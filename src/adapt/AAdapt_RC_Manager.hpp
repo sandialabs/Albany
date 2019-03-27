@@ -69,18 +69,14 @@ public:
    * evaluators. */
 
   //! Nonconst x getter.
-  Teuchos::RCP<Tpetra_Vector>& get_x();
+  Teuchos::RCP<Thyra_Vector>& get_x();
   //! Initialize x_accum using this nonoverlapping map if x_accum has not
   //  already been initialized.
   void init_x_if_not(const Teuchos::RCP<const Thyra_VectorSpace>& vs);
-  void init_x_if_not(const Teuchos::RCP<const Tpetra_Map>& map);
   //! x += soln, where soln is nonoverlapping.
-  void update_x(const Tpetra_Vector& soln_nol);
+  void update_x(const Thyra_Vector& soln_nol);
   //! Return x + a for nonoverlapping a.
-  Teuchos::RCP<const Thyra_Vector> add_x(
-    const Teuchos::RCP<const Thyra_Vector>& a) const;
-  Teuchos::RCP<const Tpetra_Vector> add_x(
-    const Teuchos::RCP<const Tpetra_Vector>& a) const;
+  Teuchos::RCP<const Thyra_Vector> add_x(const Teuchos::RCP<const Thyra_Vector>& a) const;
 
   /* Problems use these methods to set up RCU. */
 
@@ -144,13 +140,13 @@ public:
     const PHX::MDField<RealType,Cell,QuadPoint,Dim>& coord_qp);
   //! MeshAdapt uses this method to read and write nodal data from the mesh
   // database before and after adaptation.
-  const Teuchos::RCP<Tpetra_MultiVector>& getNodalField(
+  const Teuchos::RCP<Thyra_MultiVector>& getNodalField(
     const Field& f, const int g_idx, const bool overlapped) const;
   //! MeshAdapt does this if usingProjection(). In the future, I may switch to
   //  keeping an RCP<AbstractDiscretization>, and then this call would be
   //  unnecessary.
-  void initProjector(const Teuchos::RCP<const Tpetra_Map>& node_map,
-                     const Teuchos::RCP<const Tpetra_Map>& ol_node_map);
+  void initProjector(const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+                     const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs);
 
   /* Methods to inform Manager of what is happening. */
 
@@ -165,8 +161,8 @@ public:
   //! The mesh is about to adapt.
   void beginAdapt();
   //! The mesh was just adapted. The maps are needed only if usingProjection().
-  void endAdapt(const Teuchos::RCP<const Tpetra_Map>& node_map,
-                const Teuchos::RCP<const Tpetra_Map>& ol_node_map);
+  void endAdapt(const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+                const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs);
 
   /* Methods to inform others of what is happening. */
   bool usingProjection() const;

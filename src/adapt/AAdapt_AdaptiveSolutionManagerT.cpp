@@ -143,7 +143,7 @@ AdaptiveSolutionManagerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 }
 
 void AdaptiveSolutionManagerT::
-buildAdapter(const Teuchos::RCP<rc::Manager>& /* rc_mgr */)
+buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 {
 
   std::string& method = adaptParams_->get("Method", "");
@@ -183,6 +183,8 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& /* rc_mgr */)
       new MeshAdapt(adaptParams_, paramLib_, stateMgr_, rc_mgr,
                              comm_));
   } else
+#else
+  (void) rc_mgr;
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
   if (method == "Unif Size") {

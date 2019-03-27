@@ -4,32 +4,37 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
-#ifndef ALBANY_APFDISCRETIZATION_HPP
-#define ALBANY_APFDISCRETIZATION_HPP
+#ifndef ALBANY_APF_DISCRETIZATION_HPP
+#define ALBANY_APF_DISCRETIZATION_HPP
 
 #include "Albany_AbstractDiscretization.hpp"
-
-#include <vector>
-#include <functional>
-
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_VerboseObject.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 
 #include "Albany_APFMeshStruct.hpp"
 #include "Albany_PUMIOutput.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
+#include "Albany_SacadoTypes.hpp"
+
+#include "Teuchos_ParameterList.hpp"
+#include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_CompilerCodeTweakMacros.hpp"
+
+#include <vector>
+#include <functional>
 
 namespace Albany {
 
-class APFDiscretization : public Albany::AbstractDiscretization {
+class APFDiscretization : public AbstractDiscretization {
 public:
 
   //! Constructor
-  APFDiscretization(const Teuchos::RCP<Albany::APFMeshStruct> meshStruct_in,
-                    const Teuchos::RCP<const Teuchos_Comm>& commT,
+  APFDiscretization(const Teuchos::RCP<APFMeshStruct> meshStruct_in,
+                    const Teuchos::RCP<const Teuchos_Comm>& comm,
                     const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null);
+
+  APFDiscretization(const APFDiscretization&) = delete;
+  APFDiscretization& operator=(const APFDiscretization&) = delete;
 
   //! Destructor
   virtual ~APFDiscretization();
@@ -40,57 +45,75 @@ public:
   //! Set any restart data
   virtual void setRestartData() {}
 
-  //! Get Tpetra DOF map
-  Teuchos::RCP<const Tpetra_Map> getMapT() const override;
+  //! Get node vector space (owned and overlapped)
+  Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace        () const override { return m_node_vs; }
+  Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace () const override { return m_overlap_node_vs; }
 
-  //! Get Tpetra overlapped DOF map
-  Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const override;
+  //! Get solution DOF vector space (owned and overlapped).
+  Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace        () const override { return m_vs; }
+  Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace () const override { return m_overlap_vs; }
+
+  //! Get Field node vector space (owned and overlapped)
+  Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace (const std::string& /* field_name */) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "Albany::APFDiscretization: getNodeVectorSpace(field_name) not implemented yet");
+    TEUCHOS_UNREACHABLE_RETURN(Teuchos::null);
+  }
+
+  Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace (const std::string& /* field_name */) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "Albany::APFDiscretization: getOverlapNodeVectorSpace(field_name) not implemented yet");
+    TEUCHOS_UNREACHABLE_RETURN(Teuchos::null);
+  }
+
+  //! Get Field vector space (owned and overlapped)
+  Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace (const std::string& /* field_name */) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "Albany::APFDiscretization: getVectorSpace(field_name) not implemented yet");
+    TEUCHOS_UNREACHABLE_RETURN(Teuchos::null);
+  }
+
+  Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace (const std::string& /* field_name */) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "Albany::APFDiscretization: getOverlapVectorSpace(field_name) not implemented yet");
+    TEUCHOS_UNREACHABLE_RETURN(Teuchos::null);
+  }
+
+  //! Create a Jacobian operator (owned and overlapped)
+  Teuchos::RCP<Thyra_LinearOp> createJacobianOp        () const override { return m_jac_factory->createOp();         }
+  Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const override { return m_overlap_jac_factory->createOp(); }
 
 #ifdef ALBANY_AERAS
-  // GAH - Is this right for Aeras? Probably do not use PUMI with Aeras I am assuming.
-  Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const override
-               { return this->getOverlapJacobianGraphT(); }
-  Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const override
-               { return this->getJacobianGraphT(); }
+  //! Create implicit Jacobian operator (owned and overlapped) (for Aeras)
+  Teuchos::RCP<Thyra_LinearOp> createImplicitJacobianOp        () const override { return m_jac_factory->createOp();         }
+  Teuchos::RCP<Thyra_LinearOp> createImplicitOverlapJacobianOp () const override { return m_overlap_jac_factory->createOp(); }
 #endif
 
-  //! Get Tpetra Jacobian graph
-  Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const override;
-
-  //! Get Tpetra overlap Jacobian graph
-  Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const override;
-
-  //! Get Tpetra Node map
-  Teuchos::RCP<const Tpetra_Map> getNodeMapT() const override;
-
-  //! Get Tpetra overlap Node map
-  Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const override;
-
-  virtual bool isExplicitScheme() const override { return false; }
+  bool isExplicitScheme() const override { return false; }
 
   //! Process coords for ML
   void setupMLCoords();
 
   //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const Albany::NodeSetList& getNodeSets() const override { return nodeSets; }
-  const Albany::NodeSetCoordList& getNodeSetCoords() const override { return nodeSetCoords; }
+  const NodeSetList& getNodeSets() const override { return nodeSets; }
+  const NodeSetCoordList& getNodeSetCoords() const override { return nodeSetCoords; }
   // not used; just completing concrete impl
-  const Albany::NodeSetGIDsList& getNodeSetGIDs() const override { return nodeSetGIDs; }
+  const NodeSetGIDsList& getNodeSetGIDs() const override { return nodeSetGIDs; }
 
   //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const Albany::SideSetList& getSideSets(const int workset) const override { return sideSets[workset]; }
+  const SideSetList& getSideSets(const int workset) const override { return sideSets[workset]; }
 
   //! Get connectivity map from elementGID to workset
-  Albany::WsLIDList& getElemGIDws() override { return elemGIDws; }
-  const Albany::WsLIDList& getElemGIDws() const override { return elemGIDws; }
+  WsLIDList& getElemGIDws() override { return elemGIDws; }
+  const WsLIDList& getElemGIDws() const override { return elemGIDws; }
 
   //! Get map from (Ws, El, Local Node, Eqn) -> dof LID
-  using Albany::AbstractDiscretization::WorksetConn;
-  using Albany::AbstractDiscretization::Conn;
-  const Conn& getWsElNodeEqID() const override;
+  const Conn& getWsElNodeEqID() const override { return wsElNodeEqID; }
 
   //! Get map from (Ws, El, Local Node) -> NodeGID
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const override;
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const override {
+    return wsElNodeID;
+  }
 
   //! Get coordinate vector (overlap map, interleaved)
   const Teuchos::ArrayRCP<double>& getCoordinates() const override;
@@ -100,14 +123,20 @@ public:
 
 #ifdef ALBANY_CONTACT
 //! Get the contact manager
-  virtual Teuchos::RCP<const Albany::ContactManager> getContactManager() const;
+  Teuchos::RCP<const ContactManager> getContactManager() const override { return contactManager; }
 #endif
 
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const override;
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const override {
+    return coords;
+  }
 
-  const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const override;
+  const WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const override {
+    return sphereVolume;
+  }
 
-  const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type& getLatticeOrientation() const override;
+  const WorksetArray<Teuchos::ArrayRCP<double*> >::type& getLatticeOrientation() const override {
+    return latticeOrientation;
+  }
 
   //! Print coords for debugging
   void printCoords() const override;
@@ -136,65 +165,35 @@ public:
   //! Get number of spatial dimensions
   int getNumDim() const override { return meshStruct->numDim; }
 
-  virtual Teuchos::RCP<const Teuchos_Comm> getComm() const { return commT; }
+  virtual Teuchos::RCP<const Teuchos_Comm> getComm() const { return comm; }
 
   //! Get number of total DOFs per node
   int getNumEq() const override { return neq; }
 
   //! Set stateArrays
-  void setStateArrays(Albany::StateArrays& sa) override {
+  void setStateArrays(StateArrays& sa) override {
     stateArrays = sa;
     return;
   }
 
-  Albany::StateArrays& getStateArrays() override {return stateArrays;}
+  StateArrays& getStateArrays() override {return stateArrays;}
 
   //! Retrieve Vector (length num worksets) of element block names
-  const Albany::WorksetArray<std::string>::type& getWsEBNames() const override;
+  const WorksetArray<std::string>::type& getWsEBNames() const override { return wsEBNames; }
   //! Retrieve Vector (length num worksets) of physics set index
-  const Albany::WorksetArray<int>::type&  getWsPhysIndex() const override;
-
-  void writeAnySolutionToMeshDatabase(const ST* soln, const int index, const bool overlapped = false);
-  void writeAnySolutionToFile(const double time);
-  void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false) override;
-  void writeSolutionT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot, const double time, const bool overlapped = false) override;
-  void writeSolutionT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot,
-                      const Tpetra_Vector& soln_dotdot, const double time, const bool overlapped = false) override;
-  void writeSolutionMV(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false) override;
-  void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false) override;
-  void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot,
-                                    const double time, const bool overlapped = false) override;
-  void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot,
-                                    const Tpetra_Vector& soln_dotdot,
-                                    const double time, const bool overlapped = false) override;
-  void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false) override;
-  void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false) override;
-  void writeSolutionMVToFile(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false) override;
-
-  void writeRestartFile(const double time);
+  const WorksetArray<int>::type&  getWsPhysIndex() const override { return wsPhysIndex; }
 
   virtual void writeMeshDebug (const std::string& filename);
 
-  Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const override;
-
-  Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const override;
-
-#if defined(ALBANY_LCM)
-  void setResidualField (const Thyra_Vector& residual) override;
-#endif
-
   // Retrieve mesh struct
-  Teuchos::RCP<Albany::APFMeshStruct> getAPFMeshStruct() {return meshStruct;}
-  Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const override {return meshStruct;}
+  Teuchos::RCP<APFMeshStruct> getAPFMeshStruct() {return meshStruct;}
+  Teuchos::RCP<AbstractMeshStruct> getMeshStruct() const override {return meshStruct;}
 
   //! Flag if solution has a restart values -- used in Init Cond
   bool hasRestartSolution() const override {return meshStruct->hasRestartSolution;}
 
   //! If restarting, convenience function to return restart data time
   double restartDataTime() const override {return meshStruct->restartDataTime;}
-
-  //! PUMI does not support MOR
-  virtual bool supportsMOR() const override { return false; }
 
   // Before mesh modification, qp data may be needed for solution transfer
   void attachQPData();
@@ -221,10 +220,13 @@ public:
   GO getDOF(const GO inode, const int entry, int total_comps = -1) const
   {
     if (interleavedOrdering) {
-      if (total_comps == -1) total_comps = neq;
+      if (total_comps == -1) {
+        total_comps = neq;
+      }
       return inode * total_comps + entry;
+    } else {
+      return inode + numOwnedNodes*entry;
     }
-    else return inode + numOwnedNodes*entry;
   }
 
   // Copy field data from Tpetra_Vector to APF
@@ -244,86 +246,33 @@ public:
   // Rename exodus output file when the problem is resized
   void reNameExodusOutput(const std::string& str);
 
-  /* DAI: old Epetra functions still used by parts of Albany/Trilinos
-     Remove when we get to full Tpetra */
-#if defined(ALBANY_EPETRA)
-  virtual Teuchos::RCP<const Epetra_Map> getMap() const override { return map; }
-  virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const override { return overlap_map; }
-  virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const override;
-  virtual Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const override { return graph; }
-  virtual Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const override { return overlap_graph; }
-  virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const override {
-    fprintf(stderr,"APF Discretization unsupported call getNodeMap\n");
-    abort();
-    return Teuchos::RCP<const Epetra_Map>();
-  }
-  virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const override;
-  virtual void writeSolution(const Epetra_Vector&, const double, const bool) override;
-  virtual void writeSolution(const Epetra_Vector&, const Epetra_Vector&, const double, const bool) override;
-#endif
-
-  //! Get field DOF map
-  Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: getMapT(field_name) not implemented yet");
-  }
-
-  //! Get field node map
-  Teuchos::RCP<const Tpetra_Map> getNodeMapT(const std::string& field_name) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: getNodeMapT(field_name) not implemented yet");
-  }
-
-  //! Get field overlapped DOF map
-  Teuchos::RCP<const Tpetra_Map> getOverlapMapT(const std::string& field_name) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: getOverlapMapT(field_name) not implemented yet");
-  }
-
-  //! Get field overlapped node map
-  Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT(const std::string& field_name) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: getOverlapNodeMapT(field_name) not implemented yet");
-  }
-
-  //! Get field vector from mesh database
-  virtual void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const  override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: getFieldT(field_vector, field_name) not implemented yet");
-  }
-  //! Set the field vector into mesh database
-  virtual void setFieldT(const Tpetra_Vector &field_vector, const std::string& field_name, bool overlapped)  override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: setFieldT(field_vector, field_name, overlapped) not implemented yet");
-  }
-
   //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
-  const std::vector<Albany::IDArray>& getElNodeEqID(const std::string& field_name) const override {
+  const std::vector<IDArray>& getElNodeEqID(const std::string& /* field_name */) const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: getElNodeElID(field_name) not implemented yet");
+        "APFDiscretization: getElNodeElID(field_name) not implemented yet");
   }
   //! Get Dof Manager of field field_name
-  const Albany::NodalDOFManager& getDOFManager(const std::string& field_name) const override {
+  const NodalDOFManager& getDOFManager(const std::string& /* field_name */) const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: getDOFManager(field_name) not implemented yet");
+        "APFDiscretization: getDOFManager(field_name) not implemented yet");
   }
 
   //! Get Overlapped Dof Manager of field field_name
-  const Albany::NodalDOFManager& getOverlapDOFManager(const std::string& field_name) const override {
+  const NodalDOFManager& getOverlapDOFManager(const std::string& /* field_name */) const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: getOverlapDOFManager(field_name) not implemented yet");
+        "APFDiscretization: getOverlapDOFManager(field_name) not implemented yet");
   }
 
   //! Get nodal parameters state info struct
-  virtual const Albany::StateInfoStruct& getNodalParameterSIS() const  override {
+  virtual const StateInfoStruct& getNodalParameterSIS() const  override {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: getNodalParameterSIS() not implemented yet");
+        "APFDiscretization: getNodalParameterSIS() not implemented yet");
   }
 
   //! Get Numbering for layered mesh (mesh structured in one direction)
-  Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() override {
+  Teuchos::RCP<LayeredMeshNumbering<LO>> getLayeredMeshNumbering() const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Albany::APFDiscretization: getLayeredMeshNumbering() not implemented");
+        "APFDiscretization: getLayeredMeshNumbering() not implemented");
     return Teuchos::null;
   }
 
@@ -345,13 +294,77 @@ public:
   apf::DynamicArray<apf::Node> const& getOwnedNodes() { return ownedNodes; }
 
 
+
+  /* DAI: old Epetra functions still used by parts of Albany/Trilinos
+     Remove when we get to full Tpetra */
+// #if defined(ALBANY_EPETRA)
+//   virtual Teuchos::RCP<const Epetra_Map> getMap() const override { return map; }
+//   virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const override { return overlap_map; }
+//   virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const override;
+//   virtual Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const override { return graph; }
+//   virtual Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const override { return overlap_graph; }
+//   virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const override {
+//     fprintf(stderr,"APF Discretization unsupported call getNodeMap\n");
+//     abort();
+//     return Teuchos::RCP<const Epetra_Map>();
+//   }
+// #endif
+
+  // --- Get/set solution/residual/field vectors to/from mesh --- //
+
+  Teuchos::RCP<Thyra_Vector>      getSolutionField (const bool overlapped) const override;
+  Teuchos::RCP<Thyra_MultiVector> getSolutionMV    (const bool overlapped) const override;
+
+#if defined(ALBANY_LCM)
+  void setResidualField (const Thyra_Vector& residual) override;
+#endif
+
+  void getField (Thyra_Vector& /* field_vector */, const std::string& /* field_name */) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Method not yet implemented in APFDiscretization.\n";)
+  }
+  void setField (const Thyra_Vector& /* field_vector */, const std::string& /* field_name */, const bool /* overlapped */) override {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Method not yet implemented in APFDiscretization.\n";)
+  }
+
+  // --- Methods to write solution in the output file --- //
+
+  void writeSolution (const Thyra_Vector& solution,
+                      const double time, const bool overlapped) override;
+  void writeSolution (const Thyra_Vector& solution,
+                      const Thyra_Vector& solution_dot,
+                      const double time, const bool overlapped) override;
+  void writeSolution (const Thyra_Vector& solution,
+                      const Thyra_Vector& solution_dot,
+                      const Thyra_Vector& solution_dotdot,
+                      const double time, const bool overlapped) override;
+  void writeSolutionMV (const Thyra_MultiVector& solution,
+                        const double time, const bool overlapped) override;
+
+  //! Write the solution to the mesh database.
+  void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                    const double time, const bool overlapped) override;
+  void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                    const Thyra_Vector& solution_dot,
+                                    const double time, const bool overlapped) override;
+  void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                    const Thyra_Vector& solution_dot,
+                                    const Thyra_Vector& solution_dotdot,
+                                    const double time, const bool overlapped) override;
+  void writeSolutionMVToMeshDatabase (const Thyra_MultiVector &solution,
+                                      const double time, const bool overlapped) override;
+
+  //! Write the solution to file. Must call writeSolution first.
+  void writeSolutionToFile (const Thyra_Vector &solution,
+                            const double time, const bool overlapped) override;
+  void writeSolutionMVToFile (const Thyra_MultiVector &solution,
+                              const double time, const bool overlapped) override;
+
+
+  void writeAnySolutionToMeshDatabase(const ST* soln, const int index, const bool overlapped);
+  void writeAnySolutionToFile(const double time);
+
+  void writeRestartFile(const double time);
 private:
-
-  //! Private to prohibit copying
-  APFDiscretization(const APFDiscretization&);
-
-  //! Private to prohibit copying
-  APFDiscretization& operator=(const APFDiscretization&);
 
   int nonzeroesPerRow(const int neq) const;
   double monotonicTimeLabel(const double time);
@@ -362,7 +375,7 @@ public:
   void copyQPScalarToAPF(unsigned nqp, std::string const& state, apf::Field* f);
   void copyQPVectorToAPF(unsigned nqp, std::string const& state, apf::Field* f);
   void copyQPTensorToAPF(unsigned nqp, std::string const& state, apf::Field* f);
-  void copyQPStatesToAPF(apf::Field* f, apf::FieldShape* fs, bool copyAll = true);
+  void copyQPStatesToAPF(apf::FieldShape* fs, bool copyAll = true);
   void removeQPStatesFromAPF();
 
   //! Transfer QP Fields from APF to PUMIQPData
@@ -416,83 +429,60 @@ protected:
   //! Output object
   PUMIOutput* meshOutput;
 
-  //! Stk Mesh Objects
+  //! Teuchos communicator
+  Teuchos::RCP<const Teuchos_Comm>        comm;
 
-#if defined(ALBANY_EPETRA)
-  //! Epetra communicator
-  Teuchos::RCP<const Epetra_Comm> comm;
-#endif
+  //! Unknown map and node map
+  Teuchos::RCP<const Thyra_VectorSpace>   m_vs;
+  Teuchos::RCP<const Thyra_VectorSpace>   m_node_vs;
 
- //! Tpetra communicator and Kokkos node
-  Teuchos::RCP<const Teuchos::Comm<int> > commT;
+  //! Overlapped unknown map and node map
+  Teuchos::RCP<const Thyra_VectorSpace>   m_overlap_vs;
+  Teuchos::RCP<const Thyra_VectorSpace>   m_overlap_node_vs;
 
-  //! Node map
-  Teuchos::RCP<const Tpetra_Map> node_mapT;
-
-  //! Unknown Map
-  Teuchos::RCP<const Tpetra_Map> mapT;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_Map> map;
-#endif
-
-  //! Overlapped unknown map, and node map
-  Teuchos::RCP<const Tpetra_Map> overlap_mapT;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_Map> overlap_map;
-#endif
-  Teuchos::RCP<const Tpetra_Map> overlap_node_mapT;
-
-  //! Jacobian matrix graph
-  Teuchos::RCP<Tpetra_CrsGraph> graphT;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_CrsGraph> graph;
-#endif
-
-  //! Overlapped Jacobian matrix graph
-  Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_CrsGraph> overlap_graph;
-#endif
+  //! Jacobian matrix graph proxy (owned and overlap)
+  Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
+  Teuchos::RCP<ThyraCrsMatrixFactory> m_overlap_jac_factory;
 
   //! Number of equations (and unknowns) per node
   const unsigned int neq;
 
   //! node sets stored as std::map(string ID, int vector of GIDs)
-  Albany::NodeSetList nodeSets;
-  Albany::NodeSetGIDsList nodeSetGIDs; // not used
-  Albany::NodeSetCoordList nodeSetCoords;
+  NodeSetList nodeSets;
+  NodeSetGIDsList nodeSetGIDs; // not used
+  NodeSetCoordList nodeSetCoords;
 
   //! side sets stored as std::map(string ID, SideArray classes) per workset (std::vector across worksets)
-  std::vector<Albany::SideSetList> sideSets;
+  std::vector<SideSetList> sideSets;
 
   // Side set discretizations related structures (not supported but needed for getters return values)
-  std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > sideSetDiscretizations;
-  std::map<std::string,std::map<GO,GO> >                              sideToSideSetCellMap;
-  std::map<std::string,std::map<GO,std::vector<int> > >               sideNodeNumerationMap;
+  std::map<std::string,Teuchos::RCP<AbstractDiscretization> >   sideSetDiscretizations;
+  std::map<std::string,std::map<GO,GO> >                        sideToSideSetCellMap;
+  std::map<std::string,std::map<GO,std::vector<int> > >         sideNodeNumerationMap;
 
   //! Connectivity array [workset, element, local-node, Eq] => LID
   Conn wsElNodeEqID;
 
   //! Connectivity array [workset, element, local-node] => GID
-  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
+  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
 
-  mutable Teuchos::ArrayRCP<double> coordinates;
-  Teuchos::RCP<Tpetra_MultiVector> coordMV;
-  Albany::WorksetArray<std::string>::type wsEBNames;
-  Albany::WorksetArray<int>::type wsPhysIndex;
-  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
-  Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
-  Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
+  mutable Teuchos::ArrayRCP<double>     coordinates;
+  Teuchos::RCP<Thyra_MultiVector>       coordMV;
+  WorksetArray<std::string>::type       wsEBNames;
+  WorksetArray<int>::type               wsPhysIndex;
+  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
+  WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
+  WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 
 #ifdef ALBANY_CONTACT
-  Teuchos::RCP<const Albany::ContactManager> contactManager;
+  Teuchos::RCP<const ContactManager> contactManager;
 #endif
 
   //! Connectivity map from elementGID to workset and LID in workset
-  Albany::WsLIDList  elemGIDws;
+  WsLIDList  elemGIDws;
 
   // States: vector of length num worksets of a map from field name to shards array
-  Albany::StateArrays stateArrays;
+  StateArrays stateArrays;
 
   apf::GlobalNumbering* globalNumbering;
   apf::GlobalNumbering* elementNumbering;
@@ -504,9 +494,8 @@ protected:
   //! Number of elements on this processor
   int numOwnedNodes;
   int numOverlapNodes;
-  long numGlobalNodes;
 
-  Teuchos::RCP<Albany::APFMeshStruct> meshStruct;
+  Teuchos::RCP<APFMeshStruct> meshStruct;
 
   bool interleavedOrdering;
 
@@ -516,7 +505,7 @@ protected:
   std::map<std::string, std::vector<double> > nodeset_node_coords;
 
   // Needed to pass coordinates to ML.
-  Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
+  Teuchos::RCP<RigidBodyModes> rigidBodyModes;
 
   // counter for limiting data writes to output file
   int outputInterval;
@@ -526,10 +515,8 @@ protected:
 
   // Mesh adaptation stuff.
   Teuchos::RCP<AAdapt::rc::Manager> rcm;
-
 };
 
-}
+} // namespace Albany
 
-#endif // ALBANY_PUMIDISCRETIZATION_HPP
-
+#endif // ALBANY_APF_DISCRETIZATION_HPP

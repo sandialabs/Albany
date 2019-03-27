@@ -1,35 +1,36 @@
 #include "Albany_SimOutput.hpp"
+
 #include <apfSIM.h>
 #include <SimModel.h>
 #include <SimPartitionedMesh.h>
 #include <SimField.h>
 
+namespace Albany
+{
+
 static std::string removeExtension(std::string const& s)
 {
   std::size_t pos = s.find_last_of('.');
-  if (pos == std::string::npos)
+  if (pos == std::string::npos) {
     return s;
+  }
   return s.substr(0, pos);
 }
 
-Albany::SimOutput::SimOutput(
-    const Teuchos::RCP<APFMeshStruct>& meshStruct_,
-    const Teuchos::RCP<const Teuchos_Comm>& commT_):
-  commT(commT_),
-  index(1)
+
+SimOutput::SimOutput(const Teuchos::RCP<APFMeshStruct>& meshStruct_,
+                     const Teuchos::RCP<const Teuchos_Comm>& comm_)
+ : comm(comm_)
+ , index(1)
 {
   filename = removeExtension(meshStruct_->outputFileName);
   mesh = dynamic_cast<apf::MeshSIM*>(meshStruct_->getMesh());
 }
 
-Albany::SimOutput::~SimOutput()
-{
-}
-
-void Albany::SimOutput::writeFile(const double time_value)
+void SimOutput::writeFile(const double time_value)
 {
   (void) time_value;
-  assert(commT->getSize() == 1);
+  assert(comm->getSize() == 1);
   pParMesh spm = mesh->getMesh();
   pMesh sm = PM_mesh(spm, 0);
   std::string meshname;
@@ -56,7 +57,9 @@ void Albany::SimOutput::writeFile(const double time_value)
   ++index;
 }
 
-void Albany::SimOutput::setFileName(const std::string& fname)
+void SimOutput::setFileName(const std::string& fname)
 {
   filename = removeExtension(fname);
 }
+
+} // namespace Albany

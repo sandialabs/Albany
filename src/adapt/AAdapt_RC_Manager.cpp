@@ -17,11 +17,11 @@
 #include "AAdapt_RC_Projector_impl.hpp"
 #include "AAdapt_RC_Manager.hpp"
 
-#include "Albany_TpetraThyraUtils.hpp"
-#include "Albany_TpetraThyraTypes.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_ThyraTypes.hpp"
 
 #define loop(a, i, dim)                                                 \
-  for (PHX::MDField<RealType>::size_type i = 0; i < a.dimension(dim); ++i)
+  for (PHX::MDField<RealType>::size_type i = 0; i < static_cast<PHX::MDField<RealType>::size_type>(a.dimension(dim)); ++i)
 
 namespace AAdapt {
 namespace rc {
@@ -30,7 +30,7 @@ namespace rc {
 struct Manager::Field::Data {
   Transformation::Enum transformation;
   // Nodal data g. g has up to two components.
-  Teuchos::RCP<Tpetra_MultiVector> mv[2];
+  Teuchos::RCP<Thyra_MultiVector> mv[2];
 };
 
 std::string Manager::Field::get_g_name (const int g_field_idx) const {
@@ -118,7 +118,7 @@ void calc_right_polar_LieR_LieS_g2G (
   R = minitensor::dot(R, S);
 }
 
-void transformStateArray (const unsigned int wi, const Direction::Enum dir,
+void transformStateArray (const Direction::Enum dir,
                           const Transformation::Enum transformation,
                           Albany::MDArray& mda1, Albany::MDArray& mda2) {
   switch (transformation) {
@@ -164,10 +164,11 @@ class Projector {
   typedef PHX::MDField<const RealType,Cell,Node,QuadPoint> BasisField;
   typedef BasisField::size_type size_type;
 
-  Teuchos::RCP<const Tpetra_Map> node_map_, ol_node_map_;
-  Teuchos::RCP<Tpetra_CrsMatrix> M_;
-  Teuchos::RCP<Tpetra_Export> export_;
-  Teuchos::RCP<Tpetra_Operator> P_;
+  Teuchos::RCP<const Thyra_VectorSpace> node_vs_, ol_node_vs_;
+  Teuchos::RCP<Albany::ThyraCrsMatrixFactory> M_factory_;
+  Teuchos::RCP<Thyra_LinearOp> M_;
+  Teuchos::RCP<Albany::CombineAndScatterManager> cas_manager_;
+  Teuchos::RCP<Thyra_LinearOp> P_;
   // M_ persists over multiple state field manager evaluations if the mesh is
   // not adapted after every LOCA step. Indicate whether this part of M_ has
   // already been filled.
@@ -175,8 +176,8 @@ class Projector {
 
 public:
   Projector () {}
-  void init(const Teuchos::RCP<const Tpetra_Map>& node_map,
-            const Teuchos::RCP<const Tpetra_Map>& ol_node_map);
+  void init(const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+            const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs);
   void fillMassMatrix(const PHAL::Workset& workset, const BasisField& bf,
                       const BasisField& wbf);
   void fillRhs(const PHX::MDField<const RealType>& f_G_qp, Manager::Field& f,
@@ -186,23 +187,23 @@ public:
               const BasisField& bf, Albany::MDArray& mda1,
               Albany::MDArray& mda2);
   // For testing.
-  const Teuchos::RCP<const Tpetra_Map>& get_node_map () const
-    { return node_map_; }
-  const Teuchos::RCP<const Tpetra_Map>& get_ol_node_map () const
-    { return ol_node_map_; }
+  const Teuchos::RCP<const Thyra_VectorSpace>& get_node_vs () const
+    { return node_vs_; }
+  const Teuchos::RCP<const Thyra_VectorSpace>& get_ol_node_vs () const
+    { return ol_node_vs_; }
 private:
   bool is_filled(int wi);
 };
 
 void Projector::
-init (const Teuchos::RCP<const Tpetra_Map>& node_map,
-      const Teuchos::RCP<const Tpetra_Map>& ol_node_map) {
-  node_map_ = node_map;
-  ol_node_map_ = ol_node_map;
+init (const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+      const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs) {
+  node_vs_ = node_vs;
+  ol_node_vs_ = ol_node_vs;
   const int max_num_entries = 27; // Enough for first-order hex.
-  M_ = Teuchos::rcp(
-    new Tpetra_CrsMatrix(ol_node_map_, ol_node_map_, max_num_entries));
-  export_ = Teuchos::null;
+  M_factory_ = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(ol_node_vs_,ol_node_vs_,max_num_entries) );
+  M_ = Teuchos::null;
+  cas_manager_ = Albany::createCombineAndScatterManager(node_vs_,ol_node_vs_);
   P_ = Teuchos::null;
   filled_.clear();
 }
@@ -214,21 +215,31 @@ fillMassMatrix (const PHAL::Workset& workset, const BasisField& bf,
   filled_[workset.wsIndex] = true;
 
   const size_type num_node = bf.dimension(1), num_qp = bf.dimension(2);
-  for (unsigned int cell = 0; cell < workset.numCells; ++cell)
+  for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
     for (size_type rnode = 0; rnode < num_node; ++rnode) {
       const GO row = workset.wsElNodeID[cell][rnode];
-      Teuchos::Array<Tpetra_GO> cols;
+      Teuchos::Array<GO> cols;
+      for (size_type cnode = 0; cnode < num_node; ++cnode) {
+        cols.push_back(workset.wsElNodeID[cell][cnode]);
+      }
+      M_factory_->insertGlobalIndices(row, cols);
+    }
+  }
+  M_factory_->fillComplete();
+  for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
+    for (size_type rnode = 0; rnode < num_node; ++rnode) {
       Teuchos::Array<ST> vals;
       for (size_type cnode = 0; cnode < num_node; ++cnode) {
-        const GO col = workset.wsElNodeID[cell][cnode];
-        cols.push_back(col);
         ST v = 0;
         for (size_type qp = 0; qp < num_qp; ++qp)
           v += wbf(cell, rnode, qp) * bf(cell, cnode, qp);
         vals.push_back(v);
       }
-      M_->insertGlobalValues(row, cols, vals);
+      const GO grow = workset.wsElNodeID[cell][rnode];
+      const LO lrow = Albany::getLocalElement(M_->range(),grow);
+      Albany::setLocalRowValues(M_,lrow,vals);
     }
+  }
 }
 
 void Projector::
@@ -241,71 +252,75 @@ fillRhs (const PHX::MDField<const RealType>& f_G_qp, Manager::Field& f,
 
   if (f.data_->mv[0].is_null()) {
     const int ncol = rank == 0 ? 1 : rank == 1 ? ndim : ndim*ndim;
-    for (int fi = 0; fi < f.num_g_fields; ++fi)
-      f.data_->mv[fi] = Teuchos::rcp(
-        new Tpetra_MultiVector(ol_node_map_, ncol, true));
+    for (int fi = 0; fi < f.num_g_fields; ++fi) {
+      f.data_->mv[fi] = Thyra::createMembers(ol_node_vs_,ncol);
+    }
   }
 
   const Transformation::Enum transformation = f.data_->transformation;
-  for (int cell = 0; cell < (int) workset.numCells; ++cell)
+  for (int cell = 0; cell < (int) workset.numCells; ++cell) {
     for (int node = 0; node < num_node; ++node) {
-      const GO row = workset.wsElNodeID[cell][node];
+      const GO grow = workset.wsElNodeID[cell][node];
+      const LO lrow = Albany::getLocalElement(f.data_->mv[0]->range(),grow);
       for (int qp = 0; qp < num_qp; ++qp) {
         switch (rank) {
-        case 0:
-        case 1:
-          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "!impl");
-          break;
-        case 2: {
-          switch (transformation) {
-          case Transformation::none: {
-            for (int i = 0, col = 0; i < ndim; ++i)
-              for (int j = 0; j < ndim; ++j, ++col)
-                f.data_->mv[0]->sumIntoGlobalValue(
-                  row, col, f_G_qp(cell, qp, i, j) * wbf(cell, node, qp));
-          } break;
-          case Transformation::right_polar_LieR_LieS: {
-            minitensor::Tensor<RealType> F(ndim);
-            loop(f_G_qp, i, 2) loop(f_G_qp, j, 3)
-              F(i, j) = f_G_qp(cell, qp, i, j);
-            minitensor::Tensor<RealType> RS[2];
-            calc_right_polar_LieR_LieS_G2g(F, RS);
-            for (int fi = 0; fi < f.num_g_fields; ++fi) {
-              for (int i = 0, col = 0; i < ndim; ++i)
-                for (int j = 0; j < ndim; ++j, ++col)
-                  f.data_->mv[fi]->sumIntoGlobalValue(
-                    row, col, RS[fi](i, j) * wbf(cell, node, qp));
+          case 0:
+          case 1:
+            TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "!impl");
+            break;
+          case 2: {
+            switch (transformation) {
+              case Transformation::none:
+              {
+                auto data = Albany::getNonconstLocalData(f.data_->mv[0]);
+                for (int i = 0, col = 0; i < ndim; ++i)
+                  for (int j = 0; j < ndim; ++j, ++col)
+                    data[col][lrow] += f_G_qp(cell, qp, i, j) * wbf(cell, node, qp);
+              } break;
+              case Transformation::right_polar_LieR_LieS:
+              {
+                minitensor::Tensor<RealType> F(ndim);
+                loop(f_G_qp, i, 2) loop(f_G_qp, j, 3)
+                  F(i, j) = f_G_qp(cell, qp, i, j);
+                minitensor::Tensor<RealType> RS[2];
+                calc_right_polar_LieR_LieS_G2g(F, RS);
+                for (int fi = 0; fi < f.num_g_fields; ++fi) {
+                  auto data = Albany::getNonconstLocalData(f.data_->mv[fi]);
+                  for (int i = 0, col = 0; i < ndim; ++i)
+                    for (int j = 0; j < ndim; ++j, ++col)
+                      data[col][lrow] += RS[fi](i, j) * wbf(cell, node, qp);
+                }
+                break; 
+              }
             }
-          } break;
+            break; 
           }
-        } break;
-        default:
-          std::stringstream ss;
-          ss << "invalid rank: " << f.name << " with rank " << rank;
-          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
+          default:
+            std::stringstream ss;
+            ss << "invalid rank: " << f.name << " with rank " << rank;
+            TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
         }
       }
     }
+  }
 }
 
 void Projector::project (Manager::Field& f) {
-  if ( ! M_->isFillComplete()) {
+  if ( Albany::isFillActive(M_) ) {
     // Export M_ so it has nonoverlapping rows and cols.
-    M_->fillComplete();
-    export_ = Teuchos::rcp(new Tpetra_Export(ol_node_map_, node_map_));
-    Teuchos::RCP<Tpetra_CrsMatrix> M = Teuchos::rcp(
-      new Tpetra_CrsMatrix(node_map_, M_->getGlobalMaxNumRowEntries()));
-    M->doExport(*M_, *export_, Tpetra::ADD);
-    M->fillComplete();
+    Albany::fillComplete(M_);
+    Albany::ThyraCrsMatrixFactory M_owned_factory(node_vs_,node_vs_,M_factory_);
+    auto M = M_owned_factory.createOp();
+    cas_manager_->combine(M_,M,Albany::CombineMode::ADD);
     M_ = M;
+    Albany::fillComplete(M_);
   }
-  Teuchos::RCP<Tpetra_MultiVector> x[2];
+  Teuchos::RCP<Thyra_MultiVector> x[2];
   for (int fi = 0; fi < f.num_g_fields; ++fi) {
-    const int nrhs = f.data_->mv[fi]->getNumVectors();
+    const int nrhs = f.data_->mv[fi]->domain()->dim();
     // Export the rhs to the same row map.
-    Teuchos::RCP<Tpetra_MultiVector>
-      b = Teuchos::rcp(new Tpetra_MultiVector(M_->getRangeMap(), nrhs, true));
-    b->doExport(*f.data_->mv[fi], *export_, Tpetra::ADD);
+    auto b = Thyra::createMembers(M_->range(),nrhs);
+    cas_manager_->combine(f.data_->mv[fi],b,Albany::CombineMode::ADD);
     // Create x[fi] in M_ x[fi] = b[fi]. As a side effect, initialize P_ if
     // necessary.
     Teuchos::ParameterList pl;
@@ -317,8 +332,8 @@ void Projector::project (Manager::Field& f) {
     pl.set("Verbosity", 0);//33);
     x[fi] = solve(M_, P_, b, pl); // in AAdapt_RC_Projector_impl
     // Import (reverse mode) to the overlapping MV.
-    f.data_->mv[fi]->putScalar(0);
-    f.data_->mv[fi]->doImport(*x[fi], *export_, Tpetra::ADD);
+    f.data_->mv[fi]->assign(0);
+    cas_manager_->scatter(x[fi],f.data_->mv[fi],Albany::CombineMode::ADD);
 #if 0
     amb::write_CrsMatrix("M", *M_);
     amb::write_MultiVector("b", *b);
@@ -353,13 +368,14 @@ interp (const Manager::Field& f, const PHAL::Workset& workset,
             mda1(cell, qp, i, j) = 0;
         for (int node = 0; node < num_node; ++node) {
           const GO grow = workset.wsElNodeID[cell][node];
-          const LO row = ol_node_map_->getLocalElement(grow);
-          for (int i = 0, col = 0; i < ndim; ++i)
-            for (int j = 0; j < ndim; ++j, ++col)
-              for (int fi = 0; fi < nmv; ++fi)
-                (*mdas[fi])(cell, qp, i, j) +=
-                  f.data_->mv[fi]->getVector(col)->get1dView()[row] *
+          const LO row = Albany::getLocalElement(ol_node_vs_,grow);
+          for (int i = 0, col = 0; i < ndim; ++i) {
+            for (int fi = 0; fi < nmv; ++fi) {
+              auto data = Albany::getLocalData(f.data_->mv[fi].getConst());
+              for (int j = 0; j < ndim; ++j, ++col) {
+                (*mdas[fi])(cell, qp, i, j) += data[col][row] *
                   bf(cell, node, qp);
+          }}}
         }
       } break;
       default:
@@ -371,8 +387,9 @@ interp (const Manager::Field& f, const PHAL::Workset& workset,
 }
 
 bool Projector::is_filled (int wi) {
-  if (filled_.size() <= wi)
+  if (static_cast<int>(filled_.size()) <= wi) {
     filled_.insert(filled_.end(), wi - filled_.size() + 1, false);
+  }
   return filled_[wi];
 }
 
@@ -382,20 +399,17 @@ class ProjectorTester {
   Teuchos::RCP<Impl> d;
 public:
   ProjectorTester();
-  void init(const Teuchos::RCP<const Tpetra_Map>& node_map,
-            const Teuchos::RCP<const Tpetra_Map>& ol_node_map);
+  void init(const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+            const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs);
   void eval(const PHAL::Workset& workset,
             const Manager::BasisField& bf, const Manager::BasisField& wbf,
-            const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
             const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp);
   void fillRhs(const PHAL::Workset& workset, const Manager::BasisField& wbf,
-               const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
                const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp);
   void project();
   void interp(const PHAL::Workset& workset, const Manager::BasisField& bf,
-              const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
               const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp);
-  void finish(const PHAL::Workset& workset);
+  void finish();
 };
 
 void testProjector(
@@ -409,7 +423,7 @@ void testProjector(
 struct Manager::Impl {
   Teuchos::RCP<AdaptiveSolutionManagerT> sol_mgr_;
   Teuchos::RCP<Albany::StateManager> state_mgr_;
-  Teuchos::RCP<Tpetra_Vector> x_;
+  Teuchos::RCP<Thyra_Vector> x_;
   Teuchos::RCP<Projector> proj_;
 #ifdef amb_test_projector
   Teuchos::RCP<testing::ProjectorTester> proj_tester_;
@@ -483,31 +497,29 @@ public:
     }
   }
 
-  void endAdapt (const Teuchos::RCP<const Tpetra_Map>& node_map,
-                 const Teuchos::RCP<const Tpetra_Map>& ol_node_map) {
+  void endAdapt (const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+                 const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs) {
     init_g(state_mgr_->getStateArrays().elemStateArrays.size(), true);
     if (Teuchos::nonnull(proj_)) {
-      proj_->init(node_map, ol_node_map);
+      proj_->init(node_vs, ol_node_vs);
       for (Map::iterator it = field_map_.begin(); it != field_map_.end();
            ++it) {
         Field& f = *it->second;
         for (int i = 0; i < f.num_g_fields; ++i)
-          f.data_->mv[i] = Teuchos::rcp(
-            new Tpetra_MultiVector(ol_node_map, f.data_->mv[i]->getNumVectors(),
-                                   true));
+          f.data_->mv[i] = Thyra::createMembers(ol_node_vs,f.data_->mv[i]->domain()->dim());
       }
 #ifdef amb_test_projector
-      proj_tester_->init(node_map, ol_node_map);
+      proj_tester_->init(node_vs, ol_node_vs);
 #endif
     }
   }
 
-  void initProjector (const Teuchos::RCP<const Tpetra_Map>& node_map,
-                      const Teuchos::RCP<const Tpetra_Map>& ol_node_map) {
+  void initProjector (const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+                      const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs) {
     if (Teuchos::nonnull(proj_)) {
-      proj_->init(node_map, ol_node_map);
+      proj_->init(node_vs, ol_node_vs);
 #ifdef amb_test_projector
-      proj_tester_->init(node_map, ol_node_map);
+      proj_tester_->init(node_vs, ol_node_vs);
 #endif
     }
   }
@@ -582,7 +594,7 @@ public:
       for (Field::iterator it = fields_.begin(); it != fields_.end(); ++it)
         for (int i = 0; i < (*it)->num_g_fields; ++i)
           if (Teuchos::nonnull((*it)->data_->mv[i]))
-            (*it)->data_->mv[i]->putScalar(0);
+            (*it)->data_->mv[i]->assign(0);
     }
   }
 
@@ -614,8 +626,7 @@ private:
       false, false);
   }
 
-  Albany::MDArray& getMDArray (
-    const std::string& name, const WsIdx wi, const bool is_const=true)
+  Albany::MDArray& getMDArray (const std::string& name, const WsIdx wi)
   {
     Albany::StateArray& esa = state_mgr_->getStateArrays().elemStateArrays[wi];
     Albany::StateArray::iterator it = esa.find(name);
@@ -628,7 +639,7 @@ private:
     is_g_.clear();
     is_g_.resize(n, is_g ? 0 : fields_.size());
   }
-  bool is_g (const int ws_idx) const { return is_g_[ws_idx] < fields_.size(); }
+  bool is_g (const int ws_idx) const { return is_g_[ws_idx] < static_cast<int>(fields_.size()); }
   void set_G (const int ws_idx) { ++is_g_[ws_idx]; }
 
   void transformStateArray (const std::string& name_rc, const WsIdx wi,
@@ -636,9 +647,8 @@ private:
     // Name decoration coordinates with registerField's calls to
     // registerStateVariable.
     const Transformation::Enum transformation = get_transformation(name_rc);
-    AAdapt::rc::transformStateArray(
-      wi, dir, transformation, getMDArray(name_rc, wi),
-      getMDArray(name_rc + "_1", wi));
+    rc::transformStateArray(dir, transformation, getMDArray(name_rc, wi),
+                        getMDArray(name_rc + "_1", wi));
   }
 };
 
@@ -679,22 +689,11 @@ getValidParameters (Teuchos::RCP<Teuchos::ParameterList>& valid_pl) {
 }
 
 void Manager::init_x_if_not (const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
-  auto tm = Albany::getTpetraMap(vs);
-  TEUCHOS_TEST_FOR_EXCEPTION(tm.is_null(), std::runtime_error,
-                             "Error! The input Thyra_VectorSpace does not wrap a Tpetra_Map. "
-                             "If you are still refactoring to Thyra, this may happen (fix it!). "
-                             "If the refactoring is over, you may have tried to pass a vector "
-                             "space that is not wrapping Tpetra stuff. "
-                             "Perhaps the underlying linear algebra is something "
-                             "else (Epetra?), and you need to add checks here.\n");
-
-  init_x_if_not(tm);
-}
-
-void Manager::init_x_if_not (const Teuchos::RCP<const Tpetra_Map>& map) {
-  if (Teuchos::nonnull(impl_->x_)) return;
-  impl_->x_ = Teuchos::rcp(new Tpetra_Vector(map));
-  impl_->x_->putScalar(0);
+  if (Teuchos::nonnull(impl_->x_)) {
+    return;
+  }
+  impl_->x_ = Thyra::createMember(vs);
+  impl_->x_->assign(0);
 }
 
 static void update_x (
@@ -707,32 +706,30 @@ static void update_x (
       x[i+j] += s[i+j];
 }
 
-void Manager::update_x (const Tpetra_Vector& soln_nol) {
+void Manager::update_x (const Thyra_Vector& soln_nol) {
   // By convention (e.g., in MechanicsProblem), the displacement DOFs are before
   // any other DOFs.
-  const Teuchos::ArrayRCP<double>& x = impl_->x_->get1dViewNonConst();
-  const Teuchos::ArrayRCP<const double>& s = soln_nol.get1dView();
-  AAdapt::rc::update_x(x, s, impl_->state_mgr_->getDiscretization());
+  auto x_data = Albany::getNonconstLocalData(impl_->x_);
+  auto sol_data = Albany::getLocalData(soln_nol);
+  AAdapt::rc::update_x(x_data, sol_data, impl_->state_mgr_->getDiscretization());
 }
 
 Teuchos::RCP<const Thyra_Vector> Manager::
 add_x (const Teuchos::RCP<const Thyra_Vector>& a) const {
-  auto ta = ConverterT::getConstTpetraVector(a);
-  auto returnT = add_x(ta);
-  return Thyra::createConstVector(returnT);
-}
+  Teuchos::RCP<Thyra_Vector> c = Thyra::createMember(a->space());
+  c->assign(*a);
 
-Teuchos::RCP<const Tpetra_Vector> Manager::
-add_x (const Teuchos::RCP<const Tpetra_Vector>& a) const {
-  Teuchos::RCP<Tpetra_Vector>
-    c = Teuchos::rcp(new Tpetra_Vector(*a, Teuchos::Copy));
-  const Teuchos::ArrayRCP<double>& x = c->get1dViewNonConst();
-  const Teuchos::ArrayRCP<const double>& s = impl_->x_->get1dView();
-  AAdapt::rc::update_x(x, s, impl_->state_mgr_->getDiscretization());
+  auto c_data = Albany::getNonconstLocalData(c);
+  auto s_data = Albany::getLocalData(impl_->x_.getConst());
+
+  AAdapt::rc::update_x(c_data, s_data, impl_->state_mgr_->getDiscretization());
   return c;
 }
 
-Teuchos::RCP<Tpetra_Vector>& Manager::get_x () { return impl_->x_; }
+Teuchos::RCP<Thyra_Vector>&
+Manager::get_x () {
+  return impl_->x_;
+}
 
 template<typename EvalT>
 void Manager::createEvaluators (
@@ -798,18 +795,22 @@ writeQpField (const PHX::MDField<const RealType>& f, const PHAL::Workset& workse
 }
 void Manager::endQpWrite () { /* Do nothing. */ }
 
-void Manager::
-testProjector (
-  const PHAL::Workset& workset, const BasisField& bf, const BasisField& wbf,
-  const PHX::MDField<RealType,Cell,Vertex,Dim>& coord_vert,
-  const PHX::MDField<RealType,Cell,QuadPoint,Dim>& coord_qp)
+void Manager::testProjector (const PHAL::Workset& workset, const BasisField& bf, const BasisField& wbf,
+                             const PHX::MDField<RealType,Cell,Vertex,Dim>& coord_vert,
+                             const PHX::MDField<RealType,Cell,QuadPoint,Dim>& coord_qp)
 {
 #ifdef amb_test_projector
   impl_->proj_tester_->eval(workset, bf, wbf, coord_vert, coord_qp);
+#else
+  (void) workset;
+  (void) bf;
+  (void) wbf;
+  (void) coord_vert;
+  (void) coord_qp;
 #endif
 }
 
-const Teuchos::RCP<Tpetra_MultiVector>& Manager::
+const Teuchos::RCP<Thyra_MultiVector>& Manager::
 getNodalField (const Field& f, const int g_idx, const bool overlapped) const {
   TEUCHOS_TEST_FOR_EXCEPTION( ! overlapped, std::logic_error,
                              "must be overlapped");
@@ -828,12 +829,17 @@ void Manager::beginEvaluatingSfm () { impl_->set_evaluating_sfm(true); }
 void Manager::endEvaluatingSfm () { impl_->set_evaluating_sfm(false); }
 
 void Manager::beginAdapt () { impl_->beginAdapt(); }
-void Manager::endAdapt (const Teuchos::RCP<const Tpetra_Map>& node_map,
-                        const Teuchos::RCP<const Tpetra_Map>& ol_node_map)
-{ impl_->endAdapt(node_map, ol_node_map); }
-void Manager::initProjector (const Teuchos::RCP<const Tpetra_Map>& node_map,
-                             const Teuchos::RCP<const Tpetra_Map>& ol_node_map)
-{ impl_->initProjector(node_map, ol_node_map); }
+void Manager::endAdapt (const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+                        const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs)
+{
+  impl_->endAdapt(node_vs, ol_node_vs);
+}
+
+void Manager::initProjector (const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+                             const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs)
+{
+  impl_->initProjector(node_vs, ol_node_vs);
+}
 
 bool Manager::usingProjection () const
 { return Teuchos::nonnull(impl_->proj_); }
@@ -869,7 +875,7 @@ static const double Fs[3][3][3] = {
 // Some sample functions. Only the constant and linear ones should be
 // interpolated exactly.
 double eval_f (const double x, const double y, const double z, int ivec) {
-  static const double R = 0.15, H = 0.005;
+  static const double R = 0.15;
   switch (ivec + 1) {
   case 1: return 2;
   case 2: return 1.5*x + 2*y + 3*z;
@@ -888,9 +894,9 @@ double eval_f (const double x, const double y, const double z, int ivec) {
 void getBoundingBox (const PHX::MDField<RealType, Cell, Vertex, Dim>& vs,
                      RealType lo[3], RealType hi[3]) {
   bool first = true;
-  for (int cell = 0; cell < vs.dimension(0); ++cell)
-    for (int iv = 0; iv < vs.dimension(1); ++iv) {
-      for (int id = 0; id < vs.dimension(2); ++id) {
+  for (unsigned cell = 0; cell < vs.dimension(0); ++cell)
+    for (unsigned iv = 0; iv < vs.dimension(1); ++iv) {
+      for (unsigned id = 0; id < vs.dimension(2); ++id) {
         const RealType v = vs(cell, iv, id);
         if (first) lo[id] = hi[id] = v;
         else {
@@ -946,7 +952,6 @@ void testProjector (
 {
   // Works only in the case of one workset.
   TEUCHOS_ASSERT(workset.wsIndex == 0);
-  const unsigned int wi = 0;
 
   // Set up the data containers.
   typedef PHX::MDALayout<Cell, QuadPoint, Dim, Dim> Layout;
@@ -971,7 +976,7 @@ void testProjector (
   }
 
   Projector p;
-  p.init(pc.get_node_map(), pc.get_ol_node_map());
+  p.init(pc.get_node_vs(), pc.get_ol_node_vs());
 
   // M.
   p.fillMassMatrix(workset, bf, wbf);
@@ -987,8 +992,8 @@ void testProjector (
       f.data_->transformation = Transformation::none;
       f.num_g_fields = 1;
       loop(f_mdf, cell, 0) loop(f_mdf, qp, 1)
-        for (int i = 0, k = 0; i < f_mdf.dimension(2); ++i)
-          for (int j = 0; j < f_mdf.dimension(3); ++j, ++k)
+        for (unsigned i = 0, k = 0; i < f_mdf.dimension(2); ++i)
+          for (unsigned j = 0; j < f_mdf.dimension(3); ++j, ++k)
             f_mdf(cell, qp, i, j) = eval_f(
               coord_qp(cell, qp, 0), coord_qp(cell, qp, 1),
               coord_qp(cell, qp, 2), k);
@@ -998,10 +1003,10 @@ void testProjector (
       RealType lo[3], hi[3];
       getBoundingBox(coord_vert, lo, hi);
       loop(f_mdf, cell, 0) loop(f_mdf, qp, 1) {
-        RealType p[3];
+        RealType pt[3];
         for (int k = 0; k < 3; ++k)
-          p[k] = (coord_qp(cell, qp, k) - lo[k])/(hi[k] - lo[k]);
-        const minitensor::Tensor<RealType> F = eval_F(p);
+          pt[k] = (coord_qp(cell, qp, k) - lo[k])/(hi[k] - lo[k]);
+        const minitensor::Tensor<RealType> F = eval_F(pt);
         loop(f_mdf, i, 2) loop(f_mdf, j, 3) f_mdf(cell, qp, i, j) = F(i, j);
       }
     }
@@ -1017,12 +1022,12 @@ void testProjector (
     p.project(f);
 
     if (test == 0) { // Compare with true values at NP.
-      const int ncol = 9, nverts = pc.get_node_map()->getGlobalNumElements();
+      const int ncol = 9, nverts = pc.get_node_vs()->dim();
       std::vector<RealType> f_true(ncol * nverts); {
         std::vector<bool> evaled(nverts, false);
         loop(f_mdf, cell, 0) loop(coord_vert, node, 1) {
           const GO gid = workset.wsElNodeID[cell][node];
-          const LO lid = pc.get_node_map()->getLocalElement(gid);
+          const LO lid = Albany::getLocalElement(pc.get_node_vs(),gid);
           if ( ! evaled[lid]) {
             for (int k = 0; k < ncol; ++k)
               f_true[ncol*lid + k] = eval_f(
@@ -1033,11 +1038,11 @@ void testProjector (
         }
       }
       double err1[9], errmax[9], scale[9];
+      auto data = Albany::getLocalData(f.data_->mv[0].getConst());
       for (int k = 0; k < ncol; ++k) { err1[k] = errmax[k] = scale[k] = 0; }
       for (int iv = 0; iv < nverts; ++iv)
         for (int k = 0; k < ncol; ++k) {
-          const double d = std::abs(
-            f.data_->mv[0]->getVector(k)->getData()[iv] - f_true[ncol*iv + k]);
+          const double d = std::abs(data[k][iv] - f_true[ncol*iv + k]);
         err1[k] += d;
         errmax[k] = std::max(errmax[k], d);
         scale[k] = std::max(scale[k], std::abs(f_true[ncol*iv + k]));
@@ -1052,15 +1057,14 @@ void testProjector (
 
     // Interpolate to IP.
     p.interp(f, workset, bf, mda[0], mda[1]);
-    transformStateArray(wi, Direction::g2G, f.data_->transformation, mda[0],
-                        mda[1]);
+    transformStateArray(Direction::g2G, f.data_->transformation, mda[0], mda[1]);
 
     { // Compare with true values at IP.
       double err1[9], errmax[9], scale[9];
       for (int k = 0; k < 9; ++k) { err1[k] = errmax[k] = scale[k] = 0; }
       loop(f_mdf, cell, 0) loop(f_mdf, qp, 1)
-        for (int i = 0, k = 0; i < f_mdf.dimension(2); ++i)
-          for (int j = 0; j < f_mdf.dimension(3); ++j, ++k) {
+        for (int i = 0, k = 0; i < static_cast<int>(f_mdf.dimension(2)); ++i)
+          for (int j = 0; j < static_cast<int>(f_mdf.dimension(3)); ++j, ++k) {
             const double d = std::abs(mda[0]((int) cell, (int) qp, i, j) -
                                       f_mdf(cell, qp, i, j));
             err1[k] += d;
@@ -1083,10 +1087,10 @@ struct ProjectorTester::Impl {
   Projector p;
   struct Point {
     RealType x[3];
-    bool operator< (const Point& p) const {
+    bool operator< (const Point& pt) const {
       for (int i = 0; i < 3; ++i) {
-        if (x[i] < p.x[i]) return true;
-        if (x[i] > p.x[i]) return false;
+        if (x[i] < pt.x[i]) return true;
+        if (x[i] > pt.x[i]) return false;
       }
       return false;
     }
@@ -1118,9 +1122,9 @@ ProjectorTester::ProjectorTester () {
 }
 
 void ProjectorTester::
-init (const Teuchos::RCP<const Tpetra_Map>& node_map,
-      const Teuchos::RCP<const Tpetra_Map>& ol_node_map) {
-  d->p.init(node_map, ol_node_map);
+init (const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+      const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs) {
+  d->p.init(node_vs, ol_node_vs);
   d->projected = d->finished = false;
 }
 
@@ -1128,27 +1132,28 @@ init (const Teuchos::RCP<const Tpetra_Map>& node_map,
 void ProjectorTester::
 eval (const PHAL::Workset& workset,
       const Manager::BasisField& bf, const Manager::BasisField& wbf,
-      const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
       const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp) {
-  if (d->finished) return;
-  const int num_qp = coord_qp.dimension(1), num_dim = coord_qp.dimension(2);
+  if (d->finished) {
+    return;
+  }
+  const int num_qp = coord_qp.dimension(1);
   if (workset.numCells > 0 && num_qp > 0) {
     Impl::Point p;
     for (int i = 0; i < 3; ++i) p.x[i] = coord_qp(0, 0, i);
     Impl::Map::const_iterator it = d->td[0].f_true_qp.find(p);
     if (it == d->td[0].f_true_qp.end()) {
       d->p.fillMassMatrix(workset, bf, wbf);
-      fillRhs(workset, wbf, coord_vert, coord_qp);
+      fillRhs(workset, wbf, coord_qp);
     } else {
       if ( ! d->projected) {
         project();
         d->projected = true;
       }
       it = d->td[0].f_interp_qp.find(p);
-      if (it == d->td[0].f_interp_qp.end())
-        interp(workset, bf, coord_vert, coord_qp);
-      else {
-        finish(workset);
+      if (it == d->td[0].f_interp_qp.end()) {
+        interp(workset, bf, coord_qp);
+      } else {
+        finish();
         d->finished = true;
       }
     }
@@ -1157,7 +1162,6 @@ eval (const PHAL::Workset& workset,
 
 void ProjectorTester::
 fillRhs (const PHAL::Workset& workset, const Manager::BasisField& wbf,
-         const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
          const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp) {
   const int num_qp = coord_qp.dimension(1), num_dim = coord_qp.dimension(2);
   
@@ -1205,7 +1209,6 @@ void ProjectorTester::project () {
 
 void ProjectorTester::
 interp (const PHAL::Workset& workset, const Manager::BasisField& bf,
-        const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
         const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp) {
   const int num_qp = coord_qp.dimension(1), num_dim = coord_qp.dimension(2);
 
@@ -1232,8 +1235,7 @@ interp (const PHAL::Workset& workset, const Manager::BasisField& bf,
     Manager::Field& f = td.f;
     // Interpolate to IP.
     d->p.interp(f, workset, bf, mda[0], mda[1]);
-    transformStateArray(workset.wsIndex, Direction::g2G,
-                        f.data_->transformation, mda[0], mda[1]);
+    transformStateArray(Direction::g2G, f.data_->transformation, mda[0], mda[1]);
     // Record for later comparison.
     loop(mda[0], cell, 0) loop(mda[0], qp, 1) {
       Impl::Point p;
@@ -1246,7 +1248,7 @@ interp (const PHAL::Workset& workset, const Manager::BasisField& bf,
   }
 }
 
-void ProjectorTester::finish (const PHAL::Workset& workset) {
+void ProjectorTester::finish () {
   for (int test = 0; test < Impl::ntests; ++test) {
     Impl::TestData& td = d->td[test];
     // Compare with true values at IP.
@@ -1262,9 +1264,9 @@ void ProjectorTester::finish (const PHAL::Workset& workset) {
       }
       const Impl::FValues& fv_interp = it_interp->second;
       for (int k = 0; k < 9; ++k) {
-        const double d = std::abs(fv_true.f[k] - fv_interp.f[k]);
-        err1[k] += d;
-        errmax[k] = std::max(errmax[k], d);
+        const double diff = std::abs(fv_true.f[k] - fv_interp.f[k]);
+        err1[k] += diff;
+        errmax[k] = std::max(errmax[k], diff);
         scale[k] = std::max(scale[k], std::abs(fv_true.f[k]));
       }
     }

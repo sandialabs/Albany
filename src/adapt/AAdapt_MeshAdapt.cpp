@@ -108,8 +108,8 @@ void AAdapt::MeshAdapt::initRcMgr () {
           (*it)->get_g_name(i).c_str(), value_type);
       }
     }
-    rc_mgr->initProjector(pumi_discretization->getNodeMapT(),
-                          pumi_discretization->getOverlapNodeMapT());
+    rc_mgr->initProjector(pumi_discretization->getNodeVectorSpace(),
+                          pumi_discretization->getOverlapNodeVectorSpace());
   }
 }
 
@@ -283,7 +283,7 @@ void AAdapt::MeshAdapt::afterAdapt()
 struct AdaptCallback : public Parma_GroupCode
 {
   AAdapt::MeshAdapt* adapter;
-  void run(int group) {
+  void run(int /* group */) {
     adapter->adaptInPartition();
   }
 };
@@ -371,27 +371,27 @@ adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
            end = rc_mgr->fieldsEnd();
          it != end; ++it)
       for (int i = 0; i < (*it)->num_g_fields; ++i) {
-        const Teuchos::RCP<Tpetra_MultiVector>&
-          mv = rc_mgr->getNodalField(**it, i, overlapped);
-        const std::size_t n = mv->getLocalLength();
-        const int ncol = mv->getNumVectors();
+        const Teuchos::RCP<Thyra_MultiVector>& mv = rc_mgr->getNodalField(**it, i, overlapped);
+        const int ncol = mv->domain()->dim();
+        auto mv_data = Albany::getLocalData(mv.getConst());
+        const std::size_t n = mv_data[0].size();
         Teuchos::Array<double> data(n * ncol);
         // non-interleaved -> interleaved ordering.
         //rcu-todo Figure out these ordering details. What sets the ordering
         // requirements? Can we change by field at runtime?
         for (int c = 0; c < ncol; ++c) {
-          Teuchos::ArrayRCP<RealType>
-            v = mv->getVectorNonConst(c)->getDataNonConst();
-          for (size_t k = 0; k < n; ++k) data[ncol*k + c] = v[k];
+          for (size_t k = 0; k < n; ++k) {
+            data[ncol*k + c] = mv_data[c][k];
+          }
         }
-        pumi_discretization->setField((*it)->get_g_name(i).c_str(), &data[0],
+        pumi_discretization->setField((*it)->get_g_name(i).c_str(), data.getRawPtr(),
                                       overlapped, 0, ncol);
       }
   }
 
   const bool success = adaptMeshLoop(min_part_density, callback);
-  rc_mgr->endAdapt(pumi_discretization->getNodeMapT(),
-                   pumi_discretization->getOverlapNodeMapT());
+  rc_mgr->endAdapt(pumi_discretization->getNodeVectorSpace(),
+                   pumi_discretization->getOverlapNodeVectorSpace());
 
   if (rc_mgr->usingProjection()) {
     // Get the nodal data from PUMI.
@@ -399,17 +399,17 @@ adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
            end = rc_mgr->fieldsEnd();
          it != end; ++it)
       for (int i = 0; i < (*it)->num_g_fields; ++i) {
-        const Teuchos::RCP<Tpetra_MultiVector>&
-          mv = rc_mgr->getNodalField(**it, i, overlapped);
-        const std::size_t n = mv->getLocalLength();
-        const int ncol = mv->getNumVectors();
+        const Teuchos::RCP<Thyra_MultiVector>& mv = rc_mgr->getNodalField(**it, i, overlapped);
+        auto mv_data = Albany::getNonconstLocalData(mv);
+        const std::size_t n = mv_data[0].size();
+        const int ncol = mv->domain()->dim();
         Teuchos::Array<double> data(n * ncol);
         pumi_discretization->getField((*it)->get_g_name(i).c_str(), &data[0],
                                       overlapped, 0, ncol);
         for (int c = 0; c < ncol; ++c) {
-          Teuchos::ArrayRCP<RealType>
-            v = mv->getVectorNonConst(c)->getDataNonConst();
-          for (size_t k = 0; k < n; ++k) v[k] = data[ncol*k + c];
+          for (size_t k = 0; k < n; ++k) {
+            mv_data[c][k] = data[ncol*k + c];
+          }
         }
       }
   }
@@ -453,11 +453,10 @@ adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
     }
 
     // Resize x.
-    rc_mgr->get_x() = Teuchos::rcp(
-      new Tpetra_Vector(pumi_discretization->getSolutionFieldT()->getMap()));
+    rc_mgr->get_x() = Thyra::createMember(pumi_discretization->getVectorSpace());
     // Copy ref config data, now interp'ed to new mesh, into it.
-    pumi_discretization->getField(
-      "x_accum", &rc_mgr->get_x()->get1dViewNonConst()[0], false);
+    auto x_data = Albany::getNonconstLocalData(rc_mgr->get_x());
+    pumi_discretization->getField("x_accum", x_data.getRawPtr(), false);
 
     if (alpha == 1) { success = true; break; }
   }
@@ -601,11 +600,14 @@ void dispExtremum (
 {
   double my_vals[3], global_vals[3];
   const std::size_t nx = x.size() / dim;
-  for (std::size_t j = 0; j < dim; ++j) my_vals[j] = x[j];
+  for (int j = 0; j < dim; ++j) {
+    my_vals[j] = x[j];
+  }
   const double* px = &x[dim];
   for (std::size_t i = 1; i < nx; ++i) {
-    for (std::size_t j = 0; j < dim; ++j)
+    for (int j = 0; j < dim; ++j) {
       my_vals[j] = extremum_fn(my_vals[j], px[j]);
+    }
     px += dim;
   }
   const Teuchos::RCP<const Teuchos::Comm<int> >
@@ -613,7 +615,9 @@ void dispExtremum (
   Teuchos::reduceAll(*comm, rt, dim, my_vals, global_vals);
   if (comm->getRank() == 0) {
     std::cout << "amb: " << extremum_str << " ";
-    for (std::size_t j = 0; j < dim; ++j) std::cout << " " << global_vals[j];
+    for (int j = 0; j < dim; ++j) {
+      std::cout << " " << global_vals[j];
+    }
     std::cout << std::endl;
   }
 }
@@ -626,21 +630,20 @@ void anlzCoords (
   const int dim = pumi_disc->getNumDim();
   const Teuchos::ArrayRCP<const double>& coords = pumi_disc->getCoordinates();
   if (coords.size() == 0) return;
-  const Teuchos::RCP<const Tpetra_Vector>
-    soln = pumi_disc->getSolutionFieldT(true);
-  const Teuchos::ArrayRCP<const ST> soln_data = soln->get1dView();
+  const Teuchos::RCP<const Thyra_Vector> soln = pumi_disc->getSolutionField(true);
+  auto soln_data = Albany::getLocalData(soln);
   const Teuchos::ArrayRCP<double> x(coords.size());
   const int spdim = pumi_disc->getNumDim(), neq = pumi_disc->getNumEq();
-  for (std::size_t i = 0, j = 0; i < coords.size(); i += spdim, j += neq)
-    for (int k = 0; k < spdim; ++k)
+  for (int i = 0, j = 0; i < coords.size(); i += spdim, j += neq) {
+    for (int k = 0; k < spdim; ++k) {
       x[i+k] = coords[i+k] + soln_data[j+k];
+  }}
   // Display min and max extent in each axis-aligned dimension.
   dispExtremum<mymin>(x, dim, "min", Teuchos::REDUCE_MIN);
   dispExtremum<mymax>(x, dim, "max", Teuchos::REDUCE_MAX);
 }
 
-void writeMesh (
-  const Teuchos::RCP<Albany::PUMIDiscretization>&)
+void writeMesh (const Teuchos::RCP<Albany::PUMIDiscretization>&)
 {
 }
 
@@ -648,19 +651,19 @@ void writeMesh (
 // coordinates and restore the original state in the case of error.
 struct CoordState {
 private:
-  const Teuchos::RCP<Tpetra_Vector> soln_ol_;
+  const Teuchos::RCP<Thyra_Vector> soln_ol_;
   double alpha_;
 
 public:
   Teuchos::ArrayRCP<double> coords;
-  const Teuchos::RCP<Tpetra_Vector> soln_nol;
+  const Teuchos::RCP<Thyra_Vector> soln_nol;
   const Teuchos::ArrayRCP<const ST> soln_ol_data;
 
   CoordState (
     const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc)
-    : soln_ol_(pumi_disc->getSolutionFieldT(true)),
-      soln_nol(pumi_disc->getSolutionFieldT(false)),
-      soln_ol_data(soln_ol_->get1dView())
+    : soln_ol_(pumi_disc->getSolutionField(true)),
+      soln_nol(pumi_disc->getSolutionField(false)),
+      soln_ol_data(Albany::getLocalData(soln_ol_.getConst()))
   {
     coords.deepCopy(pumi_disc->getCoordinates()());
   }
@@ -684,9 +687,10 @@ void updateCoordinates (
   // Albany::PUMIDiscretization uses interleaved DOF and coordinates, so we
   // can sum coords and soln_data straightforwardly.
   const int spdim = pumi_disc->getNumDim(), neq = pumi_disc->getNumEq();
-  for (std::size_t i = 0, j = 0; i < cs.coords.size(); i += spdim, j += neq)
-    for (int k = 0; k < spdim; ++k)
+  for (int i = 0, j = 0; i < cs.coords.size(); i += spdim, j += neq) {
+    for (int k = 0; k < spdim; ++k) {
       x[i+k] = cs.coords[i+k] + cs.soln_ol_data[j+k];
+  }}
   pumi_disc->setCoordinates(x);
 }
 
@@ -699,7 +703,8 @@ void updateRefConfig (
   rc_mgr->update_x(*cs.soln_nol);
   // Save x_refconfig to the mesh database so it is interpolated after mesh
   // adaptation.
-  pumi_disc->setField("x_accum", &rc_mgr->get_x()->get1dView()[0], false);
+  auto x_data = Albany::getLocalData(rc_mgr->get_x().getConst());
+  pumi_disc->setField("x_accum", x_data.getRawPtr(), false);
 }
 
 void updateSolution (
@@ -713,11 +718,13 @@ void updateSolution (
   // displacement for which the adaptation has to account.
   if (alpha == 1) {
     // Probably a little faster to do this in this end-member case.
-    cs.soln_nol->putScalar(0);
-  } else cs.soln_nol->scale((1 - alpha)/alpha);
+    cs.soln_nol->assign(0);
+  } else {
+    cs.soln_nol->scale((1 - alpha)/alpha);
+  }
   // The -1 is a dummy value for time, which doesn't actually get used in this
   // operation.
-  pumi_disc->writeSolutionToMeshDatabaseT(*cs.soln_nol, -1, false);
+  pumi_disc->writeSolutionToMeshDatabase(*cs.soln_nol, -1, false);
 }
 
 // Find 0 < alpha < 1 by bisection such that c = coords + alpha displacement
