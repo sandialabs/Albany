@@ -42,7 +42,7 @@ getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNam
 }
 
 void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
-                       const Albany::AbstractDiscretization::Conn& wsElNodeEqID,
+                       const Albany::Conn& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,

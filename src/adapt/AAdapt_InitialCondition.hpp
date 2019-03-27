@@ -8,7 +8,7 @@
 #define AADAPT_INITIAL_CONDITION_HPP
 
 #include "Albany_DataTypes.hpp"
-#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 
 #include <string>
 #include "Teuchos_ParameterList.hpp"
@@ -16,7 +16,7 @@
 namespace AAdapt {
 
 void InitialConditions (const Teuchos::RCP<Thyra_Vector>& solnT,
-                       const Albany::AbstractDiscretization::Conn& wsElNodeEqID,
+                       const Albany::Conn& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,

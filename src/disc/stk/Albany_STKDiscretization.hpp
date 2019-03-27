@@ -154,10 +154,6 @@ class STKDiscretization : public AbstractDiscretization {
         WsLIDList& getElemGIDws ()       { return elemGIDws; }
   const WsLIDList& getElemGIDws () const { return elemGIDws; }
 
-  //! Get map from (Ws, El, Local Node) -> NodeLID
-  using AbstractDiscretization::WorksetConn;
-  using AbstractDiscretization::Conn;
-
   //! Get map from ws, elem, node [, eq] -> [Node|DOF] GID
   const Conn& getWsElNodeEqID () const { return wsElNodeEqID; }
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type& getWsElNodeID () const { return wsElNodeID; }

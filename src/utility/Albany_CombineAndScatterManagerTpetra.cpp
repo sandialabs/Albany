@@ -1,6 +1,5 @@
 #include "Albany_CombineAndScatterManagerTpetra.hpp"
 
-#include "Albany_TpetraThyraTypes.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 
 namespace {
