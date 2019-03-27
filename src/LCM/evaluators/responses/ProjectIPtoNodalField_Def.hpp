@@ -875,7 +875,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
 
     // Now export ip_field.
     // IKT, note to self: ipf has owned layout, since it is that of mm.
-    Teuchos::RCP<Thyra_MultiVector> ipf = Thyra::createMembers(Albany::getRangeSpace(mm), 
+    Teuchos::RCP<Thyra_MultiVector> ipf = Thyra::createMembers(mm->range(), 
                                                   Albany::getNumVectors(mgr_->ip_field)); 
     // IKT, not to self: we are going from overlap space to owned space -> use combine method
     // Arguments of combine are (src, tgt)
@@ -885,7 +885,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   }
   // Create x in A x = b.
   Teuchos::RCP<Thyra_MultiVector> node_projected_ip_field = 
-                                  Thyra::createMembers(Albany::getDomainSpace(mgr_->mass_linear_op->linear_op()), 
+                                  Thyra::createMembers(mgr_->mass_linear_op->domain(), 
                                   Albany::getNumVectors(mgr_->ip_field)); 
   const Teuchos::RCP<Thyra_LinearOp> A = mgr_->mass_linear_op->linear_op();
   Teuchos::RCP<Thyra::LinearOpWithSolveBase<ST>> nsA = lowsFactory_->createOp();

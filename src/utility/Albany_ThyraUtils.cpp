@@ -442,57 +442,6 @@ getRowSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop)
   return Teuchos::null;
 }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-getRangeSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return createThyraVectorSpace(tmat->getRangeMap());
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    Teuchos::RCP<const Epetra_BlockMap> range_map = Teuchos::rcpFromRef(emat->RangeMap());
-    return createThyraVectorSpace(range_map);
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
-  // Dummy return value, to silence compiler warnings
-  return Teuchos::null;
-
-}
-
-Teuchos::RCP<const Thyra_VectorSpace>
-getDomainSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return createThyraVectorSpace(tmat->getDomainMap());
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    Teuchos::RCP<const Epetra_BlockMap> domain_map = Teuchos::rcpFromRef(emat->DomainMap());
-    return createThyraVectorSpace(domain_map);
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
-  // Dummy return value, to silence compiler warnings
-  return Teuchos::null;
-
-}
-
-
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is

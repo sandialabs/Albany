@@ -67,12 +67,6 @@ getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 Teuchos::RCP<const Thyra_VectorSpace>
 getRowSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
-Teuchos::RCP<const Thyra_VectorSpace>
-getDomainSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
-
-Teuchos::RCP<const Thyra_VectorSpace>
-getRangeSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
-
 // Fill related helpers
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop);
