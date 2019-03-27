@@ -475,7 +475,7 @@ bool isFillComplete (const Teuchos::RCP<const Thyra_LinearOp>& lop)
 #if defined(ALBANY_EPETRA)
   auto emat = getConstEpetraMatrix(lop,false);
   if (!emat.is_null()) {
-    return !emat->Filled();
+    return emat->Filled();
   }
 #endif
 
