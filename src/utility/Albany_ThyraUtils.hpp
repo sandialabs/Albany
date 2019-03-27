@@ -23,6 +23,10 @@ createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, co
 
 GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO lid);
 LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO gid);
+Teuchos::Array<GO> getGlobalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                                       const Teuchos::ArrayView<const LO>& lids);
+Teuchos::Array<LO> getLocalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                                      const Teuchos::ArrayView<const GO>& gids);
 void getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                         Teuchos::Array<GO>& gids);
 Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
@@ -88,6 +92,9 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                         const LO lrow,
                         const Teuchos::ArrayView<const LO> indices,
                         const Teuchos::ArrayView<const ST> values);
+void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                        const LO lrow,
+                        const Teuchos::ArrayView<const ST> values);
 
 int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const LO lrow,
@@ -104,13 +111,13 @@ void insertGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                          const Teuchos::ArrayView<const GO> cols,
                          const Teuchos::ArrayView<const ST> values);
 
-int getGlobalMaxNumRowEntries (const Teuchos::RCP<const Thyra_LinearOp>& lop); 
+int getGlobalMaxNumRowEntries (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
 Teuchos::RCP<const Thyra_VectorSpace>
 createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs); 
 
-bool isStaticGraph(const Teuchos::RCP<Thyra_LinearOp>& lop); 
-bool isStaticGraph(const Teuchos::RCP<const Thyra_LinearOp>& lop); 
+bool isStaticGraph(const Teuchos::RCP<Thyra_LinearOp>& lop);
+bool isStaticGraph(const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
 Teuchos::RCP<const Thyra_LinearOp>
 buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,

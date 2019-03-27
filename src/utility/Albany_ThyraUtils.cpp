@@ -148,6 +148,26 @@ LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO g
   TEUCHOS_UNREACHABLE_RETURN(-1);
 }
 
+Teuchos::Array<GO> getGlobalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                                       const Teuchos::ArrayView<const LO>& lids)
+{
+  Teuchos::Array<GO> gids(lids.size());
+  for (LO i=0; i<lids.size(); ++i) {
+    gids[i] = getGlobalElement(vs,lids[i]);
+  }
+  return gids;
+}
+
+Teuchos::Array<LO> getLocalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                                      const Teuchos::ArrayView<const GO>& gids)
+{
+  Teuchos::Array<LO> lids(gids.size());
+  for (LO i=0; i<gids.size(); ++i) {
+    lids[i] = getLocalElement(vs,gids[i]);
+  }
+  return lids;
+}
+
 void getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                         Teuchos::Array<GO>& gids)
 {
@@ -810,6 +830,41 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
 
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                        const LO lrow,
+                        const Teuchos::ArrayView<const ST> values)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    Teuchos::ArrayView<const LO> indices;
+    tmat->getGraph()->getLocalRowView(lrow,indices);
+    TEUCHOS_TEST_FOR_EXCEPTION(indices.size()!=values.size(), std::logic_error,
+                               "Error! This routine is meant for setting *all* values in a row, "
+                               "but the length of the input values array does not match the number of indices in the local row.\n");
+    tmat->replaceLocalValues(lrow,indices,values);
+    return;
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emat = getEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    int numIndices;
+    int* indices;
+    emat->Graph().ExtractMyRowView (lrow, numIndices, indices);
+    TEUCHOS_TEST_FOR_EXCEPTION(numIndices!=values.size(), std::logic_error,
+                               "Error! This routine is meant for setting *all* values in a row, "
+                               "but the length of the input values array does not match the number of indices in the local row.\n");
+    emat->ReplaceMyValues(lrow,numIndices,values.getRawPtr(),indices);
+    return;
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+
 }
 
 int getGlobalMaxNumRowEntries (const Teuchos::RCP<const Thyra_LinearOp>& lop) 
