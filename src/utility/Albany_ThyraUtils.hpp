@@ -26,6 +26,7 @@ LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO g
 void getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                         Teuchos::Array<GO>& gids);
 Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
+Teuchos::ArrayView<const GO> getNodeElementList(const Teuchos::RCP<const Thyra_VectorSpace>& vs);  	
 
 // Check if the vector space locally owns a component
 bool locallyOwnedComponent (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs, const GO gid);
@@ -62,9 +63,16 @@ getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 Teuchos::RCP<const Thyra_VectorSpace>
 getRowSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
+Teuchos::RCP<const Thyra_VectorSpace>
+getDomainSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
+
+Teuchos::RCP<const Thyra_VectorSpace>
+getRangeSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
+
 // Fill related helpers
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop);
+bool isFillComplete (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop);
 
 // Entries manipulation helpers
@@ -96,12 +104,13 @@ void insertGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                          const Teuchos::ArrayView<const GO> cols,
                          const Teuchos::ArrayView<const ST> values);
 
-int getGlobalMaxNumRowEntries (const Teuchos::RCP<Thyra_LinearOp>& lop); 
+int getGlobalMaxNumRowEntries (const Teuchos::RCP<const Thyra_LinearOp>& lop); 
 
 Teuchos::RCP<const Thyra_VectorSpace>
 createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs); 
 
 bool isStaticGraph(const Teuchos::RCP<Thyra_LinearOp>& lop); 
+bool isStaticGraph(const Teuchos::RCP<const Thyra_LinearOp>& lop); 
 
 Teuchos::RCP<const Thyra_LinearOp>
 buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
