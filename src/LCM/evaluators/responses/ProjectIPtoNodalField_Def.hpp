@@ -41,6 +41,7 @@ class ProjectIPtoNodalFieldManager : public Adapt::NodalDataBase::Manager
   class LumpedMassLinearOp;
   Teuchos::RCP<MassLinearOp>         mass_linear_op;
   Teuchos::RCP<Thyra_MultiVector>       ip_field;
+  Teuchos::RCP<const Albany::ThyraCrsMatrixFactory> ovl_graph_factory;
   // Start position in the nodal vector database, and number of vectors we're
   // using.
   int ndb_start, ndb_numvecs;
@@ -682,11 +683,12 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   // a version used for linear algebra having a nonoverlapping row map, we can't
   // just resumeFill. ip_field also alternates between overlapping
   // and nonoverlapping maps and so must be reallocated.
-  Teuchos::RCP<const Albany::ThyraCrsMatrixFactory> current_graph_factory =
+  //Teuchos::RCP<const Albany::ThyraCrsMatrixFactory> current_graph_factory =
+  mgr_->ovl_graph_factory = 
     p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalOpFactory();
-  if (Teuchos::nonnull(current_graph_factory)) {
+  if (Teuchos::nonnull(mgr_->ovl_graph_factory)) {
     // Use a graph if it's available.
-    mgr_->mass_linear_op->linear_op() = current_graph_factory->createOp();
+    mgr_->mass_linear_op->linear_op() = mgr_->ovl_graph_factory->createOp();
     //IKT, note to self: createOp calls fillComplete() on the matrix that is returned
     //before it is returned  
   } else {
@@ -799,7 +801,8 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
   fillRHS(workset);
   Albany::writeMatrixMarket<Thyra_MultiVector>(mgr_->ip_field, "ip_field_evaluateFields", aabb);
   Albany::writeMatrixMarket<Thyra_LinearOp>(mgr_->mass_linear_op->linear_op(), "mass_evaluateFields", aabb);
-  aabb++; 
+  aabb++;
+  std::cout << "IKT finished evaluateFields" << std::endl;  
 }
 
 template <typename Traits>
@@ -807,6 +810,7 @@ void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     typename Traits::PostEvalData workset)
 {
+  std::cout << "IKT started postEvaluate" << std::endl; 
   const int  ctr     = mgr_->incrPostCounter();
   const bool am_last = ctr == mgr_->nWorker();
   if (!am_last) return;
@@ -838,6 +842,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   {
     // Get overlapping and nonoverlapping maps.
     const Teuchos::RCP<const Thyra_LinearOp>& mm_ovl = mgr_->mass_linear_op->linear_op();
+    std::cout << "IKT isStaticGraph? " << Albany::isStaticGraph(mm_ovl) << std::endl; 
     if (!Albany::isStaticGraph(mm_ovl)) {
       ALBANY_ASSERT(true, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
                          << "response is not supported with dynamic graph!\n"); 
@@ -852,12 +857,13 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     // Export the mass matrix.
     // IKT, the last argument in the following line tells the code to use a static profile to build
     // the graph.  If this is not true, that needs to change.
-    Albany::ThyraCrsMatrixFactory mm_graph_factory = 
-      Albany::ThyraCrsMatrixFactory(space, space, Albany::getGlobalMaxNumRowEntries(mm_ovl), true);
-    //IKT, note to self: fillComplete() needs to be called on graph_factory 
-    //before we can call createOp() 
-    mm_graph_factory.fillComplete();  
-    Teuchos::RCP<Thyra_LinearOp> mm = mm_graph_factory.createOp();
+    //Albany::ThyraCrsMatrixFactory mm_graph_factory = 
+    //  Albany::ThyraCrsMatrixFactory(space, space, Albany::getGlobalMaxNumRowEntries(mm_ovl), true);
+    // IKT, note to self: the following is an owned graph factory built from 
+    // an overlap graph factory 
+    Teuchos::RCP<Albany::ThyraCrsMatrixFactory> mm_graph_factory = 
+        Teuchos::rcp(new Albany::ThyraCrsMatrixFactory(space, space, mgr_->ovl_graph_factory)); 
+    Teuchos::RCP<Thyra_LinearOp> mm = mm_graph_factory->createOp();
     auto rowGIDs = Albany::getNodeElementList(Albany::getRowSpace(mm));
     auto colGIDs = Albany::getNodeElementList(Albany::getColumnSpace(mm));
     std::cout << "IKT mm rowGIDs size = " << rowGIDs.size() << std::endl;
@@ -869,6 +875,10 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     // IKT, not to self: we are going from overlap space to owned space -> use combine method
     // Arguments of combine are (src, tgt)
     cas_manager->combine(mm_ovl, mm, Albany::CombineMode::ADD);
+    rowGIDs = Albany::getNodeElementList(Albany::getRowSpace(mm));
+    colGIDs = Albany::getNodeElementList(Albany::getColumnSpace(mm));
+    std::cout << "IKT mm after combine rowGIDs size = " << rowGIDs.size() << std::endl;
+    std::cout << "IKT mm after combine colGIDs size = " << colGIDs.size() << std::endl;
     // We don't need the assemble form of the mass matrix any longer.
     mgr_->mass_linear_op->linear_op() = mm;
     //IKT, note to self: the original code has a fillComplete() here.  I don't think
