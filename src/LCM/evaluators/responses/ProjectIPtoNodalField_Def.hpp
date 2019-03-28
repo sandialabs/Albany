@@ -379,14 +379,12 @@ class ProjectIPtoNodalFieldManager::FullMassLinearOp
           vals.push_back(mass_value);
         }
         if (is_static_graph) {
-          const LO ret = Albany::addToGlobalRowValues(this->linear_op_, global_row, cols(), vals()); 
-          //IKT, FIXME: the following exception is being thrown - need to figure out why... 
-          /*TEUCHOS_TEST_FOR_EXCEPTION(
-              ret != cols.size(),
+          const LO ret = Albany::addToGlobalRowValues(this->linear_op_, global_row, cols(), vals());
+          TEUCHOS_TEST_FOR_EXCEPTION(
+              ret != 0,
               std::logic_error,
-              "global_row " << global_row
-                            << " of mass matrix is missing elements"
-                            << std::endl);*/
+              "Albany::addToGlobalRowValues failed: global row " << global_row
+                            << " of mass matrix is missing elements \n"); 
         } 
         else {
           ALBANY_ASSERT(true, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
@@ -780,12 +778,16 @@ void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData workset)
 {
+  Albany::resumeFill(mgr_->mass_linear_op->linear_op()); 
   if (Teuchos::nonnull(quad_mgr_)) {
     quad_mgr_->evaluateBasis(coords_verts_);
     mgr_->mass_linear_op->fill(
         workset, quad_mgr_->bf_const(), quad_mgr_->wbf_const());
-  } else
+  } 
+  else {
     mgr_->mass_linear_op->fill(workset, BF, wBF);
+  }
+  Albany::fillComplete(mgr_->mass_linear_op->linear_op()); 
 #ifdef PROJ_INTERP_TEST
   for (unsigned int cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t qp = 0; qp < num_pts_; ++qp)
