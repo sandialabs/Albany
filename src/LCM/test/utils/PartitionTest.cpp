@@ -24,6 +24,8 @@ main(int ac, char* av[])
 
   Zoltan_Initialize(ac, av, &version);
 
+  Albany::build_type(Albany::BuildType::Tpetra);
+
   //
   // Create a command line processor and parse command line options
   //

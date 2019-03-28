@@ -59,6 +59,8 @@ struct KokkosGuard
 int
 main(int ac, char* av[])
 {
+  Albany::build_type(Albany::BuildType::Tpetra);
+
   KokkosGuard kokkos(ac, av);
 
   typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type
