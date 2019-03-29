@@ -836,7 +836,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     }
   }
 
-#if defined(ALBANY_SCHWARZ) 
   ///
   /// Strong Schwarz BC specific
   ///
@@ -889,7 +888,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
       }
     }
   }
-#endif 
 
   ///
   /// Kfield BC specific
