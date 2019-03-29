@@ -799,10 +799,6 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
           coords_qp_(cell, qp, 2));
 #endif
   fillRHS(workset);
-  Albany::writeMatrixMarket<Thyra_MultiVector>(mgr_->ip_field, "ip_field_evaluateFields", aabb);
-  Albany::writeMatrixMarket<Thyra_LinearOp>(mgr_->mass_linear_op->linear_op(), "mass_evaluateFields", aabb);
-  aabb++;
-  std::cout << "IKT finished evaluateFields" << std::endl;  
 }
 
 template <typename Traits>
@@ -810,7 +806,6 @@ void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     typename Traits::PostEvalData workset)
 {
-  std::cout << "IKT started postEvaluate" << std::endl; 
   const int  ctr     = mgr_->incrPostCounter();
   const bool am_last = ctr == mgr_->nWorker();
   if (!am_last) return;
@@ -842,7 +837,6 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   {
     // Get overlapping and nonoverlapping maps.
     const Teuchos::RCP<const Thyra_LinearOp>& mm_ovl = mgr_->mass_linear_op->linear_op();
-    std::cout << "IKT isStaticGraph? " << Albany::isStaticGraph(mm_ovl) << std::endl; 
     if (!Albany::isStaticGraph(mm_ovl)) {
       ALBANY_ASSERT(true, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
                          << "response is not supported with dynamic graph!\n"); 
@@ -890,12 +884,11 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     // Don't need the assemble form of the ip_field either.
     mgr_->ip_field = ipf;
   }
-  Albany::writeMatrixMarket<Thyra_MultiVector>(mgr_->ip_field, "ip_field_postEvaluate_afterCombine", bbcc);
-  Albany::writeMatrixMarket<Thyra_LinearOp>(mgr_->mass_linear_op->linear_op(), "mass_postEvaluate_afterCombine", bbcc);
   // Create x in A x = b.
   Teuchos::RCP<Thyra_MultiVector> node_projected_ip_field = 
                                   Thyra::createMembers(mgr_->mass_linear_op->linear_op()->domain(), 
-                                  Albany::getNumVectors(mgr_->ip_field)); 
+                                  Albany::getNumVectors(mgr_->ip_field));
+  node_projected_ip_field->assign(0.0);  
   const Teuchos::RCP<Thyra_LinearOp> A = mgr_->mass_linear_op->linear_op();
   Teuchos::RCP<Thyra::LinearOpWithSolveBase<ST>> nsA = lowsFactory_->createOp();
   Thyra::initializeOp<ST>(*lowsFactory_, A, nsA.ptr());
@@ -944,7 +937,8 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
                                                              ->getNodalDataVector()
                                                              ->getOverlappedVectorSpace());
     const Teuchos::RCP<const Thyra_VectorSpace> space = node_projected_ip_field->col(0)->space();
-    Teuchos::RCP<Thyra_MultiVector> npif = Thyra::createMembers(ovl_space, Albany::getNumVectors(node_projected_ip_field));  
+    Teuchos::RCP<Thyra_MultiVector> npif = Thyra::createMembers(ovl_space, Albany::getNumVectors(node_projected_ip_field)); 
+    npif->assign(0.0);  
     // IKT, note to self: cas_manager arguments are (owned, overlapped)  
     auto cas_manager = Albany::createCombineAndScatterManager(space, ovl_space);
     // IKT, not to self: we are going from owned space (node_projected_ip_field) to overlap space (npif) -> use scatter method
