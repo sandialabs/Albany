@@ -797,16 +797,10 @@ IF (ALBANY_EPETRA)
 ENDIF()
 
 add_executable(AlbanyT Main_SolveT.cpp)
-IF (ALBANY_TEMPUS)
-  add_executable(AlbanyTempus Main_SolveT_Tempus.cpp)
-ENDIF()
 
 SET(ALBANY_EXECUTABLES AlbanyT)
 IF (ALBANY_EPETRA)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
-ENDIF()
-IF (ALBANY_TEMPUS)
-  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyTempus )
 ENDIF()
 
 IF (ALBANY_MPMD)
@@ -816,10 +810,8 @@ ENDIF()
 
 
 if (ALBANY_ASCR AND ALBANY_EPETRA)
-  add_executable(AlbanyAdjoint Main_Adjoint.cpp)
   add_executable(AlbanyCoupled Main_Coupled.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
-    AlbanyAdjoint
     AlbanyCoupled
     )
 endif()
@@ -929,8 +921,6 @@ ENDIF()
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
-  add_executable(SchwarzAlternating Main_Alternating.cpp)
-  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} SchwarzAlternating)
 ENDIF()
 
 # Can remove this once rebalance is in Trilnos again
