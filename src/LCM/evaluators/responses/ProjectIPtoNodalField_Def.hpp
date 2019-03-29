@@ -26,6 +26,7 @@
 #include "Albany_Utils.hpp"
 
 static int aabb = 0; 
+static int bbcc = 0; 
 
 namespace LCM {
 
@@ -683,7 +684,6 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   // a version used for linear algebra having a nonoverlapping row map, we can't
   // just resumeFill. ip_field also alternates between overlapping
   // and nonoverlapping maps and so must be reallocated.
-  //Teuchos::RCP<const Albany::ThyraCrsMatrixFactory> current_graph_factory =
   mgr_->ovl_graph_factory = 
     p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalOpFactory();
   if (Teuchos::nonnull(mgr_->ovl_graph_factory)) {
@@ -821,7 +821,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
 
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::VerboseObjectBase::getDefaultOStream();
-
+  
   //IKT, note to self: in original Tpetra code, we had the following fillComplete.
   //mgr_->mass_linear_op->linear_op()->fillComplete();
   //This is not needed in the Thyra code b/c fillComplete gets called in createOp(), 
@@ -864,21 +864,16 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     Teuchos::RCP<Albany::ThyraCrsMatrixFactory> mm_graph_factory = 
         Teuchos::rcp(new Albany::ThyraCrsMatrixFactory(space, space, mgr_->ovl_graph_factory)); 
     Teuchos::RCP<Thyra_LinearOp> mm = mm_graph_factory->createOp();
-    auto rowGIDs = Albany::getNodeElementList(Albany::getRowSpace(mm));
-    auto colGIDs = Albany::getNodeElementList(Albany::getColumnSpace(mm));
-    std::cout << "IKT mm rowGIDs size = " << rowGIDs.size() << std::endl;
-    std::cout << "IKT mm colGIDs size = " << colGIDs.size() << std::endl;
     //IKT, note to self: createOp calls fillComplete() on the matrix that is returned
     //before it is returned  
     // IKT, note to self: cas_manager arguments are (owned, overlapped)  
     auto cas_manager = Albany::createCombineAndScatterManager(space, ovl_space);
-    // IKT, not to self: we are going from overlap space to owned space -> use combine method
+    // IKT, note to self: we are going from overlap space to owned space -> use combine method
     // Arguments of combine are (src, tgt)
+    // IKT, note to self: the resumeFill and fillComplete before/after combine are critical!!
+    Albany::resumeFill(mm); 
     cas_manager->combine(mm_ovl, mm, Albany::CombineMode::ADD);
-    rowGIDs = Albany::getNodeElementList(Albany::getRowSpace(mm));
-    colGIDs = Albany::getNodeElementList(Albany::getColumnSpace(mm));
-    std::cout << "IKT mm after combine rowGIDs size = " << rowGIDs.size() << std::endl;
-    std::cout << "IKT mm after combine colGIDs size = " << colGIDs.size() << std::endl;
+    Albany::fillComplete(mm); 
     // We don't need the assemble form of the mass matrix any longer.
     mgr_->mass_linear_op->linear_op() = mm;
     //IKT, note to self: the original code has a fillComplete() here.  I don't think
@@ -895,6 +890,8 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     // Don't need the assemble form of the ip_field either.
     mgr_->ip_field = ipf;
   }
+  Albany::writeMatrixMarket<Thyra_MultiVector>(mgr_->ip_field, "ip_field_postEvaluate_afterCombine", bbcc);
+  Albany::writeMatrixMarket<Thyra_LinearOp>(mgr_->mass_linear_op->linear_op(), "mass_postEvaluate_afterCombine", bbcc);
   // Create x in A x = b.
   Teuchos::RCP<Thyra_MultiVector> node_projected_ip_field = 
                                   Thyra::createMembers(mgr_->mass_linear_op->linear_op()->domain(), 
@@ -958,6 +955,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
         ->getNodalDataVector()
         ->saveNodalDataState(npif, mgr_->ndb_start);
   }
+  bbcc++;
 }
 
 }  // namespace LCM
