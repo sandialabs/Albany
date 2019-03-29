@@ -34,7 +34,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   ice_saturation_max_   = p->get<RealType>("ACE Ice Maximum Saturation", 0.0);
   water_saturation_min_ = p->get<RealType>("ACE Water Minimum Saturation", 0.0);
   salinity_base_        = p->get<RealType>("ACE Base Salinity", 0.0);
-  W_curve_value_        = p->get<RealType>("ACE Freezing Curve Width", 1.0);
+  freeze_curve_width_   = p->get<RealType>("ACE Freezing Curve Width", 1.0);
   latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
   porosityE_            = p->get<RealType>("ACE Porosity E-Depth", 0.0);
