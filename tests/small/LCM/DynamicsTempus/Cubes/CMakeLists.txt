@@ -33,10 +33,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single-ct-tempus.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single-ct-tempus.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single-tempus-expl.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single-tempus-expl.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes-piro.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/larger-cubes-piro.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes-piro-expl.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/larger-cubes-piro-expl.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes-tempus.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/larger-cubes-tempus.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/larger-cubes-tempus-expl.yaml
@@ -50,10 +46,5 @@ add_test(Serial_Dynamic_${testName}_NewmarkImplicitAForm_Tempus ${SerialAlbanyT.
 add_test(Parallel_Dynamic_${testName}_NewmarkImplicitAForm_Tempus ${AlbanyT8.exe} larger-cubes-tempus.yaml)
 add_test(Parallel_Dynamic_${testName}_NewmarkExplicitAForm_LumpedMass_Tempus ${AlbanyT8.exe} larger-cubes-tempus-expl.yaml)
 endif()
-endif()
-
-if (ALBANY_EPETRA)
-add_test(Serial_Dynamic_${testName}_Newmark_Piro ${SerialAlbany.exe} cube-single-piro.yaml)
-add_test(Parallel_Dynamic_${testName}_Newmark_Piro ${Albany8.exe} larger-cubes-piro.yaml)
 endif()
 
