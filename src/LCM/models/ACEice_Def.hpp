@@ -495,7 +495,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   porosity_(cell, pt) = porosity;
 
   // Calculate melting temperature
-  ScalarT sal   = salinity_base_;  // note: this should come from chemical part of model
+  ScalarT sal   = salinity_base_;  // should come from chemical part of model
   ScalarT sal15 = std::sqrt(sal * sal * sal);
   ScalarT pressure_fixed = 1.0;
   // Tmelt is in Kelvin
@@ -517,7 +517,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   //
   // f(T) = L / (1 + e^(-W*(T-T0)))
   //
-  ScalarT const W = W_curve_value_;
+  ScalarT const W = freeze_curve_width_;
   ScalarT const Tdiff = Tcurr - Tmelt;
   ScalarT const et = exp(-W * Tdiff);
   ScalarT const etp1 = et + 1.0;
