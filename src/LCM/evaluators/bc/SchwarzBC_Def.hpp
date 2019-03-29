@@ -79,7 +79,7 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
 
   Albany::Application const& coupled_app = getApplication(coupled_app_index);
 
-  Teuchos::RCP<Tpetra_Vector const> coupled_solution = coupled_app.getX();
+  Teuchos::RCP<Thyra_Vector const> coupled_solution = coupled_app.getX();
 
   if (coupled_solution == Teuchos::null) {
     x_val = 0.0;
@@ -218,11 +218,11 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
   Teuchos::ArrayRCP<double> const& coupled_coordinates =
       coupled_stk_disc->getCoordinates();
 
-  Teuchos::ArrayRCP<ST const> coupled_solution_view =
-      coupled_solution->get1dView();
+  Teuchos::ArrayRCP<ST const> coupled_solution_view = 
+      Albany::getLocalData(coupled_solution);
 
-  Teuchos::RCP<Tpetra_Map const> coupled_overlap_node_map =
-      coupled_stk_disc->getOverlapNodeMapT();
+  Teuchos::RCP<Thyra_VectorSpace const> coupled_overlap_node_vs =
+      coupled_stk_disc->getOverlapNodeVectorSpace();
 
   // We do this element by element
   auto const number_cells = 1;
@@ -265,8 +265,7 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
       for (auto node = 0; node < coupled_node_count; ++node) {
         auto const global_node_id = ws_elem_to_node_id[workset][element][node];
 
-        auto const local_node_id =
-            coupled_overlap_node_map->getLocalElement(global_node_id);
+        auto const local_node_id = Albany::getLocalElement(coupled_overlap_node_vs,global_node_id); 
 
         double* const pcoord =
             &(coupled_coordinates[coupled_dimension * local_node_id]);

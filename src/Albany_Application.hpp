@@ -543,23 +543,23 @@ public:
     return name;
   }
 
-  Teuchos::RCP<Tpetra_Vector const> const &
+  Teuchos::RCP<Thyra_Vector const> const &
   getX() const { return x_; }
 
-  Teuchos::RCP<Tpetra_Vector const> const &
+  Teuchos::RCP<Thyra_Vector const> const &
   getXdot() const { return xdot_; }
 
-  Teuchos::RCP<Tpetra_Vector const> const &
+  Teuchos::RCP<Thyra_Vector const> const &
   getXdotdot() const { return xdotdot_; }
 
   void
-  setX(Teuchos::RCP<Tpetra_Vector const> const & x) { x_ = x; }
+  setX(Teuchos::RCP<Thyra_Vector const> const & x) { x_ = x; }
 
   void
-  setXdot(Teuchos::RCP<Tpetra_Vector const> const & xdot) { xdot_ = xdot; }
+  setXdot(Teuchos::RCP<Thyra_Vector const> const & xdot) { xdot_ = xdot; }
 
   void
-  setXdotdot(Teuchos::RCP<Tpetra_Vector const> const & xdotdot) { xdotdot_ = xdotdot; }
+  setXdotdot(Teuchos::RCP<Thyra_Vector const> const & xdotdot) { xdotdot_ = xdotdot; }
 
   void
   setSchwarzAlternating(bool const isa) {is_schwarz_alternating_ = isa;}
@@ -577,11 +577,11 @@ private:
   std::map<int, std::pair<std::string, std::string>>
       coupled_app_index_block_nodeset_names_map_;
 
-  Teuchos::RCP<Tpetra_Vector const> x_{Teuchos::null};
+  Teuchos::RCP<Thyra_Vector const> x_{Teuchos::null};
 
-  Teuchos::RCP<Tpetra_Vector const> xdot_{Teuchos::null};
+  Teuchos::RCP<Thyra_Vector const> xdot_{Teuchos::null};
 
-  Teuchos::RCP<Tpetra_Vector const> xdotdot_{Teuchos::null};
+  Teuchos::RCP<Thyra_Vector const> xdotdot_{Teuchos::null};
 
   bool is_schwarz_alternating_{false};
 

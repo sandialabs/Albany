@@ -1336,15 +1336,15 @@ void Application::computeGlobalResidualImpl(
   // Store pointers to solution and time derivatives.
   // Needed for Schwarz coupling.
   if (x != Teuchos::null)
-    x_ = Teuchos::rcp(new Tpetra_Vector(*getConstTpetraVector(x)));
+    x_ = x; 
   else
     x_ = Teuchos::null;
   if (x_dot != Teuchos::null)
-    xdot_ = Teuchos::rcp(new Tpetra_Vector(*getConstTpetraVector(x_dot)));
+    xdot_ = x_dot; 
   else
     xdot_ = Teuchos::null;
   if (x_dotdot != Teuchos::null)
-    xdotdot_ = Teuchos::rcp(new Tpetra_Vector(*getConstTpetraVector(x_dotdot)));
+    xdotdot_ = x_dotdot; 
   else
     xdotdot_ = Teuchos::null;
 #endif // ALBANY_LCM
