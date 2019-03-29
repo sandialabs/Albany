@@ -83,11 +83,15 @@ fillVector (Thyra_Vector&    field_thyra,
 
   const stk::mesh::BulkData& mesh = field_stk.get_mesh();
   auto data = getNonconstLocalData(field_thyra);
+  int num_vec_components;
+  //IKT, FIXME: ideally nodalDofManager.numComponents() should return 1 for a SFT, I would think.
+  //Need to look into this more to come up with a better fix, hopefully.  
+  if (is_SFT == true) num_vec_components = 1; 
+  else num_vec_components = nodalDofManager.numComponents();
   for(int i=0; i<num_nodes_in_bucket; ++i)  {
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
     const LO node_lid = getLocalElement(node_vs,node_gid);
 
-    const int num_vec_components = nodalDofManager.numComponents();
     for(int j=0; j<num_vec_components; ++j) {
       data[nodalDofManager.getLocalDOF(node_lid,offset+j)] = access(field_array,j,i);
     }
@@ -117,11 +121,15 @@ saveVector(const Thyra_Vector& field_thyra,
 
   const stk::mesh::BulkData& mesh = field_stk.get_mesh();
   auto data = getLocalData(field_thyra);
+  int num_vec_components;
+  //IKT, FIXME: ideally nodalDofManager.numComponents() should return 1 for a SFT, I would think.
+  //Need to look into this more to come up with a better fix, hopefully.  
+  if (is_SFT == true) num_vec_components = 1; 
+  else num_vec_components = nodalDofManager.numComponents();
   for(int i=0; i<num_nodes_in_bucket; ++i) {
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
     const LO node_lid = getLocalElement(node_vs,node_gid);
 
-    const int num_vec_components = nodalDofManager.numComponents();
     for(int j = 0; j<num_vec_components; ++j) {
       access(field_array,j,i) = data[nodalDofManager.getLocalDOF(node_lid,offset+j)];
     }
