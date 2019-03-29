@@ -545,10 +545,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt))
                                - (ice_density_ * latent_heat_ * dfdT);
 
-  //ScalarT const TI     = thermal_inertia_(cell, pt);
-  //ScalarT const RCp    = (density_(cell, pt) * heat_capacity_(cell, pt));
-  //ScalarT const RLdfdT = (ice_density_ * latent_heat_ * dfdT);
-
   // Return values
   ice_saturation_(cell, pt)   = icurr;
   water_saturation_(cell, pt) = wcurr;
