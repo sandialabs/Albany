@@ -48,10 +48,12 @@
 #include "ATOT_Solver.hpp"
 #endif
 
-#if defined(ALBANY_LCM) && defined(ALBANY_STK) && defined(ALBANY_SCHWARZ) 
+#if defined(ALBANY_LCM) && defined(ALBANY_STK)
 #include "Schwarz_Alternating.hpp"
-#include "Schwarz_Coupled.hpp"
-#include "Schwarz_PiroObserver.hpp"
+//IKT, FIXME: uncomment the following once they are converted
+//to Thyra
+//#include "Schwarz_Coupled.hpp"
+//#include "Schwarz_PiroObserver.hpp"
 #endif
 
 #ifdef ALBANY_AERAS
@@ -556,18 +558,15 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #if defined(ALBANY_LCM) && defined(ALBANY_STK) 
   bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
                           solutionMethod == "Schwarz Alternating";
-#if !defined(ALBANY_SCHWARZ)
-  ALBANY_ASSERT(is_schwarz == false, "'Coupled Schwarz' and 'Schwarz Alternating' Methods are invalid! \n"
-                                      << "Recompile with -DENABLE_SCHWARZ=ON flag to use these methods."); 
-#endif
 
   if (is_schwarz == true) {
 #if !defined(ALBANY_DTK)
     ALBANY_ASSERT(appComm->getSize() == 1, "Parallel Schwarz requires DTK");
 #endif  // ALBANY_DTK
   }
-#if (ALBANY_SCHWARZ) 
-  if (solutionMethod == "Coupled Schwarz") {
+  //IKT, FIXME: uncomment the following once 
+  //Coupled Schwarz code is ported to Thyra
+  /*if (solutionMethod == "Coupled Schwarz") {
     // IKT: We are assuming the "Piro" list will come from the main coupled
     // Schwarz input file (not the sub-input
     // files for each model).
@@ -600,13 +599,12 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // instance and so albanyApp is null.
     return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
         piroParams, coupled_model_with_solve, Teuchos::null, observerT_);
-  }
+  }*/
 
   if (solutionMethod == "Schwarz Alternating") {
     return rcp(
-        new LCM::SchwarzAlternating(appParams, solverComm, initial_guess));
+        new LCM::SchwarzAlternating(appParams, solverComm));
   }
-#endif /* Schwarz */
 #endif /* LCM */
 
   RCP<Albany::Application> app = albanyApp;

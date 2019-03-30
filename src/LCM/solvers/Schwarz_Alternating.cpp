@@ -20,8 +20,7 @@ namespace LCM {
 //
 SchwarzAlternating::SchwarzAlternating(
     Teuchos::RCP<Teuchos::ParameterList> const&   app_params,
-    Teuchos::RCP<Teuchos::Comm<int> const> const& comm,
-    Teuchos::RCP<Tpetra_Vector const> const&      initial_guess)
+    Teuchos::RCP<Teuchos::Comm<int> const> const& comm)
 {
   Teuchos::ParameterList& alt_system_params =
       app_params->sublist("Alternating System");
@@ -812,8 +811,11 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 #endif
       toFrom(internal_states_[subdomain], state_mgr.getStateArrays());
 #ifdef DEBUG
+      //IKT, 3/29/19: I changed the first argument in the following function, 
+      //to get code to compile. 
       printInternalElementStates(
-          internal_states_[subdomain], state_mgr.getStateInfoStruct());
+          state_mgr.getStateArrays(), state_mgr.getStateInfoStruct());
+
       fos << "DEBUG: ...done setting internal states subdomain = " << subdomain
           << ".\n";
 #endif
@@ -883,14 +885,17 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 
         auto& state_mgr = app.getStateMgr();
 
+
 #ifdef DEBUG
         fos << "DEBUG: Setting internal states subdomain = " << subdomain
             << "...\n";
 #endif
         toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
 #ifdef DEBUG
-        printInternalElementStates(
-            internal_states_[subdomain], state_mgr.getStateInfoStruct());
+       //IKT, 3/29/19: I changed the first argument in the following function, 
+       //to get code to compile. 
+       printInternalElementStates(
+            state_mgr.getStateArrays(), state_mgr.getStateInfoStruct());
         fos << "DEBUG: ...done setting internal states subdomain = "
             << subdomain << ".\n";
 #endif
@@ -938,17 +943,13 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         this_acce_[subdomain] = Thyra::createMember(me.get_x_space());
 
 #if defined(DEBUG)
-        Teuchos::RCP<Tpetra_Vector> prev_disp_tpetra;
-
         fos << "\n*** Thyra: Previous solution ***\n";
         prev_disp_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
         fos << "\n*** NORM: " << Thyra::norm(*prev_disp_[subdomain]) << '\n';
         if (subdomain == 0) {
-          prev_disp_tpetra = ConverterT::getTpetraVector(prev_disp_[0]);
-          Albany::writeMatrixMarket(prev_disp_tpetra, "prev_disp0", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(prev_disp_[0], "prev_disp0", num_iter_);
         } else if (subdomain == 1) {
-          prev_disp_tpetra = ConverterT::getTpetraVector(prev_disp_[1]);
-          Albany::writeMatrixMarket(prev_disp_tpetra, "prev_disp1", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(prev_disp_[1], "prev_disp1", num_iter_);
         }
         fos << "\n*** Thyra: Previous solution ***\n";
 #endif  // DEBUG
@@ -983,14 +984,11 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         fos << "\n*** NORM: " << Thyra::norm(*this_disp_[subdomain]) << '\n';
         fos << "\n*** Thyra: Current solution ***\n";
 
-        Teuchos::RCP<Tpetra_Vector> curr_disp_tpetra;
 
         if (subdomain == 0) {
-          curr_disp_tpetra = ConverterT::getTpetraVector(this_disp_[0]);
-          Albany::writeMatrixMarket(curr_disp_tpetra, "curr_disp0", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(this_disp_[0], "curr_disp0", num_iter_);
         } else if (subdomain == 1) {
-          curr_disp_tpetra = ConverterT::getTpetraVector(this_disp_[1]);
-          Albany::writeMatrixMarket(curr_disp_tpetra, "curr_disp1", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(this_disp_[1], "curr_disp1", num_iter_);
         }
 #endif  // DEBUG
 
@@ -1027,14 +1025,10 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         fos << "\n*** NORM: " << Thyra::norm(*disp_diff_rcp) << '\n';
         fos << "\n*** Thyra: Solution difference ***\n";
 
-        Teuchos::RCP<Tpetra_Vector> disp_diff_tpetra;
-
         if (subdomain == 0) {
-          disp_diff_tpetra = ConverterT::getTpetraVector(disp_diff_rcp);
-          Albany::writeMatrixMarket(disp_diff_tpetra, "disp_diff0", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(disp_diff_rcp, "disp_diff0", num_iter_);
         } else if (subdomain == 1) {
-          disp_diff_tpetra = ConverterT::getTpetraVector(disp_diff_rcp);
-          Albany::writeMatrixMarket(disp_diff_tpetra, "disp_diff1", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(disp_diff_rcp, "disp_diff1", num_iter_);
         }
 #endif  // DEBUG
 
@@ -1154,23 +1148,17 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 
         // restore the solution in the discretization so the schwarz solver gets
         // the right boundary conditions!
-        Teuchos::RCP<Tpetra_Vector const> disp_rcp_tpetra;
+        Teuchos::RCP<Thyra_Vector const> disp_rcp_thyra = ics_disp_[subdomain];
 
-        Teuchos::RCP<Tpetra_Vector const> velo_rcp_tpetra;
+        Teuchos::RCP<Thyra_Vector const> velo_rcp_thyra = ics_velo_[subdomain];
 
-        Teuchos::RCP<Tpetra_Vector const> acce_rcp_tpetra;
+        Teuchos::RCP<Thyra_Vector const> acce_rcp_thyra = ics_acce_[subdomain];
 
-        disp_rcp_tpetra =
-            ConverterT::getConstTpetraVector(ics_disp_[subdomain]);
-        velo_rcp_tpetra =
-            ConverterT::getConstTpetraVector(ics_velo_[subdomain]);
-        acce_rcp_tpetra =
-            ConverterT::getConstTpetraVector(ics_acce_[subdomain]);
         Teuchos::RCP<Albany::AbstractDiscretization> const& app_disc =
             app.getDiscretization();
 
-        app_disc->writeSolutionToMeshDatabaseT(
-            *disp_rcp_tpetra, *velo_rcp_tpetra, *acce_rcp_tpetra, current_time);
+        app_disc->writeSolutionToMeshDatabase(
+            *disp_rcp_thyra, *velo_rcp_thyra, *acce_rcp_thyra, current_time);
       }
 
       // Jump to the beginning of the time-step loop without advancing
@@ -1249,27 +1237,18 @@ SchwarzAlternating::setExplicitUpdateInitialGuessForSchwarz(
 
     auto acce_rcp = this_acce_[subdomain];
 
-    Teuchos::RCP<Tpetra_Vector const> disp_rcp_tpetra;
-
-    Teuchos::RCP<Tpetra_Vector const> velo_rcp_tpetra;
-
-    Teuchos::RCP<Tpetra_Vector const> acce_rcp_tpetra;
-
-    disp_rcp_tpetra = ConverterT::getConstTpetraVector(disp_rcp);
-    velo_rcp_tpetra = ConverterT::getConstTpetraVector(velo_rcp);
-    acce_rcp_tpetra = ConverterT::getConstTpetraVector(acce_rcp);
     // setting the displacement in the albany application
-    app.setX(disp_rcp_tpetra);
-    app.setXdot(velo_rcp_tpetra);
-    app.setXdotdot(acce_rcp_tpetra);
+    app.setX(disp_rcp);
+    app.setXdot(velo_rcp);
+    app.setXdotdot(acce_rcp);
 
     // in order to get the Schwarz boundary conditions right, we need to set the
     // state in the discretization
     Teuchos::RCP<Albany::AbstractDiscretization> const& app_disc =
         app.getDiscretization();
 
-    app_disc->writeSolutionToMeshDatabaseT(
-        *disp_rcp_tpetra, *velo_rcp_tpetra, *acce_rcp_tpetra, current_time);
+    app_disc->writeSolutionToMeshDatabase(
+        *disp_rcp, *velo_rcp, *acce_rcp, current_time);
   }
 }
 
@@ -1311,7 +1290,7 @@ SchwarzAlternating::setDynamicICVecsAndDoOutput(ST const time) const
       Thyra::copy(*(nv.get_x_dot_dot()), ics_acce_[subdomain].ptr());
 
       // Write initial condition to STK mesh
-      Teuchos::RCP<Tpetra_MultiVector const> const xMV =
+      Teuchos::RCP<Thyra_MultiVector const> const xMV =
           apps_[subdomain]->getAdaptSolMgrT()->getOverlappedSolution();
 
       stk_disc.writeSolutionMV(*xMV, initial_time_, true);
@@ -1321,14 +1300,17 @@ SchwarzAlternating::setDynamicICVecsAndDoOutput(ST const time) const
     else {  // subsequent time steps: update ic vecs based on fields in stk
             // discretization
 
-      Teuchos::RCP<Tpetra_MultiVector> disp_mv = stk_disc.getSolutionMV();
+      Teuchos::RCP<Thyra_MultiVector> disp_mv = stk_disc.getSolutionMV();
 
       // Update ics_disp_ and its time-derivatives
-      ics_disp_[subdomain] = Thyra::createVector(disp_mv->getVectorNonConst(0));
+      ics_disp_[subdomain] = Thyra::createMember(disp_mv->col(0)->space());
+      Thyra::copy(*disp_mv->col(0), ics_disp_[subdomain].ptr()); 
 
-      ics_velo_[subdomain] = Thyra::createVector(disp_mv->getVectorNonConst(1));
+      ics_velo_[subdomain] = Thyra::createMember(disp_mv->col(1)->space()); 
+      Thyra::copy(*disp_mv->col(1), ics_velo_[subdomain].ptr()); 
 
-      ics_acce_[subdomain] = Thyra::createVector(disp_mv->getVectorNonConst(2));
+      ics_acce_[subdomain] = Thyra::createMember(disp_mv->col(2)->space()); 
+      Thyra::copy(*disp_mv->col(2), ics_acce_[subdomain].ptr()); 
 
       if (do_outputs_[subdomain] == true) {  // write solution to Exodus
 
@@ -1630,14 +1612,11 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
 
         // restore the solution in the discretization so the schwarz solver gets
         // the right boundary conditions!
-        Teuchos::RCP<Tpetra_Vector const> disp_rcp_tpetra;
-
-        disp_rcp_tpetra =
-            ConverterT::getConstTpetraVector(curr_disp_[subdomain]);
+        Teuchos::RCP<Thyra_Vector const> disp_rcp_thyra = curr_disp_[subdomain]; 
         Teuchos::RCP<Albany::AbstractDiscretization> const& app_disc =
             app.getDiscretization();
 
-        app_disc->writeSolutionToMeshDatabaseT(*disp_rcp_tpetra, current_time);
+        app_disc->writeSolutionToMeshDatabase(*disp_rcp_thyra, current_time);
       }
 
       // Jump to the beginning of the continuation loop without advancing

@@ -21,7 +21,7 @@
 #include "LCM/evaluators/bc/TimeTracBC.hpp"
 #include "LCM/evaluators/bc/TorsionBC.hpp"
 #include "LCM/evaluators/Time.hpp"
-#if defined(ALBANY_STK) && defined(ALBANY_SCHWARZ) 
+#if defined(ALBANY_STK) 
 #include "LCM/evaluators/bc/SchwarzBC.hpp"
 #include "LCM/evaluators/bc/StrongSchwarzBC.hpp"
 #endif // ALBANY_STK
@@ -96,7 +96,7 @@ namespace PHAL {
         LCM::Time<_, Traits>,                     //  10
         LCM::TorsionBC<_, Traits>                  // 11
 #endif
-#if defined(ALBANY_LCM) && defined(ALBANY_STK) && defined(ALBANY_SCHWARZ) 
+#if defined(ALBANY_LCM) && defined(ALBANY_STK) 
         ,
         LCM::SchwarzBC<_, Traits>,                 // 12
         LCM::StrongSchwarzBC<_, Traits>,           // 13
