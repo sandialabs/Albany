@@ -167,7 +167,9 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp () const {
   auto bt = Albany::build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
-    Teuchos::RCP<Epetra_Operator> mat = Teuchos::rcp (new Epetra_CrsMatrix(Copy, *m_graph->e_graph));
+    Teuchos::RCP<Epetra_CrsMatrix> matrix = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *m_graph->e_graph)); 
+    matrix->PutScalar(0.0); 
+    Teuchos::RCP<Epetra_Operator> mat = Teuchos::rcp_implicit_cast<Epetra_Operator>(matrix); 
     op = createThyraLinearOp(mat);
 #else
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
@@ -175,6 +177,8 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp () const {
   } else {
     Teuchos::RCP<Tpetra_CrsMatrix> mat = Teuchos::rcp (new Tpetra_CrsMatrix(m_graph->t_graph));
     mat->fillComplete();
+    auto const zero = Teuchos::ScalarTraits<ST>::zero();
+    mat->setAllToScalar(zero);
     op = createThyraLinearOp(Teuchos::rcp_implicit_cast<Tpetra_Operator>(mat));
   }
 

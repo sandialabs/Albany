@@ -11,11 +11,6 @@
 
 #include "Teuchos_Comm.hpp"
 #include "Teuchos_RCP.hpp"
-#include "Tpetra_CrsMatrix.hpp"
-#include "Tpetra_Import.hpp"
-#include "Tpetra_Map.hpp"
-#include "Tpetra_Operator.hpp"
-#include "Tpetra_Vector.hpp"
 
 #include "Albany_Application.hpp"
 #include "Albany_DataTypes.hpp"
@@ -24,18 +19,18 @@
 namespace LCM {
 
 ///
-/// \brief A Tpetra operator that evaluates the Jacobian of a
+/// \brief A Thyra operator that evaluates the Jacobian of a
 /// LCM coupled Schwarz Multiscale problem.
 /// Each Jacobian couples one single application to another.
 ///
 
-class Schwarz_BoundaryJacobian : public Tpetra_Operator
+class Schwarz_BoundaryJacobian : public Thyra_LinearOp
 {
  public:
   Schwarz_BoundaryJacobian(
       Teuchos::RCP<Teuchos_Comm const> const&                     comm,
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const& ca,
-      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>              jacs,
+      Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>>              jacs,
       int const this_app_index    = 0,
       int const coupled_app_index = 0);
 
@@ -48,97 +43,98 @@ class Schwarz_BoundaryJacobian : public Tpetra_Operator
 
   /// Returns the result of a Tpetra_Operator applied to a
   /// Tpetra_MultiVector X in Y.
-  virtual void
+  /*virtual void
   apply(
       Tpetra_MultiVector const& X,
       Tpetra_MultiVector&       Y,
       Teuchos::ETransp          mode  = Teuchos::NO_TRANS,
       ST                        alpha = Teuchos::ScalarTraits<ST>::one(),
-      ST                        beta = Teuchos::ScalarTraits<ST>::zero()) const;
+      ST                        beta = Teuchos::ScalarTraits<ST>::zero()) const;*/
+    
+   //! Overrides Thyra::LinearOpBase purely virtual method
+   /// Returns the result of a Thyra_LinearOp applied to a
+   /// Thyra_MultiVector X in Y.
+   virtual void 
+   applyImpl (const Thyra::EOpTransp M_trans,
+              const Thyra_MultiVector& X,
+              const Teuchos::Ptr<Thyra_MultiVector>& Y,
+              const ST alpha = Teuchos::ScalarTraits<ST>::one(),
+              const ST beta = Teuchos::ScalarTraits<ST>::zero()) const;
+    
+   //! Overrides Thyra::LinearOpBase purely virtual method
+   bool opSupportedImpl(Thyra::EOpTransp /*M_trans*/) const {
+     // The underlying scalar type is not complex, and we support transpose, so we support everything.
+     return true;
+   }
 
-  /// Returns explicit matrix representation of operator if available.
-  Teuchos::RCP<Tpetra_CrsMatrix>
-  getExplicitOperator() const;
+   /// Returns explicit matrix representation of operator if available.
+   Teuchos::RCP<Thyra_LinearOp>
+   getExplicitOperator() const;
 
-  /// Returns the current UseTranspose setting.
-  virtual bool
-  hasTransposeApply() const
-  {
-    return b_use_transpose_;
-  }
+   //! Overrides Thyra::LinearOpBase purely virtual method
+   Teuchos::RCP<const Thyra_VectorSpace> domain() const {
+     return domain_vs_; 
+   }
 
-  /// Returns the Tpetra_Map object associated with the domain of this operator.
-  virtual Teuchos::RCP<Tpetra_Map const>
-  getDomainMap() const
-  {
-    return domain_map_;
-  }
+   //! Overrides Thyra::LinearOpBase purely virtual method
+   Teuchos::RCP<const Thyra_VectorSpace> range() const {
+     return range_vs_;
+   }
 
-  /// Returns the Tpetra_Map object associated with the range of this operator.
-  virtual Teuchos::RCP<Tpetra_Map const>
-  getRangeMap() const
-  {
-    return range_map_;
-  }
+   void
+   setThisAppIndex(int const tai)
+   {
+     this_app_index_ = tai;
+   }
 
-  void
-  setThisAppIndex(int const tai)
-  {
-    this_app_index_ = tai;
-  }
+   int
+   getThisAppIndex() const
+   {
+     return this_app_index_;
+   }
 
-  int
-  getThisAppIndex() const
-  {
-    return this_app_index_;
-  }
+   void
+   setCoupledAppIndex(int const cai)
+   {
+     coupled_app_index_ = cai;
+   }
 
-  void
-  setCoupledAppIndex(int const cai)
-  {
-    coupled_app_index_ = cai;
-  }
+   int
+   getCoupledAppIndex() const
+   {
+     return coupled_app_index_;
+   }
 
-  int
-  getCoupledAppIndex() const
-  {
-    return coupled_app_index_;
-  }
+   Albany::Application const&
+   getApplication(int const app_index)
+   {
+     return *(coupled_apps_[app_index]);
+   }
 
-  Albany::Application const&
-  getApplication(int const app_index)
-  {
-    return *(coupled_apps_[app_index]);
-  }
-
-  Albany::Application const&
-  getApplication(int const app_index) const
-  {
-    return *(coupled_apps_[app_index]);
-  }
+   Albany::Application const&
+   getApplication(int const app_index) const
+   {
+     return *(coupled_apps_[app_index]);
+   }
 
  private:
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> coupled_apps_;
+   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> coupled_apps_;
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs_;
+   Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>> jacs_;
 
-  int this_app_index_;
+   int this_app_index_;
 
-  int coupled_app_index_;
+   int coupled_app_index_;
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>> disc_maps_;
+   Teuchos::Array<Teuchos::RCP<Thyra_VectorSpace const>> disc_maps_;
 
-  Teuchos::RCP<Tpetra_Map const> domain_map_;
+   Teuchos::RCP<Thyra_VectorSpace const> domain_vs_;
 
-  Teuchos::RCP<Tpetra_Map const> range_map_;
+   Teuchos::RCP<Thyra_VectorSpace const> range_vs_;
 
-  Teuchos::RCP<Teuchos_Comm const> comm_;
+   Teuchos::RCP<Teuchos_Comm const> comm_;
 
-  bool b_use_transpose_;
-
-  bool b_initialized_;
-
-  int n_models_;
+   int n_models_;
 };
 
 }  // namespace LCM
