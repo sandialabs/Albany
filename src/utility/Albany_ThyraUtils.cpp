@@ -399,7 +399,7 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 #endif
   } else if (bt == BuildType::Tpetra) {
     auto gsi = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
-    const decltype(gsi) numGlobalElements = (globalDim==invalid) ? gsi : static_cast<Epetra_GO>(globalDim);
+    const decltype(gsi) numGlobalElements = (globalDim==invalid) ? gsi : static_cast<Tpetra_GO>(globalDim);
     Teuchos::ArrayView<const Tpetra_GO> tgids(reinterpret_cast<const Tpetra_GO*>(gids.getRawPtr()),gids.size());
     Teuchos::RCP<const Tpetra_Map> tmap = Teuchos::rcp( new Tpetra_Map(numGlobalElements,tgids,0,comm) );
     return createThyraVectorSpace(tmap);

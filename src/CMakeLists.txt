@@ -108,7 +108,6 @@ SET(SOURCES ${SOURCES}
   utility/PerformanceContext.cpp
   utility/TimeMonitor.cpp
   utility/Albany_CombineAndScatterManager.cpp
-  utility/Albany_CombineAndScatterManagerEpetra.cpp
   utility/Albany_CombineAndScatterManagerTpetra.cpp
   utility/Albany_CommUtils.cpp
   utility/Albany_Gather.cpp
@@ -128,7 +127,6 @@ SET(HEADERS ${HEADERS}
   utility/TimeGuard.hpp
   utility/TimeMonitor.hpp
   utility/Albany_CombineAndScatterManager.hpp
-  utility/Albany_CombineAndScatterManagerEpetra.hpp
   utility/Albany_CombineAndScatterManagerTpetra.hpp
   utility/Albany_CommUtils.hpp
   utility/Albany_Gather.hpp
@@ -146,9 +144,11 @@ SET(HEADERS ${HEADERS}
 IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
     utility/Albany_EpetraThyraUtils.cpp
+    utility/Albany_CombineAndScatterManagerEpetra.cpp
   )
   SET(HEADERS ${HEADERS}
     utility/Albany_EpetraThyraUtils.hpp
+  utility/Albany_CombineAndScatterManagerEpetra.hpp
   )
 ENDIF()
 
