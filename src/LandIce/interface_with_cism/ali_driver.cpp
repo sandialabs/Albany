@@ -61,6 +61,7 @@
 #endif
 
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 //FIXME: move static global variables to struct
 //
@@ -811,11 +812,11 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
     auto disc = albanyApp->getDiscretization();
     auto ownedVS = disc->getVectorSpace();
-    auto overlapVS = disc->getOverlappedVectorSpace();
+    auto overlapVS = disc->getOverlapVectorSpace();
     auto cas_manager = Albany::createCombineAndScatterManager(ownedVS,overlapVS);
     auto solutionOverlap = Thyra::createMember(overlapVS);
     cas_manager->scatter(*disc->getSolutionField(),*solutionOverlap,Albany::CombineMode::INSERT);
-    Teuchos::ArrayRCP<const ST> solutionOverlap_constView = Albany::getLocalData(solutionOverlap);
+    auto solutionOverlap_constView = Albany::getLocalData(Teuchos::rcp_dynamic_cast<const Thyra_Vector>(solutionOverlap)); 
 
 #ifdef WRITE_TO_MATRIX_MARKET
 #ifdef CISM_USE_EPETRA
@@ -939,25 +940,16 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     std::vector<double> uvel_local_vec(numGlobalNodes, 0.0);
     std::vector<double> vvel_local_vec(numGlobalNodes, 0.0);
 
-    int overlap_map_num_my_elts;
+    int overlap_vs_num_my_elts;
     int global_dof;
     double sol_value;
     int numDofs;
-#ifdef CISM_USE_EPETRA
-    overlap_map_num_my_elts = overlapMap.NumMyElements();
-#else
-    overlap_map_num_my_elts = overlapMap->getNodeNumElements();
-#endif
+    overlap_vs_num_my_elts = Albany::getNumLocalElements(overlapVS); 
 
     if (interleavedOrdering == true) {
-      for (int i=0; i<overlap_map_num_my_elts; i++) {
-#ifdef CISM_USE_EPETRA
-        global_dof = overlapMap.GID(i);
-        sol_value = solutionOverlap[i];
-#else
-        global_dof = overlapMap->getGlobalElement(i);
-        sol_value = solutionOverlap_constView[i];
-#endif
+      for (int i=0; i<overlap_vs_num_my_elts; i++) {
+        global_dof = Albany::getGlobalElement(overlapVS, i); 
+        sol_value = solutionOverlap_constView[i]; 
         int modulo = (global_dof % 2); //check if dof is for u or for v
         int vel_global_dof;
         if (modulo == 0) { //u dof
@@ -971,19 +963,10 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
       }
     }
     else { //note: the case with non-interleaved ordering has not been tested...
-#ifdef CISM_USE_EPETRA
-      numDofs = overlapMap.NumGlobalElements();
-#else
-      numDofs = overlapMap->getGlobalNumElements();
-#endif
-      for (int i=0; i<overlap_map_num_my_elts; i++) {
-#ifdef CISM_USE_EPETRA
-        global_dof = overlapMap.GID(i);
-        sol_value = solutionOverlap[i];
-#else
-        global_dof = overlapMap->getGlobalElement(i);
+      numDofs = Albany::getNumLocalElements(overlapVS); 
+      for (int i=0; i<overlap_vs_num_my_elts; i++) {
+        global_dof = Albany::getGlobalElement(overlapVS, i); 
         sol_value = solutionOverlap_constView[i];
-#endif
         int vel_global_dof;
         if (global_dof < numDofs/2) { //u dof
           vel_global_dof = global_dof+1; //add 1 because node_map is 1-based

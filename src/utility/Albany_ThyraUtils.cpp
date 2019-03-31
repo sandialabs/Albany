@@ -186,6 +186,22 @@ Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace
   return gids;
 }
 
+LO getNumLocalElements( const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+{
+  auto tmap = getTpetraMap(vs,false);
+  if (!tmap.is_null()) {
+    return tmap->getNodeNumElements(); 
+  }
+#if defined(ALBANY_EPETRA)
+  auto emap = getEpetraBlockMap(vs,false);
+  if (!emap.is_null()) {
+    return emap->NumMyElements(); 
+  }
+#endif
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+} 
+
 Teuchos::ArrayView<const GO> getNodeElementList(const Teuchos::RCP<const Thyra_VectorSpace>& vs)
 {
   auto tmap = getTpetraMap(vs,false);

@@ -22,7 +22,7 @@ namespace Albany {
 // Constructor for arrays passed from CISM through Albany-CISM interface
     CismSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Teuchos_Comm>& commT, 
+                  const Teuchos::RCP<const Teuchos_Comm>& comm, 
                   const double * xyz_at_nodes_Ptr, 
                   const int * global_node_id_owned_map_Ptr, 
                   const int * global_element_id_active_owned_map_Ptr, 
@@ -57,7 +57,7 @@ namespace Albany {
     ~CismSTKMeshStruct();
 
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -67,7 +67,7 @@ namespace Albany {
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}){};
     
     void constructMesh(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,

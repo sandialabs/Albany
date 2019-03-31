@@ -23,6 +23,7 @@ createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, co
 
 GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO lid);
 LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO gid);
+LO getNumLocalElements( const Teuchos::RCP<const Thyra_VectorSpace>& vs); 
 Teuchos::Array<GO> getGlobalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                                        const Teuchos::ArrayView<const LO>& lids);
 Teuchos::Array<LO> getLocalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
@@ -178,6 +179,8 @@ void describe (const Teuchos::RCP<const ThyraObjectType>& obj,
 Teuchos::RCP<const Thyra_SpmdVectorSpace>
 getSpmdVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs,
                     const bool throw_on_failure = true);
+
+
 
 // ========= Thyra_ProductXYZ utilities ========== //
 
