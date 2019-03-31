@@ -129,14 +129,14 @@ namespace Albany {
     std::vector<std::vector<int>> ef; 
     std::vector<std::vector<int>> sf; 
     std::vector<std::vector<int>> nf;
-    Teuchos::RCP<Tpetra_Map> elem_mapT; //element map 
-    Teuchos::RCP<Tpetra_Map> node_mapT; //node map 
-    Teuchos::RCP<Tpetra_Map> basal_face_mapT; //basalface map 
-    Teuchos::RCP<Tpetra_Map> top_face_mapT; //topface map 
-    Teuchos::RCP<Tpetra_Map> west_face_mapT; //westface map
-    Teuchos::RCP<Tpetra_Map> east_face_mapT; //eastface map
-    Teuchos::RCP<Tpetra_Map> south_face_mapT; //southface map
-    Teuchos::RCP<Tpetra_Map> north_face_mapT; //northface map
+    Teuchos::RCP<const Thyra_VectorSpace> elem_vs; //element map 
+    Teuchos::RCP<const Thyra_VectorSpace> node_vs; //node map 
+    Teuchos::RCP<const Thyra_VectorSpace> basal_face_vs; //basalface map 
+    Teuchos::RCP<const Thyra_VectorSpace> top_face_vs; //topface map 
+    Teuchos::RCP<const Thyra_VectorSpace> west_face_vs; //westface map
+    Teuchos::RCP<const Thyra_VectorSpace> east_face_vs; //eastface map
+    Teuchos::RCP<const Thyra_VectorSpace> south_face_vs; //southface map
+    Teuchos::RCP<const Thyra_VectorSpace> north_face_vs; //northface map
     bool hasRestartSol;
     double restartTime;
     int debug_output_verbosity; 
