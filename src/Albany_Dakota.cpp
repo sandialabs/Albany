@@ -10,7 +10,7 @@
 #include <iostream>
 #include "Albany_Utils.hpp"
 
-#include "Teuchos_XMLParameterListHelpers.hpp"
+#include <Teuchos_YamlParameterListCoreHelpers.hpp>
 #include "Piro_Epetra_StokhosMPSolver.hpp"
 
 #include "TriKota_Driver.hpp"
@@ -41,7 +41,7 @@ int Albany_Dakota(int argc, char *argv[])
   cmd.parse_cmdline(argc, argv, *out);
 
   RCP<ParameterList> appParams =
-    Teuchos::getParametersFromXmlFile(cmd.yaml_filename);
+    Teuchos::getParametersFromYamlFile(cmd.yaml_filename);
   ParameterList& dakotaParams = appParams->sublist("Piro").sublist("Dakota");
   std::string dakota_input_file =
     dakotaParams.get("Input File", "dakota.in");
