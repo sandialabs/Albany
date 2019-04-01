@@ -15,10 +15,9 @@
 #include "Teuchos_VerboseObject.hpp"
 
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
 
 // uncomment the following to write stuff out to matrix market to debug
-// define WRITE_TO_MATRIX_MARKET
+//#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static int mm_counter_sol = 0;
@@ -32,7 +31,7 @@ namespace LCM {
 SchwarzCoupled::SchwarzCoupled(
     Teuchos::RCP<Teuchos::ParameterList> const&   app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const& comm,
-    Teuchos::RCP<Tpetra_Vector const> const&      initial_guess,
+    Teuchos::RCP<Thyra_Vector const> const&      initial_guess,
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const& lowsfb)
     : supports_xdot_(false)
 {
@@ -316,13 +315,13 @@ SchwarzCoupled::SchwarzCoupled(
   Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>> model_problem_params(
       num_models_);
 
-  disc_maps_.resize(num_models_);
+  disc_vss_.resize(num_models_);
 
   jacs_.resize(num_models_);
 
   precs_.resize(num_models_);
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>> disc_overlap_maps(num_models_);
+  Teuchos::Array<Teuchos::RCP<Thyra_VectorSpace const>> disc_overlap_vss(num_models_);
 
   material_dbs_.resize(num_models_);
 
@@ -426,7 +425,7 @@ SchwarzCoupled::SchwarzCoupled(
         comm, model_app_params_[m].create_weak(), initial_guess, true));
 
     int num_sol_vectors =
-        apps_[m]->getAdaptSolMgrT()->getInitialSolution()->getNumVectors();
+        Albany::getNumVectors(apps_[m]->getAdaptSolMgrT()->getInitialSolution()); 
 
     if (num_sol_vectors > 1)  // have x dot
       supports_xdot_ = true;
@@ -438,35 +437,49 @@ SchwarzCoupled::SchwarzCoupled(
     models_[m] = model_factory.createT();
 
     // create array of individual model jacobians
-    Teuchos::RCP<Tpetra_Operator> const jac_temp =
+    /*Teuchos::RCP<Tpetra_Operator> const jac_temp =
         Teuchos::nonnull(models_[m]->create_W_op()) ?
             ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
             Teuchos::null;
 
     jacs_[m] = Teuchos::nonnull(jac_temp) ?
                    Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
-                   Teuchos::null;
+                   Teuchos::null; */
+    //IKT FIXME: delete above code 
+    Teuchos::RCP<Thyra_LinearOp> const jac_temp =
+        Teuchos::nonnull(models_[m]->create_W_op()) ?
+            models_[m]->create_W_op() :
+            Teuchos::null;
+    
+    jacs_[m] = Teuchos::nonnull(jac_temp) ?
+                   Teuchos::rcp_dynamic_cast<Thyra_LinearOp>(jac_temp, true) :
+                   Teuchos::null; 
 
     // create array of individual model preconditioners
     // these will have same graph as Jacobians for now
-    precs_[m] =
+    /*precs_[m] =
         Teuchos::nonnull(jac_temp) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
-            Teuchos::null;
+            Teuchos::null;*/
+    //IKT FIXME: delete above code 
+    precs_[m] = Teuchos::nonnull(jac_temp) ?
+                   Teuchos::rcp_dynamic_cast<Thyra_LinearOp>(jac_temp, true) :
+                   Teuchos::null; 
 
-    if (precs_[m]->isFillActive()) { precs_[m]->fillComplete(); }
+
+    if (Albany::isFillActive(precs_[m])) { Albany::fillComplete(precs_[m]); }
   }
 
-  // Now get maps, InArgs, OutArgs for each model.
+  // Now get vss, InArgs, OutArgs for each model.
   // Calculate how many parameters, responses there are in total.
   solver_inargs_.resize(num_models_);
   solver_outargs_.resize(num_models_);
 
   for (auto m = 0; m < num_models_; ++m) {
-    disc_maps_[m] = apps_[m]->getMapT();
+    disc_vss_[m] = apps_[m]->getVectorSpace();
 
-    disc_overlap_maps[m] =
-        apps_[m]->getStateMgr().getDiscretization()->getOverlapMapT();
+    disc_overlap_vss[m] =
+        apps_[m]->getStateMgr().getDiscretization()->getOverlapVectorSpace();
 
     solver_inargs_[m]  = models_[m]->createInArgs();
     solver_outargs_[m] = models_[m]->createOutArgs();
@@ -571,9 +584,7 @@ SchwarzCoupled::getThyraRangeSpace() const
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
 
     for (auto m = 0; m < num_models_; ++m) {
-      vs_array.push_back(
-          Thyra::createVectorSpace<ST, LO, Tpetra_GO, KokkosNode>(
-              disc_maps_[m]));
+      vs_array.push_back(disc_vss_[m]); 
     }
 
     range_space_ = Thyra::productVectorSpace<ST>(vs_array);
@@ -589,9 +600,7 @@ SchwarzCoupled::getThyraDomainSpace() const
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
 
     for (auto m = 0; m < num_models_; ++m) {
-      vs_array.push_back(
-          Thyra::createVectorSpace<ST, LO, Tpetra_GO, KokkosNode>(
-              disc_maps_[m]));
+      vs_array.push_back( disc_vss_[m]); 
     }
 
     domain_space_ = Thyra::productVectorSpace<ST>(vs_array);
@@ -609,10 +618,7 @@ SchwarzCoupled::getThyraResponseSpace(int l) const
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
 
     for (auto m = 0; m < num_models_; ++m) {
-      Teuchos::RCP<const Tpetra_Map> mapT =
-          apps_[m]->getResponse(l)->responseMapT();
-      vs_array.push_back(
-          Thyra::createVectorSpace<ST, LO, Tpetra_GO, KokkosNode>(mapT));
+      vs_array.push_back( apps_[m]->getResponse(l)->responseVectorSpace()); 
     }
 
     response_space_ = Thyra::productVectorSpace<ST>(vs_array);
@@ -729,7 +735,7 @@ SchwarzCoupled::create_W_prec() const
 
   Schwarz_CoupledJacobian jac(comm_);
   for (auto m = 0; m < num_models_; m++) {
-    if (precs_[m]->isFillActive()) precs_[m]->fillComplete();
+    if (Albany::isFillActive(precs_[m])) Albany::fillComplete(precs_[m]);
   }
   Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op =
       jac.getThyraCoupledJacobian(precs_, apps_);
@@ -767,7 +773,7 @@ SchwarzCoupled::allocateVectors()
       num_models_);
 
   for (auto m = 0; m < num_models_; ++m) {
-    spaces[m] = Thyra::createVectorSpace<ST>(disc_maps_[m]);
+    spaces[m] = disc_vss_[m]; 
   }
 
   Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const> space =
@@ -781,21 +787,21 @@ SchwarzCoupled::allocateVectors()
   x_dotT_vecs.resize(num_models_);
 
   for (auto m = 0; m < num_models_; ++m) {
-    Teuchos::RCP<Tpetra_MultiVector const> const xMV =
+    Teuchos::RCP<Thyra_MultiVector const> const xMV =
         apps_[m]->getAdaptSolMgrT()->getInitialSolution();
 
-    Teuchos::RCP<Tpetra_Vector> xT_vec =
-        Teuchos::rcp(new Tpetra_Vector(*xMV->getVector(0)));
-    xT_vecs[m] = Thyra::createVector(xT_vec, spaces[m]);
+    Teuchos::RCP<Thyra_Vector> xT_vec = Thyra::createMember(spaces[m]); 
+    Thyra::copy(*xMV->col(0), xT_vec.ptr()); 
+    xT_vecs[m] = xT_vec; 
 
     // Error if xdot isn't around
     // ALBANY_ASSERT(xMV->getNumVectors() >= 2, "Time derivative is not
     // present.");
 
     if (supports_xdot_) {
-      Teuchos::RCP<Tpetra_Vector> x_dotT_vec =
-          Teuchos::rcp(new Tpetra_Vector(*xMV->getVector(1)));
-      x_dotT_vecs[m] = Thyra::createVector(x_dotT_vec, spaces[m]);
+      Teuchos::RCP<Thyra_Vector> x_dotT_vec = Thyra::createMember(spaces[m]); 
+      Thyra::copy(*xMV->col(1), x_dotT_vec.ptr()); 
+      x_dotT_vecs[m] = x_dotT_vec; 
     }
   }
 
@@ -873,8 +879,8 @@ SchwarzCoupled::evalModelImpl(
   Teuchos::Array<Teuchos::RCP<const Thyra_Vector>> xs(num_models_),
       x_dots(num_models_);
 
-  // x_dotdot not used, so just create a global Tpetra RCP
-  Teuchos::RCP<const Tpetra_Vector> x_dotdotT;
+  // x_dotdot not used, so just create a global Thyra Vector RCP
+  Teuchos::RCP<const Thyra_Vector> x_dotdotT;
 
   for (int m = 0; m < num_models_; ++m) {
     // Get each Thyra vector
@@ -929,7 +935,7 @@ SchwarzCoupled::evalModelImpl(
   Teuchos::Array<Teuchos::RCP<Thyra_Vector>> fs_out(num_models_);
   if (f_out != Teuchos::null) {
     for (auto m = 0; m < num_models_; ++m) {
-      // Get each Tpetra vector
+      // Get each Thyra vector
       fs_out[m] = f_out->getNonconstVectorBlock(m);
     }
   }
@@ -949,7 +955,7 @@ SchwarzCoupled::evalModelImpl(
     Teuchos::RCP<Albany::AbstractDiscretization> const& app_disc =
         apps_[m]->getDiscretization();
 
-    app_disc->writeSolutionToMeshDatabase(xs[m], time);
+    app_disc->writeSolutionToMeshDatabase(*xs[m], time);
   }
 
   // W matrix for each individual model
@@ -966,7 +972,7 @@ SchwarzCoupled::evalModelImpl(
           x_dotdot,
           sacado_param_vecs_[m],
           fs_out[m],
-          Albany::createThyraLinearOp(jacs_[m]));
+          jacs_[m]);
       fs_already_computed[m] = true;
     }
     // FIXME: create coupled W matrix from array of model W matrices
@@ -1019,8 +1025,8 @@ SchwarzCoupled::evalModelImpl(
     // separate function, especially as we implement more preconditioners.
     if (!W_prec_out.is_null()) {
       for (auto m = 0; m < num_models_; ++m) {
-        if (!precs_[m]->isFillActive())
-          precs_[m]->resumeFill();
+        if (!Albany::isFillActive(precs_[m]))
+          Albany::resumeFill(precs_[m]);
         if (mf_prec_type_ == JACOBI) {
           // With matrix-free, W_op_out is null, so computeJacobian does not
           // get called earlier.  We need to call it here to get the Jacobians.
@@ -1034,28 +1040,26 @@ SchwarzCoupled::evalModelImpl(
               x_dotdot,
               sacado_param_vecs_[m],
               fs_out[m],
-              Albany::createThyraLinearOp(jacs_[m]));
+              jacs_[m]);
           // Get diagonal of jacs_[m]
-          Teuchos::RCP<Tpetra_Vector> diag =
-              Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap()));
-          jacs_[m]->getLocalDiagCopy(*diag);
+          Teuchos::RCP<Thyra_Vector> diag = Thyra::createMember(jacs_[m]->range());
+          Albany::getDiagonalCopy(jacs_[m],diag); 
           // Take reciprocal of diagonal
-          Teuchos::RCP<Tpetra_Vector> invdiag =
-              Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap()));
+          Teuchos::RCP<Thyra_Vector> invdiag = Thyra::createMember(jacs_[m]->range()); 
           invdiag->reciprocal(*diag);
-          Teuchos::ArrayRCP<const ST> invdiag_constView = invdiag->get1dView();
+          auto invdiag_constView = Albany::getLocalData(Teuchos::rcp_dynamic_cast<const Thyra_Vector>(invdiag));
           // Zero out precs_[m]
-          precs_[m]->resumeFill();
-          precs_[m]->scale(0.0);
+          Albany::resumeFill(precs_[m]); 
+          Albany::scale(precs_[m], 0.0); 
           // Create Jacobi preconditioner
-          for (size_t i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
-            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
+          // IKT, FIXME: check that the following gives same as jacs_[m]->getNodeNumRows()
+          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
+            GO global_row = Albany::getGlobalElement(jacs_[m]->range(),i);
             Teuchos::Array<ST>        matrixEntriesT(1);
-            Teuchos::Array<Tpetra_GO> matrixIndicesT(1);
+            Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = invdiag_constView[i];
             matrixIndicesT[0] = global_row;
-            precs_[m]->replaceGlobalValues(
-                global_row, matrixIndicesT(), matrixEntriesT());
+            Albany::replaceGlobalValues(precs_[m], global_row, matrixIndicesT(), matrixEntriesT());
           }
         } else if (mf_prec_type_ == ABS_ROW_SUM) {
           // With matrix-free, W_op_outT is null, so computeJacobianT does not
@@ -1070,57 +1074,57 @@ SchwarzCoupled::evalModelImpl(
               x_dotdot,
               sacado_param_vecs_[m],
               fs_out[m],
-              Albany::createThyraLinearOp(jacs_[m]));
+              jacs_[m]);
           // Create vector to store absrowsum
-          Teuchos::RCP<Tpetra_Vector> absrowsum =
-              Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap()));
-          absrowsum->putScalar(0.0);
-          Teuchos::ArrayRCP<ST> absrowsum_nonconstView =
-              absrowsum->get1dViewNonConst();
+          Teuchos::RCP<Thyra_Vector> absrowsum = Thyra::createMember(jacs_[m]->range()); 
+          absrowsum->assign(0.0);
+          auto absrowsum_nonconstView = Albany::getNonconstLocalData(absrowsum);
           // Compute abs sum of each row and store in absrowsum vector
-          for (std::size_t i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
-            std::size_t NumEntries = jacs_[m]->getNumEntriesInLocalRow(i);
+          // IKT, FIXME: check that the following gives same as jacs_[m]->getNodeNumRows()
+          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
+            std::size_t NumEntries = Albany::getNumEntriesInLocalRow(jacs_[m], i); 
             Teuchos::Array<LO> Indices(NumEntries);
             Teuchos::Array<ST> Values(NumEntries);
             // Get local row
-            jacs_[m]->getLocalRowCopy(i, Indices(), Values(), NumEntries);
+            Albany::getLocalRowValues(jacs_[m], i, Indices, Values); 
             // Compute abs row rum
             for (std::size_t j = 0; j < NumEntries; j++)
               absrowsum_nonconstView[i] += std::abs(Values[j]);
           }
           // Invert absrowsum
-          Teuchos::RCP<Tpetra_Vector> invabsrowsum =
-              Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap()));
+          Teuchos::RCP<Thyra_Vector> invabsrowsum = Thyra::createMember(jacs_[m]->range()); 
           invabsrowsum->reciprocal(*absrowsum);
-          Teuchos::ArrayRCP<const ST> invabsrowsum_constView =
-              invabsrowsum->get1dView();
+          auto invabsrowsum_constView = Albany::getLocalData(Teuchos::rcp_dynamic_cast<const Thyra_Vector>(invabsrowsum));
           // Zero out precs_[m]
-          precs_[m]->resumeFill();
-          precs_[m]->scale(0.0);
+          Albany::resumeFill(precs_[m]); 
+          Albany::scale(precs_[m], 0.0); 
           // Create diagonal abs row sum preconditioner
-          for (std::size_t i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
-            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
+          // IKT, FIXME: check that the following gives same as jacs_[m]->getNodeNumRows()
+          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
+            GO global_row = Albany::getGlobalElement(jacs_[m]->range(),i);
             Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<Tpetra_GO> matrixIndicesT(1);
+            Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = invabsrowsum_constView[i];
             matrixIndicesT[0] = global_row;
-            precs_[m]->replaceGlobalValues(
+            Albany::replaceGlobalValues(precs_[m], 
                 global_row, matrixIndicesT(), matrixEntriesT());
           }
         } else if (mf_prec_type_ == ID) {
           // Create Identity
-          for (std::size_t i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
-            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
+          // IKT, FIXME: check that the following gives same as jacs_[m]->getNodeNumRows()
+          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
+            GO global_row = Albany::getGlobalElement(jacs_[m]->range(),i);
             Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<Tpetra_GO> matrixIndicesT(1);
+            Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = 1.0;
             matrixIndicesT[0] = global_row;
-            precs_[m]->replaceGlobalValues(
+            Albany::replaceGlobalValues(precs_[m], 
                 global_row, matrixIndicesT(), matrixEntriesT());
           }
         }
-        if (precs_[m]->isFillActive())
-          precs_[m]->fillComplete();
+        if (Albany::isFillActive(precs_[m])) {
+          Albany::fillComplete(precs_[m]); 
+        }
       }
       Schwarz_CoupledJacobian jac(comm_);
       Teuchos::RCP<Thyra_LinearOp> W_op =

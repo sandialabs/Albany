@@ -26,7 +26,7 @@ class SchwarzCoupled : public Thyra::ModelEvaluatorDefaultBase<ST>
   SchwarzCoupled(
       Teuchos::RCP<Teuchos::ParameterList> const&   app_params,
       Teuchos::RCP<Teuchos::Comm<int> const> const& comm,
-      Teuchos::RCP<Tpetra_Vector const> const&      initial_guessT,
+      Teuchos::RCP<Thyra_Vector const> const&      initial_guess,
       Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const&
           lowsfb);
 
@@ -160,13 +160,13 @@ class SchwarzCoupled : public Thyra::ModelEvaluatorDefaultBase<ST>
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_;
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>> disc_maps_;
+  Teuchos::Array<Teuchos::RCP<Thyra_VectorSpace const>> disc_vss_;
 
   /// Teuchos array holding main diagonal jacobians (non-coupled models)
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs_;
+  Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>> jacs_;
 
   /// Teuchos array holding main diagonal preconditioners (non-coupled models)
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> precs_;
+  Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>> precs_;
 
   int num_models_;
 

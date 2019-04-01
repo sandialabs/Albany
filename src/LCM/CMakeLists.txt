@@ -77,6 +77,7 @@ set(model-eval-sources
   "${LCM_DIR}/solvers/Schwarz_StatelessObserverImpl.cpp"
   "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.cpp"
   "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.cpp"
+  "${LCM_DIR}/solvers/Schwarz_Coupled.cpp"
 )
 set(model-eval-headers
   "${LCM_DIR}/solvers/Schwarz_Alternating.hpp"
@@ -85,13 +86,8 @@ set(model-eval-headers
   "${LCM_DIR}/solvers/Schwarz_StatelessObserverImpl.hpp"
   "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.hpp"
   "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.hpp"
+  "${LCM_DIR}/solvers/Schwarz_Coupled.hpp"
 )
-  #set(model-eval-sources ${model-eval-sources}
-  #  "${LCM_DIR}/solvers/Schwarz_Coupled.cpp"
-  #)
-  #set(model-eval-headers ${model-eval-headers}
-  #  "${LCM_DIR}/solvers/Schwarz_Coupled.hpp"
-  #)
 ENDIF(ALBANY_STK)
 
 # LCM special boundary conditions

@@ -68,6 +68,9 @@ getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 Teuchos::RCP<const Thyra_VectorSpace>
 getRowSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
+std::size_t
+getNumEntriesInLocalRow (const Teuchos::RCP<const Thyra_LinearOp>& lop, const LO lrow);
+
 // Fill related helpers
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop);
@@ -101,12 +104,19 @@ int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const Teuchos::ArrayView<const GO> indices,
                           const Teuchos::ArrayView<const ST> values);
 
+void replaceGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                         const GO gid,
+                         const Teuchos::ArrayView<const GO> indices,
+                         const Teuchos::ArrayView<const ST> values);
+
 void insertGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                          const GO grow,
                          const Teuchos::ArrayView<const GO> cols,
                          const Teuchos::ArrayView<const ST> values);
 
 int getGlobalMaxNumRowEntries (const Teuchos::RCP<const Thyra_LinearOp>& lop);
+
+void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val); 
 
 Teuchos::RCP<const Thyra_VectorSpace>
 createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs); 
@@ -145,7 +155,7 @@ Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> getLocalData (const Thyra_MultiVe
 DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v);
 DeviceView1d<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v);
 
-int getNumVectors (const Teuchos::RCP<Thyra_MultiVector>& mv);
+int getNumVectors (const Teuchos::RCP<const Thyra_MultiVector>& mv);
 
 // This is just a utility routine, that mildly extend the update method of Thyra_Vector,
 // but does not have the complex signature of the linear_combination method of Thyra_Vector.
