@@ -176,9 +176,10 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp () const {
 #endif
   } else {
     Teuchos::RCP<Tpetra_CrsMatrix> mat = Teuchos::rcp (new Tpetra_CrsMatrix(m_graph->t_graph));
-    mat->fillComplete();
     auto const zero = Teuchos::ScalarTraits<ST>::zero();
+    mat->resumeFill(); 
     mat->setAllToScalar(zero);
+    mat->fillComplete(); 
     op = createThyraLinearOp(Teuchos::rcp_implicit_cast<Tpetra_Operator>(mat));
   }
 

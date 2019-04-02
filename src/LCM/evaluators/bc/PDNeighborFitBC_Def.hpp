@@ -7,7 +7,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "Tpetra_CrsMatrix.hpp"
 
 #include "Albany_STKDiscretization.hpp"
 

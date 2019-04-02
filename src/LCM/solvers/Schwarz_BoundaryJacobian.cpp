@@ -69,7 +69,7 @@ Schwarz_BoundaryJacobian::getExplicitOperator() const
 
 //
 // Returns the result of a Thyra_Operator applied to a
-// Tpetra_MultiVector X in Y.
+// Thyra_MultiVector X in Y.
 //
 void 
 Schwarz_BoundaryJacobian::applyImpl (

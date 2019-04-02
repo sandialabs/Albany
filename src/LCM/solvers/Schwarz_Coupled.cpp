@@ -437,15 +437,6 @@ SchwarzCoupled::SchwarzCoupled(
     models_[m] = model_factory.createT();
 
     // create array of individual model jacobians
-    /*Teuchos::RCP<Tpetra_Operator> const jac_temp =
-        Teuchos::nonnull(models_[m]->create_W_op()) ?
-            ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
-            Teuchos::null;
-
-    jacs_[m] = Teuchos::nonnull(jac_temp) ?
-                   Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
-                   Teuchos::null; */
-    //IKT FIXME: delete above code 
     Teuchos::RCP<Thyra_LinearOp> const jac_temp =
         Teuchos::nonnull(models_[m]->create_W_op()) ?
             models_[m]->create_W_op() :
@@ -457,11 +448,6 @@ SchwarzCoupled::SchwarzCoupled(
 
     // create array of individual model preconditioners
     // these will have same graph as Jacobians for now
-    /*precs_[m] =
-        Teuchos::nonnull(jac_temp) ?
-            Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
-            Teuchos::null;*/
-    //IKT FIXME: delete above code 
     precs_[m] = Teuchos::nonnull(jac_temp) ?
                    Teuchos::rcp_dynamic_cast<Thyra_LinearOp>(jac_temp, true) :
                    Teuchos::null; 
@@ -1052,7 +1038,6 @@ SchwarzCoupled::evalModelImpl(
           Albany::resumeFill(precs_[m]); 
           Albany::scale(precs_[m], 0.0); 
           // Create Jacobi preconditioner
-          // IKT, FIXME: check that the following gives same as jacs_[m]->getNodeNumRows()
           for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
             GO global_row = Albany::getGlobalElement(jacs_[m]->range(),i);
             Teuchos::Array<ST>        matrixEntriesT(1);
@@ -1080,7 +1065,6 @@ SchwarzCoupled::evalModelImpl(
           absrowsum->assign(0.0);
           auto absrowsum_nonconstView = Albany::getNonconstLocalData(absrowsum);
           // Compute abs sum of each row and store in absrowsum vector
-          // IKT, FIXME: check that the following gives same as jacs_[m]->getNodeNumRows()
           for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
             std::size_t NumEntries = Albany::getNumEntriesInLocalRow(jacs_[m], i); 
             Teuchos::Array<LO> Indices(NumEntries);
@@ -1099,7 +1083,6 @@ SchwarzCoupled::evalModelImpl(
           Albany::resumeFill(precs_[m]); 
           Albany::scale(precs_[m], 0.0); 
           // Create diagonal abs row sum preconditioner
-          // IKT, FIXME: check that the following gives same as jacs_[m]->getNodeNumRows()
           for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
             GO global_row = Albany::getGlobalElement(jacs_[m]->range(),i);
             Teuchos::Array<ST> matrixEntriesT(1);
@@ -1111,7 +1094,6 @@ SchwarzCoupled::evalModelImpl(
           }
         } else if (mf_prec_type_ == ID) {
           // Create Identity
-          // IKT, FIXME: check that the following gives same as jacs_[m]->getNodeNumRows()
           for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
             GO global_row = Albany::getGlobalElement(jacs_[m]->range(),i);
             Teuchos::Array<ST> matrixEntriesT(1);

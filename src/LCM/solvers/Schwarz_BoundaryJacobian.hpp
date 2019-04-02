@@ -41,31 +41,21 @@ class Schwarz_BoundaryJacobian : public Thyra_LinearOp
   void
   initialize();
 
-  /// Returns the result of a Tpetra_Operator applied to a
-  /// Tpetra_MultiVector X in Y.
-  /*virtual void
-  apply(
-      Tpetra_MultiVector const& X,
-      Tpetra_MultiVector&       Y,
-      Teuchos::ETransp          mode  = Teuchos::NO_TRANS,
-      ST                        alpha = Teuchos::ScalarTraits<ST>::one(),
-      ST                        beta = Teuchos::ScalarTraits<ST>::zero()) const;*/
-    
-   //! Overrides Thyra::LinearOpBase purely virtual method
-   /// Returns the result of a Thyra_LinearOp applied to a
-   /// Thyra_MultiVector X in Y.
-   virtual void 
-   applyImpl (const Thyra::EOpTransp M_trans,
+  //! Overrides Thyra::LinearOpBase purely virtual method
+  /// Returns the result of a Thyra_LinearOp applied to a
+  /// Thyra_MultiVector X in Y.
+  virtual void 
+  applyImpl (const Thyra::EOpTransp M_trans,
               const Thyra_MultiVector& X,
               const Teuchos::Ptr<Thyra_MultiVector>& Y,
               const ST alpha = Teuchos::ScalarTraits<ST>::one(),
               const ST beta = Teuchos::ScalarTraits<ST>::zero()) const;
     
-   //! Overrides Thyra::LinearOpBase purely virtual method
-   bool opSupportedImpl(Thyra::EOpTransp /*M_trans*/) const {
+  //! Overrides Thyra::LinearOpBase purely virtual method
+  bool opSupportedImpl(Thyra::EOpTransp /*M_trans*/) const {
      // The underlying scalar type is not complex, and we support transpose, so we support everything.
-     return true;
-   }
+    return true;
+  }
 
    /// Returns explicit matrix representation of operator if available.
    Teuchos::RCP<Thyra_LinearOp>
