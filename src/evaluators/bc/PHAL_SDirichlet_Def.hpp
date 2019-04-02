@@ -141,10 +141,10 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
   auto const& fixed_dofs = dirichlet_workset.fixed_dofs_;
 #endif
 
-  row_is_dbc_->template modify<Kokkos::HostSpace>();
+  row_is_dbc_->modify_host();
   {
     auto row_is_dbc_data =
-        row_is_dbc_->template getLocalView<Kokkos::HostSpace>();
+        row_is_dbc_->getLocalViewHost();
     ALBANY_ASSERT(row_is_dbc_data.extent(1) == 1);
 #if defined(ALBANY_LCM)
     if (dirichlet_workset.is_schwarz_bc_ == false) {  // regular SDBC
@@ -210,7 +210,7 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 #endif
 
   this->set_row_and_col_is_dbc(dirichlet_workset); 
-  auto col_is_dbc_data = col_is_dbc_->template getLocalView<Kokkos::HostSpace>();
+  auto col_is_dbc_data = col_is_dbc_->getLocalViewHost();
 
   size_t const num_local_rows = J->getNodeNumRows();
   auto         min_local_row  = J->getRowMap()->getMinLocalIndex();
