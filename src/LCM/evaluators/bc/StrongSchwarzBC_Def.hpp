@@ -13,7 +13,6 @@
 #include "Teuchos_TestForException.hpp"
 
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
 
 namespace LCM {
 
@@ -555,12 +554,9 @@ template <typename StrongSchwarzBC, typename Traits>
 void
 fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<const Tpetra_Vector> const_disp =
-      Albany::getConstTpetraVector(dirichlet_workset.x);
-  Teuchos::RCP<const Tpetra_Vector> const_velo =
-      Albany::getConstTpetraVector(dirichlet_workset.xdot);
-  Teuchos::RCP<const Tpetra_Vector> const_acce =
-      Albany::getConstTpetraVector(dirichlet_workset.xdotdot);
+  Teuchos::RCP<const Thyra_Vector> const_disp = dirichlet_workset.x;
+  Teuchos::RCP<const Thyra_Vector> const_velo = dirichlet_workset.xdot;
+  Teuchos::RCP<const Thyra_Vector> const_acce = dirichlet_workset.xdotdot;
 
   bool const has_disp = const_disp != Teuchos::null;
 
@@ -571,31 +567,31 @@ fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
   ALBANY_ASSERT(has_disp == true);
 
   // Displacement
-  Teuchos::RCP<Tpetra_Vector> disp =
+  Teuchos::RCP<Thyra_Vector> disp =
       has_disp == true ?
-          Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*const_disp)) :
+          Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*const_disp)) :
           Teuchos::null;
 
-  Teuchos::ArrayRCP<ST> disp_view =
-      has_disp == true ? disp->get1dViewNonConst() : Teuchos::null;
+  auto disp_view = 
+      has_disp == true ? Albany::getNonconstLocalData(disp) : Teuchos::null; 
 
   // Velocity
-  Teuchos::RCP<Tpetra_Vector> velo =
+  Teuchos::RCP<Thyra_Vector> velo =
       has_velo == true ?
-          Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*const_velo)) :
+          Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*const_velo)) :
           Teuchos::null;
 
-  Teuchos::ArrayRCP<ST> velo_view =
-      has_velo == true ? velo->get1dViewNonConst() : Teuchos::null;
+  auto velo_view = 
+      has_velo == true ? Albany::getNonconstLocalData(velo) : Teuchos::null; 
 
   // Acceleration
-  Teuchos::RCP<Tpetra_Vector> acce =
+  Teuchos::RCP<Thyra_Vector> acce =
       has_acce == true ?
-          Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*const_acce)) :
+          Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*const_acce)) :
           Teuchos::null;
 
-  Teuchos::ArrayRCP<ST> acce_view =
-      has_acce == true ? acce->get1dViewNonConst() : Teuchos::null;
+  auto acce_view = 
+      has_acce == true ? Albany::getNonconstLocalData(acce) : Teuchos::null; 
 
   std::vector<std::vector<int>> const& ns_nodes =
       dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
