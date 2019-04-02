@@ -11,7 +11,6 @@
 #include "Albany_Utils.hpp"
 
 #include <Teuchos_YamlParameterListCoreHelpers.hpp>
-#include "Piro_Epetra_StokhosMPSolver.hpp"
 
 #include "TriKota_Driver.hpp"
 #include "TriKota_DirectApplicInterface.hpp"
