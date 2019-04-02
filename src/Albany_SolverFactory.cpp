@@ -50,10 +50,8 @@
 
 #if defined(ALBANY_LCM) && defined(ALBANY_STK)
 #include "Schwarz_Alternating.hpp"
-//IKT, FIXME: uncomment the following once they are converted
-//to Thyra
-//#include "Schwarz_Coupled.hpp"
-//#include "Schwarz_PiroObserver.hpp"
+#include "Schwarz_Coupled.hpp"
+#include "Schwarz_PiroObserver.hpp"
 #endif
 
 #ifdef ALBANY_AERAS
@@ -564,9 +562,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     ALBANY_ASSERT(appComm->getSize() == 1, "Parallel Schwarz requires DTK");
 #endif  // ALBANY_DTK
   }
-  //IKT, FIXME: uncomment the following once 
-  //Coupled Schwarz code is ported to Thyra
-  /*if (solutionMethod == "Coupled Schwarz") {
+  if (solutionMethod == "Coupled Schwarz") {
     // IKT: We are assuming the "Piro" list will come from the main coupled
     // Schwarz input file (not the sub-input
     // files for each model).
@@ -599,7 +595,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // instance and so albanyApp is null.
     return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
         piroParams, coupled_model_with_solve, Teuchos::null, observerT_);
-  }*/
+  }
 
   if (solutionMethod == "Schwarz Alternating") {
     return rcp(
