@@ -356,7 +356,7 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: MueLu
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
                 Ifpack2: 
                   Overlap: 2

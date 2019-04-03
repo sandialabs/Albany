@@ -13,10 +13,6 @@
 #include <nlopt.h>
 #endif //ATO_USES_NLOPT
 
-#ifdef ATO_USES_DOTK
-#include "ATO_DOTk_Optimizer.hpp"
-#endif //ATO_USES_DOTK
-
 #include <algorithm>
 
 #define OUTPUT_TO_SCREEN
@@ -47,10 +43,6 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
 
 #endif //ATO_USES_NLOPT
 
-#ifdef ATO_USES_DOTK
-  else
-  if( optPackage == "DOTk"  )  return Teuchos::rcp(new Optimizer_DOTk(optimizerParams));
-#endif //ATO_USES_DOTK
   else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
@@ -63,9 +55,6 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
       << "/t NLopt ... NLOPT library\n" 
 #endif //ATO_USES_NLOPT
 
-#ifdef ATO_USES_DOTK
-      << "/t DOTk ... Design Optimization Toolkit library\n" 
-#endif //ATO_USES_DOTK
       << std::endl);
 
 }

@@ -735,15 +735,6 @@ ELSE()
   set(PlatoEngine_LIB )
 ENDIF()
 
-IF ( ENABLE_DOTK )
-  include_directories (${DOTK_INCLUDE_DIR})
-  link_directories (${DOTK_LIBRARY_DIR})
-  set(DOTK_LIB )
-ELSE()
-  set(DOTK_LIB )
-ENDIF()
-
-
 # LAME
 IF(ALBANY_LAME)
   include_directories (${LAME_INCLUDE_DIR})
@@ -851,7 +842,6 @@ set(ALL_LIBRARIES
   ${LAME_LIB}
   ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
-  ${DOTK_LIB}
   ${LAMENT_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
   ${Albany_EXTRA_LIBRARIES}
