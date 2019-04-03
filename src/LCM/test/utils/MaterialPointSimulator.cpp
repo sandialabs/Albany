@@ -507,6 +507,7 @@ main(int ac, char* av[])
     Albany::createLocallyReplicatedVectorSpace(workset_size * num_dims * num_nodes, commT); 
 
   Teuchos::RCP<Thyra_Vector> solution_vector = Thyra::createMember(space);
+  solution_vector->assign(0.0); 
 
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
