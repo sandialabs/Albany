@@ -457,7 +457,7 @@ STKDiscretization(const Teuchos::RCP<Teuchos::ParameterList>&  discParams_,
  , discParams(discParams_)
  , interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-  this->updateMesh(); 
+  //nothing to do 
 }
 
 STKDiscretization::~STKDiscretization()

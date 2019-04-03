@@ -284,6 +284,8 @@ TEUCHOS_UNIT_TEST(HeliumODEs, test1)
   Teuchos::RCP<Albany::AbstractDiscretization> discretization =
       Teuchos::rcp(new Albany::STKDiscretization(
           discretizationParameterList, stkMeshStruct, commT));
+  auto& stk_disc = static_cast<Albany::STKDiscretization&>(*discretization);
+  stk_disc.updateMesh(); 
 
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager
