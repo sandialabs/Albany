@@ -35,6 +35,7 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
  , m_domain_vs(domain_vs)
  , m_range_vs(range_vs)
  , m_filled (false)
+ , m_static_profile (static_profile) 
 {
   auto bt = Albany::build_type();
   TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for albany.\n");

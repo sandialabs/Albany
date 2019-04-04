@@ -43,6 +43,7 @@ class ProjectIPtoNodalFieldManager : public Adapt::NodalDataBase::Manager
   Teuchos::RCP<MassLinearOp>         mass_linear_op;
   Teuchos::RCP<Thyra_MultiVector>       ip_field;
   Teuchos::RCP<const Albany::ThyraCrsMatrixFactory> ovl_graph_factory;
+  bool is_static; 
   // Start position in the nodal vector database, and number of vectors we're
   // using.
   int ndb_start, ndb_numvecs;
@@ -345,12 +346,20 @@ class ProjectIPtoNodalFieldManager::MassLinearOp
   {
     return linear_op_;
   }
-
+  
+  bool&
+  is_static()
+  {
+    return is_static_;
+  }
+  
+  
   static MassLinearOp*
   create(EMassLinearOpType::Enum type);
 
  protected:
   Teuchos::RCP<Thyra_LinearOp> linear_op_;
+  bool is_static_; 
 };
 
 class ProjectIPtoNodalFieldManager::FullMassLinearOp
@@ -364,7 +373,7 @@ class ProjectIPtoNodalFieldManager::FullMassLinearOp
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf)
   {
     const int  num_nodes = bf.extent(1), num_pts = bf.extent(2);
-    const bool is_static_graph = Albany::isStaticGraph(this->linear_op_); 
+    const bool is_static_graph = this->is_static(); 
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
         GO                        global_row = workset.wsElNodeID[cell][rnode];
@@ -389,10 +398,10 @@ class ProjectIPtoNodalFieldManager::FullMassLinearOp
                             << " of mass matrix is missing elements \n"); 
         } 
         else {
-          ALBANY_ASSERT(true, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
+          ALBANY_ASSERT(false, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
                            << "response is not supported with dynamic graph!\n"); 
           //IKT, FIXME: does this case need to be implemented? 
-          //this->linear_op_->insertGlobalValues(global_row, cols, vals);
+          Albany::insertGlobalValues(this->linear_op_, global_row, cols(), vals()); 
         }
       }
     }
@@ -410,7 +419,7 @@ class ProjectIPtoNodalFieldManager::LumpedMassLinearOp
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf)
   {
     const int  num_nodes = bf.extent(1), num_pts = bf.extent(2);
-    const bool is_static_graph = Albany::isStaticGraph(this->linear_op_); 
+    const bool is_static_graph = this->is_static(); 
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (int rnode = 0; rnode < num_nodes; ++rnode) {
         const GO global_row = workset.wsElNodeID[cell][rnode];
@@ -427,10 +436,10 @@ class ProjectIPtoNodalFieldManager::LumpedMassLinearOp
           Albany::addToGlobalRowValues(this->linear_op_, global_row, cols(), vals());
         }
         else {
-          ALBANY_ASSERT(true, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
+          ALBANY_ASSERT(false, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
                            << "response is not supported with dynamic graph!\n");
           //IKT, FIXME: does this case need to be implemented?  
-          //this->linear_op_->insertGlobalValues(global_row, cols, vals);
+          Albany::insertGlobalValues(this->linear_op_, global_row, cols, vals);
         }
       }
     }
@@ -686,27 +695,27 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   // and nonoverlapping maps and so must be reallocated.
   mgr_->ovl_graph_factory = 
     p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalOpFactory();
-  if (Teuchos::nonnull(mgr_->ovl_graph_factory)) {
-    // Use a graph if it's available.
-    mgr_->mass_linear_op->linear_op() = mgr_->ovl_graph_factory->createOp();
-    //IKT, note to self: createOp calls fillComplete() on the matrix that is returned
-    //before it is returned  
-  } else {
-    ALBANY_ASSERT(true, "Construction of graph on the fly not implemented in \n" 
+  mgr_->mass_linear_op->is_static() = true; 
+  if (Teuchos::is_null(mgr_->ovl_graph_factory)) {
+    ALBANY_ASSERT(false, "Construction of graph on the fly not implemented in \n" 
                      << "ProjectIPtoNodalField preEvaluate routine!\n");
     //IKT, FIXME: implement this case?  
     // Otherwise, construct the graph on the fly.
-    /*const Teuchos::RCP<const Tpetra_Map> ovl_map =
+    mgr_->mass_linear_op->is_static() = false; 
+    const Teuchos::RCP<const Thyra_VectorSpace> ovl_vs =
         (p_state_mgr_->getStateInfoStruct()
              ->getNodalDataBase()
              ->getNodalDataVector()
-             ->getOverlapMap());
+             ->getOverlappedVectorSpace());
     // Enough for first-order hex, but only a hint.
     const size_t max_num_entries = 27;
-    mgr_->mass_linear_op->linear_op() =
-        Teuchos::rcp(new Tpetra_CrsMatrix(ovl_map, ovl_map, max_num_entries));*/
+    Teuchos::RCP<Albany::ThyraCrsMatrixFactory> ovl_graph_factory_nonconst = 
+          Teuchos::rcp(new Albany::ThyraCrsMatrixFactory(ovl_vs, ovl_vs, max_num_entries, false));
+    ovl_graph_factory_nonconst->fillComplete();  
+    mgr_->ovl_graph_factory = Teuchos::rcp_dynamic_cast<const Albany::ThyraCrsMatrixFactory>(ovl_graph_factory_nonconst); 
   }
-  mgr_->ip_field = Thyra::createMembers(Albany::getRowSpace(mgr_->mass_linear_op->linear_op()), mgr_->ndb_numvecs);
+  mgr_->mass_linear_op->linear_op() = mgr_->ovl_graph_factory->createOp();
+  mgr_->ip_field = Thyra::createMembers(mgr_->ovl_graph_factory->getRangeVectorSpace(), mgr_->ndb_numvecs);
   mgr_->ip_field->assign(0.0); 
 }
 
@@ -837,8 +846,8 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   {
     // Get overlapping and nonoverlapping maps.
     const Teuchos::RCP<const Thyra_LinearOp>& mm_ovl = mgr_->mass_linear_op->linear_op();
-    if (!Albany::isStaticGraph(mm_ovl)) {
-      ALBANY_ASSERT(true, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
+    if (!mgr_->mass_linear_op->is_static()) { 
+      ALBANY_ASSERT(false, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
                          << "response is not supported with dynamic graph!\n"); 
       // If this matrix was constructed without a graph, grab the graph now and
       // store it for possible reuse later.
@@ -846,7 +855,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
       //p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->updateNodalGraph(
       //    mm_ovl->getCrsGraph());
     }
-    const Teuchos::RCP<const Thyra_VectorSpace> ovl_space = Albany::getRowSpace(mm_ovl); 
+    const Teuchos::RCP<const Thyra_VectorSpace> ovl_space = mgr_->ovl_graph_factory->getRangeVectorSpace(); 
     const Teuchos::RCP<const Thyra_VectorSpace> space = Albany::createOneToOneVectorSpace(ovl_space);
     // Export the mass matrix.
     // IKT, the last argument in the following line tells the code to use a static profile to build

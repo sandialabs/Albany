@@ -43,6 +43,8 @@ struct ThyraCrsMatrixFactory {
 
   bool is_filled () const { return m_filled; }
 
+  bool is_static_profile () const { return m_static_profile; } 
+
   Teuchos::RCP<Thyra_LinearOp>  createOp () const;
 
 private:
@@ -56,6 +58,7 @@ private:
   Teuchos::RCP<const Thyra_VectorSpace> m_range_vs;
 
   bool m_filled;
+  bool m_static_profile; 
 };
 
 } // namespace Albany
