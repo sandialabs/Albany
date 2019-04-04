@@ -401,7 +401,7 @@ class ProjectIPtoNodalFieldManager::FullMassLinearOp
           ALBANY_ASSERT(false, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
                            << "response is not supported with dynamic graph!\n"); 
           //IKT, FIXME: does this case need to be implemented? 
-          Albany::insertGlobalValues(this->linear_op_, global_row, cols(), vals()); 
+          Albany::addToGlobalRowValues(this->linear_op_, global_row, cols(), vals()); 
         }
       }
     }
@@ -439,7 +439,7 @@ class ProjectIPtoNodalFieldManager::LumpedMassLinearOp
           ALBANY_ASSERT(false, "Albany is switching to static graph, so ProjectIPtoNodalField \n" 
                            << "response is not supported with dynamic graph!\n");
           //IKT, FIXME: does this case need to be implemented?  
-          Albany::insertGlobalValues(this->linear_op_, global_row, cols, vals);
+          Albany::addToGlobalRowValues(this->linear_op_, global_row, cols, vals);
         }
       }
     }
@@ -852,8 +852,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
       // If this matrix was constructed without a graph, grab the graph now and
       // store it for possible reuse later.
       // IKT, FIXME: does this case need to be implemented? 
-      //p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->updateNodalGraph(
-      //    mm_ovl->getCrsGraph());
+      p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->updateNodalGraph(mgr_->ovl_graph_factory); 
     }
     const Teuchos::RCP<const Thyra_VectorSpace> ovl_space = mgr_->ovl_graph_factory->getRangeVectorSpace(); 
     const Teuchos::RCP<const Thyra_VectorSpace> space = Albany::createOneToOneVectorSpace(ovl_space);

@@ -9,6 +9,8 @@
 # copy mesh files from current source dir to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar.dmg
                ${CMAKE_CURRENT_BINARY_DIR}/bar.dmg COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar_serial0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/bar_serial0.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar_p0.smb
                ${CMAKE_CURRENT_BINARY_DIR}/bar_p0.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar_p1.smb
