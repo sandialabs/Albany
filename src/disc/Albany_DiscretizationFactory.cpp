@@ -479,6 +479,8 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
         }
     }
 #if defined(ALBANY_AERAS) && defined(ALBANY_STK)
+    //IKT FIXME: uncomment when Aeras is ported to Thyra 
+    /*
     else if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") {
         //IK, 1/8/15: Added construction of Aeras::SpectralDiscretization object.
         //WARNING: meshSpecsType() right now is set to STK_MS even for an Aeras::SpectralDiscretization, b/c that's how
@@ -486,7 +488,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
         //But one may want to change it to, e.g., AERAS_MS, to prevent confusion.
         Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
         return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, numLevels, numTracers, commT, explicit_scheme, rigidBodyModes));
-    }
+    }*/
 #endif
     return Teuchos::null;
 }
