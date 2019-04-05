@@ -62,10 +62,10 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 
-# 6. Repeat process for Analysis problems if "inputAnalysis.yaml" exists
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.yaml COPYONLY)
+# 6. Repeat process for Analysis problems if "inputAnalysisT.yaml" exists
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysisT.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysisT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysisT.yaml COPYONLY)
 
   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
@@ -73,24 +73,24 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
   endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
-  add_test(${testName} ${AlbanyAnalysis.exe})
+  add_test(${testName}T ${AlbanyAnalysisT.exe} inputAnalysisT.yaml)
 
 # Additional files and tests for Dakota restart testing
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.in
                  ${CMAKE_CURRENT_BINARY_DIR}/dak.in COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.restart
                  ${CMAKE_CURRENT_BINARY_DIR}/dak.restart COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis_restart.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis_restart.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis_restartT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis_restartT.yaml COPYONLY)
 
   if (ALBANY_DAKOTA_RESTART_EXAMPLES)
-    add_test(${testName}_restart ${AlbanyAnalysis.exe} inputAnalysis_restart.yaml)
+    add_test(${testName}_restart ${AlbanyAnalysisT.exe} inputAnalysis_restartT.yaml)
     if(ALBANY_CTEST_TIMEOUT)
-      set_tests_properties (${testName}_restart PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+      set_tests_properties (${testName}_restartT PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
     endif()
   endif (ALBANY_DAKOTA_RESTART_EXAMPLES)
 #
 
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysisT.yaml)
 # This Analysis requres Dakota
 endif()
