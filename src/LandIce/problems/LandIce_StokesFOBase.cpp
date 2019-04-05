@@ -209,9 +209,9 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
        << "   VecDimFO    = " << vecDimFO << "\n";
   for (auto it : dl_side) {
     *out << " Side Set '" << it.first << "':\n" 
-         << "  Vertices   = " << it.second->vertices_vector->dimension(1) << "\n"
-         << "  Nodes      = " << it.second->node_scalar->dimension(1) << "\n"
-         << "  QuadPts    = " << it.second->qp_scalar->dimension(1) << "\n";
+         << "  Vertices   = " << it.second->vertices_vector->extent(1) << "\n"
+         << "  Nodes      = " << it.second->node_scalar->extent(1) << "\n"
+         << "  QuadPts    = " << it.second->qp_scalar->extent(1) << "\n";
   }
 #endif
 

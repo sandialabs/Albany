@@ -29,9 +29,9 @@ XZHydrostatic_Omega(const Teuchos::ParameterList& p,
   gradp     (p.get<std::string> ("Gradient QP Pressure"), dl->qp_gradient_level),
   divpivelx (p.get<std::string> ("Divergence QP PiVelx"), dl->qp_scalar_level),
   omega     (p.get<std::string> ("Omega")              ,  dl->node_scalar_level),
-  numQPs     (dl->node_qp_scalar    ->dimension(2)),
-  numDims    (dl->node_qp_gradient  ->dimension(3)),
-  numLevels  (dl->node_scalar_level ->dimension(2)),
+  numQPs     (dl->node_qp_scalar    ->extent(2)),
+  numDims    (dl->node_qp_gradient  ->extent(3)),
+  numLevels  (dl->node_scalar_level ->extent(2)),
   Cp         (p.isParameter("XZHydrostatic Problem") ? 
                 p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Cp", 1005.7):
                 p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->get<double>("Cp", 1005.7)),

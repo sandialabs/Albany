@@ -50,16 +50,16 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
     basalSideName = p.get<std::string>("Side Set Name");
-    numQPs        = dl->qp_scalar->dimension(2);
-    numNodes      = dl->node_scalar->dimension(2);
+    numQPs        = dl->qp_scalar->extent(2);
+    numNodes      = dl->node_scalar->extent(2);
   }
   else
   {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure appears to be that of a side set.\n");
 
-    numQPs    = dl->qp_scalar->dimension(1);
-    numNodes  = dl->node_scalar->dimension(1);
+    numQPs    = dl->qp_scalar->extent(1);
+    numNodes  = dl->node_scalar->extent(1);
   }
 
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;

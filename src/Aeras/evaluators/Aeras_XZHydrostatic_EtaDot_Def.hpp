@@ -24,9 +24,9 @@ XZHydrostatic_EtaDot<EvalT, Traits>::
 XZHydrostatic_EtaDot(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   etadot       (p.get<std::string> ("EtaDot"),              dl->qp_scalar_level),
-  numQPs     (dl->node_qp_scalar          ->dimension(2)),
-  numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  numQPs     (dl->node_qp_scalar          ->extent(2)),
+  numDims    (dl->node_qp_gradient        ->extent(3)),
+  numLevels  (dl->node_scalar_level       ->extent(2))
 {
 
   this->addEvaluatedField(etadot);

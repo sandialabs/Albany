@@ -26,8 +26,8 @@ XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
   Pressure  (p.get<std::string> ("Pressure"),         dl->node_scalar_level),
   Pi        (p.get<std::string> ("Pi"),               dl->node_scalar_level),
 
-  numNodes ( dl->node_scalar          ->dimension(1)),
-  numLevels( dl->node_scalar_level    ->dimension(2)),
+  numNodes ( dl->node_scalar          ->extent(1)),
+  numLevels( dl->node_scalar_level    ->extent(2)),
   E    (Eta<EvalT>::self()),
   P0   (E.p0()),
   Ptop (E.ptop())

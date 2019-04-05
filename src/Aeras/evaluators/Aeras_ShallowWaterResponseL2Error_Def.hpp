@@ -90,7 +90,7 @@ ShallowWaterResponseL2Error(Teuchos::ParameterList& p,
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = fieldName + " Local Response Aeras Shallow Water L2 Error";
   std::string global_response_name = fieldName + " Global Response Aeras Shallow Water L2 Error";
-  int worksetSize = dl->qp_scalar->dimension(0);
+  int worksetSize = dl->qp_scalar->extent(0);
   //There are three components of the response returned by this function: 
   //1.) The absolute error in the solution
   //2.) The norm of the reference solution.

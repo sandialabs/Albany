@@ -33,10 +33,10 @@ int main(int argc, char *argv[]) {
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  Albany::CmdLineArgs cmd("input.xml", "input_adjoint.xml");
+  Albany::CmdLineArgs cmd("input.yaml", "input_adjoint.yaml");
   cmd.parse_cmdline(argc, argv, *out);
-  std::string xmlfilename = cmd.xml_filename;
-  std::string xmladjfilename = cmd.xml_filename2;
+  std::string yamlfilename = cmd.yaml_filename;
+  std::string yamladjfilename = cmd.yaml_filename2;
 
   const auto stackedTimer = Teuchos::rcp(
       new Teuchos::StackedTimer("Albany Stacked Timer"));
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
       Albany::connect_vtune(comm->getRank());
     }
 
-    Albany::SolverFactory slvrfctry(xmlfilename, comm);
+    Albany::SolverFactory slvrfctry(yamlfilename, comm);
     RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create(comm, comm);
 
     EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
     auto setupAdjTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
         *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
-    Albany::SolverFactory adjslvrfctry(xmladjfilename, comm);
+    Albany::SolverFactory adjslvrfctry(yamladjfilename, comm);
     RCP<EpetraExt::ModelEvaluator> AdjApp;
     AdjApp = adjslvrfctry.create(
         comm, comm,

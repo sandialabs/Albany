@@ -23,9 +23,9 @@ XZHydrostatic_KineticEnergy(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   u  (p.get<std::string> ("Velx"),           dl->node_vector_level),
   ke (p.get<std::string> ("Kinetic Energy"), dl->node_scalar_level),
-  numNodes ( dl->node_scalar             ->dimension(1)),
-  numDims  ( dl->node_qp_gradient        ->dimension(3)),
-  numLevels( dl->node_scalar_level       ->dimension(2))
+  numNodes ( dl->node_scalar             ->extent(1)),
+  numDims  ( dl->node_qp_gradient        ->extent(3)),
+  numLevels( dl->node_scalar_level       ->extent(2))
 {
 
   this->addDependentField(u);

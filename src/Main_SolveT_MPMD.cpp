@@ -98,8 +98,8 @@ class MPMD_App : public Plato::Application
     bool isElemNodeState(std::string localFieldName);
     bool isDistParam(std::string localFieldName);
 
-    bool addField(pugi::xml_node&);
-    bool addValue(pugi::xml_node&);
+    bool addField(pugi::yaml_node&);
+    bool addValue(pugi::yaml_node&);
 
     // data
     Teuchos::RCP<Albany::Application> m_app;
@@ -113,7 +113,7 @@ class MPMD_App : public Plato::Application
     Teuchos::RCP<Tpetra_Import> m_importer;
     Teuchos::RCP<Tpetra_Export> m_exporter;
 
-    pugi::xml_document m_inputTree;
+    pugi::yaml_document m_inputTree;
   
     std::map<std::string,std::string> m_stateMap, m_distParamMap;
 //    std::map<std::string,std::vector<double>*> m_valueMap;
@@ -198,7 +198,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
     // parse input into Teuchos::ParameterList
     Teuchos::RCP<Teuchos::ParameterList>
       appParams = Teuchos::createParameterList("Albany Parameters");
-    Teuchos::updateParametersFromXmlFileAndBroadcast(cmd.xml_filename, appParams.ptr(), *m_comm);
+    Teuchos::updateParametersFromXmlFileAndBroadcast(cmd.yaml_filename, appParams.ptr(), *m_comm);
 
     Teuchos::ParameterList& probParams = appParams->sublist("Problem",false);
 
@@ -215,7 +215,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
     // add topology objects
     probParams.set<Teuchos::RCP<ATO::TopologyArray> >("Topologies",topologyArray);
     
-    // send in ParameterList instead of xml filename 
+    // send in ParameterList instead of yaml filename 
     m_solverFactory = rcp(new Albany::SolverFactory(appParams, m_comm));
     m_solver = m_solverFactory->createAndGetAlbanyAppT(m_app, m_comm, m_comm);
 
@@ -237,7 +237,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
 
   
   const char* input_char = std::getenv("PLATO_APP_FILE");
-  pugi::xml_parse_result result = m_inputTree.load_file(input_char);
+  pugi::yaml_parse_result result = m_inputTree.load_file(input_char);
   if(!result){
     //throw
   }
@@ -264,7 +264,7 @@ void MPMD_App::initialize()
 
   // parse Operation definition
   //
-  pugi::xml_node node = m_inputTree.child("Operation");
+  pugi::yaml_node node = m_inputTree.child("Operation");
   if( m_inputTree.next_sibling("Operation") ){ 
     std::stringstream message;
     message << "Only one 'Operation' definition allowed per Albany performer.  Multiple provided." << std::endl;
@@ -272,13 +272,13 @@ void MPMD_App::initialize()
     throw pe;
   }
 
-  for(pugi::xml_node inputNode : node.children("Input")){
+  for(pugi::yaml_node inputNode : node.children("Input")){
     std::string strType = Plato::Parse::getString(inputNode,"Type");
     if(strType == "Field") addField(inputNode);
     else
     if(strType == "Value") addValue(inputNode);
   }
-  for(pugi::xml_node inputNode : node.children("Output")){
+  for(pugi::yaml_node inputNode : node.children("Output")){
     std::string strType = Plato::Parse::getString(inputNode,"Type");
     if(strType == "Field") addField(inputNode);
     else
@@ -287,7 +287,7 @@ void MPMD_App::initialize()
 }
 
 /******************************************************************************/
-bool MPMD_App::addValue(pugi::xml_node& inputNode)
+bool MPMD_App::addValue(pugi::yaml_node& inputNode)
 /******************************************************************************/
 {
   string argumentName = Plato::Parse::getString(inputNode,"ArgumentName");
@@ -305,7 +305,7 @@ bool MPMD_App::addValue(pugi::xml_node& inputNode)
 }
 
 /******************************************************************************/
-bool MPMD_App::addField(pugi::xml_node& inputNode)
+bool MPMD_App::addField(pugi::yaml_node& inputNode)
 /******************************************************************************/
 {
   string argumentName = Plato::Parse::getString(inputNode,"ArgumentName");
@@ -452,7 +452,7 @@ void MPMD_App::copyFieldIntoState(const std::string& name, const Plato::SharedDa
   Teuchos::ArrayRCP<double> otopo = m_overlapVector->get1dViewNonConst(); 
   for(int ws=0; ws<numWorksets; ws++){
     Albany::MDArray& wsTopo = dest[ws][name];
-    int numCells = wsTopo.dimension(0), numNodes = wsTopo.dimension(1);
+    int numCells = wsTopo.extent(0), numNodes = wsTopo.extent(1);
     for(int cell=0; cell<numCells; cell++)
       for(int node=0; node<numNodes; node++){
         int gid = wsElNodeID[ws][cell][node];
@@ -500,8 +500,8 @@ void MPMD_App::copyFieldFromState(const std::string& name, Plato::SharedData& sf
   // copy the field from the state manager
   for(int ws=0; ws<numWorksets; ws++){
     Albany::MDArray& wsSrc = src[ws][name];
-    int numCells = wsSrc.dimension(0);
-    int numNodes = wsSrc.dimension(1);
+    int numCells = wsSrc.extent(0);
+    int numNodes = wsSrc.extent(1);
     for(int cell=0; cell<numCells; cell++)
       for(int node=0; node<numNodes; node++) {
         m_overlapVector->sumIntoGlobalValue(wsElNodeID[ws][cell][node],wsSrc(cell,node));

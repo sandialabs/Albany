@@ -41,7 +41,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(vector_data,fm);
-  numNodes = vector_data.dimension(1);
+  numNodes = vector_data.extent(1);
 }
 
 // **********************************************************************

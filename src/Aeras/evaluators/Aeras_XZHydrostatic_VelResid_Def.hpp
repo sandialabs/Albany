@@ -35,10 +35,10 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
 
   viscosity      (p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Viscosity", 0.0)),
   hyperviscosity (p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("HyperViscosity", 0.0)),
-  numNodes    ( dl->node_scalar             ->dimension(1)),
-  numQPs      ( dl->node_qp_scalar          ->dimension(2)),
-  numDims     ( dl->node_qp_gradient        ->dimension(3)),
-  numLevels   ( dl->node_scalar_level       ->dimension(2))
+  numNodes    ( dl->node_scalar             ->extent(1)),
+  numQPs      ( dl->node_qp_scalar          ->extent(2)),
+  numDims     ( dl->node_qp_gradient        ->extent(3)),
+  numLevels   ( dl->node_scalar_level       ->extent(2))
 {
   this->addDependentField(keGrad);
   this->addDependentField(PhiGrad);

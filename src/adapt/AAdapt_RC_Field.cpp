@@ -41,7 +41,7 @@ struct SizeType {
 };
 
 #define loop(f, i, dim)                                                 \
-  for (typename SizeType<decltype(f)>::type i = 0; i < f.dimension(dim); ++i)
+  for (typename SizeType<decltype(f)>::type i = 0; i < f.extent(dim); ++i)
 #define loopf(i, dim) loop(f_, i, dim)
 
 template<> template<typename ad_type>
@@ -101,12 +101,12 @@ template<> template<typename ad_type>
 void Field<2>::
 multiplyInto (typename Tensor<ad_type, 2>::type& f_incr,
               const std::size_t cell, const std::size_t qp) const {
-  MultiplyWork<ad_type> w(f_.dimension(2));
+  MultiplyWork<ad_type> w(f_.extent(2));
   multiplyIntoImpl(f_, f_incr, cell, qp, w);
 }
 template<> template<typename ad_type>
 void Field<2>::multiplyInto (typename Tensor<ad_type, 2>::type& f_incr) const {
-  MultiplyWork<ad_type> w(f_.dimension(2));
+  MultiplyWork<ad_type> w(f_.extent(2));
   loopf(cell, 0) loopf(qp, 1) multiplyIntoImpl(f_, f_incr, cell, qp, w);
 }
 

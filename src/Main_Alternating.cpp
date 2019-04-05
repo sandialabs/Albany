@@ -148,7 +148,7 @@ int main(int ac, char *av[])
   }
 
   std::string const &
-  alt_filename = cmd.xml_filename;
+  alt_filename = cmd.yaml_filename;
 
   Albany::SolverFactory
   alt_slvrfctry(alt_filename, comm);

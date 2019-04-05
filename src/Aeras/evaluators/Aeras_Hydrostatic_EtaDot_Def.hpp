@@ -26,9 +26,9 @@ Hydrostatic_EtaDot(const Teuchos::ParameterList& p,
   sphere_coord (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
   pressure     (p.get<std::string> ("Pressure"),              dl->node_scalar_level),
   etadot       (p.get<std::string> ("EtaDot"),                dl->qp_scalar_level),
-  numQPs     (dl->node_qp_scalar          ->dimension(2)),
-  numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  numQPs     (dl->node_qp_scalar          ->extent(2)),
+  numDims    (dl->node_qp_gradient        ->extent(3)),
+  numLevels  (dl->node_scalar_level       ->extent(2))
 {
 
   Teuchos::ParameterList* xzhydrostatic_params =

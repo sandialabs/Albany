@@ -49,7 +49,7 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
   numQPs   = dims[2];
   numCells = dims[0] ;
 
-  numVecDims  = Residual.fieldTag().dataLayout().dimension(2);
+  numVecDims  = Residual.fieldTag().dataLayout().extent(2);
 
 #ifdef OUTPUT_TO_SCREEN
 *out << " in LandIce StokesFOImplicitThicknessUpdate residual! " << std::endl;

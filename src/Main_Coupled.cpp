@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 
   Albany::CmdLineArgs cmd;
   cmd.parse_cmdline(argc, argv, *out);
-  std::string xmlfilename_coupled = cmd.xml_filename;
+  std::string yamlfilename_coupled = cmd.yaml_filename;
 
   const auto stackedTimer = Teuchos::rcp(
       new Teuchos::StackedTimer("Albany Stacked Timer"));
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     if (cmd.vtune) {
       Albany::connect_vtune(comm->getRank());
     }
-    Albany::SolverFactory coupled_slvrfctry(xmlfilename_coupled, comm);
+    Albany::SolverFactory coupled_slvrfctry(yamlfilename_coupled, comm);
     Teuchos::ParameterList& coupledParams = coupled_slvrfctry.getParameters();
     Teuchos::ParameterList& coupledSystemParams = 
       coupledParams.sublist("Coupled System");

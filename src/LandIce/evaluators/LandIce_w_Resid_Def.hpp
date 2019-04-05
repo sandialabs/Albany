@@ -48,10 +48,10 @@ namespace LandIce
     dl->node_qp_vector->dimensions(dims);
     numNodes = dims[1];
     numQPs   = dims[2];
-    numSideQPs   = dl_side->qp_scalar->dimension(2);
-    numSideNodes  = dl_side->node_scalar->dimension(2);
+    numSideQPs   = dl_side->qp_scalar->extent(2);
+    numSideNodes  = dl_side->node_scalar->extent(2);
 
-    int numSides = dl_side->node_scalar->dimension(1);
+    int numSides = dl_side->node_scalar->extent(1);
     int sideDim  = cellType->getDimension()-1;
 
     sideNodes.resize(numSides);

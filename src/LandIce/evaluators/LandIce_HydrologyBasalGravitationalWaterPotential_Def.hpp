@@ -26,9 +26,9 @@ BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
     basalSideName = p.get<std::string>("Side Set Name");
-    numNodes = layout->dimension(2);
+    numNodes = layout->extent(2);
   } else {
-    numNodes = layout->dimension(1);
+    numNodes = layout->extent(1);
   }
 
   z_s   = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), layout);

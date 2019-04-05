@@ -785,10 +785,10 @@ ConnectivityArray::ConnectivityArray(
 
   // Assume all the elements have the same number of nodes and eqs
   Teuchos::ArrayRCP<int>::size_type nodes_per_element =
-      element_connectivity[0].dimension(1);
+      element_connectivity[0].extent(1);
 
   // Go from unknown ID to node ID
-  int const number_equations = element_connectivity[0].dimension(2);
+  int const number_equations = element_connectivity[0].extent(2);
 
   int stride = 1;
 
@@ -825,7 +825,7 @@ ConnectivityArray::ConnectivityArray(
 
   for (workset = 0; workset < element_connectivity.size(); ++workset) {
     for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>::size_type cell = 0;
-         cell < element_connectivity[workset].dimension(0);
+         cell < element_connectivity[workset].extent(0);
          ++cell, ++element_number) {
       IDList nodes_element(nodes_per_element);
 
