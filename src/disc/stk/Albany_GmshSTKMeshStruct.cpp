@@ -970,8 +970,11 @@ void Albany::GmshSTKMeshStruct::store_element_info(
       itri6++;
       break;
     case 11: // 10-pt Tetra
+      // NOTE!
+      // The node ordering between gmsh and STK for tet10 is the same 
+      // EXCEPT for the last two. I.e., nodes 8 and 9 are switched!
       ss >> tet10[0][itet10] >> tet10[1][itet10] >> tet10[2][itet10] >> tet10[3][itet10] >> tet10[4][itet10] 
-         >> tet10[5][itet10] >> tet10[6][itet10] >> tet10[7][itet10] >> tet10[8][itet10] >> tet10[9][itet10];
+         >> tet10[5][itet10] >> tet10[6][itet10] >> tet10[7][itet10] >> tet10[9][itet10] >> tet10[8][itet10];
       tet10[10][itet10] = tags[0];
       itet10++;
       break;
