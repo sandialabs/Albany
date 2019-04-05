@@ -256,10 +256,13 @@ void Albany::GmshSTKMeshStruct::init_pointers_to_null()
 {
   pts   = nullptr;
   tetra = nullptr;
+  tet10 = nullptr;
   hexas = nullptr;
   trias = nullptr;
+  tri6  = nullptr;
   quads = nullptr;
   lines = nullptr;
+  line3 = nullptr;
   return;
 }
 
