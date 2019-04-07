@@ -101,6 +101,25 @@ createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, co
   TEUCHOS_UNREACHABLE_RETURN (Teuchos::null);
 }
 
+Teuchos::RCP<const Teuchos_Comm> getComm (const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmap = getTpetraMap(vs,false);
+  if (!tmap.is_null()) {
+    return tmap->getComm(); 
+  }
+#if defined(ALBANY_EPETRA)
+  auto emap = getEpetraBlockMap(vs,false);
+  if (!emap.is_null()) {
+    return createTeuchosCommFromEpetraComm(emap->Comm()); 
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getComm! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+
+}
+
 GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO lid) {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmap = getTpetraMap(vs,false);

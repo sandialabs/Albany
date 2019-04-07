@@ -203,22 +203,22 @@ namespace Aeras
        const bool explicit_scheme,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes=Teuchos::null);
 
-    //! Destructor
+    //! Destructor  
     ~SpectralDiscretization();
 
-    //! Get node vector space (owned and overlapped) 
+    //! Get node vector space (owned and overlapped)   
     Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const; 
     Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace() const; 
 
-    //! Get solution DOF vector space (owned and overlapped).
+    //! Get solution DOF vector space (owned and overlapped)  
     Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace        () const; 
     Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace () const; 
 
-    //! Get Field node vector space (owned and overlapped)
+    //! Get Field node vector space (owned and overlapped)  
     Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace        (const std::string& field_name) const;
     Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace (const std::string& field_name) const;
 
-    //! Get Field vector space (owned and overlapped)
+    //! Get Field vector space (owned and overlapped)  
     Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace        (const std::string& field_name) const;
     Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace (const std::string& field_name) const;
 
@@ -243,15 +243,15 @@ namespace Aeras
     Albany::WsLIDList& getElemGIDws() override { return elemGIDws; };
     const Albany::WsLIDList& getElemGIDws() const override { return elemGIDws; };
 
-    //! Get map from (Ws, El, Local Node) -> NodeLID
+    //! Get map from (Ws, El, Local Node) -> NodeLID  
     const Albany::Conn& getWsElNodeEqID() const override;
 
-    //! Get map from (Ws, Local Node) -> NodeGID
+    //! Get map from (Ws, Local Node) -> NodeGID  
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     getWsElNodeID() const override;
 
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID,
-    //! works for both scalar and vector fields
+    //! works for both scalar and vector fields  
     const std::vector<Albany::IDArray>&
     getElNodeEqID(const std::string& field_name) const override
     {
@@ -494,20 +494,15 @@ namespace Aeras
                   const std::string& field_name,
                   bool overlapped=false) override;
 
-    void setSolutionField(const Thyra_Vector& solution);
-    void setSolutionField(const Thyra_Vector& solution, const Thyra_Vector& solution_dot);
+    void setSolutionField(const Thyra_Vector& solution, 
+                          const bool overlapped);
+    void setSolutionField(const Thyra_Vector& solution, const Thyra_Vector& solution_dot,
+                          const bool overlapped);
     void setSolutionField(const Thyra_Vector& solution, const Thyra_Vector& solution_dot, 
-                          const Thyra_Vector& solution_dotdot);
-    void setSolutionFieldMV(const Thyra_MultiVector& solution);
-
-    // Copy solution vector from Epetra_Vector into STK Mesh
-    // IKT, FIXME: seems these routines are gone from disc class?
-    // Here soln is the local + neighbor (overlapped) solution
-    /*void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
-    void setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
-    void setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
-                               const Tpetra_Vector& soln_dotdotT);
-    void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);*/
+                          const Thyra_Vector& solution_dotdot, 
+                          const bool overlapped);
+    void setSolutionFieldMV(const Thyra_MultiVector& solution, 
+                            const bool overlapped);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
