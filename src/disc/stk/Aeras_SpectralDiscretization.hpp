@@ -710,6 +710,9 @@ namespace Aeras
     bool interleavedOrdering;
 
   private:
+  
+    void computeGraphsUpToFillComplete();
+    void fillCompleteGraphs();
 
   };
 

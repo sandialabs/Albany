@@ -120,6 +120,22 @@ Teuchos::RCP<const Teuchos_Comm> getComm (const Teuchos::RCP<const Thyra_VectorS
 
 }
 
+GO getMaxAllGlobalIndex(const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmap = getTpetraMap(vs,false);
+  if (!tmap.is_null()) {
+    return tmap->getMaxAllGlobalIndex();
+  }
+#if defined(ALBANY_EPETRA)
+  auto emap = getEpetraBlockMap(vs,false);
+  if (!emap.is_null()) {
+    return static_cast<GO>(emap->MaxElementSize()); 
+  }
+#endif
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getMaxAllGlobalIndex! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+}
+
 GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO lid) {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmap = getTpetraMap(vs,false);

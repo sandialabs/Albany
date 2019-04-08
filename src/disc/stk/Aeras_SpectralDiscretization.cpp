@@ -49,6 +49,7 @@ extern "C"
 #include "Albany_NodalGraphUtils.hpp"
 #include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_BucketArray.hpp"
+#include "Albany_ThyraUtils.hpp" 
 
 // Constants
 const double pi = 3.1415926535897932385;
@@ -1182,8 +1183,6 @@ void Aeras::SpectralDiscretization::enrichMeshQuads()
 
 void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
 {
-//IKT FIXME, convert to Thyra!
-/*
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
@@ -1252,7 +1251,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
 
   //////////////////////////////////////////////////////////////////////
   // N.B.: Filling the indicesT array is inherently serial
-  Teuchos::Array<Tpetra_GO> indicesT(numOwnedNodes);
+  Teuchos::Array<GO> indicesT(numOwnedNodes);
   size_t inode = 0;
 
   // Add the ownednodes to indicesT
@@ -1280,30 +1279,31 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
   // End fill indicesT
   //////////////////////////////////////////////////////////////////////
 
-  node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indicesT(), commT);
+  m_node_vs = Teuchos::null; // delete existing map happens here on remesh
+  //node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indicesT(), commT);
+  m_node_vs = Albany::createVectorSpace(commT,indicesT());
 
-  numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
+  numGlobalNodes = Albany::getMaxAllGlobalIndex(m_node_vs) + 1;
 
-  Teuchos::Array<Tpetra_GO> dofIndicesT(numOwnedNodes * neq);
+  Teuchos::Array<GO> dofIndicesT(numOwnedNodes * neq);
   for (size_t i = 0; i < numOwnedNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
-  mapT = Teuchos::null; // delete existing map happens here on remesh
-  mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(dofIndicesT(), commT);
+  m_vs = Teuchos::null; // delete existing map happens here on remesh
+  //mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(dofIndicesT(), commT);
+  m_vs = Albany::createVectorSpace(commT,dofIndicesT);
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     Teuchos::nonnull(stkMeshStruct->nodal_data_base),
     std::logic_error,
     "Nodal database not implemented for Aeras::SpectralDiscretization");
-*/
+
 }
 
 void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
 {
-//IKT FIXME: convert to Thyra
-/*#ifdef OUTPUT_TO_SCREEN
+#ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
   // Initialization
@@ -1381,7 +1381,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
 
   //////////////////////////////////////////////////////////////////////
   // N.B.: Filling the indicesT array is inherently serial
-  Teuchos::Array<Tpetra_GO> indicesT(numOwnedNodes);
+  Teuchos::Array<GO> indicesT(numOwnedNodes);
   size_t inode = 0;
 
   // Add the ownednodes to indicesT
@@ -1430,30 +1430,28 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
   // End fill indicesT
   //////////////////////////////////////////////////////////////////////
 
-  node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indicesT(), commT);
+  m_node_vs = Teuchos::null; // delete existing map happens here on remesh
+  m_node_vs = Albany::createVectorSpace(commT, indicesT());
 
-  numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
+  numGlobalNodes = Albany::getMaxAllGlobalIndex(m_node_vs) + 1;
 
-  Teuchos::Array<Tpetra_GO> dofIndicesT(numOwnedNodes * neq);
+  Teuchos::Array<GO> dofIndicesT(numOwnedNodes * neq);
   for (size_t i = 0; i < numOwnedNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
-  mapT = Teuchos::null; // delete existing map happens here on remesh
-  mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(dofIndicesT(), commT);
+  m_vs = Teuchos::null; // delete existing map happens here on remesh
+  m_vs = Albany::createVectorSpace(commT, dofIndicesT());
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     Teuchos::nonnull(stkMeshStruct->nodal_data_base),
     std::logic_error,
     "Nodal database not implemented for Aeras::SpectralDiscretization");
-*/
+
 }
 
 void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
 {
-//IKT FIXME: convert to Thyra!
-/*
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
@@ -1465,8 +1463,8 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
     stk::mesh::Selector(metaData.globally_shared_part()) -
     stk::mesh::Selector(metaData.locally_owned_part());
 
-  // Use node_mapT to get the number of locally owned nodes
-  numOverlapNodes = node_mapT->getNodeNumElements();
+  // Use m_node_vs to get the number of locally owned nodes
+  numOverlapNodes = Albany::getNumLocalElements(m_node_vs); 
 
   // Count the number of unowned nodes from the original linear STK mesh
   std::vector< stk::mesh::Entity > unownedNodes;
@@ -1492,8 +1490,8 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
   // N.B.: Filling the overlapIndicesT array is inherently serial
 
   // Copy owned indices to overlap indices
-  Teuchos::ArrayView<const Tpetra_GO> ownedIndicesT = node_mapT->getNodeElementList();
-  Teuchos::Array<Tpetra_GO> overlapIndicesT(numOverlapNodes);
+  Teuchos::ArrayView<const GO> ownedIndicesT = Albany::getNodeElementList(m_node_vs);
+  Teuchos::Array<GO> overlapIndicesT(numOverlapNodes);
   for (size_t i = 0; i < ownedIndicesT.size(); ++i)
     overlapIndicesT[i] = ownedIndicesT[i];
 
@@ -1517,29 +1515,25 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
   // End fill overlapIndicesT
   //////////////////////////////////////////////////////////////////////
 
-  overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(
-      overlapIndicesT(), commT);
+  m_overlap_node_vs = Teuchos::null; // delete existing map happens here on remesh
+  m_overlap_node_vs = Albany::createVectorSpace(commT, overlapIndicesT()); 
 
   // Compute the overlap DOF indices.  Since these might be strided by
   // the number of overlap nodes, we compute them from scratch.
-  Teuchos::Array<Tpetra_GO> overlapDofIndicesT(numOverlapNodes * neq);
+  Teuchos::Array<GO> overlapDofIndicesT(numOverlapNodes * neq);
   for (size_t i = 0; i < numOverlapNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       overlapDofIndicesT[getOverlapDOF(i,j)] =
         getGlobalDOF(overlapIndicesT[i],j);
 
-  overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(
-      overlapDofIndicesT(), commT);
+  m_overlap_vs = Teuchos::null; // delete existing map happens here on remesh
+  m_overlap_vs = Albany::createVectorSpace(commT, overlapDofIndicesT()); 
 
-  coordinates.resize(3*numOverlapNodes);*/
+  coordinates.resize(3*numOverlapNodes);
 }
 
 void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
 {
-//IKT, FIXME: convert to Thyra!
-/*
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
@@ -1552,7 +1546,7 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
     stk::mesh::Selector(metaData.locally_owned_part());
 
   // Use node_mapT to get the number of locally owned nodes
-  numOverlapNodes = node_mapT->getNodeNumElements();
+  numOverlapNodes = Albany::getNumLocalElements(m_node_vs);
 
   // Count the number of unowned nodes from the original linear STK mesh
   std::vector< stk::mesh::Entity > unownedNodes;
@@ -1608,8 +1602,8 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
   // N.B.: Filling the overlapIndicesT array is inherently serial
 
   // Copy owned indices to overlap indices
-  Teuchos::ArrayView<const Tpetra_GO> ownedIndicesT = node_mapT->getNodeElementList();
-  Teuchos::Array<Tpetra_GO> overlapIndicesT(numOverlapNodes);
+  Teuchos::ArrayView<const GO> ownedIndicesT = Albany::getNodeElementList(m_node_vs);
+  Teuchos::Array<GO> overlapIndicesT(numOverlapNodes);
   for (size_t i = 0; i < ownedIndicesT.size(); ++i)
     overlapIndicesT[i] = ownedIndicesT[i];
 
@@ -1651,21 +1645,20 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
   // End fill overlapIndicesT
   //////////////////////////////////////////////////////////////////////
 
-  overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(overlapIndicesT(), commT);
+  m_overlap_node_vs = Teuchos::null; // delete existing vector space happens here on remesh
+  m_overlap_node_vs = Albany::createVectorSpace(commT, overlapIndicesT());
 
   // Compute the overlap DOF indices.  Since these might be strided by
   // the number of overlap nodes, we compute them from scratch.
-  Teuchos::Array<Tpetra_GO> overlapDofIndicesT(numOverlapNodes * neq);
+  Teuchos::Array<GO> overlapDofIndicesT(numOverlapNodes * neq);
   for (size_t i = 0; i < numOverlapNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       overlapDofIndicesT[getOverlapDOF(i,j)] = getGlobalDOF(overlapIndicesT[i],j);
 
-  overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(overlapDofIndicesT(), commT);
+  m_overlap_vs = Teuchos::null; // delete existing vector space happens here on remesh
+  m_overlap_vs = Albany::createVectorSpace(commT, overlapDofIndicesT()); ;
 
   coordinates.resize(3*numOverlapNodes);
-*/
 }
 
 void Aeras::SpectralDiscretization::computeCoordsLines()
@@ -1853,11 +1846,28 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   }
 }
 
-void 
-Aeras::SpectralDiscretization::computeGraphs() 
+
+void Aeras::SpectralDiscretization::computeGraphs()
 {
-//IKT, FIXME: fill in using Thyra! 
+  computeGraphsUpToFillComplete();
+  fillCompleteGraphs();
 }
+
+
+void Aeras::SpectralDiscretization::computeGraphsUpToFillComplete()
+{
+  //IKT, FIXME: fill in! 
+}
+
+
+void Aeras::SpectralDiscretization::fillCompleteGraphs()
+{
+  m_overlap_jac_factory->fillComplete();
+
+  m_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_vs, m_vs, m_overlap_jac_factory) );
+}
+
+
 /*
 Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph()
 {
@@ -3204,8 +3214,6 @@ void Aeras::SpectralDiscretization::reNameExodusOutput(std::string& filename)
 void
 Aeras::SpectralDiscretization::updateMesh()
 {
-//IKT FIXME: convert to Thyra!
-/*
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
@@ -3264,7 +3272,8 @@ Aeras::SpectralDiscretization::updateMesh()
   // Right now, computeGraphs_Explicit() will not work with shallow water; therefore
   // only call this function for hydrostatic (numLevels > 0)
 
-  if (explicit_scheme == true) { //explicit scheme
+  //IKT FIXME: convert to Thyra!
+  /*if (explicit_scheme == true) { //explicit scheme
     //populate implicit_graphT, needed to populate Laplace operator for hyperviscosity
     implicit_overlap_graphT = computeOverlapGraph();
     implicit_graphT = computeOwnedGraph(implicit_overlap_graphT);
@@ -3275,7 +3284,7 @@ Aeras::SpectralDiscretization::updateMesh()
     graphT = computeOwnedGraph(overlap_graphT);
     implicit_overlap_graphT = computeOverlapGraph();
     implicit_graphT = computeOwnedGraph(overlap_graphT);
-  }
+  }*/
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   Teuchos::RCP<Tpetra_CrsMatrix> ImplicitMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT));
@@ -3312,5 +3321,5 @@ Aeras::SpectralDiscretization::updateMesh()
    setupExodusOutput();
 
   //IKT, 9/22/15: the following routine needs to be implemented, if we care about netCDFoutput.
-  //setupNetCDFOutput();*/
+  //setupNetCDFOutput();
 }
