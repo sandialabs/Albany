@@ -1849,27 +1849,28 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
 
 void Aeras::SpectralDiscretization::computeGraphs()
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
   computeGraphsUpToFillComplete();
   fillCompleteGraphs();
 }
 
-
-void Aeras::SpectralDiscretization::computeGraphsUpToFillComplete()
+void Aeras::SpectralDiscretization::computeGraphs_Explicit(const bool is_explicit)
 {
-  //IKT, FIXME: fill in! 
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+  if (is_explicit == true) {
+    computeGraphsExplicitUpToFillComplete();
+  }
+  else {
+    computeGraphsUpToFillComplete();
+    fillCompleteGraphs();
+  }
 }
 
-
-void Aeras::SpectralDiscretization::fillCompleteGraphs()
-{
-  m_overlap_jac_factory->fillComplete();
-
-  m_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_vs, m_vs, m_overlap_jac_factory) );
-}
-
-
-/*
-Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph()
+void Aeras::SpectralDiscretization::computeGraphsExplicitUpToFillComplete()
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
@@ -1879,9 +1880,60 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
   *out << "nodes_per_element: " << nodes_per_element << std::endl;
 #endif
 
-  Teuchos::RCP<Tpetra_CrsGraph> Graph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
-                                                    neq*nodes_per_element));
+  m_overlap_jac_factory = Teuchos::null; // delete existing graph here on remesh
+  //Graph for diagonal matrix
+  m_overlap_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs,1) );
 
+  stk::mesh::Selector select_owned =
+    stk::mesh::Selector(metaData.locally_owned_part());
+
+  const stk::mesh::BucketVector & buckets =
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
+
+  const int numBuckets = buckets.size();
+
+  if (commT->getRank()==0)
+    *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
+         << std::endl;
+
+  GO row;
+  Teuchos::ArrayView<GO> colAV;
+
+  //Populate the graphs
+  for (int b = 0; b < numBuckets; ++b)
+  {
+    stk::mesh::Bucket & buck = *buckets[b];
+    // i is the element index within bucket b
+    for (std::size_t i = 0; i < buck.size(); ++i)
+    {
+      Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
+      for (int j = 0; j < nodes_per_element; ++j)
+      {
+        const GO rowNode = node_rels[j];
+        // loop over eqs
+        for (std::size_t k=0; k < neq; k++)
+        {
+          row = getGlobalDOF(rowNode, k);
+          //col = row
+          colAV = Teuchos::arrayView(&row, 1);
+          m_overlap_jac_factory->insertGlobalIndices(row, colAV);
+        }
+      }
+    }
+  }
+}
+
+void Aeras::SpectralDiscretization::computeGraphsUpToFillComplete()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+#ifdef OUTPUT_TO_SCREEN
+  *out << "nodes_per_element: " << nodes_per_element << std::endl;
+#endif
+
+  //Create implicit overlap jac factory and populate  
+  m_implicit_overlap_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs,neq*nodes_per_element) );
 #ifdef OUTPUT_TO_SCREEN
   *out << "neq*nodes_per_element: " << neq*nodes_per_element << std::endl;
 #endif
@@ -1898,8 +1950,8 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
     *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
          << std::endl;
 
-  Tpetra_GO row, col;
-  Teuchos::ArrayView<Tpetra_GO> colAV;
+  GO row, col;
+  Teuchos::ArrayView<GO> colAV;
 
   //Populate the graphs
   for (int b = 0; b < numBuckets; ++b)
@@ -1922,105 +1974,44 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
             for (std::size_t m=0; m < neq; m++)
             {
               col = getGlobalDOF(colNode, m);
-              colAV = Teuchos::arrayView(&col, 1);
-              Graph->insertGlobalIndices(row, colAV);
+              m_implicit_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col,1));
+              //IKT, FIXME?  The following line might be needed 
+              //m_implicit_overlap_jac_factory->insertGlobalIndices(col, Teuchos::arrayView(&row,1));
             }
           }
         }
       }
     }
   }
-  Graph->fillComplete();
-
-  return Graph;
 }
 
-Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOwnedGraph(Teuchos::RCP<Tpetra_CrsGraph> Graph)
+
+void Aeras::SpectralDiscretization::fillCompleteGraphs()
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
 
-  // Create Owned graph by exporting overlap with known row map
-  Teuchos::RCP<Tpetra_CrsGraph> OwnedGraph = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
+  //fill complete m_implicit_overlap_jac_factory
+  m_implicit_overlap_jac_factory->fillComplete();
 
-  // Create non-overlapped matrix using two maps and export object
-  Teuchos::RCP<Tpetra_Export> exporterT =
-    Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
-
-  OwnedGraph->doExport(*Graph, *exporterT, Tpetra::INSERT);
-  OwnedGraph->fillComplete();
-
-  return OwnedGraph;
+  //create m_implicit_jac_factory (owned) 
+  m_implicit_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_vs, m_vs, m_implicit_overlap_jac_factory) );
 }
 
-
-void Aeras::SpectralDiscretization::computeGraphs_Explicit()
+void Aeras::SpectralDiscretization::fillCompleteGraphsExplicit()
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
 
-#ifdef OUTPUT_TO_SCREEN
-  *out << "nodes_per_element: " << nodes_per_element << std::endl;
-#endif
+  //fill complete m_overlap_jac_factory
+  m_overlap_jac_factory->fillComplete();
 
-  overlap_graphT = Teuchos::null; // delete existing graph here on remesh
-  //Graph for diagonal matrix
-  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT, 1));
-
-  stk::mesh::Selector select_owned =
-    stk::mesh::Selector(metaData.locally_owned_part());
-
-  const stk::mesh::BucketVector & buckets =
-    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
-
-  const int numBuckets = buckets.size();
-
-  if (commT->getRank()==0)
-    *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
-         << std::endl;
-
-  Tpetra_GO row;
-  Teuchos::ArrayView<Tpetra_GO> colAV;
-
-  //Populate the graphs
-  for (int b = 0; b < numBuckets; ++b)
-  {
-    stk::mesh::Bucket & buck = *buckets[b];
-    // i is the element index within bucket b
-    for (std::size_t i = 0; i < buck.size(); ++i)
-    {
-      Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
-      for (int j = 0; j < nodes_per_element; ++j)
-      {
-        const GO rowNode = node_rels[j];
-        // loop over eqs
-        for (std::size_t k=0; k < neq; k++)
-        {
-          row = getGlobalDOF(rowNode, k);
-          //col = row
-          colAV = Teuchos::arrayView(&row, 1);
-          overlap_graphT->insertGlobalIndices(row, colAV);
-        }
-      }
-    }
-  }
-  overlap_graphT->fillComplete();
-
-  // Create Owned graph by exporting overlap with known row map
-  graphT = Teuchos::null; // delete existing graph happens here on remesh
-
-  //Graph for diagonal matrix
-  graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, 1));
-
-  // Create non-overlapped matrix using two maps and export object
-  Teuchos::RCP<Tpetra_Export> exporterT =
-    Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
-  graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
-  graphT->fillComplete();
+  //create m_jac_factory (owned) 
+  m_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_vs, m_vs, m_overlap_jac_factory) );
 }
-*/
+
 
 void Aeras::SpectralDiscretization::computeWorksetInfo()
 {
@@ -3272,19 +3263,14 @@ Aeras::SpectralDiscretization::updateMesh()
   // Right now, computeGraphs_Explicit() will not work with shallow water; therefore
   // only call this function for hydrostatic (numLevels > 0)
 
-  //IKT FIXME: convert to Thyra!
-  /*if (explicit_scheme == true) { //explicit scheme
-    //populate implicit_graphT, needed to populate Laplace operator for hyperviscosity
-    implicit_overlap_graphT = computeOverlapGraph();
-    implicit_graphT = computeOwnedGraph(implicit_overlap_graphT);
-    computeGraphs_Explicit();
-  }
-  else { //implicit scheme
-    overlap_graphT = computeOverlapGraph();
-    graphT = computeOwnedGraph(overlap_graphT);
-    implicit_overlap_graphT = computeOverlapGraph();
-    implicit_graphT = computeOwnedGraph(overlap_graphT);
-  }*/
+  //computeGraphs populates m_implicit_graph_factory and m_implicit_overlap_graph_factory.
+  //For an explicit scheme, these are needed to populate correctly the Laplace 
+  //operator, needed for hyperviscosity
+  computeGraphs(); 
+  //computeGraphs_Explicit will populate m_graph_factory and m_overlap_graph_factory
+  //If the scheme is implicit, these are identical to m_graph_factory and m_implicit_overlap_graph_factory
+  //respectively.  Otherwise, these will be diagonal matrices (for explicit scheme). 
+  computeGraphs_Explicit(explicit_scheme); 
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   Teuchos::RCP<Tpetra_CrsMatrix> ImplicitMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT));

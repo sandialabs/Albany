@@ -226,10 +226,9 @@ namespace Aeras
     Teuchos::RCP<Thyra_LinearOp> createJacobianOp        () const { return m_jac_factory->createOp();         }
     Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const { return m_overlap_jac_factory->createOp(); }
 
-    //! Get implicit Jacobian operator (non-diagonal) - owned and overlapped 
-    //IKT FIXME - need to figure out what to do with these in Thyra code...
-    //Teuchos::RCP<Thyra_LinearOp> getImplicitJacobianOp () const override; 
-    //Teuchos::RCP<Thyra_LinearOp> getOverlapImplicitJacobianOp () const override; 
+    //! Create implicit Jacobian operator (owned and overlapped) (for Aeras)
+    Teuchos::RCP<Thyra_LinearOp> createImplicitJacobianOp        () const { return m_implicit_jac_factory->createOp();         }
+    Teuchos::RCP<Thyra_LinearOp> createImplicitOverlapJacobianOp () const { return m_implicit_overlap_jac_factory->createOp(); }
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const Albany::NodeSetList& getNodeSets() const override { return nodeSets; };
@@ -538,7 +537,7 @@ namespace Aeras
 
     //  The following function allocates the graph of a diagonal Jacobian,
     //  relevant for explicit schemes.
-    void computeGraphs_Explicit();
+    void computeGraphs_Explicit(const bool is_explicit);
 
     //! Process spectral Albany mesh for Workset/Bucket Info
     void computeWorksetInfo();
@@ -611,7 +610,7 @@ namespace Aeras
     
     //! Implicit Jacobian matrix graph proxy (owned, overlap)
     Teuchos::RCP<Albany::ThyraCrsMatrixFactory> m_implicit_jac_factory;
-    Teuchos::RCP<Albany::ThyraCrsMatrixFactory> m_overlap_implicit_jac_factory;
+    Teuchos::RCP<Albany::ThyraCrsMatrixFactory> m_implicit_overlap_jac_factory;
 
     //! Processor ID
     unsigned int myPID;
@@ -712,7 +711,9 @@ namespace Aeras
   private:
   
     void computeGraphsUpToFillComplete();
+    void computeGraphsExplicitUpToFillComplete();
     void fillCompleteGraphs();
+    void fillCompleteGraphsExplicit();
 
   };
 
