@@ -215,9 +215,6 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   logParameters = beta_list.get<bool>("Use log scalar parameters",false);
 
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
-    memoizer.enable_memoizer();
-
   this->setName("BasalFrictionCoefficient"+PHX::typeAsString<EvalT>());
 }
 
@@ -229,6 +226,9 @@ postRegistrationSetup (typename Traits::SetupData d,
 {
   if (beta_type == GIVEN_CONSTANT)
     beta.deep_copy(ScalarT(given_val));
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 //**********************************************************************
@@ -236,7 +236,7 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 evaluateFields (typename Traits::EvalData workset)
 {
-  if (memoizer.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   ParamScalarT mu, lambda, power;
 

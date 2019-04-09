@@ -514,7 +514,6 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
   utils_map[FieldScalarType::Real]        = Teuchos::rcpFromRef(evalUtils.getRTUtils());
 
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
-  const bool enableMemoizer = this->params->get<bool>("Use MDField Memoization", false);
 
   // Loop on all input fields
   for (auto& it : build_interp_ev) {
@@ -542,12 +541,16 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     //       A better choice would be to track dependencies, but we cannot do this easily. We should probably
     //       have our own Albany::FieldManager (and Albany::Evaluator), which checks that all evaluators that
     //       try to use memoization actually can do it (i.e., they do not depend on fields that cannot be memoized).
-    bool useMemoization = enableMemoizer && (is_dist_param.size()==0) && st!=FieldScalarType::Scalar;
-    if (st==FieldScalarType::ParamScalar) {
-      useMemoization &= !Albany::params_depend_on_solution();
-    } else if (st==FieldScalarType::MeshScalar) {
-      useMemoization &= !Albany::mesh_depends_on_solution() && !Albany::mesh_depends_on_parameters();
-    }
+    //
+    // TODO: We can now track dependencies but we need to specify which MDField changes based on whether
+    //       the dist param changes
+    //
+//    bool useMemoization = enableMemoizer && (is_dist_param.size()==0) && st!=FieldScalarType::Scalar;
+//    if (st==FieldScalarType::ParamScalar) {
+//      useMemoization &= !Albany::params_depend_on_solution();
+//    } else if (st==FieldScalarType::MeshScalar) {
+//      useMemoization &= !Albany::mesh_depends_on_solution() && !Albany::mesh_depends_on_parameters();
+//    }
 
     // Get the needs of this field
     auto& needs = it.second;
@@ -561,7 +564,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     if (needs[InterpolationRequest::QP_VAL]) {
       TEUCHOS_TEST_FOR_EXCEPTION(entity==FieldLocation::Cell, std::logic_error, "Error! Cannot interpolate a field not defined on nodes.\n");
       if (rank==0) {
-        ev = utils.constructDOFInterpolationEvaluator(fname, offset, useMemoization);
+        ev = utils.constructDOFInterpolationEvaluator(fname, offset);
       } else if (rank==1) {
         ev = utils.constructDOFVecInterpolationEvaluator(fname, offset);
       } else if (rank==2) {
@@ -575,7 +578,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     if (needs[InterpolationRequest::GRAD_QP_VAL]) {
       TEUCHOS_TEST_FOR_EXCEPTION(entity==FieldLocation::Cell, std::logic_error, "Error! Cannot interpolate a field not defined on nodes.\n");
       if (rank==0) {
-        ev = utils.constructDOFGradInterpolationEvaluator(fname, offset, useMemoization);
+        ev = utils.constructDOFGradInterpolationEvaluator(fname, offset);
       } else if (rank==1) {
         ev = utils.constructDOFVecGradInterpolationEvaluator(fname, offset);
       } else if (rank==2) {
@@ -588,9 +591,9 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
     if (needs[InterpolationRequest::CELL_VAL] && entity==FieldLocation::Node) {
       if (rank==0) {
-        ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ false, useMemoization);
+        ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ false);
       } else if (rank==1) {
-        ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ true, useMemoization);
+        ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ true);
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot interpolate to the cell a field of rank " + std::to_string(rank) << ".\n");
       }
@@ -638,12 +641,16 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       //       A better choice would be to track dependencies, but we cannot do this easily. We should probably
       //       have our own Albany::FieldManager (and Albany::Evaluator), which checks that all evaluators that
       //       try to use memoization actually can do it (i.e., they do not depend on fields that cannot be memoized).
-      bool useMemoization = enableMemoizer && (is_dist_param.size()==0) && st!=FieldScalarType::Scalar;
-      if (st==FieldScalarType::ParamScalar) {
-        useMemoization &= !Albany::params_depend_on_solution();
-      } else if (st==FieldScalarType::MeshScalar) {
-        useMemoization &= !Albany::mesh_depends_on_solution() && !Albany::mesh_depends_on_parameters();
-      }
+      //
+      // TODO: We can now track dependencies but we need to specify which MDField changes based on whether
+      //       the dist param changes
+      //
+//      bool useMemoization = enableMemoizer && (is_dist_param.size()==0) && st!=FieldScalarType::Scalar;
+//      if (st==FieldScalarType::ParamScalar) {
+//        useMemoization &= !Albany::params_depend_on_solution();
+//      } else if (st==FieldScalarType::MeshScalar) {
+//        useMemoization &= !Albany::mesh_depends_on_solution() && !Albany::mesh_depends_on_parameters();
+//      }
 
       // Get the right evaluator utils for this field.
       const auto& utils = *utils_map.at(st);
@@ -651,9 +658,9 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       if (needs[InterpolationRequest::QP_VAL]) {
         TEUCHOS_TEST_FOR_EXCEPTION (entity!=FieldLocation::Node, std::logic_error, "Error! DOF interpolation is only for fields defined at nodes.\n");
         if (rank==0) {
-          ev = utils.constructDOFInterpolationSideEvaluator (fname_side, ss_name, useMemoization);
+          ev = utils.constructDOFInterpolationSideEvaluator (fname_side, ss_name);
         } else {
-          ev = utils.constructDOFVecInterpolationSideEvaluator (fname_side, ss_name, useMemoization);
+          ev = utils.constructDOFVecInterpolationSideEvaluator (fname_side, ss_name);
         }
         fm0.template registerEvaluator<EvalT> (ev);
       }
@@ -661,9 +668,9 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       if (needs[InterpolationRequest::GRAD_QP_VAL]) {
         TEUCHOS_TEST_FOR_EXCEPTION (entity!=FieldLocation::Node, std::logic_error, "Error! DOF Grad interpolation is only for fields defined at nodes.\n");
         if (rank==0) {
-          ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name, useMemoization);
+          ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name);
         } else {
-          ev = utils.constructDOFVecGradInterpolationSideEvaluator (fname_side, ss_name, useMemoization);
+          ev = utils.constructDOFVecGradInterpolationSideEvaluator (fname_side, ss_name);
         }
         fm0.template registerEvaluator<EvalT> (ev);
       }
@@ -685,7 +692,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
           !is_ss_computed_field[ss_name][fname]      &&
           (is_input_field[fname] || is_computed_field[fname] || is_dist_param[fname])) {
         // Project from cell to side
-        ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side, useMemoization);
+        ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
         fm0.template registerEvaluator<EvalT> (ev);
       }
 
@@ -705,7 +712,6 @@ constructSideUtilityFields (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
-  const bool enableMemoizer = this->params->get<bool>("Use MDField Memoization", false);
 
   for (auto& it : ss_utils_needed) {
     const std::string& ss_name = it.first;
@@ -714,13 +720,13 @@ constructSideUtilityFields (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     if (it.second[UtilityRequest::BFS] || it.second[UtilityRequest::NORMALS]) {
       // BF, GradBF, w_measure, Tangents, Metric, Metric Det, Inverse Metric
       ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis[ss_name], sideCubature[ss_name],
-                                                                 ss_name, enableMemoizer, it.second[UtilityRequest::NORMALS]);
+                                                                 ss_name, it.second[UtilityRequest::NORMALS]);
       fm0.template registerEvaluator<EvalT> (ev);
     }
 
     if (it.second[UtilityRequest::QP_COORDS]) {
       // QP coordinates
-      ev = evalUtils.constructMapToPhysicalFrameSideEvaluator(cellType, sideCubature[ss_name], ss_name, enableMemoizer);
+      ev = evalUtils.constructMapToPhysicalFrameSideEvaluator(cellType, sideCubature[ss_name], ss_name);
       fm0.template registerEvaluator<EvalT> (ev);
 
       // Baricenter coordinate
@@ -730,7 +736,7 @@ constructSideUtilityFields (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
     // If any of the above was true, we need coordinates of vertices on the side
     if (it.second[UtilityRequest::BFS] || it.second[UtilityRequest::QP_COORDS] || it.second[UtilityRequest::NORMALS]) {
-      ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,ss_name,"Vertex Vector",cellType,Albany::coord_vec_name +" " + ss_name, enableMemoizer);
+      ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,ss_name,"Vertex Vector",cellType,Albany::coord_vec_name +" " + ss_name);
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }
@@ -747,7 +753,6 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
-  const bool enableMemoizer = this->params->get<bool>("Use MDField Memoization", false);
   std::string param_name;
 
   // ------------------- Interpolations and utilities ------------------ //
@@ -974,8 +979,6 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Body Force Variable Name", "Body Force");
 
-  if (enableMemoizer) p->set<bool>("Enable Memoizer", enableMemoizer);
-
   ev = Teuchos::rcp(new LandIce::StokesFOBodyForce<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
@@ -1010,9 +1013,6 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
-
-  const bool enableMemoizer = this->params->get<bool>("Use MDField Memoization", false);
-  bool basalMemoizer;
 
   std::string param_name;
 
@@ -1201,16 +1201,6 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set<std::string>("Basal Friction Coefficient Variable Name", beta_side_name);
 
     std::string bft = util::upper_case(pl->sublist("Basal Friction Coefficient").get<std::string>("Type"));
-    if (bft=="GIVEN FIELD" || bft=="EXPONENT OF GIVEN FIELD" || bft=="GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD") {
-      const std::string& bfname = pl->sublist("Basal Friction Coefficient").get<std::string>("Given Field Variable Name");
-      basalMemoizer = enableMemoizer && !is_dist_param[bfname];
-    } else {
-      basalMemoizer = false;
-    }
-
-    if (basalMemoizer) {
-      p->set<bool>("Enable Memoizer", basalMemoizer);
-    }
 
     if (temperature_coupled) {
       if (hydrology_coupled) {

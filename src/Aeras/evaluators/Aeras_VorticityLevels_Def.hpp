@@ -60,6 +60,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
   vco = Kokkos::createDynRankView(val_node.get_view(), "XXX", numNodes, 2);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

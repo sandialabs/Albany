@@ -58,8 +58,6 @@ private:
  
   bool use_params_on_mesh;
 
-  bool enable_memoizer;  
-
   PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 }

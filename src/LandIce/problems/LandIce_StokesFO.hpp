@@ -190,7 +190,6 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
     p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
     p->set<std::string>("Temperature Variable Name", temperature_name);
-    p->set<bool>("Enable Memoizer", this->params->get<bool>("Use MDField Memoization", false));
 
     //Output
     p->set<std::string>("Corrected Temperature Variable Name", corrected_temperature_name);

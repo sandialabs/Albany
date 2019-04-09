@@ -23,10 +23,6 @@ MapToPhysicalFrame(const Teuchos::ParameterList& p,
   cellType         (p.get<Teuchos::RCP<shards::CellTopology> > ("Cell Type")),
   coords_qp        (p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient)
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer")) {
-    memoizer.enable_memoizer();
-  }
-
   this->addDependentField(coords_vertices.fieldTag());
   this->addEvaluatedField(coords_qp);
 
@@ -43,7 +39,7 @@ MapToPhysicalFrame(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void MapToPhysicalFrame<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coords_vertices,fm);
@@ -53,13 +49,16 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numDim);
   refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
   cubature->getCubature(refPoints, refWeights); 
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void MapToPhysicalFrame<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   if (intrepidBasis != Teuchos::null){ 
     Intrepid2::CellTools<PHX::Device>::mapToPhysicalFrame

@@ -1041,9 +1041,6 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
   using Teuchos::RCP;
   using Teuchos::rcp;
 
-  const bool enableMemoizer =
-      params->get<bool>("Use MDField Memoization", false);
-
   // Drop into the "Neumann BCs" sublist
   ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
   BCparams.validateParameters(

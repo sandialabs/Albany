@@ -64,6 +64,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(sphere_coord,   fm);
   this->utils.setFieldData(pressure,       fm);
   this->utils.setFieldData(etadot,         fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************
