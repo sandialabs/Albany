@@ -91,6 +91,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(spressure,fm);
 
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************

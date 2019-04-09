@@ -302,6 +302,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   cgradUTY = Kokkos::createDynRankView(Residual.get_view(), "cgradUTY", numCells, numQPs, 2);
   cgradUTZ = Kokkos::createDynRankView(Residual.get_view(), "cgradUTZ", numCells, numQPs, 2);
 #endif
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // *********************************************************************

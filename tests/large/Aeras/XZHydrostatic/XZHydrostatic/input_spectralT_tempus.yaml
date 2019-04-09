@@ -5,7 +5,8 @@ ANONYMOUS:
     Write Solution to MatrixMarket: false
     Write Distributed Solution and Map to MatrixMarket: false
     Write Solution to Standard Output: true
-  Problem: 
+  Problem:
+    Use MDField Memoization: true 
     Name: Aeras XZ Hydrostatic
     Phalanx Graph Visualization Detail: 1
     Solution Method: Transient Tempus

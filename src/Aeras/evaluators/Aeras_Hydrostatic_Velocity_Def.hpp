@@ -89,6 +89,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   B = createDynRankView(B, "B", numLevels);
   E.get_B(B);
 #endif
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************
