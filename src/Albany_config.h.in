@@ -5,6 +5,7 @@
 
 #cmakedefine ALBANY_AERAS
 #cmakedefine ALBANY_APF
+#cmakedefine ALBANY_AMP
 #cmakedefine ALBANY_ATO
 #cmakedefine ALBANY_CATALYST
 #cmakedefine ALBANY_LANDICE

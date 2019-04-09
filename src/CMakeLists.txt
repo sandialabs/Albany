@@ -690,6 +690,10 @@ include_directories (${ALBANY_PUMI_INCLUDE_DIRS}
                      ./Tsunami/evaluators
                      ./Aeras/problems
                      ./Aeras/evaluators
+                     ./AMP
+                     ./AMP/problems
+                     ./AMP/evaluators
+                     ./AMP/responses
                      ./ATO
                      ./ATO/problems
                      ./ATO/evaluators
@@ -771,6 +775,11 @@ IF(ALBANY_APF)
   include_directories (${ALBANY_PUMI_INCLUDE_DIRS})
 ELSE()
   SET(ALBANY_PUMI_INCLUDE_DIRS )
+ENDIF()
+
+IF (ALBANY_AMP)
+  add_subdirectory(AMP)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
 ENDIF()
 
 # Catalyst CoProcessing
