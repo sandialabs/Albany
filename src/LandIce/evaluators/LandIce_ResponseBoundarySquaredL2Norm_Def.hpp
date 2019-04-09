@@ -40,9 +40,9 @@ ResponseBoundarySquaredL2Norm(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
 
 
   // Get Dimensions
-  numSideNodes  = dl_side->node_scalar->dimension(2);
-  numSideDims   = dl_side->node_gradient->dimension(3);
-  numSideQPs = dl_side->qp_scalar->dimension(2);
+  numSideNodes  = dl_side->node_scalar->extent(2);
+  numSideDims   = dl_side->node_gradient->extent(3);
+  numSideQPs = dl_side->qp_scalar->extent(2);
 
   this->addDependentField(w_side_measure);
   this->addDependentField(solution);
@@ -55,7 +55,7 @@ ResponseBoundarySquaredL2Norm(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = "Local Response Boundary Laplacian Regularization";
   std::string global_response_name = "Global Response Boundary Laplacian Regularization";
-  int worksetSize = dl->qp_scalar->dimension(0);
+  int worksetSize = dl->qp_scalar->extent(0);
   int responseSize = 1;
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
   Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));

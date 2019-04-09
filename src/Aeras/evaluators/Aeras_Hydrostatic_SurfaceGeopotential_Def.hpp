@@ -27,7 +27,7 @@ Hydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   PhiSurf       (p.get<std::string> ("SurfaceGeopotential"), dl->node_scalar),
   coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->node_3vector),
-  numNodes ( dl->node_scalar          ->dimension(1)),
+  numNodes ( dl->node_scalar          ->extent(1)),
   numParam(0)
 
 {

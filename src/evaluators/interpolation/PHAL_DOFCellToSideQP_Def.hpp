@@ -62,7 +62,7 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout.\n");
   }
 
-  num_side_nodes = dl_side->node_scalar->dimension(2);
+  num_side_nodes = dl_side->node_scalar->extent(2);
 
   this->addDependentField(val_cell);
   this->addEvaluatedField(val_side_qp);
@@ -73,8 +73,8 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
-    int sideDim = dl_side->cell_gradient->dimension(2);
-    int numSides = dl_side->cell_gradient->dimension(1);
+    int sideDim = dl_side->cell_gradient->extent(2);
+    int numSides = dl_side->cell_gradient->extent(1);
     sideNodes.resize(numSides);
     for (int side=0; side<numSides; ++side) {
       // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)

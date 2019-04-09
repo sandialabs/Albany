@@ -51,9 +51,9 @@ HydrologySurfaceWaterInput (const Teuchos::ParameterList& p,
   // Get Dimensions
   if (OnSide) {
     sideSetName = p.get<std::string>("Side Set Name");
-    numNodes = dl->node_scalar->dimension(2);
+    numNodes = dl->node_scalar->extent(2);
   } else {
-    numNodes = dl->node_scalar->dimension(1);
+    numNodes = dl->node_scalar->extent(1);
   }
 
   this->setName("Surface Water Input From SMB " + PHX::typeAsString<EvalT>());

@@ -552,8 +552,8 @@ template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_traction_components(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned) const {
 
-  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
-  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
+  int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
 
   for(int cell = 0; cell < numCells_; cell++)
     for(int pt = 0; pt < numPoints; pt++)
@@ -569,8 +569,8 @@ calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_return
                           const shards::CellTopology & celltopo,
                           int local_side_id) const {
 
-  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
-  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
+  int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
 
   Kokkos::DynRankView<ScalarT, PHX::Device> grad_T =  Kokkos::createDynRankView(qp_data_returned, "grad_T", numCells_, numPoints, cellDims);
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
@@ -610,8 +610,8 @@ void NeumannBase<EvalT, Traits>::
 calc_dudn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                 ScalarT scale) const {
 
-  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
-  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
 
   //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
 
@@ -627,8 +627,8 @@ void NeumannBase<EvalT, Traits>::
 calc_dudn_robin(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                 const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side) const {
 
-  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
-  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
 
   const ScalarT& dof_value = robin_vals[0];
   const ScalarT& coeff = robin_vals[1];
@@ -645,8 +645,8 @@ void NeumannBase<EvalT, Traits>::
 calc_dudn_radiate(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                 const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side) const {
 
-  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
-  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
+  int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
 
   const ScalarT& dof_value = robin_vals[0];
   const ScalarT dof_value4 = dof_value*dof_value*dof_value*dof_value; 
@@ -668,8 +668,8 @@ calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
                           const shards::CellTopology & celltopo,
                           int local_side_id) const {
 
-  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
-  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
 
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
   DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells_, numPoints, cellDims);
@@ -699,8 +699,8 @@ calc_closed_form(       Kokkos::DynRankView<ScalarT, PHX::Device>    & qp_data_r
                typename Traits::EvalData       workset) const
 {
   // How many QPs per cell?
-  int numCells_ = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
-  int numPoints = qp_data_returned.dimension( 1);
+  int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
+  int numPoints = qp_data_returned.extent( 1);
 
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
   DynRankViewMeshScalarT side_normals =
@@ -784,7 +784,7 @@ operator()(const Neumann_Tag& , const int& cell) const
   LO rowT;
   ST value[1];
   int lcol;
-  const int neq = Index.dimension(2);
+  const int neq = Index.extent(2);
   const int nunk = neq*this->numNodes;
 
   for (std::size_t node = 0; node < this->numNodes; ++node) {
@@ -860,7 +860,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       row[0] = nodeID(cell,node,this->offset[dim]);
 
-      int neq = nodeID.dimension(2);
+      int neq = nodeID.extent(2);
 
       if (f != Teuchos::null) {
         f_nonconstView[row[0]] += this->neumann(cell, node, dim).val();

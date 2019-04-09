@@ -249,7 +249,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    const int neq = nodeID.dimension(2);
+    const int neq = nodeID.extent(2);
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstunk = neq * node + this->offset;

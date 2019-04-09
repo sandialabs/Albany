@@ -51,8 +51,8 @@ ProlongateVectorBase(const Teuchos::ParameterList& p,
   dims_out.resize(v_out.fieldTag().dataLayout().rank());
   for (int i=0; i<dims_in.size()-1; ++i)
   {
-    dims_in[i] = v_in.fieldTag().dataLayout().dimension(i);
-    dims_out[i] = v_out.fieldTag().dataLayout().dimension(i);
+    dims_in[i] = v_in.fieldTag().dataLayout().extent(i);
+    dims_out[i] = v_out.fieldTag().dataLayout().extent(i);
     TEUCHOS_TEST_FOR_EXCEPTION (dims_in[i]!=dims_out[i], std::logic_error,
                                 "Error! The number of Cell/Nodes/QuadPoints must be the same for both in/out vectors.\n");
   }

@@ -34,6 +34,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   ice_saturation_init_  = p->get<RealType>("ACE Ice Initial Saturation", 0.0);
   ice_saturation_max_   = p->get<RealType>("ACE Ice Maximum Saturation", 0.0);
   water_saturation_min_ = p->get<RealType>("ACE Water Minimum Saturation", 0.0);
+  salinity_base_        = p->get<RealType>("ACE Base Salinity", 0.0);
+  freeze_curve_width_   = p->get<RealType>("ACE Freezing Curve Width", 1.0);
   latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
   porosityE_            = p->get<RealType>("ACE Porosity E-Depth", 0.0);
@@ -365,17 +367,12 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor F(num_dims_);
   Tensor sigma(num_dims_);
 
-  ScalarT icurr = ice_saturation_(cell, pt);
-  ScalarT wcurr = water_saturation_(cell, pt);
-
   ScalarT const E     = elastic_modulus_(cell, pt);
   ScalarT const nu    = poissons_ratio_(cell, pt);
   ScalarT const kappa = E / (3.0 * (1.0 - 2.0 * nu));
   ScalarT const mu    = E / (2.0 * (1.0 + nu));
   ScalarT const K     = hardening_modulus_(cell, pt);
   ScalarT const Y     = yield_strength_(cell, pt);
-  // ScalarT const Y     = yield_strength_(cell, pt) * icurr +
-  // (1.0 - icurr) * min_yield_strength_;
   ScalarT const J1    = J_(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
   ScalarT const Tcurr = temperature_(cell, pt);
@@ -501,14 +498,13 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   porosity_(cell, pt) = porosity;
 
   // Calculate melting temperature
-  ScalarT sal   = 5.0;  // note: this should come from chemical part of model
+  ScalarT sal   = salinity_base_;  // should come from chemical part of model
   ScalarT sal15 = std::sqrt(sal * sal * sal);
   ScalarT pressure_fixed = 1.0;
-  // Tmelt is in Kelvin, TmeltC is in Celcius.
-  ScalarT Tmelt = (-0.057 * sal) + (0.00170523 * sal15) -
-                  (0.0002154996 * sal * sal) -
-                  ((0.000753 / 10000.0) * pressure_fixed) + 273.15;
-  ScalarT TmeltC = Tmelt - 273.15;
+  // Tmelt is in Kelvin
+  ScalarT Tmelt = -0.057 * sal + 0.00170523 * sal15 -
+                  0.0002154996 * sal * sal -
+                  0.000753 / 10000.0 * pressure_fixed + 273.15;
 
   // Calculate temperature change
   ScalarT dTemp = Tcurr - Told;
@@ -520,64 +516,39 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Calculate the freezing curve function df/dTemp
   // W term sets the width of the freezing curve.
-  // Larger W value means steeper curve.
-  ScalarT W = 4.0;
+  // Larger W means steeper curve.
+  // f(T) = L / (1 + e^(-W*(T-T0)))
+  //
+  ScalarT const W = freeze_curve_width_;
+  ScalarT const Tdiff = Tcurr - Tmelt;
+  ScalarT const et = exp(-W * Tdiff);
+  ScalarT const etp1 = et + 1.0;
+  ScalarT const dfdT = -W * et / etp1 / etp1;
 
-  // dfdT is a smooth function, and it is centered about Tmelt.
-  // dfdT is a sigmoidal function.
-  // dfdT is naturally negative (less than 0).
-  //   f(T) = L / (1 + e^(-W*(T-T0)))
-  ScalarT dfdT = 0.0;
-  ScalarT TcurrC = Tcurr - 273.15;
-  ScalarT TdiffC = TcurrC - TmeltC;
-  //dfdT = -W * exp(-W * TdiffC) / 
-  //       ((1.0 + exp(-W * TdiffC)) * (1.0 + exp(-W * TdiffC)));
-  
   // Update the ice saturation
-  // icurr = iold + dfdT * dTemp;
-  icurr = 1.0 - (1.0 / (1.0 + exp(-W * TdiffC)));
-  icurr = std::max(0.0, icurr);
-  icurr = std::min(1.0, icurr);
-  
-  // Calculate dfdT by evaluation
-  // dfdT needs to be negative (because Lfi is always positive)
-  if (dTemp != 0.0) {
-    dfdT = -1.0 * std::abs((iold - icurr) / dTemp);
-  }
-
+  ScalarT const icurr = 1.0 - 1.0 / etp1;
   // Update the water saturation
-  wcurr = 1.0 - icurr;
-  wcurr = std::max(water_saturation_min_, wcurr);
-  wcurr = std::min(1.0, wcurr);
+  ScalarT const wcurr = 1.0 - icurr;
 
   // Update the effective material density
   density_(cell, pt) =
       (porosity * ((ice_density_ * icurr) + (water_density_ * wcurr))) +
       ((1.0 - porosity) * sediment_density_);
-  //density_(cell,pt) = water_density_;   
 
   // Update the effective material heat capacity
   heat_capacity_(cell, pt) =
       (porosity * ((ice_heat_capacity_ * icurr) + 
                    (water_heat_capacity_ * wcurr))) +
       ((1.0 - porosity) * sediment_heat_capacity_);
-  //heat_capacity_(cell,pt) = water_heat_capacity_;
 
   // Update the effective material thermal conductivity
   thermal_cond_(cell, pt) = pow(ice_thermal_cond_, (icurr * porosity)) *
                             pow(water_thermal_cond_, (wcurr * porosity)) *
                             pow(sediment_thermal_cond_, (1.0 - porosity));
-  //thermal_cond_(cell,pt) = water_thermal_cond_;
 
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) 
                                - (ice_density_ * latent_heat_ * dfdT);
-  //if (std::abs(dfdT)>0.001) {
-  //std::cout << "TI=" << thermal_inertia_(cell,pt) << "\n";}
-
-  ScalarT const TI     = thermal_inertia_(cell, pt);
-  ScalarT const RCp    = (density_(cell, pt) * heat_capacity_(cell, pt));
-  ScalarT const RLdfdT = (ice_density_ * latent_heat_ * dfdT);
 
   // Return values
   ice_saturation_(cell, pt)   = icurr;

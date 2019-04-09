@@ -78,8 +78,8 @@ ComputeMeasure(std::string measureType, double& measure)
       Albany::StateArray& 
       stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
       Albany::MDArray savedWeights = stateArrayRef["Weights"];
-      int numCells  = weighted_measure[ws].dimension(0);
-      int numQPs    = weighted_measure[ws].dimension(1);
+      int numCells  = weighted_measure[ws].extent(0);
+      int numQPs    = weighted_measure[ws].extent(1);
       for(int cell=0; cell<numCells; cell++)
         for(int qp=0; qp<numQPs; qp++)
           weighted_measure[ws](cell,qp) = savedWeights(cell,qp);
@@ -98,7 +98,7 @@ ComputeMeasure(std::string measureType, double& measure)
 
       int physIndex = wsPhysIndex[ws];
 
-      int numCells = wsElNodeEqID[ws].dimension(0);
+      int numCells = wsElNodeEqID[ws].extent(0);
       int numQPs = cubatures[physIndex]->getNumPoints();
     
       for(int cell=0; cell<numCells; cell++)
@@ -159,8 +159,8 @@ computeMeasure(std::string measureType,
       Albany::StateArray& 
       stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
       Albany::MDArray savedWeights = stateArrayRef["Weights"];
-      int numCells  = weighted_measure[ws].dimension(0);
-      int numQPs    = weighted_measure[ws].dimension(1);
+      int numCells  = weighted_measure[ws].extent(0);
+      int numQPs    = weighted_measure[ws].extent(1);
       for(int cell=0; cell<numCells; cell++)
         for(int qp=0; qp<numQPs; qp++)
           weighted_measure[ws](cell,qp) = savedWeights(cell,qp);
@@ -192,9 +192,9 @@ computeMeasure(std::string measureType,
   for(int ws=0; ws<numWorksets; ws++){
 
     int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].dimension(0);
-    int numCells  = weighted_measure[ws].dimension(0);
-    int numQPs    = weighted_measure[ws].dimension(1);
+    int numNodes  = basisAtQPs[physIndex].extent(0);
+    int numCells  = weighted_measure[ws].extent(0);
+    int numQPs    = weighted_measure[ws].extent(1);
 
     std::string blockName = wsEBNames[ws];
 
@@ -298,9 +298,9 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
   for(int ws=0; ws<numWorksets; ws++){
 
     int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].dimension(0);
-    int numCells  = weighted_measure[ws].dimension(0);
-    int numQPs    = weighted_measure[ws].dimension(1);
+    int numNodes  = basisAtQPs[physIndex].extent(0);
+    int numCells  = weighted_measure[ws].extent(0);
+    int numQPs    = weighted_measure[ws].extent(1);
     int numDims   = cubatures[physIndex]->getDimension();
 
     SubIntegrator myDicer(cellTypes[physIndex],intrepidBasis[physIndex],/*maxRefs=*/1,/*maxErr=*/1e-5);
@@ -443,8 +443,8 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
   for(int ws=0; ws<numWorksets; ws++){
   
     int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].dimension(0);
-    int numCells  = weighted_measure[ws].dimension(0);
+    int numNodes  = basisAtQPs[physIndex].extent(0);
+    int numCells  = weighted_measure[ws].extent(0);
     int numDims   = cubatures[physIndex]->getDimension();
 
     SubIntegrator myDicer(cellTypes[physIndex],intrepidBasis[physIndex],/*maxRefs=*/1,/*maxErr=*/1e-5);
@@ -513,8 +513,8 @@ ComputeVolume(double* p, const double* dfdp,
       Albany::StateArray& 
       stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
       Albany::MDArray savedWeights = stateArrayRef["Weights"];
-      int numCells  = weighted_measure[ws].dimension(0);
-      int numQPs    = weighted_measure[ws].dimension(1);
+      int numCells  = weighted_measure[ws].extent(0);
+      int numQPs    = weighted_measure[ws].extent(1);
       for(int cell=0; cell<numCells; cell++)
         for(int qp=0; qp<numQPs; qp++)
           weighted_measure[ws](cell,qp) = savedWeights(cell,qp);
@@ -530,9 +530,9 @@ ComputeVolume(double* p, const double* dfdp,
   for(int ws=0; ws<numWorksets; ws++){
 
     int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].dimension(0);
-    int numCells  = weighted_measure[ws].dimension(0);
-    int numQPs    = weighted_measure[ws].dimension(1);
+    int numNodes  = basisAtQPs[physIndex].extent(0);
+    int numCells  = weighted_measure[ws].extent(0);
+    int numQPs    = weighted_measure[ws].extent(1);
     
     for(int cell=0; cell<numCells; cell++){
       double elVol = 0.0;
@@ -690,7 +690,7 @@ ATO::OptimizationProblem::InitTopOpt()
       Albany::MDArray savedWeights = stateArrayRef["Weights"];
 
       int physIndex = wsPhysIndex[ws];
-      int numCells  = wsElNodeEqID[ws].dimension(0);
+      int numCells  = wsElNodeEqID[ws].extent(0);
       int numQPs    = cubatures[physIndex]->getNumPoints();
       weighted_measure[ws] = Kokkos::DynRankView<RealType, PHX::Device>("weighted_measure", numCells,numQPs); //inefficient, reallocating memory. 
       for(int cell=0; cell<numCells; cell++)
@@ -702,8 +702,8 @@ ATO::OptimizationProblem::InitTopOpt()
     for(int ws=0; ws<numWorksets; ws++){
   
       int physIndex = wsPhysIndex[ws];
-      int numCells  = wsElNodeEqID[ws].dimension(0);
-      int numNodes  = wsElNodeEqID[ws].dimension(1);
+      int numCells  = wsElNodeEqID[ws].extent(0);
+      int numNodes  = wsElNodeEqID[ws].extent(1);
       int numDims   = cubatures[physIndex]->getDimension();
       int numQPs    = cubatures[physIndex]->getNumPoints();
   
@@ -1128,8 +1128,8 @@ computeMeasureT(std::string measureType,
       Albany::StateArray&
       stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
       Albany::MDArray savedWeights = stateArrayRef["Weights"];
-      int numCells  = weighted_measure[ws].dimension(0);
-      int numQPs    = weighted_measure[ws].dimension(1);
+      int numCells  = weighted_measure[ws].extent(0);
+      int numQPs    = weighted_measure[ws].extent(1);
       for(int cell=0; cell<numCells; cell++)
         for(int qp=0; qp<numQPs; qp++)
           weighted_measure[ws](cell,qp) = savedWeights(cell,qp);
@@ -1161,9 +1161,9 @@ computeMeasureT(std::string measureType,
   for(int ws=0; ws<numWorksets; ws++){
 
     int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].dimension(0);
-    int numCells  = weighted_measure[ws].dimension(0);
-    int numQPs    = weighted_measure[ws].dimension(1);
+    int numNodes  = basisAtQPs[physIndex].extent(0);
+    int numCells  = weighted_measure[ws].extent(0);
+    int numQPs    = weighted_measure[ws].extent(1);
 
     std::string blockName = wsEBNames[ws];
 
@@ -1268,9 +1268,9 @@ computeConformalMeasureT(std::string measureType,
   for(int ws=0; ws<numWorksets; ws++){
 
     int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].dimension(0);
-    int numCells  = weighted_measure[ws].dimension(0);
-    int numQPs    = weighted_measure[ws].dimension(1);
+    int numNodes  = basisAtQPs[physIndex].extent(0);
+    int numCells  = weighted_measure[ws].extent(0);
+    int numQPs    = weighted_measure[ws].extent(1);
     int numDims   = cubatures[physIndex]->getDimension();
 
     SubIntegrator myDicer(cellTypes[physIndex],intrepidBasis[physIndex],/*maxRefs=*/1,/*maxErr=*/1e-5);
@@ -1413,8 +1413,8 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
   for(int ws=0; ws<numWorksets; ws++){
   
     int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].dimension(0);
-    int numCells  = weighted_measure[ws].dimension(0);
+    int numNodes  = basisAtQPs[physIndex].extent(0);
+    int numCells  = weighted_measure[ws].extent(0);
     int numDims   = cubatures[physIndex]->getDimension();
 
     SubIntegrator myDicer(cellTypes[physIndex],intrepidBasis[physIndex],/*maxRefs=*/1,/*maxErr=*/1e-5);

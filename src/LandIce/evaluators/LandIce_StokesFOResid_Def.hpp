@@ -21,9 +21,9 @@ template<typename EvalT, typename Traits>
 StokesFOResid<EvalT, Traits>::
 StokesFOResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
-  numNodes  (dl->node_qp_gradient->dimension(1)),
-  numQPs    (dl->node_qp_gradient->dimension(2)),
-  numDims   (dl->node_qp_gradient->dimension(3)),
+  numNodes  (dl->node_qp_gradient->extent(1)),
+  numQPs    (dl->node_qp_gradient->extent(2)),
+  numDims   (dl->node_qp_gradient->extent(3)),
   useStereographicMap (p.get<Teuchos::ParameterList*>("Stereographic Map")->get("Use Stereographic Map", false)),
   R2 (std::pow(p.get<Teuchos::ParameterList*>("Stereographic Map")->get<RealType>("Earth Radius", 6371),2)),
   x_0 (p.get<Teuchos::ParameterList*>("Stereographic Map")->get<RealType>("X_0", 0)),//-136)),

@@ -48,7 +48,7 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   if(compute_normals) {
     normals  = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
     coordVec = decltype(coordVec)(p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector );
-    numNodes = dl->node_gradient->dimension(1);
+    numNodes = dl->node_gradient->extent(1);
     this->addEvaluatedField(normals);
     this->addDependentField(coordVec);
   }
@@ -56,11 +56,11 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
   // Get Dimensions
-  int numCells = dl_side->node_qp_gradient->dimension(0);
-  numSides     = dl_side->node_qp_gradient->dimension(1);
-  numSideNodes = dl_side->node_qp_gradient->dimension(2);
-  numSideQPs   = dl_side->node_qp_gradient->dimension(3);
-  numCellDims  = dl_side->vertices_vector->dimension(3);    // Vertices vector always has the ambient space dimension
+  int numCells = dl_side->node_qp_gradient->extent(0);
+  numSides     = dl_side->node_qp_gradient->extent(1);
+  numSideNodes = dl_side->node_qp_gradient->extent(2);
+  numSideQPs   = dl_side->node_qp_gradient->extent(3);
+  numCellDims  = dl_side->vertices_vector->extent(3);    // Vertices vector always has the ambient space dimension
   numSideDims  = numCellDims-1;
 
   cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature Side");

@@ -29,8 +29,8 @@ DOFInterpolationSideBase (const Teuchos::ParameterList& p,
 
   this->setName("DOFInterpolationSide"+PHX::typeAsString<EvalT>());
 
-  numSideNodes = dl_side->node_qp_scalar->dimension(2);
-  numSideQPs   = dl_side->node_qp_scalar->dimension(3);
+  numSideNodes = dl_side->node_qp_scalar->extent(2);
+  numSideQPs   = dl_side->node_qp_scalar->extent(3);
 }
 
 //**********************************************************************

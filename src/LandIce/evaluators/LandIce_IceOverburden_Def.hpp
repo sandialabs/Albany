@@ -26,9 +26,9 @@ IceOverburden (const Teuchos::ParameterList& p,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
     basalSideName = p.get<std::string>("Side Set Name");
-    numPts = layout->dimension(2);
+    numPts = layout->extent(2);
   } else {
-    numPts = layout->dimension(1);
+    numPts = layout->extent(1);
   }
 
   H   = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);

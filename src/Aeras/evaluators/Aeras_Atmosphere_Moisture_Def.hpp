@@ -40,9 +40,9 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
   tracerNames     (p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names")),
   tracerSrcNames(p.get< Teuchos::ArrayRCP<std::string> >("Tracer Source Names")),
   namesToSrc      (),
-  numQPs          (dl->node_qp_scalar->dimension(2)),
-  numDims         (dl->node_qp_gradient->dimension(3)),
-  numLevels       (dl->node_scalar_level->dimension(2))
+  numQPs          (dl->node_qp_scalar->extent(2)),
+  numDims         (dl->node_qp_gradient->extent(3)),
+  numLevels       (dl->node_scalar_level->extent(2))
 {  
 
   Teuchos::ParameterList* xzhydrostatic_params =

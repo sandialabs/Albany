@@ -437,7 +437,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         entity = Albany::StateStruct::ElemData;
         sns = ss_dl->cell_scalar2;
         numLayers = thisFieldList.get<int>("Number Of Layers");
-        dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,LayerDim>(sns->dimension(0),sns->dimension(1),numLayers));
+        dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,LayerDim>(sns->extent(0),sns->extent(1),numLayers));
         stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart);
         nodal_state = false;
         scalar_state = false;
@@ -445,7 +445,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
         sns = ss_dl->node_scalar;
         numLayers = thisFieldList.get<int>("Number Of Layers");
-        dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),numLayers));
+        dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),numLayers));
         stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart);
         scalar_state = false;
         nodal_state = true;
@@ -453,7 +453,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         entity = Albany::StateStruct::ElemData;
         sns = ss_dl->cell_vector;
         numLayers = thisFieldList.get<int>("Number Of Layers");
-        dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Dim,LayerDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),numLayers));
+        dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Dim,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),numLayers));
         stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart);
         scalar_state = false;
         nodal_state = false;
@@ -461,8 +461,8 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
         sns = ss_dl->node_vector;
         numLayers = thisFieldList.get<int>("Number Of Layers");
-        dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,Dim,LayerDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),
-                                                                               sns->dimension(3),numLayers));
+        dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,Dim,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),
+                                                                               sns->extent(3),numLayers));
         stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart);
         scalar_state = false;
         nodal_state = true;

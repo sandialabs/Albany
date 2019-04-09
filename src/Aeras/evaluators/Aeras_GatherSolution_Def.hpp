@@ -22,10 +22,10 @@ template<typename EvalT, typename Traits>
 GatherSolutionBase<EvalT,Traits>::
 GatherSolutionBase(const Teuchos::ParameterList& p,
                    const Teuchos::RCP<Aeras::Layouts>& dl): 
-worksetSize(dl->node_scalar             ->dimension(0)),
-numNodes   (dl->node_scalar             ->dimension(1)),
-numDims    (dl->node_qp_gradient        ->dimension(3)),
-numLevels  (dl->node_scalar_level       ->dimension(2)), 
+worksetSize(dl->node_scalar             ->extent(0)),
+numNodes   (dl->node_scalar             ->extent(1)),
+numDims    (dl->node_qp_gradient        ->extent(3)),
+numLevels  (dl->node_scalar_level       ->extent(2)), 
 numFields  (0), numNodeVar(0), numVectorLevelVar(0), numScalarLevelVar(0), numTracerVar(0)
 {
   const Teuchos::ArrayRCP<std::string> node_names              = p.get< Teuchos::ArrayRCP<std::string> >("Node Names");
@@ -366,7 +366,7 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const GatherSolution_Tag &tag, const int &cell) const{
 
-  const int neq=nodeID.dimension(2);
+  const int neq=nodeID.extent(2);
   const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; ++node) {
@@ -381,7 +381,7 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const GatherSolution_transientTerms_Tag &tag, const int &cell) const{
 
-  const int neq=nodeID.dimension(2);
+  const int neq=nodeID.extent(2);
   const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; ++node) {
@@ -409,7 +409,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
-    const int neq = nodeID.dimension(2);
+    const int neq = nodeID.extent(2);
     const int num_dof = neq * this->numNodes;
 
 

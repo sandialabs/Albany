@@ -102,6 +102,8 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType ice_saturation_init_{0.0};
   RealType ice_saturation_max_{0.0};
   RealType water_saturation_min_{0.0};
+  RealType salinity_base_{0.0};
+  RealType freeze_curve_width_{1.0};
   RealType latent_heat_{0.0};
   RealType porosity0_{0.0};
   RealType porosityE_{0.0};

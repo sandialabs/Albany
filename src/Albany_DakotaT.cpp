@@ -11,7 +11,7 @@
 #include "Albany_DakotaT.hpp"
 #include "Albany_Utils.hpp"
 
-#include "Teuchos_XMLParameterListHelpers.hpp"
+#include <Teuchos_YamlParameterListCoreHelpers.hpp>
 // JF #include "TriKota_MPDirectApplicInterface.hpp"
 // JF #include "Piro_Epetra_StokhosMPSolver.hpp"
 
@@ -44,7 +44,7 @@ int Albany_DakotaT(int argc, char *argv[])
   cmd.parse_cmdline(argc, argv, *out);
 
   RCP<ParameterList> appParams =
-    Teuchos::getParametersFromXmlFile(cmd.xml_filename);
+    Teuchos::getParametersFromYamlFile(cmd.yaml_filename);
   ParameterList& dakotaParams = appParams->sublist("Piro").sublist("Dakota");
   std::string dakota_input_file =
     dakotaParams.get("Input File", "dakota.in");
@@ -88,7 +88,7 @@ int Albany_DakotaT(int argc, char *argv[])
   // JF modifications for Albany_DakotaT
   RCP<const Teuchos_Comm> appCommT = Albany::createTeuchosCommFromMpiComm(analysis_comm);
 
-  RCP<Albany::SolverFactory> slvrfctry = rcp(new Albany::SolverFactory(cmd.xml_filename, appCommT));
+  RCP<Albany::SolverFactory> slvrfctry = rcp(new Albany::SolverFactory(cmd.yaml_filename, appCommT));
 
   // Connect vtune for performance profiling
   if (cmd.vtune) {

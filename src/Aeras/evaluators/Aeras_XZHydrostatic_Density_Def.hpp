@@ -24,8 +24,8 @@ XZHydrostatic_Density(const Teuchos::ParameterList& p,
   pressure   (p.get<std::string> ("Pressure"),    dl->node_scalar_level),
   virtT      (p.get<std::string> ("VirtualT"),    dl->node_scalar_level),
 
-  numNodes   (dl->node_scalar             ->dimension(1)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  numNodes   (dl->node_scalar             ->extent(1)),
+  numLevels  (dl->node_scalar_level       ->extent(2))
 {
   R = 287;
   this->addDependentField(pressure);

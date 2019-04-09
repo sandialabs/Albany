@@ -54,7 +54,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(eigenvector_Im[k],fm);
   }
 
-  numNodes = (nEigenvectors > 0) ? eigenvector_Re[0].dimension(1) : 0;
+  numNodes = (nEigenvectors > 0) ? eigenvector_Re[0].extent(1) : 0;
 }
 
 // **********************************************************************

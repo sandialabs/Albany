@@ -69,7 +69,7 @@ SharedParameterVec(const Teuchos::ParameterList& p)
   Teuchos::RCP<PHX::DataLayout> layout = p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library"); //, Teuchos::null ANDY - why a compiler error with this?
 
-  numParams = layout->dimension(1);
+  numParams = layout->extent(1);
 
   paramNames.resize(numParams);
   paramValues.resize(numParams);

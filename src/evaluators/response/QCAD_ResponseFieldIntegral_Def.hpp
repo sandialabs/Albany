@@ -43,7 +43,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
 
   //! number of quad points per cell
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
-  numQPs = scalar_dl->dimension(1);
+  numQPs = scalar_dl->extent(1);
 
   //! obtain number of dimensions
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
@@ -133,7 +133,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   std::string global_response_name = 
     fieldName + " Global Response Field Integral";
 
-  int worksetSize = dl->qp_scalar->dimension(0);
+  int worksetSize = dl->qp_scalar->extent(0);
   int responseSize = 1;
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
   Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));

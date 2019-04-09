@@ -64,7 +64,7 @@ NodePointVecInterpolation<EvalT, Traits>::evaluateFields(
       // Zero out for node==0; then += for node = 1 to number_nodes_
       // ScalarT &
       // vpt = point_value_(cell, i);
-      for (int j = 0; j < point_value_.dimension(2); j++) {
+      for (int j = 0; j < point_value_.extent(2); j++) {
         point_value_(cell, i, j) =
             nodal_value_(cell, 0, i) * basis_fn_(cell, 0, i);
         for (int node = 1; node < number_nodes_; ++node) {

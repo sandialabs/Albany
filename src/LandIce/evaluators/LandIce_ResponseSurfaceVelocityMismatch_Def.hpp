@@ -54,9 +54,9 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   //metric_surface      = decltype(metric_surface)(metric_surface_name, dl_surface->qp_tensor);
 
   // Get Dimensions
-  numSideNodes  = dl_surface->node_scalar->dimension(2);
-  numSideDims   = dl_surface->node_gradient->dimension(3);
-  numSurfaceQPs = dl_surface->qp_scalar->dimension(2);
+  numSideNodes  = dl_surface->node_scalar->extent(2);
+  numSideDims   = dl_surface->node_gradient->extent(3);
+  numSurfaceQPs = dl_surface->qp_scalar->extent(2);
 
   // add dependent fields
   this->addDependentField(velocity);
@@ -89,7 +89,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
       w_measure_beta_vec.emplace_back(w_measure_basal_name, dl_basal->qp_scalar);
       metric_beta_vec.emplace_back(metric_basal_name, dl_basal->qp_tensor);
 
-      numBasalQPs = dl_basal->qp_scalar->dimension(2);
+      numBasalQPs = dl_basal->qp_scalar->extent(2);
 
       this->addDependentField(w_measure_beta_vec.back());
       this->addDependentField(metric_beta_vec.back());
@@ -116,7 +116,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
     w_measure_basal = decltype(w_measure_basal)(w_measure_basal_name, dl_basal->qp_scalar);
     metric_basal    = decltype(metric_basal)(metric_basal_name, dl_basal->qp_tensor);
 
-    numBasalQPs = dl_basal->qp_scalar->dimension(2);
+    numBasalQPs = dl_basal->qp_scalar->extent(2);
 
     this->addDependentField(w_measure_basal);
     this->addDependentField(metric_basal);
@@ -132,7 +132,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = "Local Response surface_velocity Mismatch";
   std::string global_response_name = "Global Response surface_velocity Mismatch";
-  int worksetSize = dl->qp_scalar->dimension(0);
+  int worksetSize = dl->qp_scalar->extent(0);
   int responseSize = 1;
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
   Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));

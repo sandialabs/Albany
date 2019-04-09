@@ -64,7 +64,7 @@ ResponseFieldAverage(Teuchos::ParameterList& p,
     fieldName + " Local Response Field Average";
   std::string global_response_name = 
     fieldName + " Global Response Field Average";
-  int worksetSize = scalar_dl->dimension(0);
+  int worksetSize = scalar_dl->extent(0);
   int responseSize = 2;
   Teuchos::RCP<PHX::DataLayout> local_response_layout =
     Teuchos::rcp(new MDALayout<Cell,Dim>(worksetSize, responseSize));

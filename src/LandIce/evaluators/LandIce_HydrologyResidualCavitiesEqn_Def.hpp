@@ -32,16 +32,16 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
-    numNodes = dl->node_scalar->dimension(2);
-    numQPs   = dl->qp_scalar->dimension(2);
+    numNodes = dl->node_scalar->extent(2);
+    numQPs   = dl->qp_scalar->extent(2);
 
     sideSetName = p.get<std::string>("Side Set Name");
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure appears to be that of a side set.\n");
 
-    numNodes = dl->node_scalar->dimension(1);
-    numQPs   = dl->qp_scalar->dimension(1);
+    numNodes = dl->node_scalar->extent(1);
+    numQPs   = dl->qp_scalar->extent(1);
   }
 
   this->addEvaluatedField(residual);

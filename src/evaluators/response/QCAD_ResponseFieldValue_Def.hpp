@@ -57,7 +57,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
-        int neq = nodeID.dimension(2);
+        int neq = nodeID.extent(2);
 
         // Loop over equations per node
         for (int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -125,7 +125,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
-        int neq = nodeID.dimension(2);
+        int neq = nodeID.extent(2);
 
         // Loop over equations per node
         for (int eq_dof=0; eq_dof<neq; eq_dof++) {
@@ -237,7 +237,7 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   // Setup scatter evaluator
   std::string global_response_name =
     opFieldName + " Global Response Field Value";
-  //int worksetSize = scalar_dl->dimension(0);
+  //int worksetSize = scalar_dl->extent(0);
   int responseSize = 5;
   Teuchos::RCP<PHX::DataLayout> global_response_layout =
     Teuchos::rcp(new PHX::MDALayout<Dim>(responseSize));

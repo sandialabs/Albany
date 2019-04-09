@@ -75,15 +75,15 @@ ResponseSaveField(Teuchos::ParameterList& p,
     //! number of quad points per cell and dimension
     scalar_dl = dl->qp_scalar;
     vector_dl = dl->qp_vector;
-    numQPs = vector_dl->dimension(1);
-    numDims = vector_dl->dimension(2);
+    numQPs = vector_dl->extent(1);
+    numDims = vector_dl->extent(2);
   }
   else if(fieldIndices == "Cell,Node") {
     //! number of nodes per cell and dimension
     scalar_dl = dl->node_scalar;
     vector_dl = dl->node_vector;
-    numNodes = vector_dl->dimension(1);
-    numDims = vector_dl->dimension(2);
+    numNodes = vector_dl->extent(1);
+    numDims = vector_dl->extent(2);
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,

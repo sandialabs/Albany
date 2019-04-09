@@ -26,9 +26,9 @@ SW_ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
   lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar),
   theta_nodal   (p.get<std::string>  ("Theta Coord Nodal Name"), dl->node_scalar),
-  worksetSize(dl->node_scalar             ->dimension(0)),
-  numNodes   (dl->node_scalar             ->dimension(1)),
-  numDims    (dl->node_qp_gradient        ->dimension(3)),
+  worksetSize(dl->node_scalar             ->extent(0)),
+  numNodes   (dl->node_scalar             ->extent(1)),
+  numDims    (dl->node_qp_gradient        ->extent(3)),
   numFields  (0), numNodeVar(3)
 {
   //std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -138,7 +138,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if ( buildMass ) {
     for (int cell=0; cell < workset.numCells; ++cell ) {
-      const int neq = nodeID.dimension(2);
+      const int neq = nodeID.extent(2);
 
       for (int node = 0; node < this->numNodes; ++node) {
         int n = 0, eq = 0;

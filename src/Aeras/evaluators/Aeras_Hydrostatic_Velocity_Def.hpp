@@ -27,9 +27,9 @@ Hydrostatic_Velocity(const Teuchos::ParameterList& p,
   sphere_coord (p.get<std::string> ("Spherical Coord Name"), dl->qp_gradient ),
   pressure     (p.get<std::string> ("Pressure"),             dl->node_scalar_level),
   Velocity     (p.get<std::string> ("Velocity"),             dl->node_vector_level),
-  numNodes ( dl->node_scalar             ->dimension(1)),
-  numDims  ( dl->node_qp_gradient        ->dimension(3)),
-  numLevels( dl->node_scalar_level       ->dimension(2)),
+  numNodes ( dl->node_scalar             ->extent(1)),
+  numDims  ( dl->node_qp_gradient        ->extent(3)),
+  numLevels( dl->node_scalar_level       ->extent(2)),
   E (Eta<EvalT>::self()),
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
