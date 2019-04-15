@@ -223,7 +223,7 @@ namespace Aeras
     Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace (const std::string& field_name) const;
 
     //! Create a Jacobian operator (owned and overlapped)
-    Teuchos::RCP<Thyra_LinearOp> createJacobianOp        () const { return m_jac_factory->createOp();         }
+    Teuchos::RCP<Thyra_LinearOp> createJacobianOp        () const {return m_jac_factory->createOp(); }
     Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const { return m_overlap_jac_factory->createOp(); }
 
     //! Create implicit Jacobian operator (owned and overlapped) (for Aeras)
@@ -460,7 +460,7 @@ namespace Aeras
 
     const stk::mesh::BulkData& getSTKBulkData() { return bulkData; }
 
-    Teuchos::RCP<Albany::LayeredMeshNumbering<LO> > getLayeredMeshNumbering() 
+    Teuchos::RCP<Albany::LayeredMeshNumbering<LO> > getLayeredMeshNumbering() const 
     {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::SpectralDiscretization: getLayeredMeshNumbering() not implemented");
@@ -537,7 +537,7 @@ namespace Aeras
 
     //  The following function allocates the graph of a diagonal Jacobian,
     //  relevant for explicit schemes.
-    void computeGraphs_Explicit(const bool is_explicit);
+    void computeGraphs_Explicit();
 
     //! Process spectral Albany mesh for Workset/Bucket Info
     void computeWorksetInfo();

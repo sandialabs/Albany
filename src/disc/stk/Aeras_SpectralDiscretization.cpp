@@ -138,7 +138,7 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
 #endif
   //IKT, FIXME: I think this routine needs to move with 
   //the new design of the code. 
-  Aeras::SpectralDiscretization::updateMesh();
+  //Aeras::SpectralDiscretization::updateMesh();
 }
 
 Aeras::SpectralDiscretization::~SpectralDiscretization()
@@ -1856,17 +1856,14 @@ void Aeras::SpectralDiscretization::computeGraphs()
   fillCompleteGraphs();
 }
 
-void Aeras::SpectralDiscretization::computeGraphs_Explicit(const bool is_explicit)
+void Aeras::SpectralDiscretization::computeGraphs_Explicit()
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  if (is_explicit == true) {
+  if (explicit_scheme == true) {
     computeGraphsExplicitUpToFillComplete();
-  }
-  else {
-    computeGraphsUpToFillComplete();
-    fillCompleteGraphs();
+    fillCompleteGraphsExplicit();
   }
 }
 
@@ -1934,6 +1931,10 @@ void Aeras::SpectralDiscretization::computeGraphsUpToFillComplete()
 
   //Create implicit overlap jac factory and populate  
   m_implicit_overlap_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs,neq*nodes_per_element) );
+  //For implicit scheme, m_overlap_jac_factory = m_implicit_overlap_jac_factory
+  if (explicit_scheme == false) {
+    m_overlap_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs,neq*nodes_per_element) );
+  }
 #ifdef OUTPUT_TO_SCREEN
   *out << "neq*nodes_per_element: " << neq*nodes_per_element << std::endl;
 #endif
@@ -1975,8 +1976,42 @@ void Aeras::SpectralDiscretization::computeGraphsUpToFillComplete()
             {
               col = getGlobalDOF(colNode, m);
               m_implicit_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col,1));
+              m_implicit_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col,1));
               //IKT, FIXME?  The following line might be needed 
               //m_implicit_overlap_jac_factory->insertGlobalIndices(col, Teuchos::arrayView(&row,1));
+            }
+          }
+        }
+      }
+    }
+  }
+  //For implicit scheme, m_overlap_jac_factory = m_implicit_overlap_jac_factory 
+  if (explicit_scheme == false) {
+    for (int b = 0; b < numBuckets; ++b)
+    {
+      stk::mesh::Bucket & buck = *buckets[b];
+      // i is the element index within bucket b
+      for (std::size_t i = 0; i < buck.size(); ++i)
+      {
+        Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
+        for (int j = 0; j < nodes_per_element; ++j)
+        {
+          const GO rowNode = node_rels[j];
+          // loop over eqs
+          for (std::size_t k=0; k < neq; k++)
+          {
+            row = getGlobalDOF(rowNode, k);
+            for (std::size_t l=0; l < nodes_per_element; l++)
+            {
+              const GO colNode = node_rels[l];
+              for (std::size_t m=0; m < neq; m++)
+              {
+                col = getGlobalDOF(colNode, m);
+                m_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col,1));
+                m_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col,1));
+                //IKT, FIXME?  The following line might be needed 
+                //m_overlap_jac_factory->insertGlobalIndices(col, Teuchos::arrayView(&row,1));
+              }
             }
           }
         }
@@ -1994,9 +2029,17 @@ void Aeras::SpectralDiscretization::fillCompleteGraphs()
 
   //fill complete m_implicit_overlap_jac_factory
   m_implicit_overlap_jac_factory->fillComplete();
+  //For implicit scheme, m_overlap_jac_factory = m_implicit_overlap_jac_factory 
+  if (explicit_scheme == false) {
+    m_overlap_jac_factory->fillComplete();
+  }
 
   //create m_implicit_jac_factory (owned) 
   m_implicit_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_vs, m_vs, m_implicit_overlap_jac_factory) );
+  //For implicit scheme, m_jac_factory = m_implicit_jac_factory 
+  if (explicit_scheme == false) {
+    m_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_vs, m_vs, m_overlap_jac_factory) );
+  }
 }
 
 void Aeras::SpectralDiscretization::fillCompleteGraphsExplicit()
@@ -3263,14 +3306,14 @@ Aeras::SpectralDiscretization::updateMesh()
   // Right now, computeGraphs_Explicit() will not work with shallow water; therefore
   // only call this function for hydrostatic (numLevels > 0)
 
-  //computeGraphs populates m_implicit_graph_factory and m_implicit_overlap_graph_factory.
-  //For an explicit scheme, these are needed to populate correctly the Laplace 
+  //computeGraphs populates m_implicit_graph_factory and m_implicit_overlap_graph_factory
+  //for an explicit scheme; for an implicit scheme, it also populates m_graph_factory and m_overlap_graph_factory.
+  //For an explicit scheme, these the implicit graph factories are needed to populate correctly the Laplace 
   //operator, needed for hyperviscosity
   computeGraphs(); 
   //computeGraphs_Explicit will populate m_graph_factory and m_overlap_graph_factory
-  //If the scheme is implicit, these are identical to m_graph_factory and m_implicit_overlap_graph_factory
-  //respectively.  Otherwise, these will be diagonal matrices (for explicit scheme). 
-  computeGraphs_Explicit(explicit_scheme); 
+  //for an explicit scheme, which will have graphs of diagonal matrices. 
+  computeGraphs_Explicit(); 
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   Teuchos::RCP<Tpetra_CrsMatrix> ImplicitMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT));

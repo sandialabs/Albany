@@ -243,8 +243,8 @@ evaluateFields(typename Traits::EvalData workset)
   nodeID = workset.wsElNodeEqID;
 
   // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
-  // IKT FIXME: convert to Thyra! 
-  /*auto xT_2d = ConverterT::getConstTpetraVector(workset.x)->template getLocalView<PHX::Device>();
+  // IKT FIXME: convert to Thyra to avoid casts to Tpetra! 
+  auto xT_2d = Albany::getConstTpetraVector(workset.x)->template getLocalView<PHX::Device>();
   xT_constView = Kokkos::subview(xT_2d, Kokkos::ALL(), 0);
 
   auto xdotT_2d = Albany::getConstTpetraVector(workset.xdot)->template getLocalView<PHX::Device>();
@@ -258,7 +258,7 @@ evaluateFields(typename Traits::EvalData workset)
   d_val_dot = val_dot_kokkosvec.template view<executionSpace>(); 
 
   Kokkos::parallel_for(GatherSolution_Policy(0,workset.numCells),*this);
-  cudaCheckError();*/
+  cudaCheckError();
 
 #endif
 }
