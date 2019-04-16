@@ -549,7 +549,7 @@ Aeras::SpectralDiscretization::writeSolutionToMeshDatabase(
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("solnT.mm", solnT);
+  Albany::writeMatrixMarket(Teuchos::rcpFromRef(solution), "solution.mm");
 #endif
   // Put solution as Thyra_Vector into STK Mesh
   setSolutionField(solution, overlapped);
@@ -3268,9 +3268,9 @@ Aeras::SpectralDiscretization::updateMesh()
     computeOwnedNodesAndUnknownsQuads();
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
-  //write owned maps to matrix market file for debug
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("mapT.mm", *mapT);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("node_mapT.mm", *node_mapT);
+  //write owned vector spaces to matrix market file for debug
+  Albany::writeMatrixMarket(m_vs, "m_vs.mm");
+  Albany::writeMatrixMarket(m_node_vs, "m_node_vs.mm");
 #endif
 
   // IK, 1/23/15: I've commented out the guts of this function.  It is
@@ -3284,9 +3284,9 @@ Aeras::SpectralDiscretization::updateMesh()
     computeOverlapNodesAndUnknownsQuads();
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
-  //write overlap maps to matrix market file for debug
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("overlap_mapT.mm", *overlap_mapT);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
+  //write overlap vector spaces to matrix market file for debug
+  Albany::writeMatrixMarket(m_overlap_vs, "m_overlap_vs.mm");
+  Albany::writeMatrixMarket(m_overlap_node_vs, "m_overlap_node_vs.mm");
 #endif
 
     // Note that getCoordinates has not been converted to use the
@@ -3316,12 +3316,9 @@ Aeras::SpectralDiscretization::updateMesh()
   computeGraphs_Explicit(); 
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
-  Teuchos::RCP<Tpetra_CrsMatrix> ImplicitMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT));
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("ImplicitMatrix.mm", ImplicitMatrix);
-  Teuchos::RCP<Tpetra_CrsMatrix> Matrix = Teuchos::rcp(new Tpetra_CrsMatrix(graphT));
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("Matrix.mm", Matrix);
-  Teuchos::RCP<Tpetra_CrsMatrix> OverlapMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(overlap_graphT));
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("OverlapMatrix.mm", OverlapMatrix);
+  Albany::writeMatrixMarket(m_implicit_jac_factory->createOp(), "ImplicitOp.mm"); 
+  Albany::writeMatrixMarket(m_jac_factory->createOp(), "Op.mm"); 
+  Albany::writeMatrixMarket(m_overlap_jac_factory->createOp(), "OverlapOp.mm"); 
 #endif
 
   // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
