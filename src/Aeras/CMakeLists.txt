@@ -175,13 +175,12 @@
        responses/Aeras_LayeredResponseUtilities_Def.hpp
   )
 
-#IKT, FIXME: uncomment when ported to Thyra! 
-#SET(HEADERS ${HEADERS}
-#    Aeras_HVDecorator.hpp
-#)
-#SET(SOURCES ${SOURCES}
-#    Aeras_HVDecorator.cpp
-#)
+SET(HEADERS ${HEADERS}
+    Aeras_HVDecorator.hpp
+)
+SET(SOURCES ${SOURCES}
+    Aeras_HVDecorator.cpp
+)
   
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 

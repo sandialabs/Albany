@@ -132,14 +132,8 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   double curr_time = 0.0;
-  //Get implicit_graphT from discretization object
-  Teuchos::RCP<const Tpetra_CrsGraph> implicit_graphT = 
-    app->getDiscretization()->getImplicitJacobianGraphT();  
-  //Define operator Op from implicit_graphT
-  const Teuchos::RCP<Thyra_LinearOp> Op =
-    Teuchos::nonnull(implicit_graphT) ? 
-    Albany::createThyraLinearOp(Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT))) :
-    Teuchos::null; 
+  //Get implicit Jacobian operator from discretization
+  Teuchos::RCP<Thyra_LinearOp> Op = app->getDiscretization()->createImplicitJacobianOp(); 
   auto args = this->getNominalValues();
   auto f = Thyra::createMember(args.get_x()->space());
   app->computeGlobalJacobian(alpha, beta, omega, curr_time,

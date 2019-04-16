@@ -54,10 +54,9 @@
 #include "Schwarz_PiroObserver.hpp"
 #endif
 
-//IKT, FIXME: uncomment when HVDecorator is ported to Thyra
-//#ifdef ALBANY_AERAS
-//#include "Aeras/Aeras_HVDecorator.hpp"
-//#endif
+#ifdef ALBANY_AERAS
+#include "Aeras/Aeras_HVDecorator.hpp"
+#endif
 
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
@@ -461,8 +460,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_ATO */
   }
 
-//IKT FIXME: uncomment when HVDecorator ported to Thyra 
-/*#ifdef ALBANY_AERAS
+#ifdef ALBANY_AERAS
   if (solutionMethod == "Aeras Hyperviscosity") {
     // std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras
     // Hyperviscosity" << std::endl;
@@ -553,7 +551,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     }  // if useExplHV=true and tau <>0.
 
   }  // if Aeras HyperViscosity
-#endif*/
+#endif
 
 #if defined(ALBANY_LCM) && defined(ALBANY_STK) 
   bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
