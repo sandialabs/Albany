@@ -590,9 +590,9 @@ Aeras::SpectralDiscretization::writeSolutionMVToMeshDatabase(
     const double time,
     const bool overlapped)
 {
-#ifdef OUTPUT_TO_SCREEN
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("solnT.mm", solution);
+   Albany::writeMatrixMarket(Teuchos::rcpFromRef(solution, "solution.mm");
 #endif
   // Put solution as Epetra_Vector into STK Mesh
   setSolutionFieldMV(solution, overlapped);
@@ -795,7 +795,6 @@ Aeras::SpectralDiscretization::getSolutionMV(Thyra_MultiVector &result,
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/
 
-// Tpetra version of above
 void
 Aeras::SpectralDiscretization::setSolutionField(const Thyra_Vector& solution, 
                                                 const bool overlapped)
@@ -1280,7 +1279,6 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
   //////////////////////////////////////////////////////////////////////
 
   m_node_vs = Teuchos::null; // delete existing map happens here on remesh
-  //node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indicesT(), commT);
   m_node_vs = Albany::createVectorSpace(commT,indicesT());
 
   numGlobalNodes = Albany::getMaxAllGlobalIndex(m_node_vs) + 1;
@@ -1291,7 +1289,6 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
       dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
   m_vs = Teuchos::null; // delete existing map happens here on remesh
-  //mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(dofIndicesT(), commT);
   m_vs = Albany::createVectorSpace(commT,dofIndicesT);
 
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -1399,7 +1396,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
     for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
       stk::mesh::Entity edge = edgeBucket[iedge];
-      Tpetra_GO edgeID = gid(edge);
+      GO edgeID = gid(edge);
       if (edgeIsOwned[edgeID])
       {
         for (size_t lnode = 1; lnode < np-1; ++lnode)
@@ -1621,7 +1618,7 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
     for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
       stk::mesh::Entity edge = edgeBucket[iedge];
-      Tpetra_GO edgeID = gid(edge);
+      GO edgeID = gid(edge);
       if (!edgeIsOwned[edgeID])
       {
         for (size_t lnode = 1; lnode < np-1; ++lnode)
