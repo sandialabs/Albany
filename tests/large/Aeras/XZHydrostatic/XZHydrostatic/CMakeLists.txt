@@ -6,8 +6,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT_rythmos.yaml
 if (ALBANY_TEMPUS)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT_tempus.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT_tempus.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT_tempus_no_piro.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT_tempus_no_piro.yaml COPYONLY)
 endif () 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_topography.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_with_topography.yaml COPYONLY)
