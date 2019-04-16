@@ -159,6 +159,10 @@ class STKDiscretization : public Albany::AbstractDiscretization {
   Teuchos::RCP<const Tpetra_CrsGraph>
   getJacobianGraphT() const;
 
+  //! Get Tpetra Jacobian graph
+  Teuchos::RCP<const Tpetra_CrsGraph>
+  getNodalGraphT() const;
+
 #ifdef ALBANY_AERAS
   //! Get Tpetra implicit Jacobian graph (for Aeras)
   Teuchos::RCP<const Tpetra_CrsGraph>
@@ -821,6 +825,7 @@ class STKDiscretization : public Albany::AbstractDiscretization {
 
  private:
   Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
+  Teuchos::RCP<Tpetra_CrsGraph> nonOverlapNodalGraphT;
 
   // find the location of "value" within the first "count" locations of "vector"
   ssize_t

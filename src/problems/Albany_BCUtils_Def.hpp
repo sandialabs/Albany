@@ -784,6 +784,31 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     }
   }
 
+  ///
+  /// SDBC On Icebergs (SI = "SymmetricOnIceberg")
+  ///
+  for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+    for (std::size_t j = 0; j < bcNames.size(); j++) {
+      string ss = traits_type::constructSDBCICEName(nodeSetIDs[i], bcNames[j]);
+      if (BCparams.isParameter(ss)) {
+        RCP<ParameterList> p = rcp(new ParameterList);
+        use_sdbcs_           = true;
+        p->set<int>("Type", traits_type::typeSI);
+        p->set<RCP<DataLayout>>("Data Layout", dummy);
+        p->set<string>("Dirichlet Name", ss);
+        p->set<RealType>("Dirichlet Value", BCparams.get<double>(ss));
+        p->set<string>("Node Set ID", nodeSetIDs[i]);
+        p->set<int>("Equation Offset", j);
+        offsets_[i].push_back(j);
+        p->set<RCP<ParamLib>>("Parameter Library", paramLib);
+
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
+
+        bcs->push_back(ss);
+      }
+    }
+  }
+
 #if defined(ALBANY_LCM)
   ///
   /// Schwarz BC specific
@@ -1352,12 +1377,16 @@ Albany::DirichletTraits::getValidBCParameters(
           nodeSetIDs[i], bcNames[j]);
       std::string st =
           Albany::DirichletTraits::constructSDBCName(nodeSetIDs[i], bcNames[j]);
+      std::string sice =
+          Albany::DirichletTraits::constructSDBCICEName(nodeSetIDs[i], bcNames[j]);
       std::string sst = Albany::DirichletTraits::constructScaledSDBCName(
           nodeSetIDs[i], bcNames[j]);
       validPL->set<double>(
           ss, 0.0, "Value of BC corresponding to nodeSetID and dofName");
       validPL->set<double>(
           st, 0.0, "Value of SDBC corresponding to nodeSetID and dofName");
+      validPL->set<double>(
+          sice, 0.0, "Value of SDBCICE corresponding to sideSetID");
       Teuchos::Array<double> array(1);
       array[0] = 0.0;
       validPL->set<Teuchos::Array<double>>(
@@ -1485,6 +1514,18 @@ Albany::DirichletTraits::constructSDBCName(
 
   return ss.str();
 }
+
+std::string
+Albany::DirichletTraits::constructSDBCICEName(
+    const std::string& sideset,
+    const std::string& dof)
+{
+  std::stringstream ss;
+  ss << "SDBCICE on NS " << sideset << " for DOF " << dof;
+
+  return ss.str();
+}
+
 
 std::string
 Albany::DirichletTraits::constructScaledSDBCName(

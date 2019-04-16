@@ -287,6 +287,7 @@ SET(SOURCES ${SOURCES}
   evaluators/bc/PHAL_TimeDepDBC.cpp
   evaluators/bc/PHAL_TimeDepSDBC.cpp
   evaluators/bc/PHAL_SDirichlet.cpp
+  evaluators/bc/PHAL_SDirichletOnIcebergs.cpp
   evaluators/bc/PHAL_DirichletCoordinateFunction.cpp
   evaluators/bc/PHAL_DirichletField.cpp
   evaluators/bc/PHAL_DirichletOffNodeSet.cpp
@@ -402,6 +403,7 @@ SET(HEADERS ${HEADERS}
   evaluators/bc/PHAL_TimeDepDBC.hpp
   evaluators/bc/PHAL_TimeDepSDBC.hpp
   evaluators/bc/PHAL_SDirichlet.hpp
+  evaluators/bc/PHAL_SDirichletOnIcebergs.hpp
   evaluators/bc/PHAL_DirichletCoordinateFunction.hpp
   evaluators/bc/PHAL_DirichletCoordinateFunction_Def.hpp
   evaluators/bc/PHAL_DirichletField.hpp
@@ -412,6 +414,7 @@ SET(HEADERS ${HEADERS}
   evaluators/bc/PHAL_TimeDepDBC_Def.hpp
   evaluators/bc/PHAL_TimeDepSDBC_Def.hpp
   evaluators/bc/PHAL_SDirichlet_Def.hpp
+  evaluators/bc/PHAL_SDirichletOnIcebergs_Def.hpp
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits.hpp
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
   evaluators/bc/PHAL_Neumann.hpp

@@ -4,18 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_SDIRICHLET_DEF_HPP
-#define PHAL_SDIRICHLET_DEF_HPP
+#ifndef PHAL_SDIRICHLETONICEBERGS_DEF_HPP
+#define PHAL_SDIRICHLETONICEBERGS_DEF_HPP
 
-#include "PHAL_SDirichlet.hpp"
+#include "PHAL_SDirichletOnIcebergs.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
-//#include "Albany_STKDiscretization.hpp"
-//#include <Zoltan2_IceSheet.hpp>
-//#include <Zoltan2_XpetraCrsGraphAdapter.hpp>
+#include "Albany_STKDiscretization.hpp"
+#include <Zoltan2_IceSheet.hpp>
+#include <Zoltan2_XpetraCrsGraphAdapter.hpp>
 
 // TODO: remove this include when you manage to abstract away from Tpetra the Jacobian impl.
 #include "Albany_TpetraThyraUtils.hpp"
@@ -28,10 +28,13 @@ namespace PHAL {
 // Specialization: Residual
 //
 template<typename Traits>
-SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::SDirichlet(
+SDirichletOnIcebergs<PHAL::AlbanyTraits::Residual, Traits>::SDirichletOnIcebergs(
     Teuchos::ParameterList& p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>(p)
 {
+  
+  timer_gatherAll = Teuchos::TimeMonitor::getNewTimer("Albany: **GatherAll Time**");
+  timer_zoltan2Icebergs = Teuchos::TimeMonitor::getNewTimer("Albany: **Zoltan2Icebergs Time**");
   return;
 }
 
@@ -40,11 +43,18 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::SDirichlet(
 //
 template<typename Traits>
 void
-SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
+SDirichletOnIcebergs<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
     typename Traits::EvalData dirichlet_workset)
 {
-/*
+#ifdef DEBUG_OUTPUT
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT SDirichletOnIcebergs preEvaluate Residual\n"; 
+#endif
+  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
+  Teuchos::ArrayRCP<ST> x_view = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
+  
   static int counter=0;
+
   if(counter++==0)
   {
   std::string sideSetName = "basalside";
@@ -74,90 +84,134 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   int me = node_map->getComm()->getRank();
 
   auto nodeSets = ss_disc->getNodeSets();
-  std::string nodeSetName = "node";
+  std::string nodeSetName = "node_set";
   TEUCHOS_TEST_FOR_EXCEPTION (nodeSets.find(nodeSetName)==nodeSets.end(), std::logic_error,
                               "Error! No node set found for node set " << nodeSetName <<".\n");
   auto nodeSetGIDs = ss_disc->getNodeSetGIDs().at(nodeSetName);
   auto meshStruct = ss_disc->getSTKMeshStruct();   
   typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  ScalarFieldType* bedTopoField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "bed_topography");
+  ScalarFieldType* bedTopoField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "basal_friction");//bed_topography");
   ScalarFieldType* thickField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "ice_thickness");
+  std::vector<int> grounded_map(nodeSetGIDs.size());
+  
 
-  std::vector<int> grounded_map(nodeSetGIDs.size(),false);
   for (int i=0; i<nodeSetGIDs.size(); ++i) {
-    Tpetra_GO gid=nodeSetGIDs[i];
+    //Tpetra_GO gid=nodeSetGIDs[i];
+    Tpetra_GO gid=node_map->getGlobalElement(i);
+    if(gid != nodeSetGIDs[i])
+      std::cout<< "something wrong here.." << std::endl;
     stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, gid + 1);
     if((bedTopoField != NULL)&&(thickField != NULL)) {
       double* bed = stk::mesh::field_data(*bedTopoField, node);
       double* thk = stk::mesh::field_data(*thickField, node);
-      grounded_map[i]=(thk[0]*910+bed[0]*1028)>0;
+      grounded_map[i]=(bed[0]>1e-3);//(thk[0]*910+bed[0]*1028)>0;
+    }
+    else {
+      std::cout << "Who's null? " << (bedTopoField != NULL) << " " << (thickField != NULL) << std::endl; 
     }
   }    
 
-  std::string side_name = "lateralside";
 
+
+  std::string side_name = "boundary_side_set";
   stk::mesh::Part&    part = *meshStruct->ssPartVec.find(side_name)->second;
-  stk::mesh::Selector selector = stk::mesh::Selector(part);
+  stk::mesh::Selector selector = stk::mesh::Selector(part) &  stk::mesh::Selector(meshStruct->metaData->locally_owned_part());
   std::vector<stk::mesh::Entity> sides;
   stk::mesh::get_selected_entities(selector, meshStruct->bulkData->buckets(meshStruct->metaData->side_rank()), sides);
-  std::vector<Tpetra_GO> edgeIDs; edgeIDs.reserve(2*nodeSetGIDs.size());
+  std::vector<Tpetra_GO> edgeIDs, ghost_nodes, received_nodes;
+  std::vector<int> nodes_procs; 
+  edgeIDs.reserve(2*nodeSetGIDs.size());
+  ghost_nodes.reserve(2*nodeSetGIDs.size());
   for (auto side : sides) {
     const stk::mesh::Entity* side_nodes = meshStruct->bulkData->begin_nodes(side);
     Tpetra_GO id0 = ss_disc->gid(side_nodes[0]);
     Tpetra_GO id1 = ss_disc->gid(side_nodes[1]);
-    if (node_map->isNodeGlobalElement(id0) || node_map->isNodeGlobalElement(id1)) {
-      edgeIDs.push_back(id0<id1? id0 : id1);
-      edgeIDs.push_back(id0<id1? id1 : id0);
+    if (node_map->isNodeGlobalElement(id0) && node_map->isNodeGlobalElement(id1)) {
+      edgeIDs.push_back(id0);
+      edgeIDs.push_back(id1);
+    } else{
+        ghost_nodes.push_back(id0);
+        ghost_nodes.push_back(id1);
     }
+   
   } 
-  
+ 
+  int localSize = ghost_nodes.size();
+  int maxGlobalSize = 0;
+  {
+  Teuchos::TimeMonitor Timer(*timer_gatherAll);  // start timer
+  Teuchos::reduceAll<int,int>(*node_map->getComm(), Teuchos::MaxValueReductionOp<int, int>(), 1, &localSize, &maxGlobalSize);
+  ghost_nodes.resize(maxGlobalSize,-1);
+  received_nodes.resize(maxGlobalSize*node_map->getComm()->getSize());
+  Teuchos::gatherAll( *node_map->getComm(),
+		maxGlobalSize,
+		ghost_nodes.data(),
+		maxGlobalSize*node_map->getComm()->getSize(),
+	        received_nodes.data() 
+	); 	
+  for(int i=0; i < received_nodes.size(); ) {
+    int id0 = received_nodes[i++];
+    int id1 = received_nodes[i++]; 
+    if(node_map->isNodeGlobalElement(id0) || node_map->isNodeGlobalElement(id1)) {
+      edgeIDs.push_back(id0);
+      edgeIDs.push_back(id1);
+    }
+  }
+  }
+ 
+  if (me == 0)
+    std::cout << "Max size: " << maxGlobalSize << std::endl;
+   
   auto graph = ss_disc->getNodalGraphT();
 
+  auto  row_map = graph->getColMap();
+  int* removeFlags;
+  {
+  Teuchos::TimeMonitor Timer(*timer_zoltan2Icebergs);  // start timer
   Teuchos::RCP<Zoltan2::XpetraCrsGraphAdapter<Tpetra_CrsGraph> > inputGraphAdapter;
 
   inputGraphAdapter = rcp(new Zoltan2::XpetraCrsGraphAdapter<Tpetra_CrsGraph>(graph));
   
-  Zoltan2::IceProp<Zoltan2::XpetraCrsGraphAdapter<Tpetra_CrsGraph>> iceProp(node_map->getComm(), inputGraphAdapter, grounded_map.data(), edgeIDs.data(), edgeIDs.size());
-  std::cout<<me<<": is calling propagate\n";
-  int* removeFlags = iceProp.getDegenerateFeatureFlags();
-  
-  std::cout << "On proc " << me << " considering " << edgeIDs.size() << " boundary edges IDs" << std::endl; 
+  Zoltan2::IceProp<Zoltan2::XpetraCrsGraphAdapter<Tpetra_CrsGraph>> iceProp(node_map->getComm(), inputGraphAdapter, grounded_map.data(), edgeIDs.data(), edgeIDs.size()/2);
+  removeFlags = iceProp.getDegenerateFeatureFlags();
+  }
   int count = 0;
   for(int i = 0; i < grounded_map.size(); i++){
-    if((i==0)||(removeFlags[i] > -2)){
+    if(removeFlags[i] > -2){
       count++;
-      std::cout<<me<<": removed vertex "<<node_map->getGlobalElement(i)<<"\n";
+      //std::cout<<me<<": removed vertex "<<node_map->getGlobalElement(i)<<"\n";
     }
   }
-  std::cout << "On proc " << me << " removed " << count << " vertices out of " << grounded_map.size() << " vertices" << std::endl;
-
+  std::cout << "On proc " << me << " removed " << count << " vertices out of " << grounded_map.size() << " vertices, and considered " << edgeIDs.size() << " boundary edges IDs" << std::endl;
+  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *dirichlet_workset.disc->getLayeredMeshNumbering();
+  int numLayers = layeredMeshNumbering.numLayers;
   const Albany::NodalDOFManager& solDOFManager = dirichlet_workset.disc->getOverlapDOFManager("ordinary_solution");
   int neq = dirichlet_workset.disc->getNumEq(); 
-  std::vector<std::vector<int>> ns_nodes(count, std::vector<int>(neq));
+  std::vector<std::vector<int>> ns_nodes(count*(numLayers+1), std::vector<int>(neq));
   count=0;
   for(int i=0; i< grounded_map.size(); i++) {
-    if((i==0) || (removeFlags[i] > -2)){
-      int node_lid =  dirichlet_workset.disc->getOverlapNodeMapT()->getLocalElement(node_map->getGlobalElement(i));
-      for(int k=0; k<neq; k++) 
-        ns_nodes[count][k] = solDOFManager.getLocalDOF(node_lid,k);
-      count++;
+    if(removeFlags[i] > -2){
+      for(int il=0; il<numLayers+1; ++il) {
+        LO node_lid = layeredMeshNumbering.getId(i, il);
+        for(int k=0; k<neq; k++) {
+          ns_nodes[count][k] = solDOFManager.getLocalDOF(node_lid,k);
+    //      std::cout << "Ecooci: " << count << " " << node_map->getGlobalElement(i) << " " << node_lid << " " << ns_nodes[count][k] << std::endl;
+        }
+        count++;
+      }
     }
   }
  
   Teuchos::RCP<Albany::NodeSetList> nodeSetList = Teuchos::rcp_const_cast<Albany::NodeSetList>(dirichlet_workset.nodeSets);
   (*nodeSetList)["nonconnected_nodes"] = ns_nodes;
   }
-*/
-#ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT SDirichlet preEvaluate Residual\n"; 
-#endif
-  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
-  Teuchos::ArrayRCP<ST> x_view = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
-  // Grab the vector of node GIDs for this Node Set ID
-  std::vector<std::vector<int>> const& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+
+
+  auto& ns_nodes = dirichlet_workset.nodeSets->find("nonconnected_nodes")->second;
+// Grab the vector of node GIDs for this Node Set ID
   for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     int const dof = ns_nodes[ns_node][this->offset];
+  //  std::cout << "Bd: " << dof << " " << this->offset << " " << this->value << std::endl;
     x_view[dof] = this->value;
   }
 }
@@ -167,7 +221,7 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
 //
 template<typename Traits>
 void
-SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
+SDirichletOnIcebergs<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
   // NOTE: you may be tempted to const_cast away the const here. However,
@@ -181,26 +235,24 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 
   Teuchos::ArrayRCP<ST> f_view = Albany::getNonconstLocalData(f);
 
+
+
   // Grab the vector of node GIDs for this Node Set ID
-  std::vector<std::vector<int>> const& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  std::vector<std::vector<int>> const& ns_nodes = dirichlet_workset.nodeSets->find("nonconnected_nodes")->second;
 
   for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     int const dof = ns_nodes[ns_node][this->offset];
 
     f_view[dof] = 0.0;
-
-#if defined(ALBANY_LCM)
-    // Record DOFs to avoid setting Schwarz BCs on them.
-    dirichlet_workset.fixed_dofs_.insert(dof);
-#endif
   }
+
 }
 
 //
 // Specialization: Jacobian
 //
 template<typename Traits>
-SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
+SDirichletOnIcebergs<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichletOnIcebergs(
     Teuchos::ParameterList& p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
@@ -213,7 +265,7 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
 //
 template<typename Traits>
 void
-SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
+SDirichletOnIcebergs<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
     typename Traits::EvalData dirichlet_workset) 
 {
   // TODO: abstract away the tpetra interface
@@ -224,8 +276,8 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
   // we make this assumption, which lets us use both local row and column
   // indices into a single is_dbc vector
   ALBANY_ASSERT(col_map->isLocallyFitted(*row_map));
-  
-  auto& ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+ 
+  auto& ns_nodes = dirichlet_workset.nodeSets->find("nonconnected_nodes")->second;
   
   using IntVec = Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>;
   using Import = Tpetra::Import<Tpetra_LO, Tpetra_GO, KokkosNode>;
@@ -245,34 +297,15 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
 
   int const spatial_dimension = dirichlet_workset.spatial_dimension_;
 
-#if defined(ALBANY_LCM)
-  auto const& fixed_dofs = dirichlet_workset.fixed_dofs_;
-#endif
-
   row_is_dbc_->modify_host();
   {
     auto row_is_dbc_data =
         row_is_dbc_->getLocalViewHost();
     ALBANY_ASSERT(row_is_dbc_data.extent(1) == 1);
-#if defined(ALBANY_LCM)
-    if (dirichlet_workset.is_schwarz_bc_ == false) {  // regular SDBC
-#endif
       for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
         auto dof                = ns_nodes[ns_node][this->offset];
         row_is_dbc_data(dof, 0) = 1;
       }
-#if defined(ALBANY_LCM)
-    } else {  // special case for Schwarz SDBC
-      for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
-        for (int offset = 0; offset < spatial_dimension; ++offset) {
-          auto dof = ns_nodes[ns_node][offset];
-          // If this DOF already has a DBC, skip it.
-          if (fixed_dofs.find(dof) != fixed_dofs.end()) continue;
-          row_is_dbc_data(dof, 0) = 1;
-        }
-      }
-    }
-#endif
   }
   col_is_dbc_->doImport(*row_is_dbc_, *import, Tpetra::ADD);
 }
@@ -282,7 +315,7 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
 //
 template<typename Traits>
 void
-SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
+SDirichletOnIcebergs<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
   // NOTE: you may be tempted to const_cast away the const here. However,
@@ -312,10 +345,6 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   Teuchos::Array<ST> entries;
 
   Teuchos::Array<LO> indices;
-
-#if defined(ALBANY_LCM)
-  auto const& fixed_dofs = dirichlet_workset.fixed_dofs_;
-#endif
 
   this->set_row_and_col_is_dbc(dirichlet_workset); 
   auto col_is_dbc_data = col_is_dbc_->getLocalViewHost();
@@ -364,7 +393,7 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 // Specialization: Tangent
 //
 template<typename Traits>
-SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
+SDirichletOnIcebergs<PHAL::AlbanyTraits::Tangent, Traits>::SDirichletOnIcebergs(
     Teuchos::ParameterList& p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
@@ -377,7 +406,7 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
 
 template<typename Traits>
 void
-SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
+SDirichletOnIcebergs<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
 
@@ -385,7 +414,7 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
       true,
       Teuchos::Exceptions::InvalidParameter,
       std::endl
-          << "Error!  Tangent specialization for PHAL::SDirichlet "
+          << "Error!  Tangent specialization for PHAL::SDirichletOnIcebergs "
              "is not implemented!\n");
   return;
 
@@ -450,7 +479,7 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
 // Specialization: DistParamDeriv
 //
 template<typename Traits>
-SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
+SDirichletOnIcebergs<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichletOnIcebergs(
     Teuchos::ParameterList& p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
@@ -462,7 +491,7 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
 //
 template<typename Traits>
 void
-SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
+SDirichletOnIcebergs<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
 return;
@@ -470,9 +499,8 @@ return;
 
   bool trans = dirichlet_workset.transpose_dist_param_deriv;
   int num_cols = fpV->domain()->dim();
-
   const std::vector<std::vector<int> >& nsNodes =
-      dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+      dirichlet_workset.nodeSets->find("nonconnected_nodes")->second;
 
   if (trans) {
     // For (df/dp)^T*V we zero out corresponding entries in V

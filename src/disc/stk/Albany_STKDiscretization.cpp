@@ -208,6 +208,12 @@ Albany::STKDiscretization::getJacobianGraphT() const
   return graphT;
 }
 
+Teuchos::RCP<const Tpetra_CrsGraph>
+Albany::STKDiscretization::getNodalGraphT() const
+{
+  return nonOverlapNodalGraphT;
+}
+
 #ifdef ALBANY_AERAS
 Teuchos::RCP<const Tpetra_CrsGraph>
 Albany::STKDiscretization::getImplicitJacobianGraphT() const
@@ -1864,6 +1870,7 @@ Albany::STKDiscretization::fillCompleteGraphs()
       Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
   graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
   graphT->fillComplete();
+
 }
 
 void
@@ -3314,7 +3321,60 @@ Albany::STKDiscretization::meshToGraph()
   // Set up the CRS graph used for solution transfer and projection mass
   // matrices. Assume the Crs row size is 27, which is the maximum number
   // required for first-order hexahedral elements.
+  nodalGraph = Teuchos::null;
   nodalGraph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_node_mapT, 27));
+
+/*
+  stk::mesh::Selector select_owned_in_part =
+      stk::mesh::Selector(metaData.universal_part()) &
+      stk::mesh::Selector(metaData.locally_owned_part());
+
+  stk::mesh::get_selected_entities(
+      select_owned_in_part,
+      bulkData.buckets(stk::topology::ELEMENT_RANK),
+      cells);
+
+  Tpetra_GO                     row, col;
+  Teuchos::ArrayView<Tpetra_GO> colAV;
+
+  // determining the equations that are defined on the whole domain
+
+  for (std::size_t i = 0; i < cells.size(); i++) {
+    stk::mesh::Entity        e         = cells[i];
+    stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
+    const size_t             num_nodes = bulkData.num_nodes(e);
+
+    // loop over local nodes
+    for (std::size_t j = 0; j < num_nodes; j++) {
+      stk::mesh::Entity rowNode = node_rels[j];
+
+      // loop over eqs
+      row = gid(rowNode);
+      for (std::size_t l = 0; l < num_nodes; l++) {
+        stk::mesh::Entity colNode = node_rels[l];
+        col   = gid(colNode);
+        colAV = Teuchos::arrayView(&col, 1);
+        nodalGraph->insertGlobalIndices(row, colAV);
+      }
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+/*/
+
+
+
+
+
 
   // Elements that surround a given node, in the form of Entity's.
   std::vector<std::vector<stk::mesh::Entity>> sur_elem;
@@ -3395,12 +3455,26 @@ Albany::STKDiscretization::meshToGraph()
     }
     nodalGraph->insertGlobalIndices(globalrow, adjacency());
   }
-
+//*/
   // end find_adjacency
 
   nodalGraph->fillComplete();
   // Pass the graph RCP to the nodal data block
   stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraph);
+
+
+  {
+  // Create Owned graph by exporting overlap with known row map
+  nonOverlapNodalGraphT = Teuchos::null;  // delete existing graph happens here on remesh
+
+  nonOverlapNodalGraphT = Teuchos::rcp(new Tpetra_CrsGraph(node_mapT, nonzeroesPerRow(1)));
+
+  // Create non-overlapped matrix using two maps and export object
+  Teuchos::RCP<Tpetra_Export> exporterT =
+      Teuchos::rcp(new Tpetra_Export(overlap_node_mapT, node_mapT));
+  nonOverlapNodalGraphT->doExport(*nodalGraph, *exporterT, Tpetra::INSERT);
+  nonOverlapNodalGraphT->fillComplete();
+  }
 }
 
 void

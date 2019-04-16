@@ -28,6 +28,7 @@
 #endif // ALBANY_LCM
 
 #include "PHAL_SDirichlet.hpp"
+#include "PHAL_SDirichletOnIcebergs.hpp"
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_TimeDepDBC.hpp"
 #include "PHAL_TimeDepSDBC.hpp"
@@ -72,6 +73,7 @@ namespace PHAL {
     static const int id_timedep_bc                     =  5; // Only for LCM probs
     static const int id_timedep_sdbc                   =  6; // Only for LCM probs
     static const int id_sdbc                           =  7;
+    static const int id_sd_on_ice_bc                   =  8;
     static const int id_kfield_bc                      =  8; // Only for LCM probs
     static const int id_eq_concentration_bc            =  9; // Only for LCM probs
     static const int id_time                           = 10; // Only for LCM probs
@@ -101,6 +103,10 @@ namespace PHAL {
         LCM::SchwarzBC<_, Traits>,                 // 12
         LCM::StrongSchwarzBC<_, Traits>,           // 13
         LCM::PDNeighborFitBC<_, Traits>            // 14
+#endif
+#if defined(ALBANY_LANDICE)
+        ,
+        PHAL::SDirichletOnIcebergs<_, Traits>      //  8
 #endif
         > EvaluatorTypes;
 };

@@ -62,6 +62,10 @@ struct DirichletTraits
   };
   enum
   {
+    typeSI = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_sd_on_ice_bc
+  };
+  enum
+  {
     typeSw = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_schwarz_bc
   };
   enum
@@ -110,6 +114,9 @@ struct DirichletTraits
   constructSDBCName(const std::string& ns, const std::string& dof);
 
   static std::string
+  constructSDBCICEName(const std::string& ss, const std::string& dof);
+  
+  static std::string
   constructScaledSDBCName(const std::string& ns, const std::string& dof);
 
   static std::string
@@ -118,6 +125,9 @@ struct DirichletTraits
   static std::string
   constructSDBCNameField(const std::string& ns, const std::string& dof);
 
+  static std::string
+  constructSDBCICENameField(const std::string& ss, const std::string& dof);
+  
   static std::string
   constructScaledSDBCNameField(const std::string& ns, const std::string& dof);
 
