@@ -67,11 +67,23 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 Teuchos::RCP<const Thyra_VectorSpace>
 getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
+bool
+hasColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
+
+bool
+isLocallyIndexed (const Teuchos::RCP<const Thyra_LinearOp>& lop);
+
 Teuchos::RCP<const Thyra_VectorSpace>
 getRowSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
 std::size_t
 getNumEntriesInLocalRow (const Teuchos::RCP<const Thyra_LinearOp>& lop, const LO lrow);
+
+void 
+getNumEntriesPerLocalRowUpperBound(const Teuchos::RCP<const Thyra_LinearOp>& lop, 
+                                   Teuchos::ArrayRCP< const size_t > &boundPerLocalRow,
+  		                   size_t &boundForAllLocalRows,
+		                   bool &boundSameForAllLocalRows); 
 
 // Fill related helpers
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop);
@@ -121,7 +133,11 @@ int getGlobalMaxNumRowEntries (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val); 
 
 Teuchos::RCP<const Thyra_VectorSpace>
-createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs); 
+createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs);
+
+LO getMinLocalIndex(const Teuchos::RCP<const Thyra_VectorSpace> vs); 
+LO getMaxLocalIndex(const Teuchos::RCP<const Thyra_VectorSpace> vs); 
+ 
 
 bool isStaticGraph(const Teuchos::RCP<Thyra_LinearOp>& lop);
 bool isStaticGraph(const Teuchos::RCP<const Thyra_LinearOp>& lop);

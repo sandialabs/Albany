@@ -38,7 +38,7 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
  , m_static_profile (static_profile) 
 {
   auto bt = Albany::build_type();
-  TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for albany.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for Albany.\n");
 
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
@@ -46,7 +46,7 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
     auto e_range  = getEpetraBlockMap(range_vs);
     m_graph->e_graph = Teuchos::rcp(new Epetra_CrsGraph(Copy,*e_range,nonzeros_per_row,static_profile));
 #else
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in Albany.\n");
 #endif
   } else {
     auto t_domain = getTpetraMap(domain_vs);
@@ -55,6 +55,40 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
       m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,nonzeros_per_row,Tpetra::ProfileType::StaticProfile));
     } else {
       m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,nonzeros_per_row,Tpetra::ProfileType::DynamicProfile));
+    }
+  }
+}
+
+ThyraCrsMatrixFactory::
+ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
+                       const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
+                       const Teuchos::ArrayRCP< const size_t > &num_ent_per_row_to_alloc,
+                       const bool static_profile)
+ : m_graph(new Impl())
+ , m_domain_vs(domain_vs)
+ , m_range_vs(range_vs)
+ , m_filled (false)
+ , m_static_profile (static_profile) 
+{
+  auto bt = Albany::build_type();
+  TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for Albany.\n");
+
+  if (bt==BuildType::Epetra) {
+#ifdef ALBANY_EPETRA
+    auto e_domain = getEpetraBlockMap(domain_vs);
+    auto e_range  = getEpetraBlockMap(range_vs); 
+    Epetra_GO* e_num_ent_per_row_to_alloc = const_cast<Epetra_GO*>(reinterpret_cast<const Epetra_GO*>(num_ent_per_row_to_alloc().getRawPtr()));
+    m_graph->e_graph = Teuchos::rcp(new Epetra_CrsGraph(Copy,*e_range,e_num_ent_per_row_to_alloc,static_profile));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in Albany.\n");
+#endif
+  } else {
+    auto t_domain = getTpetraMap(domain_vs);
+    auto t_range = getTpetraMap(range_vs);
+    if (static_profile) {
+      m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,num_ent_per_row_to_alloc,Tpetra::ProfileType::StaticProfile));
+    } else {
+      m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,num_ent_per_row_to_alloc,Tpetra::ProfileType::DynamicProfile));
     }
   }
 }
@@ -71,7 +105,7 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
   m_graph = Teuchos::rcp(new Impl());
 
   auto bt = Albany::build_type();
-  TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for albany.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for Albany.\n");
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
     auto e_range = getEpetraBlockMap(range_vs);
@@ -87,7 +121,7 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
     m_graph->e_graph->FillComplete(*e_domain,*e_range);
     m_graph->e_graph->OptimizeStorage();
 #else
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in Albany.\n");
 #endif
   } else {
     auto t_range = getTpetraMap(range_vs);
@@ -132,12 +166,24 @@ void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::Ar
       m_graph->e_graph->InsertGlobalIndices(e_row, e_size,e_indices.getRawPtr());
     }
 #else
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in Albany.\n");
 #endif
   } else {
     // Despite being both 64 bits, GO and Tpetra_GO *may* be different *types*.
     Teuchos::ArrayView<const Tpetra_GO> t_indices(reinterpret_cast<const Tpetra_GO*>(indices.getRawPtr()),indices.size());
     m_graph->t_graph->insertGlobalIndices(static_cast<Tpetra_GO>(row),t_indices);
+  }
+}
+
+void ThyraCrsMatrixFactory::insertLocalIndices (const LO row, const Teuchos::ArrayView<LO>& indices) 
+{
+  auto bt = Albany::build_type();
+  if (bt==BuildType::Epetra) {
+#ifdef ALBANY_EPETRA
+    m_graph->e_graph->InsertMyIndices(row, indices.size(), indices.getRawPtr());  
+#endif
+  } else {
+    m_graph->t_graph->insertLocalIndices(row,indices);
   }
 }
 
@@ -150,7 +196,7 @@ void ThyraCrsMatrixFactory::fillComplete () {
     m_graph->e_graph->FillComplete(*e_domain,*e_range);
     m_graph->e_graph->OptimizeStorage();
 #else
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in Albany.\n");
 #endif
   } else {
     auto t_domain = getTpetraMap(m_domain_vs);
@@ -173,7 +219,7 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp () const {
     Teuchos::RCP<Epetra_Operator> mat = Teuchos::rcp_implicit_cast<Epetra_Operator>(matrix); 
     op = createThyraLinearOp(mat);
 #else
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in Albany.\n");
 #endif
   } else {
     Teuchos::RCP<Tpetra_CrsMatrix> mat = Teuchos::rcp (new Tpetra_CrsMatrix(m_graph->t_graph));

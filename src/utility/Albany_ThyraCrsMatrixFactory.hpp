@@ -30,12 +30,21 @@ struct ThyraCrsMatrixFactory {
                          const int nonzeros_per_row,
                          const bool static_profile = false);
 
+  // Create an empty graph, that needs to be filled later 
+  // Overloaded version of constructor that takes ArrayRCP of num entries per row to 
+  // allocate, rather than a scalar estimate of the number of non-zeros per row 
+  ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
+                         const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
+                         const Teuchos::ArrayRCP< const size_t > &num_ent_per_row_to_alloc,
+                         const bool static_profile = false);
+
   // Create a graph from an overlapped one
   ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
                          const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
                          const Teuchos::RCP<const ThyraCrsMatrixFactory> overlap_src);
 
   void insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& indices);
+  void insertLocalIndices (const LO row, const Teuchos::ArrayView<LO>& indices);
   void fillComplete ();
 
   Teuchos::RCP<const Thyra_VectorSpace> getDomainVectorSpace () const { return m_domain_vs; }
