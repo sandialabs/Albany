@@ -22,7 +22,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Rythmos ${AlbanyT.exe} input_spectralT_rythmos.yaml) 
 if (ALBANY_TEMPUS)
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus ${AlbanyT.exe} input_spectralT_tempus.yaml) 
-add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus_No_Piro ${AlbanyTempus.exe} input_spectralT_tempus_no_piro.yaml) 
 endif () 
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
