@@ -445,43 +445,6 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
 // ========= Thyra_LinearOp utilities ========= //
 
-bool
-hasColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->hasColMap(); 
-  }
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    return emat->HaveColMap(); 
-  }
-#endif
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in hasColumnSpace! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-}
-
-bool
-isLocallyIndexed (const Teuchos::RCP<const Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->isLocallyIndexed(); 
-  }
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    return emat->IndicesAreLocal();
-  }
-#endif
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in isLocallyIndexed! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-}
-
-
 Teuchos::RCP<const Thyra_VectorSpace>
 getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop)
 {
@@ -674,28 +637,6 @@ void assign (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST value)
 
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in assign! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-}
-
-void 
-getNumEntriesPerLocalRowUpperBound(const Teuchos::RCP<const Thyra_LinearOp>& lop, 
-                                   Teuchos::ArrayRCP< const size_t > &boundPerLocalRow,
-  		                   size_t &boundForAllLocalRows,
-		                   bool &boundSameForAllLocalRows)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->getCrsGraph()->getNumEntriesPerLocalRowUpperBound(boundPerLocalRow, boundForAllLocalRows, boundSameForAllLocalRows);
-  }
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error: getNumEntriesPerLocaRowUpperBound not implemented for Epetra_CrsMatrix!\n");
-  }
-#endif
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getNumEntriesPerLocalRowUpperBound! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
 }
 
 void getDiagonalCopy (const Teuchos::RCP<const Thyra_LinearOp>& lop,
@@ -1072,43 +1013,6 @@ bool isStaticGraph(const Teuchos::RCP<const Thyra_LinearOp>& lop)
   
 } 
 
-LO getMinLocalIndex(const Teuchos::RCP<const Thyra_VectorSpace> vs)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmap = getTpetraMap(vs,false);
-  if (!tmap.is_null()) {
-    return tmap->getMinLocalIndex(); 
-  }
-#if defined(ALBANY_EPETRA)
-  auto emap = getEpetraMap(vs,false);
-  if (!emap.is_null()) {
-    return emap->MinLID(); 
-  }
-#endif
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getMinLocalIndex! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
-}
-
-LO getMaxLocalIndex(const Teuchos::RCP<const Thyra_VectorSpace> vs)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmap = getTpetraMap(vs,false);
-  if (!tmap.is_null()) {
-    return tmap->getMaxLocalIndex(); 
-  }
-#if defined(ALBANY_EPETRA)
-  auto emap = getEpetraMap(vs,false);
-  if (!emap.is_null()) {
-    return emap->MaxLID(); 
-  }
-#endif
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getMaxLocalIndex! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
-}
-
- 
-
- 
 //The following routine creates a one-to-one version of the given Map where each GID lives on only one process. 
 //Therefore it is an owned (unique) map.
 Teuchos::RCP<const Thyra_VectorSpace>

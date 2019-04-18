@@ -10,7 +10,8 @@
 #include "Teuchos_VerboseObject.hpp"
 #include <sstream>
 
-#include "Albany_ThyraUtils.hpp" 
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 //uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET_TO_MM_FILE
@@ -23,11 +24,8 @@ int mm_counter = 0;
 //#define OUTPUT_TO_SCREEN 
 
 namespace {
-
 // Got hints from Tpetra::CrsMatrix::clone.
-Teuchos::RCP<Albany::ThyraCrsMatrixFactory>
-alloc (const Teuchos::RCP<Thyra_LinearOp>& A) 
-{
+Teuchos::RCP<Tpetra_CrsMatrix> alloc (const Teuchos::RCP<Tpetra_CrsMatrix>& A) {
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayRCP;
@@ -35,56 +33,38 @@ alloc (const Teuchos::RCP<Thyra_LinearOp>& A)
   ArrayRCP<const std::size_t> per_local_row;
   std::size_t all_local_rows = 0;
   bool bound_same = false;
-  Albany::getNumEntriesPerLocalRowUpperBound(A, per_local_row, all_local_rows, bound_same);
-  Teuchos::RCP<Albany::ThyraCrsMatrixFactory> B_graph_factory; 
-  if (bound_same) {
-    B_graph_factory = rcp(new Albany::ThyraCrsMatrixFactory(A->range(), Albany::getColumnSpace(A), all_local_rows, true)); 
-  } 
-  else {
-    B_graph_factory = rcp(new Albany::ThyraCrsMatrixFactory(A->range(), Albany::getColumnSpace(A), per_local_row, true)); 
-  }
+  A->getCrsGraph()->getNumEntriesPerLocalRowUpperBound(per_local_row, all_local_rows, bound_same);
 
-  const RCP<const Thyra_VectorSpace> row_vs = B_graph_factory->getRangeVectorSpace(); 
-  Teuchos::Array<LO> Ainds;
-  Teuchos::Array<ST> Avals;
-  Teuchos::Array<LO> Binds;
-  Teuchos::Array<ST> Bvals;
-  for (LO lrow = Albany::getMinLocalIndex(row_vs), lmax = Albany::getMaxLocalIndex(row_vs); lrow <= lmax; ++lrow) {
-    Albany::getLocalRowValues(A, lrow, Ainds, Avals); 
-    if (Ainds.size()) {
-      Binds.clear();
-      for (std::size_t i = 0, ilim = Ainds.size(); i < ilim; ++i)
-        if (Avals[i] != 0) {
-          Binds.push_back(Ainds[i]);
-        }
-      B_graph_factory->insertLocalIndices(lrow, Binds); 
-    }
-  }
-  B_graph_factory->fillComplete();
-  return B_graph_factory; 
+  RCP<Tpetra_CrsMatrix> B;
+  if (bound_same)
+    B = rcp(new Tpetra_CrsMatrix(A->getRowMap(), A->getColMap(), all_local_rows,
+                                 Tpetra::StaticProfile));
+  else
+    B = rcp(new Tpetra_CrsMatrix(A->getRowMap(), A->getColMap(), per_local_row,
+                                 Tpetra::StaticProfile));
+
+  return B;
 }
 
-Teuchos::RCP<Thyra_LinearOp> getOnlyNonzeros (const Teuchos::RCP<Thyra_LinearOp>& A_op) 
-{
+Teuchos::RCP<Thyra_LinearOp> getOnlyNonzeros (const Teuchos::RCP<Thyra_LinearOp>& A_op) {
   using Teuchos::RCP;
   using Teuchos::Array;
   using Teuchos::ArrayView;
 
-  TEUCHOS_ASSERT(Albany::hasColumnSpace(A_op)); 
-  TEUCHOS_ASSERT(Albany::isLocallyIndexed(A_op));
+  auto A = Albany::getTpetraMatrix(A_op);
 
-  //Create operator to be returned
-  RCP<Albany::ThyraCrsMatrixFactory> B_op_graph_factory = alloc(A_op);
-  RCP<Thyra_LinearOp> B_op = B_op_graph_factory->createOp(); 
- 
-  //Populate operator to be returned
-  const RCP<const Thyra_VectorSpace> row_vs = B_op_graph_factory->getRangeVectorSpace(); 
-  Array<LO> Ainds;
-  Array<ST> Avals;
+  TEUCHOS_ASSERT(A->hasColMap());
+  TEUCHOS_ASSERT(A->isLocallyIndexed());
+
+  RCP<Tpetra_CrsMatrix> B = alloc(A);
+  const RCP<const Tpetra_Map> row_map = B->getRowMap();
+
+  ArrayView<const LO> Ainds;
+  ArrayView<const ST> Avals;
   Array<LO> Binds;
   Array<ST> Bvals;
-  for (LO lrow = Albany::getMinLocalIndex(row_vs), lmax = Albany::getMaxLocalIndex(row_vs); lrow <= lmax; ++lrow) {
-    Albany::getLocalRowValues(A_op, lrow, Ainds, Avals); 
+  for (LO lrow = row_map->getMinLocalIndex(), lmax = row_map->getMaxLocalIndex(); lrow <= lmax; ++lrow) {
+    A->getLocalRowView(lrow, Ainds, Avals);
     if (Ainds.size()) {
       Binds.clear();
       Bvals.clear();
@@ -93,13 +73,13 @@ Teuchos::RCP<Thyra_LinearOp> getOnlyNonzeros (const Teuchos::RCP<Thyra_LinearOp>
           Binds.push_back(Ainds[i]);
           Bvals.push_back(Avals[i]);
         }
-      Albany::setLocalRowValues(B_op, lrow, Binds, Bvals);
+      B->insertLocalValues(lrow, Binds, Bvals);
     }
   }
+  B->fillComplete();
   
-  return B_op;
+  return Albany::createThyraLinearOp(B);
 }
-
 } // namespace
 
 Aeras::HVDecorator::HVDecorator(
@@ -113,11 +93,11 @@ Aeras::HVDecorator::HVDecorator(
   std::cout << "In HVDecorator app name: " << app->getProblemPL()->get("Name", "") << std::endl;
 #endif
 
-  // Create and store mass and Laplacian operators (in LinearOp form). 
-  Teuchos::RCP<Thyra_LinearOp> mass = createOperatorDiag(1.0, 0.0, 0.0); 
+  // Create and store mass and Laplacian operators (in CrsMatrix form). 
+  Teuchos::RCP<Thyra_LinearOp> mass = createOperatorDiag(1.0, 0.0, 0.0);
   Teuchos::RCP<Thyra_LinearOp> laplace = createOperator(0.0, 0.0, 1.0);
 
-  Teuchos::RCP<const Thyra_VectorSpace> mass_vs = mass->range();
+  Teuchos::RCP<const Thyra_VectorSpace> mass_vs = mass->range(); 
 
   // Do some preprocessing to speed up subsequent residual calculations.
   // 1. Store the lumped mass diag reciprocal.
@@ -136,8 +116,8 @@ Aeras::HVDecorator::HVDecorator(
 //compare the product L*x (L is the Laplace, x is an arbitrary vector)
 //in case of a parallel and serial run.
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
-  Albany::writeMatrixMarket(mass, "mass.mm");
-  Albany::writeMatrixMarket(laplace_, "laplace.mm");
+  Albany::writeMatrixMarket(mass, "mass");
+  Albany::writeMatrixMarket(laplace_, "laplace");
 #endif
 }
  
@@ -344,8 +324,8 @@ Aeras::HVDecorator::evalModelImpl(
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //writing to MatrixMarket for debug
-  Albany::writeMatrixMarket(x, "x", mm_counter); 
-  Albany::writeMatrixMarket(xtilde, "xtilde", mm_counter); 
+  Albany::writeMatrixMarket(x, "x", mm_counter);
+  Albany::writeMatrixMarket(xtilde, "xtilde", mm_counter);
   mm_counter++; 
 #endif  
 
