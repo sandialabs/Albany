@@ -72,6 +72,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   setEvaluatedField("ACE Water Saturation", dl->qp_scalar);
   setEvaluatedField("ACE Porosity", dl->qp_scalar);
   setEvaluatedField("ACE Temperature Dot", dl->qp_scalar);
+  setEvaluatedField("ACE Failure Indicator", dl->qp_scalar);
 
   // define the evaluated fields
   setEvaluatedField(cauchy_string, dl->qp_tensor);
@@ -207,6 +208,15 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
       0.0,
       false,
       p->get<bool>("Output Mechanical Source", false));
+
+  // failed state
+  addStateVariable(
+      "ACE Failure Indicator",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output ACE Failure Indicator", true));
 }
 
 template <typename EvalT, typename Traits>
@@ -248,6 +258,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
   porosity_         = *output_fields["ACE Porosity"];
   tdot_             = *output_fields["ACE Temperature Dot"];
   source_           = *output_fields[source_string];
+  failed_           = *output_fields["ACE Failure Indicator"];
 
   // get State Variables
   Fp_old_             = (*workset.stateArrayPtr)[Fp_string + "_old"];
