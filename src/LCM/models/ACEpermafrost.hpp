@@ -74,7 +74,6 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   ScalarField thermal_inertia_;
   ScalarField water_saturation_;
   ScalarField porosity_;
-  ScalarField tdot_;
   ScalarField failed_;
 
   // Mechanical MDFields
