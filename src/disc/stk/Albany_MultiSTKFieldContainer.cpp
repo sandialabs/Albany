@@ -6,5 +6,5 @@
 #include "Albany_MultiSTKFieldContainer.hpp"
 #include "Albany_MultiSTKFieldContainer_Def.hpp"
 
-MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(
-    Albany::MultiSTKFieldContainer)
+MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(Albany::MultiSTKFieldContainer)
+

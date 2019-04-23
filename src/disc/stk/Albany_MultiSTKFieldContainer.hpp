@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
 
 #ifndef ALBANY_MULTISTKFIELDCONT_HPP
 #define ALBANY_MULTISTKFIELDCONT_HPP
@@ -14,159 +14,90 @@
 
 namespace Albany {
 
-template <bool Interleaved>
+template<bool Interleaved>
 
 class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
- public:
-  MultiSTKFieldContainer(
-      const Teuchos::RCP<Teuchos::ParameterList>&               params_,
-      const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
-      const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
-      const int                                                 neq_,
-      const AbstractFieldContainer::FieldContainerRequirements& req,
-      const int                                                 numDim_,
-      const Teuchos::RCP<Albany::StateInfoStruct>&              sis,
-      const Teuchos::Array<Teuchos::Array<std::string>>&        solution_vector,
-      const Teuchos::Array<std::string>& residual_vector);
 
-  ~MultiSTKFieldContainer();
+  public:
 
-  bool
-  hasResidualField()
-  {
-    return haveResidual;
-  }
-  bool
-  hasSphereVolumeField()
-  {
-    return buildSphereVolume;
-  }
-  bool
-  hasLatticeOrientationField()
-  {
-    return buildLatticeOrientation;
-  }
+    MultiSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                           const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
+                           const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
+                           const int neq_,
+                           const AbstractFieldContainer::FieldContainerRequirements& req,
+                           const int numDim_,
+                           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                           const Teuchos::Array<Teuchos::Array<std::string> >& solution_vector,
+                           const Teuchos::Array<std::string>& residual_vector);
+
+    ~MultiSTKFieldContainer();
+
+    bool hasResidualField(){ return haveResidual; }
+    bool hasSphereVolumeField(){ return buildSphereVolume; }
+    bool hasLatticeOrientationField(){ return buildLatticeOrientation; }
 
 #if defined(ALBANY_EPETRA)
-  void
-  fillSolnVector(
-      Epetra_Vector&                        soln,
-      stk::mesh::Selector&                  sel,
-      const Teuchos::RCP<const Epetra_Map>& node_map);
+    void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map);
 #endif
-  void
-  fillSolnVectorT(
-      Tpetra_Vector&                        solnT,
-      stk::mesh::Selector&                  sel,
-      const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+    void fillSolnVectorT(Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
 
-  void
-  fillSolnMultiVector(
-      Tpetra_MultiVector&                   solnT,
-      stk::mesh::Selector&                  sel,
-      const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+    void fillSolnMultiVector(Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
 
 #if defined(ALBANY_EPETRA)
-  void
-  saveSolnVector(
-      const Epetra_Vector&                  soln,
-      stk::mesh::Selector&                  sel,
-      const Teuchos::RCP<const Epetra_Map>& node_map);
+    void saveSolnVector(const Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map);
 #endif
-  // Tpetra version of above
-  void
-  saveSolnVectorT(
-      const Tpetra_Vector&                  solnT,
-      stk::mesh::Selector&                  sel,
-      const Teuchos::RCP<const Tpetra_Map>& node_mapT);
-  void
-  saveSolnVectorT(
-      const Tpetra_Vector&                  solnT,
-      const Tpetra_Vector&                  soln_dotT,
-      stk::mesh::Selector&                  sel,
-      const Teuchos::RCP<const Tpetra_Map>& node_mapT);
-  void
-  saveSolnVectorT(
-      const Tpetra_Vector&                  solnT,
-      const Tpetra_Vector&                  soln_dotT,
-      const Tpetra_Vector&                  soln_dotdotT,
-      stk::mesh::Selector&                  sel,
-      const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+    //Tpetra version of above
+    void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+    void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+                         stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+    void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+                         const Tpetra_Vector& soln_dotdotT, 
+                         stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
 
-  void
-  saveSolnMultiVector(
-      const Tpetra_MultiVector&             solnT,
-      stk::mesh::Selector&                  sel,
-      const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+    void saveSolnMultiVector(const Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
 
 #if defined(ALBANY_EPETRA)
-  void
-  saveResVector(
-      const Epetra_Vector&                  res,
-      stk::mesh::Selector&                  sel,
-      const Teuchos::RCP<const Epetra_Map>& node_map);
+    void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map);
 #endif
-  void
-  saveResVectorT(
-      const Tpetra_Vector&                  res,
-      stk::mesh::Selector&                  sel,
-      const Teuchos::RCP<const Tpetra_Map>& node_map);
+    void saveResVectorT(const Tpetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map);
 
 #if defined(ALBANY_EPETRA)
-  void
-  fillVector(
-      Epetra_Vector&                        field_vector,
-      const std::string&                    field_name,
-      stk::mesh::Selector&                  field_selection,
-      const Teuchos::RCP<const Epetra_Map>& field_node_map,
-      const NodalDOFManager&                nodalDofManager);
+    void fillVector(Epetra_Vector& field_vector, const std::string&  field_name,
+        stk::mesh::Selector& field_selection, const Teuchos::RCP<const Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
 
-  void
-  saveVector(
-      const Epetra_Vector&                  field_vector,
-      const std::string&                    field_name,
-      stk::mesh::Selector&                  field_selection,
-      const Teuchos::RCP<const Epetra_Map>& field_node_map,
-      const NodalDOFManager&                nodalDofManager);
+    void saveVector(const Epetra_Vector& field_vector, const std::string&  field_name,
+        stk::mesh::Selector& field_selection, const Teuchos::RCP<const Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
 #endif
-  void
-  fillVectorT(
-      Tpetra_Vector&                        field_vector,
-      const std::string&                    field_name,
-      stk::mesh::Selector&                  field_selection,
-      const Teuchos::RCP<const Tpetra_Map>& field_node_map,
-      const NodalDOFManager&                nodalDofManager);
+    void fillVectorT(Tpetra_Vector& field_vector, const std::string&  field_name,
+            stk::mesh::Selector& field_selection, const Teuchos::RCP<const Tpetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
 
-  void
-  saveVectorT(
-      const Tpetra_Vector&                  field_vector,
-      const std::string&                    field_name,
-      stk::mesh::Selector&                  field_selection,
-      const Teuchos::RCP<const Tpetra_Map>& field_node_map,
-      const NodalDOFManager&                nodalDofManager);
+    void saveVectorT(const Tpetra_Vector& field_vector, const std::string&  field_name,
+            stk::mesh::Selector& field_selection, const Teuchos::RCP<const Tpetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
 
-  void
-  transferSolutionToCoords();
+    void transferSolutionToCoords();
 
- private:
-  void
-  initializeSTKAdaptation();
+  private:
 
-  bool haveResidual;
+    void initializeSTKAdaptation();
 
-  bool buildSphereVolume;
-  bool buildLatticeOrientation;
+    bool haveResidual;
 
-  // Containers for residual and solution
+    bool buildSphereVolume;
+    bool buildLatticeOrientation;
 
-  Teuchos::Array<Teuchos::Array<std::string>> sol_vector_name;
-  Teuchos::Array<Teuchos::Array<int>>         sol_index;
+    // Containers for residual and solution
 
-  Teuchos::Array<std::string> res_vector_name;
-  Teuchos::Array<int>         res_index;
+    Teuchos::Array<Teuchos::Array<std::string> > sol_vector_name;
+    Teuchos::Array<Teuchos::Array<int> > sol_index;
+
+    Teuchos::Array<std::string> res_vector_name;
+    Teuchos::Array<int> res_index;
+
 };
 
-}  // namespace Albany
+} // namespace Albany
+
+
 
 // Define macro for explicit template instantiation
 #define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
@@ -174,8 +105,9 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 #define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name) \
   template class name<true>;
 
-#define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name)          \
+#define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name) \
   MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
   MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name)
+
 
 #endif
