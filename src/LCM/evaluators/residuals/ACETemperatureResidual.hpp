@@ -12,8 +12,8 @@
 #include "Phalanx_MDField.hpp"
 #include "Phalanx_config.hpp"
 
-#include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LCM {
 
