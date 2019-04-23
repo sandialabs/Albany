@@ -48,6 +48,7 @@ namespace PHAL {
     this->utils.setFieldData(val_node,fm);
     this->utils.setFieldData(GradBF,fm);
     this->utils.setFieldData(grad_val_qp,fm);
+    d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   }
 
   //*********************************************************************

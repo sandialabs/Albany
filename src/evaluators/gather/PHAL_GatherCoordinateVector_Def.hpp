@@ -27,9 +27,6 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
     dispVecName = Teuchos::rcp( new std::string(strDispVec) );
   }
     
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
-    memoizer.enable_memoizer();
-
   this->addEvaluatedField(coordVec);
   this->setName("Gather Coordinate Vector"+PHX::typeAsString<EvalT>());
 }
@@ -43,9 +40,6 @@ GatherCoordinateVector(const Teuchos::ParameterList& p) :
 {  
   if (p.isType<bool>("Periodic BC")) periodic = p.get<bool>("Periodic BC");
   else periodic = false;
-
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
-    memoizer.enable_memoizer();
 
   this->addEvaluatedField(coordVec);
   this->setName("Gather Coordinate Vector"+PHX::typeAsString<EvalT>());
@@ -64,13 +58,16 @@ void GatherCoordinateVector<EvalT, Traits>::postRegistrationSetup(typename Trait
   worksetSize = dims[0];
   numVertices = dims[1];
   numDim = dims[2];
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   unsigned int numCells = workset.numCells;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;

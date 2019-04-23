@@ -47,6 +47,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(PiVelx, fm);
   this->utils.setFieldData(Tracer, fm);
   this->utils.setFieldData(UTracer,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

@@ -65,9 +65,6 @@ protected:
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<const MeshScalarT,Cell,Node> lambda_nodal;
   PHX::MDField<const MeshScalarT,Cell,Node> theta_nodal;
-
-protected:
-
 };
 
 template<typename EvalT, typename Traits> class SW_ComputeAndScatterJac;

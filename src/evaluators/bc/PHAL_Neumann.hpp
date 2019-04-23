@@ -269,8 +269,8 @@ public:
 
   NeumannAggregator(const Teuchos::ParameterList& p);
 
-  void postRegistrationSetup(typename Traits::SetupData /* d */,
-                             PHX::FieldManager<Traits>& /* vm */) {};
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData /* d */) {};
 

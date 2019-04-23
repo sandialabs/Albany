@@ -89,7 +89,7 @@ private:
                             const double rrearth=1) const;
   void initialize_grad(Kokkos::DynRankView<RealType, PHX::Device> &) const;
 
-  PHAL::MDFieldMemoizer<Traits> memoizer_;
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 
   // Kokkos
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT

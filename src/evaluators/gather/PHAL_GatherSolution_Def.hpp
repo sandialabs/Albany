@@ -180,6 +180,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     if (enableAcceleration) this->utils.setFieldData(valTensor_dotdot,fm);
     numNodes = valTensor.extent(1);
   }
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
 }
 
 // **********************************************************************

@@ -40,18 +40,16 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Tpetra_MueLu NAME)
 endif ()
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
-if (ALBANY_DAKOTA)
+if (ALBANY_DAKOTA AND ALBANY_IFPACK2)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
                  ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
   endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
-  add_test(${testName} ${AlbanyDakota.exe})
+  add_test(${testName}T ${AlbanyDakotaT.exe} inputT.yaml)
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 endif()
 

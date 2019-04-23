@@ -19,10 +19,6 @@ ComputeBasisFunctionsSide<EvalT, Traits>::
 ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer")) {
-    memoizer.enable_memoizer();
-  }
-
   // Get side set name and side set layouts
   sideSetName = p.get<std::string>("Side Set Name");
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(),
@@ -138,6 +134,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   numCellsOnSide.resize(numSides, 0);
   for (int i=0; i<numSides; i++)
     cellsOnSides[i] = Kokkos::DynRankView<int, PHX::Device>("cellOnSide_i", numCells);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 //**********************************************************************
@@ -145,7 +144,7 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctionsSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   //TODO: use Intrepid routines as much as possible
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())

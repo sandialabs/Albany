@@ -45,7 +45,7 @@ SchwarzAlternating::SchwarzAlternating(
   min_time_step_    = alt_system_params.get<ST>("Minimum Time Step", dt);
   max_time_step_    = alt_system_params.get<ST>("Maximum Time Step", dt);
   reduction_factor_ = alt_system_params.get<ST>("Reduction Factor", 1.0);
-  increase_factor_  = alt_system_params.get<ST>("Increase Factor", 1.0);
+  increase_factor_  = alt_system_params.get<ST>("Amplification Factor", 1.0);
   output_interval_  = alt_system_params.get<int>("Exodus Write Interval", 1);
   std_init_guess_ =
       alt_system_params.get<bool>("Standard Initial Guess", false);

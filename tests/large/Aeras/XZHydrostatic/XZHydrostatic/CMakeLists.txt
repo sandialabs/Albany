@@ -6,8 +6,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT_rythmos.yaml
 if (ALBANY_TEMPUS)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT_tempus.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT_tempus.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT_tempus_no_piro.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT_tempus_no_piro.yaml COPYONLY)
 endif () 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_topography.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_with_topography.yaml COPYONLY)
@@ -24,7 +22,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Rythmos ${AlbanyT.exe} input_spectralT_rythmos.yaml) 
 if (ALBANY_TEMPUS)
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus ${AlbanyT.exe} input_spectralT_tempus.yaml) 
-add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus_No_Piro ${AlbanyTempus.exe} input_spectralT_tempus_no_piro.yaml) 
 endif () 
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists

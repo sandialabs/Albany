@@ -222,28 +222,43 @@ struct ExtendLayout
  */
 template<typename Traits>
 class MDFieldMemoizer {
-  bool _enableMemoizer;
-  int _prevWorksetIndex;
-
 public:
+
+  //! Constructor
   MDFieldMemoizer() :
     _enableMemoizer(false),
     _prevWorksetIndex(-1) {
   }
 
+  //! Enable memoizer
   void enable_memoizer() {
     _enableMemoizer = true;
   }
 
-  bool have_stored_data (const typename Traits::EvalData workset) {
+  //! Check if evaluated MDFields are saved (only works on single workset)
+  bool have_saved_data(const typename Traits::EvalData workset,
+      const std::vector<Teuchos::RCP<PHX::FieldTag>>& evalFields) {
     if (!_enableMemoizer) return false;
 
     // Check workset index
-    const bool stored = (workset.wsIndex == _prevWorksetIndex);
+    bool saved = false;
+    if (workset.wsIndex == _prevWorksetIndex) {
+      // Check if MDField is saved
+      for (const auto & evalField: evalFields) {
+        if (workset.savedMDFields->count(evalField->identifier()) > 0) {
+          saved = true;
+          break;
+        }
+      }
+    }
     _prevWorksetIndex = workset.wsIndex;
 
-    return stored;
+    return saved;
   }
+
+private:
+  bool _enableMemoizer;
+  int _prevWorksetIndex;
 };
 
 } // namespace PHAL
