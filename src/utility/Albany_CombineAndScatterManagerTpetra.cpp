@@ -1,6 +1,7 @@
 #include "Albany_CombineAndScatterManagerTpetra.hpp"
 
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 namespace {
 Tpetra::CombineMode combineModeT (const Albany::CombineMode modeA)
@@ -30,8 +31,7 @@ namespace Albany
 CombineAndScatterManagerTpetra::
 CombineAndScatterManagerTpetra(const Teuchos::RCP<const Thyra_VectorSpace>& owned,
                                const Teuchos::RCP<const Thyra_VectorSpace>& overlapped)
- : owned_vs      (owned)
- , overlapped_vs (overlapped)
+ : CombineAndScatterManager(owned,overlapped)
 {
   auto ownedT = Albany::getTpetraMap(owned);
   auto overlappedT = Albany::getTpetraMap(overlapped);
@@ -390,6 +390,41 @@ scatter (const Teuchos::RCP<const Thyra_LinearOp>& src,
 #endif
 
   dstT->doImport(*srcT,*importer,cmT);
+}
+
+void CombineAndScatterManagerTpetra::
+create_ghosted_aura_owners () const {
+  // Use the getter, so it creates the vs is if it's null
+  auto ga_vs = getGhostedAuraVectorSpace();
+
+  // Get the gids in the ghosted vs
+  auto gids = getGlobalElements(ga_vs);
+  auto tgids = Teuchos::arrayView(reinterpret_cast<Tpetra_GO*>(gids.getRawPtr()),gids.size());
+  Teuchos::Array<LO> lids(gids.size());
+  ghosted_aura_owners.resize(lids.size());
+
+  // Ask the owned map the pids that own the gids
+  auto map = getTpetraMap(ga_vs);
+  map->getRemoteIndexList(tgids(),ghosted_aura_owners(),lids());
+}
+
+void CombineAndScatterManagerTpetra::
+create_owned_aura_users () const {
+  // Use the getter, so it creates the vs is if it's null
+  auto ga_vs = getGhostedAuraVectorSpace();
+  auto oa_vs = getOwnedAuraVectorSpace();
+  auto ga_map = getTpetraMap(ga_vs);
+  auto oa_map = getTpetraMap(oa_vs);
+
+  // Build an importer from the owned to the ghosted
+  auto imp = Teuchos::rcp( new Tpetra_Import(oa_map, ga_map) );
+
+  // Get the pid to which each of the exported pids goes
+  auto pids = imp->getExportPIDs();
+  auto lids = imp->getExportLIDs();
+  for (int i=0; i<lids.size(); ++i) {
+    owned_aura_users.push_back(std::make_pair(lids[i],pids[i]));
+  }
 }
 
 } // namespace Albany

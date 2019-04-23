@@ -443,6 +443,44 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
   }
 }
 
+Teuchos::RCP<const Thyra_VectorSpace>
+createVectorSpacesIntersection(const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
+                               const Teuchos::RCP<const Thyra_VectorSpace>& vs2,
+                               const Teuchos::RCP<const Teuchos_Comm>& comm)
+{
+  auto gids1 = getGlobalElements(vs1);
+  auto gids2 = getGlobalElements(vs2);
+  std::sort(gids1.begin(),gids1.end());
+  std::sort(gids2.begin(),gids2.end());
+
+  const auto min_size = std::min(gids1.size(),gids2.size());
+
+  Teuchos::Array<GO> gids(min_size);
+  const auto it = std::set_intersection(gids1.begin(),gids1.end(),gids2.begin(),gids2.end(),gids.begin());
+  gids.resize(std::distance(gids.begin(),it));
+
+  return createVectorSpace(comm,gids);
+}
+
+Teuchos::RCP<const Thyra_VectorSpace>
+createVectorSpacesDifference (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
+                              const Teuchos::RCP<const Thyra_VectorSpace>& vs2,
+                              const Teuchos::RCP<const Teuchos_Comm>& comm)
+{
+  auto gids1 = getGlobalElements(vs1);
+  auto gids2 = getGlobalElements(vs2);
+  std::sort(gids1.begin(),gids1.end());
+  std::sort(gids2.begin(),gids2.end());
+
+  const auto min_size = std::min(gids1.size(),gids2.size());
+
+  Teuchos::Array<GO> gids(min_size);
+  const auto it = std::set_intersection(gids1.begin(),gids1.end(),gids2.begin(),gids2.end(),gids.begin());
+  gids.resize(std::distance(gids.begin(),it));
+
+  return createVectorSpace(comm,gids);
+}
+
 // ========= Thyra_LinearOp utilities ========= //
 
 Teuchos::RCP<const Thyra_VectorSpace>

@@ -1,6 +1,8 @@
 #include "Albany_CombineAndScatterManagerEpetra.hpp"
 
 #include "Albany_EpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_Macros.hpp"
 
 namespace {
 Epetra_CombineMode combineModeE (const Albany::CombineMode modeA)
@@ -30,8 +32,7 @@ namespace Albany
 CombineAndScatterManagerEpetra::
 CombineAndScatterManagerEpetra(const Teuchos::RCP<const Thyra_VectorSpace>& owned,
                                const Teuchos::RCP<const Thyra_VectorSpace>& overlapped)
- : owned_vs      (owned)
- , overlapped_vs (overlapped)
+ : CombineAndScatterManager(owned,overlapped)
 {
   auto ownedE = getEpetraMap(owned);
   auto overlappedE = getEpetraMap(overlapped);
@@ -390,6 +391,56 @@ scatter (const Teuchos::RCP<const Thyra_LinearOp>& src,
 #endif
 
   dstE->Import(*srcE,*importer,cmE);
+}
+
+void CombineAndScatterManagerEpetra::
+create_ghosted_aura_owners () const {
+  // Use the getter, so it creates the vs is if it's null
+  auto gvs = getGhostedAuraVectorSpace();
+
+  // Get the gids of the ghosted vs
+  auto gids = getGlobalElements(gvs);
+  Teuchos::Array<Epetra_GO> egids_array;
+  Teuchos::ArrayView<Epetra_GO> egids;
+  if (sizeof(GO)==sizeof(Epetra_GO)) {
+    // Same size, potentially different type name. A reinterpret_cast will do.
+    egids = Teuchos::arrayView(reinterpret_cast<Epetra_GO*>(gids.getRawPtr()),gids.size());
+  } else {
+    // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
+    egids_array.resize(gids.size());
+    const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
+    for (int i=0; i<gids.size(); ++i) {
+      ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error in createLocallyReplicatedVectorSpace! Input gids exceed Epetra_GO ranges.\n");
+      egids_array[i] = static_cast<Epetra_GO>(gids[i]);
+    }
+    (void) max_safe_gid;
+    egids = Teuchos::arrayView(egids_array.getRawPtr(),gids.size());
+  }
+
+  // Ask epetra to give the pid of the owner of each of the gids
+  Teuchos::Array<LO> lids(gids.size());
+  ghosted_aura_owners.resize(lids.size());
+  auto map = getEpetraMap(getOwnedAuraVectorSpace());
+  map->RemoteIDList(gids.size(),egids.getRawPtr(),ghosted_aura_owners.getRawPtr(),lids.getRawPtr());
+}
+
+void CombineAndScatterManagerEpetra::
+create_owned_aura_users () const {
+  // Use the getter, so it creates the vs is if it's null
+  auto ga_vs = getGhostedAuraVectorSpace();
+  auto oa_vs = getOwnedAuraVectorSpace();
+  auto ga_map = getEpetraMap(ga_vs);
+  auto oa_map = getEpetraMap(oa_vs);
+
+  // Build an importer from the owned to the ghosted
+  auto imp = Teuchos::rcp( new Epetra_Import(*ga_map, *oa_map) );
+
+  // Get the pid to which each of the exported pids goes
+  auto pids = imp->ExportPIDs();
+  auto lids = imp->ExportLIDs();
+  for (int i=0; i<imp->NumExportIDs(); ++i) {
+    owned_aura_users.push_back(std::make_pair(lids[i],pids[i]));
+  }
 }
 
 } // namespace Albany

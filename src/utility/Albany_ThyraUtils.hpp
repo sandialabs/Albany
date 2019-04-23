@@ -58,6 +58,19 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
                    const Teuchos::ArrayView<const GO>& gids,
                    const GO globalDim = Teuchos::OrdinalTraits<GO>::invalid());
 
+// Intersects vectors spaces
+Teuchos::RCP<const Thyra_VectorSpace>
+createVectorSpacesIntersection (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
+                                const Teuchos::RCP<const Thyra_VectorSpace>& vs2,
+                                const Teuchos::RCP<const Teuchos_Comm>& comm);
+
+// Complement of a vector spaces to another
+// NOTE: elements in vs2 that are not in vs1 are ignored.
+Teuchos::RCP<const Thyra_VectorSpace>
+createVectorSpacesDifference (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
+                              const Teuchos::RCP<const Thyra_VectorSpace>& vs2,
+                              const Teuchos::RCP<const Teuchos_Comm>& comm);
+
 // ========= Thyra_LinearOp utilities ========= //
 
 // These routines help to manipulate the a Thyra_LinearOp. They are needed
