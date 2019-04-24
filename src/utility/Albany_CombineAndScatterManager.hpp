@@ -11,6 +11,7 @@ namespace Albany
 enum class CombineMode {
   ADD,    // Add remote contributions to local ones
   INSERT, // Replace local contributions with remote ones (beware of race conditions!)
+  ABSMAX, // Replace local contributions with max(|local|,|remote|)
   ZERO    // Ignore remote contributions
 };
 

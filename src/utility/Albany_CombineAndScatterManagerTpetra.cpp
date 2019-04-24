@@ -17,6 +17,9 @@ Tpetra::CombineMode combineModeT (const Albany::CombineMode modeA)
     case Albany::CombineMode::ZERO:
       modeT = Tpetra::CombineMode::ZERO;
       break;
+    case Albany::CombineMode::ABSMAX:
+      modeT = Tpetra::CombineMode::ABSMAX;
+      break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unknown Albany combine mode. Please, contact developers.\n");
   }
