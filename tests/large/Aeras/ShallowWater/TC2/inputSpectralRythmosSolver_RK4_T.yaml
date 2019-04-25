@@ -1,7 +1,8 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Problem: 
+  Problem:
+    Use MDField Memoization: true 
     Name: Aeras Shallow Water 3D
     Solution Method: Transient
     Shallow Water Problem: 

@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
       Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  Albany::CmdLineArgs cmd;
+  Albany::CmdLineArgs cmd("inputT.yaml");
   cmd.parse_cmdline(argc, argv, *out);
 
   const auto stackedTimer = Teuchos::rcp(
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
     // Connect vtune for performance profiling
     if (cmd.vtune) { Albany::connect_vtune(comm->getRank()); }
 
-    Albany::SolverFactory slvrfctry(cmd.xml_filename, comm);
+    Albany::SolverFactory slvrfctry(cmd.yaml_filename, comm);
     RCP<Albany::Application> app;
     const RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>> solver =
         slvrfctry.createAndGetAlbanyAppT(app, comm, comm);

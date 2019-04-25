@@ -90,7 +90,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void ScatterResidualBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   if (tensorRank == 0) {
@@ -105,6 +105,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
     this->utils.setFieldData(valTensor,fm);
     numNodes = valTensor.extent(1);
   }
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************

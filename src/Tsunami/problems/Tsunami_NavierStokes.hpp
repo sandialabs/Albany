@@ -148,10 +148,6 @@ Tsunami::NavierStokes::constructEvaluators(
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
-  //The following, when set to true, will load parameters (rho and mu) only once at the beginning
-  //of the simulation to save time 
-  const bool enableMemoizer = this->params->get<bool>("Use MDField Memoization", true);
-
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
 
@@ -306,7 +302,6 @@ Tsunami::NavierStokes::constructEvaluators(
     p->set<double>("Viscosity", mu); 
     p->set<double>("Density", rho); 
     p->set<bool>("Use Parameters on Mesh", use_params_on_mesh); 
-    p->set<bool>("Enable Memoizer", enableMemoizer);
 
     //Output
     p->set<std::string>("Fluid Viscosity QP Name", "Viscosity Field");

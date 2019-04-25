@@ -68,13 +68,27 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   sol_vector_name.resize(solution_vector.size());
   sol_index.resize(solution_vector.size());
 
-  for(int vec_num = 0; vec_num < solution_vector.size(); vec_num++){
+  // Check the input
 
-    if(solution_vector[vec_num].size() == 0) { // Do the default solution vector
+  auto const num_derivs = solution_vector[0].size();
+  for (auto i = 1; i < solution_vector.size(); ++i) {
+    ALBANY_ASSERT(
+        solution_vector[i].size() == num_derivs,
+        "\n*** ERROR ***\n"
+        "Number of derivatives for each variable is different.\n"
+        "Check definition of solution vector and its derivatives.\n");
+  }
 
-      std::string name = params_->get<std::string>(sol_tag_name[vec_num], sol_id_name[vec_num]);
-      VFT* solution = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, name);
-      stk::mesh::put_field_on_mesh(*solution, metaData_->universal_part(), neq_, nullptr);
+  for (int vec_num = 0; vec_num < solution_vector.size(); vec_num++) {
+    if (solution_vector[vec_num].size() ==
+        0) {  // Do the default solution vector
+
+      std::string name = params_->get<std::string>(
+          sol_tag_name[vec_num], sol_id_name[vec_num]);
+      VFT* solution =
+          &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, name);
+      stk::mesh::put_field_on_mesh(
+          *solution, metaData_->universal_part(), neq_, nullptr);
 #ifdef ALBANY_SEACAS
       stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
 #endif
@@ -101,10 +115,9 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 
       int len, accum = 0;
 
-      for(int i = 0; i < solution_vector[vec_num].size(); i += 2) {
-        if(solution_vector[vec_num][i + 1] == "V") {
-
-          len = numDim_; // vector
+      for (int i = 0; i < solution_vector[vec_num].size(); i += 2) {
+        if (solution_vector[vec_num][i + 1] == "V") {
+          len = numDim_;  // vector
           accum += len;
           VFT* solution = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, solution_vector[vec_num][i]);
           stk::mesh::put_field_on_mesh(*solution, metaData_->universal_part(), len, nullptr);

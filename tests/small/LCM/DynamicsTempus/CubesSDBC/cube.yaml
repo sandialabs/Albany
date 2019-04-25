@@ -58,35 +58,27 @@ LCM:
     Exodus Write Interval: 1
   Regression Results:
     Number of Comparisons: 3
-    Test Values: [1.149255934841e-01, 0.000000000000e+00, -1.552232195477e-01]
+    Test Values: [1.149192890563e-01, 0.000000000000e+00, -1.552421328312e-01]
     Relative Tolerance: 1.0e-7
     Absolute Tolerance: 1.0e-7
   Piro:
     Tempus:
       Integrator Name: Tempus Integrator
+      Abort on Failure: false 
+      Albany Time Step Control Options:
+        Initial Time: 0.0
+        Final Time: 1.0 
+        Initial Time Step: 0.1
+        Minimum Time Step: 1.0e-3
+        Maximum Time Step: 0.5
+        Reduction Factor: 0.5
+        Amplification Factor: 2.0
       Tempus Integrator:
         Integrator Type: Integrator Basic
         Stepper Name: Tempus Stepper
         Solution History:
           Storage Type: Unlimited
           Storage Limit: 2000
-        Time Step Control:
-          Initial Time: 0.0
-          Final Time: 1.0
-          Initial Time Index: 0
-          Final Time Index: 1000000
-          Initial Time Step: 0.1
-          Integrator Step Type: Variable
-          Time Step Control Strategy:
-            Time Step Control Strategy List: basic_vs
-            basic_vs:
-              Name: 'Basic VS'
-              Reduction Factor: 0.5
-              Amplification Factor: 2.0 
-              Minimum Value Monitoring Function: 1.0e-1
-              Maximum Value Monitoring Function: 5.0e0
-          Output Time List: ''
-          Output Index List: ''
       Tempus Stepper:
         Stepper Type: 'Newmark Implicit d-Form'
         Newmark Parameters:

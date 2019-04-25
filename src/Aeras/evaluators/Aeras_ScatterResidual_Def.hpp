@@ -76,6 +76,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm) 
 {
   for (int eq = 0; eq < numFields; ++eq) this->utils.setFieldData(val[eq],fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************

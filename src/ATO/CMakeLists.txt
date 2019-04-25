@@ -47,13 +47,6 @@ SET(SOURCES ${SOURCES}
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.cpp
 )
 
-IF (ENABLE_DOTK)
-  SET(SOURCES ${SOURCES}
-    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_Optimizer.cpp
-    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_ContinuousOperators.cpp
-  )
-ENDIF()
-
 IF (ENABLE_Cogent)
   SET(SOURCES ${SOURCES}
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions.cpp
@@ -131,14 +124,6 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.hpp
 )
-
-IF (ENABLE_DOTK)
-  SET(HEADERS ${HEADERS}
-    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_Optimizer.hpp
-    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_ContinuousOperators.hpp
-    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_vector.hpp
-  )
-ENDIF()
 
 IF (ENABLE_Cogent)
   SET(HEADERS ${HEADERS}

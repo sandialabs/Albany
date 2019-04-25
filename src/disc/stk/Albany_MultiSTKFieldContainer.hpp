@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
+// IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
 
 #ifndef ALBANY_MULTISTKFIELDCONT_HPP
 #define ALBANY_MULTISTKFIELDCONT_HPP
@@ -91,9 +91,8 @@ private:
 #define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name) \
   template class name<true>;
 
-#define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name) \
+#define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name)          \
   MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
   MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name)
-
 
 #endif

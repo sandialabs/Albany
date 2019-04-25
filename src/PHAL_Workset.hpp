@@ -11,6 +11,7 @@
 
 #include <list>
 #include <set>
+#include <string>
 
 #include "Albany_TpetraTypes.hpp"
 #include "Albany_ThyraTypes.hpp"
@@ -19,6 +20,7 @@
 #if defined(ALBANY_LCM)
 #include <set>
 #endif
+#include "PHAL_Setup.hpp"
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_StateInfoStruct.hpp"
@@ -180,6 +182,9 @@ struct Workset {
   Teuchos::RCP<Thyra_MultiVector> overlapped_dgdxdot;
   Teuchos::RCP<Thyra_MultiVector> overlapped_dgdxdotdot;
   Teuchos::RCP<Thyra_MultiVector> overlapped_dgdp;
+
+  // List of saved MDFields (needed for memoization)
+  Teuchos::RCP<const StringSet> savedMDFields;
 
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT
   // where T is any lambda expression (typically a placeholder expression)

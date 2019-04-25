@@ -1,7 +1,8 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Problem: 
+  Problem:
+    Use MDField Memoization: true 
     Name: Aeras Shallow Water No AD 3D
     Phalanx Graph Visualization Detail: 1
     Solution Method: Transient

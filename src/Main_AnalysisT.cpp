@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  Albany::CmdLineArgs cmd("inputAnalysis.xml");
+  Albany::CmdLineArgs cmd("inputAnalysis.yaml");
   cmd.parse_cmdline(argc, argv, *out);
 
   const auto stackedTimer = Teuchos::rcp(
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     }
 
     Teuchos::RCP<Albany::SolverFactory> slvrfctry =
-      Teuchos::rcp(new Albany::SolverFactory(cmd.xml_filename, comm));
+      Teuchos::rcp(new Albany::SolverFactory(cmd.yaml_filename, comm));
 
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > appThyra = slvrfctry->createT(comm, comm);
 

@@ -111,6 +111,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   // Output
   this->utils.setFieldData(residual,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->contributedFields());
 }
 
 //**********************************************************************

@@ -63,8 +63,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
 
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
-
-  memoizer_.enable_memoizer();
 }
 
 //**********************************************************************
@@ -143,6 +141,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   DD3.setFieldData(ViewFactory::buildView(DD3.fieldTag(),ddims_));
 #endif
 
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 //**********************************************************************
@@ -352,7 +352,7 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer_.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   /** The allocated size of the Field Containers must currently 
     * match the full workset size of the allocated PHX Fields, 

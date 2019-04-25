@@ -148,10 +148,6 @@ Tsunami::Boussinesq::constructEvaluators(
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  //The following, when set to true, will load parameters (water depth) only once at the beginning
-  //of the simulation to save time/computation 
-  const bool enableMemoizer = this->params->get<bool>("Use MDField Memoization", true);
-  
   Intrepid2::DefaultCubatureFactory cubFactory;
   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
   
@@ -230,11 +226,11 @@ Tsunami::Boussinesq::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
    // Intepolate water depth from nodes to QPs
-   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("water_depth", -1, enableMemoizer);
+   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("water_depth", -1);
    fm0.template registerEvaluator<EvalT> (ev);
   
    // Intepolate surface height gradient
-   ev = evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("water_depth", -1, enableMemoizer);
+   ev = evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("water_depth", -1);
    fm0.template registerEvaluator<EvalT> (ev);
 
 
@@ -248,7 +244,7 @@ Tsunami::Boussinesq::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
    // Intepolate z_alpha from nodes to QPs
-   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("z_alpha", -1, enableMemoizer);
+   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("z_alpha", -1);
    fm0.template registerEvaluator<EvalT> (ev);
 
    { // Specialized DofVecGrad Interpolation for this problem
@@ -289,7 +285,6 @@ Tsunami::Boussinesq::constructEvaluators(
     p->set<double>("Water Depth", h); 
     p->set<double>("Z_alpha", zAlpha); 
     p->set<bool>("Use Parameters on Mesh", use_params_on_mesh); 
-    p->set<bool>("Enable Memoizer", enableMemoizer);
 
     //Output
     p->set<std::string>("Water Depth QP Name", "Water Depth Field");

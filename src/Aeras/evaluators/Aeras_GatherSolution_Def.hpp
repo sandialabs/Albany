@@ -101,6 +101,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   for (int eq = 0; eq < val.size();     ++eq) this->utils.setFieldData(val[eq],fm);
   for (int eq = 0; eq < val_dot.size(); ++eq) this->utils.setFieldData(val_dot[eq],fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
 }
 
 

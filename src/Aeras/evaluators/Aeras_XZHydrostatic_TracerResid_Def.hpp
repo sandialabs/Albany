@@ -69,6 +69,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   //this->utils.setFieldData(etadotdTracer,  fm);
   this->utils.setFieldData(dedotpiTracerde,  fm);
   this->utils.setFieldData(Residual,       fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
       Albany::connect_vtune(comm->getRank());
     }
 
-    Albany::SolverFactory slvrfctry(cmd.xml_filename, comm);
+    Albany::SolverFactory slvrfctry(cmd.yaml_filename, comm);
     RCP<Albany::Application> app;
     const RCP<Thyra::ModelEvaluator<double> > solver =
       slvrfctry.createThyraSolverAndGetAlbanyApp(app, comm, comm);

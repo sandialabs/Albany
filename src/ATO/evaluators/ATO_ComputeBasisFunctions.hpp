@@ -7,6 +7,7 @@
 #ifndef PHAL_COMPUTEBASISFUNCTIONS_HPP
 #define PHAL_COMPUTEBASISFUNCTIONS_HPP
 
+#include "PHAL_Utilities.hpp"
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"

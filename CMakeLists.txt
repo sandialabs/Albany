@@ -793,6 +793,17 @@ ELSE()
   SET(ALBANY_ASCR FALSE)
 ENDIF()
 
+# Set optional dependency on AMP, defaults to Disabled
+OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
+IF (ENABLE_AMP)
+  SET(ALBANY_APF TRUE)
+  MESSAGE("-- AMP       is Enabled, compiling with -DALBANY_AMP")
+  SET(ALBANY_AMP TRUE)
+ELSE()
+  MESSAGE("-- AMP       is NOT Enabled.")
+  SET(ALBANY_AMP FALSE)
+ENDIF()
+
 # Set optional dependency on SCOREC PUMI,  optional adaptivity
 OPTION(ENABLE_SCOREC "Flag to turn on SCOREC dependency" OFF)
 SET(ALBANY_SCOREC_DIR "" CACHE PATH "Path to standalone SCOREC installation")

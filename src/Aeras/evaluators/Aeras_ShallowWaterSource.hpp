@@ -77,7 +77,7 @@ private:
   ScalarT SIGMA;
   ScalarT NPWR;
 
-  PHAL::MDFieldMemoizer<Traits> memoizer_;          
+  PHAL::MDFieldMemoizer<Traits> memoizer;
           
   KOKKOS_INLINE_FUNCTION
   ScalarT dbubf(const ScalarT &lat) const;

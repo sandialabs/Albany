@@ -44,6 +44,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(pi     , fm);
   this->utils.setFieldData(velocity  , fm);
   this->utils.setFieldData(pivelx , fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

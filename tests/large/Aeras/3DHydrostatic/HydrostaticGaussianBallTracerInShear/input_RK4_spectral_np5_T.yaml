@@ -1,7 +1,8 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Problem: 
+  Problem:
+    Use MDField Memoization: true 
     Name: Aeras Hydrostatic
     Solution Method: Transient
     Hydrostatic Problem: 

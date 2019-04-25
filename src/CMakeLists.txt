@@ -22,6 +22,7 @@ SET(SOURCES
   Albany_Utils.cpp
   PHAL_AlbanyTraits.cpp
   PHAL_Dimension.cpp
+  PHAL_Setup.cpp
   Albany_Application.cpp
   Albany_Memory.cpp
   Albany_ModelFactory.cpp
@@ -79,6 +80,7 @@ SET(HEADERS
   PHAL_AlbanyTraits.hpp
   PHAL_Dimension.hpp
   PHAL_FactoryTraits.hpp
+  PHAL_Setup.hpp
   PHAL_TypeKeyMap.hpp
   PHAL_Utilities.hpp
   PHAL_Utilities_Def.hpp
@@ -696,6 +698,10 @@ include_directories (${ALBANY_PUMI_INCLUDE_DIRS}
                      ./Tsunami/evaluators
                      ./Aeras/problems
                      ./Aeras/evaluators
+                     ./AMP
+                     ./AMP/problems
+                     ./AMP/evaluators
+                     ./AMP/responses
                      ./ATO
                      ./ATO/problems
                      ./ATO/evaluators
@@ -741,15 +747,6 @@ ELSE()
   set(PlatoEngine_LIB )
 ENDIF()
 
-IF ( ENABLE_DOTK )
-  include_directories (${DOTK_INCLUDE_DIR})
-  link_directories (${DOTK_LIBRARY_DIR})
-  set(DOTK_LIB )
-ELSE()
-  set(DOTK_LIB )
-ENDIF()
-
-
 # LAME
 IF(ALBANY_LAME)
   include_directories (${LAME_INCLUDE_DIR})
@@ -788,6 +785,11 @@ ELSE()
   SET(ALBANY_PUMI_INCLUDE_DIRS )
 ENDIF()
 
+IF (ALBANY_AMP)
+  add_subdirectory(AMP)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
+ENDIF()
+
 # Catalyst CoProcessing
 if(ALBANY_CATALYST)
   set(ALBANY_CATALYST_INCLUDE_DIRS ./disc/catalyst)
@@ -803,16 +805,10 @@ IF (ALBANY_EPETRA)
 ENDIF()
 
 add_executable(AlbanyT Main_SolveT.cpp)
-IF (ALBANY_TEMPUS)
-  add_executable(AlbanyTempus Main_SolveT_Tempus.cpp)
-ENDIF()
 
 SET(ALBANY_EXECUTABLES AlbanyT)
 IF (ALBANY_EPETRA)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
-ENDIF()
-IF (ALBANY_TEMPUS)
-  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyTempus )
 ENDIF()
 
 IF (ALBANY_MPMD)
@@ -822,10 +818,8 @@ ENDIF()
 
 
 if (ALBANY_ASCR AND ALBANY_EPETRA)
-  add_executable(AlbanyAdjoint Main_Adjoint.cpp)
   add_executable(AlbanyCoupled Main_Coupled.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
-    AlbanyAdjoint
     AlbanyCoupled
     )
 endif()
@@ -865,7 +859,6 @@ set(ALL_LIBRARIES
   ${LAME_LIB}
   ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
-  ${DOTK_LIB}
   ${LAMENT_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
   ${Albany_EXTRA_LIBRARIES}

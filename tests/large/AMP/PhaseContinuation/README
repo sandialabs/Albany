@@ -1,0 +1,42 @@
+=====================================
+
+INSTRUCTIONS TO TEST MESH ADAPTATION
+
+=====================================
+
+1) Run case without mesh adaptation:
+   /Albany/build/src/AlbanyT input.xml
+
+2) Open paraview and save data points all time steps.
+   Name file "temperature.cvs"
+
+3) Run case with mesh adaptation every 4 time steps:
+   /Albany/build/src/AlbanyT input4.xml
+
+4) Open paraview and save data points all time steps.
+   Name file "temperatureAdapt4.csv"
+
+5) Open matlab and run: plotMaxTemp
+
+=====================================
+
+*****************
+
+IMPORTANT
+
+*****************
+
+File LaserCenter.txt MUST be present in the folder directory
+where you run this problem.
+
+LaserCenter.txt contains the position of the laser as a function
+of time. This is the structure of the file:
+
+time x-coordinate z-coordinate Power_Flag
+
+where x- and z-coordinate are the position of the laser center at time t
+and power_flag is equal to 1 if laser is active and 0 otherwise.
+
+Note that LaserCenter.txt is an input file.
+
+

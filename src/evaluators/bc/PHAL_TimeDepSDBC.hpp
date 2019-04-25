@@ -14,7 +14,7 @@
 namespace PHAL {
 
 ///
-/// Time-dependendt, strongly-enforced Dirichlet BC evauator
+/// Time-dependent, strongly-enforced Dirichlet BC evauator
 ///
 template <typename EvalT, typename Traits>
 class TimeDepSDBC_Base : public PHAL::SDirichlet<EvalT, Traits>

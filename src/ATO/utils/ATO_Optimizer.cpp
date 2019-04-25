@@ -7,9 +7,6 @@
 #include "ATO_Optimizer.hpp"
 #include "ATO_Pareto_Optimizer.hpp"
 #include "ATO_Solver.hpp"
-#ifdef ATO_USES_DOTK
-#include "ATO_DOTk_Optimizer.hpp"
-#endif //ATO_USES_DOTK
 
 #include "Teuchos_TestForException.hpp"
 #ifdef ATO_USES_NLOPT
@@ -38,11 +35,6 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
   } else if (optPackage == "NLopt"  ) {
     return Teuchos::rcp(new Optimizer_NLopt(optimizerParams));
 #endif //ATO_USES_NLOPT
-
-#ifdef ATO_USES_DOTK
-  } else if (optPackage == "DOTk") {
-    return Teuchos::rcp(new Optimizer_DOTk(optimizerParams));
-#endif //ATO_USES_DOTK
   } else {
     // Don't place ifdefs inside the TEUCHOS_TEST_FOR_EXCEPTION, since
     // compiler says 'embedding a directive within macro arguments has undefined behavior'                           
@@ -53,9 +45,6 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
 #ifdef ATO_USES_NLOPT
     errorMsg += "/t NLopt ... NLOPT library\n";
 #endif //ATO_USES_NLOPT
-#ifdef ATO_USES_DOTK
-    errorMsg += "/t DOTk ... Design Optimization Toolkit library\n";
-#endif //ATO_USES_DOTK
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, errorMsg);
   }
 }

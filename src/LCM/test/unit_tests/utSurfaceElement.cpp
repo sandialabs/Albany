@@ -197,8 +197,7 @@ TEUCHOS_UNIT_TEST(SurfaceElement, Basis)
     fieldManager.requireField<Residual>(**it);
 
   // Call postRegistrationSetup on the evaluators
-  // JTO - I don't know what "Test String" is meant for...
-  PHAL::AlbanyTraits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   fieldManager.postRegistrationSetup(setupData);
 
   // Create a workset
@@ -448,8 +447,7 @@ TEUCHOS_UNIT_TEST(SurfaceElement, ScalarJump)
     fieldManager.requireField<Residual>(**it);
 
   // Call postRegistrationSetup on the evaluators
-  // JTO - I don't know what "Test String" is meant for...
-  PHAL::AlbanyTraits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   fieldManager.postRegistrationSetup(setupData);
 
   // Create a workset
@@ -666,8 +664,7 @@ TEUCHOS_UNIT_TEST(SurfaceElement, VectorJump)
     fieldManager.requireField<Residual>(**it);
 
   // Call postRegistrationSetup on the evaluators
-  // JTO - I don't know what "Test String" is meant for...
-  PHAL::AlbanyTraits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   fieldManager.postRegistrationSetup(setupData);
 
   // Create a workset
@@ -844,8 +841,7 @@ TEUCHOS_UNIT_TEST(SurfaceElement, ScalarGradient)
     fieldManager.requireField<Residual>(**it);
 
   // Call postRegistrationSetup on the evaluators
-  // JTO - I don't know what "Test String" is meant for...
-  PHAL::AlbanyTraits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   fieldManager.postRegistrationSetup(setupData);
 
   // Create a workset
@@ -1083,8 +1079,7 @@ TEUCHOS_UNIT_TEST(SurfaceElement, VectorGradient)
     fieldManager.requireField<Residual>(**it);
 
   // Call postRegistrationSetup on the evaluators
-  // JTO - I don't know what "Test String" is meant for...
-  PHAL::AlbanyTraits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   fieldManager.postRegistrationSetup(setupData);
 
   // Create a workset
@@ -1209,8 +1204,7 @@ TEUCHOS_UNIT_TEST(SurfaceElement, CohesiveForce)
     fieldManager.requireField<Residual>(**it);
 
   // Call postRegistrationSetup on the evaluators
-  // JTO - I don't know what "Test String" is meant for...
-  PHAL::AlbanyTraits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   fieldManager.postRegistrationSetup(setupData);
 
   // Create a workset
@@ -1490,8 +1484,7 @@ TEUCHOS_UNIT_TEST(SurfaceElement, Complete)
     fieldManager.requireField<Residual>(**it);
 
   // Call postRegistrationSetup on the evaluators
-  // JTO - I don't know what "Test String" is meant for...
-  PHAL::AlbanyTraits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   fieldManager.postRegistrationSetup(setupData);
 
   // Create a workset

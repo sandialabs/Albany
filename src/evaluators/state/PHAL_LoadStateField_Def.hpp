@@ -19,9 +19,6 @@ template<typename EvalT, typename Traits, typename ScalarType>
 LoadStateFieldBase<EvalT, Traits, ScalarType>::
 LoadStateFieldBase(const Teuchos::ParameterList& p)
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
-    memoizer.enable_memoizer();
-
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");
 
@@ -34,17 +31,20 @@ LoadStateFieldBase(const Teuchos::ParameterList& p)
 
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ScalarType>
-void LoadStateFieldBase<EvalT, Traits, ScalarType>::postRegistrationSetup(typename Traits::SetupData /* d */,
+void LoadStateFieldBase<EvalT, Traits, ScalarType>::postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(data,fm);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ScalarType>
 void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   //cout << "LoadStateFieldBase importing state " << stateName << " to field "
   //     << fieldName << " with size " << data.size() << endl;
@@ -60,9 +60,6 @@ template<typename EvalT, typename Traits>
 LoadStateField<EvalT, Traits>::
 LoadStateField(const Teuchos::ParameterList& p) 
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
-    memoizer.enable_memoizer();
-
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");
 
@@ -79,13 +76,16 @@ void LoadStateField<EvalT, Traits>::postRegistrationSetup(typename Traits::Setup
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(data,fm);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   //cout << "LoadStateField importing state " << stateName << " to field " 
   //     << fieldName << " with size " << data.size() << endl;

@@ -118,7 +118,6 @@ class MPMD_App : public Plato::Application
     pugi::xml_document m_inputTree;
   
     std::map<std::string,std::string> m_stateMap, m_distParamMap;
-//    std::map<std::string,std::vector<double>*> m_valueMap;
 
 
 };
@@ -199,7 +198,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
     // parse input into Teuchos::ParameterList
     Teuchos::RCP<Teuchos::ParameterList>
       appParams = Teuchos::createParameterList("Albany Parameters");
-    Teuchos::updateParametersFromXmlFileAndBroadcast(cmd.xml_filename, appParams.ptr(), *m_comm);
+    Teuchos::updateParametersFromXmlFileAndBroadcast(cmd.yaml_filename, appParams.ptr(), *m_comm);
 
     Teuchos::ParameterList& probParams = appParams->sublist("Problem",false);
 
@@ -216,7 +215,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
     // add topology objects
     probParams.set<Teuchos::RCP<ATO::TopologyArray> >("Topologies",topologyArray);
     
-    // send in ParameterList instead of xml filename 
+    // send in ParameterList instead of yaml filename 
     m_solverFactory = rcp(new Albany::SolverFactory(appParams, m_comm));
     m_solver = m_solverFactory->createAndGetAlbanyAppT(m_app, m_comm, m_comm);
 
@@ -362,8 +361,6 @@ tpetraFromThyraProdVec(
     const Teuchos::Array<Teuchos::Array< Teuchos::RCP<const Thyra::MultiVectorBase<ST>>>> &thyraSensitivities,
     Teuchos::Array<Teuchos::RCP<const Tpetra_Vector>> &responses,
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector>>> &sensitivities);
-
-//const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
 
 
 /******************************************************************************/

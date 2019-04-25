@@ -16,9 +16,6 @@
 #include <chrono>
 #endif
 
-// IKT: uncomment to turn on debug output
-//#define DEBUG_OUTPUT
-
 namespace LCM {
 
 //------------------------------------------------------------------------------
@@ -50,9 +47,6 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
     enable_dynamics_ = true;
 
   use_analytic_mass_ = p.get<bool>("Use Analytic Mass");
-#ifdef DEBUG_OUTPUT
-  *out << "IKT use_analytic_mass_ = " << use_analytic_mass_ << "\n";
-#endif
   if (enable_dynamics_) {
     acceleration_ = decltype(acceleration_)(
         p.get<std::string>("Acceleration Name"), dl->qp_vector);
@@ -269,20 +263,6 @@ MechanicsResidual<EvalT, Traits>::evaluateFields(
       }
     }
   }
-#ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out =
-      Teuchos::VerboseObjectBase::getDefaultOStream();
-  for (int cell = 0; cell < workset.numCells; ++cell) {
-    if (cell == 0) {
-      for (int node = 0; node < this->num_nodes_; ++node) {
-        for (int dim = 0; dim < this->num_dims_; ++dim) {
-          *out << "IKT node, dim, residual = " << node << ", " << dim << ", "
-               << residual_(cell, node, dim) << "\n";
-        }
-      }
-    }
-  }
-#endif
 }
-//------------------------------------------------------------------------------
+
 }  // namespace LCM

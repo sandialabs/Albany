@@ -23,7 +23,7 @@ namespace PHAL {
 //
 // Specialization: Residual
 //
-template<typename Traits>
+template <typename Traits>
 SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::SDirichlet(
     Teuchos::ParameterList& p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>(p)
@@ -34,7 +34,7 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::SDirichlet(
 //
 //
 //
-template<typename Traits>
+template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
     typename Traits::EvalData dirichlet_workset)
@@ -56,7 +56,7 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
 //
 //
 //
-template<typename Traits>
+template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
@@ -83,7 +83,7 @@ SDirichlet<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 //
 // Specialization: Jacobian
 //
-template<typename Traits>
+template <typename Traits>
 SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
     Teuchos::ParameterList& p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p)
@@ -91,14 +91,13 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
   scale = p.get<RealType>("SDBC Scaling", 1.0);  
 }
 
-
 //
 //
 //
-template<typename Traits>
+template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
-    typename Traits::EvalData dirichlet_workset) 
+    typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP<const Thyra_LinearOp> J = dirichlet_workset.Jac;
 
@@ -147,22 +146,14 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
 //
 //
 //
-template<typename Traits>
+template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
-  // NOTE: you may be tempted to const_cast away the const here. However,
-  //       consider the case where x is a Thyra::TpetraVector object. The
-  //       actual Tpetra_Vector is stored as a Teuchos::ConstNonconstObjectContainer,
-  //       which (most likely) happens to be created from a const RCP, and therefore
-  //       when calling getTpetraVector (from Thyra::TpetraVector), the container
-  //       will throw.
-  //       Instead, keep the const correctness until the very last moment.
   Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
   Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
 
-  // TODO: abstract away the tpetra interface
   Teuchos::RCP<Thyra_LinearOp> J = dirichlet_workset.Jac;
 
   bool const fill_residual = f != Teuchos::null;
@@ -170,7 +161,7 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   auto f_view = fill_residual ? Albany::getNonconstLocalData(f) : Teuchos::null;
   auto x_view = fill_residual ? Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x)) : Teuchos::null;
 
-  Teuchos::Array<Tpetra_GO> global_index(1);
+  Teuchos::Array<GO> global_index(1);
 
   Teuchos::Array<LO> index(1);
 
@@ -223,7 +214,7 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 //
 // Specialization: Tangent
 //
-template<typename Traits>
+template <typename Traits>
 SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
     Teuchos::ParameterList& p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p)
@@ -235,12 +226,11 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
 //
 //
 
-template<typename Traits>
+template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
     typename Traits::EvalData /* dirichlet_workset */)
 {
-
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
       Teuchos::Exceptions::InvalidParameter,
@@ -249,7 +239,7 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
              "is not implemented!\n");
   return;
 
-/* Draft of implementation  
+/* Draft of implementation (with the old Tpetra way)
   Teuchos::RCP<const Thyra_Vector>       x  = dirichlet_workset.x;
   Teuchos::RCP<const Thyra_MultiVector> Vx = dirichlet_workset.Vx;
   Teuchos::RCP<Thyra_Vector>             f  = dirichlet_workset.f;
@@ -309,7 +299,7 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
 //
 // Specialization: DistParamDeriv
 //
-template<typename Traits>
+template <typename Traits>
 SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
     Teuchos::ParameterList& p)
     : PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
@@ -320,13 +310,13 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
 //
 //
 //
-template<typename Traits>
+template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
-return;
-  Teuchos::RCP<Thyra_MultiVector> fpV =  dirichlet_workset.fpV;
+  return;
+  Teuchos::RCP<Thyra_MultiVector> fpV = dirichlet_workset.fpV;
 
   bool trans = dirichlet_workset.transpose_dist_param_deriv;
   int num_cols = fpV->domain()->dim();

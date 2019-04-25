@@ -20,9 +20,6 @@ template<typename EvalT, typename Traits, typename ScalarType>
 LoadSideSetStateFieldBase<EvalT, Traits, ScalarType>::
 LoadSideSetStateFieldBase (const Teuchos::ParameterList& p)
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
-    memoizer.enable_memoizer();
-
   sideSetName = p.get<std::string>("Side Set Name");
 
   fieldName = p.get<std::string>("Field Name");
@@ -39,17 +36,20 @@ LoadSideSetStateFieldBase (const Teuchos::ParameterList& p)
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ScalarType>
 void LoadSideSetStateFieldBase<EvalT, Traits, ScalarType>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 template<typename EvalT, typename Traits, typename ScalarType>
 void LoadSideSetStateFieldBase<EvalT, Traits, ScalarType>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoizer.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
                               "Error! The mesh does not store any side set.\n");

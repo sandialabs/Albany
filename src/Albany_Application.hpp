@@ -42,6 +42,7 @@
 #include "Sacado_ScalarParameterVector.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Setup.hpp"
 #include "PHAL_Workset.hpp"
 #include <set>
 
@@ -587,6 +588,10 @@ private:
 
 #endif // ALBANY_LCM
 
+public:
+  //! Get Phalanx postRegistration data
+  Teuchos::RCP<PHAL::Setup> getPhxSetup() { return phxSetup; }
+
 protected:
 
   bool is_schwarz_;
@@ -711,7 +716,8 @@ protected:
 #endif
   std::vector<int> blockDecomp;
 
-  std::set<std::string> setupSet;
+  //! Phalanx postRegistration data
+  Teuchos::RCP<PHAL::Setup> phxSetup;
   mutable int phxGraphVisDetail;
   mutable int stateGraphVisDetail;
 
@@ -768,6 +774,8 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset &workset,
   workset.wsIndex = ws;
 
   workset.local_Vp.resize(workset.numCells);
+
+  workset.savedMDFields = phxSetup->get_saved_fields();
 
   //  workset.print(*out);
 

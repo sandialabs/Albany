@@ -22,7 +22,7 @@ TimeDepSDBC_Base<EvalT, Traits>::TimeDepSDBC_Base(Teuchos::ParameterList& p)
     : offset_(p.get<int>("Equation Offset")), PHAL::SDirichlet<EvalT, Traits>(p)
 {
   times_  = p.get<Teuchos::Array<RealType>>("Time Values").toVector();
-  values_  = p.get<Teuchos::Array<RealType>>("BC Values").toVector();
+  values_ = p.get<Teuchos::Array<RealType>>("BC Values").toVector();
 
   ALBANY_ASSERT(
       times_.size() == values_.size(),
@@ -71,8 +71,9 @@ void
 TimeDepSDBC<EvalT, Traits>::preEvaluate(typename Traits::EvalData workset)
 {
 #ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT TimeDepSDBC preEvaluate Residual\n"; 
+  Teuchos::RCP<Teuchos::FancyOStream> out =
+      Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT TimeDepSDBC preEvaluate Residual\n";
 #endif
   this->value = this->computeVal(workset.current_time);
   PHAL::SDirichlet<EvalT, Traits>::preEvaluate(workset);

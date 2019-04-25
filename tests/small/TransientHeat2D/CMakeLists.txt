@@ -29,11 +29,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_be_nox_solver.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/tempus_be_nox_solver.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_rk4.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/tempus_rk4.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_rk4_no_piro.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/tempus_rk4_no_piro.yaml COPYONLY)
 add_test(${testName}_Tpetra_Tempus_BackwardEuler_NOXSolver ${AlbanyT.exe} tempus_be_nox_solver.yaml)
 add_test(${testName}_Tpetra_Tempus_RK4 ${AlbanyT.exe} tempus_rk4.yaml)
-add_test(${testName}_Tpetra_Tempus_NoPiro_RK4 ${AlbanyTempus.exe} tempus_rk4_no_piro.yaml)
 endif () 
 endif ()
 
