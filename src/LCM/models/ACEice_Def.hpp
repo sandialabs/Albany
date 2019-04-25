@@ -4,11 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "MiniNonlinearSolver.h"
-
-#include "Albany_Utils.hpp"
-
 #include "ACEice.hpp"
+#include "Albany_Utils.hpp"
+#include "MiniNonlinearSolver.h"
 
 namespace LCM {
 
@@ -37,8 +35,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   freeze_curve_width_   = p->get<RealType>("ACE Freezing Curve Width", 1.0);
   latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
-  porosityE_            = p->get<RealType>("ACE Porosity E-Depth", 0.0);
-  T_init_               = p->get<RealType>("ACE Initial Temperature", 0.0);
 
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
@@ -185,7 +181,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       "ACE Temperature",
       dl->qp_scalar,
       "scalar",
-      T_init_,
+      0.0,
       true,
       p->get<bool>("Output Temperature", false));
 
@@ -500,10 +496,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // NOTE: The porosity does not change in time so this calculation only needs
   //       to be done once, at the beginning of the simulation.
   ScalarT const porosity = porosity0_;
-  // NOTE: Can't let this keep getting updated! So commenting out for now.
-  // porosity0_ * std::exp(-pressure / (porosityE_ * 9.81 * 1500.0));
-
-  porosity_(cell, pt) = porosity;
+  porosity_(cell, pt)    = porosity;
 
   // Calculate melting temperature
   ScalarT sal   = salinity_base_;  // should come from chemical part of model
