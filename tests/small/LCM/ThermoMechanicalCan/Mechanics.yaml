@@ -21,7 +21,8 @@ LCM:
       Number: 1
       Parameter 0: Time
     Response Functions:
-      Number: 3
+      # LB 4/25/19: Disable the '(Project) IP to Nodal Field' responses, since they are currently giving issues
+      Number: 1
       Response 0: Solution Average
       Response 1: IP to Nodal Field
       Response 2: Project IP to Nodal Field
