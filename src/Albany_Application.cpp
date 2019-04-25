@@ -36,15 +36,6 @@
 #endif
 #endif
 
-//#if defined(ATO_USES_COGENT)
-#ifdef ALBANY_ATO
-#if defined(ALBANY_EPETRA)
-#include "ATO_XFEM_Preconditioner.hpp"
-#endif
-#include "ATOT_XFEM_Preconditioner.hpp"
-#endif
-//#endif
-
 #include "Albany_ScalarResponseFunction.hpp"
 #include "PHAL_Utilities.hpp"
 
@@ -455,12 +446,6 @@ void Application::initialSetUp(
     if (precType == "Teko")
       precParams = Teuchos::sublist(problemParams, "Teko", true);
 #endif
-//#ifdef ATO_USES_COGENT
-#ifdef ALBANY_ATO
-    if (precType == "XFEM")
-      precParams = Teuchos::sublist(problemParams, "XFEM", true);
-#endif
-    //#endif
   }
 
 
@@ -964,14 +949,7 @@ RCP<Thyra_LinearOp> Application::createJacobianOp() const {
 }
 
 RCP<Tpetra_Operator> Application::getPreconditionerT() {
-//#if defined(ATO_USES_COGENT)
-#ifdef ALBANY_ATO
-  if (precType == "XFEM") {
-    return rcp(new ATOT::XFEM::Preconditioner(precParams));
-  } else
-#endif
-    //#endif
-    return Teuchos::null;
+  return Teuchos::null;
 }
 
 #if defined(ALBANY_EPETRA)
@@ -1003,13 +981,6 @@ RCP<Epetra_Operator> Application::getPreconditioner() {
     return rcp(new Teko::Epetra::InverseFactoryOperator(inverseFac));
   } else
 #endif
-//#if defined(ATO_USES_COGENT)
-#ifdef ALBANY_ATO
-      if (precType == "XFEM") {
-    return rcp(new ATO::XFEM::Preconditioner(precParams));
-  } else
-#endif
-    //#endif
     return Teuchos::null;
 }
 
@@ -1845,24 +1816,12 @@ void Application::computeGlobalJacobian(
   }
 }
 
-void Application::computeGlobalPreconditionerT(
-    const RCP<Tpetra_CrsMatrix> &jac, const RCP<Tpetra_Operator> &prec) {
-#ifdef ALBANY_ATO
-  if (precType == "XFEM") {
-    TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
-
-    *out << "Computing WPrec by Cogent" << std::endl;
-
-    RCP<ATOT::XFEM::Preconditioner> cogentPrec =
-        rcp_dynamic_cast<ATOT::XFEM::Preconditioner>(prec);
-
-    cogentPrec->BuildPreconditioner(jac, disc, stateMgr);
-  }
-#else
+void Application::
+computeGlobalPreconditionerT(const RCP<Tpetra_CrsMatrix> &jac,
+                             const RCP<Tpetra_Operator> &prec) {
   // Silence compiler warnings
   (void) jac;
   (void) prec;
-#endif
 }
 
 #if defined(ALBANY_EPETRA)
@@ -1881,18 +1840,6 @@ void Application::computeGlobalPreconditioner(
 
     wrappedJac = buildWrappedOperator(jac, wrappedJac);
     blockPrec->rebuildInverseOperator(wrappedJac);
-  }
-#endif
-#ifdef ALBANY_ATO
-  if (precType == "XFEM") {
-    TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
-
-    *out << "Computing WPrec by Cogent" << std::endl;
-
-    RCP<ATO::XFEM::Preconditioner> cogentPrec =
-        rcp_dynamic_cast<ATO::XFEM::Preconditioner>(prec);
-
-    cogentPrec->BuildPreconditioner(jac, disc, stateMgr);
   }
 #endif
 }

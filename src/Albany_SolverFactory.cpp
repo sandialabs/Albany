@@ -253,8 +253,12 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 #endif
   if (solutionMethod == "ATO Problem") {
 #ifdef ALBANY_ATO
-    // IK, 10/16/14: need to convert ATO::Solver to Tpetra
-    return rcp(new ATO::Solver(appParams, solverComm, initial_guess));
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "EpetraExt version of ATO has been removed.\n"
+        "If you are in the process of refactoring, this is expected.\n"
+        "If the Thyra refactor has ended, you forgot to remove EpetraExt support (and you should).\n");
 #else  /* ALBANY_ATO */
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
