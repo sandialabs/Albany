@@ -36,18 +36,10 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 {
   fname = params->get("Gmsh Input Mesh File Name", "mesh.msh");
 
-  // Init counters to 0
-  NumSides = NumNodes = 0;
-  NumElems = 0;
-  nb_hexas = 0;
-  nb_tetra = 0;
-  nb_quads = 0;
-  nb_trias = 0;
-  nb_lines = 0;
-
-  // Init ptrs to nullptr
-  pts = nullptr;
-  tetra = hexas = trias = quads = lines = nullptr;
+  // Init counters to 0, pointers to null
+  init_counters_to_zero();
+  init_pointers_to_null();
+  
 
   // Reading the mesh on proc 0
   if (commT->getRank() == 0) 
@@ -58,13 +50,20 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 
     determine_file_type( legacy, binary, ascii);
 
-    if (legacy) {
-      loadLegacyMesh ();
-    } else if (binary) {
-      loadBinaryMesh ();
-    } else if (ascii) {
-      loadAsciiMesh ();
-    } else {
+    if(legacy) 
+    {
+      loadLegacyMesh();
+    } 
+    else if(binary) 
+    {
+      loadBinaryMesh();
+    } 
+    else if(ascii) 
+    {
+      loadAsciiMesh();
+    } 
+    else 
+    {
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Mesh format not recognized.\n");
     }
   }
@@ -101,6 +100,13 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
         for (auto ss : ssPartVec) {
           stk::mesh::set_cell_topology<shards::Line<2> >(*ss.second);
         }
+      }
+      else if( NumElemNodes == 6)
+      {
+        stk::mesh::set_cell_topology<shards::Triangle<6> >(*partVec[0]);
+        for (auto ss : ssPartVec) {
+          stk::mesh::set_cell_topology<shards::Line<3> >(*ss.second);
+        }
       } else {
         stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
         for (auto ss : ssPartVec) {
@@ -113,6 +119,13 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
         stk::mesh::set_cell_topology<shards::Tetrahedron<4> >(*partVec[0]);
         for (auto ss : ssPartVec) {
           stk::mesh::set_cell_topology<shards::Triangle<3> >(*ss.second);
+        }
+      }
+      else if( NumElemNodes == 10)
+      {
+        stk::mesh::set_cell_topology<shards::Tetrahedron<10> >(*partVec[0]);
+        for (auto ss : ssPartVec) {
+          stk::mesh::set_cell_topology<shards::Triangle<6> >(*ss.second);
         }
       } else {
         stk::mesh::set_cell_topology<shards::Hexahedron<8> >(*partVec[0]);
@@ -149,9 +162,19 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
       delete[] tetra[i];
     }
   }
+  if (tet10!=nullptr) {
+    for (int i(0); i<11; ++i) {
+      delete[] tet10[i];
+    }
+  }
   if (trias!=nullptr) {
     for (int i(0); i<4; ++i) {
       delete[] trias[i];
+    }
+  }
+  if (tri6!=nullptr) {
+    for (int i(0); i<7; ++i) {
+      delete[] tri6[i];
     }
   }
   if (hexas!=nullptr) {
@@ -169,12 +192,18 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
       delete[] lines[i];
     }
   }
+  if (line3!=nullptr) {
+    for (int i(0); i<4; ++i) {
+      delete[] line3[i];
+    }
+  }
 
   delete[] tetra;
   delete[] trias;
   delete[] hexas;
   delete[] quads;
   delete[] lines;
+  delete[] line3;
 
   allowable_gmsh_versions.clear();
 }
@@ -203,6 +232,37 @@ void Albany::GmshSTKMeshStruct::determine_file_type( bool& legacy, bool& binary,
   }
 
   ifile.close();
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::init_counters_to_zero()
+{
+  NumSides = 0;
+  NumNodes = 0;
+  NumElems = 0;
+  nb_hexas = 0;
+  nb_tetra = 0;
+  nb_tet10 = 0;
+  nb_quads = 0;
+  nb_trias = 0;
+  nb_tri6  = 0;
+  nb_lines = 0;
+  nb_line3 = 0;
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::init_pointers_to_null()
+{
+  pts   = nullptr;
+  tetra = nullptr;
+  tet10 = nullptr;
+  hexas = nullptr;
+  trias = nullptr;
+  tri6  = nullptr;
+  quads = nullptr;
+  lines = nullptr;
+  line3 = nullptr;
   return;
 }
 
@@ -621,14 +681,18 @@ void Albany::GmshSTKMeshStruct::increment_element_type( int e_type)
 {
   switch (e_type) 
   {
-    case 1: ++nb_lines;  break;
-    case 2: ++nb_trias;  break;
-    case 3: ++nb_quads;  break;
-    case 4: ++nb_tetra;  break;
-    case 5: ++nb_hexas;  break;
-    case 15: /*point*/   break;
+    case 1:  ++nb_lines;  break;
+    case 2:  ++nb_trias;  break;
+    case 3:  ++nb_quads;  break;
+    case 4:  ++nb_tetra;  break;
+    case 5:  ++nb_hexas;  break;
+    case 8:  ++nb_line3;  break;
+    case 9:  ++nb_tri6;   break;
+    case 11: ++nb_tet10;  break;
+    case 15: /*point*/    break;
     default:
-      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, 
+                                    "Error! Element type (" << e_type << ") not supported.\n");
   }
 
   return;
@@ -685,27 +749,78 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
     }
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_trias*nb_quads!=0, std::logic_error, "Error! Cannot mix triangles and quadrilaterals.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexas+nb_trias+nb_quads==0, std::logic_error, "Error! Can only handle 2D and 3D geometries.\n");
+  bool is_first_order  = (nb_lines != 0);
+  bool is_second_order = (nb_line3 != 0);
+
+  if( is_first_order)
+  {
+    bool mixed_order_mesh = (nb_line3!=0);
+         mixed_order_mesh = (nb_tri6 !=0) || mixed_order_mesh;
+         mixed_order_mesh = (nb_tet10!=0) || mixed_order_mesh;
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( mixed_order_mesh, std::logic_error, 
+        "Error! Found second order elements in first order mesh.\n");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas !=0, std::logic_error, 
+        "Error! Cannot mix tetrahedra and hexahedra.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (nb_trias*nb_quads!=0, std::logic_error, 
+        "Error! Cannot mix triangles and quadrilaterals.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra+nb_hexas+nb_trias+nb_quads==0, std::logic_error, 
+        "Error! Can only handle 2D and 3D geometries.\n");
+  }
+  else if( is_second_order)
+  {
+    bool mixed_order_mesh = (nb_lines!=0);
+         mixed_order_mesh = (nb_trias!=0) || mixed_order_mesh;
+         mixed_order_mesh = (nb_tetra!=0) || mixed_order_mesh;
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( mixed_order_mesh, std::logic_error, 
+        "Error! Found first order elements in second order mesh.\n");
+
+    bool missing_parts = (nb_line3 == 0);
+         missing_parts = (nb_tri6  == 0) || missing_parts;
+         missing_parts = (nb_tet10 == 0) || missing_parts;
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( missing_parts, std::logic_error, 
+        "Error! This second order mesh is missing secord order parts.\n");
+    
+  }
+  else
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION( true, std::logic_error,
+            "Error! Could not determine if mesh was first or second order.\n" <<
+            "Checked for number of 2pt lines and 3pt lines, both are non-zero. \n")
+  }
 
   return;
 }
 
 void Albany::GmshSTKMeshStruct::size_all_element_pointers()
 {
+  // First values are the node IDs of the element, then tag
   lines = new int*[3];
+  line3 = new int*[4];
   tetra = new int*[5];
+  tet10 = new int*[11];
   trias = new int*[4];
+  tri6  = new int*[7];
   hexas = new int*[9];
   quads = new int*[5];
   for (int i(0); i<5; ++i) 
   {
     tetra[i] = new int[nb_tetra];
   }
+  for (int i(0); i<11; ++i) 
+  {
+    tet10[i] = new int[nb_tet10];
+  }
   for (int i(0); i<4; ++i) 
   {
     trias[i] = new int[nb_trias];
+  }
+  for (int i(0); i<7; ++i) 
+  {
+    tri6[i] = new int[nb_tri6];
   }
   for (int i(0); i<9; ++i) 
   {
@@ -718,6 +833,10 @@ void Albany::GmshSTKMeshStruct::size_all_element_pointers()
   for (int i(0); i<3; ++i) 
   {
     lines[i] = new int[nb_lines];
+  }
+  for( int i(0); i<4; ++i)
+  {
+    line3[i] = new int[nb_line3];
   }
 
   return;
@@ -735,6 +854,17 @@ void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
     NumSideNodes = 3;
     elems = tetra;
     sides = trias;
+  } 
+  else if (nb_tet10>0) 
+  {
+    this->numDim = 3;
+
+    NumElems = nb_tet10;
+    NumSides = nb_tri6;
+    NumElemNodes = 10;
+    NumSideNodes = 6;
+    elems = tet10;
+    sides = tri6;
   } 
   else if (nb_hexas>0) 
   {
@@ -758,6 +888,17 @@ void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
     elems = trias;
     sides = lines;
   } 
+  else if (nb_tri6>0) 
+  {
+    this->numDim = 2;
+
+    NumElems = nb_tri6;
+    NumSides = nb_line3;
+    NumElemNodes = 6;
+    NumSideNodes = 3;
+    elems = tri6;
+    sides = line3;
+  } 
   else if (nb_quads>0) 
   {
     this->numDim = 2;
@@ -779,9 +920,12 @@ void Albany::GmshSTKMeshStruct::set_generic_mesh_info()
 void Albany::GmshSTKMeshStruct::store_element_info( 
       int  e_type,
       int& iline,
+      int& iline3,
       int& itria,
+      int& itri6,
       int& iquad,
       int& itetra,
+      int& itet10,
       int& ihexa,
       std::vector<int>& tags,
       std::stringstream& ss)
@@ -814,6 +958,26 @@ void Albany::GmshSTKMeshStruct::store_element_info(
       hexas[8][ihexa] = tags[0];
       ++ihexa;
       break;
+    case 8: // 3-pt Line
+      ss >> line3[0][iline3] >> line3[1][iline3] >> line3[2][iline3];
+      line3[3][iline3] = tags[0];
+      iline3++;
+      break;
+    case 9: // 6-pt Triangle
+      ss >> tri6[0][itri6] >> tri6[1][itri6] >> tri6[2][itri6]
+         >> tri6[3][itri6] >> tri6[4][itri6] >> tri6[5][itri6];
+      tri6[6][itri6] = tags[0];
+      itri6++;
+      break;
+    case 11: // 10-pt Tetra
+      // NOTE!
+      // The node ordering between gmsh and STK for tet10 is the same 
+      // EXCEPT for the last two. I.e., nodes 8 and 9 are switched!
+      ss >> tet10[0][itet10] >> tet10[1][itet10] >> tet10[2][itet10] >> tet10[3][itet10] >> tet10[4][itet10] 
+         >> tet10[5][itet10] >> tet10[6][itet10] >> tet10[7][itet10] >> tet10[9][itet10] >> tet10[8][itet10];
+      tet10[10][itet10] = tags[0];
+      itet10++;
+      break;
     case 15: // Point
         break;
     default:
@@ -835,7 +999,13 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
   std::getline(ifile,line);
 
   // Read the elements
-  int iline(0), itria(0), iquad(0), itetra(0), ihexa(0), n_tags(0), id(0), e_type(0);
+  int iline(0), iline3(0), 
+      itria(0), itri6(0), 
+      iquad(0), 
+      itetra(0), itet10(0), 
+      ihexa(0), 
+      n_tags(0), id(0), e_type(0);
+
   if( version == GmshVersion::V2_2)
   {
     std::vector<int> tags;
@@ -852,7 +1022,7 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
       }
       tags[n_tags] = 0;
 
-      store_element_info( e_type, iline, itria, iquad, itetra, ihexa, tags, ss);
+      store_element_info( e_type, iline, iline3, itria, itri6, iquad, itetra, itet10, ihexa, tags, ss);
     }
   }
   else if( version == GmshVersion::V4_1)
@@ -879,7 +1049,7 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
         ss >> elem_id;
 
         int e_type = entity_type;
-        store_element_info( e_type, iline, itria, iquad, itetra, ihexa, tags, ss);
+        store_element_info( e_type, iline, iline3, itria, itri6, iquad, itetra, itet10, ihexa, tags, ss);
         accounted_elems++;
       }
       tags.clear();
@@ -1490,9 +1660,12 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
     std::map< int, int> physical_surface_tags;
     get_physical_tag_to_surface_tag_map( ifile, physical_surface_tags, num_surfaces);
 
-    std::string error_message = "Cannot support more than one physical tag per surface \n";
-    error_message             += "(but you should have gotten an error before this! \n";
-    TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != names.size(), std::runtime_error, error_message);
+    std::stringstream error_msg;
+    error_msg << "Cannot support more than one physical tag per surface \n"
+              << "(but you should have gotten an error before this!)    \n"
+              << "physical_surface_tags.size() = " << physical_surface_tags.size() << ". \n"
+              << "names.size() = " << names.size() << ". \n";
+    TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != names.size(), std::runtime_error, error_msg.str());
 
     // Add each physical name pair to the map
     for( int i = 0; i < names.size(); i++)
