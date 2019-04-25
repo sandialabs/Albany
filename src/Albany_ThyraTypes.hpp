@@ -54,6 +54,7 @@ typedef Thyra::ModelEvaluator<ST>                 Thyra_ModelEvaluator;
 typedef Thyra_ModelEvaluator::InArgs<ST>          Thyra_InArgs;
 typedef Thyra_ModelEvaluator::OutArgs<ST>         Thyra_OutArgs;
 typedef Thyra_ModelEvaluator::Derivative<ST>      Thyra_Derivative;
+typedef Thyra_ModelEvaluator::DerivativeSupport   Thyra_DerivativeSupport;
 
 // Spmd types
 typedef Thyra::SpmdVectorSpaceBase<ST>      Thyra_SpmdVectorSpace;
