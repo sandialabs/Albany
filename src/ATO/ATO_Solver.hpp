@@ -72,10 +72,10 @@ public:
   ~Solver() = default;
 
   // Override methods from Thyra_ModelEvaluator
-  Teuchos::RCP<const Thyra_VectorSpace> get_x_space() const override; 
-  Teuchos::RCP<const Thyra_VectorSpace> get_f_space() const override;  
+  Teuchos::RCP<const Thyra_VectorSpace> get_x_space() const override { return Teuchos::null; } 
+  Teuchos::RCP<const Thyra_VectorSpace> get_f_space() const override { return Teuchos::null; }  
   Teuchos::RCP<const Thyra_VectorSpace> get_g_space(const int ig) const override;
-  Teuchos::RCP<const Thyra_VectorSpace> get_p_space(const int ip) const override { return m_x_vs; }
+  Teuchos::RCP<const Thyra_VectorSpace> get_p_space(const int /* ip */) const override { return m_x_vs; }
   Thyra_InArgs  createInArgs()      const override;
 
   // Override method from Thyra::ResponseOnlyModelEvaluatorBase<ST>

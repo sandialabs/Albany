@@ -20,11 +20,19 @@ public:
 
   virtual void ComputeMeasure(const std::string& measureType, const double* p,
                               double& measure, double* dmdp, const std::string& integrationMethod) = 0;
-  virtual void ComputeMeasure(const std::string& measureType, const double* p,
-                              double& measure, const std::string& integrationMethod);
 
-  virtual void ComputeMeasure(std::string measureType, const double* p, double& measure);
-  virtual void ComputeMeasure(std::string measureType, const double* p, double& measure, double* dmdp);
+  void ComputeMeasure(const std::string& measureType, const double* p,
+                      double& measure, const std::string& integrationMethod) {
+    ComputeMeasure(measureType, p, measure, NULL, integrationMethod);
+  }
+
+  void ComputeMeasure(const std::string& measureType, const double* p, double& measure) {
+    ComputeMeasure(measureType, p, measure, nullptr, "Gauss Quadrature");
+  }
+
+  void ComputeMeasure(const std::string& measureType, const double* p, double& measure, double* dmdp) {
+    ComputeMeasure(measureType, p, measure, dmdp, "Gauss Quadrature");
+  }
 
   virtual void InitializeOptDofs(double* p) = 0;
   virtual void getOptDofsLowerBound (Teuchos::Array<double>& b) const = 0;

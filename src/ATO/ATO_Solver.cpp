@@ -1464,7 +1464,7 @@ Thyra_OutArgs Solver::createOutArgsImpl() const
 Teuchos::RCP<const Thyra_VectorSpace> Solver::get_g_space(int j) const
 //**********************************************************************
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (j != 0, Teuchos::Exceptions::InvalidParameter,
+  TEUCHOS_TEST_FOR_EXCEPTION (j<0 || j>m_num_responses, Teuchos::Exceptions::InvalidParameter,
                               "Error in Solver::get_g_space(): Invalid response index j = " << j << std::endl);
 
   return m_x_vs;
