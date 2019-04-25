@@ -21,8 +21,9 @@ namespace PHAL {
 ///
 /// Strong Dirichlet boundary condition evaluator
 ///
-template<typename EvalT, typename Traits>
-class SDirichlet {
+template <typename EvalT, typename Traits>
+class SDirichlet
+{
 };
 
 //
@@ -32,9 +33,10 @@ class SDirichlet {
 //
 // Residual
 //
-template<typename Traits>
+template <typename Traits>
 class SDirichlet<PHAL::AlbanyTraits::Residual, Traits>
-    : public PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits> {
+    : public PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>
+{
  public:
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
 
@@ -50,33 +52,36 @@ class SDirichlet<PHAL::AlbanyTraits::Residual, Traits>
 //
 // Jacobian
 //
-template<typename Traits>
+template <typename Traits>
 class SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>
-    : public PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits> {
+    : public PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>
+{
  public:
   using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
 
   SDirichlet(Teuchos::ParameterList& p);
-  
+
   void
   evaluateFields(typename Traits::EvalData d);
 
-  void 
-  set_row_and_col_is_dbc(typename Traits::EvalData d); 
+  void
+  set_row_and_col_is_dbc(typename Traits::EvalData d);
 
  protected:
   double scale;
-  Teuchos::RCP<Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>> row_is_dbc_; 
-  Teuchos::RCP<Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>> col_is_dbc_; 
- 
+  Teuchos::RCP<Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>>
+      row_is_dbc_;
+  Teuchos::RCP<Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>>
+      col_is_dbc_;
 };
 
 //
 // Tangent
 //
-template<typename Traits>
+template <typename Traits>
 class SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>
-    : public PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits> {
+    : public PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>
+{
  public:
   using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
 
@@ -92,9 +97,10 @@ class SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>
 //
 // Distributed Parameter Derivative
 //
-template<typename Traits>
+template <typename Traits>
 class SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>
-    : public PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+    : public PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>
+{
  public:
   using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
 
