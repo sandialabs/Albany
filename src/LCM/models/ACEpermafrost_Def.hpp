@@ -38,8 +38,6 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   freeze_curve_width_   = p->get<RealType>("ACE Freezing Curve Width", 1.0);
   latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
-  porosityE_            = p->get<RealType>("ACE Porosity E-Depth", 0.0);
-  T_init_               = p->get<RealType>("ACE Initial Temperature", 0.0);
   min_yield_strength_   = p->get<RealType>("ACE Minimum Yield Strength", 0.0);
 
   // retrieve appropriate field name strings
@@ -187,7 +185,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
       "ACE Temperature",
       dl->qp_scalar,
       "scalar",
-      T_init_,
+      0.0,
       true,
       p->get<bool>("Output Temperature", false));
 
@@ -503,10 +501,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // NOTE: The porosity does not change in time so this calculation only needs
   //       to be done once, at the beginning of the simulation.
   ScalarT const porosity = porosity0_;
-  // NOTE: Can't let this keep getting updated! So commenting out for now.
-  // porosity0_ * std::exp(-pressure / (porosityE_ * 9.81 * 1500.0));
-
-  porosity_(cell, pt) = porosity;
+  porosity_(cell, pt)    = porosity;
 
   // Calculate melting temperature
   ScalarT sal   = salinity_base_;  // should come from chemical part of model

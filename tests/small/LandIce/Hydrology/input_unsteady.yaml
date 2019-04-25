@@ -54,7 +54,7 @@ ANONYMOUS:
       Type: Regularized Coulomb
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [3.25463000000000022e+02]
+    Test Values: [3.241297833084e+02]
     Number of Sensitivity Comparisons: 0
     Relative Tolerance: 1.00000000000000005e-04
     Absolute Tolerance: 1.00000000000000005e-04
