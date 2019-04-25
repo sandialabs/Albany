@@ -4,11 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifdef ATO_USES_DOTK
 #include "ATO_DOTk_Optimizer.hpp"
-#endif
-#include "Teuchos_TestForException.hpp"
-#include "ATO_Solver.hpp"
+#include "ATO_DOTk_ContinuousOperators.hpp"
 
 namespace ATO {
 
@@ -17,7 +14,7 @@ Optimizer_DOTk::Optimizer_DOTk(const Teuchos::ParameterList& optimizerParams) :
 Optimizer(optimizerParams)
 /**********************************************************************/
 { 
-  myCoOperators = NULL;
+  myCoOperators = nullptr;
 }
 
 /******************************************************************************/
@@ -32,7 +29,6 @@ void
 Optimizer_DOTk::Initialize()
 /******************************************************************************/
 {
-
   myCoOperators = new ATO_DOTk_ContinuousOperators(solverInterface, comm);
 
   int numOptDofs = solverInterface->GetNumOptDofs();
@@ -47,5 +43,4 @@ Optimizer_DOTk::Optimize()
 {
 }
 
-}
-
+} // namespace ATO

@@ -42,10 +42,7 @@
 
 #include "Albany_ModelEvaluatorT.hpp"
 #ifdef ALBANY_ATO
-#if defined(ALBANY_EPETRA)
 #include "ATO_Solver.hpp"
-#endif
-#include "ATOT_Solver.hpp"
 #endif
 
 #if defined(ALBANY_LCM) && defined(ALBANY_STK)
@@ -153,8 +150,7 @@ Albany::SolverFactory::SolverFactory(
         inputFile, appParams.ptr(), *tcomm);
   }
 
-  // do not set default solver parameters for ATO::Solver
-  // problems,
+  // do not set default solver parameters for ATO::Solver problems,
   // ... as they handle this themselves
   std::string solution_method =
       appParams->sublist("Problem").get("Solution Method", "Steady");
@@ -242,7 +238,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     Teuchos::RCP<Albany::Application>&       albanyApp,
     const Teuchos::RCP<const Teuchos_Comm>&  appComm,
     const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
-    const Teuchos::RCP<const Thyra_Vector>& initial_guess,
+    const Teuchos::RCP<const Thyra_Vector>&  initial_guess,
     bool                                     createAlbanyApp)
 {
   const RCP<ParameterList> problemParams =
@@ -451,7 +447,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
   if (solutionMethod == "ATO Problem") {
 #ifdef ALBANY_ATO
-    return rcp(new ATOT::Solver(appParams, solverComm, initial_guess));
+    return rcp(new ATO::Solver(appParams, solverComm, initial_guess));
 #else  /* ALBANY_ATO */
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,

@@ -4,11 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef TopoTools_HPP
-#define TopoTools_HPP
+#ifndef ATO_TOPO_TOOLS_HPP
+#define ATO_TOPO_TOOLS_HPP
 
 #include "Teuchos_ParameterList.hpp"
-#include <unordered_map>
 
 namespace ATO {
 
@@ -17,6 +16,7 @@ class Ramp;
 class H1;
 class H2;
 class Poly;
+
 /** \brief Topology support utilities
 
     This class provides basic support for various penalization approaches.
@@ -74,8 +74,9 @@ private:
   int spatialFilterIndex;
 };
 
-  typedef Teuchos::Array<Teuchos::RCP<Topology> > TopologyArray;
+using TopologyArray = Teuchos::Array<Teuchos::RCP<Topology>>;
 
+// ================= Penalty classes ============== //
 
 class Simp {
  public:
@@ -118,7 +119,8 @@ class Poly {
   Teuchos::Array<double> coefficients;
 };
 
-}
+} // namespace ATO
 
 #include "ATO_TopoTools_Def.hpp"
-#endif
+
+#endif // ATO_TOPO_TOOLS_HPP

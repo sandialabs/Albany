@@ -4,36 +4,29 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ATO_Optimizer_DOTk_HPP
-#define ATO_Optimizer_DOTk_HPP
-
-
-#include "Albany_StateManager.hpp"
-
-#include <string>
-#include <vector>
-#include <tr1/memory>
+#ifndef ATO_OPTIMIZER_DOTK_HPP
+#define ATO_OPTIMIZER_DOTK_HPP
 
 #include "Teuchos_ParameterList.hpp"
 
-#include "DOTk/DOTk_Types.hpp"
-#include "DOTk/vector.hpp"
-
 #include "ATO_Optimizer.hpp"
-#include "ATO_DOTk_ContinuousOperators.hpp"
 
 namespace ATO {
 
+// ATO forward declarations
+class ATO_DOTk_ContinuousOperators;
+
 class Optimizer_DOTk : public Optimizer {
- public:
+public:
   Optimizer_DOTk(const Teuchos::ParameterList& optimizerParams);
   ~Optimizer_DOTk();
   void Initialize();
   void Optimize();
- private:
+private:
 
   ATO_DOTk_ContinuousOperators* myCoOperators;
 };
 
-}
-#endif
+} // namespace ATO
+
+#endif // ATO_OPTIMIZER_DOTK_HPP

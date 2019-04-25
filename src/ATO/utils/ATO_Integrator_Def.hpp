@@ -984,31 +984,32 @@ RealType ATO::Integrator::getTriMeasure(
 }
 
 //******************************************************************************//
-void ATO::Integrator::getCubature(std::vector<std::vector<RealType> >& refPoints, 
-                                  std::vector<RealType>& weights, 
-                                  const Kokkos::DynRankView<RealType, PHX::Device>& coordCon, 
-                                  const Kokkos::DynRankView<RealType, PHX::Device>& topoVals, RealType zeroVal)
+void ATO::Integrator::getCubature(std::vector<std::vector<RealType> >& /* refPoints */, 
+                                  std::vector<RealType>& /* weights */, 
+                                  const Kokkos::DynRankView<RealType, PHX::Device>& /* coordCon */, 
+                                  const Kokkos::DynRankView<RealType, PHX::Device>& /* topoVals */,
+                                  RealType /* zeroVal */)
 //******************************************************************************//
 {
 }
 
 //******************************************************************************//
-void ATO::Integrator::addCubature(std::vector<std::vector<RealType> >& refPoints, 
-                                     std::vector<RealType>& weights, 
-                                     const Vector3D& c0,
-                                     const Vector3D& c1,
-                                     const Vector3D& c2)
+void ATO::Integrator::addCubature(std::vector<std::vector<RealType> >& /* refPoints */, 
+                                     std::vector<RealType>& /* weights */, 
+                                     const Vector3D& /* c0 */,
+                                     const Vector3D& /* c1 */,
+                                     const Vector3D& /* c2 */)
 //******************************************************************************//
 {
 }
 
 //******************************************************************************//
-void ATO::Integrator::addCubature(std::vector<std::vector<RealType> >& refPoints, 
-                                     std::vector<RealType>& weights, 
-                                     const Vector3D& c0,
-                                     const Vector3D& c1,
-                                     const Vector3D& c2,
-                                     const Vector3D& c3)
+void ATO::Integrator::addCubature(std::vector<std::vector<RealType> >& /* refPoints */, 
+                                     std::vector<RealType>& /* weights */, 
+                                     const Vector3D& /* c0 */,
+                                     const Vector3D& /* c1 */,
+                                     const Vector3D& /* c2 */,
+                                     const Vector3D& /* c3 */)
 //******************************************************************************//
 {
 }

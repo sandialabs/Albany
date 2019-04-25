@@ -12,19 +12,20 @@
 
 namespace ATO {
 
-ATO_DOTk_ContinuousOperators::ATO_DOTk_ContinuousOperators(
-  OptInterface* interface,
-  Teuchos::RCP<const Teuchos_Comm> comm) :
-  dotk::DOTk_ContinuousOperators::DOTk_ContinuousOperators(),
-  solverInterface( interface ),
-  myComm( comm )
+ATO_DOTk_ContinuousOperators::
+ATO_DOTk_ContinuousOperators(OptInterface* interface,
+                             Teuchos::RCP<const Teuchos_Comm> comm)
+ : dotk::DOTk_ContinuousOperators::DOTk_ContinuousOperators()
+ , solverInterface( interface )
+ , myComm( comm )
+ , current_dfdz(new vector(interface->GetNumOptDofs(), comm))
 {
   nTopologyUpdates = 0;
-  current_dfdz = new ATO::vector(solverInterface->GetNumOptDofs(), comm);
 }
+
 ATO_DOTk_ContinuousOperators::~ATO_DOTk_ContinuousOperators()
 {
-  if(current_dfdz) delete current_dfdz;
+  if(current_dfdz) { delete current_dfdz; }
 }
 
 Real 
@@ -38,18 +39,20 @@ ATO_DOTk_ContinuousOperators::Fval(const dotk::vector<Real> & z_)
 }
 void 
 ATO_DOTk_ContinuousOperators::Fval(
-  const std::vector<std::map<dotk::types::variable_t, std::tr1::shared_ptr<dotk::vector<Real> > > > & z_,
-  const std::map<dotk::types::variable_t, std::tr1::shared_ptr<dotk::vector<Real> > > & fval_)
+  const std::vector<std::map<dotk::types::variable_t, std::shared_ptr<dotk::vector<Real> > > > & /* z_ */,
+  const std::map<dotk::types::variable_t, std::shared_ptr<dotk::vector<Real> > > & /* fval_ */)
 {
 }
+
 void 
 ATO_DOTk_ContinuousOperators::Fval(
-  const std::vector< std::map<dotk::types::variable_t, std::tr1::shared_ptr< dotk::vector<Real> > > > & z_plus_,
-  const std::vector< std::map<dotk::types::variable_t, std::tr1::shared_ptr< dotk::vector<Real> > > > & z_minus_,
-  const std::map<dotk::types::variable_t, std::tr1::shared_ptr< dotk::vector<Real> > > & fval_plus_,
-  const std::map<dotk::types::variable_t, std::tr1::shared_ptr< dotk::vector<Real> > > & fval_minus_)
+  const std::vector< std::map<dotk::types::variable_t, std::shared_ptr< dotk::vector<Real> > > > & /* z_plus_*/,
+  const std::vector< std::map<dotk::types::variable_t, std::shared_ptr< dotk::vector<Real> > > > & /* z_minus_*/,
+  const std::map<dotk::types::variable_t, std::shared_ptr< dotk::vector<Real> > > & /* fval_plus_ */,
+  const std::map<dotk::types::variable_t, std::shared_ptr< dotk::vector<Real> > > & /* fval_minus_ */)
 {
 }
+
 void 
 ATO_DOTk_ContinuousOperators::F_z(
   const dotk::vector<Real> & z_, dotk::vector<Real> & f_z_)
@@ -62,10 +65,10 @@ ATO_DOTk_ContinuousOperators::F_z(
 }
 void 
 ATO_DOTk_ContinuousOperators::F_zz(
-  const dotk::vector<Real> & z_, 
-  const dotk::vector<Real> & dz_, dotk::vector<Real> & f_zz_dz_)
+  const dotk::vector<Real> & /* z_ */, 
+  const dotk::vector<Real> & /* dz_ */,
+  dotk::vector<Real>& /* f_zz_dz_ */)
 {
 }
 
-
-}
+} // namespace ATO

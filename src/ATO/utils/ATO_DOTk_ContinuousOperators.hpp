@@ -4,12 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#ifndef ATO_DOTK_CONTINUOUS_OPERATORS_HPP
+#define ATO_DOTK_CONTINUOUS_OPERATORS_HPP
 
-#ifndef ATO_DOTK_CONTINUOUSOPERATORS_HPP_
-#define ATO_DOTK_CONTINUOUSOPERATORS_HPP_
-
-#include "DOTk/DOTk_ContinuousOperators.hpp"
+// ATO includes
 #include "ATO_DOTk_vector.hpp"
+
+// Albany includes
+#include "Albany_ScalarOrdinalTypes.hpp"
+
+// DOTk includes
+#include "DOTk/DOTk_ContinuousOperators.hpp"
 
 namespace ATO {
 
@@ -18,39 +23,38 @@ class OptInterface;
 class ATO_DOTk_ContinuousOperators : public dotk::DOTk_ContinuousOperators
 {
 public:
-    ATO_DOTk_ContinuousOperators(
-      OptInterface* interface,
-      Teuchos::RCP<const Teuchos_Comm> comm);
-    virtual ~ATO_DOTk_ContinuousOperators();
 
-    virtual Real Fval(const dotk::vector<Real> & z_);
+  ATO_DOTk_ContinuousOperators(OptInterface* interface,
+                               Teuchos::RCP<const Teuchos_Comm> comm);
+  virtual ~ATO_DOTk_ContinuousOperators();
+  ATO_DOTk_ContinuousOperators(const ATO_DOTk_ContinuousOperators&) = delete
+  ATO_DOTk_ContinuousOperators operator=(const ATO_DOTk_ContinuousOperators&) = delete
 
-    virtual void Fval(const std::vector<std::map<dotk::types::variable_t, std::tr1::shared_ptr<dotk::vector<Real> > > > & z_,
-                      const std::map<dotk::types::variable_t, std::tr1::shared_ptr<dotk::vector<Real> > > & fval_);
+  virtual Real Fval(const dotk::vector<Real> & z_);
 
-    virtual void Fval(const std::vector< std::map<dotk::types::variable_t, std::tr1::shared_ptr< dotk::vector<Real> > > > & z_plus_,
-                      const std::vector< std::map<dotk::types::variable_t, std::tr1::shared_ptr< dotk::vector<Real> > > > & z_minus_,
-                      const std::map<dotk::types::variable_t, std::tr1::shared_ptr< dotk::vector<Real> > > & fval_plus_,
-                      const std::map<dotk::types::variable_t, std::tr1::shared_ptr< dotk::vector<Real> > > & fval_minus_);
+  virtual void Fval(const std::vector<std::map<dotk::types::variable_t, std::shared_ptr<dotk::vector<Real> > > > & z_,
+                    const std::map<dotk::types::variable_t, std::shared_ptr<dotk::vector<Real> > > & fval_);
 
-    virtual void F_z(const dotk::vector<Real> & z_, dotk::vector<Real> & f_z_);
+  virtual void Fval(const std::vector< std::map<dotk::types::variable_t, std::shared_ptr< dotk::vector<Real> > > > & z_plus_,
+                    const std::vector< std::map<dotk::types::variable_t, std::shared_ptr< dotk::vector<Real> > > > & z_minus_,
+                    const std::map<dotk::types::variable_t, std::shared_ptr< dotk::vector<Real> > > & fval_plus_,
+                    const std::map<dotk::types::variable_t, std::shared_ptr< dotk::vector<Real> > > & fval_minus_);
 
-    virtual void F_zz(const dotk::vector<Real> & z_, const dotk::vector<Real> & dz_, dotk::vector<Real> & f_zz_dz_);
+  virtual void F_z(const dotk::vector<Real> & z_, dotk::vector<Real> & f_z_);
+
+  virtual void F_zz(const dotk::vector<Real> & z_, const dotk::vector<Real> & dz_, dotk::vector<Real> & f_zz_dz_);
 
 
 private:
-    // unimplemented
-    ATO_DOTk_ContinuousOperators(const ATO_DOTk_ContinuousOperators&);
-    ATO_DOTk_ContinuousOperators operator=(const ATO_DOTk_ContinuousOperators&);
 
-    int nTopologyUpdates;
-    Real current_f;
-    ATO::vector* current_dfdz;
+  int nTopologyUpdates;
+  Real current_f;
+  std::unique_ptr<vector> current_dfdz;
 
-    OptInterface* solverInterface;
-    Teuchos::RCP<const Teuchos_Comm> myComm; 
+  OptInterface* solverInterface;
+  Teuchos::RCP<const Teuchos_Comm> myComm; 
 };
 
-}
+} // namespace ATO
 
-#endif /* DOTK_ROSENBROCKOPERATORS_HPP_ */
+#endif // ATO_DOTK_CONTINUOUS_OPERATORS_HPP
