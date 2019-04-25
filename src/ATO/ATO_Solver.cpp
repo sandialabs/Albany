@@ -116,28 +116,28 @@ Solver::Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
     topoStruct->filterIsRecursive = topoParams.get<bool>("Apply Filter Recursively", true);
 
-    size_t topologyFilterIndex = topo->SpatialFilterIndex();
+    int topologyFilterIndex = topo->SpatialFilterIndex();
     if (topologyFilterIndex >= 0) {
-      TEUCHOS_TEST_FOR_EXCEPTION (topologyFilterIndex >= m_filters.size(),
+      TEUCHOS_TEST_FOR_EXCEPTION (topologyFilterIndex >= static_cast<int>(m_filters.size()),
                                   Teuchos::Exceptions::InvalidParameter,
-                                  "Error!  Spatial filter " << topologyFilterIndex << "requested but not defined.\n");
+                                  "Error!  Spatial filter " << topologyFilterIndex << " requested but not defined.\n");
       topoStruct->filter = m_filters[topologyFilterIndex];
     }
 
-    size_t topologyOutputFilter = topo->TopologyOutputFilter();
+    int topologyOutputFilter = topo->TopologyOutputFilter();
     if (topologyOutputFilter >= 0) {
-      TEUCHOS_TEST_FOR_EXCEPTION (topologyOutputFilter >= m_filters.size(),
+      TEUCHOS_TEST_FOR_EXCEPTION (topologyOutputFilter >= static_cast<int>(m_filters.size()),
                                   Teuchos::Exceptions::InvalidParameter,
-                                  "Error! Spatial filter " << topologyFilterIndex << "requested but not defined.\n");
+                                  "Error! Spatial filter " << topologyFilterIndex << " requested but not defined.\n");
       topoStruct->postFilter = m_filters[topologyOutputFilter];
     }
   }
 
-  size_t derivativeFilterIndex = objAggregatorParams.get<int>("Spatial Filter", -1);
+  int derivativeFilterIndex = objAggregatorParams.get<int>("Spatial Filter", -1);
   if (derivativeFilterIndex >= 0) {
-    TEUCHOS_TEST_FOR_EXCEPTION (derivativeFilterIndex >= m_filters.size(),
+    TEUCHOS_TEST_FOR_EXCEPTION (derivativeFilterIndex >= static_cast<int>(m_filters.size()),
                                 Teuchos::Exceptions::InvalidParameter,
-                                "Error! Spatial filter " << derivativeFilterIndex << "requested but not defined.\n");
+                                "Error! Spatial filter " << derivativeFilterIndex << " requested but not defined.\n");
     m_derivativeFilter = m_filters[derivativeFilterIndex];
   }
 
