@@ -41,7 +41,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   std::string const Fp_string           = field_name_map_["Fp"];
   std::string const eqps_string         = field_name_map_["eqps"];
   std::string const yieldSurface_string = field_name_map_["Yield_Surface"];
-  std::string const source_string       = field_name_map_["Mechanical_Source"];
   std::string const F_string            = field_name_map_["F"];
   std::string const J_string            = field_name_map_["J"];
 
@@ -73,7 +72,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField(Fp_string, dl->qp_tensor);
   setEvaluatedField(eqps_string, dl->qp_scalar);
   setEvaluatedField(yieldSurface_string, dl->qp_scalar);
-  setEvaluatedField(source_string, dl->qp_scalar);
 
   // define the state variables
 
@@ -194,15 +192,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("ACE Temperature Dot", false));
 
-  // mechanical source
-  addStateVariable(
-      source_string,
-      dl->qp_scalar,
-      "scalar",
-      0.0,
-      false,
-      p->get<bool>("Output Mechanical Source", false));
-
   // failed state
   addStateVariable(
       "ACE Failure Indicator",
@@ -224,7 +213,6 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   std::string Fp_string           = field_name_map_["Fp"];
   std::string eqps_string         = field_name_map_["eqps"];
   std::string yieldSurface_string = field_name_map_["Yield_Surface"];
-  std::string source_string       = field_name_map_["Mechanical_Source"];
   std::string F_string            = field_name_map_["F"];
   std::string J_string            = field_name_map_["J"];
 
@@ -251,7 +239,6 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   water_saturation_ = *output_fields["ACE Water Saturation"];
   porosity_         = *output_fields["ACE Porosity"];
   tdot_             = *output_fields["ACE Temperature Dot"];
-  source_           = *output_fields[source_string];
   failed_           = *output_fields["ACE Failure Indicator"];
 
   // get State Variables
@@ -451,12 +438,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     // update eqps
     eqps_(cell, pt) = alpha;
 
-    // mechanical source
-    if (delta_time_(0) > 0) {
-      source_(cell, pt) = (SQ23 * dgam / delta_time_(0) * (Y + H + Tcurr)) /
-                          (density_(cell, pt) * heat_capacity_(cell, pt));
-    }
-
     // exponential map to get Fpnew
     Tensor const A     = dgam * N;
     Tensor const expA  = minitensor::exp(A);
@@ -467,8 +448,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   } else {
     eqps_(cell, pt) = eqps_old_(cell, pt);
-
-    source_(cell, pt) = 0.0;
 
     for (int i{0}; i < num_dims_; ++i) {
       for (int j{0}; j < num_dims_; ++j) { Fp_(cell, pt, i, j) = Fpn(i, j); }

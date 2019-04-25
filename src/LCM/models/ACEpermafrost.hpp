@@ -80,7 +80,6 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   // Mechanical MDFields
   ScalarField eqps_;
   ScalarField Fp_;
-  ScalarField source_;
   ScalarField stress_;
   ScalarField yield_surf_;
 
