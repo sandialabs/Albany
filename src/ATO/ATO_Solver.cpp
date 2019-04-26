@@ -1445,7 +1445,7 @@ Thyra_InArgs Solver::createInArgs() const
 //**********************************************************************
 {
   Thyra::ModelEvaluatorBase::InArgsSetup<ST> inArgs;
-  inArgs.setModelEvalDescription("ATO Solver Model Evaluator Description");
+  inArgs.setModelEvalDescription(this->description());
   inArgs.set_Np(m_num_parameters);
   return std::forward<Thyra_InArgs>(inArgs);
 }
@@ -1455,7 +1455,7 @@ Thyra_OutArgs Solver::createOutArgsImpl() const
 //**********************************************************************
 {
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST> outArgs;
-  outArgs.setModelEvalDescription("ATO Solver Multipurpose Model Evaluator");
+  outArgs.setModelEvalDescription(this->description());
   outArgs.set_Np_Ng(m_num_parameters, m_num_responses);
   return std::forward<Thyra_OutArgs>(outArgs);
 }
