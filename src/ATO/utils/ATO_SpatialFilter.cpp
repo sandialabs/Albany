@@ -227,29 +227,16 @@ void SpatialFilter::importNeighbors(nbrs_map_type&  neighbors,
   std::map<int, std::set<int> > boundaryNodesByProc;
 
   for (int i=0; i<ghosted_aura_owners.size(); ++i) {
-    auto procIter = boundaryNodesByProc.find(ghosted_aura_owners[i]);
-    GO gid = ghosted_aura_gids[i];
-    if( procIter == boundaryNodesByProc.end() ){
-      std::set<int> newSet;
-      newSet.insert(gid);
-      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(ghosted_aura_owners[i],newSet) );
-    } else {
-      procIter->second.insert(gid);
-    }
+    auto& proc_set = boundaryNodesByProc[ghosted_aura_owners[i]];
+    proc_set.insert(ghosted_aura_gids[i]);
   }
   for (int i=0; i<owned_aura_users.size(); ++i) {
-    auto procIter = boundaryNodesByProc.find(owned_aura_users[i].second);
+    auto& proc_set = boundaryNodesByProc[owned_aura_users[i].second];
     GO gid = Albany::getGlobalElement(owned_aura_vs,owned_aura_users[i].first);
-    if( procIter == boundaryNodesByProc.end() ){
-      std::set<int> newSet;
-      newSet.insert(gid);
-      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(owned_aura_users[i].second,newSet) );
-    } else {
-      procIter->second.insert(gid);
-    }
+    proc_set.insert(gid);
   }
 
-
+  // Assume there's at least one new point
   int newPoints = 1;
   
   const MPI_Datatype MPI_GlobalPoint = get_MPI_GlobalPoint_type();
