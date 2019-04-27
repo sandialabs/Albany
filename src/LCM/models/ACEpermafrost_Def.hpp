@@ -500,16 +500,24 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Calculate the freezing curve function df/dTemp
   // W term sets the width of the freezing curve.
   // Larger W means steeper curve.
-  // f(T) = L / (1 + e^(-W*(T-T0)))
-  //
+  // f(T) = 1 / (1 + e^(-W*(T-T0)))
   ScalarT const W     = freeze_curve_width_;
   ScalarT const Tdiff = Tcurr - Tmelt;
-  ScalarT const et    = exp(-W * Tdiff);
-  ScalarT const etp1  = et + 1.0;
-  ScalarT const dfdT  = -W * et / etp1 / etp1;
+  ScalarT const arg   = -W * Tdiff;
+  ScalarT       icurr{1.0};
+  ScalarT       dfdT{0.0};
 
-  // Update the ice saturation
-  ScalarT const icurr = 1.0 - 1.0 / etp1;
+  if (arg < std::log(DBL_MAX)) {
+    ScalarT const et   = exp(-W * Tdiff);
+    ScalarT const etp1 = et + 1.0;
+
+    // Update freeze curve slope
+    dfdT = -W * et / etp1 / etp1;
+
+    // Update the ice saturation
+    icurr = 1.0 - 1.0 / etp1;
+  }
+
   // Update the water saturation
   ScalarT const wcurr = 1.0 - icurr;
 
