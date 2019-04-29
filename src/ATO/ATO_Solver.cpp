@@ -30,11 +30,13 @@ Solver::Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
                const Teuchos::RCP<const Teuchos_Comm>& comm,
                const Teuchos::RCP<const Thyra_Vector>& /* initial_guess */)
 //**********************************************************************
- : m_iteration     (1)
- , m_is_verbose    (false)
- , m_is_restart    (false)
- , m_solverComm    (comm)
- , m_mainAppParams (appParams)
+ : m_iteration      (1)
+ , m_num_parameters (0)
+ , m_num_responses  (1)
+ , m_is_verbose     (false)
+ , m_is_restart     (false)
+ , m_solverComm     (comm)
+ , m_mainAppParams  (appParams)
 {
   m_objectiveValue = Teuchos::rcp(new double[1]);
   *m_objectiveValue = 0.0;

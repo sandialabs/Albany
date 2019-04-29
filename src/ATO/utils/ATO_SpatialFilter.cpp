@@ -142,7 +142,7 @@ void SpatialFilter::buildOperator (const app_type& app,
 
   // communicate neighbor data
   importNeighbors(neighbors,cas_manager);
-  
+
   // now build filter operator
   int numnonzeros = 0;
   const auto localNodeVS = cas_manager.getOwnedVectorSpace();
@@ -153,19 +153,18 @@ void SpatialFilter::buildOperator (const app_type& app,
   for (const auto& it : neighbors) {
     const auto& homeNode = it.first;
     const GO home_node_gid = homeNode.gid;
-    if (Albany::locallyOwnedComponent(spmd_localNodeVS,home_node_gid)) {
-      const auto& connected_nodes = it.second;
-      if (connected_nodes.size() > 0) {
-        Teuchos::Array<GO> indices;
-        indices.reserve(connected_nodes.size());
-        for (const auto& connected_node : connected_nodes) {
-          indices.push_back(connected_node.gid);
-        }
-        opFactory.insertGlobalIndices(home_node_gid,indices); 
-      } else {
-        // If the list of connected nodes is empty, still add a one on the diagonal.
-        opFactory.insertGlobalIndices(home_node_gid,Teuchos::arrayView(&home_node_gid,1)); 
+
+    const auto& connected_nodes = it.second;
+    if (connected_nodes.size() > 0) {
+      Teuchos::Array<GO> indices;
+      indices.reserve(connected_nodes.size());
+      for (const auto& connected_node : connected_nodes) {
+        indices.push_back(connected_node.gid);
       }
+      opFactory.insertGlobalIndices(home_node_gid,indices);
+    } else {
+      // If the list of connected nodes is empty, still add a one on the diagonal.
+      opFactory.insertGlobalIndices(home_node_gid,Teuchos::arrayView(&home_node_gid,1));
     }
   }
   opFactory.fillComplete();
@@ -238,7 +237,7 @@ void SpatialFilter::importNeighbors(nbrs_map_type&  neighbors,
 
   // Assume there's at least one new point
   int newPoints = 1;
-  
+
   const MPI_Datatype MPI_GlobalPoint = get_MPI_GlobalPoint_type();
   while(newPoints > 0){
     newPoints = 0;
@@ -246,7 +245,6 @@ void SpatialFilter::importNeighbors(nbrs_map_type&  neighbors,
     int numNeighborProcs = boundaryNodesByProc.size();
     std::vector<std::vector<int> > numNeighbors_send(numNeighborProcs);
     std::vector<std::vector<int> > numNeighbors_recv(numNeighborProcs);
-    
  
     // determine number of neighborhood nodes to be communicated
     int index = 0;
@@ -373,7 +371,6 @@ void SpatialFilter::importNeighbors(nbrs_map_type&  neighbors,
       
       index++;
     }
-  
     // add newNeighbors map to neighbors map
     std::map< GlobalPoint, std::set<GlobalPoint> >::iterator new_nbr;
     std::map< GlobalPoint, std::set<GlobalPoint> >::iterator nbr;

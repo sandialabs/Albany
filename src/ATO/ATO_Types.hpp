@@ -19,7 +19,12 @@ using ATO_GO = GO;
 
 struct GlobalPoint {
 
-  GlobalPoint() = default;
+  // LB: I initially did 'GlobalPoint() = default;', but that
+  //     does not 0-initialize the coordinates, which 'can'
+  //     cause problems when checking if two points are the same
+  GlobalPoint() : gid(-1) {
+    coords[0] = coords[1] = coords[2] = 0.0;
+  }
 
   ATO_GO  gid;
   double  coords[3];
@@ -32,10 +37,12 @@ inline bool operator< (GlobalPoint const & a, GlobalPoint const & b) {
 inline MPI_Datatype get_MPI_GlobalPoint_type () {
   MPI_Datatype MPI_GlobalPoint;
 
+  auto GO_MPI_INT_TYPE = sizeof(ATO_GO)==sizeof(std::int32_t) ? MPI_INT32_T : MPI_INT64_T;
+
   // this should go somewhere else.  for now ...
   GlobalPoint gp;
   int blockcounts[2] = {1,3};
-  MPI_Datatype oldtypes[2] = {MPI_INT, MPI_DOUBLE};
+  MPI_Datatype oldtypes[2] = {GO_MPI_INT_TYPE, MPI_DOUBLE};
   MPI_Aint offsets[3] = {(MPI_Aint)&(gp.gid)    - (MPI_Aint)&gp, 
                          (MPI_Aint)&(gp.coords) - (MPI_Aint)&gp};
   MPI_Type_create_struct(2,blockcounts,offsets,oldtypes,&MPI_GlobalPoint);
