@@ -407,7 +407,7 @@ create_ghosted_aura_owners () const {
   ghosted_aura_owners.resize(lids.size());
 
   // Ask the owned map the pids that own the gids
-  auto map = getTpetraMap(ga_vs);
+  auto map = getTpetraMap(getOwnedAuraVectorSpace());
   map->getRemoteIndexList(tgids(),ghosted_aura_owners(),lids());
 }
 

@@ -25,12 +25,14 @@ CombineAndScatterManager (const Teuchos::RCP<const Thyra_VectorSpace>& owned,
 void CombineAndScatterManager::create_aura_vss () const {
   auto comm = getComm(overlapped_vs);
 
-  // Count how many processes own each element
-  auto myNumProcs = Thyra::createMember(owned_vs);
-  auto numProcs   = Thyra::createMember(overlapped_vs);
-  myNumProcs->assign(1.0);
-  combine(myNumProcs,numProcs,CombineMode::ADD);
-  auto data = getLocalData(numProcs.getConst());
+  // Count how many processes own each element. This is an all-to-all
+  // operation, which we perform with a combine+scatter 
+  auto numProcs = Thyra::createMember(owned_vs);
+  auto ovNumProcs   = Thyra::createMember(overlapped_vs);
+  ovNumProcs->assign(1.0);
+  combine(ovNumProcs,numProcs,CombineMode::ADD);
+  scatter(numProcs,ovNumProcs,CombineMode::INSERT);
+  auto data = getLocalData(ovNumProcs.getConst());
 
   // If an element is no longer 1.0, then it is in the aura
   Teuchos::Array<GO> aura_gids;
@@ -39,10 +41,15 @@ void CombineAndScatterManager::create_aura_vss () const {
       aura_gids.push_back(getGlobalElement(overlapped_vs,lid));
     }
   }
-  
-  shared_aura_vs = createVectorSpace(comm,aura_gids);
-  owned_aura_vs = createVectorSpacesDifference(shared_aura_vs,owned_vs,comm);
-  ghosted_aura_vs = createVectorSpacesDifference(shared_aura_vs,owned_aura_vs,comm);
+
+  // Recall the three aura types:
+  //  - shared: anything that is also used by at least another rank
+  //  - ghosted: anything shared that is not in the owned vs
+  //  - owned: anything shared that is also in the owned vs
+  // Obviously, shared=owned+ghosted
+  shared_aura_vs  = createVectorSpace(comm,aura_gids);
+  ghosted_aura_vs = createVectorSpacesDifference(shared_aura_vs,owned_vs,comm);
+  owned_aura_vs   = createVectorSpacesIntersection(shared_aura_vs,owned_vs,comm);
 }
 
 // Utility function that returns a concrete manager, depending on the return value

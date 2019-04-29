@@ -472,11 +472,10 @@ createVectorSpacesDifference (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
   std::sort(gids1.begin(),gids1.end());
   std::sort(gids2.begin(),gids2.end());
 
-  const auto min_size = std::min(gids1.size(),gids2.size());
-
-  Teuchos::Array<GO> gids(min_size);
-  const auto it = std::set_intersection(gids1.begin(),gids1.end(),gids2.begin(),gids2.end(),gids.begin());
-  gids.resize(std::distance(gids.begin(),it));
+  Teuchos::Array<GO> gids;
+  std::set_difference(gids1.begin(),gids1.end(),
+                      gids2.begin(),gids2.end(),
+                      std::back_inserter(gids));
 
   return createVectorSpace(comm,gids);
 }
