@@ -69,9 +69,6 @@ int countJac; // counter which counts instances of Jacobian (for debug output)
 int countRes; // counter which counts instances of residual (for debug output)
 int countScale;
 
-const Tpetra::global_size_t INVALID =
-    Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
-
 namespace {
 int calcTangentDerivDimension(
     const Teuchos::RCP<Teuchos::ParameterList> &problemParams) {
