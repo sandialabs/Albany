@@ -49,10 +49,10 @@ public:
   Teuchos::RCP<const Thyra_VectorSpace> getGhostedAuraVectorSpace () const;
 
   // Get the ranks that own ids in the ghosted aura VS
-  Teuchos::Array<int> getGhostedAuraOwners () const;
+  Teuchos::ArrayView<int> getGhostedAuraOwners () const;
 
-  // Get a LID-rank par for all ids in the owned aura VS. A pair <a,b> means that rank b will need lid a.
-  Teuchos::Array<std::pair<LO,int>> getOwnedAuraUsers () const;
+  // Get an array of GID-rank pairs. A pair <gid,pid> means that rank pid will need global element gid.
+  Teuchos::ArrayView<std::pair<GO,int>> getOwnedAuraUsers () const;
 
   // Combine methods
   virtual void combine (const Thyra_Vector& src,
@@ -109,8 +109,17 @@ protected:
   mutable Teuchos::RCP<const Thyra_VectorSpace>   owned_aura_vs;
   mutable Teuchos::RCP<const Thyra_VectorSpace>   shared_aura_vs;
   mutable Teuchos::RCP<const Thyra_VectorSpace>   ghosted_aura_vs;
-  mutable Teuchos::Array<int> ghosted_aura_owners;
-  mutable Teuchos::Array<std::pair<LO,int>> owned_aura_users;
+  mutable Teuchos::Array<int>                     ghosted_aura_owners;
+  mutable Teuchos::Array<std::pair<GO,int>>       owned_aura_users;
+
+  // Note: we do need these flags, since simply checking the size of the arrays
+  //       would not be enough. In fact, if one rank has the array of size 0,
+  //       the method to compute the array would be called multiple times,
+  //       which is wrong if the method involves global communication.
+  //       The alternative would be to store RCP to the array, but it
+  //       makes the code a bit ugly.
+  mutable bool ghosted_aura_owners_computed;
+  mutable bool owned_aura_users_computed;
 };
 
 inline Teuchos::RCP<const Thyra_VectorSpace>
@@ -137,20 +146,22 @@ CombineAndScatterManager::getGhostedAuraVectorSpace  () const {
   return ghosted_aura_vs;
 }
 
-inline Teuchos::Array<int>
+inline Teuchos::ArrayView<int>
 CombineAndScatterManager::getGhostedAuraOwners () const {
-  if (ghosted_aura_owners.size()==0) {
+  if (!ghosted_aura_owners_computed) {
     create_ghosted_aura_owners();
+    ghosted_aura_owners_computed = true;
   }
-  return ghosted_aura_owners;
+  return ghosted_aura_owners();
 }
 
-inline Teuchos::Array<std::pair<LO,int>>
+inline Teuchos::ArrayView<std::pair<GO,int>>
 CombineAndScatterManager::getOwnedAuraUsers () const {
-  if (owned_aura_users.size()==0) {
+  if (!owned_aura_users_computed) {
     create_owned_aura_users();
+    owned_aura_users_computed = true;
   }
-  return owned_aura_users;
+  return owned_aura_users();
 }
 
 // Utility function that returns a concrete manager, depending on the concrete type

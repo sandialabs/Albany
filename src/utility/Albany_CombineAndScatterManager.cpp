@@ -19,7 +19,8 @@ CombineAndScatterManager (const Teuchos::RCP<const Thyra_VectorSpace>& owned,
  : owned_vs      (owned)
  , overlapped_vs (overlapped)
 {
-  // Nothing to be done here
+  ghosted_aura_owners_computed = false;
+  owned_aura_users_computed = false;
 }
 
 void CombineAndScatterManager::create_aura_vss () const {
@@ -43,9 +44,10 @@ void CombineAndScatterManager::create_aura_vss () const {
   }
 
   // Recall the three aura types:
-  //  - shared: anything that is also used by at least another rank
-  //  - ghosted: anything shared that is not in the owned vs
-  //  - owned: anything shared that is also in the owned vs
+  //  - shared: anything in the overlapped vs that is also
+  //    in the overelapped vs of another process
+  //  - ghosted: anything in the shared_aura_vs that is not in the owned_vs
+  //  - owned: anything in the shared_aura_vs that is also in the owned_vs
   // Obviously, shared=owned+ghosted
   shared_aura_vs  = createVectorSpace(comm,aura_gids);
   ghosted_aura_vs = createVectorSpacesDifference(shared_aura_vs,owned_vs,comm);

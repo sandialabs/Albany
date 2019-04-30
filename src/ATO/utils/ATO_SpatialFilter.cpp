@@ -217,12 +217,11 @@ void SpatialFilter::importNeighbors(nbrs_map_type&  neighbors,
                                     const cas_type& cas_manager)
 {
   // Aura points are the ones on the boundary (and may be owned or not by the current rank)
-  const auto& owned_aura_vs  = cas_manager.getOwnedAuraVectorSpace();
   const auto& ghosted_aura_vs = cas_manager.getGhostedAuraVectorSpace();
   const auto ghosted_aura_gids = Albany::getGlobalElements(ghosted_aura_vs);
   const auto& ghosted_aura_owners = cas_manager.getGhostedAuraOwners();
   const auto& owned_aura_users = cas_manager.getOwnedAuraUsers();
-  const auto comm = Albany::getComm(owned_aura_vs);
+  const auto comm = Albany::getComm(ghosted_aura_vs);
 
   // Get from the cas manager the node global ids and the associated processor ids
   std::map<int, std::set<int> > boundaryNodesByProc;
@@ -233,8 +232,7 @@ void SpatialFilter::importNeighbors(nbrs_map_type&  neighbors,
   }
   for (int i=0; i<owned_aura_users.size(); ++i) {
     auto& proc_set = boundaryNodesByProc[owned_aura_users[i].second];
-    GO gid = Albany::getGlobalElement(owned_aura_vs,owned_aura_users[i].first);
-    proc_set.insert(gid);
+    proc_set.insert(owned_aura_users[i].first);
   }
 
   // Assume there's at least one new point

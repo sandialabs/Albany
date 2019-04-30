@@ -8,7 +8,6 @@
 #define ALBANY_GENERIC_STK_MESH_STRUCT_HPP
 
 #include "Albany_AbstractSTKMeshStruct.hpp"
-#include "Albany_CombineAndScatterManager.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -19,6 +18,9 @@
 #endif
 
 namespace Albany {
+
+// Forward declaration(s)
+class CombineAndScatterManager;
 
 class GenericSTKMeshStruct : public AbstractSTKMeshStruct
 {

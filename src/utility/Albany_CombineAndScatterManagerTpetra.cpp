@@ -413,20 +413,16 @@ create_ghosted_aura_owners () const {
 
 void CombineAndScatterManagerTpetra::
 create_owned_aura_users () const {
-  // Use the getter, so it creates the vs is if it's null
-  auto ga_vs = getGhostedAuraVectorSpace();
-  auto oa_vs = getOwnedAuraVectorSpace();
-  auto ga_map = getTpetraMap(ga_vs);
-  auto oa_map = getTpetraMap(oa_vs);
-
-  // Build an importer from the owned to the ghosted
-  auto imp = Teuchos::rcp( new Tpetra_Import(oa_map, ga_map) );
-
   // Get the pid to which each of the exported pids goes
-  auto pids = imp->getExportPIDs();
-  auto lids = imp->getExportLIDs();
+  // Note: we can use the importer we already created for this
+  auto pids = importer->getExportPIDs();
+  auto lids = importer->getExportLIDs();
+
+  owned_aura_users.resize(lids.size());
+  auto owned_map = getTpetraMap(owned_vs);
   for (int i=0; i<lids.size(); ++i) {
-    owned_aura_users.push_back(std::make_pair(lids[i],pids[i]));
+    owned_aura_users[i].first  = owned_map->getGlobalElement(lids[i]);
+    owned_aura_users[i].second = pids[i];
   }
 }
 
