@@ -798,35 +798,33 @@ void insertGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                          const Teuchos::ArrayView<const GO> cols,
                          const Teuchos::ArrayView<const ST> values)
 {
-  const Teuchos::Array<GO> grow_array(1, grow);
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    Teuchos::ArrayView<const Tpetra_GO> tgrow_array(reinterpret_cast<const Tpetra_GO*>(grow_array().getRawPtr()),1);
+    const Tpetra_GO tgrow = grow;
     Teuchos::ArrayView<const Tpetra_GO> tcols(reinterpret_cast<const Tpetra_GO*>(cols.getRawPtr()),cols.size());
-    tmat->insertGlobalValues(tgrow_array[0], tcols, values); 
+    tmat->insertGlobalValues(tgrow, tcols, values); 
     return; 
   }
 #if defined(ALBANY_EPETRA)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
+    const Epetra_GO egrow = grow;
     if (sizeof(GO)==sizeof(Epetra_GO)) {
-      Teuchos::ArrayView<const Epetra_GO> egrow_array(reinterpret_cast<const Epetra_GO*>(grow_array().getRawPtr()),1);
       Teuchos::ArrayView<const Epetra_GO> ecols(reinterpret_cast<const Epetra_GO*>(ecols.getRawPtr()),ecols.size());
-      emat->InsertGlobalValues(egrow_array[0], ecols.size(), values.getRawPtr(), ecols.getRawPtr());
+      emat->InsertGlobalValues(egrow, ecols.size(), values.getRawPtr(), ecols.getRawPtr());
     }
     else {
       // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
       Teuchos::Array<Epetra_GO> ecols(cols.size());
-      Teuchos::Array<Epetra_GO> egrow_array(1);
       const GO max_safe_col = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
       for (int i=0; i<cols.size(); ++i) {
         ALBANY_EXPECT(cols[i]<=max_safe_col, "Error in insertGlobalValues! Input cols exceed Epetra_GO ranges.\n");
         ecols[i] = static_cast<Epetra_GO>(cols[i]);
       }
-      ALBANY_EXPECT(egrow_array[0]<=max_safe_col, "Error in insertGlobalValues! Input grow exceeds Epetra_GO ranges.\n");
+      ALBANY_EXPECT(grow<=max_safe_col, "Error in insertGlobalValues! Input grow exceeds Epetra_GO ranges.\n");
       (void) max_safe_col;
-      emat->InsertGlobalValues(egrow_array[0], ecols.size(), values.getRawPtr(), ecols.getRawPtr());
+      emat->InsertGlobalValues(egrow, ecols.size(), values.getRawPtr(), ecols.getRawPtr());
     }
     return; 
   }
@@ -838,34 +836,33 @@ void replaceGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                              const Teuchos::ArrayView<const GO> indices,
                              const Teuchos::ArrayView<const ST> values)
 {
-  const Teuchos::Array<GO> gid_array(1, gid);
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    Teuchos::ArrayView<const Tpetra_GO> tgid_array(reinterpret_cast<const Tpetra_GO*>(gid_array().getRawPtr()),1);
+    const Tpetra_GO tgid = gid;
     Teuchos::ArrayView<const Tpetra_GO> tindices(reinterpret_cast<const Tpetra_GO*>(indices.getRawPtr()),indices.size());
-    tmat->replaceGlobalValues(tgid_array[0],tindices,values);
+    tmat->replaceGlobalValues(tgid,tindices,values);
+    return;
   }
 #if defined(ALBANY_EPETRA)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
+    const Epetra_GO egid = gid;
     if (sizeof(GO)==sizeof(Epetra_GO)) {
-      Teuchos::ArrayView<const Epetra_GO> egid_array(reinterpret_cast<const Epetra_GO*>(gid_array().getRawPtr()),1);
       Teuchos::ArrayView<const Epetra_GO> eindices(reinterpret_cast<const Epetra_GO*>(indices.getRawPtr()),indices.size());
-      emat->ReplaceGlobalValues(egid_array[0], eindices.size(), values.getRawPtr(), eindices.getRawPtr());
+      emat->ReplaceGlobalValues(egid, eindices.size(), values.getRawPtr(), eindices.getRawPtr());
     }
     else {
       // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
       Teuchos::Array<Epetra_GO> eindices(indices.size());
-      Teuchos::Array<Epetra_GO> egid_array(1);
       const GO max_safe_index = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
       for (int i=0; i<indices.size(); ++i) {
         ALBANY_EXPECT(indices[i]<=max_safe_index, "Error in replaceGlobalValues! Input indices exceed Epetra_GO ranges.\n");
         eindices[i] = static_cast<Epetra_GO>(indices[i]);
       }
-      ALBANY_EXPECT(egid_array[0]<=max_safe_index, "Error in replaceGlobalValues! Input grow exceeds Epetra_GO ranges.\n");
+      ALBANY_EXPECT(gid<=max_safe_index, "Error in replaceGlobalValues! Input grow exceeds Epetra_GO ranges.\n");
       (void) max_safe_index;
-      emat->ReplaceGlobalValues(egid_array[0], eindices.size(), values.getRawPtr(), eindices.getRawPtr());
+      emat->ReplaceGlobalValues(egid, eindices.size(), values.getRawPtr(), eindices.getRawPtr());
     }
     return;
   }
@@ -883,13 +880,12 @@ int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   //The following is an integer error code, to be returned by this 
   //routine if something doesn't go right.  0 means success, 1 means failure 
   int integer_error_code = 0; 
-  const Teuchos::Array<GO> grow_array(1, grow);
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    Teuchos::ArrayView<const Tpetra_GO> tgrow_array(reinterpret_cast<const Tpetra_GO*>(grow_array().getRawPtr()),1);
+    const Tpetra_GO tgrow = grow;
     Teuchos::ArrayView<const Tpetra_GO> tindices(reinterpret_cast<const Tpetra_GO*>(indices.getRawPtr()),indices.size());
-    auto returned_val = tmat->sumIntoGlobalValues(tgrow_array[0],tindices,values);
+    auto returned_val = tmat->sumIntoGlobalValues(tgrow,tindices,values);
     //std::cout << "IKT returned_val, indices size = " << returned_val << ", " << indices.size() << std::endl; 
     ALBANY_ASSERT(returned_val != -1, "Error: addToGlobalRowValues returned -1, meaning linear op is not fillActive \n" 
                        << "or does not have an underlying non-null static graph!\n"); 
@@ -904,23 +900,22 @@ int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   if (!emat.is_null()) {
     //Epetra's ReplaceGlobalValues routine returns integer error code, set to 0 if successful, set to 1 if one or more indices are not 
     //associated with the calling processor.  We can just return that value for the Epetra case. 
+    const Epetra_GO egrow = grow;
     if (sizeof(GO)==sizeof(Epetra_GO)) {
-      Teuchos::ArrayView<const Epetra_GO> egrow_array(reinterpret_cast<const Epetra_GO*>(grow_array().getRawPtr()),1);
       Teuchos::ArrayView<const Epetra_GO> eindices(reinterpret_cast<const Epetra_GO*>(indices.getRawPtr()),indices.size());
-      integer_error_code = emat->SumIntoGlobalValues(egrow_array[0], eindices.size(), values.getRawPtr(), eindices.getRawPtr());
+      integer_error_code = emat->SumIntoGlobalValues(egrow, eindices.size(), values.getRawPtr(), eindices.getRawPtr());
     }
     else {
       // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
       Teuchos::Array<Epetra_GO> eindices(indices.size());
-      Teuchos::Array<Epetra_GO> egrow_array(1);
       const GO max_safe_index = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
       for (int i=0; i<indices.size(); ++i) {
         ALBANY_EXPECT(indices[i]<=max_safe_index, "Error in addToGlobalRowValues! Input indices exceed Epetra_GO ranges.\n");
         eindices[i] = static_cast<Epetra_GO>(indices[i]);
       }
-      ALBANY_EXPECT(egrow_array[0]<=max_safe_index, "Error in addToGlobalRowValues! Input grow exceeds Epetra_GO ranges.\n");
+      ALBANY_EXPECT(grow<=max_safe_index, "Error in addToGlobalRowValues! Input grow exceeds Epetra_GO ranges.\n");
       (void) max_safe_index;
-      integer_error_code = emat->SumIntoGlobalValues(egrow_array[0], eindices.size(), values.getRawPtr(), eindices.getRawPtr());
+      integer_error_code = emat->SumIntoGlobalValues(egrow, eindices.size(), values.getRawPtr(), eindices.getRawPtr());
     }
     return integer_error_code;
   }
