@@ -56,9 +56,6 @@
 
 int main(int argc, char *argv[])
 {
-  // Global variable that denotes this is the Tpetra executable
-  static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-
   int status = 0;  // 0 = pass, failures are incremented
   bool success = true;
 
@@ -104,7 +101,6 @@ int main(int argc, char *argv[])
   const auto stackedTimer = Teuchos::rcp(
       new Teuchos::StackedTimer("Albany Stacked Timer"));
   Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
-
   try {
     auto totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
         *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
@@ -117,6 +113,20 @@ int main(int argc, char *argv[])
     if (cmd.vtune) { Albany::connect_vtune(comm->getRank()); }
 
     Albany::SolverFactory slvrfctry(cmd.yaml_filename, comm);
+
+    auto& bt = slvrfctry.getParameters().get("Build Type","Tpetra");
+    if (bt=="Tpetra") {
+      // Global variable that denotes this as a Tpetra run
+      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+    } else if (bt=="Epetra") {
+      // Global variable that denotes this as a Epetra run
+      static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                                 "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
+                                 "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+    }
+
     RCP<Albany::Application> app;
     const RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>> solver =
         slvrfctry.createAndGetAlbanyAppT(app, comm, comm);

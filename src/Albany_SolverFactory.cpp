@@ -1069,6 +1069,7 @@ Albany::SolverFactory::getValidAppParameters() const
 {
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidAppParams"));
 
+  validPL->set("Build Type", "Tpetra", "The type of run (e.g., Epetra, Tpetra)");
   validPL->sublist("Problem", false, "Problem sublist");
   validPL->sublist("Debug Output", false, "Debug Output sublist");
   validPL->sublist("Scaling", false, "Jacobian/Residual Scaling sublist");
