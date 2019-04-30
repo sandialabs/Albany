@@ -162,8 +162,8 @@ private:
   Teuchos::RCP<const Teuchos_Comm>      m_solverComm;
   Teuchos::RCP<Teuchos::ParameterList>  m_mainAppParams;
 
-  Teuchos::RCP<const Thyra_VectorSpace> m_overlapNodeVS;
-  Teuchos::RCP<const Thyra_VectorSpace> m_localNodeVS;
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> m_overlapNodeVS;
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> m_localNodeVS;
 
   Teuchos::Array< Teuchos::RCP<Thyra_Vector> > m_overlapObjectiveGradientVec;
   Teuchos::Array< Teuchos::RCP<Thyra_Vector> > m_ObjectiveGradientVec;

@@ -6,6 +6,8 @@
 #include "Albany_config.h"
 #include "Albany_ThyraTypes.hpp"
 
+#include <Teuchos_SerializationTraits.hpp>
+
 #include <mpi.h>
 
 namespace ATO {
@@ -15,7 +17,7 @@ struct TopologyStruct {
   Teuchos::RCP<Thyra_Vector>  dataVector;
 };
 
-using ATO_GO = GO;
+using ATO_GO = int;
 
 struct GlobalPoint {
 
@@ -52,5 +54,15 @@ inline MPI_Datatype get_MPI_GlobalPoint_type () {
 }
 
 } // namespace ATO
+
+// Partial specialization of Teuchos::SerializationTraits for ATO::GlobalPoint
+// This is needed in order to rely on Teuchos_CommHelpers.hpp functions to do MPI
+namespace Teuchos {
+
+template<typename Ordinal>
+class SerializationTraits<Ordinal,ATO::GlobalPoint> :
+    public DirectSerializationTraits<Ordinal,ATO::GlobalPoint> {};
+
+} // namespace Teuchos
 
 #endif // ATO_TYPES_HPP

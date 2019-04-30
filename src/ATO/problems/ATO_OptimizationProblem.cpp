@@ -976,9 +976,8 @@ computeConformalVolume (const std::vector<Teuchos::RCP<TopologyStruct>>& topolog
   Teuchos::ArrayRCP<const double> p = Albany::getLocalData(topologyStructs[0]->dataVector.getConst());
 
   double localv = 0.0;
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-        wsElNodeID = disc->getWsElNodeID();
-  const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+  const auto& wsElNodeID  = disc->getWsElNodeID();
+  const auto& wsPhysIndex = disc->getWsPhysIndex();
   int numWorksets = wsElNodeID.size();
 
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&

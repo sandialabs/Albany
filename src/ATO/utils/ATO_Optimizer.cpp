@@ -757,6 +757,7 @@ Optimizer_OC::computeUpdatedTopology()
     vmid = (v2+v1)/2.0;
 
     // update topology
+
     for (int i=0; i<numOptDofs; i++) {
       double be = 0.0;
       if (dmdp[i] != 0.0 )
@@ -787,7 +788,9 @@ Optimizer_OC::computeUpdatedTopology()
         v1 = vmid;
         niters++;
         break;
-      } else v2 = vmid;
+      } else {
+        v2 = vmid;
+      }
     } else {
       solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
       double newResidual = measure - _measureConstraint*_optMeasure;

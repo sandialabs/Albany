@@ -231,19 +231,19 @@ Solver::Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDiscretization();
 
-  m_localNodeVS   = disc->getNodeVectorSpace();
-  m_overlapNodeVS = disc->getOverlapNodeVectorSpace();
+  m_localNodeVS   = Albany::getSpmdVectorSpace(disc->getNodeVectorSpace());
+  m_overlapNodeVS = Albany::getSpmdVectorSpace(disc->getOverlapNodeVectorSpace());
 
   for (int itopo=0; itopo<ntopos; ++itopo) {
     Teuchos::RCP<TopologyInfoStruct> topoStruct = m_topologyInfoStructs[itopo];
     if (topoStruct->postFilter != Teuchos::null) {
-      topoStruct->filteredOverlapVector = Thyra::createMember(m_overlapNodeVS);
-      topoStruct->filteredVector        = Thyra::createMember(m_localNodeVS);
+      topoStruct->filteredOverlapVector = Thyra::createMember(*m_overlapNodeVS);
+      topoStruct->filteredVector        = Thyra::createMember(*m_localNodeVS);
     }
 
     // create overlap topo vector for output purposes
-    topoStruct->overlapVector = Thyra::createMember(m_overlapNodeVS);
-    topoStruct->localVector   = Thyra::createMember(m_localNodeVS);
+    topoStruct->overlapVector = Thyra::createMember(*m_overlapNodeVS);
+    topoStruct->localVector   = Thyra::createMember(*m_localNodeVS);
   } 
 
   m_overlapObjectiveGradientVec.resize(ntopos);
@@ -251,10 +251,10 @@ Solver::Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   m_overlapConstraintGradientVec.resize(ntopos);
   m_ConstraintGradientVec.resize(ntopos);
   for (int itopo=0; itopo<ntopos; ++itopo) {
-    m_overlapObjectiveGradientVec[itopo]  = Thyra::createMember(m_overlapNodeVS);
-    m_ObjectiveGradientVec[itopo]         = Thyra::createMember(m_localNodeVS);
-    m_overlapConstraintGradientVec[itopo] = Thyra::createMember(m_overlapNodeVS);
-    m_ConstraintGradientVec[itopo]        = Thyra::createMember(m_localNodeVS);
+    m_overlapObjectiveGradientVec[itopo]  = Thyra::createMember(*m_overlapNodeVS);
+    m_ObjectiveGradientVec[itopo]         = Thyra::createMember(*m_localNodeVS);
+    m_overlapConstraintGradientVec[itopo] = Thyra::createMember(*m_overlapNodeVS);
+    m_ConstraintGradientVec[itopo]        = Thyra::createMember(*m_localNodeVS);
   } 
   
   m_cas_manager = Albany::createCombineAndScatterManager(m_localNodeVS, m_overlapNodeVS);
@@ -386,8 +386,8 @@ void Solver::evalModelImpl (const Thyra_InArgs&  /* inArgs */,
             for (int cell=0; cell<numCells; ++cell) {
               for (int node=0; node<numNodes; ++node) {
                 const int gid = wsElNodeID[ws][cell][node];
-                const int lid = Albany::getLocalElement(m_localNodeVS,gid);
-                if (lid != -1) {
+                if (Albany::locallyOwnedComponent(m_localNodeVS,gid)) {
+                  const int lid = Albany::getLocalElement(m_localNodeVS,gid);
                   ltopo[lid] = matVal;
                 }
               }
@@ -616,8 +616,9 @@ void Solver::copyTopologyIntoParameter (const double* p, SolverSubSolver& subSol
     const int numWorksets = wsElDofs.size();
     const double matVal = topology->getMaterialValue();
     for (int ws=0; ws<numWorksets; ++ws) {
-      if (find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end()) {
-        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& elNodeID = wsElNodeID[ws];
+      const auto it = std::find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]);
+      if (it != fixedBlocks.end()) {
+        const auto& elNodeID = wsElNodeID[ws];
         const int numCells = elNodeID.size();
         const int numNodes = elNodeID[0].size();
         for (int cell=0; cell<numCells; ++cell) {
@@ -672,8 +673,8 @@ void Solver::copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr)
       for (int cell=0; cell<numCells; ++cell) {
         for (int node=0; node<numNodes; ++node) {
           const int gid = wsElNodeID[ws][cell][node];
-          const int lid = Albany::getLocalElement(m_localNodeVS,gid);
-          if (lid >= 0) {
+          if (Albany::locallyOwnedComponent(m_localNodeVS,gid)) {
+            const int lid = Albany::getLocalElement(m_localNodeVS,gid);
             p[lid+offset] = wsTopo(cell,node);
           }
         }
@@ -715,23 +716,24 @@ void Solver::smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct)
 {
   // apply filter if requested
   if (topoStruct->filter != Teuchos::null) {
-    Teuchos::RCP<Thyra_Vector> topoVec = topoStruct->localVector;
-
     // The apply method does not allow the input to alias the output,
     // so in order to do x=A*x we need to do x=A*x_old;x_old=x
-    Teuchos::RCP<Thyra_Vector> filtered_topoVec = Thyra::createMember(m_localNodeVS);
-    Teuchos::RCP<Thyra_Vector> filtered_topoVec_old = Thyra::createMember(m_localNodeVS);
+    Teuchos::RCP<Thyra_Vector> filtered_topoVec_old = Thyra::createMember(*m_localNodeVS);
+    Teuchos::RCP<Thyra_Vector> filtered_topoVec = topoStruct->localVector;
     const int numIters = topoStruct->filter->getNumIterations();
+
     for (int i=0; i<numIters; ++i) {
-      if (i == 0) {
-        filtered_topoVec_old->assign(*topoVec);
-      } else {
-        // Swap x and x_old
-        std::swap(filtered_topoVec,filtered_topoVec_old);
-      }
+      // Swap x and x_old
+      std::swap(filtered_topoVec,filtered_topoVec_old);
+
+      // Apply filter to x_old
       topoStruct->filter->getFilterOperator()->apply(Thyra::NOTRANS, *filtered_topoVec_old, filtered_topoVec.ptr(), 1.0, 0.0);
     }
-    topoVec->assign(*filtered_topoVec);
+    // Set topoVec to the filtered solution
+    // Note: swapping the two rcps is probably easier, but there may be
+    //       other places storing an RCP to the vector, which would no
+    //       longer be pointing to the same object.
+    topoStruct->localVector->assign(*filtered_topoVec);
   } else if (topoStruct->postFilter != Teuchos::null) {
     Teuchos::RCP<Thyra_Vector> topoVec = topoStruct->localVector;
     Teuchos::RCP<Thyra_Vector> filteredTopoVec = topoStruct->filteredVector;
@@ -789,8 +791,8 @@ void Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       }
     }
 
-    auto overlapFreeNodeMask = Thyra::createMember(m_overlapNodeVS);
-    auto localFreeNodeMask   = Thyra::createMember(m_localNodeVS);
+    auto overlapFreeNodeMask = Thyra::createMember(*m_overlapNodeVS);
+    auto localFreeNodeMask   = Thyra::createMember(*m_localNodeVS);
     overlapFreeNodeMask->assign(0.0);
     Teuchos::ArrayRCP<double> fMask = Albany::getNonconstLocalData(overlapFreeNodeMask);
     for (int ws=0; ws<numWorksets; ++ws) {
@@ -885,29 +887,25 @@ void Solver::copyObjectiveFromStateMgr( double& g, double* dgdp)
     }
 
     // apply filter if requested
-    Teuchos::RCP<Thyra_Vector> filtered_ObjectiveGradientVec = Thyra::createMember(m_ObjectiveGradientVec[ivec]->space());
+    Teuchos::RCP<Thyra_Vector> filtered_ObjectiveGradientVec = m_ObjectiveGradientVec[ivec];
     if (m_derivativeFilter != Teuchos::null) {
       // The apply method does not allow the input to alias the output,
       // so in order to do x=A*x we need to do x=A*x_old;x_old=x
-      Teuchos::RCP<Thyra_Vector> filtered_ObjectiveGradientVec_old = Thyra::createMember(m_ObjectiveGradientVec[ivec]->space());
+      Teuchos::RCP<Thyra_Vector> filtered_ObjectiveGradientVec_old = Thyra::createMember(*m_ObjectiveGradientVec[ivec]->space());
       const int numIters = m_derivativeFilter->getNumIterations();
       for (int i=0; i<numIters; ++i) {
+        // Swap x and x_old
+        std::swap(filtered_ObjectiveGradientVec,filtered_ObjectiveGradientVec_old);
 
-        //IKt, 1/23/17: the use of copies here is somewhat hacky, to get apply 
-        //to do the right thing and not throw an exception in a debug build. 
-        if (i == 0) {
-          filtered_ObjectiveGradientVec_old->assign(*m_ObjectiveGradientVec[ivec]);
-        } else {
-          // Swap x and x_old
-          std::swap(filtered_ObjectiveGradientVec,filtered_ObjectiveGradientVec_old);
-        }
+        // Apply the filter to x_old
         m_derivativeFilter->getFilterOperator()->apply(Thyra::TRANS,
                                                        *filtered_ObjectiveGradientVec_old,
                                                        filtered_ObjectiveGradientVec.ptr(),
                                                        1.0, 0.0);
-        m_ObjectiveGradientVec[ivec]->assign(*filtered_ObjectiveGradientVec);
       }
-      Teuchos::ArrayRCP<const double> lvec = Albany::getLocalData(filtered_ObjectiveGradientVec.getConst());
+      // Set the objective gradient to the filtered one.
+      m_ObjectiveGradientVec[ivec] = filtered_ObjectiveGradientVec;
+      Teuchos::ArrayRCP<const double> lvec = Albany::getLocalData(m_ObjectiveGradientVec[ivec].getConst());
       const int numLocalNodes = lvec.size();
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
     } else {
@@ -961,14 +959,13 @@ void Solver::ComputeMeasure(const std::string& measureType, const double* p,
       for (int cell=0; cell<numCells; ++cell) {
         for (int node=0; node<numNodes; ++node) {
           const int gid = wsElNodeID[ws][cell][node];
-          const int lid = Albany::getLocalElement(m_localNodeVS,gid);
-          if (lid != -1) {
+          if (Albany::locallyOwnedComponent(m_localNodeVS,gid)) {
+            const int lid = Albany::getLocalElement(m_localNodeVS,gid);
             ltopo[lid] = p[lid+offset];
           }
         }
       }
     }
-
     Teuchos::RCP<TopologyInfoStruct> topoStruct = m_topologyInfoStructs[itopo];
     smoothTopology(topoStruct);
 
@@ -1102,7 +1099,7 @@ Solver::CreateSubSolver (const Teuchos::RCP<Teuchos::ParameterList> appParams,
   Teuchos::RCP<Thyra_Vector> g1;
   const int ss_num_g = ret.responses_out->Ng(); // Number of *vectors* of responses
   for (int ig=0; ig<ss_num_g; ++ig) {
-    g1 = Thyra::createMember(ret.model->get_g_space(ig));
+    g1 = Thyra::createMember(*ret.model->get_g_space(ig));
     ret.responses_out->set_g(ig,g1);
   }
 
@@ -1129,7 +1126,7 @@ Solver::CreateSubSolver (const Teuchos::RCP<Teuchos::ParameterList> appParams,
           const auto p_space = ret.model->get_p_space(ip);
           gVector[iBlock]  = ret.responses_out->get_g(ig);
 
-          dgdpVector[iBlock] = Thyra::createMembers(p_space,gVector[iBlock]->space()->dim());
+          dgdpVector[iBlock] = Thyra::createMembers(*p_space,gVector[iBlock]->space()->dim());
 
           if (ret.responses_out->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)) {
             Thyra_Derivative dgdp_out(dgdpVector[iBlock], DERIV_TRANS_MV_BY_ROW);
@@ -1144,7 +1141,7 @@ Solver::CreateSubSolver (const Teuchos::RCP<Teuchos::ParameterList> appParams,
     }
   }
 
-  auto x_final = Thyra::createMember(ret.model->get_g_space(ss_num_g-1));
+  auto x_final = Thyra::createMember(*ret.model->get_g_space(ss_num_g-1));
   x_final->assign(0.0);
   ret.responses_out->set_g(ss_num_g-1,x_final);
 

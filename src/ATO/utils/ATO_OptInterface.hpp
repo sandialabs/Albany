@@ -23,7 +23,7 @@ public:
 
   void ComputeMeasure(const std::string& measureType, const double* p,
                       double& measure, const std::string& integrationMethod) {
-    ComputeMeasure(measureType, p, measure, NULL, integrationMethod);
+    ComputeMeasure(measureType, p, measure, nullptr, integrationMethod);
   }
 
   void ComputeMeasure(const std::string& measureType, const double* p, double& measure) {

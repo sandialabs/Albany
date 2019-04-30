@@ -11,6 +11,7 @@
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 
+#include "Teuchos_CommHelpers.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 
@@ -18,7 +19,6 @@
 #include "Albany_STKDiscretization.hpp"
 #include "STKExtract.hpp"
 #endif
-
 
 namespace ATO
 {
@@ -171,6 +171,7 @@ void SpatialFilter::buildOperator (const app_type& app,
 
   // ... then we create the operator...
   m_filterOperator = opFactory.createOp();
+  Albany::assign(m_filterOperator,0.0);
 
   // ... and finally we fill it.
   Albany::resumeFill(m_filterOperator);
@@ -192,8 +193,8 @@ void SpatialFilter::buildOperator (const app_type& app,
         }
         distance = (distance > 0.0) ? std::sqrt(distance) : 0.0;
         values.push_back(m_filterRadius - distance);
-        Albany::addToGlobalRowValues(m_filterOperator,home_node_gid,indices(),values());
       }
+      Albany::addToGlobalRowValues(m_filterOperator,home_node_gid,indices(),values());
     } else {
       // if the list of connected nodes is empty, still add a one on the diagonal.
       indices.push_back(home_node_gid);
@@ -221,6 +222,7 @@ void SpatialFilter::importNeighbors(nbrs_map_type&  neighbors,
   const auto ghosted_aura_gids = Albany::getGlobalElements(ghosted_aura_vs);
   const auto& ghosted_aura_owners = cas_manager.getGhostedAuraOwners();
   const auto& owned_aura_users = cas_manager.getOwnedAuraUsers();
+  const auto comm = Albany::getComm(owned_aura_vs);
 
   // Get from the cas manager the node global ids and the associated processor ids
   std::map<int, std::set<int> > boundaryNodesByProc;
@@ -238,51 +240,48 @@ void SpatialFilter::importNeighbors(nbrs_map_type&  neighbors,
   // Assume there's at least one new point
   int newPoints = 1;
 
-  const MPI_Datatype MPI_GlobalPoint = get_MPI_GlobalPoint_type();
   while(newPoints > 0){
     newPoints = 0;
 
     int numNeighborProcs = boundaryNodesByProc.size();
-    std::vector<std::vector<int> > numNeighbors_send(numNeighborProcs);
-    std::vector<std::vector<int> > numNeighbors_recv(numNeighborProcs);
+    std::vector<Teuchos::ArrayRCP<int> > numNeighbors_send(numNeighborProcs);
+    std::vector<Teuchos::ArrayRCP<int> > numNeighbors_recv(numNeighborProcs);
  
     // determine number of neighborhood nodes to be communicated
     int index = 0;
-    std::map<int, std::set<int> >::iterator boundaryNodesIter;
-    for( boundaryNodesIter=boundaryNodesByProc.begin(); 
-         boundaryNodesIter!=boundaryNodesByProc.end(); 
-         boundaryNodesIter++){
+    Teuchos::Array<Teuchos::RCP<Teuchos::CommRequest<int>>> sendReq(numNeighborProcs);
+    Teuchos::Array<Teuchos::RCP<Teuchos::CommRequest<int>>> recvReq(numNeighborProcs);
+    for(const auto& boundaryNodesIter : boundaryNodesByProc) {
    
-      int send_to = boundaryNodesIter->first;
-      int recv_from = send_to;
+      const int send_to = boundaryNodesIter.first;
+      const int recv_from = send_to;
   
-      std::set<int>& boundaryNodes = boundaryNodesIter->second; 
-      int numNodes = boundaryNodes.size();
+      const std::set<int>& boundaryNodes = boundaryNodesIter.second;
+      const int numNodes = boundaryNodes.size();
   
       numNeighbors_send[index].resize(numNodes);
       numNeighbors_recv[index].resize(numNodes);
   
       GlobalPoint sendPoint;
-      std::map< GlobalPoint, std::set<GlobalPoint> >::iterator sendPointIter;
       int localIndex = 0;
-      std::set<int>::iterator boundaryNodeGID;
-      for(boundaryNodeGID=boundaryNodes.begin(); 
-          boundaryNodeGID!=boundaryNodes.end();
-          boundaryNodeGID++){
-        sendPoint.gid = *boundaryNodeGID;
-        sendPointIter = neighbors.find(sendPoint);
+      for(auto boundaryNodeGID : boundaryNodes) {
+        sendPoint.gid = boundaryNodeGID;
+        auto sendPointIter = neighbors.find(sendPoint);
         std::set<GlobalPoint>& sendPointSet = sendPointIter->second;
         numNeighbors_send[index][localIndex] = sendPointSet.size();
         localIndex++;
       }
   
-      MPI_Status status;
-      MPI_Sendrecv(&(numNeighbors_send[index][0]), numNodes, MPI_INT, send_to, 0,
-                   &(numNeighbors_recv[index][0]), numNodes, MPI_INT, recv_from, 0,
-                   MPI_COMM_WORLD, &status);
+      // Fire send and recv
+      sendReq[index] = Teuchos::isend(*comm,numNeighbors_send[index].getConst(),send_to);
+      recvReq[index] = Teuchos::ireceive(*comm,numNeighbors_recv[index],recv_from);
       index++;
     }
-  
+
+    // Wait for send/recv to complete
+    Teuchos::waitAll(*comm,sendReq());
+    Teuchos::waitAll(*comm,recvReq());
+
     // new neighbors can't be immediately added to the neighbor map or they'll be
     // found and added to the list that's communicated to other procs.  This causes
     // problems because the message length has already been communicated.  
@@ -290,113 +289,86 @@ void SpatialFilter::importNeighbors(nbrs_map_type&  neighbors,
   
     // communicate neighborhood nodes
     index = 0;
-    for( boundaryNodesIter=boundaryNodesByProc.begin(); 
-         boundaryNodesIter!=boundaryNodesByProc.end(); 
-         boundaryNodesIter++){
+    for( const auto& boundaryNodesIter : boundaryNodesByProc) {
    
       // determine total message size
       int totalNumEntries_send = 0;
       int totalNumEntries_recv = 0;
-      std::vector<int>& send = numNeighbors_send[index];
-      std::vector<int>& recv = numNeighbors_recv[index];
+      auto& send = numNeighbors_send[index];
+      auto& recv = numNeighbors_recv[index];
       int totalNumNodes = send.size();
       for(int i=0; i<totalNumNodes; i++){
         totalNumEntries_send += send[i];
         totalNumEntries_recv += recv[i];
       }
   
-      int send_to = boundaryNodesIter->first;
+      int send_to = boundaryNodesIter.first;
       int recv_from = send_to;
   
-      GlobalPoint* GlobalPoints_send = new GlobalPoint[totalNumEntries_send];
-      GlobalPoint* GlobalPoints_recv = new GlobalPoint[totalNumEntries_recv];
+      Teuchos::ArrayRCP<GlobalPoint> GlobalPoints_send(totalNumEntries_send);
+      Teuchos::ArrayRCP<GlobalPoint> GlobalPoints_recv(totalNumEntries_recv);
       
+      // Fire off the recv, in case other ranks already packed and sent...
+      auto recv_req = Teuchos::ireceive(*comm,GlobalPoints_recv,recv_from);
+
       // copy into contiguous memory
-      std::set<int>& boundaryNodes = boundaryNodesIter->second;
+      const std::set<int>& boundaryNodes = boundaryNodesIter.second;
       GlobalPoint sendPoint;
-      std::map< GlobalPoint, std::set<GlobalPoint> >::iterator sendPointIter;
-      std::set<int>::iterator boundaryNodeGID;
       int offset = 0;
-      for(boundaryNodeGID=boundaryNodes.begin(); 
-          boundaryNodeGID!=boundaryNodes.end();
-          boundaryNodeGID++){
+      for(auto boundaryNodeGID : boundaryNodes) {
         // get neighbors for boundary node i
-        sendPoint.gid = *boundaryNodeGID;
-        sendPointIter = neighbors.find(sendPoint);
+        sendPoint.gid = boundaryNodeGID;
+        auto sendPointIter = neighbors.find(sendPoint);
         TEUCHOS_TEST_FOR_EXCEPT( sendPointIter == neighbors.end() );
         std::set<GlobalPoint>& sendPointSet = sendPointIter->second;
         // copy neighbors into contiguous memory
-        for(std::set<GlobalPoint>::iterator igp=sendPointSet.begin(); 
-            igp!=sendPointSet.end(); igp++){
-          GlobalPoints_send[offset] = *igp;
+        for(const auto& gp : sendPointSet) {
+          GlobalPoints_send[offset] = gp;
           offset++;
         }
       }
-  
-      MPI_Status status;
-      MPI_Sendrecv(GlobalPoints_send, totalNumEntries_send, MPI_GlobalPoint, send_to, 0,
-                   GlobalPoints_recv, totalNumEntries_recv, MPI_GlobalPoint, recv_from, 0,
-                   MPI_COMM_WORLD, &status);
+
+      // Fire the send, then wait for send and recv to be completed
+      auto send_req = Teuchos::isend(*comm,GlobalPoints_send.getConst(),send_to);
+      Teuchos::wait(*comm,Teuchos::ptrFromRef(send_req));
+      Teuchos::wait(*comm,Teuchos::ptrFromRef(recv_req));
   
       // copy out of contiguous memory
       GlobalPoint recvPoint;
       std::map< GlobalPoint, std::set<GlobalPoint> >::iterator recvPointIter;
       offset = 0;
       int localIndex=0;
-      for(boundaryNodeGID=boundaryNodes.begin(); 
-          boundaryNodeGID!=boundaryNodes.end();
-          boundaryNodeGID++){
-        recvPoint.gid = *boundaryNodeGID;
-        recvPointIter = newNeighbors.find(recvPoint);
-        if( recvPointIter == newNeighbors.end() ){ // not found, add.
-          std::set<GlobalPoint> newPointSet;
-          int nrecv = recv[localIndex];
-          for(int j=0; j<nrecv; j++){
-            newPointSet.insert(GlobalPoints_recv[offset]);
-            offset++;
-          }
-          newNeighbors.insert( std::pair<GlobalPoint,std::set<GlobalPoint> >(recvPoint,newPointSet) );
-        } else {
-          int nrecv = recv[localIndex];
-          for(int j=0; j<nrecv; j++){
-            recvPointIter->second.insert(GlobalPoints_recv[offset]);
-            offset++;
-          }
+      for(auto boundaryNodeGID : boundaryNodes) {
+        recvPoint.gid = boundaryNodeGID;
+        // newNeighbors[recvPoint]
+        int nrecv = recv[localIndex];
+        for(int j=0; j<nrecv; j++){
+          newNeighbors[recvPoint].insert(GlobalPoints_recv[offset]);
+          ++offset;
         }
         localIndex++;
       }
-   
-      delete [] GlobalPoints_send;
-      delete [] GlobalPoints_recv;
-      
       index++;
     }
     // add newNeighbors map to neighbors map
-    std::map< GlobalPoint, std::set<GlobalPoint> >::iterator new_nbr;
-    std::map< GlobalPoint, std::set<GlobalPoint> >::iterator nbr;
-    std::set< GlobalPoint >::iterator newPoint;
     // loop on total neighbor list
-    for(nbr=neighbors.begin(); nbr!=neighbors.end(); nbr++){
+    for(auto& nbr : neighbors) {
   
-      std::set<GlobalPoint>& pointSet = nbr->second;
-      int pointSetSize = pointSet.size();
+      std::set<GlobalPoint>& pointSet = nbr.second;
+      const int pointSetSize = pointSet.size();
   
-      GlobalPoint home_point = nbr->first;
-      double* home_coords = &(home_point.coords[0]);
-      std::map< GlobalPoint, std::set<GlobalPoint> >::iterator nbrs;
-      std::set< GlobalPoint >::iterator remote_point;
-      for(nbrs=newNeighbors.begin(); nbrs!=newNeighbors.end(); nbrs++){
-        std::set<GlobalPoint>& remote_points = nbrs->second;
-        for(remote_point=remote_points.begin(); 
-            remote_point!=remote_points.end();
-            remote_point++){
-          const double* remote_coords = &(remote_point->coords[0]);
+      GlobalPoint home_point = nbr.first;
+      const double* home_coords = &(home_point.coords[0]);
+      for(const auto& nbrs : newNeighbors) {
+        const std::set<GlobalPoint>& remote_points = nbrs.second;
+        for(const auto& remote_point : remote_points) {
+          const double* remote_coords = &(remote_point.coords[0]);
           double distance = 0.0;
           for(int i=0; i<3; i++)
             distance += (remote_coords[i]-home_coords[i])*(remote_coords[i]-home_coords[i]);
           distance = (distance > 0.0) ? sqrt(distance) : 0.0;
           if( distance < m_filterRadius ) {
-            pointSet.insert(*remote_point);
+            pointSet.insert(remote_point);
           }
         }
       }
@@ -404,7 +376,7 @@ void SpatialFilter::importNeighbors(nbrs_map_type&  neighbors,
       newPoints += (pointSet.size() - pointSetSize);
     }
     int globalNewPoints=0;
-    Teuchos::reduceAll(*(Albany::getComm(owned_aura_vs)), Teuchos::REDUCE_SUM, 1, &newPoints, &globalNewPoints); 
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &newPoints, &globalNewPoints);
     newPoints = globalNewPoints;
   }
 }
