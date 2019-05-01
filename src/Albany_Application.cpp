@@ -2285,7 +2285,7 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
     const auto& vs = distParamLib->get(dist_param_name)->overlap_vector_space();
     overlapped_V = Thyra::createMembers(vs, V_bc->domain()->dim());
     overlapped_V->assign(0.0);
-    cas_manager->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
+    distParamLib->get(dist_param_name)->get_cas_manager()->scatter(V_bc,overlapped_V,Albany::CombineMode::INSERT);
   }
 
   // Set data in Workset struct, and perform fill via field manager
