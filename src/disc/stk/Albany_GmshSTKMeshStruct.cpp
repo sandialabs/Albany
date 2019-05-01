@@ -81,7 +81,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 
-  create_element_block();
+  create_element_block( commT);
 
 #ifdef ALBANY_SEACAS
   //  stk::io::put_io_part_attribute(metaData->universal_part());
@@ -206,6 +206,7 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
   delete[] line3;
 
   allowable_gmsh_versions.clear();
+  phys_name_trips.clear();
 }
 
 void Albany::GmshSTKMeshStruct::determine_file_type( bool& legacy, bool& binary, bool& ascii)
@@ -1080,11 +1081,38 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   // Populate the element pointers with tag and node info
   load_element_data( ifile);
 
+  // Read the phyical name triplets
+  load_physical_names( ifile);
+
   // Close the input stream
   ifile.close();
 }
 
-void Albany::GmshSTKMeshStruct::create_element_block()
+void Albany::GmshSTKMeshStruct::load_physical_names( std::ifstream& ifile)
+{
+  // Advance to the PhysicalNames section
+  std::string line;
+  swallow_lines_until( ifile, line, "$PhysicalNames");
+
+  // Get number of Physical Names
+  int num_physical_names = 0;
+  std::getline( ifile, line);
+  std::stringstream ss (line);
+  ss >> num_physical_names;
+
+  // Get the list of physical names
+  std::vector< std::string> names;
+  for( size_t i = 0; i < num_physical_names; i++)
+  {
+    set_physical_name_triplet( ifile);
+  }
+
+  ifile.close();
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::create_element_block( const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   
   if( version == GmshVersion::V2_2)
@@ -1097,10 +1125,38 @@ void Albany::GmshSTKMeshStruct::create_element_block()
   else if( version == GmshVersion::V4_1)
   {
     // TODO: need to read elem block names, elements, from file
+    std::map<std::string, int> volume_names;
+    get_physical_volume_names( volume_names, commT);
+
     std::string ebn = "Element Block 0";
     partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
     ebNameToIndex[ebn] = 0;
   }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::broadcast_volume_names( std::map<std::string, int>              volume_names, 
+                                                        const Teuchos::RCP<const Teuchos_Comm>& commT)
+{
+  //TODO
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::read_physical_volume_names_from_file( std::map<std::string, int> volume_names)
+{
+  // TODO
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::get_physical_volume_names( std::map<std::string, int>              volume_names, 
+                                                           const Teuchos::RCP<const Teuchos_Comm>& commT)
+{
+  if( commT->getRank() == 0)
+  {
+    read_physical_volume_names_from_file( volume_names);
+  }
+  broadcast_volume_names( volume_names, commT);
 
   return;
 }
@@ -1546,6 +1602,27 @@ void Albany::GmshSTKMeshStruct::open_fname( std::ifstream& ifile)
   return;
 }
 
+void Albany::GmshSTKMeshStruct::set_physical_name_triplet( std::ifstream& ifile)
+{
+  std::string line;
+  int         id;
+  int         dim;
+  std::string name;
+
+  std::getline( ifile, line);
+  std::stringstream ss (line);
+  ss >> dim >> id >> name;
+
+  physical_name_triplet pnt;
+  pnt.dimension = dim;
+  pnt.tag       = id;
+  pnt.name      = name;
+
+  phys_name_trips.push_back( pnt);
+
+  return;
+}
+
 void Albany::GmshSTKMeshStruct::get_name_for_surface_names( std::string& name, std::ifstream& ifile)
 {
   std::string line;
@@ -1591,7 +1668,7 @@ void Albany::GmshSTKMeshStruct::get_physical_tag_to_surface_tag_map(
   double max_x               = 0.0;
   double max_y               = 0.0;
   double max_z               = 0.0;
-  int    num_physical_tags   = 0;
+  int    num_surface_tags    = 0;
   int    physical_tag        = 0;
   int    num_bounding_curves = 0;
   int    curve_tag           = 0;
@@ -1608,18 +1685,18 @@ void Albany::GmshSTKMeshStruct::get_physical_tag_to_surface_tag_map(
        >> max_x
        >> max_y
        >> max_z
-       >> num_physical_tags  
+       >> num_surface_tags  
        >> physical_tag       
        >> num_bounding_curves
        >> curve_tag;
 
-    TEUCHOS_TEST_FOR_EXCEPTION ( num_physical_tags > 1, std::runtime_error, 
+    TEUCHOS_TEST_FOR_EXCEPTION ( num_surface_tags > 1, std::runtime_error, 
                                 "Cannot support more than one physical tag per surface.\n");
 
-    TEUCHOS_TEST_FOR_EXCEPTION ( num_physical_tags < 0, std::runtime_error, 
+    TEUCHOS_TEST_FOR_EXCEPTION ( num_surface_tags < 0, std::runtime_error, 
                                 "Cannot have a negative number of physical tags per surface.\n");
 
-    if( num_physical_tags == 1)
+    if( num_surface_tags == 1)
     {
       physical_surface_tags.insert( std::make_pair( physical_tag, surface_tag));
     }

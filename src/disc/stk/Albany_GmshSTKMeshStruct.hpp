@@ -18,6 +18,13 @@ enum class GmshVersion
   V4_1
 };
 
+struct physical_name_triplet
+{
+  int dimension;
+  int tag;
+  std::string name;
+};
+
 class GmshSTKMeshStruct : public GenericSTKMeshStruct
 {
   public:
@@ -73,13 +80,25 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void get_physical_surface_names( std::map<std::string, int>&             surface_names,
                                    const Teuchos::RCP<const Teuchos_Comm>& commT);
 
+  // Gets the physical volume name-tag pairs for version 4.1 meshes
+  void get_physical_volume_names( std::map<std::string, int>              volume_names, 
+                                  const Teuchos::RCP<const Teuchos_Comm>& commT);
+
   // Share surface_names map with all other proccesses
   void broadcast_surface_names( std::map<std::string, int>&             surface_names,
                                 const Teuchos::RCP<const Teuchos_Comm>& commT);
 
+  // Share volume_names map with all other proccesses
+  void broadcast_volume_names( std::map<std::string, int>              volume_names, 
+                               const Teuchos::RCP<const Teuchos_Comm>& commT);
+
   // Read the physical surface names for Gmsh V 4.1 
   // to populate the surface_names map
   void read_physical_surface_names_from_file( std::map<std::string, int>& surface_names);
+
+  // Read the physical volume names for Gmsh V 4.1 
+  // to populate the volume_names map
+  void read_physical_volume_names_from_file( std::map<std::string, int> volume_names);
 
   // Opens the gmsh msh file. Variable `fname` must be set.
   // Don't forget to close when done!
@@ -117,6 +136,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Includes tags and nodes belonging to each element.
   void load_element_data( std::ifstream& ifile);
 
+  // Reads in the phsyical name triplets
+  void load_physical_names( std::ifstream& ifile);
+
   // Stores element info based on e_type. Updates i(type) counters.
   // Records tags for the element.
   void store_element_info( int  e_type,
@@ -133,7 +155,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   // Create the element blocks
   // Current only creates `Element Block 0` 
-  void create_element_block();
+  void create_element_block( const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   // Creates a nodeset will all nodes
   void set_all_nodes_boundary( std::vector<std::string>& nsNames);
@@ -176,6 +198,12 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   // The set of versions we know how to read
   std::set<float> allowable_gmsh_versions;
+
+  // A list of physical names from the input file
+  std::vector< physical_name_triplet> phys_name_trips;
+
+  // Sets the physical name triplet vector one line at a time
+  void set_physical_name_triplet( std::ifstream& ifile);
 
   // Map from element block names to their index
   std::map<std::string,int> ebNameToIndex;
