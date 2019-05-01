@@ -1086,9 +1086,21 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
 
 void Albany::GmshSTKMeshStruct::create_element_block()
 {
-  std::string ebn = "Element Block 0";
-  partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
-  ebNameToIndex[ebn] = 0;
+  
+  if( version == GmshVersion::V2_2)
+  {
+    // Only supporting one element block for V2.2 meshes
+    std::string ebn = "Element Block 0";
+    partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
+    ebNameToIndex[ebn] = 0;
+  }
+  else if( version == GmshVersion::V4_1)
+  {
+    // TODO: need to read elem block names, elements, from file
+    std::string ebn = "Element Block 0";
+    partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
+    ebNameToIndex[ebn] = 0;
+  }
 
   return;
 }
@@ -1420,11 +1432,11 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
   if( version == GmshVersion::V4_1)
   {
     // Map has format: "name",  physical_tag
-    std::map<std::string, int> physical_names; 
-    get_physical_names( physical_names, commT);
+    std::map<std::string, int> surface_names; 
+    get_physical_surface_names( surface_names, commT);
 
     std::map< std::string, int>::iterator it;
-    for( it = physical_names.begin(); it != physical_names.end(); it++)
+    for( it = surface_names.begin(); it != surface_names.end(); it++)
     {
       std::string name = it->first;
       int         tag  = it->second;
@@ -1534,7 +1546,7 @@ void Albany::GmshSTKMeshStruct::open_fname( std::ifstream& ifile)
   return;
 }
 
-void Albany::GmshSTKMeshStruct::get_name_for_physical_names( std::string& name, std::ifstream& ifile)
+void Albany::GmshSTKMeshStruct::get_name_for_surface_names( std::string& name, std::ifstream& ifile)
 {
   std::string line;
   int         id;
@@ -1544,20 +1556,24 @@ void Albany::GmshSTKMeshStruct::get_name_for_physical_names( std::string& name, 
   std::stringstream ss (line);
   ss >> dim >> id >> name;
 
-  // If this entity has a name, then assign it.
-  // Use the id otherwise.
-  if( name.empty() )
+  // First make sure we have the surface of the mesh
+  if( dim == numDim-1)
   {
-    std::stringstream ss;
-    ss << id;
-    name = ss.str();
-  }
-  else
-  {
-    // Need to remove quote marks from name 
-    // and prepend with underscore
-    name.erase( std::remove(name.begin(), name.end(), '"'), name.end());
-    name = "_" + name;
+    // If this entity has a name, then assign it.
+    // Use the id otherwise.
+    if( name.empty() )
+    {
+      std::stringstream ss;
+      ss << id;
+      name = ss.str();
+    }
+    else
+    {
+      // Need to remove quote marks from name 
+      // and prepend with underscore
+      name.erase( std::remove(name.begin(), name.end(), '"'), name.end());
+      name = "_" + name;
+    }
   }
 
   return;
@@ -1613,7 +1629,7 @@ void Albany::GmshSTKMeshStruct::get_physical_tag_to_surface_tag_map(
 }
                                                              
 
-void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::string, int>& physical_names)
+void Albany::GmshSTKMeshStruct::read_physical_surface_names_from_file( std::map<std::string, int>& surface_names)
 {
   std::ifstream ifile;
   open_fname( ifile);
@@ -1634,7 +1650,7 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
     for( size_t i = 0; i < num_physical_names; i++)
     {
       std::string name;
-      get_name_for_physical_names( name, ifile);
+      get_name_for_surface_names( name, ifile);
       names.push_back( name);
     }
 
@@ -1674,7 +1690,7 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
       // Index by i+1 since gmsh starts counting at 1 and not 0
       int surface_tag  = physical_surface_tags[i+1];
 
-      physical_names.insert( std::make_pair( name, surface_tag));
+      surface_names.insert( std::make_pair( name, surface_tag));
     }
 
   }
@@ -1687,7 +1703,7 @@ void Albany::GmshSTKMeshStruct::broadcast_name_tag_pair( std::vector< std::strin
                                                          int*                                    tags_array,
                                                          int                                     pair_number,
                                                          const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                                         std::map< std::string, int>&            physical_names)
+                                                         std::map< std::string, int>&            surface_names)
 {
   std::string name;
   if( commT->getRank() == 0) 
@@ -1711,17 +1727,17 @@ void Albany::GmshSTKMeshStruct::broadcast_name_tag_pair( std::vector< std::strin
   }
 
   int tag = tags_array[pair_number];
-  physical_names.insert( std::make_pair( name, tag));
+  surface_names.insert( std::make_pair( name, tag));
 
   return;
 }
                                                          
 
-void Albany::GmshSTKMeshStruct::broadcast_physical_names( std::map<std::string, int>&             physical_names,
-                                                          const Teuchos::RCP<const Teuchos_Comm>& commT)
+void Albany::GmshSTKMeshStruct::broadcast_surface_names( std::map<std::string, int>&             surface_names,
+                                                         const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   // Broadcast the number of name-tag pairs
-  int num_pairs = physical_names.size();
+  int num_pairs = surface_names.size();
   Teuchos::broadcast(*commT, 0, 1, &num_pairs);
 
   // First unpack the names and tags from the map.
@@ -1732,7 +1748,7 @@ void Albany::GmshSTKMeshStruct::broadcast_physical_names( std::map<std::string, 
 
   std::map< std::string, int>::iterator it;
   int counter = 0;
-  for( it = physical_names.begin(); it != physical_names.end(); it++)
+  for( it = surface_names.begin(); it != surface_names.end(); it++)
   {
     names.push_back( it->first);
     tags_array[counter] = it->second;
@@ -1740,27 +1756,27 @@ void Albany::GmshSTKMeshStruct::broadcast_physical_names( std::map<std::string, 
   }
 
   // Clear out the map to rebuild it together.
-  physical_names.clear();
+  surface_names.clear();
 
   // Broadcast names and tags
   Teuchos::broadcast<LO,LO>(*commT, 0, num_pairs, tags_array);
   for( int i = 0; i < num_pairs; i++)
   {
-    broadcast_name_tag_pair( names, tags_array, i, commT, physical_names);
+    broadcast_name_tag_pair( names, tags_array, i, commT, surface_names);
   }
 
   delete[] tags_array;
   return;
 }
 
-void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>&             physical_names,
-                                                    const Teuchos::RCP<const Teuchos_Comm>& commT)
+void Albany::GmshSTKMeshStruct::get_physical_surface_names( std::map<std::string, int>&             surface_names,
+                                                            const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   if( commT->getRank() == 0 )
   {
-    read_physical_names_from_file( physical_names);
+    read_physical_surface_names_from_file( surface_names);
   }
-  broadcast_physical_names( physical_names, commT);
+  broadcast_surface_names( surface_names, commT);
 
   return;
 }

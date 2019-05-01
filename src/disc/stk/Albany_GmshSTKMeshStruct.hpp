@@ -69,17 +69,17 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
-  // Gets the physical name-tag pairs for version 4.1 meshes
-  void get_physical_names( std::map<std::string, int>&             physical_names,
-                           const Teuchos::RCP<const Teuchos_Comm>& commT);
+  // Gets the physical surface name-tag pairs for version 4.1 meshes
+  void get_physical_surface_names( std::map<std::string, int>&             surface_names,
+                                   const Teuchos::RCP<const Teuchos_Comm>& commT);
 
-  // Share physical_names map with all other proccesses
-  void broadcast_physical_names( std::map<std::string, int>&             physical_names,
-                                 const Teuchos::RCP<const Teuchos_Comm>& commT);
+  // Share surface_names map with all other proccesses
+  void broadcast_surface_names( std::map<std::string, int>&             surface_names,
+                                const Teuchos::RCP<const Teuchos_Comm>& commT);
 
-  // Read the physical names for Gmsh V 4.1 
-  // to populate the physical_names map
-  void read_physical_names_from_file( std::map<std::string, int>& physical_names);
+  // Read the physical surface names for Gmsh V 4.1 
+  // to populate the surface_names map
+  void read_physical_surface_names_from_file( std::map<std::string, int>& surface_names);
 
   // Opens the gmsh msh file. Variable `fname` must be set.
   // Don't forget to close when done!
@@ -146,11 +146,11 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                                 int*                                    tags_array,
                                 int                                     pair_number,
                                 const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                std::map< std::string, int>&            physical_names);
+                                std::map< std::string, int>&            surface_names);
 
   // Reads a single physical name from ifile.
   // Prepends with an undescore and remove quotation marks.
-  void get_name_for_physical_names( std::string& name, std::ifstream& ifile);
+  void get_name_for_surface_names( std::string& name, std::ifstream& ifile);
 
   // Reads ifile to map surface tags to physical tags.
   // Reports error if any surface is associted with more than one tag.
