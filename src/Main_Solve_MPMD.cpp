@@ -200,6 +200,19 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
       appParams = Teuchos::createParameterList("Albany Parameters");
     Teuchos::updateParametersFromXmlFileAndBroadcast(cmd.yaml_filename, appParams.ptr(), *m_comm);
 
+    const auto& bt = appParams.get("Build Type","Tpetra");
+    if (bt=="Tpetra") {
+      // Set the static variable that denotes this as a Tpetra run
+      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+    } else if (bt=="Epetra") {
+      // Set the static variable that denotes this as a Epetra run
+      static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                                 "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
+                                 "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+    }
+
     Teuchos::ParameterList& probParams = appParams->sublist("Problem",false);
 
     Teuchos::ParameterList& topoParams = probParams.get<Teuchos::ParameterList>("Topologies");

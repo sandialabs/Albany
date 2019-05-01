@@ -56,9 +56,7 @@ int main(int argc, char *argv[]) {
 
     Albany::SolverFactory slvrfctry (cmd.yaml_filename, comm);
 
-    Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > appThyra = slvrfctry.create(comm, comm);
-
-    auto& bt = slvrfctry.getParameters().get("Build Type","Tpetra");
+    const auto& bt = slvrfctry.getParameters().get("Build Type","Tpetra");
     if (bt=="Tpetra") {
       // Set the static variable that denotes this as a Tpetra run
       static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
@@ -70,6 +68,8 @@ int main(int argc, char *argv[]) {
                                  "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
                                  "       Valid choicses are 'Epetra', 'Tpetra'.\n");
     }
+
+    Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > appThyra = slvrfctry.create(comm, comm);
 
     Teuchos::RCP< Thyra::VectorBase<double> > p;
 

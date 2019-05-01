@@ -8,25 +8,22 @@
 
 #ifdef ALBANY_DAKOTA
 
-#include <iostream>
+#include "Albany_SolverFactory.hpp"
 #include "Albany_DakotaT.hpp"
 #include "Albany_Utils.hpp"
 
 #include <Teuchos_YamlParameterListCoreHelpers.hpp>
-// JF #include "TriKota_MPDirectApplicInterface.hpp"
-// JF #include "Piro_Epetra_StokhosMPSolver.hpp"
 
 #include "TriKota_Driver.hpp"
-// JF #include "TriKota_DirectApplicInterface.hpp"
 #include "TriKota_ThyraDirectApplicInterface.hpp"
-#include "Albany_SolverFactory.hpp"
 #include "Teuchos_TestForException.hpp"
 
+#include <iostream>
+
 // Standard use case for TriKota
-//   Dakota is run in library mode with its interface
-//   implemented with an EpetraExt::ModelEvaluator
 int Albany_Dakota(int argc, char *argv[])
-{ // Assumes MPI_Init() already called, and using MPI_COMM_WORLD
+{
+  // Assumes MPI_Init() already called, and using MPI_COMM_WORLD
   using std::cout;
   using std::endl;
   using Teuchos::RCP;
@@ -38,7 +35,7 @@ int Albany_Dakota(int argc, char *argv[])
 
   const RCP<FancyOStream> out = VerboseObjectBase::getDefaultOStream();
 
-  *out << "\nStarting Albany_DakotaT!" << endl;
+  *out << "\nStarting Albany_Dakota!" << endl;
 
   // Parse parameters
   Albany::CmdLineArgs cmd;
@@ -82,6 +79,18 @@ int Albany_Dakota(int argc, char *argv[])
   RCP<const Teuchos_Comm> appComm = Albany::createTeuchosCommFromMpiComm(analysis_comm);
 
   RCP<Albany::SolverFactory> slvrfctry = rcp(new Albany::SolverFactory(cmd.yaml_filename, appComm));
+  const auto& bt = slvrfctry.getParameters().get("Build Type","Tpetra");
+  if (bt=="Tpetra") {
+    // Set the static variable that denotes this as a Tpetra run
+    static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+  } else if (bt=="Epetra") {
+    // Set the static variable that denotes this as a Epetra run
+    static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                               "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
+                               "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+  }
 
   // Connect vtune for performance profiling
   if (cmd.vtune) {
