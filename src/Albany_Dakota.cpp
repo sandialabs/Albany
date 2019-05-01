@@ -4,16 +4,21 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_Dakota.hpp"
+#include "Albany_config.h"
 
 #ifdef ALBANY_DAKOTA
+
 #include <iostream>
+#include "Albany_DakotaT.hpp"
 #include "Albany_Utils.hpp"
 
 #include <Teuchos_YamlParameterListCoreHelpers.hpp>
+// JF #include "TriKota_MPDirectApplicInterface.hpp"
+// JF #include "Piro_Epetra_StokhosMPSolver.hpp"
 
 #include "TriKota_Driver.hpp"
-#include "TriKota_DirectApplicInterface.hpp"
+// JF #include "TriKota_DirectApplicInterface.hpp"
+#include "TriKota_ThyraDirectApplicInterface.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Teuchos_TestForException.hpp"
 
@@ -33,23 +38,19 @@ int Albany_Dakota(int argc, char *argv[])
 
   const RCP<FancyOStream> out = VerboseObjectBase::getDefaultOStream();
 
-  *out << "\nStarting Albany_Dakota!" << endl;
+  *out << "\nStarting Albany_DakotaT!" << endl;
 
   // Parse parameters
   Albany::CmdLineArgs cmd;
   cmd.parse_cmdline(argc, argv, *out);
 
-  RCP<ParameterList> appParams =
-    Teuchos::getParametersFromYamlFile(cmd.yaml_filename);
-  ParameterList& dakotaParams = appParams->sublist("Piro").sublist("Dakota");
-  std::string dakota_input_file =
-    dakotaParams.get("Input File", "dakota.in");
-  std::string dakota_output_file =
-    dakotaParams.get("Output File", "dakota.out");
-  std::string dakota_restart_file =
-    dakotaParams.get("Restart File", "dakota.res");
-  std::string dakota_error_file =
-    dakotaParams.get("Error File", "dakota.err");
+  RCP<ParameterList> appParams    = Teuchos::getParametersFromYamlFile(cmd.yaml_filename);
+  ParameterList&     dakotaParams = appParams->sublist("Piro").sublist("Dakota");
+
+  std::string dakota_input_file   = dakotaParams.get("Input File", "dakota.in");
+  std::string dakota_output_file  = dakotaParams.get("Output File", "dakota.out");
+  std::string dakota_restart_file = dakotaParams.get("Restart File", "dakota.res");
+  std::string dakota_error_file   = dakotaParams.get("Error File", "dakota.err");
 
   std::string dakotaRestartIn;
   std::string dakRestartIn;
@@ -63,11 +64,10 @@ int Albany_Dakota(int argc, char *argv[])
 
   // Construct driver
   TriKota::Driver dakota(dakota_input_file,
-       dakota_output_file,
-       dakota_restart_file,
-       dakota_error_file,
+                         dakota_output_file,
+                         dakota_restart_file,
+                         dakota_error_file,
                          dakRestartIn, dakotaRestartEvals );
-
 
   // Construct a ModelEvaluator for your application with the
   // MPI_Comm chosen by Dakota. This example ModelEvaluator
@@ -75,45 +75,38 @@ int Albany_Dakota(int argc, char *argv[])
   // and must not be constructed if Dakota assigns MPI_COMM_NULL.
 
   Albany_MPI_Comm analysis_comm = dakota.getAnalysisComm();
-  if (analysis_comm == Albany_MPI_COMM_NULL)
+  if (analysis_comm == Albany_MPI_COMM_NULL) {
     return 0;
-  RCP<const Epetra_Comm> appComm =
-      Albany::createEpetraCommFromMpiComm(analysis_comm);
-  RCP<const Teuchos_Comm> appCommT = Albany::createTeuchosCommFromEpetraComm(appComm);
-  RCP<Albany::SolverFactory> slvrfctry =
-    rcp(new Albany::SolverFactory(cmd.yaml_filename, appCommT));
+  }
+
+  RCP<const Teuchos_Comm> appComm = Albany::createTeuchosCommFromMpiComm(analysis_comm);
+
+  RCP<Albany::SolverFactory> slvrfctry = rcp(new Albany::SolverFactory(cmd.yaml_filename, appComm));
 
   // Connect vtune for performance profiling
   if (cmd.vtune) {
-    Albany::connect_vtune(appCommT->getRank());
+    Albany::connect_vtune(appComm->getRank());
   }
 
   // Construct a concrete Dakota interface with an EpetraExt::ModelEvaluator
   // trikota_interface is freed in the destructor for the Dakota interface class
   RCP<Dakota::DirectApplicInterface> trikota_interface;
-  RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appCommT, appCommT);
-  trikota_interface =
-    rcp(new TriKota::DirectApplicInterface(dakota.getProblemDescDB(), App, p_index, g_index),
-        false);
+
+  RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > app = slvrfctry->create(appComm, appComm);
+  trikota_interface = rcp(new TriKota::ThyraDirectApplicInterface(dakota.getProblemDescDB(), app, p_index, g_index), false);
 
   // Run the requested Dakota strategy using this interface
   dakota.run(trikota_interface.get());
 
-/*
- if (dakota.rankZero()) {
-    Dakota::RealVector finalValues =
-      dakota.getFinalSolution().all_continuous_variables();
-    *out << "\nAlbany_Dakota: Final Values from Dakota = "
+  if (dakota.rankZero()) {
+    Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();
+    *out << "\nAlbany_DakotaT: Final Values from Dakota = "
          << std::setprecision(8) << finalValues << endl;
 
     return slvrfctry->checkDakotaTestResults(0, &finalValues);
+  } else {
+    return 0;
   }
-  else return 0;
-   */
-   if (dakota.rankZero()) {
-    *out << "\nAlbany_Dakota: No longer comparing results. \n"
-         << "\tNeed to fix accessor to final values" << std::endl;
-   }
-   return 0;
 }
-#endif
+
+#endif // ALBANY_DAKOTA

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_DAKOTA_H
-#define ALBANY_DAKOTA_H
+#ifndef ALBANY_DAKOTA_HPP
+#define ALBANY_DAKOTA_HPP
 
 #include "Albany_config.h"
 
@@ -15,10 +15,13 @@
 int Albany_Dakota(int argc, char *argv[]);
 
 #else // ALBANY_DAKOTA
-int Albany_Dakota(int argc, char *argv[])
+#include <stdio.h>
+int Albany_Dakota(int /* argc */, char * /*argv*/[])
 {
-  std::cout << "\nDakota requested but not compiled in!\n" << std::endl;
+  printf("\nDakota requested but not compiled in!\n");
   return 999;
 }
+
 #endif  // ALBANY_DAKOTA
-#endif //ALBANY_DAKOTA_H
+
+#endif //ALBANY_DAKOTA_HPP

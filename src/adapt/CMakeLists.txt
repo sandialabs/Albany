@@ -8,8 +8,8 @@
 # Adaptation
 
 SET(SOURCES
-    AAdapt_AbstractAdapterT.cpp
-    AAdapt_AdaptiveSolutionManagerT.cpp
+    AAdapt_AbstractAdapter.cpp
+    AAdapt_AdaptiveSolutionManager.cpp
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
     AAdapt_SolutionObserver.cpp
@@ -22,8 +22,8 @@ SET(SOURCES
    )
 
 SET(HEADERS
-    AAdapt_AbstractAdapterT.hpp
-    AAdapt_AdaptiveSolutionManagerT.hpp
+    AAdapt_AbstractAdapter.hpp
+    AAdapt_AdaptiveSolutionManager.hpp
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
     AAdapt_SolutionObserver.hpp
@@ -36,37 +36,25 @@ SET(HEADERS
 
 IF(ALBANY_STK)
   SET(SOURCES ${SOURCES}
-    AAdapt_CopyRemeshT.cpp
+    AAdapt_CopyRemesh.cpp
   )
   SET(HEADERS ${HEADERS}
-    AAdapt_CopyRemeshT.hpp
+    AAdapt_CopyRemesh.hpp
   )
 ENDIF()
 
 
 IF (ALBANY_EPETRA) 
   SET(SOURCES ${SOURCES} 
-    AAdapt_AbstractAdapter.cpp
     AAdapt_AdaptationFactory.cpp
-    AAdapt_AdaptiveSolutionManager.cpp
     AAdapt_AdaptiveModelFactory.cpp
     AAdapt_ThyraAdaptiveModelEvaluator.cpp
    ) 
   SET(HEADERS ${HEADERS} 
-    AAdapt_AbstractAdapter.hpp
     AAdapt_AdaptationFactory.hpp
-    AAdapt_AdaptiveSolutionManager.hpp
     AAdapt_AdaptiveModelFactory.hpp
     AAdapt_ThyraAdaptiveModelEvaluator.hpp
   )
-  IF(ALBANY_STK)
-    SET(SOURCES ${SOURCES}
-      AAdapt_CopyRemesh.cpp
-    )
-    SET(HEADERS ${HEADERS}
-      AAdapt_CopyRemesh.hpp
-    )
-  ENDIF()
 ENDIF()
 
 # Random Criterion & Stress Fracture depend on LCM
@@ -84,61 +72,39 @@ SET(HEADERS ${HEADERS}
    )
 
 IF (ALBANY_EPETRA) 
-SET(SOURCES ${SOURCES} 
-    AAdapt_RandomFracture.cpp
-    )
-SET(HEADERS ${HEADERS}
-    AAdapt_RandomFracture.hpp
-    )
-ENDIF()
+  SET(SOURCES ${SOURCES} 
+      AAdapt_RandomFracture.cpp
+      )
+  SET(HEADERS ${HEADERS}
+      AAdapt_RandomFracture.hpp
+      )
+  ENDIF()
 ENDIF()
 
 # Topology Modification depends on LCM and STK
 IF(ALBANY_LCM AND ALBANY_STK AND ALBANY_BGL)
 
-SET(SOURCES ${SOURCES}
-    AAdapt_TopologyModificationT.cpp
-   )
+  SET(SOURCES ${SOURCES}
+      AAdapt_TopologyModification.cpp
+     )
 
-SET(HEADERS ${HEADERS}
-    AAdapt_TopologyModificationT.hpp
-   )
-
-IF (ALBANY_EPETRA)
- 
-SET(SOURCES ${SOURCES} 
-    AAdapt_TopologyModification.cpp
-    )
-SET(HEADERS ${HEADERS}
-    AAdapt_TopologyModification.hpp
-    )
-    
-ENDIF()
+  SET(HEADERS ${HEADERS}
+      AAdapt_TopologyModification.hpp
+     )
 
 ENDIF()
 
 IF(ALBANY_LCM AND ALBANY_STK_PERCEPT AND ALBANY_STK)
+  SET(SOURCES ${SOURCES}
+      AAdapt_STKAdapt.cpp
+      AAdapt_STKConstantSizeField.cpp
+     )
 
-SET(SOURCES ${SOURCES}
-    AAdapt_STKAdaptT.cpp
-    AAdapt_STKConstantSizeField.cpp
-   )
-
-SET(HEADERS ${HEADERS}
-    AAdapt_STKAdaptT.hpp
-    AAdapt_STKAdaptT_Def.hpp
-    AAdapt_STKConstantSizeField.hpp
-   )
-
-IF (ALBANY_EPETRA) 
-SET(SOURCES ${SOURCES}
-    AAdapt_STKAdapt.cpp
-    )
-SET(HEADERS ${HEADERS}
-    AAdapt_STKAdapt.hpp
-    AAdapt_STKAdapt_Def.hpp
-)
-ENDIF()
+  SET(HEADERS ${HEADERS}
+      AAdapt_STKAdapt.hpp
+      AAdapt_STKAdapt_Def.hpp
+      AAdapt_STKConstantSizeField.hpp
+     )
 
 ENDIF()
 

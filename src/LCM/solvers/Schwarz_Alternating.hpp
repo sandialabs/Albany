@@ -11,9 +11,9 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_Application.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_MaterialDatabase.hpp"
-#include "Albany_ModelEvaluatorT.hpp"
 #include "Piro_NOXSolver.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"

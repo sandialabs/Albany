@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_STKUNIFSIZEFIELD_HPP
-#define AADAPT_STKUNIFSIZEFIELD_HPP
+#ifndef AADAPT_STK_UNIF_SIZE_FIELD_HPP
+#define AADAPT_STK_UNIF_SIZE_FIELD_HPP
 
 #include <stk_percept/PerceptMesh.hpp>
 #include <stk_percept/function/ElementOp.hpp>
@@ -13,38 +13,36 @@
 namespace AAdapt {
 
 class STKUnifRefineField : public stk::percept::ElementOp {
+public:
 
-  public:
+  STKUnifRefineField(stk::percept::PerceptMesh& eMesh) : m_eMesh(eMesh) {
+  }
 
-    STKUnifRefineField(stk::percept::PerceptMesh& eMesh) : m_eMesh(eMesh) {
-    }
-stk_
-    virtual bool operator()(stk::mesh::Entity element,
-                            stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData);
-    virtual void init_elementOp() {}
-    virtual void fini_elementOp() {}
+  virtual bool operator()(stk::mesh::Entity element,
+                          stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData);
+  virtual void init_elementOp() {}
+  virtual void fini_elementOp() {}
 
-  private:
-    stk::percept::PerceptMesh& m_eMesh;
+private:
+  stk::percept::PerceptMesh& m_eMesh;
 };
 
 class STKUnifUnrefineField : public stk::percept::ElementOp {
 
-  public:
+public:
 
-    STKUnifUnrefineField(stk::percept::PerceptMesh& eMesh) : m_eMesh(eMesh) {
-    }
+  STKUnifUnrefineField(stk::percept::PerceptMesh& eMesh) : m_eMesh(eMesh) {
+  }
 
-    virtual bool operator()(stk::mesh::Entity element,
-                            stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData);
-    virtual void init_elementOp() {}
-    virtual void fini_elementOp() {}
+  virtual bool operator()(stk::mesh::Entity element,
+                          stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData);
+  virtual void init_elementOp() {}
+  virtual void fini_elementOp() {}
 
-  private:
-    stk::percept::PerceptMesh& m_eMesh;
+private:
+  stk::percept::PerceptMesh& m_eMesh;
 };
 
-}
+} // namespace AAdapt
 
-#endif
-
+#endif // AADAPT_STK_UNIF_SIZE_FIELD_HPP

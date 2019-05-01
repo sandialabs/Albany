@@ -4,10 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(Aeras_HVDecorator_hpp)
-#define Aeras_HVDecorator_hpp
+#ifndef AERAS_HV_DECORATOR_HPP
+#define AERAS_HV_DECORATOR_HPP
 
-#include "Albany_ModelEvaluatorT.hpp"
+#include "Albany_ModelEvaluator.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
@@ -19,7 +19,7 @@ namespace Aeras {
 ///
 /// \brief Definition for the HyperViscosityDecorator
 ///
-class HVDecorator: public Albany::ModelEvaluatorT {
+class HVDecorator: public Albany::ModelEvaluator {
 
 public:
 
@@ -51,6 +51,6 @@ private:
   Teuchos::RCP<Thyra_Vector>   xtilde; 
 };
 
-}
+} // namespace Aeras
 
-#endif // ALBANY_HVDECORATOR_HPP
+#endif // ALBANY_HV_DECORATOR_HPP

@@ -16,14 +16,14 @@ typedef stk::mesh::RelationIdentifier EdgeId;
 typedef stk::mesh::EntityKey EntityKey;
 
 //----------------------------------------------------------------------------
-AAdapt::CopyRemesh::
-CopyRemesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
-           const Teuchos::RCP<ParamLib>& param_lib,
-           Albany::StateManager& state_mgr,
-           const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  AAdapt::AbstractAdapter(params, param_lib, state_mgr, commT),
-  remesh_file_index_(1) {
-
+CopyRemesh::
+CopyRemesh(Teuchos::RCP<Teuchos::ParameterList> const & params,
+           Teuchos::RCP<ParamLib>               const & param_lib,
+           Albany::StateManager                 const & state_mgr,
+           Teuchos::RCP<Teuchos_Comm const>     const & comm)
+ : AbstractAdapter(params, param_lib, state_mgr, comm)
+ , remesh_file_index_(1)
+{
   discretization_ = state_mgr_.getDiscretization();
 
   stk_discretization_ =
@@ -38,48 +38,36 @@ CopyRemesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Save the initial output file name
   base_exo_filename_ = stk_mesh_struct_->exoOutFile;
-
 }
 
 //----------------------------------------------------------------------------
-AAdapt::CopyRemesh::
-~CopyRemesh() {
-}
-
-//----------------------------------------------------------------------------
-bool
-AAdapt::CopyRemesh::queryAdaptationCriteria() {
+bool CopyRemesh::queryAdaptationCriteria(int iter) {
 
   if(adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0){
 
-    if(iter > 1)
-
+    if(iter > 1) {
       return true;
-
-    else
-
+    } else {
       return false;
-
+    }
   }
 
   Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
 
-  for(int i = 0; i < remesh_iter.size(); i++)
-
-    if(iter == remesh_iter[i])
-
+  for(int i = 0; i < remesh_iter.size(); i++) {
+    if(iter == remesh_iter[i]) {
       return true;
+    }
+  }
 
   return false;
-
 }
 
 //----------------------------------------------------------------------------
-bool
-AAdapt::CopyRemesh::adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution) {
+bool CopyRemesh::adaptMesh(){
 
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
-  std::cout << "Adapting mesh using AAdapt::CopyRemesh method       \n";
+  std::cout << "Adapting mesh using CopyRemesh method       \n";
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
   // Save the current results and close the exodus file
@@ -107,25 +95,11 @@ AAdapt::CopyRemesh::adaptMesh(const Epetra_Vector& solution, const Epetra_Vector
   stk_discretization_->updateMesh();
 
   return true;
-
-}
-
-//----------------------------------------------------------------------------
-//
-// Transfer solution between meshes.
-//
-void
-AAdapt::CopyRemesh::
-solutionTransfer(const Epetra_Vector& oldSolution,
-                 Epetra_Vector& newSolution) {
-
-  TEUCHOS_TEST_FOR_EXCEPT(oldSolution.MyLength() != newSolution.MyLength());
-  newSolution = oldSolution;
 }
 
 //----------------------------------------------------------------------------
 Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::CopyRemesh::getValidAdapterParameters() const {
+CopyRemesh::getValidAdapterParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericAdapterParams("ValidCopyRemeshParameters");
 
@@ -137,4 +111,5 @@ AAdapt::CopyRemesh::getValidAdapterParameters() const {
   return validPL;
 }
 //----------------------------------------------------------------------------
-}
+
+} // namespace AAdapt

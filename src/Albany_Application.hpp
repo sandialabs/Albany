@@ -16,24 +16,12 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
-#if defined(ALBANY_EPETRA)
-#include "Epetra_CrsMatrix.h"
-#include "Epetra_Export.h"
-#include "Epetra_Import.h"
-#include "Epetra_Map.h"
-#include "Epetra_Vector.h"
-#endif
-
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
 
-#if defined(ALBANY_EPETRA)
 #include "AAdapt_AdaptiveSolutionManager.hpp"
-#endif
-
-#include "AAdapt_AdaptiveSolutionManagerT.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 
 #include "Sacado_ParameterAccessor.hpp"
@@ -45,17 +33,6 @@
 #include "PHAL_Setup.hpp"
 #include "PHAL_Workset.hpp"
 #include <set>
-
-#if defined(ALBANY_EPETRA)
-
-#include "EpetraExt_MultiComm.h"
-#include "LOCA_Epetra_Group.H"
-
-#if defined(ALBANY_TEKO)
-#include "Teko_InverseLibrary.hpp"
-#endif
-
-#endif
 
 // Forward declarations.
 namespace AAdapt {
@@ -78,18 +55,21 @@ public:
     Eigensolve
   };
 
-  //! Constructor
-  Application(
-      const Teuchos::RCP<const Teuchos_Comm> &comm,
-      const Teuchos::RCP<Teuchos::ParameterList> &params,
-      const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null,
-      const bool schwarz = false);
+  //! Constructor(s) and Destructor
+  Application(const Teuchos::RCP<const Teuchos_Comm> &comm,
+              const Teuchos::RCP<Teuchos::ParameterList> &params,
+              const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null,
+              const bool schwarz = false);
 
-  //! Constructor
   Application(const Teuchos::RCP<const Teuchos_Comm> &comm);
 
-  //! Destructor
-  ~Application();
+  Application(const Application &) = delete;
+
+  ~Application() = default;
+
+  //! Prohibit copying/moving
+  Application &operator=(const Application &) = delete;
+  Application &operator=(Application &&) = delete;
 
   void initialSetUp(const Teuchos::RCP<Teuchos::ParameterList> &params);
   void createMeshSpecs();
@@ -115,19 +95,8 @@ public:
   //! Create Jacobian operator
   Teuchos::RCP<Thyra_LinearOp> createJacobianOp() const;
 
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_Operator> getPreconditioner();
-
-  //! Get initial solution
-  Teuchos::RCP<const Epetra_Vector> getInitialSolution() const;
-
-  //! Get initial solution dot
-  Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
-  Teuchos::RCP<const Epetra_Vector> getInitialSolutionDotDot() const;
-#endif
-
   //! Get Preconditioner Operator
-  Teuchos::RCP<Tpetra_Operator> getPreconditionerT();
+  Teuchos::RCP<Thyra_LinearOp> getPreconditioner();
 
   bool observeResponses() const { return observe_responses; }
 
@@ -137,14 +106,8 @@ public:
     return relative_responses;
   }
 
-#if defined(ALBANY_EPETRA)
-  //! Get the solution memory manager
   Teuchos::RCP<AAdapt::AdaptiveSolutionManager> getAdaptSolMgr() {
     return solMgr;
-  }
-#endif
-  Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> getAdaptSolMgrT() {
-    return solMgrT;
   }
 
   //! Get parameter library
@@ -230,13 +193,6 @@ public:
   /*!
    * Set xdot to NULL for steady-state problems
    */
-  void computeGlobalPreconditionerT(const Teuchos::RCP<Tpetra_CrsMatrix> &jac,
-                                    const Teuchos::RCP<Tpetra_Operator> &prec);
-
-#if defined(ALBANY_EPETRA)
-  void computeGlobalPreconditioner(const Teuchos::RCP<Epetra_CrsMatrix> &jac,
-                                   const Teuchos::RCP<Epetra_Operator> &prec);
-#endif
 
   void computeGlobalTangent(
       const double alpha, const double beta, const double omega,
@@ -361,30 +317,9 @@ public:
   //! Access to app parameter list
   Teuchos::RCP<Teuchos::ParameterList> getAppPL() { return params_; }
 
-#if defined(ALBANY_EPETRA)
-  //! Accessor function to Epetra_Import the solution from other PEs for output
-  Epetra_Vector *getOverlapSolution(const Epetra_Vector &solution) {
-    return solMgr->getOverlapSolution(solution);
-  }
-#endif
-
   bool is_adjoint;
 
 private:
-  //! Private to prohibit copying
-  Application(const Application &);
-
-  //! Private to prohibit copying
-  Application &operator=(const Application &);
-
-#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
-  //! Call to Teko to build strided block operator
-  Teuchos::RCP<Epetra_Operator>
-  buildWrappedOperator(const Teuchos::RCP<Epetra_Operator> &Jac,
-                       const Teuchos::RCP<Epetra_Operator> &wrapInput,
-                       bool reorder = false) const;
-#endif
-
   //! Utility function to set up ShapeParameters through Sacado
   void registerShapeParameters();
 
@@ -480,7 +415,7 @@ public:
 
 #if defined(ALBANY_LCM)
   // Needed for coupled Schwarz
-public:
+
   void
   setApplications(Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> ca) {
     apps_ = ca;
@@ -602,13 +537,8 @@ protected:
 
   bool requires_orig_dbcs_;
 
-#if defined(ALBANY_EPETRA)
-  //! Communicator
-  Teuchos::RCP<const Epetra_Comm> comm;
-#endif
-
-  //! Tpetra communicator and Kokkos node
-  Teuchos::RCP<const Teuchos_Comm> commT;
+  //! Teuchos communicator
+  Teuchos::RCP<const Teuchos_Comm> comm;
 
   //! Output stream, defaults to pronting just Proc 0
   Teuchos::RCP<Teuchos::FancyOStream> out;
@@ -637,13 +567,8 @@ protected:
   //! Distributed parameter library
   Teuchos::RCP<DistributedParameterLibrary> distParamLib;
 
-#if defined(ALBANY_EPETRA)
   //! Solution memory manager
   Teuchos::RCP<AAdapt::AdaptiveSolutionManager> solMgr;
-#endif
-
-  //! Solution memory manager
-  Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> solMgrT;
 
   //! Reference configuration (update) manager
   Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
@@ -662,12 +587,6 @@ protected:
 
   //! Phalanx Field Manager for states
   Teuchos::Array<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> sfm;
-
-#if defined(ALBANY_EPETRA)
-  //! Product multi-comm
-  Teuchos::RCP<const EpetraExt::MultiComm> product_comm;
-
-#endif
 
   bool explicit_scheme;
 
@@ -708,12 +627,6 @@ protected:
 
   unsigned int neq, spatial_dimension, tangent_deriv_dim;
 
-#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
-  //! Teko stuff
-  Teuchos::RCP<Teko::InverseLibrary> inverseLib;
-  Teuchos::RCP<Teko::InverseFactory> inverseFac;
-  Teuchos::RCP<Epetra_Operator> wrappedJac;
-#endif
   std::vector<int> blockDecomp;
 
   //! Phalanx postRegistration data
@@ -752,11 +665,12 @@ protected:
   // local responses
   Teuchos::Array<unsigned int> relative_responses;
 };
-} // namespace Albany
 
 template <typename EvalT>
-void Albany::Application::loadWorksetBucketInfo(PHAL::Workset &workset,
-                                                const int &ws) {
+void Application::
+loadWorksetBucketInfo (PHAL::Workset &workset,
+                       const int &ws)
+{
   const auto &wsElNodeEqID = disc->getWsElNodeEqID();
   const auto &wsElNodeID = disc->getWsElNodeID();
   const auto &coords = disc->getCoords();
@@ -792,5 +706,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset &workset,
   // FIXME, 6/25: This line was causing link error.  Need to figure out why.
   // workset.auxDataPtrT = stateMgr.getAuxDataT();
 }
+
+} // namespace Albany
 
 #endif // ALBANY_APPLICATION_HPP

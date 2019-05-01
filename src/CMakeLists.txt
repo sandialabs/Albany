@@ -25,11 +25,10 @@ SET(SOURCES
   PHAL_Setup.cpp
   Albany_Application.cpp
   Albany_Memory.cpp
-  Albany_ModelFactory.cpp
-  Albany_ModelEvaluatorT.cpp
+  Albany_ModelEvaluator.cpp
   Albany_NullSpaceUtils.cpp
   Albany_ObserverImpl.cpp
-  Albany_PiroObserverT.cpp
+  Albany_PiroObserver.cpp
   Albany_StatelessObserverImpl.cpp
   Albany_StateManager.cpp
   PHAL_Utilities.cpp
@@ -43,10 +42,8 @@ ENDIF()
 
 IF(ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
-    Albany_ModelEvaluator.cpp
     Albany_NOXObserver.cpp
     Albany_NOXStatelessObserver.cpp
-    Albany_PiroObserver.cpp
   )
   IF(ALBANY_RYTHMOS)
     SET(SOURCES ${SOURCES} Albany_RythmosObserver.cpp)
@@ -63,11 +60,10 @@ SET(HEADERS
   Albany_EigendataInfoStructT.hpp
   Albany_KokkosTypes.hpp
   Albany_Memory.hpp
-  Albany_ModelFactory.hpp
-  Albany_ModelEvaluatorT.hpp
+  Albany_ModelEvaluator.hpp
   Albany_NullSpaceUtils.hpp
   Albany_ObserverImpl.hpp
-  Albany_PiroObserverT.hpp
+  Albany_PiroObserver.hpp
   Albany_ScalarOrdinalTypes.hpp
   Albany_SolverFactory.hpp
   Albany_StateManager.hpp
@@ -90,11 +86,9 @@ SET(HEADERS
 IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
     Albany_EigendataInfoStruct.hpp
-    Albany_ModelEvaluator.hpp
     Albany_NOXObserver.hpp
     Albany_NOXStatelessObserver.hpp
     Albany_ObserverFactory.hpp
-    Albany_PiroObserver.hpp
     Petra_Converters.hpp
   )
   IF(ALBANY_RYTHMOS)
@@ -800,22 +794,14 @@ endif()
 # Now build executables from this library, tailored main()s, and Trilinos
 IF (NOT ALBANY_LIBRARIES_ONLY)
 
-IF (ALBANY_EPETRA)
-  add_executable(Albany Main_Solve.cpp)
-ENDIF()
+add_executable(Albany Main_Solve.cpp)
 
-add_executable(AlbanyT Main_SolveT.cpp)
-
-SET(ALBANY_EXECUTABLES AlbanyT)
-IF (ALBANY_EPETRA)
-  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
-ENDIF()
+SET(ALBANY_EXECUTABLES Albany)
 
 IF (ALBANY_MPMD)
-  add_executable(AlbanyMPMD Main_SolveT_MPMD.cpp)
+  add_executable(AlbanyMPMD Main_Solve_MPMD.cpp)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
 ENDIF()
-
 
 if (ALBANY_ASCR AND ALBANY_EPETRA)
   add_executable(AlbanyCoupled Main_Coupled.cpp)
@@ -823,21 +809,14 @@ SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
     AlbanyCoupled
     )
 endif()
-IF (ALBANY_DAKOTA AND ALBANY_EPETRA)
+
+IF (ALBANY_DAKOTA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
 ENDIF ()
-IF (ALBANY_DAKOTA)
-  add_executable(AlbanyDakotaT Main_DakotaT.cpp Albany_DakotaT.cpp Albany_DakotaT.hpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakotaT)
-ENDIF ()
 
-IF (ALBANY_EPETRA)
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
-ENDIF()
-add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysisT)
 
 IF (ALBANY_MESHDB_TOOLS)
   add_executable(exopumiconvert disc/tools/exopumiconvert.cpp)

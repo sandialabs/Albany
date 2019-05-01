@@ -393,8 +393,8 @@ ENDIF()
 # be needed at all in the Trilinos.  This will be accomplished by ifdef'ing
 # out all the Epetra stuff
 
-OPTION(ENABLE_ALBANY_EPETRA_EXE "Flag to turn on building of Albany Epetra Executable" ON)
-IF (ENABLE_ALBANY_EPETRA_EXE)
+OPTION(ENABLE_ALBANY_EPETRA "Flag to turn on building of code depending on Epetra" ON)
+IF (ENABLE_ALBANY_EPETRA)
   MESSAGE("-- ALBANY_EPETRA_EXE     is Enabled, compiling with -DALBANY_EPETRA")
   SET(ALBANY_EPETRA TRUE)
 

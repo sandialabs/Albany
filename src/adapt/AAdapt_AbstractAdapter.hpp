@@ -4,17 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_ABSTRACT_ADAPTER_HPP
-#define AADAPT_ABSTRACT_ADAPTER_HPP
+#ifndef AADAPT_ABSTRACT_ADAPTERT_HPP
+#define AADAPT_ABSTRACT_ADAPTERT_HPP
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_VerboseObject.hpp>
-
-#include <Epetra_Map.h>
-#include <Epetra_Vector.h>
-
-#include <NOX_Epetra_AdaptManager.H>
 
 #include "Albany_SacadoTypes.hpp"
 
@@ -25,25 +20,34 @@ namespace AAdapt {
 ///
 /// \brief Abstract interface for representing the set of adaptation tools available.
 ///
-class AbstractAdapter : public NOX::Epetra::AdaptManager
-{
+class AbstractAdapter {
+
 public:
 
   ///
   /// Only constructor
   ///
-  AbstractAdapter(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                  const Teuchos::RCP<ParamLib>& paramLib_,
-                  Albany::StateManager& StateMgr_,
-                  const Teuchos::RCP<const Teuchos_Comm>& commT_);
+  AbstractAdapter (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                   const Teuchos::RCP<ParamLib>& paramLib_,
+                   const Albany::StateManager& StateMgr_,
+                   const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
   ///
   /// Destructor
   ///
-  virtual ~AbstractAdapter() {};
+  virtual ~AbstractAdapter() = default;
+
+  //! Method called by LOCA Solver to determine if the mesh needs adapting
+  // A return type of true means that the mesh should be adapted
+  virtual bool queryAdaptationCriteria(int iteration) = 0;
+
+  //! Method called by LOCA Solver to actually adapt the mesh
+  //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
+  virtual bool adaptMesh() = 0;
+
 
   ///
-  /// Each adapter must generate it's list of valid parameters
+  /// Each adapter must generate its list of valid parameters
   ///
   virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const {
     return getGenericAdapterParams("Generic Adapter List");
@@ -76,14 +80,14 @@ protected:
   ///
   /// State Manager
   ///
-  Albany::StateManager& state_mgr_;
+  const Albany::StateManager& state_mgr_;
 
   ///
-  /// Epetra communicator
+  /// Teuchos communicator
   ///
-  Teuchos::RCP<const Teuchos_Comm> commT_;
+  Teuchos::RCP<const Teuchos_Comm> teuchos_comm_;
 };
 
 } // namespace AAdapt
 
-#endif // AADAPT_ABSTRACT_ADAPTER_HPP
+#endif // AADAPT_ABSTRACT_ADAPTERT_HPP

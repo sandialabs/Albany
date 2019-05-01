@@ -7,7 +7,6 @@
 
 #include <sstream>
 
-#include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Schwarz_CoupledJacobian.hpp"
 #include "SolutionSniffer.hpp"
@@ -424,17 +423,13 @@ SchwarzCoupled::SchwarzCoupled(
     apps_[m] = Teuchos::rcp(new Albany::Application(
         comm, model_app_params_[m].create_weak(), initial_guess, true));
 
-    int num_sol_vectors =
-        Albany::getNumVectors(apps_[m]->getAdaptSolMgrT()->getInitialSolution()); 
+    int num_sol_vectors = apps_[m]->getAdaptSolMgr()->getInitialSolution()->domain()->dim(); 
 
     if (num_sol_vectors > 1)  // have x dot
       supports_xdot_ = true;
 
     // Create model evaluator
-    Albany::ModelFactory model_factory(
-        model_app_params_[m].create_weak(), apps_[m]);
-
-    models_[m] = model_factory.createT();
+    models_[m] = Teuchos::rcp( new Albany::ModelEvaluator(apps_[m], model_app_params_[m].create_weak()) );
 
     // create array of individual model jacobians
     Teuchos::RCP<Thyra_LinearOp> const jac_temp =
@@ -546,8 +541,6 @@ SchwarzCoupled::SchwarzCoupled(
 
   //--------------End setting of nominal values------------------
 }
-
-SchwarzCoupled::~SchwarzCoupled() {}
 
 // Overridden from Thyra::ModelEvaluator<ST>
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
@@ -774,7 +767,7 @@ SchwarzCoupled::allocateVectors()
 
   for (auto m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Thyra_MultiVector const> const xMV =
-        apps_[m]->getAdaptSolMgrT()->getInitialSolution();
+        apps_[m]->getAdaptSolMgr()->getInitialSolution();
 
     Teuchos::RCP<Thyra_Vector> xT_vec = Thyra::createMember(spaces[m]); 
     Thyra::copy(*xMV->col(0), xT_vec.ptr()); 

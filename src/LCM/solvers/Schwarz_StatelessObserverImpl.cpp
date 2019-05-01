@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include "Schwarz_StatelessObserverImpl.hpp"
 
 namespace LCM {
@@ -56,11 +57,11 @@ StatelessObserverImpl::observeSolution(
 
   for (int m = 0; m < n_models_; m++) {
     Teuchos::RCP<Thyra_Vector const> const overlapped_solution =
-        apps_[m]->getAdaptSolMgrT()->updateAndReturnOverlapSolution(
+        apps_[m]->getAdaptSolMgr()->updateAndReturnOverlapSolution(
             *non_overlapped_solution[m]);
     if (non_overlapped_solution_dot[m] != Teuchos::null) {
       const Teuchos::RCP<const Thyra_Vector> overlapped_solution_dot =
-          apps_[m]->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDot(
+          apps_[m]->getAdaptSolMgr()->updateAndReturnOverlapSolutionDot(
               *non_overlapped_solution_dot[m]);
       apps_[m]->getDiscretization()->writeSolution(
           *overlapped_solution,
@@ -72,7 +73,6 @@ StatelessObserverImpl::observeSolution(
           *overlapped_solution, stamp, true);
     }
   }
-  return;
 }
 
 }  // namespace LCM

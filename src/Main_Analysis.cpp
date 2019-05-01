@@ -3,27 +3,24 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include <iostream>
 
 #include "Albany_Utils.hpp"
 #include "Albany_CommUtils.hpp"
 #include "Albany_SolverFactory.hpp"
 
-#include "Thyra_EpetraModelEvaluator.hpp"
-#include "Piro_PerformAnalysis.hpp"
-#include "Teuchos_GlobalMPISession.hpp"
-#include "Teuchos_StackedTimer.hpp"
-#include "Teuchos_TimeMonitor.hpp"
-#include "Teuchos_VerboseObject.hpp"
-#include "Teuchos_StandardCatchMacros.hpp"
+#include <Piro_PerformAnalysis.hpp>
+#include <Teuchos_GlobalMPISession.hpp>
+#include <Teuchos_StackedTimer.hpp>
+#include <Teuchos_TimeMonitor.hpp>
+#include <Teuchos_VerboseObject.hpp>
+#include <Teuchos_StandardCatchMacros.hpp>
 
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
   bool success = true;
-
-  // Set the linear algebra type
-  Albany::build_type(Albany::BuildType::Epetra);
 
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
@@ -57,26 +54,34 @@ int main(int argc, char *argv[]) {
       Albany::connect_vtune(comm->getRank());
     }
 
-    Teuchos::RCP<Albany::SolverFactory> slvrfctry =
-      Teuchos::rcp(new Albany::SolverFactory(cmd.yaml_filename, comm));
+    Albany::SolverFactory slvrfctry (cmd.yaml_filename, comm);
 
-    Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(comm, comm);
+    Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > appThyra = slvrfctry.create(comm, comm);
 
-
-    Thyra::EpetraModelEvaluator appThyra;
-    appThyra.initialize(App, Teuchos::null);
+    auto& bt = slvrfctry.getParameters().get("Build Type","Tpetra");
+    if (bt=="Tpetra") {
+      // Set the static variable that denotes this as a Tpetra run
+      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+    } else if (bt=="Epetra") {
+      // Set the static variable that denotes this as a Epetra run
+      static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                                 "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
+                                 "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+    }
 
     Teuchos::RCP< Thyra::VectorBase<double> > p;
 
     // If no analysis section set in input file, default to simple "Solve"
-    std::string analysisPackage = slvrfctry->getAnalysisParameters().get("Analysis Package","Solve");
-    status = Piro::PerformAnalysis(appThyra, slvrfctry->getAnalysisParameters(), p); 
+    std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
+    status = Piro::PerformAnalysis(*appThyra, slvrfctry.getAnalysisParameters(), p); 
 
 //    Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();
 //    std::cout << "\nAlbany_Dakota: Final Values from Dakota = "
 //         << setprecision(8) << finalValues << std::endl;
 
-    status =  slvrfctry->checkAnalysisTestResults(0, p);
+    status = slvrfctry.checkAnalysisTestResults(0, p);
 
     // Regression comparisons for Dakota runs only valid on Proc 0.
     if (mpiSession.getRank()>0)  status=0;

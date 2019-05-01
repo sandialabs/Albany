@@ -7,5 +7,13 @@
 #include "AAdapt_STKAdapt.hpp"
 #include "AAdapt_STKAdapt_Def.hpp"
 
-STKADAPT_INSTANTIATE_TEMPLATE_CLASS(AAdapt::STKAdapt)
+#include "AAdapt_STKUnifSizeField.hpp"
 
+namespace AAdapt
+{
+
+// Explicit instantiations
+template class STKAdapt<STKUnifRefineField>;
+
+
+} // namespace AAdapt

@@ -30,14 +30,53 @@
 
 #include "AAdapt_MeshAdapt.hpp"
 
-AAdapt::MeshAdapt::
+namespace AAdapt
+{
+
+/* Adaptation loop.
+ *   Namespace al and method adaptMeshLoop implement the following operation. We
+ * have current coordinates c and the solution vector of displacements d. Now we
+ * need to update the coordinates to be c' = c + d and then hand c' to the
+ * SCOREC remesher.
+ *   One problem is that if we simply add d to c, some tets may flip from having
+ * positive volume to negative volume. This loop implements a stepping procedure
+ * that tries out c'' = c + alpha d, with the goal of moving alpha from 0 to
+ * 1. It tries alpha = 1 first to take advantage of the easy case of no volume
+ * sign flips. If that fails, then it backs off. Once it finds 0 < alpha < 1 for
+ * which c'' has all positive-volume tets, c'' is passed to the SCOREC
+ * remesher. The remesher also interpolates (1 - alpha) d, which is the
+ * displacement remaining to be accumulated into the coordinates, to the new
+ * mesh. This procedure repeats until alpha = 1.
+ */
+namespace al {
+
+void anlzCoords(
+  const Teuchos::RCP<const Albany::PUMIDiscretization>& pumi_disc);
+void writeMesh(
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc);
+double findAlpha(
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<rc::Manager>& rc_mgr,
+  // Max number of iterations to spend if a successful alpha is already found.
+  const int n_iterations_if_found,
+  // Max number of iterations before failure is declared. Must be >=
+  // n_iterations_if_found.
+  const int n_iterations_to_fail);
+
+bool correctnessTestSkip () {
+  return false;
+}
+
+} // namespace al
+
+MeshAdapt::
 MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const Teuchos::RCP<ParamLib>& paramLib_,
           const Albany::StateManager& StateMgr_,
-          const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_,
-          const Teuchos::RCP<const Teuchos_Comm>& commT_)
-  : AbstractAdapterT(params_, paramLib_, StateMgr_, commT_),
-    remeshFileIndex(1), rc_mgr(refConfigMgr_)
+          const Teuchos::RCP<rc::Manager>& refConfigMgr_,
+          const Teuchos::RCP<const Teuchos_Comm>& comm_)
+ : AbstractAdapter(params_, paramLib_, StateMgr_, comm_)
+ , remeshFileIndex(1), rc_mgr(refConfigMgr_)
 {
   disc = StateMgr_.getDiscretization();
 
@@ -50,21 +89,21 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   const std::string& method = params_->get("Method", "");
   if (method == "RPI Constant Size")
-    szField = Teuchos::rcp(new AAdapt::ConstantSizeField(pumi_discretization));
+    szField = Teuchos::rcp(new ConstantSizeField(pumi_discretization));
   else if (method == "RPI Scaled Size")
-    szField = Teuchos::rcp(new AAdapt::ScaledSizeField(pumi_discretization));
+    szField = Teuchos::rcp(new ScaledSizeField(pumi_discretization));
   else if (method == "RPI Uniform Refine")
-    szField = Teuchos::rcp(new AAdapt::UniformRefine(pumi_discretization));
+    szField = Teuchos::rcp(new UniformRefine(pumi_discretization));
   else if (method == "RPI Albany Size")
-    szField = Teuchos::rcp(new AAdapt::AlbanySizeField(pumi_discretization));
+    szField = Teuchos::rcp(new AlbanySizeField(pumi_discretization));
   else if (method == "RPI SPR Size") {
     checkValidStateVariable(StateMgr_,params_->get<std::string>("State Variable",""));
-    szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
+    szField = Teuchos::rcp(new SPRSizeField(pumi_discretization));
   } else if (method == "RPI Extruded")
-    szField = Teuchos::rcp(new AAdapt::ExtrudedAdapt(pumi_discretization));
+    szField = Teuchos::rcp(new ExtrudedAdapt(pumi_discretization));
 #ifdef ALBANY_OMEGA_H
   else if (method == "RPI Omega_h")
-    szField = Teuchos::rcp(new AAdapt::Omega_h_Method(pumi_discretization));
+    szField = Teuchos::rcp(new Omega_h_Method(pumi_discretization));
 #endif
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -89,7 +128,7 @@ inline int getValueType (const PHX::DataLayout& dl) {
 }
 } // end anonymous namespace
 
-void AAdapt::MeshAdapt::initRcMgr () {
+void MeshAdapt::initRcMgr () {
   if (rc_mgr.is_null()) return;
   Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct =
     pumi_discretization->getPUMIMeshStruct();
@@ -113,9 +152,7 @@ void AAdapt::MeshAdapt::initRcMgr () {
   }
 }
 
-AAdapt::MeshAdapt::~MeshAdapt() {}
-
-bool AAdapt::MeshAdapt::queryAdaptationCriteria(int iteration)
+bool MeshAdapt::queryAdaptationCriteria(int iteration)
 {
   adapt_params_->set<int>("LastIter", iteration);
   std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "Step Number");
@@ -146,11 +183,11 @@ bool AAdapt::MeshAdapt::queryAdaptationCriteria(int iteration)
 }
 
 
-void AAdapt::MeshAdapt::initAdapt()
+void MeshAdapt::initAdapt()
 {
   if (PCU_Comm_Self() == 0) {
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-    std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
+    std::cout << "Adapting mesh using MeshAdapt method        " << std::endl;
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   }
 
@@ -180,7 +217,7 @@ void AAdapt::MeshAdapt::initAdapt()
 
 }
 
-void AAdapt::MeshAdapt::beforeAdapt()
+void MeshAdapt::beforeAdapt()
 {
   TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Transfer to APF Mesh");
   if (should_transfer_ip_data)
@@ -188,7 +225,7 @@ void AAdapt::MeshAdapt::beforeAdapt()
   szField->preProcessOriginalMesh();
 }
 
-void AAdapt::MeshAdapt::adaptInPartition()
+void MeshAdapt::adaptInPartition()
 {
   szField->preProcessShrunkenMesh();
   szField->adaptMesh(adapt_params_);
@@ -242,7 +279,7 @@ namespace {
   }
 } // end anonymous namespace
 
-void AAdapt::MeshAdapt::afterAdapt()
+void MeshAdapt::afterAdapt()
 {
   static int ncalls = 0;
 
@@ -282,45 +319,11 @@ void AAdapt::MeshAdapt::afterAdapt()
 
 struct AdaptCallback : public Parma_GroupCode
 {
-  AAdapt::MeshAdapt* adapter;
+  MeshAdapt* adapter;
   void run(int /* group */) {
     adapter->adaptInPartition();
   }
 };
-
-/* Adaptation loop.
- *   Namespace al and method adaptMeshLoop implement the following operation. We
- * have current coordinates c and the solution vector of displacements d. Now we
- * need to update the coordinates to be c' = c + d and then hand c' to the
- * SCOREC remesher.
- *   One problem is that if we simply add d to c, some tets may flip from having
- * positive volume to negative volume. This loop implements a stepping procedure
- * that tries out c'' = c + alpha d, with the goal of moving alpha from 0 to
- * 1. It tries alpha = 1 first to take advantage of the easy case of no volume
- * sign flips. If that fails, then it backs off. Once it finds 0 < alpha < 1 for
- * which c'' has all positive-volume tets, c'' is passed to the SCOREC
- * remesher. The remesher also interpolates (1 - alpha) d, which is the
- * displacement remaining to be accumulated into the coordinates, to the new
- * mesh. This procedure repeats until alpha = 1.
- */
-namespace al {
-void anlzCoords(
-  const Teuchos::RCP<const Albany::PUMIDiscretization>& pumi_disc);
-void writeMesh(
-  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc);
-double findAlpha(
-  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
-  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
-  // Max number of iterations to spend if a successful alpha is already found.
-  const int n_iterations_if_found,
-  // Max number of iterations before failure is declared. Must be >=
-  // n_iterations_if_found.
-  const int n_iterations_to_fail);
-
-bool correctnessTestSkip () {
-  return false;
-}
-} // namespace al
 
 /* If the mesh is spread too thin, as defined by having a small (<1000)
  * number of element on each MPI rank, the partition adjustment algorithms
@@ -333,7 +336,7 @@ bool correctnessTestSkip () {
 void adaptShrunken(apf::Mesh2* m, double min_part_density,
                    Parma_GroupCode& callback);
 
-bool AAdapt::MeshAdapt::adaptMesh()
+bool MeshAdapt::adaptMesh()
 {
   AdaptCallback callback;
   callback.adapter = this;
@@ -359,7 +362,7 @@ bool AAdapt::MeshAdapt::adaptMesh()
   return success;
 }
 
-bool AAdapt::MeshAdapt::
+bool MeshAdapt::
 adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
   const bool overlapped = true;
 
@@ -422,7 +425,7 @@ adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
 // it's almost certainly the case that we're already sunk. Iterating more than
 // once implies the displacement solution is turning an element inside
 // out. That's bad.
-bool AAdapt::MeshAdapt::
+bool MeshAdapt::
 adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
   const int
     n_max_outer_iterations = 10,
@@ -464,7 +467,7 @@ adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
   return success;
 }
 
-void AAdapt::MeshAdapt::checkValidStateVariable(
+void MeshAdapt::checkValidStateVariable(
   const Albany::StateManager& state_mgr_,
   const std::string name)
 {
@@ -498,7 +501,7 @@ void AAdapt::MeshAdapt::checkValidStateVariable(
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::MeshAdapt::getValidAdapterParameters() const
+MeshAdapt::getValidAdapterParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     getGenericAdapterParams("ValidMeshAdaptParams");
@@ -589,14 +592,14 @@ void adaptShrunken(apf::Mesh2* m, double minPartDensity,
 // to negative simplices.
 //rc-todo Can I deal with the "APF warning: 2 empty parts" issue by looping, too?
 namespace al {
+
 typedef double ExtremumFn (const double, const double);
 inline double mymin (const double a, const double b) { return std::min(a, b); }
 inline double mymax (const double a, const double b) { return std::max(a, b); }
 
 template<ExtremumFn extremum_fn>
-void dispExtremum (
-  const Teuchos::ArrayRCP<const double>& x, const int dim,
-  const std::string& extremum_str, const Teuchos::EReductionType rt)
+void dispExtremum (const Teuchos::ArrayRCP<const double>& x, const int dim,
+                   const std::string& extremum_str, const Teuchos::EReductionType rt)
 {
   double my_vals[3], global_vals[3];
   const std::size_t nx = x.size() / dim;
@@ -623,8 +626,7 @@ void dispExtremum (
 }
 
 // For analysis.
-void anlzCoords (
-  const Teuchos::RCP<const Albany::PUMIDiscretization>& pumi_disc)
+void anlzCoords (const Teuchos::RCP<const Albany::PUMIDiscretization>& pumi_disc)
 {
   // x = coords + displacement.
   const int dim = pumi_disc->getNumDim();
@@ -680,9 +682,8 @@ public:
   }
 };
 
-void updateCoordinates (
-  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
-  const CoordState& cs, const Teuchos::ArrayRCP<double>& x)
+void updateCoordinates (const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
+                        const CoordState& cs, const Teuchos::ArrayRCP<double>& x)
 {
   // Albany::PUMIDiscretization uses interleaved DOF and coordinates, so we
   // can sum coords and soln_data straightforwardly.
@@ -694,10 +695,9 @@ void updateCoordinates (
   pumi_disc->setCoordinates(x);
 }
 
-void updateRefConfig (
-  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
-  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
-  const CoordState& cs)
+void updateRefConfig (const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
+                      const Teuchos::RCP<rc::Manager>& rc_mgr,
+                      const CoordState& cs)
 {
   // x_refconfig += displacement (nonoverlapping).
   rc_mgr->update_x(*cs.soln_nol);
@@ -707,9 +707,8 @@ void updateRefConfig (
   pumi_disc->setField("x_accum", x_data.getRawPtr(), false);
 }
 
-void updateSolution (
-  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
-  const double alpha, CoordState& cs)
+void updateSolution (const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
+                     const double alpha, CoordState& cs)
 {
   // Set solution to (1 - alpha) solution.
   //   Undo the scaling the findAlpha loop applied to get back to original:
@@ -732,14 +731,13 @@ void updateSolution (
 // simplices. If this function succeeds, the coordinates are updated to c, the
 // reference configuration is updated, and the solution field is set to (1 -
 // alpha) [original solution].
-double findAlpha (
-  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
-  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
-  // Max number of iterations to spend if a successful alpha is already found.
-  const int n_iterations_if_found,
-  // Max number of iterations before failure is declared. Must be >=
-  // n_iterations_if_found.
-  const int n_iterations_to_fail)
+double findAlpha (const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
+                  const Teuchos::RCP<rc::Manager>& rc_mgr,
+                  // Max number of iterations to spend if a successful alpha is already found.
+                  const int n_iterations_if_found,
+                  // Max number of iterations before failure is declared. Must be >=
+                  // n_iterations_if_found.
+                  const int n_iterations_to_fail)
 {
   CoordState cs(pumi_disc);
 
@@ -796,4 +794,7 @@ double findAlpha (
 
   return alpha_lo;
 }
+
 } // namespace al
+
+} // namespace AAdapt

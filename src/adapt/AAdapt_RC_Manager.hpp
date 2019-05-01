@@ -3,19 +3,22 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef AADAPT_RC_MANAGER
-#define AADAPT_RC_MANAGER
+
+#ifndef AADAPT_RC_MANAGER_HPP
+#define AADAPT_RC_MANAGER_HPP
 
 #include "Albany_DataTypes.hpp"
 #include "AAdapt_RC_DataTypes.hpp"
 
 // Forward declarations.
 namespace Albany { class StateManager; class Layouts; }
-namespace PHAL { struct AlbanyTraits; class Workset; }
+namespace PHAL { struct AlbanyTraits; struct Workset; }
 namespace PHX { template<typename T> class FieldManager; }
 
 namespace AAdapt {
-class AdaptiveSolutionManagerT;
+
+// Forward declaration(s)
+class AdaptiveSolutionManager;
 
 namespace rc {
 
@@ -59,8 +62,9 @@ public:
   static Teuchos::RCP<Manager> create(
     const Teuchos::RCP<Albany::StateManager>& state_mgr,
     Teuchos::ParameterList& problem_params);
-  void setSolutionManager(
-    const Teuchos::RCP<AdaptiveSolutionManagerT>& sol_mgr);
+
+  void setSolutionManager(const Teuchos::RCP<AdaptiveSolutionManager>& sol_mgr);
+
   //! Fill valid_pl with valid parameters for this class.
   static void getValidParameters(
     Teuchos::RCP<Teuchos::ParameterList>& valid_pl);
@@ -178,4 +182,4 @@ private:
 } // namespace rc
 } // namespace AAdapt
 
-#endif // AADAPT_RC_MANAGER
+#endif // AADAPT_RC_MANAGER_HPP

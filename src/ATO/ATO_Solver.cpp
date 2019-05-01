@@ -1066,7 +1066,7 @@ Solver::CreateSubSolver (const Teuchos::RCP<Teuchos::ParameterList> appParams,
 
   //! Create solver factory, which reads xml input filen
   Albany::SolverFactory slvrfctry(appParams, comm);
-  ret.model = slvrfctry.createAndGetAlbanyAppT(ret.app, comm, comm, initial_guess);
+  ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, comm, comm, initial_guess);
 
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
 
@@ -1446,7 +1446,7 @@ Thyra_InArgs Solver::createInArgs() const
   Thyra::ModelEvaluatorBase::InArgsSetup<ST> inArgs;
   inArgs.setModelEvalDescription(this->description());
   inArgs.set_Np(m_num_parameters);
-  return std::forward<Thyra_InArgs>(inArgs);
+  return static_cast<Thyra_InArgs>(inArgs);
 }
 
 //**********************************************************************
@@ -1456,7 +1456,7 @@ Thyra_OutArgs Solver::createOutArgsImpl() const
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST> outArgs;
   outArgs.setModelEvalDescription(this->description());
   outArgs.set_Np_Ng(m_num_parameters, m_num_responses);
-  return std::forward<Thyra_OutArgs>(outArgs);
+  return static_cast<Thyra_OutArgs>(outArgs);
 }
 
 //**********************************************************************

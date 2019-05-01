@@ -4,23 +4,29 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// IK, 9/12/14: Epetra ifdef'ed out!
-// No epetra if setting ALBANY_EPETRA_EXE off.
 #include "Albany_SolverFactory.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Albany_ObserverFactory.hpp"
 #include "Albany_PiroObserver.hpp"
-#include "NOX_Epetra_Observer.H"
-#include "Petra_Converters.hpp"
-#include "Piro_Epetra_SolverFactory.hpp"
-#endif
-#include "Albany_ModelFactory.hpp"
-#include "Albany_PiroObserverT.hpp"
-
+#include "Albany_ModelEvaluator.hpp"
+#include "Albany_Application.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_ThyraUtils.hpp"
 #include "Albany_Macros.hpp"
 
-#include "Piro_ProviderBase.hpp"
+#ifdef ALBANY_ATO
+#include "ATO_Solver.hpp"
+#endif
 
+#if defined(ALBANY_LCM) && defined(ALBANY_STK)
+#include "Schwarz_Alternating.hpp"
+#include "Schwarz_Coupled.hpp"
+#include "Schwarz_PiroObserver.hpp"
+#endif
+
+#ifdef ALBANY_AERAS
+#include "Aeras/Aeras_HVDecorator.hpp"
+#endif
+
+#include "Piro_ProviderBase.hpp"
 #include "Piro_NOXSolver.hpp"
 #include "Piro_SolverFactory.hpp"
 #include "Piro_StratimikosUtils.hpp"
@@ -40,21 +46,6 @@
 #include "Teko_StratimikosFactory.hpp"
 #endif
 
-#include "Albany_ModelEvaluatorT.hpp"
-#ifdef ALBANY_ATO
-#include "ATO_Solver.hpp"
-#endif
-
-#if defined(ALBANY_LCM) && defined(ALBANY_STK)
-#include "Schwarz_Alternating.hpp"
-#include "Schwarz_Coupled.hpp"
-#include "Schwarz_PiroObserver.hpp"
-#endif
-
-#ifdef ALBANY_AERAS
-#include "Aeras/Aeras_HVDecorator.hpp"
-#endif
-
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
 
@@ -62,353 +53,8 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_YamlParameterListHelpers.hpp"
 
-#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
+#if defined(ALBANY_RYTHMOS)
 #include "Rythmos_IntegrationObserverBase.hpp"
-#endif
-
-#include "Albany_Application.hpp"
-#include "Albany_Utils.hpp"
-
-#include "Albany_ThyraUtils.hpp"
-#include "Albany_TpetraTypes.hpp"
-
-#if defined(ALBANY_EPETRA)
-namespace Albany {
-
-class NOXStatelessObserverConstructor
-    : public Piro::ProviderBase<NOX::Epetra::Observer> {
- public:
-  explicit NOXStatelessObserverConstructor(const Teuchos::RCP<Application>& app)
-      : factory_(app), instance_(Teuchos::null)
-  {
-  }
-
-  virtual Teuchos::RCP<NOX::Epetra::Observer>
-  getInstance(const Teuchos::RCP<Teuchos::ParameterList>& /* params */)
-  {
-    if (Teuchos::is_null(instance_)) instance_ = factory_.createInstance();
-    return instance_;
-  }
-
- private:
-  NOXStatelessObserverFactory         factory_;
-  Teuchos::RCP<NOX::Epetra::Observer> instance_;
-};
-
-#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
-class RythmosObserverConstructor
-    : public Piro::ProviderBase<Rythmos::IntegrationObserverBase<double>> {
- public:
-  explicit RythmosObserverConstructor(const Teuchos::RCP<Application>& app)
-      : factory_(app), instance_(Teuchos::null)
-  {
-  }
-
-  virtual Teuchos::RCP<Rythmos::IntegrationObserverBase<double>>
-  getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params);
-
- private:
-  RythmosObserverFactory                                 factory_;
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double>> instance_;
-};
-
-Teuchos::RCP<Rythmos::IntegrationObserverBase<double>>
-RythmosObserverConstructor::getInstance(
-    const Teuchos::RCP<Teuchos::ParameterList>& /*params*/)
-{
-  if (Teuchos::is_null(instance_)) {
-    instance_ = factory_.createInstance();
-  }
-  return instance_;
-}
-#endif
-
-}  // namespace Albany
-#endif
-
-using Teuchos::ParameterList;
-using Teuchos::RCP;
-using Teuchos::rcp;
-
-Albany::SolverFactory::SolverFactory(
-    const std::string&             inputFile,
-    const RCP<const Teuchos_Comm>& tcomm)
-    : out(Teuchos::VerboseObjectBase::getDefaultOStream())
-{
-  // Set up application parameters: read and broadcast XML file, and set
-  // defaults
-  // RCP<ParameterList> input_
-  appParams = Teuchos::createParameterList("Albany Parameters");
-
-  std::string const input_extension = getFileExtension(inputFile);
-
-  if (input_extension == "yaml" || input_extension == "yml") {
-    Teuchos::updateParametersFromYamlFileAndBroadcast(
-        inputFile, appParams.ptr(), *tcomm);
-  } else {
-    Teuchos::updateParametersFromXmlFileAndBroadcast(
-        inputFile, appParams.ptr(), *tcomm);
-  }
-
-  // do not set default solver parameters for ATO::Solver problems,
-  // ... as they handle this themselves
-  std::string solution_method =
-      appParams->sublist("Problem").get("Solution Method", "Steady");
-  if (solution_method != "ATO Problem") {
-    RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
-    setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
-    appParams->setParametersNotAlreadySet(*defaultSolverParams);
-  }
-
-  appParams->validateParametersAndSetDefaults(*getValidAppParameters(), 0);
-  if (appParams->isSublist("Debug Output")) {
-    Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
-    debugPL->validateParametersAndSetDefaults(*getValidDebugParameters(), 0);
-  }
-  if (appParams->isSublist("Scaling")) {
-    Teuchos::RCP<Teuchos::ParameterList> scalingPL = Teuchos::rcpFromRef(appParams->sublist("Scaling", false)); 
-    scalingPL->validateParametersAndSetDefaults(*getValidScalingParameters(), 0);
-  }
-}
-
-Albany::SolverFactory::SolverFactory(
-    const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
-    const RCP<const Teuchos_Comm>&              tcomm)
-    : appParams(input_appParams),
-      out(Teuchos::VerboseObjectBase::getDefaultOStream())
-{
-  // do not set default solver parameters for ATO::Solver
-  // problems,
-  // ... as they handle this themselves
-  std::string solution_method =
-      appParams->sublist("Problem").get("Solution Method", "Steady");
-  if (solution_method != "ATO Problem") {
-    RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
-    setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
-    appParams->setParametersNotAlreadySet(*defaultSolverParams);
-  }
-
-  appParams->validateParametersAndSetDefaults(*getValidAppParameters(), 0);
-  if (appParams->isSublist("Debug Output")) {
-    Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
-    debugPL->validateParametersAndSetDefaults(*getValidDebugParameters(), 0);
-  }
-}
-
-Albany::SolverFactory::~SolverFactory()
-{
-#if defined(ALBANY_EPETRA)
-  // Release the model to eliminate RCP circular reference
-  if (Teuchos::nonnull(thyraModelFactory)) thyraModelFactory->releaseModel();
-#endif
-
-#ifdef ALBANY_DEBUG
-  *out << "Calling destructor for Albany_SolverFactory" << std::endl;
-#endif
-}
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<EpetraExt::ModelEvaluator>
-Albany::SolverFactory::create(
-    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
-    const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
-    const Teuchos::RCP<const Thyra_Vector>& initial_guess)
-{
-  Teuchos::RCP<Albany::Application> dummyAlbanyApp;
-  return createAndGetAlbanyApp(
-      dummyAlbanyApp, appComm, solverComm, initial_guess);
-}
-#endif
-
-Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
-Albany::SolverFactory::createT(
-    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
-    const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
-    const Teuchos::RCP<const Thyra_Vector>& initial_guess)
-{
-  Teuchos::RCP<Albany::Application> dummyAlbanyApp;
-  //  Teuchos::RCP<Albany::ApplicationT> dummyAlbanyApp;
-  return createAndGetAlbanyAppT(
-      dummyAlbanyApp, appComm, solverComm, initial_guess);
-}
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<EpetraExt::ModelEvaluator>
-Albany::SolverFactory::createAndGetAlbanyApp(
-    Teuchos::RCP<Albany::Application>&       albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
-    const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
-    const Teuchos::RCP<const Thyra_Vector>&  initial_guess,
-    bool                                     createAlbanyApp)
-{
-  const RCP<ParameterList> problemParams =
-      Teuchos::sublist(appParams, "Problem");
-  const std::string solutionMethod =
-      problemParams->get("Solution Method", "Steady");
-
-#if defined(ALBANY_LCM) 
-  bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
-                          solutionMethod == "Alternating Schwarz";
-  ALBANY_ASSERT(is_schwarz == false, "Schwarz methods require AlbanyT");
-#endif
-  if (solutionMethod == "ATO Problem") {
-#ifdef ALBANY_ATO
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "EpetraExt version of ATO has been removed.\n"
-        "If you are in the process of refactoring, this is expected.\n"
-        "If the Thyra refactor has ended, you forgot to remove EpetraExt support (and you should).\n");
-#else  /* ALBANY_ATO */
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "Must activate ATO (topological optimization)\n");
-#endif /* ALBANY_ATO */
-  }
-  // Solver uses a single app, create it here along with observer
-  RCP<Albany::Application> app;
-
-  if (createAlbanyApp) {
-    app = rcp(new Albany::Application(
-        appComm, appParams, initial_guess, is_schwarz_));
-
-    // Pass back albany app so that interface beyond ModelEvaluator can be used.
-    // This is essentially a hack to allow additional in/out arguments beyond
-    //  what ModelEvaluator specifies.
-    albanyApp = app;
-  } else
-    app = albanyApp;
-
-  const RCP<EpetraExt::ModelEvaluator> model = createModel(app);
-
-  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-
-  if (solutionMethod == "Continuation") {
-    ParameterList& locaParams = piroParams->sublist("LOCA");
-    if (app->getDiscretization()->hasRestartSolution()) {
-      // Pick up problem time from restart file
-      locaParams.sublist("Stepper").set(
-          "Initial Value", app->getDiscretization()->restartDataTime());
-    }
-  }
-
-  // Create and setup the Piro solver factory
-  Piro::Epetra::SolverFactory piroEpetraFactory;
-  {
-#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
-    // Observers for output from time-stepper
-    const RCP<Piro::ProviderBase<Rythmos::IntegrationObserverBase<double>>>
-        rythmosObserverProvider = rcp(new RythmosObserverConstructor(app));
-    piroEpetraFactory.setSource<Rythmos::IntegrationObserverBase<double>>(
-        rythmosObserverProvider);
-#endif
-
-    // LOCA auxiliary objects
-    {
-      const RCP<AAdapt::AdaptiveSolutionManager> adaptMgr =
-          app->getAdaptSolMgr();
-      piroEpetraFactory.setSource<Piro::Epetra::AdaptiveSolutionManager>(
-          adaptMgr);
-    }
-  }
-
-  // Silence compiler warning in case it wasn't used (due to ifdef logic)
-  (void) solverComm;
-
-  // Piro::Epetra::SolverFactory
-  return piroEpetraFactory.createSolver(piroParams, model);
-}
-
-Teuchos::RCP<Thyra::ModelEvaluator<double>>
-Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
-    Teuchos::RCP<Application>&               albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
-    const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
-    const Teuchos::RCP<const Thyra_Vector>&  initial_guess,
-    bool                                     createAlbanyApp)
-{
-  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-  const Teuchos::Ptr<const std::string> solverToken(
-      piroParams->getPtr<std::string>("Solver Type"));
-
-  bool TpetraBuild = Albany::build_type() == Albany::BuildType::Tpetra;
-
-  const RCP<ParameterList> problemParams =
-      Teuchos::sublist(appParams, "Problem");
-  const std::string solutionMethod =
-      problemParams->get("Solution Method", "Steady");
-
-  if (Teuchos::nonnull(solverToken) && *solverToken == "ThyraNOX") {
-    piroParams->set("Solver Type", "NOX");
-
-    RCP<Albany::Application> app;
-
-    // WARINING: if createAlbanyApp==true, then albanyApp will be constructed
-    // twice, here and below, when calling
-    //    createAndGetAlbanyApp. Why? (Mauro)
-    if (createAlbanyApp) {
-      app = rcp(new Albany::Application(
-          appComm, appParams, initial_guess, is_schwarz_));
-
-      // Pass back albany app so that interface beyond ModelEvaluator can be
-      // used.
-      // This is essentially a hack to allow additional in/out arguments beyond
-      // what ModelEvaluator specifies.
-      albanyApp = app;
-    } else
-      app = albanyApp;
-
-    // Creates the Albany::ModelEvaluator
-    const RCP<EpetraExt::ModelEvaluator> model = createModel(app);
-
-    Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-    linearSolverBuilder.setParameterList(
-        Piro::extractStratimikosParams(piroParams));
-
-    const RCP<Thyra::LinearOpWithSolveFactoryBase<double>> lowsFactory =
-        createLinearSolveStrategy(linearSolverBuilder);
-
-    if (solutionMethod == "ATO Problem") {
-      // This ATO solver does not contain a primary Albany::Application
-      // instance and so albanyApp is null.
-      // For now, do not resize the response vectors. FIXME sort out this issue.
-      const RCP<Thyra::ModelEvaluator<double>> thyraModel =
-          Thyra::epetraModelEvaluator(model, lowsFactory);
-      observerT_ = rcp(new PiroObserver(app));
-      return rcp(
-          new Piro::NOXSolver<double>(piroParams, thyraModel, observerT_));
-    } else {
-      //      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory =
-      //      albanyApp->getAdaptSolMgr()->modelFactory();
-      thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
-      const RCP<Thyra::ModelEvaluator<double>> thyraModel =
-          thyraModelFactory->create(model, lowsFactory);
-      if (TpetraBuild) {
-        observerT_ = rcp(new PiroObserverT(app, thyraModel));
-        return rcp(
-            new Piro::NOXSolver<double>(piroParams, thyraModel, observerT_));
-      } else {
-        observerT_ = rcp(new PiroObserver(app));
-        return rcp(
-            new Piro::NOXSolver<double>(piroParams, thyraModel, observerT_));
-      }
-    }
-  }
-
-  const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
-      this->createAndGetAlbanyApp(
-          albanyApp, appComm, solverComm, initial_guess, createAlbanyApp);
-
-  if (solutionMethod == "ATO Problem") {
-    return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
-  } else {
-    //    const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory =
-    //    albanyApp->getAdaptSolMgr()->modelFactory();
-    thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
-    return thyraModelFactory->create(epetraSolver, Teuchos::null);
-  }
-}
 #endif
 
 namespace {
@@ -434,20 +80,95 @@ enableMueLu(
 }
 }  // namespace
 
-Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
-Albany::SolverFactory::createAndGetAlbanyAppT(
-    Teuchos::RCP<Albany::Application>&       albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
-    const Teuchos::RCP<const Teuchos_Comm>&  solverComm,
-    const Teuchos::RCP<const Thyra_Vector>&  initial_guess,
-    bool                                     createAlbanyApp)
-{
-  const RCP<ParameterList> problemParams =
-      Teuchos::sublist(appParams, "Problem");
-  const std::string solutionMethod =
-      problemParams->get("Solution Method", "Steady");
 
-  bool TpetraBuild = Albany::build_type() == Albany::BuildType::Tpetra;
+namespace Albany
+{
+
+SolverFactory::
+SolverFactory(const std::string&                      inputFile,
+              const Teuchos::RCP<const Teuchos_Comm>& comm)
+ : out(Teuchos::VerboseObjectBase::getDefaultOStream())
+{
+  // Set up application parameters: read and broadcast XML file, and set
+  // defaults
+  // Teuchos::RCP<Teuchos::ParameterList> input_
+  appParams = Teuchos::createParameterList("Albany Parameters");
+
+  std::string const input_extension = getFileExtension(inputFile);
+
+  if (input_extension == "yaml" || input_extension == "yml") {
+    Teuchos::updateParametersFromYamlFileAndBroadcast(
+        inputFile, appParams.ptr(), *comm);
+  } else {
+    Teuchos::updateParametersFromXmlFileAndBroadcast(
+        inputFile, appParams.ptr(), *comm);
+  }
+
+  // do not set default solver parameters for ATO::Solver problems,
+  // ... as they handle this themselves
+  std::string solution_method =
+      appParams->sublist("Problem").get("Solution Method", "Steady");
+  if (solution_method != "ATO Problem") {
+    Teuchos::RCP<Teuchos::ParameterList> defaultSolverParams = rcp(new Teuchos::ParameterList());
+    setSolverParamDefaults(defaultSolverParams.get(), comm->getRank());
+    appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  }
+
+  appParams->validateParametersAndSetDefaults(*getValidAppParameters(), 0);
+  if (appParams->isSublist("Debug Output")) {
+    Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
+    debugPL->validateParametersAndSetDefaults(*getValidDebugParameters(), 0);
+  }
+  if (appParams->isSublist("Scaling")) {
+    Teuchos::RCP<Teuchos::ParameterList> scalingPL = Teuchos::rcpFromRef(appParams->sublist("Scaling", false)); 
+    scalingPL->validateParametersAndSetDefaults(*getValidScalingParameters(), 0);
+  }
+}
+
+SolverFactory::
+SolverFactory(const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
+              const Teuchos::RCP<const Teuchos_Comm>&     comm)
+ : appParams(input_appParams)
+ , out(Teuchos::VerboseObjectBase::getDefaultOStream())
+{
+  // do not set default solver parameters for ATO::Solver
+  // problems,
+  // ... as they handle this themselves
+  std::string solution_method =
+      appParams->sublist("Problem").get("Solution Method", "Steady");
+  if (solution_method != "ATO Problem") {
+    Teuchos::RCP<Teuchos::ParameterList> defaultSolverParams = rcp(new Teuchos::ParameterList());
+    setSolverParamDefaults(defaultSolverParams.get(), comm->getRank());
+    appParams->setParametersNotAlreadySet(*defaultSolverParams);
+  }
+
+  appParams->validateParametersAndSetDefaults(*getValidAppParameters(), 0);
+  if (appParams->isSublist("Debug Output")) {
+    Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
+    debugPL->validateParametersAndSetDefaults(*getValidDebugParameters(), 0);
+  }
+}
+
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
+SolverFactory::create(
+    const Teuchos::RCP<const Teuchos_Comm>& appComm,
+    const Teuchos::RCP<const Teuchos_Comm>& solverComm,
+    const Teuchos::RCP<const Thyra_Vector>& initial_guess)
+{
+  Teuchos::RCP<Application> dummyAlbanyApp;
+  return createAndGetAlbanyApp(dummyAlbanyApp, appComm, solverComm, initial_guess);
+}
+
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
+SolverFactory::createAndGetAlbanyApp(
+    Teuchos::RCP<Application>&              albanyApp,
+    const Teuchos::RCP<const Teuchos_Comm>& appComm,
+    const Teuchos::RCP<const Teuchos_Comm>& solverComm,
+    const Teuchos::RCP<const Thyra_Vector>& initial_guess,
+    bool                                    createAlbanyApp)
+{
+  const Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+  const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
 
   if (solutionMethod == "ATO Problem") {
 #ifdef ALBANY_ATO
@@ -512,7 +233,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
     if ((useExplHyperviscosity) && (tau != 0.0)) {
       ///// make a solver, repeated code
-      const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+      const Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
       const Teuchos::RCP<Teuchos::ParameterList> stratList =
           Piro::extractStratimikosParams(piroParams);
       // Create and setup the Piro solver factory
@@ -522,31 +243,22 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       enableIfpack2(linearSolverBuilder);
       enableMueLu(linearSolverBuilder);
       linearSolverBuilder.setParameterList(stratList);
-      const RCP<Thyra::LinearOpWithSolveFactoryBase<ST>> lowsFactory =
-          createLinearSolveStrategy(linearSolverBuilder);
+      const Teuchos::RCP<Thyra_LOWS_Factory> lowsFactory = createLinearSolveStrategy(linearSolverBuilder);
 
       ///// create an app and a model evaluator
 
-      RCP<Albany::Application> app;
+      albanyApp = Teuchos::rcp (new Application(appComm, appParams, initial_guess, is_schwarz_));
+      Teuchos::RCP<Thyra_ModelEvaluator> modelHV(new Aeras::HVDecorator(albanyApp, appParams));
 
-      app = rcp(new Albany::Application(
-          appComm, appParams, initial_guess, is_schwarz_));
-      RCP<Thyra::ModelEvaluatorDefaultBase<ST>> modelHV(
-          new Aeras::HVDecorator(app, appParams));
+      Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;
 
-      albanyApp = app;
+      modelWithSolve = Teuchos::rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelHV, lowsFactory));
 
-      RCP<Thyra::ModelEvaluator<ST>> modelWithSolveT;
-
-      modelWithSolveT =
-          rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(
-              modelHV, lowsFactory));
-
-      observerT_ = rcp(new PiroObserverT(albanyApp, modelWithSolveT));
+      observer_ = Teuchos::rcp(new PiroObserver(albanyApp, modelWithSolve));
 
       // Piro::SolverFactory
       return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
-          piroParams, modelWithSolveT, Teuchos::null, observerT_);
+          piroParams, modelWithSolve, Teuchos::null, observer_);
 
     }  // if useExplHV=true and tau <>0.
 
@@ -566,7 +278,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // IKT: We are assuming the "Piro" list will come from the main coupled
     // Schwarz input file (not the sub-input
     // files for each model).
-    const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+    const Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
     const Teuchos::RCP<Teuchos::ParameterList> stratList =
         Piro::extractStratimikosParams(piroParams);
@@ -582,36 +294,29 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif
     linearSolverBuilder.setParameterList(stratList);
 
-    const RCP<Thyra::LinearOpWithSolveFactoryBase<ST>> lowsFactory =
+    const Teuchos::RCP<Thyra_LOWS_Factory> lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
 
-    const RCP<LCM::SchwarzCoupled> coupled_model_with_solve =
-        rcp(new LCM::SchwarzCoupled(
+    const Teuchos::RCP<LCM::SchwarzCoupled> coupled_model_with_solve =
+        Teuchos::rcp(new LCM::SchwarzCoupled(
             appParams, solverComm, initial_guess, lowsFactory));
 
-    observerT_ = rcp(new LCM::Schwarz_PiroObserver(coupled_model_with_solve));
+    observer_ = Teuchos::rcp(new LCM::Schwarz_PiroObserver(coupled_model_with_solve));
 
-    // WARNING: Coupled Schwarz does not contain a primary Albany::Application
+    // WARNING: Coupled Schwarz does not contain a primary Application
     // instance and so albanyApp is null.
     return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
-        piroParams, coupled_model_with_solve, Teuchos::null, observerT_);
+        piroParams, coupled_model_with_solve, Teuchos::null, observer_);
   }
 
   if (solutionMethod == "Schwarz Alternating") {
-    return rcp(
-        new LCM::SchwarzAlternating(appParams, solverComm));
+    return Teuchos::rcp(new LCM::SchwarzAlternating(appParams, solverComm));
   }
 #endif /* LCM */
 
-  RCP<Albany::Application> app = albanyApp;
-  modelT_ =
-      createAlbanyAppAndModelT(app, appComm, initial_guess, createAlbanyApp);
-  // Pass back albany app so that interface beyond ModelEvaluator can be used.
-  // This is essentially a hack to allow additional in/out arguments beyond what
-  // ModelEvaluator specifies.
-  albanyApp = app;
+  model_ = createAlbanyAppAndModel(albanyApp, appComm, initial_guess, createAlbanyApp);
 
-  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+  const Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::RCP<Teuchos::ParameterList> stratList =
       Piro::extractStratimikosParams(piroParams);
 
@@ -629,9 +334,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
             << "\n");
   }
 
-  RCP<Thyra::ModelEvaluator<ST>> modelWithSolveT;
-  if (Teuchos::nonnull(modelT_->get_W_factory())) {
-    modelWithSolveT = modelT_;
+  Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;
+  if (Teuchos::nonnull(model_->get_W_factory())) {
+    modelWithSolve = model_;
   } else {
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
@@ -642,42 +347,22 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif
     linearSolverBuilder.setParameterList(stratList);
 
-    const RCP<Thyra::LinearOpWithSolveFactoryBase<ST>> lowsFactory =
+    const Teuchos::RCP<Thyra_LOWS_Factory> lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
 
-    modelWithSolveT = rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(
-        modelT_, lowsFactory));
+    modelWithSolve = rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(model_, lowsFactory));
   }
 
-  const RCP<Thyra::AdaptiveSolutionManager> solMgrT = app->getAdaptSolMgrT();
-  Piro::SolverFactory                       piroFactory;
+  const auto solMgr = albanyApp->getAdaptSolMgr();
 
-  if (solMgrT->isAdaptive()) {
-    if (TpetraBuild) {
-      observerT_ = rcp(new PiroObserverT(app, modelWithSolveT));
-      return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
-          piroParams, modelWithSolveT, solMgrT, observerT_);
-    }
-#if defined(ALBANY_EPETRA)
-    else {
-      observerT_ = rcp(new PiroObserver(app));
-      return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
-          piroParams, modelWithSolveT, solMgrT, observerT_);
-    }
-#endif
+  Piro::SolverFactory piroFactory;
+  observer_ = Teuchos::rcp(new PiroObserver(albanyApp, modelWithSolve));
+  if (solMgr->isAdaptive()) {
+    return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
+        piroParams, modelWithSolve, solMgr, observer_);
   } else {
-    if (TpetraBuild) {
-      observerT_ = rcp(new PiroObserverT(app, modelWithSolveT));
-      return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
-          piroParams, modelWithSolveT, Teuchos::null, observerT_);
-    }
-#if defined(ALBANY_EPETRA)
-    else {
-      observerT_ = rcp(new PiroObserver(app));
-      return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
-          piroParams, modelWithSolveT, Teuchos::null, observerT_);
-    }
-#endif
+    return piroFactory.createSolver<ST, LO, Tpetra_GO, KokkosNode>(
+        piroParams, modelWithSolve, Teuchos::null, observer_);
   }
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
@@ -691,59 +376,29 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   return Teuchos::null;
 }
 
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<EpetraExt::ModelEvaluator>
-Albany::SolverFactory::createAlbanyAppAndModel(
-    Teuchos::RCP<Albany::Application>&       albanyApp,
-    const Teuchos::RCP<const Teuchos_Comm>&  appComm,
-    const Teuchos::RCP<const Thyra_Vector>& initial_guess)
-{
-  // Create application
-  albanyApp = rcp(
-      new Albany::Application(appComm, appParams, initial_guess, is_schwarz_));
-
-  return createModel(albanyApp);
-}
-
-Teuchos::RCP<EpetraExt::ModelEvaluator>
-Albany::SolverFactory::createModel(const Teuchos::RCP<Albany::Application>& albanyApp)
-{
-  // Validate Response list: may move inside individual Problem class
-  const RCP<ParameterList> problemParams =
-      Teuchos::sublist(appParams, "Problem");
-  problemParams->sublist("Response Functions")
-      .validateParameters(*getValidResponseParameters(), 0);
-
-  // Create model evaluator
-  Albany::ModelFactory modelFactory(appParams, albanyApp);
-
-  return modelFactory.create();
-}
-#endif
-
-Teuchos::RCP<Thyra::ModelEvaluator<ST>>
-Albany::SolverFactory::createAlbanyAppAndModelT(
-    Teuchos::RCP<Albany::Application>&      albanyApp,
+Teuchos::RCP<Thyra_ModelEvaluator>
+SolverFactory::createAlbanyAppAndModel(
+    Teuchos::RCP<Application>&      albanyApp,
     const Teuchos::RCP<const Teuchos_Comm>& appComm,
     const Teuchos::RCP<const Thyra_Vector>& initial_guess,
     const bool                              createAlbanyApp)
 {
   if (createAlbanyApp) {
     // Create application
-    albanyApp = rcp(new Albany::Application(
+    albanyApp = Teuchos::rcp(new Application(
         appComm, appParams, initial_guess, is_schwarz_));
-    //  albanyApp = rcp(new Albany::ApplicationT(appComm, appParams,
+    //  albanyApp = rcp(new ApplicationT(appComm, appParams,
     //  initial_guess));
   }
 
   // Validate Response list: may move inside individual Problem class
-  RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
   problemParams->sublist("Response Functions")
       .validateParameters(*getValidResponseParameters(), 0);
 
   // If not explicitly specified, determine which Piro solver to use from the
   // problem parameters
-  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+  const Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   if (!piroParams->getPtr<std::string>("Solver Type")) {
     const std::string solutionMethod =
         problemParams->get("Solution Method", "Steady");
@@ -782,19 +437,18 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
   }
 
   // Create model evaluator
-  Albany::ModelFactory modelFactory(appParams, albanyApp);
-  return modelFactory.createT();
+  return Teuchos::rcp(new ModelEvaluator(albanyApp,appParams));
 }
 
 int
-Albany::SolverFactory::
+SolverFactory::
 checkSolveTestResults(
     int                                           response_index,
     int                                           parameter_index,
     const Teuchos::RCP<const Thyra_Vector>&       g,
     const Teuchos::RCP<const Thyra_MultiVector>&  dgdp) const
 {
-  ParameterList* testParams = getTestParameters(response_index);
+  Teuchos::ParameterList* testParams = getTestParameters(response_index);
 
   int          failures    = 0;
   int          comparisons = 0;
@@ -821,7 +475,7 @@ checkSolveTestResults(
                                      << ") != number of Test Values ("
                                      << testValues.size() << ") !");
 
-    Teuchos::ArrayRCP<const ST> g_view = Albany::getLocalData(g);
+    Teuchos::ArrayRCP<const ST> g_view = getLocalData(g);
     for (int i = 0; i < testValues.size(); i++) {
       auto s = std::string("Response Test ") + std::to_string(i);
       failures += scaledCompare(g_view[i], testValues[i], relTol, absTol, s);
@@ -832,7 +486,7 @@ checkSolveTestResults(
   // Repeat comparisons for sensitivities
   Teuchos::ParameterList* sensitivityParams = 0;
   std::string             sensitivity_sublist_name =
-      Albany::strint("Sensitivity Comparisons", parameter_index);
+      strint("Sensitivity Comparisons", parameter_index);
   if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = testParams;
   else if (testParams->isSublist(sensitivity_sublist_name))
@@ -858,13 +512,13 @@ checkSolveTestResults(
     const int numVecs = dgdp->domain()->dim();
     Teuchos::Array<double> testSensValues =
         sensitivityParams->get<Teuchos::Array<double>>(
-            Albany::strint("Sensitivity Test Values", i));
+            strint("Sensitivity Test Values", i));
     ALBANY_ASSERT(
         numVecs== testSensValues.size(),
         "Number of Sensitivity Test Values ("
             << testSensValues.size() << " != number of sensitivity vectors ("
             << numVecs << ") !");
-    auto dgdp_view = Albany::getLocalData(dgdp);
+    auto dgdp_view = getLocalData(dgdp);
     for (int jvec = 0; jvec < numVecs; jvec++) {
       auto s = std::string("Sensitivity Test ") + std::to_string(i) + "," +
                std::to_string(jvec);
@@ -880,11 +534,11 @@ checkSolveTestResults(
 }
 
 int
-Albany::SolverFactory::checkDakotaTestResults(
+SolverFactory::checkDakotaTestResults(
     int                                            response_index,
     const Teuchos::SerialDenseVector<int, double>* drdv) const
 {
-  ParameterList* testParams = getTestParameters(response_index);
+  Teuchos::ParameterList* testParams = getTestParameters(response_index);
 
   int          failures    = 0;
   int          comparisons = 0;
@@ -916,11 +570,11 @@ Albany::SolverFactory::checkDakotaTestResults(
 }
 
 int
-Albany::SolverFactory::checkAnalysisTestResults(
+SolverFactory::checkAnalysisTestResults(
     int                                            response_index,
     const Teuchos::RCP<Thyra::VectorBase<double>>& tvec) const
 {
-  ParameterList* testParams = getTestParameters(response_index);
+  Teuchos::ParameterList* testParams = getTestParameters(response_index);
 
   int          failures    = 0;
   int          comparisons = 0;
@@ -954,16 +608,16 @@ Albany::SolverFactory::checkAnalysisTestResults(
   return failures;
 }
 
-ParameterList*
-Albany::SolverFactory::getTestParameters(int response_index) const
+Teuchos::ParameterList*
+SolverFactory::getTestParameters(int response_index) const
 {
-  ParameterList* result;
+  Teuchos::ParameterList* result;
 
   if (response_index == 0 && appParams->isSublist("Regression Results")) {
     result = &(appParams->sublist("Regression Results"));
   } else {
     result = &(appParams->sublist(
-        Albany::strint("Regression Results", response_index)));
+        strint("Regression Results", response_index)));
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -977,8 +631,8 @@ Albany::SolverFactory::getTestParameters(int response_index) const
 }
 
 void
-Albany::SolverFactory::storeTestResults(
-    ParameterList* testParams,
+SolverFactory::storeTestResults(
+    Teuchos::ParameterList* testParams,
     int            failures,
     int            comparisons) const
 {
@@ -990,7 +644,7 @@ Albany::SolverFactory::storeTestResults(
 }
 
 bool
-Albany::SolverFactory::scaledCompare(
+SolverFactory::scaledCompare(
     double             x1,
     double             x2,
     double             relTol,
@@ -1010,17 +664,17 @@ Albany::SolverFactory::scaledCompare(
 }
 
 void
-Albany::SolverFactory::setSolverParamDefaults(
-    ParameterList* appParams_,
+SolverFactory::setSolverParamDefaults(
+    Teuchos::ParameterList* appParams_,
     int            myRank)
 {
   // Set the nonlinear solver method
-  ParameterList& piroParams = appParams_->sublist("Piro");
-  ParameterList& noxParams  = piroParams.sublist("NOX");
+  Teuchos::ParameterList& piroParams = appParams_->sublist("Piro");
+  Teuchos::ParameterList& noxParams  = piroParams.sublist("NOX");
   noxParams.set("Nonlinear Solver", "Line Search Based");
 
   // Set the printing parameters in the "Printing" sublist
-  ParameterList& printParams = noxParams.sublist("Printing");
+  Teuchos::ParameterList& printParams = noxParams.sublist("Printing");
   printParams.set("MyPID", myRank);
   printParams.set("Output Precision", 3);
   printParams.set("Output Processor", 0);
@@ -1032,17 +686,17 @@ Albany::SolverFactory::setSolverParamDefaults(
           NOX::Utils::Warning + NOX::Utils::Error);
 
   // Sublist for line search
-  ParameterList& searchParams = noxParams.sublist("Line Search");
+  Teuchos::ParameterList& searchParams = noxParams.sublist("Line Search");
   searchParams.set("Method", "Full Step");
 
   // Sublist for direction
-  ParameterList& dirParams = noxParams.sublist("Direction");
+  Teuchos::ParameterList& dirParams = noxParams.sublist("Direction");
   dirParams.set("Method", "Newton");
-  ParameterList& newtonParams = dirParams.sublist("Newton");
+  Teuchos::ParameterList& newtonParams = dirParams.sublist("Newton");
   newtonParams.set("Forcing Term Method", "Constant");
 
   // Sublist for linear solver for the Newton method
-  ParameterList& lsParams = newtonParams.sublist("Linear Solver");
+  Teuchos::ParameterList& lsParams = newtonParams.sublist("Linear Solver");
   lsParams.set("Aztec Solver", "GMRES");
   lsParams.set("Max Iterations", 43);
   lsParams.set("Tolerance", 1e-4);
@@ -1050,24 +704,24 @@ Albany::SolverFactory::setSolverParamDefaults(
   lsParams.set("Preconditioner", "Ifpack");
 
   // Sublist for status tests
-  ParameterList& statusParams = noxParams.sublist("Status Tests");
+  Teuchos::ParameterList& statusParams = noxParams.sublist("Status Tests");
   statusParams.set("Test Type", "Combo");
   statusParams.set("Combo Type", "OR");
   statusParams.set("Number of Tests", 2);
-  ParameterList& normF = statusParams.sublist("Test 0");
+  Teuchos::ParameterList& normF = statusParams.sublist("Test 0");
   normF.set("Test Type", "NormF");
   normF.set("Tolerance", 1.0e-8);
   normF.set("Norm Type", "Two Norm");
   normF.set("Scale Type", "Unscaled");
-  ParameterList& maxiters = statusParams.sublist("Test 1");
+  Teuchos::ParameterList& maxiters = statusParams.sublist("Test 1");
   maxiters.set("Test Type", "MaxIters");
   maxiters.set("Maximum Iterations", 10);
 }
 
-RCP<const ParameterList>
-Albany::SolverFactory::getValidAppParameters() const
+Teuchos::RCP<const Teuchos::ParameterList>
+SolverFactory::getValidAppParameters() const
 {
-  RCP<ParameterList> validPL = rcp(new ParameterList("ValidAppParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidAppParams"));
 
   validPL->set("Build Type", "Tpetra", "The type of run (e.g., Epetra, Tpetra)");
   validPL->sublist("Problem", false, "Problem sublist");
@@ -1102,10 +756,10 @@ Albany::SolverFactory::getValidAppParameters() const
 }
 
 
-RCP<const ParameterList>
-Albany::SolverFactory::getValidDebugParameters() const
+Teuchos::RCP<const Teuchos::ParameterList>
+SolverFactory::getValidDebugParameters() const
 {
-  RCP<ParameterList> validPL = rcp(new ParameterList("ValidDebugParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidDebugParams"));
   validPL->set<int>("Write Jacobian to MatrixMarket", 0, "Jacobian Number to Dump to MatrixMarket");
   validPL->set<int>("Compute Jacobian Condition Number", 0, "Jacobian Condition Number to Compute");
   validPL->set<int>("Write Residual to MatrixMarket", 0, "Residual Number to Dump to MatrixMarket");
@@ -1119,21 +773,21 @@ Albany::SolverFactory::getValidDebugParameters() const
   return validPL; 
 }
 
-RCP<const ParameterList>
-Albany::SolverFactory::getValidScalingParameters() const
+Teuchos::RCP<const Teuchos::ParameterList>
+SolverFactory::getValidScalingParameters() const
 {
-  RCP<ParameterList> validPL = rcp(new ParameterList("ValidScalingParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidScalingParams"));
   validPL->set<double>("Scale", 0.0, "Value of Scaling to Apply to Jacobian/Residual");
   validPL->set<bool>("Scale BC Dofs", false, "Flag to Scale Jacobian/Residual Rows Corresponding to DBC Dofs");
   validPL->set<std::string>("Type", "Constant", "Scaling Type (Constant, Diagonal, AbsRowSum)"); 
   return validPL; 
 }
 
-RCP<const ParameterList>
-Albany::SolverFactory::getValidRegressionResultsParameters() const
+Teuchos::RCP<const Teuchos::ParameterList>
+SolverFactory::getValidRegressionResultsParameters() const
 {
   using Teuchos::Array;
-  RCP<ParameterList> validPL = rcp(new ParameterList("ValidRegressionParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidRegressionParams"));
   ;
   Array<double> ta;
   ;  // std::string to be converted to teuchos array
@@ -1160,12 +814,12 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
   const int maxSensTests = 10;
   for (int i = 0; i < maxSensTests; i++) {
     validPL->set<Array<double>>(
-        Albany::strint("Sensitivity Test Values", i),
+        strint("Sensitivity Test Values", i),
         ta,
-        Albany::strint(
+        strint(
             "Array of regression values for Sensitivities w.r.t parameter", i));
     validPL->sublist(
-        Albany::strint("Sensitivity Comparisons", i),
+        strint("Sensitivity Comparisons", i),
         false,
         "Sensitivity Comparisons sublist");
   }
@@ -1198,9 +852,9 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
   const int maxSGTests = 10;
   for (int i = 0; i < maxSGTests; i++) {
     validPL->set<Array<double>>(
-        Albany::strint("Stochastic Galerkin Expansion Test Values", i),
+        strint("Stochastic Galerkin Expansion Test Values", i),
         ta,
-        Albany::strint(
+        strint(
             "Array of regression values for stochastic Galerkin expansions",
             i));
   }
@@ -1238,24 +892,24 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
   return validPL;
 }
 
-RCP<const ParameterList>
-Albany::SolverFactory::getValidParameterParameters() const
+Teuchos::RCP<const Teuchos::ParameterList>
+SolverFactory::getValidParameterParameters() const
 {
-  RCP<ParameterList> validPL = rcp(new ParameterList("ValidParameterParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidParameterParams"));
   ;
 
   validPL->set<int>("Number", 0);
   const int maxParameters = 100;
   for (int i = 0; i < maxParameters; i++) {
-    validPL->set<std::string>(Albany::strint("Parameter", i), "");
+    validPL->set<std::string>(strint("Parameter", i), "");
   }
   return validPL;
 }
 
-RCP<const ParameterList>
-Albany::SolverFactory::getValidResponseParameters() const
+Teuchos::RCP<const Teuchos::ParameterList>
+SolverFactory::getValidResponseParameters() const
 {
-  RCP<ParameterList> validPL = rcp(new ParameterList("ValidResponseParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidResponseParams"));
   ;
   validPL->set<std::string>("Collection Method", "Sum Responses");
   validPL->set<int>("Number of Response Vectors", 0);
@@ -1271,9 +925,11 @@ Albany::SolverFactory::getValidResponseParameters() const
   validPL->set<int>("Equation", 0);
   const int maxParameters = 500;
   for (int i = 0; i < maxParameters; i++) {
-    validPL->set<std::string>(Albany::strint("Response", i), "");
-    validPL->sublist(Albany::strint("ResponseParams", i));
-    validPL->sublist(Albany::strint("Response Vector", i));
+    validPL->set<std::string>(strint("Response", i), "");
+    validPL->sublist(strint("ResponseParams", i));
+    validPL->sublist(strint("Response Vector", i));
   }
   return validPL;
 }
+
+} // namespace Albany

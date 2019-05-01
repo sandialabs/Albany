@@ -4,15 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <iostream>
-
 #include "Albany_SolverFactory.hpp"
 #include "Albany_Dakota.hpp"
+
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_StackedTimer.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
+
+#include <iostream>
 
 int main(int argc, char *argv[]) {
 
@@ -28,7 +29,7 @@ int main(int argc, char *argv[]) {
 
   try {
     Teuchos::RCP<Teuchos::Time> totalTime =
-      Teuchos::TimeMonitor::getNewTimer("AlbanyDakota: ***Total Time***");
+      Teuchos::TimeMonitor::getNewTimer("AlbanyDakotaT: ***Total Time***");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
 
     status += Albany_Dakota(argc, argv);
@@ -47,6 +48,5 @@ int main(int argc, char *argv[]) {
   stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
 
   Kokkos::finalize_all();
-
   return status;
 }

@@ -3,9 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include "Aeras_HVDecorator.hpp"
 #include "Albany_SolverFactory.hpp"
-#include "Albany_ModelFactory.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include <sstream>
@@ -82,10 +82,13 @@ Teuchos::RCP<Thyra_LinearOp> getOnlyNonzeros (const Teuchos::RCP<Thyra_LinearOp>
 }
 } // namespace
 
-Aeras::HVDecorator::HVDecorator(
-    const Teuchos::RCP<Albany::Application>& app_,
-    const Teuchos::RCP<Teuchos::ParameterList>& appParams)
-    :Albany::ModelEvaluatorT(app_,appParams)
+namespace Aeras
+{
+
+HVDecorator::
+HVDecorator(const Teuchos::RCP<Albany::Application>& app_,
+            const Teuchos::RCP<Teuchos::ParameterList>& appParams)
+ : Albany::ModelEvaluator(app_,appParams)
 {
 
 #ifdef OUTPUT_TO_SCREEN
@@ -126,7 +129,7 @@ Aeras::HVDecorator::HVDecorator(
 //utilde/htilde variables when integrating the hyperviscosity system in time using 
 //an explicit scheme. 
 Teuchos::RCP<Thyra_LinearOp> 
-Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
+HVDecorator::createOperator(double alpha, double beta, double omega)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -145,7 +148,7 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
 }
 
 Teuchos::RCP<Thyra_LinearOp> 
-Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
+HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -167,9 +170,8 @@ Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
 //in evalModelImpl after the last computeGlobalResidual call.
 //Note that it is more efficient to implement an apply method like is done here, than 
 //to form a sparse CrsMatrix laplace_*mass_^(-1)*laplace_ and store it.  
-void
-Aeras::HVDecorator::applyLinvML(Teuchos::RCP<const Thyra_Vector> x_in, Teuchos::RCP<Thyra_Vector> x_out)
-const
+void HVDecorator::
+applyLinvML(Teuchos::RCP<const Thyra_Vector> x_in, Teuchos::RCP<Thyra_Vector> x_out) const
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -226,7 +228,7 @@ void sanitize_nans (const Thyra_Derivative& v) {
 
 // hide the original parental method AMET->evalModelImpl():
 void
-Aeras::HVDecorator::evalModelImpl(
+HVDecorator::evalModelImpl(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT,
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
@@ -383,3 +385,5 @@ Aeras::HVDecorator::evalModelImpl(
     }
   }
 }
+
+} // namespace Aeras

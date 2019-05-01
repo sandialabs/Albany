@@ -9,7 +9,7 @@
 #include <Teuchos_CommHelpers.hpp>
 #include "Phalanx_DataLayout_MDALayout.hpp"
 
-#include "AAdapt_AdaptiveSolutionManagerT.hpp"
+#include "AAdapt_AdaptiveSolutionManager.hpp"
 #include "AAdapt_RC_DataTypes.hpp"
 #include "AAdapt_RC_DataTypes_impl.hpp"
 #include "AAdapt_RC_Reader.hpp"
@@ -421,7 +421,7 @@ void testProjector(
 } // namespace
 
 struct Manager::Impl {
-  Teuchos::RCP<AdaptiveSolutionManagerT> sol_mgr_;
+  Teuchos::RCP<AdaptiveSolutionManager> sol_mgr_;
   Teuchos::RCP<Albany::StateManager> state_mgr_;
   Teuchos::RCP<Thyra_Vector> x_;
   Teuchos::RCP<Projector> proj_;
@@ -679,7 +679,7 @@ create (const Teuchos::RCP<Albany::StateManager>& state_mgr,
 }
 
 void Manager::setSolutionManager(
-  const Teuchos::RCP<AdaptiveSolutionManagerT>& sol_mgr)
+  const Teuchos::RCP<AdaptiveSolutionManager>& sol_mgr)
 { impl_->sol_mgr_ = sol_mgr; }
 
 void Manager::

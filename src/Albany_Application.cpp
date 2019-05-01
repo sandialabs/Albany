@@ -16,14 +16,6 @@
 
 #include "Teuchos_TimeMonitor.hpp"
 
-#if defined(ALBANY_EPETRA)
-#include "EpetraExt_MultiVectorOut.h"
-#include "EpetraExt_RowMatrixOut.h"
-#include "EpetraExt_VectorOut.h"
-#include "Epetra_LocalMap.h"
-#include "Petra_Converters.hpp"
-#endif
-
 #include "Albany_DataTypes.hpp"
 #include <string>
 
@@ -31,9 +23,6 @@
 
 #ifdef ALBANY_TEKO
 #include "Teko_InverseFactoryOperator.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Teko_StridedEpetraOperator.hpp"
-#endif
 #endif
 
 #include "Albany_ScalarResponseFunction.hpp"
@@ -107,7 +96,7 @@ Application (const RCP<const Teuchos_Comm> &comm_,
  , no_dir_bcs_(false)
  , requires_sdbcs_(false)
  , requires_orig_dbcs_(false)
- , commT(comm_)
+ , comm(comm_)
  , out(Teuchos::VerboseObjectBase::getDefaultOStream())
  , params_(params)
  , physicsBasedPreconditioner(false)
@@ -128,7 +117,7 @@ Application::Application(const RCP<const Teuchos_Comm> &comm_)
  : no_dir_bcs_(false)
  , requires_sdbcs_(false)
  , requires_orig_dbcs_(false)
- , commT(comm_)
+ , comm(comm_)
  , out(Teuchos::VerboseObjectBase::getDefaultOStream())
  , physicsBasedPreconditioner(false)
  , shapeParamsHaveBeenReset(false)
@@ -193,7 +182,7 @@ void Application::initialSetUp(
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
 
-  ProblemFactory problemFactory(params, paramLib, commT);
+  ProblemFactory problemFactory(params, paramLib, comm);
   rc_mgr = AAdapt::rc::Manager::create(Teuchos::rcp(&stateMgr, false),
                                        *problemParams);
   if (Teuchos::nonnull(rc_mgr)) {
@@ -513,7 +502,7 @@ void Application::initialSetUp(
   // Schwarz problems.
   countScale = 0;
   // Create discretization object
-  discFactory = rcp(new Albany::DiscretizationFactory(params, commT, expl));
+  discFactory = rcp(new Albany::DiscretizationFactory(params, comm, expl));
 
 #if defined(ALBANY_LCM)
   // Check for Schwarz parameters
@@ -738,7 +727,7 @@ void Application::finalSetUp(
    RCP<const Tpetra_Vector> initial_guessT;
    if (Teuchos::nonnull(initial_guess)) {
    initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess,
-   commT);
+   comm);
    }
    */
 
@@ -747,22 +736,12 @@ void Application::finalSetUp(
   if (!stateMgr.areStateVarsAllocated())
     stateMgr.setupStateArrays(disc);
 
-#if defined(ALBANY_EPETRA)
-  if (!TpetraBuild) {
-    RCP<const Epetra_Vector> initial_guessE;
-    if (Teuchos::nonnull(initial_guess)) {
-      initial_guessE = getConstEpetraVector(initial_guess);
-    }
-    solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guessE));
-  }
-#endif
-
-  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(
+  solMgr = rcp(new AAdapt::AdaptiveSolutionManager(
       params, initial_guess, paramLib, stateMgr,
       // Prevent a circular dependency.
-      Teuchos::rcp(rc_mgr.get(), false), commT));
+      Teuchos::rcp(rc_mgr.get(), false), comm));
   if (Teuchos::nonnull(rc_mgr))
-    rc_mgr->setSolutionManager(solMgrT);
+    rc_mgr->setSolutionManager(solMgr);
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
@@ -855,7 +834,7 @@ void Application::finalSetUp(
 
   nfm = problem->getNeumannFieldManager();
 
-  if (commT->getRank() == 0) {
+  if (comm->getRank() == 0) {
     phxGraphVisDetail =
         problemParams->get("Phalanx Graph Visualization Detail", 0);
     stateGraphVisDetail = phxGraphVisDetail;
@@ -902,26 +881,13 @@ void Application::finalSetUp(
  * Initialize mesh adaptation features
  */
 
-#if defined(ALBANY_EPETRA)
-  if (!TpetraBuild && solMgr->hasAdaptation()) {
-
-    solMgr->buildAdaptiveProblem(paramLib, stateMgr, commT);
-  }
-#endif
-
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
   if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
-    LCM::PeridigmManager::self()->initialize(params, disc, commT);
+    LCM::PeridigmManager::self()->initialize(params, disc, comm);
     LCM::PeridigmManager::self()->insertPeridigmNonzerosIntoAlbanyGraph();
   }
 #endif
-#endif
-}
-
-Application::~Application() {
-#ifdef ALBANY_DEBUG
-  *out << "Calling destructor for Albany_Application" << std::endl;
 #endif
 }
 
@@ -934,7 +900,7 @@ RCP<AbstractProblem> Application::getProblem() const {
   return problem;
 }
 
-RCP<const Teuchos_Comm> Application::getComm() const { return commT; }
+RCP<const Teuchos_Comm> Application::getComm() const { return comm; }
 
 Teuchos::RCP<const Thyra_VectorSpace> Application::getVectorSpace() const
 {
@@ -945,87 +911,9 @@ RCP<Thyra_LinearOp> Application::createJacobianOp() const {
   return disc->createJacobianOp();
 }
 
-RCP<Tpetra_Operator> Application::getPreconditionerT() {
+RCP<Thyra_LinearOp> Application::getPreconditioner() {
   return Teuchos::null;
 }
-
-#if defined(ALBANY_EPETRA)
-RCP<Epetra_Operator> Application::getPreconditioner() {
-#if defined(ALBANY_TEKO)
-  if (precType == "Teko") {
-    // inverseLib = Teko::InverseLibrary::buildFromStratimikos();
-    inverseLib = Teko::InverseLibrary::buildFromParameterList(
-        precParams->sublist("Inverse Factory Library"));
-    inverseLib->PrintAvailableInverses(*out);
-
-    inverseFac = inverseLib->getInverseFactory(
-        precParams->get("Preconditioner Name", "Amesos"));
-
-    // get desired blocking of unknowns
-    std::stringstream ss;
-    ss << precParams->get<std::string>("Unknown Blocking");
-
-    // figure out the decomposition requested by the string
-    unsigned int num = 0, sum = 0;
-    while (not ss.eof()) {
-      ss >> num;
-      TEUCHOS_ASSERT(num > 0);
-      sum += num;
-      blockDecomp.push_back(num);
-    }
-    TEUCHOS_ASSERT(neq == sum);
-
-    return rcp(new Teko::Epetra::InverseFactoryOperator(inverseFac));
-  } else
-#endif
-    return Teuchos::null;
-}
-
-RCP<const Epetra_Vector> Application::getInitialSolution() const {
-  const Teuchos::RCP<const Thyra_MultiVector> xMV =
-      solMgrT->getInitialSolution();
-  Teuchos::RCP<const Thyra_Vector> x = xMV->col(0);
-
-  const Teuchos::RCP<Epetra_Vector> &initial_x = solMgr->get_initial_x();
-  auto data = getLocalData(x);
-  for (int i=0; i<data.size(); ++i) {
-    (*initial_x)[i] = data[i];
-  }
-  
-  return initial_x;
-}
-
-RCP<const Epetra_Vector> Application::getInitialSolutionDot() const {
-  const Teuchos::RCP<const Thyra_MultiVector> xMV =
-      solMgrT->getInitialSolution();
-  if (xMV->domain()->dim() < 2) {
-    return Teuchos::null;
-  }
-  Teuchos::RCP<const Thyra_Vector> xdot = xMV->col(1);
-
-  const Teuchos::RCP<Epetra_Vector>& initial_x_dot = solMgr->get_initial_xdot();
-  auto data = getLocalData(xdot);
-  for (int i=0; i<data.size(); ++i) {
-    (*initial_x_dot)[i] = data[i];
-  }
-  return initial_x_dot;
-}
-
-RCP<const Epetra_Vector> Application::getInitialSolutionDotDot() const {
-  const Teuchos::RCP<const Thyra_MultiVector> xMV = solMgrT->getInitialSolution();
-  if (xMV->domain()->dim() < 3) {
-    return Teuchos::null;
-  }
-  Teuchos::RCP<const Thyra_Vector> xdotdot = xMV->col(2);
-
-  const Teuchos::RCP<Epetra_Vector>& initial_x_dotdot = solMgr->get_initial_xdotdot();
-  auto data = getLocalData(xdotdot);
-  for (int i=0; i<data.size(); ++i) {
-    (*initial_x_dotdot)[i] = data[i];
-  }
-  return initial_x_dotdot;
-}
-#endif
 
 RCP<ParamLib> Application::getParamLib() const { return paramLib; }
 
@@ -1287,12 +1175,12 @@ void Application::computeGlobalResidualImpl(
 
   int const numWorksets = wsElNodeEqID.size();
 
-  const Teuchos::RCP<Thyra_Vector> overlapped_f = solMgrT->get_overlapped_f();
+  const Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
 
-  Teuchos::RCP<const CombineAndScatterManager> cas_manager = solMgrT->get_cas_manager();
+  Teuchos::RCP<const CombineAndScatterManager> cas_manager = solMgr->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distrbution
-  solMgrT->scatterX(*x, x_dot.ptr(), x_dotdot.ptr());
+  solMgr->scatterX(*x, x_dot.ptr(), x_dotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -1534,22 +1422,23 @@ void Application::computeGlobalJacobianImpl(
 
   Teuchos::RCP<Thyra_Vector> overlapped_f;
   if (Teuchos::nonnull(f)) {
-    overlapped_f = solMgrT->get_overlapped_f();
+    overlapped_f = solMgr->get_overlapped_f();
   }
 
-  Teuchos::RCP<Thyra_LinearOp> overlapped_jac =solMgrT->get_overlapped_jac();
-  auto cas_manager = solMgrT->get_cas_manager();
+  Teuchos::RCP<Thyra_LinearOp> overlapped_jac =solMgr->get_overlapped_jac();
+  auto cas_manager = solMgr->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distribution
-  solMgrT->scatterX(*x, xdot.ptr(), xdotdot.ptr());
+  solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();
 
   // Set parameters
-  for (int i = 0; i < p.size(); i++)
-    for (unsigned int j = 0; j < p[i].size(); j++)
+  for (int i = 0; i < p.size(); i++) {
+    for (unsigned int j = 0; j < p[i].size(); j++) {
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
+  }}
 
   // Zero out overlapped residual
   if (Teuchos::nonnull(f)) {
@@ -1803,44 +1692,16 @@ void Application::computeGlobalJacobian(
     TEUCHOS_TEST_FOR_EXCEPTION(
         true, std::logic_error,
         "Error in Albany::Application: Compute Jacobian Condition Number debug option "
-        "currently relies on an Epetra-based routine in AztecOO.  To use this option, please "
-        "rebuild Albany with ENABLE_ALBANY_EPETRA_EXE=ON.  You will then be able to have Albany "
-        "output the Jacobian condition number when running either the Albany or AlbanyT executable.\n");
+        "currently relies on an Epetra-based routine in AztecOO.\n To use this option, please "
+        "rebuild Albany with ENABLE_ALBANY_EPETRA=ON.\nYou will then be able to have Albany "
+        "output the Jacobian condition number when running either the Tpetra or Epetra stack.\n"
+        "Notice that ENABLE_ALBANY_EPETRA is ON by default, so you must have disabled it explicitly.\n");
 #endif
   }
   if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 || computeJacCondNum != 0) {
     countJac++; // increment Jacobian counter
   }
 }
-
-void Application::
-computeGlobalPreconditionerT(const RCP<Tpetra_CrsMatrix> &jac,
-                             const RCP<Tpetra_Operator> &prec) {
-  // Silence compiler warnings
-  (void) jac;
-  (void) prec;
-}
-
-#if defined(ALBANY_EPETRA)
-void Application::computeGlobalPreconditioner(
-    const RCP<Epetra_CrsMatrix> &jac, const RCP<Epetra_Operator> &prec) {
-#if defined(ALBANY_TEKO)
-  if (precType == "Teko") {
-    TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
-
-    *out << "Computing WPrec by Teko" << std::endl;
-
-    RCP<Teko::Epetra::InverseFactoryOperator> blockPrec =
-        rcp_dynamic_cast<Teko::Epetra::InverseFactoryOperator>(prec);
-
-    blockPrec->initInverse();
-
-    wrappedJac = buildWrappedOperator(jac, wrappedJac);
-    blockPrec->rebuildInverseOperator(wrappedJac);
-  }
-#endif
-}
-#endif
 
 void Application::computeGlobalTangent(
     const double alpha, const double beta, const double omega,
@@ -1867,13 +1728,13 @@ void Application::computeGlobalTangent(
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Thyra_Vector> overlapped_f = solMgrT->get_overlapped_f();
+  Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
 
   // The combine-and-scatter manager
-  auto cas_manager = solMgrT->get_cas_manager();
+  auto cas_manager = solMgr->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distrbution
-  solMgrT->scatterX(*x, xdot.ptr(), xdotdot.ptr());
+  solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2100,10 +1961,10 @@ void Application::applyGlobalDistParamDerivImpl(
   int numWorksets = wsElNodeEqID.size();
 
   // The combin-and-scatter manager
-  auto cas_manager = solMgrT->get_cas_manager();
+  auto cas_manager = solMgr->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distribution
-  solMgrT->scatterX(*x, xdot.ptr(), xdotdot.ptr());
+  solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2392,7 +2253,7 @@ void Application::evaluateStateFieldManager(
     }
   }
 
-  Teuchos::RCP<Thyra_Vector> overlapped_f = solMgrT->get_overlapped_f();
+  Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
 
   // Load connectivity map and coordinates
   const auto &wsElNodeEqID = disc->getWsElNodeEqID();
@@ -2401,7 +2262,7 @@ void Application::evaluateStateFieldManager(
   int numWorksets = wsElNodeEqID.size();
 
   // Scatter to the overlapped distrbution
-  solMgrT->scatterX(x, xdot, xdotdot);
+  solMgr->scatterX(x, xdot, xdotdot);
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2633,36 +2494,6 @@ void Application::postRegSetup(std::string eval) {
   }
 }
 
-#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
-RCP<Epetra_Operator>
-Application::buildWrappedOperator(const RCP<Epetra_Operator> &Jac,
-                                          const RCP<Epetra_Operator> &wrapInput,
-                                          bool /* reorder */) const { // TODO: remove argument altogether
-  RCP<Epetra_Operator> wrappedOp = wrapInput;
-  // if only one block just use orignal jacobian
-  if (blockDecomp.size() == 1)
-    return (Jac);
-
-  // initialize jacobian
-  if (wrappedOp == Teuchos::null)
-    wrappedOp = rcp(new Teko::Epetra::StridedEpetraOperator(blockDecomp, Jac));
-  else
-    rcp_dynamic_cast<Teko::Epetra::StridedEpetraOperator>(wrappedOp)
-        ->RebuildOps();
-
-  // test blocked operator for correctness
-  if (precParams->get("Test Blocked Operator", false)) {
-    bool result =
-        rcp_dynamic_cast<Teko::Epetra::StridedEpetraOperator>(wrappedOp)
-            ->testAgainstFullOperator(6, 1e-14);
-
-    *out << "Teko: Tested operator correctness:  "
-         << (result ? "passed" : "FAILED!") << std::endl;
-  }
-  return wrappedOp;
-}
-#endif
-
 void Application::determinePiroSolver(
     const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams) {
 
@@ -2710,7 +2541,7 @@ void Application::determinePiroSolver(
 void Application::loadBasicWorksetInfo(PHAL::Workset &workset,
                                                 double current_time)
 {
-  auto overlapped_MV = solMgrT->getOverlappedSolution();
+  auto overlapped_MV = solMgr->getOverlappedSolution();
   auto numVectors = overlapped_MV->domain()->dim();
 
   workset.x = overlapped_MV->col(0);
@@ -2732,10 +2563,10 @@ void Application::loadBasicWorksetInfoSDBCs(
     const double current_time)
 {
   // Scatter owned solution into the overlapped one
-  auto overlapped_MV = solMgrT->getOverlappedSolution();
+  auto overlapped_MV = solMgr->getOverlappedSolution();
   auto overlapped_sol = Thyra::createMember(overlapped_MV->range());
   overlapped_sol->assign(0.0);
-  solMgrT->get_cas_manager()->scatter(owned_sol,overlapped_sol,CombineMode::INSERT);
+  solMgr->get_cas_manager()->scatter(owned_sol,overlapped_sol,CombineMode::INSERT);
 
   auto numVectors = overlapped_MV->domain()->dim();
   workset.x = overlapped_sol;
@@ -2910,7 +2741,7 @@ void Application::setupBasicWorksetInfo(
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec> &p)
 {
-  Teuchos::RCP<const Thyra_MultiVector> overlapped_MV = solMgrT->getOverlappedSolution();
+  Teuchos::RCP<const Thyra_MultiVector> overlapped_MV = solMgr->getOverlappedSolution();
   auto numVectors = overlapped_MV->domain()->dim();
 
   Teuchos::RCP<const Thyra_Vector> overlapped_x = overlapped_MV->col(0);
@@ -2918,7 +2749,7 @@ void Application::setupBasicWorksetInfo(
   Teuchos::RCP<const Thyra_Vector> overlapped_xdotdot = numVectors > 2 ? overlapped_MV->col(2) : Teuchos::null;
 
   // Scatter xT and xdotT to the overlapped distrbution
-  solMgrT->scatterX(*x, xdot.ptr(), xdotdot.ptr());
+  solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2942,9 +2773,9 @@ void Application::setupBasicWorksetInfo(
   workset.transientTerms = Teuchos::nonnull(workset.xdot);
   workset.accelerationTerms = Teuchos::nonnull(workset.xdotdot);
 
-  workset.comm = commT;
+  workset.comm = comm;
 
-  workset.x_cas_manager = solMgrT->get_cas_manager();
+  workset.x_cas_manager = solMgr->get_cas_manager();
 }
 
 void Application::setupTangentWorksetInfo(
@@ -2966,7 +2797,7 @@ void Application::setupTangentWorksetInfo(
   if (Vx != Teuchos::null) {
     overlapped_Vx = Thyra::createMembers(disc->getOverlapVectorSpace(),Vx->domain()->dim());
     overlapped_Vx->assign(0.0);
-    solMgrT->get_cas_manager()->scatter(Vx,overlapped_Vx,CombineMode::INSERT);
+    solMgr->get_cas_manager()->scatter(Vx,overlapped_Vx,CombineMode::INSERT);
   }
 
   // Scatter Vx dot the overlapped distribution
@@ -2974,13 +2805,13 @@ void Application::setupTangentWorksetInfo(
   if (Vxdot != Teuchos::null) {
     overlapped_Vxdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdot->domain()->dim());
     overlapped_Vxdot->assign(0.0);
-    solMgrT->get_cas_manager()->scatter(Vxdot,overlapped_Vxdot,CombineMode::INSERT);
+    solMgr->get_cas_manager()->scatter(Vxdot,overlapped_Vxdot,CombineMode::INSERT);
   }
   RCP<Thyra_MultiVector> overlapped_Vxdotdot;
   if (Vxdotdot != Teuchos::null) {
     overlapped_Vxdotdot = Thyra::createMembers(disc->getOverlapVectorSpace(),Vxdotdot->domain()->dim());
     overlapped_Vxdotdot->assign(0.0);
-    solMgrT->get_cas_manager()->scatter(Vxdotdot,overlapped_Vxdotdot,CombineMode::INSERT);
+    solMgr->get_cas_manager()->scatter(Vxdotdot,overlapped_Vxdotdot,CombineMode::INSERT);
   }
 
   // RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
