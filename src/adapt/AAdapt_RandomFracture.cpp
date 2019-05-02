@@ -41,7 +41,7 @@ AAdapt::RandomFracture::RandomFracture(
   bulk_data_ = stk_mesh_struct_->bulkData;
   meta_data_ = stk_mesh_struct_->metaData;
 
-  fracture_criterion_ = Teuchos::rcp(new AAdapt::RandomCriterion(
+  failure_criterion_ = Teuchos::rcp(new AAdapt::RandomCriterion(
       num_dim_, element_rank_, *stk_discretization_));
 
   num_dim_ = stk_mesh_struct_->numDim;
@@ -51,7 +51,7 @@ AAdapt::RandomFracture::RandomFracture(
 
   // Modified by GAH from LCM::NodeUpdate.cc
   topology_ =
-      Teuchos::rcp(new LCM::Topology(discretization_, fracture_criterion_));
+      Teuchos::rcp(new LCM::Topology(discretization_, failure_criterion_));
 }
 
 //----------------------------------------------------------------------------
@@ -85,7 +85,7 @@ AAdapt::RandomFracture::queryAdaptationCriteria()
     for (int i(0); i < face_list.size(); ++i) {
       stk::mesh::Entity face = face_list[i];
 
-      if (fracture_criterion_->computeFractureCriterion(
+      if (failure_criterion_->computeFractureCriterion(
               face, fracture_probability_)) {
         fractured_faces_.push_back(face_list[i]);
       }

@@ -54,10 +54,10 @@ AAdapt::ErosionT::ErosionT(
   topology_ = Teuchos::rcp(new LCM::Topology(
       discretization_, bulk_block_name, interface_block_name));
 
-  fracture_criterion_ = Teuchos::rcp(new LCM::FractureCriterionTraction(
+  failure_criterion_ = Teuchos::rcp(new LCM::FractureCriterionTraction(
       *topology_, stress_name, critical_traction, beta));
 
-  topology_->set_fracture_criterion(fracture_criterion_);
+  topology_->set_failure_criterion(failure_criterion_);
 }
 
 //

@@ -21,7 +21,7 @@ StressFracture::StressFracture(
     const std::vector<std::vector<double>>& stresses,
     double                                  crit_stress,
     Albany::STKDiscretization&              stk)
-    : AbstractFractureCriterion(num_dim, element_rank),
+    : AbstractFailureCriterion(num_dim, element_rank),
       avg_stresses_(stresses),
       critical_stress_(crit_stress),
       stk_(stk)

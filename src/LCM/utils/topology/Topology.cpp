@@ -21,7 +21,7 @@ namespace LCM {
 Topology::Topology()
     : discretization_(Teuchos::null),
       stk_mesh_struct_(Teuchos::null),
-      fracture_criterion_(Teuchos::null),
+      failure_criterion_(Teuchos::null),
       output_type_(UNIDIRECTIONAL_UNILEVEL)
 {
   return;
@@ -35,7 +35,7 @@ Topology::Topology(
     std::string const& output_file)
     : discretization_(Teuchos::null),
       stk_mesh_struct_(Teuchos::null),
-      fracture_criterion_(Teuchos::null),
+      failure_criterion_(Teuchos::null),
       output_type_(UNIDIRECTIONAL_UNILEVEL)
 {
   Teuchos::RCP<Teuchos::ParameterList> params =
@@ -113,7 +113,7 @@ Topology::Topology(
     std::string const&                            interface_block_name)
     : discretization_(Teuchos::null),
       stk_mesh_struct_(Teuchos::null),
-      fracture_criterion_(Teuchos::null),
+      failure_criterion_(Teuchos::null),
       output_type_(UNIDIRECTIONAL_UNILEVEL)
 {
   set_discretization(abstract_disc);
@@ -161,7 +161,7 @@ Topology::get_entity_id(stk::mesh::Entity const entity)
 bool
 Topology::checkOpen(stk::mesh::Entity e)
 {
-  return fracture_criterion_->check(get_bulk_data(), e);
+  return failure_criterion_->check(get_bulk_data(), e);
 }
 
 //
@@ -1123,7 +1123,7 @@ Topology::insertSurfaceElements(std::set<EntityPair> const& fractured_faces)
   // Same rank as bulk cells!
   stk::mesh::EntityRank const interface_rank = stk::topology::ELEMENT_RANK;
 
-  stk::mesh::Part& interface_part = fracture_criterion_->get_interface_part();
+  stk::mesh::Part& interface_part = failure_criterion_->get_interface_part();
 
   stk::mesh::PartVector interface_parts;
 

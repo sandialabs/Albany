@@ -19,7 +19,7 @@ namespace AAdapt {
 /// fracture has occurred between two elements, based on the average
 /// stress in the elements sharing the edge between them.
 ///
-class StressFracture : public LCM::AbstractFractureCriterion
+class StressFracture : public LCM::AbstractFailureCriterion
 {
  public:
   ///

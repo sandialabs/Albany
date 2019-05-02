@@ -20,7 +20,7 @@ namespace AAdapt {
 /// stress in the elements sharing the edge between them.
 ///
 ///
-class RandomCriterion : public LCM::AbstractFractureCriterion
+class RandomCriterion : public LCM::AbstractFailureCriterion
 {
  public:
   ///

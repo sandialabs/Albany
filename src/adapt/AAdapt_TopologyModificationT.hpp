@@ -86,7 +86,7 @@ class TopologyModT : public AbstractAdapterT
 
   Teuchos::RCP<stk::mesh::MetaData> meta_data_;
 
-  Teuchos::RCP<LCM::AbstractFractureCriterion> fracture_criterion_;
+  Teuchos::RCP<LCM::AbstractFailureCriterion> failure_criterion_;
 
   Teuchos::RCP<LCM::Topology> topology_;
 

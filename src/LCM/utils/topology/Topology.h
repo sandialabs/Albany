@@ -16,10 +16,11 @@
 namespace LCM {
 
 // Forward declaration
-class AbstractFractureCriterion;
+class AbstractFailureCriterion;
 
-class Topology {
-public:
+class Topology
+{
+ public:
   ///
   /// \brief Create mesh data structure
   ///
@@ -28,7 +29,7 @@ public:
   ///
   /// Use if want to create new Albany mesh object
   ///
-  Topology(std::string const & input_file, std::string const & output_file);
+  Topology(std::string const& input_file, std::string const& output_file);
 
   ///
   /// \brief Create mesh data structure
@@ -40,15 +41,15 @@ public:
   /// Use if already have an Albany mesh object
   ///
   Topology(
-      Teuchos::RCP<Albany::AbstractDiscretization> & abstract_disc,
-      std::string const & bulk_block_name,
-      std::string const & interface_block_name);
+      Teuchos::RCP<Albany::AbstractDiscretization>& abstract_disc,
+      std::string const&                            bulk_block_name,
+      std::string const&                            interface_block_name);
 
   ///
   /// \brief Iterates over the boundary entities of the mesh of (all
   /// entities of rank dimension-1) and checks fracture criterion.
   ///
-  /// If fracture_criterion is met, the entity and all lower order
+  /// If failure_criterion is met, the entity and all lower order
   /// entities associated with it are marked as open.
   ///
   size_t
@@ -72,7 +73,7 @@ public:
   };
 
   void
-  outputToGraphviz(std::string const & output_filename);
+  outputToGraphviz(std::string const& output_filename);
 
   ///
   /// \brief Initializes the default stk mesh object needed by class.
@@ -149,7 +150,7 @@ public:
   /// \brief Output boundary
   ///
   void
-  outputBoundary(std::string const & output_filename);
+  outputBoundary(std::string const& output_filename);
 
   ///
   /// \brief Get a connectivity list of the boundary
@@ -190,9 +191,9 @@ public:
   ///
   void
   createStar(
-      stk::mesh::Entity entity,
-      std::set<stk::mesh::Entity> & subgraph_entities,
-      std::set<STKEdge, EdgeLessThan> & subgraph_edges);
+      stk::mesh::Entity                entity,
+      std::set<stk::mesh::Entity>&     subgraph_entities,
+      std::set<STKEdge, EdgeLessThan>& subgraph_edges);
 
   ///
   /// \brief Fractures all open boundary entities of the mesh.
@@ -210,7 +211,7 @@ public:
   splitOpenFaces();
 
   void
-  insertSurfaceElements(std::set<EntityPair> const & fractured_faces);
+  insertSurfaceElements(std::set<EntityPair> const& fractured_faces);
 
   ///
   /// \brief Adds a new entity of rank 3 to the mesh
@@ -224,7 +225,7 @@ public:
   ///        contained in the input vector called: "requests"
   ///
   void
-  addEntities(std::vector<size_t> & requests);
+  addEntities(std::vector<size_t>& requests);
 
   ///
   /// \brief Removes an entity and all its connections
@@ -239,7 +240,7 @@ public:
   addRelation(
       stk::mesh::Entity source_entity,
       stk::mesh::Entity target_entity,
-      EdgeId local_relation_id);
+      EdgeId            local_relation_id);
 
   ///
   /// \brief Removes the relation between two entities
@@ -248,7 +249,7 @@ public:
   removeRelation(
       stk::mesh::Entity source_entity,
       stk::mesh::Entity target_entity,
-      EdgeId local_relation_id);
+      EdgeId            local_relation_id);
 
   ///
   /// \brief Returns a vector with all the mesh entities of a
@@ -256,8 +257,8 @@ public:
   ///
   stk::mesh::EntityVector
   getEntitiesByRank(
-      stk::mesh::BulkData const & bulk_data,
-      stk::mesh::EntityRank entity_rank);
+      stk::mesh::BulkData const& bulk_data,
+      stk::mesh::EntityRank      entity_rank);
 
   ///
   /// \brief Gets the local relation id (0,1,2,...) between two entities
@@ -281,7 +282,7 @@ public:
   ///
   stk::mesh::EntityVector
   getDirectlyConnectedEntities(
-      stk::mesh::Entity entity,
+      stk::mesh::Entity     entity,
       stk::mesh::EntityRank entity_rank);
 
   ///
@@ -289,8 +290,8 @@ public:
   ///
   bool
   findEntityInVector(
-      stk::mesh::EntityVector & entities,
-      stk::mesh::Entity entity);
+      stk::mesh::EntityVector& entities,
+      stk::mesh::Entity        entity);
 
   ///
   /// \brief Returns a group of entities connected indirectly to a
@@ -304,7 +305,7 @@ public:
   ///
   stk::mesh::EntityVector
   getBoundaryEntities(
-      stk::mesh::Entity entity,
+      stk::mesh::Entity     entity,
       stk::mesh::EntityRank entity_rank);
 
   ///
@@ -348,9 +349,9 @@ public:
   ///
   stk::mesh::EntityVector
   findAdjacentSegmentsFromFace(
-      std::vector<stk::mesh::EntityVector> const & faces_inside_element,
-      stk::mesh::Entity face,
-      int element_number);
+      std::vector<stk::mesh::EntityVector> const& faces_inside_element,
+      stk::mesh::Entity                           face,
+      int                                         element_number);
 
   ///
   /// \brief Returns a pointer with the coordinates of a given entity
@@ -364,8 +365,8 @@ public:
   ///
   stk::mesh::EntityVector
   getFormerElementNodes(
-      stk::mesh::Entity element,
-      std::vector<stk::mesh::EntityVector> const & entities);
+      stk::mesh::Entity                           element,
+      std::vector<stk::mesh::EntityVector> const& entities);
 
   ///
   /// \brief Generates the coordinate of a given barycenter
@@ -374,8 +375,8 @@ public:
   ///
   void
   computeBarycentricCoordinates(
-      stk::mesh::EntityVector const & entities,
-      stk::mesh::Entity barycenter);
+      stk::mesh::EntityVector const& entities,
+      stk::mesh::Entity              barycenter);
 
   ///
   /// \brief Barycentric subdivision
@@ -445,14 +446,14 @@ public:
   ///
   std::vector<std::vector<int>>
   shortestpathOnBoundaryFaces(
-      std::vector<stk::mesh::Entity> const & nodes,
-      std::vector<stk::mesh::Entity> const & MeshEdgesShortestPath);
+      std::vector<stk::mesh::Entity> const& nodes,
+      std::vector<stk::mesh::Entity> const& MeshEdgesShortestPath);
 
   ///
   /// \brief Returns the shortest path between three input nodes
   ///
   std::vector<std::vector<int>>
-  shortestpath(std::vector<stk::mesh::Entity> const & nodes);
+  shortestpath(std::vector<stk::mesh::Entity> const& nodes);
 
   ///
   /// \brief Returns the directions of all the edges of the input mesh
@@ -501,7 +502,7 @@ public:
   ///        a shortest path (composed by egdes) between three nodes
   ///
   std::vector<std::vector<int>>
-  boundaryVector(std::vector<std::vector<int>> & shortPath);
+  boundaryVector(std::vector<std::vector<int>>& shortPath);
 
   ///
   /// \brief Returns the 1-D boundary required to compute the minimum
@@ -510,7 +511,7 @@ public:
   ///        between three nodes
   ///
   std::vector<std::vector<int>>
-  boundaryVectorOuterSurface(std::vector<std::vector<int>> & shortPath);
+  boundaryVectorOuterSurface(std::vector<std::vector<int>>& shortPath);
 
   ///
   /// \brief Returns the corresponding entities of rank 2 that build
@@ -526,8 +527,8 @@ public:
   ///
   int
   numberOfRepetitions(
-      std::vector<stk::mesh::Entity> & entities,
-      stk::mesh::Entity entity);
+      std::vector<stk::mesh::Entity>& entities,
+      stk::mesh::Entity               entity);
 
   ///
   /// \brief Returns the coordinates of an input node.
@@ -580,12 +581,12 @@ public:
   void
   AssignTopology(
       stk::mesh::EntityRank const rank,
-      stk::mesh::Entity const entity);
+      stk::mesh::Entity const     entity);
 
   ///
   /// Accessors and mutators
   ///
-  Topology &
+  Topology&
   get_topology()
   {
     return *this;
@@ -595,43 +596,43 @@ public:
   get_entity_id(stk::mesh::Entity const entity);
 
   void
-  set_stk_mesh_struct(Teuchos::RCP<Albany::AbstractSTKMeshStruct> const & sms)
+  set_stk_mesh_struct(Teuchos::RCP<Albany::AbstractSTKMeshStruct> const& sms)
   {
     stk_mesh_struct_ = sms;
   }
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> &
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct>&
   get_stk_mesh_struct()
   {
     return stk_mesh_struct_;
   }
 
   void
-  set_discretization(Teuchos::RCP<Albany::AbstractDiscretization> const & d)
+  set_discretization(Teuchos::RCP<Albany::AbstractDiscretization> const& d)
   {
     discretization_ = d;
   }
 
-  Teuchos::RCP<Albany::AbstractDiscretization> &
+  Teuchos::RCP<Albany::AbstractDiscretization>&
   get_discretization()
   {
     return discretization_;
   }
 
-  Albany::STKDiscretization &
+  Albany::STKDiscretization&
   get_stk_discretization()
   {
-    return static_cast<Albany::STKDiscretization &>(
+    return static_cast<Albany::STKDiscretization&>(
         *(get_discretization().get()));
   }
 
-  stk::mesh::BulkData &
+  stk::mesh::BulkData&
   get_bulk_data()
   {
     return *(get_stk_mesh_struct()->bulkData);
   }
 
-  stk::mesh::MetaData &
+  stk::mesh::MetaData&
   get_meta_data()
   {
     return *(get_stk_mesh_struct()->metaData);
@@ -650,55 +651,55 @@ public:
   }
 
   void
-  set_bulk_block_name(std::string const & bn)
+  set_bulk_block_name(std::string const& bn)
   {
     bulk_block_name_ = bn;
   }
 
   void
-  set_interface_block_name(std::string const & in)
+  set_interface_block_name(std::string const& in)
   {
     interface_block_name_ = in;
   }
 
-  std::string const &
+  std::string const&
   get_bulk_block_name()
   {
     return bulk_block_name_;
   }
 
-  std::string const &
+  std::string const&
   get_interface_block_name()
   {
     return interface_block_name_;
   }
 
-  IntScalarFieldType &
+  IntScalarFieldType&
   get_fracture_state_field(stk::mesh::EntityRank rank)
   {
-    return
-        *(get_stk_mesh_struct()->getFieldContainer()->getFractureState(rank));
+    return *(
+        get_stk_mesh_struct()->getFieldContainer()->getFractureState(rank));
   }
 
   void
-  set_fracture_criterion(Teuchos::RCP<AbstractFractureCriterion> const & fc)
+  set_failure_criterion(Teuchos::RCP<AbstractFailureCriterion> const& fc)
   {
-    fracture_criterion_ = fc;
+    failure_criterion_ = fc;
   }
 
-  Teuchos::RCP<AbstractFractureCriterion> &
-  get_fracture_criterion()
+  Teuchos::RCP<AbstractFailureCriterion>&
+  get_failure_criterion()
   {
-    return fracture_criterion_;
+    return failure_criterion_;
   }
 
-  stk::mesh::Part &
+  stk::mesh::Part&
   get_bulk_part()
   {
     return *(get_meta_data().get_part(get_bulk_block_name()));
   }
 
-  stk::mesh::Part &
+  stk::mesh::Part&
   get_interface_part()
   {
     return *(get_meta_data().get_part(get_interface_block_name()));
@@ -710,7 +711,7 @@ public:
     return get_meta_data().get_cell_topology(get_bulk_part());
   }
 
-  stk::mesh::Part &
+  stk::mesh::Part&
   get_local_part()
   {
     return get_meta_data().locally_owned_part();
@@ -747,7 +748,7 @@ public:
   }
 
   bool
-  is_in_part(stk::mesh::Part & part, stk::mesh::Entity e)
+  is_in_part(stk::mesh::Part& part, stk::mesh::Entity e)
   {
     return get_bulk_data().bucket(e).member(part);
   }
@@ -755,8 +756,8 @@ public:
   bool
   is_bulk_cell(stk::mesh::Entity e)
   {
-    return (get_bulk_data().entity_rank(e) == stk::topology::ELEMENT_RANK)
-        && is_in_bulk(e);
+    return (get_bulk_data().entity_rank(e) == stk::topology::ELEMENT_RANK) &&
+           is_in_bulk(e);
   }
 
   bool
@@ -768,8 +769,8 @@ public:
   bool
   is_interface_cell(stk::mesh::Entity e)
   {
-    return (get_bulk_data().entity_rank(e) == stk::topology::ELEMENT_RANK)
-        && is_in_interface(e);
+    return (get_bulk_data().entity_rank(e) == stk::topology::ELEMENT_RANK) &&
+           is_in_interface(e);
   }
 
   //
@@ -792,22 +793,18 @@ public:
   get_fracture_state(stk::mesh::Entity e)
   {
     stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(e);
-    return
-    rank >= stk::topology::ELEMENT_RANK ?
-        CLOSED :
-        static_cast<FractureState>(*(stk::mesh::field_data(
-            get_fracture_state_field(rank),
-            e)));
+    return rank >= stk::topology::ELEMENT_RANK ?
+               CLOSED :
+               static_cast<FractureState>(
+                   *(stk::mesh::field_data(get_fracture_state_field(rank), e)));
   }
 
   bool
   is_internal(stk::mesh::Entity e)
   {
-
     assert(get_bulk_data().entity_rank(e) == get_boundary_rank());
 
-    size_t const
-    number_in_edges = get_bulk_data().num_elements(e);
+    size_t const number_in_edges = get_bulk_data().num_elements(e);
 
     assert(number_in_edges == 1 || number_in_edges == 2);
 
@@ -866,7 +863,7 @@ public:
   minitensor::Vector<double>
   get_normal(stk::mesh::Entity boundary_entity);
 
-private:
+ private:
   ///
   /// \brief Create Albany discretization
   ///
@@ -883,38 +880,28 @@ private:
 
   //
   //
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  discretization_;
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization_;
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct>
-  stk_mesh_struct_;
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
 
-  std::vector<stk::mesh::EntityVector>
-  connectivity_;
+  std::vector<stk::mesh::EntityVector> connectivity_;
 
-  std::set<EntityPair>
-  fractured_faces_;
+  std::set<EntityPair> fractured_faces_;
 
-  std::vector<stk::topology>
-  topologies_;
+  std::vector<stk::topology> topologies_;
 
-  std::vector<stk::mesh::EntityId>
-  highest_ids_;
+  std::vector<stk::mesh::EntityId> highest_ids_;
 
-  std::string
-  bulk_block_name_;
+  std::string bulk_block_name_;
 
-  std::string
-  interface_block_name_;
+  std::string interface_block_name_;
 
   /// Pointer to failure criterion object
-  Teuchos::RCP<AbstractFractureCriterion>
-  fracture_criterion_;
+  Teuchos::RCP<AbstractFailureCriterion> failure_criterion_;
 
-  OutputType
-  output_type_;
+  OutputType output_type_;
 
-private:
+ private:
   ///
   /// \brief Hide default constructor for Topology
   ///
@@ -922,6 +909,6 @@ private:
 };
 // class Topology
 
-}// namespace LCM
+}  // namespace LCM
 
-#endif // LCM_Topology_Topology_h
+#endif  // LCM_Topology_Topology_h

@@ -132,8 +132,8 @@ class RandomFracture : public AbstractAdapter
   stk::mesh::EntityRank face_rank_;
   stk::mesh::EntityRank element_rank_;
 
-  Teuchos::RCP<LCM::AbstractFractureCriterion> fracture_criterion_;
-  Teuchos::RCP<LCM::Topology>                  topology_;
+  Teuchos::RCP<LCM::AbstractFailureCriterion> failure_criterion_;
+  Teuchos::RCP<LCM::Topology>                 topology_;
 
   //! Edges to fracture the mesh on
   std::vector<stk::mesh::Entity> fractured_faces_;
