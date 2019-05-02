@@ -385,6 +385,7 @@ set(transport-headers
 #LCM models
 set(models-sources
   "${LCM_DIR}/models/AAAModel.cpp"
+  "${LCM_DIR}/models/ACEcommon.cpp"
   "${LCM_DIR}/models/ACEice.cpp"
   "${LCM_DIR}/models/ACEpermafrost.cpp"
   "${LCM_DIR}/models/AbstractModel.cpp"
@@ -424,6 +425,7 @@ set(models-sources
 set(models-headers
   "${LCM_DIR}/models/AAAModel_Def.hpp"
   "${LCM_DIR}/models/AAAModel.hpp"
+  "${LCM_DIR}/models/ACEcommon.hpp"
   "${LCM_DIR}/models/ACEice_Def.hpp"
   "${LCM_DIR}/models/ACEice.hpp"
   "${LCM_DIR}/models/ACEpermafrost_Def.hpp"

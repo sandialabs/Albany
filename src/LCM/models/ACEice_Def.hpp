@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "ACEcommon.hpp"
 #include "ACEice.hpp"
-#include "Albany_Utils.hpp"
 #include "MiniNonlinearSolver.h"
 
 namespace LCM {
