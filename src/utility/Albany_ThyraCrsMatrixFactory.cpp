@@ -52,9 +52,9 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
     auto t_domain = getTpetraMap(domain_vs);
     auto t_range = getTpetraMap(range_vs);
     if (static_profile) {
-      m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,nonzeros_per_row,Tpetra::ProfileType::StaticProfile));
+      m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,nonzeros_per_row,Tpetra::StaticProfile));
     } else {
-      m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,nonzeros_per_row,Tpetra::ProfileType::DynamicProfile));
+      m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,nonzeros_per_row,Tpetra::DynamicProfile));
     }
   }
 }

@@ -32,7 +32,7 @@
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
 Teuchos::RCP<Teuchos::ParameterList> paramList;
-Teuchos::RCP<const Teuchos_Comm> mpiCommT;
+Teuchos::RCP<const Teuchos_Comm> mpiComm;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 Teuchos::RCP<double> MPAS_dt;
@@ -214,11 +214,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   bool success = true;
   Teuchos::ArrayRCP<const ST> solution_constView;
   try {
-#ifdef MPAS_USE_EPETRA
-    solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
-#else
-    solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
-#endif
+    solver = slvrfctry->createAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
@@ -305,7 +301,7 @@ void velocity_solver_finalize() {
   meshStruct = Teuchos::null;
   albanyApp = Teuchos::null;
   paramList = Teuchos::null;
-  mpiCommT = Teuchos::null;
+  mpiComm = Teuchos::null;
   discParams = Teuchos::null;
   slvrfctry = Teuchos::null;
   MPAS_dt = Teuchos::null;
@@ -325,7 +321,7 @@ void velocity_solver_finalize() {
 
 void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
   keptMesh = false;
-  mpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
+  mpiComm = Albany::createTeuchosCommFromMpiComm(reducedComm);
 }
 
 void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff) {
@@ -356,7 +352,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& floating2dEdgesIds) {
 
-  slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.yaml", mpiCommT));
+  slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.yaml", mpiComm));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
   Teuchos::Array<std::string> arrayRequiredFields(9);
@@ -519,7 +515,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   discParams = Teuchos::sublist(paramList, "Discretization", true);
 
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
-  albanyApp = Teuchos::rcp(new Albany::Application(mpiCommT));
+  albanyApp = Teuchos::rcp(new Albany::Application(mpiComm));
   albanyApp->initialSetUp(paramList);
 
   int neq = (paramList->sublist("Problem").get<std::string>("Name") == "LandIce Coupled FO H 3D") ? 3 : 2;
@@ -528,13 +524,13 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   std::vector<GO> indexToTriangleGOID;
   indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());
   meshStruct = Teuchos::rcp(
-      new Albany::MpasSTKMeshStruct(discParams, mpiCommT, indexToTriangleGOID,
+      new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleGOID,
           nGlobalTriangles, nLayers, Ordering));
   albanyApp->createMeshSpecs(meshStruct);
 
   albanyApp->buildProblem();
 
-  meshStruct->constructMesh(mpiCommT, discParams, neq, req,
+  meshStruct->constructMesh(mpiComm, discParams, neq, req,
       albanyApp->getStateMgr().getStateInfoStruct(), indexToVertexID,
       mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
       verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,

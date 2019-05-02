@@ -7,67 +7,12 @@
 #ifndef ALBANY_NULL_SPACE_UTILS_HPP
 #define ALBANY_NULL_SPACE_UTILS_HPP
 
-#include "Albany_TpetraTypes.hpp"
 #include "Albany_ThyraTypes.hpp"
 
 namespace Albany {
 
-struct Tpetra_NullSpace_Traits {
-
-  typedef Tpetra_MultiVector base_array_type;
-  typedef Teuchos::RCP<base_array_type> array_type;
-  typedef base_array_type::global_ordinal_type GO_type;
-  typedef base_array_type::local_ordinal_type LO_type;
-  const int Ndof;
-  const int NscalarDof;
-  const int NSdim;
-  const LO_type vec_leng;
-  array_type Array;
-
-  Tpetra_NullSpace_Traits(const int ndof, const int nscalardof, const int nsdim,
-     const LO_type veclen, array_type &array)
-   : Ndof(ndof), NscalarDof(nscalardof), NSdim(nsdim), vec_leng(veclen), Array(array) {}
-
-  void zero(){
-      Array->putScalar(0.0);
-  }
-
-  double &ArrObj(const LO_type DOF, const int i, const int j){
-     Teuchos::ArrayRCP<ST> rdata = Array->getDataNonConst(j);
-     return rdata[DOF + i];
-  }
-
-};
-
-struct Epetra_NullSpace_Traits {
-
-  typedef std::vector<ST> array_type;
-  const int Ndof;
-  const int NscalarDof;
-  const int NSdim;
-  const array_type::size_type vec_leng;
-  array_type& Array;
-
-  Epetra_NullSpace_Traits(const int ndof, const int nscalardof, const int nsdim, const array_type::size_type veclen,
-      array_type &array)
-   : Ndof(ndof), NscalarDof(nscalardof), NSdim(nsdim), vec_leng(veclen), Array(array) {}
-
-  void zero(){
-    for (array_type::size_type i = 0; i < vec_leng*(NSdim + NscalarDof); i++)
-       Array[i] = 0.0;
-  }
-
-  double &ArrObj(const array_type::size_type DOF, const int i, const int j){
-     return Array[DOF + i + j * vec_leng];
-  }
-
-};
-
 class RigidBodyModes {
 public:
-  typedef Tpetra_MultiVector::global_ordinal_type GO_type;
-  typedef Tpetra_MultiVector::local_ordinal_type LO_type;
-
   //! Construct RBM object.
   RigidBodyModes(int numPDEs);
 
@@ -108,9 +53,6 @@ private:
   Teuchos::RCP<Teuchos::ParameterList> plist;
 
   Teuchos::RCP<Thyra_MultiVector> coordMV;
-
-  Tpetra_NullSpace_Traits::array_type trr;
-  Epetra_NullSpace_Traits::array_type err;
 };
 
 } // namespace Albany
