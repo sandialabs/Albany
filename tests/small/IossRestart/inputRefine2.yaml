@@ -1,49 +1,39 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
-    Name: Heat 3D
-    Phalanx Graph Visualization Detail: 1
+    Name: Heat 2D
     Dirichlet BCs: 
-      DBC on NS NodeSet0 for DOF T: 2.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF T: 2.00000000000000000e+00
-      DBC on NS NodeSet2 for DOF T: 1.00000000000000000e+00
-      DBC on NS NodeSet3 for DOF T: 1.00000000000000000e+00
-      DBC on NS NodeSet4 for DOF T: 1.50000000000000000e+00
-      DBC on NS NodeSet5 for DOF T: 1.50000000000000000e+00
+      DBC on NS nodelist_15 for DOF T: 1.50000000000000000e+00
+      DBC on NS nodelist_16 for DOF T: 1.00000000000000000e+00
+      DBC on NS nodelist_17 for DOF T: 1.00000000000000000e+00
+      DBC on NS nodelist_18 for DOF T: 1.00000000000000000e+00
     Initial Condition: 
-      Function: Constant
-      Function Data: [1.50000000000000000e+00]
-    Thermal Conductivity: 
-      Thermal Conductivity Type: Constant
-      Value: 3.00000000000000000e+00
+      Function: Restart
     Source Functions: 
       Quadratic: 
-        Nonlinear Factor: 3.00000000000000000e+00
+        Nonlinear Factor: 3.39999999999999991e+00
     Parameters: 
-      Number: 8
-      Parameter 0: DBC on NS NodeSet0 for DOF T
-      Parameter 1: DBC on NS NodeSet1 for DOF T
-      Parameter 2: DBC on NS NodeSet2 for DOF T
-      Parameter 3: DBC on NS NodeSet3 for DOF T
-      Parameter 4: DBC on NS NodeSet4 for DOF T
-      Parameter 5: DBC on NS NodeSet5 for DOF T
-      Parameter 6: Quadratic Nonlinear Factor
-      Parameter 7: Thermal Conductivity
+      Number: 0
     Response Functions: 
       Number: 1
-      Response 0: Solution Two Norm
+      Response 0: Solution Average
   Discretization: 
-    Exodus Output File Name: ascii_tpetra.exo
-    Workset Size: 100
-    Method: Ascii
-    Cubature Degree: 3
+    Method: Ioss
+    Exodus Input File Name: quadOut.exo
+    Exodus Output File Name: quad2RefineOut.exo
+    Restart Index: 1
+    Restart Fields: [T]
+    Use Serial Mesh: true
+    STK Initial Refine: Quad4_Quad4_4
+    Number of Refinement Passes: 2
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [5.64511798500000026e+01]
+    Test Values: [1.43913827362000002e+00]
     Relative Tolerance: 1.00000000000000002e-03
-    Number of Sensitivity Comparisons: 1
-    Sensitivity Test Values 0: [6.58433553203999988e+00, 6.58432125014000036e+00, 5.21736314617000030e+00, 5.21731994254999965e+00, 7.07370218711000032e+00, 7.07371668683000010e+00, 5.14000048705000046e-01, -5.14000048705000046e-01]
+    Number of Dakota Comparisons: 0
+    Dakota Test Values: [1.72755999999999998e+00]
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -86,12 +76,12 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 50
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack2
+              Preconditioner Type: Ifpack
               Preconditioner Types: 
-                Ifpack2: 
+                Ifpack: 
                   Overlap: 1
-                  Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Prec Type: ILU
+                  Ifpack Settings: 
                     'fact: drop tolerance': 0.00000000000000000e+00
                     'fact: ilut level-of-fill': 1.00000000000000000e+00
                     'fact: level-of-fill': 1
@@ -103,6 +93,16 @@ ANONYMOUS:
       Printing: 
         Output Information: 103
         Output Precision: 3
-      Solver Options: 
-        Status Test Check Type: Minimal
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000002e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 3
 ...

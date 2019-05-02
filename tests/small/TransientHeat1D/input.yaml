@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: Heat 1D
     Solution Method: Transient
@@ -34,11 +35,14 @@ ANONYMOUS:
     Sensitivity Test Values 0: [5.00000000000000000e-01, 5.00000000000000000e-01, 3.00000000000000008e-06]
   Piro: 
     Rythmos: 
-      Num Time Steps: 1000
+      Nonlinear Solver Type: Rythmos
       Final Time: 1.00000000000000000e+00
       Max State Error: 5.00000000000000028e-02
       Alpha: 0.00000000000000000e+00
       Name: 1D Gauss-Sin
+      Rythmos Integration Control: 
+        Take Variable Steps: false
+        Number of Time Steps: 1000
       Rythmos Stepper: 
         VerboseObject: 
           Verbosity Level: low
@@ -73,7 +77,6 @@ ANONYMOUS:
             Overlap: 1
             Ifpack Settings: 
               'fact: level-of-fill': 1
-      Rythmos Integration Control: { }
       Rythmos Integrator: 
         VerboseObject: 
           Verbosity Level: low

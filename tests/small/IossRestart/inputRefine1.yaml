@@ -1,44 +1,37 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: Heat 2D
     Dirichlet BCs: 
-      DBC on NS NodeSet99 for DOF T: 0.00000000000000000e+00
+      DBC on NS nodelist_15 for DOF T: 1.50000000000000000e+00
+      DBC on NS nodelist_16 for DOF T: 1.00000000000000000e+00
+      DBC on NS nodelist_17 for DOF T: 1.00000000000000000e+00
+      DBC on NS nodelist_18 for DOF T: 1.00000000000000000e+00
+    Initial Condition: 
+      Function: Restart
     Source Functions: 
-      Trigonometric: { }
+      Quadratic: 
+        Nonlinear Factor: 3.39999999999999991e+00
     Parameters: 
       Number: 0
-      Parameter 0: DBC on NS NodeSet0 for DOF T
-      Parameter 1: DBC on NS NodeSet1 for DOF T
-      Parameter 2: DBC on NS NodeSet2 for DOF T
-      Parameter 3: DBC on NS NodeSet3 for DOF T
     Response Functions: 
-      Number: 0
+      Number: 1
       Response 0: Solution Average
-      Response 1: Solution Two Norm
   Discretization: 
-    Periodic_x BC: true
-    Periodic_y BC: true
-    Workset Size: 100
-    1D Scale: 1.00000000000000000e+00
-    2D Scale: 1.00000000000000000e+00
-    Element Blocks: 4
-    Block 0: 'begins at (0, 0) ends at (39, 39) length (0.975, 0.975) named MainDomain'
-    Block 1: 'begins at (39, 0) ends at (40, 39) length (0.025, 0.975) named RightStrip'
-    Block 2: 'begins at (0, 39) ends at (39, 40) length (0.975, 0.025) named TopStrip'
-    Block 3: 'begins at (39, 39) ends at (40, 40) length (0.025, 0.025) named TopCorner'
-    Method: STK2D
-    Exodus Output File Name: steady2d.exo
-    Cubature Degree: 9
+    Method: Ioss
+    Exodus Input File Name: quadOut.exo
+    Exodus Output File Name: quadRefineOut.exo
+    Restart Index: 1
+    Restart Fields: [T]
+    Use Serial Mesh: true
+    STK Initial Refine: Quad4_Quad4_4
   Regression Results: 
-    Number of Comparisons: 2
-    Test Values: [1.39149999999999996e+00, 5.79341999999999970e+01]
+    Number of Comparisons: 1
+    Test Values: [1.43584143492999994e+00]
     Relative Tolerance: 1.00000000000000002e-03
-    Number of Sensitivity Comparisons: 2
-    Sensitivity Test Values 0: [4.51417000000000013e-01, 4.26205999999999974e-01, 4.36869000000000007e-01, 4.36869000000000007e-01, 1.72225999999999990e-01]
-    Sensitivity Test Values 1: [2.04623999999999988e+01, 1.72040000000000006e+01, 1.81322000000000010e+01, 1.81322000000000010e+01, 7.71400000000000041e+00]
-    Number of Dakota Comparisons: 1
+    Number of Dakota Comparisons: 0
     Dakota Test Values: [1.72755999999999998e+00]
   Piro: 
     LOCA: 
@@ -78,7 +71,7 @@ ANONYMOUS:
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
-                      Maximum Iterations: 2000
+                      Maximum Iterations: 100
                       Block Size: 1
                       Num Blocks: 50
                       Flexible Gmres: false
@@ -99,6 +92,16 @@ ANONYMOUS:
       Printing: 
         Output Information: 103
         Output Precision: 3
-      Solver Options: 
-        Status Test Check Type: Minimal
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000000000002e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 3
 ...
