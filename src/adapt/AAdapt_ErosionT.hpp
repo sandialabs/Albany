@@ -3,8 +3,8 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#if !defined(AAdapt_TopologyModificationT_hpp)
-#define AAdapt_TopologyModificationT_hpp
+#if !defined(AAdapt_ErosionT_hpp)
+#define AAdapt_ErosionT_hpp
 
 #include <PHAL_Dimension.hpp>
 #include <PHAL_Workset.hpp>
@@ -19,13 +19,13 @@ namespace AAdapt {
 ///
 /// \brief Topology modification based adapter
 ///
-class TopologyModT : public AbstractAdapterT
+class ErosionT : public AbstractAdapterT
 {
  public:
   ///
   /// Constructor
   ///
-  TopologyModT(
+  ErosionT(
       Teuchos::RCP<Teuchos::ParameterList> const& params,
       Teuchos::RCP<ParamLib> const&               param_lib,
       Albany::StateManager const&                 state_mgr,
@@ -34,7 +34,7 @@ class TopologyModT : public AbstractAdapterT
   ///
   /// Destructor
   ///
-  ~TopologyModT();
+  ~ErosionT();
 
   ///
   /// Check adaptation criteria to determine if the mesh needs
@@ -67,10 +67,10 @@ class TopologyModT : public AbstractAdapterT
   ///
   /// Disallow copy and assignment and default
   ///
-  TopologyModT()                    = delete;
-  TopologyModT(TopologyModT const&) = delete;
-  TopologyModT&
-  operator=(TopologyModT const&) = delete;
+  ErosionT()                = delete;
+  ErosionT(ErosionT const&) = delete;
+  ErosionT&
+  operator=(ErosionT const&) = delete;
 
  private:
   ///
@@ -110,4 +110,4 @@ class TopologyModT : public AbstractAdapterT
 
 }  // namespace AAdapt
 
-#endif  // AAdapt_TopologyModificationT_hpp
+#endif  // AAdapt_ErosionT_hpp

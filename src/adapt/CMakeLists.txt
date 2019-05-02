@@ -93,14 +93,16 @@ SET(HEADERS ${HEADERS}
 ENDIF()
 ENDIF()
 
-# Topology Modification depends on LCM and STK
+# Topology Modification and Erosion depend on LCM and STK
 IF(ALBANY_LCM AND ALBANY_STK AND ALBANY_BGL)
 
 SET(SOURCES ${SOURCES}
+    AAdapt_ErosionT.cpp
     AAdapt_TopologyModificationT.cpp
    )
 
 SET(HEADERS ${HEADERS}
+    AAdapt_ErosionT.hpp
     AAdapt_TopologyModificationT.hpp
    )
 

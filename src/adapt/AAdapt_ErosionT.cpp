@@ -8,7 +8,7 @@
 
 #include <stk_util/parallel/ParallelReduce.hpp>
 
-#include "AAdapt_TopologyModificationT.hpp"
+#include "AAdapt_ErosionT.hpp"
 #include "LCM/utils/topology/Topology_FractureCriterion.h"
 
 namespace AAdapt {
@@ -16,7 +16,7 @@ namespace AAdapt {
 //
 //
 //
-AAdapt::TopologyModT::TopologyModT(
+AAdapt::ErosionT::ErosionT(
     Teuchos::RCP<Teuchos::ParameterList> const& params,
     Teuchos::RCP<ParamLib> const&               param_lib,
     Albany::StateManager const&                 state_mgr,
@@ -63,13 +63,13 @@ AAdapt::TopologyModT::TopologyModT(
 //
 //
 //
-AAdapt::TopologyModT::~TopologyModT() {}
+AAdapt::ErosionT::~ErosionT() {}
 
 //
 //
 //
 bool
-AAdapt::TopologyModT::queryAdaptationCriteria(int)
+AAdapt::ErosionT::queryAdaptationCriteria(int)
 {
   size_t const number_fractured_faces = topology_->setEntitiesOpen();
 
@@ -80,10 +80,10 @@ AAdapt::TopologyModT::queryAdaptationCriteria(int)
 //
 //
 bool
-AAdapt::TopologyModT::adaptMesh()
+AAdapt::ErosionT::adaptMesh()
 {
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
-                  << "Adapting mesh using AAdapt::TopologyMod method      \n"
+                  << "Adapting mesh using AAdapt::Erosion method      \n"
                   << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
   // Save the current results and close the exodus file
@@ -126,7 +126,7 @@ AAdapt::TopologyModT::adaptMesh()
 // topology->splitOpenFaces() function.
 //
 void
-AAdapt::TopologyModT::solutionTransfer(
+AAdapt::ErosionT::solutionTransfer(
     Teuchos::RCP<Tpetra_Vector const> const& old_solution,
     Teuchos::RCP<Tpetra_Vector const>&       new_solution)
 {
@@ -136,10 +136,10 @@ AAdapt::TopologyModT::solutionTransfer(
 //
 //
 Teuchos::RCP<Teuchos::ParameterList const>
-AAdapt::TopologyModT::getValidAdapterParameters() const
+AAdapt::ErosionT::getValidAdapterParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> valid_pl_ =
-      this->getGenericAdapterParams("ValidTopologyModificationParams");
+      this->getGenericAdapterParams("ValidErosionParams");
 
   valid_pl_->set<double>(
       "Critical Traction",
