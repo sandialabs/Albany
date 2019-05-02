@@ -17,7 +17,6 @@
 // Uses LCM Topology util class
 // Note that all topology functions are in Albany::LCM namespace
 #include "Albany_STKDiscretization.hpp"
-#include "Fracture.h"
 #include "Topology.h"
 
 namespace AAdapt {

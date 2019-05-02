@@ -8,7 +8,7 @@
 #define AAdapt_StressFracture_hpp
 
 #include "Albany_STKDiscretization.hpp"
-#include "Fracture.h"
+#include "Topology_FractureCriterion.h"
 
 namespace AAdapt {
 
@@ -48,6 +48,8 @@ class StressFracture : public LCM::AbstractFractureCriterion
   ///
   virtual bool
   computeFractureCriterion(stk::mesh::Entity entity, double p);
+
+  virtual ~StressFracture() {}
 
  private:
   StressFracture();
