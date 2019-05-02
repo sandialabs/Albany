@@ -143,19 +143,19 @@ int main(int argc, char *argv[])
         slvrfctry.getAnalysisParameters().sublist(
             "Solve", /*mustAlreadyExist =*/false);
 
-    Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST>>> thyraResponses;
+    Teuchos::Array<Teuchos::RCP<const Thyra_Vector>> thyraResponses;
     Teuchos::Array<
-        Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST>>>>
+        Teuchos::Array<Teuchos::RCP<const Thyra_MultiVector>>>
         thyraSensitivities;
     Piro::PerformSolve(
         *solver, solveParams, thyraResponses, thyraSensitivities);
 
     // Check if thyraResponses are product vectors or regular vectors
-    Teuchos::RCP<const Thyra::ProductVectorBase<ST>> r_prod;
+    Teuchos::RCP<const Thyra_ProductVector> r_prod;
     if (thyraResponses.size() > 0) {
       r_prod =
           Teuchos::nonnull(thyraResponses[0])
-              ? Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
+              ? Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(
                     thyraResponses[0], false)
               : Teuchos::null;
     }
@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
       TEUCHOS_TEST_FOR_EXCEPTION(
           numParameters == 0, Teuchos::Exceptions::InvalidParameter,
           std::endl
-              << "Error!  In Albany::ModelEvaluatorT constructor:  "
+              << "Error!  In Albany::ModelEvaluator constructor:  "
               << "Parameter vector " << l << " has zero parameters!"
               << std::endl);
 
@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
         TEUCHOS_TEST_FOR_EXCEPTION(
             numParameters == 0, Teuchos::Exceptions::InvalidParameter,
             std::endl
-                << "Error!  In Albany::ModelEvaluatorT constructor:  "
+                << "Error!  In Albany::ModelEvaluator constructor:  "
                 << "Response vector " << l << " has zero parameters!"
                 << std::endl);
 
@@ -254,15 +254,14 @@ int main(int argc, char *argv[])
       }
     }
 
-    const Thyra::ModelEvaluatorBase::InArgs<ST> nominal =
-        solver->getNominalValues();
+    const Thyra_InArgs nominal = solver->getNominalValues();
 
     // Check if parameters are product vectors or regular vectors
-    Teuchos::RCP<const Thyra::ProductVectorBase<ST>> p_prod;
+    Teuchos::RCP<const Thyra_ProductVector> p_prod;
     if (num_p > 0) {
       p_prod =
           Teuchos::nonnull(nominal.get_p(0))
-              ? Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
+              ? Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(
                     nominal.get_p(0), false)
               : Teuchos::null;
       if (p_prod == Teuchos::null) {
@@ -279,8 +278,8 @@ int main(int argc, char *argv[])
       } else {
         // Thyra product vector case
         for (int i = 0; i < num_p; i++) {
-          Teuchos::RCP<const Thyra::ProductVectorBase<ST>> pT =
-              Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
+          Teuchos::RCP<const Thyra_ProductVector> pT =
+              Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(
                   nominal.get_p(i), true);
           // IKT: note that we are assuming the parameters are all the same for
           // all the models

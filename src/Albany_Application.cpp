@@ -38,11 +38,6 @@
 #include "SolutionSniffer.hpp"
 #endif // ALBANY_LCM
 
-// TODO: remove this if/when the thyra refactor is 100% complete,
-//       and there is no more any Tpetra stuff in this class
-#include "Albany_TpetraThyraUtils.hpp"
-#include "Albany_EpetraThyraUtils.hpp"
-
 //#define WRITE_TO_MATRIX_MARKET
 //#define DEBUG_OUTPUT
 
@@ -719,17 +714,7 @@ void Application::finalSetUp(
     const Teuchos::RCP<Teuchos::ParameterList> &params,
     const Teuchos::RCP<const Thyra_Vector>& initial_guess) {
 
-  bool TpetraBuild = build_type() == BuildType::Tpetra;
-
   setScaling(params); 
-
-  /*
-   RCP<const Tpetra_Vector> initial_guessT;
-   if (Teuchos::nonnull(initial_guess)) {
-   initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess,
-   comm);
-   }
-   */
 
   // Now that space is allocated in STK for state fields, initialize states.
   // If the states have been already allocated, skip this.
@@ -1209,7 +1194,7 @@ void Application::computeGlobalResidualImpl(
     xdotdot_ = Teuchos::null;
 #endif // ALBANY_LCM
 
-  // Zero out overlapped residual - Tpetra
+  // Zero out overlapped residual
   overlapped_f->assign(0.0);
   f->assign(0.0);
 
@@ -1367,8 +1352,6 @@ void Application::computeGlobalResidual(
     const Teuchos::RCP<Thyra_Vector>& f,
     const double dt) 
 {
-  // Create non-owning RCPs to Tpetra objects
-  // to be passed to the implementation
   this->computeGlobalResidualImpl(
         current_time, x, x_dot, x_dotdot,
         p, f, dt);
@@ -1652,8 +1635,6 @@ void Application::computeGlobalJacobian(
     const Teuchos::RCP<Thyra_LinearOp>& jac,
     const double dt) 
 {
-  // Create non-owning RCPs to Tpetra objects
-  // to be passed to the implementation
   this->computeGlobalJacobianImpl(alpha, beta, omega, current_time, x, xdot, xdotdot, p, f, jac, dt);
   // Debut output
   if (writeToMatrixMarketJac != 0) {
@@ -2662,10 +2643,6 @@ void Application::setScaleBCDofs(PHAL::Workset &workset, Teuchos::RCP<const Thyr
     scale = 1.0; 
   }
 
-  // TODO: cast scaleVec_ to SpmdVectorBase, and get the local data.
-  //       Right now, the getNonconstLocalData in SpmdVectorBase does not work correctly
-  //       for Tpetra, since the Tpetra host view is not marked as modified (see Trilinos issue #3180)
-  //       Therefore, for now we ASSUME the underlying vector
   auto scaleVecLocalData = getNonconstLocalData(scaleVec_);
   for (size_t ns=0; ns<nodeSetIDs_.size(); ns++) {
     std::string key = nodeSetIDs_[ns]; 
@@ -2814,7 +2791,6 @@ void Application::setupTangentWorksetInfo(
     solMgr->get_cas_manager()->scatter(Vxdotdot,overlapped_Vxdotdot,CombineMode::INSERT);
   }
 
-  // RCP<const Epetra_MultiVector > vp = rcp(Vp, false);
   RCP<ParamVec> params = rcp(deriv_p, false);
 
   // Number of x & xdot tangent directions
@@ -2856,12 +2832,10 @@ void Application::setupTangentWorksetInfo(
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i = 0; i < params->size(); i++) {
       p_val = TanFadType(num_cols_tot, (*params)[i].baseValue);
-      auto VpT = getConstTpetraMultiVector(Vp);
-      if (VpT != Teuchos::null) {
-        Teuchos::ArrayRCP<const ST> VpT_constView;
+      if (Vp != Teuchos::null) {
+        auto Vp_constView = getLocalData(Vp);
         for (int k = 0; k < num_cols_p; k++) {
-          VpT_constView = VpT->getData(k);
-          p_val.fastAccessDx(param_offset + k) = VpT_constView[i];
+          p_val.fastAccessDx(param_offset + k) = Vp_constView[k][i];
         }
       } else
         p_val.fastAccessDx(param_offset + i) = 1.0;

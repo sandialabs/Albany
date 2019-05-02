@@ -4,18 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// IK, 9/12/14: has Epetra_Comm! No other Epetra.
-
 #include "Albany_ModelEvaluator.hpp"
 
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_DistributedParameterDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
-#include "Tpetra_ConfigDefs.hpp"
 
-#include "Albany_TpetraThyraTypes.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 #include "Albany_Application.hpp"
@@ -33,10 +28,15 @@ static int mm_counter_jac = 0;
 // which is needed
 // for some applications.  Uncomment the following line to turn on.
 //#define WRITE_MASS_MATRIX_TO_MM_FILE
-#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
-#include "MatrixMarket_Tpetra.hpp"
-#include "TpetraExt_MMHelpers.hpp"
-#endif
+
+namespace {
+void sanitize_nans(const Thyra_Derivative& v)
+{
+  if (!v.isEmpty() && Teuchos::nonnull(v.getMultiVector())) {
+    v.getMultiVector()->assign(0.0);
+  }
+}
+}  // namespace
 
 namespace Albany
 {
@@ -150,7 +150,7 @@ ModelEvaluator(const Teuchos::RCP<Albany::Application>&    app_,
 
   *out << "Number of response vectors  = " << num_response_vecs << std::endl;
 
-  // Setup sacado and tpetra storage for parameters
+  // Setup sacado and thyra storage for parameters
   sacado_param_vec.resize(num_param_vecs);
   param_vecs.resize(num_param_vecs);
   param_vss.resize(num_param_vecs);
@@ -373,7 +373,7 @@ void ModelEvaluator::allocateVectors()
     // Set xdotdot in parent class to pass to time integrator
 
     // GAH set x_dotdot for transient simulations. Note that xDotDot is a member
-    // of Piro::TransientDecorator<ST, LO, Tpetra_GO, KokkosNode>
+    // of Piro::TransientDecorator<ST, LO, GO, KokkosNode>
     const Teuchos::RCP<const Thyra_Vector> x_dotdot_init = xMV->col(2);
     const Teuchos::RCP<Thyra_Vector>       x_dotdot_init_nonconst = x_dotdot_init->clone_v();
     // IKT, 3/30/17: set x_dotdot in nominalValues for Tempus, now that
@@ -648,25 +648,6 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
   return static_cast<Thyra_OutArgs>(result);
 }
 
-namespace {
-// As of early Jan 2015, it seems there is some conflict between Thyra's use of
-// NaN to initialize certain quantities and Tpetra's v.update(alpha, x, 0)
-// implementation. In the past, 0 as the third argument seemed to trigger a code
-// path that does a set v <- alpha x rather than an accumulation v <- alpha x +
-// beta v. Hence any(isnan(v(:))) was not a problem if beta == 0. That seems not
-// to be entirely true now. For some reason, this problem occurs only in DEBUG
-// builds in the sensitivities. I have not had time to fully dissect this
-// problem to determine why the problem occurs only there, but the solution is
-// nonetheless quite suggestive: sanitize v before calling update. I do this at
-// the highest level, here, rather than in the responses.
-void
-sanitize_nans(const Thyra_ModelEvaluator::Derivative<ST>& v)
-{
-  if (!v.isEmpty() && Teuchos::nonnull(v.getMultiVector()))
-    ConverterT::getTpetraMultiVector(v.getMultiVector())->putScalar(0.0);
-}
-}  // namespace
-
 void ModelEvaluator::
 evalModelImpl(const Thyra_InArgs&  inArgs,
               const Thyra_OutArgs& outArgs) const
@@ -688,8 +669,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   // IKT, 3/30/17: the following logic is meant to support both the Thyra
   // time-integrators in Piro
   //(e.g., trapezoidal rule) and the second order time-integrators in Tempus.
-  Teuchos::RCP<Thyra_Vector> x_dotdot; 
-  Teuchos::RCP<Tpetra_Vector> x_dotdotT;
+  Teuchos::RCP<const Thyra_Vector> x_dotdot; 
   ST                          omega = 0.0;
   if (supports_xdotdot == true) {
     if (use_tempus == true) 
@@ -697,12 +677,10 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     // The following case is to support second order time-integrators in Piro
     if (std::abs(omega) < 1.0e-14) {
       if (Teuchos::nonnull(this->get_x_dotdot())) {
-        x_dotdot  =  Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*(this->get_x_dotdot()))); 
-        x_dotdotT = ConverterT::getTpetraVector(x_dotdot);
+        x_dotdot  =  this->get_x_dotdot(); 
         omega     = this->get_omega();
       } else {
         x_dotdot  = Teuchos::null; 
-        x_dotdotT = Teuchos::null;
         omega     = 0.0;
       }
     }
@@ -710,43 +688,33 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     else {
       if (inArgs.supports(Thyra_ModelEvaluator::IN_ARG_x_dot_dot)) {
         //x_dotdot = inArgs.get_x_dot_dot(); 
-        x_dotdot  =  Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*(inArgs.get_x_dot_dot())));
-        if (x_dotdot != Teuchos::null) { 
-          Teuchos::RCP<const Tpetra_Vector> x_dotdotT_temp =
-              Albany::getConstTpetraVector(x_dotdot);
-          x_dotdotT = Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_temp));
-        }
-        else {
-          x_dotdotT = Teuchos::null; 
-          omega     = 0.0;
-        }
+        x_dotdot = inArgs.get_x_dot_dot();
+        omega    = this->get_omega();
       } else {
         x_dotdot  = Teuchos::null; 
-        x_dotdotT = Teuchos::null;
         omega     = 0.0;
       }
     }
   } else {
     x_dotdot  = Teuchos::null; 
-    x_dotdotT = Teuchos::null;
     omega     = 0.0;
   }
 
-  const ST alpha = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdotT)) ?
+  const ST alpha = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ?
                        inArgs.get_alpha() :
                        0.0;
-  const ST beta = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdotT)) ?
+  const ST beta = (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ?
                       inArgs.get_beta() :
                       1.0;
 
   bool const is_dynamic =
-      Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdotT);
+      Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot);
 
 #if defined(ALBANY_LCM)
   ST const curr_time = is_dynamic == true ? inArgs.get_t() : getCurrentTime();
 #else
   const ST curr_time =
-      (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdotT)) ?
+      (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ?
           inArgs.get_t() :
           0.0;
 #endif  // ALBANY_LCM
@@ -776,21 +744,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   //
   auto f_out    = outArgs.get_f();
   auto W_op_out = outArgs.get_W_op();
-
-  /*
-   * Commenting this out for now, cause it seems it is never used. If that turns out to
-   * be the case, then remove altogether.
-   *
-   * // Get preconditioner operator, if requested
-   * Teuchos::RCP<Tpetra_Operator> WPrec_out;
-   * if (outArgsT.supports(Thyra_ModelEvaluator::OUT_ARG_W_prec)) {
-   *   // IKT, 12/19/16: need to verify that this is correct
-   *   // LB, 7/25/18: this is currently pointless because: a) we're hiding WPrec_out
-   *   //              from outside the if with a temporary, and b) we never set the
-   *   //              WPrec_out in the outArgs.
-   *   Teuchos::RCP<Tpetra_Operator> WPrec_out = app->getPreconditionerT();
-   * }
-   */
 
 #ifdef WRITE_STIFFNESS_MATRIX_TO_MM_FILE
     // IK, 4/24/15: write stiffness matrix to matrix market file
@@ -910,8 +863,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       dgdxdot_out = outArgs.get_DgDx_dot(j);
     }
 
-    //    const Thyra_ModelEvaluator::Derivative<ST> dgdxdotdotT_out =
-    //    this->get_DgDx_dotdot(j);
     const Thyra_Derivative dgdxdotdot_out;
 
     sanitize_nans(dgdx_out);
