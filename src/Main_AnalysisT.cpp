@@ -17,6 +17,9 @@
 
 int main(int argc, char *argv[]) {
 
+  // Global variable that denotes this is the Tpetra executable
+  static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+
   int status=0; // 0 = pass, failures are incremented
   bool success = true;
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
