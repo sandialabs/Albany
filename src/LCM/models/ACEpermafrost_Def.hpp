@@ -43,15 +43,17 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   min_yield_strength_   = p->get<RealType>("ACE Minimum Yield Strength", 0.0);
 
   if (p->isParameter("ACE Time File") == true) {
-    time_file_ = p->get<std::string>("ACE Time File");
+    std::string const filename = p->get<std::string>("ACE Time File");
+    time_                      = vectorFromFile(filename);
   }
   if (p->isParameter("ACE Sea Level File") == true) {
-    sea_level_file_ = p->get<std::string>("ACE Sea Level File");
+    std::string const filename = p->get<std::string>("ACE Sea Level File");
+    sea_level_                 = vectorFromFile(filename);
   }
 
   ALBANY_ASSERT(
       time_.size() == sea_level_.size(),
-      "Number of times and number of sea level values must match");
+      "*** ERROR: Number of times and number of sea level values must match");
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
   std::string const Fp_string           = field_name_map_["Fp"];

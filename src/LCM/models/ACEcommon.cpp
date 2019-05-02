@@ -10,7 +10,7 @@ std::vector<RealType>
 LCM::vectorFromFile(std::string const& filename)
 {
   std::ifstream file(filename);
-  ALBANY_ASSERT(file.good() == true, "Error opening Time File");
+  ALBANY_ASSERT(file.good() == true, "**** ERROR opening file " + filename);
   std::stringstream buffer;
   buffer << file.rdbuf();
   file.close();
