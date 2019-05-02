@@ -7,10 +7,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_paramT.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dirichlet_Dist_ParamT NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${AlbanyT.exe} input_dirichlet_dist_paramT.yaml)
+if (ALBANY_ROL) 
 # 2.1 Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dirichlet_Dist_Param_AnalysisT NAME)
 # 3.1 Create the test with this name and standard executable
 add_test(${testName} ${AlbanyAnalysisT.exe} input_dirichlet_dist_paramT.yaml)
+endif()
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_param.yaml
@@ -29,10 +31,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_mixed_paramsT.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dirichlet_Mixed_ParamsT NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${AlbanyT.exe} input_dirichlet_mixed_paramsT.yaml)
+if (ALBANY_ROL) 
 # 2.1 Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dirichlet_Mixed_Params_AnalysisT NAME)
 # 3.1 Create the test with this name and standard executable
 add_test(${testName} ${AlbanyAnalysisT.exe} input_dirichlet_mixed_paramsT.yaml)
+endif()
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_mixed_params.yaml
@@ -43,11 +47,13 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dirichlet_Mixed_Para
 if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe} input_dirichlet_mixed_params.yaml)
 endif()
+if (ALBANY_ROL) 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dirichlet_Mixed_Params_Analysis NAME)
 # 3. Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
 add_test(${testName} ${AlbanyAnalysis.exe} input_dirichlet_mixed_params.yaml)
+endif()
 endif()
 
 # 1. Copy Input file from source to binary dir
@@ -67,11 +73,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_paramT.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Conductivity_Dist_ParamT NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${AlbanyT.exe} input_conductivity_dist_paramT.yaml)
+if (ALBANY_ROL) 
 # 2.1 Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Conductivity_Dist_Param_AnalysisT NAME)
 # 3.1 Create the test with this name and standard executable
 add_test(${testName} ${AlbanyAnalysisT.exe} input_conductivity_dist_paramT.yaml)
-
+endif()
 
 if (ALBANY_IOPX)
 # 1. Copy Input file from source to binary dir
