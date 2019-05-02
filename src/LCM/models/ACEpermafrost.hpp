@@ -76,6 +76,7 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   ScalarField porosity_;
   ScalarField tdot_;
   ScalarField failed_;
+  ScalarField exposure_time_;
 
   // Mechanical MDFields
   ScalarField eqps_;
@@ -92,13 +93,13 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   // Baseline constants
   RealType ice_density_{0.0};
   RealType water_density_{0.0};
-  RealType sediment_density_{0.0};
+  RealType soil_density_{0.0};
   RealType ice_thermal_cond_{0.0};
   RealType water_thermal_cond_{0.0};
-  RealType sediment_thermal_cond_{0.0};
+  RealType soil_thermal_cond_{0.0};
   RealType ice_heat_capacity_{0.0};
   RealType water_heat_capacity_{0.0};
-  RealType sediment_heat_capacity_{0.0};
+  RealType soil_heat_capacity_{0.0};
   RealType ice_saturation_init_{0.0};
   RealType ice_saturation_max_{0.0};
   RealType water_saturation_min_{0.0};
@@ -106,11 +107,17 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType freeze_curve_width_{1.0};
   RealType latent_heat_{0.0};
   RealType porosity0_{0.0};
+  RealType erosion_rate_{-1.0};
+  RealType element_size_{0.0};
   RealType min_yield_strength_{0.0};
 
   // Saturation hardening constraints
   RealType sat_mod_{0.0};
   RealType sat_exp_{0.0};
+
+  // Sea level arrays
+  std::vector<RealType> times_;
+  std::vector<RealType> values_;
 
   void
   init(

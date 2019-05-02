@@ -20,16 +20,14 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   this->setIntegrationPointLocationFlag(true);
 
   // Baseline constants
-  sat_mod_ = p->get<RealType>("Saturation Modulus", 0.0);
-  sat_exp_ = p->get<RealType>("Saturation Exponent", 0.0);
-
+  sat_mod_            = p->get<RealType>("Saturation Modulus", 0.0);
+  sat_exp_            = p->get<RealType>("Saturation Exponent", 0.0);
   ice_density_        = p->get<RealType>("ACE Ice Density", 0.0);
   water_density_      = p->get<RealType>("ACE Water Density", 0.0);
   ice_thermal_cond_   = p->get<RealType>("ACE Ice Thermal Conductivity", 0.0);
   water_thermal_cond_ = p->get<RealType>("ACE Water Thermal Conductivity", 0.0);
   ice_heat_capacity_  = p->get<RealType>("ACE Ice Heat Capacity", 0.0);
-  water_heat_capacity_ = p->get<RealType>("ACE Water Heat Capacity", 0.0);
-
+  water_heat_capacity_  = p->get<RealType>("ACE Water Heat Capacity", 0.0);
   ice_saturation_init_  = p->get<RealType>("ACE Ice Initial Saturation", 0.0);
   ice_saturation_max_   = p->get<RealType>("ACE Ice Maximum Saturation", 0.0);
   water_saturation_min_ = p->get<RealType>("ACE Water Minimum Saturation", 0.0);
@@ -37,6 +35,8 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   freeze_curve_width_   = p->get<RealType>("ACE Freezing Curve Width", 1.0);
   latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
+  erosion_rate_         = p->get<RealType>("ACE Erosion Rate", -1.0);
+  element_size_         = p->get<RealType>("ACE Element Size", 0.0);
 
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
@@ -56,10 +56,8 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setDependentField("Delta Time", dl->workset_scalar);
   setDependentField("ACE Temperature", dl->qp_scalar);
 
-  // Computed incrementally
+  // define the evaluated fields
   setEvaluatedField("ACE Ice Saturation", dl->qp_scalar);
-
-  // For output/convenience
   setEvaluatedField("ACE Density", dl->qp_scalar);
   setEvaluatedField("ACE Heat Capacity", dl->qp_scalar);
   setEvaluatedField("ACE Thermal Conductivity", dl->qp_scalar);
@@ -68,8 +66,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField("ACE Porosity", dl->qp_scalar);
   setEvaluatedField("ACE Temperature Dot", dl->qp_scalar);
   setEvaluatedField("ACE Failure Indicator", dl->qp_scalar);
-
-  // define the evaluated fields
+  setEvaluatedField("ACE Exposure Time", dl->qp_scalar);
   setEvaluatedField(cauchy_string, dl->qp_tensor);
   setEvaluatedField(Fp_string, dl->qp_tensor);
   setEvaluatedField(eqps_string, dl->qp_scalar);
@@ -202,6 +199,15 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       0.0,
       false,
       p->get<bool>("Output ACE Failure Indicator", true));
+
+  // exposure time
+  addStateVariable(
+      "ACE Exposure Time",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output ACE Exposure Time", false));
 }
 
 template <typename EvalT, typename Traits>
@@ -240,6 +246,7 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   porosity_         = *output_fields["ACE Porosity"];
   tdot_             = *output_fields["ACE Temperature Dot"];
   failed_           = *output_fields["ACE Failure Indicator"];
+  exposure_time_    = *output_fields["ACE Exposure Time"];
 
   // get State Variables
   Fp_old_             = (*workset.stateArrayPtr)[Fp_string + "_old"];
@@ -361,18 +368,95 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   auto const coord_vec = this->model_.getCoordVecField();
 
-  ScalarT const E      = elastic_modulus_(cell, pt);
-  ScalarT const nu     = poissons_ratio_(cell, pt);
-  ScalarT const kappa  = E / (3.0 * (1.0 - 2.0 * nu));
-  ScalarT const mu     = E / (2.0 * (1.0 + nu));
-  ScalarT const K      = hardening_modulus_(cell, pt);
-  ScalarT const Y      = yield_strength_(cell, pt);
-  ScalarT const J1     = J_(cell, pt);
-  ScalarT const Jm23   = 1.0 / std::cbrt(J1 * J1);
-  ScalarT const Tcurr  = temperature_(cell, pt);
-  ScalarT const Told   = T_old_(cell, pt);
-  ScalarT const iold   = ice_saturation_old_(cell, pt);
-  ScalarT const height = coord_vec(cell, pt, 2);
+  ScalarT const E                      = elastic_modulus_(cell, pt);
+  ScalarT const nu                     = poissons_ratio_(cell, pt);
+  ScalarT const kappa                  = E / (3.0 * (1.0 - 2.0 * nu));
+  ScalarT const mu                     = E / (2.0 * (1.0 + nu));
+  ScalarT const K                      = hardening_modulus_(cell, pt);
+  ScalarT const Y                      = yield_strength_(cell, pt);
+  ScalarT const J1                     = J_(cell, pt);
+  ScalarT const Jm23                   = 1.0 / std::cbrt(J1 * J1);
+  ScalarT const Tcurr                  = temperature_(cell, pt);
+  ScalarT const Told                   = T_old_(cell, pt);
+  ScalarT const iold                   = ice_saturation_old_(cell, pt);
+  ScalarT const height                 = coord_vec(cell, pt, 2);
+  ScalarT const erosion_rate           = erosion_rate_;
+  ScalarT const element_size           = element_size_;
+  ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
+
+  //
+  // Thermal calculation
+  //
+
+  // Calculate the depth-dependent porosity
+  // NOTE: The porosity does not change in time so this calculation only needs
+  //       to be done once, at the beginning of the simulation.
+  ScalarT const porosity = porosity0_;
+  porosity_(cell, pt)    = porosity;
+
+  // Calculate melting temperature
+  ScalarT sal   = salinity_base_;  // should come from chemical part of model
+  ScalarT sal15 = std::sqrt(sal * sal * sal);
+  ScalarT pressure_fixed = 1.0;
+  // Tmelt is in Kelvin
+  ScalarT Tmelt = -0.057 * sal + 0.00170523 * sal15 - 0.0002154996 * sal * sal -
+                  0.000753 / 10000.0 * pressure_fixed + 273.15;
+
+  // Calculate temperature change
+  ScalarT dTemp = Tcurr - Told;
+  if (delta_time_(0) > 0.0) {
+    tdot_(cell, pt) = dTemp / delta_time_(0);
+  } else {
+    tdot_(cell, pt) = 0.0;
+  }
+
+  // Calculate the freezing curve function df/dTemp
+  // W term sets the width of the freezing curve.
+  // Larger W means steeper curve.
+  // f(T) = 1 / (1 + e^(-W*(T-T0)))
+  ScalarT const W     = freeze_curve_width_;
+  ScalarT const Tdiff = Tcurr - Tmelt;
+  ScalarT const arg   = -W * Tdiff;
+  ScalarT       icurr{1.0};
+  ScalarT       dfdT{0.0};
+
+  if (arg < std::log(DBL_MAX)) {
+    ScalarT const et   = exp(-W * Tdiff);
+    ScalarT const etp1 = et + 1.0;
+
+    // Update freeze curve slope
+    dfdT = -W * et / etp1 / etp1;
+
+    // Update the ice saturation
+    icurr = 1.0 - 1.0 / etp1;
+  }
+
+  // Update the water saturation
+  ScalarT const wcurr = 1.0 - icurr;
+
+  // Update the effective material density
+  density_(cell, pt) =
+      porosity * ((ice_density_ * icurr) + (water_density_ * wcurr));
+
+  // Update the effective material heat capacity
+  heat_capacity_(cell, pt) = porosity * ((ice_heat_capacity_ * icurr) +
+                                         (water_heat_capacity_ * wcurr));
+
+  // Update the effective material thermal conductivity
+  thermal_cond_(cell, pt) = pow(ice_thermal_cond_, (icurr * porosity)) *
+                            pow(water_thermal_cond_, (wcurr * porosity));
+
+  // Update the material thermal inertia term
+  thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
+                               (ice_density_ * latent_heat_ * dfdT);
+
+  // Return values
+  ice_saturation_(cell, pt)   = icurr;
+  water_saturation_(cell, pt) = wcurr;
+
+  //
+  // Mechanical computation
+  //
 
   // fill local tensors
   F.fill(def_grad_, cell, pt, 0, 0);
@@ -473,72 +557,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
       stress_(cell, pt, i, j) = sigma(i, j);
     }
   }
-
-  // Calculate the depth-dependent porosity
-  // NOTE: The porosity does not change in time so this calculation only needs
-  //       to be done once, at the beginning of the simulation.
-  ScalarT const porosity = porosity0_;
-  porosity_(cell, pt)    = porosity;
-
-  // Calculate melting temperature
-  ScalarT sal   = salinity_base_;  // should come from chemical part of model
-  ScalarT sal15 = std::sqrt(sal * sal * sal);
-  ScalarT pressure_fixed = 1.0;
-  // Tmelt is in Kelvin
-  ScalarT Tmelt = -0.057 * sal + 0.00170523 * sal15 - 0.0002154996 * sal * sal -
-                  0.000753 / 10000.0 * pressure_fixed + 273.15;
-
-  // Calculate temperature change
-  ScalarT dTemp = Tcurr - Told;
-  if (delta_time_(0) > 0.0) {
-    tdot_(cell, pt) = dTemp / delta_time_(0);
-  } else {
-    tdot_(cell, pt) = 0.0;
-  }
-
-  // Calculate the freezing curve function df/dTemp
-  // W term sets the width of the freezing curve.
-  // Larger W means steeper curve.
-  // f(T) = 1 / (1 + e^(-W*(T-T0)))
-  ScalarT const W     = freeze_curve_width_;
-  ScalarT const Tdiff = Tcurr - Tmelt;
-  ScalarT const arg   = -W * Tdiff;
-  ScalarT       icurr{1.0};
-  ScalarT       dfdT{0.0};
-
-  if (arg < std::log(DBL_MAX)) {
-    ScalarT const et   = exp(-W * Tdiff);
-    ScalarT const etp1 = et + 1.0;
-
-    // Update freeze curve slope
-    dfdT = -W * et / etp1 / etp1;
-
-    // Update the ice saturation
-    icurr = 1.0 - 1.0 / etp1;
-  }
-
-  // Update the water saturation
-  ScalarT const wcurr = 1.0 - icurr;
-
-  // Update the effective material density
-  density_(cell, pt) =
-      porosity * ((ice_density_ * icurr) + (water_density_ * wcurr));
-
-  // Update the effective material heat capacity
-  heat_capacity_(cell, pt) = porosity * ((ice_heat_capacity_ * icurr) +
-                                         (water_heat_capacity_ * wcurr));
-
-  // Update the effective material thermal conductivity
-  thermal_cond_(cell, pt) = pow(ice_thermal_cond_, (icurr * porosity)) *
-                            pow(water_thermal_cond_, (wcurr * porosity));
-
-  // Update the material thermal inertia term
-  thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
-                               (ice_density_ * latent_heat_ * dfdT);
-
-  // Return values
-  ice_saturation_(cell, pt)   = icurr;
-  water_saturation_(cell, pt) = wcurr;
 
   return;
 }
