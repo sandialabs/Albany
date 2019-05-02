@@ -37,6 +37,12 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
   erosion_rate_         = p->get<RealType>("ACE Erosion Rate", -1.0);
   element_size_         = p->get<RealType>("ACE Element Size", 0.0);
+  time_file_            = p->get<std::string>("ACE Time File");
+  sea_level_file_       = p->get<std::string>("ACE Sea Level File");
+
+  ALBANY_ASSERT(
+      time_.size() == sea_level_.size(),
+      "Number of times and number of sea level values must match");
 
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];

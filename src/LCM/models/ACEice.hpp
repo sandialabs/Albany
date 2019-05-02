@@ -112,8 +112,10 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType sat_exp_{0.0};
 
   // Sea level arrays
-  std::vector<RealType> times_;
-  std::vector<RealType> values_;
+  std::string           time_file_;
+  std::string           sea_level_file_;
+  std::vector<RealType> time_;
+  std::vector<RealType> sea_level_;
 
   void
   init(
