@@ -723,7 +723,7 @@ SolverFactory::getValidAppParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidAppParams"));
 
-  validPL->set("Build Type", "Tpetra", "The type of run (e.g., Epetra, Tpetra)");
+  validPL->set("Build Type", "NONE", "The type of run (e.g., Epetra, Tpetra)");
   validPL->sublist("Problem", false, "Problem sublist");
   validPL->sublist("Debug Output", false, "Debug Output sublist");
   validPL->sublist("Scaling", false, "Jacobian/Residual Scaling sublist");
