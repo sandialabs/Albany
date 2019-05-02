@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
       Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  Albany::CmdLineArgs cmd("inputT.yaml");
+  Albany::CmdLineArgs cmd("input.yaml");
   cmd.parse_cmdline(argc, argv, *out);
 
   const auto stackedTimer = Teuchos::rcp(
