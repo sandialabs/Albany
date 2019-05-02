@@ -41,8 +41,13 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   erosion_rate_         = p->get<RealType>("ACE Erosion Rate", -1.0);
   element_size_         = p->get<RealType>("ACE Element Size", 0.0);
   min_yield_strength_   = p->get<RealType>("ACE Minimum Yield Strength", 0.0);
-  time_file_            = p->get<std::string>("ACE Time File");
-  sea_level_file_       = p->get<std::string>("ACE Sea Level File");
+
+  if (p->isParameter("ACE Time File") == true) {
+    time_file_ = p->get<std::string>("ACE Time File");
+  }
+  if (p->isParameter("ACE Sea Level File") == true) {
+    sea_level_file_ = p->get<std::string>("ACE Sea Level File");
+  }
 
   ALBANY_ASSERT(
       time_.size() == sea_level_.size(),
