@@ -16,6 +16,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
     Teuchos::RCP<Albany::Layouts> const& dl)
     : BaseKernel(model)
 {
+  this->setIntegrationPointLocationFlag(true);
+
   // Baseline constants
   sat_mod_ = p->get<RealType>("Saturation Modulus", 0.0);
   sat_exp_ = p->get<RealType>("Saturation Exponent", 0.0);
@@ -220,9 +222,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
   std::string F_string            = field_name_map_["F"];
   std::string J_string            = field_name_map_["J"];
 
-  def_grad_ = *input_fields[F_string];
-  J_        = *input_fields[J_string];
-
+  def_grad_          = *input_fields[F_string];
+  J_                 = *input_fields[J_string];
   elastic_modulus_   = *input_fields["Elastic Modulus"];
   hardening_modulus_ = *input_fields["Hardening Modulus"];
   poissons_ratio_    = *input_fields["Poissons Ratio"];
@@ -230,11 +231,10 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
   delta_time_        = *input_fields["Delta Time"];
   temperature_       = *input_fields["ACE Temperature"];
 
-  stress_     = *output_fields[cauchy_string];
-  Fp_         = *output_fields[Fp_string];
-  eqps_       = *output_fields[eqps_string];
-  yield_surf_ = *output_fields[yieldSurface_string];
-
+  stress_           = *output_fields[cauchy_string];
+  Fp_               = *output_fields[Fp_string];
+  eqps_             = *output_fields[eqps_string];
+  yield_surf_       = *output_fields[yieldSurface_string];
   ice_saturation_   = *output_fields["ACE Ice Saturation"];
   density_          = *output_fields["ACE Density"];
   heat_capacity_    = *output_fields["ACE Heat Capacity"];
@@ -363,17 +363,20 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor F(num_dims_);
   Tensor sigma(num_dims_);
 
-  ScalarT const E     = elastic_modulus_(cell, pt);
-  ScalarT const nu    = poissons_ratio_(cell, pt);
-  ScalarT const kappa = E / (3.0 * (1.0 - 2.0 * nu));
-  ScalarT const mu    = E / (2.0 * (1.0 + nu));
-  ScalarT const K     = hardening_modulus_(cell, pt);
-  ScalarT const Y     = yield_strength_(cell, pt);
-  ScalarT const J1    = J_(cell, pt);
-  ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
-  ScalarT const Tcurr = temperature_(cell, pt);
-  ScalarT const Told  = T_old_(cell, pt);
-  ScalarT const iold  = ice_saturation_old_(cell, pt);
+  auto const coord_vec = this->model_.getCoordVecField();
+
+  ScalarT const E      = elastic_modulus_(cell, pt);
+  ScalarT const nu     = poissons_ratio_(cell, pt);
+  ScalarT const kappa  = E / (3.0 * (1.0 - 2.0 * nu));
+  ScalarT const mu     = E / (2.0 * (1.0 + nu));
+  ScalarT const K      = hardening_modulus_(cell, pt);
+  ScalarT const Y      = yield_strength_(cell, pt);
+  ScalarT const J1     = J_(cell, pt);
+  ScalarT const Jm23   = 1.0 / std::cbrt(J1 * J1);
+  ScalarT const Tcurr  = temperature_(cell, pt);
+  ScalarT const Told   = T_old_(cell, pt);
+  ScalarT const iold   = ice_saturation_old_(cell, pt);
+  ScalarT const height = coord_vec(cell, pt, 2);
 
   // fill local tensors
   F.fill(def_grad_, cell, pt, 0, 0);
