@@ -23,10 +23,11 @@ if(ALBANY_IFPACK2)
  SET(OUTFILE "surfaceDiffusion.e")
  SET(REF_FILE "surfaceDiffusion.gold.e")
  add_test(NAME ${testName}_surfaceDiffusion
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=surfaceDiffusion -DTEST_ARGS=surfaceDiffusion.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+  set_tests_properties(${testName}_surfaceDiffusion PROPERTIES LABELS "LCM;Tpetra;Forward")
 
 endif()

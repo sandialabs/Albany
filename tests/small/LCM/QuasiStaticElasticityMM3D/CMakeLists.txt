@@ -11,6 +11,7 @@ if (ALBANY_64BIT_INT)
                ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/turbine.e
                ${CMAKE_CURRENT_BINARY_DIR}/turbine.e COPYONLY)
-    add_test(${testName}_64 ${AlbanyT.exe} input.yaml)
+    add_test(${testName}_64 ${Albany.exe} input.yaml)
+    set_tests_properties(${testName}_64 PROPERTIES LABELS "LCM;Tpetra;Forward")
   endif ()
 endif ()
