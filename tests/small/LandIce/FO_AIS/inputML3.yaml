@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Debug Output: { }
   Problem: 
     Number RBMs for ML: 3

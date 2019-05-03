@@ -78,7 +78,7 @@ ANONYMOUS:
       basalside: 
         Method: Ioss
         Number Of Time Derivatives: 0
-        Use Serial Mesh: true
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Exodus Output File Name: gis_unstruct_adjoint_sensitivity_beta_basal.exo
         Cubature Degree: 3

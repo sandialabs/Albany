@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
@@ -130,7 +131,7 @@ ANONYMOUS:
                 Ifpack2: 
                   Overlap: 1
                   Prec Type: ILUT
-                  Ifpack Settings: 
+                  Ifpack2 Settings: 
                     'fact: ilut level-of-fill': 2.00000000000000000e+00
                 MueLu: 
                   multigrid algorithm: sa
@@ -138,7 +139,7 @@ ANONYMOUS:
                   'smoother: params': 
                     'relaxation: type': Symmetric Gauss-Seidel
                   'smoother: pre or post': both
-                  'coarse: type': Superlu
+                  'coarse: type': KLU2
                   number of equations: 4
           Rescue Bad Newton Solve: true
       Line Search: 

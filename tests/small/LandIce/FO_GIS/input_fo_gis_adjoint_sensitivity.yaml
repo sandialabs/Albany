@@ -1,11 +1,13 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Debug Output: 
     Write Solution to MatrixMarket: false
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
+    Compute Sensitivities: true
     Name: LandIce Stokes First Order 3D
     Required Fields: [temperature]
     Basal Side Name: basalside
@@ -86,7 +88,7 @@ ANONYMOUS:
       basalside: 
         Method: Ioss
         Number Of Time Derivatives: 0
-        Use Serial Mesh: true
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Exodus Output File Name: gis_unstruct_adjoint_sensitivity_basal.exo
         Cubature Degree: 3

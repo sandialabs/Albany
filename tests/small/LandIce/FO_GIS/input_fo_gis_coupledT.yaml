@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Debug Output: 
     Write Solution to MatrixMarket: false
   Problem: 
@@ -84,7 +85,7 @@ ANONYMOUS:
         Cubature Degree: 3
         Exodus Output File Name: gis_coupled_basal.exo
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
-        Use Serial Mesh: true
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Required Fields Info: 
           Number Of Fields: 4
           Field 0: 

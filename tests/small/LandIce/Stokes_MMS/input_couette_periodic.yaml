@@ -1,44 +1,41 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
-    Phalanx Graph Visualization Detail: 1
+    Phalanx Graph Visualization Detail: 0
     Name: LandIce Stokes 2D
     Dirichlet BCs: 
-      DBC on NS NodeSet0 for DOF ux: 0.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF ux: 0.00000000000000000e+00
-      DBC on NS NodeSet2 for DOF ux: 0.00000000000000000e+00
+      DBC on NS NodeSet2 for DOF ux: 1.00000000000000000e+00
       DBC on NS NodeSet3 for DOF ux: 0.00000000000000000e+00
-      DBC on NS NodeSet0 for DOF uy: 0.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF uy: 0.00000000000000000e+00
       DBC on NS NodeSet2 for DOF uy: 0.00000000000000000e+00
       DBC on NS NodeSet3 for DOF uy: 0.00000000000000000e+00
-      DBC on NS NodeSet99 for DOF p: 4.16129999999999978e+00
-    Body Force: 
-      Type: PolySacado
+      DBC on NS NodeSet99 for DOF p: 1.00000000000000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: DBC on NS NodeSet2 for DOF ux
     LandIce Viscosity: 
       Type: Constant
-    Parameters: 
-      Number: 0
-      Parameter 0: DBC on NS NodeSet1 for DOF ux
     Response Functions: 
       Number: 1
-      Response 0: Solution Max Value
+      Response 0: Solution Average
       ResponseParams 0: 
         Equation: 0
   Discretization: 
-    1D Elements: 200
-    2D Elements: 200
-    1D Scale: 1.00000000000000000e+00
+    Periodic_x BC: true
+    1D Elements: 40
+    2D Elements: 20
+    1D Scale: 2.50000000000000000e+00
     2D Scale: 1.00000000000000000e+00
     Method: STK2D
-    Exodus Output File Name: ns_out.exo
+    Workset Size: 50
+    Exodus Output File Name: nscp_out.exo
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [1.20229269999999999e-01]
-    Relative Tolerance: 1.00000000000000008e-05
-    Number of Sensitivity Comparisons: 0
-    Sensitivity Test Values 0: [1.35470000000000002e+00]
+    Test Values: [5.00000000000000000e-01]
+    Relative Tolerance: 1.00000000000000002e-03
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Test Values 0: [1.66666599999999998e-01]
     Number of Dakota Comparisons: 0
   Piro: 
     NOX: 
@@ -79,22 +76,22 @@ ANONYMOUS:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 250
-                      Output Frequency: 10
+                      Output Frequency: 20
                     Max Iterations: 250
-                    Tolerance: 9.99999999999999955e-07
+                    Tolerance: 1.00000000000000002e-08
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-07
-                      Output Frequency: 10
+                      Convergence Tolerance: 1.00000000000000002e-08
+                      Output Frequency: 20
                       Output Style: 1
                       Verbosity: 0
                       Maximum Iterations: 250
                       Block Size: 1
                       Num Blocks: 250
                       Flexible Gmres: false
-              Preconditioner Type: ML
+              Preconditioner Type: Ifpack
               Preconditioner Types: 
                 ML: 
                   Base Method Defaults: none
