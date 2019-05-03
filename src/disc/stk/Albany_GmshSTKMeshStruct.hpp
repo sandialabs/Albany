@@ -101,6 +101,9 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // to populate the volume_names map
   void read_physical_volume_names_from_file( std::map<std::string, int> volume_names);
 
+  // Update the physical name sets vector to include entity tag
+  void update_physical_name_sets_vector( std::map< int, int>& physical_surface_tags);
+
   // Opens the gmsh msh file. Variable `fname` must be set.
   // Don't forget to close when done!
   // Uses Teuchos test to check if file is open.

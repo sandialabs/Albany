@@ -1127,6 +1127,13 @@ void Albany::GmshSTKMeshStruct::load_entities( std::ifstream& ifile)
   TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != num_boundary_tags, std::runtime_error, error_msg.str());
 
   // Update the physical name sets vector
+  update_physical_name_sets_vector( physical_surface_tags);
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::update_physical_name_sets_vector( std::map< int, int>& physical_surface_tags)
+{
   std::map< int, int>::iterator it = physical_surface_tags.begin();
   int found_surfaces = 0;
   while( it != physical_surface_tags.end() || found_surfaces == num_boundary_tags)
