@@ -8,9 +8,9 @@ if (ALBANY_IFPACK2 AND SEACAS_EXODIFF)
 # Create a symlink to exodiff
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
-# Create a symlink to AlbanyT
+# Create a symlink to Albany
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 
 # input files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/EqConcentrationBC.yaml
@@ -44,10 +44,11 @@ IF(NOT ALBANY_PARALLEL_ONLY)
   SET(OUTFILE  "EqConcentrationBC.e") 
   SET(REF_FILE "EqConcentrationBC.gold.e") 
    add_test(NAME ${testName}
-           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
            -DTEST_NAME=EqConcentrationBC -DTEST_ARGS=EqConcentrationBC.yaml -DMPIMNP=1
            -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
            -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
            -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake)
+  set_tests_properties(${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 ENDIF()
 endif()

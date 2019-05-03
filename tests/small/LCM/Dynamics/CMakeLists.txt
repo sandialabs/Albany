@@ -15,5 +15,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 if (ALBANY_IFPACK2)
-  add_test(${testName} ${AlbanyT.exe} dynamics.yaml)
+  add_test(${testName} ${Albany.exe} dynamics.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif()

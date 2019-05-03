@@ -62,13 +62,14 @@ if (SEACAS_EXODIFF AND SEACAS_ALGEBRA)
       SET(REF_FILE "outCohesive.alg.gold.e")
       SET(ALG_OUTFILE "outCohesive.alg.e") 
       add_test(NAME ${testName}
-               COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+               COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
                -DTEST_NAME=Cohesive -DTEST_ARGS=inputCohesive.yaml -DMPIMNP=1
                -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
                -DSEACAS_ALGEBRA=${SEACAS_ALGEBRA}
                -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${ALG_OUTFILE}
                -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-
+      
+      set_tests_properties(${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
     endif()
   ENDIF()
 endif(SEACAS_EXODIFF AND SEACAS_ALGEBRA)
