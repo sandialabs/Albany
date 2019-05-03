@@ -199,7 +199,9 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
   }
 
   delete[] tetra;
+  delete[] tet10;
   delete[] trias;
+  delete[] tri6;
   delete[] hexas;
   delete[] quads;
   delete[] lines;
