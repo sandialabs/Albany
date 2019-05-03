@@ -689,7 +689,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       if (inArgs.supports(Thyra_ModelEvaluator::IN_ARG_x_dot_dot)) {
         //x_dotdot = inArgs.get_x_dot_dot(); 
         x_dotdot = inArgs.get_x_dot_dot();
-        omega    = this->get_omega();
       } else {
         x_dotdot  = Teuchos::null; 
         omega     = 0.0;
