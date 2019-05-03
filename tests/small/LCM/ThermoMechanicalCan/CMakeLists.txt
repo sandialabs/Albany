@@ -4,7 +4,6 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-if (ALBANY_IOPX)
 
 # Mechanics
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.yaml
@@ -17,6 +16,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureMaterials.yam
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureMaterials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/brick_model_2.g
                ${CMAKE_CURRENT_BINARY_DIR}/brick_model_2.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/brick_model_2.g.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/brick_model_2.g.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/brick_model_2.g.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/brick_model_2.g.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/brick_model_2.g.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/brick_model_2.g.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/brick_model_2.g.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/brick_model_2.g.4.3 COPYONLY)
 
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -28,4 +35,3 @@ IF (ALBANY_MUELU_EXAMPLES)
   set_tests_properties(${testName}_thermomech PROPERTIES LABELS CUDA_TEST)
 ENDIF ()
 
-endif(ALBANY_IOPX)
