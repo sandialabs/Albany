@@ -97,12 +97,11 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void broadcast_volume_names( std::map<std::string, int>              volume_names, 
                                const Teuchos::RCP<const Teuchos_Comm>& commT);
 
-  // Read the physical volume names for Gmsh V 4.1 
-  // to populate the volume_names map
-  void read_physical_volume_names_from_file( std::map<std::string, int> volume_names);
-
   // Update the physical name sets vector to include entity tag for surfaces
   void update_physical_name_sets_vector_surfaces( std::map< int, int>& physical_surface_tags);
+
+  // Update the physical name sets vector to include entity tag for volumes
+  void update_physical_name_sets_vector_volumes( std::map< int, int>& physical_volume_tags);
 
   // Opens the gmsh msh file. Variable `fname` must be set.
   // Don't forget to close when done!

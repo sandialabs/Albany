@@ -1127,7 +1127,7 @@ void Albany::GmshSTKMeshStruct::load_entities( std::ifstream& ifile)
   TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != num_boundary_tags, 
                                std::runtime_error, error_msg_surf.str());
 
-  // Update the physical name sets vector
+  // Update the surfaces in the physical name sets vector
   update_physical_name_sets_vector_surfaces( physical_surface_tags);
 
   // After the lines with surfaces are the volumes
@@ -1141,6 +1141,9 @@ void Albany::GmshSTKMeshStruct::load_entities( std::ifstream& ifile)
                 << "num_interior_tags = " << num_interior_tags << ". \n";
   TEUCHOS_TEST_FOR_EXCEPTION ( physical_volume_tags.size() != num_interior_tags, 
                                std::runtime_error, error_msg_vol.str());
+
+  // Update the volumes in the physical name sets vector
+  update_physical_name_sets_vector_volumes( physical_volume_tags);
 
   return;
 }
@@ -1167,7 +1170,7 @@ void Albany::GmshSTKMeshStruct::update_physical_name_sets_vector_surfaces( std::
       count++;
     }
     std::stringstream error_msg;
-    error_msg << "Could not match physical names to entities.\n";
+    error_msg << "Could not match physical surface names to entities.\n";
     TEUCHOS_TEST_FOR_EXCEPTION ( !found, std::runtime_error, error_msg.str());
 
     it++;
@@ -1234,18 +1237,20 @@ void Albany::GmshSTKMeshStruct::broadcast_volume_names( std::map<std::string, in
   return;
 }
 
-void Albany::GmshSTKMeshStruct::read_physical_volume_names_from_file( std::map<std::string, int> volume_names)
-{
-  // TODO
-  return;
-}
 
 void Albany::GmshSTKMeshStruct::get_physical_volume_names( std::map<std::string, int>              volume_names, 
                                                            const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   if( commT->getRank() == 0)
   {
-    read_physical_volume_names_from_file( volume_names);
+    for( int i=0; i < phys_name_sets.size(); i++)
+    {
+      physical_name_set pns = phys_name_sets[i];
+      if( pns.dimension == numDim)
+      {
+        volume_names.insert( std::make_pair( pns.name, pns.tag));
+      }
+    }
   }
   broadcast_volume_names( volume_names, commT);
 
@@ -1737,6 +1742,37 @@ void Albany::GmshSTKMeshStruct::set_physical_name_sets( std::ifstream& ifile)
   else if( dim == numDim)
   {
     num_interior_tags++;
+  }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::update_physical_name_sets_vector_volumes( std::map< int, int>& physical_volume_tags)
+{
+  std::map< int, int>::iterator it = physical_volume_tags.begin();
+  int found_volumes = 0;
+  while( it != physical_volume_tags.end() || found_volumes == num_boundary_tags)
+  {
+    int boundary_tag = it->first;
+
+    bool found    = false;
+    int  count    = 0;
+    while( !found && count < phys_name_sets.size())
+    {
+      physical_name_set pns = phys_name_sets[count];
+      if( (phys_name_sets[count]).id == it->first)
+      {
+        (phys_name_sets[count]).tag = it->second;
+        found = true;
+        found_volumes++;
+      }
+      count++;
+    }
+    std::stringstream error_msg;
+    error_msg << "Could not match physical volume names to entities.\n";
+    TEUCHOS_TEST_FOR_EXCEPTION ( !found, std::runtime_error, error_msg.str());
+
+    it++;
   }
 
   return;
