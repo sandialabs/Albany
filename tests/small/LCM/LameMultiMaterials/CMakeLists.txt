@@ -29,16 +29,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_100.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
-if (ALBANY_EPETRA)
+
 add_test(${testName}_SingleMaterial_SERIAL ${SerialAlbany.exe} inputSingleMaterial.yaml)
+
 add_test(${testName}_MultiMaterial_10_SERIAL ${SerialAlbany.exe} inputMultiMat_10.yaml)
-add_test(${testName}_MultiMaterial_100_SERIAL ${SerialAlbany.exe} inputMultiMat_100.yaml)
-endif()
 
-add_test(${testName}_SingleMaterial_SERIAL ${SerialAlbanyT.exe} inputSingleMaterial.yaml)
-
-add_test(${testName}_MultiMaterial_10_SERIAL ${SerialAlbanyT.exe} inputMultiMat_10.yaml)
-
-add_test(${testName}_MultiMaterial_100_SERIAL ${SerialAlbanyT.exe}
+add_test(${testName}_MultiMaterial_100_SERIAL ${SerialAlbany.exe}
 inputMultiMat_100T.yaml)
 
