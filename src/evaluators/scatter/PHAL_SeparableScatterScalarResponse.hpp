@@ -88,6 +88,43 @@ protected:
   }
 };
 
+
+template<typename EvalT, typename Traits> class SeparableScatterScalarResponse;
+
+template<typename EvalT, typename Traits>
+class SeparableScatterScalarResponseWithExtrudedParams
+  : public SeparableScatterScalarResponse<EvalT, Traits> {
+
+public:
+
+  SeparableScatterScalarResponseWithExtrudedParams(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+                                SeparableScatterScalarResponse<EvalT, Traits>(p,dl) {
+//    extruded_params_levels = p.get< Teuchos::RCP<std::map<std::string, int> > >("Extruded Params Levels");
+  };
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm) {
+    SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d,vm);
+  }
+
+  void evaluateFields(typename Traits::EvalData d) {
+    SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(d);
+  }
+
+protected:
+
+  typedef typename EvalT::ScalarT ScalarT;
+  //Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
+
+  SeparableScatterScalarResponseWithExtrudedParams() {}
+  void setup(const Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl) {
+    SeparableScatterScalarResponse<EvalT,Traits>::setup(p,dl);
+  }
+};
+
+
 // **************************************************************
 // **************************************************************
 // * Specializations
@@ -149,6 +186,7 @@ public:
                                                         const std::string& /* sidesetName */,
                                                         Teuchos::RCP<const CellTopologyData> /* cellTopo */) {}
   void postEvaluate(typename Traits::PostEvalData d);
+
 protected:
   typedef PHAL::AlbanyTraits::DistParamDeriv EvalT;
   SeparableScatterScalarResponse() {}
@@ -158,10 +196,43 @@ protected:
     SeparableScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
     numNodes = dl->node_scalar->extent(1);
   }
+  int numNodes;
+
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
-  int numNodes;
 };
+
+
+template<typename Traits>
+class SeparableScatterScalarResponseWithExtrudedParams<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+  : public SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+public:
+  SeparableScatterScalarResponseWithExtrudedParams(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl)  :
+                    SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl) {
+    extruded_params_levels = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem")->get< Teuchos::RCP<std::map<std::string, int> > >("Extruded Params Levels");
+  };
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm) {
+    SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::postRegistrationSetup(d,vm);
+  }
+  void evaluateFields(typename Traits::EvalData d);
+
+protected:
+  SeparableScatterScalarResponseWithExtrudedParams() {}
+  void setup(const Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl) {
+    SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv,Traits>::setup(p,dl);
+    extruded_params_levels = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem")->get< Teuchos::RCP<std::map<std::string, int> > >("Extruded Params Levels");
+  }
+
+private:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
+
+};
+
 
 // **************************************************************
 } // namespace PHAL
