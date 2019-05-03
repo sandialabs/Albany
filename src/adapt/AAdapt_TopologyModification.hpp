@@ -18,7 +18,7 @@
 // Note that all topology functions are in Albany::LCM namespace
 #include "Albany_STKDiscretization.hpp"
 #include "LCM/utils/topology/Topology.h"
-#include "LCM/utils/topology/Topology_FractureCriterion.h"
+#include "LCM/utils/topology/Topology_FailureCriterion.h"
 
 namespace AAdapt {
 

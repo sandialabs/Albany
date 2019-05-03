@@ -8,7 +8,7 @@
 // Test of topology manipulation.
 //
 #include "topology/Topology.h"
-#include "topology/Topology_FractureCriterion.h"
+#include "topology/Topology_FailureCriterion.h"
 #include "topology/Topology_Utils.h"
 
 int

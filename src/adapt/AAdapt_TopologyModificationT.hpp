@@ -12,7 +12,7 @@
 #include "AAdapt_AbstractAdapterT.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Topology.h"
-#include "Topology_FractureCriterion.h"
+#include "Topology_FailureCriterion.h"
 
 namespace AAdapt {
 

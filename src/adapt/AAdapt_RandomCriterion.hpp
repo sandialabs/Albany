@@ -8,7 +8,7 @@
 #define AAdapt_RandomCriterion_hpp
 
 #include "Albany_STKDiscretization.hpp"
-#include "Topology_FractureCriterion.h"
+#include "Topology_FailureCriterion.h"
 
 namespace AAdapt {
 

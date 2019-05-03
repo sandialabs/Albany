@@ -4,10 +4,10 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 #
-# LCM DIR
+#LCM DIR
 SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
-# LCM problems
+#LCM problems
 
 set(problem-sources
   "${LCM_DIR}/problems/ConstitutiveDriverProblem.cpp"
@@ -39,7 +39,7 @@ ENDIF()
 SET(SOURCES )
 SET(HEADERS )
 
-# LCM evaluators
+#LCM evaluators
 set(evaluator-sources
   "${LCM_DIR}/evaluators/BifurcationCheck.cpp"
   "${LCM_DIR}/evaluators/BodyForce.cpp"
@@ -93,7 +93,7 @@ set(model-eval-headers
   )
 ENDIF(ALBANY_STK)
 
-# LCM special boundary conditions
+#LCM special boundary conditions
 set(bc-sources
   "${LCM_DIR}/evaluators/bc/EquilibriumConcentrationBC.cpp"
   "${LCM_DIR}/evaluators/bc/KfieldBC.cpp"
@@ -129,7 +129,7 @@ IF (ALBANY_STK)
   )
 ENDIF (ALBANY_STK)
 
-# LCM HMC evaluators
+#LCM HMC evaluators
 set(hmc-sources
   "${LCM_DIR}/evaluators/HMC/HMC_MicroResidual.cpp"
   "${LCM_DIR}/evaluators/HMC/HMC_StrainDifference.cpp"
@@ -150,7 +150,7 @@ set(hmc-headers
   "${LCM_DIR}/evaluators/HMC/UpdateField.hpp"
 )
 
-# LCM kinematics evaluators
+#LCM kinematics evaluators
 set(kin-sources
   "${LCM_DIR}/evaluators/kinematics/CurrentCoords.cpp"
   "${LCM_DIR}/evaluators/kinematics/DefGrad.cpp"
@@ -171,7 +171,7 @@ set(kin-headers
   "${LCM_DIR}/evaluators/kinematics/LatticeDefGrad.hpp"
 )
 
-# LCM linear elasticity evaluators
+#LCM linear elasticity evaluators
 set(lin-sources
   "${LCM_DIR}/evaluators/linear-elasticity/ElasticModulus.cpp"
   "${LCM_DIR}/evaluators/linear-elasticity/PoissonsRatio.cpp"
@@ -189,7 +189,7 @@ set(lin-headers
   "${LCM_DIR}/evaluators/linear-elasticity/Stress.hpp"
 )
 
-# LCM poro evaluators
+#LCM poro evaluators
 set(poro-sources
   "${LCM_DIR}/evaluators/poro/BiotCoefficient.cpp"
   "${LCM_DIR}/evaluators/poro/BiotModulus.cpp"
@@ -228,7 +228,7 @@ set(poro-headers
   "${LCM_DIR}/evaluators/poro/TLPoroStress.hpp"
 )
 
-# LCM peridigm evaluators
+#LCM peridigm evaluators
 IF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
   set(pd-sources
     "${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.cpp"
@@ -247,7 +247,7 @@ IF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
   )
 ENDIF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
 
-# LCM projection evaluators
+#LCM projection evaluators
 set(proj-sources
   "${LCM_DIR}/evaluators/projection/ScalarL2ProjectionResidual.cpp"
 )
@@ -256,7 +256,7 @@ set(proj-headers
   "${LCM_DIR}/evaluators/projection/ScalarL2ProjectionResidual.hpp"
 )
 
-# LCM residual evaluators
+#LCM residual evaluators
 set(residual-sources
   "${LCM_DIR}/evaluators/residuals/AnalyticMassResidual.cpp"
   "${LCM_DIR}/evaluators/residuals/ElasticityResid.cpp"
@@ -286,7 +286,7 @@ set(residual-headers
   "${LCM_DIR}/evaluators/residuals/TLElasResid_Def.hpp"
 )
 
-# LCM response evaluators
+#LCM response evaluators
 set(response-sources
   "${LCM_DIR}/evaluators/responses/IPtoNodalField.cpp"
   "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField.cpp"
@@ -298,7 +298,7 @@ set(response-headers
   "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField.hpp"
 )
 
-# LCM mesh size field evaluators
+#LCM mesh size field evaluators
 set(sf-sources
   "${LCM_DIR}/evaluators/size-field/MeshSizeField.cpp"
 )
@@ -307,7 +307,7 @@ set(sf-headers
   "${LCM_DIR}/evaluators/size-field/MeshSizeField.hpp"
 )
 
-# LCM surface element evaluators
+#LCM surface element evaluators
 set(surface-element-sources
   "${LCM_DIR}/evaluators/surface-element/SurfaceBasis.cpp"
   "${LCM_DIR}/evaluators/surface-element/SurfaceCohesiveResidual.cpp"
@@ -358,7 +358,7 @@ set(surface-element-headers
   "${LCM_DIR}/evaluators/surface-element/SurfaceVectorResidual.hpp"
 )
 
-# LCM transport evaluators
+#LCM transport evaluators
 set(transport-sources
   "${LCM_DIR}/evaluators/transport/DamageCoefficients.cpp"
   "${LCM_DIR}/evaluators/transport/GradientElementLength.cpp"
@@ -575,19 +575,19 @@ IF(ALBANY_STK)
   ENDIF(ALBANY_PERIDIGM AND ALBANY_EPETRA)
 ENDIF(ALBANY_STK)
 
-#LCM utils/topology
+#LCM utils / topology
 IF(ALBANY_STK)
   set(topology-sources
     "${LCM_DIR}/utils/topology/BarycentricSubdivision.cpp"
     "${LCM_DIR}/utils/topology/MinimumSurface.cpp"
     "${LCM_DIR}/utils/topology/Subgraph.cpp"
     "${LCM_DIR}/utils/topology/Topology.cpp"
-    "${LCM_DIR}/utils/topology/Topology_FractureCriterion.cpp"
+    "${LCM_DIR}/utils/topology/Topology_FailureCriterion.cpp"
     "${LCM_DIR}/utils/topology/Topology_Utils.cpp"
   )
   set(topology-headers
     "${LCM_DIR}/utils/topology/Subgraph.h"
-    "${LCM_DIR}/utils/topology/Topology_FractureCriterion.h"
+    "${LCM_DIR}/utils/topology/Topology_FailureCriterion.h"
     "${LCM_DIR}/utils/topology/Topology.h"
     "${LCM_DIR}/utils/topology/Topology_Types.h"
     "${LCM_DIR}/utils/topology/Topology_Utils.h"
@@ -831,7 +831,7 @@ IF(BUILD_SHARED_LIBS)
     SET(LCM_UT_LIBS albanyLib albanyAdapt albanySTK LCM albanyLib)
   ENDIF()
 ELSE(BUILD_SHARED_LIBS)
-  # We really don't link to anything in Hydride
+#We really don't link to anything in Hydride
   IF(ALBANY_SCOREC)
     SET(LCM_UT_LIBS LCM albanyAdapt albanyLib albanyPUMI albanySTK albanyLib)
   ELSE()

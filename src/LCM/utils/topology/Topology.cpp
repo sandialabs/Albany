@@ -7,7 +7,7 @@
 
 #include "Subgraph.h"
 #include "Topology.h"
-#include "Topology_FractureCriterion.h"
+#include "Topology_FailureCriterion.h"
 #include "Topology_Utils.h"
 #include "stk_mesh/base/FEMHelpers.hpp"
 

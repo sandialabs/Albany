@@ -9,7 +9,7 @@
 #include <stk_util/parallel/ParallelReduce.hpp>
 
 #include "AAdapt_TopologyModificationT.hpp"
-#include "LCM/utils/topology/Topology_FractureCriterion.h"
+#include "LCM/utils/topology/Topology_FailureCriterion.h"
 
 namespace AAdapt {
 

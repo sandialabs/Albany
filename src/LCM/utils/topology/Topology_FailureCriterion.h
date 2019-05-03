@@ -9,8 +9,8 @@
 /// called check that takes as argument an entity and returns a bool.
 ///
 
-#if !defined(LCM_Topology_FractureCriterion_h)
-#define LCM_Topology_FractureCriterion_h
+#if !defined(LCM_Topology_FailureCriterion_h)
+#define LCM_Topology_FailureCriterion_h
 
 #include <cassert>
 
@@ -250,4 +250,4 @@ class FractureCriterionTraction : public AbstractFailureCriterion
 
 }  // namespace LCM
 
-#endif  // LCM_Topology_FractureCriterion_h
+#endif  // LCM_Topology_FailureCriterion_h
