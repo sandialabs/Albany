@@ -140,7 +140,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::setup(p, dl);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::setup(p, dl);
 }
 
 // **********************************************************************
@@ -148,7 +148,7 @@ template<typename EvalT, typename Traits>
 void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
@@ -161,7 +161,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::preEvaluate(typena
   p_resp = p_reg = p_reg_stiffening =0;
 
   // Do global initialization
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::preEvaluate(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::preEvaluate(workset);
 }
 
 // **********************************************************************
@@ -282,7 +282,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
   }
 
   // Do any local-scattering necessary
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluateFields(workset);
 }
 
 // **********************************************************************
@@ -317,7 +317,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typen
   }
 
   // Do global scattering
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************
@@ -325,7 +325,7 @@ template<typename EvalT, typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList> LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("Valid ResponseSurfaceVelocityMismatch Params"));
-  Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponse<EvalT, Traits>::getValidResponseParameters();
+  Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
   validPL->set<std::string>("Name", "", "Name of response function");

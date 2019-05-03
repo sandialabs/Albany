@@ -1459,6 +1459,7 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
     // ----------------------- Responses --------------------- //
     paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
     paramList->set<Teuchos::ParameterList>("LandIce Physical Parameters List", params->sublist("LandIce Physical Parameters"));
+    paramList->set<Teuchos::RCP<std::map<std::string, int>>> ("Extruded Params Levels", Teuchos::rcpFromRef(extruded_params_levels));
     paramList->set<std::string>("Coordinate Vector Side Variable Name", Albany::coord_vec_name + " " + basalSideName);
     paramList->set<std::string>("Basal Friction Coefficient Name","beta");
     paramList->set<std::string>("Stiffening Factor Gradient Name",stiffening_factor_name + "_" + basalSideName + " Gradient");

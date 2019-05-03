@@ -63,7 +63,7 @@ ResponseBoundarySquaredL2Norm(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::setup(p, dl);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::setup(p, dl);
 }
 
 // **********************************************************************
@@ -74,7 +74,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(solution, fm);
   this->utils.setFieldData(w_side_measure, fm);
 
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
 }
 
 // **********************************************************************
@@ -86,7 +86,7 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::preEvaluate(typename
   p_reg = 0;
 
   // Do global initialization
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::preEvaluate(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::preEvaluate(workset);
 }
 
 // **********************************************************************
@@ -132,7 +132,7 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
   }
 
   // Do any local-scattering necessary
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluateFields(workset);
 }
 
 // **********************************************************************
@@ -151,7 +151,7 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::postEvaluate(typenam
 
 
   // Do global scattering
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************
@@ -159,7 +159,7 @@ template<typename EvalT, typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList> LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("Valid ResponseBoundarySquaredL2Norm Params"));
-  Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponse<EvalT, Traits>::getValidResponseParameters();
+  Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
   validPL->set<std::string>("Name", "", "Name of response function");
