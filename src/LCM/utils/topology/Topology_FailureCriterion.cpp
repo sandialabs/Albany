@@ -262,7 +262,10 @@ BulkFailureCriterion::check(
     stk::mesh::BulkData& bulk_data,
     stk::mesh::Entity    element)
 {
-  return false;
+  double const failure_indicator =
+      *stk::mesh::field_data(*failure_indicator_, element);
+
+  return failure_indicator >= 0.5;
 }
 
 }  // namespace LCM
