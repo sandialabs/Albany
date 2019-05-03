@@ -1235,7 +1235,36 @@ void Albany::GmshSTKMeshStruct::create_element_blocks( const Teuchos::RCP<const 
 void Albany::GmshSTKMeshStruct::broadcast_volume_names( std::map<std::string, int>              volume_names, 
                                                         const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
-  //TODO
+  // Broadcast the number of name-tag pairs
+  int num_pairs = volume_names.size();
+  Teuchos::broadcast(*commT, 0, 1, &num_pairs);
+
+  // First unpack the names and tags from the map.
+  // Only proc 0 will be doing anything here. 
+  // Maps on other procs will be empty.
+  std::vector< std::string> names;
+  int* tags_array = new int[num_pairs];
+
+  std::map< std::string, int>::iterator it;
+  int counter = 0;
+  for( it = volume_names.begin(); it != volume_names.end(); it++)
+  {
+    names.push_back( it->first);
+    tags_array[counter] = it->second;
+    counter++;
+  }
+
+  // Clear out the map to rebuild it together.
+  volume_names.clear();
+
+  // Broadcast names and tags
+  Teuchos::broadcast<LO,LO>(*commT, 0, num_pairs, tags_array);
+  for( int i = 0; i < num_pairs; i++)
+  {
+    broadcast_name_tag_pair( names, tags_array, i, commT, volume_names);
+  }
+
+  delete[] tags_array;
   return;
 }
 
