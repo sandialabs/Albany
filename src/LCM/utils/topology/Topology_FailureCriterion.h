@@ -264,7 +264,7 @@ class BulkFailureCriterion : public AbstractFailureCriterion
   operator=(BulkFailureCriterion const&) = delete;
 
  private:
-  IntScalarFieldType const* const failure_indicator_;
+  ScalarFieldType const* const failure_indicator_;
 };
 }  // namespace LCM
 

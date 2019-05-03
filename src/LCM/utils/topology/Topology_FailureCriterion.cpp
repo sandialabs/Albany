@@ -243,7 +243,7 @@ BulkFailureCriterion::BulkFailureCriterion(
     Topology&          topology,
     std::string const& fail_indicator_name)
     : AbstractFailureCriterion(topology),
-      failure_indicator_(get_meta_data().get_field<IntScalarFieldType>(
+      failure_indicator_(get_meta_data().get_field<ScalarFieldType>(
           stk::topology::ELEMENT_RANK,
           fail_indicator_name))
 {

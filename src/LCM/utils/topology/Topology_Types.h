@@ -91,7 +91,7 @@ using EntityEntityMap    = std::map<stk::mesh::Entity, stk::mesh::Entity>;
 enum FailureState
 {
   INTACT = 0,
-  FAILED   = 1
+  FAILED = 1
 };
 
 enum VTKCellType
