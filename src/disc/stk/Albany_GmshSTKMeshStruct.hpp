@@ -101,8 +101,8 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // to populate the volume_names map
   void read_physical_volume_names_from_file( std::map<std::string, int> volume_names);
 
-  // Update the physical name sets vector to include entity tag
-  void update_physical_name_sets_vector( std::map< int, int>& physical_surface_tags);
+  // Update the physical name sets vector to include entity tag for surfaces
+  void update_physical_name_sets_vector_surfaces( std::map< int, int>& physical_surface_tags);
 
   // Opens the gmsh msh file. Variable `fname` must be set.
   // Don't forget to close when done!
@@ -187,6 +187,11 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                                             std::map<int, int>& physical_surface_tags,
                                             int                 num_surfaces);
 
+  // Reads ifile to map volume tags to physical tags.
+  // Reports error if any volume is associted with more than one tag.
+  void get_physical_tag_to_volume_tag_map( std::ifstream&      ifile, 
+                                           std::map<int, int>& physical_surface_tags,
+                                           int                 num_surfaces);
   
   // Adds a sideset with name sideset_name and side tag number tag.
   void add_sideset( std::string sideset_name, int tag, std::vector<std::string>& ssNames);

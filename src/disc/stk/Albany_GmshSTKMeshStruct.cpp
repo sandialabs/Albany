@@ -1119,20 +1119,33 @@ void Albany::GmshSTKMeshStruct::load_entities( std::ifstream& ifile)
   std::map< int, int> physical_surface_tags;
   get_physical_tag_to_surface_tag_map( ifile, physical_surface_tags, num_surfaces);
 
-  std::stringstream error_msg;
-  error_msg << "Cannot support more than one physical tag per surface \n"
-            << "(but you should have gotten an error before this!)    \n"
-            << "physical_surface_tags.size() = " << physical_surface_tags.size() << ". \n"
-            << "num_boundary_tags = " << num_boundary_tags << ". \n";
-  TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != num_boundary_tags, std::runtime_error, error_msg.str());
+  std::stringstream error_msg_surf;
+  error_msg_surf << "Cannot support more than one physical tag per surface \n"
+                 << "(but you should have gotten an error before this!)    \n"
+                 << "physical_surface_tags.size() = " << physical_surface_tags.size() << ". \n"
+                 << "num_boundary_tags = " << num_boundary_tags << ". \n";
+  TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != num_boundary_tags, 
+                               std::runtime_error, error_msg_surf.str());
 
   // Update the physical name sets vector
-  update_physical_name_sets_vector( physical_surface_tags);
+  update_physical_name_sets_vector_surfaces( physical_surface_tags);
+
+  // After the lines with surfaces are the volumes
+  std::map< int, int> physical_volume_tags;
+  get_physical_tag_to_volume_tag_map( ifile, physical_volume_tags, num_volumes);
+
+  std::stringstream error_msg_vol;
+  error_msg_vol << "Cannot support more than one physical tag per volume \n"
+                << "(but you should have gotten an error before this!)    \n"
+                << "physical_volume_tags.size() = " << physical_volume_tags.size() << ". \n"
+                << "num_interior_tags = " << num_interior_tags << ". \n";
+  TEUCHOS_TEST_FOR_EXCEPTION ( physical_volume_tags.size() != num_interior_tags, 
+                               std::runtime_error, error_msg_vol.str());
 
   return;
 }
 
-void Albany::GmshSTKMeshStruct::update_physical_name_sets_vector( std::map< int, int>& physical_surface_tags)
+void Albany::GmshSTKMeshStruct::update_physical_name_sets_vector_surfaces( std::map< int, int>& physical_surface_tags)
 {
   std::map< int, int>::iterator it = physical_surface_tags.begin();
   int found_surfaces = 0;
@@ -1726,6 +1739,54 @@ void Albany::GmshSTKMeshStruct::set_physical_name_sets( std::ifstream& ifile)
     num_interior_tags++;
   }
 
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::get_physical_tag_to_volume_tag_map( 
+      std::ifstream&      ifile, 
+      std::map<int, int>& physical_volume_tags,
+      int                 num_volumes)
+{
+  int    volume_tag            = 0;
+  double min_x                 = 0.0;
+  double min_y                 = 0.0;
+  double min_z                 = 0.0;
+  double max_x                 = 0.0;
+  double max_y                 = 0.0;
+  double max_z                 = 0.0;
+  int    num_volume_tags       = 0;
+  int    physical_tag          = 0;
+  int    num_bounding_surfaces = 0;
+  int    surface_tag           = 0;
+
+  std::string line;
+  for( int i = 0; i < num_volumes; i++)
+  {
+    std::getline( ifile, line);
+    std::stringstream ss (line);
+    ss >> volume_tag
+       >> min_x
+       >> min_y
+       >> min_z
+       >> max_x
+       >> max_y
+       >> max_z
+       >> num_volume_tags  
+       >> physical_tag       
+       >> num_bounding_surfaces
+       >> surface_tag;
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( num_volume_tags > 1, std::runtime_error, 
+                                "Cannot support more than one physical tag per volume.\n");
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( num_volume_tags < 0, std::runtime_error, 
+                                "Cannot have a negative number of physical tags per volume.\n");
+
+    if( num_volume_tags == 1)
+    {
+      physical_volume_tags.insert( std::make_pair( physical_tag, volume_tag));
+    }
+  }
   return;
 }
 
