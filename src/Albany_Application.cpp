@@ -2353,9 +2353,11 @@ void Albany::Application::applyGlobalDistParamDerivImpl(
   if (!trans && dfm != Teuchos::null) {
     PHAL::Workset workset;
 
+    workset.dist_param_deriv_name = dist_param_name;
     workset.fpV = fpV;
     workset.Vp = V_bc;
     workset.transpose_dist_param_deriv = trans;
+    workset.disc = disc;
 
     double const
     this_time = fixTime(current_time);
