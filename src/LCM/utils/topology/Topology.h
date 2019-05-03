@@ -846,6 +846,25 @@ class Topology
     return false;
   }
 
+  bool
+  is_failed_boundary_cell(stk::mesh::Entity e)
+  {
+    return is_boundary_cell(e) == true && is_open(e) == true;
+  }
+
+  bool
+  there_are_failed_boundary_cells()
+  {
+    stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+    stk::mesh::EntityVector     cells;
+    stk::mesh::get_entities(get_bulk_data(), cell_rank, cells);
+    for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
+      stk::mesh::Entity cell = cells[i];
+      if (is_failed_boundary_cell(cell) == true) return true;
+    }
+    return false;
+  }
+
   void
   set_output_type(OutputType const ot)
   {
