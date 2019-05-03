@@ -1224,15 +1224,28 @@ void Albany::GmshSTKMeshStruct::create_element_blocks( const Teuchos::RCP<const 
     std::map<std::string, int> volume_names;
     get_physical_volume_names( volume_names, commT);
 
-    std::string ebn = "Element Block 0";
-    partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
-    ebNameToIndex[ebn] = 0;
+    std::map<std::string, int>::iterator it;
+    int counter = 0;
+    for( it = volume_names.begin(); it != volume_names.end(); it++)
+    {
+      std::string ebn = "Element Block" + it->first;
+      partVec[counter] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
+      ebNameToIndex[ebn] = counter;
+
+      counter++;
+    }
+    if( volume_names.size() == 0)
+    {
+      std::string ebn = "Element Block 0";
+      partVec[counter] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
+      ebNameToIndex[ebn] = counter;
+    }
   }
 
   return;
 }
 
-void Albany::GmshSTKMeshStruct::broadcast_volume_names( std::map<std::string, int>              volume_names, 
+void Albany::GmshSTKMeshStruct::broadcast_volume_names( std::map<std::string, int>&             volume_names, 
                                                         const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   // Broadcast the number of name-tag pairs
@@ -1269,7 +1282,7 @@ void Albany::GmshSTKMeshStruct::broadcast_volume_names( std::map<std::string, in
 }
 
 
-void Albany::GmshSTKMeshStruct::get_physical_volume_names( std::map<std::string, int>              volume_names, 
+void Albany::GmshSTKMeshStruct::get_physical_volume_names( std::map<std::string, int>&             volume_names, 
                                                            const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   if( commT->getRank() == 0)

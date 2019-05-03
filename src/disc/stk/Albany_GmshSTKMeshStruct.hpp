@@ -86,7 +86,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                                    const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   // Gets the physical volume name-tag pairs for version 4.1 meshes
-  void get_physical_volume_names( std::map<std::string, int>              volume_names, 
+  void get_physical_volume_names( std::map<std::string, int>&             volume_names, 
                                   const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   // Share surface_names map with all other proccesses
@@ -94,7 +94,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                                 const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   // Share volume_names map with all other proccesses
-  void broadcast_volume_names( std::map<std::string, int>              volume_names, 
+  void broadcast_volume_names( std::map<std::string, int>&             volume_names, 
                                const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   // Update the physical name sets vector to include entity tag for surfaces
