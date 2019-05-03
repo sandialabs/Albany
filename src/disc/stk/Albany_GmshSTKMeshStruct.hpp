@@ -18,10 +18,15 @@ enum class GmshVersion
   V4_1
 };
 
-struct physical_name_triplet
+struct physical_name_set
 {
+  // Dimension of the feature with the tag
   int dimension;
+  // Tag number of the entity
   int tag;
+  // The id number of this physical name
+  int id;
+  // The Name of this physical tag
   std::string name;
 };
 
@@ -92,10 +97,6 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void broadcast_volume_names( std::map<std::string, int>              volume_names, 
                                const Teuchos::RCP<const Teuchos_Comm>& commT);
 
-  // Read the physical surface names for Gmsh V 4.1 
-  // to populate the surface_names map
-  void read_physical_surface_names_from_file( std::map<std::string, int>& surface_names);
-
   // Read the physical volume names for Gmsh V 4.1 
   // to populate the volume_names map
   void read_physical_volume_names_from_file( std::map<std::string, int> volume_names);
@@ -136,8 +137,11 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Includes tags and nodes belonging to each element.
   void load_element_data( std::ifstream& ifile);
 
-  // Reads in the phsyical name triplets
+  // Reads in the phsyical name sets
   void load_physical_names( std::ifstream& ifile);
+
+  // Load the physical entities from the mesh file
+  void load_entities( std::ifstream& ifile);
 
   // Stores element info based on e_type. Updates i(type) counters.
   // Records tags for the element.
@@ -154,8 +158,8 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                            std::stringstream& ss);
 
   // Create the element blocks
-  // Current only creates `Element Block 0` 
-  void create_element_block( const Teuchos::RCP<const Teuchos_Comm>& commT);
+  // Current only creates `Element Block 0` for Gmsh V 2.2
+  void create_element_blocks( const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   // Creates a nodeset will all nodes
   void set_all_nodes_boundary( std::vector<std::string>& nsNames);
@@ -200,10 +204,18 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   std::set<float> allowable_gmsh_versions;
 
   // A list of physical names from the input file
-  std::vector< physical_name_triplet> phys_name_trips;
+  std::vector< physical_name_set> phys_name_sets;
 
-  // Sets the physical name triplet vector one line at a time
-  void set_physical_name_triplet( std::ifstream& ifile);
+  // The number of physical names assigned to boundaries
+  // Boundary is surface for 3D, edges in 2D
+  int num_boundary_tags;
+
+  // The number of physical names assigned to volumes
+  // Interior is voluem for 3D, surface in 2D
+  int num_interior_tags;
+
+  // Sets the physical name set vector one line at a time
+  void set_physical_name_sets( std::ifstream& ifile);
 
   // Map from element block names to their index
   std::map<std::string,int> ebNameToIndex;
@@ -219,6 +231,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Init the int pointers below to null.
   void init_pointers_to_null();
 
+  void print_phys_name_sets();
 
   // The number of entities, both elements and cells
   int num_entities;
