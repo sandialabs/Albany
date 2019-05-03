@@ -42,8 +42,8 @@ class Topology
   ///
   Topology(
       Teuchos::RCP<Albany::AbstractDiscretization>& abstract_disc,
-      std::string const&                            bulk_block_name,
-      std::string const&                            interface_block_name);
+      std::string const&                            bulk_block_name      = "",
+      std::string const&                            interface_block_name = "");
 
   ///
   /// \brief Iterates over the boundary entities of the mesh of (all
@@ -547,7 +547,7 @@ class Topology
   /// Initialization of the open field for fracture
   ///
   void
-  initializeFractureState();
+  initializeFailureState();
 
   ///----------------------------------------------------------------------
   ///
@@ -675,10 +675,9 @@ class Topology
   }
 
   IntScalarFieldType&
-  get_fracture_state_field(stk::mesh::EntityRank rank)
+  get_failure_state_field(stk::mesh::EntityRank rank)
   {
-    return *(
-        get_stk_mesh_struct()->getFieldContainer()->getFractureState(rank));
+    return *(get_stk_mesh_struct()->getFieldContainer()->getFailureState(rank));
   }
 
   void
@@ -777,11 +776,11 @@ class Topology
   // Set fracture state. Do nothing for cells (elements).
   //
   void
-  set_fracture_state(stk::mesh::Entity e, FractureState const fs)
+  set_failure_state(stk::mesh::Entity e, FailureState const fs)
   {
     stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(e);
     if (rank < stk::topology::ELEMENT_RANK) {
-      *(stk::mesh::field_data(get_fracture_state_field(rank), e)) =
+      *(stk::mesh::field_data(get_failure_state_field(rank), e)) =
           static_cast<int>(fs);
     }
   }
@@ -789,14 +788,14 @@ class Topology
   //
   // Get fracture state. Return CLOSED for cells (elements).
   //
-  FractureState
-  get_fracture_state(stk::mesh::Entity e)
+  FailureState
+  get_failure_state(stk::mesh::Entity e)
   {
     stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(e);
     return rank >= stk::topology::ELEMENT_RANK ?
                CLOSED :
-               static_cast<FractureState>(
-                   *(stk::mesh::field_data(get_fracture_state_field(rank), e)));
+               static_cast<FailureState>(
+                   *(stk::mesh::field_data(get_failure_state_field(rank), e)));
   }
 
   bool
@@ -814,7 +813,7 @@ class Topology
   bool
   is_open(stk::mesh::Entity e)
   {
-    return get_fracture_state(e) == OPEN;
+    return get_failure_state(e) == OPEN;
   }
 
   bool

@@ -239,4 +239,30 @@ FractureCriterionTraction::computeNormals()
   }
 }
 
+BulkFailureCriterion::BulkFailureCriterion(
+    Topology&          topology,
+    std::string const& fail_indicator_name)
+    : AbstractFailureCriterion(topology),
+      failure_indicator_(get_meta_data().get_field<IntScalarFieldType>(
+          stk::topology::ELEMENT_RANK,
+          fail_indicator_name))
+{
+  if (failure_indicator_ == NULL) {
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Cannot find field for bulk failure criterion: ";
+    std::cerr << fail_indicator_name;
+    std::cerr << '\n';
+    exit(1);
+  }
+}
+
+bool
+BulkFailureCriterion::check(
+    stk::mesh::BulkData& bulk_data,
+    stk::mesh::Entity    element)
+{
+  return false;
+}
+
 }  // namespace LCM

@@ -117,14 +117,13 @@ class AbstractFailureCriterion
     return get_topology().get_cell_topology();
   }
 
+  AbstractFailureCriterion()                                = delete;
+  AbstractFailureCriterion(const AbstractFailureCriterion&) = delete;
+  AbstractFailureCriterion&
+  operator=(const AbstractFailureCriterion&) = delete;
+
  protected:
   Topology& topology_;
-
- private:
-  AbstractFailureCriterion();
-  AbstractFailureCriterion(const AbstractFailureCriterion&);
-  AbstractFailureCriterion&
-  operator=(const AbstractFailureCriterion&);
 };
 
 ///
@@ -155,11 +154,10 @@ class FractureCriterionRandom : public AbstractFailureCriterion
     return random < probability_;
   }
 
- private:
-  FractureCriterionRandom();
-  FractureCriterionRandom(FractureCriterionRandom const&);
+  FractureCriterionRandom()                               = delete;
+  FractureCriterionRandom(FractureCriterionRandom const&) = delete;
   FractureCriterionRandom&
-  operator=(FractureCriterionRandom const&);
+  operator=(FractureCriterionRandom const&) = delete;
 
  private:
   double probability_;
@@ -199,11 +197,10 @@ class FractureCriterionOnce : public AbstractFailureCriterion
     return is_open;
   }
 
- private:
-  FractureCriterionOnce();
-  FractureCriterionOnce(FractureCriterionOnce const&);
+  FractureCriterionOnce()                             = delete;
+  FractureCriterionOnce(FractureCriterionOnce const&) = delete;
   FractureCriterionOnce&
-  operator=(FractureCriterionOnce const&);
+  operator=(FractureCriterionOnce const&) = delete;
 
  private:
   double probability_;
@@ -226,12 +223,12 @@ class FractureCriterionTraction : public AbstractFailureCriterion
   bool
   check(stk::mesh::BulkData& bulk_data, stk::mesh::Entity interface);
 
- private:
-  FractureCriterionTraction();
-  FractureCriterionTraction(FractureCriterionTraction const&);
+  FractureCriterionTraction()                                 = delete;
+  FractureCriterionTraction(FractureCriterionTraction const&) = delete;
   FractureCriterionTraction&
-  operator=(FractureCriterionTraction const&);
+  operator=(FractureCriterionTraction const&) = delete;
 
+ private:
   minitensor::Vector<double> const&
   getNormal(stk::mesh::EntityId const entity_id);
 
@@ -248,6 +245,27 @@ class FractureCriterionTraction : public AbstractFailureCriterion
   std::map<stk::mesh::EntityId, minitensor::Vector<double>> normals_;
 };
 
+///
+/// Bulk fracture criterion
+///
+class BulkFailureCriterion : public AbstractFailureCriterion
+{
+ public:
+  BulkFailureCriterion(
+      Topology&          topology,
+      std::string const& fail_indicator_name);
+
+  bool
+  check(stk::mesh::BulkData& bulk_data, stk::mesh::Entity element);
+
+  BulkFailureCriterion()                            = delete;
+  BulkFailureCriterion(BulkFailureCriterion const&) = delete;
+  BulkFailureCriterion&
+  operator=(BulkFailureCriterion const&) = delete;
+
+ private:
+  IntScalarFieldType const* const failure_indicator_;
+};
 }  // namespace LCM
 
 #endif  // LCM_Topology_FailureCriterion_h

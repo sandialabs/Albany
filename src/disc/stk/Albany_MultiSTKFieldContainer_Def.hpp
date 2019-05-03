@@ -53,7 +53,8 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
           bulkData_,
           neq_,
           numDim_),
-      haveResidual(false), buildSphereVolume(false),
+      haveResidual(false),
+      buildSphereVolume(false),
       buildLatticeOrientation(false)
 {
   typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
@@ -358,10 +359,10 @@ Albany::MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
        rank < stk::topology::ELEMENT_RANK;
        ++rank) {
-    this->fracture_state[rank] =
-        &this->metaData->template declare_field<ISFT>(rank, "fracture_state");
+    this->failure_state[rank] =
+        &this->metaData->template declare_field<ISFT>(rank, "failure_state");
     stk::mesh::put_field_on_mesh(
-        *this->fracture_state[rank], this->metaData->universal_part(), nullptr);
+        *this->failure_state[rank], this->metaData->universal_part(), nullptr);
   }
 #endif  // ALBANY_LCM
 
@@ -372,7 +373,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
        rank < stk::topology::ELEMENT_RANK;
        ++rank) {
-    stk::io::set_field_role(*this->fracture_state[rank], Ioss::Field::MESH);
+    stk::io::set_field_role(*this->failure_state[rank], Ioss::Field::MESH);
   }
 #endif  // ALBANY_LCM
 #endif

@@ -16,9 +16,9 @@ namespace LCM {
 // Forward declaration
 class Topology;
 
-class Subgraph: public Graph {
-public:
-
+class Subgraph : public Graph
+{
+ public:
   ///
   /// \brief Create a subgraph given two vectors: a vertex list and
   ///        a edge list.
@@ -36,11 +36,11 @@ public:
   /// mesh.
   ///
   Subgraph(
-      Topology & topology,
+      Topology&                             topology,
       std::set<stk::mesh::Entity>::iterator first_entity,
       std::set<stk::mesh::Entity>::iterator last_entity,
-      std::set<STKEdge>::iterator first_edge,
-      std::set<STKEdge>::iterator last_edge);
+      std::set<STKEdge>::iterator           first_edge,
+      std::set<STKEdge>::iterator           last_edge);
 
   ///
   ///\brief Map a vertex in the subgraph to a entity in the stk mesh.
@@ -48,8 +48,8 @@ public:
   ///\param[in] Vertex in the subgraph
   ///\return Global entity for the stk mesh
   ///
-  ///Return the global entity (in the stk mesh) given a local
-  ///subgraph vertex (in the boost subgraph).
+  /// Return the global entity (in the stk mesh) given a local
+  /// subgraph vertex (in the boost subgraph).
   ///
   stk::mesh::Entity
   entityFromVertex(Vertex vertex);
@@ -60,7 +60,7 @@ public:
   ///\param[in] Global entity for the stk mesh
   ///\return Vertex in the subgraph
   ///
-  ///Return local vertex (in the boost graph) given global entity (in the
+  /// Return local vertex (in the boost graph) given global entity (in the
   ///  stk mesh).
   ///
   Vertex
@@ -81,7 +81,7 @@ public:
   Vertex
   addVertex(
       stk::mesh::EntityRank vertex_rank,
-      stk::mesh::Entity entity = INVALID_ENTITY);
+      stk::mesh::Entity     entity = INVALID_ENTITY);
 
   ///
   /// \brief Remove vertex in subgraph
@@ -127,9 +127,7 @@ public:
   ///
   ///
   void
-  removeEdge(
-      Vertex const source_vertex,
-      Vertex const target_vertex);
+  removeEdge(Vertex const source_vertex, Vertex const target_vertex);
 
   ///
   /// \param[in] Vertex in subgraph
@@ -168,9 +166,9 @@ public:
   ///
   void
   testArticulationPoint(
-      Vertex const articulation_vertex,
-      size_t & number_components,
-      VertexComponentMap & vertex_component_map);
+      Vertex const        articulation_vertex,
+      size_t&             number_components,
+      VertexComponentMap& vertex_component_map);
 
   ///
   /// \brief Clones a boundary entity from the subgraph and separates
@@ -198,7 +196,7 @@ public:
   void
   updateEntityPointConnectivity(
       stk::mesh::Entity old_point,
-      EntityEntityMap & entity_new_point_map);
+      EntityEntityMap&  entity_new_point_map);
 
   ///
   /// \brief Splits an articulation point.
@@ -255,24 +253,24 @@ public:
   ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
   ///
   void
-  outputToGraphviz(std::string const & output_filename);
+  outputToGraphviz(std::string const& output_filename);
 
   ///
   /// Accessors and mutators
   ///
-  Topology &
+  Topology&
   get_topology();
 
   size_t
   get_space_dimension();
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> &
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct>&
   get_stk_mesh_struct();
 
-  stk::mesh::BulkData &
+  stk::mesh::BulkData&
   get_bulk_data();
 
-  stk::mesh::MetaData &
+  stk::mesh::MetaData&
   get_meta_data();
 
   stk::mesh::EntityId
@@ -281,14 +279,14 @@ public:
   stk::mesh::EntityRank
   get_boundary_rank();
 
-  IntScalarFieldType &
-  get_fracture_state_field(stk::mesh::EntityRank rank);
+  IntScalarFieldType&
+  get_failure_state_field(stk::mesh::EntityRank rank);
 
   void
-  set_fracture_state(stk::mesh::Entity e, FractureState const fs);
+  set_failure_state(stk::mesh::Entity e, FailureState const fs);
 
-  FractureState
-  get_fracture_state(stk::mesh::Entity e);
+  FailureState
+  get_failure_state(stk::mesh::Entity e);
 
   bool
   is_open(stk::mesh::Entity e);
@@ -299,14 +297,12 @@ public:
   bool
   is_internal(stk::mesh::Entity e)
   {
-
     assert(get_bulk_data().entity_rank(e) == get_boundary_rank());
 
-    Vertex
-    vertex = vertexFromEntity(e);
+    Vertex vertex = vertexFromEntity(e);
 
-    boost::graph_traits<Graph>::degree_size_type
-    number_in_edges = boost::in_degree(vertex, *this);
+    boost::graph_traits<Graph>::degree_size_type number_in_edges =
+        boost::in_degree(vertex, *this);
 
     assert(number_in_edges == 1 || number_in_edges == 2);
 
@@ -319,36 +315,32 @@ public:
   typedef std::map<Vertex, stk::mesh::Entity> VertexEntityMap;
   typedef std::map<stk::mesh::Entity, Vertex> EntityVertexMap;
 
-private:
-
+ private:
   //! Private to prohibit copying
   Subgraph(const Subgraph&);
 
   //! Private to prohibit copying
-  Subgraph& operator=(const Subgraph&);
+  Subgraph&
+  operator=(const Subgraph&);
 
-private:
-
+ private:
   ///
   /// topology
   ///
-  Topology &
-  topology_;
+  Topology& topology_;
 
   ///
   /// map local vertex -> global entity
   ///
-  VertexEntityMap
-  vertex_entity_map_;
+  VertexEntityMap vertex_entity_map_;
 
   ///
   /// map global entity -> local vertex
   ///
-  EntityVertexMap
-  entity_vertex_map_;
+  EntityVertexMap entity_vertex_map_;
 };
 // class Subgraph
 
-}// namespace LCM
+}  // namespace LCM
 
-#endif // LCM_Topology_Subgraph_h
+#endif  // LCM_Topology_Subgraph_h

@@ -39,23 +39,12 @@ AAdapt::ErosionT::ErosionT(
   // Save the initial output file name
   base_exo_filename_ = stk_mesh_struct_->exoOutFile;
 
-  std::string const bulk_block_name =
-      params->get<std::string>("Bulk Block Name");
+  topology_ = Teuchos::rcp(new LCM::Topology(discretization_));
 
-  std::string const interface_block_name =
-      params->get<std::string>("Interface Block Name");
+  std::string const fail_indicator_name = "ACE Failure Indicator";
 
-  std::string const stress_name = "nodal_Cauchy_Stress";
-
-  double const critical_traction = params->get<double>("Critical Traction");
-
-  double const beta = params->get<double>("beta");
-
-  topology_ = Teuchos::rcp(new LCM::Topology(
-      discretization_, bulk_block_name, interface_block_name));
-
-  failure_criterion_ = Teuchos::rcp(new LCM::FractureCriterionTraction(
-      *topology_, stress_name, critical_traction, beta));
+  failure_criterion_ = Teuchos::rcp(
+      new LCM::BulkFailureCriterion(*topology_, fail_indicator_name));
 
   topology_->set_failure_criterion(failure_criterion_);
 }

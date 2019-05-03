@@ -9,100 +9,106 @@
 
 // STK includes
 #include <stk_mesh/base/BulkData.hpp>
+#include <stk_mesh/base/CreateAdjacentEntities.hpp>
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/Field.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
-#include <stk_mesh/base/Types.hpp>
-#include <stk_mesh/base/CreateAdjacentEntities.hpp>
 #include <stk_mesh/base/SkinMesh.hpp>
+#include <stk_mesh/base/Types.hpp>
 
 // Boost includes
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/properties.hpp>
 #include <boost/graph/connected_components.hpp>
+#include <boost/graph/properties.hpp>
 #ifdef __INTEL_COMPILER
-#pragma warning(disable:2196)
+#pragma warning(disable : 2196)
 // On Intel compiler, disable boost warning
-// /projects/albany/intel5.1/include/boost/xpressive/detail/core/adaptor.hpp(75): warning #2196:
+// /projects/albany/intel5.1/include/boost/xpressive/detail/core/adaptor.hpp(75):
+// warning #2196:
 //    routine is both "inline" and "noinline"
 #endif
 #include <boost/graph/graphviz.hpp>
 
 // Shards includes
-#include <Shards_CellTopology.hpp>
 #include <Shards_BasicTopologies.hpp>
+#include <Shards_CellTopology.hpp>
 
 // Teuchos includes
-#include <Teuchos_RCP.hpp>
 #include <Teuchos_ArrayRCP.hpp>
-#include <Teuchos_ParameterList.hpp>
-#include <Teuchos_ScalarTraits.hpp>
 #include <Teuchos_CommandLineProcessor.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ScalarTraits.hpp>
 
-//Intrepid2 includes
 #include <MiniTensor.h>
 
 // Albany includes
-#include "Albany_AbstractSTKFieldContainer.hpp"
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_AbstractSTKFieldContainer.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
 
 namespace LCM {
 
-typedef stk::mesh::RelationIdentifier EdgeId;
-typedef stk::mesh::EntityVector::size_type EntityVectorIndex;
-typedef stk::mesh::RelationVector::size_type RelationVectorIndex;
-typedef std::vector<minitensor::Vector<double>> Coordinates;
-typedef Coordinates::size_type CoordinatesIndex;
+typedef stk::mesh::RelationIdentifier                 EdgeId;
+typedef stk::mesh::EntityVector::size_type            EntityVectorIndex;
+typedef stk::mesh::RelationVector::size_type          RelationVectorIndex;
+typedef std::vector<minitensor::Vector<double>>       Coordinates;
+typedef Coordinates::size_type                        CoordinatesIndex;
 typedef std::vector<std::vector<stk::mesh::EntityId>> Connectivity;
-typedef Connectivity::size_type ConnectivityIndex;
+typedef Connectivity::size_type                       ConnectivityIndex;
 
-typedef boost::vertex_name_t VertexName;
-typedef boost::edge_name_t EdgeName;
+typedef boost::vertex_name_t                               VertexName;
+typedef boost::edge_name_t                                 EdgeName;
 typedef boost::property<VertexName, stk::mesh::EntityRank> VertexProperty;
-typedef boost::property<EdgeName, EdgeId> EdgeProperty;
-typedef boost::listS ListS;
-typedef boost::vecS VectorS;
-typedef boost::bidirectionalS Directed;
-typedef boost::undirectedS Undirected;
+typedef boost::property<EdgeName, EdgeId>                  EdgeProperty;
+typedef boost::listS                                       ListS;
+typedef boost::vecS                                        VectorS;
+typedef boost::bidirectionalS                              Directed;
+typedef boost::undirectedS                                 Undirected;
 
-typedef boost::adjacency_list<
-    ListS, ListS, Directed, VertexProperty, EdgeProperty> Graph;
+typedef boost::
+    adjacency_list<ListS, ListS, Directed, VertexProperty, EdgeProperty>
+        Graph;
 
 typedef boost::property_map<Graph, VertexName>::type VertexNamePropertyMap;
-typedef boost::property_map<Graph, EdgeName>::type EdgeNamePropertyMap;
+typedef boost::property_map<Graph, EdgeName>::type   EdgeNamePropertyMap;
 
 typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
-typedef boost::graph_traits<Graph>::edge_descriptor Edge;
-typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
-typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
+typedef boost::graph_traits<Graph>::edge_descriptor   Edge;
+typedef boost::graph_traits<Graph>::vertex_iterator   VertexIterator;
+typedef boost::graph_traits<Graph>::edge_iterator     EdgeIterator;
 typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
-typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
+typedef boost::graph_traits<Graph>::in_edge_iterator  InEdgeIterator;
 
 typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
-IntScalarFieldType;
+    IntScalarFieldType;
 
-typedef Albany::AbstractSTKFieldContainer::VectorFieldType
-VectorFieldType;
+typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
 
-typedef Albany::AbstractSTKFieldContainer::TensorFieldType
-TensorFieldType;
+typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
+
+typedef Albany::AbstractSTKFieldContainer::TensorFieldType TensorFieldType;
 
 // Specific to topological manipulation
 typedef std::pair<stk::mesh::Entity, stk::mesh::Entity> EntityPair;
-typedef std::map<Vertex, size_t> VertexComponentMap;
-typedef std::map<stk::mesh::Entity, stk::mesh::Entity> EntityEntityMap;
+typedef std::map<Vertex, size_t>                        VertexComponentMap;
+typedef std::map<stk::mesh::Entity, stk::mesh::Entity>  EntityEntityMap;
 
-enum FractureState
+enum FailureState
 {
-  CLOSED = 0, OPEN = 1
+  CLOSED = 0,
+  OPEN   = 1
 };
 
 enum VTKCellType
 {
-  INVALID = 0, VERTEX = 1, LINE = 2, TRIANGLE = 5, QUAD = 9
+  INVALID  = 0,
+  VERTEX   = 1,
+  LINE     = 2,
+  TRIANGLE = 5,
+  QUAD     = 9
 };
 
 ///
@@ -123,7 +129,7 @@ struct STKEdge
 {
   stk::mesh::Entity source;
   stk::mesh::Entity target;
-  EdgeId local_id;
+  EdgeId            local_id;
 };
 
 ///
@@ -131,7 +137,8 @@ struct STKEdge
 ///
 struct EdgeLessThan
 {
-  bool operator()(STKEdge const & a, STKEdge const & b) const
+  bool
+  operator()(STKEdge const& a, STKEdge const& b) const
   {
     if (a.source < b.source) return true;
 
@@ -143,12 +150,12 @@ struct EdgeLessThan
   }
 };
 
-stk::mesh::Entity const
-INVALID_ENTITY(stk::mesh::Entity::Entity_t::InvalidEntity);
+stk::mesh::Entity const INVALID_ENTITY(
+    stk::mesh::Entity::Entity_t::InvalidEntity);
 
 // Forward declarations
 class Topology;
 
-} // namespace LCM
+}  // namespace LCM
 
-#endif // LCM_Topology_Types_h
+#endif  // LCM_Topology_Types_h

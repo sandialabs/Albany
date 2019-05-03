@@ -90,17 +90,6 @@ class ErosionT : public AbstractAdapterT
 
   Teuchos::RCP<LCM::Topology> topology_;
 
-  //! Edges to fracture the mesh on
-  std::vector<stk::mesh::Entity> fractured_faces_;
-
-  //! Data structures used to transfer solution between meshes
-  //! Element to node connectivity for old mesh
-
-  std::vector<std::vector<stk::mesh::Entity>> old_elem_to_node_;
-
-  //! Element to node connectivity for new mesh
-  std::vector<std::vector<stk::mesh::Entity>> new_elem_to_node_;
-
   int num_dim_;
 
   int remesh_file_index_;
