@@ -1111,6 +1111,38 @@ Topology::splitOpenFaces()
 }
 
 //
+// Remove failed elements from the mesh
+//
+void
+Topology::erodeFailedElements()
+{
+  stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityVector     cells;
+  stk::mesh::EntityVector     failed_cells;
+  stk::mesh::BulkData&        bulk_data = get_bulk_data();
+  stk::mesh::get_entities(bulk_data, cell_rank, cells);
+  // 3D only for now.
+  assert(get_space_dimension() == cell_rank);
+
+  // Collect failed cells
+  for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
+    stk::mesh::Entity cell = cells[i];
+    if (is_open(cell) == true) { failed_cells.emplace_back(cell); }
+  }
+
+  // Now remove them
+  bulk_data.modification_begin();
+  for (RelationVectorIndex i = 0; i < failed_cells.size(); ++i) {
+    stk::mesh::Entity failed_cell = failed_cells[i];
+    remove_entity(failed_cell);
+  }
+  Albany::fix_node_sharing(bulk_data);
+  bulk_data.modification_end();
+
+  return;
+}
+
+//
 //
 //
 void

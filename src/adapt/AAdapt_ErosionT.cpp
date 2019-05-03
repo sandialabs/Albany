@@ -60,9 +60,7 @@ AAdapt::ErosionT::~ErosionT() {}
 bool
 AAdapt::ErosionT::queryAdaptationCriteria(int)
 {
-  size_t const number_fractured_faces = topology_->setEntitiesOpen();
-
-  return number_fractured_faces > 0;
+  return topology_->there_are_failed_cells();
 }
 
 //
@@ -91,16 +89,9 @@ AAdapt::ErosionT::adaptMesh()
 
   remesh_file_index_++;
 
-  // Print element connectivity before the mesh topology is modified
-
-  //  *output_stream_
-  //   << "*************************\n"
-  //   << "Before element separation\n"
-  //   << "*************************\n";
-
   // Start the mesh update process
 
-  topology_->splitOpenFaces();
+  topology_->erodeFailedElements();
 
   // Throw away all the Albany data structures and re-build them from the mesh
 
@@ -111,8 +102,7 @@ AAdapt::ErosionT::adaptMesh()
 
 //
 // Transfer solution between meshes.  This is a no-op as the
-// solution is copied to the newly created nodes by the
-// topology->splitOpenFaces() function.
+// solution is the same except for possibly removed nodes.
 //
 void
 AAdapt::ErosionT::solutionTransfer(
@@ -129,14 +119,6 @@ AAdapt::ErosionT::getValidAdapterParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> valid_pl_ =
       this->getGenericAdapterParams("ValidErosionParams");
-
-  valid_pl_->set<double>(
-      "Critical Traction",
-      1.0,
-      "Critical traction at which two elements separate t_eff >= t_cr");
-
-  valid_pl_->set<double>(
-      "beta", 1.0, "Weight factor t_eff = sqrt[(t_s/beta)^2 + t_n^2]");
 
   return valid_pl_;
 }

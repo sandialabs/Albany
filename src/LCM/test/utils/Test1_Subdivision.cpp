@@ -123,19 +123,19 @@ return_number_entities(LCM::Topology& topology_)
   // Push back number of nodes
   stk::mesh::BulkData&           bulkData_ = topology_.get_bulk_data();
   std::vector<stk::mesh::Entity> initial_entities_D0 =
-      topology_.getEntitiesByRank(bulkData_, stk::topology::NODE_RANK);
+      topology_.get_rank_entities(bulkData_, stk::topology::NODE_RANK);
   output_vector.push_back(initial_entities_D0.size());
   // Push back number of edges
   std::vector<stk::mesh::Entity> initial_entities_D1 =
-      topology_.getEntitiesByRank(bulkData_, stk::topology::EDGE_RANK);
+      topology_.get_rank_entities(bulkData_, stk::topology::EDGE_RANK);
   output_vector.push_back(initial_entities_D1.size());
   // Push back number of faces
   std::vector<stk::mesh::Entity> initial_entities_D2 =
-      topology_.getEntitiesByRank(bulkData_, stk::topology::FACE_RANK);
+      topology_.get_rank_entities(bulkData_, stk::topology::FACE_RANK);
   output_vector.push_back(initial_entities_D2.size());
   // Push back number of elements
   std::vector<stk::mesh::Entity> initial_entities_D3 =
-      topology_.getEntitiesByRank(bulkData_, stk::topology::ELEMENT_RANK);
+      topology_.get_rank_entities(bulkData_, stk::topology::ELEMENT_RANK);
   output_vector.push_back(initial_entities_D3.size());
 
   return output_vector;

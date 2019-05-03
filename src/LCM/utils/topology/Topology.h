@@ -198,8 +198,6 @@ class Topology
   ///
   /// \brief Fractures all open boundary entities of the mesh.
   ///
-  /// \param[in] map of entity and boolean value is entity open
-  ///
   /// Iterate through the faces of the mesh and split into two faces
   /// if marked as open. The elements associated with an open face
   /// are separated. All lower order entities of the face are
@@ -210,6 +208,13 @@ class Topology
   void
   splitOpenFaces();
 
+  ///
+  /// Iterate over all elements in the mesh and remove those
+  /// that are marked as failed.
+  ///
+  void
+  erodeFailedElements();
+
   void
   insertSurfaceElements(std::set<EntityPair> const& fractured_faces);
 
@@ -217,7 +222,7 @@ class Topology
   /// \brief Adds a new entity of rank 3 to the mesh
   ///
   void
-  addElement(stk::mesh::EntityRank entity_rank);
+  add_element(stk::mesh::EntityRank entity_rank);
 
   ///
   /// \brief creates several entities at a time. The information
@@ -225,19 +230,19 @@ class Topology
   ///        contained in the input vector called: "requests"
   ///
   void
-  addEntities(std::vector<size_t>& requests);
+  add_entities(std::vector<size_t>& requests);
 
   ///
   /// \brief Removes an entity and all its connections
   ///
   void
-  removeEntity(stk::mesh::Entity entity);
+  remove_entity(stk::mesh::Entity entity);
 
   ///
   /// \brief Adds a relation between two entities
   ///
   void
-  addRelation(
+  add_relation(
       stk::mesh::Entity source_entity,
       stk::mesh::Entity target_entity,
       EdgeId            local_relation_id);
@@ -246,7 +251,7 @@ class Topology
   /// \brief Removes the relation between two entities
   ///
   void
-  removeRelation(
+  remove_relation(
       stk::mesh::Entity source_entity,
       stk::mesh::Entity target_entity,
       EdgeId            local_relation_id);
@@ -256,7 +261,7 @@ class Topology
   ///        specific rank
   ///
   stk::mesh::EntityVector
-  getEntitiesByRank(
+  get_rank_entities(
       stk::mesh::BulkData const& bulk_data,
       stk::mesh::EntityRank      entity_rank);
 
@@ -850,6 +855,19 @@ class Topology
   is_failed_boundary_cell(stk::mesh::Entity e)
   {
     return is_boundary_cell(e) == true && is_open(e) == true;
+  }
+
+  bool
+  there_are_failed_cells()
+  {
+    stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+    stk::mesh::EntityVector     cells;
+    stk::mesh::get_entities(get_bulk_data(), cell_rank, cells);
+    for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
+      stk::mesh::Entity cell = cells[i];
+      if (is_open(cell) == true) return true;
+    }
+    return false;
   }
 
   bool
