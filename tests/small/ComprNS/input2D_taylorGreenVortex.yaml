@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Name: ComprNS 2D
@@ -42,14 +43,16 @@ ANONYMOUS:
     Relative Tolerance: 1.00000000000000005e-04
   Piro: 
     Rythmos: 
-      Num Time Steps: 200
+      Nonlinear Solver Type: NOX
       Final Time: 1.00000000000000000e+00
       Max State Error: 1.00000000000000005e-04
       Alpha: 0.00000000000000000e+00
       Rythmos Stepper: 
         VerboseObject: 
           Verbosity Level: low
-      Rythmos Integration Control: { }
+      Rythmos Integration Control: 
+        Take Variable Steps: false
+        Number of Time Steps: 200
       Rythmos Integrator: 
         VerboseObject: 
           Verbosity Level: none
