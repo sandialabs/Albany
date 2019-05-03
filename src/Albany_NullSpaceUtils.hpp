@@ -11,6 +11,9 @@
 
 namespace Albany {
 
+// Forward declaration of a helper class, used to hide Tpetra/Epetra details
+struct TraitsImplBase;
+
 class RigidBodyModes {
 public:
   //! Construct RBM object.
@@ -53,6 +56,8 @@ private:
   Teuchos::RCP<Teuchos::ParameterList> plist;
 
   Teuchos::RCP<Thyra_MultiVector> coordMV;
+
+  Teuchos::RCP<TraitsImplBase> traits;
 };
 
 } // namespace Albany

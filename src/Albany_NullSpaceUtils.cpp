@@ -263,6 +263,24 @@ struct Epetra_NullSpace_Traits {
 
 } // namespace
 
+// The base structure is empty. The derived one, stores an array,
+// of the type specified by the Traits
+// This struct allows us to hide tpetra/epetra info from the header file.
+// When we decide what to use (ML or MueLu) we create a TraitsImpl
+// templated on the 'actual' traits, and we grab the array.
+// This way the null space stores a persistent array (being stored inside
+// the class makes sure the array does not disappear like it would
+// if it were a temporary), and yet the class need not to know what
+// kind of array it is.
+struct TraitsImplBase {
+};
+
+template<typename Traits>
+struct TraitsImpl : public TraitsImplBase {
+  typename Traits::array_type arr;
+};
+
+
 RigidBodyModes::RigidBodyModes(int numPDEs_)
   : numPDEs(numPDEs_), numElasticityDim(0), numScalar(0), nullSpaceDim(0),
     mlUsed(false), mueLuUsed(false), setNonElastRBM(false)
@@ -288,6 +306,12 @@ setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams)
       plist = sublist(sublist(stratList, "Preconditioner Types"), ptype);
       mueLuUsed = true;
     }
+  }
+
+  if (mlUsed) {
+    traits = Teuchos::rcp( new TraitsImpl<Epetra_NullSpace_Traits>());
+  } else {
+    traits = Teuchos::rcp( new TraitsImpl<Tpetra_NullSpace_Traits>());
   }
 }
 
@@ -387,7 +411,8 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
     if (isMLUsed()) {
 
       using Traits = Epetra_NullSpace_Traits;
-      Traits::array_type err;
+      auto e_traits = Teuchos::rcp_dynamic_cast<TraitsImpl<Traits>>(traits);
+      auto& err = e_traits->arr;
 
       if(nullSpaceDim > 0) {
         if (setNonElastRBM == true) {
@@ -412,8 +437,9 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
 
     } else {
       using Traits = Tpetra_NullSpace_Traits;
-
-      auto trr = Teuchos::rcp(new Tpetra_NullSpace_Traits::base_array_type(getTpetraMap(soln_vs),
+      auto t_traits = Teuchos::rcp_dynamic_cast<TraitsImpl<Traits>>(traits);
+      auto& trr = t_traits->arr;
+      trr = Teuchos::rcp(new Tpetra_NullSpace_Traits::base_array_type(getTpetraMap(soln_vs),
                                nullSpaceDim + numScalar, false));
 
       subtractCentroid(coordMV);
