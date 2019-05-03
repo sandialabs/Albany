@@ -166,7 +166,7 @@ Topology::checkOpen(stk::mesh::Entity e)
 
 //
 // Initialize fracture state field
-// It exists for all entities except cells (elements)
+// It exists for all entities
 //
 void
 Topology::initializeFailureState()

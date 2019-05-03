@@ -773,29 +773,25 @@ class Topology
   }
 
   //
-  // Set fracture state. Do nothing for cells (elements).
+  // Set fracture state.
   //
   void
   set_failure_state(stk::mesh::Entity e, FailureState const fs)
   {
     stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(e);
-    if (rank < stk::topology::ELEMENT_RANK) {
-      *(stk::mesh::field_data(get_failure_state_field(rank), e)) =
-          static_cast<int>(fs);
-    }
+    *(stk::mesh::field_data(get_failure_state_field(rank), e)) =
+        static_cast<int>(fs);
   }
 
   //
-  // Get fracture state. Return INTACT for cells (elements).
+  // Get fracture state.
   //
   FailureState
   get_failure_state(stk::mesh::Entity e)
   {
     stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(e);
-    return rank >= stk::topology::ELEMENT_RANK ?
-               INTACT :
-               static_cast<FailureState>(
-                   *(stk::mesh::field_data(get_failure_state_field(rank), e)));
+    return static_cast<FailureState>(
+        *(stk::mesh::field_data(get_failure_state_field(rank), e)));
   }
 
   bool
@@ -811,6 +807,12 @@ class Topology
   }
 
   bool
+  is_at_boundary(stk::mesh::Entity e)
+  {
+    return is_internal(e) == false;
+  }
+
+  bool
   is_open(stk::mesh::Entity e)
   {
     return get_failure_state(e) == FAILED;
@@ -820,6 +822,28 @@ class Topology
   is_internal_and_open(stk::mesh::Entity e)
   {
     return is_internal(e) == true && is_open(e) == true;
+  }
+
+  bool
+  is_at_boundary_and_open(stk::mesh::Entity e)
+  {
+    return is_at_boundary(e) == true && is_open(e) == true;
+  }
+
+  bool
+  is_boundary_cell(stk::mesh::Entity e)
+  {
+    stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+    stk::mesh::EntityRank const face_rank = get_boundary_rank();
+    auto&                       bulk_data = get_bulk_data();
+    assert(bulk_data.entity_rank(e) == cell_rank);
+    stk::mesh::Entity const* relations = bulk_data.begin(e, face_rank);
+    size_t const num_relations = bulk_data.num_connectivity(e, face_rank);
+    for (size_t i = 0; i < num_relations; ++i) {
+      stk::mesh::Entity face_entity = relations[i];
+      if (is_at_boundary(face_entity) == true) return true;
+    }
+    return false;
   }
 
   void
