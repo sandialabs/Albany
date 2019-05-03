@@ -786,14 +786,14 @@ class Topology
   }
 
   //
-  // Get fracture state. Return CLOSED for cells (elements).
+  // Get fracture state. Return INTACT for cells (elements).
   //
   FailureState
   get_failure_state(stk::mesh::Entity e)
   {
     stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(e);
     return rank >= stk::topology::ELEMENT_RANK ?
-               CLOSED :
+               INTACT :
                static_cast<FailureState>(
                    *(stk::mesh::field_data(get_failure_state_field(rank), e)));
   }
@@ -813,7 +813,7 @@ class Topology
   bool
   is_open(stk::mesh::Entity e)
   {
-    return get_failure_state(e) == OPEN;
+    return get_failure_state(e) == FAILED;
   }
 
   bool

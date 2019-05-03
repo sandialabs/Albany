@@ -186,7 +186,7 @@ Topology::initializeFailureState()
     for (EntityVectorIndex i = 0; i < entities.size(); ++i) {
       stk::mesh::Entity entity = entities[i];
 
-      set_failure_state(entity, CLOSED);
+      set_failure_state(entity, INTACT);
     }
   }
 
@@ -857,7 +857,7 @@ Topology::splitOpenFaces()
        ++i) {
     stk::mesh::Entity point = *i;
 
-    if (get_failure_state(point) == OPEN) { open_points.push_back(point); }
+    if (get_failure_state(point) == FAILED) { open_points.push_back(point); }
   }
 
 #if defined(DEBUG_LCM_TOPOLOGY)
@@ -892,7 +892,7 @@ Topology::splitOpenFaces()
 
       bool const is_local_segment = is_local_entity(segment) == true;
 
-      bool const is_open_segment = get_failure_state(segment) == OPEN;
+      bool const is_open_segment = get_failure_state(segment) == FAILED;
 
       bool const is_local_and_open_segment =
           is_local_segment == true && is_open_segment == true;
@@ -985,8 +985,8 @@ Topology::splitOpenFaces()
             segment_star.entityFromVertex(new_face_vertex);
 
         // Reset fracture state for both old and new faces
-        set_failure_state(face, CLOSED);
-        set_failure_state(new_face, CLOSED);
+        set_failure_state(face, INTACT);
+        set_failure_state(new_face, INTACT);
 
         EntityPair face_pair = std::make_pair(face, new_face);
 
@@ -1011,7 +1011,7 @@ Topology::splitOpenFaces()
       segment_star.splitArticulation(segment_vertex);
 
       // Reset segment fracture state
-      set_failure_state(segment, CLOSED);
+      set_failure_state(segment, INTACT);
 
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
@@ -1065,7 +1065,7 @@ Topology::splitOpenFaces()
         point_star.splitArticulation(point_vertex);
 
     // Reset fracture state of point
-    set_failure_state(point, CLOSED);
+    set_failure_state(point, INTACT);
 
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
@@ -1205,7 +1205,7 @@ Topology::setEntitiesOpen()
 
     if (checkOpen(entity) == false) continue;
 
-    set_failure_state(entity, OPEN);
+    set_failure_state(entity, FAILED);
     ++counter;
 
     switch (get_space_dimension()) {
@@ -1226,7 +1226,7 @@ Topology::setEntitiesOpen()
         for (size_t j = 0; j < num_segments; ++j) {
           stk::mesh::Entity segment = segments[j];
 
-          set_failure_state(segment, OPEN);
+          set_failure_state(segment, FAILED);
 
           stk::mesh::Entity const* points =
               get_bulk_data().begin_nodes(segment);
@@ -1236,7 +1236,7 @@ Topology::setEntitiesOpen()
           for (size_t k = 0; k < num_points; ++k) {
             stk::mesh::Entity point = points[k];
 
-            set_failure_state(point, OPEN);
+            set_failure_state(point, FAILED);
           }
         }
       } break;
@@ -1249,7 +1249,7 @@ Topology::setEntitiesOpen()
         for (size_t j = 0; j < num_points; ++j) {
           stk::mesh::Entity point = points[j];
 
-          set_failure_state(point, OPEN);
+          set_failure_state(point, FAILED);
         }
       } break;
     }

@@ -51,55 +51,47 @@
 
 namespace LCM {
 
-typedef stk::mesh::RelationIdentifier                 EdgeId;
-typedef stk::mesh::EntityVector::size_type            EntityVectorIndex;
-typedef stk::mesh::RelationVector::size_type          RelationVectorIndex;
-typedef std::vector<minitensor::Vector<double>>       Coordinates;
-typedef Coordinates::size_type                        CoordinatesIndex;
-typedef std::vector<std::vector<stk::mesh::EntityId>> Connectivity;
-typedef Connectivity::size_type                       ConnectivityIndex;
+using EdgeId              = stk::mesh::RelationIdentifier;
+using EntityVectorIndex   = stk::mesh::EntityVector::size_type;
+using RelationVectorIndex = stk::mesh::RelationVector::size_type;
+using Coordinates         = std::vector<minitensor::Vector<double>>;
+using CoordinatesIndex    = Coordinates::size_type;
+using Connectivity        = std::vector<std::vector<stk::mesh::EntityId>>;
+using ConnectivityIndex   = Connectivity::size_type;
 
-typedef boost::vertex_name_t                               VertexName;
-typedef boost::edge_name_t                                 EdgeName;
-typedef boost::property<VertexName, stk::mesh::EntityRank> VertexProperty;
-typedef boost::property<EdgeName, EdgeId>                  EdgeProperty;
-typedef boost::listS                                       ListS;
-typedef boost::vecS                                        VectorS;
-typedef boost::bidirectionalS                              Directed;
-typedef boost::undirectedS                                 Undirected;
+using VertexName     = boost::vertex_name_t;
+using EdgeName       = boost::edge_name_t;
+using VertexProperty = boost::property<VertexName, stk::mesh::EntityRank>;
+using EdgeProperty   = boost::property<EdgeName, EdgeId>;
+using ListS          = boost::listS;
+using VectorS        = boost::vecS;
+using Directed       = boost::bidirectionalS;
+using Undirected     = boost::undirectedS;
+using Graph =
+    boost::adjacency_list<ListS, ListS, Directed, VertexProperty, EdgeProperty>;
+using VertexNamePropertyMap = boost::property_map<Graph, VertexName>::type;
+using EdgeNamePropertyMap   = boost::property_map<Graph, EdgeName>::type;
+using Vertex                = boost::graph_traits<Graph>::vertex_descriptor;
+using Edge                  = boost::graph_traits<Graph>::edge_descriptor;
+using VertexIterator        = boost::graph_traits<Graph>::vertex_iterator;
+using EdgeIterator          = boost::graph_traits<Graph>::edge_iterator;
+using OutEdgeIterator       = boost::graph_traits<Graph>::out_edge_iterator;
+using InEdgeIterator        = boost::graph_traits<Graph>::in_edge_iterator;
 
-typedef boost::
-    adjacency_list<ListS, ListS, Directed, VertexProperty, EdgeProperty>
-        Graph;
+using IntScalarFieldType =
+    Albany::AbstractSTKFieldContainer::IntScalarFieldType;
+using ScalarFieldType = Albany::AbstractSTKFieldContainer::ScalarFieldType;
+using VectorFieldType = Albany::AbstractSTKFieldContainer::VectorFieldType;
+using TensorFieldType = Albany::AbstractSTKFieldContainer::TensorFieldType;
 
-typedef boost::property_map<Graph, VertexName>::type VertexNamePropertyMap;
-typedef boost::property_map<Graph, EdgeName>::type   EdgeNamePropertyMap;
-
-typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
-typedef boost::graph_traits<Graph>::edge_descriptor   Edge;
-typedef boost::graph_traits<Graph>::vertex_iterator   VertexIterator;
-typedef boost::graph_traits<Graph>::edge_iterator     EdgeIterator;
-typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
-typedef boost::graph_traits<Graph>::in_edge_iterator  InEdgeIterator;
-
-typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
-    IntScalarFieldType;
-
-typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-
-typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
-
-typedef Albany::AbstractSTKFieldContainer::TensorFieldType TensorFieldType;
-
-// Specific to topological manipulation
-typedef std::pair<stk::mesh::Entity, stk::mesh::Entity> EntityPair;
-typedef std::map<Vertex, size_t>                        VertexComponentMap;
-typedef std::map<stk::mesh::Entity, stk::mesh::Entity>  EntityEntityMap;
+using EntityPair         = std::pair<stk::mesh::Entity, stk::mesh::Entity>;
+using VertexComponentMap = std::map<Vertex, size_t>;
+using EntityEntityMap    = std::map<stk::mesh::Entity, stk::mesh::Entity>;
 
 enum FailureState
 {
-  CLOSED = 0,
-  OPEN   = 1
+  INTACT = 0,
+  FAILED   = 1
 };
 
 enum VTKCellType

@@ -241,7 +241,7 @@ entity_color(stk::mesh::EntityRank const rank, FailureState const failure_state)
       exit(1);
       break;
 
-    case CLOSED:
+    case INTACT:
       switch (rank) {
         default:
           std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
@@ -262,7 +262,7 @@ entity_color(stk::mesh::EntityRank const rank, FailureState const failure_state)
       }
       break;
 
-    case OPEN:
+    case FAILED:
       switch (rank) {
         default:
           std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
