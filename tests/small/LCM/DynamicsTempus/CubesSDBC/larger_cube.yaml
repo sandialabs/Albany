@@ -1,0 +1,167 @@
+LCM:
+  Debug Output:
+    Write Jacobian to MatrixMarket: 0
+    Write Jacobian to Standard Output: 0
+    Write Residual to MatrixMarket: 0
+    Write Residual to Standard Output: 0
+    Write Solution to MatrixMarket: false
+    Write Solution to Standard Output: false
+  Problem:
+    Name: Mechanics 3D
+    Solution Method: Transient Tempus
+    MaterialDB Filename: 'material_larger.yaml'
+    Displacement:
+      Variable Type: DOF
+    ACE Temperature:
+      Variable Type: DOF
+    Dirichlet BCs:
+      SDBC on NS -x for DOF X: 0.0
+      SDBC on NS -y for DOF Y: 0.0
+      SDBC on NS -z for DOF Z: 0.0
+      SDBC on NS -z for DOF T: 250.0
+      Time Dependent SDBC on NS +z for DOF Z:
+        Number of points: 2
+        Time Values: [0.0, 2.0e+06]
+        BC Values: [0.0, 2.0]
+      Time Dependent SDBC on NS +z for DOF T:
+        Number of points: 2
+        Time Values: [0.0, 2.0e+06]
+        BC Values: [250.0, 450.0]
+    Initial Condition:
+      Function: Constant
+      Function Data: [0.0, 0.0, 0.0, 250.0]
+  Discretization:
+    Method: Ioss
+    Exodus Input File Name: 'larger_cube.g'
+    Exodus Output File Name: 'larger_cube.e'
+    Solution Vector Components: [disp, V, temp, S]
+    SolutionDot Vector Components: [velo, V, tdot, S]
+    SolutionDotDot Vector Components: [acce, V, tdotdot, S]
+    Residual Vector Components: [force, V, entro, S]
+    Separate Evaluators by Element Block: true
+    Number Of Time Derivatives: 2
+    Exodus Write Interval: 1
+  Piro:
+    Tempus:
+      Integrator Name: Tempus Integrator
+      Abort on Failure: false
+      Albany Time Step Control Options:
+        Initial Time: 0.0
+        Final Time: 1.0e+05
+        Initial Time Step: 1.0e+04
+        Minimum Time Step: 1.0e-10
+        Maximum Time Step: 1.0e+04
+        Reduction Factor: 0.5
+        Amplification Factor: 1.1
+      Tempus Integrator:
+        Integrator Type: Integrator Basic
+        Stepper Name: Tempus Stepper
+        Solution History:
+          Storage Type: Unlimited
+          Storage Limit: 2000
+      Tempus Stepper:
+        Stepper Type: 'Newmark Implicit d-Form'
+        Newmark Parameters:
+          Beta: 0.25
+          Gamma: 0.50
+        Solver Name: Tempus Solver
+        Tempus Solver:
+          NOX:
+            Direction:
+              Method: Newton
+              Newton:
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+                Linear Solver:
+                  Tolerance: 1.0e-10
+            Line Search:
+              Method: Backtrack
+              Full Step:
+                Full Step: 1.0
+            Nonlinear Solver: Line Search Based
+            Printing:
+              Output Precision: 3
+              Output Processor: 0
+              Output Information:
+                Error: true
+                Warning: true
+                Outer Iteration: true
+                Parameters: true
+                Details: true
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options:
+                Status Test Check Type: Complete
+            Status Tests:
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 5
+              Test 0:
+                Test Type: RelativeNormF
+                Tolerance: 1.0e-10
+              Test 1:
+                Test Type: MaxIters
+                Maximum Iterations: 16
+              Test 2:
+                Test Type: Combo
+                Combo Type: AND
+                Number of Tests: 2
+                Test 0:
+                  Test Type: NStep
+                  Number of Nonlinear Iterations: 2
+                Test 1:
+                  Test Type: NormF
+                  Tolerance: 1.0e-08
+              Test 3:
+                Test Type: FiniteValue
+              Test 4:
+                Test Type: NormF
+                Tolerance: 1.0e-08
+      Stratimikos:
+        Linear Solver Type: Belos
+        Linear Solver Types:
+          AztecOO:
+            Forward Solve:
+              AztecOO Settings:
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+                Output Frequency: 1
+              Max Iterations: 100
+              Tolerance: 1.0e-10
+          Belos:
+            Solver Type: Block GMRES
+            Solver Types:
+              Block GMRES:
+                Convergence Tolerance: 1.00000000e-14
+                Output Frequency: 1
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 100
+                Num Blocks: 100
+        Preconditioner Type: MueLu
+        Preconditioner Types:
+          MueLu:
+            verbosity: none
+            number of equations: 3
+            'coarse: max size': 500
+            multigrid algorithm: sa
+            max levels: 4
+            'aggregation: type': uncoupled
+            'aggregation: drop scheme': classical
+            'smoother: type': CHEBYSHEV
+            'smoother: params':
+              'chebyshev: degree': 2
+              'chebyshev: ratio eigenvalue': 7.0
+              'chebyshev: min eigenvalue': 1.0
+              'chebyshev: zero starting solution': true
+            'smoother: pre or post': both
+            'repartition: enable': true
+            'repartition: partitioner': zoltan2
+            'repartition: start level': 2
+            'repartition: min rows per proc': 800
+            'repartition: max imbalance': 1.1
+            'repartition: remap parts': false
+...
