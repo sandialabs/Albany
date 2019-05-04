@@ -122,6 +122,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   {
     return failure_state[rank];
   }
+  IntScalarFieldType*
+  getBoundaryIndicator(stk::topology::rank_t rank)
+  {
+    return boundary_indicator[rank];
+  }
 #endif  // ALBANY_LCM
   SphereVolumeFieldType*
   getSphereVolumeField()
@@ -312,6 +317,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   IntScalarFieldType* refine_field;
 #if defined(ALBANY_LCM)
   IntScalarFieldType* failure_state[stk::topology::ELEMENT_RANK];
+  IntScalarFieldType* boundary_indicator[stk::topology::ELEMENT_RANK];
 #endif  // ALBANY_LCM
 
   SphereVolumeFieldType*

@@ -192,9 +192,15 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
        ++rank) {
     this->failure_state[rank] =
         &this->metaData->template declare_field<ISFT>(rank, "failure_state");
-
     stk::mesh::put_field_on_mesh(
         *this->failure_state[rank], this->metaData->universal_part(), nullptr);
+    this->boundary_indicator[rank] =
+        &this->metaData->template declare_field<ISFT>(
+            rank, "boundary_indicator");
+    stk::mesh::put_field_on_mesh(
+        *this->boundary_indicator[rank],
+        this->metaData->universal_part(),
+        nullptr);
   }
 #endif  // ALBANY_LCM
 
@@ -206,6 +212,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
        rank <= stk::topology::ELEMENT_RANK;
        ++rank) {
     stk::io::set_field_role(*this->failure_state[rank], Ioss::Field::MESH);
+    stk::io::set_field_role(*this->boundary_indicator[rank], Ioss::Field::MESH);
   }
 #endif  // ALBANY_LCM
 #endif
