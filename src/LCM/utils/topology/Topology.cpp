@@ -194,6 +194,41 @@ Topology::initializeFailureState()
 }
 
 //
+// Set boundary indicator
+// For now meaningful for elements only
+//
+void
+Topology::setBoundaryIndicator()
+{
+  stk::mesh::Selector local_part = get_local_part();
+
+  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
+       rank <= stk::topology::ELEMENT_RANK;
+       ++rank) {
+    std::vector<stk::mesh::Bucket*> const& buckets =
+        get_bulk_data().buckets(rank);
+
+    stk::mesh::EntityVector entities;
+
+    stk::mesh::get_selected_entities(local_part, buckets, entities);
+
+    for (EntityVectorIndex i = 0; i < entities.size(); ++i) {
+      stk::mesh::Entity entity = entities[i];
+
+      if (rank < stk::topology::ELEMENT_RANK) {
+        set_boundary_indicator(entity, INTERIOR);
+      } else {
+        BoundaryIndicator const bi =
+            is_boundary_cell(entity) == true ? EXTERIOR : INTERIOR;
+        set_boundary_indicator(entity, bi);
+      }
+    }
+  }
+
+  return;
+}
+
+//
 // Create the full mesh representation. This must be done prior to
 // the adaptation query.
 //
@@ -207,6 +242,7 @@ Topology::graphInitialization()
   get_bulk_data().modification_begin();
   removeMultiLevelRelations();
   initializeFailureState();
+  setBoundaryIndicator();
   Albany::fix_node_sharing(get_bulk_data());
   get_bulk_data().modification_end();
   get_stk_discretization().updateMesh();
@@ -1138,7 +1174,7 @@ Topology::erodeFailedElements()
   }
   Albany::fix_node_sharing(bulk_data);
   bulk_data.modification_end();
-
+  setBoundaryIndicator();
   return;
 }
 

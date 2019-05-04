@@ -94,6 +94,12 @@ enum FailureState
   FAILED = 1
 };
 
+enum BoundaryIndicator
+{
+  INTERIOR = 0,
+  EXTERIOR = 1
+};
+
 enum VTKCellType
 {
   INVALID  = 0,

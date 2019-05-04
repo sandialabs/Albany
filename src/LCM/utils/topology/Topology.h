@@ -549,12 +549,17 @@ class Topology
   checkOpen(stk::mesh::Entity e);
 
   ///
-  /// Initialization of the open field for fracture
+  /// Initialization of the open field for failure
   ///
   void
   initializeFailureState();
 
-  ///----------------------------------------------------------------------
+  ///
+  /// Setting boundary indicator
+  ///
+  void
+  setBoundaryIndicator();
+
   ///
   /// \brief Practice creating the barycentric subdivision
   ///
@@ -689,6 +694,16 @@ class Topology
     return *(pisft);
   }
 
+  IntScalarFieldType&
+  get_boundary_indicator_field(stk::mesh::EntityRank rank)
+  {
+    auto& asms  = get_stk_mesh_struct();
+    auto  asfc  = asms->getFieldContainer();
+    auto* pisft = asfc->getBoundaryIndicator(rank);
+    assert(pisft != nullptr);
+    return *(pisft);
+  }
+
   void
   set_failure_criterion(Teuchos::RCP<AbstractFailureCriterion> const& fc)
   {
@@ -782,26 +797,53 @@ class Topology
   }
 
   //
-  // Set fracture state.
+  // Set failure state.
   //
   void
   set_failure_state(stk::mesh::Entity e, FailureState const fs)
   {
-    stk::mesh::BulkData&        bulk_data   = get_bulk_data();
-    stk::mesh::EntityRank const rank        = bulk_data.entity_rank(e);
-    IntScalarFieldType& failure_state_field = get_failure_state_field(rank);
-    *(stk::mesh::field_data(failure_state_field, e)) = static_cast<int>(fs);
+    auto& bulk_data                            = get_bulk_data();
+    auto  rank                                 = bulk_data.entity_rank(e);
+    auto& failure_field                        = get_failure_state_field(rank);
+    *(stk::mesh::field_data(failure_field, e)) = static_cast<int>(fs);
   }
 
   //
-  // Get fracture state.
+  // Get failure state.
   //
   FailureState
   get_failure_state(stk::mesh::Entity e)
   {
-    stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(e);
+    auto& bulk_data     = get_bulk_data();
+    auto  rank          = bulk_data.entity_rank(e);
+    auto& failure_field = get_failure_state_field(rank);
     return static_cast<FailureState>(
-        *(stk::mesh::field_data(get_failure_state_field(rank), e)));
+        *(stk::mesh::field_data(failure_field, e)));
+  }
+
+  //
+  // Set boundary indicator.
+  //
+  void
+  set_boundary_indicator(stk::mesh::Entity e, BoundaryIndicator const bi)
+  {
+    auto& bulk_data      = get_bulk_data();
+    auto  rank           = bulk_data.entity_rank(e);
+    auto& boundary_field = get_boundary_indicator_field(rank);
+    *(stk::mesh::field_data(boundary_field, e)) = static_cast<int>(bi);
+  }
+
+  //
+  // Get boundary indicator.
+  //
+  BoundaryIndicator
+  get_boundary_indicator(stk::mesh::Entity e)
+  {
+    auto& bulk_data      = get_bulk_data();
+    auto  rank           = bulk_data.entity_rank(e);
+    auto& boundary_field = get_boundary_indicator_field(rank);
+    return static_cast<BoundaryIndicator>(
+        *(stk::mesh::field_data(boundary_field, e)));
   }
 
   bool
