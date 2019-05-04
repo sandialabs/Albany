@@ -682,7 +682,11 @@ class Topology
   IntScalarFieldType&
   get_failure_state_field(stk::mesh::EntityRank rank)
   {
-    return *(get_stk_mesh_struct()->getFieldContainer()->getFailureState(rank));
+    auto& asms  = get_stk_mesh_struct();
+    auto  asfc  = asms->getFieldContainer();
+    auto* pisft = asfc->getFailureState(rank);
+    assert(pisft != nullptr);
+    return *(pisft);
   }
 
   void
@@ -783,9 +787,10 @@ class Topology
   void
   set_failure_state(stk::mesh::Entity e, FailureState const fs)
   {
-    stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(e);
-    *(stk::mesh::field_data(get_failure_state_field(rank), e)) =
-        static_cast<int>(fs);
+    stk::mesh::BulkData&        bulk_data   = get_bulk_data();
+    stk::mesh::EntityRank const rank        = bulk_data.entity_rank(e);
+    IntScalarFieldType& failure_state_field = get_failure_state_field(rank);
+    *(stk::mesh::field_data(failure_state_field, e)) = static_cast<int>(fs);
   }
 
   //

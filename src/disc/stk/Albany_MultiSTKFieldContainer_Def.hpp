@@ -354,10 +354,10 @@ Albany::MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
 
 #if defined(ALBANY_LCM)
   // Fracture state used for adaptive insertion.
-  // It exists for all entities except cells (elements).
+  // It exists for all entities.
 
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
-       rank < stk::topology::ELEMENT_RANK;
+       rank <= stk::topology::ELEMENT_RANK;
        ++rank) {
     this->failure_state[rank] =
         &this->metaData->template declare_field<ISFT>(rank, "failure_state");
@@ -371,7 +371,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
   stk::io::set_field_role(*this->refine_field, Ioss::Field::MESH);
 #if defined(ALBANY_LCM)
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
-       rank < stk::topology::ELEMENT_RANK;
+       rank <= stk::topology::ELEMENT_RANK;
        ++rank) {
     stk::io::set_field_role(*this->failure_state[rank], Ioss::Field::MESH);
   }

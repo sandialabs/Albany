@@ -174,7 +174,7 @@ Topology::initializeFailureState()
   stk::mesh::Selector local_part = get_local_part();
 
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
-       rank < stk::topology::ELEMENT_RANK;
+       rank <= stk::topology::ELEMENT_RANK;
        ++rank) {
     std::vector<stk::mesh::Bucket*> const& buckets =
         get_bulk_data().buckets(rank);
