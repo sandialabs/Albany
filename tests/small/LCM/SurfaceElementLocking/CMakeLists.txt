@@ -12,7 +12,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_ALGEBRA} ${CMAKE_CURRENT_BINARY_DIR}/algebra)
 if (ALBANY_IFPACK2)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 endif()
 
 if (ALBANY_IFPACK2)
@@ -81,39 +81,42 @@ IF(NOT ALBANY_PARALLEL_ONLY)
       SET(ALG_OUTFILE "outNoVolJ.alg.e")
       SET(ALG_FILE "run_algebra_NoVolJ.sh")  
       add_test(NAME ${testName}_NoVolJ
-               COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+               COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
                -DTEST_NAME=NoVolJ -DTEST_ARGS=inputNoVolJ.yaml -DMPIMNP=1
                -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
                -DSEACAS_ALGEBRA=${SEACAS_ALGEBRA}
                -DALGEBRA_FILE=${ALG_FILE} 
                -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${ALG_OUTFILE}
                -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+      set_tests_properties(${testName}_NoVolJ PROPERTIES LABELS "LCM;Tpetra;Forward")
       #test 2 - VolJ
       SET(OUTFILE "VolJ.e")
       SET(REF_FILE "outVolJ.alg.gold.e")
       SET(ALG_OUTFILE "outVolJ.alg.e")
       SET(ALG_FILE "run_algebra_VolJ.sh")  
       add_test(NAME ${testName}_VolJ
-               COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+               COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
                -DTEST_NAME=VolJ -DTEST_ARGS=inputVolJ.yaml -DMPIMNP=1
                -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
                -DSEACAS_ALGEBRA=${SEACAS_ALGEBRA}
                -DALGEBRA_FILE=${ALG_FILE} 
                -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${ALG_OUTFILE}
                -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+      set_tests_properties(${testName}_VolJ PROPERTIES LABELS "LCM;Tpetra;Forward")
       #test 3 - AveragePressure
       SET(OUTFILE "AveragePressure.e")
       SET(REF_FILE "outAveragePressure.alg.gold.e")
       SET(ALG_OUTFILE "outAveragePressure.alg.e")
       SET(ALG_FILE "run_algebra_AveragePressure.sh")  
       add_test(NAME ${testName}_AveragePressure
-               COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+               COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
                -DTEST_NAME=AveragePressure -DTEST_ARGS=inputAveragePressure.yaml -DMPIMNP=1
                -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
                -DSEACAS_ALGEBRA=${SEACAS_ALGEBRA}
                -DALGEBRA_FILE=${ALG_FILE} 
                -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${ALG_OUTFILE}
                -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+      set_tests_properties(${testName}_AveragePressure PROPERTIES LABELS "LCM;Tpetra;Forward")
 
   endif()
 ENDIF()

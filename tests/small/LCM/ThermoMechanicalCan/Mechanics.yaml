@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 LCM:
+  Build Type: Tpetra
   Problem:
     Name: Mechanics 3D
     Solution Method: Continuation
@@ -45,7 +46,7 @@ LCM:
     Residual Vector Components: [force, V]
     Separate Evaluators by Element Block: true
     Exodus Write Interval: 5
-    Use Serial Mesh: true
+    Use Serial Mesh: false
   Regression Results:
     Number of Comparisons: 1
     Test Values: [4.29348493e-06]

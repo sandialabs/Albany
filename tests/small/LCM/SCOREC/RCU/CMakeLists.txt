@@ -18,5 +18,6 @@ set (testName "SCOREC_${testRoot}")
 # 3. Create the test with this name and standard executable
 if (ALBANY_IFPACK2)
   add_test (NAME ${testName}_SquareStabilized_Tpetra_SERIAL COMMAND
-    ${SerialAlbanyT.exe} inputSquareStabilized.yaml)
+    ${SerialAlbany.exe} inputSquareStabilized.yaml)
+  set_tests_properties(${testName}_SquareStabilized_Tpetra_SERIAL PROPERTIES LABELS "LCM;Tpetra;Forward;SCOREC")
 endif ()

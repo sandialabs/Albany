@@ -13,7 +13,8 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
   IF(ALBANY_IFPACK2)
-    add_test(${testName}_SERIAL ${SerialAlbanyT.exe} input.yaml)
+    add_test(${testName}_SERIAL ${SerialAlbany.exe} input.yaml)
+    set_tests_properties(${testName}_SERIAL PROPERTIES LABELS "LCM;Tpetra;Forward")
   ENDIF()
 ENDIF()
 

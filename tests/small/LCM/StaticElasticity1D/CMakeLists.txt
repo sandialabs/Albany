@@ -15,9 +15,11 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if (ALBANY_IFPACK2)
   if (NOT (ALBANY_CHECK_FPE OR ALBANY_STRONG_FPE_CHECK))
 #   Dont need IFPACK2 for this first test - this is unpreconditioned matrix-free. Fails with FPE.
-    add_test(${testName}_MF ${AlbanyT.exe} input.yaml)
+    add_test(${testName}_MF ${Albany.exe} input.yaml)
+    set_tests_properties(${testName}_MF PROPERTIES LABELS "LCM;Tpetra;Forward")
   endif ()
-  add_test(${testName}_Ifpack2 ${AlbanyT.exe} inputP.yaml)
+  add_test(${testName}_Ifpack2 ${Albany.exe} inputP.yaml)
+  set_tests_properties(${testName}_Ifpack2 PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif()
 
 # Repeat process for Analysis problems if "inputAnalysis.yaml" exists
@@ -26,5 +28,6 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml AND ALBANY_IFPACK2 AND
                  ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.yaml COPYONLY)
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
-  add_test(${testName} ${AlbanyAnalysisT.exe} inputAnalysis.yaml)
+  add_test(${testName} ${AlbanyAnalysis.exe} inputAnalysis.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LCM;Tpetra;Analysis")
 endif ()

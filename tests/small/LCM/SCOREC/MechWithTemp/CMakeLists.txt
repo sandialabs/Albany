@@ -19,6 +19,8 @@ set(testName "SCOREC_${testRoot}")
 
 # 3. Create the test with this name and standard executable
 IF(ALBANY_IFPACK2)
-  add_test(NAME ${testName}_Tpetra COMMAND ${AlbanyT.exe} inputT.yaml)
-  add_test(NAME ${testName}_Unif_Tpetra COMMAND ${AlbanyT.exe} inputUnifT.yaml)
+  add_test(NAME ${testName}_Tpetra COMMAND ${Albany.exe} inputT.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LCM;Tpetra;Forward;SCOREC")
+  add_test(NAME ${testName}_Unif_Tpetra COMMAND ${Albany.exe} inputUnifT.yaml)
+  set_tests_properties(${testName}_Unif_Tpetra PROPERTIES LABELS "LCM;Tpetra;Forward;SCOREC")
 ENDIF()

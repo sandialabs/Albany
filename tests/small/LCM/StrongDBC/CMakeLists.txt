@@ -14,5 +14,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.g
 
 if (ALBANY_IFPACK2)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-add_test(${testName} ${SerialAlbanyT.exe} cube.yaml)
+add_test(${testName} ${SerialAlbany.exe} cube.yaml)
+set_tests_properties(${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif()
