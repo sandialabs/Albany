@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem:
     Use MDField Memoization: true 
     Name: Aeras XZ Hydrostatic
