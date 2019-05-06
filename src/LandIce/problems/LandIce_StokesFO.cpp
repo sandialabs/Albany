@@ -41,7 +41,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
   //written by IK, Feb. 2012
   //Check if we want to give ML RBMs (from parameterlist)
-  int numRBMs = params_->get<int>("Number RBMs for ML", 0);
+  int numRBMs = params_->get<int>("Number RBMs for ML", neq);
   bool setRBMs = false;
   if (numRBMs > 0) {
     setRBMs = true;
