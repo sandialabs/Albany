@@ -13,22 +13,6 @@
 //uncomment the following if you want to exclude procs with 0 elements from solve.
 //#define REDUCED_COMM
 
-//uncomment the following if you want to use Epetra
-//#define CISM_USE_EPETRA
-
-//if we have an epetra build but no reduced comm, compute sensitivities
-//and responses
-#ifdef CISM_USE_EPETRA
-#ifndef REDUCED_COMM
-#define COMPUTE_SENS_AND_RESP
-#endif
-#endif
-
-//if we have tpetra build, compute sensitivities and responses.
-#ifndef CISM_USE_EPETRA
-#define COMPUTE_SENS_AND_RESP
-#endif
-
 //computation of sensitivities and responses will be off in the case
 //we have an epetra build + reduced comm, as this was causing a hang.
 
@@ -152,11 +136,6 @@ extern "C" void ali_driver_();
 //What is exec_mode??
 void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char * input_fname)
 {
-#ifndef CISM_USE_EPETRA
-   static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-#else
-   static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
-#endif
    if (first_time_step)
      Kokkos::initialize();
     // ---------------------------------------------
@@ -174,8 +153,6 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
     comm = MPI_Comm_f2c(cism_communicator);
     //MPI_COMM_size (comm, &cism_process_count);
     //MPI_COMM_rank (comm, &my_cism_rank);
-    //convert comm to Epetra_Comm
-    //mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
     mpiCommT = Albany::createTeuchosCommFromMpiComm(comm);
 
     //IK, 4/4/14: get verbosity level specified in CISM *.config file
@@ -317,6 +294,28 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
       std::cout << "In ali_driver: creating Albany mesh struct..." << std::endl;
     slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, reducedMpiCommT));
+    const auto& bt = slvrfctry->getParameters().get("Build Type","Tpetra");
+    if (bt=="Tpetra") {
+      // Set the static variable that denotes this as a Tpetra run
+      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+//if we have tpetra build, compute sensitivities and responses.
+#define COMPUTE_SENS_AND_RESP
+    } 
+    else if (bt=="Epetra") {
+      // Set the static variable that denotes this as a Epetra run
+      static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
+      //if we have an epetra build but no reduced comm, compute sensitivities
+      //and responses
+#ifndef REDUCED_COMM
+#define COMPUTE_SENS_AND_RESP
+#endif
+    } 
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                                 "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
+                                 "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+    }
+
     parameterList = Teuchos::rcp(&slvrfctry->getParameters(),false);
     discParams = Teuchos::sublist(parameterList, "Discretization", true);
     discParams->set<bool>("Output DTK Field to Exodus", true);
@@ -529,9 +528,6 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
 // IK, 12/3/13: time_inc_yr and cur_time_yr are not used here...
 void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc_yr)
 {
-/*#ifndef CISM_USE_EPETRA
-   static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-#endif*/
     //IK, 12/9/13: how come FancyOStream prints an all processors??
     Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
@@ -653,7 +649,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
     //if (!first_time_step)
     //  std::cout << "previousSolution: " << *previousSolution << std::endl;
-    solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
+    solver = slvrfctry->createAndGetAlbanyApp(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
