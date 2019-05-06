@@ -4,6 +4,7 @@ ANONYMOUS:
   Build Type: Tpetra
   Problem: 
     Phalanx Graph Visualization Detail: 2
+    Number RBMs for ML: 2
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
     Dirichlet BCs: 
@@ -140,7 +141,6 @@ ANONYMOUS:
                     'relaxation: type': Symmetric Gauss-Seidel
                   'smoother: pre or post': both
                   'coarse: type': KLU2
-                  number of equations: 4
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 

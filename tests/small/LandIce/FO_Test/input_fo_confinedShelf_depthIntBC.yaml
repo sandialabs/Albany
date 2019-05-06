@@ -141,7 +141,6 @@ ANONYMOUS:
                     'smoother: sweeps': 1
                     'smoother: pre or post': both
                     'coarse: type': Amesos-KLU
-                    PDE equations: 4
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 
