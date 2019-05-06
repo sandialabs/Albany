@@ -803,7 +803,7 @@ class Topology
   set_failure_state(stk::mesh::Entity e, FailureState const fs)
   {
     auto& bulk_data                            = get_bulk_data();
-    auto  rank                                 = bulk_data.entity_rank(e);
+    auto const rank                                 = bulk_data.entity_rank(e);
     auto& failure_field                        = get_failure_state_field(rank);
     *(stk::mesh::field_data(failure_field, e)) = static_cast<int>(fs);
   }
@@ -827,9 +827,9 @@ class Topology
   void
   set_boundary_indicator(stk::mesh::Entity e, BoundaryIndicator const bi)
   {
-    auto& bulk_data      = get_bulk_data();
-    auto  rank           = bulk_data.entity_rank(e);
-    auto& boundary_field = get_boundary_indicator_field(rank);
+    auto&      bulk_data      = get_bulk_data();
+    auto const rank           = bulk_data.entity_rank(e);
+    auto&      boundary_field = get_boundary_indicator_field(rank);
     *(stk::mesh::field_data(boundary_field, e)) = static_cast<int>(bi);
   }
 

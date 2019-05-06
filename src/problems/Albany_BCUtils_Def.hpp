@@ -378,7 +378,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -414,7 +414,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
 
       // Add other functional boundary conditions here. Note that Torsion could
@@ -438,7 +438,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         p->set<RCP<ParamLib>>("Parameter Library", paramLib);
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -510,7 +510,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -629,7 +629,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -677,7 +677,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
           evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
           bcs->push_back(ss);
-          use_dbcs_ = true; 
+          use_dbcs_ = true;
         }
       }
     }
@@ -721,7 +721,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
       evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
       bcs->push_back(ss);
-      use_dbcs_ = true; 
+      use_dbcs_ = true;
     }
   }
 
@@ -830,7 +830,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -937,7 +937,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -992,15 +992,17 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
       evaluators_to_build[ess.str()] = p;
 
       bcs->push_back(dir_name);
-      use_dbcs_ = true; 
+      use_dbcs_ = true;
     }
     delete value;
   }
 
-  if ((use_dbcs_ == true) && (use_sdbcs_ == true)) { 
-    TEUCHOS_TEST_FOR_EXCEPTION( true, 
-              std::logic_error,
-              "You are attempting to prescribe a mix of SDBCs and DBCs, which is not allowed!\n"); 
+  if ((use_dbcs_ == true) && (use_sdbcs_ == true)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "You are attempting to prescribe a mix of SDBCs and DBCs, which is not "
+        "allowed!\n");
   }
 
   string allBC = "Evaluator for all Dirichlet BCs";

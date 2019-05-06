@@ -84,6 +84,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField(Fp_string, dl->qp_tensor);
   setEvaluatedField(eqps_string, dl->qp_scalar);
   setEvaluatedField(yieldSurface_string, dl->qp_scalar);
+  setEvaluatedField("boundary_indicator", dl->cell_scalar);
 
   // define the state variables
 
@@ -213,6 +214,17 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("Output ACE Failure Indicator", true));
 
+  //  boundary indicator
+/*
+  addStateVariable(
+      "boundary_indicator",
+      dl->cell_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output boundary_indicator", true));
+*/
+
   // exposure time
   addStateVariable(
       "ACE Exposure Time",
@@ -246,20 +258,21 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   delta_time_        = *input_fields["Delta Time"];
   temperature_       = *input_fields["ACE Temperature"];
 
-  stress_           = *output_fields[cauchy_string];
-  Fp_               = *output_fields[Fp_string];
-  eqps_             = *output_fields[eqps_string];
-  yield_surf_       = *output_fields[yieldSurface_string];
-  ice_saturation_   = *output_fields["ACE Ice Saturation"];
-  density_          = *output_fields["ACE Density"];
-  heat_capacity_    = *output_fields["ACE Heat Capacity"];
-  thermal_cond_     = *output_fields["ACE Thermal Conductivity"];
-  thermal_inertia_  = *output_fields["ACE Thermal Inertia"];
-  water_saturation_ = *output_fields["ACE Water Saturation"];
-  porosity_         = *output_fields["ACE Porosity"];
-  tdot_             = *output_fields["ACE Temperature Dot"];
-  failed_           = *output_fields["ACE Failure Indicator"];
-  exposure_time_    = *output_fields["ACE Exposure Time"];
+  stress_             = *output_fields[cauchy_string];
+  Fp_                 = *output_fields[Fp_string];
+  eqps_               = *output_fields[eqps_string];
+  yield_surf_         = *output_fields[yieldSurface_string];
+  ice_saturation_     = *output_fields["ACE Ice Saturation"];
+  density_            = *output_fields["ACE Density"];
+  heat_capacity_      = *output_fields["ACE Heat Capacity"];
+  thermal_cond_       = *output_fields["ACE Thermal Conductivity"];
+  thermal_inertia_    = *output_fields["ACE Thermal Inertia"];
+  water_saturation_   = *output_fields["ACE Water Saturation"];
+  porosity_           = *output_fields["ACE Porosity"];
+  tdot_               = *output_fields["ACE Temperature Dot"];
+  failed_             = *output_fields["ACE Failure Indicator"];
+  exposure_time_      = *output_fields["ACE Exposure Time"];
+  boundary_indicator_ = *output_fields["boundary_indicator"];
 
   // get State Variables
   Fp_old_             = (*workset.stateArrayPtr)[Fp_string + "_old"];

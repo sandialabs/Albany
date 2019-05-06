@@ -190,13 +190,14 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
        rank <= stk::topology::ELEMENT_RANK;
        ++rank) {
-    this->failure_state[rank] =
-        &this->metaData->template declare_field<ISFT>(rank, "failure_state");
+    this->failure_state[rank] = &this->metaData->template
+        declare_field<ISFT>(rank, "failure_state");
     stk::mesh::put_field_on_mesh(
-        *this->failure_state[rank], this->metaData->universal_part(), nullptr);
-    this->boundary_indicator[rank] =
-        &this->metaData->template declare_field<ISFT>(
-            rank, "boundary_indicator");
+        *this->failure_state[rank],
+        this->metaData->universal_part(),
+        nullptr);
+    this->boundary_indicator[rank] = &this->metaData->template
+        declare_field<ISFT>(rank, "boundary_indicator");
     stk::mesh::put_field_on_mesh(
         *this->boundary_indicator[rank],
         this->metaData->universal_part(),

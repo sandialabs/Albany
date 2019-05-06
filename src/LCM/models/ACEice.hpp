@@ -77,6 +77,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ScalarField tdot_;
   ScalarField failed_;
   ScalarField exposure_time_;
+  ScalarField boundary_indicator_;
 
   // Mechanical MDFields
   ScalarField eqps_;

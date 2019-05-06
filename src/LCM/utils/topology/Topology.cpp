@@ -215,12 +215,12 @@ Topology::setBoundaryIndicator()
     for (EntityVectorIndex i = 0; i < entities.size(); ++i) {
       stk::mesh::Entity entity = entities[i];
 
-      if (rank < stk::topology::ELEMENT_RANK) {
-        set_boundary_indicator(entity, INTERIOR);
-      } else {
+      if (rank == stk::topology::ELEMENT_RANK) {
         BoundaryIndicator const bi =
             is_boundary_cell(entity) == true ? EXTERIOR : INTERIOR;
         set_boundary_indicator(entity, bi);
+      } else {
+        set_boundary_indicator(entity, INTERIOR);
       }
     }
   }
