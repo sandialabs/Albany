@@ -80,7 +80,7 @@ ENDIF(ALBANY_STK)
 
 # LCM ###############
 IF(ALBANY_LCM)
-  # add_subdirectory(LCM)
+   add_subdirectory(LCM)
 ENDIF()
 
 IF(ALBANY_STK)
