@@ -17,4 +17,5 @@ set(testName ${testDirName})
 
 if (ALBANY_EPETRA)
 add_test(LaplaceBeltrami:${testName}_DTPS ${Albany.exe} inputDTPS.yaml)
+set_tests_properties(LaplaceBeltrami:${testName}_DTPS PROPERTIES LABELS "LCM;Epetra;Forward")
 endif()

@@ -40,7 +40,7 @@ if(ALBANY_IFPACK2)
  SET(OUTFILE "ElasticShear3d.exo")
  SET(REF_FILE "ElasticShear3d.gold.exo")
  add_test(NAME CrystalPlasticity_${testName}_ElasticShear3d
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=ElasticShear3d -DTEST_ARGS=ElasticShear3d.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
@@ -49,7 +49,7 @@ if(ALBANY_IFPACK2)
  SET(OUTFILE "ElasticShearRotated3d.exo")
  SET(REF_FILE "ElasticShearRotated3d.gold.exo")
  add_test(NAME CrystalPlasticity_${testName}_ElasticShearRotated3d
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=ElasticShearRotated3d -DTEST_ARGS=ElasticShearRotated3d.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}

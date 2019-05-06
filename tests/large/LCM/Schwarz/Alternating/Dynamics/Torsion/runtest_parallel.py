@@ -17,7 +17,7 @@ if os.path.exists(log_file_name):
 logfile = open(log_file_name, 'w')
 
 # run Albany
-command = ["mpirun", "-np", "8", "AlbanyT", "nobcs.yaml"]
+command = ["mpirun", "-np", "8", "Albany", "nobcs.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 

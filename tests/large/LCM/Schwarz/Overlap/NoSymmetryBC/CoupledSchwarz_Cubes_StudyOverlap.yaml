@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 LCM:
+  Build Type: Tpetra
   Coupled System:
     Model Input Files: [CoupledSchwarz_Cubes_StudyOverlap_Cube0_Model.yaml, CoupledSchwarz_Cubes_StudyOverlap_Cube1_Model.yaml]
   Debug Output:

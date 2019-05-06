@@ -1,4 +1,5 @@
 LCM:
+  Build Type: Tpetra
   Alternating System:
     Model Input Files: [clamped_00.yaml, clamped_01.yaml]
     Minimum Iterations: 1

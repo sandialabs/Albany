@@ -43,7 +43,7 @@ if(ALBANY_IFPACK2)
  SET(OUTFILE "MultiSlipPlaneHard_Implicit_Active_Sets.exo")
  SET(REF_FILE "MultiSlipPlaneHard_Implicit_Active_Sets.gold.exo")
  add_test(NAME CrystalPlasticity_${testName}_Implicit_Active_Sets
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=MultiSlipPlaneHard_Implicit_Active_Sets -DTEST_ARGS=MultiSlipPlaneHard_Implicit_Active_Sets.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
@@ -52,7 +52,7 @@ if(ALBANY_IFPACK2)
  SET(OUTFILE "MultiSlipPlaneHard_Implicit.exo")
  SET(REF_FILE "MultiSlipPlaneHard_Implicit.gold.exo")
  add_test(NAME CrystalPlasticity_${testName}_Implicit
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=MultiSlipPlaneHard_Implicit -DTEST_ARGS=MultiSlipPlaneHard_Implicit.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}

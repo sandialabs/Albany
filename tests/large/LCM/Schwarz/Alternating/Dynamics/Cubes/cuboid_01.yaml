@@ -1,4 +1,5 @@
 LCM:
+  Build Type: Tpetra
   Scaling:
     Scale: 1.0
   DataTransferKit:

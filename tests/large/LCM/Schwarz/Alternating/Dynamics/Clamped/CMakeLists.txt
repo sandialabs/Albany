@@ -19,7 +19,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/check_convergence.py
                ${CMAKE_CURRENT_BINARY_DIR}/check_convergence.py COPYONLY)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${runtest.cmake} ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake)
 
@@ -28,9 +28,10 @@ IF(ALBANY_DTK)
 SET(OUTFILE "clamped_parallel.log")
 SET(PYTHON_FILE "check_convergence.py") 
 add_test(NAME Schwarz_Alternating_Dynamics_${testName}_Parallel
-        COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+        COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
         -DTEST_NAME=Clamped -DTEST_ARGS=clamped.yaml -DMPIMNP=4
         -DLOGFILE=${OUTFILE} -DPY_FILE=${PYTHON_FILE}
         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+set_tests_properties(Schwarz_Alternating_Dynamics_${testName}_Parallel PROPERTIES LABELS "LCM;Tpetra;Forward")
 
 ENDIF()

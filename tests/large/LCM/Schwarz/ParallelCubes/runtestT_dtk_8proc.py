@@ -23,8 +23,8 @@ tolerance = 1.0e-8;
 #meanvalue = 0.000594484007237; #meanvalue for 10 LOCA steps
 meanvalue = 0.000118897637152;
 
-# run AlbanyT
-command = ["mpirun", "-np", "8", "AlbanyT", "cubes.yaml"]
+# run Albany
+command = ["mpirun", "-np", "8", "Albany", "cubes.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:
@@ -62,8 +62,8 @@ tolerance = 1.0e-8;
 #meanvalue = 0.000594484007237; #meanvalue for 10 LOCA steps
 meanvalue = 0.000118897650651;
 
-# run AlbanyT
-command = ["mpirun", "-np", "8", "AlbanyT", "cubes.yaml"]
+# run Albany
+command = ["mpirun", "-np", "8", "Albany", "cubes.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

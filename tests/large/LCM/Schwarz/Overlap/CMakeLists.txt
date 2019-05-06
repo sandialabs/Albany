@@ -16,6 +16,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CoupledSchwarz_Cubes_StudyOverlap_Cub
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CoupledSchwarz_Cubes_StudyOverlap_Cube1_Material.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/CoupledSchwarz_Cubes_StudyOverlap_Cube1_Material.yaml COPYONLY)
 
-#create symlink to AlbanyT
+#create symlink to Albany
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)

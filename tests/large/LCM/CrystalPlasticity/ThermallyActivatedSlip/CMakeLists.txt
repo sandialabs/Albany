@@ -26,9 +26,10 @@ if(ALBANY_IFPACK2)
  SET(OUTFILE "ThermallyActivatedSlip.exo")
  SET(REF_FILE "ThermallyActivatedSlip.gold.exo")
  add_test(NAME CrystalPlasticity_${testName}
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=ThermallyActivatedSlip -DTEST_ARGS=ThermallyActivatedSlip.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+ set_tests_properties(CrystalPlasticity_${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif()

@@ -1,4 +1,5 @@
 LCM:
+  Build Type: Tpetra
   DataTransferKit:
     Map Type: Consistent Interpolation
     L2 Projection:
