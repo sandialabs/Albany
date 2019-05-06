@@ -18,7 +18,7 @@ if (SEACAS_EXODIFF AND SEACAS_ALGEBRA)
   endif()
   if (ALBANY_IFPACK2)
     execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-      ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+      ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
   endif()
 
   if (ALBANY_IFPACK2)

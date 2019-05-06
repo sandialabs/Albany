@@ -8,9 +8,9 @@ if (ALBANY_IFPACK2)
   # Create a symlink to exodiff
   execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
     ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
-  # Create a symlink to AlbanyT
+  # Create a symlink to Albany
   execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-    ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+    ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 
   # input files
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAllLocalHarder.yaml

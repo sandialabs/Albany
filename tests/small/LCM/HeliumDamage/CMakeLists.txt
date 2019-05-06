@@ -11,7 +11,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_ALGEBRA} ${CMAKE_CURRENT_BINARY_DIR}/algebra)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 
 # input files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/helium-damage.yaml
@@ -41,7 +41,7 @@ IF((NOT ALBANY_PARALLEL_ONLY) AND SEACAS_EXODIFF)
   SET(OUTFILE "helium-damage.e")
   SET(REF_FILE "helium-damage.gold.e")
   add_test(NAME ${testName}
-           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
            -DTEST_NAME=helium-damage -DTEST_ARGS=helium-damage.yaml -DMPIMNP=1
            -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
            -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
