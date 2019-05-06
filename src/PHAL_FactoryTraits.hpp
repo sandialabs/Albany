@@ -78,7 +78,6 @@ namespace PHAL {
     static const int id_torsion_bc                     = 11; // Only for LCM probs
     static const int id_schwarz_bc                     = 12; // Only for LCM probs
     static const int id_strong_schwarz_bc              = 13; // Only for LCM probs
-    static const int id_pd_neigh_fit_bc                = 14; // Only for LCM-Peridigm coupling
 
     typedef Sacado::mpl::vector<
         PHAL::Dirichlet<_,Traits>,                //  0

@@ -28,12 +28,6 @@
 #include "Albany_ScalarResponseFunction.hpp"
 #include "PHAL_Utilities.hpp"
 
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-#include "PeridigmManager.hpp"
-#endif
-#endif
-
 #if defined(ALBANY_LCM)
 #include "SolutionSniffer.hpp"
 #endif // ALBANY_LCM
@@ -529,13 +523,6 @@ void Application::initialSetUp(
     this->setAppNameIndexMap(anim);
   }
 #endif // ALBANY_LCM
-
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-  // TODO [Thyra Refator]: Remove Epetra requirement on Peridigm
-  LCM::PeridigmManager::initializeSingleton(params);
-#endif
-#endif
 }
 
 void Application::createMeshSpecs() {
@@ -728,14 +715,6 @@ void Application::finalSetUp(
   if (Teuchos::nonnull(rc_mgr))
     rc_mgr->setSolutionManager(solMgr);
 
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-  if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
-    LCM::PeridigmManager::self()->setDirichletFields(disc);
-  }
-#endif
-#endif
-
   try {
     // dp-todo getNodalParameterSIS() needs to be implemented in PUMI. Until
     // then, catch the exception and continue.
@@ -861,19 +840,6 @@ void Application::finalSetUp(
   for (int i = 0; i < responses.size(); ++i) {
     responses[i]->postRegSetup();
   }
-
-/*
- * Initialize mesh adaptation features
- */
-
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-  if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
-    LCM::PeridigmManager::self()->initialize(params, disc, comm);
-    LCM::PeridigmManager::self()->insertPeridigmNonzerosIntoAlbanyGraph();
-  }
-#endif
-#endif
 }
 
 RCP<AbstractDiscretization>
@@ -1198,17 +1164,6 @@ void Application::computeGlobalResidualImpl(
   overlapped_f->assign(0.0);
   f->assign(0.0);
 
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-  const Teuchos::RCP<LCM::PeridigmManager> &peridigmManager =
-      LCM::PeridigmManager::self();
-  if (Teuchos::nonnull(peridigmManager)) {
-    peridigmManager->setCurrentTimeAndDisplacement(current_time, x);
-    peridigmManager->evaluateInternalForce();
-  }
-#endif
-#endif
-
   // Set data in Workset struct, and perform fill via field manager
   {
     if (Teuchos::nonnull(rc_mgr)) {
@@ -1259,25 +1214,8 @@ void Application::computeGlobalResidualImpl(
 #endif
 
       if (nfm != Teuchos::null) {
-#ifdef ALBANY_PERIDIGM
-        // DJL this is a hack to avoid running a block with sphere elements
-        // through a Neumann field manager that was constructed for a non-sphere
-        // element topology.  The root cause is that Albany currently supports
-        // only a single Neumann field manager.  The history on that is murky.
-        // The single field manager is created for a specific element topology,
-        // and it fails if applied to worksets with a different element
-        // topology. The Peridigm use case is a discretization that contains
-        // blocks with sphere elements and blocks with standard FEM solid
-        // elements, and we want to apply Neumann BC to the standard solid
-        // elements.
-        if (workset.sideSets->size() != 0) {
-          deref_nfm(nfm, wsPhysIndex, ws)
-              ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-        }
-#else
         deref_nfm(nfm, wsPhysIndex, ws)
             ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-#endif
       }
     }
   }
@@ -1483,17 +1421,8 @@ void Application::computeGlobalJacobianImpl(
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(
           workset);
       if (Teuchos::nonnull(nfm))
-#ifdef ALBANY_PERIDIGM
-        // DJL avoid passing a sphere mesh through a nfm that was
-        // created for non-sphere topology.
-        if (workset.sideSets->size() != 0) {
-          deref_nfm(nfm, wsPhysIndex, ws)
-              ->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
-        }
-#else
         deref_nfm(nfm, wsPhysIndex, ws)
             ->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
-#endif
     }
   }
 
@@ -1515,16 +1444,6 @@ void Application::computeGlobalJacobianImpl(
     }
     // Assemble global Jacobian
     cas_manager->combine(overlapped_jac,jac,CombineMode::ADD);
-
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-    // TODO [Thyra Refactor]: remove dependence of Peridigm on Epetra
-    if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
-      LCM::PeridigmManager::self()
-          ->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jac);
-    }
-#endif
-#endif
 
     // scale Jacobian
     if (scaleBCdofs == false && scale != 1.0) {
@@ -2028,17 +1947,8 @@ void Application::applyGlobalDistParamDerivImpl(
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(
           workset);
       if (nfm != Teuchos::null)
-#ifdef ALBANY_PERIDIGM
-        // DJL avoid passing a sphere mesh through a nfm that was
-        // created for non-sphere topology.
-        if (workset.sideSets->size() != 0) {
-          deref_nfm(nfm, wsPhysIndex, ws)
-              ->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(workset);
-        }
-#else
         deref_nfm(nfm, wsPhysIndex, ws)
             ->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(workset);
-#endif
     }
   }
 

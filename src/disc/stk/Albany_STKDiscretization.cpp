@@ -50,10 +50,6 @@ extern "C" {
 
 #include <algorithm>
 
-#ifdef ALBANY_PERIDIGM
-#include "PeridigmManager.hpp"
-#endif
-
 #include <PHAL_Dimension.hpp>
 
 // Uncomment the following line if you want debug output to be printed to screen
@@ -1728,56 +1724,6 @@ void STKDiscretization::fillCompleteGraphs()
   m_overlap_jac_factory->fillComplete();
 
   m_jac_factory = Teuchos::rcp( new ThyraCrsMatrixFactory(m_vs, m_vs, m_overlap_jac_factory) );
-}
-
-void STKDiscretization::insertPeridigmNonzerosIntoGraph()
-{
-//TODO: remove epetra from peridigm
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-  if (Teuchos::nonnull(LCM::PeridigmManager::self()) &&
-      LCM::PeridigmManager::self()->hasTangentStiffnessMatrix()) {
-    // The Peridigm matrix is a subset of the Albany matrix.  The global ids are
-    // the same and the parallel
-    // partitioning is the same.  fillComplete() has already been called for the
-    // Peridigm matrix.
-    Teuchos::RCP<const Epetra_FECrsMatrix> peridigmMatrix =
-        LCM::PeridigmManager::self()->getTangentStiffnessMatrix();
-
-    // Allocate nonzeros for the standard FEM portion of the graph
-    computeGraphsUpToFillComplete();
-
-    // Allocate nonzeros for the peridynamic portion of the graph
-    int                    peridigmLocalRow;
-    int                    numEntries;
-    double*                values;
-    int*                   indices;
-    for (std::size_t i = 0; i < cells.size(); i++) {
-      stk::mesh::Entity        e         = cells[i];
-      stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
-      const size_t             num_nodes = bulkData.num_nodes(e);
-      // Search for sphere elements (they contain a single node)
-      if (num_nodes == 1) {
-        stk::mesh::Entity rowNode = node_rels[0];
-        for (std::size_t k = 0; k < neq; k++) {
-          auto globalRow        = getGlobalDOF(gid(rowNode), k);
-          peridigmLocalRow = peridigmMatrix->RowMap().LID(static_cast<long long>(globalRow));
-          peridigmMatrix->ExtractMyRowView(
-              peridigmLocalRow, numEntries, values, indices);
-          for (int i = 0; i < numEntries; ++i) {
-            Tpetra_GO globalCol   = peridigmMatrix->ColMap().GID(indices[i]);
-            auto globalColAV = Teuchos::arrayView(&globalCol, 1);
-            m_overlap_jac_factory->insertGlobalIndices(globalRow, globalColAV);
-          }
-        }
-      }
-    }
-
-    // Call fillComplete() for the overlap graph and create the non-overlap map
-    fillCompleteGraphs();
-  }
-#endif
-#endif
 }
 
 void STKDiscretization::computeWorksetInfo()

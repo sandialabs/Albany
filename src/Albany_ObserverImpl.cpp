@@ -14,12 +14,6 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_Ptr.hpp"
 
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-#include "PeridigmManager.hpp"
-#endif
-#endif
-
 #include <string>
 
 namespace Albany {
@@ -28,51 +22,6 @@ ObserverImpl::
 ObserverImpl (const Teuchos::RCP<Application> &app)
   : StatelessObserverImpl(app)
 {}
-
-// #if defined(ALBANY_EPETRA)
-// void ObserverImpl::observeSolution (
-//   double stamp, const Epetra_Vector& nonOverlappedSolution,
-//   const Teuchos::Ptr<const Epetra_Vector>& nonOverlappedSolutionDot)
-// {
-//   // If solution == "Steady" or "Continuation", we need to update the solution
-//   // from the initial guess prior to writing it out, or we will not get the
-//   // proper state of things like "Stress" in the Exodus file.
-//   {
-//     // Evaluate state field manager
-//     if(nonOverlappedSolutionDot != Teuchos::null)
-//       app_->evaluateStateFieldManager(stamp, nonOverlappedSolutionDot.get(),
-//                                       NULL, nonOverlappedSolution);
-//     else
-//       app_->evaluateStateFieldManager(stamp, NULL, NULL, nonOverlappedSolution);
-
-//     // Renames the New state as the Old state in preparation for the next step
-//     app_->getStateMgr().updateStates();
-
-// #ifdef ALBANY_PERIDIGM
-// #if defined(ALBANY_EPETRA)
-//     const Teuchos::RCP<LCM::PeridigmManager>&
-//       peridigmManager = LCM::PeridigmManager::self();
-//     if (Teuchos::nonnull(peridigmManager)) {
-//       peridigmManager->writePeridigmSubModel(stamp);
-//       peridigmManager->updateState();
-//     }
-// #endif
-// #endif
-//   }
-
-//   //! update distributed parameters in the mesh
-//   Teuchos::RCP<DistributedParameterLibrary> distParamLib = app_->getDistributedParameterLibrary();
-//   distParamLib->scatter();
-//   DistributedParameterLibrary::const_iterator it;
-//   for(it = distParamLib->begin(); it != distParamLib->end(); ++it) {
-//     app_->getDiscretization()->setField(*it->second->overlapped_vector(), it->second->name(),
-//                                         [>overlapped<] true);
-//   }
-
-//   StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution,
-//                                          nonOverlappedSolutionDot);
-// }
-// #endif
 
 void ObserverImpl::
 observeSolution(double stamp,

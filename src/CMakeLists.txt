@@ -671,7 +671,6 @@ include_directories (${ALBANY_PUMI_INCLUDE_DIRS}
                      ./LCM/evaluators/kinematics
                      ./LCM/evaluators/lame
                      ./LCM/evaluators/linear-elasticity
-                     ./LCM/evaluators/peridigm
                      ./LCM/evaluators/poro
                      ./LCM/evaluators/projection
                      ./LCM/evaluators/responses
@@ -763,14 +762,6 @@ ELSE()
   set(LAMENT_LIB )
 ENDIF()
 
-# PERIDIGM
-IF(ALBANY_PERIDIGM AND ALBANY_EPETRA)
-  include_directories (${Peridigm_INCLUDE_DIRS})
-  link_directories (${Peridigm_LIBRARY_DIRS})
-ELSE()
-  set(Peridigm_LIBRARIES )
-ENDIF()
-
 # RPI APF mesh interface
 IF(ALBANY_APF)
   SET(ALBANY_PUMI_INCLUDE_DIRS ./disc/pumi)
@@ -829,7 +820,6 @@ ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 # Note: Albany_EXTRA_LIBRARIES is to allow users to specify
 # libraries that one cannot get out of Trilinos directly.
 set(ALL_LIBRARIES
-  ${Peridigm_LIBRARIES}
   ${ALBANY_CI_LIB}
   ${PlatoEngine_LIB}
   ${PlatoEngine_LIB}

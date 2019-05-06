@@ -71,11 +71,6 @@ struct DirichletTraits
   };
   enum
   {
-    typePd =
-        PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_pd_neigh_fit_bc
-  };
-  enum
-  {
     typeDa = PHAL::DirichletFactoryTraits<
         PHAL::AlbanyTraits>::id_dirichlet_aggregator
   };

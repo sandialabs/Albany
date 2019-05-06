@@ -137,9 +137,6 @@ class STKDiscretization : public AbstractDiscretization {
   Teuchos::RCP<Thyra_LinearOp> createImplicitOverlapJacobianOp () const { return m_overlap_jac_factory->createOp(); }
 #endif
 
-  //! Modify CRS Graphs for Peridigm-Albany coupling
-  void insertPeridigmNonzerosIntoGraph();
-
   bool isExplicitScheme() const { return false; }
 
   //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
