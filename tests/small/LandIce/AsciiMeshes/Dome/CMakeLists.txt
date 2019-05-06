@@ -20,13 +20,13 @@ if (ALBANY_EPETRA)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_restart.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_restart.yaml COPYONLY)
 
-  add_test(${testName}_Ascii_Epetra ${SerialAlbany.exe} input_fo_dome_ascii.yaml)
-  set_tests_properties(${testName}_Ascii_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward;Serial")
+  add_test(${testName}_Ascii ${SerialAlbany.exe} input_fo_dome_ascii.yaml)
+  set_tests_properties(${testName}_Ascii PROPERTIES LABELS "LandIce;Epetra;Forward;Serial")
 
   IF (ALBANY_SEACSAS)
-    add_test(${testName}_Restart_Epetra ${SerialAlbany.exe} input_fo_dome_restart.yaml)
-    set_tests_properties(${testName}_Restart_Epetra PROPERTIES DEPENDS ${testName}_Ascii_Epetra)
-    set_tests_properties(${testName}_Restart_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward;Serial")
+    add_test(${testName}_Restart ${SerialAlbany.exe} input_fo_dome_restart.yaml)
+    set_tests_properties(${testName}_Restart PROPERTIES DEPENDS ${testName}_Ascii_Epetra)
+    set_tests_properties(${testName}_Restart PROPERTIES LABELS "LandIce;Epetra;Forward;Serial")
   ENDIF()
 
 endif()

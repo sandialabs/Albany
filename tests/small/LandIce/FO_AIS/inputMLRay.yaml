@@ -3,7 +3,6 @@
 ANONYMOUS:
   Debug Output: { }
   Problem: 
-    Number RBMs for ML: 3
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
     Required Fields: [temperature]
@@ -192,7 +191,6 @@ ANONYMOUS:
                     'coarse: max size': 2000
                     'coarse: pre or post': pre
                     max levels: 7
-                    PDE equations: 4
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 

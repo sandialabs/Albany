@@ -4,7 +4,6 @@ ANONYMOUS:
   Build Type: Epetra
   Debug Output: { }
   Problem: 
-    Number RBMs for ML: 3
     Phalanx Graph Visualization Detail: 0
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
@@ -169,6 +168,8 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver: 
             Write Linear System: false
+            Tolerance: 1e-6
+            Max Iterations: 50
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
@@ -181,8 +182,6 @@ ANONYMOUS:
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
-                    Max Iterations: 400
-                    Tolerance: 9.99999999999999955e-07
               Preconditioner Type: ML
               Preconditioner Types: 
                 Ifpack: 
@@ -212,7 +211,6 @@ ANONYMOUS:
                     'coarse: max size': 2000
                     'coarse: pre or post': pre
                     max levels: 5
-                    PDE equations: 4
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 

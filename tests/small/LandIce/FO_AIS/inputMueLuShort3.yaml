@@ -5,7 +5,6 @@ ANONYMOUS:
   Debug Output: { }
   Problem: 
     Phalanx Graph Visualization Detail: 0
-    Number RBMs for ML: 3
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
     Required Fields: [temperature]
@@ -183,10 +182,10 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 400
-                    Tolerance: 9.99999999999999955e-07
+                    Tolerance: 1e-6
               Preconditioner Type: MueLu
               Preconditioner Types: 
-                MueLu: 
+                MueLu:
                   verbosity: none
                   'repartition: enable': true
                   'repartition: partitioner': zoltan
@@ -206,7 +205,6 @@ ANONYMOUS:
                     'relaxation: type': Gauss-Seidel
                     'relaxation: sweeps': 4
                   max levels: 5
-                  number of equations: 4
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 
