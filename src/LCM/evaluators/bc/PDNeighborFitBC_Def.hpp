@@ -10,13 +10,6 @@
 
 #include "Albany_STKDiscretization.hpp"
 
-
-#ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-#include "PeridigmManager.hpp"
-#endif
-#endif
-
 #include "Albany_ThyraUtils.hpp"
 
 // **********************************************************************
@@ -49,12 +42,6 @@ void
 PDNeighborFitBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
-#ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-  Teuchos::RCP<LCM::PeridigmManager> peridigmManager = LCM::PeridigmManager::self();
-#endif
-#endif
-
   Teuchos::RCP<const Thyra_Vector> x = dirichletWorkset.x;
   Teuchos::RCP<Thyra_Vector>       f = dirichletWorkset.f;
 
@@ -73,36 +60,24 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     int localId = xlunk/3;
     coord = nsNodeCoords[inode];
 
-#ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-      const double val_x = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,0);
-      const double val_y = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,1);
-      const double val_z = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,2);
-#else
-      const double val_x = 0.0;
-      const double val_y = 0.0;
-      const double val_z = 0.0;
-#endif
-#else
-      const double val_x = 0.0;
-      const double val_y = 0.0;
-      const double val_z = 0.0;
-#endif
+    const double val_x = 0.0;
+    const double val_y = 0.0;
+    const double val_z = 0.0;
 
-      // The scheme below is intended to be consistent with Velocity-Verlet time integration (explicit transient dynamics).
-      // Should work for statics and quasi-statics as well.
+    // The scheme below is intended to be consistent with Velocity-Verlet time integration (explicit transient dynamics).
+    // Should work for statics and quasi-statics as well.
 
-      double delta_x = x_constView[xlunk] - val_x;
-      double delta_y = x_constView[ylunk] - val_y;
-      double delta_z = x_constView[zlunk] - val_z;
+    double delta_x = x_constView[xlunk] - val_x;
+    double delta_y = x_constView[ylunk] - val_y;
+    double delta_z = x_constView[zlunk] - val_z;
 
-      double a_x = (2.0/3.0)*delta_x/(this->timeStep*this->timeStep);
-      double a_y = (2.0/3.0)*delta_y/(this->timeStep*this->timeStep);
-      double a_z = (2.0/3.0)*delta_z/(this->timeStep*this->timeStep);
+    double a_x = (2.0/3.0)*delta_x/(this->timeStep*this->timeStep);
+    double a_y = (2.0/3.0)*delta_y/(this->timeStep*this->timeStep);
+    double a_z = (2.0/3.0)*delta_z/(this->timeStep*this->timeStep);
 
-      f_nonconstView[xlunk] = -1.5 * this->perturbDirichlet * a_x;
-      f_nonconstView[ylunk] = -1.5 * this->perturbDirichlet * a_y;
-      f_nonconstView[zlunk] = -1.5 * this->perturbDirichlet * a_z;
+    f_nonconstView[xlunk] = -1.5 * this->perturbDirichlet * a_x;
+    f_nonconstView[ylunk] = -1.5 * this->perturbDirichlet * a_y;
+    f_nonconstView[zlunk] = -1.5 * this->perturbDirichlet * a_z;
   }
 }
 
@@ -119,12 +94,6 @@ PDNeighborFitBC(Teuchos::ParameterList& p) :
 template<typename Traits>
 void PDNeighborFitBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
-
-#ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-  Teuchos::RCP<LCM::PeridigmManager> peridigmManager = LCM::PeridigmManager::self();
-#endif
-#endif
 
   Teuchos::RCP<const Thyra_Vector> x   = dirichletWorkset.x;
   Teuchos::RCP<Thyra_Vector>       f   = dirichletWorkset.f;
@@ -158,21 +127,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
       int localId = xlunk/3;
       coord = nsNodeCoords[inode];
 
-#ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-      const double val_x = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,0);
-      const double val_y = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,1);
-      const double val_z = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,2);
-#else
       const double val_x = 0.0;
       const double val_y = 0.0;
       const double val_z = 0.0;
-#endif
-#else
-      const double val_x = 0.0;
-      const double val_y = 0.0;
-      const double val_z = 0.0;
-#endif
 
       Albany::getLocalRowValues(jac, xlunk, matrixIndices, matrixEntries);
       for (auto& val : matrixEntries) { val = 0.0; }
@@ -214,12 +171,6 @@ template<typename Traits>
 void PDNeighborFitBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
-#ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-  Teuchos::RCP<LCM::PeridigmManager> peridigmManager = LCM::PeridigmManager::self();
-#endif
-#endif
-
   Teuchos::RCP<const Thyra_Vector>       x = dirichletWorkset.x;
   Teuchos::RCP<const Thyra_MultiVector> Vx = dirichletWorkset.Vx;
 
@@ -260,21 +211,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     int localId = xlunk/3;
     coord = nsNodeCoords[inode];
 
-#ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-      const double val_x = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,0);
-      const double val_y = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,1);
-      const double val_z = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,2);
-#else
-      const double val_x = 0.0;
-      const double val_y = 0.0;
-      const double val_z = 0.0;
-#endif
-#else
-      const double val_x = 0.0;
-      const double val_y = 0.0;
-      const double val_z = 0.0;
-#endif
+    const double val_x = 0.0;
+    const double val_y = 0.0;
+    const double val_z = 0.0;
 
     if (f != Teuchos::null) {
       f_nonconstView[xlunk] = x_constView[xlunk] - val_x;

@@ -38,11 +38,6 @@
 #include "LCM/problems/ConstitutiveDriverProblem.hpp"
 #include "LCM/problems/HMCProblem.hpp"
 #include "LCM/problems/ElectroMechanicsProblem.hpp"
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-#include "LCM/problems/PeridigmProblem.hpp"
-#endif
-#endif
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/lame/LameProblem.hpp"
 #endif
@@ -295,17 +290,6 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Tsunami::Boussinesq(problemParams, paramLib, 2));
   }
 #endif
-  else if (method == "Peridigm Code Coupling" ) {
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-    strategy = rcp(new Albany::PeridigmProblem(problemParams, paramLib, 3, commT));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling requires epetra and Peridigm, recompile with -DENABLE_ALBANY_EPETRA_EXE and -DENABLE_PERIDIGM ****\n");
-#endif
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling not enabled, recompile with -DENABLE_PERIDIGM ****\n");
-#endif
-  }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                        std::endl <<

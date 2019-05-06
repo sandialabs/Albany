@@ -27,14 +27,6 @@ set(problem-headers
   "${LCM_DIR}/problems/MechanicsProblem.hpp"
   "${LCM_DIR}/problems/ThermoElasticityProblem.hpp"
 )
-IF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
-  set(problem-sources ${problem-sources}
-    "${LCM_DIR}/problems/PeridigmProblem.cpp"
-  )
-  set(problem-headers ${problem-headers}
-    "${LCM_DIR}/problems/PeridigmProblem.hpp"
-  )
-ENDIF()
 
 SET(SOURCES )
 SET(HEADERS )
@@ -224,25 +216,6 @@ set(poro-headers
   "${LCM_DIR}/evaluators/poro/TLPoroStress_Def.hpp"
   "${LCM_DIR}/evaluators/poro/TLPoroStress.hpp"
 )
-
-# LCM peridigm evaluators
-IF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
-  set(pd-sources
-    "${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.cpp"
-    "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume.cpp"
-    "${LCM_DIR}/evaluators/peridigm/PeridigmForce.cpp"
-    "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.cpp"
-  )
-  set(pd-headers
-    "${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.hpp"
-    "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume_Def.hpp"
-    "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume.hpp"
-    "${LCM_DIR}/evaluators/peridigm/PeridigmForce_Def.hpp"
-    "${LCM_DIR}/evaluators/peridigm/PeridigmForce.hpp"
-    "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress_Def.hpp"
-    "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.hpp"
-  )
-ENDIF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
 
 # LCM projection evaluators
 set(proj-sources
@@ -560,14 +533,6 @@ IF(ALBANY_STK)
     "${LCM_DIR}/utils/MiniNonlinearSolver.t.h"
     "${LCM_DIR}/utils/MiniSolvers.h"
   )
-  IF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
-    set(utils-sources ${utils-sources}
-      "${LCM_DIR}/utils/PeridigmManager.cpp"
-    )
-    set(utils-headers ${utils-headers}
-      "${LCM_DIR}/utils/PeridigmManager.hpp"
-    )
-  ENDIF(ALBANY_PERIDIGM AND ALBANY_EPETRA)
 ENDIF(ALBANY_STK)
 
 #LCM utils/topology
