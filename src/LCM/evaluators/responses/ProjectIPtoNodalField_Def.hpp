@@ -28,6 +28,8 @@
 static int aabb = 0; 
 static int bbcc = 0; 
 
+//#define DEBUG_OUTPUT
+
 namespace LCM {
 
 class ProjectIPtoNodalFieldManager : public Adapt::NodalDataBase::Manager
@@ -372,6 +374,10 @@ class ProjectIPtoNodalFieldManager::FullMassLinearOp
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& bf,
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf)
   {
+#ifdef DEBUG_OUTPUT
+    auto comm = workset.comm; 
+    std::cout << "IKT beginning of fill1, proc = " << comm->getRank() << std::endl;
+#endif 
     const int  num_nodes = bf.extent(1), num_pts = bf.extent(2);
     const bool is_static_graph = this->is_static(); 
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
@@ -405,6 +411,9 @@ class ProjectIPtoNodalFieldManager::FullMassLinearOp
         }
       }
     }
+#ifdef DEBUG_OUTPUT
+    std::cout << "IKT end of fill1, proc = " << comm->getRank() << std::endl;
+#endif 
   }
 };
 
@@ -418,6 +427,10 @@ class ProjectIPtoNodalFieldManager::LumpedMassLinearOp
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& bf,
       const PHX::MDField<const RealType, Cell, Node, QuadPoint>& wbf)
   {
+#ifdef DEBUG_OUTPUT
+    auto comm = workset.comm; 
+    std::cout << "IKT beginning of fill2, proc = " << comm->getRank() << std::endl;
+#endif 
     const int  num_nodes = bf.extent(1), num_pts = bf.extent(2);
     const bool is_static_graph = this->is_static(); 
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
@@ -443,6 +456,9 @@ class ProjectIPtoNodalFieldManager::LumpedMassLinearOp
         }
       }
     }
+#ifdef DEBUG_OUTPUT
+    std::cout << "IKT end of fill2, proc = " << comm->getRank() << std::endl;
+#endif 
   }
 };
 
@@ -685,6 +701,10 @@ void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
     typename Traits::PreEvalData workset)
 {
+#ifdef DEBUG_OUTPUT
+  auto comm = workset.comm; 
+  std::cout << "IKT beginning of preEvaluate, proc = " << comm->getRank() << std::endl;
+#endif 
   const int  ctr      = mgr_->incrPreCounter();
   const bool am_first = ctr == 1;
   if (!am_first) return;
@@ -717,6 +737,9 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   mgr_->mass_linear_op->linear_op() = mgr_->ovl_graph_factory->createOp();
   mgr_->ip_field = Thyra::createMembers(mgr_->ovl_graph_factory->getRangeVectorSpace(), mgr_->ndb_numvecs);
   mgr_->ip_field->assign(0.0); 
+#ifdef DEBUG_OUTPUT
+  std::cout << "IKT end of preEvaluate, proc = " << comm->getRank() << std::endl;
+#endif 
 }
 
 template <typename Traits>
@@ -724,6 +747,10 @@ void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::fillRHS(
     const typename Traits::EvalData workset)
 {
+#ifdef DEBUG_OUTPUT
+  auto comm = workset.comm; 
+  std::cout << "IKT beginning of fillRHS, proc = " << comm->getRank() << std::endl;
+#endif 
   Teuchos::RCP<Adapt::NodalDataVector> node_data =
       p_state_mgr_->getStateInfoStruct()
           ->getNodalDataBase()
@@ -772,6 +799,9 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::fillRHS(
       }
     }  // cell
   }    // field
+#ifdef DEBUG_OUTPUT
+  std::cout << "IKT end of fillRHS, proc = " << comm->getRank() << std::endl;
+#endif 
 }
 
 #ifdef PROJ_INTERP_TEST
@@ -789,6 +819,10 @@ void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData workset)
 {
+#ifdef DEBUG_OUTPUT
+  auto comm = workset.comm; 
+  std::cout << "IKT beginning of evaluateFields, proc = " << comm->getRank() << std::endl;
+#endif 
   Albany::resumeFill(mgr_->mass_linear_op->linear_op()); 
   if (Teuchos::nonnull(quad_mgr_)) {
     quad_mgr_->evaluateBasis(coords_verts_);
@@ -798,7 +832,6 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
   else {
     mgr_->mass_linear_op->fill(workset, BF, wBF);
   }
-  Albany::fillComplete(mgr_->mass_linear_op->linear_op()); 
 #ifdef PROJ_INTERP_TEST
   for (unsigned int cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t qp = 0; qp < num_pts_; ++qp)
@@ -808,6 +841,9 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
           coords_qp_(cell, qp, 2));
 #endif
   fillRHS(workset);
+#ifdef DEBUG_OUTPUT
+  std::cout << "IKT beginning of evaluateFields, proc = " << comm->getRank() << std::endl;
+#endif 
 }
 
 template <typename Traits>
@@ -815,6 +851,10 @@ void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     typename Traits::PostEvalData workset)
 {
+#ifdef DEBUG_OUTPUT
+  auto comm = workset.comm; 
+  std::cout << "IKT beginning of postEvaluate, proc = " << comm->getRank() << std::endl;
+#endif 
   const int  ctr     = mgr_->incrPostCounter();
   const bool am_last = ctr == mgr_->nWorker();
   if (!am_last) return;
@@ -958,6 +998,9 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
         ->saveNodalDataState(npif, mgr_->ndb_start);
   }
   bbcc++;
+#ifdef DEBUG_OUTPUT
+  std::cout << "IKT end of postEvaluate, proc = " << comm->getRank() << std::endl;
+#endif 
 }
 
 }  // namespace LCM
