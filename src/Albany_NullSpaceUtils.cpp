@@ -273,6 +273,7 @@ struct Epetra_NullSpace_Traits {
 // if it were a temporary), and yet the class need not to know what
 // kind of array it is.
 struct TraitsImplBase {
+  virtual ~TraitsImplBase () = default;
 };
 
 template<typename Traits>
