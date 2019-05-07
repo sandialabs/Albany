@@ -1,0 +1,2 @@
+00 07 * * 1-7  cd /mscratch/albany/mayer/nightlyCDashJenkins; source send_email.sh
+

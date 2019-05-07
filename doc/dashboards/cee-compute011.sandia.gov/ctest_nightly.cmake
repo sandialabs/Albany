@@ -214,7 +214,7 @@ find_program (CTEST_SVN_COMMAND NAMES svn)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
-set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
+#set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
 
 #if (CLEAN_BUILD)
 #  # Initial cache info
@@ -298,20 +298,20 @@ if (DOWNLOAD)
   endif ()
 
   # Get Peridigm. Nonfatal if error.
-  if (BUILD_PERIDIGM AND (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Peridigm"))
-    execute_process (COMMAND ${CTEST_GIT_COMMAND}
-      clone ${Peridigm_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Peridigm
-      OUTPUT_VARIABLE _out
-      ERROR_VARIABLE _err
-      RESULT_VARIABLE HAD_ERROR)
-    message(STATUS "out: ${_out}")
-    message(STATUS "err: ${_err}")
-    message(STATUS "res: ${HAD_ERROR}")
-    if (HAD_ERROR)
-      message (FATAL_ERROR "Cannot clone Peridigm repository.")
-      set (BUILD_PERIDIGM FALSE)
-    endif ()    
-  endif ()
+  #if (BUILD_PERIDIGM AND (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Peridigm"))
+  #  execute_process (COMMAND ${CTEST_GIT_COMMAND}
+  #    clone ${Peridigm_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Peridigm
+  #    OUTPUT_VARIABLE _out
+  #    ERROR_VARIABLE _err
+  #    RESULT_VARIABLE HAD_ERROR)
+  #  message(STATUS "out: ${_out}")
+  #  message(STATUS "err: ${_err}")
+  #  message(STATUS "res: ${HAD_ERROR}")
+  #  if (HAD_ERROR)
+  #    message (FATAL_ERROR "Cannot clone Peridigm repository.")
+  #    set (BUILD_PERIDIGM FALSE)
+  #  endif ()    
+  #endif ()
 endif ()
 
 ctest_start(${CTEST_TEST_TYPE})
@@ -412,23 +412,23 @@ if (DOWNLOAD)
   endif ()
 
   # Peridigm
-  if (BUILD_PERIDIGM)
-    set_property (GLOBAL PROPERTY SubProject Peridigm)
-    set_property (GLOBAL PROPERTY Label Peridigm)
+  #if (BUILD_PERIDIGM)
+  #  set_property (GLOBAL PROPERTY SubProject Peridigm)
+  #  set_property (GLOBAL PROPERTY Label Peridigm)
 
-    set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-    CTEST_UPDATE (SOURCE "${CTEST_SOURCE_DIRECTORY}/Peridigm" RETURN_VALUE count)
-    message ("Found ${count} changed files")
-    if (count LESS 0)
-      set (BUILD_PERIDIGM FALSE)
-    endif ()
+ #   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+ #   CTEST_UPDATE (SOURCE "${CTEST_SOURCE_DIRECTORY}/Peridigm" RETURN_VALUE count)
+ #   message ("Found ${count} changed files")
+ #   if (count LESS 0)
+ #     set (BUILD_PERIDIGM FALSE)
+ #   endif ()
 
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Update RETURN_VALUE HAD_ERROR)
-    endif ()
+  #  if (CTEST_DO_SUBMIT)
+  #    ctest_submit (PARTS Update RETURN_VALUE HAD_ERROR)
+  #  endif ()
 
-    message ("After downloading, BUILD_PERIDIGM = ${BUILD_PERIDIGM}")
-  endif ()
+   # message ("After downloading, BUILD_PERIDIGM = ${BUILD_PERIDIGM}")
+  #endif ()
 
 endif ()
 
@@ -672,11 +672,11 @@ if (BUILD_ALB32)
     set (CONF_OPTIONS ${CONF_OPTIONS}
       "-DENABLE_SCOREC:BOOL=ON")
   endif (BUILD_SCOREC)
-  if (BUILD_PERIDIGM)
-    set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_PERIDIGM:BOOL=ON"
-      "-DPeridigm_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
-  endif (BUILD_PERIDIGM)
+  #if (BUILD_PERIDIGM)
+  #  set (CONF_OPTIONS ${CONF_OPTIONS}
+  #    "-DENABLE_PERIDIGM:BOOL=ON"
+  #    "-DPeridigm_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
+  #endif (BUILD_PERIDIGM)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany32Bit")
