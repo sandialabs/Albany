@@ -1,8 +1,4 @@
 if (ALBANY_EPETRA) 
-  # Change coupled tests to run on 4 proc's
-  # IF (ALBANY_MPI)
-  #   set(AlbanyCoupled.exe   ${MPIEX} ${MPIPRE} ${MPINPF} 4 ${Albany_BINARY_DIR}/src/AlbanyCoupled)
-  # ENDIF()
 
   # Copy input and mesh files from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/reactor.yaml
@@ -32,9 +28,4 @@ if (ALBANY_EPETRA)
 
   add_test(${testName}_Reactor_Epetra ${Albany.exe} reactor.yaml)
   set_tests_properties(${testName}_Reactor_Epetra PROPERTIES LABELS "Demo;Epetra;Forward")
-
-  # Main_Coupled is not yet refactored to the thyra framework
-  # configure_file(${CMAKE_CURRENT_SOURCE_DIR}/network_coupled.yaml
-  #                ${CMAKE_CURRENT_BINARY_DIR}/network_coupled.yaml COPYONLY)
-  # add_test(${testNameNetwork} ${AlbanyCoupled.exe} network_coupled.yaml)
 endif()

@@ -614,16 +614,6 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/pde/PNP_PotentialResid_Def.hpp
   )
 
-# ASCR
-IF(ALBANY_ASCR AND ALBANY_EPETRA)
-  SET(SOURCES ${SOURCES}
-    Albany_Networks.cpp
-    )
-  SET(HEADERS ${HEADERS}
-    Albany_Networks.hpp
-    )
-ENDIF()
-
 IF (ALBANY_SCOREC_STANDALONE)
   SET(SCOREC_LIB SCOREC::core)
 ENDIF()
@@ -793,13 +783,6 @@ IF (ALBANY_MPMD)
   add_executable(AlbanyMPMD Main_Solve_MPMD.cpp)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
 ENDIF()
-
-if (ALBANY_ASCR AND ALBANY_EPETRA)
-  add_executable(AlbanyCoupled Main_Coupled.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
-    AlbanyCoupled
-    )
-endif()
 
 IF (ALBANY_DAKOTA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
