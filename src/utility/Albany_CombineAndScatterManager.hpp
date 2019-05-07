@@ -49,10 +49,10 @@ public:
   Teuchos::RCP<const Thyra_VectorSpace> getGhostedAuraVectorSpace () const;
 
   // Get the ranks that own ids in the ghosted aura VS
-  Teuchos::ArrayView<int> getGhostedAuraOwners () const;
+  const Teuchos::Array<int>& getGhostedAuraOwners () const;
 
   // Get an array of GID-rank pairs. A pair <gid,pid> means that rank pid will need global element gid.
-  Teuchos::ArrayView<std::pair<GO,int>> getOwnedAuraUsers () const;
+  const Teuchos::Array<std::pair<GO,int>>& getOwnedAuraUsers () const;
 
   // Combine methods
   virtual void combine (const Thyra_Vector& src,
@@ -146,22 +146,22 @@ CombineAndScatterManager::getGhostedAuraVectorSpace  () const {
   return ghosted_aura_vs;
 }
 
-inline Teuchos::ArrayView<int>
+inline const Teuchos::Array<int>&
 CombineAndScatterManager::getGhostedAuraOwners () const {
   if (!ghosted_aura_owners_computed) {
     create_ghosted_aura_owners();
     ghosted_aura_owners_computed = true;
   }
-  return ghosted_aura_owners();
+  return ghosted_aura_owners;
 }
 
-inline Teuchos::ArrayView<std::pair<GO,int>>
+inline const Teuchos::Array<std::pair<GO,int>>&
 CombineAndScatterManager::getOwnedAuraUsers () const {
   if (!owned_aura_users_computed) {
     create_owned_aura_users();
     owned_aura_users_computed = true;
   }
-  return owned_aura_users();
+  return owned_aura_users;
 }
 
 // Utility function that returns a concrete manager, depending on the concrete type

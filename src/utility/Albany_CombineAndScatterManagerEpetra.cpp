@@ -403,6 +403,8 @@ create_ghosted_aura_owners () const {
 
   // Get the gids of the ghosted vs
   auto gids = getGlobalElements(gvs);
+  int num_gids = gids.size();
+
   Teuchos::Array<Epetra_GO> egids_array;
   Teuchos::ArrayView<Epetra_GO> egids;
   if (sizeof(GO)==sizeof(Epetra_GO)) {
@@ -410,21 +412,22 @@ create_ghosted_aura_owners () const {
     egids = Teuchos::arrayView(reinterpret_cast<Epetra_GO*>(gids.getRawPtr()),gids.size());
   } else {
     // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
-    egids_array.resize(gids.size());
+    egids_array.resize(num_gids);
     const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
-    for (int i=0; i<gids.size(); ++i) {
+    for (int i=0; i<num_gids; ++i) {
       ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error in createLocallyReplicatedVectorSpace! Input gids exceed Epetra_GO ranges.\n");
       egids_array[i] = static_cast<Epetra_GO>(gids[i]);
     }
     (void) max_safe_gid;
-    egids = Teuchos::arrayView(egids_array.getRawPtr(),gids.size());
+    egids = Teuchos::arrayView(egids_array.getRawPtr(),num_gids);
   }
 
   // Ask epetra to give the pid of the owner of each of the gids
-  Teuchos::Array<LO> lids(gids.size());
-  ghosted_aura_owners.resize(lids.size());
-  auto map = getEpetraMap(getOwnedAuraVectorSpace());
-  map->RemoteIDList(gids.size(),egids.getRawPtr(),ghosted_aura_owners.getRawPtr(),lids.getRawPtr());
+  ghosted_aura_owners.resize(num_gids);
+  auto map = getEpetraBlockMap(getOwnedAuraVectorSpace());
+  auto err = map->RemoteIDList(num_gids,egids.getRawPtr(),ghosted_aura_owners.getRawPtr(),nullptr);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(err!=0, std::runtime_error, "Error! Something went wrong while computing remote lids.\n");
 }
 
 void CombineAndScatterManagerEpetra::
