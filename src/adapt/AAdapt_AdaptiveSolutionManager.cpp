@@ -178,15 +178,16 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
   } else
 # endif
 #endif
-#ifdef ALBANY_SCOREC
   if (first_three_chars == "RPI") {
+#ifdef ALBANY_SCOREC
     adapter_ = Teuchos::rcp(
       new MeshAdapt(adaptParams_, paramLib_, stateMgr_, rc_mgr,
                              comm_));
-  } else
 #else
-  (void) rc_mgr;
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error! 'RPI' adaptation requires SCOREC.\n");
+    (void) rc_mgr;
 #endif
+  } else
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
   if (method == "Unif Size") {
     adapter_ = Teuchos::rcp(new STKAdaptT<STKUnifRefineField>(adaptParams_,
