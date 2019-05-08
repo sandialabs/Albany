@@ -214,17 +214,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("Output ACE Failure Indicator", true));
 
-  //  boundary indicator
-/*
-  addStateVariable(
-      "boundary_indicator",
-      dl->cell_scalar,
-      "scalar",
-      0.0,
-      false,
-      p->get<bool>("Output boundary_indicator", true));
-*/
-
   // exposure time
   addStateVariable(
       "ACE Exposure Time",
