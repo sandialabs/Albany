@@ -78,7 +78,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField("ACE Water Saturation", dl->qp_scalar);
   setEvaluatedField("ACE Porosity", dl->qp_scalar);
   setEvaluatedField("ACE Temperature Dot", dl->qp_scalar);
-  setEvaluatedField("ACE Failure Indicator", dl->qp_scalar);
+  setEvaluatedField("ACE Failure Indicator", dl->cell_scalar);
   setEvaluatedField("ACE Exposure Time", dl->qp_scalar);
   setEvaluatedField(cauchy_string, dl->qp_tensor);
   setEvaluatedField(Fp_string, dl->qp_tensor);
@@ -208,7 +208,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   // failed state
   addStateVariable(
       "ACE Failure Indicator",
-      dl->qp_scalar,
+      dl->cell_scalar,
       "scalar",
       0.0,
       false,

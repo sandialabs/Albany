@@ -81,7 +81,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   setEvaluatedField("ACE Water Saturation", dl->qp_scalar);
   setEvaluatedField("ACE Porosity", dl->qp_scalar);
   setEvaluatedField("ACE Temperature Dot", dl->qp_scalar);
-  setEvaluatedField("ACE Failure Indicator", dl->qp_scalar);
+  setEvaluatedField("ACE Failure Indicator", dl->cell_scalar);
   setEvaluatedField("ACE Exposure Time", dl->qp_scalar);
 
   // define the evaluated fields
@@ -212,7 +212,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   // failed state
   addStateVariable(
       "ACE Failure Indicator",
-      dl->qp_scalar,
+      dl->cell_scalar,
       "scalar",
       0.0,
       false,
