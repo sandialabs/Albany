@@ -14,7 +14,7 @@ if (ALBANY_EPETRA)
                  ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
 
   # 2. Name the test with the directory name
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Epetra NAME)
+  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
   add_test(${testName}_A ${Albany.exe} inputA.yaml)
   set_tests_properties(${testName}_A PROPERTIES LABELS "Basic;Epetra;Forward")

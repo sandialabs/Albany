@@ -51,16 +51,16 @@ endif(ALBANY_EPETRA AND ALBANY_DAKOTA)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysisT.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysisT.yaml COPYONLY)
 
-add_test(${testName}_Analysis_Tpetra ${AlbanyAnalysis.exe} inputAnalysisT.yaml)
-set_tests_properties(${testName}_Analysis_Tpetra  PROPERTIES LABELS "Tpetra;Analysis;Basic")
+add_test(${testName}_Analysis ${AlbanyAnalysis.exe} inputAnalysisT.yaml)
+set_tests_properties(${testName}_Analysis PROPERTIES LABELS "Tpetra;Analysis;Basic")
 
 # Additional files for restart testing
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis_restartT.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis_restartT.yaml COPYONLY)
 
-add_test(${testName}_Analysis_restart_Tpetra ${AlbanyAnalysis.exe} inputAnalysis_restartT.yaml)
-set_tests_properties(${testName}_Analysis_restart_Tpetra  PROPERTIES LABELS "Tpetra;Analysis;Basic")
-set_tests_properties(${testName}_Analysis_restart_Tpetra  PROPERTIES DEPENDS  ${testName}_Analysis_Tpetra)
+add_test(${testName}_Analysis_restart ${AlbanyAnalysis.exe} inputAnalysis_restartT.yaml)
+set_tests_properties(${testName}_Analysis_restart PROPERTIES LABELS "Tpetra;Analysis;Basic")
+set_tests_properties(${testName}_Analysis_restart PROPERTIES DEPENDS  ${testName}_Analysis_Tpetra)
 if(ALBANY_CTEST_TIMEOUT)
-  set_tests_properties (${testName}_restartT PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+  set_tests_properties (${testName}_Analysis_restart PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
 endif()

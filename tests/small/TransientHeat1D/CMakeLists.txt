@@ -56,6 +56,6 @@ if (ALBANY_EPETRA)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.yaml COPYONLY)
 
-  add_test(${testName}_Epetra ${AlbanyAnalysis.exe} inputAnalysis.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Epetra;Analysis;OptiPack")
+  add_test(${testName} ${AlbanyAnalysis.exe} inputAnalysis.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "Epetra;Analysis;OptiPack")
 endif()

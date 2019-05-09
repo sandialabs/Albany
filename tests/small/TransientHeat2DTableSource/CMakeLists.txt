@@ -19,10 +19,10 @@ if (ALBANY_EPETRA)
 
   # Create the tests
 
-  add_test(${testName}_Steady_Epetra ${SerialAlbany.exe} input.yaml)
-  set_tests_properties(${testName}_Steady_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
+  add_test(${testName}_Steady ${SerialAlbany.exe} input.yaml)
+  set_tests_properties(${testName}_Steady PROPERTIES LABELS "Basic;Epetra;Forward")
 
-  add_test(${testName}_Transient_Epetra ${Albany.exe} inputTrans.yaml)
-  set_tests_properties(${testName}_Transient_Epetra PROPERTIES DEPENDS ${testName}_Steady)
-  set_tests_properties(${testName}_Transient_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
+  add_test(${testName}_Transient ${Albany.exe} inputTrans.yaml)
+  set_tests_properties(${testName}_Transient PROPERTIES DEPENDS ${testName}_Steady)
+  set_tests_properties(${testName}_Transient PROPERTIES LABELS "Basic;Epetra;Forward")
 endif()
