@@ -223,6 +223,9 @@ if (BUILD_TRILINOS)
     "-DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=ON"
     "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
     "-DTpetra_INST_INT_INT:BOOL=OFF"
+    "-DXpetra_ENABLE_Epetra=OFF"
+    "-DMueLu_ENABLE_Epetra=OFF"
+    "-DBelos_ENABLE_Epetra=OFF"
     #
     "-DTPL_ENABLE_Matio:BOOL=OFF"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
