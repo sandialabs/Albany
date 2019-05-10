@@ -122,7 +122,6 @@
   #cmakedefine ATO_USES_ISOLIB
   #cmakedefine ATO_USES_NLOPT
   #cmakedefine ATO_USES_COGENT
-  #cmakedefine ALBANY_ATO_SOLVER_EPETRA
 #endif
 
 #ifdef ALBANY_LANDICE
