@@ -144,7 +144,8 @@ protected:
 
 
 /******************************************************************************/
-class Aggregator_Scaled : public virtual Aggregator_StateVarBased {
+class Aggregator_Scaled : public virtual Aggregator,
+                          public virtual Aggregator_StateVarBased {
 public:
   Aggregator_Scaled () = default;
   Aggregator_Scaled (const Teuchos::ParameterList& aggregatorParams, int nTopos);
@@ -156,7 +157,8 @@ protected:
 
 /******************************************************************************/
 template <typename CompareType>
-class Aggregator_Extremum : public virtual Aggregator_StateVarBased {
+class Aggregator_Extremum : public virtual Aggregator,
+                            public virtual Aggregator_StateVarBased {
 public:
   Aggregator_Extremum () = default;
   Aggregator_Extremum (const Teuchos::ParameterList& aggregatorParams, int nTopos);
@@ -167,17 +169,15 @@ protected:
 /******************************************************************************/
 
 /******************************************************************************/
-class Aggregator_Uniform : public virtual Aggregator,
-                           public virtual Aggregator_Scaled
-{
+class Aggregator_Uniform : public Aggregator_Scaled {
 public:
-  Aggregator_Uniform () = default;
   Aggregator_Uniform (const Teuchos::ParameterList& aggregatorParams, int nTopos);
 };
 /******************************************************************************/
 
 /******************************************************************************/
-class Aggregator_DistScaled : public virtual Aggregator_DistParamBased {
+class Aggregator_DistScaled : public virtual Aggregator,
+                              public virtual Aggregator_DistParamBased {
 public:
   Aggregator_DistScaled () = default;
   Aggregator_DistScaled (const Teuchos::ParameterList& aggregatorParams, int nTopos);
@@ -188,7 +188,8 @@ protected:
 /******************************************************************************/
 
 /******************************************************************************/
-class Aggregator_Homogenized : public virtual Aggregator_DistParamBased {
+class Aggregator_Homogenized : public virtual Aggregator,
+                               public virtual Aggregator_DistParamBased {
 public:
   Aggregator_Homogenized () = default;
   Aggregator_Homogenized (const Teuchos::ParameterList& aggregatorParams, int nTopos);
@@ -202,7 +203,8 @@ protected:
 
 /******************************************************************************/
 template <typename CompareType>
-class Aggregator_DistExtremum : public virtual Aggregator_DistParamBased {
+class Aggregator_DistExtremum : public virtual Aggregator,
+                                public virtual Aggregator_DistParamBased {
  public:
   Aggregator_DistExtremum () = default;
   Aggregator_DistExtremum (const Teuchos::ParameterList& aggregatorParams, int nTopos);

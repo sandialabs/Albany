@@ -124,9 +124,8 @@ void Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
 
 //**********************************************************************
 Aggregator_DistParamBased::
-Aggregator_DistParamBased(const Teuchos::ParameterList& aggregatorParams, int nTopos)
+Aggregator_DistParamBased(const Teuchos::ParameterList& /* aggregatorParams */, int nTopos)
 //**********************************************************************
- : Aggregator(aggregatorParams,nTopos)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
     nTopos > 1,
@@ -244,9 +243,11 @@ Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams, int nTopos)
 { 
   int nAgg = aggregatedValuesNames.size();
   if (nAgg == 0) nAgg = aggregatedDerivativesNames.size();
-  double weight = 1.0/nAgg;
   weights.resize(nAgg);
-  for (int i=0; i<nAgg; ++i) weights[i] = weight;
+
+  for (double& weight : weights) {
+    weight = 1.0/nAgg;
+  }
 
   normalizeMethod = "Scaled";
 }
@@ -256,13 +257,16 @@ Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams, int nTopos)
 Aggregator_DistUniform::
 Aggregator_DistUniform(const Teuchos::ParameterList& aggregatorParams, int nTopos)
 //**********************************************************************
- : Aggregator_DistParamBased(aggregatorParams,nTopos)
+ : Aggregator(aggregatorParams,nTopos)
+ , Aggregator_DistParamBased(aggregatorParams,nTopos)
 { 
   int nAgg = aggregatedValuesNames.size();
   if (nAgg == 0) nAgg = aggregatedDerivativesNames.size();
-  double weight = 1.0/nAgg;
   weights.resize(nAgg);
-  for (int i=0; i<nAgg; ++i) weights[i] = weight;
+  for (double& weight : weights) {
+    weight = 1.0/nAgg;
+  }
+
 }
 
 //**********************************************************************
@@ -314,7 +318,8 @@ Aggregator_Extremum<CompareType>::Aggregator_Extremum(const Teuchos::ParameterLi
 Aggregator_DistScaled::
 Aggregator_DistScaled(const Teuchos::ParameterList& aggregatorParams, int nTopos)
 //**********************************************************************
- : Aggregator_DistParamBased(aggregatorParams, nTopos)
+ : Aggregator(aggregatorParams,nTopos)
+ , Aggregator_DistParamBased(aggregatorParams, nTopos)
 { 
   TEUCHOS_TEST_FOR_EXCEPTION(!aggregatorParams.isType<Teuchos::Array<double> >("Weights"),
                               Teuchos::Exceptions::InvalidParameter,
@@ -332,7 +337,8 @@ Aggregator_DistScaled(const Teuchos::ParameterList& aggregatorParams, int nTopos
 Aggregator_Homogenized::
 Aggregator_Homogenized(const Teuchos::ParameterList& aggregatorParams, int nTopos)
 //**********************************************************************
- : Aggregator_DistParamBased(aggregatorParams, nTopos)
+ : Aggregator(aggregatorParams,nTopos)
+ , Aggregator_DistParamBased(aggregatorParams, nTopos)
 { 
   TEUCHOS_TEST_FOR_EXCEPTION(!aggregatorParams.isSublist("Homogenization"),
                               Teuchos::Exceptions::InvalidParameter,
@@ -367,6 +373,7 @@ Aggregator_DistExtremum<CompareType>::
 Aggregator_DistExtremum(const Teuchos::ParameterList& aggregatorParams, int nTopos)
 //**********************************************************************
  : Aggregator(aggregatorParams, nTopos)
+ , Aggregator_DistParamBased(aggregatorParams, nTopos)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(aggregatedValuesNames.size() == 0 &&
                              aggregatedDerivativesNames.size() > 0,

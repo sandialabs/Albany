@@ -19,7 +19,6 @@
 #include "STKExtract.hpp"
 #endif
 
-
 #include "Teuchos_XMLParameterListHelpers.hpp"
 
 namespace ATO
