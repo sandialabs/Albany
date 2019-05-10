@@ -20,7 +20,6 @@ set( CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
 SET(SOURCES
   Albany_SolverFactory.cpp
   Albany_Utils.cpp
-  PHAL_AlbanyTraits.cpp
   PHAL_Dimension.cpp
   PHAL_Setup.cpp
   Albany_Application.cpp
