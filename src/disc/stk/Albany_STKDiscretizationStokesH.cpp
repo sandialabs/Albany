@@ -50,7 +50,8 @@ void STKDiscretizationStokesH::computeGraphs()
   int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
 
   //super bad hack based on current LandIce probelms.. make this general!!
-  const unsigned int n3dEq = (neq == 4) ? 4 : 2;
+  unsigned int n3dEq = (neq == 4) ? 4 : 2;
+  n3dEq = std::min(n3dEq,neq);
 
   m_overlap_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs,neq*nodes_per_element));
 

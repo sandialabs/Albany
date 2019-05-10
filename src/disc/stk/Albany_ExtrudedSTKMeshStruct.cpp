@@ -384,7 +384,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
     std::vector<int> sharing_procs;
     bulkData2D.comm_shared_procs( bulkData2D.entity_key(node2d), sharing_procs );
-    for(const auto& proc : sharing_procs) {
+    for(const int proc : sharing_procs) {
       bulkData->add_node_sharing(node, proc);
     }
 
@@ -633,9 +633,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       continue;
     stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(metaData2D.side_rank()), sides2D);
     singlePartVec[0] = ssPartVec["extruded_"+part->name()];
-    int num_bd_sides = sides2D.size();
-    for (int ib=0; ib<num_bd_sides; ++ib) {
-      const GO side2dId = bulkData2D.identifier(sides2D[ib]) - 1;
+    for (const auto& side2D : sides2D) {
+      const stk::mesh::EntityId side2dId = bulkData2D.identifier(side2D) - 1;
       for (int il=0; il<numLayers; ++il) {
         switch (ElemShape) {
           case Tetrahedron: {
@@ -668,9 +667,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(stk::topology::NODE_RANK), boundaryNodes2D);
     singlePartVecLateral[0] = nsPartVec["extruded_"+part->name()];
 
-    const int num_bd_nodes = boundaryNodes2D.size();
-    for (int ib=0; ib<num_bd_nodes; ++ib) {
-      const GO node2dId = bulkData2D.identifier(boundaryNodes2D[ib]) - 1;
+    for (const auto& node2D : boundaryNodes2D) {
+      const stk::mesh::EntityId node2dId = bulkData2D.identifier(node2D) - 1;
       for (int il=0; il<(numLayers+1); ++il) {
         const GO nodeId = il * vertexColumnShift + vertexLayerShift * node2dId + 1;
         stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
