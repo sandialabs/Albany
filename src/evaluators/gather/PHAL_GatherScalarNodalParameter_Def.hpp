@@ -209,8 +209,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
   Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
 
-  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
-
   // Are we differentiating w.r.t. this parameter?
   bool is_active = (workset.dist_param_deriv_name == this->param_name);
 
@@ -264,15 +262,16 @@ evaluateFields(typename Traits::EvalData workset)
         } else {
           local_Vp.resize(num_deriv);
           for (std::size_t node = 0; node < num_deriv; ++node) {
-            LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+            const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
             LO base_id, ilayer;
             layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-            LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-            GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
-            LO id= pvecT->getMap()->getLocalElement(ginode);
+            const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+            const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
+            const LO id = Albany::getLocalElement(pvec->space(),ginode);
             local_Vp[node].resize(num_cols);
-            for (std::size_t col=0; col<num_cols; ++col)
+            for (std::size_t col=0; col<num_cols; ++col) {
               local_Vp[node][col] = (id >= 0) ? Vp_data[col][id] : 0;
+            }
           }
         }
       }

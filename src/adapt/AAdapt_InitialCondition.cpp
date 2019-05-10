@@ -131,12 +131,12 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
 
       std::vector<double> X(neq);
 
-      for (unsigned el=0; el < wsElNodeEqID[ws].dimension(0); el++) { // loop over elements in workset
+      for (unsigned el=0; el < wsElNodeEqID[ws].extent(0); el++) { // loop over elements in workset
 
         for (int i=0; i<neq; i++) 
             X[i] = 0;
 
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].dimension(1); ln++) // loop over node local to the element
+        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) // loop over node local to the element
           for (int i=0; i<neq; i++)
             X[i] += coords[ws][el][ln][i]; // nodal coords
 
@@ -145,7 +145,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
 
         initFunc->compute(&x[0], &X[0]);
 
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].dimension(1); ln++) { // loop over node local to the element
+        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) { // loop over node local to the element
           for (int i=0; i<neq; i++){
 
              soln_data[wsElNodeEqID[ws](el,ln,i)] += x[i];
@@ -169,8 +169,8 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     int numDOFsPerDim = neq / numDim;
 
     for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
-      for(unsigned el = 0; el < wsElNodeEqID[ws].dimension(0); el++) {
-        for(unsigned ln = 0; ln < wsElNodeEqID[ws].dimension(1); ln++) {
+      for(unsigned el = 0; el < wsElNodeEqID[ws].extent(0); el++) {
+        for(unsigned ln = 0; ln < wsElNodeEqID[ws].extent(1); ln++) {
 
           const double* X = coords[ws][el][ln];
           for(int j = 0; j < numDOFsPerDim; j++)
@@ -192,8 +192,8 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
     std::vector<double> x; x.resize(neq);
     for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
-      for (unsigned el=0; el < wsElNodeEqID[ws].dimension(0); el++) {
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].dimension(1); ln++) {
+      for (unsigned el=0; el < wsElNodeEqID[ws].extent(0); el++) {
+        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) {
           const double* X = coords[ws][el][ln];
           for (int i=0; i<neq; i++) {
             x[i] = soln_data[wsElNodeEqID[ws](el,ln,i)];
@@ -216,8 +216,8 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
     std::vector<double> x; x.resize(neq);
     for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
-      for (unsigned el=0; el < wsElNodeEqID[ws].dimension(0); el++) {
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].dimension(1); ln++) {
+      for (unsigned el=0; el < wsElNodeEqID[ws].extent(0); el++) {
+        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) {
           const double* X = coords[ws][el][ln];
           for (int i=0; i<neq; i++) {
             x[i] = soln_data[wsElNodeEqID[ws](el,ln,i)];

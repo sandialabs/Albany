@@ -201,12 +201,9 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
     return nodal_parameter_sis;
   }
 
-  virtual bool
-  hasResidualField() = 0;
-  virtual bool
-  hasSphereVolumeField() = 0;
-  virtual bool
-  hasLatticeOrientationField() = 0;
+  virtual bool hasResidualField() const = 0;
+  virtual bool hasSphereVolumeField() const = 0;
+  virtual bool hasLatticeOrientationField() const = 0;
 
   std::map<std::string, double>&
   getTime()
