@@ -1,11 +1,12 @@
 IF (NOT ALBANY_PARALLEL_ONLY)
   # Name the test with the directory name
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_SERIAL NAME)
+  get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR}_SERIAL NAME)
 
   ####################################
   ###            Tests             ###
   ####################################
 
+  set(testName ${testNameRoot}_no_prec)
   IF(ALBANY_EPETRA)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
@@ -22,11 +23,12 @@ IF (NOT ALBANY_PARALLEL_ONLY)
     set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Demo;Tpetra;Forward;Serial")
   endif ()
 
+  set(testName ${testNameRoot}_Ifpack2)
   if (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTP.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/inputTP.yaml COPYONLY)
 
-    add_test(${testName}_Ifpack2_Tpetra ${SerialAlbany.exe} inputTP.yaml)
-    set_tests_properties(${testName}_Ifpack2_Tpetra PROPERTIES LABELS "Demo;Tpetra;Forward;Serial")
+    add_test(${testName} ${SerialAlbany.exe} inputTP.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "Demo;Tpetra;Forward;Serial")
   endif()
 ENDIF()

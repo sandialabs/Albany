@@ -6,7 +6,7 @@ if (ALBANY_EPETRA)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input2D_taylorGreenVortex.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input2D_taylorGreenVortex.yaml COPYONLY)
 
-  add_test(${testName}_Epetra ${Albany.exe} input2D_taylorGreenVortex.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Demo;Epetra;Forward")
+  add_test(${testName} ${Albany.exe} input2D_taylorGreenVortex.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "Demo;Epetra;Forward")
 endif()
 

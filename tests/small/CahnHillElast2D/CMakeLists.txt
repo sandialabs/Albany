@@ -1,11 +1,12 @@
 if (ALBANY_IOPX)
   # Name the test with the directory name
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+  get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
   # Copy mesh file from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/domain.exo
                  ${CMAKE_CURRENT_BINARY_DIR}/domain.exo COPYONLY)
 
+  set (testName ${testNameRoot}_Rythmos)
   if (ALBANY_EPETRA) 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
@@ -17,14 +18,15 @@ if (ALBANY_IOPX)
   if (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_rythmos.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/inputT_rythmos.yaml COPYONLY)
-    add_test(${testName}_Rythmos_Tpetra ${Albany.exe} inputT_rythmos.yaml)
-    set_tests_properties(${testName}_Rythmos_Tpetra PROPERTIES LABELS "Demo;Tpetra;Forward")
+    add_test(${testName}_Tpetra ${Albany.exe} inputT_rythmos.yaml)
+    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Demo;Tpetra;Forward")
+  endif()
 
-    if (ALBANY_TEMPUS)
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_tempus.yaml
-                     ${CMAKE_CURRENT_BINARY_DIR}/inputT_tempus.yaml COPYONLY)
-      add_test(${testName}_Tempus_Tpetra ${Albany.exe} inputT_tempus.yaml)
-      set_tests_properties(${testName}_Tempus_Tpetra PROPERTIES LABELS "Demo;Tpetra;Forward")
-    endif()
+  set (testName ${testNameRoot}_Tempus)
+  if (ALBANY_IFPACK2 AND ALBANY_TEMPUS)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_tempus.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/inputT_tempus.yaml COPYONLY)
+    add_test(${testName} ${Albany.exe} inputT_tempus.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "Demo;Tpetra;Forward")
   endif()
 endif(ALBANY_IOPX)

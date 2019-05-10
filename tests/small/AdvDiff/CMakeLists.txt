@@ -7,6 +7,6 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
                  ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
 
   # Create the test with this name and standard executable
-  add_test(${testName}_Tpetra ${SerialAlbany.exe} inputT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Demo;Tpetra;Forward;Serial")
+  add_test(${testName} ${SerialAlbany.exe} inputT.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "Demo;Tpetra;Forward;Serial")
 ENDIF ()
