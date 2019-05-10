@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Topology_FractureCriterion.h"
+#include "Topology_FailureCriterion.h"
 #include "Topology.h"
 
 namespace LCM {
@@ -14,7 +14,7 @@ FractureCriterionTraction::FractureCriterionTraction(
     std::string const& stress_name,
     double const       critical_traction,
     double const       beta)
-    : AbstractFractureCriterion(topology),
+    : AbstractFailureCriterion(topology),
       stress_field_(get_meta_data().get_field<TensorFieldType>(
           stk::topology::NODE_RANK,
           stress_name)),
@@ -237,6 +237,35 @@ FractureCriterionTraction::computeNormals()
 
     normals_.insert(std::make_pair(face_id, normal));
   }
+}
+
+BulkFailureCriterion::BulkFailureCriterion(
+    Topology&          topology,
+    std::string const& fail_indicator_name)
+    : AbstractFailureCriterion(topology),
+      failure_indicator_(get_meta_data().get_field<ScalarFieldType>(
+          stk::topology::ELEMENT_RANK,
+          fail_indicator_name))
+{
+  if (failure_indicator_ == NULL) {
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Cannot find field for bulk failure criterion: ";
+    std::cerr << fail_indicator_name;
+    std::cerr << '\n';
+    exit(1);
+  }
+}
+
+bool
+BulkFailureCriterion::check(
+    stk::mesh::BulkData& bulk_data,
+    stk::mesh::Entity    element)
+{
+  double const failure_indicator =
+      *stk::mesh::field_data(*failure_indicator_, element);
+
+  return failure_indicator >= 0.5;
 }
 
 }  // namespace LCM

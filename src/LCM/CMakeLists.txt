@@ -60,26 +60,29 @@ set(evaluator-headers
 
 #LCM model evaluators
 
-#IKT, FIXME: uncomment the Schwarz files commented out here
 IF (ALBANY_STK)
 set(model-eval-sources
   "${LCM_DIR}/solvers/Schwarz_Alternating.cpp"
   "${LCM_DIR}/solvers/Schwarz_ObserverImpl.cpp"
   "${LCM_DIR}/solvers/Schwarz_PiroObserver.cpp"
   "${LCM_DIR}/solvers/Schwarz_StatelessObserverImpl.cpp"
-  "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.cpp"
-  "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.cpp"
-  "${LCM_DIR}/solvers/Schwarz_Coupled.cpp"
 )
 set(model-eval-headers
   "${LCM_DIR}/solvers/Schwarz_Alternating.hpp"
   "${LCM_DIR}/solvers/Schwarz_ObserverImpl.hpp"
   "${LCM_DIR}/solvers/Schwarz_PiroObserver.hpp"
   "${LCM_DIR}/solvers/Schwarz_StatelessObserverImpl.hpp"
-  "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.hpp"
-  "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.hpp"
-  "${LCM_DIR}/solvers/Schwarz_Coupled.hpp"
 )
+  set(model-eval-sources ${model-eval-sources}
+    "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.cpp"
+    "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.cpp"
+    "${LCM_DIR}/solvers/Schwarz_Coupled.cpp"
+  )
+  set(model-eval-headers ${model-eval-headers}
+    "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.hpp"
+    "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.hpp"
+    "${LCM_DIR}/solvers/Schwarz_Coupled.hpp"
+  )
 ENDIF(ALBANY_STK)
 
 # LCM special boundary conditions
@@ -355,6 +358,7 @@ set(transport-headers
 #LCM models
 set(models-sources
   "${LCM_DIR}/models/AAAModel.cpp"
+  "${LCM_DIR}/models/ACEcommon.cpp"
   "${LCM_DIR}/models/ACEice.cpp"
   "${LCM_DIR}/models/ACEpermafrost.cpp"
   "${LCM_DIR}/models/AbstractModel.cpp"
@@ -394,6 +398,7 @@ set(models-sources
 set(models-headers
   "${LCM_DIR}/models/AAAModel_Def.hpp"
   "${LCM_DIR}/models/AAAModel.hpp"
+  "${LCM_DIR}/models/ACEcommon.hpp"
   "${LCM_DIR}/models/ACEice_Def.hpp"
   "${LCM_DIR}/models/ACEice.hpp"
   "${LCM_DIR}/models/ACEpermafrost_Def.hpp"
@@ -535,19 +540,19 @@ IF(ALBANY_STK)
   )
 ENDIF(ALBANY_STK)
 
-#LCM utils/topology
+#LCM utils / topology
 IF(ALBANY_STK)
   set(topology-sources
     "${LCM_DIR}/utils/topology/BarycentricSubdivision.cpp"
     "${LCM_DIR}/utils/topology/MinimumSurface.cpp"
     "${LCM_DIR}/utils/topology/Subgraph.cpp"
     "${LCM_DIR}/utils/topology/Topology.cpp"
-    "${LCM_DIR}/utils/topology/Topology_FractureCriterion.cpp"
+    "${LCM_DIR}/utils/topology/Topology_FailureCriterion.cpp"
     "${LCM_DIR}/utils/topology/Topology_Utils.cpp"
   )
   set(topology-headers
     "${LCM_DIR}/utils/topology/Subgraph.h"
-    "${LCM_DIR}/utils/topology/Topology_FractureCriterion.h"
+    "${LCM_DIR}/utils/topology/Topology_FailureCriterion.h"
     "${LCM_DIR}/utils/topology/Topology.h"
     "${LCM_DIR}/utils/topology/Topology_Types.h"
     "${LCM_DIR}/utils/topology/Topology_Utils.h"

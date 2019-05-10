@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/mscratch/albany/nightlyCDashJenkins
+BASE_DIR=/mscratch/albany/mayer/nightlyCDashJenkins
 cd $BASE_DIR
 
 unset http_proxy
@@ -18,4 +18,4 @@ LOG_FILE=$BASE_DIR/nightly_log_mayerAlbany.txt
 
 eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly.cmake" > $LOG_FILE 2>&1
 
-bash process_results_ctest_jenkins.sh
+bash process_results_ctest.sh

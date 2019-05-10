@@ -228,22 +228,20 @@ entity_string(Topology& topology, stk::mesh::Entity entity)
 // Auxiliary for graphviz output
 //
 std::string
-entity_color(
-    stk::mesh::EntityRank const rank,
-    FractureState const         fracture_state)
+entity_color(stk::mesh::EntityRank const rank, FailureState const failure_state)
 {
   std::ostringstream oss;
 
-  switch (fracture_state) {
+  switch (failure_state) {
     default:
       std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
       std::cerr << '\n';
-      std::cerr << "Fracture state is invalid: " << fracture_state;
+      std::cerr << "Fracture state is invalid: " << failure_state;
       std::cerr << '\n';
       exit(1);
       break;
 
-    case CLOSED:
+    case INTACT:
       switch (rank) {
         default:
           std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
@@ -264,7 +262,7 @@ entity_color(
       }
       break;
 
-    case OPEN:
+    case FAILED:
       switch (rank) {
         default:
           std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
@@ -322,7 +320,7 @@ dot_entity(
     stk::mesh::Entity const     entity,
     stk::mesh::EntityId const   id,
     stk::mesh::EntityRank const rank,
-    FractureState const         fracture_state)
+    FailureState const          failure_state)
 {
   std::ostringstream oss;
 
@@ -342,7 +340,7 @@ dot_entity(
   oss << "</font>";
   oss << ">,";
   oss << "style=filled,fillcolor=\"";
-  oss << entity_color(rank, fracture_state);
+  oss << entity_color(rank, failure_state);
   oss << "\"]\n";
 
   return oss.str();

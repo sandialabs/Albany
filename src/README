@@ -1,0 +1,26 @@
+*** WARNING ***
+
+Some functionalities that were present in Albany in the past
+are no longer supported, and have been removed. Usually, this happened
+because of lack of resources to maintain the feature, and/or to upgrade
+the code to be compliant with newer Albany and/or Trilinos infrastructure.
+
+For each of these functionalities, we added a git tag to the repo,
+corresponding to the last commit supporting the functionality.
+To revive a feature 'BLAH', you can checkout the last version of the
+code supporting the feature with
+
+git checkout tags/BLAH_support_end
+
+You can also find information on the trilinos revision to use in the tag
+comment; simply do
+
+git tag -v BLAH_support_end
+
+
+Most of these functionalities correspond to a particular folder
+in Albany. Such folder is still present, empty, but with a README file
+inside, with the instruction on how to checkout the tag.
+
+Additionally, there's the tag PERIDIGM_support_end, which corresponds
+to the last commit supporting Peridigm features.

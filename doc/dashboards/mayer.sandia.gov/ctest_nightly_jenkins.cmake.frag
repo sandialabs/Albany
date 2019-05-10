@@ -47,13 +47,14 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 
 set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
-set (HDF5_PATH $ENV{HDF5_ROOT})
-set (NETCDF_PATH $ENV{NETCDF_ROOT}) 
-set (PNETCDF_PATH $ENV{PNETCDF_ROOT}) 
-set (BOOST_PATH $ENV{BOOST_ROOT}) 
-set (BLAS_PATH $ENV{OPENBLAS_ROOT}) 
-set (LAPACK_PATH $ENV{OPENBLAS_ROOT}) 
-set (ZLIB_PATH $ENV{ZLIB_DIR})  
+set (HDF5_DIR $ENV{HDF5_DIR})
+set (NETCDF_DIR $ENV{NETCDF_DIR}) 
+set (PNETCDF_DIR $ENV{PNETCDF_DIR}) 
+set (BOOST_DIR $ENV{BOOST_DIR}) 
+set (BLAS_DIR $ENV{OPENBLAS_DIR}) 
+set (LAPACK_DIR $ENV{OPENBLAS_DIR}) 
+set (ARMPL_DIR $ENV{ARMPL_DIR})
+set (ZLIB_DIR $ENV{ZLIB_DIR})  
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -178,6 +179,7 @@ if (BUILD_TRILINOS)
   set_property (GLOBAL PROPERTY Label IKTMayerARMTrilinos)
 
   set (CONFIGURE_OPTIONS
+    "-DCMAKE_INSTALL_PREFIX:PATH=$ENV{jenkins_trilinos_install_dir}"
     "-DKokkos_ENABLE_Pthread=OFF"
     "-DKokkos_ENABLE_Serial:BOOL=ON"
     "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
@@ -185,7 +187,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTrilinos_ENABLE_DEBUG:BOOL=OFF"
     #
-    "-DCMAKE_INSTALL_PREFIX:PATH=/mscratch/albany/nightlyCDashTrilinos/build/TrilinosInstall"
     "-DCMAKE_C_COMPILER=mpicc"
     "-DCMAKE_CXX_COMPILER=mpicxx"
     "-DCMAKE_Fortran_COMPILER=mpif90"
@@ -255,12 +256,12 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Belos:BOOL=ON"
     "-DTrilinos_ENABLE_ML:BOOL=ON"
     "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
-    "-DPhalanx_ENABLE_TESTS:BOOL=ON"
-    "-DPhalanx_ENABLE_EXAMPLES:BOOL=ON"
+    "-DPhalanx_ENABLE_TESTS:BOOL=OFF"
+    "-DPhalanx_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
     "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
-    "-DIntrepid2_ENABLE_TESTS:BOOL=ON"
-    "-DIntrepid2_ENABLE_EXAMPLES:BOOL=ON"
+    "-DIntrepid2_ENABLE_TESTS:BOOL=OFF"
+    "-DIntrepid2_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTrilinos_ENABLE_ROL:BOOL=ON"
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
@@ -269,7 +270,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
     "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
     "-DTrilinos_ENABLE_MOOCHO:BOOL=ON"
-    "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
     "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
@@ -307,7 +307,6 @@ if (BUILD_TRILINOS)
     "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
     "-DTrilinos_ENABLE_FEI:BOOL=OFF"
     "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-    "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DTrilinos_ENABLE_MueLu:BOOL=ON"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
@@ -331,7 +330,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
     "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DTPL_ENABLE_HWLOC:STRING=OFF"
-    "-DKOKKOS_ARCH:STRING=ARMv8-TX2"
+    "-DKOKKOS_ARCH:STRING='ARMv8-TX2'"
     #
     "-DTrilinos_ENABLE_Panzer:BOOL=OFF"
     "-DMPI_EXEC=${MPI_DIR}/bin/mpirun"

@@ -132,21 +132,21 @@ Subgraph::get_boundary_rank()
 }
 
 IntScalarFieldType&
-Subgraph::get_fracture_state_field(stk::mesh::EntityRank rank)
+Subgraph::get_failure_state_field(stk::mesh::EntityRank rank)
 {
-  return get_topology().get_fracture_state_field(rank);
+  return get_topology().get_failure_state_field(rank);
 }
 
 void
-Subgraph::set_fracture_state(stk::mesh::Entity e, FractureState const fs)
+Subgraph::set_failure_state(stk::mesh::Entity e, FailureState const fs)
 {
-  get_topology().set_fracture_state(e, fs);
+  get_topology().set_failure_state(e, fs);
 }
 
-FractureState
-Subgraph::get_fracture_state(stk::mesh::Entity e)
+FailureState
+Subgraph::get_failure_state(stk::mesh::Entity e)
 {
-  return get_topology().get_fracture_state(e);
+  return get_topology().get_failure_state(e);
 }
 
 bool
@@ -892,7 +892,7 @@ Subgraph::outputToGraphviz(std::string const& output_filename)
 
     stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(entity);
 
-    FractureState const fracture_state = get_fracture_state(entity);
+    FailureState const failure_state = get_failure_state(entity);
 
     stk::mesh::EntityId const entity_id = get_entity_id(entity);
 
@@ -902,7 +902,7 @@ Subgraph::outputToGraphviz(std::string const& output_filename)
         entity,
         entity_id,
         rank,
-        fracture_state);
+        failure_state);
 
     // write the edges in the subgraph
     OutEdgeIterator out_edge_begin;

@@ -269,6 +269,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   } else {
     // for (df/dp)*V we zero out corresponding entries in df/dp
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vp_const2dView = Albany::getLocalData(dirichletWorkset.Vp);
     if(isFieldParameter) {
       const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
       auto fieldNodeVs = dirichletWorkset.disc->getNodeVectorSpace(this->field_name);
@@ -281,8 +282,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
         GO node_gid = nsNodesGIDs[inode];
         int lfield = fieldDofManager.getLocalDOF(Albany::getLocalElement(fieldNodeVs,node_gid),fieldOffset);
         for (int col=0; col<num_cols; ++col) {
-          //(*fpV)[col][lunk] = 0.0;
-          fpV_nonconst2dView[col][lunk] = -double(col == lfield);
+          fpV_nonconst2dView[col][lunk] -= Vp_const2dView[col][lfield];
         }
       }
     } else {

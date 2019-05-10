@@ -14,8 +14,8 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-//This include is added in Tpetra branch to get all the necessary
-//Tpetra includes (e.g., Tpetra_Vector.hpp, Tpetra_Map.hpp, etc.)
+// This include is added in Tpetra branch to get all the necessary
+// Tpetra includes (e.g., Tpetra_Vector.hpp, Tpetra_Map.hpp, etc.)
 #include "Albany_DataTypes.hpp"
 
 #include "Albany_NodalDOFManager.hpp"
@@ -34,27 +34,31 @@ namespace Albany {
  */
 class AbstractSTKFieldContainer : public AbstractFieldContainer
 {
-public:
-
+ public:
   // Tensor per Node/Cell  - (Node, Dim, Dim) or (Cell,Dim,Dim)
-  typedef stk::mesh::Field<double, stk::mesh::Cartesian, stk::mesh::Cartesian> TensorFieldType ;
+  typedef stk::mesh::Field<double, stk::mesh::Cartesian, stk::mesh::Cartesian>
+      TensorFieldType;
   // Vector per Node/Cell  - (Node, Dim) or (Cell,Dim)
-  typedef stk::mesh::Field<double, stk::mesh::Cartesian> VectorFieldType ;
+  typedef stk::mesh::Field<double, stk::mesh::Cartesian> VectorFieldType;
   // Scalar per Node/Cell  - (Node) or (Cell)
-  typedef stk::mesh::Field<double>                      ScalarFieldType ;
+  typedef stk::mesh::Field<double> ScalarFieldType;
   // One int scalar per Node/Cell  - (Node) or (Cell)
-  typedef stk::mesh::Field<int>                         IntScalarFieldType ;
+  typedef stk::mesh::Field<int> IntScalarFieldType;
   // int vector per Node/Cell  - (Node,Dim/VecDim) or (Cell,Dim/VecDim)
-  typedef stk::mesh::Field<int, stk::mesh::Cartesian>   IntVectorFieldType ;
+  typedef stk::mesh::Field<int, stk::mesh::Cartesian> IntVectorFieldType;
 
-  typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
+  typedef stk::mesh::Cartesian QPTag;  // need to invent shards::ArrayDimTag
   // Tensor per QP   - (Cell, QP, Dim, Dim)
-  typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian, stk::mesh::Cartesian> QPTensorFieldType ;
+  typedef stk::mesh::
+      Field<double, QPTag, stk::mesh::Cartesian, stk::mesh::Cartesian>
+          QPTensorFieldType;
   // Vector per QP   - (Cell, QP, Dim)
-  typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian > QPVectorFieldType ;
+  typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian>
+      QPVectorFieldType;
   // One scalar per QP   - (Cell, QP)
-  typedef stk::mesh::Field<double, QPTag>                      QPScalarFieldType ;
-  typedef stk::mesh::Field<double, stk::mesh::Cartesian3d>     SphereVolumeFieldType ;
+  typedef stk::mesh::Field<double, QPTag> QPScalarFieldType;
+  typedef stk::mesh::Field<double, stk::mesh::Cartesian3d>
+      SphereVolumeFieldType;
 
   typedef std::vector<const std::string*> ScalarValueState;
   typedef std::vector<QPScalarFieldType*> QPScalarState;
@@ -65,51 +69,148 @@ public:
   typedef std::vector<VectorFieldType*> VectorState;
   typedef std::vector<TensorFieldType*> TensorState;
 
-  typedef std::map<std::string,double>                MeshScalarState;
-  typedef std::map<std::string,std::vector<double> >  MeshVectorState;
+  typedef std::map<std::string, double>              MeshScalarState;
+  typedef std::map<std::string, std::vector<double>> MeshVectorState;
 
-  typedef std::map<std::string,int>                MeshScalarIntegerState;
-  typedef std::map<std::string,std::vector<int> >  MeshVectorIntegerState;
-
+  typedef std::map<std::string, int>              MeshScalarIntegerState;
+  typedef std::map<std::string, std::vector<int>> MeshVectorIntegerState;
   //! Destructor
-  virtual ~AbstractSTKFieldContainer() = default;
+  virtual ~AbstractSTKFieldContainer(){};
 
-  virtual void addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis) = 0;
+  virtual void
+  addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis) = 0;
 
   // Coordinates field ALWAYS in 3D
-  const VectorFieldType* getCoordinatesField3d() const { return coordinates_field3d; }
-  VectorFieldType* getCoordinatesField3d(){ return coordinates_field3d; }
+  const VectorFieldType*
+  getCoordinatesField3d() const
+  {
+    return coordinates_field3d;
+  }
+  VectorFieldType*
+  getCoordinatesField3d()
+  {
+    return coordinates_field3d;
+  }
 
-  const VectorFieldType* getCoordinatesField() const { return coordinates_field; }
-  VectorFieldType* getCoordinatesField(){ return coordinates_field; }
-  IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
-  IntScalarFieldType* getRefineField(){ return refine_field; }
+  const VectorFieldType*
+  getCoordinatesField() const
+  {
+    return coordinates_field;
+  }
+  VectorFieldType*
+  getCoordinatesField()
+  {
+    return coordinates_field;
+  }
+  IntScalarFieldType*
+  getProcRankField()
+  {
+    return proc_rank_field;
+  }
+  IntScalarFieldType*
+  getRefineField()
+  {
+    return refine_field;
+  }
 #if defined(ALBANY_LCM)
-  IntScalarFieldType* getFractureState(stk::topology::rank_t rank){ return fracture_state[rank]; }
-#endif // ALBANY_LCM
-  SphereVolumeFieldType* getSphereVolumeField(){ return sphereVolume_field; }
-  stk::mesh::FieldBase* getLatticeOrientationField(){ return latticeOrientation_field; }
+  IntScalarFieldType*
+  getFailureState(stk::topology::rank_t rank)
+  {
+    return failure_state[rank];
+  }
+  IntScalarFieldType*
+  getBoundaryIndicator(stk::topology::rank_t rank)
+  {
+    return boundary_indicator[rank];
+  }
+#endif  // ALBANY_LCM
+  SphereVolumeFieldType*
+  getSphereVolumeField()
+  {
+    return sphereVolume_field;
+  }
+  stk::mesh::FieldBase*
+  getLatticeOrientationField()
+  {
+    return latticeOrientation_field;
+  }
 
-  ScalarValueState& getScalarValueStates(){ return scalarValue_states;}
-  MeshScalarState& getMeshScalarStates(){return mesh_scalar_states;}
-  MeshVectorState& getMeshVectorStates(){return mesh_vector_states;}
-  MeshScalarIntegerState& getMeshScalarIntegerStates(){return mesh_scalar_integer_states;}
-  MeshVectorIntegerState& getMeshVectorIntegerStates(){return mesh_vector_integer_states;}
-  ScalarState& getCellScalarStates(){return cell_scalar_states;}
-  VectorState& getCellVectorStates(){return cell_vector_states;}
-  TensorState& getCellTensorStates(){return cell_tensor_states;}
-  QPScalarState& getQPScalarStates(){return qpscalar_states;}
-  QPVectorState& getQPVectorStates(){return qpvector_states;}
-  QPTensorState& getQPTensorStates(){return qptensor_states;}
+  ScalarValueState&
+  getScalarValueStates()
+  {
+    return scalarValue_states;
+  }
+  MeshScalarState&
+  getMeshScalarStates()
+  {
+    return mesh_scalar_states;
+  }
+  MeshVectorState&
+  getMeshVectorStates()
+  {
+    return mesh_vector_states;
+  }
+  MeshScalarIntegerState&
+  getMeshScalarIntegerStates()
+  {
+    return mesh_scalar_integer_states;
+  }
+  MeshVectorIntegerState&
+  getMeshVectorIntegerStates()
+  {
+    return mesh_vector_integer_states;
+  }
+  ScalarState&
+  getCellScalarStates()
+  {
+    return cell_scalar_states;
+  }
+  VectorState&
+  getCellVectorStates()
+  {
+    return cell_vector_states;
+  }
+  TensorState&
+  getCellTensorStates()
+  {
+    return cell_tensor_states;
+  }
+  QPScalarState&
+  getQPScalarStates()
+  {
+    return qpscalar_states;
+  }
+  QPVectorState&
+  getQPVectorStates()
+  {
+    return qpvector_states;
+  }
+  QPTensorState&
+  getQPTensorStates()
+  {
+    return qptensor_states;
+  }
+  const StateInfoStruct&
+  getNodalSIS() const
+  {
+    return nodal_sis;
+  }
+  const StateInfoStruct&
+  getNodalParameterSIS() const
+  {
+    return nodal_parameter_sis;
+  }
 
-  const StateInfoStruct& getNodalSIS         () const { return nodal_sis;           }
-  const StateInfoStruct& getNodalParameterSIS() const { return nodal_parameter_sis; }
+  virtual bool
+  hasResidualField() = 0;
+  virtual bool
+  hasSphereVolumeField() = 0;
+  virtual bool
+  hasLatticeOrientationField() = 0;
 
-  virtual bool hasResidualField           () const = 0;
-  virtual bool hasSphereVolumeField       () const = 0;
-  virtual bool hasLatticeOrientationField () const = 0;
-
-  std::map<std::string, double>& getTime() {
+  std::map<std::string, double>&
+  getTime()
+  {
     return time;
   }
 
@@ -138,11 +239,14 @@ protected:
   IntScalarFieldType* proc_rank_field;
   IntScalarFieldType* refine_field;
 #if defined(ALBANY_LCM)
-  IntScalarFieldType* fracture_state[stk::topology::ELEMENT_RANK];
-#endif // ALBANY_LCM
+  IntScalarFieldType* failure_state[stk::topology::ELEMENT_RANK + 1];
+  IntScalarFieldType* boundary_indicator[stk::topology::ELEMENT_RANK + 1];
+#endif  // ALBANY_LCM
 
-  SphereVolumeFieldType* sphereVolume_field; // Required for Peridynamics in LCM
-  stk::mesh::FieldBase* latticeOrientation_field; // Required for certain LCM material models
+  SphereVolumeFieldType*
+      sphereVolume_field;  // Required for Peridynamics in LCM
+  stk::mesh::FieldBase*
+      latticeOrientation_field;  // Required for certain LCM material models
 
   ScalarValueState       scalarValue_states;
   MeshScalarState        mesh_scalar_states;

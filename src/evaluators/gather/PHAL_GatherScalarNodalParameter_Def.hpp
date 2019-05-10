@@ -264,7 +264,12 @@ evaluateFields(typename Traits::EvalData workset)
         } else {
           local_Vp.resize(num_deriv);
           for (std::size_t node = 0; node < num_deriv; ++node) {
-            const LO id = wsElDofs((int)cell,(int)node,0);
+            LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+            LO base_id, ilayer;
+            layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
+            LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+            GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
+            LO id= pvecT->getMap()->getLocalElement(ginode);
             local_Vp[node].resize(num_cols);
             for (std::size_t col=0; col<num_cols; ++col)
               local_Vp[node][col] = (id >= 0) ? Vp_data[col][id] : 0;

@@ -76,11 +76,12 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ScalarField porosity_;
   ScalarField tdot_;
   ScalarField failed_;
+  ScalarField exposure_time_;
+  ScalarField boundary_indicator_;
 
   // Mechanical MDFields
   ScalarField eqps_;
   ScalarField Fp_;
-  ScalarField source_;
   ScalarField stress_;
   ScalarField yield_surf_;
 
@@ -104,10 +105,16 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType freeze_curve_width_{1.0};
   RealType latent_heat_{0.0};
   RealType porosity0_{0.0};
+  RealType erosion_rate_{-1.0};
+  RealType element_size_{0.0};
 
   // Saturation hardening constraints
   RealType sat_mod_{0.0};
   RealType sat_exp_{0.0};
+
+  // Sea level arrays
+  std::vector<RealType> time_;
+  std::vector<RealType> sea_level_;
 
   void
   init(

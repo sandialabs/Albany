@@ -82,7 +82,7 @@ main(int ac, char* av[])
   //-----------------------------------------------------------------------------------------
   stk::mesh::BulkData&           bulk_data = topology.get_bulk_data();
   std::vector<stk::mesh::Entity> MeshNodes =
-      topology.getEntitiesByRank(bulk_data, 0);
+      topology.get_rank_entities(bulk_data, 0);
 
   // Definition of parameters and arrays of the function Graph
   const int TotalNumberNodes =
@@ -90,7 +90,7 @@ main(int ac, char* av[])
   std::vector<int> _nodeNames = topology.nodeNames();  // Vector with node names
 
   // Define edges and weights
-  std::vector<stk::mesh::Entity> MeshEdges = topology.getEntitiesByRank(
+  std::vector<stk::mesh::Entity> MeshEdges = topology.get_rank_entities(
       bulk_data,
       1);  // Get all the edges of the mesh
 

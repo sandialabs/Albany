@@ -274,34 +274,43 @@ void MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
   this->refine_field = &this->metaData->template declare_field< ISFT >(stk::topology::ELEMENT_RANK, "refine_field");
 
   // Processor rank field, a scalar
-  stk::mesh::put_field_on_mesh(*this->proc_rank_field,
-                                this->metaData->universal_part(),
-                                nullptr);
+  stk::mesh::put_field_on_mesh(
+      *this->proc_rank_field, this->metaData->universal_part(), nullptr);
 
-  stk::mesh::put_field_on_mesh(*this->refine_field,
-                                this->metaData->universal_part(),
-                                nullptr);
+  stk::mesh::put_field_on_mesh(
+      *this->refine_field, this->metaData->universal_part(), nullptr);
 
 #if defined(ALBANY_LCM)
-  // Fracture state used for adaptive insertion.
-  // It exists for all entities except cells (elements).
-
-  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK; rank < stk::topology::ELEMENT_RANK; ++rank) {
-    this->fracture_state[rank] = &this->metaData->template declare_field< ISFT >(rank, "fracture_state");
-    stk::mesh::put_field_on_mesh(*this->fracture_state[rank],
-                                  this->metaData->universal_part(),
-                                  nullptr);
+  // Failure state and boundary indicator used for mesh adaptation
+  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
+       rank <= stk::topology::ELEMENT_RANK;
+       ++rank) {
+    this->failure_state[rank] = &this->metaData->template
+        declare_field<ISFT>(rank, "failure_state");
+    stk::mesh::put_field_on_mesh(
+        *this->failure_state[rank],
+        this->metaData->universal_part(),
+        nullptr);
+    this->boundary_indicator[rank] = &this->metaData->template
+        declare_field<ISFT>(rank, "boundary_indicator");
+    stk::mesh::put_field_on_mesh(
+        *this->boundary_indicator[rank],
+        this->metaData->universal_part(),
+        nullptr);
   }
-#endif // ALBANY_LCM
+#endif  // ALBANY_LCM
 
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
   stk::io::set_field_role(*this->refine_field, Ioss::Field::MESH);
 #if defined(ALBANY_LCM)
-  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK; rank < stk::topology::ELEMENT_RANK; ++rank) {
-    stk::io::set_field_role(*this->fracture_state[rank], Ioss::Field::MESH);
+  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
+       rank <= stk::topology::ELEMENT_RANK;
+       ++rank) {
+    stk::io::set_field_role(*this->failure_state[rank], Ioss::Field::MESH);
+    stk::io::set_field_role(*this->boundary_indicator[rank], Ioss::Field::MESH);
   }
-#endif // ALBANY_LCM
+#endif  // ALBANY_LCM
 #endif
 }
 

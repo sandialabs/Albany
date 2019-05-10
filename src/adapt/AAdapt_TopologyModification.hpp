@@ -4,31 +4,30 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_TOPOLOGY_MODIFICATION_HPP
-#define AADAPT_TOPOLOGY_MODIFICATION_HPP
+#if !defined(AAdapt_TopologyModification_hpp)
+#define AAdapt_TopologyModification_hpp
 
-#include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
+#include <Teuchos_RCP.hpp>
 
-#include <PHAL_Workset.hpp>
 #include <PHAL_Dimension.hpp>
+#include <PHAL_Workset.hpp>
 
-#include "Albany_STKDiscretization.hpp"
 #include "AAdapt_AbstractAdapter.hpp"
-
 // Uses LCM Topology util class
 // Note that all topology functions are in Albany::LCM namespace
+#include "Albany_STKDiscretization.hpp"
 #include "LCM/utils/topology/Topology.h"
-#include "LCM/utils/topology/Topology_FractureCriterion.h"
+#include "LCM/utils/topology/Topology_FailureCriterion.h"
 
 namespace AAdapt {
 
 ///
 /// \brief Topology modification based adapter
 ///
-class TopologyMod : public AbstractAdapter {
-public:
-
+class TopologyMod : public AbstractAdapter
+{
+ public:
   ///
   /// Constructor(s) && Destructor
   ///
@@ -76,7 +75,39 @@ public:
   Teuchos::RCP<Teuchos::ParameterList const>
   getValidAdapterParameters() const;
 
-private:
+ private:
+  ///
+  /// Disallow copy and assignment and default
+  ///
+  TopologyMod();
+  TopologyMod(TopologyMod const&);
+  TopologyMod&
+  operator=(TopologyMod const&);
+
+  ///
+  /// Connectivity display method
+  ///
+  void
+  showElemToNodes();
+
+  ///
+  /// Relation display method
+  ///
+  void
+  showRelations();
+
+  ///
+  /// Parallel all-reduce function. Returns the argument in serial,
+  /// returns the sum of the argument in parallel
+  int
+  accumulateFractured(int num_fractured);
+
+  /// Parallel all-gatherv function. Communicates local open list to
+  /// all processors to form global open list.
+  void
+  getGlobalOpenList(
+      std::map<stk::mesh::EntityKey, bool>& local_entity_open,
+      std::map<stk::mesh::EntityKey, bool>& global_entity_open);
 
   ///
   /// stk_mesh Bulk Data
@@ -113,6 +144,6 @@ private:
   std::string     base_exo_filename_;
 };
 
-}
+}  // namespace AAdapt
 
-#endif //AAdapt_TopologyModificationT_hpp
+#endif  // AAdapt_TopologyModification_hpp

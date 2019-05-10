@@ -25,6 +25,11 @@ if (ALBANY_EPETRA)
   set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
 endif()
 
+if (ALBANY_ROL)
+  add_test(${testName}_Analysis ${AlbanyAnalysis.exe} input_dirichlet_dist_paramT.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Analysis;ROL")
+endif ()
+
 ####################################
 ### Dirichlet Mixed Params tests ###
 ####################################
@@ -47,6 +52,16 @@ if (ALBANY_EPETRA)
   # Create the test with this name and standard executable
   add_test(${testName}_Epetra ${Albany.exe} input_dirichlet_mixed_params.yaml)
   set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
+endif()
+
+set(testName ${testNameRoot}_Dirichlet_Mixed_Params_Analysis)
+
+if (ALBANY_ROL)
+  add_test(${testName}_Tpetra ${AlbanyAnalysis.exe} input_dirichlet_mixed_paramsT.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Analysis;ROL")
+
+  add_test(${testName}_Epetra ${AlbanyAnalysis.exe} input_dirichlet_mixed_params.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Analysis;ROL")
 endif()
 
 ####################################

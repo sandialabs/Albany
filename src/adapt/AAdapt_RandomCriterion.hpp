@@ -7,8 +7,8 @@
 #if !defined(AAdapt_RandomCriterion_hpp)
 #define AAdapt_RandomCriterion_hpp
 
-#include "Fracture.h"
 #include "Albany_STKDiscretization.hpp"
+#include "Topology_FailureCriterion.h"
 
 namespace AAdapt {
 
@@ -20,45 +20,41 @@ namespace AAdapt {
 /// stress in the elements sharing the edge between them.
 ///
 ///
-class RandomCriterion: public LCM::AbstractFractureCriterion {
+class RandomCriterion : public LCM::AbstractFailureCriterion
+{
+ public:
+  ///
+  /// \brief Default constructor for the criterion object
+  ///
+  RandomCriterion(int num_dim, Albany::STKDiscretization& stk);
 
-  public:
+  ///
+  /// \brief Stress fracture criterion function.
+  ///
+  /// \param[in] entity
+  /// \param[in] probability
+  /// \return is criterion met
+  ///
+  /// Given an entity and probability, will determine if fracture
+  /// criterion is met. Will return true if fracture criterion is
+  /// met, else false.  Fracture only defined on surface of
+  /// elements. Thus, input entity must be of rank dimension-1, else
+  /// error. For 2D, entity rank must = 1.  For 3D, entity rank must
+  /// = 2.
+  ///
+  bool
+  computeFractureCriterion(stk::mesh::Entity entity, double p);
 
-    ///
-    /// \brief Default constructor for the criterion object
-    ///
-    RandomCriterion(int num_dim,
-                    Albany::STKDiscretization& stk);
+ private:
+  RandomCriterion();
+  RandomCriterion(const RandomCriterion&);
+  RandomCriterion&
+  operator=(const RandomCriterion&);
 
+  Albany::STKDiscretization& stk_;
 
-    ///
-    /// \brief Stress fracture criterion function.
-    ///
-    /// \param[in] entity
-    /// \param[in] probability
-    /// \return is criterion met
-    ///
-    /// Given an entity and probability, will determine if fracture
-    /// criterion is met. Will return true if fracture criterion is
-    /// met, else false.  Fracture only defined on surface of
-    /// elements. Thus, input entity must be of rank dimension-1, else
-    /// error. For 2D, entity rank must = 1.  For 3D, entity rank must
-    /// = 2.
-    ///
-    bool
-    computeFractureCriterion(stk::mesh::Entity entity, double p);
+};  // class RandomCriterion
 
-  private:
+}  // namespace AAdapt
 
-    RandomCriterion();
-    RandomCriterion(const RandomCriterion&);
-    RandomCriterion& operator=(const RandomCriterion&);
-
-    Albany::STKDiscretization& stk_;
-
-}; // class RandomCriterion
-
-
-} // namespace AAdapt
-
-#endif // RandomCriterion_hpp
+#endif  // RandomCriterion_hpp

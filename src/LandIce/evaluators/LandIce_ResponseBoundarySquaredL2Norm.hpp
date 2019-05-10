@@ -15,7 +15,7 @@ namespace LandIce {
  * \brief Response Description
  */
   template<typename EvalT, typename Traits>
-  class ResponseBoundarySquaredL2Norm : public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
+  class ResponseBoundarySquaredL2Norm : public PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT,Traits>
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;
