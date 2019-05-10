@@ -1,6 +1,10 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Debug Output:
+    Write Jacobian to MatrixMarket: -1
+    Write Residual to MatrixMarket: -1
+  Build Type: Tpetra
   Problem: 
     Solution Method: ATO Problem
     Number of Subproblems: 3

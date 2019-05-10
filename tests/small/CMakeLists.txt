@@ -87,7 +87,7 @@ IF(ALBANY_STK)
 
   # ATO ##################
   IF(ALBANY_ATO)
-    # add_subdirectory(ATO)
+    add_subdirectory(ATO)
   ENDIF()
 
   # LandIce ##################

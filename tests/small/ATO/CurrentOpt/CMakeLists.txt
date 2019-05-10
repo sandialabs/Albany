@@ -1,27 +1,27 @@
-# 
-# 1. Copy input file from source to binary dir
-IF (ALBANY_EPETRA) 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_ebw.yaml ${CMAKE_CURRENT_BINARY_DIR}/2d_ebw.yaml COPYONLY)
-ENDIF() 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_ebwT.yaml ${CMAKE_CURRENT_BINARY_DIR}/2d_ebwT.yaml COPYONLY)
-# 2. Copy mesh files from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_ebw.gen     ${CMAKE_CURRENT_BINARY_DIR}/2d_ebw.gen COPYONLY)
-# 3. Copy runtest.cmake from source to binary dir
+IF (DEFINED MPIMNP AND ${MPIMNP} GREATER 1 )
+  SET (PARALLEL TRUE)
+ELSE()
+  SET (PARALLEL FALSE)
+ENDIF()
 
-set (PARALLEL,  DEFINED MPIMNP AND ${MPIMNP} GREATER 1 )
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+IF (NOT PARALLEL AND ATO_NLOPT)
 
-IF (ALBANY_EPETRA)
-IF (NOT ${PARALLEL}) 
-IF (ATO_NLOPT)
-add_test(ATO:${testName} ${Albany.exe} 2d_ebw.yaml)
-ENDIF() 
-ENDIF() 
-ENDIF() 
+  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+  # Copy mesh files from source to binary dir
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_ebw.gen     ${CMAKE_CURRENT_BINARY_DIR}/2d_ebw.gen COPYONLY)
+
+  IF (ALBANY_EPETRA)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_ebw.yaml ${CMAKE_CURRENT_BINARY_DIR}/2d_ebw.yaml COPYONLY)
+    add_test(${testName}_Epetra ${Albany.exe} 2d_ebw.yaml)
+    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "ATO;Epetra;Forward")
+  ENDIF() 
 
 
-IF (NOT ${PARALLEL}) 
-IF (ATO_NLOPT)
-add_test(ATOT:${testName} ${AlbanyT.exe} 2d_ebwT.yaml)
-ENDIF() 
+  IF (ALBANY_IFPACK2)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_ebwT.yaml ${CMAKE_CURRENT_BINARY_DIR}/2d_ebwT.yaml COPYONLY)
+    add_test(${testName}_Tpetra ${Albany.exe} 2d_ebwT.yaml)
+    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "ATO;Tpetra;Forward")
+  ENDIF()
+
 ENDIF() 

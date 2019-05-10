@@ -697,11 +697,8 @@ SolverFactory::setSolverParamDefaults(
 
   // Sublist for linear solver for the Newton method
   Teuchos::ParameterList& lsParams = newtonParams.sublist("Linear Solver");
-  lsParams.set("Aztec Solver", "GMRES");
   lsParams.set("Max Iterations", 43);
   lsParams.set("Tolerance", 1e-4);
-  lsParams.set("Output Frequency", 20);
-  lsParams.set("Preconditioner", "Ifpack");
 
   // Sublist for status tests
   Teuchos::ParameterList& statusParams = noxParams.sublist("Status Tests");
