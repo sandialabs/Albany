@@ -29,6 +29,8 @@
 #include "AAdapt_RC_Manager.hpp"
 
 #include "AAdapt_MeshAdapt.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
+#include "Albany_PUMIDiscretization.hpp"
 
 namespace AAdapt
 {

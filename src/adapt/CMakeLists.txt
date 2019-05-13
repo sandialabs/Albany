@@ -124,35 +124,34 @@ ENDIF()
 # Mesh Adapt depends on SCOREC tools and PUMI
 IF(ALBANY_SCOREC)
 
-SET(SOURCES ${SOURCES}
-    AAdapt_MeshAdapt.cpp
-    AAdapt_MeshAdaptMethod.cpp
-    AAdapt_ConstantSizeField.cpp
-    AAdapt_ScaledSizeField.cpp
-    AAdapt_UniformRefine.cpp
-    AAdapt_AlbanySizeField.cpp
-    AAdapt_ExtrudedAdapt.cpp
-   )
+  SET(SOURCES ${SOURCES}
+      AAdapt_MeshAdapt.cpp
+      AAdapt_MeshAdaptMethod.cpp
+      AAdapt_ConstantSizeField.cpp
+      AAdapt_ScaledSizeField.cpp
+      AAdapt_UniformRefine.cpp
+      AAdapt_AlbanySizeField.cpp
+      AAdapt_ExtrudedAdapt.cpp
+      AAdapt_SPRSizeField.cpp
+  )
 
-SET(HEADERS ${HEADERS}
-    AAdapt_MeshAdaptMethod.hpp
-    AAdapt_MeshAdapt.hpp
-    AAdapt_ConstantSizeField.hpp
-    AAdapt_ScaledSizeField.hpp
-    AAdapt_UniformRefine.hpp
-    AAdapt_AlbanySizeField.hpp
-    AAdapt_ExtrudedAdapt.hpp
-   )
+  SET(HEADERS ${HEADERS}
+      AAdapt_MeshAdaptMethod.hpp
+      AAdapt_MeshAdapt.hpp
+      AAdapt_ConstantSizeField.hpp
+      AAdapt_ScaledSizeField.hpp
+      AAdapt_UniformRefine.hpp
+      AAdapt_AlbanySizeField.hpp
+      AAdapt_ExtrudedAdapt.hpp
+      AAdapt_SPRSizeField.hpp
+  )
 
-SET(SOURCES ${SOURCES} AAdapt_SPRSizeField.cpp)
-SET(HEADERS ${HEADERS} AAdapt_SPRSizeField.hpp)
+  IF(ALBANY_OMEGA_H)
+    SET(SOURCES ${SOURCES} AAdapt_MeshAdapt_Omega_h.cpp)
+    SET(HEADERS ${HEADERS} AAdapt_MeshAdapt_Omega_h.hpp)
+  ENDIF()
 
-IF(ALBANY_OMEGA_H)
-  SET(SOURCES ${SOURCES} AAdapt_MeshAdapt_Omega_h.cpp)
-  SET(HEADERS ${HEADERS} AAdapt_MeshAdapt_Omega_h.hpp)
-ENDIF()
-
-include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
+  include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 
 ENDIF()
 

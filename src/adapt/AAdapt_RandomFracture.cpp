@@ -8,6 +8,7 @@
 #include <stk_util/parallel/ParallelReduce.hpp>
 #include "AAdapt_RandomCriterion.hpp"
 #include "Teuchos_TimeMonitor.hpp"
+#include "Albany_STKDiscretization.hpp"
 
 using stk::mesh::Entity;
 using stk::mesh::EntityKey;
@@ -20,16 +21,15 @@ typedef stk::mesh::RelationIdentifier EdgeId;
 typedef stk::mesh::EntityKey          EntityKey;
 
 //----------------------------------------------------------------------------
-AAdapt::RandomFracture::RandomFracture(
-    const Teuchos::RCP<Teuchos::ParameterList>& params,
-    const Teuchos::RCP<ParamLib>&               param_lib,
-    Albany::StateManager&                       state_mgr,
-    const Teuchos::RCP<const Teuchos_Comm>&     commT)
-    : AAdapt::AbstractAdapter(params, param_lib, state_mgr, commT),
-
-      remesh_file_index_(1),
-      fracture_interval_(params->get<int>("Adaptivity Step Interval", 1)),
-      fracture_probability_(params->get<double>("Fracture Probability", 1.0))
+RandomFracture::
+RandomFracture(const Teuchos::RCP<Teuchos::ParameterList>& params,
+               const Teuchos::RCP<ParamLib>&               param_lib,
+               Albany::StateManager&                       state_mgr,
+               const Teuchos::RCP<const Teuchos_Comm>&     commT)
+ : AbstractAdapter(params, param_lib, state_mgr, commT)
+ , remesh_file_index_(1)
+ , fracture_interval_(params->get<int>("Adaptivity Step Interval", 1))
+ , fracture_probability_(params->get<double>("Fracture Probability", 1.0))
 {
   discretization_ = state_mgr_.getDiscretization();
 
@@ -41,7 +41,7 @@ AAdapt::RandomFracture::RandomFracture(
   bulk_data_ = stk_mesh_struct_->bulkData;
   meta_data_ = stk_mesh_struct_->metaData;
 
-  failure_criterion_ = Teuchos::rcp(new AAdapt::RandomCriterion(
+  failure_criterion_ = Teuchos::rcp(new RandomCriterion(
       num_dim_, element_rank_, *stk_discretization_));
 
   num_dim_ = stk_mesh_struct_->numDim;
@@ -55,11 +55,8 @@ AAdapt::RandomFracture::RandomFracture(
 }
 
 //----------------------------------------------------------------------------
-AAdapt::RandomFracture::~RandomFracture() {}
-
-//----------------------------------------------------------------------------
 bool
-AAdapt::RandomFracture::queryAdaptationCriteria()
+RandomFracture::queryAdaptationCriteria()
 {
   // iter is a member variable elsewhere, NOX::Epetra::AdaptManager.H
   if (iter % fracture_interval_ == 0) {
@@ -109,14 +106,11 @@ AAdapt::RandomFracture::queryAdaptationCriteria()
 }
 
 //----------------------------------------------------------------------------
-bool
-AAdapt::RandomFracture::adaptMesh(
-    const Epetra_Vector& solution,
-    const Epetra_Vector& ovlp_solution)
+bool RandomFracture::adaptMesh()
 {
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
                   << std::endl;
-  *output_stream_ << "Adapting mesh using AAdapt::RandomFracture method   "
+  *output_stream_ << "Adapting mesh using RandomFracture method   "
                   << std::endl;
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
                   << std::endl;
@@ -187,7 +181,7 @@ AAdapt::RandomFracture::adaptMesh(
 // currently a no-op as the solution is copied to the newly created
 // nodes by the topology->splitOpenFaces() function
 void
-AAdapt::RandomFracture::solutionTransfer(
+RandomFracture::solutionTransfer(
     const Epetra_Vector& oldSolution,
     Epetra_Vector&       newSolution)
 {
@@ -195,7 +189,7 @@ AAdapt::RandomFracture::solutionTransfer(
 
 //----------------------------------------------------------------------------
 Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::RandomFracture::getValidAdapterParameters() const
+RandomFracture::getValidAdapterParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
       this->getGenericAdapterParams("ValidRandomFractureificationParams");
@@ -209,7 +203,7 @@ AAdapt::RandomFracture::getValidAdapterParameters() const
 
 //----------------------------------------------------------------------------
 void
-AAdapt::RandomFracture::showTopLevelRelations()
+RandomFracture::showTopLevelRelations()
 {
   std::vector<Entity> element_list;
   stk::mesh::get_entities(*(bulk_data_), element_rank_, element_list);
@@ -231,7 +225,7 @@ AAdapt::RandomFracture::showTopLevelRelations()
 
 //----------------------------------------------------------------------------
 void
-AAdapt::RandomFracture::showRelations()
+RandomFracture::showRelations()
 {
   std::vector<Entity> element_list;
   stk::mesh::get_entities(*(bulk_data_), element_rank_, element_list);
@@ -245,7 +239,7 @@ AAdapt::RandomFracture::showRelations()
 
 //----------------------------------------------------------------------------
 void
-AAdapt::RandomFracture::showRelations(int level, Entity entity)
+RandomFracture::showRelations(int level, Entity entity)
 {
   stk::mesh::PairIterRelation relations = entity.relations();
 
@@ -274,7 +268,7 @@ AAdapt::RandomFracture::showRelations(int level, Entity entity)
 #ifdef ALBANY_MPI
 //----------------------------------------------------------------------------
 int
-AAdapt::RandomFracture::accumulateFractured(int num_fractured)
+RandomFracture::accumulateFractured(int num_fractured)
 {
   int total_fractured;
 
@@ -288,7 +282,7 @@ AAdapt::RandomFracture::accumulateFractured(int num_fractured)
 // Parallel all-gatherv function. Communicates local open list to all processors
 // to form global open list.
 void
-AAdapt::RandomFracture::getGlobalOpenList(
+RandomFracture::getGlobalOpenList(
     std::map<EntityKey, bool>& local_entity_open,
     std::map<EntityKey, bool>& global_entity_open)
 {
@@ -372,7 +366,7 @@ AAdapt::RandomFracture::getGlobalOpenList(
 
 #else
 int
-AAdapt::RandomFracture::accumulateFractured(int num_fractured)
+RandomFracture::accumulateFractured(int num_fractured)
 {
   return num_fractured;
 }
@@ -380,11 +374,12 @@ AAdapt::RandomFracture::accumulateFractured(int num_fractured)
 // Parallel all-gatherv function. Communicates local open list to all processors
 // to form global open list.
 void
-AAdapt::RandomFracture::getGlobalOpenList(
+RandomFracture::getGlobalOpenList(
     std::map<EntityKey, bool>& local_entity_open,
     std::map<EntityKey, bool>& global_entity_open)
 {
   global_entity_open = local_entity_open;
 }
-#endif
+#endif // ALBANY_MPI
+
 }  // namespace AAdapt

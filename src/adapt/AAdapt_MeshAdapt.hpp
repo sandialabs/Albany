@@ -11,17 +11,23 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "AAdapt_AbstractAdapter.hpp"
-#include "Albany_PUMIMeshStruct.hpp"
-#include "Albany_PUMIDiscretization.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
+// Forward declarations
 struct Parma_GroupCode;
+namespace Albany {
+  class PUMIDiscretization;
+}
+namespace apf {
+  class Mesh2;
+}
 
 namespace AAdapt {
-class MeshAdaptMethod;
-namespace rc { class Manager; }
+  // Forward declarations
+  class MeshAdaptMethod;
+  namespace rc { class Manager; }
 
 class MeshAdapt : public AbstractAdapter {
 public:
