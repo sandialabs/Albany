@@ -193,6 +193,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_C_COMPILER=mpicc"
     "-DCMAKE_CXX_COMPILER=mpicxx"
     "-DCMAKE_Fortran_COMPILER=mpif90"
+    "-DCMAKE_CXX_FLAGS:STRING='-Wno-inconsistent-missing-override -Wno-deprecated-declarations'"
     "-DTPL_DLlib_LIBRARIES='dl'"
     "-DTrilinos_ENABLE_INSTALL_CMAKE_CONFIG_FILES:BOOL=ON"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
