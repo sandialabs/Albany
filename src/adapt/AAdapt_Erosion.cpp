@@ -8,7 +8,7 @@
 
 #include <stk_util/parallel/ParallelReduce.hpp>
 
-#include "AAdapt_ErosionT.hpp"
+#include "AAdapt_Erosion.hpp"
 #include "LCM/utils/topology/Topology_FailureCriterion.h"
 
 namespace AAdapt {
@@ -16,12 +16,12 @@ namespace AAdapt {
 //
 //
 //
-AAdapt::ErosionT::ErosionT(
+AAdapt::Erosion::Erosion(
     Teuchos::RCP<Teuchos::ParameterList> const& params,
     Teuchos::RCP<ParamLib> const&               param_lib,
     Albany::StateManager const&                 state_mgr,
     Teuchos::RCP<Teuchos_Comm const> const&     comm)
-    : AAdapt::AbstractAdapterT(params, param_lib, state_mgr, comm),
+    : AAdapt::AbstractAdapter(params, param_lib, state_mgr, comm),
       remesh_file_index_(1)
 {
   discretization_ = state_mgr_.getDiscretization();
@@ -52,13 +52,8 @@ AAdapt::ErosionT::ErosionT(
 //
 //
 //
-AAdapt::ErosionT::~ErosionT() {}
-
-//
-//
-//
 bool
-AAdapt::ErosionT::queryAdaptationCriteria(int)
+AAdapt::Erosion::queryAdaptationCriteria(int)
 {
   return topology_->there_are_failed_cells();
 }
@@ -67,7 +62,7 @@ AAdapt::ErosionT::queryAdaptationCriteria(int)
 //
 //
 bool
-AAdapt::ErosionT::adaptMesh()
+AAdapt::Erosion::adaptMesh()
 {
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
                   << "Adapting mesh using AAdapt::Erosion method      \n"
@@ -101,21 +96,10 @@ AAdapt::ErosionT::adaptMesh()
 }
 
 //
-// Transfer solution between meshes.  This is a no-op as the
-// solution is the same except for possibly removed nodes.
-//
-void
-AAdapt::ErosionT::solutionTransfer(
-    Teuchos::RCP<Tpetra_Vector const> const& old_solution,
-    Teuchos::RCP<Tpetra_Vector const>&       new_solution)
-{
-}
-
-//
 //
 //
 Teuchos::RCP<Teuchos::ParameterList const>
-AAdapt::ErosionT::getValidAdapterParameters() const
+AAdapt::Erosion::getValidAdapterParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> valid_pl_ =
       this->getGenericAdapterParams("ValidErosionParams");

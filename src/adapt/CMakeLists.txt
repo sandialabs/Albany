@@ -59,66 +59,47 @@ ENDIF()
 
 # Random Criterion & Stress Fracture depend on LCM
 # Speculative features and code, currently
-IF(ALBANY_LCM AND LCM_SPECULATIVE AND ALBANY_STK)
+IF(ALBANY_LCM AND ALBANY_STK)
+  IF(LCM_SPECULATIVE)
+    SET(SOURCES ${SOURCES}
+        AAdapt_RandomCriterion.cpp
+        AAdapt_RandomFracture.cpp
+        AAdapt_StressFracture.cpp
+       )
 
-SET(SOURCES ${SOURCES}
-    AAdapt_RandomCriterion.cpp
-    AAdapt_StressFracture.cpp
-   )
-
-SET(HEADERS ${HEADERS}
-    AAdapt_RandomCriterion.hpp
-    AAdapt_StressFracture.hpp
-   )
-
-IF (ALBANY_EPETRA) 
-  SET(SOURCES ${SOURCES} 
-      AAdapt_RandomFracture.cpp
-      )
-  SET(HEADERS ${HEADERS}
-      AAdapt_RandomFracture.hpp
-      )
+    SET(HEADERS ${HEADERS}
+        AAdapt_RandomCriterion.hpp
+        AAdapt_RandomFracture.hpp
+        AAdapt_StressFracture.hpp
+       )
   ENDIF()
-ENDIF()
 
-# Topology Modification depends on LCM and STK
-IF(ALBANY_LCM AND ALBANY_STK AND ALBANY_BGL)
+  # Topology Modification depends on LCM and STK
+  IF(ALBANY_BGL)
+    SET(SOURCES ${SOURCES}
+        AAdapt_Erosion.cpp
+        AAdapt_TopologyModification.cpp
+       )
 
-SET(SOURCES ${SOURCES}
-    AAdapt_ErosionT.cpp
-    AAdapt_TopologyModificationT.cpp
-   )
+    SET(HEADERS ${HEADERS}
+        AAdapt_Erosion.hpp
+        AAdapt_TopologyModification.hpp
+       )
+  ENDIF()
 
-SET(HEADERS ${HEADERS}
-    AAdapt_ErosionT.hpp
-    AAdapt_TopologyModificationT.hpp
-   )
+  IF(ALBANY_STK_PERCEPT)
+    SET(SOURCES ${SOURCES}
+        AAdapt_STKAdapt.cpp
+        AAdapt_STKConstantSizeField.cpp
+       )
 
-IF (ALBANY_EPETRA)
- 
-SET(SOURCES ${SOURCES} 
-    AAdapt_TopologyModification.cpp
-    )
-SET(HEADERS ${HEADERS}
-    AAdapt_TopologyModification.hpp
-    )
-    
-ENDIF()
+    SET(HEADERS ${HEADERS}
+        AAdapt_STKAdapt.hpp
+        AAdapt_STKAdapt_Def.hpp
+        AAdapt_STKConstantSizeField.hpp
+       )
 
-ENDIF()
-
-IF(ALBANY_LCM AND ALBANY_STK_PERCEPT AND ALBANY_STK)
-  SET(SOURCES ${SOURCES}
-      AAdapt_STKAdapt.cpp
-      AAdapt_STKConstantSizeField.cpp
-     )
-
-  SET(HEADERS ${HEADERS}
-      AAdapt_STKAdapt.hpp
-      AAdapt_STKAdapt_Def.hpp
-      AAdapt_STKConstantSizeField.hpp
-     )
-
+  ENDIF()
 ENDIF()
 
 # Mesh Adapt depends on SCOREC tools and PUMI

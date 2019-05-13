@@ -177,9 +177,9 @@ void OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
   // Fracture state used for adaptive insertion.
   // It exists for all entities except cells (elements).
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK; rank < stk::topology::ELEMENT_RANK; ++rank) {
-    this->fracture_state[rank] = &this->metaData->template declare_field< ISFT >(rank, "fracture_state");
+    this->failure_state[rank] = &this->metaData->template declare_field< ISFT >(rank, "failure_state");
 
-    stk::mesh::put_field_on_mesh(*this->fracture_state[rank],
+    stk::mesh::put_field_on_mesh(*this->failure_state[rank],
                                   this->metaData->universal_part(),
                                   nullptr);
   }

@@ -139,7 +139,7 @@ AAdapt::TopologyMod::showRelations() {
   stk::mesh::get_entities(*(bulk_data_), stk::topology::ELEMENT_RANK, element_list);
 
   // Remove extra relations from element
-  for(int i = 0; i < element_list.size(); ++i) {
+  for(size_t i = 0; i < element_list.size(); ++i) {
     Entity element = element_list[i];
 
     for (EntityRank rank = stk::topology::NODE_RANK; rank < meta_data_->entity_rank_count(); ++rank) {
@@ -151,7 +151,7 @@ AAdapt::TopologyMod::showRelations() {
       std::cout << "Element " << bulk_data_->identifier(element_list[i])
                 << " relations are :" << std::endl;
 
-      for(int j = 0; j < num_relations; ++j) {
+      for(size_t j = 0; j < num_relations; ++j) {
         std::cout << "entity:\t" << bulk_data_->identifier(relations[j]) << ","
                   << bulk_data_->entity_rank(relations[j]) << "\tlocal id: "
                   << ords[j] << "\n";
@@ -215,7 +215,7 @@ getGlobalOpenList(std::map<EntityKey, bool>& local_entity_open,
   int* offsets = new int[parallel_size];
   int count = 0;
 
-  for(int i = 0; i < parallel_size; i++) {
+  for(size_t i = 0; i < parallel_size; i++) {
     offsets[i] = count;
     count += sizes[i];
   }

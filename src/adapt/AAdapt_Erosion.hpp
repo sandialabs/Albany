@@ -3,38 +3,50 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#if !defined(AAdapt_ErosionT_hpp)
-#define AAdapt_ErosionT_hpp
+#if !defined(AAdapt_Erosion_hpp)
+#define AAdapt_Erosion_hpp
 
 #include <PHAL_Dimension.hpp>
 #include <PHAL_Workset.hpp>
 
-#include "AAdapt_AbstractAdapterT.hpp"
+#include "AAdapt_AbstractAdapter.hpp"
 #include "Albany_STKDiscretization.hpp"
-#include "Topology.h"
-#include "Topology_FailureCriterion.h"
+
+// Forward declarations
+namespace LCM {
+class AbstractFailureCriterion;
+class Topology;
+}
 
 namespace AAdapt {
 
 ///
 /// \brief Topology modification based adapter
 ///
-class ErosionT : public AbstractAdapterT
+class Erosion : public AbstractAdapter
 {
  public:
   ///
   /// Constructor
   ///
-  ErosionT(
+  Erosion(
       Teuchos::RCP<Teuchos::ParameterList> const& params,
       Teuchos::RCP<ParamLib> const&               param_lib,
       Albany::StateManager const&                 state_mgr,
       Teuchos::RCP<Teuchos_Comm const> const&     comm);
 
   ///
+  /// Disallow copy and assignment and default
+  ///
+  Erosion()                = delete;
+  Erosion(Erosion const&) = delete;
+  Erosion&
+  operator=(Erosion const&) = delete;
+
+  ///
   /// Destructor
   ///
-  ~ErosionT();
+  ~Erosion() = default;
 
   ///
   /// Check adaptation criteria to determine if the mesh needs
@@ -51,26 +63,10 @@ class ErosionT : public AbstractAdapterT
   adaptMesh();
 
   ///
-  /// Transfer solution between meshes.
-  ///
-  virtual void
-  solutionTransfer(
-      Teuchos::RCP<Tpetra_Vector const> const& old_solution,
-      Teuchos::RCP<Tpetra_Vector const>&       new_solution);
-
-  ///
   /// Each adapter must generate its list of valid parameters
   ///
   Teuchos::RCP<Teuchos::ParameterList const>
   getValidAdapterParameters() const;
-
-  ///
-  /// Disallow copy and assignment and default
-  ///
-  ErosionT()                = delete;
-  ErosionT(ErosionT const&) = delete;
-  ErosionT&
-  operator=(ErosionT const&) = delete;
 
  private:
   ///
@@ -99,4 +95,4 @@ class ErosionT : public AbstractAdapterT
 
 }  // namespace AAdapt
 
-#endif  // AAdapt_ErosionT_hpp
+#endif  // AAdapt_Erosion_hpp

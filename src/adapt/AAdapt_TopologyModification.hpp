@@ -17,8 +17,12 @@
 // Uses LCM Topology util class
 // Note that all topology functions are in Albany::LCM namespace
 #include "Albany_STKDiscretization.hpp"
-#include "LCM/utils/topology/Topology.h"
-#include "LCM/utils/topology/Topology_FailureCriterion.h"
+
+// Forward declaration
+namespace LCM {
+class AbstractFailureCriterion;
+class Topology;
+}
 
 namespace AAdapt {
 
@@ -58,17 +62,6 @@ class TopologyMod : public AbstractAdapter
   virtual bool adaptMesh();
 
   ///
-  // Transfer solution between meshes.
-  // This is a no-op as the solution is copied to the
-  // newly created nodes by the topology->splitOpenFaces() function.
-  ///
-  virtual void
-  solutionTransfer(Teuchos::RCP<Thyra_Vector const> const & /* old_solution */,
-                   Teuchos::RCP<Thyra_Vector const>       & /* new_solution */)
-  {
-    // Nothing to be done here
-  }
-
   ///
   /// Each adapter must generate its list of valid parameters
   ///
@@ -76,13 +69,6 @@ class TopologyMod : public AbstractAdapter
   getValidAdapterParameters() const;
 
  private:
-  ///
-  /// Disallow copy and assignment and default
-  ///
-  TopologyMod();
-  TopologyMod(TopologyMod const&);
-  TopologyMod&
-  operator=(TopologyMod const&);
 
   ///
   /// Connectivity display method
@@ -122,7 +108,7 @@ class TopologyMod : public AbstractAdapter
 
   Teuchos::RCP<stk::mesh::MetaData>               meta_data_;
 
-  Teuchos::RCP<LCM::AbstractFractureCriterion>    fracture_criterion_;
+  Teuchos::RCP<LCM::AbstractFailureCriterion>     failure_criterion_;
 
   Teuchos::RCP<LCM::Topology>                     topology_;
 

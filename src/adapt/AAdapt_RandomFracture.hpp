@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(AAdapt_RandomFracture_hpp)
-#define AAdapt_RandomFracture_hpp
+#ifndef AADAPT_RANDOM_FRACTURE_HPP
+#define AADAPT_RANDOM_FRACTURE_HPP
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
@@ -151,4 +151,4 @@ class RandomFracture : public AbstractAdapter
 
 }  // namespace AAdapt
 
-#endif  // ALBANY_Filler::RANDOM_HPP
+#endif // AADAPT_RANDOM_FRACTURE_HPP

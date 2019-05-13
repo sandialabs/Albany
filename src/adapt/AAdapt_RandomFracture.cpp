@@ -175,19 +175,6 @@ bool RandomFracture::adaptMesh()
 }
 
 //----------------------------------------------------------------------------
-//
-// Transfer solution between meshes.
-//
-// currently a no-op as the solution is copied to the newly created
-// nodes by the topology->splitOpenFaces() function
-void
-RandomFracture::solutionTransfer(
-    const Epetra_Vector& oldSolution,
-    Epetra_Vector&       newSolution)
-{
-}
-
-//----------------------------------------------------------------------------
 Teuchos::RCP<const Teuchos::ParameterList>
 RandomFracture::getValidAdapterParameters() const
 {
