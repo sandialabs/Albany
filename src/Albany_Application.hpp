@@ -627,8 +627,6 @@ protected:
 
   unsigned int neq, spatial_dimension, tangent_deriv_dim;
 
-  std::vector<int> blockDecomp;
-
   //! Phalanx postRegistration data
   Teuchos::RCP<PHAL::Setup> phxSetup;
   mutable int phxGraphVisDetail;
