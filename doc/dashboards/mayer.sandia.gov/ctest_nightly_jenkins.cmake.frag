@@ -56,6 +56,7 @@ set (BLAS_DIR $ENV{OPENBLAS_DIR})
 set (LAPACK_DIR $ENV{OPENBLAS_DIR}) 
 set (ARMPL_DIR $ENV{ARMPL_DIR})
 set (ZLIB_DIR $ENV{ZLIB_DIR})  
+set (MPI_DIR $ENV{MPI_DIR})  
 
 if (CLEAN_BUILD)
   # Initial cache info
