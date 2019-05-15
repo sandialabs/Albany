@@ -43,20 +43,6 @@ IF(ALBANY_STK)
   )
 ENDIF()
 
-
-IF (ALBANY_EPETRA) 
-  SET(SOURCES ${SOURCES} 
-    AAdapt_AdaptationFactory.cpp
-    AAdapt_AdaptiveModelFactory.cpp
-    AAdapt_ThyraAdaptiveModelEvaluator.cpp
-   ) 
-  SET(HEADERS ${HEADERS} 
-    AAdapt_AdaptationFactory.hpp
-    AAdapt_AdaptiveModelFactory.hpp
-    AAdapt_ThyraAdaptiveModelEvaluator.hpp
-  )
-ENDIF()
-
 # Random Criterion & Stress Fracture depend on LCM
 # Speculative features and code, currently
 IF(ALBANY_LCM AND ALBANY_STK)
