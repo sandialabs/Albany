@@ -46,21 +46,8 @@ LCM:
       Number: 1
       Parameter 0: Time
     Response Functions:
-      Number: 3
+      Number: 1
       Response 0: Solution Average
-      Response 1: Project IP to Nodal Field
-      Response 2: IP to Nodal Field
-      ResponseParams 1:
-        Number of Fields: 1
-        IP Field Name 0: Temperature
-        IP Field Layout 0: Scalar
-        Output to File: true
-        Mass Matrix Type: Full
-      ResponseParams 2:
-        Number of Fields: 1
-        IP Field Name 0: Cauchy_Stress
-        IP Field Layout 0: Tensor
-        Output to File: true
   Discretization:
     Method: PUMI
     Workset Size: 50
