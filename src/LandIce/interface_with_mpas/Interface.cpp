@@ -42,11 +42,8 @@ double MPAS_gravity(9.8), MPAS_rho_ice(910.0), MPAS_rho_seawater(1028.0), MPAS_s
        MPAS_ClausiusClapeyoronCoeff(9.7546e-8);
 bool MPAS_useGLP(true);
 
-#ifdef MPAS_USE_EPETRA
-  Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
-#else
-  Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
-#endif
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
+
 bool keptMesh =false;
 
 typedef struct TET_ {
@@ -77,12 +74,6 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     int& error,
     const double& deltat)
 {
-#ifndef MPAS_USE_EPETRA
-  static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-#else
-  static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
-#endif
-
   int numVertices3D = (nLayers + 1) * indexToVertexID.size();
   int numPrisms = nLayers * indexToTriangleID.size();
   int vertexColumnShift = (ordering == 1) ? 1 : nGlobalVertices;
@@ -237,7 +228,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     auto disc = albanyApp->getDiscretization();
     auto cas_manager = Albany::createCombineAndScatterManager(disc->getVectorSpace(), disc->getOverlapVectorSpace());
     Teuchos::RCP<Thyra_Vector> solution = Thyra::createMember(disc->getOverlapVectorSpace());
-    cas_manager->combine(*disc->getSolutionField(), *solution, Albany::CombineMode::INSERT);
+    cas_manager->scatter(*disc->getSolutionField(), *solution, Albany::CombineMode::INSERT);
     solution_constView = Albany::getLocalData(solution.getConst());
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
@@ -292,7 +283,7 @@ void velocity_solver_export_fo_velocity(MPI_Comm reducedComm) {
 #endif
 }
 
-int velocity_solver_init_mpi(int /* *fComm */) {
+int velocity_solver_init_mpi(int* /* fComm */) {
   Kokkos::initialize();
   return 0;
 }
@@ -354,6 +345,29 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 
   slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.yaml", mpiComm));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
+
+  auto& bt = paramList->get<std::string>("Build Type");
+#ifdef ALBANY_EPETRA
+  if(bt == "NONE") bt = "Epetra";
+#else
+  if(bt == "NONE") bt = "Tpetra";
+  TEUCHOS_TEST_FOR_EXCEPTION(bt == "Epetra", Teuchos::Exceptions::InvalidArgument,
+                             "Error! CMake option ENABLE_MPAS_EPETRA must be ON in order to perform an Epetra run.\n");
+#endif
+
+  if (bt=="Tpetra") {
+    // Set the static variable that denotes this as a Tpetra run
+    static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+  } else if (bt=="Epetra") {
+    // Set the static variable that denotes this as a Epetra run
+    static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                               "Error! Invalid choice (" + bt + ") for 'Build Type'.\n"
+                               "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+  }
+
+  paramList->set("Overwrite Nominal Values With Final Point", true);
 
   Teuchos::Array<std::string> arrayRequiredFields(9);
   arrayRequiredFields[0]="temperature";  arrayRequiredFields[1]="ice_thickness"; arrayRequiredFields[2]="surface_height"; arrayRequiredFields[3]="bed_topography";
