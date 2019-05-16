@@ -322,6 +322,15 @@ ELSE()
   SET(ALBANY_STK_REBALANCE FALSE)
 ENDIF()
 
+# set optional dependency on Belos's Epetra subpackage
+IF (EXISTS "${Trilinos_INCLUDE_DIRS}/BelosEpetraAdapter.hpp")
+  MESSAGE("-- Looking for BelosEpetra:     Found, compiling with -DALBANY_BELOS_EPETRA")
+  SET(ALBANY_BELOS_EPETRA TRUE)
+ELSE ()
+  MESSAGE("-- Looking for BelosEpetra:     NOT found.")
+  SET(ALBANY_BELOS_EPETRA FALSE)
+ENDIF()
+
 # set optional dependency on Amesos2, for solving and preconditioning
 LIST(FIND Trilinos_PACKAGE_LIST Amesos2 Amesos2_List_ID)
 IF (Amesos2_List_ID GREATER -1)

@@ -17,7 +17,9 @@
 #ifdef ALBANY_EPETRA
 #include "Albany_EpetraThyraUtils.hpp"
 #include <Ifpack_ILU.h>
+#ifdef ALBANY_BELOS_EPETRA
 #include <BelosEpetraAdapter.hpp>
+#endif
 #endif
 
 namespace AAdapt {
