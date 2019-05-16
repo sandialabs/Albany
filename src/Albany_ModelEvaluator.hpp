@@ -54,36 +54,24 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
   }
 
-  Thyra_InArgs
-  getNominalValues() const;
+  Thyra_InArgs getNominalValues () const { return nominalValues; }
+  Thyra_InArgs getLowerBounds   () const { return lowerBounds; }
+  Thyra_InArgs getUpperBounds   () const { return upperBounds; }
 
-  Thyra_InArgs
-  getLowerBounds() const;
-
-  Thyra_InArgs
-  getUpperBounds() const;
-
-  Teuchos::RCP<Thyra::LinearOpBase<ST>>
-  create_W_op() const;
+  Teuchos::RCP<Thyra_LinearOp>  create_W_op() const;
 
   //! Create preconditioner operator
-  Teuchos::RCP<Thyra::PreconditionerBase<ST>>
-  create_W_prec() const;
+  Teuchos::RCP<Thyra_Preconditioner> create_W_prec() const;
 
-  Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST>>
-  get_W_factory() const;
+  Teuchos::RCP<const Thyra_LOWS_Factory>  get_W_factory() const;
 
   //! Create InArgs
-  Thyra_InArgs
-  createInArgs() const;
+  Thyra_InArgs createInArgs() const;
 
-  void
-  reportFinalPoint(
-      const Thyra_InArgs& finalPoint,
-      const bool wasSolved);
+  void reportFinalPoint(const Thyra_InArgs& finalPoint,
+                        const bool wasSolved);
 
-  void
-  allocateVectors();
+  void allocateVectors();
 
   //@}
 

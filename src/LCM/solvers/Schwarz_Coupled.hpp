@@ -9,10 +9,11 @@
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_MaterialDatabase.hpp"
-#include "Albany_ModelEvaluator.hpp"
 #include "Schwarz_BoundaryJacobian.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "Thyra_ModelEvaluatorDefaultBase.hpp"
+
 
 namespace LCM {
 

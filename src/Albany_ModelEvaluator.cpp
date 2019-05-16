@@ -312,41 +312,37 @@ ModelEvaluator(const Teuchos::RCP<Albany::Application>&    app_,
     thyra_response_vec[l] = Thyra::createMember(app->getResponse(l)->responseVectorSpace());
   }
 
-  {
-    // Determine the number of solution vectors (x, xdot, xdotdot)
+  // Determine the number of solution vectors (x, xdot, xdotdot)
+  int num_sol_vectors = app->getAdaptSolMgr()->getInitialSolution()->domain()->dim();
 
-    int num_sol_vectors =
-        app->getAdaptSolMgr()->getInitialSolution()->domain()->dim();
-
-    if (num_sol_vectors > 1)  // have x dot
-      supports_xdot = true;
-
+  if (num_sol_vectors > 1) {  // have x dot
+    supports_xdot = true;
     if (num_sol_vectors > 2)  // have both x dot and x dotdot
       supports_xdotdot = true;
+  }
 
-    // Setup nominal values, lower and upper bounds
-    nominalValues = this->createInArgsImpl();
-    lowerBounds = this->createInArgsImpl();
-    upperBounds = this->createInArgsImpl();
+  // Setup nominal values, lower and upper bounds, and final point
+  nominalValues = this->createInArgsImpl();
+  lowerBounds = this->createInArgsImpl();
+  upperBounds = this->createInArgsImpl();
 
-    // All the ME vectors are unallocated here
-    allocateVectors();
+  // All the ME vectors are unallocated here
+  allocateVectors();
 
-    // TODO: Check if correct nominal values for parameters
-    for (int l = 0; l < num_param_vecs; ++l) {
-      nominalValues.set_p(l, param_vecs[l]);
-      if(Teuchos::nonnull(param_lower_bds[l])) {
-        lowerBounds.set_p(l, param_lower_bds[l]);
-      }
-      if(Teuchos::nonnull(param_upper_bds[l])) {
-        upperBounds.set_p(l, param_upper_bds[l]);
-      }
+  // TODO: Check if correct nominal values for parameters
+  for (int l = 0; l < num_param_vecs; ++l) {
+    nominalValues.set_p(l, param_vecs[l]);
+    if(Teuchos::nonnull(param_lower_bds[l])) {
+      lowerBounds.set_p(l, param_lower_bds[l]);
     }
-    for (int l = 0; l < num_dist_param_vecs; ++l) {
-      nominalValues.set_p(l+num_param_vecs, distParamLib->get(dist_param_names[l])->vector());
-      lowerBounds.set_p(l+num_param_vecs, distParamLib->get(dist_param_names[l])->lower_bounds_vector());
-      upperBounds.set_p(l+num_param_vecs, distParamLib->get(dist_param_names[l])->upper_bounds_vector());
+    if(Teuchos::nonnull(param_upper_bds[l])) {
+      upperBounds.set_p(l, param_upper_bds[l]);
     }
+  }
+  for (int l = 0; l < num_dist_param_vecs; ++l) {
+    nominalValues.set_p(l+num_param_vecs, distParamLib->get(dist_param_names[l])->vector());
+    lowerBounds.set_p(l+num_param_vecs, distParamLib->get(dist_param_names[l])->lower_bounds_vector());
+    upperBounds.set_p(l+num_param_vecs, distParamLib->get(dist_param_names[l])->upper_bounds_vector());
   }
 
   timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
@@ -451,24 +447,6 @@ ModelEvaluator::get_p_names(int l) const
       new Teuchos::Array<std::string>(1, dist_param_names[l - num_param_vecs]));
 }
 
-Thyra_ModelEvaluator::InArgs<ST>
-ModelEvaluator::getNominalValues() const
-{
-  return nominalValues;
-}
-
-Thyra_ModelEvaluator::InArgs<ST>
-ModelEvaluator::getLowerBounds() const
-{
-  return lowerBounds;
-}
-
-Thyra_ModelEvaluator::InArgs<ST>
-ModelEvaluator::getUpperBounds() const
-{
-  return upperBounds;
-}
-
 Teuchos::RCP<Thyra_LinearOp>
 ModelEvaluator::create_W_op() const
 {
@@ -514,15 +492,13 @@ ModelEvaluator::createInArgs() const
 
 void
 ModelEvaluator::reportFinalPoint(
-    const Thyra_ModelEvaluator::InArgs<ST>& /* finalPoint */,
-    const bool                                   /* wasSolved */)
+    const Thyra_ModelEvaluator::InArgs<ST>& finalPoint,
+    const bool                              wasSolved)
 {
-  // TODO
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      Teuchos::Exceptions::InvalidParameter,
-      "Calling reportFinalPoint in Albany_ModelEvaluator.cpp line 296"
-          << std::endl);
+  // Set nominal values to the final point, if the model was solved
+  if (wasSolved) {
+    nominalValues = finalPoint;
+  }
 }
 
 Teuchos::RCP<Thyra_LinearOp>

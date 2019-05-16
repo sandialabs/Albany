@@ -254,6 +254,12 @@ Solver::Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     m_ObjectiveGradientVec[itopo]         = Thyra::createMember(*m_localNodeVS);
     m_overlapConstraintGradientVec[itopo] = Thyra::createMember(*m_overlapNodeVS);
     m_ConstraintGradientVec[itopo]        = Thyra::createMember(*m_localNodeVS);
+
+    // Zero out the vectors
+    m_overlapObjectiveGradientVec[itopo] ->assign(0.0);
+    m_ObjectiveGradientVec[itopo]->assign(0.0);
+    m_overlapConstraintGradientVec[itopo]->assign(0.0);
+    m_ConstraintGradientVec[itopo]->assign(0.0);
   } 
   
   m_cas_manager = Albany::createCombineAndScatterManager(m_localNodeVS, m_overlapNodeVS);
@@ -623,8 +629,8 @@ void Solver::copyTopologyIntoParameter (const double* p, SolverSubSolver& subSol
         for (int cell=0; cell<numCells; ++cell) {
           for (int node=0; node<numNodes; ++node) {
             const int gid = wsElNodeID[ws][cell][node];
-            const int lid = Albany::getLocalElement(m_localNodeVS,gid);
-            if (lid != -1) {
+            if (Albany::locallyOwnedComponent(m_localNodeVS,gid)) {
+              const int lid = Albany::getLocalElement(m_localNodeVS,gid);
               ltopo[lid] = matVal;
             }
           }
@@ -903,7 +909,10 @@ void Solver::copyObjectiveFromStateMgr( double& g, double* dgdp)
                                                        1.0, 0.0);
       }
       // Set the objective gradient to the filtered one.
-      m_ObjectiveGradientVec[ivec] = filtered_ObjectiveGradientVec;
+      // Note: swapping the two rcps is probably easier, but are
+      //       other places storing an RCP to the vector, which would no
+      //       longer be pointing to the same object.
+      m_ObjectiveGradientVec[ivec]->assign(*filtered_ObjectiveGradientVec);
       Teuchos::ArrayRCP<const double> lvec = Albany::getLocalData(m_ObjectiveGradientVec[ivec].getConst());
       const int numLocalNodes = lvec.size();
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));

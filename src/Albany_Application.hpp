@@ -269,10 +269,10 @@ public:
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec> &p, ParamVec *deriv_p,
       const Teuchos::RCP<Thyra_Vector>& g,
-      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
-      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
-      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
-      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
+      const Thyra_Derivative& dg_dx,
+      const Thyra_Derivative& dg_dxdot,
+      const Thyra_Derivative& dg_dxdotdot,
+      const Thyra_Derivative& dg_dp);
 
   void evaluateResponseDistParamDeriv(
       int response_index, const double current_time,

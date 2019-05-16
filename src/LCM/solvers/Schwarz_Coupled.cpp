@@ -7,6 +7,7 @@
 
 #include <sstream>
 
+#include "Albany_ModelEvaluator.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Schwarz_CoupledJacobian.hpp"
 #include "SolutionSniffer.hpp"
