@@ -1208,6 +1208,8 @@ Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, 
     appParams->sublist("Problem").get<Teuchos::ParameterList>("Configuration");
   physics_probParams.set<Teuchos::ParameterList>("Configuration",conParams);
 
+  physics_probParams.set<bool>("Overwrite Nominal Values With Final Point", true);
+
   // Discretization sublist processing
   Teuchos::ParameterList& discList = appParams->sublist("Discretization");
   Teuchos::ParameterList& physics_discList = physics_appParams->sublist("Discretization", false);

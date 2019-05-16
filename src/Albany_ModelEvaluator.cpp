@@ -42,7 +42,7 @@ namespace Albany
 {
 
 ModelEvaluator::
-ModelEvaluator(const Teuchos::RCP<Albany::Application>&    app_,
+ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
                 const Teuchos::RCP<Teuchos::ParameterList>& appParams)
  : app(app_)
  , supplies_prec(app_->suppliesPreconditioner())
@@ -345,6 +345,8 @@ ModelEvaluator(const Teuchos::RCP<Albany::Application>&    app_,
     upperBounds.set_p(l+num_param_vecs, distParamLib->get(dist_param_names[l])->upper_bounds_vector());
   }
 
+  overwriteNominalValuesWithFinalPoint = appParams->get("Overwrite Nominal Values With Final Point",false);
+
   timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
 }
 
@@ -496,7 +498,7 @@ ModelEvaluator::reportFinalPoint(
     const bool                              wasSolved)
 {
   // Set nominal values to the final point, if the model was solved
-  if (wasSolved) {
+  if (overwriteNominalValuesWithFinalPoint && wasSolved) {
     nominalValues = finalPoint;
   }
 }
