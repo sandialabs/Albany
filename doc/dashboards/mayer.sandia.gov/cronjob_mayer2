@@ -1,1 +1,2 @@
-00 07 * * 1-7  cd /mscratch/albany; rm a b c d results_arm; cd /mscratch/albany/mayer/nightlyCDashJenkins; source send_email.sh
+00 07 * * 1-7  cd /mscratch/albany; rm *; cp /mscratch/albany/mayer/nightlyCDashJenkins/* .; source send_email.sh
+
