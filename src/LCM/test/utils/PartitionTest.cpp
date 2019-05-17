@@ -191,8 +191,8 @@ main(int ac, char* av[])
   }
 
   // Need solution for output call
-  Teuchos::RCP<Thyra_Vector> solution_field = 
-      stk_discretization.getSolutionField(); 
+  Teuchos::RCP<Thyra_Vector> solution_field =
+      stk_discretization.getSolutionField();
 
   // second arg to output is (pseudo)time
   stk_discretization.writeSolution(*solution_field, 1.0);

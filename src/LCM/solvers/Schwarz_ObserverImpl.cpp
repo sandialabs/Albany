@@ -27,16 +27,17 @@ ObserverImpl::~ObserverImpl() { return; }
 //
 void
 ObserverImpl::observeSolution(
-    double                                            stamp,
+    double                                           stamp,
     Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> non_overlapped_solution,
-    Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> non_overlapped_solution_dot)
+    Teuchos::Array<Teuchos::RCP<Thyra_Vector const>>
+        non_overlapped_solution_dot)
 {
   for (int m = 0; m < this->n_models_; m++) {
     this->apps_[m]->evaluateStateFieldManager(
         stamp,
-        *non_overlapped_solution[m], 
+        *non_overlapped_solution[m],
         non_overlapped_solution_dot[m].ptr(),
-        Teuchos::null); 
+        Teuchos::null);
 
     this->apps_[m]->getStateMgr().updateStates();
   }

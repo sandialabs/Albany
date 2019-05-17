@@ -502,12 +502,13 @@ main(int ac, char* av[])
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name", output_file);
   discretizationParameterList->set<int>("Workset Size", workset_size);
-  
-  Teuchos::RCP<const Thyra_VectorSpace> space = 
-    Albany::createLocallyReplicatedVectorSpace(workset_size * num_dims * num_nodes, commT); 
+
+  Teuchos::RCP<const Thyra_VectorSpace> space =
+      Albany::createLocallyReplicatedVectorSpace(
+          workset_size * num_dims * num_nodes, commT);
 
   Teuchos::RCP<Thyra_Vector> solution_vector = Thyra::createMember(space);
-  solution_vector->assign(0.0); 
+  solution_vector->assign(0.0);
 
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -527,7 +528,7 @@ main(int ac, char* av[])
       Teuchos::rcp(new Albany::STKDiscretization(
           discretizationParameterList, stkMeshStruct, commT));
   auto& stk_disc = static_cast<Albany::STKDiscretization&>(*discretization);
-  stk_disc.updateMesh(); 
+  stk_disc.updateMesh();
 
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager
@@ -645,8 +646,7 @@ main(int ac, char* av[])
     // output to the exodus file
     // Don't include this in timing data...
     total_time->stop();
-    discretization->writeSolution(
-        *solution_vector, Teuchos::as<double>(istep));
+    discretization->writeSolution(*solution_vector, Teuchos::as<double>(istep));
 
     // if check for bifurcation, adaptive step
     total_time->start();

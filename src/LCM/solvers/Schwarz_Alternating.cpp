@@ -5,9 +5,9 @@
 //*****************************************************************//
 
 #include "Schwarz_Alternating.hpp"
+#include "Albany_ModelEvaluator.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_SolverFactory.hpp"
-#include "Albany_ModelEvaluator.hpp"
 #include "MiniTensor.h"
 #include "Piro_LOCASolver.hpp"
 #include "Piro_TempusSolver.hpp"
@@ -91,21 +91,21 @@ SchwarzAlternating::SchwarzAlternating(
   }
 
   // Firewalls
-  ALBANY_ASSERT(min_iters_ >= 1,"");
-  ALBANY_ASSERT(max_iters_ >= 1,"");
-  ALBANY_ASSERT(max_iters_ >= min_iters_,"");
-  ALBANY_ASSERT(rel_tol_ >= 0.0,"");
-  ALBANY_ASSERT(abs_tol_ >= 0.0,"");
-  ALBANY_ASSERT(maximum_steps_ >= 1,"");
-  ALBANY_ASSERT(final_time_ >= initial_time_,"");
-  ALBANY_ASSERT(initial_time_step_ > 0.0,"");
-  ALBANY_ASSERT(max_time_step_ > 0.0,"");
-  ALBANY_ASSERT(min_time_step_ > 0.0,"");
-  ALBANY_ASSERT(max_time_step_ >= min_time_step_,"");
-  ALBANY_ASSERT(reduction_factor_ <= 1.0,"");
-  ALBANY_ASSERT(reduction_factor_ > 0.0,"");
-  ALBANY_ASSERT(increase_factor_ >= 1.0,"");
-  ALBANY_ASSERT(output_interval_ >= 1,"");
+  ALBANY_ASSERT(min_iters_ >= 1, "");
+  ALBANY_ASSERT(max_iters_ >= 1, "");
+  ALBANY_ASSERT(max_iters_ >= min_iters_, "");
+  ALBANY_ASSERT(rel_tol_ >= 0.0, "");
+  ALBANY_ASSERT(abs_tol_ >= 0.0, "");
+  ALBANY_ASSERT(maximum_steps_ >= 1, "");
+  ALBANY_ASSERT(final_time_ >= initial_time_, "");
+  ALBANY_ASSERT(initial_time_step_ > 0.0, "");
+  ALBANY_ASSERT(max_time_step_ > 0.0, "");
+  ALBANY_ASSERT(min_time_step_ > 0.0, "");
+  ALBANY_ASSERT(max_time_step_ >= min_time_step_, "");
+  ALBANY_ASSERT(reduction_factor_ <= 1.0, "");
+  ALBANY_ASSERT(reduction_factor_ > 0.0, "");
+  ALBANY_ASSERT(increase_factor_ >= 1.0, "");
+  ALBANY_ASSERT(output_interval_ >= 1, "");
 
   // number of models
   num_subdomains_ = model_filenames.size();
@@ -562,7 +562,7 @@ printInternalElementState(
         fos << "   DEBUG: case 5, " << statename << " = "
             << esa[ws][statename](cell, qp, i, j, k) << "\n";
         break;
-      default: ALBANY_ASSERT(1 <= size && size <= 5,""); break;
+      default: ALBANY_ASSERT(1 <= size && size <= 5, ""); break;
     }
   } else if (init_type == "identity") {
     fos << "   DEBUG: " << statename << " = "
@@ -621,8 +621,9 @@ toFrom(Albany::StateArrayVec& dst, LCM::StateArrayVec const& src)
 {
   const auto num_maps = src.size();
 
-  ALBANY_ASSERT(num_maps == dst.size(),
-               "Inconsistent number of state maps from LCM to Albany");
+  ALBANY_ASSERT(
+      num_maps == dst.size(),
+      "Inconsistent number of state maps from LCM to Albany");
 
   for (size_t i = 0; i < num_maps; ++i) {
     auto&& src_map = src[i];
@@ -642,8 +643,9 @@ toFrom(Albany::StateArrayVec& dst, LCM::StateArrayVec const& src)
 
       const int num_states = src_states.size();
 
-      ALBANY_ASSERT(num_states == dst_states.size(),
-                    "Inconsistent number of state entries from LCM to Albany");
+      ALBANY_ASSERT(
+          num_states == dst_states.size(),
+          "Inconsistent number of state entries from LCM to Albany");
 
       for (auto j = 0; j < num_states; ++j) { dst_states[j] = src_states[j]; }
     }
@@ -803,8 +805,8 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 #endif
       toFrom(internal_states_[subdomain], state_mgr.getStateArrays());
 #ifdef DEBUG
-      //IKT, 3/29/19: I changed the first argument in the following function, 
-      //to get code to compile. 
+      // IKT, 3/29/19: I changed the first argument in the following function,
+      // to get code to compile.
       printInternalElementStates(
           state_mgr.getStateArrays(), state_mgr.getStateInfoStruct());
 
@@ -866,8 +868,7 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 
         Thyra_ModelEvaluator::InArgs<ST> in_args = solver.createInArgs();
 
-        Thyra_ModelEvaluator::OutArgs<ST> out_args =
-            solver.createOutArgs();
+        Thyra_ModelEvaluator::OutArgs<ST> out_args = solver.createOutArgs();
 
         auto& me = dynamic_cast<Albany::ModelEvaluator&>(
             *model_evaluators_[subdomain]);
@@ -877,16 +878,15 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 
         auto& state_mgr = app.getStateMgr();
 
-
 #ifdef DEBUG
         fos << "DEBUG: Setting internal states subdomain = " << subdomain
             << "...\n";
 #endif
         toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
 #ifdef DEBUG
-       //IKT, 3/29/19: I changed the first argument in the following function, 
-       //to get code to compile. 
-       printInternalElementStates(
+        // IKT, 3/29/19: I changed the first argument in the following function,
+        // to get code to compile.
+        printInternalElementStates(
             state_mgr.getStateArrays(), state_mgr.getStateInfoStruct());
         fos << "DEBUG: ...done setting internal states subdomain = "
             << subdomain << ".\n";
@@ -939,9 +939,11 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         prev_disp_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
         fos << "\n*** NORM: " << Thyra::norm(*prev_disp_[subdomain]) << '\n';
         if (subdomain == 0) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(prev_disp_[0], "prev_disp0", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(
+              prev_disp_[0], "prev_disp0", num_iter_);
         } else if (subdomain == 1) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(prev_disp_[1], "prev_disp1", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(
+              prev_disp_[1], "prev_disp1", num_iter_);
         }
         fos << "\n*** Thyra: Previous solution ***\n";
 #endif  // DEBUG
@@ -976,11 +978,12 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         fos << "\n*** NORM: " << Thyra::norm(*this_disp_[subdomain]) << '\n';
         fos << "\n*** Thyra: Current solution ***\n";
 
-
         if (subdomain == 0) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(this_disp_[0], "curr_disp0", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(
+              this_disp_[0], "curr_disp0", num_iter_);
         } else if (subdomain == 1) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(this_disp_[1], "curr_disp1", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(
+              this_disp_[1], "curr_disp1", num_iter_);
         }
 #endif  // DEBUG
 
@@ -1018,9 +1021,11 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         fos << "\n*** Thyra: Solution difference ***\n";
 
         if (subdomain == 0) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(disp_diff_rcp, "disp_diff0", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(
+              disp_diff_rcp, "disp_diff0", num_iter_);
         } else if (subdomain == 1) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(disp_diff_rcp, "disp_diff1", num_iter_);
+          Albany::writeMatrixMarket<Thyra_MultiVector>(
+              disp_diff_rcp, "disp_diff1", num_iter_);
         }
 #endif  // DEBUG
 
@@ -1201,7 +1206,7 @@ SchwarzAlternating::setExplicitUpdateInitialGuessForSchwarz(
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
     auto& app = *apps_[subdomain];
 
-    Thyra_Vector& ic_disp   = *ics_disp_[subdomain];
+    Thyra_Vector& ic_disp = *ics_disp_[subdomain];
 
     Thyra_Vector& ic_velo = *ics_velo_[subdomain];
 
@@ -1295,13 +1300,13 @@ SchwarzAlternating::setDynamicICVecsAndDoOutput(ST const time) const
 
       // Update ics_disp_ and its time-derivatives
       ics_disp_[subdomain] = Thyra::createMember(disp_mv->col(0)->space());
-      Thyra::copy(*disp_mv->col(0), ics_disp_[subdomain].ptr()); 
+      Thyra::copy(*disp_mv->col(0), ics_disp_[subdomain].ptr());
 
-      ics_velo_[subdomain] = Thyra::createMember(disp_mv->col(1)->space()); 
-      Thyra::copy(*disp_mv->col(1), ics_velo_[subdomain].ptr()); 
+      ics_velo_[subdomain] = Thyra::createMember(disp_mv->col(1)->space());
+      Thyra::copy(*disp_mv->col(1), ics_velo_[subdomain].ptr());
 
-      ics_acce_[subdomain] = Thyra::createMember(disp_mv->col(2)->space()); 
-      Thyra::copy(*disp_mv->col(2), ics_acce_[subdomain].ptr()); 
+      ics_acce_[subdomain] = Thyra::createMember(disp_mv->col(2)->space());
+      Thyra::copy(*disp_mv->col(2), ics_acce_[subdomain].ptr());
 
       if (do_outputs_[subdomain] == true) {  // write solution to Exodus
 
@@ -1600,7 +1605,7 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
 
         // restore the solution in the discretization so the schwarz solver gets
         // the right boundary conditions!
-        Teuchos::RCP<Thyra_Vector const> disp_rcp_thyra = curr_disp_[subdomain]; 
+        Teuchos::RCP<Thyra_Vector const> disp_rcp_thyra = curr_disp_[subdomain];
         Teuchos::RCP<Albany::AbstractDiscretization> const& app_disc =
             app.getDiscretization();
 

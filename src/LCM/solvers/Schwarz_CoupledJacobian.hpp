@@ -29,7 +29,7 @@ class Schwarz_CoupledJacobian
 
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
   getThyraCoupledJacobian(
-      Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>>              jacs,
+      Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>>                jacs,
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const& ca) const;
 
  private:

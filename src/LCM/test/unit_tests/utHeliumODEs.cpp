@@ -261,8 +261,9 @@ TEUCHOS_UNIT_TEST(HeliumODEs, test1)
   discretizationParameterList->set<int>("Number Of Time Derivatives", 0);
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name", output_file);
-  Teuchos::RCP<const Thyra_VectorSpace> space = 
-    Albany::createLocallyReplicatedVectorSpace(workset_size * num_dims * num_nodes, commT); 
+  Teuchos::RCP<const Thyra_VectorSpace> space =
+      Albany::createLocallyReplicatedVectorSpace(
+          workset_size * num_dims * num_nodes, commT);
 
   Teuchos::RCP<Thyra_Vector> solution_vector = Thyra::createMember(space);
 
@@ -284,7 +285,7 @@ TEUCHOS_UNIT_TEST(HeliumODEs, test1)
       Teuchos::rcp(new Albany::STKDiscretization(
           discretizationParameterList, stkMeshStruct, commT));
   auto& stk_disc = static_cast<Albany::STKDiscretization&>(*discretization);
-  stk_disc.updateMesh(); 
+  stk_disc.updateMesh();
 
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager

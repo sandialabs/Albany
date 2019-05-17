@@ -7,41 +7,39 @@
 #if !defined(LCM_ConstitutiveDriverProblem_hpp)
 #define LCM_ConstitutiveDriverProblem_hpp
 
-#include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_RCP.hpp"
 
 #include "Albany_AbstractProblem.hpp"
 
-#include "PHAL_Workset.hpp"
-#include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Dimension.hpp"
+#include "PHAL_Workset.hpp"
 
-namespace Albany
-{
+namespace Albany {
 
 //------------------------------------------------------------------------------
 ///
 /// \brief Definition for the Constitutive Model Driver Problem
 ///
-class ConstitutiveDriverProblem: public Albany::AbstractProblem
+class ConstitutiveDriverProblem : public Albany::AbstractProblem
 {
-public:
-
+ public:
   typedef Kokkos::DynRankView<RealType, PHX::Device> FC;
 
   ///
   /// Default constructor
   ///
-  ConstitutiveDriverProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
-      const Teuchos::RCP<ParamLib>& param_lib,
-      const int num_dims,
-      Teuchos::RCP<const Teuchos::Comm<int>>& commT);
+  ConstitutiveDriverProblem(
+      const Teuchos::RCP<Teuchos::ParameterList>& params,
+      const Teuchos::RCP<ParamLib>&               param_lib,
+      const int                                   num_dims,
+      Teuchos::RCP<const Teuchos::Comm<int>>&     commT);
 
   ///
   /// Destructor
   ///
-  virtual
-  ~ConstitutiveDriverProblem();
+  virtual ~ConstitutiveDriverProblem();
 
   ///
   Teuchos::RCP<std::map<std::string, std::string>>
@@ -50,8 +48,7 @@ public:
   ///
   /// Return number of spatial dimensions
   ///
-  virtual
-  int
+  virtual int
   spatialDimension() const
   {
     return num_dims_;
@@ -61,28 +58,28 @@ public:
   /// Get boolean telling code if SDBCs are utilized
   ///
   virtual bool
-  useSDBCs() const {
+  useSDBCs() const
+  {
     return use_sdbcs_;
   }
-
 
   ///
   /// Build the PDE instantiations, boundary conditions, initial solution
   ///
-  virtual
-  void
-  buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>
-      meshSpecs,
-      StateManager& stateMgr);
+  virtual void
+  buildProblem(
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> meshSpecs,
+      StateManager&                                            stateMgr);
 
   ///
   /// Build evaluators
   ///
   virtual Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
-  buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecsStruct& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
+  buildEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>&      fm0,
+      const Albany::MeshSpecsStruct&              meshSpecs,
+      Albany::StateManager&                       stateMgr,
+      Albany::FieldManagerChoice                  fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
   ///
@@ -95,14 +92,12 @@ public:
   /// Retrieve the state data
   ///
   void
-  getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>>
-      old_state,
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>>
-      new_state) const;
+  getAllocatedStates(
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>> old_state,
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>> new_state) const;
 
   //----------------------------------------------------------------------------
-private:
-
+ private:
   ///
   /// Private to prohibit copying
   ///
@@ -111,23 +106,23 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  ConstitutiveDriverProblem& operator=(const ConstitutiveDriverProblem&);
+  ConstitutiveDriverProblem&
+  operator=(const ConstitutiveDriverProblem&);
 
   //----------------------------------------------------------------------------
-public:
-
+ public:
   ///
   /// Main problem setup routine.
   /// Not directly called, but indirectly by following functions
   ///
-  template<typename EvalT>
+  template <typename EvalT>
   Teuchos::RCP<const PHX::FieldTag>
-  constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecsStruct& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>&
-      responseList);
+  constructEvaluators(
+      PHX::FieldManager<PHAL::AlbanyTraits>&      fm0,
+      const Albany::MeshSpecsStruct&              meshSpecs,
+      Albany::StateManager&                       stateMgr,
+      Albany::FieldManagerChoice                  fmchoice,
+      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
   ///
   /// Setup for the dirichlet BCs
@@ -143,10 +138,9 @@ public:
       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
   //----------------------------------------------------------------------------
-protected:
-
+ protected:
   ///
-  ///Boolean marking whether SDBCs are used
+  /// Boolean marking whether SDBCs are used
   bool use_sdbcs_;
 
   ///
@@ -193,40 +187,39 @@ protected:
   /// new state data
   ///
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>> new_state_;
-
 };
 //------------------------------------------------------------------------------
-}
+}  // namespace Albany
 
-#include "Albany_Utils.hpp"
+#include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
-#include "Albany_EvaluatorUtils.hpp"
+#include "Albany_Utils.hpp"
 
+#include "FieldNameMap.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
-#include "PHAL_Source.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_ScatterResidual.hpp"
-#include "FieldNameMap.hpp"
+#include "PHAL_Source.hpp"
 
 #include "Time.hpp"
 
 // Constitutive Model Interface and parameters
-#include "Kinematics.hpp"
-#include "ConstitutiveModelInterface.hpp"
-#include "ConstitutiveModelParameters.hpp"
 #include "ConstitutiveModelDriver.hpp"
 #include "ConstitutiveModelDriverPre.hpp"
+#include "ConstitutiveModelInterface.hpp"
+#include "ConstitutiveModelParameters.hpp"
 #include "FirstPK.hpp"
+#include "Kinematics.hpp"
 
 //------------------------------------------------------------------------------
-template<typename EvalT>
+template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Albany::ConstitutiveDriverProblem::
-constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-    const Albany::MeshSpecsStruct& meshSpecs,
-    Albany::StateManager& stateMgr,
-    Albany::FieldManagerChoice fieldManagerChoice,
+Albany::ConstitutiveDriverProblem::constructEvaluators(
+    PHX::FieldManager<PHAL::AlbanyTraits>&      fm0,
+    const Albany::MeshSpecsStruct&              meshSpecs,
+    Albany::StateManager&                       stateMgr,
+    Albany::FieldManagerChoice                  fieldManagerChoice,
     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Collect problem-specific response parameters
@@ -238,55 +231,50 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // get the name of the material model to be used (and make sure there is one)
   std::string material_model_name =
-    material_db_->
-    getElementBlockSublist(eb_name, "Material Model").
-    get<std::string>("Model Name");
+      material_db_->getElementBlockSublist(eb_name, "Material Model")
+          .get<std::string>("Model Name");
   TEUCHOS_TEST_FOR_EXCEPTION(
       material_model_name.length() == 0,
       std::logic_error,
-      "A material model must be defined for block: "
-          + eb_name);
+      "A material model must be defined for block: " + eb_name);
 
   // Note that these are the volume element quantities
-  num_nodes_ = 1;
+  num_nodes_             = 1;
   const int workset_size = meshSpecs.worksetSize;
-  num_pts_ = 1;
-  num_vertices_ = num_nodes_;
+  num_pts_               = 1;
+  num_vertices_          = num_nodes_;
 
   *out << "Field Dimensions: Workset=" << workset_size
-       << ", Vertices= " << num_vertices_
-       << ", Nodes= " << num_nodes_
-       << ", QuadPts= " << num_pts_
-       << ", Dim= " << num_dims_ << std::endl;
+       << ", Vertices= " << num_vertices_ << ", Nodes= " << num_nodes_
+       << ", QuadPts= " << num_pts_ << ", Dim= " << num_dims_ << std::endl;
 
   // Construct standard FEM evaluators with standard field names
-  dl_ = Teuchos::rcp(new Albany::Layouts(workset_size,
-                                         num_vertices_,
-                                         num_nodes_,
-                                         num_pts_,
-                                         num_dims_));
-  std::string msg = "Data Layout Usage in Mechanics problems assume vecDim = num_dims_";
-  TEUCHOS_TEST_FOR_EXCEPTION(dl_->vectorAndGradientLayoutsAreEquivalent == false,
-                             std::logic_error,
-                             msg);
+  dl_ = Teuchos::rcp(new Albany::Layouts(
+      workset_size, num_vertices_, num_nodes_, num_pts_, num_dims_));
+  std::string msg =
+      "Data Layout Usage in Mechanics problems assume vecDim = num_dims_";
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      dl_->vectorAndGradientLayoutsAreEquivalent == false,
+      std::logic_error,
+      msg);
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl_);
-  bool supports_transient = true;
-  int offset = 0;
+  bool                                              supports_transient = true;
+  int                                               offset             = 0;
 
   // Define Field Names
   // generate the field name map to deal with outputing surface element info
-  LCM::FieldNameMap field_name_map(false);
+  LCM::FieldNameMap                                field_name_map(false);
   Teuchos::RCP<std::map<std::string, std::string>> fnm =
-    field_name_map.getMap();
-  std::string cauchy = (*fnm)["Cauchy_Stress"];
-  std::string firstPK = (*fnm)["FirstPK"];
-  std::string Fp = (*fnm)["Fp"];
-  std::string eqps = (*fnm)["eqps"];
+      field_name_map.getMap();
+  std::string cauchy      = (*fnm)["Cauchy_Stress"];
+  std::string firstPK     = (*fnm)["FirstPK"];
+  std::string Fp          = (*fnm)["Fp"];
+  std::string eqps        = (*fnm)["eqps"];
   std::string temperature = (*fnm)["Temperature"];
-  std::string pressure = (*fnm)["Pressure"];
+  std::string pressure    = (*fnm)["Pressure"];
   std::string mech_source = (*fnm)["Mechanical_Source"];
-  std::string defgrad = (*fnm)["F"];
-  std::string J = (*fnm)["J"];
+  std::string defgrad     = (*fnm)["F"];
+  std::string J           = (*fnm)["J"];
 
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits>> ev;
@@ -294,66 +282,65 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Register the solution and residual fields
   Teuchos::ArrayRCP<std::string> dof_names(1);
   Teuchos::ArrayRCP<std::string> resid_names(1);
-  dof_names[0] = "driver deformation gradient";
+  dof_names[0]   = "driver deformation gradient";
   resid_names[0] = "driver scatter";
 
-  { // Gather Solution
+  {  // Gather Solution
     Teuchos::RCP<Teuchos::ParameterList> p =
-      Teuchos::rcp(new Teuchos::ParameterList("Gather Solution"));
-    p->set< Teuchos::ArrayRCP<std::string>>("Solution Names", dof_names);
+        Teuchos::rcp(new Teuchos::ParameterList("Gather Solution"));
+    p->set<Teuchos::ArrayRCP<std::string>>("Solution Names", dof_names);
 
     p->set<int>("Tensor Rank", 2);
 
     p->set<int>("Offset of First DOF", 0);
     p->set<bool>("Disable Transient", true);
 
-    ev = Teuchos::rcp(new PHAL::GatherSolution<EvalT,PHAL::AlbanyTraits>(*p,dl_));
+    ev = Teuchos::rcp(
+        new PHAL::GatherSolution<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Time
-    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-        new Teuchos::ParameterList("Time"));
+  {  // Time
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Time"));
     p->set<std::string>("Time Name", "Time");
     p->set<std::string>("Delta Time Name", "Delta Time");
     p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "Workset Scalar Data Layout",
-        dl_->workset_scalar);
+        "Workset Scalar Data Layout", dl_->workset_scalar);
     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
     p->set<bool>("Disable Transient", true);
     ev = Teuchos::rcp(new LCM::Time<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Time",
-        dl_->workset_scalar,
-        dl_->dummy,
-        eb_name,
-        "scalar",
-        0.0,
-        true);
+    p = stateMgr.registerStateVariable(
+        "Time", dl_->workset_scalar, dl_->dummy, eb_name, "scalar", 0.0, true);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Constitutive Model Driver Preprocessor
+  {  // Constitutive Model Driver Preprocessor
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList("Constitutive Model Driver Preprocessor"));
 
-    p->set<Teuchos::ParameterList>("Driver Params", params->sublist("Constitutive Model Driver Parameters"));
+    p->set<Teuchos::ParameterList>(
+        "Driver Params",
+        params->sublist("Constitutive Model Driver Parameters"));
     p->set<std::string>("Solution Name", dof_names[0]);
     p->set<std::string>("Prescribed F Name", "Prescribed F");
     p->set<std::string>("Time Name", "Time");
     p->set<std::string>("F Name", defgrad);
     p->set<std::string>("J Name", J);
 
-    ev=Teuchos::rcp(new LCM::ConstitutiveModelDriverPre<EvalT, PHAL::AlbanyTraits>(*p,dl_));
+    ev = Teuchos::rcp(
+        new LCM::ConstitutiveModelDriverPre<EvalT, PHAL::AlbanyTraits>(
+            *p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // Constitutive Model Parameters
+  {  // Constitutive Model Parameters
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList("Constitutive Model Parameters"));
-    std::string matName = material_db_->getElementBlockParam<std::string>(
-        eb_name, "material");
+    std::string matName =
+        material_db_->getElementBlockParam<std::string>(eb_name, "material");
     Teuchos::ParameterList& param_list =
         material_db_->getElementBlockSublist(eb_name, matName);
     if (have_temperature_) {
@@ -365,16 +352,17 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
     Teuchos::RCP<LCM::ConstitutiveModelParameters<EvalT, PHAL::AlbanyTraits>>
-    cmpEv =
-      Teuchos::rcp(new LCM::ConstitutiveModelParameters<EvalT, PHAL::AlbanyTraits>(*p,dl_));
+        cmpEv = Teuchos::rcp(
+            new LCM::ConstitutiveModelParameters<EvalT, PHAL::AlbanyTraits>(
+                *p, dl_));
     fm0.template registerEvaluator<EvalT>(cmpEv);
   }
 
-  { // Constitutive Model Interface
+  {  // Constitutive Model Interface
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList("Constitutive Model Interface"));
-    std::string matName = material_db_->getElementBlockParam<std::string>(
-        eb_name, "material");
+    std::string matName =
+        material_db_->getElementBlockParam<std::string>(eb_name, "material");
     Teuchos::ParameterList& param_list =
         material_db_->getElementBlockSublist(eb_name, matName);
 
@@ -386,19 +374,20 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
 
     param_list.set<Teuchos::RCP<std::map<std::string, std::string>>>(
-        "Name Map",
-        fnm);
+        "Name Map", fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
     Teuchos::RCP<LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>>
-    cmiEv =
-        Teuchos::rcp(new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(*p,dl_));
+        cmiEv = Teuchos::rcp(
+            new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(
+                *p, dl_));
     fm0.template registerEvaluator<EvalT>(cmiEv);
 
     // register state variables
     for (int sv(0); sv < cmiEv->getNumStateVars(); ++sv) {
       cmiEv->fillStateVariableStruct(sv);
-      p = stateMgr.registerStateVariable(cmiEv->getName(),
+      p = stateMgr.registerStateVariable(
+          cmiEv->getName(),
           cmiEv->getLayout(),
           dl_->dummy,
           eb_name,
@@ -406,39 +395,39 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           cmiEv->getInitValue(),
           cmiEv->getStateFlag(),
           cmiEv->getOutputFlag());
-      ev = Teuchos::rcp(
-          new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      ev =
+          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
 
-  { // Constitutive Model Driver
-    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-        new Teuchos::ParameterList("Constitutive Model Driver"));
+  {  // Constitutive Model Driver
+    Teuchos::RCP<Teuchos::ParameterList> p =
+        Teuchos::rcp(new Teuchos::ParameterList("Constitutive Model Driver"));
     p->set<std::string>("Residual Name", resid_names[0]);
     p->set<std::string>("F Name", defgrad);
     p->set<std::string>("Prescribed F Name", "Prescribed F");
     p->set<std::string>("Stress Name", cauchy);
     Teuchos::RCP<LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits>>
-    cmdEv =
-        Teuchos::rcp(new LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits>(*p,dl_));
+        cmdEv = Teuchos::rcp(
+            new LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits>(
+                *p, dl_));
     fm0.template registerEvaluator<EvalT>(cmdEv);
   }
 
-
-  { // Scatter Residual
+  {  // Scatter Residual
     Teuchos::RCP<Teuchos::ParameterList> p =
-      Teuchos::rcp(new Teuchos::ParameterList("Scatter Residual"));
-    p->set< Teuchos::ArrayRCP<std::string>>("Residual Names", resid_names);
+        Teuchos::rcp(new Teuchos::ParameterList("Scatter Residual"));
+    p->set<Teuchos::ArrayRCP<std::string>>("Residual Names", resid_names);
     p->set<int>("Tensor Rank", 2);
     p->set<int>("Offset of First DOF", 0);
     p->set<bool>("Disable Transient", true);
-    ev = Teuchos::rcp(new PHAL::ScatterResidual<EvalT, PHAL::AlbanyTraits>(*p,dl_));
+    ev = Teuchos::rcp(
+        new PHAL::ScatterResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
-
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
 
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl_->dummy);
@@ -446,13 +435,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ret_tag = res_tag.clone();
 
     return ret_tag;
-  }
-  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-
+  } else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl_);
-    return
-    respUtils.constructResponses(fm0, *responseList, pFromProb, stateMgr);
-
+    return respUtils.constructResponses(
+        fm0, *responseList, pFromProb, stateMgr);
   }
 
   return Teuchos::null;

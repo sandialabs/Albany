@@ -118,7 +118,7 @@ main(int ac, char* av[])
   Albany::STKDiscretization& stk_discretization =
       static_cast<Albany::STKDiscretization&>(*discretization_ptr);
 
-  Teuchos::RCP<Thyra_Vector> solution_field = 
+  Teuchos::RCP<Thyra_Vector> solution_field =
       stk_discretization.getSolutionField();
 
   // Write final mesh to exodus file

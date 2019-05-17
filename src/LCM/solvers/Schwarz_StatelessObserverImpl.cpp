@@ -49,9 +49,10 @@ StatelessObserverImpl::getTimeParamValueOrDefault(RealType default_value) const
 //
 void
 StatelessObserverImpl::observeSolution(
-    double                                            stamp,
+    double                                           stamp,
     Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> non_overlapped_solution,
-    Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> non_overlapped_solution_dot)
+    Teuchos::Array<Teuchos::RCP<Thyra_Vector const>>
+        non_overlapped_solution_dot)
 {
   Teuchos::TimeMonitor timer(*sol_out_time_);
 

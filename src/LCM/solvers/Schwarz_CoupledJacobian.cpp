@@ -36,7 +36,7 @@ Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian() { return; }
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
 Schwarz_CoupledJacobian::getThyraCoupledJacobian(
-    Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>>              jacs,
+    Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>>                jacs,
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const& ca) const
 {
   auto const block_dim = jacs.size();
@@ -45,10 +45,10 @@ Schwarz_CoupledJacobian::getThyraCoupledJacobian(
   char name[5];  // create string for file name
   for (auto i = 0; i < block_dim; ++i) {
     sprintf(name, "Jac%02d", i);
-    std::string name_string; 
-    name_string.assign(name_string, 5); 
-    auto jac = jacs[i]; 
-    Albany::writeMatrixMarket(jac, name_string, mm_counter); 
+    std::string name_string;
+    name_string.assign(name_string, 5);
+    auto jac = jacs[i];
+    Albany::writeMatrixMarket(jac, name_string, mm_counter);
   }
   mm_counter++;
 #endif  // WRITE_TO_MATRIX_MARKET
@@ -76,14 +76,14 @@ Schwarz_CoupledJacobian::getThyraCoupledJacobian(
         Teuchos::RCP<Thyra_LinearOp> exp_jac =
             jac_boundary->getExplicitOperator();
 
-        Teuchos::RCP<Thyra::LinearOpBase<ST>> block = exp_jac; 
+        Teuchos::RCP<Thyra::LinearOpBase<ST>> block = exp_jac;
 
 #else
 
         Teuchos::RCP<Thyra_LinearOp> jac_boundary =
             Teuchos::rcp(new Schwarz_BoundaryJacobian(comm_, ca, jacs, i, j));
 
-        Teuchos::RCP<Thyra::LinearOpBase<ST>> block = jac_boundary; 
+        Teuchos::RCP<Thyra::LinearOpBase<ST>> block = jac_boundary;
 
 #endif  // EXPLICIT_OFF_DIAGONAL
 

@@ -18,9 +18,10 @@ class ObserverImpl : public StatelessObserverImpl
 
   virtual void
   observeSolution(
-      double                                            stamp,
+      double                                           stamp,
       Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> non_overlapped_solution,
-      Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> non_overlapped_solution_dot);
+      Teuchos::Array<Teuchos::RCP<Thyra_Vector const>>
+          non_overlapped_solution_dot);
 
   virtual ~ObserverImpl();
 

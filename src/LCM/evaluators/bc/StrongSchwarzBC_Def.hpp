@@ -213,7 +213,8 @@ StrongSchwarzBC_Base<EvalT, Traits>::computeBCs(
   Teuchos::ArrayRCP<double> const& coupled_coordinates =
       coupled_stk_disc->getCoordinates();
 
-  Teuchos::ArrayRCP<ST const> coupled_solution_view = Albany::getLocalData(coupled_solution);
+  Teuchos::ArrayRCP<ST const> coupled_solution_view =
+      Albany::getLocalData(coupled_solution);
 
   Teuchos::RCP<Thyra_VectorSpace const> coupled_overlap_node_vs =
       coupled_stk_disc->getOverlapNodeVectorSpace();
@@ -259,7 +260,8 @@ StrongSchwarzBC_Base<EvalT, Traits>::computeBCs(
       for (auto node = 0; node < coupled_node_count; ++node) {
         auto const global_node_id = ws_elem_to_node_id[workset][element][node];
 
-        auto const local_node_id = Albany::getLocalElement(coupled_overlap_node_vs,global_node_id); 
+        auto const local_node_id =
+            Albany::getLocalElement(coupled_overlap_node_vs, global_node_id);
 
         double* const pcoord =
             &(coupled_coordinates[coupled_dimension * local_node_id]);
@@ -548,7 +550,7 @@ StrongSchwarzBC_Base<EvalT, Traits>::doDTKInterpolation(
 #endif  // ALBANY_DTK
 
 //
-// Fill solution with Dirichlet values 
+// Fill solution with Dirichlet values
 //
 template <typename StrongSchwarzBC, typename Traits>
 void
@@ -572,8 +574,8 @@ fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
           Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*const_disp)) :
           Teuchos::null;
 
-  auto disp_view = 
-      has_disp == true ? Albany::getNonconstLocalData(disp) : Teuchos::null; 
+  auto disp_view =
+      has_disp == true ? Albany::getNonconstLocalData(disp) : Teuchos::null;
 
   // Velocity
   Teuchos::RCP<Thyra_Vector> velo =
@@ -581,8 +583,8 @@ fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
           Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*const_velo)) :
           Teuchos::null;
 
-  auto velo_view = 
-      has_velo == true ? Albany::getNonconstLocalData(velo) : Teuchos::null; 
+  auto velo_view =
+      has_velo == true ? Albany::getNonconstLocalData(velo) : Teuchos::null;
 
   // Acceleration
   Teuchos::RCP<Thyra_Vector> acce =
@@ -590,8 +592,8 @@ fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
           Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*const_acce)) :
           Teuchos::null;
 
-  auto acce_view = 
-      has_acce == true ? Albany::getNonconstLocalData(acce) : Teuchos::null; 
+  auto acce_view =
+      has_acce == true ? Albany::getNonconstLocalData(acce) : Teuchos::null;
 
   std::vector<std::vector<int>> const& ns_nodes =
       dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
@@ -712,9 +714,9 @@ template <typename StrongSchwarzBC, typename Traits>
 void
 fillResidual(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
 {
-  //Residual
-  Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
-  Teuchos::ArrayRCP<ST> f_view = Albany::getNonconstLocalData(f);
+  // Residual
+  Teuchos::RCP<Thyra_Vector> f      = dirichlet_workset.f;
+  Teuchos::ArrayRCP<ST>      f_view = Albany::getNonconstLocalData(f);
 
   std::vector<std::vector<int>> const& ns_nodes =
       dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
@@ -732,15 +734,9 @@ fillResidual(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
 
     std::set<int> const& fixed_dofs = dirichlet_workset.fixed_dofs_;
 
-    if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
-      f_view[x_dof]    = 0.0;
-    }
-    if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
-      f_view[y_dof]    = 0.0;
-    }
-    if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
-      f_view[z_dof]    = 0.0;
-    }
+    if (fixed_dofs.find(x_dof) == fixed_dofs.end()) { f_view[x_dof] = 0.0; }
+    if (fixed_dofs.find(y_dof) == fixed_dofs.end()) { f_view[y_dof] = 0.0; }
+    if (fixed_dofs.find(z_dof) == fixed_dofs.end()) { f_view[z_dof] = 0.0; }
   }
   return;
 }
@@ -764,8 +760,9 @@ StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
     typename Traits::EvalData dirichlet_workset)
 {
 #ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT StrongSchwarzBC preEvaluate Residual\n"; 
+  Teuchos::RCP<Teuchos::FancyOStream> out =
+      Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT StrongSchwarzBC preEvaluate Residual\n";
 #endif
   fillSolution<StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>, Traits>(
       *this, dirichlet_workset);

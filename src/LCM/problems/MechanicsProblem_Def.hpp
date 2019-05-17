@@ -22,9 +22,9 @@
 #include "MechanicsResidual.hpp"
 #include "SurfaceBasis.hpp"
 //#include "SurfaceScalarGradientOperator.hpp"
+#include "SurfaceScalarGradientOperatorHydroStress.hpp"
 #include "SurfaceScalarGradientOperatorPorePressure.hpp"
 #include "SurfaceScalarGradientOperatorTransport.hpp"
-#include "SurfaceScalarGradientOperatorHydroStress.hpp"
 #include "SurfaceScalarJump.hpp"
 #include "SurfaceVectorGradient.hpp"
 #include "SurfaceVectorJump.hpp"
@@ -549,8 +549,8 @@ MechanicsProblem::constructEvaluators(
               false, dof_names, offset));
     }
 
-    if (have_mech_eq_ == false) { 
-       fm0.template registerEvaluator<EvalT>(
+    if (have_mech_eq_ == false) {
+      fm0.template registerEvaluator<EvalT>(
           evalUtils.constructGatherCoordinateVectorEvaluator());
     }
 
@@ -568,12 +568,11 @@ MechanicsProblem::constructEvaluators(
           evalUtils.constructDOFGradInterpolationEvaluator(
               dof_names[0], offset));
 
-      if (have_mech_eq_ == false) { 
+      if (have_mech_eq_ == false) {
         fm0.template registerEvaluator<EvalT>(
             evalUtils.constructComputeBasisFunctionsEvaluator(
                 cellType, intrepidBasis, cubature));
       }
-
     }
 
     fm0.template registerEvaluator<EvalT>(
@@ -1395,8 +1394,9 @@ MechanicsProblem::constructEvaluators(
     if (have_pore_pressure_eq_ && surface_element) {
       // SurfaceScalarGradientOperatorPorePressure_Def.hpp
 
-      Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-          new Teuchos::ParameterList("Surface Scalar Gradient Operator Pore Pressure"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList(
+              "Surface Scalar Gradient Operator Pore Pressure"));
 
       // inputs
       p->set<RealType>("thickness", thickness);
@@ -1422,16 +1422,17 @@ MechanicsProblem::constructEvaluators(
       p->set<Teuchos::RCP<PHX::DataLayout>>(
           "QP Vector Data Layout", dl_->qp_vector);
 
-      ev = Teuchos::rcp(
-          new LCM::SurfaceScalarGradientOperatorPorePressure<EvalT, PHAL::AlbanyTraits>(
-              *p, dl_));
+      ev = Teuchos::rcp(new LCM::SurfaceScalarGradientOperatorPorePressure<
+                        EvalT,
+                        PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     if (have_transport_eq_ && surface_element) {
       // SurfaceScalarGradientOperatorTransport_Def.hpp
-      Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-          new Teuchos::ParameterList("Surface Scalar Gradient Operator Transport"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList(
+              "Surface Scalar Gradient Operator Transport"));
       // inputs
       p->set<RealType>("thickness", thickness);
       p->set<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>(
@@ -1452,20 +1453,22 @@ MechanicsProblem::constructEvaluators(
       p->set<Teuchos::RCP<PHX::DataLayout>>(
           "Node QP Vector Data Layout", dl_->node_qp_vector);
       p->set<std::string>(
-            "Surface Scalar Gradient Name", "Surface Transport Gradient");
+          "Surface Scalar Gradient Name", "Surface Transport Gradient");
       p->set<Teuchos::RCP<PHX::DataLayout>>(
           "QP Vector Data Layout", dl_->qp_vector);
 
       ev = Teuchos::rcp(
-          new LCM::SurfaceScalarGradientOperatorTransport<EvalT, PHAL::AlbanyTraits>(
-              *p, dl_));
+          new LCM::
+              SurfaceScalarGradientOperatorTransport<EvalT, PHAL::AlbanyTraits>(
+                  *p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     if (have_hydrostress_eq_ && surface_element) {
       // SurfaceScalarGradientOperatorHydroStress_Def.hpp
-      Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-          new Teuchos::ParameterList("Surface Scalar Gradient Operator HydroStress"));
+      Teuchos::RCP<Teuchos::ParameterList> p =
+          Teuchos::rcp(new Teuchos::ParameterList(
+              "Surface Scalar Gradient Operator HydroStress"));
       // inputs
       p->set<RealType>("thickness", thickness);
       p->set<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>(
@@ -1491,9 +1494,9 @@ MechanicsProblem::constructEvaluators(
       p->set<Teuchos::RCP<PHX::DataLayout>>(
           "QP Vector Data Layout", dl_->qp_vector);
 
-      ev = Teuchos::rcp(
-          new LCM::SurfaceScalarGradientOperatorHydroStress<EvalT, PHAL::AlbanyTraits>(
-              *p, dl_));
+      ev = Teuchos::rcp(new LCM::SurfaceScalarGradientOperatorHydroStress<
+                        EvalT,
+                        PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
@@ -1903,7 +1906,7 @@ MechanicsProblem::constructEvaluators(
         p->set<std::string>(
             "Unit Gradient QP Variable Name", "surf_Pressure Gradient");
       }
-      //p->set<std::string>(
+      // p->set<std::string>(
       //    "Gradient BF Name", "Surface Scalar Gradient Operator");
       p->set<std::string>(
           "Gradient BF Name", "Surface Scalar Gradient Operator Pore Pressure");
@@ -2137,10 +2140,11 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Output QP pore pressure
-    // IKT: commenting this out b/c it is a duplicate of earlier writing of porePressure
-    // to the output.  The current DAG rules in Trilinos as of 12/6/2018 do 
-    // not allow for such duplicates.  If Pore_Pressure at IPs is needed,
-    // one needs to create a different name for this field and uncomment code below.
+    // IKT: commenting this out b/c it is a duplicate of earlier writing of
+    // porePressure to the output.  The current DAG rules in Trilinos as of
+    // 12/6/2018 do not allow for such duplicates.  If Pore_Pressure at IPs is
+    // needed, one needs to create a different name for this field and uncomment
+    // code below.
 
     /*bool const output_ip = material_db_->getElementBlockParam<bool>(
         eb_name, "Output IP" + porePressure, false);

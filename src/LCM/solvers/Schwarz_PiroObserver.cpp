@@ -71,7 +71,7 @@ arrayVecsFromVec(Thyra::VectorBase<double> const& v, int n_models)
   for (int m = 0; m < n_models; ++m) {
     // Get each Thyra vector
     vs[m] = Teuchos::rcp_dynamic_cast<const Thyra_Vector>(
-                v_nonowning_rcp->getVectorBlock(m), true); 
+        v_nonowning_rcp->getVectorBlock(m), true);
   }
   return vs;
 }
@@ -93,7 +93,7 @@ Schwarz_PiroObserver::observeSolutionImpl(
   null_array.resize(n_models_);
   for (int m = 0; m < n_models_; m++) { null_array[m] = Teuchos::null; }
 
-  impl_->observeSolution(default_stamp, solutions, null_array); 
+  impl_->observeSolution(default_stamp, solutions, null_array);
 }
 
 //
@@ -111,7 +111,7 @@ Schwarz_PiroObserver::observeSolutionImpl(
   Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> solutions_dot =
       arrayVecsFromVec(solution_dot, n_models_);
 
-  impl_->observeSolution(default_stamp, solutions, solutions_dot); 
+  impl_->observeSolution(default_stamp, solutions, solutions_dot);
 }
 
 //

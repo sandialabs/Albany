@@ -136,7 +136,7 @@ main(int ac, char* av[])
       static_cast<Albany::STKDiscretization&>(*discretization_ptr);
 
   // Need solution for output call
-  Teuchos::RCP<Thyra_Vector> solution_field = 
+  Teuchos::RCP<Thyra_Vector> solution_field =
       stk_discretization.getSolutionField();
 
   // second arg to output is (pseudo)time

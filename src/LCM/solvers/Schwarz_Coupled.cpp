@@ -31,7 +31,7 @@ namespace LCM {
 SchwarzCoupled::SchwarzCoupled(
     Teuchos::RCP<Teuchos::ParameterList> const&   app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const& comm,
-    Teuchos::RCP<Thyra_Vector const> const&      initial_guess,
+    Teuchos::RCP<Thyra_Vector const> const&       initial_guess,
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const& lowsfb)
     : supports_xdot_(false)
 {
@@ -39,7 +39,8 @@ SchwarzCoupled::SchwarzCoupled(
 
   lowsfb_ = lowsfb;
 
-  //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
+  // IK, 2/11/15: I am assuming for now we don't have any distributed
+  // parameters.
   num_dist_params_total_ = 0;
 
   // Get "Coupled Schwarz" parameter sublist
@@ -321,7 +322,8 @@ SchwarzCoupled::SchwarzCoupled(
 
   precs_.resize(num_models_);
 
-  Teuchos::Array<Teuchos::RCP<Thyra_VectorSpace const>> disc_overlap_vss(num_models_);
+  Teuchos::Array<Teuchos::RCP<Thyra_VectorSpace const>> disc_overlap_vss(
+      num_models_);
 
   material_dbs_.resize(num_models_);
 
@@ -424,30 +426,31 @@ SchwarzCoupled::SchwarzCoupled(
     apps_[m] = Teuchos::rcp(new Albany::Application(
         comm, model_app_params_[m].create_weak(), initial_guess, true));
 
-    int num_sol_vectors = apps_[m]->getAdaptSolMgr()->getInitialSolution()->domain()->dim(); 
+    int num_sol_vectors =
+        apps_[m]->getAdaptSolMgr()->getInitialSolution()->domain()->dim();
 
     if (num_sol_vectors > 1)  // have x dot
       supports_xdot_ = true;
 
     // Create model evaluator
-    models_[m] = Teuchos::rcp( new Albany::ModelEvaluator(apps_[m], model_app_params_[m].create_weak()) );
+    models_[m] = Teuchos::rcp(new Albany::ModelEvaluator(
+        apps_[m], model_app_params_[m].create_weak()));
 
     // create array of individual model jacobians
     Teuchos::RCP<Thyra_LinearOp> const jac_temp =
         Teuchos::nonnull(models_[m]->create_W_op()) ?
             models_[m]->create_W_op() :
             Teuchos::null;
-    
+
     jacs_[m] = Teuchos::nonnull(jac_temp) ?
                    Teuchos::rcp_dynamic_cast<Thyra_LinearOp>(jac_temp, true) :
-                   Teuchos::null; 
+                   Teuchos::null;
 
     // create array of individual model preconditioners
     // these will have same graph as Jacobians for now
     precs_[m] = Teuchos::nonnull(jac_temp) ?
-                   Teuchos::rcp_dynamic_cast<Thyra_LinearOp>(jac_temp, true) :
-                   Teuchos::null; 
-
+                    Teuchos::rcp_dynamic_cast<Thyra_LinearOp>(jac_temp, true) :
+                    Teuchos::null;
 
     if (Albany::isFillActive(precs_[m])) { Albany::fillComplete(precs_[m]); }
   }
@@ -563,9 +566,7 @@ SchwarzCoupled::getThyraRangeSpace() const
     // loop over all vectors and build the vector space
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
 
-    for (auto m = 0; m < num_models_; ++m) {
-      vs_array.push_back(disc_vss_[m]); 
-    }
+    for (auto m = 0; m < num_models_; ++m) { vs_array.push_back(disc_vss_[m]); }
 
     range_space_ = Thyra::productVectorSpace<ST>(vs_array);
   }
@@ -579,9 +580,7 @@ SchwarzCoupled::getThyraDomainSpace() const
     // loop over all vectors and build the vector space
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
 
-    for (auto m = 0; m < num_models_; ++m) {
-      vs_array.push_back( disc_vss_[m]); 
-    }
+    for (auto m = 0; m < num_models_; ++m) { vs_array.push_back(disc_vss_[m]); }
 
     domain_space_ = Thyra::productVectorSpace<ST>(vs_array);
   }
@@ -598,7 +597,7 @@ SchwarzCoupled::getThyraResponseSpace(int l) const
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
 
     for (auto m = 0; m < num_models_; ++m) {
-      vs_array.push_back( apps_[m]->getResponse(l)->responseVectorSpace()); 
+      vs_array.push_back(apps_[m]->getResponse(l)->responseVectorSpace());
     }
 
     response_space_ = Thyra::productVectorSpace<ST>(vs_array);
@@ -739,7 +738,7 @@ SchwarzCoupled::createInArgs() const
 void
 SchwarzCoupled::reportFinalPoint(
     Thyra::ModelEvaluatorBase::InArgs<ST> const& /* final_point */,
-    bool const                                   /* was_solved */)
+    bool const /* was_solved */)
 {
   ALBANY_ASSERT(false, "Calling reportFinalPoint");
 }
@@ -752,9 +751,7 @@ SchwarzCoupled::allocateVectors()
   Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> spaces(
       num_models_);
 
-  for (auto m = 0; m < num_models_; ++m) {
-    spaces[m] = disc_vss_[m]; 
-  }
+  for (auto m = 0; m < num_models_; ++m) { spaces[m] = disc_vss_[m]; }
 
   Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const> space =
       Thyra::productVectorSpace<ST>(spaces);
@@ -770,18 +767,18 @@ SchwarzCoupled::allocateVectors()
     Teuchos::RCP<Thyra_MultiVector const> const xMV =
         apps_[m]->getAdaptSolMgr()->getInitialSolution();
 
-    Teuchos::RCP<Thyra_Vector> xT_vec = Thyra::createMember(spaces[m]); 
-    Thyra::copy(*xMV->col(0), xT_vec.ptr()); 
-    xT_vecs[m] = xT_vec; 
+    Teuchos::RCP<Thyra_Vector> xT_vec = Thyra::createMember(spaces[m]);
+    Thyra::copy(*xMV->col(0), xT_vec.ptr());
+    xT_vecs[m] = xT_vec;
 
     // Error if xdot isn't around
     // ALBANY_ASSERT(xMV->getNumVectors() >= 2, "Time derivative is not
     // present.");
 
     if (supports_xdot_) {
-      Teuchos::RCP<Thyra_Vector> x_dotT_vec = Thyra::createMember(spaces[m]); 
-      Thyra::copy(*xMV->col(1), x_dotT_vec.ptr()); 
-      x_dotT_vecs[m] = x_dotT_vec; 
+      Teuchos::RCP<Thyra_Vector> x_dotT_vec = Thyra::createMember(spaces[m]);
+      Thyra::copy(*xMV->col(1), x_dotT_vec.ptr());
+      x_dotT_vecs[m] = x_dotT_vec;
     }
   }
 
@@ -882,8 +879,8 @@ SchwarzCoupled::evalModelImpl(
 
   // Get parameters
   for (auto l = 0; l < num_params_total_; ++l) {
-    //get p from in_args for each parameter. Throw if cast fails.
-    auto p = Albany::getConstProductVector(in_args.get_p(l),true);
+    // get p from in_args for each parameter. Throw if cast fails.
+    auto p = Albany::getConstProductVector(in_args.get_p(l), true);
 
     // Don't set it if there is nothing. Avoid null pointer.
     if (p.is_null()) { continue; }
@@ -1005,8 +1002,7 @@ SchwarzCoupled::evalModelImpl(
     // separate function, especially as we implement more preconditioners.
     if (!W_prec_out.is_null()) {
       for (auto m = 0; m < num_models_; ++m) {
-        if (!Albany::isFillActive(precs_[m]))
-          Albany::resumeFill(precs_[m]);
+        if (!Albany::isFillActive(precs_[m])) Albany::resumeFill(precs_[m]);
         if (mf_prec_type_ == JACOBI) {
           // With matrix-free, W_op_out is null, so computeJacobian does not
           // get called earlier.  We need to call it here to get the Jacobians.
@@ -1022,23 +1018,28 @@ SchwarzCoupled::evalModelImpl(
               fs_out[m],
               jacs_[m]);
           // Get diagonal of jacs_[m]
-          Teuchos::RCP<Thyra_Vector> diag = Thyra::createMember(jacs_[m]->range());
-          Albany::getDiagonalCopy(jacs_[m],diag); 
+          Teuchos::RCP<Thyra_Vector> diag =
+              Thyra::createMember(jacs_[m]->range());
+          Albany::getDiagonalCopy(jacs_[m], diag);
           // Take reciprocal of diagonal
-          Teuchos::RCP<Thyra_Vector> invdiag = Thyra::createMember(jacs_[m]->range()); 
+          Teuchos::RCP<Thyra_Vector> invdiag =
+              Thyra::createMember(jacs_[m]->range());
           invdiag->reciprocal(*diag);
-          auto invdiag_constView = Albany::getLocalData(Teuchos::rcp_dynamic_cast<const Thyra_Vector>(invdiag));
+          auto invdiag_constView = Albany::getLocalData(
+              Teuchos::rcp_dynamic_cast<const Thyra_Vector>(invdiag));
           // Zero out precs_[m]
-          Albany::resumeFill(precs_[m]); 
-          Albany::scale(precs_[m], 0.0); 
+          Albany::resumeFill(precs_[m]);
+          Albany::scale(precs_[m], 0.0);
           // Create Jacobi preconditioner
-          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
-            GO global_row = Albany::getGlobalElement(jacs_[m]->range(),i);
-            Teuchos::Array<ST>        matrixEntriesT(1);
+          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range());
+               ++i) {
+            GO global_row = Albany::getGlobalElement(jacs_[m]->range(), i);
+            Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = invdiag_constView[i];
             matrixIndicesT[0] = global_row;
-            Albany::replaceGlobalValues(precs_[m], global_row, matrixIndicesT(), matrixEntriesT());
+            Albany::replaceGlobalValues(
+                precs_[m], global_row, matrixIndicesT(), matrixEntriesT());
           }
         } else if (mf_prec_type_ == ABS_ROW_SUM) {
           // With matrix-free, W_op_outT is null, so computeJacobianT does not
@@ -1055,54 +1056,61 @@ SchwarzCoupled::evalModelImpl(
               fs_out[m],
               jacs_[m]);
           // Create vector to store absrowsum
-          Teuchos::RCP<Thyra_Vector> absrowsum = Thyra::createMember(jacs_[m]->range()); 
+          Teuchos::RCP<Thyra_Vector> absrowsum =
+              Thyra::createMember(jacs_[m]->range());
           absrowsum->assign(0.0);
           auto absrowsum_nonconstView = Albany::getNonconstLocalData(absrowsum);
           // Compute abs sum of each row and store in absrowsum vector
-          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
-            std::size_t NumEntries = Albany::getNumEntriesInLocalRow(jacs_[m], i); 
+          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range());
+               ++i) {
+            std::size_t NumEntries =
+                Albany::getNumEntriesInLocalRow(jacs_[m], i);
             Teuchos::Array<LO> Indices(NumEntries);
             Teuchos::Array<ST> Values(NumEntries);
             // Get local row
-            Albany::getLocalRowValues(jacs_[m], i, Indices, Values); 
+            Albany::getLocalRowValues(jacs_[m], i, Indices, Values);
             // Compute abs row rum
             for (std::size_t j = 0; j < NumEntries; j++)
               absrowsum_nonconstView[i] += std::abs(Values[j]);
           }
           // Invert absrowsum
-          Teuchos::RCP<Thyra_Vector> invabsrowsum = Thyra::createMember(jacs_[m]->range()); 
+          Teuchos::RCP<Thyra_Vector> invabsrowsum =
+              Thyra::createMember(jacs_[m]->range());
           invabsrowsum->reciprocal(*absrowsum);
-          auto invabsrowsum_constView = Albany::getLocalData(Teuchos::rcp_dynamic_cast<const Thyra_Vector>(invabsrowsum));
+          auto invabsrowsum_constView = Albany::getLocalData(
+              Teuchos::rcp_dynamic_cast<const Thyra_Vector>(invabsrowsum));
           // Zero out precs_[m]
-          Albany::resumeFill(precs_[m]); 
-          Albany::scale(precs_[m], 0.0); 
+          Albany::resumeFill(precs_[m]);
+          Albany::scale(precs_[m], 0.0);
           // Create diagonal abs row sum preconditioner
-          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
-            GO global_row = Albany::getGlobalElement(jacs_[m]->range(),i);
+          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range());
+               ++i) {
+            GO global_row = Albany::getGlobalElement(jacs_[m]->range(), i);
             Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = invabsrowsum_constView[i];
             matrixIndicesT[0] = global_row;
-            Albany::replaceGlobalValues(precs_[m], 
-                global_row, matrixIndicesT(), matrixEntriesT());
+            Albany::replaceGlobalValues(
+                precs_[m], global_row, matrixIndicesT(), matrixEntriesT());
           }
         } else if (mf_prec_type_ == ID) {
           // Create Identity
-          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range()); ++i) {
-            GO global_row = Albany::getGlobalElement(jacs_[m]->range(),i);
+          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range());
+               ++i) {
+            GO global_row = Albany::getGlobalElement(jacs_[m]->range(), i);
             Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = 1.0;
             matrixIndicesT[0] = global_row;
-            Albany::replaceGlobalValues(precs_[m], 
-                global_row, matrixIndicesT(), matrixEntriesT());
+            Albany::replaceGlobalValues(
+                precs_[m], global_row, matrixIndicesT(), matrixEntriesT());
           }
         }
         if (Albany::isFillActive(precs_[m])) {
-          Albany::fillComplete(precs_[m]); 
+          Albany::fillComplete(precs_[m]);
         }
       }
-      Schwarz_CoupledJacobian jac(comm_);
+      Schwarz_CoupledJacobian      jac(comm_);
       Teuchos::RCP<Thyra_LinearOp> W_op =
           jac.getThyraCoupledJacobian(precs_, apps_);
       Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec =

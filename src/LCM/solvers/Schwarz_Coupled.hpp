@@ -14,7 +14,6 @@
 #include "Thyra_DefaultProductVectorSpace.hpp"
 #include "Thyra_ModelEvaluatorDefaultBase.hpp"
 
-
 namespace LCM {
 
 ///
@@ -27,9 +26,8 @@ class SchwarzCoupled : public Thyra::ModelEvaluatorDefaultBase<ST>
   SchwarzCoupled(
       Teuchos::RCP<Teuchos::ParameterList> const&   app_params,
       Teuchos::RCP<Teuchos::Comm<int> const> const& comm,
-      Teuchos::RCP<Thyra_Vector const> const&      initial_guess,
-      Teuchos::RCP<Thyra_LOWS_Factory const> const&
-          lowsfb);
+      Teuchos::RCP<Thyra_Vector const> const&       initial_guess,
+      Teuchos::RCP<Thyra_LOWS_Factory const> const& lowsfb);
 
   /// Destructor
   ~SchwarzCoupled() = default;
@@ -81,9 +79,7 @@ class SchwarzCoupled : public Thyra::ModelEvaluatorDefaultBase<ST>
   createInArgs() const;
 
   void
-  reportFinalPoint(
-      Thyra_InArgs const& final_point,
-      bool const                                   was_solved);
+  reportFinalPoint(Thyra_InArgs const& final_point, bool const was_solved);
 
   void
   allocateVectors();
@@ -129,9 +125,8 @@ class SchwarzCoupled : public Thyra::ModelEvaluatorDefaultBase<ST>
 
   /// Evaluate model on InArgs
   void
-  evalModelImpl(
-      Thyra_InArgs const&  in_args,
-      Thyra_OutArgs const& out_args) const;
+  evalModelImpl(Thyra_InArgs const& in_args, Thyra_OutArgs const& out_args)
+      const;
 
  private:
   Teuchos::RCP<Teuchos::ParameterList const>
@@ -188,8 +183,7 @@ class SchwarzCoupled : public Thyra::ModelEvaluatorDefaultBase<ST>
 
   mutable Teuchos::Array<Thyra_InArgs> solver_inargs_;
 
-  mutable Teuchos::Array<Thyra_OutArgs>
-      solver_outargs_;
+  mutable Teuchos::Array<Thyra_OutArgs> solver_outargs_;
 
   bool w_prec_supports_;
 
