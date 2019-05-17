@@ -352,7 +352,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 #else
   if(bt == "NONE") bt = "Tpetra";
   TEUCHOS_TEST_FOR_EXCEPTION(bt == "Epetra", Teuchos::Exceptions::InvalidArgument,
-                             "Error! CMake option ENABLE_MPAS_EPETRA must be ON in order to perform an Epetra run.\n");
+                             "Error! ALBANY_EPETRA must be defined in order to perform an Epetra run.\n");
 #endif
 
   if (bt=="Tpetra") {
