@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #ifdef ALBANY_TIMER
 #include <chrono>
 #endif
@@ -11,7 +12,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "PHAL_ScatterResidual.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_Macros.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
@@ -31,8 +32,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
     fieldName = p.get<std::string>("Scatter Field Name");
   else fieldName = "Scatter";
 
-  scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
-    (fieldName, dl->dummy));
+  scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
 
   Teuchos::ArrayRCP<std::string> names;
   if (p.isType<Teuchos::ArrayRCP<std::string>>("Residual Names")) {
@@ -46,8 +46,8 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 
   tensorRank = p.get<int>("Tensor Rank");
 
-  // scalar
   if (tensorRank == 0 ) {
+    // scalar
     numFieldsBase = names.size();
     const std::size_t num_val = numFieldsBase;
     val.resize(num_val);
@@ -56,18 +56,14 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
       val[eq] = mdf;
       this->addDependentField(val[eq]);
     }
-  }
-  // vector
-  else
-  if (tensorRank == 1 ) {
+  } else if (tensorRank == 1 ) {
+    // vector
     PHX::MDField<ScalarT const,Cell,Node,Dim> mdf(names[0],dl->node_vector);
     valVec= mdf;
     this->addDependentField(valVec);
     numFieldsBase = dl->node_vector->extent(2);
-  }
-  // tensor
-  else
-  if (tensorRank == 2 ) {
+  } else if (tensorRank == 2 ) {
+    // tensor
     PHX::MDField<ScalarT const,Cell,Node,Dim,Dim> mdf(names[0],dl->node_tensor);
     valTensor = mdf;
     this->addDependentField(valTensor);
@@ -75,13 +71,16 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   }
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (tensorRank == 0)
+  if (tensorRank == 0) {
     val_kokkos.resize(numFieldsBase);
+  }
 #endif
 
-  if (p.isType<int>("Offset of First DOF"))
+  if (p.isType<int>("Offset of First DOF")) {
     offset = p.get<int>("Offset of First DOF");
-  else offset = 0;
+  } else {
+    offset = 0;
+  }
 
   this->addEvaluatedField(*scatter_operation);
 
@@ -95,17 +94,14 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   if (tensorRank == 0) {
-    for (std::size_t eq = 0; eq < numFieldsBase; ++eq)
+    for (std::size_t eq = 0; eq < numFieldsBase; ++eq) {
       this->utils.setFieldData(val[eq],fm);
+    }
     numNodes = val[0].extent(1);
-  }
-  else 
-  if (tensorRank == 1) {
+  } else  if (tensorRank == 1) {
     this->utils.setFieldData(valVec,fm);
     numNodes = valVec.extent(1);
-  }
-  else 
-  if (tensorRank == 2) {
+  } else  if (tensorRank == 2) {
     this->utils.setFieldData(valTensor,fm);
     numNodes = valTensor.extent(1);
   }
@@ -182,15 +178,13 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t eq = 0; eq < numFields; eq++)
           f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->val[eq])(cell,node);
     }
-  } else 
-  if (this->tensorRank == 1) {
+  } else if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
           f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->valVec)(cell,node,eq);
     }
-  } else
-  if (this->tensorRank == 2) {
+  } else if (this->tensorRank == 2) {
     int numDims = this->valTensor.extent(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node)
@@ -218,12 +212,10 @@ evaluateFields(typename Traits::EvalData workset)
 
     Kokkos::parallel_for(PHAL_ScatterResRank0_Policy(0,workset.numCells),*this);
     cudaCheckError();
-  }
-  else if (this->tensorRank == 1) {
+  } else if (this->tensorRank == 1) {
     Kokkos::parallel_for(PHAL_ScatterResRank1_Policy(0,workset.numCells),*this);
     cudaCheckError();
-  }
-  else if (this->tensorRank == 2) {
+  } else if (this->tensorRank == 2) {
     numDims = this->valTensor.extent(2);
     Kokkos::parallel_for(PHAL_ScatterResRank2_Policy(0,workset.numCells),*this);
     cudaCheckError();
@@ -276,7 +268,9 @@ operator() (const PHAL_ScatterJacRank0_Adjoint_Tag&, const int& cell) const
   LO col[500];
   LO row;
 
-  if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  if (nunk>500) {
+    Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  }
 
   for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -308,7 +302,9 @@ operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const
   LO col[500];
   ST vals[500];
 
-  if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  if (nunk>500) {
+    Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  }
 
   for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -350,7 +346,9 @@ operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const
   LO col[500];
   LO row;
 
-  if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  if (nunk>500) {
+    Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  }
 
   for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -383,7 +381,9 @@ operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const
   LO row;
   ST vals[500];
 
-  if (nunk>500) Kokkos::abort ("ERROR (ScatterResidual): nunk > 500");
+  if (nunk>500) {
+    Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  }
 
   for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -426,7 +426,9 @@ operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const
   LO col[500];
   LO row;
 
-  if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  if (nunk>500) {
+    Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  }
 
   for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -459,7 +461,9 @@ operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
   LO row;
   ST vals[500];
 
-  if (nunk>500) { Kokkos::abort("ERROR (ScatterResidual): nunk > 500"); }
+  if (nunk>500) {
+    Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
+  }
 
   for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -790,18 +794,19 @@ evaluateFields(typename Traits::EvalData workset)
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
-    auto overlap_map = Albany::getTpetraMap(workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space());
+    auto overlapVS = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
+    auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
       const int num_deriv = this->numNodes;//local_Vp.size()/this->numFields;
       for (int i=0; i<num_deriv; i++) {
-        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[i]);
+        const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[i]);
         LO base_id, ilayer;
         layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-        LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
+        const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+        const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
 
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
@@ -814,7 +819,7 @@ evaluateFields(typename Traits::EvalData workset)
               val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
-          const LO row = overlap_map->getLocalElement(ginode);
+          const LO row = Albany::getLocalElement(overlapVS,ginode);
           if(row >=0) {
             fpV_nonconst2dView[col][row] += val;
           }

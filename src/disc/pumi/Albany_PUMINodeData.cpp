@@ -7,5 +7,11 @@
 #include "Albany_PUMINodeData.hpp"
 #include "Albany_PUMINodeData_Def.hpp"
 
-PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS(Albany::PUMINodeData)
+namespace Albany
+{
 
+template class PUMINodeData<double, 1>;
+template class PUMINodeData<double, 2>;
+template class PUMINodeData<double, 3>;
+
+} // namespace Albany

@@ -13,10 +13,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2dsmall.e.2.0
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2dsmall.e.2.1
                ${CMAKE_CURRENT_BINARY_DIR}/2dsmall.e.2.1 COPYONLY)
 
-# Create symlink to AlbanyT for convenience
+# Create symlink to Albany for convenience
 if (ALBANY_IFPACK2)
   execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-    ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+    ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 endif()
 
 # 2. Name the test with the directory name
@@ -28,7 +28,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #if (ALBANY_CONTACT)
 #
 #   if (ALBANY_IFPACK2)
-#     add_test(${testName} ${AlbanyT.exe} input.yaml)
+#     add_test(${testName} ${Albany.exe} input.yaml)
 #   endif ()
 #
 #endif()

@@ -31,7 +31,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/check_comparisons.py
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${runtest.cmake} ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 
 #add_test(NAME Schwarz_${testName} COMMAND "python" "runtestT.py")
 
@@ -40,8 +40,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 SET(OUTFILE "Cubes_DBC.log")
 SET(PYTHON_FILE "check_comparisons.py") 
 add_test(NAME Schwarz_${testName}
-        COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+        COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
         -DTEST_NAME=Cubes -DTEST_ARGS=cubes.yaml -DMPIMNP=1
         -DLOGFILE=${OUTFILE} -DPY_FILE=${PYTHON_FILE}
         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+set_tests_properties(Schwarz_${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 

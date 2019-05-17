@@ -1,37 +1,30 @@
 # Name the test with the directory name
-get_filename_component(testDirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-set(testName ${testDirName})
-
-# 
-# 1. Copy input file from source to binary dir
-IF (ALBANY_EPETRA) 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3D.yaml ${CMAKE_CURRENT_BINARY_DIR}/mitchell3D.yaml COPYONLY)
-ENDIF() 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3DT.yaml ${CMAKE_CURRENT_BINARY_DIR}/mitchell3DT.yaml COPYONLY)
-# 2. Copy mesh files from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen     ${CMAKE_CURRENT_BINARY_DIR}/padded.gen COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen.4.0 ${CMAKE_CURRENT_BINARY_DIR}/padded.gen.4.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen.4.1 ${CMAKE_CURRENT_BINARY_DIR}/padded.gen.4.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen.4.2 ${CMAKE_CURRENT_BINARY_DIR}/padded.gen.4.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen.4.3 ${CMAKE_CURRENT_BINARY_DIR}/padded.gen.4.3 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.gen     ${CMAKE_CURRENT_BINARY_DIR}/cube.gen COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.gen.4.0 ${CMAKE_CURRENT_BINARY_DIR}/cube.gen.4.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.gen.4.1 ${CMAKE_CURRENT_BINARY_DIR}/cube.gen.4.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.gen.4.2 ${CMAKE_CURRENT_BINARY_DIR}/cube.gen.4.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.gen.4.3 ${CMAKE_CURRENT_BINARY_DIR}/cube.gen.4.3 COPYONLY)
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 IF (SEACAS_EPU AND SEACAS_EXODIFF)
-IF (ALBANY_EPETRA) 
-add_test(NAME ATO:${testName} 
-         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
-         -DTEST_NAME=${testName} -DTEST_ARGS=mitchell3D.yaml -DMPIMNP=${MPIMNP} 
-         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
-         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-ENDIF() 
-add_test(NAME ATOT:${testName} 
-         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
-         -DTEST_NAME=${testName} -DTEST_ARGS=mitchell3DT.yaml -DMPIMNP=${MPIMNP} 
-         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
-         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake)
+
+  # Copy mesh files from source to binary dir
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen     ${CMAKE_CURRENT_BINARY_DIR}/padded.gen COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen.4.0 ${CMAKE_CURRENT_BINARY_DIR}/padded.gen.4.0 COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen.4.1 ${CMAKE_CURRENT_BINARY_DIR}/padded.gen.4.1 COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen.4.2 ${CMAKE_CURRENT_BINARY_DIR}/padded.gen.4.2 COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen.4.3 ${CMAKE_CURRENT_BINARY_DIR}/padded.gen.4.3 COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.gen     ${CMAKE_CURRENT_BINARY_DIR}/cube.gen COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.gen.4.0 ${CMAKE_CURRENT_BINARY_DIR}/cube.gen.4.0 COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.gen.4.1 ${CMAKE_CURRENT_BINARY_DIR}/cube.gen.4.1 COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.gen.4.2 ${CMAKE_CURRENT_BINARY_DIR}/cube.gen.4.2 COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.gen.4.3 ${CMAKE_CURRENT_BINARY_DIR}/cube.gen.4.3 COPYONLY)
+
+  IF (ALBANY_EPETRA) 
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3D.yaml ${CMAKE_CURRENT_BINARY_DIR}/mitchell3D.yaml COPYONLY)
+    createExoDiffTest(${testName}_Epetra mitchell3D.yaml physics_0_padded)
+    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "ATO;Epetra;Forward")
+  ENDIF() 
+
+  IF (ALBANY_IFPACK2)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3DT.yaml ${CMAKE_CURRENT_BINARY_DIR}/mitchell3DT.yaml COPYONLY)
+    createExoDiffTest(${testName}_Tpetra mitchell3DT.yaml physics_0_paddedT)
+    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "ATO;Tpetra;Forward")
+  ENDIF()
 ENDIF()

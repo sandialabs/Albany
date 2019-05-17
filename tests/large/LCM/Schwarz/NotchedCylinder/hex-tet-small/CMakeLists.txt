@@ -45,11 +45,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-1.g.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-1.g.4.3 COPYONLY)
 endif()
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 if (ALBANY_DTK)
   add_test(NAME Schwarz_NotchedCylinder_${testName}_DTK_4proc COMMAND "python" "runtestT_dtk_4proc.py")
+  set_tests_properties(Schwarz_Notched_Cylinder_${testName}_DTK_4proc PROPERTIES LABELS "LCM;Tpetra;Forward")
 else()
   add_test(NAME Schwarz_NotchedCylinder_${testName} COMMAND "python" "runtestT.py")
+  set_tests_properties(Schwarz_NotchedCylinder_${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif()

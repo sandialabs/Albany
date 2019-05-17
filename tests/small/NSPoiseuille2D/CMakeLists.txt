@@ -1,10 +1,7 @@
+# Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-
-# 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/ns.exo COPYONLY)
+# Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns-m4-bKL.par
                ${CMAKE_CURRENT_BINARY_DIR}/ns-m4-bKL.par COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns-m4-bKL.par.4.0
@@ -15,50 +12,20 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns-m4-bKL.par.4.2
                ${CMAKE_CURRENT_BINARY_DIR}/ns-m4-bKL.par.4.2 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns-m4-bKL.par.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/ns-m4-bKL.par.4.3 COPYONLY)
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-# 3. Create the test with this name and standard executable
+
+# Create the tests
 if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe} input.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+
+  add_test(${testName}_Epetra ${Albany.exe} input.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Demo;Epetra;Forward")
 endif()
 
 if (ALBANY_IFPACK2)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
+
+  add_test(${testName}_Tpetra ${Albany.exe} inputT.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Demo;Tpetra;Forward")
 endif()
-
-# 5. Repeat process for Dakota problems if "dakota.in" exists
-if (ALBANY_DAKOTA)
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
-                   ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
-  add_test(${testName} ${AlbanyDakota.exe})
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-endif()
-
-# 6. Repeat process for Analysis problems if "inputAnalysis.yaml" exists
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.yaml COPYONLY)
-
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt
-                   ${CMAKE_CURRENT_BINARY_DIR}/Moocho.opt COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
-  add_test(${testName} ${AlbanyAnalysis.exe})
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)

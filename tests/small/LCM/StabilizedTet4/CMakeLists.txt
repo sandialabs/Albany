@@ -46,10 +46,11 @@ get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 4. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(NAME ${dirName}_galerkin COMMAND
-      ${CMAKE_COMMAND} "-DALBANY=${SerialAlbanyT.exe}" -DTESTNAME=galerkin
+      ${CMAKE_COMMAND} "-DALBANY=${SerialAlbany.exe}" -DTESTNAME=galerkin
       -DEXODIFF=${SEACAS_EXODIFF} -P runtest.cmake)
 # currently exodiff fails; look into it
 # add_test(NAME ${dirName}_stabilized COMMAND
-#     ${CMAKE_COMMAND} "-DALBANY=${SerialAlbanyT.exe}" -DTESTNAME=stabilized
+#     ${CMAKE_COMMAND} "-DALBANY=${SerialAlbany.exe}" -DTESTNAME=stabilized
 #     -DEXODIFF=${SEACAS_EXODIFF} -P runtest.cmake)
+  set_tests_properties(${dirName}_galerkin PROPERTIES LABELS "LCM;Tpetra;Forward")
 ENDIF()

@@ -10,6 +10,8 @@
 // Get all Albany configuration macros
 #include "Albany_config.h"
 
+#include "Albany_ScalarOrdinalTypes.hpp"
+
 // Get Kokkos node wrapper
 #include "KokkosCompat_ClassicNodeAPI_Wrapper.hpp"
 
@@ -28,16 +30,17 @@ namespace Albany
 // NOTE: Tpetra may use a different LO type (Albany uses int32, while tpetra uses int). When extracting local views/matrices,
 //       be careful about this. At worst, you may need to extract pointers and reinterpret_cast them.
 
-// A kokkos 1d view to be used for on-device kernels
-template<typename Scalar>
-using DeviceView1d = Kokkos::View<Scalar*, Kokkos::LayoutLeft, PHX::Device>;
+// kokkos 1d and 2d views to be used for on-device kernels
+template<typename Scalar, typename MemoryTraits = Kokkos::MemoryUnmanaged>
+using DeviceView1d = Kokkos::View<Scalar*, Kokkos::LayoutLeft, PHX::Device, MemoryTraits>;
+template<typename Scalar, typename MemoryTraits = Kokkos::MemoryUnmanaged>
+using DeviceView2d = Kokkos::View<Scalar**, Kokkos::LayoutLeft, PHX::Device, MemoryTraits>;
 
 // Kokkos types for local graphs/matrices, to be used for on-device kernels
 using DeviceLocalGraph  = Kokkos::StaticCrsGraph<LO, Kokkos::LayoutLeft, PHX::Device>;
 
 template<typename Scalar>
-using DeviceLocalMatrix = KokkosSparse::CrsMatrix<Scalar, LO, PHX::Device, void, DeviceLocalGraph::size_type>;
-
+using DeviceLocalMatrix = KokkosSparse::CrsMatrix<Scalar, LO, PHX::Device, Kokkos::MemoryUnmanaged, DeviceLocalGraph::size_type>;
 
 } // namespace Albany
 

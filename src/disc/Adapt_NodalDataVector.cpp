@@ -5,72 +5,81 @@
 //*****************************************************************//
 
 #include "Adapt_NodalDataVector.hpp"
-#include "Tpetra_Import.hpp"
 #include "Teuchos_CommHelpers.hpp"
 
-Adapt::NodalDataVector::NodalDataVector(
-  const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
-  NodeFieldSizeVector& nodeVectorLayout_,
-  NodeFieldSizeMap& nodeVectorMap_, LO& vectorsize_)
-  : nodeContainer(nodeContainer_),
-    nodeVectorLayout(nodeVectorLayout_),
-    nodeVectorMap(nodeVectorMap_),
-    vectorsize(vectorsize_),
-    mapsHaveChanged(false),
-    num_preeval_calls(0), num_posteval_calls(0)
+#include "Albany_ThyraUtils.hpp"
+
+namespace Adapt
 {
+
+NodalDataVector::
+NodalDataVector(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
+                NodeFieldSizeVector& nodeVectorLayout_,
+                NodeFieldSizeMap& nodeVectorMap_, LO& vectorsize_)
+ : nodeContainer(nodeContainer_)
+ , nodeVectorLayout(nodeVectorLayout_)
+ , nodeVectorMap(nodeVectorMap_)
+ , vectorsize(vectorsize_)
+ , mapsHaveChanged(false)
+ , num_preeval_calls(0)
+ , num_posteval_calls(0)
+{
+  // Nothing to be done here
 }
 
-void
-Adapt::NodalDataVector::
-resizeOverlapMap(const Teuchos::Array<Tpetra_GO>& overlap_nodeGIDs,
-                 const Teuchos::RCP<const Teuchos::Comm<int> >& comm_)
+void NodalDataVector::
+replaceOverlapVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs)
 {
-  overlap_node_map = Teuchos::rcp(
-    new Tpetra_Map(Teuchos::OrdinalTraits<Tpetra_GO>::invalid(),
-                   overlap_nodeGIDs,
-                   Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
-                   comm_));
-
-  // Build the vector and accessors
-  overlap_node_vec = Teuchos::rcp(new Tpetra_MultiVector(overlap_node_map, vectorsize));
+  overlap_node_vs = vs;
+  
+  // Build the vector
+  overlap_node_vec = Thyra::createMembers(overlap_node_vs,vectorsize);
 
   mapsHaveChanged = true;
 }
 
-void
-Adapt::NodalDataVector::
-resizeLocalMap(const Teuchos::Array<Tpetra_GO>& local_nodeGIDs,
-               const Teuchos::RCP<const Teuchos::Comm<int> >& comm_)
+void NodalDataVector::
+replaceOverlapVectorSpace(const Teuchos::Array<GO>& overlap_nodeGIDs,
+                          const Teuchos::RCP<const Teuchos_Comm>& comm_)
 {
-  local_node_map = Teuchos::rcp(
-    new Tpetra_Map(
-      Teuchos::OrdinalTraits<Tpetra_GO>::invalid(),
-      local_nodeGIDs,
-      Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
-      comm_));
+  auto vs = Albany::createVectorSpace(comm_,overlap_nodeGIDs());
+  replaceOverlapVectorSpace(vs);
+}
 
-  // Build the vector and accessors
-  local_node_vec = Teuchos::rcp(new Tpetra_MultiVector(local_node_map, vectorsize));
+void NodalDataVector::
+replaceOwnedVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
+  owned_node_vs = vs;
+  
+  // Build the vector
+  owned_node_vec = Thyra::createMembers(owned_node_vs,vectorsize);
 
   mapsHaveChanged = true;
 }
 
-Teuchos::RCP<const Tpetra_Import> Adapt::NodalDataVector::initializeExport()
+void NodalDataVector::
+replaceOwnedVectorSpace(const Teuchos::Array<GO>& owned_nodeGIDs,
+                        const Teuchos::RCP<const Teuchos_Comm>& comm_)
+{
+  auto vs = Albany::createVectorSpace(comm_,owned_nodeGIDs());
+  replaceOwnedVectorSpace(vs);
+}
+
+Teuchos::RCP<const Albany::CombineAndScatterManager>
+NodalDataVector::initializeCASManager()
 {
   if (mapsHaveChanged) {
-    importer = Teuchos::rcp(new Tpetra_Import(local_node_map, overlap_node_map));
+    cas_manager = Albany::createCombineAndScatterManager(owned_node_vs, overlap_node_vs);
     mapsHaveChanged = false;
   }
-  return importer;
+  return cas_manager;
 }
 
-void Adapt::NodalDataVector::exportAddNodalDataVector()
+void NodalDataVector::exportAddNodalDataVector()
 {
-  overlap_node_vec->doImport(*local_node_vec, *importer, Tpetra::ADD);
+  cas_manager->scatter(*owned_node_vec,*overlap_node_vec,Albany::CombineMode::ADD);
 }
 
-void Adapt::NodalDataVector::
+void NodalDataVector::
 getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const
 {
   NodeFieldSizeMap::const_iterator it;
@@ -87,41 +96,43 @@ getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const
   ndofs = nodeVectorLayout[value].ndofs;
 }
 
-void Adapt::NodalDataVector::saveNodalDataState() const
+void NodalDataVector::saveNodalDataState() const
 {
   // Save the nodal data arrays back to stk.
-  for (NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin();
-       i != nodeVectorLayout.end(); ++i)
-    (*nodeContainer)[i->name]->saveFieldVector(overlap_node_vec, i->offset);
-}
-
-void Adapt::NodalDataVector::
-saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
-                   const int start_col) const
-{
-  // Save the nodal data arrays back to stk.
-  const size_t nv = mv->getNumVectors();
-  for (NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin();
-       i != nodeVectorLayout.end(); ++i) {
-    if (i->offset < start_col || i->offset >= start_col + nv) continue;
-    (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset - start_col);
+  for (auto it=nodeVectorLayout.begin(); it!=nodeVectorLayout.end(); ++it) {
+    (*nodeContainer)[it->name]->saveFieldVector(overlap_node_vec, it->offset);
   }
 }
 
-void Adapt::NodalDataVector::
-saveTpetraNodalDataVector (
-  const std::string& name,
-  const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
-  const int offset) const
+void NodalDataVector::
+saveNodalDataState(const Teuchos::RCP<const Thyra_MultiVector>& mv,
+                   const int start_col) const
+{
+  // Save the nodal data arrays back to stk.
+  const size_t nv = mv->domain()->dim();
+  for (auto it=nodeVectorLayout.begin(); it!=nodeVectorLayout.end(); ++it) {
+    if (it->offset < start_col || static_cast<unsigned long>(it->offset) >= start_col + nv) {
+      continue;
+    }
+    (*nodeContainer)[it->name]->saveFieldVector(mv, it->offset - start_col);
+  }
+}
+
+void NodalDataVector::
+saveNodalDataVector (const std::string& name,
+                     const Teuchos::RCP<const Thyra_MultiVector>& overlap_node_vector,
+                     const int offset) const
 {
   Albany::NodeFieldContainer::const_iterator it = nodeContainer->find(name);
   TEUCHOS_TEST_FOR_EXCEPTION(
     it == nodeContainer->end(), std::logic_error,
     "Error: Cannot locate nodal field " << name << " in NodalDataVector");
-  (*nodeContainer)[name]->saveFieldVector(overlap_node_vec, offset);
+  (*nodeContainer)[name]->saveFieldVector(overlap_node_vector, offset);
 }
 
-void Adapt::NodalDataVector::initializeVectors(ST value) {
-  overlap_node_vec->putScalar(value);
-  local_node_vec->putScalar(value);
+void NodalDataVector::initializeVectors(ST value) {
+  overlap_node_vec->assign(value);
+  owned_node_vec->assign(value);
 }
+
+} // namespace Adapt

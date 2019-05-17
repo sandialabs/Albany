@@ -9,35 +9,37 @@
 //IK, 9/12/14: right now this is Epetra (Albany) function.
 //Not compiled if ALBANY_EPETRA_EXE is off.
 
-#ifndef ALBANY_EIGENDATASTRUCT
-#define ALBANY_EIGENDATASTRUCT
+#ifndef ALBANY_EIGEN_DATA_STRUCT_HPP
+#define ALBANY_EIGEN_DATA_STRUCT_HPP
 
 #include <string>
 #include <vector>
-#include "Teuchos_RCP.hpp"
-#include "Epetra_Vector.h"
+
+#include "Albany_ThyraTypes.hpp"
+
+#include <Teuchos_RCP.hpp>
 
 namespace Albany {
 
 struct EigendataStruct {
 
-  EigendataStruct () {};
-  ~EigendataStruct () {};
-  EigendataStruct (const EigendataStruct& copy) {
-    eigenvalueRe = Teuchos::rcp(new std::vector<double>(*(copy.eigenvalueRe)));
-    eigenvalueIm = Teuchos::rcp(new std::vector<double>(*(copy.eigenvalueIm)));
-    eigenvectorRe = Teuchos::rcp(new Epetra_MultiVector(*(copy.eigenvectorRe)));
-    eigenvectorIm = Teuchos::rcp(new Epetra_MultiVector(*(copy.eigenvectorIm)));
+  EigendataStruct () = default;
+  ~EigendataStruct () = default;
+
+  EigendataStruct (const EigendataStruct& src) {
+    eigenvalueRe = Teuchos::rcp(new std::vector<double>(*(src.eigenvalueRe)));
+    eigenvalueIm = Teuchos::rcp(new std::vector<double>(*(src.eigenvalueIm)));
+
+    eigenvectorRe = Thyra::createMembers(src.eigenvectorRe->range(),src.eigenvectorRe->domain()->dim());
+    eigenvectorIm = Thyra::createMembers(src.eigenvectorIm->range(),src.eigenvectorIm->domain()->dim());
   };
 
-  Teuchos::RCP<std::vector<double> > eigenvalueRe;
-  Teuchos::RCP<std::vector<double> > eigenvalueIm;
-  Teuchos::RCP<Epetra_MultiVector> eigenvectorRe;
-  Teuchos::RCP<Epetra_MultiVector> eigenvectorIm;
+  Teuchos::RCP<std::vector<double> >  eigenvalueRe;
+  Teuchos::RCP<std::vector<double> >  eigenvalueIm;
+  Teuchos::RCP<Thyra_MultiVector>     eigenvectorRe;
+  Teuchos::RCP<Thyra_MultiVector>     eigenvectorIm;
 };
 
-}
-#endif
+} // namespace Albany
 
-
-
+#endif // ALBANY_EIGEN_DATA_STRUCT_HPP

@@ -47,7 +47,7 @@
 #define velocity_solver_set_physical_parameters velocity_solver_set_physical_parameters__
 /*
 #include "Extrude3DMesh.hpp"
-/*/
+*/
 #include <vector>
 #include <mpi.h>
 #include <list>
@@ -110,14 +110,4 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles, int nGlo
 
 void velocity_solver_export_fo_velocity(MPI_Comm reducedComm);
 
-
 //}
-
-
-
-
-
-
-
-
-

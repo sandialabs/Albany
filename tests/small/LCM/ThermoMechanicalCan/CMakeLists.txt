@@ -4,7 +4,6 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-
 # Mechanics
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/Mechanics.yaml COPYONLY)
@@ -29,9 +28,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/brick_model_2.g.4.3
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 IF (ALBANY_MUELU_EXAMPLES)
-  add_test (${testName}_mech ${AlbanyT.exe} Mechanics.yaml)
-  set_tests_properties(${testName}_mech PROPERTIES LABELS CUDA_TEST)
-  add_test (${testName}_thermomech ${AlbanyT.exe} MechanicsWithTemperature.yaml)
-  set_tests_properties(${testName}_thermomech PROPERTIES LABELS CUDA_TEST)
+  add_test (${testName}_mech ${Albany.exe} Mechanics.yaml)
+  set_tests_properties(${testName}_mech PROPERTIES LABELS "LCM;Tpetra;Forward")
+  add_test (${testName}_thermomech ${Albany.exe} MechanicsWithTemperature.yaml)
+  set_tests_properties(${testName}_thermomech PROPERTIES LABELS "LCM;Tpetra;Forward")
 ENDIF ()
 

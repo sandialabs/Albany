@@ -21,18 +21,18 @@ typedef stk::mesh::EntityKey          EntityKey;
 //
 //
 //
-AAdapt::TopologyMod::TopologyMod(
-    Teuchos::RCP<Teuchos::ParameterList> const& params,
-    Teuchos::RCP<ParamLib> const&               param_lib,
-    Albany::StateManager&                       state_mgr,
-    const Teuchos::RCP<const Teuchos_Comm>&     commT)
-    : AAdapt::AbstractAdapter(params, param_lib, state_mgr, commT),
-      remesh_file_index_(1)
+TopologyMod::
+TopologyMod(Teuchos::RCP<Teuchos::ParameterList> const & params,
+            Teuchos::RCP<ParamLib>               const & param_lib,
+            Albany::StateManager                 const & state_mgr,
+            Teuchos::RCP<Teuchos_Comm const>     const & comm)
+ : AbstractAdapter (params, param_lib, state_mgr, comm)
+ , remesh_file_index_(1)
 {
   discretization_ = state_mgr_.getDiscretization();
 
   stk_discretization_ =
-      static_cast<Albany::STKDiscretization*>(discretization_.get());
+    static_cast<Albany::STKDiscretization*>(discretization_.get());
 
   stk_mesh_struct_ = stk_discretization_->getSTKMeshStruct();
 
@@ -65,40 +65,25 @@ AAdapt::TopologyMod::TopologyMod(
   topology_->set_failure_criterion(failure_criterion_);
 }
 
-//
-//
-//
-AAdapt::TopologyMod::~TopologyMod() {}
-
-//
-//
-//
-bool
-AAdapt::TopologyMod::queryAdaptationCriteria()
-{
-  size_t number_fractured_faces = topology_->setEntitiesOpen();
+bool TopologyMod::queryAdaptationCriteria(int) {
+  size_t const number_fractured_faces = topology_->setEntitiesOpen();
 
   return number_fractured_faces > 0;
 }
 
-//
-//
-//
-bool
-AAdapt::TopologyMod::adaptMesh(
-    Epetra_Vector const& solution,
-    Epetra_Vector const& ovlp_solution)
-{
-  *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
-                  << "Adapting mesh using AAdapt::TopologyMod method      \n"
-                  << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+bool TopologyMod::adaptMesh() {
+
+  *output_stream_
+      << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+      << "Adapting mesh using TopologyMod method      \n"
+      << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
   // Save the current results and close the exodus file
 
   // Create a remeshed output file naming convention by
   // adding the remesh_file_index_ ahead of the period
   std::ostringstream ss;
-  std::string        str = base_exo_filename_;
+  std::string str = base_exo_filename_;
   ss << "_" << remesh_file_index_ << ".";
   str.replace(str.find('.'), 1, ss.str());
 
@@ -118,10 +103,6 @@ AAdapt::TopologyMod::adaptMesh(
 
   // Start the mesh update process
 
-  // Modifies mesh for graph algorithm
-
-  // begin mesh update
-
   topology_->splitOpenFaces();
 
   // Throw away all the Albany data structures and re-build them from the mesh
@@ -131,62 +112,49 @@ AAdapt::TopologyMod::adaptMesh(
   return true;
 }
 
-//----------------------------------------------------------------------------
-// Transfer solution between meshes.  This is a no-op as the
-// solution is copied to the newly created nodes by the
-// topology->fracture_boundary() function.
-void
-AAdapt::TopologyMod::solutionTransfer(
-    const Epetra_Vector& oldSolution,
-    Epetra_Vector&       newSolution)
-{
-}
+Teuchos::RCP<Teuchos::ParameterList const>
+TopologyMod::getValidAdapterParameters() const {
 
-//----------------------------------------------------------------------------
-Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::TopologyMod::getValidAdapterParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList> valid_pl_ =
-      this->getGenericAdapterParams("ValidTopologyModificationParams");
+  Teuchos::RCP<Teuchos::ParameterList>
+  valid_pl_ = this->getGenericAdapterParams("ValidTopologyModificationParams");
 
   valid_pl_->set<double>(
-      "Critical Traction",
-      1.0,
-      "Critical traction at which two elements separate t_eff >= t_cr");
+    "Critical Traction",
+    1.0,
+    "Critical traction at which two elements separate t_eff >= t_cr");
 
   valid_pl_->set<double>(
-      "beta", 1.0, "Weight factor t_eff = sqrt[(t_s/beta)^2 + t_n^2]");
+    "beta",
+    1.0,
+    "Weight factor t_eff = sqrt[(t_s/beta)^2 + t_n^2]");
 
   return valid_pl_;
 }
 
+
 //----------------------------------------------------------------------------
 void
-AAdapt::TopologyMod::showRelations()
-{
+AAdapt::TopologyMod::showRelations() {
   std::vector<Entity> element_list;
-  stk::mesh::get_entities(
-      *(bulk_data_), stk::topology::ELEMENT_RANK, element_list);
+  stk::mesh::get_entities(*(bulk_data_), stk::topology::ELEMENT_RANK, element_list);
 
   // Remove extra relations from element
-  for (int i = 0; i < element_list.size(); ++i) {
+  for(size_t i = 0; i < element_list.size(); ++i) {
     Entity element = element_list[i];
 
-    for (EntityRank rank = stk::topology::NODE_RANK;
-         rank < meta_data_->entity_rank_count();
-         ++rank) {
+    for (EntityRank rank = stk::topology::NODE_RANK; rank < meta_data_->entity_rank_count(); ++rank) {
+
       Entity const* relations = bulk_data_->begin(element, rank);
-      stk::mesh::ConnectivityOrdinal const* ords =
-          bulk_data_->begin_ordinals(element, rank);
+      stk::mesh::ConnectivityOrdinal const* ords = bulk_data_->begin_ordinals(element, rank);
       size_t const num_relations = bulk_data_->num_connectivity(element, rank);
 
       std::cout << "Element " << bulk_data_->identifier(element_list[i])
                 << " relations are :" << std::endl;
 
-      for (int j = 0; j < num_relations; ++j) {
+      for(size_t j = 0; j < num_relations; ++j) {
         std::cout << "entity:\t" << bulk_data_->identifier(relations[j]) << ","
-                  << bulk_data_->entity_rank(relations[j])
-                  << "\tlocal id: " << ords[j] << "\n";
+                  << bulk_data_->entity_rank(relations[j]) << "\tlocal id: "
+                  << ords[j] << "\n";
       }
     }
   }
@@ -195,12 +163,10 @@ AAdapt::TopologyMod::showRelations()
 #ifdef ALBANY_MPI
 //----------------------------------------------------------------------------
 int
-AAdapt::TopologyMod::accumulateFractured(int num_fractured)
-{
+AAdapt::TopologyMod::accumulateFractured(int num_fractured) {
   int total_fractured;
 
-  stk::all_reduce_sum(
-      bulk_data_->parallel(), &num_fractured, &total_fractured, 1);
+  stk::all_reduce_sum(bulk_data_->parallel(), &num_fractured, &total_fractured, 1);
 
   return total_fractured;
 }
@@ -209,32 +175,32 @@ AAdapt::TopologyMod::accumulateFractured(int num_fractured)
 // Parallel all-gatherv function. Communicates local open list to
 // all processors to form global open list.
 void
-AAdapt::TopologyMod::getGlobalOpenList(
-    std::map<EntityKey, bool>& local_entity_open,
-    std::map<EntityKey, bool>& global_entity_open)
-{
+AAdapt::TopologyMod::
+getGlobalOpenList(std::map<EntityKey, bool>& local_entity_open,
+                  std::map<EntityKey, bool>& global_entity_open) {
+
   // Make certain that we can send keys as MPI_UINT64_T types
   assert(sizeof(EntityKey::entity_key_t) >= sizeof(uint64_t));
 
   const unsigned parallel_size = bulk_data_->parallel_size();
 
   // Build local vector of keys
-  std::pair<EntityKey, bool> me;  // what a map<EntityKey, bool> is made of
-  std::vector<EntityKey::entity_key_t> v;  // local vector of open keys
+  std::pair<EntityKey, bool> me; // what a map<EntityKey, bool> is made of
+  std::vector<EntityKey::entity_key_t> v;     // local vector of open keys
 
-  BOOST_FOREACH (me, local_entity_open) {
+  BOOST_FOREACH(me, local_entity_open) {
     v.push_back(EntityKey::entity_key_t(me.first));
 
     // Debugging
     /*
       const unsigned entity_rank = stk::mesh::entity_rank( me.first);
       const stk::mesh::EntityId entity_id = stk::mesh::entity_id( me.first );
-      const std::string & entity_rank_name = metaData->entity_rank_name(
-      entity_rank ); Entity entity = bulk_data_->get_entity(me.first);
-      std::cout<<"Single proc fracture list contains "<<" "<<entity_rank_name<<"
-      ["<<entity_id<<"] Proc:"
+      const std::string & entity_rank_name = metaData->entity_rank_name( entity_rank );
+      Entity entity = bulk_data_->get_entity(me.first);
+      std::cout<<"Single proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"] Proc:"
       <<entity->owner_rank() <<std::endl;
     */
+
   }
 
   int num_open_on_pe = v.size();
@@ -243,15 +209,13 @@ AAdapt::TopologyMod::getGlobalOpenList(
 
   // gather the number of open entities on each processor
   int* sizes = new int[parallel_size];
-  MPI_Allgather(
-      &num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulk_data_->parallel());
+  MPI_Allgather(&num_open_on_pe, 1, MPI_INT, sizes, 1, MPI_INT, bulk_data_->parallel());
 
-  // Loop over each processor and calculate the array offset of its entities in
-  // the receive array
+  // Loop over each processor and calculate the array offset of its entities in the receive array
   int* offsets = new int[parallel_size];
-  int  count   = 0;
+  int count = 0;
 
-  for (int i = 0; i < parallel_size; i++) {
+  for(size_t i = 0; i < parallel_size; i++) {
     offsets[i] = count;
     count += sizes[i];
   }
@@ -262,34 +226,26 @@ AAdapt::TopologyMod::getGlobalOpenList(
 #ifndef MPI_UINT64_T
 #define MPI_UINT64_T MPI_UNSIGNED_LONG_LONG
 #endif
-  EntityKey::entity_key_t* result_array =
-      new EntityKey::entity_key_t[total_number_of_open_entities];
-  MPI_Allgatherv(
-      (void*)&v[0],
-      num_open_on_pe,
-      MPI_UINT64_T,
-      (void*)result_array,
-      sizes,
-      offsets,
-      MPI_UINT64_T,
-      bulk_data_->parallel());
+  EntityKey::entity_key_t* result_array = new EntityKey::entity_key_t[total_number_of_open_entities];
+  MPI_Allgatherv((void *)&v[0], num_open_on_pe, MPI_UINT64_T, (void *)result_array,
+                 sizes, offsets, MPI_UINT64_T, bulk_data_->parallel());
 
   // Save the global keys
-  for (int i = 0; i < total_number_of_open_entities; i++) {
-    EntityKey key           = EntityKey(result_array[i]);
+  for(int i = 0; i < total_number_of_open_entities; i++) {
+
+    EntityKey key = EntityKey(result_array[i]);
     global_entity_open[key] = true;
 
     // Debugging
     /*
       const unsigned entity_rank = stk::mesh::entity_rank( key);
       const stk::mesh::EntityId entity_id = stk::mesh::entity_id( key );
-      const std::string & entity_rank_name = metaData->entity_rank_name(
-    entity_rank ); Entity entity = bulk_data_->get_entity(key); if(!entity) {
-    std::cout << "Error on this processor: Entity not addressible!!!!!!!!!!!!!"
-    << std::endl;
+      const std::string & entity_rank_name = metaData->entity_rank_name( entity_rank );
+      Entity entity = bulk_data_->get_entity(key);
+      if(!entity) { std::cout << "Error on this processor: Entity not addressible!!!!!!!!!!!!!" << std::endl;
 
-      std::cout<<"Global proc fracture list contains "<<" "<<entity_rank_name<<"
-    ["<<entity_id<<"]" << std::endl; std::vector<Entity> element_lst;
+      std::cout<<"Global proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"]" << std::endl;
+    std::vector<Entity> element_lst;
     stk::mesh::get_entities(*(bulk_data_),elementRank,element_lst);
     for (int i = 0; i < element_lst.size(); ++i){
       std::cout << element_lst[i]->identifier() << std::endl;
@@ -301,23 +257,21 @@ AAdapt::TopologyMod::getGlobalOpenList(
       }
       }
       else {
-      std::cout<<"Global proc fracture list contains "<<" "<<entity_rank_name<<"
-    ["<<entity_id<<"] Proc:"
+      std::cout<<"Global proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"] Proc:"
       <<entity->owner_rank() <<std::endl;
       }
     */
   }
 
-  delete[] sizes;
-  delete[] offsets;
-  delete[] result_array;
+  delete [] sizes;
+  delete [] offsets;
+  delete [] result_array;
 }
 
 #else
 //----------------------------------------------------------------------------
 int
-AAdapt::TopologyMod::accumulateFractured(int num_fractured)
-{
+AAdapt::TopologyMod::accumulateFractured(int num_fractured) {
   return num_fractured;
 }
 
@@ -325,12 +279,12 @@ AAdapt::TopologyMod::accumulateFractured(int num_fractured)
 // Parallel all-gatherv function. Communicates local open list to
 // all processors to form global open list.
 void
-AAdapt::TopologyMod::getGlobalOpenList(
-    std::map<EntityKey, bool>& local_entity_open,
-    std::map<EntityKey, bool>& global_entity_open)
-{
+AAdapt::TopologyMod::getGlobalOpenList(std::map<EntityKey, bool>& local_entity_open,
+                                       std::map<EntityKey, bool>& global_entity_open) {
+
   global_entity_open = local_entity_open;
 }
 #endif
 
-}  // namespace AAdapt
+}
+

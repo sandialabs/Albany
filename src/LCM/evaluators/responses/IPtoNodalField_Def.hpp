@@ -46,7 +46,7 @@ class IPtoNodalFieldManager : public Adapt::NodalDataBase::Manager
   // using.
   int ndb_start, ndb_numvecs;
   // Multivector that will go into the nodal database.
-  Teuchos::RCP<Tpetra_MultiVector> nodal_field;
+  Teuchos::RCP<Thyra_MultiVector> nodal_field;
 
  private:
   int nwrkr_, prectr_, postctr_;
@@ -262,8 +262,8 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
       this->p_state_mgr_->getStateInfoStruct()
           ->getNodalDataBase()
           ->getNodalDataVector();
-  this->mgr_->nodal_field = Teuchos::rcp(new Tpetra_MultiVector(
-      node_data->getLocalMap(), this->mgr_->ndb_numvecs, true));
+  this->mgr_->nodal_field = Thyra::createMembers(node_data->getOwnedVectorSpace(), this->mgr_->ndb_numvecs);
+  (this->mgr_->nodal_field)->assign(0.0); 
 }
 
 //------------------------------------------------------------------------------
@@ -276,9 +276,9 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
   // and summed
 
   // Get the node data block container
-  const Teuchos::RCP<Tpetra_MultiVector>&  data       = this->mgr_->nodal_field;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> wsElNodeID = workset.wsElNodeID;
-  Teuchos::RCP<const Tpetra_Map>           local_node_map = data->getMap();
+  const Teuchos::RCP<Thyra_MultiVector>&    data         = this->mgr_->nodal_field;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>  wsElNodeID   = workset.wsElNodeID;
+  Teuchos::RCP<const Thyra_VectorSpace> local_node_space = data->col(0)->space();
 
   const Teuchos::RCP<Adapt::NodalDataVector> node_data =
       this->p_state_mgr_->getStateInfoStruct()
@@ -288,6 +288,9 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
   int num_nodes = this->num_nodes_;
   int num_dims  = this->num_dims_;
   int num_pts   = this->num_pts_;
+  
+  //IKT, note to self: the resulting array is indexed by [numCols][numLocalVals]
+  auto data_nonconstView = Albany::getNonconstLocalData(data);
 
   // deal with weights
   int node_weight_offset;
@@ -298,12 +301,14 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < num_nodes; ++node) {
       const GO global_row = wsElNodeID[cell][node];
-      if (!local_node_map->isNodeGlobalElement(global_row)) continue;
-      for (int pt = 0; pt < num_pts; ++pt)
-        data->sumIntoGlobalValue(
-            global_row, node_weight_offset, this->weights_(cell, pt));
+      const LO local_row = Albany::getLocalElement(local_node_space,global_row);
+      if (!Albany::locallyOwnedComponent(Albany::getSpmdVectorSpace(local_node_space),global_row)) continue; 
+      for (int pt = 0; pt < num_pts; ++pt) {
+        data_nonconstView[node_weight_offset][local_row] += this->weights_(cell,pt);
+      }
     }
   }
+
 
   // deal with each of the fields
 
@@ -316,22 +321,16 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes; ++node) {
         const GO global_row = wsElNodeID[cell][node];
-        if (!local_node_map->isNodeGlobalElement(global_row)) continue;
+        const LO local_row = Albany::getLocalElement(local_node_space,global_row);
+        if (!Albany::locallyOwnedComponent(Albany::getSpmdVectorSpace(local_node_space),global_row)) continue; 
         for (int pt = 0; pt < num_pts; ++pt) {
           if (this->ip_field_layouts_[field] == "Scalar") {
             // save the scalar component
-            data->sumIntoGlobalValue(
-                global_row,
-                node_var_offset,
-                this->ip_fields_[field](cell, pt) * this->weights_(cell, pt));
+            data_nonconstView[node_var_offset][local_row] += this->ip_fields_[field](cell, pt) * this->weights_(cell, pt);
           } else if (this->ip_field_layouts_[field] == "Vector") {
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               // save the vector component
-              data->sumIntoGlobalValue(
-                  global_row,
-                  node_var_offset + dim0,
-                  (this->ip_fields_[field](cell, pt, dim0) *
-                   this->weights_(cell, pt)));
+              data_nonconstView[node_var_offset + dim0][local_row] += this->ip_fields_[field](cell, pt, dim0) * this->weights_(cell, pt);
             }
           } else if (this->ip_field_layouts_[field] == "Tensor") {
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
@@ -341,10 +340,8 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
                     this->ip_fields_[field];
                 ScalarT ipval  = tensor_field(cell, pt, dim0, dim1);
                 ScalarT weight = this->weights_(cell, pt);
-                data->sumIntoGlobalValue(
-                    global_row,
-                    node_var_offset + dim0 * num_dims + dim1,
-                    ipval * weight);
+                data_nonconstView[node_var_offset + dim0 * num_dims + dim1][local_row] += 
+                    ipval * weight;
               }
             }
           }
@@ -372,18 +369,19 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
           ->getNodalDataVector();
 
   // Export the data from the local to overlapped decomposition.
-  const Teuchos::RCP<const Tpetra_Import> importer =
-      node_data->initializeExport();
-  const Teuchos::RCP<const Tpetra_Map> overlap_node_map =
-      node_data->getOverlapMap();
-  const Teuchos::RCP<Tpetra_MultiVector> data = Teuchos::rcp(
-      new Tpetra_MultiVector(overlap_node_map, this->mgr_->ndb_numvecs, true));
-  data->doImport(*this->mgr_->nodal_field, *importer, Tpetra::ADD);
+  const Teuchos::RCP<const Thyra_VectorSpace> overlap_node_space = node_data->getOverlappedVectorSpace(); 
+  const Teuchos::RCP<Thyra_MultiVector> data = Thyra::createMembers(overlap_node_space, this->mgr_->ndb_numvecs);  
+  data->assign(0.0);
+  // IKT, note to self: cas_manager arguments are (owned, overlapped)  
+  auto cas_manager = Albany::createCombineAndScatterManager(this->mgr_->nodal_field->col(0)->space(), overlap_node_space);
+  // IKT, note to self: scatter is from unique -> overlap space
+  // Arguments are (src, tgt)  
+  cas_manager->scatter(this->mgr_->nodal_field, data, Albany::CombineMode::ADD);  
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> wsElNodeID =
       workset.wsElNodeID;
 
-  const int num_nodes = overlap_node_map->getNodeNumElements();
+  const auto num_nodes = Albany::getSpmdVectorSpace(overlap_node_space)->localSubDim();
   const int blocksize = node_data->getVecSize();
 
   // Get weight info.
@@ -394,7 +392,8 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   node_weight_offset -= this->mgr_->ndb_start;
 
   // Divide the overlap field through by the weights.
-  Teuchos::ArrayRCP<const ST> weights = data->getData(node_weight_offset);
+  auto v_nonConstView = Albany::getNonconstLocalData(data);
+  auto weights_constView = Albany::getLocalData(Teuchos::rcp_dynamic_cast<const Thyra_MultiVector>(data)); 
   for (int field(0); field < this->number_of_fields_; ++field) {
     int node_var_offset;
     int node_var_ndofs;
@@ -403,9 +402,9 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
     node_var_offset -= this->mgr_->ndb_start;
 
     for (int k = 0; k < node_var_ndofs; ++k) {
-      Teuchos::ArrayRCP<ST> v = data->getDataNonConst(node_var_offset + k);
       for (LO overlap_node = 0; overlap_node < num_nodes; ++overlap_node) {
-        v[overlap_node] /= weights[overlap_node];
+        auto weight = weights_constView[node_weight_offset][overlap_node];
+        v_nonConstView[node_var_offset + k][overlap_node] /= weight; 
       }
     }
   }

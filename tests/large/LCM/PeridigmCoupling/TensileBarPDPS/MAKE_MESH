@@ -1,3 +1,0 @@
-cubit -nographics -batch TensileBarPDPS.jou
-/home/djlittl/scripts/spheregen.py PD_Block.g
-gjoin < TensileBarPDPS.gjoin

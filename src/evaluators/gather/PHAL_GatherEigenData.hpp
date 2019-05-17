@@ -4,10 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: does not get compiled if ALBANY_EPETRA_EXE is off.  Has epetra.
-
-#ifndef PHAL_GATHER_EIGENVECTORS2D_HPP
-#define PHAL_GATHER_EIGENVECTORS2D_HPP
+#ifndef PHAL_GATHER_EIGEN_DATA_HPP
+#define PHAL_GATHER_EIGEN_DATA_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -15,9 +13,10 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 
 namespace PHAL {
 /** \brief Gathers solution values from the Newton solution vector into 
@@ -34,14 +33,13 @@ namespace PHAL {
 // **************************************************************
 
 template<typename EvalT, typename Traits>
-class GatherEigenDataBase
-  : public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>  {
-  
+class GatherEigenDataBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                            public PHX::EvaluatorDerived<EvalT, Traits>
+{  
 public:
   
   GatherEigenDataBase(const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl);
+                      const Teuchos::RCP<Albany::Layouts>& dl);
   
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
@@ -60,12 +58,9 @@ protected:
   std::size_t nEigenvectors;
 
 };
-  
-template<typename EvalT, typename Traits> class GatherEigenData;
 
 template<typename EvalT, typename Traits>
-class GatherEigenData
-   : public GatherEigenDataBase<EvalT, Traits>  {
+class GatherEigenData : public GatherEigenDataBase<EvalT, Traits>  {
 
   public:
     GatherEigenData(const Teuchos::ParameterList& p,
@@ -87,38 +82,33 @@ class GatherEigenData
 // Residual
 // **************************************************************
 template<typename Traits>
-class GatherEigenData<PHAL::AlbanyTraits::Residual,Traits>
-   : public GatherEigenDataBase<PHAL::AlbanyTraits::Residual, Traits>  {
+class GatherEigenData<AlbanyTraits::Residual,Traits> : public GatherEigenDataBase<AlbanyTraits::Residual, Traits>
+{
+public:
+  GatherEigenData(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl);
 
-  public:
-    GatherEigenData(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-    //void evaluateFields(typename Traits::EvalData d);
-  private:
-    typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+  //void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename AlbanyTraits::Residual::ScalarT ScalarT;
 };
 
 // **************************************************************
 // Jacobian
 // **************************************************************
 template<typename Traits>
-class GatherEigenData<PHAL::AlbanyTraits::Jacobian,Traits>
-   : public GatherEigenDataBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
+class GatherEigenData<AlbanyTraits::Jacobian,Traits> : public GatherEigenDataBase<AlbanyTraits::Jacobian, Traits>
+{
+public:
+  GatherEigenData(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl);
 
-  using GatherEigenDataBase<PHAL::AlbanyTraits::Jacobian,Traits>::nEigenvectors;
-
-  public:
-    GatherEigenData(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-    void evaluateFields(typename Traits::EvalData d);
-  private:
-    typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename AlbanyTraits::Jacobian::ScalarT ScalarT;
+  using GatherEigenDataBase<AlbanyTraits::Jacobian,Traits>::nEigenvectors;
 };
 
+} // namespace PHAL
 
-// **************************************************************
-}
-
-#endif
+#endif // PHAL_GATHER_EIGEN_DATA_HPP

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(AAdapt_RandomFracture_hpp)
-#define AAdapt_RandomFracture_hpp
+#ifndef AADAPT_RANDOM_FRACTURE_HPP
+#define AADAPT_RANDOM_FRACTURE_HPP
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
@@ -14,10 +14,15 @@
 #include <PHAL_Workset.hpp>
 
 #include "AAdapt_AbstractAdapter.hpp"
+
 // Uses LCM Topology util class
 // Note that all topology functions are in Albany::LCM namespace
-#include "Albany_STKDiscretization.hpp"
 #include "Topology.h"
+
+// Forward declaration(s)
+namespace Albany {
+  class STKDiscretization;
+}
 
 namespace AAdapt {
 
@@ -39,44 +44,33 @@ class RandomFracture : public AbstractAdapter
   ///
   /// Destructor
   ///
-  ~RandomFracture();
+  ~RandomFracture() = default;
+
+  ///
+  /// Disallow copy and assignment and default
+  ///
+  RandomFracture() = delete;
+  RandomFracture(const RandomFracture&) = delete;
+  RandomFracture& operator=(const RandomFracture&) = delete;
 
   ///
   /// Check adaptation criteria to determine if the mesh needs
   /// adapting
   ///
-  virtual bool
-  queryAdaptationCriteria();
+  bool queryAdaptationCriteria(int iteration) override;
 
   ///
   /// Apply adaptation method to mesh and problem. Returns true if
   /// adaptation is performed successfully.
   ///
-  virtual bool
-  adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution);
-
-  ///
-  /// Transfer solution between meshes.
-  ///
-  virtual void
-  solutionTransfer(
-      const Epetra_Vector& oldSolution,
-      Epetra_Vector&       newSolution);
+  bool adaptMesh() override;
 
   ///
   /// Each adapter must generate it's list of valid parameters
   ///
-  Teuchos::RCP<const Teuchos::ParameterList>
-  getValidAdapterParameters() const;
+  Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const override;
 
  private:
-  ///
-  /// Disallow copy and assignment and default
-  ///
-  RandomFracture();
-  RandomFracture(const RandomFracture&);
-  RandomFracture&
-  operator=(const RandomFracture&);
 
   void
   showTopLevelRelations();
@@ -92,6 +86,7 @@ class RandomFracture : public AbstractAdapter
   ///
   void
   showRelations();
+
   void
   showRelations(int level, const stk::mesh::Entity ent);
 
@@ -156,4 +151,4 @@ class RandomFracture : public AbstractAdapter
 
 }  // namespace AAdapt
 
-#endif  // ALBANY_Filler::RANDOM_HPP
+#endif // AADAPT_RANDOM_FRACTURE_HPP

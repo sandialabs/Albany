@@ -275,7 +275,7 @@ struct ConstructEvaluatorsOp {
   }
   template <typename T>
   void
-  operator()(T x) const {
+  operator()(T /* x */) const {
     tags->push_back(prob.template constructEvaluators<T>(
         fm, meshSpecs, stateMgr, fmchoice, responseList));
   }

@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Solution Method: ATO Problem
     Number of Subproblems: 1
@@ -153,6 +154,8 @@ ANONYMOUS:
         Newton: 
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
+          Linear Solver:
+            Tolerance: 9.99999999999999980e-13
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
@@ -171,7 +174,6 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999980e-13
                       Output Frequency: 2
                       Output Style: 1
                       Verbosity: 0

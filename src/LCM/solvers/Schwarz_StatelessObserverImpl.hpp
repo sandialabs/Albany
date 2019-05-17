@@ -23,11 +23,10 @@ class StatelessObserverImpl
   getTimeParamValueOrDefault(RealType default_value) const;
 
   virtual void
-  observeSolutionT(
+  observeSolution(
       double                                            stamp,
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution,
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>>
-          non_overlapped_solution_dot);
+      Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> non_overlapped_solution,
+      Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> non_overlapped_solution_dot);
 
   StatelessObserverImpl(StatelessObserverImpl const&) = delete;
   StatelessObserverImpl&

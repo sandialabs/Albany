@@ -13,17 +13,11 @@
 // Get scalar and ordinal types
 #include "Albany_ScalarOrdinalTypes.hpp"
 
-// Get all Tpetra types
-#include "Albany_TpetraTypes.hpp"
-
 // Get all Sacado types (and helpers)
 #include "Albany_SacadoTypes.hpp"
 
 // Get all Thyra types
 #include "Albany_ThyraTypes.hpp"
-
-// Get the Thyra-Tpetra converter
-#include "Albany_TpetraThyraTypes.hpp"
 
 // Get all comm types
 #include "Albany_CommTypes.hpp"

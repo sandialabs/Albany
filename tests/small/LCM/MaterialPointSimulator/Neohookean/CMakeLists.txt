@@ -66,6 +66,7 @@ add_test(NAME ${testName}_uniaxial
          -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
          -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${MPS.cmake})
+set_tests_properties(${testName}_uniaxial PROPERTIES LABELS "LCM;Tpetra;Forward")
 #test 2 - shear
 SET(OUTFILE "Neohookean-shear.exo")
 SET(REF_FILE "Neohookean-shear.gold.exo")
@@ -75,6 +76,7 @@ add_test(NAME ${testName}_shear
          -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
          -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${MPS.cmake})
+set_tests_properties(${testName}_shear PROPERTIES LABELS "LCM;Tpetra;Forward")
 #test 3 - hydrostatic
 SET(OUTFILE "Neohookean-hydrostatic.exo")
 SET(REF_FILE "Neohookean-hydrostatic.gold.exo")
@@ -84,6 +86,7 @@ add_test(NAME ${testName}_hydrostatic
          -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
          -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${MPS.cmake})
+set_tests_properties(${testName}_hydrostatic PROPERTIES LABELS "LCM;Tpetra;Forward")
 #test 4 - general
 SET(OUTFILE "Neohookean-general.exo")
 SET(REF_FILE "Neohookean-general.gold.exo")
@@ -93,4 +96,5 @@ add_test(NAME ${testName}_general
          -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
          -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${MPS.cmake}) 
+set_tests_properties(${testName}_general PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif(SEACAS_EXODIFF)

@@ -4,277 +4,208 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ATO_SOLVER_H
-#define ATO_SOLVER_H
+#ifndef ATO_SOLVER_HPP
+#define ATO_SOLVER_HPP
 
-#include <iostream>
-
-#include "LOCA.H"
-#include "LOCA_Epetra.H"
-#include "Epetra_Vector.h"
-#include "Epetra_LocalMap.h"
-#include "Epetra_CrsMatrix.h"
-#include "LOCA_Epetra_ModelEvaluatorInterface.H"
-#include <NOX_Epetra_MultiVector.H>
-
-#include "Albany_ModelEvaluator.hpp"
-#include "Albany_StateManager.hpp"
-#include "Albany_Utils.hpp"
+// ATO includes
+#include "ATO_OptInterface.hpp"
 #include "ATO_Types.hpp"
-#include "ATO_Aggregator.hpp"
-#include "ATO_Optimizer.hpp"
+
+// Albany includes
+#include "Albany_ThyraTypes.hpp"
+#include "Albany_CommTypes.hpp"
+
+// Trilinos includes
+#include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
+
+// System includes
+#include <vector>
+
+// Albany forward declarations
+namespace Albany {
+class Application;
+class CombineAndScatterManager;
+class StateManager;
+} // namespace Albany
 
 namespace ATO {
 
-  class SolverSubSolver;
-  class SolverSubSolverData;
-  class OptimizationProblem;
-  class Topology;
+// ATO forward declarations
+class Aggregator;
+class OptimizationProblem;
+class Optimizer;
+class SpatialFilter;
 
-  typedef struct GlobalPoint{
-    GlobalPoint();
-    int    gid;
-    double coords[3];
-  } GlobalPoint;
-  bool operator< (GlobalPoint const & a, GlobalPoint const & b);
+// Subsolver structs
+struct SolverSubSolver {
+  Teuchos::RCP<Albany::Application>   app;
+  Teuchos::RCP<Thyra_ModelEvaluator>  model;
+  Teuchos::RCP<Thyra_InArgs>          params_in;
+  Teuchos::RCP<Thyra_OutArgs>         responses_out;
 
-  // eventually make this a base class and derive from it to make
-  // various kernels.  Also add a factory.
-  class SpatialFilter{
-    public:
-      SpatialFilter(Teuchos::ParameterList& params);
-      void buildOperator(
-             Teuchos::RCP<Albany::Application> app,
-             Teuchos::RCP<const Tpetra_Map>    overlapNodeMapT,
-             Teuchos::RCP<const Tpetra_Map>    localNodeMapT,
-             Teuchos::RCP<Tpetra_Import>       importerT,
-             Teuchos::RCP<Tpetra_Export>       exporterT);
-      Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorT(){return filterOperatorT;}
-      //IKT, FIXME: remove the following function once Mark Hoemmen
-      //fixes apply method with TRANS mode in Tpetra::CrsMatrix.
-      Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorTransposeT(){return filterOperatorTransposeT;}
-      int getNumIterations(){return iterations;}
-    protected:
-      void importNeighbors(
-             std::map< GlobalPoint, std::set<GlobalPoint> >& neighbors,
-             Teuchos::RCP<Tpetra_Import>       importerT,
-             const Tpetra_Map& localNodeMapT,
-             Teuchos::RCP<Tpetra_Export>       exporterT,
-             const Tpetra_Map& overlapNodeMapT);
+  void freeUp() {
+    app   = Teuchos::null;
+    model = Teuchos::null;
+  }
+};
 
-      Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorT;
-      //IKT, FIXME: remove the following creation of filterOperatorTransposeT
-      //once Mark Hoemmen fixes apply method with TRANS mode in Tpetra::CrsMatrix.
-      Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorTransposeT;
-      int iterations;
-      double filterRadius;
-      Teuchos::Array<std::string> blocks;
+struct SolverSubSolverData {
+  int Np;
+  int Ng;
+
+  std::vector<int> pLength;
+  std::vector<int> gLength;
+
+  Teuchos::RCP<const Thyra_Vector>  p_init;
+  Thyra_DerivativeSupport           deriv_support;
+};
+
+// Solver class
+class Solver : public Thyra::ResponseOnlyModelEvaluatorBase<ST>,
+               public OptInterface
+{
+public:
+   Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+          const Teuchos::RCP<const Teuchos_Comm>&     comm,
+          const Teuchos::RCP<const Thyra_Vector>&     initial_guess);
+
+  ~Solver() = default;
+
+  // Override methods from Thyra_ModelEvaluator
+  Teuchos::RCP<const Thyra_VectorSpace> get_x_space() const override { return Teuchos::null; } 
+  Teuchos::RCP<const Thyra_VectorSpace> get_f_space() const override { return Teuchos::null; }  
+  Teuchos::RCP<const Thyra_VectorSpace> get_g_space(const int ig) const override;
+  Teuchos::RCP<const Thyra_VectorSpace> get_p_space(const int /* ip */) const override { return m_x_vs; }
+  Thyra_InArgs  createInArgs()      const override;
+
+  // Override method from Thyra::ResponseOnlyModelEvaluatorBase<ST>
+  Thyra_OutArgs createOutArgsImpl() const override;
+  void evalModelImpl (const Thyra_InArgs& inArgs, const Thyra_OutArgs& outArgs) const override;
+
+  // Override methods from OptInterface
+  void Compute (      double* p, double& f, double* dfdp, double& g, double* dgdp) override;
+  void Compute (const double* p, double& f, double* dfdp, double& g, double* dgdp) override;
+
+  void ComputeConstraint (double* /* p */, double& /* c */, double* /* dcdp */) override {}
+
+  void ComputeObjective (      double* p, double& g, double* dgdp) override;
+  void ComputeObjective (const double* p, double& g, double* dgdp) override;
+
+  void writeCurrentDesign ();
+  void InitializeOptDofs(double* p) override;
+  void getOptDofsLowerBound (Teuchos::Array<double>& b) const override;
+  void getOptDofsUpperBound (Teuchos::Array<double>& b) const override;
+  void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP) override;
+  void ComputeMeasure(const std::string& measureType, const double* p,
+                      double& measure, double* dmdp, const std::string& integrationMethod) override;
+  void ComputeMeasure(const std::string& measureType, double& measure) override;
+  int GetNumOptDofs() const override;
+
+private:
+
+  // data
+  int m_iteration;
+  int m_writeDesignFrequency;
+  int m_numDims;
+  int m_num_parameters; // for sensitivity analysis
+  int m_num_responses;
+
+  Teuchos::RCP<const Thyra_VectorSpace> m_x_vs;
+
+  int m_numPhysics; // number of sub problems
+
+  std::vector<int> m_wsOffset;  //index offsets to map to/from workset to/from 1D array.
+
+  bool m_is_verbose;    // verbose or not for topological optimization solver
+  bool m_is_restart;
+
+  Teuchos::RCP<Aggregator> m_objAggregator;
+  Teuchos::RCP<Aggregator> m_conAggregator;
+  Teuchos::RCP<Optimizer>  m_optimizer;
+
+  struct TopologyInfoStruct {
+    Teuchos::RCP<Topology>      topology;
+    Teuchos::RCP<SpatialFilter> filter;
+    Teuchos::RCP<SpatialFilter> postFilter;
+    Teuchos::RCP<Thyra_Vector>  filteredOverlapVector;
+    Teuchos::RCP<Thyra_Vector>  filteredVector;
+    Teuchos::RCP<Thyra_Vector>  overlapVector;
+    Teuchos::RCP<Thyra_Vector>  localVector;
+    bool                        filterIsRecursive;
   };
 
-  class OptInterface {
-  public:
-    virtual void Compute(const double* p, double& g, double* dgdp, double& c, double* dcdp=NULL)=0;
+  std::vector<Teuchos::RCP<TopologyInfoStruct> >  m_topologyInfoStructs;
+  Teuchos::RCP<TopologyArray>                     m_topologyArray;
 
-    virtual void ComputeMeasure(std::string measureType, double& measure)=0;
+  // currently all topologies must have the same entity type
+  std::string m_entityType;
 
-    virtual void ComputeMeasure(std::string measureType, const double* p,
-                                double& measure, double* dmdp, std::string integrationMethod)=0;
-    virtual void ComputeMeasure(std::string measureType, const double* p,
-                                double& measure, std::string integrationMethod);
+  std::vector<Teuchos::RCP<SpatialFilter> > m_filters;
+  Teuchos::RCP<SpatialFilter>               m_derivativeFilter;
 
-    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure);
-    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure, double* dmdp);
-
-    virtual void InitializeOptDofs(double* p)=0;
-    virtual void getOptDofsLowerBound( Teuchos::Array<double>& b )=0;
-    virtual void getOptDofsUpperBound( Teuchos::Array<double>& b )=0;
-
-    virtual int GetNumOptDofs()=0;
-
-    /* legacy */
-
-    virtual void Compute(double* p, double& g, double* dgdp, double& c, double* dcdp=NULL)=0;
-    virtual void ComputeConstraint(double* p, double& c, double* dcdp=NULL)=0;
-
-    virtual void ComputeObjective(double* p, double& g, double* dgdp=NULL)=0;
-    virtual void ComputeObjective(const double* p, double& g, double* dgdp=NULL)=0;
-    virtual void updateTpetraResponseMaps() = 0;
-    virtual void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP)=0;
-
-
-    /* end legacy */
+  struct HomogenizationSet {
+    std::string name;
+    std::string type;
+    int responseIndex;
+    int homogDim;
+    std::vector<Teuchos::RCP<Teuchos::ParameterList> > homogenizationAppParams;
+    std::vector<SolverSubSolver> homogenizationProblems;
   };
 
-  class Solver : public EpetraExt::ModelEvaluator , public OptInterface {
-  public:
+  std::vector<HomogenizationSet> m_homogenizationSets;
 
-     Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-            const Teuchos::RCP<const Teuchos_Comm>& comm,
-            const Teuchos::RCP<const Tpetra_Vector>& initial_guess);
+  std::vector<Teuchos::RCP<Teuchos::ParameterList> >  m_subProblemAppParams;
+  std::vector<SolverSubSolver>                        m_subProblems;
 
-    ~Solver();
+  OptimizationProblem* m_atoProblem;
 
-    //pure virtual from EpetraExt::ModelEvaluator
-    virtual Teuchos::RCP<const Epetra_Map> get_x_map() const;
-    //pure virtual from EpetraExt::ModelEvaluator
-    virtual Teuchos::RCP<const Epetra_Map> get_f_map() const;
-    //pure virtual from EpetraExt::ModelEvaluator
-    virtual EpetraExt::ModelEvaluator::InArgs createInArgs() const;
-    //pure virtual from EpetraExt::ModelEvaluator
-    virtual EpetraExt::ModelEvaluator::OutArgs createOutArgs() const;
-    //pure virtual from EpetraExt::ModelEvaluator
-    void evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const;
+  Teuchos::RCP<const Teuchos_Comm>      m_solverComm;
+  Teuchos::RCP<Teuchos::ParameterList>  m_mainAppParams;
 
-    void Compute(double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
-    void Compute(const double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> m_overlapNodeVS;
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> m_localNodeVS;
 
-    void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
+  Teuchos::Array< Teuchos::RCP<Thyra_Vector> > m_overlapObjectiveGradientVec;
+  Teuchos::Array< Teuchos::RCP<Thyra_Vector> > m_ObjectiveGradientVec;
 
-    void ComputeObjective(double* p, double& g, double* dgdp=NULL);
-    void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
-    void updateTpetraResponseMaps();
-    void writeCurrentDesign();
-    void InitializeOptDofs(double* p);
-    void getOptDofsLowerBound( Teuchos::Array<double>& b );
-    void getOptDofsUpperBound( Teuchos::Array<double>& b );
-    void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP);
-    void ComputeMeasure(std::string measureType, const double* p,
-                        double& measure, double* dmdp, std::string integrationMethod);
-    void ComputeMeasure(std::string measureType, double& measure);
-    int GetNumOptDofs();
+  Teuchos::Array< Teuchos::RCP<Thyra_Vector> > m_overlapConstraintGradientVec;
+  Teuchos::Array< Teuchos::RCP<Thyra_Vector> > m_ConstraintGradientVec;
 
-  private:
+  Teuchos::RCP<double> m_objectiveValue;
+  Teuchos::RCP<double> m_constraintValue;
 
-    // data
-    int _iteration;
-    int _writeDesignFrequency;
-    int  numDims;
-    const int c_num_parameters; // set to zero in initialization list
-    const int c_num_responses; // set to one in initialization list
-    Teuchos::RCP<Epetra_Map>      _epetra_x_map;
+  Teuchos::RCP<Albany::CombineAndScatterManager> m_cas_manager;
 
-    int _numPhysics; // number of sub problems
+  std::map<std::string, std::vector<Teuchos::RCP<const Thyra_Vector>>>  m_responseMap;
+  std::map<std::string, std::vector<Teuchos::RCP<Thyra_MultiVector>>>   m_responseDerivMap;
 
-    std::vector<int> _wsOffset;  //index offsets to map to/from workset to/from 1D array.
+  // === Private methods === //
+  void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
+  void smoothTopology(double* p);
+  void smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct);
+  void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
+  void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
+  void copyObjectiveFromStateMgr( double& g, double* dgdp );
+  void copyConstraintFromStateMgr( double& c, double* dcdp );
+  Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-    bool _is_verbose;    // verbose or not for topological optimization solver
-    bool _is_restart;
+  Teuchos::RCP<Teuchos::ParameterList>
+    createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
 
-    Teuchos::RCP<Aggregator> _objAggregator;
-    Teuchos::RCP<Aggregator> _conAggregator;
-    Teuchos::RCP<Optimizer> _optimizer;
+  SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList>  appParams,
+                                  const Teuchos::RCP<const Teuchos_Comm>&     comm,
+                                  const Teuchos::RCP<const Thyra_Vector>&     initial_guess  = Teuchos::null);
 
-    typedef struct TopologyInfoStructT {
-      Teuchos::RCP<Topology>      topologyT;
-      Teuchos::RCP<SpatialFilter> filterT;
-      Teuchos::RCP<SpatialFilter> postFilterT;
-      Teuchos::RCP<Tpetra_Vector> filteredOverlapVectorT;
-      Teuchos::RCP<Tpetra_Vector> filteredVectorT;
-      Teuchos::RCP<Tpetra_Vector> overlapVectorT;
-      Teuchos::RCP<Tpetra_Vector> localVectorT;
-      bool                        filterIsRecursiveT;
-    } TopologyInfoStructT;
+  Teuchos::RCP<Teuchos::ParameterList>
+    createHomogenizationInputFile (const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+                                   const Teuchos::ParameterList& homog_subList,
+                                   int homogProblemIndex,
+                                   int homogSubIndex,
+                                   int homogDim) const;
 
-    std::vector<Teuchos::RCP<TopologyInfoStructT> > _topologyInfoStructsT;
-    Teuchos::RCP<TopologyArray> _topologyArrayT;
+  SolverSubSolverData CreateSubSolverData(const SolverSubSolver& sub) const;
+};
 
-    // currently all topologies must have the same entity type
-    std::string entityType;
+} // namespace ATO
 
-    std::vector<Teuchos::RCP<SpatialFilter> > filters;
-    Teuchos::RCP<SpatialFilter> _derivativeFilter;
-
-
-    typedef struct HomogenizationSet {
-      std::string name;
-      std::string type;
-      int responseIndex;
-      int homogDim;
-      std::vector<Teuchos::RCP<Teuchos::ParameterList> > homogenizationAppParams;
-      std::vector<SolverSubSolver> homogenizationProblems;
-    } HomogenizationSet;
-
-    std::vector<HomogenizationSet> _homogenizationSets;
-
-    std::vector<Teuchos::RCP<Teuchos::ParameterList> > _subProblemAppParams;
-    std::vector<SolverSubSolver> _subProblems;
-
-    OptimizationProblem* _atoProblem;
-
-    Teuchos::RCP<const Teuchos_Comm> _solverComm;
-    Teuchos::RCP<Teuchos::ParameterList> _mainAppParams;
-
-    Teuchos::RCP<const Tpetra_Map> overlapNodeMapT;
-    Teuchos::RCP<const Tpetra_Map> localNodeMapT;
-
-    Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > overlapObjectiveGradientVecT;
-    Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > ObjectiveGradientVecT;
-
-    Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > overlapConstraintGradientVecT;
-    Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > ConstraintGradientVecT;
-
-    Teuchos::RCP<double> objectiveValue;
-    Teuchos::RCP<double> constraintValue;
-
-    Teuchos::RCP<Tpetra_Import> importerT;
-    Teuchos::RCP<Tpetra_Export> exporterT;
-
-    std::map<std::string, std::vector<Teuchos::RCP<const Epetra_Vector>>> responseMap;
-    std::map<std::string, std::vector<Teuchos::RCP<Epetra_MultiVector>>> responseDerivMap;
-    std::map<std::string, std::vector<Teuchos::RCP<const Tpetra_Vector>>> responseMapT;
-    std::map<std::string, std::vector<Teuchos::RCP<Tpetra_MultiVector>>> responseDerivMapT;
-
-
-    // methods
-    void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
-    void smoothTopologyT(double* p);
-    void smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT);
-    void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
-    void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
-    void copyObjectiveFromStateMgr( double& g, double* dgdp );
-    void copyConstraintFromStateMgr( double& c, double* dcdp );
-    void zeroSet();
-    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
-
-    Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
-
-    Teuchos::RCP<Teuchos::ParameterList>
-      createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
-
-    SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams,
-                                    const Teuchos::RCP<const Teuchos_Comm>& comm,
-            const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
-
-    Teuchos::RCP<Teuchos::ParameterList>
-      createHomogenizationInputFile(
-            const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-            const Teuchos::ParameterList& homog_subList,
-            int homogProblemIndex,
-            int homogSubIndex,
-            int homogDim) const;
-
-    SolverSubSolverData CreateSubSolverData(const ATO::SolverSubSolver& sub) const;
-
-  };
-
-  class SolverSubSolver {
-  public:
-    Teuchos::RCP<Albany::Application> app;
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model;
-    Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> params_in;
-    Teuchos::RCP<EpetraExt::ModelEvaluator::OutArgs> responses_out;
-    void freeUp() { app = Teuchos::null; model = Teuchos::null; }
-  };
-
-  class SolverSubSolverData {
-  public:
-    int Np;
-    int Ng;
-    std::vector<int> pLength;
-    std::vector<int> gLength;
-    Teuchos::RCP<const Epetra_Vector> p_init;
-    EpetraExt::ModelEvaluator::DerivativeSupport deriv_support;
-  };
-
-}
-#endif
+#endif // ATO_SOLVER_HPP

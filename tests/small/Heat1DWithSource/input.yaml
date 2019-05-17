@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: Heat 1D
     Solution Method: Transient
@@ -33,7 +34,7 @@ ANONYMOUS:
     Sensitivity Test Values 0: [4.65129000000000015e-01, 4.65129000000000015e-01]
   Piro: 
     Rythmos: 
-      Num Time Steps: 200
+      Nonlinear Solver Type: Rythmos
       Final Time: 2.50000000000000000e-01
       Max State Error: 1.00000000000000002e-03
       Alpha: 7.50000000000000000e-01
@@ -44,7 +45,9 @@ ANONYMOUS:
       Stratimikos: 
         Linear Solver Type: Belos
         Preconditioner Type: Ifpack
-      Rythmos Integration Control: { }
+      Rythmos Integration Control: 
+        Take Variable Steps: false
+        Number of Time Steps: 200
       Rythmos Integrator: 
         VerboseObject: 
           Verbosity Level: low

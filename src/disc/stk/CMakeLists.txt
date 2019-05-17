@@ -16,6 +16,8 @@ SET(SOURCES
   Albany_OrdinarySTKFieldContainer.cpp
   Albany_SideSetSTKMeshStruct.cpp
   Albany_STKDiscretization.cpp
+  Albany_STKDiscretizationStokesH.cpp
+  Albany_STKFieldContainerHelper.cpp
   Albany_STKNodeFieldContainer.cpp
   Albany_STKNodeSharing.cpp
   Albany_STK3DPointStruct.cpp
@@ -38,6 +40,8 @@ SET(HEADERS
   Albany_OrdinarySTKFieldContainer_Def.hpp
   Albany_SideSetSTKMeshStruct.hpp
   Albany_STKDiscretization.hpp
+  Albany_STKDiscretizationStokesH.hpp
+  Albany_STKFieldContainerHelper.hpp
   Albany_STKNodeFieldContainer.hpp
   Albany_STKNodeFieldContainer_Def.hpp
   Albany_STKNodeSharing.hpp
@@ -48,9 +52,7 @@ SET(HEADERS
 
 IF (ALBANY_LANDICE)
   SET(SOURCES ${SOURCES} Albany_ExtrudedSTKMeshStruct.cpp)
-  SET(SOURCES ${SOURCES} Albany_STKDiscretizationStokesH.cpp)
   SET(HEADERS ${HEADERS} Albany_ExtrudedSTKMeshStruct.hpp)
-  SET(HEADERS ${HEADERS} Albany_STKDiscretizationStokesH.hpp)
 ENDIF()
 
 IF (ALBANY_AERAS)
@@ -60,9 +62,11 @@ IF (ALBANY_AERAS)
                          Aeras_SpectralOutputSTKMeshStruct.hpp)
 ENDIF()
 
-include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
+INCLUDE_DIRECTORIES (
+  ${Trilinos_INCLUDE_DIRS}
+  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src
-  )
+)
 
 add_library(albanySTK ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 target_link_libraries(albanySTK ${Trilinos_LIBRARIES})

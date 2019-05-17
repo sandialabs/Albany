@@ -16,6 +16,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_TEMPUS)
 if (ALBANY_IFPACK2)
-add_test(Serial_Dynamic_${testName}_NewmarkImplicitDForm_Tempus ${SerialAlbanyT.exe} cube.yaml)
+add_test(Serial_Dynamic_${testName}_NewmarkImplicitDForm_Tempus ${SerialAlbany.exe} cube.yaml)
+set_tests_properties(Serial_Dynamic_${testName}_NewmarkImplicitDForm_Tempus PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif()
 endif()

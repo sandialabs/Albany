@@ -1,14 +1,7 @@
+# Name the test with the directory name
+get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-
-# 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dudx.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_dudx.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_dudx.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT_dudx.yaml COPYONLY)
+# Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo
                ${CMAKE_CURRENT_BINARY_DIR}/quadQuadSS.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo.4.0
@@ -20,18 +13,46 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo.4.2
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/quadQuadSS.exo.4.3 COPYONLY)
 
+####################################
+###          Main tests          ###
+####################################
 
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-
-# 3. Create the test with this name and standard executable
+set(testName ${testNameRoot})
 
 if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe} input.yaml)
-add_test(${testName}_dudxdudy ${Albany.exe} input_dudx.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+
+  add_test(${testName}_Epetra ${Albany.exe} input.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
 endif()
 
 if (ALBANY_IFPACK2)
-  add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.yaml)
-  add_test(${testName}_dudxdudy_Tpetra ${AlbanyT.exe} inputT_dudx.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
+
+  add_test(${testName}_Tpetra ${Albany.exe} inputT.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
+endif ()
+
+####################################
+###          DuDx tests          ###
+####################################
+
+set(testName ${testNameRoot}_dydx)
+
+if (ALBANY_EPETRA) 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dudx.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_dudx.yaml COPYONLY)
+
+  add_test(${testName}_Epetra ${Albany.exe} input_dudx.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
+endif()
+
+if (ALBANY_IFPACK2)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_dudx.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputT_dudx.yaml COPYONLY)
+
+  add_test(${testName}_Tpetra ${Albany.exe} inputT_dudx.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
 endif ()

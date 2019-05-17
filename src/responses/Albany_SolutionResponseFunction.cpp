@@ -6,85 +6,82 @@
 
 #include "Albany_SolutionResponseFunction.hpp"
 #include "Albany_ThyraUtils.hpp"
-#include <algorithm>
+#include "Albany_Application.hpp"
 
-// TODO: remove this include once you figured out how to abstract away from Tpetra
-#include "Albany_TpetraThyraUtils.hpp"
+namespace Albany {
 
-Albany::SolutionResponseFunction::
-SolutionResponseFunction(
-  const Teuchos::RCP<Albany::Application>& application_,
-  Teuchos::ParameterList& responseParams) :
-  application(application_)
+SolutionResponseFunction::
+SolutionResponseFunction(const Teuchos::RCP<Albany::Application>& application,
+                         const Teuchos::ParameterList& responseParams)
+ : solution_vs(getSpmdVectorSpace(application->getVectorSpace()))
 {
   // Build list of DOFs we want to keep
   // This should be replaced by DOF names eventually
   int numDOF = application->getProblem()->numEquations();
   if (responseParams.isType< Teuchos::Array<int> >("Keep DOF Indices")) {
-    Teuchos::Array<int> dofs =
-      responseParams.get< Teuchos::Array<int> >("Keep DOF Indices");
-    keepDOF = Teuchos::Array<int>(numDOF, 0);
-    for (int i=0; i<dofs.size(); i++)
-      keepDOF[dofs[i]] = 1;
+    Teuchos::Array<int> dofs = responseParams.get< Teuchos::Array<int> >("Keep DOF Indices");
+    keepDOF.resize(numDOF,false);
+    numKeepDOF = 0;
+    for (int i=0; i<dofs.size(); i++) {
+      keepDOF[dofs[i]] = true;
+      ++numKeepDOF;
+    }
+  } else {
+    keepDOF.resize(numDOF,true);
+    numKeepDOF = numDOF;
   }
-  else {
-    keepDOF = Teuchos::Array<int>(numDOF, 1);
+}
+
+void Albany::SolutionResponseFunction::setup()
+{
+  // Build culled vs
+  int Neqns = keepDOF.size();
+  int N = solution_vs->localSubDim();
+
+  TEUCHOS_ASSERT( !(N % Neqns) ); // Assume that all the equations for
+                                  // a given node are on the assigned
+                                  // processor. I.e. need to ensure
+                                  // that N is exactly Neqns-divisible
+
+  int nnodes = N / Neqns;          // number of fem nodes
+  int N_new = nnodes * numKeepDOF; // length of local x_new
+
+  Teuchos::Array<LO> subspace_components(N_new);
+  for (int ieqn=0, idx=0; ieqn<Neqns; ++ieqn) {
+    if (keepDOF[ieqn]) {
+      for (int inode=0; inode<nnodes; ++inode, ++idx) {
+        subspace_components[idx] = inode*Neqns+ieqn;
+      }
+    }
   }
-}
+  culled_vs = getSpmdVectorSpace(createSubspace(solution_vs,subspace_components));
 
 
-void
-Albany::SolutionResponseFunction::
-setup()
-{
-  // Build culled map and importer - Tpetra
-  Teuchos::RCP<const Tpetra_Map> x_mapT = application->getMapT();
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = application->getComm(); 
-  //Tpetra version of culled_map
-  culled_mapT = buildCulledMapT(*x_mapT, keepDOF);
-
-  importerT = Teuchos::rcp(new Tpetra_Import(x_mapT, culled_mapT));
-
-  // Create graph for gradient operator -- diagonal matrix: Tpetra version
-  Teuchos::ArrayView<Tpetra_GO> rowAV;
-  gradient_graphT =
-    Teuchos::rcp(new Tpetra_CrsGraph(culled_mapT, 1));
-  for (int i=0; i<culled_mapT->getNodeNumElements(); i++) {
-    Tpetra_GO row = culled_mapT->getGlobalElement(i);
-    rowAV = Teuchos::arrayView(&row, 1);
-    gradient_graphT->insertGlobalIndices(row, rowAV);
+  // Create graph for gradient operator -- diagonal matrix
+  cull_op_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(solution_vs,culled_vs,1,/* static_profile = */ true));
+  for (int i=0; i<culled_vs->localSubDim(); i++) {
+    const GO row = getGlobalElement(culled_vs,i);
+    cull_op_factory->insertGlobalIndices(row,Teuchos::arrayView(&row,1));
   }
-  gradient_graphT->fillComplete();
-  //IK, 8/22/13: Tpetra_CrsGraph does not appear to have optimizeStorage() function...
-  //gradient_graphT->optimizeStorage();
+  cull_op_factory->fillComplete();
+
+  // Create the culling operator
+  cull_op = cull_op_factory->createOp();
+  assign(cull_op,1.0);
+  fillComplete(cull_op);
 }
 
-Albany::SolutionResponseFunction::
-~SolutionResponseFunction()
+Teuchos::RCP<Thyra_LinearOp>
+SolutionResponseFunction::createGradientOp() const
 {
+  auto gradOp = cull_op_factory->createOp();
+  fillComplete(gradOp);
+  return gradOp;
 }
 
-Teuchos::RCP<const Tpetra_Map>
-Albany::SolutionResponseFunction::
-responseMapT() const
-{
-  return culled_mapT;
-}
-
-Teuchos::RCP<Tpetra_Operator>
-Albany::SolutionResponseFunction::
-createGradientOpT() const
-{
-  Teuchos::RCP<Tpetra_CrsMatrix> GT =
-    Teuchos::rcp(new Tpetra_CrsMatrix(gradient_graphT));
-  GT->fillComplete();
-  return GT;
-}
-
-
-void
-Albany::SolutionResponseFunction::
-evaluateResponse(const double /*current_time*/,
+void SolutionResponseFunction::
+evaluateResponse(
+    const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
@@ -94,8 +91,7 @@ evaluateResponse(const double /*current_time*/,
   cullSolution(x, g);
 }
 
-void
-Albany::SolutionResponseFunction::
+void SolutionResponseFunction::
 evaluateTangent(const double /*alpha*/,
 		const double beta,
 		const double /*omega*/,
@@ -131,8 +127,7 @@ evaluateTangent(const double /*alpha*/,
   }
 }
 
-void
-Albany::SolutionResponseFunction::
+void SolutionResponseFunction::
 evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -145,8 +140,6 @@ evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<Thyra_LinearOp>& dg_dxdotdot,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-  bool callFillComplete = false;
-
   if (!g.is_null()) {
     cullSolution(x, g);
   }
@@ -168,8 +161,7 @@ evaluateGradient(const double /*current_time*/,
   }
 }
 
-void
-Albany::SolutionResponseFunction::
+void SolutionResponseFunction::
 evaluateDistParamDeriv(
     const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
@@ -184,43 +176,11 @@ evaluateDistParamDeriv(
   }
 }
 
-Teuchos::RCP<const Tpetra_Map>
-Albany::SolutionResponseFunction::
-buildCulledMapT(const Tpetra_Map& x_mapT,
-	       const Teuchos::Array<int>& keepDOF) const
+void SolutionResponseFunction::
+cullSolution(const Teuchos::RCP<const Thyra_MultiVector>& x,
+             const Teuchos::RCP<      Thyra_MultiVector>& x_culled) const
 {
-  int numKeepDOF = std::accumulate(keepDOF.begin(), keepDOF.end(), 0);
-  int Neqns = keepDOF.size();
-  int N = x_mapT.getNodeNumElements(); // x_mapT is map for solution vector
-
-  TEUCHOS_ASSERT( !(N % Neqns) ); // Assume that all the equations for
-                                  // a given node are on the assigned
-                                  // processor. I.e. need to ensure
-                                  // that N is exactly Neqns-divisible
-
-  int nnodes = N / Neqns;          // number of fem nodes
-  int N_new = nnodes * numKeepDOF; // length of local x_new
-
-  Teuchos::ArrayView<const Tpetra_GO> gidsT = x_mapT.getNodeElementList();
-  Teuchos::Array<Tpetra_GO> gids_new(N_new);
-  int idx = 0;
-  for ( int inode = 0; inode < N/Neqns ; ++inode) // For every node
-    for ( int ieqn = 0; ieqn < Neqns; ++ieqn )  // Check every dof on the node
-      if ( keepDOF[ieqn] == 1 )  // then want to keep this dof
-	gids_new[idx++] = gidsT[(inode*Neqns)+ieqn];
-  // end cull
-
-  Teuchos::RCP<const Tpetra_Map> x_new_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (gids_new, x_mapT.getComm(), x_mapT.getNode());
-
-  return x_new_mapT;
-
+  cull_op->apply(Thyra::EOpTransp::NOTRANS,*x,x_culled.ptr(),1.0,0.0);
 }
 
-void
-Albany::SolutionResponseFunction::
-cullSolution(const Teuchos::RCP<const Thyra_MultiVector>& x, const Teuchos::RCP<Thyra_MultiVector>& x_culled) const
-{
-  auto xT = Albany::getConstTpetraMultiVector(x);
-  auto x_culledT = Albany::getTpetraMultiVector(x_culled);
-  x_culledT->doImport(*xT, *importerT, Tpetra::INSERT);
-}
+} // namespace Albany

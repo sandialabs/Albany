@@ -10,60 +10,14 @@
 // Get Albany configuration macros
 #include "Albany_config.h"
 
-// For cudaCheckError
-#include <stdexcept>
-
 #include <sstream>
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Albany_ThyraTypes.hpp"
+#include "Albany_CommUtils.hpp"
+
 #include "Teuchos_RCP.hpp"
-
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Comm.h"
-#endif
-
-// Checks if the previous Kokkos::Cuda kernel has failed
-#ifdef ALBANY_CUDA_ERROR_CHECK
-#define cudaCheckError() \
-  { cudaError(__FILE__, __LINE__); }
-inline void
-cudaError(const char* file, int line) {
-  cudaError_t err = cudaGetLastError();
-  if (err != cudaSuccess) {
-    fprintf(
-        stderr, "CUDA Error: %s before %s:%d\n", cudaGetErrorString(err), file,
-        line);
-    throw std::runtime_error(cudaGetErrorString(err));
-  }
-}
-#else
-#define cudaCheckError()
-#endif
-
-// NVTX Range creates a colored range which can be viewed on the nvvp timeline
-// (from Parallel Forall blog)
-#ifdef ALBANY_CUDA_NVTX
-#include "nvToolsExt.h"
-static const uint32_t nvtx_colors[] = { 0x0000ff00, 0x000000ff, 0x00ffff00,
-    0x00ff00ff, 0x0000ffff, 0x00ff0000, 0x00ffffff };
-static const int num_nvtx_colors = sizeof(nvtx_colors)/sizeof(uint32_t);
-#define PUSH_RANGE(name,cid) { \
-  int color_id = cid; \
-  color_id = color_id%num_nvtx_colors;\
-  nvtxEventAttributes_t eventAttrib = {0}; \
-  eventAttrib.version = NVTX_VERSION; \
-  eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE; \
-  eventAttrib.colorType = NVTX_COLOR_ARGB; \
-  eventAttrib.color = nvtx_colors[color_id]; \
-  eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII; \
-  eventAttrib.message.ascii = name; \
-  nvtxRangePushEx(&eventAttrib); \
-}
-#define POP_RANGE nvtxRangePop();
-#else
-#define PUSH_RANGE(name,cid)
-#define POP_RANGE
-#endif
+#include "Albany_Macros.hpp"
 
 namespace Albany {
 
@@ -87,38 +41,12 @@ AbsRowSum(
     Teuchos::RCP<Tpetra_Vector>& absRowSumsTpetra,
     const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
 
-#if defined(ALBANY_EPETRA)
-
-Albany_MPI_Comm
-getMpiCommFromEpetraComm(const Epetra_Comm& ec);
-
-Albany_MPI_Comm
-getMpiCommFromEpetraComm(Epetra_Comm& ec);
-Teuchos::RCP<const Epetra_Comm>
-createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
-Teuchos::RCP<const Epetra_Comm>
-createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
-Teuchos::RCP<const Teuchos_Comm>
-createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec);
-Teuchos::RCP<const Teuchos_Comm>
-createTeuchosCommFromEpetraComm(const Epetra_Comm& ec);
-
-#endif
 
 // Helper function which replaces the diagonal of a matrix
 void
 ReplaceDiagonalEntries(
     const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
     const Teuchos::RCP<Tpetra_Vector>& diag);
-
-// Helper function which creates diagonal vector with entries equal to the
-// absolute value of the rowsum of a matrix.
-
-Albany_MPI_Comm
-getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
-
-Teuchos::RCP<Teuchos_Comm>
-createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
 
 //! Utility to make a string out of a string + int with a delimiter:
 //! strint("dog",2,' ') = "dog 2"
@@ -297,33 +225,5 @@ enum class BuildType {None, Tpetra, Epetra};
 BuildType build_type(const BuildType value=BuildType::None);
 
 }  // end namespace Albany
-
-#ifdef __CUDA_ARCH__
-#define ALBANY_ASSERT_IMPL(cond, ...) assert(cond)
-#else
-#define ALBANY_ASSERT_IMPL(cond, msg, ...)          \
-  do {                                              \
-    if (!(cond)) {                                  \
-      std::ostringstream omsg;                      \
-      omsg << #cond " failed at ";                  \
-      omsg << __FILE__ << " +" << __LINE__ << '\n'; \
-      omsg << msg << '\n';                          \
-      Albany::assert_fail(omsg.str());              \
-    }                                               \
-  } while (0)
-#endif
-
-#define ALBANY_ASSERT(...) ALBANY_ASSERT_IMPL(__VA_ARGS__, "")
-
-#ifdef NDEBUG
-#define ALBANY_EXPECT(...)
-#else
-#define ALBANY_EXPECT(...) ALBANY_ASSERT(__VA_ARGS__)
-#endif
-
-#define ALBANY_ALWAYS_ASSERT(cond) ALBANY_ASSERT(cond)
-#define ALBANY_ALWAYS_ASSERT_VERBOSE(cond, msg) ALBANY_ASSERT(cond, msg)
-#define ALBANY_DEBUG_ASSERT(cond) ALBANY_EXPECT(cond)
-#define ALBANY_DEBUG_ASSERT_VERBOSE(cond, msg) ALBANY_EXPECT(cond, msg)
 
 #endif  // ALBANY_UTILS

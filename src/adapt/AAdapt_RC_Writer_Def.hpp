@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "AAdapt_RC_Manager.hpp"
+#include "AAdapt_RC_Writer.hpp"
 
 #include "Phalanx_DataLayout_MDALayout.hpp"
 
@@ -47,7 +48,7 @@ Writer (const Teuchos::RCP<Manager>& rc_mgr,
 
 template<typename Traits>
 void Writer<PHAL::AlbanyTraits::Residual, Traits>::
-postRegistrationSetup (typename Traits::SetupData d,
+postRegistrationSetup (typename Traits::SetupData /* d */,
                        PHX::FieldManager<Traits>& fm) {
   if (this->rc_mgr_->usingProjection()) {
     this->utils.setFieldData(bf_, fm);

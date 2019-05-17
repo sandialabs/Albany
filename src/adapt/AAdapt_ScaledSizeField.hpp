@@ -4,51 +4,48 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_SCALEDSIZEFIELD_HPP
-#define AADAPT_SCALEDSIZEFIELD_HPP
+#ifndef AADAPT_SCALED_SIZE_FIELD_HPP
+#define AADAPT_SCALED_SIZE_FIELD_HPP
 
 #include "AAdapt_MeshAdaptMethod.hpp"
 
 namespace AAdapt {
 
 class ScaledSizeField : public MeshAdaptMethod {
+public:
 
+  ScaledSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
+
+  ~ScaledSizeField() = default;
+
+  void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+
+  void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
+
+  void preProcessShrunkenMesh();
+
+  void preProcessOriginalMesh();
+  void postProcessFinalMesh() {}
+  void postProcessShrunkenMesh() {}
+
+  class ScaledIsoFunc : public ma::IsotropicFunction
+  {
   public:
+    virtual ~ScaledIsoFunc() = default;
 
-    ScaledSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
+/** \brief get the desired element size at this vertex */
 
-    ~ScaledSizeField();
+    virtual double getValue(ma::Entity* /* vert */){
+      return factor_ * averageEdgeLength_;
+    }
 
-    void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+    double factor_;
+    double averageEdgeLength_;
 
-    void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
-
-    void preProcessShrunkenMesh();
-
-    void preProcessOriginalMesh();
-    void postProcessFinalMesh() {}
-    void postProcessShrunkenMesh() {}
-
-    class ScaledIsoFunc : public ma::IsotropicFunction
-    {
-      public:
-        virtual ~ScaledIsoFunc(){}
-
-    /** \brief get the desired element size at this vertex */
-
-        virtual double getValue(ma::Entity* vert){
-            return factor_ * averageEdgeLength_;
-        }
-
-        double factor_;
-        double averageEdgeLength_;
-
-    } scaledIsoFunc;
-
-
+  } scaledIsoFunc;
 };
 
-}
+} // namespace AAdapt
 
-#endif
+#endif // AADAPT_SCALED_SIZE_FIELD_HPP
 

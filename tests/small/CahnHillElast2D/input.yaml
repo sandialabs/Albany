@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: CahnHill 2D
     Solution Method: Transient
@@ -27,18 +28,20 @@ ANONYMOUS:
     Absolute Tolerance: 1.00000000000000006e-01
   Piro: 
     Rythmos: 
-      Num Time Steps: 10
+      Nonlinear Solver Type: Rythmos
       Final Time: 1.00000000000000006e-01
       Max State Error: 1.00000000000000002e-03
       Alpha: 0.00000000000000000e+00
       Rythmos Stepper: 
         VerboseObject: 
           Verbosity Level: none
-      Stratimikos: 
-        Linear Solver Type: Belos
-        Preconditioner Type: Ifpack
-      Rythmos Integration Control: { }
+      Rythmos Integration Control: 
+        Take Variable Steps: false
+        Number of Time Steps: 10
       Rythmos Integrator: 
         VerboseObject: 
           Verbosity Level: low
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Preconditioner Type: Ifpack
 ...

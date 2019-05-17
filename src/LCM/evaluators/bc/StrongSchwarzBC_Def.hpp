@@ -13,7 +13,6 @@
 #include "Teuchos_TestForException.hpp"
 
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
 
 namespace LCM {
 
@@ -75,7 +74,7 @@ StrongSchwarzBC_Base<EvalT, Traits>::computeBCs(
 
   Albany::Application const& coupled_app = getApplication(coupled_app_index);
 
-  Teuchos::RCP<Tpetra_Vector const> coupled_solution = coupled_app.getX();
+  Teuchos::RCP<Thyra_Vector const> coupled_solution = coupled_app.getX();
 
   if (coupled_solution == Teuchos::null) {
     x_val = 0.0;
@@ -214,11 +213,10 @@ StrongSchwarzBC_Base<EvalT, Traits>::computeBCs(
   Teuchos::ArrayRCP<double> const& coupled_coordinates =
       coupled_stk_disc->getCoordinates();
 
-  Teuchos::ArrayRCP<ST const> coupled_solution_view =
-      coupled_solution->get1dView();
+  Teuchos::ArrayRCP<ST const> coupled_solution_view = Albany::getLocalData(coupled_solution);
 
-  Teuchos::RCP<Tpetra_Map const> coupled_overlap_node_map =
-      coupled_stk_disc->getOverlapNodeMapT();
+  Teuchos::RCP<Thyra_VectorSpace const> coupled_overlap_node_vs =
+      coupled_stk_disc->getOverlapNodeVectorSpace();
 
   // We do this element by element
   auto const number_cells = 1;
@@ -261,8 +259,7 @@ StrongSchwarzBC_Base<EvalT, Traits>::computeBCs(
       for (auto node = 0; node < coupled_node_count; ++node) {
         auto const global_node_id = ws_elem_to_node_id[workset][element][node];
 
-        auto const local_node_id =
-            coupled_overlap_node_map->getLocalElement(global_node_id);
+        auto const local_node_id = Albany::getLocalElement(coupled_overlap_node_vs,global_node_id); 
 
         double* const pcoord =
             &(coupled_coordinates[coupled_dimension * local_node_id]);
@@ -557,12 +554,9 @@ template <typename StrongSchwarzBC, typename Traits>
 void
 fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<const Tpetra_Vector> const_disp =
-      Albany::getConstTpetraVector(dirichlet_workset.x);
-  Teuchos::RCP<const Tpetra_Vector> const_velo =
-      Albany::getConstTpetraVector(dirichlet_workset.xdot);
-  Teuchos::RCP<const Tpetra_Vector> const_acce =
-      Albany::getConstTpetraVector(dirichlet_workset.xdotdot);
+  Teuchos::RCP<const Thyra_Vector> const_disp = dirichlet_workset.x;
+  Teuchos::RCP<const Thyra_Vector> const_velo = dirichlet_workset.xdot;
+  Teuchos::RCP<const Thyra_Vector> const_acce = dirichlet_workset.xdotdot;
 
   bool const has_disp = const_disp != Teuchos::null;
 
@@ -573,31 +567,31 @@ fillSolution(StrongSchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
   ALBANY_ASSERT(has_disp == true);
 
   // Displacement
-  Teuchos::RCP<Tpetra_Vector> disp =
+  Teuchos::RCP<Thyra_Vector> disp =
       has_disp == true ?
-          Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*const_disp)) :
+          Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*const_disp)) :
           Teuchos::null;
 
-  Teuchos::ArrayRCP<ST> disp_view =
-      has_disp == true ? disp->get1dViewNonConst() : Teuchos::null;
+  auto disp_view = 
+      has_disp == true ? Albany::getNonconstLocalData(disp) : Teuchos::null; 
 
   // Velocity
-  Teuchos::RCP<Tpetra_Vector> velo =
+  Teuchos::RCP<Thyra_Vector> velo =
       has_velo == true ?
-          Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*const_velo)) :
+          Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*const_velo)) :
           Teuchos::null;
 
-  Teuchos::ArrayRCP<ST> velo_view =
-      has_velo == true ? velo->get1dViewNonConst() : Teuchos::null;
+  auto velo_view = 
+      has_velo == true ? Albany::getNonconstLocalData(velo) : Teuchos::null; 
 
   // Acceleration
-  Teuchos::RCP<Tpetra_Vector> acce =
+  Teuchos::RCP<Thyra_Vector> acce =
       has_acce == true ?
-          Teuchos::rcpFromRef(const_cast<Tpetra_Vector&>(*const_acce)) :
+          Teuchos::rcpFromRef(const_cast<Thyra_Vector&>(*const_acce)) :
           Teuchos::null;
 
-  Teuchos::ArrayRCP<ST> acce_view =
-      has_acce == true ? acce->get1dViewNonConst() : Teuchos::null;
+  auto acce_view = 
+      has_acce == true ? Albany::getNonconstLocalData(acce) : Teuchos::null; 
 
   std::vector<std::vector<int>> const& ns_nodes =
       dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;

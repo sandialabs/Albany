@@ -3,16 +3,12 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef ALBANY_STATELESSOBSERVERIMPL_HPP
-#define ALBANY_STATELESSOBSERVERIMPL_HPP
+
+#ifndef ALBANY_STATELESS_OBSERVER_IMPL_HPP
+#define ALBANY_STATELESS_OBSERVER_IMPL_HPP
 
 #include "Albany_Application.hpp"
 #include "Albany_DataTypes.hpp"
-
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Map.h"
-#include "Epetra_Vector.h"
-#endif
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Ptr.hpp"
@@ -51,46 +47,36 @@ namespace Albany {
  * do. Instead, NOXStatelessObserver will start with just one user (Epetra
  * eigendata saver), and NOXObserver will continue to behave as it always has.
  */
+
 class StatelessObserverImpl {
 public:
   explicit StatelessObserverImpl(const Teuchos::RCP<Application> &app);
 
   RealType getTimeParamValueOrDefault(RealType defaultValue) const;
 
-#if defined(ALBANY_EPETRA)
-  const Epetra_Map& getNonOverlappedMap() const;
-#endif
+  Teuchos::RCP<const Thyra_VectorSpace> getNonOverlappedVectorSpace() const;
 
-  Teuchos::RCP<const Tpetra_Map> getNonOverlappedMapT() const;
-
-#if defined(ALBANY_EPETRA)
-  virtual void observeSolution(
-    double stamp, const Epetra_Vector& nonOverlappedSolution,
-    const Teuchos::Ptr<const Epetra_Vector>& nonOverlappedSolutionDot);
-#endif
-  
-  virtual void observeSolutionT(
-    double stamp, const Tpetra_Vector& nonOverlappedSolutionT,
-    const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT,
-    const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotDotT);
+  virtual void observeSolution (
+    double stamp,
+    const Thyra_Vector& nonOverlappedSolution,
+    const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
+    const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot);
 
 
-  virtual void observeSolutionT(
-    double stamp, const Tpetra_Vector& nonOverlappedSolutionT,
-    const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT);
+  virtual void observeSolution (
+    double stamp,
+    const Thyra_Vector& nonOverlappedSolution,
+    const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot);
 
-  virtual void observeSolutionT(
-    double stamp, const Tpetra_MultiVector& nonOverlappedSolutionT);
+  virtual void observeSolution (
+    double stamp,
+    const Thyra_MultiVector& nonOverlappedSolution);
 
 protected:
   Teuchos::RCP<Application> app_;
   Teuchos::RCP<Teuchos::Time> solOutTime_;
-
-private:
-  StatelessObserverImpl(const StatelessObserverImpl&);
-  StatelessObserverImpl& operator=(const StatelessObserverImpl&);
 };
 
 } // namespace Albany
 
-#endif // ALBANY_STATELESSOBSERVERIMPL_HPP
+#endif // ALBANY_STATELESS_OBSERVER_IMPL_HPP

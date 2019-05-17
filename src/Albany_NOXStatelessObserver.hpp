@@ -4,25 +4,26 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_STATELESSNOXOBSERVER
-#define ALBANY_STATELESSNOXOBSERVER
+#ifndef ALBANY_STATELESS_NOX_OBSERVER_HPP
+#define ALBANY_STATELESS_NOX_OBSERVER_HPP
 
 #include "NOX_Epetra_Observer.H"
 
 #include "Albany_Application.hpp"
-#include "Albany_StatelessObserverImpl.hpp"
 
 namespace Albany {
+class StatelessObserverImpl;
 
 class NOXStatelessObserver : public NOX::Epetra::Observer {
 public:
-  NOXStatelessObserver(const Teuchos::RCP<Albany::Application> &app);
+  NOXStatelessObserver(const Teuchos::RCP<Application> &app);
+
   void observeSolution(const Epetra_Vector& solution);
   void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 private:
-   Albany::StatelessObserverImpl impl;
+  Teuchos::RCP<StatelessObserverImpl> impl;
 };
 
-}
+} // namespace Albany
 
-#endif // ALBANY_STATELESSNOXOBSERVER
+#endif // ALBANY_STATELESS_NOX_OBSERVER_HPP

@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Solution Method: Transient
     Phalanx Graph Visualization Detail: 0
@@ -48,22 +49,19 @@ ANONYMOUS:
     Sensitivity Test Values 0: [5.21962479841000040e-03]
     Number of Dakota Comparisons: 0
   Piro: 
-    Rythmos Solver: 
-      Rythmos: 
-        Integrator Settings: 
-          Final Time: 3.00000000000000000e+00
-          Land On Final Time: false
-        Stepper Settings: 
-          Stepper Selection: 
-            Stepper Type: Backward Euler
-          Runge Kutta Butcher Tableau Selection: 
-            Runge Kutta Butcher Tableau Type: Singly Diagonal IRK 2 Stage 3rd order
-        Integration Control Strategy Selection: 
-          Integration Control Strategy Type: Simple Integration Control Strategy
-          Simple Integration Control Strategy: 
-            Take Variable Steps: false
-            Number of Time Steps: 100
-      Stratimikos: { }
+    Rythmos: 
+      Nonlinear Solver Type: Rythmos
+      Stepper Type: Backward Euler
+      Final Time: 3.0e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos Integration Control: 
+          Take Variable Steps: false
+          Number of Time Steps: 100
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
     NOX: 
       Status Tests: 
         Test Type: Combo

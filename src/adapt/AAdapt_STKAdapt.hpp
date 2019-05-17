@@ -5,8 +5,8 @@
 //*****************************************************************//
 
 
-#ifndef AADAPT_STKADAPT_HPP
-#define AADAPT_STKADAPT_HPP
+#ifndef AADAPT_STKADAPTT_HPP
+#define AADAPT_STKADAPTT_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -21,73 +21,68 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
-#include "AAdapt_STKUnifSizeField.hpp"
 #include "UniformRefinerPattern.hpp"
 
 namespace AAdapt {
 
 template<class SizeField>
-
 class STKAdapt : public AbstractAdapter {
-  public:
+public:
 
-    STKAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             Albany::StateManager& StateMgr_,
-             const Teuchos::RCP<const Teuchos_Comm>& commT_);
-    //! Destructor
-    ~STKAdapt();
+  STKAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+            const Teuchos::RCP<ParamLib>& paramLib_,
+            const Albany::StateManager& StateMgr_,
+            const Teuchos::RCP<const Teuchos_Comm>& comm_);
+  //! Destructor
+  ~STKAdapt() = delete;
 
-    //! Check adaptation criteria to determine if the mesh needs adapting
-    virtual bool queryAdaptationCriteria();
+  //! Check adaptation criteria to determine if the mesh needs adapting
+  virtual bool queryAdaptationCriteria(int iteration);
 
-    //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
-    virtual bool adaptMesh(const Epetra_Vector& solution, const Epetra_Vector& ovlp_solution);
+  //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
+  virtual bool adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
+                         const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
 
-    //! Transfer solution between meshes.
-    virtual void solutionTransfer(const Epetra_Vector& oldSolution,
-                                  Epetra_Vector& newSolution);
+  //! Each adapter must generate it's list of valid parameters
+  Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const;
 
-    //! Each adapter must generate it's list of valid parameters
-    Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const;
+private:
 
-  private:
+  // Disallow copy and assignment
+  STKAdapt(const STKAdapt&);
+  STKAdapt& operator=(const STKAdapt&);
 
-    // Disallow copy and assignment
-    STKAdapt(const STKAdapt&);
-    STKAdapt& operator=(const STKAdapt&);
+  void printElementData();
 
-    void printElementData();
-
-    int numDim;
-    int remeshFileIndex;
-    std::string base_exo_filename;
+  int numDim;
+  int remeshFileIndex;
+  std::string base_exo_filename;
 
 
-    Teuchos::RCP<Albany::GenericSTKMeshStruct> genericMeshStruct;
+  Teuchos::RCP<Albany::GenericSTKMeshStruct> genericMeshStruct;
 
-    Teuchos::RCP<Albany::AbstractDiscretization> disc;
+  Teuchos::RCP<Albany::AbstractDiscretization> disc;
 
-    Albany::STKDiscretization* stk_discretization;
+  Albany::STKDiscretization* stk_discretization;
 
-    Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
-    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
+  Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
+  Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
 
-    int num_iterations;
+  int num_iterations;
 
-    const Epetra_Vector* solution;
-    const Epetra_Vector* ovlp_solution;
+  const Teuchos::RCP<const Tpetra_Vector> solution;
+  const Teuchos::RCP<const Tpetra_Vector> ovlp_solution;
 
 };
 
-}
+} // namespace AAdapt
 
 // Define macros for explicit template instantiation
-#define STKADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREFINE(name) \
+#define STKADAPTT_INSTANTIATE_TEMPLATE_CLASS_UNIFREFINE(name) \
   template class name<AAdapt::STKUnifRefineField>;
 
-#define STKADAPT_INSTANTIATE_TEMPLATE_CLASS(name) \
-  STKADAPT_INSTANTIATE_TEMPLATE_CLASS_UNIFREFINE(name)
+#define STKADAPTT_INSTANTIATE_TEMPLATE_CLASS(name) \
+  STKADAPTT_INSTANTIATE_TEMPLATE_CLASS_UNIFREFINE(name)
 
 
-#endif //ALBANY_STKADAPT_HPP
+#endif // ALBANY_STK_ADAPT_HPP

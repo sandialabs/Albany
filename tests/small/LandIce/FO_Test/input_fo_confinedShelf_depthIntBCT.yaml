@@ -1,8 +1,10 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Phalanx Graph Visualization Detail: 2
+    Number RBMs for ML: 2
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
     Dirichlet BCs: 
@@ -130,7 +132,7 @@ ANONYMOUS:
                 Ifpack2: 
                   Overlap: 1
                   Prec Type: ILUT
-                  Ifpack Settings: 
+                  Ifpack2 Settings: 
                     'fact: ilut level-of-fill': 2.00000000000000000e+00
                 MueLu: 
                   multigrid algorithm: sa
@@ -138,8 +140,7 @@ ANONYMOUS:
                   'smoother: params': 
                     'relaxation: type': Symmetric Gauss-Seidel
                   'smoother: pre or post': both
-                  'coarse: type': Superlu
-                  number of equations: 4
+                  'coarse: type': KLU2
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 

@@ -7,28 +7,19 @@
 
 #include "Albany_SolutionAverageResponseFunction.hpp"
 
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
-Albany::SolutionAverageResponseFunction::
-SolutionAverageResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  ScalarResponseFunction(commT)
+namespace Albany
 {
+
+SolutionAverageResponseFunction::
+SolutionAverageResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& comm) :
+  ScalarResponseFunction(comm)
+{
+  // Nothing to be done here
 }
 
-Albany::SolutionAverageResponseFunction::
-~SolutionAverageResponseFunction()
-{
-}
-
-unsigned int
-Albany::SolutionAverageResponseFunction::
-numResponses() const 
-{
-  return 1;
-}
-
-void
-Albany::SolutionAverageResponseFunction::
+void SolutionAverageResponseFunction::
 evaluateResponse(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -39,10 +30,9 @@ evaluateResponse(const double /*current_time*/,
   evaluateResponseImpl(*x,*g);
 }
 
-void
-Albany::SolutionAverageResponseFunction::
+void SolutionAverageResponseFunction::
 evaluateTangent(const double alpha, 
-		const double beta,
+		const double /* beta */,
 		const double /*omega*/,
 		const double /*current_time*/,
 		bool /*sum_derivs*/,
@@ -69,7 +59,7 @@ evaluateTangent(const double alpha,
   // If Vx is null, Vx is the identity
   if (!gx.is_null()) {
     if (!Vx.is_null()) {
-      if (ones.is_null() || ones->domain()->dim()!=Vx->domain()->dim()) {
+      if (ones.is_null() || !sameAs(ones->domain(),Vx->domain())) {
         ones = Thyra::createMembers(Vx->range(), Vx->domain()->dim());
         ones->assign(1.0);
       }
@@ -94,14 +84,13 @@ evaluateTangent(const double alpha,
   }
 }
 
-void
-Albany::SolutionAverageResponseFunction::
-evaluateGradient(const double current_time,
+void SolutionAverageResponseFunction::
+evaluateGradient(const double /* current_time */,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
+		const Teuchos::Array<ParamVec>& /* p */,
+		ParamVec* /* deriv_p */,
 		const Teuchos::RCP<Thyra_Vector>& g,
 		const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
 		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
@@ -134,8 +123,7 @@ evaluateGradient(const double current_time,
   }
 }
 
-void
-Albany::SolutionAverageResponseFunction::
+void SolutionAverageResponseFunction::
 evaluateDistParamDeriv(
     const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
@@ -151,27 +139,17 @@ evaluateDistParamDeriv(
   }
 }
 
-void 
-Albany::SolutionAverageResponseFunction::
+void SolutionAverageResponseFunction::
 evaluateResponseImpl (
     const Thyra_Vector& x,
 		Thyra_Vector& g)
 {
-  //IKT, 12/11/19: I had to add these conversions to TpetraVectors b/c I do 
-  //not believe there is a method equivalent to getLocalLength in Thyra.
-  //The checks done here with the local length are needed for problems
-  //where the mesh can adapt. 
-  int one_ll = 0; 
-  if (!one.is_null()) {
-    auto oneTpetraVector = ConverterT::getConstTpetraVector(one); 
-    one_ll = oneTpetraVector->getLocalLength(); 
-  }
-  auto xTpetraVector = ConverterT::getConstTpetraVector(Teuchos::rcpFromRef(x)); 
-  int x_ll = xTpetraVector->getLocalLength(); 
-  if (one.is_null() || (x_ll != one_ll)) {
+  if (one.is_null() || !sameAs(one->range(),x.range())) {
     one = Thyra::createMember(x.space());
     one->assign(1.0);
   }
   const ST mean = one->dot(x) / x.space()->dim();
   g.assign(mean);
 }
+
+} // namespace Albany

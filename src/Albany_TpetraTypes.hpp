@@ -23,6 +23,8 @@
 #include "Tpetra_CrsMatrix.hpp"
 #include "Tpetra_DistObject.hpp"
 #include "Tpetra_Operator.hpp"
+#include "Tpetra_Import.hpp"
+#include "Tpetra_Export.hpp"
 #include "Tpetra_MultiVector.hpp"
 
 #ifndef HAVE_TPETRA_INST_DOUBLE

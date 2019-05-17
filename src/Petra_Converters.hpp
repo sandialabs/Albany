@@ -8,7 +8,9 @@
 #define PETRA_CONVERTERS_H
 
 #include "Teuchos_RCP.hpp"
-#include "Albany_DataTypes.hpp"
+
+#include "Albany_TpetraTypes.hpp"
+#include "Albany_CommTypes.hpp"
 
 #include "Epetra_Comm.h"
 #include "Epetra_Vector.h"
@@ -139,6 +141,6 @@ public:
   Teuchos::RCP<const Epetra_Comm> commE_;
 };
 
-}
+} // namespace Petra
 
 #endif //PETRA_CONVERTERS

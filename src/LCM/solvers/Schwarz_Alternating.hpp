@@ -11,9 +11,9 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_Application.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_MaterialDatabase.hpp"
-#include "Albany_ModelEvaluatorT.hpp"
 #include "Piro_NOXSolver.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
@@ -48,8 +48,7 @@ class SchwarzAlternating : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
   /// Constructor
   SchwarzAlternating(
       Teuchos::RCP<Teuchos::ParameterList> const&   app_params,
-      Teuchos::RCP<Teuchos::Comm<int> const> const& comm,
-      Teuchos::RCP<Tpetra_Vector const> const&      initial_guess);
+      Teuchos::RCP<Teuchos::Comm<int> const> const& comm); 
 
   /// Destructor
   ~SchwarzAlternating();

@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: ODE
     Solution Method: Transient
@@ -24,14 +25,16 @@ ANONYMOUS:
     Sensitivity Test Values 0: [3.05378999999999998e-02, 3.30262109999999998e-01]
   Piro: 
     Rythmos: 
-      Num Time Steps: 200
+      Nonlinear Solver Type: Rythmos
       Final Time: 1.00000000000000000e+00
       Max State Error: 5.00000000000000028e-02
       Alpha: 0.00000000000000000e+00
       Rythmos Stepper: 
         VerboseObject: 
           Verbosity Level: low
-      Rythmos Integration Control: { }
+      Rythmos Integration Control: 
+        Take Variable Steps: false
+        Number of Time Steps: 200
       Rythmos Integrator: 
         VerboseObject: 
           Verbosity Level: none

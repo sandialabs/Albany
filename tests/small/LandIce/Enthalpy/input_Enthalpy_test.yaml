@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
@@ -130,6 +131,8 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver: 
             Write Linear System: false
+            Max Iterations: 200
+            Tolerance: 1.00000000000000002e-08
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
@@ -142,8 +145,6 @@ ANONYMOUS:
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 1.00000000000000002e-08
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 

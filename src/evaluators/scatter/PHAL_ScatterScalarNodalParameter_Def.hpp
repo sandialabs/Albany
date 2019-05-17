@@ -10,6 +10,7 @@
 #include "PHAL_ScatterScalarNodalParameter.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 namespace PHAL {
 
@@ -79,19 +80,19 @@ evaluateFields(typename Traits::EvalData workset)
 {
   // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
   Teuchos::RCP<Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->vector();
-  Teuchos::RCP<Tpetra_Vector> pvecT = Albany::getTpetraVector(pvec);
-  Teuchos::ArrayRCP<ST> pvecT_constView = pvecT->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> pvec_view = Albany::getNonconstLocalData(pvec);
 
   const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
-  auto overlap_map = Albany::getTpetraMap(workset.distParamLib->get(this->param_name)->overlap_vector_space());
-  auto map = pvecT->getMap();
+  auto param_overlap_vs = workset.distParamLib->get(this->param_name)->overlap_vector_space();
+  auto param_vs = pvec->range();
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       const LO lid_overlap = wsElDofs((int)cell,(int)node,0);
-      const LO lid = map->getLocalElement(overlap_map->getGlobalElement(lid_overlap));
+      const GO gid_overlap = Albany::getGlobalElement(param_overlap_vs,lid_overlap);
+      const LO lid = Albany::getLocalElement(param_vs,gid_overlap);
       if(lid >= 0) {
-       pvecT_constView[lid] = (this->val)(cell,node);
+       pvec_view[lid] = (this->val)(cell,node);
       }
     }
   }
@@ -118,31 +119,28 @@ evaluateFields(typename Traits::EvalData workset)
 {
   // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
   Teuchos::RCP<Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->vector();
-  Teuchos::RCP<Tpetra_Vector> pvecT = Albany::getTpetraVector(pvec);
-  Teuchos::ArrayRCP<ST> pvecT_constView = pvecT->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> pvec_view = Albany::getNonconstLocalData(pvec);
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  auto overlap_map = Albany::getTpetraMap(workset.distParamLib->get(this->param_name)->overlap_vector_space());
-  auto map = pvecT->getMap();
+  auto param_vs = pvec->range();
+  auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+      const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
       LO base_id, ilayer;
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       if(ilayer==fieldLevel) {
-        GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(lnodeId);
-        LO lid = map->getLocalElement(ginode);
-        if(lid>=0)
-          pvecT_constView[ lid ] = (this->val)(cell,node);
+        const LO lid = Albany::getLocalElement(param_vs,elNodeID[node]);
+        if(lid>=0) {
+          pvec_view[ lid ] = (this->val)(cell,node);
+        }
       }
     }
   }
 }
-
-// **********************************************************************
 
 } // namespace PHAL

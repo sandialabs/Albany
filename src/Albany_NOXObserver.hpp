@@ -7,30 +7,32 @@
 //IK, 9/12/14: right now this is Epetra (Albany) function.
 //Not compiled if ALBANY_EPETRA_EXE is off.
 
-#ifndef ALBANY_NOXOBSERVER
-#define ALBANY_NOXOBSERVER
+#ifndef ALBANY_NOX_OBSERVER_HPP
+#define ALBANY_NOX_OBSERVER_HPP
 
 #include "NOX_Epetra_Observer.H"
+#include "Teuchos_RCP.hpp"
 
-#include "Albany_Application.hpp"
-#include "Albany_ObserverImpl.hpp"
+namespace Albany
+{
+class Application;
+class ObserverImpl;
 
-class Albany_NOXObserver : public NOX::Epetra::Observer
+class NOXObserver : public NOX::Epetra::Observer
 {
 public:
-   Albany_NOXObserver(
-       const Teuchos::RCP<Albany::Application> &app_);
+   NOXObserver (const Teuchos::RCP<Albany::Application> &app_);
 
   //! Original version, for steady with no time or param info
-  void observeSolution(
-    const Epetra_Vector& solution);
+  void observeSolution (const Epetra_Vector& solution);
 
   //! Improved version with space for time or parameter value
-  void observeSolution(
-    const Epetra_Vector& solution, double time_or_param_val);
+  void observeSolution(const Epetra_Vector& solution, double time_or_param_val);
 
 private:
-   Albany::ObserverImpl impl;
+   Teuchos::RCP<ObserverImpl> impl;
 };
 
-#endif //ALBANY_NOXOBSERVER
+} // namespace Albany
+
+#endif // ALBANY_NOX_OBSERVER_HPP

@@ -28,14 +28,15 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "Albany_Utils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 
-const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
+const GO INVALID = Teuchos::OrdinalTraits<GO>::invalid();
 
 //Constructor for arrays passed from CISM through Albany-CISM interface
 Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
                   const double * xyz_at_nodes_Ptr,
                   const int * global_node_id_owned_map_Ptr,
                   const int * global_element_id_active_owned_map_Ptr,
@@ -72,7 +73,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   restartTime(0.0),
   periodic(false)
 {
-  if (verbosity == 1 & commT->getRank() == 0) std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl;
+  if (verbosity == 1 & comm->getRank() == 0) std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl;
   NumNodes = nNodes;
   NumEles = nElementsActive;
   NumBasalFaces = nCellsActive;
@@ -82,7 +83,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   NumNorthFaces = nNorthFacesActive; 
   debug_output_verbosity = verbosity;
   if (verbosity == 2) {
-    std::cout <<"Proc #" << commT->getRank() << ", NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces 
+    std::cout <<"Proc #" << comm->getRank() << ", NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces 
                <<", NumWestFaces = " << NumWestFaces << ", NumEastFaces = "<< NumEastFaces 
               << ", NumSouthFaces = " << NumSouthFaces << ", NumNorthFaces = " << NumNorthFaces <<  std::endl;
   }
@@ -99,14 +100,14 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   sh.resize(NumNodes); 
   thck.resize(NumNodes);
   resizeVec(shGrad, NumNodes, 2); 
-  Teuchos::Array<Tpetra_GO> globalNodesID(NumNodes); // local; doesn't have to be class data unless desired
-  Teuchos::Array<Tpetra_GO> globalElesID(NumEles);
-  Teuchos::Array<Tpetra_GO> basalFacesID(NumBasalFaces); 
-  Teuchos::Array<Tpetra_GO> topFacesID(NumBasalFaces);
-  Teuchos::Array<Tpetra_GO> westFacesID(NumWestFaces); 
-  Teuchos::Array<Tpetra_GO> eastFacesID(NumEastFaces); 
-  Teuchos::Array<Tpetra_GO> southFacesID(NumSouthFaces); 
-  Teuchos::Array<Tpetra_GO> northFacesID(NumNorthFaces); 
+  Teuchos::Array<GO> globalNodesID(NumNodes); // local; doesn't have to be class data unless desired
+  Teuchos::Array<GO> globalElesID(NumEles);
+  Teuchos::Array<GO> basalFacesID(NumBasalFaces); 
+  Teuchos::Array<GO> topFacesID(NumBasalFaces);
+  Teuchos::Array<GO> westFacesID(NumWestFaces); 
+  Teuchos::Array<GO> eastFacesID(NumEastFaces); 
+  Teuchos::Array<GO> southFacesID(NumSouthFaces); 
+  Teuchos::Array<GO> northFacesID(NumNorthFaces); 
   flwa.resize(NumEles); 
   beta.resize(NumNodes);
   uvel.resize(NumNodes); 
@@ -227,13 +228,13 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
        southFacesID[i] = global_south_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++)  
          sf[i][j] = global_south_face_conn_active_Ptr[i + NumSouthFaces*j];
-        /*if (commT->getRank() == 0) { 
+        /*if (comm->getRank() == 0) { 
           *out << "proc 0, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; }
-        if (commT->getRank() == 1) { 
+        if (comm->getRank() == 1) { 
           *out << "proc 1, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << bf[i][4] << std::endl; }
-        if (commT->getRank() == 2) { 
+        if (comm->getRank() == 2) { 
           *out << "proc 2, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; }
-        if (commT->getRank() == 3) { 
+        if (comm->getRank() == 3) { 
           *out << "proc 3, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; } */
     }
   }
@@ -247,18 +248,18 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 
 
   //Distribute the elements according to the global element IDs
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, globalElesID, 0, commT)); 
+  elem_vs = Albany::createVectorSpace(comm, globalElesID(), INVALID);  
   //Distribute the nodes according to the global node IDs
-  node_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, globalNodesID, 0, commT));
+  node_vs = Albany::createVectorSpace(comm, globalNodesID(), INVALID);  
   //Distribute the elements according to the basal face IDs
-  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, basalFacesID, 0, commT));
+  basal_face_vs = Albany::createVectorSpace(comm, basalFacesID(), INVALID);  
   //Distribute the elements according to the top face IDs
-  top_face_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, topFacesID, 0, commT));
+  top_face_vs = Albany::createVectorSpace(comm, topFacesID(), INVALID);  
   //Distribute the elements according to the lateral face IDs
-  west_face_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, westFacesID, 0, commT));
-  east_face_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, eastFacesID, 0, commT));
-  south_face_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, southFacesID, 0, commT));
-  north_face_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, northFacesID, 0, commT));
+  west_face_vs = Albany::createVectorSpace(comm, westFacesID(), INVALID);  
+  east_face_vs = Albany::createVectorSpace(comm, eastFacesID(), INVALID);  
+  south_face_vs = Albany::createVectorSpace(comm, southFacesID(), INVALID);  
+  north_face_vs = Albany::createVectorSpace(comm, northFacesID(), INVALID);  
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -307,7 +308,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, Albany::getNumLocalElements(elem_vs)); 
 
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
@@ -316,7 +317,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                              ebNameToIndex, this->interleavedOrdering));
 
   // Create a mesh specs object for EACH side set
-  this->initializeSideSetMeshSpecs(commT);
+  this->initializeSideSetMeshSpecs(comm);
 }
 
 
@@ -326,14 +327,14 @@ Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
 
 void
 Albany::CismSTKMeshStruct::constructMesh(
-                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
+                                               const Teuchos::RCP<const Teuchos_Comm>& comm,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const unsigned int neq_,
                                                const AbstractFieldContainer::FieldContainerRequirements& req,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                                                const unsigned int worksetSize)
 {
-  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
+  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
   metaData->commit();
 
@@ -343,8 +344,8 @@ Albany::CismSTKMeshStruct::constructMesh(
   stk::mesh::PartVector singlePartVec(1);
   stk::mesh::PartVector emptyPartVec;
   if (debug_output_verbosity == 2) {
-    std::cout << "elem_mapT # elements: " << elem_mapT->getNodeNumElements() << std::endl;
-    std::cout << "node_mapT # elements: " << node_mapT->getNodeNumElements() << std::endl;
+    std::cout << "elem_vs # elements: " << Albany::getNumLocalElements(elem_vs) << std::endl;
+    std::cout << "node_vs # elements: " << Albany::getNumLocalElements(node_vs) << std::endl;
   }
   unsigned int ebNo = 0; //element block #???
   int sideID = 0;
@@ -377,8 +378,8 @@ Albany::CismSTKMeshStruct::constructMesh(
   int node_GID;
   unsigned int node_LID;
 
-  for (int i=0; i<elem_mapT->getNodeNumElements(); i++) {
-     const unsigned int elem_GID = elem_mapT->getGlobalElement(i);
+  for (int i=0; i<Albany::getNumLocalElements(elem_vs); i++) {
+     const unsigned int elem_GID = Albany::getGlobalElement(elem_vs,i);
      stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
      singlePartVec[0] = partVec[ebNo];
      //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh 
@@ -389,7 +390,7 @@ Albany::CismSTKMeshStruct::constructMesh(
        bulkData->declare_relation(elem, node, j);
        
        node_GID = eles[i][j]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = Albany::getLocalElement(node_vs, node_GID); 
        coord = stk::mesh::field_data(*coordinates_field, node);
        coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
        //set surface height
@@ -431,7 +432,7 @@ Albany::CismSTKMeshStruct::constructMesh(
      singlePartVec[0] = nsPartVec["NodeSetDirichlet"];
      for (int j=0; j<8; j++) { //loop over 8 nodes of each element
        node_GID = eles[i][j]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = Albany::getLocalElement(node_vs, node_GID); 
        if (dirichletNodeMask[node_LID] == 1) {
          stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][j], nodePartVec);
          bulkData->change_entity_parts(node, singlePartVec); 
@@ -460,8 +461,8 @@ Albany::CismSTKMeshStruct::constructMesh(
   if (have_bf == true) {
     if (debug_output_verbosity != 0) *out << "Setting basal surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Basal"];
-    for (int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
-       sideID = basal_face_mapT->getGlobalElement(i);
+    for (int i=0; i<Albany::getNumLocalElements(basal_face_vs); i++) {
+       sideID = Albany::getGlobalElement(basal_face_vs,i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = bf[i][0];
@@ -484,8 +485,8 @@ Albany::CismSTKMeshStruct::constructMesh(
   if (have_tf == true) {
     if (debug_output_verbosity != 0) *out << "Setting top surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Top"];
-    for (int i=0; i<top_face_mapT->getNodeNumElements(); i++) {
-       sideID = top_face_mapT->getGlobalElement(i);
+    for (int i=0; i<Albany::getNumLocalElements(top_face_vs); i++) {
+       sideID = Albany::getGlobalElement(top_face_vs, i);
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = tf[i][0];
@@ -511,8 +512,8 @@ Albany::CismSTKMeshStruct::constructMesh(
   if (have_wf == true) {
     if (debug_output_verbosity != 0) *out << "Setting west lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    for (int i=0; i<west_face_mapT->getNodeNumElements(); i++) {
-       sideID = west_face_mapT->getGlobalElement(i);
+    for (int i=0; i<Albany::getNumLocalElements(west_face_vs); i++) {
+       sideID = Albany::getGlobalElement(west_face_vs,i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = wf[i][0];
@@ -537,8 +538,8 @@ Albany::CismSTKMeshStruct::constructMesh(
   if (have_ef == true) {
     if (debug_output_verbosity != 0) *out << "Setting east lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    for (int i=0; i<east_face_mapT->getNodeNumElements(); i++) {
-       sideID = east_face_mapT->getGlobalElement(i);
+    for (int i=0; i<Albany::getNumLocalElements(east_face_vs); i++) {
+       sideID = Albany::getGlobalElement(east_face_vs, i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = ef[i][0];
@@ -562,8 +563,8 @@ Albany::CismSTKMeshStruct::constructMesh(
   if (have_sf == true) {
     if (debug_output_verbosity != 0) *out << "Setting south lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    for (int i=0; i<south_face_mapT->getNodeNumElements(); i++) {
-       sideID = south_face_mapT->getGlobalElement(i);
+    for (int i=0; i<Albany::getNumLocalElements(south_face_vs); i++) {
+       sideID = Albany::getGlobalElement(south_face_vs, i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = sf[i][0];
@@ -587,8 +588,8 @@ Albany::CismSTKMeshStruct::constructMesh(
   if (have_nf == true) {
     if (debug_output_verbosity != 0) *out << "Setting north lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    for (int i=0; i<north_face_mapT->getNodeNumElements(); i++) {
-       sideID = north_face_mapT->getGlobalElement(i);
+    for (int i=0; i<Albany::getNumLocalElements(north_face_vs); i++) {
+       sideID = getGlobalElement(north_face_vs, i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = nf[i][0];

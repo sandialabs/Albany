@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: Heat 1D
     Periodic BC: true
@@ -29,7 +30,7 @@ ANONYMOUS:
     Sensitivity Test Values 0: [5.62650000000000025e-02]
   Piro: 
     Rythmos: 
-      Num Time Steps: 500
+      Nonlinear Solver Type: Rythmos
       Final Time: 5.00000000000000028e-02
       Max State Error: 1.00000000000000002e-03
       Alpha: 0.00000000000000000e+00
@@ -40,7 +41,9 @@ ANONYMOUS:
       Stratimikos: 
         Linear Solver Type: Belos
         Preconditioner Type: Ifpack
-      Rythmos Integration Control: { }
+      Rythmos Integration Control: 
+        Take Variable Steps: false
+        Number of Time Steps: 500
       Rythmos Integrator: 
         VerboseObject: 
           Verbosity Level: medium

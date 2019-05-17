@@ -108,12 +108,12 @@ main(int ac, char* av[])
       topology.get_discretization();
   Albany::STKDiscretization& stk_discretization =
       static_cast<Albany::STKDiscretization&>(*discretization_ptr);
-  Teuchos::RCP<Tpetra_Vector> solution_fieldT =
-      stk_discretization.getSolutionFieldT();
+  Teuchos::RCP<Thyra_Vector> solution_field = 
+      stk_discretization.getSolutionField();
 
   // Write final mesh to exodus file
   // second arg to output is (pseudo)time
-  stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
+  stk_discretization.writeSolution(*solution_field, 1.0);
 
   //
   // Read the output mesh after the subdivision and check that it is correct

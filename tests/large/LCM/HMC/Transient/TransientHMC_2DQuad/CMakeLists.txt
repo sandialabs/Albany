@@ -18,4 +18,5 @@ add_test(NAME HMC:${testName}
          -DTEST_NAME=${testName} -DTEST_ARGS= -DMPIMNP=${MPIMNP}
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+set_tests_properties(${testName} PROPERTIES LABELS "LCM;Epetra;Forward")
 endif(SEACAS_EPU AND SEACAS_EXODIFF)

@@ -4,9 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************/
 
-#define T_PI 3.1415926535897932385
-
 namespace ATO {
+
+constexpr double T_PI = 3.1415926535897932385;
 
 template<typename T> 
 T Simp::Penalize(T rho) { 

@@ -16,6 +16,8 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#include "Albany_ThyraTypes.hpp"
+
 namespace PHAL {
 
 ///
@@ -69,10 +71,9 @@ class SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>
 
  protected:
   double scale;
-  Teuchos::RCP<Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>>
-      row_is_dbc_;
-  Teuchos::RCP<Tpetra::Vector<int, Tpetra_LO, Tpetra_GO, KokkosNode>>
-      col_is_dbc_;
+  Teuchos::RCP<Thyra_Vector> row_is_dbc_; 
+  Teuchos::RCP<Thyra_Vector> col_is_dbc_; 
+ 
 };
 
 //

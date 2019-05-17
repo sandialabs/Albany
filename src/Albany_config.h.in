@@ -11,7 +11,6 @@
 #cmakedefine ALBANY_LANDICE
 #cmakedefine ALBANY_HYDRIDE
 #cmakedefine ALBANY_LCM
-#cmakedefine ALBANY_PERIDIGM
 #cmakedefine ALBANY_TSUNAMI
 
 // ===================== Macros to identify packages found in Trilinos ======================= //
@@ -123,7 +122,6 @@
   #cmakedefine ATO_USES_ISOLIB
   #cmakedefine ATO_USES_NLOPT
   #cmakedefine ATO_USES_COGENT
-  #cmakedefine ALBANY_ATO_SOLVER_EPETRA
 #endif
 
 #ifdef ALBANY_LANDICE
@@ -133,7 +131,6 @@
   #cmakedefine CISM_CHECK_COMPARISONS
   #cmakedefine REDUCED_COMM
   #cmakedefine CISM_USE_EPETRA
-  #cmakedefine MPAS_USE_EPETRA
   #cmakedefine USE_CISM_FLOW_PARAMETERS
 #endif
 

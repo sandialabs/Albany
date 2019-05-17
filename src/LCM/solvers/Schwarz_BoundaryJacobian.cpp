@@ -18,7 +18,7 @@ namespace LCM {
 Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
     Teuchos::RCP<Teuchos_Comm const> const&                     comm,
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const& ca,
-    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>              jacs,
+    Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>>              jacs,
     int const                                                   this_app_index,
     int const coupled_app_index)
     : comm_(comm),
@@ -26,14 +26,12 @@ Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
       jacs_(jacs),
       this_app_index_(this_app_index),
       coupled_app_index_(coupled_app_index),
-      b_use_transpose_(false),
-      b_initialized_(false),
       n_models_(0)
 {
   ALBANY_EXPECT(0 <= this_app_index && this_app_index < ca.size());
   ALBANY_EXPECT(0 <= coupled_app_index && coupled_app_index < ca.size());
-  domain_map_ = ca[coupled_app_index]->getMapT();
-  range_map_  = ca[this_app_index]->getMapT();
+  domain_vs_ = ca[coupled_app_index]->getVectorSpace();
+  range_vs_  = ca[this_app_index]->getVectorSpace();
 }
 
 //
@@ -53,38 +51,37 @@ Schwarz_BoundaryJacobian::initialize()
 //
 // Returns explicit matrix representation of operator if available.
 //
-Teuchos::RCP<Tpetra_CrsMatrix>
+Teuchos::RCP<Thyra_LinearOp>
 Schwarz_BoundaryJacobian::getExplicitOperator() const
 {
-  auto const max_num_cols = getDomainMap()->getNodeNumElements();
+  auto const max_num_cols = Albany::getNumLocalElements(this->domain());
 
-  Teuchos::RCP<Tpetra_CrsMatrix> K = Teuchos::rcp(
-      new Tpetra_CrsMatrix(getRangeMap(), getDomainMap(), max_num_cols));
+  //IKT: there may be problems here in creating jac_factory - will need to check 
+  Teuchos::RCP<Albany::ThyraCrsMatrixFactory> jac_factory = 
+       Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(this->range(),this->domain(),max_num_cols) );
+  
+  jac_factory->fillComplete();
 
-  auto const zero = Teuchos::ScalarTraits<ST>::zero();
-
-  K->setAllToScalar(zero);
-
-  K->fillComplete();
+  Teuchos::RCP<Thyra_LinearOp> K = jac_factory->createOp(); 
 
   return K;
 }
 
 //
-// Returns the result of a Tpetra_Operator applied to a
-// Tpetra_MultiVector X in Y.
+// Returns the result of a Thyra_Operator applied to a
+// Thyra_MultiVector X in Y.
 //
-void
-Schwarz_BoundaryJacobian::apply(
-    Tpetra_MultiVector const& X,
-    Tpetra_MultiVector&       Y,
-    Teuchos::ETransp          mode,
-    ST                        alpha,
-    ST                        beta) const
+void 
+Schwarz_BoundaryJacobian::applyImpl (
+    const Thyra::EOpTransp M_trans,
+    const Thyra_MultiVector& X,
+    const Teuchos::Ptr<Thyra_MultiVector>& Y,
+    const ST alpha,
+    const ST beta) const
 {
   auto const zero = Teuchos::ScalarTraits<ST>::zero();
 
-  Y.putScalar(zero);
+  Y->assign(zero);
 }
 
 }  // namespace LCM

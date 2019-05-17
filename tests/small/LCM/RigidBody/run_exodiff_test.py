@@ -19,7 +19,7 @@ def runtest(albany_command, yaml_file_name):
 
     # To mimic the ctest behavior, tests may be run from inside the test
     # directory like so:
-    # python ../run_exodiff_test.py "mpirun;-np;4;/scratch/djlittl/Albany/GCC_4.7.2_OPT/src/AlbanyT" RubiksCube.yaml
+    # python ../run_exodiff_test.py "mpirun;-np;4;/scratch/djlittl/Albany/GCC_4.7.2_OPT/src/Albany" RubiksCube.yaml
 
     result = 0
     base_name = yaml_file_name[:-5]

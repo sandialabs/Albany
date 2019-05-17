@@ -39,9 +39,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/finer_cube.g.2.1
                ${CMAKE_CURRENT_BINARY_DIR}/finer_cube.g.2.1 COPYONLY)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-add_test(${testName} ${AlbanyT.exe} finer_cube_dbc.yaml)
-add_test(${testName} ${AlbanyT.exe} finer_cube_dbc_file.yaml)
-add_test(${testName} ${AlbanyT.exe} finer_cube_sdbc.yaml)
-add_test(${testName} ${AlbanyT.exe} finer_cube_sdbc_file.yaml)
+add_test(${testName}_dbc ${Albany.exe} finer_cube_dbc.yaml)
+set_tests_properties(${testName}_dbc PROPERTIES LABELS "LCM;Tpetra;Forward")
+add_test(${testName}_dbc_file ${Albany.exe} finer_cube_dbc_file.yaml)
+set_tests_properties(${testName}_dbc_file PROPERTIES LABELS "LCM;Tpetra;Forward")
+add_test(${testName}_sdbc ${Albany.exe} finer_cube_sdbc.yaml)
+set_tests_properties(${testName}_sdbc PROPERTIES LABELS "LCM;Tpetra;Forward")
+add_test(${testName}_sdbc_file ${Albany.exe} finer_cube_sdbc_file.yaml)
+set_tests_properties(${testName}_sdbc_file PROPERTIES LABELS "LCM;Tpetra;Forward")

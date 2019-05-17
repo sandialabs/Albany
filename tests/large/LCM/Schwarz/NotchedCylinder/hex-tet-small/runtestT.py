@@ -22,8 +22,8 @@ logfile = open(log_file_name, 'w')
 tolerance = 1.0e-6;
 meanvalue = 0.000922355860891;
 
-# run AlbanyT
-command = ["./AlbanyT", "notched-cylinder-S-ctest.yaml"]
+# run Albany
+command = ["./Albany", "notched-cylinder-S-ctest.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

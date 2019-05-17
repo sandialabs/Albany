@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
@@ -145,7 +146,7 @@ ANONYMOUS:
                   Base Method Defaults: none
                   ML Settings: 
                     default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: type': symmetric Gauss-Seidel
                     'smoother: pre or post': both
                     'coarse: type': Amesos-KLU
                     PDE equations: 4

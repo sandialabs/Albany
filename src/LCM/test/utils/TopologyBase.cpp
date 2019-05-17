@@ -136,11 +136,11 @@ main(int ac, char* av[])
       static_cast<Albany::STKDiscretization&>(*discretization_ptr);
 
   // Need solution for output call
-  Teuchos::RCP<Tpetra_Vector> solution_fieldT =
-      stk_discretization.getSolutionFieldT();
+  Teuchos::RCP<Thyra_Vector> solution_field = 
+      stk_discretization.getSolutionField();
 
   // second arg to output is (pseudo)time
-  stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
+  stk_discretization.writeSolution(*solution_field, 1.0);
 
   return 0;
 }

@@ -15,38 +15,55 @@ namespace Albany
 class CombineAndScatterManagerTpetra : public CombineAndScatterManager
 {
 public:
-  Teuchos::RCP<const Thyra_VectorSpace> getOwnedVectorSpace () const { return owned_vs; }
-  Teuchos::RCP<const Thyra_VectorSpace> getOverlappedVectorSpace () const { return overlapped_vs; }
-
   CombineAndScatterManagerTpetra(const Teuchos::RCP<const Thyra_VectorSpace>& owned,
                                  const Teuchos::RCP<const Thyra_VectorSpace>& overlapped);
 
   // Combine methods
+  void combine (const Thyra_Vector& src,
+                      Thyra_Vector& dst,
+                const CombineMode CM) const override;
+  void combine (const Thyra_MultiVector& src,
+                      Thyra_MultiVector& dst,
+                const CombineMode CM) const override;
+  void combine (const Thyra_LinearOp& src,
+                      Thyra_LinearOp& dst,
+                const CombineMode CM) const override;
+
   void combine (const Teuchos::RCP<const Thyra_Vector>& src,
-                const Teuchos::RCP<Thyra_Vector>& dst,
-                const CombineMode CM) const;
+                const Teuchos::RCP<      Thyra_Vector>& dst,
+                const CombineMode CM) const override;
   void combine (const Teuchos::RCP<const Thyra_MultiVector>& src,
-                const Teuchos::RCP<Thyra_MultiVector>& dst,
-                const CombineMode CM) const;
+                const Teuchos::RCP<      Thyra_MultiVector>& dst,
+                const CombineMode CM) const override;
   void combine (const Teuchos::RCP<const Thyra_LinearOp>& src,
-                const Teuchos::RCP<Thyra_LinearOp>& dst,
-                const CombineMode CM) const;
+                const Teuchos::RCP<      Thyra_LinearOp>& dst,
+                const CombineMode CM) const override;
+
 
   // Scatter methods
+  void scatter (const Thyra_Vector& src,
+                      Thyra_Vector& dst,
+                const CombineMode CM) const override;
+  void scatter (const Thyra_MultiVector& src,
+                      Thyra_MultiVector& dst,
+                const CombineMode CM) const override;
+  void scatter (const Thyra_LinearOp& src,
+                      Thyra_LinearOp& dst,
+                const CombineMode CM) const override;
+
   void scatter (const Teuchos::RCP<const Thyra_Vector>& src,
-                const Teuchos::RCP<Thyra_Vector>& dst,
-                const CombineMode CM) const;
+                const Teuchos::RCP<      Thyra_Vector>& dst,
+                const CombineMode CM) const override;
   void scatter (const Teuchos::RCP<const Thyra_MultiVector>& src,
-                const Teuchos::RCP<Thyra_MultiVector>& dst,
-                const CombineMode CM) const;
+                const Teuchos::RCP<      Thyra_MultiVector>& dst,
+                const CombineMode CM) const override;
   void scatter (const Teuchos::RCP<const Thyra_LinearOp>& src,
-                const Teuchos::RCP<Thyra_LinearOp>& dst,
-                const CombineMode CM) const;
+                const Teuchos::RCP<      Thyra_LinearOp>& dst,
+                const CombineMode CM) const override;
 
-private:
-
-  Teuchos::RCP<const Thyra_VectorSpace>   owned_vs;
-  Teuchos::RCP<const Thyra_VectorSpace>   overlapped_vs;
+protected:
+  void create_ghosted_aura_owners () const override;
+  void create_owned_aura_users () const override;
 
   Teuchos::RCP<Tpetra_Import>   importer;
 };

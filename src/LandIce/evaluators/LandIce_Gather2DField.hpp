@@ -26,22 +26,21 @@ namespace LandIce {
 
 template<typename EvalT, typename Traits>
 class Gather2DFieldBase : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits> {
-
+		                      public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
   Gather2DFieldBase(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
-  virtual ~Gather2DFieldBase(){};
+  virtual ~Gather2DFieldBase () = default;
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
-  virtual void evaluateFields(typename Traits::EvalData d)=0;
+  virtual void evaluateFields(typename Traits::EvalData d) = 0;
 
 protected:
-
 
   typedef typename EvalT::ScalarT ScalarT;
 
@@ -58,24 +57,19 @@ protected:
   Teuchos::RCP<const CellTopologyData> cell_topo;
 };
 
+// ================ Gather2DField =============== //
 
 template<typename EvalT, typename Traits> class Gather2DField;
-
-
 
 template<typename Traits>
 class Gather2DField<PHAL::AlbanyTraits::Residual,Traits>
     : public Gather2DFieldBase<PHAL::AlbanyTraits::Residual,Traits> {
 
 public:
-
   Gather2DField(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
 
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
@@ -88,12 +82,9 @@ class Gather2DField<PHAL::AlbanyTraits::Jacobian,Traits>
 public:
 
   Gather2DField(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
 
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
@@ -106,12 +97,9 @@ class Gather2DField<PHAL::AlbanyTraits::Tangent,Traits>
 public:
 
   Gather2DField(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
+  void evaluateFields(typename Traits::EvalData /* d */) {}
 
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
@@ -124,21 +112,17 @@ class Gather2DField<PHAL::AlbanyTraits::DistParamDeriv,Traits>
 public:
 
   Gather2DField(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+                const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
+  void evaluateFields(typename Traits::EvalData /* d */) {};
 
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 };
 
+// ================ GatherExtruded2DField =============== //
 
 template<typename EvalT, typename Traits> class GatherExtruded2DField;
-
-
 
 template<typename Traits>
 class GatherExtruded2DField<PHAL::AlbanyTraits::Residual,Traits>
@@ -147,12 +131,9 @@ class GatherExtruded2DField<PHAL::AlbanyTraits::Residual,Traits>
 public:
 
   GatherExtruded2DField(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+                        const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
 
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
@@ -165,12 +146,9 @@ class GatherExtruded2DField<PHAL::AlbanyTraits::Jacobian,Traits>
 public:
 
   GatherExtruded2DField(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+                        const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
 
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
@@ -183,12 +161,9 @@ class GatherExtruded2DField<PHAL::AlbanyTraits::Tangent,Traits>
 public:
 
   GatherExtruded2DField(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+                        const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
+  void evaluateFields(typename Traits::EvalData /* d */) {}
 
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
@@ -201,12 +176,9 @@ class GatherExtruded2DField<PHAL::AlbanyTraits::DistParamDeriv,Traits>
 public:
 
   GatherExtruded2DField(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+                        const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
+  void evaluateFields(typename Traits::EvalData /* d */) {}
 
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;

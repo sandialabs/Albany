@@ -10,7 +10,3 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/thickness.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/thickness.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/velocity_RMS.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/velocity_RMS.ascii COPYONLY)
-               
-
-
-

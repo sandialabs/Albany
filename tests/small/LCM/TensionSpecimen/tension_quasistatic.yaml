@@ -1,17 +1,5 @@
 LCM:
-  DataTransferKit:
-    Map Type: Consistent Interpolation
-    L2 Projection:
-      Integration Order: 2
-    Consistent Interpolation: { }
-    Point Cloud:
-      Map Type: Moving Least Square Reconstruction
-      Basis Type: Wu
-      Basis Order: 4
-      Spatial Dimension: 3
-      RBF Radius: 0.002
-    Search:
-      Track Missed Range Entities: true
+  Build Type: Tpetra
   Problem:
     Name: Mechanics 3D
     Solution Method: Continuation

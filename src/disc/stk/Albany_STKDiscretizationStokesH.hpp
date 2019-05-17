@@ -4,39 +4,35 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
-#ifndef ALBANY_STKDISCRETIZATIONSTOKESH_HPP
-#define ALBANY_STKDISCRETIZATIONSTOKESH_HPP
+#ifndef ALBANY_STK_DISCRETIZATION_STOKES_H_HPP
+#define ALBANY_STK_DISCRETIZATION_STOKES_H_HPP
 
 #include <vector>
 #include <utility>
 
-
 #include "Albany_STKDiscretization.hpp"
-
-
 
 namespace Albany {
 
-  class STKDiscretizationStokesH : public Albany::STKDiscretization {
-  public:
+class STKDiscretizationStokesH : public STKDiscretization {
+public:
 
-    //! Constructor
-    STKDiscretizationStokesH(
-       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
-       Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct,
-       const Teuchos::RCP<const Teuchos_Comm>& commT,
-       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
+  //! Constructor
+  STKDiscretizationStokesH(
+     const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+     Teuchos::RCP<AbstractSTKMeshStruct>& stkMeshStruct,
+     const Teuchos::RCP<const Teuchos_Comm>& commT,
+     const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
-    //! Destructor
-    ~STKDiscretizationStokesH();
+  //! Destructor
+  ~STKDiscretizationStokesH() = default;
 
-  private:
-    //! Process STK mesh for CRS Graphs
-    void computeGraphs();
-  };
+private:
+  //! Process STK mesh for CRS Graphs
+  void computeGraphs();
+};
 
-}
+} // namespace Albany
 
-#endif // ALBANY_STKDISCRETIZATION_HPP
+#endif // ALBANY_STK_DISCRETIZATION_STOKESH_H_HPP

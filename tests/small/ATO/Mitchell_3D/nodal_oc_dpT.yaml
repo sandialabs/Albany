@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Solution Method: ATO Problem
     Number of Subproblems: 1
@@ -49,6 +50,7 @@ ANONYMOUS:
             Function Type: SIMP
             Minimum: 0.00000000000000000e+00
             Penalization Parameter: 1.00000000000000000e+00
+        Spatial Filter: 0
     Configuration: 
       Element Blocks: 
         Number of Element Blocks: 3
