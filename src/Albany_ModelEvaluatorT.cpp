@@ -544,11 +544,11 @@ ModelEvaluatorT::reportFinalPoint(
     const bool                                   /* wasSolved */)
 {
   // TODO
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      Teuchos::Exceptions::InvalidParameter,
-      "Calling reportFinalPoint in Albany_ModelEvaluatorT.cpp line 296"
-          << std::endl);
+  // TEUCHOS_TEST_FOR_EXCEPTION(
+  //     true,
+  //     Teuchos::Exceptions::InvalidParameter,
+  //     "Calling reportFinalPoint in Albany_ModelEvaluatorT.cpp line 296"
+  //         << std::endl);
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
