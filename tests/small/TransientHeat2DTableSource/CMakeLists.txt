@@ -22,7 +22,7 @@ if (ALBANY_EPETRA)
   add_test(${testName}_Steady ${SerialAlbany.exe} input.yaml)
   set_tests_properties(${testName}_Steady PROPERTIES LABELS "Basic;Epetra;Forward")
 
-  add_test(${testName}_Transient ${Albany.exe} inputTrans.yaml)
+  add_test(${testName}_Transient ${SerialAlbany.exe} inputTrans.yaml)
   set_tests_properties(${testName}_Transient PROPERTIES DEPENDS ${testName}_Steady)
   set_tests_properties(${testName}_Transient PROPERTIES LABELS "Basic;Epetra;Forward")
 endif()
