@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 LCM:
-  Build Type: Tpetra
   Scaling:
     Scale: 1000.0000
   DataTransferKit:

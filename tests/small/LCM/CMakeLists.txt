@@ -79,6 +79,5 @@ IF(ALBANY_SCOREC)
 ENDIF()
 
 IF(ALBANY_STK_PERCEPT)
-  add_subdirectory(Heat2DSTKAdapt)
   add_subdirectory(Necking3DSTKAdapt)
 ENDIF()

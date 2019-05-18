@@ -113,7 +113,7 @@ SolverFactory(const std::string&                      inputFile,
       problem == "Mechanics 3D" || problem == "Elasticity 1D" ||
       problem == "Elasticity 2D" || problem == "Elasticity 3D" ||
       problem == "Lame" || problem == "ThermoElasticity 2D" ||
-      problem == "ThermoElasticity 3D" || problem == "Heat 2D";
+      problem == "ThermoElasticity 3D";
   setLCMOnly(is_lcm);
 #endif
   std::string solution_method =

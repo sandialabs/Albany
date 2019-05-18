@@ -1,5 +1,4 @@
 LCM:
-  Build Type: Tpetra
   Alternating System:
     Model Input Files: [nobcs_00.yaml, nobcs_01.yaml]
     Minimum Iterations: 1

@@ -1,5 +1,4 @@
 LCM:
-  Build Type: Tpetra
   Problem:
     Name: Mechanics 3D
     Solution Method: Transient Tempus

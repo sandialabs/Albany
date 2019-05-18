@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 LCM:
-  Build Type: Tpetra
   Coupled System:
     Model Input Files: [cube0.yaml, cube1.yaml]
   Problem:

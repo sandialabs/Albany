@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 LCM:
-  Build Type: Tpetra
   ElementBlocks:
     Block0:
       material: Hydride

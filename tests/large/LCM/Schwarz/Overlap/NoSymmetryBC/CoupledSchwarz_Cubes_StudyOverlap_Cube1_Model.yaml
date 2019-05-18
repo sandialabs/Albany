@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 LCM:
-  Build Type: Tpetra
   Debug Output:
     Compute Jacobian Condition Number: -1
     Write Resdiual to MatrixMarket: 0

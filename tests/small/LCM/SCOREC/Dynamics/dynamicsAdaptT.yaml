@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 LCM:
-  Build Type: Tpetra
   Problem:
     Name: Mechanics 2D
     Solution Method: Transient
