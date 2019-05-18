@@ -110,7 +110,13 @@ int main(int argc, char *argv[])
 
     Albany::SolverFactory slvrfctry(cmd.yaml_filename, comm);
 
-    const auto& bt = slvrfctry.getParameters().get("Build Type","Tpetra");
+#if defined(ALBANY_LCM)
+    auto const& bt = slvrfctry.getLCMOnly() == true ? "Tpetra" :
+        slvrfctry.getParameters().get("Build Type","Tpetra");
+#else
+    auto const& bt = slvrfctry.getParameters().get("Build Type","Tpetra");
+#endif
+
     if (bt=="Tpetra") {
       // Set the static variable that denotes this as a Tpetra run
       static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
