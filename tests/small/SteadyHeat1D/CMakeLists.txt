@@ -38,7 +38,7 @@ if (ALBANY_EPETRA AND ALBANY_DAKOTA)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_restart.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_restart.yaml COPYONLY)
   if (ALBANY_DAKOTA_RESTART_EXAMPLES)
-    add_test(${testName}_Dakot_restarta_Epetra ${AlbanyDakota.exe} input_restart.yaml)
+    add_test(${testName}_Dakota_restart_Epetra ${AlbanyDakota.exe} input_restart.yaml)
     set_tests_properties(${testName}_Dakota_restart_Epetra PROPERTIES LABELS "Epetra;Analysis;Dakota")
     set_tests_properties(${testName}_Dakota_restart_Epetra PROPERTIES DEPENDS  ${testName}_Dakota_Epetra)
     if(ALBANY_CTEST_TIMEOUT)
