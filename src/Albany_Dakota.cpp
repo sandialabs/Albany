@@ -9,7 +9,6 @@
 #ifdef ALBANY_DAKOTA
 
 #include "Albany_SolverFactory.hpp"
-#include "Albany_DakotaT.hpp"
 #include "Albany_Utils.hpp"
 
 #include <Teuchos_YamlParameterListCoreHelpers.hpp>
@@ -79,7 +78,7 @@ int Albany_Dakota(int argc, char *argv[])
   RCP<const Teuchos_Comm> appComm = Albany::createTeuchosCommFromMpiComm(analysis_comm);
 
   RCP<Albany::SolverFactory> slvrfctry = rcp(new Albany::SolverFactory(cmd.yaml_filename, appComm));
-  const auto& bt = slvrfctry.getParameters().get("Build Type","Tpetra");
+  const auto& bt = slvrfctry->getParameters().get("Build Type","Tpetra");
   if (bt=="Tpetra") {
     // Set the static variable that denotes this as a Tpetra run
     static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
