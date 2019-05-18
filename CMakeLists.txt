@@ -404,7 +404,7 @@ ENDIF()
 
 OPTION(ENABLE_ALBANY_EPETRA "Flag to turn on building of code depending on Epetra" ON)
 IF (ENABLE_ALBANY_EPETRA)
-  MESSAGE("-- ALBANY_EPETRA_EXE     is Enabled, compiling with -DALBANY_EPETRA")
+  MESSAGE("-- ALBANY_EPETRA     is Enabled, compiling with -DALBANY_EPETRA")
   SET(ALBANY_EPETRA TRUE)
 
   # DAKOTA uses Epetra currently
@@ -418,7 +418,7 @@ IF (ENABLE_ALBANY_EPETRA)
   ENDIF()
 
 ELSE()
-  MESSAGE("-- ALBANY_EPETRA_EXE     is NOT Enabled.")
+  MESSAGE("-- ALBANY_EPETRA     is NOT Enabled.")
   SET(ALBANY_EPETRA FALSE)
   SET(ALBANY_DAKOTA FALSE)
 ENDIF()
@@ -553,28 +553,6 @@ IF (ENABLE_ATO)
 ELSE()
   MESSAGE("-- ATO       is NOT Enabled.")
   SET(ALBANY_ATO FALSE)
-ENDIF()
-
-# set optional dependency on Peridigm peridynamics code, defaults to Disabled
-OPTION(ENABLE_PERIDIGM "Flag to turn on Albany-Peridigm code coupling" OFF)
-IF(ENABLE_PERIDIGM)
-  IF(ENABLE_ALBANY_EPETRA_EXE)
-    SET(CMAKE_PREFIX_PATH ${PERIDIGM_DIR} ${CMAKE_PREFIX_PATH})
-    FIND_PACKAGE(Peridigm REQUIRED)
-    MESSAGE("\nFound Peridigm!  Here are the details: ")
-    MESSAGE("   Peridigm_DIR = ${Peridigm_DIR}")
-    MESSAGE("   Peridigm_LIBRARIES = ${Peridigm_LIBRARIES}")
-    MESSAGE("   Peridigm_INCLUDE_DIRS = ${Peridigm_INCLUDE_DIRS}")
-    MESSAGE("   Peridigm_LIBRARY_DIRS = ${Peridigm_LIBRARY_DIRS}")
-    MESSAGE("End of Peridigm details\n")
-    SET(ALBANY_PERIDIGM TRUE)
-    MESSAGE("-- PERIDIGM   is Enabled, compiling with -DALBANY_PERIDIGM")
-  ELSE()
-    MESSAGE(FATAL_ERROR "\nError: ENABLE_PERIDIGM requires ENABLE_ALBANY_EPETRA_EXE to be ON\n")
-  ENDIF()
-ELSE()
-  MESSAGE("-- PERIDIGM  is NOT Enabled.")
-  SET(ALBANY_PERIDIGM FALSE)
 ENDIF()
 
 # Set optional build of LandIce (Land Ice SciDAC project), defaults to Disabled
@@ -986,8 +964,8 @@ IF(NOT DEFINED Kokkos_ENABLE_Cuda)
       ELSE()
         MESSAGE("-- CUDA Error Check        is NOT Enabled.")
       ENDIF()
-      IF (ENABLE_ALBANY_EPETRA_EXE)
-        MESSAGE(FATAL_ERROR "\nError:  Albany with Epetra is not supported with CUDA KokkosNode!  Please re-configure w/o Epetra (ENABLE_ALBANY_EPETRA_EXE=OFF).")
+      IF (ENABLE_ALBANY_EPETRA)
+        MESSAGE(FATAL_ERROR "\nError:  Albany with Epetra is not supported with CUDA KokkosNode!  Please re-configure w/o Epetra (ENABLE_ALBANY_EPETRA=OFF).")
       ENDIF()
       IF (ENABLE_CUDA_NVTX)
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lnvToolsExt")
@@ -1192,15 +1170,12 @@ IF (ENABLE_MESHDB_TOOLS)
 ENDIF()
 
 # Repeat this warning.
-IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
-    MESSAGE("-- WARNING: ATO was set to be Enabled but does not work fully yet with AlbanyT executable yet!  Use at your own risk!")
-ENDIF(ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 
-IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
+IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA)
   MESSAGE(FATAL_ERROR "\nError:  TriKota option does not work with
-ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you
+ENABLE_ALBANY_EPETRA turned off!  Turn on ENABLE_ALBANY_EPETRA if you
 want to useTriKota.")
-ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
+ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA)
 
 # add a target to generate API documentation with Doxygen
 IF( NOT DISABLE_DOXYGEN )
