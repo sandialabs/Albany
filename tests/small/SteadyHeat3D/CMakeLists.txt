@@ -46,7 +46,7 @@ IF (NOT ALBANY_PARALLEL_ONLY)
                    ${CMAKE_CURRENT_BINARY_DIR}/inputT_10x10x10_ascii.yaml COPYONLY)
 
     add_test(${testName}_Tpetra ${SerialAlbany.exe} inputT_10x10x10_ascii.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Tpetra;Forward")
+    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
   endif ()
 ENDIF ()
 
