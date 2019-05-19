@@ -4,9 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: right now this is Epetra (Albany) function.
-//Not compiled if ALBANY_EPETRA_EXE is off.
-
 #ifndef ALBANY_RYTHMOS_OBSERVER_HPP
 #define ALBANY_RYTHMOS_OBSERVER_HPP
 

@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE set to off.
-
 #ifndef ALBANY_ABSTRACT_STK_FIELD_CONTAINER_HPP
 #define ALBANY_ABSTRACT_STK_FIELD_CONTAINER_HPP
 
