@@ -1,4 +1,3 @@
-if (ALBANY_EPETRA)
   set(testName LandIce_FO_Dome)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/circle.msh
@@ -29,4 +28,3 @@ if (ALBANY_EPETRA)
     set_tests_properties(${testName}_Restart PROPERTIES LABELS "LandIce;Epetra;Forward;Serial")
   ENDIF()
 
-endif()

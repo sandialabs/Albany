@@ -29,15 +29,6 @@ endif()
 # Repeat process for Dakota problems
 if (ALBANY_DAKOTA AND ALBANY_EPETRA)
   set (testName ${testNameRoot}_Dakota)
-  if (ALBANY_EPETRA)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_list.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/dakota_list.in COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputDakota_list.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/inputDakota_list.yaml COPYONLY)
-
-    add_test(${testName}_Epetra ${AlbanyDakota.exe} inputDakota_list.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Epetra;Analysis;Dakota")
-  endif ()
   if (ALBANY_IFPACK2) 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_list.in
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_list.in COPYONLY)
