@@ -1230,7 +1230,7 @@ void Albany::GmshSTKMeshStruct::create_element_blocks( const Teuchos::RCP<const 
     {
       std::string ebn = "Element Block" + it->first;
       partVec[counter] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
-      ebNameToIndex[ebn] = counter;
+      ebNameToIndex[ebn] = it->second;
 
       counter++;
     }
