@@ -13,6 +13,7 @@
 #include "Albany_Memory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_ThyraUtils.hpp"
 #include "Albany_CommUtils.hpp"
 
 #include "Piro_PerformSolve.hpp"
