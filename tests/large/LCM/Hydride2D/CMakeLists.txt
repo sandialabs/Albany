@@ -18,4 +18,5 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_EPETRA)
 add_test(${testName} ${Albany.exe})
+set_tests_properties(${testName} PROPERTIES LABELS "LCM;Epetra;Forward")
 endif()

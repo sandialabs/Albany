@@ -11,7 +11,8 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 IF(NOT ALBANY_PARALLEL_ONLY)
   if (ALBANY_IFPACK2)
-    add_test(${testName}_SERIAL ${SerialAlbanyT.exe} input.yaml)
+    add_test(${testName}_SERIAL ${SerialAlbany.exe} input.yaml)
+    set_tests_properties(${testName}_SERIAL PROPERTIES LABELS "LCM;Tpetra;Forward")
   endif()
 ENDIF()
 
@@ -27,7 +28,8 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}Parallel NAME)
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
   if (ALBANY_IFPACK2)
-    add_test(${testName}_SERIAL ${SerialAlbanyT.exe} inputParallel.yaml)
+    add_test(${testName}_SERIAL ${SerialAlbany.exe} inputParallel.yaml)
+    set_tests_properties(${testName}_SERIAL PROPERTIES LABELS "LCM;Tpetra;Forward")
   endif()
 ENDIF()
 
@@ -43,6 +45,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}Orthogonal NAME)
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
   if (ALBANY_IFPACK2)
-    add_test(${testName}_SERIAL ${SerialAlbanyT.exe} inputOrthogonal.yaml)
+    add_test(${testName}_SERIAL ${SerialAlbany.exe} inputOrthogonal.yaml)
+    set_tests_properties(${testName}_SERIAL PROPERTIES LABELS "LCM;Tpetra;Forward")
   endif()
 ENDIF()

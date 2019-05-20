@@ -8,135 +8,113 @@
 #define ALBANY_SOLUTION_RESPONSE_FUNCTION_HPP
 
 #include "Albany_DistributedResponseFunction.hpp"
-#include "Albany_Application.hpp"
+#include "Albany_ThyraCrsMatrixFactory.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_Array.hpp"
 
 namespace Albany {
 
-  /*!
-   * \brief A response function given by (possibly a portion of) the solution
-   */
-  class SolutionResponseFunction : public DistributedResponseFunction {
-  public:
+class Application;
+
+/*!
+ * \brief A response function given by (possibly a portion of) the solution
+ */
+class SolutionResponseFunction : public DistributedResponseFunction {
+public:
+
+  //! Default constructor
+  SolutionResponseFunction(const Teuchos::RCP<Albany::Application>& application,
+                           const Teuchos::ParameterList& responseParams);
+
+  //! Destructor
+  virtual ~SolutionResponseFunction() = default;
+
+  //! Setup response function
+  void setup() override;
   
-    //! Default constructor
-    SolutionResponseFunction(
-      const Teuchos::RCP<Albany::Application>& application,
-      Teuchos::ParameterList& responseParams);
+  //! Get the map associate with this response
+  Teuchos::RCP<const Thyra_VectorSpace> responseVectorSpace() const override { return culled_vs; }
 
-    //! Destructor
-    virtual ~SolutionResponseFunction();
+  //! Create operator for gradient
+  Teuchos::RCP<Thyra_LinearOp> createGradientOp() const override;
 
-    //! Setup response function
-    virtual void setup();
-    
-    //! Get the map associate with this response
-    virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
+  //! \name Deterministic evaluation functions
+  //@{
 
-    //! Create operator for gradient
-    virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
+  //! Evaluate responses
+  void evaluateResponse(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    const Teuchos::RCP<Thyra_Vector>& g) override;
+  
+  //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
+  void evaluateTangent(
+    const double alpha, 
+    const double beta,
+    const double omega,
+    const double current_time,
+    bool sum_derivs,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    ParamVec* deriv_p,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vp,
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& gx,
+    const Teuchos::RCP<Thyra_MultiVector>& gp) override;
 
-    //! \name Deterministic evaluation functions
-    //@{
+  //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
+  void evaluateGradient(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    ParamVec* deriv_p,
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_LinearOp>& dg_dx,
+    const Teuchos::RCP<Thyra_LinearOp>& dg_dxdot,
+    const Teuchos::RCP<Thyra_LinearOp>& dg_dxdotdot,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp) override;
 
-    //! Evaluate responses
-    virtual void evaluateResponse(
-      const double current_time,
-      const Teuchos::RCP<const Thyra_Vector>& x,
-      const Teuchos::RCP<const Thyra_Vector>& xdot,
-      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::RCP<Thyra_Vector>& g);
-    
-    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void evaluateTangent(
-      const double alpha, 
-      const double beta,
-      const double omega,
-      const double current_time,
-      bool sum_derivs,
-      const Teuchos::RCP<const Thyra_Vector>& x,
-      const Teuchos::RCP<const Thyra_Vector>& xdot,
-      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      const Teuchos::RCP<const Thyra_MultiVector>& Vx,
-      const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
-      const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
-      const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-      const Teuchos::RCP<Thyra_Vector>& g,
-      const Teuchos::RCP<Thyra_MultiVector>& gx,
-      const Teuchos::RCP<Thyra_MultiVector>& gp);
+  //! Evaluate distributed parameter derivative = dg/dp
+  void evaluateDistParamDeriv(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp) override;
+  //@}
 
-    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
-    virtual void evaluateGradient(
-      const double current_time,
-      const Teuchos::RCP<const Thyra_Vector>& x,
-      const Teuchos::RCP<const Thyra_Vector>& xdot,
-      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      const Teuchos::RCP<Thyra_Vector>& g,
-      const Teuchos::RCP<Thyra_LinearOp>& dg_dx,
-      const Teuchos::RCP<Thyra_LinearOp>& dg_dxdot,
-      const Teuchos::RCP<Thyra_LinearOp>& dg_dxdotdot,
-      const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
+protected:
+  
+  void cullSolution(const Teuchos::RCP<const Thyra_MultiVector>& x, 
+                    const Teuchos::RCP<      Thyra_MultiVector>& x_culled) const;
 
-    //! Evaluate distributed parameter derivative = dg/dp
-    virtual void
-    evaluateDistParamDeriv(
-      const double current_time,
-      const Teuchos::RCP<const Thyra_Vector>& x,
-      const Teuchos::RCP<const Thyra_Vector>& xdot,
-      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec>& param_array,
-      const std::string& dist_param_name,
-      const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
-    //@}
+  //! Mask for DOFs to keep
+  Teuchos::Array<bool> keepDOF;
+  int numKeepDOF;
+  
+  //! Vector space for response
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> solution_vs;
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> culled_vs;
 
-  private:
+  //! The restriction operator, use to cull the solution
+  Teuchos::RCP<Thyra_LinearOp> cull_op;
 
-    //! Private to prohibit copying
-    SolutionResponseFunction(const SolutionResponseFunction&);
-    
-    //! Private to prohibit copying
-    SolutionResponseFunction& operator=(const SolutionResponseFunction&);
-
-  protected:
-    
-    Teuchos::RCP<const Tpetra_Map> 
-    buildCulledMapT(
-      const Tpetra_Map& x_mapT, 
-		  const Teuchos::Array<int>& keepDOF) const;
-    
-    //Tpetra version of above function
-    void cullSolution(
-      const Teuchos::RCP<const Thyra_MultiVector>& x, 
-      const Teuchos::RCP<Thyra_MultiVector>& x_culledT) const;
-
-  protected:
-
-    //! Application to get global maps
-    Teuchos::RCP<Albany::Application> application;
-
-    //! Mask for DOFs to keep
-    Teuchos::Array<int> keepDOF;
-
-    
-    //! Tpetra map for response
-    Teuchos::RCP<const Tpetra_Map> culled_mapT;
-
-
-    //! Tpetra importer mapping between full and culled solution
-    Teuchos::RCP<Tpetra_Import> importerT;
-
-
-    //! Graph of gradient operator - Tpetra version
-    Teuchos::RCP<Tpetra_CrsGraph> gradient_graphT;
-
-  };
+  //! Factory for the culling operator
+  Teuchos::RCP<ThyraCrsMatrixFactory> cull_op_factory;
+};
 
 } // namespace Albany
 

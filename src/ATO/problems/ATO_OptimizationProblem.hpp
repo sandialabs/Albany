@@ -7,107 +7,100 @@
 #ifndef ATO_OPTIMIZATION_PROBLEM_HPP
 #define ATO_OPTIMIZATION_PROBLEM_HPP
 
-#include "Albany_AbstractProblem.hpp"
+// ATO includes
 #include "ATO_Types.hpp"
+
+// Albany includes
+#include "Albany_AbstractProblem.hpp"
+
+// System includes
+#include <unordered_map>
 
 namespace ATO {
 
-
+// ATO forward declarations
 class MeasureModel;
 class Topology;
 
-typedef std::unordered_map<std::string, Teuchos::RCP<MeasureModel> > BlockMeasureMap;
+using BlockMeasureMap = std::unordered_map<std::string, Teuchos::RCP<MeasureModel>>;
 
-class OptimizationProblem :
-public virtual Albany::AbstractProblem {
+class OptimizationProblem : public virtual Albany::AbstractProblem
+{
+public:
+  OptimizationProblem( const Teuchos::RCP<Teuchos::ParameterList>& _params,
+                       const Teuchos::RCP<ParamLib>& _paramLib,
+                       const int _numDim);
+  void ComputeVolume(double* p, const double* dfdp,
+                     double& v, double threshhold, double minP);
 
-  public:
-   OptimizationProblem( const Teuchos::RCP<Teuchos::ParameterList>& _params,
-                        const Teuchos::RCP<ParamLib>& _paramLib,
-                        const int _numDim);
-   void ComputeVolume(double* p, const double* dfdp,
-                      double& v, double threshhold, double minP);
-#if defined(ALBANY_EPETRA)
-   void ComputeMeasure(std::string measure, 
-                       std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
-                       double& v, double* dvdp=NULL, 
-                       std::string strIntegrationMethod="Gauss Quadrature");
-#endif
-   void ComputeMeasureT(std::string measure, 
-                       std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
-                       double& v, double* dvdp=NULL, 
-                       std::string strIntegrationMethod="Gauss Quadrature");
-#if defined(ALBANY_EPETRA)
-   void computeMeasure(std::string measure, 
-                       std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
-                       double& v, double* dvdp=NULL);
-#endif
-   void computeMeasureT(std::string measure, 
-                       std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
-                       double& v, double* dvdp=NULL);
-#if defined(ALBANY_EPETRA)
-   void computeConformalVolume(std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
-                      double& m, double* dmdp);
-#endif
-   void computeConformalVolumeT(std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
-                      double& m, double* dmdp);
-#if defined(ALBANY_EPETRA)
-   void computeConformalMeasure(std::string measure, 
-                      std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
-                      double& m, double* dmdp);
-#endif
-   void computeConformalMeasureT(std::string measure, 
-                      std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
-                      double& m, double* dmdp);
-   void ComputeMeasure(std::string measure, double& v);
-   void setDiscretization(Teuchos::RCP<Albany::AbstractDiscretization> _disc)
-          {disc = _disc;}
-   void setCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm) {comm = _comm;}
+  void ComputeMeasure (const std::string& measure, 
+                       const std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
+                       double& v, double* dvdp = nullptr, 
+                       const std::string& strIntegrationMethod = "Gauss Quadrature");
+
+  void computeMeasure (const std::string& measure, 
+                       const std::vector<Teuchos::RCP<TopologyStruct>>& topologyStructs,
+                       double& v, double* dvdp = nullptr);
+
+  void computeConformalVolume (const std::vector<Teuchos::RCP<TopologyStruct>>& topologyStructs,
+                               double& m, double* dmdp);
+
+  void computeConformalMeasure (const std::string& measure, 
+                                const std::vector<Teuchos::RCP<TopologyStruct>>& topologyStructs,
+                                double& m, double* dmdp);
+
+  void ComputeMeasure (const std::string& measure, double& v);
+
+  void setDiscretization(Teuchos::RCP<Albany::AbstractDiscretization> _disc) {
+     disc = _disc;
+  }
+
+  void setCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm) {
+    comm = _comm;
+  }
 
 
-   void InitTopOpt();
+  void InitTopOpt();
 
-  protected:
-   void setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpecs,
-                     Albany::StateManager& _stateMgr);
+protected:
 
-   Teuchos::RCP<Albany::AbstractDiscretization> disc;
-   Teuchos::RCP<const Teuchos_Comm> comm;
+  void setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpecs,
+                    Albany::StateManager& _stateMgr);
 
-   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
-   Albany::StateManager* stateMgr;
+  Teuchos::RCP<Albany::AbstractDiscretization> disc;
+  Teuchos::RCP<const Teuchos_Comm> comm;
 
-   std::vector<Teuchos::RCP<shards::CellTopology> > cellTypes;
-   std::vector<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > > cubatures;
-   std::vector<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
-     intrepidBasis;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+  Albany::StateManager* stateMgr;
 
-
-   std::vector<Kokkos::DynRankView<RealType, PHX::Device> > refPoints;
-   std::vector<Kokkos::DynRankView<RealType, PHX::Device> > refWeights;
-   std::vector<Kokkos::DynRankView<RealType, PHX::Device> > basisAtQPs;
-   std::vector<Kokkos::DynRankView<RealType, PHX::Device> > weighted_measure;
-
-   Teuchos::RCP<Tpetra_Vector> overlapVecT;
-   Teuchos::RCP<Tpetra_Vector> localVecT;
-   Teuchos::RCP<Tpetra_Export> exporterT;
-
-   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > overlapVectorsT;
-
-   Teuchos::RCP<const Tpetra_Map> localNodeMapT;
-   Teuchos::RCP<const Tpetra_Map> overlapNodeMapT;
+  std::vector<Teuchos::RCP<shards::CellTopology> >                                cellTypes;
+  std::vector<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > >                   cubatures;
+  std::vector<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >  intrepidBasis;
 
 
-   std::unordered_map<std::string, Teuchos::RCP<BlockMeasureMap> > measureModels;
+  std::vector<Kokkos::DynRankView<RealType, PHX::Device> > refPoints;
+  std::vector<Kokkos::DynRankView<RealType, PHX::Device> > refWeights;
+  std::vector<Kokkos::DynRankView<RealType, PHX::Device> > basisAtQPs;
+  std::vector<Kokkos::DynRankView<RealType, PHX::Device> > weighted_measure;
 
-//   std::string strIntegrationMethod;
+  Teuchos::RCP<Thyra_Vector> overlapVec;
+  Teuchos::RCP<Thyra_Vector> localVec;
+  Teuchos::RCP<Albany::CombineAndScatterManager> cas_manager;
 
-   int nTopologies;
+  Teuchos::Array<Teuchos::RCP<Thyra_Vector> > overlapVectors;
 
-   bool isNonconformal;
+  Teuchos::RCP<const Thyra_VectorSpace> localNodeVs;
+  Teuchos::RCP<const Thyra_VectorSpace> overlapNodeVs;
 
+
+  std::unordered_map<std::string, Teuchos::RCP<BlockMeasureMap> > measureModels;
+
+//  std::string strIntegrationMethod;
+
+  int nTopologies;
+
+  bool isNonconformal;
 };
-
 
 class MeasureModel
 {
@@ -188,6 +181,7 @@ class TopologyBasedMixture : public MeasureModel
                   Teuchos::Array<double>& outVals);
     
 };
+
 class TopologyBasedMaterial : public MeasureModel
 {
   public:
@@ -212,6 +206,6 @@ class MeasureModelFactory
     
 };
 
-}
+} // namespace ATO
 
-#endif
+#endif // ATO_OPTIMIZATION_PROBLEM_HPP

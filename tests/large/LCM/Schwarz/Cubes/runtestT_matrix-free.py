@@ -22,8 +22,8 @@ logfile = open(log_file_name, 'w')
 tolerance = 1.0e-9;
 meanvalue = 0.000809523809524;
 
-# run AlbanyT
-command = ["./AlbanyT", "cubes_matrix-free.yaml"]
+# run Albany
+command = ["./Albany", "cubes_matrix-free.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

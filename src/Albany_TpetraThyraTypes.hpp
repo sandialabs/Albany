@@ -10,6 +10,10 @@
 // Get all Albany configuration macros
 #include "Albany_config.h"
 
+// Get the scalar/ordinal types, as well as Tpetra ordinals/node
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+
 // Get the converter and the Thyra::TpetraXYZ types
 #include "Thyra_TpetraThyraWrappers.hpp"
 #include "Thyra_TpetraVector.hpp"

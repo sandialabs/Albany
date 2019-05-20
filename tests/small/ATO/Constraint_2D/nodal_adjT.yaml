@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Solution Method: ATO Problem
     Number of Subproblems: 1
@@ -153,10 +154,12 @@ ANONYMOUS:
         Newton: 
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
+          Linear Solver:
+            Tolerance: 9.99999999999999980e-13
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types: 
                 AztecOO: 
                   Forward Solve: 
@@ -166,15 +169,16 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 50
                     Max Iterations: 200
-                    Tolerance: 9.99999999999999980e-13
-                Belos: 
+                Belos:
+                  VerboseObject:
+                    Verbosity Level: low
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
                       Convergence Tolerance: 9.99999999999999980e-13
-                      Output Frequency: 2
+                      Output Frequency: 50
                       Output Style: 1
-                      Verbosity: 0
+                      Verbosity: 33
                       Maximum Iterations: 200
                       Block Size: 1
                       Num Blocks: 200

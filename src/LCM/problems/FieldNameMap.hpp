@@ -11,45 +11,49 @@
 
 namespace LCM {
 
-  class FieldNameMap
+class FieldNameMap
+{
+ public:
+  ///
+  /// Constructor
+  ///
+  FieldNameMap(bool surface_flag);
+
+  ///
+  /// Destructor
+  ///
+  virtual ~FieldNameMap();
+
+  ///
+  /// Return the map
+  ///
+  Teuchos::RCP<std::map<std::string, std::string>>
+  getMap()
   {
-  public:
-    ///
-    /// Constructor
-    ///
-    FieldNameMap(bool surface_flag);
+    return field_name_map_;
+  }
 
-    ///
-    /// Destructor
-    ///
-    virtual ~FieldNameMap();
+ private:
+  ///
+  /// Private and unimplemented
+  ///
+  FieldNameMap();
 
-    ///
-    /// Return the map
-    ///
-    Teuchos::RCP<std::map<std::string, std::string>>
-    getMap() { return field_name_map_; }
+  ///
+  /// Private to prohibit copying
+  ///
+  FieldNameMap(const FieldNameMap&);
 
-  private:
-    ///
-    /// Private and unimplemented
-    ///
-    FieldNameMap();
+  ///
+  /// Private to prohibit copying
+  ///
+  FieldNameMap&
+  operator=(const FieldNameMap&);
 
-    ///
-    /// Private to prohibit copying
-    ///
-    FieldNameMap(const FieldNameMap&);
-
-    ///
-    /// Private to prohibit copying
-    ///
-    FieldNameMap& operator=(const FieldNameMap&);
-
-    ///
-    /// Map data variable
-    ///
-    Teuchos::RCP<std::map<std::string, std::string>> field_name_map_;
-  };
-}
+  ///
+  /// Map data variable
+  ///
+  Teuchos::RCP<std::map<std::string, std::string>> field_name_map_;
+};
+}  // namespace LCM
 #endif

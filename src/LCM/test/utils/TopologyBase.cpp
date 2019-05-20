@@ -8,7 +8,7 @@
 // Test of topology manipulation.
 //
 #include "topology/Topology.h"
-#include "topology/Topology_FractureCriterion.h"
+#include "topology/Topology_FailureCriterion.h"
 #include "topology/Topology_Utils.h"
 
 int
@@ -34,11 +34,11 @@ main(int ac, char* av[])
 
   char const* criteria_names[] = {"one", "random", "traction"};
 
-  LCM::fracture::Criterion fracture_criterion = LCM::fracture::RANDOM;
+  LCM::fracture::Criterion failure_criterion = LCM::fracture::RANDOM;
 
   command_line_processor.setOption(
       "fracture-criterion",
-      &fracture_criterion,
+      &failure_criterion,
       num_criteria,
       criteria_values,
       criteria_names,
@@ -93,25 +93,25 @@ main(int ac, char* av[])
 
   LCM::Topology topology(input_file, output_file);
 
-  Teuchos::RCP<LCM::AbstractFractureCriterion> abstract_fracture_criterion;
+  Teuchos::RCP<LCM::AbstractFailureCriterion> abstract_failure_criterion;
 
-  switch (fracture_criterion) {
+  switch (failure_criterion) {
     default:
       std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
       std::cerr << '\n';
       std::cerr << "Unknown or unsupported fracture criterion: ";
-      std::cerr << fracture_criterion;
+      std::cerr << failure_criterion;
       std::cerr << '\n';
       exit(1);
       break;
 
     case LCM::fracture::ONE:
-      abstract_fracture_criterion =
+      abstract_failure_criterion =
           Teuchos::rcp(new LCM::FractureCriterionOnce(topology, probability));
       break;
 
     case LCM::fracture::RANDOM:
-      abstract_fracture_criterion =
+      abstract_failure_criterion =
           Teuchos::rcp(new LCM::FractureCriterionRandom(topology, probability));
       break;
   }
@@ -121,7 +121,7 @@ main(int ac, char* av[])
   topology.outputToGraphviz(gviz_filename);
 #endif
 
-  topology.set_fracture_criterion(abstract_fracture_criterion);
+  topology.set_failure_criterion(abstract_failure_criterion);
 
   topology.setEntitiesOpen();
 
@@ -136,11 +136,11 @@ main(int ac, char* av[])
       static_cast<Albany::STKDiscretization&>(*discretization_ptr);
 
   // Need solution for output call
-  Teuchos::RCP<Tpetra_Vector> solution_fieldT =
-      stk_discretization.getSolutionFieldT();
+  Teuchos::RCP<Thyra_Vector> solution_field =
+      stk_discretization.getSolutionField();
 
   // second arg to output is (pseudo)time
-  stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
+  stk_discretization.writeSolution(*solution_field, 1.0);
 
   return 0;
 }

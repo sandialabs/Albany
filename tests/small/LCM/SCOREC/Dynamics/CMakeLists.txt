@@ -31,6 +31,8 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 if (ALBANY_IFPACK2)
-  add_test(${testName}_SCOREC_Tpetra ${AlbanyT.exe} dynamicsT.yaml)
-  add_test(${testName}_SCOREC_Adapt_Tpetra ${AlbanyT.exe} dynamicsAdaptT.yaml)
+  add_test(${testName}_SCOREC_Tpetra ${Albany.exe} dynamicsT.yaml)
+  set_tests_properties(${testName}_SCOREC_Tpetra PROPERTIES LABELS "LCM;Tpetra;Forward;SCOREC")
+  add_test(${testName}_SCOREC_Adapt_Tpetra ${Albany.exe} dynamicsAdaptT.yaml)
+  set_tests_properties(${testName}_SCOREC_Adapt_Tpetra PROPERTIES LABELS "LCM;Tpetra;Forward;SCOREC")
 endif()

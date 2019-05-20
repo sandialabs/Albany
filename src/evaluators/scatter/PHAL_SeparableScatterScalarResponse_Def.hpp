@@ -168,6 +168,8 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
+    auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
+
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
       const int elem_LID = sideSet[iSide].elem_LID;
@@ -181,12 +183,12 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
         LO base_id, ilayer;
         for (int i = 0; i < numSideNodes; ++i) {
           std::size_t node = side.node[i];
-          LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+          const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
           layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
           for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
-            LO inode = layeredMeshNumbering.getId(base_id, il_col);
+            const LO inode = layeredMeshNumbering.getId(base_id, il_col);
             for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-              LO dof = solDOFManager.getLocalDOF(inode, eq_col);
+              const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
               int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
               dg_data[res][dof] += val.dx(deriv);
             }
@@ -280,7 +282,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int deriv=0; deriv<num_deriv; ++deriv) {
         const int row = wsElDofs((int)cell,deriv,0);
 
-          // Set dg/dp
+        // Set dg/dp
         if(row >=0){
           dgdp_data[res][row] += this->local_response(cell, res).dx(deriv);
         }
@@ -304,9 +306,60 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Thyra_MultiVector> dgdp = workset.dgdp;
   Teuchos::RCP<Thyra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
   if (!dgdp.is_null() && !overlapped_dgdp.is_null()) {
-
     workset.p_cas_manager->combine(overlapped_dgdp, dgdp, Albany::CombineMode::ADD);
   }
+}
+
+// **********************************************************************
+template<typename Traits>
+void SeparableScatterScalarResponseWithExtrudedParams<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  auto level_it = extruded_params_levels->find(workset.dist_param_deriv_name);
+  if(level_it == extruded_params_levels->end()) //if parameter is not extruded use usual scatter.
+    return SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(workset);
+
+  // Here we scatter the *local* response derivative
+  Teuchos::RCP<Thyra_MultiVector> dgdp = workset.overlapped_dgdp;
+
+  if (dgdp.is_null()) {
+    return;
+  }
+
+  auto dgdp_data = Albany::getNonconstLocalData(dgdp);
+
+  int num_deriv = this->numNodes;
+  auto nodeID = workset.wsElNodeEqID;
+  int fieldLevel = level_it->second;
+
+  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+  auto overlap_p_vs = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
+  auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
+
+  // Loop over cells in workset
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+
+    // Loop over responses
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+
+      // Loop over nodes in cell
+      for (int deriv=0; deriv<num_deriv; ++deriv) {
+        const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[deriv]);
+        LO base_id, ilayer;
+        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
+        const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+        const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
+        const LO row = Albany::getLocalElement(overlap_p_vs,ginode);
+
+        // Set dg/dp
+        if(row >=0){
+          dgdp_data[res][row] += this->local_response(cell, res).dx(deriv);
+        }
+      } // deriv
+    } // response
+  } // cell
 }
 
 } // namespace PHAL

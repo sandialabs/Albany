@@ -4,17 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: does not get compiled if ALBANY_EPETRA_EXE is off.  Has epetra.
-
 #include <vector>
 #include <string>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+
 #include "Albany_EigendataInfoStruct.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "PHAL_GatherEigenvectors.hpp"
 
 namespace PHAL {
-
 
 template<typename EvalT, typename Traits>
 GatherEigenvectors<EvalT,Traits>::
@@ -43,10 +43,9 @@ GatherEigenvectors(const Teuchos::ParameterList& p,
   this->setName("Gather Eigenvectors" );
 }
 
-// **********************************************************************
 template<typename EvalT, typename Traits>
 void GatherEigenvectors<EvalT,Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   for (std::size_t k = 0; k < nEigenvectors; ++k) {
@@ -57,8 +56,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   numNodes = (nEigenvectors > 0) ? eigenvector_Re[0].extent(1) : 0;
 }
 
-// **********************************************************************
-
 template<typename EvalT, typename Traits>
 void GatherEigenvectors<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset)
@@ -67,47 +64,44 @@ evaluateFields(typename Traits::EvalData workset)
 
   auto nodeID = workset.wsElNodeEqID;
   if(workset.eigenDataPtr->eigenvectorRe != Teuchos::null) {
+    Teuchos::RCP<const Thyra_MultiVector> e_r = workset.eigenDataPtr->eigenvectorRe;
+    auto e_r_data = Albany::getLocalData(e_r);
     if(workset.eigenDataPtr->eigenvectorIm != Teuchos::null) {
 
       //Gather real and imaginary parts from workset Eigendata info structure
-      const Epetra_MultiVector& e_r = *(workset.eigenDataPtr->eigenvectorRe);
-      const Epetra_MultiVector& e_i = *(workset.eigenDataPtr->eigenvectorIm);
-      int numVecsInWorkset = std::min(e_r.NumVectors(),e_i.NumVectors());
+      Teuchos::RCP<const Thyra_MultiVector> e_i = workset.eigenDataPtr->eigenvectorIm;
+      int numVecsInWorkset = std::min(e_r->domain()->dim(),e_i->domain()->dim());
       int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
+      auto e_i_data = Albany::getLocalData(e_i);
 
       for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-  for(std::size_t node =0; node < this->numNodes; ++node) {
-    int offsetIntoVec = nodeID(cell,node,0); // neq==1 hardwired
+        for(std::size_t node =0; node < this->numNodes; ++node) {
+          int offsetIntoVec = nodeID(cell,node,0); // neq==1 hardwired
 
-    for (std::size_t k = 0; k < numVecsToGather; ++k) {
-      (this->eigenvector_Re[k])(cell,node) = (*(e_r(k)))[offsetIntoVec];
-      (this->eigenvector_Im[k])(cell,node) = (*(e_i(k)))[offsetIntoVec];
-    }
-  }
+          for (int k = 0; k < numVecsToGather; ++k) {
+            this->eigenvector_Re[k](cell,node) = e_r_data[k][offsetIntoVec];
+            this->eigenvector_Im[k](cell,node) = e_i_data[k][offsetIntoVec];
+          }
+        }
       }
-    }
-    else { // Only real parts of eigenvectors is given -- "gather" zeros into imaginary fields
-
-      //Gather real and imaginary parts from workset Eigendata info structure
-      const Epetra_MultiVector& e_r = *(workset.eigenDataPtr->eigenvectorRe);
-      int numVecsInWorkset = e_r.NumVectors();
+    } else {
+      // Only real parts of eigenvectors is given -- "gather" zeros into imaginary fields
+      int numVecsInWorkset = e_r->domain()->dim();
       int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
 
       for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-  for(std::size_t node =0; node < this->numNodes; ++node) {
-    int offsetIntoVec = nodeID(cell,node,0); // neq==1 hardwired
+        for(std::size_t node =0; node < this->numNodes; ++node) {
+          int offsetIntoVec = nodeID(cell,node,0); // neq==1 hardwired
 
-    for (std::size_t k = 0; k < numVecsToGather; ++k) {
-      (this->eigenvector_Re[k])(cell,node) = (*(e_r(k)))[offsetIntoVec];
-      (this->eigenvector_Im[k])(cell,node) = 0.0;
-    }
-  }
+          for (int k = 0; k < numVecsToGather; ++k) {
+            (this->eigenvector_Re[k])(cell,node) = e_r_data[k][offsetIntoVec];
+            (this->eigenvector_Im[k])(cell,node) = 0.0;
+          }
+        }
       }
     }
   }
   // else (if both Re and Im are null) gather zeros into both??
 }
 
-// **********************************************************************
-
-}
+} // namespace PHAL

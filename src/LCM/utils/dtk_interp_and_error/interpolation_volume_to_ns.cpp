@@ -226,7 +226,10 @@ interpolate(
       tgt_broker.meta_data().declare_field<FieldType>(
           stk::topology::NODE_RANK, tgt_interp_field_name);
   stk::mesh::put_field_on_mesh(
-      target_interp_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
+      target_interp_field,
+      tgt_broker.meta_data().universal_part(),
+      neq,
+      nullptr);
   FieldType& dirichlet_field = tgt_broker.meta_data().declare_field<FieldType>(
       stk::topology::NODE_RANK, "dirichlet_field");
   stk::mesh::put_field_on_mesh(

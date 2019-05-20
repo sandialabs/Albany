@@ -30,7 +30,7 @@ namespace Albany {
     //! Perform post registration setup (do nothing)
     virtual void postRegSetup(){};
 
-    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
+    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateGradient(
       const double current_time,
       const Teuchos::RCP<const Thyra_Vector>& x,

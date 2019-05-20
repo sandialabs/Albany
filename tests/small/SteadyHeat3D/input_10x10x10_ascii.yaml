@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: Heat 3D
     Phalanx Graph Visualization Detail: 1
@@ -34,12 +35,9 @@ ANONYMOUS:
       Number: 1
       Response 0: Solution Two Norm
   Discretization: 
-    1D Elements: 10
-    2D Elements: 10
-    3D Elements: 10
-    Exodus Output File Name: stk.exo
-    Method: STK3D
+    Exodus Output File Name: ascii.exo
     Workset Size: 100
+    Method: Ascii
     Cubature Degree: 3
   Regression Results: 
     Number of Comparisons: 1

@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: Heat 2D
     Solution Method: Transient
@@ -30,7 +31,7 @@ ANONYMOUS:
     Relative Tolerance: 1.00000000000000005e-04
   Piro: 
     Rythmos: 
-      Num Time Steps: 5
+      Nonlinear Solver Type: Rythmos
       Final Time: 4.00000000000000000e+00
       Max State Error: 1.00000000000000002e-03
       Alpha: 0.00000000000000000e+00
@@ -40,7 +41,9 @@ ANONYMOUS:
       Stratimikos: 
         Linear Solver Type: AztecOO
         Preconditioner Type: Ifpack
-      Rythmos Integration Control: { }
+      Rythmos Integration Control: 
+        Take Variable Steps: false
+        Number of Time Steps: 5
       Rythmos Integrator: 
         VerboseObject: 
           Verbosity Level: low

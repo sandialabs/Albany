@@ -4,32 +4,31 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_PUMINODEDATA_HPP
-#define ALBANY_PUMINODEDATA_HPP
-
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#ifndef ALBANY_PUMI_NODE_DATA_HPP
+#define ALBANY_PUMI_NODE_DATA_HPP
 
 #include "PHAL_Dimension.hpp"
 #include "Albany_AbstractNodeFieldContainer.hpp"
+#include "Albany_ThyraUtils.hpp"
 #include "Albany_StateInfoStruct.hpp"
 
 #include <apfNumbering.h>
 
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
 namespace Albany {
 
-class AbstractPUMINodeFieldContainer : public Albany::AbstractNodeFieldContainer {
+class AbstractPUMINodeFieldContainer : public AbstractNodeFieldContainer
+{
+public:
 
-  public:
+  virtual ~AbstractPUMINodeFieldContainer() = default;
 
-    AbstractPUMINodeFieldContainer(){}
-    virtual ~AbstractPUMINodeFieldContainer(){}
-
-    virtual void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
-            int offset) = 0;
-    virtual Albany::MDArray getMDA(const std::vector<apf::Node>& buck) = 0;
-    virtual void resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map) = 0;
-
+  virtual void saveFieldVector(const Teuchos::RCP<const Thyra_MultiVector>& mv,
+                               int offset) = 0;
+  virtual MDArray getMDA(const std::vector<apf::Node>& buck) = 0;
+  virtual void resize(const Teuchos::RCP<const Thyra_VectorSpace> local_node_vs) = 0;
 };
 
 struct PUMINodeMetaData {
@@ -45,103 +44,91 @@ struct PUMINodeMetaData {
 
 template<typename DataType>
 struct PUMINodeDataBase : public AbstractPUMINodeFieldContainer,
-                          public PUMINodeMetaData {
+                          public PUMINodeMetaData
+{
   std::vector<DataType> buffer; // 1D array storage -> numOwnedNodes * product of dims
   PUMINodeDataBase (const std::string& name, const bool output,
                     const std::vector<PHX::DataLayout::size_type>& dims)
     : PUMINodeMetaData(name, output, dims) {}
 };
 
-Teuchos::RCP<Albany::AbstractNodeFieldContainer>
+Teuchos::RCP<AbstractNodeFieldContainer>
 buildPUMINodeField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output);
 
-  // Helper class for PUMINodeData
-  template<typename DataType, unsigned ArrayDim>
-  struct PUMINodeData_Traits { };
+// Helper class for PUMINodeData
+template<typename DataType, unsigned ArrayDim>
+struct PUMINodeData_Traits { };
 
-  template<typename DataType, unsigned ArrayDim, class traits = PUMINodeData_Traits<DataType, ArrayDim> >
-  class PUMINodeData : public PUMINodeDataBase<DataType> {
+template<typename DataType, unsigned ArrayDim, class traits = PUMINodeData_Traits<DataType, ArrayDim> >
+class PUMINodeData : public PUMINodeDataBase<DataType> {
 
-  public:
+public:
 
-    PUMINodeData(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output = false);
-    virtual ~PUMINodeData(){}
+  PUMINodeData(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output = false);
+  virtual ~PUMINodeData(){}
 
-    //! Type of traits class being used
-    typedef traits traits_type;
+  //! Type of traits class being used
+  typedef traits traits_type;
 
-    //! Define the field type
-    typedef typename traits_type::field_type field_type;
+  //! Define the field type
+  typedef typename traits_type::field_type field_type;
 
-    void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv, int offset);
-    void resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map);
-    Albany::MDArray getMDA(const std::vector<apf::Node>& buck);
+  void saveFieldVector(const Teuchos::RCP<const Thyra_MultiVector>& mv, int offset);
+  void resize(const Teuchos::RCP<const Thyra_VectorSpace> local_node_vs);
+  MDArray getMDA(const std::vector<apf::Node>& buck);
 
-  protected:
+protected:
 
-    std::size_t beginning_index;        // Buffer starting location for the next array allocation
+  std::size_t beginning_index;        // Buffer starting location for the next array allocation
 
-    Teuchos::RCP<const Tpetra_Map> local_node_map;
+  Teuchos::RCP<const Thyra_SpmdVectorSpace> m_local_node_vs;
 
-  };
+};
 
 // Explicit template definitions in support of the above
 
-  // NodeScalar
-  template <typename T>
-  struct PUMINodeData_Traits<T, 1> {
+// NodeScalar
+template <typename T>
+struct PUMINodeData_Traits<T, 1> {
 
-    enum { size = 1 }; // One array dimension tags: number of nodes in workset
-    typedef shards::Array<T, shards::NaturalOrder, Node> field_type ;
-    static field_type buildArray(T *buf, unsigned nelems, const std::vector<PHX::DataLayout::size_type>& dims){
+  enum { size = 1 }; // One array dimension tags: number of nodes in workset
+  typedef shards::Array<T, shards::NaturalOrder, Node> field_type ;
+  static field_type buildArray(T *buf, unsigned nelems, const std::vector<PHX::DataLayout::size_type>& dims){
 
-      return field_type(buf, nelems);
+    return field_type(buf, nelems);
 
-    }
+  }
 
-  };
+};
 
-  // NodeVector
-  template <typename T>
-  struct PUMINodeData_Traits<T, 2> {
+// NodeVector
+template <typename T>
+struct PUMINodeData_Traits<T, 2> {
 
-    enum { size = 2 }; // Two array dimension tags: Nodes and vec dim
-    typedef shards::Array<T, shards::NaturalOrder, Node, Dim> field_type ;
-    static field_type buildArray(T *buf, unsigned nelems, const std::vector<PHX::DataLayout::size_type>& dims){
+  enum { size = 2 }; // Two array dimension tags: Nodes and vec dim
+  typedef shards::Array<T, shards::NaturalOrder, Node, Dim> field_type ;
+  static field_type buildArray(T *buf, unsigned nelems, const std::vector<PHX::DataLayout::size_type>& dims){
 
-      return field_type(buf, nelems, dims[1]);
+    return field_type(buf, nelems, dims[1]);
 
-    }
+  }
 
-  };
+};
 
-  // NodeTensor
-  template <typename T>
-  struct PUMINodeData_Traits<T, 3> {
+// NodeTensor
+template <typename T>
+struct PUMINodeData_Traits<T, 3> {
 
-    enum { size = 3 }; // Three array dimension tags: Nodes, Dim and Dim
-    typedef shards::Array<T, shards::NaturalOrder, Node, Dim, Dim> field_type ;
-    static field_type buildArray(T *buf, unsigned nelems, const std::vector<PHX::DataLayout::size_type>& dims){
+  enum { size = 3 }; // Three array dimension tags: Nodes, Dim and Dim
+  typedef shards::Array<T, shards::NaturalOrder, Node, Dim, Dim> field_type ;
+  static field_type buildArray(T *buf, unsigned nelems, const std::vector<PHX::DataLayout::size_type>& dims){
 
-      return field_type(buf, nelems, dims[1], dims[2]);
+    return field_type(buf, nelems, dims[1], dims[2]);
 
-    }
+  }
 
-  };
+};
 
-}
+} // namespace Albany
 
-// Define macro for explicit template instantiation
-#define PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_SCAL(name, type) \
-  template class name<type, 1>;
-#define PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_VEC(name, type) \
-  template class name<type, 2>;
-#define PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_TENS(name, type) \
-  template class name<type, 3>;
-
-#define PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS(name) \
-  PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_SCAL(name, double) \
-  PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_VEC(name, double) \
-  PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_TENS(name, double)
-
-#endif
+#endif // ALBANY_PUMI_NODE_DATA_HPP

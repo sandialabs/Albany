@@ -18,7 +18,7 @@ namespace LandIce {
  */
   template<typename EvalT, typename Traits>
   class ResponseGLFlux :
-    public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
+    public PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT,Traits>
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;

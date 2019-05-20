@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_MATERIALDATABASE_HPP
-#define ALBANY_MATERIALDATABASE_HPP
+#ifndef ALBANY_MATERIAL_DATABASE_HPP
+#define ALBANY_MATERIAL_DATABASE_HPP
 
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_Utils.hpp"
@@ -25,7 +25,7 @@ public:
       Teuchos::RCP<Teuchos::Comm<int> const>& tcomm);
 
   //! Destructor
-  ~MaterialDatabase();
+  ~MaterialDatabase() = default;
 
   //! No copying
   MaterialDatabase(MaterialDatabase const &) = delete;
@@ -156,4 +156,4 @@ ALBANY_INST_DECL(Teuchos::Array<double>)
 
 #undef ALBANY_INST_DECL
 
-#endif
+#endif // ALBANY_MATERIAL_DATABASE_HPP

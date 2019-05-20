@@ -12,9 +12,10 @@ namespace LCM {
 
 //**********************************************************************
 template <typename EvalT, typename Traits>
-SurfaceScalarGradientOperatorTransport<EvalT, Traits>::SurfaceScalarGradientOperatorTransport(
-    const Teuchos::ParameterList&        p,
-    const Teuchos::RCP<Albany::Layouts>& dl)
+SurfaceScalarGradientOperatorTransport<EvalT, Traits>::
+    SurfaceScalarGradientOperatorTransport(
+        const Teuchos::ParameterList&        p,
+        const Teuchos::RCP<Albany::Layouts>& dl)
     : thickness(p.get<double>("thickness")),
       cubature(
           p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
@@ -43,7 +44,8 @@ SurfaceScalarGradientOperatorTransport<EvalT, Traits>::SurfaceScalarGradientOper
   this->addEvaluatedField(grad_val_qp);
 
   this->setName(
-      "Surface Scalar Gradient Operator Transport" + PHX::typeAsString<EvalT>());
+      "Surface Scalar Gradient Operator Transport" +
+      PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_gradient->dimensions(dims);

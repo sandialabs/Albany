@@ -5,7 +5,6 @@
 //*****************************************************************//
 
 #include "AAdapt_STKAdapt.hpp"
-#include "Teuchos_TimeMonitor.hpp"
 #include "Albany_AbstractSTKFieldContainer.hpp"
 
 #include <stk_adapt/IEdgeBasedAdapterPredicate.hpp>
@@ -13,17 +12,22 @@
 #include <stk_adapt/PredicateBasedElementAdapter.hpp>
 #include <stk_adapt/PredicateBasedEdgeAdapter.hpp>
 
+#include "Teuchos_TimeMonitor.hpp"
+
+namespace AAdapt
+{
 
 template<class SizeField>
-AAdapt::STKAdapt<SizeField>::
-STKAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-         const Teuchos::RCP<ParamLib>& paramLib_,
-         Albany::StateManager& StateMgr_,
-         const Teuchos::RCP<const Teuchos_Comm>& commT_) :
-  AAdapt::AbstractAdapter(params_, paramLib_, StateMgr_, commT_),
-  remeshFileIndex(1) {
+STKAdapt<SizeField>::
+STKAdapt (Teuchos::RCP<Teuchos::ParameterList> const & params_,
+          Teuchos::RCP<ParamLib>               const & paramLib_,
+          Albany::StateManager                 const & StateMgr_,
+          Teuchos::RCP<Teuchos_Comm const>     const & comm_)
+ : AbstractAdapter(params_, paramLib_, StateMgr_, comm_)
+ , remeshFileIndex(1)
+{
 
-  disc = StateMgr_.getDiscretization();
+  disc = state_mgr_.getDiscretization();
 
   stk_discretization = static_cast<Albany::STKDiscretization*>(disc.get());
 
@@ -39,46 +43,33 @@ STKAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Save the initial output file name
   base_exo_filename = stk_discretization->getSTKMeshStruct()->exoOutFile;
-
-
 }
 
 template<class SizeField>
-AAdapt::STKAdapt<SizeField>::
-~STKAdapt() {
-}
-
-template<class SizeField>
-bool
-AAdapt::STKAdapt<SizeField>::queryAdaptationCriteria() {
+bool STKAdapt<SizeField>::queryAdaptationCriteria(int iteration) {
 
   if(adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0){
 
-    if(iter > 1)
-
+    if(iteration > 1) {
       return true;
-
-    else
-
+    } else {
       return false;
-
+    }
   }
 
   Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
 
-  for(int i = 0; i < remesh_iter.size(); i++)
-
-    if(iter == remesh_iter[i])
-
+  for(int i = 0; i < remesh_iter.size(); i++) {
+    if(iteration == remesh_iter[i]) {
       return true;
+    }
+  }
 
   return false;
-
 }
 
 template<class SizeField>
-void
-AAdapt::STKAdapt<SizeField>::printElementData() {
+void STKAdapt<SizeField>::printElementData() {
 
   Albany::StateArrays& sa = disc->getStateArrays();
   Albany::StateArrayVec& esa = sa.elemStateArrays;
@@ -98,8 +89,6 @@ AAdapt::STKAdapt<SizeField>::printElementData() {
     std::cout << "Meshadapt: have element field \"" << stateName << "\" of type \"" << init_type << "\"" << std::endl;
 
     if(init_type == "scalar") {
-
-
       switch(size) {
 
         case 1:
@@ -123,25 +112,24 @@ AAdapt::STKAdapt<SizeField>::printElementData() {
           break;
 
       }
-    }
-
-    else if(init_type == "identity") {
+    } else if(init_type == "identity") {
       std::cout << "Have an identity matrix: " << "esa[ws][stateName](cell, qp, i, j)" << std::endl;
     }
   }
 }
 
 template<class SizeField>
-bool
-AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Vector& ovlp_sol) {
-
+bool STKAdapt<SizeField>::
+adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& /* solution_ */,
+          const Teuchos::RCP<const Tpetra_Vector>& /* ovlp_solution_ */)
+{
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  *output_stream_ << "Adapting mesh using AAdapt::STKAdapt method        " << std::endl;
+  *output_stream_ << "Adapting mesh using STKAdapt method        " << std::endl;
   *output_stream_ << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
-  Albany::AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field 
+  Albany::AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field
       = genericMeshStruct->getFieldContainer()->getProcRankField();
-  Albany::AbstractSTKFieldContainer::IntScalarFieldType* refine_field 
+  Albany::AbstractSTKFieldContainer::IntScalarFieldType* refine_field
       = genericMeshStruct->getFieldContainer()->getRefineField();
 
   // Save the current results and close the exodus file
@@ -191,7 +179,7 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
       const unsigned num_elements_in_bucket = bucket.size();
 
       for(unsigned i_element = 0; i_element < num_elements_in_bucket; i_element++) {
-        stk::mesh::Entity element = bucket[i_element];
+        stk::mesh::Entity& element = bucket[i_element];
         double* f_data = stk::percept::PerceptMesh::field_data_entity(refine_field, element);
 
         std::cout << "Element: " << element.identifier() << "Refine field: " << f_data[0] << std::endl;
@@ -214,8 +202,8 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
 
   if(adapt_params_->get<bool>("Rebalance", false))
 
-    genericMeshStruct->rebalanceAdaptedMeshT(adapt_params_, commT_);
-    
+    genericMeshStruct->rebalanceAdaptedMeshT(adapt_params_, teuchos_comm_);
+
   stk_discretization->updateMesh();
 //  printElementData();
 
@@ -223,32 +211,11 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
 
 }
 
-//! Transfer solution between meshes.
-template<class SizeField>
-void
-AAdapt::STKAdapt<SizeField>::
-solutionTransfer(const Epetra_Vector& oldSolution,
-                 Epetra_Vector& newSolution) {
-#if 0
-
-  // Just copy across for now!
-
-  std::cout << "WARNING: solution transfer not implemented yet!!!" << std::endl;
-
-
-  std::cout << "AAdapt<> will now throw an exception from line #156" << std::endl;
-
-  newSolution = oldSolution;
-
-#endif
-
-}
-
 template<class SizeField>
 Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::STKAdapt<SizeField>::getValidAdapterParameters() const {
+STKAdapt<SizeField>::getValidAdapterParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericAdapterParams("ValidSTKAdaptParams");
+    this->getGenericAdapterParams("ValidSTKTAdaptParams");
 
   Teuchos::Array<int> defaultArgs;
 
@@ -262,4 +229,4 @@ AAdapt::STKAdapt<SizeField>::getValidAdapterParameters() const {
   return validPL;
 }
 
-
+} // namespace AAdapt

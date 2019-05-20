@@ -1,53 +1,61 @@
+# The root name for the tests in this directory is the directory name
+get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-# 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-# 3. Create the test with this name and standard executable
+####################################
+###          Main tests          ###
+####################################
+
+set (testName ${testNameRoot})
+
 if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe} input.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+
+  add_test(${testName}_Epetra ${Albany.exe} input.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
 endif()
 
 if (ALBANY_IFPACK2) 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
+  add_test(${testName}_Tpetra ${Albany.exe} inputT.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
 endif()
 
-# 5. Repeat process for Dakota problems if "dakota.in" exists
-if (ALBANY_DAKOTA)
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
-                   ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
+####################################
+###        Analysis tests        ###
+####################################
+
+# Repeat process for Dakota problems
+if (ALBANY_DAKOTA AND ALBANY_EPETRA)
+  set (testName ${testNameRoot}_Dakota)
+  if (ALBANY_EPETRA)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_list.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/dakota_list.in COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputDakota_list.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/inputDakota_list.yaml COPYONLY)
+
+    add_test(${testName}_Epetra ${AlbanyDakota.exe} inputDakota_list.yaml)
+    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Epetra;Analysis;Dakota")
   endif ()
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
-  add_test(${testName} ${AlbanyDakota.exe})
-endif ()
+  if (ALBANY_IFPACK2) 
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_list.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/dakota_list.in COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputDakotaT_list.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/inputDakotaT_list.yaml COPYONLY)
+
+    add_test(${testName}_Tpetra ${AlbanyDakota.exe} inputDakotaT_list.yaml)
+    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Tpetra;Analysis;Dakota")
+  endif ()
 endif()
 
-# 6. Repeat process for Analysis problems if "inputAnalysis.yaml" exists
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
+# Repeat process for Analysis problems
+if (ALBANY_EPETRA)
+  set (testName ${testNameRoot}_OptiPack)
+
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.yaml COPYONLY)
 
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  endif ()
-
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt
-                   ${CMAKE_CURRENT_BINARY_DIR}/Moocho.opt COPYONLY)
-  endif ()
-
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
-  if (ALBANY_EPETRA) 
-    add_test(${testName} ${AlbanyAnalysis.exe} inputAnalysis.yaml)
-  endif()
-endif ()
+  add_test(${testName} ${AlbanyAnalysis.exe} inputAnalysis.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "Epetra;Analysis;OptiPack")
+endif()

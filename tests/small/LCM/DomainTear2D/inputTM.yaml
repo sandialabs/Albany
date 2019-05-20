@@ -39,7 +39,7 @@ LCM:
     Exodus Output File Name: rip_out.exo
     Exodus Solution Name: disp
     Exodus Residual Name: resid
-    Use Serial Mesh: true
+    Use Serial Mesh: false
   Regression Results:
     Number of Comparisons: 2
     Test Values: [0.00684314, 0.03019474]

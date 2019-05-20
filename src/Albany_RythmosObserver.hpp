@@ -4,35 +4,30 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: right now this is Epetra (Albany) function.
-//Not compiled if ALBANY_EPETRA_EXE is off.
-
-#ifndef ALBANY_RYTHMOSOBSERVER
-#define ALBANY_RYTHMOSOBSERVER
+#ifndef ALBANY_RYTHMOS_OBSERVER_HPP
+#define ALBANY_RYTHMOS_OBSERVER_HPP
 
 #include "Rythmos_IntegrationObserverBase.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 
-#include "Albany_Application.hpp"
-#include "Albany_ObserverImpl.hpp"
+namespace Albany
+{
+class Application;
+class ObserverImpl;
 
-class Albany_RythmosObserver : public Rythmos::IntegrationObserverBase<RealType>
+class RythmosObserver : public Rythmos::IntegrationObserverBase<RealType>
 {
 public:
-   Albany_RythmosObserver (
-         const Teuchos::RCP<Albany::Application> &app_);
+   RythmosObserver (const Teuchos::RCP<Application> &app_);
 
-   ~Albany_RythmosObserver ()
-   { };
+   ~RythmosObserver () = default;
 
   typedef RealType ScalarType;
 
   Teuchos::RCP<Rythmos::IntegrationObserverBase<ScalarType> >
-    cloneIntegrationObserver() const
-  {  TEUCHOS_TEST_FOR_EXCEPT(true);};
+  cloneIntegrationObserver() const {  TEUCHOS_TEST_FOR_EXCEPT(true);}
 
-  void resetIntegrationObserver(
-    const Rythmos::TimeRange<ScalarType> &integrationTimeDomain
-    )
+  void resetIntegrationObserver(const Rythmos::TimeRange<ScalarType>& /* integrationTimeDomain */)
   { };
 
   // Print initial condition
@@ -49,10 +44,11 @@ public:
     );
 
 private:
-   Albany::ObserverImpl impl;
+   Teuchos::RCP<ObserverImpl> impl;
 
    bool initial_step;
-
 };
 
-#endif //ALBANY_RYTHMOSOBSERVER
+} // namespace Albany
+
+#endif // ALBANY_RYTHMOS_OBSERVER_HPP

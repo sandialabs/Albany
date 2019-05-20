@@ -44,12 +44,6 @@ class Schwarz_PiroObserver : public Piro::ObserverBase<ST>
       Thyra::VectorBase<ST> const& solution_dot,
       ST const                     default_stamp);
 
-  void
-  observeTpetraSolutionImpl(
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> solutions,
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> solutions_dot,
-      ST const                                          default_stamp);
-
   int n_models_;
 
   Teuchos::RCP<ObserverImpl> impl_;

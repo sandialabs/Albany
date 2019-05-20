@@ -204,7 +204,10 @@ interp_and_calc_error(
           stk::topology::NODE_RANK, tgt_interp_field_name);
 
   stk::mesh::put_field_on_mesh(
-      target_interp_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
+      target_interp_field,
+      tgt_broker.meta_data().universal_part(),
+      neq,
+      nullptr);
 
   // Add a absolute error nodal field to the target part.
   FieldType& target_abs_error_field =
@@ -212,7 +215,10 @@ interp_and_calc_error(
           stk::topology::NODE_RANK, abs_err_field_name);
 
   stk::mesh::put_field_on_mesh(
-      target_abs_error_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
+      target_abs_error_field,
+      tgt_broker.meta_data().universal_part(),
+      neq,
+      nullptr);
 
   // Add a relative error nodal field to the target part.
   FieldType& target_rel_error_field =
@@ -220,7 +226,10 @@ interp_and_calc_error(
           stk::topology::NODE_RANK, rel_err_field_name);
 
   stk::mesh::put_field_on_mesh(
-      target_rel_error_field, tgt_broker.meta_data().universal_part(), neq, nullptr);
+      target_rel_error_field,
+      tgt_broker.meta_data().universal_part(),
+      neq,
+      nullptr);
 
   // Create the target bulk data.
   tgt_broker.populate_bulk_data();
@@ -551,9 +560,9 @@ interp_and_calc_error(
 
         // IKT, 10/20/17: originally, the relative error was computed in the
         // next line. This can cause problems and erroneous-looking figures in
-        // the case the reference solution is close to 0.  It makes more sense to
-        // divife the absolute error by the norm of the reference solution rather
-        // than a single-point value (done below).
+        // the case the reference solution is close to 0.  It makes more sense
+        // to divife the absolute error by the norm of the reference solution
+        // rather than a single-point value (done below).
         /*if (std::abs(gold_value[component]) > 1.0e-14) {
           rel_err_field_data[component] /= std::abs(gold_value[component]);
         }*/

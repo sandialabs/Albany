@@ -1,6 +1,10 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Debug Output:
+    Write Jacobian to MatrixMarket: -1
+    Write Residual to MatrixMarket: -1
+  Build Type: Epetra
   Problem: 
     Solution Method: ATO Problem
     Number of Subproblems: 3
@@ -330,6 +334,8 @@ ANONYMOUS:
         Newton: 
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
+          Linear Solver: 
+            Tolerance: 1.00000000000000004e-10
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
@@ -356,7 +362,7 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: ML
+              Preconditioner Type: Ifpack
               Preconditioner Types: 
                 Ifpack: 
                   Overlap: 2
@@ -364,7 +370,6 @@ ANONYMOUS:
                   Ifpack Settings: 
                     'fact: drop tolerance': 0.00000000000000000e+00
                     'fact: ilut level-of-fill': 1.00000000000000000e+00
-                    'fact: level-of-fill': 0
                   VerboseObject: 
                     Verbosity Level: medium
       Line Search: 

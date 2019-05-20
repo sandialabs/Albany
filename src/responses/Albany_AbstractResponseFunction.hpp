@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
-#define ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
+#ifndef ALBANY_ABSTRACT_RESPONSE_FUNCTION_HPP
+#define ALBANY_ABSTRACT_RESPONSE_FUNCTION_HPP
 
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
@@ -13,7 +13,6 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_DataTypes.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
 
 namespace Albany {
 
@@ -32,13 +31,8 @@ namespace Albany {
     //! Setup response function
     virtual void setup() = 0;
 
-    //! Get the map associate with this response - Tpetra version 
-    virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const = 0;
-
     //! Get the vector space associated with this response.
-    // NOTE: To make life easier during Thyra refactor, simply wrap responseMapT.
-    //       If derived classes can do better, override (e.g., see AggregateScalarResponseFunction)
-    virtual Teuchos::RCP<const Thyra_VectorSpace> responseVectorSpace() const { return createThyraVectorSpace(this->responseMapT()); }
+    virtual Teuchos::RCP<const Thyra_VectorSpace> responseVectorSpace() const = 0;
 
     /*!
      * \brief Is this response function "scalar" valued, i.e., has a replicated
@@ -46,8 +40,8 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const = 0;
 
-    //! Create Tpetra operator for gradient (e.g., dg/dx)
-    virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const = 0;
+    //! Create Thyra operator for gradient (e.g., dg/dx)
+    virtual Teuchos::RCP<Thyra_LinearOp> createGradientOp() const = 0;
 
     //! perform post registration setup
     virtual void postRegSetup() = 0;
@@ -119,4 +113,4 @@ namespace Albany {
 
 } // namespace Albany
 
-#endif // ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
+#endif // ALBANY_ABSTRACT_RESPONSE_FUNCTION_HPP

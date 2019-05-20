@@ -14,7 +14,7 @@ namespace LandIce {
  * \brief Response Description
  */
   template<typename EvalT, typename Traits>
-  class ResponseSurfaceVelocityMismatch : public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
+  class ResponseSurfaceVelocityMismatch : public PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT,Traits>
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;
@@ -63,6 +63,7 @@ namespace LandIce {
     std::vector<PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>>          grad_beta_vec;
     std::vector<PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>>          w_measure_beta_vec;
     std::vector<PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>>  metric_beta_vec;
+    Teuchos::RCP<const CellTopologyData>                                      cell_topo;
 
     ScalarT p_resp, p_reg, resp, reg, p_reg_stiffening,reg_stiffening;
     double scaling, alpha, asinh_scaling, alpha_stiffening;

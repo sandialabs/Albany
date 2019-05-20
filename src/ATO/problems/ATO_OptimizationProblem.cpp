@@ -4,28 +4,31 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Kokkos_DynRankView_Fad.hpp>
-#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "ATO_OptimizationProblem.hpp"
 #include "ATO_TopoTools.hpp"
 #include "ATO_Integrator.hpp"
 #include "ATO_Types.hpp"
 
+#include "Albany_ThyraUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Adapt_NodalDataVector.hpp"
 
-#include <functional>
+#include <Kokkos_DynRankView_Fad.hpp>
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
+#include <functional>
 #include <sstream>
 
+namespace ATO
+{
+
 /******************************************************************************/
-ATO::OptimizationProblem::
+OptimizationProblem::
 OptimizationProblem( const Teuchos::RCP<Teuchos::ParameterList>& params,
                      const Teuchos::RCP<ParamLib>& paramLib,
-                     const int numDim) :
-Albany::AbstractProblem(params, paramLib, numDim)
-/******************************************************************************/
+                     const int numDim)
+ : Albany::AbstractProblem(params, paramLib, numDim)
 {
   if( params->isSublist("Topologies Parameters") == false ){
     nTopologies = 0;
@@ -36,13 +39,13 @@ Albany::AbstractProblem(params, paramLib, numDim)
 
   const Teuchos::ParameterList& configSpec = params->sublist("Configuration");
 
-  if( configSpec.isSublist("Linear Measures") ){
+  if( configSpec.isSublist("Linear Measures") ) {
     const Teuchos::ParameterList& measuresSpec = configSpec.sublist("Linear Measures");
 
     MeasureModelFactory modelFactory(configSpec);
 
     int nMeasures = measuresSpec.get<int>("Number of Linear Measures");
-    for(int iMeasure=0; iMeasure<nMeasures; iMeasure++){
+    for(int iMeasure=0; iMeasure<nMeasures; iMeasure++) {
       const Teuchos::ParameterList& 
         measureSpec = measuresSpec.sublist(Albany::strint("Linear Measure", iMeasure));
       std::string name = measureSpec.get<std::string>("Linear Measure Name");
@@ -59,15 +62,11 @@ Albany::AbstractProblem(params, paramLib, numDim)
       "Error in ATO::OptimizationProblem setup:  " << std::endl <<
       "  'Linear Measures' section missing." << std::endl);
   }
-
-
 }
 
 /******************************************************************************/
-void
-ATO::OptimizationProblem::
-ComputeMeasure(std::string measureType, double& measure)
-/******************************************************************************/
+void OptimizationProblem::
+ComputeMeasure(const std::string& measureType, double& measure)
 {
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
         wsElNodeID = disc->getWsElNodeID();
@@ -92,7 +91,7 @@ ComputeMeasure(std::string measureType, double& measure)
     const auto& wsElNodeEqID = disc->getWsElNodeEqID();
     const auto& wsPhysIndex = disc->getWsPhysIndex();
 
-    int numWorksets = wsElNodeEqID.size();
+    numWorksets = wsElNodeEqID.size();
 
     for(int ws=0; ws<numWorksets; ws++){
 
@@ -118,391 +117,10 @@ ComputeMeasure(std::string measureType, double& measure)
   }
 }
 
-#if defined(ALBANY_EPETRA)
 /******************************************************************************/
-void
-ATO::OptimizationProblem::
-ComputeMeasure(std::string measureType, 
-               std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
-               double& measure, double* dmdp, 
-               std::string strIntegrationMethod)
-/******************************************************************************/
-{
-  if(strIntegrationMethod == "Conformal")
-    if(measureType == "Volume")
-      computeConformalVolume(topologyStructs, measure, dmdp);
-    else
-      computeConformalMeasure(measureType, topologyStructs, measure, dmdp);
-  else
-  if(strIntegrationMethod == "Gauss Quadrature")
-    computeMeasure(measureType, topologyStructs, measure, dmdp);
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, std::endl <<
-      "Error!  In ATO::OptimizationProblem setup:  Integration Method not recognized" << std::endl);
-}
-
-/******************************************************************************/
-void
-ATO::OptimizationProblem::
-computeMeasure(std::string measureType, 
-               std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
-               double& measure, double* dmdp)
-/******************************************************************************/
-{
-
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-        wsElNodeID = disc->getWsElNodeID();
-  int numWorksets = wsElNodeID.size();
-
-  if(isNonconformal){
-    for(int ws=0; ws<numWorksets; ws++){
-      Albany::StateArray& 
-      stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
-      Albany::MDArray savedWeights = stateArrayRef["Weights"];
-      int numCells  = weighted_measure[ws].extent(0);
-      int numQPs    = weighted_measure[ws].extent(1);
-      for(int cell=0; cell<numCells; cell++)
-        for(int qp=0; qp<numQPs; qp++)
-          weighted_measure[ws](cell,qp) = savedWeights(cell,qp);
-    }
-  }
-
-  double localm = 0.0;
-  const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
-  const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-
-  std::vector<double*> topoValues(nTopologies);
-  Teuchos::Array<Teuchos::RCP<Topology> > topologies(nTopologies);
-  for(int itopo=0; itopo<nTopologies; itopo++){
-    topologies[itopo] = topologyStructs[itopo]->topology;
-    topologyStructs[itopo]->dataVector->ExtractView(&topoValues[itopo]);
-  }
-
-  std::vector< Teuchos::ArrayRCP<ST>> odmdpT(nTopologies);
-  Teuchos::Array<double> drdz(nTopologies), pVals(nTopologies);
-  if(dmdp != NULL){
-    for(int i=0; i<nTopologies; i++){
-      overlapVectorsT[i]->putScalar(0.0);
-      odmdpT[i] = overlapVectorsT[i]->get1dViewNonConst();
-    }
-  }
-
-  Teuchos::RCP<BlockMeasureMap> measureModel = measureModels.at(measureType);
-
-  for(int ws=0; ws<numWorksets; ws++){
-
-    int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].extent(0);
-    int numCells  = weighted_measure[ws].extent(0);
-    int numQPs    = weighted_measure[ws].extent(1);
-
-    std::string blockName = wsEBNames[ws];
-
-    // not all blocks are required to have all measures 
-    // (surface blocks, for example, don't have a mass)
-    if(measureModel->find(blockName) == measureModel->end()) continue;
-
-    Teuchos::RCP<MeasureModel> blockMeasureModel = measureModel->at(blockName);
-      
-    for(int cell=0; cell<numCells; cell++){
-      double elMeasure = 0.0;
-      for(int qp=0; qp<numQPs; qp++){
-
-        // compute values of mixture topologies at the qp
-        for(int itopo=0; itopo<nTopologies; itopo++) pVals[itopo]=0.0;
-        for(int node=0; node<numNodes; node++){
-          GO gid = wsElNodeID[ws][cell][node];
-          LO lidT = overlapNodeMapT->getLocalElement(gid);
-          for(int itopo=0; itopo<nTopologies; itopo++) {
-            pVals[itopo] += topoValues[itopo][lidT]*basisAtQPs[physIndex](node,qp);
-          }
-        }
-
-        double qpMeasure = blockMeasureModel->Evaluate(pVals, topologies);
-
-        elMeasure += qpMeasure*weighted_measure[ws](cell,qp);
-
-        if(dmdp != NULL ){
-          blockMeasureModel->Gradient(pVals, topologies, drdz);
-          for(int node=0; node<numNodes; node++){
-            GO gid = wsElNodeID[ws][cell][node];
-            LO lidT = overlapNodeMapT->getLocalElement(gid);
-            for(int itopo=0; itopo<nTopologies; itopo++) {
-              odmdpT[itopo][lidT] += drdz[itopo]
-                                  *basisAtQPs[physIndex](node,qp)
-                                  *weighted_measure[ws](cell,qp);
-             }
-          }
-        }
-      }
-      localm += elMeasure;
-    }
-  }
-
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localm, &measure);
-
-  if( dmdp != NULL ){
-    LO numLocalNodesT = localVecT->getLocalLength();
-    for(int itopo=0; itopo<nTopologies; itopo++){
-      localVecT->putScalar(0.0);
-      localVecT->doExport(*overlapVectorsT[itopo], *exporterT, Tpetra::ADD);
-      Teuchos::ArrayRCP<ST> lvecT = localVecT->getDataNonConst();
-      std::memcpy((void*)(dmdp+itopo*numLocalNodesT), lvecT.getRawPtr(), numLocalNodesT*sizeof(double));
-    }
-  }
-}
-
-/******************************************************************************/
-void
-ATO::OptimizationProblem::
-computeConformalMeasure(std::string measureType, 
-                        std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
-                        double& measure, double* dmdp)
-/******************************************************************************/
-{
-TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParameter, std::endl <<
-"Error!  In ATO::OptimizationProblem setup: " << std::endl << 
-"Conformal integration not implemented for non-conformal geometry. " << std::endl);
-
-  double localm = 0.0;
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-        wsElNodeID = disc->getWsElNodeID();
-  const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
-  const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-  int numWorksets = wsElNodeID.size();
-
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-        coords = disc->getCoords();
-
-  Kokkos::DynRankView<RealType, PHX::Device> coordCon;
-  Kokkos::DynRankView<RealType, PHX::Device> topoVals;
-  Kokkos::DynRankView<RealType, PHX::Device> dMdtopo;
-
-  std::vector<double*> topoValues(nTopologies);
-  Teuchos::Array<Teuchos::RCP<Topology> > topologies(nTopologies);
-  for(int itopo=0; itopo<nTopologies; itopo++){
-    topologies[itopo] = topologyStructs[itopo]->topology;
-    topologyStructs[itopo]->dataVector->ExtractView(&topoValues[itopo]);
-  }
-
-  std::vector< Teuchos::ArrayRCP<ST>> odmdpT(nTopologies);
-  Teuchos::Array<double> drdz(nTopologies), pVals(nTopologies);
-  if(dmdp != NULL){
-    for(int i=0; i<nTopologies; i++){
-      overlapVectorsT[i]->putScalar(0.0);
-    }
-  }
-
-  Teuchos::RCP<BlockMeasureMap> measureModel = measureModels.at(measureType);
-
-  for(int ws=0; ws<numWorksets; ws++){
-
-    int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].extent(0);
-    int numCells  = weighted_measure[ws].extent(0);
-    int numQPs    = weighted_measure[ws].extent(1);
-    int numDims   = cubatures[physIndex]->getDimension();
-
-    SubIntegrator myDicer(cellTypes[physIndex],intrepidBasis[physIndex],/*maxRefs=*/1,/*maxErr=*/1e-5);
-
-    coordCon = Kokkos::DynRankView<RealType, PHX::Device>("coordCon", numNodes, numDims);
-    topoVals = Kokkos::DynRankView<RealType, PHX::Device>("topoVals", numNodes);
-    dMdtopo = Kokkos::DynRankView<RealType, PHX::Device>("dMdtopo", numNodes);
-
-    std::string blockName = wsEBNames[ws];
-
-    // not all blocks are required to have all measures 
-    // (surface blocks, for example, don't have a mass)
-    if(measureModel->find(blockName) == measureModel->end()) continue;
-
-    Teuchos::RCP<MeasureModel> blockMeasureModel = measureModel->at(blockName);
-
- 
-    int materialTopologyIndex = blockMeasureModel->getMaterialTopologyIndex();
-    double* p; topologyStructs[materialTopologyIndex]->dataVector->ExtractView(&p);
-    Teuchos::RCP<Topology> materialTopology = topologyStructs[materialTopologyIndex]->topology;
-      
-    for(int cell=0; cell<numCells; cell++){
-      double elMass = 0.0;
-
-      for(int node=0; node<numNodes; node++){
-        for(int dim=0; dim<numDims; dim++)
-          coordCon(node,dim) = coords[ws][cell][node][dim];
-        GO gid = wsElNodeID[ws][cell][node];
-        LO lidT = overlapNodeMapT->getLocalElement(gid);
-        topoVals(node) = p[lidT];
-      }
-
-      // JR:  Until this is done right ...
-
-      double weight=0.0;
-      if(dmdp != NULL ){
-        myDicer.getMeasure(weight, topoVals, coordCon, 
-                           materialTopology->getInterfaceValue(), Sense::Positive);
-      } else {
-        myDicer.getMeasure(weight, dMdtopo, topoVals, coordCon, 
-                           materialTopology->getInterfaceValue(), Sense::Positive);
-      }
-
-      double totalWeight = 0.0;
-      for(int qp=0; qp<numQPs; qp++) 
-        totalWeight += weighted_measure[ws](cell,qp);
-
-      double weightFraction = weight/totalWeight;
-
-      double elMeasure = 0.0;
-      for(int qp=0; qp<numQPs; qp++){
-
-        // compute values of mixture topologies at the qp
-        for(int itopo=0; itopo<nTopologies; itopo++) pVals[itopo]=0.0;
-        for(int node=0; node<numNodes; node++){
-          GO gid = wsElNodeID[ws][cell][node];
-          LO lidT = overlapNodeMapT->getLocalElement(gid);
-          for(int itopo=0; itopo<nTopologies; itopo++) {
-            pVals[itopo] += topoValues[itopo][lidT]*basisAtQPs[physIndex](node,qp);
-          }
-        }
-
-        double qpMeasure = blockMeasureModel->Evaluate(pVals, topologies);
-
-        elMeasure += qpMeasure*weightFraction*weighted_measure[ws](cell,qp);
-
-        localm += weight;
-
-
-        if(dmdp != NULL ){
-          blockMeasureModel->Gradient(pVals, topologies, drdz);
-          for(int node=0; node<numNodes; node++){
-            GO gid = wsElNodeID[ws][cell][node];
-            LO lidT = overlapNodeMapT->getLocalElement(gid);
-            for(int itopo=0; itopo<nTopologies; itopo++){
-              if(itopo == materialTopologyIndex){
-                odmdpT[itopo][lidT] += drdz[itopo]*dMdtopo[node]*weightFraction
-                                     *basisAtQPs[physIndex](node,qp)
-                                     *weighted_measure[ws](cell,qp);
-              } else {
-                odmdpT[itopo][lidT] += drdz[itopo]*weightFraction
-                                     *basisAtQPs[physIndex](node,qp)
-                                     *weighted_measure[ws](cell,qp);
-              }
-            }
-          }
-        }
-      }
-      localm += elMeasure;
-    }
-  }
-
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localm, &measure);
-
-  if( dmdp != NULL ){
-    LO numLocalNodesT = localVecT->getLocalLength();
-    for(int itopo=0; itopo<nTopologies; itopo++){
-      localVecT->putScalar(0.0);
-      localVecT->doExport(*overlapVectorsT[itopo], *exporterT, Tpetra::ADD);
-      Teuchos::ArrayRCP<ST> lvecT = localVecT->getDataNonConst();
-      std::memcpy((void*)(dmdp+itopo*nTopologies), lvecT.getRawPtr(), numLocalNodesT*sizeof(double));
-    }
-  }
-}
-/******************************************************************************/
-void
-ATO::OptimizationProblem::
-computeConformalVolume(std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
-double& v, double* dvdp)
-/******************************************************************************/
-{
-
-TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParameter, std::endl <<
-"Error!  In ATO::OptimizationProblem setup: " << std::endl << 
-"Conformal integration not implemented for non-conformal geometry. " << std::endl);
-
-  Teuchos::RCP<Topology> topology = topologyStructs[0]->topology;
-  double* p; topologyStructs[0]->dataVector->ExtractView(&p);
-
-  double localv = 0.0;
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-        wsElNodeID = disc->getWsElNodeID();
-  const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
-  int numWorksets = wsElNodeID.size();
-
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-        coords = disc->getCoords();
-
-  Kokkos::DynRankView<RealType, PHX::Device> coordCon;
-  Kokkos::DynRankView<RealType, PHX::Device> topoVals;
-  Kokkos::DynRankView<RealType, PHX::Device> dMdtopo;
-
-  Teuchos::ArrayRCP<ST> odvdpT; 
-  if( dvdp != NULL ){
-    localVecT->putScalar(0.0);
-    overlapVecT->putScalar(0.0);
-    odvdpT = overlapVecT->get1dViewNonConst();
-  }
-
-  for(int ws=0; ws<numWorksets; ws++){
-  
-    int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].extent(0);
-    int numCells  = weighted_measure[ws].extent(0);
-    int numDims   = cubatures[physIndex]->getDimension();
-
-    SubIntegrator myDicer(cellTypes[physIndex],intrepidBasis[physIndex],/*maxRefs=*/1,/*maxErr=*/1e-5);
-
-    coordCon = Kokkos::DynRankView<RealType, PHX::Device>("coordCon", numNodes, numDims);  //inefficient, reallocating memory. 
-    topoVals = Kokkos::DynRankView<RealType, PHX::Device>("topoVals", numNodes);   //inefficient, reallocating memory. 
-    dMdtopo = Kokkos::DynRankView<RealType, PHX::Device>("dMdtopo", numNodes);   //inefficient, reallocating memory. 
-
-    for(int cell=0; cell<numCells; cell++){
-      for(int node=0; node<numNodes; node++){
-        for(int dim=0; dim<numDims; dim++)
-          coordCon(node,dim) = coords[ws][cell][node][dim];
-        GO gid = wsElNodeID[ws][cell][node];
-        LO lidT = overlapNodeMapT->getLocalElement(gid);
-        topoVals(node) = p[lidT];
-      }
-
-      if( dvdp == NULL ){
-
-        double weight=0.0;
-        myDicer.getMeasure(weight, topoVals, coordCon, 
-                           topology->getInterfaceValue(), Sense::Positive);
-        localv += weight;
-
-      } else { 
-
-        double weight=0.0;
-        myDicer.getMeasure(weight, dMdtopo, topoVals, coordCon, 
-                           topology->getInterfaceValue(), Sense::Positive);
-        localv += weight;
-
-        for(int node=0; node<numNodes; node++){
-          GO gid = wsElNodeID[ws][cell][node];
-          LO lidT = overlapNodeMapT->getLocalElement(gid);
-          odvdpT[lidT] += dMdtopo(node);
-        }
-      }
-    }
-  }
-
-  if( dvdp != NULL ){
-    localVecT->doExport(*overlapVecT, *exporterT, Tpetra::ADD);
-    LO numLocalNodesT = localVecT->getLocalLength();
-    Teuchos::ArrayRCP<ST> lvecT = localVecT->getDataNonConst();
-    std::memcpy((void*)(dvdp), lvecT.getRawPtr(), numLocalNodesT*sizeof(double));
-  }
-
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localv, &v);
-
-}
-#endif
-
-/******************************************************************************/
-void
-ATO::OptimizationProblem::
+void OptimizationProblem::
 ComputeVolume(double* p, const double* dfdp, 
               double& v, double threshhold, double minP)
-/******************************************************************************/
 {
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = disc->getWsElNodeID();
@@ -538,16 +156,19 @@ ComputeVolume(double* p, const double* dfdp,
       double elVol = 0.0;
       for(int node=0; node<numNodes; node++){
         GO gid = wsElNodeID[ws][cell][node];
-        LO lidT = overlapNodeMapT->getLocalElement(gid);
-        if(dfdp[lidT] < threshhold) p[lidT] = 1.0;
-        else p[lidT] = minP;
+        LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+        if(dfdp[lid] < threshhold) {
+          p[lid] = 1.0;
+        } else {
+          p[lid] = minP;
+        }
       }
 
       for(int node=0; node<numNodes; node++){
         GO gid = wsElNodeID[ws][cell][node];
-        LO lidT = overlapNodeMapT->getLocalElement(gid);
+        LO lid = Albany::getLocalElement(overlapNodeVs,gid);
         for(int qp=0; qp<numQPs; qp++) {
-          elVol += p[lidT]*basisAtQPs[physIndex](node,qp)*weighted_measure[ws](cell,qp);
+          elVol += p[lid]*basisAtQPs[physIndex](node,qp)*weighted_measure[ws](cell,qp);
         }
       }
       localv += elVol;
@@ -558,11 +179,9 @@ ComputeVolume(double* p, const double* dfdp,
 
 
 /******************************************************************************/
-void
-ATO::OptimizationProblem::
+void OptimizationProblem::
 setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpecs,
              Albany::StateManager& _stateMgr)
-/******************************************************************************/
 {
   meshSpecs=_meshSpecs; 
   stateMgr=&_stateMgr;
@@ -571,9 +190,9 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
 
   const Teuchos::ParameterList& configSpec = params->sublist("Configuration");
   isNonconformal = false;
-  if(configSpec.isType<bool>("Nonconformal"))
+  if(configSpec.isType<bool>("Nonconformal")) {
     isNonconformal = configSpec.get<bool>("Nonconformal");
-
+  }
 
   int numPhysSets = meshSpecs.size();
 
@@ -584,8 +203,9 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
   refPoints.resize(numPhysSets);
   refWeights.resize(numPhysSets);
   basisAtQPs.resize(numPhysSets);
-  for(int i=0; i<numPhysSets; i++){
 
+  Albany::StateStruct::MeshFieldEntity entity;
+  for(int i=0; i<numPhysSets; ++i) {
     cellTypes[i] = Teuchos::rcp(new shards::CellTopology (&meshSpecs[i]->ctd));
     Intrepid2::DefaultCubatureFactory cubFactory;
 
@@ -593,8 +213,10 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
     // to the projected integrator in Cogent.
 
     int cubatureDegree = meshSpecs[i]->cubatureDegree;
-    if(isNonconformal) cubatureDegree += 1;  // non-conformal is degree n (vs 2n-1)
-   
+    if(isNonconformal) {
+      cubatureDegree += 1;  // non-conformal is degree n (vs 2n-1)
+    }
+
     cubatures[i] = cubFactory.create<PHX::Device, RealType, RealType>(*(cellTypes[i]), cubatureDegree);
     intrepidBasis[i] = Albany::getIntrepid2Basis(meshSpecs[i]->ctd);
 
@@ -618,21 +240,20 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
     for(it=topologyArray->begin(); it!=topologyArray->end(); ++it){
       Teuchos::RCP<Topology> topology = *it;
       double initValue = topology->getInitialValue();
-      Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDataToElemNode;
+      entity = Albany::StateStruct::NodalDataToElemNode;
       stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_scalar, "all",true,&entity);
                                      
-      if( topology->TopologyOutputFilter() >= 0 )
+      if( topology->TopologyOutputFilter() >= 0 ) {
         stateMgr->registerStateVariable(topology->getName()+"_node_filtered", dl->node_node_scalar, "all",
                                        "scalar", initValue, /*registerOldState=*/ false, true);
-  
+      }
       if( topology->getEntityType() == "State Variable" ){
         stateMgr->registerStateVariable(topology->getName(), dl->node_scalar, meshSpecs[i]->ebName, 
                                        "scalar", initValue, /*registerOldState=*/ false, false);
       } else if( topology->getEntityType() == "Distributed Parameter" ){
-        Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+        entity = Albany::StateStruct::NodalDistParameter;
         stateMgr->registerStateVariable(topology->getName(), dl->node_scalar, "all", true, &entity, "");
-      } 
-      else {
+      } else {
         TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, std::endl <<
           "Error!  In ATO::OptimizationProblem setup:  Entity Type not recognized" << std::endl);
       }
@@ -644,8 +265,6 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
       std::string derName = aggParams.get<std::string>("Output Derivative Name");
       std::string objName = aggParams.get<std::string>("Output Value Name");
 
-      //tpetra-conversion If registerOldState is ever made true, the code will
-      // likely break.
       stateMgr->registerStateVariable(objName, dl->workset_scalar, meshSpecs[i]->ebName, 
                                      "scalar", 0.0, /*registerOldState=*/ false, true);
   
@@ -663,17 +282,11 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
 
 
 /******************************************************************************/
-void
-ATO::OptimizationProblem::InitTopOpt()
-/******************************************************************************/
+void OptimizationProblem::InitTopOpt()
 {
-
   const auto& wsPhysIndex = disc->getWsPhysIndex();
   const auto& coords = disc->getCoords();
   const auto& wsElNodeEqID = disc->getWsElNodeEqID();
-  const auto& wsElNodeID = disc->getWsElNodeID();
-
-  const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
 
   int numWorksets = wsElNodeEqID.size();
 
@@ -724,86 +337,77 @@ ATO::OptimizationProblem::InitTopOpt()
     }
   }
 
-  overlapNodeMapT = disc->getOverlapNodeMapT();
-  localNodeMapT = disc->getNodeMapT();
+  overlapNodeVs = disc->getOverlapNodeVectorSpace();
+  localNodeVs   = disc->getNodeVectorSpace();
 
-  overlapVecT = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
-  localVecT   = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
-  exporterT   = Teuchos::rcp(new Tpetra_Export(overlapNodeMapT, localNodeMapT));
+  overlapVec  = Thyra::createMember(overlapNodeVs);
+  localVec    = Thyra::createMember(localNodeVs);
+  cas_manager = Albany::createCombineAndScatterManager(localNodeVs,overlapNodeVs);
 
-  overlapVectorsT.resize(nTopologies);
+  overlapVectors.resize(nTopologies);
   for(int i=0; i<nTopologies; i++) {
-    overlapVectorsT[i] = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT)); 
+    overlapVectors[i] = Thyra::createMember(overlapNodeVs);
   }
 }
 
 
 /******************************************************************************/
-ATO::TopologyBasedMixture::
-TopologyBasedMixture(const Teuchos::ParameterList& blockSpec)
-/******************************************************************************/
+TopologyBasedMixture::
+TopologyBasedMixture(const Teuchos::ParameterList& /* blockSpec */)
 {
 }
 
 /******************************************************************************/
-double 
-ATO::TopologyBasedMixture::
-Evaluate(const Teuchos::Array<double>& pVals,
-         Teuchos::Array<Teuchos::RCP<Topology> >& topologies)
-/******************************************************************************/
+double  TopologyBasedMixture::
+Evaluate(const Teuchos::Array<double>& /* pVals */,
+         Teuchos::Array<Teuchos::RCP<Topology> >& /* topologies */)
 {
   return 0.0;
 }
 
 /******************************************************************************/
-void
-ATO::TopologyBasedMixture::
-Gradient(const Teuchos::Array<double>& pVals,
-         Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
-         Teuchos::Array<double>& outVals)
-/******************************************************************************/
+void TopologyBasedMixture::
+Gradient(const Teuchos::Array<double>& /* pVals */,
+         Teuchos::Array<Teuchos::RCP<Topology> >& /* topologies */,
+         Teuchos::Array<double>& /* outVals */)
 {
 }
 
 /******************************************************************************/
-ATO::TopologyBasedMaterial::
-TopologyBasedMaterial(const Teuchos::ParameterList& blockSpec)
-/******************************************************************************/
+TopologyBasedMaterial::
+TopologyBasedMaterial(const Teuchos::ParameterList& /* blockSpec */)
 {
 }
 
 /******************************************************************************/
-double 
-ATO::TopologyBasedMaterial::
-Evaluate(const Teuchos::Array<double>& pVals,
-         Teuchos::Array<Teuchos::RCP<Topology> >& topologies)
-/******************************************************************************/
+double  TopologyBasedMaterial::
+Evaluate(const Teuchos::Array<double>& /* pVals */,
+         Teuchos::Array<Teuchos::RCP<Topology> >& /* topologies */)
 {
   return 0.0;
 }
 
 /******************************************************************************/
-void
-ATO::TopologyBasedMaterial::
-Gradient(const Teuchos::Array<double>& pVals,
-         Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
-         Teuchos::Array<double>& outVals)
-/******************************************************************************/
+void TopologyBasedMaterial::
+Gradient(const Teuchos::Array<double>& /* pVals */,
+         Teuchos::Array<Teuchos::RCP<Topology> >& /* topologies */,
+         Teuchos::Array<double>& /* outVals */)
 {
 }
 
 /******************************************************************************/
-ATO::MeasureModelFactory::
-MeasureModelFactory( Teuchos::ParameterList _p ) : configParams(_p) {}
-/******************************************************************************/
+MeasureModelFactory::
+MeasureModelFactory( Teuchos::ParameterList _p )
+ : configParams(_p)
+{
+  // Nothing to do here
+}
 
 /******************************************************************************/
 Teuchos::RCP<ATO::BlockMeasureMap>
-ATO::MeasureModelFactory::
+MeasureModelFactory::
 create(const Teuchos::ParameterList& measureParams )
-/******************************************************************************/
 {
-
   std::string measureType = measureParams.get<std::string>("Linear Measure Type");
 
   bool limitByBlock = false;
@@ -878,14 +482,12 @@ create(const Teuchos::ParameterList& measureParams )
   }
 
   return blockMeasureMap;
-
 }
 
 /******************************************************************************/
-ATO::VolumeMeasure::
-VolumeMeasure(const Teuchos::ParameterList& blockSpec, 
+VolumeMeasure::
+VolumeMeasure(const Teuchos::ParameterList& /* blockSpec */, 
               const Teuchos::ParameterList& measureParams)
-/******************************************************************************/
 {
   const Teuchos::ParameterList& params = measureParams.sublist("Volume");
 
@@ -895,10 +497,9 @@ VolumeMeasure(const Teuchos::ParameterList& blockSpec,
 
 
 /******************************************************************************/
-ATO::TopologyWeightedIntegral_Material::
+TopologyWeightedIntegral_Material::
 TopologyWeightedIntegral_Material(const Teuchos::ParameterList& blockSpec, 
                                   const Teuchos::ParameterList& measureParams)
-/******************************************************************************/
 {
   const Teuchos::ParameterList& materialSpec = blockSpec.sublist("Material");
 
@@ -913,10 +514,9 @@ TopologyWeightedIntegral_Material(const Teuchos::ParameterList& blockSpec,
 }
 
 /******************************************************************************/
-ATO::TopologyWeightedIntegral_Mixture::
+TopologyWeightedIntegral_Mixture::
 TopologyWeightedIntegral_Mixture(const Teuchos::ParameterList& blockSpec, 
                                  const Teuchos::ParameterList& measureParams)
-/******************************************************************************/
 {
 
   const Teuchos::ParameterList& mixtureSpec = blockSpec.sublist("Mixture");
@@ -960,11 +560,9 @@ TopologyWeightedIntegral_Mixture(const Teuchos::ParameterList& blockSpec,
 }
 
 /******************************************************************************/
-double 
-ATO::VolumeMeasure::
+double VolumeMeasure::
 Evaluate(const Teuchos::Array<double>& pVals,
          Teuchos::Array<Teuchos::RCP<Topology> >& topologies)
-/******************************************************************************/
 {
   int matIdx = materialTopologyIndex;
   int fncIdx = materialFunctionIndex;
@@ -972,11 +570,9 @@ Evaluate(const Teuchos::Array<double>& pVals,
 }
 
 /******************************************************************************/
-double 
-ATO::TopologyWeightedIntegral_Material::
+double TopologyWeightedIntegral_Material::
 Evaluate(const Teuchos::Array<double>& pVals,
          Teuchos::Array<Teuchos::RCP<Topology> >& topologies)
-/******************************************************************************/
 {
   int matIdx = materialTopologyIndex;
   int fncIdx = materialFunctionIndex;
@@ -984,11 +580,9 @@ Evaluate(const Teuchos::Array<double>& pVals,
 }
 
 /******************************************************************************/
-double 
-ATO::TopologyWeightedIntegral_Mixture::
+double  TopologyWeightedIntegral_Mixture::
 Evaluate(const Teuchos::Array<double>& pVals,
          Teuchos::Array<Teuchos::RCP<Topology> >& topologies)
-/******************************************************************************/
 {
   
   double mixtureValue = 0.0;
@@ -1016,15 +610,15 @@ Evaluate(const Teuchos::Array<double>& pVals,
 }
 
 /******************************************************************************/
-void
-ATO::VolumeMeasure::
+void VolumeMeasure::
 Gradient(const Teuchos::Array<double>& pVals,
          Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
          Teuchos::Array<double>& outVals)
-/******************************************************************************/
 {
   int n = outVals.size();
-  for(int i=0; i<n; i++) outVals[i]=0.0;
+  for(int i=0; i<n; i++) {
+    outVals[i]=0.0;
+  }
   
   int topoIdx = materialTopologyIndex;
   int fncIdx = materialFunctionIndex;
@@ -1032,15 +626,15 @@ Gradient(const Teuchos::Array<double>& pVals,
 }
 
 /******************************************************************************/
-void
-ATO::TopologyWeightedIntegral_Material::
+void TopologyWeightedIntegral_Material::
 Gradient(const Teuchos::Array<double>& pVals,
          Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
          Teuchos::Array<double>& outVals)
-/******************************************************************************/
 {
   int n = outVals.size();
-  for(int i=0; i<n; i++) outVals[i]=0.0;
+  for(int i=0; i<n; i++) {
+    outVals[i]=0.0;
+  }
   
   int matIdx = materialTopologyIndex;
   int fncIdx = materialFunctionIndex;
@@ -1048,15 +642,15 @@ Gradient(const Teuchos::Array<double>& pVals,
 }
 
 /******************************************************************************/
-void
-ATO::TopologyWeightedIntegral_Mixture::
+void TopologyWeightedIntegral_Mixture::
 Gradient(const Teuchos::Array<double>& pVals,
          Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
          Teuchos::Array<double>& outVals)
-/******************************************************************************/
 {
   int n = outVals.size();
-  for(int i=0; i<n; i++) outVals[i]=0.0;
+  for(int i=0; i<n; i++) {
+    outVals[i]=0.0;
+  }
   
   double mixtureValue = 0.0;
   double unityRemainder = 1.0;
@@ -1086,39 +680,35 @@ Gradient(const Teuchos::Array<double>& pVals,
     double R0 = topologies[topoIdx]->Penalize(fncIdx, pVals[topoIdx]);
     outVals[itopoIdx] = R0*dRi*(parameterValues[imatIdx] - parameterValues[lastMatIndex]);
   }
-
 }
+
 /******************************************************************************/
-void
-ATO::OptimizationProblem::
-ComputeMeasureT(std::string measureType, 
-               std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
-               double& measure, double* dmdp, 
-               std::string strIntegrationMethod)
-/******************************************************************************/
+void OptimizationProblem::
+ComputeMeasure (const std::string& measureType, 
+                const std::vector<Teuchos::RCP<TopologyStruct>>& topologyStructs,
+                double& measure, double* dmdp, 
+                const std::string& strIntegrationMethod)
 {
-  if(strIntegrationMethod == "Conformal")
-    if(measureType == "Volume")
-      computeConformalVolumeT(topologyStructsT, measure, dmdp);
-    else
-      computeConformalMeasureT(measureType, topologyStructsT, measure, dmdp);
-  else
-  if(strIntegrationMethod == "Gauss Quadrature")
-    computeMeasureT(measureType, topologyStructsT, measure, dmdp);
-  else
+  if(strIntegrationMethod == "Conformal") {
+    if(measureType == "Volume") {
+      computeConformalVolume(topologyStructs, measure, dmdp);
+    } else {
+      computeConformalMeasure(measureType, topologyStructs, measure, dmdp);
+    }
+  } else if(strIntegrationMethod == "Gauss Quadrature") {
+    computeMeasure(measureType, topologyStructs, measure, dmdp);
+  } else {
     TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, std::endl <<
       "Error!  In ATO::OptimizationProblem setup:  Integration Method not recognized" << std::endl);
+  }
 }
 
 /******************************************************************************/
-void
-ATO::OptimizationProblem::
-computeMeasureT(std::string measureType, 
-               std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
-               double& measure, double* dmdp)
-/******************************************************************************/
+void OptimizationProblem::
+computeMeasure (const std::string& measureType, 
+                const std::vector<Teuchos::RCP<TopologyStruct>>& topologyStructs,
+                double& measure, double* dmdp)
 {
-
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
         wsElNodeID = disc->getWsElNodeID();
   int numWorksets = wsElNodeID.size();
@@ -1143,16 +733,16 @@ computeMeasureT(std::string measureType,
   std::vector<Teuchos::ArrayRCP<const double>> topoValues(nTopologies);
   Teuchos::Array<Teuchos::RCP<Topology> > topologies(nTopologies);
   for(int itopo=0; itopo<nTopologies; itopo++){
-    topologies[itopo] = topologyStructsT[itopo]->topologyT;
-    topoValues[itopo] = topologyStructsT[itopo]->dataVectorT->get1dView();
+    topologies[itopo] = topologyStructs[itopo]->topology;
+    topoValues[itopo] = Albany::getLocalData(topologyStructs[itopo]->dataVector.getConst());
   }
 
-  std::vector< Teuchos::ArrayRCP<ST>> odmdpT(nTopologies);
+  std::vector< Teuchos::ArrayRCP<ST>> odmdp(nTopologies);
   Teuchos::Array<double> drdz(nTopologies), pVals(nTopologies);
-  if(dmdp != NULL){
+  if(dmdp != nullptr){
     for(int i=0; i<nTopologies; i++){
-      overlapVectorsT[i]->putScalar(0.0);
-      odmdpT[i] = overlapVectorsT[i]->get1dViewNonConst();
+      overlapVectors[i]->assign(0.0);
+      odmdp[i] = Albany::getNonconstLocalData(overlapVectors[i]);
     }
   }
 
@@ -1169,7 +759,9 @@ computeMeasureT(std::string measureType,
 
     // not all blocks are required to have all measures 
     // (surface blocks, for example, don't have a mass)
-    if(measureModel->find(blockName) == measureModel->end()) continue;
+    if(measureModel->find(blockName) == measureModel->end()) {
+      continue;
+    }
 
     Teuchos::RCP<MeasureModel> blockMeasureModel = measureModel->at(blockName);
       
@@ -1181,9 +773,9 @@ computeMeasureT(std::string measureType,
         for(int itopo=0; itopo<nTopologies; itopo++) pVals[itopo]=0.0;
         for(int node=0; node<numNodes; node++){
           GO gid = wsElNodeID[ws][cell][node];
-          LO lidT = overlapNodeMapT->getLocalElement(gid);
+          LO lid = Albany::getLocalElement(overlapNodeVs,gid);
           for(int itopo=0; itopo<nTopologies; itopo++) {
-            pVals[itopo] += topoValues[itopo][lidT]*basisAtQPs[physIndex](node,qp);
+            pVals[itopo] += topoValues[itopo][lid]*basisAtQPs[physIndex](node,qp);
           }
         }
 
@@ -1191,16 +783,16 @@ computeMeasureT(std::string measureType,
 
         elMeasure += qpMeasure*weighted_measure[ws](cell,qp);
 
-        if(dmdp != NULL ){
+        if(dmdp != nullptr ){
           blockMeasureModel->Gradient(pVals, topologies, drdz);
           for(int node=0; node<numNodes; node++){
             GO gid = wsElNodeID[ws][cell][node];
-            LO lidT = overlapNodeMapT->getLocalElement(gid);
+            LO lid = Albany::getLocalElement(overlapNodeVs,gid);
             for(int itopo=0; itopo<nTopologies; itopo++) {
-              odmdpT[itopo][lidT] += drdz[itopo]
+              odmdp[itopo][lid] += drdz[itopo]
                                   *basisAtQPs[physIndex](node,qp)
                                   *weighted_measure[ws](cell,qp);
-             }
+            }
           }
         }
       }
@@ -1208,31 +800,28 @@ computeMeasureT(std::string measureType,
     }
   }
 
-   Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localm, &measure);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localm, &measure);
 
-  if( dmdp != NULL ){
-    LO numLocalNodesT = localVecT->getLocalLength();
+  if( dmdp != nullptr ){
     for(int itopo=0; itopo<nTopologies; itopo++){
-      localVecT->putScalar(0.0);
-      localVecT->doExport(*overlapVectorsT[itopo], *exporterT, Tpetra::ADD);
-      Teuchos::ArrayRCP<ST> lvecT = localVecT->getDataNonConst();
-      std::memcpy((void*)(dmdp+itopo*numLocalNodesT), lvecT.getRawPtr(), numLocalNodesT*sizeof(double));
+      localVec->assign(0.0);
+      cas_manager->combine(overlapVectors[itopo],localVec,Albany::CombineMode::ADD);
+      Teuchos::ArrayRCP<ST> lvec = Albany::getNonconstLocalData(localVec);
+      std::memcpy((void*)(dmdp+itopo*lvec.size()), lvec.getRawPtr(), lvec.size()*sizeof(double));
     }
   }
 }
 
 
 /******************************************************************************/
-void
-ATO::OptimizationProblem::
-computeConformalMeasureT(std::string measureType, 
-                        std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
-                        double& measure, double* dmdp)
-/******************************************************************************/
+void OptimizationProblem::
+computeConformalMeasure (const std::string& measureType, 
+                         const std::vector<Teuchos::RCP<TopologyStruct>>& topologyStructs,
+                         double& measure, double* dmdp)
 {
   TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParameter, std::endl <<
-"Error!  In ATO::OptimizationProblem setup: " << std::endl <<
-"Conformal integration not implemented for non-conformal geometry. " << std::endl);
+                              "Error!  In ATO::OptimizationProblem setup: " << std::endl <<
+                              "Conformal integration not implemented for non-conformal geometry. " << std::endl);
 
   double localm = 0.0;
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
@@ -1251,15 +840,15 @@ computeConformalMeasureT(std::string measureType,
   std::vector<Teuchos::ArrayRCP<const double>> topoValues(nTopologies);
   Teuchos::Array<Teuchos::RCP<Topology> > topologies(nTopologies);
   for(int itopo=0; itopo<nTopologies; itopo++){
-    topologies[itopo] = topologyStructsT[itopo]->topologyT;
-    topoValues[itopo] = topologyStructsT[itopo]->dataVectorT->get1dView(); 
+    topologies[itopo] = topologyStructs[itopo]->topology;
+    topoValues[itopo] = Albany::getLocalData(topologyStructs[itopo]->dataVector.getConst());
   }
 
-  std::vector< Teuchos::ArrayRCP<ST>> odmdpT(nTopologies);
+  std::vector< Teuchos::ArrayRCP<ST>> odmdp(nTopologies);
   Teuchos::Array<double> drdz(nTopologies), pVals(nTopologies);
-  if(dmdp != NULL){
+  if(dmdp != nullptr){
     for(int i=0; i<nTopologies; i++){
-      overlapVectorsT[i]->putScalar(0.0);
+      overlapVectors[i]->assign(0.0);
     }
   }
 
@@ -1289,24 +878,23 @@ computeConformalMeasureT(std::string measureType,
 
  
     int materialTopologyIndex = blockMeasureModel->getMaterialTopologyIndex();
-    Teuchos::ArrayRCP<const double> p = topologyStructsT[materialTopologyIndex]->dataVectorT->get1dView(); 
-    Teuchos::RCP<Topology> materialTopology = topologyStructsT[materialTopologyIndex]->topologyT;
+    Teuchos::ArrayRCP<const double> p = Albany::getLocalData(topologyStructs[materialTopologyIndex]->dataVector.getConst());
+    Teuchos::RCP<Topology> materialTopology = topologyStructs[materialTopologyIndex]->topology;
       
     for(int cell=0; cell<numCells; cell++){
-      double elMass = 0.0;
 
       for(int node=0; node<numNodes; node++){
         for(int dim=0; dim<numDims; dim++)
           coordCon(node,dim) = coords[ws][cell][node][dim];
         GO gid = wsElNodeID[ws][cell][node];
-        LO lidT = overlapNodeMapT->getLocalElement(gid);
-        topoVals(node) = p[lidT];
+        LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+        topoVals(node) = p[lid];
       }
 
       // JR:  Until this is done right ...
 
       double weight=0.0;
-      if(dmdp != NULL ){
+      if(dmdp != nullptr ){
         myDicer.getMeasure(weight, topoVals, coordCon, 
                            materialTopology->getInterfaceValue(), Sense::Positive);
       } else {
@@ -1327,9 +915,9 @@ computeConformalMeasureT(std::string measureType,
         for(int itopo=0; itopo<nTopologies; itopo++) pVals[itopo]=0.0;
         for(int node=0; node<numNodes; node++){
           GO gid = wsElNodeID[ws][cell][node];
-          LO lidT = overlapNodeMapT->getLocalElement(gid);
+          LO lid = Albany::getLocalElement(overlapNodeVs,gid);
           for(int itopo=0; itopo<nTopologies; itopo++) {
-            pVals[itopo] += topoValues[itopo][lidT]*basisAtQPs[physIndex](node,qp);
+            pVals[itopo] += topoValues[itopo][lid]*basisAtQPs[physIndex](node,qp);
           }
         }
 
@@ -1340,18 +928,18 @@ computeConformalMeasureT(std::string measureType,
         localm += weight;
 
 
-        if(dmdp != NULL ){
+        if(dmdp != nullptr ){
           blockMeasureModel->Gradient(pVals, topologies, drdz);
           for(int node=0; node<numNodes; node++){
             GO gid = wsElNodeID[ws][cell][node];
-            LO lidT = overlapNodeMapT->getLocalElement(gid);
+            LO lid = Albany::getLocalElement(overlapNodeVs,gid);
             for(int itopo=0; itopo<nTopologies; itopo++){
               if(itopo == materialTopologyIndex){
-                odmdpT[itopo][lidT] += drdz[itopo]*dMdtopo[node]*weightFraction
+                odmdp[itopo][lid] += drdz[itopo]*dMdtopo[node]*weightFraction
                                      *basisAtQPs[physIndex](node,qp)
                                      *weighted_measure[ws](cell,qp);
               } else {
-                odmdpT[itopo][lidT] += drdz[itopo]*weightFraction
+                odmdp[itopo][lid] += drdz[itopo]*weightFraction
                                      *basisAtQPs[physIndex](node,qp)
                                      *weighted_measure[ws](cell,qp);
               }
@@ -1365,35 +953,31 @@ computeConformalMeasureT(std::string measureType,
 
   Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localm, &measure);
 
-  if( dmdp != NULL ){
-    LO numLocalNodesT = localVecT->getLocalLength();
+  if( dmdp != nullptr ){
     for(int itopo=0; itopo<nTopologies; itopo++){
-      localVecT->putScalar(0.0);
-      localVecT->doExport(*overlapVectorsT[itopo], *exporterT, Tpetra::ADD);
-      Teuchos::ArrayRCP<ST> lvecT = localVecT->getDataNonConst();
-      std::memcpy((void*)(dmdp+itopo*nTopologies), lvecT.getRawPtr(), numLocalNodesT*sizeof(double));
+      localVec->assign(0.0);
+      cas_manager->combine(overlapVectors[itopo],localVec,Albany::CombineMode::ADD);
+      Teuchos::ArrayRCP<ST> lvec = Albany::getNonconstLocalData(localVec);
+      std::memcpy((void*)(dmdp+itopo*nTopologies), lvec.getRawPtr(), lvec.size()*sizeof(double));
     }
   }
 }
 
 /******************************************************************************/
-void
-ATO::OptimizationProblem::
-computeConformalVolumeT(std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
-double& v, double* dvdp)
-/******************************************************************************/
+void OptimizationProblem::
+computeConformalVolume (const std::vector<Teuchos::RCP<TopologyStruct>>& topologyStructs,
+                        double& v, double* dvdp)
 {
-TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParameter, std::endl <<
-"Error!  In ATO::OptimizationProblem setup: " << std::endl << 
-"Conformal integration not implemented for non-conformal geometry. " << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParameter, std::endl <<
+                              "Error!  In ATO::OptimizationProblem setup: " << std::endl << 
+                              "Conformal integration not implemented for non-conformal geometry. " << std::endl);
 
-  Teuchos::RCP<Topology> topology = topologyStructsT[0]->topologyT;
-  Teuchos::ArrayRCP<const double> p = topologyStructsT[0]->dataVectorT->get1dView(); 
+  Teuchos::RCP<Topology> topology = topologyStructs[0]->topology;
+  Teuchos::ArrayRCP<const double> p = Albany::getLocalData(topologyStructs[0]->dataVector.getConst());
 
   double localv = 0.0;
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-        wsElNodeID = disc->getWsElNodeID();
-  const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+  const auto& wsElNodeID  = disc->getWsElNodeID();
+  const auto& wsPhysIndex = disc->getWsPhysIndex();
   int numWorksets = wsElNodeID.size();
 
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
@@ -1403,11 +987,11 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
   Kokkos::DynRankView<RealType, PHX::Device> topoVals;
   Kokkos::DynRankView<RealType, PHX::Device> dMdtopo;
 
-  Teuchos::ArrayRCP<ST> odvdpT; 
-  if( dvdp != NULL ){
-    localVecT->putScalar(0.0);
-    overlapVecT->putScalar(0.0);
-    odvdpT = overlapVecT->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> odvdp; 
+  if( dvdp != nullptr ){
+    localVec->assign(0.0);
+    overlapVec->assign(0.0);
+    odvdp = Albany::getNonconstLocalData(overlapVec);
   }
 
   for(int ws=0; ws<numWorksets; ws++){
@@ -1428,11 +1012,11 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
         for(int dim=0; dim<numDims; dim++)
           coordCon(node,dim) = coords[ws][cell][node][dim];
         GO gid = wsElNodeID[ws][cell][node];
-        LO lidT = overlapNodeMapT->getLocalElement(gid);
-        topoVals(node) = p[lidT];
+        LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+        topoVals(node) = p[lid];
       }
 
-      if( dvdp == NULL ){
+      if( dvdp == nullptr ){
         double weight=0.0;
         myDicer.getMeasure(weight, topoVals, coordCon, 
                            topology->getInterfaceValue(), Sense::Positive);
@@ -1447,22 +1031,20 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
 
         for(int node=0; node<numNodes; node++){
           GO gid = wsElNodeID[ws][cell][node];
-          LO lidT = overlapNodeMapT->getLocalElement(gid);
-          odvdpT[lidT] += dMdtopo(node);
+          LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+          odvdp[lid] += dMdtopo(node);
         }
       }
     }
   }
 
-  if( dvdp != NULL ){
-    localVecT->doExport(*overlapVecT, *exporterT, Tpetra::ADD);
-    LO numLocalNodesT = localVecT->getLocalLength();
-    Teuchos::ArrayRCP<ST> lvecT = localVecT->getDataNonConst();
-    std::memcpy((void*)(dvdp), lvecT.getRawPtr(), numLocalNodesT*sizeof(double));
+  if( dvdp != nullptr ){
+    cas_manager->combine(overlapVec,localVec,Albany::CombineMode::ADD);
+    Teuchos::ArrayRCP<ST> lvec = Albany::getNonconstLocalData(localVec);
+    std::memcpy((void*)(dvdp), lvec.getRawPtr(), lvec.size()*sizeof(double));
   }
 
   Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localv, &v);
-
 }
 
-
+} // namespace ATO

@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Debug Output: 
     Write Solution to MatrixMarket: false
   Problem: 
@@ -94,7 +95,7 @@ ANONYMOUS:
       basalside: 
         Method: Ioss
         Number Of Time Derivatives: 0
-        Use Serial Mesh: true
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Exodus Output File Name: gis_beta_smb_basal.exo
         Cubature Degree: 3

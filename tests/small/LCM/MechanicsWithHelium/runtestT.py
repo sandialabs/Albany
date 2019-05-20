@@ -17,8 +17,8 @@ if os.path.exists(log_file_name):
     os.remove(log_file_name)
 logfile = open(log_file_name, 'w')
 
-# run AlbanyT
-command = ["./AlbanyT", name + ".yaml"]
+# run Albany
+command = ["./Albany", name + ".yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:
@@ -52,8 +52,8 @@ if os.path.exists(log_file_name):
     os.remove(log_file_name)
 logfile = open(log_file_name, 'w')
 
-# run AlbanyT
-command = ["./AlbanyT", name + ".yaml"]
+# run Albany
+command = ["./Albany", name + ".yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:
@@ -87,8 +87,8 @@ if os.path.exists(log_file_name):
     os.remove(log_file_name)
 logfile = open(log_file_name, 'w')
 
-# run AlbanyT
-command = ["./AlbanyT", name + ".yaml"]
+# run Albany
+command = ["./Albany", name + ".yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:
@@ -121,8 +121,8 @@ if os.path.exists(log_file_name):
     os.remove(log_file_name)
 logfile = open(log_file_name, 'w')
 
-# run AlbanyT
-command = ["./AlbanyT", name + ".yaml"]
+# run Albany
+command = ["./Albany", name + ".yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:
@@ -155,8 +155,8 @@ if os.path.exists(log_file_name):
     os.remove(log_file_name)
 logfile = open(log_file_name, 'w')
 
-# run AlbanyT
-command = ["./AlbanyT", name + ".yaml"]
+# run Albany
+command = ["./Albany", name + ".yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

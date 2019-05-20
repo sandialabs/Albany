@@ -707,7 +707,8 @@ bool MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Assemble_3D(
                 int row = slmdof[k];
                 GO  col = sdof[k];
                 // std::cout << "Proc " << lComm()->MyPID() << " inserting D
-                // row/col:" << row << "/" << col << " val " << val << std::endl;
+                // row/col:" << row << "/" << col << " val " << val <<
+                // std::endl;
                 int err = D.sumIntoGlobalValues(row, 1, &val, &col);
 
                 if (err) D.insertGlobalValues(row, 1, &val, &col);
@@ -807,7 +808,8 @@ bool MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::Assemble_3D(
                 int row = slmdof[k];
                 GO  col = mdof[k];
                 // std::cout << "Proc " << lComm()->MyPID() << " inserting M
-                // row/col:" << row << "/" << col << " val " << val << std::endl;
+                // row/col:" << row << "/" << col << " val " << val <<
+                // std::endl;
                 int err = M.sumIntoGlobalValues(row, 1, &val, &col);
 
                 if (err) M.insertGlobalValues(row, 1, &val, &col);
@@ -1308,7 +1310,8 @@ bool MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::AssembleResidualVector()
                 int row = slmdof[k];
                 int col = sdof[k];
                 // std::cout << "Proc " << lComm()->MyPID() << " inserting D
-                // row/col:" << row << "/" << col << " val " << val << std::endl;
+                // row/col:" << row << "/" << col << " val " << val <<
+                // std::endl;
 
                 // Assemble D times soln
                 // Row of D determines row in rhs
@@ -1396,7 +1399,8 @@ bool MoertelT::MOERTEL_TEMPLATE_CLASS(InterfaceT)::AssembleResidualVector()
                 int row = slmdof[k];
                 int col = mdof[k];
                 // std::cout << "Proc " << lComm()->MyPID() << " inserting M
-                // row/col:" << row << "/" << col << " val " << val << std::endl;
+                // row/col:" << row << "/" << col << " val " << val <<
+                // std::endl;
 
                 // Assemble M times soln
                 // Row of M determines row in rhs

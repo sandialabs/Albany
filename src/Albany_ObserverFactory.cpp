@@ -27,7 +27,7 @@ NOXObserverFactory::NOXObserverFactory(const Teuchos::RCP<Application> &app) :
 Teuchos::RCP<NOX::Epetra::Observer>
 NOXObserverFactory::createInstance()
 {
-  Teuchos::RCP<NOX::Epetra::Observer> result(new Albany_NOXObserver(app_));
+  Teuchos::RCP<NOX::Epetra::Observer> result(new NOXObserver(app_));
   return result;
 }
 
@@ -51,7 +51,7 @@ RythmosObserverFactory::RythmosObserverFactory(const Teuchos::RCP<Application> &
 Teuchos::RCP<Rythmos::IntegrationObserverBase<double> >
 RythmosObserverFactory::createInstance()
 {
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > result(new Albany_RythmosObserver(app_));
+  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > result(new RythmosObserver(app_));
   return result;
 }
 #endif

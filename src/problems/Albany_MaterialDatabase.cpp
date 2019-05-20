@@ -8,14 +8,16 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_YamlParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_Macros.hpp"
 
 /* TODO: there is still a lot duplication in the code below.
    many of the safety checks could be consolidated into helper functions,
    and common behavior among Material, Element Block, Node Set, and Side Set too.
   */
 
-Albany::MaterialDatabase::
+namespace Albany {
+
+MaterialDatabase::
 MaterialDatabase(
     std::string const& input_file,
     Teuchos::RCP<Teuchos::Comm<int> const>& tcomm)
@@ -58,34 +60,27 @@ MaterialDatabase(
   }
 }
 
-Albany::MaterialDatabase::
-~MaterialDatabase()
-{
-}
-
-bool
-Albany::MaterialDatabase::
+bool MaterialDatabase::
 isParam(std::string const& param_name)
 {
   return data_.isParameter(param_name);
 }
 
-template<typename T> T
-Albany::MaterialDatabase::
+template<typename T>
+T MaterialDatabase::
 getParam(std::string const& param_name)
 {
   return data_.get<T>(param_name);
 }
 
-template<typename T> T
-Albany::MaterialDatabase::
+template<typename T>
+T MaterialDatabase::
 getParam(std::string const& param_name, T def_value)
 {
   return data_.get<T>(param_name, def_value);
 }
 
-bool
-Albany::MaterialDatabase::
+bool MaterialDatabase::
 isMaterialParam(std::string const& material_name, std::string const& param_name)
 {
   ALBANY_ASSERT(p_materials_list_,
@@ -96,8 +91,8 @@ isMaterialParam(std::string const& material_name, std::string const& param_name)
   return sublist.isParameter(param_name);
 }
 
-template<typename T> T
-Albany::MaterialDatabase::
+template<typename T>
+T MaterialDatabase::
 getMaterialParam(std::string const& material_name, std::string const& param_name)
 {
   ALBANY_ASSERT(p_materials_list_,
@@ -113,8 +108,8 @@ getMaterialParam(std::string const& material_name, std::string const& param_name
   return sublist.get<T>(param_name);
 }
 
-template<typename T> T
-Albany::MaterialDatabase::
+template<typename T>
+T MaterialDatabase::
 getMaterialParam(std::string const& material_name, std::string const& param_name, T def_value)
 {
   if (!p_materials_list_) return def_value;
@@ -130,8 +125,7 @@ getMaterialParam(std::string const& material_name, std::string const& param_name
   return sublist.get<T>(param_name, def_value);
 }
 
-bool
-Albany::MaterialDatabase::
+bool MaterialDatabase::
 isElementBlockParam(std::string const& eb_name, std::string const& param_name)
 {
   ALBANY_ASSERT(p_eb_list_,
@@ -155,8 +149,8 @@ isElementBlockParam(std::string const& eb_name, std::string const& param_name)
   return mat_sublist.isParameter(param_name);
 }
 
-template<typename T> T
-Albany::MaterialDatabase::
+template<typename T>
+T MaterialDatabase::
 getElementBlockParam(std::string const& eb_name, std::string const& param_name)
 {
   ALBANY_ASSERT(p_eb_list_,
@@ -200,8 +194,8 @@ getElementBlockParam(std::string const& eb_name, std::string const& param_name)
   return mat_sublist.get<T>(param_name);
 }
 
-template<typename T> T
-Albany::MaterialDatabase::
+template<typename T>
+T MaterialDatabase::
 getElementBlockParam(std::string const& eb_name, std::string const& param_name, T def_value)
 {
   if (!p_eb_list_) return def_value;
@@ -235,8 +229,7 @@ getElementBlockParam(std::string const& eb_name, std::string const& param_name, 
   return mat_sublist.get<T>(param_name, def_value);
 }
 
-bool
-Albany::MaterialDatabase::
+bool MaterialDatabase::
 isElementBlockSublist(std::string const& eb_name, std::string const& sublist_name)
 {
   ALBANY_ASSERT(p_eb_list_,
@@ -262,7 +255,7 @@ isElementBlockSublist(std::string const& eb_name, std::string const& sublist_nam
 }
 
 Teuchos::ParameterList&
-Albany::MaterialDatabase::
+MaterialDatabase::
 getElementBlockSublist(std::string const& eb_name, std::string const& sublist_name)
 {
   ALBANY_ASSERT(p_eb_list_,
@@ -319,7 +312,7 @@ getElementBlockSublist(std::string const& eb_name, std::string const& sublist_na
 }
 
 template<typename T> std::vector<T>
-Albany::MaterialDatabase::
+MaterialDatabase::
 getAllMatchingParams(std::string const& param_name)
 {
   std::vector<T> results;
@@ -327,7 +320,7 @@ getAllMatchingParams(std::string const& param_name)
   return results;
 }
 
-bool Albany::MaterialDatabase::
+bool MaterialDatabase::
 isNodeSetParam(std::string const& ns_name, std::string const& param_name)
 {
   ALBANY_ASSERT(p_ns_list_,
@@ -338,8 +331,8 @@ isNodeSetParam(std::string const& ns_name, std::string const& param_name)
   return sublist.isParameter(param_name);
 }
 
-template<typename T> T
-Albany::MaterialDatabase::
+template<typename T>
+T MaterialDatabase::
 getNodeSetParam(std::string const& ns_name, std::string const& param_name)
 {
   ALBANY_ASSERT(p_ns_list_,
@@ -355,8 +348,8 @@ getNodeSetParam(std::string const& ns_name, std::string const& param_name)
   return sublist.get<T>(param_name);
 }
 
-template<typename T> T
-Albany::MaterialDatabase::
+template<typename T>
+T MaterialDatabase::
 getNodeSetParam(std::string const& ns_name, std::string const& param_name, T def_value)
 {
   if (!p_ns_list_) return def_value;
@@ -371,7 +364,7 @@ getNodeSetParam(std::string const& ns_name, std::string const& param_name, T def
   return sublist.get<T>(param_name, def_value);
 }
 
-bool Albany::MaterialDatabase::
+bool MaterialDatabase::
 isSideSetParam(std::string const& ss_name, std::string const& param_name)
 {
   ALBANY_ASSERT(p_ss_list_,
@@ -382,8 +375,8 @@ isSideSetParam(std::string const& ss_name, std::string const& param_name)
   return sublist.isParameter(param_name);
 }
 
-template<typename T> T
-Albany::MaterialDatabase::
+template<typename T>
+T MaterialDatabase::
 getSideSetParam(std::string const& ss_name, std::string const& param_name)
 {
   ALBANY_ASSERT(p_ss_list_,
@@ -399,8 +392,8 @@ getSideSetParam(std::string const& ss_name, std::string const& param_name)
   return sublist.get<T>(param_name);
 }
 
-template<typename T> T
-Albany::MaterialDatabase::
+template<typename T>
+T MaterialDatabase::
 getSideSetParam(std::string const& ss_name, std::string const& param_name, T def_value)
 {
   if (!p_ss_list_) return def_value;
@@ -415,8 +408,8 @@ getSideSetParam(std::string const& ss_name, std::string const& param_name, T def
   return sublist.get<T>(param_name, def_value);
 }
 
-template<typename T> void
-Albany::MaterialDatabase::
+template<typename T>
+void MaterialDatabase::
 getAllMatchingParams_helper(std::string const& param_name, std::vector<T>& results, Teuchos::ParameterList& list)
 {
   Teuchos::ParameterList* list_type{nullptr};
@@ -432,8 +425,7 @@ getAllMatchingParams_helper(std::string const& param_name, std::vector<T>& resul
   }
 }
 
-std::string
-Albany::MaterialDatabase::
+std::string MaterialDatabase::
 translateDBSublistName(Teuchos::ParameterList* list, std::string const& listname)
 {
   // NOTE: STK Ioss lowercases all names in the Exodus file,
@@ -457,7 +449,7 @@ translateDBSublistName(Teuchos::ParameterList* list, std::string const& listname
 }
 
 Teuchos::RCP<Albany::MaterialDatabase>
-Albany::createMaterialDatabase(
+createMaterialDatabase(
     Teuchos::RCP<Teuchos::ParameterList> const & params,
     Teuchos::RCP<Teuchos_Comm const> & commT)
 {
@@ -467,6 +459,8 @@ Albany::createMaterialDatabase(
   auto filename = params->get<std::string>("MaterialDB Filename");
   return Teuchos::rcp(new Albany::MaterialDatabase(filename, commT));
 }
+
+} // namespace Albany
 
 // Explicit instantiation of functions above
 #define ALBANY_INST(T) \

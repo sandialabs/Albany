@@ -27,23 +27,20 @@ namespace LCM {
 //
 //
 //
-template<typename EvalT, typename Traits>
-SchwarzBC_Base<EvalT, Traits>::
-SchwarzBC_Base(Teuchos::ParameterList & p) :
-    PHAL::DirichletBase<EvalT, Traits>(p),
-    app_(p.get<Teuchos::RCP<Albany::Application>>(
-        "Application", Teuchos::null)),
-    coupled_apps_(app_->getApplications()),
-    coupled_app_name_(p.get<std::string>("Coupled Application", "SELF")),
-    coupled_block_name_(p.get<std::string>("Coupled Block", "NONE"))
+template <typename EvalT, typename Traits>
+SchwarzBC_Base<EvalT, Traits>::SchwarzBC_Base(Teuchos::ParameterList& p)
+    : PHAL::DirichletBase<EvalT, Traits>(p),
+      app_(p.get<Teuchos::RCP<Albany::Application>>(
+          "Application",
+          Teuchos::null)),
+      coupled_apps_(app_->getApplications()),
+      coupled_app_name_(p.get<std::string>("Coupled Application", "SELF")),
+      coupled_block_name_(p.get<std::string>("Coupled Block", "NONE"))
 {
-  std::string const &
-  nodeset_name = this->nodeSetID;
+  std::string const& nodeset_name = this->nodeSetID;
 
   app_->setCoupledAppBlockNodeset(
-      coupled_app_name_,
-      coupled_block_name_,
-      nodeset_name);
+      coupled_app_name_, coupled_block_name_, nodeset_name);
 
   std::string const& this_app_name = app_->getAppName();
 
@@ -69,17 +66,20 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
 //
 //
 //
-template<typename EvalT, typename Traits>
-template<typename T>
+template <typename EvalT, typename Traits>
+template <typename T>
 void
-SchwarzBC_Base<EvalT, Traits>::
-computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
+SchwarzBC_Base<EvalT, Traits>::computeBCs(
+    size_t const ns_node,
+    T&           x_val,
+    T&           y_val,
+    T&           z_val)
 {
   auto const coupled_app_index = getCoupledAppIndex();
 
   Albany::Application const& coupled_app = getApplication(coupled_app_index);
 
-  Teuchos::RCP<Tpetra_Vector const> coupled_solution = coupled_app.getX();
+  Teuchos::RCP<Thyra_Vector const> coupled_solution = coupled_app.getX();
 
   if (coupled_solution == Teuchos::null) {
     x_val = 0.0;
@@ -219,10 +219,10 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
       coupled_stk_disc->getCoordinates();
 
   Teuchos::ArrayRCP<ST const> coupled_solution_view =
-      coupled_solution->get1dView();
+      Albany::getLocalData(coupled_solution);
 
-  Teuchos::RCP<Tpetra_Map const> coupled_overlap_node_map =
-      coupled_stk_disc->getOverlapNodeMapT();
+  Teuchos::RCP<Thyra_VectorSpace const> coupled_overlap_node_vs =
+      coupled_stk_disc->getOverlapNodeVectorSpace();
 
   // We do this element by element
   auto const number_cells = 1;
@@ -266,7 +266,7 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
         auto const global_node_id = ws_elem_to_node_id[workset][element][node];
 
         auto const local_node_id =
-            coupled_overlap_node_map->getLocalElement(global_node_id);
+            Albany::getLocalElement(coupled_overlap_node_vs, global_node_id);
 
         double* const pcoord =
             &(coupled_coordinates[coupled_dimension * local_node_id]);
@@ -488,11 +488,10 @@ fillResidual(SchwarzBC& sbc, typename Traits::EvalData dirichlet_workset)
 
   Teuchos::ArrayRCP<ST> f_view = Albany::getNonconstLocalData(f);
 
-  std::vector<std::vector<int>> const &
-  ns_dof = dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
+  std::vector<std::vector<int>> const& ns_dof =
+      dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
 
-  auto const
-  ns_number_nodes = ns_dof.size();
+  auto const ns_number_nodes = ns_dof.size();
 
 #if defined(ALBANY_DTK)
 
@@ -608,7 +607,7 @@ SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   Teuchos::RCP<Thyra_LinearOp>     jac = dirichlet_workset.Jac;
 
   Teuchos::ArrayRCP<ST const> x_const_view = Albany::getLocalData(x);
-  Teuchos::ArrayRCP<ST> f_view;
+  Teuchos::ArrayRCP<ST>       f_view;
 
   RealType const j_coeff = dirichlet_workset.j_coeff;
 
@@ -620,18 +619,15 @@ SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 
   value[0] = j_coeff;
 
-  size_t numEntries;
+  size_t             numEntries;
   Teuchos::Array<ST> matrixEntries;
   Teuchos::Array<LO> matrixIndices;
 
   bool const fill_residual = (f != Teuchos::null);
 
-  if (fill_residual == true) {
-    f_view = Albany::getNonconstLocalData(f);
-  }
+  if (fill_residual == true) { f_view = Albany::getNonconstLocalData(f); }
 
   for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
-
     auto const x_dof = ns_nodes[ns_node][0];
     auto const y_dof = ns_nodes[ns_node][1];
     auto const z_dof = ns_nodes[ns_node][2];
@@ -691,18 +687,16 @@ void
 SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<const Thyra_Vector>       x = dirichlet_workset.x;
+  Teuchos::RCP<const Thyra_Vector>      x  = dirichlet_workset.x;
   Teuchos::RCP<const Thyra_MultiVector> Vx = dirichlet_workset.Vx;
-  Teuchos::RCP<Thyra_Vector>             f = dirichlet_workset.f;
+  Teuchos::RCP<Thyra_Vector>            f  = dirichlet_workset.f;
   Teuchos::RCP<Thyra_MultiVector>       fp = dirichlet_workset.fp;
   Teuchos::RCP<Thyra_MultiVector>       JV = dirichlet_workset.JV;
 
+  RealType const j_coeff = dirichlet_workset.j_coeff;
 
-  RealType const
-  j_coeff = dirichlet_workset.j_coeff;
-
-  std::vector<std::vector<int>> const &
-  ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  std::vector<std::vector<int>> const& ns_nodes =
+      dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
   Teuchos::ArrayRCP<ST const> x_const_view = Albany::getLocalData(x);
   Teuchos::ArrayRCP<ST>       f_view;
@@ -711,16 +705,12 @@ SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       JV_view;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       fp_view;
 
-  if (f != Teuchos::null) {
-    f_view = Albany::getNonconstLocalData(f);
-  }
+  if (f != Teuchos::null) { f_view = Albany::getNonconstLocalData(f); }
   if (JV != Teuchos::null) {
     JV_view       = Albany::getNonconstLocalData(JV);
     Vx_const_view = Albany::getLocalData(Vx);
   }
-  if (fp != Teuchos::null) {
-    fp_view = Albany::getNonconstLocalData(fp);
-  }
+  if (fp != Teuchos::null) { fp_view = Albany::getNonconstLocalData(fp); }
 
   for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
     auto const x_dof = ns_nodes[ns_node][0];
@@ -728,7 +718,6 @@ SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
     auto const y_dof = ns_nodes[ns_node][1];
 
     auto const z_dof = ns_nodes[ns_node][2];
-
 
     if (JV != Teuchos::null) {
       for (auto i = 0; i < dirichlet_workset.num_cols_x; ++i) {
@@ -740,10 +729,8 @@ SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
   }
 
   if (f != Teuchos::null || fp != Teuchos::null) {
-
 #if defined(ALBANY_DTK)
     if (f != Teuchos::null) {
-
       Teuchos::RCP<
           Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
           schwarz_bcs = this->computeBCsDTK();
@@ -796,7 +783,6 @@ SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
         f_view[z_dof] = x_const_view[z_dof] - z_val.val();
       }
       if (fp != Teuchos::null) {
-
         for (auto i = 0; i < dirichlet_workset.num_cols_p; ++i) {
           fp_view[i][x_dof] = -x_val.dx(dirichlet_workset.param_offset + i);
           fp_view[i][y_dof] = -y_val.dx(dirichlet_workset.param_offset + i);
@@ -829,7 +815,6 @@ SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
 {
   Teuchos::RCP<Thyra_MultiVector> fpV = dirichlet_workset.fpV;
 
-
   bool const trans = dirichlet_workset.transpose_dist_param_deriv;
 
   auto const num_cols = fpV->domain()->dim();
@@ -846,7 +831,7 @@ SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
   if (trans == true) {
     // For (df/dp)^T*V we zero out corresponding entries in V
     Teuchos::RCP<Thyra_MultiVector> Vp = dirichlet_workset.Vp_bc;
-    Teuchos::ArrayRCP<ST> Vp_view;
+    Teuchos::ArrayRCP<ST>           Vp_view;
 
     for (auto inode = 0; inode < ns_nodes.size(); ++inode) {
       auto const x_dof = ns_nodes[inode][0];
@@ -856,7 +841,7 @@ SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
       auto const z_dof = ns_nodes[inode][2];
 
       for (auto col = 0; col < num_cols; ++col) {
-        Vp_view = Albany::getNonconstLocalData(Vp->col(col));
+        Vp_view        = Albany::getNonconstLocalData(Vp->col(col));
         Vp_view[x_dof] = 0.0;
         Vp_view[y_dof] = 0.0;
         Vp_view[z_dof] = 0.0;
@@ -873,7 +858,7 @@ SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
       auto const z_dof = ns_nodes[inode][2];
 
       for (auto col = 0; col < num_cols; ++col) {
-        fpV_view = Albany::getNonconstLocalData(fpV->col(col));
+        fpV_view        = Albany::getNonconstLocalData(fpV->col(col));
         fpV_view[x_dof] = 0.0;
         fpV_view[y_dof] = 0.0;
         fpV_view[z_dof] = 0.0;

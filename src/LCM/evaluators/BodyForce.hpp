@@ -7,8 +7,8 @@
 #if !defined(BODY_FORCE_HPP)
 #define BODY_FORCE_HPP
 
-#include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

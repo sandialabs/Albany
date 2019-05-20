@@ -8,8 +8,8 @@
 # Adaptation
 
 SET(SOURCES
-    AAdapt_AbstractAdapterT.cpp
-    AAdapt_AdaptiveSolutionManagerT.cpp
+    AAdapt_AbstractAdapter.cpp
+    AAdapt_AdaptiveSolutionManager.cpp
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
     AAdapt_SolutionObserver.cpp
@@ -22,8 +22,8 @@ SET(SOURCES
    )
 
 SET(HEADERS
-    AAdapt_AbstractAdapterT.hpp
-    AAdapt_AdaptiveSolutionManagerT.hpp
+    AAdapt_AbstractAdapter.hpp
+    AAdapt_AdaptiveSolutionManager.hpp
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
     AAdapt_SolutionObserver.hpp
@@ -36,144 +36,89 @@ SET(HEADERS
 
 IF(ALBANY_STK)
   SET(SOURCES ${SOURCES}
-    AAdapt_CopyRemeshT.cpp
+    AAdapt_CopyRemesh.cpp
   )
   SET(HEADERS ${HEADERS}
-    AAdapt_CopyRemeshT.hpp
+    AAdapt_CopyRemesh.hpp
   )
-ENDIF()
-
-
-IF (ALBANY_EPETRA) 
-  SET(SOURCES ${SOURCES} 
-    AAdapt_AbstractAdapter.cpp
-    AAdapt_AdaptationFactory.cpp
-    AAdapt_AdaptiveSolutionManager.cpp
-    AAdapt_AdaptiveModelFactory.cpp
-    AAdapt_ThyraAdaptiveModelEvaluator.cpp
-   ) 
-  SET(HEADERS ${HEADERS} 
-    AAdapt_AbstractAdapter.hpp
-    AAdapt_AdaptationFactory.hpp
-    AAdapt_AdaptiveSolutionManager.hpp
-    AAdapt_AdaptiveModelFactory.hpp
-    AAdapt_ThyraAdaptiveModelEvaluator.hpp
-  )
-  IF(ALBANY_STK)
-    SET(SOURCES ${SOURCES}
-      AAdapt_CopyRemesh.cpp
-    )
-    SET(HEADERS ${HEADERS}
-      AAdapt_CopyRemesh.hpp
-    )
-  ENDIF()
 ENDIF()
 
 # Random Criterion & Stress Fracture depend on LCM
 # Speculative features and code, currently
-IF(ALBANY_LCM AND LCM_SPECULATIVE AND ALBANY_STK)
+IF(ALBANY_LCM AND ALBANY_STK)
+  IF(LCM_SPECULATIVE)
+    SET(SOURCES ${SOURCES}
+        AAdapt_RandomCriterion.cpp
+        AAdapt_RandomFracture.cpp
+        AAdapt_StressFracture.cpp
+       )
 
-SET(SOURCES ${SOURCES}
-    AAdapt_RandomCriterion.cpp
-    AAdapt_StressFracture.cpp
-   )
+    SET(HEADERS ${HEADERS}
+        AAdapt_RandomCriterion.hpp
+        AAdapt_RandomFracture.hpp
+        AAdapt_StressFracture.hpp
+       )
+  ENDIF()
 
-SET(HEADERS ${HEADERS}
-    AAdapt_RandomCriterion.hpp
-    AAdapt_StressFracture.hpp
-   )
+  # Topology Modification depends on LCM and STK
+  IF(ALBANY_BGL)
+    SET(SOURCES ${SOURCES}
+        AAdapt_Erosion.cpp
+        AAdapt_TopologyModification.cpp
+       )
 
-IF (ALBANY_EPETRA) 
-SET(SOURCES ${SOURCES} 
-    AAdapt_RandomFracture.cpp
-    )
-SET(HEADERS ${HEADERS}
-    AAdapt_RandomFracture.hpp
-    )
-ENDIF()
-ENDIF()
+    SET(HEADERS ${HEADERS}
+        AAdapt_Erosion.hpp
+        AAdapt_TopologyModification.hpp
+       )
+  ENDIF()
 
-# Topology Modification depends on LCM and STK
-IF(ALBANY_LCM AND ALBANY_STK AND ALBANY_BGL)
+  IF(ALBANY_STK_PERCEPT)
+    SET(SOURCES ${SOURCES}
+        AAdapt_STKAdapt.cpp
+        AAdapt_STKConstantSizeField.cpp
+       )
 
-SET(SOURCES ${SOURCES}
-    AAdapt_TopologyModificationT.cpp
-   )
+    SET(HEADERS ${HEADERS}
+        AAdapt_STKAdapt.hpp
+        AAdapt_STKAdapt_Def.hpp
+        AAdapt_STKConstantSizeField.hpp
+       )
 
-SET(HEADERS ${HEADERS}
-    AAdapt_TopologyModificationT.hpp
-   )
-
-IF (ALBANY_EPETRA)
- 
-SET(SOURCES ${SOURCES} 
-    AAdapt_TopologyModification.cpp
-    )
-SET(HEADERS ${HEADERS}
-    AAdapt_TopologyModification.hpp
-    )
-    
-ENDIF()
-
-ENDIF()
-
-IF(ALBANY_LCM AND ALBANY_STK_PERCEPT AND ALBANY_STK)
-
-SET(SOURCES ${SOURCES}
-    AAdapt_STKAdaptT.cpp
-    AAdapt_STKConstantSizeField.cpp
-   )
-
-SET(HEADERS ${HEADERS}
-    AAdapt_STKAdaptT.hpp
-    AAdapt_STKAdaptT_Def.hpp
-    AAdapt_STKConstantSizeField.hpp
-   )
-
-IF (ALBANY_EPETRA) 
-SET(SOURCES ${SOURCES}
-    AAdapt_STKAdapt.cpp
-    )
-SET(HEADERS ${HEADERS}
-    AAdapt_STKAdapt.hpp
-    AAdapt_STKAdapt_Def.hpp
-)
-ENDIF()
-
+  ENDIF()
 ENDIF()
 
 # Mesh Adapt depends on SCOREC tools and PUMI
 IF(ALBANY_SCOREC)
 
-SET(SOURCES ${SOURCES}
-    AAdapt_MeshAdapt.cpp
-    AAdapt_MeshAdaptMethod.cpp
-    AAdapt_ConstantSizeField.cpp
-    AAdapt_ScaledSizeField.cpp
-    AAdapt_UniformRefine.cpp
-    AAdapt_AlbanySizeField.cpp
-    AAdapt_ExtrudedAdapt.cpp
-   )
+  SET(SOURCES ${SOURCES}
+      AAdapt_MeshAdapt.cpp
+      AAdapt_MeshAdaptMethod.cpp
+      AAdapt_ConstantSizeField.cpp
+      AAdapt_ScaledSizeField.cpp
+      AAdapt_UniformRefine.cpp
+      AAdapt_AlbanySizeField.cpp
+      AAdapt_ExtrudedAdapt.cpp
+      AAdapt_SPRSizeField.cpp
+  )
 
-SET(HEADERS ${HEADERS}
-    AAdapt_MeshAdaptMethod.hpp
-    AAdapt_MeshAdapt.hpp
-    AAdapt_ConstantSizeField.hpp
-    AAdapt_ScaledSizeField.hpp
-    AAdapt_UniformRefine.hpp
-    AAdapt_AlbanySizeField.hpp
-    AAdapt_ExtrudedAdapt.hpp
-   )
+  SET(HEADERS ${HEADERS}
+      AAdapt_MeshAdaptMethod.hpp
+      AAdapt_MeshAdapt.hpp
+      AAdapt_ConstantSizeField.hpp
+      AAdapt_ScaledSizeField.hpp
+      AAdapt_UniformRefine.hpp
+      AAdapt_AlbanySizeField.hpp
+      AAdapt_ExtrudedAdapt.hpp
+      AAdapt_SPRSizeField.hpp
+  )
 
-SET(SOURCES ${SOURCES} AAdapt_SPRSizeField.cpp)
-SET(HEADERS ${HEADERS} AAdapt_SPRSizeField.hpp)
+  IF(ALBANY_OMEGA_H)
+    SET(SOURCES ${SOURCES} AAdapt_MeshAdapt_Omega_h.cpp)
+    SET(HEADERS ${HEADERS} AAdapt_MeshAdapt_Omega_h.hpp)
+  ENDIF()
 
-IF(ALBANY_OMEGA_H)
-  SET(SOURCES ${SOURCES} AAdapt_MeshAdapt_Omega_h.cpp)
-  SET(HEADERS ${HEADERS} AAdapt_MeshAdapt_Omega_h.hpp)
-ENDIF()
-
-include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
+  include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 
 ENDIF()
 

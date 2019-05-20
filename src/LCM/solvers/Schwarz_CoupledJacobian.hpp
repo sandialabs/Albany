@@ -12,11 +12,6 @@
 #include "Teuchos_Comm.hpp"
 #include "Thyra_BlockedLinearOpBase.hpp"
 #include "Thyra_PhysicallyBlockedLinearOpBase.hpp"
-#include "Tpetra_CrsMatrix.hpp"
-#include "Tpetra_Import.hpp"
-#include "Tpetra_Map.hpp"
-#include "Tpetra_Operator.hpp"
-#include "Tpetra_Vector.hpp"
 
 namespace LCM {
 
@@ -34,7 +29,7 @@ class Schwarz_CoupledJacobian
 
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
   getThyraCoupledJacobian(
-      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>              jacs,
+      Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>>                jacs,
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const& ca) const;
 
  private:

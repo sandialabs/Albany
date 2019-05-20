@@ -4,70 +4,102 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_ADAPTIVESOLUTIONMANAGER
-#define AADAPT_ADAPTIVESOLUTIONMANAGER
+#ifndef AADAPT_ADAPTIVE_SOLUTION_MANAGER_HPP
+#define AADAPT_ADAPTIVE_SOLUTION_MANAGER_HPP
 
-#include "Piro_Epetra_AdaptiveSolutionManager.hpp"
-#include "Piro_SolutionObserverBase.hpp"
+#include "Albany_DataTypes.hpp"
 #include "Albany_AbstractDiscretization.hpp"
-#include "AAdapt_AdaptiveModelFactory.hpp"
-#include "AAdapt_SolutionObserver.hpp"
-
-#include "Sacado_ScalarParameterLibrary.hpp"
 #include "Albany_StateManager.hpp"
+#include "Albany_CombineAndScatterManager.hpp"
 
+#include "AAdapt_InitialCondition.hpp"
+#include "AAdapt_AbstractAdapter.hpp"
+
+#include "Thyra_AdaptiveSolutionManager.hpp"
+
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 namespace AAdapt {
 
-typedef Teuchos::RCP<Piro::SolutionObserverBase<double, const Thyra::VectorBase<double> > > AdaptSolutionObserverType;
+namespace rc { class Manager; }
 
-class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
-
-  public:
+class AdaptiveSolutionManager : public Thyra::AdaptiveSolutionManager {
+public:
     AdaptiveSolutionManager(
-      const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-      const Teuchos::RCP<Albany::AbstractDiscretization>& disc_,
-      const Teuchos::RCP<const Epetra_Vector>& initial_guess);
+        const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+        const Teuchos::RCP<const Thyra_Vector>& initial_guess,
+        const Teuchos::RCP<ParamLib>& param_lib,
+        const Albany::StateManager& StateMgr,
+        const Teuchos::RCP<rc::Manager>& rc_mgr,
+        const Teuchos::RCP<const Teuchos_Comm>& comm);
 
-    virtual ~AdaptiveSolutionManager();
+   //! Method called by the solver implementation to determine if the mesh needs adapting
+   // A return type of true means that the mesh should be adapted
+   virtual bool queryAdaptationCriteria(){ return adapter_->queryAdaptationCriteria(iter_); }
 
-    //! Build a mesh adaptive problem
-    void buildAdaptiveProblem(const Teuchos::RCP<ParamLib>& paramLib,
-                              Albany::StateManager& StateMgr,
-                              const Teuchos::RCP<const Teuchos_Comm>& commT);
+   //! Method called by solver implementation to actually adapt the mesh
+   //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
+   virtual bool adaptProblem();
 
-    //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
-    virtual bool adaptProblem();
+   //! Remap "old" solution into new data structures
+   virtual void projectCurrentSolution();
 
-    //! Build the model factory that returns the Thyra Model Evaluator wrapping Albany::ModelEvaluator
-    virtual Teuchos::RCP<AAdapt::AdaptiveModelFactory> modelFactory() const;
+   Teuchos::RCP<const Thyra_MultiVector> getInitialSolution() const { return current_soln; }
 
-    AdaptSolutionObserverType getSolObserver(){ return solutionObserver; }
+   Teuchos::RCP<Thyra_MultiVector> getOverlappedSolution() { return overlapped_soln; }
+   Teuchos::RCP<const Thyra_MultiVector> getOverlappedSolution() const { return overlapped_soln; }
 
-    //! Remap the solution
-    virtual void
-    projectCurrentSolution();
+   Teuchos::RCP<const Thyra_Vector> updateAndReturnOverlapSolution(const Thyra_Vector& solution /*not overlapped*/);
+   Teuchos::RCP<const Thyra_Vector> updateAndReturnOverlapSolutionDot(const Thyra_Vector& solution_dot /*not overlapped*/);
+   Teuchos::RCP<const Thyra_Vector> updateAndReturnOverlapSolutionDotDot(const Thyra_Vector& solution_dotdot /*not overlapped*/);
+   Teuchos::RCP<const Thyra_MultiVector> updateAndReturnOverlapSolutionMV(const Thyra_MultiVector& solution /*not overlapped*/);
 
-    void scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot, const Epetra_Vector* xdotdot);
+   Teuchos::RCP<Thyra_Vector>   get_overlapped_f()   const {return overlapped_f;}
+   Teuchos::RCP<Thyra_LinearOp> get_overlapped_jac() const {return overlapped_jac;}
 
+   Teuchos::RCP<const Albany::CombineAndScatterManager> get_cas_manager() const { return cas_manager; }
 
-  protected:
+   Teuchos::RCP<Thyra_MultiVector> getCurrentSolution() { return current_soln; }
 
-    //! Element discretization
-    Teuchos::RCP<Albany::AbstractDiscretization> disc;
+   void scatterX(
+       const Thyra_Vector& x,
+       const Teuchos::Ptr<const Thyra_Vector> x_dot,
+       const Teuchos::Ptr<const Thyra_Vector> x_dotdot);
+
+   void scatterX(
+       const Thyra_MultiVector& soln);
+
+private:
+
+    Teuchos::RCP<const Albany::CombineAndScatterManager> cas_manager;
+
+    Teuchos::RCP<Thyra_Vector>   overlapped_f;
+    Teuchos::RCP<Thyra_LinearOp> overlapped_jac;
+
+    // The solution directly from the discretization class
+    Teuchos::RCP<Thyra_MultiVector> current_soln;
+    Teuchos::RCP<Thyra_MultiVector> overlapped_soln;
+
+    // Number of time derivative vectors that we need to support
+    const int num_time_deriv;
+
+    const Teuchos::RCP<Teuchos::ParameterList> appParams_;
+    const Teuchos::RCP<Albany::AbstractDiscretization> disc_;
+    const Teuchos::RCP<ParamLib>& paramLib_;
+    const Albany::StateManager& stateMgr_;
+    const Teuchos::RCP<const Teuchos_Comm> comm_;
 
     //! Output stream, defaults to printing just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    //! The adaptive thyra model factory object
-    Teuchos::RCP<AAdapt::AdaptiveModelFactory> thyra_model_factory;
+    Teuchos::RCP<AbstractAdapter> adapter_;
 
-    Teuchos::RCP<SolutionObserver> solutionObserver;
+    void buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr);
 
+    void resizeMeshDataArrays(const Teuchos::RCP<const Albany::AbstractDiscretization>& disc);
 };
 
-}
+} // namespace AAdapt
 
-#endif //ALBANY_ADAPTIVESOLUTIONMANAGER
-
-
+#endif // AADAPT_ADAPTIVE_SOLUTION_MANAGER_HPP

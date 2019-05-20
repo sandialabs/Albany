@@ -6,15 +6,15 @@
 
 #include "ATO_Optimizer.hpp"
 #include "ATO_Pareto_Optimizer.hpp"
-#include "Teuchos_TestForException.hpp"
 #include "ATO_Solver.hpp"
 
+#include "Teuchos_TestForException.hpp"
 #ifdef ATO_USES_NLOPT
 #include <nlopt.h>
 #endif //ATO_USES_NLOPT
 
 #include <algorithm>
-
+#include <list>
 
 namespace ATO {
 
@@ -25,45 +25,38 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
 {
   std::string optPackage = optimizerParams.get<std::string>("Package");
 
-  if( optPackage == "OC"  )  return Teuchos::rcp(new Optimizer_OC(optimizerParams));
-
-  else
-  if( optPackage == "OCG"  )  return Teuchos::rcp(new Optimizer_OCG(optimizerParams));
-
-  else
-  if( optPackage == "Pareto"  )  return Teuchos::rcp(new Optimizer_Pareto(optimizerParams));
-
+  if (optPackage == "OC") {
+    return Teuchos::rcp(new Optimizer_OC(optimizerParams));
+  } else if (optPackage == "OCG") {
+    return Teuchos::rcp(new Optimizer_OCG(optimizerParams));
+  } else if (optPackage == "Pareto") {
+    return Teuchos::rcp(new Optimizer_Pareto(optimizerParams));
 #ifdef ATO_USES_NLOPT
-  else
-  if( optPackage == "NLopt"  ) return Teuchos::rcp(new Optimizer_NLopt(optimizerParams));
-
+  } else if (optPackage == "NLopt"  ) {
+    return Teuchos::rcp(new Optimizer_NLopt(optimizerParams));
 #endif //ATO_USES_NLOPT
-
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Optimization package: " << optPackage << " Unknown!" << std::endl 
-      << "Valid options are\n"
-      << "/t OC ... optimality criterion\n"
-      << "/t Pareto ... pareto optimization\n"
-
+  } else {
+    // Don't place ifdefs inside the TEUCHOS_TEST_FOR_EXCEPTION, since
+    // compiler says 'embedding a directive within macro arguments has undefined behavior'                           
+    std::string errorMsg = "Error! Optimization package: " + optPackage + " Unknown!\n"
+                           "Valid options are\n"
+                           "/t OC ... optimality criterion\n"
+                           "/t Pareto ... pareto optimization\n";
 #ifdef ATO_USES_NLOPT
-      << "/t NLopt ... NLOPT library\n" 
+    errorMsg += "/t NLopt ... NLOPT library\n";
 #endif //ATO_USES_NLOPT
-
-      << std::endl);
-
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, errorMsg);
+  }
 }
 
 /**********************************************************************/
 Optimizer::Optimizer(const Teuchos::ParameterList& optimizerParams)
 /**********************************************************************/
 { 
-
-  solverInterface = NULL;
+  solverInterface = nullptr;
   comm = Teuchos::null;
 
-  if( optimizerParams.isType<Teuchos::ParameterList>("Convergence Tests") ){
+  if (optimizerParams.isType<Teuchos::ParameterList>("Convergence Tests")) {
     const Teuchos::ParameterList& 
       convParams = optimizerParams.get<Teuchos::ParameterList>("Convergence Tests");
     convergenceChecker = Teuchos::rcp(new ConvergenceTest(convParams));
@@ -72,23 +65,21 @@ Optimizer::Optimizer(const Teuchos::ParameterList& optimizerParams)
       std::endl << "Optimization convergence:  'Convergence Tests' ParameterList is required" << std::endl);
   }
 
-  if( optimizerParams.isType<Teuchos::ParameterList>("Measure Enforcement") ){
+  if (optimizerParams.isType<Teuchos::ParameterList>("Measure Enforcement")) {
     const Teuchos::ParameterList& 
       measureParams = optimizerParams.get<Teuchos::ParameterList>("Measure Enforcement");
 
     _measureType = measureParams.get<std::string>("Measure");
 
-    if( measureParams.isType<std::string>("Integration Method") )
+    if (measureParams.isType<std::string>("Integration Method") ) {
       _measureIntMethod = measureParams.get<std::string>("Integration Method");
-    else 
+    } else {
       _measureIntMethod = "Gauss Quadrature";
-
-  } else
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    true, Teuchos::Exceptions::InvalidParameter, std::endl 
-    << "Error! Missing 'Measure Enforcement' ParameterList." << std::endl);
-  
-
+    }
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                               "Error! Missing 'Measure Enforcement' ParameterList.\n");
+  }
 }
 
 /**********************************************************************/
@@ -96,20 +87,20 @@ Optimizer_OC::Optimizer_OC(const Teuchos::ParameterList& optimizerParams) :
 Optimizer(optimizerParams)
 /**********************************************************************/
 { 
-  p = NULL;
-  p_last = NULL;
+  p = nullptr;
+  p_last = nullptr;
   f = 0.0;
   f_last = 0.0;
   g = 0.0;
   g_last = 0.0;
-  dfdp = NULL;
-  dgdp = NULL;
-  dmdp = NULL;
+  dfdp = nullptr;
+  dgdp = nullptr;
+  dmdp = nullptr;
 
   _moveLimit     = optimizerParams.get<double>("Move Limiter");
   _stabExponent  = optimizerParams.get<double>("Stabilization Parameter");
 
-  if( optimizerParams.isType<Teuchos::ParameterList>("Measure Enforcement") ){
+  if (optimizerParams.isType<Teuchos::ParameterList>("Measure Enforcement")) {
     const Teuchos::ParameterList& 
       measureParams = optimizerParams.get<Teuchos::ParameterList>("Measure Enforcement");
 
@@ -117,32 +108,38 @@ Optimizer(optimizerParams)
     _measureConstraint = measureParams.get<double>("Target");
     _measureMaxIter    = measureParams.get<int>("Maximum Iterations");
 
-    if(measureParams.isType<double>("Minimum"))
+    if (measureParams.isType<double>("Minimum")) {
       _minMeasure        = measureParams.get<double>("Minimum");
-    else _minMeasure     = 0.1;
-    if(measureParams.isType<double>("Maximum"))
+    } else {
+      _minMeasure     = 0.1;
+    }
+    if (measureParams.isType<double>("Maximum")) {
       _maxMeasure        = measureParams.get<double>("Maximum");
-    else _maxMeasure     = 1.0;
-    if( measureParams.isType<double>("Acceptable Tolerance") )
+    } else {
+      _maxMeasure     = 1.0;
+    }
+    if (measureParams.isType<double>("Acceptable Tolerance") ) {
       _measureAccpTol    = measureParams.get<double>("Acceptable Tolerance");
-    else _measureAccpTol = _measureConvTol;
-    if( measureParams.isType<bool>("Use Newton Search") )
+    } else {
+      _measureAccpTol = _measureConvTol;
+    }
+    if (measureParams.isType<bool>("Use Newton Search") ) {
       _useNewtonSearch   = measureParams.get<bool>("Use Newton Search");
-    else _useNewtonSearch = true;
+    } else {
+      _useNewtonSearch = true;
+    }
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                               "Error! Missing 'Measure Enforcement' ParameterList.\n");
+  }
 
-  } else
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    true, Teuchos::Exceptions::InvalidParameter, std::endl 
-    << "Error! Missing 'Measure Enforcement' ParameterList." << std::endl);
-  
-
-  if( optimizerParams.isType<Teuchos::ParameterList>("Constraint Enforcement") ){
+  if (optimizerParams.isType<Teuchos::ParameterList>("Constraint Enforcement")) {
     const Teuchos::ParameterList& 
       conParams = optimizerParams.get<Teuchos::ParameterList>("Constraint Enforcement");
     secondaryConstraintGradient = conParams.get<std::string>("Constraint Gradient");
-  } else
+  } else {
     secondaryConstraintGradient = "None";
-
+  }
 }
 
 #ifdef ATO_USES_NLOPT
@@ -151,68 +148,68 @@ Optimizer_NLopt::Optimizer_NLopt(const Teuchos::ParameterList& optimizerParams) 
 Optimizer(optimizerParams)
 /**********************************************************************/
 { 
-  p = NULL;
-  p_last = NULL;
+  p = nullptr;
+  p_last = nullptr;
   objectiveValue = 0.0;
   objectiveValue_last = 0.0;
   constraintValue = 0.0;
   constraintValue_last = 0.0;
-  opt = NULL;
+  opt = nullptr;
 
   _optMethod     = optimizerParams.get<std::string>("Method");
   _nIterations = 0;
 
-  if( optimizerParams.isType<std::string>("Objective") ){
+  if (optimizerParams.isType<std::string>("Objective")) {
     std::string objType = optimizerParams.get<std::string>("Objective");
-    if( objType == "Measure" )
+    if (objType == "Measure" ) {
       objectiveType = ResponseType::Measure;
-    else
-    if( objType == "Aggregator" || objType == "Objective Aggregator" )
+    } else if (objType == "Aggregator" || objType == "Objective Aggregator" ) {
       objectiveType = ResponseType::Aggregate;
-    else
-     TEUCHOS_TEST_FOR_EXCEPTION(
-       true, Teuchos::Exceptions::InvalidParameter, std::endl << "Unknown objective specified." << std::endl);
-  } else
-  objectiveType = ResponseType::Aggregate;
+    } else {
+     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                "Unknown objective specified.\n");
+    }
+  } else {
+    objectiveType = ResponseType::Aggregate;
+  }
 
-  if( optimizerParams.isType<std::string>("Constraint") ){
+  if (optimizerParams.isType<std::string>("Constraint")) {
     std::string conType = optimizerParams.get<std::string>("Constraint");
-    if( conType == "Measure" )
+    if (conType == "Measure" ) {
       primaryConstraintType = ResponseType::Measure;
-    else
-    if( conType == "Aggregator" || conType == "Constraint Aggregator" )
+    } else if (conType == "Aggregator" || conType == "Constraint Aggregator" ) {
       primaryConstraintType = ResponseType::Aggregate;
-    else
-     TEUCHOS_TEST_FOR_EXCEPTION(
-       true, Teuchos::Exceptions::InvalidParameter, std::endl << "Unknown constraint specified." << std::endl);
-  } else
-  primaryConstraintType = ResponseType::Measure;
+    } else {
+     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                "Unknown constraint specified.\n");
+    }
+  } else {
+    primaryConstraintType = ResponseType::Measure;
+  }
 
 
-  if( primaryConstraintType == ResponseType::Aggregate ){
-    if( optimizerParams.isType<Teuchos::ParameterList>("Constraint Enforcement") ){
+  if (primaryConstraintType == ResponseType::Aggregate) {
+    if (optimizerParams.isType<Teuchos::ParameterList>("Constraint Enforcement")) {
       const Teuchos::ParameterList& 
         conParams = optimizerParams.get<Teuchos::ParameterList>("Constraint Enforcement");
       _conConvTol = conParams.get<double>("Convergence Tolerance");
-    } else
-      TEUCHOS_TEST_FOR_EXCEPTION(
-      true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error! Missing 'Constraint Enforcement' ParameterList." << std::endl);
-  } else
-  if( primaryConstraintType == ResponseType::Measure ){
-    if( optimizerParams.isType<Teuchos::ParameterList>("Measure Enforcement") ){
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                 "Error! Missing 'Constraint Enforcement' ParameterList.\m");
+    }
+  } else if (primaryConstraintType == ResponseType::Measure) {
+    if (optimizerParams.isType<Teuchos::ParameterList>("Measure Enforcement")) {
       const Teuchos::ParameterList& 
         measureParams = optimizerParams.get<Teuchos::ParameterList>("Measure Enforcement");
   
       _measureConvTol    = measureParams.get<double>("Convergence Tolerance");
       _measureConstraint = measureParams.get<double>("Target");
-    } else
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error! Missing 'Measure Enforcement' ParameterList." << std::endl);
+    } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                               "Error! Missing 'Measure Enforcement' ParameterList.\n");
+    }
   }
 }
-
 #endif //ATO_USES_NLOPT
 
 /**********************************************************************/
@@ -221,33 +218,19 @@ Optimizer::SetInterface(Solver* mySolverInterface)
 /**********************************************************************/
 {
   solverInterface = dynamic_cast<OptInterface*>(mySolverInterface);
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    solverInterface == NULL, Teuchos::Exceptions::InvalidParameter, std::endl 
-    << "Error! Dynamic cast of Solver* to OptInterface* failed." << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(solverInterface == nullptr, Teuchos::Exceptions::InvalidParameter,
+                             "Error! Dynamic cast of Solver* to OptInterface* failed.\n");
 }
-
-/**********************************************************************/
-/*void
-Optimizer::SetInterface(SolverT* mySolverInterface)*/
-/**********************************************************************/
-/*{
-  solverInterfaceT = dynamic_cast<OptInterface*>(mySolverInterface);
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    solverInterface == NULL, Teuchos::Exceptions::InvalidParameter, std::endl 
-    << "Error! Dynamic cast of Solver* to OptInterface* failed." << std::endl);
-}*/
-
-/******************************************************************************/
 
 /******************************************************************************/
 Optimizer_OC::~Optimizer_OC()
 /******************************************************************************/
 {
-  if( p      ) delete [] p;
-  if( p_last ) delete [] p_last;
-  if( dfdp   ) delete [] dfdp;
-  if( dgdp   ) delete [] dgdp;
-  if( dmdp   ) delete [] dmdp;
+  delete [] p;
+  delete [] p_last;
+  delete [] dfdp;
+  delete [] dgdp;
+  delete [] dmdp;
 }
 
 #ifdef ATO_USES_NLOPT
@@ -255,8 +238,8 @@ Optimizer_OC::~Optimizer_OC()
 Optimizer_NLopt::~Optimizer_NLopt()
 /******************************************************************************/
 {
-  if( p      ) delete [] p;
-  if( p_last ) delete [] p_last;
+  delete [] p;
+  delete [] p_last;
 }
 #endif //ATO_USES_NLOPT
 
@@ -266,7 +249,7 @@ Optimizer::computeNorm(const double* p, int n)
 /******************************************************************************/
 {
   double norm = 0.0;
-  for(int i=0; i<n; i++){
+  for (int i=0; i<n; i++) {
     norm += p[i]*p[i];
   }
   double gnorm = 0.0;
@@ -282,13 +265,13 @@ Optimizer::computeDiffNorm(const double* p, const double* p_last, int n, bool pr
 /******************************************************************************/
 {
   double norm = 0.0;
-  for(int i=0; i<n; i++){
+  for (int i=0; i<n; i++) {
     norm += pow(p[i]-p_last[i],2);
   }
   double gnorm = 0.0;
   Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &norm, &gnorm);
   gnorm = (gnorm > 0.0) ? sqrt(gnorm) : 0.0;
-  if(printResult && comm->getRank()==0){
+  if (printResult && comm->getRank()==0) {
     std::cout << "************************************************************************" << std::endl;
     std::cout << "  Optimizer:  computed diffnorm is: " << gnorm << std::endl;
     std::cout << "************************************************************************" << std::endl;
@@ -302,7 +285,7 @@ Optimizer_OC::Initialize()
 /******************************************************************************/
 {
   TEUCHOS_TEST_FOR_EXCEPTION (
-    solverInterface == NULL, Teuchos::Exceptions::InvalidParameter, 
+    solverInterface == nullptr, Teuchos::Exceptions::InvalidParameter, 
     std::endl << "Error! Optimizer requires valid Solver Interface" << std::endl);
 
   numOptDofs = solverInterface->GetNumOptDofs();
@@ -317,22 +300,25 @@ Optimizer_OC::Initialize()
   std::fill_n(dfdp,   numOptDofs, 0.0);
   std::fill_n(dmdp,   numOptDofs, 0.0);
 
-  if( secondaryConstraintGradient != "None" ){
+  if (secondaryConstraintGradient != "None") {
     dgdp = new double[numOptDofs];
     std::fill_n(dgdp, numOptDofs, 0.0);
   }
 
   solverInterface->InitializeOptDofs(p);
 
-  if( secondaryConstraintGradient == "Adjoint" )
+  if (secondaryConstraintGradient == "Adjoint") {
     solverInterface->Compute(p, f, dfdp, g, dgdp);
-  else 
+  } else {
     solverInterface->Compute(p, f, dfdp, g);
+  }
 
   solverInterface->ComputeMeasure(_measureType, _optMeasure);
 
   double measure=0.0;
-  for(int i=0; i<numOptDofs; i++) p_last[i] = p[i];
+  for (int i=0; i<numOptDofs; i++) {
+    p_last[i] = p[i];
+  }
   solverInterface->ComputeMeasure(_measureType, p, measure, dmdp);
 
   computeUpdatedTopology();
@@ -340,8 +326,8 @@ Optimizer_OC::Initialize()
   double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
   Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &f, &global_f);
   convergenceChecker->initNorm(global_f, pnorm);
-
 }
+
 /******************************************************************************/
 void
 Optimizer_OCG::Optimize()
@@ -359,18 +345,20 @@ Optimizer_OCG::Optimize()
 
   int iter=0;
   bool optimization_converged = false;
-  while(!optimization_converged) {
+  while (!optimization_converged) {
 
     f_last = f; g_last = g;
     solverInterface->Compute(p, f, dfdp, g, dgdp);
-    for(int i=0; i<numOptDofs; i++) p_last[i] = p[i];
+    for (int i=0; i<numOptDofs; i++) {
+      p_last[i] = p[i];
+    }
 
     double gmax_dgdp =0.0;
     Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, *std::max_element(dgdp, dgdp+numOptDofs), Teuchos::ptr(&gmax_dgdp));
 
     double vmid, v1=0.0, v2=0.0;
     double dfdp_tot = 0.0, dgdp_tot = 0.0;
-    for(int i=0; i<numOptDofs; i++) {
+    for (int i=0; i<numOptDofs; i++) {
       dfdp_tot += dfdp[i];
       dgdp_tot += (dgdp[i]-gmax_dgdp);
     }
@@ -386,7 +374,7 @@ Optimizer_OCG::Optimize()
       vmid = (v2+v1)/2.0;
 
       // update topology
-      for(int i=0; i<numOptDofs; i++) {
+      for (int i=0; i<numOptDofs; i++) {
         double be = dfdp[i]/(dgdp[i]-gmax_dgdp)/vmid;
         double p_old = p_last[i];
         double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
@@ -395,28 +383,29 @@ Optimizer_OCG::Optimize()
         double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
         // limit change
         double dval = p_new - p_old;
-        if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
+        if (fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
         // enforce limits
-        if( p_new < lowerBound[i] ) p_new = lowerBound[i];
-        if( p_new > upperBound[i] ) p_new = upperBound[i];
+        if (p_new < lowerBound[i] ) p_new = lowerBound[i];
+        if (p_new > upperBound[i] ) p_new = upperBound[i];
         p[i] = p_new;
       }
 
       newResidual = -g;
-      for(int i=0; i<numOptDofs; i++)
+      for (int i=0; i<numOptDofs; i++) {
         newResidual += (dgdp[i]-gmax_dgdp)*(p[i] - p_last[i]);
-  
-      if( newResidual < 0.0 ){
+      }
+
+      if (newResidual < 0.0) {
         v1 = vmid;
       } else v2 = vmid;
 
-      if(comm->getRank()==0){
+      if (comm->getRank()==0) {
         std::cout << "Constraint enforcement (iteration " << niters << "): Residual = " << newResidual << std::endl;
       }
 
     } while ( niters < _measureMaxIter && fabs(newResidual) > 1e-2  );
   
-    if(comm->getRank()==0.0){
+    if (comm->getRank()==0.0) {
       std::cout << "************************************************************************" << std::endl;
       std::cout << "** Optimization Status Check *******************************************" << std::endl;
       std::cout << "Status: Objective = " << f << std::endl;
@@ -440,38 +429,39 @@ void
 Optimizer_OC::Optimize()
 /******************************************************************************/
 {
-
   double measure=0.0;
 
   int iter=0;
   double measureConstraint_last = _measureConstraint;
   std::list<double> dgdm_vals;
   bool optimization_converged = false;
-  while(!optimization_converged) {
+  while (!optimization_converged) {
 
     f_last = f; g_last = g;
-    if( secondaryConstraintGradient == "Adjoint" )
+    if (secondaryConstraintGradient == "Adjoint" ) {
       solverInterface->Compute(p, f, dfdp, g, dgdp);
-    else
+    } else {
       solverInterface->Compute(p, f, dfdp, g);
+    }
 
     solverInterface->ComputeMeasure(_measureType, p, measure, dmdp);
 
-    for(int i=0; i<numOptDofs; i++) p_last[i] = p[i];
-
+    for (int i=0; i<numOptDofs; i++) {
+      p_last[i] = p[i];
+    }
   
-    if( g != 0.0 ){
+    if (g != 0.0) {
       // if the constraint condition isn't satisfied, modify the measure budget.
 
       double deltam = 0.0;
-      if( secondaryConstraintGradient == "Adjoint" ){
+      if (secondaryConstraintGradient == "Adjoint") {
         double dm = 0.001;
         _measureConstraint += dm;
         computeUpdatedTopology();
         _measureConstraint -= dm;
   
         double dg = 0.0;
-        for(int i=0; i<numOptDofs; i++){
+        for (int i=0; i<numOptDofs; i++) {
           dg += dgdp[i]*(p[i]-p_last[i]);
         }
         double global_dg = 0.0;
@@ -479,39 +469,39 @@ Optimizer_OC::Optimize()
         double dgdm = global_dg/dm;
         deltam = -g / dgdm;
 
-      } else 
-      if( secondaryConstraintGradient == "Finite Difference" ){
-        if( _measureConstraint != measureConstraint_last ){
+      } else if (secondaryConstraintGradient == "Finite Difference") {
+        if (_measureConstraint != measureConstraint_last) {
           dgdm_vals.push_back( (g - g_last)/(_measureConstraint - measureConstraint_last) );
-          if( dgdm_vals.size() > 10 ) dgdm_vals.pop_front();
+          if (dgdm_vals.size() > 10 ) dgdm_vals.pop_front();
           std::list<double>::iterator it;
           double dgdm = 0.0;
-          for(it=dgdm_vals.begin(); it!=dgdm_vals.end(); ++it) dgdm += *it;
+          for (it=dgdm_vals.begin(); it!=dgdm_vals.end(); ++it) {
+            dgdm += *it;
+          }
           dgdm /= dgdm_vals.size();
           deltam = -g / dgdm;
         } else {
           deltam = 0.001;
         }
-      } else
-      if( secondaryConstraintGradient == "Direct"){
+      } else if (secondaryConstraintGradient == "Direct") {
       }
     
       double _dmeasureLimit = 0.1*_measureConstraint;
-      if(fabs(deltam) > _dmeasureLimit) deltam = deltam/fabs(deltam) * _dmeasureLimit;
+      if (fabs(deltam) > _dmeasureLimit) {
+        deltam = deltam/fabs(deltam) * _dmeasureLimit;
+      }
 
       measureConstraint_last = _measureConstraint;
       _measureConstraint += deltam;
   
-      if(_measureConstraint < _minMeasure) _measureConstraint = _minMeasure;
-      if(_measureConstraint > _maxMeasure) _measureConstraint = _maxMeasure;
-
- 
+      if (_measureConstraint < _minMeasure) { _measureConstraint = _minMeasure; }
+      if (_measureConstraint > _maxMeasure) { _measureConstraint = _maxMeasure; }
     }
 
     computeUpdatedTopology();
 
 
-    if(comm->getRank()==0.0){
+    if (comm->getRank()==0.0) {
       std::cout << "************************************************************************" << std::endl;
       std::cout << "** Optimization Status Check *******************************************" << std::endl;
       std::cout << "Status: Objective = " << f << std::endl;
@@ -525,8 +515,6 @@ Optimizer_OC::Optimize()
 
     iter++;
   }
-
-  return;
 }
 
 /******************************************************************************/
@@ -534,9 +522,10 @@ void
 ConvergenceTest::initNorm( double f, double pnorm )
 /******************************************************************************/
 {
-    Teuchos::Array<Teuchos::RCP<ConTest> >::iterator it;
-    for(it=conTests.begin(); it!=conTests.end(); it++)
-      (*it)->initNorm(f, pnorm);
+  Teuchos::Array<Teuchos::RCP<ConTest> >::iterator it;
+  for (it=conTests.begin(); it!=conTests.end(); it++) {
+    (*it)->initNorm(f, pnorm);
+  }
 }
 
 /******************************************************************************/
@@ -544,169 +533,185 @@ bool
 ConvergenceTest::isConverged( double delta_f, double delta_p, int iter, int myPID )
 /******************************************************************************/
 {
-    if(iter == 0) return false;
+  if (iter == 0) { return false; }
 
-    bool writeToCout = false;
-    if(myPID == 0) writeToCout = true;
+  bool writeToCout = false;
+  if (myPID == 0) { writeToCout = true; }
 
-    // check convergence based on user defined criteria
-    if(writeToCout){
-      std::cout << "************************************************************************" << std::endl;
-      std::cout << "** Optimization Convergence Check **************************************" << std::endl;
-    }
-    std::vector<bool> results;
-    Teuchos::Array<Teuchos::RCP<ConTest> >::iterator it;
-    for(it=conTests.begin(); it!=conTests.end(); it++)
-      results.push_back((*it)->passed(delta_f, delta_p, writeToCout));
-    
-    bool converged = false;
-    if( comboType == AND ){
-      converged = ( find(results.begin(),results.end(),false) == results.end() );
-    } else 
-    if( comboType == OR ){
-      converged = ( find(results.begin(),results.end(),true) != results.end() );
-    }
-    if(writeToCout){
-      if(converged){
-        if( iter < minIterations )
-          std::cout << "Converged, but continuing because min iterations not reached." << std::endl;
-        else 
-          std::cout << "Converged!" << std::endl;
-      } else
-        std::cout << "Not converged." << std::endl;
-      std::cout << "************************************************************************" << std::endl;
-    }
-
-    if( iter < minIterations ) converged = false;
-
-    // check iteration limit
-    if( iter >= maxIterations && !converged ){
-      converged = true;
-      if(writeToCout){
-        std::cout << "************************************************************************" << std::endl;
-        std::cout << "************************************************************************" << std::endl;
-        std::cout << "**********  Not converged.  Exiting due to iteration limit.  ***********" << std::endl;
-        std::cout << "************************************************************************" << std::endl;
-        std::cout << "************************************************************************" << std::endl;
+  // check convergence based on user defined criteria
+  if (writeToCout) {
+    std::cout << "************************************************************************" << std::endl;
+    std::cout << "** Optimization Convergence Check **************************************" << std::endl;
+  }
+  std::vector<bool> results;
+  Teuchos::Array<Teuchos::RCP<ConTest> >::iterator it;
+  for (it=conTests.begin(); it!=conTests.end(); it++)
+    results.push_back((*it)->passed(delta_f, delta_p, writeToCout));
+  
+  bool converged = false;
+  if (comboType == AND) {
+    converged = ( find(results.begin(),results.end(),false) == results.end() );
+  } else if (comboType == OR) {
+    converged = ( find(results.begin(),results.end(),true) != results.end() );
+  }
+  if (writeToCout) {
+    if (converged) {
+      if (iter < minIterations ) {
+        std::cout << "Converged, but continuing because min iterations not reached." << std::endl;
+      } else {
+        std::cout << "Converged!" << std::endl;
       }
+    } else {
+      std::cout << "Not converged." << std::endl;
     }
+    std::cout << "************************************************************************" << std::endl;
+  }
 
-    return converged;
+  if (iter < minIterations ) { converged = false; }
+
+  // check iteration limit
+  if (iter >= maxIterations && !converged) {
+    converged = true;
+    if (writeToCout) {
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "**********  Not converged.  Exiting due to iteration limit.  ***********" << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+    }
+  }
+
+  return converged;
 }
 
 /******************************************************************************/
 ConvergenceTest::ConvergenceTest(const Teuchos::ParameterList& convParams)
 /******************************************************************************/
 {
-
-  if( convParams.isType<int>("Minimum Iterations") )
+  if (convParams.isType<int>("Minimum Iterations") ) {
     minIterations = convParams.get<int>("Minimum Iterations");
-  else minIterations = 0;
+  } else {
+    minIterations = 0;
+  }
 
-  if( convParams.isType<int>("Maximum Iterations") ){
+  if (convParams.isType<int>("Maximum Iterations")) {
     maxIterations = convParams.get<int>("Maximum Iterations");
-  } else
+  } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-      std::endl << "Optimization convergence:  'Maximum Iterations' parameter is required." << std::endl);
+                               "Optimization convergence: 'Maximum Iterations' parameter is required.\n");
+  }
 
-  if( convParams.isType<std::string>("Combo Type") ){
+  if (convParams.isType<std::string>("Combo Type")) {
     std::string combo = convParams.get<std::string>("Combo Type");
     std::transform(combo.begin(), combo.end(), combo.begin(), ::tolower);
-    if(combo == "or"){
+    if (combo == "or") {
       comboType = OR;
-    }else
-    if(combo == "and"){
+    } else if (combo == "and") {
       comboType = AND;
-    }else {
+    } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
         std::endl << "Optimization convergence:  Unknown 'Combo Type'.  Options are ('AND', 'OR') " << std::endl);
     }
-  } else comboType = OR;
+  } else {
+    comboType = OR;
+  }
 
-  if( convParams.isType<double>("Relative Topology Change") ){
+  if (convParams.isType<double>("Relative Topology Change")) {
     double conValue = convParams.get<double>("Relative Topology Change");
     conTests.push_back( Teuchos::rcp(new RelDeltaP(conValue)) );
   }
-  if( convParams.isType<double>("Absolute Topology Change") ){
+  if (convParams.isType<double>("Absolute Topology Change")) {
     double conValue = convParams.get<double>("Absolute Topology Change");
     conTests.push_back( Teuchos::rcp(new AbsDeltaP(conValue)) );
   }
-  if( convParams.isType<double>("Relative Objective Change") ){
+  if (convParams.isType<double>("Relative Objective Change")) {
     double conValue = convParams.get<double>("Relative Objective Change");
     conTests.push_back( Teuchos::rcp(new RelDeltaF(conValue)) );
   }
-  if( convParams.isType<double>("Absolute Objective Change") ){
+  if (convParams.isType<double>("Absolute Objective Change")) {
     double conValue = convParams.get<double>("Absolute Objective Change");
     conTests.push_back( Teuchos::rcp(new AbsDeltaF(conValue)) );
   }
-  if( convParams.isType<double>("Relative Objective Running Average Change") ){
+  if (convParams.isType<double>("Relative Objective Running Average Change")) {
     double conValue = convParams.get<double>("Relative Objective Running Average Change");
     conTests.push_back( Teuchos::rcp(new RelRunningDF(conValue)) );
   }
-  if( convParams.isType<double>("Absolute Objective Running Average Change") ){
+  if (convParams.isType<double>("Absolute Objective Running Average Change")) {
     double conValue = convParams.get<double>("Absolute Objective Running Average Change");
     conTests.push_back( Teuchos::rcp(new AbsRunningDF(conValue)) );
   }
 }
 
 /******************************************************************************/
-bool ConvergenceTest::AbsDeltaP::passed(double delta_f, double delta_p, bool write)
+bool ConvergenceTest::AbsDeltaP::passed(double /* delta_f */, double delta_p, bool write)
 { 
   bool status = ( fabs(delta_p) < conValue );
-  if( write )
+  if (write )
     std::cout << "Test: Topology Change (Absolute): " << std::endl 
     << "     abs(dp) = " << fabs(delta_p) << " < " << conValue << ": " 
     << (status ? "true" : "false") << std::endl;
   return status;
 }
-bool ConvergenceTest::AbsDeltaF::passed(double delta_f, double delta_p, bool write)
+
+bool ConvergenceTest::AbsDeltaF::passed(double delta_f, double /* delta_p */, bool write)
 {
   bool status = ( fabs(delta_f) < conValue );
-  if( write )
+  if (write ) {
     std::cout << "Test: Objective Change (Absolute): " << std::endl 
-    << "     abs(df) = " << fabs(delta_f) << " < " << conValue << ": " 
-    << (status ? "true" : "false") << std::endl;
+              << "     abs(df) = " << fabs(delta_f) << " < " << conValue << ": " 
+              << (status ? "true" : "false") << std::endl;
+  }
   return status;
 }
-bool ConvergenceTest::AbsRunningDF::passed(double delta_f, double delta_p, bool write)
+
+bool ConvergenceTest::AbsRunningDF::passed(double delta_f, double /* delta_p */, bool write)
 {
   dF.push_back(delta_f);
   runningDF += delta_f;
-  if(dF.size()>nave) runningDF -= *(dF.end()-nave);
+  if (static_cast<int>(dF.size())>nave) {
+    runningDF -= *(dF.end()-nave);
+  }
+
   bool status = ( runningDF < conValue );
-  if( write )
+  if (write) {
     std::cout << "Test: Objective Change Running Average (Absolute): " << std::endl 
-    << "     abs(<df>) = " << runningDF << " < " << conValue << ": " 
-    << (status ? "true" : "false") << std::endl;
+              << "     abs(<df>) = " << runningDF << " < " << conValue << ": " 
+              << (status ? "true" : "false") << std::endl;
+  }
   return status;
 }
-bool ConvergenceTest::RelDeltaP::passed(double delta_f, double delta_p, bool write){
+
+bool ConvergenceTest::RelDeltaP::passed(double /* delta_f */, double delta_p, bool write) {
   bool status = (p0 != 0.0) ? ( fabs(delta_p/p0) < conValue ) : false;
-  if( write )
+  if (write ) {
     std::cout << "Test: Topology Change (Relative): " << std::endl 
-    << "     abs(dp) = " << fabs(delta_p) << ", fabs(dp/p0) = " << fabs(delta_p/p0) << " < " << conValue 
-    << ": " << (status ? "true" : "false") << std::endl;
+              << "     abs(dp) = " << fabs(delta_p) << ", fabs(dp/p0) = " << fabs(delta_p/p0) << " < " << conValue 
+              << ": " << (status ? "true" : "false") << std::endl;
+  }
   return status;
 }
-bool ConvergenceTest::RelDeltaF::passed(double delta_f, double delta_p, bool write){
+
+bool ConvergenceTest::RelDeltaF::passed(double delta_f, double /* delta_p */, bool write) {
   bool status = (f0 != 0.0) ? ( fabs(delta_f/f0) < conValue ) : false;
-  if( write )
+  if (write) {
     std::cout << "Test: Objective Change (Relative): " << std::endl 
-    << "     abs(df) = " << fabs(delta_f) << ", fabs(df/f0) = " << fabs(delta_f/f0) << " < " << conValue 
-    << ": " << (status ? "true" : "false") << std::endl;
+              << "     abs(df) = " << fabs(delta_f) << ", fabs(df/f0) = " << fabs(delta_f/f0) << " < " << conValue 
+              << ": " << (status ? "true" : "false") << std::endl;
+  }
   return status;
 }
-bool ConvergenceTest::RelRunningDF::passed(double delta_f, double delta_p, bool write){
+
+bool ConvergenceTest::RelRunningDF::passed(double delta_f, double delta_p, bool write) {
   dF.push_back(delta_f);
   runningDF += delta_f;
   int nvals = dF.size();
   int lastVal = nvals-1;
-  if(nvals>nave){
+  if (nvals>nave) {
      runningDF -= dF[lastVal-nave];
      nvals = nave;
    }
   bool status = (f0 != 0.0) ? ( fabs(runningDF/f0)/nvals < conValue ) : false;
-  if( write )
+  if (write )
     std::cout << "Test: Objective Change Running Average (Relative): " << std::endl 
     << "     abs(<df>) = " << fabs(runningDF)/nvals << ", fabs(<df/f0>) = " << fabs(runningDF/f0)/nvals << " < " << conValue 
     << ": " << (status ? "true" : "false") << std::endl;
@@ -730,7 +735,7 @@ Optimizer_OC::computeUpdatedTopology()
   int niters=0;
 
   double dfdp_tot = 0.0, dmdp_tot = 0.0;
-  for(int i=0; i<numOptDofs; i++) {
+  for (int i=0; i<numOptDofs; i++) {
     dfdp_tot += dfdp[i];
     dmdp_tot += dmdp[i];
   }
@@ -740,7 +745,7 @@ Optimizer_OC::computeUpdatedTopology()
 
   v2 = -1000.0* g_dfdp_tot / g_dmdp_tot;
 
-  if(comm->getRank()==0){
+  if (comm->getRank()==0) {
     std::cout << "Measure enforcement: Target = " << _measureConstraint <<  std::endl;
     std::cout << "Measure enforcement: Beginning search with recursive bisection." <<  std::endl;
   }
@@ -752,11 +757,11 @@ Optimizer_OC::computeUpdatedTopology()
     vmid = (v2+v1)/2.0;
 
     // update topology
-    for(int i=0; i<numOptDofs; i++) {
+
+    for (int i=0; i<numOptDofs; i++) {
       double be = 0.0;
-      if( dmdp[i] != 0.0 )
+      if (dmdp[i] != 0.0 )
         be = -dfdp[i]/dmdp[i]/vmid;
-// No HACK        be = -dfdp[i]/vmid;
       else
         be = -dfdp[i]/vmid;
       double p_old = p_last[i];
@@ -766,34 +771,36 @@ Optimizer_OC::computeUpdatedTopology()
       double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
       // limit change
       double dval = p_new - p_old;
-      if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
+      if (fabs(dval) > _moveLimit) { p_new = p_old+fabs(dval)/dval*_moveLimit; }
       // enforce limits
-      if( p_new < lowerBound[i] ) p_new = lowerBound[i];
-      if( p_new > upperBound[i] ) p_new = upperBound[i];
+      if (p_new < lowerBound[i] ) { p_new = lowerBound[i]; }
+      if (p_new > upperBound[i] ) { p_new = upperBound[i]; }
       p[i] = p_new;
     }
 
     // compute new measure
-    if( _useNewtonSearch ){
+    if (_useNewtonSearch) {
       double prevResidual = measure - _measureConstraint*_optMeasure;
       solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
       double newResidual = measure - _measureConstraint*_optMeasure;
-      if( newResidual > 0.0 ){
+      if (newResidual > 0.0) {
         residRatio = newResidual/prevResidual;
         v1 = vmid;
         niters++;
         break;
-      } else v2 = vmid;
+      } else {
+        v2 = vmid;
+      }
     } else {
       solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
       double newResidual = measure - _measureConstraint*_optMeasure;
-      if( newResidual > 0.0 ){
+      if (newResidual > 0.0) {
         v1 = vmid;
       } else v2 = vmid;
     }
     niters++;
 
-    if(comm->getRank()==0){
+    if (comm->getRank()==0) {
       double resid = (measure - _measureConstraint*_optMeasure)/_optMeasure;
       std::cout << "Measure enforcement (iteration " << niters << "): Residual = " << resid << std::endl;
     }
@@ -801,138 +808,129 @@ Optimizer_OC::computeUpdatedTopology()
   } while ( niters < _measureMaxIter && fabs(measure - _measureConstraint*_optMeasure) > _measureConvTol*_optMeasure );
 
 
-  if(_useNewtonSearch){
-
-  if(comm->getRank()==0){
-    std::cout << "Measure enforcement: Bounds found.  Switching to Newton search." << std::endl;
-  }
-
-  int newtonMaxIters = niters + 20;
-  double lambda = (residRatio*v2 - v1)/(residRatio-1.0);
-  double epsilon = lambda*1e-5;
-  if( lambda > 0.0 ) do {
-    for(int i=0; i<numOptDofs; i++) {
-      double be = 0.0;
-      if( dmdp[i] != 0.0 )
-        be = -dfdp[i]/dmdp[i]/lambda;
-// no HACK        be = -dfdp[i]/lambda;
-      else
-        be = -dfdp[i]/lambda;
-      double p_old = p_last[i];
-      double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
-      double sign = (be > 0.0) ? 1 : -1;
-      be = (be > 0.0) ? be : -be;
-      double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
-      // limit change
-      double dval = p_new - p_old;
-      if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
-      // enforce limits
-      if( p_new < lowerBound[i] ) p_new = lowerBound[i];
-      if( p_new > upperBound[i] ) p_new = upperBound[i];
-      p[i] = p_new;
-    }
-    // compute new measure
-    solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
-    double f0 =  (measure - _measureConstraint*_optMeasure);
-
-    if(comm->getRank()==0){
-      std::cout << "Measure Enforcement (iteration " << niters << "): Residual = " << f0/_optMeasure << std::endl;
+  if (_useNewtonSearch) {
+    if (comm->getRank()==0) {
+      std::cout << "Measure enforcement: Bounds found.  Switching to Newton search." << std::endl;
     }
 
-    if( fabs(f0) < _measureConvTol*_optMeasure ){
-      converged = true;
-      break;
-    }
-
-    double plambda = lambda+epsilon;
-    for(int i=0; i<numOptDofs; i++) {
-      double be = 0.0;
-      if( dmdp[i] != 0.0 )
-        be = -dfdp[i]/dmdp[i]/plambda;
-// no HACK        be = -dfdp[i]/plambda;
-      else
-        be = -dfdp[i]/plambda;
-      double p_old = p_last[i];
-      double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
-      double sign = (be > 0.0) ? 1 : -1;
-      be = (be > 0.0) ? be : -be;
-      double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
-      // limit change
-      double dval = p_new - p_old;
-      if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
-      // enforce limits
-      if( p_new < lowerBound[i] ) p_new = lowerBound[i];
-      if( p_new > upperBound[i] ) p_new = upperBound[i];
-      p[i] = p_new;
-    }
-    // compute new measure
-    solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
-    double f1 =  (measure - _measureConstraint*_optMeasure);
-
-    if( f1-f0 == 0.0 ) break;
-    lambda -= epsilon*f0/(f1-f0);
-
-    niters++;
-  } while ( niters < newtonMaxIters );
-
-  if(!converged){
-    if(comm->getRank()==0){
-      std::cout << "Measure enforcement: Newton search failed.  Switching back to recursive bisection." << std::endl;
-    }
-  
-    niters = 0;
-    do {
-      measure = 0.0;
-      vmid = (v2+v1)/2.0;
-  
-      // update topology
-      for(int i=0; i<numOptDofs; i++) {
+    int newtonMaxIters = niters + 20;
+    double lambda = (residRatio*v2 - v1)/(residRatio-1.0);
+    double epsilon = lambda*1e-5;
+    if (lambda > 0.0 ) do {
+      for (int i=0; i<numOptDofs; i++) {
         double be = 0.0;
-        if( dmdp[i] != 0.0 )
-          be = -dfdp[i]/dmdp[i]/vmid;
-// no HACK          be = -dfdp[i]/vmid;
+        if (dmdp[i] != 0.0 )
+          be = -dfdp[i]/dmdp[i]/lambda;
         else
-          be = -dfdp[i]/vmid;
+          be = -dfdp[i]/lambda;
         double p_old = p_last[i];
         double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
-      double sign = (be > 0.0) ? 1 : -1;
+        double sign = (be > 0.0) ? 1 : -1;
         be = (be > 0.0) ? be : -be;
         double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
         // limit change
         double dval = p_new - p_old;
-        if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
+        if (fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
         // enforce limits
-        if( p_new < lowerBound[i] ) p_new = lowerBound[i];
-        if( p_new > upperBound[i] ) p_new = upperBound[i];
+        if (p_new < lowerBound[i] ) p_new = lowerBound[i];
+        if (p_new > upperBound[i] ) p_new = upperBound[i];
         p[i] = p_new;
       }
-  
       // compute new measure
       solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
-      double newResidual = measure - _measureConstraint*_optMeasure;
-      if( newResidual > 0.0 ){
-        v1 = vmid;
-      } else v2 = vmid;
+      double f0 =  (measure - _measureConstraint*_optMeasure);
+
+      if (comm->getRank()==0) {
+        std::cout << "Measure Enforcement (iteration " << niters << "): Residual = " << f0/_optMeasure << std::endl;
+      }
+
+      if (fabs(f0) < _measureConvTol*_optMeasure) {
+        converged = true;
+        break;
+      }
+
+      double plambda = lambda+epsilon;
+      for (int i=0; i<numOptDofs; i++) {
+        double be = 0.0;
+        if (dmdp[i] != 0.0 )
+          be = -dfdp[i]/dmdp[i]/plambda;
+        else
+          be = -dfdp[i]/plambda;
+        double p_old = p_last[i];
+        double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
+        double sign = (be > 0.0) ? 1 : -1;
+        be = (be > 0.0) ? be : -be;
+        double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
+        // limit change
+        double dval = p_new - p_old;
+        if (fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
+        // enforce limits
+        if (p_new < lowerBound[i] ) p_new = lowerBound[i];
+        if (p_new > upperBound[i] ) p_new = upperBound[i];
+        p[i] = p_new;
+      }
+      // compute new measure
+      solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
+      double f1 =  (measure - _measureConstraint*_optMeasure);
+
+      if (f1-f0 == 0.0 ) break;
+      lambda -= epsilon*f0/(f1-f0);
+
       niters++;
-  
-      if(comm->getRank()==0){
-        double resid = (measure - _measureConstraint*_optMeasure)/_optMeasure;
-        std::cout << "Measure enforcement (iteration " << niters << "): Residual = " << resid << std::endl;
+    } while ( niters < newtonMaxIters );
+
+    if (!converged) {
+      if (comm->getRank()==0) {
+        std::cout << "Measure enforcement: Newton search failed.  Switching back to recursive bisection." << std::endl;
       }
     
-    } while ( niters < _measureMaxIter && fabs(measure - _measureConstraint*_optMeasure) > _measureConvTol*_optMeasure );
+      niters = 0;
+      do {
+        measure = 0.0;
+        vmid = (v2+v1)/2.0;
+    
+        // update topology
+        for (int i=0; i<numOptDofs; i++) {
+          double be = 0.0;
+          if (dmdp[i] != 0.0 ) {
+            be = -dfdp[i]/dmdp[i]/vmid;
+          } else {
+            be = -dfdp[i]/vmid;
+          }
+          double p_old = p_last[i];
+          double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
+          double sign = (be > 0.0) ? 1 : -1;
+          be = (be > 0.0) ? be : -be;
+          double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
+          // limit change
+          double dval = p_new - p_old;
+          if (fabs(dval) > _moveLimit) { p_new = p_old+fabs(dval)/dval*_moveLimit; }
+          // enforce limits
+          if (p_new < lowerBound[i] ) { p_new = lowerBound[i]; }
+          if (p_new > upperBound[i] ) { p_new = upperBound[i]; }
+          p[i] = p_new;
+        }
+    
+        // compute new measure
+        solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
+        double newResidual = measure - _measureConstraint*_optMeasure;
+        if (newResidual > 0.0) {
+          v1 = vmid;
+        } else v2 = vmid;
+        niters++;
+    
+        if (comm->getRank()==0) {
+          double resid = (measure - _measureConstraint*_optMeasure)/_optMeasure;
+          std::cout << "Measure enforcement (iteration " << niters << "): Residual = " << resid << std::endl;
+        }
+      
+      } while ( niters < _measureMaxIter && fabs(measure - _measureConstraint*_optMeasure) > _measureConvTol*_optMeasure );
+    }
   }
 
-  }
-
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    ( fabs(measure - _measureConstraint*_optMeasure) > _measureAccpTol*_optMeasure ),
-    Teuchos::Exceptions::InvalidParameter, 
-    std::endl << "Enforcement of measure constraint failed:  Exceeded max iterations" 
-    << std::endl);
-
-
-
+  TEUCHOS_TEST_FOR_EXCEPTION(( fabs(measure - _measureConstraint*_optMeasure) > _measureAccpTol*_optMeasure ),
+                             Teuchos::Exceptions::InvalidParameter, 
+                             "Enforcement of measure constraint failed:  Exceeded max iterations.\n"); 
 }
 
 #ifdef ATO_USES_NLOPT
@@ -941,14 +939,12 @@ void
 Optimizer_NLopt::Initialize()
 /******************************************************************************/
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (
-    solverInterface == NULL, Teuchos::Exceptions::InvalidParameter, std::endl
-    << "Error! Optimizer requires valid Solver Interface" << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION (solverInterface == nullptr, Teuchos::Exceptions::InvalidParameter,
+                              "Error! Optimizer requires valid Solver Interface.\n");
 
-  TEUCHOS_TEST_FOR_EXCEPTION (
-    (comm->getSize() != 1) && (comm->getRank()==0), 
-    Teuchos::Exceptions::InvalidParameter, std::endl
-    << "Error! NLopt package doesn't work in parallel.  Use OC package." << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION ((comm->getSize() != 1) && (comm->getRank()==0), 
+                             Teuchos::Exceptions::InvalidParameter,
+                             "Error! NLopt package doesn't work in parallel.  Use OC package.\n");
   TEUCHOS_TEST_FOR_EXCEPT ( (comm->getSize() != 1) );
   
   // JR: todo -- add a distributed/local mode to the solver interface so 
@@ -963,21 +959,18 @@ Optimizer_NLopt::Initialize()
   solverInterface->getOptDofsUpperBound(upperBound);
   solverInterface->getOptDofsLowerBound(lowerBound);
   
-  if( _optMethod == "MMA" )
+  if (_optMethod == "MMA") {
     opt = nlopt_create(NLOPT_LD_MMA, numOptDofs);
-  else
-  if( _optMethod == "CCSA" )
+  } else if (_optMethod == "CCSA") {
     opt = nlopt_create(NLOPT_LD_CCSAQ, numOptDofs);
-  else
-  if( _optMethod == "SLSQP" )
+  } else if (_optMethod == "SLSQP") {
     opt = nlopt_create(NLOPT_LD_SLSQP, numOptDofs);
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Optimization method: " << _optMethod << " Unknown!" << std::endl 
-      << "Valid options are (MMA, CCSA, SLSQP)" << std::endl);
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl 
+                               "Error! Optimization method: " << _optMethod << " Unknown!\n"
+                               "       Valid options are (MMA, CCSA, SLSQP)\n");
+  }
 
-  
   // set bounds
   nlopt_set_lower_bounds(opt, lowerBound.getRawPtr());
   nlopt_set_upper_bounds(opt, upperBound.getRawPtr());
@@ -1005,12 +998,12 @@ Optimizer_NLopt::Initialize()
 
   solverInterface->InitializeOptDofs(p);
 
-  if( primaryConstraintType == ResponseType::Measure ){
+  if (primaryConstraintType == ResponseType::Measure) {
     solverInterface->ComputeMeasure(_measureType, _optMeasure);
     nlopt_add_inequality_constraint(opt, this->constraint, this, _measureConvTol*_optMeasure);
-  } else
-  if( primaryConstraintType == ResponseType::Aggregate )
+  } else if (primaryConstraintType == ResponseType::Aggregate ) {
     nlopt_add_inequality_constraint(opt, this->constraint, this, _conConvTol);
+  }
 }
 #define ATO_XTOL_REACHED 104
 
@@ -1029,20 +1022,16 @@ Optimizer_NLopt::Optimize()
   double minf;
   int errorcode = nlopt_optimize(opt, p, &minf);
 
-  if( errorcode == NLOPT_FORCED_STOP && comm->getRank()==0 ){
+  if (errorcode == NLOPT_FORCED_STOP && comm->getRank()==0) {
     int forcestop_errorcode = nlopt_get_force_stop(opt);
     std::cout << "************************************************************************" << std::endl;
     std::cout << "  Optimizer converged.  Objective value = " << minf << std::endl;
     std::cout << "    Convergence code: " << forcestop_errorcode << std::endl;
     std::cout << "************************************************************************" << std::endl;
-  } else
-  if( errorcode < 0 ){
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Optimization failed with errorcode " << errorcode << std::endl);
+  } else if (errorcode < 0) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl 
+                               "Error! Optimization failed with errorcode " << errorcode << std::endl);
   }
-
-  return;
 }
 
 /******************************************************************************/
@@ -1050,26 +1039,24 @@ double
 Optimizer_NLopt::evaluate_backend( unsigned int n, const double* x, double* grad )
 /******************************************************************************/
 {
-   
   bool changed = isChanged(x);
 
-  if( changed ){
+  if (changed) {
     objectiveValue_last = objectiveValue;
     std::memcpy((void*)p_last, (void*)x, numOptDofs*sizeof(double));
     solverInterface->ComputeMeasure(_measureType, x, measure, dmdp);
     solverInterface->Compute(x, f, dfdp, g, dgdp);
   }
 
-  if( objectiveType == ResponseType::Measure ){
+  if (objectiveType == ResponseType::Measure) {
     std::memcpy((void*)grad, (void*)dmdp, numOptDofs*sizeof(double));
     objectiveValue = measure;
-  } else
-  if( objectiveType == ResponseType::Aggregate ){
+  } else if (objectiveType == ResponseType::Aggregate) {
     std::memcpy((void*)grad, (void*)dfdp, numOptDofs*sizeof(double));
     objectiveValue = f;
   }
 
-  if(comm->getRank()==0){
+  if (comm->getRank()==0) {
     std::cout << "************************************************************************" << std::endl;
     std::cout << "  Optimizer:     measure: " << measure << std::endl;
     std::cout << "  Optimizer:   objective: " << objectiveValue << std::endl;
@@ -1081,7 +1068,7 @@ Optimizer_NLopt::evaluate_backend( unsigned int n, const double* x, double* grad
   Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &ldelta_objective, &delta_objective);
   double delta_p = computeDiffNorm(x, p_last, numOptDofs, /*result to cout*/ false);
 
-  if( convergenceChecker->isConverged(delta_objective, delta_p, _nIterations , comm->getRank()) ){
+  if (convergenceChecker->isConverged(delta_objective, delta_p, _nIterations , comm->getRank())) {
     nlopt_set_force_stop(opt, ATO_XTOL_REACHED);
     nlopt_force_stop(opt);
   }
@@ -1107,22 +1094,25 @@ Optimizer_NLopt::constraint_backend( unsigned int n, const double* x, double* gr
 {
   bool changed = isChanged(x);
 
-  if( primaryConstraintType == ResponseType::Measure ){
-    if( changed ) solverInterface->ComputeMeasure(_measureType, x, measure, dmdp);
+  if (primaryConstraintType == ResponseType::Measure) {
+    if (changed ) {
+      solverInterface->ComputeMeasure(_measureType, x, measure, dmdp);
+    }
     std::memcpy((void*)grad, (void*)dmdp, numOptDofs*sizeof(double));
     constraintValue = measure - _measureConstraint*_optMeasure;
-    if(comm->getRank()==0){
+    if (comm->getRank()==0) {
       std::cout << "************************************************************************" << std::endl;
       std::cout << "  Optimizer:  computed measure is: " << measure << std::endl;
       std::cout << "  Optimizer:    target measure is: " << _measureConstraint*_optMeasure << std::endl;
       std::cout << "************************************************************************" << std::endl;
     }
-  } else
-  if( primaryConstraintType == ResponseType::Aggregate ){
-    if( changed ) solverInterface->Compute(x, f, dfdp, g, dgdp);
+  } else if (primaryConstraintType == ResponseType::Aggregate) {
+    if (changed ) {
+      solverInterface->Compute(x, f, dfdp, g, dgdp);
+    }
     std::memcpy((void*)grad, (void*)dgdp, numOptDofs*sizeof(double));
     constraintValue = g;
-    if(comm->getRank()==0){
+    if (comm->getRank()==0) {
       std::cout << "************************************************************************" << std::endl;
       std::cout << "  Optimizer:  computed constraint is: " << constraintValue << std::endl;
       std::cout << "************************************************************************" << std::endl;
@@ -1147,8 +1137,8 @@ bool
 Optimizer_NLopt::isChanged(const double* x)
 /******************************************************************************/
 {
-  for(int i=0; i<numOptDofs; i++){
-    if( x[i] != x_ref[i] ){
+  for (int i=0; i<numOptDofs; i++) {
+    if (x[i] != x_ref[i]) {
       std::memcpy((void*)x_ref, (void*)x, numOptDofs*sizeof(double));
       return true;
     }
@@ -1157,6 +1147,4 @@ Optimizer_NLopt::isChanged(const double* x)
 }
 #endif //ATO_USES_NLOPT
 
-
-}
-
+} // namespace ATO

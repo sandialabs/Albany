@@ -3,8 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef AADAPT_RC_PROJECTOR_IMPL
-#define AADAPT_RC_PROJECTOR_IMPL
+
+#ifndef AADAPT_RC_PROJECTOR_IMPL_HPP
+#define AADAPT_RC_PROJECTOR_IMPL_HPP
+
+#include "Albany_ThyraTypes.hpp"
 
 namespace AAdapt {
 namespace rc {
@@ -17,13 +20,13 @@ namespace rc {
  */
 
 //! Solve A x = b using preconditioner P. Construct P if it is null on input.
-Teuchos::RCP<Tpetra_MultiVector>
-solve(const Teuchos::RCP<const Tpetra_CrsMatrix>& A,
-      Teuchos::RCP<Tpetra_Operator>& P,
-      const Teuchos::RCP<const Tpetra_MultiVector>& b,
+Teuchos::RCP<Thyra_MultiVector>
+solve(const Teuchos::RCP<const Thyra_LinearOp>& A,
+      Teuchos::RCP<Thyra_LinearOp>& P,
+      const Teuchos::RCP<const Thyra_MultiVector>& b,
       Teuchos::ParameterList& belos_pl);
 
 } // namespace rc
 } // namespace AAdapt
 
-#endif // AADAPT_RC_PROJECTOR_IMPL
+#endif // AADAPT_RC_PROJECTOR_IMPL_HPP

@@ -23,8 +23,8 @@ tolerance = 1.0e-6;
 #meanvalue = 0.000341851470936; #meanvalue for 10 LOCA steps
 meanvalue = 2.05743317057e-05;
 
-# run AlbanyT
-command = ["mpirun", "-np", "8", "./AlbanyT", "notched-cylinder-S-ctest.yaml"]
+# run Albany
+command = ["mpirun", "-np", "8", "./Albany", "notched-cylinder-S-ctest.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

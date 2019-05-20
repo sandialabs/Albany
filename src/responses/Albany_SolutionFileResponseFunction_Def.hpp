@@ -4,44 +4,31 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #include "Albany_SolutionFileResponseFunction.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 #include "Teuchos_CommHelpers.hpp"
-#include "Tpetra_DistObject.hpp"
+
+namespace Albany
+{
 
 template<class Norm>
-Albany::SolutionFileResponseFunction<Norm>::
+SolutionFileResponseFunction<Norm>::
 SolutionFileResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& comm)
-  : SamplingBasedScalarResponseFunction(comm)
-  , solutionLoaded(false)
+ : SamplingBasedScalarResponseFunction(comm)
+ , solutionLoaded(false)
 {
+  // Nothing to be done here
 }
 
 template<class Norm>
-Albany::SolutionFileResponseFunction<Norm>::
-~SolutionFileResponseFunction()
-{
-}
-
-template<class Norm>
-unsigned int
-Albany::SolutionFileResponseFunction<Norm>::
-numResponses() const 
-{
-  return 1;
-}
-
-template<class Norm>
-void
-Albany::SolutionFileResponseFunction<Norm>::
+void SolutionFileResponseFunction<Norm>::
 evaluateResponse(const double /*current_time*/,
-		const Teuchos::RCP<const Thyra_Vector>& x,
-		const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
-		const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
-		const Teuchos::Array<ParamVec>& /*p*/,
-    const Teuchos::RCP<Thyra_Vector>& g)
+  const Teuchos::RCP<const Thyra_Vector>& x,
+  const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+  const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+  const Teuchos::Array<ParamVec>& /*p*/,
+  const Teuchos::RCP<Thyra_Vector>& g)
 {
   int MMFileStatus = 0;
 
@@ -51,10 +38,10 @@ evaluateResponse(const double /*current_time*/,
 
   if (!solutionLoaded) {
     RefSoln = Thyra::createMember(x->space());
-    MMFileStatus = MatrixMarketFileToThyraVector("reference_solution.dat",RefSoln);
+    MMFileStatus = MatrixMarketFile("reference_solution.dat",RefSoln);
 
-    TEUCHOS_TEST_FOR_EXCEPTION(MMFileStatus, std::runtime_error,
-      std::endl << "EpetraExt::MatrixMarketFileToVector, file " __FILE__
+    TEUCHOS_TEST_FOR_EXCEPTION(MMFileStatus!=0, std::runtime_error,
+      std::endl << "MatrixMarketFile, file " __FILE__
       " line " << __LINE__ << " returned " << MMFileStatus << std::endl);
 
     solutionLoaded = true;
@@ -79,52 +66,51 @@ evaluateResponse(const double /*current_time*/,
 }
 
 template<class Norm>
-void
-Albany::SolutionFileResponseFunction<Norm>::
+void SolutionFileResponseFunction<Norm>::
 evaluateTangent(
-		const double /*alpha*/, 
-		const double /*beta*/,
-		const double /*omega*/,
-		const double /*current_time*/,
-		bool /*sum_derivs*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
-		const Teuchos::Array<ParamVec>& /*p*/,
-		ParamVec* /*deriv_p*/,
-    const Teuchos::RCP<const Thyra_MultiVector>& /*Vx*/,
-    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
-    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
-    const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
-		const Teuchos::RCP<Thyra_Vector>& /*g*/,
-		const Teuchos::RCP<Thyra_MultiVector>& /*gx*/,
-		const Teuchos::RCP<Thyra_MultiVector>& /*gp*/)
+  const double /*alpha*/, 
+  const double /*beta*/,
+  const double /*omega*/,
+  const double /*current_time*/,
+  bool /*sum_derivs*/,
+  const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+  const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+  const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+  const Teuchos::Array<ParamVec>& /*p*/,
+  ParamVec* /*deriv_p*/,
+  const Teuchos::RCP<const Thyra_MultiVector>& /*Vx*/,
+  const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
+  const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
+  const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
+  const Teuchos::RCP<Thyra_Vector>& /*g*/,
+  const Teuchos::RCP<Thyra_MultiVector>& /*gx*/,
+  const Teuchos::RCP<Thyra_MultiVector>& /*gp*/)
 {
   // Do nothing
 }
 
 template<class Norm>
 void
-Albany::SolutionFileResponseFunction<Norm>::
+SolutionFileResponseFunction<Norm>::
 evaluateGradient(const double /*current_time*/,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
-		const Teuchos::Array<ParamVec>& /*p*/,
-		ParamVec* /*deriv_p*/,
-    const Teuchos::RCP<Thyra_Vector>& g,
-    const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
-    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
-    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
-    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
+  const Teuchos::RCP<const Thyra_Vector>& x,
+  const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+  const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+	const Teuchos::Array<ParamVec>& /*p*/,
+	ParamVec* /*deriv_p*/,
+  const Teuchos::RCP<Thyra_Vector>& g,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   int MMFileStatus = 0;
   if (!solutionLoaded) {
     RefSoln = Thyra::createMember(x->space());
-    MMFileStatus = MatrixMarketFileToThyraVector("reference_solution.dat",RefSoln);
+    MMFileStatus = MatrixMarketFile("reference_solution.dat",RefSoln);
 
-    TEUCHOS_TEST_FOR_EXCEPTION(MMFileStatus, std::runtime_error,
-      std::endl << "EpetraExt::MatrixMarketFileToVector, file " __FILE__
+    TEUCHOS_TEST_FOR_EXCEPTION(MMFileStatus!=0, std::runtime_error,
+      std::endl << "MatrixMarketFile, file " __FILE__
       " line " << __LINE__ << " returned " << MMFileStatus << std::endl);
 
     solutionLoaded = true;
@@ -173,16 +159,15 @@ evaluateGradient(const double /*current_time*/,
 
 //! Evaluate distributed parameter derivative dg/dp
 template<class Norm>
-void
-Albany::SolutionFileResponseFunction<Norm>::
+void SolutionFileResponseFunction<Norm>::
 evaluateDistParamDeriv(
-    const double /*current_time*/,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
-    const Teuchos::Array<ParamVec>& /*param_array*/,
-    const std::string& /*dist_param_name*/,
-    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
+  const double /*current_time*/,
+  const Teuchos::RCP<const Thyra_Vector>& /* x */,
+  const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+  const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+  const Teuchos::Array<ParamVec>& /*param_array*/,
+  const std::string& /*dist_param_name*/,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   if (!dg_dp.is_null()) {
     dg_dp->assign(0.0);
@@ -190,18 +175,8 @@ evaluateDistParamDeriv(
 }
 
 template<class Norm>
-int 
-Albany::SolutionFileResponseFunction<Norm>::
-MatrixMarketFileToThyraVector( const char *filename, const Teuchos::RCP<Thyra_Vector>& v)
-{
-  auto vT = Albany::getTpetraVector(v);
-  return MatrixMarketFileToTpetraMultiVector(filename, *vT); 
-}
-
-template<class Norm>
-int 
-Albany::SolutionFileResponseFunction<Norm>::
-MatrixMarketFileToTpetraMultiVector( const char *filename, Tpetra_MultiVector& AT)
+int SolutionFileResponseFunction<Norm>::
+MatrixMarketFile (const char *filename, const Teuchos::RCP<Thyra_MultiVector>& mv)
 {
   const int lineLength = 1025;
   const int tokenLength = 35;
@@ -261,8 +236,7 @@ MatrixMarketFileToTpetraMultiVector( const char *filename, Tpetra_MultiVector& A
         << std::endl);
 
   // Compute the offset for each processor for when it should start storing values
-  const Tpetra_Map& mapT = *AT.getMap();
-  int numMyPoints = mapT.getNodeNumElements();
+  const auto spmd_vs = getSpmdVectorSpace(mv->range());
   int offset;
   //map.Comm().ScanSum(&numMyPoints, &offset, 1); // ScanSum will compute offsets for us
   //offset -= numMyPoints; // readjust for my PE
@@ -270,62 +244,20 @@ MatrixMarketFileToTpetraMultiVector( const char *filename, Tpetra_MultiVector& A
   // Line to start reading in reference file
 //  offset = map.MinMyGID();
 
-  if (mapT.getComm()->getRank() == 0) {
+  if (spmd_vs->getComm()->getRank() == 0) {
     std::cout << "Reading reference solution from file \"" << filename << "\"" << std::endl;
     std::cout << "Reference solution contains " << N << " vectors, each with " << M << " rows." << std::endl;
     std::cout << std::endl;
   }
 
   // Now construct vector/multivector
-  TEUCHOS_TEST_FOR_EXCEPTION (N!=static_cast<int>(AT.getNumVectors()), std::runtime_error,
-                              "Error! Input file is storing a Tpetra MultiVector with a number of vectors "
+  TEUCHOS_TEST_FOR_EXCEPTION (N!=static_cast<int>(mv->domain()->dim()), std::runtime_error,
+                              "Error! Input file is storing a Thyra MultiVector with a number of vectors "
                               "different from the what was expected.\n");
 
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST> > ApT = AT.get2dViewNonConst(); 
-
-/*
+  auto vals = getNonconstLocalData(mv);
   for (int j=0; j<N; j++) {
-    double * v = Ap[j];
-
-    // Now read in lines that we will discard
-    for (int i=0; i<offset; i++)
-      if(fgets(line, lineLength, handle)==0)
-
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-          std::endl << "Reference solution file: invalid line number " << i << " found while reading file lead data."
-          << std::endl);
-    
-    // Now read in each value and store to the local portion of the the  if the row is owned.
-    double V;
-    for (int i=0; i<numMyPoints; i++) {
-      if(fgets(line, lineLength, handle)==0) 
-
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-          std::endl << "Reference solution file: cannot read line number " << i + offset << " in file."
-          << std::endl);
-
-      if(sscanf(line, "%lg\n", &V)==0)
-
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-          std::endl << "Reference solution file: cannot parse line number " << i << " in file."
-          << std::endl);
-
-      v[i] = V;
-    }
-    // Now read in the rest of the lines to discard
-    for (int i=0; i < M-numMyPoints-offset; i++) {
-      if(fgets(line, lineLength, handle)==0)
-
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-          std::endl << "Reference solution file: invalid line number " << i + offset + numMyPoints
-          << " found parsing toward end of file."
-          << std::endl);
-    }
-  }
-*/
-
-  for (int j=0; j<N; j++) {
-    Teuchos::ArrayRCP<ST> vT = ApT[j];
+    Teuchos::ArrayRCP<ST> v = vals[j];
 
     // Now read in each value and store to the local portion of the array if the row is owned.
     ST V;
@@ -336,23 +268,23 @@ MatrixMarketFileToTpetraMultiVector( const char *filename, Tpetra_MultiVector& A
           std::endl << "Reference solution file: cannot read line number " << i + offset << " in file."
           << std::endl);
 
-      if(mapT.getLocalElement(i)>= 0){ // we own this data value
-       if(sscanf(line, "%lg\n", &V)==0)
-
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-          std::endl << "Reference solution file: cannot parse line number " << i << " in file."
-          << std::endl);
-
-       vT[mapT.getLocalElement(i)] = V;
+      const LO lid = getLocalElement(spmd_vs,i);
+      if(lid>= 0) { // we own this data value
+        if(sscanf(line, "%lg\n", &V)==0) {
+          TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+                                     "Reference solution file: cannot parse line number " << i << " in file.\n");
+        }
+        v[lid] = V;
       }
     }
   }
 
-  if (fclose(handle))
+  if (fclose(handle)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+                               "Cannot close reference solution file.\n");
+  }
 
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-          std::endl << "Cannot close reference solution file."
-          << std::endl);
-  
   return 0;
 }
+
+} // namespace Albany

@@ -4,37 +4,25 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_INITIALCONDITION_HPP
-#define AADAPT_INITIALCONDITION_HPP
+#ifndef AADAPT_INITIAL_CONDITION_HPP
+#define AADAPT_INITIAL_CONDITION_HPP
 
 #include "Albany_DataTypes.hpp"
-#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 
 #include <string>
 #include "Teuchos_ParameterList.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Vector.h"
-#endif
 
 namespace AAdapt {
 
-#if defined(ALBANY_EPETRA)
-void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
-                       const Albany::AbstractDiscretization::Conn& wsElNodeEqID,
-                       const Teuchos::ArrayRCP<std::string>& wsEBNames,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
-                       const int neq, const int numDim,
-                       Teuchos::ParameterList& icParams,
-                       const bool gasRestartSolution = false);
-#endif
-
-void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
-                       const Albany::AbstractDiscretization::Conn& wsElNodeEqID,
+void InitialConditions (const Teuchos::RCP<Thyra_Vector>& solnT,
+                       const Albany::Conn& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,
                        Teuchos::ParameterList& icParams,
                        const bool gasRestartSolution = false);
 
-}
-#endif
+} // namespace AAdapt
+
+#endif // AADAPT_INITIAL_CONDITION_HPP

@@ -17,10 +17,10 @@ class ObserverImpl : public StatelessObserverImpl
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>& apps);
 
   virtual void
-  observeSolutionT(
-      double                                            stamp,
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution,
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>>
+  observeSolution(
+      double                                           stamp,
+      Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> non_overlapped_solution,
+      Teuchos::Array<Teuchos::RCP<Thyra_Vector const>>
           non_overlapped_solution_dot);
 
   virtual ~ObserverImpl();

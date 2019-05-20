@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Debug Output: 
     Write Solution to MatrixMarket: false
     Write Distributed Solution and Map to MatrixMarket: false

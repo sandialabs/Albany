@@ -11,8 +11,8 @@
 
 #include "Phalanx_MDField.hpp"
 
-#include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
 namespace LCM {
 
@@ -217,7 +217,7 @@ class ConstitutiveModel
   }
 
   ///
-  /// Integration point location flag
+  /// Get integration point location flag
   ///
   bool
   getIntegrationPointLocationFlag()
@@ -226,13 +226,31 @@ class ConstitutiveModel
   }
 
   ///
+  /// Set integration point location flag
+  ///
+  void
+  setIntegrationPointLocationFlag(bool iplf = true)
+  {
+    need_integration_pt_locations_ = iplf;
+  }
+
+  ///
   /// Integration point location set method
   ///
   void
   setCoordVecField(
-      PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> coord_vec)
+      PHX::MDField<MeshScalarT const, Cell, QuadPoint, Dim> coord_vec)
   {
     coord_vec_ = coord_vec;
+  }
+
+  ///
+  /// Integration point location get method
+  ///
+  PHX::MDField<MeshScalarT const, Cell, QuadPoint, Dim>
+  getCoordVecField()
+  {
+    return coord_vec_;
   }
 
   ///

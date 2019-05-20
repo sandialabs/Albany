@@ -19,9 +19,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_ho_BE_T.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Rythmos ${AlbanyT.exe} input_spectralT_rythmos.yaml) 
+add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Rythmos ${Albany.exe} input_spectralT_rythmos.yaml) 
+set_tests_properties(Aeras_${testName}_Spectral_np2_RungeKutta4_Rythmos PROPERTIES LABELS "Aeras;Tpetra;Forward")
 if (ALBANY_TEMPUS)
-add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus ${AlbanyT.exe} input_spectralT_tempus.yaml) 
+add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus ${Albany.exe} input_spectralT_tempus.yaml) 
+set_tests_properties(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus PROPERTIES LABELS "Aeras;Tpetra;Forward")
 endif () 
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
@@ -37,6 +39,7 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
   endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
   add_test(Aeras_${testName} ${AlbanyDakota.exe})
+  set_tests_properties(Aeras_${testName} PROPERTIES LABELS "Aeras;Tpetra;Dakota")
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 endif()
 
@@ -59,6 +62,7 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   add_test(Aeras_${testName} ${AlbanyAnalysis.exe})
+  set_tests_properties(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus PROPERTIES LABELS "Aeras;Tpetra;Analysis")
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
 endif()
 

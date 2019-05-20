@@ -13,22 +13,6 @@
 //uncomment the following if you want to exclude procs with 0 elements from solve.
 //#define REDUCED_COMM
 
-//uncomment the following if you want to use Epetra
-//#define CISM_USE_EPETRA
-
-//if we have an epetra build but no reduced comm, compute sensitivities
-//and responses
-#ifdef CISM_USE_EPETRA
-#ifndef REDUCED_COMM
-#define COMPUTE_SENS_AND_RESP
-#endif
-#endif
-
-//if we have tpetra build, compute sensitivities and responses.
-#ifndef CISM_USE_EPETRA
-#define COMPUTE_SENS_AND_RESP
-#endif
-
 //computation of sensitivities and responses will be off in the case
 //we have an epetra build + reduced comm, as this was causing a hang.
 
@@ -45,22 +29,10 @@
 #include "Piro_PerformSolve.hpp"
 #include <stk_mesh/base/GetEntities.hpp>
 #include "Albany_OrdinarySTKFieldContainer.hpp"
-#ifdef CISM_USE_EPETRA
-#include "Thyra_EpetraThyraWrappers.hpp"
-#endif
 //#include "Teuchos_TestForException.hpp"
 #include "Kokkos_Core.hpp"
 
-#ifdef WRITE_TO_MATRIX_MARKET
-#ifdef CISM_USE_EPETRA
-#include "EpetraExt_MultiVectorOut.h"
-#include "EpetraExt_BlockMapOut.h"
-#else
-#include "MatrixMarket_Tpetra.hpp"
-#endif
-#endif
-
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 //FIXME: move static global variables to struct
 //
@@ -74,12 +46,7 @@
 
 Teuchos::RCP<Albany::CismSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
-#ifdef CISM_USE_EPETRA
-  Teuchos::RCP<const Epetra_Comm> mpiComm, reducedMpiComm;
-  Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
-#else
-  Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
-#endif
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
 Teuchos::RCP<const Teuchos_Comm> mpiCommT, reducedMpiCommT;
 Teuchos::RCP<Teuchos::ParameterList> parameterList;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
@@ -137,119 +104,12 @@ double *vVel_ptr;
 double *uvel_at_nodes_Ptr;
 double *vvel_at_nodes_Ptr;
 bool first_time_step = true;
-#ifdef CISM_USE_EPETRA
-  Teuchos::RCP<Epetra_Map> node_map;
-#else
-  Teuchos::RCP<Tpetra_Map> node_map;
-#endif
+
+Teuchos::RCP<const Thyra_VectorSpace> nodeVS;
+
 //Teuchos::RCP<Tpetra_Vector> previousSolution;
 bool keep_proc = true;
-const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
-
-#ifdef CISM_USE_EPETRA
-Teuchos::RCP<const Epetra_Vector>
-epetraVectorFromThyra(
-  const Teuchos::RCP<const Epetra_Comm> &comm,
-  const Teuchos::RCP<const Thyra::VectorBase<double> > &thyra)
-{
-  Teuchos::RCP<const Epetra_Vector> result;
-  if (Teuchos::nonnull(thyra)) {
-    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(*thyra->space(), comm);
-    result = Thyra::get_Epetra_Vector(*epetra_map, thyra);
-  }
-  return result;
-}
-
-Teuchos::RCP<const Epetra_MultiVector>
-epetraMultiVectorFromThyra(
-  const Teuchos::RCP<const Epetra_Comm> &comm,
-  const Teuchos::RCP<const Thyra::MultiVectorBase<double> > &thyra)
-{
-  Teuchos::RCP<const Epetra_MultiVector> result;
-  if (Teuchos::nonnull(thyra)) {
-    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(*thyra->range(), comm);
-    result = Thyra::get_Epetra_MultiVector(*epetra_map, thyra);
-  }
-  return result;
-}
-
-void epetraFromThyra(
-  const Teuchos::RCP<const Epetra_Comm> &comm,
-  const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > &thyraResponses,
-  const Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > &thyraSensitivities,
-  Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > &responses,
-  Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > &sensitivities)
-{
-  responses.clear();
-  responses.reserve(thyraResponses.size());
-  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > ThyraResponseArray;
-  for (ThyraResponseArray::const_iterator it_begin = thyraResponses.begin(),
-      it_end = thyraResponses.end(),
-      it = it_begin;
-      it != it_end;
-      ++it) {
-    responses.push_back(epetraVectorFromThyra(comm, *it));
-  }
-
-  sensitivities.clear();
-  sensitivities.reserve(thyraSensitivities.size());
-  typedef Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > ThyraSensitivityArray;
-  for (ThyraSensitivityArray::const_iterator it_begin = thyraSensitivities.begin(),
-      it_end = thyraSensitivities.end(),
-      it = it_begin;
-      it != it_end;
-      ++it) {
-    ThyraSensitivityArray::const_reference sens_thyra = *it;
-    Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > sens;
-    sens.reserve(sens_thyra.size());
-    for (ThyraSensitivityArray::value_type::const_iterator jt = sens_thyra.begin(),
-        jt_end = sens_thyra.end();
-        jt != jt_end;
-        ++jt) {
-        sens.push_back(epetraMultiVectorFromThyra(comm, *jt));
-    }
-    sensitivities.push_back(sens);
-  }
-}
-#else
-void tpetraFromThyra(
-  const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > &thyraResponses,
-  const Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > &thyraSensitivities,
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > &responses,
-  Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector> > > &sensitivities)
-{
-  responses.clear();
-  responses.reserve(thyraResponses.size());
-  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > ThyraResponseArray;
-  for (ThyraResponseArray::const_iterator it_begin = thyraResponses.begin(),
-      it_end = thyraResponses.end(),
-      it = it_begin;
-      it != it_end;
-      ++it) {
-    responses.push_back(Albany::getConstTpetraVector(*it));
-  }
-
-  sensitivities.clear();
-  sensitivities.reserve(thyraSensitivities.size());
-  typedef Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > ThyraSensitivityArray;
-  for (ThyraSensitivityArray::const_iterator it_begin = thyraSensitivities.begin(),
-      it_end = thyraSensitivities.end(),
-      it = it_begin;
-      it != it_end;
-      ++it) {
-  ThyraSensitivityArray::const_reference sens_thyra = *it;
-    Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector> > sens;
-    sens.reserve(sens_thyra.size());
-    for (ThyraSensitivityArray::value_type::const_iterator jt = sens_thyra.begin(),
-        jt_end = sens_thyra.end();
-        jt != jt_end;
-        ++jt) {
-        sens.push_back(Albany::getConstTpetraMultiVector(*jt));
-    }
-    sensitivities.push_back(sens);
-  }
-}
-#endif
+const GO INVALID = Teuchos::OrdinalTraits<GO>::invalid();
 
 void createReducedMPI(int nLocalEntities, MPI_Comm& reduced_comm_id) {
   int numProcs, me;
@@ -276,9 +136,6 @@ extern "C" void ali_driver_();
 //What is exec_mode??
 void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char * input_fname)
 {
-#ifndef CISM_USE_EPETRA
-   static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-#endif
    if (first_time_step)
      Kokkos::initialize();
     // ---------------------------------------------
@@ -296,11 +153,6 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
     comm = MPI_Comm_f2c(cism_communicator);
     //MPI_COMM_size (comm, &cism_process_count);
     //MPI_COMM_rank (comm, &my_cism_rank);
-    //convert comm to Epetra_Comm
-    //mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
-#ifdef CISM_USE_EPETRA
-    mpiComm = Albany::createEpetraCommFromMpiComm(comm);
-#endif
     mpiCommT = Albany::createTeuchosCommFromMpiComm(comm);
 
     //IK, 4/4/14: get verbosity level specified in CISM *.config file
@@ -429,14 +281,8 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
     if (keep_proc) { //in the case we're using the reduced Comm, only call routines if there is a nonzero # of elts on a proc.
 #ifdef REDUCED_COMM
       reducedMpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
-   #ifdef CISM_USE_EPETRA
-      reducedMpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
-   #endif
 #else
       reducedMpiCommT = mpiCommT;
-   #ifdef CISM_USE_EPETRA
-      reducedMpiComm = mpiComm;
-   #endif
 #endif
 
 
@@ -448,6 +294,28 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
       std::cout << "In ali_driver: creating Albany mesh struct..." << std::endl;
     slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, reducedMpiCommT));
+    const auto& bt = slvrfctry->getParameters().get("Build Type","Tpetra");
+    if (bt=="Tpetra") {
+      // Set the static variable that denotes this as a Tpetra run
+      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+//if we have tpetra build, compute sensitivities and responses.
+#define COMPUTE_SENS_AND_RESP
+    } 
+    else if (bt=="Epetra") {
+      // Set the static variable that denotes this as a Epetra run
+      static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
+      //if we have an epetra build but no reduced comm, compute sensitivities
+      //and responses
+#ifndef REDUCED_COMM
+#define COMPUTE_SENS_AND_RESP
+#endif
+    } 
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                                 "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
+                                 "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+    }
+
     parameterList = Teuchos::rcp(&slvrfctry->getParameters(),false);
     discParams = Teuchos::sublist(parameterList, "Discretization", true);
     discParams->set<bool>("Output DTK Field to Exodus", true);
@@ -640,17 +508,14 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
     albanyApp->buildProblem();
     meshStruct->constructMesh(reducedMpiCommT, discParams, neq, req, albanyApp->getStateMgr().getStateInfoStruct(), meshStruct->getMeshSpecs()[0]->worksetSize);
 
-    //Create node_map
-    //global_node_id_owned_map_Ptr is 1-based, so node_map is 1-based
+    //Create nodeVS
+    //global_node_id_owned_map_Ptr is 1-based, so nodeVS is 1-based
     //Distribute the elements according to the global element IDs
-#ifdef CISM_USE_EPETRA
-     node_map = Teuchos::rcp(new Epetra_Map(-1, nNodes, global_node_id_owned_map_Ptr, 0, *reducedMpiComm)); //node_map is 1-based
-#else
-    Teuchos::Array<Tpetra_GO> global_node_id_owned_map(nNodes);
-    for (int i=0; i<nNodes; i++)
+    Teuchos::Array<GO> global_node_id_owned_map(nNodes);
+    for (int i=0; i<nNodes; i++) {
       global_node_id_owned_map[i] = global_node_id_owned_map_Ptr[i];
-    node_map = Teuchos::rcp(new Tpetra_Map(INVALID, global_node_id_owned_map, 0, reducedMpiCommT));
-#endif
+    }
+    nodeVS = Albany::createVectorSpace(reducedMpiCommT, global_node_id_owned_map(), INVALID);  
  }
 
 
@@ -663,9 +528,6 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
 // IK, 12/3/13: time_inc_yr and cur_time_yr are not used here...
 void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc_yr)
 {
-/*#ifndef CISM_USE_EPETRA
-   static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-#endif*/
     //IK, 12/9/13: how come FancyOStream prints an all processors??
     Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
@@ -728,11 +590,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
          for (int k=0; k<upn; k++) {
            if (j >= nhalo-1 & j < nsn-nhalo) {
              if (i >= nhalo-1 & i < ewn-nhalo) {
-#ifdef CISM_USE_EPETRA
-               local_nodeID = node_map->LID(cismToAlbanyNodeNumberMap[counter1]);
-#else
-               local_nodeID = node_map->getLocalElement(cismToAlbanyNodeNumberMap[counter1]);
-#endif
+               local_nodeID = Albany::getLocalElement(nodeVS, cismToAlbanyNodeNumberMap[counter1]);
                uvel_vec[counter1] = uVel_ptr[counter2];
                vvel_vec[counter1] = vVel_ptr[counter2];
                counter1++;
@@ -749,11 +607,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
      for (int i=0; i<nElementsActive; i++) {
        for (int j=0; j<8; j++) {
         int node_GID =  global_element_conn_active_Ptr[i + nElementsActive*j]; //node_GID is 1-based
-#ifdef CISM_USE_EPETRA
-        int node_LID =  node_map->LID(node_GID); //node_LID is 0-based
-#else
-        int node_LID =  node_map->getLocalElement(node_GID); //node_LID is 0-based
-#endif
+        auto node_LID = Albany::getLocalElement(nodeVS, node_GID); 
         stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, node_GID);
         double* sol = stk::mesh::field_data(*solutionField, node);
         //IK, 3/18/14: added division by velScale to convert uvel and vvel from dimensionless to having units of m/year (the Albany units)
@@ -795,11 +649,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
     //if (!first_time_step)
     //  std::cout << "previousSolution: " << *previousSolution << std::endl;
-#ifdef CISM_USE_EPETRA
-    solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
-#else
-   solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
-#endif
+    solver = slvrfctry->createAndGetAlbanyApp(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
@@ -807,34 +657,20 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
     Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-#ifdef CISM_USE_EPETRA
-    const Epetra_Map& ownedMap(*albanyApp->getDiscretization()->getMap()); //owned map
-    const Epetra_Map& overlapMap(*albanyApp->getDiscretization()->getOverlapMap()); //overlap map
-    Epetra_Import import(overlapMap, ownedMap); //importer from ownedMap to overlapMap
-    Epetra_Vector solutionOverlap(overlapMap); //overlapped solution
-    solutionOverlap.Import(*albanyApp->getDiscretization()->getSolutionField(), import, Insert);
-#else
-    Teuchos::RCP<const Tpetra_Map> ownedMap = albanyApp->getDiscretization()->getMapT(); //owned map
-    Teuchos::RCP<const Tpetra_Map> overlapMap = albanyApp->getDiscretization()->getOverlapMapT(); //overlap map
-    Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(ownedMap, overlapMap));
-    Teuchos::RCP<Tpetra_Vector> solutionOverlap = Teuchos::rcp(new Tpetra_Vector(overlapMap));
-    solutionOverlap->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
-    Teuchos::ArrayRCP<const ST> solutionOverlap_constView = solutionOverlap->get1dView();
-#endif
+    auto disc = albanyApp->getDiscretization();
+    auto ownedVS = disc->getVectorSpace();
+    auto overlapVS = disc->getOverlapVectorSpace();
+    auto cas_manager = Albany::createCombineAndScatterManager(ownedVS,overlapVS);
+    auto solutionOverlap = Thyra::createMember(overlapVS);
+    cas_manager->scatter(*disc->getSolutionField(),*solutionOverlap,Albany::CombineMode::INSERT);
+    auto solutionOverlap_constView = Albany::getLocalData(Teuchos::rcp_dynamic_cast<const Thyra_Vector>(solutionOverlap)); 
 
 #ifdef WRITE_TO_MATRIX_MARKET
-#ifdef CISM_USE_EPETRA
     //For debug: write solution and maps to matrix market file
-    EpetraExt::BlockMapToMatrixMarketFile("node_map.mm", *node_map);
-    EpetraExt::BlockMapToMatrixMarketFile("map.mm", ownedMap);
-    EpetraExt::BlockMapToMatrixMarketFile("overlap_map.mm", overlapMap);
-    EpetraExt::MultiVectorToMatrixMarketFile("solution.mm", *albanyApp->getDiscretization()->getSolutionField());
-#else
-    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("node_map.mm", *node_map);
-    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("map.mm", *ownedMap);
-    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("overlap_map.mm", *overlapMap);
-    Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("solution.mm", albanyApp->getDiscretization()->getSolutionFieldT());
-#endif
+    Albany::writeMatrixMarket(nodeVS, "nodeVS");  
+    Albany::writeMatrixMarket(ownedVS, "ownedVs");  
+    Albany::writeMatrixMarket(overlapVS, "overlapVs");  
+    Albany::writeMatrixMarket(albanyApp->getDiscretization()->getSolutionField(), "solution");  
 #endif
 
    //set previousSolution (used as initial guess for next time step) to final Albany solution.
@@ -917,9 +753,9 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     //std::cout << "overlapMap: " << overlapMap << std::endl;
     //std::cout << "map # global elements: " << ownedMap.NumGlobalElements() << std::endl;
     //std::cout << "map # my elements: " << ownedMap.NumMyElements() << std::endl;
-    //std::cout << "node_map # global elements: " << node_map->NumGlobalElements() << std::endl;
-    //std::cout << "node_map # my elements: " << node_map->NumMyElements() << std::endl;
-    //std::cout << "node_map: " << *node_map << std::endl;
+    //std::cout << "nodeVS # global elements: " << nodeVS->NumGlobalElements() << std::endl;
+    //std::cout << "nodeVS # my elements: " << nodeVS->NumMyElements() << std::endl;
+    //std::cout << "nodeVS: " << *nodeVS << std::endl;
 
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
       std::cout << "In ali_driver_run: copying Albany solution to uvel and vvel to send back to CISM... " << std::endl;
@@ -929,11 +765,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     //correctly in parallel for all geometries/decompositions.
 
     int numGlobalNodes;
-#ifdef CISM_USE_EPETRA
-    numGlobalNodes = node_map->NumGlobalElements();
-#else
-    numGlobalNodes = node_map->getGlobalNumElements();
-#endif
+    numGlobalNodes = nodeVS->dim(); 
 
     //IKT, 10/6/17: ensure size of *vel_local* and *vec_global* std::vecs
     //is large enough when reduced comm is used.
@@ -944,58 +776,40 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     std::vector<double> uvel_local_vec(numGlobalNodes, 0.0);
     std::vector<double> vvel_local_vec(numGlobalNodes, 0.0);
 
-    int overlap_map_num_my_elts;
+    int overlap_vs_num_my_elts;
     int global_dof;
     double sol_value;
     int numDofs;
-#ifdef CISM_USE_EPETRA
-    overlap_map_num_my_elts = overlapMap.NumMyElements();
-#else
-    overlap_map_num_my_elts = overlapMap->getNodeNumElements();
-#endif
+    overlap_vs_num_my_elts = Albany::getNumLocalElements(overlapVS); 
 
     if (interleavedOrdering == true) {
-      for (int i=0; i<overlap_map_num_my_elts; i++) {
-#ifdef CISM_USE_EPETRA
-        global_dof = overlapMap.GID(i);
-        sol_value = solutionOverlap[i];
-#else
-        global_dof = overlapMap->getGlobalElement(i);
-        sol_value = solutionOverlap_constView[i];
-#endif
+      for (int i=0; i<overlap_vs_num_my_elts; i++) {
+        global_dof = Albany::getGlobalElement(overlapVS, i); 
+        sol_value = solutionOverlap_constView[i]; 
         int modulo = (global_dof % 2); //check if dof is for u or for v
         int vel_global_dof;
         if (modulo == 0) { //u dof
-          vel_global_dof = global_dof/2+1; //add 1 because node_map is 1-based
+          vel_global_dof = global_dof/2+1; //add 1 because nodeVS is 1-based
           uvel_local_vec[vel_global_dof] = sol_value;
         }
         else { // v dof
-          vel_global_dof = (global_dof-1)/2+1; //add 1 because node_map is 1-based
+          vel_global_dof = (global_dof-1)/2+1; //add 1 because nodeVS is 1-based
           vvel_local_vec[vel_global_dof] = sol_value;
         }
       }
     }
     else { //note: the case with non-interleaved ordering has not been tested...
-#ifdef CISM_USE_EPETRA
-      numDofs = overlapMap.NumGlobalElements();
-#else
-      numDofs = overlapMap->getGlobalNumElements();
-#endif
-      for (int i=0; i<overlap_map_num_my_elts; i++) {
-#ifdef CISM_USE_EPETRA
-        global_dof = overlapMap.GID(i);
-        sol_value = solutionOverlap[i];
-#else
-        global_dof = overlapMap->getGlobalElement(i);
+      numDofs = Albany::getNumLocalElements(overlapVS); 
+      for (int i=0; i<overlap_vs_num_my_elts; i++) {
+        global_dof = Albany::getGlobalElement(overlapVS, i); 
         sol_value = solutionOverlap_constView[i];
-#endif
         int vel_global_dof;
         if (global_dof < numDofs/2) { //u dof
-          vel_global_dof = global_dof+1; //add 1 because node_map is 1-based
+          vel_global_dof = global_dof+1; //add 1 because nodeVS is 1-based
           uvel_local_vec[vel_global_dof] = sol_value;
         }
         else { //v dofs
-          vel_global_dof = global_dof-numDofs/2+1; //add 1 because node_map is 1-based
+          vel_global_dof = global_dof-numDofs/2+1; //add 1 because nodeVS is 1-based
           vvel_local_vec[vel_global_dof] = sol_value;
         }
       }
@@ -1030,34 +844,28 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     meshStruct = Teuchos::null;
     albanyApp = Teuchos::null;
     solver = Teuchos::null;
-#ifdef CISM_USE_EPETRA
-    mpiComm = Teuchos::null;
-    reducedMpiComm = Teuchos::null;
-#endif
     if (cur_time_yr == final_time) {
       mpiCommT = Teuchos::null;
       reducedMpiCommT = Teuchos::null;
       parameterList = Teuchos::null;
       discParams = Teuchos::null;
       slvrfctry = Teuchos::null;
-      node_map = Teuchos::null;
+      nodeVS = Teuchos::null;
       Kokkos::finalize();
     }
 }
-
 
 //Clean up
 //IK, 12/3/13: this is not called anywhere in the interface code...  used to be called (based on old bisicles interface code)?
 void ali_driver_finalize(int ftg_obj_index)
 {
-  if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0)
+  if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) {
     std::cout << "In ali_driver_finalize: cleaning up..." << std::endl;
+  }
 
-   //Nothing to do.
+  //Nothing to do.
 
-  if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0)
+  if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) {
     std::cout << "...done cleaning up!" << std::endl << std::endl;
-
-
+  }
 }
-

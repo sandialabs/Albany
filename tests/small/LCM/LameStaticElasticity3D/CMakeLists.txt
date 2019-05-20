@@ -14,8 +14,8 @@ if (ALBANY_EPETRA)
 add_test(${testName}_MatrixFree ${Albany.exe} inputMatrixFree.yaml)
 add_test(${testName}_ProbeLame ${Albany.exe} inputProbeLame.yaml)
 endif()
-add_test(${testName}_MatrixFree ${AlbanyT.exe} inputMatrixFree.yaml)
-add_test(${testName}_ProbeLame ${AlbanyT.exe} inputProbeLameT.yaml)
+add_test(${testName}_MatrixFree ${Albany.exe} inputMatrixFree.yaml)
+add_test(${testName}_ProbeLame ${Albany.exe} inputProbeLameT.yaml)
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
 if (ALBANY_DAKOTA)

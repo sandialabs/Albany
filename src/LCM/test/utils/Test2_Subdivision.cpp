@@ -108,12 +108,12 @@ main(int ac, char* av[])
       topology.get_discretization();
   Albany::STKDiscretization& stk_discretization =
       static_cast<Albany::STKDiscretization&>(*discretization_ptr);
-  Teuchos::RCP<Tpetra_Vector> solution_fieldT =
-      stk_discretization.getSolutionFieldT();
+  Teuchos::RCP<Thyra_Vector> solution_field =
+      stk_discretization.getSolutionField();
 
   // Write final mesh to exodus file
   // second arg to output is (pseudo)time
-  stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
+  stk_discretization.writeSolution(*solution_field, 1.0);
 
   //
   // Read the output mesh after the subdivision and check that it is correct
@@ -143,19 +143,19 @@ return_number_entities(LCM::Topology& topology_)
   // Push back number of nodes
   stk::mesh::BulkData&           bulkData_ = topology_.get_bulk_data();
   std::vector<stk::mesh::Entity> initial_entities_D0 =
-      topology_.getEntitiesByRank(bulkData_, stk::topology::NODE_RANK);
+      topology_.get_rank_entities(bulkData_, stk::topology::NODE_RANK);
   output_vector.push_back(initial_entities_D0.size());
   // Push back number of edges
   std::vector<stk::mesh::Entity> initial_entities_D1 =
-      topology_.getEntitiesByRank(bulkData_, stk::topology::EDGE_RANK);
+      topology_.get_rank_entities(bulkData_, stk::topology::EDGE_RANK);
   output_vector.push_back(initial_entities_D1.size());
   // Push back number of faces
   std::vector<stk::mesh::Entity> initial_entities_D2 =
-      topology_.getEntitiesByRank(bulkData_, stk::topology::FACE_RANK);
+      topology_.get_rank_entities(bulkData_, stk::topology::FACE_RANK);
   output_vector.push_back(initial_entities_D2.size());
   // Push back number of elements
   std::vector<stk::mesh::Entity> initial_entities_D3 =
-      topology_.getEntitiesByRank(bulkData_, stk::topology::ELEMENT_RANK);
+      topology_.get_rank_entities(bulkData_, stk::topology::ELEMENT_RANK);
   output_vector.push_back(initial_entities_D3.size());
 
   return output_vector;

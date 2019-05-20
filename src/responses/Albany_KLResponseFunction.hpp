@@ -21,115 +21,111 @@ namespace Albany {
    * 
    * It only defines the SG methods.
    */
-  class KLResponseFunction : public AbstractResponseFunction {
-  public:
+class KLResponseFunction : public AbstractResponseFunction {
+public:
+
+  //! Default constructor
+  KLResponseFunction(
+    const Teuchos::RCP<AbstractResponseFunction>& response,
+    Teuchos::ParameterList& responseParams);
+
+  //! Destructor
+  ~KLResponseFunction() = default;
+
+  //! Setup response function
+  void setup() override { response->setup(); }
+
+  //! Perform post registration setup (do nothing)
+  void postRegSetup() override {}
   
-    //! Default constructor
-    KLResponseFunction(
-      const Teuchos::RCP<AbstractResponseFunction>& response,
-      Teuchos::ParameterList& responseParams);
+  //! Get the vector space associated with this response
+  Teuchos::RCP<const Thyra_VectorSpace> responseVectorSpace() const override {
+    return response->responseVectorSpace();
+  }
 
-    //! Destructor
-    virtual ~KLResponseFunction();
+  /*! 
+   * \brief Is this response function "scalar" valued, i.e., has a replicated
+   * local response map.
+   */
+  bool isScalarResponse() const override { return response->isScalarResponse(); }
 
-    //! Setup response function
-    virtual void setup() { response->setup(); }
+  //! Create operator for gradient (e.g., dg/dx)
+  Teuchos::RCP<Thyra_LinearOp> createGradientOp() const override {
+    return response->createGradientOp();
+  }
 
-    //! Perform post registration setup (do nothing)
-    virtual void postRegSetup(){};
-    
-    //! Get the map associate with this response - Tpetra version
-    virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
+  //! \name Deterministic evaluation functions
+  //@{
 
-    /*! 
-     * \brief Is this response function "scalar" valued, i.e., has a replicated
-     * local response map.
-     */
-    virtual bool isScalarResponse() const;
+  //! Evaluate responses 
+  void evaluateResponse(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    const Teuchos::RCP<Thyra_Vector>& g) override;
+  
+  //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
+  void evaluateTangent(
+    const double alpha, 
+    const double beta,
+    const double omega,
+    const double current_time,
+    bool sum_derivs,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    ParamVec* deriv_p,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vp,
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& gx,
+    const Teuchos::RCP<Thyra_MultiVector>& gp) override;
 
-    //! Create Tpetra operator for gradient (e.g., dg/dx)
-    virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
+  //! Evaluate distributed parameter derivative dg/dp
+  void evaluateDistParamDeriv(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp) override;
 
-    //! \name Deterministic evaluation functions
-    //@{
+  //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
+  void evaluateDerivative(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    ParamVec* deriv_p,
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
+    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp) override;
+  //@}
 
-    //! Evaluate responses 
-    virtual void evaluateResponse(
-      const double current_time,
-      const Teuchos::RCP<const Thyra_Vector>& x,
-      const Teuchos::RCP<const Thyra_Vector>& xdot,
-      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec>& p,
-      const Teuchos::RCP<Thyra_Vector>& g);
-    
-    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void evaluateTangent(
-      const double alpha, 
-      const double beta,
-      const double omega,
-      const double current_time,
-      bool sum_derivs,
-      const Teuchos::RCP<const Thyra_Vector>& x,
-      const Teuchos::RCP<const Thyra_Vector>& xdot,
-      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      const Teuchos::RCP<const Thyra_MultiVector>& Vx,
-      const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
-      const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
-      const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-      const Teuchos::RCP<Thyra_Vector>& g,
-      const Teuchos::RCP<Thyra_MultiVector>& gx,
-      const Teuchos::RCP<Thyra_MultiVector>& gp);
+protected:
 
-    //! Evaluate distributed parameter derivative dg/dp
-    virtual void evaluateDistParamDeriv(
-      const double current_time,
-      const Teuchos::RCP<const Thyra_Vector>& x,
-      const Teuchos::RCP<const Thyra_Vector>& xdot,
-      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec>& param_array,
-      const std::string& dist_param_name,
-      const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
+  //! Response function we work with
+  Teuchos::RCP<AbstractResponseFunction> response;
 
-    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    virtual void evaluateDerivative(
-      const double current_time,
-      const Teuchos::RCP<const Thyra_Vector>& x,
-      const Teuchos::RCP<const Thyra_Vector>& xdot,
-      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      const Teuchos::RCP<Thyra_Vector>& g,
-      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
-      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
-      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
-      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
-    //@}
+  //! Response parameters
+  Teuchos::ParameterList responseParams;
 
-  private:
+  //! Output stream;
+  Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    //! Private to prohibit copying
-    KLResponseFunction(const KLResponseFunction&);
-    
-    //! Private to prohibit copying
-    KLResponseFunction& operator=(const KLResponseFunction&);
+  //! Number of KL terms
+  int num_kl;
 
-  protected:
-
-    //! Response function we work with
-    Teuchos::RCP<AbstractResponseFunction> response;
-
-    //! Response parameters
-    Teuchos::ParameterList responseParams;
-
-    //! Output stream;
-    Teuchos::RCP<Teuchos::FancyOStream> out;
-
-    //! Number of KL terms
-    int num_kl;
-
-  };
+};
 
 } // namespace Albany
 

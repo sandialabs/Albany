@@ -210,7 +210,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
   out->setProcRankAndSize(comm->getRank(), comm->getSize());
   out->setOutputToRootOnly(0);
 
@@ -219,9 +218,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   if (params->isSublist("Side Set Discretizations"))
   {
     params2D = Teuchos::rcp(new Teuchos::ParameterList(params->sublist("Side Set Discretizations").sublist("basalside")));
-  }
-  else
-  {
+  } else {
     // Old style: the 2D parameter are mixed with the 3D
     params2D = Teuchos::rcp(new Teuchos::ParameterList());
     params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
@@ -244,8 +241,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   LayeredMeshOrdering COLUMN = LayeredMeshOrdering::COLUMN;
 
   bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
-  GO numGlobalVertices2D = 0;
-  bool isTetra = true;
 
   stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
   stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
@@ -289,21 +284,21 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << maxGlobalSides2D << std::endl;
 
   Teuchos::Array<Tpetra_GO> indices(nodes2D.size());
-  for (int i = 0; i < nodes2D.size(); ++i)
+  for (size_t i = 0; i < nodes2D.size(); ++i)
   {
     indices[i] = bulkData2D.identifier(nodes2D[i]) - 1;
   }
   Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
 
   indices.resize(cells2D.size());
-  for (int i=0; i<cells2D.size(); ++i)
+  for (size_t i=0; i<cells2D.size(); ++i)
   {
     indices[i] = bulkData2D.identifier(cells2D[i]) -1;
   }
   Teuchos::RCP<const Tpetra_Map> cells_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
 
   indices.resize(sides2D.size());
-  for (int i=0; i<sides2D.size(); ++i)
+  for (size_t i=0; i<sides2D.size(); ++i)
   {
     indices[i] = bulkData2D.identifier(sides2D[i]) -1;
   }
@@ -330,7 +325,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
 
   std::vector<double> ltr(layerThicknessRatio.size());
-  for(int i=0; i< ltr.size(); ++i) ltr[i]=layerThicknessRatio[i];
+  for(size_t i=0; i< ltr.size(); ++i) {
+    ltr[i]=layerThicknessRatio[i];
+  }
   fieldContainer->getMeshVectorStates()["layer_thickness_ratio"] = ltr;
   fieldContainer->getMeshScalarIntegerStates()["ordering"] = static_cast<int>(Ordering);
   fieldContainer->getMeshScalarIntegerStates()["stride"] = (Ordering==LAYER) ? lVertexColumnShift : vertexLayerShift;
@@ -387,8 +384,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
     std::vector<int> sharing_procs;
     bulkData2D.comm_shared_procs( bulkData2D.entity_key(node2d), sharing_procs );
-    for(int iproc=0; iproc<sharing_procs.size(); ++iproc)
-      bulkData->add_node_sharing(node, sharing_procs[iproc]);
+    for(const int proc : sharing_procs) {
+      bulkData->add_node_sharing(node, proc);
+    }
 
     double* coord = stk::mesh::field_data(*coordinates_field, node);
     double const* coord2d = (double const*) stk::mesh::field_data(*coordinates_field2d, node2d);
@@ -494,8 +492,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   *out << "[ExtrudedSTKMesh] Adding basalside sides... ";
   out->getOStream()->flush();
-  for (int i = 0; i < cells2D.size(); i++) {
-    stk::mesh::Entity elem2d = cells2D[i];
+  for (const auto& elem2d : cells2D) {
     stk::mesh::EntityId elem2d_id = bulkData2D.identifier(elem2d) - 1;
     stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), elem2d_id + 1, singlePartVec);
     stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, elem2d_id * numSubelemOnPrism * elemLayerShift + 1);
@@ -517,8 +514,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   *out << "[ExtrudedSTKMesh] Adding upperside sides... ";
   out->getOStream()->flush();
-  for (int i = 0; i < cells2D.size(); i++) {
-    stk::mesh::Entity elem2d = cells2D[i];
+  for (const auto& elem2d : cells2D) {
     stk::mesh::EntityId elem2d_id = bulkData2D.identifier(elem2d) - 1;
     stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), elem2d_id + upperBasalOffset + 1, singlePartVec);
     stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, elem2d_id * numSubelemOnPrism * elemLayerShift + (numLayers - 1) * numSubelemOnPrism * elemColumnShift + 1 + (numSubelemOnPrism - 1));
@@ -637,27 +633,26 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       continue;
     stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(metaData2D.side_rank()), sides2D);
     singlePartVec[0] = ssPartVec["extruded_"+part->name()];
-    int num_sides = sides2D.size() * numLayers;
-    for (int i = 0; i < num_sides; i++) {
-      int ib = (Ordering == LAYER) * (i % lsideColumnShift) + (Ordering == COLUMN) * (i / sideLayerShift);
-      int il = (Ordering == LAYER) * (i / lsideColumnShift) + (Ordering == COLUMN) * (i % sideLayerShift);
-      stk::mesh::EntityId side2dId = bulkData2D.identifier(sides2D[ib]) - 1;
-      switch (ElemShape) {
-        case Tetrahedron: {
-          stk::mesh::EntityId sideId = 2 * sideColumnShift * il +  2 * side2dId * sideLayerShift + upperBasalOffset + 1;
-          stk::mesh::Entity side0 = bulkData->get_entity(metaData->side_rank(), sideId);
-          stk::mesh::Entity side1 = bulkData->get_entity(metaData->side_rank(), sideId + 1);
-          bulkData->change_entity_parts(side0, singlePartVec);
-          bulkData->change_entity_parts(side1, singlePartVec);
+    for (const auto& side2D : sides2D) {
+      const stk::mesh::EntityId side2dId = bulkData2D.identifier(side2D) - 1;
+      for (int il=0; il<numLayers; ++il) {
+        switch (ElemShape) {
+          case Tetrahedron: {
+            stk::mesh::EntityId sideId = 2 * sideColumnShift * il +  2 * side2dId * sideLayerShift + upperBasalOffset + 1;
+            stk::mesh::Entity side0 = bulkData->get_entity(metaData->side_rank(), sideId);
+            stk::mesh::Entity side1 = bulkData->get_entity(metaData->side_rank(), sideId + 1);
+            bulkData->change_entity_parts(side0, singlePartVec);
+            bulkData->change_entity_parts(side1, singlePartVec);
+          }
+          break;
+          case Wedge:
+          case Hexahedron: {
+            stk::mesh::EntityId sideId = sideColumnShift * il + side2dId * sideLayerShift + upperBasalOffset + 1;
+            stk::mesh::Entity side = bulkData->get_entity(metaData->side_rank(), sideId);
+            bulkData->change_entity_parts(side, singlePartVec);
+          }
+          break;
         }
-        break;
-        case Wedge:
-        case Hexahedron: {
-          stk::mesh::EntityId sideId = sideColumnShift * il + side2dId * sideLayerShift + upperBasalOffset + 1;
-          stk::mesh::Entity side = bulkData->get_entity(metaData->side_rank(), sideId);
-          bulkData->change_entity_parts(side, singlePartVec);
-        }
-        break;
       }
     }
   }
@@ -666,20 +661,19 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   std::vector<stk::mesh::Entity> boundaryNodes2D;
   std::vector<stk::mesh::Entity> nodes;
   for (auto part:nodepartvec) {
-    if(part->primary_entity_rank() != stk::topology::NODE_RANK)
+    if(part->primary_entity_rank() != stk::topology::NODE_RANK) {
       continue;
+    }
     stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(stk::topology::NODE_RANK), boundaryNodes2D);
     singlePartVecLateral[0] = nsPartVec["extruded_"+part->name()];
 
-    int num_nodes = (numLayers + 1) * boundaryNodes2D.size();
-    for (int i = 0; i < num_nodes; i++) {
-      int ib = (Ordering == LAYER) * (i % lVertexColumnShift) + (Ordering == COLUMN) * (i / vertexLayerShift);
-      int il = (Ordering == LAYER) * (i / lVertexColumnShift) + (Ordering == COLUMN) * (i % vertexLayerShift);
-      stk::mesh::EntityId node2dId = bulkData2D.identifier(boundaryNodes2D[ib]) - 1;
-      GO nodeId = il * vertexColumnShift + vertexLayerShift * node2dId + 1;
-      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
-      if(node != stk::mesh::Entity::InvalidEntity )
+    for (const auto& node2D : boundaryNodes2D) {
+      const stk::mesh::EntityId node2dId = bulkData2D.identifier(node2D) - 1;
+      for (int il=0; il<(numLayers+1); ++il) {
+        const GO nodeId = il * vertexColumnShift + vertexLayerShift * node2dId + 1;
+        stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
         bulkData->change_entity_parts(node, singlePartVecLateral);
+      }
     }
   }
 
@@ -719,7 +713,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     ofile << "$Nodes\n" << nodes2D.size() << "\n";
     stk::mesh::Entity node2d;
     stk::mesh::EntityId nodeId;
-    for (int i(0); i<nodes2D.size(); ++i)
+    for (size_t i=0; i<nodes2D.size(); ++i)
     {
       node2d = bulkData2D.get_entity(stk::topology::NODE_RANK, i + 1);
       nodeId = bulkData2D.identifier(nodes2D[i]);
@@ -737,7 +731,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     int counter = 1;
 
     // sides
-    for (int i(0); i<sides2D.size(); ++i)
+    for (size_t i=0; i<sides2D.size(); ++i)
     {
       stk::mesh::Entity const* rel = bulkData2D.begin_nodes(sides2D[i]);
 
@@ -752,7 +746,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     }
 
     // elements
-    for (int i(0); i<cells2D.size(); ++i)
+    for (size_t i=0; i<cells2D.size(); ++i)
     {
       stk::mesh::Entity const* rel = bulkData2D.begin_nodes(cells2D[i]);
       ofile << counter << " " << 2 << " " << 2 << " " << 100 << " " << 11;
@@ -854,8 +848,6 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
                                                                    const std::vector<double>& levelsNormalizedThickness,
                                                                    GO maxGlobalCells2dId, GO maxGlobalNodes2dId)
 {
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
   Teuchos::Array<std::string> node_fields_names, cell_fields_names;
   Teuchos::Array<int> node_fields_ranks, cell_fields_ranks;
   if (params->isParameter("Interpolate Basal Node Layered Fields"))
@@ -1133,8 +1125,6 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
                                                         const std::vector<stk::mesh::Entity>& cells2d,
                                                         GO maxGlobalCells2dId, GO maxGlobalNodes2dId)
 {
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
   Teuchos::Array<std::string> node_fields_names, cell_fields_names;
   Teuchos::Array<int> node_fields_ranks, cell_fields_ranks;
   if (params->isParameter("Extrude Basal Node Fields"))

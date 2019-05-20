@@ -6,7 +6,7 @@
 
 IF(ALBANY_STK) # STK is needed for all these
 
-# Heat Transfer Problems ###############
+  # Heat Transfer Problems ###############
   add_subdirectory(SteadyHeat1D)
   add_subdirectory(SteadyHeat2D)
   add_subdirectory(SteadyHeatConstrainedOpt2D)
@@ -23,13 +23,14 @@ IF(ALBANY_STK) # STK is needed for all these
   add_subdirectory(TransientHeat2D)
   add_subdirectory(HeatEigenvalues)
   add_subdirectory(SideSetLaplacian) # Not 100% sure this requires STK, but I think so
+
   IF(ALBANY_SEACAS)
     IF(ALBANY_PAMGEN)
       add_subdirectory(Heat3DPamgen)
     ENDIF()
     add_subdirectory(Heat2DMMCylWithSource)
     add_subdirectory(HeatQuadTri)
-  #  add_subdirectory(TransientHeat2DTableSource)
+    add_subdirectory(TransientHeat2DTableSource)
     add_subdirectory(Ioss2D)
     add_subdirectory(Ioss3D)
     add_subdirectory(IossRestart)
@@ -38,78 +39,67 @@ IF(ALBANY_STK) # STK is needed for all these
     add_subdirectory(SteadyHeat2DSS)
   ENDIF(ALBANY_SEACAS)
 
+  add_subdirectory(Utils)
 ENDIF(ALBANY_STK)
-
-add_subdirectory(Utils)
 
 IF(ALBANY_SCOREC)
   add_subdirectory(Heat3DPUMI)
 ENDIF()
 
 IF(ALBANY_STK)
-# DEMO PDES ###############
-IF(ALBANY_DEMO_PDES)
-  add_subdirectory(Helmholtz2D)
-  add_subdirectory(LinComprNS)
-  add_subdirectory(AdvDiff)
-  add_subdirectory(ReactDiffSystem)
-  add_subdirectory(ComprNS)
-  add_subdirectory(ODE)
-  add_subdirectory(ThermoElectrostatics2D)
-  add_subdirectory(TekoPrec)
+  # DEMO PDES ###############
+  IF(ALBANY_DEMO_PDES)
+    add_subdirectory(Helmholtz2D)
+    add_subdirectory(LinComprNS)
+    add_subdirectory(AdvDiff)
+    add_subdirectory(ReactDiffSystem)
+    add_subdirectory(ComprNS)
+    add_subdirectory(ODE)
+    add_subdirectory(ThermoElectrostatics2D)
+    # add_subdirectory(TekoPrec)
 
-  # These require exodus, Ioss, stk_io, to read meshes
-  IF(ALBANY_SEACAS)
-    add_subdirectory(CahnHillElast2D)
-    add_subdirectory(NSPoiseuille2D)
-    add_subdirectory(NSRayleighBernard2D)
-    IF(NOT Kokkos_ENABLE_Cuda) # Currently takes too long to run on Ride
-      add_subdirectory(NSVortexShedding2D)
+    # These require exodus, Ioss, stk_io, to read meshes
+    IF(ALBANY_SEACAS)
+      add_subdirectory(CahnHillElast2D)
+      add_subdirectory(NSPoiseuille2D)
+      add_subdirectory(NSRayleighBernard2D)
+      IF(NOT Kokkos_ENABLE_Cuda) # Currently takes too long to run on Ride
+        add_subdirectory(NSVortexShedding2D)
+      ENDIF()
+      add_subdirectory(PNP)
     ENDIF()
-    add_subdirectory(PNP)
-  ENDIF(ALBANY_SEACAS)
 
-  if (ALBANY_ASCR)
-    add_subdirectory(CoupledReactor)
-    add_subdirectory(NSReactor)
-  endif(ALBANY_ASCR)
+    if (ALBANY_ASCR)
+      add_subdirectory(CoupledReactor)
+      add_subdirectory(NSReactor)
+    endif()
 
-ENDIF(ALBANY_DEMO_PDES)
+  ENDIF(ALBANY_DEMO_PDES)
 
 ENDIF(ALBANY_STK)
 
 # LCM ###############
-
 IF(ALBANY_LCM)
-  add_subdirectory(LCM)
-ENDIF(ALBANY_LCM)
-
-# GOAL ##############
-
-IF(ALBANY_GOAL)
-  add_subdirectory(GOAL)
+   add_subdirectory(LCM)
 ENDIF()
 
 IF(ALBANY_STK)
 
-# ATO ##################
+  # ATO ##################
+  IF(ALBANY_ATO)
+    add_subdirectory(ATO)
+  ENDIF()
 
-IF(ALBANY_ATO)
-  add_subdirectory(ATO)
+  # LandIce ##################
+  IF(ALBANY_LANDICE AND ALBANY_SEACAS )
+    add_subdirectory(LandIce)
+  ENDIF()
+
+  # LandIce ##################
+  IF(ALBANY_TSUNAMI AND ALBANY_SEACAS )
+    # add_subdirectory(Tsunami)
+  ENDIF()
+
 ENDIF()
-
-# LandIce ##################
-
-IF(ALBANY_LANDICE AND ALBANY_SEACAS )
-  add_subdirectory(LandIce)
-ENDIF()
-
-# LandIce ##################
-
-IF(ALBANY_TSUNAMI AND ALBANY_SEACAS )
-  add_subdirectory(Tsunami)
-ENDIF()
-
-ENDIF(ALBANY_STK)
 
 ###################

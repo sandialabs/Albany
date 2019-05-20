@@ -17,7 +17,7 @@ namespace LandIce {
  */
   template<typename EvalT, typename Traits, typename ThicknessScalarType>
   class ResponseSMBMismatch :
-    public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
+    public PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT,Traits>
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;

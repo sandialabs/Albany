@@ -70,8 +70,8 @@ NeohookeanKernel<EvalT, Traits>::init(
   tangent = *eval_fields["Material Tangent"];
 
   // std::cout << "field dimension: " << kern.def_grad.extent(2) <<
-  // std::endl; std::cout << "num_dims: " << num_dims_ << std::endl; std::cout <<
-  // "num_pts: " << num_pts_ << std::endl;
+  // std::endl; std::cout << "num_dims: " << num_dims_ << std::endl; std::cout
+  // << "num_pts: " << num_pts_ << std::endl;
 }
 
 template <typename EvalT, typename Traits>

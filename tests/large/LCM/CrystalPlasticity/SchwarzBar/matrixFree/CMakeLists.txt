@@ -22,8 +22,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
  SET(OUTFILE "coupling.exo")
  SET(REF_FILE "coupling.gold.exo")
  add_test(NAME CrystalPlasticity_SchwarzBar_${testName}_np1
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=coupling -DTEST_ARGS=coupling.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+ set_tests_properties(CrystalPlasticity_SchwarzBar_${testName}_np1 PROPERTIES LABELS "LCM;Tpetra;Forward")

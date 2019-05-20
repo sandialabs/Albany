@@ -4,18 +4,19 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #include "AAdapt_ScaledSizeField.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 
 #include "Albany_Utils.hpp"
 
-AAdapt::ScaledSizeField::ScaledSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
+namespace AAdapt
+{
+
+ScaledSizeField::ScaledSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
   MeshAdaptMethod(disc) {
 }
 
-void
-AAdapt::ScaledSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+void ScaledSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
 {
 
   ma::IsotropicFunction*
@@ -29,30 +30,21 @@ AAdapt::ScaledSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& a
   setCommonMeshAdaptOptions(adapt_params_, in);
 
   ma::adapt(in);
-
 }
 
-void
-AAdapt::ScaledSizeField::preProcessOriginalMesh()
+void ScaledSizeField::preProcessOriginalMesh()
 {
-
   scaledIsoFunc.averageEdgeLength_ = ma::getAverageEdgeLength(mesh_struct->getMesh());
-
 }
 
-AAdapt::ScaledSizeField::
-~ScaledSizeField() {
+void ScaledSizeField::preProcessShrunkenMesh() {
 }
 
-void
-AAdapt::ScaledSizeField::preProcessShrunkenMesh() {
-}
-
-void
-AAdapt::ScaledSizeField::setParams(
+void ScaledSizeField::setParams(
     const Teuchos::RCP<Teuchos::ParameterList>& p) {
 
   scaledIsoFunc.factor_ = p->get<double>("Element Size Scaling", 0.7);
 
 }
 
+} // namespace AAdapt

@@ -12,35 +12,24 @@
 
 namespace Albany {
 
-  /*!
-   * \brief Response function implementation for SG and MP functions using
-   * a sampling-based scheme
-   */
-  class SamplingBasedScalarResponseFunction : 
-    public ScalarResponseFunction {
-  public:
-  
-    //! Default constructor
-    SamplingBasedScalarResponseFunction(
-      const Teuchos::RCP<const Teuchos_Comm>& commT) : 
-      ScalarResponseFunction(commT) {};
+/*!
+ * \brief Response function implementation for SG and MP functions using
+ * a sampling-based scheme
+ */
+class SamplingBasedScalarResponseFunction : public ScalarResponseFunction
+{
+public:
 
-    //! Destructor
-    virtual ~SamplingBasedScalarResponseFunction() {};
+  //! Default constructor
+  SamplingBasedScalarResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT) : 
+    ScalarResponseFunction(commT)
+  {
+    // Nothing to be done here
+  }
 
-  private:
-
-    //! Private to prohibit copying
-    SamplingBasedScalarResponseFunction(
-      const SamplingBasedScalarResponseFunction&);
-    
-    //! Private to prohibit copying
-    SamplingBasedScalarResponseFunction& operator=(
-      const SamplingBasedScalarResponseFunction&);
-
-  protected:
-
-  };
+  //! Destructor
+  virtual ~SamplingBasedScalarResponseFunction() = default;
+};
 
 } // namespace Albany
 

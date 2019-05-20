@@ -7,16 +7,18 @@
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Adapt_NodalDataVector.hpp"
+
 #include "Albany_StateManager.hpp"
+#include "PHAL_SaveNodalField.hpp"
 
-#include "Albany_TpetraThyraUtils.hpp"
-
-template<typename EvalT, typename Traits>
-PHAL::SaveNodalFieldBase<EvalT, Traits>::
-SaveNodalFieldBase(Teuchos::ParameterList& p,
-      const Teuchos::RCP<Albany::Layouts>& dl)
+namespace PHAL
 {
 
+template<typename EvalT, typename Traits>
+SaveNodalFieldBase<EvalT, Traits>::
+SaveNodalFieldBase(Teuchos::ParameterList& p,
+                   const Teuchos::RCP<Albany::Layouts>& dl)
+{
   Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem =
     p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
 
@@ -88,10 +90,11 @@ SaveNodalFieldBase(Teuchos::ParameterList& p,
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void PHAL::SaveNodalFieldBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
+void SaveNodalFieldBase<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData /* d */,
+                      PHX::FieldManager<Traits>& /* fm */)
 {
+  // do nawthing ...
 }
 
 // **********************************************************************
@@ -99,36 +102,36 @@ postRegistrationSetup(typename Traits::SetupData d,
 // **********************************************************************
 // **********************************************************************
 template<typename Traits>
-PHAL::
-SaveNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+
+SaveNodalField<AlbanyTraits::Residual, Traits>::
 SaveNodalField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  SaveNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
+  SaveNodalFieldBase<AlbanyTraits::Residual, Traits>(p, dl)
 {
+  // Nothing to be done here
 }
 
 template<typename Traits>
-void PHAL::SaveNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-preEvaluate(typename Traits::PreEvalData workset)
+void SaveNodalField<AlbanyTraits::Residual, Traits>::
+preEvaluate(typename Traits::PreEvalData /* workset */)
 {
-   // do nawthing ...
+  // do nawthing ...
 }
 
 template<typename Traits>
-void PHAL::SaveNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+void SaveNodalField<AlbanyTraits::Residual, Traits>::
+evaluateFields(typename Traits::EvalData /* workset */)
 {
-   // do nawthing ...
+  // do nawthing ...
 }
 
 template<typename Traits>
-void PHAL::SaveNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+void SaveNodalField<AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here is what we might like to save ...
-  // Recall: Albany::get(Const)Tpetra(Multi)Vector returns Teuchos::null if the input is Teuchos::null
-  Teuchos::RCP<const Tpetra_Vector> xT       = Albany::getConstTpetraVector(workset.x);
-  Teuchos::RCP<const Tpetra_Vector> xdotT    = Albany::getConstTpetraVector(workset.xdot);
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT = Albany::getConstTpetraVector(workset.xdotdot);
+  const Teuchos::RCP<const Thyra_Vector> x       = workset.x;
+  const Teuchos::RCP<const Thyra_Vector> xdot    = workset.xdot;
+  const Teuchos::RCP<const Thyra_Vector> xdotdot = workset.xdotdot;
 
   // Note: we are in postEvaluate so all PEs call this
 
@@ -136,17 +139,17 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Adapt::NodalDataVector> node_data =
     this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
 
-  if(this->xName.length() > 0)
+  if(this->xName.length() > 0) {
+    node_data->saveNodalDataVector(this->xName, x, 0);
+  }
 
-    node_data->saveTpetraNodalDataVector(this->xName, xT, 0);
+  if(this->xdotName.length() > 0) {
+    node_data->saveNodalDataVector(this->xdotName, xdot, 0);
+  }
 
-  if(this->xdotName.length() > 0)
-
-    node_data->saveTpetraNodalDataVector(this->xdotName, xdotT, 0);
-
-  if(this->xdotdotName.length() > 0)
-
-    node_data->saveTpetraNodalDataVector(this->xdotdotName, xdotdotT, 0);
-
+  if(this->xdotdotName.length() > 0) {
+    node_data->saveNodalDataVector(this->xdotdotName, xdotdot, 0);
+  }
 }
 
+} // namespace PHAL

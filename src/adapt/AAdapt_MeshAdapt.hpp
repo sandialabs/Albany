@@ -4,33 +4,40 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_MESHADAPT_HPP
-#define AADAPT_MESHADAPT_HPP
+#ifndef AADAPT_MESH_ADAPT_HPP
+#define AADAPT_MESH_ADAPT_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-#include "AAdapt_AbstractAdapterT.hpp"
-#include "Albany_PUMIMeshStruct.hpp"
-#include "Albany_PUMIDiscretization.hpp"
+#include "AAdapt_AbstractAdapter.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
+// Forward declarations
 struct Parma_GroupCode;
+namespace Albany {
+  class PUMIDiscretization;
+}
+namespace apf {
+  class Mesh2;
+}
 
 namespace AAdapt {
-class MeshAdaptMethod;
-namespace rc { class Manager; }
+  // Forward declarations
+  class MeshAdaptMethod;
+  namespace rc { class Manager; }
 
-class MeshAdapt : public AbstractAdapterT {
+class MeshAdapt : public AbstractAdapter {
 public:
   MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
             const Teuchos::RCP<ParamLib>& paramLib_,
             const Albany::StateManager& StateMgr_,
             const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_,
-            const Teuchos::RCP<const Teuchos_Comm>& commT_);
-  ~MeshAdapt();
+            const Teuchos::RCP<const Teuchos_Comm>& comm_);
+
+  ~MeshAdapt() = default;
 
   //! Check adaptation criteria to determine if the mesh needs adapting
   bool queryAdaptationCriteria(int iteration);
@@ -85,4 +92,4 @@ private:
 
 } //namespace AAdapt
 
-#endif //ALBANY_MESHADAPT_HPP
+#endif //ALBANY_MESH_ADAPT_HPP

@@ -22,7 +22,7 @@ LCM:
     Exodus Output File Name: outRigidBodyTranslation.e
     Cubature Degree: 3
     Separate Evaluators by Element Block: true
-    Use Serial Mesh: true
+    Use Serial Mesh: false
   Regression Results:
     Number of Comparisons: 0
     Test Values: [0.01104033]

@@ -279,7 +279,7 @@ CapImplicitModel<EvalT, Traits>::computeState(
           // TEUCHOS_TEST_FOR_EXCEPTION( iter > 20, std::runtime_error,
           // std::endl << "Error in return mapping, iter = "
           //<< iter << "\nres = " << normR << "\nrelres = " << conv <<
-          //std::endl;
+          // std::endl;
 
           std::vector<ScalarT> XXValK = XXVal;
           solver.solve(dRdX, XXValK, R);

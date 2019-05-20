@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #ifndef PHAL_GATHER_SOLUTION_HPP
 #define PHAL_GATHER_SOLUTION_HPP
 
@@ -15,6 +14,8 @@
 
 #include "Albany_Layouts.hpp"
 #include "Albany_DiscretizationUtils.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Dimension.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -35,10 +36,9 @@ namespace PHAL {
 // **************************************************************
 
 template<typename EvalT, typename Traits>
-class GatherSolutionBase
-  : public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+class GatherSolutionBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                           public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
   GatherSolutionBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -70,7 +70,7 @@ protected:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
   Albany::WorksetConn nodeID;
-  Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView, xdotdotT_constView;
+  Albany::DeviceView1d<const ST> x_constView, xdot_constView, xdotdot_constView;
 
   typedef Kokkos::vector<Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device> KV;
   KV val_kokkos, val_dot_kokkos, val_dotdot_kokkos;
@@ -146,9 +146,9 @@ private:
 
   typedef GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits> Base;
   using Base::nodeID;
-  using Base::xT_constView;
-  using Base::xdotT_constView;
-  using Base::xdotdotT_constView;
+  using Base::x_constView;
+  using Base::xdot_constView;
+  using Base::xdotdot_constView;
   using Base::val_kokkos;
   using Base::val_dot_kokkos;
   using Base::val_dotdot_kokkos;
@@ -228,9 +228,9 @@ private:
 
   typedef GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
   using Base::nodeID;
-  using Base::xT_constView;
-  using Base::xdotT_constView;
-  using Base::xdotdotT_constView;
+  using Base::x_constView;
+  using Base::xdot_constView;
+  using Base::xdotdot_constView;
   using Base::val_kokkos;
   using Base::val_dot_kokkos;
   using Base::val_dotdot_kokkos;
@@ -288,7 +288,6 @@ private:
   const std::size_t numFields;
 };
 
-// **************************************************************
-}
+} // namespace PHAL
 
-#endif
+#endif // PHAL_GATHER_SOLUTION_HPP

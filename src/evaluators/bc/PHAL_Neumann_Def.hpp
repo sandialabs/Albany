@@ -774,55 +774,55 @@ Neumann(Teuchos::ParameterList& p)
 }
 
 // **********************************************************************
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-template<typename Traits>
-KOKKOS_INLINE_FUNCTION
-void Neumann<PHAL::AlbanyTraits::Jacobian,Traits>::
-operator()(const Neumann_Tag& , const int& cell) const
-{
-  LO colT[1];
-  LO rowT;
-  ST value[1];
-  int lcol;
-  const int neq = Index.extent(2);
-  const int nunk = neq*this->numNodes;
+// #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+// template<typename Traits>
+// KOKKOS_INLINE_FUNCTION
+// void Neumann<PHAL::AlbanyTraits::Jacobian,Traits>::
+// operator()(const Neumann_Tag& , const int& cell) const
+// {
+//   LO colT[1];
+//   LO rowT;
+//   ST value[1];
+//   int lcol;
+//   const int neq = Index.extent(2);
+//   const int nunk = neq*this->numNodes;
 
-  for (std::size_t node = 0; node < this->numNodes; ++node) {
-    for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+//   for (std::size_t node = 0; node < this->numNodes; ++node) {
+//     for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-      int dim2=this->offset[dim];
-      rowT = Index(cell,node,dim2);
+//       int dim2=this->offset[dim];
+//       rowT = Index(cell,node,dim2);
 
-      if (this->fT != Teuchos::null) {
-         this->fT->sumIntoLocalValue(rowT, this->neumann(cell, node, dim).val());
-      }
+//       if (this->fT != Teuchos::null) {
+//          this->fT->sumIntoLocalValue(rowT, this->neumann(cell, node, dim).val());
+//       }
 
-      // Check derivative array is nonzero
-      if (this->neumann(cell, node, dim).hasFastAccess()) {
-        // Loop over nodes in element
-        for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-          // Loop over equations per node
-          for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-            lcol = neq * node_col + eq_col;
+//       // Check derivative array is nonzero
+//       if (this->neumann(cell, node, dim).hasFastAccess()) {
+//         // Loop over nodes in element
+//         for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+//           // Loop over equations per node
+//           for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+//             lcol = neq * node_col + eq_col;
 
-            // Global column
-            colT[0] =  Index(cell, node_col, eq_col);
-            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
-            if (is_adjoint) {
-              // Sum Jacobian transposed
-              jacobian.sumIntoValues(colT[0], &rowT,1, &value[0], false, true);
-            }
-            else {
-              // Sum Jacobian
-              jacobian.sumIntoValues(rowT, colT, nunk,value, false, true);
-            }
-          } // column equations
-        } // column nodes
-      } // has fast access
-    }
-  }
-}
-#endif
+//             // Global column
+//             colT[0] =  Index(cell, node_col, eq_col);
+//             value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
+//             if (is_adjoint) {
+//               // Sum Jacobian transposed
+//               jacobian.sumIntoValues(colT[0], &rowT,1, &value[0], false, true);
+//             }
+//             else {
+//               // Sum Jacobian
+//               jacobian.sumIntoValues(rowT, colT, nunk,value, false, true);
+//             }
+//           } // column equations
+//         } // column nodes
+//       } // has fast access
+//     }
+//   }
+// }
+// #endif
 
 // **********************************************************************
 template<typename Traits>

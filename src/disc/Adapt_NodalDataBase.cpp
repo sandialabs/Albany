@@ -8,19 +8,28 @@
 
 #include "Adapt_NodalDataVector.hpp"
 
-Adapt::NodalDataBase::NodalDataBase() :
-  nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
-  initialized(false),
-  vectorsize(0)
+namespace Adapt
 {
+
+NodalDataBase::NodalDataBase() :
+  nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
+  vectorsize(0),
+  initialized(false)
+{
+  // Nothing to be done here
 }
 
-void Adapt::NodalDataBase::
+void NodalDataBase::
+updateNodalGraph(const Teuchos::RCP<const Albany::ThyraCrsMatrixFactory>& crsOpFactory)
+{
+  nodalOpFactory = crsOpFactory;
+}
+
+void NodalDataBase::
 registerVectorState(const std::string &stateName, int ndofs) {
   // Save the nodal data field names and lengths in order of allocation which
   // implies access order.
-  NodeFieldSizeMap::const_iterator it;
-  it = nodeVectorMap.find(stateName);
+  auto it = nodeVectorMap.find(stateName);
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     (it != nodeVectorMap.end()), std::logic_error,
@@ -38,52 +47,78 @@ registerVectorState(const std::string &stateName, int ndofs) {
   vectorsize += ndofs;
 }
 
-void Adapt::NodalDataBase::initialize() {
-  if (initialized) return;
+void NodalDataBase::initialize() {
+  if (initialized) {
+    return;
+  }
 
-  if (vectorsize > 0)
+  if (vectorsize > 0) {
     nodal_data_vector = Teuchos::rcp(
-      new Adapt::NodalDataVector(nodeContainer, nodeVectorLayout, nodeVectorMap,
+      new NodalDataVector(nodeContainer, nodeVectorLayout, nodeVectorMap,
                                  vectorsize));
+  }
 
   initialized = true;
 }
 
-void Adapt::NodalDataBase::
-resizeOverlapMap(const Teuchos::Array<Tpetra_GO>& overlap_nodeGIDs,
-                 const Teuchos::RCP<const Teuchos::Comm<int> >& comm_) {
+void NodalDataBase::
+replaceOverlapVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+{
   initialize();
 
   if (Teuchos::nonnull(nodal_data_vector))
-    nodal_data_vector->resizeOverlapMap(overlap_nodeGIDs, comm_);
+    nodal_data_vector->replaceOverlapVectorSpace(vs);
 }
 
-void Adapt::NodalDataBase::
-resizeLocalMap(const Teuchos::Array<Tpetra_GO>& local_nodeGIDs,
-               const Teuchos::RCP<const Teuchos::Comm<int> >& comm_) {
+void NodalDataBase::
+replaceOwnedVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+{
   initialize();
 
-  if (Teuchos::nonnull(nodal_data_vector))
-    nodal_data_vector->resizeLocalMap(local_nodeGIDs, comm_);
+  if (Teuchos::nonnull(nodal_data_vector)) {
+    nodal_data_vector->replaceOwnedVectorSpace(vs);
+  }
 }
 
-void Adapt::NodalDataBase::
+void NodalDataBase::
+replaceOverlapVectorSpace(const Teuchos::Array<GO>& overlap_nodeGIDs,
+                          const Teuchos::RCP<const Teuchos_Comm>& comm_) {
+  initialize();
+
+  if (Teuchos::nonnull(nodal_data_vector)) {
+    nodal_data_vector->replaceOverlapVectorSpace(overlap_nodeGIDs, comm_);
+  }
+}
+
+void NodalDataBase::
+replaceOwnedVectorSpace(const Teuchos::Array<GO>& local_nodeGIDs,
+                        const Teuchos::RCP<const Teuchos_Comm>& comm_) {
+  initialize();
+
+  if (Teuchos::nonnull(nodal_data_vector)) {
+    nodal_data_vector->replaceOwnedVectorSpace(local_nodeGIDs, comm_);
+  }
+}
+
+void NodalDataBase::
 registerManager (const std::string& key,
-                 const Teuchos::RCP<Adapt::NodalDataBase::Manager>& manager) {
+                 const Teuchos::RCP<NodalDataBase::Manager>& manager) {
   TEUCHOS_TEST_FOR_EXCEPTION(
     isManagerRegistered(key), std::logic_error,
     "A manager is already registered with key " << key);
   mgr_map[key] = manager;
 }
 
-bool Adapt::NodalDataBase::isManagerRegistered (const std::string& key) const {
+bool NodalDataBase::isManagerRegistered (const std::string& key) const {
   return mgr_map.find(key) != mgr_map.end();
 }
 
-const Teuchos::RCP<Adapt::NodalDataBase::Manager>& Adapt::NodalDataBase::
+const Teuchos::RCP<NodalDataBase::Manager>& NodalDataBase::
 getManager(const std::string& key) const {
   ManagerMap::const_iterator it = mgr_map.find(key);
   TEUCHOS_TEST_FOR_EXCEPTION(it == mgr_map.end(), std::logic_error,
                              "There is no manager with key " << key);
   return it->second;
 }
+
+} // namespace Adapt

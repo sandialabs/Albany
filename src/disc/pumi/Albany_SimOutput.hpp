@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_SIMOUTPUT_HPP
-#define ALBANY_SIMOUTPUT_HPP
+#ifndef ALBANY_SIM_OUTPUT_HPP
+#define ALBANY_SIM_OUTPUT_HPP
 
 #include "Albany_PUMIOutput.hpp"
 
@@ -16,27 +16,24 @@ class MeshSIM;
 namespace Albany {
 
 class SimOutput : public PUMIOutput {
+public:
 
-  public:
+  SimOutput(const Teuchos::RCP<APFMeshStruct>& meshStruct_,
+            const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
-    SimOutput(const Teuchos::RCP<APFMeshStruct>& meshStruct_,
-              const Teuchos::RCP<const Teuchos_Comm>& commT_);
+  ~SimOutput() = default;
 
-    ~SimOutput();
+  void writeFile(const double time);
+  void setFileName(const std::string& fname);
 
-    void writeFile(const double time);
-    void setFileName(const std::string& fname);
-
-  private:
-    //! Epetra communicator
-    Teuchos::RCP<const Teuchos_Comm> commT;
-    apf::MeshSIM* mesh;
-    std::string filename;
-    int index;
+private:
+  //! Communicator
+  Teuchos::RCP<const Teuchos_Comm> comm;
+  apf::MeshSIM* mesh;
+  std::string filename;
+  int index;
 };
 
-}
+} // namespace Albany
 
-#endif
-
-
+#endif // ALBANY_SIM_OUTPUT_HPP

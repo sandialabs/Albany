@@ -57,9 +57,6 @@ IF(ALBANY_STK)
     # JTO 8/1/2015
     # deactivating HeliumDamage until model robustness issues are resolved
     # add_subdirectory(HeliumDamage)
-    IF(ALBANY_EPETRA AND ALBANY_PERIDIGM)
-      add_subdirectory(PeridigmCoupling)
-    ENDIF()
   ENDIF(ALBANY_SEACAS)
 ENDIF(ALBANY_STK)
 
@@ -82,6 +79,5 @@ IF(ALBANY_SCOREC)
 ENDIF()
 
 IF(ALBANY_STK_PERCEPT)
-  add_subdirectory(Heat2DSTKAdapt)
   add_subdirectory(Necking3DSTKAdapt)
 ENDIF()

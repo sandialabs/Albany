@@ -9,6 +9,8 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
 if (ALBANY_MUELU_EXAMPLES)
-    add_test(${testName} ${AlbanyT.exe} input.yaml)
-    add_test(${testName}_Traction ${AlbanyT.exe} inputTraction.yaml)
+    add_test(${testName} ${Albany.exe} input.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
+    add_test(${testName}_Traction ${Albany.exe} inputTraction.yaml)
+    set_tests_properties(${testName}_Traction PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif ()
