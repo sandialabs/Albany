@@ -885,7 +885,7 @@ endif()
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
 
-MESSAGE("-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
+MESSAGE("\n-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
 
 IF (Albany_BUILD_STATIC_EXE)
   FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})

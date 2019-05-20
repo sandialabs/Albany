@@ -49,9 +49,6 @@
 #cmakedefine ALBANY_MESH_DEPENDS_ON_SOLUTION
 #cmakedefine ALBANY_PARAMETERS_DEPEND_ON_SOLUTION
 
-// Whether to use 64bit integers as Global Ordinals
-#cmakedefine ALBANY_64BIT_INT
-
 // Cuda options
 #cmakedefine ALBANY_CUDA_ERROR_CHECK
 #cmakedefine ALBANY_CUDA_NVTX
