@@ -16,14 +16,14 @@ IF (SEACAS_EPU AND SEACAS_EXODIFF)
 
     createExoDiffTest(${testName}_Epetra nodal_adj.yaml physics_0_mitchell)
     set_tests_properties(${testName}_Epetra PROPERTIES LABELS "ATO;Epetra;Forward")
-
   ENDIF() 
-  # Currently fails exodif test
+
+  # Currently crashes in belos due to nans. I suspect un-initialized vector somewhere
   # IF (ALBANY_IFPACK2)
   #   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_adjT.yaml
   #                  ${CMAKE_CURRENT_BINARY_DIR}/nodal_adjT.yaml COPYONLY)
 
-  #   createExoDiffTest(${testName}_Tpetra nodal_adj.yaml physics_0_mitchell)
+  #   createExoDiffTest(${testName}_Tpetra nodal_adjT.yaml physics_0_mitchellT)
   #   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "ATO;Tpetra;Forward")
   # ENDIF() 
 
@@ -34,15 +34,14 @@ IF (SEACAS_EPU AND SEACAS_EXODIFF)
 
     createExoDiffTest(${testName}_Epetra nodal_fd.yaml physics_0_mitchell)
     set_tests_properties(${testName}_Epetra PROPERTIES LABELS "ATO;Epetra;Forward")
-
   ENDIF() 
-  # Currently fails exodif test
+
+  # Currently crashes in belos due to nans. I suspect un-initialized vector somewhere
   # IF (ALBANY_IFPACK2)
   #   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_fdT.yaml
   #                  ${CMAKE_CURRENT_BINARY_DIR}/nodal_fdT.yaml COPYONLY)
 
-  #   createExoDiffTest(${testName}_Tpetra nodal_fd.yaml physics_0_mitchell)
+  #   createExoDiffTest(${testName}_Tpetra nodal_fdT.yaml physics_0_mitchellT)
   #   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "ATO;Tpetra;Forward")
-
   # ENDIF() 
 ENDIF()
