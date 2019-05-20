@@ -17,7 +17,7 @@ IF (SEACAS_EPU AND SEACAS_EXODIFF)
 
   IF (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fblockT.yaml ${CMAKE_CURRENT_BINARY_DIR}/fblockT.yaml COPYONLY)
-    createExoDiffTest(${testName}_Tpetra fblockT.yaml physics_0_fblock)
+    createExoDiffTest(${testName}_Tpetra fblockT.yaml physics_0_fblockT)
     set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "ATO;Tpetra;Forward")
   ENDIF()
 ENDIF()

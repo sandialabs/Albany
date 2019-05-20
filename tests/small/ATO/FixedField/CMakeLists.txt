@@ -18,7 +18,7 @@ IF (SEACAS_EPU AND SEACAS_EXODIFF)
   # This test currently fails, due to small differences in computed solution
   # IF (ALBANY_IFPACK2)
   #   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pcm_optT.yaml ${CMAKE_CURRENT_BINARY_DIR}/pcm_optT.yaml COPYONLY)
-  #   createExoDiffTest(${testName}_Tpetra pcm_optT.yaml physics_0_pcm_opt)
+  #   createExoDiffTest(${testName}_Tpetra pcm_optT.yaml physics_0_pcm_optT)
   #   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "ATO;Tpetra;Forward")
   # ENDIF()
 ENDIF()

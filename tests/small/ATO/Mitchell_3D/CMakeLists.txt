@@ -22,7 +22,7 @@ IF (SEACAS_EPU AND SEACAS_EXODIFF)
 
   IF (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_ocT.yaml ${CMAKE_CURRENT_BINARY_DIR}/nodal_ocT.yaml COPYONLY)
-    createExoDiffTestWithOutFile(${testName}_Tpetra nodal_ocT.yaml physics_0_mitchell3D_oc exodiff_oc_dp.txt)
+    createExoDiffTestWithOutFile(${testName}_Tpetra nodal_ocT.yaml physics_0_mitchell3D_ocT exodiff_oc_dp.txt)
     set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "ATO;Tpetra;Forward")
   ENDIF()
 
