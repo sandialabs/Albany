@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 LCM:
+  Build Type: Tpetra
   Problem:
     Name: HMC 2D
     Phalanx Graph Visualization Detail: 2

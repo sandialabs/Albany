@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 LCM:
+  Build Type: Tpetra
   Scaling:
     Scale: 10000.000
     Scale BC Dofs: true

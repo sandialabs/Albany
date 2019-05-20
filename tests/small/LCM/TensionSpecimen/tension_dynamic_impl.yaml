@@ -1,4 +1,5 @@
 LCM:
+  Build Type: Tpetra
   Debug Output:
     Write Solution to MatrixMarket: false
     Write Solution to Standard Output: false
