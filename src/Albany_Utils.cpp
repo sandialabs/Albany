@@ -433,8 +433,9 @@ void assert_fail(std::string const& msg) {
 
 BuildType build_type(const BuildType value)
 {
+  // Recall how static local variable work: the following are created (and initialized) only once
   static bool initialized_ = false;
-  static BuildType value_ = value;
+  static BuildType value_ = BuildType::None;
   if (!initialized_ && (value != BuildType::None)) {
     value_ = value;
     initialized_ = true;

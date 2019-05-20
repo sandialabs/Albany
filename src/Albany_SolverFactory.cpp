@@ -106,16 +106,6 @@ SolverFactory(const std::string&                      inputFile,
 
   // do not set default solver parameters for ATO::Solver problems,
   // ... as they handle this themselves
-#if defined(ALBANY_LCM)
-  std::string const problem =
-      appParams->sublist("Problem").get("Name", "Mechanics 3D");
-  bool const is_lcm = problem == "Mechanics 1D" || problem == "Mechanics 2D" ||
-      problem == "Mechanics 3D" || problem == "Elasticity 1D" ||
-      problem == "Elasticity 2D" || problem == "Elasticity 3D" ||
-      problem == "Lame" || problem == "ThermoElasticity 2D" ||
-      problem == "ThermoElasticity 3D";
-  setLCMOnly(is_lcm);
-#endif
   std::string solution_method =
       appParams->sublist("Problem").get("Solution Method", "Steady");
   if (solution_method != "ATO Problem") {
@@ -730,7 +720,15 @@ SolverFactory::getValidAppParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidAppParams"));
 
+#ifdef ALBANY_EPETRA
+  // This configuration can support both Tpetra and Epetra.
+  // Hence, do not set a default build type, and force the user to specify it.
   validPL->set("Build Type", "NONE", "The type of run (e.g., Epetra, Tpetra)");
+#else
+  // This is a Tpetra-only build. We can safely set Tpetra as default build type
+  validPL->set("Build Type", "Tpetra", "The type of run (e.g., Epetra, Tpetra)");
+#endif
+
   validPL->sublist("Problem", false, "Problem sublist");
   validPL->sublist("Debug Output", false, "Debug Output sublist");
   validPL->sublist("Scaling", false, "Jacobian/Residual Scaling sublist");

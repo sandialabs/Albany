@@ -8,7 +8,6 @@
 #define ALBANY_SOLVER_FACTORY_HPP
 
 #include "Albany_Application.hpp"
-#include "Albany_Utils.hpp"
 
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_VectorBase.hpp"
@@ -131,11 +130,6 @@ public:
     return observer_;
   };
 
-#if defined(ALBANY_LCM)
-  void setLCMOnly(bool lcm = false) {is_lcm_only_ = lcm;}
-  bool getLCMOnly() {return is_lcm_only_;}
-#endif
-
 private:
   /** \brief Testing utility that compares two numbers using two tolerances */
   bool scaledCompare (double             x1,
@@ -153,10 +147,6 @@ private:
   Teuchos::RCP<Thyra::ModelEvaluator<ST>> model_;
 
   Teuchos::RCP<Piro::ObserverBase<double>> observer_;
-
-#if defined(ALBANY_LCM)
-  bool is_lcm_only_{false};
-#endif
 
 protected:
   //! Parameter list specifying what solver to create
