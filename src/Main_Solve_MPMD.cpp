@@ -14,8 +14,6 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_CommUtils.hpp"
-#include "Albany_TpetraTypes.hpp"
-#include "Albany_TpetraThyraTypes.hpp"
 
 #include "Piro_PerformSolve.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -108,12 +106,13 @@ class MPMD_App : public Plato::Application
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>> m_solver;
     Teuchos::RCP<Albany::SolverFactory> m_solverFactory;
     Teuchos::RCP<const Teuchos_Comm> m_comm;
-    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector>> m_responses;
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector>>> m_sensitivities;
+    Teuchos::Array<Teuchos::RCP<const Thyra_Vector>> m_responses;
+    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra_MultiVector>>> m_sensitivities;
 
-    Teuchos::RCP<Tpetra_Vector> m_localVector, m_overlapVector;
-    Teuchos::RCP<Tpetra_Import> m_importer;
-    Teuchos::RCP<Tpetra_Export> m_exporter;
+    Teuchos::RCP<Thyra_Vector> m_localVector;
+    Teuchos::RCP<Thyra_Vector> m_overlapVector;
+
+    Teuchos::RCP<Albany::CombineAndScatterManager> m_cas_manager;
 
     pugi::xml_document m_inputTree;
   
@@ -129,9 +128,6 @@ class MPMD_App : public Plato::Application
 int main(int argc, char **argv)
 /******************************************************************************/
 {
-    // Global variable that denotes this is the Tpetra executable
-    static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-
     MPI_Init(&argc, &argv);
 
     Plato::Interface* platoInterface = new Plato::Interface();
@@ -200,7 +196,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
       appParams = Teuchos::createParameterList("Albany Parameters");
     Teuchos::updateParametersFromXmlFileAndBroadcast(cmd.yaml_filename, appParams.ptr(), *m_comm);
 
-    const auto& bt = appParams.get("Build Type","Tpetra");
+    const auto& bt = appParams->get("Build Type","Tpetra");
     if (bt=="Tpetra") {
       // Set the static variable that denotes this as a Tpetra run
       static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
@@ -230,7 +226,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
     
     // send in ParameterList instead of yaml filename 
     m_solverFactory = rcp(new Albany::SolverFactory(appParams, m_comm));
-    m_solver = m_solverFactory->createAndGetAlbanyAppT(m_app, m_comm, m_comm);
+    m_solver = m_solverFactory->createAndGetAlbanyApp(m_app, m_comm, m_comm);
 
     setupTimer = Teuchos::null;
 
@@ -265,15 +261,12 @@ void MPMD_App::initialize()
 
   Albany::StateManager& stateMgr = m_app->getStateMgr();
   Teuchos::RCP<Albany::AbstractDiscretization> disc = stateMgr.getDiscretization();
-  Teuchos::RCP<const Tpetra_Map> localNodeMapT   = disc->getNodeMapT();
-  Teuchos::RCP<const Tpetra_Map> overlapNodeMapT = disc->getOverlapNodeMapT();
+  Teuchos::RCP<const Thyra_VectorSpace> localNodeVS   = disc->getNodeVectorSpace();
+  Teuchos::RCP<const Thyra_VectorSpace> overlapNodeVS = disc->getOverlapNodeVectorSpace();
 
-  m_localVector    = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
-  m_overlapVector  = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
-  m_importer       = Teuchos::rcp(new Tpetra_Import(localNodeMapT, overlapNodeMapT));
-  m_exporter       = Teuchos::rcp(new Tpetra_Export(overlapNodeMapT, localNodeMapT));
-
-
+  m_localVector    = Thyra::createMember(localNodeVS);
+  m_overlapVector  = Thyra::createMember(overlapNodeVS);
+  m_cas_manager    = Albany::createCombineAndScatterManager(localNodeVS,overlapNodeVS);
 
   // parse Operation definition
   //
@@ -361,39 +354,19 @@ bool MPMD_App::isDistParam(std::string localFieldName)
   return false;
 }
 
-void
-tpetraFromThyra( 
-    const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST>>> &thyraResponses,
-    const Teuchos::Array<Teuchos::Array< Teuchos::RCP<const Thyra::MultiVectorBase<ST>>>> &thyraSensitivities,
-    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector>> &responses,
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector>>> &sensitivities);
-
-void
-tpetraFromThyraProdVec(
-    const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST>>> &thyraResponses,
-    const Teuchos::Array<Teuchos::Array< Teuchos::RCP<const Thyra::MultiVectorBase<ST>>>> &thyraSensitivities,
-    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector>> &responses,
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector>>> &sensitivities);
-
-
 /******************************************************************************/
 void
 MPMD_App::compute(const std::string & noOp)
 /******************************************************************************/
 {
 
-    Teuchos::ParameterList &solveParams = m_solverFactory->getAnalysisParameters().sublist("Solve", false);
+  Teuchos::ParameterList &solveParams = m_solverFactory->getAnalysisParameters().sublist("Solve", false);
 
-    Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST>>> thyraResponses;
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST>>>> thyraSensitivities;
+  Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST>>> thyraResponses;
+  Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST>>>> thyraSensitivities;
 
-    Piro::PerformSolve(*m_solver, solveParams, thyraResponses, thyraSensitivities);
-
-    tpetraFromThyra(thyraResponses, thyraSensitivities, m_responses, m_sensitivities);
-
+  Piro::PerformSolve(*m_solver, solveParams, thyraResponses, thyraSensitivities);
 }
-
-
 
 /******************************************************************************/
 void MPMD_App::finalize()
@@ -401,8 +374,6 @@ void MPMD_App::finalize()
 {
   Kokkos::finalize_all();
 }
-
-
 
 /******************************************************************************/
 void MPMD_App::importData(const std::string& name, const Plato::SharedData& sf)
@@ -443,15 +414,15 @@ void MPMD_App::copyFieldIntoState(const std::string& name, const Plato::SharedDa
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = disc->getWsElNodeID();
 
-  m_localVector->putScalar(0.0);
-  Teuchos::ArrayRCP<double> ltopo = m_localVector->get1dViewNonConst(); 
-  int numLocalVals = m_localVector->getLocalLength();
+  m_localVector->assign(0.0);
+  Teuchos::ArrayRCP<double> ltopo = Albany::getNonconstLocalData(m_localVector);
+  int numLocalVals = ltopo.size();
 
   std::vector<double> outVector(numLocalVals);
   sf.getData(outVector);
   ltopo.assign(outVector.begin(),outVector.end());
 
-  m_overlapVector->doImport(*m_localVector, *m_importer, Tpetra::INSERT);
+  m_cas_manager->scatter(m_localVector,m_overlapVector,Albany::CombineMode::INSERT);
   Teuchos::RCP<Albany::NodeFieldContainer>
     nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
   auto it = nodeContainer->find(name+"_node");
@@ -459,15 +430,16 @@ void MPMD_App::copyFieldIntoState(const std::string& name, const Plato::SharedDa
     (*nodeContainer)[name+"_node"]->saveFieldVector(m_overlapVector,/*offset=*/0);
 
   // copy the field into the state manager
-  Teuchos::RCP<const Tpetra_Map> overlapNodeMap = m_overlapVector->getMap();
-  Teuchos::ArrayRCP<double> otopo = m_overlapVector->get1dViewNonConst(); 
+  Teuchos::RCP<const Thyra_VectorSpace> overlapNodeVS = m_overlapVector->space();
+  Teuchos::ArrayRCP<double> otopo = Albany::getNonconstLocalData(m_overlapVector);
   for(int ws=0; ws<numWorksets; ws++){
     Albany::MDArray& wsTopo = dest[ws][name];
-    int numCells = wsTopo.extent(0), numNodes = wsTopo.extent(1);
+    const int numCells = wsTopo.dimension(0);
+    const int numNodes = wsTopo.dimension(1);
     for(int cell=0; cell<numCells; cell++)
       for(int node=0; node<numNodes; node++){
         int gid = wsElNodeID[ws][cell][node];
-        int lid = overlapNodeMap->getLocalElement(gid);
+        int lid = Albany::getLocalElement(overlapNodeVS,gid);
         wsTopo(cell,node) = otopo[lid];
       }
   }
@@ -506,23 +478,25 @@ void MPMD_App::copyFieldFromState(const std::string& name, Plato::SharedData& sf
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = disc->getWsElNodeID();
 
-  m_overlapVector->putScalar(0.0);
+  m_overlapVector->assign(0.0);
 
   // copy the field from the state manager
+  auto data = Albany::getNonconstLocalData(m_overlapVector);
   for(int ws=0; ws<numWorksets; ws++){
     Albany::MDArray& wsSrc = src[ws][name];
-    int numCells = wsSrc.extent(0);
-    int numNodes = wsSrc.extent(1);
+    const int numCells = wsSrc.dimension(0);
+    const int numNodes = wsSrc.dimension(1);
     for(int cell=0; cell<numCells; cell++)
       for(int node=0; node<numNodes; node++) {
-        m_overlapVector->sumIntoGlobalValue(wsElNodeID[ws][cell][node],wsSrc(cell,node));
+        int lid = Albany::getLocalElement(m_overlapVector->space(),wsElNodeID[ws][cell][node]);
+        data[lid] += wsSrc(cell,node);
       }
   }
 
-  m_localVector->putScalar(0.0);
-  m_localVector->doExport(*m_overlapVector, *m_exporter, Tpetra::ADD);
-  Teuchos::ArrayRCP<double> ltopo = m_localVector->get1dViewNonConst(); 
-  int numLocalVals = m_localVector->getLocalLength();
+  m_localVector->assign(0.0);
+  m_cas_manager->combine(m_overlapVector,m_localVector,Albany::CombineMode::ADD);
+  Teuchos::ArrayRCP<double> ltopo = Albany::getNonconstLocalData(m_localVector);
+  int numLocalVals = ltopo.size();
   std::vector<double> inVector(ltopo.begin(),ltopo.end());
   sf.setData(inVector);
 
@@ -530,7 +504,7 @@ void MPMD_App::copyFieldFromState(const std::string& name, Plato::SharedData& sf
     nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
   auto it = nodeContainer->find(name+"_node");
   if(it != nodeContainer->end()){
-    m_overlapVector->doImport(*m_localVector, *m_importer, Tpetra::INSERT);
+    m_cas_manager->scatter(m_localVector,m_overlapVector,Albany::CombineMode::INSERT);
     (*nodeContainer)[name+"_node"]->saveFieldVector(m_overlapVector,/*offset=*/0);
   }
 }
@@ -546,8 +520,6 @@ void MPMD_App::copyFieldFromDistParam(const std::string& name, Plato::SharedData
 {
 }
 
-
-
 /******************************************************************************/
 void MPMD_App::exportDataMap(const Plato::data::layout_t & aDataLayout, 
                              std::vector<int> & aMyOwnedGlobalIDs)
@@ -556,11 +528,11 @@ void MPMD_App::exportDataMap(const Plato::data::layout_t & aDataLayout,
 
     if(aDataLayout == Plato::data::layout_t::SCALAR_FIELD)
     {
-      auto map = m_localVector->getMap();
-      int numLocalVals = map->getNodeNumElements();
+      auto spmd_vs = Albany::getSpmdVectorSpace(m_localVector->space());
+      int numLocalVals = spmd_vs->localSubDim();
       aMyOwnedGlobalIDs.resize(numLocalVals);
       for(int lid=0; lid<numLocalVals; lid++){
-        aMyOwnedGlobalIDs[lid] = map->getGlobalElement(lid)+1; // Albany's gids start from 0
+        aMyOwnedGlobalIDs[lid] = Albany::getGlobalElement(spmd_vs,lid)+1; // Albany's gids start from 0
       }
     }
 }
@@ -643,50 +615,4 @@ MPMD_App::~MPMD_App()
   Albany::APFMeshStruct::finalize_libraries();
 #endif
 
-}
-
-/******************************************************************************/
-void
-tpetraFromThyra(
-    const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST>>> &thyraResponses,
-    const Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST>>>> &thyraSensitivities,
-    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector>> &responses,
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector>>> &sensitivities) 
-/******************************************************************************/
-{
-  responses.clear();
-  responses.reserve(thyraResponses.size());
-  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST>>>
-      ThyraResponseArray;
-  for (ThyraResponseArray::const_iterator it_begin = thyraResponses.begin(),
-                                          it_end = thyraResponses.end(),
-                                          it = it_begin;
-       it != it_end; ++it) {
-    responses.push_back(
-        Teuchos::nonnull(*it) ? ConverterT::getConstTpetraVector(*it)
-                              : Teuchos::null);
-  }
-
-  sensitivities.clear();
-  sensitivities.reserve(thyraSensitivities.size());
-  typedef Teuchos::Array<
-      Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST>>>>
-      ThyraSensitivityArray;
-  for (ThyraSensitivityArray::const_iterator
-           it_begin = thyraSensitivities.begin(),
-           it_end = thyraSensitivities.end(), it = it_begin;
-       it != it_end; ++it) {
-    ThyraSensitivityArray::const_reference sens_thyra = *it;
-    Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector>> sens;
-    sens.reserve(sens_thyra.size());
-    for (ThyraSensitivityArray::value_type::const_iterator
-             jt = sens_thyra.begin(),
-             jt_end = sens_thyra.end();
-         jt != jt_end; ++jt) {
-      sens.push_back(
-          Teuchos::nonnull(*jt) ? ConverterT::getConstTpetraMultiVector(*jt)
-                                : Teuchos::null);
-    }
-    sensitivities.push_back(sens);
-  }
 }
