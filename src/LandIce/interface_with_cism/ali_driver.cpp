@@ -302,6 +302,12 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
 #define COMPUTE_SENS_AND_RESP
     } 
     else if (bt=="Epetra") {
+#ifndef ALBANY_EPETRA
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                                 "Error! You are attempting to run CALI with 'Build Type = Epetra', \n"
+                                 "but Albany was configured with -DALBANY_EPETRA=OFF.  To run with this \n" 
+                                 "build time, rebuild Albany with -DALBANY_EPETRA=ON.\n"); 
+#endif
       // Set the static variable that denotes this as a Epetra run
       static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
       //if we have an epetra build but no reduced comm, compute sensitivities
