@@ -88,7 +88,7 @@ int Albany_Dakota(int argc, char *argv[])
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
                                "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
-                               "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+                               "       Valid choices are 'Epetra', 'Tpetra'.\n");
   }
 
   // Connect vtune for performance profiling

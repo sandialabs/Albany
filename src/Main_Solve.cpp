@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
                                  "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
-                                 "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+                                 "       Valid choices are 'Epetra', 'Tpetra'.\n");
     }
 
     RCP<Albany::Application> app;

@@ -319,7 +319,7 @@ void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
                                  "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
-                                 "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+                                 "       Valid choices are 'Epetra', 'Tpetra'.\n");
     }
 
     parameterList = Teuchos::rcp(&slvrfctry->getParameters(),false);

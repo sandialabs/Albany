@@ -206,7 +206,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
                                  "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
-                                 "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+                                 "       Valid choices are 'Epetra', 'Tpetra'.\n");
     }
 
     Teuchos::ParameterList& probParams = appParams->sublist("Problem",false);

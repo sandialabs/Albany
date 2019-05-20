@@ -364,7 +364,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
                                "Error! Invalid choice (" + bt + ") for 'Build Type'.\n"
-                               "       Valid choicses are 'Epetra', 'Tpetra'.\n");
+                               "       Valid choices are 'Epetra', 'Tpetra'.\n");
   }
 
   paramList->set("Overwrite Nominal Values With Final Point", true);
