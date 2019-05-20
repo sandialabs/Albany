@@ -396,7 +396,7 @@ namespace Aeras
     Teuchos::RCP<Thyra_MultiVector>
     getSolutionMV(const bool overlapped=false) const override;
 
-    void setResidualField(const Thyra_Vector& residual) override;
+    void setResidualField(const Thyra_Vector& residual);
 
     //Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const override {return stkMeshStruct;}
