@@ -543,13 +543,14 @@ STKDiscretization::getCoordinates() const
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
       stkMeshStruct->getCoordinatesField();
 
+  const int meshDim = stkMeshStruct->numDim;
   for (int i = 0; i < numOverlapNodes; i++) {
     GO  node_gid = gid(overlapnodes[i]);
     int node_lid = getLocalElement(m_overlap_vs,node_gid);
 
     double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
-    for (int dim= 0; dim<stkMeshStruct->numDim; ++dim)
-      coordinates[3 * node_lid + dim] = x[dim];
+    for (int dim= 0; dim<meshDim; ++dim)
+      coordinates[meshDim * node_lid + dim] = x[dim];
   }
 
   return coordinates;
