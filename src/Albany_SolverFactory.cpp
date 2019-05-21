@@ -114,6 +114,16 @@ SolverFactory(const std::string&                      inputFile,
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
   }
 
+  if (!appParams->isParameter("Build Type")) {
+    if (comm->getRank()==0) {
+      *out << "\nWARNING! You have not set the entry 'Build Type' in the input file. This will cause Albany to *assume* a Tpetra build.\n"
+           << "         If that's not ok, and you specified Epetra-based solvers/preconditioners, you will get an dynamic cast error like this:\n"
+           << "\n"
+           << "           dyn_cast<Thyra::EpetraLinearOpBase>(Thyra::LinearOpBase<double>) : Error, the object with the concrete type 'Thyra::TpetraLinearOp<[Some Template Args]>' (passed in through the interface type 'Thyra::LinearOpBase<double>')  does not support the interface 'Thyra::EpetraLinearOpBase' and the dynamic cast failed!\n"
+           << "\n"
+           << "         If that happens, all you have to do is to set 'Build Type: Epetra' in the main level of your input yaml file.\n\n";
+    }
+  }
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(), 0);
   if (appParams->isSublist("Debug Output")) {
     Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
@@ -142,6 +152,16 @@ SolverFactory(const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
   }
 
+  if (!appParams->isParameter("Build Type")) {
+    if (comm->getRank()==0) {
+      *out << "\nWARNING! You have not set the entry 'Build Type' in the input parameter list. This will cause Albany to *assume* a Tpetra build.\n"
+           << "         If that's not ok, and you specified Epetra-based solvers/preconditioners, you will get an dynamic cast error like this:\n"
+           << "\n"
+           << "           dyn_cast<Thyra::EpetraLinearOpBase>(Thyra::LinearOpBase<double>) : Error, the object with the concrete type 'Thyra::TpetraLinearOp<[Some Template Args]>' (passed in through the interface type 'Thyra::LinearOpBase<double>')  does not support the interface 'Thyra::EpetraLinearOpBase' and the dynamic cast failed!\n"
+           << "\n"
+           << "         If that happens, all you have to do is to set 'Build Type: Epetra' in the main level of your parameter list.\n\n";
+    }
+  }
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(), 0);
   if (appParams->isSublist("Debug Output")) {
     Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
@@ -720,14 +740,7 @@ SolverFactory::getValidAppParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidAppParams"));
 
-#ifdef ALBANY_EPETRA
-  // This configuration can support both Tpetra and Epetra.
-  // Hence, do not set a default build type, and force the user to specify it.
-  validPL->set("Build Type", "NONE", "The type of run (e.g., Epetra, Tpetra)");
-#else
-  // This is a Tpetra-only build. We can safely set Tpetra as default build type
   validPL->set("Build Type", "Tpetra", "The type of run (e.g., Epetra, Tpetra)");
-#endif
 
   validPL->sublist("Problem", false, "Problem sublist");
   validPL->sublist("Debug Output", false, "Debug Output sublist");
