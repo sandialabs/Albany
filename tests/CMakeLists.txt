@@ -22,6 +22,11 @@ IF (ALBANY_SEACAS)
          NAMES algebra
          PATHS ${ALBANY_SEACAS_PATH}
     )
+    find_program(
+         SEACAS_DECOMP
+         NAMES decomp
+         PATHS ${ALBANY_SEACAS_PATH}
+    )
   ELSE()
     find_program(
          SEACAS_EPU
@@ -38,10 +43,16 @@ IF (ALBANY_SEACAS)
          NAMES algebra
          PATHS ${Trilinos_BIN_DIRS} ENV PATH
     )
+    find_program(
+         SEACAS_DECOMP
+         NAMES decomp
+         PATHS ${Trilinos_BIN_DIRS} ENV PATH
+    )
   ENDIF()
-  MESSAGE("-- SEACAS_EPU = ${SEACAS_EPU}")
-  MESSAGE("-- SEACAS_EXODIFF = ${SEACAS_EXODIFF}")
   MESSAGE("-- SEACAS_ALGEBRA = ${SEACAS_ALGEBRA}")
+  MESSAGE("-- SEACAS_DECOMP  = ${SEACAS_DECOMP}")
+  MESSAGE("-- SEACAS_EPU     = ${SEACAS_EPU}")
+  MESSAGE("-- SEACAS_EXODIFF = ${SEACAS_EXODIFF}")
 ENDIF()
 
 

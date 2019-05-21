@@ -5,6 +5,12 @@ get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if (ALBANY_IOPX)
   set (USE_SERIAL_MESH "true")
 else ()
+  # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
+  # OR execute with only one rank.
+  IF (NOT ALBANY_DECOMP AND ALBANY_MPI AND ${MPINP} GREATER 1)
+    MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
+  ENDIF()
+
   set (USE_SERIAL_MESH "false")
 endif()
 
@@ -13,13 +19,30 @@ endif()
 ####################################
 
 set (testName ${testNameRoot}_PopulateMeshes)
-set (popMeshName ${testName})
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_populate_meshes.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_populate_meshes.yaml)
 
 add_test(${testName} ${Albany.exe} input_fo_gis_populate_meshes.yaml)
-set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
+# If Iopx is not present, we must decompose the input mesh first
+IF (NOT ALBANY_IOPX AND ALBANY_MPI)
+  add_test (NAME FO_GIS_decompMesh
+            COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} gis_unstruct_2d.exo
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
+  set_tests_properties (FO_GIS_decompMesh PROPERTIES FIXTURES_SETUP meshSetup)
+
+  set_tests_properties(${testName}
+                       PROPERTIES
+                       LABELS            "LandIce;Epetra;Forward"
+                       FIXTURES_SETUP    PopulateMeshes
+                       FIXTURES_REQUIRED meshSetup)
+ELSE ()
+  set_tests_properties(${testName}
+                       PROPERTIES
+                       LABELS         "LandIce;Epetra;Forward"
+                       FIXTURES_SETUP PopulateMeshes)
+ENDIF()
+
 
 ####################################
 ###        Unstruct tests        ###
@@ -32,15 +55,19 @@ if (ALBANY_EPETRA)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct.yaml)
   add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_unstruct.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES DEPENDS ${popMeshName})
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
+  set_tests_properties(${testName}_Epetra
+                       PROPERTIES
+                       LABELS            "LandIce;Epetra;Forward"
+                       FIXTURES_REQUIRED PopulateMeshes)
 
   # Restart
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_restart.yaml)
   add_test(${testName}_Restart ${Albany.exe} input_fo_gis_unstruct_restart.yaml)
-  set_tests_properties(${testName}_Restart PROPERTIES DEPENDS ${testName})
-  set_tests_properties(${testName}_Restart PROPERTIES LABELS "LandIce;Epetra;Forward")
+  set_tests_properties(${testName}_Restart
+                       PROPERTIES
+                       LABELS "LandIce;Epetra;Forward"
+                       FIXTURES_REQUIRED PopulateMeshes)
 endif()
 
 if (ALBANY_IFPACK2)
@@ -48,15 +75,19 @@ if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstructT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstructT.yaml)
   add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_unstructT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES DEPENDS ${popMeshName})
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  set_tests_properties(${testName}_Tpetra
+                       PROPERTIES
+                       LABELS "LandIce;Tpetra;Forward"
+                       FIXTURES_REQUIRED PopulateMeshes)
 
   # Performance run
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_perfT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_perfT.yaml)
   add_test(${testName}_Performance ${Albany.exe} input_fo_gis_unstruct_perfT.yaml)
-  set_tests_properties(${testName}_Performance PROPERTIES DEPENDS ${popMeshName})
-  set_tests_properties(${testName}_Performance PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  set_tests_properties(${testName}_Performance
+                       PROPERTIES
+                       LABELS "LandIce;Tpetra;Forward"
+                       FIXTURES_REQUIRED PopulateMeshes)
 endif()
 
 ####################################
