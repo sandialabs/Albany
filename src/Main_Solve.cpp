@@ -133,13 +133,6 @@ int main(int argc, char *argv[])
     std::string solnMethod =
         slvrfctry.getParameters().sublist("Problem").get<std::string>(
             "Solution Method");
-    if (solnMethod == "Transient Tempus No Piro") {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true, Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  Please run AlbanyTempus executable with Solution "
-                 "Method = Transient Tempus No Piro.\n");
-    }
     Teuchos::ParameterList &solveParams =
         slvrfctry.getAnalysisParameters().sublist(
             "Solve", /*mustAlreadyExist =*/false);

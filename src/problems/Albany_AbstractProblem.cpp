@@ -174,8 +174,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 
   // Deprecated parameters, kept solely for backward compatibility
   validPL->set<bool>("Compute Sensitivities", true, "Deprecated; Use parameter located under \"Piro\"/\"Analysis\"/\"Solve\" instead.");
-  validPL->set<bool>("Stochastic", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
-  validPL->sublist("Stochastic Galerkin", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
 
   // NOX status test that allows constutive models to cut the global time step
   // needed at the Problem scope when running Schwarz coupling
