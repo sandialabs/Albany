@@ -99,8 +99,8 @@ class MPMD_App : public Plato::Application
     bool isElemNodeState(std::string localFieldName);
     bool isDistParam(std::string localFieldName);
 
-    bool addField(pugi::xml_node&);
-    bool addValue(pugi::xml_node&);
+    void addField(pugi::xml_node&);
+    void addValue(pugi::xml_node&);
 
     // data
     Teuchos::RCP<Albany::Application> m_app;
@@ -187,7 +187,7 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
     auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
         *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
-    m_comm = Albany::getDefaultComm();
+    m_comm = Albany::createTeuchosCommFromMpiComm(localComm);
 
     // Connect vtune for performance profiling
     if (cmd.vtune) { Albany::connect_vtune(m_comm->getRank()); }
@@ -294,7 +294,7 @@ void MPMD_App::initialize()
 }
 
 /******************************************************************************/
-bool MPMD_App::addValue(pugi::xml_node& inputNode)
+void MPMD_App::addValue(pugi::xml_node& inputNode)
 /******************************************************************************/
 {
   string argumentName = Plato::Parse::getString(inputNode,"ArgumentName");
@@ -312,7 +312,7 @@ bool MPMD_App::addValue(pugi::xml_node& inputNode)
 }
 
 /******************************************************************************/
-bool MPMD_App::addField(pugi::xml_node& inputNode)
+void MPMD_App::addField(pugi::xml_node& inputNode)
 /******************************************************************************/
 {
   string argumentName = Plato::Parse::getString(inputNode,"ArgumentName");
@@ -349,7 +349,7 @@ bool MPMD_App::isElemNodeState(std::string localFieldName)
   return false;
 }
 /******************************************************************************/
-bool MPMD_App::isDistParam(std::string localFieldName)
+bool MPMD_App::isDistParam(std::string /* localFieldName */)
 /******************************************************************************/
 {
   return false;
@@ -357,7 +357,7 @@ bool MPMD_App::isDistParam(std::string localFieldName)
 
 /******************************************************************************/
 void
-MPMD_App::compute(const std::string & noOp)
+MPMD_App::compute(const std::string & /* noOp */)
 /******************************************************************************/
 {
 
@@ -497,7 +497,6 @@ void MPMD_App::copyFieldFromState(const std::string& name, Plato::SharedData& sf
   m_localVector->assign(0.0);
   m_cas_manager->combine(m_overlapVector,m_localVector,Albany::CombineMode::ADD);
   Teuchos::ArrayRCP<double> ltopo = Albany::getNonconstLocalData(m_localVector);
-  int numLocalVals = ltopo.size();
   std::vector<double> inVector(ltopo.begin(),ltopo.end());
   sf.setData(inVector);
 
@@ -511,12 +510,14 @@ void MPMD_App::copyFieldFromState(const std::string& name, Plato::SharedData& sf
 }
 
 /******************************************************************************/
-void MPMD_App::copyFieldIntoDistParam(const std::string& name, const Plato::SharedData& sf)
+void MPMD_App::copyFieldIntoDistParam(const std::string& /* name */,
+                                      const Plato::SharedData& /* sf */)
 /******************************************************************************/
 {
 }
 /******************************************************************************/
-void MPMD_App::copyFieldFromDistParam(const std::string& name, Plato::SharedData& sf)
+void MPMD_App::copyFieldFromDistParam(const std::string& /* name */,
+                                      Plato::SharedData& /* sf */)
 /******************************************************************************/
 {
 }
