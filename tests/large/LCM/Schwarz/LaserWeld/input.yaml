@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 LCM:
-  Build Type: Tpetra
   Coupled System:
     Model Input Files: [modelLaserWeldHolder0.yaml, modelLaserWeldGauge.yaml, modelLaserWeldHolder1.yaml]
   Debug Output:

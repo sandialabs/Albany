@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 LCM:
-  Build Type: Tpetra
   Problem:
     Name: Total Lagrangian ThermoPoroPlasticity 3D
     Solution Method: Continuation

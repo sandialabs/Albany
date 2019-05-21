@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 LCM:
-  Build Type: Tpetra
   Debug Output:
     Write Jacobian to MatrixMarket: -1
     Write Jacobian to Standard Output: 0

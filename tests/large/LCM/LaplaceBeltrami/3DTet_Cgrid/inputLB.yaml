@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 LCM:
-  Build Type: Tpetra
   Problem:
     Name: LaplaceBeltrami 3D
     Method: LaplaceBeltrami
