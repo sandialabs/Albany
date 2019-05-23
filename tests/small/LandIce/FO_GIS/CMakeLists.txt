@@ -4,14 +4,14 @@ get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # This variable will be set in the input files during the 'configure_file' call
 if (ALBANY_IOPX)
   set (USE_SERIAL_MESH "true")
-else ()
+#IKT 5/22/19 - commenting out for now as this is leading to compilation error
+#else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-  IF (NOT ALBANY_DECOMP AND ALBANY_MPI AND ${MPINP} GREATER 1)
-    MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
-  ENDIF()
-
-  set (USE_SERIAL_MESH "false")
+#  IF (ALBANY_MPI AND ${MPINP} GREATER 1)
+#    MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
+#  ENDIF()
+# set (USE_SERIAL_MESH "false")
 endif()
 
 ####################################
