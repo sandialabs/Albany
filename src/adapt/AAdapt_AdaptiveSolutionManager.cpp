@@ -9,6 +9,7 @@
 #if defined(ALBANY_STK)
 #include "AAdapt_CopyRemesh.hpp"
 #if defined(ALBANY_LCM) && defined(ALBANY_BGL)
+#include "AAdapt_Erosion.hpp"
 #include "AAdapt_TopologyModification.hpp"
 #endif
 #if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
@@ -165,6 +166,12 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
         stateMgr_,
         comm_));
   } else
+  if (method == "Erosion") {
+      adapter_ = Teuchos::rcp(new Erosion(adaptParams_,
+          paramLib_,
+          stateMgr_,
+          comm_));
+    } else
 # endif
 #endif
 
