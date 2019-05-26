@@ -161,7 +161,8 @@ set (GCC_DBG_MPI_DIR $ENV{MPI_HOME})
 
 set (BOOST_ROOT /projects/albany)
 set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.1)
-set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang)
+#set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang)
+set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang/boost_1_55_0_clang)
 
 SET (INTEL_MPI_DIR $ENV{MPI_HOME})
 SET (MPI_BIN_DIR $ENV{MPI_BIN})
