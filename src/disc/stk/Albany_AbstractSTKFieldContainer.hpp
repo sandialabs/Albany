@@ -119,8 +119,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   IntScalarFieldType*
   getBoundaryIndicator(stk::topology::rank_t rank)
   {
-    auto const boundary_rank = boundary_indicator[rank]->entity_rank();
-    assert(boundary_rank == rank);
     return boundary_indicator[rank];
   }
 #endif  // ALBANY_LCM
