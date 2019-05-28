@@ -894,9 +894,9 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
       Teuchos::VerboseObjectBase::getDefaultOStream();
 
   // IKT, note to self: in original Tpetra code, we had the following
-  // fillComplete. mgr_->mass_linear_op->linear_op()->fillComplete(); This is not
-  // needed in the Thyra code b/c fillComplete gets called in createOp(), which
-  // we call on mgr_->mass_linear_op->linear_op() in preEvaluate.
+  // fillComplete. mgr_->mass_linear_op->linear_op()->fillComplete(); This is
+  // not needed in the Thyra code b/c fillComplete gets called in createOp(),
+  // which we call on mgr_->mass_linear_op->linear_op() in preEvaluate.
 
   // Right now, ip_field and mass_linear_op->linear_op() have the same
   // overlapping (row) map.

@@ -9,8 +9,8 @@
 
 #include <ROL_MiniTensor_MiniSolver.hpp>
 #include "CrystalPlasticityFwd.hpp"
-#include "NonlinearSolver.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
+#include "NonlinearSolver.hpp"
 
 namespace CP {
 

@@ -21,7 +21,7 @@ class ElastoViscoplasticModel : public LCM::ConstitutiveModel<EvalT, Traits>
   using DepFieldMap = typename Base::DepFieldMap;
   using FieldMap    = typename Base::FieldMap;
 
-  using ScalarT = typename EvalT::ScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
   typedef typename Sacado::Fad::DFad<ScalarT> Fad;
 

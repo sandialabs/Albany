@@ -48,7 +48,7 @@ class AnalyticMassResidualBase : public PHX::EvaluatorWithBaseImpl<Traits>,
   evaluateFields(typename Traits::EvalData d) = 0;
 
  protected:
-  using ScalarT = typename EvalT::ScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
   /// Local function: return row of analytic composite tet local mass

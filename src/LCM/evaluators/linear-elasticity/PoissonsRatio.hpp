@@ -33,7 +33,7 @@ class PoissonsRatio : public PHX::EvaluatorWithBaseImpl<Traits>,
                       public Sacado::ParameterAccessor<EvalT, SPL_Traits>
 {
  public:
-  using ScalarT = typename EvalT::ScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
   PoissonsRatio(Teuchos::ParameterList& p);

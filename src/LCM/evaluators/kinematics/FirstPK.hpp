@@ -26,7 +26,7 @@ class FirstPK : public PHX::EvaluatorWithBaseImpl<Traits>,
                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
  public:
-  using ScalarT = typename EvalT::ScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
   ///

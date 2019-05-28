@@ -160,7 +160,7 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
   // Construct BC evaluators for all possible names of conditions
   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not
   // both
-  std::vector<std::string> condNames(3);  // dudx, dudy, dudz, dudn, P
+  std::vector<std::string>       condNames(3);  // dudx, dudy, dudz, dudn, P
   Teuchos::ArrayRCP<std::string> dof_names(1);
   dof_names[0] = "Displacement";
 

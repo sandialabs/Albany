@@ -50,7 +50,7 @@ class BifurcationCheck : public PHX::EvaluatorWithBaseImpl<Traits>,
   evaluateFields(typename Traits::EvalData d);
 
  private:
-  using ScalarT = typename EvalT::ScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
   typedef typename Sacado::mpl::apply<FadType, ScalarT>::type  DFadType;
   typedef typename Sacado::mpl::apply<FadType, DFadType>::type D2FadType;

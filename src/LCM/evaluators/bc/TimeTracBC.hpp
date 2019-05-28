@@ -21,7 +21,7 @@ template <typename EvalT, typename Traits>
 class TimeTracBC_Base : public PHAL::Neumann<EvalT, Traits>
 {
  public:
-  using ScalarT = typename EvalT::ScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
   TimeTracBC_Base(Teuchos::ParameterList& p);

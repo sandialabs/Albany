@@ -25,7 +25,7 @@ class MooneyRivlinModel : public LCM::ConstitutiveModel<EvalT, Traits>
   using DepFieldMap = typename Base::DepFieldMap;
   using FieldMap    = typename Base::FieldMap;
 
-  using ScalarT = typename EvalT::ScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
