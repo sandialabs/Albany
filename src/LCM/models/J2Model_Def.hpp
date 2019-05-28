@@ -139,9 +139,6 @@ J2Model<EvalT, Traits>::computeState(
   Albany::MDArray Fpold   = (*workset.stateArrayPtr)[Fp_string + "_old"];
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
-  //#if !defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) ||
-  // defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
-
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
   ScalarT sq23(std::sqrt(2. / 3.));
