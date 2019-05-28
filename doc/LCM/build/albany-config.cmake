@@ -10,7 +10,6 @@ set(OPTS
 "-DENABLE_LAMENT:BOOL=OFF"
 "-DENABLE_CHECK_FPE:BOOL=@lcm_fpe_switch@"
 "-DENABLE_FLUSH_DENORMALS:BOOL=@lcm_denormal_switch@"
-"-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=@lcm_enable_kokkos_devel@"
 "-DALBANY_ENABLE_FORTRAN:BOOL=OFF"
 "@lcm_package_dir@"
 )
