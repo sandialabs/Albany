@@ -31,7 +31,7 @@ class CapImplicitModel : public LCM::ConstitutiveModel<EvalT, Traits>
   using FieldMap    = typename Base::FieldMap;
 
   typedef typename EvalT::ScalarT                              ScalarT;
-  typedef typename EvalT::MeshScalarT                          MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
   typedef typename Sacado::mpl::apply<FadType, ScalarT>::type  DFadType;
   typedef typename Sacado::mpl::apply<FadType, DFadType>::type D2FadType;
 

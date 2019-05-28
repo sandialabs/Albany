@@ -22,7 +22,7 @@ class ElastoViscoplasticModel : public LCM::ConstitutiveModel<EvalT, Traits>
   using FieldMap    = typename Base::FieldMap;
 
   typedef typename EvalT::ScalarT             ScalarT;
-  typedef typename EvalT::MeshScalarT         MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
   typedef typename Sacado::Fad::DFad<ScalarT> Fad;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;

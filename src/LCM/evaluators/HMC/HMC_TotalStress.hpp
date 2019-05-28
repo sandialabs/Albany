@@ -42,7 +42,7 @@ class TotalStress : public PHX::EvaluatorWithBaseImpl<Traits>,
 
  private:
   typedef typename EvalT::ScalarT                                ScalarT;
-  typedef typename EvalT::MeshScalarT                            MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
   typedef PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> cHMC2Tensor;
 
   ///
