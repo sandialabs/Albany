@@ -33,7 +33,7 @@ class EquilibriumConcentrationBC_Base
     : public PHAL::DirichletBase<EvalT, Traits>
 {
  public:
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
   EquilibriumConcentrationBC_Base(Teuchos::ParameterList& p);
   void
   computeBCs(ScalarT& pressure, ScalarT& Cval);

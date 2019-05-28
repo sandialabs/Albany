@@ -26,7 +26,7 @@ class TLElasResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                     public Sacado::ParameterAccessor<EvalT, SPL_Traits>
 {
  public:
-  typedef typename EvalT::ScalarT     ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
   TLElasResid(const Teuchos::ParameterList& p);

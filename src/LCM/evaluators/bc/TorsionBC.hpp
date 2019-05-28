@@ -36,7 +36,7 @@ template <typename EvalT, typename Traits>
 class TorsionBC_Base : public PHAL::DirichletBase<EvalT, Traits>
 {
  public:
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
   TorsionBC_Base(Teuchos::ParameterList& p);
   void
   computeBCs(double* coord, ScalarT& Xval, ScalarT& Yval, const RealType time);

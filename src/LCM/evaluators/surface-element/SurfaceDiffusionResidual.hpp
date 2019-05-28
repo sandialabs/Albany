@@ -41,7 +41,7 @@ class SurfaceDiffusionResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   evaluateFields(typename Traits::EvalData d);
 
  private:
-  typedef typename EvalT::ScalarT     ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
   // Input:

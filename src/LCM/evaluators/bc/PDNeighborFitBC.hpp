@@ -36,7 +36,7 @@ template <typename EvalT, typename Traits>
 class PDNeighborFitBC_Base : public PHAL::DirichletBase<EvalT, Traits>
 {
  public:
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
   PDNeighborFitBC_Base(Teuchos::ParameterList& p);
 
  protected:

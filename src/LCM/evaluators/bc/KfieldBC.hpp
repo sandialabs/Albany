@@ -37,7 +37,7 @@ template <typename EvalT, typename Traits>
 class KfieldBC_Base : public PHAL::DirichletBase<EvalT, Traits>
 {
  public:
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
   KfieldBC_Base(Teuchos::ParameterList& p);
   ScalarT&
   getValue(const std::string& n);

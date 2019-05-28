@@ -20,7 +20,7 @@ template <typename EvalT, typename Traits>
 class LocalNonlinearSolver_Base
 {
  public:
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
   LocalNonlinearSolver_Base();
   ~LocalNonlinearSolver_Base(){};
   Teuchos::LAPACK<int, RealType> lapack;

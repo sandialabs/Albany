@@ -45,7 +45,7 @@ template <typename EvalT, typename Traits>
 class StrongSchwarzBC_Base : public PHAL::SDirichlet<EvalT, Traits>
 {
  public:
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
 
   StrongSchwarzBC_Base(Teuchos::ParameterList& p);
 

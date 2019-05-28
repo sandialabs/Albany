@@ -26,7 +26,7 @@ class AnisotropicViscoplasticModel
   using DepFieldMap = typename Base::DepFieldMap;
   using FieldMap    = typename Base::FieldMap;
 
-  typedef typename EvalT::ScalarT     ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
