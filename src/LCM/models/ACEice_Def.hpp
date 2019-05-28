@@ -68,6 +68,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setDependentField("Yield Strength", dl->qp_scalar);
   setDependentField("Delta Time", dl->workset_scalar);
   setDependentField("ACE Temperature", dl->qp_scalar);
+  setDependentField("boundary_indicator", dl->cell_scalar);
 
   // define the evaluated fields
   setEvaluatedField("ACE Ice Saturation", dl->qp_scalar);
@@ -84,7 +85,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setEvaluatedField(Fp_string, dl->qp_tensor);
   setEvaluatedField(eqps_string, dl->qp_scalar);
   setEvaluatedField(yieldSurface_string, dl->qp_scalar);
-  setEvaluatedField("boundary_indicator", dl->cell_scalar);
 
   // define the state variables
 
@@ -238,30 +238,30 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   std::string F_string            = field_name_map_["F"];
   std::string J_string            = field_name_map_["J"];
 
-  def_grad_          = *input_fields[F_string];
-  J_                 = *input_fields[J_string];
-  elastic_modulus_   = *input_fields["Elastic Modulus"];
-  hardening_modulus_ = *input_fields["Hardening Modulus"];
-  poissons_ratio_    = *input_fields["Poissons Ratio"];
-  yield_strength_    = *input_fields["Yield Strength"];
-  delta_time_        = *input_fields["Delta Time"];
-  temperature_       = *input_fields["ACE Temperature"];
+  def_grad_           = *input_fields[F_string];
+  J_                  = *input_fields[J_string];
+  elastic_modulus_    = *input_fields["Elastic Modulus"];
+  hardening_modulus_  = *input_fields["Hardening Modulus"];
+  poissons_ratio_     = *input_fields["Poissons Ratio"];
+  yield_strength_     = *input_fields["Yield Strength"];
+  delta_time_         = *input_fields["Delta Time"];
+  temperature_        = *input_fields["ACE Temperature"];
+  boundary_indicator_ = *input_fields["boundary_indicator"];
 
-  stress_             = *output_fields[cauchy_string];
-  Fp_                 = *output_fields[Fp_string];
-  eqps_               = *output_fields[eqps_string];
-  yield_surf_         = *output_fields[yieldSurface_string];
-  ice_saturation_     = *output_fields["ACE Ice Saturation"];
-  density_            = *output_fields["ACE Density"];
-  heat_capacity_      = *output_fields["ACE Heat Capacity"];
-  thermal_cond_       = *output_fields["ACE Thermal Conductivity"];
-  thermal_inertia_    = *output_fields["ACE Thermal Inertia"];
-  water_saturation_   = *output_fields["ACE Water Saturation"];
-  porosity_           = *output_fields["ACE Porosity"];
-  tdot_               = *output_fields["ACE Temperature Dot"];
-  failed_             = *output_fields["ACE Failure Indicator"];
-  exposure_time_      = *output_fields["ACE Exposure Time"];
-  boundary_indicator_ = *output_fields["boundary_indicator"];
+  stress_           = *output_fields[cauchy_string];
+  Fp_               = *output_fields[Fp_string];
+  eqps_             = *output_fields[eqps_string];
+  yield_surf_       = *output_fields[yieldSurface_string];
+  ice_saturation_   = *output_fields["ACE Ice Saturation"];
+  density_          = *output_fields["ACE Density"];
+  heat_capacity_    = *output_fields["ACE Heat Capacity"];
+  thermal_cond_     = *output_fields["ACE Thermal Conductivity"];
+  thermal_inertia_  = *output_fields["ACE Thermal Inertia"];
+  water_saturation_ = *output_fields["ACE Water Saturation"];
+  porosity_         = *output_fields["ACE Porosity"];
+  tdot_             = *output_fields["ACE Temperature Dot"];
+  failed_           = *output_fields["ACE Failure Indicator"];
+  exposure_time_    = *output_fields["ACE Exposure Time"];
 
   // get State Variables
   Fp_old_             = (*workset.stateArrayPtr)[Fp_string + "_old"];
@@ -399,6 +399,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const element_size           = element_size_;
   ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
 
+  std::cout << "*** BOUNDARY INDICATOR: " << boundary_indicator_(cell) << '\n';
   //
   // Thermal calculation
   //

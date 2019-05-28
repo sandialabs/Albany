@@ -7,10 +7,9 @@
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_OrdinarySTKFieldContainer_Def.hpp"
 
-namespace Albany
-{
+namespace Albany {
 
 template class OrdinarySTKFieldContainer<true>;
 template class OrdinarySTKFieldContainer<false>;
 
-} // namespace Albany
+}  // namespace Albany

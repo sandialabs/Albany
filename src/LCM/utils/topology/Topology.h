@@ -694,7 +694,7 @@ class Topology
     return *(pisft);
   }
 
-  IntScalarFieldType&
+  ScalarFieldType&
   get_boundary_indicator_field(stk::mesh::EntityRank rank)
   {
     auto& asms  = get_stk_mesh_struct();
@@ -802,9 +802,9 @@ class Topology
   void
   set_failure_state(stk::mesh::Entity e, FailureState const fs)
   {
-    auto& bulk_data                            = get_bulk_data();
-    auto const rank                                 = bulk_data.entity_rank(e);
-    auto& failure_field                        = get_failure_state_field(rank);
+    auto&      bulk_data                       = get_bulk_data();
+    auto const rank                            = bulk_data.entity_rank(e);
+    auto&      failure_field                   = get_failure_state_field(rank);
     *(stk::mesh::field_data(failure_field, e)) = static_cast<int>(fs);
   }
 
@@ -830,7 +830,7 @@ class Topology
     auto&      bulk_data      = get_bulk_data();
     auto const rank           = bulk_data.entity_rank(e);
     auto&      boundary_field = get_boundary_indicator_field(rank);
-    *(stk::mesh::field_data(boundary_field, e)) = static_cast<int>(bi);
+    *(stk::mesh::field_data(boundary_field, e)) = static_cast<double>(bi);
   }
 
   //

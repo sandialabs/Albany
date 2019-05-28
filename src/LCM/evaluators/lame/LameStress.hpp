@@ -42,7 +42,7 @@ class LameStressBase : public PHX::EvaluatorWithBaseImpl<Traits>,
 
  protected:
   typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   // Protected function for stress calc, only for RealType
   void

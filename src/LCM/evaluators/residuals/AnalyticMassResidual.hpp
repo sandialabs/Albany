@@ -49,7 +49,7 @@ class AnalyticMassResidualBase : public PHX::EvaluatorWithBaseImpl<Traits>,
 
  protected:
   typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   /// Local function: return row of analytic composite tet local mass
   std::vector<RealType>

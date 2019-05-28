@@ -52,7 +52,7 @@ class HeliumODEs : public PHX::EvaluatorWithBaseImpl<Traits>,
 
  private:
   typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   ///
   /// Input: total_concentration - addition of lattice and trapped

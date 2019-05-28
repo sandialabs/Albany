@@ -34,7 +34,7 @@ class ElasticModulus : public PHX::EvaluatorWithBaseImpl<Traits>,
 {
  public:
   typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   ElasticModulus(Teuchos::ParameterList& p);
 

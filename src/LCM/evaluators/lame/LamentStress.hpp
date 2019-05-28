@@ -36,7 +36,7 @@ class LamentStress : public PHX::EvaluatorWithBaseImpl<Traits>,
 
  protected:
   typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   // Input:
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defGradField;

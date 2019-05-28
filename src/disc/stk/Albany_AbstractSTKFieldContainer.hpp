@@ -9,20 +9,20 @@
 
 #include "Albany_config.h"
 
-#include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_RCP.hpp"
 
 // This include is added in Tpetra branch to get all the necessary
 // Tpetra includes (e.g., Tpetra_Vector.hpp, Tpetra_Map.hpp, etc.)
 #include "Albany_DataTypes.hpp"
 
+#include "Albany_AbstractFieldContainer.hpp"
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
-#include "Albany_AbstractFieldContainer.hpp"
 
+#include <stk_mesh/base/CoordinateSystems.hpp>
 #include <stk_mesh/base/Field.hpp>
 #include <stk_mesh/base/FieldTraits.hpp>
-#include <stk_mesh/base/CoordinateSystems.hpp>
 
 namespace Albany {
 
@@ -116,7 +116,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   {
     return failure_state[rank];
   }
-  IntScalarFieldType*
+  ScalarFieldType*
   getBoundaryIndicator(stk::topology::rank_t rank)
   {
     return boundary_indicator[rank];
@@ -199,9 +199,12 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
     return nodal_parameter_sis;
   }
 
-  virtual bool hasResidualField() const = 0;
-  virtual bool hasSphereVolumeField() const = 0;
-  virtual bool hasLatticeOrientationField() const = 0;
+  virtual bool
+  hasResidualField() const = 0;
+  virtual bool
+  hasSphereVolumeField() const = 0;
+  virtual bool
+  hasLatticeOrientationField() const = 0;
 
   std::map<std::string, double>&
   getTime()
@@ -209,33 +212,74 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
     return time;
   }
 
-  virtual void fillSolnVector(Thyra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void fillVector(Thyra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
-                          const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs, const NodalDOFManager& nodalDofManager) = 0;
-  virtual void fillSolnMultiVector(Thyra_MultiVector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void saveVector(const Thyra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
-                          const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs, const NodalDOFManager& nodalDofManager) = 0;
-  virtual void saveSolnVector(const Thyra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void saveSolnVector(const Thyra_Vector& soln, const Thyra_Vector& soln_dot, stk::mesh::Selector& sel,
-                              const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void saveSolnVector(const Thyra_Vector& soln, const Thyra_Vector& soln_dot,const Thyra_Vector& soln_dotdot, stk::mesh::Selector& sel,
-                              const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void saveResVector(const Thyra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void saveSolnMultiVector(const Thyra_MultiVector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+  virtual void
+  fillSolnVector(
+      Thyra_Vector&                                soln,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+  virtual void
+  fillVector(
+      Thyra_Vector&                                field_vector,
+      const std::string&                           field_name,
+      stk::mesh::Selector&                         field_selection,
+      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
+      const NodalDOFManager&                       nodalDofManager) = 0;
+  virtual void
+  fillSolnMultiVector(
+      Thyra_MultiVector&                           soln,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+  virtual void
+  saveVector(
+      const Thyra_Vector&                          field_vector,
+      const std::string&                           field_name,
+      stk::mesh::Selector&                         field_selection,
+      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
+      const NodalDOFManager&                       nodalDofManager) = 0;
+  virtual void
+  saveSolnVector(
+      const Thyra_Vector&                          soln,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+  virtual void
+  saveSolnVector(
+      const Thyra_Vector&                          soln,
+      const Thyra_Vector&                          soln_dot,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+  virtual void
+  saveSolnVector(
+      const Thyra_Vector&                          soln,
+      const Thyra_Vector&                          soln_dot,
+      const Thyra_Vector&                          soln_dotdot,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+  virtual void
+  saveResVector(
+      const Thyra_Vector&                          res,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+  virtual void
+  saveSolnMultiVector(
+      const Thyra_MultiVector&                     soln,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
 
-  virtual void transferSolutionToCoords() = 0;
+  virtual void
+  transferSolutionToCoords() = 0;
 
-protected:
-
-  // Note: for 3d meshes, coordinates_field3d==coordinates_field (they point to the same field).
-  //       Otherwise, coordinates_field3d stores coordinates in 3d (useful for non-flat 2d meshes)
-  VectorFieldType* coordinates_field3d;
-  VectorFieldType* coordinates_field;
+ protected:
+  // Note: for 3d meshes, coordinates_field3d==coordinates_field (they point to
+  // the same field).
+  //       Otherwise, coordinates_field3d stores coordinates in 3d (useful for
+  //       non-flat 2d meshes)
+  VectorFieldType*    coordinates_field3d;
+  VectorFieldType*    coordinates_field;
   IntScalarFieldType* proc_rank_field;
   IntScalarFieldType* refine_field;
 #if defined(ALBANY_LCM)
   IntScalarFieldType* failure_state[stk::topology::ELEMENT_RANK + 1];
-  IntScalarFieldType* boundary_indicator[stk::topology::ELEMENT_RANK + 1];
+  ScalarFieldType*    boundary_indicator[stk::topology::ELEMENT_RANK + 1];
 #endif  // ALBANY_LCM
 
   SphereVolumeFieldType*
@@ -261,6 +305,6 @@ protected:
   std::map<std::string, double> time;
 };
 
-} // namespace Albany
+}  // namespace Albany
 
-#endif // ALBANY_ABSTRACT_STK_FIELD_CONTAINER_HPP
+#endif  // ALBANY_ABSTRACT_STK_FIELD_CONTAINER_HPP

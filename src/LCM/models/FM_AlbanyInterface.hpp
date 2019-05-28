@@ -31,7 +31,7 @@ class FerroicDriver : public LCM::ConstitutiveModel<EvalT, Traits>
   using FieldMap    = typename Base::FieldMap;
 
   typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   using LCM::ConstitutiveModel<EvalT, Traits>::num_dims_;
   using LCM::ConstitutiveModel<EvalT, Traits>::num_pts_;

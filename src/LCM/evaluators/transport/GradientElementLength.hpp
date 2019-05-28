@@ -48,7 +48,7 @@ class GradientElementLength : public PHX::EvaluatorWithBaseImpl<Traits>,
 
  private:
   typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   ///
   /// Input: unit scalar gradient

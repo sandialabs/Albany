@@ -26,7 +26,7 @@ class J2FiberModel : public LCM::ConstitutiveModel<EvalT, Traits>
   using FieldMap    = typename Base::FieldMap;
 
   typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
   using ConstitutiveModel<EvalT, Traits>::num_pts_;

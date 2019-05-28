@@ -22,7 +22,7 @@ class RigidContactBC_Base : public PHAL::Neumann<EvalT, Traits>
 {
  public:
   typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   RigidContactBC_Base(Teuchos::ParameterList& p);
 

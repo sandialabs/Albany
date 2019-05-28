@@ -33,11 +33,14 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ACEiceMiniKernel&
   operator=(ACEiceMiniKernel const&) = delete;
 
-  using ScalarT          = typename EvalT::ScalarT;
-  using ScalarField      = PHX::MDField<ScalarT>;
-  using ConstScalarField = PHX::MDField<ScalarT const>;
-  using BaseKernel       = ParallelKernel<EvalT, Traits>;
-  using Workset          = typename BaseKernel::Workset;
+  using ScalarT              = typename EvalT::ScalarT;
+  using MeshScalarT          = typename EvalT::MeshScalarT;
+  using ScalarField          = PHX::MDField<ScalarT>;
+  using IntField             = PHX::MDField<int>;
+  using ConstScalarField     = PHX::MDField<ScalarT const>;
+  using ConstIntField        = PHX::MDField<int const>;
+  using BaseKernel           = ParallelKernel<EvalT, Traits>;
+  using Workset              = typename BaseKernel::Workset;
 
   using BaseKernel::field_name_map_;
   using BaseKernel::num_dims_;
@@ -65,6 +68,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField poissons_ratio_;
   ConstScalarField yield_strength_;
   ConstScalarField temperature_;
+  ConstScalarField boundary_indicator_;
 
   // Output MDFields
   ScalarField density_;
@@ -77,7 +81,6 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ScalarField tdot_;
   ScalarField failed_;
   ScalarField exposure_time_;
-  ScalarField boundary_indicator_;
 
   // Mechanical MDFields
   ScalarField eqps_;
