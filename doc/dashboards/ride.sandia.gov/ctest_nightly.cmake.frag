@@ -280,7 +280,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
     "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
-    "-DTrilinos_ENABLE_Teko:BOOL=ON"
+    "-DTrilinos_ENABLE_Teko:BOOL=OFF"
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
     "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
