@@ -5,13 +5,13 @@ get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if (ALBANY_IOPX)
   set (USE_SERIAL_MESH "true")
 #IKT 5/22/19 - commenting out for now as this is leading to compilation error
-#else ()
+else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-#  IF (ALBANY_MPI AND ${MPINP} GREATER 1)
-#    MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
-#  ENDIF()
-# set (USE_SERIAL_MESH "false")
+  IF (ALBANY_MPI AND NOT ${ALBANY_SEACAS_PATH})
+    MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
+  ENDIF()
+ set (USE_SERIAL_MESH "false")
 endif()
 
 ####################################
