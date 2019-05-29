@@ -102,11 +102,4 @@ ANONYMOUS:
           Explicit Array: '{1.1, 1.1}'
         Parameter Lower Bounds: 
           Explicit Array: '{0.0, 0.0}'
-      OptiPack: 
-        Max Num Iterations: 20
-        Objective Gradient Tol: 9.99999999999999955e-07
-        Solver Type: FR
-      GlobiPack: 
-        Minimize: 
-          Max Iterations: 8
 ...

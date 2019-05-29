@@ -40,13 +40,3 @@ if (ALBANY_DAKOTA AND ALBANY_EPETRA)
   endif ()
 endif()
 
-# Repeat process for Analysis problems
-if (ALBANY_EPETRA)
-  set (testName ${testNameRoot}_OptiPack)
-
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.yaml COPYONLY)
-
-  add_test(${testName} ${AlbanyAnalysis.exe} inputAnalysis.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "Epetra;Analysis;OptiPack")
-endif()
