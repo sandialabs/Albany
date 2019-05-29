@@ -15,8 +15,8 @@ ANONYMOUS:
     Initial Condition: 
       Function: Constant
       Function Data: [1.50000000000000000e+00]
-    Thermal Conductivity: 
-      Thermal Conductivity Type: Constant
+    ThermalConductivity: 
+      ThermalConductivity Type: Constant
       Value: 3.00000000000000000e+00
     Source Functions: 
       Quadratic: 
@@ -30,7 +30,7 @@ ANONYMOUS:
       Parameter 4: DBC on NS nodelist_5 for DOF T
       Parameter 5: DBC on NS nodelist_6 for DOF T
       Parameter 6: Quadratic Nonlinear Factor
-      Parameter 7: Thermal Conductivity
+      Parameter 7: ThermalConductivity
     Response Functions: 
       Number: 1
       Response 0: Solution Two Norm

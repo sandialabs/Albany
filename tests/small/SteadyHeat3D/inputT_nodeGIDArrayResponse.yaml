@@ -15,8 +15,8 @@ ANONYMOUS:
     Initial Condition: 
       Function: Constant
       Function Data: [1.50000000000000000e+00]
-    Thermal Conductivity: 
-      Thermal Conductivity Type: Constant
+    ThermalConductivity: 
+      ThermalConductivity Type: Constant
       Value: 3.00000000000000000e+00
     Source Functions: 
       Quadratic: 

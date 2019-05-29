@@ -29,7 +29,7 @@ ANONYMOUS:
       ResponseParams 1: 
         Field Rank: Scalar
         Scaling: 1.49999999999999994e-01
-        Source Field Name: Thermal Conductivity
+        Source Field Name: ThermalConductivity
         Target Field Name: ZERO
   Discretization: 
     Method: Exodus

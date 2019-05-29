@@ -217,7 +217,7 @@ Albany::HeatProblem::constructEvaluators(
   { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Thermal Conductivity");
+    p->set<string>("QP Variable Name", "ThermalConductivity");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
@@ -225,7 +225,7 @@ Albany::HeatProblem::constructEvaluators(
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     //p->set<RCP<DistributedParameterLibrary> >("Distributed Parameter Library", distParamLib);
-    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
+    Teuchos::ParameterList& paramList = params->sublist("ThermalConductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     // Here we assume that the instance of this problem applies on a single element block
@@ -268,7 +268,7 @@ Albany::HeatProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList);
     Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
     std::string stateName = "thermal_conductivity";
-    std::string fieldName = "Thermal Conductivity";
+    std::string fieldName = "ThermalConductivity";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
 
     //Gather parameter (similarly to what done with the solution)
@@ -351,10 +351,10 @@ Albany::HeatProblem::constructEvaluators(
     p->set<bool>("Have Absorption", haveAbsorption);
     p->set<string>("Source Name", "Source");
 
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<string>("ThermalConductivity Name", "ThermalConductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Absorption Name", "Thermal Conductivity");
+    p->set<string>("Absorption Name", "ThermalConductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");

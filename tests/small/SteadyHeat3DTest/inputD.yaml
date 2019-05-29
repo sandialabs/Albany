@@ -10,14 +10,14 @@ ANONYMOUS:
       DBC on NS nodelist_1 for DOF T: 0.00000000000000000e+00
     Neumann BCs: 
       NBC on SS surface_3 for DOF T set radiate: [6.00000000000000000e+02, 3.7257824143070044e-8]
-    Thermal Conductivity: 
-      Thermal Conductivity Type: Constant
+    ThermalConductivity: 
+      ThermalConductivity Type: Constant
       Value: 5.00000000000000000e+01
     Parameters: 
       Number: 3
       Parameter 0: DBC on NS nodelist_1 for DOF T
       Parameter 1: 'NBC on SS surface_3 for DOF T set radiate[0]'
-      Parameter 2: Thermal Conductivity
+      Parameter 2: ThermalConductivity
   Discretization: 
     Method: Pamgen
     Exodus Output File Name: beamD.exo

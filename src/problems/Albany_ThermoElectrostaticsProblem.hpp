@@ -200,7 +200,7 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
   { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("QP Variable Name", "Thermal Conductivity");
+    p->set<string>("QP Variable Name", "ThermalConductivity");
     p->set<string>("QP Variable Name 2", "Permittivity");  // really electrical conductivity
     p->set<string>("QP Variable Name 3", "Rho Cp"); 
     p->set<string>("Coordinate Vector Name", "Coord Vec");
@@ -271,7 +271,7 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
 
     p->set<bool>("Have Absorption", false);
 
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<string>("ThermalConductivity Name", "ThermalConductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");

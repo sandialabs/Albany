@@ -36,8 +36,8 @@ constant thermal conductivity was being used, and its value was 5.0:
 
 <ParameterList name="Problem">
    ...
-    <ParameterList name="Thermal Conductivity">
-       <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+    <ParameterList name="ThermalConductivity">
+       <Parameter name="ThermalConductivity Type" type="string" value="Constant"/>
        <Parameter name="Value" type="double" value="5.0"/>
     </ParameterList>
 </ParameterList>
@@ -73,7 +73,7 @@ public:
 
 private:
 
-//! Validate the name strings under "Thermal Conductivity" section in xml input file,
+//! Validate the name strings under "ThermalConductivity" section in xml input file,
   Teuchos::RCP<const Teuchos::ParameterList>
                getValidThermalCondParameters() const;
 

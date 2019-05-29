@@ -457,13 +457,13 @@ Albany::NavierStokes::constructEvaluators(
   if (haveHeatEq) { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Thermal Conductivity");
+    p->set<string>("Material Property Name", "ThermalConductivity");
     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
+    Teuchos::ParameterList& paramList = params->sublist("ThermalConductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
@@ -982,7 +982,7 @@ Albany::NavierStokes::constructEvaluators(
     //Input
     p->set<string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Contravarient Metric Tensor Name", "Gc"); 
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<string>("ThermalConductivity Name", "ThermalConductivity");
     p->set<string>("Density QP Variable Name", "Density");
     p->set<string>("Specific Heat QP Variable Name", "Specific Heat");
 
@@ -1068,7 +1068,7 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
     p->set<string>("Density QP Variable Name", "Density");
     p->set<string>("Specific Heat QP Variable Name", "Specific Heat");
-    p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<string>("ThermalConductivity Name", "ThermalConductivity");
     if(number_of_time_deriv == 0)
        p->set<bool>("Disable Transient", true);
     

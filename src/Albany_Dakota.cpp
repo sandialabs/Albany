@@ -57,14 +57,22 @@ int Albany_Dakota(int argc, char *argv[])
 
   int p_index = dakotaParams.get("Parameter Vector Index", 0);
   int g_index = dakotaParams.get("Response Vector Index", 0);
-
+ 
+  std::cout << "IKT here!" << std::endl;
+  std::cout << "IKT dakota_input_file = " << dakota_input_file << "\n"; 
+  std::cout << "IKT dakota_output_file = " << dakota_output_file << "\n"; 
+  std::cout << "IKT dakota_restart_file = " << dakota_restart_file << "\n"; 
+  std::cout << "IKT dakota_error_file = " << dakota_error_file << "\n"; 
+  std::cout << "IKT dakRestartIn = " << dakRestartIn << "\n"; 
+  std::cout << "IKT dakotaRestartEvals = " << dakotaRestartEvals << "\n"; 
+ 
   // Construct driver
   TriKota::Driver dakota(dakota_input_file,
                          dakota_output_file,
                          dakota_restart_file,
                          dakota_error_file,
                          dakRestartIn, dakotaRestartEvals );
-
+  std::cout << "IKT here2" << std::endl; 
   // Construct a ModelEvaluator for your application with the
   // MPI_Comm chosen by Dakota. This example ModelEvaluator
   // only takes an input file name and MPI_Comm to construct,
@@ -78,7 +86,9 @@ int Albany_Dakota(int argc, char *argv[])
   RCP<const Teuchos_Comm> appComm = Albany::createTeuchosCommFromMpiComm(analysis_comm);
 
   RCP<Albany::SolverFactory> slvrfctry = rcp(new Albany::SolverFactory(cmd.yaml_filename, appComm));
+  std::cout << "IKT here3" << std::endl; 
   const auto& bt = slvrfctry->getParameters().get("Build Type","Tpetra");
+  std::cout << "IKT bt = " << bt << std::endl; 
   if (bt=="Tpetra") {
     // Set the static variable that denotes this as a Tpetra run
     static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));

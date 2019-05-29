@@ -43,7 +43,7 @@ TEProp(Teuchos::ParameterList& p) :
   for (int i=0; i<dbl_elecCs.size(); i++) elecCs[i] = dbl_elecCs[i];
 
   thermCs  = Teuchos::getArrayFromStringParameter<double> (*teprop_list,
-                           "Thermal Conductivity", mats, true);
+                           "ThermalConductivity", mats, true);
   rhoCps   = Teuchos::getArrayFromStringParameter<double> (*teprop_list,
                            "Rho Cp", mats, true);
   factor  = Teuchos::getArrayFromStringParameter<double> (*teprop_list,

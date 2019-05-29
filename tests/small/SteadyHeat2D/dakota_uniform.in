@@ -10,7 +10,7 @@ variables,
         uniform_uncertain = 1 
            lower_bounds   0.01
            upper_bounds   1.00
-           descriptors  'Thermal Conductivity' 
+           descriptors  'ThermalConductivity' 
 interface,
         direct
           #asynch

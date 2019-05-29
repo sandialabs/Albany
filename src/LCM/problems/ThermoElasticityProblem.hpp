@@ -375,14 +375,14 @@ Albany::ThermoElasticityProblem::constructEvaluators(
   {  // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<std::string>("QP Variable Name", "Thermal Conductivity");
+    p->set<std::string>("QP Variable Name", "ThermalConductivity");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
     p->set<RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
     p->set<RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
     p->set<RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
+    Teuchos::ParameterList& paramList = params->sublist("ThermalConductivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::ThermalConductivity<EvalT, AlbanyTraits>(*p));
@@ -418,7 +418,7 @@ Albany::ThermoElasticityProblem::constructEvaluators(
 
     p->set<bool>("Have Absorption", false);
 
-    p->set<std::string>("Thermal Conductivity Name", "Thermal Conductivity");
+    p->set<std::string>("ThermalConductivity Name", "ThermalConductivity");
     p->set<RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<std::string>("Gradient QP Variable Name", "Temperature Gradient");

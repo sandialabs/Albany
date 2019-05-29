@@ -10,12 +10,12 @@ ANONYMOUS:
   Materials: 
     Plastic: 
       Category: Urethane
-      Thermal Conductivity: 
+      ThermalConductivity: 
         Name: Constant
         Value: 1.00000000000000000e+00
     Metal: 
       Category: Non-ferrous
-      Thermal Conductivity: 
+      ThermalConductivity: 
         Name: Constant
         Value: 1.00000000000000000e+01
 ...

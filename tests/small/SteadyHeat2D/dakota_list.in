@@ -6,7 +6,7 @@ method,
                             0.3
 variables,
         continuous_design = 1 
-           descriptors  'Thermal Conductivity' 
+           descriptors  'ThermalConductivity' 
 interface,
         direct
           #asynch
