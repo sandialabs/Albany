@@ -13,6 +13,9 @@
 #include "Albany_ResponseFactory.hpp"
 #include "Albany_Macros.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Thyra_VectorBase.hpp" 
+#include "Thyra_MultiVectorStdOps.hpp"
+#include "Thyra_VectorStdOps.hpp"
 
 #include "Teuchos_TimeMonitor.hpp"
 
@@ -1249,7 +1252,7 @@ void Application::computeGlobalResidualImpl(
 #endif
 
   if (scaleBCdofs == false && scale != 1.0) {
-    Thyra::ele_wise_scale(*scaleVec_,f.ptr());
+    Thyra::ele_wise_scale<ST>(*scaleVec_,f.ptr());
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
@@ -1277,7 +1280,7 @@ void Application::computeGlobalResidualImpl(
 
   // scale residual by scaleVec_ if scaleBCdofs is on
   if (scaleBCdofs == true) {
-    Thyra::ele_wise_scale(*scaleVec_,f.ptr());
+    Thyra::ele_wise_scale<ST>(*scaleVec_,f.ptr());
   }
 }
 
@@ -1463,9 +1466,9 @@ void Application::computeGlobalJacobianImpl(
       jac_scaled_lop->scaleLeft(*scaleVec_);
       resumeFill(jac);
       // scale residual
-      if (Teuchos::nonnull(f)) {
-        Thyra::ele_wise_scale(*scaleVec_,f.ptr());
-      }
+      /*IKTif (Teuchos::nonnull(f)) {
+        Thyra::ele_wise_scale<ST>(*scaleVec_,f.ptr());
+      }*/
 #ifdef WRITE_TO_MATRIX_MARKET
       writeMatrixMarket(jac,"jacScaled",countScale);
       if (f != Teuchos::null) {
@@ -1524,7 +1527,7 @@ void Application::computeGlobalJacobianImpl(
   // Apply scaling to residual and Jacobian
   if (scaleBCdofs == true) {
     if (Teuchos::nonnull(f)) {
-      Thyra::ele_wise_scale(*scaleVec_, f.ptr());
+      Thyra::ele_wise_scale<ST>(*scaleVec_, f.ptr());
     }
     // We MUST be able to cast jac to ScaledLinearOpBase in order to left scale it.
     auto jac_scaled_lop = Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac,true);
@@ -2507,7 +2510,7 @@ void Application::setScale(Teuchos::RCP<const Thyra_LinearOp> jac)
       scaleVec_->assign(1.0);
     } else {
       getDiagonalCopy(jac,scaleVec_);
-      Thyra::reciprocal(*scaleVec_,scaleVec_.ptr());
+      Thyra::reciprocal<ST>(*scaleVec_,scaleVec_.ptr());
     }
   } else if (scale_type == ABSROWSUM) { // absolute value of row sum scaling
     if (jac == Teuchos::null) {
