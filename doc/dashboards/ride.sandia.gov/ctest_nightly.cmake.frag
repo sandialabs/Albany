@@ -259,7 +259,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_KokkosContainers:BOOL=ON"
     "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
     "-DTrilinos_ENABLE_KokkosExample:BOOL=OFF"
-    "-DTrilinos_ENABLE_ML:BOOL=ON"
+    "-DTrilinos_ENABLE_ML:BOOL=OFF"
     "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
     "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
     "-DTrilinos_ENABLE_MueLu:BOOL=ON"
