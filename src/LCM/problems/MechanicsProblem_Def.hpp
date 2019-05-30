@@ -21,7 +21,6 @@
 #include "CurrentCoords.hpp"
 #include "MechanicsResidual.hpp"
 #include "SurfaceBasis.hpp"
-//#include "SurfaceScalarGradientOperator.hpp"
 #include "SurfaceScalarGradientOperatorHydroStress.hpp"
 #include "SurfaceScalarGradientOperatorPorePressure.hpp"
 #include "SurfaceScalarGradientOperatorTransport.hpp"
@@ -30,9 +29,7 @@
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceVectorResidual.hpp"
 #include "Time.hpp"
-//#include "TvergaardHutchinson.hpp"
 #include "MeshSizeField.hpp"
-//#include "SurfaceCohesiveResidual.hpp"
 
 // Constitutive Model Interface and parameters
 #include "ConstitutiveModelInterface.hpp"
@@ -89,7 +86,6 @@ namespace Albany {
 ///
 /// Public methods for MechanicsProblem class
 ///
-
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
 MechanicsProblem::buildEvaluators(
     PHX::FieldManager<PHAL::AlbanyTraits>&      fm0,
@@ -108,8 +104,9 @@ MechanicsProblem::buildEvaluators(
   return *op.tags;
 }
 
-//------------------------------------------------------------------------------
-
+//
+//
+//
 Teuchos::RCP<const Teuchos::ParameterList>
 MechanicsProblem::getValidProblemParameters() const
 {
@@ -135,8 +132,9 @@ MechanicsProblem::getValidProblemParameters() const
   return validPL;
 }
 
-//------------------------------------------------------------------------------
-
+//
+//
+//
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 MechanicsProblem::constructEvaluators(
@@ -268,7 +266,7 @@ MechanicsProblem::constructEvaluators(
 
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> surfaceCubature;
 
-  if (surface_element) {
+  if (surface_element == true) {
 #ifdef ALBANY_VERBOSE
     *out << "In Surface Element Logic" << std::endl;
 #endif
@@ -317,7 +315,7 @@ MechanicsProblem::constructEvaluators(
 #endif
 
   num_dims_ = cubature->getDimension();
-  if (!surface_element) {
+  if (surface_element == false) {
     num_pts_ = cubature->getNumPoints();
   } else {
     num_pts_ = surfaceCubature->getNumPoints();
@@ -372,67 +370,41 @@ MechanicsProblem::constructEvaluators(
       field_name_map.getMap();
 
   std::string cauchy = (*fnm)["Cauchy_Stress"];
-
   std::string firstPK = (*fnm)["FirstPK"];
-
   std::string Fp = (*fnm)["Fp"];
-
   std::string eqps = (*fnm)["eqps"];
-
   std::string temperature = (*fnm)["Temperature"];
-
   std::string ace_temperature = (*fnm)["ACE Temperature"];
-
   std::string pressure = (*fnm)["Pressure"];
-
   std::string mech_source = (*fnm)["Mechanical_Source"];
-
   std::string defgrad = (*fnm)["F"];
-
   std::string J = (*fnm)["J"];
 
   // Poromechanics variables
   std::string totStress = (*fnm)["Total_Stress"];
-
   std::string kcPerm = (*fnm)["KCPermeability"];
-
   std::string biotModulus = (*fnm)["Biot_Modulus"];
-
   std::string biotCoeff = (*fnm)["Biot_Coefficient"];
-
   std::string porosity = (*fnm)["Porosity"];
-
   std::string porePressure = (*fnm)["Pore_Pressure"];
 
   // Hydrogen diffusion variable
   std::string transport = (*fnm)["Transport"];
-
   std::string hydroStress = (*fnm)["HydroStress"];
-
   std::string diffusionCoefficient = (*fnm)["Diffusion_Coefficient"];
-
   std::string convectionCoefficient = (*fnm)["Tau_Contribution"];
-
   std::string trappedConcentration = (*fnm)["Trapped_Concentration"];
-
   std::string totalConcentration = (*fnm)["Total_Concentration"];
-
   std::string effectiveDiffusivity = (*fnm)["Effective_Diffusivity"];
-
   std::string trappedSolvent = (*fnm)["Trapped_Solvent"];
-
   std::string strainRateFactor = (*fnm)["Strain_Rate_Factor"];
-
   std::string eqilibriumParameter =
       (*fnm)["Concentration_Equilibrium_Parameter"];
-
   std::string gradient_element_length = (*fnm)["Gradient_Element_Length"];
 
   // Helium bubble evolution
   std::string he_concentration = (*fnm)["He_Concentration"];
-
   std::string total_bubble_density = (*fnm)["Total_Bubble_Density"];
-
   std::string bubble_volume_fraction = (*fnm)["Bubble_Volume_Fraction"];
 
   // Get the solution method type
@@ -444,13 +416,10 @@ MechanicsProblem::constructEvaluators(
       "Solution Method must be Steady, Transient, "
       "Continuation, Eigensolve, or Aeras Hyperviscosity");
 
-  if (have_mech_eq_) {
+  if (have_mech_eq_ == true) {
     Teuchos::ArrayRCP<std::string> const dof_names(1, "Displacement");
-
     Teuchos::ArrayRCP<std::string> const dof_names_dot(1, "Velocity");
-
     Teuchos::ArrayRCP<std::string> const dof_names_dotdot(1, "Acceleration");
-
     Teuchos::ArrayRCP<std::string> const resid_names(
         1, dof_names[0] + " Residual");
 
@@ -461,7 +430,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(
         evalUtils.constructGatherCoordinateVectorEvaluator());
 
-    if (!surface_element) {
+    if (surface_element == false) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
 
@@ -495,7 +464,7 @@ MechanicsProblem::constructEvaluators(
 #endif
 
     offset += num_dims_;
-  } else if (have_mech_) {  // constant configuration
+  } else if (have_mech_ == true) {  // constant configuration
 
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList);
@@ -530,12 +499,10 @@ MechanicsProblem::constructEvaluators(
   // store computed xdotdot in "Acceleration" field
   pFromProb->set<std::string>("xdotdot Field Name", "Acceleration");
 
-  if (have_temperature_eq_) {  // Gather Solution Temperature
+  if (have_temperature_eq_ == true) {  // Gather Solution Temperature
 
     Teuchos::ArrayRCP<std::string> const dof_names(1, "Temperature");
-
     Teuchos::ArrayRCP<std::string> const dof_names_dot(1, "Temperature Dot");
-
     Teuchos::ArrayRCP<std::string> const resid_names(
         1, dof_names[0] + " Residual");
 
@@ -554,7 +521,7 @@ MechanicsProblem::constructEvaluators(
           evalUtils.constructGatherCoordinateVectorEvaluator());
     }
 
-    if (!surface_element) {
+    if (surface_element == false) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
@@ -616,13 +583,11 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_ace_temperature_eq_) {  // Gather Solution ACE Temperature
+  if (have_ace_temperature_eq_ == true) {  // Gather Solution ACE Temperature
 
     Teuchos::ArrayRCP<std::string> const dof_names(1, "ACE Temperature");
-
     Teuchos::ArrayRCP<std::string> const dof_names_dot(
         1, "ACE Temperature Dot");
-
     Teuchos::ArrayRCP<std::string> const resid_names(
         1, dof_names[0] + " Residual");
 
@@ -636,7 +601,7 @@ MechanicsProblem::constructEvaluators(
               false, dof_names, offset));
     }
 
-    if (!surface_element) {
+    if (surface_element == false) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
@@ -657,17 +622,16 @@ MechanicsProblem::constructEvaluators(
     offset++;
   }
 
-  if (have_stab_pressure_eq_) {  // Gather Stabilized Pressure
+  if (have_stab_pressure_eq_ == true) {  // Gather Stabilized Pressure
 
     Teuchos::ArrayRCP<std::string> dof_names(1, "Pressure");
-
     Teuchos::ArrayRCP<std::string> resid_names(1, dof_names[0] + " Residual");
 
     fm0.template registerEvaluator<EvalT>(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
             false, dof_names, offset));
 
-    if (!surface_element) {
+    if (surface_element == false) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
@@ -682,10 +646,9 @@ MechanicsProblem::constructEvaluators(
     offset++;
   }
 
-  if (have_damage_eq_) {  // Damage
+  if (have_damage_eq_ == true) {  // Damage
 
     Teuchos::ArrayRCP<std::string> const dof_names(1, "Damage");
-
     Teuchos::ArrayRCP<std::string> const resid_names(
         1, dof_names[0] + " Residual");
 
@@ -693,7 +656,7 @@ MechanicsProblem::constructEvaluators(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
             false, dof_names, offset));
 
-    if (!surface_element) {
+    if (surface_element == false) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
@@ -706,7 +669,7 @@ MechanicsProblem::constructEvaluators(
         evalUtils.constructScatterResidualEvaluator(
             false, resid_names, offset, "Scatter Damage"));
     offset++;
-  } else if (!have_damage_eq_ && have_damage_) {
+  } else if ((have_damage_eq_ == false) && (have_damage_ == true)) {
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList);
 
@@ -727,9 +690,8 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_pore_pressure_eq_) {
+  if (have_pore_pressure_eq_ == true) {
     Teuchos::ArrayRCP<std::string> const dof_names(1, "Pore_Pressure");
-
     Teuchos::ArrayRCP<std::string> const resid_names(
         1, dof_names[0] + " Residual");
 
@@ -737,7 +699,7 @@ MechanicsProblem::constructEvaluators(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
             false, dof_names, offset));
 
-    if (!surface_element) {
+    if (surface_element == false) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
@@ -750,7 +712,7 @@ MechanicsProblem::constructEvaluators(
         evalUtils.constructScatterResidualEvaluator(
             false, resid_names, offset, "Scatter Pore_Pressure"));
     offset++;
-  } else if (have_pore_pressure_) {  // constant Pressure
+  } else if (have_pore_pressure_ == true) {  // constant Pressure
 
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList);
@@ -773,7 +735,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_transport_eq_) {  // Gather solution for transport problem
+  if (have_transport_eq_ ==  true) {  // Gather solution for transport problem
     // Lattice Concentration
     Teuchos::ArrayRCP<std::string> const dof_names(1, "Transport");
 
@@ -784,7 +746,7 @@ MechanicsProblem::constructEvaluators(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
             false, dof_names, offset));
 
-    if (!surface_element) {
+    if (surface_element == false) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
@@ -798,7 +760,7 @@ MechanicsProblem::constructEvaluators(
             false, resid_names, offset, "Scatter Transport"));
 
     offset++;                    // for lattice concentration
-  } else if (have_transport_) {  // Constant transport scalar value
+  } else if (have_transport_ == true) {  // Constant transport scalar value
 
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList);
@@ -820,10 +782,9 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_hydrostress_eq_) {  // Gather solution for transport problem
+  if (have_hydrostress_eq_ == true) {  // Gather solution for transport problem
 
     Teuchos::ArrayRCP<std::string> const dof_names(1, "HydroStress");
-
     Teuchos::ArrayRCP<std::string> const resid_names(
         1, dof_names[0] + " Residual");
 
@@ -831,7 +792,7 @@ MechanicsProblem::constructEvaluators(
         evalUtils.constructGatherSolutionEvaluator_noTransient(
             false, dof_names, offset));
 
-    if (!surface_element) {
+    if (surface_element == false) {
       fm0.template registerEvaluator<EvalT>(
           evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
@@ -883,7 +844,7 @@ MechanicsProblem::constructEvaluators(
     dir_count++;
   }
 
-  if (have_mech_eq_) {  // Current Coordinates
+  if (have_mech_eq_ == true) {  // Current Coordinates
 
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList("Current Coordinates"));
@@ -897,7 +858,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_mech_eq_ && have_sizefield_adaptation_) {  // Mesh size field
+  if ((have_mech_eq_ == true) && (have_sizefield_adaptation_ == true)) {
 
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList("Isotropic Mesh Size Field"));
@@ -917,20 +878,8 @@ MechanicsProblem::constructEvaluators(
         new LCM::IsoMeshSizeField<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    // output mesh size field if requested
-    /*
-        bool output_flag = false;
-        if (material_db_->isElementBlockParam(eb_name, "Output MeshSizeField"))
-          output_flag =
-              material_db_->getElementBlockParam<bool>(eb_name, "Output
-       MeshSizeField");
-    */
-
-    // FIXME: This is unnecessary as written. Should the above code be
-    // activated? - CA
     bool output_flag{true};
 
-    if (output_flag) {
       p = stateMgr.registerStateVariable(
           "IsoMeshSizeField",
           dl_->qp_scalar,
@@ -943,10 +892,9 @@ MechanicsProblem::constructEvaluators(
       ev =
           Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-    }
   }
 
-  if (have_temperature_eq_ || have_temperature_) {
+  if ((have_temperature_eq_ == true) || (have_temperature_ == true)) {
     RealType const temp = material_db_->getElementBlockParam<RealType>(
         eb_name, "Initial Temperature", 0.0);
 
@@ -999,7 +947,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_pore_pressure_eq_ || have_pore_pressure_) {
+  if ((have_pore_pressure_eq_ == true) || (have_pore_pressure_ == true)) {
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList("Save Pore Pressure"));
 
@@ -1017,7 +965,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_transport_eq_ || have_transport_) {
+  if ((have_transport_eq_ == true) || (have_transport_ == true)) {
     bool const output_flag = material_db_->getElementBlockParam<bool>(
         eb_name, "Output IP" + transport, true);
 
@@ -1039,7 +987,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_hydrostress_eq_ || have_hydrostress_) {
+  if ((have_hydrostress_eq_ == true) || (have_hydrostress_ == true)) {
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList("Save HydroStress"));
 
@@ -1058,8 +1006,7 @@ MechanicsProblem::constructEvaluators(
   }
 
   // Source list exists and the mechanical source params are defined
-
-  if (have_source_ &&
+  if ((have_source_ == true) &&
       params->sublist("Source Functions").isSublist("Mechanical Source")) {
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList);
@@ -1165,13 +1112,13 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(cmpEv);
   }
 
-  if (have_mech_eq_) {
+  if (have_mech_eq_ == true) {
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList("Constitutive Model Interface"));
 
     // TODO: figure out how to do this better
     param_list.set<bool>("Have Temperature", false);
-    if (have_temperature_) {
+    if (have_temperature_ == true) {
       p->set<std::string>("Temperature Name", temperature);
       param_list.set<bool>("Have Temperature", true);
     }
@@ -1183,7 +1130,7 @@ MechanicsProblem::constructEvaluators(
     }
 
     param_list.set<bool>("Have Total Concentration", false);
-    if (have_transport_) {
+    if (have_transport_ == true) {
       p->set<std::string>("Total Concentration Name", totalConcentration);
       param_list.set<bool>("Have Total Concentration", true);
     }
@@ -1206,7 +1153,7 @@ MechanicsProblem::constructEvaluators(
         "Name Map", fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
     p->set<bool>("Volume Average Pressure", volume_average_pressure);
-    if (volume_average_pressure) {
+    if (volume_average_pressure == true) {
       p->set<std::string>("Weights Name", "Weights");
       p->set<std::string>("J Name", J);
     }
@@ -1236,7 +1183,7 @@ MechanicsProblem::constructEvaluators(
   }
 
   // Surface Element Block
-  if (surface_element) {
+  if (surface_element == true) {
     {  // Surface Basis
       // SurfaceBasis_Def.hpp
       Teuchos::RCP<Teuchos::ParameterList> p =
@@ -1263,7 +1210,7 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (have_mech_eq_) {  // Surface Jump
+    if (have_mech_eq_ == true) {  // Surface Jump
       // SurfaceVectorJump_Def.hpp
 
       Teuchos::RCP<Teuchos::ParameterList> p =
@@ -1300,7 +1247,7 @@ MechanicsProblem::constructEvaluators(
         p->set<std::string>("MidPlane Temperature Name", temperature);
       }
 
-      if (have_ace_temperature_eq_) {
+      if (have_ace_temperature_eq_ == true) {
         p->set<std::string>("Nodal ACE Temperature Name", "ACE Temperature");
         // outputs
         p->set<std::string>(
@@ -1308,21 +1255,21 @@ MechanicsProblem::constructEvaluators(
         p->set<std::string>("MidPlane ACE Temperature Name", temperature);
       }
 
-      if (have_transport_eq_) {
+      if (have_transport_eq_ == true) {
         p->set<std::string>("Nodal Transport Name", "Transport");
         // outputs
         p->set<std::string>("Jump of Transport Name", "Transport Jump");
         p->set<std::string>("MidPlane Transport Name", transport);
       }
 
-      if (have_pore_pressure_eq_) {
+      if (have_pore_pressure_eq_ == true) {
         p->set<std::string>("Nodal Pore Pressure Name", "Pore_Pressure");
         // outputs
         p->set<std::string>("Jump of Pore Pressure Name", "Pore_Pressure Jump");
         p->set<std::string>("MidPlane Pore Pressure Name", porePressure);
       }
 
-      if (have_hydrostress_eq_) {
+      if (have_hydrostress_eq_ == true) {
         p->set<std::string>("Nodal HydroStress Name", "HydroStress");
         // outputs
         p->set<std::string>("Jump of HydroStress Name", "HydroStress Jump");
@@ -1334,7 +1281,7 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if (have_mech_eq_) {  // Surface Gradient
+    if (have_mech_eq_ == true) {  // Surface Gradient
       // SurfaceVectorGradient_Def.hpp
 
       Teuchos::RCP<Teuchos::ParameterList> p =
@@ -1553,7 +1500,7 @@ MechanicsProblem::constructEvaluators(
     }  // end of coehesive/surface element block
 
   } else {                // surface_element == False
-    if (have_mech_eq_) {  // Kinematics quantities
+    if (have_mech_eq_ == true) {  // Kinematics quantities
 
       Teuchos::RCP<Teuchos::ParameterList> p =
           Teuchos::rcp(new Teuchos::ParameterList("Kinematics"));
@@ -1894,7 +1841,7 @@ MechanicsProblem::constructEvaluators(
         Teuchos::rcp(new Teuchos::ParameterList("Gradient_Element_Length"));
 
     // Input
-    if (!surface_element) {  // bulk element length
+    if (surface_element == false) {  // bulk element length
       if (have_pore_pressure_eq_) {
         p->set<std::string>(
             "Unit Gradient QP Variable Name", "Pore_Pressure Gradient");
@@ -2074,7 +2021,7 @@ MechanicsProblem::constructEvaluators(
   }
 
   // Pore Pressure Residual (Bulk Element)
-  if (have_pore_pressure_eq_ && !surface_element) {
+  if (have_pore_pressure_eq_ && (surface_element == false)) {
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList("Pore_Pressure Residual"));
 
@@ -2493,7 +2440,7 @@ MechanicsProblem::constructEvaluators(
   }
 
   // Transport of the temperature field
-  if (have_temperature_eq_ && !surface_element) {
+  if (have_temperature_eq_ && (surface_element == false)) {
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList("ThermoMechanical Coefficients"));
 
@@ -2536,7 +2483,7 @@ MechanicsProblem::constructEvaluators(
   }
 
   // Equation for ACE temperature
-  if (have_ace_temperature_eq_ == true && surface_element == false) {
+  if (have_ace_temperature_eq_ == true && (surface_element == false)) {
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList("ACE Temperature Residual"));
 
@@ -2570,7 +2517,7 @@ MechanicsProblem::constructEvaluators(
   }
 
   // Transport of the temperature field
-  if (have_temperature_eq_ && !surface_element) {
+  if (have_temperature_eq_ && (surface_element == false)) {
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList("Temperature Residual"));
 
@@ -2630,7 +2577,7 @@ MechanicsProblem::constructEvaluators(
   }
 
   // Hydrogen Transport model proposed in Foulk et al 2014
-  if (have_transport_eq_ && !surface_element) {
+  if (have_transport_eq_ && (surface_element == false)) {
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList("Transport Residual"));
 
@@ -2745,7 +2692,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_hydrostress_eq_ && !surface_element) {
+  if (have_hydrostress_eq_ && (surface_element == false)) {
     // L2 hydrostatic stress projection
 
     Teuchos::RCP<Teuchos::ParameterList> p =
