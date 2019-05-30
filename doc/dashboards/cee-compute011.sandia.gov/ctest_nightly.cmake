@@ -526,7 +526,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
   "-DTrilinos_ENABLE_OptiPack:BOOL=OFF"
   "-DTrilinos_ENABLE_GlobiPack:BOOL=OFF"
-  "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
+  "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
   "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
   "-DTrilinos_ENABLE_Piro:BOOL=ON"
   "-DTrilinos_ENABLE_Teko:BOOL=ON"
@@ -535,7 +535,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_FEI:BOOL=OFF"
   #
   "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-  "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
+  "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=OFF"
   "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
   #
   "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
