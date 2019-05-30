@@ -61,12 +61,15 @@ elif [ "$BUILD_OPT" = "clang" ] || [ "$BUILD_OPT" = "clangdbg" ]; then
     # Modules have not been set
     . /usr/share/Modules/init/bash
   fi
+
   module purge
+  module load sparc-cmake 
   module load sierra-git/2.6.1
   module load sierra-devel/clang-7.0-openmpi-1.10.2
-#  module load sierra-mkl/18.0-2018.1.163
+  #  module load sierra-mkl/18.0-2018.1.163
   module load sierra-mkl/19.0-2019.0.117
-  module load sparc-cmake
+  #module unload sierra-compiler/clang/7.0
+  module unload sierra-mpi/openmpi/1.10.2
 
 #  export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
 
