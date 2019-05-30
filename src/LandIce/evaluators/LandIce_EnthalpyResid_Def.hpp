@@ -292,7 +292,21 @@ evaluateFields(typename Traits::EvalData d)
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
         //ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
         vmax = std::max(vmax,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)+std::pow(verticalVel(cell,qp),2)));
-        vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
+        //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
+        auto val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
+        VelocityST sqrtval; 
+        if (val == 0.0) {
+          sqrtval = 0.0; 
+        }
+        else {
+          sqrtval = std::sqrt(val); 
+        }
+        if (vmax_xy == 0.0 || sqrtval == 0.0) {
+          vmax_xy = 0.0; 
+        }
+        else {
+          vmax_xy = std::max(vmax_xy, sqrtval); 
+        }
 //          vmax = std::max(vmax,std::sqrt(std::pow(Albany::ADValue(Velocity(cell,qp,0)),2)+std::pow(Albany::ADValue(Velocity(cell,qp,1)),2)+std::pow(verticalVel(cell,qp),2)));
 //          vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Albany::ADValue(Velocity(cell,qp,0)),2)+std::pow(Albany::ADValue(Velocity(cell,qp,1)),2)));
 
