@@ -3,10 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
+#include "Albany_Application.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
+#include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
 
 #include "PHAL_NSMaterialProperty.hpp"
@@ -945,6 +946,13 @@ MechanicsProblem::constructEvaluators(
     ev =
         Teuchos::rcp(new PHAL::LoadStateFieldST<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+#if defined(ALBANY_STK)
+    auto app_rcp = getApplication();
+    auto disc_rcp = app_rcp->getDiscretization();
+    auto& stk_disc = *static_cast<Albany::STKDiscretization*>(disc_rcp.get());
+    auto const& meta_data = stk_disc.getSTKMetaData();
+
+#endif
   }
 
   if ((have_pore_pressure_eq_ == true) || (have_pore_pressure_ == true)) {
