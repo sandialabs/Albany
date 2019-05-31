@@ -951,7 +951,6 @@ MechanicsProblem::constructEvaluators(
     auto disc_rcp = app_rcp->getDiscretization();
     auto& stk_disc = *static_cast<Albany::STKDiscretization*>(disc_rcp.get());
     auto const& meta_data = stk_disc.getSTKMetaData();
-
 #endif
   }
 
