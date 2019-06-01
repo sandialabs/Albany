@@ -62,7 +62,7 @@ evaluateFields(typename Traits::EvalData d)
   for (std::size_t cell = 0; cell < d.numCells; ++cell)
     for (std::size_t node = 0; node < numNodes; ++node) {
       enthalpyHs(cell,node) = rho_i * c_i * ( meltingTemp(cell,node) - T0 ) * powm6;
-      surfaceEnthalpy(cell,node) = rho_i * c_i * ( surfaceTemp(cell,node) - T0 ) * powm6;
+      surfaceEnthalpy(cell,node) = rho_i * c_i * ( std::min(surfaceTemp(cell,node),273.16) - T0 ) * powm6;
     }
 }
 

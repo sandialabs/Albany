@@ -121,7 +121,6 @@ constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(true, resid_names[0], Teuchos::rcpFromRef(extruded_params_levels), dof_offsets[0], scatter_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
   if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
-
     // Require scattering of residual
     PHX::Tag<typename EvalT::ScalarT> res_tag(scatter_names[0], dl->dummy);
     fm0.requireField<EvalT>(res_tag);
@@ -216,27 +215,35 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
 
     //Output
-    p->set<std::string>("Residual Variable Name", "W_z Residual");
+    p->set<std::string>("Residual Variable Name", resid_names[1]);
 
     ev = Teuchos::rcp(new LandIce::w_ZResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   } else {
+
+
+    ev = evalUtils.constructDOFGradInterpolationEvaluator ("W", dof_offsets[1]);
+    fm0.template registerEvaluator<EvalT> (ev);
+
     // --- W Residual ---
-    p = Teuchos::rcp(new Teuchos::ParameterList("W Resid"));
+    p = Teuchos::rcp(new Teuchos::ParameterList(resid_names[1]));
 
     //Input
+    p->set<std::string>("Basal Vertical Velocity Variable Name", "basal_vert_velocity_"+basalSideName);
+    p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
     p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
     p->set<std::string>("BF Side Name", Albany::bf_name + " "+basalSideName);
+    p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
     p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + " "+basalSideName);
-
-    p->set<std::string>("w Side QP Variable Name", "W");
+    p->set<std::string>("Side Normal Name", Albany::normal_name + " " + basalSideName);
+    p->set<std::string>("w Side QP Variable Name", "W_" + basalSideName);
     p->set<std::string>("w Gradient QP Variable Name", "W Gradient");
     p->set<std::string>("w Variable Name", "W");
-    p->set<std::string>("Basal Melt Rate Variable Name", "basal_melt_rate");
-    p->set<std::string>("Basal Melt Rate Side QP Variable Name", "basal_melt_rate");
+    p->set<std::string>("Basal Vertical Velocity Side QP Variable Name", "basal_vert_velocity_" + basalSideName);
     p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
 
     //Output
     p->set<std::string>("Residual Variable Name", resid_names[1]);
@@ -284,7 +291,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-  p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy Regularization", false));
+  p->set<Teuchos::ParameterList*>("LandIce Enthalpy", &params->sublist("LandIce Enthalpy", false));
 
   p->set<std::string>("Side Set Name", basalSideName);
 
@@ -420,8 +427,8 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "beta");
     p->set<std::string>("Side Set Name", basalSideName);
 
-    if(params->isSublist("LandIce Enthalpy Stabilization")) {
-      p->set<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy Stabilization"));
+    if(params->isSublist("LandIce Enthalpy") &&  params->sublist("LandIce Enthalpy").isParameter("Stabilization")) {
+      p->set<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy").sublist("Stabilization"));
     }
 
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
@@ -469,9 +476,9 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<bool>("Constant Geothermal Flux", isGeoFluxConst);
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-  p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy Regularization", false));
-  if(params->isSublist("LandIce Enthalpy Stabilization")) {
-    p->set<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy Stabilization"));
+  p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy", false).sublist("Regularization", false));
+  if(params->isSublist("LandIce Enthalpy") &&  params->sublist("LandIce Enthalpy").isParameter("Stabilization")) {
+    p->set<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy").sublist("Stabilization"));
   }
 
   //Output

@@ -27,7 +27,7 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
  , EnthalpyHs        (p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar)
  // , basal_dTdz        (p.get<std::string> ("Basal dTdz Variable Name"),dl_basal->node_scalar)
  , homotopy          (p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
- , basalMeltRate     (p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar)
+ , enthalpyBasalFlux     (p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar)
  , basalVertVelocity (p.get<std::string> ("Basal Vertical Velocity Variable Name"),dl_basal->node_scalar)
 {
   this->addDependentField(phi);
@@ -39,14 +39,14 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   this->addDependentField(homotopy);
   // this->addDependentField(basal_dTdz);
 
-  this->addEvaluatedField(basalMeltRate);
+  this->addEvaluatedField(enthalpyBasalFlux);
   this->addEvaluatedField(basalVertVelocity);
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
   numSideNodes = dims[2];
   sideDim      = dims[4];
-  numCellNodes = basalMeltRate.fieldTag().dataLayout().extent(1);
+  numCellNodes = enthalpyBasalFlux.fieldTag().dataLayout().extent(1);
 
   basalSideName = p.get<std::string> ("Side Set Name");
 
@@ -65,11 +65,14 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
   a = physics_list->get<double>("Diffusivity homotopy exponent");//, -9.0);
 
-  Teuchos::ParameterList* regularization_list = p.get<Teuchos::ParameterList*>("LandIce Enthalpy Regularization");
-  auto flux_reg_list = regularization_list->sublist("Enthalpy Flux Regularization", false);
-  auto basalMelt_reg_list = regularization_list->sublist("Enthalpy Basal Melting Regularization", false);
+  Teuchos::ParameterList* landice_list = p.get<Teuchos::ParameterList*>("LandIce Enthalpy");
+  auto flux_reg_list = landice_list->sublist("Regularization",false).sublist("Flux Regularization", false);
+  auto basalMelt_reg_list = landice_list->sublist("Regularization",false).sublist("Basal Melting Regularization", false);
   flux_reg_alpha = flux_reg_list.get<double>("alpha");
   flux_reg_beta = flux_reg_list.get<double>("beta");
+
+  isThereWater = (landice_list->get<std::string>("Bed Lubrication") == "Wet") ? true : false;
+
   basalMelt_reg_alpha = basalMelt_reg_list.get<double>("alpha");
   basalMelt_reg_beta = basalMelt_reg_list.get<double>("beta");
 
@@ -79,18 +82,7 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
 void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
 postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(phi,fm);
-  this->utils.setFieldData(geoFluxHeat,fm);
-  this->utils.setFieldData(velocity,fm);
-  this->utils.setFieldData(beta,fm);
-  this->utils.setFieldData(EnthalpyHs,fm);
-  this->utils.setFieldData(Enthalpy,fm);
-  // this->utils.setFieldData(basal_dTdz,fm);
-  this->utils.setFieldData(homotopy,fm);
-  this->utils.setFieldData(basalMeltRate,fm);
-  this->utils.setFieldData(basalVertVelocity,fm);
-}
+{}
 
 template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
 void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
@@ -102,7 +94,6 @@ evaluateFields(typename Traits::EvalData d)
   double pi = atan(1.) * 4.;
   ScalarT hom = homotopy(0);
   const double scyr (3.1536e7);  // [s/yr];
-  ScalarT phiExp; // [adim]
   ScalarT basal_reg_coeff = basalMelt_reg_alpha*exp(basalMelt_reg_beta*hom); // [adim]
   ScalarT flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom); // [adim]
 
@@ -117,23 +108,23 @@ evaluateFields(typename Traits::EvalData d)
 
       for (int node = 0; node < numSideNodes; ++node)
       {
-        bool isThereWater = false;//(beta(cell,side,node)<5.0);
-
         ScalarT diffEnthalpy = Enthalpy(cell,side,node) - EnthalpyHs(cell,side,node);
-        ScalarT basal_reg_scale = (diffEnthalpy > 0 || !isThereWater) ?  ScalarT(0.5 - atan(basal_reg_coeff * diffEnthalpy)/pi) :
-                                                               ScalarT(0.5 - basal_reg_coeff * diffEnthalpy /pi);
-        ScalarT flux_reg_scale = 1;//ScalarT(0.5 - atan(flux_reg_coeff * diffEnthalpy)/pi);
+        ScalarT basal_reg_scale = (diffEnthalpy > 0 || !isThereWater) ?  ScalarT(0.5 + atan(basal_reg_coeff * diffEnthalpy)/pi) :
+                                                               ScalarT(0.5 + basal_reg_coeff * diffEnthalpy /pi);
 
-        ScalarT M = geoFluxHeat(cell,side,node);
+        //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
+        ScalarT mstar = geoFluxHeat(cell,side,node);
         for (int dim = 0; dim < vecDimFO; dim++)
-          M += 1000./scyr * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);
+          mstar += 1000./scyr * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);
 
         double dTdz_melting = beta_p * rho_i * g;
-        M += 1e-3* k_i * dTdz_melting;
+        mstar += 1e-3* k_i * dTdz_melting;
 
-        phiExp = pow(phi(cell,side,node),alpha_om);
-        basalMeltRate(cell,side,node) =  -flux_reg_scale * basal_reg_scale *M + 1e-3*k_i*dTdz_melting;
-        basalVertVelocity(cell,side,node) =  - scyr*(1-basal_reg_scale) * M / ((1 - rho_w/rho_i*std::min(phi(cell,side,node),0.5))*L*rho_w) -  scyr  *k_0 * (rho_w - rho_i) * g / eta_w * phiExp ;
+        enthalpyBasalFlux(cell,side,node) =  (basal_reg_scale-1) *mstar + 1e-3*k_i*dTdz_melting;
+
+        ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(cell,side,node),alpha_om); //[m yr^{-1}]
+        ScalarT meting = scyr * basal_reg_scale * mstar / (L*rho_i); //[m yr^{-1}]
+        basalVertVelocity(cell,side,node) =  - meting /(1 - rho_w/rho_i*std::min(phi(cell,side,node),0.5)) -  basal_water_flux;
       }
     }
   } 

@@ -2,9 +2,11 @@
 ---
 ANONYMOUS:
   Build Type: Epetra
+  Debug Output:
+    Write Jacobian to MatrixMarket: -1
   Problem: 
     Phalanx Graph Visualization Detail: 2
-    Solution Method: Continuation
+    Solution Method: Steady
     Compute Sensitivities: true
     Name: LandIce Stokes FO Thermo Coupled 3D
     Basal Side Name: basalside
@@ -12,6 +14,7 @@ ANONYMOUS:
     Needs Dissipation: true
     Needs Basal Friction: true
     Constant Geothermal Flux: false
+    Compute W: true
     Dirichlet BCs: 
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
       DBC on NS bottom for DOF U1: 0.00000000000000000e+00
@@ -34,7 +37,7 @@ ANONYMOUS:
     LandIce Viscosity: 
       Extract Strain Rate Sq: true
       Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 0.00000000000000000e+00
+      'Glen''s Law Homotopy Parameter': 0.4e+00
       Continuous Homotopy With Constant Initial Viscosity: true
       Coefficient For Continuous Homotopy: 8.00000000000000000e+00
       'Glen''s Law A': 7.56960000000000017e-05
@@ -65,7 +68,7 @@ ANONYMOUS:
       Stabilization: 
         Type: Streamline Upwind
         Parameter Delta: 2.00000000000000000e+00
-      Bed Lubrication: 'Dry'
+      Bed Lubrication: 'Wet'
     Body Force: 
       Type: FO INTERP SURF GRAD
     Response Functions: 
@@ -83,6 +86,7 @@ ANONYMOUS:
       ResponseParams 3: 
         Equation: 3
   Discretization: 
+    Workset Size: -1
     Method: Extruded
     Number Of Time Derivatives: 0
     Cubature Degree: 3
@@ -121,6 +125,7 @@ ANONYMOUS:
     Side Set Discretizations: 
       Side Sets: [basalside]
       basalside: 
+        Workset Size: -1
         Method: Exodus
         Number Of Time Derivatives: 0
         Exodus Input File Name: ../ExoMeshes/slab_2d.exo
@@ -155,11 +160,11 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/DomeEnth/basal_heat_flux.ascii
   Regression Results: 
     Number of Comparisons: 4
-    Test Values: [5.94338847686000022e+01, 0.00000000000000000e+00, 2.54696534045999989e+00, 1.96960310493999984e+01]
-    Relative Tolerance: 1.00000000000000002e-02
+    Test Values: [6.088429472171e+01, 0.00000000000000000e+00, 1.351719337170e+00, 2.017137816678e+01]
+    Relative Tolerance: 1.0e-04
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [3.892771352475e+01, 0.00000000000000000e+00, -1.056499312556e+01, 2.010235548098e+02]
+      Sensitivity Test Values 0: [6.032144346249e+02, 0.00000000000000000e+00, 7.908825974575e+00, 3.377727008815e+01]
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -206,10 +211,11 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver: 
             Write Linear System: false
+            Tolerance: 1.0e-10
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
-              Linear Solver Type: Belos
+              Linear Solver Type: AztecOO
               Linear Solver Types: 
                 AztecOO: 
                   Forward Solve: 
@@ -236,7 +242,7 @@ ANONYMOUS:
               Preconditioner Types: 
                 Ifpack: 
                   Overlap: 0
-                  Prec Type: ILU
+                  Prec Type: Amesos
                   Ifpack Settings: 
                     'fact: level-of-fill': 0
                 ML: 

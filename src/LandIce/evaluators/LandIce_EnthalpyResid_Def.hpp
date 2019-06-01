@@ -143,7 +143,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
 
   Teuchos::ParameterList* regularization_list = p.get<Teuchos::ParameterList*>("LandIce Enthalpy Regularization");
-  auto flux_reg_list = regularization_list->sublist("Enthalpy Flux Regularization", false);\
+  auto flux_reg_list = regularization_list->sublist("Flux Regularization", false);
   flux_reg_alpha = flux_reg_list.get<double>("alpha");
   flux_reg_beta = flux_reg_list.get<double>("beta");
 }
