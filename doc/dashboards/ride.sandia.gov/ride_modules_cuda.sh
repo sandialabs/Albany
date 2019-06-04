@@ -4,6 +4,7 @@ module purge
 #module load devpack/20180521/openmpi/2.1.2/gcc/7.2.0/cuda/9.2.88
 #module swap cmake cmake/3.12.3
 module load devpack/20190404/openmpi/4.0.1/gcc/7.2.0/cuda/10.1.105
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64
 module list
 #FIXME: the following needs needs to be changed to point to your Trilinos!
 #export OMPI_CXX=${jenkins_trilinos_dir}/packages/kokkos/config/nvcc_wrapper
