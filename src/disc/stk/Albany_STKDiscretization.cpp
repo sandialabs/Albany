@@ -2436,11 +2436,22 @@ void STKDiscretization::setupExodusOutput()
 
     const stk::mesh::FieldVector& fields = mesh_data->meta_data().get_fields();
     for (size_t i = 0; i < fields.size(); i++) {
-      // Hacky, but doesn't appear to be a way to query if a field is already
-      // going to be output.
-      try {
-        mesh_data->add_field(outputFileIdx, *fields[i]);
-      } catch (std::runtime_error const&) {
+      // If the mesh was loaded with Ioss, the StkMeshIoBroker would have set
+      // the field role to MESH, while the add_field will try to set it to
+      // TRANSIENT. This would generate an exception. The exception itself would
+      // be "innocuous", so one could simply catch it with a do-nothing cathc block.
+      // However, this is annoying during debug. Therefore, we preemptively
+      // remove any field role that the field may have set. If, after the call
+      // to add_field, the field is still without a role, we add back the
+      // one that was stored before (if any).
+
+      auto attr = fields[i]->attribute<Ioss::Field::RoleType>();
+      if (attr!=nullptr) {
+        metaData.remove_attribute(*fields[i],attr);
+      }
+      mesh_data->add_field(outputFileIdx, *fields[i]);
+      if (attr!=nullptr && fields[i]->attribute<Ioss::Field::RoleType>()==nullptr) {
+        metaData.declare_attribute_with_delete(*fields[i],attr);
       }
     }
   }
