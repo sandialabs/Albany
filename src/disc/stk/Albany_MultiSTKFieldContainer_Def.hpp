@@ -282,7 +282,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     stk::mesh::put_field_on_mesh(
         *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
 #ifdef ALBANY_SEACAS
-    stk::io::set_field_role(*this->coordinates_field3d, Ioss::Field::MESH);
+    stk::io::set_field_role(*this->coordinates_field3d, Ioss::Field::TRANSIENT);
 #endif
   }
 

@@ -342,7 +342,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       if (this->numDim!=3)
       {
         // Try to load 3d coordinates (if present in the input file)
-        loadOrSetCoordinates3d();
+        loadOrSetCoordinates3d(index);
       }
 
       //bulkData = &mesh_data->bulk_data();
@@ -388,7 +388,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
     if (this->numDim!=3)
     {
       // Try to load 3d coordinates (if present in the input file)
-      loadOrSetCoordinates3d();
+      loadOrSetCoordinates3d(index);
     }
 
     if (!usePamgen)
@@ -551,7 +551,7 @@ Albany::IossSTKMeshStruct::getSolutionFieldHistoryStamp(int step) const
 }
 
 void
-Albany::IossSTKMeshStruct::loadOrSetCoordinates3d()
+Albany::IossSTKMeshStruct::loadOrSetCoordinates3d(int index)
 {
   const std::string coords3d_name = "coordinates3d";
 
@@ -559,17 +559,41 @@ Albany::IossSTKMeshStruct::loadOrSetCoordinates3d()
   const Ioss::NodeBlockContainer& node_blocks = region->get_node_blocks();
   Ioss::NodeBlock *nb = node_blocks[0];
 
-  if (nb->field_exists(coords3d_name))
+  if (nb->field_exists(coords3d_name) && index>0)
   {
     // The field "coordinates3d" exists in the input mesh
     // (which must then come from a previous Albany run), so load it.
     std::vector<stk::mesh::Entity> nodes;
     stk::mesh::get_entities(*bulkData,stk::topology::NODE_RANK,nodes);
 
+    // This is some trickery to get around STK-Ioss implementation.
+    // Basically, you cannot access transient fields if begin_state
+    // has not yet been called (with the proper step number).
+    // Therefore, if the current state has a step number invalid
+    // or different to the one desired, we set it to the restart
+    // index state. If the state was already set, we also take
+    // care of resetting the index back to the original configuration.
+    const int current_step = region->get_current_state();
+    if (current_step != index) {
+      if (current_step != -1) {
+        region->end_state(current_step);
+      }
+      region->begin_state(index);
+    }
+
     stk::io::field_data_from_ioss(*bulkData, this->getCoordinatesField3d(), nodes, nb, coords3d_name);
+    if (current_step != -1) {
+      region->begin_state(index);
+    }
   }
   else
   {
+    if (nb->field_exists(coords3d_name)) {
+      // The 3d coords field exists in the input mesh, but the restart index was
+      // not set in the input file. We issue a warning, and load default coordinates
+      *out << "WARNING! The field 'coordinates3d' was found in the input mesh, but no restart index was specified.\n"
+           << "         Albany will set the 3d coordinates to the 'default' ones (filling native coordinates with trailins zeros).\n";
+    }
     // The input mesh does not store the 'coordinates3d' field
     // (perhaps the mesh does not come from a previous Albany run).
     // Hence, we initialize coordinates3d with coordinates,
