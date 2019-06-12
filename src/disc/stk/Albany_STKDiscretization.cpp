@@ -2421,40 +2421,32 @@ void STKDiscretization::setupExodusOutput()
     mesh_data->set_bulk_data(bulkData);
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
+    const auto& field_container = stkMeshStruct->getFieldContainer();
     // Adding mesh global variables
-    for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates()) {
+    for (auto& it : field_container->getMeshVectorStates()) {
+      const auto DV_Type = stk::util::ParameterType::DOUBLEVECTOR;
       boost::any mvs = it.second;
-      mesh_data->add_global(
-          outputFileIdx, it.first, mvs, stk::util::ParameterType::DOUBLEVECTOR);
+      mesh_data->add_global(outputFileIdx, it.first, mvs, DV_Type);
     }
-    for (auto& it :
-         stkMeshStruct->getFieldContainer()->getMeshScalarIntegerStates()) {
+    for (auto& it : field_container->getMeshScalarIntegerStates()) {
+      const auto INT_Type = stk::util::ParameterType::INTEGER;
       boost::any mvs = it.second;
-      mesh_data->add_global(
-          outputFileIdx, it.first, mvs, stk::util::ParameterType::INTEGER);
+      mesh_data->add_global(outputFileIdx, it.first, mvs, INT_Type);
     }
 
+    // STK and Ioss/Exodus only allow TRANSIENT fields to be exported.
+    // *Some* fields with MESH role are also allowed, but only if they
+    // have a predefined name (e.g., "coordinates", "ids", "connectivity",...).
+    // Therefore, we *ignore* all fields not marked as TRANSIENT.
     const stk::mesh::FieldVector& fields = mesh_data->meta_data().get_fields();
     for (size_t i = 0; i < fields.size(); i++) {
-      // If the mesh was loaded with Ioss, the StkMeshIoBroker would have set
-      // the field role to MESH, while the add_field will try to set it to
-      // TRANSIENT. This would generate an exception. The exception itself would
-      // be "innocuous", so one could simply catch it with a do-nothing cathc block.
-      // However, this is annoying during debug. Therefore, we preemptively
-      // remove any field role that the field may have set. If, after the call
-      // to add_field, the field is still without a role, we add back the
-      // one that was stored before (if any).
-
       auto attr = fields[i]->attribute<Ioss::Field::RoleType>();
-      if (attr!=nullptr) {
-        metaData.remove_attribute(*fields[i],attr);
-      }
-      mesh_data->add_field(outputFileIdx, *fields[i]);
-      if (attr!=nullptr && fields[i]->attribute<Ioss::Field::RoleType>()==nullptr) {
-        metaData.declare_attribute_with_delete(*fields[i],attr);
+      if (*attr==Ioss::Field::TRANSIENT) {
+        mesh_data->add_field(outputFileIdx, *fields[i]);
       }
     }
   }
+
 #else
   if (stkMeshStruct->exoOutput) {
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
