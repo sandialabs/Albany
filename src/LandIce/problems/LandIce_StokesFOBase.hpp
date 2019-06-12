@@ -697,7 +697,6 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       }
 
       if (needs[InterpolationRequest::SIDE_TO_CELL]) {
-std::cout << "building side2cell on ss " << ss_name << ": " << fname_side << "->" << fname << "\n";
         // Project from cell to side
         ev = utils.constructDOFSideToCellEvaluator(fname_side, ss_name, layout, cellType, fname);
         fm0.template registerEvaluator<EvalT> (ev);
