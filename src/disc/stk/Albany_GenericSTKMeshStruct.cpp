@@ -1952,6 +1952,7 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid");
   validPL->set<bool>("Build Node Sets From Side Sets",false,"Flag to build node sets from side sets");
+  validPL->set<bool>("Export 3d coordinates field",false,"If true AND the mesh dimension is not already 3, export a 3d version of the coordinate field.");
 
   validPL->sublist("Required Fields Info", false, "Info for the creation of the required fields in the STK mesh");
 

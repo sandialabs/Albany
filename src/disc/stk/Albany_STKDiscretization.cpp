@@ -2441,7 +2441,7 @@ void STKDiscretization::setupExodusOutput()
     const stk::mesh::FieldVector& fields = mesh_data->meta_data().get_fields();
     for (size_t i = 0; i < fields.size(); i++) {
       auto attr = fields[i]->attribute<Ioss::Field::RoleType>();
-      if (*attr==Ioss::Field::TRANSIENT) {
+      if (attr!=nullptr && *attr==Ioss::Field::TRANSIENT) {
         mesh_data->add_field(outputFileIdx, *fields[i]);
       }
     }
