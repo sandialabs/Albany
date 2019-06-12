@@ -135,7 +135,9 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
   drainage_coeff = g * rho_w * L * k_0 * (rho_w - rho_i) / eta_w; //[kg s^{-3}]
 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "Drainage: " << drainage_coeff/rho_w/L*3.1536e7 << std::endl;
+#endif
 
   printedRegCoeff = -1.0;
 
@@ -202,11 +204,13 @@ evaluateFields(typename Traits::EvalData d)
 
   ScalarT flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom); // [adim]
 
+#ifdef OUTPUT_TO_SCREEN
   if (std::fabs(printedRegCoeff - flux_reg_coeff) > 0.0001*flux_reg_coeff)
   {
     std::cout << "[Diffusivity()] alpha = " << flux_reg_coeff << " :: " <<hom << "\n";
     printedRegCoeff = flux_reg_coeff;
   }
+#endif
 
   for (std::size_t cell = 0; cell < d.numCells; ++cell)
     for (std::size_t node = 0; node < numNodes; ++node)

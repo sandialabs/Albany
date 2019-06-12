@@ -299,8 +299,10 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typen
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg_stiffening);
   reg_stiffening = p_reg_stiffening;
 
+#ifdef OUTPUT_TO_SCREEN
   if(workset.comm->getRank()   ==0)
     std::cout << "SV, resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg) <<  ", reg_stiffening: " << Sacado::ScalarValue<ScalarT>::eval(reg_stiffening) <<std::endl;
+#endif
 
   if (rank(*workset.comm) == 0) {
     std::ofstream ofile;

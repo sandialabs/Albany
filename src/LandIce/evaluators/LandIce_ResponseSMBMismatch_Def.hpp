@@ -219,11 +219,13 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::postEvalu
   misH = p_misH;
 #endif
 
+#ifdef OUTPUT_TO_SCREEN
   if(workset.comm->getRank()   ==0)
 //    std::cout << "resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
   std::cout << "SMB, resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) <<
     ", misH: " <<Sacado::ScalarValue<ScalarT>::eval(misH) <<
     ", reg: " <<Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
+#endif
 
   if (rank(*workset.comm) == 0) {
     std::ofstream ofile;
