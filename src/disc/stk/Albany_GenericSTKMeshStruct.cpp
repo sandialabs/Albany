@@ -1287,7 +1287,7 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
     } else if (load_math_expr) {
       computeField (fname, fparams, field_mv, vs, *entities, nodal, scalar, layered, out);
     } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! No means of loading the field were specified.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! No means were specified for loading field '" + fname + "'.\n");
     }
 
     auto field_mv_view = getLocalData(field_mv.getConst());
