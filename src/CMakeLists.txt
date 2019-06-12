@@ -331,6 +331,7 @@ SET(SOURCES ${SOURCES}
   evaluators/scatter/PHAL_SeparableScatterScalarResponse.cpp
   evaluators/state/PHAL_LoadSideSetStateField.cpp
   evaluators/state/PHAL_LoadStateField.cpp
+  evaluators/state/PHAL_ReadStateField.cpp
   evaluators/state/PHAL_SaveCellStateField.cpp
   evaluators/state/PHAL_SaveNodalField.cpp
   evaluators/state/PHAL_SaveStateField.cpp
@@ -491,6 +492,8 @@ SET(HEADERS ${HEADERS}
   evaluators/state/PHAL_LoadSideSetStateField_Def.hpp
   evaluators/state/PHAL_LoadStateField.hpp
   evaluators/state/PHAL_LoadStateField_Def.hpp
+  evaluators/state/PHAL_ReadStateField.hpp
+  evaluators/state/PHAL_ReadStateField_Def.hpp
   evaluators/state/PHAL_SaveCellStateField.hpp
   evaluators/state/PHAL_SaveCellStateField_Def.hpp
   evaluators/state/PHAL_SaveNodalField.hpp
