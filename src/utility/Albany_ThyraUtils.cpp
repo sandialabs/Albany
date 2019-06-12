@@ -56,51 +56,6 @@ createLocallyReplicatedVectorSpace(const int size, const Teuchos::RCP<const Teuc
   TEUCHOS_UNREACHABLE_RETURN (Teuchos::null);
 }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-createLocallyReplicatedVectorSpace (const Teuchos::ArrayView<const GO>& gids, const Teuchos::RCP<const Teuchos_Comm> comm)
-{
-  auto bt = build_type();
-  switch (bt) {
-#ifdef ALBANY_EPETRA
-    case BuildType::Epetra:
-    {
-      Teuchos::RCP<const Epetra_BlockMap> emap;
-      if (sizeof(GO)==sizeof(Epetra_GO)) {
-        // Same size, potentially different type name. A reinterpret_cast will do.
-        emap = Teuchos::rcp( new Epetra_BlockMap(gids.size(),gids.size(),
-                             reinterpret_cast<const Epetra_GO*>(gids.getRawPtr()),
-                             1,0,*createEpetraCommFromTeuchosComm(comm)) );
-      } else {
-        // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
-        Teuchos::Array<Epetra_GO> e_gids(gids.size());
-        const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
-        for (int i=0; i<gids.size(); ++i) {
-          ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error in createLocallyReplicatedVectorSpace! Input gids exceed Epetra_GO ranges.\n");
-          e_gids[i] = static_cast<Epetra_GO>(gids[i]);
-        }
-        (void) max_safe_gid;
-        emap = Teuchos::rcp( new Epetra_BlockMap(gids.size(),gids.size(),
-                             reinterpret_cast<const Epetra_GO*>(e_gids.getRawPtr()),
-                             1,0,*createEpetraCommFromTeuchosComm(comm)) );
-      }
-      return createThyraVectorSpace(emap);
-      break;
-    }
-#endif
-    case BuildType::Tpetra:
-    {
-      Teuchos::ArrayView<const Tpetra_GO> tgids(reinterpret_cast<const Tpetra_GO*>(gids.getRawPtr()),gids.size());
-      Teuchos::RCP<const Tpetra_Map> tmap( new Tpetra_Map(tgids.size(),tgids,0,comm) );
-      return createThyraVectorSpace(tmap);
-      break;
-    }
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in createLocallyReplicatedVectorSpace! Build type not supported.\n");
-  }
-
-  TEUCHOS_UNREACHABLE_RETURN (Teuchos::null);
-}
-
 Teuchos::RCP<const Teuchos_Comm> getComm (const Teuchos::RCP<const Thyra_VectorSpace>& vs)
 {
   // Allow failure, since we don't know what the underlying linear algebra is

@@ -92,6 +92,7 @@ private:
 
   Teuchos::RCP<SolutionCullingStrategyBase> cullingStrategy_;
 
+  Teuchos::RCP<Thyra_Vector>              culledVec;
   Teuchos::RCP<CombineAndScatterManager>  cas_manager;
 
   class SolutionPrinter;

@@ -415,7 +415,7 @@ create_ghosted_aura_owners () const {
     egids_array.resize(num_gids);
     const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
     for (int i=0; i<num_gids; ++i) {
-      ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error in createLocallyReplicatedVectorSpace! Input gids exceed Epetra_GO ranges.\n");
+      ALBANY_EXPECT(gids[i]<=max_safe_gid, "Error in create_ghosted_aura_owners! Input gids exceed Epetra_GO ranges.\n");
       egids_array[i] = static_cast<Epetra_GO>(gids[i]);
     }
     (void) max_safe_gid;

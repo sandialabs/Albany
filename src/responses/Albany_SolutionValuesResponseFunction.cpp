@@ -153,7 +153,8 @@ evaluateResponse(const double /*current_time*/,
 {
   this->updateCASManager();
   // Import the selected gids
-  cas_manager->scatter(*x,*g,CombineMode::INSERT);
+  cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
+  getNonconstLocalData(g).deepCopy(getLocalData(culledVec.getConst())());
   if (Teuchos::nonnull(sol_printer_)) {
     sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
   }
@@ -182,7 +183,8 @@ evaluateTangent(const double /*alpha*/,
 
   if (!g.is_null()) {
     // Import the selected gids
-    cas_manager->scatter(*x,*g,CombineMode::INSERT);
+    cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
+    getNonconstLocalData(g).deepCopy(getLocalData(culledVec.getConst())());
     if (Teuchos::nonnull(sol_printer_)) {
       sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
     }
@@ -190,9 +192,12 @@ evaluateTangent(const double /*alpha*/,
 
   if (!gx.is_null()) {
     TEUCHOS_TEST_FOR_EXCEPT(Vx.is_null());
-    // Import the selected gids
+    // Import the selected gids (only if not already done for the response)
+    if (g.is_null()) {
+      cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
+    }
     for (int i=0; i<Vx->domain()->dim(); ++i) {
-      cas_manager->scatter(*x,*gx->col(i),CombineMode::INSERT);
+      getNonconstLocalData(gx->col(i)).deepCopy(getLocalData(culledVec.getConst())());
     }
     if (beta != 1.0) {
       gx->scale(beta);
@@ -237,7 +242,8 @@ evaluateGradient(const double /*current_time*/,
 
   if (!g.is_null()) {
     // Import the selected gids
-    cas_manager->scatter(*x,*g,CombineMode::INSERT);
+    cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
+    getNonconstLocalData(g).deepCopy(getLocalData(culledVec.getConst())());
     if (Teuchos::nonnull(sol_printer_))
       sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
   }
@@ -275,9 +281,10 @@ void SolutionValuesResponseFunction::updateCASManager()
   const Teuchos::RCP<const Thyra_VectorSpace> solutionVS = app_->getVectorSpace();
   if (cas_manager.is_null() || !sameAs(solutionVS,cas_manager->getOwnedVectorSpace())) {
     const Teuchos::Array<GO> selectedGIDs = cullingStrategy_->selectedGIDs(solutionVS);
-    Teuchos::RCP<const Thyra_VectorSpace> targetVS = createLocallyReplicatedVectorSpace(selectedGIDs,app_->getComm());
+    Teuchos::RCP<const Thyra_VectorSpace> targetVS = createVectorSpace(app_->getComm(),selectedGIDs);
 
     cas_manager = createCombineAndScatterManager(solutionVS,targetVS);
+    culledVec = Thyra::createMember(targetVS);
   }
 }
 
