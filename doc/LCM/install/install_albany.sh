@@ -23,8 +23,6 @@ hwloc-devel \
 hwloc-libs \
 lapack \
 lapack-devel \
-matio \
-matio-devel \
 netcdf \
 netcdf-devel \
 netcdf-openmpi \
