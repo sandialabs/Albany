@@ -16,7 +16,7 @@ ANONYMOUS:
         Name: Squared L2 Difference Source ST Target PST
         Field Rank: Scalar
         Source Field Name: u
-        Target Field Name: ZERO
+        Target Value: 0.0
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF U: 0.00000000000000000e+00
       DBC on NS NodeSet1 for DOF U: 0.00000000000000000e+00

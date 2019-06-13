@@ -25,13 +25,13 @@ ANONYMOUS:
       ResponseParams 0: 
         Field Rank: Scalar
         Source Field Name: Temperature
-        Target Field Name: ZERO
+        Target Field Value: 0.0
       Response 1: Squared L2 Difference Source ST Target PST
       ResponseParams 1: 
         Field Rank: Scalar
         Scaling: 1.49999999999999994e-01
         Source Field Name: ThermalConductivity
-        Target Field Name: ZERO
+        Target Field Value: 0.0
   Discretization: 
     1D Elements: 40
     2D Elements: 40

@@ -15,7 +15,7 @@ ANONYMOUS:
         Name: Squared L2 Difference Source ST Target PST
         Field Rank: Scalar
         Source Field Name: water_thickness
-        Target Field Name: ZERO
+        Target Value: 0.0
     Initial Condition: 
       Function: Constant
       Function Data: [1.00000000000000000e+02, 1.00000000000000006e-01]

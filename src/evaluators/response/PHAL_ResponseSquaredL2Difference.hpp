@@ -40,8 +40,8 @@ private:
   int fieldDim;
   std::vector<PHX::Device::size_type> dims;
 
-  bool target_zero;
-  TargetScalarT target_zero_val;
+  bool target_value;
+  TargetScalarT target_value_val;
   RealType scaling;
 
   PHX::MDField<const SourceScalarT>             sourceField;

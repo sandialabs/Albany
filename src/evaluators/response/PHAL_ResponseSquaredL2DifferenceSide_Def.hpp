@@ -28,18 +28,18 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   numQPs  = dl_side->qp_scalar->extent(2);
 
   Teuchos::RCP<PHX::DataLayout> layout;
-  std::string rank,fname,target_fname;
+  std::string rank,fname;
 
   rank         = plist->get<std::string>("Field Rank");
   fname        = plist->get<std::string>("Source Field Name");
-  target_fname = plist->get<std::string>("Target Field Name");
 
   fieldDim = getLayout(dl_side,rank,layout);
   layout->dimensions(dims);
 
-  if (fieldDim>1)
+  if (fieldDim>0)
   {
     metric = decltype(metric)("Metric " + sideSetName, dl_side->qp_tensor);
+    this->addDependentField(metric);
   }
 
   sourceField = decltype(sourceField)(fname,layout);
@@ -47,12 +47,18 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   scaling     = plist->get("Scaling",1.0);
 
   this->addDependentField(sourceField);
-  if (target_fname=="ZERO") {
-    target_zero = true;
-    target_zero_val = TargetScalarT(0.0);
-  } else {
+  if (plist->isParameter("Target Field Name")) {
+    TEUCHOS_TEST_FOR_EXCEPTION(plist->isParameter("Target Value"), std::logic_error,
+                               "[ResponseSquaredL2DifferenceSideBase] Error! Both target value and target field provided.\n")
+    std::string target_fname;
+    target_fname = plist->get<std::string>("Target Field Name");
     targetField = decltype(targetField)(target_fname,layout);
     this->addDependentField(targetField);
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(!plist->isParameter("Target Value"), std::logic_error,
+                               "[ResponseSquaredL2DifferenceSideBase] Error! No target value or target field provided.\n")
+    target_value = true;
+    target_value_val = TargetScalarT(plist->get<double>("Target Value"));
   }
   this->addDependentField(w_measure);
 
@@ -81,7 +87,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(sourceField,fm);
   this->utils.setFieldData(w_measure,fm);
 
-  if (!target_zero) {
+  if (!target_value) {
     this->utils.setFieldData(targetField,fm);
   }
 
@@ -134,12 +140,12 @@ evaluateFields(typename Traits::EvalData workset)
         switch (fieldDim)
         {
           case 0:
-            sq += std::pow(sourceField(cell,side,qp)-(target_zero ? target_zero_val : targetField(cell,side,qp)),2);
+            sq += std::pow(sourceField(cell,side,qp)-(target_value ? target_value_val : targetField(cell,side,qp)),2);
             break;
           case 1:
             // Precompute differentce and access fields only n times (not n^2)
             for (int i=0; i<dims[3]; ++i)
-              diff_1[i] = sourceField(cell,side,qp,i) - (target_zero ? target_zero_val : targetField(cell,side,qp,i));
+              diff_1[i] = sourceField(cell,side,qp,i) - (target_value ? target_value_val : targetField(cell,side,qp,i));
 
             for (int i=0; i<dims[3]; ++i)
               for (int j=0; j<dims[3]; ++j)
@@ -149,7 +155,7 @@ evaluateFields(typename Traits::EvalData workset)
             // Precompute differentce and access fields only n^2 times (not n^4)
             for (int i=0; i<dims[3]; ++i)
               for (int j=0; j<dims[3]; ++j)
-                diff_2[i][j] = sourceField(cell,side,qp,i,j) - (target_zero ? target_zero_val : targetField(cell,side,qp,i,j));
+                diff_2[i][j] = sourceField(cell,side,qp,i,j) - (target_value ? target_value_val : targetField(cell,side,qp,i,j));
 
             for (int i=0; i<dims[3]; ++i)
               for (int j=0; j<dims[3]; ++j)

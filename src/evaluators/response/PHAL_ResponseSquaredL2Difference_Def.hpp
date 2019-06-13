@@ -21,11 +21,10 @@ ResponseSquaredL2DifferenceBase(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   numQPs   = dl->qp_scalar->extent(1);
 
   Teuchos::RCP<PHX::DataLayout> layout;
-  std::string rank,fname,target_fname;
+  std::string rank,fname;
 
   rank           = plist->get<std::string>("Field Rank");
   fname          = plist->get<std::string>("Source Field Name");
-  target_fname   = plist->get<std::string>("Target Field Name");
 
   fieldDim = getLayout(dl,rank,layout);
   layout->dimensions(dims);
@@ -35,12 +34,18 @@ ResponseSquaredL2DifferenceBase(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   scaling     = plist->get("Scaling",1.0);
 
   this->addDependentField(sourceField);
-  if (target_fname=="ZERO") {
-    target_zero = true;
-    target_zero_val = TargetScalarT(0.0);
-  } else {
+  if (plist->isParameter("Target Field Name")) {
+    TEUCHOS_TEST_FOR_EXCEPTION(plist->isParameter("Target Value"), std::logic_error,
+                               "[ResponseSquaredL2DifferenceSideBase] Error! Both target value and target field provided.\n")
+    std::string target_fname;
+    target_fname = plist->get<std::string>("Target Field Name");
     targetField = decltype(targetField)(target_fname,layout);
     this->addDependentField(targetField);
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(!plist->isParameter("Target Value"), std::logic_error,
+                               "[ResponseSquaredL2DifferenceSideBase] Error! No target value or target field provided.\n")
+    target_value = true;
+    target_value_val = TargetScalarT(plist->get<double>("Target Value"));
   }
   this->addDependentField(w_measure);
 
@@ -69,7 +74,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(sourceField,fm);
   this->utils.setFieldData(w_measure,fm);
 
-  if (!target_zero) {
+  if (!target_value) {
     this->utils.setFieldData(targetField,fm);
   }
 
@@ -103,16 +108,16 @@ void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetS
       switch (fieldDim)
       {
         case 0:
-          sq += std::pow(sourceField(cell,qp)-(target_zero ? target_zero_val : targetField(cell,qp)),2);
+          sq += std::pow(sourceField(cell,qp)-(target_value ? target_value_val : targetField(cell,qp)),2);
           break;
         case 1:
           for (int j=0; j<dims[2]; ++j)
-            sq += std::pow(sourceField(cell,qp,j)-(target_zero ? target_zero_val : targetField(cell,qp,j)),2);
+            sq += std::pow(sourceField(cell,qp,j)-(target_value ? target_value_val : targetField(cell,qp,j)),2);
           break;
         case 2:
           for (int j=0; j<dims[2]; ++j)
             for (int k=0; k<dims[3]; ++k)
-              sq += std::pow(sourceField(cell,qp,j,k)-(target_zero ? target_zero_val : targetField(cell,qp,j,k)),2);
+              sq += std::pow(sourceField(cell,qp,j,k)-(target_value ? target_value_val : targetField(cell,qp,j,k)),2);
           break;
       }
       sum += sq * w_measure(cell,qp);
