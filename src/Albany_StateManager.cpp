@@ -189,6 +189,7 @@ Albany::StateManager::registerStateVariable(
     StateStruct::MeshFieldEntity const*  fieldEntity,
     const std::string&                   meshPartName)
 {
+  ALBANY_ASSERT(stateName != "", "State Name cannot be the empty string");
   TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
   using Albany::StateStruct;
 
