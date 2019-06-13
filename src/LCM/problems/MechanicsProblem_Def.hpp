@@ -11,6 +11,7 @@
 #include "Albany_Utils.hpp"
 
 #include "PHAL_NSMaterialProperty.hpp"
+#include "PHAL_ReadStateField.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_Source.hpp"
 
@@ -946,12 +947,6 @@ MechanicsProblem::constructEvaluators(
     ev =
         Teuchos::rcp(new PHAL::LoadStateFieldST<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-#if defined(ALBANY_STK)
-    auto app_rcp = getApplication();
-    auto disc_rcp = app_rcp->getDiscretization();
-    auto& stk_disc = *static_cast<Albany::STKDiscretization*>(disc_rcp.get());
-    auto const& meta_data = stk_disc.getSTKMetaData();
-#endif
   }
 
   if ((have_pore_pressure_eq_ == true) || (have_pore_pressure_ == true)) {
