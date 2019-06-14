@@ -30,7 +30,7 @@ ANONYMOUS:
       ResponseParams 0: 
         Field Rank: Scalar
         Source Field Name: Temperature
-        Target Field Value: 0.0
+        Target Value: 0.0
   Discretization: 
     1D Elements: 40
     2D Elements: 40
