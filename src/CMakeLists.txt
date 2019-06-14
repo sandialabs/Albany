@@ -51,6 +51,7 @@ ENDIF()
 
 SET(HEADERS
   Albany_Application.hpp
+  Albany_CommTypes.hpp
   Albany_DataTypes.hpp
   Albany_DistributedParameter.hpp
   Albany_DistributedParameterLibrary.hpp
@@ -58,11 +59,13 @@ SET(HEADERS
   Albany_DummyParameterAccessor.hpp
   Albany_EigendataInfoStructT.hpp
   Albany_KokkosTypes.hpp
+  Albany_Macros.hpp
   Albany_Memory.hpp
   Albany_ModelEvaluator.hpp
   Albany_NullSpaceUtils.hpp
   Albany_ObserverImpl.hpp
   Albany_PiroObserver.hpp
+  Albany_SacadoTypes.hpp
   Albany_ScalarOrdinalTypes.hpp
   Albany_SolverFactory.hpp
   Albany_StateManager.hpp
@@ -794,6 +797,7 @@ IF (ALBANY_AERAS)
 
   SET (ALBANY_INCLUDE_DIRS
     ${ALBANY_INCLUDE_DIRS}
+    ${ALBANY_INCLUDE_DIRS}/src/Aeras
     ${Albany_SOURCE_DIR}/src/Aeras/problems
     ${Albany_SOURCE_DIR}/src/Aeras/evaluators
   )
