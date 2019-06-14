@@ -918,7 +918,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_ace_temperature_eq_ == true) {
+  if ((have_ace_temperature_eq_ == true) || (have_ace_temperature_ == true)) {
     RealType const temp = material_db_->getElementBlockParam<RealType>(
         eb_name, "Initial ACE Temperature", 0.0);
 
@@ -1161,24 +1161,25 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("J Name", J);
     }
 
-    Teuchos::RCP<LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>>
-        cmiEv = Teuchos::rcp(
-            new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(
-                *p, dl_));
-    fm0.template registerEvaluator<EvalT>(cmiEv);
+    auto cmi_rcp = Teuchos::rcp(
+        new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(
+            *p, dl_));
+    fm0.template registerEvaluator<EvalT>(cmi_rcp);
 
     // register state variables
-    for (int sv(0); sv < cmiEv->getNumStateVars(); ++sv) {
-      cmiEv->fillStateVariableStruct(sv);
+    auto       cmi            = (*cmi_rcp);
+    auto const num_state_vars = cmi.getNumStateVars();
+    for (int sv(0); sv < num_state_vars; ++sv) {
+      cmi.fillStateVariableStruct(sv);
       p = stateMgr.registerStateVariable(
-          cmiEv->getName(),
-          cmiEv->getLayout(),
+          cmi.getName(),
+          cmi.getLayout(),
           dl_->dummy,
           eb_name,
-          cmiEv->getInitType(),
-          cmiEv->getInitValue(),
-          cmiEv->getStateFlag(),
-          cmiEv->getOutputFlag());
+          cmi.getInitType(),
+          cmi.getInitValue(),
+          cmi.getStateFlag(),
+          cmi.getOutputFlag());
       ev =
           Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);

@@ -7,12 +7,13 @@
 #if !defined(LCM_ConstitutiveModel_hpp)
 #define LCM_ConstitutiveModel_hpp
 
+#include <algorithm>
 #include <map>
 
-#include "Phalanx_MDField.hpp"
-
 #include "Albany_Layouts.hpp"
+#include "Albany_Utils.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "Phalanx_MDField.hpp"
 
 namespace LCM {
 
@@ -151,6 +152,10 @@ class ConstitutiveModel
       bool                          old_state_flag,
       bool                          output_flag)
   {
+    auto const begin = state_var_names_.begin();
+    auto const end   = state_var_names_.end();
+    auto       it    = std::find(begin, end, name);
+    ALBANY_ASSERT(it == end, "Duplicate state variable: " + name);
     ++num_state_variables_;
     state_var_names_.push_back(name);
     state_var_layouts_.push_back(layout);

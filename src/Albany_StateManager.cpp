@@ -192,8 +192,11 @@ Albany::StateManager::registerStateVariable(
   ALBANY_ASSERT(stateName != "", "State Name cannot be the empty string");
   TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
   using Albany::StateStruct;
-
-  if (statesToStore[ebName].find(stateName) != statesToStore[ebName].end()) {
+  auto       registered_states = statesToStore[ebName];
+  auto const it                = registered_states.find(stateName);
+  auto const end               = registered_states.end();
+  bool const is_duplicate      = it != end;
+  if (is_duplicate == true) {
     // Duplicate registration.  This will occur when a problem's
     // constructEvaluators function (templated) registers state variables.
 
