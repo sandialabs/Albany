@@ -243,7 +243,6 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
   using Teuchos::rcp;
   using Teuchos::ParameterList;
   using PHX::DataLayout;
-  using PHX::MDALayout;
   using std::vector;
   using std::string;
   using std::map;

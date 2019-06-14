@@ -72,8 +72,6 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   this->setName("Laplacian Regularization Residual" + PHX::typeAsString<EvalT>());
 
-  using PHX::MDALayout;
-
   sideNodes.resize(numSides);
   for (int side=0; side<numSides; ++side)
   {

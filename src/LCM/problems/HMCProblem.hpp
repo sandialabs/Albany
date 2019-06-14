@@ -180,6 +180,7 @@ class HMCProblem :
 #include "DefGrad.hpp"
 #include "ElasticityResid.hpp"
 #include "HMC_MicroResidual.hpp"
+#include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_SaveCellStateField.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "Strain.hpp"
@@ -205,7 +206,6 @@ Albany::HMCProblem::constructEvaluators(
 {
   using PHAL::AlbanyTraits;
   using PHX::DataLayout;
-  using PHX::MDALayout;
   using std::vector;
   using Teuchos::ParameterList;
   using Teuchos::RCP;

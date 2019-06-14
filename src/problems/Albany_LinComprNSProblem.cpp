@@ -12,6 +12,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
+#include "PHAL_FactoryTraits.hpp"
 #include <string>
 
 

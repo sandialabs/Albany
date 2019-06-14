@@ -17,7 +17,7 @@
 
 #include "Albany_AbstractFieldContainer.hpp"  //has typedef needed to list the field requirements of the problem
 #include "Albany_NullSpaceUtils.hpp"  // has defn of struct that holds null space info for ML
-#include "Albany_StateInfoStruct.hpp"  // contains MeshSpecsStuct
+#include "Albany_MeshSpecs.hpp"
 #include "Albany_StateManager.hpp"
 
 #include "Albany_DataTypes.hpp"
@@ -25,6 +25,8 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_Workset.hpp"
+
+#include "Phalanx_FieldManager.hpp"
 
 #include "Teuchos_VerboseObject.hpp"
 
@@ -40,7 +42,6 @@
 #include "Intrepid2_HGRAD_TET_COMP12_FEM.hpp"
 #include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_TRI_C2_FEM.hpp"
-#include "PHAL_FactoryTraits.hpp"
 #include "Shards_CellTopology.hpp"
 
 namespace Albany {

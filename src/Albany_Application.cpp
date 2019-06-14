@@ -12,6 +12,7 @@
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
 #include "Albany_Macros.hpp"
+#include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Thyra_VectorBase.hpp" 
 #include "Thyra_MultiVectorStdOps.hpp"

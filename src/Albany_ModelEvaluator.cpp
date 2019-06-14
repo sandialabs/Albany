@@ -12,6 +12,7 @@
 #include "Teuchos_TestForException.hpp"
 
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Albany_Application.hpp"
 

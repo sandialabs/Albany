@@ -165,7 +165,6 @@ Albany::ElasticityProblem::constructEvaluators(
 {
   using PHAL::AlbanyTraits;
   using PHX::DataLayout;
-  using PHX::MDALayout;
   using std::vector;
   using Teuchos::ParameterList;
   using Teuchos::RCP;

@@ -135,7 +135,6 @@ Albany::LameProblem::constructEvaluators(
 {
   using PHAL::AlbanyTraits;
   using PHX::DataLayout;
-  using PHX::MDALayout;
   using std::string;
   using std::vector;
   using Teuchos::ParameterList;

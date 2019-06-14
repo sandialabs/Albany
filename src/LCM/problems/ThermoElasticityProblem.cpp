@@ -9,6 +9,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_FactoryTraits.hpp"
 
 Albany::ThermoElasticityProblem::ThermoElasticityProblem(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,

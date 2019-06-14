@@ -9,6 +9,7 @@
 
 #include "Albany_Application.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Teuchos_TestForException.hpp"
 

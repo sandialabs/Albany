@@ -11,6 +11,7 @@
 #include "Teuchos_RCP.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
@@ -194,10 +195,12 @@ class ConstitutiveDriverProblem : public Albany::AbstractProblem
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "Albany_Utils.hpp"
 
 #include "FieldNameMap.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
+#include "PHAL_GatherSolution.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_Source.hpp"

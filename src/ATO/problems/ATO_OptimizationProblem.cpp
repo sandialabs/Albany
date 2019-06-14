@@ -9,6 +9,7 @@
 #include "ATO_Integrator.hpp"
 #include "ATO_Types.hpp"
 
+#include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_AbstractDiscretization.hpp"

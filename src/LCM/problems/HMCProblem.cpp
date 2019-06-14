@@ -11,6 +11,7 @@
 #ifdef ALBANY_ATO
 #include "ATO_TopoTools.hpp"
 #endif
+#include "PHAL_FactoryTraits.hpp"
 
 Albany::HMCProblem::HMCProblem(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,

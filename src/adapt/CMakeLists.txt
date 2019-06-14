@@ -125,7 +125,8 @@ ENDIF()
 include_directories(
   ${Trilinos_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
+  ${Albany_SOURCE_DIR}/src
+  ${Albany_SOURCE_DIR}/src/evaluators
   ${Albany_SOURCE_DIR}/src/problems
   ${Albany_SOURCE_DIR}/src/responses
   ${Albany_SOURCE_DIR}/src/disc

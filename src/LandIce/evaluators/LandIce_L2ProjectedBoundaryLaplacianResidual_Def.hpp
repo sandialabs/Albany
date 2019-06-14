@@ -74,9 +74,6 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
 
   this->setName("Boundary Laplacian L2 Projection Residual" + PHX::typeAsString<EvalT>());
 
-  using PHX::MDALayout;
-
-
   sideNodes.resize(numSides);
   for (int side=0; side<numSides; ++side)
   {

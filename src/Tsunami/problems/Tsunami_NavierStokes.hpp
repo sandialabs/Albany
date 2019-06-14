@@ -117,6 +117,8 @@ namespace Tsunami {
 #include "Albany_ResponseUtilities.hpp"
 
 #include "PHAL_Neumann.hpp"
+#include "PHAL_LoadStateField.hpp"
+
 #include "Tsunami_NavierStokesContravarientMetricTensor.hpp"
 #include "Tsunami_NavierStokesBodyForce.hpp"
 #include "Tsunami_NavierStokesParameters.hpp"
@@ -138,7 +140,6 @@ Tsunami::NavierStokes::constructEvaluators(
   using Teuchos::rcp;
   using Teuchos::ParameterList;
   using PHX::DataLayout;
-  using PHX::MDALayout;
   using std::vector;
   using std::string;
   using std::map;

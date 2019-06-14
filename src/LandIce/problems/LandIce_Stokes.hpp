@@ -125,8 +125,10 @@ namespace LandIce {
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
-#include "LandIce_StokesContravarientMetricTensor.hpp"
 #include "PHAL_Neumann.hpp"
+#include "PHAL_LoadStateField.hpp"
+
+#include "LandIce_StokesContravarientMetricTensor.hpp"
 #include "LandIce_SharedParameter.hpp"
 #include "LandIce_ParamEnum.hpp"
 #include "LandIce_StokesBodyForce.hpp"
@@ -149,7 +151,6 @@ LandIce::Stokes::constructEvaluators(
   using Teuchos::rcp;
   using Teuchos::ParameterList;
   using PHX::DataLayout;
-  using PHX::MDALayout;
   using std::vector;
   using std::string;
   using std::map;

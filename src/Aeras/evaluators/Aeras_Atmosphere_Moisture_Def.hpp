@@ -22,7 +22,6 @@
 
 namespace Aeras {
 using Teuchos::rcp;
-using PHX::MDALayout;
 
 
 template<typename EvalT, typename Traits>

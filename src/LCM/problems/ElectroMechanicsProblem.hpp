@@ -11,6 +11,7 @@
 #include "Teuchos_RCP.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "ConstitutiveModelInterface.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
