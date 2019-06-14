@@ -147,10 +147,13 @@ IF (ALBANY_EPETRA)
   )
 ENDIF()
 
-add_executable(xml2yaml utility/xml2yaml.cpp)
-add_executable(yaml2xml utility/yaml2xml.cpp)
-target_link_libraries(xml2yaml teuchosparameterlist)
-target_link_libraries(yaml2xml teuchosparameterlist)
+foreach (target xml2yaml yaml2xml)
+  # Avoid using 'include_directory' on a top level directory
+  add_executable(${target} utility/${target}.cpp)
+  target_include_directories (${target} SYSTEM PUBLIC ${Trilinos_INCLUDE_DIRS} ${Trilnos_TPL_INCLUDE_DIRS})
+  set_target_properties(${target} PROPERTIES LINK_DIRECTORIES ${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
+  target_link_libraries(${target} teuchosparameterlist)
+endforeach()
 
 #problems
 SET(SOURCES ${SOURCES}
@@ -614,113 +617,59 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/pde/PNP_ConcentrationResid_Def.hpp
   evaluators/pde/PNP_PotentialResid.hpp
   evaluators/pde/PNP_PotentialResid_Def.hpp
-  )
+)
 
-IF (ALBANY_SCOREC_STANDALONE)
-  SET(SCOREC_LIB SCOREC::core)
-ENDIF()
+SET (ALBANY_INCLUDE_DIRS
+  ${Albany_SOURCE_DIR}/src/
+  ${Albany_SOURCE_DIR}/src/evaluators
+  ${Albany_SOURCE_DIR}/src/evaluators/bc
+  ${Albany_SOURCE_DIR}/src/evaluators/gather
+  ${Albany_SOURCE_DIR}/src/evaluators/interpolation
+  ${Albany_SOURCE_DIR}/src/evaluators/pde
+  ${Albany_SOURCE_DIR}/src/evaluators/response
+  ${Albany_SOURCE_DIR}/src/evaluators/scatter
+  ${Albany_SOURCE_DIR}/src/evaluators/state
+  ${Albany_SOURCE_DIR}/src/evaluators/utility
+  ${Albany_SOURCE_DIR}/src/problems
+  ${Albany_SOURCE_DIR}/src/responses
+  ${Albany_SOURCE_DIR}/src/disc
+  ${Albany_SOURCE_DIR}/src/adapt
+  ${Albany_SOURCE_DIR}/src/utility
+)
 
-add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-target_link_libraries(albanyLib ${SCOREC_LIB} ${Trilinos_LIBRARIES})
-
-# Add Albany external libraries
-
-set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
-
-# We may not want warnings from Trilinos and/or its TPLs...
-IF (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
-  include_directories (SYSTEM
-                       ${Trilinos_INCLUDE_DIRS}
-                       ${Trilinos_TPL_INCLUDE_DIRS})
-ELSE()
-  include_directories (${Trilinos_INCLUDE_DIRS}
-                       ${Trilinos_TPL_INCLUDE_DIRS})
-ENDIF()
-
-include_directories (${ALBANY_PUMI_INCLUDE_DIRS}
-                     ./
-                     ./evaluators
-                     ./evaluators/bc
-                     ./evaluators/gather
-                     ./evaluators/interpolation
-                     ./evaluators/pde
-                     ./evaluators/response
-                     ./evaluators/scatter
-                     ./evaluators/state
-                     ./evaluators/utility
-                     ./problems
-                     ./responses
-                     ./disc/stk
-                     ./adapt
-                     ./disc
-                     ./utility
-                     ./LCM/
-                     ./LCM/evaluators
-                     ./LCM/evaluators/ACE
-                     ./LCM/evaluators/bc
-                     ./LCM/evaluators/contact
-                     ./LCM/evaluators/HMC
-                     ./LCM/evaluators/kinematics
-                     ./LCM/evaluators/lame
-                     ./LCM/evaluators/linear-elasticity
-                     ./LCM/evaluators/poro
-                     ./LCM/evaluators/projection
-                     ./LCM/evaluators/responses
-                     ./LCM/evaluators/residuals
-                     ./LCM/evaluators/surface-element
-                     ./LCM/evaluators/size-field
-                     ./LCM/evaluators/transport
-                     ./LCM/evaluators/HMC
-                     ./LCM/models
-                     ./LCM/parallel_evaluators
-                     ./LCM/parallel_models
-                     ./LCM/solvers
-                     ./LCM/utils
-                     ./LCM/utils/topology
-                     ./LandIce/problems
-                     ./LandIce/evaluators
-                     ./Tsunami/problems
-                     ./Tsunami/evaluators
-                     ./Aeras/problems
-                     ./Aeras/evaluators
-                     ./AMP
-                     ./AMP/problems
-                     ./AMP/evaluators
-                     ./AMP/responses
-                     ./ATO
-                     ./ATO/problems
-                     ./ATO/evaluators
-                     ./ATO/utils
-                    )
-
-link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
+SET(ALBANY_TPL_LIBRARY_DIRS ${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
+SET(ALBANY_TPL_INCLUDE_DIRS ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
 
 IF ( ENABLE_ISOLIB )
-  include_directories (${ISOLIB_INCLUDE_DIR_MAIN})
-  include_directories (${ISOLIB_INCLUDE_DIR_UTIL})
-  link_directories (${ISOLIB_LIBRARY_DIR})
+  SET(ALBANY_TPL_LIBRARY_DIRS ${ALBANY_TPL_LIBRARY_DIRS} ${ISOLIB_LIBRARY_DIR})
+  SET(ALBANY_TPL_INCLUDE_DIRS ${ALBANY_TPL_INCLUDE_DIRS} ${ISOLIB_INCLUDE_DIR_MAIN} ${ISOLIB_INCLUDE_DIR_UTIL})
   set(ISOLIB_LIB iso)
 ELSE()
   set(ISOLIB_LIB )
 ENDIF()
 
 IF ( ENABLE_NLopt )
-  include_directories (${NLopt_INCLUDE_DIR})
-  link_directories (${NLopt_LIBRARY_DIR})
+  SET(ALBANY_TPL_LIBRARY_DIRS ${ALBANY_TPL_LIBRARY_DIRS} ${NLopt_LIBRARY_DIR})
+  SET(ALBANY_TPL_INCLUDE_DIRS ${ALBANY_TPL_INCLUDE_DIRS} ${NLopt_INCLUDE_DIR})
   set(NLOPT_LIB nlopt)
 ELSE()
   set(NLOPT_LIB )
 ENDIF()
 
 IF ( ENABLE_Cogent )
-  include_directories (${PlatoEngine_INSTALL_DIR}/include)
+  SET(ALBANY_TPL_LIBRARY_DIRS ${ALBANY_TPL_LIBRARY_DIRS} ${PlatoEngine_INSTALL_DIR}/include)
+  SET(ALBANY_TPL_INCLUDE_DIRS ${ALBANY_TPL_INCLUDE_DIRS} ${PlatoEngine_INSTALL_DIR}/lib)
   set(Cogent_LIB ${PlatoEngine_INSTALL_DIR}/lib/libPlatoGeometryCogent.a)
 ELSE()
   set(Cogent_LIB )
 ENDIF()
 
 IF ( ENABLE_MPMD )
-  include_directories (${PlatoEngine_INSTALL_DIR}/include)
+  # Avoid duplicates, to keep list short
+  IF (NOT ENABLE_Cogent)
+    SET(ALBANY_TPL_LIBRARY_DIRS ${ALBANY_TPL_LIBRARY_DIRS} ${PlatoEngine_INSTALL_DIR}/include)
+    SET(ALBANY_TPL_INCLUDE_DIRS ${ALBANY_TPL_INCLUDE_DIRS} ${PlatoEngine_INSTALL_DIR}/lib)
+  ENDIF()
   set(PlatoEngine_LIB
       ${PlatoEngine_INSTALL_DIR}/lib/libPlatoDataLayer.a
       ${PlatoEngine_INSTALL_DIR}/lib/libPlatoInterface.a
@@ -734,11 +683,9 @@ ENDIF()
 
 # LAME
 IF(ALBANY_LAME)
-  include_directories (${LAME_INCLUDE_DIR})
-  link_directories (${LAME_LIBRARY_DIR})
+  SET(ALBANY_TPL_LIBRARY_DIRS ${ALBANY_TPL_LIBRARY_DIRS} ${LAME_INCLUDE_DIR} ${MATH_TOOLKIT_INCLUDE_DIR})
+  SET(ALBANY_TPL_INCLUDE_DIRS ${ALBANY_TPL_INCLUDE_DIRS} ${LAME_LIBRARY_DIR} ${MATH_TOOLKIT_LIBRARY_DIR})
   set(LAME_LIB lame ${LAME_LIBRARIES})
-  include_directories (${MATH_TOOLKIT_INCLUDE_DIR})
-  link_directories (${MATH_TOOLKIT_LIBRARY_DIR})
   set(MATH_TOOLKIT_LIB math_toolkit)
 ELSE()
   set(LAME_LIB )
@@ -747,8 +694,8 @@ ENDIF()
 
 # LAMENT
 IF(ALBANY_LAMENT)
-  include_directories (${LAMENT_INCLUDE_DIR})
-  link_directories (${LAMENT_LIBRARY_DIR})
+  SET(ALBANY_TPL_LIBRARY_DIRS ${ALBANY_TPL_LIBRARY_DIRS} ${LAMEND_INCLUDE_DIR})
+  SET(ALBANY_TPL_INCLUDE_DIRS ${ALBANY_TPL_INCLUDE_DIRS} ${LAMEND_LIBRARY_DIR})
   set(LAMENT_LIB lament)
 ELSE()
   set(LAMENT_LIB )
@@ -756,85 +703,115 @@ ENDIF()
 
 # RPI APF mesh interface
 IF(ALBANY_APF)
-  SET(ALBANY_PUMI_INCLUDE_DIRS ./disc/pumi)
-  include_directories (${ALBANY_PUMI_INCLUDE_DIRS})
+  SET(ALBANY_PUMI_INCLUDE_DIRS ${Albany_SOURCE_DIR}/src/disc/pumi)
+  SET (ALBANY_INCLUDE_DIRS
+    ${ALBANY_INCLUDE_DIRS}
+    ${ALBANY_PUMI_INCLUDE_DIRS}
+  )
 ELSE()
   SET(ALBANY_PUMI_INCLUDE_DIRS )
+ENDIF()
+
+# Catalyst CoProcessing
+if(ALBANY_CATALYST)
+  set(ALBANY_INCLUDE_DIRS
+    ${ALBANY_INCLUDE_DIRS}
+    ${Albany_SOURCE_DIR}/src/disc/catalyst
+  )
+  SET(ALBANY_TPL_LIBRARY_DIRS ${ALBANY_TPL_LIBRARY_DIRS} ${ALBANY_CATALYST_INCLUDE_DIRS})
+endif()
+
+# Note: Albany_EXTRA_LIBRARIES is to allow users to specify
+# libraries that are not already added in here
+set(ALBANY_TPL_LIBRARIES
+  ${PlatoEngine_LIB}
+  ${PlatoEngine_LIB}
+  ${Cogent_LIB}
+  ${Trilinos_LIBRARIES}
+  ${Trilinos_TPL_LIBRARIES}
+  ${LAME_LIB}
+  ${MATH_TOOLKIT_LIB}
+  ${NLOPT_LIB}
+  ${LAMENT_LIB}
+  ${Albany_EXTRA_LIBRARIES}
+  ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
+)
+
+IF (ALBANY_SCOREC_STANDALONE)
+  SET(ALBANY_TPL_LIBRARIES
+    ${ALBANY_TPL_LIBRARIES}
+    SCOREC::core
+  )
+ENDIF()
+
+############################################################
+#  Add Albany internal libraries/physics sets, as enabled. #
+############################################################
+
+# Adapt and discretization, are always present
+add_subdirectory(adapt)
+add_subdirectory(disc)
+SET(ALBANY_LIBRARIES albanyLib albanyAdapt)
+
+# STK, APF, and CATALYST are conditional 
+IF(ALBANY_STK)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanySTK)
+
+  SET (ALBANY_INCLUDE_DIRS
+    ${ALBANY_INCLUDE_DIRS}
+    ${Albany_SOURCE_DIR}/src/disc/stk
+  )
+
+  # Can remove this once rebalance is in Trilnos again
+  IF(ALBANY_STK_REBALANCE)
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanySTKRebalance)
+  endif()
+ENDIF()
+
+IF(ALBANY_APF)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPUMI)
+ENDIF()
+
+IF(ALBANY_CATALYST)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyCatalyst)
+endif()
+
+# Demo pdes
+IF(ALBANY_DEMO_PDES)
+  add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS} ${PDE_HDRS})
+  # Avoid using 'include_directory' on a top level directory
+  target_include_directories(albanyPDEs PUBLIC
+    "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
+     $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+  target_include_directories(albanyPDEs SYSTEM PUBLIC ${ALBANY_TPL_INCLUDE_DIRS})
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPDEs)
+ENDIF()
+
+# Aeras
+IF (ALBANY_AERAS)
+  add_subdirectory(Aeras)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Aeras)
+
+  SET (ALBANY_INCLUDE_DIRS
+    ${ALBANY_INCLUDE_DIRS}
+    ${Albany_SOURCE_DIR}/src/Aeras/problems
+    ${Albany_SOURCE_DIR}/src/Aeras/evaluators
+  )
 ENDIF()
 
 IF (ALBANY_AMP)
   add_subdirectory(AMP)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
-ENDIF()
-
-# Catalyst CoProcessing
-if(ALBANY_CATALYST)
-  set(ALBANY_CATALYST_INCLUDE_DIRS ./disc/catalyst)
-  include_directories(${ALBANY_CATALYST_INCLUDE_DIRS})
-endif()
-
-
-# Now build executables from this library, tailored main()s, and Trilinos
-IF (NOT ALBANY_LIBRARIES_ONLY)
-
-add_executable(Albany Main_Solve.cpp)
-
-SET(ALBANY_EXECUTABLES Albany)
-
-IF (ALBANY_MPMD)
-  add_executable(AlbanyMPMD Main_Solve_MPMD.cpp)
-  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
-ENDIF()
-
-IF (ALBANY_DAKOTA)
-  add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
-ENDIF ()
-
-add_executable(AlbanyAnalysis Main_Analysis.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
-
-IF (ALBANY_MESHDB_TOOLS)
-  add_executable(exopumiconvert disc/tools/exopumiconvert.cpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} exopumiconvert)
-ENDIF()
-
-ENDIF (NOT ALBANY_LIBRARIES_ONLY)
-# End declaration of executables
-
-# Note: Albany_EXTRA_LIBRARIES is to allow users to specify
-# libraries that one cannot get out of Trilinos directly.
-set(ALL_LIBRARIES
-  ${ALBANY_CI_LIB}
-  ${PlatoEngine_LIB}
-  ${PlatoEngine_LIB}
-  ${Cogent_LIB}
-  ${ALB_TRILINOS_LIBS}
-  ${LAME_LIB}
-  ${MATH_TOOLKIT_LIB}
-  ${NLOPT_LIB}
-  ${LAMENT_LIB}
-  ${Trilinos_EXTRA_LD_FLAGS}
-  ${Albany_EXTRA_LIBRARIES}
-  ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
+  SET (ALBANY_INCLUDE_DIRS
+    ${ALBANY_INCLUDE_DIRS}
+    ${Albany_SOURCE_DIR}/src/AMP
+    ${Albany_SOURCE_DIR}/src/AMP/problems
+    ${Albany_SOURCE_DIR}/src/AMP/evaluators
+    ${Albany_SOURCE_DIR}/src/AMP/responses
   )
-
-# Add Albany internal libraries/physics sets, as enabled.
-
-add_subdirectory(adapt)
-add_subdirectory(disc)
-
-IF(ALBANY_STK)
-SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK)
-ELSE()
-SET(ALBANY_LIBRARIES albanyLib albanyAdapt)
 ENDIF()
 
-IF(ALBANY_DEMO_PDES)
-  add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS} ${PDE_HDRS})
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPDEs)
-ENDIF()
-
+# LandIce
 IF (ALBANY_LANDICE)
   add_subdirectory(LandIce)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LandIce)
@@ -846,58 +823,129 @@ IF (ALBANY_LANDICE)
   IF (ENABLE_CISM_INTERFACE)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
   ENDIF()
+
+  SET (ALBANY_INCLUDE_DIRS
+    ${ALBANY_INCLUDE_DIRS}
+    ${Albany_SOURCE_DIR}/src/LandIce/problems
+    ${Albany_SOURCE_DIR}/src/LandIce/evaluators
+  )
 ENDIF()
 
-IF (ALBANY_AERAS)
-  add_subdirectory(Aeras)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Aeras)
-ENDIF()
-
+# Tsunami
 IF (ALBANY_TSUNAMI)
   add_subdirectory(Tsunami)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Tsunami)
+  SET (ALBANY_INCLUDE_DIRS
+    ${ALBANY_INCLUDE_DIRS}
+    ${Albany_SOURCE_DIR}/src/Tsunami/problems
+    ${Albany_SOURCE_DIR}/src/Tsunami/evaluators
+  )
 ENDIF()
-
-# RPI APF mesh interface
-IF(ALBANY_APF)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPUMI)
-ENDIF()
-
-IF(ALBANY_CATALYST)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyCatalyst)
-endif()
 
 IF (ALBANY_ATO)
-    SET(ALBANY_LCM ON)
-    add_subdirectory(ATO)
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)
-    # iso library uses stk
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ISOLIB_LIB})
+  SET(ALBANY_LCM ON)
+  add_subdirectory(ATO)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)
+  # iso library uses stk
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ISOLIB_LIB})
+  SET (ALBANY_INCLUDE_DIRS
+    ${ALBANY_INCLUDE_DIRS}
+    ${Albany_SOURCE_DIR}/src/ATO
+    ${Albany_SOURCE_DIR}/src/ATO/problems
+    ${Albany_SOURCE_DIR}/src/ATO/evaluators
+    ${Albany_SOURCE_DIR}/src/ATO/utils
+  )
 ENDIF()
 
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
+
+  SET (ALBANY_INCLUDE_DIRS
+    ${ALBANY_INCLUDE_DIRS}
+    ${Albany_SOURCE_DIR}/src/LCM/
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/ACE
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/bc
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/contact
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/HMC
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/kinematics
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/lame
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/linear-elasticity
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/poro
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/projection
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/responses
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/residuals
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/surface-element
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/size-field
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/transport
+    ${Albany_SOURCE_DIR}/src/LCM/evaluators/HMC
+    ${Albany_SOURCE_DIR}/src/LCM/models
+    ${Albany_SOURCE_DIR}/src/LCM/parallel_evaluators
+    ${Albany_SOURCE_DIR}/src/LCM/parallel_models
+    ${Albany_SOURCE_DIR}/src/LCM/solvers
+    ${Albany_SOURCE_DIR}/src/LCM/utils
+    ${Albany_SOURCE_DIR}/src/LCM/utils/topology
+  )
 ENDIF()
 
-# Can remove this once rebalance is in Trilnos again
-IF(ALBANY_STK_REBALANCE)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanySTKRebalance)
-endif()
+# The main albany library
+add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+# Avoid using 'include_directory' on a top level directory
+target_include_directories (albanyLib PUBLIC
+            "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
+            $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+target_include_directories(albanyLib SYSTEM PUBLIC ${ALBANY_TPL_INCLUDE_DIRS})
+set_target_properties(albanyLib PROPERTIES LINK_DIRECTORIES "${ALBANY_TPL_LIBRARY_DIRS}")
+target_link_libraries(albanyLib ${SCOREC_LIB} ${Trilinos_LIBRARIES})
 
 # Repeat libraries twice to catch circular dependencies
-SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
+# SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
+
+# Now build executables from this library, tailored main()s, and Trilinos
+IF (NOT ALBANY_LIBRARIES_ONLY)
+  add_executable(Albany Main_Solve.cpp)
+
+  SET(ALBANY_EXECUTABLES Albany)
+
+  IF (ALBANY_MPMD)
+    add_executable(AlbanyMPMD Main_Solve_MPMD.cpp)
+    SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
+  ENDIF()
+
+  IF (ALBANY_DAKOTA)
+    add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
+    SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
+  ENDIF ()
+
+  add_executable(AlbanyAnalysis Main_Analysis.cpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
+
+  IF (ALBANY_MESHDB_TOOLS)
+    add_executable(exopumiconvert disc/tools/exopumiconvert.cpp)
+    SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} exopumiconvert)
+  ENDIF()
+ENDIF (NOT ALBANY_LIBRARIES_ONLY)
+# End declaration of executables
 
 MESSAGE("\n-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
 
 IF (Albany_BUILD_STATIC_EXE)
   FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})
-    SET_PROPERTY(TARGET ${ALB_EXEC} PROPERTY LINK_SEARCH_START_STATIC 1)
+    SET_TARGET_PROPERTIES(${ALB_EXEC} PROPERTIES LINK_SEARCH_START_STATIC 1)
   ENDFOREACH()
 ENDIF()
 
 FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})
-  target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  set_target_properties(${ALB_EXEC} PROPERTIES
+                         LINK_DIRECTORIES "${ALBANY_TPL_LIBRARY_DIRS}")
+  IF (NOT "${Trilinos_EXTRA_LD_FLAGS}" STREQUAL "")
+    set_target_properties(${ALB_EXEC} PROPERTIES
+                           LINK_FLAGS "${Trilinos_EXTRA_LD_FLAGS}")
+  ENDIF()
+  target_include_directories(${ALB_EXEC} SYSTEM PUBLIC
+                             ${ALBANY_TPL_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
+  target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALBANY_TPL_LIBRARIES})
 ENDFOREACH()
 
 IF (INSTALL_ALBANY)
@@ -924,7 +972,7 @@ IF (INSTALL_ALBANY)
   ENDIF()
   INSTALL(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
 
-  SET(TMP1 ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  SET(TMP1 ${ALBANY_LIBRARIES} ${ALBANY_TPL_LIBRARIES})
 
   MESSAGE("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
   STRING(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")

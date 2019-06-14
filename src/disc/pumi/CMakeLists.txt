@@ -44,12 +44,11 @@ IF(ALBANY_STK)
   SET(HEADERS ${HEADERS} Albany_PUMIExodus.hpp)
 ENDIF()
 
-
-include_directories(
+include_directories(${ALBANY_INCLUDE_DIRS})
+include_directories( SYSTEM
   ${Trilinos_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/src
-  )
+)
 
 add_library(albanyPUMI ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 target_link_libraries(albanyPUMI ${SCOREC_LIB})

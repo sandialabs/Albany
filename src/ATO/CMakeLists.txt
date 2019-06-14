@@ -132,20 +132,19 @@ IF (ENABLE_Cogent)
   )
 ENDIF()
 
-include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}
-  ${CMAKE_SOURCE_DIR}/src
-  ${CMAKE_SOURCE_DIR}/src/evaluators
-  ${CMAKE_SOURCE_DIR}/src/problems
-  ${CMAKE_SOURCE_DIR}/src/responses
+include_directories (
+  ${ALBANY_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src/LCM/
   ${CMAKE_SOURCE_DIR}/src/LCM/evaluators
+  ${CMAKE_SOURCE_DIR}/src/LCM/evaluators/linear-elasticity
+  ${CMAKE_SOURCE_DIR}/src/LCM/evaluators/residuals
   ${CMAKE_SOURCE_DIR}/src/LCM/utils
   ${CMAKE_SOURCE_DIR}/src/ATO/
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators
   ${CMAKE_SOURCE_DIR}/src/ATO/problems
   ${CMAKE_SOURCE_DIR}/src/ATO/utils
 )
+include_directories (SYSTEM ${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS})
 
 add_library(ATO ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 

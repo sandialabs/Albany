@@ -1,6 +1,10 @@
 @PACKAGE_INIT@
+
 set_and_check(Albany_INCLUDE_DIRS "@PACKAGE_INCLUDE_INSTALL_DIR@")
 set_and_check(Albany_LIBRARY_DIRS "@PACKAGE_LIB_INSTALL_DIR@")
 include(${Albany_LIBRARY_DIRS}/Albany/cmake/albany-targets.cmake)
 set(Albany_LIBRARIES @ALBANY_LIBRARIES@)
+set(Albany_TPL_LIBRARIES @Trilinos_LIBRARIES@ @Trilinos_TPL_LIBRARIES@)
+set(Albany_TPL_LIBRARY_DIRS @ALBANY_TPL_LIBRARY_DIRS@)
+set(Albany_TPL_INCLUDE_DIRS @ALBANY_TPL_INCLUDE_DIRS@)
 check_required_components(Albany)

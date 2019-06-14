@@ -122,19 +122,23 @@ IF(ALBANY_SCOREC)
 
 ENDIF()
 
-include_directories(${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-                    ${Albany_SOURCE_DIR} / src ${Albany_SOURCE_DIR} / src / evaluators
-                    ${Albany_SOURCE_DIR} / src / problems ${Albany_SOURCE_DIR} / src / responses
-                    ${Albany_SOURCE_DIR} / src / disc
-                    ${Albany_SOURCE_DIR} / src / utility 
-                    ${Albany_SOURCE_DIR} / src / disc / stk ${Albany_SOURCE_DIR} / src / LCM /
-                    ${Albany_SOURCE_DIR} / src / LCM / evaluators ${Albany_SOURCE_DIR} / src / LCM / utils
-                   )
+include_directories(
+  ${Trilinos_INCLUDE_DIRS}
+  ${Trilinos_TPL_INCLUDE_DIRS}
+  ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
+  ${Albany_SOURCE_DIR}/src/problems
+  ${Albany_SOURCE_DIR}/src/responses
+  ${Albany_SOURCE_DIR}/src/disc
+  ${Albany_SOURCE_DIR}/src/utility
+  ${Albany_SOURCE_DIR}/src/disc/stk
+  ${Albany_SOURCE_DIR}/src/Aeras/evaluators
+  ${Albany_SOURCE_DIR}/src/LCM/
+  ${Albany_SOURCE_DIR}/src/LCM/evaluators
+  ${Albany_SOURCE_DIR}/src/LCM/utils
+)
 
 add_library(albanyAdapt ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-
 set_target_properties(albanyAdapt PROPERTIES PUBLIC_HEADER "${HEADERS}")
-
 target_link_libraries(albanyAdapt ${SCOREC_LIB})
 
 IF(ALBANY_OMEGA_H)

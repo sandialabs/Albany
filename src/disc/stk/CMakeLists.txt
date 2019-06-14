@@ -4,6 +4,11 @@
 #    in the file "license.txt" in the top-level Albany directory  //
 #*****************************************************************//
 
+# Can remove following once stk_rebalance is in trilinos again
+IF (ALBANY_STK_REBALANCE)
+  add_subdirectory(percept)
+ENDIF()
+
 #stk
 SET(SOURCES
   Albany_AsciiSTKMesh2D.cpp
@@ -62,14 +67,19 @@ IF (ALBANY_AERAS)
                          Aeras_SpectralOutputSTKMeshStruct.hpp)
 ENDIF()
 
-INCLUDE_DIRECTORIES (
-  ${Trilinos_INCLUDE_DIRS}
-  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/src
-)
-
 add_library(albanySTK ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+include_directories(
+  ${ALBANY_INCLUDE_DIRS}
+  ${Albany_SOURCE_DIR}/src/disc/stk
+)
+include_directories(SYSTEM
+        ${Trilinos_INCLUDE_DIRS}
+        ${Trilinos_TPL_INCLUDE_DIRS})
+
 target_link_libraries(albanySTK ${Trilinos_LIBRARIES})
+IF (ALBANY_STK_REBALANCE)
+  target_link_libraries(albanySTK albanySTKRebalance)
+ENDIF()
 
 set_target_properties(albanySTK PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
@@ -80,8 +90,3 @@ IF (INSTALL_ALBANY)
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 ENDIF()
 
-# Can remove following once stk_rebalance is in trilinos again
-IF (ALBANY_STK_REBALANCE)
-  add_subdirectory(percept)
-  target_link_libraries(albanySTK albanySTKRebalance)
-ENDIF()
