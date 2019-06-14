@@ -28,6 +28,7 @@ SET(SOURCES
   Albany_NullSpaceUtils.cpp
   Albany_ObserverImpl.cpp
   Albany_PiroObserver.cpp
+  Albany_Session.cpp
   Albany_StatelessObserverImpl.cpp
   Albany_StateManager.cpp
   PHAL_Utilities.cpp
@@ -67,6 +68,7 @@ SET(HEADERS
   Albany_PiroObserver.hpp
   Albany_SacadoTypes.hpp
   Albany_ScalarOrdinalTypes.hpp
+  Albany_Session.hpp
   Albany_SolverFactory.hpp
   Albany_StateManager.hpp
   Albany_StateInfoStruct.hpp

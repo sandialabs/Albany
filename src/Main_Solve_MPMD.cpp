@@ -12,7 +12,7 @@
 
 #include "Albany_Memory.hpp"
 #include "Albany_SolverFactory.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_Session.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_CommUtils.hpp"
 
@@ -200,10 +200,10 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
     const auto& bt = appParams->get("Build Type","Tpetra");
     if (bt=="Tpetra") {
       // Set the static variable that denotes this as a Tpetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+      Albany::Session::reset_build_type(Albany::BuildType::Tpetra);
     } else if (bt=="Epetra") {
       // Set the static variable that denotes this as a Epetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
+      Albany::Session::reset_build_type(Albany::BuildType::Epetra);
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
                                  "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"

@@ -19,6 +19,7 @@
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
+#include "Albany_Session.hpp"
 #include "Albany_Utils.hpp"
 #include "HeliumODEs.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -48,7 +49,7 @@ using Teuchos::rcp;
 
 TEUCHOS_UNIT_TEST(HeliumODEs, test1)
 {
-  Albany::build_type(Albany::BuildType::Tpetra);
+  Albany::Session::reset_build_type(Albany::BuildType::Tpetra);
   // A mpi object must be instantiated
   Teuchos::GlobalMPISession        mpi_session(void);
   Teuchos::RCP<const Teuchos_Comm> commT =

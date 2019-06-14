@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "AAdapt_RC_Projector_impl.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_Session.hpp"
 
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosThyraAdapter.hpp>
@@ -33,7 +33,7 @@ solve (const Teuchos::RCP<const Thyra_LinearOp>& A,
   const int nrhs = b->domain()->dim();
   Teuchos::RCP<Thyra_MultiVector> x = Thyra::createMembers(A->domain(),nrhs);
 
-  auto bt = Albany::build_type();
+  auto bt = Albany::Session::get_build_type();
   if (P.is_null()) {
     Teuchos::ParameterList pl_;
     switch (bt) {

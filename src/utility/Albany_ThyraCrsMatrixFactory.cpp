@@ -10,7 +10,7 @@
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_EpetraThyraUtils.hpp"
 
-#include "Albany_Utils.hpp"
+#include "Albany_Session.hpp"
 #include "Albany_Macros.hpp"
 
 namespace Albany {
@@ -37,8 +37,8 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
  , m_filled (false)
  , m_static_profile (static_profile) 
 {
-  auto bt = Albany::build_type();
-  TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for albany.\n");
+  auto bt = Albany::Session::get_build_type();
+  TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::Undefined, std::logic_error, "Error! No build type set for albany.\n");
 
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
@@ -70,8 +70,8 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
                               "Error! Can only build a graph from an overlapped source if source has been filled already.\n");
   m_graph = Teuchos::rcp(new Impl());
 
-  auto bt = Albany::build_type();
-  TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for albany.\n");
+  auto bt = Albany::Session::get_build_type();
+  TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::Undefined, std::logic_error, "Error! No build type set for albany.\n");
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
     auto e_range = getEpetraBlockMap(range_vs);
@@ -108,7 +108,7 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
 }
 
 void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& indices) {
-  auto bt = Albany::build_type();
+  auto bt = Albany::Session::get_build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
     const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
@@ -142,7 +142,7 @@ void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::Ar
 }
 
 void ThyraCrsMatrixFactory::fillComplete () {
-  auto bt = Albany::build_type();
+  auto bt = Albany::Session::get_build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
     auto e_domain = getEpetraBlockMap(m_domain_vs);
@@ -165,7 +165,7 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp () const {
   TEUCHOS_TEST_FOR_EXCEPTION (!m_filled, std::logic_error, "Error! Cannot create a linear operator if the graph is not filled.\n");
 
   Teuchos::RCP<Thyra_LinearOp> op;
-  auto bt = Albany::build_type();
+  auto bt = Albany::Session::get_build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_CrsMatrix> matrix = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *m_graph->e_graph)); 

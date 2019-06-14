@@ -6,9 +6,10 @@
 
 #include <iostream>
 
-#include "Albany_Utils.hpp"
 #include "Albany_CommUtils.hpp"
+#include "Albany_Session.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_Utils.hpp"
 
 #include <Piro_PerformAnalysis.hpp>
 #include <Teuchos_GlobalMPISession.hpp>
@@ -59,10 +60,10 @@ int main(int argc, char *argv[]) {
     const auto& bt = slvrfctry.getParameters().get("Build Type","Tpetra");
     if (bt=="Tpetra") {
       // Set the static variable that denotes this as a Tpetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+      Albany::Session::reset_build_type(Albany::BuildType::Tpetra);
     } else if (bt=="Epetra") {
       // Set the static variable that denotes this as a Epetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
+      Albany::Session::reset_build_type(Albany::BuildType::Epetra);
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
                                  "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"

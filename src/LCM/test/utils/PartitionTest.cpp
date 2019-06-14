@@ -11,6 +11,7 @@
 #include <chrono>
 #include <iomanip>
 
+#include <Albany_Session.hpp>
 #include <LCMPartition.h>
 #include <Teuchos_CommandLineProcessor.hpp>
 
@@ -24,7 +25,7 @@ main(int ac, char* av[])
 
   Zoltan_Initialize(ac, av, &version);
 
-  Albany::build_type(Albany::BuildType::Tpetra);
+  Albany::Session::reset_build_type(Albany::BuildType::Tpetra);
 
   //
   // Create a command line processor and parse command line options

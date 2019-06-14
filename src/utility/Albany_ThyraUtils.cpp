@@ -2,6 +2,7 @@
 #include "Albany_CommUtils.hpp"
 #include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_Session.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_Macros.hpp"
 
@@ -30,7 +31,7 @@ namespace Albany
 Teuchos::RCP<const Thyra_VectorSpace>
 createLocallyReplicatedVectorSpace(const int size, const Teuchos::RCP<const Teuchos_Comm> comm)
 {
-  auto bt = build_type();
+  auto bt = Session::get_build_type();
   switch (bt) {
 #ifdef ALBANY_EPETRA
     case BuildType::Epetra:
@@ -361,7 +362,7 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
                    const Teuchos::ArrayView<const GO>& gids,
                    const GO globalDim)
 {
-  auto bt = build_type();
+  auto bt = Session::get_build_type();
   const GO invalid = Teuchos::OrdinalTraits<GO>::invalid();
   if (bt == BuildType::Epetra) {
 #ifdef ALBANY_EPETRA

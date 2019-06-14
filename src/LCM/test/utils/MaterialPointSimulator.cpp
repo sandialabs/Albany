@@ -22,7 +22,7 @@
 #include <Albany_STKDiscretization.hpp>
 #include <Albany_StateManager.hpp>
 #include <Albany_TmplSTKMeshStruct.hpp>
-#include <Albany_Utils.hpp>
+#include <Albany_Session.hpp>
 #include <PHAL_AlbanyTraits.hpp>
 #include <PHAL_SaveStateField.hpp>
 
@@ -59,7 +59,7 @@ struct KokkosGuard
 int
 main(int ac, char* av[])
 {
-  Albany::build_type(Albany::BuildType::Tpetra);
+  Albany::Session::reset_build_type(Albany::BuildType::Tpetra);
 
   KokkosGuard kokkos(ac, av);
 
