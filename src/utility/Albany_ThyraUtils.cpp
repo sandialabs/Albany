@@ -395,7 +395,7 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
     Teuchos::RCP<const Tpetra_Map> tmap = Teuchos::rcp( new Tpetra_Map(numGlobalElements,tgids,0,comm) );
     return createThyraVectorSpace(tmap);
   } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in createVectorSpace! Invalid or unsupported build type.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in createVectorSpace! Invalid or unsupported build type (" + std::to_string(std::underlying_type<BuildType>::type(bt)) + ").\n");
   }
 }
 

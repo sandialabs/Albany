@@ -13,8 +13,8 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
-#include "utility/Albany_ThyraUtils.hpp"
-#include "utility/Albany_ThyraCrsMatrixFactory.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_ThyraCrsMatrixFactory.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
 

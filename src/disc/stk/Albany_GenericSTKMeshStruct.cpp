@@ -1509,7 +1509,7 @@ fillField (const std::string& field_name,
       }
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
-                                 "Error! Invalid type for parameter 'Field Value'. Should be either 'double' or 'Array(double)'.\n");
+                                 "Error! Invalid type for parameter 'Field Value' for field '" + field_name + "'. It should be either 'double' or 'Array(double)'.\n");
     }
 
     if (layered) {
