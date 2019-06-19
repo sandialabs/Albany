@@ -36,7 +36,7 @@ RIHMRModel<EvalT, Traits>::RIHMRModel(
   std::string cauchy_string       = (*field_name_map_)["Cauchy_Stress"];
   std::string logFp_string        = (*field_name_map_)["logFp"];
   std::string eqps_string         = (*field_name_map_)["eqps"];
-  std::string isoHardening_string = (*field_name_map_)["isoHardening"];
+  std::string isoHardening_string = (*field_name_map_)["isotropic_hardening"];
 
   // define evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
@@ -104,8 +104,7 @@ RIHMRModel<EvalT, Traits>::computeState(
   std::string cauchy_string       = (*field_name_map_)["Cauchy_Stress"];
   std::string logFp_string        = (*field_name_map_)["logFp"];
   std::string eqps_string         = (*field_name_map_)["eqps"];
-  std::string isoHardening_string = (*field_name_map_)["isoHardening"];
-
+  std::string isoHardening_string = (*field_name_map_)["isotropic_hardening"];
   // extract evaluated MDFields
   auto stress       = *eval_fields[cauchy_string];
   auto logFp        = *eval_fields[logFp_string];

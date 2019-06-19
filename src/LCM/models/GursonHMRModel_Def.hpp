@@ -47,7 +47,7 @@ GursonHMRModel<EvalT, Traits>::GursonHMRModel(
   std::string Fp_string           = (*field_name_map_)["Fp"];
   std::string eqps_string         = (*field_name_map_)["eqps"];
   std::string ess_string          = (*field_name_map_)["ess"];
-  std::string isoHardening_string = (*field_name_map_)["isoHardening"];
+  std::string isoHardening_string = (*field_name_map_)["isotropic_hardening"];
   std::string void_string         = (*field_name_map_)["Void_Volume"];
 
   // define the evaluated fields

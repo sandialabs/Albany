@@ -368,46 +368,47 @@ MechanicsProblem::constructEvaluators(
   // generate the field name map to deal with outputing surface element info
   LCM::FieldNameMap field_name_map(surface_element);
 
-  Teuchos::RCP<std::map<std::string, std::string>> fnm =
+  Teuchos::RCP<std::map<std::string, std::string>> fnm_rcp =
       field_name_map.getMap();
 
-  std::string cauchy = (*fnm)["Cauchy_Stress"];
-  std::string firstPK = (*fnm)["FirstPK"];
-  std::string Fp = (*fnm)["Fp"];
-  std::string eqps = (*fnm)["eqps"];
-  std::string temperature = (*fnm)["Temperature"];
-  std::string ace_temperature = (*fnm)["ACE Temperature"];
-  std::string pressure = (*fnm)["Pressure"];
-  std::string mech_source = (*fnm)["Mechanical_Source"];
-  std::string defgrad = (*fnm)["F"];
-  std::string J = (*fnm)["J"];
+  auto fnm = (*fnm_rcp);
+
+  std::string cauchy          = fnm["Cauchy_Stress"];
+  std::string firstPK         = fnm["FirstPK"];
+  std::string Fp              = fnm["Fp"];
+  std::string eqps            = fnm["eqps"];
+  std::string temperature     = fnm["Temperature"];
+  std::string ace_temperature = fnm["ACE Temperature"];
+  std::string pressure        = fnm["Pressure"];
+  std::string mech_source     = fnm["Mechanical_Source"];
+  std::string defgrad         = fnm["F"];
+  std::string J               = fnm["J"];
 
   // Poromechanics variables
-  std::string totStress = (*fnm)["Total_Stress"];
-  std::string kcPerm = (*fnm)["KCPermeability"];
-  std::string biotModulus = (*fnm)["Biot_Modulus"];
-  std::string biotCoeff = (*fnm)["Biot_Coefficient"];
-  std::string porosity = (*fnm)["Porosity"];
-  std::string porePressure = (*fnm)["Pore_Pressure"];
+  std::string totStress    = fnm["Total_Stress"];
+  std::string kcPerm       = fnm["KCPermeability"];
+  std::string biotModulus  = fnm["Biot_Modulus"];
+  std::string biotCoeff    = fnm["Biot_Coefficient"];
+  std::string porosity     = fnm["Porosity"];
+  std::string porePressure = fnm["Pore_Pressure"];
 
   // Hydrogen diffusion variable
-  std::string transport = (*fnm)["Transport"];
-  std::string hydroStress = (*fnm)["HydroStress"];
-  std::string diffusionCoefficient = (*fnm)["Diffusion_Coefficient"];
-  std::string convectionCoefficient = (*fnm)["Tau_Contribution"];
-  std::string trappedConcentration = (*fnm)["Trapped_Concentration"];
-  std::string totalConcentration = (*fnm)["Total_Concentration"];
-  std::string effectiveDiffusivity = (*fnm)["Effective_Diffusivity"];
-  std::string trappedSolvent = (*fnm)["Trapped_Solvent"];
-  std::string strainRateFactor = (*fnm)["Strain_Rate_Factor"];
-  std::string eqilibriumParameter =
-      (*fnm)["Concentration_Equilibrium_Parameter"];
-  std::string gradient_element_length = (*fnm)["Gradient_Element_Length"];
+  std::string transport             = fnm["Transport"];
+  std::string hydroStress           = fnm["HydroStress"];
+  std::string diffusionCoefficient  = fnm["Diffusion_Coefficient"];
+  std::string convectionCoefficient = fnm["Tau_Contribution"];
+  std::string trappedConcentration  = fnm["Trapped_Concentration"];
+  std::string totalConcentration    = fnm["Total_Concentration"];
+  std::string effectiveDiffusivity  = fnm["Effective_Diffusivity"];
+  std::string trappedSolvent        = fnm["Trapped_Solvent"];
+  std::string strainRateFactor      = fnm["Strain_Rate_Factor"];
+  std::string eqilibriumParameter = fnm["Concentration_Equilibrium_Parameter"];
+  std::string gradient_element_length = fnm["Gradient_Element_Length"];
 
   // Helium bubble evolution
-  std::string he_concentration = (*fnm)["He_Concentration"];
-  std::string total_bubble_density = (*fnm)["Total_Bubble_Density"];
-  std::string bubble_volume_fraction = (*fnm)["Bubble_Volume_Fraction"];
+  std::string he_concentration       = fnm["He_Concentration"];
+  std::string total_bubble_density   = fnm["Total_Bubble_Density"];
+  std::string bubble_volume_fraction = fnm["Bubble_Volume_Fraction"];
 
   // Get the solution method type
   SolutionMethodType SolutionType = getSolutionMethod();
@@ -917,7 +918,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_ace_temperature_eq_ == true) {
+  if ((have_ace_temperature_eq_ == true) || (have_ace_temperature_ == true)) {
     RealType const temp = material_db_->getElementBlockParam<RealType>(
         eb_name, "Initial ACE Temperature", 0.0);
 
@@ -1152,7 +1153,7 @@ MechanicsProblem::constructEvaluators(
     }
 
     param_list.set<Teuchos::RCP<std::map<std::string, std::string>>>(
-        "Name Map", fnm);
+        "Name Map", fnm_rcp);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
     p->set<bool>("Volume Average Pressure", volume_average_pressure);
     if (volume_average_pressure == true) {
@@ -1160,24 +1161,25 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("J Name", J);
     }
 
-    Teuchos::RCP<LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>>
-        cmiEv = Teuchos::rcp(
-            new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(
-                *p, dl_));
-    fm0.template registerEvaluator<EvalT>(cmiEv);
+    auto cmi_rcp = Teuchos::rcp(
+        new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(
+            *p, dl_));
+    fm0.template registerEvaluator<EvalT>(cmi_rcp);
 
     // register state variables
-    for (int sv(0); sv < cmiEv->getNumStateVars(); ++sv) {
-      cmiEv->fillStateVariableStruct(sv);
+    auto       cmi            = (*cmi_rcp);
+    auto const num_state_vars = cmi.getNumStateVars();
+    for (int sv(0); sv < num_state_vars; ++sv) {
+      cmi.fillStateVariableStruct(sv);
       p = stateMgr.registerStateVariable(
-          cmiEv->getName(),
-          cmiEv->getLayout(),
+          cmi.getName(),
+          cmi.getLayout(),
           dl_->dummy,
           eb_name,
-          cmiEv->getInitType(),
-          cmiEv->getInitValue(),
-          cmiEv->getStateFlag(),
-          cmiEv->getOutputFlag());
+          cmi.getInitType(),
+          cmi.getInitValue(),
+          cmi.getStateFlag(),
+          cmi.getOutputFlag());
       ev =
           Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -2192,7 +2194,8 @@ MechanicsProblem::constructEvaluators(
         "Average J Stabilization Parameter",
         volume_average_stabilization_param);
 
-    p->set<Teuchos::RCP<std::map<std::string, std::string>>>("Name Map", fnm);
+    p->set<Teuchos::RCP<std::map<std::string, std::string>>>(
+        "Name Map", fnm_rcp);
 
     // Output
     p->set<std::string>("Trapped Concentration Name", trappedConcentration);

@@ -216,7 +216,7 @@ if (BUILD_TRILINOS_SERIAL)
       "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-liomp5 -lpthread'"
 
 
-      "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosSerialInstall"
+      "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/MiniEMInstall"
       "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
       "-DCMAKE_CXX_COMPILER=mpicxx" 
       "-DCMAKE_C_COMPILER=mpicc"
@@ -374,7 +374,7 @@ if (BUILD_TRILINOS_SERIAL)
   set_property (GLOBAL PROPERTY SubProject IKTBlakeMiniEM)
   set_property (GLOBAL PROPERTY Label IKTBlakeMiniEM)
   #set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
+  set (CTEST_BUILD_TARGET install)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 

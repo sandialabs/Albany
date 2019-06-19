@@ -187,14 +187,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       false,
       p->get<bool>("ACE Porosity", false));
 
-  // ACE Temperature
-  addStateVariable(
-      "ACE Temperature",
-      dl->qp_scalar,
-      "scalar",
-      0.0,
-      true,
-      p->get<bool>("Output Temperature", false));
+  // ACE Temperature is already registered in Mechanics Problem.
 
   // ACE Temperature Dot
   addStateVariable(
