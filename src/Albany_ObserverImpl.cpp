@@ -51,4 +51,10 @@ observeSolution(double stamp,
   StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution);
 }
 
+void ObserverImpl::
+observeParameter(const std::string& param)
+{
+  app_->getPhxSetup()->init_unsaved_param(param);
+}
+
 } // namespace Albany

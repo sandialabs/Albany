@@ -722,6 +722,13 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   auto f_out    = outArgs.get_f();
   auto W_op_out = outArgs.get_W_op();
 
+  //
+  // Compute the functions
+  //
+
+  // Setup Phalanx data before functions are computed
+  app->getPhxSetup()->pre_eval();
+
 #ifdef WRITE_STIFFNESS_MATRIX_TO_MM_FILE
     // IK, 4/24/15: write stiffness matrix to matrix market file
     // Warning: to read this in to MATLAB correctly, code must be run in serial.
@@ -758,9 +765,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     writeMatrixMarket(W_op_out->domain(),"domain_space.mm");
 #endif
 
-  //
-  // Compute the functions
-  //
   bool f_already_computed = false;
 
   // W matrix
@@ -912,6 +916,9 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   Albany::writeMatrixMarket(W_op_out, "jac", mm_counter_jac);
   ++mm_counter_jac;
 #endif
+
+  // Setup Phalanx data after functions are computed
+  app->getPhxSetup()->post_eval();
 }
 
 Thyra_InArgs ModelEvaluator::createInArgsImpl() const

@@ -25,9 +25,44 @@ void Setup::init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> probl
   _enableMemoization = problemParams->get<bool>("Use MDField Memoization", false);
 }
 
+void Setup::init_unsaved_param(const std::string& param)
+{
+  _unsavedParam = param;
+}
+
 bool Setup::memoizer_active() const
 {
   return _enableMemoization;
+}
+
+// Modify default route:
+// Create general/private update_fields(unsavedFields, savedFields)
+// -> no unsaved params:
+//   -> postReg -> fill_dep() (default filled) -> update_fields() (calls private with default)
+// get_saved_fields() if (_unsavedParam.empty()) savedFields else savedParamFields
+
+void Setup::pre_eval()
+{
+  if (_enableMemoization && !_unsavedParam.empty())
+  {
+    // Find MDFields that contain unsaved parameter (or parameters if vector overload later)
+    // Add unsaved fields to unsavedParamFields
+
+    if (_setupEvals->empty())
+    {
+      // -> before postReg:
+      //   -> in update_fields():
+      //     -> if (!_unsavedParam.empty()) do the else below
+    }
+    else
+    {
+      // -> after postReg:
+      //   -> Copy saved fields to savedParamFields
+      //   -> Remove unsaved param fields from savedParamFields
+      //   -> Add unsaved fields to unsavedParamFields
+      //   -> update_fields(unsavedParamFields, savedParamFields)
+    }
+  }
 }
 
 void Setup::insert_eval(const std::string& eval)
@@ -38,6 +73,14 @@ void Setup::insert_eval(const std::string& eval)
 bool Setup::contain_eval(const std::string& eval) const
 {
   return _setupEvals->count(eval) > 0;
+}
+
+void Setup::post_eval()
+{
+  // if _enableMemoization && !_unsavedParam.empty()
+  // _unsavedParam.clear()
+  // unsavedParamFields/savedParamFields.reset() and allocate (or allocate in pre)
+  // Note: I could probably move the reset/allocate to pre and save an update_fields() when parameter doesn't change!
 }
 
 void Setup::fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag>>& depFields,
@@ -58,7 +101,7 @@ void Setup::fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag
   }
 }
 
-void Setup::update_unsaved_fields()
+void Setup::update_fields()
 {
   if (_enableMemoization) {
     // Start with list of unsaved fields

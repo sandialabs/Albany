@@ -139,7 +139,7 @@ postRegSetup()
   application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Jacobian>());
   application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Tangent>());
   application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::DistParamDeriv>());
-  application->getPhxSetup()->update_unsaved_fields();
+  application->getPhxSetup()->update_fields();
   performedPostRegSetup = true;
 }
 
