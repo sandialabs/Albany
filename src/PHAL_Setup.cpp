@@ -13,10 +13,10 @@ namespace PHAL {
 
 Setup::Setup() :
     _setupEvals(Teuchos::rcp(new StringSet())),
+    _enableMemoization(false),
     _dep2EvalFields(Teuchos::rcp(new StringMap())),
     _savedFields(Teuchos::rcp(new StringSet())),
-    _unsavedFields(Teuchos::rcp(new StringSet())),
-    _enableMemoization(false)
+    _unsavedFields(Teuchos::rcp(new StringSet()))
 {
 }
 
@@ -25,9 +25,46 @@ void Setup::init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> probl
   _enableMemoization = problemParams->get<bool>("Use MDField Memoization", false);
 }
 
+void Setup::init_unsaved_param(const std::string& param)
+{
+  if (_enableMemoization) _unsavedParam = param;
+}
+
 bool Setup::memoizer_active() const
 {
   return _enableMemoization;
+}
+
+void Setup::pre_eval()
+{
+  if (_enableMemoization)
+  {
+    // If the MDFields haven't been computed yet, everything will be computed
+    // anyways so let's skip memoization pre_eval()
+    if (_setupEvals->empty()) return;
+
+    // If a parameter has changed and the saved/unsaved string sets haven't
+    // been created yet then create the sets
+    if (!_unsavedParam.empty() && (_unsavedParam != _savedParamStringSets)) {
+
+      // Copy saved/unsaved MDFields
+      _savedFieldsWOParam = Teuchos::rcp(new StringSet(*_savedFields));
+      _unsavedFieldsWParam = Teuchos::rcp(new StringSet(*_unsavedFields));
+
+      // If saved field has been changed, add field to list of unsaved
+      for (const auto & savedField: *_savedFields)
+        if (savedField.find(_unsavedParam) != std::string::npos) {
+          _unsavedFieldsWParam->insert(savedField);
+          _savedFieldsWOParam->erase(savedField);
+        }
+
+      // Update list of saved/unsaved fields
+      update_fields(_savedFieldsWOParam, _unsavedFieldsWParam);
+
+      // Save param string sets for later use
+      _savedParamStringSets = _unsavedParam;
+    }
+  }
 }
 
 void Setup::insert_eval(const std::string& eval)
@@ -38,6 +75,12 @@ void Setup::insert_eval(const std::string& eval)
 bool Setup::contain_eval(const std::string& eval) const
 {
   return _setupEvals->count(eval) > 0;
+}
+
+void Setup::post_eval()
+{
+  // Clear unsaved param
+  if (_enableMemoization && !_unsavedParam.empty()) _unsavedParam.clear();
 }
 
 void Setup::fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag>>& depFields,
@@ -58,34 +101,14 @@ void Setup::fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag
   }
 }
 
-void Setup::update_unsaved_fields()
-{
-  if (_enableMemoization) {
-    // Start with list of unsaved fields
-    std::stack<std::string> unsavedStack;
-    for (const auto & unsavedField: *_unsavedFields)
-      unsavedStack.push(unsavedField);
-
-    // Continue until all unsaved fields have been removed
-    while(!unsavedStack.empty()) {
-      const auto iter = _dep2EvalFields->find(unsavedStack.top());
-      unsavedStack.pop();
-
-      // If unsaved field is used to evaluate fields, add evaluated fields to list of unsaved
-      if (iter != _dep2EvalFields->end()) {
-        for (const auto & evalField: iter->second) {
-          _savedFields->erase(evalField);
-          _unsavedFields->insert(evalField);
-          unsavedStack.push(evalField);
-        }
-      }
-    }
-  }
-}
-
 Teuchos::RCP<const StringSet> Setup::get_saved_fields() const
 {
-  return _savedFields;
+  return _unsavedParam.empty() ? _savedFields : _savedFieldsWOParam;
+}
+
+void Setup::update_fields()
+{
+  if (_enableMemoization) update_fields(_savedFields, _unsavedFields);
 }
 
 void Setup::check_fields(const std::vector<Teuchos::RCP<PHX::FieldTag>>& fields) const
@@ -128,6 +151,32 @@ void Setup::print_field_dependencies() const
         std::cout << "    " << evalField << std::endl;
     }
     std::cout << "******************************************" << std::endl;
+  }
+}
+
+void Setup::update_fields(Teuchos::RCP<StringSet> savedFields, Teuchos::RCP<StringSet> unsavedFields)
+{
+  if (_enableMemoization) {
+
+    // Start with list of unsaved fields
+    std::stack<std::string> unsavedStack;
+    for (const auto & unsavedField: *unsavedFields)
+      unsavedStack.push(unsavedField);
+
+    // Continue until all unsaved fields have been removed
+    while(!unsavedStack.empty()) {
+      const auto iter = _dep2EvalFields->find(unsavedStack.top());
+      unsavedStack.pop();
+
+      // If unsaved field is used to evaluate fields, add evaluated fields to list of unsaved
+      if (iter != _dep2EvalFields->end()) {
+        for (const auto & evalField: iter->second) {
+          savedFields->erase(evalField);
+          unsavedFields->insert(evalField);
+          unsavedStack.push(evalField);
+        }
+      }
+    }
   }
 }
 

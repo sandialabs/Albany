@@ -2256,11 +2256,9 @@ Application::evaluateStateFieldManager(
             ->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
                 derivative_dimensions);
         sfm[ps]->postRegistrationSetup(*phxSetup);
-        phxSetup->check_fields(
-            sfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Residual>());
-        phxSetup->check_fields(
-            sfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Jacobian>());
-        phxSetup->update_unsaved_fields();
+        phxSetup->check_fields(sfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Residual>());
+        phxSetup->check_fields(sfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Jacobian>());
+        phxSetup->update_fields();
       }
       // visualize state field manager
       if (stateGraphVisDetail > 0) {
@@ -2503,7 +2501,7 @@ Application::postRegSetup(std::string eval)
             << " Unrecognized name: " << eval << std::endl);
 
   // Update phalanx saved/unsaved fields based on field dependencies
-  phxSetup->update_unsaved_fields();
+  phxSetup->update_fields();
 
   // Write out Phalanx Graph if requested, on Proc 0, for Resid and Jacobian
   bool alreadyWroteResidPhxGraph = false;

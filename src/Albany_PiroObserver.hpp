@@ -7,6 +7,8 @@
 #ifndef ALBANY_PIRO_OBSERVER_HPP
 #define ALBANY_PIRO_OBSERVER_HPP
 
+#include <string>
+
 #include "Piro_ObserverBase.hpp"
 
 #include "Albany_DataTypes.hpp"
@@ -43,6 +45,9 @@ public:
   virtual void observeSolution(
       const Thyra_MultiVector& solution,
       const ST stamp);
+
+  virtual void observeParameter(
+      const std::string& param);
 
 private:
   void observeSolutionImpl(
