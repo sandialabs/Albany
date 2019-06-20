@@ -55,7 +55,7 @@ public:
   void fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag>>& depFields,
       const std::vector<Teuchos::RCP<PHX::FieldTag>>& evalFields, const bool saved = true);
 
-  //! Update list of saved/unsaved MDFields based on unsaved MDFields and field dependencies
+  //! Update list of _saved/_unsaved MDFields based on _unsaved MDFields and field dependencies
   void update_fields();
 
   //! Get list of saved MDFields
@@ -69,11 +69,19 @@ public:
   void print_field_dependencies() const;
 
 private:
+  //! Update list of saved/unsaved MDFields based on unsaved MDFields and field dependencies
+  void update_fields(Teuchos::RCP<StringSet> savedFields, Teuchos::RCP<StringSet> unsavedFields);
+
   const Teuchos::RCP<StringSet> _setupEvals;
+
+  //! Data structures for general memoization
+  bool _enableMemoization;
   const Teuchos::RCP<StringMap> _dep2EvalFields;
   const Teuchos::RCP<StringSet> _savedFields, _unsavedFields;
-  bool _enableMemoization;
-  std::string _unsavedParam;
+
+  //! Data structures for memoization of parameters that change occasionally
+  std::string _unsavedParam, _savedParamStringSets;
+  Teuchos::RCP<StringSet> _savedFieldsWOParam, _unsavedFieldsWParam;
 };
 
 } // namespace PHAL
