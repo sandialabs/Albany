@@ -1,6 +1,6 @@
 whatis("LCM Intel compiler")
 
-load("intel/17.0.4.196")
+load("intel/18.0.3.222")
 
 setenv("TOOL_CHAIN", "intel")
 
