@@ -91,7 +91,7 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
 // **********************************************************************
 template<typename EvalT, typename Traits, typename FieldScalarT>
 void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScalarT>::
-postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
 
   this->utils.setFieldData(solution, fm);
@@ -102,6 +102,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Trai
   this->utils.setFieldData(side_tangents, fm);
 
   this->utils.setFieldData(bdLaplacian_L2Projection_res, fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 
