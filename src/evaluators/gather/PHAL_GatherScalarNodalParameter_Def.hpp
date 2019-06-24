@@ -33,11 +33,12 @@ GatherScalarNodalParameterBase(const Teuchos::ParameterList& p,
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void GatherScalarNodalParameterBase<EvalT,Traits>::
-postRegistrationSetup(typename Traits::SetupData /* c */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(val,fm);
   numNodes = val.extent(1);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
 }
 
 // **********************************************************************

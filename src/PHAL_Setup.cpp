@@ -114,12 +114,19 @@ void Setup::update_fields()
 void Setup::check_fields(const std::vector<Teuchos::RCP<PHX::FieldTag>>& fields) const
 {
   if (_enableMemoization) {
+    StringSet missingFields;
     for (const auto & field: fields) {
       const auto & fieldId = field->identifier();
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          _savedFields->count(fieldId) == 0 &&
-          _unsavedFields->count(fieldId) == 0,
-          std::logic_error, fieldId + " could not be found!\n");
+      if (_savedFields->count(fieldId) == 0 && _unsavedFields->count(fieldId) == 0)
+        missingFields.insert(fieldId);
+    }
+    if (!missingFields.empty()) {
+      std::ostringstream os;
+      for (const auto & missingField: missingFields) {
+        os << missingField << "\n";
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION(true,
+          std::logic_error, "The following fields could not be found:\n" + os.str());
     }
   }
 }
