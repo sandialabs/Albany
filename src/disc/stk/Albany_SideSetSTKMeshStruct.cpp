@@ -102,7 +102,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
   bulkData = Teuchos::rcp(new stk::mesh::BulkData(*metaData, *mpiComm->getRawMpiComm(),
                                                    stk::mesh::BulkData::NO_AUTO_AURA,
-                                                   false, NULL, NULL, worksetSize));
+                                                   false, /*NULL,*/ NULL, worksetSize));
 }
 
 SideSetSTKMeshStruct::~SideSetSTKMeshStruct()
