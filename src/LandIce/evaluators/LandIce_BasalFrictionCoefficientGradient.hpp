@@ -15,6 +15,7 @@
 #include "Albany_Layouts.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 #include "PHAL_Dimension.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace LandIce
 {
@@ -37,8 +38,8 @@ public:
 
   virtual ~BasalFrictionCoefficientGradient () {}
 
-  void postRegistrationSetup (typename Traits::SetupData,
-                              PHX::FieldManager<Traits>&) {}
+  void postRegistrationSetup (typename Traits::SetupData d,
+                              PHX::FieldManager<Traits>& vm);
 
   void evaluateFields (typename Traits::EvalData d);
 
@@ -86,6 +87,8 @@ private:
 
   enum BETA_TYPE {INVALID, GIVEN_CONSTANT, GIVEN_FIELD, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 
 } // Namespace LandIce

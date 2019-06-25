@@ -141,6 +141,16 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
+void BasalFrictionCoefficientGradient<EvalT, Traits>::
+postRegistrationSetup (typename Traits::SetupData d,
+                       PHX::FieldManager<Traits>& fm)
+{
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
 void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (beta_type==INVALID, Teuchos::Exceptions::InvalidParameter,
@@ -151,6 +161,8 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
 
   if (it_ss==ssList.end())
     return;
+
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   ScalarT lambda, mu, power;
   if (beta_type==REGULARIZED_COULOMB)
