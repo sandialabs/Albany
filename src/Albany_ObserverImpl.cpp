@@ -3,18 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include "Albany_ObserverImpl.hpp"
 
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
-#if defined(ALBANY_EPETRA)
-# include "AAdapt_AdaptiveSolutionManager.hpp"
-#endif
-
-#include "Teuchos_TimeMonitor.hpp"
-#include "Teuchos_Ptr.hpp"
-
-#include <string>
 
 namespace Albany {
 
@@ -35,6 +28,16 @@ observeSolution(double stamp,
                                    nonOverlappedSolutionDotDot);
 
   app_->getStateMgr().updateStates();
+
+  //! update distributed parameters in the mesh
+  auto distParamLib = app_->getDistributedParameterLibrary();
+  auto disc = app_->getDiscretization();
+  distParamLib->scatter();
+  for(auto it : *distParamLib) {
+    disc->setField(*it.second->overlapped_vector(),
+                    it.second->name(),
+                   /*overlapped*/ true);
+  }
 
   StatelessObserverImpl::observeSolution (stamp,
                                           nonOverlappedSolution,
