@@ -345,20 +345,21 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& floating2dEdgesIds) {
 
 
+  paramList = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromYamlFileAndBroadcast("albany_input.yaml", paramList.ptr(), *mpiComm);
-  auto bt = paramList->get<std::string>("Build Type");
+  auto bt = paramList->get<std::string>("Build Type", "NONE");
 
   slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.yaml", mpiComm));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 #ifdef ALBANY_EPETRA
   if(bt == "NONE") {
-    paramList->set("Build Type","Epetra");
     bt = "Epetra";
+    paramList->set("Build Type", bt);
   }
 #else
   if(bt == "NONE") {
-    paramList->set("Build Type","Epetra");
     bt = "Tpetra";
+    paramList->set("Build Type",bt);
   }
   TEUCHOS_TEST_FOR_EXCEPTION(bt == "Epetra", Teuchos::Exceptions::InvalidArgument,
                              "Error! ALBANY_EPETRA must be defined in order to perform an Epetra run.\n");
