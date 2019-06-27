@@ -29,14 +29,10 @@ class ReadStateField : public PHX::EvaluatorWithBaseImpl<Traits>,
   void
   postRegistrationSetup(
       typename Traits::SetupData d,
-      PHX::FieldManager<Traits>& vm);
+      PHX::FieldManager<Traits>& fm);
 
   void
   evaluateFields(typename Traits::EvalData d);
-
- private:
-  using ScalarT     = typename EvalT::ScalarT;
-  using MeshScalarT = typename EvalT::MeshScalarT;
 };
 
 template <typename Traits>
@@ -50,7 +46,7 @@ class ReadStateField<PHAL::AlbanyTraits::Residual, Traits>
   void
   postRegistrationSetup(
       typename Traits::SetupData d,
-      PHX::FieldManager<Traits>& vm);
+      PHX::FieldManager<Traits>& fm);
 
   void
   evaluateFields(typename Traits::EvalData d);
@@ -64,7 +60,7 @@ class ReadStateField<PHAL::AlbanyTraits::Residual, Traits>
 
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
 
-  Teuchos::RCP<PHX::FieldTag> read_state_operation{Teuchos::null};
+  Teuchos::RCP<PHX::FieldTag> read_state_op{Teuchos::null};
   PHX::MDField<ScalarT>       field;
   std::string                 field_name;
   std::string                 state_name;

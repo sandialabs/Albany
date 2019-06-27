@@ -4,7 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_AbstractDiscretization.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Utils.hpp"
 #include "PHAL_ReadStateField.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_DataLayout_MDALayout.hpp"
@@ -14,15 +16,16 @@
 #include "Albany_AbstractSTKFieldContainer.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #endif
-#include "Albany_AbstractDiscretization.hpp"
 
 namespace PHAL {
 
+//
+//
+//
 template <typename EvalT, typename Traits>
-ReadStateField<EvalT, Traits>::ReadStateField(
-    const Teuchos::ParameterList& /* p */)
+ReadStateField<EvalT, Traits>::ReadStateField(const Teuchos::ParameterList&)
 {
-  // States Not REad for Generic Type, only Specializations
+  // States not read for generic type, only specializations
   this->setName("Read State Field");
 }
 
@@ -32,10 +35,10 @@ ReadStateField<EvalT, Traits>::ReadStateField(
 template <typename EvalT, typename Traits>
 void
 ReadStateField<EvalT, Traits>::postRegistrationSetup(
-    typename Traits::SetupData /* d */,
-    PHX::FieldManager<Traits>& /* fm */)
+    typename Traits::SetupData,
+    PHX::FieldManager<Traits>&)
 {
-  // States Not Read for Generic Type, only Specializations
+  // States not read for generic type, only specializations
 }
 
 //
@@ -45,7 +48,7 @@ template <typename EvalT, typename Traits>
 void ReadStateField<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData /* workset */)
 {
-  // States Not Saved for Generic Type, only Specializations
+  // States not read for generic type, only specializations
 }
 
 //
@@ -55,20 +58,17 @@ template <typename Traits>
 ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::ReadStateField(
     const Teuchos::ParameterList& p)
 {
-  field_name = p.get<std::string>("Field Name");
-  state_name = p.get<std::string>("State Name");
+  field_name  = p.get<std::string>("Field Name");
+  state_name  = p.get<std::string>("State Name");
+  auto layout = p.get<Teuchos::RCP<PHX::DataLayout>>("State Field Layout");
+  field       = decltype(field)(field_name, layout);
+  field_type  = layout->name(0);
 
-  Teuchos::RCP<PHX::DataLayout> layout =
-      p.get<Teuchos::RCP<PHX::DataLayout>>("State Field Layout");
-  field      = decltype(field)(field_name, layout);
-  field_type = layout->name(0);
+  auto dummy    = Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
+  read_state_op = Teuchos::rcp(new PHX::Tag<ScalarT>(field_name, dummy));
 
-  Teuchos::RCP<PHX::DataLayout> dummy =
-      Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
-  read_state_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(field_name, dummy));
-
-  this->addDependentField(field.fieldTag());
-  this->addEvaluatedField(*read_state_operation);
+  this->addEvaluatedField(*read_state_op);
+  this->addEvaluatedField(field.fieldTag());
 
   this->setName(
       "Read Field " + field_name + " to State " + state_name + "Residual");
@@ -120,79 +120,59 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readElemState(
   //       data and use them to access the values of the stk field.
 
 #ifdef ALBANY_STK
-  Teuchos::RCP<Albany::AbstractDiscretization> disc = workset.disc;
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      disc == Teuchos::null,
-      std::runtime_error,
-      "Error! Discretization is needed to read a cell state.\n");
-
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> mesh =
-      Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(
-          disc->getMeshStruct());
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      mesh == Teuchos::null,
-      std::runtime_error,
-      "Error! Read cell state available only for stk meshes.\n");
+  auto disc = workset.disc;
+  ALBANY_ASSERT(disc != Teuchos::null, "Null discretization");
+  auto mesh = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(
+      disc->getMeshStruct());
+  ALBANY_ASSERT(mesh != Teuchos::null, "Null STK mesh structure");
 
   stk::mesh::MetaData& metaData = *mesh->metaData;
   stk::mesh::BulkData& bulkData = *mesh->bulkData;
 
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
-  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
-
-  SFT* scalar_field;
-  VFT* vector_field;
-
-  auto cell_vs = disc->getVectorSpace(state_name);
+  auto const& elem_gid_wslid = disc->getElemGIDws();
+  using LIDT                 = decltype(elem_gid_wslid.begin()->second.LID);
+  using GIDT                 = decltype(elem_gid_wslid.begin()->first);
+  std::map<LIDT, GIDT> elem_lid_2_gid;
+  for (auto&& gid_wslid : elem_gid_wslid) {
+    if (gid_wslid.second.ws == workset.wsIndex) {
+      elem_lid_2_gid.emplace(gid_wslid.second.LID, gid_wslid.first);
+    }
+  }
 
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
 
-  GO                cellId;
-  double*           values;
-  auto const        num_local_cells = Albany::getNumLocalElements(cell_vs);
-  stk::mesh::Entity e;
-
   switch (dims.size()) {
-    case 2:  // cell_scalar
-      scalar_field =
+    case 2: {
+      using SFT = Albany::AbstractSTKFieldContainer::ScalarFieldType;
+      auto scalar_field =
           metaData.get_field<SFT>(stk::topology::ELEM_RANK, state_name);
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          scalar_field == 0, std::runtime_error, "Error! Field not found.\n");
-
-      for (int cell = 0; cell < num_local_cells; ++cell) {
-        cellId      = Albany::getGlobalElement(cell_vs, cell);
-        e           = bulkData.get_entity(stk::topology::ELEM_RANK, cellId + 1);
-        values      = stk::mesh::field_data(*scalar_field, e);
+      ALBANY_ASSERT(scalar_field != nullptr);
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+        auto gid    = elem_lid_2_gid[cell];
+        auto e      = bulkData.get_entity(stk::topology::ELEM_RANK, gid + 1);
+        auto values = stk::mesh::field_data(*scalar_field, e);
         field(cell) = values[0];
       }
-      break;
-    case 3:  // cell_vector
-      vector_field =
+    } break;
+    case 3: {
+      using VFT = Albany::AbstractSTKFieldContainer::VectorFieldType;
+      auto vector_field =
           metaData.get_field<VFT>(stk::topology::NODE_RANK, state_name);
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          vector_field == 0, std::runtime_error, "Error! Field not found.\n");
-      for (int cell = 0; cell < num_local_cells; ++cell) {
-        cellId = Albany::getGlobalElement(cell_vs, cell);
-        e      = bulkData.get_entity(stk::topology::NODE_RANK, cellId + 1);
-        values = stk::mesh::field_data(*vector_field, e);
-        for (int i = 0; i < dims[2]; ++i) field(cell, i) = values[i];
+      ALBANY_ASSERT(vector_field != nullptr);
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+        auto gid    = elem_lid_2_gid[cell];
+        auto e      = bulkData.get_entity(stk::topology::ELEM_RANK, gid + 1);
+        auto values = stk::mesh::field_data(*vector_field, e);
+        for (int i = 0; i < dims[2]; ++i) field(cell, 0, i) = values[i];
       }
-      break;
-    default:  // error!
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true,
-          std::runtime_error,
-          "Error! Unexpected field dimension (only cell_scalar/cell_vector for "
-          "now).\n");
+    } break;
+    default:
+      ALBANY_ASSERT(false, "Unexpected dimension: only cell scalar/vector");
   }
 #else
   (void)workset;
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      std::runtime_error,
-      "Error! Cell states only available for stk meshes, but Trilinos was "
-      "compiled without STK!\n");
+  ALBANY_ASSERT(false, "STK is required");
 #endif
 }
 
@@ -210,78 +190,53 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readNodalState(
   //       data and use them to access the values of the stk field.
 
 #ifdef ALBANY_STK
-  Teuchos::RCP<Albany::AbstractDiscretization> disc = workset.disc;
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      disc == Teuchos::null,
-      std::runtime_error,
-      "Error! Discretization is needed to read a nodal state.\n");
-
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> mesh =
-      Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(
-          disc->getMeshStruct());
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      mesh == Teuchos::null,
-      std::runtime_error,
-      "Error! Read nodal state available only for stk meshes.\n");
+  auto disc = workset.disc;
+  ALBANY_ASSERT(disc != Teuchos::null, "Null discretization");
+  auto mesh = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(
+      disc->getMeshStruct());
+  ALBANY_ASSERT(mesh != Teuchos::null, "Null STK mesh structure");
 
   stk::mesh::MetaData& metaData = *mesh->metaData;
   stk::mesh::BulkData& bulkData = *mesh->bulkData;
 
-  const auto& wsElNodeID = disc->getWsElNodeID();
-
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
-  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
-
-  SFT* scalar_field;
-  VFT* vector_field;
+  auto const& wsElgid = disc->getWsElNodeID();
 
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
 
-  GO                nodeId;
-  double*           values;
-  stk::mesh::Entity e;
   switch (dims.size()) {
-    case 2:  // node_scalar
-      scalar_field =
+    case 2: {
+      using SFT = Albany::AbstractSTKFieldContainer::ScalarFieldType;
+      auto scalar_field =
           metaData.get_field<SFT>(stk::topology::NODE_RANK, state_name);
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          scalar_field == 0, std::runtime_error, "Error! Field not found.\n");
+      ALBANY_ASSERT(scalar_field != nullptr);
       for (int cell = 0; cell < workset.numCells; ++cell)
         for (int node = 0; node < dims[1]; ++node) {
-          nodeId    = wsElNodeID[workset.wsIndex][cell][node];
-          e         = bulkData.get_entity(stk::topology::NODE_RANK, nodeId + 1);
-          values    = stk::mesh::field_data(*scalar_field, e);
-          values[0] = field(cell, node);
+          auto gid    = wsElgid[workset.wsIndex][cell][node];
+          auto e      = bulkData.get_entity(stk::topology::NODE_RANK, gid + 1);
+          auto values = stk::mesh::field_data(*scalar_field, e);
+          field(cell, node) = values[0];
         }
-      break;
-    case 3:  // node_vector
-      vector_field =
+    } break;
+    case 3: {
+      using VFT = Albany::AbstractSTKFieldContainer::VectorFieldType;
+      auto vector_field =
           metaData.get_field<VFT>(stk::topology::NODE_RANK, state_name);
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          vector_field == 0, std::runtime_error, "Error! Field not found.\n");
+      ALBANY_ASSERT(vector_field != nullptr);
       for (int cell = 0; cell < workset.numCells; ++cell)
         for (int node = 0; node < dims[1]; ++node) {
-          nodeId = wsElNodeID[workset.wsIndex][cell][node];
-          e      = bulkData.get_entity(stk::topology::NODE_RANK, nodeId + 1);
-          values = stk::mesh::field_data(*vector_field, e);
-          for (int i = 0; i < dims[2]; ++i) values[i] = field(cell, node, i);
+          auto gid    = wsElgid[workset.wsIndex][cell][node];
+          auto e      = bulkData.get_entity(stk::topology::NODE_RANK, gid + 1);
+          auto values = stk::mesh::field_data(*vector_field, e);
+          for (int i = 0; i < dims[2]; ++i) field(cell, node, i) = values[i];
         }
-      break;
-    default:  // error!
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true,
-          std::runtime_error,
-          "Error! Unexpected field dimension (only node_scalar/node_vector for "
-          "now).\n");
+    } break;
+    default:
+      ALBANY_ASSERT(false, "Unexpected dimension: only cell scalar/vector");
   }
 #else
   (void)workset;
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      std::runtime_error,
-      "Error! Nodal states only available for stk meshes, but Trilinos was "
-      "compiled without STK!\n");
+  ALBANY_ASSERT(false, "STK is required");
 #endif
 }
 }  // namespace PHAL

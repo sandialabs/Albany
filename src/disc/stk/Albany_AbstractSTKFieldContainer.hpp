@@ -116,10 +116,10 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   {
     return failure_state[rank];
   }
-  ScalarFieldType*
-  getBoundaryIndicator(stk::topology::rank_t rank)
+  stk::mesh::FieldBase*
+  getBoundaryIndicator()
   {
-    return boundary_indicator[rank];
+    return boundary_indicator;
   }
 #endif  // ALBANY_LCM
   SphereVolumeFieldType*
@@ -205,6 +205,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   hasSphereVolumeField() const = 0;
   virtual bool
   hasLatticeOrientationField() const = 0;
+  virtual bool
+  hasBoundaryIndicatorField() const = 0;
 
   std::map<std::string, double>&
   getTime()
@@ -279,7 +281,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   IntScalarFieldType* refine_field;
 #if defined(ALBANY_LCM)
   IntScalarFieldType* failure_state[stk::topology::ELEMENT_RANK + 1];
-  ScalarFieldType*    boundary_indicator[stk::topology::ELEMENT_RANK + 1];
+  stk::mesh::FieldBase* boundary_indicator;
 #endif  // ALBANY_LCM
 
   SphereVolumeFieldType*

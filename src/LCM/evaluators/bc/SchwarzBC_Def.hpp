@@ -11,11 +11,6 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
-
-#if defined(ALBANY_DTK)
-#include "Albany_OrdinarySTKFieldContainer.hpp"
-#endif
-
 #include "Albany_ThyraUtils.hpp"
 
 //

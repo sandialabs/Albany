@@ -39,6 +39,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   using IntField         = PHX::MDField<int>;
   using ConstScalarField = PHX::MDField<ScalarT const>;
   using ConstIntField    = PHX::MDField<int const>;
+  using ConstMeshScalarField = PHX::MDField<MeshScalarT const>;
   using BaseKernel       = ParallelKernel<EvalT, Traits>;
   using Workset          = typename BaseKernel::Workset;
 

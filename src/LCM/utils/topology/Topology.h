@@ -694,14 +694,14 @@ class Topology
     return *(pisft);
   }
 
-  ScalarFieldType&
-  get_boundary_indicator_field(stk::mesh::EntityRank rank)
+  stk::mesh::FieldBase&
+  get_boundary_indicator_field()
   {
-    auto& asms  = get_stk_mesh_struct();
-    auto  asfc  = asms->getFieldContainer();
-    auto* pisft = asfc->getBoundaryIndicator(rank);
-    assert(pisft != nullptr);
-    return *(pisft);
+    auto& asms = get_stk_mesh_struct();
+    auto  asfc = asms->getFieldContainer();
+    auto* psfb = asfc->getBoundaryIndicator();
+    assert(psfb != nullptr);
+    return (*psfb);
   }
 
   void
@@ -827,10 +827,12 @@ class Topology
   void
   set_boundary_indicator(stk::mesh::Entity e, BoundaryIndicator const bi)
   {
-    auto&      bulk_data      = get_bulk_data();
-    auto const rank           = bulk_data.entity_rank(e);
-    auto&      boundary_field = get_boundary_indicator_field(rank);
-    *(stk::mesh::field_data(boundary_field, e)) = static_cast<double>(bi);
+    auto& bulk_data          = get_bulk_data();
+    auto& boundary_field     = get_boundary_indicator_field();
+    auto* pbi                = stk::mesh::field_data(boundary_field, e);
+    auto* boundary_indicator = static_cast<double*>(pbi);
+    ALBANY_ASSERT(boundary_indicator != nullptr);
+    *boundary_indicator = static_cast<double>(bi);
   }
 
   //
@@ -839,11 +841,12 @@ class Topology
   BoundaryIndicator
   get_boundary_indicator(stk::mesh::Entity e)
   {
-    auto& bulk_data      = get_bulk_data();
-    auto  rank           = bulk_data.entity_rank(e);
-    auto& boundary_field = get_boundary_indicator_field(rank);
-    return static_cast<BoundaryIndicator>(
-        *(stk::mesh::field_data(boundary_field, e)));
+    auto& bulk_data          = get_bulk_data();
+    auto& boundary_field     = get_boundary_indicator_field();
+    auto* pbi                = stk::mesh::field_data(boundary_field, e);
+    auto* boundary_indicator = static_cast<double*>(pbi);
+    ALBANY_ASSERT(boundary_indicator != nullptr);
+    return static_cast<BoundaryIndicator>(*boundary_indicator);
   }
 
   bool

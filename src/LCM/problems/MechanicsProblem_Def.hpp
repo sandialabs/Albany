@@ -364,6 +364,24 @@ MechanicsProblem::constructEvaluators(
         &entity);
   }
 
+  // Have to register boundary_indicator in the mesh before the discretization
+  // is built
+  auto find_boundary_indicator = std::find(
+      this->requirements.begin(),
+      this->requirements.end(),
+      "boundary_indicator");
+
+  if (find_boundary_indicator != this->requirements.end()) {
+    auto entity = StateStruct::ElemData;
+
+    stateMgr.registerStateVariable(
+        "boundary_indicator",
+        dl_->cell_scalar,
+        meshSpecs.ebName,
+        false,
+        &entity);
+  }
+
   // Define Field Names
   // generate the field name map to deal with outputing surface element info
   LCM::FieldNameMap field_name_map(surface_element);
@@ -938,15 +956,19 @@ MechanicsProblem::constructEvaluators(
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    std::string const                    state_name = "boundary_indicator";
-    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::ElemData;
+    std::string const state_name = "boundary_indicator";
 
     p = stateMgr.registerStateVariable(
-        state_name, dl_->cell_scalar, eb_name, true, &entity);
+        state_name,
+        dl_->cell_scalar,
+        dl_->dummy,
+        eb_name,
+        "scalar",
+        temp,
+        false,
+        true);
 
-    p->set<std::string>("Field Name", state_name);
-    ev =
-        Teuchos::rcp(new PHAL::LoadStateFieldST<EvalT, PHAL::AlbanyTraits>(*p));
+    ev = Teuchos::rcp(new PHAL::ReadStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
