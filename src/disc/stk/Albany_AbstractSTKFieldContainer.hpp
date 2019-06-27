@@ -19,6 +19,7 @@
 #include "Albany_AbstractFieldContainer.hpp"
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#include "Albany_Utils.hpp"
 
 #include <stk_mesh/base/CoordinateSystems.hpp>
 #include <stk_mesh/base/Field.hpp>

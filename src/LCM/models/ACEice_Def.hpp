@@ -259,6 +259,9 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   eqps_old_           = (*workset.stateArrayPtr)[eqps_string + "_old"];
   T_old_              = (*workset.stateArrayPtr)["ACE Temperature_old"];
   ice_saturation_old_ = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
+
+  boundary_indicator_ = workset.boundary_indicator;
+  ALBANY_ASSERT(boundary_indicator_.is_null() == false);
 }
 
 namespace {
@@ -390,7 +393,9 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const element_size           = element_size_;
   ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
 
-  std::cout << "*** BOUNDARY INDICATOR: " << boundary_indicator_[cell] << '\n';
+  bool const boundary_indicator =
+      static_cast<bool const>(*(boundary_indicator_[cell]));
+
   //
   // Thermal calculation
   //
