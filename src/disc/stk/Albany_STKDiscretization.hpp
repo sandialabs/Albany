@@ -290,6 +290,7 @@ class STKDiscretization : public AbstractDiscretization
     return boundary_indicator;
   }
 #endif
+
   //! Print the coordinates for debugging
   void
   printCoords() const;

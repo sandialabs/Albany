@@ -844,6 +844,9 @@ void APFDiscretization::computeWorksetInfo()
   coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
   latticeOrientation.resize(numBuckets);
+#if defined(ALBANY_LCM)
+  boundary_indicator.resize(numBuckets);
+#endif
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) {

@@ -127,6 +127,9 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
     bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
   const int numBuckets = buckets.size();
   latticeOrientation.resize(numBuckets);
+#if defined(ALBANY_LCM)
+  boundary_indicator.resize(numBuckets);
+#endif
 #ifdef OUTPUT_TO_SCREEN
   *out << "points_per_edge: " << points_per_edge << std::endl;
   *out << "element name: " << element_name << std::endl;
@@ -245,6 +248,14 @@ Aeras::SpectralDiscretization::getLatticeOrientation() const
 {
   return latticeOrientation;
 }
+
+#if defined(ALBANY_LCM)
+Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
+Aeras::SpectralDiscretization::getBoundaryIndicator() const
+{
+  return boundary_indicator;
+}
+#endif
 
 void
 Aeras::SpectralDiscretization::printCoords() const

@@ -138,6 +138,14 @@ public:
     return latticeOrientation;
   }
 
+#if defined(ALBANY_LCM)
+  WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
+  getBoundaryIndicator() const
+  {
+    return boundary_indicator;
+  }
+#endif
+
   //! Print coords for debugging
   void printCoords() const override;
 
@@ -474,7 +482,11 @@ protected:
   WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
   WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 
-#ifdef ALBANY_CONTACT
+#if defined(ALBANY_LCM)
+  WorksetArray<Teuchos::ArrayRCP<double*>>::type boundary_indicator;
+#endif
+
+  #ifdef ALBANY_CONTACT
   Teuchos::RCP<const ContactManager> contactManager;
 #endif
 
