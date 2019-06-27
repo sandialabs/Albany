@@ -68,7 +68,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setDependentField("Yield Strength", dl->qp_scalar);
   setDependentField("Delta Time", dl->workset_scalar);
   setDependentField("ACE Temperature", dl->qp_scalar);
-  setDependentField("boundary_indicator", dl->cell_scalar);
 
   // define the evaluated fields
   setEvaluatedField("ACE Ice Saturation", dl->qp_scalar);
@@ -239,7 +238,6 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   yield_strength_     = *input_fields["Yield Strength"];
   delta_time_         = *input_fields["Delta Time"];
   temperature_        = *input_fields["ACE Temperature"];
-  boundary_indicator_ = *input_fields["boundary_indicator"];
 
   stress_           = *output_fields[cauchy_string];
   Fp_               = *output_fields[Fp_string];
@@ -392,7 +390,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const element_size           = element_size_;
   ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
 
-  std::cout << "*** BOUNDARY INDICATOR: " << boundary_indicator_(cell) << '\n';
+  std::cout << "*** BOUNDARY INDICATOR: " << boundary_indicator_[cell] << '\n';
   //
   // Thermal calculation
   //

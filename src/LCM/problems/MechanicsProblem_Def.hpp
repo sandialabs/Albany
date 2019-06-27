@@ -955,21 +955,6 @@ MechanicsProblem::constructEvaluators(
 
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-
-    std::string const state_name = "boundary_indicator";
-
-    p = stateMgr.registerStateVariable(
-        state_name,
-        dl_->cell_scalar,
-        dl_->dummy,
-        eb_name,
-        "scalar",
-        temp,
-        false,
-        true);
-
-    ev = Teuchos::rcp(new PHAL::ReadStateField<EvalT, PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if ((have_pore_pressure_eq_ == true) || (have_pore_pressure_ == true)) {

@@ -69,7 +69,6 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField poissons_ratio_;
   ConstScalarField yield_strength_;
   ConstScalarField temperature_;
-  ConstScalarField boundary_indicator_;
 
   // Output MDFields
   ScalarField density_;
@@ -94,6 +93,8 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   Albany::MDArray eqps_old_;
   Albany::MDArray T_old_;
   Albany::MDArray ice_saturation_old_;
+
+  Teuchos::ArrayRCP<double*> boundary_indicator_;
 
   // Baseline constants
   RealType ice_density_{0.0};
