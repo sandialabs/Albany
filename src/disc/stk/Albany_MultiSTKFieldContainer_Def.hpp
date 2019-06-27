@@ -320,11 +320,10 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     this->boundary_indicator =
         metaData_->template get_field<stk::mesh::FieldBase>(
             stk::topology::ELEMENT_RANK, "extra_attribute_1");
-    if (this->boundary_indicator != nullptr) {
-      build_boundary_indicator = true;
-      stk::io::set_field_role(
-          *this->boundary_indicator, Ioss::Field::ATTRIBUTE);
-    }
+    ALBANY_ASSERT(this->boundary_indicator != nullptr);
+    build_boundary_indicator = true;
+    stk::io::set_field_role(
+        *this->boundary_indicator, Ioss::Field::ATTRIBUTE);
   }
 #endif
 
