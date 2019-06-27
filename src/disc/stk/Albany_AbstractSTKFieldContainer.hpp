@@ -205,8 +205,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   hasSphereVolumeField() const = 0;
   virtual bool
   hasLatticeOrientationField() const = 0;
+
+#if defined(ALBANY_LCM)
   virtual bool
   hasBoundaryIndicatorField() const = 0;
+#endif
 
   std::map<std::string, double>&
   getTime()
