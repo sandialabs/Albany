@@ -1841,7 +1841,7 @@ STKDiscretization::computeWorksetInfo()
   }
 
 #if defined(ALBANY_LCM)
-  stk::mesh::FieldBase* boundary_indicator_field;
+  stk::mesh::FieldBase* boundary_indicator_field{nullptr};
   if (stkMeshStruct->getFieldContainer()->hasBoundaryIndicatorField()) {
     boundary_indicator_field =
         stkMeshStruct->getFieldContainer()->getBoundaryIndicator();

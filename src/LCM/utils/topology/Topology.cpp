@@ -219,8 +219,6 @@ Topology::setBoundaryIndicator()
         BoundaryIndicator const bi =
             is_boundary_cell(entity) == true ? EXTERIOR : INTERIOR;
         set_boundary_indicator(entity, bi);
-      } else {
-        set_boundary_indicator(entity, INTERIOR);
       }
     }
   }

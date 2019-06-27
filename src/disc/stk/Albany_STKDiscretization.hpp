@@ -287,6 +287,7 @@ class STKDiscretization : public AbstractDiscretization
   WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
   getBoundaryIndicator() const
   {
+    ALBANY_ASSERT(boundary_indicator.is_null() == false);
     return boundary_indicator;
   }
 #endif

@@ -119,6 +119,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   stk::mesh::FieldBase*
   getBoundaryIndicator()
   {
+    ALBANY_ASSERT(boundary_indicator != nullptr);
     return boundary_indicator;
   }
 #endif  // ALBANY_LCM
@@ -287,10 +288,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   stk::mesh::FieldBase* boundary_indicator;
 #endif  // ALBANY_LCM
 
-  SphereVolumeFieldType*
-      sphereVolume_field;  // Required for Peridynamics in LCM
-  stk::mesh::FieldBase*
-      latticeOrientation_field;  // Required for certain LCM material models
+  // Required for Peridynamics in LCM
+  SphereVolumeFieldType* sphereVolume_field;
+
+  // Required for certain LCM material models
+  stk::mesh::FieldBase* latticeOrientation_field;
 
   ScalarValueState       scalarValue_states;
   MeshScalarState        mesh_scalar_states;

@@ -92,8 +92,9 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     stk::mesh::put_field_on_mesh(
         *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
 #ifdef ALBANY_SEACAS
-    if (params_->get<bool>("Export 3d coordinates field",false)) {
-      stk::io::set_field_role(*this->coordinates_field3d, Ioss::Field::TRANSIENT);
+    if (params_->get<bool>("Export 3d coordinates field", false)) {
+      stk::io::set_field_role(
+          *this->coordinates_field3d, Ioss::Field::TRANSIENT);
     }
 #endif
   }
@@ -153,6 +154,20 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     buildSphereVolume = true;
     stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
   }
+#endif
+  // If the problem requests that the initial guess at the solution equals the
+  // input node coordinates, set that here
+  /*
+    if(std::find(req.begin(), req.end(), "Initial Guess Coords") != req.end()){
+       this->copySTKField(this->coordinates_field, solution_field);
+    }
+  */
+
+  this->addStateStructs(sis);
+
+  initializeSTKAdaptation();
+
+#if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
 
   bool has_boundary_indicator =
       (std::find(req.begin(), req.end(), "boundary_indicator") != req.end());
@@ -165,22 +180,10 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     if (this->boundary_indicator != nullptr) {
       build_boundary_indicator = true;
       stk::io::set_field_role(
-          *this->boundary_indicator, Ioss::Field::ATTRIBUTE);
+          *this->boundary_indicator, Ioss::Field::INFORMATION);
     }
   }
 #endif
-
-  // If the problem requests that the initial guess at the solution equals the
-  // input node coordinates, set that here
-  /*
-    if(std::find(req.begin(), req.end(), "Initial Guess Coords") != req.end()){
-       this->copySTKField(this->coordinates_field, solution_field);
-    }
-  */
-
-  this->addStateStructs(sis);
-
-  initializeSTKAdaptation();
 }
 
 template <bool Interleaved>
@@ -213,6 +216,12 @@ OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
 
     stk::mesh::put_field_on_mesh(
         *this->failure_state[rank], this->metaData->universal_part(), nullptr);
+
+    // Boundary indicator
+    this->boundary_indicator = &this->metaData->template declare_field<SFT>(
+        stk::topology::ELEMENT_RANK, "boundary_indicator");
+    stk::mesh::put_field_on_mesh(
+        *this->boundary_indicator, this->metaData->universal_part(), nullptr);
   }
 #endif  // ALBANY_LCM
 

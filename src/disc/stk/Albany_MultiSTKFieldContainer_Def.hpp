@@ -280,8 +280,9 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     stk::mesh::put_field_on_mesh(
         *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
 #ifdef ALBANY_SEACAS
-    if (params_->get<bool>("Export 3d coordinates field",false)) {
-      stk::io::set_field_role(*this->coordinates_field3d, Ioss::Field::TRANSIENT);
+    if (params_->get<bool>("Export 3d coordinates field", false)) {
+      stk::io::set_field_role(
+          *this->coordinates_field3d, Ioss::Field::TRANSIENT);
     }
 #endif
   }
@@ -311,7 +312,13 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
           *this->latticeOrientation_field, Ioss::Field::ATTRIBUTE);
     }
   }
+#endif
 
+  this->addStateStructs(sis);
+
+  initializeSTKAdaptation();
+
+#if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
   bool has_boundary_indicator =
       (std::find(req.begin(), req.end(), "boundary_indicator") != req.end());
   if (has_boundary_indicator) {
@@ -319,17 +326,13 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     // "extra_attribute_3" , #states: 1 ]
     this->boundary_indicator =
         metaData_->template get_field<stk::mesh::FieldBase>(
-            stk::topology::ELEMENT_RANK, "extra_attribute_1");
+            stk::topology::ELEMENT_RANK, "boundary_indicator");
     ALBANY_ASSERT(this->boundary_indicator != nullptr);
     build_boundary_indicator = true;
     stk::io::set_field_role(
-        *this->boundary_indicator, Ioss::Field::ATTRIBUTE);
+        *this->boundary_indicator, Ioss::Field::INFORMATION);
   }
 #endif
-
-  this->addStateStructs(sis);
-
-  initializeSTKAdaptation();
 }
 
 template <bool Interleaved>
@@ -362,6 +365,11 @@ MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
     stk::mesh::put_field_on_mesh(
         *this->failure_state[rank], this->metaData->universal_part(), nullptr);
   }
+  // Boundary indicator
+  this->boundary_indicator = &this->metaData->template declare_field<SFT>(
+      stk::topology::ELEMENT_RANK, "boundary_indicator");
+  stk::mesh::put_field_on_mesh(
+      *this->boundary_indicator, this->metaData->universal_part(), nullptr);
 #endif  // ALBANY_LCM
 
 #ifdef ALBANY_SEACAS
