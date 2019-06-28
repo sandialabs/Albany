@@ -910,27 +910,35 @@ class Topology
   bool
   there_are_failed_cells()
   {
+    bool                        have_failed_cells{false};
     stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
     stk::mesh::EntityVector     cells;
     stk::mesh::get_entities(get_bulk_data(), cell_rank, cells);
     for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
       stk::mesh::Entity cell = cells[i];
-      if (is_open(cell) == true) return true;
+      if (is_open(cell) == true) {
+        have_failed_cells = true;
+        break;
+      }
     }
-    return false;
+    return have_failed_cells;
   }
 
   bool
   there_are_failed_boundary_cells()
   {
+    bool                        have_failed_cells{false};
     stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
     stk::mesh::EntityVector     cells;
     stk::mesh::get_entities(get_bulk_data(), cell_rank, cells);
     for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
       stk::mesh::Entity cell = cells[i];
-      if (is_failed_boundary_cell(cell) == true) return true;
+      if (is_failed_boundary_cell(cell) == true) {
+        have_failed_cells = true;
+        break;
+      }
     }
-    return false;
+    return have_failed_cells;
   }
 
   void
