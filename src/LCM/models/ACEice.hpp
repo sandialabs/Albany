@@ -34,12 +34,8 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   operator=(ACEiceMiniKernel const&) = delete;
 
   using ScalarT          = typename EvalT::ScalarT;
-  using MeshScalarT      = typename EvalT::MeshScalarT;
   using ScalarField      = PHX::MDField<ScalarT>;
-  using IntField         = PHX::MDField<int>;
   using ConstScalarField = PHX::MDField<ScalarT const>;
-  using ConstIntField    = PHX::MDField<int const>;
-  using ConstMeshScalarField = PHX::MDField<MeshScalarT const>;
   using BaseKernel       = ParallelKernel<EvalT, Traits>;
   using Workset          = typename BaseKernel::Workset;
 
