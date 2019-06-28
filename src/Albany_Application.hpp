@@ -861,7 +861,9 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws)
   auto const& wsEBNames          = disc->getWsEBNames();
   auto const& sphereVolume       = disc->getSphereVolume();
   auto const& latticeOrientation = disc->getLatticeOrientation();
+#ifdef ALBANY_LCM
   auto const& boundary_indicator = disc->getBoundaryIndicator();
+#endif
 
   workset.numCells             = wsElNodeEqID[ws].extent(0);
   workset.wsElNodeEqID         = wsElNodeEqID[ws];
@@ -869,7 +871,9 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws)
   workset.wsCoords             = coords[ws];
   workset.wsSphereVolume       = sphereVolume[ws];
   workset.wsLatticeOrientation = latticeOrientation[ws];
+#ifdef ALBANY_LCM
   workset.boundary_indicator   = boundary_indicator[ws];
+#endif
   workset.EBName               = wsEBNames[ws];
   workset.wsIndex              = ws;
 

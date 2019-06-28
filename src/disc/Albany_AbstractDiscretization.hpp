@@ -153,7 +153,7 @@ class AbstractDiscretization
   virtual const WorksetArray<Teuchos::ArrayRCP<double*>>::type&
   getLatticeOrientation() const = 0;
 
-#if defined(ALBANY_LCM) && defined(ALBANY_STK)
+#if defined(ALBANY_LCM)
   virtual const WorksetArray<Teuchos::ArrayRCP<double*>>::type&
   getBoundaryIndicator() const = 0;
 #endif
