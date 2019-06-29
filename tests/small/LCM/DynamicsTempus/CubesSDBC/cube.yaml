@@ -38,7 +38,6 @@ LCM:
       Scaled SDBC on NS nodelist_3 for DOF Y: [0.0, 10]
       Scaled SDBC on NS nodelist_5 for DOF Z: [0.0, 10]
       Time Dependent SDBC on NS nodelist_6 for DOF Z:
-        SDBC Scaling: 10.0 
         Number of points: 2
         Time Values: [0.0, 2.0]
         BC Values: [0.0, 2.0]

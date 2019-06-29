@@ -70,10 +70,8 @@ class SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>
   set_row_and_col_is_dbc(typename Traits::EvalData d);
 
  protected:
-  double scale;
-  Teuchos::RCP<Thyra_Vector> row_is_dbc_; 
-  Teuchos::RCP<Thyra_Vector> col_is_dbc_; 
- 
+  Teuchos::RCP<Thyra_Vector> row_is_dbc_;
+  Teuchos::RCP<Thyra_Vector> col_is_dbc_;
 };
 
 //
@@ -90,9 +88,6 @@ class SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>
 
   void
   evaluateFields(typename Traits::EvalData d);
-
- protected:
-  double scale;
 };
 
 //

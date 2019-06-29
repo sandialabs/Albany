@@ -573,8 +573,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         p->set<RCP<DataLayout>>("Data Layout", dummy);
         p->set<string>("Dirichlet Name", ss);
         p->set<RealType>("Dirichlet Value", 0.0);
-        p->set<RealType>(
-            "SDBC Scaling", sub_list.get<RealType>("SDBC Scaling", 1.0));
         p->set<int>("Equation Offset", j);
         offsets_[i].push_back(j);
         p->set<RCP<ParamLib>>("Parameter Library", paramLib);
@@ -726,11 +724,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         Teuchos::Array<RealType> array =
             BCparams.get<Teuchos::Array<RealType>>(ss);
         p->set<RealType>("Dirichlet Value", array[0]);
-        if (array.size() > 1) {
-          p->set<RealType>("SDBC Scaling", array[1]);
-        } else {
-          p->set<RealType>("SDBC Scaling", 1.0);
-        }
         p->set<string>("Node Set ID", nodeSetIDs[i]);
         p->set<int>("Equation Offset", j);
         offsets_[i].push_back(j);
@@ -828,8 +821,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         p->set<RCP<DataLayout>>("Data Layout", dummy);
         p->set<string>("Dirichlet Name", ss);
         p->set<RealType>("Dirichlet Value", 0.0);
-        p->set<RealType>(
-            "SDBC Scaling", sub_list.get<RealType>("SDBC Scaling", 1.0));
         p->set<string>("Node Set ID", nodeSetIDs[i]);
         p->set<int>("Equation Offset", 0);
         for (std::size_t j = 0; j < bcNames.size(); j++) {
@@ -956,10 +947,12 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     delete value;
   }
 
-  if ((use_dbcs_ == true) && (use_sdbcs_ == true)) { 
-    TEUCHOS_TEST_FOR_EXCEPTION( true, 
-              std::logic_error,
-              "You are attempting to prescribe a mix of SDBCs and DBCs, which is not allowed!\n"); 
+  if ((use_dbcs_ == true) && (use_sdbcs_ == true)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "You are attempting to prescribe a mix of SDBCs and DBCs, which is not "
+        "allowed!\n");
   }
 
   string allBC = "Evaluator for all Dirichlet BCs";
