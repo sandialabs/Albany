@@ -800,66 +800,28 @@ class Topology
   // Set failure state.
   //
   void
-  set_failure_state(stk::mesh::Entity e, FailureState const fs)
-  {
-    auto&      bulk_data                       = get_bulk_data();
-    auto const rank                            = bulk_data.entity_rank(e);
-    auto&      failure_field                   = get_failure_state_field(rank);
-    *(stk::mesh::field_data(failure_field, e)) = static_cast<int>(fs);
-  }
+  set_failure_state(stk::mesh::Entity e, FailureState const fs);
 
   //
   // Get failure state.
   //
   FailureState
-  get_failure_state(stk::mesh::Entity e)
-  {
-    auto& bulk_data     = get_bulk_data();
-    auto  rank          = bulk_data.entity_rank(e);
-    auto& failure_field = get_failure_state_field(rank);
-    return static_cast<FailureState>(
-        *(stk::mesh::field_data(failure_field, e)));
-  }
+  get_failure_state(stk::mesh::Entity e);
 
   //
   // Set boundary indicator.
   //
   void
-  set_boundary_indicator(stk::mesh::Entity e, BoundaryIndicator const bi)
-  {
-    auto& bulk_data          = get_bulk_data();
-    auto& boundary_field     = get_boundary_indicator_field();
-    auto* pbi                = stk::mesh::field_data(boundary_field, e);
-    auto* boundary_indicator = static_cast<double*>(pbi);
-    ALBANY_ASSERT(boundary_indicator != nullptr);
-    *boundary_indicator = static_cast<double>(bi);
-  }
+  set_boundary_indicator(stk::mesh::Entity e, BoundaryIndicator const bi);
 
   //
   // Get boundary indicator.
   //
   BoundaryIndicator
-  get_boundary_indicator(stk::mesh::Entity e)
-  {
-    auto& bulk_data          = get_bulk_data();
-    auto& boundary_field     = get_boundary_indicator_field();
-    auto* pbi                = stk::mesh::field_data(boundary_field, e);
-    auto* boundary_indicator = static_cast<double*>(pbi);
-    ALBANY_ASSERT(boundary_indicator != nullptr);
-    return static_cast<BoundaryIndicator>(*boundary_indicator);
-  }
+  get_boundary_indicator(stk::mesh::Entity e);
 
   bool
-  is_internal(stk::mesh::Entity e)
-  {
-    assert(get_bulk_data().entity_rank(e) == get_boundary_rank());
-
-    size_t const number_in_edges = get_bulk_data().num_elements(e);
-
-    assert(number_in_edges == 1 || number_in_edges == 2);
-
-    return number_in_edges == 2;
-  }
+  is_internal(stk::mesh::Entity e);
 
   bool
   is_at_boundary(stk::mesh::Entity e)
@@ -886,20 +848,7 @@ class Topology
   }
 
   bool
-  is_boundary_cell(stk::mesh::Entity e)
-  {
-    stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
-    stk::mesh::EntityRank const face_rank = get_boundary_rank();
-    auto&                       bulk_data = get_bulk_data();
-    assert(bulk_data.entity_rank(e) == cell_rank);
-    stk::mesh::Entity const* relations = bulk_data.begin(e, face_rank);
-    size_t const num_relations = bulk_data.num_connectivity(e, face_rank);
-    for (size_t i = 0; i < num_relations; ++i) {
-      stk::mesh::Entity face_entity = relations[i];
-      if (is_at_boundary(face_entity) == true) return true;
-    }
-    return false;
-  }
+  is_boundary_cell(stk::mesh::Entity e);
 
   bool
   is_failed_boundary_cell(stk::mesh::Entity e)
@@ -908,38 +857,10 @@ class Topology
   }
 
   bool
-  there_are_failed_cells()
-  {
-    bool                        have_failed_cells{false};
-    stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
-    stk::mesh::EntityVector     cells;
-    stk::mesh::get_entities(get_bulk_data(), cell_rank, cells);
-    for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
-      stk::mesh::Entity cell = cells[i];
-      if (is_open(cell) == true) {
-        have_failed_cells = true;
-        break;
-      }
-    }
-    return have_failed_cells;
-  }
+  there_are_failed_cells();
 
   bool
-  there_are_failed_boundary_cells()
-  {
-    bool                        have_failed_cells{false};
-    stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
-    stk::mesh::EntityVector     cells;
-    stk::mesh::get_entities(get_bulk_data(), cell_rank, cells);
-    for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
-      stk::mesh::Entity cell = cells[i];
-      if (is_failed_boundary_cell(cell) == true) {
-        have_failed_cells = true;
-        break;
-      }
-    }
-    return have_failed_cells;
-  }
+  there_are_failed_boundary_cells();
 
   void
   set_output_type(OutputType const ot)
