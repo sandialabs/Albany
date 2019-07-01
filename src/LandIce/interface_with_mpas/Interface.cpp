@@ -347,10 +347,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 
   paramList = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromYamlFileAndBroadcast("albany_input.yaml", paramList.ptr(), *mpiComm);
-  auto bt = paramList->get<std::string>("Build Type", "NONE");
 
-  slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.yaml", mpiComm));
-  paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
+  // Set build Type 
+  auto bt = paramList->get<std::string>("Build Type", "NONE");
 #ifdef ALBANY_EPETRA
   if(bt == "NONE") {
     bt = "Epetra";
@@ -376,6 +375,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
                                "Error! Invalid choice (" + bt + ") for 'Build Type'.\n"
                                "       Valid choices are 'Epetra', 'Tpetra'.\n");
   }
+
+  slvrfctry = Teuchos::rcp(new Albany::SolverFactory(paramList, mpiComm));
+  //paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
   paramList->set("Overwrite Nominal Values With Final Point", true);
 
