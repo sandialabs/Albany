@@ -22,6 +22,7 @@
 #include "BodyForce.hpp"
 #include "CurrentCoords.hpp"
 #include "MechanicsResidual.hpp"
+#include "MeshSizeField.hpp"
 #include "SurfaceBasis.hpp"
 #include "SurfaceScalarGradientOperatorHydroStress.hpp"
 #include "SurfaceScalarGradientOperatorPorePressure.hpp"
@@ -31,7 +32,6 @@
 #include "SurfaceVectorJump.hpp"
 #include "SurfaceVectorResidual.hpp"
 #include "Time.hpp"
-#include "MeshSizeField.hpp"
 
 // Constitutive Model Interface and parameters
 #include "ConstitutiveModelInterface.hpp"
@@ -364,6 +364,24 @@ MechanicsProblem::constructEvaluators(
         &entity);
   }
 
+  // Have to register boundary_indicator in the mesh before the discretization
+  // is built
+  auto find_boundary_indicator = std::find(
+      this->requirements.begin(),
+      this->requirements.end(),
+      "boundary_indicator");
+
+  if (find_boundary_indicator != this->requirements.end()) {
+    auto entity = StateStruct::ElemData;
+
+    stateMgr.registerStateVariable(
+        "boundary_indicator",
+        dl_->cell_scalar,
+        meshSpecs.ebName,
+        false,
+        &entity);
+  }
+
   // Define Field Names
   // generate the field name map to deal with outputing surface element info
   LCM::FieldNameMap field_name_map(surface_element);
@@ -402,7 +420,7 @@ MechanicsProblem::constructEvaluators(
   std::string effectiveDiffusivity  = fnm["Effective_Diffusivity"];
   std::string trappedSolvent        = fnm["Trapped_Solvent"];
   std::string strainRateFactor      = fnm["Strain_Rate_Factor"];
-  std::string eqilibriumParameter = fnm["Concentration_Equilibrium_Parameter"];
+  std::string equilibrium_param = fnm["Concentration_Equilibrium_Parameter"];
   std::string gradient_element_length = fnm["Gradient_Element_Length"];
 
   // Helium bubble evolution
@@ -738,7 +756,7 @@ MechanicsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_transport_eq_ ==  true) {  // Gather solution for transport problem
+  if (have_transport_eq_ == true) {  // Gather solution for transport problem
     // Lattice Concentration
     Teuchos::ArrayRCP<std::string> const dof_names(1, "Transport");
 
@@ -762,7 +780,7 @@ MechanicsProblem::constructEvaluators(
         evalUtils.constructScatterResidualEvaluator(
             false, resid_names, offset, "Scatter Transport"));
 
-    offset++;                    // for lattice concentration
+    offset++;                            // for lattice concentration
   } else if (have_transport_ == true) {  // Constant transport scalar value
 
     Teuchos::RCP<Teuchos::ParameterList> p =
@@ -862,7 +880,6 @@ MechanicsProblem::constructEvaluators(
   }
 
   if ((have_mech_eq_ == true) && (have_sizefield_adaptation_ == true)) {
-
     Teuchos::RCP<Teuchos::ParameterList> p =
         Teuchos::rcp(new Teuchos::ParameterList("Isotropic Mesh Size Field"));
 
@@ -883,18 +900,17 @@ MechanicsProblem::constructEvaluators(
 
     bool output_flag{true};
 
-      p = stateMgr.registerStateVariable(
-          "IsoMeshSizeField",
-          dl_->qp_scalar,
-          dl_->dummy,
-          eb_name,
-          "scalar",
-          1.0,
-          true,
-          output_flag);
-      ev =
-          Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable(
+        "IsoMeshSizeField",
+        dl_->qp_scalar,
+        dl_->dummy,
+        eb_name,
+        "scalar",
+        1.0,
+        true,
+        output_flag);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if ((have_temperature_eq_ == true) || (have_temperature_ == true)) {
@@ -936,17 +952,6 @@ MechanicsProblem::constructEvaluators(
         true);
 
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    std::string const                    state_name = "boundary_indicator";
-    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::ElemData;
-
-    p = stateMgr.registerStateVariable(
-        state_name, dl_->cell_scalar, eb_name, true, &entity);
-
-    p->set<std::string>("Field Name", state_name);
-    ev =
-        Teuchos::rcp(new PHAL::LoadStateFieldST<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -1503,7 +1508,7 @@ MechanicsProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }  // end of coehesive/surface element block
 
-  } else {                // surface_element == False
+  } else {                        // surface_element == False
     if (have_mech_eq_ == true) {  // Kinematics quantities
 
       Teuchos::RCP<Teuchos::ParameterList> p =
@@ -2207,7 +2212,7 @@ MechanicsProblem::constructEvaluators(
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>(
-        "Concentration Equilibrium Parameter Name", eqilibriumParameter);
+        "Concentration Equilibrium Parameter Name", equilibrium_param);
 
     ev = Teuchos::rcp(
         new LCM::TransportCoefficients<EvalT, PHAL::AlbanyTraits>(*p, dl_));

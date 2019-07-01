@@ -19,6 +19,7 @@
 #include "Albany_AbstractFieldContainer.hpp"
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#include "Albany_Utils.hpp"
 
 #include <stk_mesh/base/CoordinateSystems.hpp>
 #include <stk_mesh/base/Field.hpp>
@@ -116,10 +117,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   {
     return failure_state[rank];
   }
-  ScalarFieldType*
-  getBoundaryIndicator(stk::topology::rank_t rank)
+  stk::mesh::FieldBase*
+  getBoundaryIndicator()
   {
-    return boundary_indicator[rank];
+    ALBANY_ASSERT(boundary_indicator != nullptr);
+    return boundary_indicator;
   }
 #endif  // ALBANY_LCM
   SphereVolumeFieldType*
@@ -206,6 +208,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   virtual bool
   hasLatticeOrientationField() const = 0;
 
+#if defined(ALBANY_LCM)
+  virtual bool
+  hasBoundaryIndicatorField() const = 0;
+#endif
+
   std::map<std::string, double>&
   getTime()
   {
@@ -279,13 +286,14 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   IntScalarFieldType* refine_field;
 #if defined(ALBANY_LCM)
   IntScalarFieldType* failure_state[stk::topology::ELEMENT_RANK + 1];
-  ScalarFieldType*    boundary_indicator[stk::topology::ELEMENT_RANK + 1];
+  stk::mesh::FieldBase* boundary_indicator;
 #endif  // ALBANY_LCM
 
-  SphereVolumeFieldType*
-      sphereVolume_field;  // Required for Peridynamics in LCM
-  stk::mesh::FieldBase*
-      latticeOrientation_field;  // Required for certain LCM material models
+  // Required for Peridynamics in LCM
+  SphereVolumeFieldType* sphereVolume_field;
+
+  // Required for certain LCM material models
+  stk::mesh::FieldBase* latticeOrientation_field;
 
   ScalarValueState       scalarValue_states;
   MeshScalarState        mesh_scalar_states;

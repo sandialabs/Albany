@@ -180,7 +180,6 @@ void GenericSTKMeshStruct::SetupFieldData(
                                auto_aura_option,
                                //worksetSize, // capability currently removed from STK_Mesh
                                false, // add_fmwk_data
-                               NULL, // ConnectivityMap
                                NULL, // FieldDataManager
                                worksetSize));
   }

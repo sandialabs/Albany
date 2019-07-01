@@ -57,18 +57,6 @@ MechanicsProblem::MechanicsProblem(
   // Are any source functions specified?
   have_source_ = params->isSublist("Source Functions");
 
-  // Is adaptation specified?
-  bool adapt_sublist_exists = params->isSublist("Adaptation");
-
-  if (adapt_sublist_exists) {
-    Teuchos::ParameterList const& adapt_params = params->sublist("Adaptation");
-
-    std::string const& adaptation_method_name =
-        adapt_params.get<std::string>("Method");
-
-    have_sizefield_adaptation_ = (adaptation_method_name == "RPI Albany Size");
-  }
-
   getVariableType(
       params->sublist("Displacement"),
       "DOF",
@@ -261,6 +249,7 @@ MechanicsProblem::MechanicsProblem(
 
   // Check whether we are doing adaptive insertion with topology modification.
   bool const have_adaptation = params->isSublist("Adaptation");
+  bool       have_erosion{false};
 
   if (have_adaptation == true) {
     Teuchos::ParameterList const& adapt_params = params->sublist("Adaptation");
@@ -268,7 +257,9 @@ MechanicsProblem::MechanicsProblem(
     std::string const& adaptation_method_name =
         adapt_params.get<std::string>("Method");
 
+    have_sizefield_adaptation_ = adaptation_method_name == "RPI Albany Size";
     have_topmod_adaptation_ = adaptation_method_name == "Topmod";
+    have_erosion               = adaptation_method_name == "Erosion";
   }
 
   // User-defined NOX status test that can be passed to the ModelEvaluators
@@ -294,9 +285,10 @@ MechanicsProblem::MechanicsProblem(
       }
     }
   }
-  if (requireLatticeOrientationOnMesh) {
+  if (requireLatticeOrientationOnMesh == true) {
     requirements.push_back("Lattice_Orientation");
   }
+  if (have_erosion == true) { requirements.push_back("boundary_indicator"); }
 }  // MechanicsProblem
 
 //------------------------------------------------------------------------------

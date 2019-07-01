@@ -47,9 +47,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     const int                                   neq_,
     const AbstractFieldContainer::FieldContainerRequirements&
         req,  // TODO: remove this altogether?
-              // IKT reply: req is currently used in lattice orientation stuff
-              // which I think is for peridigm.  Peridigm doesn't compile now so
-              // we should check what are the plans for it...
+              // AM: No, used in LCM for crystal plasticity and ACE
     const int                                          numDim_,
     const Teuchos::RCP<StateInfoStruct>&               sis,
     const Teuchos::Array<Teuchos::Array<std::string>>& solution_vector,
@@ -282,8 +280,9 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     stk::mesh::put_field_on_mesh(
         *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
 #ifdef ALBANY_SEACAS
-    if (params_->get<bool>("Export 3d coordinates field",false)) {
-      stk::io::set_field_role(*this->coordinates_field3d, Ioss::Field::TRANSIENT);
+    if (params_->get<bool>("Export 3d coordinates field", false)) {
+      stk::io::set_field_role(
+          *this->coordinates_field3d, Ioss::Field::TRANSIENT);
     }
 #endif
   }
@@ -318,6 +317,22 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   this->addStateStructs(sis);
 
   initializeSTKAdaptation();
+
+#if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
+  bool has_boundary_indicator =
+      (std::find(req.begin(), req.end(), "boundary_indicator") != req.end());
+  if (has_boundary_indicator) {
+    // STK says that attributes are of type Field<double,anonymous>[ name:
+    // "extra_attribute_3" , #states: 1 ]
+    this->boundary_indicator =
+        metaData_->template get_field<stk::mesh::FieldBase>(
+            stk::topology::ELEMENT_RANK, "boundary_indicator");
+    ALBANY_ASSERT(this->boundary_indicator != nullptr);
+    build_boundary_indicator = true;
+    stk::io::set_field_role(
+        *this->boundary_indicator, Ioss::Field::INFORMATION);
+  }
+#endif
 }
 
 template <bool Interleaved>
@@ -341,7 +356,7 @@ MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
       *this->refine_field, this->metaData->universal_part(), nullptr);
 
 #if defined(ALBANY_LCM)
-  // Failure state and boundary indicator used for mesh adaptation
+  // Failure state used for mesh adaptation
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
        rank <= stk::topology::ELEMENT_RANK;
        ++rank) {
@@ -349,14 +364,12 @@ MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
         &this->metaData->template declare_field<ISFT>(rank, "failure_state");
     stk::mesh::put_field_on_mesh(
         *this->failure_state[rank], this->metaData->universal_part(), nullptr);
-    this->boundary_indicator[rank] =
-        &this->metaData->template declare_field<SFT>(
-            rank, "boundary_indicator");
-    stk::mesh::put_field_on_mesh(
-        *this->boundary_indicator[rank],
-        this->metaData->universal_part(),
-        nullptr);
   }
+  // Boundary indicator
+  this->boundary_indicator = &this->metaData->template declare_field<SFT>(
+      stk::topology::ELEMENT_RANK, "boundary_indicator");
+  stk::mesh::put_field_on_mesh(
+      *this->boundary_indicator, this->metaData->universal_part(), nullptr);
 #endif  // ALBANY_LCM
 
 #ifdef ALBANY_SEACAS
@@ -367,7 +380,6 @@ MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
        rank <= stk::topology::ELEMENT_RANK;
        ++rank) {
     stk::io::set_field_role(*this->failure_state[rank], Ioss::Field::MESH);
-    stk::io::set_field_role(*this->boundary_indicator[rank], Ioss::Field::MESH);
   }
 #endif  // ALBANY_LCM
 #endif

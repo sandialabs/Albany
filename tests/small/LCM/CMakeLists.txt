@@ -23,6 +23,7 @@ add_subdirectory(UnitTests)
 
 IF(ALBANY_STK)
   IF(ALBANY_SEACAS)
+    add_subdirectory(ACE)
     add_subdirectory(BoreDemo)
     add_subdirectory(CohesiveElement)
     add_subdirectory(Dynamics)

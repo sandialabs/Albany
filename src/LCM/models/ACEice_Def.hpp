@@ -6,7 +6,7 @@
 
 #include "ACEcommon.hpp"
 #include "ACEice.hpp"
-#include "MiniNonlinearSolver.h"
+#include "Albany_STKDiscretization.hpp"
 
 namespace LCM {
 
@@ -68,7 +68,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
   setDependentField("Yield Strength", dl->qp_scalar);
   setDependentField("Delta Time", dl->workset_scalar);
   setDependentField("ACE Temperature", dl->qp_scalar);
-  setDependentField("boundary_indicator", dl->cell_scalar);
 
   // define the evaluated fields
   setEvaluatedField("ACE Ice Saturation", dl->qp_scalar);
@@ -239,7 +238,6 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   yield_strength_     = *input_fields["Yield Strength"];
   delta_time_         = *input_fields["Delta Time"];
   temperature_        = *input_fields["ACE Temperature"];
-  boundary_indicator_ = *input_fields["boundary_indicator"];
 
   stress_           = *output_fields[cauchy_string];
   Fp_               = *output_fields[Fp_string];
@@ -261,105 +259,18 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   eqps_old_           = (*workset.stateArrayPtr)[eqps_string + "_old"];
   T_old_              = (*workset.stateArrayPtr)["ACE Temperature_old"];
   ice_saturation_old_ = (*workset.stateArrayPtr)["ACE Ice Saturation_old"];
+
+  auto& disc               = *workset.disc;
+  auto& stk_disc           = dynamic_cast<Albany::STKDiscretization&>(disc);
+  auto& mesh_struct        = *(stk_disc.getSTKMeshStruct());
+  auto& field_cont         = *(mesh_struct.getFieldContainer());
+  have_boundary_indicator_ = field_cont.hasBoundaryIndicatorField();
+
+  if (have_boundary_indicator_ == true) {
+    boundary_indicator_ = workset.boundary_indicator;
+    ALBANY_ASSERT(boundary_indicator_.is_null() == false);
+  }
 }
-
-namespace {
-
-static RealType const SQ23{std::sqrt(2.0 / 3.0)};
-
-}  // anonymous namespace
-
-//
-// ACE ice nonlinear system
-//
-template <typename EvalT, minitensor::Index M = 1>
-class IceNLS : public minitensor::
-                   Function_Base<IceNLS<EvalT, M>, typename EvalT::ScalarT, M>
-{
-  using S = typename EvalT::ScalarT;
-
- public:
-  IceNLS(
-      RealType sat_mod,
-      RealType sat_exp,
-      RealType eqps_old,
-      S const& K,
-      S const& smag,
-      S const& mubar,
-      S const& Y)
-      : sat_mod_(sat_mod),
-        sat_exp_(sat_exp),
-        eqps_old_(eqps_old),
-        K_(K),
-        smag_(smag),
-        mubar_(mubar),
-        Y_(Y)
-  {
-  }
-
-  constexpr static char const* const NAME{"ACE ice NLS"};
-
-  using Base =
-      minitensor::Function_Base<IceNLS<EvalT, M>, typename EvalT::ScalarT, M>;
-
-  // Default value.
-  template <typename T, minitensor::Index N>
-  T
-  value(minitensor::Vector<T, N> const& x)
-  {
-    return Base::value(*this, x);
-  }
-
-  // Explicit gradient.
-  template <typename T, minitensor::Index N>
-  minitensor::Vector<T, N>
-  gradient(minitensor::Vector<T, N> const& x)
-  {
-    // Firewalls.
-    minitensor::Index const dimension = x.get_dimension();
-
-    ALBANY_EXPECT(dimension == Base::DIMENSION);
-
-    // Variables that potentially have Albany::Traits sensitivity
-    // information need to be handled by the peel functor so that
-    // proper conversions take place.
-    T const K     = peel<EvalT, T, N>()(K_);
-    T const smag  = peel<EvalT, T, N>()(smag_);
-    T const mubar = peel<EvalT, T, N>()(mubar_);
-    T const Y     = peel<EvalT, T, N>()(Y_);
-
-    // This is the actual computation of the gradient.
-    minitensor::Vector<T, N> r(dimension);
-
-    T const& X     = x(0);
-    T const  alpha = eqps_old_ + SQ23 * X;
-    T const  H     = K * alpha + sat_mod_ * (1.0 - std::exp(-sat_exp_ * alpha));
-    T const  R     = smag - (2.0 * mubar * X + SQ23 * (Y + H));
-
-    r(0) = R;
-
-    return r;
-  }
-
-  // Default AD hessian.
-  template <typename T, minitensor::Index N>
-  minitensor::Tensor<T, N>
-  hessian(minitensor::Vector<T, N> const& x)
-  {
-    return Base::hessian(*this, x);
-  }
-
-  // Constants.
-  RealType const sat_mod_{0.0};
-  RealType const sat_exp_{0.0};
-  RealType const eqps_old_{0.0};
-
-  // Inputs
-  S const& K_;
-  S const& smag_;
-  S const& mubar_;
-  S const& Y_;
-};
 
 template <typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
@@ -392,7 +303,15 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const element_size           = element_size_;
   ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
 
-  std::cout << "*** BOUNDARY INDICATOR: " << boundary_indicator_(cell) << '\n';
+  auto&& failed = failed_(cell, 0);
+
+  if (have_boundary_indicator_ == true) {
+    bool const boundary_indicator =
+        static_cast<bool const>(*(boundary_indicator_[cell]));
+
+    if (height > 1.0 / 3.0 && boundary_indicator == true) { failed = 1.0; }
+  }
+
   //
   // Thermal calculation
   //
@@ -503,7 +422,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   if (f > yield_tolerance) {
     // Use minimization equivalent to return mapping
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
-    using NLS    = IceNLS<EvalT>;
+    using NLS    = ACE_NLS<EvalT>;
 
     constexpr minitensor::Index nls_dim{NLS::DIMENSION};
 

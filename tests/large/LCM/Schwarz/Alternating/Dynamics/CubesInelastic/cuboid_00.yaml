@@ -38,7 +38,6 @@ LCM:
       Scaled SDBC on NS nodelist_3 for DOF Y: [0.0, 10.0]
       Scaled SDBC on NS nodelist_5 for DOF Z: [0.0, 10.0]
       SDBC on NS nodelist_6 for DOF StrongSchwarz:
-        SDBC Scaling: 10.0 
         BC Function: StrongSchwarz
         Coupled Application: cuboid_01.yaml
         Coupled Block: coarse

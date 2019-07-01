@@ -22,6 +22,7 @@
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Thyra_DetachedVectorView.hpp"
+#include "Teuchos_YamlParameterListHelpers.hpp"
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -343,14 +344,22 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& floating2dEdgesIds) {
 
-  slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.yaml", mpiComm));
-  paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
-  auto& bt = paramList->get<std::string>("Build Type");
+  paramList = Teuchos::createParameterList("Albany Parameters");
+  Teuchos::updateParametersFromYamlFileAndBroadcast("albany_input.yaml", paramList.ptr(), *mpiComm);
+
+  // Set build Type 
+  auto bt = paramList->get<std::string>("Build Type", "NONE");
 #ifdef ALBANY_EPETRA
-  if(bt == "NONE") bt = "Epetra";
+  if(bt == "NONE") {
+    bt = "Epetra";
+    paramList->set("Build Type", bt);
+  }
 #else
-  if(bt == "NONE") bt = "Tpetra";
+  if(bt == "NONE") {
+    bt = "Tpetra";
+    paramList->set("Build Type",bt);
+  }
   TEUCHOS_TEST_FOR_EXCEPTION(bt == "Epetra", Teuchos::Exceptions::InvalidArgument,
                              "Error! ALBANY_EPETRA must be defined in order to perform an Epetra run.\n");
 #endif
@@ -366,6 +375,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
                                "Error! Invalid choice (" + bt + ") for 'Build Type'.\n"
                                "       Valid choices are 'Epetra', 'Tpetra'.\n");
   }
+
+  slvrfctry = Teuchos::rcp(new Albany::SolverFactory(paramList, mpiComm));
+  //paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
   paramList->set("Overwrite Nominal Values With Final Point", true);
 

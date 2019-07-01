@@ -296,6 +296,11 @@ namespace Aeras
     const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
     getLatticeOrientation() const override;
 
+#if defined(ALBANY_LCM)
+    Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
+    getBoundaryIndicator() const override;
+#endif
+
     //! Print the coordinates for debugging
     void printCoords() const override;
     void printConnectivity(bool printEdges=false) const;
@@ -657,6 +662,10 @@ namespace Aeras
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
     Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
+
+#if defined(ALBANY_LCM)
+    Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type boundary_indicator;
+#endif
 
 #ifdef ALBANY_CONTACT
     Teuchos::RCP<const Albany::ContactManager> contactManager;

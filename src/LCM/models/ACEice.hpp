@@ -34,11 +34,8 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   operator=(ACEiceMiniKernel const&) = delete;
 
   using ScalarT          = typename EvalT::ScalarT;
-  using MeshScalarT      = typename EvalT::MeshScalarT;
   using ScalarField      = PHX::MDField<ScalarT>;
-  using IntField         = PHX::MDField<int>;
   using ConstScalarField = PHX::MDField<ScalarT const>;
-  using ConstIntField    = PHX::MDField<int const>;
   using BaseKernel       = ParallelKernel<EvalT, Traits>;
   using Workset          = typename BaseKernel::Workset;
 
@@ -68,7 +65,6 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField poissons_ratio_;
   ConstScalarField yield_strength_;
   ConstScalarField temperature_;
-  ConstScalarField boundary_indicator_;
 
   // Output MDFields
   ScalarField density_;
@@ -93,6 +89,9 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   Albany::MDArray eqps_old_;
   Albany::MDArray T_old_;
   Albany::MDArray ice_saturation_old_;
+
+  bool                       have_boundary_indicator_{false};
+  Teuchos::ArrayRCP<double*> boundary_indicator_;
 
   // Baseline constants
   RealType ice_density_{0.0};
