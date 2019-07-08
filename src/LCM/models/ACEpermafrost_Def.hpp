@@ -495,6 +495,14 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // NOTE: Can't let this keep getting updated! So commenting out for now.
   // porosity0_ * std::exp(-pressure / (porosityE_ * 9.81 * 1500.0));
 
+  // A boundary cell (this is a hack): porosity = -1.0 (set in input deck)
+  bool b_cell;
+  if (porosity < 0.0) {
+    b_cell = true;
+  } else {
+    b_cell = false;
+  }
+
   porosity_(cell, pt) = porosity;
 
   // Calculate melting temperature
@@ -526,9 +534,15 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const dfdT = -W * et / etp1 / etp1;
 
   // Update the ice saturation
-  ScalarT const icurr = 1.0 - 1.0 / etp1;
+  ScalarT icurr = 1.0 - 1.0 / etp1;
   // Update the water saturation
-  ScalarT const wcurr = 1.0 - icurr;
+  ScalarT wcurr = 1.0 - icurr;
+
+  // Correct ice/water saturation if b_cell
+  if (b_cell) {
+    icurr = 0.0;
+    wcurr = 0.0;
+  }
 
   // Update the effective material density
   density_(cell, pt) =
@@ -549,6 +563,17 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) 
                                - (ice_density_ * latent_heat_ * dfdT);
+
+  // Correct the thermal properties if b_cell
+  // Right now, I assume air properties, but this needs to toggle between
+  // air or water, depending on ocean boundary conditions.
+  // Note: The units here must be consistent with input deck units.
+  if (b_cell) {
+    density_(cell, pt) = 1.225;           // [kg/m3]
+    heat_capacity_(cell, pt) = 1.006e+03; // [J/kg/K]
+    thermal_cond_(cell, pt) = 0.0255;     // [W/K/m]
+    thermal_inertia_(cell, pt) = density_(cell, pt) * heat_capacity_(cell, pt);
+  }
 
   // Return values
   ice_saturation_(cell, pt)   = icurr;
