@@ -38,7 +38,7 @@ private:
   // Input:
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;  // [km^3]
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim>  wGradBF; // [km^2]
-  PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint> sideBF;  // []
+  PHX::MDField<const RealType, Cell,Side,Node,QuadPoint> sideBF;  // []
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint> side_w_measure;  // [km^2]
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   normals;
 

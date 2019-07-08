@@ -52,6 +52,9 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"The specified number of RBMs "
                                      << numRBMs << " is not valid!  Valid values are 0, 2 and 3.");
   }
+
+  adjustSurfaceHeight = false;
+  adjustBedTopo = false;
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
