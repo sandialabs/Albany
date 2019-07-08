@@ -35,8 +35,8 @@ class UpdateField : public PHX::EvaluatorWithBaseImpl<Traits>,
   evaluateFields(typename Traits::EvalData d);
 
  private:
-  typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   PHX::MDField<ScalarT>       field_Nplus1;
   PHX::MDField<const ScalarT> field_Inc;

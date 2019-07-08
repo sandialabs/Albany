@@ -62,7 +62,7 @@ class ConstitutiveModelInterface : public PHX::EvaluatorWithBaseImpl<Traits>,
   fillStateVariableStruct(int state_var);
 
   ///
-  /// Retrive the number of model state variables
+  /// Retrieve the number of model state variables
   ///
   int
   getNumStateVars()
@@ -79,7 +79,7 @@ class ConstitutiveModelInterface : public PHX::EvaluatorWithBaseImpl<Traits>,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
-  /// Retrive SV name from the state variable registration struct
+  /// Retrieve SV name from the state variable registration struct
   ///
   std::string
   getName()
@@ -88,7 +88,7 @@ class ConstitutiveModelInterface : public PHX::EvaluatorWithBaseImpl<Traits>,
   }
 
   ///
-  /// Retrive SV layout from the state variable registration struct
+  /// Retrieve SV layout from the state variable registration struct
   ///
   Teuchos::RCP<PHX::DataLayout>
   getLayout()
@@ -97,7 +97,7 @@ class ConstitutiveModelInterface : public PHX::EvaluatorWithBaseImpl<Traits>,
   }
 
   ///
-  /// Retrive SV init type from the state variable registration struct
+  /// Retrieve SV init type from the state variable registration struct
   ///
   std::string
   getInitType()
@@ -106,7 +106,7 @@ class ConstitutiveModelInterface : public PHX::EvaluatorWithBaseImpl<Traits>,
   }
 
   ///
-  /// Retrive SV init value from the state variable registration struct
+  /// Retrieve SV init value from the state variable registration struct
   ///
   double
   getInitValue()
@@ -115,7 +115,7 @@ class ConstitutiveModelInterface : public PHX::EvaluatorWithBaseImpl<Traits>,
   }
 
   ///
-  /// Retrive SV state flag from the state variable registration struct
+  /// Retrieve SV state flag from the state variable registration struct
   ///
   double
   getStateFlag()
@@ -124,7 +124,7 @@ class ConstitutiveModelInterface : public PHX::EvaluatorWithBaseImpl<Traits>,
   }
 
   ///
-  /// Retrive SV output flag from the state variable registration struct
+  /// Retrieve SV output flag from the state variable registration struct
   ///
   double
   getOutputFlag()

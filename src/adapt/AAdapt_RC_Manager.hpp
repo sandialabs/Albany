@@ -3,19 +3,22 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef AADAPT_RC_MANAGER
-#define AADAPT_RC_MANAGER
+
+#ifndef AADAPT_RC_MANAGER_HPP
+#define AADAPT_RC_MANAGER_HPP
 
 #include "Albany_DataTypes.hpp"
 #include "AAdapt_RC_DataTypes.hpp"
 
 // Forward declarations.
 namespace Albany { class StateManager; class Layouts; }
-namespace PHAL { struct AlbanyTraits; class Workset; }
+namespace PHAL { struct AlbanyTraits; struct Workset; }
 namespace PHX { template<typename T> class FieldManager; }
 
 namespace AAdapt {
-class AdaptiveSolutionManagerT;
+
+// Forward declaration(s)
+class AdaptiveSolutionManager;
 
 namespace rc {
 
@@ -59,8 +62,9 @@ public:
   static Teuchos::RCP<Manager> create(
     const Teuchos::RCP<Albany::StateManager>& state_mgr,
     Teuchos::ParameterList& problem_params);
-  void setSolutionManager(
-    const Teuchos::RCP<AdaptiveSolutionManagerT>& sol_mgr);
+
+  void setSolutionManager(const Teuchos::RCP<AdaptiveSolutionManager>& sol_mgr);
+
   //! Fill valid_pl with valid parameters for this class.
   static void getValidParameters(
     Teuchos::RCP<Teuchos::ParameterList>& valid_pl);
@@ -69,18 +73,14 @@ public:
    * evaluators. */
 
   //! Nonconst x getter.
-  Teuchos::RCP<Tpetra_Vector>& get_x();
+  Teuchos::RCP<Thyra_Vector>& get_x();
   //! Initialize x_accum using this nonoverlapping map if x_accum has not
   //  already been initialized.
   void init_x_if_not(const Teuchos::RCP<const Thyra_VectorSpace>& vs);
-  void init_x_if_not(const Teuchos::RCP<const Tpetra_Map>& map);
   //! x += soln, where soln is nonoverlapping.
-  void update_x(const Tpetra_Vector& soln_nol);
+  void update_x(const Thyra_Vector& soln_nol);
   //! Return x + a for nonoverlapping a.
-  Teuchos::RCP<const Thyra_Vector> add_x(
-    const Teuchos::RCP<const Thyra_Vector>& a) const;
-  Teuchos::RCP<const Tpetra_Vector> add_x(
-    const Teuchos::RCP<const Tpetra_Vector>& a) const;
+  Teuchos::RCP<const Thyra_Vector> add_x(const Teuchos::RCP<const Thyra_Vector>& a) const;
 
   /* Problems use these methods to set up RCU. */
 
@@ -144,13 +144,13 @@ public:
     const PHX::MDField<RealType,Cell,QuadPoint,Dim>& coord_qp);
   //! MeshAdapt uses this method to read and write nodal data from the mesh
   // database before and after adaptation.
-  const Teuchos::RCP<Tpetra_MultiVector>& getNodalField(
+  const Teuchos::RCP<Thyra_MultiVector>& getNodalField(
     const Field& f, const int g_idx, const bool overlapped) const;
   //! MeshAdapt does this if usingProjection(). In the future, I may switch to
   //  keeping an RCP<AbstractDiscretization>, and then this call would be
   //  unnecessary.
-  void initProjector(const Teuchos::RCP<const Tpetra_Map>& node_map,
-                     const Teuchos::RCP<const Tpetra_Map>& ol_node_map);
+  void initProjector(const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+                     const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs);
 
   /* Methods to inform Manager of what is happening. */
 
@@ -165,8 +165,8 @@ public:
   //! The mesh is about to adapt.
   void beginAdapt();
   //! The mesh was just adapted. The maps are needed only if usingProjection().
-  void endAdapt(const Teuchos::RCP<const Tpetra_Map>& node_map,
-                const Teuchos::RCP<const Tpetra_Map>& ol_node_map);
+  void endAdapt(const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+                const Teuchos::RCP<const Thyra_VectorSpace>& ol_node_vs);
 
   /* Methods to inform others of what is happening. */
   bool usingProjection() const;
@@ -182,4 +182,4 @@ private:
 } // namespace rc
 } // namespace AAdapt
 
-#endif // AADAPT_RC_MANAGER
+#endif // AADAPT_RC_MANAGER_HPP

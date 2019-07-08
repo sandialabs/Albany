@@ -1,79 +1,114 @@
+# The root name for the tests in this directory is the directory name
+get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
+##################################
+### Dirichlet Dist Param tests ###
+##################################
 
-# 1. Copy Input file from source to binary dir
+set(testName ${testNameRoot}_Dirichlet_Dist_Param)
+
+# Copy Input files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_paramT.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_dirichlet_dist_paramT.yaml COPYONLY)
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dirichlet_Dist_ParamT NAME)
-# 3. Create the test with this name and standard executable
-add_test(${testName} ${AlbanyT.exe} input_dirichlet_dist_paramT.yaml)
 
-# 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_param.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_dirichlet_dist_param.yaml COPYONLY)
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dirichlet_Dist_Param NAME)
-# 3. Create the test with this name and standard executable
+# Create the test with this name and standard executable
+add_test(${testName}_Tpetra ${Albany.exe} input_dirichlet_dist_paramT.yaml)
+set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
+
 if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe} input_dirichlet_dist_param.yaml)
+  # Copy Input files from source to binary dir
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_param.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_dirichlet_dist_param.yaml COPYONLY)
+
+  # Create the test with this name and standard executable
+  add_test(${testName}_Epetra ${Albany.exe} input_dirichlet_dist_param.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
 endif()
 
-# 1. Copy Input file from source to binary dir
+if (ALBANY_ROL)
+  add_test(${testName}_Analysis ${AlbanyAnalysis.exe} input_dirichlet_dist_paramT.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Analysis;ROL")
+endif ()
+
+####################################
+### Dirichlet Mixed Params tests ###
+####################################
+
+set(testName ${testNameRoot}_Dirichlet_Mixed_Params)
+
+# Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_mixed_paramsT.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_dirichlet_mixed_paramsT.yaml COPYONLY)
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dirichlet_Mixed_ParamsT NAME)
-# 3. Create the test with this name and standard executable
-add_test(${testName} ${AlbanyT.exe} input_dirichlet_mixed_paramsT.yaml)
 
-# 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_mixed_params.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_dirichlet_mixed_params.yaml COPYONLY)
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dirichlet_Mixed_Params NAME)
-# 3. Create the test with this name and standard executable
+# Create the test with this name and standard executable
+add_test(${testName}_Tpetra ${Albany.exe} input_dirichlet_mixed_paramsT.yaml)
+set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
+
 if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe} input_dirichlet_mixed_params.yaml)
+  # Copy Input file from source to binary dir
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_mixed_params.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_dirichlet_mixed_params.yaml COPYONLY)
+
+  # Create the test with this name and standard executable
+  add_test(${testName}_Epetra ${Albany.exe} input_dirichlet_mixed_params.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
 endif()
 
-# 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_param.yaml COPYONLY)
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Conductivity_Dist_Param NAME)
-# 3. Create the test with this name and standard executable
-if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe} input_conductivity_dist_param.yaml)
+set(testName ${testNameRoot}_Dirichlet_Mixed_Params_Analysis)
+
+if (ALBANY_ROL)
+  add_test(${testName}_Tpetra ${AlbanyAnalysis.exe} input_dirichlet_mixed_paramsT.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Analysis;ROL")
+if (ALBANY_EPETRA)
+  add_test(${testName}_Epetra ${AlbanyAnalysis.exe} input_dirichlet_mixed_params.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Analysis;ROL")
+endif() 
 endif()
 
-# 1. Copy Input file from source to binary dir
+####################################
+### Dirichlet Mixed Params tests ###
+####################################
+
+set(testName ${testNameRoot}_Conductivity_Dist_Param)
+
+# Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_paramT.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_paramT.yaml COPYONLY)
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Conductivity_Dist_ParamT NAME)
-# 3. Create the test with this name and standard executable
-add_test(${testName} ${AlbanyT.exe} input_conductivity_dist_paramT.yaml)
+# Create the test with this name and standard executable
+add_test(${testName}_Tpetra ${Albany.exe} input_conductivity_dist_paramT.yaml)
+set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
 
 if (ALBANY_IOPX)
-# 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param_restart.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_param_restart.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/steady2d_conduct_opt.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/steady2d_conduct_opt.exo COPYONLY)
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Conductivity_Dist_Param_Restart NAME)
-# 3. Create the test with this name and standard executable
-if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe} input_conductivity_dist_param_restart.yaml)
+  # Copy Input file from source to binary dir
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param_restartT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_param_restartT.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/steady2d_conduct_opt.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/steady2d_conduct_opt.exo COPYONLY)
+
+  # Create the test with this name and standard executable
+  add_test(${testName}_Restart_Tpetra ${Albany.exe} input_conductivity_dist_param_restartT.yaml)
+  set_tests_properties(${testName}_Restart_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
+  set_tests_properties(${testName}_Restart_Tpetra PROPERTIES DEPENDS  ${testName}_Tpetra)
 endif()
 
-# 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param_restartT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_param_restartT.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/steady2d_conduct_opt.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/steady2d_conduct_opt.exo COPYONLY)
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Conductivity_Dist_Param_RestartT NAME)
-# 3. Create the test with this name and standard executable
-add_test(${testName} ${AlbanyT.exe} input_conductivity_dist_param_restartT.yaml)
+if (ALBANY_EPETRA) 
+  # Copy Input file from source to binary dir
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_param.yaml COPYONLY)
+  # Create the test with this name and standard executable
+  add_test(${testName}_Epetra ${Albany.exe} input_conductivity_dist_param.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
+
+  if (ALBANY_IOPX)
+    # Copy Input file from source to binary dir
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param_restart.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_param_restart.yaml COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/steady2d_conduct_opt.exo
+                   ${CMAKE_CURRENT_BINARY_DIR}/steady2d_conduct_opt.exo COPYONLY)
+
+    # Create the test with this name and standard executable
+    add_test(${testName}_Restart_Epetra ${Albany.exe} input_conductivity_dist_param_restart.yaml)
+    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
+    set_tests_properties(${testName}_Restart_Epetra PROPERTIES DEPENDS  ${testName}_Epetra)
+  endif()
 endif()

@@ -151,9 +151,11 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Adaptation", false, "");
   validPL->sublist("Catalyst", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
+  validPL->set<bool>("Overwrite Nominal Values With Final Point",false,
+                     "Whether 'reportFinalPoint' should be allowed to overwrite nominal values");
   validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
 
-  validPL->set<bool>("Use MDField Memoization", false, "Use memoizer optimization to avoid recomputing MDFields (currently only works for LandIce)");
+  validPL->set<bool>("Use MDField Memoization", false, "Use memoization to avoid recomputing MDFields");
   validPL->set<bool>("Ignore Residual In Jacobian", false,
                      "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
   validPL->set<double>("Perturb Dirichlet", 0.0,
@@ -172,8 +174,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 
   // Deprecated parameters, kept solely for backward compatibility
   validPL->set<bool>("Compute Sensitivities", true, "Deprecated; Use parameter located under \"Piro\"/\"Analysis\"/\"Solve\" instead.");
-  validPL->set<bool>("Stochastic", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
-  validPL->sublist("Stochastic Galerkin", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
 
   // NOX status test that allows constutive models to cut the global time step
   // needed at the Problem scope when running Schwarz coupling

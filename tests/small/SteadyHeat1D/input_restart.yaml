@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra 
   Problem: 
     Name: Heat 1D
     Solution Method: Steady

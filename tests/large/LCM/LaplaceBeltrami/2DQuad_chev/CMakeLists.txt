@@ -16,17 +16,19 @@ get_filename_component(testDirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if (ALBANY_IFPACK2)
   set(testName ${testDirName})
   add_test(NAME LaplaceBeltrami:${testName}
-         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
          -DTEST_NAME=${testName} -DTEST_ARGS= -DMPIMNP=${MPIMNP}
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  set_tests_properties(LaplaceBeltrami:${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 
   set(testName ${testDirName}_TPS)
   add_test(NAME LaplaceBeltrami:${testName}
-         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
          -DTEST_NAME=${testName} -DTEST_ARGS=inputTPS.yaml -DMPIMNP=${MPIMNP}
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+  set_tests_properties(LaplaceBeltrami:${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 
 #set(testName ${testDirName}_LB)
 #add_test(NAME LaplaceBeltrami:${testName}

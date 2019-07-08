@@ -180,7 +180,7 @@ main(int ac, char* av[])
 
     }  // End of creating the .msh file, which contains the information of the
        // contour
-  }  // End of for loop
+  }    // End of for loop
 
   return 0;
 }

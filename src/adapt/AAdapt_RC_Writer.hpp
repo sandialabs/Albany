@@ -4,13 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_RC_WRITER
-#define AADAPT_RC_WRITER
+#ifndef AADAPT_RC_WRITER_HPP
+#define AADAPT_RC_WRITER_HPP
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
 namespace AAdapt {
 namespace rc {
@@ -40,9 +42,9 @@ private:
 template<typename EvalT, typename Traits>
 class Writer : public WriterBase<EvalT, Traits> {
 public:
-  void postRegistrationSetup(typename Traits::SetupData d,
-                             PHX::FieldManager<Traits>& fm) {}
-  void evaluateFields(typename Traits::EvalData d) {}
+  void postRegistrationSetup(typename Traits::SetupData /* d */,
+                             PHX::FieldManager<Traits>& /* fm */) {}
+  void evaluateFields(typename Traits::EvalData /* d */) {}
 };
 
 template<typename Traits>
@@ -65,4 +67,4 @@ private:
 } // namespace rc
 } // namespace AAdapt
 
-#endif // AADAPT_RC_WRITER
+#endif // AADAPT_RC_WRITER_HPP

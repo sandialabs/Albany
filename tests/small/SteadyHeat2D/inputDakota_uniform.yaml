@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra 
   Problem: 
     Solution Method: Steady
     Name: Heat 2D
@@ -12,12 +13,12 @@ ANONYMOUS:
     Source Functions: 
       Quadratic: 
         Nonlinear Factor: 2.50000000000000000e-01
-    Thermal Conductivity: 
-      Thermal Conductivity Type: Constant
+    ThermalConductivity: 
+      ThermalConductivity Type: Constant
       Value: 2.00000000000000011e-01
     Parameters: 
       Number: 1
-      Parameter 0: Thermal Conductivity
+      Parameter 0: ThermalConductivity
     Response Functions: 
       Number: 1
       Response 0: Solution Average

@@ -188,7 +188,7 @@ Albany::HeatProblem::getValidProblemParameters() const
 
   if (numDim==1)
     validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
-  validPL->sublist("Thermal Conductivity", false, "");
+  validPL->sublist("ThermalConductivity", false, "");
   validPL->set("Convection Velocity", "{0,0,0}", "");
   validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
   validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");

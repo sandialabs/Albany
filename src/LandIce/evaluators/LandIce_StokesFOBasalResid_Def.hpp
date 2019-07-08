@@ -86,7 +86,7 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
 //**********************************************************************
 template<typename EvalT, typename Traits, typename BetaScalarT>
 void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(u,fm);
@@ -97,6 +97,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
     this->utils.setFieldData(homotopyParam,fm);
 
   this->utils.setFieldData(residual,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->contributedFields());
 }
 
 //**********************************************************************

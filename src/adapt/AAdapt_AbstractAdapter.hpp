@@ -4,20 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
-#if !defined(AAdapt_AbstractAdapter_hpp)
-#define AAdapt_AbstractAdapter_hpp
+#ifndef AADAPT_ABSTRACT_ADAPTERT_HPP
+#define AADAPT_ABSTRACT_ADAPTERT_HPP
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_VerboseObject.hpp>
 
-#include <Epetra_Map.h>
-#include <Epetra_Vector.h>
-
-#include <NOX_Epetra_AdaptManager.H>
-
-#include <Sacado_ScalarParameterLibrary.hpp>
+#include "Albany_SacadoTypes.hpp"
 
 #include "Albany_StateManager.hpp"
 
@@ -26,73 +20,73 @@ namespace AAdapt {
 ///
 /// \brief Abstract interface for representing the set of adaptation tools available.
 ///
-class AbstractAdapter : public NOX::Epetra::AdaptManager {
+class AbstractAdapter {
 
-  public:
+public:
 
-    ///
-    /// Only constructor
-    ///
-    AbstractAdapter(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                    const Teuchos::RCP<ParamLib>& paramLib_,
-                    Albany::StateManager& StateMgr_,
-                    const Teuchos::RCP<const Teuchos_Comm>& commT_);
+  ///
+  /// Only constructor
+  ///
+  AbstractAdapter (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                   const Teuchos::RCP<ParamLib>& paramLib_,
+                   const Albany::StateManager& StateMgr_,
+                   const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
-    ///
-    /// Destructor
-    ///
-    virtual ~AbstractAdapter() {};
+  ///
+  /// Destructor
+  ///
+  virtual ~AbstractAdapter() = default;
 
-    ///
-    /// Each adapter must generate it's list of valid parameters
-    ///
-    virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const {
-      return getGenericAdapterParams("Generic Adapter List");
-    }
+  //! Method called by LOCA Solver to determine if the mesh needs adapting
+  // A return type of true means that the mesh should be adapted
+  virtual bool queryAdaptationCriteria(int iteration) = 0;
 
-  protected:
+  //! Method called by LOCA Solver to actually adapt the mesh
+  //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
+  virtual bool adaptMesh() = 0;
 
-    ///
-    /// List of valid problem params common to all adapters, as
-    /// a starting point for the specific  getValidAdapterParameters
-    ///
-    Teuchos::RCP<Teuchos::ParameterList>
-    getGenericAdapterParams(std::string listname = "AdapterList") const;
+  ///
+  /// Each adapter must generate its list of valid parameters
+  ///
+  virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const {
+    return getGenericAdapterParams("Generic Adapter List");
+  }
 
-    ///
-    /// Configurable output stream, defaults to printing on proc=0
-    ///
-    Teuchos::RCP<Teuchos::FancyOStream> output_stream_;
+protected:
 
-    ///
-    /// Adaptation parameters
-    ///
-    Teuchos::RCP<Teuchos::ParameterList> adapt_params_;
+  ///
+  /// List of valid problem params common to all adapters, as
+  /// a starting point for the specific  getValidAdapterParameters
+  ///
+  Teuchos::RCP<Teuchos::ParameterList>
+  getGenericAdapterParams(std::string listname = "AdapterList") const;
 
-    ///
-    /// Parameter library
-    ///
-    Teuchos::RCP<ParamLib> param_lib_;
+  ///
+  /// Configurable output stream, defaults to printing on proc=0
+  ///
+  Teuchos::RCP<Teuchos::FancyOStream> output_stream_;
 
-    ///
-    /// State Manager
-    ///
-    Albany::StateManager& state_mgr_;
+  ///
+  /// Adaptation parameters
+  ///
+  Teuchos::RCP<Teuchos::ParameterList> adapt_params_;
 
-    ///
-    /// Epetra communicator
-    ///
-    Teuchos::RCP<const Teuchos_Comm> commT_;
+  ///
+  /// Parameter library
+  ///
+  Teuchos::RCP<ParamLib> param_lib_;
 
-  private:
+  ///
+  /// State Manager
+  ///
+  const Albany::StateManager& state_mgr_;
 
-    //! Private to prohibit default or copy constructor
-    AbstractAdapter();
-    AbstractAdapter(const AbstractAdapter&);
-
-    //! Private to prohibit copying
-    AbstractAdapter& operator=(const AbstractAdapter&);
+  ///
+  /// Teuchos communicator
+  ///
+  Teuchos::RCP<const Teuchos_Comm> teuchos_comm_;
 };
-}
 
-#endif // AbstractAdaptation_hpp
+} // namespace AAdapt
+
+#endif // AADAPT_ABSTRACT_ADAPTERT_HPP

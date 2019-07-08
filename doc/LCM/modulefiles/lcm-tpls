@@ -3,9 +3,9 @@
 module-whatis "LCM TPLs for Trilinos/Albany"
 
 if { [is-loaded lcm-fedora] } {
-  set                     netcdf_root     /usr/local/netcdf
+  set                     netcdf_root     /usr
   set                     netcdf_inc      $netcdf_root/include
-  set                     netcdf_lib      $netcdf_root/lib
+  set                     netcdf_lib      $netcdf_root/lib64
   setenv                  BOOST_INC       /usr/include/boost
   setenv                  BOOST_LIB       /usr/lib64
   setenv                  BOOSTLIB_INC    /usr/include/boost

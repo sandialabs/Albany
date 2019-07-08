@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: Heat 3D
     Phalanx Graph Visualization Detail: 1
@@ -14,8 +15,8 @@ ANONYMOUS:
     Initial Condition: 
       Function: Constant
       Function Data: [1.50000000000000000e+00]
-    Thermal Conductivity: 
-      Thermal Conductivity Type: Constant
+    ThermalConductivity: 
+      ThermalConductivity Type: Constant
       Value: 3.00000000000000000e+00
     Source Functions: 
       Quadratic: 
@@ -29,17 +30,14 @@ ANONYMOUS:
       Parameter 4: DBC on NS NodeSet4 for DOF T
       Parameter 5: DBC on NS NodeSet5 for DOF T
       Parameter 6: Quadratic Nonlinear Factor
-      Parameter 7: Thermal Conductivity
+      Parameter 7: ThermalConductivity
     Response Functions: 
       Number: 1
       Response 0: Solution Two Norm
   Discretization: 
-    1D Elements: 10
-    2D Elements: 10
-    3D Elements: 10
-    Exodus Output File Name: stk.exo
-    Method: STK3D
+    Exodus Output File Name: ascii.exo
     Workset Size: 100
+    Method: Ascii
     Cubature Degree: 3
   Regression Results: 
     Number of Comparisons: 1

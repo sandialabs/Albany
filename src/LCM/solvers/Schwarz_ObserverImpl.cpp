@@ -26,23 +26,23 @@ ObserverImpl::~ObserverImpl() { return; }
 //
 //
 void
-ObserverImpl::observeSolutionT(
-    double                                            stamp,
-    Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution,
-    Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>>
+ObserverImpl::observeSolution(
+    double                                           stamp,
+    Teuchos::Array<Teuchos::RCP<Thyra_Vector const>> non_overlapped_solution,
+    Teuchos::Array<Teuchos::RCP<Thyra_Vector const>>
         non_overlapped_solution_dot)
 {
   for (int m = 0; m < this->n_models_; m++) {
-    this->apps_[m]->evaluateStateFieldManagerT(
+    this->apps_[m]->evaluateStateFieldManager(
         stamp,
+        *non_overlapped_solution[m],
         non_overlapped_solution_dot[m].ptr(),
-        Teuchos::null,
-        *non_overlapped_solution[m]);
+        Teuchos::null);
 
     this->apps_[m]->getStateMgr().updateStates();
   }
 
-  StatelessObserverImpl::observeSolutionT(
+  StatelessObserverImpl::observeSolution(
       stamp, non_overlapped_solution, non_overlapped_solution_dot);
 }
 

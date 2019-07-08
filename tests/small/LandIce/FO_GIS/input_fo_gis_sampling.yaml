@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Debug Output: 
     Write Jacobian to MatrixMarket: -1
   Problem: 
@@ -28,7 +29,7 @@ ANONYMOUS:
     Cubature Degree: 3
     Exodus Output File Name: gis_laplacian_sample.exo
     Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
-    Use Serial Mesh: true
+    Use Serial Mesh: ${USE_SERIAL_MESH}
     Required Fields Info: 
       Number Of Fields: 1
       Field 0: 
@@ -42,7 +43,7 @@ ANONYMOUS:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Cubature Degree: 1
-        Use Serial Mesh: true
+        Use Serial Mesh: ${USE_SERIAL_MESH}
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [1.39731563362999992e+02]

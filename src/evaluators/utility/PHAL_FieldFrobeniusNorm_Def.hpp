@@ -173,6 +173,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   if (regularization_type==GIVEN_PARAMETER || regularization_type==PARAMETER_EXPONENTIAL)
     this->utils.setFieldData(regularizationParam,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

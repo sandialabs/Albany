@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
-
 #ifndef ALBANY_MULTISTKFIELDCONT_HPP
 #define ALBANY_MULTISTKFIELDCONT_HPP
 
@@ -14,90 +12,143 @@
 
 namespace Albany {
 
-template<bool Interleaved>
+template <bool Interleaved>
+class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
+{
+ public:
+  MultiSTKFieldContainer(
+      const Teuchos::RCP<Teuchos::ParameterList>&               params_,
+      const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
+      const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
+      const int                                                 neq_,
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const int                                                 numDim_,
+      const Teuchos::RCP<Albany::StateInfoStruct>&              sis,
+      const Teuchos::Array<Teuchos::Array<std::string>>&        solution_vector,
+      const Teuchos::Array<std::string>& residual_vector);
 
-class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
+  ~MultiSTKFieldContainer() = default;
 
-  public:
+  bool
+  hasResidualField() const
+  {
+    return haveResidual;
+  }
+  bool
+  hasSphereVolumeField() const
+  {
+    return buildSphereVolume;
+  }
+  bool
+  hasLatticeOrientationField() const
+  {
+    return buildLatticeOrientation;
+  }
 
-    MultiSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                           const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
-                           const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
-                           const int neq_,
-                           const AbstractFieldContainer::FieldContainerRequirements& req,
-                           const int numDim_,
-                           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                           const Teuchos::Array<Teuchos::Array<std::string> >& solution_vector,
-                           const Teuchos::Array<std::string>& residual_vector);
-
-    ~MultiSTKFieldContainer();
-
-    bool hasResidualField(){ return haveResidual; }
-    bool hasSphereVolumeField(){ return buildSphereVolume; }
-    bool hasLatticeOrientationField(){ return buildLatticeOrientation; }
-
-#if defined(ALBANY_EPETRA)
-    void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map);
+#if defined(ALBANY_LCM)
+  bool
+  hasBoundaryIndicatorField() const
+  {
+    return build_boundary_indicator;
+  }
 #endif
-    void fillSolnVectorT(Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
 
-    void fillSolnMultiVector(Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+  void
+  fillSolnVector(
+      Thyra_Vector&                                soln,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
+  void
+  fillVector(
+      Thyra_Vector&                                field_vector,
+      const std::string&                           field_name,
+      stk::mesh::Selector&                         field_selection,
+      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
+      const NodalDOFManager&                       nodalDofManager);
+  void
+  fillSolnMultiVector(
+      Thyra_MultiVector&                           soln,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
+  void
+  saveVector(
+      const Thyra_Vector&                          field_vector,
+      const std::string&                           field_name,
+      stk::mesh::Selector&                         field_selection,
+      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
+      const NodalDOFManager&                       nodalDofManager);
+  void
+  saveSolnVector(
+      const Thyra_Vector&                          soln,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
+  void
+  saveSolnVector(
+      const Thyra_Vector&                          soln,
+      const Thyra_Vector&                          soln_dot,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
+  void
+  saveSolnVector(
+      const Thyra_Vector&                          soln,
+      const Thyra_Vector&                          soln_dot,
+      const Thyra_Vector&                          soln_dotdot,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
+  void
+  saveResVector(
+      const Thyra_Vector&                          res,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
+  void
+  saveSolnMultiVector(
+      const Thyra_MultiVector&                     soln,
+      stk::mesh::Selector&                         sel,
+      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
 
-#if defined(ALBANY_EPETRA)
-    void saveSolnVector(const Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map);
+  void
+  transferSolutionToCoords();
+
+ private:
+  void
+  fillVectorImpl(
+      Thyra_Vector&                                field_vector,
+      const std::string&                           field_name,
+      stk::mesh::Selector&                         field_selection,
+      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
+      const NodalDOFManager&                       nodalDofManager,
+      const int                                    offset);
+  void
+  saveVectorImpl(
+      const Thyra_Vector&                          field_vector,
+      const std::string&                           field_name,
+      stk::mesh::Selector&                         field_selection,
+      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
+      const NodalDOFManager&                       nodalDofManager,
+      const int                                    offset);
+
+  void
+  initializeSTKAdaptation();
+
+  bool haveResidual;
+
+  bool buildSphereVolume;
+  bool buildLatticeOrientation;
+
+#if defined(ALBANY_LCM)
+  bool build_boundary_indicator{false};
 #endif
-    //Tpetra version of above
-    void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
-    void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
-                         stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
-    void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
-                         const Tpetra_Vector& soln_dotdotT, 
-                         stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
 
-    void saveSolnMultiVector(const Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+  // Containers for residual and solution
 
-#if defined(ALBANY_EPETRA)
-    void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map);
-#endif
-    void saveResVectorT(const Tpetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map);
+  Teuchos::Array<Teuchos::Array<std::string>> sol_vector_name;
+  Teuchos::Array<Teuchos::Array<int>>         sol_index;
 
-#if defined(ALBANY_EPETRA)
-    void fillVector(Epetra_Vector& field_vector, const std::string&  field_name,
-        stk::mesh::Selector& field_selection, const Teuchos::RCP<const Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
-
-    void saveVector(const Epetra_Vector& field_vector, const std::string&  field_name,
-        stk::mesh::Selector& field_selection, const Teuchos::RCP<const Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
-#endif
-    void fillVectorT(Tpetra_Vector& field_vector, const std::string&  field_name,
-            stk::mesh::Selector& field_selection, const Teuchos::RCP<const Tpetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
-
-    void saveVectorT(const Tpetra_Vector& field_vector, const std::string&  field_name,
-            stk::mesh::Selector& field_selection, const Teuchos::RCP<const Tpetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
-
-    void transferSolutionToCoords();
-
-  private:
-
-    void initializeSTKAdaptation();
-
-    bool haveResidual;
-
-    bool buildSphereVolume;
-    bool buildLatticeOrientation;
-
-    // Containers for residual and solution
-
-    Teuchos::Array<Teuchos::Array<std::string> > sol_vector_name;
-    Teuchos::Array<Teuchos::Array<int> > sol_index;
-
-    Teuchos::Array<std::string> res_vector_name;
-    Teuchos::Array<int> res_index;
-
+  Teuchos::Array<std::string> res_vector_name;
+  Teuchos::Array<int>         res_index;
 };
 
-} // namespace Albany
-
-
+}  // namespace Albany
 
 // Define macro for explicit template instantiation
 #define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
@@ -105,9 +156,8 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 #define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name) \
   template class name<true>;
 
-#define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name) \
+#define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name)          \
   MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
   MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name)
-
 
 #endif

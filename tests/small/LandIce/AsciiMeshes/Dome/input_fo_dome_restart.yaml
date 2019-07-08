@@ -1,10 +1,13 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Phalanx Graph Visualization Detail: 1
-    Solution Method: Steady
+    Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
+    Required Fields: [flow_factor]
+    Basal Side Name: basal
     Parameters: 
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'
@@ -13,6 +16,20 @@ ANONYMOUS:
       'Glen''s Law Homotopy Parameter': 1.00000000000000000e+00
       Flow Rate Type: From File
       'Glen''s Law n': 3.00000000000000000e+00
+    LandIce Physical Parameters: 
+      Water Density: 1.00000000000000000e+03
+      Ice Density: 9.10000000000000000e+02
+      Gravity Acceleration: 9.80000000000000071e+00
+      Clausius-Clapeyron Coefficient: 0.0
+    LandIce BCs:
+      Number: 1
+      BC 0:
+        Type: Basal Friction
+        Cubature Degree: 3
+        Side Set Name: basal
+        Basal Friction Coefficient: 
+          Type: Given Constant
+          Constant Given Beta Value: 1.00000000000000000e+07
     Body Force: 
       Type: FO INTERP SURF GRAD
     Response Functions: 
@@ -25,10 +42,28 @@ ANONYMOUS:
         Equation: 1
       Response 2: Solution Average
   Discretization: 
-    Method: Exodus
+    Method: Ioss
+    Number Of Time Derivatives: 0
     Exodus Input File Name: dome_ascii_out.exo
     Exodus Output File Name: dome_restart_out.exo
-    Restart Index: 7
+    Restart Index: 1
+    Required Fields Info: 
+      Number Of Fields: 2
+      Field 0: 
+        Field Name: flow_factor
+        Field Type: Elem Scalar
+        Field Origin: Mesh
+      Field 1: 
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+    Side Set Discretizations: 
+      Side Sets: [basal]
+      basal: 
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Exodus Output File Name: dome_restart_basal_out.exo
+        Cubature Degree: 3
   Regression Results: 
     Number of Comparisons: 3
     Test Values: [7.79162527533000002e+01, 7.79162527533000002e+01, 0.00000000000000000e+00]
@@ -73,7 +108,7 @@ ANONYMOUS:
             Relative Tolerance: 9.99999999999999955e-07
         Test 1: 
           Test Type: MaxIters
-          Maximum Iterations: 1
+          Maximum Iterations: 10
       Direction: 
         Method: Newton
         Newton: 

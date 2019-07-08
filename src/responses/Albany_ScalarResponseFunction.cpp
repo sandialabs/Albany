@@ -4,30 +4,22 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
-#include "Albany_ScalarResponseFunction.hpp"
 #include "Teuchos_TestForException.hpp"
 
-#include "Albany_DataTypes.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_ScalarResponseFunction.hpp"
+#include "Albany_ThyraUtils.hpp"
 
-//Tpetra version of above
-Teuchos::RCP<const Tpetra_Map>
-Albany::ScalarResponseFunction::
-responseMapT() const
+namespace Albany {
+
+Teuchos::RCP<const Thyra_VectorSpace>
+ScalarResponseFunction::responseVectorSpace() const
 {
   int num_responses = this->numResponses();
-  //the following is needed to create Tpetra local map...
-  Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
-  Teuchos::RCP<const Tpetra_Map> response_mapT =
-    Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
-  return response_mapT;
-
+  return createLocallyReplicatedVectorSpace(num_responses,comm);
 }
 
-Teuchos::RCP<Tpetra_Operator>
-Albany::ScalarResponseFunction::
-createGradientOpT() const
+Teuchos::RCP<Thyra_LinearOp>
+ScalarResponseFunction::createGradientOp() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
     true, std::logic_error,
@@ -36,9 +28,7 @@ createGradientOpT() const
   return Teuchos::null;
 }
 
-void
-Albany::ScalarResponseFunction::
-evaluateDerivative(
+void ScalarResponseFunction::evaluateDerivative(
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -56,3 +46,5 @@ evaluateDerivative(
     dg_dx.getMultiVector(), dg_dxdot.getMultiVector(),
     dg_dxdotdot.getMultiVector(), dg_dp.getMultiVector());
 }
+
+} // namespace Albany

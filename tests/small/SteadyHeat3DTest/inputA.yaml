@@ -1,20 +1,21 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: Heat 3D
     Phalanx Graph Visualization Detail: 1
     Dirichlet BCs: 
       DBC on NS nodelist_1 for DOF T: 0.00000000000000000e+00
       DBC on NS nodelist_2 for DOF T: 5.00000000000000000e+02
-    Thermal Conductivity: 
-      Thermal Conductivity Type: Constant
+    ThermalConductivity: 
+      ThermalConductivity Type: Constant
       Value: 5.00000000000000000e+01
     Parameters: 
       Number: 3
       Parameter 0: DBC on NS nodelist_1 for DOF T
       Parameter 1: DBC on NS nodelist_2 for DOF T
-      Parameter 2: Thermal Conductivity
+      Parameter 2: ThermalConductivity
   Discretization: 
     Method: Pamgen
     Exodus Output File Name: beamA.exo

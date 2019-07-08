@@ -31,8 +31,8 @@ class BiotModulus : public PHX::EvaluatorWithBaseImpl<Traits>,
                     public Sacado::ParameterAccessor<EvalT, SPL_Traits>
 {
  public:
-  typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   BiotModulus(Teuchos::ParameterList& p);
 

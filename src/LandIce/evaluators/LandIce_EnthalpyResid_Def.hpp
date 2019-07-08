@@ -135,13 +135,15 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
   drainage_coeff = g * rho_w * L * k_0 * (rho_w - rho_i) / eta_w; //[kg s^{-3}]
 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "Drainage: " << drainage_coeff/rho_w/L*3.1536e7 << std::endl;
+#endif
 
   printedRegCoeff = -1.0;
 
 
   Teuchos::ParameterList* regularization_list = p.get<Teuchos::ParameterList*>("LandIce Enthalpy Regularization");
-  auto flux_reg_list = regularization_list->sublist("Enthalpy Flux Regularization", false);\
+  auto flux_reg_list = regularization_list->sublist("Flux Regularization", false);
   flux_reg_alpha = flux_reg_list.get<double>("alpha");
   flux_reg_beta = flux_reg_list.get<double>("beta");
 }
@@ -202,11 +204,13 @@ evaluateFields(typename Traits::EvalData d)
 
   ScalarT flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom); // [adim]
 
+#ifdef OUTPUT_TO_SCREEN
   if (std::fabs(printedRegCoeff - flux_reg_coeff) > 0.0001*flux_reg_coeff)
   {
     std::cout << "[Diffusivity()] alpha = " << flux_reg_coeff << " :: " <<hom << "\n";
     printedRegCoeff = flux_reg_coeff;
   }
+#endif
 
   for (std::size_t cell = 0; cell < d.numCells; ++cell)
     for (std::size_t node = 0; node < numNodes; ++node)
@@ -292,7 +296,21 @@ evaluateFields(typename Traits::EvalData d)
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
         //ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
         vmax = std::max(vmax,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)+std::pow(verticalVel(cell,qp),2)));
-        vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
+        //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
+        VelocityST val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
+        VelocityST sqrtval; 
+        if (val == 0.0) {
+          sqrtval = 0.0; 
+        }
+        else {
+          sqrtval = std::sqrt(val); 
+        }
+        if (vmax_xy == 0.0 || sqrtval == 0.0) {
+          vmax_xy = 0.0; 
+        }
+        else {
+          vmax_xy = std::max(vmax_xy, sqrtval); 
+        }
 //          vmax = std::max(vmax,std::sqrt(std::pow(Albany::ADValue(Velocity(cell,qp,0)),2)+std::pow(Albany::ADValue(Velocity(cell,qp,1)),2)+std::pow(verticalVel(cell,qp),2)));
 //          vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Albany::ADValue(Velocity(cell,qp,0)),2)+std::pow(Albany::ADValue(Velocity(cell,qp,1)),2)));
 

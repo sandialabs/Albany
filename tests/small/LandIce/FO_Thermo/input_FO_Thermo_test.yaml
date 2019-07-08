@@ -1,9 +1,11 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
+    Compute Sensitivities: true
     Name: LandIce Stokes FO Thermo Coupled 3D
     Basal Side Name: basalside
     Required Fields: [basal_friction]
@@ -52,18 +54,20 @@ ANONYMOUS:
       Viscosity of water: 1.79999999999999995e-03
       Omega exponent alpha: 2.00000000000000000e+00
       Diffusivity homotopy exponent: -1.10000000000000009e+00
-    LandIce Enthalpy Regularization: 
-      Enthalpy Flux Regularization: 
-        alpha: 1.00000000000000006e-01
-        beta: 7.50000000000000000e+00
-      Enthalpy Basal Melting Regularization: 
-        alpha: 1.00000000000000006e-01
-        beta: 7.50000000000000000e+00
+    LandIce Enthalpy:
+      Regularization: 
+        Flux Regularization: 
+          alpha: 1.00000000000000006e-01
+          beta: 7.50000000000000000e+00
+        Basal Melting Regularization: 
+          alpha: 1.00000000000000006e-01
+          beta: 7.50000000000000000e+00
+      Stabilization: 
+        Type: Streamline Upwind
+        Parameter Delta: 2.00000000000000000e+00
+      Bed Lubrication: 'Dry'
     Body Force: 
       Type: FO INTERP SURF GRAD
-    LandIce Enthalpy Stabilization: 
-      Type: Streamline Upwind
-      Parameter Delta: 2.00000000000000000e+00
     Response Functions: 
       Number: 4
       Response 0: Solution Max Value
@@ -153,8 +157,9 @@ ANONYMOUS:
     Number of Comparisons: 4
     Test Values: [5.94338847686000022e+01, 0.00000000000000000e+00, 2.54696534045999989e+00, 1.96960310493999984e+01]
     Relative Tolerance: 1.00000000000000002e-02
-    Number of Sensitivity Comparisons: 0
-    Sensitivity Test Values 0: [1.90715449153000007e-06, 0.00000000000000000e+00, -4.28824139453999975e-08, -1.08451424140999999e-06]
+    Sensitivity Comparisons 0:
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [3.892771352475e+01, 0.00000000000000000e+00, -1.056499312556e+01, 2.010235548098e+02]
   Piro: 
     LOCA: 
       Bifurcation: { }

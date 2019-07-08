@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Debug Output: 
     Write Solution to MatrixMarket: false
   Problem: 
@@ -118,7 +119,7 @@ ANONYMOUS:
         Number Of Time Derivatives: 0
         Cubature Degree: 3
         Exodus Output File Name: gis_unstruct_analysis_two_params_basal.exo
-        Use Serial Mesh: true
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Required Fields Info: 
           Number Of Fields: 9

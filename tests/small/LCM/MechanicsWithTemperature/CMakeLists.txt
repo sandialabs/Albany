@@ -23,8 +23,10 @@ endif()
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_IFPACK2)
-    add_test(${testName}TransientHeat2D ${AlbanyT.exe} TransientHeat2D.yaml)
-    add_test(${testName}LinearThermalExpansion ${AlbanyT.exe} LinearThermalExpansion.yaml)
+    add_test(${testName}TransientHeat2D ${Albany.exe} TransientHeat2D.yaml)
+    set_tests_properties(${testName}TransientHeat2D PROPERTIES LABELS "LCM;Tpetra;Forward")
+    add_test(${testName}LinearThermalExpansion ${Albany.exe} LinearThermalExpansion.yaml)
+    set_tests_properties(${testName}LinearThermalExpansion PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif()
 
 # Thermal Expansion test

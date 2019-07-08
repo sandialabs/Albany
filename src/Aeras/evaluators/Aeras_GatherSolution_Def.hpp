@@ -13,7 +13,9 @@
 #include "Aeras_Dimension.hpp"
 #include "Albany_Utils.hpp"
 
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
+
+//#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 namespace Aeras {
 
@@ -99,6 +101,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   for (int eq = 0; eq < val.size();     ++eq) this->utils.setFieldData(val[eq],fm);
   for (int eq = 0; eq < val_dot.size(); ++eq) this->utils.setFieldData(val_dot[eq],fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
 }
 
 
@@ -200,12 +203,12 @@ evaluateFields(typename Traits::EvalData workset)
 { 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
-  Teuchos::RCP<const Tpetra_Vector> xdotT = Albany::getConstTpetraVector(workset.xdot);
+  Teuchos::RCP<const Thyra_Vector> xT = workset.x;
+  Teuchos::RCP<const Thyra_Vector> xdotT = workset.xdot;
 
   //Get const view of xT and xdotT 
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+  const auto& xT_constView = Albany::getLocalData(xT);
+  const auto& xdotT_constView = Albany::getLocalData(xT);
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
     for (int node = 0; node < this->numNodes; ++node) {
@@ -242,12 +245,9 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   nodeID = workset.wsElNodeEqID;
 
-  // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
-  auto xT_2d = ConverterT::getConstTpetraVector(workset.x)->template getLocalView<PHX::Device>();
-  xT_constView = Kokkos::subview(xT_2d, Kokkos::ALL(), 0);
-
-  auto xdotT_2d = Albany::getConstTpetraVector(workset.xdot)->template getLocalView<PHX::Device>();
-  xdotT_constView = Kokkos::subview(xdotT_2d, Kokkos::ALL(), 0);
+  // Obtain a Kokkos View from a specific device
+  xT_constView = Albany::getDeviceData(workset.x); 
+  xdotT_constView = Albany::getDeviceData(workset.xdot); 
 
   for (int i =0; i<numFields;i++) {
     val_kokkosvec[i]=this->val[i].get_view(); 
@@ -401,12 +401,12 @@ evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   auto nodeID = workset.wsElNodeEqID;
-  const Teuchos::RCP<const Tpetra_Vector>    xT = Albany::getConstTpetraVector(workset.x);
-  const Teuchos::RCP<const Tpetra_Vector> xdotT = Albany::getConstTpetraVector(workset.x_dot);
+  const Teuchos::RCP<const Thyra_Vector>    xT = workset.x;
+  const Teuchos::RCP<const Thyra_Vector> xdotT = workset.x_dot;
 
   //Get const view of xT and xdotT 
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+  const auto& xT_constView = Albany::getLocalData(xT);
+  const auto& xdotT_constView = Albany::getLocalData(xT);
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
     const int neq = nodeID.extent(2);
@@ -493,12 +493,9 @@ evaluateFields(typename Traits::EvalData workset)
   m_coeff=workset.m_coeff; 
   nodeID=workset.wsElNodeEqID;
 
-  // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
-  auto xT_2d = Albany::getConstTpetraVector(workset.x)->template getLocalView<PHX::Device>();
-  xT_constView = Kokkos::subview(xT_2d, Kokkos::ALL(), 0);
-
-  auto xdotT_2d = Albany::getConstTpetraVector(workset.xdot)->template getLocalView<PHX::Device>();
-  xdotT_constView = Kokkos::subview(xdotT_2d, Kokkos::ALL(), 0);
+  //Obtain a Kokkos View from a specific device
+  xT_constView = Albany::getDeviceData(workset.x); 
+  xdotT_constView = Albany::getDeviceData(workset.xdot); 
 
   for (int i =0; i<numFields;i++)
     val_kokkosjac[i]=this->val[i].get_view();
@@ -536,14 +533,17 @@ void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector>    xT = Albany::getConstTpetraVector(workset.x);
-  Teuchos::RCP<const Tpetra_Vector> xdotT = Albany::getConstTpetraVector(workset.xdot);
-  Teuchos::RCP<const Tpetra_MultiVector> VxT    = Albany::getConstTpetraMultiVector(workset.Vx);
-  Teuchos::RCP<const Tpetra_MultiVector> VxdotT = Albany::getConstTpetraMultiVector(workset.Vxdot);
+  Teuchos::RCP<const Thyra_Vector>    xT = workset.x;
+  Teuchos::RCP<const Thyra_Vector> xdotT = workset.xdot;
+  Teuchos::RCP<const Thyra_MultiVector> VxT    = workset.Vx;
+  Teuchos::RCP<const Thyra_MultiVector> VxdotT = workset.Vxdot;
 
   //get const views of xT and xdotT  
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+  const auto& xT_constView = Albany::getLocalData(xT);
+  const auto& xdotT_constView = Albany::getLocalData(xdotT); 
+  //get const view of Vx and VxdotT
+  const auto& Vx_data = Albany::getLocalData(VxT);
+  const auto& Vxdot_data = Albany::getLocalData(VxdotT);
 
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "no impl");
  
@@ -558,7 +558,7 @@ evaluateFields(typename Traits::EvalData workset)
         if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
           valptr = TanFadType(num_cols_tot, xT_constView[nodeID(cell,node,n)]);
           for (int k=0; k<workset.num_cols_x; k++)
-            valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[nodeID(cell,node,n)];
+            valptr.fastAccessDx(k) = workset.j_coeff*Vx_data[k][nodeID(cell,node,n)];
         }
         else
           valptr = TanFadType(xT_constView[nodeID(cell,node,n)]);
@@ -571,7 +571,7 @@ evaluateFields(typename Traits::EvalData workset)
             if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
               valptr = TanFadType(num_cols_tot, xT_constView[nodeID(cell,node,n)]);
               for (int k=0; k<workset.num_cols_x; k++)
-                valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[nodeID(cell,node,n)];
+                valptr.fastAccessDx(k) = workset.j_coeff*Vx_data[k][nodeID(cell,node,n)];
             }
             else
               valptr = TanFadType(xT_constView[nodeID(cell,node,n)]);
@@ -583,7 +583,7 @@ evaluateFields(typename Traits::EvalData workset)
           if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
             valptr = TanFadType(num_cols_tot, xT_constView[nodeID(cell,node,n)]);
             for (int k=0; k<workset.num_cols_x; k++)
-              valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[nodeID(cell,node,n)];
+              valptr.fastAccessDx(k) = workset.j_coeff*Vx_data[k][nodeID(cell,node,n)];
           }
           else
             valptr = TanFadType(xT_constView[nodeID(cell,node,n)]);
@@ -596,7 +596,7 @@ evaluateFields(typename Traits::EvalData workset)
           if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
             valptr = TanFadType(num_cols_tot, xT_constView[nodeID(cell,node,n)]);
             for (int k=0; k<workset.num_cols_x; k++)
-              valptr.fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[nodeID(cell,node,n)];
+              valptr.fastAccessDx(k) = workset.j_coeff*Vx_data[k][nodeID(cell,node,n)];
           }
           else
             valptr = TanFadType(xT_constView[nodeID(cell,node,n)]);
@@ -611,7 +611,7 @@ evaluateFields(typename Traits::EvalData workset)
             valptr = TanFadType(num_cols_tot, xdotT_constView[nodeID(cell,node,n)]);
             for (int k=0; k<workset.num_cols_x; k++)
               valptr.fastAccessDx(k) =
-                workset.m_coeff*VxdotT->getData(k)[nodeID(cell,node,n)];
+                workset.m_coeff*Vxdot_data[k][nodeID(cell,node,n)];
           }
           else
             valptr = TanFadType(xdotT_constView[nodeID(cell,node,n)]);
@@ -625,7 +625,7 @@ evaluateFields(typename Traits::EvalData workset)
                 valptr = TanFadType(num_cols_tot, xdotT_constView[nodeID(cell,node,n)]);
                 for (int k=0; k<workset.num_cols_x; k++)
                   valptr.fastAccessDx(k) =
-                    workset.m_coeff*VxdotT->getData(k)[nodeID(cell,node,n)];
+                    workset.m_coeff*Vxdot_data[k][nodeID(cell,node,n)];
               }
               else
                 valptr = TanFadType(xdotT_constView[nodeID(cell,node,n)]);
@@ -638,7 +638,7 @@ evaluateFields(typename Traits::EvalData workset)
               valptr = TanFadType(num_cols_tot, xdotT_constView[nodeID(cell,node,n)]);
               for (int k=0; k<workset.num_cols_x; k++)
                 valptr.fastAccessDx(k) =
-                  workset.m_coeff*VxdotT->getData(k)[nodeID(cell,node,n)];
+                  workset.m_coeff*Vxdot_data[k][nodeID(cell,node,n)];
             }
             else
               valptr = TanFadType(xdotT_constView[nodeID(cell,node,n)]);
@@ -652,7 +652,7 @@ evaluateFields(typename Traits::EvalData workset)
               valptr = TanFadType(num_cols_tot, xdotT_constView[nodeID(cell,node,n)]);
               for (int k=0; k<workset.num_cols_x; k++)
                 valptr.fastAccessDx(k) =
-                  workset.m_coeff*VxdotT->getData(k)[nodeID(cell,node,n)];
+                  workset.m_coeff*Vxdot_data[k][nodeID(cell,node,n)];
             }
             else
               valptr = TanFadType(xdotT_constView[nodeID(cell,node,n)]);

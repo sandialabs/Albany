@@ -76,6 +76,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm) 
 {
   for (int eq = 0; eq < numFields; ++eq) this->utils.setFieldData(val[eq],fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************
@@ -166,7 +167,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Get map for local data structures
   nodeID = workset.wsElNodeEqID;
 
-  // Get Tpetra vector view from a specific device
+  // Get Thyra vector view from a specific device
   f_kokkos = Albany::getNonconstDeviceData(workset.f);
 
   // Get MDField views from std::vector
@@ -507,7 +508,7 @@ evaluateFields(typename Traits::EvalData workset)
   neq = nodeID.extent(2);
   nunk = neq*this->numNodes;
 
-  // Get Tpetra vector view and local matrix
+  // Get Thyra vector view and local matrix
   const bool loadResid = Teuchos::nonnull(workset.f);
   if (loadResid) {
     f_kokkos = Albany::getNonconstDeviceData(workset.f);

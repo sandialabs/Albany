@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Debug Output: 
     Write Solution to MatrixMarket: false
   Problem: 
@@ -20,7 +21,7 @@ ANONYMOUS:
       basalside: 
         Method: Ioss
         Number Of Time Derivatives: 0
-        Use Serial Mesh: true
+        Use Serial Mesh: false
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Exodus Output File Name: gis_unstruct_basal_populated.exo
         Cubature Degree: 0

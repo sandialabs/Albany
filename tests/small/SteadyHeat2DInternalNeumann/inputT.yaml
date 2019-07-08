@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Name: Heat 2D
     Solution Method: Steady
@@ -11,8 +12,8 @@ ANONYMOUS:
       DBC on NS nodelist_2 for DOF T: 1.00000000000000000e+00
     Neumann BCs: 
       NBC on SS surface_1 for DOF T set scaled jump: [-1.00000000000000000e+00]
-    Thermal Conductivity: 
-      Thermal Conductivity Type: Constant
+    ThermalConductivity: 
+      ThermalConductivity Type: Constant
       Value: 1.00000000000000000e+00
     Parameters: 
       Number: 1

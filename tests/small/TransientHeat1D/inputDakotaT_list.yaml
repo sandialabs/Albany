@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Name: Heat 1D
     Solution Method: Transient
@@ -35,7 +36,7 @@ ANONYMOUS:
     Sensitivity Test Values 0: [5.00000000000000000e-01, 5.00000000000000000e-01, 3.00000000000000008e-06]
   Piro: 
     Dakota: 
-      Input File: dakotaT_list.in
+      Input File: dakota_list.in
       Output File: dakotaT_list.out
       Restart File: dakota.res
       Error File: dakota.err

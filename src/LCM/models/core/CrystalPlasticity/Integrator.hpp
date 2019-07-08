@@ -7,28 +7,27 @@
 #if !defined(Core_Integrator_hpp)
 #define Core_Integrator_hpp
 
+#include <ROL_MiniTensor_MiniSolver.hpp>
 #include "CrystalPlasticityFwd.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
-#include <ROL_MiniTensor_MiniSolver.hpp>
+#include "NonlinearSolver.hpp"
 
-namespace CP
-{
+namespace CP {
 
-template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
+template <typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class Integrator
 {
-  public:
-
-    using ScalarT = typename EvalT::ScalarT;
-    Integrator(
-      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
-      std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
-      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      StateMechanical<ScalarT, NumDimT> & state_mechanical,
-      StateInternal<ScalarT, NumSlipT > & state_internal,
-      minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt,
-      CP::Verbosity const verbosity)
+ public:
+  using ScalarT = typename EvalT::ScalarT;
+  Integrator(
+      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>     nox_status_test,
+      std::vector<CP::SlipSystem<NumDimT>> const&           slip_systems,
+      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const& slip_families,
+      StateMechanical<ScalarT, NumDimT>&                    state_mechanical,
+      StateInternal<ScalarT, NumSlipT>&                     state_internal,
+      minitensor::Tensor4<ScalarT, NumDimT> const&          C,
+      RealType                                              dt,
+      CP::Verbosity const                                   verbosity)
       : nox_status_test_(nox_status_test),
         num_slip_(state_internal.slip_n_.get_dimension()),
         num_dims_(state_mechanical.Fp_n_.get_dimension()),
@@ -41,348 +40,322 @@ class Integrator
         C_(C),
         dt_(dt),
         verbosity_(verbosity)
-    {}
+  {
+  }
 
-    virtual ~Integrator(){}
+  virtual ~Integrator() {}
 
-    virtual void update() const = 0;
+  virtual void
+  update() const = 0;
 
-    void forceGlobalLoadStepReduction(
-      std::string const & message) const;
+  void
+  forceGlobalLoadStepReduction(std::string const& message) const;
 
-    void setWarningStatus(
-      std::string const & message) const;
-  
-    int
-    getNumIters() const { return num_iters_; }
+  void
+  setWarningStatus(std::string const& message) const;
 
-    RealType
-    getNormResidual() const { return norm_residual_; }
+  int
+  getNumIters() const
+  {
+    return num_iters_;
+  }
 
-    NOX::StatusTest::StatusType
-    getStatus() const { return nox_status_test_->status_; }
+  RealType
+  getNormResidual() const
+  {
+    return norm_residual_;
+  }
 
-    std::string
-    getMessage() const { return nox_status_test_->status_message_; }
+  NOX::StatusTest::StatusType
+  getStatus() const
+  {
+    return nox_status_test_->status_;
+  }
 
-  protected:
+  std::string
+  getMessage() const
+  {
+    return nox_status_test_->status_message_;
+  }
 
-    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
-    nox_status_test_;
+ protected:
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test_;
 
-    int
-    num_slip_;
+  int num_slip_;
 
-    int
-    num_dims_;
+  int num_dims_;
 
-    mutable int
-    num_iters_;
+  mutable int num_iters_;
 
-    mutable RealType
-    norm_residual_;
+  mutable RealType norm_residual_;
 
-    std::vector<SlipSystem<NumDimT>> const &
-    slip_systems_;
+  std::vector<SlipSystem<NumDimT>> const& slip_systems_;
 
-    std::vector<SlipFamily<NumDimT, NumSlipT>> const &
-    slip_families_;
+  std::vector<SlipFamily<NumDimT, NumSlipT>> const& slip_families_;
 
-    StateMechanical<ScalarT, NumDimT> &
-    state_mechanical_;
+  StateMechanical<ScalarT, NumDimT>& state_mechanical_;
 
-    StateInternal<ScalarT, NumSlipT> &
-    state_internal_;
+  StateInternal<ScalarT, NumSlipT>& state_internal_;
 
-    minitensor::Tensor4<ScalarT, NumDimT> const &
-    C_;
+  minitensor::Tensor4<ScalarT, NumDimT> const& C_;
 
-    RealType
-    dt_;
+  RealType dt_;
 
-    CP::Verbosity const 
-    verbosity_;
+  CP::Verbosity const verbosity_;
 };
 
-
-template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
+template <typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class IntegratorFactory
 {
-  public:
+ public:
+  using ScalarT   = typename EvalT::ScalarT;
+  using ValueT    = typename Sacado::ValueType<ScalarT>::type;
+  using Minimizer = minitensor::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
+  using RolMinimizer =
+      ROL::MiniTensor_Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
+  using IntegratorBase = Integrator<EvalT, NumDimT, NumSlipT>;
 
-    using ScalarT = typename EvalT::ScalarT;
-    using ValueT = typename Sacado::ValueType<ScalarT>::type;
-    using Minimizer = minitensor::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
-    using RolMinimizer = ROL::MiniTensor_Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
-    using IntegratorBase = Integrator<EvalT, NumDimT, NumSlipT>;
+  IntegratorFactory(
+      utility::StaticAllocator&                             allocator,
+      const Minimizer&                                      minimizer,
+      const RolMinimizer&                                   rol_minimizer,
+      minitensor::StepType                                  step_type,
+      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>     nox_status_test,
+      std::vector<CP::SlipSystem<NumDimT>> const&           slip_systems,
+      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const& slip_families,
+      CP::StateMechanical<ScalarT, NumDimT>&                state_mechanical,
+      CP::StateInternal<ScalarT, NumSlipT>&                 state_internal,
+      minitensor::Tensor4<ScalarT, NumDimT> const&          C,
+      RealType                                              dt,
+      CP::Verbosity const                                   verbosity);
 
-    IntegratorFactory(
-      utility::StaticAllocator & allocator,
-      const Minimizer & minimizer,
-      const RolMinimizer & rol_minimizer,
-      minitensor::StepType step_type,
-      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
-      std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
-      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      CP::StateMechanical<ScalarT, NumDimT> & state_mechanical,
-      CP::StateInternal<ScalarT, NumSlipT> & state_internal,
-      minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt,
-      CP::Verbosity const verbosity);
+  utility::StaticPointer<IntegratorBase>
+  operator()(
+      CP::IntegrationScheme integration_scheme,
+      CP::ResidualType      residual_type) const;
 
-    utility::StaticPointer<IntegratorBase>
-    operator()(CP::IntegrationScheme integration_scheme,
-               CP::ResidualType residual_type) const;
+ private:
+  utility::StaticAllocator& allocator_;
 
-  private:
+  const Minimizer& minimizer_;
 
-    utility::StaticAllocator &
-    allocator_;
+  const RolMinimizer& rol_minimizer_;
 
-    const Minimizer &
-    minimizer_;
+  minitensor::StepType step_type_;
 
-    const RolMinimizer &
-    rol_minimizer_;
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test_;
 
-    minitensor::StepType
-    step_type_;
+  std::vector<CP::SlipSystem<NumDimT>> const& slip_systems_;
 
-    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
-    nox_status_test_;
+  std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const& slip_families_;
 
-    std::vector<CP::SlipSystem<NumDimT>> const &
-    slip_systems_;
+  CP::StateMechanical<ScalarT, NumDimT>& state_mechanical_;
 
-    std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const &
-    slip_families_;
+  CP::StateInternal<ScalarT, NumSlipT>& state_internal_;
 
-    CP::StateMechanical<ScalarT, NumDimT> &
-    state_mechanical_;
+  minitensor::Tensor4<ScalarT, NumDimT> const& C_;
 
-    CP::StateInternal<ScalarT, NumSlipT> &
-    state_internal_;
+  RealType dt_;
 
-    minitensor::Tensor4<ScalarT, NumDimT> const &
-    C_;
-
-    RealType
-    dt_;
-
-    CP::Verbosity const
-    verbosity_;
+  CP::Verbosity const verbosity_;
 };
 
-template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
+template <typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
 {
-  public:
+ public:
+  using Base    = Integrator<EvalT, NumDimT, NumSlipT>;
+  using ScalarT = typename Base::ScalarT;
 
-    using Base = Integrator<EvalT, NumDimT, NumSlipT>;
-    using ScalarT = typename Base::ScalarT;
+  ExplicitIntegrator(
+      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>     nox_status_test,
+      std::vector<CP::SlipSystem<NumDimT>> const&           slip_systems,
+      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const& slip_families,
+      StateMechanical<ScalarT, NumDimT>&                    state_mechanical,
+      StateInternal<ScalarT, NumSlipT>&                     state_internal,
+      minitensor::Tensor4<ScalarT, NumDimT> const&          C,
+      RealType                                              dt,
+      CP::Verbosity const                                   verbosity);
 
-    ExplicitIntegrator(
-      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
-      std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
-      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      StateMechanical<ScalarT, NumDimT> & state_mechanical,
-      StateInternal<ScalarT, NumSlipT > & state_internal,
-      minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt,
-      CP::Verbosity const verbosity);
+  virtual void
+  update() const override;
 
-    virtual void
-    update() const override;
+ protected:
+  using Base::C_;
+  using Base::dt_;
+  using Base::slip_families_;
+  using Base::slip_systems_;
+  using Base::state_internal_;
+  using Base::state_mechanical_;
+  using Base::verbosity_;
+};
 
-  protected:
-
-    using Base::slip_systems_;
-    using Base::slip_families_;
-    using Base::state_mechanical_;
-    using Base::state_internal_;
-    using Base::C_;
-    using Base::dt_;
-    using Base::verbosity_;
-  };
-
-template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
+template <typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
 {
-  public:
+ public:
+  using Base      = Integrator<EvalT, NumDimT, NumSlipT>;
+  using ScalarT   = typename Base::ScalarT;
+  using ValueT    = typename Sacado::ValueType<ScalarT>::type;
+  using Minimizer = minitensor::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
+  using RolMinimizer =
+      ROL::MiniTensor_Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
 
-    using Base = Integrator<EvalT, NumDimT, NumSlipT>;
-    using ScalarT = typename Base::ScalarT;
-    using ValueT = typename Sacado::ValueType<ScalarT>::type;
-    using Minimizer = minitensor::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
-    using RolMinimizer = ROL::MiniTensor_Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
+  ImplicitIntegrator(
+      const Minimizer&                                      minimizer,
+      const RolMinimizer&                                   rol_minimizer,
+      minitensor::StepType                                  step_type,
+      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>     nox_status_test,
+      std::vector<CP::SlipSystem<NumDimT>> const&           slip_systems,
+      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const& slip_families,
+      StateMechanical<ScalarT, NumDimT>&                    state_mechanical,
+      StateInternal<ScalarT, NumSlipT>&                     state_internal,
+      minitensor::Tensor4<ScalarT, NumDimT> const&          C,
+      RealType                                              dt,
+      CP::Verbosity const                                   verbosity);
 
-    ImplicitIntegrator(
-      const Minimizer & minimizer,
-      const RolMinimizer & rol_minimizer,
-      minitensor::StepType step_type,
-      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
-      std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
-      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      StateMechanical<ScalarT, NumDimT> & state_mechanical,
-      StateInternal<ScalarT, NumSlipT > & state_internal,
-      minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt,
-      CP::Verbosity const verbosity);
+  void
+  reevaluateState() const;
 
-    void
-    reevaluateState() const;
+ protected:
+  using Base::C_;
+  using Base::dt_;
+  using Base::slip_families_;
+  using Base::slip_systems_;
+  using Base::state_internal_;
+  using Base::state_mechanical_;
+  using Base::verbosity_;
 
-  protected:
+  bool using_rol_minimizer_;
 
-    using Base::slip_systems_;
-    using Base::slip_families_;
-    using Base::state_mechanical_;
-    using Base::state_internal_;
-    using Base::C_;
-    using Base::dt_;
-    using Base::verbosity_;
+  mutable Minimizer minimizer_;
 
-    bool
-    using_rol_minimizer_;
+  mutable RolMinimizer rol_minimizer_;
 
-    mutable Minimizer
-    minimizer_;
-
-    mutable RolMinimizer
-    rol_minimizer_;
-
-    minitensor::StepType
-    step_type_;
+  minitensor::StepType step_type_;
 };
 
-
-template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
-class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlipT>
+template <typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
+class ImplicitSlipIntegrator
+    : public ImplicitIntegrator<EvalT, NumDimT, NumSlipT>
 {
-  public:
+ public:
+  using Base         = ImplicitIntegrator<EvalT, NumDimT, NumSlipT>;
+  using ScalarT      = typename Base::ScalarT;
+  using ValueT       = typename Base::ValueT;
+  using Minimizer    = typename Base::Minimizer;
+  using RolMinimizer = typename Base::RolMinimizer;
 
-    using Base = ImplicitIntegrator<EvalT, NumDimT, NumSlipT>;
-    using ScalarT = typename Base::ScalarT;
-    using ValueT = typename Base::ValueT;
-    using Minimizer = typename Base::Minimizer;
-    using RolMinimizer = typename Base::RolMinimizer;
+  ImplicitSlipIntegrator(
+      const Minimizer&                                      minimizer,
+      const RolMinimizer&                                   rol_minimizer,
+      minitensor::StepType                                  step_type,
+      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>     nox_status_test,
+      std::vector<CP::SlipSystem<NumDimT>> const&           slip_systems,
+      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const& slip_families,
+      StateMechanical<ScalarT, NumDimT>&                    state_mechanical,
+      StateInternal<ScalarT, NumSlipT>&                     state_internal,
+      minitensor::Tensor4<ScalarT, NumDimT> const&          C,
+      RealType                                              dt,
+      CP::Verbosity const                                   verbosity);
 
-    ImplicitSlipIntegrator(
-      const Minimizer &minimizer,
-      const RolMinimizer &rol_minimizer,
-      minitensor::StepType step_type,
-      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
-      std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
-      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      StateMechanical<ScalarT, NumDimT> & state_mechanical,
-      StateInternal<ScalarT, NumSlipT > & state_internal,
-      minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt,
-      CP::Verbosity const verbosity);
+  virtual void
+  update() const override;
 
-    virtual void
-    update() const override;
-
-  protected:
-
-    using Base::slip_systems_;
-    using Base::slip_families_;
-    using Base::state_mechanical_;
-    using Base::state_internal_;
-    using Base::C_;
-    using Base::dt_;
-    using Base::minimizer_;
-    using Base::rol_minimizer_;
-    using Base::step_type_;
-    using Base::verbosity_;
+ protected:
+  using Base::C_;
+  using Base::dt_;
+  using Base::minimizer_;
+  using Base::rol_minimizer_;
+  using Base::slip_families_;
+  using Base::slip_systems_;
+  using Base::state_internal_;
+  using Base::state_mechanical_;
+  using Base::step_type_;
+  using Base::verbosity_;
 };
 
-
-template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
-class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlipT>
+template <typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
+class ImplicitSlipHardnessIntegrator
+    : public ImplicitIntegrator<EvalT, NumDimT, NumSlipT>
 {
-  public:
+ public:
+  using Base         = ImplicitIntegrator<EvalT, NumDimT, NumSlipT>;
+  using ScalarT      = typename Base::ScalarT;
+  using ValueT       = typename Base::ValueT;
+  using Minimizer    = typename Base::Minimizer;
+  using RolMinimizer = typename Base::RolMinimizer;
 
-    using Base = ImplicitIntegrator<EvalT, NumDimT, NumSlipT>;
-    using ScalarT = typename Base::ScalarT;
-    using ValueT = typename Base::ValueT;
-    using Minimizer = typename Base::Minimizer;
-    using RolMinimizer = typename Base::RolMinimizer;
+  ImplicitSlipHardnessIntegrator(
+      const Minimizer&                                      minimizer,
+      const RolMinimizer&                                   rol_minimizer,
+      minitensor::StepType                                  step_type,
+      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>     nox_status_test,
+      std::vector<CP::SlipSystem<NumDimT>> const&           slip_systems,
+      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const& slip_families,
+      StateMechanical<ScalarT, NumDimT>&                    state_mechanical,
+      StateInternal<ScalarT, NumSlipT>&                     state_internal,
+      minitensor::Tensor4<ScalarT, NumDimT> const&          C,
+      RealType                                              dt,
+      CP::Verbosity const                                   verbosity);
 
-    ImplicitSlipHardnessIntegrator(
-      const Minimizer &minimizer,
-      const RolMinimizer &rol_minimizer,
-      minitensor::StepType step_type,
-      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
-      std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
-      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      StateMechanical<ScalarT, NumDimT> & state_mechanical,
-      StateInternal<ScalarT, NumSlipT > & state_internal,
-      minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt,
-      CP::Verbosity const verbosity);
+  virtual void
+  update() const override;
 
-    virtual void
-    update() const override;
-
-  protected:
-
-    using Base::slip_systems_;
-    using Base::slip_families_;
-    using Base::state_mechanical_;
-    using Base::state_internal_;
-    using Base::C_;
-    using Base::dt_;
-    using Base::rol_minimizer_;
-    using Base::minimizer_;
-    using Base::step_type_;
-    using Base::verbosity_;
+ protected:
+  using Base::C_;
+  using Base::dt_;
+  using Base::minimizer_;
+  using Base::rol_minimizer_;
+  using Base::slip_families_;
+  using Base::slip_systems_;
+  using Base::state_internal_;
+  using Base::state_mechanical_;
+  using Base::step_type_;
+  using Base::verbosity_;
 };
 
-
-template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
-class ImplicitConstrainedSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlipT>
+template <typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
+class ImplicitConstrainedSlipHardnessIntegrator
+    : public ImplicitIntegrator<EvalT, NumDimT, NumSlipT>
 {
-  public:
+ public:
+  using Base         = ImplicitIntegrator<EvalT, NumDimT, NumSlipT>;
+  using ScalarT      = typename Base::ScalarT;
+  using ValueT       = typename Base::ValueT;
+  using Minimizer    = typename Base::Minimizer;
+  using RolMinimizer = typename Base::RolMinimizer;
 
-    using Base = ImplicitIntegrator<EvalT, NumDimT, NumSlipT>;
-    using ScalarT = typename Base::ScalarT;
-    using ValueT = typename Base::ValueT;
-    using Minimizer = typename Base::Minimizer;
-    using RolMinimizer = typename Base::RolMinimizer;
+  ImplicitConstrainedSlipHardnessIntegrator(
+      const Minimizer&                                      minimizer,
+      const RolMinimizer&                                   rol_minimizer,
+      minitensor::StepType                                  step_type,
+      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>     nox_status_test,
+      std::vector<CP::SlipSystem<NumDimT>> const&           slip_systems,
+      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const& slip_families,
+      StateMechanical<ScalarT, NumDimT>&                    state_mechanical,
+      StateInternal<ScalarT, NumSlipT>&                     state_internal,
+      minitensor::Tensor4<ScalarT, NumDimT> const&          C,
+      RealType                                              dt,
+      CP::Verbosity const                                   verbosity);
 
-    ImplicitConstrainedSlipHardnessIntegrator(
-      const Minimizer &minimizer,
-      const RolMinimizer &rol_minimizer,
-      minitensor::StepType step_type,
-      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
-      std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
-      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      StateMechanical<ScalarT, NumDimT> & state_mechanical,
-      StateInternal<ScalarT, NumSlipT > & state_internal,
-      minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      RealType dt,
-      CP::Verbosity const verbosity);
+  virtual void
+  update() const override;
 
-    virtual void
-    update() const override;
-
-  protected:
-
-    using Base::slip_systems_;
-    using Base::slip_families_;
-    using Base::state_mechanical_;
-    using Base::state_internal_;
-    using Base::C_;
-    using Base::dt_;
-    using Base::minimizer_;
-    using Base::rol_minimizer_;
-    using Base::step_type_;
-    using Base::verbosity_;
+ protected:
+  using Base::C_;
+  using Base::dt_;
+  using Base::minimizer_;
+  using Base::rol_minimizer_;
+  using Base::slip_families_;
+  using Base::slip_systems_;
+  using Base::state_internal_;
+  using Base::state_mechanical_;
+  using Base::step_type_;
+  using Base::verbosity_;
 };
-}
+}  // namespace CP
 
 #include "Integrator_Def.hpp"
 
 #endif
-

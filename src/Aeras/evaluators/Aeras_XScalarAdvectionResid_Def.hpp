@@ -75,6 +75,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(coordVec,fm);
 
   this->utils.setFieldData(Residual,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

@@ -35,8 +35,8 @@ class ViscoElasticModel : public LCM::ConstitutiveModel<EvalT, Traits>
   using DepFieldMap = typename Base::DepFieldMap;
   using FieldMap    = typename Base::FieldMap;
 
-  typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   // accessing directly protected variables of Constitutive model.
   using ConstitutiveModel<EvalT, Traits>::num_dims_;

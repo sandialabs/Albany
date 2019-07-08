@@ -15,9 +15,9 @@
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
 
-#include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LCM {
 /** \brief
@@ -46,8 +46,8 @@ class HDiffusionDeformationMatterResidual
   evaluateFields(typename Traits::EvalData d);
 
  private:
-  typedef typename EvalT::ScalarT     ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   // Input:
   PHX::MDField<const MeshScalarT, Cell, QuadPoint>            weights;

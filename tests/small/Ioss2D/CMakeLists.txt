@@ -1,10 +1,7 @@
+# Name the test with the directory name
+get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-
-# 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_Serial.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_Serial.yaml COPYONLY)
+# Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuad.exo
                ${CMAKE_CURRENT_BINARY_DIR}/quadQuad.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuad.exo.4.0
@@ -16,65 +13,47 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuad.exo.4.2
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuad.exo.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/quadQuad.exo.4.3 COPYONLY)
 
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-# 3. Create the test with this name and standard executable
-###add_test(${testName} ${Albany.exe})
+####################################
+###     Parallel input tests     ###
+####################################
+
+set(testName ${testNameRoot})
+
 if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe} input.yaml)
-if (ALBANY_IOPX)
-add_test(${testName}_SerialInput ${Albany.exe} input_Serial.yaml)
-endif()
-endif()
-
-if (ALBANY_IFPACK2)
-# 1'. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_Serial.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT_Serial.yaml COPYONLY)
-
-# 2'. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-
-# 3'. Create the test with this name and standard executable
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.yaml)
-if (ALBANY_IOPX)
-add_test(${testName}_SerialInput_Tpetra ${AlbanyT.exe} inputT_Serial.yaml)
-endif()
-endif ()
-
-# 5. Repeat process for Dakota problems if "dakota.in" exists
-if (ALBANY_DAKOTA)
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
-                   ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
-  add_test(${testName} ${AlbanyDakota.exe})
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
+
+  add_test(${testName}_Epetra ${Albany.exe} input.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
+endif()
+if (ALBANY_IFPACK2)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
+
+  add_test(${testName}_Tpetra ${Albany.exe} inputT.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
 endif()
 
-# 6. Repeat process for Analysis problems if "inputAnalysis.yaml" exists
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.yaml COPYONLY)
+####################################
+###      Serial input tests      ###
+####################################
 
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
+if (ALBANY_IOPX)
+  set(testName ${testNameRoot}_SerialInput)
+  if (ALBANY_EPETRA)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_Serial.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_Serial.yaml COPYONLY)
 
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt
-                   ${CMAKE_CURRENT_BINARY_DIR}/Moocho.opt COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
+    add_test(${testName}_Epetra ${Albany.exe} input_Serial.yaml)
+    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
+  endif()
 
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
-  add_test(${testName} ${AlbanyAnalysis.exe})
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
+  if (ALBANY_IFPACK2)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_Serial.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/inputT_Serial.yaml COPYONLY)
+    add_test(${testName}_Tpetra ${Albany.exe} inputT_Serial.yaml)
+    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
+
+  endif ()
+endif ()

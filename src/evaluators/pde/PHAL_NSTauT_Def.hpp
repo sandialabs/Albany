@@ -17,7 +17,7 @@ NSTauT<EvalT, Traits>::
 NSTauT(const Teuchos::ParameterList& p) :
   V           (p.get<std::string>                   ("Velocity QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
+  ThermalCond (p.get<std::string>                   ("ThermalConductivity Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   Gc            (p.get<std::string>                   ("Contravarient Metric Tensor Name"),  
                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),

@@ -21,6 +21,7 @@
 #include "Albany_SacadoTypes.hpp"
 
 #include "PHAL_Dimension.hpp"
+#include "PHAL_Setup.hpp"
 
 //! PHalanx-ALbany Code base: templated evaluators for Sacado AD
 namespace PHAL {
@@ -93,8 +94,7 @@ namespace PHAL {
     // ******************************************************************
     // *** User Defined Object Passed in for Evaluation Method
     // ******************************************************************
-    typedef const std::string& SetupData;
-    //typedef const Albany::AbstractDiscretization& SetupData;
+    typedef Setup& SetupData;
     typedef Workset& EvalData;
     typedef Workset& PreEvalData;
     typedef Workset& PostEvalData;

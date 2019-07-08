@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Name: Aeras XZ Scalar Advection
     Solution Method: Transient

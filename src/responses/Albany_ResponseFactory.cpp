@@ -13,9 +13,6 @@
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_SolutionMinValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
-#ifdef ALBANY_PERIDIGM
-#include "AlbanyPeridigmOBCFunctional.hpp"
-#endif
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_CumulativeScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
@@ -77,12 +74,6 @@ createResponseFunction(
   else if (name == "Solution Inf Norm File") {
     responses.push_back(
       rcp(new Albany::SolutionFileResponseFunction<Albany::NormInf>(comm)));
-  }
-
-  else if (name == "OBC Functional") {
-#ifdef ALBANY_PERIDIGM
-    responses.push_back(rcp(new Albany::AlbanyPeridigmOBCFunctional(comm)));
-#endif
   }
 
   else if (name == "Aggregate Responses" || name == "Sum Responses") {

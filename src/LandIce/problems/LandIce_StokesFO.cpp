@@ -38,13 +38,10 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   neq =  params_->sublist("Equation Set").get<int>("Num Equations", neq);
 
-  // Set the num PDEs for the null space object to pass to ML
-  this->rigidBodyModes->setNumPDEs(neq);
-
   // the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
   //written by IK, Feb. 2012
   //Check if we want to give ML RBMs (from parameterlist)
-  int numRBMs = params_->get<int>("Number RBMs for ML", 0);
+  int numRBMs = params_->get<int>("Number RBMs for ML", neq);
   bool setRBMs = false;
   if (numRBMs > 0) {
     setRBMs = true;
@@ -55,6 +52,9 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"The specified number of RBMs "
                                      << numRBMs << " is not valid!  Valid values are 0, 2 and 3.");
   }
+
+  adjustSurfaceHeight = false;
+  adjustBedTopo = false;
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >

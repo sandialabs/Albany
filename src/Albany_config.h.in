@@ -5,12 +5,12 @@
 
 #cmakedefine ALBANY_AERAS
 #cmakedefine ALBANY_APF
+#cmakedefine ALBANY_AMP
 #cmakedefine ALBANY_ATO
 #cmakedefine ALBANY_CATALYST
 #cmakedefine ALBANY_LANDICE
 #cmakedefine ALBANY_HYDRIDE
 #cmakedefine ALBANY_LCM
-#cmakedefine ALBANY_PERIDIGM
 #cmakedefine ALBANY_TSUNAMI
 
 // ===================== Macros to identify packages found in Trilinos ======================= //
@@ -48,9 +48,6 @@
 #cmakedefine ALBANY_MESH_DEPENDS_ON_PARAMETERS
 #cmakedefine ALBANY_MESH_DEPENDS_ON_SOLUTION
 #cmakedefine ALBANY_PARAMETERS_DEPEND_ON_SOLUTION
-
-// Whether to use 64bit integers as Global Ordinals
-#cmakedefine ALBANY_64BIT_INT
 
 // Cuda options
 #cmakedefine ALBANY_CUDA_ERROR_CHECK
@@ -120,10 +117,8 @@
 #ifdef ALBANY_ATO
   // --- ATO
   #cmakedefine ATO_USES_ISOLIB
-  #cmakedefine ATO_USES_DOTK
   #cmakedefine ATO_USES_NLOPT
   #cmakedefine ATO_USES_COGENT
-  #cmakedefine ALBANY_ATO_SOLVER_EPETRA
 #endif
 
 #ifdef ALBANY_LANDICE
@@ -133,7 +128,6 @@
   #cmakedefine CISM_CHECK_COMPARISONS
   #cmakedefine REDUCED_COMM
   #cmakedefine CISM_USE_EPETRA
-  #cmakedefine MPAS_USE_EPETRA
   #cmakedefine USE_CISM_FLOW_PARAMETERS
 #endif
 

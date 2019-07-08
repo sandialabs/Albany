@@ -24,10 +24,8 @@
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_GmshSTKMeshStruct.hpp"
 #ifdef ALBANY_LANDICE
-#include "Albany_ExtrudedSTKMeshStruct.hpp"
-#endif
-#ifdef ALBANY_LANDICE
 #include "Albany_STKDiscretizationStokesH.hpp"
+#include "Albany_ExtrudedSTKMeshStruct.hpp"
 #endif
 #endif
 #ifdef ALBANY_SCOREC
@@ -456,22 +454,27 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
             case Albany::AbstractMeshStruct::STK_MS:
             {
                 Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
+                Teuchos::RCP<Albany::STKDiscretization> disc;
 #ifdef ALBANY_LANDICE
-                if (method == "Extruded")
-                    return Teuchos::rcp(new Albany::STKDiscretizationStokesH(discParams, ms, commT, rigidBodyModes));
-                else
+                if (method=="Extruded") {
+                  disc = Teuchos::rcp(new Albany::STKDiscretizationStokesH(discParams, ms, commT, rigidBodyModes));
+                } else
 #endif
-                    return Teuchos::rcp(new Albany::STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
-            }
+                {
+                  disc = Teuchos::rcp(new Albany::STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
+                }
+                disc->updateMesh();
+                return disc;
                 break;
+            }
 #endif
 #ifdef ALBANY_SCOREC
             case Albany::AbstractMeshStruct::PUMI_MS:
             {
                 Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
                 return Teuchos::rcp(new Albany::PUMIDiscretization(ms, commT, rigidBodyModes));
-            }
                 break;
+            }
 #endif
         }
     }
@@ -482,7 +485,9 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
         //the code is structured.  That should be OK since meshSpecsType() is not used anywhere except this function.
         //But one may want to change it to, e.g., AERAS_MS, to prevent confusion.
         Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-        return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, numLevels, numTracers, commT, explicit_scheme, rigidBodyModes));
+        auto disc = Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, numLevels, numTracers, commT, explicit_scheme, rigidBodyModes));
+        disc->updateMesh(); 
+        return disc; 
     }
 #endif
     return Teuchos::null;

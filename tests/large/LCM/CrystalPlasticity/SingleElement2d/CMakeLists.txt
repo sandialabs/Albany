@@ -33,18 +33,20 @@ if(ALBANY_IFPACK2)
  SET(OUTFILE "ElasticShear2d.exo")
  SET(REF_FILE "ElasticShear2d.gold.exo")
  add_test(NAME CrystalPlasticity_${testName}_ElasticShear2d
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=ElasticShear2d -DTEST_ARGS=ElasticShear2d.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+set_tests_properties(CrystalPlasticity_${testName}_ElasticShear2d PROPERTIES LABELS "LCM;Tpetra;Forward")
  #test 2 - Plastic shear
  SET(OUTFILE "PlasticShear2d.exo")
  SET(REF_FILE "PlasticShear2d.gold.exo")
  add_test(NAME CrystalPlasticity_${testName}_PlasticShear2d
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=PlasticShear2d -DTEST_ARGS=PlasticShear2d.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+ set_tests_properties(CrystalPlasticity_${testName}_PlasticShear2d PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif()

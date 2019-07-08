@@ -25,5 +25,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 IF (ALBANY_MUELU_EXAMPLES)
-  add_test(${testName} ${AlbanyT.exe} NotchedTensileCT.yaml)
+  add_test(${testName} ${Albany.exe} NotchedTensileCT.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 ENDIF()

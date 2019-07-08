@@ -32,9 +32,6 @@ NeumannBase(const Teuchos::ParameterList& p) :
   sideSetID      (p.get<std::string>("Side Set ID")),
   coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector)
 {
-  if (p.isType<bool>("Enable Memoizer") && p.get<bool>("Enable Memoizer"))
-    memoizer.enable_memoizer();
-
   // the input.xml string "NBC on SS sidelist_12 for DOF T set dudn" (or something like it)
   name = p.get< std::string >("Neumann Input String");
 
@@ -197,7 +194,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coordVec,fm);
@@ -230,13 +227,16 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   if (inputConditions == "robin" || inputConditions == "radiate") {
     dofCell_buffer = Kokkos::createDynRankView(dof.get_view(), "dofCell", numCells, numNodes, numDOFsSet);
   }
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 evaluateNeumannContribution(typename Traits::EvalData workset)
 {
-  if (memoizer.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   // setJacobian only needs to be RealType since the data type is only
   //  used internally for Basis Fns on reference elements, which are
@@ -774,55 +774,55 @@ Neumann(Teuchos::ParameterList& p)
 }
 
 // **********************************************************************
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-template<typename Traits>
-KOKKOS_INLINE_FUNCTION
-void Neumann<PHAL::AlbanyTraits::Jacobian,Traits>::
-operator()(const Neumann_Tag& , const int& cell) const
-{
-  LO colT[1];
-  LO rowT;
-  ST value[1];
-  int lcol;
-  const int neq = Index.extent(2);
-  const int nunk = neq*this->numNodes;
+// #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+// template<typename Traits>
+// KOKKOS_INLINE_FUNCTION
+// void Neumann<PHAL::AlbanyTraits::Jacobian,Traits>::
+// operator()(const Neumann_Tag& , const int& cell) const
+// {
+//   LO colT[1];
+//   LO rowT;
+//   ST value[1];
+//   int lcol;
+//   const int neq = Index.extent(2);
+//   const int nunk = neq*this->numNodes;
 
-  for (std::size_t node = 0; node < this->numNodes; ++node) {
-    for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+//   for (std::size_t node = 0; node < this->numNodes; ++node) {
+//     for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-      int dim2=this->offset[dim];
-      rowT = Index(cell,node,dim2);
+//       int dim2=this->offset[dim];
+//       rowT = Index(cell,node,dim2);
 
-      if (this->fT != Teuchos::null) {
-         this->fT->sumIntoLocalValue(rowT, this->neumann(cell, node, dim).val());
-      }
+//       if (this->fT != Teuchos::null) {
+//          this->fT->sumIntoLocalValue(rowT, this->neumann(cell, node, dim).val());
+//       }
 
-      // Check derivative array is nonzero
-      if (this->neumann(cell, node, dim).hasFastAccess()) {
-        // Loop over nodes in element
-        for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-          // Loop over equations per node
-          for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-            lcol = neq * node_col + eq_col;
+//       // Check derivative array is nonzero
+//       if (this->neumann(cell, node, dim).hasFastAccess()) {
+//         // Loop over nodes in element
+//         for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+//           // Loop over equations per node
+//           for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+//             lcol = neq * node_col + eq_col;
 
-            // Global column
-            colT[0] =  Index(cell, node_col, eq_col);
-            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
-            if (is_adjoint) {
-              // Sum Jacobian transposed
-              jacobian.sumIntoValues(colT[0], &rowT,1, &value[0], false, true);
-            }
-            else {
-              // Sum Jacobian
-              jacobian.sumIntoValues(rowT, colT, nunk,value, false, true);
-            }
-          } // column equations
-        } // column nodes
-      } // has fast access
-    }
-  }
-}
-#endif
+//             // Global column
+//             colT[0] =  Index(cell, node_col, eq_col);
+//             value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
+//             if (is_adjoint) {
+//               // Sum Jacobian transposed
+//               jacobian.sumIntoValues(colT[0], &rowT,1, &value[0], false, true);
+//             }
+//             else {
+//               // Sum Jacobian
+//               jacobian.sumIntoValues(rowT, colT, nunk,value, false, true);
+//             }
+//           } // column equations
+//         } // column nodes
+//       } // has fast access
+//     }
+//   }
+// }
+// #endif
 
 // **********************************************************************
 template<typename Traits>
@@ -1078,6 +1078,15 @@ NeumannAggregator(const Teuchos::ParameterList& p)
   this->addEvaluatedField(fieldTag);
 
   this->setName("Neumann Aggregator"+PHX::typeAsString<EvalT>());
+}
+
+// **********************************************************************
+template<typename EvalT, typename Traits>
+void NeumannAggregator<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm)
+{
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 } // namespace PHAL

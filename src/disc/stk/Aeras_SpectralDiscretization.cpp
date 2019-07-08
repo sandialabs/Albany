@@ -43,28 +43,19 @@ extern "C"
 }
 #endif
 #endif
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Export.h"
-#include "EpetraExt_MultiVectorOut.h"
-#include "Petra_Converters.hpp"
-#endif
-
-#include "MatrixMarket_Tpetra.hpp"
 
 // Albany includes
-#include "Albany_TpetraThyraUtils.hpp"
-#include "Albany_EpetraThyraUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_NodalGraphUtils.hpp"
 #include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_BucketArray.hpp"
+#include "Albany_ThyraUtils.hpp" 
 
 // Constants
 const double pi = 3.1415926535897932385;
 
 
-const Tpetra::global_size_t INVALID =
-  Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
+const GO INVALID = Teuchos::OrdinalTraits<GO>::invalid();
 
 // Uncomment the following line if you want debug output to be printed
 // to screen
@@ -98,11 +89,6 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
   *out << "Explicit scheme in Aeras? " << explicit_scheme << std::endl;
 #endif
-
-#if defined(ALBANY_EPETRA)
-  comm = Albany::createEpetraCommFromTeuchosComm(commT_);
-#endif
-
    //IKT, 9/30/15: error check that the user is not trying to prescribe periodic BCs for a problem other than a 1D one.
    //Periodic BCs are only supported for 1D (xz-hydrostatic) problems.
   int numPeriodicBCs = 0;
@@ -141,6 +127,9 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
     bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
   const int numBuckets = buckets.size();
   latticeOrientation.resize(numBuckets);
+#if defined(ALBANY_LCM)
+  boundary_indicator.resize(numBuckets);
+#endif
 #ifdef OUTPUT_TO_SCREEN
   *out << "points_per_edge: " << points_per_edge << std::endl;
   *out << "element name: " << element_name << std::endl;
@@ -150,7 +139,9 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   *out << "numLevels: " << numLevels << std::endl;
   *out << "numTracers: " << numTracers << std::endl;
 #endif
-  Aeras::SpectralDiscretization::updateMesh();
+  //IKT, FIXME: I think this routine needs to move with 
+  //the new design of the code. 
+  //Aeras::SpectralDiscretization::updateMesh();
 }
 
 Aeras::SpectralDiscretization::~SpectralDiscretization()
@@ -168,145 +159,60 @@ Aeras::SpectralDiscretization::~SpectralDiscretization()
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 }
 
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Aeras::SpectralDiscretization::getMap() const
+Teuchos::RCP<const Thyra_VectorSpace> 
+Aeras::SpectralDiscretization::getVectorSpace() const
 {
-  Teuchos::RCP<const Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm);
-  return map;
-}
-#endif
-
-Teuchos::RCP<const Tpetra_Map>
-Aeras::SpectralDiscretization::getMapT() const
-{
-  return mapT;
+  return m_vs; 
 }
 
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Aeras::SpectralDiscretization::getOverlapMap() const
+Teuchos::RCP<const Thyra_VectorSpace> 
+Aeras::SpectralDiscretization::getOverlapVectorSpace() const  
 {
-  Teuchos::RCP<const Epetra_Map> overlap_map =
-    Petra::TpetraMap_To_EpetraMap(overlap_mapT, comm);
-  return overlap_map;
-}
-#endif
-
-Teuchos::RCP<const Tpetra_Map>
-Aeras::SpectralDiscretization::getOverlapMapT() const
-{
-  return overlap_mapT;
+  return m_overlap_vs; 
 }
 
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_CrsGraph>
-Aeras::SpectralDiscretization::getJacobianGraph() const
+Teuchos::RCP<const Thyra_VectorSpace> 
+Aeras::SpectralDiscretization::getNodeVectorSpace() const 
 {
-  Teuchos::RCP<const Epetra_CrsGraph> graph =
-    Petra::TpetraCrsGraph_To_EpetraCrsGraph(graphT, comm);
-  return graph;
-}
-#endif
-
-Teuchos::RCP<const Tpetra_Map>
-Aeras::SpectralDiscretization::getMapT(const std::string& field_name) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
-  return Teuchos::null;
+  return m_node_vs; 
 }
 
-Teuchos::RCP<const Tpetra_Map>
-Aeras::SpectralDiscretization::getOverlapMapT(const std::string& field_name) const
+Teuchos::RCP<const Thyra_VectorSpace> 
+Aeras::SpectralDiscretization::getOverlapNodeVectorSpace() const 
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
-  return Teuchos::null;
-}
+  return m_overlap_node_vs; 
+}  
 
-Teuchos::RCP<const Tpetra_CrsGraph>
-Aeras::SpectralDiscretization::getJacobianGraphT() const
-{
-  return graphT;
-}
-
-Teuchos::RCP<const Tpetra_CrsGraph>
-Aeras::SpectralDiscretization::getImplicitJacobianGraphT() const
-{
-  return implicit_graphT;
-}
-
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_CrsGraph>
-Aeras::SpectralDiscretization::getOverlapJacobianGraph() const
-{
-  Teuchos::RCP<const Epetra_CrsGraph> overlap_graph =
-    Petra::TpetraCrsGraph_To_EpetraCrsGraph(overlap_graphT, comm);
-  return overlap_graph;
-}
-#endif
-
-Teuchos::RCP<const Tpetra_CrsGraph>
-Aeras::SpectralDiscretization::getOverlapJacobianGraphT() const
-{
-  return overlap_graphT;
-}
-
-Teuchos::RCP<const Tpetra_CrsGraph>
-Aeras::SpectralDiscretization::getImplicitOverlapJacobianGraphT() const
-{
-  return implicit_overlap_graphT;
-}
-
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Aeras::SpectralDiscretization::getNodeMap() const
-{
-  Teuchos::RCP<const Epetra_Map> node_map =
-    Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
-  return node_map;
-}
-
-Teuchos::RCP<const Epetra_Map>
-Aeras::SpectralDiscretization::getOverlapNodeMap() const
-{
-  Teuchos::RCP<const Epetra_Map> overlap_node_map =
-    Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
-  return overlap_node_map;
-}
-#endif
-
-Teuchos::RCP<const Tpetra_Map>
-Aeras::SpectralDiscretization::getNodeMapT() const
-{
-  return node_mapT;
-}
-
-Teuchos::RCP<const Tpetra_Map>
-Aeras::SpectralDiscretization::getOverlapNodeMapT() const
-{
-  return overlap_node_mapT;
-}
-
-Teuchos::RCP<const Tpetra_Map>
-Aeras::SpectralDiscretization::getNodeMapT(const std::string& field_name) const
+Teuchos::RCP<const Thyra_VectorSpace> 
+Aeras::SpectralDiscretization::getNodeVectorSpace (const std::string& field_name) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
   return Teuchos::null;
 }
 
-Teuchos::RCP<const Tpetra_Map>
-Aeras::SpectralDiscretization::getOverlapNodeMapT(const std::string& field_name)
-  const
+Teuchos::RCP<const Thyra_VectorSpace> 
+Aeras::SpectralDiscretization::getOverlapNodeVectorSpace (const std::string& field_name) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
   return Teuchos::null;
 }
 
-const Aeras::SpectralDiscretization::Conn&
+Teuchos::RCP<const Thyra_VectorSpace> 
+Aeras::SpectralDiscretization::getVectorSpace(const std::string& field_name) const 
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
+  return Teuchos::null;
+}
+
+Teuchos::RCP<const Thyra_VectorSpace> 
+Aeras::SpectralDiscretization::getOverlapVectorSpace (const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
+  return Teuchos::null;
+}
+
+
+const Albany::Conn&
 Aeras::SpectralDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
@@ -342,6 +248,14 @@ Aeras::SpectralDiscretization::getLatticeOrientation() const
 {
   return latticeOrientation;
 }
+
+#if defined(ALBANY_LCM)
+Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
+Aeras::SpectralDiscretization::getBoundaryIndicator() const
+{
+  return boundary_indicator;
+}
+#endif
 
 void
 Aeras::SpectralDiscretization::printCoords() const
@@ -451,13 +365,13 @@ Aeras::SpectralDiscretization::getCoordinates() const
   for (int i=0; i < numOverlapNodes; i++)
   {
     GO node_gid = gid(overlapnodes[i]);
-    int node_lid = overlap_node_mapT->getLocalElement(node_gid);
+    auto node_lid = Albany::getLocalElement(m_overlap_node_vs,node_gid);
 
     double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
     for (int dim=0; dim<stkMeshStruct->numDim; dim++)
       coordinates[3*node_lid + dim] = x[dim];
   }
-
+  
   return coordinates;
 }
 
@@ -470,6 +384,7 @@ setCoordinates(const Teuchos::ArrayRCP<const double>& c)
     true, std::logic_error,
     "Aeras::SpectralDiscretization::setCoordinates is not implemented.");
 }
+
 void Aeras::SpectralDiscretization::
 setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
 {
@@ -556,93 +471,17 @@ Aeras::SpectralDiscretization::transformMesh()
 void Aeras::SpectralDiscretization::setupMLCoords()
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out << "Warning: setupMLCoords() not yet implemented in Aeras::"
+  *out << "Warning: setupMLCoords() not implemented in Aeras::"
        << "SpectralDiscretization!  " << "ML and MueLu will not receive "
        << "coordinates for repartitioning if used." << std::endl;
 #endif
-/*  if (rigidBodyModes.is_null()) return;
-  if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed()) return;
-
-  const int numDim = stkMeshStruct->numDim;
-  Albany::AbstractSTKFieldContainer::VectorFieldType*
-    coordinates_field = stkMeshStruct->getCoordinatesField();
-  rigidBodyModes->resize(numDim, numOwnedNodes);
-  double* const coords = rigidBodyModes->getCoordArray();
-
-  for (int i = 0; i < numOwnedNodes; i++)
-  {
-    GO node_gid = gid(ownednodes[i]);
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    double* X = stk::mesh::field_data(*coordinates_field, ownednodes[i]);
-    for (int j = 0; j < numDim; j++)
-      coords[j*numOwnedNodes + node_lid] = X[j];
-  }
-
-  rigidBodyModes->setCoordinatesAndNullspace(node_mapT, mapT);
-
-  // Some optional matrix-market output was tagged on here; keep that
-  // functionality.
-  writeCoordsToMatrixMarket();
-  */
 }
 
 void Aeras::SpectralDiscretization::writeCoordsToMatrixMarket() const
 {
-  // if user wants to write the coordinates to matrix market file,
-  // write them to matrix market file
-#if 0 // ML RBM not functional yet
-  if (rigidBodyModes->isMLUsed() && stkMeshStruct->writeCoordsToMMFile)
-  {
-    Teuchos::RCP<const Tpetra_Vector> xCoordsT = coordMV->getVector(0);
-    if (node_mapT->getComm()->getRank()==0)
-    {
-      std::cout << "Writing mesh coordinates to Matrix Market file."
-                << std::endl;
-    }
-    int numMyElements = (node_mapT->getComm()->getRank() == 0) ?
-      node_mapT->getGlobalNumElements() : 0;
-    Teuchos::RCP<Tpetra_Import> importOperatorT;
-    Teuchos::RCP<Tpetra_Map> serial_mapT;
-    Teuchos::RCP<const Tpetra_Vector> xCoordsT =  coordMV->getVector(0);
-    // Writing of coordinates to MatrixMarket file for Ray
-    if (node_mapT->getComm()->getSize() > 1)
-    {
-      serial_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, numMyElements, 0, node_mapT->getComm()));
-      // create importer from parallel map to serial map and populate
-      // serial solution xfinal_serial
-      importOperatorT = Teuchos::rcp(new Tpetra_Import(node_mapT, serial_mapT));
-      // Writing of coordinates to MatrixMarket file for Ray
-      Teuchos::RCP<Tpetra_Vector> xCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
-      xCoords_serialT->doImport(*xCoordsT, *importOperatorT, Tpetra::INSERT);
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xCoords.mm", xCoords_serialT);
-    }
-    else
-      Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("xCoords.mm", xCoordsT);
-    if (coordMV->getNumVectors() > 1)
-    {
-      Teuchos::RCP<Tpetra_Vector> yCoordsT = coordMV->getVector(1);
-      if (node_mapT->getComm()->getSize() > 1)
-      {
-        Teuchos::RCP<Tpetra_Vector> yCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
-        yCoords_serialT->doImport(*yCoordsT, *importOperatorT, Tpetra::INSERT);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("yCoords.mm", yCoords_serialT);
-      }
-      else
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("yCoords.mm", yCoordsT);
-    }
-    if (coordMV->getNumVectors() > 2)
-    {
-      Teuchos::RCP<Tpetra_Vector> zCoordsT = coordMV->getVector(2);
-      if (node_mapT->getComm()->getSize() > 1)
-      {
-        Teuchos::RCP<Tpetra_Vector> zCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
-        zCoords_serialT->doImport(*zCoordsT, *importOperatorT, Tpetra::INSERT);
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("zCoords.mm", zCoords_serialT);
-      }
-      else
-        Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("zCoords.mm", zCoordsT);
-    }
-  }
+#ifdef OUTPUT_TO_SCREEN
+  *out << "Warning: writeCoordsToMatrixMarketCoords() not implemented in Aeras::"
+       << "SpectralDiscretization!  " <<  std::endl;
 #endif
 }
 
@@ -658,208 +497,123 @@ Aeras::SpectralDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
-#if defined(ALBANY_EPETRA)
+
 void
-Aeras::SpectralDiscretization::writeSolution(
-    const Epetra_Vector& soln,
-    const double time, const bool overlapped)
+Aeras::SpectralDiscretization::writeSolution(const Thyra_Vector& solution,
+                                             const double time,
+                                             const bool overlapped)
 {
-#if 1
-  Teuchos::RCP<const Tpetra_Vector> solnT =
-     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
-  writeSolutionT(*solnT, time, overlapped);
-#else
-  // Put solution as Epetra_Vector into STK Mesh
-  if(!overlapped)
-    setSolutionField(soln);
-
-  // soln coming in is overlapped
-  else
-    setOvlpSolutionField(soln);
-
-#ifdef ALBANY_SEACAS
-
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords)
-  {
-    Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = outputStkMeshStruct->getFieldContainer();
-
-    container->transferSolutionToCoords();
-
-    if (!mesh_data.is_null())
-    {
-      // Mesh coordinates have changed. Rewrite output file by
-      // deleting the mesh data object and recreate it
-      setupExodusOutput();
-    }
-  }
-
-  // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput &&
-      !(outputInterval % stkMeshStruct->exoOutputInterval))
-  {
-     double time_label = monotonicTimeLabel(time);
-     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
-     if (mapT->getComm()->getRank()==0)
-     {
-       *out << "Aeras::SpectralDiscretization::writeSolution: writing time "
-            << time;
-       if (time_label != time)
-         *out << " with label " << time_label;
-       *out << " to index " <<out_step<<" in file "<< stkMeshStruct->exoOutFile
-            << std::endl;
-     }
-  }
-  outputInterval++;
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-#endif
+  writeSolutionToMeshDatabase(solution, time, overlapped);
+  writeSolutionToFile(solution, time, overlapped);
 }
 
 void
-Aeras::SpectralDiscretization::writeSolution(
-    const Epetra_Vector& soln, const Epetra_Vector &soln_dot,
-    const double time, const bool overlapped)
+Aeras::SpectralDiscretization::writeSolution(const Thyra_Vector& solution,
+                                             const Thyra_Vector& solution_dot,
+                                             const double time,
+                                             const bool overlapped)
 {
-#if 1
-  Teuchos::RCP<const Tpetra_Vector> solnT =
-     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
-  Teuchos::RCP<const Tpetra_Vector> soln_dotT =
-     Petra::EpetraVector_To_TpetraVectorConst(soln_dot, commT);
-  writeSolutionT(*solnT, *soln_dotT, time, overlapped);
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
+  writeSolutionToMeshDatabase(solution, solution_dot, time, overlapped);
+  //IKT, FIXME? extend writeSolutionToFile to take in solution_dot?
+  writeSolutionToFile(solution, time, overlapped);
 }
 
+void
+Aeras::SpectralDiscretization::writeSolution(const Thyra_Vector& solution,
+                                             const Thyra_Vector& solution_dot,
+                                             const Thyra_Vector& solution_dotdot,
+                                             const double time,
+                                             const bool overlapped)
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
+  writeSolutionToMeshDatabase(solution, solution_dot, solution_dotdot, time, overlapped);
+  //IKT, FIXME? extend writeSolutionToFile to take in solution_dot and solution_dotdot?
+  writeSolutionToFile(solution, time, overlapped);
+}
 
 void
-Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
+Aeras::SpectralDiscretization::writeSolutionMV(const Thyra_MultiVector& solution,
                                               const double time,
                                               const bool overlapped)
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  writeSolutionToMeshDatabaseT(solnT, time, overlapped);
-  writeSolutionToFileT(solnT, time, overlapped);
+  writeSolutionMVToMeshDatabase(solution, time, overlapped);
+  writeSolutionMVToFile(solution, time, overlapped);
 }
 
 void
-Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
-                                              const Tpetra_Vector& soln_dotT,
-                                              const double time,
-                                              const bool overlapped)
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
-  writeSolutionToMeshDatabaseT(solnT, soln_dotT, time, overlapped);
-  //IKT, FIXME? extend writeSolutionToFileT to take in soln_dotT?
-  writeSolutionToFileT(solnT, time, overlapped);
-}
-
-void
-Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
-                                              const Tpetra_Vector& soln_dotT,
-                                              const Tpetra_Vector& soln_dotdotT,
-                                              const double time,
-                                              const bool overlapped)
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
-  writeSolutionToMeshDatabaseT(solnT, soln_dotT, soln_dotdotT, time, overlapped);
-  //IKT, FIXME? extend writeSolutionToFileT to take in soln_dotT and soln_dotdotT?
-  writeSolutionToFileT(solnT, time, overlapped);
-}
-
-void
-Aeras::SpectralDiscretization::writeSolutionMV(const Tpetra_MultiVector& solnT,
-                                              const double time,
-                                              const bool overlapped)
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
-  writeSolutionMVToMeshDatabase(solnT, time, overlapped);
-  writeSolutionMVToFile(solnT, time, overlapped);
-}
-
-void
-Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(
-    const Tpetra_Vector& solnT,
+Aeras::SpectralDiscretization::writeSolutionToMeshDatabase(
+    const Thyra_Vector& solution,
     const double time,
     const bool overlapped)
 {
+
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("solnT.mm", solnT);
+  Albany::writeMatrixMarket(Teuchos::rcpFromRef(solution), "solution.mm");
 #endif
-  // Put solution as Tpetra_Vector into STK Mesh
-  if (!overlapped)
-    setSolutionFieldT(solnT);
-  // soln coming in is overlapped
-  else
-    setOvlpSolutionFieldT(solnT);
+  // Put solution as Thyra_Vector into STK Mesh
+  setSolutionField(solution, overlapped);
 }
 
 void
-Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(
-    const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT,
+Aeras::SpectralDiscretization::writeSolutionToMeshDatabase(
+    const Thyra_Vector& solution,
+    const Thyra_Vector& solution_dot,
     const double time,
     const bool overlapped)
 {
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  // Put solution as Tpetra_Vector into STK Mesh
-  if (!overlapped)
-    setSolutionFieldT(solnT, soln_dotT);
-  // soln coming in is overlapped
-  else
-    setOvlpSolutionFieldT(solnT, soln_dotT);
+  // Put solution as Thyra_Vector into STK Mesh
+  setSolutionField(solution, solution_dot, overlapped);
 }
 
 void
-Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(
-    const Tpetra_Vector& solnT,
-    const Tpetra_Vector& soln_dotT,
-    const Tpetra_Vector& soln_dotdotT,
+Aeras::SpectralDiscretization::writeSolutionToMeshDatabase(
+    const Thyra_Vector& solution,
+    const Thyra_Vector& solution_dot,
+    const Thyra_Vector& solution_dotdot,
     const double time,
     const bool overlapped)
 {
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  // Put solution as Tpetra_Vector into STK Mesh
-  if (!overlapped)
-    setSolutionFieldT(solnT, soln_dotT, soln_dotdotT);
-  // soln coming in is overlapped
-  else
-    setOvlpSolutionFieldT(solnT, soln_dotT, soln_dotdotT);
+  // Put solution as Thyra_Vector into STK Mesh
+  setSolutionField(solution, solution_dot, solution_dotdot, overlapped);
 }
 
 void
 Aeras::SpectralDiscretization::writeSolutionMVToMeshDatabase(
-    const Tpetra_MultiVector& solnT,
+    const Thyra_MultiVector& solution,
     const double time,
     const bool overlapped)
 {
-#ifdef OUTPUT_TO_SCREEN
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile("solnT.mm", solnT);
+   Albany::writeMatrixMarket(Teuchos::rcpFromRef(solution, "solution.mm");
 #endif
   // Put solution as Epetra_Vector into STK Mesh
-  if (!overlapped)
-    setSolutionFieldMV(solnT);
-  // soln coming in is overlapped
-  else
-    setOvlpSolutionFieldMV(solnT);
+  setSolutionFieldMV(solution, overlapped);
 }
 
+
 void
-Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
-                                                    const double time,
-                                                    const bool overlapped)
+Aeras::SpectralDiscretization::writeSolutionToFile(const Thyra_Vector& solution,
+                                                   const double time,
+                                                   const bool overlapped)
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
@@ -882,7 +636,7 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
   {
     double time_label = monotonicTimeLabel(time);
     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
-    if (mapT->getComm()->getRank() == 0)
+    if (Albany::getComm(m_vs)->getRank() == 0)
     {
       *out << "Aeras::SpectralDiscretization::writeSolution: writing time "
            << time;
@@ -892,26 +646,19 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
            << std::endl;
     }
   }
-
   // IKT, 4/22/15: we are not going to worry about netcdf file writing yet.
- /* if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval))
+  if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval))
   {
-    double time_label = monotonicTimeLabel(time);
-    const int out_step = processNetCDFOutputRequestT(solnT);
-    if (mapT->getComm()->getRank() == 0)
-    {
-      *out << "Aeras::SpectralDiscretization::writeSolution: writing time " << time;
-      if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->cdfOutFile<< std::endl;
-    }
-  }*/
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Aeras::SpectralDiscretization::writeSolutionToFile"
+                               << " is not implemented for writing out NetCDF files!");
+  }
   outputInterval++;
 #endif
-
 }
 
+
 void
-Aeras::SpectralDiscretization::writeSolutionMVToFile(const Tpetra_MultiVector& solnT,
+Aeras::SpectralDiscretization::writeSolutionMVToFile(const Thyra_MultiVector& solution,
                                                     const double time,
                                                     const bool overlapped)
 {
@@ -936,7 +683,7 @@ Aeras::SpectralDiscretization::writeSolutionMVToFile(const Tpetra_MultiVector& s
   {
     double time_label = monotonicTimeLabel(time);
     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
-    if (mapT->getComm()->getRank() == 0)
+    if (Albany::getComm(m_vs)->getRank() == 0)
     {
       *out << "Aeras::SpectralDiscretization::writeSolution: writing time "
            << time;
@@ -946,19 +693,12 @@ Aeras::SpectralDiscretization::writeSolutionMVToFile(const Tpetra_MultiVector& s
            << std::endl;
     }
   }
-
   // IKT, 4/22/15: we are not going to worry about netcdf file writing yet.
- /* if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval))
+  if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval))
   {
-    double time_label = monotonicTimeLabel(time);
-    const int out_step = processNetCDFOutputRequestT(solnT);
-    if (mapT->getComm()->getRank() == 0)
-    {
-      *out << "Aeras::SpectralDiscretization::writeSolution: writing time " << time;
-      if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->cdfOutFile<< std::endl;
-    }
-  }*/
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Aeras::SpectralDiscretization::writeSolutionMVToFile"
+                               << " is not implemented for writing out NetCDF files!");
+  }
   outputInterval++;
 #endif
 
@@ -994,51 +734,34 @@ Aeras::SpectralDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
+
 void
-Aeras::SpectralDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
+Aeras::SpectralDiscretization::setResidualField(const Thyra_Vector& residual)
 {
   // Nothing to do for Aeras -- LCM-only function
 }
 
-
-#if defined(ALBANY_EPETRA)
-Teuchos::RCP<Epetra_Vector>
+Teuchos::RCP<Thyra_Vector>
 Aeras::SpectralDiscretization::getSolutionField(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
-  auto indicesAV = mapT->getNodeElementList();
-  int numElements = mapT->getNodeNumElements();
-  Teuchos::Array<int> i_indices(numElements);
-  for(std::size_t k = 0; k < numElements; k++)
-  i_indices[k] = Teuchos::as<int>(indicesAV[k]);
-  Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, i_indices.getRawPtr(), 0, *comm));
-  Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
-  this->getSolutionField(*soln, overlapped);
-  return soln;
-}
-#endif
-
-Teuchos::RCP<Tpetra_Vector>
-Aeras::SpectralDiscretization::getSolutionFieldT(bool overlapped) const
-{
-  // Copy soln vector into solution field, one node at a time
-  Teuchos::RCP<Tpetra_Vector> solnT = Teuchos::rcp(new Tpetra_Vector(mapT));
-  this->getSolutionFieldT(*solnT, overlapped);
-  return solnT;
+  Teuchos::RCP<Thyra_Vector> solution = Thyra::createMember(m_vs); 
+  this->getSolutionField(*solution, overlapped);
+  return solution;
 }
 
-Teuchos::RCP<Tpetra_MultiVector>
+Teuchos::RCP<Thyra_MultiVector>
 Aeras::SpectralDiscretization::getSolutionMV(bool overlapped) const
 {
+  // Copy soln multi-vector into solution field, one node at a time
   int num_time_deriv = stkMeshStruct->num_time_deriv;
-  Teuchos::RCP<Tpetra_MultiVector> solnMV = Teuchos::rcp(new Tpetra_MultiVector(mapT, num_time_deriv + 1, false));
+  Teuchos::RCP<Thyra_MultiVector> solnMV = Thyra::createMembers(m_vs, num_time_deriv + 1); 
   this->getSolutionMV(*solnMV, overlapped);
   return solnMV;
 }
 
-#if defined(ALBANY_EPETRA)
 void
-Aeras::SpectralDiscretization::getSolutionField(Epetra_Vector &result,
+Aeras::SpectralDiscretization::getSolutionField(Thyra_Vector &result,
                                                 const bool overlapped) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
@@ -1050,31 +773,11 @@ Aeras::SpectralDiscretization::getSolutionField(Epetra_Vector &result,
   // iterating over each bucket.
   stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
-  Teuchos::RCP<const Epetra_Map> node_map =
-    Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
-  container->fillSolnVector(result, locally_owned, node_map);
-}
-#endif
-
-void
-Aeras::SpectralDiscretization::getSolutionFieldT(Tpetra_Vector &resultT,
-                                                 const bool overlapped) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
-
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-    stkMeshStruct->getFieldContainer();
-
-  // Iterate over the on-processor nodes by getting node buckets and
-  // iterating over each bucket.
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-  container->fillSolnVectorT(resultT, locally_owned, node_mapT);
-
+  container->fillSolnVector(result, locally_owned, m_node_vs);
 }
 
 void
-Aeras::SpectralDiscretization::getFieldT(Tpetra_Vector &result,
+Aeras::SpectralDiscretization::getField(Thyra_Vector &result,
                                         const std::string& name) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -1082,7 +785,7 @@ Aeras::SpectralDiscretization::getFieldT(Tpetra_Vector &result,
 }
 
 void
-Aeras::SpectralDiscretization::getSolutionMV(Tpetra_MultiVector &resultT,
+Aeras::SpectralDiscretization::getSolutionMV(Thyra_MultiVector &result,
                                                  const bool overlapped) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
@@ -1094,17 +797,18 @@ Aeras::SpectralDiscretization::getSolutionMV(Tpetra_MultiVector &resultT,
   // iterating over each bucket.
   stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
-  container->fillSolnMultiVector(resultT, locally_owned, node_mapT);
+  container->fillSolnMultiVector(result, locally_owned, m_node_vs);
 
 }
+
 
 /*****************************************************************/
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/
 
-// Tpetra version of above
 void
-Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
+Aeras::SpectralDiscretization::setSolutionField(const Thyra_Vector& solution, 
+                                                const bool overlapped)
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
@@ -1120,12 +824,12 @@ Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
   stk::mesh::Selector locally_owned =
     outputStkMeshStruct->metaData->locally_owned_part();
 
-  container->saveSolnVectorT(solnT, locally_owned, node_mapT);
-
+  container->saveSolnVector(solution, locally_owned, m_node_vs);
 }
 
 void
-Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT)
+Aeras::SpectralDiscretization::setSolutionField(const Thyra_Vector& solution, const Thyra_Vector& solution_dot,
+                                                const bool overlapped)
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
@@ -1141,14 +845,14 @@ Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT, con
   stk::mesh::Selector locally_owned =
     outputStkMeshStruct->metaData->locally_owned_part();
 
-  container->saveSolnVectorT(solnT, soln_dotT, locally_owned, node_mapT);
-
+  container->saveSolnVector(solution, solution_dot, locally_owned, m_node_vs);
 }
 
 void
-Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT,
-                                                 const Tpetra_Vector& soln_dotT,
-                                                 const Tpetra_Vector& soln_dotdotT)
+Aeras::SpectralDiscretization::setSolutionField(const Thyra_Vector& solution,
+                                                const Thyra_Vector& solution_dot,
+                                                const Thyra_Vector& solution_dotdot,
+                                                const bool overlapped)
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
@@ -1165,11 +869,11 @@ Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT,
   stk::mesh::Selector locally_owned =
     outputStkMeshStruct->metaData->locally_owned_part();
 
-  container->saveSolnVectorT(solnT, soln_dotT, soln_dotdotT, locally_owned, node_mapT);
-
+  container->saveSolnVector(solution, solution_dot, solution_dotdot, locally_owned, m_node_vs);
 }
+
 void
-Aeras::SpectralDiscretization::setFieldT(const Tpetra_Vector &result,
+Aeras::SpectralDiscretization::setField(const Thyra_Vector &result,
                                         const std::string& name,
                                         bool overlapped)
 {
@@ -1177,7 +881,8 @@ Aeras::SpectralDiscretization::setFieldT(const Tpetra_Vector &result,
 }
 
 void
-Aeras::SpectralDiscretization::setSolutionFieldMV(const Tpetra_MultiVector& solnT)
+Aeras::SpectralDiscretization::setSolutionFieldMV(const Thyra_MultiVector& solution,
+                                                  const bool overlapped)
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
@@ -1193,91 +898,7 @@ Aeras::SpectralDiscretization::setSolutionFieldMV(const Tpetra_MultiVector& soln
   stk::mesh::Selector locally_owned =
     outputStkMeshStruct->metaData->locally_owned_part();
 
-  container->saveSolnMultiVector(solnT, locally_owned, node_mapT);
-
-}
-
-void
-Aeras::SpectralDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
-  // Copy soln vector into solution field, one node at a time
-  // Note that soln coming in is the local+ghost (overlapped) soln
-
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-    outputStkMeshStruct->getFieldContainer();
-
-  // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared =
-    outputStkMeshStruct->metaData->locally_owned_part() |
-    outputStkMeshStruct->metaData->globally_shared_part();
-
-  container->saveSolnVectorT(solnT, select_owned_or_shared, overlap_node_mapT);
-}
-
-void
-Aeras::SpectralDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT)
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
-  // Copy soln and soln_dot vector into solution field, one node at a time
-  // Note that soln and soln_dot coming in is the local+ghost (overlapped) soln and soln_dot
-
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-    outputStkMeshStruct->getFieldContainer();
-
-  // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared =
-    outputStkMeshStruct->metaData->locally_owned_part() |
-    outputStkMeshStruct->metaData->globally_shared_part();
-
-  container->saveSolnVectorT(solnT, soln_dotT, select_owned_or_shared, overlap_node_mapT);
-}
-
-void
-Aeras::SpectralDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT,
-                                                     const Tpetra_Vector& soln_dotT,
-                                                     const Tpetra_Vector& soln_dotdotT)
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
-  // Copy soln, soln_dot and soln_dotdot vector into solution field, one node at a time
-  // Note that soln, soln_dot, soln_dotdot coming in is the local+ghost (overlapped) soln, soln_dot
-  // and soln_dotdot
-
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-    outputStkMeshStruct->getFieldContainer();
-
-  // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared =
-    outputStkMeshStruct->metaData->locally_owned_part() |
-    outputStkMeshStruct->metaData->globally_shared_part();
-
-  container->saveSolnVectorT(solnT, soln_dotT, soln_dotdotT, select_owned_or_shared, overlap_node_mapT);
-}
-
-void
-Aeras::SpectralDiscretization::setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT)
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
-  // Copy soln vector into solution field, one node at a time
-  // Note that soln coming in is the local+ghost (overlapped) soln
-
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-    outputStkMeshStruct->getFieldContainer();
-
-  // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared =
-    outputStkMeshStruct->metaData->locally_owned_part() |
-    outputStkMeshStruct->metaData->globally_shared_part();
-
-  container->saveSolnMultiVector(solnT, select_owned_or_shared, overlap_node_mapT);
+  container->saveSolnMultiVector(solution, locally_owned, m_node_vs);
 }
 
 inline GO Aeras::SpectralDiscretization::gid(const stk::mesh::Entity node) const
@@ -1640,7 +1261,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
 
   //////////////////////////////////////////////////////////////////////
   // N.B.: Filling the indicesT array is inherently serial
-  Teuchos::Array<Tpetra_GO> indicesT(numOwnedNodes);
+  Teuchos::Array<GO> indicesT(numOwnedNodes);
   size_t inode = 0;
 
   // Add the ownednodes to indicesT
@@ -1668,23 +1289,24 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
   // End fill indicesT
   //////////////////////////////////////////////////////////////////////
 
-  node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indicesT(), commT);
+  m_node_vs = Teuchos::null; // delete existing map happens here on remesh
+  m_node_vs = Albany::createVectorSpace(commT,indicesT());
 
-  numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
+  numGlobalNodes = Albany::getMaxAllGlobalIndex(m_node_vs) + 1;
 
-  Teuchos::Array<Tpetra_GO> dofIndicesT(numOwnedNodes * neq);
+  Teuchos::Array<GO> dofIndicesT(numOwnedNodes * neq);
   for (size_t i = 0; i < numOwnedNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
-  mapT = Teuchos::null; // delete existing map happens here on remesh
-  mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(dofIndicesT(), commT);
+  m_vs = Teuchos::null; // delete existing map happens here on remesh
+  m_vs = Albany::createVectorSpace(commT,dofIndicesT);
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     Teuchos::nonnull(stkMeshStruct->nodal_data_base),
     std::logic_error,
     "Nodal database not implemented for Aeras::SpectralDiscretization");
+
 }
 
 void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
@@ -1767,7 +1389,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
 
   //////////////////////////////////////////////////////////////////////
   // N.B.: Filling the indicesT array is inherently serial
-  Teuchos::Array<Tpetra_GO> indicesT(numOwnedNodes);
+  Teuchos::Array<GO> indicesT(numOwnedNodes);
   size_t inode = 0;
 
   // Add the ownednodes to indicesT
@@ -1785,7 +1407,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
     for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
       stk::mesh::Entity edge = edgeBucket[iedge];
-      Tpetra_GO edgeID = gid(edge);
+      GO edgeID = gid(edge);
       if (edgeIsOwned[edgeID])
       {
         for (size_t lnode = 1; lnode < np-1; ++lnode)
@@ -1816,23 +1438,24 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
   // End fill indicesT
   //////////////////////////////////////////////////////////////////////
 
-  node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indicesT(), commT);
+  m_node_vs = Teuchos::null; // delete existing map happens here on remesh
+  m_node_vs = Albany::createVectorSpace(commT, indicesT());
 
-  numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
+  numGlobalNodes = Albany::getMaxAllGlobalIndex(m_node_vs) + 1;
 
-  Teuchos::Array<Tpetra_GO> dofIndicesT(numOwnedNodes * neq);
+  Teuchos::Array<GO> dofIndicesT(numOwnedNodes * neq);
   for (size_t i = 0; i < numOwnedNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
-  mapT = Teuchos::null; // delete existing map happens here on remesh
-  mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(dofIndicesT(), commT);
+  m_vs = Teuchos::null; // delete existing map happens here on remesh
+  m_vs = Albany::createVectorSpace(commT, dofIndicesT());
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     Teuchos::nonnull(stkMeshStruct->nodal_data_base),
     std::logic_error,
     "Nodal database not implemented for Aeras::SpectralDiscretization");
+
 }
 
 void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
@@ -1848,8 +1471,8 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
     stk::mesh::Selector(metaData.globally_shared_part()) -
     stk::mesh::Selector(metaData.locally_owned_part());
 
-  // Use node_mapT to get the number of locally owned nodes
-  numOverlapNodes = node_mapT->getNodeNumElements();
+  // Use m_node_vs to get the number of locally owned nodes
+  numOverlapNodes = Albany::getNumLocalElements(m_node_vs); 
 
   // Count the number of unowned nodes from the original linear STK mesh
   std::vector< stk::mesh::Entity > unownedNodes;
@@ -1875,8 +1498,8 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
   // N.B.: Filling the overlapIndicesT array is inherently serial
 
   // Copy owned indices to overlap indices
-  Teuchos::ArrayView<const Tpetra_GO> ownedIndicesT = node_mapT->getNodeElementList();
-  Teuchos::Array<Tpetra_GO> overlapIndicesT(numOverlapNodes);
+  Teuchos::ArrayView<const GO> ownedIndicesT = Albany::getNodeElementList(m_node_vs);
+  Teuchos::Array<GO> overlapIndicesT(numOverlapNodes);
   for (size_t i = 0; i < ownedIndicesT.size(); ++i)
     overlapIndicesT[i] = ownedIndicesT[i];
 
@@ -1900,21 +1523,19 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
   // End fill overlapIndicesT
   //////////////////////////////////////////////////////////////////////
 
-  overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(
-      overlapIndicesT(), commT);
+  m_overlap_node_vs = Teuchos::null; // delete existing map happens here on remesh
+  m_overlap_node_vs = Albany::createVectorSpace(commT, overlapIndicesT()); 
 
   // Compute the overlap DOF indices.  Since these might be strided by
   // the number of overlap nodes, we compute them from scratch.
-  Teuchos::Array<Tpetra_GO> overlapDofIndicesT(numOverlapNodes * neq);
+  Teuchos::Array<GO> overlapDofIndicesT(numOverlapNodes * neq);
   for (size_t i = 0; i < numOverlapNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       overlapDofIndicesT[getOverlapDOF(i,j)] =
         getGlobalDOF(overlapIndicesT[i],j);
 
-  overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(
-      overlapDofIndicesT(), commT);
+  m_overlap_vs = Teuchos::null; // delete existing map happens here on remesh
+  m_overlap_vs = Albany::createVectorSpace(commT, overlapDofIndicesT()); 
 
   coordinates.resize(3*numOverlapNodes);
 }
@@ -1933,7 +1554,7 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
     stk::mesh::Selector(metaData.locally_owned_part());
 
   // Use node_mapT to get the number of locally owned nodes
-  numOverlapNodes = node_mapT->getNodeNumElements();
+  numOverlapNodes = Albany::getNumLocalElements(m_node_vs);
 
   // Count the number of unowned nodes from the original linear STK mesh
   std::vector< stk::mesh::Entity > unownedNodes;
@@ -1989,8 +1610,8 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
   // N.B.: Filling the overlapIndicesT array is inherently serial
 
   // Copy owned indices to overlap indices
-  Teuchos::ArrayView<const Tpetra_GO> ownedIndicesT = node_mapT->getNodeElementList();
-  Teuchos::Array<Tpetra_GO> overlapIndicesT(numOverlapNodes);
+  Teuchos::ArrayView<const GO> ownedIndicesT = Albany::getNodeElementList(m_node_vs);
+  Teuchos::Array<GO> overlapIndicesT(numOverlapNodes);
   for (size_t i = 0; i < ownedIndicesT.size(); ++i)
     overlapIndicesT[i] = ownedIndicesT[i];
 
@@ -2008,7 +1629,7 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
     for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
       stk::mesh::Entity edge = edgeBucket[iedge];
-      Tpetra_GO edgeID = gid(edge);
+      GO edgeID = gid(edge);
       if (!edgeIsOwned[edgeID])
       {
         for (size_t lnode = 1; lnode < np-1; ++lnode)
@@ -2032,18 +1653,18 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
   // End fill overlapIndicesT
   //////////////////////////////////////////////////////////////////////
 
-  overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(overlapIndicesT(), commT);
+  m_overlap_node_vs = Teuchos::null; // delete existing vector space happens here on remesh
+  m_overlap_node_vs = Albany::createVectorSpace(commT, overlapIndicesT());
 
   // Compute the overlap DOF indices.  Since these might be strided by
   // the number of overlap nodes, we compute them from scratch.
-  Teuchos::Array<Tpetra_GO> overlapDofIndicesT(numOverlapNodes * neq);
+  Teuchos::Array<GO> overlapDofIndicesT(numOverlapNodes * neq);
   for (size_t i = 0; i < numOverlapNodes; ++i)
     for (size_t j = 0; j < neq; ++j)
       overlapDofIndicesT[getOverlapDOF(i,j)] = getGlobalDOF(overlapIndicesT[i],j);
 
-  overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(overlapDofIndicesT(), commT);
+  m_overlap_vs = Teuchos::null; // delete existing vector space happens here on remesh
+  m_overlap_vs = Albany::createVectorSpace(commT, overlapDofIndicesT()); ;
 
   coordinates.resize(3*numOverlapNodes);
 }
@@ -2233,7 +1854,28 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   }
 }
 
-Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph()
+
+void Aeras::SpectralDiscretization::computeGraphs()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+  computeGraphsUpToFillComplete();
+  fillCompleteGraphs();
+}
+
+void Aeras::SpectralDiscretization::computeGraphs_Explicit()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+  if (explicit_scheme == true) {
+    computeGraphsExplicitUpToFillComplete();
+    fillCompleteGraphsExplicit();
+  }
+}
+
+void Aeras::SpectralDiscretization::computeGraphsExplicitUpToFillComplete()
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
@@ -2243,9 +1885,64 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
   *out << "nodes_per_element: " << nodes_per_element << std::endl;
 #endif
 
-  Teuchos::RCP<Tpetra_CrsGraph> Graph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
-                                                    neq*nodes_per_element));
+  m_overlap_jac_factory = Teuchos::null; // delete existing graph here on remesh
+  //Graph for diagonal matrix
+  m_overlap_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs,1) );
 
+  stk::mesh::Selector select_owned =
+    stk::mesh::Selector(metaData.locally_owned_part());
+
+  const stk::mesh::BucketVector & buckets =
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
+
+  const int numBuckets = buckets.size();
+
+  if (commT->getRank()==0)
+    *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
+         << std::endl;
+
+  GO row;
+  Teuchos::ArrayView<GO> colAV;
+
+  //Populate the graphs
+  for (int b = 0; b < numBuckets; ++b)
+  {
+    stk::mesh::Bucket & buck = *buckets[b];
+    // i is the element index within bucket b
+    for (std::size_t i = 0; i < buck.size(); ++i)
+    {
+      Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
+      for (int j = 0; j < nodes_per_element; ++j)
+      {
+        const GO rowNode = node_rels[j];
+        // loop over eqs
+        for (std::size_t k=0; k < neq; k++)
+        {
+          row = getGlobalDOF(rowNode, k);
+          //col = row
+          colAV = Teuchos::arrayView(&row, 1);
+          m_overlap_jac_factory->insertGlobalIndices(row, colAV);
+        }
+      }
+    }
+  }
+}
+
+void Aeras::SpectralDiscretization::computeGraphsUpToFillComplete()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+#ifdef OUTPUT_TO_SCREEN
+  *out << "nodes_per_element: " << nodes_per_element << std::endl;
+#endif
+
+  //Create implicit overlap jac factory and populate  
+  m_implicit_overlap_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs,neq*nodes_per_element) );
+  //For implicit scheme, m_overlap_jac_factory = m_implicit_overlap_jac_factory
+  if (explicit_scheme == false) {
+    m_overlap_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs,neq*nodes_per_element) );
+  }
 #ifdef OUTPUT_TO_SCREEN
   *out << "neq*nodes_per_element: " << neq*nodes_per_element << std::endl;
 #endif
@@ -2262,8 +1959,8 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
     *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
          << std::endl;
 
-  Tpetra_GO row, col;
-  Teuchos::ArrayView<Tpetra_GO> colAV;
+  GO row, col;
+  Teuchos::ArrayView<GO> colAV;
 
   //Populate the graphs
   for (int b = 0; b < numBuckets; ++b)
@@ -2286,103 +1983,84 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
             for (std::size_t m=0; m < neq; m++)
             {
               col = getGlobalDOF(colNode, m);
-              colAV = Teuchos::arrayView(&col, 1);
-              Graph->insertGlobalIndices(row, colAV);
+              m_implicit_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col,1));
+              m_implicit_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col,1));
+              //IKT, FIXME?  The following line might be needed 
+              //m_implicit_overlap_jac_factory->insertGlobalIndices(col, Teuchos::arrayView(&row,1));
             }
           }
         }
       }
     }
   }
-  Graph->fillComplete();
-
-  return Graph;
-}
-
-Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOwnedGraph(Teuchos::RCP<Tpetra_CrsGraph> Graph)
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
-
-  // Create Owned graph by exporting overlap with known row map
-  Teuchos::RCP<Tpetra_CrsGraph> OwnedGraph = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
-
-  // Create non-overlapped matrix using two maps and export object
-  Teuchos::RCP<Tpetra_Export> exporterT =
-    Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
-
-  OwnedGraph->doExport(*Graph, *exporterT, Tpetra::INSERT);
-  OwnedGraph->fillComplete();
-
-  return OwnedGraph;
-}
-
-
-void Aeras::SpectralDiscretization::computeGraphs_Explicit()
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
-
-#ifdef OUTPUT_TO_SCREEN
-  *out << "nodes_per_element: " << nodes_per_element << std::endl;
-#endif
-
-  overlap_graphT = Teuchos::null; // delete existing graph here on remesh
-  //Graph for diagonal matrix
-  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT, 1));
-
-  stk::mesh::Selector select_owned =
-    stk::mesh::Selector(metaData.locally_owned_part());
-
-  const stk::mesh::BucketVector & buckets =
-    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
-
-  const int numBuckets = buckets.size();
-
-  if (commT->getRank()==0)
-    *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
-         << std::endl;
-
-  Tpetra_GO row;
-  Teuchos::ArrayView<Tpetra_GO> colAV;
-
-  //Populate the graphs
-  for (int b = 0; b < numBuckets; ++b)
-  {
-    stk::mesh::Bucket & buck = *buckets[b];
-    // i is the element index within bucket b
-    for (std::size_t i = 0; i < buck.size(); ++i)
+  //For implicit scheme, m_overlap_jac_factory = m_implicit_overlap_jac_factory 
+  if (explicit_scheme == false) {
+    for (int b = 0; b < numBuckets; ++b)
     {
-      Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
-      for (int j = 0; j < nodes_per_element; ++j)
+      stk::mesh::Bucket & buck = *buckets[b];
+      // i is the element index within bucket b
+      for (std::size_t i = 0; i < buck.size(); ++i)
       {
-        const GO rowNode = node_rels[j];
-        // loop over eqs
-        for (std::size_t k=0; k < neq; k++)
+        Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
+        for (int j = 0; j < nodes_per_element; ++j)
         {
-          row = getGlobalDOF(rowNode, k);
-          //col = row
-          colAV = Teuchos::arrayView(&row, 1);
-          overlap_graphT->insertGlobalIndices(row, colAV);
+          const GO rowNode = node_rels[j];
+          // loop over eqs
+          for (std::size_t k=0; k < neq; k++)
+          {
+            row = getGlobalDOF(rowNode, k);
+            for (std::size_t l=0; l < nodes_per_element; l++)
+            {
+              const GO colNode = node_rels[l];
+              for (std::size_t m=0; m < neq; m++)
+              {
+                col = getGlobalDOF(colNode, m);
+                m_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col,1));
+                m_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col,1));
+                //IKT, FIXME?  The following line might be needed 
+                //m_overlap_jac_factory->insertGlobalIndices(col, Teuchos::arrayView(&row,1));
+              }
+            }
+          }
         }
       }
     }
   }
-  overlap_graphT->fillComplete();
+}
 
-  // Create Owned graph by exporting overlap with known row map
-  graphT = Teuchos::null; // delete existing graph happens here on remesh
 
-  //Graph for diagonal matrix
-  graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, 1));
+void Aeras::SpectralDiscretization::fillCompleteGraphs()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
 
-  // Create non-overlapped matrix using two maps and export object
-  Teuchos::RCP<Tpetra_Export> exporterT =
-    Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
-  graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
-  graphT->fillComplete();
+  //fill complete m_implicit_overlap_jac_factory
+  m_implicit_overlap_jac_factory->fillComplete();
+  //For implicit scheme, m_overlap_jac_factory = m_implicit_overlap_jac_factory 
+  if (explicit_scheme == false) {
+    m_overlap_jac_factory->fillComplete();
+  }
+
+  //create m_implicit_jac_factory (owned) 
+  m_implicit_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_vs, m_vs, m_implicit_overlap_jac_factory) );
+  //For implicit scheme, m_jac_factory = m_implicit_jac_factory 
+  if (explicit_scheme == false) {
+    m_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_vs, m_vs, m_overlap_jac_factory) );
+  }
+}
+
+void Aeras::SpectralDiscretization::fillCompleteGraphsExplicit()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+
+  //fill complete m_overlap_jac_factory
+  m_overlap_jac_factory->fillComplete();
+
+  //create m_jac_factory (owned) 
+  m_jac_factory = Teuchos::rcp( new Albany::ThyraCrsMatrixFactory(m_vs, m_vs, m_overlap_jac_factory) );
 }
 
 
@@ -2468,7 +2146,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     //coords[b].resize(buck.size());
 
     // Set size of Kokkos views
-    wsElNodeEqID[b] = WorksetConn("wsElNodeEqID", buck.size(), nodes_per_element, neq);
+    wsElNodeEqID[b] = Albany::WorksetConn("wsElNodeEqID", buck.size(), nodes_per_element, neq);
 
     {  // nodalDataToElemNode.
 
@@ -2574,7 +2252,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
         // const stk::mesh::Entity rowNode = node_rels[j];
         // const GO node_gid = gid(rowNode);
         const GO node_gid = node_rels[j];
-        const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
+        const LO node_lid = Albany::getLocalElement(m_overlap_node_vs,node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(
           node_lid < 0,
@@ -2730,7 +2408,6 @@ void Aeras::SpectralDiscretization::computeSideSetsLines()
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  /*
   // Clean up existing sideset structure if remeshing
   for(int i = 0; i < sideSets.size(); i++)
     sideSets[i].clear(); // empty the ith map
@@ -2791,7 +2468,7 @@ void Aeras::SpectralDiscretization::computeSideSetsLines()
       sStruct.side_local_id = determine_local_side_id(elem, sidee);
 
       // Save the index of the element block that this elem lives in
-      sStruct.elem_ebIndex = stkMeshStruct->ebNameToIndex[wsEBNames[workset]];
+      sStruct.elem_ebIndex = stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[workset]];
 
       Albany::SideSetList& ssList = sideSets[workset];   // Get a ref to the side set map for this ws
       Albany::SideSetList::iterator it = ssList.find(ss->first); // Get an iterator to the correct sideset (if
@@ -2813,7 +2490,7 @@ void Aeras::SpectralDiscretization::computeSideSetsLines()
     }
 
     ss++;
-  }*/
+  }
 }
 
 unsigned
@@ -2937,7 +2614,6 @@ void Aeras::SpectralDiscretization::computeNodeSetsLines()
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  /*
   std::map<std::string, stk::mesh::Part*>::iterator ns = stkMeshStruct->nsPartVec.begin();
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
@@ -2959,13 +2635,13 @@ void Aeras::SpectralDiscretization::computeNodeSetsLines()
     for (std::size_t i=0; i < nodes.size(); i++)
     {
       GO node_gid = gid(nodes[i]);
-      int node_lid = node_mapT->getLocalElement(node_gid);
+      auto node_lid = Albany::getLocalElement(m_node_vs,node_gid);
       nodeSets[ns->first][i].resize(neq);
       for (std::size_t eq=0; eq < neq; eq++)  nodeSets[ns->first][i][eq] = getOwnedDOF(node_lid,eq);
       nodeSetCoords[ns->first][i] = stk::mesh::field_data(*coordinates_field, nodes[i]);
     }
     ns++;
-  }*/
+  }
 }
 
 void Aeras::SpectralDiscretization::createOutputMesh()
@@ -3410,7 +3086,7 @@ std::cout << "AGS -- changing POINTTYPE_SPECTRAL to POINTTYPE_WARPBLEND -- check
 }
 
 int
-Aeras::SpectralDiscretization::processNetCDFOutputRequestT(const Tpetra_Vector& solution_fieldT)
+Aeras::SpectralDiscretization::processNetCDFOutputRequestT(const Thyra_Vector& solution_field)
 {
 #ifdef ALBANY_SEACAS
   // IK, 10/13/14: need to implement!
@@ -3600,9 +3276,9 @@ Aeras::SpectralDiscretization::updateMesh()
     computeOwnedNodesAndUnknownsQuads();
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
-  //write owned maps to matrix market file for debug
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("mapT.mm", *mapT);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("node_mapT.mm", *node_mapT);
+  //write owned vector spaces to matrix market file for debug
+  Albany::writeMatrixMarket(m_vs, "m_vs.mm");
+  Albany::writeMatrixMarket(m_node_vs, "m_node_vs.mm");
 #endif
 
   // IK, 1/23/15: I've commented out the guts of this function.  It is
@@ -3616,9 +3292,9 @@ Aeras::SpectralDiscretization::updateMesh()
     computeOverlapNodesAndUnknownsQuads();
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
-  //write overlap maps to matrix market file for debug
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("overlap_mapT.mm", *overlap_mapT);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
+  //write overlap vector spaces to matrix market file for debug
+  Albany::writeMatrixMarket(m_overlap_vs, "m_overlap_vs.mm");
+  Albany::writeMatrixMarket(m_overlap_node_vs, "m_overlap_node_vs.mm");
 #endif
 
     // Note that getCoordinates has not been converted to use the
@@ -3638,26 +3314,19 @@ Aeras::SpectralDiscretization::updateMesh()
   // Right now, computeGraphs_Explicit() will not work with shallow water; therefore
   // only call this function for hydrostatic (numLevels > 0)
 
-  if (explicit_scheme == true) { //explicit scheme
-    //populate implicit_graphT, needed to populate Laplace operator for hyperviscosity
-    implicit_overlap_graphT = computeOverlapGraph();
-    implicit_graphT = computeOwnedGraph(implicit_overlap_graphT);
-    computeGraphs_Explicit();
-  }
-  else { //implicit scheme
-    overlap_graphT = computeOverlapGraph();
-    graphT = computeOwnedGraph(overlap_graphT);
-    implicit_overlap_graphT = computeOverlapGraph();
-    implicit_graphT = computeOwnedGraph(overlap_graphT);
-  }
+  //computeGraphs populates m_implicit_graph_factory and m_implicit_overlap_graph_factory
+  //for an explicit scheme; for an implicit scheme, it also populates m_graph_factory and m_overlap_graph_factory.
+  //For an explicit scheme, these the implicit graph factories are needed to populate correctly the Laplace 
+  //operator, needed for hyperviscosity
+  computeGraphs(); 
+  //computeGraphs_Explicit will populate m_graph_factory and m_overlap_graph_factory
+  //for an explicit scheme, which will have graphs of diagonal matrices. 
+  computeGraphs_Explicit(); 
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
-  Teuchos::RCP<Tpetra_CrsMatrix> ImplicitMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT));
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("ImplicitMatrix.mm", ImplicitMatrix);
-  Teuchos::RCP<Tpetra_CrsMatrix> Matrix = Teuchos::rcp(new Tpetra_CrsMatrix(graphT));
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("Matrix.mm", Matrix);
-  Teuchos::RCP<Tpetra_CrsMatrix> OverlapMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(overlap_graphT));
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("OverlapMatrix.mm", OverlapMatrix);
+  Albany::writeMatrixMarket(m_implicit_jac_factory->createOp(), "ImplicitOp.mm"); 
+  Albany::writeMatrixMarket(m_jac_factory->createOp(), "Op.mm"); 
+  Albany::writeMatrixMarket(m_overlap_jac_factory->createOp(), "OverlapOp.mm"); 
 #endif
 
   // IK, 1/23/15, FIXME: to implement -- transform mesh based on new

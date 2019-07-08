@@ -2,12 +2,6 @@
 
 cd /home/ikalash/nightlyCDash
 
-rm -rf /home/ikalash/nightlyCDash/repos
-rm -rf /home/ikalash/nightlyCDash/build
-rm -rf /home/ikalash/nightlyCDash/ctest_nightly.cmake.work
-rm -rf /home/ikalash/nightlyCDash/nightly_log*
-rm -rf /home/ikalash/nightlyCDash/results*
-
 cat albanyT ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
 export PATH=$PATH:/usr/lib64/openmpi/bin:/home/ikalash/Install/ParaView-4.3.1-Linux-64bit/bin:/home/ikalash/Install:/home/ikalash/Install/Cubit:/home/ikalash/Install/R2015a/bin:/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install

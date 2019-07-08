@@ -29,7 +29,7 @@ StokesFOThickness::StokesFOThickness(
   neq = 3; //LandIce FO Stokes system is a system of 2 PDEs; add one for the thickness.
 
   // Set the num PDEs for the null space object to pass to ML
-  this->rigidBodyModes->setNumPDEs(neq);
+  // this->rigidBodyModes->setNumPDEs(neq);
 
   if (basalSideName!="__INVALID__") {
     // Defining the thickness equation only in 2D (basal side)

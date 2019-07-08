@@ -52,7 +52,7 @@ namespace Albany {
 
     Ioss::Init::Initializer ioInit;
 
-    void loadOrSetCoordinates3d ();
+    void loadOrSetCoordinates3d (int index);
 
     Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 

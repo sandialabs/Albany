@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Name: Heat 2D
     Solution Method: Steady
@@ -9,8 +10,8 @@ ANONYMOUS:
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF T: 1.00000000000000000e+00
       DBC on NS NodeSet1 for DOF T: 0.00000000000000000e+00
-    Thermal Conductivity: 
-      Thermal Conductivity Type: Block Dependent
+    ThermalConductivity: 
+      ThermalConductivity Type: Block Dependent
     Parameters: 
       Number: 2
       Parameter 0: DBC on NS NodeSet0 for DOF T

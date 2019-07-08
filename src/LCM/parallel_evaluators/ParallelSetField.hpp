@@ -35,7 +35,7 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
 
   //! The name of the field to be set.
   std::string evaluatedFieldName;

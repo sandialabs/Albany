@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: ThermoElectrostatics 2D
     Convection Velocity: '{0.0,0.0}'
@@ -13,7 +14,7 @@ ANONYMOUS:
     TE Properties: 
       Number of Materials: 1
       Coupling Factor: '{2.0}'
-      Thermal Conductivity: '{1.0}'
+      ThermalConductivity: '{1.0}'
       Electrical Conductivity: '{50.0}'
       Rho Cp: '{1.0}'
       X Bounds: '{0.0,2.0}'

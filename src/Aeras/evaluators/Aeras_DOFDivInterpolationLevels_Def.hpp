@@ -71,6 +71,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   vcontra = Kokkos::createDynRankView(val_node.get_view(), "XXX", numNodes, 2);
 #endif
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************

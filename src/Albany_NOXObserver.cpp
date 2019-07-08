@@ -4,28 +4,30 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: right now this is Epetra (Albany) function.
-//Not compiled if ALBANY_EPETRA_EXE is off.
-
 #include "Albany_NOXObserver.hpp"
+#include "Albany_ObserverImpl.hpp"
+#include "Albany_EpetraThyraUtils.hpp"
 
-#include "Teuchos_ENull.hpp"
+namespace Albany
+{
 
-Albany_NOXObserver::Albany_NOXObserver(
-    const Teuchos::RCP<Albany::Application> &app_) :
-  impl(app_)
+NOXObserver::NOXObserver(const Teuchos::RCP<Albany::Application>& app_)
+ : impl(new ObserverImpl(app_))
 {
    // Nothing to do
 }
 
-void Albany_NOXObserver::observeSolution(
-    const Epetra_Vector& solution)
+void NOXObserver::observeSolution(const Epetra_Vector& solution)
 {
-  this->observeSolution(solution, impl.getTimeParamValueOrDefault(0.0));
+  this->observeSolution(solution, impl->getTimeParamValueOrDefault(0.0));
 }
 
-void Albany_NOXObserver::observeSolution(
-    const Epetra_Vector& solution, double time_or_param_val)
+void NOXObserver::observeSolution(const Epetra_Vector& solution,
+                                  double time_or_param_val)
 {
-  impl.observeSolution(time_or_param_val, solution, Teuchos::null);
+  auto solution_ptr = Teuchos::rcpFromRef(solution);
+  auto solution_thyra = createConstThyraVector(solution_ptr);
+  impl->observeSolution(time_or_param_val, *solution_thyra, Teuchos::null, Teuchos::null);
 }
+
+} // namespace Albany

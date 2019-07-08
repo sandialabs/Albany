@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Debug Output: 
     Write Solution to MatrixMarket: false
   Problem: 
@@ -16,7 +17,7 @@ ANONYMOUS:
         Side Set Name: SideSet2
         Field Rank: Scalar
         Source Field Name: u
-        Target Field Name: ZERO
+        Target Value: 0.0
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF U: 0.00000000000000000e+00
       DBC on NS NodeSet1 for DOF U: 0.00000000000000000e+00

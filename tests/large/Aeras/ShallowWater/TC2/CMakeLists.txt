@@ -12,10 +12,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSpectralRythmosSolver_KandG_T.ya
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-add_test(Aeras_${testName}_Spectral_Large_Quad9_BackwardEuler ${AlbanyT.exe}
+add_test(Aeras_${testName}_Spectral_Large_Quad9_BackwardEuler ${Albany.exe}
 inputSpectralT.yaml) 
-add_test(Aeras_${testName}_Spectral_24Eles_Quad25_BackwardEuler ${AlbanyT.exe}
+set_tests_properties(Aeras_${testName}_Spectral_Large_Quad9_BackwardEuler PROPERTIES LABELS "Aeras;Tpetra;Forward")
+add_test(Aeras_${testName}_Spectral_24Eles_Quad25_BackwardEuler ${Albany.exe}
 input_24elesSpectralT.yaml) 
+set_tests_properties(Aeras_${testName}_Spectral_24Eles_Quad25_BackwardEuler PROPERTIES LABELS "Aeras;Tpetra;Forward")
 
-#add_test(Aeras_${testName}_Spectral_RythmosSolver_RungeKutta4 ${AlbanyT.exe}
+#add_test(Aeras_${testName}_Spectral_RythmosSolver_RungeKutta4 ${Albany.exe}
 #    inputSpectralRythmosSolverT.yaml) 

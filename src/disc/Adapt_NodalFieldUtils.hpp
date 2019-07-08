@@ -4,25 +4,23 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ADAPT_NODALFIELDUTILS_HPP
-#define ADAPT_NODALFIELDUTILS_HPP
+#ifndef ADAPT_NODAL_FIELD_UTILS_HPP
+#define ADAPT_NODAL_FIELD_UTILS_HPP
 
 #include <map>
 #include <vector>
 
 namespace Adapt {
 
-    struct NodeFieldSize {
+struct NodeFieldSize {
+  std::string name;
+  int offset;
+  int ndofs;
+};
 
-       std::string name;
-       int offset;
-       int ndofs;
-
-    };
-
-   typedef std::vector<NodeFieldSize> NodeFieldSizeVector;
-   typedef std::map<const std::string, std::size_t> NodeFieldSizeMap;
+typedef std::vector<NodeFieldSize> NodeFieldSizeVector;
+typedef std::map<const std::string, std::size_t> NodeFieldSizeMap;
 
 }
 
-#endif // ADAPT_NODALFIELDUTILS_HPP
+#endif // ADAPT_NODAL_FIELD_UTILS_HPP

@@ -25,10 +25,11 @@ if(ALBANY_IFPACK2)
  SET(OUTFILE "channelDiffusion.e")
  SET(REF_FILE "channelDiffusion.gold.e")
  add_test(NAME MechWithHydrogenFastPath_${testName}
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=channelDiffusion -DTEST_ARGS=channelDiffusion.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+set_tests_properties(MechWithHydrogenFastPath_${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 
 endif()

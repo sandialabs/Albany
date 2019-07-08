@@ -8,46 +8,20 @@
 #include "Teuchos_Array.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
-Albany::KLResponseFunction::
-KLResponseFunction(
-  const Teuchos::RCP<Albany::AbstractResponseFunction>& response_,
-  Teuchos::ParameterList& responseParams) :
-  response(response_),
-  responseParams(responseParams),
-  out(Teuchos::VerboseObjectBase::getDefaultOStream())
+namespace Albany
+{
+
+KLResponseFunction::
+KLResponseFunction(const Teuchos::RCP<Albany::AbstractResponseFunction>& response_,
+                   Teuchos::ParameterList& responseParams) :
+                   response(response_),
+                   responseParams(responseParams),
+                   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   num_kl = responseParams.get("Number of KL Terms", 5);
 }
 
-Albany::KLResponseFunction::
-~KLResponseFunction()
-{
-}
-
-Teuchos::RCP<const Tpetra_Map>
-Albany::KLResponseFunction::
-responseMapT() const
-{
-  return response->responseMapT();
-}
-
-Teuchos::RCP<Tpetra_Operator>
-Albany::KLResponseFunction::
-createGradientOpT() const
-{
-  return response->createGradientOpT();
-}
-
-bool
-Albany::KLResponseFunction::
-isScalarResponse() const
-{
-  return response->isScalarResponse();
-}
-
-
-void
-Albany::KLResponseFunction::
+void KLResponseFunction::
 evaluateResponse(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -58,9 +32,7 @@ evaluateResponse(const double current_time,
   response->evaluateResponse(current_time, x, xdot, xdotdot, p, g);
 }
 
-
-void
-Albany::KLResponseFunction::
+void KLResponseFunction::
 evaluateTangent(const double alpha,
     const double beta,
     const double omega,
@@ -84,8 +56,7 @@ evaluateTangent(const double alpha,
 }
 
 //! Evaluate distributed parameter derivative dg/dp
-void
-Albany::KLResponseFunction::
+void KLResponseFunction::
 evaluateDistParamDeriv(
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -98,8 +69,7 @@ evaluateDistParamDeriv(
   response->evaluateDistParamDeriv(current_time, x, xdot, xdotdot, param_array, dist_param_name, dg_dp);
 }
 
-void
-Albany::KLResponseFunction::
+void KLResponseFunction::
 evaluateDerivative(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -115,3 +85,5 @@ evaluateDerivative(const double current_time,
   response->evaluateDerivative(current_time, x, xdot, xdotdot, p, deriv_p,
                                g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
 }
+
+} // namespace Albany

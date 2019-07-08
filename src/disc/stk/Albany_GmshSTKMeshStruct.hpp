@@ -121,9 +121,12 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Records tags for the element.
   void store_element_info( int  e_type,
                            int& iline,
+                           int& iline3,
                            int& itria,
+                           int& itri6,
                            int& iquad,
                            int& itetra,
+                           int& itet10,
                            int& ihexa,
                            std::vector<int>& tags,
                            std::stringstream& ss);
@@ -181,6 +184,14 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void loadAsciiMesh ();
   void loadBinaryMesh ();
 
+
+  // Init the int counters below to zero.
+  void init_counters_to_zero();
+
+  // Init the int pointers below to null.
+  void init_pointers_to_null();
+
+
   // The number of entities, both elements and cells
   int num_entities;
 
@@ -197,15 +208,21 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   // Only some will be used, but it's easier to have different pointers
   int** hexas;
   int** tetra;
+  int** tet10;
   int** quads;
   int** trias;
+  int** tri6;
   int** lines;
+  int** line3;
 
   // Number of each of the above element types
   int nb_hexas;
   int nb_tetra;
+  int nb_tet10;
   int nb_quads;
   int nb_trias;
+  int nb_line3;
+  int nb_tri6;
   int nb_lines;
 
   // These pointers will be set equal to two of the previous group, depending on dimension

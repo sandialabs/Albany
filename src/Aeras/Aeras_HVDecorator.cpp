@@ -3,13 +3,14 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include "Aeras_HVDecorator.hpp"
 #include "Albany_SolverFactory.hpp"
-#include "Albany_ModelFactory.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include <sstream>
 
+#include "Albany_ThyraUtils.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 
 //uncomment the following to write stuff out to matrix market to debug
@@ -18,7 +19,6 @@
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
 static
 int mm_counter = 0;
-#include "TpetraExt_MMHelpers.hpp"
 #endif // WRITE_TO_MATRIX_MARKET
 
 //#define OUTPUT_TO_SCREEN 
@@ -82,10 +82,13 @@ Teuchos::RCP<Thyra_LinearOp> getOnlyNonzeros (const Teuchos::RCP<Thyra_LinearOp>
 }
 } // namespace
 
-Aeras::HVDecorator::HVDecorator(
-    const Teuchos::RCP<Albany::Application>& app_,
-    const Teuchos::RCP<Teuchos::ParameterList>& appParams)
-    :Albany::ModelEvaluatorT(app_,appParams)
+namespace Aeras
+{
+
+HVDecorator::
+HVDecorator(const Teuchos::RCP<Albany::Application>& app_,
+            const Teuchos::RCP<Teuchos::ParameterList>& appParams)
+ : Albany::ModelEvaluator(app_,appParams)
 {
 
 #ifdef OUTPUT_TO_SCREEN
@@ -94,15 +97,15 @@ Aeras::HVDecorator::HVDecorator(
 #endif
 
   // Create and store mass and Laplacian operators (in CrsMatrix form). 
-  Teuchos::RCP<Tpetra_CrsMatrix> mass = Albany::getTpetraMatrix(createOperatorDiag(1.0, 0.0, 0.0));
+  Teuchos::RCP<Thyra_LinearOp> mass = createOperatorDiag(1.0, 0.0, 0.0);
   Teuchos::RCP<Thyra_LinearOp> laplace = createOperator(0.0, 0.0, 1.0);
 
-  Teuchos::RCP<const Thyra_VectorSpace> mass_vs = Albany::createThyraVectorSpace(mass->getRowMap());
+  Teuchos::RCP<const Thyra_VectorSpace> mass_vs = mass->range(); 
 
   // Do some preprocessing to speed up subsequent residual calculations.
   // 1. Store the lumped mass diag reciprocal.
   inv_mass_diag_ = Thyra::createMember(mass_vs);
-  mass->getLocalDiagCopy(*Albany::getTpetraVector(inv_mass_diag_));
+  Albany::getDiagonalCopy(mass, inv_mass_diag_);
   Thyra::reciprocal(*inv_mass_diag_,inv_mass_diag_.ptr());
   // 2. Create a work vector in advance.
   wrk_ = Thyra::createMember(mass_vs);
@@ -116,8 +119,8 @@ Aeras::HVDecorator::HVDecorator(
 //compare the product L*x (L is the Laplace, x is an arbitrary vector)
 //in case of a parallel and serial run.
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("mass.mm", mass);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile("laplace.mm", Albany::getTpetraMatrix(laplace_));
+  Albany::writeMatrixMarket(mass, "mass");
+  Albany::writeMatrixMarket(laplace_, "laplace");
 #endif
 }
  
@@ -126,20 +129,14 @@ Aeras::HVDecorator::HVDecorator(
 //utilde/htilde variables when integrating the hyperviscosity system in time using 
 //an explicit scheme. 
 Teuchos::RCP<Thyra_LinearOp> 
-Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
+HVDecorator::createOperator(double alpha, double beta, double omega)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   double curr_time = 0.0;
-  //Get implicit_graphT from discretization object
-  Teuchos::RCP<const Tpetra_CrsGraph> implicit_graphT = 
-    app->getDiscretization()->getImplicitJacobianGraphT();  
-  //Define operator Op from implicit_graphT
-  const Teuchos::RCP<Thyra_LinearOp> Op =
-    Teuchos::nonnull(implicit_graphT) ? 
-    Albany::createThyraLinearOp(Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT))) :
-    Teuchos::null; 
+  //Get implicit Jacobian operator from discretization
+  Teuchos::RCP<Thyra_LinearOp> Op = app->getDiscretization()->createImplicitJacobianOp(); 
   auto args = this->getNominalValues();
   auto f = Thyra::createMember(args.get_x()->space());
   app->computeGlobalJacobian(alpha, beta, omega, curr_time,
@@ -151,7 +148,7 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
 }
 
 Teuchos::RCP<Thyra_LinearOp> 
-Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
+HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -173,9 +170,8 @@ Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
 //in evalModelImpl after the last computeGlobalResidual call.
 //Note that it is more efficient to implement an apply method like is done here, than 
 //to form a sparse CrsMatrix laplace_*mass_^(-1)*laplace_ and store it.  
-void
-Aeras::HVDecorator::applyLinvML(Teuchos::RCP<const Thyra_Vector> x_in, Teuchos::RCP<Thyra_Vector> x_out)
-const
+void HVDecorator::
+applyLinvML(Teuchos::RCP<const Thyra_Vector> x_in, Teuchos::RCP<Thyra_Vector> x_out) const
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -232,7 +228,7 @@ void sanitize_nans (const Thyra_Derivative& v) {
 
 // hide the original parental method AMET->evalModelImpl():
 void
-Aeras::HVDecorator::evalModelImpl(
+HVDecorator::evalModelImpl(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT,
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
@@ -262,12 +258,11 @@ Aeras::HVDecorator::evalModelImpl(
   for (int l = 0; l < inArgsT.Np(); ++l) {
     const Teuchos::RCP<const Thyra_Vector> p = inArgsT.get_p(l);
     if (Teuchos::nonnull(p)) {
-      const Teuchos::RCP<const Tpetra_Vector> pT = Albany::getConstTpetraVector(p);
-      const Teuchos::ArrayRCP<const ST> pT_constView = pT->get1dView();
+      auto p_constView = Albany::getLocalData(p); 
 
       ParamVec &sacado_param_vector = sacado_param_vec[l];
       for (unsigned int k = 0; k < sacado_param_vector.size(); ++k) {
-        sacado_param_vector[k].baseValue = pT_constView[k];
+        sacado_param_vector[k].baseValue = p_constView[k];
       }
     }
   }
@@ -331,13 +326,8 @@ Aeras::HVDecorator::evalModelImpl(
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //writing to MatrixMarket for debug
-  char name[100];  //create string for file name
-  sprintf(name, "xT_%i.mm", mm_counter);
-  const Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(x);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, xT);
-  sprintf(name, "xtildeT_%i.mm", mm_counter);
-  const Teuchos::RCP<const Tpetra_Vector> xtildeT = Albany::getConstTpetraVector(xtilde);
-  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(name, xtildeT);
+  Albany::writeMatrixMarket(x, "x", mm_counter);
+  Albany::writeMatrixMarket(xtilde, "xtilde", mm_counter);
   mm_counter++; 
 #endif  
 
@@ -395,3 +385,5 @@ Aeras::HVDecorator::evalModelImpl(
     }
   }
 }
+
+} // namespace Aeras

@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: Heat 2D
     Solution Method: Steady
@@ -8,8 +9,8 @@ ANONYMOUS:
     MaterialDB Filename: materials.yaml
     Dirichlet BCs: 
       DBC on NS t_inf for DOF T: 3.13149999999999977e+02
-    Thermal Conductivity: 
-      Thermal Conductivity Type: Block Dependent
+    ThermalConductivity: 
+      ThermalConductivity Type: Block Dependent
     Response Functions: 
       Number: 2
       Response 0: Solution Max Value

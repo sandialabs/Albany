@@ -79,6 +79,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(lambda_nodal,fm);
   this->utils.setFieldData(theta_nodal,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 

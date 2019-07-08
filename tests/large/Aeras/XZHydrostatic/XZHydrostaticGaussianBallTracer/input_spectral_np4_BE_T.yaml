@@ -1,7 +1,9 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Problem: 
+  Build Type: Tpetra
+  Problem:
+    Use MDField Memoization: true 
     Name: Aeras XZ Hydrostatic
     Phalanx Graph Visualization Detail: 1
     Solution Method: Transient

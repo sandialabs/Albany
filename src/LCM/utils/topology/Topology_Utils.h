@@ -21,9 +21,7 @@ namespace LCM {
 /// nodes exist.
 ///
 void
-display_connectivity(
-    Topology & topology,
-    stk::mesh::EntityRank cell_rank);
+display_connectivity(Topology& topology, stk::mesh::EntityRank cell_rank);
 
 ///
 /// \brief Output relations associated with entity
@@ -32,9 +30,7 @@ display_connectivity(
 /// \param[in] entity
 ///
 void
-display_relation(
-    Topology & topology,
-    stk::mesh::Entity entity);
+display_relation(Topology& topology, stk::mesh::Entity entity);
 
 ///
 /// \brief Output relations of a given rank associated with entity
@@ -44,8 +40,8 @@ display_relation(
 ///
 void
 display_relation(
-    Topology & topology,
-    stk::mesh::Entity entity,
+    Topology&                   topology,
+    stk::mesh::Entity           entity,
     stk::mesh::EntityRank const rank);
 
 ///
@@ -55,9 +51,9 @@ display_relation(
 ///
 bool
 is_needed_for_stk(
-    stk::mesh::BulkData & bulk_data,
-    stk::mesh::Entity source_entity,
-    stk::mesh::EntityRank target_rank,
+    stk::mesh::BulkData&        bulk_data,
+    stk::mesh::Entity           source_entity,
+    stk::mesh::EntityRank       target_rank,
     stk::mesh::EntityRank const cell_rank);
 
 ///
@@ -65,7 +61,7 @@ is_needed_for_stk(
 /// file names.
 ///
 std::string
-parallelize_string(std::string const & string);
+parallelize_string(std::string const& string);
 
 ///
 /// Auxiliary for graphviz output
@@ -77,9 +73,7 @@ entity_label(stk::mesh::EntityRank const rank);
 /// Auxiliary for graphviz output
 ///
 std::string
-entity_string(
-    Topology & topology,
-    stk::mesh::Entity entity);
+entity_string(Topology& topology, stk::mesh::Entity entity);
 
 ///
 /// Auxiliary for graphviz output
@@ -87,7 +81,7 @@ entity_string(
 std::string
 entity_color(
     stk::mesh::EntityRank const rank,
-    FractureState const fracture_state);
+    FailureState const          failure_state);
 
 ///
 /// Auxiliary for graphviz output
@@ -101,18 +95,17 @@ dot_header();
 std::string
 dot_footer();
 
-
 ///
 /// Auxiliary for graphviz output
 ///
 std::string
 dot_entity(
-    size_t const space_dimension,
-    int const parallel_rank,
-    stk::mesh::Entity const entity,
-    stk::mesh::EntityId const id,
+    size_t const                space_dimension,
+    int const                   parallel_rank,
+    stk::mesh::Entity const     entity,
+    stk::mesh::EntityId const   id,
     stk::mesh::EntityRank const rank,
-    FractureState const fracture_state);
+    FailureState const          failure_state);
 
 ///
 /// Auxiliary for graphviz output
@@ -125,11 +118,11 @@ relation_color(unsigned int const relation_id);
 ///
 std::string
 dot_relation(
-    stk::mesh::EntityId const source_id,
+    stk::mesh::EntityId const   source_id,
     stk::mesh::EntityRank const source_rank,
-    stk::mesh::EntityId const target_id,
+    stk::mesh::EntityId const   target_id,
     stk::mesh::EntityRank const target_rank,
-    unsigned int const relation_local_id);
+    unsigned int const          relation_local_id);
 
 //
 // The entity id has now some very high number.
@@ -138,76 +131,66 @@ dot_relation(
 //
 stk::mesh::EntityId
 new_id_from_old_id(
-    size_t const dimension,
-    int const parallel_rank,
+    size_t const                dimension,
+    int const                   parallel_rank,
     stk::mesh::EntityRank const rank,
-    stk::mesh::EntityId const old_id,
-    bool const is_low_from_high);
+    stk::mesh::EntityId const   old_id,
+    bool const                  is_low_from_high);
 //
 //
 //
 stk::mesh::EntityId
 low_id_from_high_id(
-    size_t const dimension,
-    int const parallel_rank,
+    size_t const                dimension,
+    int const                   parallel_rank,
     stk::mesh::EntityRank const rank,
-    stk::mesh::EntityId const high_id);
+    stk::mesh::EntityId const   high_id);
 //
 //
 //
 stk::mesh::EntityId
 high_id_from_low_id(
-    size_t const dimension,
-    int const parallel_rank,
+    size_t const                dimension,
+    int const                   parallel_rank,
     stk::mesh::EntityRank const rank,
-    stk::mesh::EntityId const low_id);
+    stk::mesh::EntityId const   low_id);
 
 ///
 /// Determine surface element topology based on bulk element topology
 ///
-inline
-shards::CellTopology
+inline shards::CellTopology
 interfaceCellTopogyFromBulkCellTopogy(
-    shards::CellTopology const & bulk_cell_topology)
+    shards::CellTopology const& bulk_cell_topology)
 {
-  std::string const &
-  bulk_cell_topology_name = bulk_cell_topology.getName();
+  std::string const& bulk_cell_topology_name = bulk_cell_topology.getName();
 
-  CellTopologyData const *
-  ctd = NULL;
+  CellTopologyData const* ctd = NULL;
 
   if (bulk_cell_topology_name == "Triangle_3") {
-
     ctd = shards::getCellTopologyData<shards::Quadrilateral<4>>();
 
   } else if (bulk_cell_topology_name == "Quadrilateral_4") {
-
     ctd = shards::getCellTopologyData<shards::Quadrilateral<4>>();
 
   } else if (bulk_cell_topology_name == "Tetrahedron_4") {
-
     ctd = shards::getCellTopologyData<shards::Wedge<6>>();
 
   } else if (bulk_cell_topology_name == "Hexahedron_8") {
-
     ctd = shards::getCellTopologyData<shards::Hexahedron<8>>();
 
   } else {
-
     TEUCHOS_TEST_FOR_EXCEPTION(
         false,
         std::logic_error,
-        "LogicError: Interface cell topology not implemented for:" <<
-        bulk_cell_topology_name << '\n');
-
+        "LogicError: Interface cell topology not implemented for:"
+            << bulk_cell_topology_name << '\n');
   }
 
-  shards::CellTopology
-  interface_cell_topology = shards::CellTopology(ctd);
+  shards::CellTopology interface_cell_topology = shards::CellTopology(ctd);
 
   return interface_cell_topology;
 }
 
 }  // namespace LCM
 
-#endif // LCM_Topology_Utils_h
+#endif  // LCM_Topology_Utils_h

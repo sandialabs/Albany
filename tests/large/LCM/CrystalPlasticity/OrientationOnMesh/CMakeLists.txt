@@ -55,36 +55,40 @@ if(ALBANY_IFPACK2)
  SET(OUTFILE "OrientationOnMesh.exo")
  SET(REF_FILE "OrientationOnMesh.gold.exo")
  add_test(NAME CrystalPlasticity_${testName}
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=OrientationOnMesh -DTEST_ARGS=OrientationOnMesh.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+ set_tests_properties(CrystalPlasticity_${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
  #test 2 - OrientationOnMesh 4 procs
  SET(OUTFILE "OrientationOnMesh.exo")
  SET(REF_FILE "OrientationOnMesh.gold.exo")
  add_test(NAME CrystalPlasticity_${testName}_np4
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
           -DTEST_NAME=OrientationOnMesh -DTEST_ARGS=OrientationOnMesh.yaml -DMPIMNP=${MPIMNP}
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -DSEACAS_EPU=${SEACAS_EPU}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+ set_tests_properties(CrystalPlasticity_${testName}_np4 PROPERTIES LABELS "LCM;Tpetra;Forward")
  #test 3 - OrientationNotOnMesh
  SET(OUTFILE "OrientationNotOnMesh.exo")
  SET(REF_FILE "OrientationNotOnMesh.gold.exo")
  add_test(NAME CrystalPlasticity_OrientationNotOnMesh
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
           -DTEST_NAME=OrientationNotOnMesh -DTEST_ARGS=OrientationNotOnMesh.yaml -DMPIMNP=1
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+ set_tests_properties(CrystalPlasticity_OrientationNotOnMesh PROPERTIES LABELS "LCM;Tpetra;Forward")
  #test 4 - OrientationNotOnMesh 4 procs
  SET(OUTFILE "OrientationNotOnMesh.exo")
  SET(REF_FILE "OrientationNotOnMesh.gold.exo")
  add_test(NAME CrystalPlasticity_OrientationNotOnMesh_np4
-          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
           -DTEST_NAME=OrientationNotOnMesh -DTEST_ARGS=OrientationNotOnMesh.yaml -DMPIMNP=${MPIMNP}
           -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -DSEACAS_EPU=${SEACAS_EPU}
           -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
           -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+ set_tests_properties(CrystalPlasticity_OrientationNotOnMesh_np4 PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif()

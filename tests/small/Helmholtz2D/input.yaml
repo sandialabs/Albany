@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Name: Helmholtz 2D
     Ksqr: 1.10000000000000009e+00

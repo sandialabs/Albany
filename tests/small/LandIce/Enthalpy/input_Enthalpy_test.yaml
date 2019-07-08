@@ -1,9 +1,11 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
+    Compute Sensitivities: true
     Name: LandIce Enthalpy 3D
     Basal Side Name: basalside
     Required Basal Fields: [basal_friction]
@@ -35,16 +37,18 @@ ANONYMOUS:
       Viscosity of water: 1.79999999999999995e-03
       Omega exponent alpha: 2.00000000000000000e+00
       Diffusivity homotopy exponent: -1.00000000000000006e-01
-    LandIce Enthalpy Regularization: 
-      Enthalpy Flux Regularization: 
-        alpha: 1.00000000000000006e-01
-        beta: 7.50000000000000000e+00
-      Enthalpy Basal Melting Regularization: 
-        alpha: 1.00000000000000000e+00
-        beta: 1.00000000000000000e+01
-    LandIce Enthalpy Stabilization: 
-      Type: Streamline Upwind
-      Parameter Delta: 1.00000000000000000e+00
+    LandIce Enthalpy:
+      Regularization: 
+        Flux Regularization: 
+          alpha: 1.00000000000000006e-01
+          beta: 7.50000000000000000e+00
+        Basal Melting Regularization: 
+          alpha: 1.00000000000000000e+00
+          beta: 1.00000000000000000e+01
+      Stabilization: 
+        Type: Streamline Upwind
+        Parameter Delta: 1.00000000000000000e+00
+      Bed Lubrication: Dry
     Parameters: 
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'
@@ -86,7 +90,9 @@ ANONYMOUS:
     Number of Comparisons: 2
     Test Values: [2.21240269082999994e+01, 7.28622636010999969e+00]
     Relative Tolerance: 1.00000000000000002e-02
-    Number of Sensitivity Comparisons: 0
+    Sensitivity Comparisons 0:
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [-2.703728242420e+02, 1.526281625473e-14]
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -130,6 +136,8 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver: 
             Write Linear System: false
+            Max Iterations: 200
+            Tolerance: 1.00000000000000002e-08
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
@@ -142,8 +150,6 @@ ANONYMOUS:
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 1.00000000000000002e-08
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 

@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_ThyraUtils.hpp"
@@ -12,18 +11,20 @@
 
 #include "Thyra_DefaultProductVectorSpace.hpp"
 
-Albany::AggregateScalarResponseFunction::
-AggregateScalarResponseFunction(
-  const Teuchos::RCP<const Teuchos_Comm>& commT,
-  const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses_) :
-  SamplingBasedScalarResponseFunction(commT),
-  responses(responses_)
+namespace Albany
 {
+
+AggregateScalarResponseFunction::
+AggregateScalarResponseFunction(
+  const Teuchos::RCP<const Teuchos_Comm>& comm,
+  const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses_)
+ : SamplingBasedScalarResponseFunction(comm)
+ , responses(responses_)
+{
+  // Nothing to be done here
 }
 
-void
-Albany::AggregateScalarResponseFunction::
-setup()
+void AggregateScalarResponseFunction::setup()
 {
   typedef Teuchos::Array<Teuchos::RCP<ScalarResponseFunction> > ResponseArray;
   for (ResponseArray::iterator it = responses.begin(), it_end = responses.end(); it != it_end; ++it) {
@@ -39,9 +40,7 @@ setup()
   productVectorSpace = Thyra::productVectorSpace(vss());
 }
 
-void
-Albany::AggregateScalarResponseFunction::
-postRegSetup()
+void AggregateScalarResponseFunction::postRegSetup()
 {
   typedef Teuchos::Array<Teuchos::RCP<ScalarResponseFunction> > ResponseArray;
   for (ResponseArray::iterator it = responses.begin(), it_end = responses.end(); it != it_end; ++it) {
@@ -49,14 +48,8 @@ postRegSetup()
   }
 }
 
-Albany::AggregateScalarResponseFunction::
-~AggregateScalarResponseFunction()
-{
-}
-
 unsigned int
-Albany::AggregateScalarResponseFunction::
-numResponses() const 
+AggregateScalarResponseFunction::numResponses() const 
 {
   unsigned int n = 0;
   for (int i=0; i<responses.size(); i++)
@@ -64,20 +57,19 @@ numResponses() const
   return n;
 }
 
-void
-Albany::AggregateScalarResponseFunction::
+void AggregateScalarResponseFunction::
 evaluateResponse(const double current_time,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-		const Teuchos::Array<ParamVec>& p,
-    const Teuchos::RCP<Thyra_Vector>& g)
+  const Teuchos::RCP<const Thyra_Vector>& x,
+  const Teuchos::RCP<const Thyra_Vector>& xdot,
+  const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+  const Teuchos::Array<ParamVec>& p,
+  const Teuchos::RCP<Thyra_Vector>& g)
 {
   if (g.is_null()) {
     return;
   }
 
-  // NOTE: You CANNOT use ProduceVector's if you want to maintain support for EpetraExt::ModelEvaluator,
+  // NOTE: You CANNOT use ProductVector's if you want to maintain support for EpetraExt::ModelEvaluator,
   //       since that class has no knowledge of vector spaces, and would try to build a monolithic map
   //       for the aggregate response. For now, stick with monolithic responses and manual copies
 
@@ -115,27 +107,26 @@ evaluateResponse(const double current_time,
   }
 }
 
-void
-Albany::AggregateScalarResponseFunction::
+void AggregateScalarResponseFunction::
 evaluateTangent(const double alpha, 
-		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
-    const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
-    const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
-    const Teuchos::RCP<const Thyra_MultiVector>& Vp,
-		const Teuchos::RCP<Thyra_Vector>& g,
-		const Teuchos::RCP<Thyra_MultiVector>& gx,
-		const Teuchos::RCP<Thyra_MultiVector>& gp)
+  const double beta,
+  const double omega,
+  const double current_time,
+  bool sum_derivs,
+  const Teuchos::RCP<const Thyra_Vector>& x,
+  const Teuchos::RCP<const Thyra_Vector>& xdot,
+  const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+  const Teuchos::Array<ParamVec>& p,
+  ParamVec* deriv_p,
+  const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+  const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
+  const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
+  const Teuchos::RCP<const Thyra_MultiVector>& Vp,
+  const Teuchos::RCP<Thyra_Vector>& g,
+  const Teuchos::RCP<Thyra_MultiVector>& gx,
+  const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
-  // NOTE: You CANNOT use ProduceVector's if you want to maintain support for EpetraExt::ModelEvaluator,
+  // NOTE: You CANNOT use ProductVector's if you want to maintain support for EpetraExt::ModelEvaluator,
   //       since that class has no knowledge of vector spaces, and would try to build a monolithic map
   //       for the aggregate response. For now, stick with monolithic responses and manual copies
 
@@ -224,21 +215,20 @@ evaluateTangent(const double alpha,
   }
 }
 
-void
-Albany::AggregateScalarResponseFunction::
+void AggregateScalarResponseFunction::
 evaluateGradient(const double current_time,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Teuchos::RCP<Thyra_Vector>& g,
-		const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
-		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
-		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
-		const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
+  const Teuchos::RCP<const Thyra_Vector>& x,
+  const Teuchos::RCP<const Thyra_Vector>& xdot,
+  const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+  const Teuchos::Array<ParamVec>& p,
+  ParamVec* deriv_p,
+  const Teuchos::RCP<Thyra_Vector>& g,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-  // NOTE: You CANNOT use ProduceVector's if you want to maintain support for EpetraExt::ModelEvaluator,
+  // NOTE: You CANNOT use ProductVector's if you want to maintain support for EpetraExt::ModelEvaluator,
   //       since that class has no knowledge of vector spaces, and would try to build a monolithic map
   //       for the aggregate response. For now, stick with monolithic responses and manual copies
 
@@ -306,16 +296,15 @@ evaluateGradient(const double current_time,
   }
 }
 
-void
-Albany::AggregateScalarResponseFunction::
+void AggregateScalarResponseFunction::
 evaluateDistParamDeriv(
-    const double current_time,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec>& param_array,
-    const std::string& dist_param_name,
-    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
+  const double current_time,
+  const Teuchos::RCP<const Thyra_Vector>& x,
+  const Teuchos::RCP<const Thyra_Vector>& xdot,
+  const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+  const Teuchos::Array<ParamVec>& param_array,
+  const std::string& dist_param_name,
+  const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   if (dg_dp.is_null()) {
     return;
@@ -345,3 +334,5 @@ evaluateDistParamDeriv(
     offset += vs_i->dim();
   }
 }
+
+} // namespace Albany

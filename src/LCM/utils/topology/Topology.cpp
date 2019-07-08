@@ -7,7 +7,7 @@
 
 #include "Subgraph.h"
 #include "Topology.h"
-#include "Topology_FractureCriterion.h"
+#include "Topology_FailureCriterion.h"
 #include "Topology_Utils.h"
 #include "stk_mesh/base/FEMHelpers.hpp"
 
@@ -21,7 +21,7 @@ namespace LCM {
 Topology::Topology()
     : discretization_(Teuchos::null),
       stk_mesh_struct_(Teuchos::null),
-      fracture_criterion_(Teuchos::null),
+      failure_criterion_(Teuchos::null),
       output_type_(UNIDIRECTIONAL_UNILEVEL)
 {
   return;
@@ -35,7 +35,7 @@ Topology::Topology(
     std::string const& output_file)
     : discretization_(Teuchos::null),
       stk_mesh_struct_(Teuchos::null),
-      fracture_criterion_(Teuchos::null),
+      failure_criterion_(Teuchos::null),
       output_type_(UNIDIRECTIONAL_UNILEVEL)
 {
   Teuchos::RCP<Teuchos::ParameterList> params =
@@ -113,7 +113,7 @@ Topology::Topology(
     std::string const&                            interface_block_name)
     : discretization_(Teuchos::null),
       stk_mesh_struct_(Teuchos::null),
-      fracture_criterion_(Teuchos::null),
+      failure_criterion_(Teuchos::null),
       output_type_(UNIDIRECTIONAL_UNILEVEL)
 {
   set_discretization(abstract_disc);
@@ -161,20 +161,20 @@ Topology::get_entity_id(stk::mesh::Entity const entity)
 bool
 Topology::checkOpen(stk::mesh::Entity e)
 {
-  return fracture_criterion_->check(get_bulk_data(), e);
+  return failure_criterion_->check(get_bulk_data(), e);
 }
 
 //
 // Initialize fracture state field
-// It exists for all entities except cells (elements)
+// It exists for all entities
 //
 void
-Topology::initializeFractureState()
+Topology::initializeFailureState()
 {
   stk::mesh::Selector local_part = get_local_part();
 
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
-       rank < stk::topology::ELEMENT_RANK;
+       rank <= stk::topology::ELEMENT_RANK;
        ++rank) {
     std::vector<stk::mesh::Bucket*> const& buckets =
         get_bulk_data().buckets(rank);
@@ -186,7 +186,40 @@ Topology::initializeFractureState()
     for (EntityVectorIndex i = 0; i < entities.size(); ++i) {
       stk::mesh::Entity entity = entities[i];
 
-      set_fracture_state(entity, CLOSED);
+      set_failure_state(entity, INTACT);
+    }
+  }
+
+  return;
+}
+
+//
+// Set boundary indicator
+// For now meaningful for elements only
+//
+void
+Topology::setBoundaryIndicator()
+{
+  stk::mesh::Selector local_part = get_local_part();
+
+  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
+       rank <= stk::topology::ELEMENT_RANK;
+       ++rank) {
+    std::vector<stk::mesh::Bucket*> const& buckets =
+        get_bulk_data().buckets(rank);
+
+    stk::mesh::EntityVector entities;
+
+    stk::mesh::get_selected_entities(local_part, buckets, entities);
+
+    for (EntityVectorIndex i = 0; i < entities.size(); ++i) {
+      stk::mesh::Entity entity = entities[i];
+
+      if (rank == stk::topology::ELEMENT_RANK) {
+        BoundaryIndicator const bi =
+            is_boundary_cell(entity) == true ? EXTERIOR : INTERIOR;
+        set_boundary_indicator(entity, bi);
+      }
     }
   }
 
@@ -206,7 +239,8 @@ Topology::graphInitialization()
 
   get_bulk_data().modification_begin();
   removeMultiLevelRelations();
-  initializeFractureState();
+  initializeFailureState();
+  setBoundaryIndicator();
   Albany::fix_node_sharing(get_bulk_data());
   get_bulk_data().modification_end();
   get_stk_discretization().updateMesh();
@@ -857,7 +891,7 @@ Topology::splitOpenFaces()
        ++i) {
     stk::mesh::Entity point = *i;
 
-    if (get_fracture_state(point) == OPEN) { open_points.push_back(point); }
+    if (get_failure_state(point) == FAILED) { open_points.push_back(point); }
   }
 
 #if defined(DEBUG_LCM_TOPOLOGY)
@@ -892,7 +926,7 @@ Topology::splitOpenFaces()
 
       bool const is_local_segment = is_local_entity(segment) == true;
 
-      bool const is_open_segment = get_fracture_state(segment) == OPEN;
+      bool const is_open_segment = get_failure_state(segment) == FAILED;
 
       bool const is_local_and_open_segment =
           is_local_segment == true && is_open_segment == true;
@@ -985,8 +1019,8 @@ Topology::splitOpenFaces()
             segment_star.entityFromVertex(new_face_vertex);
 
         // Reset fracture state for both old and new faces
-        set_fracture_state(face, CLOSED);
-        set_fracture_state(new_face, CLOSED);
+        set_failure_state(face, INTACT);
+        set_failure_state(new_face, INTACT);
 
         EntityPair face_pair = std::make_pair(face, new_face);
 
@@ -1011,7 +1045,7 @@ Topology::splitOpenFaces()
       segment_star.splitArticulation(segment_vertex);
 
       // Reset segment fracture state
-      set_fracture_state(segment, CLOSED);
+      set_failure_state(segment, INTACT);
 
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
@@ -1065,7 +1099,7 @@ Topology::splitOpenFaces()
         point_star.splitArticulation(point_vertex);
 
     // Reset fracture state of point
-    set_fracture_state(point, CLOSED);
+    set_failure_state(point, INTACT);
 
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
@@ -1111,6 +1145,40 @@ Topology::splitOpenFaces()
 }
 
 //
+// Remove failed elements from the mesh
+//
+void
+Topology::erodeFailedElements()
+{
+  stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityVector     cells;
+  stk::mesh::EntityVector     failed_cells;
+  stk::mesh::BulkData&        bulk_data = get_bulk_data();
+  stk::mesh::get_entities(bulk_data, cell_rank, cells);
+  // 3D only for now.
+  assert(get_space_dimension() == cell_rank);
+
+  // Collect failed cells
+  for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
+    stk::mesh::Entity cell = cells[i];
+    if (failure_criterion_->check(get_bulk_data(), cell) == true) {
+      failed_cells.emplace_back(cell);
+    }
+  }
+
+  // Now remove them
+  bulk_data.modification_begin();
+  for (RelationVectorIndex i = 0; i < failed_cells.size(); ++i) {
+    stk::mesh::Entity failed_cell = failed_cells[i];
+    remove_entity(failed_cell);
+  }
+  Albany::fix_node_sharing(bulk_data);
+  bulk_data.modification_end();
+  setBoundaryIndicator();
+  return;
+}
+
+//
 //
 //
 void
@@ -1123,7 +1191,7 @@ Topology::insertSurfaceElements(std::set<EntityPair> const& fractured_faces)
   // Same rank as bulk cells!
   stk::mesh::EntityRank const interface_rank = stk::topology::ELEMENT_RANK;
 
-  stk::mesh::Part& interface_part = fracture_criterion_->get_interface_part();
+  stk::mesh::Part& interface_part = failure_criterion_->get_interface_part();
 
   stk::mesh::PartVector interface_parts;
 
@@ -1205,7 +1273,7 @@ Topology::setEntitiesOpen()
 
     if (checkOpen(entity) == false) continue;
 
-    set_fracture_state(entity, OPEN);
+    set_failure_state(entity, FAILED);
     ++counter;
 
     switch (get_space_dimension()) {
@@ -1226,7 +1294,7 @@ Topology::setEntitiesOpen()
         for (size_t j = 0; j < num_segments; ++j) {
           stk::mesh::Entity segment = segments[j];
 
-          set_fracture_state(segment, OPEN);
+          set_failure_state(segment, FAILED);
 
           stk::mesh::Entity const* points =
               get_bulk_data().begin_nodes(segment);
@@ -1236,7 +1304,7 @@ Topology::setEntitiesOpen()
           for (size_t k = 0; k < num_points; ++k) {
             stk::mesh::Entity point = points[k];
 
-            set_fracture_state(point, OPEN);
+            set_failure_state(point, FAILED);
           }
         }
       } break;
@@ -1249,7 +1317,7 @@ Topology::setEntitiesOpen()
         for (size_t j = 0; j < num_points; ++j) {
           stk::mesh::Entity point = points[j];
 
-          set_fracture_state(point, OPEN);
+          set_failure_state(point, FAILED);
         }
       } break;
     }
@@ -1299,7 +1367,7 @@ Topology::outputToGraphviz(std::string const& output_filename)
     for (EntityVectorIndex i = 0; i < entities.size(); ++i) {
       stk::mesh::Entity source_entity = entities[i];
 
-      FractureState const fracture_state = get_fracture_state(source_entity);
+      FailureState const failure_state = get_failure_state(source_entity);
 
       stk::mesh::EntityId const source_id = get_entity_id(source_entity);
 
@@ -1309,7 +1377,7 @@ Topology::outputToGraphviz(std::string const& output_filename)
           source_entity,
           source_id,
           rank,
-          fracture_state);
+          failure_state);
 
       for (stk::mesh::EntityRank target_rank = stk::topology::NODE_RANK;
            target_rank < get_meta_data().entity_rank_count();
@@ -1495,6 +1563,119 @@ stk::mesh::EntityId
 Topology::get_highest_id(stk::mesh::EntityRank const rank)
 {
   return highest_ids_[rank];
+}
+
+//
+// Set failure state.
+//
+void
+Topology::set_failure_state(stk::mesh::Entity e, FailureState const fs)
+{
+  auto&      bulk_data                       = get_bulk_data();
+  auto const rank                            = bulk_data.entity_rank(e);
+  auto&      failure_field                   = get_failure_state_field(rank);
+  *(stk::mesh::field_data(failure_field, e)) = static_cast<int>(fs);
+}
+
+//
+// Get failure state.
+//
+FailureState
+Topology::get_failure_state(stk::mesh::Entity e)
+{
+  auto& bulk_data     = get_bulk_data();
+  auto  rank          = bulk_data.entity_rank(e);
+  auto& failure_field = get_failure_state_field(rank);
+  return static_cast<FailureState>(*(stk::mesh::field_data(failure_field, e)));
+}
+
+//
+// Set boundary indicator.
+//
+void
+Topology::set_boundary_indicator(
+    stk::mesh::Entity       e,
+    BoundaryIndicator const bi)
+{
+  auto& bulk_data          = get_bulk_data();
+  auto& boundary_field     = get_boundary_indicator_field();
+  auto* pbi                = stk::mesh::field_data(boundary_field, e);
+  auto* boundary_indicator = static_cast<double*>(pbi);
+  ALBANY_ASSERT(boundary_indicator != nullptr);
+  *boundary_indicator = static_cast<double>(bi);
+}
+
+//
+// Get boundary indicator.
+//
+BoundaryIndicator
+Topology::get_boundary_indicator(stk::mesh::Entity e)
+{
+  auto& bulk_data          = get_bulk_data();
+  auto& boundary_field     = get_boundary_indicator_field();
+  auto* pbi                = stk::mesh::field_data(boundary_field, e);
+  auto* boundary_indicator = static_cast<double*>(pbi);
+  ALBANY_ASSERT(boundary_indicator != nullptr);
+  return static_cast<BoundaryIndicator>(*boundary_indicator);
+}
+
+bool
+Topology::is_internal(stk::mesh::Entity e)
+{
+  assert(get_bulk_data().entity_rank(e) == get_boundary_rank());
+  size_t const number_in_edges = get_bulk_data().num_elements(e);
+  assert(number_in_edges == 1 || number_in_edges == 2);
+  return number_in_edges == 2;
+}
+
+bool
+Topology::is_boundary_cell(stk::mesh::Entity e)
+{
+  stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityRank const face_rank = get_boundary_rank();
+  auto&                       bulk_data = get_bulk_data();
+  assert(bulk_data.entity_rank(e) == cell_rank);
+  stk::mesh::Entity const* relations = bulk_data.begin(e, face_rank);
+  size_t const num_relations         = bulk_data.num_connectivity(e, face_rank);
+  for (size_t i = 0; i < num_relations; ++i) {
+    stk::mesh::Entity face_entity = relations[i];
+    if (is_at_boundary(face_entity) == true) return true;
+  }
+  return false;
+}
+
+bool
+Topology::there_are_failed_cells()
+{
+  bool                        have_failed_cells{false};
+  stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityVector     cells;
+  stk::mesh::get_entities(get_bulk_data(), cell_rank, cells);
+  for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
+    stk::mesh::Entity cell = cells[i];
+    if (failure_criterion_->check(get_bulk_data(), cell) == true) {
+      have_failed_cells = true;
+      break;
+    }
+  }
+  return have_failed_cells;
+}
+
+bool
+Topology::there_are_failed_boundary_cells()
+{
+  bool                        have_failed_cells{false};
+  stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityVector     cells;
+  stk::mesh::get_entities(get_bulk_data(), cell_rank, cells);
+  for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
+    stk::mesh::Entity cell = cells[i];
+    if (is_failed_boundary_cell(cell) == true) {
+      have_failed_cells = true;
+      break;
+    }
+  }
+  return have_failed_cells;
 }
 
 }  // namespace LCM

@@ -32,8 +32,8 @@ class DruckerPragerModel : public LCM::ConstitutiveModel<EvalT, Traits>
   using DepFieldMap = typename Base::DepFieldMap;
   using FieldMap    = typename Base::FieldMap;
 
-  typedef typename EvalT::ScalarT                             ScalarT;
-  typedef typename EvalT::MeshScalarT                         MeshScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
   typedef typename Sacado::mpl::apply<FadType, ScalarT>::type DFadType;
 
   using Base::field_name_map_;

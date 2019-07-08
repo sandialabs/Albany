@@ -59,6 +59,8 @@ struct KokkosGuard
 int
 main(int ac, char* av[])
 {
+  Albany::build_type(Albany::BuildType::Tpetra);
+
   KokkosGuard kokkos(ac, av);
 
   typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type
@@ -457,7 +459,7 @@ main(int ac, char* av[])
   stateFieldManager.registerEvaluator<Residual>(ev);
   //---------------------------------------------------------------------------
   //
-  Traits::SetupData setupData = "Test String";
+  PHAL::Setup setupData;
   // std::cout << "Calling postRegistrationSetup" << std::endl;
   fieldManager.postRegistrationSetup(setupData);
 
@@ -475,7 +477,7 @@ main(int ac, char* av[])
     stateFieldManager.requireField<PHAL::AlbanyTraits::Residual>(
         res_response_tag);
   }
-  stateFieldManager.postRegistrationSetup("");
+  stateFieldManager.postRegistrationSetup(setupData);
 
   // std::cout << "Process using 'dot -Tpng -O <name>'\n";
   fieldManager.writeGraphvizFile<Residual>("FM", true, true);
@@ -500,13 +502,13 @@ main(int ac, char* av[])
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name", output_file);
   discretizationParameterList->set<int>("Workset Size", workset_size);
-  Teuchos::RCP<Tpetra_Map>    mapT = Teuchos::rcp(new Tpetra_Map(
-      workset_size * num_dims * num_nodes,
-      0,
-      commT,
-      Tpetra::LocallyReplicated));
-  Teuchos::RCP<Tpetra_Vector> solution_vectorT =
-      Teuchos::rcp(new Tpetra_Vector(mapT));
+
+  Teuchos::RCP<const Thyra_VectorSpace> space =
+      Albany::createLocallyReplicatedVectorSpace(
+          workset_size * num_dims * num_nodes, commT);
+
+  Teuchos::RCP<Thyra_Vector> solution_vector = Thyra::createMember(space);
+  solution_vector->assign(0.0);
 
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -525,6 +527,8 @@ main(int ac, char* av[])
   Teuchos::RCP<Albany::AbstractDiscretization> discretization =
       Teuchos::rcp(new Albany::STKDiscretization(
           discretizationParameterList, stkMeshStruct, commT));
+  auto& stk_disc = static_cast<Albany::STKDiscretization&>(*discretization);
+  stk_disc.updateMesh();
 
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager
@@ -642,8 +646,7 @@ main(int ac, char* av[])
     // output to the exodus file
     // Don't include this in timing data...
     total_time->stop();
-    discretization->writeSolutionT(
-        *solution_vectorT, Teuchos::as<double>(istep));
+    discretization->writeSolution(*solution_vector, Teuchos::as<double>(istep));
 
     // if check for bifurcation, adaptive step
     total_time->start();

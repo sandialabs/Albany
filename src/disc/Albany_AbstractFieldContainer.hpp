@@ -5,8 +5,8 @@
 //*****************************************************************//
 
 
-#ifndef ALBANY_ABSTRACTFIELDCONT_HPP
-#define ALBANY_ABSTRACTFIELDCONT_HPP
+#ifndef ALBANY_ABSTRACT_FIELD_CONTAINER_HPP
+#define ALBANY_ABSTRACT_FIELD_CONTAINER_HPP
 
 #include <vector>
 #include <string>
@@ -18,19 +18,14 @@ namespace Albany {
  *
  */
 class AbstractFieldContainer {
+public:
 
-  public:
+  typedef std::vector<std::string> FieldContainerRequirements;
 
-    typedef std::vector<std::string> FieldContainerRequirements;
-
-    //! Destructor
-    virtual ~AbstractFieldContainer() {};
-
-  protected:
-
+  //! Destructor
+  virtual ~AbstractFieldContainer() = default;
 };
 
+} // namespace Albany
 
-}
-
-#endif // ALBANY_ABSTRACTFIELDCONT_HPP
+#endif // ALBANY_ABSTRACT_FIELD_CONTAINER_HPP

@@ -16,6 +16,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "Teuchos_Array.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp" 
 
 
 

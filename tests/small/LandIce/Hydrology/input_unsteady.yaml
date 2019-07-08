@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Debug Output: 
     Write Jacobian to MatrixMarket: 0
     Write Solution to MatrixMarket: false
@@ -14,7 +15,7 @@ ANONYMOUS:
         Name: Squared L2 Difference Source ST Target PST
         Field Rank: Scalar
         Source Field Name: water_thickness
-        Target Field Name: ZERO
+        Target Value: 0.0
     Initial Condition: 
       Function: Constant
       Function Data: [1.00000000000000000e+02, 1.00000000000000006e-01]
@@ -54,7 +55,7 @@ ANONYMOUS:
       Type: Regularized Coulomb
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [3.25463000000000022e+02]
+    Test Values: [3.241297833084e+02]
     Number of Sensitivity Comparisons: 0
     Relative Tolerance: 1.00000000000000005e-04
     Absolute Tolerance: 1.00000000000000005e-04

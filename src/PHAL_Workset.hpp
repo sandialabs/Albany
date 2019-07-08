@@ -4,50 +4,55 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra has been ifdef'ed out if ALBANY_EPETRA_EXE is off.
-
 #ifndef PHAL_WORKSET_HPP
 #define PHAL_WORKSET_HPP
 
 #include <list>
 #include <set>
+#include <string>
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_SacadoTypes.hpp"
+#include "Albany_ThyraTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+
 #if defined(ALBANY_LCM)
 #include <set>
 #endif
+#include "PHAL_Setup.hpp"
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_StateInfoStruct.hpp"
 
 #include "Kokkos_ViewFactory.hpp"
 
-#include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
+#include "Teuchos_RCP.hpp"
 
 // Forward declarations
 namespace Albany {
-  class AbstractDiscretization;
-  class CombineAndScatterManager;
-  class DistributedParameterLibrary;
+class AbstractDiscretization;
+class CombineAndScatterManager;
+class DistributedParameterLibrary;
 #if defined(ALBANY_LCM)
-  // Forward declaration needed for Schwarz coupling
-  class Application;
+// Forward declaration needed for Schwarz coupling
+class Application;
 #endif
 #if defined(ALBANY_EPETRA)
-  struct EigendataStruct;
+struct EigendataStruct;
 #endif
-} // namespace Albany
+}  // namespace Albany
 #if defined(ALBANY_EPETRA)
-  class Epetra_MultiVector;
+class Epetra_MultiVector;
 #endif
 
 namespace PHAL {
 
-struct Workset {
-
-  Workset() :
-    transientTerms(false), accelerationTerms(false), ignore_residual(false) {}
+struct Workset
+{
+  Workset()
+      : transientTerms(false), accelerationTerms(false), ignore_residual(false)
+  {
+  }
 
   unsigned int numCells;
   unsigned int wsIndex;
@@ -61,75 +66,76 @@ struct Workset {
   Teuchos::RCP<ParamVec> params;
 
   // Component of Tangent vector direction along x, xdot, xdotdot, and p.
-  // These are used to compute df/dx*Vx + df/dxdot*Vxdot + df/dxdotdot*Vxdotdot + df/dp*Vp.
+  // These are used to compute df/dx*Vx + df/dxdot*Vxdot + df/dxdotdot*Vxdotdot
+  // + df/dp*Vp.
   Teuchos::RCP<const Thyra_MultiVector> Vx;
   Teuchos::RCP<const Thyra_MultiVector> Vxdot;
   Teuchos::RCP<const Thyra_MultiVector> Vxdotdot;
   Teuchos::RCP<const Thyra_MultiVector> Vp;
 
   // These are residual related.
-  Teuchos::RCP<Thyra_Vector> f;
-  Teuchos::RCP<Thyra_LinearOp> Jac;
+  Teuchos::RCP<Thyra_Vector>      f;
+  Teuchos::RCP<Thyra_LinearOp>    Jac;
   Teuchos::RCP<Thyra_MultiVector> JV;
   Teuchos::RCP<Thyra_MultiVector> fp;
   Teuchos::RCP<Thyra_MultiVector> fpV;
   Teuchos::RCP<Thyra_MultiVector> Vp_bc;
 
-  Teuchos::RCP<const Albany::NodeSetList> nodeSets;
+  Teuchos::RCP<const Albany::NodeSetList>      nodeSets;
   Teuchos::RCP<const Albany::NodeSetCoordList> nodeSetCoords;
 
   Teuchos::RCP<const Albany::SideSetList> sideSets;
 
   // jacobian and mass matrix coefficients for matrix fill
   double j_coeff;
-  double m_coeff; //d(x_dot)/dx_{new}
-  double n_coeff; //d(x_dotdot)/dx_{new}
+  double m_coeff;  // d(x_dot)/dx_{new}
+  double n_coeff;  // d(x_dotdot)/dx_{new}
 
   // Current Time as defined by Rythmos
   double current_time;
-  //amb Nowhere set. We should either set it or remove it.
+  // amb Nowhere set. We should either set it or remove it.
   double previous_time;
 
-  double time_step; 
+  double time_step;
 
   // flag indicating whether to sum tangent derivatives, i.e.,
-  // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + omega*df/dxddotot*Vxdotdot + df/dp*Vp or
-  // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + omega*df/dxdotdot*Vxdotdot and df/dp*Vp separately
+  // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + omega*df/dxddotot*Vxdotdot +
+  // df/dp*Vp or compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx +
+  // omega*df/dxdotdot*Vxdotdot and df/dp*Vp separately
   int num_cols_x;
   int num_cols_p;
   int param_offset;
 
   // Distributed parameter derivatives
   Teuchos::RCP<Albany::DistributedParameterLibrary> distParamLib;
-  std::string dist_param_deriv_name;
-  bool transpose_dist_param_deriv;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
+  std::string                                       dist_param_deriv_name;
+  bool                                              transpose_dist_param_deriv;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>> local_Vp;
 
   std::vector<PHX::index_size_type> Jacobian_deriv_dims;
   std::vector<PHX::index_size_type> Tangent_deriv_dims;
 
-  Albany::WorksetConn wsElNodeEqID;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
-  Teuchos::ArrayRCP<double>  wsSphereVolume;
-  Teuchos::ArrayRCP<double*>  wsLatticeOrientation;
-  std::string EBName;
+  Albany::WorksetConn                           wsElNodeEqID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>      wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>> wsCoords;
+  Teuchos::ArrayRCP<double>                     wsSphereVolume;
+  Teuchos::ArrayRCP<double*>                    wsLatticeOrientation;
+  std::string                                   EBName;
 
-  // Needed for Schwarz coupling and for dirichlet conditions based on dist parameters.
+  // Needed for Schwarz coupling and for dirichlet conditions based on dist
+  // parameters.
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
 #if defined(ALBANY_LCM)
   // Needed for Schwarz coupling
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
-  apps_;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
 
-  Teuchos::RCP<Albany::Application>
-  current_app_;
+  Teuchos::RCP<Albany::Application> current_app_;
 
-  std::set<int>
-  fixed_dofs_;
+  std::set<int> fixed_dofs_;
 
-  bool 
-  is_schwarz_bc_{false}; 
+  bool is_schwarz_bc_{false};
+
+  Teuchos::ArrayRCP<double*> boundary_indicator;
 #endif
 
   int spatial_dimension_{0};
@@ -137,9 +143,9 @@ struct Workset {
   Albany::StateArray* stateArrayPtr;
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<Albany::EigendataStruct> eigenDataPtr;
-  Teuchos::RCP<Epetra_MultiVector> auxDataPtr;
+  Teuchos::RCP<Epetra_MultiVector>      auxDataPtr;
 #endif
-  //Teuchos::RCP<Albany::EigendataStructT> eigenDataPtrT;
+  // Teuchos::RCP<Albany::EigendataStructT> eigenDataPtrT;
   Teuchos::RCP<Tpetra_MultiVector> auxDataPtrT;
 
   bool transientTerms;
@@ -158,7 +164,7 @@ struct Workset {
   bool is_adjoint;
 
   // New field manager response stuff
-  Teuchos::RCP<const Teuchos::Comm<int> > comm;
+  Teuchos::RCP<const Teuchos::Comm<int>> comm;
 
   // Combine and Scatter manager (for import-export of responses derivatives),
   // for both solution (x) and distributed parameter (p)
@@ -178,44 +184,54 @@ struct Workset {
   Teuchos::RCP<Thyra_MultiVector> overlapped_dgdxdotdot;
   Teuchos::RCP<Thyra_MultiVector> overlapped_dgdp;
 
+  // List of saved MDFields (needed for memoization)
+  Teuchos::RCP<const StringSet> savedMDFields;
+
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT
   // where T is any lambda expression (typically a placeholder expression)
   template <typename T>
-  struct ApplyEvalT {
-    template <typename EvalT> struct apply {
-      typedef typename Sacado::mpl::apply<T, typename EvalT::ScalarT>::type type;
+  struct ApplyEvalT
+  {
+    template <typename EvalT>
+    struct apply
+    {
+      typedef
+          typename Sacado::mpl::apply<T, typename EvalT::ScalarT>::type type;
     };
   };
 
   // Meta-function class encoding RCP<ValueTypeSerializer<int,T> > for a given
   // type T.  This is to eliminate an error when using a placeholder expression
   // for the same thing in CreateLambdaKeyMap below
-  struct ApplyVTS {
+  struct ApplyVTS
+  {
     template <typename T>
-    struct apply {
-      typedef Teuchos::RCP< Teuchos::ValueTypeSerializer<int,T> > type;
+    struct apply
+    {
+      typedef Teuchos::RCP<Teuchos::ValueTypeSerializer<int, T>> type;
     };
   };
 
-  void print(std::ostream &os){
-
+  void
+  print(std::ostream& os)
+  {
     os << "Printing workset data:" << std::endl;
     os << "\tEB name : " << EBName << std::endl;
     os << "\tnumCells : " << numCells << std::endl;
     os << "\twsElNodeEqID : " << std::endl;
-    for(unsigned int i = 0; i < wsElNodeEqID.extent(0); i++)
-      for(unsigned int j = 0; j < wsElNodeEqID.extent(1); j++)
-        for(unsigned int k = 0; k < wsElNodeEqID.extent(2); k++)
-          os << "\t\twsElNodeEqID(" << i << "," << j << "," << k << ") = " <<
-            wsElNodeEqID(i,j,k) << std::endl;
+    for (unsigned int i = 0; i < wsElNodeEqID.extent(0); i++)
+      for (unsigned int j = 0; j < wsElNodeEqID.extent(1); j++)
+        for (unsigned int k = 0; k < wsElNodeEqID.extent(2); k++)
+          os << "\t\twsElNodeEqID(" << i << "," << j << "," << k
+             << ") = " << wsElNodeEqID(i, j, k) << std::endl;
     os << "\twsCoords : " << std::endl;
-    for(int i = 0; i < wsCoords.size(); i++)
-      for(int j = 0; j < wsCoords[i].size(); j++)
-          os << "\t\tcoord0:" << wsCoords[i][j][0] << "][" << wsCoords[i][j][1] << std::endl;
+    for (int i = 0; i < wsCoords.size(); i++)
+      for (int j = 0; j < wsCoords[i].size(); j++)
+        os << "\t\tcoord0:" << wsCoords[i][j][0] << "][" << wsCoords[i][j][1]
+           << std::endl;
   }
-
 };
 
-} // namespace PHAL
+}  // namespace PHAL
 
-#endif // PHAL_WORKSET_HPP
+#endif  // PHAL_WORKSET_HPP

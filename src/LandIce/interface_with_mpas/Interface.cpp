@@ -22,6 +22,7 @@
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Thyra_DetachedVectorView.hpp"
+#include "Teuchos_YamlParameterListHelpers.hpp"
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -32,7 +33,7 @@
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
 Teuchos::RCP<Teuchos::ParameterList> paramList;
-Teuchos::RCP<const Teuchos_Comm> mpiCommT;
+Teuchos::RCP<const Teuchos_Comm> mpiComm;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 Teuchos::RCP<double> MPAS_dt;
@@ -42,11 +43,8 @@ double MPAS_gravity(9.8), MPAS_rho_ice(910.0), MPAS_rho_seawater(1028.0), MPAS_s
        MPAS_ClausiusClapeyoronCoeff(9.7546e-8);
 bool MPAS_useGLP(true);
 
-#ifdef MPAS_USE_EPETRA
-  Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
-#else
-  Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
-#endif
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
+
 bool keptMesh =false;
 
 typedef struct TET_ {
@@ -62,7 +60,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     int nGlobalTriangles, bool ordering, bool first_time_step,
     const std::vector<int>& indexToVertexID,
     const std::vector<int>& indexToTriangleID, double minBeta,
-    const std::vector<double>& regulThk,
+    const std::vector<double>& /* regulThk */,
     const std::vector<double>& levelsNormalizedThickness,
     const std::vector<double>& elevationData,
     const std::vector<double>& thicknessData,
@@ -75,13 +73,8 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     std::vector<double>& dissipationHeatOnTetra,
     std::vector<double>& velocityOnVertices,
     int& error,
-    const double& deltat) {
-
-
-#ifndef MPAS_USE_EPETRA
-  static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-#endif
-
+    const double& deltat)
+{
   int numVertices3D = (nLayers + 1) * indexToVertexID.size();
   int numPrisms = nLayers * indexToTriangleID.size();
   int vertexColumnShift = (ordering == 1) ? 1 : nGlobalVertices;
@@ -108,14 +101,15 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   VectorFieldType* solutionField;
 
-  if (interleavedOrdering)
+  if (interleavedOrdering) {
     solutionField = Teuchos::rcp_dynamic_cast<
         Albany::OrdinarySTKFieldContainer<true> >(
         meshStruct->getFieldContainer())->getSolutionField();
-  else
+  } else {
     solutionField = Teuchos::rcp_dynamic_cast<
         Albany::OrdinarySTKFieldContainer<false> >(
         meshStruct->getFieldContainer())->getSolutionField();
+  }
 
   ScalarFieldType* surfaceHeightField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_height");
   ScalarFieldType* thicknessField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "ice_thickness");
@@ -127,7 +121,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   ScalarFieldType* effectivePressureField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "effective_pressure");
 
   bool nonEmptyEffectivePressure = effectivePressureData.size()>0;
-  for (UInt j = 0; j < numVertices3D; ++j) {
+  for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
         + (ordering == 1) * (j / vertexLayerShift);
     int il = (ordering == 0) * (j / lVertexColumnShift)
@@ -172,7 +166,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
 
-  for (UInt j = 0; j < numPrisms; ++j) {
+  for (int j = 0; j < numPrisms; ++j) {
     int ib = (ordering == 0) * (j % (lElemColumnShift / 3))
         + (ordering == 1) * (j / (elemLayerShift / 3));
     int il = (ordering == 0) * (j / (lElemColumnShift / 3))
@@ -200,8 +194,6 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     }
   }
 
-
-
   if(!keptMesh) {
     albanyApp->createDiscretization();
   } else {
@@ -213,44 +205,39 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   bool success = true;
   Teuchos::ArrayRCP<const ST> solution_constView;
-  Teuchos::RCP<const Tpetra_Map> overlapMap;
   try {
-#ifdef MPAS_USE_EPETRA
-  solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
-#else
-   solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
-#endif
+    solver = slvrfctry->createAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
 
-  Teuchos::ParameterList solveParams;
-  solveParams.set("Compute Sensitivities", false);
+    Teuchos::ParameterList solveParams;
+    solveParams.set("Compute Sensitivities", false);
 
-  Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
-  Teuchos::Array<
-      Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
-  Piro::PerformSolveBase(*solver, solveParams, thyraResponses,
-      thyraSensitivities);
+    Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
+    Teuchos::Array<
+        Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
+    Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
-  // Printing responses
-  const int num_g = solver->Ng();
-  for (int i=0; i<num_g-1; i++) {
-    if (albanyApp->getResponse(i)->isScalarResponse()) {
-      Thyra::ConstDetachedVectorView<double> g(thyraResponses[i]);
-      std::cout << std::setprecision(15) << "\nResponse " << i << ": " << g[0] << std::endl;
+    // Printing responses
+    const int num_g = solver->Ng();
+    for (int i=0; i<num_g-1; i++) {
+      if (albanyApp->getResponse(i)->isScalarResponse()) {
+        Thyra::ConstDetachedVectorView<double> g(thyraResponses[i]);
+        std::cout << std::setprecision(15) << "\nResponse " << i << ": " << g[0] << std::endl;
+      }
     }
-  }
 
-  overlapMap = albanyApp->getDiscretization()->getOverlapMapT();
-  Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(albanyApp->getDiscretization()->getMapT(), overlapMap));
-  Teuchos::RCP<Tpetra_Vector> solution = Teuchos::rcp(new Tpetra_Vector(overlapMap));
-  solution->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
-  solution_constView = solution->get1dView();
+    auto overlapVS = albanyApp->getDiscretization()->getOverlapVectorSpace();
+    auto disc = albanyApp->getDiscretization();
+    auto cas_manager = Albany::createCombineAndScatterManager(disc->getVectorSpace(), disc->getOverlapVectorSpace());
+    Teuchos::RCP<Thyra_Vector> solution = Thyra::createMember(disc->getOverlapVectorSpace());
+    cas_manager->scatter(*disc->getSolutionField(), *solution, Albany::CombineMode::INSERT);
+    solution_constView = Albany::getLocalData(solution.getConst());
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
 
   error = !success;
 
-
-  for (UInt j = 0; j < numVertices3D; ++j) {
+  auto overlapVS = albanyApp->getDiscretization()->getOverlapVectorSpace();
+  for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
         + (ordering == 1) * (j / vertexLayerShift);
     int il = (ordering == 0) * (j / lVertexColumnShift)
@@ -260,19 +247,18 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     int lId0, lId1;
 
     if (interleavedOrdering) {
-      lId0 = overlapMap->getLocalElement(neq * gId);
+      lId0 = Albany::getLocalElement(overlapVS,neq * gId);
       lId1 = lId0 + 1;
     } else {
-      lId0 = overlapMap->getLocalElement(gId);
+      lId0 = Albany::getLocalElement(overlapVS,gId);
       lId1 = lId0 + numVertices3D;
     }
     velocityOnVertices[j] = solution_constView[lId0];
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
   }
 
-
   ScalarFieldType* dissipationHeatField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::ELEMENT_RANK, "dissipation_heat");
-  for (UInt j = 0; j < numPrisms; ++j) {
+  for (int j = 0; j < numPrisms; ++j) {
     int ib = (ordering == 0) * (j % (lElemColumnShift / 3))
         + (ordering == 1) * (j / (elemLayerShift / 3));
     int il = (ordering == 0) * (j / (lElemColumnShift / 3))
@@ -298,7 +284,7 @@ void velocity_solver_export_fo_velocity(MPI_Comm reducedComm) {
 #endif
 }
 
-int velocity_solver_init_mpi(int *fComm) {
+int velocity_solver_init_mpi(int* /* fComm */) {
   Kokkos::initialize();
   return 0;
 }
@@ -307,7 +293,7 @@ void velocity_solver_finalize() {
   meshStruct = Teuchos::null;
   albanyApp = Teuchos::null;
   paramList = Teuchos::null;
-  mpiCommT = Teuchos::null;
+  mpiComm = Teuchos::null;
   discParams = Teuchos::null;
   slvrfctry = Teuchos::null;
   MPAS_dt = Teuchos::null;
@@ -327,7 +313,7 @@ void velocity_solver_finalize() {
 
 void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
   keptMesh = false;
-  mpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
+  mpiComm = Albany::createTeuchosCommFromMpiComm(reducedComm);
 }
 
 void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff) {
@@ -343,7 +329,7 @@ void velocity_solver_set_physical_parameters(double const& gravity, double const
 }
 
 void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
-    int nGlobalVertices, int nGlobalEdges, int Ordering, MPI_Comm reducedComm,
+    int nGlobalVertices, int nGlobalEdges, int Ordering, MPI_Comm /* reducedComm */,
     const std::vector<int>& indexToVertexID,
     const std::vector<int>& mpasIndexToVertexID,
     const std::vector<double>& verticesCoords,
@@ -358,8 +344,42 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& floating2dEdgesIds) {
 
-  slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.yaml", mpiCommT));
-  paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
+
+  paramList = Teuchos::createParameterList("Albany Parameters");
+  Teuchos::updateParametersFromYamlFileAndBroadcast("albany_input.yaml", paramList.ptr(), *mpiComm);
+
+  // Set build Type 
+  auto bt = paramList->get<std::string>("Build Type", "NONE");
+#ifdef ALBANY_EPETRA
+  if(bt == "NONE") {
+    bt = "Epetra";
+    paramList->set("Build Type", bt);
+  }
+#else
+  if(bt == "NONE") {
+    bt = "Tpetra";
+    paramList->set("Build Type",bt);
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(bt == "Epetra", Teuchos::Exceptions::InvalidArgument,
+                             "Error! ALBANY_EPETRA must be defined in order to perform an Epetra run.\n");
+#endif
+
+  if (bt=="Tpetra") {
+    // Set the static variable that denotes this as a Tpetra run
+    static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+  } else if (bt=="Epetra") {
+    // Set the static variable that denotes this as a Epetra run
+    static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                               "Error! Invalid choice (" + bt + ") for 'Build Type'.\n"
+                               "       Valid choices are 'Epetra', 'Tpetra'.\n");
+  }
+
+  slvrfctry = Teuchos::rcp(new Albany::SolverFactory(paramList, mpiComm));
+  //paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
+
+  paramList->set("Overwrite Nominal Values With Final Point", true);
 
   Teuchos::Array<std::string> arrayRequiredFields(9);
   arrayRequiredFields[0]="temperature";  arrayRequiredFields[1]="ice_thickness"; arrayRequiredFields[2]="surface_height"; arrayRequiredFields[3]="bed_topography";
@@ -521,7 +541,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   discParams = Teuchos::sublist(paramList, "Discretization", true);
 
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
-  albanyApp = Teuchos::rcp(new Albany::Application(mpiCommT));
+  albanyApp = Teuchos::rcp(new Albany::Application(mpiComm));
   albanyApp->initialSetUp(paramList);
 
   int neq = (paramList->sublist("Problem").get<std::string>("Name") == "LandIce Coupled FO H 3D") ? 3 : 2;
@@ -530,13 +550,13 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   std::vector<GO> indexToTriangleGOID;
   indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());
   meshStruct = Teuchos::rcp(
-      new Albany::MpasSTKMeshStruct(discParams, mpiCommT, indexToTriangleGOID,
+      new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleGOID,
           nGlobalTriangles, nLayers, Ordering));
   albanyApp->createMeshSpecs(meshStruct);
 
   albanyApp->buildProblem();
 
-  meshStruct->constructMesh(mpiCommT, discParams, neq, req,
+  meshStruct->constructMesh(mpiComm, discParams, neq, req,
       albanyApp->getStateMgr().getStateInfoStruct(), indexToVertexID,
       mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
       verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
@@ -544,4 +564,3 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
       dirichletNodesIds, floating2dEdgesIds,
       meshStruct->getMeshSpecs()[0]->worksetSize, nLayers, Ordering);
 }
-

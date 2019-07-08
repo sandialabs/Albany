@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
@@ -123,7 +124,7 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack2
+              Preconditioner Type: MueLu
               Preconditioner Types: 
                 Ifpack2: 
                   Overlap: 1

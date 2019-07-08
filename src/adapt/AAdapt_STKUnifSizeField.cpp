@@ -7,9 +7,13 @@
 #include "AAdapt_STKUnifSizeField.hpp"
 #include "Albany_AbstractSTKFieldContainer.hpp"
 
+#include <cmath>
+
 /*
  * Utility functions (from stk_adapt/regression_tests/RegressionTestLocalRefiner.cpp)
  */
+
+namespace {
 
 static void normalize(double input_normal[3], double normal[3]) {
   double sum = std::sqrt(input_normal[0] * input_normal[0] +
@@ -61,11 +65,13 @@ static void project_point_to_plane(double plane_point[3], double plane_normal[3]
   }
 }
 #endif
+} // anonymous namespace
 
+namespace AAdapt
 
-bool
-AAdapt::STKUnifRefineField::operator()(const stk::mesh::Entity element,
-                                       stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData) {
+bool STKUnifRefineField::
+operator() (const stk::mesh::Entity element,
+            stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData) {
 
   /*
     double plane_point[3] = {2, 0, 0};
@@ -114,9 +120,9 @@ AAdapt::STKUnifRefineField::operator()(const stk::mesh::Entity element,
   return false;  // don't terminate the loop
 }
 
-bool
-AAdapt::STKUnifUnrefineField::operator()(const stk::mesh::Entity element,
-    stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData) {
+bool STKUnifUnrefineField::
+operator ()(const stk::mesh::Entity element,
+            stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData) {
 
   const stk::mesh::PairIterRelation elem_nodes = element.relations(stk::topology::NODE_RANK);
   unsigned num_node = elem_nodes.size();
@@ -144,6 +150,4 @@ AAdapt::STKUnifUnrefineField::operator()(const stk::mesh::Entity element,
   return false;  // don't terminate the loop
 }
 
-
-
-
+} // namespace AAdapt

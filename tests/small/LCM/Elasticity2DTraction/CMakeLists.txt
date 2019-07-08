@@ -44,13 +44,15 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_IFPACK2)
 if (ALBANY_DTK)
-add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};input.yaml"
+add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe};input.yaml"
   -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
   -P runtest_dtk.cmake)
+set_tests_properties(${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 else()
-add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};input.yaml"
+add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe};input.yaml"
   -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
   -P runtest.cmake)
+set_tests_properties(${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 endif()
 endif()
 

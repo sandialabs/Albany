@@ -7,12 +7,13 @@
 #if !defined(LCM_ConstitutiveModel_hpp)
 #define LCM_ConstitutiveModel_hpp
 
+#include <algorithm>
 #include <map>
 
-#include "Phalanx_MDField.hpp"
-
-#include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Layouts.hpp"
+#include "Albany_Utils.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+#include "Phalanx_MDField.hpp"
 
 namespace LCM {
 
@@ -151,6 +152,10 @@ class ConstitutiveModel
       bool                          old_state_flag,
       bool                          output_flag)
   {
+    auto const begin = state_var_names_.begin();
+    auto const end   = state_var_names_.end();
+    auto       it    = std::find(begin, end, name);
+    ALBANY_ASSERT(it == end, "Duplicate state variable: " + name);
     ++num_state_variables_;
     state_var_names_.push_back(name);
     state_var_layouts_.push_back(layout);
@@ -217,7 +222,7 @@ class ConstitutiveModel
   }
 
   ///
-  /// Integration point location flag
+  /// Get integration point location flag
   ///
   bool
   getIntegrationPointLocationFlag()
@@ -226,13 +231,31 @@ class ConstitutiveModel
   }
 
   ///
+  /// Set integration point location flag
+  ///
+  void
+  setIntegrationPointLocationFlag(bool iplf = true)
+  {
+    need_integration_pt_locations_ = iplf;
+  }
+
+  ///
   /// Integration point location set method
   ///
   void
   setCoordVecField(
-      PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> coord_vec)
+      PHX::MDField<MeshScalarT const, Cell, QuadPoint, Dim> coord_vec)
   {
     coord_vec_ = coord_vec;
+  }
+
+  ///
+  /// Integration point location get method
+  ///
+  PHX::MDField<MeshScalarT const, Cell, QuadPoint, Dim>
+  getCoordVecField()
+  {
+    return coord_vec_;
   }
 
   ///

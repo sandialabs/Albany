@@ -52,7 +52,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   std::string ebName =
     p.get<std::string>("Element Block Name", "Missing");
 
-  type = cond_list->get("Thermal Conductivity Type", "Constant");
+  type = cond_list->get("ThermalConductivity Type", "Constant");
 
   if (type == "Constant") {
 
@@ -87,9 +87,9 @@ ThermalConductivity(Teuchos::ParameterList& p) :
     // Get the sublist for thermal conductivity for the element block in the mat DB (the material in the
     // elem block ebName.
 
-    Teuchos::ParameterList& subList = materialDB->getElementBlockSublist(ebName, "Thermal Conductivity");
+    Teuchos::ParameterList& subList = materialDB->getElementBlockSublist(ebName, "ThermalConductivity");
 
-    std::string typ = subList.get("Thermal Conductivity Type", "Constant");
+    std::string typ = subList.get("ThermalConductivity Type", "Constant");
 
     if (typ == "Constant") {
 
@@ -112,7 +112,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   }
 
   this->addEvaluatedField(thermalCond);
-  this->setName("Thermal Conductivity" );
+  this->setName("ThermalConductivity" );
 }
 
 template<typename EvalT, typename Traits>
@@ -129,7 +129,7 @@ init_constant(ScalarT value, Teuchos::ParameterList& p){
     Teuchos::RCP<ParamLib> paramLib =
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
 
-    this->registerSacadoParameter("Thermal Conductivity", paramLib);
+    this->registerSacadoParameter("ThermalConductivity", paramLib);
 
 } // init_constant
 
@@ -163,7 +163,7 @@ init_KL_RF(std::string &type, Teuchos::ParameterList& sublist, Teuchos::Paramete
     Teuchos::RCP<ParamLib> paramLib =
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
     for (int i=0; i<num_KL; i++) {
-      std::string ss = Albany::strint("Thermal Conductivity KL Random Variable",i);
+      std::string ss = Albany::strint("ThermalConductivity KL Random Variable",i);
       this->registerSacadoParameter(ss, paramLib);
       rv[i] = sublist.get(ss, 0.0);
     }
@@ -221,7 +221,7 @@ ThermalConductivity<EvalT,Traits>::getValue(const std::string &n)
   }
 #ifdef ALBANY_STOKHOS
   for (int i=0; i<rv.size(); i++) {
-    if (n == Albany::strint("Thermal Conductivity KL Random Variable",i))
+    if (n == Albany::strint("ThermalConductivity KL Random Variable",i))
       return rv[i];
   }
 #endif
@@ -238,9 +238,9 @@ Teuchos::RCP<const Teuchos::ParameterList>
 ThermalConductivity<EvalT,Traits>::getValidThermalCondParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-       rcp(new Teuchos::ParameterList("Valid Thermal Conductivity Params"));;
+       rcp(new Teuchos::ParameterList("Valid ThermalConductivity Params"));;
 
-  validPL->set<std::string>("Thermal Conductivity Type", "Constant",
+  validPL->set<std::string>("ThermalConductivity Type", "Constant",
                "Constant thermal conductivity across the entire domain");
   validPL->set<double>("Value", 1.0, "Constant thermal conductivity value");
 

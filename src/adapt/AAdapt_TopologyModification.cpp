@@ -9,26 +9,26 @@
 #include <stk_util/parallel/ParallelReduce.hpp>
 
 #include "AAdapt_TopologyModification.hpp"
-#include "LCM/utils/topology/Topology_FractureCriterion.h"
+#include "LCM/utils/topology/Topology_FailureCriterion.h"
 
 namespace AAdapt {
 
-typedef stk::mesh::Entity Entity;
-typedef stk::mesh::EntityRank EntityRank;
+typedef stk::mesh::Entity             Entity;
+typedef stk::mesh::EntityRank         EntityRank;
 typedef stk::mesh::RelationIdentifier EdgeId;
-typedef stk::mesh::EntityKey EntityKey;
+typedef stk::mesh::EntityKey          EntityKey;
 
 //
 //
 //
-AAdapt::TopologyMod::TopologyMod(
-    Teuchos::RCP<Teuchos::ParameterList> const & params,
-    Teuchos::RCP<ParamLib> const & param_lib,
-    Albany::StateManager & state_mgr,
-    const Teuchos::RCP<const Teuchos_Comm> & commT) :
-  AAdapt::AbstractAdapter(params, param_lib, state_mgr, commT),
-  remesh_file_index_(1) {
-
+TopologyMod::
+TopologyMod(Teuchos::RCP<Teuchos::ParameterList> const & params,
+            Teuchos::RCP<ParamLib>               const & param_lib,
+            Albany::StateManager                 const & state_mgr,
+            Teuchos::RCP<Teuchos_Comm const>     const & comm)
+ : AbstractAdapter (params, param_lib, state_mgr, comm)
+ , remesh_file_index_(1)
+{
   discretization_ = state_mgr_.getDiscretization();
 
   stk_discretization_ =
@@ -44,66 +44,38 @@ AAdapt::TopologyMod::TopologyMod(
   // Save the initial output file name
   base_exo_filename_ = stk_mesh_struct_->exoOutFile;
 
-  std::string const
-  bulk_block_name = params->get<std::string>("Bulk Block Name");
+  std::string const bulk_block_name =
+      params->get<std::string>("Bulk Block Name");
 
-  std::string const
-  interface_block_name = params->get<std::string>("Interface Block Name");
+  std::string const interface_block_name =
+      params->get<std::string>("Interface Block Name");
 
-  std::string const
-  stress_name = "nodal_FirstPK";
+  std::string const stress_name = "nodal_FirstPK";
 
-  double const
-  critical_traction = params->get<double>("Critical Traction");
+  double const critical_traction = params->get<double>("Critical Traction");
 
-  double const
-  beta = params->get<double>("beta");
+  double const beta = params->get<double>("beta");
 
-  topology_ =
-    Teuchos::rcp(new LCM::Topology(
-        discretization_,
-        bulk_block_name,
-        interface_block_name));
+  topology_ = Teuchos::rcp(new LCM::Topology(
+      discretization_, bulk_block_name, interface_block_name));
 
-  fracture_criterion_ =
-    Teuchos::rcp(
-        new LCM::FractureCriterionTraction(
-            *topology_,
-            stress_name,
-            critical_traction,
-            beta));
+  failure_criterion_ = Teuchos::rcp(new LCM::FractureCriterionTraction(
+      *topology_, stress_name, critical_traction, beta));
 
-  topology_->set_fracture_criterion(fracture_criterion_);
+  topology_->set_failure_criterion(failure_criterion_);
 }
 
-//
-//
-//
-AAdapt::TopologyMod::~TopologyMod() {
-}
-
-//
-//
-//
-bool
-AAdapt::TopologyMod::queryAdaptationCriteria() {
-  size_t
-  number_fractured_faces = topology_->setEntitiesOpen();
+bool TopologyMod::queryAdaptationCriteria(int) {
+  size_t const number_fractured_faces = topology_->setEntitiesOpen();
 
   return number_fractured_faces > 0;
 }
 
-//
-//
-//
-bool
-AAdapt::TopologyMod::adaptMesh(
-    Epetra_Vector const & solution,
-    Epetra_Vector const & ovlp_solution) {
+bool TopologyMod::adaptMesh() {
 
   *output_stream_
       << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
-      << "Adapting mesh using AAdapt::TopologyMod method      \n"
+      << "Adapting mesh using TopologyMod method      \n"
       << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
   // Save the current results and close the exodus file
@@ -131,10 +103,6 @@ AAdapt::TopologyMod::adaptMesh(
 
   // Start the mesh update process
 
-  // Modifies mesh for graph algorithm
-
-  // begin mesh update
-
   topology_->splitOpenFaces();
 
   // Throw away all the Albany data structures and re-build them from the mesh
@@ -144,30 +112,21 @@ AAdapt::TopologyMod::adaptMesh(
   return true;
 }
 
-//----------------------------------------------------------------------------
-// Transfer solution between meshes.  This is a no-op as the
-// solution is copied to the newly created nodes by the
-// topology->fracture_boundary() function.
-void
-AAdapt::TopologyMod::
-solutionTransfer(const Epetra_Vector& oldSolution,
-                 Epetra_Vector& newSolution) {}
+Teuchos::RCP<Teuchos::ParameterList const>
+TopologyMod::getValidAdapterParameters() const {
 
-//----------------------------------------------------------------------------
-Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::TopologyMod::getValidAdapterParameters() const {
-  Teuchos::RCP<Teuchos::ParameterList> valid_pl_ =
-    this->getGenericAdapterParams("ValidTopologyModificationParams");
+  Teuchos::RCP<Teuchos::ParameterList>
+  valid_pl_ = this->getGenericAdapterParams("ValidTopologyModificationParams");
 
-  valid_pl_->
-  set<double>("Critical Traction",
-              1.0,
-              "Critical traction at which two elements separate t_eff >= t_cr");
+  valid_pl_->set<double>(
+    "Critical Traction",
+    1.0,
+    "Critical traction at which two elements separate t_eff >= t_cr");
 
-  valid_pl_->
-  set<double>("beta",
-              1.0,
-              "Weight factor t_eff = sqrt[(t_s/beta)^2 + t_n^2]");
+  valid_pl_->set<double>(
+    "beta",
+    1.0,
+    "Weight factor t_eff = sqrt[(t_s/beta)^2 + t_n^2]");
 
   return valid_pl_;
 }
@@ -180,7 +139,7 @@ AAdapt::TopologyMod::showRelations() {
   stk::mesh::get_entities(*(bulk_data_), stk::topology::ELEMENT_RANK, element_list);
 
   // Remove extra relations from element
-  for(int i = 0; i < element_list.size(); ++i) {
+  for(size_t i = 0; i < element_list.size(); ++i) {
     Entity element = element_list[i];
 
     for (EntityRank rank = stk::topology::NODE_RANK; rank < meta_data_->entity_rank_count(); ++rank) {
@@ -192,7 +151,7 @@ AAdapt::TopologyMod::showRelations() {
       std::cout << "Element " << bulk_data_->identifier(element_list[i])
                 << " relations are :" << std::endl;
 
-      for(int j = 0; j < num_relations; ++j) {
+      for(size_t j = 0; j < num_relations; ++j) {
         std::cout << "entity:\t" << bulk_data_->identifier(relations[j]) << ","
                   << bulk_data_->entity_rank(relations[j]) << "\tlocal id: "
                   << ords[j] << "\n";
@@ -256,7 +215,7 @@ getGlobalOpenList(std::map<EntityKey, bool>& local_entity_open,
   int* offsets = new int[parallel_size];
   int count = 0;
 
-  for(int i = 0; i < parallel_size; i++) {
+  for(size_t i = 0; i < parallel_size; i++) {
     offsets[i] = count;
     count += sizes[i];
   }

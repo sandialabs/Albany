@@ -48,7 +48,7 @@ Topology::getClosestNodes(std::vector<std::vector<double>> points)
   std::vector<double>            pointA, pointB, pointC;
   double                         minDA, minDB, minDC;
 
-  std::vector<stk::mesh::Entity> entities_D0 = getEntitiesByRank(
+  std::vector<stk::mesh::Entity> entities_D0 = get_rank_entities(
       get_bulk_data(),
       stk::topology::NODE_RANK);  // get all the nodes
 
@@ -108,7 +108,7 @@ Topology::getClosestNodesOnSurface(std::vector<std::vector<double>> points)
   // Obtain all the nodes that lie over the surface
   // Obtain all the faces of the mesh
   std::vector<stk::mesh::Entity> MeshFaces =
-      getEntitiesByRank(get_bulk_data(), stk::topology::FACE_RANK);
+      get_rank_entities(get_bulk_data(), stk::topology::FACE_RANK);
 
   // Find the faces (Entities of rank 2) that build the boundary of
   // the given mesh
@@ -446,7 +446,7 @@ Topology::getDistanceBetweenNodes(
 std::vector<double>
 Topology::getCoordinatesOfMaxAndMin()
 {
-  std::vector<stk::mesh::Entity> entities_D0 = getEntitiesByRank(
+  std::vector<stk::mesh::Entity> entities_D0 = get_rank_entities(
       get_bulk_data(),
       stk::topology::NODE_RANK);  // get all the nodes
 
@@ -509,7 +509,7 @@ Topology::meshEdgesShortestPath()
 {
   // Obtain all the faces of the mesh
   std::vector<stk::mesh::Entity> MeshFaces =
-      getEntitiesByRank(get_bulk_data(), stk::topology::FACE_RANK);
+      get_rank_entities(get_bulk_data(), stk::topology::FACE_RANK);
 
   // Find the faces (Entities of rank 2) that build the boundary of the
   // given mesh
@@ -753,7 +753,7 @@ Topology::shortestpath(const std::vector<stk::mesh::Entity>& nodes)
 
   // Obtain all the faces of the mesh
   std::vector<stk::mesh::Entity> MeshFaces =
-      getEntitiesByRank(get_bulk_data(), stk::topology::FACE_RANK);
+      get_rank_entities(get_bulk_data(), stk::topology::FACE_RANK);
 
   // Find the faces (Entities of rank 2) that build the boundary of the
   // given mesh
@@ -931,7 +931,7 @@ Topology::edgesDirections()
 {
   // Get all of the edges
   std::vector<stk::mesh::Entity> setOfEdges =
-      getEntitiesByRank(get_bulk_data(), stk::topology::EDGE_RANK);
+      get_rank_entities(get_bulk_data(), stk::topology::EDGE_RANK);
 
   // Create a map that assigns new numbering to the Edges
   std::map<stk::mesh::Entity, int>               edge_map;
@@ -972,7 +972,7 @@ Topology::edgesDirectionsOuterSurface()
 {
   // Obtain all the faces of the mesh
   std::vector<stk::mesh::Entity> MeshFaces =
-      getEntitiesByRank(get_bulk_data(), stk::topology::FACE_RANK);
+      get_rank_entities(get_bulk_data(), stk::topology::FACE_RANK);
 
   // Find the faces (Entities of rank 2) that build the boundary of the
   // given mesh
@@ -1043,7 +1043,7 @@ Topology::facesDirections()
 {
   // Get the faces
   std::vector<stk::mesh::Entity> setOfFaces =
-      getEntitiesByRank(get_bulk_data(), stk::topology::FACE_RANK);
+      get_rank_entities(get_bulk_data(), stk::topology::FACE_RANK);
 
   // Make a new map, mapping the Entities of Rank 2(faces) to a counter
   std::map<stk::mesh::Entity, int>               face_map;
@@ -1086,7 +1086,7 @@ std::vector<double>
 Topology::facesAreas()
 {
   std::vector<stk::mesh::Entity> setOfFaces =
-      getEntitiesByRank(get_bulk_data(), stk::topology::FACE_RANK);
+      get_rank_entities(get_bulk_data(), stk::topology::FACE_RANK);
 
   // Create the map
   std::map<stk::mesh::Entity, int>               face_map;
@@ -1137,7 +1137,7 @@ Topology::boundaryOperator()
   std::vector<std::vector<int>>  edgesDirec = edgesDirections();
   std::vector<std::vector<int>>  facesDirec = facesDirections();
   std::vector<stk::mesh::Entity> meshFaces =
-      getEntitiesByRank(get_bulk_data(), stk::topology::FACE_RANK);
+      get_rank_entities(get_bulk_data(), stk::topology::FACE_RANK);
   std::vector<std::vector<int>> boundaryOp;
 
   // Iterate through every row of facesDirec
@@ -1210,7 +1210,7 @@ Topology::outputForMpsFile()
   std::vector<std::vector<int>>  edgesDirec = edgesDirections();
   std::vector<std::vector<int>>  facesDirec = facesDirections();
   std::vector<stk::mesh::Entity> meshFaces =
-      getEntitiesByRank(get_bulk_data(), stk::topology::FACE_RANK);
+      get_rank_entities(get_bulk_data(), stk::topology::FACE_RANK);
   std::vector<std::vector<double>> matrixForMpsFile;
 
   // Iterate through every row of facesDirec
@@ -1381,7 +1381,7 @@ Topology::minimumSurfaceFaces(std::vector<int> VectorFromLPSolver)
 {
   // Obtain the faces
   std::vector<stk::mesh::Entity> setOfFaces =
-      getEntitiesByRank(get_bulk_data(), stk::topology::FACE_RANK);
+      get_rank_entities(get_bulk_data(), stk::topology::FACE_RANK);
 
   // Define the map with the entities and their identifiers
   std::map<int, stk::mesh::Entity>               face_map;
@@ -1435,7 +1435,7 @@ Topology::numberOfRepetitions(
 std::vector<double>
 Topology::findCoordinates(unsigned int nodeIdentifier)
 {
-  std::vector<stk::mesh::Entity> MeshNodes = getEntitiesByRank(
+  std::vector<stk::mesh::Entity> MeshNodes = get_rank_entities(
       get_bulk_data(),
       stk::topology::NODE_RANK);  // Get all the nodes
   // of the mesh

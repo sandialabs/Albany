@@ -5,8 +5,8 @@
 ##*****************************************************************//
 
 set(runtest.cmake ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-add_subdirectory(Cubes)
 add_subdirectory(Alternating)
+add_subdirectory(Cubes)
 if(ALBANY_DTK)
   add_subdirectory(ParallelCubes)
 endif()

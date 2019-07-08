@@ -9,7 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Albany_Layouts.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_NodalDOFManager.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -67,8 +67,6 @@ void UpdateZCoordinateMovingTop<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   // const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
@@ -78,8 +76,9 @@ evaluateFields(typename Traits::EvalData workset)
   const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
-  for(int i=1; i<numLayers; ++i)
+  for(int i=1; i<numLayers; ++i) {
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
+  }
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
@@ -87,14 +86,15 @@ evaluateFields(typename Traits::EvalData workset)
     // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
       MeshScalarT h;
-      if(haveThickness)
+      if(haveThickness) {
         h = std::max(H(cell,node), MeshScalarT(minH));
-      else
+      } else {
         h = std::max(H0(cell,node) + dH(cell,node), MeshScalarT(minH));
+      }
       MeshScalarT bed = bedTopo(cell,node);
       auto floating = (rho_i*h + rho_w*bed < 0.0);// && (h+bed > 0.0);
 
@@ -144,7 +144,6 @@ UpdateZCoordinateMovingBed (const Teuchos::ParameterList& p,
   rho_i = p_list->get<double>("Ice Density");
   rho_w = p_list->get<double>("Water Density");
 
-
   this->setName("Update Z Coordinate Moving Bed");
 }
 
@@ -157,8 +156,6 @@ void UpdateZCoordinateMovingBed<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
-  Teuchos::RCP<const Tpetra_Vector> xT = Albany::getConstTpetraVector(workset.x);
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   // const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
@@ -177,7 +174,7 @@ evaluateFields(typename Traits::EvalData workset)
     // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
 //      MeshScalarT h = std::max(H(cell,node), MeshScalarT(minH));

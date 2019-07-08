@@ -111,6 +111,26 @@ struct ParallelKernel
   ConstitutiveModel<EvalT, Traits>& model_;
 
   ///
+  /// Get integration point location flag
+  ///
+  bool
+  getIntegrationPointLocationFlag()
+  {
+    need_integration_pt_locations_ = model_.getIntegrationPointLocationFlag();
+    return need_integration_pt_locations_;
+  }
+
+  ///
+  /// Set integration point location flag
+  ///
+  void
+  setIntegrationPointLocationFlag(bool iplf = true)
+  {
+    model_.setIntegrationPointLocationFlag(iplf);
+    need_integration_pt_locations_ = iplf;
+    coord_vec_                     = model_.coord_vec_;
+  }
+  ///
   /// Map of field names
   ///
   NameMap& field_name_map_;

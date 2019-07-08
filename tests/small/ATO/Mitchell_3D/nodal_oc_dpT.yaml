@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Solution Method: ATO Problem
     Number of Subproblems: 1
@@ -49,6 +50,7 @@ ANONYMOUS:
             Function Type: SIMP
             Minimum: 0.00000000000000000e+00
             Penalization Parameter: 1.00000000000000000e+00
+        Spatial Filter: 0
     Configuration: 
       Element Blocks: 
         Number of Element Blocks: 3
@@ -144,23 +146,13 @@ ANONYMOUS:
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 10
-                    Max Iterations: 200
-                    Tolerance: 1.00000000000000004e-10
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999980e-13
-                      Output Frequency: 2
+                      Output Frequency: 10
                       Output Style: 1
                       Verbosity: 0
                       Maximum Iterations: 200
@@ -170,8 +162,8 @@ ANONYMOUS:
               Preconditioner Type: Ifpack2
               Preconditioner Types: 
                 Ifpack2: 
-                  Overlap: 2
-                  Prec Type: ILUT
+                  Overlap: 0
+                  Prec Type: RILUK
                   Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000000000000e+00
                     'fact: ilut level-of-fill': 1.00000000000000000e+00

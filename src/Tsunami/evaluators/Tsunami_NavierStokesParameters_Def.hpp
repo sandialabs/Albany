@@ -23,8 +23,7 @@ NavierStokesParameters(const Teuchos::ParameterList& p,
   densityQP          (p.get<std::string>("Fluid Density QP Name"),dl->qp_scalar),
   mu                 (p.get<double>("Viscosity")), 
   rho                (p.get<double>("Density")), 
-  use_params_on_mesh (p.get<bool>("Use Parameters on Mesh")),
-  enable_memoizer    (p.get<bool>("Enable Memoizer"))
+  use_params_on_mesh (p.get<bool>("Use Parameters on Mesh"))
 {
 
   this->addDependentField(viscosityQPin);
@@ -32,9 +31,6 @@ NavierStokesParameters(const Teuchos::ParameterList& p,
   this->addEvaluatedField(viscosityQP);
   this->addEvaluatedField(densityQP);
   
-  if (enable_memoizer)   
-    memoizer.enable_memoizer();
-
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
@@ -53,6 +49,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(densityQPin,fm);
   this->utils.setFieldData(viscosityQP,fm);
   this->utils.setFieldData(densityQP,fm);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 //**********************************************************************
@@ -61,7 +60,7 @@ void NavierStokesParameters<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //If memoizer is on, do this just once at the beginning of the simulation
-  if (memoizer.have_stored_data(workset)) return;
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   if (use_params_on_mesh == false) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

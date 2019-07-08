@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_BCUtils.hpp"
+#include "Albany_Macros.hpp"
 
 #include <Phalanx_Evaluator_Factory.hpp>
 
@@ -378,7 +379,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -414,7 +415,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
 
       // Add other functional boundary conditions here. Note that Torsion could
@@ -438,7 +439,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         p->set<RCP<ParamLib>>("Parameter Library", paramLib);
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -510,7 +511,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -572,8 +573,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         p->set<RCP<DataLayout>>("Data Layout", dummy);
         p->set<string>("Dirichlet Name", ss);
         p->set<RealType>("Dirichlet Value", 0.0);
-        p->set<RealType>(
-            "SDBC Scaling", sub_list.get<RealType>("SDBC Scaling", 1.0));
         p->set<int>("Equation Offset", j);
         offsets_[i].push_back(j);
         p->set<RCP<ParamLib>>("Parameter Library", paramLib);
@@ -629,7 +628,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -677,51 +676,9 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
           evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
           bcs->push_back(ss);
-          use_dbcs_ = true; 
+          use_dbcs_ = true;
         }
       }
-    }
-  }
-
-  ///
-  /// Least squares fit of peridynamics neighbors BC
-  ////
-  for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
-    string ss = traits_type::constructBCName(nodeSetIDs[i], "lsfit");
-
-    if (BCparams.isSublist(ss)) {
-      // grab the sublist
-      ParameterList& sub_list = BCparams.sublist(ss);
-
-      RCP<ParameterList> p = rcp(new ParameterList);
-      p->set<int>("Type", traits_type::typePd);
-
-      // Fill up ParameterList with things DirichletBase wants
-      p->set<RCP<DataLayout>>("Data Layout", dummy);
-      p->set<string>("Dirichlet Name", ss);
-      p->set<RealType>("Dirichlet Value", 0.0);
-      p->set<string>("Node Set ID", nodeSetIDs[i]);
-      // p->set< int >     ("Number of Equations", dirichletNames.size());
-      p->set<int>("Equation Offset", 0);
-      for (std::size_t j = 0; j < bcNames.size(); j++) {
-        offsets_[i].push_back(j);
-      }
-      p->set<int>(
-          "Cubature Degree",
-          BCparams.get("Cubature Degree", 0));  // if set to zero, the cubature
-                                                // degree of the side will be
-                                                // set to that of the element
-
-      // Parameters specific to the lsfit BC
-      p->set<double>(
-          "Perturb Dirichlet", sub_list.get<double>("Perturb Dirichlet", 1.0));
-      p->set<double>("Time Step", sub_list.get<double>("Time Step", 1.0));
-
-      p->set<RCP<ParamLib>>("Parameter Library", paramLib);
-      evaluators_to_build[evaluatorsToBuildName(ss)] = p;
-
-      bcs->push_back(ss);
-      use_dbcs_ = true; 
     }
   }
 
@@ -767,11 +724,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         Teuchos::Array<RealType> array =
             BCparams.get<Teuchos::Array<RealType>>(ss);
         p->set<RealType>("Dirichlet Value", array[0]);
-        if (array.size() > 1) {
-          p->set<RealType>("SDBC Scaling", array[1]);
-        } else {
-          p->set<RealType>("SDBC Scaling", 1.0);
-        }
         p->set<string>("Node Set ID", nodeSetIDs[i]);
         p->set<int>("Equation Offset", j);
         offsets_[i].push_back(j);
@@ -830,7 +782,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -869,8 +821,6 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         p->set<RCP<DataLayout>>("Data Layout", dummy);
         p->set<string>("Dirichlet Name", ss);
         p->set<RealType>("Dirichlet Value", 0.0);
-        p->set<RealType>(
-            "SDBC Scaling", sub_list.get<RealType>("SDBC Scaling", 1.0));
         p->set<string>("Node Set ID", nodeSetIDs[i]);
         p->set<int>("Equation Offset", 0);
         for (std::size_t j = 0; j < bcNames.size(); j++) {
@@ -937,7 +887,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
-        use_dbcs_ = true; 
+        use_dbcs_ = true;
       }
     }
   }
@@ -992,15 +942,17 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
       evaluators_to_build[ess.str()] = p;
 
       bcs->push_back(dir_name);
-      use_dbcs_ = true; 
+      use_dbcs_ = true;
     }
     delete value;
   }
 
-  if ((use_dbcs_ == true) && (use_sdbcs_ == true)) { 
-    TEUCHOS_TEST_FOR_EXCEPTION( true, 
-              std::logic_error,
-              "You are attempting to prescribe a mix of SDBCs and DBCs, which is not allowed!\n"); 
+  if ((use_dbcs_ == true) && (use_sdbcs_ == true)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "You are attempting to prescribe a mix of SDBCs and DBCs, which is not "
+        "allowed!\n");
   }
 
   string allBC = "Evaluator for all Dirichlet BCs";
@@ -1040,9 +992,6 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
   using Teuchos::ParameterList;
   using Teuchos::RCP;
   using Teuchos::rcp;
-
-  const bool enableMemoizer =
-      params->get<bool>("Use MDField Memoization", false);
 
   // Drop into the "Neumann BCs" sublist
   ParameterList BCparams = params->sublist(traits_type::bcParamsPl);

@@ -188,12 +188,8 @@ public:
   void setFieldT(const Tpetra_Vector &field_vector, const std::string& field_name, bool overlapped) override;
 
   //! Set the residual field for output - Tpetra version
-  void setResidualFieldT(const Tpetra_Vector& residual) override;
-
-#if defined(ALBANY_EPETRA)
-  void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false) override;
-  void writeSolution(const Epetra_Vector& solution, const Epetra_Vector& solution_dot, 
-                             const double time, const bool overlapped = false) override;
+#if defined(ALBANY_LCM)
+  void setResidualField (const Thyra_Vector& residual) override;
 #endif
 
   //! Write the solution to the output file - Tpetra version. Calls next two together.

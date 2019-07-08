@@ -20,15 +20,14 @@ set( CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
 SET(SOURCES
   Albany_SolverFactory.cpp
   Albany_Utils.cpp
-  PHAL_AlbanyTraits.cpp
   PHAL_Dimension.cpp
+  PHAL_Setup.cpp
   Albany_Application.cpp
   Albany_Memory.cpp
-  Albany_ModelFactory.cpp
-  Albany_ModelEvaluatorT.cpp
+  Albany_ModelEvaluator.cpp
   Albany_NullSpaceUtils.cpp
   Albany_ObserverImpl.cpp
-  Albany_PiroObserverT.cpp
+  Albany_PiroObserver.cpp
   Albany_StatelessObserverImpl.cpp
   Albany_StateManager.cpp
   PHAL_Utilities.cpp
@@ -42,11 +41,8 @@ ENDIF()
 
 IF(ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
-    Albany_ModelEvaluator.cpp
     Albany_NOXObserver.cpp
     Albany_NOXStatelessObserver.cpp
-    Albany_PiroObserver.cpp
-    Albany_SaveEigenData.cpp
   )
   IF(ALBANY_RYTHMOS)
     SET(SOURCES ${SOURCES} Albany_RythmosObserver.cpp)
@@ -63,11 +59,10 @@ SET(HEADERS
   Albany_EigendataInfoStructT.hpp
   Albany_KokkosTypes.hpp
   Albany_Memory.hpp
-  Albany_ModelFactory.hpp
-  Albany_ModelEvaluatorT.hpp
+  Albany_ModelEvaluator.hpp
   Albany_NullSpaceUtils.hpp
   Albany_ObserverImpl.hpp
-  Albany_PiroObserverT.hpp
+  Albany_PiroObserver.hpp
   Albany_ScalarOrdinalTypes.hpp
   Albany_SolverFactory.hpp
   Albany_StateManager.hpp
@@ -80,6 +75,7 @@ SET(HEADERS
   PHAL_AlbanyTraits.hpp
   PHAL_Dimension.hpp
   PHAL_FactoryTraits.hpp
+  PHAL_Setup.hpp
   PHAL_TypeKeyMap.hpp
   PHAL_Utilities.hpp
   PHAL_Utilities_Def.hpp
@@ -89,12 +85,9 @@ SET(HEADERS
 IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
     Albany_EigendataInfoStruct.hpp
-    Albany_SaveEigenData.hpp
-    Albany_ModelEvaluator.hpp
     Albany_NOXObserver.hpp
     Albany_NOXStatelessObserver.hpp
     Albany_ObserverFactory.hpp
-    Albany_PiroObserver.hpp
     Petra_Converters.hpp
   )
   IF(ALBANY_RYTHMOS)
@@ -111,6 +104,9 @@ SET(SOURCES ${SOURCES}
   utility/TimeMonitor.cpp
   utility/Albany_CombineAndScatterManager.cpp
   utility/Albany_CombineAndScatterManagerTpetra.cpp
+  utility/Albany_CommUtils.cpp
+  utility/Albany_Gather.cpp
+  utility/Albany_ThyraCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
   utility/Albany_TpetraThyraUtils.cpp
   utility/VariableMonitor.cpp
@@ -127,6 +123,9 @@ SET(HEADERS ${HEADERS}
   utility/TimeMonitor.hpp
   utility/Albany_CombineAndScatterManager.hpp
   utility/Albany_CombineAndScatterManagerTpetra.hpp
+  utility/Albany_CommUtils.hpp
+  utility/Albany_Gather.hpp
+  utility/Albany_ThyraCrsMatrixFactory.hpp
   utility/Albany_ThyraUtils.hpp
   utility/Albany_TpetraThyraUtils.hpp
   utility/VariableMonitor.hpp
@@ -140,9 +139,11 @@ SET(HEADERS ${HEADERS}
 IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
     utility/Albany_EpetraThyraUtils.cpp
+    utility/Albany_CombineAndScatterManagerEpetra.cpp
   )
   SET(HEADERS ${HEADERS}
     utility/Albany_EpetraThyraUtils.hpp
+  utility/Albany_CombineAndScatterManagerEpetra.hpp
   )
 ENDIF()
 
@@ -330,6 +331,7 @@ SET(SOURCES ${SOURCES}
   evaluators/scatter/PHAL_SeparableScatterScalarResponse.cpp
   evaluators/state/PHAL_LoadSideSetStateField.cpp
   evaluators/state/PHAL_LoadStateField.cpp
+  evaluators/state/PHAL_ReadStateField.cpp
   evaluators/state/PHAL_SaveCellStateField.cpp
   evaluators/state/PHAL_SaveNodalField.cpp
   evaluators/state/PHAL_SaveStateField.cpp
@@ -490,6 +492,8 @@ SET(HEADERS ${HEADERS}
   evaluators/state/PHAL_LoadSideSetStateField_Def.hpp
   evaluators/state/PHAL_LoadStateField.hpp
   evaluators/state/PHAL_LoadStateField_Def.hpp
+  evaluators/state/PHAL_ReadStateField.hpp
+  evaluators/state/PHAL_ReadStateField_Def.hpp
   evaluators/state/PHAL_SaveCellStateField.hpp
   evaluators/state/PHAL_SaveCellStateField_Def.hpp
   evaluators/state/PHAL_SaveNodalField.hpp
@@ -612,16 +616,6 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/pde/PNP_PotentialResid_Def.hpp
   )
 
-# ASCR
-IF(ALBANY_ASCR AND ALBANY_EPETRA)
-  SET(SOURCES ${SOURCES}
-    Albany_Networks.cpp
-    )
-  SET(HEADERS ${HEADERS}
-    Albany_Networks.hpp
-    )
-ENDIF()
-
 IF (ALBANY_SCOREC_STANDALONE)
   SET(SCOREC_LIB SCOREC::core)
 ENDIF()
@@ -669,7 +663,6 @@ include_directories (${ALBANY_PUMI_INCLUDE_DIRS}
                      ./LCM/evaluators/kinematics
                      ./LCM/evaluators/lame
                      ./LCM/evaluators/linear-elasticity
-                     ./LCM/evaluators/peridigm
                      ./LCM/evaluators/poro
                      ./LCM/evaluators/projection
                      ./LCM/evaluators/responses
@@ -690,6 +683,10 @@ include_directories (${ALBANY_PUMI_INCLUDE_DIRS}
                      ./Tsunami/evaluators
                      ./Aeras/problems
                      ./Aeras/evaluators
+                     ./AMP
+                     ./AMP/problems
+                     ./AMP/evaluators
+                     ./AMP/responses
                      ./ATO
                      ./ATO/problems
                      ./ATO/evaluators
@@ -735,15 +732,6 @@ ELSE()
   set(PlatoEngine_LIB )
 ENDIF()
 
-IF ( ENABLE_DOTK )
-  include_directories (${DOTK_INCLUDE_DIR})
-  link_directories (${DOTK_LIBRARY_DIR})
-  set(DOTK_LIB )
-ELSE()
-  set(DOTK_LIB )
-ENDIF()
-
-
 # LAME
 IF(ALBANY_LAME)
   include_directories (${LAME_INCLUDE_DIR})
@@ -766,20 +754,17 @@ ELSE()
   set(LAMENT_LIB )
 ENDIF()
 
-# PERIDIGM
-IF(ALBANY_PERIDIGM AND ALBANY_EPETRA)
-  include_directories (${Peridigm_INCLUDE_DIRS})
-  link_directories (${Peridigm_LIBRARY_DIRS})
-ELSE()
-  set(Peridigm_LIBRARIES )
-ENDIF()
-
 # RPI APF mesh interface
 IF(ALBANY_APF)
   SET(ALBANY_PUMI_INCLUDE_DIRS ./disc/pumi)
   include_directories (${ALBANY_PUMI_INCLUDE_DIRS})
 ELSE()
   SET(ALBANY_PUMI_INCLUDE_DIRS )
+ENDIF()
+
+IF (ALBANY_AMP)
+  add_subdirectory(AMP)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
 ENDIF()
 
 # Catalyst CoProcessing
@@ -792,44 +777,22 @@ endif()
 # Now build executables from this library, tailored main()s, and Trilinos
 IF (NOT ALBANY_LIBRARIES_ONLY)
 
-IF (ALBANY_EPETRA)
-  add_executable(Albany Main_Solve.cpp)
-ENDIF()
+add_executable(Albany Main_Solve.cpp)
 
-add_executable(AlbanyT Main_SolveT.cpp)
-
-SET(ALBANY_EXECUTABLES AlbanyT)
-IF (ALBANY_EPETRA)
-  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
-ENDIF()
+SET(ALBANY_EXECUTABLES Albany)
 
 IF (ALBANY_MPMD)
-  add_executable(AlbanyMPMD Main_SolveT_MPMD.cpp)
+  add_executable(AlbanyMPMD Main_Solve_MPMD.cpp)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
 ENDIF()
 
-
-if (ALBANY_ASCR AND ALBANY_EPETRA)
-  add_executable(AlbanyCoupled Main_Coupled.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
-    AlbanyCoupled
-    )
-endif()
-IF (ALBANY_DAKOTA AND ALBANY_EPETRA)
+IF (ALBANY_DAKOTA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
 ENDIF ()
-IF (ALBANY_DAKOTA)
-  add_executable(AlbanyDakotaT Main_DakotaT.cpp Albany_DakotaT.cpp Albany_DakotaT.hpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakotaT)
-ENDIF ()
 
-IF (ALBANY_EPETRA)
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
-ENDIF()
-add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysisT)
 
 IF (ALBANY_MESHDB_TOOLS)
   add_executable(exopumiconvert disc/tools/exopumiconvert.cpp)
@@ -842,7 +805,6 @@ ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 # Note: Albany_EXTRA_LIBRARIES is to allow users to specify
 # libraries that one cannot get out of Trilinos directly.
 set(ALL_LIBRARIES
-  ${Peridigm_LIBRARIES}
   ${ALBANY_CI_LIB}
   ${PlatoEngine_LIB}
   ${PlatoEngine_LIB}
@@ -851,7 +813,6 @@ set(ALL_LIBRARIES
   ${LAME_LIB}
   ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
-  ${DOTK_LIB}
   ${LAMENT_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
   ${Albany_EXTRA_LIBRARIES}
@@ -883,11 +844,7 @@ IF (ALBANY_LANDICE)
   ENDIF()
 
   IF (ENABLE_CISM_INTERFACE)
-    IF (ENABLE_CISM_EPETRA)
-      SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterfaceE)
-    ELSE()
-      SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
-    ENDIF()
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
   ENDIF()
 ENDIF()
 
@@ -931,7 +888,7 @@ endif()
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
 
-MESSAGE("-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
+MESSAGE("\n-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
 
 IF (Albany_BUILD_STATIC_EXE)
   FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})

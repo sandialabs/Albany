@@ -34,9 +34,10 @@ public:
     this->setName("Shared Parameter " + param_name + PHX::typeAsString<EvalT>());
   }
 
-  void postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
+  void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(param_as_field,fm);
+    d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
   }
 
   static void setNominalValue (const Teuchos::ParameterList& p, double default_value);

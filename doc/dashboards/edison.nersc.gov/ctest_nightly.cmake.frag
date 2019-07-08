@@ -78,7 +78,7 @@ if (DOWNLOAD_TRILINOS)
   
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Trilinos_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      clone ${Trilinos_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -287,6 +287,9 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
     "-DTpetra_INST_INT_INT:BOOL=OFF"
+    "-DXpetra_ENABLE_Epetra=OFF"
+    "-DMueLu_ENABLE_Epetra=OFF"
+    "-DBelos_ENABLE_Epetra=OFF"
     #
     "-DMPI_USE_COMPILER_WRAPPERS:BOOL=OFF"
     "-DCMAKE_CXX_COMPILER:FILEPATH=CC"

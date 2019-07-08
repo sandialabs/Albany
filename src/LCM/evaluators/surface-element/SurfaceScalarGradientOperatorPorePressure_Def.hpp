@@ -12,9 +12,10 @@ namespace LCM {
 
 //**********************************************************************
 template <typename EvalT, typename Traits>
-SurfaceScalarGradientOperatorPorePressure<EvalT, Traits>::SurfaceScalarGradientOperatorPorePressure(
-    const Teuchos::ParameterList&        p,
-    const Teuchos::RCP<Albany::Layouts>& dl)
+SurfaceScalarGradientOperatorPorePressure<EvalT, Traits>::
+    SurfaceScalarGradientOperatorPorePressure(
+        const Teuchos::ParameterList&        p,
+        const Teuchos::RCP<Albany::Layouts>& dl)
     : thickness(p.get<double>("thickness")),
       cubature(
           p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
@@ -28,7 +29,8 @@ SurfaceScalarGradientOperatorPorePressure<EvalT, Traits>::SurfaceScalarGradientO
       refNormal(p.get<std::string>("Reference Normal Name"), dl->qp_vector),
       val_node(p.get<std::string>("Nodal Scalar Name"), dl->node_scalar),
       surface_Grad_BF(
-          p.get<std::string>("Surface Scalar Gradient Operator Pore Pressure Name"),
+          p.get<std::string>(
+              "Surface Scalar Gradient Operator Pore Pressure Name"),
           dl->node_qp_gradient),
       grad_val_qp(
           p.get<std::string>("Surface Scalar Gradient Name"),
@@ -43,7 +45,8 @@ SurfaceScalarGradientOperatorPorePressure<EvalT, Traits>::SurfaceScalarGradientO
   this->addEvaluatedField(grad_val_qp);
 
   this->setName(
-      "Surface Scalar Gradient Operator Pore Pressure" + PHX::typeAsString<EvalT>());
+      "Surface Scalar Gradient Operator Pore Pressure" +
+      PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_gradient->dimensions(dims);

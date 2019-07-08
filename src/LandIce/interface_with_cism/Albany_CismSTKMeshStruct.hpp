@@ -22,7 +22,7 @@ namespace Albany {
 // Constructor for arrays passed from CISM through Albany-CISM interface
     CismSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Teuchos_Comm>& commT, 
+                  const Teuchos::RCP<const Teuchos_Comm>& comm, 
                   const double * xyz_at_nodes_Ptr, 
                   const int * global_node_id_owned_map_Ptr, 
                   const int * global_element_id_active_owned_map_Ptr, 
@@ -57,7 +57,7 @@ namespace Albany {
     ~CismSTKMeshStruct();
 
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -67,7 +67,7 @@ namespace Albany {
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}){};
     
     void constructMesh(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -129,14 +129,14 @@ namespace Albany {
     std::vector<std::vector<int>> ef; 
     std::vector<std::vector<int>> sf; 
     std::vector<std::vector<int>> nf;
-    Teuchos::RCP<Tpetra_Map> elem_mapT; //element map 
-    Teuchos::RCP<Tpetra_Map> node_mapT; //node map 
-    Teuchos::RCP<Tpetra_Map> basal_face_mapT; //basalface map 
-    Teuchos::RCP<Tpetra_Map> top_face_mapT; //topface map 
-    Teuchos::RCP<Tpetra_Map> west_face_mapT; //westface map
-    Teuchos::RCP<Tpetra_Map> east_face_mapT; //eastface map
-    Teuchos::RCP<Tpetra_Map> south_face_mapT; //southface map
-    Teuchos::RCP<Tpetra_Map> north_face_mapT; //northface map
+    Teuchos::RCP<const Thyra_VectorSpace> elem_vs; //element map 
+    Teuchos::RCP<const Thyra_VectorSpace> node_vs; //node map 
+    Teuchos::RCP<const Thyra_VectorSpace> basal_face_vs; //basalface map 
+    Teuchos::RCP<const Thyra_VectorSpace> top_face_vs; //topface map 
+    Teuchos::RCP<const Thyra_VectorSpace> west_face_vs; //westface map
+    Teuchos::RCP<const Thyra_VectorSpace> east_face_vs; //eastface map
+    Teuchos::RCP<const Thyra_VectorSpace> south_face_vs; //southface map
+    Teuchos::RCP<const Thyra_VectorSpace> north_face_vs; //northface map
     bool hasRestartSol;
     double restartTime;
     int debug_output_verbosity; 

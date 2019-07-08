@@ -15,7 +15,12 @@
 
 #include <iostream>
 
+#include "Albany_Application.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_CombineAndScatterManager.hpp"
+
+namespace Albany
+{
 
 //amb Hack for John M.'s work. Replace with an evaluator-based RF later so we
 // can get gradient, etc.
@@ -23,7 +28,7 @@
 // isn't doing the right thing when the solution is other than scalar. But we're
 // just whipping this together quickly for a demo, so I'll leave that issue (if
 // indeed it is one) for later.
-class Albany::SolutionValuesResponseFunction::SolutionPrinter {
+class SolutionValuesResponseFunction::SolutionPrinter {
 private:
   std::string filename_;
   // No need for a separate RCP.
@@ -46,16 +51,15 @@ public:
     return Teuchos::null;
   }
 
-  void print (const Teuchos::RCP<const Thyra_Vector>& g, const Teuchos::Array<Tpetra_GO>& eq_gids) {
-    do_print(Albany::getLocalData(g), eq_gids);
+  void print (const Teuchos::RCP<const Thyra_Vector>& g, const Teuchos::Array<GO>& eq_gids) {
+    do_print(getLocalData(g), eq_gids);
   }
 
 private:
   struct Point { ST p[3]; };
 
-  template<typename gid_type>
   void do_print (const Teuchos::ArrayRCP<const ST>& g,
-                 const Teuchos::Array<gid_type>& eq_gids) {
+                 const Teuchos::Array<GO>& eq_gids) {
     TEUCHOS_TEST_FOR_EXCEPTION(g.size() != eq_gids.size(), std::logic_error,
                                "g.size() != eq_gids.size()");
 
@@ -68,7 +72,7 @@ private:
 
     std::string filename; {
       std::stringstream ss;
-      ss << filename_ << "." << app_->getMapT()->getComm()->getRank();
+      ss << filename_ << "." << app_->getComm()->getRank();
       filename = ss.str();
     }
 
@@ -87,34 +91,34 @@ private:
   }
 
   // gids is global equation ids.
-  template<typename gid_type>
   void getCoordsOnRank (
-    const Teuchos::Array<gid_type>& eq_gids, std::vector<GO>& node_gids,
+    const Teuchos::Array<GO>& eq_gids, std::vector<GO>& node_gids,
     std::vector<Point>& coords, int& ndim, std::vector<std::size_t>& idxs)
   {
-    Teuchos::RCP<Albany::AbstractDiscretization> d = app_->getDiscretization();
-    const Teuchos::ArrayRCP<double>& ol_coords = d->getCoordinates();
-    Teuchos::RCP<const Tpetra_Map>
-      ol_node_map = d->getOverlapNodeMapT(),
-      node_map = d->getNodeMapT();
-    ndim = d->getNumDim();
-    const int neq = d->getNumEq();
-    for (std::size_t i = 0; i < eq_gids.size(); ++i) {
+    Teuchos::RCP<AbstractDiscretization> disc = app_->getDiscretization();
+    const Teuchos::ArrayRCP<double>& ov_coords = disc->getCoordinates();
+    Teuchos::RCP<const Thyra_SpmdVectorSpace> ov_node_vs = getSpmdVectorSpace(disc->getOverlapNodeVectorSpace());
+    Teuchos::RCP<const Thyra_SpmdVectorSpace> node_vs = getSpmdVectorSpace(disc->getNodeVectorSpace());
+    ndim = disc->getNumDim();
+    const int neq = disc->getNumEq();
+    for (int i=0; i<eq_gids.size(); ++i) {
       const GO node_gid = eq_gids[i] / neq;
-      if ( ! node_map->isNodeGlobalElement(node_gid)) continue;
+      if (!locallyOwnedComponent(node_vs,node_gid)) {
+        continue;
+      }
       idxs.push_back(i);
       node_gids.push_back(node_gid);
-      const LO ol_node_lid = ol_node_map->getLocalElement(node_gid);
+      const LO ov_node_lid = getLocalElement(ov_node_vs,node_gid);
       coords.push_back(Point());
       for (int j = 0; j < ndim; ++j) {
         // 3 is used regardless of ndim.
-        coords.back().p[j] = ol_coords[3*ol_node_lid + j];
+        coords.back().p[j] = ov_coords[3*ov_node_lid + j];
       }
     }
   }
 };
 
-Albany::SolutionValuesResponseFunction::
+SolutionValuesResponseFunction::
 SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
                                Teuchos::ParameterList& responseParams) :
   SamplingBasedScalarResponseFunction(app->getComm()),
@@ -124,25 +128,22 @@ SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
   sol_printer_ = SolutionPrinter::create(app_, responseParams);
 }
 
-void
-Albany::SolutionValuesResponseFunction::
-setup()
+void SolutionValuesResponseFunction::setup()
 {
-  cullingStrategy_->setupT();
-  this->updateSolutionImporterT();
+  cullingStrategy_->setup();
+  this->updateCASManager();
 }
 
-unsigned int
-Albany::SolutionValuesResponseFunction::
+unsigned int SolutionValuesResponseFunction::
 numResponses() const
 {
-  if (Teuchos::nonnull(solutionImporterT_))
-    return solutionImporterT_->getTargetMap()->getNodeNumElements();
+  if (Teuchos::nonnull(cas_manager)) {
+    return getSpmdVectorSpace(cas_manager->getOverlappedVectorSpace())->localSubDim();
+  }
   return 0u;
 }
 
-void
-Albany::SolutionValuesResponseFunction::
+void SolutionValuesResponseFunction::
 evaluateResponse(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -150,19 +151,19 @@ evaluateResponse(const double /*current_time*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
     const Teuchos::RCP<Thyra_Vector>& g)
 {
-  this->updateSolutionImporterT();
-  this->ImportWithAlternateMapT(*Albany::getConstTpetraVector(x), *Albany::getTpetraVector(g), Tpetra::CombineMode::INSERT);
+  this->updateCASManager();
+  // Import the selected gids
+  cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
+  getNonconstLocalData(g).deepCopy(getLocalData(culledVec.getConst())());
   if (Teuchos::nonnull(sol_printer_)) {
-    // TODO: abstract away the map from the app
-    sol_printer_->print(g, cullingStrategy_->selectedGIDsT(app_->getMapT()));
+    sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
   }
 }
 
-void
-Albany::SolutionValuesResponseFunction::
+void SolutionValuesResponseFunction::
 evaluateTangent(const double /*alpha*/,
 		const double beta,
-		const double omega,
+		const double /* omega */,
 		const double /*current_time*/,
 		bool /*sum_derivs*/,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -178,19 +179,26 @@ evaluateTangent(const double /*alpha*/,
     const Teuchos::RCP<Thyra_MultiVector>& gx,
     const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
-  // TODO: abstract away the map from the app
-  this->updateSolutionImporterT();
+  this->updateCASManager();
 
   if (!g.is_null()) {
-    this->ImportWithAlternateMapT(*Albany::getConstTpetraVector(x), *Albany::getTpetraVector(g), Tpetra::CombineMode::INSERT);
+    // Import the selected gids
+    cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
+    getNonconstLocalData(g).deepCopy(getLocalData(culledVec.getConst())());
     if (Teuchos::nonnull(sol_printer_)) {
-      sol_printer_->print(g, cullingStrategy_->selectedGIDsT(app_->getMapT()));
+      sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
     }
   }
 
   if (!gx.is_null()) {
     TEUCHOS_TEST_FOR_EXCEPT(Vx.is_null());
-    this->ImportWithAlternateMapT(*Albany::getConstTpetraMultiVector(Vx), *Albany::getTpetraMultiVector(gx), Tpetra::CombineMode::INSERT);
+    // Import the selected gids (only if not already done for the response)
+    if (g.is_null()) {
+      cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
+    }
+    for (int i=0; i<Vx->domain()->dim(); ++i) {
+      getNonconstLocalData(gx->col(i)).deepCopy(getLocalData(culledVec.getConst())());
+    }
     if (beta != 1.0) {
       gx->scale(beta);
     }
@@ -202,8 +210,7 @@ evaluateTangent(const double /*alpha*/,
 }
 
 //! Evaluate distributed parameter derivative dg/dp
-void
-Albany::SolutionValuesResponseFunction::
+void SolutionValuesResponseFunction::
 evaluateDistParamDeriv(
     const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
@@ -218,8 +225,7 @@ evaluateDistParamDeriv(
   }
 }
 
-void
-Albany::SolutionValuesResponseFunction::
+void SolutionValuesResponseFunction::
 evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -232,27 +238,27 @@ evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
-  this->updateSolutionImporterT();
+  this->updateCASManager();
 
   if (!g.is_null()) {
-    this->ImportWithAlternateMapT(*Albany::getConstTpetraVector(x), *Albany::getTpetraVector(g), Tpetra::CombineMode::INSERT);
+    // Import the selected gids
+    cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
+    getNonconstLocalData(g).deepCopy(getLocalData(culledVec.getConst())());
     if (Teuchos::nonnull(sol_printer_))
-      // TODO: abstract away the map from the app
-      sol_printer_->print(g, cullingStrategy_->selectedGIDsT(app_->getMapT()));
+      sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
   }
 
   if (!dg_dx.is_null()) {
     dg_dx->assign(0.0);
 
-    // TODO: think about how to abstract away tpetra here. Idea: introduce generic
-    //       interfaces in Albany_ThyraUtils.*pp, to recover local/global elements.
-    Teuchos::RCP<const Tpetra_Map> replicatedMapT = solutionImporterT_->getTargetMap();
-    Teuchos::RCP<const Tpetra_Map> derivMapT = Albany::getTpetraMap(dg_dx->range());
+    Teuchos::RCP<const Thyra_VectorSpace> replicatedVS = cas_manager->getOverlappedVectorSpace();
+    Teuchos::RCP<const Thyra_VectorSpace> derivVS = dg_dx->range();
     const int colCount = dg_dx->domain()->dim();
     for (int icol = 0; icol < colCount; ++icol) {
-      const int lid = derivMapT->getLocalElement(replicatedMapT->getGlobalElement(icol));
+      const GO gid = getGlobalElement(replicatedVS,icol);
+      const LO lid = getLocalElement(derivVS,gid);
       if (lid != -1) {
-        auto dg_dx_localview = Albany::getNonconstLocalData(dg_dx->col(icol));
+        auto dg_dx_localview = getNonconstLocalData(dg_dx->col(icol));
         dg_dx_localview[lid] = 1.0;
       }
     }
@@ -270,42 +276,16 @@ evaluateGradient(const double /*current_time*/,
   }
 }
 
-void
-Albany::SolutionValuesResponseFunction::
-updateSolutionImporterT()
+void SolutionValuesResponseFunction::updateCASManager()
 {
-  // TODO: abstract away the tpetra stuff
-  const Teuchos::RCP<const Tpetra_Map> solutionMapT = app_->getMapT();
-  if (Teuchos::is_null(solutionImporterT_) || !solutionMapT->isSameAs(*solutionImporterT_->getSourceMap())) {
-    const Teuchos::Array<Tpetra_GO> selectedGIDsT = cullingStrategy_->selectedGIDsT(solutionMapT);
-    Teuchos::RCP<const Tpetra_Map> targetMapT = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode> (selectedGIDsT, solutionMapT->getComm(), solutionMapT->getNode());
-    //const Epetra_Map targetMap(-1, selectedGIDs.size(), selectedGIDs.getRawPtr(), 0, solutionMap->Comm());
-    solutionImporterT_ = Teuchos::rcp(new Tpetra_Import(solutionMapT, targetMapT));
+  const Teuchos::RCP<const Thyra_VectorSpace> solutionVS = app_->getVectorSpace();
+  if (cas_manager.is_null() || !sameAs(solutionVS,cas_manager->getOwnedVectorSpace())) {
+    const Teuchos::Array<GO> selectedGIDs = cullingStrategy_->selectedGIDs(solutionVS);
+    Teuchos::RCP<const Thyra_VectorSpace> targetVS = createVectorSpace(app_->getComm(),selectedGIDs);
+
+    cas_manager = createCombineAndScatterManager(solutionVS,targetVS);
+    culledVec = Thyra::createMember(targetVS);
   }
 }
 
-void
-Albany::SolutionValuesResponseFunction::
-ImportWithAlternateMapT(
-    const Tpetra_MultiVector& sourceT,
-    Tpetra_MultiVector& targetT,
-    Tpetra::CombineMode modeT)
-{
-  Teuchos::RCP<const Tpetra_Map> savedMapT = targetT.getMap();
-  targetT.replaceMap(solutionImporterT_->getTargetMap());
-  targetT.doImport(sourceT, *solutionImporterT_, modeT);
-  targetT.replaceMap(savedMapT);
-}
-
-void
-Albany::SolutionValuesResponseFunction::
-ImportWithAlternateMapT(
-    const Tpetra_Vector& sourceT,
-    Tpetra_Vector& targetT,
-    Tpetra::CombineMode modeT)
-{
-  Teuchos::RCP<const Tpetra_Map> savedMapT = targetT.getMap();
-  targetT.replaceMap(solutionImporterT_->getTargetMap());
-  targetT.doImport(sourceT, *solutionImporterT_, modeT);
-  targetT.replaceMap(savedMapT);
-}
+} // namespace Albany

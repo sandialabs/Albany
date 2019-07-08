@@ -1186,7 +1186,8 @@ bool MoertelT::MOERTEL_TEMPLATE_CLASS(IntegratorT)::Integrate(
       const double length = MoertelT::length(n, 3);
       for (int j = 0; j < 3; ++j) n[j] /= length;
       // std::cout << "x = " << x[0] << " / " << x[1] << " / " << x[2] <<
-      // std::endl; std::cout << "n = " << n[0] << " / " << n[1] << " / " << n[2]
+      // std::endl; std::cout << "n = " << n[0] << " / " << n[1] << " / " <<
+      // n[2]
       // << std::endl;
       gpnode->SetX(x);
       gpnode->SetN(n);

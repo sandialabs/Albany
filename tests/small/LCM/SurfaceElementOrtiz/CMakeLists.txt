@@ -9,7 +9,7 @@ if (ALBANY_IFPACK2 AND SEACAS_EXODIFF)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 
 # input files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
@@ -41,11 +41,12 @@ IF(NOT ALBANY_PARALLEL_ONLY)
   SET(OUTFILE  "out.e")
   SET(REF_FILE "out.gold.e")
    add_test(NAME ${testName}
-           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+           COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
            -DTEST_NAME=out -DTEST_ARGS=input.yaml -DMPIMNP=1
            -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
            -DREF_FILENAME=${REF_FILE} -DOUTPUT_FILENAME=${OUTFILE}
            -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+    set_tests_properties(${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 
 ENDIF()
 endif()

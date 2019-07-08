@@ -4,136 +4,172 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: this is Epetra (Albany) function.
-//Not compiled if ALBANY_EPETRA_EXE is off.
-
 #ifndef ALBANY_MODEL_EVALUATOR_HPP
 #define ALBANY_MODEL_EVALUATOR_HPP
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_SacadoTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Albany_ThyraTypes.hpp"
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_Array.hpp"
-#include "Teuchos_TimeMonitor.hpp"
-
-#include "EpetraExt_ModelEvaluator.h"
-#include "Epetra_LocalMap.h"
+#include "Piro_TransientDecorator.hpp"
 
 namespace Albany {
 
 // Forward declarations
 class Application;
 class DistributedParameterLibrary;
-class DistributedParameterDerivativeOp;
 
-class ModelEvaluator : public EpetraExt::ModelEvaluator {
+class ModelEvaluator : public Piro::TransientDecorator<ST, LO, Tpetra_GO, KokkosNode> {
 public:
-
   // Constructor
   ModelEvaluator(
-     const Teuchos::RCP<Application>& app,
-     const Teuchos::RCP<Teuchos::ParameterList>& appParams);
+      const Teuchos::RCP<Application>& app,
+      const Teuchos::RCP<Teuchos::ParameterList>& appParams);
 
-  virtual ~ModelEvaluator();
-
-  /** \name Overridden from EpetraExt::ModelEvaluator . */
+  /** \name Overridden from Thyra::ModelEvaluator<ST> . */
   //@{
 
   //! Return solution vector map
-  Teuchos::RCP<const Epetra_Map> get_x_map() const;
+  Teuchos::RCP<const Thyra_VectorSpace>
+  get_x_space() const;
 
   //! Return residual vector map
-  Teuchos::RCP<const Epetra_Map> get_f_map() const;
+  Teuchos::RCP<const Thyra_VectorSpace>
+  get_f_space() const;
 
   //! Return parameter vector map
-  Teuchos::RCP<const Epetra_Map> get_p_map(int l) const;
+  Teuchos::RCP<const Thyra_VectorSpace>
+  get_p_space(int l) const;
 
   //! Return response function map
-  Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
+  Teuchos::RCP<const Thyra_VectorSpace>
+  get_g_space(int j) const;
 
   //! Return array of parameter names
-  Teuchos::RCP<const Teuchos::Array<std::string> >
+  Teuchos::RCP<const Teuchos::Array<std::string>>
   get_p_names(int l) const;
 
-  //! Return initial solution and x_dot init
-  Teuchos::RCP<const Epetra_Vector> get_x_init() const;
-  Teuchos::RCP<const Epetra_Vector> get_x_dot_init() const;
-  Teuchos::RCP<const Epetra_Vector> get_x_dotdot_init() const;
+  Teuchos::ArrayView<const std::string>
+  get_g_names(int /* j */) const {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  }
 
-  //! Return initial parameters
-  Teuchos::RCP<const Epetra_Vector> get_p_init(int l) const;
+  Thyra_InArgs getNominalValues () const { return nominalValues; }
+  Thyra_InArgs getLowerBounds   () const { return lowerBounds; }
+  Thyra_InArgs getUpperBounds   () const { return upperBounds; }
 
-  //! Return parameters lower bounds
-  virtual Teuchos::RCP<const Epetra_Vector> get_p_lower_bounds(int l) const;
-
-  //! Return parameters upper bounds
-  virtual Teuchos::RCP<const Epetra_Vector> get_p_upper_bounds(int l) const;
-
-  //! Create W = alpha*M + beta*J + omega*N matrix
-  Teuchos::RCP<Epetra_Operator> create_W() const;
+  Teuchos::RCP<Thyra_LinearOp>  create_W_op() const;
 
   //! Create preconditioner operator
-  Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner> create_WPrec() const;
+  Teuchos::RCP<Thyra_Preconditioner> create_W_prec() const;
 
-  //! Create operator form of df/dp for distributed parameters
-  Teuchos::RCP<Epetra_Operator> create_DfDp_op(int j) const;
-
-  //! Create operator form of df/dp for distributed parameters
-   Teuchos::RCP<Epetra_Operator> create_DgDp_op(int j, int l) const;
-
-  //! Create operator form of dg/dx for distributed responses
-  Teuchos::RCP<Epetra_Operator> create_DgDx_op(int j) const;
-
-  //! Create operator form of dg/dx_dot for distributed responses
-  Teuchos::RCP<Epetra_Operator> create_DgDx_dot_op(int j) const;
-  Teuchos::RCP<Epetra_Operator> create_DgDx_dotdot_op(int j) const;
+  Teuchos::RCP<const Thyra_LOWS_Factory>  get_W_factory() const;
 
   //! Create InArgs
-  InArgs createInArgs() const;
+  Thyra_InArgs createInArgs() const;
 
-  //! Create OutArgs
-  OutArgs createOutArgs() const;
+  void reportFinalPoint(const Thyra_InArgs& finalPoint,
+                        const bool wasSolved);
 
-  //! Evaluate model on InArgs
-  void evalModel(const InArgs& inArgs, const OutArgs& outArgs) const;
+  void allocateVectors();
 
   //@}
 
-  //! Return the application object
-  Teuchos::RCP<Application> get_app() const { return app; }
+#if defined(ALBANY_LCM)
+  // This is here to have a sane way to handle time and avoid Thyra ME.
+  ST
+  getCurrentTime() const
+  {
+    return current_time_;
+  }
 
-protected:
+  void
+  setCurrentTime(ST const t)
+  {
+    current_time_ = t;
+    return;
+  }
+
+  void
+  setNominalValues(Thyra_InArgs nv)
+  {
+    nominalValues = nv;
+  }
+#endif // ALBANY_LCM
+
+ protected:
+  /** \name Overridden from Thyra::ModelEvaluatorDefaultBase<ST> . */
+  //@{
+
+  //! Create operator form of df/dp for distributed parameters
+  Teuchos::RCP<Thyra::LinearOpBase<ST>>
+  create_DfDp_op_impl(int j) const;
+
+  //! Create operator form of dg/dx for distributed responses
+  Teuchos::RCP<Thyra::LinearOpBase<ST>>
+  create_DgDx_op_impl(int j) const;
+
+  //! Create operator form of dg/dx_dot for distributed responses
+  Teuchos::RCP<Thyra::LinearOpBase<ST>>
+  create_DgDx_dot_op_impl(int j) const;
+
+  //! Create operator form of dg/dx_dotdot for distributed responses
+  Teuchos::RCP<Thyra::LinearOpBase<ST>>
+  create_DgDx_dotdot_op_impl(int j) const;
+
+  //! Create OutArgs
+  Thyra::ModelEvaluatorBase::OutArgs<ST>
+  createOutArgsImpl() const;
+
+  //! Evaluate model on InArgs
+  void
+  evalModelImpl(
+      const Thyra_InArgs& inArgs,
+      const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const;
 
   //! Application object
-  Teuchos::RCP<Application> app;
+  Teuchos::RCP<Albany::Application> app;
 
-  //! Number of parameter vectors
-  int num_param_vecs;
-
-  //! Number of time derivatives
-  int num_time_deriv;
-
-  //! List of free parameter names
-  Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > param_names;
-  Teuchos::Array< Teuchos::RCP< Epetra_Vector > > param_lower_bd;
-  Teuchos::Array< Teuchos::RCP< Epetra_Vector > > param_upper_bd;
+  Teuchos::RCP<Teuchos::Time> timer;
 
   //! Sacado parameter vector
   mutable Teuchos::Array<ParamVec> sacado_param_vec;
 
-  //! Epetra map for parameter vector
-  Teuchos::Array< Teuchos::RCP<Epetra_LocalMap> > epetra_param_map;
-
-  //! Epetra parameter vector
-  Teuchos::Array< Teuchos::RCP<Epetra_Vector> > epetra_param_vec;
+  //! Allocated Jacobian for sending to user preconditioner
+  mutable Teuchos::RCP<Thyra_LinearOp> Extra_W_op;
 
   //! Whether the problem supplies its own preconditioner
   bool supplies_prec;
 
-  //! Allocated Jacobian for sending to user preconditioner
-  mutable Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs;
+  //! Boolean marking whether Tempus is used 
+  bool use_tempus{false}; 
 
-  Teuchos::RCP<Teuchos::Time> timer;
+  //@}
+
+ protected:
+  //! Number of parameter vectors
+  int num_param_vecs;
+
+  Thyra_InArgs createInArgsImpl() const;
+
+  //! Cached nominal values and lower/upper bounds
+  Thyra_InArgs nominalValues;
+  Thyra_InArgs lowerBounds;
+  Thyra_InArgs upperBounds;
+
+  //! List of free parameter names
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>> param_names;
+
+  //! Thyra vector spaces for parameter vector
+  Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> param_vss;
+
+  //! Thyra vectors for parameters and their bounds
+  Teuchos::Array<Teuchos::RCP<Thyra_Vector>> param_vecs;
+  Teuchos::Array<Teuchos::RCP<Thyra_Vector>> param_lower_bds;
+  Teuchos::Array<Teuchos::RCP<Thyra_Vector>> param_upper_bds;
+
+  //! Thyra response vector
+  Teuchos::Array<Teuchos::RCP<Thyra_Vector>> thyra_response_vec;
 
   //! Number of distributed parameter vectors
   int num_dist_param_vecs;
@@ -144,8 +180,19 @@ protected:
   //! Distributed parameter library
   Teuchos::RCP<DistributedParameterLibrary> distParamLib;
 
-  // We need to keep these around, since the EpetraOperatorWrapper does not allow to modify the underlying operator
-  Teuchos::Array<Teuchos::RCP<DistributedParameterDerivativeOp>> dfdp_ops;
+  //! Model uses time integration (velocities)
+  bool supports_xdot;
+
+  //! Model uses time integration (accelerations)
+  bool supports_xdotdot;
+
+  //! As it says, when reportFinalPoint is called.
+  bool overwriteNominalValuesWithFinalPoint;
+
+#if defined(ALBANY_LCM)
+  // This is here to have a sane way to handle time and avoid Thyra ME.
+  ST current_time_{0.0};
+#endif // ALBANY_LCM
 };
 
 } // namespace Albany

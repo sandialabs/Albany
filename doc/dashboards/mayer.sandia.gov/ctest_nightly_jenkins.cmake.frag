@@ -10,6 +10,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
+set (CTEST_BUILD_CONFIGURATION Release)
 set (CTEST_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 
@@ -47,13 +48,15 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 
 set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
-set (HDF5_PATH $ENV{HDF5_ROOT})
-set (NETCDF_PATH $ENV{NETCDF_ROOT}) 
-set (PNETCDF_PATH $ENV{PNETCDF_ROOT}) 
-set (BOOST_PATH $ENV{BOOST_ROOT}) 
-set (BLAS_PATH $ENV{OPENBLAS_ROOT}) 
-set (LAPACK_PATH $ENV{OPENBLAS_ROOT}) 
-set (ZLIB_PATH $ENV{ZLIB_DIR})  
+set (HDF5_DIR $ENV{HDF5_DIR})
+set (NETCDF_DIR $ENV{NETCDF_DIR}) 
+set (PNETCDF_DIR $ENV{PNETCDF_DIR}) 
+set (BOOST_DIR $ENV{BOOST_DIR}) 
+set (BLAS_DIR $ENV{OPENBLAS_DIR}) 
+set (LAPACK_DIR $ENV{OPENBLAS_DIR}) 
+set (ARMPL_DIR $ENV{ARMPL_DIR})
+set (ZLIB_DIR $ENV{ZLIB_DIR})  
+set (MPI_DIR $ENV{MPI_DIR})  
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -178,57 +181,55 @@ if (BUILD_TRILINOS)
   set_property (GLOBAL PROPERTY Label IKTMayerARMTrilinos)
 
   set (CONFIGURE_OPTIONS
+    "-DCMAKE_INSTALL_PREFIX:PATH=$ENV{jenkins_trilinos_install_dir}"
     "-DKokkos_ENABLE_Pthread=OFF"
     "-DKokkos_ENABLE_Serial:BOOL=ON"
     "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTrilinos_ENABLE_DEBUG:BOOL=OFF"
-    "-DTPL_FIND_SHARED_LIBS:BOOL=OFF"
+    "-DTrilinos_ENABLE_RELEASE:BOOL=ON"
+    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     #
-    "-DCMAKE_INSTALL_PREFIX:PATH=/mscratch/albany/nightlyCDashTrilinos/build/TrilinosInstall"
     "-DCMAKE_C_COMPILER=mpicc"
     "-DCMAKE_CXX_COMPILER=mpicxx"
     "-DCMAKE_Fortran_COMPILER=mpif90"
+    "-DCMAKE_CXX_FLAGS:STRING='-Wno-inconsistent-missing-override -Wno-deprecated-declarations'"
     "-DTPL_DLlib_LIBRARIES='dl'"
     "-DTrilinos_ENABLE_INSTALL_CMAKE_CONFIG_FILES:BOOL=ON"
-    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
     "-DTrilinos_ENABLE_CHECKED_STL:BOOL=OFF"
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
-    "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DDART_TESTING_TIMEOUT:STRING=600"
-    "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING=''"
     "-DTrilinos_ENABLE_CXX11=ON"
     #
     "-DTPL_ENABLE_MPI=ON"
     "-DTPL_ENABLE_BinUtils=OFF"
     "-DTPL_ENABLE_SuperLU=OFF"
-    "-DTPL_ENABLE_BLAS=ON"
-    "-DTPL_BLAS_LIBRARIES='blas\\;gfortran\\;gomp'"
-    "-DTPL_LAPACK_LIBRARIES='lapack\\;gfortran\\;gomp'"
-    "-DBLAS_INCLUDE_DIRS:PATH=${BLAS_PATH}/include"
-    "-DBLAS_LIBRARY_DIRS:PATH=${BLAS_PATH}/lib"
-    "-DTPL_ENABLE_LAPACK=ON"
-    "-DLAPACK_INCLUDE_DIRS:PATH=${LAPACK_PATH}/include"
-    "-DLAPACK_LIBRARY_DIRS:PATH=${LAPACK_PATH}/lib"
+    "-DTPL_ENABLE_BLAS:BOOL=ON"
+    "-DBLAS_INCLUDE_DIRS:PATH=${ARMPL_DIR}/include"
+    "-DTPL_BLAS_LIBRARIES:STRING=${ARMPL_DIR}/lib/libarmpl_lp64.so"
+    "-DTPL_ENABLE_LAPACK:BOOL=ON"
+    "-DLAPACK_INCLUDE_DIRS:PATH=${ARMPL_DIR}/include"
+    "-DTPL_LAPACK_LIBRARIES:STRING=${ARMPL_DIR}/lib/libarmpl_lp64.so"
     "-DTPL_ENABLE_Boost=ON"
-    "-DBoost_INCLUDE_DIRS:PATH=${BOOST_PATH}/include"
-    "-DBoost_LIBRARY_DIRS:PATH=${BOOST_PATH}/lib"
+    "-DBoost_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
+    "-DBoost_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
     "-DTPL_ENABLE_BoostLib=ON"
-    "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_PATH}/include"
-    "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_PATH}/lib"
+    "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
+    "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
     "-DTPL_ENABLE_Netcdf=ON"
-    "-DNetcdf_INCLUDE_DIRS:PATH=${NETCDF_PATH}/include"
-    "-DNetcdf_LIBRARY_DIRS:PATH=${NETCDF_PATH}/lib"
-    "-DTPL_Netcdf_LIBRARIES:FILEPATH='${NETCDF_PATH}/lib/libnetcdf.a\\;${PNETCDF_PATH}/lib/libpnetcdf.a\\;${HDF5_PATH}/lib/libhdf5_hl.a\\;${HDF5_PATH}/lib/libhdf5.a\\;${ZLIB_PATH}/lib/libz.a\\;dl'"
+    "-DNetcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+    "-DNetcdf_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib"
+    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
     "-DTPL_ENABLE_HDF5=ON"
-    "-DHDF5_INCLUDE_DIRS:PATH=${HDF5_PATH}/include"
-    "-DTPL_HDF5_LIBRARIES:FILEPATH='${NETCDF_PATH}/lib/libnetcdf.a\\;${PNETCDF_PATH}/lib/libpnetcdf.a\\;${HDF5_PATH}/lib/libhdf5_hl.a\\;${HDF5_PATH}/lib/libhdf5.a\\;${ZLIB_PATH}/lib/libz.a\\;dl'"
-    "-DTPL_ENABLE_Zlib=ON"
-    "-DZlib_INCLUDE_DIRS:PATH=${ZLIB_PATH}/include"
-    "-DTPL_Zlib_LIBRARIES:PATH=${ZLIB_PATH}/lib/libz.a"
+    "-DHDF5_INCLUDE_DIRS:PATH=${HDF5_DIR}/include"
+    "-DHDF5_LIBRARY_DIRS:PATH=${HDF5_DIR}/lib"
+    "-DTPL_ENABLE_Zlib:BOOL=ON"
+    "-DZlib_INCLUDE_DIRS:PATH=${ZLIB_DIR}/include"
+    "-DZlib_LIBRARY_DIRS:PATH=${ZLIB_DIR}/lib"
+    "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz'"
     #
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
     "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
@@ -258,21 +259,20 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Belos:BOOL=ON"
     "-DTrilinos_ENABLE_ML:BOOL=ON"
     "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
-    "-DPhalanx_ENABLE_TESTS:BOOL=ON"
-    "-DPhalanx_ENABLE_EXAMPLES:BOOL=ON"
+    "-DPhalanx_ENABLE_TESTS:BOOL=OFF"
+    "-DPhalanx_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
     "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
-    "-DIntrepid2_ENABLE_TESTS:BOOL=ON"
-    "-DIntrepid2_ENABLE_EXAMPLES:BOOL=ON"
+    "-DIntrepid2_ENABLE_TESTS:BOOL=OFF"
+    "-DIntrepid2_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTrilinos_ENABLE_ROL:BOOL=ON"
-    "- Trilinos_ENABLE_NOX:BOOL=ON"
+    "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
     "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
     "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
     "-DTrilinos_ENABLE_MOOCHO:BOOL=ON"
-    "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
     "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
@@ -310,7 +310,6 @@ if (BUILD_TRILINOS)
     "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
     "-DTrilinos_ENABLE_FEI:BOOL=OFF"
     "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-    "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DTrilinos_ENABLE_MueLu:BOOL=ON"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
@@ -334,15 +333,12 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
     "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DTPL_ENABLE_HWLOC:STRING=OFF"
-    "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
-    "-DKOKKOS_ARCH:STRING=ARMv81"
+    "-DKOKKOS_ARCH:STRING='ARMv8-TX2'"
     #
     "-DTrilinos_ENABLE_Panzer:BOOL=OFF"
-    "-DMPI_EXEC=mpirun"
+    "-DMPI_EXEC=${MPI_DIR}/bin/mpirun"
     "-DMPI_EXEC_MAX_NUMPROCS:STRING='4'"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING='-np'"
-    #
-    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
   )
     
   #"-DMPI_EXEC_POST_NUMPROCS_FLAGS:STRING='-bind-to;numa;-map-by;numa;'"

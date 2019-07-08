@@ -14,6 +14,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_CHECK_FPE)
 IF (NOT ALBANY_STRONG_FPE_CHECK) 
-add_test(Aeras_${testName}_RungeKutta4 ${AlbanyT.exe} inputT.yaml)
+add_test(Aeras_${testName}_RungeKutta4 ${Albany.exe} inputT.yaml)
+set_tests_properties(Aeras_${testName}_RungeKutta4 PROPERTIES LABELS "Aeras;Tpetra;Forward")
 ENDIF()
 ENDIF()

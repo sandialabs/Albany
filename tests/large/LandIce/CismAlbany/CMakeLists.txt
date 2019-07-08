@@ -5,7 +5,7 @@ add_subdirectory(mFiles)
 add_subdirectory(ncGridSamples)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${CismAlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/cism_driver)

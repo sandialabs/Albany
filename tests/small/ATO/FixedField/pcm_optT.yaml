@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Solution Method: ATO Problem
     Number of Subproblems: 2
@@ -183,7 +184,7 @@ ANONYMOUS:
   Discretization: 
     Method: Ioss
     Exodus Input File Name: pcm_opt.gen
-    Exodus Output File Name: pcm_opt.exo
+    Exodus Output File Name: pcm_optT.exo
     Separate Evaluators by Element Block: true
     Workset Size: 50
   Piro: 
@@ -220,6 +221,8 @@ ANONYMOUS:
         Newton: 
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
+          Linear Solver: 
+            Tolerance: 1.00000000000000004e-10
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 

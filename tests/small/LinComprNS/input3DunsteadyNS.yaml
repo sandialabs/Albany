@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Epetra
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Name: LinComprNS 3D
@@ -51,13 +52,18 @@ ANONYMOUS:
     Relative Tolerance: 1.00000000000000005e-04
   Piro: 
     Rythmos: 
-      Num Time Steps: 9
+      Nonlinear Solver Type: NOX
+      Stepper Type: Backward Euler
       Final Time: 3.46229999999999993e+00
-      Max State Error: 5.00000000000000028e-02
-      Alpha: 0.00000000000000000e+00
       Rythmos Stepper: 
         VerboseObject: 
           Verbosity Level: low
+      Rythmos Integration Control: 
+          Take Variable Steps: false
+          Number of Time Steps: 9
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
       Stratimikos: 
         Linear Solver Type: AztecOO
         Linear Solver Types: 
@@ -89,10 +95,6 @@ ANONYMOUS:
             Overlap: 1
             Ifpack Settings: 
               'fact: level-of-fill': 1
-      Rythmos Integration Control: { }
-      Rythmos Integrator: 
-        VerboseObject: 
-          Verbosity Level: low
     NOX: 
       Status Tests: 
         Test Type: Combo
@@ -120,35 +122,6 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver: 
             Write Linear System: false
-          Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
-            Stratimikos: 
-              Linear Solver Type: AztecOO
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 9.99999999999999955e-07
-              Preconditioner Type: Ifpack
-              Preconditioner Types: 
-                Ifpack: 
-                  Overlap: 0
-                  Prec Type: ILU
-                  Ifpack Settings: 
-                    'fact: level-of-fill': 0
-                ML: 
-                  Base Method Defaults: none
-                  ML Settings: 
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
-                    PDE equations: 4
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 

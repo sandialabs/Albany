@@ -4,10 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: right now this is Epetra (Albany) function.
-//Not compiled if ALBANY_EPETRA_EXE is off.
-
 #include "Albany_RythmosObserver.hpp"
+
+#include "Albany_Application.hpp"
+#include "Albany_ObserverImpl.hpp"
+#include "Albany_EpetraThyraUtils.hpp"
 
 #include "Rythmos_StepperBase.hpp"
 
@@ -17,29 +18,26 @@
 
 #include "Epetra_Vector.h"
 
-#include "Teuchos_Ptr.hpp"
+namespace Albany
+{
 
-Albany_RythmosObserver::Albany_RythmosObserver(
-     const Teuchos::RCP<Albany::Application> &app_) :
-  impl(app_),
-  initial_step(true)
+RythmosObserver::RythmosObserver(const Teuchos::RCP<Application>& app_)
+ : impl(new ObserverImpl(app_))
+ , initial_step(true)
 {
   // Nothing to do
 }
 
-void Albany_RythmosObserver::observeStartTimeStep(
-    const Rythmos::StepperBase<ScalarType> &stepper,
-    const Rythmos::StepControlInfo<ScalarType> &stepCtrlInfo,
-    const int timeStepIter
-    )
+void RythmosObserver::
+observeStartTimeStep(const Rythmos::StepperBase<ScalarType>& stepper,
+                     const Rythmos::StepControlInfo<ScalarType>& /* stepCtrlInfo */,
+                     const int /* timeStepIter */)
 {
-  if(initial_step)
-
+  if(initial_step) {
     initial_step = false;
-
-  else
-
+  } else {
     return;
+  }
 
  //IK, 7/18/14: commented out the next line.  It was causing the 1st solution (initial condition) 
  //to not be written to the Exodus file.  The hack was in place b/c of the return in the end of the line.
@@ -66,25 +64,19 @@ void Albany_RythmosObserver::observeStartTimeStep(
   }
 
   // Time should be zero unless we are restarting
-  const ScalarType time = impl.getTimeParamValueOrDefault(stepper.getStepStatus().time);
-
-  const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution));
+  const ScalarType time = impl->getTimeParamValueOrDefault(stepper.getStepStatus().time);
 
   if(solution_dot != Teuchos::null){
-    const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution_dot));
-    impl.observeSolution(time, soln, Teuchos::constOptInArg(soln_dot));
+    impl->observeSolution(time, *solution, solution_dot.ptr(), Teuchos::null);
+  } else {
+    impl->observeSolution(time, *solution, Teuchos::null, Teuchos::null);
   }
-  else {
-    impl.observeSolution(time, soln, Teuchos::null);
-  }
-
 }
 
-void Albany_RythmosObserver::observeCompletedTimeStep(
-    const Rythmos::StepperBase<ScalarType> &stepper,
-    const Rythmos::StepControlInfo<ScalarType> &stepCtrlInfo,
-    const int timeStepIter
-    )
+void RythmosObserver::
+observeCompletedTimeStep(const Rythmos::StepperBase<ScalarType>& stepper,
+                         const Rythmos::StepControlInfo<ScalarType>& /* stepCtrlInfo */,
+                         const int /* timeStepIter */)
 {
   //cout << "ALBANY OBSERVER CALLED step=" <<  timeStepIter 
   //     << ",  time=" << stepper.getStepStatus().time << endl;
@@ -108,17 +100,13 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
     solution_dot = stepper.getStepStatus().solutionDot;
   }
 
-  const ScalarType time = impl.getTimeParamValueOrDefault(stepper.getStepStatus().time);
-
-  const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution));
+  const ScalarType time = impl->getTimeParamValueOrDefault(stepper.getStepStatus().time);
 
   // Comment out this section for BDF
-  if(solution_dot != Teuchos::null){
-    const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution_dot));
-    impl.observeSolution(time, soln, Teuchos::constOptInArg(soln_dot));
-  }
-  else {
-    impl.observeSolution(time, soln, Teuchos::null);
+  if(solution_dot != Teuchos::null) {
+    impl->observeSolution(time, *solution, solution_dot.ptr(), Teuchos::null);
+  } else {
+    impl->observeSolution(time, *solution, Teuchos::null, Teuchos::null);
   }
 
   // Add this section for output of sensitivities instead of soution
@@ -137,3 +125,5 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   else  impl.observeSolution(time, soln, Teuchos::null);
   */
 }
+
+} // namespace Albany

@@ -70,20 +70,21 @@ ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
   PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::setup(p, dl);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::setup(p, dl);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void LandIce::ResponseGLFlux<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
   gl_func = Kokkos::createDynRankView(bed.get_view(), "gl_func", numSideNodes);
   H = Kokkos::createDynRankView(bed.get_view(), "H", 2);
   x = Kokkos::createDynRankView(bed.get_view(), "x", 2);
   y = Kokkos::createDynRankView(bed.get_view(), "y", 2);
   velx = Kokkos::createDynRankView(avg_vel.get_view(), "velx", 2);
   vely = Kokkos::createDynRankView(avg_vel.get_view(), "vely", 2);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************
@@ -93,7 +94,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::preEvaluate(typename Traits::PreEva
 
 
   // Do global initialization
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::preEvaluate(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::preEvaluate(workset);
 }
 
 // **********************************************************************
@@ -175,8 +176,8 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
   }
 
   // Do any local-scattering necessary
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,basalSideName, cell_topo);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluateFields(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,basalSideName, cell_topo);
 }
 
 // **********************************************************************
@@ -187,14 +188,14 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::postEvaluate(typename Traits::PostE
                            this->global_response_eval);
 
   // Do global scattering
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList> LandIce::ResponseGLFlux<EvalT, Traits>::getValidResponseParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("Valid ResponseGLFlux Params"));
-  Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponse<EvalT, Traits>::getValidResponseParameters();
+  Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
   validPL->set<std::string>("Name", "", "Name of response function");

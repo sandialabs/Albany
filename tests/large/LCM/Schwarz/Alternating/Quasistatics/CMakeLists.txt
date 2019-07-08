@@ -31,7 +31,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/check_convergence.py
                ${CMAKE_CURRENT_BINARY_DIR}/check_convergence.py COPYONLY)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${runtest.cmake} ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake)
 
@@ -39,8 +39,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 SET(OUTFILE "cuboid.log")
 SET(PYTHON_FILE "check_convergence.py") 
 add_test(NAME Schwarz_Alternating_${testName}
-        COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbanyT.exe}"
+        COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${SerialAlbany.exe}"
         -DTEST_NAME=Cubes -DTEST_ARGS=cuboids.yaml -DMPIMNP=1
         -DLOGFILE=${OUTFILE} -DPY_FILE=${PYTHON_FILE}
         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${runtest.cmake})
+set_tests_properties(Schwarz_Alternating_${testName} PROPERTIES LABELS "LCM;Tpetra;Forward")
 

@@ -10,12 +10,12 @@ ANONYMOUS:
   Materials: 
     Insulator: 
       Category: Fiberglass
-      Thermal Conductivity: 
+      ThermalConductivity: 
         Name: Constant
         Value: 1.00000000000000002e-02
     Metal: 
       Category: Non-ferrous
-      Thermal Conductivity: 
+      ThermalConductivity: 
         Name: Constant
         Value: 1.00000000000000000e+01
 ...

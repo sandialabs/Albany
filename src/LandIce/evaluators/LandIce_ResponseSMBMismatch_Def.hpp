@@ -90,7 +90,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::setup(p, dl);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::setup(p, dl);
 }
 
 // **********************************************************************
@@ -107,7 +107,7 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::postRegis
   this->utils.setFieldData(w_measure_2d, fm);
   this->utils.setFieldData(tangents, fm);
 
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
 }
 
 // **********************************************************************
@@ -118,7 +118,7 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::preEvalua
   p_resp = p_reg = p_misH =0;
 
   // Do global initialization
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::preEvaluate(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::preEvaluate(workset);
 }
 
 // **********************************************************************
@@ -187,8 +187,8 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::evaluateF
   }
 
   // Do any local-scattering necessary
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,basalSideName, cell_topo);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluateFields(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,basalSideName, cell_topo);
 }
 
 // **********************************************************************
@@ -219,11 +219,13 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::postEvalu
   misH = p_misH;
 #endif
 
+#ifdef OUTPUT_TO_SCREEN
   if(workset.comm->getRank()   ==0)
 //    std::cout << "resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
   std::cout << "SMB, resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) <<
     ", misH: " <<Sacado::ScalarValue<ScalarT>::eval(misH) <<
     ", reg: " <<Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
+#endif
 
   if (rank(*workset.comm) == 0) {
     std::ofstream ofile;
@@ -248,7 +250,7 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::postEvalu
   }
 
   // Do global scattering
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************
@@ -256,7 +258,7 @@ template<typename EvalT, typename Traits, typename ThicknessScalarType>
 Teuchos::RCP<const Teuchos::ParameterList>
 LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::getValidResponseParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("Valid ResponseSMBMismatch Params"));
-  Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponse<EvalT, Traits>::getValidResponseParameters();
+  Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
 
   validPL->set<std::string>("Name", "", "Name of response function");

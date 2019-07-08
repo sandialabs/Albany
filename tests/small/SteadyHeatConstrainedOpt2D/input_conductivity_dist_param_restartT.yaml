@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Build Type: Tpetra
   Problem: 
     Name: Heat 2D
     Compute Sensitivities: true
@@ -23,13 +24,13 @@ ANONYMOUS:
       ResponseParams 0: 
         Field Rank: Scalar
         Source Field Name: Temperature
-        Target Field Name: ZERO
+        Target Value: 0.0
       Response 1: Squared L2 Difference Source ST Target PST
       ResponseParams 1: 
         Field Rank: Scalar
         Scaling: 1.49999999999999994e-01
-        Source Field Name: Thermal Conductivity
-        Target Field Name: ZERO
+        Source Field Name: ThermalConductivity
+        Target Value: 0.0
   Discretization: 
     Method: Exodus
     Number Of Time Derivatives: 0

@@ -47,7 +47,7 @@ private:
   PHX::MDField<const ScalarT,Dim>                         homotopy;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,Node> basalMeltRate; // [W m^{-2}]
+  PHX::MDField<ScalarT,Cell,Side,Node> enthalpyBasalFlux; // [W m^{-2}]
   PHX::MDField<ScalarT,Cell,Side,Node> basalVertVelocity; // [m/yr]
 
   std::vector<std::vector<int> >  sideNodes;
@@ -71,6 +71,7 @@ private:
   double flux_reg_beta;
   double basalMelt_reg_alpha;
   double basalMelt_reg_beta;
+  bool isThereWater;
 };
 
 } // namespace LandIce

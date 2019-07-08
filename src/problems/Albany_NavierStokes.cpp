@@ -281,7 +281,7 @@ Albany::NavierStokes::getValidProblemParameters() const
   validPL->sublist("Flow", false, "");
   validPL->sublist("Heat", false, "");
   validPL->sublist("Neutronics", false, "");
-  validPL->sublist("Thermal Conductivity", false, "");
+  validPL->sublist("ThermalConductivity", false, "");
   validPL->sublist("Density", false, "");
   validPL->sublist("Viscosity", false, "");
   validPL->sublist("Volumetric Expansion Coefficient", false, "");
