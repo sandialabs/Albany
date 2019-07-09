@@ -38,39 +38,43 @@ public:
   //! Check if memoization is activated
   bool memoizer_active() const;
 
-  //! Setup data before app Eval functions are called
+  //! Setup data before app evaluation functions are called
   void pre_eval();
 
-  //! Insert Eval (e.g. Residual, Jacobian)
+  //! Insert evaluation type name
   void insert_eval(const std::string& eval);
 
-  //! Determine if Eval (e.g. Residual, Jacobian) exists
+  //! Determine if evaluation type name exists
   bool contain_eval(const std::string& eval) const;
-
-  //! Setup data after app Eval functions are called
-  void post_eval();
 
   //! Store MDField identifiers in order to identify field dependencies in the FieldManager
   //! "saved" is used to specify whether an MDField should be saved for memoization
   void fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag>>& depFields,
       const std::vector<Teuchos::RCP<PHX::FieldTag>>& evalFields, const bool saved = true);
 
+  //! Print MDField lists
+  void print_field_dependencies() const;
+
   //! Update list of _saved/_unsaved MDFields based on _unsaved MDFields and field dependencies
   void update_fields();
-
-  //! Get list of saved MDFields
-  Teuchos::RCP<const StringSet> get_saved_fields() const;
 
   //! Compare list of saved/unsaved MDFields to input
   //! (used to ensure all MDFields have been gathered by fill_field_dependencies())
   void check_fields(const std::vector<Teuchos::RCP<PHX::FieldTag>>& fields) const;
 
-  //! Print all MDField lists for debug
-  void print_field_dependencies() const;
+  //! Print list of _saved/_unsaved MDFields
+  void print_fields() const;
+
+  //! Get list of saved MDFields
+  Teuchos::RCP<const StringSet> get_saved_fields(const std::string& eval) const;
 
 private:
   //! Update list of saved/unsaved MDFields based on unsaved MDFields and field dependencies
   void update_fields(Teuchos::RCP<StringSet> savedFields, Teuchos::RCP<StringSet> unsavedFields);
+
+  //! Print list of _saved/_unsaved MDFields
+  void print_fields(Teuchos::RCP<StringSet> savedFields,
+      Teuchos::RCP<StringSet> unsavedFields) const;
 
   const Teuchos::RCP<StringSet> _setupEvals;
 
@@ -81,6 +85,7 @@ private:
 
   //! Data structures for memoization of parameters that change occasionally
   std::string _unsavedParam, _savedParamStringSets;
+  Teuchos::RCP<StringSet> _unsavedParamEvals;
   Teuchos::RCP<StringSet> _savedFieldsWOParam, _unsavedFieldsWParam;
 };
 

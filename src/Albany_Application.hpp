@@ -440,7 +440,8 @@ class Application
   //! Routine to get workset (bucket) size info needed by all Evaluation types
   template <typename EvalT>
   void
-  loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
+  loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
+      const std::string& evalName);
 
   void
   loadBasicWorksetInfo(PHAL::Workset& workset, double current_time);
@@ -504,9 +505,21 @@ class Application
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp);
 
+ private:
+  template <typename EvalT>
   void
-  postRegSetup(std::string eval);
+  postRegSetup();
 
+  template <typename EvalT>
+  void
+  postRegSetupDImpl();
+
+  template <typename EvalT>
+  void
+  writePhalanxGraph(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm,
+      const std::string& evalName, const int& phxGraphVisDetail);
+
+ public:
 #if defined(ALBANY_LCM)
   double
   fixTime(double const current_time) const
@@ -853,7 +866,8 @@ class Application
 
 template <typename EvalT>
 void
-Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws)
+Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
+    const std::string& evalName)
 {
   auto const& wsElNodeEqID       = disc->getWsElNodeEqID();
   auto const& wsElNodeID         = disc->getWsElNodeID();
@@ -879,7 +893,7 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws)
 
   workset.local_Vp.resize(workset.numCells);
 
-  workset.savedMDFields = phxSetup->get_saved_fields();
+  workset.savedMDFields = phxSetup->get_saved_fields(evalName);
 
   //  workset.print(*out);
 

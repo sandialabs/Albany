@@ -916,9 +916,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   Albany::writeMatrixMarket(W_op_out, "jac", mm_counter_jac);
   ++mm_counter_jac;
 #endif
-
-  // Setup Phalanx data after functions are computed
-  app->getPhxSetup()->post_eval();
 }
 
 Thyra_InArgs ModelEvaluator::createInArgsImpl() const
