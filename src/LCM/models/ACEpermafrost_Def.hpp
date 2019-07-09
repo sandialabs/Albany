@@ -273,6 +273,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
     boundary_indicator_ = workset.boundary_indicator;
     ALBANY_ASSERT(boundary_indicator_.is_null() == false);
   }
+
+  current_time_ = workset.current_time;
 }
 
 template <typename EvalT, typename Traits>
@@ -289,6 +291,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor sigma(num_dims_);
 
   auto const coord_vec = this->model_.getCoordVecField();
+  auto const current_time = current_time_;
 
   ScalarT const E                      = elastic_modulus_(cell, pt);
   ScalarT const nu                     = poissons_ratio_(cell, pt);

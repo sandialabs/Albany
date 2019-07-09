@@ -270,6 +270,8 @@ ACEiceMiniKernel<EvalT, Traits>::init(
     boundary_indicator_ = workset.boundary_indicator;
     ALBANY_ASSERT(boundary_indicator_.is_null() == false);
   }
+
+  current_time_ = workset.current_time;
 }
 
 template <typename EvalT, typename Traits>
@@ -286,6 +288,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor sigma(num_dims_);
 
   auto const coord_vec = this->model_.getCoordVecField();
+  auto const current_time = current_time_;
 
   ScalarT const E                      = elastic_modulus_(cell, pt);
   ScalarT const nu                     = poissons_ratio_(cell, pt);
@@ -309,8 +312,11 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     bool const boundary_indicator =
         static_cast<bool const>(*(boundary_indicator_[cell]));
 
-    if (height > 0.0 && boundary_indicator == true) { failed = 1.0; }
-    else { failed = 0.0; }
+    if (height > 0.45 && boundary_indicator == true) {
+      failed = 1.0;
+    } else {
+      failed = 0.0;
+    }
   }
 
   //

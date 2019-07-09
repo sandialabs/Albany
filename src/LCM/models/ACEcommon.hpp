@@ -14,6 +14,12 @@ namespace LCM {
 std::vector<RealType>
 vectorFromFile(std::string const& filename);
 
+RealType
+interpolateVectors(
+    std::vector<RealType> const& xv,
+    std::vector<RealType> const& yv,
+    RealType const               x);
+
 namespace {
 
 static RealType const SQ23{std::sqrt(2.0 / 3.0)};
