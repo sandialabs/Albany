@@ -7,6 +7,8 @@
 #ifndef PHAL_UTILITIES
 #define PHAL_UTILITIES
 
+#include <string>
+
 #include "Albany_CommTypes.hpp"
 
 #include "Teuchos_RCP.hpp"
@@ -257,6 +259,15 @@ private:
   bool _memoizerEnabled;
   int _prevWorksetIndex;
 };
+
+//! Return field manager name and evaluation type string
+template <typename EvalT>
+inline std::string evalName(const std::string& fmName, const int& ps) {
+  std::string evalName = PHX::typeAsString<EvalT>();
+  evalName.erase(evalName.begin());
+  evalName.pop_back();
+  return fmName + std::to_string(ps) + evalName;
+}
 
 } // namespace PHAL
 
