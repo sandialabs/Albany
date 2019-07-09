@@ -19,3 +19,26 @@ LCM::vectorFromFile(std::string const& filename)
   iss >> values;
   return values.toVector();
 }
+
+RealType
+LCM::interpolateVectors(
+    std::vector<RealType> const& xv,
+    std::vector<RealType> const& yv,
+    RealType const               x)
+{
+  RealType y{0.0};
+  size_t   i{0};
+
+  while (xv[i] < x) ++i;
+
+  if (i == 0) {
+    y = yv[0];
+  } else {
+    RealType const dy    = yv[i] - yv[i - 1];
+    RealType const dx    = xv[i] - xv[i - 1];
+    RealType const slope = dy / dx;
+    y                    = yv[i - 1] + slope * (x - xv[i - 1]);
+  }
+
+  return y;
+}
