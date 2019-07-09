@@ -310,6 +310,8 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   auto&& failed = failed_(cell, 0);
   auto&& exposure_time = exposure_time_(cell, pt);
 
+#pragma omp atomic
+  failed = 0.0;
   // Determine if erosion has occurred.
   if (have_boundary_indicator_ == true) {
     bool const is_at_boundary =
@@ -327,9 +329,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     if (exposure_time >= critical_exposure_time) {
 #pragma omp atomic
       failed = 1.0;
-    } else {
-#pragma omp atomic
-      failed = 0.0;
     }
   }
 
