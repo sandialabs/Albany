@@ -316,10 +316,11 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
         static_cast<bool const>(*(boundary_indicator_[cell]));
 
     auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
-
     bool const is_under_water = height <= sea_level;
+    bool const is_exposed_to_water =
+        is_under_water == true && is_at_boundary == true;
 
-    if (is_under_water == true) { exposure_time += delta_time; }
+    if (is_exposed_to_water == true) { exposure_time += delta_time; }
 
     auto const critical_exposure_time = element_size_ / erosion_rate_;
 
