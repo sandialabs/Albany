@@ -329,6 +329,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     auto const critical_exposure_time = element_size_ / erosion_rate_;
 
     if (exposure_time >= critical_exposure_time) { failed += 1.0; }
+  } else {
+    exposure_time = 0.0;
   }
 
   //
