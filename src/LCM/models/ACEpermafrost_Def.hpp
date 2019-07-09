@@ -216,7 +216,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
       "scalar",
       0.0,
       false,
-      p->get<bool>("Output ACE Exposure Time", false));
+      p->get<bool>("Output ACE Exposure Time", true));
 }
 
 template <typename EvalT, typename Traits>
@@ -309,13 +309,30 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const element_size           = element_size_;
   ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
 
+  auto&& delta_time    = delta_time_(0);
   auto&& failed = failed_(cell, 0);
+  auto&& exposure_time = exposure_time_(cell, pt);
 
+  // Determine if erosion has occurred.
   if (have_boundary_indicator_ == true) {
-    bool const boundary_indicator =
+    bool const is_at_boundary =
         static_cast<bool const>(*(boundary_indicator_[cell]));
 
-    if (height > 1.0 / 3.0 && boundary_indicator == true) { failed = 1.0; }
+    auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
+
+    bool const is_under_water = height <= sea_level;
+
+    if (is_under_water == true) { exposure_time += delta_time; }
+
+    auto const critical_exposure_time = element_size_ / erosion_rate_;
+
+    if (exposure_time >= critical_exposure_time) {
+#pragma omp atomic
+      failed = 1.0;
+    } else {
+#pragma omp atomic
+      failed = 0.0;
+    }
   }
 
   //
@@ -338,8 +355,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Calculate temperature change
   ScalarT dTemp = Tcurr - Told;
-  if (delta_time_(0) > 0.0) {
-    tdot_(cell, pt) = dTemp / delta_time_(0);
+  if (delta_time > 0.0) {
+    tdot_(cell, pt) = dTemp / delta_time;
   } else {
     tdot_(cell, pt) = 0.0;
   }
