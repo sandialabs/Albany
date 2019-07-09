@@ -309,7 +309,8 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     bool const boundary_indicator =
         static_cast<bool const>(*(boundary_indicator_[cell]));
 
-    if (height > 1.0 / 3.0 && boundary_indicator == true) { failed = 1.0; }
+    if (height > 0.0 && boundary_indicator == true) { failed = 1.0; }
+    else { failed = 0.0; }
   }
 
   //

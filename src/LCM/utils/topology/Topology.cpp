@@ -1174,6 +1174,7 @@ Topology::erodeFailedElements()
   }
   Albany::fix_node_sharing(bulk_data);
   bulk_data.modification_end();
+  initializeFailureState();
   setBoundaryIndicator();
   return;
 }
