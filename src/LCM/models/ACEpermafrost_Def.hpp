@@ -325,6 +325,14 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const porosity = porosity0_;
   porosity_(cell, pt)    = porosity;
 
+  // A boundary cell (this is a hack): porosity = -1.0 (set in input deck)
+  bool b_cell;
+  if (porosity < 0.0) {
+    b_cell = true;
+  } else {
+    b_cell = false;
+  }
+
   // Calculate melting temperature
   ScalarT sal   = salinity_base_;  // should come from chemical part of model
   ScalarT sal15 = std::sqrt(sal * sal * sal);
@@ -365,6 +373,12 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Update the water saturation
   ScalarT const wcurr = 1.0 - icurr;
 
+  // Correct ice/water saturation if b_cell
+  if (b_cell) {
+    icurr = 0.0;
+    wcurr = 0.0;
+  }
+
   // Update the effective material density
   density_(cell, pt) =
       (porosity * ((ice_density_ * icurr) + (water_density_ * wcurr))) +
@@ -383,6 +397,17 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
                                (ice_density_ * latent_heat_ * dfdT);
+
+  // Correct the thermal properties if b_cell
+  // Right now, I assume air properties, but this needs to toggle between
+  // air or water, depending on ocean boundary conditions.
+  // Note: The units here must be consistent with input deck units.
+  if (b_cell) {
+    density_(cell, pt) = 1.225;           // [kg/m3]
+    heat_capacity_(cell, pt) = 1.006e+03; // [J/kg/K]
+    thermal_cond_(cell, pt) = 0.0255;     // [W/K/m]
+    thermal_inertia_(cell, pt) = density_(cell, pt) * heat_capacity_(cell, pt);
+  }
 
   // Return values
   ice_saturation_(cell, pt)   = icurr;
@@ -491,98 +516,6 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
       stress_(cell, pt, i, j) = sigma(i, j);
     }
   }
-
-<<<<<<< HEAD
-  // Calculate the depth-dependent porosity
-  // NOTE: The porosity does not change in time so this calculation only needs
-  //       to be done once, at the beginning of the simulation.
-  ScalarT const porosity = porosity0_;
-  // NOTE: Can't let this keep getting updated! So commenting out for now.
-  // porosity0_ * std::exp(-pressure / (porosityE_ * 9.81 * 1500.0));
-
-  // A boundary cell (this is a hack): porosity = -1.0 (set in input deck)
-  bool b_cell;
-  if (porosity < 0.0) {
-    b_cell = true;
-  } else {
-    b_cell = false;
-  }
-
-  porosity_(cell, pt) = porosity;
-
-  // Calculate melting temperature
-  ScalarT sal   = salinity_base_;  // should come from chemical part of model
-  ScalarT sal15 = std::sqrt(sal * sal * sal);
-  ScalarT pressure_fixed = 1.0;
-  // Tmelt is in Kelvin
-  ScalarT Tmelt = -0.057 * sal + 0.00170523 * sal15 -
-                  0.0002154996 * sal * sal -
-                  0.000753 / 10000.0 * pressure_fixed + 273.15;
-
-  // Calculate temperature change
-  ScalarT dTemp = Tcurr - Told;
-  if (delta_time_(0) > 0.0) {
-    tdot_(cell, pt) = dTemp / delta_time_(0);
-  } else {
-    tdot_(cell, pt) = 0.0;
-  }
-
-  // Calculate the freezing curve function df/dTemp
-  // W term sets the width of the freezing curve.
-  // Larger W means steeper curve.
-  // f(T) = L / (1 + e^(-W*(T-T0)))
-  //
-  ScalarT const W = freeze_curve_width_;
-  ScalarT const Tdiff = Tcurr - Tmelt;
-  ScalarT const et = exp(-W * Tdiff);
-  ScalarT const etp1 = et + 1.0;
-  ScalarT const dfdT = -W * et / etp1 / etp1;
-
-  // Update the ice saturation
-  ScalarT icurr = 1.0 - 1.0 / etp1;
-  // Update the water saturation
-  ScalarT wcurr = 1.0 - icurr;
-
-  // Correct ice/water saturation if b_cell
-  if (b_cell) {
-    icurr = 0.0;
-    wcurr = 0.0;
-  }
-
-  // Update the effective material density
-  density_(cell, pt) =
-      (porosity * ((ice_density_ * icurr) + (water_density_ * wcurr))) +
-      ((1.0 - porosity) * sediment_density_);
-
-  // Update the effective material heat capacity
-  heat_capacity_(cell, pt) =
-      (porosity * ((ice_heat_capacity_ * icurr) + 
-                   (water_heat_capacity_ * wcurr))) +
-      ((1.0 - porosity) * sediment_heat_capacity_);
-
-  // Update the effective material thermal conductivity
-  thermal_cond_(cell, pt) = pow(ice_thermal_cond_, (icurr * porosity)) *
-                            pow(water_thermal_cond_, (wcurr * porosity)) *
-                            pow(sediment_thermal_cond_, (1.0 - porosity));
-
-  // Update the material thermal inertia term
-  thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) 
-                               - (ice_density_ * latent_heat_ * dfdT);
-
-  // Correct the thermal properties if b_cell
-  // Right now, I assume air properties, but this needs to toggle between
-  // air or water, depending on ocean boundary conditions.
-  // Note: The units here must be consistent with input deck units.
-  if (b_cell) {
-    density_(cell, pt) = 1.225;           // [kg/m3]
-    heat_capacity_(cell, pt) = 1.006e+03; // [J/kg/K]
-    thermal_cond_(cell, pt) = 0.0255;     // [W/K/m]
-    thermal_inertia_(cell, pt) = density_(cell, pt) * heat_capacity_(cell, pt);
-  }
-
-  // Return values
-  ice_saturation_(cell, pt)   = icurr;
-  water_saturation_(cell, pt) = wcurr;
 
   return;
 }
