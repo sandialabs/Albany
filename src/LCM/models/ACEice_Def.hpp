@@ -288,6 +288,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor sigma(num_dims_);
 
   auto const coord_vec = this->model_.getCoordVecField();
+  auto const height       = coord_vec(cell, pt, 2);
   auto const current_time = current_time_;
 
   ScalarT const E                      = elastic_modulus_(cell, pt);
@@ -301,7 +302,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const Tcurr                  = temperature_(cell, pt);
   ScalarT const Told                   = T_old_(cell, pt);
   ScalarT const iold                   = ice_saturation_old_(cell, pt);
-  ScalarT const height                 = coord_vec(cell, pt, 2);
   ScalarT const erosion_rate           = erosion_rate_;
   ScalarT const element_size           = element_size_;
   ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
