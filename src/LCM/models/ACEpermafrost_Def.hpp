@@ -314,13 +314,14 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   auto&& exposure_time = exposure_time_(cell, pt);
 
   failed *= 0.0;
+  bool is_under_water;
   // Determine if erosion has occurred.
   if (have_boundary_indicator_ == true) {
     bool const is_at_boundary =
         static_cast<bool const>(*(boundary_indicator_[cell]));
 
     auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
-    bool const is_under_water = height <= sea_level;
+    is_under_water = (height <= sea_level);
     bool const is_exposed_to_water =
         is_under_water == true && is_at_boundary == true;
 
@@ -388,7 +389,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   // Update the water saturation
-  ScalarT const wcurr = 1.0 - icurr;
+  ScalarT wcurr = 1.0 - icurr;
 
   // Correct ice/water saturation if b_cell
   if (b_cell) {
