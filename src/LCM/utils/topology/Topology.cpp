@@ -122,7 +122,7 @@ Topology::Topology(
   set_stk_mesh_struct(stk_mesh_struct);
   set_bulk_block_name(bulk_block_name);
   set_interface_block_name(interface_block_name);
-  Topology::graphInitialization();
+  graphInitialization();
 }
 
 //
@@ -229,6 +229,7 @@ Topology::graphInitialization()
   removeMultiLevelRelations();
   initializeFailureState();
   setBoundaryIndicator();
+  removeMidLevelEntities();
   Albany::fix_node_sharing(get_bulk_data());
   get_bulk_data().modification_end();
   get_stk_discretization().updateMesh();
@@ -341,6 +342,28 @@ Topology::removeMultiLevelRelations()
   }
 
   return;
+}
+
+//
+// Remove all entities but the ones representing elements and nodes.
+// Only 3D for now.
+//
+void
+Topology::removeMidLevelEntities()
+{
+  auto& bulk_data = get_bulk_data();
+
+  // Go from edges to faces
+  for (stk::mesh::EntityRank rank = stk::topology::EDGE_RANK;
+       rank <= stk::topology::FACE_RANK;
+       ++rank) {
+    stk::mesh::EntityVector delete_entities;
+
+    stk::mesh::get_entities(bulk_data, rank, delete_entities);
+
+    // Delete the entities
+    for (auto e : delete_entities) { bulk_data.destroy_entity(e); }
+  }
 }
 
 //
