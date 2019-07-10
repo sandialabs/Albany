@@ -116,6 +116,12 @@ class Topology
   removeMultiLevelRelations();
 
   ///
+  /// Remove all entities but the ones representing elements and nodes.
+  ///
+  void
+  removeMidLevelEntities();
+
+  ///
   /// \brief After mesh manipulations are complete, need to recreate a
   ///        stk mesh understood by Albany::STKDiscretization.
   ///

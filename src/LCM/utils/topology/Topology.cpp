@@ -116,23 +116,13 @@ Topology::Topology(
       failure_criterion_(Teuchos::null),
       output_type_(UNIDIRECTIONAL_UNILEVEL)
 {
+  auto& stk_disc = static_cast<Albany::STKDiscretization&>(*abstract_disc);
+  auto  stk_mesh_struct = stk_disc.getSTKMeshStruct();
   set_discretization(abstract_disc);
-
-  Albany::STKDiscretization& stk_disc =
-      static_cast<Albany::STKDiscretization&>(*abstract_disc);
-
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct =
-      stk_disc.getSTKMeshStruct();
-
   set_stk_mesh_struct(stk_mesh_struct);
-
   set_bulk_block_name(bulk_block_name);
-
   set_interface_block_name(interface_block_name);
-
-  Topology::graphInitialization();
-
-  return;
+  graphInitialization();
 }
 
 //
@@ -234,21 +224,17 @@ void
 Topology::graphInitialization()
 {
   stk::mesh::PartVector add_parts;
-
   stk::mesh::create_adjacent_entities(get_bulk_data(), add_parts);
-
   get_bulk_data().modification_begin();
   removeMultiLevelRelations();
   initializeFailureState();
   setBoundaryIndicator();
+  removeMidLevelEntities();
   Albany::fix_node_sharing(get_bulk_data());
   get_bulk_data().modification_end();
   get_stk_discretization().updateMesh();
-
   initializeTopologies();
   initializeHighestIds();
-
-  return;
 }
 
 //
@@ -356,6 +342,28 @@ Topology::removeMultiLevelRelations()
   }
 
   return;
+}
+
+//
+// Remove all entities but the ones representing elements and nodes.
+// Only 3D for now.
+//
+void
+Topology::removeMidLevelEntities()
+{
+  auto& bulk_data = get_bulk_data();
+
+  // Go from edges to faces
+  for (stk::mesh::EntityRank rank = stk::topology::EDGE_RANK;
+       rank <= stk::topology::FACE_RANK;
+       ++rank) {
+    stk::mesh::EntityVector delete_entities;
+
+    stk::mesh::get_entities(bulk_data, rank, delete_entities);
+
+    // Delete the entities
+    for (auto e : delete_entities) { bulk_data.destroy_entity(e); }
+  }
 }
 
 //
