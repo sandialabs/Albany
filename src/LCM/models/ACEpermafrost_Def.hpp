@@ -313,26 +313,23 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   auto&& failed = failed_(cell, 0);
   auto&& exposure_time = exposure_time_(cell, pt);
 
+  failed *= 0.0;
   // Determine if erosion has occurred.
   if (have_boundary_indicator_ == true) {
     bool const is_at_boundary =
         static_cast<bool const>(*(boundary_indicator_[cell]));
 
     auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
-
     bool const is_under_water = height <= sea_level;
+    bool const is_exposed_to_water =
+        is_under_water == true && is_at_boundary == true;
 
-    if (is_under_water == true) { exposure_time += delta_time; }
+    if (is_exposed_to_water == true) { exposure_time += delta_time; }
 
     auto const critical_exposure_time = element_size_ / erosion_rate_;
 
-    if (exposure_time >= critical_exposure_time) {
-#pragma omp atomic
-      failed = 0.0; // This should be set to 1.0 but I am turning it off for testing.
-    } else {
-#pragma omp atomic
-      failed = 0.0;
-    }
+    // This should be set to +=1.0 but I am turning it off for testing.
+    if (exposure_time >= critical_exposure_time) { failed += 0.0; }
   }
 
   //
