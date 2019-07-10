@@ -76,7 +76,7 @@ SaveStateField(const Teuchos::ParameterList& p)
 // **********************************************************************
 template<typename Traits>
 void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
@@ -88,6 +88,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
     TEUCHOS_TEST_FOR_EXCEPTION (field.fieldTag().dataLayout().name(1)!="Node", Teuchos::Exceptions::InvalidParameter,
                                 "Error! To save a nodal state, the second tag of the layout MUST be 'Node'.\n");
   }
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 // **********************************************************************
 template<typename Traits>

@@ -213,7 +213,7 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
       "scalar",
       0.0,
       false,
-      p->get<bool>("Output ACE Exposure Time", false));
+      p->get<bool>("Output ACE Exposure Time", true));
 }
 
 template <typename EvalT, typename Traits>
@@ -270,6 +270,8 @@ ACEiceMiniKernel<EvalT, Traits>::init(
     boundary_indicator_ = workset.boundary_indicator;
     ALBANY_ASSERT(boundary_indicator_.is_null() == false);
   }
+
+  current_time_ = workset.current_time;
 }
 
 template <typename EvalT, typename Traits>
@@ -286,6 +288,8 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor sigma(num_dims_);
 
   auto const coord_vec = this->model_.getCoordVecField();
+  auto const height       = coord_vec(cell, pt, 2);
+  auto const current_time = current_time_;
 
   ScalarT const E                      = elastic_modulus_(cell, pt);
   ScalarT const nu                     = poissons_ratio_(cell, pt);
@@ -298,18 +302,32 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const Tcurr                  = temperature_(cell, pt);
   ScalarT const Told                   = T_old_(cell, pt);
   ScalarT const iold                   = ice_saturation_old_(cell, pt);
-  ScalarT const height                 = coord_vec(cell, pt, 2);
   ScalarT const erosion_rate           = erosion_rate_;
   ScalarT const element_size           = element_size_;
   ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
 
+  auto&& delta_time    = delta_time_(0);
   auto&& failed = failed_(cell, 0);
+  auto&& exposure_time = exposure_time_(cell, pt);
 
+  failed *= 0.0;
+  // Determine if erosion has occurred.
   if (have_boundary_indicator_ == true) {
-    bool const boundary_indicator =
+    bool const is_at_boundary =
         static_cast<bool const>(*(boundary_indicator_[cell]));
 
-    if (height > 1.0 / 3.0 && boundary_indicator == true) { failed = 1.0; }
+    auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
+    bool const is_under_water = height <= sea_level;
+    bool const is_exposed_to_water =
+        is_under_water == true && is_at_boundary == true;
+
+    if (is_exposed_to_water == true) { exposure_time += delta_time; }
+
+    auto const critical_exposure_time = element_size_ / erosion_rate_;
+
+    if (exposure_time >= critical_exposure_time) { failed += 1.0; }
+  } else {
+    exposure_time = 0.0;
   }
 
   //
@@ -332,8 +350,8 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Calculate temperature change
   ScalarT dTemp = Tcurr - Told;
-  if (delta_time_(0) > 0.0) {
-    tdot_(cell, pt) = dTemp / delta_time_(0);
+  if (delta_time > 0.0) {
+    tdot_(cell, pt) = dTemp / delta_time;
   } else {
     tdot_(cell, pt) = 0.0;
   }

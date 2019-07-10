@@ -466,9 +466,9 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
     p->set<ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-    p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy Regularization", false));
-    if(params->isSublist("LandIce Enthalpy Stabilization"))
-      p->set<ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy Stabilization"));
+    p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy",false).sublist("Regularization", false));
+    if(params->isSublist("LandIce Enthalpy") &&  params->sublist("LandIce Enthalpy").isParameter("Stabilization"))
+      p->set<ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy").sublist("Stabilization"));
 
     p->set<std::string>("Velocity Gradient QP Variable Name", "velocity Gradient");
 
@@ -508,13 +508,13 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
-    if(params->isSublist("LandIce Enthalpy Stabilization"))
-      p->set<ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy Stabilization"));
+    if(params->isSublist("LandIce Enthalpy") &&  params->sublist("LandIce Enthalpy").isParameter("Stabilization"))
+      p->set<ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy").sublist("Stabilization"));
 
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
 
     p->set<ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-    p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy Regularization", false));
+    p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy",false).sublist("Regularization", false));
     p->set<std::string>("Basal Melt Rate Side QP Variable Name", "basal_neumann_term");
     p->set<std::string>("Basal Melt Rate Side Variable Name", "pippo");
 
@@ -632,8 +632,8 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
     p->set<std::string>("Side Set Name", basalSideName);
 
-    if(params->isSublist("LandIce Enthalpy Stabilization"))
-      p->set<ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy Stabilization"));
+    if(params->isSublist("LandIce Enthalpy") &&  params->sublist("LandIce Enthalpy").isParameter("Stabilization"))
+      p->set<ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy").sublist("Stabilization"));
 
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
 
@@ -658,8 +658,8 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
 
-    if(params->isSublist("LandIce Enthalpy Stabilization"))
-      p->set<ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy Stabilization"));
+    if(params->isSublist("LandIce Enthalpy") &&  params->sublist("LandIce Enthalpy").isParameter("Stabilization"))
+      p->set<ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy").sublist("Stabilization"));
 
     if(!isGeoFluxConst)
       p->set<std::string>("Geothermal Flux Side QP Variable Name", "basal_heat_flux");
@@ -901,7 +901,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
     p->set<ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-    p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy Regularization", false));
+    p->set<Teuchos::ParameterList*>("LandIce Enthalpy", &params->sublist("LandIce Enthalpy",false));
 
     p->set<std::string>("Side Set Name", basalSideName);
 

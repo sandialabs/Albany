@@ -87,6 +87,9 @@ protected:
   bool isGeoFluxConst;
   bool compute_w;
 
+  bool adjustBedTopo;
+  bool adjustSurfaceHeight;
+
   std::string hydrostatic_pressure_name;
   std::string melting_enthalpy_name;
   std::string melting_temperature_name;
@@ -121,38 +124,68 @@ constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(true, resid_names[0], Teuchos::rcpFromRef(extruded_params_levels), dof_offsets[0], scatter_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
   if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
-
     // Require scattering of residual
     PHX::Tag<typename EvalT::ScalarT> res_tag(scatter_names[0], dl->dummy);
     fm0.requireField<EvalT>(res_tag);
   }
 
   // Geometry
-  if (Albany::mesh_depends_on_solution() && is_dist_param[ice_thickness_name]) {
-    //--- Gather Coordinates ---//
-    p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
+  // If the mesh depends on parameters AND the thickness is a parameter,
+  // after gathering the coordinates, we modify the z coordinate of the mesh.
+  if (Albany::mesh_depends_on_parameters() && is_dist_param[ice_thickness_name]) {
+    if(adjustBedTopo && !adjustSurfaceHeight) {
+      //----- Gather Coordinate Vector (ad hoc parameters)
+      p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
 
-    // Output:: Coordindate Vector at vertices
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
+      // Output:: Coordindate Vector at vertices
+      p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
 
-    ev =  Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+      ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
 
-    //--- Update Z Coordinate ---//
-    p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
+      //------ Update Z Coordinate
+      p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
+      p->set<std::string>("Old Coords Name",  "Coord Vec Old");
+      p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
+      p->set<std::string>("Thickness Name",   ice_thickness_name);
+      p->set<std::string>("Thickness Lower Bound Name",   ice_thickness_name + "_lowerbound");
+      p->set<std::string>("Thickness Upper Bound Name",   ice_thickness_name + "_upperbound");
+      p->set<std::string>("Top Surface Name", "observed_surface_height");
+      p->set<std::string>("Updated Top Surface Name", surface_height_name);
+      p->set<std::string>("Bed Topography Name", "observed_bed_topography");
+      p->set<std::string>("Updated Bed Topography Name", bed_topography_name);
+      p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
 
-    // Input
-    p->set<std::string>("Old Coords Name", "Coord Vec Old");
-    p->set<std::string>("New Coords Name", Albany::coord_vec_name);
-    p->set<std::string>("Thickness Name", ice_thickness_name);
-    p->set<std::string>("Top Surface Name", surface_height_name);
-    p->set<std::string>("Bed Topography Name", bed_topography_name);
-    p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
+      ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    } else if(adjustSurfaceHeight && !adjustBedTopo) {
+      //----- Gather Coordinate Vector (ad hoc parameters)
+      p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
 
-    ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+      // Output:: Coordindate Vector at vertices
+      p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
+
+      ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      //------ Update Z Coordinate
+      p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
+      p->set<std::string>("Old Coords Name",  "Coord Vec Old");
+      p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
+      p->set<std::string>("Thickness Name",   ice_thickness_name);
+      p->set<std::string>("Top Surface Name", surface_height_name);
+      p->set<std::string>("Bed Topography Name", bed_topography_name);
+      p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
+
+      ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    } else {
+          TEUCHOS_TEST_FOR_EXCEPTION(adjustBedTopo == adjustSurfaceHeight, std::logic_error, "Error! When the ice thickness is a parameter,\n "
+              "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
+              " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
+    }
   } else {
-    //---- Gather coordinates
+    //----- Gather Coordinate Vector (general parameters)
     ev = evalUtils.constructGatherCoordinateVectorEvaluator();
     fm0.template registerEvaluator<EvalT> (ev);
   }
@@ -216,27 +249,35 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
 
     //Output
-    p->set<std::string>("Residual Variable Name", "W_z Residual");
+    p->set<std::string>("Residual Variable Name", resid_names[1]);
 
     ev = Teuchos::rcp(new LandIce::w_ZResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   } else {
+
+
+    ev = evalUtils.constructDOFGradInterpolationEvaluator ("W", dof_offsets[1]);
+    fm0.template registerEvaluator<EvalT> (ev);
+
     // --- W Residual ---
-    p = Teuchos::rcp(new Teuchos::ParameterList("W Resid"));
+    p = Teuchos::rcp(new Teuchos::ParameterList(resid_names[1]));
 
     //Input
+    p->set<std::string>("Basal Vertical Velocity Variable Name", "basal_vert_velocity_"+basalSideName);
+    p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
     p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
     p->set<std::string>("BF Side Name", Albany::bf_name + " "+basalSideName);
+    p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
     p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + " "+basalSideName);
-
-    p->set<std::string>("w Side QP Variable Name", "W");
+    p->set<std::string>("Side Normal Name", Albany::normal_name + " " + basalSideName);
+    p->set<std::string>("w Side QP Variable Name", "W_" + basalSideName);
     p->set<std::string>("w Gradient QP Variable Name", "W Gradient");
     p->set<std::string>("w Variable Name", "W");
-    p->set<std::string>("Basal Melt Rate Variable Name", "basal_melt_rate");
-    p->set<std::string>("Basal Melt Rate Side QP Variable Name", "basal_melt_rate");
+    p->set<std::string>("Basal Vertical Velocity Side QP Variable Name", "basal_vert_velocity_" + basalSideName);
     p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
 
     //Output
     p->set<std::string>("Residual Variable Name", resid_names[1]);
@@ -284,7 +325,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-  p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy Regularization", false));
+  p->set<Teuchos::ParameterList*>("LandIce Enthalpy", &params->sublist("LandIce Enthalpy", false));
 
   p->set<std::string>("Side Set Name", basalSideName);
 
@@ -420,8 +461,8 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "beta");
     p->set<std::string>("Side Set Name", basalSideName);
 
-    if(params->isSublist("LandIce Enthalpy Stabilization")) {
-      p->set<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy Stabilization"));
+    if(params->isSublist("LandIce Enthalpy") &&  params->sublist("LandIce Enthalpy").isParameter("Stabilization")) {
+      p->set<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy").sublist("Stabilization"));
     }
 
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
@@ -469,9 +510,9 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<bool>("Constant Geothermal Flux", isGeoFluxConst);
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-  p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy Regularization", false));
-  if(params->isSublist("LandIce Enthalpy Stabilization")) {
-    p->set<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy Stabilization"));
+  p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy", false).sublist("Regularization", false));
+  if(params->isSublist("LandIce Enthalpy") &&  params->sublist("LandIce Enthalpy").isParameter("Stabilization")) {
+    p->set<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy").sublist("Stabilization"));
   }
 
   //Output

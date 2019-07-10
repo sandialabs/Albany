@@ -53,10 +53,11 @@ GatherVerticallyAveragedVelocityBase(const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits>
 void GatherVerticallyAveragedVelocityBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(averagedVel,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
 }
 
 //**********************************************************************

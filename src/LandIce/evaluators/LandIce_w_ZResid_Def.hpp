@@ -32,7 +32,7 @@ w_ZResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
   this->addDependentField(w_z);
 
   this->addEvaluatedField(Residual);
-  this->setName("w_z Residual");
+  this->setName("W_z Residual");
 }
 
 template<typename EvalT, typename Traits, typename VelocityType>

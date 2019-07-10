@@ -6,6 +6,8 @@ module load serial-intel-release
 rm -rf trilinos-build-serial-intel-release
 rm -rf trilinos-install-serial-intel-release
 rm -rf albany-build-serial-intel-release
+rm -rf Albany
+rm -rf Trilinos
 rm -rf *log 
 rm -rf slurm*
 ./clean-config-build-dash.sh trilinos 8

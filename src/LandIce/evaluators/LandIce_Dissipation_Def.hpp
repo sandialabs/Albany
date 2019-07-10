@@ -40,6 +40,7 @@ namespace LandIce
     this->utils.setFieldData(epsilonSq,fm);
 
     this->utils.setFieldData(diss,fm);
+    d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   }
 
   template<typename EvalT, typename Traits>

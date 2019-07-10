@@ -56,9 +56,10 @@ DirichletBase(Teuchos::ParameterList& p) :
 
 template<typename EvalT, typename Traits>
 void DirichletBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& /* fm */)
 {
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************

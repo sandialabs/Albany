@@ -84,6 +84,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   stiffening_factor_name      = params->sublist("Variables Names").get<std::string>("Stiffening Factor Name" ,"stiffening_factor");
   effective_pressure_name     = params->sublist("Variables Names").get<std::string>("Effective Pressure Name","effective_pressure");
   vertically_averaged_velocity_name = params->sublist("Variables Names").get<std::string>("Vertically Averaged Velocity Name","vertically_averaged_velocity");
+  flux_divergence_name        = params->sublist("Variables Names").get<std::string>("Flux Divergence Name" ,"flux_divergence");
 
   // Mark the velocity as computed
   is_computed_field[dof_names[0]] = true;
@@ -592,6 +593,7 @@ void StokesFOBase::setupEvaluatorRequests ()
     ss_build_interp_ev[basalSideName][ice_thickness_name][InterpolationRequest::QP_VAL      ] = true; 
     ss_build_interp_ev[basalSideName][ice_thickness_name][InterpolationRequest::GRAD_QP_VAL ] = true; 
     ss_build_interp_ev[basalSideName][ice_thickness_name][InterpolationRequest::CELL_TO_SIDE] = true; 
+    ss_build_interp_ev[basalSideName][flux_divergence_name][InterpolationRequest::CELL_VAL] = true;
     if (is_ss_input_field[basalSideName]["surface_mass_balance"]) {
       ss_build_interp_ev[basalSideName]["surface_mass_balance"][InterpolationRequest::QP_VAL] = true; 
     }

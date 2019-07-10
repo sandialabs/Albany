@@ -84,6 +84,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::postRegistrationSetup(typename Trai
   y = Kokkos::createDynRankView(bed.get_view(), "y", 2);
   velx = Kokkos::createDynRankView(avg_vel.get_view(), "velx", 2);
   vely = Kokkos::createDynRankView(avg_vel.get_view(), "vely", 2);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************

@@ -143,7 +143,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
 
   Teuchos::ParameterList* regularization_list = p.get<Teuchos::ParameterList*>("LandIce Enthalpy Regularization");
-  auto flux_reg_list = regularization_list->sublist("Enthalpy Flux Regularization", false);\
+  auto flux_reg_list = regularization_list->sublist("Flux Regularization", false);
   flux_reg_alpha = flux_reg_list.get<double>("alpha");
   flux_reg_beta = flux_reg_list.get<double>("beta");
 }
@@ -295,7 +295,10 @@ evaluateFields(typename Traits::EvalData d)
       ScalarT wSUPG = 0.0;
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
         //ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-        vmax = std::max(vmax,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)+std::pow(verticalVel(cell,qp),2)));
+        ScalarT arg = Velocity(cell,qp,0)*Velocity(cell,qp,0) + Velocity(cell,qp,1)*Velocity(cell,qp,1) + verticalVel(cell,qp)*verticalVel(cell,qp); 
+        ScalarT arg2 = 0.0; 
+        if (arg > 0) arg2 = std::sqrt(arg); 
+        vmax = std::max(vmax, arg2); 
         //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
         VelocityST val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
         VelocityST sqrtval; 

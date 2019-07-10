@@ -216,7 +216,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
       "scalar",
       0.0,
       false,
-      p->get<bool>("Output ACE Exposure Time", false));
+      p->get<bool>("Output ACE Exposure Time", true));
 }
 
 template <typename EvalT, typename Traits>
@@ -273,6 +273,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
     boundary_indicator_ = workset.boundary_indicator;
     ALBANY_ASSERT(boundary_indicator_.is_null() == false);
   }
+
+  current_time_ = workset.current_time;
 }
 
 template <typename EvalT, typename Traits>
@@ -289,6 +291,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor sigma(num_dims_);
 
   auto const coord_vec = this->model_.getCoordVecField();
+  auto const height       = coord_vec(cell, pt, 2);
+  auto const current_time = current_time_;
 
   ScalarT const E                      = elastic_modulus_(cell, pt);
   ScalarT const nu                     = poissons_ratio_(cell, pt);
@@ -301,18 +305,32 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const Tcurr                  = temperature_(cell, pt);
   ScalarT const Told                   = T_old_(cell, pt);
   ScalarT const iold                   = ice_saturation_old_(cell, pt);
-  ScalarT const height                 = coord_vec(cell, pt, 2);
   ScalarT const erosion_rate           = erosion_rate_;
   ScalarT const element_size           = element_size_;
   ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
 
+  auto&& delta_time    = delta_time_(0);
   auto&& failed = failed_(cell, 0);
+  auto&& exposure_time = exposure_time_(cell, pt);
 
+  failed *= 0.0;
+  bool is_under_water;
+  // Determine if erosion has occurred.
   if (have_boundary_indicator_ == true) {
-    bool const boundary_indicator =
+    bool const is_at_boundary =
         static_cast<bool const>(*(boundary_indicator_[cell]));
 
-    if (height > 1.0 / 3.0 && boundary_indicator == true) { failed = 1.0; }
+    auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
+    is_under_water = (height <= sea_level);
+    bool const is_exposed_to_water =
+        is_under_water == true && is_at_boundary == true;
+
+    if (is_exposed_to_water == true) { exposure_time += delta_time; }
+
+    auto const critical_exposure_time = element_size_ / erosion_rate_;
+
+    // This should be set to +=1.0 but I am turning it off for testing.
+    if (exposure_time >= critical_exposure_time) { failed += 0.0; }
   }
 
   //
@@ -325,6 +343,14 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const porosity = porosity0_;
   porosity_(cell, pt)    = porosity;
 
+  // A boundary cell (this is a hack): porosity = -1.0 (set in input deck)
+  bool b_cell;
+  if (porosity < 0.0) {
+    b_cell = true;
+  } else {
+    b_cell = false;
+  }
+
   // Calculate melting temperature
   ScalarT sal   = salinity_base_;  // should come from chemical part of model
   ScalarT sal15 = std::sqrt(sal * sal * sal);
@@ -335,8 +361,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Calculate temperature change
   ScalarT dTemp = Tcurr - Told;
-  if (delta_time_(0) > 0.0) {
-    tdot_(cell, pt) = dTemp / delta_time_(0);
+  if (delta_time > 0.0) {
+    tdot_(cell, pt) = dTemp / delta_time;
   } else {
     tdot_(cell, pt) = 0.0;
   }
@@ -363,7 +389,13 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   // Update the water saturation
-  ScalarT const wcurr = 1.0 - icurr;
+  ScalarT wcurr = 1.0 - icurr;
+
+  // Correct ice/water saturation if b_cell
+  if (b_cell) {
+    icurr = 0.0;
+    wcurr = 0.0;
+  }
 
   // Update the effective material density
   density_(cell, pt) =
@@ -383,6 +415,24 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Update the material thermal inertia term
   thermal_inertia_(cell, pt) = (density_(cell, pt) * heat_capacity_(cell, pt)) -
                                (ice_density_ * latent_heat_ * dfdT);
+
+  // Correct the thermal properties if b_cell
+  // Note: The units here must be consistent with input deck units.
+  if (b_cell) {
+    if (is_under_water) {
+    // These are values for seawater:
+      density_(cell, pt) = 1027.3;          // [kg/m3]
+      heat_capacity_(cell, pt) = 4.000e+03; // [J/kg/K]
+      thermal_cond_(cell, pt) = 0.59;       // [W/K/m]
+    } 
+    else {
+    // These are values for air:
+      density_(cell, pt) = 1.225;           // [kg/m3]
+      heat_capacity_(cell, pt) = 1.006e+03; // [J/kg/K]
+      thermal_cond_(cell, pt) = 0.0255;     // [W/K/m]
+    }
+    thermal_inertia_(cell, pt) = density_(cell, pt) * heat_capacity_(cell, pt);
+  }
 
   // Return values
   ice_saturation_(cell, pt)   = icurr;

@@ -229,6 +229,7 @@ protected:
   // Name of common variables (constructor provides defaults)
   std::string surface_height_name;
   std::string ice_thickness_name;
+  std::string flux_divergence_name;
   std::string bed_topography_name;
   std::string temperature_name;
   std::string corrected_temperature_name;
@@ -262,6 +263,9 @@ constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // --- Basal BC evaluators (if needed) --- //
   constructBasalBCEvaluators<EvalT> (fm0);
+
+  // --- SMB-related evaluators (if needed) --- //
+  constructSMBEvaluators<EvalT> (fm0, meshSpecs);
 }
 
 template <typename EvalT>
@@ -1371,10 +1375,6 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
 
     // ------------------- Interpolations and utilities ------------------ //
 
-    //---- Interpolate flux_divergence from side quad points to side
-    ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator("flux_divergence",basalSideName,false);
-    fm0.template registerEvaluator<EvalT> (ev);
-
     // if (is_dist_param[ice_thickness_name])
     // {
     //   //---- Restrict ice thickness from cell-based to cell-side-based
@@ -1405,7 +1405,7 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     p->set<std::string>("Thickness Gradient Name", ice_thickness_side_name + " Gradient");
     p->set<std::string>("Side Tangents Name", Albany::tangents_name + " " + basalSideName);
 
-    p->set<std::string>("Field Name",  "flux_divergence");
+    p->set<std::string>("Field Name",  "flux_divergence_basalside");
     p->set<std::string>("Side Set Name", basalSideName);
 
     ev = createEvaluatorWithOneScalarType<LandIce::FluxDiv,EvalT>(p,dl_side,field_scalar_type[ice_thickness_name]);
@@ -1441,9 +1441,6 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
     // --- SurfaceVelocity-related evaluators (if needed) --- //
     constructSurfaceVelocityEvaluators<EvalT> (fm0);
 
-    // --- SMB-related evaluators (if needed) --- //
-    constructSMBEvaluators<EvalT> (fm0, meshSpecs);
-
     Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(new Teuchos::ParameterList("Param List"));
 
     // Figure out if observed surface velocity RMS is scalar (if present at all)
@@ -1469,7 +1466,7 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
     paramList->set<std::string>("Averaged Vertical Velocity Side Variable Name",vertically_averaged_velocity_name + "_" + basalSideName);
     paramList->set<std::string>("Observed Surface Velocity Side QP Variable Name","observed_surface_velocity_" + surfaceSideName);
     paramList->set<std::string>("Observed Surface Velocity RMS Side QP Variable Name","observed_surface_velocity_RMS_" + surfaceSideName);
-    paramList->set<std::string>("Flux Divergence Side QP Variable Name","flux_divergence");
+    paramList->set<std::string>("Flux Divergence Side QP Variable Name","flux_divergence_basalside");
     paramList->set<std::string>("Thickness RMS Side QP Variable Name","observed_ice_thickness_RMS_" + basalSideName);
     paramList->set<std::string>("Observed Thickness Side QP Variable Name","observed_ice_thickness_" + basalSideName);
     paramList->set<std::string>("SMB Side QP Variable Name","surface_mass_balance_" + basalSideName);

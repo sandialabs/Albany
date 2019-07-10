@@ -249,11 +249,11 @@ BulkFailureCriterion::BulkFailureCriterion(
     Topology&          topology,
     std::string const& fail_indicator_name)
     : AbstractFailureCriterion(topology),
-      failure_indicator_(get_meta_data().get_field<ScalarFieldType>(
+      failure_state_(get_meta_data().get_field<ScalarFieldType>(
           stk::topology::ELEMENT_RANK,
           fail_indicator_name))
 {
-  if (failure_indicator_ == NULL) {
+  if (failure_state_ == NULL) {
     std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
     std::cerr << '\n';
     std::cerr << "Cannot find field for bulk failure criterion: ";
@@ -268,10 +268,9 @@ BulkFailureCriterion::check(
     stk::mesh::BulkData& bulk_data,
     stk::mesh::Entity    element)
 {
-  double const failure_indicator =
-      *stk::mesh::field_data(*failure_indicator_, element);
+  double const failure_state = *stk::mesh::field_data(*failure_state_, element);
 
-  return failure_indicator >= 0.5;
+  return failure_state >= 0.5;
 }
 
 }  // namespace LCM
