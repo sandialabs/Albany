@@ -328,7 +328,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
     if (exposure_time >= critical_exposure_time) {
 #pragma omp atomic
-      failed = 1.0;
+      failed = 0.0; // This should be set to 1.0 but I am turning it off for testing.
     } else {
 #pragma omp atomic
       failed = 0.0;
@@ -419,13 +419,20 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
                                (ice_density_ * latent_heat_ * dfdT);
 
   // Correct the thermal properties if b_cell
-  // Right now, I assume air properties, but this needs to toggle between
-  // air or water, depending on ocean boundary conditions.
   // Note: The units here must be consistent with input deck units.
   if (b_cell) {
-    density_(cell, pt) = 1.225;           // [kg/m3]
-    heat_capacity_(cell, pt) = 1.006e+03; // [J/kg/K]
-    thermal_cond_(cell, pt) = 0.0255;     // [W/K/m]
+    if (is_under_water) {
+    // These are values for seawater:
+      density_(cell, pt) = 1027.3;          // [kg/m3]
+      heat_capacity_(cell, pt) = 4.000e+03; // [J/kg/K]
+      thermal_cond_(cell, pt) = 0.59;       // [W/K/m]
+    } 
+    else {
+    // These are values for air:
+      density_(cell, pt) = 1.225;           // [kg/m3]
+      heat_capacity_(cell, pt) = 1.006e+03; // [J/kg/K]
+      thermal_cond_(cell, pt) = 0.0255;     // [W/K/m]
+    }
     thermal_inertia_(cell, pt) = density_(cell, pt) * heat_capacity_(cell, pt);
   }
 
