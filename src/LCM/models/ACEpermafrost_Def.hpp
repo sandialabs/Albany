@@ -314,7 +314,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   auto&& exposure_time = exposure_time_(cell, pt);
 
   failed *= 0.0;
-  bool is_under_water;
+  bool is_under_water{false};
   // Determine if erosion has occurred.
   if (have_boundary_indicator_ == true) {
     bool const is_at_boundary =

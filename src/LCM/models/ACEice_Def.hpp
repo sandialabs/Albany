@@ -401,7 +401,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   water_saturation_(cell, pt) = wcurr;
 
   //
-  // Mechanical computation
+  // Mechanical calculation
   //
 
   // fill local tensors
