@@ -221,6 +221,9 @@ class Topology
   void
   erodeFailedElements();
 
+  bool
+  isIsolatedNode(stk::mesh::Entity entity);
+
   void
   insertSurfaceElements(std::set<EntityPair> const& fractured_faces);
 

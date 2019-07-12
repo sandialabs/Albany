@@ -272,6 +272,7 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   }
 
   current_time_ = workset.current_time;
+  block_name_   = workset.EBName;
 }
 
 template <typename EvalT, typename Traits>
@@ -310,21 +311,20 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   auto&& failed = failed_(cell, 0);
   auto&& exposure_time = exposure_time_(cell, pt);
 
-  failed *= 0.0;
   // Determine if erosion has occurred.
-  if (have_boundary_indicator_ == true) {
-    bool const is_at_boundary =
-        static_cast<bool const>(*(boundary_indicator_[cell]));
-
+  failed *= 0.0;
+  bool       is_exposed_to_water{false};
+  bool const is_bulk = block_name_ == "bulk";
+  bool const is_at_boundary =
+      have_boundary_indicator_ == true ?
+          static_cast<bool const>(*(boundary_indicator_[cell])) :
+          false;
+  bool const is_bulk_at_boundary = is_bulk && is_at_boundary;
+  if (is_bulk_at_boundary == true) {
     auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
-    bool const is_under_water = height <= sea_level;
-    bool const is_exposed_to_water =
-        is_under_water == true && is_at_boundary == true;
-
+    is_exposed_to_water  = (height <= sea_level);
     if (is_exposed_to_water == true) { exposure_time += delta_time; }
-
     auto const critical_exposure_time = element_size_ / erosion_rate_;
-
     if (exposure_time >= critical_exposure_time) { failed += 1.0; }
   } else {
     exposure_time = 0.0;

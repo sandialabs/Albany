@@ -1159,6 +1159,7 @@ void
 Topology::erodeFailedElements()
 {
   stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityRank const node_rank = stk::topology::NODE_RANK;
   stk::mesh::EntityVector     cells;
   stk::mesh::EntityVector     failed_cells;
   stk::mesh::BulkData&        bulk_data = get_bulk_data();
@@ -1182,11 +1183,58 @@ Topology::erodeFailedElements()
   }
   Albany::fix_node_sharing(bulk_data);
   bulk_data.modification_end();
+
+  /*
+    // Collect isolated nodes
+    stk::mesh::EntityVector nodes;
+    stk::mesh::EntityVector isolated_nodes;
+    stk::mesh::get_entities(bulk_data, node_rank, nodes);
+    for (RelationVectorIndex i = 0; i < nodes.size(); ++i) {
+      stk::mesh::Entity node = nodes[i];
+      if (isIsolatedNode(node) == true) {
+        isolated_nodes.emplace_back(node);
+      }
+    }
+
+    // Now remove them
+    bulk_data.modification_begin();
+    for (RelationVectorIndex i = 0; i < isolated_nodes.size(); ++i) {
+      stk::mesh::Entity isolated_node = isolated_nodes[i];
+      remove_entity(isolated_node);
+    }
+    Albany::fix_node_sharing(bulk_data);
+    bulk_data.modification_end();
+  */
+
   initializeFailureState();
   setBoundaryIndicator();
-  return;
 }
 
+//
+//
+//
+bool
+Topology::isIsolatedNode(stk::mesh::Entity entity)
+{
+  stk::mesh::EntityRank const cell_rank   = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityRank const node_rank   = stk::topology::NODE_RANK;
+  stk::mesh::BulkData&        bulk_data   = get_bulk_data();
+  auto const                  entity_rank = bulk_data.entity_rank(entity);
+  ALBANY_ASSERT(entity_rank == node_rank);
+  stk::mesh::EntityVector cells;
+  stk::mesh::get_entities(bulk_data, cell_rank, cells);
+  for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
+    stk::mesh::Entity        cell          = cells[i];
+    stk::mesh::Entity const* relations     = bulk_data.begin_nodes(cell);
+    auto const               num_relations = get_bulk_data().num_nodes(cell);
+    stk::mesh::EntityVector  nodes(relations, relations + num_relations);
+    for (RelationVectorIndex j = 0; j < nodes.size(); ++j) {
+      stk::mesh::Entity node = nodes[j];
+      if (node == entity) return false;
+    }
+  }
+  return true;
+}
 //
 //
 //
