@@ -2257,7 +2257,7 @@ STKDiscretization::computeWorksetInfo()
     //              svs != scalarValue_states.end(); ++svs){
     for (size_t i = 0; i < scalarValue_states.size(); i++) {
       const int                                         size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(
+      shards::Array<double, shards::NaturalOrder, CELL> array(
           &time[*scalarValue_states[i]], size);
       MDArray ar = array;
       // Debug

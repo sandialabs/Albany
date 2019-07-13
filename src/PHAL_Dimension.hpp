@@ -10,64 +10,54 @@
 #define PHAL_DIMENSION_HPP
 
 #include "Shards_Array.hpp"
+#include "Phalanx_ExtentTraits.hpp"
 
-struct Dim : public shards::ArrayDimTag {
-  Dim(){};
+struct Dim {};
+struct VecDim {};
+struct LayerDim {};
+struct QuadPoint {};
+struct Node {};
+struct Vertex {};
+struct Point {};
+struct Cell {};
+struct Side {};
+struct Dummy {};
+
+namespace PHX {
+  template<> struct is_extent<Dim> : std::true_type {};
+  template<> struct is_extent<VecDim> : std::true_type {};
+  template<> struct is_extent<LayerDim> : std::true_type {};
+  template<> struct is_extent<QuadPoint> : std::true_type {};
+  template<> struct is_extent<Node> : std::true_type {};
+  template<> struct is_extent<Vertex> : std::true_type {};
+  template<> struct is_extent<Point> : std::true_type {};
+  template<> struct is_extent<Cell> : std::true_type {};
+  template<> struct is_extent<Side> : std::true_type {};
+  template<> struct is_extent<Dummy> : std::true_type {};
+}
+
+struct DIM : public shards::ArrayDimTag {
+  DIM(){};
   const char * name() const ;
-  static const Dim& tag();
+  static const DIM& tag();
 };
 
-struct VecDim : public shards::ArrayDimTag {
-  VecDim(){};
+struct QP : public shards::ArrayDimTag {
+  QP(){};
   const char * name() const ;
-  static const VecDim& tag();
+  static const QP& tag();
 };
 
-struct LayerDim : public shards::ArrayDimTag {
-  LayerDim(){};
+struct NODE : public shards::ArrayDimTag {
+  NODE(){};
   const char * name() const ;
-  static const LayerDim& tag();
+  static const NODE& tag();
 };
 
-struct QuadPoint : public shards::ArrayDimTag {
-  QuadPoint(){};
+struct CELL : public shards::ArrayDimTag {
+  CELL(){};
   const char * name() const ;
-  static const QuadPoint& tag();
+  static const CELL& tag();
 };
 
-struct Node : public shards::ArrayDimTag {
-  Node(){};
-  const char * name() const ;
-  static const Node& tag();
-};
-
-struct Vertex : public shards::ArrayDimTag {
-  Vertex(){};
-  const char * name() const ;
-  static const Vertex& tag();
-};
-
-struct Point : public shards::ArrayDimTag {
-  Point(){};
-  const char * name() const ;
-  static const Point& tag();
-};
-
-struct Cell : public shards::ArrayDimTag {
-  Cell(){};
-  const char * name() const ;
-  static const Cell& tag();
-};
-
-struct Side : public shards::ArrayDimTag {
-  Side(){};
-  const char * name() const;
-  static const Side& tag();
-};
-
-struct Dummy : public shards::ArrayDimTag {
-  Dummy(){};
-  const char * name() const ;
-  static const Dummy& tag();
-};
 #endif

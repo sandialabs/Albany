@@ -55,7 +55,7 @@ namespace Albany {
   struct PUMIQPData_Traits<T, 1> {
 
     enum { size = 1 }; // One array dimension tags: Cell
-    typedef shards::Array<T, shards::NaturalOrder, Cell> field_type ;
+    typedef shards::Array<T, shards::NaturalOrder, CELL> field_type ;
     static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems);
@@ -69,7 +69,7 @@ namespace Albany {
   struct PUMIQPData_Traits<T, 2> {
 
     enum { size = 2 }; // Two array dimension tags: Cell and QuadPoint
-    typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint> field_type ;
+    typedef shards::Array<T, shards::NaturalOrder, CELL, QP> field_type ;
     static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems, dims[1]);
@@ -83,7 +83,7 @@ namespace Albany {
   struct PUMIQPData_Traits<T, 3> {
 
     enum { size = 3 }; // Three array dimension tags: Cell, QuadPoint, and Dim
-    typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint, Dim> field_type ;
+    typedef shards::Array<T, shards::NaturalOrder, CELL, QP, DIM> field_type ;
     static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems, dims[1], dims[2]);
@@ -97,7 +97,7 @@ namespace Albany {
   struct PUMIQPData_Traits<T, 4> {
 
     enum { size = 4 }; // Four array dimension tags: Cell, QuadPoint, Dim, and Dim
-    typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> field_type ;
+    typedef shards::Array<T, shards::NaturalOrder, CELL, QP, DIM, DIM> field_type ;
     static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems, dims[1], dims[2], dims[3]);

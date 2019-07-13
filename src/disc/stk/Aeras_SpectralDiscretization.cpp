@@ -2365,7 +2365,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
          svs != scalarValue_states.end(); ++svs)
     {
       const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(&time[**svs], size);
+      shards::Array<double, shards::NaturalOrder, CELL> array(&time[**svs], size);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: "
       //           << array.extent(0) << std::endl;

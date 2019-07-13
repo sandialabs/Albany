@@ -959,7 +959,7 @@ void testProjector (
     new Layout(workset.numCells, coord_qp.dimension(1),
                coord_qp.dimension(2), coord_qp.dimension(2)));
   PHX::MDField<RealType> f_mdf = PHX::MDField<RealType>("f_mdf", layout);
-  auto f_mdf_data = PHX::KokkosViewFactory<RealType, PHX::Device>::buildView(f_mdf.fieldTag());
+  auto f_mdf_data = PHX::KokkosViewFactory<RealType, typename PHX::DevLayout<RealType>::type, PHX::Device>::buildView(f_mdf.fieldTag());
   f_mdf.setFieldData(f_mdf_data);
     
   std::vector<Albany::MDArray> mda;
@@ -968,7 +968,7 @@ void testProjector (
     typedef Albany::MDArray::size_type size_t;
     mda_data[i].resize(f_mdf.dimension(0) * f_mdf.dimension(1) *
                        f_mdf.dimension(2) * f_mdf.dimension(3));
-    shards::Array<RealType, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> a;
+    shards::Array<RealType, shards::NaturalOrder, CELL, QP, DIM, DIM> a;
     a.assign(&mda_data[i][0], (size_t) f_mdf.dimension(0),
              (size_t) f_mdf.dimension(1), (size_t) f_mdf.dimension(2),
              (size_t) f_mdf.dimension(3));
@@ -1169,7 +1169,7 @@ fillRhs (const PHAL::Workset& workset, const Manager::BasisField& wbf,
   Teuchos::RCP<Layout> layout = Teuchos::rcp(
     new Layout(workset.numCells, num_qp, num_dim, num_dim));
   PHX::MDField<RealType> f_mdf = PHX::MDField<RealType>("f_mdf", layout);
-  auto f_mdf_data = PHX::KokkosViewFactory<RealType, PHX::Device>::buildView(f_mdf.fieldTag());
+  auto f_mdf_data = PHX::KokkosViewFactory<RealType, typename PHX::DevLayout<RealType>::type,PHX::Device>::buildView(f_mdf.fieldTag());
   f_mdf.setFieldData(f_mdf_data);
 
   for (int test = 0; test < Impl::ntests; ++test) {
@@ -1225,7 +1225,7 @@ interp (const PHAL::Workset& workset, const Manager::BasisField& bf,
   for (int i = 0; i < 2; ++i) {
     typedef Albany::MDArray::size_type size_t;
     mda_data[i].resize(workset.numCells * num_qp * num_dim * num_dim);
-    shards::Array<RealType, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> a;
+    shards::Array<RealType, shards::NaturalOrder, CELL, QP, DIM, DIM> a;
     a.assign(&mda_data[i][0], workset.numCells, num_qp, num_dim, num_dim);
     mda.push_back(a);
   }

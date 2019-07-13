@@ -92,7 +92,7 @@ template <typename T>
 struct PUMINodeData_Traits<T, 1> {
 
   enum { size = 1 }; // One array dimension tags: number of nodes in workset
-  typedef shards::Array<T, shards::NaturalOrder, Node> field_type ;
+  typedef shards::Array<T, shards::NaturalOrder, NODE> field_type ;
   static field_type buildArray(T *buf, unsigned nelems, const std::vector<PHX::DataLayout::size_type>& dims){
 
     return field_type(buf, nelems);
@@ -106,7 +106,7 @@ template <typename T>
 struct PUMINodeData_Traits<T, 2> {
 
   enum { size = 2 }; // Two array dimension tags: Nodes and vec dim
-  typedef shards::Array<T, shards::NaturalOrder, Node, Dim> field_type ;
+  typedef shards::Array<T, shards::NaturalOrder, NODE, DIM> field_type ;
   static field_type buildArray(T *buf, unsigned nelems, const std::vector<PHX::DataLayout::size_type>& dims){
 
     return field_type(buf, nelems, dims[1]);
@@ -120,7 +120,7 @@ template <typename T>
 struct PUMINodeData_Traits<T, 3> {
 
   enum { size = 3 }; // Three array dimension tags: Nodes, Dim and Dim
-  typedef shards::Array<T, shards::NaturalOrder, Node, Dim, Dim> field_type ;
+  typedef shards::Array<T, shards::NaturalOrder, NODE, DIM, DIM> field_type ;
   static field_type buildArray(T *buf, unsigned nelems, const std::vector<PHX::DataLayout::size_type>& dims){
 
     return field_type(buf, nelems, dims[1], dims[2]);
