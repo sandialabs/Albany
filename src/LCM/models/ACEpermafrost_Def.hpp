@@ -50,10 +50,31 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
     std::string const filename = p->get<std::string>("ACE Sea Level File");
     sea_level_                 = vectorFromFile(filename);
   }
-
   ALBANY_ASSERT(
       time_.size() == sea_level_.size(),
       "*** ERROR: Number of times and number of sea level values must match");
+ 
+  if (p->isParameter("ACE Z Depth File") == true) {
+    std::string const filename = p->get<std::string>("ACE Z Depth File");
+    z_above_mean_sea_level_    = vectorFromFile(filename);
+  }
+  if (p->isParameter("ACE Salinity File") == true) {
+    std::string const filename = p->get<std::string>("ACE Salinity File");
+    salinity_                  = vectorFromFile(filename);
+  }
+  if (p->isParameter("ACE Air Saturation File") == true) {
+    std::string const filename = p->get<std::string>("ACE Air Saturation File");
+    air_saturation_            = vectorFromFile(filename);
+  }
+  ALBANY_ASSERT(
+      z_above_mean_sea_level_.size() == salinity_.size(),
+      "*** ERROR: Number of z values and number of salinity values in ACE "
+      "Salinity File must match");
+  ALBANY_ASSERT(
+      z_above_mean_sea_level_.size() == air_saturation_.size(),
+      "*** ERROR: Number of z values and number of air saturation values in "
+      "ACE Air Saturation File must match");
+  
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
   std::string const Fp_string           = field_name_map_["Fp"];
@@ -353,6 +374,9 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Calculate melting temperature
   ScalarT sal   = salinity_base_;  // should come from chemical part of model
+  if (salinity_.size() > 0) {
+    sal = interpolateVectors(z_above_mean_sea_level_, salinity_, height);
+  }
   ScalarT sal15 = std::sqrt(sal * sal * sal);
   ScalarT pressure_fixed = 1.0;
   // Tmelt is in Kelvin
@@ -391,6 +415,16 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Update the water saturation
   ScalarT wcurr = 1.0 - icurr;
 
+  // If air pockets exist, correct for air saturation
+  ScalarT air_sat = 0.0;
+  if (air_saturation_.size() > 0) {
+    air_sat = interpolateVectors(z_above_mean_sea_level_, air_saturation_, height);
+    icurr = icurr - air_sat;
+    icurr = std::max(icurr, 0.0);
+    icurr = std::min(icurr, 1.0);
+    wcurr = 1.0 - (icurr + air_sat);
+  }
+
   // Correct ice/water saturation if b_cell
   if (b_cell) {
     icurr = 0.0;
@@ -399,17 +433,19 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Update the effective material density
   density_(cell, pt) =
-      (porosity * ((ice_density_ * icurr) + (water_density_ * wcurr))) +
-      ((1.0 - porosity) * soil_density_);
+      (porosity * ((ice_density_ * icurr) + (water_density_ * wcurr) +
+      (1.225 * air_sat))) + ((1.0 - porosity) * soil_density_);
 
   // Update the effective material heat capacity
   heat_capacity_(cell, pt) = (porosity * ((ice_heat_capacity_ * icurr) +
-                                          (water_heat_capacity_ * wcurr))) +
+                                          (water_heat_capacity_ * wcurr) +
+					  (1.006e+03 * air_sat))) +
                              ((1.0 - porosity) * soil_heat_capacity_);
 
   // Update the effective material thermal conductivity
   thermal_cond_(cell, pt) = pow(ice_thermal_cond_, (icurr * porosity)) *
                             pow(water_thermal_cond_, (wcurr * porosity)) *
+			    pow(0.0255, (air_sat * porosity)) *
                             pow(soil_thermal_cond_, (1.0 - porosity));
 
   // Update the material thermal inertia term
