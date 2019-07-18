@@ -18,7 +18,7 @@ if { [is-loaded lcm-fedora] } {
   setenv                  NETCDF_INC      $netcdf_inc
   setenv                  NETCDF_LIB      $netcdf_lib
   prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
-  prepend-path            LD_LIBRARY_PATH /usr/local/netcdf/lib
+  prepend-path            LD_LIBRARY_PATH $netcdf_lib
   prepend-path            PATH            /usr/lib64/openmpi/bin
 }
 

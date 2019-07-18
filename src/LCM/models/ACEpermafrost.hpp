@@ -128,6 +128,8 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   std::vector<RealType> sea_level_;
   RealType              current_time_{0.0};
 
+  std::string block_name_{""};
+
   void
   init(
       Workset&                 workset,

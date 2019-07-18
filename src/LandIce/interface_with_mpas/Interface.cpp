@@ -8,6 +8,8 @@
 //! Includes
 // ===================================================
 
+#include <fstream>
+
 #include "Interface.hpp"
 #include "Albany_MpasSTKMeshStruct.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -24,6 +26,9 @@
 #include "Thyra_DetachedVectorView.hpp"
 #include "Teuchos_YamlParameterListHelpers.hpp"
 
+#include "Teuchos_StackedTimer.hpp"
+#include "Teuchos_TimeMonitor.hpp"
+
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #include <stk_io/StkMeshIoBroker.hpp>
@@ -37,6 +42,7 @@ Teuchos::RCP<const Teuchos_Comm> mpiComm;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 Teuchos::RCP<double> MPAS_dt;
+Teuchos::RCP<Teuchos::StackedTimer> stackedTimer;
 
 double MPAS_gravity(9.8), MPAS_rho_ice(910.0), MPAS_rho_seawater(1028.0), MPAS_sea_level(0),
        MPAS_flowParamA(1e-4), MPAS_flowLawExponent(3), MPAS_dynamic_thickness(1e-2),
@@ -75,6 +81,8 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     int& error,
     const double& deltat)
 {
+  auto solveTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: SolveFO"));
+
   int numVertices3D = (nLayers + 1) * indexToVertexID.size();
   int numPrisms = nLayers * indexToTriangleID.size();
   int vertexColumnShift = (ordering == 1) ? 1 : nGlobalVertices;
@@ -286,6 +294,8 @@ void velocity_solver_export_fo_velocity(MPI_Comm reducedComm) {
 
 int velocity_solver_init_mpi(int* /* fComm */) {
   Kokkos::initialize();
+  stackedTimer = Teuchos::rcp(new Teuchos::StackedTimer("Albany Velocity Solver"));
+  Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
   return 0;
 }
 
@@ -293,11 +303,26 @@ void velocity_solver_finalize() {
   meshStruct = Teuchos::null;
   albanyApp = Teuchos::null;
   paramList = Teuchos::null;
-  mpiComm = Teuchos::null;
   discParams = Teuchos::null;
   slvrfctry = Teuchos::null;
   MPAS_dt = Teuchos::null;
   solver = Teuchos::null;
+
+  // Print Teuchos timers into file
+  std::ostream* os = &std::cout;
+  std::ofstream ofs;
+  if (mpiComm->getRank() == 0) {
+    ofs.open("log.albany.timers.out", std::ofstream::out);
+    os = &ofs;
+  }
+  stackedTimer->stop("Albany Velocity Solver");
+  Teuchos::StackedTimer::OutputOptions options;
+  options.output_fraction = true;
+  options.output_minmax = true;
+  stackedTimer->report(*os, mpiComm, options);
+  stackedTimer = Teuchos::null;
+
+  mpiComm = Teuchos::null;
   Kokkos::finalize_all();
 }
 
@@ -344,6 +369,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& floating2dEdgesIds) {
 
+  auto gridTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Extrude 3D Grid"));
 
   paramList = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromYamlFileAndBroadcast("albany_input.yaml", paramList.ptr(), *mpiComm);

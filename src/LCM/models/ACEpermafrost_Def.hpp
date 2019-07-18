@@ -296,6 +296,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
   }
 
   current_time_ = workset.current_time;
+  block_name_   = workset.EBName;
 }
 
 template <typename EvalT, typename Traits>
@@ -334,24 +335,23 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   auto&& failed = failed_(cell, 0);
   auto&& exposure_time = exposure_time_(cell, pt);
 
-  failed *= 0.0;
-  bool is_under_water;
   // Determine if erosion has occurred.
-  if (have_boundary_indicator_ == true) {
-    bool const is_at_boundary =
-        static_cast<bool const>(*(boundary_indicator_[cell]));
-
+  failed *= 0.0;
+  bool       is_exposed_to_water{false};
+  bool const is_bulk = block_name_ == "bulk";
+  bool const is_at_boundary =
+      have_boundary_indicator_ == true ?
+          static_cast<bool const>(*(boundary_indicator_[cell])) :
+          false;
+  bool const is_bulk_at_boundary = is_bulk && is_at_boundary;
+  if (is_bulk_at_boundary == true) {
     auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
-    is_under_water = (height <= sea_level);
-    bool const is_exposed_to_water =
-        is_under_water == true && is_at_boundary == true;
-
+    is_exposed_to_water  = (height <= sea_level);
     if (is_exposed_to_water == true) { exposure_time += delta_time; }
-
     auto const critical_exposure_time = element_size_ / erosion_rate_;
-
-    // This should be set to +=1.0 but I am turning it off for testing.
-    if (exposure_time >= critical_exposure_time) { failed += 0.0; }
+    if (exposure_time >= critical_exposure_time) { failed += 1.0; }
+  } else {
+    exposure_time = 0.0;
   }
 
   //
@@ -365,12 +365,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   porosity_(cell, pt)    = porosity;
 
   // A boundary cell (this is a hack): porosity = -1.0 (set in input deck)
-  bool b_cell;
-  if (porosity < 0.0) {
-    b_cell = true;
-  } else {
-    b_cell = false;
-  }
+  bool const b_cell = porosity < 0.0;
 
   // Calculate melting temperature
   ScalarT sal   = salinity_base_;  // should come from chemical part of model
@@ -454,15 +449,14 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Correct the thermal properties if b_cell
   // Note: The units here must be consistent with input deck units.
-  if (b_cell) {
-    if (is_under_water) {
-    // These are values for seawater:
+  if (b_cell == true) {
+    if (is_exposed_to_water == true) {
+      // These are values for seawater:
       density_(cell, pt) = 1027.3;          // [kg/m3]
       heat_capacity_(cell, pt) = 4.000e+03; // [J/kg/K]
       thermal_cond_(cell, pt) = 0.59;       // [W/K/m]
-    } 
-    else {
-    // These are values for air:
+    } else {
+      // These are values for air:
       density_(cell, pt) = 1.225;           // [kg/m3]
       heat_capacity_(cell, pt) = 1.006e+03; // [J/kg/K]
       thermal_cond_(cell, pt) = 0.0255;     // [W/K/m]

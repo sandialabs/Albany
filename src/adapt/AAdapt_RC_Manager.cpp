@@ -959,7 +959,7 @@ void testProjector (
     new Layout(workset.numCells, coord_qp.dimension(1),
                coord_qp.dimension(2), coord_qp.dimension(2)));
   PHX::MDField<RealType> f_mdf = PHX::MDField<RealType>("f_mdf", layout);
-  auto f_mdf_data = PHX::KokkosViewFactory<RealType, PHX::Device>::buildView(f_mdf.fieldTag());
+  auto f_mdf_data = PHX::KokkosViewFactory<RealType, typename PHX::DevLayout<RealType>::type, PHX::Device>::buildView(f_mdf.fieldTag());
   f_mdf.setFieldData(f_mdf_data);
     
   std::vector<Albany::MDArray> mda;
@@ -1169,7 +1169,7 @@ fillRhs (const PHAL::Workset& workset, const Manager::BasisField& wbf,
   Teuchos::RCP<Layout> layout = Teuchos::rcp(
     new Layout(workset.numCells, num_qp, num_dim, num_dim));
   PHX::MDField<RealType> f_mdf = PHX::MDField<RealType>("f_mdf", layout);
-  auto f_mdf_data = PHX::KokkosViewFactory<RealType, PHX::Device>::buildView(f_mdf.fieldTag());
+  auto f_mdf_data = PHX::KokkosViewFactory<RealType, typename PHX::DevLayout<RealType>::type, PHX::Device>::buildView(f_mdf.fieldTag());
   f_mdf.setFieldData(f_mdf_data);
 
   for (int test = 0; test < Impl::ntests; ++test) {

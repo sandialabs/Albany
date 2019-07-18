@@ -116,6 +116,12 @@ class Topology
   removeMultiLevelRelations();
 
   ///
+  /// Remove all entities but the ones representing elements and nodes.
+  ///
+  void
+  removeMidLevelEntities();
+
+  ///
   /// \brief After mesh manipulations are complete, need to recreate a
   ///        stk mesh understood by Albany::STKDiscretization.
   ///
@@ -214,6 +220,9 @@ class Topology
   ///
   void
   erodeFailedElements();
+
+  bool
+  isIsolatedNode(stk::mesh::Entity entity);
 
   void
   insertSurfaceElements(std::set<EntityPair> const& fractured_faces);

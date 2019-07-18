@@ -55,7 +55,7 @@ template<typename T>
 class MDFieldIterator {
 public:
   using array_type = typename PHX::MDField<T>::array_type;
-  using return_type = typename PHX::MDFieldTypeTraits<array_type>::return_type;
+  using return_type = typename PHX::MDFieldReturnType<array_type>::return_type;
   //! User ctor.
   explicit MDFieldIterator(PHX::MDField<T>& a);
   //! Increment efficiently.

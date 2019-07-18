@@ -116,23 +116,13 @@ Topology::Topology(
       failure_criterion_(Teuchos::null),
       output_type_(UNIDIRECTIONAL_UNILEVEL)
 {
+  auto& stk_disc = static_cast<Albany::STKDiscretization&>(*abstract_disc);
+  auto  stk_mesh_struct = stk_disc.getSTKMeshStruct();
   set_discretization(abstract_disc);
-
-  Albany::STKDiscretization& stk_disc =
-      static_cast<Albany::STKDiscretization&>(*abstract_disc);
-
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct =
-      stk_disc.getSTKMeshStruct();
-
   set_stk_mesh_struct(stk_mesh_struct);
-
   set_bulk_block_name(bulk_block_name);
-
   set_interface_block_name(interface_block_name);
-
-  Topology::graphInitialization();
-
-  return;
+  graphInitialization();
 }
 
 //
@@ -234,21 +224,17 @@ void
 Topology::graphInitialization()
 {
   stk::mesh::PartVector add_parts;
-
   stk::mesh::create_adjacent_entities(get_bulk_data(), add_parts);
-
   get_bulk_data().modification_begin();
   removeMultiLevelRelations();
   initializeFailureState();
   setBoundaryIndicator();
+  removeMidLevelEntities();
   Albany::fix_node_sharing(get_bulk_data());
   get_bulk_data().modification_end();
   get_stk_discretization().updateMesh();
-
   initializeTopologies();
   initializeHighestIds();
-
-  return;
 }
 
 //
@@ -356,6 +342,28 @@ Topology::removeMultiLevelRelations()
   }
 
   return;
+}
+
+//
+// Remove all entities but the ones representing elements and nodes.
+// Only 3D for now.
+//
+void
+Topology::removeMidLevelEntities()
+{
+  auto& bulk_data = get_bulk_data();
+
+  // Go from edges to faces
+  for (stk::mesh::EntityRank rank = stk::topology::EDGE_RANK;
+       rank <= stk::topology::FACE_RANK;
+       ++rank) {
+    stk::mesh::EntityVector delete_entities;
+
+    stk::mesh::get_entities(bulk_data, rank, delete_entities);
+
+    // Delete the entities
+    for (auto e : delete_entities) { bulk_data.destroy_entity(e); }
+  }
 }
 
 //
@@ -1151,6 +1159,7 @@ void
 Topology::erodeFailedElements()
 {
   stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityRank const node_rank = stk::topology::NODE_RANK;
   stk::mesh::EntityVector     cells;
   stk::mesh::EntityVector     failed_cells;
   stk::mesh::BulkData&        bulk_data = get_bulk_data();
@@ -1174,11 +1183,58 @@ Topology::erodeFailedElements()
   }
   Albany::fix_node_sharing(bulk_data);
   bulk_data.modification_end();
+
+  /*
+    // Collect isolated nodes
+    stk::mesh::EntityVector nodes;
+    stk::mesh::EntityVector isolated_nodes;
+    stk::mesh::get_entities(bulk_data, node_rank, nodes);
+    for (RelationVectorIndex i = 0; i < nodes.size(); ++i) {
+      stk::mesh::Entity node = nodes[i];
+      if (isIsolatedNode(node) == true) {
+        isolated_nodes.emplace_back(node);
+      }
+    }
+
+    // Now remove them
+    bulk_data.modification_begin();
+    for (RelationVectorIndex i = 0; i < isolated_nodes.size(); ++i) {
+      stk::mesh::Entity isolated_node = isolated_nodes[i];
+      remove_entity(isolated_node);
+    }
+    Albany::fix_node_sharing(bulk_data);
+    bulk_data.modification_end();
+  */
+
   initializeFailureState();
   setBoundaryIndicator();
-  return;
 }
 
+//
+//
+//
+bool
+Topology::isIsolatedNode(stk::mesh::Entity entity)
+{
+  stk::mesh::EntityRank const cell_rank   = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityRank const node_rank   = stk::topology::NODE_RANK;
+  stk::mesh::BulkData&        bulk_data   = get_bulk_data();
+  auto const                  entity_rank = bulk_data.entity_rank(entity);
+  ALBANY_ASSERT(entity_rank == node_rank);
+  stk::mesh::EntityVector cells;
+  stk::mesh::get_entities(bulk_data, cell_rank, cells);
+  for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
+    stk::mesh::Entity        cell          = cells[i];
+    stk::mesh::Entity const* relations     = bulk_data.begin_nodes(cell);
+    auto const               num_relations = get_bulk_data().num_nodes(cell);
+    stk::mesh::EntityVector  nodes(relations, relations + num_relations);
+    for (RelationVectorIndex j = 0; j < nodes.size(); ++j) {
+      stk::mesh::Entity node = nodes[j];
+      if (node == entity) return false;
+    }
+  }
+  return true;
+}
 //
 //
 //
