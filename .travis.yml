@@ -1,0 +1,119 @@
+language: cpp
+sudo: false
+dist: bionic
+
+cache:
+  directories:
+  - ${HOME}/trilinos/trilinos-install
+  - ${HOME}/netcdf-c/netcdf-c-install
+
+os:
+- linux
+
+addons:
+  apt:
+    packages:
+    - gcc
+    - gfortran
+    - libopenmpi-dev
+    - openmpi-bin
+    - libyaml-cpp-dev
+    - libboost-all-dev
+    - liblapack-dev
+    - libblas-dev
+    - libpnetcdf-dev
+    - libhdf5-mpi-dev
+    - libparmetis-dev
+
+git:
+  quiet: true
+  clone: false
+  submodules: false
+
+branches:
+  only:
+  - master
+
+before_install:
+  - sudo apt-get install -y gcc gfortran libopenmpi-dev openmpi-bin libyaml-cpp-dev libboost-all-dev
+  - sudo apt-get install -y liblapack-dev libblas-dev libpnetcdf-dev libhdf5-mpi-dev libparmetis-dev
+  - mkdir -p ${HOME}/netcdf-c/netcdf-c-build
+  - mkdir -p ${HOME}/trilinos/trilinos-build
+  - mkdir -p ${HOME}/albany/albany-build
+  - cd ${HOME}/netcdf-c && git clone https://github.com/Unidata/netcdf-c.git netcdf-c-src
+  - cd ${HOME}/trilinos && git clone https://github.com/trilinos/Trilinos.git trilinos-src
+  - cd ${HOME}/trilinos && git clone https://github.com/SCOREC/core.git trilinos-src/SCOREC
+  - cd ${HOME}/albany   && git clone https://github.com/SNLComputation/Albany.git albany-src
+  - cd ${HOME}/albany/albany-src && git checkout ${TRAVIS_PULL_REQUEST_BRANCH}
+
+jobs:
+  include:
+    - stage: "NetCDF"
+      script:
+        - cd ${HOME}/netcdf-c/netcdf-c-build
+        - ${HOME}/albany/albany-src/tools/travis_scripts/config-netcdf.sh
+        - make -j4 install
+    - stage: "Trilinos-config"
+      script:
+        - cd ${HOME}/trilinos/trilinos-build
+        - ${HOME}/albany/albany-src/tools/travis_scripts/config-trilinos.sh
+    - stage: "Trilinos-common"
+      script:
+        - cd ${HOME}/trilinos/trilinos-build
+        - ls -la
+        - make -j4 Kokkos_all Teuchos_all Shards_all
+    - stage: "Trilinos-epetra-stack"
+      script:
+        - cd ${HOME}/trilinos/trilinos-build
+        - make -j4 Epetra_all EpetraExt_all Amesos_all Ifpack_all Zoltan_all ML_all
+    - stage: "Trilinos-tpetra-stack"
+      script:
+        - cd ${HOME}/trilinos/trilinos-build
+        - make -j4 Tpetra_all Amesos2_all Ifpack2_all Zoltan2_all MueLu_all
+    - stage: "Trilinos-basic-solvers"
+      script:
+        - cd ${HOME}/trilinos/trilinos-build
+        - make -j4 Thyra_all Stratimikos_all AztecOO_all Anasazi_all Belos_all NOX_all MiniTensor_all
+    - stage: "Trilinos-advanced-solvers"
+      script:
+        - cd ${HOME}/trilinos/trilinos-build
+        - make -j4 Tempus_all Rythmos_all ROL_all Teko_all
+    - stage: "Trilinos-fe-utils"
+      script:
+        - cd ${HOME}/trilinos/trilinos-build
+        - make -j4 Sacado_all Phalanx_all Intrepid_all Intrepid2_all SEACAS_all STK_all Panzer_all
+    - stage: "Trilinos-install"
+      script:
+        - cd ${HOME}/trilinos/trilinos-build
+        - make -j4 install
+    - stage: "Albany-config"
+      script:
+        - cd ${HOME}/albany/albany-build
+        - ../albany-src/tools/travis_scripts/config-albany.sh
+    - stage: "Albany-build"
+      script:
+        - cd ${HOME}/albany/albany-build
+        - make -j4
+    - stage: "Albany-install"
+      script:
+        - cd ${HOME}/albany/albany-build
+        - make -j4 install
+    - stage: "Testing"
+      script:
+        - cd ${HOME}/albany/albany-build
+        - ctest
+
+stages:
+  - NetCDF
+  - Trilinos-config
+  - Trilinos-common
+  - Trilinos-epetra-stack
+  - Trilinos-tpetra-stack
+  - Trilinos-basic-solvers
+  - Trilinos-advanced-solvers
+  - Trilinos-fe-utils
+  - Trilinos-install
+  - Albany-config
+  - Albany-build
+  - Albany-install
+  - Testing
