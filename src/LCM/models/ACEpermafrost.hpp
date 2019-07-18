@@ -122,6 +122,8 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   std::vector<RealType> z_above_mean_sea_level_;
   std::vector<RealType> salinity_;
   std::vector<RealType> air_saturation_;
+  std::vector<RealType> porosity_from_file_;
+  std::vector<RealType> freezing_curve_width_;
 
   // Sea level arrays
   std::vector<RealType> time_;

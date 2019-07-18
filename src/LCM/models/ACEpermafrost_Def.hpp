@@ -52,7 +52,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   }
   ALBANY_ASSERT(
       time_.size() == sea_level_.size(),
-      "*** ERROR: Number of times and number of sea level values must match");
+      "*** ERROR: Number of times and number of sea level values must match.");
  
   if (p->isParameter("ACE Z Depth File") == true) {
     std::string const filename = p->get<std::string>("ACE Z Depth File");
@@ -66,15 +66,31 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
     std::string const filename = p->get<std::string>("ACE Air Saturation File");
     air_saturation_            = vectorFromFile(filename);
   }
+  if (p->isParameter("ACE Porosity File") == true) {
+    std::string const filename = p->get<std::string>("ACE Porosity File");
+    porosity_from_file_        = vectorFromFile(filename);
+  }
+  if (p->isParameter("ACE Freezing Curve Width File") == true) {
+    std::string const filename = p->get<std::string>("ACE Freezing Curve Width File");
+    freezing_curve_width_      = vectorFromFile(filename);
+  }
   ALBANY_ASSERT(
       z_above_mean_sea_level_.size() == salinity_.size(),
       "*** ERROR: Number of z values and number of salinity values in ACE "
-      "Salinity File must match");
+      "Salinity File must match.");
   ALBANY_ASSERT(
       z_above_mean_sea_level_.size() == air_saturation_.size(),
       "*** ERROR: Number of z values and number of air saturation values in "
-      "ACE Air Saturation File must match");
-  
+      "ACE Air Saturation File must match.");
+  ALBANY_ASSERT(
+      z_above_mean_sea_level_.size() == porosity_.size(),
+      "*** ERROR: Number of z values and number of porosity values in "
+      "ACE Porosity File must match.");
+  ALBANY_ASSERT(
+      z_above_mean_sea_level_.size() == freezing_curve_width_.size(),
+      "*** ERROR: Number of z values and number of freezing curve width values in "
+      "ACE Freezing Curve Width File must match.");
+
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
   std::string const Fp_string           = field_name_map_["Fp"];
@@ -361,8 +377,12 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Calculate the depth-dependent porosity
   // NOTE: The porosity does not change in time so this calculation only needs
   //       to be done once, at the beginning of the simulation.
-  ScalarT const porosity = porosity0_;
-  porosity_(cell, pt)    = porosity;
+  ScalarT porosity = porosity0_;
+  if (porosity_from_file_.size() > 0) {
+    porosity = interpolateVectors(z_above_mean_sea_level_, 
+		                  porosity_from_file_, height);
+  }
+  porosity_(cell, pt) = porosity;
 
   // A boundary cell (this is a hack): porosity = -1.0 (set in input deck)
   bool const b_cell = porosity < 0.0;
@@ -388,9 +408,13 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Calculate the freezing curve function df/dTemp
   // W term sets the width of the freezing curve.
-  // Larger W means steeper curve.
+  // Smaller W means steeper curve.
   // f(T) = 1 / (1 + e^(-W*(T-T0)))
-  ScalarT const W     = freeze_curve_width_;
+  ScalarT W = freeze_curve_width_; // constant value
+  if (freezing_curve_width_.size() > 0) {
+    W = interpolateVectors(z_above_mean_sea_level_, 
+		           freezing_curve_width_, height);
+  }
   ScalarT const Tdiff = Tcurr - Tmelt;
   ScalarT const arg   = -W * Tdiff;
   ScalarT       icurr{1.0};
