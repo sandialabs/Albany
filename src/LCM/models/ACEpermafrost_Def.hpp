@@ -83,7 +83,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
       "*** ERROR: Number of z values and number of air saturation values in "
       "ACE Air Saturation File must match.");
   ALBANY_ASSERT(
-      z_above_mean_sea_level_.size() == porosity_.size(),
+      z_above_mean_sea_level_.size() == porosity_from_file_.size(),
       "*** ERROR: Number of z values and number of porosity values in "
       "ACE Porosity File must match.");
   ALBANY_ASSERT(
