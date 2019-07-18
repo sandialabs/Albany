@@ -10,6 +10,7 @@
 #define PHAL_DIMENSION_HPP
 
 #include "Shards_Array.hpp"
+#include "Phalanx_ExtentTraits.hpp"
 
 struct Dim : public shards::ArrayDimTag {
   Dim(){};
@@ -70,4 +71,18 @@ struct Dummy : public shards::ArrayDimTag {
   const char * name() const ;
   static const Dummy& tag();
 };
+
+namespace PHX {
+  template<> struct is_extent<Dim> : std::true_type {};
+  template<> struct is_extent<LayerDim> : std::true_type {};
+  template<> struct is_extent<VecDim> : std::true_type {};
+  template<> struct is_extent<QuadPoint> : std::true_type {};
+  template<> struct is_extent<Node> : std::true_type {};
+  template<> struct is_extent<Vertex> : std::true_type {};
+  template<> struct is_extent<Point> : std::true_type {};
+  template<> struct is_extent<Cell> : std::true_type {};
+  template<> struct is_extent<Side> : std::true_type {};
+  template<> struct is_extent<Dummy> : std::true_type {};
+}
+
 #endif
