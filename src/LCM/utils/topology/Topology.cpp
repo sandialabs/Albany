@@ -62,19 +62,12 @@ Topology::Topology(
   Teuchos::RCP<Teuchos_Comm> communicatorT =
       Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
   adapt_params->set<std::string>("Method", "Topmod");
-
   std::string const bulk_block_name = "Bulk Element";
-
   adapt_params->set<std::string>("Bulk Block Name", bulk_block_name);
-
   std::string const interface_block_name = "Surface Element";
-
   adapt_params->set<std::string>("Interface Block Name", interface_block_name);
-
   set_bulk_block_name(bulk_block_name);
-
   set_interface_block_name(interface_block_name);
-
   Albany::DiscretizationFactory disc_factory(params, communicatorT);
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> mesh_specs =
@@ -98,10 +91,7 @@ Topology::Topology(
       stk_disc.getSTKMeshStruct();
 
   set_stk_mesh_struct(stk_mesh_struct);
-
   Topology::graphInitialization();
-
-  return;
 }
 
 //
@@ -132,16 +122,11 @@ stk::mesh::EntityId
 Topology::get_entity_id(stk::mesh::Entity const entity)
 {
   size_t const space_dimension = get_space_dimension();
-
   int const parallel_rank = get_bulk_data().parallel_rank();
-
   stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(entity);
-
   stk::mesh::EntityId const high_id = get_bulk_data().identifier(entity);
-
   stk::mesh::EntityId const low_id =
       low_id_from_high_id(space_dimension, parallel_rank, rank, high_id);
-
   return low_id;
 }
 
@@ -173,14 +158,8 @@ Topology::initializeFailureState()
 
     stk::mesh::get_selected_entities(local_part, buckets, entities);
 
-    for (EntityVectorIndex i = 0; i < entities.size(); ++i) {
-      stk::mesh::Entity entity = entities[i];
-
-      set_failure_state(entity, INTACT);
-    }
+    for (auto entity : entities) { set_failure_state(entity, INTACT); }
   }
-
-  return;
 }
 
 //
@@ -191,29 +170,24 @@ void
 Topology::setBoundaryIndicator()
 {
   stk::mesh::Selector local_part = get_local_part();
+  auto const          cell_rank  = stk::topology::ELEMENT_RANK;
+  auto const          node_rank  = stk::topology::NODE_RANK;
 
-  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
-       rank <= stk::topology::ELEMENT_RANK;
-       ++rank) {
-    std::vector<stk::mesh::Bucket*> const& buckets =
-        get_bulk_data().buckets(rank);
+  for (auto rank = node_rank; rank <= cell_rank; ++rank) {
+    if (rank == stk::topology::ELEMENT_RANK) {
+      std::vector<stk::mesh::Bucket*> const& buckets =
+          get_bulk_data().buckets(rank);
 
-    stk::mesh::EntityVector entities;
+      stk::mesh::EntityVector entities;
+      stk::mesh::get_selected_entities(local_part, buckets, entities);
 
-    stk::mesh::get_selected_entities(local_part, buckets, entities);
-
-    for (EntityVectorIndex i = 0; i < entities.size(); ++i) {
-      stk::mesh::Entity entity = entities[i];
-
-      if (rank == stk::topology::ELEMENT_RANK) {
+      for (auto entity : entities) {
         BoundaryIndicator const bi =
             is_boundary_cell(entity) == true ? EXTERIOR : INTERIOR;
         set_boundary_indicator(entity, bi);
       }
     }
   }
-
-  return;
 }
 
 //
@@ -223,18 +197,26 @@ Topology::setBoundaryIndicator()
 void
 Topology::graphInitialization()
 {
-  stk::mesh::PartVector add_parts;
-  stk::mesh::create_adjacent_entities(get_bulk_data(), add_parts);
-  get_bulk_data().modification_begin();
-  removeMultiLevelRelations();
+  auto& bulk_data = get_bulk_data();
+  set_output_type(UNIDIRECTIONAL_MULTILEVEL);
+  createAllLevelsRelations();
   initializeFailureState();
   setBoundaryIndicator();
-  removeMidLevelEntities();
-  Albany::fix_node_sharing(get_bulk_data());
-  get_bulk_data().modification_end();
+  Albany::fix_node_sharing(bulk_data);
   get_stk_discretization().updateMesh();
   initializeTopologies();
   initializeHighestIds();
+}
+
+//
+//
+//
+void
+Topology::createAllLevelsRelations()
+{
+  stk::mesh::PartVector add_parts;
+  auto&                 bulk_data = get_bulk_data();
+  stk::mesh::create_adjacent_entities(bulk_data, add_parts);
 }
 
 //
@@ -280,47 +262,35 @@ Topology::removeMultiLevelRelations()
 {
   typedef std::vector<EdgeId>   EdgeIdList;
   typedef EdgeIdList::size_type EdgeIdListIndex;
+  auto const                    cell_rank = stk::topology::ELEMENT_RANK;
+  auto const                    node_rank = stk::topology::NODE_RANK;
+  auto&                         bulk_data = get_bulk_data();
 
+  bulk_data.modification_begin();
   // Go from points to cells
-  for (stk::mesh::EntityRank source_rank = stk::topology::NODE_RANK;
-       source_rank <= stk::topology::ELEMENT_RANK;
-       ++source_rank) {
+  for (auto source_rank = node_rank; source_rank <= cell_rank; ++source_rank) {
     stk::mesh::EntityVector source_entities;
+    stk::mesh::get_entities(bulk_data, source_rank, source_entities);
 
-    stk::mesh::get_entities(get_bulk_data(), source_rank, source_entities);
-
-    bool const source_is_point = source_rank == stk::topology::NODE_RANK;
-
-    for (RelationVectorIndex i = 0; i < source_entities.size(); ++i) {
-      stk::mesh::Entity source_entity = source_entities[i];
-
+    for (auto source_entity : source_entities) {
       stk::mesh::EntityVector target_entities;
-
       EdgeIdList multilevel_relation_ids;
 
-      for (stk::mesh::EntityRank target_rank = stk::topology::NODE_RANK;
-           target_rank < get_meta_data().entity_rank_count();
+      for (auto target_rank = node_rank; target_rank <= cell_rank;
            ++target_rank) {
         stk::mesh::Entity const* relations =
-            get_bulk_data().begin(source_entity, target_rank);
+            bulk_data.begin(source_entity, target_rank);
 
         size_t const num_relations =
-            get_bulk_data().num_connectivity(source_entity, target_rank);
+            bulk_data.num_connectivity(source_entity, target_rank);
 
         stk::mesh::ConnectivityOrdinal const* ordinals =
-            get_bulk_data().begin_ordinals(source_entity, target_rank);
-
-        bool const target_is_point = target_rank == stk::topology::NODE_RANK;
+            bulk_data.begin_ordinals(source_entity, target_rank);
 
         // Collect relations to delete
         for (size_t r = 0; r < num_relations; ++r) {
-          size_t const rank_distance =
-              source_rank > target_rank ? source_rank - target_rank : 0;
-
-          bool const end_is_point = source_is_point || target_is_point;
-
-          bool const is_invalid_relation =
-              end_is_point == false && rank_distance > 1;
+          auto const rank_distance       = source_rank - target_rank;
+          bool const is_invalid_relation = rank_distance > 1;
 
           if (is_invalid_relation == true) {
             target_entities.push_back(relations[r]);
@@ -331,17 +301,13 @@ Topology::removeMultiLevelRelations()
 
       // Delete them
       for (EdgeIdListIndex i = 0; i < multilevel_relation_ids.size(); ++i) {
-        stk::mesh::Entity far_entity = target_entities[i];
-
-        EdgeId const multilevel_relation_id = multilevel_relation_ids[i];
-
-        get_bulk_data().destroy_relation(
-            source_entity, far_entity, multilevel_relation_id);
+        stk::mesh::Entity target_entity = target_entities[i];
+        EdgeId const      id            = multilevel_relation_ids[i];
+        bulk_data.destroy_relation(source_entity, target_entity, id);
       }
     }
   }
-
-  return;
+  bulk_data.modification_end();
 }
 
 //
@@ -352,18 +318,50 @@ void
 Topology::removeMidLevelEntities()
 {
   auto& bulk_data = get_bulk_data();
+  auto const              edge_rank = stk::topology::EDGE_RANK;
+  auto const              face_rank = stk::topology::FACE_RANK;
+  auto const              cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityVector edges;
+  stk::mesh::EntityVector faces;
+  stk::mesh::EntityVector cells;
+  stk::mesh::get_entities(bulk_data, edge_rank, edges);
+  stk::mesh::get_entities(bulk_data, face_rank, faces);
+  stk::mesh::get_entities(bulk_data, cell_rank, cells);
 
-  // Go from edges to faces
-  for (stk::mesh::EntityRank rank = stk::topology::EDGE_RANK;
-       rank <= stk::topology::FACE_RANK;
-       ++rank) {
-    stk::mesh::EntityVector delete_entities;
+  bulk_data.modification_begin();
 
-    stk::mesh::get_entities(bulk_data, rank, delete_entities);
-
-    // Delete the entities
-    for (auto e : delete_entities) { bulk_data.destroy_entity(e); }
+  for (auto cell : cells) {
+    stk::mesh::Entity const* relations     = bulk_data.begin_faces(cell);
+    size_t const             num_relations = bulk_data.num_faces(cell);
+    stk::mesh::EntityVector  cell_faces(relations, relations + num_relations);
+    for (size_t j = 0; j < cell_faces.size(); ++j) {
+      assert(bulk_data.destroy_relation(cell, cell_faces[j], j) == true);
+    }
   }
+
+  for (auto face : faces) {
+    stk::mesh::Entity const* relations     = bulk_data.begin_edges(face);
+    size_t const             num_relations = bulk_data.num_edges(face);
+    stk::mesh::EntityVector  face_edges(relations, relations + num_relations);
+    for (size_t j = 0; j < face_edges.size(); ++j) {
+      assert(bulk_data.destroy_relation(face, face_edges[j], j) == true);
+    }
+    assert(num_connectivity(face) == 0);
+    remove_entity(face);
+  }
+
+  for (auto edge : edges) {
+    stk::mesh::Entity const* relations     = bulk_data.begin_nodes(edge);
+    size_t const             num_relations = bulk_data.num_nodes(edge);
+    stk::mesh::EntityVector  edge_nodes(relations, relations + num_relations);
+    for (size_t j = 0; j < edge_nodes.size(); ++j) {
+      assert(bulk_data.destroy_relation(edge, edge_nodes[j], j) == true);
+    }
+    assert(num_connectivity(edge) == 0);
+    remove_entity(edge);
+  }
+
+  bulk_data.modification_end();
 }
 
 //
@@ -1159,53 +1157,44 @@ void
 Topology::erodeFailedElements()
 {
   stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityRank const face_rank = stk::topology::FACE_RANK;
+  stk::mesh::EntityRank const edge_rank = stk::topology::EDGE_RANK;
   stk::mesh::EntityRank const node_rank = stk::topology::NODE_RANK;
-  stk::mesh::EntityVector     cells;
-  stk::mesh::EntityVector     failed_cells;
   stk::mesh::BulkData&        bulk_data = get_bulk_data();
-  stk::mesh::get_entities(bulk_data, cell_rank, cells);
   // 3D only for now.
   assert(get_space_dimension() == cell_rank);
-
-  // Collect failed cells
-  for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
-    stk::mesh::Entity cell = cells[i];
-    if (failure_criterion_->check(get_bulk_data(), cell) == true) {
-      failed_cells.emplace_back(cell);
-    }
-  }
-
-  // Now remove them
   bulk_data.modification_begin();
-  for (RelationVectorIndex i = 0; i < failed_cells.size(); ++i) {
-    stk::mesh::Entity failed_cell = failed_cells[i];
-    remove_entity(failed_cell);
+
+  // Collect and remove failed cells
+  stk::mesh::EntityVector cells;
+  stk::mesh::get_entities(bulk_data, cell_rank, cells);
+  for (auto cell : cells) {
+    if (failure_criterion_->check(bulk_data, cell) == true) {
+      remove_entity(cell);
+    }
   }
-  Albany::fix_node_sharing(bulk_data);
+
+  // Collect and remove entities no longer connected to an element
+  stk::mesh::EntityVector faces;
+  stk::mesh::get_entities(bulk_data, face_rank, faces);
+  for (auto face : faces) {
+    auto const num_elems = bulk_data.num_elements(face);
+    if (num_elems == 0) { remove_entity(face); }
+  }
+  stk::mesh::EntityVector edges;
+  stk::mesh::get_entities(bulk_data, edge_rank, edges);
+  for (auto edge : edges) {
+    auto const num_elems = bulk_data.num_elements(edge);
+    if (num_elems == 0) { remove_entity(edge); }
+  }
+  stk::mesh::EntityVector nodes;
+  stk::mesh::get_entities(bulk_data, node_rank, nodes);
+  for (auto node : nodes) {
+    auto const num_elems = bulk_data.num_elements(node);
+    if (num_elems == 0) { remove_entity(node); }
+  }
   bulk_data.modification_end();
-
-  /*
-    // Collect isolated nodes
-    stk::mesh::EntityVector nodes;
-    stk::mesh::EntityVector isolated_nodes;
-    stk::mesh::get_entities(bulk_data, node_rank, nodes);
-    for (RelationVectorIndex i = 0; i < nodes.size(); ++i) {
-      stk::mesh::Entity node = nodes[i];
-      if (isIsolatedNode(node) == true) {
-        isolated_nodes.emplace_back(node);
-      }
-    }
-
-    // Now remove them
-    bulk_data.modification_begin();
-    for (RelationVectorIndex i = 0; i < isolated_nodes.size(); ++i) {
-      stk::mesh::Entity isolated_node = isolated_nodes[i];
-      remove_entity(isolated_node);
-    }
-    Albany::fix_node_sharing(bulk_data);
-    bulk_data.modification_end();
-  */
-
+  Albany::fix_node_sharing(bulk_data);
   initializeFailureState();
   setBoundaryIndicator();
 }
@@ -1733,6 +1722,21 @@ Topology::there_are_failed_boundary_cells()
     }
   }
   return have_failed_cells;
+}
+
+size_t
+Topology::num_connectivity(stk::mesh::Entity e)
+{
+  size_t                      num{0};
+  stk::mesh::EntityRank const node_rank = stk::topology::NODE_RANK;
+  stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  auto&                       bulk_data = get_bulk_data();
+  for (auto rank = node_rank; rank <= cell_rank; ++rank) {
+    auto const n = bulk_data.num_connectivity(e, rank);
+    assert(n == 0);
+    num += n;
+  }
+  return num;
 }
 
 }  // namespace LCM

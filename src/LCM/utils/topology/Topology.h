@@ -75,6 +75,9 @@ class Topology
   void
   outputToGraphviz(std::string const& output_filename);
 
+  void
+  createAllLevelsRelations();
+
   ///
   /// \brief Initializes the default stk mesh object needed by class.
   ///
@@ -870,6 +873,9 @@ class Topology
 
   bool
   there_are_failed_boundary_cells();
+
+  size_t
+  num_connectivity(stk::mesh::Entity e);
 
   void
   set_output_type(OutputType const ot)
