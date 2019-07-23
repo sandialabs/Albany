@@ -934,25 +934,15 @@ class Topology
 
   //
   //
-  Teuchos::RCP<Albany::AbstractDiscretization> discretization_;
-
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
-
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization_{Teuchos::null};
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct>  stk_mesh_struct_{Teuchos::null};
+  Teuchos::RCP<AbstractFailureCriterion> failure_criterion_{Teuchos::null};
   std::vector<stk::mesh::EntityVector> connectivity_;
-
   std::set<EntityPair> fractured_faces_;
-
   std::vector<stk::topology> topologies_;
-
   std::vector<stk::mesh::EntityId> highest_ids_;
-
-  std::string bulk_block_name_;
-
-  std::string interface_block_name_;
-
-  /// Pointer to failure criterion object
-  Teuchos::RCP<AbstractFailureCriterion> failure_criterion_;
-
+  std::string                            bulk_block_name_{""};
+  std::string                            interface_block_name_{""};
   OutputType output_type_;
 
  private:

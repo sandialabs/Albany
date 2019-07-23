@@ -38,7 +38,7 @@ class Erosion : public AbstractAdapter
   ///
   /// Disallow copy and assignment and default
   ///
-  Erosion()                = delete;
+  Erosion() = delete;
   Erosion(Erosion const&) = delete;
   Erosion&
   operator=(Erosion const&) = delete;
@@ -72,25 +72,17 @@ class Erosion : public AbstractAdapter
   ///
   /// stk_mesh Bulk Data
   ///
-  Teuchos::RCP<stk::mesh::BulkData> bulk_data_;
+  Teuchos::RCP<stk::mesh::BulkData>            bulk_data_{Teuchos::null};
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct>  stk_mesh_struct_{Teuchos::null};
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization_{Teuchos::null};
+  Albany::STKDiscretization*                   stk_discretization_{nullptr};
+  Teuchos::RCP<stk::mesh::MetaData>            meta_data_{Teuchos::null};
+  Teuchos::RCP<LCM::AbstractFailureCriterion> failure_criterion_{Teuchos::null};
+  Teuchos::RCP<LCM::Topology>                 topology_{Teuchos::null};
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
-
-  Teuchos::RCP<Albany::AbstractDiscretization> discretization_;
-
-  Albany::STKDiscretization* stk_discretization_;
-
-  Teuchos::RCP<stk::mesh::MetaData> meta_data_;
-
-  Teuchos::RCP<LCM::AbstractFailureCriterion> failure_criterion_;
-
-  Teuchos::RCP<LCM::Topology> topology_;
-
-  int num_dim_;
-
-  int remesh_file_index_;
-
-  std::string base_exo_filename_;
+  int         num_dim_{0};
+  int         remesh_file_index_{0};
+  std::string base_exo_filename_{""};
 };
 
 }  // namespace AAdapt
