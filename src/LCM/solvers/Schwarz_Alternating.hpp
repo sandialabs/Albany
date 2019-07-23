@@ -35,7 +35,6 @@ using StateArrayVec = std::vector<StateArray>;
 struct StateArrays
 {
   StateArrayVec element_state_arrays;
-
   StateArrayVec node_state_arrays;
 };
 

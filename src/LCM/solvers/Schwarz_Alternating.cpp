@@ -589,7 +589,7 @@ printInternalElementStates(
 }
 
 void
-toFrom(LCM::StateArrayVec& dst, Albany::StateArrayVec const& src)
+fromTo(Albany::StateArrayVec const& src, LCM::StateArrayVec& dst)
 {
   const int num_maps = src.size();
 
@@ -617,7 +617,7 @@ toFrom(LCM::StateArrayVec& dst, Albany::StateArrayVec const& src)
 }
 
 void
-toFrom(Albany::StateArrayVec& dst, LCM::StateArrayVec const& src)
+fromTo(LCM::StateArrayVec const& src, Albany::StateArrayVec& dst)
 {
   const auto num_maps = src.size();
 
@@ -653,17 +653,17 @@ toFrom(Albany::StateArrayVec& dst, LCM::StateArrayVec const& src)
 }
 
 void
-toFrom(LCM::StateArrays& dst, Albany::StateArrays const& src)
+fromTo(Albany::StateArrays const& src, LCM::StateArrays& dst)
 {
-  toFrom(dst.element_state_arrays, src.elemStateArrays);
-  toFrom(dst.node_state_arrays, src.nodeStateArrays);
+  fromTo(src.elemStateArrays, dst.element_state_arrays);
+  fromTo(src.nodeStateArrays, dst.node_state_arrays);
 }
 
 void
-toFrom(Albany::StateArrays& dst, LCM::StateArrays const& src)
+fromTo(LCM::StateArrays const& src, Albany::StateArrays& dst)
 {
-  toFrom(dst.elemStateArrays, src.element_state_arrays);
-  toFrom(dst.nodeStateArrays, src.node_state_arrays);
+  fromTo(src.element_state_arrays, dst.elemStateArrays);
+  fromTo(src.node_state_arrays, dst.nodeStateArrays);
 }
 
 }  // namespace
@@ -803,7 +803,7 @@ SchwarzAlternating::SchwarzLoopDynamics() const
       fos << "DEBUG: Getting internal states subdomain = " << subdomain
           << "...\n";
 #endif
-      toFrom(internal_states_[subdomain], state_mgr.getStateArrays());
+      fromTo(state_mgr.getStateArrays(), internal_states_[subdomain]);
 #ifdef DEBUG
       // IKT, 3/29/19: I changed the first argument in the following function,
       // to get code to compile.
@@ -882,7 +882,7 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         fos << "DEBUG: Setting internal states subdomain = " << subdomain
             << "...\n";
 #endif
-        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
+        fromTo(internal_states_[subdomain], state_mgr.getStateArrays());
 #ifdef DEBUG
         // IKT, 3/29/19: I changed the first argument in the following function,
         // to get code to compile.
@@ -1141,7 +1141,7 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 
         auto& state_mgr = app.getStateMgr();
 
-        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
+        fromTo(internal_states_[subdomain], state_mgr.getStateArrays());
 
         // restore the solution in the discretization so the schwarz solver gets
         // the right boundary conditions!
@@ -1421,7 +1421,7 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
 
       auto& state_mgr = app.getStateMgr();
 
-      toFrom(internal_states_[subdomain], state_mgr.getStateArrays());
+      fromTo(state_mgr.getStateArrays(), internal_states_[subdomain]);
     }
 
     num_iter_ = 0;
@@ -1451,7 +1451,7 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
 
         auto& state_mgr = app.getStateMgr();
 
-        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
+        fromTo(internal_states_[subdomain], state_mgr.getStateArrays());
 
         // Restore solution from previous time step
         auto prev_step_disp_rcp = prev_step_disp_[subdomain];
@@ -1601,7 +1601,7 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
 
         auto& state_mgr = app.getStateMgr();
 
-        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
+        fromTo(internal_states_[subdomain], state_mgr.getStateArrays());
 
         // restore the solution in the discretization so the schwarz solver gets
         // the right boundary conditions!
