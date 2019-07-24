@@ -5,10 +5,10 @@
 //*****************************************************************//
 
 #include <Teuchos_TimeMonitor.hpp>
-
 #include <stk_util/parallel/ParallelReduce.hpp>
 
 #include "AAdapt_Erosion.hpp"
+#include "Albany_Utils.hpp"
 #include "LCM/utils/topology/Topology_FailureCriterion.h"
 
 namespace AAdapt {
@@ -84,6 +84,9 @@ AAdapt::Erosion::adaptMesh()
 
   remesh_file_index_++;
 
+  std::cout << "**** BEFORE EROSION ****\n";
+  Albany::printInternalElementStates(this->state_mgr_);
+
   // Start the mesh update process
 
   topology_->erodeFailedElements();
@@ -91,6 +94,9 @@ AAdapt::Erosion::adaptMesh()
   // Throw away all the Albany data structures and re-build them from the mesh
 
   stk_discretization_->updateMesh();
+
+  std::cout << "**** AFTER EROSION ****\n";
+  Albany::printInternalElementStates(this->state_mgr_);
 
   return true;
 }

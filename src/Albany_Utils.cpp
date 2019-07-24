@@ -6,22 +6,22 @@
 
 #include "Albany_Utils.hpp"
 
-#include "Albany_ThyraUtils.hpp"
 #include "Albany_Macros.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 // Include the concrete Epetra Comm's, if needed
 #if defined(ALBANY_EPETRA)
-  #ifdef ALBANY_MPI
-    #include "Epetra_MpiComm.h"
-  #else
-    #include "Epetra_SerialComm.h"
-  #endif
+#ifdef ALBANY_MPI
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
 #endif
 
-#include "MatrixMarket_Tpetra.hpp"
-#include "Teuchos_TestForException.hpp"
 #include <cstdlib>
 #include <stdexcept>
+#include "MatrixMarket_Tpetra.hpp"
+#include "Teuchos_TestForException.hpp"
 
 // For vtune
 #include <sys/types.h>
@@ -29,23 +29,24 @@
 
 // For stack trace
 #include <execinfo.h>
-#include <cstdio>
 #include <cstdarg>
+#include <cstdio>
 
-namespace Albany
-{
+namespace Albany {
 
-void ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
-                            const Teuchos::RCP<Tpetra_Vector>& diag)
+void
+ReplaceDiagonalEntries(
+    const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+    const Teuchos::RCP<Tpetra_Vector>&    diag)
 {
   Teuchos::ArrayRCP<const ST> diag_constView = diag->get1dView();
-  for (size_t i=0; i<matrix->getNodeNumRows(); i++) {
-    auto NumEntries = matrix->getNumEntriesInLocalRow(i);
+  for (size_t i = 0; i < matrix->getNodeNumRows(); i++) {
+    auto               NumEntries = matrix->getNumEntriesInLocalRow(i);
     Teuchos::Array<LO> Indices(NumEntries);
     Teuchos::Array<ST> Values(NumEntries);
     matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
     GO global_row = matrix->getRowMap()->getGlobalElement(i);
-    for (size_t j=0; j<NumEntries; j++) {
+    for (size_t j = 0; j < NumEntries; j++) {
       GO global_col = matrix->getColMap()->getGlobalElement(Indices[j]);
       if (global_row == global_col) {
         Teuchos::Array<ST> matrixEntriesT(1);
@@ -58,186 +59,220 @@ void ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
   }
 }
 
-void InvAbsRowSum(Teuchos::RCP<Tpetra_Vector>& invAbsRowSumsTpetra,
-                  const Teuchos::RCP<Tpetra_CrsMatrix> matrix)
+void
+InvAbsRowSum(
+    Teuchos::RCP<Tpetra_Vector>&         invAbsRowSumsTpetra,
+    const Teuchos::RCP<Tpetra_CrsMatrix> matrix)
 {
-  //Check that invAbsRowSumsTpetra and matrix have same map 
-  ALBANY_ASSERT(invAbsRowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap())), 
-     "Error in Albany::InvAbsRowSum!  "
-     "Input vector must have same map as row map of input matrix!");
+  // Check that invAbsRowSumsTpetra and matrix have same map
+  ALBANY_ASSERT(
+      invAbsRowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap())),
+      "Error in Albany::InvAbsRowSum!  "
+      "Input vector must have same map as row map of input matrix!");
 
   invAbsRowSumsTpetra->putScalar(0.0);
-  Teuchos::ArrayRCP<double> invAbsRowSumsTpetra_nonconstView = invAbsRowSumsTpetra->get1dViewNonConst(); 
-  for (size_t row=0; row<invAbsRowSumsTpetra->getLocalLength(); row++) {
-    auto numEntriesRow = matrix->getNumEntriesInLocalRow(row); 
-    Teuchos::Array<LO> indices(numEntriesRow); 
-    Teuchos::Array<ST> values(numEntriesRow); 
+  Teuchos::ArrayRCP<double> invAbsRowSumsTpetra_nonconstView =
+      invAbsRowSumsTpetra->get1dViewNonConst();
+  for (size_t row = 0; row < invAbsRowSumsTpetra->getLocalLength(); row++) {
+    auto               numEntriesRow = matrix->getNumEntriesInLocalRow(row);
+    Teuchos::Array<LO> indices(numEntriesRow);
+    Teuchos::Array<ST> values(numEntriesRow);
     matrix->getLocalRowCopy(row, indices(), values(), numEntriesRow);
-    ST scale = 0.0; 
-    for (size_t j=0; j < numEntriesRow; j++) {
-      scale += std::abs(values[j]);
-    }
+    ST scale = 0.0;
+    for (size_t j = 0; j < numEntriesRow; j++) { scale += std::abs(values[j]); }
 
     if (scale < 1.0e-16) {
-      invAbsRowSumsTpetra_nonconstView[row] = 0.0; 
+      invAbsRowSumsTpetra_nonconstView[row] = 0.0;
     } else {
-      invAbsRowSumsTpetra_nonconstView[row] = 1.0/scale; 
+      invAbsRowSumsTpetra_nonconstView[row] = 1.0 / scale;
     }
   }
 }
 
-void  AbsRowSum(Teuchos::RCP<Tpetra_Vector>& absRowSumsTpetra,
-                const Teuchos::RCP<Tpetra_CrsMatrix> matrix) {
-  //Check that absRowSumsTpetra and matrix have same map 
-  ALBANY_ASSERT(absRowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap())), 
-     "Error in Albany::AbsRowSum!  "
-     "Input vector must have same map as row map of input matrix!");
+void
+AbsRowSum(
+    Teuchos::RCP<Tpetra_Vector>&         absRowSumsTpetra,
+    const Teuchos::RCP<Tpetra_CrsMatrix> matrix)
+{
+  // Check that absRowSumsTpetra and matrix have same map
+  ALBANY_ASSERT(
+      absRowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap())),
+      "Error in Albany::AbsRowSum!  "
+      "Input vector must have same map as row map of input matrix!");
   absRowSumsTpetra->putScalar(0.0);
-  Teuchos::ArrayRCP<double> absRowSumsTpetra_nonconstView = absRowSumsTpetra->get1dViewNonConst(); 
-  for (size_t row=0; row<absRowSumsTpetra->getLocalLength(); row++) {
-    auto numEntriesRow = matrix->getNumEntriesInLocalRow(row); 
-    Teuchos::Array<LO> indices(numEntriesRow); 
-    Teuchos::Array<ST> values(numEntriesRow); 
+  Teuchos::ArrayRCP<double> absRowSumsTpetra_nonconstView =
+      absRowSumsTpetra->get1dViewNonConst();
+  for (size_t row = 0; row < absRowSumsTpetra->getLocalLength(); row++) {
+    auto               numEntriesRow = matrix->getNumEntriesInLocalRow(row);
+    Teuchos::Array<LO> indices(numEntriesRow);
+    Teuchos::Array<ST> values(numEntriesRow);
     matrix->getLocalRowCopy(row, indices(), values(), numEntriesRow);
-    ST scale = 0.0; 
-    for (size_t j=0; j < numEntriesRow; j++) {
-      scale += std::abs(values[j]);
-    }
-    absRowSumsTpetra_nonconstView[row] = scale; 
+    ST scale = 0.0;
+    for (size_t j = 0; j < numEntriesRow; j++) { scale += std::abs(values[j]); }
+    absRowSumsTpetra_nonconstView[row] = scale;
   }
 }
 
-std::string strint(const std::string s, const int i, const char delim) {
-    std::ostringstream ss;
-    ss << s << delim << i;
-    return ss.str();
-  }
+std::string
+strint(const std::string s, const int i, const char delim)
+{
+  std::ostringstream ss;
+  ss << s << delim << i;
+  return ss.str();
+}
 
-bool isValidInitString(const std::string& initString) {
-
+bool
+isValidInitString(const std::string& initString)
+{
   // Make sure the first part of the string has the correct verbiage
   std::string verbiage("initial value ");
-  size_t pos = initString.find(verbiage);
-  if(pos != 0)
-    return false;
+  size_t      pos = initString.find(verbiage);
+  if (pos != 0) return false;
 
   // Make sure the rest of the string has only allowable characters
-  std::string valueString = initString.substr(verbiage.size(), initString.size() - verbiage.size());
-  for(std::string::iterator it=valueString.begin() ; it!=valueString.end() ; it++){
+  std::string valueString =
+      initString.substr(verbiage.size(), initString.size() - verbiage.size());
+  for (std::string::iterator it = valueString.begin(); it != valueString.end();
+       it++) {
     std::string charAsString(1, *it);
     pos = charAsString.find_first_of("0123456789.-+eE");
-    if(pos == std::string::npos)
-      return false;
+    if (pos == std::string::npos) return false;
   }
 
   return true;
 }
 
-std::string doubleToInitString(double val) {
-  std::string verbiage("initial value ");
+std::string
+doubleToInitString(double val)
+{
+  std::string       verbiage("initial value ");
   std::stringstream ss;
   ss << verbiage << val;
   return ss.str();
 }
 
-double initStringToDouble(const std::string& initString) {
-  ALBANY_ASSERT(isValidInitString(initString),
-           " initStringToDouble() called with invalid initialization string: " << initString);
+double
+initStringToDouble(const std::string& initString)
+{
+  ALBANY_ASSERT(
+      isValidInitString(initString),
+      " initStringToDouble() called with invalid initialization string: "
+          << initString);
   std::string verbiage("initial value ");
-  std::string valueString = initString.substr(verbiage.size(), initString.size() - verbiage.size());
+  std::string valueString =
+      initString.substr(verbiage.size(), initString.size() - verbiage.size());
   return std::atof(valueString.c_str());
 }
 
-void splitStringOnDelim(const std::string &s, char delim, std::vector<std::string> &elems) {
+void
+splitStringOnDelim(
+    const std::string&        s,
+    char                      delim,
+    std::vector<std::string>& elems)
+{
   std::stringstream ss(s);
-  std::string item;
-  while(std::getline(ss, item, delim)) {
-      elems.push_back(item);
-  }
+  std::string       item;
+  while (std::getline(ss, item, delim)) { elems.push_back(item); }
 }
 
-std::string getFileExtension(std::string const & filename)
+std::string
+getFileExtension(std::string const& filename)
 {
   auto const pos = filename.find_last_of(".");
   return filename.substr(pos + 1);
 }
 
-void printThyraVector(std::ostream& os,
-                      const Teuchos::RCP<const Thyra_Vector>& vec) {
-  Teuchos::ArrayRCP<const ST> vv = Albany::getLocalData(vec);
-  const int localLength = vv.size();
-
-  os <<  std::setw(10) << std::endl;
-  for(int i = 0; i < localLength; ++i){
-     os.width(20);
-     os << "             " << std::left << vv[i] << std::endl;
-  }
-}
-
-void printThyraVector(std::ostream& os,
-                      const Teuchos::Array<std::string>& names,
-                      const Teuchos::RCP<const Thyra_Vector>& vec) {
-
-  Teuchos::ArrayRCP<const ST> vv = Albany::getLocalData(vec);
-  const int localLength = vv.size();
-
-  TEUCHOS_TEST_FOR_EXCEPTION (names.size()!=localLength, std::logic_error, "Error! names and mvec length do not match.\n");
-
-  os <<  std::setw(10) << std::endl;
-  for(int i = 0; i < localLength; ++i){
-     os.width(20);
-     os << "   " << std::left << names[i] << "\t" << vv[i] << std::endl;
-  }
-}
-
-void printThyraMultiVector(std::ostream& os,
-                           const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
-                           const Teuchos::RCP<const Thyra_MultiVector>& mvec) {
-
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST> > mvv = Albany::getLocalData(mvec);
-  const int numVecs = mvec->domain()->dim();
-  const int localLength = mvv.size()>0 ? mvv[0].size() : 0;
-  TEUCHOS_TEST_FOR_EXCEPTION (names.size()!=localLength, std::logic_error, "Error! names and mvec length do not match.\n");
-
-  os <<  std::setw(10) << std::endl;
-  for(int row = 0; row < localLength; ++row){
-    for(int col = 0; col < numVecs; ++col){
-       os.width(20);
-       os << "   " << std::left << (*names[col])[row] << "\t" << mvv[col][row] << std::endl;
-    }
-    os << std::endl;
-  }
-
-}
-
-void printThyraMultiVector(std::ostream& os,
-                           const Teuchos::RCP<const Thyra_MultiVector>& mvec) {
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST> > mvv = Albany::getLocalData(mvec);
-
-  const int numVecs = mvec->domain()->dim();
-  const int localLength = mvv.size()>0 ? mvv[0].size() : 0;
-  os <<  std::setw(10) << std::endl;
-  for(int row = 0; row < localLength; ++row){
-    for(int col = 0; col < numVecs; ++col){
-       os.width(20);
-       os << "             " << std::left << mvv[col][row] ;
-    }
-    os << std::endl;
-  }
-}
-
-//
-//
-//
-template<>
-void writeMatrixMarket<const Tpetra_Map>(
-    const Teuchos::RCP<const Tpetra_Map>& map,
-    const std::string& prefix,
-    int const counter)
+void
+printThyraVector(std::ostream& os, const Teuchos::RCP<const Thyra_Vector>& vec)
 {
-  if (map.is_null()) {
-    return;
+  Teuchos::ArrayRCP<const ST> vv          = Albany::getLocalData(vec);
+  const int                   localLength = vv.size();
+
+  os << std::setw(10) << std::endl;
+  for (int i = 0; i < localLength; ++i) {
+    os.width(20);
+    os << "             " << std::left << vv[i] << std::endl;
   }
+}
+
+void
+printThyraVector(
+    std::ostream&                           os,
+    const Teuchos::Array<std::string>&      names,
+    const Teuchos::RCP<const Thyra_Vector>& vec)
+{
+  Teuchos::ArrayRCP<const ST> vv          = Albany::getLocalData(vec);
+  const int                   localLength = vv.size();
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      names.size() != localLength,
+      std::logic_error,
+      "Error! names and mvec length do not match.\n");
+
+  os << std::setw(10) << std::endl;
+  for (int i = 0; i < localLength; ++i) {
+    os.width(20);
+    os << "   " << std::left << names[i] << "\t" << vv[i] << std::endl;
+  }
+}
+
+void
+printThyraMultiVector(
+    std::ostream&                                                    os,
+    const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
+    const Teuchos::RCP<const Thyra_MultiVector>&                     mvec)
+{
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> mvv =
+      Albany::getLocalData(mvec);
+  const int numVecs     = mvec->domain()->dim();
+  const int localLength = mvv.size() > 0 ? mvv[0].size() : 0;
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      names.size() != localLength,
+      std::logic_error,
+      "Error! names and mvec length do not match.\n");
+
+  os << std::setw(10) << std::endl;
+  for (int row = 0; row < localLength; ++row) {
+    for (int col = 0; col < numVecs; ++col) {
+      os.width(20);
+      os << "   " << std::left << (*names[col])[row] << "\t" << mvv[col][row]
+         << std::endl;
+    }
+    os << std::endl;
+  }
+}
+
+void
+printThyraMultiVector(
+    std::ostream&                                os,
+    const Teuchos::RCP<const Thyra_MultiVector>& mvec)
+{
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> mvv =
+      Albany::getLocalData(mvec);
+
+  const int numVecs     = mvec->domain()->dim();
+  const int localLength = mvv.size() > 0 ? mvv[0].size() : 0;
+  os << std::setw(10) << std::endl;
+  for (int row = 0; row < localLength; ++row) {
+    for (int col = 0; col < numVecs; ++col) {
+      os.width(20);
+      os << "             " << std::left << mvv[col][row];
+    }
+    os << std::endl;
+  }
+}
+
+//
+//
+//
+template <>
+void
+writeMatrixMarket<const Tpetra_Map>(
+    const Teuchos::RCP<const Tpetra_Map>& map,
+    const std::string&                    prefix,
+    int const                             counter)
+{
+  if (map.is_null()) { return; }
 
   std::ostringstream oss;
   oss << prefix;
@@ -254,15 +289,14 @@ void writeMatrixMarket<const Tpetra_Map>(
 //
 //
 //
-template<>
-void writeMatrixMarket<const Tpetra_Vector>(
+template <>
+void
+writeMatrixMarket<const Tpetra_Vector>(
     const Teuchos::RCP<const Tpetra_Vector>& v,
-    const std::string& prefix,
-    int const counter)
+    const std::string&                       prefix,
+    int const                                counter)
 {
-  if (v.is_null()) {
-    return;
-  }
+  if (v.is_null()) { return; }
 
   std::ostringstream oss;
 
@@ -280,15 +314,14 @@ void writeMatrixMarket<const Tpetra_Vector>(
 //
 //
 //
-template<>
-void writeMatrixMarket<const Tpetra_MultiVector>(
+template <>
+void
+writeMatrixMarket<const Tpetra_MultiVector>(
     const Teuchos::RCP<const Tpetra_MultiVector>& mv,
-    const std::string& prefix,
-    int const counter)
+    const std::string&                            prefix,
+    int const                                     counter)
 {
-  if (mv.is_null()) {
-    return;
-  }
+  if (mv.is_null()) { return; }
 
   std::ostringstream oss;
 
@@ -306,15 +339,14 @@ void writeMatrixMarket<const Tpetra_MultiVector>(
 //
 //
 //
-template<>
-void writeMatrixMarket<const Tpetra_CrsMatrix>(
+template <>
+void
+writeMatrixMarket<const Tpetra_CrsMatrix>(
     const Teuchos::RCP<const Tpetra_CrsMatrix>& A,
-    const std::string& prefix,
-    int const counter)
+    const std::string&                          prefix,
+    int const                                   counter)
 {
-  if (A.is_null()) {
-    return;
-  }
+  if (A.is_null()) { return; }
 
   std::ostringstream oss;
 
@@ -329,122 +361,141 @@ void writeMatrixMarket<const Tpetra_CrsMatrix>(
   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(filename, A);
 }
 
-CmdLineArgs::CmdLineArgs(const std::string& default_yaml_filename,
-                         const std::string& default_yaml_filename2,
-                         const std::string& default_yaml_filename3) :
-  yaml_filename(default_yaml_filename),
-  yaml_filename2(default_yaml_filename2),
-  yaml_filename3(default_yaml_filename3),
-  has_first_yaml_file(false),
-  has_second_yaml_file(false),
-  has_third_yaml_file(false),
-  vtune(false) {}
+CmdLineArgs::CmdLineArgs(
+    const std::string& default_yaml_filename,
+    const std::string& default_yaml_filename2,
+    const std::string& default_yaml_filename3)
+    : yaml_filename(default_yaml_filename),
+      yaml_filename2(default_yaml_filename2),
+      yaml_filename3(default_yaml_filename3),
+      has_first_yaml_file(false),
+      has_second_yaml_file(false),
+      has_third_yaml_file(false),
+      vtune(false)
+{
+}
 
-void CmdLineArgs::parse_cmdline(int argc , char ** argv,
-                                        std::ostream& os) {
-  bool found_first_yaml_file = false;
+void
+CmdLineArgs::parse_cmdline(int argc, char** argv, std::ostream& os)
+{
+  bool found_first_yaml_file  = false;
   bool found_second_yaml_file = false;
-  for (int arg=1; arg<argc; ++arg) {
-    if(!std::strcmp(argv[arg],"--help")) {
-      os << argv[0] << " [--vtune] [inputfile1.yaml] [inputfile2.yaml] [inputfile3.yaml]\n";
+  for (int arg = 1; arg < argc; ++arg) {
+    if (!std::strcmp(argv[arg], "--help")) {
+      os << argv[0]
+         << " [--vtune] [inputfile1.yaml] [inputfile2.yaml] "
+            "[inputfile3.yaml]\n";
       std::exit(1);
-    }
-    else if (!std::strcmp(argv[arg],"--vtune")) {
+    } else if (!std::strcmp(argv[arg], "--vtune")) {
       vtune = true;
-    }
-    else {
+    } else {
       if (!found_first_yaml_file) {
-        yaml_filename=argv[arg];
+        yaml_filename         = argv[arg];
         found_first_yaml_file = true;
-        has_first_yaml_file = true;
-      }
-      else if (!found_second_yaml_file) {
-        yaml_filename2=argv[arg];
+        has_first_yaml_file   = true;
+      } else if (!found_second_yaml_file) {
+        yaml_filename2         = argv[arg];
         found_second_yaml_file = true;
-        has_second_yaml_file = true;
-      }
-      else {
-        yaml_filename3=argv[arg];
+        has_second_yaml_file   = true;
+      } else {
+        yaml_filename3      = argv[arg];
         has_third_yaml_file = true;
       }
     }
   }
 }
 
-void connect_vtune(const int p_rank) {
+void
+connect_vtune(const int p_rank)
+{
   std::stringstream cmd;
-  pid_t my_os_pid=getpid();
-  const std::string vtune_loc = "amplxe-cl";
+  pid_t             my_os_pid  = getpid();
+  const std::string vtune_loc  = "amplxe-cl";
   const std::string output_dir = "./vtune/vtune.";
-  cmd << vtune_loc
-      << " -collect hotspots -result-dir " << output_dir << p_rank
+  cmd << vtune_loc << " -collect hotspots -result-dir " << output_dir << p_rank
       << " -target-pid " << my_os_pid << " &";
-  if (p_rank == 0)
-    std::cout << cmd.str() << std::endl;
+  if (p_rank == 0) std::cout << cmd.str() << std::endl;
   safe_system(cmd.str().c_str());
   safe_system("sleep 10");
 }
 
-void do_stack_trace() {
-
-      void* callstack[128];
-      int i, frames = backtrace(callstack, 128);
-      char** strs = backtrace_symbols(callstack, frames);
-      for (i = 0; i < frames; ++i) {
-          printf("%s\n", strs[i]);
-      }
-      free(strs);
+void
+do_stack_trace()
+{
+  void*  callstack[128];
+  int    i, frames = backtrace(callstack, 128);
+  char** strs = backtrace_symbols(callstack, frames);
+  for (i = 0; i < frames; ++i) { printf("%s\n", strs[i]); }
+  free(strs);
 }
 
-void safe_fscanf(int nitems, FILE* file, const char* format, ...) {
+void
+safe_fscanf(int nitems, FILE* file, const char* format, ...)
+{
   va_list ap;
   va_start(ap, format);
   int ret = vfscanf(file, format, ap);
   va_end(ap);
-  ALBANY_ASSERT(ret == nitems,
-      ret<<"=safe_fscanf("<<nitems<<", "<<file<<", \""<<format<<"\")");
+  ALBANY_ASSERT(
+      ret == nitems,
+      ret << "=safe_fscanf(" << nitems << ", " << file << ", \"" << format
+          << "\")");
 }
 
-void safe_sscanf(int nitems, const char* str, const char* format, ...) {
+void
+safe_sscanf(int nitems, const char* str, const char* format, ...)
+{
   va_list ap;
   va_start(ap, format);
   int ret = vsscanf(str, format, ap);
   va_end(ap);
-  ALBANY_ASSERT(ret == nitems,
-      ret<<"=safe_sscanf("<<nitems<<", \""<<str<<"\", \""<<format<<"\")");
+  ALBANY_ASSERT(
+      ret == nitems,
+      ret << "=safe_sscanf(" << nitems << ", \"" << str << "\", \"" << format
+          << "\")");
 }
 
-void safe_fgets(char* str, int size, FILE* stream) {
+void
+safe_fgets(char* str, int size, FILE* stream)
+{
   char* ret = fgets(str, size, stream);
-  ALBANY_ASSERT(ret == str,
-      ret<<"=safe_fgets("<<static_cast<void*>(str)<<", "<<size<<", "<<stream<<")");
+  ALBANY_ASSERT(
+      ret == str,
+      ret << "=safe_fgets(" << static_cast<void*>(str) << ", " << size << ", "
+          << stream << ")");
 }
 
-void safe_system(char const* str) {
+void
+safe_system(char const* str)
+{
   ALBANY_ASSERT(str, "safe_system called with null command string\n");
   int ret = system(str);
-  ALBANY_ASSERT(str, ret<<"=safe_system(\""<<str<<"\")");
+  ALBANY_ASSERT(str, ret << "=safe_system(\"" << str << "\")");
 }
 
-void assert_fail(std::string const& msg) {
+void
+assert_fail(std::string const& msg)
+{
   std::cerr << msg;
   abort();
 }
 
-BuildType build_type(const BuildType value)
+BuildType
+build_type(const BuildType value)
 {
-  // Recall how static local variable work: the following are created (and initialized) only once
-  static bool initialized_ = false;
-  static BuildType value_ = BuildType::None;
+  // Recall how static local variable work: the following are created (and
+  // initialized) only once
+  static bool      initialized_ = false;
+  static BuildType value_       = BuildType::None;
   if (!initialized_ && (value != BuildType::None)) {
-    value_ = value;
+    value_       = value;
     initialized_ = true;
   }
   return value_;
 }
 
 void
-printInternalElementStates(Albany::StateManager& state_mgr)
+printInternalElementStates(Albany::StateManager const& state_mgr)
 {
   auto&      sa     = state_mgr.getStateArrays();
   auto       sis    = state_mgr.getStateInfoStruct();
@@ -463,14 +514,14 @@ printInternalElementStates(Albany::StateManager& state_mgr)
         switch (size) {
           case 1:
             for (auto cell = 0; cell < dims[0]; ++cell) {
-              fos << "   DEBUG: case 1, " << state_name << "(" << cell << ")"
+              fos << "*** # INDEX 1, " << state_name << "(" << cell << ")"
                   << " = " << esa[ws][state_name](cell) << "\n";
             }
             break;
           case 2:
             for (auto cell = 0; cell < dims[0]; ++cell) {
               for (auto qp = 0; qp < dims[1]; ++qp) {
-                fos << "   DEBUG: case 2, " << state_name << "(" << cell << ","
+                fos << "*** # INDEX 2, " << state_name << "(" << cell << ","
                     << qp << ")"
                     << " = " << esa[ws][state_name](cell, qp) << "\n";
               }
@@ -480,8 +531,8 @@ printInternalElementStates(Albany::StateManager& state_mgr)
             for (auto cell = 0; cell < dims[0]; ++cell) {
               for (auto qp = 0; qp < dims[1]; ++qp) {
                 for (auto i = 0; i < dims[2]; ++i) {
-                  fos << "   DEBUG: case 3, " << state_name << "(" << cell
-                      << "," << qp << "," << i << ")"
+                  fos << "*** # INDEX 3, " << state_name << "(" << cell << ","
+                      << qp << "," << i << ")"
                       << " = " << esa[ws][state_name](cell, qp, i) << "\n";
                 }
               }
@@ -492,9 +543,8 @@ printInternalElementStates(Albany::StateManager& state_mgr)
               for (int qp = 0; qp < dims[1]; ++qp) {
                 for (int i = 0; i < dims[2]; ++i) {
                   for (int j = 0; j < dims[3]; ++j) {
-                    fos << "   DEBUG: case 4, " << state_name << "(" << cell
-                        << "," << qp << "," << i << j << ","
-                        << ")"
+                    fos << "*** # INDEX 4, " << state_name << "(" << cell << ","
+                        << qp << "," << i << "," << j << ")"
                         << " = " << esa[ws][state_name](cell, qp, i, j) << "\n";
                   }
                 }
@@ -507,8 +557,9 @@ printInternalElementStates(Albany::StateManager& state_mgr)
                 for (int i = 0; i < dims[2]; ++i) {
                   for (int j = 0; j < dims[3]; ++j) {
                     for (int k = 0; k < dims[4]; ++k) {
-                      fos << "   DEBUG: case 5, " << state_name << "(" << cell
-                          << "," << qp << "," << i << j << "," << k << ","
+                      fos << "*** # INDEX 5, " << state_name << "(" << cell
+                          << "," << qp << "," << i << "," << j << "," << k
+                          << ","
                           << ")"
                           << " = " << esa[ws][state_name](cell, qp, i, j, k)
                           << "\n";
@@ -525,8 +576,8 @@ printInternalElementStates(Albany::StateManager& state_mgr)
           for (int qp = 0; qp < dims[1]; ++qp) {
             for (int i = 0; i < dims[2]; ++i) {
               for (int j = 0; j < dims[3]; ++j) {
-                fos << "   DEBUG: case 4, " << state_name << "(" << cell << ","
-                    << qp << "," << i << j << ","
+                fos << "*** # INDEX 4, " << state_name << "(" << cell << ","
+                    << qp << "," << i << "," << j << ","
                     << ")"
                     << " = " << esa[ws][state_name](cell, qp, i, j) << "\n";
               }
@@ -538,4 +589,4 @@ printInternalElementStates(Albany::StateManager& state_mgr)
   }
 }
 
-} // namespace Albany
+}  // namespace Albany
