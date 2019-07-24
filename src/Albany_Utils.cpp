@@ -559,7 +559,6 @@ printInternalElementStates(Albany::StateManager const& state_mgr)
                     for (int k = 0; k < dims[4]; ++k) {
                       fos << "*** # INDEX 5, " << state_name << "(" << cell
                           << "," << qp << "," << i << "," << j << "," << k
-                          << ","
                           << ")"
                           << " = " << esa[ws][state_name](cell, qp, i, j, k)
                           << "\n";
@@ -577,8 +576,7 @@ printInternalElementStates(Albany::StateManager const& state_mgr)
             for (int i = 0; i < dims[2]; ++i) {
               for (int j = 0; j < dims[3]; ++j) {
                 fos << "*** # INDEX 4, " << state_name << "(" << cell << ","
-                    << qp << "," << i << "," << j << ","
-                    << ")"
+                    << qp << "," << i << "," << j << ")"
                     << " = " << esa[ws][state_name](cell, qp, i, j) << "\n";
               }
             }
