@@ -8,6 +8,7 @@
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_Utils.hpp"
 #include "MiniTensor.h"
 #include "Piro_LOCASolver.hpp"
 #include "Piro_TempusSolver.hpp"
@@ -522,73 +523,6 @@ centered(std::string const& str, int width)
 }
 
 void
-printInternalElementState(
-    Albany::StateArrayVec& esa,
-    std::string const&     statename,
-    std::string const&     init_type,
-    int const              size,
-    int const              ws)
-{
-  // IKT, 2/7/18: this is cut/paste from Albany::StateManager.
-  // Note we are only printing states at first cell, quad point, dimension,
-  // etc., to suppress amount of debug output. This can be changed, as desired,
-  // by modifying the code here.
-  auto& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
-  if (size == 0) return;
-  int cell = 0;
-  int qp   = 0;
-  int i    = 0;
-  int j    = 0;
-  int k    = 0;
-  if (init_type == "scalar") {
-    switch (size) {
-      case 1:
-        fos << "   DEBUG: case 1, " << statename << " = "
-            << esa[ws][statename](cell) << "\n";
-        break;
-      case 2:
-        fos << "   DEBUG: case 2, " << statename << " = "
-            << esa[ws][statename](cell, qp) << "\n";
-        break;
-      case 3:
-        fos << "   DEBUG: case 3, " << statename << " = "
-            << esa[ws][statename](cell, qp, i) << "\n";
-        break;
-      case 4:
-        fos << "   DEBUG: case 4, " << statename << " = "
-            << esa[ws][statename](cell, qp, i, j) << "\n";
-        break;
-      case 5:
-        fos << "   DEBUG: case 5, " << statename << " = "
-            << esa[ws][statename](cell, qp, i, j, k) << "\n";
-        break;
-      default: ALBANY_ASSERT(1 <= size && size <= 5, ""); break;
-    }
-  } else if (init_type == "identity") {
-    fos << "   DEBUG: " << statename << " = "
-        << esa[ws][statename](cell, qp, i, j) << "\n";
-  }
-}
-
-void
-printInternalElementStates(
-    Albany::StateArrays&                  sa,
-    Teuchos::RCP<Albany::StateInfoStruct> sis)
-{
-  Albany::StateArrayVec& esa = sa.elemStateArrays;
-  // Print stuff for only workset 0
-  int const ws = 0;
-  for (size_t i = 0; i < sis->size(); i++) {
-    std::string const&             state_name = (*sis)[i]->name;
-    std::string const&             init_type  = (*sis)[i]->initType;
-    Albany::StateStruct::FieldDims dims;
-    esa[ws][state_name].dimensions(dims);
-    int size = dims.size();
-    printInternalElementState(esa, state_name, init_type, size, ws);
-  }
-}
-
-void
 fromTo(Albany::StateArrayVec const& src, LCM::StateArrayVec& dst)
 {
   const int num_maps = src.size();
@@ -807,8 +741,7 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 #ifdef DEBUG
       // IKT, 3/29/19: I changed the first argument in the following function,
       // to get code to compile.
-      printInternalElementStates(
-          state_mgr.getStateArrays(), state_mgr.getStateInfoStruct());
+      Albany::printInternalElementStates(state_mgr);
 
       fos << "DEBUG: ...done setting internal states subdomain = " << subdomain
           << ".\n";
@@ -886,8 +819,7 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 #ifdef DEBUG
         // IKT, 3/29/19: I changed the first argument in the following function,
         // to get code to compile.
-        printInternalElementStates(
-            state_mgr.getStateArrays(), state_mgr.getStateInfoStruct());
+        Albany::printInternalElementStates(state_mgr);
         fos << "DEBUG: ...done setting internal states subdomain = "
             << subdomain << ".\n";
 #endif

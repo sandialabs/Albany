@@ -12,12 +12,12 @@
 
 #include <sstream>
 
-#include "Albany_TpetraTypes.hpp"
-#include "Albany_ThyraTypes.hpp"
 #include "Albany_CommUtils.hpp"
-
-#include "Teuchos_RCP.hpp"
 #include "Albany_Macros.hpp"
+#include "Albany_StateManager.hpp"
+#include "Albany_ThyraTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Teuchos_RCP.hpp"
 
 namespace Albany {
 
@@ -223,6 +223,9 @@ assert_fail(std::string const& msg) __attribute__((noreturn));
 /// to execute code that is specific to either Tpetra or Epetra.
 enum class BuildType {None, Tpetra, Epetra};
 BuildType build_type(const BuildType value=BuildType::None);
+
+void
+printInternalElementStates(StateManager& state_mgr);
 
 }  // end namespace Albany
 

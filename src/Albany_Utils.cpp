@@ -443,4 +443,99 @@ BuildType build_type(const BuildType value)
   return value_;
 }
 
+void
+printInternalElementStates(Albany::StateManager& state_mgr)
+{
+  auto&      sa     = state_mgr.getStateArrays();
+  auto       sis    = state_mgr.getStateInfoStruct();
+  auto&      fos    = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  auto&      esa    = sa.elemStateArrays;
+  auto const num_ws = esa.size();
+  for (auto ws = 0; ws < num_ws; ++ws) {
+    for (auto i = 0; i < sis->size(); i++) {
+      std::string const&             state_name = (*sis)[i]->name;
+      std::string const&             init_type  = (*sis)[i]->initType;
+      Albany::StateStruct::FieldDims dims;
+      esa[ws][state_name].dimensions(dims);
+      int size = dims.size();
+      if (size == 0) return;
+      if (init_type == "scalar") {
+        switch (size) {
+          case 1:
+            for (auto cell = 0; cell < dims[0]; ++cell) {
+              fos << "   DEBUG: case 1, " << state_name << "(" << cell << ")"
+                  << " = " << esa[ws][state_name](cell) << "\n";
+            }
+            break;
+          case 2:
+            for (auto cell = 0; cell < dims[0]; ++cell) {
+              for (auto qp = 0; qp < dims[1]; ++qp) {
+                fos << "   DEBUG: case 2, " << state_name << "(" << cell << ","
+                    << qp << ")"
+                    << " = " << esa[ws][state_name](cell, qp) << "\n";
+              }
+            }
+            break;
+          case 3:
+            for (auto cell = 0; cell < dims[0]; ++cell) {
+              for (auto qp = 0; qp < dims[1]; ++qp) {
+                for (auto i = 0; i < dims[2]; ++i) {
+                  fos << "   DEBUG: case 3, " << state_name << "(" << cell
+                      << "," << qp << "," << i << ")"
+                      << " = " << esa[ws][state_name](cell, qp, i) << "\n";
+                }
+              }
+            }
+            break;
+          case 4:
+            for (int cell = 0; cell < dims[0]; ++cell) {
+              for (int qp = 0; qp < dims[1]; ++qp) {
+                for (int i = 0; i < dims[2]; ++i) {
+                  for (int j = 0; j < dims[3]; ++j) {
+                    fos << "   DEBUG: case 4, " << state_name << "(" << cell
+                        << "," << qp << "," << i << j << ","
+                        << ")"
+                        << " = " << esa[ws][state_name](cell, qp, i, j) << "\n";
+                  }
+                }
+              }
+            }
+            break;
+          case 5:
+            for (int cell = 0; cell < dims[0]; ++cell) {
+              for (int qp = 0; qp < dims[1]; ++qp) {
+                for (int i = 0; i < dims[2]; ++i) {
+                  for (int j = 0; j < dims[3]; ++j) {
+                    for (int k = 0; k < dims[4]; ++k) {
+                      fos << "   DEBUG: case 5, " << state_name << "(" << cell
+                          << "," << qp << "," << i << j << "," << k << ","
+                          << ")"
+                          << " = " << esa[ws][state_name](cell, qp, i, j, k)
+                          << "\n";
+                    }
+                  }
+                }
+              }
+            }
+            break;
+          default: ALBANY_ASSERT(1 <= size && size <= 5, ""); break;
+        }
+      } else if (init_type == "identity") {
+        for (int cell = 0; cell < dims[0]; ++cell) {
+          for (int qp = 0; qp < dims[1]; ++qp) {
+            for (int i = 0; i < dims[2]; ++i) {
+              for (int j = 0; j < dims[3]; ++j) {
+                fos << "   DEBUG: case 4, " << state_name << "(" << cell << ","
+                    << qp << "," << i << j << ","
+                    << ")"
+                    << " = " << esa[ws][state_name](cell, qp, i, j) << "\n";
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 } // namespace Albany
