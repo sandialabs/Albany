@@ -2105,29 +2105,6 @@ MechanicsProblem::constructEvaluators(
     ev = Teuchos::rcp(
         new LCM::TLPoroPlasticityResidMass<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-
-    // Output QP pore pressure
-    // IKT: commenting this out b/c it is a duplicate of earlier writing of
-    // porePressure to the output.  The current DAG rules in Trilinos as of
-    // 12/6/2018 do not allow for such duplicates.  If Pore_Pressure at IPs is
-    // needed, one needs to create a different name for this field and uncomment
-    // code below.
-
-    /*bool const output_ip = material_db_->getElementBlockParam<bool>(
-        eb_name, "Output IP" + porePressure, false);
-
-    p = stateMgr.registerStateVariable(
-        porePressure,
-        dl_->qp_scalar,
-        dl_->dummy,
-        eb_name,
-        "scalar",
-        0.0,
-        true,
-        output_ip);
-
-    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);*/
   }
 
   if (have_pore_pressure_eq_ && surface_element) {
