@@ -1166,6 +1166,8 @@ MechanicsProblem::constructEvaluators(
       p->set<std::string>("J Name", J);
     }
 
+    // AQUI
+    p->set<Albany::StateManager*>("State Manager", &stateMgr);
     auto cmi_rcp = Teuchos::rcp(
         new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(
             *p, dl_));

@@ -59,6 +59,9 @@ ConstitutiveModelInterface<EvalT, Traits>::ConstitutiveModelInterface(
 {
   Teuchos::ParameterList* plist =
       p.get<Teuchos::ParameterList*>("Material Parameters");
+  // AQUI
+  auto* pstate_mgr = p.get<Albany::StateManager*>("State Manager");
+  plist->set<Albany::StateManager*>("State Manager", pstate_mgr);
   plist->set<bool>("Volume Average Pressure", volume_average_pressure_);
   this->initializeModel(plist, dl);
 

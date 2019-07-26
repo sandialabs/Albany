@@ -17,6 +17,9 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
     Teuchos::RCP<Albany::Layouts> const& dl)
     : BaseKernel(model)
 {
+  // AQUI
+  pstate_mgr = p->get<Albany::StateManager*>("State Manager");
+  assert(pstate_mgr != nullptr);
   this->setIntegrationPointLocationFlag(true);
 
   // Baseline constants
@@ -230,14 +233,14 @@ ACEiceMiniKernel<EvalT, Traits>::init(
   std::string F_string            = field_name_map_["F"];
   std::string J_string            = field_name_map_["J"];
 
-  def_grad_           = *input_fields[F_string];
-  J_                  = *input_fields[J_string];
-  elastic_modulus_    = *input_fields["Elastic Modulus"];
-  hardening_modulus_  = *input_fields["Hardening Modulus"];
-  poissons_ratio_     = *input_fields["Poissons Ratio"];
-  yield_strength_     = *input_fields["Yield Strength"];
-  delta_time_         = *input_fields["Delta Time"];
-  temperature_        = *input_fields["ACE Temperature"];
+  def_grad_          = *input_fields[F_string];
+  J_                 = *input_fields[J_string];
+  elastic_modulus_   = *input_fields["Elastic Modulus"];
+  hardening_modulus_ = *input_fields["Hardening Modulus"];
+  poissons_ratio_    = *input_fields["Poissons Ratio"];
+  yield_strength_    = *input_fields["Yield Strength"];
+  delta_time_        = *input_fields["Delta Time"];
+  temperature_       = *input_fields["ACE Temperature"];
 
   stress_           = *output_fields[cauchy_string];
   Fp_               = *output_fields[Fp_string];
@@ -288,7 +291,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor F(num_dims_);
   Tensor sigma(num_dims_);
 
-  auto const coord_vec = this->model_.getCoordVecField();
+  auto const coord_vec    = this->model_.getCoordVecField();
   auto const height       = coord_vec(cell, pt, 2);
   auto const current_time = current_time_;
 
@@ -308,7 +311,7 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
 
   auto&& delta_time    = delta_time_(0);
-  auto&& failed = failed_(cell, 0);
+  auto&& failed        = failed_(cell, 0);
   auto&& exposure_time = exposure_time_(cell, pt);
 
   // Determine if erosion has occurred.
@@ -322,16 +325,17 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   if (is_bulk_at_boundary == true) {
     auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
     is_exposed_to_water  = (height <= sea_level);
-    if (is_exposed_to_water == true) {
-      exposure_time += delta_time;
-    }
+    if (is_exposed_to_water == true) { exposure_time += delta_time; }
     auto const critical_exposure_time = element_size_ / erosion_rate_;
     if (exposure_time >= critical_exposure_time) {
       failed += 1.0;
+      exposure_time = 0.0;
     }
-  } else {
-    exposure_time = 0.0;
   }
+
+  // AQUI
+  std::cout << "**** ACE ICE (" << cell << "," << pt << "), FAILED : " << failed
+            << " ****\n";
 
   //
   // Thermal calculation

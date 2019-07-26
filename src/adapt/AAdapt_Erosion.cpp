@@ -41,10 +41,10 @@ AAdapt::Erosion::Erosion(
 
   topology_ = Teuchos::rcp(new LCM::Topology(discretization_));
 
-  std::string const fail_indicator_name = "ACE Failure Indicator";
+  std::string const failure_indicator_name = "ACE Failure Indicator";
 
   failure_criterion_ = Teuchos::rcp(
-      new LCM::BulkFailureCriterion(*topology_, fail_indicator_name));
+      new LCM::BulkFailureCriterion(*topology_, failure_indicator_name));
 
   topology_->set_failure_criterion(failure_criterion_);
 }
@@ -86,7 +86,7 @@ AAdapt::Erosion::adaptMesh()
 
   std::cout << "**** BEFORE EROSION ****\n";
   Albany::printInternalElementStates(this->state_mgr_);
-
+  topology_->printFailureState(std::cout);
   // Start the mesh update process
 
   topology_->erodeFailedElements();
@@ -97,6 +97,7 @@ AAdapt::Erosion::adaptMesh()
 
   std::cout << "**** AFTER EROSION ****\n";
   Albany::printInternalElementStates(this->state_mgr_);
+  topology_->printFailureState(std::cout);
 
   return true;
 }

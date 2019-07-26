@@ -230,6 +230,9 @@ class Topology
   void
   insertSurfaceElements(std::set<EntityPair> const& fractured_faces);
 
+  void
+  printFailureState(std::ostream& os);
+
   ///
   /// \brief Adds a new entity of rank 3 to the mesh
   ///
@@ -937,13 +940,13 @@ class Topology
   Teuchos::RCP<Albany::AbstractDiscretization> discretization_{Teuchos::null};
   Teuchos::RCP<Albany::AbstractSTKMeshStruct>  stk_mesh_struct_{Teuchos::null};
   Teuchos::RCP<AbstractFailureCriterion> failure_criterion_{Teuchos::null};
-  std::vector<stk::mesh::EntityVector> connectivity_;
-  std::set<EntityPair> fractured_faces_;
-  std::vector<stk::topology> topologies_;
-  std::vector<stk::mesh::EntityId> highest_ids_;
+  std::vector<stk::mesh::EntityVector>   connectivity_;
+  std::set<EntityPair>                   fractured_faces_;
+  std::vector<stk::topology>             topologies_;
+  std::vector<stk::mesh::EntityId>       highest_ids_;
   std::string                            bulk_block_name_{""};
   std::string                            interface_block_name_{""};
-  OutputType output_type_;
+  OutputType                             output_type_;
 
  private:
   ///

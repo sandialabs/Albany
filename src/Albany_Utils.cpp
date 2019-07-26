@@ -504,8 +504,10 @@ printInternalElementStates(Albany::StateManager const& state_mgr)
   auto const num_ws = esa.size();
   for (auto ws = 0; ws < num_ws; ++ws) {
     for (auto i = 0; i < sis->size(); i++) {
-      std::string const&             state_name = (*sis)[i]->name;
-      std::string const&             init_type  = (*sis)[i]->initType;
+      std::string const& state_name = (*sis)[i]->name;
+      std::string const& init_type  = (*sis)[i]->initType;
+      // AQUI
+      if (state_name != "ACE Failure Indicator") continue;
       Albany::StateStruct::FieldDims dims;
       esa[ws][state_name].dimensions(dims);
       int size = dims.size();
@@ -514,16 +516,18 @@ printInternalElementStates(Albany::StateManager const& state_mgr)
         switch (size) {
           case 1:
             for (auto cell = 0; cell < dims[0]; ++cell) {
+              double& value = esa[ws][state_name](cell);
               fos << "**** # INDEX 1, " << state_name << "(" << cell << ")"
-                  << " = " << esa[ws][state_name](cell) << "\n";
+                  << " = " << value << '\n';
             }
             break;
           case 2:
             for (auto cell = 0; cell < dims[0]; ++cell) {
               for (auto qp = 0; qp < dims[1]; ++qp) {
+                double& value = esa[ws][state_name](cell, qp);
                 fos << "**** # INDEX 2, " << state_name << "(" << cell << ","
                     << qp << ")"
-                    << " = " << esa[ws][state_name](cell, qp) << "\n";
+                    << " = " << value << '\n';
               }
             }
             break;
@@ -531,9 +535,10 @@ printInternalElementStates(Albany::StateManager const& state_mgr)
             for (auto cell = 0; cell < dims[0]; ++cell) {
               for (auto qp = 0; qp < dims[1]; ++qp) {
                 for (auto i = 0; i < dims[2]; ++i) {
+                  double& value = esa[ws][state_name](cell, qp, i);
                   fos << "**** # INDEX 3, " << state_name << "(" << cell << ","
                       << qp << "," << i << ")"
-                      << " = " << esa[ws][state_name](cell, qp, i) << "\n";
+                      << " = " << value << '\n';
                 }
               }
             }
@@ -543,9 +548,10 @@ printInternalElementStates(Albany::StateManager const& state_mgr)
               for (int qp = 0; qp < dims[1]; ++qp) {
                 for (int i = 0; i < dims[2]; ++i) {
                   for (int j = 0; j < dims[3]; ++j) {
+                    double& value = esa[ws][state_name](cell, qp, i, j);
                     fos << "**** # INDEX 4, " << state_name << "(" << cell
                         << "," << qp << "," << i << "," << j << ")"
-                        << " = " << esa[ws][state_name](cell, qp, i, j) << "\n";
+                        << " = " << value << '\n';
                   }
                 }
               }
@@ -557,11 +563,11 @@ printInternalElementStates(Albany::StateManager const& state_mgr)
                 for (int i = 0; i < dims[2]; ++i) {
                   for (int j = 0; j < dims[3]; ++j) {
                     for (int k = 0; k < dims[4]; ++k) {
+                      double& value = esa[ws][state_name](cell, qp, i, j, k);
                       fos << "**** # INDEX 5, " << state_name << "(" << cell
                           << "," << qp << "," << i << "," << j << "," << k
                           << ")"
-                          << " = " << esa[ws][state_name](cell, qp, i, j, k)
-                          << "\n";
+                          << " = " << value << '\n';
                     }
                   }
                 }
@@ -575,9 +581,10 @@ printInternalElementStates(Albany::StateManager const& state_mgr)
           for (int qp = 0; qp < dims[1]; ++qp) {
             for (int i = 0; i < dims[2]; ++i) {
               for (int j = 0; j < dims[3]; ++j) {
+                double& value = esa[ws][state_name](cell, qp, i, j);
                 fos << "**** # INDEX 4, " << state_name << "(" << cell << ","
                     << qp << "," << i << "," << j << ")"
-                    << " = " << esa[ws][state_name](cell, qp, i, j) << "\n";
+                    << " = " << value << '\n';
               }
             }
           }

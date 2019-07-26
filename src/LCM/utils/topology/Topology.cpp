@@ -3,13 +3,12 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <boost/foreach.hpp>
-
-#include "Subgraph.h"
 #include "Topology.h"
+#include <stk_mesh/base/FEMHelpers.hpp>
+#include <stk_mesh/base/FieldBase.hpp>
+#include "Subgraph.h"
 #include "Topology_FailureCriterion.h"
 #include "Topology_Utils.h"
-#include "stk_mesh/base/FEMHelpers.hpp"
 
 #include <Albany_STKNodeSharing.hpp>
 
@@ -121,11 +120,11 @@ Topology::Topology(
 stk::mesh::EntityId
 Topology::get_entity_id(stk::mesh::Entity const entity)
 {
-  size_t const space_dimension = get_space_dimension();
-  int const parallel_rank = get_bulk_data().parallel_rank();
-  stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(entity);
-  stk::mesh::EntityId const high_id = get_bulk_data().identifier(entity);
-  stk::mesh::EntityId const low_id =
+  size_t const                space_dimension = get_space_dimension();
+  int const                   parallel_rank   = get_bulk_data().parallel_rank();
+  stk::mesh::EntityRank const rank    = get_bulk_data().entity_rank(entity);
+  stk::mesh::EntityId const   high_id = get_bulk_data().identifier(entity);
+  stk::mesh::EntityId const   low_id =
       low_id_from_high_id(space_dimension, parallel_rank, rank, high_id);
   return low_id;
 }
@@ -146,18 +145,13 @@ Topology::checkOpen(stk::mesh::Entity e)
 void
 Topology::initializeFailureState()
 {
-  stk::mesh::Selector local_part = get_local_part();
+  auto&      bulk_data = get_bulk_data();
+  auto const node_rank = stk::topology::NODE_RANK;
+  auto const cell_rank = stk::topology::ELEMENT_RANK;
 
-  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
-       rank <= stk::topology::ELEMENT_RANK;
-       ++rank) {
-    std::vector<stk::mesh::Bucket*> const& buckets =
-        get_bulk_data().buckets(rank);
-
+  for (auto rank = node_rank; rank <= cell_rank; ++rank) {
     stk::mesh::EntityVector entities;
-
-    stk::mesh::get_selected_entities(local_part, buckets, entities);
-
+    stk::mesh::get_entities(bulk_data, rank, entities);
     for (auto entity : entities) { set_failure_state(entity, INTACT); }
   }
 }
@@ -169,24 +163,14 @@ Topology::initializeFailureState()
 void
 Topology::setBoundaryIndicator()
 {
-  stk::mesh::Selector local_part = get_local_part();
-  auto const          cell_rank  = stk::topology::ELEMENT_RANK;
-  auto const          node_rank  = stk::topology::NODE_RANK;
+  auto&                   bulk_data = get_bulk_data();
+  auto const              cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityVector cells;
+  stk::mesh::get_entities(bulk_data, cell_rank, cells);
 
-  for (auto rank = node_rank; rank <= cell_rank; ++rank) {
-    if (rank == stk::topology::ELEMENT_RANK) {
-      std::vector<stk::mesh::Bucket*> const& buckets =
-          get_bulk_data().buckets(rank);
-
-      stk::mesh::EntityVector entities;
-      stk::mesh::get_selected_entities(local_part, buckets, entities);
-
-      for (auto entity : entities) {
-        BoundaryIndicator const bi =
-            is_boundary_cell(entity) == true ? EXTERIOR : INTERIOR;
-        set_boundary_indicator(entity, bi);
-      }
-    }
+  for (auto cell : cells) {
+    auto const bi = is_boundary_cell(cell) == true ? EXTERIOR : INTERIOR;
+    set_boundary_indicator(cell, bi);
   }
 }
 
@@ -274,7 +258,7 @@ Topology::removeMultiLevelRelations()
 
     for (auto source_entity : source_entities) {
       stk::mesh::EntityVector target_entities;
-      EdgeIdList multilevel_relation_ids;
+      EdgeIdList              multilevel_relation_ids;
 
       for (auto target_rank = node_rank; target_rank <= cell_rank;
            ++target_rank) {
@@ -317,7 +301,7 @@ Topology::removeMultiLevelRelations()
 void
 Topology::removeMidLevelEntities()
 {
-  auto& bulk_data = get_bulk_data();
+  auto&                   bulk_data = get_bulk_data();
   auto const              edge_rank = stk::topology::EDGE_RANK;
   auto const              face_rank = stk::topology::FACE_RANK;
   auto const              cell_rank = stk::topology::ELEMENT_RANK;
@@ -1151,6 +1135,26 @@ Topology::splitOpenFaces()
 }
 
 //
+//
+//
+void
+Topology::printFailureState(std::ostream& os)
+{
+  stk::mesh::BulkData&        bulk_data = get_bulk_data();
+  stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityVector     cells;
+  stk::mesh::get_entities(bulk_data, cell_rank, cells);
+  stk::mesh::MetaData&         meta_data = get_meta_data();
+  ScalarFieldType const* const failure_state =
+      meta_data.get_field<ScalarFieldType>(cell_rank, "ACE Failure Indicator");
+
+  for (auto cell : cells) {
+    double const fs = *stk::mesh::field_data(*failure_state, cell);
+    os << "**** STK ELEMENT : " << cell << " FAIL : " << fs << '\n';
+  }
+}
+
+//
 // Remove failed elements from the mesh
 //
 void
@@ -1170,6 +1174,7 @@ Topology::erodeFailedElements()
   stk::mesh::get_entities(bulk_data, cell_rank, cells);
   for (auto cell : cells) {
     if (failure_criterion_->check(bulk_data, cell) == true) {
+      set_failure_state(cell, INTACT);
       remove_entity(cell);
     }
   }
@@ -1693,35 +1698,27 @@ Topology::is_boundary_cell(stk::mesh::Entity e)
 bool
 Topology::there_are_failed_cells()
 {
-  bool                        have_failed_cells{false};
   stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
   stk::mesh::EntityVector     cells;
   stk::mesh::get_entities(get_bulk_data(), cell_rank, cells);
-  for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
-    stk::mesh::Entity cell = cells[i];
-    if (failure_criterion_->check(get_bulk_data(), cell) == true) {
-      have_failed_cells = true;
-      break;
-    }
+  for (auto cell : cells) {
+    bool const have_failed = failure_criterion_->check(get_bulk_data(), cell);
+    if (have_failed == true) return true;
   }
-  return have_failed_cells;
+  return false;
 }
 
 bool
 Topology::there_are_failed_boundary_cells()
 {
-  bool                        have_failed_cells{false};
   stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
   stk::mesh::EntityVector     cells;
   stk::mesh::get_entities(get_bulk_data(), cell_rank, cells);
-  for (RelationVectorIndex i = 0; i < cells.size(); ++i) {
-    stk::mesh::Entity cell = cells[i];
-    if (is_failed_boundary_cell(cell) == true) {
-      have_failed_cells = true;
-      break;
-    }
+  for (auto cell : cells) {
+    bool const have_failed = is_failed_boundary_cell(cell);
+    if (have_failed == true) return true;
   }
-  return have_failed_cells;
+  return false;
 }
 
 size_t
@@ -1733,7 +1730,6 @@ Topology::num_connectivity(stk::mesh::Entity e)
   auto&                       bulk_data = get_bulk_data();
   for (auto rank = node_rank; rank <= cell_rank; ++rank) {
     auto const n = bulk_data.num_connectivity(e, rank);
-    assert(n == 0);
     num += n;
   }
   return num;
