@@ -7,59 +7,61 @@
 #ifndef ALBANY_DISCRETIZATION_UTILS_HPP
 #define ALBANY_DISCRETIZATION_UTILS_HPP
 
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
+#include "Albany_KokkosTypes.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 #include "Teuchos_ArrayRCP.hpp"
 
-#include "Albany_ScalarOrdinalTypes.hpp"
-#include "Albany_KokkosTypes.hpp"
-
-namespace AAdapt { namespace rc { class Manager; } }
+namespace AAdapt {
+namespace rc {
+class Manager;
+}
+}  // namespace AAdapt
 
 namespace Albany {
 
-typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
-typedef std::map<std::string, std::vector<GO> > NodeSetGIDsList;
-typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
+using NodeSetList      = std::map<std::string, std::vector<std::vector<int>>>;
+using NodeSetGIDsList  = std::map<std::string, std::vector<GO>>;
+using NodeSetCoordList = std::map<std::string, std::vector<double*>>;
 
-class SideStruct {
-
-  public:
-
-    GO side_GID; // the global id of the side in the mesh
-    GO elem_GID; // the global id of the element containing the side
-    int elem_LID; // the local id of the element containing the side
-    int elem_ebIndex; // The index of the element block that contains the element
-    unsigned side_local_id; // The local id of the side relative to the owning element
-
+class SideStruct
+{
+ public:
+  GO       side_GID;       // global id of side in the mesh
+  GO       elem_GID;       // global id of element containing side
+  int      elem_LID;       // local id of element containing side
+  int      elem_ebIndex;   // index of element block that contains element
+  unsigned side_local_id;  // local id of side relative to owning element
 };
 
-typedef std::map<std::string, std::vector<SideStruct> > SideSetList;
+using SideSetList = std::map<std::string, std::vector<SideStruct>>;
 
-class wsLid {
-
-  public:
-
-    int ws; // the workset of the element containing the side
-    int LID; // the local id of the element containing the side
-
+class wsLid
+{
+ public:
+  int ws;   // workset of element containing side
+  int LID;  // local id of element containing side
 };
 
-typedef std::map<GO, wsLid > WsLIDList;
+using WsLIDList = std::map<GO, wsLid>;
 
 template <typename T>
-struct WorksetArray {
-   typedef Teuchos::ArrayRCP<T> type;
+struct WorksetArray
+{
+  using type = Teuchos::ArrayRCP<T>;
 };
 
-// LB 8/17/18: I moved these out of AbstractDiscretization, so if one only needs these types,
-//             he/she can include this small file rather than Albany_AbstractDiscretization.hpp,
-//             which has tons of dependencies.
+// LB 8/17/18: I moved these out of AbstractDiscretization, so if one only needs
+// these types,
+//             he/she can include this small file rather than
+//             Albany_AbstractDiscretization.hpp, which has tons of
+//             dependencies.
 using WorksetConn = Kokkos::View<LO***, Kokkos::LayoutRight, PHX::Device>;
 using Conn        = WorksetArray<WorksetConn>::type;
 
-} // namespace Albany
+}  // namespace Albany
 
-#endif // ALBANY_DISCRETIZATION_UTILS_HPP
+#endif  // ALBANY_DISCRETIZATION_UTILS_HPP

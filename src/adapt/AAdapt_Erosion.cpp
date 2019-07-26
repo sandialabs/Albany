@@ -84,6 +84,7 @@ AAdapt::Erosion::adaptMesh()
 
   remesh_file_index_++;
 
+  // AQUI
   std::cout << "**** BEFORE EROSION ****\n";
   Albany::printInternalElementStates(this->state_mgr_);
   topology_->printFailureState(std::cout);
