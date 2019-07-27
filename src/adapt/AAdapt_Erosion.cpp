@@ -88,6 +88,8 @@ AAdapt::Erosion::adaptMesh()
   std::cout << "**** BEFORE EROSION ****\n";
   Albany::printInternalElementStates(this->state_mgr_);
   topology_->printFailureState(std::cout);
+  stk_discretization_->printElemGIDws(std::cout);
+
   // Start the mesh update process
 
   topology_->erodeFailedElements();
@@ -99,6 +101,7 @@ AAdapt::Erosion::adaptMesh()
   std::cout << "**** AFTER EROSION ****\n";
   Albany::printInternalElementStates(this->state_mgr_);
   topology_->printFailureState(std::cout);
+  stk_discretization_->printElemGIDws(std::cout);
 
   return true;
 }

@@ -508,17 +508,11 @@ std::string
 centered(std::string const& str, int width)
 {
   assert(width >= 0);
-
-  int const length = static_cast<int>(str.size());
-
+  int const length  = static_cast<int>(str.size());
   int const padding = width - length;
-
   if (padding <= 0) return str;
-
-  int const left = padding / 2;
-
+  int const left  = padding / 2;
   int const right = padding - left;
-
   return std::string(left, ' ') + str + std::string(right, ' ');
 }
 
@@ -526,25 +520,16 @@ void
 fromTo(Albany::StateArrayVec const& src, LCM::StateArrayVec& dst)
 {
   const int num_maps = src.size();
-
   dst.resize(num_maps);
-
   for (auto i = 0; i < num_maps; ++i) {
     auto&& src_map = src[i];
-
     auto&& dst_map = dst[i];
-
     for (auto&& kv : src_map) {
-      auto&& state_name = kv.first;
-
-      auto&& src_states = kv.second;
-
-      auto&& dst_states = dst_map[state_name];
-
+      auto&&     state_name = kv.first;
+      auto&&     src_states = kv.second;
+      auto&&     dst_states = dst_map[state_name];
       auto const num_states = src_states.size();
-
       dst_states.resize(num_states);
-
       for (auto j = 0; j < num_states; ++j) { dst_states[j] = src_states[j]; }
     }
   }
@@ -553,34 +538,18 @@ fromTo(Albany::StateArrayVec const& src, LCM::StateArrayVec& dst)
 void
 fromTo(LCM::StateArrayVec const& src, Albany::StateArrayVec& dst)
 {
-  const auto num_maps = src.size();
-
-  ALBANY_ASSERT(
-      num_maps == dst.size(),
-      "Inconsistent number of state maps from LCM to Albany");
-
-  for (size_t i = 0; i < num_maps; ++i) {
-    auto&& src_map = src[i];
-
-    auto&& dst_map = dst[i];
-
+  const auto num_ws = src.size();
+  assert(num_ws == dst.size());
+  for (size_t ws = 0; ws < num_ws; ++ws) {
+    auto&& src_map = src[ws];
+    auto&& dst_map = dst[ws];
     for (auto&& kv : src_map) {
       auto&& state_name = kv.first;
-
       auto&& src_states = kv.second;
-
-      ALBANY_ASSERT(
-          dst_map.find(state_name) != dst_map.end(),
-          "Missing state name in transfer from LCM to Albany: " + state_name);
-
-      auto&& dst_states = dst_map[state_name];
-
+      assert(dst_map.find(state_name) != dst_map.end());
+      auto&&    dst_states = dst_map[state_name];
       const int num_states = src_states.size();
-
-      ALBANY_ASSERT(
-          num_states == dst_states.size(),
-          "Inconsistent number of state entries from LCM to Albany");
-
+      assert(num_states == dst_states.size());
       for (auto j = 0; j < num_states; ++j) { dst_states[j] = src_states[j]; }
     }
   }
@@ -739,8 +708,6 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 #endif
       fromTo(state_mgr.getStateArrays(), internal_states_[subdomain]);
 #ifdef DEBUG
-      // IKT, 3/29/19: I changed the first argument in the following function,
-      // to get code to compile.
       Albany::printInternalElementStates(state_mgr);
 
       fos << "DEBUG: ...done setting internal states subdomain = " << subdomain

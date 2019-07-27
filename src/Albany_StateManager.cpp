@@ -9,10 +9,6 @@
 #include "Teuchos_VerboseObject.hpp"
 //#define IKT_DEBUG
 
-// IKT, 2/7/18: uncomment the following to show verbose
-// debug output pertaining to internal states
-//#define DEBUG_INTERNAL_STATES
-
 Albany::StateManager::StateManager()
     : stateVarsAreAllocated(false), stateInfo(Teuchos::rcp(new StateInfoStruct))
 {
@@ -858,15 +854,6 @@ Albany::StateManager::getStateArrays() const
 {
   ALBANY_ASSERT(stateVarsAreAllocated == true);
   Albany::StateArrays& sa = disc->getStateArrays();
-#ifdef DEBUG_INTERNAL_STATES
-  Albany::StateArrayVec& esa         = sa.elemStateArrays;
-  std::string            eqps_string = "eqps";
-  int                    cell        = 0;
-  int                    qp          = 0;
-  int                    ws          = 0;
-  std::cout << "DEBUG: Albany::StateManager::getStateArrays eqps = "
-            << esa[ws][eqps_string](cell, qp) << "\n";
-#endif
   return sa;
 }
 
@@ -875,15 +862,6 @@ Albany::StateManager::setStateArrays(Albany::StateArrays& sa)
 {
   ALBANY_ASSERT(stateVarsAreAllocated == true);
   disc->setStateArrays(sa);
-#ifdef DEBUG_INTERNAL_STATES
-  Albany::StateArrayVec& esa         = sa.elemStateArrays;
-  std::string            eqps_string = "eqps";
-  int                    cell        = 0;
-  int                    qp          = 0;
-  int                    ws          = 0;
-  std::cout << "DEBUG: Albany::StateManager::setStateArrays eqps = "
-            << esa[ws][eqps_string](cell, qp) << "\n";
-#endif
   return;
 }
 
@@ -1234,9 +1212,11 @@ Albany::StateManager::doSetStateArrays(
                     << size);
             TEUCHOS_TEST_FOR_EXCEPT(!(dims[1] == dims[2]));
 #ifdef IKT_DEBUG
-            std::cout << "IKT Albany StateManager stateName, dims0, dims1, dims2 = " << 
-                          stateName << ", " << dims[0] << ", " << dims[1] << ", " << dims[2] << std::endl;
-#endif 
+            std::cout
+                << "IKT Albany StateManager stateName, dims0, dims1, dims2 = "
+                << stateName << ", " << dims[0] << ", " << dims[1] << ", "
+                << dims[2] << std::endl;
+#endif
             for (int node = 0; node < dims[0]; ++node)
               for (int i = 0; i < dims[1]; ++i)
                 for (int j = 0; j < dims[2]; ++j)

@@ -1248,6 +1248,19 @@ STKDiscretization::setResidualField(const Thyra_Vector& residual)
     it.second->setResidualField(*ss_residual);
   }
 }
+
+void
+STKDiscretization::printElemGIDws(std::ostream& os) const
+{
+  auto& gowslid_map = getElemGIDws();
+  for (auto gowslid : gowslid_map) {
+    auto const go    = gowslid.first;
+    auto const wslid = gowslid.second;
+    auto const ws    = wslid.ws;
+    auto const lid   = wslid.LID;
+    os << "**** GO : " << go << " WS : " << ws << " LID : " << lid << "\n";
+  }
+}
 #endif
 
 Teuchos::RCP<Thyra_Vector>

@@ -154,8 +154,11 @@ class AbstractDiscretization
   getLatticeOrientation() const = 0;
 
 #if defined(ALBANY_LCM)
-  virtual const WorksetArray<Teuchos::ArrayRCP<double*>>::type&
+  virtual WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
   getBoundaryIndicator() const = 0;
+
+  virtual void
+  printElemGIDws(std::ostream& os) const = 0;
 #endif
 
   //! Print the coords for mesh debugging
