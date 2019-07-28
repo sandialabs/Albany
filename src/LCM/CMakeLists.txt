@@ -516,6 +516,7 @@ set(utils-sources
   "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cpp"
   "${LCM_DIR}/utils/Projection.cpp"
   "${LCM_DIR}/utils/SolutionSniffer.cpp"
+  "${LCM_DIR}/utils/StateVarUtils.cpp"
 )
 set(utils-headers
   "${LCM_DIR}/utils/LocalNonlinearSolver.hpp"
@@ -523,6 +524,7 @@ set(utils-headers
   "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h"
   "${LCM_DIR}/utils/Projection.hpp"
   "${LCM_DIR}/utils/SolutionSniffer.hpp"
+  "${LCM_DIR}/utils/StateVarUtils.hpp"
 )
 IF(ALBANY_STK)
   set(utils-sources ${utils-sources}
