@@ -11,18 +11,18 @@ namespace LCM {
 void
 fromTo(Albany::StateArrayVec const& src, LCM::StateArrayVec& dst)
 {
-  const int num_maps = src.size();
-  dst.resize(num_maps);
-  for (auto i = 0; i < num_maps; ++i) {
-    auto&& src_map = src[i];
-    auto&& dst_map = dst[i];
+  const int num_ws = src.size();
+  dst.resize(num_ws);
+  for (auto ws = 0; ws < num_ws; ++ws) {
+    auto&& src_map = src[ws];
+    auto&& dst_map = dst[ws];
     for (auto&& kv : src_map) {
       auto&&     state_name = kv.first;
       auto&&     src_states = kv.second;
       auto&&     dst_states = dst_map[state_name];
       auto const num_states = src_states.size();
       dst_states.resize(num_states);
-      for (auto j = 0; j < num_states; ++j) { dst_states[j] = src_states[j]; }
+      for (auto s = 0; s < num_states; ++s) { dst_states[s] = src_states[s]; }
     }
   }
 }
@@ -32,7 +32,7 @@ fromTo(LCM::StateArrayVec const& src, Albany::StateArrayVec& dst)
 {
   const auto num_ws = src.size();
   assert(num_ws == dst.size());
-  for (size_t ws = 0; ws < num_ws; ++ws) {
+  for (auto ws = 0; ws < num_ws; ++ws) {
     auto&& src_map = src[ws];
     auto&& dst_map = dst[ws];
     for (auto&& kv : src_map) {
@@ -42,7 +42,7 @@ fromTo(LCM::StateArrayVec const& src, Albany::StateArrayVec& dst)
       auto&&    dst_states = dst_map[state_name];
       const int num_states = src_states.size();
       assert(num_states == dst_states.size());
-      for (auto j = 0; j < num_states; ++j) { dst_states[j] = src_states[j]; }
+      for (auto s = 0; s < num_states; ++s) { dst_states[s] = src_states[s]; }
     }
   }
 }
