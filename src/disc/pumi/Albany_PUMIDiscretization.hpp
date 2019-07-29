@@ -34,6 +34,16 @@ class PUMIDiscretization : public APFDiscretization {
     //! Set data for LandIce problems
     void setLandIceData();
 
+#if defined(ALBANY_LCM)
+    WorksetArray<Teuchos::ArrayRCP<double*>>::type const& getBoundaryIndicator() const 
+    {//do nothing
+    };  
+
+    void printElemGIDws(std::ostream& os) const 
+    {//do nothing 
+    }; 
+#endif
+
   private:
 
     Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct;
