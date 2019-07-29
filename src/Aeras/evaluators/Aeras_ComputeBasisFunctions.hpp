@@ -102,7 +102,7 @@ public:
   double DIST_THRESHOLD;
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  typedef PHX::KokkosViewFactory<MeshScalarT,PHX::Device> ViewFactory;
+  typedef PHX::KokkosViewFactory<MeshScalarT,PHX::Device::array_layout,PHX::Device> ViewFactory;
   PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> Phi;
   PHX::MDField<MeshScalarT, Cell, QuadPoint> Norm;
   PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dPhi;
