@@ -44,7 +44,7 @@ class PUMIDiscretization : public APFDiscretization {
     }; 
 
     std::map<std::pair<int, int>, GO>
-    buildElemWsLIDGIDMap() const 
+    getElemWsLIDGIDMap() const 
     {//do nothing
     };
 
