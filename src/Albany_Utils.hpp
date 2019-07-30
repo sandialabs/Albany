@@ -243,10 +243,6 @@ enum class BuildType
 };
 BuildType
 build_type(const BuildType value = BuildType::None);
-
-void
-printInternalElementStates(StateManager const& state_mgr);
-
 }  // end namespace Albany
 
 #endif  // ALBANY_UTILS

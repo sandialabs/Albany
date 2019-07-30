@@ -655,7 +655,7 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 #endif
       fromTo(state_mgr.getStateArrays(), internal_states_[subdomain]);
 #ifdef DEBUG
-      Albany::printInternalElementStates(state_mgr);
+      LCM::printElementStates(state_mgr);
 
       fos << "DEBUG: ...done setting internal states subdomain = " << subdomain
           << ".\n";
@@ -733,7 +733,7 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 #ifdef DEBUG
         // IKT, 3/29/19: I changed the first argument in the following function,
         // to get code to compile.
-        Albany::printInternalElementStates(state_mgr);
+        LCM::printElementStates(state_mgr);
         fos << "DEBUG: ...done setting internal states subdomain = "
             << subdomain << ".\n";
 #endif

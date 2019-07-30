@@ -294,6 +294,9 @@ class STKDiscretization : public AbstractDiscretization
 
   void
   printElemGIDws(std::ostream& os) const;
+
+  void
+  printWsElNodeID(std::ostream& os) const;
 #endif
 
   //! Print the coordinates for debugging

@@ -10,6 +10,7 @@
 #include <vector>
 #include "Albany_DataTypes.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#include "Albany_StateManager.hpp"
 namespace LCM {
 
 //
@@ -40,6 +41,9 @@ fromTo(Albany::StateArrays const& src, LCM::StateArrays& dst);
 
 void
 fromTo(LCM::StateArrays const& src, Albany::StateArrays& dst);
+
+void
+printElementStates(Albany::StateManager const& state_mgr);
 
 }  // namespace LCM
 

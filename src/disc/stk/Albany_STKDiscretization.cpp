@@ -1252,13 +1252,33 @@ STKDiscretization::setResidualField(const Thyra_Vector& residual)
 void
 STKDiscretization::printElemGIDws(std::ostream& os) const
 {
-  auto& gowslid_map = getElemGIDws();
-  for (auto gowslid : gowslid_map) {
-    auto const go    = gowslid.first;
-    auto const wslid = gowslid.second;
+  auto& gidwslid_map = getElemGIDws();
+  for (auto gidwslid : gidwslid_map) {
+    auto const gid   = gidwslid.first;
+    auto const wslid = gidwslid.second;
     auto const ws    = wslid.ws;
     auto const lid   = wslid.LID;
-    os << "**** GO : " << go << " WS : " << ws << " LID : " << lid << "\n";
+    os << "**** GID : " << gid << " WS : " << ws << " LID : " << lid << "\n";
+  }
+}
+
+void
+STKDiscretization::printWsElNodeID(std::ostream& os) const
+{
+  auto&&     wselnodegid = getWsElNodeID();
+  auto const num_ws      = wselnodegid.size();
+  for (auto ws = 0; ws < num_ws; ++ws) {
+    auto&&     elnodegid = wselnodegid[ws];
+    auto const num_el    = elnodegid.size();
+    for (auto el = 0; el < num_el; ++el) {
+      auto&&     nodegid  = elnodegid[el];
+      auto const num_node = nodegid.size();
+      for (auto node = 0; node < num_node; ++node) {
+        auto const gid = nodegid[node];
+        os << "**** GID : " << gid << " WS : " << ws << " EL : " << el
+           << " LID : " << node << "\n";
+      }
+    }
   }
 }
 #endif

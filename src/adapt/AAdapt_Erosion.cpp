@@ -6,11 +6,10 @@
 
 #include "AAdapt_Erosion.hpp"
 #include <Teuchos_TimeMonitor.hpp>
-#include <stk_util/parallel/ParallelReduce.hpp>
-#include "Albany_Utils.hpp"
-#include "LCM/utils/topology/Topology_FailureCriterion.h"
-namespace AAdapt {
+#include "StateVarUtils.hpp"
+#include "Topology_FailureCriterion.h"
 
+namespace AAdapt {
 //
 //
 //
@@ -128,9 +127,10 @@ AAdapt::Erosion::adaptMesh()
 
   // AQUI
   std::cout << "**** BEFORE EROSION ****\n";
-  Albany::printInternalElementStates(this->state_mgr_);
+  LCM::printElementStates(this->state_mgr_);
   topology_->printFailureState(std::cout);
   stk_discretization_->printElemGIDws(std::cout);
+  stk_discretization_->printWsElNodeID(std::cout);
   auto&& state_arrays = stk_discretization_->getStateArrays();
   copyStateArrays(state_arrays);
 
@@ -141,9 +141,10 @@ AAdapt::Erosion::adaptMesh()
   stk_discretization_->updateMesh();
 
   std::cout << "**** AFTER EROSION ****\n";
-  Albany::printInternalElementStates(this->state_mgr_);
+  LCM::printElementStates(this->state_mgr_);
   topology_->printFailureState(std::cout);
   stk_discretization_->printElemGIDws(std::cout);
+  stk_discretization_->printWsElNodeID(std::cout);
   return true;
 }
 
