@@ -1263,7 +1263,7 @@ STKDiscretization::printElemGIDws(std::ostream& os) const
 }
 
 std::map<std::pair<int, int>, GO>
-STKDiscretization::buildElemWsLIDGIDMap() const
+STKDiscretization::getElemWsLIDGIDMap() const
 {
   std::map<std::pair<int, int>, GO> wslidgid_map;
   auto&&                            gidwslid_map = getElemGIDws();

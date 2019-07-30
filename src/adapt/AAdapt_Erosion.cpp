@@ -107,15 +107,74 @@ AAdapt::Erosion::copyStateArrays(Albany::StateArrays const& sa)
 void
 AAdapt::Erosion::transferStateArrays()
 {
-  auto&&     new_sa  = this->state_mgr_.getStateArrays();
-  auto       sis     = this->state_mgr_.getStateInfoStruct();
-  auto&&     new_esa = new_sa.elemStateArrays;
-  auto&&     old_esa = state_arrays_.elemStateArrays;
-  auto const num_ws  = new_esa.size();
+  auto&&     new_sa       = this->state_mgr_.getStateArrays();
+  auto       sis          = this->state_mgr_.getStateInfoStruct();
+  auto&&     new_esa      = new_sa.elemStateArrays;
+  auto&&     old_esa      = state_arrays_.elemStateArrays;
+  auto&&     gidwslid_map = stk_discretization_->getElemGIDws();
+  auto&&     wslidgid_map = stk_discretization_->getElemWsLIDGIDMap();
+  auto const num_ws       = new_esa.size();
+
+  auto mapWsLID = [&](int ws, int lid) {
+    auto wslid       = std::make_pair(ws, lid);
+    auto wslidgid_it = wslidgid_map.find(wslid);
+    assert(wslidgid_it != wslidgid_map.end());
+    auto gid         = wslidgid_it->second;
+    auto gidwslid_it = gidwslid_map.find(gid);
+    assert(gidwslid_it != gidwslid_map.end());
+    auto wslid_old = gidwslid_it->second;
+    auto ws_old    = wslid_old.ws;
+    auto lid_old   = wslid_old.LID;
+    return std::make_pair(ws_old, lid_old);
+  };
+
+  auto oldValue1 = [&](int ws, std::string const& state, int lid) {
+    auto old_wslid = mapWsLID(ws, lid);
+    auto old_ws    = old_wslid.first;
+    auto old_lid   = old_wslid.second;
+    return old_esa[old_ws][state](old_lid);
+  };
+
+  auto oldValue2 = [&](int ws, std::string const& state, int lid, int qp) {
+    auto old_wslid = mapWsLID(ws, lid);
+    auto old_ws    = old_wslid.first;
+    auto old_lid   = old_wslid.second;
+    return old_esa[old_ws][state](old_lid, qp);
+  };
+
+  auto oldValue3 =
+      [&](int ws, std::string const& state, int lid, int qp, int i) {
+        auto old_wslid = mapWsLID(ws, lid);
+        auto old_ws    = old_wslid.first;
+        auto old_lid   = old_wslid.second;
+        return old_esa[old_ws][state](old_lid, qp, i);
+      };
+
+  auto oldValue4 =
+      [&](int ws, std::string const& state, int lid, int qp, int i, int j) {
+        auto old_wslid = mapWsLID(ws, lid);
+        auto old_ws    = old_wslid.first;
+        auto old_lid   = old_wslid.second;
+        return old_esa[old_ws][state](old_lid, qp, i, j);
+      };
+
+  auto oldValue5 = [&](int                ws,
+                       std::string const& state,
+                       int                lid,
+                       int                qp,
+                       int                i,
+                       int                j,
+                       int                k) {
+    auto old_wslid = mapWsLID(ws, lid);
+    auto old_ws    = old_wslid.first;
+    auto old_lid   = old_wslid.second;
+    return old_esa[old_ws][state](old_lid, qp, i, j, k);
+  };
+
   for (auto ws = 0; ws < num_ws; ++ws) {
     for (auto s = 0; s < sis->size(); ++s) {
-      std::string const& state_name = (*sis)[s]->name;
-      std::string const& init_type  = (*sis)[s]->initType;
+      std::string const&             state_name = (*sis)[s]->name;
+      std::string const&             init_type  = (*sis)[s]->initType;
       Albany::StateStruct::FieldDims dims;
       new_esa[ws][state_name].dimensions(dims);
       int size = dims.size();
@@ -124,12 +183,14 @@ AAdapt::Erosion::transferStateArrays()
         case 1:
           for (auto cell = 0; cell < dims[0]; ++cell) {
             double& value = new_esa[ws][state_name](cell);
+            value = oldValue1(ws, state_name, cell);
           }
           break;
         case 2:
           for (auto cell = 0; cell < dims[0]; ++cell) {
             for (auto qp = 0; qp < dims[1]; ++qp) {
               double& value = new_esa[ws][state_name](cell, qp);
+              value = oldValue2(ws, state_name, cell, qp);
             }
           }
           break;
@@ -138,6 +199,7 @@ AAdapt::Erosion::transferStateArrays()
             for (auto qp = 0; qp < dims[1]; ++qp) {
               for (auto i = 0; i < dims[2]; ++i) {
                 double& value = new_esa[ws][state_name](cell, qp, i);
+                value = oldValue3(ws, state_name, cell, qp, i);
               }
             }
           }
@@ -148,6 +210,7 @@ AAdapt::Erosion::transferStateArrays()
               for (int i = 0; i < dims[2]; ++i) {
                 for (int j = 0; j < dims[3]; ++j) {
                   double& value = new_esa[ws][state_name](cell, qp, i, j);
+                  value = oldValue4(ws, state_name, cell, qp, i, j);
                 }
               }
             }
@@ -160,6 +223,7 @@ AAdapt::Erosion::transferStateArrays()
                 for (int j = 0; j < dims[3]; ++j) {
                   for (int k = 0; k < dims[4]; ++k) {
                     double& value = new_esa[ws][state_name](cell, qp, i, j, k);
+                    value = oldValue5(ws, state_name, cell, qp, i, j, k);
                   }
                 }
               }
@@ -211,6 +275,7 @@ AAdapt::Erosion::adaptMesh()
 
   // Throw away all the Albany data structures and re-build them from the mesh
   stk_discretization_->updateMesh();
+  //transferStateArrays();
 
   std::cout << "**** AFTER EROSION ****\n";
   LCM::printElementStates(this->state_mgr_);

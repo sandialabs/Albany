@@ -296,7 +296,7 @@ class STKDiscretization : public AbstractDiscretization
   printElemGIDws(std::ostream& os) const;
 
   std::map<std::pair<int, int>, GO>
-  buildElemWsLIDGIDMap() const;
+  getElemWsLIDGIDMap() const;
 
   void
   printWsElNodeID(std::ostream& os) const;

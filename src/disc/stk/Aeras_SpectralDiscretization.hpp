@@ -305,7 +305,7 @@ namespace Aeras
     }; 
 
     std::map<std::pair<int, int>, GO>
-    buildElemWsLIDGIDMap() const
+    getElemWsLIDGIDMap() const
     {
       // AM: Do nothing. Here because I had to pollute the base
       // class interface to add this for LCM.
