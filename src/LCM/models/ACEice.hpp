@@ -33,9 +33,6 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   ACEiceMiniKernel&
   operator=(ACEiceMiniKernel const&) = delete;
 
-  // AQUI
-  Albany::StateManager* pstate_mgr{nullptr};
-
   using ScalarT          = typename EvalT::ScalarT;
   using ScalarField      = PHX::MDField<ScalarT>;
   using ConstScalarField = PHX::MDField<ScalarT const>;

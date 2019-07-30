@@ -17,9 +17,6 @@ ACEiceMiniKernel<EvalT, Traits>::ACEiceMiniKernel(
     Teuchos::RCP<Albany::Layouts> const& dl)
     : BaseKernel(model)
 {
-  // AQUI
-  pstate_mgr = p->get<Albany::StateManager*>("State Manager");
-  assert(pstate_mgr != nullptr);
   this->setIntegrationPointLocationFlag(true);
 
   // Baseline constants
