@@ -42,6 +42,14 @@ class PUMIDiscretization : public APFDiscretization {
     void printElemGIDws(std::ostream& os) const 
     {//do nothing 
     }; 
+
+    std::map<std::pair<int, int>, GO>
+    buildElemWsLIDGIDMap() const 
+    {//do nothing
+    };
+
+    void
+    printWsElNodeID(std::ostream& os) const {}; 
 #endif
 
   private:

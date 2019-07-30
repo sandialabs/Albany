@@ -312,6 +312,9 @@ namespace Aeras
       std::map<std::pair<int, int>, GO> wslidgid_map;
       return wslidgid_map;
     }
+  
+    void
+    printWsElNodeID(std::ostream& os) const {}; 
 #endif
 
     //! Print the coordinates for debugging
