@@ -299,6 +299,10 @@ namespace Aeras
 #if defined(ALBANY_LCM)
     Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
     getBoundaryIndicator() const override;
+
+    void printElemGIDws(std::ostream& os) const 
+    {//do nothing 
+    }; 
 #endif
 
     //! Print the coordinates for debugging
@@ -577,7 +581,7 @@ namespace Aeras
 
     //Create enum type for the different kinds of elements (currently lines and quads)
     enum elemType {LINE, QUAD};
-    elemType ElemType;
+    elemType ElemType; 
 
   protected:
 
