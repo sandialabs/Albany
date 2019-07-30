@@ -105,8 +105,71 @@ AAdapt::Erosion::copyStateArrays(Albany::StateArrays const& sa)
 //
 //
 void
-AAdapt::Erosion::transferStateArrays(Albany::StateArrays& sa)
+AAdapt::Erosion::transferStateArrays()
 {
+  auto&&     new_sa  = this->state_mgr_.getStateArrays();
+  auto       sis     = this->state_mgr_.getStateInfoStruct();
+  auto&&     new_esa = new_sa.elemStateArrays;
+  auto&&     old_esa = state_arrays_.elemStateArrays;
+  auto const num_ws  = new_esa.size();
+  for (auto ws = 0; ws < num_ws; ++ws) {
+    for (auto s = 0; s < sis->size(); ++s) {
+      std::string const& state_name = (*sis)[s]->name;
+      std::string const& init_type  = (*sis)[s]->initType;
+      Albany::StateStruct::FieldDims dims;
+      new_esa[ws][state_name].dimensions(dims);
+      int size = dims.size();
+      if (size == 0) return;
+      switch (size) {
+        case 1:
+          for (auto cell = 0; cell < dims[0]; ++cell) {
+            double& value = new_esa[ws][state_name](cell);
+          }
+          break;
+        case 2:
+          for (auto cell = 0; cell < dims[0]; ++cell) {
+            for (auto qp = 0; qp < dims[1]; ++qp) {
+              double& value = new_esa[ws][state_name](cell, qp);
+            }
+          }
+          break;
+        case 3:
+          for (auto cell = 0; cell < dims[0]; ++cell) {
+            for (auto qp = 0; qp < dims[1]; ++qp) {
+              for (auto i = 0; i < dims[2]; ++i) {
+                double& value = new_esa[ws][state_name](cell, qp, i);
+              }
+            }
+          }
+          break;
+        case 4:
+          for (int cell = 0; cell < dims[0]; ++cell) {
+            for (int qp = 0; qp < dims[1]; ++qp) {
+              for (int i = 0; i < dims[2]; ++i) {
+                for (int j = 0; j < dims[3]; ++j) {
+                  double& value = new_esa[ws][state_name](cell, qp, i, j);
+                }
+              }
+            }
+          }
+          break;
+        case 5:
+          for (int cell = 0; cell < dims[0]; ++cell) {
+            for (int qp = 0; qp < dims[1]; ++qp) {
+              for (int i = 0; i < dims[2]; ++i) {
+                for (int j = 0; j < dims[3]; ++j) {
+                  for (int k = 0; k < dims[4]; ++k) {
+                    double& value = new_esa[ws][state_name](cell, qp, i, j, k);
+                  }
+                }
+              }
+            }
+          }
+          break;
+        default: ALBANY_ASSERT(1 <= size && size <= 5, ""); break;
+      }
+    }
+  }
 }
 
 //

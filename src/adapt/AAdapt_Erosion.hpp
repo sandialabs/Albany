@@ -77,7 +77,7 @@ class Erosion : public AbstractAdapter
   copyStateArrays(Albany::StateArrays const& sa);
 
   void
-  transferStateArrays(Albany::StateArrays& sa);
+  transferStateArrays();
 
   ///
   /// stk_mesh Bulk Data

@@ -71,9 +71,9 @@ printElementStates(Albany::StateManager const& state_mgr)
   auto const num_ws = esa.size();
   fos << "**** BEGIN ELEMENT STATES ****\n";
   for (auto ws = 0; ws < num_ws; ++ws) {
-    for (auto i = 0; i < sis->size(); i++) {
-      std::string const& state_name = (*sis)[i]->name;
-      std::string const& init_type  = (*sis)[i]->initType;
+    for (auto s = 0; s < sis->size(); ++s) {
+      std::string const& state_name = (*sis)[s]->name;
+      std::string const& init_type  = (*sis)[s]->initType;
       // AQUI
       if (state_name != "ACE Failure Indicator") continue;
       Albany::StateStruct::FieldDims dims;
@@ -173,9 +173,9 @@ printNodeStates(Albany::StateManager const& state_mgr)
   auto const num_ws = nsa.size();
   fos << "**** BEGIN NODE STATES ****\n";
   for (auto ws = 0; ws < num_ws; ++ws) {
-    for (auto i = 0; i < sis->size(); i++) {
-      std::string const&             state_name = (*sis)[i]->name;
-      std::string const&             init_type  = (*sis)[i]->initType;
+    for (auto s = 0; s < sis->size(); ++s) {
+      std::string const& state_name = (*sis)[s]->name;
+      std::string const& init_type  = (*sis)[s]->initType;
       Albany::StateStruct::FieldDims dims;
       nsa[ws][state_name].dimensions(dims);
       int size = dims.size();
