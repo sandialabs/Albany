@@ -11,14 +11,18 @@
 
 #include "AAdapt_AbstractAdapter.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include "Albany_StateInfoStruct.hpp"
+#include "Shards_Array.hpp"
 
 // Forward declarations
 namespace LCM {
 class AbstractFailureCriterion;
 class Topology;
-}
+}  // namespace LCM
 
 namespace AAdapt {
+
+using MDArray = shards::Array<double, shards::NaturalOrder>;
 
 ///
 /// \brief Topology modification based adapter
@@ -38,7 +42,7 @@ class Erosion : public AbstractAdapter
   ///
   /// Disallow copy and assignment and default
   ///
-  Erosion() = delete;
+  Erosion()               = delete;
   Erosion(Erosion const&) = delete;
   Erosion&
   operator=(Erosion const&) = delete;
@@ -69,6 +73,12 @@ class Erosion : public AbstractAdapter
   getValidAdapterParameters() const;
 
  private:
+  void
+  copyStateArrays(Albany::StateArrays const& sa);
+
+  void
+  transferStateArrays(Albany::StateArrays& sa);
+
   ///
   /// stk_mesh Bulk Data
   ///
@@ -79,6 +89,9 @@ class Erosion : public AbstractAdapter
   Teuchos::RCP<stk::mesh::MetaData>            meta_data_{Teuchos::null};
   Teuchos::RCP<LCM::AbstractFailureCriterion> failure_criterion_{Teuchos::null};
   Teuchos::RCP<LCM::Topology>                 topology_{Teuchos::null};
+  std::vector<std::vector<double>>            cell_state_store_;
+  std::vector<std::vector<double>>            node_state_store_;
+  Albany::StateArrays                         state_arrays_;
 
   int         num_dim_{0};
   int         remesh_file_index_{0};

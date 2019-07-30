@@ -159,6 +159,9 @@ class AbstractDiscretization
 
   virtual void
   printElemGIDws(std::ostream& os) const = 0;
+
+  virtual void
+  printWsElNodeID(std::ostream& os) const = 0;
 #endif
 
   //! Print the coords for mesh debugging

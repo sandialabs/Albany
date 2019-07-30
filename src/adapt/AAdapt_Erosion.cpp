@@ -9,7 +9,6 @@
 #include <stk_util/parallel/ParallelReduce.hpp>
 #include "Albany_Utils.hpp"
 #include "LCM/utils/topology/Topology_FailureCriterion.h"
-
 namespace AAdapt {
 
 //
@@ -49,6 +48,60 @@ AAdapt::Erosion::queryAdaptationCriteria(int)
   return topology_->there_are_failed_cells();
 }
 
+namespace {
+
+void
+copyStateArray(
+    Albany::StateArrayVec const&      src,
+    Albany::StateArrayVec&            dst,
+    std::vector<std::vector<double>>& store)
+{
+  auto const num_ws = src.size();
+  dst.resize(num_ws);
+  store.resize(num_ws);
+  for (auto ws = 0; ws < num_ws; ++ws) {
+    auto&& src_map = src[ws];
+    auto&& dst_map = dst[ws];
+    for (auto&& kv : src_map) {
+      auto&&     state_name = kv.first;
+      auto&&     src_states = kv.second;
+      auto&&     dst_states = dst_map[state_name];
+      auto const num_states = src_states.size();
+      auto const rank       = src_states.rank();
+      using DimT            = decltype(src_states.dimension(0));
+      using TagT            = decltype(src_states.tag(0));
+      std::vector<DimT> dims(rank);
+      std::vector<TagT> tags(rank);
+      for (auto i = 0; i < rank; ++i) {
+        dims[i] = src_states.dimension(i);
+        tags[i] = src_states.tag(i);
+      }
+      store[ws].resize(num_states);
+      auto*   pval = &store[ws][0];
+      auto*   pdim = &dims[0];
+      auto*   ptag = &tags[0];
+      MDArray mda(pval, rank, pdim, ptag);
+      dst_states = mda;
+    }
+  }
+}
+
+}  // anonymous namespace
+
+//
+//
+//
+void
+AAdapt::Erosion::copyStateArrays(Albany::StateArrays const& sa)
+{
+  auto&& src_esa = sa.elemStateArrays;
+  auto&& dst_esa = state_arrays_.elemStateArrays;
+  copyStateArray(src_esa, dst_esa, cell_state_store_);
+  auto&& src_nsa = sa.nodeStateArrays;
+  auto&& dst_nsa = state_arrays_.nodeStateArrays;
+  copyStateArray(src_nsa, dst_nsa, node_state_store_);
+}
+
 //
 //
 //
@@ -78,6 +131,8 @@ AAdapt::Erosion::adaptMesh()
   Albany::printInternalElementStates(this->state_mgr_);
   topology_->printFailureState(std::cout);
   stk_discretization_->printElemGIDws(std::cout);
+  auto&& state_arrays = stk_discretization_->getStateArrays();
+  copyStateArrays(state_arrays);
 
   // Start the mesh update process
   topology_->erodeFailedElements();

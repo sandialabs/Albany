@@ -11,7 +11,7 @@ namespace LCM {
 void
 fromTo(Albany::StateArrayVec const& src, LCM::StateArrayVec& dst)
 {
-  const int num_ws = src.size();
+  auto const num_ws = src.size();
   dst.resize(num_ws);
   for (auto ws = 0; ws < num_ws; ++ws) {
     auto&& src_map = src[ws];
@@ -30,7 +30,7 @@ fromTo(Albany::StateArrayVec const& src, LCM::StateArrayVec& dst)
 void
 fromTo(LCM::StateArrayVec const& src, Albany::StateArrayVec& dst)
 {
-  const auto num_ws = src.size();
+  auto const num_ws = src.size();
   assert(num_ws == dst.size());
   for (auto ws = 0; ws < num_ws; ++ws) {
     auto&& src_map = src[ws];
