@@ -104,6 +104,14 @@ AAdapt::Erosion::copyStateArrays(Albany::StateArrays const& sa)
 //
 //
 //
+void
+AAdapt::Erosion::transferStateArrays(Albany::StateArrays& sa)
+{
+}
+
+//
+//
+//
 bool
 AAdapt::Erosion::adaptMesh()
 {
