@@ -69,6 +69,7 @@ printElementStates(Albany::StateManager const& state_mgr)
   auto&      fos    = *Teuchos::VerboseObjectBase::getDefaultOStream();
   auto&      esa    = sa.elemStateArrays;
   auto const num_ws = esa.size();
+  fos << "**** BEGIN ELEMENT STATES ****\n";
   for (auto ws = 0; ws < num_ws; ++ws) {
     for (auto i = 0; i < sis->size(); i++) {
       std::string const& state_name = (*sis)[i]->name;
@@ -159,6 +160,61 @@ printElementStates(Albany::StateManager const& state_mgr)
       }
     }
   }
+  fos << "**** END ELEMENT STATES ****\n";
+}
+
+void
+printNodeStates(Albany::StateManager const& state_mgr)
+{
+  auto&      sa     = state_mgr.getStateArrays();
+  auto       sis    = state_mgr.getStateInfoStruct();
+  auto&      fos    = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  auto&      nsa    = sa.nodeStateArrays;
+  auto const num_ws = nsa.size();
+  fos << "**** BEGIN NODE STATES ****\n";
+  for (auto ws = 0; ws < num_ws; ++ws) {
+    for (auto i = 0; i < sis->size(); i++) {
+      std::string const&             state_name = (*sis)[i]->name;
+      std::string const&             init_type  = (*sis)[i]->initType;
+      Albany::StateStruct::FieldDims dims;
+      nsa[ws][state_name].dimensions(dims);
+      int size = dims.size();
+      if (size == 0) return;
+      switch (size) {
+        case 1:
+          for (auto node = 0; node < dims[0]; ++node) {
+            double& value = nsa[ws][state_name](node);
+            fos << "**** # SCALAR, " << state_name << "(" << node << ")"
+                << " = " << value << '\n';
+          }
+          break;
+        case 2:
+          for (auto node = 0; node < dims[0]; ++node) {
+            for (auto i = 0; i < dims[1]; ++i) {
+              double& value = nsa[ws][state_name](node, i);
+              fos << "**** # VECTOR, " << state_name << "(" << node << "," << i
+                  << ")"
+                  << " = " << value << '\n';
+            }
+          }
+          break;
+        case 3:
+          for (int node = 0; node < dims[0]; ++node) {
+            for (int i = 0; i < dims[1]; ++i) {
+              for (int j = 0; j < dims[2]; ++j) {
+                double& value = nsa[ws][state_name](node, i, j);
+                fos << "**** # INDEX 4, " << state_name << "(" << node << ","
+                    << i << "," << j << ")"
+                    << " = " << value << '\n';
+              }
+            }
+          }
+          break;
+        default: ALBANY_ASSERT(1 <= size && size <= 3, ""); break;
+      }
+    }
+  }
+  fos << "**** END NODE STATES ****\n";
 }
 
 }  // namespace LCM

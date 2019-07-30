@@ -128,6 +128,7 @@ AAdapt::Erosion::adaptMesh()
   // AQUI
   std::cout << "**** BEFORE EROSION ****\n";
   LCM::printElementStates(this->state_mgr_);
+  LCM::printNodeStates(this->state_mgr_);
   topology_->printFailureState(std::cout);
   stk_discretization_->printElemGIDws(std::cout);
   stk_discretization_->printWsElNodeID(std::cout);
@@ -142,6 +143,7 @@ AAdapt::Erosion::adaptMesh()
 
   std::cout << "**** AFTER EROSION ****\n";
   LCM::printElementStates(this->state_mgr_);
+  LCM::printNodeStates(this->state_mgr_);
   topology_->printFailureState(std::cout);
   stk_discretization_->printElemGIDws(std::cout);
   stk_discretization_->printWsElNodeID(std::cout);

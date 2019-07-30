@@ -45,6 +45,9 @@ fromTo(LCM::StateArrays const& src, Albany::StateArrays& dst);
 void
 printElementStates(Albany::StateManager const& state_mgr);
 
+void
+printNodeStates(Albany::StateManager const& state_mgr);
+
 }  // namespace LCM
 
 #endif  // LCM_StateVarUtils_hpp
