@@ -303,6 +303,15 @@ namespace Aeras
     void printElemGIDws(std::ostream& os) const 
     {//do nothing 
     }; 
+
+    std::map<std::pair<int, int>, GO>
+    buildElemWsLIDGIDMap() const
+    {
+      // AM: Do nothing. Here because I had to pollute the base
+      // class interface to add this for LCM.
+      std::map<std::pair<int, int>, GO> wslidgid_map;
+      return wslidgid_map;
+    }
 #endif
 
     //! Print the coordinates for debugging
