@@ -160,6 +160,9 @@ class AbstractDiscretization
   virtual void
   printElemGIDws(std::ostream& os) const = 0;
 
+  virtual std::map<std::pair<int, int>, GO>
+  buildElemWsLIDGIDMap() const = 0;
+
   virtual void
   printWsElNodeID(std::ostream& os) const = 0;
 #endif

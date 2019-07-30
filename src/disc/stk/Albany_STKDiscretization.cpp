@@ -1252,7 +1252,7 @@ STKDiscretization::setResidualField(const Thyra_Vector& residual)
 void
 STKDiscretization::printElemGIDws(std::ostream& os) const
 {
-  auto& gidwslid_map = getElemGIDws();
+  auto&& gidwslid_map = getElemGIDws();
   for (auto gidwslid : gidwslid_map) {
     auto const gid   = gidwslid.first;
     auto const wslid = gidwslid.second;
@@ -1260,6 +1260,22 @@ STKDiscretization::printElemGIDws(std::ostream& os) const
     auto const lid   = wslid.LID;
     os << "**** GID : " << gid << " WS : " << ws << " LID : " << lid << "\n";
   }
+}
+
+std::map<std::pair<int, int>, GO>
+STKDiscretization::buildElemWsLIDGIDMap() const
+{
+  std::map<std::pair<int, int>, GO> wslidgid_map;
+  auto&&                            gidwslid_map = getElemGIDws();
+  for (auto gidwslid : gidwslid_map) {
+    auto const gid           = gidwslid.first;
+    auto const wslid         = gidwslid.second;
+    auto const ws            = wslid.ws;
+    auto const lid           = wslid.LID;
+    auto       wslid_pair    = std::make_pair(ws, lid);
+    wslidgid_map[wslid_pair] = gid;
+  }
+  return wslidgid_map;
 }
 
 void
