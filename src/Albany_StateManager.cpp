@@ -892,6 +892,8 @@ Albany::StateManager::updateStates()
             for (int j = 0; j < nsa[ws][stateName].size(); j++)
               nsa[ws][stateName_old][j] = nsa[ws][stateName][j];
 
+          break;
+
         case Albany::StateStruct::WorksetValue:
         case Albany::StateStruct::ElemData:
         case Albany::StateStruct::QuadPoint:
@@ -1256,4 +1258,10 @@ Albany::StateManager::doSetStateArrays(
     }
   }
   *out << std::endl;
+}
+
+void
+Albany::StateManager::printStates() const
+{
+
 }

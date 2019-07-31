@@ -237,11 +237,15 @@ class StateManager {
   {
     return stateInfo->createNodalDataBase();
   }
+
   Teuchos::RCP<Adapt::NodalDataBase>
   getSideSetNodalDataBase(const std::string& sideSet)
   {
     return sideSetStateInfo.at(sideSet)->createNodalDataBase();
   }
+
+  void
+  printStates() const;
 
 #if defined(ALBANY_EPETRA)
   /// Methods to get/set the EigendataStruct which holds eigenvalue /
