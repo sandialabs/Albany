@@ -231,7 +231,7 @@ class Topology
   insertSurfaceElements(std::set<EntityPair> const& fractured_faces);
 
   void
-  printFailureState(std::ostream& os);
+  printFailureState();
 
   ///
   /// \brief Adds a new entity of rank 3 to the mesh

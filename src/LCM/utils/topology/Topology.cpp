@@ -1138,7 +1138,7 @@ Topology::splitOpenFaces()
 //
 //
 void
-Topology::printFailureState(std::ostream& os)
+Topology::printFailureState()
 {
   stk::mesh::BulkData&        bulk_data = get_bulk_data();
   stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
@@ -1148,9 +1148,10 @@ Topology::printFailureState(std::ostream& os)
   ScalarFieldType const* const failure_state =
       meta_data.get_field<ScalarFieldType>(cell_rank, "ACE Failure Indicator");
 
+  auto& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
   for (auto cell : cells) {
     double const fs = *stk::mesh::field_data(*failure_state, cell);
-    os << "**** STK ELEMENT : " << cell << " FAIL : " << fs << '\n';
+    fos << "**** Topology : STK ELEMENT : " << cell << " FAIL : " << fs << '\n';
   }
 }
 

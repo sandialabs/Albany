@@ -372,7 +372,7 @@ AAdapt::Erosion::adaptMesh()
   // AQUI
   std::cout << "**** BEFORE EROSION ****\n";
   this->state_mgr_.printStates();
-  topology_->printFailureState(std::cout);
+  topology_->printFailureState();
   stk_discretization_->printElemGIDws(std::cout);
   // auto&& state_arrays = stk_discretization_->getStateArrays();
   // copyStateArrays(state_arrays);
@@ -396,7 +396,7 @@ AAdapt::Erosion::postAdapt()
 {
   std::cout << "**** AFTER EROSION ****\n";
   this->state_mgr_.printStates();
-  topology_->printFailureState(std::cout);
+  topology_->printFailureState();
   stk_discretization_->printElemGIDws(std::cout);
 }
 //
