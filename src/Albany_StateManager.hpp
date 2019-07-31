@@ -246,7 +246,7 @@ class StateManager
   }
 
   void
-  printStates() const;
+  printStates(std::string const& where = "") const;
 
 #if defined(ALBANY_EPETRA)
   /// Methods to get/set the EigendataStruct which holds eigenvalue /

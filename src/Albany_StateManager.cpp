@@ -987,8 +987,12 @@ Albany::StateManager::getResidResponseIDsToRequire(
 //
 //
 void
-Albany::StateManager::printStates() const
+Albany::StateManager::printStates(std::string const& where) const
 {
+  if (where != "") {
+    auto& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+    fos << "**** StateMAnager: PRINTING FROM : " << where << '\n';
+  }
   printElementStates();
   printNodeStates();
 }
