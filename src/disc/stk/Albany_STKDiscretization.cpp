@@ -1250,15 +1250,16 @@ STKDiscretization::setResidualField(const Thyra_Vector& residual)
 }
 
 void
-STKDiscretization::printElemGIDws(std::ostream& os) const
+STKDiscretization::printElemGIDws() const
 {
   auto&& gidwslid_map = getElemGIDws();
+  auto&  fos          = *Teuchos::VerboseObjectBase::getDefaultOStream();
   for (auto gidwslid : gidwslid_map) {
     auto const gid   = gidwslid.first;
     auto const wslid = gidwslid.second;
     auto const ws    = wslid.ws;
     auto const lid   = wslid.LID;
-    os << "**** GID : " << gid << " WS : " << ws << " LID : " << lid << "\n";
+    fos << "**** GID : " << gid << " WS : " << ws << " LID : " << lid << "\n";
   }
 }
 
@@ -1279,10 +1280,11 @@ STKDiscretization::getElemWsLIDGIDMap() const
 }
 
 void
-STKDiscretization::printWsElNodeID(std::ostream& os) const
+STKDiscretization::printWsElNodeID() const
 {
   auto&&     wselnodegid = getWsElNodeID();
   auto const num_ws      = wselnodegid.size();
+  auto&      fos         = *Teuchos::VerboseObjectBase::getDefaultOStream();
   for (auto ws = 0; ws < num_ws; ++ws) {
     auto&&     elnodegid = wselnodegid[ws];
     auto const num_el    = elnodegid.size();
@@ -1291,8 +1293,8 @@ STKDiscretization::printWsElNodeID(std::ostream& os) const
       auto const num_node = nodegid.size();
       for (auto node = 0; node < num_node; ++node) {
         auto const gid = nodegid[node];
-        os << "**** GID : " << gid << " WS : " << ws << " EL : " << el
-           << " LID : " << node << "\n";
+        fos << "**** GID : " << gid << " WS : " << ws << " EL : " << el
+            << " LID : " << node << "\n";
       }
     }
   }

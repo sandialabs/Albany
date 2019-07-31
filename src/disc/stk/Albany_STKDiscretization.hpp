@@ -293,13 +293,13 @@ class STKDiscretization : public AbstractDiscretization
   }
 
   void
-  printElemGIDws(std::ostream& os) const;
+  printElemGIDws() const;
 
   std::map<std::pair<int, int>, GO>
   getElemWsLIDGIDMap() const;
 
   void
-  printWsElNodeID(std::ostream& os) const;
+  printWsElNodeID() const;
 #endif
 
   //! Print the coordinates for debugging

@@ -296,27 +296,6 @@ namespace Aeras
     const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
     getLatticeOrientation() const override;
 
-#if defined(ALBANY_LCM)
-    Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
-    getBoundaryIndicator() const override;
-
-    void printElemGIDws(std::ostream& os) const 
-    {//do nothing 
-    }; 
-
-    std::map<std::pair<int, int>, GO>
-    getElemWsLIDGIDMap() const
-    {
-      // AM: Do nothing. Here because I had to pollute the base
-      // class interface to add this for LCM.
-      std::map<std::pair<int, int>, GO> wslidgid_map;
-      return wslidgid_map;
-    }
-  
-    void
-    printWsElNodeID(std::ostream& os) const {}; 
-#endif
-
     //! Print the coordinates for debugging
     void printCoords() const override;
     void printConnectivity(bool printEdges=false) const;
