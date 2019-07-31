@@ -45,6 +45,8 @@ public:
   //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
   virtual bool adaptMesh() = 0;
 
+  virtual void postAdapt() {}
+
   ///
   /// Each adapter must generate its list of valid parameters
   ///

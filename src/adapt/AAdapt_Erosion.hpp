@@ -23,6 +23,7 @@ class Topology;
 namespace AAdapt {
 
 using MDArray = shards::Array<double, shards::NaturalOrder>;
+using StoreT = std::vector<std::map<std::string, std::vector<double>>>;
 
 ///
 /// \brief Topology modification based adapter
@@ -66,6 +67,9 @@ class Erosion : public AbstractAdapter
   virtual bool
   adaptMesh();
 
+  virtual void
+  postAdapt();
+
   ///
   /// Each adapter must generate its list of valid parameters
   ///
@@ -79,9 +83,6 @@ class Erosion : public AbstractAdapter
   void
   transferStateArrays();
 
-  ///
-  /// stk_mesh Bulk Data
-  ///
   Teuchos::RCP<stk::mesh::BulkData>            bulk_data_{Teuchos::null};
   Teuchos::RCP<Albany::AbstractSTKMeshStruct>  stk_mesh_struct_{Teuchos::null};
   Teuchos::RCP<Albany::AbstractDiscretization> discretization_{Teuchos::null};
@@ -89,8 +90,8 @@ class Erosion : public AbstractAdapter
   Teuchos::RCP<stk::mesh::MetaData>            meta_data_{Teuchos::null};
   Teuchos::RCP<LCM::AbstractFailureCriterion> failure_criterion_{Teuchos::null};
   Teuchos::RCP<LCM::Topology>                 topology_{Teuchos::null};
-  std::vector<std::vector<double>>            cell_state_store_;
-  std::vector<std::vector<double>>            node_state_store_;
+  StoreT            cell_state_store_;
+  StoreT            node_state_store_;
   Albany::StateArrays                         state_arrays_;
 
   int         num_dim_{0};

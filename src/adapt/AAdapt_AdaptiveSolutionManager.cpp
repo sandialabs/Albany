@@ -293,6 +293,8 @@ AdaptiveSolutionManager::adaptProblem()
 
     current_soln = disc_->getSolutionMV();
 
+    adapter_->postAdapt();
+
     *out << "Mesh adaptation was successfully performed!" << std::endl;
 
     return true;
