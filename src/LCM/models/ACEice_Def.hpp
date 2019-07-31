@@ -288,8 +288,8 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor F(num_dims_);
   Tensor sigma(num_dims_);
 
-  auto const coord_vec    = this->model_.getCoordVecField();
-  auto const height       = coord_vec(cell, pt, 2);
+  auto const coords       = this->model_.getCoordVecField();
+  auto const height       = Sacado::Value<ScalarT>::eval(coords(cell, pt, 2));
   auto const current_time = current_time_;
 
   ScalarT const E                      = elastic_modulus_(cell, pt);

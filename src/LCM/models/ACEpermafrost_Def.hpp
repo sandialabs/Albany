@@ -53,7 +53,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   ALBANY_ASSERT(
       time_.size() == sea_level_.size(),
       "*** ERROR: Number of times and number of sea level values must match.");
- 
+
   if (p->isParameter("ACE Z Depth File") == true) {
     std::string const filename = p->get<std::string>("ACE Z Depth File");
     z_above_mean_sea_level_    = vectorFromFile(filename);
@@ -71,8 +71,9 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
     porosity_from_file_        = vectorFromFile(filename);
   }
   if (p->isParameter("ACE Freezing Curve Width File") == true) {
-    std::string const filename = p->get<std::string>("ACE Freezing Curve Width File");
-    freezing_curve_width_      = vectorFromFile(filename);
+    std::string const filename =
+        p->get<std::string>("ACE Freezing Curve Width File");
+    freezing_curve_width_ = vectorFromFile(filename);
   }
   ALBANY_ASSERT(
       z_above_mean_sea_level_.size() == salinity_.size(),
@@ -88,7 +89,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
       "ACE Porosity File must match.");
   ALBANY_ASSERT(
       z_above_mean_sea_level_.size() == freezing_curve_width_.size(),
-      "*** ERROR: Number of z values and number of freezing curve width values in "
+      "*** ERROR: Number of z values and number of freezing curve width values "
+      "in "
       "ACE Freezing Curve Width File must match.");
 
   // retrieve appropriate field name strings
@@ -328,8 +330,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   Tensor F(num_dims_);
   Tensor sigma(num_dims_);
 
-  auto const coord_vec = this->model_.getCoordVecField();
-  auto const height       = coord_vec(cell, pt, 2);
+  auto const coords       = this->model_.getCoordVecField();
+  auto const height       = Sacado::Value<ScalarT>::eval(coords(cell, pt, 2));
   auto const current_time = current_time_;
 
   ScalarT const E                      = elastic_modulus_(cell, pt);
@@ -348,7 +350,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
 
   auto&& delta_time    = delta_time_(0);
-  auto&& failed = failed_(cell, 0);
+  auto&& failed        = failed_(cell, 0);
   auto&& exposure_time = exposure_time_(cell, pt);
 
   // Determine if erosion has occurred.
@@ -378,8 +380,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   //       to be done once, at the beginning of the simulation.
   ScalarT porosity = porosity0_;
   if (porosity_from_file_.size() > 0) {
-    porosity = interpolateVectors(z_above_mean_sea_level_, 
-		                  porosity_from_file_, height);
+    porosity = interpolateVectors(
+        z_above_mean_sea_level_, porosity_from_file_, height);
   }
   porosity_(cell, pt) = porosity;
 
@@ -387,11 +389,11 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   bool const b_cell = porosity < 0.0;
 
   // Calculate melting temperature
-  ScalarT sal   = salinity_base_;  // should come from chemical part of model
+  ScalarT sal = salinity_base_;  // should come from chemical part of model
   if (salinity_.size() > 0) {
     sal = interpolateVectors(z_above_mean_sea_level_, salinity_, height);
   }
-  ScalarT sal15 = std::sqrt(sal * sal * sal);
+  ScalarT sal15          = std::sqrt(sal * sal * sal);
   ScalarT pressure_fixed = 1.0;
   // Tmelt is in Kelvin
   ScalarT Tmelt = -0.057 * sal + 0.00170523 * sal15 - 0.0002154996 * sal * sal -
@@ -409,10 +411,10 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // W term sets the width of the freezing curve.
   // Smaller W means steeper curve.
   // f(T) = 1 / (1 + e^(-W*(T-T0)))
-  ScalarT W = freeze_curve_width_; // constant value
+  ScalarT W = freeze_curve_width_;  // constant value
   if (freezing_curve_width_.size() > 0) {
-    W = interpolateVectors(z_above_mean_sea_level_, 
-		           freezing_curve_width_, height);
+    W = interpolateVectors(
+        z_above_mean_sea_level_, freezing_curve_width_, height);
   }
   ScalarT const Tdiff = Tcurr - Tmelt;
   ScalarT const arg   = -W * Tdiff;
@@ -436,7 +438,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // If air pockets exist, correct for air saturation
   ScalarT air_sat = 0.0;
   if (air_saturation_.size() > 0) {
-    air_sat = interpolateVectors(z_above_mean_sea_level_, air_saturation_, height);
+    air_sat =
+        interpolateVectors(z_above_mean_sea_level_, air_saturation_, height);
     icurr = icurr - air_sat;
     icurr = std::max(icurr, 0.0);
     icurr = std::min(icurr, 1.0);
@@ -452,18 +455,19 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Update the effective material density
   density_(cell, pt) =
       (porosity * ((ice_density_ * icurr) + (water_density_ * wcurr) +
-      (1.225 * air_sat))) + ((1.0 - porosity) * soil_density_);
+                   (1.225 * air_sat))) +
+      ((1.0 - porosity) * soil_density_);
 
   // Update the effective material heat capacity
-  heat_capacity_(cell, pt) = (porosity * ((ice_heat_capacity_ * icurr) +
-                                          (water_heat_capacity_ * wcurr) +
-					  (1.006e+03 * air_sat))) +
-                             ((1.0 - porosity) * soil_heat_capacity_);
+  heat_capacity_(cell, pt) =
+      (porosity * ((ice_heat_capacity_ * icurr) +
+                   (water_heat_capacity_ * wcurr) + (1.006e+03 * air_sat))) +
+      ((1.0 - porosity) * soil_heat_capacity_);
 
   // Update the effective material thermal conductivity
   thermal_cond_(cell, pt) = pow(ice_thermal_cond_, (icurr * porosity)) *
                             pow(water_thermal_cond_, (wcurr * porosity)) *
-			    pow(0.0255, (air_sat * porosity)) *
+                            pow(0.0255, (air_sat * porosity)) *
                             pow(soil_thermal_cond_, (1.0 - porosity));
 
   // Update the material thermal inertia term
@@ -475,14 +479,14 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   if (b_cell == true) {
     if (is_exposed_to_water == true) {
       // These are values for seawater:
-      density_(cell, pt) = 1027.3;          // [kg/m3]
-      heat_capacity_(cell, pt) = 4.000e+03; // [J/kg/K]
-      thermal_cond_(cell, pt) = 0.59;       // [W/K/m]
+      density_(cell, pt)       = 1027.3;     // [kg/m3]
+      heat_capacity_(cell, pt) = 4.000e+03;  // [J/kg/K]
+      thermal_cond_(cell, pt)  = 0.59;       // [W/K/m]
     } else {
       // These are values for air:
-      density_(cell, pt) = 1.225;           // [kg/m3]
-      heat_capacity_(cell, pt) = 1.006e+03; // [J/kg/K]
-      thermal_cond_(cell, pt) = 0.0255;     // [W/K/m]
+      density_(cell, pt)       = 1.225;      // [kg/m3]
+      heat_capacity_(cell, pt) = 1.006e+03;  // [J/kg/K]
+      thermal_cond_(cell, pt)  = 0.0255;     // [W/K/m]
     }
     thermal_inertia_(cell, pt) = density_(cell, pt) * heat_capacity_(cell, pt);
   }
