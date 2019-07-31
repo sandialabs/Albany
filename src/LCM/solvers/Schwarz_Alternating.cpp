@@ -655,8 +655,7 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 #endif
       fromTo(state_mgr.getStateArrays(), internal_states_[subdomain]);
 #ifdef DEBUG
-      LCM::printElementStates(state_mgr);
-
+      state_mgr.printStates();
       fos << "DEBUG: ...done setting internal states subdomain = " << subdomain
           << ".\n";
 #endif
@@ -731,9 +730,7 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 #endif
         fromTo(internal_states_[subdomain], state_mgr.getStateArrays());
 #ifdef DEBUG
-        // IKT, 3/29/19: I changed the first argument in the following function,
-        // to get code to compile.
-        LCM::printElementStates(state_mgr);
+        state_mgr.printStates();
         fos << "DEBUG: ...done setting internal states subdomain = "
             << subdomain << ".\n";
 #endif

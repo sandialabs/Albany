@@ -7,7 +7,6 @@
 #include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
-//#define IKT_DEBUG
 
 Albany::StateManager::StateManager()
     : stateVarsAreAllocated(false), stateInfo(Teuchos::rcp(new StateInfoStruct))
@@ -193,13 +192,6 @@ Albany::StateManager::registerStateVariable(
   auto const end               = registered_states.end();
   bool const is_duplicate      = it != end;
   if (is_duplicate == true) {
-    // Duplicate registration.  This will occur when a problem's
-    // constructEvaluators function (templated) registers state variables.
-
-    // Perform a check here that dl and statesToStore[stateName] are the same:
-    // TEUCHOS_TEST_FOR_EXCEPT(dl != statesToStore[stateName]);  //I don't know
-    // how to do this correctly (erik)
-    //    TEUCHOS_TEST_FOR_EXCEPT(!(*dl == *statesToStore[stateName]));
     return;  // Don't re-register the same state name
   }
 
@@ -314,13 +306,6 @@ Albany::StateManager::registerNodalVectorStateVariable(
   using Albany::StateStruct;
 
   if (statesToStore[ebName].find(stateName) != statesToStore[ebName].end()) {
-    // Duplicate registration.  This will occur when a problem's
-    // constructEvaluators function (templated) registers state variables.
-
-    // Perform a check here that dl and statesToStore[stateName] are the same:
-    // TEUCHOS_TEST_FOR_EXCEPT(dl != statesToStore[stateName]);  //I don't know
-    // how to do this correctly (erik)
-    //    TEUCHOS_TEST_FOR_EXCEPT(!(*dl == *statesToStore[stateName]));
     return;  // Don't re-register the same state name
   }
 
@@ -491,13 +476,6 @@ Albany::StateManager::registerSideSetStateVariable(
 
   if (sideSetStatesToStore[sideSetName][ebName].find(stateName) !=
       sideSetStatesToStore[sideSetName][ebName].end()) {
-    // Duplicate registration.  This will occur when a problem's
-    // constructEvaluators function (templated) registers state variables.
-
-    // Perform a check here that dl and statesToStore[stateName] are the same:
-    // TEUCHOS_TEST_FOR_EXCEPT(dl != statesToStore[stateName]);  //I don't know
-    // how to do this correctly (erik)
-    //    TEUCHOS_TEST_FOR_EXCEPT(!(*dl == *statesToStore[stateName]));
     return p;  // Don't re-register the same state name
   }
 
@@ -1005,6 +983,161 @@ Albany::StateManager::getResidResponseIDsToRequire(
   return idsToRequire;
 }
 
+//
+//
+//
+void
+Albany::StateManager::printStates() const
+{
+  printElementStates();
+  printNodeStates();
+}
+
+//
+//
+//
+void
+Albany::StateManager::printElementStates() const
+{
+  auto&      sa     = getStateArrays();
+  auto       sis    = getStateInfoStruct();
+  auto&      fos    = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  auto&      esa    = sa.elemStateArrays;
+  auto const num_ws = esa.size();
+  fos << "**** StateMAnager: BEGIN ELEMENT STATES ****\n";
+  for (auto ws = 0; ws < num_ws; ++ws) {
+    for (auto s = 0; s < sis->size(); ++s) {
+      std::string const& state_name = (*sis)[s]->name;
+      std::string const& init_type  = (*sis)[s]->initType;
+      // AQUI
+      if (state_name != "ACE Failure Indicator") continue;
+      Albany::StateStruct::FieldDims dims;
+      esa[ws][state_name].dimensions(dims);
+      int size = dims.size();
+      if (size == 0) return;
+      switch (size) {
+        case 1:
+          for (auto cell = 0; cell < dims[0]; ++cell) {
+            double& value = esa[ws][state_name](cell);
+            fos << "**** # INDEX 1, " << state_name << "(" << cell << ")"
+                << " = " << value << '\n';
+          }
+          break;
+        case 2:
+          for (auto cell = 0; cell < dims[0]; ++cell) {
+            for (auto qp = 0; qp < dims[1]; ++qp) {
+              double& value = esa[ws][state_name](cell, qp);
+              fos << "**** # INDEX 2, " << state_name << "(" << cell << ","
+                  << qp << ")"
+                  << " = " << value << '\n';
+            }
+          }
+          break;
+        case 3:
+          for (auto cell = 0; cell < dims[0]; ++cell) {
+            for (auto qp = 0; qp < dims[1]; ++qp) {
+              for (auto i = 0; i < dims[2]; ++i) {
+                double& value = esa[ws][state_name](cell, qp, i);
+                fos << "**** # INDEX 3, " << state_name << "(" << cell << ","
+                    << qp << "," << i << ")"
+                    << " = " << value << '\n';
+              }
+            }
+          }
+          break;
+        case 4:
+          for (int cell = 0; cell < dims[0]; ++cell) {
+            for (int qp = 0; qp < dims[1]; ++qp) {
+              for (int i = 0; i < dims[2]; ++i) {
+                for (int j = 0; j < dims[3]; ++j) {
+                  double& value = esa[ws][state_name](cell, qp, i, j);
+                  fos << "**** # INDEX 4, " << state_name << "(" << cell << ","
+                      << qp << "," << i << "," << j << ")"
+                      << " = " << value << '\n';
+                }
+              }
+            }
+          }
+          break;
+        case 5:
+          for (int cell = 0; cell < dims[0]; ++cell) {
+            for (int qp = 0; qp < dims[1]; ++qp) {
+              for (int i = 0; i < dims[2]; ++i) {
+                for (int j = 0; j < dims[3]; ++j) {
+                  for (int k = 0; k < dims[4]; ++k) {
+                    double& value = esa[ws][state_name](cell, qp, i, j, k);
+                    fos << "**** # INDEX 5, " << state_name << "(" << cell
+                        << "," << qp << "," << i << "," << j << "," << k << ")"
+                        << " = " << value << '\n';
+                  }
+                }
+              }
+            }
+          }
+          break;
+        default: ALBANY_ASSERT(1 <= size && size <= 5, ""); break;
+      }
+    }
+  }
+  fos << "**** StateManager: END ELEMENT STATES ****\n";
+}
+
+//
+//
+//
+void
+Albany::StateManager::printNodeStates() const
+{
+  auto&      sa     = getStateArrays();
+  auto       sis    = getStateInfoStruct();
+  auto&      fos    = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  auto&      nsa    = sa.nodeStateArrays;
+  auto const num_ws = nsa.size();
+  fos << "**** StateManager: BEGIN NODE STATES ****\n";
+  for (auto ws = 0; ws < num_ws; ++ws) {
+    for (auto s = 0; s < sis->size(); ++s) {
+      std::string const&             state_name = (*sis)[s]->name;
+      Albany::StateStruct::FieldDims dims;
+      nsa[ws][state_name].dimensions(dims);
+      int size = dims.size();
+      if (size == 0) return;
+      switch (size) {
+        case 1:
+          for (auto node = 0; node < dims[0]; ++node) {
+            double& value = nsa[ws][state_name](node);
+            fos << "**** # SCALAR, " << state_name << "(" << node << ")"
+                << " = " << value << '\n';
+          }
+          break;
+        case 2:
+          for (auto node = 0; node < dims[0]; ++node) {
+            for (auto i = 0; i < dims[1]; ++i) {
+              double& value = nsa[ws][state_name](node, i);
+              fos << "**** # VECTOR, " << state_name << "(" << node << "," << i
+                  << ")"
+                  << " = " << value << '\n';
+            }
+          }
+          break;
+        case 3:
+          for (int node = 0; node < dims[0]; ++node) {
+            for (int i = 0; i < dims[1]; ++i) {
+              for (int j = 0; j < dims[2]; ++j) {
+                double& value = nsa[ws][state_name](node, i, j);
+                fos << "**** # INDEX 4, " << state_name << "(" << node << ","
+                    << i << "," << j << ")"
+                    << " = " << value << '\n';
+              }
+            }
+          }
+          break;
+        default: ALBANY_ASSERT(1 <= size && size <= 3, ""); break;
+      }
+    }
+  }
+  fos << "**** StateManager: END NODE STATES ****\n";
+}
+
 // ============================================= PRIVATE METHODS
 // =============================================== //
 
@@ -1213,12 +1346,6 @@ Albany::StateManager::doSetStateArrays(
                 "initialization: "
                     << size);
             TEUCHOS_TEST_FOR_EXCEPT(!(dims[1] == dims[2]));
-#ifdef IKT_DEBUG
-            std::cout
-                << "IKT Albany StateManager stateName, dims0, dims1, dims2 = "
-                << stateName << ", " << dims[0] << ", " << dims[1] << ", "
-                << dims[2] << std::endl;
-#endif
             for (int node = 0; node < dims[0]; ++node)
               for (int i = 0; i < dims[1]; ++i)
                 for (int j = 0; j < dims[2]; ++j)
@@ -1258,10 +1385,4 @@ Albany::StateManager::doSetStateArrays(
     }
   }
   *out << std::endl;
-}
-
-void
-Albany::StateManager::printStates() const
-{
-
 }

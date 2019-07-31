@@ -17,10 +17,10 @@
 #include "Adapt_NodalDataBase.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
-#include "Albany_TpetraTypes.hpp"
-#include "Albany_StateInfoStruct.hpp"
 #include "Albany_EigendataInfoStructT.hpp"
 #include "Albany_Macros.hpp"
+#include "Albany_StateInfoStruct.hpp"
+#include "Albany_TpetraTypes.hpp"
 
 #if defined(ALBANY_EPETRA)
 #include "Albany_EigendataInfoStruct.hpp"
@@ -37,7 +37,8 @@ namespace Albany {
  * are stored as MDFields.
  */
 
-class StateManager {
+class StateManager
+{
  public:
   enum SAType
   {
@@ -288,6 +289,12 @@ class StateManager {
   doSetStateArrays(
       const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
       const Teuchos::RCP<StateInfoStruct>&                stateInfoPtr);
+
+  void
+  printElementStates() const;
+
+  void
+  printNodeStates() const;
 
   /// boolean to enforce that allocate gets called once, and after registration
   /// and befor gets

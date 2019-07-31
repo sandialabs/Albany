@@ -51,9 +51,9 @@ namespace {
 
 void
 copyStateArray(
-    Albany::StateArrayVec const&      src,
-    Albany::StateArrayVec&            dst,
-    AAdapt::StoreT& store)
+    Albany::StateArrayVec const& src,
+    Albany::StateArrayVec&       dst,
+    AAdapt::StoreT&              store)
 {
   auto const num_ws = src.size();
   dst.resize(num_ws);
@@ -97,8 +97,8 @@ printElementStatesArray(
   fos << "**** BEGIN ELEMENT STATE ARRAYS ****\n";
   for (auto ws = 0; ws < num_ws; ++ws) {
     for (auto s = 0; s < sis->size(); ++s) {
-      std::string const&             state_name = (*sis)[s]->name;
-      std::string const&             init_type  = (*sis)[s]->initType;
+      std::string const& state_name = (*sis)[s]->name;
+      std::string const& init_type  = (*sis)[s]->initType;
       // AQUI
       if (state_name != "ACE Failure Indicator") continue;
       Albany::StateStruct::FieldDims dims;
@@ -274,7 +274,7 @@ AAdapt::Erosion::transferStateArrays()
     return old_esa[old_ws][state](old_lid, qp, i, j, k);
   };
 
-  auto&      fos    = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  auto& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
 
   for (auto ws = 0; ws < num_ws; ++ws) {
     for (auto s = 0; s < sis->size(); ++s) {
@@ -288,17 +288,17 @@ AAdapt::Erosion::transferStateArrays()
         case 1:
           for (auto cell = 0; cell < dims[0]; ++cell) {
             double& value = new_esa[ws][state_name](cell);
-            //value         = oldValue1(ws, state_name, cell);
+            // value         = oldValue1(ws, state_name, cell);
           }
           break;
         case 2:
           for (auto cell = 0; cell < dims[0]; ++cell) {
             for (auto qp = 0; qp < dims[1]; ++qp) {
               double& value = new_esa[ws][state_name](cell, qp);
-              fos << "**** AFTER : " << state_name << "(" << cell << ","
-                  << qp << ")"
+              fos << "**** AFTER : " << state_name << "(" << cell << "," << qp
+                  << ")"
                   << " = " << value;
-              //value         = oldValue2(ws, state_name, cell, qp);
+              // value         = oldValue2(ws, state_name, cell, qp);
               fos << " BEFORE : " << value << '\n';
             }
           }
@@ -308,7 +308,7 @@ AAdapt::Erosion::transferStateArrays()
             for (auto qp = 0; qp < dims[1]; ++qp) {
               for (auto i = 0; i < dims[2]; ++i) {
                 double& value = new_esa[ws][state_name](cell, qp, i);
-                //value         = oldValue3(ws, state_name, cell, qp, i);
+                // value         = oldValue3(ws, state_name, cell, qp, i);
               }
             }
           }
@@ -319,7 +319,7 @@ AAdapt::Erosion::transferStateArrays()
               for (int i = 0; i < dims[2]; ++i) {
                 for (int j = 0; j < dims[3]; ++j) {
                   double& value = new_esa[ws][state_name](cell, qp, i, j);
-                  //value         = oldValue4(ws, state_name, cell, qp, i, j);
+                  // value         = oldValue4(ws, state_name, cell, qp, i, j);
                 }
               }
             }
@@ -332,7 +332,7 @@ AAdapt::Erosion::transferStateArrays()
                 for (int j = 0; j < dims[3]; ++j) {
                   for (int k = 0; k < dims[4]; ++k) {
                     double& value = new_esa[ws][state_name](cell, qp, i, j, k);
-                    //value = oldValue5(ws, state_name, cell, qp, i, j, k);
+                    // value = oldValue5(ws, state_name, cell, qp, i, j, k);
                   }
                 }
               }
@@ -371,19 +371,19 @@ AAdapt::Erosion::adaptMesh()
 
   // AQUI
   std::cout << "**** BEFORE EROSION ****\n";
-  LCM::printElementStates(this->state_mgr_);
+  this->state_mgr_.printStates();
   topology_->printFailureState(std::cout);
   stk_discretization_->printElemGIDws(std::cout);
-  //auto&& state_arrays = stk_discretization_->getStateArrays();
-  //copyStateArrays(state_arrays);
-  //printElementStatesArray(this->state_mgr_, state_arrays_.elemStateArrays);
+  // auto&& state_arrays = stk_discretization_->getStateArrays();
+  // copyStateArrays(state_arrays);
+  // printElementStatesArray(this->state_mgr_, state_arrays_.elemStateArrays);
 
   // Start the mesh update process
   topology_->erodeFailedElements();
 
   // Throw away all the Albany data structures and re-build them from the mesh
   stk_discretization_->updateMesh();
-  //transferStateArrays();
+  // transferStateArrays();
 
   return true;
 }
@@ -395,7 +395,7 @@ void
 AAdapt::Erosion::postAdapt()
 {
   std::cout << "**** AFTER EROSION ****\n";
-  LCM::printElementStates(this->state_mgr_);
+  this->state_mgr_.printStates();
   topology_->printFailureState(std::cout);
   stk_discretization_->printElemGIDws(std::cout);
 }
