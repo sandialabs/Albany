@@ -23,7 +23,7 @@ class Topology;
 namespace AAdapt {
 
 using MDArray = shards::Array<double, shards::NaturalOrder>;
-using StoreT = std::vector<std::map<std::string, std::vector<double>>>;
+using StoreT  = std::vector<std::map<std::string, std::vector<double>>>;
 
 ///
 /// \brief Topology modification based adapter
@@ -90,9 +90,10 @@ class Erosion : public AbstractAdapter
   Teuchos::RCP<stk::mesh::MetaData>            meta_data_{Teuchos::null};
   Teuchos::RCP<LCM::AbstractFailureCriterion> failure_criterion_{Teuchos::null};
   Teuchos::RCP<LCM::Topology>                 topology_{Teuchos::null};
-  StoreT            cell_state_store_;
-  StoreT            node_state_store_;
+  StoreT                                      cell_state_store_;
+  StoreT                                      node_state_store_;
   Albany::StateArrays                         state_arrays_;
+  Albany::WsLIDList                           gidwslid_map_;
 
   int         num_dim_{0};
   int         remesh_file_index_{0};
