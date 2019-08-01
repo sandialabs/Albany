@@ -422,9 +422,9 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     W = interpolateVectors(
         z_above_mean_sea_level_, freezing_curve_width_, height);
   }
-  
+
   ScalarT const Tdiff = Tcurr - Tmelt;
-  //ScalarT const arg   = -W * Tdiff;
+  // ScalarT const arg   = -W * Tdiff;
   ScalarT const arg = -(8.0 / W) * (Tdiff + (f_shift_ * W));
   ScalarT       icurr{1.0};
   ScalarT       dfdT{0.0};
