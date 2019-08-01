@@ -20,7 +20,6 @@ Albany::PUMIDiscretization::PUMIDiscretization(
   pumiMeshStruct = meshStruct_;
   if (pumiMeshStruct->meshSpecsType() == Albany::AbstractMeshStruct::PUMI_MS)
     init();
-  boundary_indicator.resize(buckets.size());
 }
 
 Albany::PUMIDiscretization::~PUMIDiscretization()
