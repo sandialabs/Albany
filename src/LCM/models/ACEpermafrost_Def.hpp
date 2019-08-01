@@ -36,6 +36,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   water_saturation_min_ = p->get<RealType>("ACE Water Minimum Saturation", 0.0);
   salinity_base_        = p->get<RealType>("ACE Base Salinity", 0.0);
   freeze_curve_width_   = p->get<RealType>("ACE Freezing Curve Width", 1.0);
+  f_shift_              = p->get<RealType>("ACE Freezing Curve Shift", 0.25);
   latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
   erosion_rate_         = p->get<RealType>("ACE Erosion Rate", -1.0);
@@ -411,16 +412,35 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // W term sets the width of the freezing curve.
   // Smaller W means steeper curve.
   // f(T) = 1 / (1 + e^(-W*(T-T0)))
+  // New curve, formulated by Siddharth, which shifts the
+  // freezing point to left or right:
+  // f(T) = 1 / (1 + e^(-(8/W)((T-T0) + (b*W))))
+  // W = true width of freezing curve (in Celcius)
+  // b = shift to left or right (+ is left, - is right)
   ScalarT W = freeze_curve_width_;  // constant value
   if (freezing_curve_width_.size() > 0) {
     W = interpolateVectors(
         z_above_mean_sea_level_, freezing_curve_width_, height);
   }
+  
   ScalarT const Tdiff = Tcurr - Tmelt;
-  ScalarT const arg   = -W * Tdiff;
+  //ScalarT const arg   = -W * Tdiff;
+  ScalarT const arg = -(8.0 / W) * (Tdiff + (f_shift_ * W));
   ScalarT       icurr{1.0};
   ScalarT       dfdT{0.0};
 
+  if (arg < std::log(DBL_MAX)) {
+    ScalarT const et   = exp(arg);
+    ScalarT const etp1 = et + 1.0;
+
+    // Update freeze curve slope
+    dfdT = -(W / 8.0) * et / etp1 / etp1;
+
+    // Update the ice saturation
+    icurr = 1.0 - 1.0 / etp1;
+  }
+
+  /*
   if (arg < std::log(DBL_MAX)) {
     ScalarT const et   = exp(-W * Tdiff);
     ScalarT const etp1 = et + 1.0;
@@ -431,6 +451,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     // Update the ice saturation
     icurr = 1.0 - 1.0 / etp1;
   }
+  */
 
   // Update the water saturation
   ScalarT wcurr = 1.0 - icurr;
