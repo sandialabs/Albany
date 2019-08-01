@@ -157,6 +157,19 @@ Topology::initializeFailureState()
 }
 
 //
+// Initialize cell failure state field
+//
+void
+Topology::initializeCellFailureState()
+{
+  auto&                   bulk_data = get_bulk_data();
+  auto const              cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityVector cells;
+  stk::mesh::get_entities(bulk_data, cell_rank, cells);
+  for (auto cell : cells) { set_failure_state(cell, INTACT); }
+}
+
+//
 // Set boundary indicator
 // For now meaningful for elements only
 //
@@ -184,7 +197,7 @@ Topology::graphInitialization()
   auto& bulk_data = get_bulk_data();
   set_output_type(UNIDIRECTIONAL_MULTILEVEL);
   createAllLevelsRelations();
-  initializeFailureState();
+  initializeCellFailureState();
   setBoundaryIndicator();
   Albany::fix_node_sharing(bulk_data);
   get_stk_discretization().updateMesh();
@@ -1143,14 +1156,10 @@ Topology::printFailureState()
   stk::mesh::BulkData&        bulk_data = get_bulk_data();
   stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
   stk::mesh::EntityVector     cells;
-  stk::mesh::get_entities(bulk_data, cell_rank, cells);
-  stk::mesh::MetaData&         meta_data = get_meta_data();
-  ScalarFieldType const* const failure_state =
-      meta_data.get_field<ScalarFieldType>(cell_rank, "ACE Failure Indicator");
-
   auto& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  stk::mesh::get_entities(bulk_data, cell_rank, cells);
   for (auto cell : cells) {
-    double const fs = *stk::mesh::field_data(*failure_state, cell);
+    auto const fs = get_failure_state(cell);
     fos << "**** Topology : STK ELEMENT : " << cell << " FAIL : " << fs << '\n';
   }
 }
@@ -1201,7 +1210,7 @@ Topology::erodeFailedElements()
   }
   bulk_data.modification_end();
   Albany::fix_node_sharing(bulk_data);
-  initializeFailureState();
+  initializeCellFailureState();
   setBoundaryIndicator();
 }
 
@@ -1621,7 +1630,7 @@ Topology::get_highest_id(stk::mesh::EntityRank const rank)
 // Set failure state.
 //
 void
-Topology::set_failure_state(stk::mesh::Entity e, FailureState const fs)
+Topology::set_failure_state_0(stk::mesh::Entity e, FailureState const fs)
 {
   auto&      bulk_data                       = get_bulk_data();
   auto const rank                            = bulk_data.entity_rank(e);
@@ -1630,14 +1639,42 @@ Topology::set_failure_state(stk::mesh::Entity e, FailureState const fs)
 }
 
 //
+//
+//
+void
+Topology::set_failure_state(stk::mesh::Entity e, FailureState const fs)
+{
+  auto&                bulk_data = get_bulk_data();
+  auto const           rank      = bulk_data.entity_rank(e);
+  stk::mesh::MetaData& meta_data = get_meta_data();
+  ScalarFieldType&     failure_field =
+      *meta_data.get_field<ScalarFieldType>(rank, "ACE Failure Indicator");
+  *(stk::mesh::field_data(failure_field, e)) = static_cast<int>(fs);
+}
+
+//
 // Get failure state.
 //
 FailureState
-Topology::get_failure_state(stk::mesh::Entity e)
+Topology::get_failure_state_0(stk::mesh::Entity e)
 {
   auto& bulk_data     = get_bulk_data();
   auto  rank          = bulk_data.entity_rank(e);
   auto& failure_field = get_failure_state_field(rank);
+  return static_cast<FailureState>(*(stk::mesh::field_data(failure_field, e)));
+}
+
+//
+//
+//
+FailureState
+Topology::get_failure_state(stk::mesh::Entity e)
+{
+  auto&                bulk_data = get_bulk_data();
+  auto const           rank      = bulk_data.entity_rank(e);
+  stk::mesh::MetaData& meta_data = get_meta_data();
+  ScalarFieldType&     failure_field =
+      *meta_data.get_field<ScalarFieldType>(rank, "ACE Failure Indicator");
   return static_cast<FailureState>(*(stk::mesh::field_data(failure_field, e)));
 }
 

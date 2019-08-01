@@ -569,6 +569,9 @@ class Topology
   void
   initializeFailureState();
 
+  void
+  initializeCellFailureState();
+
   ///
   /// Setting boundary indicator
   ///
@@ -815,11 +818,16 @@ class Topology
   // Set failure state.
   //
   void
-  set_failure_state(stk::mesh::Entity e, FailureState const fs);
+  set_failure_state_0(stk::mesh::Entity e, FailureState const fs);
 
+  void
+  set_failure_state(stk::mesh::Entity e, FailureState const fs);
   //
   // Get failure state.
   //
+  FailureState
+  get_failure_state_0(stk::mesh::Entity e);
+
   FailureState
   get_failure_state(stk::mesh::Entity e);
 
