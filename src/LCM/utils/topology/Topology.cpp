@@ -139,7 +139,7 @@ Topology::checkOpen(stk::mesh::Entity e)
 }
 
 //
-// Initialize fracture state field
+// Initialize failure state field
 // It exists for all entities
 //
 void
