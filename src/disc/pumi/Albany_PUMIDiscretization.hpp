@@ -10,6 +10,7 @@
 
 #include "Albany_APFDiscretization.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
+#include "Albany_Utils.hpp"
 
 namespace Albany {
 
@@ -34,9 +35,32 @@ class PUMIDiscretization : public APFDiscretization {
     //! Set data for LandIce problems
     void setLandIceData();
 
+    WorksetArray<Teuchos::ArrayRCP<double*>>::type const& getBoundaryIndicator() const 
+    {
+      ALBANY_ASSERT(boundary_indicator.is_null() == false);
+      return boundary_indicator;
+    };  
+
+    void printElemGIDws(std::ostream& os) const 
+    {//do nothing 
+    }; 
+
+    std::map<std::pair<int, int>, GO>
+    getElemWsLIDGIDMap() const 
+    {//do nothing
+    };
+
+    void
+    printWsElNodeID(std::ostream& os) const {}; 
+
   private:
 
     Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct;
+
+  protected:
+
+    WorksetArray<Teuchos::ArrayRCP<double*>>::type boundary_indicator;
+
 };
 
 }

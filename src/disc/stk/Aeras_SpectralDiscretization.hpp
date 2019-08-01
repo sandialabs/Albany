@@ -467,6 +467,16 @@ namespace Aeras
       return Teuchos::null;
     }
 
+#if defined(ALBANY_LCM)
+    Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
+    getBoundaryIndicator() const
+    {
+      ALBANY_ASSERT(boundary_indicator.is_null() == false);
+      return boundary_indicator;
+    }
+#endif
+
+
   private:
 
     //! Private to prohibit copying

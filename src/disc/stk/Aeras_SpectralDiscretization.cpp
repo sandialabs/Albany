@@ -249,14 +249,6 @@ Aeras::SpectralDiscretization::getLatticeOrientation() const
   return latticeOrientation;
 }
 
-#if defined(ALBANY_LCM)
-Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
-Aeras::SpectralDiscretization::getBoundaryIndicator() const
-{
-  return boundary_indicator;
-}
-#endif
-
 void
 Aeras::SpectralDiscretization::printCoords() const
 {
@@ -2128,6 +2120,9 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 
   nodesOnElemStateVec.resize(numBuckets);
   stateArrays.elemStateArrays.resize(numBuckets);
+#if defined(ALBANY_LCM)
+  boundary_indicator.resize(numBuckets);
+#endif
   const Albany::StateInfoStruct& nodal_states =
     stkMeshStruct->getFieldContainer()->getNodalSIS();
 
