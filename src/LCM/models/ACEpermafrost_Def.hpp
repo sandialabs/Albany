@@ -373,9 +373,6 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   }
 
-  // AQUI
-  std::cout << "**** ACE PERMAFROST (" << cell << "," << pt
-            << "), FAILED : " << failed << " ****\n";
   //
   // Thermal calculation
   //

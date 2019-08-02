@@ -330,10 +330,6 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   }
 
-  // AQUI
-  std::cout << "**** ACE ICE (" << cell << "," << pt << "), FAILED : " << failed
-            << " ****\n";
-
   //
   // Thermal calculation
   //
