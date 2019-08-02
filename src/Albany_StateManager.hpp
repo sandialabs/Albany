@@ -290,12 +290,6 @@ class StateManager
       const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
       const Teuchos::RCP<StateInfoStruct>&                stateInfoPtr);
 
-  void
-  printElementStates() const;
-
-  void
-  printNodeStates() const;
-
   /// boolean to enforce that allocate gets called once, and after registration
   /// and befor gets
   bool stateVarsAreAllocated;

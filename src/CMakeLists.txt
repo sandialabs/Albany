@@ -30,6 +30,7 @@ SET(SOURCES
   Albany_PiroObserver.cpp
   Albany_StatelessObserverImpl.cpp
   Albany_StateManager.cpp
+  Albany_StateInfoStruct.cpp
   PHAL_Utilities.cpp
   )
 

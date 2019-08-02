@@ -86,92 +86,6 @@ copyStateArray(
   }
 }
 
-void
-printElementStatesArray(
-    Albany::StateManager const& state_mgr,
-    Albany::StateArrayVec&      esa)
-{
-  auto       sis    = state_mgr.getStateInfoStruct();
-  auto&      fos    = *Teuchos::VerboseObjectBase::getDefaultOStream();
-  auto const num_ws = esa.size();
-  fos << "**** AAdaptErosion : BEGIN ELEMENT STATE ARRAYS ****\n";
-  for (auto ws = 0; ws < num_ws; ++ws) {
-    for (auto s = 0; s < sis->size(); ++s) {
-      std::string const& state_name = (*sis)[s]->name;
-      std::string const& init_type  = (*sis)[s]->initType;
-      // AQUI
-      if (state_name != "ACE Failure Indicator") continue;
-      Albany::StateStruct::FieldDims dims;
-      esa[ws][state_name].dimensions(dims);
-      int size = dims.size();
-      if (size == 0) return;
-      switch (size) {
-        case 1:
-          for (auto cell = 0; cell < dims[0]; ++cell) {
-            double& value = esa[ws][state_name](cell);
-            fos << "**** # INDEX 1, " << state_name << "(" << cell << ")"
-                << " = " << value << '\n';
-          }
-          break;
-        case 2:
-          for (auto cell = 0; cell < dims[0]; ++cell) {
-            for (auto qp = 0; qp < dims[1]; ++qp) {
-              double& value = esa[ws][state_name](cell, qp);
-              fos << "**** # INDEX 2, " << state_name << "(" << cell << ","
-                  << qp << ")"
-                  << " = " << value << '\n';
-            }
-          }
-          break;
-        case 3:
-          for (auto cell = 0; cell < dims[0]; ++cell) {
-            for (auto qp = 0; qp < dims[1]; ++qp) {
-              for (auto i = 0; i < dims[2]; ++i) {
-                double& value = esa[ws][state_name](cell, qp, i);
-                fos << "**** # INDEX 3, " << state_name << "(" << cell << ","
-                    << qp << "," << i << ")"
-                    << " = " << value << '\n';
-              }
-            }
-          }
-          break;
-        case 4:
-          for (int cell = 0; cell < dims[0]; ++cell) {
-            for (int qp = 0; qp < dims[1]; ++qp) {
-              for (int i = 0; i < dims[2]; ++i) {
-                for (int j = 0; j < dims[3]; ++j) {
-                  double& value = esa[ws][state_name](cell, qp, i, j);
-                  fos << "**** # INDEX 4, " << state_name << "(" << cell << ","
-                      << qp << "," << i << "," << j << ")"
-                      << " = " << value << '\n';
-                }
-              }
-            }
-          }
-          break;
-        case 5:
-          for (int cell = 0; cell < dims[0]; ++cell) {
-            for (int qp = 0; qp < dims[1]; ++qp) {
-              for (int i = 0; i < dims[2]; ++i) {
-                for (int j = 0; j < dims[3]; ++j) {
-                  for (int k = 0; k < dims[4]; ++k) {
-                    double& value = esa[ws][state_name](cell, qp, i, j, k);
-                    fos << "**** # INDEX 5, " << state_name << "(" << cell
-                        << "," << qp << "," << i << "," << j << "," << k << ")"
-                        << " = " << value << '\n';
-                  }
-                }
-              }
-            }
-          }
-          break;
-        default: ALBANY_ASSERT(1 <= size && size <= 5, ""); break;
-      }
-    }
-  }
-  fos << "**** AAdaptErosion : END ELEMENT STATE ARRAYS ****\n";
-}
-
 }  // anonymous namespace
 
 //
@@ -354,7 +268,7 @@ AAdapt::Erosion::adaptMesh()
   topology_->printFailureState();
   auto&& state_arrays = stk_discretization_->getStateArrays();
   gidwslid_map_       = stk_discretization_->getElemGIDws();
-  copyStateArrays(state_arrays);
+  // copyStateArrays(state_arrays);
 
   // Start the mesh update process
   topology_->erodeFailedElements();
@@ -372,8 +286,8 @@ void
 AAdapt::Erosion::postAdapt()
 {
   std::cout << "**** AFTER EROSION ****\n";
-  printElementStatesArray(this->state_mgr_, state_arrays_.elemStateArrays);
-  //transferStateArrays();
+  // Albany::printStateArrays(state_arrays_);
+  // transferStateArrays();
   this->state_mgr_.printStates();
   stk_discretization_->printElemGIDws();
   topology_->printFailureState();

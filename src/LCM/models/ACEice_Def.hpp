@@ -273,6 +273,9 @@ ACEiceMiniKernel<EvalT, Traits>::init(
 
   current_time_ = workset.current_time;
   block_name_   = workset.EBName;
+
+  auto const num_cells = workset.numCells;
+  for (auto cell = 0; cell < num_cells; ++cell) { failed_(cell, 0) = 0.0; }
 }
 
 template <typename EvalT, typename Traits>
