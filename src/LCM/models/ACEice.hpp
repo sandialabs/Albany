@@ -7,7 +7,6 @@
 #if !defined(LCM_ACEice_hpp)
 #define LCM_ACEice_hpp
 
-#include "Albany_STKDiscretization.hpp"
 #include "ParallelConstitutiveModel.hpp"
 
 namespace LCM {

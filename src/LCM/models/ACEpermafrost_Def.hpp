@@ -316,6 +316,9 @@ ACEpermafrostMiniKernel<EvalT, Traits>::init(
 
   current_time_ = workset.current_time;
   block_name_   = workset.EBName;
+
+  auto const num_cells = workset.numCells;
+  for (auto cell = 0; cell < num_cells; ++cell) { failed_(cell, 0) = 0.0; }
 }
 
 template <typename EvalT, typename Traits>
@@ -323,32 +326,30 @@ KOKKOS_INLINE_FUNCTION void
 ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
   constexpr minitensor::Index MAX_DIM{3};
-
   using Tensor = minitensor::Tensor<ScalarT, MAX_DIM>;
-
   Tensor const I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
-
-  Tensor F(num_dims_);
-  Tensor sigma(num_dims_);
+  Tensor       F(num_dims_);
+  Tensor       sigma(num_dims_);
 
   auto const coords       = this->model_.getCoordVecField();
   auto const height       = Sacado::Value<ScalarT>::eval(coords(cell, pt, 2));
   auto const current_time = current_time_;
 
-  ScalarT const E                      = elastic_modulus_(cell, pt);
-  ScalarT const nu                     = poissons_ratio_(cell, pt);
-  ScalarT const kappa                  = E / (3.0 * (1.0 - 2.0 * nu));
-  ScalarT const mu                     = E / (2.0 * (1.0 + nu));
-  ScalarT const K                      = hardening_modulus_(cell, pt);
-  ScalarT const Y                      = yield_strength_(cell, pt);
-  ScalarT const J1                     = J_(cell, pt);
-  ScalarT const Jm23                   = 1.0 / std::cbrt(J1 * J1);
-  ScalarT const Tcurr                  = temperature_(cell, pt);
-  ScalarT const Told                   = T_old_(cell, pt);
-  ScalarT const iold                   = ice_saturation_old_(cell, pt);
-  ScalarT const erosion_rate           = erosion_rate_;
-  ScalarT const element_size           = element_size_;
-  ScalarT const critical_exposure_time = element_size_ / erosion_rate_;
+  ScalarT const E     = elastic_modulus_(cell, pt);
+  ScalarT const nu    = poissons_ratio_(cell, pt);
+  ScalarT const kappa = E / (3.0 * (1.0 - 2.0 * nu));
+  ScalarT const mu    = E / (2.0 * (1.0 + nu));
+  ScalarT const K     = hardening_modulus_(cell, pt);
+  ScalarT const Y     = yield_strength_(cell, pt);
+  ScalarT const J1    = J_(cell, pt);
+  ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
+  ScalarT const Tcurr = temperature_(cell, pt);
+  ScalarT const Told  = T_old_(cell, pt);
+  ScalarT const iold  = ice_saturation_old_(cell, pt);
+
+  auto const erosion_rate           = erosion_rate_;
+  auto const element_size           = element_size_;
+  auto const critical_exposure_time = element_size_ / erosion_rate_;
 
   auto&& delta_time    = delta_time_(0);
   auto&& failed        = failed_(cell, 0);
@@ -366,12 +367,15 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
     is_exposed_to_water  = (height <= sea_level);
     if (is_exposed_to_water == true) { exposure_time += delta_time; }
-    auto const critical_exposure_time = element_size_ / erosion_rate_;
-    if (exposure_time >= critical_exposure_time) { failed += 1.0; }
-  } else {
-    exposure_time = 0.0;
+    if (exposure_time >= critical_exposure_time) {
+      failed += 1.0;
+      exposure_time = 0.0;
+    }
   }
 
+  // AQUI
+  std::cout << "**** ACE PERMAFROST (" << cell << "," << pt
+            << "), FAILED : " << failed << " ****\n";
   //
   // Thermal calculation
   //
