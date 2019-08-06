@@ -39,7 +39,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   f_shift_              = p->get<RealType>("ACE Freezing Curve Shift", 0.25);
   latent_heat_          = p->get<RealType>("ACE Latent Heat", 0.0);
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
-  erosion_rate_         = p->get<RealType>("ACE Erosion Rate", -1.0);
+  erosion_rate_         = p->get<RealType>("ACE Erosion Rate", 0.0);
   element_size_         = p->get<RealType>("ACE Element Size", 0.0);
   min_yield_strength_   = p->get<RealType>("ACE Minimum Yield Strength", 0.0);
 
@@ -357,13 +357,13 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Determine if erosion has occurred.
   bool       is_exposed_to_water{false};
-  bool const is_bulk = block_name_ == "bulk";
+  bool const is_erodible = erosion_rate > 0.0;
   bool const is_at_boundary =
       have_boundary_indicator_ == true ?
           static_cast<bool const>(*(boundary_indicator_[cell])) :
           false;
-  bool const is_bulk_at_boundary = is_bulk && is_at_boundary;
-  if (is_bulk_at_boundary == true) {
+  bool const is_erodible_at_boundary = is_erodible && is_at_boundary;
+  if (is_erodible_at_boundary == true) {
     auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
     is_exposed_to_water  = (height <= sea_level);
     if (is_exposed_to_water == true) { exposure_time += delta_time; }

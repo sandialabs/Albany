@@ -111,7 +111,7 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType f_shift_{0.25};
   RealType latent_heat_{0.0};
   RealType porosity0_{0.0};
-  RealType erosion_rate_{-1.0};
+  RealType erosion_rate_{0.0};
   RealType element_size_{0.0};
   RealType min_yield_strength_{0.0};
 
