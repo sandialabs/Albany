@@ -30,10 +30,8 @@ printElementStates(StateArrays const& sa)
   for (auto ws = 0; ws < num_ws; ++ws) {
     auto const num_states = esa[ws].size();
     for (auto state_mda : esa[ws]) {
-      auto const state_name = state_mda.first;
-      // AQUI
-      if (state_name != "ACE Failure Indicator") continue;
-      auto                           mda = state_mda.second;
+      auto const                     state_name = state_mda.first;
+      auto                           mda        = state_mda.second;
       Albany::StateStruct::FieldDims dims;
       mda.dimensions(dims);
       int size = dims.size();

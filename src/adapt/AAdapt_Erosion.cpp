@@ -261,15 +261,6 @@ AAdapt::Erosion::adaptMesh()
   stk_discretization_->reNameExodusOutput(str);
   remesh_file_index_++;
 
-  // AQUI
-  std::cout << "**** BEFORE EROSION ****\n";
-  this->state_mgr_.printStates();
-  stk_discretization_->printElemGIDws();
-  topology_->printFailureState();
-  auto&& state_arrays = stk_discretization_->getStateArrays();
-  gidwslid_map_       = stk_discretization_->getElemGIDws();
-  // copyStateArrays(state_arrays);
-
   // Start the mesh update process
   topology_->erodeFailedElements();
 
@@ -285,12 +276,6 @@ AAdapt::Erosion::adaptMesh()
 void
 AAdapt::Erosion::postAdapt()
 {
-  std::cout << "**** AFTER EROSION ****\n";
-  // Albany::printStateArrays(state_arrays_);
-  // transferStateArrays();
-  this->state_mgr_.printStates();
-  stk_discretization_->printElemGIDws();
-  topology_->printFailureState();
 }
 //
 //
