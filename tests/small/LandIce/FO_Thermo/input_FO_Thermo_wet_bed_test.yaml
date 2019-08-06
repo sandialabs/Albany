@@ -3,7 +3,8 @@
 ANONYMOUS:
   Build Type: Epetra
   Debug Output:
-    Write Jacobian to MatrixMarket: -1
+    Write Jacobian to MatrixMarket: 0
+    Write Residual to MatrixMarket: 0
   Problem: 
     Phalanx Graph Visualization Detail: 2
     Solution Method: Steady
@@ -164,7 +165,7 @@ ANONYMOUS:
     Relative Tolerance: 1.0e-04
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [6.032144346249e+02, 0.00000000000000000e+00, 7.908825974575e+00, 3.377727008815e+01]
+      Sensitivity Test Values 0: [3.016072359141e+02, 0.00000000000000000e+00, 7.908789961152e+00, 3.377744243858e+01]
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -197,11 +198,7 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999955e-08
-          Test 1: 
-            Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000005e-04
-            Relative Tolerance: 9.99999999999999955e-08
+            Tolerance: 1.0e-08
         Test 1: 
           Test Type: MaxIters
           Maximum Iterations: 100
@@ -274,7 +271,7 @@ ANONYMOUS:
       Line Search: 
         Full Step: 
           Full Step: 1.00000000000000000e+00
-        Method: Backtrack
+        Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing: 
         Output Precision: 3
