@@ -347,9 +347,11 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const Told  = T_old_(cell, pt);
   ScalarT const iold  = ice_saturation_old_(cell, pt);
 
-  auto const erosion_rate           = erosion_rate_;
-  auto const element_size           = element_size_;
-  auto const critical_exposure_time = element_size_ / erosion_rate_;
+  auto const erosion_rate = erosion_rate_;
+  auto const element_size = element_size_;
+  bool const is_erodible  = erosion_rate > 0.0;
+  auto const critical_exposure_time =
+      is_erodible == true ? element_size / erosion_rate : 0.0;
 
   auto&& delta_time    = delta_time_(0);
   auto&& failed        = failed_(cell, 0);
@@ -357,10 +359,9 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Determine if erosion has occurred.
   bool       is_exposed_to_water{false};
-  bool const is_erodible = erosion_rate > 0.0;
   bool const is_at_boundary =
       have_boundary_indicator_ == true ?
-          static_cast<bool const>(*(boundary_indicator_[cell])) :
+          static_cast<bool>(*(boundary_indicator_[cell])) :
           false;
   bool const is_erodible_at_boundary = is_erodible && is_at_boundary;
   if (is_erodible_at_boundary == true) {
@@ -380,7 +381,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Calculate the depth-dependent porosity
   // NOTE: The porosity does not change in time so this calculation only needs
   //       to be done once, at the beginning of the simulation.
-  ScalarT porosity = porosity0_;
+  auto porosity = porosity0_;
   if (porosity_from_file_.size() > 0) {
     porosity = interpolateVectors(
         z_above_mean_sea_level_, porosity_from_file_, height);
@@ -391,18 +392,18 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   bool const b_cell = porosity < 0.0;
 
   // Calculate melting temperature
-  ScalarT sal = salinity_base_;  // should come from chemical part of model
+  auto sal = salinity_base_;  // should come from chemical part of model
   if (salinity_.size() > 0) {
     sal = interpolateVectors(z_above_mean_sea_level_, salinity_, height);
   }
-  ScalarT sal15          = std::sqrt(sal * sal * sal);
-  ScalarT pressure_fixed = 1.0;
+  auto sal15          = std::sqrt(sal * sal * sal);
+  auto pressure_fixed = 1.0;
   // Tmelt is in Kelvin
-  ScalarT Tmelt = -0.057 * sal + 0.00170523 * sal15 - 0.0002154996 * sal * sal -
-                  0.000753 / 10000.0 * pressure_fixed + 273.15;
+  auto Tmelt = -0.057 * sal + 0.00170523 * sal15 - 0.0002154996 * sal * sal -
+               0.000753 / 10000.0 * pressure_fixed + 273.15;
 
   // Calculate temperature change
-  ScalarT dTemp = Tcurr - Told;
+  auto dTemp = Tcurr - Told;
   if (delta_time > 0.0) {
     tdot_(cell, pt) = dTemp / delta_time;
   } else {
