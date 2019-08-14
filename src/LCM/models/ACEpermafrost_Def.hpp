@@ -349,26 +349,29 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const Told  = T_old_(cell, pt);
   ScalarT const iold  = ice_saturation_old_(cell, pt);
 
+  auto&& delta_time    = delta_time_(0);
+  auto&& failed        = failed_(cell, 0);
+  auto&& exposure_time = exposure_time_(cell, pt);
+
+  // Determine if erosion has occurred.
   auto const erosion_rate = erosion_rate_;
   auto const element_size = element_size_;
   bool const is_erodible  = erosion_rate > 0.0;
   auto const critical_exposure_time =
       is_erodible == true ? element_size / erosion_rate : 0.0;
 
-  auto&& delta_time    = delta_time_(0);
-  auto&& failed        = failed_(cell, 0);
-  auto&& exposure_time = exposure_time_(cell, pt);
-
-  // Determine if erosion has occurred.
-  bool       is_exposed_to_water{false};
+  auto const sea_level =
+      sea_level_.size() > 0 ?
+          interpolateVectors(time_, sea_level_, current_time) :
+          0.0;
+  bool const is_exposed_to_water = (height <= sea_level);
   bool const is_at_boundary =
       have_boundary_indicator_ == true ?
           static_cast<bool>(*(boundary_indicator_[cell])) :
           false;
+
   bool const is_erodible_at_boundary = is_erodible && is_at_boundary;
   if (is_erodible_at_boundary == true) {
-    auto const sea_level = interpolateVectors(time_, sea_level_, current_time);
-    is_exposed_to_water  = (height <= sea_level);
     if (is_exposed_to_water == true) { exposure_time += delta_time; }
     if (exposure_time >= critical_exposure_time) {
       failed += 1.0;
@@ -459,7 +462,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   // Correct ice/water saturation if b_cell
-  if (b_cell) {
+  if (b_cell == true) {
     icurr = 0.0;
     wcurr = 0.0;
   }
