@@ -113,6 +113,8 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType porosity0_{0.0};
   RealType erosion_rate_{0.0};
   RealType element_size_{0.0};
+  RealType critical_stress_{0.0};
+  RealType critical_angle_{0.0};
   RealType min_yield_strength_{0.0};
 
   // Saturation hardening constraints

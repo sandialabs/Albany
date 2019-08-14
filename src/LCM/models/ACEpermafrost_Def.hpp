@@ -41,6 +41,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   porosity0_            = p->get<RealType>("ACE Surface Porosity", 0.0);
   erosion_rate_         = p->get<RealType>("ACE Erosion Rate", 0.0);
   element_size_         = p->get<RealType>("ACE Element Size", 0.0);
+  critical_stress_      = p->get<RealType>("ACE Critical Stress", 0.0);
+  critical_angle_       = p->get<RealType>("ACE Critical Angle", 0.0);
   min_yield_strength_   = p->get<RealType>("ACE Minimum Yield Strength", 0.0);
 
   if (p->isParameter("ACE Time File") == true) {
@@ -442,19 +444,6 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     icurr = 1.0 - 1.0 / etp1;
   }
 
-  /*
-  if (arg < std::log(DBL_MAX)) {
-    ScalarT const et   = exp(-W * Tdiff);
-    ScalarT const etp1 = et + 1.0;
-
-    // Update freeze curve slope
-    dfdT = -W * et / etp1 / etp1;
-
-    // Update the ice saturation
-    icurr = 1.0 - 1.0 / etp1;
-  }
-  */
-
   // Update the water saturation
   ScalarT wcurr = 1.0 - icurr;
 
@@ -620,6 +609,31 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     for (int j(0); j < num_dims_; ++j) {
       stress_(cell, pt, i, j) = sigma(i, j);
     }
+  }
+
+  //
+  // Determine if critical stress is exceeded
+  //
+
+  // sigma_XX component for now
+  auto const critical_stress = critical_stress_;
+  if (critical_stress > 0.0) {
+    auto const stress_test = Sacado::Value<ScalarT>::eval(sigma(0, 0));
+    if (std::abs(stress_test) >= critical_stress) failed += 1.0;
+  }
+
+  //
+  // Determine if kinematic failure occurred
+  //
+  auto const critical_angle = critical_angle_;
+  if (critical_angle > 0.0) {
+    auto const Fval   = Sacado::Value<decltype(F)>::eval(F);
+    auto const Q      = minitensor::polar_rotation(Fval);
+    auto       cosine = 0.5 * (minitensor::trace(Q) - 1.0);
+    cosine            = cosine > 1.0 ? 1.0 : cosine;
+    cosine            = cosine < -1.0 ? -1.0 : cosine;
+    auto const theta  = std::acos(cosine);
+    if (std::abs(theta) >= critical_angle) failed += 1.0;
   }
 
   return;
