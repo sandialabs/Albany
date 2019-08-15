@@ -53,10 +53,6 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
     std::string const filename = p->get<std::string>("ACE Sea Level File");
     sea_level_                 = vectorFromFile(filename);
   }
-  ALBANY_ASSERT(
-      time_.size() == sea_level_.size(),
-      "*** ERROR: Number of times and number of sea level values must match.");
-
   if (p->isParameter("ACE Z Depth File") == true) {
     std::string const filename = p->get<std::string>("ACE Z Depth File");
     z_above_mean_sea_level_    = vectorFromFile(filename);
@@ -78,6 +74,9 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
         p->get<std::string>("ACE Freezing Curve Width File");
     freezing_curve_width_ = vectorFromFile(filename);
   }
+  ALBANY_ASSERT(
+      time_.size() == sea_level_.size(),
+      "*** ERROR: Number of times and number of sea level values must match.");
   ALBANY_ASSERT(
       z_above_mean_sea_level_.size() == salinity_.size(),
       "*** ERROR: Number of z values and number of salinity values in ACE "
@@ -434,8 +433,9 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const arg   = -(8.0 / W) * (Tdiff + (f_shift_ * W));
   ScalarT       icurr{1.0};
   ScalarT       dfdT{0.0};
+  auto const    tol = 45.0;
 
-  if (arg < std::log(DBL_MAX)) {
+  if (std::abs(arg) < tol) {
     ScalarT const et   = std::exp(arg);
     ScalarT const etp1 = et + 1.0;
 
