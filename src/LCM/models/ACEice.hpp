@@ -105,6 +105,7 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType water_saturation_min_{0.0};
   RealType salinity_base_{0.0};
   RealType freeze_curve_width_{1.0};
+  RealType f_shift_{0.25};
   RealType latent_heat_{0.0};
   RealType porosity0_{0.0};
   RealType erosion_rate_{0.0};
@@ -115,6 +116,10 @@ struct ACEiceMiniKernel : public ParallelKernel<EvalT, Traits>
   // Saturation hardening constraints
   RealType sat_mod_{0.0};
   RealType sat_exp_{0.0};
+
+  // Params with depth:
+  std::vector<RealType> z_above_mean_sea_level_;
+  std::vector<RealType> freezing_curve_width_;
 
   // Sea level arrays
   std::vector<RealType> time_;

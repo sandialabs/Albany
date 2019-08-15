@@ -422,7 +422,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // New curve, formulated by Siddharth, which shifts the
   // freezing point to left or right:
   // f(T) = 1 / (1 + e^(-(8/W)((T-T0) + (b*W))))
-  // W = true width of freezing curve (in Celcius)
+  // W = true width of freezing curve (in Celsius)
   // b = shift to left or right (+ is left, - is right)
   ScalarT W = freeze_curve_width_;  // constant value
   if (freezing_curve_width_.size() > 0) {
@@ -431,13 +431,12 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   ScalarT const Tdiff = Tcurr - Tmelt;
-  // ScalarT const arg   = -W * Tdiff;
-  ScalarT const arg = -(8.0 / W) * (Tdiff + (f_shift_ * W));
+  ScalarT const arg   = -(8.0 / W) * (Tdiff + (f_shift_ * W));
   ScalarT       icurr{1.0};
   ScalarT       dfdT{0.0};
 
   if (arg < std::log(DBL_MAX)) {
-    ScalarT const et   = exp(arg);
+    ScalarT const et   = std::exp(arg);
     ScalarT const etp1 = et + 1.0;
 
     // Update freeze curve slope

@@ -364,27 +364,37 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Calculate the freezing curve function df/dTemp
   // W term sets the width of the freezing curve.
-  // Larger W means steeper curve.
+  // Smaller W means steeper curve.
   // f(T) = 1 / (1 + e^(-W*(T-T0)))
-  ScalarT const W     = freeze_curve_width_;
+  // New curve, formulated by Siddharth, which shifts the
+  // freezing point to left or right:
+  // f(T) = 1 / (1 + e^(-(8/W)((T-T0) + (b*W))))
+  // W = true width of freezing curve (in Celsius)
+  // b = shift to left or right (+ is left, - is right)
+  ScalarT W = freeze_curve_width_;  // constant value
+  if (freezing_curve_width_.size() > 0) {
+    W = interpolateVectors(
+        z_above_mean_sea_level_, freezing_curve_width_, height);
+  }
+
   ScalarT const Tdiff = Tcurr - Tmelt;
-  ScalarT const arg   = -W * Tdiff;
+  ScalarT const arg   = -(8.0 / W) * (Tdiff + (f_shift_ * W));
   ScalarT       icurr{1.0};
   ScalarT       dfdT{0.0};
 
   if (arg < std::log(DBL_MAX)) {
-    ScalarT const et   = exp(-W * Tdiff);
+    ScalarT const et   = std::exp(arg);
     ScalarT const etp1 = et + 1.0;
 
     // Update freeze curve slope
-    dfdT = -W * et / etp1 / etp1;
+    dfdT = -(W / 8.0) * et / etp1 / etp1;
 
     // Update the ice saturation
     icurr = 1.0 - 1.0 / etp1;
   }
 
   // Update the water saturation
-  ScalarT const wcurr = 1.0 - icurr;
+  ScalarT wcurr = 1.0 - icurr;
 
   // Update the effective material density
   density_(cell, pt) =
