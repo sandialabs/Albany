@@ -437,6 +437,16 @@ ELSE()
   SET(ALBANY_MUELU_EXAMPLES FALSE)
 ENDIF()
 
+# set optional dependency on FROSch, for preconditioning
+LIST(FIND Trilinos_PACKAGE_LIST ShyLU_DDFROSch FROSch_List_ID)
+IF (FROSch_List_ID GREATER -1)
+  MESSAGE("-- Looking for FROSch:               Found.")
+  SET(ALBANY_FROSCH TRUE)
+ELSE()
+  MESSAGE("-- Looking for FROSch:               NOT found.")
+  SET(ALBANY_FROSCH FALSE)
+ENDIF()
+
 LIST(FIND Trilinos_PACKAGE_LIST Rythmos Rythmos_List_ID)
 IF (Rythmos_List_ID GREATER -1)
   MESSAGE("-- Looking for Rythmos:              Found.")

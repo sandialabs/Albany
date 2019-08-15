@@ -3125,11 +3125,11 @@ STKDiscretization::updateMesh()
   writeMatrixMarket(m_node_vs, "node_vs");
 #endif
 
-  setupMLCoords();
-
   computeNodalVectorSpaces(true);
 
   computeOverlapNodesAndUnknowns();
+    
+  setupMLCoords();
 
   transformMesh();
 

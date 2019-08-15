@@ -31,4 +31,20 @@ if (ALBANY_IOPX)
     add_test(${testName}_MueLu ${Albany8.exe} inputMueLuShort3.yaml)
     set_tests_properties(${testName}_MueLu PROPERTIES LABELS "LandIce;Tpetra;Forward")
   endif()
+
+  if (ALBANY_FROSCH)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input3_FROSch.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input3_FROSch.yaml COPYONLY)
+    add_test(${testName}_FROSch_3 ${Albany8.exe} input3_FROSch.yaml)
+    set_tests_properties(${testName}_FROSch_3
+                         PROPERTIES
+                         LABELS "LandIce;Tpetra;Forward")
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputShort_FROSch.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/inputShort_FROSch.yaml COPYONLY)
+    add_test(${testName}_FROSch_short ${Albany8.exe} inputShort_FROSch.yaml)
+    set_tests_properties(${testName}_FROSch_short
+                         PROPERTIES
+                         LABELS "LandIce;Tpetra;Forward")
+  endif()
 endif()

@@ -381,7 +381,7 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
 
     plist->set("PDE equations", numPDEs);
 
-  } else {  // MueLu here
+  } else if (isMLUsed()) {  // MueLu here
     // It apperas MueLu only accepts Tpetra. Get the Tpetra MV then.
     auto t_coordMV = getTpetraMultiVector(coordMV);
     if (plist->isSublist("Factories") == true) {
@@ -394,6 +394,9 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
       plist->set("Coordinates", t_coordMV);
       plist->set("number of equations", numPDEs);
     }
+  } else { // FROSch here
+    auto t_coordMV = getTpetraMultiVector(coordMV);
+    plist->set("Coordinates List",t_coordMV);
   }
 }
 
@@ -458,15 +461,18 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
       TEUCHOS_TEST_FOR_EXCEPTION(
         soln_vs.is_null(), std::logic_error,
         "numElasticityDim > 0 and (isMueLuUsed() or isFROSchUsed()): soln_map must be provided.");
-      plist->set("Nullspace", trr);
+        if (isMueLuUsed()) {
+          plist->set("Nullspace", trr);
+        } else { // This means that FROSch is used
+          plist->set("Null Space",trr);
+        }
     }
   }
-  
   if(isFROSchUsed()) {
     TEUCHOS_TEST_FOR_EXCEPTION(
       soln_overlap_vs.is_null(), std::logic_error,
       "isFROSchUsed(): soln_overlap_map must be provided.");
-    plist->set("Overlapped Map", getTpetraMap(soln_overlap_vs));
+    plist->set("Repeated Map",getTpetraMap(soln_overlap_vs));
   }
 }
 
