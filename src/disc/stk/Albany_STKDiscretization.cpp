@@ -2603,6 +2603,9 @@ STKDiscretization::setupExodusOutput()
     mesh_data = Teuchos::rcp(
         new stk::io::StkMeshIoBroker(getMpiCommFromTeuchosComm(comm)));
     mesh_data->set_bulk_data(bulkData);
+    //IKT, 8/16/19: The following is needed to get correct output file for Schwarz problems
+    //Please see: https://github.com/trilinos/Trilinos/issues/5479
+    mesh_data->property_add(Ioss::Property("FLUSH_INTERVAL", 1));
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
     const auto& field_container = stkMeshStruct->getFieldContainer();
