@@ -66,7 +66,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(*scatter_operation);
 
-  this->setName("Aeras_ScatterResidual"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras_ScatterResidual"+PHX::print<EvalT>());
 }
 
 // **********************************************************************

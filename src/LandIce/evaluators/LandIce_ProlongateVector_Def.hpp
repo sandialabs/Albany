@@ -62,7 +62,7 @@ ProlongateVectorBase(const Teuchos::ParameterList& p,
   pad_value = p.isParameter("Pad Value") ? p.get<double>("Pad Value") : 0.;
   pad_back = p.isParameter("Pad Back") ? p.get<bool>("Pad Back") : true;
 
-  this->setName("ProlongateVectorBase"+PHX::typeAsString<EvalT>());
+  this->setName("ProlongateVectorBase"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

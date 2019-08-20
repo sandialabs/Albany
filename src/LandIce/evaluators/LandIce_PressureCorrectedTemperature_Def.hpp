@@ -6,7 +6,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 #include "LandIce_PressureCorrectedTemperature.hpp"
 
@@ -26,7 +26,7 @@ PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP
 	this->addDependentField(temp);
 	this->addEvaluatedField(correctedTemp);
 
-	this->setName("Pressure Corrected Temperature"+PHX::typeAsString<EvalT>());
+	this->setName("Pressure Corrected Temperature"+PHX::print<EvalT>());
 
   auto physicsList = p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
   rho_i = physicsList->get<double>("Ice Density");

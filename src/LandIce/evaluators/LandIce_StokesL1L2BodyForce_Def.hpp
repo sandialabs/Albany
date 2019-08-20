@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Sacado.hpp"
 
 
@@ -63,7 +63,7 @@ StokesL1L2BodyForce(const Teuchos::ParameterList& p,
 //*out << " numQPs = " << numQPs << endl;
 
 
-  this->setName("StokesL1L2BodyForce"+PHX::typeAsString<EvalT>());
+  this->setName("StokesL1L2BodyForce"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

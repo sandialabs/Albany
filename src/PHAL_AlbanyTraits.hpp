@@ -15,7 +15,7 @@
 
 // Include User Data Types
 #include "Phalanx_config.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
 #include "Albany_SacadoTypes.hpp"
@@ -103,16 +103,16 @@ namespace PHAL {
 
 namespace PHX {
   // Evaluation Types
-  template<> inline std::string typeAsString<PHAL::AlbanyTraits::Residual>()
+  template<> inline std::string print<PHAL::AlbanyTraits::Residual>()
   { return "<Residual>"; }
 
-  template<> inline std::string typeAsString<PHAL::AlbanyTraits::Jacobian>()
+  template<> inline std::string print<PHAL::AlbanyTraits::Jacobian>()
   { return "<Jacobian>"; }
 
-  template<> inline std::string typeAsString<PHAL::AlbanyTraits::Tangent>()
+  template<> inline std::string print<PHAL::AlbanyTraits::Tangent>()
   { return "<Tangent>"; }
 
-  template<> inline std::string typeAsString<PHAL::AlbanyTraits::DistParamDeriv>()
+  template<> inline std::string print<PHAL::AlbanyTraits::DistParamDeriv>()
   { return "<DistParamDeriv>"; }
 
   // ******************************************************************

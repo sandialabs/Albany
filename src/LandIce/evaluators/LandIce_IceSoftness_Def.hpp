@@ -7,7 +7,7 @@
 #include "LandIce_ParamEnum.hpp"
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -58,7 +58,7 @@ IceSoftness<EvalT, Traits, ThermoCoupled>::IceSoftness (const Teuchos::Parameter
 
   this->addEvaluatedField(ice_softness);
 
-  this->setName("IceSoftness"+PHX::typeAsString<EvalT>());
+  this->setName("IceSoftness"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

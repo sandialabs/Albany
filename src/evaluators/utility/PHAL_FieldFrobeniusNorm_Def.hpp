@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 #define OUTPUT_TO_SCREEN
@@ -159,7 +159,7 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
 
   numDims = dims.size();
 
-  this->setName("FieldFrobeniusNormBase(" + fieldNormName + ")" + PHX::typeAsString<EvalT>());
+  this->setName("FieldFrobeniusNormBase(" + fieldNormName + ")" + PHX::print<EvalT>());
 }
 
 //**********************************************************************
@@ -191,7 +191,7 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Tr
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
     if (std::fabs(printedReg-regularization)>1e-6*regularization)
     {
-        *output << "[Field Norm<" << PHX::typeAsString<EvalT>() << ">]] reg = " << regularization << "\n";
+        *output << "[Field Norm<" << PHX::print<EvalT>() << ">]] reg = " << regularization << "\n";
         printedReg = regularization;
     }
   }

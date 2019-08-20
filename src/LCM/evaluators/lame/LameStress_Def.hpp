@@ -40,7 +40,7 @@ LameStressBase<EvalT, Traits>::LameStressBase(Teuchos::ParameterList& p)
   stressName = p.get<std::string>("Stress Name") + "_old";
   this->addEvaluatedField(stressField);
 
-  this->setName("LameStress" + PHX::typeAsString<EvalT>());
+  this->setName("LameStress" + PHX::print<EvalT>());
 
   // Default to getting material info form base input file (possibley
   // overwritten later)

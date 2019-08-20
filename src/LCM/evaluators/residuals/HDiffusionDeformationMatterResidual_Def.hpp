@@ -115,7 +115,7 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::
     eqpsName = p.get<std::string>("Equivalent Plastic Strain Name") + "_old";
 
   this->setName(
-      "HDiffusionDeformationMatterResidual" + PHX::typeAsString<EvalT>());
+      "HDiffusionDeformationMatterResidual" + PHX::print<EvalT>());
   // std::cout << "End of Hdiff ctor" << std::endl;
 }
 

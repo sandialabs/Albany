@@ -37,7 +37,7 @@ BodyForce(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(outVector);
 
 
-  this->setName("BodyForce"+PHX::typeAsString<EvalT>());
+  this->setName("BodyForce"+PHX::print<EvalT>());
 
 }
 

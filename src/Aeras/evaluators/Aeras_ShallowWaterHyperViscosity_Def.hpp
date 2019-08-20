@@ -63,7 +63,7 @@ ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
   std::cout << "vecDim: " << vecDim << std::endl;  
 #endif
 
-  this->setName("ShallowWaterHyperViscosity"+PHX::typeAsString<EvalT>());
+  this->setName("ShallowWaterHyperViscosity"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

@@ -45,7 +45,7 @@ SurfaceScalarGradientOperatorTransport<EvalT, Traits>::
 
   this->setName(
       "Surface Scalar Gradient Operator Transport" +
-      PHX::typeAsString<EvalT>());
+      PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_gradient->dimensions(dims);

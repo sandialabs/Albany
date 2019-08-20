@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 #include "LandIce_StokesFOResid.hpp"
 
@@ -84,7 +84,7 @@ StokesFOResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("StokesFOResid"+PHX::typeAsString<EvalT>());
+  this->setName("StokesFOResid"+PHX::print<EvalT>());
 
   int vecDimFO = (numDims < 2) ? numDims : 2;
 

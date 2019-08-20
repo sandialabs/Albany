@@ -26,7 +26,7 @@ ParallelSetField(const Teuchos::ParameterList& p) :
 
   // Register the field to be set as an evaluated field
   this->addEvaluatedField(evaluatedField);
-  this->setName("SetField" + PHX::typeAsString<EvalT>());
+  this->setName("SetField" + PHX::print<EvalT>());
 }
 
 template<typename EvalT, typename Traits>

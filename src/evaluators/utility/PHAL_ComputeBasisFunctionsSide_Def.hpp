@@ -76,7 +76,7 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
           << numSideDims << " side dimensions.\n";
 #endif
 
-  this->setName("ComputeBasisFunctionsSide"+PHX::typeAsString<EvalT>());
+  this->setName("ComputeBasisFunctionsSide"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

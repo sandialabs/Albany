@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Sacado.hpp"
 
 
@@ -36,7 +36,7 @@ NavierStokesParameters(const Teuchos::ParameterList& p,
   numQPs  = dims[1];
   numDims = dims[2];
 
-  this->setName("NavierStokesParameters"+PHX::typeAsString<EvalT>());
+  this->setName("NavierStokesParameters"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

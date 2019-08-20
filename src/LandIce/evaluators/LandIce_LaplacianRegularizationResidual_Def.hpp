@@ -70,7 +70,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   this->addEvaluatedField(residual);
 
-  this->setName("Laplacian Regularization Residual" + PHX::typeAsString<EvalT>());
+  this->setName("Laplacian Regularization Residual" + PHX::print<EvalT>());
 
   using PHX::MDALayout;
 

@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 
 namespace LandIce {
@@ -76,7 +76,7 @@ ViscosityL1L2(const Teuchos::ParameterList& p,
   numQPs  = dims[1];
   numDims = dims[2];
 
-  this->setName("ViscosityL1L2"+PHX::typeAsString<EvalT>());
+  this->setName("ViscosityL1L2"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

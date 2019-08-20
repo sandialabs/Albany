@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "PHAL_SideLaplacianResidual.hpp"
@@ -79,7 +79,7 @@ SideLaplacianResidual<EvalT, Traits>::SideLaplacianResidual (const Teuchos::Para
 
   this->addEvaluatedField(residual);
 
-  this->setName("SideLaplacianResidual"+PHX::typeAsString<EvalT>());
+  this->setName("SideLaplacianResidual"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

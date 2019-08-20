@@ -24,7 +24,7 @@ GradientElementLength<EvalT, Traits>::GradientElementLength(
   this->addDependentField(grad_bf_);
   this->addEvaluatedField(element_length_);
 
-  this->setName("Element Length" + PHX::typeAsString<EvalT>());
+  this->setName("Element Length" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_vector->dimensions(dims);

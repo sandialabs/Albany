@@ -71,7 +71,7 @@ HeliumODEs<EvalT, Traits>::HeliumODEs(
   this->addEvaluatedField(total_bubble_density_);
   this->addEvaluatedField(bubble_volume_fraction_);
 
-  this->setName("Helium ODEs" + PHX::typeAsString<EvalT>());
+  this->setName("Helium ODEs" + PHX::print<EvalT>());
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);
   num_pts_  = dims[1];

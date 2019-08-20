@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace Tsunami {
 
@@ -59,7 +59,7 @@ BoussinesqBodyForce(const Teuchos::ParameterList& p,
             << type << "!  Valid types are: 'None, 1D Solitary Wave'.");
   }
 
-  this->setName("BoussinesqBodyForce"+PHX::typeAsString<EvalT>());
+  this->setName("BoussinesqBodyForce"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

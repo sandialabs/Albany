@@ -35,7 +35,7 @@ SurfaceCohesiveResidual<EvalT, Traits>::SurfaceCohesiveResidual(
 
   this->addEvaluatedField(force_);
 
-  this->setName("Surface Cohesive Residual" + PHX::typeAsString<EvalT>());
+  this->setName("Surface Cohesive Residual" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
 

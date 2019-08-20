@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -39,7 +39,7 @@ StokesMomentumResid(const Teuchos::ParameterList& p,
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("StokesMomentumResid"+PHX::typeAsString<EvalT>());
+  this->setName("StokesMomentumResid"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

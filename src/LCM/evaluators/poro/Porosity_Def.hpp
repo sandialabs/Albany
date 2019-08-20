@@ -140,7 +140,7 @@ Porosity<EvalT, Traits>::Porosity(
   }
 
   this->addEvaluatedField(porosity);
-  this->setName("Porosity" + PHX::typeAsString<EvalT>());
+  this->setName("Porosity" + PHX::print<EvalT>());
 }
 
 //----------------------------------------------------------------------------

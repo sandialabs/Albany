@@ -50,7 +50,7 @@ Hydrostatic_EtaDot(const Teuchos::ParameterList& p,
   this->addDependentField(sphere_coord);
   this->addDependentField(pressure);
   this->addEvaluatedField(etadot);
-  this->setName("Aeras::Hydrostatic_EtaDot"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::Hydrostatic_EtaDot"+PHX::print<EvalT>());
 
   pureAdvection = xzhydrostatic_params->get<bool>("Pure Advection", false);
 }

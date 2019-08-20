@@ -67,7 +67,7 @@ ResponseThermalEnergy(Teuchos::ParameterList& p,
 //  this->addDependentField(time.fieldTag());
 //  this->addDependentField(deltaTime.fieldTag());
   this->addDependentField(weights.fieldTag());
-  this->setName(field_name+" Response Field IntegralT"+PHX::typeAsString<EvalT>());
+  this->setName(field_name+" Response Field IntegralT"+PHX::print<EvalT>());
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);

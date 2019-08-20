@@ -27,7 +27,7 @@ StrainDifference<EvalT, Traits>::StrainDifference(
 
   this->addEvaluatedField(strainDifference);
 
-  this->setName("StrainDifference" + PHX::typeAsString<EvalT>());
+  this->setName("StrainDifference" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);

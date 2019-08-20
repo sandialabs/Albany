@@ -73,7 +73,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
 
   this->addDependentField(BF);
 
-  this->setName("Topology Mixture"+PHX::typeAsString<EvalT>());
+  this->setName("Topology Mixture"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

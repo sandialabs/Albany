@@ -74,7 +74,7 @@ public:
 
   FastSolutionTensorGradInterpolationBase(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
     : DOFTensorGradInterpolationBase<EvalT, Traits,  ScalarT>(p, dl) {
-    this->setName("FastSolutionTensorGradInterpolationBase"+PHX::typeAsString<EvalT>());
+    this->setName("FastSolutionTensorGradInterpolationBase"+PHX::print<EvalT>());
   };
 
   void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& vm) {
@@ -98,7 +98,7 @@ public:
   FastSolutionTensorGradInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
     : DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits,  typename PHAL::AlbanyTraits::Jacobian::ScalarT>(p, dl) {
-    this->setName("FastSolutionTensorGradInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
+    this->setName("FastSolutionTensorGradInterpolationBase"+PHX::print<PHAL::AlbanyTraits::Jacobian>());
     offset = p.get<int>("Offset of First DOF");
   };
 

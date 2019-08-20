@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
 #include "LandIce_ParamEnum.hpp"
@@ -52,7 +52,7 @@ EffectivePressure (const Teuchos::ParameterList& p,
   this->addDependentField (P_o);
   this->addEvaluatedField (N);
 
-  this->setName("EffectivePressure"+PHX::typeAsString<EvalT>());
+  this->setName("EffectivePressure"+PHX::print<EvalT>());
 }
 
 //**********************************************************************
@@ -102,7 +102,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
     if (std::fabs(printedAlpha-alpha)>1e-10) {
-      *output << "[Effective Pressure<" << PHX::typeAsString<EvalT>() << ">]] alpha = " << alpha << "\n";
+      *output << "[Effective Pressure<" << PHX::print<EvalT>() << ">]] alpha = " << alpha << "\n";
       printedAlpha = alpha;
     }
 #endif
@@ -142,7 +142,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
     if (std::fabs(printedAlpha-alpha)>1e-10) {
-      *output << "[Effective Pressure " << PHX::typeAsString<EvalT>() << "] alpha = " << alpha << "\n";
+      *output << "[Effective Pressure " << PHX::print<EvalT>() << "] alpha = " << alpha << "\n";
       printedAlpha = alpha;
     }
 #endif

@@ -65,7 +65,7 @@ AnalyticMassResidualBase<EvalT, Traits>::AnalyticMassResidualBase(
     this->addDependentField(accel_nodes_);
   }
 
-  this->setName("AnalyticMassResidual" + PHX::typeAsString<EvalT>());
+  this->setName("AnalyticMassResidual" + PHX::print<EvalT>());
 
   Teuchos::RCP<PHX::DataLayout>           vector_dl = dl->node_qp_vector;
   std::vector<PHX::DataLayout::size_type> dims;

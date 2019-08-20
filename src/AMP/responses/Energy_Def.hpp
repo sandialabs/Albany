@@ -45,7 +45,7 @@ namespace AMP {
  Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
  cond_list->validateParameters(*reflist, 0);
 
- this->setName("Energy" + PHX::typeAsString<EvalT>());      
+ this->setName("Energy" + PHX::print<EvalT>());      
 
  using PHX::MDALayout;
  //Setup scatter evaluater

@@ -151,7 +151,7 @@ TLPoroPlasticityResidMass<EvalT, Traits>::TLPoroPlasticityResidMass(
     }
   }
 
-  this->setName("TLPoroPlasticityResidMass" + PHX::typeAsString<EvalT>());
+  this->setName("TLPoroPlasticityResidMass" + PHX::print<EvalT>());
 }
 
 //**********************************************************************

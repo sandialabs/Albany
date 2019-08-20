@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "PHAL_Utilities.hpp"
 
 #include "LandIce_StokesFOImplicitThicknessUpdateResid.hpp"
@@ -41,7 +41,7 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
   this->addContributedField(Residual);
 
 
-  this->setName("StokesFOImplicitThicknessUpdateResid"+PHX::typeAsString<EvalT>());
+  this->setName("StokesFOImplicitThicknessUpdateResid"+PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   gradBF.fieldTag().dataLayout().dimensions(dims);

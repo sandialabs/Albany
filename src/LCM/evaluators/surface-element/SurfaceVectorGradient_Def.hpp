@@ -48,7 +48,7 @@ SurfaceVectorGradient<EvalT, Traits>::SurfaceVectorGradient(
   this->addEvaluatedField(defGrad);
   this->addEvaluatedField(J);
 
-  this->setName("Surface Vector Gradient" + PHX::typeAsString<EvalT>());
+  this->setName("Surface Vector Gradient" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);

@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 
 namespace LandIce {
@@ -61,7 +61,7 @@ Viscosity(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
 
-  this->setName("Viscosity"+PHX::typeAsString<EvalT>());
+  this->setName("Viscosity"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

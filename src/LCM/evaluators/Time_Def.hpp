@@ -36,7 +36,7 @@ Time<EvalT, Traits>::Time(Teuchos::ParameterList& p)
   this->addEvaluatedField(deltaTime);
 
   timeName = p.get<std::string>("Time Name") + "_old";
-  this->setName("Time" + PHX::typeAsString<EvalT>());
+  this->setName("Time" + PHX::print<EvalT>());
 }
 
 // **********************************************************************

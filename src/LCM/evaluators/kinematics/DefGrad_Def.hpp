@@ -51,7 +51,7 @@ DefGrad<EvalT, Traits>::DefGrad(const Teuchos::ParameterList& p)
   this->addEvaluatedField(defgrad);
   this->addEvaluatedField(J);
 
-  this->setName("DefGrad" + PHX::typeAsString<EvalT>());
+  this->setName("DefGrad" + PHX::print<EvalT>());
 }
 
 //**********************************************************************

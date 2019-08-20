@@ -62,7 +62,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   //OG make grad_at_cub_points an output value
 
 
-  this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::ComputeBasisFunctions"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

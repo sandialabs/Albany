@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Sacado.hpp"
 
 #include "Albany_ThyraUtils.hpp"
@@ -46,7 +46,7 @@ GatherVerticallyAveragedVelocityBase(const Teuchos::ParameterList& p,
   averagedVel = decltype(averagedVel)(p.get<std::string>("Averaged Velocity Name"), dl_side->node_vector);
   this->addEvaluatedField(averagedVel);
 
-  this->setName("GatherVerticallyAveragedVelocity"+PHX::typeAsString<EvalT>());
+  this->setName("GatherVerticallyAveragedVelocity"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace PHAL {
 
@@ -40,7 +40,7 @@ NodesToCellInterpolationBase (const Teuchos::ParameterList& p,
 
   this->addEvaluatedField (field_cell);
 
-  this->setName("NodesToCellInterpolation"+PHX::typeAsString<EvalT>());
+  this->setName("NodesToCellInterpolation"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

@@ -64,7 +64,7 @@ BodyForce<EvalT, Traits>::BodyForce(
   this->addDependentField(coordinates_);
   this->addDependentField(weights_);
   this->addEvaluatedField(body_force_);
-  this->setName("Body Force" + PHX::typeAsString<EvalT>());
+  this->setName("Body Force" + PHX::print<EvalT>());
 }
 
 //

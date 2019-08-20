@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Sacado.hpp"
 
 
@@ -51,7 +51,7 @@ NavierStokesBodyForce(const Teuchos::ParameterList& p,
   numQPs  = dims[1];
   numDims = dims[2];
 
-  this->setName("NavierStokesBodyForce"+PHX::typeAsString<EvalT>());
+  this->setName("NavierStokesBodyForce"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

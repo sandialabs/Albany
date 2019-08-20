@@ -80,7 +80,7 @@ BiotCoefficient<EvalT, Traits>::BiotCoefficient(Teuchos::ParameterList& p)
   this->registerSacadoParameter("Grain Bulk Modulus Value", paramLib);
 
   this->addEvaluatedField(biotCoefficient);
-  this->setName("Biot Coefficient" + PHX::typeAsString<EvalT>());
+  this->setName("Biot Coefficient" + PHX::print<EvalT>());
 }
 
 // **********************************************************************

@@ -35,7 +35,7 @@ VorticityLevels(Teuchos::ParameterList& p,
   this->addDependentField(jacobian);
   this->addEvaluatedField(vort_val_qp);
 
-  this->setName("Aeras::VorticityLevels"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::VorticityLevels"+PHX::print<EvalT>());
 
   //std::cout << "In Vorticity, name = " << this->getName() << "\n";
   //std::cout<< "Aeras::VorticityLevels: " << numNodes << " " << numDims << " " << numQPs << " " << numLevels << std::endl;

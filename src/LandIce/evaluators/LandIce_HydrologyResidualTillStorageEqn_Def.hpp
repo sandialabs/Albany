@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -113,7 +113,7 @@ HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
   scaling_h_dot   = yr_to_s;
   C_drain *= 1e-3;
 
-  this->setName("HydrologyResidualTillStorageEqn"+PHX::typeAsString<EvalT>());
+  this->setName("HydrologyResidualTillStorageEqn"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

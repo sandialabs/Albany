@@ -215,7 +215,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   logParameters = beta_list.get<bool>("Use log scalar parameters",false);
 
-  this->setName("BasalFrictionCoefficient"+PHX::typeAsString<EvalT>());
+  this->setName("BasalFrictionCoefficient"+PHX::print<EvalT>());
 }
 
 //**********************************************************************
@@ -261,12 +261,12 @@ evaluateFields (typename Traits::EvalData workset)
 
     if (printedMu!=mu)
     {
-      *output << "[Basal Friction Coefficient" << PHX::typeAsString<EvalT>() << "] mu = " << mu << " [kPa yr^q m^{-q}]\n";
+      *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] mu = " << mu << " [kPa yr^q m^{-q}]\n";
       printedMu = mu;
     }
     if (printedQ!=power)
     {
-      *output << "[Basal Friction Coefficient" << PHX::typeAsString<EvalT>() << "] power = " << power << "\n";
+      *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] power = " << power << "\n";
       printedQ = power;
     }
 #endif
@@ -302,17 +302,17 @@ evaluateFields (typename Traits::EvalData workset)
 
     if (!distributedLambda && printedLambda!=lambda)
     {
-      *output << "[Basal Friction Coefficient" << PHX::typeAsString<EvalT>() << "] lambda = " << lambda << "\n";
+      *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] lambda = " << lambda << "\n";
       printedLambda = lambda;
     }
     if (printedMu!=mu)
     {
-      *output << "[Basal Friction Coefficient" << PHX::typeAsString<EvalT>() << "] mu = " << mu << "\n";
+      *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] mu = " << mu << "\n";
       printedMu = mu;
     }
     if (printedQ!=power)
     {
-      *output << "[Basal Friction Coefficient" << PHX::typeAsString<EvalT>() << "] power = " << power << "\n";
+      *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] power = " << power << "\n";
       printedQ = power;
     }
 #endif

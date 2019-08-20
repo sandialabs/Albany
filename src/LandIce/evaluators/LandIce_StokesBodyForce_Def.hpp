@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Sacado.hpp"
 
 
@@ -382,7 +382,7 @@ StokesBodyForce(const Teuchos::ParameterList& p,
       gravity[numDims-1] = -1.0;
     }
   }
-  this->setName("StokesBodyForce"+PHX::typeAsString<EvalT>());
+  this->setName("StokesBodyForce"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

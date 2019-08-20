@@ -30,7 +30,7 @@ DOFGradInterpolationBase(const Teuchos::ParameterList& p,
   this->addDependentField(GradBF.fieldTag());
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("DOFGradInterpolationBase"+PHX::typeAsString<EvalT>());
+  this->setName("DOFGradInterpolationBase"+PHX::print<EvalT>());
 
  // std::vector<PHX::DataLayout::size_type> dims;
   std::vector<PHX::DataLayout::size_type> dims;

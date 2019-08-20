@@ -41,7 +41,7 @@ DamageCoefficients<EvalT, Traits>::DamageCoefficients(
   this->addEvaluatedField(damage_diffusivity_);
   this->addEvaluatedField(damage_dot_);
 
-  this->setName("Damage Coefficients" + PHX::typeAsString<EvalT>());
+  this->setName("Damage Coefficients" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);

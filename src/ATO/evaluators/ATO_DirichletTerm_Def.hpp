@@ -56,7 +56,7 @@ DirichletVectorTerm(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(outVector);
   this->addDependentField(dirVector);
 
-  this->setName("DirichletVectorTerm"+PHX::typeAsString<EvalT>());
+  this->setName("DirichletVectorTerm"+PHX::print<EvalT>());
 
 }
 
@@ -114,7 +114,7 @@ DirichletScalarTerm(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(outValue);
   this->addDependentField(dirValue);
 
-  this->setName("DirichletScalarTerm"+PHX::typeAsString<EvalT>());
+  this->setName("DirichletScalarTerm"+PHX::print<EvalT>());
 
 }
 

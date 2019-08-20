@@ -22,7 +22,7 @@ SaveSideSetStateField (const Teuchos::ParameterList& /* p */,
                        const Teuchos::RCP<Albany::Layouts>& /* dl */)
 {
   // States Not Saved for Generic Type, only Specializations
-  this->setName("Save Side Set State Field"+PHX::typeAsString<EvalT>());
+  this->setName("Save Side Set State Field"+PHX::print<EvalT>());
 }
 
 // **********************************************************************

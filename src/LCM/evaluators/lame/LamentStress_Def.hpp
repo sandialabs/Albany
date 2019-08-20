@@ -42,7 +42,7 @@ LamentStress<EvalT, Traits>::LamentStress(Teuchos::ParameterList& p)
   stressName = p.get<std::string>("Stress Name") + "_old";
   this->addEvaluatedField(stressField);
 
-  this->setName("LamentStress" + PHX::typeAsString<EvalT>());
+  this->setName("LamentStress" + PHX::print<EvalT>());
 
   // Default to getting material info form base input file (possibley
   // overwritten later)

@@ -108,7 +108,7 @@ namespace AMP {
         Initial_porosity = cond_list->get("Value", 0.0);
 
 
-        this->setName("EnergyDot" + PHX::typeAsString<EvalT>());
+        this->setName("EnergyDot" + PHX::print<EvalT>());
 
     }
 

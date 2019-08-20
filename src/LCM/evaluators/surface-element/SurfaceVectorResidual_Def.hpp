@@ -57,7 +57,7 @@ SurfaceVectorResidual<EvalT, Traits>::SurfaceVectorResidual(
 
   this->addEvaluatedField(force_);
 
-  this->setName("Surface Vector Residual" + PHX::typeAsString<EvalT>());
+  this->setName("Surface Vector Residual" + PHX::print<EvalT>());
 
   // if enabled grab the cohesive tractions
   if (use_cohesive_traction_) {

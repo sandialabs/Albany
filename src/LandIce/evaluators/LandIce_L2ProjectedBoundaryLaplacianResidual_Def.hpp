@@ -72,7 +72,7 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
 
   this->addEvaluatedField(bdLaplacian_L2Projection_res);
 
-  this->setName("Boundary Laplacian L2 Projection Residual" + PHX::typeAsString<EvalT>());
+  this->setName("Boundary Laplacian L2 Projection Residual" + PHX::print<EvalT>());
 
   using PHX::MDALayout;
 

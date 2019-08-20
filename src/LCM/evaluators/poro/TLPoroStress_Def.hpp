@@ -51,7 +51,7 @@ TLPoroStress<EvalT, Traits>::TLPoroStress(const Teuchos::ParameterList& p)
   this->addEvaluatedField(porePressure);
   this->addEvaluatedField(totstress);
 
-  this->setName("TLPoroStress" + PHX::typeAsString<EvalT>());
+  this->setName("TLPoroStress" + PHX::print<EvalT>());
 }
 
 //**********************************************************************

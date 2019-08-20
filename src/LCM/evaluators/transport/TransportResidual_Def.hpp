@@ -124,7 +124,7 @@ TransportResidual<EvalT, Traits>::TransportResidual(
 
   scalar_name_ = p.get<std::string>("Scalar Variable Name") + "_old";
 
-  this->setName("TransportResidual" + PHX::typeAsString<EvalT>());
+  this->setName("TransportResidual" + PHX::print<EvalT>());
 }
 
 //----------------------------------------------------------------------------

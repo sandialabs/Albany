@@ -26,7 +26,7 @@ NodePointVecInterpolation<EvalT, Traits>::NodePointVecInterpolation(
   this->addDependentField(basis_fn_);
   this->addEvaluatedField(point_value_);
 
-  this->setName("NodePointVecInterpolation" + PHX::typeAsString<EvalT>());
+  this->setName("NodePointVecInterpolation" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dimensions;
 
@@ -94,7 +94,7 @@ NodePointVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
 
   this->setName(
       "NodePointVecInterpolation" +
-      PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
+      PHX::print<PHAL::AlbanyTraits::Jacobian>());
 
   std::vector<PHX::DataLayout::size_type> dimensions;
 

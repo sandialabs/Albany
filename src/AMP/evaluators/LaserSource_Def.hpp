@@ -72,7 +72,7 @@ LaserSource(Teuchos::ParameterList& p,
   ScalarT value_powder_hemispherical_reflectivity = cond_list->get("Powder Hemispherical Reflectivity Value", 1.0);
   init_constant_powder_hemispherical_reflectivity(value_powder_hemispherical_reflectivity,p);
 
-  this->setName("LaserSource"+PHX::typeAsString<EvalT>());
+  this->setName("LaserSource"+PHX::print<EvalT>());
 
 }
 

@@ -89,7 +89,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   cubature->getBasis()->getValues(val_at_cub_points, refPoints, Intrepid2::OPERATOR_VALUE);
   cubature->getBasis()->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
-  this->setName("Cogent:ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
+  this->setName("Cogent:ComputeBasisFunctions"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

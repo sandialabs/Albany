@@ -110,7 +110,7 @@ ElasticModulus<EvalT, Traits>::ElasticModulus(Teuchos::ParameterList& p)
   }
 
   this->addEvaluatedField(elasticModulus);
-  this->setName("Elastic Modulus" + PHX::typeAsString<EvalT>());
+  this->setName("Elastic Modulus" + PHX::print<EvalT>());
 }
 
 // **********************************************************************

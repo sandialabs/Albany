@@ -54,7 +54,7 @@ MechanicsResidual<EvalT, Traits>::MechanicsResidual(
     if (use_analytic_mass_) this->addDependentField(mass_);
   }
 
-  this->setName("MechanicsResidual" + PHX::typeAsString<EvalT>());
+  this->setName("MechanicsResidual" + PHX::print<EvalT>());
 
   if (have_body_force_) {
     body_force_ = decltype(body_force_)(

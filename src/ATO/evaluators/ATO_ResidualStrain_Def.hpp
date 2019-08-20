@@ -79,7 +79,7 @@ ResidualStrain(Teuchos::ParameterList& p) :
   }
 
   this->addEvaluatedField(strain);
-  this->setName("Residual Strain"+PHX::typeAsString<EvalT>());
+  this->setName("Residual Strain"+PHX::print<EvalT>());
 }
 
 // **********************************************************************

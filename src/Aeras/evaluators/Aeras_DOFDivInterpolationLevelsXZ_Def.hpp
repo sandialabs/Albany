@@ -29,7 +29,7 @@ DOFDivInterpolationLevelsXZ(Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(div_val_qp);
 
-  this->setName("Aeras::DOFDivInterpolationLevelsXZ"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::DOFDivInterpolationLevelsXZ"+PHX::print<EvalT>());
   //std::cout<< "Aeras::DOFDivInterpolationLevels: " << numNodes << " " << numDims << " " << numQPs << " " << numLevels << std::endl;
 }
 

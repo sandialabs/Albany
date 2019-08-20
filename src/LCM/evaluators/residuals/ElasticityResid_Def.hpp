@@ -73,7 +73,7 @@ ElasticityResid<EvalT, Traits>::ElasticityResid(Teuchos::ParameterList& p)
   }
 #endif
 
-  this->setName("ElasticityResid" + PHX::typeAsString<EvalT>());
+  this->setName("ElasticityResid" + PHX::print<EvalT>());
 }
 
 //**********************************************************************
