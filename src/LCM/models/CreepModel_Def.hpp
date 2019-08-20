@@ -65,7 +65,10 @@ CreepModel<EvalT, Traits>::CreepModel(
       // below is what we called Q/R in the functions, users can give them
       // values here
       activation_para_(
-          p->get<RealType>("Activation Parameter of Material_Q/R", 500.0))
+          p->get<RealType>("Activation Parameter of Material_Q/R", 500.0)),
+      // Maximum allowable attempts for the return mapping algorithm
+      max_return_map_count(
+          p->get<int>("Max Return Mapping Attempts", 100))
 
 {
   // retrive appropriate field name strings
@@ -262,7 +265,7 @@ CreepModel<EvalT, Traits>::computeState(
           ScalarT   alpha     = 0.0;
           ScalarT   res       = 0.0;
           int       count     = 0;
-          int const max_count = 100;
+          int const max_count = max_return_map_count;
           // ScalarT H = 0.0;
           dgam = 0.0;
           ScalarT debug_X[max_count + 1];

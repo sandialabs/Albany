@@ -87,6 +87,8 @@ class CreepModel : public LCM::ConstitutiveModel<EvalT, Traits>
   ///
   RealType sat_mod_, sat_exp_, creep_initial_guess_, strain_rate_expo_,
       relaxation_para_, activation_para_;
+
+  int max_return_map_count;
 };
 }  // namespace LCM
 
