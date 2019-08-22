@@ -12,40 +12,6 @@
 
 namespace LCM {
 
-// static void aprintd(double x)
-//{
-//  if (-1e-5 < x && x < 0)
-//    x = 0;
-//  fprintf(stderr, "%.5f", x);
-//}
-
-// static void aprints(double x)
-//{
-//  aprintd(x);
-//  fprintf(stderr,"\n");
-//}
-
-// static void aprints(FadType const& x)
-//{
-//  aprintd(x.val());
-//  fprintf(stderr," [");
-//  for (int i = 0; i < x.size(); ++i) {
-//    fprintf(stderr," ");
-//    aprintd(x.dx(i));
-//  }
-//  fprintf(stderr,"]\n");
-//}
-
-// static void stripDeriv(double& x)
-//{
-//  (void)x;
-//}
-
-// static void stripDeriv(FadType& x)
-//{
-//  x.resize(0);
-//}
-
 //------------------------------------------------------------------------------
 template <typename EvalT, typename Traits>
 CreepModel<EvalT, Traits>::CreepModel(
@@ -67,8 +33,7 @@ CreepModel<EvalT, Traits>::CreepModel(
       activation_para_(
           p->get<RealType>("Activation Parameter of Material_Q/R", 500.0)),
       // Maximum allowable attempts for the return mapping algorithm
-      max_return_map_count(
-          p->get<int>("Max Return Mapping Attempts", 100))
+      max_return_map_count(p->get<int>("Max Return Mapping Attempts", 100))
 
 {
   // retrive appropriate field name strings

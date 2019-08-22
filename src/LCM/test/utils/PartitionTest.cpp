@@ -243,37 +243,6 @@ main(int ac, char* av[])
     std::cout << volume / length_scale_cubed << '\n';
   }
 
-#if defined(DEBUG)
-  std::cout << "==========================================";
-  std::cout << '\n';
-
-  std::cout << "Number of elements       : ";
-  std::cout << std::setw(14);
-  std::cout << connectivity_array.GetNumberElements() << '\n';
-  std::cout << '\n';
-  std::cout << "------------------------------------------";
-  std::cout << '\n';
-  std::cout << "Element        Partition";
-  std::cout << '\n';
-  std::cout << "------------------------------------------";
-  std::cout << '\n';
-
-  for (auto&& partition_element : partitions) {
-    int const element = partition_element.first;
-
-    int const partition = partition_element.second;
-
-    std::cout << std::setw(16) << element;
-    std::cout << std::setw(16) << partition;
-    std::cout << '\n';
-  }
-  std::cout << "==========================================";
-  std::cout << '\n';
-
-  LCM::DualGraph dual_graph(connectivity_array);
-  dual_graph.Print();
-#endif
-
   std::chrono::duration<double> elapsed_seconds = end - start;
   std::cout << std::scientific << std::setw(16) << std::setprecision(8);
   std::cout << "PARTITION TIME [s]: " << elapsed_seconds.count() << std::endl;

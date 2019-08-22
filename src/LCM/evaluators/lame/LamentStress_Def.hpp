@@ -232,59 +232,11 @@ LamentStress<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
       // incremental deformation gradient
       minitensor::Tensor<ScalarT> Finc = Fnew * minitensor::inverse(Fold);
 
-      // DEBUGGING //
-      // if(cell==0 && qp==0){
-      // std::cout << "Fnew(0,0) " << Fnew(0,0) << endl;
-      // std::cout << "Fnew(1,0) " << Fnew(1,0) << endl;
-      // std::cout << "Fnew(2,0) " << Fnew(2,0) << endl;
-      // std::cout << "Fnew(0,1) " << Fnew(0,1) << endl;
-      // std::cout << "Fnew(1,1) " << Fnew(1,1) << endl;
-      // std::cout << "Fnew(2,1) " << Fnew(2,1) << endl;
-      // std::cout << "Fnew(0,2) " << Fnew(0,2) << endl;
-      // std::cout << "Fnew(1,2) " << Fnew(1,2) << endl;
-      // std::cout << "Fnew(2,2) " << Fnew(2,2) << endl;
-      //}
-      // END DEBUGGING //
-
       // left stretch V, and rotation R, from left polar decomposition of new
       // deformation gradient
       minitensor::Tensor<ScalarT> V(3), R(3), U(3);
       boost::tie(V, R) = minitensor::polar_left(Fnew);
       // V = R * U * transpose(R);
-
-      // DEBUGGING //
-      // if(cell==0 && qp==0){
-      // std::cout << "U(0,0) " << U(0,0) << endl;
-      // std::cout << "U(1,0) " << U(1,0) << endl;
-      // std::cout << "U(2,0) " << U(2,0) << endl;
-      // std::cout << "U(0,1) " << U(0,1) << endl;
-      // std::cout << "U(1,1) " << U(1,1) << endl;
-      // std::cout << "U(2,1) " << U(2,1) << endl;
-      // std::cout << "U(0,2) " << U(0,2) << endl;
-      // std::cout << "U(1,2) " << U(1,2) << endl;
-      // std::cout << "U(2,2) " << U(2,2) << endl;
-      // std::cout << "========\n";
-      // std::cout << "V(0,0) " << V(0,0) << endl;
-      // std::cout << "V(1,0) " << V(1,0) << endl;
-      // std::cout << "V(2,0) " << V(2,0) << endl;
-      // std::cout << "V(0,1) " << V(0,1) << endl;
-      // std::cout << "V(1,1) " << V(1,1) << endl;
-      // std::cout << "V(2,1) " << V(2,1) << endl;
-      // std::cout << "V(0,2) " << V(0,2) << endl;
-      // std::cout << "V(1,2) " << V(1,2) << endl;
-      // std::cout << "V(2,2) " << V(2,2) << endl;
-      // std::cout << "========\n";
-      // std::cout << "R(0,0) " << R(0,0) << endl;
-      // std::cout << "R(1,0) " << R(1,0) << endl;
-      // std::cout << "R(2,0) " << R(2,0) << endl;
-      // std::cout << "R(0,1) " << R(0,1) << endl;
-      // std::cout << "R(1,1) " << R(1,1) << endl;
-      // std::cout << "R(2,1) " << R(2,1) << endl;
-      // std::cout << "R(0,2) " << R(0,2) << endl;
-      // std::cout << "R(1,2) " << R(1,2) << endl;
-      // std::cout << "R(2,2) " << R(2,2) << endl;
-      //}
-      // END DEBUGGING //
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of
       // incremental left stretch, logVinc
@@ -389,17 +341,6 @@ LamentStress<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
           stressNew[2]);
       minitensor::Tensor<ScalarT> cauchy = R * lameStress * transpose(R);
 
-      // DEBUGGING //
-      // if(cell==0 && qp==0){
-      // std::cout << "check strainRate[0] " << strainRate[0] << endl;
-      // std::cout << "check strainRate[1] " << strainRate[1] << endl;
-      // std::cout << "check strainRate[2] " << strainRate[2] << endl;
-      // std::cout << "check strainRate[3] " << strainRate[3] << endl;
-      // std::cout << "check strainRate[4] " << strainRate[4] << endl;
-      // std::cout << "check strainRate[5] " << strainRate[5] << endl;
-      //}
-      // END DEBUGGING //
-
       // Copy the new stress into the stress field
       for (int i(0); i < 3; ++i)
         for (int j(0); j < 3; ++j) stressField(cell, qp, i, j) = cauchy(i, j);
@@ -419,22 +360,6 @@ LamentStress<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
       for (int iVar = 0; iVar < numStateVariables; iVar++)
         this->lamentMaterialModelStateVariableFields[iVar](cell, qp) =
             stateNew[iVar];
-
-      // DEBUGGING //
-      // if(cell==0 && qp==0){
-      //   std::cout << "stress(0,0) " << this->stressField(cell,qp,0,0) <<
-      //   endl; std::cout << "stress(1,1) " << this->stressField(cell,qp,1,1)
-      //   << endl; std::cout << "stress(2,2) " <<
-      //   this->stressField(cell,qp,2,2) << endl; std::cout << "stress(0,1) "
-      //   << this->stressField(cell,qp,0,1) << endl; std::cout << "stress(1,2)
-      //   " << this->stressField(cell,qp,1,2) << endl; std::cout <<
-      //   "stress(0,2) " << this->stressField(cell,qp,0,2) << endl; std::cout
-      //   << "stress(1,0) " << this->stressField(cell,qp,1,0) << endl;
-      //   std::cout << "stress(2,1) " << this->stressField(cell,qp,2,1) <<
-      //   endl; std::cout << "stress(2,0) " << this->stressField(cell,qp,2,0)
-      //   << endl;
-      //   //}
-      // // END DEBUGGING //
     }
   }
 }

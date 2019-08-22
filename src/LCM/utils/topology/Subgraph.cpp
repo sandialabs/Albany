@@ -498,19 +498,6 @@ Subgraph::testArticulationPoint(
     }
   }
 
-#if defined(DEBUG_LCM_TOPOLOGY)
-  {
-    stk::mesh::Entity entity = entityFromVertex(articulation_vertex);
-
-    stk::mesh::BulkData& bulk_data = get_bulk_data();
-
-    std::string file_name =
-        "undirected-" + entity_string(get_topology(), entity) + ".dot";
-
-    writeGraphviz(file_name, graph);
-  }
-#endif  // DEBUG_LCM_TOPOLOGY
-
   std::vector<size_t> components(boost::num_vertices(graph));
 
   number_components = boost::connected_components(graph, &components[0]);

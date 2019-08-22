@@ -9,8 +9,6 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_TestForException.hpp"
 
-//#define PRINT_DEBUG
-
 namespace LCM {
 
 //----------------------------------------------------------------------------
@@ -242,20 +240,8 @@ SurfaceVectorResidual<EvalT, Traits>::evaluateFields(
         force_(cell, bottom_node, 2) += f_minus(2) * ref_area_(cell, pt);
 
       }  // end of pt
-
-#if defined(PRINT_DEBUG)
-      std::cout << "\nCELL: " << cell << " TOP NODE: " << top_node;
-      std::cout << " BOTTOM NODE: " << bottom_node << '\n';
-      std::cout << "force(0) +:" << force_(cell, top_node, 0) << '\n';
-      std::cout << "force(1) +:" << force_(cell, top_node, 1) << '\n';
-      std::cout << "force(2) +:" << force_(cell, top_node, 2) << '\n';
-      std::cout << "force(0) -:" << force_(cell, bottom_node, 0) << '\n';
-      std::cout << "force(1) -:" << force_(cell, bottom_node, 1) << '\n';
-      std::cout << "force(2) -:" << force_(cell, bottom_node, 2) << '\n';
-#endif  // PRINT_DEBUG
-
-    }  // end of numPlaneNodes
-  }    // end of cell
+    }    // end of numPlaneNodes
+  }      // end of cell
 
   // This is here just to satisfy projection operators from QPs to nodes
   if (have_topmod_adaptation_ == true) {

@@ -9,8 +9,6 @@
 #include "NOX_Solver_Generic.H"
 #include "Teuchos_VerboseObject.hpp"
 
-//#define DEBUG
-
 namespace LCM {
 
 //
@@ -53,18 +51,8 @@ SolutionSniffer::runPreSolve(NOX::Solver::Generic const& solver)
   }
 
   NOX::Abstract::Vector const& x = solver.getPreviousSolutionGroup().getX();
-
-  norm_init_ = x.norm();
-
-  soln_init_ = x.clone(NOX::DeepCopy);
-
-#if defined(DEBUG)
-  Teuchos::FancyOStream& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
-
-  fos << "\n*** NOX: Initial solution ***\n";
-  x.print(fos);
-  fos << "\n*** NOX: Initial solution ***\n";
-#endif  // DEBUG
+  norm_init_                     = x.norm();
+  soln_init_                     = x.clone(NOX::DeepCopy);
 
   return;
 }
@@ -78,27 +66,15 @@ SolutionSniffer::runPostSolve(NOX::Solver::Generic const& solver)
   NOX::Abstract::Vector const& y = solver.getSolutionGroup().getX();
 
   // Save solution
-  last_soln_ = y.clone();
-
+  last_soln_  = y.clone();
   norm_final_ = y.norm();
 
-  NOX::Abstract::Vector const& x = *(soln_init_);
-
+  NOX::Abstract::Vector const&        x         = *(soln_init_);
   Teuchos::RCP<NOX::Abstract::Vector> soln_diff = x.clone();
-
-  NOX::Abstract::Vector& dx = *(soln_diff);
+  NOX::Abstract::Vector&              dx        = *(soln_diff);
 
   dx.update(1.0, y, -1.0, x, 0.0);
-
   norm_diff_ = dx.norm();
-
-#if defined(DEBUG)
-  Teuchos::FancyOStream& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
-
-  fos << "\n*** NOX: Final solution ***\n";
-  y.print(fos);
-  fos << "\n*** NOX: Final solution ***\n";
-#endif
 
   return;
 }

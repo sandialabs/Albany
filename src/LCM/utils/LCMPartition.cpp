@@ -18,8 +18,6 @@
 #include "Albany_Utils.hpp"
 #include "LCMPartition.h"
 
-//#define DEBUG
-
 namespace LCM {
 
 //

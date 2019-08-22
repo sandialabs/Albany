@@ -45,8 +45,7 @@ SurfaceScalarGradientOperatorPorePressure<EvalT, Traits>::
   this->addEvaluatedField(grad_val_qp);
 
   this->setName(
-      "Surface Scalar Gradient Operator Pore Pressure" +
-      PHX::print<EvalT>());
+      "Surface Scalar Gradient Operator Pore Pressure" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_gradient->dimensions(dims);

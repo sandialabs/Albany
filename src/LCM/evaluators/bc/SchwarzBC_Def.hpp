@@ -7,11 +7,11 @@
 #include "Albany_Application.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include "Albany_ThyraUtils.hpp"
 #include "MiniTensor.h"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
-#include "Albany_ThyraUtils.hpp"
 
 //
 // Generic Template Code for Constructor and PostRegistrationSetup

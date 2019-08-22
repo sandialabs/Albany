@@ -258,7 +258,7 @@ MechanicsProblem::MechanicsProblem(
         adapt_params.get<std::string>("Method");
 
     have_sizefield_adaptation_ = adaptation_method_name == "RPI Albany Size";
-    have_topmod_adaptation_ = adaptation_method_name == "Topmod";
+    have_topmod_adaptation_    = adaptation_method_name == "Topmod";
     have_erosion               = adaptation_method_name == "Erosion";
   }
 

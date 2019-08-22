@@ -67,8 +67,6 @@
 #include <Ionit_Initializer.h>
 #include <Ioss_SubSystem.h>
 
-//#define DEBUG_OUTPUT
-
 template <typename FieldType>
 void
 interpolate(
