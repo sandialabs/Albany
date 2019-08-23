@@ -8,6 +8,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
+    Number RBMs for ML: 3
     Compute Sensitivities: true
     Required Fields: [temperature]
     Basal Side Name: basalside
@@ -208,7 +209,7 @@ ANONYMOUS:
                 FROSch:
                   FROSch Preconditioner Type: TwoLevelPreconditioner
                   OverlappingOperator Type: AlgebraicOverlappingOperator
-                  CoarseOperator Type: IPOUHarmonicCoarseOperator
+                  CoarseOperator Type: RGDSWCoarseOperator
                   Dimension : 3
                   DofsPerNode : 2
                   Overlap: 1
@@ -218,16 +219,28 @@ ANONYMOUS:
                     Solver:
                       SolverType: Amesos2
                       Solver: Umfpack
+                      Ifpack2:
+                        'fact: iluk level-of-fill': 0
                   IPOUHarmonicCoarseOperator:
                     Blocks:
                       1:
                         InterfacePartitionOfUnity:
-                          Type: GDSW
+                          Type: RGDSW
                           GDSW:
                             Type: Full
+                          RGDSW:
+                            Type: Full
+                            Distance Function: Inverse Euclidean
+                  RGDSWCoarseOperator:
+                    Blocks:
+                      1:
+                        Use For Coarse Space: true
+                        Rotations: false
                     ExtensionSolver:
                       SolverType: Amesos2
                       Solver: Umfpack
+                      Ifpack2:
+                        'fact: iluk level-of-fill': 0
                     Distribution:
                       Type: linear
                       NumProcs: 1

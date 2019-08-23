@@ -7,6 +7,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
+    Number RBMs for ML: 3
     Required Fields: [temperature]
     Basal Side Name: basalside
     Surface Side Name: upperside
