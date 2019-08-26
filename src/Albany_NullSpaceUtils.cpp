@@ -381,7 +381,7 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
 
     plist->set("PDE equations", numPDEs);
 
-  } else if (isMLUsed()) {  // MueLu here
+  } else if (isMueLuUsed()) {  // MueLu here
     // It apperas MueLu only accepts Tpetra. Get the Tpetra MV then.
     auto t_coordMV = getTpetraMultiVector(coordMV);
     if (plist->isSublist("Factories") == true) {
