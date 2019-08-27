@@ -68,7 +68,10 @@ CreepModel<EvalT, Traits>::CreepModel(
           p->get<RealType>("Activation Parameter of Material_Q/R", 500.0)),
       // Maximum allowable attempts for the return mapping algorithm
       max_return_map_count(
-          p->get<int>("Max Return Mapping Attempts", 100))
+          p->get<int>("Max Return Mapping Attempts", 100)),
+      // Tolerance on the return mapping algorithm
+      return_map_tolerance(
+          p->get<RealType>("Return Mapping Tolerance", 1.0e-10))
 
 {
   // retrive appropriate field name strings
@@ -350,7 +353,7 @@ CreepModel<EvalT, Traits>::computeState(
 
             res              = std::abs(F[0]);
             debug_res[count] = res;
-            if (res < 1.e-10) { converged = true; }
+            if (res < return_map_tolerance) { converged = true; }
 
             if (count == max_count) {
               std::cerr << "detected NaN, here are the X, F, dfdX values at "
