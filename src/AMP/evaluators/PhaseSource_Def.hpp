@@ -59,7 +59,7 @@ PhaseSource(Teuchos::ParameterList& p,
   
   
 
-  this->setName("PhaseSource"+PHX::typeAsString<EvalT>());
+  this->setName("PhaseSource"+PHX::print<EvalT>());
 
 }
 

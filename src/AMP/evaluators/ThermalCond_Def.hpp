@@ -63,7 +63,7 @@ ThermalCond(Teuchos::ParameterList& p,
   solid_value_ = cond_list->get("Value", 1.0);
   
 
-  this->setName("ThermalCond"+PHX::typeAsString<EvalT>());
+  this->setName("ThermalCond"+PHX::print<EvalT>());
 
 }
 

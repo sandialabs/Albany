@@ -45,7 +45,7 @@ MixtureSpecificHeat<EvalT, Traits>::MixtureSpecificHeat(
 
   this->addEvaluatedField(mixtureSpecificHeat);
 
-  this->setName("Mixture Specific Heat" + PHX::typeAsString<EvalT>());
+  this->setName("Mixture Specific Heat" + PHX::print<EvalT>());
 
   Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");

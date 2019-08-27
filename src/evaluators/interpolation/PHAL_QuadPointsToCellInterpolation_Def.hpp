@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace PHAL {
 
@@ -27,7 +27,7 @@ QuadPointsToCellInterpolationBase (const Teuchos::ParameterList& p,
   this->addDependentField (w_measure.fieldTag());
   this->addEvaluatedField (field_cell);
 
-  this->setName("QuadPointsToCellInterpolation"+PHX::typeAsString<EvalT>());
+  this->setName("QuadPointsToCellInterpolation"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

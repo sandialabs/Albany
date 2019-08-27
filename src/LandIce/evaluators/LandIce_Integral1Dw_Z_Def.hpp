@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Sacado.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
@@ -56,7 +56,7 @@ Integral1Dw_ZBase(const Teuchos::ParameterList& p,
     neq = 2;
   }
 
-  this->setName("Integral1Dw_Z"+PHX::typeAsString<EvalT>());
+  this->setName("Integral1Dw_Z"+PHX::print<EvalT>());
 }
 
 template<typename EvalT, typename Traits, typename ThicknessScalarT>

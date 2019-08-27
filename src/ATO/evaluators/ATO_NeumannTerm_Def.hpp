@@ -31,7 +31,7 @@ NeumannVectorTerm(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(outVector);
 
-  this->setName("NeumannVectorTerm"+PHX::typeAsString<EvalT>());
+  this->setName("NeumannVectorTerm"+PHX::print<EvalT>());
 
 }
 
@@ -76,7 +76,7 @@ NeumannScalarTerm(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(outValue);
 
-  this->setName("NeumannScalarTerm"+PHX::typeAsString<EvalT>());
+  this->setName("NeumannScalarTerm"+PHX::print<EvalT>());
 
 }
 

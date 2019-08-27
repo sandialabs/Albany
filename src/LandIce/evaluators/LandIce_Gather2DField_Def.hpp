@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Sacado.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
@@ -39,7 +39,7 @@ Gather2DFieldBase(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   vecDim = dims[2];
 
-  this->setName("Gather2DField"+PHX::typeAsString<EvalT>());
+  this->setName("Gather2DField"+PHX::print<EvalT>());
 
   if (p.isType<int>("Offset of First DOF")) {
     offset = p.get<int>("Offset of First DOF");

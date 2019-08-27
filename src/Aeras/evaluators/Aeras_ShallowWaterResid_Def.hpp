@@ -184,7 +184,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 			       <<  "This does not hold: numNodes = " <<  nNodes << ", numQPs = " << numQPs << ".");
   }
 
-  this->setName("Aeras::ShallowWaterResid"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::ShallowWaterResid"+PHX::print<EvalT>());
 
   U.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];

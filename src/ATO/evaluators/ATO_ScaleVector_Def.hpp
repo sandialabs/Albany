@@ -50,7 +50,7 @@ ScaleVector(const Teuchos::ParameterList& p) :
     coefficient = p.get<double>("Coefficient");
   }
 
-  this->setName("ScaleVector"+PHX::typeAsString<EvalT>());
+  this->setName("ScaleVector"+PHX::print<EvalT>());
 
   if(p.isType<int>("Cell Forcing Column")){
     addCellForcing = true;

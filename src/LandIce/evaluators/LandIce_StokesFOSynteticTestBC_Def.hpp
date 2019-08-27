@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Kokkos_ViewFactory.hpp"
 
@@ -130,7 +130,7 @@ StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::StokesFOSynteticTestBC (cons
     }
   }
 
-  this->setName("StokesFOSynteticTestBC"+PHX::typeAsString<EvalT>());
+  this->setName("StokesFOSynteticTestBC"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

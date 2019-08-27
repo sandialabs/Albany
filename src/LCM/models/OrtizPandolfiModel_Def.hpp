@@ -8,8 +8,6 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_TestForException.hpp"
 
-//#define PRINT_DEBUG
-
 namespace LCM {
 
 //------------------------------------------------------------------------------
@@ -129,10 +127,6 @@ OrtizPandolfiModel<EvalT, Traits>::computeState(
   Albany::MDArray jump_max_old = (*workset.stateArrayPtr)["Max_Jump_old"];
 
   bool print_debug = false;
-#if defined(PRINT_DEBUG)
-  if (typeid(ScalarT) == typeid(RealType)) { print_debug = true; }
-  std::cout.precision(15);
-#endif
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {

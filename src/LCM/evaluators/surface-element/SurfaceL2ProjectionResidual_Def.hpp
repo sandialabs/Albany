@@ -51,7 +51,7 @@ SurfaceL2ProjectionResidual<EvalT, Traits>::SurfaceL2ProjectionResidual(
 
   this->addEvaluatedField(projection_residual_);
 
-  this->setName("HydroStress Residual" + PHX::typeAsString<EvalT>());
+  this->setName("HydroStress Residual" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);

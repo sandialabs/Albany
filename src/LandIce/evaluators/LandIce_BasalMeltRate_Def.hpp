@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "LandIce_BasalMeltRate.hpp"
@@ -76,7 +76,7 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   basalMelt_reg_alpha = basalMelt_reg_list.get<double>("alpha");
   basalMelt_reg_beta = basalMelt_reg_list.get<double>("beta");
 
-  this->setName("Basal Melt Rate" + PHX::typeAsString<EvalT>());
+  this->setName("Basal Melt Rate" + PHX::print<EvalT>());
 }
 
 template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>

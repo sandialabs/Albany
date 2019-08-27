@@ -52,7 +52,7 @@ Phi(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   type = cond_list->get("delta Temperature Type", "Constant");
   deltaTemperature_ = cond_list->get("delta Temperature Value", 50.0); 
 
-  this->setName("Phi"+PHX::typeAsString<EvalT>());
+  this->setName("Phi"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

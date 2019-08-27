@@ -27,7 +27,7 @@ namespace PHAL {
     this->addDependentField(GradBF.fieldTag());
     this->addEvaluatedField(grad_val_qp);
 
-    this->setName("DOFVecGradInterpolationBase"+PHX::typeAsString<EvalT>());
+    this->setName("DOFVecGradInterpolationBase"+PHX::print<EvalT>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);

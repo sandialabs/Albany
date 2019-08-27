@@ -29,7 +29,7 @@ DOFDInterpolationLevels(Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(d_val_qp);
 
-  this->setName("Aeras::DOFDInterpolationLevels"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::DOFDInterpolationLevels"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

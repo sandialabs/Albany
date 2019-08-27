@@ -29,7 +29,7 @@ CreateField(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(field);
 
-  this->setName("CreateField"+PHX::typeAsString<EvalT>());
+  this->setName("CreateField"+PHX::print<EvalT>());
 
 }
 

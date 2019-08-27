@@ -42,8 +42,7 @@ SurfaceScalarGradientOperator<EvalT, Traits>::SurfaceScalarGradientOperator(
   this->addEvaluatedField(surface_Grad_BF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName(
-      "Surface Scalar Gradient Operator" + PHX::typeAsString<EvalT>());
+  this->setName("Surface Scalar Gradient Operator" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_gradient->dimensions(dims);

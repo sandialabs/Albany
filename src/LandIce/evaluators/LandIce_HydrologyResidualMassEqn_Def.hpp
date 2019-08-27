@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -133,7 +133,7 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   scaling_h_dot   = yr_to_s;
   scaling_q       = 1e-3*yr_to_s;
 
-  this->setName("HydrologyResidualMassEqn"+PHX::typeAsString<EvalT>());
+  this->setName("HydrologyResidualMassEqn"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

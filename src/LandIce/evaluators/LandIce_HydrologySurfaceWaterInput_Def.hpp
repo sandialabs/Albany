@@ -1,7 +1,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "utility/string.hpp"
 
 #include <math.h>
@@ -56,7 +56,7 @@ HydrologySurfaceWaterInput (const Teuchos::ParameterList& p,
     numNodes = dl->node_scalar->extent(1);
   }
 
-  this->setName("Surface Water Input From SMB " + PHX::typeAsString<EvalT>());
+  this->setName("Surface Water Input From SMB " + PHX::print<EvalT>());
 }
 
 template<typename EvalT, typename Traits, bool OnSide>

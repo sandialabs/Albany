@@ -124,7 +124,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
     this->addDependentField(stiffening);
   }
 
-  this->setName("Response surface_velocity Mismatch" + PHX::typeAsString<EvalT>());
+  this->setName("Response surface_velocity Mismatch" + PHX::print<EvalT>());
 
   using PHX::MDALayout;
 

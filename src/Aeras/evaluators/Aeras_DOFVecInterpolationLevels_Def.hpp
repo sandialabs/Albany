@@ -28,7 +28,7 @@ DOFVecInterpolationLevels(Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("Aeras::DOFVecInterpolationLevels"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::DOFVecInterpolationLevels"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

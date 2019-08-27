@@ -37,7 +37,7 @@ ResponseSaveField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
   //! Register with state manager
   pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
 
-  const std::string key = "ResponseSaveField" + PHX::typeAsString<EvalT>();
+  const std::string key = "ResponseSaveField" + PHX::print<EvalT>();
   Teuchos::RCP<Adapt::NodalDataBase>
     ndb = pStateMgr->getNodalDataBase();
   if (ndb->isManagerRegistered(key)) {

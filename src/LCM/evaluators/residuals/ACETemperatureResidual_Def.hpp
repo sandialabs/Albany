@@ -66,7 +66,7 @@ ACETemperatureResidual<EvalT, Traits>::ACETemperatureResidual(
   num_qp_       = dims[2];
   num_dims_     = dims[3];
 
-  this->setName("ACE Temperature Residual" + PHX::typeAsString<EvalT>());
+  this->setName("ACE Temperature Residual" + PHX::print<EvalT>());
 }
 
 //

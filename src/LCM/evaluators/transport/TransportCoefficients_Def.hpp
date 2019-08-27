@@ -93,7 +93,7 @@ TransportCoefficients<EvalT, Traits>::TransportCoefficients(
   this->addEvaluatedField(convection_coefficient_);
   this->addEvaluatedField(F_mech_);
 
-  this->setName("Transport Coefficients" + PHX::typeAsString<EvalT>());
+  this->setName("Transport Coefficients" + PHX::print<EvalT>());
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);
   worksetSize = dims[0];

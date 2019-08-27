@@ -145,7 +145,7 @@ ConstitutiveModelInterface<EvalT, Traits>::ConstitutiveModelInterface(
     this->addEvaluatedField(*(pair.second));
   }
 
-  this->setName("ConstitutiveModelInterface" + PHX::typeAsString<EvalT>());
+  this->setName("ConstitutiveModelInterface" + PHX::print<EvalT>());
 }
 
 //------------------------------------------------------------------------------

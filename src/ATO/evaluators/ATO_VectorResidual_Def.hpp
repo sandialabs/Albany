@@ -27,7 +27,7 @@ VectorResidual(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(ExResidual);
 
-  this->setName("VectorResidual"+PHX::typeAsString<EvalT>());
+  this->setName("VectorResidual"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

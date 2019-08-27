@@ -65,7 +65,7 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
   this->addEvaluatedField(*stiffness_objective_tag);
   
   std::string responseID = "ATO Internal Energy";
-  this->setName(responseID + PHX::typeAsString<EvalT>());
+  this->setName(responseID + PHX::print<EvalT>());
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);

@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Kokkos_ViewFactory.hpp"
@@ -58,7 +58,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
   V = decltype(V)(p.get<std::string>("Averaged Velocity Variable Name"), dl_side->node_vector);
   this->addDependentField(V);
 
-  this->setName("ThicknessResid"+PHX::typeAsString<EvalT>());
+  this->setName("ThicknessResid"+PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);

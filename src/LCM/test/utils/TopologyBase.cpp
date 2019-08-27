@@ -116,17 +116,9 @@ main(int ac, char* av[])
       break;
   }
 
-#if defined(DEBUG_LCM_TOPOLOGY)
-  std::string gviz_filename = LCM::parallelize_string("initial") + ".dot";
-  topology.outputToGraphviz(gviz_filename);
-#endif
-
   topology.set_failure_criterion(abstract_failure_criterion);
-
   topology.setEntitiesOpen();
-
   topology.set_output_type(plot_style);
-
   topology.splitOpenFaces();
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr =

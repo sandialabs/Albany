@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
 namespace LandIce
@@ -79,7 +79,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
     this->addDependentField(regularizationParam);
   }
 
-  this->setName("HydrologyWaterDischarge"+PHX::typeAsString<EvalT>());
+  this->setName("HydrologyWaterDischarge"+PHX::print<EvalT>());
 }
 
 //**********************************************************************
@@ -124,7 +124,7 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
 
   static ScalarT printedReg = -1;
   if (printedReg!=regularization) {
-    *output << "[HydrologyWaterDischarge" << PHX::typeAsString<EvalT>() << "] reg = " << regularization << "\n";
+    *output << "[HydrologyWaterDischarge" << PHX::print<EvalT>() << "] reg = " << regularization << "\n";
     printedReg = regularization;
   }
 
@@ -170,7 +170,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   output->setOutputToRootOnly (0);
   static ScalarT printedReg = -1;
   if (printedReg!=regularization) {
-    *output << "[HydrologyWaterDischarge<" << PHX::typeAsString<EvalT>() << ">] reg = " << regularization << "\n";
+    *output << "[HydrologyWaterDischarge<" << PHX::print<EvalT>() << ">] reg = " << regularization << "\n";
     printedReg = regularization;
   }
 

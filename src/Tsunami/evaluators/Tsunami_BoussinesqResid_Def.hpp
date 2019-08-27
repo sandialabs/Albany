@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace Tsunami {
 
@@ -58,7 +58,7 @@ BoussinesqResid(const Teuchos::ParameterList& p,
   *out << "numNodes, numQPs, numDims, vecDim = " << numNodes << ", " 
        <<  numQPs << ", " << numDims << ", " << vecDim << "\n"; 
 
-  this->setName("BoussinesqResid"+PHX::typeAsString<EvalT>());
+  this->setName("BoussinesqResid"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

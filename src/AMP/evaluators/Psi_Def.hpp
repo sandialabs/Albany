@@ -54,7 +54,7 @@ Psi(Teuchos::ParameterList& p,
 
   psi_Name_ = p.get<std::string>("Psi Name")+"_old";
   phi_Name_ = p.get<std::string>("Phi Name")+"_old";
-  this->setName("Psi"+PHX::typeAsString<EvalT>());
+  this->setName("Psi"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

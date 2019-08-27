@@ -29,7 +29,7 @@ CurrentCoords<EvalT, Traits>::CurrentCoords(
 
   this->addEvaluatedField(currentCoords);
 
-  this->setName("Current Coordinates" + PHX::typeAsString<EvalT>());
+  this->setName("Current Coordinates" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);

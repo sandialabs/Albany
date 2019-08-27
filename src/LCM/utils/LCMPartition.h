@@ -17,45 +17,42 @@
 
 #include <zoltan_cpp.h>
 
+#include <MiniTensor_Geometry.h>
 #include <Albany_AbstractDiscretization.hpp>
 #include <Albany_DiscretizationFactory.hpp>
 #include <Albany_STKDiscretization.hpp>
 #include <Albany_Utils.hpp>
-#include <MiniTensor_Geometry.h>
 
 namespace LCM {
 
 ///
 /// A list of IDs
 ///
-typedef std::vector<int>
-IDList;
+typedef std::vector<int> IDList;
 
 ///
 /// Maps topological object by its ID to adjacent topological objects
 /// by their IDs. Objects may and usually live in different spaces.
 ///
-typedef std::map<int, IDList>
-AdjacencyMap;
+typedef std::map<int, IDList> AdjacencyMap;
 
 ///
 /// A scalar quantity associated with a topological object.
 ///
-typedef std::map<int, double>
-ScalarMap;
+typedef std::map<int, double> ScalarMap;
 
 ///
 /// Map for topologcal objects for which it is possible to associate points.
 ///
-typedef std::map<int, minitensor::Vector<double>>
-PointMap;
+typedef std::map<int, minitensor::Vector<double>> PointMap;
 
 ///
 /// Useful to distinguish among different partitioning schemes.
 ///
 namespace PARTITION {
 
-enum class Scheme {
+enum class Scheme
+{
   UNKNOWN,
   RANDOM,
   GEOMETRIC,
@@ -82,15 +79,13 @@ struct KDTreeNode;
 /// IEEE Transactions on Pattern Analysis and Machine Intelligence
 /// 24(7) July 2002
 ///
-struct ClusterCenter {
-  minitensor::Vector<double>
-  position;
+struct ClusterCenter
+{
+  minitensor::Vector<double> position;
 
-  minitensor::Vector<double>
-  weighted_centroid;
+  minitensor::Vector<double> weighted_centroid;
 
-  minitensor::Index
-  count;
+  minitensor::Index count;
 };
 
 ///
@@ -100,42 +95,32 @@ struct ClusterCenter {
 /// IEEE Transactions on Pattern Analysis and Machine Intelligence
 /// 24(7) July 2002
 ///
-struct KDTreeNode {
-  std::string
-  name;
+struct KDTreeNode
+{
+  std::string name;
 
-  std::shared_ptr<KDTreeNode>
-  parent;
+  std::shared_ptr<KDTreeNode> parent;
 
   // Children
-  std::shared_ptr<KDTreeNode>
-  left;
+  std::shared_ptr<KDTreeNode> left;
 
-  std::shared_ptr<KDTreeNode>
-  right;
+  std::shared_ptr<KDTreeNode> right;
 
   // Bounding box of cell
-  minitensor::Vector<double>
-  lower_corner;
+  minitensor::Vector<double> lower_corner;
 
-  minitensor::Vector<double>
-  upper_corner;
+  minitensor::Vector<double> upper_corner;
 
   // Weighted centroid and count
-  minitensor::Vector<double>
-  weighted_centroid;
+  minitensor::Vector<double> weighted_centroid;
 
-  minitensor::Index
-  count;
+  minitensor::Index count;
 
-  std::set<minitensor::Index>
-  cell_points;
+  std::set<minitensor::Index> cell_points;
 
-  std::set<minitensor::Index>
-  candidate_centers;
+  std::set<minitensor::Index> candidate_centers;
 
-  minitensor::Index
-  closest_center_to_midcell;
+  minitensor::Index closest_center_to_midcell;
 };
 
 ///
@@ -145,24 +130,22 @@ struct KDTreeNode {
 /// IEEE Transactions on Pattern Analysis and Machine Intelligence
 /// 24(7) July 2002
 ///
-template<typename Node>
-class KDTree {
-public:
-
+template <typename Node>
+class KDTree
+{
+ public:
   KDTree(
-      std::vector<minitensor::Vector<double>> const & points,
-      minitensor::Index const number_centers);
+      std::vector<minitensor::Vector<double>> const& points,
+      minitensor::Index const                        number_centers);
 
-  std::shared_ptr<Node> &
+  std::shared_ptr<Node>&
   get_root()
   {
     return root_;
   }
 
-private:
-
-  std::shared_ptr<Node>
-  root_;
+ private:
+  std::shared_ptr<Node> root_;
 };
 
 ///
@@ -170,85 +153,85 @@ private:
 /// \param point list
 /// \return Boost shared pointer to root node of tree.
 ///
-template<typename Node>
+template <typename Node>
 std::shared_ptr<Node>
-buildKDTree(std::vector<minitensor::Vector<double>> const & points);
+buildKDTree(std::vector<minitensor::Vector<double>> const& points);
 
 ///
 /// Create KD tree node.
 /// \param point list
 /// \return Boost shared pointer to node of tree if created, 0 otherwise.
 ///
-template<typename Node>
+template <typename Node>
 std::shared_ptr<Node>
 createKDTreeNode(
-    std::string const & name,
-    std::shared_ptr<Node> parent,
-    std::vector<minitensor::Vector<double>> const & points,
-    std::set<minitensor::Index> const & points_indices);
+    std::string const&                             name,
+    std::shared_ptr<Node>                          parent,
+    std::vector<minitensor::Vector<double>> const& points,
+    std::set<minitensor::Index> const&             points_indices);
 
 ///
 /// Visit Tree nodes recursively and
 /// perform the action defined by the Visitor object.
 ///
-template<typename Node, typename Visitor>
+template <typename Node, typename Visitor>
 void
-visitTreeNode(Node & node, Visitor const & visitor);
+visitTreeNode(Node& node, Visitor const& visitor);
 
 ///
 /// Traverse a Tree and perform the action defined by the Visitor object.
 ///
-template<typename Tree, typename Visitor>
+template <typename Tree, typename Visitor>
 void
-traverseTree(Tree & tree, Visitor const & visitor);
+traverseTree(Tree& tree, Visitor const& visitor);
 
 ///
 /// Output visitor for KDTree node.
 ///
-template<typename Node>
-struct OutputVisitor {
+template <typename Node>
+struct OutputVisitor
+{
   void
-  operator()(Node const & node) const;
+  operator()(Node const& node) const;
 
   bool
-  pre_stop(Node const & node) const;
+  pre_stop(Node const& node) const;
 
   bool
-  post_stop(Node const & node) const;
+  post_stop(Node const& node) const;
 };
 
 ///
 /// Filtering visitor for K-means algorithm.
 ///
-template<typename Node, typename Center>
-struct FilterVisitor {
+template <typename Node, typename Center>
+struct FilterVisitor
+{
   FilterVisitor(
-      std::vector<minitensor::Vector<double>> & p,
-      std::vector<Center> & c);
+      std::vector<minitensor::Vector<double>>& p,
+      std::vector<Center>&                     c);
 
   void
-  operator()(Node const & node) const;
+  operator()(Node const& node) const;
 
   bool
-  pre_stop(Node const & node) const;
+  pre_stop(Node const& node) const;
 
   bool
-  post_stop(Node const & node) const;
+  post_stop(Node const& node) const;
 
-  std::vector<minitensor::Vector<double>> &
-  points;
+  std::vector<minitensor::Vector<double>>& points;
 
-  std::vector<Center> &
-  centers;
+  std::vector<Center>& centers;
 };
 
 ///
 /// Simple connectivity array.
 /// Holds coordinate array as well.
 ///
-class ConnectivityArray {
-public:
-
+class ConnectivityArray
+{
+ public:
   ///
   /// Default constructor for Connectivity Array
   ///
@@ -260,8 +243,8 @@ public:
   /// \param output_file Exodus II output file name
   ///
   ConnectivityArray(
-      std::string const & input_file,
-      std::string const & output_file);
+      std::string const& input_file,
+      std::string const& output_file);
 
   ///
   /// \return Number of nodes on the array
@@ -414,13 +397,13 @@ public:
   /// Convert point to index into voxel array
   ///
   minitensor::Vector<int>
-  pointToIndex(minitensor::Vector<double> const & point) const;
+  pointToIndex(minitensor::Vector<double> const& point) const;
 
   ///
   /// Determine if a given point is inside the mesh.
   ///
   bool
-  isInsideMesh(minitensor::Vector<double> const & point) const;
+  isInsideMesh(minitensor::Vector<double> const& point) const;
 
   ///
   /// Determine is a given point is inside the mesh
@@ -429,7 +412,7 @@ public:
   /// be used on a faster method.
   ///
   bool
-  isInsideMeshByElement(minitensor::Vector<double> const & point) const;
+  isInsideMeshByElement(minitensor::Vector<double> const& point) const;
 
   ///
   /// \param length_scale Length scale for partitioning for
@@ -443,7 +426,7 @@ public:
   ///
   /// \return Albany abstract discretization corresponding to array
   ///
-  Albany::AbstractDiscretization &
+  Albany::AbstractDiscretization&
   getDiscretization();
 
   ///
@@ -452,7 +435,7 @@ public:
   /// closest center to its centroid
   ///
   std::map<int, int>
-  partitionByCenters(std::vector<minitensor::Vector<double>> const & centers);
+  partitionByCenters(std::vector<minitensor::Vector<double>> const& centers);
 
   ///
   /// Partition mesh with the specified algorithm and length scale
@@ -464,7 +447,7 @@ public:
   std::map<int, int>
   partition(
       const PARTITION::Scheme partition_scheme,
-      double const length_scale);
+      double const            length_scale);
 
   ///
   /// Partition mesh with Zoltan Hypergraph algorithm
@@ -588,14 +571,14 @@ public:
   ///
   static void
   getObjectList(
-      void* data,
-      int sizeGID,
-      int sizeLID,
+      void*         data,
+      int           sizeGID,
+      int           sizeLID,
       ZOLTAN_ID_PTR globalID,
       ZOLTAN_ID_PTR localID,
-      int wgt_dim,
-      float* obj_wgts,
-      int* ierr);
+      int           wgt_dim,
+      float*        obj_wgts,
+      int*          ierr);
 
   ///
   /// Zoltan interface query function that returns a vector of geometry
@@ -637,110 +620,93 @@ public:
   ///
   static void
   getGeometry(
-      void* data,
-      int sizeGID,
-      int sizeLID,
-      int num_obj,
+      void*         data,
+      int           sizeGID,
+      int           sizeLID,
+      int           num_obj,
       ZOLTAN_ID_PTR globalID,
       ZOLTAN_ID_PTR localID,
-      int num_dim,
-      double* geom_vec,
-      int* ierr);
+      int           num_dim,
+      double*       geom_vec,
+      int*          ierr);
 
-private:
-
+ private:
   //
   // The type of elements in the mesh (assumed that all are of same type)
   //
-  minitensor::ELEMENT::Type
-  type_;
+  minitensor::ELEMENT::Type type_;
 
   //
   // Node list
   //
-  PointMap
-  nodes_;
+  PointMap nodes_;
 
   //
   // Element - nodes connectivity
   //
-  AdjacencyMap
-  connectivity_;
+  AdjacencyMap connectivity_;
 
   //
   // Space dimension
   //
-  minitensor::Index
-  dimension_;
+  minitensor::Index dimension_;
 
   //
   // Teuchos pointer to corresponding discretization
   //
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  discretization_ptr_;
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr_;
 
   //
   // Partitions if mesh is partitioned; otherwise empty
   //
-  std::map<int, int>
-  partitions_;
+  std::map<int, int> partitions_;
 
   //
   // Background grid of the domain for fast determination
   // of whether a point is inside the domain or not.
   //
-  std::vector<std::vector<std::vector<bool>>>
-  grid_;
+  std::vector<std::vector<std::vector<bool>>> grid_;
 
   //
   // Points in the domain according to the grid.
   //
-  std::vector<minitensor::Vector<double>>
-  domain_points_;
+  std::vector<minitensor::Vector<double>> domain_points_;
 
-  bool
-  has_grid_{false};
+  bool has_grid_{false};
 
   //
   // Size of background grid cell
   //
-  minitensor::Vector<double>
-  cell_size_;
+  minitensor::Vector<double> cell_size_;
 
   //
   // Parameters for kmeans partitioning
   //
-  double
-  tolerance_;
+  double tolerance_;
 
-  double
-  requested_cell_size_;
+  double requested_cell_size_;
 
-  minitensor::Index
-  maximum_iterations_;
+  minitensor::Index maximum_iterations_;
 
   //
   // Limits of the bounding box for coordinate array
   //
-  minitensor::Vector<double>
-  lower_corner_;
+  minitensor::Vector<double> lower_corner_;
 
-  minitensor::Vector<double>
-  upper_corner_;
+  minitensor::Vector<double> upper_corner_;
 
   //
   // Initializer scheme, if any.
   //
-  PARTITION::Scheme
-  initializer_scheme_;
+  PARTITION::Scheme initializer_scheme_;
 };
 
 ///
 /// Dual graph of a connectivity array
 ///
-class DualGraph {
-public:
-
+class DualGraph
+{
+ public:
   ///
   /// Default constructor
   ///
@@ -749,7 +715,7 @@ public:
   ///
   /// Build dual graph from a connectivity array
   ///
-  DualGraph(ConnectivityArray const & connectivity_array);
+  DualGraph(ConnectivityArray const& connectivity_array);
 
   ///
   /// \return Number of vertices in the dual graph
@@ -768,7 +734,7 @@ public:
   /// \param vw Map from vertex ID to weight
   ///
   void
-  setVertexWeights(ScalarMap & vertex_weights);
+  setVertexWeights(ScalarMap& vertex_weights);
 
   ///
   /// \return Vertex weights of dual graph, if any
@@ -781,7 +747,7 @@ public:
   /// \param graph Graph structure that will replace the current one
   ///
   void
-  setGraph(AdjacencyMap & graph);
+  setGraph(AdjacencyMap& graph);
 
   ///
   /// \return Current graph structure
@@ -799,7 +765,7 @@ public:
   /// \return Connected components in the dual graph
   ///
   int
-  getConnectedComponents(std::vector<int> & components) const;
+  getConnectedComponents(std::vector<int>& components) const;
 
   ///
   /// Print graph for debugging
@@ -807,8 +773,7 @@ public:
   void
   print() const;
 
-private:
-
+ private:
   //
   // Given a connectivity array type, return local numbering of
   // proper faces
@@ -816,25 +781,21 @@ private:
   std::vector<std::vector<int>>
   getFaceConnectivity(minitensor::ELEMENT::Type const type) const;
 
-private:
-
+ private:
   //
   // Number of edges in dual graph
   //
-  int
-  number_edges_;
+  int number_edges_;
 
   //
   // Graph data structure
   //
-  AdjacencyMap
-  graph_;
+  AdjacencyMap graph_;
 
   //
   // Vertex weights
   //
-  ScalarMap
-  vertex_weights_;
+  ScalarMap vertex_weights_;
 };
 
 ///
@@ -848,9 +809,9 @@ private:
 /// See Zoltan documentation at
 /// http://www.cs.sandia.gov/Zoltan/ug_html/ug.html
 ///
-class ZoltanHyperGraph {
-public:
-
+class ZoltanHyperGraph
+{
+ public:
   ///
   /// Default constructor
   ///
@@ -860,7 +821,7 @@ public:
   /// Build Zoltan hypergraph from dual graph
   /// \param dual_graph Dual graph
   ///
-  ZoltanHyperGraph(DualGraph const & dual_graph);
+  ZoltanHyperGraph(DualGraph const& dual_graph);
 
   ///
   /// \return Number of vertices in hypergraph
@@ -886,7 +847,7 @@ public:
   /// \param graph Graph structure that replaces current one
   ///
   void
-  setGraph(AdjacencyMap & graph);
+  setGraph(AdjacencyMap& graph);
 
   ///
   /// \return Current graph structure
@@ -899,7 +860,7 @@ public:
   /// \param vertex_weights Map from vertex ID to weight
   ///
   void
-  setVertexWeights(ScalarMap & vertex_weights);
+  setVertexWeights(ScalarMap& vertex_weights);
 
   ///
   /// \return Vertex weights of hypergraph, if any.
@@ -978,14 +939,14 @@ public:
   ///
   static void
   getObjectList(
-      void* data,
-      int sizeGID,
-      int sizeLID,
+      void*         data,
+      int           sizeGID,
+      int           sizeLID,
       ZOLTAN_ID_PTR globalID,
       ZOLTAN_ID_PTR localID,
-      int wgt_dim,
-      float* obj_wgts,
-      int* ierr);
+      int           wgt_dim,
+      float*        obj_wgts,
+      int*          ierr);
 
   ///
   /// Zoltan interface query function to tell Zoltan in which format
@@ -1014,10 +975,10 @@ public:
   static void
   getHyperGraphSize(
       void* data,
-      int* num_lists,
-      int* num_pins,
-      int* format,
-      int* ierr);
+      int*  num_lists,
+      int*  num_pins,
+      int*  format,
+      int*  ierr);
 
   ///
   /// Zoltan interface function that returns the hypergraph in
@@ -1067,42 +1028,36 @@ public:
   ///
   static void
   getHyperGraph(
-      void* data,
-      int num_gid_entries,
-      int num_vtx_edge,
-      int num_pins,
-      int format,
-      ZOLTAN_ID_PTR
-      vtxedge_GID,
-      int* vtxedge_ptr,
+      void*         data,
+      int           num_gid_entries,
+      int           num_vtx_edge,
+      int           num_pins,
+      int           format,
+      ZOLTAN_ID_PTR vtxedge_GID,
+      int*          vtxedge_ptr,
       ZOLTAN_ID_PTR pin_GID,
-      int* ierr);
+      int*          ierr);
 
-private:
-
+ private:
   //
   // Number of vertices
   //
-  int
-  number_vertices_;
+  int number_vertices_;
 
   //
   // Number of hyperedges
   //
-  int
-  number_hyperedges_;
+  int number_hyperedges_;
 
   //
   // Graph data structure
   //
-  AdjacencyMap
-  graph_;
+  AdjacencyMap graph_;
 
   //
   // Vertex weights
   //
-  ScalarMap
-  vertex_weights_;
+  ScalarMap vertex_weights_;
 };
 
 ///
@@ -1110,41 +1065,37 @@ private:
 /// \param input_stream Input stream
 /// \param connectivity_array Connectivity array
 ///
-std::istream &
-operator>>(
-    std::istream & input_stream,
-    ConnectivityArray & connectivity_array);
+std::istream&
+operator>>(std::istream& input_stream, ConnectivityArray& connectivity_array);
 
 ///
 /// Write a Connectivity Array to an output stream
 /// \param output_stream Output stream
 /// \param connectivity_array Connectivity array
 ///
-std::ostream &
+std::ostream&
 operator<<(
-    std::ostream & output_stream,
-    ConnectivityArray const & connectivity_array);
+    std::ostream&            output_stream,
+    ConnectivityArray const& connectivity_array);
 
 ///
 /// Read a Zoltan Hyperedge Graph from an input stream
 /// \param input_stream Input stream
 /// \param zoltan_hypergraph Zoltan Hypergraph
 ///
-std::istream &
-operator>>(
-    std::istream & input_stream,
-    ZoltanHyperGraph & zoltan_hypergraph);
+std::istream&
+operator>>(std::istream& input_stream, ZoltanHyperGraph& zoltan_hypergraph);
 
 ///
 /// Write a Zoltan Hyperedge Graph to an output stream
 /// \param output_stream Output stream
 /// \param zoltan_hypergraph Zoltan Hypergraph
 ///
-std::ostream &
+std::ostream&
 operator<<(
-    std::ostream & output_stream,
-    ZoltanHyperGraph const & zoltan_hypergraph);
+    std::ostream&           output_stream,
+    ZoltanHyperGraph const& zoltan_hypergraph);
 
-} // namespace LCM
+}  // namespace LCM
 
-#endif // #if !defined(LCM_Partition_h)
+#endif  // #if !defined(LCM_Partition_h)

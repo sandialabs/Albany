@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_DiscretizationUtils.hpp"
@@ -91,7 +91,7 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
     }
   }
 
-  this->setName("StokesFOLateralResid"+PHX::typeAsString<EvalT>());
+  this->setName("StokesFOLateralResid"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

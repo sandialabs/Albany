@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 #include "PHAL_SideQuadPointsToSideInterpolation.hpp"
 #include "Albany_DiscretizationUtils.hpp"
@@ -46,7 +46,7 @@ SideQuadPointsToSideInterpolationBase (const Teuchos::ParameterList& p,
   this->addDependentField (w_measure.fieldTag());
   this->addEvaluatedField (field_side);
 
-  this->setName("SideQuadPointsToSideInterpolation"+PHX::typeAsString<EvalT>());
+  this->setName("SideQuadPointsToSideInterpolation"+PHX::print<EvalT>());
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>

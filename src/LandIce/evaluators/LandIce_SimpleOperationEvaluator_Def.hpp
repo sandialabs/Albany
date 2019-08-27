@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 #include "PHAL_Utilities.hpp"
 
@@ -29,7 +29,7 @@ SimpleOperationBase (const Teuchos::ParameterList& p,
   this->addDependentField(field_in);
   this->addEvaluatedField(field_out);
 
-  this->setName("SimpleOperationBase"+PHX::typeAsString<EvalT>());
+  this->setName("SimpleOperationBase"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

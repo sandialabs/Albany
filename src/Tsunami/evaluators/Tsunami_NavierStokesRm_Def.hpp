@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace Tsunami {
 
@@ -46,7 +46,7 @@ NavierStokesRm(const Teuchos::ParameterList& p,
 
   *out << "Have_advection = " << have_advection << "\n"; 
   *out << "Have_unsteady = "  << have_unsteady << "\n"; 
-  this->setName("NavierStokesRm"+PHX::typeAsString<EvalT>());
+  this->setName("NavierStokesRm"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

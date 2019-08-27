@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 
 namespace Tsunami {
@@ -43,7 +43,7 @@ NavierStokesTau(const Teuchos::ParameterList& p,
     stab_type=SHAKIBHUGHES;
   else if (stabType == "Tsunami")
     stab_type=TSUNAMI; 
-  this->setName("NavierStokesTau"+PHX::typeAsString<EvalT>());
+  this->setName("NavierStokesTau"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

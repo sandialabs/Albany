@@ -76,7 +76,7 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::Hydrostatic_VelResid" + PHX::typeAsString<EvalT>());
+  this->setName("Aeras::Hydrostatic_VelResid" + PHX::print<EvalT>());
 
   //refWeights        .resize               (numQPs);
   //grad_at_cub_points.resize     (numNodes, numQPs, 2);

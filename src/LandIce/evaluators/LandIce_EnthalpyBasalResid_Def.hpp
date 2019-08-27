@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "LandIce_EnthalpyBasalResid.hpp"
@@ -113,7 +113,7 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
     }
   }
 
-  this->setName("Enthalpy Basal Residual" + PHX::typeAsString<EvalT>());
+  this->setName("Enthalpy Basal Residual" + PHX::print<EvalT>());
 }
 
 template<typename EvalT, typename Traits, typename Type>

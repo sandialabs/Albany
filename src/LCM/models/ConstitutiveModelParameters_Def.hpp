@@ -154,7 +154,7 @@ ConstitutiveModelParameters<EvalT, Traits>::ConstitutiveModelParameters(
   }
   // register evaluated fields
   for (auto& pair : field_map_) { this->addEvaluatedField(pair.second); }
-  this->setName("Constitutive Model Parameters" + PHX::typeAsString<EvalT>());
+  this->setName("Constitutive Model Parameters" + PHX::print<EvalT>());
 }
 
 //------------------------------------------------------------------------------

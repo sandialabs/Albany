@@ -44,7 +44,7 @@ ConstitutiveModelDriverPre<EvalT, Traits>::ConstitutiveModelDriverPre(
   num_nodes_ = dims[1];
   num_pts_   = dims[2];
   num_dims_  = dims[3];
-  this->setName("ConstitutiveModelDriverPre" + PHX::typeAsString<EvalT>());
+  this->setName("ConstitutiveModelDriverPre" + PHX::print<EvalT>());
 
   // F0 is the total prescribed deformation gradient
   F0_ = computeLoading(loading_case, increment);

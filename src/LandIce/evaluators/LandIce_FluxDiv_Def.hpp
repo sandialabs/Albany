@@ -50,7 +50,7 @@ FluxDiv (const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(flux_div);
 
-  this->setName("FluxDivergence"+PHX::typeAsString<EvalT>());
+  this->setName("FluxDivergence"+PHX::print<EvalT>());
 }
 
 // **********************************************************************

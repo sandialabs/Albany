@@ -62,7 +62,7 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   }
   this->addDependentField(w_measure);
 
-  this->setName("Response Squared L2 Error Side" + PHX::typeAsString<EvalT>());
+  this->setName("Response Squared L2 Error Side" + PHX::print<EvalT>());
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
@@ -184,7 +184,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
   if(workset.comm->getRank()==0)
-    std::cout << "resp" << PHX::typeAsString<EvalT>() << ": " << this->global_response_eval(0) << "\n" << std::flush;
+    std::cout << "resp" << PHX::print<EvalT>() << ": " << this->global_response_eval(0) << "\n" << std::flush;
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);

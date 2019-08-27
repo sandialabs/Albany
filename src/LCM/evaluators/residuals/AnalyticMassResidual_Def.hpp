@@ -14,9 +14,6 @@
 #include <chrono>
 #endif
 
-// IKT: uncomment the following for debug output
-//#define DEBUG_OUTPUT
-
 // **********************************************************************
 // Base Class Generic Implemtation
 // **********************************************************************
@@ -31,9 +28,6 @@ AnalyticMassResidualBase<EvalT, Traits>::AnalyticMassResidualBase(
       mass_(p.get<std::string>("Analytic Mass Name"), dl->node_vector),
       out_(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-#ifdef DEBUG_OUTPUT
-  *out_ << "IKT AnalyticMassResidualBase! \n";
-#endif
   if (p.isParameter("Density")) density_ = p.get<RealType>("Density");
 
   resid_using_cub_    = p.get<bool>("Residual Computed Using Cubature");
@@ -41,12 +35,6 @@ AnalyticMassResidualBase<EvalT, Traits>::AnalyticMassResidualBase(
   use_analytic_mass_  = p.get<bool>("Use Analytic Mass");
   lump_analytic_mass_ = p.get<bool>("Lump Analytic Mass");
 
-#ifdef DEBUG_OUTPUT
-  *out_ << "IKT resid_using_cub, use_composite_tet, use_analytic_mass, "
-           "lump_analytic_mass = "
-        << resid_using_cub_ << ", " << use_composite_tet_ << ", "
-        << use_analytic_mass_ << ", " << lump_analytic_mass_ << "\n";
-#endif
   this->addDependentField(w_bf_);
   this->addDependentField(weights_);
   this->addEvaluatedField(mass_);
@@ -65,7 +53,7 @@ AnalyticMassResidualBase<EvalT, Traits>::AnalyticMassResidualBase(
     this->addDependentField(accel_nodes_);
   }
 
-  this->setName("AnalyticMassResidual" + PHX::typeAsString<EvalT>());
+  this->setName("AnalyticMassResidual" + PHX::print<EvalT>());
 
   Teuchos::RCP<PHX::DataLayout>           vector_dl = dl->node_qp_vector;
   std::vector<PHX::DataLayout::size_type> dims;
@@ -74,10 +62,6 @@ AnalyticMassResidualBase<EvalT, Traits>::AnalyticMassResidualBase(
   num_pts_   = dims[2];
   num_dims_  = dims[3];
   num_cells_ = dims[0];
-#ifdef DEBUG_OUTPUT
-  *out_ << "IKT num_cells_, num_nodes, num_pts_, num_dims = " << num_cells_
-        << ", " << num_nodes_ << ", " << num_pts_ << ", " << num_dims_ << "\n";
-#endif
 
   // Infer what is element type based on # of nodes
   switch (num_nodes_) {
@@ -709,11 +693,6 @@ AnalyticMassResidualBase<EvalT, Traits>::computeElementVolScaling(
   for (int pt = 0; pt < num_pts_; ++pt) {
     elt_vol_scale_at_node += w_bf_(cell, node, pt);
   }
-#ifdef DEBUG_OUTPUT
-  if (cell == 0)
-    *out_ << "  IKT node, elt_vol_scale_at_node = " << node << ", "
-          << elt_vol_scale_at_node << "\n";
-#endif
   return elt_vol_scale_at_node;
 }
 
@@ -726,9 +705,6 @@ AnalyticMassResidualBase<EvalT, Traits>::computeElementVolume(
   for (int pt = 0; pt < num_pts_; ++pt) {
     elt_vol += Albany::ADValue(weights_(cell, pt));
   }
-#ifdef DEBUG_OUTPUT
-  if (cell == 0) *out_ << "  IKT elt_vol = " << elt_vol << "\n";
-#endif
   return elt_vol;
 }
 
@@ -801,18 +777,6 @@ AnalyticMassResidualBase<EvalT, Traits>::computeResidualValue(
       }
     }
   }
-#ifdef DEBUG_OUTPUT
-  for (int cell = 0; cell < workset.numCells; ++cell) {
-    if (cell == 0) {
-      for (int node = 0; node < this->num_nodes_; ++node) {
-        for (int dim = 0; dim < this->num_dims_; ++dim) {
-          *(this->out_) << "IKT node, dim, ct_mass = " << node << ", " << dim
-                        << ", " << (this->mass_)(cell, node, dim) << "\n";
-        }
-      }
-    }
-  }
-#endif
 }
 
 // **********************************************************************
@@ -833,10 +797,6 @@ void
 AnalyticMassResidual<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData workset)
 {
-#ifdef DEBUG_OUTPUT
-  *(this->out_)
-      << "IKT AnalyticMassResidual Residual Specialization evaluateFields!\n";
-#endif
   if (this->use_analytic_mass_ == false) return;
 
   // Throw error is trying to call with unsupported element type
@@ -874,11 +834,6 @@ void
 AnalyticMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     typename Traits::EvalData workset)
 {
-#ifdef DEBUG_OUTPUT
-  *(this->out_)
-      << "IKT AnalyticMassResidual Jacobian Specialization evaluateFields!\n";
-#endif
-
   if (this->use_analytic_mass_ == false) return;
 
   // Throw error is trying to call with unsupported element type
@@ -899,9 +854,6 @@ AnalyticMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 
   // Set local Jacobian entries
   double n_coeff = workset.n_coeff;
-#ifdef DEBUG_OUTPUT
-  *(this->out_) << "  IKT n_coeff = " << n_coeff << "\n";
-#endif
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < this->num_nodes_;
          ++node) {  // loop over Jacobian rows
@@ -952,20 +904,6 @@ AnalyticMassResidual<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
       }
     }
   }
-
-#ifdef DEBUG_OUTPUT
-  for (int cell = 0; cell < workset.numCells; ++cell) {
-    if (cell == 0) {
-      for (int node = 0; node < this->num_nodes_; ++node) {
-        for (int dim = 0; dim < this->num_dims_; ++dim) {
-          *(this->out_) << "IKT node, dim, ct_mass = " << node << ", " << dim
-                        << ", " << (this->mass_)(cell, node, dim) << "\n";
-        }
-      }
-    }
-  }
-#endif
-  //------------------------------------------------------------------------------
 }
 
 // **********************************************************************

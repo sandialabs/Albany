@@ -30,7 +30,7 @@ XZHydrostatic_EtaDot(const Teuchos::ParameterList& p,
 {
 
   this->addEvaluatedField(etadot);
-  this->setName("Aeras::XZHydrostatic_EtaDot"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::XZHydrostatic_EtaDot"+PHX::print<EvalT>());
 
 }
 

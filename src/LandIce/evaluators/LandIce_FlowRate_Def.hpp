@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 #include "LandIce_FlowRate.hpp"
 
@@ -58,7 +58,7 @@ FlowRate<EvalT, Traits>::FlowRate (const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(flowRate);
 
-  this->setName("FlowRate"+PHX::typeAsString<EvalT>());
+  this->setName("FlowRate"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

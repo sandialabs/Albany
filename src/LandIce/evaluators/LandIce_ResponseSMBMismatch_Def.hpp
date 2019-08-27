@@ -74,7 +74,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   this->addDependentField(w_measure_2d);
   this->addDependentField(tangents);
 
-  this->setName("Response Surface Mass Balance Mismatch" + PHX::typeAsString<EvalT>());
+  this->setName("Response Surface Mass Balance Mismatch" + PHX::print<EvalT>());
 
   using PHX::MDALayout;
 

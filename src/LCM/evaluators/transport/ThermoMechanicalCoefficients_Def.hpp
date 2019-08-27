@@ -53,7 +53,7 @@ ThermoMechanicalCoefficients<EvalT, Traits>::ThermoMechanicalCoefficients(
   this->addEvaluatedField(thermal_transient_coeff_);
   this->addEvaluatedField(thermal_diffusivity_);
 
-  this->setName("ThermoMechanical Coefficients" + PHX::typeAsString<EvalT>());
+  this->setName("ThermoMechanical Coefficients" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
 

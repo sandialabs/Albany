@@ -47,7 +47,7 @@ ShallowWaterResponseL2Norm(Teuchos::ParameterList& p,
   // add dependent fields
   this->addDependentField(flow_state_field);
   this->addDependentField(weighted_measure);
-  this->setName(fieldName+" Aeras Shallow Water L2 Norm"+PHX::typeAsString<EvalT>());
+  this->setName(fieldName+" Aeras Shallow Water L2 Norm"+PHX::print<EvalT>());
   
   using PHX::MDALayout;
 

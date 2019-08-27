@@ -6,11 +6,11 @@
 
 #include <typeinfo>
 
-#include "Phalanx_DataLayout.hpp"
-#include "Teuchos_TestForException.hpp"
 #include "Albany_MaterialDatabase.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Intrepid2_RealSpaceTools.hpp"
+#include "Phalanx_DataLayout.hpp"
+#include "Teuchos_TestForException.hpp"
 
 namespace LCM {
 
@@ -51,7 +51,7 @@ DefGrad<EvalT, Traits>::DefGrad(const Teuchos::ParameterList& p)
   this->addEvaluatedField(defgrad);
   this->addEvaluatedField(J);
 
-  this->setName("DefGrad" + PHX::typeAsString<EvalT>());
+  this->setName("DefGrad" + PHX::print<EvalT>());
 }
 
 //**********************************************************************

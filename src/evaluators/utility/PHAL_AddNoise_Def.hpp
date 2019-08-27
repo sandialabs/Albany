@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 #include "PHAL_Utilities.hpp"
 
@@ -74,7 +74,7 @@ AddNoiseBase<EvalT, Traits, ScalarT>::AddNoiseBase (const Teuchos::ParameterList
 
   noise_free = (rel_noise==0) && (abs_noise==0);
 
-  this->setName("AddNoiseBase"+PHX::typeAsString<EvalT>());
+  this->setName("AddNoiseBase"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

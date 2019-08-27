@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -55,7 +55,7 @@ StokesFOStress(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Stress);
 
-  this->setName("StokesFOStress"+PHX::typeAsString<EvalT>());
+  this->setName("StokesFOStress"+PHX::print<EvalT>());
 
   std::vector<PHX::Device::size_type> dims;
   Ugrad.fieldTag().dataLayout().dimensions(dims);

@@ -40,7 +40,7 @@ SurfaceScalarGradient<EvalT, Traits>::SurfaceScalarGradient(
 
   this->addEvaluatedField(scalarGrad);
 
-  this->setName("Surface Scalar Gradient" + PHX::typeAsString<EvalT>());
+  this->setName("Surface Scalar Gradient" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);
