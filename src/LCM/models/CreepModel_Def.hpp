@@ -228,11 +228,13 @@ CreepModel<EvalT, Traits>::computeState(
       if (f <= 0.0) {
         if (a0 > 1.0E-12) {
           // return mapping algorithm
-          bool      converged = false;
-          ScalarT   alpha     = 0.0;
-          ScalarT   res       = 0.0;
-          int       count     = 0;
-          int const max_count = max_return_map_count;
+          bool      converged     = false;
+          ScalarT   alpha         = 0.0;
+          ScalarT   res           = 0.0;
+          ScalarT   res_norm      = 1.0;
+          ScalarT   original_res  = 1.0;
+          int       count         = 0;
+          int const max_count     = max_return_map_count;
           // ScalarT H = 0.0;
           dgam = 0.0;
           ScalarT debug_X[max_count + 1];
@@ -281,6 +283,7 @@ CreepModel<EvalT, Traits>::computeState(
           debug_F[0]    = F[0];
           debug_dFdX[0] = dFdX[0];
           debug_res[0]  = 0.0;
+          original_res  = F[0];
 
           while (!converged && count <= max_count) {
             count++;
@@ -317,7 +320,8 @@ CreepModel<EvalT, Traits>::computeState(
 
             res              = std::abs(F[0]);
             debug_res[count] = res;
-            if (res < return_map_tolerance) { converged = true; }
+            res_norm         = res/original_res;
+            if (res_norm < return_map_tolerance) { converged = true; }
 
             if (count == max_count) {
               std::cerr << "detected NaN, here are the X, F, dfdX values at "
