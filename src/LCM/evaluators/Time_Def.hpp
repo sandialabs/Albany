@@ -59,6 +59,10 @@ Time<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 
   Albany::MDArray timeOld = (*workset.stateArrayPtr)[timeName];
   deltaTime(0)            = time(0) - timeOld(0);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      deltaTime(0) < 0.0, 
+      std::logic_error, 
+      "Tried to return a negative deltaTime(0) = " << deltaTime(0) << ".");
 }
 
 // **********************************************************************
