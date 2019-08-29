@@ -608,7 +608,7 @@ SchwarzAlternating::reportFinals(std::ostream& os) const
 void
 SchwarzAlternating::SchwarzLoopDynamics() const
 {
-  constexpr auto         ZEROS{minitensor::Filler::ZEROS};
+  auto const             ZEROS{minitensor::Filler::ZEROS};
   minitensor::Vector<ST> norms_init(num_subdomains_, ZEROS);
   minitensor::Vector<ST> norms_final(num_subdomains_, ZEROS);
   minitensor::Vector<ST> norms_diff(num_subdomains_, ZEROS);
@@ -1094,7 +1094,7 @@ SchwarzAlternating::doQuasistaticOutput(ST const time) const
 void
 SchwarzAlternating::SchwarzLoopQuasistatics() const
 {
-  constexpr auto         ZEROS{minitensor::Filler::ZEROS};
+  auto const             ZEROS{minitensor::Filler::ZEROS};
   minitensor::Vector<ST> norms_init(num_subdomains_, ZEROS);
   minitensor::Vector<ST> norms_final(num_subdomains_, ZEROS);
   minitensor::Vector<ST> norms_diff(num_subdomains_, ZEROS);
