@@ -42,6 +42,9 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
+      -D MPI_BASE_DIR:PATH=/usr/lib64/openmpi \
+      -D TPL_MPI_LIBRARIES:FILEPATH=/usr/lib64/openmpi/lib/libmpi.so.20 \
+      -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L/usr/lib64/openmpi/lib -lmpi" \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDFDIR}/include \
@@ -74,7 +77,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_AztecOO:BOOL=ON \
       -D Trilinos_ENABLE_Belos:BOOL=ON \
       -D Trilinos_ENABLE_COMPLEX_DOUBLE:BOOL=ON \
-      -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
       -D Trilinos_ENABLE_Epetra:BOOL=ON \
       -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
       -D Trilinos_ENABLE_FEI:BOOL=OFF\
@@ -83,7 +85,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Intrepid:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
-      -D HAVE_INTREPID_KOKKOSCORE:BOOL=OFF\
       -D Kokkos_ENABLE_Serial:BOOL=ON \
       -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
       -D Kokkos_ENABLE_Pthread:BOOL=OFF \
