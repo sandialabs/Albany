@@ -608,12 +608,12 @@ SchwarzAlternating::reportFinals(std::ostream& os) const
 void
 SchwarzAlternating::SchwarzLoopDynamics() const
 {
-  auto const             ZEROS{minitensor::Filler::ZEROS};
-  minitensor::Vector<ST> norms_init(num_subdomains_, ZEROS);
-  minitensor::Vector<ST> norms_final(num_subdomains_, ZEROS);
-  minitensor::Vector<ST> norms_diff(num_subdomains_, ZEROS);
-  std::string const      delim(72, '=');
-  auto&                  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  minitensor::Filler const ZEROS{minitensor::Filler::ZEROS};
+  minitensor::Vector<ST>   norms_init(num_subdomains_, ZEROS);
+  minitensor::Vector<ST>   norms_final(num_subdomains_, ZEROS);
+  minitensor::Vector<ST>   norms_diff(num_subdomains_, ZEROS);
+  std::string const        delim(72, '=');
+  auto& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
 
   fos << delim << std::endl;
   fos << "Schwarz Alternating Method with " << num_subdomains_;
@@ -1094,10 +1094,10 @@ SchwarzAlternating::doQuasistaticOutput(ST const time) const
 void
 SchwarzAlternating::SchwarzLoopQuasistatics() const
 {
-  auto const             ZEROS{minitensor::Filler::ZEROS};
-  minitensor::Vector<ST> norms_init(num_subdomains_, ZEROS);
-  minitensor::Vector<ST> norms_final(num_subdomains_, ZEROS);
-  minitensor::Vector<ST> norms_diff(num_subdomains_, ZEROS);
+  minitensor::Filler const ZEROS{minitensor::Filler::ZEROS};
+  minitensor::Vector<ST>   norms_init(num_subdomains_, ZEROS);
+  minitensor::Vector<ST>   norms_final(num_subdomains_, ZEROS);
+  minitensor::Vector<ST>   norms_diff(num_subdomains_, ZEROS);
 
   std::string const delim(72, '=');
   auto&             fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
