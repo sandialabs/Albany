@@ -30,7 +30,6 @@
 #
 rm -f CMakeCache.txt
 rm -rf CMakeFiles
-NETCDFDIR=/usr/local/netcdf
 PARMETISDIR=/home/ikalash/Install/parmetis/build/install
 
 
@@ -44,12 +43,10 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
       -D MPI_BASE_DIR:PATH=/usr/lib64/openmpi \
-      -D TPL_MPI_LIBRARIES:FILEPATH=/usr/lib64/openmpi/lib/libmpi.so.20 \
-      -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L/usr/lib64/openmpi/lib -lmpi" \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDFDIR}/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDFDIR}/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=/usr/lib64 \
 \
       -D TPL_ENABLE_HDF5:BOOL=OFF \
 \
