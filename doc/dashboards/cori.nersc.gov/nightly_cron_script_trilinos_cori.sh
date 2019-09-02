@@ -4,12 +4,14 @@ BASE_DIR=/project/projectdirs/piscees/nightlyCoriCDash
 
 cd $BASE_DIR
 
-source cori_modules.sh 
+source cori_modules.sh >& modules.out 
 
 rm -rf $BASE_DIR/repos
 rm -rf $BASE_DIR/build
 rm -rf $BASE_DIR/ctest_nightly.cmake.work
 rm -rf $BASE_DIR/nightly_log*
+rm -rf $BASE_DIR/*out 
+rm -rf $BASE_DIR/slurm* 
 rm -rf $BASE_DIR/results*
 rm -rf $BASE_DIR/test_summary.txt
 

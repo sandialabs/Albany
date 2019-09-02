@@ -593,26 +593,26 @@ if (BUILD_CISM_PISCEES)
   # Run CISM-Albany tests
   #
 
-  #CTEST_TEST(
-  #  BUILD "${CTEST_BINARY_DIRECTORY}/CoriAlbanyFELIX"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-  #  RETURN_VALUE  HAD_ERROR
-  #  )
+  CTEST_TEST(
+    BUILD "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany"
+#                  PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+#                  INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+#    NUMBER_FAILED  TEST_NUM_FAILED
+    RETURN_VALUE  HAD_ERROR
+    )
 
-  #if (CTEST_DO_SUBMIT)
-  #  ctest_submit (PARTS Test
-  #    RETURN_VALUE  S_HAD_ERROR
-  #    )
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Test
+      RETURN_VALUE  S_HAD_ERROR
+      )
 
-  #  if (S_HAD_ERROR)
-  #    message(FATAL_ERROR "Cannot submit Albany test results!")
-  #  endif ()
-  #endif ()
+    if (S_HAD_ERROR)
+      message(FATAL_ERROR "Cannot submit CISM-Albany test results!")
+    endif ()
+  endif ()
 
-  #if (HAD_ERROR)
-  #	message(FATAL_ERROR "Some Albany tests failed.")
-  #endif ()
+  if (HAD_ERROR)
+  	message(FATAL_ERROR "Some CISM-Albany tests failed.")
+  endif ()
 
 endif ()
