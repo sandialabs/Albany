@@ -183,7 +183,7 @@ if (BUILD_ALBANY)
     "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
-    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=ON"
+    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
     "-DSEACAS_EPU=/home/ikalash/Trilinos/seacas-build/install/bin/epu"
     "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"
