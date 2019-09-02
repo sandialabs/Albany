@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --qos=regular
-#SBATCH --time=00:30:00 
+#SBATCH --time=00:22:00 
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=16
 #SBATCH --constraint=haswell
