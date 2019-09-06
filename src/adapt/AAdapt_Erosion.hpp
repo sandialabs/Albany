@@ -98,6 +98,8 @@ class Erosion : public AbstractAdapter
   int         num_dim_{0};
   int         remesh_file_index_{0};
   std::string base_exo_filename_{""};
+  double      erosion_volume_{0.0};
+  double      cross_section_{1.0};
 };
 
 }  // namespace AAdapt

@@ -36,6 +36,7 @@ AAdapt::Erosion::Erosion(
   failure_criterion_                       = Teuchos::rcp(
       new LCM::BulkFailureCriterion(*topology_, failure_indicator_name));
   topology_->set_failure_criterion(failure_criterion_);
+  cross_section_ = params->get<double>("Cross Section", 1.0);
 }
 
 //
@@ -262,10 +263,16 @@ AAdapt::Erosion::adaptMesh()
   remesh_file_index_++;
 
   // Start the mesh update process
-  topology_->erodeFailedElements();
+  double volume = topology_->erodeFailedElements();
+  erosion_volume_ += volume;
 
   // Throw away all the Albany data structures and re-build them from the mesh
   stk_discretization_->updateMesh();
+
+  *output_stream_ << "*** ACE INFO: Eroded Volume : " << erosion_volume_
+                  << '\n';
+  *output_stream_ << "*** ACE INFO: Eroded Length : "
+                  << erosion_volume_ / cross_section_ << '\n';
 
   return true;
 }
