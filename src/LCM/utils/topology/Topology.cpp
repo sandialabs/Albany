@@ -188,6 +188,52 @@ Topology::setBoundaryIndicator()
 }
 
 //
+// Compute volume of given cell
+//
+double
+Topology::getCellVolume(stk::mesh::Entity const cell)
+{
+  stk::mesh::EntityRank const cell_rank       = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityRank const node_rank       = stk::topology::NODE_RANK;
+  auto&                       bulk_data       = get_bulk_data();
+  auto&                       stk_mesh_struct = *(get_stk_mesh_struct());
+  auto& coord_field = *(stk_mesh_struct.getCoordinatesField());
+
+  assert(bulk_data.entity_rank(cell) == cell_rank);
+  stk::mesh::Entity const* relations = bulk_data.begin(cell, node_rank);
+  auto const num_relations = bulk_data.num_connectivity(cell, node_rank);
+  std::vector<minitensor::Vector<double, 3>> points;
+  for (auto i = 0; i < num_relations; ++i) {
+    stk::mesh::Entity node = relations[i];
+    double*           pc   = stk::mesh::field_data(coord_field, node);
+
+    minitensor::Vector<double, 3> point(pc[0], pc[1], pc[2]);
+    points.emplace_back(point);
+  }
+
+  double volume{0.0};
+  switch (num_relations) {
+    default: ALBANY_ASSERT(num_relations == 4 || num_relations == 8); break;
+    case 4:
+      volume = minitensor::volume(points[0], points[1], points[2], points[3]);
+      break;
+    case 8:
+      volume = minitensor::volume(
+          points[0],
+          points[1],
+          points[2],
+          points[3],
+          points[4],
+          points[5],
+          points[6],
+          points[7]);
+      break;
+  }
+
+  return volume;
+}
+
+//
 // Create the full mesh representation. This must be done prior to
 // the adaptation query.
 //
@@ -1167,7 +1213,7 @@ Topology::printFailureState()
 //
 // Remove failed elements from the mesh
 //
-void
+double
 Topology::erodeFailedElements()
 {
   stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
@@ -1179,11 +1225,15 @@ Topology::erodeFailedElements()
   assert(get_space_dimension() == cell_rank);
   bulk_data.modification_begin();
 
+  double eroded_volume{0.0};
+
   // Collect and remove failed cells
   stk::mesh::EntityVector cells;
   stk::mesh::get_entities(bulk_data, cell_rank, cells);
   for (auto cell : cells) {
     if (failure_criterion_->check(bulk_data, cell) == true) {
+      auto cell_volume = getCellVolume(cell);
+      eroded_volume += cell_volume;
       set_failure_state(cell, INTACT);
       remove_entity(cell);
     }
@@ -1212,6 +1262,8 @@ Topology::erodeFailedElements()
   Albany::fix_node_sharing(bulk_data);
   initializeCellFailureState();
   setBoundaryIndicator();
+
+  return eroded_volume;
 }
 
 //

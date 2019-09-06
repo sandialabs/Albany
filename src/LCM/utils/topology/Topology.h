@@ -221,7 +221,7 @@ class Topology
   /// Iterate over all elements in the mesh and remove those
   /// that are marked as failed.
   ///
-  void
+  double
   erodeFailedElements();
 
   bool
@@ -577,6 +577,12 @@ class Topology
   ///
   void
   setBoundaryIndicator();
+
+  ///
+  ///
+  ///
+  double
+  getCellVolume(stk::mesh::Entity const cell);
 
   ///
   /// \brief Practice creating the barycentric subdivision
