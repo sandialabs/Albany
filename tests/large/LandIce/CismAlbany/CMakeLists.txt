@@ -18,6 +18,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-IF (CISM_EXE_DIR)
+IF (CISM_CHECK_COMPARISONS)
 add_test(NAME LandIce_${testName} COMMAND "python" "runtestT.py")
 ENDIF() 
