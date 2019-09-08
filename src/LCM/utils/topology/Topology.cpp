@@ -99,11 +99,13 @@ Topology::Topology(
 Topology::Topology(
     Teuchos::RCP<Albany::AbstractDiscretization>& abstract_disc,
     std::string const&                            bulk_block_name,
-    std::string const&                            interface_block_name)
+    std::string const&                            interface_block_name,
+    double                                        bluff_width)
     : discretization_(Teuchos::null),
       stk_mesh_struct_(Teuchos::null),
       failure_criterion_(Teuchos::null),
-      output_type_(UNIDIRECTIONAL_UNILEVEL)
+      output_type_(UNIDIRECTIONAL_UNILEVEL),
+      bluff_width_(bluff_width)
 {
   auto& stk_disc = static_cast<Albany::STKDiscretization&>(*abstract_disc);
   auto  stk_mesh_struct = stk_disc.getSTKMeshStruct();
@@ -185,6 +187,65 @@ Topology::setBoundaryIndicator()
     auto const bi = is_boundary_cell(cell) == true ? EXTERIOR : INTERIOR;
     set_boundary_indicator(cell, bi);
   }
+}
+
+//
+//
+//
+bool
+Topology::is_erodible(stk::mesh::Entity face)
+{
+  if (is_internal(face) == true) return false;
+
+  stk::mesh::EntityRank const face_rank       = stk::topology::FACE_RANK;
+  stk::mesh::EntityRank const node_rank       = stk::topology::NODE_RANK;
+  auto&                       bulk_data       = get_bulk_data();
+  auto&                       stk_mesh_struct = *(get_stk_mesh_struct());
+  auto& coord_field = *(stk_mesh_struct.getCoordinatesField());
+
+  ALBANY_ASSERT(bulk_data.entity_rank(face) == face_rank);
+  stk::mesh::Entity const* relations = bulk_data.begin(face, node_rank);
+  auto const num_relations = bulk_data.num_connectivity(face, node_rank);
+  ALBANY_ASSERT(num_relations > 0);
+  std::vector<minitensor::Vector<double, 3>> points;
+  minitensor::Vector<double, 3>              avg(0.0, 0.0, 0.0);
+  for (auto i = 0; i < num_relations; ++i) {
+    stk::mesh::Entity node = relations[i];
+    double*           pc   = stk::mesh::field_data(coord_field, node);
+
+    minitensor::Vector<double, 3> point(pc[0], pc[1], pc[2]);
+    points.emplace_back(point);
+    avg += point;
+  }
+  avg /= num_relations;
+  minitensor::Vector<double, 3> norms(0.0, 0.0, 0.0);
+  for (auto i = 0; i < num_relations; ++i) {
+    auto const diff = points[i] - avg;
+    norms(0)        = diff(0) * diff(0);
+    norms(1)        = diff(1) * diff(1);
+    norms(2)        = diff(2) * diff(2);
+  }
+  norms(0) = std::sqrt(norms(0));
+  norms(1) = std::sqrt(norms(1));
+  norms(2) = std::sqrt(norms(2));
+
+  double const eps   = 0.001;
+  double const yplus = bluff_width_;
+
+  bool const is_x_minus = std::abs(avg(0)) <= eps && std::abs(norms(0)) <= eps;
+  if (is_x_minus == true) return false;
+
+  bool const is_y_minus = std::abs(avg(1)) <= eps && std::abs(norms(1)) <= eps;
+  if (is_y_minus == true) return false;
+
+  avg(1) -= yplus;
+  bool const is_y_plus = std::abs(avg(1)) <= eps && std::abs(norms(1)) <= eps;
+  if (is_y_plus == true) return false;
+
+  bool const is_z_minus = std::abs(avg(2)) <= eps && std::abs(norms(2)) <= eps;
+  if (is_z_minus == true) return false;
+
+  return true;
 }
 
 //

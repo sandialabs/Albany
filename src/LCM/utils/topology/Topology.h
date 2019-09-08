@@ -43,7 +43,8 @@ class Topology
   Topology(
       Teuchos::RCP<Albany::AbstractDiscretization>& abstract_disc,
       std::string const&                            bulk_block_name      = "",
-      std::string const&                            interface_block_name = "");
+      std::string const&                            interface_block_name = "",
+      double                                        bluff_width          = 1.0);
 
   ///
   /// \brief Iterates over the boundary entities of the mesh of (all
@@ -584,6 +585,12 @@ class Topology
   double
   getCellVolume(stk::mesh::Entity const cell);
 
+  void
+  setBluffWidth(double const bw)
+  {
+    bluff_width_ = bw;
+  }
+
   ///
   /// \brief Practice creating the barycentric subdivision
   ///
@@ -853,9 +860,13 @@ class Topology
   is_internal(stk::mesh::Entity e);
 
   bool
+  is_erodible(stk::mesh::Entity e);
+
+  bool
   is_at_boundary(stk::mesh::Entity e)
   {
-    return is_internal(e) == false;
+    // return is_internal(e) == false;
+    return is_erodible(e) == true;
   }
 
   bool
@@ -961,8 +972,8 @@ class Topology
   std::string                            bulk_block_name_{""};
   std::string                            interface_block_name_{""};
   OutputType                             output_type_;
+  double                                 bluff_width_{1.0};
 
- private:
   ///
   /// \brief Hide default constructor for Topology
   ///

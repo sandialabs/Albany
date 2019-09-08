@@ -30,13 +30,15 @@ AAdapt::Erosion::Erosion(
   num_dim_            = stk_mesh_struct_->numDim;
 
   // Save the initial output file name
-  base_exo_filename_ = stk_mesh_struct_->exoOutFile;
-  topology_          = Teuchos::rcp(new LCM::Topology(discretization_));
+  base_exo_filename_     = stk_mesh_struct_->exoOutFile;
+  cross_section_         = params->get<double>("Cross Section", 1.0);
+  auto const bluff_width = params->get<double>("Bluff Width", 1.0);
+  topology_ =
+      Teuchos::rcp(new LCM::Topology(discretization_, "", "", bluff_width));
   std::string const failure_indicator_name = "ACE Failure Indicator";
   failure_criterion_                       = Teuchos::rcp(
       new LCM::BulkFailureCriterion(*topology_, failure_indicator_name));
   topology_->set_failure_criterion(failure_criterion_);
-  cross_section_ = params->get<double>("Cross Section", 1.0);
 }
 
 //
