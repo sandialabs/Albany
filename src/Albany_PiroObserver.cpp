@@ -16,11 +16,11 @@ namespace Albany
 
 PiroObserver::
 PiroObserver(const Teuchos::RCP<Application> &app, 
-              Teuchos::RCP<Thyra_ModelEvaluator> model)
+              Teuchos::RCP<const Thyra_ModelEvaluator> model)
  : impl_(app) 
+ , model_(model) 
  , out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-  model_ = Teuchos::rcp_dynamic_cast<Albany::ModelEvaluator>(model); 
   observe_responses_ = false; 
   if ((app->observeResponses() == true) && (model_ != Teuchos::null)) 
     observe_responses_ = true;
@@ -164,7 +164,6 @@ observeResponse(const ST defaultStamp,
     if (inArgs.supports(Thyra::ModelEvaluatorBase::IN_ARG_t)) { 
       const ST time = impl_.getTimeParamValueOrDefault(defaultStamp);
       inArgs.set_t(time);
-      model_->setCurrentTime(time); 
       *out << "Time = " << time << "\n";  
     }
   
