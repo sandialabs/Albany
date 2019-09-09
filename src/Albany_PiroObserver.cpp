@@ -164,7 +164,9 @@ observeResponse(const ST defaultStamp,
     if (inArgs.supports(Thyra::ModelEvaluatorBase::IN_ARG_t)) { 
       const ST time = impl_.getTimeParamValueOrDefault(defaultStamp);
       inArgs.set_t(time);
+#ifdef ALBANY_LCM
       model_->setCurrentTime(time); 
+#endif
       *out << "Time = " << time << "\n";  
     }
   
