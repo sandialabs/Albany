@@ -2830,7 +2830,12 @@ Application::setupBasicWorksetInfo(
   workset.distParamLib = distParamLib;
   workset.disc         = disc;
 
-  const double this_time = fixTime(current_time);
+  //IKT - temporary fix for negative dt issue
+  //Need to ask Alejandro to fix fixTime routine to remedy problem correctly
+  const double this_time = current_time; 
+  //IKT Original line was below 
+  //I think it's necessary for some Schwarz problem - need to ask Alejandro 
+  //const double this_time = fixTime(current_time);
 
   workset.current_time = this_time;
 

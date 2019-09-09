@@ -12,6 +12,7 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_ObserverImpl.hpp"
+#include "Albany_ModelEvaluator.hpp" 
 
 #include "Teuchos_RCP.hpp"
 
@@ -20,7 +21,7 @@ namespace Albany {
 class PiroObserver : public Piro::ObserverBase<ST> {
 public:
   explicit PiroObserver(const Teuchos::RCP<Albany::Application> &app, 
-                         Teuchos::RCP<const Thyra_ModelEvaluator> model = Teuchos::null);
+                         Teuchos::RCP<Thyra_ModelEvaluator> model = Teuchos::null);
 
   virtual void observeSolution(
       const Thyra_Vector& solution);
@@ -81,7 +82,7 @@ private:
 
   ObserverImpl impl_;
 
-  Teuchos::RCP<const Thyra_ModelEvaluator> model_; 
+  Teuchos::RCP<Albany::ModelEvaluator> model_; 
 
 protected: 
 

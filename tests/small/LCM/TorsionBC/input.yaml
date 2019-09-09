@@ -40,8 +40,7 @@ LCM:
       Bifurcation: { }
       Constraints: { }
       Predictor:
-        First Step Predictor: { }
-        Last Step Predictor: { }
+        Method: Constant
       Stepper:
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
