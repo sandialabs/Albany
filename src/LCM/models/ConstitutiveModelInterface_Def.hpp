@@ -28,6 +28,7 @@
 #include "HyperelasticDamageModel.hpp"
 #include "J2FiberModel.hpp"
 #include "J2HMCModel.hpp"
+#include "J2Erosion.hpp"
 #include "J2MiniSolver.hpp"
 #include "J2Model.hpp"
 #include "LinearElasticModel.hpp"
@@ -337,6 +338,8 @@ ConstitutiveModelInterface<EvalT, Traits>::initializeModel(
     model = rcp(new OrtizPandolfiModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Elasto Viscoplastic") {
     model = rcp(new ElastoViscoplasticModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "J2 Erosion") {
+    model = rcp(new J2Erosion<EvalT, Traits>(p, dl));
   } else if (model_name == "J2 MiniSolver") {
     model = rcp(new J2MiniSolver<EvalT, Traits>(p, dl));
   } else if (model_name == "ACE ice") {
