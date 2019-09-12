@@ -35,7 +35,7 @@ AAdapt::Erosion::Erosion(
   auto const bluff_width = params->get<double>("Bluff Width", 1.0);
   topology_ =
       Teuchos::rcp(new LCM::Topology(discretization_, "", "", bluff_width));
-  std::string const failure_indicator_name = "ACE Failure Indicator";
+  std::string const failure_indicator_name = "Failure Indicator";
   failure_criterion_                       = Teuchos::rcp(
       new LCM::BulkFailureCriterion(*topology_, failure_indicator_name));
   topology_->set_failure_criterion(failure_criterion_);
