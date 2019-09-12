@@ -58,7 +58,7 @@ struct J2ErosionKernel : public ParallelKernel<EvalT, Traits>
   /// a global load step reduction
   using BaseKernel::nox_status_test_;
 
-  // Dependent MDFields
+  // Input constant MDFields
   ConstScalarField def_grad_;
   ConstScalarField delta_time_;
   ConstScalarField elastic_modulus_;
@@ -68,19 +68,34 @@ struct J2ErosionKernel : public ParallelKernel<EvalT, Traits>
   ConstScalarField yield_strength_;
   ConstScalarField temperature_;
 
-  // extract evaluated MDFields
+  // Output MDFields
   ScalarField eqps_;
   ScalarField Fp_;
   ScalarField source_;
   ScalarField stress_;
   ScalarField yield_surf_;
+  ScalarField failed_;
+  ScalarField exposure_time_;
 
+  // Workspace arrays
   Albany::MDArray Fp_old_;
   Albany::MDArray eqps_old_;
 
-  // Saturation hardening constraints
-  RealType sat_mod_;
-  RealType sat_exp_;
+  bool                       have_boundary_indicator_{false};
+  Teuchos::ArrayRCP<double*> boundary_indicator_;
+
+  // Baseline constants
+  RealType sat_mod_{0.0};
+  RealType sat_exp_{0.0};
+  RealType erosion_rate_{0.0};
+  RealType element_size_{0.0};
+  RealType critical_stress_{0.0};
+  RealType critical_angle_{0.0};
+
+  // Sea level arrays
+  std::vector<RealType> time_;
+  std::vector<RealType> sea_level_;
+  RealType              current_time_{0.0};
 
   void
   init(
@@ -94,14 +109,13 @@ struct J2ErosionKernel : public ParallelKernel<EvalT, Traits>
 };
 
 template <typename EvalT, typename Traits>
-class J2Erosion
-    : public LCM::
-          ParallelConstitutiveModel<EvalT, Traits, J2ErosionKernel<EvalT, Traits>>
+class J2Erosion : public LCM::ParallelConstitutiveModel<
+                      EvalT,
+                      Traits,
+                      J2ErosionKernel<EvalT, Traits>>
 {
  public:
-  J2Erosion(
-      Teuchos::ParameterList*              p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  J2Erosion(Teuchos::ParameterList* p, const Teuchos::RCP<Albany::Layouts>& dl);
 };
 }  // namespace LCM
 #endif  // LCM_J2Erosion_hpp

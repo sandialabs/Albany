@@ -3,9 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "Albany_Utils.hpp"
+#include "ACEcommon.hpp"
+#include "Albany_STKDiscretization.hpp"
 #include "J2Erosion.hpp"
-#include "MiniNonlinearSolver.h"
 
 namespace LCM {
 
@@ -14,10 +14,32 @@ J2ErosionKernel<EvalT, Traits>::J2ErosionKernel(
     ConstitutiveModel<EvalT, Traits>&    model,
     Teuchos::ParameterList*              p,
     Teuchos::RCP<Albany::Layouts> const& dl)
-    : BaseKernel(model),
-      sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
-      sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
+    : BaseKernel(model)
 {
+  this->setIntegrationPointLocationFlag(true);
+
+  // Baseline constants
+  sat_mod_         = p->get<RealType>("Saturation Modulus", 0.0);
+  sat_exp_         = p->get<RealType>("Saturation Exponent", 0.0);
+  erosion_rate_    = p->get<RealType>("Erosion Rate", 0.0);
+  element_size_    = p->get<RealType>("Element Size", 0.0);
+  critical_stress_ = p->get<RealType>("Critical Stress", 0.0);
+  critical_angle_  = p->get<RealType>("Critical Angle", 0.0);
+
+  if (p->isParameter("Time File") == true) {
+    std::string const filename = p->get<std::string>("Time File");
+    time_                      = vectorFromFile(filename);
+  }
+
+  if (p->isParameter("Sea Level File") == true) {
+    std::string const filename = p->get<std::string>("Sea Level File");
+    sea_level_                 = vectorFromFile(filename);
+  }
+
+  ALBANY_ASSERT(
+      time_.size() == sea_level_.size(),
+      "*** ERROR: Number of times and number of sea level values must match");
+
   // retrieve appropriate field name strings
   std::string const cauchy_string       = field_name_map_["Cauchy_Stress"];
   std::string const Fp_string           = field_name_map_["Fp"];
@@ -37,6 +59,8 @@ J2ErosionKernel<EvalT, Traits>::J2ErosionKernel(
   setDependentField("Delta Time", dl->workset_scalar);
 
   // define the evaluated fields
+  setEvaluatedField("Failure Indicator", dl->cell_scalar);
+  setEvaluatedField("Exposure Time", dl->qp_scalar);
   setEvaluatedField(cauchy_string, dl->qp_tensor);
   setEvaluatedField(Fp_string, dl->qp_tensor);
   setEvaluatedField(eqps_string, dl->qp_scalar);
@@ -102,6 +126,24 @@ J2ErosionKernel<EvalT, Traits>::J2ErosionKernel(
         false,
         p->get<bool>("Output Mechanical Source", false));
   }
+
+  // failed state
+  addStateVariable(
+      "Failure Indicator",
+      dl->cell_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output Failure Indicator", true));
+
+  // exposure time
+  addStateVariable(
+      "Exposure Time",
+      dl->qp_scalar,
+      "scalar",
+      0.0,
+      false,
+      p->get<bool>("Output Exposure Time", true));
 }
 
 template <typename EvalT, typename Traits>
@@ -129,10 +171,12 @@ J2ErosionKernel<EvalT, Traits>::init(
   delta_time_        = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
-  stress_     = *eval_fields[cauchy_string];
-  Fp_         = *eval_fields[Fp_string];
-  eqps_       = *eval_fields[eqps_string];
-  yield_surf_ = *eval_fields[yieldSurface_string];
+  stress_        = *eval_fields[cauchy_string];
+  Fp_            = *eval_fields[Fp_string];
+  eqps_          = *eval_fields[eqps_string];
+  yield_surf_    = *eval_fields[yieldSurface_string];
+  failed_        = *eval_fields["Failure Indicator"];
+  exposure_time_ = *eval_fields["Exposure Time"];
 
   if (have_temperature_ == true) {
     source_      = *eval_fields[source_string];
@@ -142,25 +186,36 @@ J2ErosionKernel<EvalT, Traits>::init(
   // get State Variables
   Fp_old_   = (*workset.stateArrayPtr)[Fp_string + "_old"];
   eqps_old_ = (*workset.stateArrayPtr)[eqps_string + "_old"];
+
+  auto& disc               = *workset.disc;
+  auto& stk_disc           = dynamic_cast<Albany::STKDiscretization&>(disc);
+  auto& mesh_struct        = *(stk_disc.getSTKMeshStruct());
+  auto& field_cont         = *(mesh_struct.getFieldContainer());
+  have_boundary_indicator_ = field_cont.hasBoundaryIndicatorField();
+
+  if (have_boundary_indicator_ == true) {
+    boundary_indicator_ = workset.boundary_indicator;
+    ALBANY_ASSERT(boundary_indicator_.is_null() == false);
+  }
+
+  current_time_ = workset.current_time;
+
+  auto const num_cells = workset.numCells;
+  for (auto cell = 0; cell < num_cells; ++cell) { failed_(cell, 0) = 0.0; }
 }
-
-namespace {
-
-static RealType const SQ23{std::sqrt(2.0 / 3.0)};
-
-}  // anonymous namespace
 
 //
 // J2 nonlinear system
 //
 template <typename EvalT, minitensor::Index M = 1>
-class J2NLS : public minitensor::
-                  Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>
+class J2ErosionNLS
+    : public minitensor::
+          Function_Base<J2ErosionNLS<EvalT, M>, typename EvalT::ScalarT, M>
 {
   using S = typename EvalT::ScalarT;
 
  public:
-  J2NLS(
+  J2ErosionNLS(
       RealType sat_mod,
       RealType sat_exp,
       RealType eqps_old,
@@ -180,8 +235,8 @@ class J2NLS : public minitensor::
 
   constexpr static char const* const NAME{"J2 NLS"};
 
-  using Base =
-      minitensor::Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>;
+  using Base = minitensor::
+      Function_Base<J2ErosionNLS<EvalT, M>, typename EvalT::ScalarT, M>;
 
   // Default value.
   template <typename T, minitensor::Index N>
@@ -247,12 +302,15 @@ KOKKOS_INLINE_FUNCTION void
 J2ErosionKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
   constexpr minitensor::Index MAX_DIM{3};
-
   using Tensor = minitensor::Tensor<ScalarT, MAX_DIM>;
+  Tensor       F(num_dims_);
+  Tensor const I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
+  Tensor       sigma(num_dims_);
 
-  Tensor        F(num_dims_);
-  Tensor const  I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
-  Tensor        sigma(num_dims_);
+  auto const coords       = this->model_.getCoordVecField();
+  auto const height       = Sacado::Value<ScalarT>::eval(coords(cell, pt, 2));
+  auto const current_time = current_time_;
+
   ScalarT const E     = elastic_modulus_(cell, pt);
   ScalarT const nu    = poissons_ratio_(cell, pt);
   ScalarT const kappa = E / (3.0 * (1.0 - 2.0 * nu));
@@ -262,23 +320,42 @@ J2ErosionKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const J1    = J_(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
 
+  auto&& delta_time    = delta_time_(0);
+  auto&& failed        = failed_(cell, 0);
+  auto&& exposure_time = exposure_time_(cell, pt);
+
+  // Determine if erosion has occurred.
+  auto const erosion_rate = erosion_rate_;
+  auto const element_size = element_size_;
+  bool const is_erodible  = erosion_rate > 0.0;
+  auto const critical_exposure_time =
+      is_erodible == true ? element_size / erosion_rate : 0.0;
+
+  auto const sea_level =
+      sea_level_.size() > 0 ?
+          interpolateVectors(time_, sea_level_, current_time) :
+          0.0;
+  bool const is_exposed_to_water = (height <= sea_level);
+  bool const is_at_boundary =
+      have_boundary_indicator_ == true ?
+          static_cast<bool>(*(boundary_indicator_[cell])) :
+          false;
+
+  bool const is_erodible_at_boundary = is_erodible && is_at_boundary;
+  if (is_erodible_at_boundary == true) {
+    if (is_exposed_to_water == true) { exposure_time += delta_time; }
+    if (exposure_time >= critical_exposure_time) {
+      failed += 1.0;
+      exposure_time = 0.0;
+    }
+  }
+
   // fill local tensors
   F.fill(def_grad_, cell, pt, 0, 0);
 
   // Mechanical deformation gradient
   auto Fm = Tensor(F);
   if (have_temperature_) {
-    // Compute the mechanical deformation gradient Fm based on the
-    // multiplicative decomposition of the deformation gradient
-    //
-    //            F = Fm.Ft => Fm = F.inv(Ft)
-    //
-    // where Ft is the thermal part of F, given as
-    //
-    //     Ft = Le * I = exp(alpha * dtemp) * I
-    //
-    // Le = exp(alpha*dtemp) is the thermal stretch and alpha the
-    // coefficient of thermal expansion.
     ScalarT dtemp           = temperature_(cell, pt) - ref_temperature_;
     ScalarT thermal_stretch = std::exp(expansion_coeff_ * dtemp);
     Fm /= thermal_stretch;
@@ -311,7 +388,7 @@ J2ErosionKernel<EvalT, Traits>::operator()(int cell, int pt) const
   if (f > yield_tolerance) {
     // Use minimization equivalent to return mapping
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
-    using NLS    = J2NLS<EvalT>;
+    using NLS    = J2ErosionNLS<EvalT>;
 
     constexpr minitensor::Index nls_dim{NLS::DIMENSION};
 
@@ -382,6 +459,31 @@ J2ErosionKernel<EvalT, Traits>::operator()(int cell, int pt) const
     for (int j(0); j < num_dims_; ++j) {
       stress_(cell, pt, i, j) = sigma(i, j);
     }
+  }
+
+  //
+  // Determine if critical stress is exceeded
+  //
+
+  // sigma_XX component for now
+  auto const critical_stress = critical_stress_;
+  if (critical_stress > 0.0) {
+    auto const stress_test = Sacado::Value<ScalarT>::eval(sigma(0, 0));
+    if (std::abs(stress_test) >= critical_stress) failed += 1.0;
+  }
+
+  //
+  // Determine if kinematic failure occurred
+  //
+  auto const critical_angle = critical_angle_;
+  if (critical_angle > 0.0) {
+    auto const Fval   = Sacado::Value<decltype(F)>::eval(F);
+    auto const Q      = minitensor::polar_rotation(Fval);
+    auto       cosine = 0.5 * (minitensor::trace(Q) - 1.0);
+    cosine            = cosine > 1.0 ? 1.0 : cosine;
+    cosine            = cosine < -1.0 ? -1.0 : cosine;
+    auto const theta  = std::acos(cosine);
+    if (std::abs(theta) >= critical_angle) failed += 1.0;
   }
 }
 }  // namespace LCM
