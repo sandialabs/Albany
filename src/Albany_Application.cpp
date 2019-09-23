@@ -1477,6 +1477,14 @@ Application::computeGlobalJacobianImpl(
                   this, ps, explicit_scheme));
     }
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    if (!workset.f.is_null()) {
+      workset.f_kokkos = getNonconstDeviceData(workset.f);
+    }
+    if (!workset.Jac.is_null()) {
+      workset.Jac_kokkos = getNonconstDeviceData(workset.Jac);
+    }
+#endif
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
       // FillType template argument used to specialize Sacado

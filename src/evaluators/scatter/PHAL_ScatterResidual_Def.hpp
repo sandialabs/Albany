@@ -488,10 +488,10 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Thyra_Vector>   f   = workset.f;
   Teuchos::RCP<Thyra_LinearOp> Jac = workset.Jac;
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   auto nodeID = workset.wsElNodeEqID;
   const bool loadResid = Teuchos::nonnull(f);
   Teuchos::Array<LO> col;
@@ -553,12 +553,12 @@ evaluateFields(typename Traits::EvalData workset)
   neq = nodeID.extent(2);
   nunk = neq*this->numNodes;
 
-  // Get Tpetra vector view and local matrix
+  // Get Kokkos vector view and local matrix
   const bool loadResid = Teuchos::nonnull(workset.f);
   if (loadResid) {
-    f_kokkos = Albany::getNonconstDeviceData(workset.f);
+    f_kokkos = workset.f_kokkos;
   }
-  Jac_kokkos = Albany::getNonconstDeviceData(workset.Jac);
+  Jac_kokkos = workset.Jac_kokkos;
 
   if (this->tensorRank == 0) {
     // Get MDField views from std::vector
