@@ -588,7 +588,9 @@ if (BUILD_CISM_PISCEES)
   if (LIBS_NUM_ERRORS GREATER 0)
     message(FATAL_ERROR "Encountered build errors in CISM-Albany build. Exiting!")
   endif ()
+endif ()
 
+IF(RUN_CISM_PISCEES) 
   #
   # Run CISM-Albany tests
   #

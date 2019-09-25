@@ -7,8 +7,8 @@ echo "----Cori Albany build----" >& d
 grep "Compiler errors" nightly_log_coriAlbany.txt >& e
 grep "Compiler warnings" nightly_log_coriAlbany.txt >& f
 echo "----Cori CISM-Albany build----" >& g
-grep "Compiler errors" nightly_log_coriCismAlbany.txt >& h
-grep "Compiler warnings" nightly_log_coriCismAlbany.txt >& i
+grep "Compiler errors" nightly_log_coriCismAlbanyBuild.txt >& h
+grep "Compiler warnings" nightly_log_coriCismAlbanyBuild.txt >& i
 cat a b >& out 
 rm a b 
 cat out c >& out2 

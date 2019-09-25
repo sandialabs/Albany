@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --qos=regular
-#SBATCH --time=00:22:00 
+#SBATCH --time=00:25:00 
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=16
 #SBATCH --constraint=haswell
@@ -8,4 +8,4 @@
 #SBATCH --mail-user=ikalash@sandia.gov
 
 source cori_modules.sh 
-bash nightly_cron_script_cismAlbany_cori.sh
+bash nightly_cron_script_cismAlbany_cori_run.sh
