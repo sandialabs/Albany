@@ -88,12 +88,12 @@ ENDIF()
 ###      3D Unsteady NS test     ###
 ####################################
 
-IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_EPETRA)
-  set(testName ${testNameRoot}_3DUnsteadyNS)
+#IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_EPETRA)
+#  set(testName ${testNameRoot}_3DUnsteadyNS)
 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input3DunsteadyNS.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input3DunsteadyNS.yaml COPYONLY)
+#  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input3DunsteadyNS.yaml
+#                 ${CMAKE_CURRENT_BINARY_DIR}/input3DunsteadyNS.yaml COPYONLY)
 
-  add_test(${testName} ${SerialAlbany.exe} input3DunsteadyNS.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "Demo;Epetra;Forward;Serial")
-ENDIF()
+ # add_test(${testName} ${SerialAlbany.exe} input3DunsteadyNS.yaml)
+#  set_tests_properties(${testName} PROPERTIES LABELS "Demo;Epetra;Forward;Serial")
+#ENDIF()
