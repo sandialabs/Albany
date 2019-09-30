@@ -41,7 +41,7 @@ BifurcationCheck<EvalT, Traits>::BifurcationCheck(
   this->addEvaluatedField(direction_);
   this->addEvaluatedField(min_detA_);
 
-  this->setName("BifurcationCheck" + PHX::typeAsString<EvalT>());
+  this->setName("BifurcationCheck" + PHX::print<EvalT>());
 }
 
 //----------------------------------------------------------------------------

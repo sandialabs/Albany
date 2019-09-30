@@ -54,7 +54,7 @@ Stress(const Teuchos::ParameterList& p) :
     poissonsRatio = p.get<double>("Poissons Ratio");
   }
 
-  this->setName("Stress"+PHX::typeAsString<EvalT>());
+  this->setName("Stress"+PHX::print<EvalT>());
 
   if(p.isType<int>("Cell Forcing Column")){
     addCellForcing = true;

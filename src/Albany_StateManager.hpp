@@ -17,10 +17,10 @@
 #include "Adapt_NodalDataBase.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
-#include "Albany_TpetraTypes.hpp"
-#include "Albany_StateInfoStruct.hpp"
 #include "Albany_EigendataInfoStructT.hpp"
 #include "Albany_Macros.hpp"
+#include "Albany_StateInfoStruct.hpp"
+#include "Albany_TpetraTypes.hpp"
 
 #if defined(ALBANY_EPETRA)
 #include "Albany_EigendataInfoStruct.hpp"
@@ -37,7 +37,8 @@ namespace Albany {
  * are stored as MDFields.
  */
 
-class StateManager {
+class StateManager
+{
  public:
   enum SAType
   {
@@ -237,11 +238,15 @@ class StateManager {
   {
     return stateInfo->createNodalDataBase();
   }
+
   Teuchos::RCP<Adapt::NodalDataBase>
   getSideSetNodalDataBase(const std::string& sideSet)
   {
     return sideSetStateInfo.at(sideSet)->createNodalDataBase();
   }
+
+  void
+  printStates(std::string const& where = "") const;
 
 #if defined(ALBANY_EPETRA)
   /// Methods to get/set the EigendataStruct which holds eigenvalue /

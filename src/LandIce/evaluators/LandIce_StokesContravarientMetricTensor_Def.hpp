@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -30,7 +30,7 @@ StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
   numQPs = dim[1];
   numDims = dim[2];
 
-  this->setName("StokesContravarientMetricTensor"+PHX::typeAsString<EvalT>());
+  this->setName("StokesContravarientMetricTensor"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

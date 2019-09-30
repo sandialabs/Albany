@@ -45,8 +45,7 @@ SurfaceScalarGradientOperatorHydroStress<EvalT, Traits>::
   this->addEvaluatedField(grad_val_qp);
 
   this->setName(
-      "Surface Scalar Gradient Operator HydroStress" +
-      PHX::typeAsString<EvalT>());
+      "Surface Scalar Gradient Operator HydroStress" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_gradient->dimensions(dims);

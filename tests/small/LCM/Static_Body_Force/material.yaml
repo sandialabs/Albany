@@ -1,0 +1,20 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks:
+    Element Block 0:
+      material: mat
+  Materials:
+    mat:
+      Material Model:
+        Model Name: Linear Elastic
+      Elastic Modulus:
+        Elastic Modulus Type: Constant
+        Value: 100.0
+      Poissons Ratio:
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+      Output Cauchy Stress: true
+      Body Force:
+        Body Force Type: Constant
+        Value: [0.0, 0.0, -1.0]

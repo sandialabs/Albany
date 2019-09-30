@@ -296,11 +296,6 @@ namespace Aeras
     const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
     getLatticeOrientation() const override;
 
-#if defined(ALBANY_LCM)
-    Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
-    getBoundaryIndicator() const override;
-#endif
-
     //! Print the coordinates for debugging
     void printCoords() const override;
     void printConnectivity(bool printEdges=false) const;
@@ -472,6 +467,16 @@ namespace Aeras
       return Teuchos::null;
     }
 
+#if defined(ALBANY_LCM)
+    Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
+    getBoundaryIndicator() const
+    {
+      ALBANY_ASSERT(boundary_indicator.is_null() == false);
+      return boundary_indicator;
+    }
+#endif
+
+
   private:
 
     //! Private to prohibit copying
@@ -577,7 +582,7 @@ namespace Aeras
 
     //Create enum type for the different kinds of elements (currently lines and quads)
     enum elemType {LINE, QUAD};
-    elemType ElemType;
+    elemType ElemType; 
 
   protected:
 

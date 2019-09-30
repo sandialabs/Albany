@@ -66,7 +66,7 @@ LatticeDefGrad<EvalT, Traits>::LatticeDefGrad(const Teuchos::ParameterList& p)
   this->addEvaluatedField(latticeDefGrad);
   this->addEvaluatedField(JH);
 
-  this->setName("Lattice Deformation Gradient" + PHX::typeAsString<EvalT>());
+  this->setName("Lattice Deformation Gradient" + PHX::print<EvalT>());
 }
 
 //**********************************************************************

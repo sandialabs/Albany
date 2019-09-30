@@ -68,7 +68,7 @@ namespace AMP {
     Temperature_Name_ = p.get<std::string>("Temperature Name")+"_old";
 
 
-    this->setName("PhaseResidual"+PHX::typeAsString<EvalT>());
+    this->setName("PhaseResidual"+PHX::print<EvalT>());
   }
 
   //**********************************************************************

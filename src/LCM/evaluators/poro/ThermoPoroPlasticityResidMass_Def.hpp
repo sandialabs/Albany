@@ -173,7 +173,7 @@ ThermoPoroPlasticityResidMass<EvalT, Traits>::ThermoPoroPlasticityResidMass(
       this->addDependentField(rhoCp);
     }
   }
-  this->setName("ThermoPoroPlasticityResidMass" + PHX::typeAsString<EvalT>());
+  this->setName("ThermoPoroPlasticityResidMass" + PHX::print<EvalT>());
 }
 
 //**********************************************************************

@@ -50,7 +50,7 @@ MicroResidual<EvalT, Traits>::MicroResidual(const Teuchos::ParameterList& p)
     this->addDependentField(epsDotDot);
   }
 
-  this->setName("MicroResidual" + PHX::typeAsString<EvalT>());
+  this->setName("MicroResidual" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -44,7 +44,7 @@ IceOverburden (const Teuchos::ParameterList& p,
   rho_i = physics.get<double>("Ice Density",1000);
   g     = physics.get<double>("Gravity Acceleration",9.8);
 
-  this->setName("IceOverburden"+PHX::typeAsString<EvalT>());
+  this->setName("IceOverburden"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

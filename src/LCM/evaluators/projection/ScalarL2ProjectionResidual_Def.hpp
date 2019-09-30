@@ -63,7 +63,7 @@ ScalarL2ProjectionResidual<EvalT, Traits>::ScalarL2ProjectionResidual(
   numQPs      = dims[2];
   numDims     = dims[3];
 
-  this->setName("ScalarL2ProjectionResidual" + PHX::typeAsString<EvalT>());
+  this->setName("ScalarL2ProjectionResidual" + PHX::print<EvalT>());
 }
 
 //**********************************************************************

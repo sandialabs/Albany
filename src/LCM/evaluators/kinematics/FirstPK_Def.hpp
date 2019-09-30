@@ -32,7 +32,7 @@ FirstPK<EvalT, Traits>::FirstPK(
 
   this->addEvaluatedField(first_pk_stress_);
 
-  this->setName("FirstPK" + PHX::typeAsString<EvalT>());
+  this->setName("FirstPK" + PHX::print<EvalT>());
 
   // logic to modify stress in the presence of a pore pressure
   if (have_pore_pressure_) {

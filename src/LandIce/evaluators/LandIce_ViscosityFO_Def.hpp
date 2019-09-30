@@ -175,7 +175,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
   //dummy initialization
   R=R2=x_0=y_0=0;
 
-  this->setName("ViscosityFO"+PHX::typeAsString<EvalT>());
+  this->setName("ViscosityFO"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

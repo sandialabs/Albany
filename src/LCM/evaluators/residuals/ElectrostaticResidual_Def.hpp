@@ -27,7 +27,7 @@ ElectrostaticResidual<EvalT, Traits>::ElectrostaticResidual(
 
   this->addEvaluatedField(residual_);
 
-  this->setName("ElectrostaticResidual" + PHX::typeAsString<EvalT>());
+  this->setName("ElectrostaticResidual" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);

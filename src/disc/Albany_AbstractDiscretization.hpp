@@ -154,8 +154,28 @@ class AbstractDiscretization
   getLatticeOrientation() const = 0;
 
 #if defined(ALBANY_LCM)
-  virtual const WorksetArray<Teuchos::ArrayRCP<double*>>::type&
-  getBoundaryIndicator() const = 0;
+  WorksetArray<Teuchos::ArrayRCP<double*>>::type dummy;
+  virtual WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
+  getBoundaryIndicator() const
+  {
+    return dummy;
+  }
+
+  virtual void
+  printElemGIDws() const
+  {
+  }
+
+  virtual std::map<std::pair<int, int>, GO>
+  getElemWsLIDGIDMap() const
+  {
+    return std::map<std::pair<int, int>, GO>();
+  }
+
+  virtual void
+  printWsElNodeID() const
+  {
+  }
 #endif
 
   //! Print the coords for mesh debugging

@@ -89,7 +89,7 @@ Stresses<EvalT, Traits>::Stresses(const Teuchos::ParameterList& p)
     this->addEvaluatedField(*(doubleStress[i]));
   }
 
-  this->setName("Stresses" + PHX::typeAsString<EvalT>());
+  this->setName("Stresses" + PHX::print<EvalT>());
 }
 
 //**********************************************************************

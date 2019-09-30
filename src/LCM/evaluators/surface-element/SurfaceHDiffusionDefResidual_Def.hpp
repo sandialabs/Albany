@@ -82,7 +82,7 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::SurfaceHDiffusionDefResidual(
   this->addEvaluatedField(transport_residual_);
   //  this->addEvaluatedField(transport_);
 
-  this->setName("Transport Residual" + PHX::typeAsString<EvalT>());
+  this->setName("Transport Residual" + PHX::print<EvalT>());
 
   if (p.isType<std::string>("DefGrad Name")) {
     haveMech = true;

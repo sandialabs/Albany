@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -55,7 +55,7 @@ HydraulicPotential (const Teuchos::ParameterList& p,
     g     = physics.get<double>("Gravity Acceleration",9.8);
   }
 
-  this->setName("HydraulicPotential"+PHX::typeAsString<EvalT>());
+  this->setName("HydraulicPotential"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

@@ -12,12 +12,12 @@
 
 #include <sstream>
 
-#include "Albany_TpetraTypes.hpp"
-#include "Albany_ThyraTypes.hpp"
 #include "Albany_CommUtils.hpp"
-
-#include "Teuchos_RCP.hpp"
 #include "Albany_Macros.hpp"
+#include "Albany_StateManager.hpp"
+#include "Albany_ThyraTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Teuchos_RCP.hpp"
 
 namespace Albany {
 
@@ -25,28 +25,27 @@ namespace Albany {
 void
 ReplaceDiagonalEntries(
     const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
-    const Teuchos::RCP<Tpetra_Vector>& diag);
+    const Teuchos::RCP<Tpetra_Vector>&    diag);
 
 // Helper function which computes absolute values of the rowsum
 // of a matrix, takes its inverse, and puts it in a vector.
 void
 InvAbsRowSum(
-    Teuchos::RCP<Tpetra_Vector>& invAbsRowSumsTpetra,
+    Teuchos::RCP<Tpetra_Vector>&         invAbsRowSumsTpetra,
     const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
 
 // Helper function which computes absolute values of the rowsum
 // of a matrix, and puts it in a vector.
 void
 AbsRowSum(
-    Teuchos::RCP<Tpetra_Vector>& absRowSumsTpetra,
+    Teuchos::RCP<Tpetra_Vector>&         absRowSumsTpetra,
     const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
-
 
 // Helper function which replaces the diagonal of a matrix
 void
 ReplaceDiagonalEntries(
     const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
-    const Teuchos::RCP<Tpetra_Vector>& diag);
+    const Teuchos::RCP<Tpetra_Vector>&    diag);
 
 //! Utility to make a string out of a string + int with a delimiter:
 //! strint("dog",2,' ') = "dog 2"
@@ -72,56 +71,70 @@ initStringToDouble(const std::string& initString);
 //! Splits a std::string on a delimiter
 void
 splitStringOnDelim(
-    const std::string& s, char delim, std::vector<std::string>& elems);
+    const std::string&        s,
+    char                      delim,
+    std::vector<std::string>& elems);
 
 /// Get file name extension
 std::string
 getFileExtension(std::string const& filename);
 
 //! Nicely prints out a Thyra Vector
-void printThyraVector(std::ostream& os,
-                      const Teuchos::RCP<const Thyra_Vector>& vec);
-void printThyraVector(std::ostream& os,
-                      const Teuchos::Array<std::string>& names,
-                      const Teuchos::RCP<const Thyra_Vector>& vec);
+void
+printThyraVector(std::ostream& os, const Teuchos::RCP<const Thyra_Vector>& vec);
+void
+printThyraVector(
+    std::ostream&                           os,
+    const Teuchos::Array<std::string>&      names,
+    const Teuchos::RCP<const Thyra_Vector>& vec);
 
 //! Inlined product version
-inline void printThyraVector(std::ostream& os,
-                             const Teuchos::RCP<const Thyra_ProductVector>& vec) {
-  for (int i=0; i<vec->productSpace()->numBlocks(); ++i) {
-    printThyraVector(os,vec->getVectorBlock(i));
+inline void
+printThyraVector(
+    std::ostream&                                  os,
+    const Teuchos::RCP<const Thyra_ProductVector>& vec)
+{
+  for (int i = 0; i < vec->productSpace()->numBlocks(); ++i) {
+    printThyraVector(os, vec->getVectorBlock(i));
   }
 }
 
 //! Nicely prints out a Thyra MultiVector
-void printThyraMultiVector(std::ostream& os,
-                           const Teuchos::RCP<const Thyra_MultiVector>& vec);
-void printThyraMultiVector(std::ostream& os,
-                           const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
-                           const Teuchos::RCP<const Thyra_MultiVector>& vec);
+void
+printThyraMultiVector(
+    std::ostream&                                os,
+    const Teuchos::RCP<const Thyra_MultiVector>& vec);
+void
+printThyraMultiVector(
+    std::ostream&                                                    os,
+    const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
+    const Teuchos::RCP<const Thyra_MultiVector>&                     vec);
 
 //! Inlined product version
-inline void printThyraVector(std::ostream& os,
-                             const Teuchos::RCP<const Thyra_ProductMultiVector>& vec) {
-  for (int i=0; i<vec->productSpace()->numBlocks(); ++i) {
-    printThyraMultiVector(os,vec->getMultiVectorBlock(i));
+inline void
+printThyraVector(
+    std::ostream&                                       os,
+    const Teuchos::RCP<const Thyra_ProductMultiVector>& vec)
+{
+  for (int i = 0; i < vec->productSpace()->numBlocks(); ++i) {
+    printThyraMultiVector(os, vec->getMultiVectorBlock(i));
   }
 }
 
 /// Write to matrix market format a vector, matrix or map.
-template<typename LinearAlgebraObjectType>
+template <typename LinearAlgebraObjectType>
 void
 writeMatrixMarket(
     const Teuchos::RCP<LinearAlgebraObjectType>& A,
-    const std::string& prefix,
-    int const counter = -1);
+    const std::string&                           prefix,
+    int const                                    counter = -1);
 
-template<typename LinearAlgebraObjectType>
+template <typename LinearAlgebraObjectType>
 void
 writeMatrixMarket(
     const Teuchos::Array<Teuchos::RCP<LinearAlgebraObjectType>>& x,
-    const std::string& prefix,
-    int const counter = -1)
+    const std::string&                                           prefix,
+    int const                                                    counter = -1)
 {
   for (auto i = 0; i < x.size(); ++i) {
     std::ostringstream oss;
@@ -135,48 +148,49 @@ writeMatrixMarket(
 }
 /////
 
-//void
-//writeMatrixMarket(
-//    Teuchos::RCP<Tpetra_MultiVector const> const& x, std::string const& prefix,
-//    int const counter = -1);
+// void
+// writeMatrixMarket(
+//    Teuchos::RCP<Tpetra_MultiVector const> const& x, std::string const&
+//    prefix, int const counter = -1);
 
-//void
-//writeMatrixMarket(
+// void
+// writeMatrixMarket(
 //    Teuchos::RCP<Tpetra_CrsMatrix const> const& A, std::string const& prefix,
 //    int const counter = -1);
 
-//void
-//writeMatrixMarket(
+// void
+// writeMatrixMarket(
 //    Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> const& x,
 //    std::string const& prefix, int const counter = -1);
 
-//void
-//writeMatrixMarket(
+// void
+// writeMatrixMarket(
 //    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix const>> const& A,
 //    std::string const& prefix, int const counter = -1);
 
-//void
-//writeMatrixMarket(
+// void
+// writeMatrixMarket(
 //    Teuchos::Array<Teuchos::RCP<Tpetra_Vector>> const& x,
 //    std::string const& prefix, int const counter = -1);
 
-//void
-//writeMatrixMarket(
+// void
+// writeMatrixMarket(
 //    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> const& A,
 //    std::string const& prefix, int const counter = -1);
 
 // Parses and stores command-line arguments
-struct CmdLineArgs {
+struct CmdLineArgs
+{
   std::string yaml_filename;
   std::string yaml_filename2;
   std::string yaml_filename3;
-  bool has_first_yaml_file;
-  bool has_second_yaml_file;
-  bool has_third_yaml_file;
-  bool vtune;
+  bool        has_first_yaml_file;
+  bool        has_second_yaml_file;
+  bool        has_third_yaml_file;
+  bool        vtune;
 
   CmdLineArgs(
-      const std::string& default_yaml_filename = "input.yaml",
+      const std::string& default_yaml_filename  = "input.yaml",
       const std::string& default_yaml_filename2 = "",
       const std::string& default_yaml_filename3 = "");
   void
@@ -221,9 +235,14 @@ assert_fail(std::string const& msg) __attribute__((noreturn));
 /// This function and capablity may not be necessary after the transition away
 /// from Epetra is complete.  In the meantime, it is used in a handful of places
 /// to execute code that is specific to either Tpetra or Epetra.
-enum class BuildType {None, Tpetra, Epetra};
-BuildType build_type(const BuildType value=BuildType::None);
-
+enum class BuildType
+{
+  None,
+  Tpetra,
+  Epetra
+};
+BuildType
+build_type(const BuildType value = BuildType::None);
 }  // end namespace Albany
 
 #endif  // ALBANY_UTILS

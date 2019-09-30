@@ -43,7 +43,8 @@ class Topology
   Topology(
       Teuchos::RCP<Albany::AbstractDiscretization>& abstract_disc,
       std::string const&                            bulk_block_name      = "",
-      std::string const&                            interface_block_name = "");
+      std::string const&                            interface_block_name = "",
+      double                                        bluff_width          = 1.0);
 
   ///
   /// \brief Iterates over the boundary entities of the mesh of (all
@@ -74,6 +75,9 @@ class Topology
 
   void
   outputToGraphviz(std::string const& output_filename);
+
+  void
+  createAllLevelsRelations();
 
   ///
   /// \brief Initializes the default stk mesh object needed by class.
@@ -218,11 +222,17 @@ class Topology
   /// Iterate over all elements in the mesh and remove those
   /// that are marked as failed.
   ///
-  void
+  double
   erodeFailedElements();
+
+  bool
+  isIsolatedNode(stk::mesh::Entity entity);
 
   void
   insertSurfaceElements(std::set<EntityPair> const& fractured_faces);
+
+  void
+  printFailureState();
 
   ///
   /// \brief Adds a new entity of rank 3 to the mesh
@@ -560,11 +570,26 @@ class Topology
   void
   initializeFailureState();
 
+  void
+  initializeCellFailureState();
+
   ///
   /// Setting boundary indicator
   ///
   void
   setBoundaryIndicator();
+
+  ///
+  ///
+  ///
+  double
+  getCellVolume(stk::mesh::Entity const cell);
+
+  void
+  setBluffWidth(double const bw)
+  {
+    bluff_width_ = bw;
+  }
 
   ///
   /// \brief Practice creating the barycentric subdivision
@@ -806,11 +831,16 @@ class Topology
   // Set failure state.
   //
   void
-  set_failure_state(stk::mesh::Entity e, FailureState const fs);
+  set_failure_state_0(stk::mesh::Entity e, FailureState const fs);
 
+  void
+  set_failure_state(stk::mesh::Entity e, FailureState const fs);
   //
   // Get failure state.
   //
+  FailureState
+  get_failure_state_0(stk::mesh::Entity e);
+
   FailureState
   get_failure_state(stk::mesh::Entity e);
 
@@ -830,9 +860,13 @@ class Topology
   is_internal(stk::mesh::Entity e);
 
   bool
+  is_erodible(stk::mesh::Entity e);
+
+  bool
   is_at_boundary(stk::mesh::Entity e)
   {
-    return is_internal(e) == false;
+    // return is_internal(e) == false;
+    return is_erodible(e) == true;
   }
 
   bool
@@ -867,6 +901,9 @@ class Topology
 
   bool
   there_are_failed_boundary_cells();
+
+  size_t
+  num_connectivity(stk::mesh::Entity e);
 
   void
   set_output_type(OutputType const ot)
@@ -925,28 +962,18 @@ class Topology
 
   //
   //
-  Teuchos::RCP<Albany::AbstractDiscretization> discretization_;
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization_{Teuchos::null};
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct>  stk_mesh_struct_{Teuchos::null};
+  Teuchos::RCP<AbstractFailureCriterion> failure_criterion_{Teuchos::null};
+  std::vector<stk::mesh::EntityVector>   connectivity_;
+  std::set<EntityPair>                   fractured_faces_;
+  std::vector<stk::topology>             topologies_;
+  std::vector<stk::mesh::EntityId>       highest_ids_;
+  std::string                            bulk_block_name_{""};
+  std::string                            interface_block_name_{""};
+  OutputType                             output_type_;
+  double                                 bluff_width_{1.0};
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
-
-  std::vector<stk::mesh::EntityVector> connectivity_;
-
-  std::set<EntityPair> fractured_faces_;
-
-  std::vector<stk::topology> topologies_;
-
-  std::vector<stk::mesh::EntityId> highest_ids_;
-
-  std::string bulk_block_name_;
-
-  std::string interface_block_name_;
-
-  /// Pointer to failure criterion object
-  Teuchos::RCP<AbstractFailureCriterion> failure_criterion_;
-
-  OutputType output_type_;
-
- private:
   ///
   /// \brief Hide default constructor for Topology
   ///

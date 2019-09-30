@@ -38,7 +38,6 @@ rm -rf CMake*
 
 BUILD_DIR=`pwd`
 
-NETCDFDIR=/usr/local/netcdf
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
@@ -46,6 +45,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
+      -D MPI_BASE_DIR:PATH=/usr/lib64/openmpi \
 \
       -D TPL_ENABLE_Boost:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
@@ -61,7 +61,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
 \
-      -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
       -D Kokkos_ENABLE_Cuda_UVM:BOOL=OFF \
       -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Kokkos_ENABLE_OpenMP:BOOL=ON \
@@ -86,6 +85,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_ENABLE_HDF5:BOOL=OFF \
       -D TPL_ENABLE_Matio:BOOL=OFF \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=/usr/lib64 \
       -D TPL_Netcdf_PARALLEL:BOOL=OFF \
       -D TPL_ENABLE_X11:BOOL=OFF \
       -D Trilinos_EXTRA_LINK_FLAGS:STRING='-L/usr/lib64 -lhdf5_hl -lhdf5 ' \

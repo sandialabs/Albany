@@ -34,9 +34,14 @@ class PUMIDiscretization : public APFDiscretization {
     //! Set data for LandIce problems
     void setLandIceData();
 
+    void
+    printWsElNodeID(std::ostream& os) const {}; 
+
   private:
 
     Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct;
+
+
 };
 
 }

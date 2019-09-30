@@ -249,14 +249,6 @@ Aeras::SpectralDiscretization::getLatticeOrientation() const
   return latticeOrientation;
 }
 
-#if defined(ALBANY_LCM)
-Albany::WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
-Aeras::SpectralDiscretization::getBoundaryIndicator() const
-{
-  return boundary_indicator;
-}
-#endif
-
 void
 Aeras::SpectralDiscretization::printCoords() const
 {
@@ -2128,6 +2120,9 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 
   nodesOnElemStateVec.resize(numBuckets);
   stateArrays.elemStateArrays.resize(numBuckets);
+#if defined(ALBANY_LCM)
+  boundary_indicator.resize(numBuckets);
+#endif
   const Albany::StateInfoStruct& nodal_states =
     stkMeshStruct->getFieldContainer()->getNodalSIS();
 
@@ -2693,6 +2688,9 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
       Teuchos::rcp(new stk::io::StkMeshIoBroker(
           Albany::getMpiCommFromTeuchosComm(commT)));
     mesh_data->set_bulk_data(*outputStkMeshStruct->bulkData);
+    //IKT, 8/16/19: The following is needed to get correct output file for Schwarz problems
+    //Please see: https://github.com/trilinos/Trilinos/issues/5479
+    mesh_data->property_add(Ioss::Property("FLUSH_INTERVAL", 1));
     //IKT, 5/7/15:
     //Uncomment the following out if you want to see the un-enriched mesh
     // written out

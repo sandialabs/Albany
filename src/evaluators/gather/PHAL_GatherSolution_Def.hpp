@@ -147,7 +147,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
     offset = p.get<int>("Offset of First DOF");
   else offset = 0;
 
-  this->setName("Gather Solution"+PHX::typeAsString<EvalT>() );
+  this->setName("Gather Solution"+PHX::print<EvalT>() );
 }
 
 // **********************************************************************

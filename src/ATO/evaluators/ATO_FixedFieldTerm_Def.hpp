@@ -34,7 +34,7 @@ FixedFieldTerm(const Teuchos::ParameterList& p) :
   this->addDependentField(fieldVal);
   this->addEvaluatedField(outScalar);
 
-  this->setName("FixedFieldTerm"+PHX::typeAsString<EvalT>());
+  this->setName("FixedFieldTerm"+PHX::print<EvalT>());
 
 }
 

@@ -14,5 +14,9 @@ struct Level : public shards::ArrayDimTag {
   const char * name() const ;
   static const Level& tag();
 };
+
+namespace PHX {
+  template<> struct is_extent<Level> : std::true_type {};
+}
 #endif
 

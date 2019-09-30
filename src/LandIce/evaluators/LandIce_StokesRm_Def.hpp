@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -38,7 +38,7 @@ StokesRm(const Teuchos::ParameterList& p,
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("StokesRm"+PHX::typeAsString<EvalT>());
+  this->setName("StokesRm"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

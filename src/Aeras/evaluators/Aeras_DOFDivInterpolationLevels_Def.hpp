@@ -36,7 +36,7 @@ DOFDivInterpolationLevels(Teuchos::ParameterList& p,
   this->addDependentField(jacobian_inv);
   this->addEvaluatedField(div_val_qp);
 
-  this->setName("Aeras::DOFDivInterpolationLevels"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::DOFDivInterpolationLevels"+PHX::print<EvalT>());
 
   Teuchos::ParameterList* xsa_params =
       p.get<Teuchos::ParameterList*>("Hydrostatic Problem");

@@ -48,7 +48,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   dl->vertices_vector->dimensions(dims);
   numVertices = dims[1];
 
-  this->setName("ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
+  this->setName("ComputeBasisFunctions"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

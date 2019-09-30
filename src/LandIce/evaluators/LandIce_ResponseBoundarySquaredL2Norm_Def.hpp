@@ -47,7 +47,7 @@ ResponseBoundarySquaredL2Norm(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   this->addDependentField(w_side_measure);
   this->addDependentField(solution);
 
-  this->setName("Response Boundary Squared L2 Norm" + PHX::typeAsString<EvalT>());
+  this->setName("Response Boundary Squared L2 Norm" + PHX::print<EvalT>());
 
   using PHX::MDALayout;
 

@@ -210,7 +210,7 @@ class STKDiscretization : public AbstractDiscretization
   {
     return elemGIDws;
   }
-  const WsLIDList&
+  WsLIDList const&
   getElemGIDws() const
   {
     return elemGIDws;
@@ -222,6 +222,7 @@ class STKDiscretization : public AbstractDiscretization
   {
     return wsElNodeEqID;
   }
+
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type&
   getWsElNodeID() const
   {
@@ -290,6 +291,15 @@ class STKDiscretization : public AbstractDiscretization
     ALBANY_ASSERT(boundary_indicator.is_null() == false);
     return boundary_indicator;
   }
+
+  void
+  printElemGIDws() const;
+
+  std::map<std::pair<int, int>, GO>
+  getElemWsLIDGIDMap() const;
+
+  void
+  printWsElNodeID() const;
 #endif
 
   //! Print the coordinates for debugging

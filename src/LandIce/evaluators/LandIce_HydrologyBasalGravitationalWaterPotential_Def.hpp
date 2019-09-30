@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -46,7 +46,7 @@ BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
   rho_w = physics.get<double>("Water Density",1000);
   g     = physics.get<double>("Gravity Acceleration",9.8);
 
-  this->setName("BasalGravitationalWaterPotential"+PHX::typeAsString<EvalT>());
+  this->setName("BasalGravitationalWaterPotential"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

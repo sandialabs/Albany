@@ -42,7 +42,7 @@ SurfaceDiffusionResidual<EvalT, Traits>::SurfaceDiffusionResidual(
 
   this->addEvaluatedField(scalarResidual);
 
-  this->setName("Surface Scalar Residual" + PHX::typeAsString<EvalT>());
+  this->setName("Surface Scalar Residual" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);

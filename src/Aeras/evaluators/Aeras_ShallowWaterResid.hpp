@@ -145,7 +145,7 @@ public:
 	Kokkos::DynRankView<MeshScalarT, PHX::Device> grad_at_cub_points_Kokkos;
 	Kokkos::DynRankView<MeshScalarT, PHX::Device> refPoints_kokkos;
 
-	typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
+	typedef PHX::KokkosViewFactory<ScalarT,PHX::Device::array_layout,PHX::Device> ViewFactory;
 
   Kokkos::DynRankView<ScalarT, PHX::Device> csurf;
   Kokkos::DynRankView<ScalarT, PHX::Device> csurftilde;

@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace LandIce {
@@ -45,7 +45,7 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("StokesContinuityResid"+PHX::typeAsString<EvalT>());
+  this->setName("StokesContinuityResid"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

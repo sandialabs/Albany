@@ -1625,6 +1625,14 @@ Application::computeGlobalJacobianImpl(
                   this, ps, explicit_scheme));
     }
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    if (!workset.f.is_null()) {
+      workset.f_kokkos = getNonconstDeviceData(workset.f);
+    }
+    if (!workset.Jac.is_null()) {
+      workset.Jac_kokkos = getNonconstDeviceData(workset.Jac);
+    }
+#endif
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
       loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
@@ -2204,7 +2212,7 @@ Application::applyGlobalDistParamDerivImpl(
       sensitivity_name << dist_param_name << "_sensitivity";
       if (distParamLib->has(sensitivity_name.str())) {
         auto sens_vec = distParamLib->get(sensitivity_name.str())->vector();
-        scale_and_update(sens_vec, 0.0, fpV->col(0), 1.0);
+        sens_vec->update(1.0, *fpV->col(0));
         distParamLib->get(sensitivity_name.str())->scatter();
       }
     } else {

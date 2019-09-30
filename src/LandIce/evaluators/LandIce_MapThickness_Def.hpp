@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 #include "PHAL_Utilities.hpp"
 
@@ -34,7 +34,7 @@ MapThickness (const Teuchos::ParameterList& p,
   this->addDependentField(H_max);
   this->addEvaluatedField(H_out);
 
-  this->setName("MapThickness"+PHX::typeAsString<EvalT>());
+  this->setName("MapThickness"+PHX::print<EvalT>());
 }
 
 template<typename EvalT, typename Traits>

@@ -73,7 +73,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
     this->addEvaluatedField(dedotpiTracerde[tracerNames[i]]);
   }
 
-  this->setName("Aeras::XZHydrostatic_EtaDotPi"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::XZHydrostatic_EtaDotPi"+PHX::print<EvalT>());
 
   pureAdvection = xzhydrostatic_params->get<bool>("Pure Advection", false);
 }

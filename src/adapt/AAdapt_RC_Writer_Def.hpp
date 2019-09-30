@@ -14,7 +14,7 @@ namespace rc {
 
 template<typename EvalT, typename Traits>
 WriterBase<EvalT, Traits>::WriterBase () {
-  this->setName("AAdapt::rc::Writer" + PHX::typeAsString<EvalT>());
+  this->setName("AAdapt::rc::Writer" + PHX::print<EvalT>());
   // Writer doesn't output anything, so make a no-output tag to give to the
   // field manager via getNoOutputTag().
   nooutput_tag_ = Teuchos::rcp(

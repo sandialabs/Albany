@@ -1,3 +1,4 @@
+
 //*****************************************************************//
 //    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
@@ -12,32 +13,14 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_Application.hpp"
-#include "Albany_DataTypes.hpp"
 #include "Albany_MaterialDatabase.hpp"
 #include "Piro_NOXSolver.hpp"
+#include "StateVarUtils.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 #include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
 
 namespace LCM {
-
-//
-// These are to mirror Albany::StateArrays, which are shards:Arrays
-// under the hood, which in turn use for storage a raw pointer that comes
-// from the depths of STK. Thus, to make a copy of the states without
-// touching that pointer, we create these so that the values can be
-// passed back and forth between LCM::StateArrays and Albany::StateArrays
-// whenever we need to reset states.
-//
-using StateArray    = std::map<std::string, std::vector<ST>>;
-using StateArrayVec = std::vector<StateArray>;
-
-struct StateArrays
-{
-  StateArrayVec element_state_arrays;
-
-  StateArrayVec node_state_arrays;
-};
 
 ///
 /// SchwarzAlternating coupling class

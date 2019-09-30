@@ -94,7 +94,7 @@ BiotModulus<EvalT, Traits>::BiotModulus(Teuchos::ParameterList& p)
   }
 
   this->addEvaluatedField(biotModulus);
-  this->setName("Biot Modulus" + PHX::typeAsString<EvalT>());
+  this->setName("Biot Modulus" + PHX::print<EvalT>());
 }
 
 // **********************************************************************

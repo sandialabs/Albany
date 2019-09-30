@@ -83,7 +83,7 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   std::cout << cubature_->getDimension() << '\n';
 #endif
 
-  this->setName("SurfaceBasis" + PHX::typeAsString<EvalT>());
+  this->setName("SurfaceBasis" + PHX::print<EvalT>());
 }
 
 //

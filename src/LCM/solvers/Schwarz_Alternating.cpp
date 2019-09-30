@@ -8,11 +8,10 @@
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_Utils.hpp"
 #include "MiniTensor.h"
 #include "Piro_LOCASolver.hpp"
 #include "Piro_TempusSolver.hpp"
-
-//#define DEBUG
 
 namespace LCM {
 
@@ -507,163 +506,12 @@ std::string
 centered(std::string const& str, int width)
 {
   assert(width >= 0);
-
-  int const length = static_cast<int>(str.size());
-
+  int const length  = static_cast<int>(str.size());
   int const padding = width - length;
-
   if (padding <= 0) return str;
-
-  int const left = padding / 2;
-
+  int const left  = padding / 2;
   int const right = padding - left;
-
   return std::string(left, ' ') + str + std::string(right, ' ');
-}
-
-void
-printInternalElementState(
-    Albany::StateArrayVec& esa,
-    std::string const&     statename,
-    std::string const&     init_type,
-    int const              size,
-    int const              ws)
-{
-  // IKT, 2/7/18: this is cut/paste from Albany::StateManager.
-  // Note we are only printing states at first cell, quad point, dimension,
-  // etc., to suppress amount of debug output. This can be changed, as desired,
-  // by modifying the code here.
-  auto& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
-  if (size == 0) return;
-  int cell = 0;
-  int qp   = 0;
-  int i    = 0;
-  int j    = 0;
-  int k    = 0;
-  if (init_type == "scalar") {
-    switch (size) {
-      case 1:
-        fos << "   DEBUG: case 1, " << statename << " = "
-            << esa[ws][statename](cell) << "\n";
-        break;
-      case 2:
-        fos << "   DEBUG: case 2, " << statename << " = "
-            << esa[ws][statename](cell, qp) << "\n";
-        break;
-      case 3:
-        fos << "   DEBUG: case 3, " << statename << " = "
-            << esa[ws][statename](cell, qp, i) << "\n";
-        break;
-      case 4:
-        fos << "   DEBUG: case 4, " << statename << " = "
-            << esa[ws][statename](cell, qp, i, j) << "\n";
-        break;
-      case 5:
-        fos << "   DEBUG: case 5, " << statename << " = "
-            << esa[ws][statename](cell, qp, i, j, k) << "\n";
-        break;
-      default: ALBANY_ASSERT(1 <= size && size <= 5, ""); break;
-    }
-  } else if (init_type == "identity") {
-    fos << "   DEBUG: " << statename << " = "
-        << esa[ws][statename](cell, qp, i, j) << "\n";
-  }
-}
-
-void
-printInternalElementStates(
-    Albany::StateArrays&                  sa,
-    Teuchos::RCP<Albany::StateInfoStruct> sis)
-{
-  Albany::StateArrayVec& esa = sa.elemStateArrays;
-  // Print stuff for only workset 0
-  int const ws = 0;
-  for (size_t i = 0; i < sis->size(); i++) {
-    std::string const&             state_name = (*sis)[i]->name;
-    std::string const&             init_type  = (*sis)[i]->initType;
-    Albany::StateStruct::FieldDims dims;
-    esa[ws][state_name].dimensions(dims);
-    int size = dims.size();
-    printInternalElementState(esa, state_name, init_type, size, ws);
-  }
-}
-
-void
-toFrom(LCM::StateArrayVec& dst, Albany::StateArrayVec const& src)
-{
-  const int num_maps = src.size();
-
-  dst.resize(num_maps);
-
-  for (auto i = 0; i < num_maps; ++i) {
-    auto&& src_map = src[i];
-
-    auto&& dst_map = dst[i];
-
-    for (auto&& kv : src_map) {
-      auto&& state_name = kv.first;
-
-      auto&& src_states = kv.second;
-
-      auto&& dst_states = dst_map[state_name];
-
-      auto const num_states = src_states.size();
-
-      dst_states.resize(num_states);
-
-      for (auto j = 0; j < num_states; ++j) { dst_states[j] = src_states[j]; }
-    }
-  }
-}
-
-void
-toFrom(Albany::StateArrayVec& dst, LCM::StateArrayVec const& src)
-{
-  const auto num_maps = src.size();
-
-  ALBANY_ASSERT(
-      num_maps == dst.size(),
-      "Inconsistent number of state maps from LCM to Albany");
-
-  for (size_t i = 0; i < num_maps; ++i) {
-    auto&& src_map = src[i];
-
-    auto&& dst_map = dst[i];
-
-    for (auto&& kv : src_map) {
-      auto&& state_name = kv.first;
-
-      auto&& src_states = kv.second;
-
-      ALBANY_ASSERT(
-          dst_map.find(state_name) != dst_map.end(),
-          "Missing state name in transfer from LCM to Albany: " + state_name);
-
-      auto&& dst_states = dst_map[state_name];
-
-      const int num_states = src_states.size();
-
-      ALBANY_ASSERT(
-          num_states == dst_states.size(),
-          "Inconsistent number of state entries from LCM to Albany");
-
-      for (auto j = 0; j < num_states; ++j) { dst_states[j] = src_states[j]; }
-    }
-  }
-}
-
-void
-toFrom(LCM::StateArrays& dst, Albany::StateArrays const& src)
-{
-  toFrom(dst.element_state_arrays, src.elemStateArrays);
-  toFrom(dst.node_state_arrays, src.nodeStateArrays);
-}
-
-void
-toFrom(Albany::StateArrays& dst, LCM::StateArrays const& src)
-{
-  toFrom(dst.elemStateArrays, src.element_state_arrays);
-  toFrom(dst.nodeStateArrays, src.node_state_arrays);
 }
 
 }  // namespace
@@ -760,15 +608,11 @@ SchwarzAlternating::reportFinals(std::ostream& os) const
 void
 SchwarzAlternating::SchwarzLoopDynamics() const
 {
-  minitensor::Vector<ST> norms_init(num_subdomains_, minitensor::Filler::ZEROS);
-
-  minitensor::Vector<ST> norms_final(
-      num_subdomains_, minitensor::Filler::ZEROS);
-
-  minitensor::Vector<ST> norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
-
-  std::string const delim(72, '=');
-
+  minitensor::Filler const ZEROS{minitensor::Filler::ZEROS};
+  minitensor::Vector<ST>   norms_init(num_subdomains_, ZEROS);
+  minitensor::Vector<ST>   norms_final(num_subdomains_, ZEROS);
+  minitensor::Vector<ST>   norms_diff(num_subdomains_, ZEROS);
+  std::string const        delim(72, '=');
   auto& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
 
   fos << delim << std::endl;
@@ -776,11 +620,9 @@ SchwarzAlternating::SchwarzLoopDynamics() const
   fos << " subdomains\n";
   fos << std::scientific << std::setprecision(17);
 
-  ST time_step{initial_time_step_};
-
+  ST  time_step{initial_time_step_};
   int stop{0};
-
-  ST current_time{initial_time_};
+  ST  current_time{initial_time_};
 
   // Set ICs and PrevSoln vecs and write initial configuration to Exodus file
   setDynamicICVecsAndDoOutput(initial_time_);
@@ -795,28 +637,12 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 
     // Before the Schwarz loop, get internal states
     for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-      auto& app = *apps_[subdomain];
-
+      auto& app       = *apps_[subdomain];
       auto& state_mgr = app.getStateMgr();
-
-#ifdef DEBUG
-      fos << "DEBUG: Getting internal states subdomain = " << subdomain
-          << "...\n";
-#endif
-      toFrom(internal_states_[subdomain], state_mgr.getStateArrays());
-#ifdef DEBUG
-      // IKT, 3/29/19: I changed the first argument in the following function,
-      // to get code to compile.
-      printInternalElementStates(
-          state_mgr.getStateArrays(), state_mgr.getStateInfoStruct());
-
-      fos << "DEBUG: ...done setting internal states subdomain = " << subdomain
-          << ".\n";
-#endif
+      fromTo(state_mgr.getStateArrays(), internal_states_[subdomain]);
     }
 
     ST const next_time{current_time + time_step};
-
     num_iter_ = 0;
 
     // Schwarz loop
@@ -866,37 +692,21 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         fos << "Time step          :" << time_step << '\n';
         fos << delim << std::endl;
 
-        Thyra_ModelEvaluator::InArgs<ST> in_args = solver.createInArgs();
-
+        Thyra_ModelEvaluator::InArgs<ST>  in_args  = solver.createInArgs();
         Thyra_ModelEvaluator::OutArgs<ST> out_args = solver.createOutArgs();
 
         auto& me = dynamic_cast<Albany::ModelEvaluator&>(
             *model_evaluators_[subdomain]);
 
         // Restore internal states
-        auto& app = *apps_[subdomain];
-
+        auto& app       = *apps_[subdomain];
         auto& state_mgr = app.getStateMgr();
 
-#ifdef DEBUG
-        fos << "DEBUG: Setting internal states subdomain = " << subdomain
-            << "...\n";
-#endif
-        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
-#ifdef DEBUG
-        // IKT, 3/29/19: I changed the first argument in the following function,
-        // to get code to compile.
-        printInternalElementStates(
-            state_mgr.getStateArrays(), state_mgr.getStateInfoStruct());
-        fos << "DEBUG: ...done setting internal states subdomain = "
-            << subdomain << ".\n";
-#endif
+        fromTo(internal_states_[subdomain], state_mgr.getStateArrays());
 
         Teuchos::RCP<Tempus::SolutionHistory<ST>> solution_history;
-
-        Teuchos::RCP<Tempus::SolutionState<ST>> current_state;
-
-        Teuchos::RCP<Thyra_Vector> ic_disp_rcp =
+        Teuchos::RCP<Tempus::SolutionState<ST>>   current_state;
+        Teuchos::RCP<Thyra_Vector>                ic_disp_rcp =
             Thyra::createMember(me.get_x_space());
 
         Teuchos::RCP<Thyra_Vector> ic_velo_rcp =
@@ -908,15 +718,11 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         // set ic_disp_rcp, ic_velo_rcp and ic_acce_rcp
         // by making copy of what is in ics_disp_[subdomain], etc.
         Thyra_Vector& ic_disp = *ics_disp_[subdomain];
-
         Thyra_Vector& ic_velo = *ics_velo_[subdomain];
-
         Thyra_Vector& ic_acce = *ics_acce_[subdomain];
 
         Thyra::copy(ic_disp, ic_disp_rcp.ptr());
-
         Thyra::copy(ic_velo, ic_velo_rcp.ptr());
-
         Thyra::copy(ic_acce, ic_acce_rcp.ptr());
 
         piro_tempus_solver.setInitialState(
@@ -934,25 +740,10 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         this_velo_[subdomain] = Thyra::createMember(me.get_x_space());
         this_acce_[subdomain] = Thyra::createMember(me.get_x_space());
 
-#if defined(DEBUG)
-        fos << "\n*** Thyra: Previous solution ***\n";
-        prev_disp_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(*prev_disp_[subdomain]) << '\n';
-        if (subdomain == 0) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(
-              prev_disp_[0], "prev_disp0", num_iter_);
-        } else if (subdomain == 1) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(
-              prev_disp_[1], "prev_disp1", num_iter_);
-        }
-        fos << "\n*** Thyra: Previous solution ***\n";
-#endif  // DEBUG
-
         // Check whether solver did OK.
 
         auto const status = piro_tempus_solver.getTempusIntegratorStatus();
 
-        // if (status == NOX::StatusTest::Failed) {
         if (status == Tempus::Status::FAILED) {
           fos << "\nINFO: Unable to solve for subdomain " << subdomain << '\n';
           failed_ = true;
@@ -963,29 +754,11 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         // If solver is OK, extract solution
 
         solution_history = piro_tempus_solver.getSolutionHistory();
-
-        current_state = solution_history->getCurrentState();
+        current_state    = solution_history->getCurrentState();
 
         Thyra::copy(*current_state->getX(), this_disp_[subdomain].ptr());
-
         Thyra::copy(*current_state->getXDot(), this_velo_[subdomain].ptr());
-
         Thyra::copy(*current_state->getXDotDot(), this_acce_[subdomain].ptr());
-
-#if defined(DEBUG)
-        fos << "\n*** Thyra: Current solution ***\n";
-        this_disp_[subdomain]->describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(*this_disp_[subdomain]) << '\n';
-        fos << "\n*** Thyra: Current solution ***\n";
-
-        if (subdomain == 0) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(
-              this_disp_[0], "curr_disp0", num_iter_);
-        } else if (subdomain == 1) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(
-              this_disp_[1], "curr_disp1", num_iter_);
-        }
-#endif  // DEBUG
 
         Teuchos::RCP<Thyra_Vector> disp_diff_rcp =
             Thyra::createMember(me.get_x_space());
@@ -1013,21 +786,6 @@ SchwarzAlternating::SchwarzLoopDynamics() const
             *this_acce_[subdomain],
             -1.0,
             *prev_acce_[subdomain]);
-
-#if defined(DEBUG)
-        fos << "\n*** Thyra: Solution difference ***\n";
-        disp_diff_rcp->describe(fos, Teuchos::VERB_EXTREME);
-        fos << "\n*** NORM: " << Thyra::norm(*disp_diff_rcp) << '\n';
-        fos << "\n*** Thyra: Solution difference ***\n";
-
-        if (subdomain == 0) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(
-              disp_diff_rcp, "disp_diff0", num_iter_);
-        } else if (subdomain == 1) {
-          Albany::writeMatrixMarket<Thyra_MultiVector>(
-              disp_diff_rcp, "disp_diff1", num_iter_);
-        }
-#endif  // DEBUG
 
         // After solve, save solution and get info to check convergence
         norms_init(subdomain)  = Thyra::norm(*prev_disp_[subdomain]);
@@ -1137,18 +895,14 @@ SchwarzAlternating::SchwarzLoopDynamics() const
 
         // restore the state manager with the state variables from the previous
         // loadstep.
-        auto& app = *apps_[subdomain];
-
+        auto& app       = *apps_[subdomain];
         auto& state_mgr = app.getStateMgr();
-
-        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
+        fromTo(internal_states_[subdomain], state_mgr.getStateArrays());
 
         // restore the solution in the discretization so the schwarz solver gets
         // the right boundary conditions!
         Teuchos::RCP<Thyra_Vector const> disp_rcp_thyra = ics_disp_[subdomain];
-
         Teuchos::RCP<Thyra_Vector const> velo_rcp_thyra = ics_velo_[subdomain];
-
         Teuchos::RCP<Thyra_Vector const> acce_rcp_thyra = ics_acce_[subdomain];
 
         Teuchos::RCP<Albany::AbstractDiscretization> const& app_disc =
@@ -1207,9 +961,7 @@ SchwarzAlternating::setExplicitUpdateInitialGuessForSchwarz(
     auto& app = *apps_[subdomain];
 
     Thyra_Vector& ic_disp = *ics_disp_[subdomain];
-
     Thyra_Vector& ic_velo = *ics_velo_[subdomain];
-
     Thyra_Vector& ic_acce = *ics_acce_[subdomain];
 
     auto& me =
@@ -1228,9 +980,7 @@ SchwarzAlternating::setExplicitUpdateInitialGuessForSchwarz(
     // This is the initial guess that I want to apply to the subdomains before
     // the schwarz solver starts
     auto disp_rcp = this_disp_[subdomain];
-
     auto velo_rcp = this_velo_[subdomain];
-
     auto acce_rcp = this_acce_[subdomain];
 
     // setting the displacement in the albany application
@@ -1265,8 +1015,7 @@ SchwarzAlternating::setDynamicICVecsAndDoOutput(ST const time) const
         static_cast<Albany::STKDiscretization&>(abs_disc);
 
     stk_mesh_struct.exoOutputInterval = 1;
-
-    stk_mesh_struct.exoOutput = do_outputs_[subdomain];
+    stk_mesh_struct.exoOutput         = do_outputs_[subdomain];
 
     if (is_initial_time == true) {  // initial time-step: get initial solution
                                     // from nominalValues in ME
@@ -1329,14 +1078,11 @@ SchwarzAlternating::doQuasistaticOutput(ST const time) const
       stk_mesh_struct.exoOutput         = true;
 
       auto& abs_disc = *discs_[subdomain];
-
       auto& stk_disc = static_cast<Albany::STKDiscretization&>(abs_disc);
 
       // Do not dereference this RCP. Leads to SEGFAULT (!?)
       auto disp_mv_rcp = stk_disc.getSolutionMV();
-
       stk_disc.writeSolutionMV(*disp_mv_rcp, time);
-
       stk_mesh_struct.exoOutput = false;
     }
   }
@@ -1348,32 +1094,27 @@ SchwarzAlternating::doQuasistaticOutput(ST const time) const
 void
 SchwarzAlternating::SchwarzLoopQuasistatics() const
 {
-  minitensor::Vector<ST> norms_init(num_subdomains_, minitensor::Filler::ZEROS);
-
-  minitensor::Vector<ST> norms_final(
-      num_subdomains_, minitensor::Filler::ZEROS);
-
-  minitensor::Vector<ST> norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
+  minitensor::Filler const ZEROS{minitensor::Filler::ZEROS};
+  minitensor::Vector<ST>   norms_init(num_subdomains_, ZEROS);
+  minitensor::Vector<ST>   norms_final(num_subdomains_, ZEROS);
+  minitensor::Vector<ST>   norms_diff(num_subdomains_, ZEROS);
 
   std::string const delim(72, '=');
-
-  auto& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  auto&             fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
 
   fos << delim << std::endl;
   fos << "Schwarz Alternating Method with " << num_subdomains_;
   fos << " subdomains\n";
   fos << std::scientific << std::setprecision(17);
 
-  ST time_step{initial_time_step_};
-
+  ST  time_step{initial_time_step_};
   int stop{0};
-
-  ST current_time{initial_time_};
+  ST  current_time{initial_time_};
 
   // Output initial configuration.
   doQuasistaticOutput(current_time);
 
-  // Continuation loop. We do continuation manually for Schwarz instead
+  // Continuation loop. We do continuation manually for Schwarz instead of
   // using LOCA. It turned out to be too complicated to use LOCA to sync
   // continuation between different subdomains.
   while (stop < maximum_steps_ && current_time < final_time_) {
@@ -1406,7 +1147,6 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
             *model_evaluators_[subdomain]);
 
         auto zero_disp_rcp = Thyra::createMember(me.get_x_space());
-
         auto zero_disp_ptr = zero_disp_rcp.ptr();
 
         Thyra::put_scalar<ST>(0.0, zero_disp_ptr);
@@ -1417,11 +1157,9 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
         prev_step_disp_[subdomain] = curr_disp_[subdomain];
       }
 
-      auto& app = *apps_[subdomain];
-
+      auto& app       = *apps_[subdomain];
       auto& state_mgr = app.getStateMgr();
-
-      toFrom(internal_states_[subdomain], state_mgr.getStateArrays());
+      fromTo(state_mgr.getStateArrays(), internal_states_[subdomain]);
     }
 
     num_iter_ = 0;
@@ -1442,16 +1180,13 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
         auto& me = dynamic_cast<Albany::ModelEvaluator&>(
             *model_evaluators_[subdomain]);
 
-        auto prev_disp_rcp = curr_disp_[subdomain];
-
-        auto const& prev_disp = *prev_disp_rcp;
+        auto        prev_disp_rcp = curr_disp_[subdomain];
+        auto const& prev_disp     = *prev_disp_rcp;
 
         // Restore internal states
-        auto& app = *apps_[subdomain];
-
+        auto& app       = *apps_[subdomain];
         auto& state_mgr = app.getStateMgr();
-
-        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
+        fromTo(internal_states_[subdomain], state_mgr.getStateArrays());
 
         // Restore solution from previous time step
         auto prev_step_disp_rcp = prev_step_disp_[subdomain];
@@ -1463,23 +1198,17 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
         me.setCurrentTime(next_time);
 
         // Solve for each subdomain
-        auto& solver = *(solvers_[subdomain]);
-
+        auto& solver          = *(solvers_[subdomain]);
         auto& piro_nox_solver = dynamic_cast<Piro::NOXSolver<ST>&>(solver);
-
-        auto in_args = solver.createInArgs();
-
-        auto out_args = solver.createOutArgs();
+        auto  in_args         = solver.createInArgs();
+        auto  out_args        = solver.createOutArgs();
 
         solver.evalModel(in_args, out_args);
 
         // Check whether solver did OK.
         auto const& thyra_nox_solver = *piro_nox_solver.getSolver();
-
         auto const& const_nox_solver = *thyra_nox_solver.getNOXSolver();
-
-        auto& nox_solver = const_cast<NOX::Solver::Generic&>(const_nox_solver);
-
+        auto& nox_solver  = const_cast<NOX::Solver::Generic&>(const_nox_solver);
         auto const status = nox_solver.getStatus();
 
         if (status == NOX::StatusTest::Failed) {
@@ -1490,17 +1219,14 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
         }
 
         // Solver OK, extract solution
-        auto curr_disp_rcp = thyra_nox_solver.get_current_x()->clone_v();
-
-        auto const& curr_disp = *curr_disp_rcp;
+        auto        curr_disp_rcp = thyra_nox_solver.get_current_x()->clone_v();
+        auto const& curr_disp     = *curr_disp_rcp;
 
         // Compute difference between previous and current solutions
         auto disp_diff_rcp = Thyra::createMember(me.get_x_space());
-
         auto disp_diff_ptr = disp_diff_rcp.ptr();
 
         Thyra::put_scalar<ST>(0.0, disp_diff_ptr);
-
         Thyra::V_VpStV(disp_diff_ptr, curr_disp, -1.0, prev_disp);
 
         auto& disp_diff = *disp_diff_rcp;
@@ -1595,15 +1321,15 @@ SchwarzAlternating::SchwarzLoopQuasistatics() const
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
         curr_disp_[subdomain] = prev_step_disp_[subdomain];
 
-        // restore the state manager with the state variables from the previous
-        // loadstep.
+        // Restore the state manager with the state variables from the previous
+        // load step.
         auto& app = *apps_[subdomain];
 
         auto& state_mgr = app.getStateMgr();
 
-        toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
+        fromTo(internal_states_[subdomain], state_mgr.getStateArrays());
 
-        // restore the solution in the discretization so the schwarz solver gets
+        // Restore the solution in the discretization so the schwarz solver gets
         // the right boundary conditions!
         Teuchos::RCP<Thyra_Vector const> disp_rcp_thyra = curr_disp_[subdomain];
         Teuchos::RCP<Albany::AbstractDiscretization> const& app_disc =

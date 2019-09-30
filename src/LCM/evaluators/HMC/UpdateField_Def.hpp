@@ -30,7 +30,7 @@ UpdateField<EvalT, Traits>::UpdateField(const Teuchos::ParameterList& p)
   std::string name_Inc    = p.get<std::string>("Increment Name");
   this->setName(
       "Update " + name_N + " to " + name_Nplus1 + " by " + name_Inc +
-      PHX::typeAsString<EvalT>());
+      PHX::print<EvalT>());
 }
 
 // **********************************************************************

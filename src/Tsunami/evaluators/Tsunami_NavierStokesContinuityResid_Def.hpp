@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace Tsunami {
@@ -48,7 +48,7 @@ NavierStokesContinuityResid(const Teuchos::ParameterList& p,
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("NavierStokesContinuityResid"+PHX::typeAsString<EvalT>());
+  this->setName("NavierStokesContinuityResid"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

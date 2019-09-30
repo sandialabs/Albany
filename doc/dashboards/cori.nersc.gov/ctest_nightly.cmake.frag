@@ -51,7 +51,7 @@ set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (cism-piscees_REPOSITORY_LOCATION  git@github.com:E3SM-Project/cism-piscees.git)
 
 
-#set (BOOST_DIR /usr/common/software/boost/1.61/hsw/gnu) 
+set (BOOST_DIR /project/projectdirs/piscees/tpl/boost_1_55_0) 
 #set (NETCDF_DIR /opt/cray/pe/netcdf-hdf5parallel/4.4.0/GNU/5.1) 
 
 if (CLEAN_BUILD)
@@ -287,12 +287,12 @@ if (BUILD_TRILINOS)
     "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DThyra_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DTrilinos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-    "-DBoost_LIBRARY_DIRS:FILEPATH=$ENV{BOOST_DIR}/lib"
-    "-DBoost_INCLUDE_DIRS:FILEPATH=$ENV{BOOST_DIR}/include"
-    "-DBoostLib_LIBRARY_DIRS:FILEPATH=$ENV{BOOST_DIR}/lib"
-    "-DBoostLib_INCLUDE_DIRS:FILEPATH=$ENV{BOOST_DIR}/include"
-    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=$ENV{BOOST_DIR}/lib"
-    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=$ENV{BOOST_DIR}/include"
+    "-DBoost_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
+    "-DBoost_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
+    "-DBoostLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
+    "-DBoostLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
+    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
+    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
     "-DTPL_ENABLE_Boost:BOOL=ON"
     "-DTPL_ENABLE_BoostLib:BOOL=ON"
     "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
@@ -588,31 +588,33 @@ if (BUILD_CISM_PISCEES)
   if (LIBS_NUM_ERRORS GREATER 0)
     message(FATAL_ERROR "Encountered build errors in CISM-Albany build. Exiting!")
   endif ()
+endif ()
 
+IF(RUN_CISM_PISCEES) 
   #
   # Run CISM-Albany tests
   #
 
-  #CTEST_TEST(
-  #  BUILD "${CTEST_BINARY_DIRECTORY}/CoriAlbanyFELIX"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-  #  RETURN_VALUE  HAD_ERROR
-  #  )
+  CTEST_TEST(
+    BUILD "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany"
+#                  PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+#                  INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+#    NUMBER_FAILED  TEST_NUM_FAILED
+    RETURN_VALUE  HAD_ERROR
+    )
 
-  #if (CTEST_DO_SUBMIT)
-  #  ctest_submit (PARTS Test
-  #    RETURN_VALUE  S_HAD_ERROR
-  #    )
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Test
+      RETURN_VALUE  S_HAD_ERROR
+      )
 
-  #  if (S_HAD_ERROR)
-  #    message(FATAL_ERROR "Cannot submit Albany test results!")
-  #  endif ()
-  #endif ()
+    if (S_HAD_ERROR)
+      message(FATAL_ERROR "Cannot submit CISM-Albany test results!")
+    endif ()
+  endif ()
 
-  #if (HAD_ERROR)
-  #	message(FATAL_ERROR "Some Albany tests failed.")
-  #endif ()
+  if (HAD_ERROR)
+  	message(FATAL_ERROR "Some CISM-Albany tests failed.")
+  endif ()
 
 endif ()

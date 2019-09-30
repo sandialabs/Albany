@@ -381,6 +381,7 @@ set(models-sources
   "${LCM_DIR}/models/J2FiberModel.cpp"
   "${LCM_DIR}/models/J2HMCModel.cpp"
   "${LCM_DIR}/models/J2MiniSolver.cpp"
+  "${LCM_DIR}/models/J2Erosion.cpp"
   "${LCM_DIR}/models/J2Model.cpp"
   "${LCM_DIR}/models/LinearElasticModel.cpp"
   "${LCM_DIR}/models/LinearHMCModel.cpp"
@@ -444,6 +445,8 @@ set(models-headers
   "${LCM_DIR}/models/J2HMCModel.hpp"
   "${LCM_DIR}/models/J2MiniSolver_Def.hpp"
   "${LCM_DIR}/models/J2MiniSolver.hpp"
+  "${LCM_DIR}/models/J2Erosion_Def.hpp"
+  "${LCM_DIR}/models/J2Erosion.hpp"
   "${LCM_DIR}/models/J2Model_Def.hpp"
   "${LCM_DIR}/models/J2Model.hpp"
   "${LCM_DIR}/models/LinearElasticModel_Def.hpp"
@@ -516,6 +519,7 @@ set(utils-sources
   "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cpp"
   "${LCM_DIR}/utils/Projection.cpp"
   "${LCM_DIR}/utils/SolutionSniffer.cpp"
+  "${LCM_DIR}/utils/StateVarUtils.cpp"
 )
 set(utils-headers
   "${LCM_DIR}/utils/LocalNonlinearSolver.hpp"
@@ -523,6 +527,7 @@ set(utils-headers
   "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h"
   "${LCM_DIR}/utils/Projection.hpp"
   "${LCM_DIR}/utils/SolutionSniffer.hpp"
+  "${LCM_DIR}/utils/StateVarUtils.hpp"
 )
 IF(ALBANY_STK)
   set(utils-sources ${utils-sources}

@@ -24,7 +24,7 @@ AddVector(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(outResidual);
 
-  this->setName("AddVector"+PHX::typeAsString<EvalT>());
+  this->setName("AddVector"+PHX::print<EvalT>());
 
 
   if(p.isType<std::string>("In Residual Name")){
@@ -153,7 +153,7 @@ AddScalar(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(outResidual);
 
-  this->setName("AddScalar"+PHX::typeAsString<EvalT>());
+  this->setName("AddScalar"+PHX::print<EvalT>());
 
   if(p.isType<std::string>("In Residual Name")){
     inResidual = decltype(inResidual)(p.get<std::string>("In Residual Name"),

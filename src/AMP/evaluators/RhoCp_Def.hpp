@@ -49,7 +49,7 @@ RhoCp(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   cond_list = p.get<Teuchos::ParameterList*>("Porosity Parameter List");
   Initial_porosity = cond_list->get("Value", 0.0);
 
-  this->setName("RhoCp"+PHX::typeAsString<EvalT>());
+  this->setName("RhoCp"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

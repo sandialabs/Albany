@@ -51,7 +51,7 @@ ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
   this->addDependentField(bed);
   this->addDependentField(coords);
 
-  this->setName("Response Grounding Line Flux" + PHX::typeAsString<EvalT>());
+  this->setName("Response Grounding Line Flux" + PHX::print<EvalT>());
 
   using PHX::MDALayout;
 

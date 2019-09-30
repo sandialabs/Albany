@@ -12,40 +12,6 @@
 
 namespace LCM {
 
-// static void aprintd(double x)
-//{
-//  if (-1e-5 < x && x < 0)
-//    x = 0;
-//  fprintf(stderr, "%.5f", x);
-//}
-
-// static void aprints(double x)
-//{
-//  aprintd(x);
-//  fprintf(stderr,"\n");
-//}
-
-// static void aprints(FadType const& x)
-//{
-//  aprintd(x.val());
-//  fprintf(stderr," [");
-//  for (int i = 0; i < x.size(); ++i) {
-//    fprintf(stderr," ");
-//    aprintd(x.dx(i));
-//  }
-//  fprintf(stderr,"]\n");
-//}
-
-// static void stripDeriv(double& x)
-//{
-//  (void)x;
-//}
-
-// static void stripDeriv(FadType& x)
-//{
-//  x.resize(0);
-//}
-
 //------------------------------------------------------------------------------
 template <typename EvalT, typename Traits>
 CreepModel<EvalT, Traits>::CreepModel(
@@ -65,7 +31,11 @@ CreepModel<EvalT, Traits>::CreepModel(
       // below is what we called Q/R in the functions, users can give them
       // values here
       activation_para_(
-          p->get<RealType>("Activation Parameter of Material_Q/R", 500.0))
+          p->get<RealType>("Activation Parameter of Material_Q/R", 500.0)),
+      // Maximum allowable attempts for the return mapping algorithm
+      max_return_map_count(p->get<int>("Max Return Mapping Attempts", 100)),
+      // Tolerance on the return mapping algorithm
+      return_map_tolerance(p->get<RealType>("Return Mapping Tolerance", 1.0e-10))
 
 {
   // retrive appropriate field name strings
@@ -258,11 +228,13 @@ CreepModel<EvalT, Traits>::computeState(
       if (f <= 0.0) {
         if (a0 > 1.0E-12) {
           // return mapping algorithm
-          bool      converged = false;
-          ScalarT   alpha     = 0.0;
-          ScalarT   res       = 0.0;
-          int       count     = 0;
-          int const max_count = 100;
+          bool      converged     = false;
+          ScalarT   alpha         = 0.0;
+          ScalarT   res           = 0.0;
+          ScalarT   res_norm      = 1.0;
+          ScalarT   original_res  = 1.0;
+          int       count         = 0;
+          int const max_count     = max_return_map_count;
           // ScalarT H = 0.0;
           dgam = 0.0;
           ScalarT debug_X[max_count + 1];
@@ -311,6 +283,7 @@ CreepModel<EvalT, Traits>::computeState(
           debug_F[0]    = F[0];
           debug_dFdX[0] = dFdX[0];
           debug_res[0]  = 0.0;
+          original_res  = F[0];
 
           while (!converged && count <= max_count) {
             count++;
@@ -347,7 +320,8 @@ CreepModel<EvalT, Traits>::computeState(
 
             res              = std::abs(F[0]);
             debug_res[count] = res;
-            if (res < 1.e-10) { converged = true; }
+            res_norm         = res/original_res;
+            if (res_norm < return_map_tolerance) { converged = true; }
 
             if (count == max_count) {
               std::cerr << "detected NaN, here are the X, F, dfdX values at "

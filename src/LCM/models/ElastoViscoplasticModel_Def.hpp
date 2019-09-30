@@ -5,12 +5,9 @@
 //*****************************************************************//
 
 #include <MiniTensor.h>
+#include "LocalNonlinearSolver.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_TestForException.hpp"
-
-#include "LocalNonlinearSolver.hpp"
-
-// #define PRINT_DEBUG
 
 namespace LCM {
 
@@ -369,9 +366,6 @@ ElastoViscoplasticModel<EvalT, Traits>::computeState(
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
-#ifdef PRINT_DEBUG
-      std::cout << " ++++ PT ++++: " << pt << std::endl;
-#endif
       ScalarT bulk = elastic_modulus(cell, pt) /
                      (3. * (1. - 2. * poissons_ratio(cell, pt)));
       ScalarT mu =
@@ -490,24 +484,7 @@ ElastoViscoplasticModel<EvalT, Traits>::computeState(
         //
         ScalarT Phi = 0.5 * minitensor::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
 
-#ifdef PRINT_DEBUG
-        std::cout << "        F:\n" << F << std::endl;
-        std::cout << "      Fpn:\n" << Fpn << std::endl;
-        std::cout << "    Cpinv:\n" << Cpinv << std::endl;
-        std::cout << "       be:\n" << Cpinv << std::endl;
-        std::cout << "      Phi: " << Phi << std::endl;
-        std::cout << "     Ybar: " << Ybar << std::endl;
-        std::cout << "    fstar: " << fstar << std::endl;
-        std::cout << "      psi: " << psi << std::endl;
-        std::cout << "       Je: " << Je << std::endl;
-        std::cout << "        p: " << p << std::endl;
-        std::cout << "      arg: " << arg << std::endl;
-        std::cout << "cosh(arg): " << cosh_arg << std::endl;
-        std::cout << "     bulk: " << bulk << std::endl;
-        std::cout << "       mu: " << mu << std::endl;
-        std::cout << "        Y: " << Y << std::endl;
-#endif
-
+        //
         // check yield condition
         //
         if (Phi > std::numeric_limits<RealType>::epsilon()) {
@@ -735,35 +712,7 @@ ElastoViscoplasticModel<EvalT, Traits>::computeState(
                 std::sqrt(R0 * R0 + R1 * R1 + R2 * R2 + R3 * R3 + R4 * R4);
             // max_norm = std::max(norm_res, max_norm);
 
-#ifdef PRINT_DEBUG
-            std::cout << "---Iteration Loop: " << iter
-                      << ", norm_res: " << norm_res << std::endl;
-            std::cout << "     dgamF: " << dgamF << std::endl;
-            std::cout << "   eps_ssF: " << eps_ssF << std::endl;
-            std::cout << "        pF: " << pF << std::endl;
-            std::cout << "     voidF: " << void_volume_fractionF << std::endl;
-            std::cout << "     eqpsF: " << eqpsF << std::endl;
-            std::cout << "    fstarF: " << fstarF << std::endl;
-            std::cout << "       deq: " << deq << std::endl;
-            std::cout << "  deps_ssF: " << deps_ssF << std::endl;
-            std::cout << "eqps_rateF: " << eqps_rateF << std::endl;
-            std::cout << "rate_termF: " << rate_termF << std::endl;
-            std::cout << "    kappaF: " << kappaF << std::endl;
-            std::cout << "     YbarF: " << YbarF << std::endl;
-            std::cout << "      argF: " << argF << std::endl;
-            std::cout << " sinh_argF: " << sinh_argF << std::endl;
-            std::cout << "sinh(argF): " << std::sinh(argF) << std::endl;
-            std::cout << " cosh_argF: " << cosh_argF << std::endl;
-            std::cout << "cosh(argF): " << std::cosh(argF) << std::endl;
-            std::cout << "      psiF: " << psiF << std::endl;
-            std::cout << "    factor: " << factor << std::endl;
-            std::cout << "    Res[0]: " << RFad[0] << std::endl;
-            std::cout << "    Res[1]: " << RFad[1] << std::endl;
-            std::cout << "    Res[2]: " << RFad[2] << std::endl;
-            std::cout << "    Res[3]: " << RFad[3] << std::endl;
-            std::cout << "    Res[4]: " << RFad[4] << std::endl;
-#endif
-
+            //
             // check against too many iterations and failure
             //
             // if we have iterated the maximum number of times, just quit.
@@ -917,9 +866,6 @@ ElastoViscoplasticModel<EvalT, Traits>::computeState(
         // compute stress
         //
         sigma = p / Je * I + s / Je;
-#ifdef PRINT_DEBUG
-        std::cout << " !!! Stress:\n" << sigma << std::endl;
-#endif
         for (std::size_t i(0); i < num_dims_; ++i) {
           for (std::size_t j(0); j < num_dims_; ++j) {
             stress_field(cell, pt, i, j) = sigma(i, j);

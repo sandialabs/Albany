@@ -11,14 +11,19 @@
 
 #include "AAdapt_AbstractAdapter.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include "Albany_StateInfoStruct.hpp"
+#include "Shards_Array.hpp"
 
 // Forward declarations
 namespace LCM {
 class AbstractFailureCriterion;
 class Topology;
-}
+}  // namespace LCM
 
 namespace AAdapt {
+
+using MDArray = shards::Array<double, shards::NaturalOrder>;
+using StoreT  = std::vector<std::map<std::string, std::vector<double>>>;
 
 ///
 /// \brief Topology modification based adapter
@@ -38,7 +43,7 @@ class Erosion : public AbstractAdapter
   ///
   /// Disallow copy and assignment and default
   ///
-  Erosion()                = delete;
+  Erosion()               = delete;
   Erosion(Erosion const&) = delete;
   Erosion&
   operator=(Erosion const&) = delete;
@@ -62,6 +67,9 @@ class Erosion : public AbstractAdapter
   virtual bool
   adaptMesh();
 
+  virtual void
+  postAdapt();
+
   ///
   /// Each adapter must generate its list of valid parameters
   ///
@@ -69,28 +77,29 @@ class Erosion : public AbstractAdapter
   getValidAdapterParameters() const;
 
  private:
-  ///
-  /// stk_mesh Bulk Data
-  ///
-  Teuchos::RCP<stk::mesh::BulkData> bulk_data_;
+  void
+  copyStateArrays(Albany::StateArrays const& sa);
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
+  void
+  transferStateArrays();
 
-  Teuchos::RCP<Albany::AbstractDiscretization> discretization_;
+  Teuchos::RCP<stk::mesh::BulkData>            bulk_data_{Teuchos::null};
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct>  stk_mesh_struct_{Teuchos::null};
+  Teuchos::RCP<Albany::AbstractDiscretization> discretization_{Teuchos::null};
+  Albany::STKDiscretization*                   stk_discretization_{nullptr};
+  Teuchos::RCP<stk::mesh::MetaData>            meta_data_{Teuchos::null};
+  Teuchos::RCP<LCM::AbstractFailureCriterion> failure_criterion_{Teuchos::null};
+  Teuchos::RCP<LCM::Topology>                 topology_{Teuchos::null};
+  StoreT                                      cell_state_store_;
+  StoreT                                      node_state_store_;
+  Albany::StateArrays                         state_arrays_;
+  Albany::WsLIDList                           gidwslid_map_;
 
-  Albany::STKDiscretization* stk_discretization_;
-
-  Teuchos::RCP<stk::mesh::MetaData> meta_data_;
-
-  Teuchos::RCP<LCM::AbstractFailureCriterion> failure_criterion_;
-
-  Teuchos::RCP<LCM::Topology> topology_;
-
-  int num_dim_;
-
-  int remesh_file_index_;
-
-  std::string base_exo_filename_;
+  int         num_dim_{0};
+  int         remesh_file_index_{0};
+  std::string base_exo_filename_{""};
+  double      erosion_volume_{0.0};
+  double      cross_section_{1.0};
 };
 
 }  // namespace AAdapt

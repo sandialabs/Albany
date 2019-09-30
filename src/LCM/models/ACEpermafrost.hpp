@@ -108,20 +108,32 @@ struct ACEpermafrostMiniKernel : public ParallelKernel<EvalT, Traits>
   RealType water_saturation_min_{0.0};
   RealType salinity_base_{0.0};
   RealType freeze_curve_width_{1.0};
+  RealType f_shift_{0.25};
   RealType latent_heat_{0.0};
   RealType porosity0_{0.0};
-  RealType erosion_rate_{-1.0};
+  RealType erosion_rate_{0.0};
   RealType element_size_{0.0};
+  RealType critical_stress_{0.0};
+  RealType critical_angle_{0.0};
   RealType min_yield_strength_{0.0};
 
   // Saturation hardening constraints
   RealType sat_mod_{0.0};
   RealType sat_exp_{0.0};
 
+  // Params with depth:
+  std::vector<RealType> z_above_mean_sea_level_;
+  std::vector<RealType> salinity_;
+  std::vector<RealType> air_saturation_;
+  std::vector<RealType> porosity_from_file_;
+  std::vector<RealType> freezing_curve_width_;
+
   // Sea level arrays
   std::vector<RealType> time_;
   std::vector<RealType> sea_level_;
   RealType              current_time_{0.0};
+
+  std::string block_name_{""};
 
   void
   init(

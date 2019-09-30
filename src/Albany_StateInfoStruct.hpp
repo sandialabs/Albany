@@ -12,16 +12,16 @@
 // This includes name, number of quantitites (scalar,vector,tensor),
 // Element vs Node lcoation, etc.
 
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 #include "Phalanx_DataLayout.hpp"
 #include "Shards_Array.hpp"
 #include "Shards_CellTopologyData.h"
 
-#include "Albany_ScalarOrdinalTypes.hpp"
 #include "Adapt_NodalDataBase.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 
 //! Container for minimal mesh specification info needed to
 //  construct an Albany Problem
@@ -34,14 +34,14 @@ namespace Albany {
 // In any case, the operator= still does a shallow copym which was the
 // motivation to try Kokkos::View
 //
-//using MDArray = Kokkos::View<double*, PHX::Device>;
-//using IDArray = Kokkos::View<LO*, PHX::Device>;
-//using StateArray = std::map<std::string, MDArray>;
-//using StateArrayVec = std::vector<StateArray>;
+// using MDArray = Kokkos::View<double*, PHX::Device>;
+// using IDArray = Kokkos::View<LO*, PHX::Device>;
+// using StateArray = std::map<std::string, MDArray>;
+// using StateArrayVec = std::vector<StateArray>;
 
-using MDArray = shards::Array<double, shards::NaturalOrder>;
-using IDArray = shards::Array<LO, shards::NaturalOrder>;
-using StateArray = std::map<std::string, MDArray>;
+using MDArray       = shards::Array<double, shards::NaturalOrder>;
+using IDArray       = shards::Array<LO, shards::NaturalOrder>;
+using StateArray    = std::map<std::string, MDArray>;
 using StateArrayVec = std::vector<StateArray>;
 
 struct StateArrays
@@ -133,43 +133,45 @@ struct StateStruct
   {
     std::cout << "StateInfoStruct diagnostics for : " << name << std::endl;
     std::cout << "Dimensions : " << std::endl;
-    for (unsigned int i = 0; i < dim.size(); i++)
+    for (auto i = 0; i < dim.size(); ++i) {
       std::cout << "    " << i << " " << dim[i] << std::endl;
+    }
     std::cout << "Entity : " << entity << std::endl;
   }
 
-  const std::string name;
-  FieldDims         dim;
-  MeshFieldEntity   entity;
-  std::string       initType;
-  double            initValue;
+  const std::string                  name{""};
+  FieldDims                          dim;
+  MeshFieldEntity                    entity;
+  std::string                        initType{""};
+  double                             initValue{0.0};
   std::map<std::string, std::string> nameMap;
 
   // For proper PHAL_SaveStateField functionality - maybe only needed
   // temporarily?
   // If nonzero length, the responseID for response
   // field manager to require (assume dummy data layout)
-  std::string responseIDtoRequire;
-  bool        output;
-  bool        restartDataAvailable;
+  std::string responseIDtoRequire{""};
+  bool        output{false};
+  bool        restartDataAvailable{false};
   // Bool that this state is to be copied into name+"_old"
-  bool        saveOldState;
-  bool        layered;
-  std::string meshPart;
-  std::string ebName;
+  bool        saveOldState{false};
+  bool        layered{false};
+  std::string meshPart{""};
+  std::string ebName{""};
   // If this is a copy (name = parentName+"_old"), ptr to parent struct
-  StateStruct* pParentStateStruct;
+  StateStruct* pParentStateStruct{nullptr};
 
   StateStruct();
 };
 
 // typedef std::vector<Teuchos::RCP<StateStruct> >  StateInfoStruct;
 // New container class approach
-class StateInfoStruct {
+class StateInfoStruct
+{
  public:
   typedef std::vector<Teuchos::RCP<StateStruct>>::const_iterator const_iterator;
 
-  Teuchos::RCP<StateStruct>& operator[](int index) { return sis[index]; }
+  Teuchos::RCP<StateStruct>&      operator[](int index) { return sis[index]; }
   const Teuchos::RCP<StateStruct> operator[](int index) const
   {
     return sis[index];
@@ -219,6 +221,15 @@ class StateInfoStruct {
   Teuchos::RCP<Adapt::NodalDataBase>     nodal_data_base;
 };
 
-} // namespace Albany
+void
+printStateArrays(StateArrays const& sa, std::string const& where = "");
 
-#endif // ALBANY_STATEINFOSTRUCT
+void
+printElementStates(StateArrays const& sa);
+
+void
+printNodeStates(StateArrays const& sa);
+
+}  // namespace Albany
+
+#endif  // ALBANY_STATEINFOSTRUCT

@@ -15,6 +15,7 @@
                                       #           priority: High priority jobs (special request)
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ikalash@sandia.gov
+#SBATCH --exclude=node03,node27,node29,node30
 
 
 nodes=$SLURM_JOB_NUM_NODES           # Number of nodes - the number of nodes you have requested (for a list of SLURM environment variables see "man sbatch")

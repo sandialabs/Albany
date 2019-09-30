@@ -14,7 +14,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora29-gcc8.2.1-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_BUILD_NAME "fedora30-gcc9.2.1-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 
 
@@ -183,7 +183,7 @@ if (BUILD_ALBANY)
     "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
-    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=ON"
+    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
     "-DSEACAS_EPU=/home/ikalash/Trilinos/seacas-build/install/bin/epu"
     "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"
@@ -315,7 +315,7 @@ if (BUILD_ALBANY_NOEPETRA)
     "-DSEACAS_ALGEBRA=/home/ikalash/Trilinos/seacas-build/install/bin/algebra"
     "-DENABLE_MPAS_INTERFACE:BOOL=OFF"
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
-    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=ON"
+    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
     "-DENABLE_CISM_EPETRA:BOOL=OFF"
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
@@ -535,7 +535,7 @@ if (BUILD_CISM_PISCEES)
   set_property (GLOBAL PROPERTY Label IKTCismAlbany)
 
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
-  set (NETCDF_DIR /usr/local/netcdf-fortran-fedora28) 
+  set (NETCDF_DIR /usr/local/netcdf) 
 
   set (CONFIGURE_OPTIONS
     "-Wno-dev"
@@ -652,7 +652,7 @@ if (BUILD_CISM_PISCEES_EPETRA)
   set_property (GLOBAL PROPERTY Label IKTCismAlbanyEpetra)
 
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
-  set (NETCDF_DIR /usr/local/netcdf-fortran-fedora28) 
+  set (NETCDF_DIR /usr/local/netcdf) 
 
   set (CONFIGURE_OPTIONS
     "-Wno-dev"
@@ -787,7 +787,7 @@ if (BUILD_ALBANY_FPE)
     "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE:BOOL=OFF"
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"
-    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=ON"
+    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
     "-DSEACAS_EPU=/home/ikalash/Trilinos/seacas-build/install/bin/epu"
     "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"

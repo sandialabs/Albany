@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce
 {
@@ -97,7 +97,7 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
   double yr_to_s = 365.25*24*3600;
   c_creep *= yr_to_s;
 
-  this->setName("HydrologyWaterThickness"+PHX::typeAsString<EvalT>());
+  this->setName("HydrologyWaterThickness"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

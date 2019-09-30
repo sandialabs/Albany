@@ -136,7 +136,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     this->addDependentField(coordVec);
   }
 
-  this->setName("BasalFrictionCoefficientGradient"+PHX::typeAsString<EvalT>());
+  this->setName("BasalFrictionCoefficientGradient"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

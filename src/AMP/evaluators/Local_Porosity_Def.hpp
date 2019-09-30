@@ -48,7 +48,7 @@ Local_Porosity(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
   type = cond_list->get("Porosity Type", "Constant");
   Initial_porosity = cond_list->get("Value", 0.0);
 
-  this->setName("Porosity"+PHX::typeAsString<EvalT>());
+  this->setName("Porosity"+PHX::print<EvalT>());
 
 }
 

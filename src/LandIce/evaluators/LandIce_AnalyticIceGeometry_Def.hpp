@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -32,7 +32,7 @@ AnalyticIceGeometry<EvalT, Traits>::AnalyticIceGeometry (const Teuchos::Paramete
   L = p.get<Teuchos::ParameterList*>("Hydrology Parameters")->get<double>("Domain Length",1.0);
   dx = p.get<Teuchos::ParameterList*>("Hydrology Parameters")->get<double>("Domain dx",1.0);
 
-  this->setName("AnalyticIceGeometry"+PHX::typeAsString<EvalT>());
+  this->setName("AnalyticIceGeometry"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

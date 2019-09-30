@@ -253,7 +253,7 @@ class BulkFailureCriterion : public AbstractFailureCriterion
  public:
   BulkFailureCriterion(
       Topology&          topology,
-      std::string const& fail_indicator_name);
+      std::string const& failure_indicator_name);
 
   bool
   check(stk::mesh::BulkData& bulk_data, stk::mesh::Entity element);

@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace PHAL {
 
@@ -19,7 +19,7 @@ DummyResidual<EvalT, Traits>::DummyResidual (const Teuchos::ParameterList& p,
   this->addDependentField(solution);
   this->addEvaluatedField(residual);
 
-  this->setName("DummyResidual"+PHX::typeAsString<EvalT>());
+  this->setName("DummyResidual"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

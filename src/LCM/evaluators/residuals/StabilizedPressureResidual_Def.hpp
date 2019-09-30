@@ -46,7 +46,7 @@ StabilizedPressureResidual<EvalT, Traits>::StabilizedPressureResidual(
 
   this->addEvaluatedField(residual_);
 
-  this->setName("StabilizedPressureResidual" + PHX::typeAsString<EvalT>());
+  this->setName("StabilizedPressureResidual" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);

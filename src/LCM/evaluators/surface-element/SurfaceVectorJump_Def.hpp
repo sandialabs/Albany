@@ -28,7 +28,7 @@ SurfaceVectorJump<EvalT, Traits>::SurfaceVectorJump(
 
   this->addEvaluatedField(jump_);
 
-  this->setName("Surface Vector Jump" + PHX::typeAsString<EvalT>());
+  this->setName("Surface Vector Jump" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);

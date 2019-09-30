@@ -9,7 +9,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 #include "LandIce_GeoFluxHeat.hpp"
 #include "Albany_DiscretizationUtils.hpp"

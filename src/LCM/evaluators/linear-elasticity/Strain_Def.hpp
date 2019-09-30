@@ -23,7 +23,7 @@ Strain<EvalT, Traits>::Strain(
 
   this->addEvaluatedField(strain);
 
-  this->setName("Strain" + PHX::typeAsString<EvalT>());
+  this->setName("Strain" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);

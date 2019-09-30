@@ -194,7 +194,7 @@ ThermoPoroPlasticityResidEnergy<EvalT, Traits>::ThermoPoroPlasticityResidEnergy(
     }
   }
 
-  this->setName("ThermoPoroPlasticityResidEnergy" + PHX::typeAsString<EvalT>());
+  this->setName("ThermoPoroPlasticityResidEnergy" + PHX::print<EvalT>());
 }
 
 //**********************************************************************

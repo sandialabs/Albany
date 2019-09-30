@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_DiscretizationUtils.hpp"
@@ -80,7 +80,7 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   }
 
   printedFF = -1.0;
-  this->setName("StokesFOBasalResid"+PHX::typeAsString<EvalT>());
+  this->setName("StokesFOBasalResid"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

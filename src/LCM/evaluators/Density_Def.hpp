@@ -23,7 +23,7 @@ Density<EvalT, Traits>::Density(Teuchos::ParameterList& p)
   constant_value = density_param_list->get<double>("Value");
 
   this->addEvaluatedField(density);
-  this->setName("Density" + PHX::typeAsString<EvalT>());
+  this->setName("Density" + PHX::print<EvalT>());
 }
 
 // **********************************************************************

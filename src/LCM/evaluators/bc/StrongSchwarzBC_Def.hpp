@@ -7,15 +7,13 @@
 #include "Albany_Application.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include "Albany_ThyraUtils.hpp"
 #include "MiniTensor.h"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
-#include "Albany_ThyraUtils.hpp"
 
 namespace LCM {
-
-//#define DEBUG_OUTPUT
 
 //
 //
@@ -758,11 +756,6 @@ void
 StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
     typename Traits::EvalData dirichlet_workset)
 {
-#ifdef DEBUG_OUTPUT
-  Teuchos::RCP<Teuchos::FancyOStream> out =
-      Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT StrongSchwarzBC preEvaluate Residual\n";
-#endif
   fillSolution<StrongSchwarzBC<PHAL::AlbanyTraits::Residual, Traits>, Traits>(
       *this, dirichlet_workset);
   return;

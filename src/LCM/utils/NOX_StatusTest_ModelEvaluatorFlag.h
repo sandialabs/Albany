@@ -14,34 +14,36 @@ namespace NOX {
 namespace StatusTest {
 
 //! Failure test based on a flag set by a ModelEvaluator.
-class ModelEvaluatorFlag : public Generic {
-
-public:
-
+class ModelEvaluatorFlag : public Generic
+{
+ public:
   //! Constructor.
-    ModelEvaluatorFlag();
+  ModelEvaluatorFlag();
 
   //! Destructor.
   virtual ~ModelEvaluatorFlag();
 
   virtual NOX::StatusTest::StatusType
-  checkStatus(const NOX::Solver::Generic& problem,
-	      NOX::StatusTest::CheckType checkType);
+  checkStatus(
+      const NOX::Solver::Generic& problem,
+      NOX::StatusTest::CheckType  checkType);
 
-  virtual NOX::StatusTest::StatusType getStatus() const;
+  virtual NOX::StatusTest::StatusType
+  getStatus() const;
 
-  void syncFlag();
+  void
+  syncFlag();
 
-  virtual std::ostream& print(std::ostream& stream, int indent = 0) const;
+  virtual std::ostream&
+  print(std::ostream& stream, int indent = 0) const;
 
   //! Current status
   NOX::StatusTest::StatusType status_;
 
-  std::string
-  status_message_;
+  std::string status_message_;
 };
 
-} // namespace StatusTest
-} // namespace NOX
+}  // namespace StatusTest
+}  // namespace NOX
 
 #endif

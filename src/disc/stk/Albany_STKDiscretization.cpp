@@ -1248,6 +1248,57 @@ STKDiscretization::setResidualField(const Thyra_Vector& residual)
     it.second->setResidualField(*ss_residual);
   }
 }
+
+void
+STKDiscretization::printElemGIDws() const
+{
+  auto&& gidwslid_map = getElemGIDws();
+  auto&  fos          = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  for (auto gidwslid : gidwslid_map) {
+    auto const gid   = gidwslid.first;
+    auto const wslid = gidwslid.second;
+    auto const ws    = wslid.ws;
+    auto const lid   = wslid.LID;
+    fos << "**** GID : " << gid << " WS : " << ws << " LID : " << lid << "\n";
+  }
+}
+
+std::map<std::pair<int, int>, GO>
+STKDiscretization::getElemWsLIDGIDMap() const
+{
+  std::map<std::pair<int, int>, GO> wslidgid_map;
+  auto&&                            gidwslid_map = getElemGIDws();
+  for (auto gidwslid : gidwslid_map) {
+    auto const gid           = gidwslid.first;
+    auto const wslid         = gidwslid.second;
+    auto const ws            = wslid.ws;
+    auto const lid           = wslid.LID;
+    auto       wslid_pair    = std::make_pair(ws, lid);
+    wslidgid_map[wslid_pair] = gid;
+  }
+  return wslidgid_map;
+}
+
+void
+STKDiscretization::printWsElNodeID() const
+{
+  auto&&     wselnodegid = getWsElNodeID();
+  auto const num_ws      = wselnodegid.size();
+  auto&      fos         = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  for (auto ws = 0; ws < num_ws; ++ws) {
+    auto&&     elnodegid = wselnodegid[ws];
+    auto const num_el    = elnodegid.size();
+    for (auto el = 0; el < num_el; ++el) {
+      auto&&     nodegid  = elnodegid[el];
+      auto const num_node = nodegid.size();
+      for (auto node = 0; node < num_node; ++node) {
+        auto const gid = nodegid[node];
+        fos << "**** GID : " << gid << " WS : " << ws << " EL : " << el
+            << " LID : " << node << "\n";
+      }
+    }
+  }
+}
 #endif
 
 Teuchos::RCP<Thyra_Vector>
@@ -2552,6 +2603,9 @@ STKDiscretization::setupExodusOutput()
     mesh_data = Teuchos::rcp(
         new stk::io::StkMeshIoBroker(getMpiCommFromTeuchosComm(comm)));
     mesh_data->set_bulk_data(bulkData);
+    //IKT, 8/16/19: The following is needed to get correct output file for Schwarz problems
+    //Please see: https://github.com/trilinos/Trilinos/issues/5479
+    mesh_data->property_add(Ioss::Property("FLUSH_INTERVAL", 1));
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
     const auto& field_container = stkMeshStruct->getFieldContainer();

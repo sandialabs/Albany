@@ -31,7 +31,7 @@ DirichletBase(Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(fieldTag);
 
-  this->setName(name+PHX::typeAsString<EvalT>());
+  this->setName(name+PHX::print<EvalT>());
 
   // Set up values as parameters for parameter library
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >
@@ -285,7 +285,7 @@ DirichletAggregator(Teuchos::ParameterList& p)
   PHX::Tag<ScalarT> fieldTag(p.get<std::string>("DBC Aggregator Name"), dl);
   this->addEvaluatedField(fieldTag);
 
-  this->setName("Dirichlet Aggregator"+PHX::typeAsString<EvalT>());
+  this->setName("Dirichlet Aggregator"+PHX::print<EvalT>());
 }
 
 // **********************************************************************

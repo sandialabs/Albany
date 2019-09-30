@@ -29,10 +29,18 @@ LCM::interpolateVectors(
   RealType y{0.0};
   size_t   i{0};
 
-  while (xv[i] < x) ++i;
+  auto const n = xv.size();
+  ALBANY_ASSERT(n == yv.size(), "Vectors must have same size.\n");
+
+  while (xv[i] < x) {
+    if (i + 1 == n) break;
+    ++i;
+  }
 
   if (i == 0) {
     y = yv[0];
+  } else if (i + 1 == n) {
+    y = yv[i];
   } else {
     RealType const dy    = yv[i] - yv[i - 1];
     RealType const dx    = xv[i] - xv[i - 1];

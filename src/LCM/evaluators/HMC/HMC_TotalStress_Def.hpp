@@ -37,7 +37,7 @@ TotalStress<EvalT, Traits>::TotalStress(
 
   this->addEvaluatedField(totalStress);
 
-  this->setName("TotalStress" + PHX::typeAsString<EvalT>());
+  this->setName("TotalStress" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);

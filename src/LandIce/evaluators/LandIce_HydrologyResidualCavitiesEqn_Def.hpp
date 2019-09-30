@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -136,7 +136,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
     }
   }
 
-  this->setName("HydrologyResidualCavitiesEqn"+PHX::typeAsString<EvalT>());
+  this->setName("HydrologyResidualCavitiesEqn"+PHX::print<EvalT>());
 }
 
 template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>

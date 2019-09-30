@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Sacado.hpp"
 
 
@@ -39,7 +39,7 @@ BoussinesqParameters(const Teuchos::ParameterList& p,
   numQPs  = dims[1];
   numDims = dims[2];
 
-  this->setName("BoussinesqParameters"+PHX::typeAsString<EvalT>());
+  this->setName("BoussinesqParameters"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

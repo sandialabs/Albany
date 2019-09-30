@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 #include "Sacado.hpp"
 
 #include "LandIce_StokesFOBodyForce.hpp"
@@ -194,7 +194,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 //*out << " numQPs = " << numQPs << std::endl;
 //*out << " numNodes = " << numNodes << std::endl;
 
-  this->setName("StokesFOBodyForce"+PHX::typeAsString<EvalT>());
+  this->setName("StokesFOBodyForce"+PHX::print<EvalT>());
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>

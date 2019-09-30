@@ -15,7 +15,7 @@ if { [ file exists /etc/sl-release ] } {
   module load lcm-scientific-linux
 }
 
-if { [ file exists /etc/leostreamagent.release ] } {
+if { [ file exists /projects/sems ] } {
   module load lcm-sems
 }
 

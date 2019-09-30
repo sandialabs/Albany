@@ -33,7 +33,7 @@ ConstitutiveModelDriver<EvalT, Traits>::ConstitutiveModelDriver(
   num_nodes_ = dims[1];
   num_pts_   = dims[2];
   num_dims_  = dims[3];
-  this->setName("ConstitutiveModelDriver" + PHX::typeAsString<EvalT>());
+  this->setName("ConstitutiveModelDriver" + PHX::print<EvalT>());
 }
 
 //------------------------------------------------------------------------------

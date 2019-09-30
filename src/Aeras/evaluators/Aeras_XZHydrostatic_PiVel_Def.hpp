@@ -32,7 +32,7 @@ XZHydrostatic_PiVel(const Teuchos::ParameterList& p,
   this->addDependentField(velocity);
 
   this->addEvaluatedField(pivelx);
-  this->setName("Aeras::XZHydrostatic_PiVel"+PHX::typeAsString<EvalT>());
+  this->setName("Aeras::XZHydrostatic_PiVel"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

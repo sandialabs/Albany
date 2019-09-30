@@ -31,7 +31,7 @@ public:
     // Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib>>("Parameter Library");
     this->registerSacadoParameter(param_name, paramLib);
-    this->setName("Shared Parameter " + param_name + PHX::typeAsString<EvalT>());
+    this->setName("Shared Parameter " + param_name + PHX::print<EvalT>());
   }
 
   void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)

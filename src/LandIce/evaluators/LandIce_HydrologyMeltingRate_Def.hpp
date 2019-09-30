@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
@@ -81,7 +81,7 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
   this->addDependentField(G);
   this->addEvaluatedField(m);
 
-  this->setName("HydrologyMeltingRate"+PHX::typeAsString<EvalT>());
+  this->setName("HydrologyMeltingRate"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_Print.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -76,7 +76,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (offsets[2]!=dims_out.back(), std::logic_error,
                               "Error! The sum of input fields dimensions does not match the output field dimension.\n");
 
-  this->setName("StackFieldsBase"+PHX::typeAsString<EvalT>());
+  this->setName("StackFieldsBase"+PHX::print<EvalT>());
 }
 
 //**********************************************************************
@@ -131,7 +131,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (offsets.back()!=dims_out.back(), std::logic_error,
                               "Error! The sum of input fields dimensions does not match the output field dimension.\n");
 
-  this->setName("StackFieldsBase"+PHX::typeAsString<EvalT>());
+  this->setName("StackFieldsBase"+PHX::print<EvalT>());
 }
 
 //**********************************************************************

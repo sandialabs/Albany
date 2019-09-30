@@ -48,7 +48,7 @@ MortarContactResidualBase(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(*scatter_operation);
 
-  this->setName("MortarContactResidual"+PHX::typeAsString<EvalT>());
+  this->setName("MortarContactResidual"+PHX::print<EvalT>());
 }
 
 // **********************************************************************

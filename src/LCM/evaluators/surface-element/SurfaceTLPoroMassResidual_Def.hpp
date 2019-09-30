@@ -65,7 +65,7 @@ SurfaceTLPoroMassResidual<EvalT, Traits>::SurfaceTLPoroMassResidual(
 
   this->addEvaluatedField(poroMassResidual);
 
-  this->setName("Surface TL Poro Mass Residual" + PHX::typeAsString<EvalT>());
+  this->setName("Surface TL Poro Mass Residual" + PHX::print<EvalT>());
 
   if (p.isType<std::string>("DefGrad Name")) {
     haveMech = true;

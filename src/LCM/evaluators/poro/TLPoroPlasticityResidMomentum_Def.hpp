@@ -58,7 +58,7 @@ TLPoroPlasticityResidMomentum<EvalT, Traits>::TLPoroPlasticityResidMomentum(
     this->addDependentField(uDotDot);
   }
 
-  this->setName("TLPoroPlasticityResidMomentum" + PHX::typeAsString<EvalT>());
+  this->setName("TLPoroPlasticityResidMomentum" + PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

@@ -40,7 +40,7 @@ LameStressBase<EvalT, Traits>::LameStressBase(Teuchos::ParameterList& p)
   stressName = p.get<std::string>("Stress Name") + "_old";
   this->addEvaluatedField(stressField);
 
-  this->setName("LameStress" + PHX::typeAsString<EvalT>());
+  this->setName("LameStress" + PHX::print<EvalT>());
 
   // Default to getting material info form base input file (possibley
   // overwritten later)
@@ -106,7 +106,9 @@ LameStressBase<EvalT, Traits>::postRegistrationSetup(
   for (unsigned int i = 0; i < lameMaterialModelStateVariableFields.size(); ++i)
     this->utils.setFieldData(lameMaterialModelStateVariableFields[i], fm);
 
-  typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
+  typedef PHX::
+      KokkosViewFactory<RealType, PHX::Device::array_layout, PHX::Device>
+          ViewFactory;
   this->stressFieldRealType = PHX::MDField<RealType, Cell, QuadPoint, Dim, Dim>(
       "stress_RealType", this->tensor_dl);
   this->defGradFieldRealType =

@@ -21,7 +21,7 @@ SurfaceScalarJump<EvalT, Traits>::SurfaceScalarJump(
               Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>(
               "Intrepid2 Basis"))
 {
-  this->setName("Surface Scalar Jump" + PHX::typeAsString<EvalT>());
+  this->setName("Surface Scalar Jump" + PHX::print<EvalT>());
 
   haveTemperature  = false;
   haveTransport    = false;

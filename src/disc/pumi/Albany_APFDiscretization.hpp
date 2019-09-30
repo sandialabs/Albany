@@ -19,6 +19,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
+#include "Albany_Utils.hpp" 
 
 #include <vector>
 #include <functional>
@@ -137,14 +138,6 @@ public:
   const WorksetArray<Teuchos::ArrayRCP<double*> >::type& getLatticeOrientation() const override {
     return latticeOrientation;
   }
-
-#if defined(ALBANY_LCM)
-  WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
-  getBoundaryIndicator() const
-  {
-    return boundary_indicator;
-  }
-#endif
 
   //! Print coords for debugging
   void printCoords() const override;
@@ -372,6 +365,22 @@ public:
   void writeAnySolutionToFile(const double time);
 
   void writeRestartFile(const double time);
+    
+  WorksetArray<Teuchos::ArrayRCP<double*>>::type const& getBoundaryIndicator() const 
+  {
+    ALBANY_ASSERT(boundary_indicator.is_null() == false);
+    return boundary_indicator;
+  };  
+
+  void printElemGIDws(std::ostream& os) const 
+  {//do nothing 
+  }; 
+
+  std::map<std::pair<int, int>, GO>
+  getElemWsLIDGIDMap() const 
+  {//do nothing
+  };
+
 private:
 
   int nonzeroesPerRow(const int neq) const;
@@ -482,11 +491,7 @@ protected:
   WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
   WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 
-#if defined(ALBANY_LCM)
-  WorksetArray<Teuchos::ArrayRCP<double*>>::type boundary_indicator;
-#endif
-
-  #ifdef ALBANY_CONTACT
+#ifdef ALBANY_CONTACT
   Teuchos::RCP<const ContactManager> contactManager;
 #endif
 
@@ -527,6 +532,8 @@ protected:
 
   // Mesh adaptation stuff.
   Teuchos::RCP<AAdapt::rc::Manager> rcm;
+    
+  WorksetArray<Teuchos::ArrayRCP<double*>>::type boundary_indicator;
 };
 
 } // namespace Albany
