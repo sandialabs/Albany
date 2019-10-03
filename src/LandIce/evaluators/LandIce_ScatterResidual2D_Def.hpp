@@ -10,6 +10,7 @@
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #include "LandIce_ScatterResidual2D.hpp"
 
@@ -81,6 +82,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
+    auto indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
     // Loop over the sides that form the boundary condition
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
@@ -96,7 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO base_id, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
+        LO lnodeId = indexer->getLocalElement(elNodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
         for (int il_col=0; il_col<numLayers+1; il_col++) {
           LO inode = layeredMeshNumbering.getId(base_id, il_col);
@@ -259,12 +261,13 @@ evaluateFields(typename Traits::EvalData workset)
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
+  auto indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     Teuchos::ArrayRCP<LO> basalIds(this->numNodes);
     LO base_id, ilayer;
     for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node_col]);
+      LO lnodeId = indexer->getLocalElement(elNodeID[node_col]);
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
       lcols[node_col] = solDOFManager.getLocalDOF(inode, offset2DField);

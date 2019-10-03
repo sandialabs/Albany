@@ -11,6 +11,7 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 namespace PHAL {
 
@@ -182,15 +183,17 @@ evaluateFields(typename Traits::EvalData workset)
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
   auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
+  auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
+  auto pspace_indexer = Albany::createGlobalLocalIndexer(pvec->space());
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
+      const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
       LO base_id, ilayer;
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-      const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
-      const LO p_lid= Albany::getLocalElement(pvec->space(),ginode);
+      const GO ginode = ov_node_indexer->getGlobalElement(inode);
+      const LO p_lid= pspace_indexer->getLocalElement(ginode);
       (this->val)(cell,node) = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
     }
   }
@@ -219,6 +222,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   // If active, intialize data needed for differentiation
   auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
+  auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
+  auto p_indexer = Albany::createGlobalLocalIndexer(pvec->space());
   if (is_active) {
     const int num_deriv = this->numNodes;
     const int num_nodes_res = this->numNodes;
@@ -226,12 +231,12 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       for (std::size_t node = 0; node < num_deriv; ++node) {
-        const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
+        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
         LO base_id, ilayer;
         layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
         const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
-        const LO p_lid= Albany::getLocalElement(pvec->space(),ginode);
+        const GO ginode = ov_node_indexer->getGlobalElement(inode);
+        const LO p_lid= p_indexer->getLocalElement(ginode);
         double pvec_id = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
 
         ParamScalarT v(num_deriv, node, pvec_id);
@@ -262,12 +267,12 @@ evaluateFields(typename Traits::EvalData workset)
         } else {
           local_Vp.resize(num_deriv);
           for (std::size_t node = 0; node < num_deriv; ++node) {
-            const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
+            const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
             LO base_id, ilayer;
             layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
             const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-            const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
-            const LO id = Albany::getLocalElement(pvec->space(),ginode);
+            const GO ginode = ov_node_indexer->getGlobalElement(inode);
+            const LO id = p_indexer->getLocalElement(ginode);
             local_Vp[node].resize(num_cols);
             for (std::size_t col=0; col<num_cols; ++col) {
               local_Vp[node][col] = (id >= 0) ? Vp_data[col][id] : 0;
@@ -281,12 +286,12 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node) {
-        const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
+        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
         LO base_id, ilayer;
         layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
         const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
-        const LO p_lid= Albany::getLocalElement(pvec->space(),ginode);
+        const GO ginode = ov_node_indexer->getGlobalElement(inode);
+        const LO p_lid= p_indexer->getLocalElement(ginode);
         (this->val)(cell,node) = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
       }
     }

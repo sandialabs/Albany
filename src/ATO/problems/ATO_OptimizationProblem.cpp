@@ -13,6 +13,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Adapt_NodalDataVector.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #include <Kokkos_DynRankView_Fad.hpp>
 #include "Intrepid2_FunctionSpaceTools.hpp"
@@ -143,7 +144,7 @@ ComputeVolume(double* p, const double* dfdp,
 
   const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
-
+  auto indexer = Albany::createGlobalLocalIndexer(overlapNodeVs);
 
   for(int ws=0; ws<numWorksets; ws++){
 
@@ -156,7 +157,7 @@ ComputeVolume(double* p, const double* dfdp,
       double elVol = 0.0;
       for(int node=0; node<numNodes; node++){
         GO gid = wsElNodeID[ws][cell][node];
-        LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+        LO lid = indexer->getLocalElement(gid);
         if(dfdp[lid] < threshhold) {
           p[lid] = 1.0;
         } else {
@@ -166,7 +167,7 @@ ComputeVolume(double* p, const double* dfdp,
 
       for(int node=0; node<numNodes; node++){
         GO gid = wsElNodeID[ws][cell][node];
-        LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+        LO lid = indexer->getLocalElement(gid);
         for(int qp=0; qp<numQPs; qp++) {
           elVol += p[lid]*basisAtQPs[physIndex](node,qp)*weighted_measure[ws](cell,qp);
         }
@@ -747,6 +748,7 @@ computeMeasure (const std::string& measureType,
   }
 
   Teuchos::RCP<BlockMeasureMap> measureModel = measureModels.at(measureType);
+  auto indexer = Albany::createGlobalLocalIndexer(overlapNodeVs);
 
   for(int ws=0; ws<numWorksets; ws++){
 
@@ -773,7 +775,7 @@ computeMeasure (const std::string& measureType,
         for(int itopo=0; itopo<nTopologies; itopo++) pVals[itopo]=0.0;
         for(int node=0; node<numNodes; node++){
           GO gid = wsElNodeID[ws][cell][node];
-          LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+          LO lid = indexer->getLocalElement(gid);
           for(int itopo=0; itopo<nTopologies; itopo++) {
             pVals[itopo] += topoValues[itopo][lid]*basisAtQPs[physIndex](node,qp);
           }
@@ -787,7 +789,7 @@ computeMeasure (const std::string& measureType,
           blockMeasureModel->Gradient(pVals, topologies, drdz);
           for(int node=0; node<numNodes; node++){
             GO gid = wsElNodeID[ws][cell][node];
-            LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+            LO lid = indexer->getLocalElement(gid);
             for(int itopo=0; itopo<nTopologies; itopo++) {
               odmdp[itopo][lid] += drdz[itopo]
                                   *basisAtQPs[physIndex](node,qp)
@@ -853,6 +855,7 @@ computeConformalMeasure (const std::string& measureType,
   }
 
   Teuchos::RCP<BlockMeasureMap> measureModel = measureModels.at(measureType);
+  auto indexer = Albany::createGlobalLocalIndexer(overlapNodeVs);
 
   for(int ws=0; ws<numWorksets; ws++){
 
@@ -887,7 +890,7 @@ computeConformalMeasure (const std::string& measureType,
         for(int dim=0; dim<numDims; dim++)
           coordCon(node,dim) = coords[ws][cell][node][dim];
         GO gid = wsElNodeID[ws][cell][node];
-        LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+        LO lid = indexer->getLocalElement(gid);
         topoVals(node) = p[lid];
       }
 
@@ -915,7 +918,7 @@ computeConformalMeasure (const std::string& measureType,
         for(int itopo=0; itopo<nTopologies; itopo++) pVals[itopo]=0.0;
         for(int node=0; node<numNodes; node++){
           GO gid = wsElNodeID[ws][cell][node];
-          LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+          LO lid = indexer->getLocalElement(gid);
           for(int itopo=0; itopo<nTopologies; itopo++) {
             pVals[itopo] += topoValues[itopo][lid]*basisAtQPs[physIndex](node,qp);
           }
@@ -932,7 +935,7 @@ computeConformalMeasure (const std::string& measureType,
           blockMeasureModel->Gradient(pVals, topologies, drdz);
           for(int node=0; node<numNodes; node++){
             GO gid = wsElNodeID[ws][cell][node];
-            LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+            LO lid = indexer->getLocalElement(gid);
             for(int itopo=0; itopo<nTopologies; itopo++){
               if(itopo == materialTopologyIndex){
                 odmdp[itopo][lid] += drdz[itopo]*dMdtopo[node]*weightFraction
@@ -994,6 +997,7 @@ computeConformalVolume (const std::vector<Teuchos::RCP<TopologyStruct>>& topolog
     odvdp = Albany::getNonconstLocalData(overlapVec);
   }
 
+  auto indexer = Albany::createGlobalLocalIndexer(overlapNodeVs);
   for(int ws=0; ws<numWorksets; ws++){
   
     int physIndex = wsPhysIndex[ws];
@@ -1012,7 +1016,7 @@ computeConformalVolume (const std::vector<Teuchos::RCP<TopologyStruct>>& topolog
         for(int dim=0; dim<numDims; dim++)
           coordCon(node,dim) = coords[ws][cell][node][dim];
         GO gid = wsElNodeID[ws][cell][node];
-        LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+        LO lid = indexer->getLocalElement(gid);
         topoVals(node) = p[lid];
       }
 
@@ -1031,7 +1035,7 @@ computeConformalVolume (const std::vector<Teuchos::RCP<TopologyStruct>>& topolog
 
         for(int node=0; node<numNodes; node++){
           GO gid = wsElNodeID[ws][cell][node];
-          LO lid = Albany::getLocalElement(overlapNodeVs,gid);
+          LO lid = indexer->getLocalElement(gid);
           odvdp[lid] += dMdtopo(node);
         }
       }

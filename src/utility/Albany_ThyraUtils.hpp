@@ -19,21 +19,15 @@ Teuchos::RCP<const Thyra_VectorSpace>
 createLocallyReplicatedVectorSpace (const int size, const Teuchos::RCP<const Teuchos_Comm> comm);
 
 Teuchos::RCP<const Teuchos_Comm> getComm (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
-GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO lid);
-LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO gid);
-LO getNumLocalElements( const Teuchos::RCP<const Thyra_VectorSpace>& vs);
-GO getMaxAllGlobalIndex(const Teuchos::RCP<const Thyra_VectorSpace>& vs);  
 Teuchos::Array<GO> getGlobalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                                        const Teuchos::ArrayView<const LO>& lids);
 Teuchos::Array<LO> getLocalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                                       const Teuchos::ArrayView<const GO>& gids);
 void getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
-                        Teuchos::Array<GO>& gids);
-Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
-Teuchos::ArrayView<const GO> getNodeElementList(const Teuchos::RCP<const Thyra_VectorSpace>& vs);  	
+                        const Teuchos::ArrayView<GO>& gids);
+LO getLocalSubdim( const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
-// Check if the vector space locally owns a component
-bool locallyOwnedComponent (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs, const GO gid);
+Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
 // Check if two vector spaces are indeed the same vector space
 bool sameAs (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,

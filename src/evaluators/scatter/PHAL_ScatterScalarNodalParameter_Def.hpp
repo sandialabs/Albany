@@ -11,6 +11,7 @@
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 namespace PHAL {
 
@@ -86,11 +87,13 @@ evaluateFields(typename Traits::EvalData workset)
   auto param_overlap_vs = workset.distParamLib->get(this->param_name)->overlap_vector_space();
   auto param_vs = pvec->range();
 
+  auto param_indexer = Albany::createGlobalLocalIndexer(param_vs);
+  auto param_ov_indexer = Albany::createGlobalLocalIndexer(param_overlap_vs);
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       const LO lid_overlap = wsElDofs((int)cell,(int)node,0);
-      const GO gid_overlap = Albany::getGlobalElement(param_overlap_vs,lid_overlap);
-      const LO lid = Albany::getLocalElement(param_vs,gid_overlap);
+      const GO gid_overlap = param_ov_indexer->getGlobalElement(lid_overlap);
+      const LO lid = param_indexer->getLocalElement(gid_overlap);
       if(lid >= 0) {
        pvec_view[lid] = (this->val)(cell,node);
       }
@@ -127,14 +130,16 @@ evaluateFields(typename Traits::EvalData workset)
   auto param_vs = pvec->range();
   auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
 
+  auto param_indexer = Albany::createGlobalLocalIndexer(param_vs);
+  auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
+      const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
       LO base_id, ilayer;
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       if(ilayer==fieldLevel) {
-        const LO lid = Albany::getLocalElement(param_vs,elNodeID[node]);
+        const LO lid = param_indexer->getLocalElement(elNodeID[node]);
         if(lid>=0) {
           pvec_view[ lid ] = (this->val)(cell,node);
         }

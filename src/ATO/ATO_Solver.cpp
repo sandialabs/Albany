@@ -14,6 +14,7 @@
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #ifdef ATO_USES_ISOLIB
 #include "Albany_STKDiscretization.hpp"
 #include "STKExtract.hpp"
@@ -353,6 +354,7 @@ void Solver::evalModelImpl (const Thyra_InArgs&  /* inArgs */,
     }
   }
 
+  auto indexer = Albany::createGlobalLocalIndexer(m_localNodeVS);
   for (int i=0; i<m_numPhysics; ++i) {
     Albany::StateManager& stateMgr = m_subProblems[i].app->getStateMgr();
     const auto& wsEBNames  = stateMgr.getDiscretization()->getWsEBNames();
@@ -391,8 +393,8 @@ void Solver::evalModelImpl (const Thyra_InArgs&  /* inArgs */,
             for (int cell=0; cell<numCells; ++cell) {
               for (int node=0; node<numNodes; ++node) {
                 const int gid = wsElNodeID[ws][cell][node];
-                if (Albany::locallyOwnedComponent(m_localNodeVS,gid)) {
-                  const int lid = Albany::getLocalElement(m_localNodeVS,gid);
+                if (indexer->isLocallyOwnedElement(gid)) {
+                  const int lid = indexer->getLocalElement(gid);
                   ltopo[lid] = matVal;
                 }
               }
@@ -599,6 +601,8 @@ void Solver::copyTopologyIntoParameter (const double* p, SolverSubSolver& subSol
 
   const Albany::WorksetArray<std::string>::type& wsEBNames = stateMgr.getDiscretization()->getWsEBNames();
 
+  auto indexer = Albany::createGlobalLocalIndexer(m_localNodeVS);
+
   int ntopos = m_topologyInfoStructs.size();
   for (int itopo=0; itopo<ntopos; ++itopo) {
     Teuchos::RCP<TopologyInfoStruct> topoStruct = m_topologyInfoStructs[itopo];
@@ -629,8 +633,8 @@ void Solver::copyTopologyIntoParameter (const double* p, SolverSubSolver& subSol
         for (int cell=0; cell<numCells; ++cell) {
           for (int node=0; node<numNodes; ++node) {
             const int gid = wsElNodeID[ws][cell][node];
-            if (Albany::locallyOwnedComponent(m_localNodeVS,gid)) {
-              const int lid = Albany::getLocalElement(m_localNodeVS,gid);
+            if (indexer->isLocallyOwnedElement(gid)) {
+              const int lid = indexer->getLocalElement(gid);
               ltopo[lid] = matVal;
             }
           }
@@ -665,6 +669,7 @@ void Solver::copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr)
   const auto& wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
 
   // copy the topology from the state manager
+  auto indexer = Albany::createGlobalLocalIndexer(m_localNodeVS);
   const int ntopos = m_topologyInfoStructs.size();
   for (int itopo=0; itopo<ntopos; ++itopo) {
     Teuchos::RCP<TopologyInfoStruct> topologyInfoStruct = m_topologyInfoStructs[itopo];
@@ -678,8 +683,8 @@ void Solver::copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr)
       for (int cell=0; cell<numCells; ++cell) {
         for (int node=0; node<numNodes; ++node) {
           const int gid = wsElNodeID[ws][cell][node];
-          if (Albany::locallyOwnedComponent(m_localNodeVS,gid)) {
-            const int lid = Albany::getLocalElement(m_localNodeVS,gid);
+          if (indexer->isLocallyOwnedElement(gid)) {
+            const int lid = indexer->getLocalElement(gid);
             p[lid+offset] = wsTopo(cell,node);
           }
         }
@@ -760,6 +765,7 @@ void Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
   const auto& wsEBNames  = disc->getWsEBNames();
   const auto& wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
 
+  auto indexer = Albany::createGlobalLocalIndexer(m_localNodeVS);
   const int ntopos = m_topologyInfoStructs.size();
   for (int itopo=0; itopo<ntopos; ++itopo) {
     Teuchos::RCP<TopologyInfoStruct> topoStruct = m_topologyInfoStructs[itopo];
@@ -790,7 +796,7 @@ void Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       for (int cell=0; cell<numCells; ++cell) {
         for (int node=0; node<numNodes; ++node) {
           int gid = wsElNodeID[ws][cell][node];
-          int lid = Albany::getLocalElement(m_overlapNodeVS,gid);
+          int lid = indexer->getLocalElement(gid);
           wsTopo(cell,node) = otopo[lid];
         }
       }
@@ -809,7 +815,7 @@ void Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
         for (int cell=0; cell<numCells; ++cell) {
           for (int node=0; node<numNodes; ++node) {
             int gid = wsElNodeID[ws][cell][node];
-            int lid = Albany::getLocalElement(m_overlapNodeVS,gid);
+            int lid = indexer->getLocalElement(gid);
             fMask[lid] = 1.0;
           }
         }
@@ -832,7 +838,7 @@ void Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       for (int cell=0; cell<numCells; ++cell) {
         for (int node=0; node<numNodes; ++node) {
           const int gid = wsElNodeID[ws][cell][node];
-          const int lid = Albany::getLocalElement(m_overlapNodeVS,gid);
+          const int lid = indexer->getLocalElement(gid);
           if (fMask[lid] != 1.0) {
             otopo[lid] = matVal;
           }
@@ -952,6 +958,7 @@ void Solver::ComputeMeasure(const std::string& measureType, const double* p,
   const int ntopos = m_topologyInfoStructs.size();
 
   std::vector<Teuchos::RCP<TopologyStruct> > topologyStructs(ntopos);
+  auto indexer = Albany::createGlobalLocalIndexer(m_localNodeVS);
 
   for (int itopo=0; itopo<ntopos; ++itopo) {
 
@@ -967,8 +974,8 @@ void Solver::ComputeMeasure(const std::string& measureType, const double* p,
       for (int cell=0; cell<numCells; ++cell) {
         for (int node=0; node<numNodes; ++node) {
           const int gid = wsElNodeID[ws][cell][node];
-          if (Albany::locallyOwnedComponent(m_localNodeVS,gid)) {
-            const int lid = Albany::getLocalElement(m_localNodeVS,gid);
+          if (indexer->isLocallyOwnedElement(gid)) {
+            const int lid = indexer->getLocalElement(gid);
             ltopo[lid] = p[lid+offset];
           }
         }

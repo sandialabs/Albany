@@ -9,6 +9,7 @@
 #include "Albany_Application.hpp"
 #include "Albany_Gather.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #include "Teuchos_Array.hpp" 
 #include "Albany_Utils.hpp"
@@ -32,17 +33,17 @@ Teuchos::Array<GO>
 UniformSolutionCullingStrategy::
 selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const
 {
-  auto spmd_vs = getSpmdVectorSpace(sourceVS);
-  auto comm = createTeuchosCommFromThyraComm(spmd_vs->getComm());
+  auto source_indexer = createGlobalLocalIndexer(sourceVS);
 
-  Teuchos::Array<GO> allGIDs(spmd_vs->dim());
-  Teuchos::Array<GO> myGIDs(spmd_vs->localSubDim());
+  const int localDim = source_indexer->getNumLocalElements();
+  Teuchos::Array<GO> allGIDs(sourceVS->dim());
+  Teuchos::Array<GO> myGIDs(localDim);
 
-  for (LO lid=0; lid<spmd_vs->localSubDim(); ++lid) {
-    myGIDs[lid] = getGlobalElement(spmd_vs,lid);
+  for (LO lid=0; lid<localDim; ++lid) {
+    myGIDs[lid] = source_indexer->getGlobalElement(lid);
   }
 
-  gatherAllV(comm,myGIDs(),allGIDs);
+  gatherAllV(source_indexer->getComm(),myGIDs(),allGIDs);
   std::sort(allGIDs.begin(), allGIDs.end());
 
   Teuchos::Array<GO> target_gids(numValues_);
@@ -83,6 +84,8 @@ Teuchos::Array<GO>
 NodeSetSolutionCullingStrategy::
 selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const
 {
+  auto source_indexer = createGlobalLocalIndexer(sourceVS);
+
   // Gather gids on given nodeset on this rank
   Teuchos::Array<GO> mySelectedGIDs;
 
@@ -96,7 +99,7 @@ selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const
       typedef NodeSetEntryList::value_type NodeEntryList;
       const NodeEntryList &sampleEntries = *jt;
       for (NodeEntryList::const_iterator kt = sampleEntries.begin(); kt != sampleEntries.end(); ++kt) {
-        mySelectedGIDs.push_back(getGlobalElement(sourceVS,*kt));
+        mySelectedGIDs.push_back(source_indexer->getGlobalElement(*kt));
       }
     }
   }
@@ -154,9 +157,9 @@ selectedGIDs(const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const
   Teuchos::Array<GO> mySelectedGIDs;
 
   // Subract 1 to convert exodus GIDs to our GIDs
-  auto spmd_vs = getSpmdVectorSpace(sourceVS);
+  auto source_indexer = createGlobalLocalIndexer(sourceVS);
   for (int i=0; i<nodeGIDs_.size(); ++i) {
-    if (locallyOwnedComponent(spmd_vs,nodeGIDs_[i] -1)) {
+    if (source_indexer->isLocallyOwnedElement(nodeGIDs_[i] -1)) {
       mySelectedGIDs.push_back(nodeGIDs_[i] - 1);
     }
   }

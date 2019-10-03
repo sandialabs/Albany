@@ -7,6 +7,7 @@
 #include "Albany_AbstractSTKFieldContainer.hpp"
 #include "Albany_STKFieldContainerHelper.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_Macros.hpp"
 
 #include "Albany_BucketArray.hpp"
@@ -88,9 +89,11 @@ fillVector (Thyra_Vector&    field_thyra,
   //Need to look into this more to come up with a better fix, hopefully.  
   if (is_SFT == true) num_vec_components = 1; 
   else num_vec_components = nodalDofManager.numComponents();
+
+  auto indexer = createGlobalLocalIndexer(node_vs);
   for(int i=0; i<num_nodes_in_bucket; ++i)  {
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
-    const LO node_lid = getLocalElement(node_vs,node_gid);
+    const LO node_lid = indexer->getLocalElement(node_gid);
 
     for(int j=0; j<num_vec_components; ++j) {
       data[nodalDofManager.getLocalDOF(node_lid,offset+j)] = access(field_array,j,i);
@@ -126,9 +129,11 @@ saveVector(const Thyra_Vector& field_thyra,
   //Need to look into this more to come up with a better fix, hopefully.  
   if (is_SFT == true) num_vec_components = 1; 
   else num_vec_components = nodalDofManager.numComponents();
+
+  auto indexer = createGlobalLocalIndexer(node_vs);
   for(int i=0; i<num_nodes_in_bucket; ++i) {
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
-    const LO node_lid = getLocalElement(node_vs,node_gid);
+    const LO node_lid = indexer->getLocalElement(node_gid);
 
     for(int j = 0; j<num_vec_components; ++j) {
       access(field_array,j,i) = data[nodalDofManager.getLocalDOF(node_lid,offset+j)];

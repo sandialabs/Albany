@@ -8,6 +8,7 @@
 #include <fstream>
 #include "Adapt_NodalDataVector.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 namespace LCM {
 class IPtoNodalFieldManager : public Adapt::NodalDataBase::Manager
@@ -301,14 +302,13 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
   node_data->getNDofsAndOffset(
       this->nodal_weights_name_, node_weight_offset, node_weight_ndofs);
   node_weight_offset -= this->mgr_->ndb_start;
+  auto local_node_indexer = Albany::createGlobalLocalIndexer(local_node_space);
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < num_nodes; ++node) {
       const GO global_row = wsElNodeID[cell][node];
-      const LO local_row =
-          Albany::getLocalElement(local_node_space, global_row);
-      if (!Albany::locallyOwnedComponent(
-              Albany::getSpmdVectorSpace(local_node_space), global_row))
+      if (!local_node_indexer->isLocallyOwnedElement(global_row))
         continue;
+      const LO local_row = local_node_indexer->getLocalElement(global_row);
       for (int pt = 0; pt < num_pts; ++pt) {
         data_nonconstView[node_weight_offset][local_row] +=
             this->weights_(cell, pt);
@@ -327,11 +327,9 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes; ++node) {
         const GO global_row = wsElNodeID[cell][node];
-        const LO local_row =
-            Albany::getLocalElement(local_node_space, global_row);
-        if (!Albany::locallyOwnedComponent(
-                Albany::getSpmdVectorSpace(local_node_space), global_row))
+        if (!local_node_indexer->isLocallyOwnedElement(global_row))
           continue;
+        const LO local_row = local_node_indexer->getLocalElement(global_row);
         for (int pt = 0; pt < num_pts; ++pt) {
           if (this->ip_field_layouts_[field] == "Scalar") {
             // save the scalar component

@@ -6,6 +6,7 @@
 
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #include "Teuchos_CommHelpers.hpp"
 
@@ -256,6 +257,7 @@ MatrixMarketFile (const char *filename, const Teuchos::RCP<Thyra_MultiVector>& m
                               "different from the what was expected.\n");
 
   auto vals = getNonconstLocalData(mv);
+  auto indexer = createGlobalLocalIndexer(spmd_vs);
   for (int j=0; j<N; j++) {
     Teuchos::ArrayRCP<ST> v = vals[j];
 
@@ -268,7 +270,7 @@ MatrixMarketFile (const char *filename, const Teuchos::RCP<Thyra_MultiVector>& m
           std::endl << "Reference solution file: cannot read line number " << i + offset << " in file."
           << std::endl);
 
-      const LO lid = getLocalElement(spmd_vs,i);
+      const LO lid = indexer->getLocalElement(i);
       if(lid>= 0) { // we own this data value
         if(sscanf(line, "%lg\n", &V)==0) {
           TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,

@@ -10,6 +10,7 @@
 #include "Albany_AbstractNodeFieldContainer.hpp"
 #include "Albany_BucketArray.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_StateInfoStruct.hpp" // For MDArray
 
 #include "Teuchos_RCP.hpp"
@@ -99,6 +100,7 @@ struct NodeData_Traits<T, 1> {
   {
     Teuchos::ArrayRCP<const ST> const_overlap_node_view = getLocalData(overlap_node_vec->col(offset));
 
+    auto indexer = createGlobalLocalIndexer(overlap_node_vec->range());
     for(auto it=all_elements.begin(); it!=all_elements.end(); ++it) {
       const stk::mesh::Bucket& bucket = **it;
       const stk::mesh::BulkData& bulkData = bucket.mesh();
@@ -109,7 +111,7 @@ struct NodeData_Traits<T, 1> {
 
       for (std::size_t i = 0; i < num_nodes_in_bucket; i++) {
         const GO global_id = bulkData.identifier(bucket[i]) - 1; // global node in mesh
-        const LO local_id =  getLocalElement(overlap_node_vec->range(),global_id);
+        const LO local_id = indexer->getLocalElement(global_id);
         solution_array(i) = const_overlap_node_view[local_id];
       }
     }
@@ -137,6 +139,7 @@ struct NodeData_Traits<T, 2> {
                             const stk::mesh::BucketVector& all_elements,
                             field_type *fld, int offset)
   {
+    auto indexer = createGlobalLocalIndexer(overlap_node_vec->range());
     for(auto it=all_elements.begin(); it!=all_elements.end(); ++it) {
       const stk::mesh::Bucket& bucket = **it;
 
@@ -152,7 +155,7 @@ struct NodeData_Traits<T, 2> {
         for(int i=0; i<num_nodes_in_bucket; ++i) {
 
           const GO global_id = bulkData.identifier(bucket[i]) - 1; // global node in mesh
-          const LO local_id =  getLocalElement(overlap_node_vec->range(), global_id);
+          const LO local_id = indexer->getLocalElement(global_id);
 
           solution_array(j, i) = const_overlap_node_view[local_id];
         }
@@ -182,6 +185,7 @@ struct NodeData_Traits<T, 3> {
                             const stk::mesh::BucketVector& all_elements,
                             field_type *fld, int offset)
   {
+    auto indexer = createGlobalLocalIndexer(overlap_node_vec->range());
     for(auto it=all_elements.begin(); it!=all_elements.end(); ++it) {
       const stk::mesh::Bucket& bucket = **it;
       stk::mesh::BulkData const& bulkData = bucket.mesh();
@@ -198,7 +202,7 @@ struct NodeData_Traits<T, 3> {
 
           for(int i=0; i<num_nodes_in_bucket; ++i)  {
             const GO global_id = bulkData.identifier(bucket[i]) - 1; // global node in mesh
-            const LO local_id =  getLocalElement(overlap_node_vec->range(),global_id);
+            const LO local_id = indexer->getLocalElement(global_id);
             solution_array(k, j, i) = const_overlap_node_view[local_id];
       }}}
     }

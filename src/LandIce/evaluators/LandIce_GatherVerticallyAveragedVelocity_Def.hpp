@@ -11,6 +11,7 @@
 #include "Sacado.hpp"
 
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 
 #include "LandIce_GatherVerticallyAveragedVelocity.hpp"
@@ -93,6 +94,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
+    auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
     const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
     int numLayers = layeredMeshNumbering.numLayers;
 
@@ -115,7 +117,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
+        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         std::vector<double> avVel(this->vecDimFO,0);
         for(int il=0; il<numLayers+1; ++il) {
@@ -165,6 +167,7 @@ evaluateFields(typename Traits::EvalData workset)
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+    auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
 
     const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
 
@@ -188,7 +191,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
+        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         std::vector<double> avVel(this->vecDimFO,0);
         for(int il=0; il<numLayers+1; ++il) {
@@ -237,6 +240,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+    auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
 
     const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
     int numLayers = layeredMeshNumbering.numLayers;
@@ -260,7 +264,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
+        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         std::vector<double> avVel(this->vecDimFO,0);
         for(int il=0; il<numLayers+1; ++il) {
@@ -309,6 +313,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+    auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
 
     const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
     int numLayers = layeredMeshNumbering.numLayers;
@@ -332,7 +337,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
+        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
         layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         std::vector<double> avVel(this->vecDimFO,0);
         for(int il=0; il<numLayers+1; ++il) {

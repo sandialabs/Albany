@@ -27,6 +27,7 @@
 #include <Albany_STKNodeSharing.hpp>
 #include <Albany_ThyraUtils.hpp>
 #include <Albany_CombineAndScatterManager.hpp>
+#include <Albany_GlobalLocalIndexer.hpp>
 
 // Expression reading
 #ifdef ALBANY_PANZER_EXPR_EVAL
@@ -1319,6 +1320,7 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
     stk::mesh::EntityId gid;
     LO lid;
     double* values;
+    auto indexer = createGlobalLocalIndexer(vs);
     for (unsigned int i(0); i<entities->size(); ++i) {
       if (scalar_field!=0) {
         values = stk::mesh::field_data(*scalar_field, (*entities)[i]);
@@ -1329,7 +1331,7 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
       }
 
       gid = bulkData->identifier((*entities)[i]) - 1;
-      lid = getLocalElement(vs,GO(gid));
+      lid = indexer->getLocalElement(GO(gid));
       for (int iDim(0); iDim<field_mv_view.size(); ++iDim) {
         values[iDim] = field_mv_view[iDim][lid];
       }

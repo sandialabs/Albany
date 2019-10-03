@@ -4,11 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "ProjectIPtoNodalField.hpp"
+
 #include "Albany_config.h"
 
+#include "Adapt_NodalDataVector.hpp"
+// #include "Albany_ProblemUtils.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
+
 #include <Teuchos_AbstractFactoryStd.hpp>
-#include <Teuchos_TestForException.hpp>
-#include <fstream>
+// #include <Teuchos_TestForException.hpp>
 
 #ifdef ALBANY_IFPACK2
 #include <Thyra_Ifpack2PreconditionerFactory.hpp>
@@ -16,14 +23,12 @@
 
 #include <Phalanx_DataLayout_MDALayout.hpp>
 
-#include <Intrepid2_CellTools.hpp>
-#include <Intrepid2_DefaultCubatureFactory.hpp>
-#include <Intrepid2_FunctionSpaceTools.hpp>
-#include <Shards_CellTopology.hpp>
+// #include <Intrepid2_CellTools.hpp>
+// #include <Intrepid2_DefaultCubatureFactory.hpp>
+// #include <Intrepid2_FunctionSpaceTools.hpp>
+// #include <Shards_CellTopology.hpp>
 
-#include "Adapt_NodalDataVector.hpp"
-#include "Albany_ProblemUtils.hpp"
-#include "Albany_Utils.hpp"
+// #include <fstream>
 
 static int aabb = 0;
 static int bbcc = 0;
@@ -88,7 +93,7 @@ class ProjectIPtoNodalFieldQuadrature
   typedef PHAL::AlbanyTraits::Residual::MeshScalarT      MeshScalarT;
   PHX::MDField<RealType, Cell, Node, QuadPoint>          bf_;
   PHX::MDField<const RealType, Cell, Node, QuadPoint>    bf_const_;
-  PHX::MDField<MeshScalarT, Cell, Node, QuadPoint>       wbf_;
+  PHX::MDField<      MeshScalarT, Cell, Node, QuadPoint> wbf_;
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint> wbf_const_;
 
   Teuchos::RCP<Intrepid2Basis>               intrepid_basis_;
@@ -430,7 +435,7 @@ class ProjectIPtoNodalFieldManager::LumpedMassLinearOp
         const GO                 global_row = workset.wsElNodeID[cell][rnode];
         const Teuchos::Array<GO> cols(1, global_row);
         double                   diag = 0;
-        for (std::size_t qp = 0; qp < num_pts; ++qp) {
+        for (int qp = 0; qp < num_pts; ++qp) {
           double diag_qp = 0;
           for (int cnode = 0; cnode < num_nodes; ++cnode)
             diag_qp += bf(cell, cnode, qp);
@@ -541,7 +546,6 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
   // Number of quad points per cell and dimension.
   const Teuchos::RCP<PHX::DataLayout>& vector_dl      = dl->qp_vector;
   const Teuchos::RCP<PHX::DataLayout>& node_dl        = dl->node_qp_vector;
-  const Teuchos::RCP<PHX::DataLayout>& vert_vector_dl = dl->vertices_vector;
   num_pts_                                            = vector_dl->extent(1);
   num_dims_                                           = vector_dl->extent(2);
   num_nodes_                                          = node_dl->extent(1);
@@ -678,7 +682,7 @@ template <typename Traits>
 void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
     postRegistrationSetup(
-        typename Traits::SetupData d,
+        typename Traits::SetupData /* d */,
         PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(BF, fm);
@@ -694,7 +698,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 template <typename Traits>
 void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
-    typename Traits::PreEvalData workset)
+    typename Traits::PreEvalData /* workset */)
 {
   const int  ctr      = mgr_->incrPreCounter();
   const bool am_first = ctr == 1;
@@ -749,8 +753,6 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::fillRHS(
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>& wsElNodeID =
       workset.wsElNodeID;
 
-  Teuchos::RCP<const Thyra_VectorSpace> ip_field_space =
-      mgr_->ip_field->col(0)->space();
   // IKT, note to self: the resulting array is indexed by
   // [numCols][numLocalVals]
   auto ip_field_nonconstView = Albany::getNonconstLocalData(mgr_->ip_field);
@@ -760,6 +762,10 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::fillRHS(
                          + 1
 #endif
       ;
+
+  Teuchos::RCP<const Thyra_VectorSpace> ip_field_space =
+      mgr_->ip_field->col(0)->space();
+  auto ip_field_vs_indexer = Albany::createGlobalLocalIndexer(ip_field_space);
   for (int field = 0; field < num_fields; ++field) {
     int node_var_offset, node_var_ndofs;
     node_data->getNDofsAndOffset(
@@ -769,7 +775,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::fillRHS(
       for (std::size_t node = 0; node < num_nodes_; ++node) {
         const GO global_row = wsElNodeID[cell][node];
         const LO local_row =
-            Albany::getLocalElement(ip_field_space, global_row);
+            ip_field_vs_indexer->getLocalElement(global_row);
         for (std::size_t qp = 0; qp < num_pts_; ++qp) {
           switch (ip_field_layouts_[field]) {
             case EFieldLayout::scalar:
@@ -836,7 +842,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 template <typename Traits>
 void
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
-    typename Traits::PostEvalData workset)
+    typename Traits::PostEvalData /* workset */)
 {
   const int  ctr     = mgr_->incrPostCounter();
   const bool am_last = ctr == mgr_->nWorker();
@@ -844,7 +850,6 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::postEvaluate(
   mgr_->initCounters();
 
   typedef Teuchos::ScalarTraits<ST>::magnitudeType MT;
-  const ST one = Teuchos::ScalarTraits<ST>::one();
 
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::VerboseObjectBase::getDefaultOStream();
