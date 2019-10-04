@@ -168,13 +168,7 @@ Topology::initializeCellFailureState()
   auto const              cell_rank = stk::topology::ELEMENT_RANK;
   stk::mesh::EntityVector cells;
   stk::mesh::get_entities(bulk_data, cell_rank, cells);
-  for (auto cell : cells) {
-    auto proc_rank = get_proc_rank();
-    auto gid = get_gid(cell) - 1;
-    std::cout << "**** DEBUG TOPO PROC GID: " << proc_rank << " "
-              << std::setw(3) << std::setfill('0') << gid << "\n";
-    set_failure_state(cell, INTACT);
-  }
+  for (auto cell : cells) { set_failure_state(cell, INTACT); }
 }
 
 //
@@ -192,6 +186,12 @@ Topology::setBoundaryIndicator()
   for (auto cell : cells) {
     auto const bi = is_boundary_cell(cell) == true ? EXTERIOR : INTERIOR;
     set_boundary_indicator(cell, bi);
+    if (bi == EXTERIOR) {
+      auto proc_rank = get_proc_rank();
+      auto gid       = get_gid(cell) - 1;
+      std::cout << "**** DEBUG TOPO PROC GID: " << proc_rank << " "
+                << std::setw(3) << std::setfill('0') << gid << "\n";
+    }
   }
 }
 
@@ -1272,8 +1272,11 @@ Topology::printFailureState()
   auto& fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
   stk::mesh::get_entities(bulk_data, cell_rank, cells);
   for (auto cell : cells) {
-    auto const fs = get_failure_state(cell);
-    fos << "**** Topology : STK ELEMENT : " << cell << " FAIL : " << fs << '\n';
+    auto const fs        = get_failure_state(cell);
+    auto       proc_rank = get_proc_rank();
+    auto       gid       = get_gid(cell) - 1;
+    std::cout << "**** DEBUG TOPO PROC GID FAILED: " << proc_rank << " "
+              << std::setw(3) << std::setfill('0') << gid << " " << fs << "\n";
   }
 }
 

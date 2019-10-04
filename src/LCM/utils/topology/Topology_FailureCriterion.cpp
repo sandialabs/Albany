@@ -265,7 +265,7 @@ BulkFailureCriterion::check(
     stk::mesh::Entity    element)
 {
   double const failure_state = *stk::mesh::field_data(*failure_state_, element);
-  return failure_state >= 0.5;
+  return failure_state > 0.0;
 }
 
 }  // namespace LCM

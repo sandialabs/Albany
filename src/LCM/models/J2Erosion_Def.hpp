@@ -194,7 +194,7 @@ J2ErosionKernel<EvalT, Traits>::init(
   have_boundary_indicator_ = field_cont.hasBoundaryIndicatorField();
 
   elemWsLIDGIDMap_ = stk_disc.getElemWsLIDGIDMap();
-  ws_index_ = workset.wsIndex;
+  ws_index_        = workset.wsIndex;
 
   if (have_boundary_indicator_ == true) {
     boundary_indicator_ = workset.boundary_indicator;
@@ -327,16 +327,6 @@ J2ErosionKernel<EvalT, Traits>::operator()(int cell, int pt) const
   auto&& failed        = failed_(cell, 0);
   auto&& exposure_time = exposure_time_(cell, pt);
 
-  auto const proc_rank = Albany::getProcRank();
-  if (pt == 0) {
-    auto ws_lid = std::make_pair(ws_index_, cell);
-    auto iter = elemWsLIDGIDMap_.find(ws_lid);
-    ALBANY_ASSERT(iter != elemWsLIDGIDMap_.end());
-    auto gid = iter->second;
-    std::cout << "**** DEBUG MATE PROC GID: " << proc_rank << " "
-              << std::setw(3) << std::setfill('0') << gid << "\n";
-  }
-
   // Determine if erosion has occurred.
   auto const erosion_rate = erosion_rate_;
   auto const element_size = element_size_;
@@ -361,6 +351,16 @@ J2ErosionKernel<EvalT, Traits>::operator()(int cell, int pt) const
       failed += 1.0;
       exposure_time = 0.0;
     }
+  }
+
+  if (is_at_boundary == true) {
+    auto const proc_rank = Albany::getProcRank();
+    auto       ws_lid    = std::make_pair(ws_index_, cell);
+    auto       iter      = elemWsLIDGIDMap_.find(ws_lid);
+    ALBANY_ASSERT(iter != elemWsLIDGIDMap_.end());
+    auto gid = iter->second;
+    std::cout << "**** DEBUG MATE PROC GID: " << proc_rank << " "
+              << std::setw(3) << std::setfill('0') << gid << "\n";
   }
 
   // fill local tensors
