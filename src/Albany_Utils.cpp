@@ -493,4 +493,16 @@ build_type(const BuildType value)
   }
   return value_;
 }
+
+//
+//
+//
+int
+getProcRank()
+{
+  int rank{0};
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  return rank;
+}
+
 }  // namespace Albany

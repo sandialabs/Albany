@@ -193,6 +193,9 @@ J2ErosionKernel<EvalT, Traits>::init(
   auto& field_cont         = *(mesh_struct.getFieldContainer());
   have_boundary_indicator_ = field_cont.hasBoundaryIndicatorField();
 
+  elemWsLIDGIDMap_ = stk_disc.getElemWsLIDGIDMap();
+  ws_index_ = workset.wsIndex;
+
   if (have_boundary_indicator_ == true) {
     boundary_indicator_ = workset.boundary_indicator;
     ALBANY_ASSERT(boundary_indicator_.is_null() == false);
@@ -323,6 +326,16 @@ J2ErosionKernel<EvalT, Traits>::operator()(int cell, int pt) const
   auto&& delta_time    = delta_time_(0);
   auto&& failed        = failed_(cell, 0);
   auto&& exposure_time = exposure_time_(cell, pt);
+
+  auto const proc_rank = Albany::getProcRank();
+  if (pt == 0) {
+    auto ws_lid = std::make_pair(ws_index_, cell);
+    auto iter = elemWsLIDGIDMap_.find(ws_lid);
+    ALBANY_ASSERT(iter != elemWsLIDGIDMap_.end());
+    auto gid = iter->second;
+    std::cout << "**** DEBUG MATE PROC GID: " << proc_rank << " "
+              << std::setw(3) << std::setfill('0') << gid << "\n";
+  }
 
   // Determine if erosion has occurred.
   auto const erosion_rate = erosion_rate_;

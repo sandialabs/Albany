@@ -168,7 +168,13 @@ Topology::initializeCellFailureState()
   auto const              cell_rank = stk::topology::ELEMENT_RANK;
   stk::mesh::EntityVector cells;
   stk::mesh::get_entities(bulk_data, cell_rank, cells);
-  for (auto cell : cells) { set_failure_state(cell, INTACT); }
+  for (auto cell : cells) {
+    auto proc_rank = get_proc_rank();
+    auto gid = get_gid(cell) - 1;
+    std::cout << "**** DEBUG TOPO PROC GID: " << proc_rank << " "
+              << std::setw(3) << std::setfill('0') << gid << "\n";
+    set_failure_state(cell, INTACT);
+  }
 }
 
 //
