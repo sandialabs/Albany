@@ -8,10 +8,13 @@
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_ThyraUtils.hpp"
-#include "MiniTensor.h"
-#include "Phalanx_DataLayout.hpp"
-#include "Sacado_ParameterRegistration.hpp"
-#include "Teuchos_TestForException.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
+#include "SchwarzBC.hpp"
+
+#include <MiniTensor.h>
+#include <Phalanx_DataLayout.hpp>
+#include <Sacado_ParameterRegistration.hpp>
+#include <Teuchos_TestForException.hpp>
 
 //
 // Generic Template Code for Constructor and PostRegistrationSetup
@@ -160,7 +163,7 @@ SchwarzBC_Base<EvalT, Traits>::computeBCs(
   std::vector<minitensor::Vector<double>> coupled_element_solution(
       coupled_node_count);
 
-  for (auto i = 0; i < coupled_node_count; ++i) {
+  for (unsigned i = 0; i < coupled_node_count; ++i) {
     coupled_element_nodes[i].set_dimension(coupled_dimension);
     coupled_element_solution[i].set_dimension(coupled_dimension);
   }
@@ -229,7 +232,7 @@ SchwarzBC_Base<EvalT, Traits>::computeBCs(
   Kokkos::DynRankView<RealType, PHX::Device> parametric_point(
       "par_point", number_cells, number_points, parametric_dimension);
 
-  for (auto j = 0; j < parametric_dimension; ++j) {
+  for (unsigned j = 0; j < parametric_dimension; ++j) {
     parametric_point(0, 0, j) = 0.0;
   }
 
@@ -237,7 +240,7 @@ SchwarzBC_Base<EvalT, Traits>::computeBCs(
   Kokkos::DynRankView<RealType, PHX::Device> physical_coordinates(
       "phys_point", number_cells, number_points, coupled_dimension);
 
-  for (auto i = 0; i < coupled_dimension; ++i) {
+  for (unsigned i = 0; i < coupled_dimension; ++i) {
     physical_coordinates(0, 0, i) = point(i);
   }
 
@@ -247,6 +250,7 @@ SchwarzBC_Base<EvalT, Traits>::computeBCs(
 
   bool found = false;
 
+  auto coupled_ov_node_vs_indexer = Albany::createGlobalLocalIndexer(coupled_overlap_node_vs);
   for (auto workset = 0; workset < ws_elem_to_node_id.size(); ++workset) {
     std::string const& coupled_element_block = coupled_ws_eb_names[workset];
 
@@ -257,26 +261,26 @@ SchwarzBC_Base<EvalT, Traits>::computeBCs(
     auto const elements_per_workset = ws_elem_to_node_id[workset].size();
 
     for (auto element = 0; element < elements_per_workset; ++element) {
-      for (auto node = 0; node < coupled_node_count; ++node) {
+      for (unsigned node = 0; node < coupled_node_count; ++node) {
         auto const global_node_id = ws_elem_to_node_id[workset][element][node];
 
         auto const local_node_id =
-            Albany::getLocalElement(coupled_overlap_node_vs, global_node_id);
+            coupled_ov_node_vs_indexer->getLocalElement(global_node_id);
 
         double* const pcoord =
             &(coupled_coordinates[coupled_dimension * local_node_id]);
 
         coupled_element_nodes[node].fill(pcoord);
 
-        for (auto i = 0; i < coupled_dimension; ++i) {
+        for (unsigned i = 0; i < coupled_dimension; ++i) {
           coupled_element_solution[node](i) =
               coupled_solution_view[coupled_dimension * local_node_id + i];
         }  // dimension loop
 
       }  // node loop
 
-      for (auto i = 0; i < coupled_node_count; ++i) {
-        for (auto j = 0; j < coupled_dimension; ++j) {
+      for (unsigned i = 0; i < coupled_node_count; ++i) {
+        for (unsigned j = 0; j < coupled_dimension; ++j) {
           nodal_coordinates(0, i, j) = coupled_element_nodes[i](j);
         }
       }
@@ -290,7 +294,7 @@ SchwarzBC_Base<EvalT, Traits>::computeBCs(
 
       bool in_element = true;
 
-      for (auto i = 0; i < parametric_dimension; ++i) {
+      for (unsigned i = 0; i < parametric_dimension; ++i) {
         auto const xi = parametric_point(0, 0, i);
         in_element    = in_element && lo(i) <= xi && xi <= hi(i);
       }
@@ -318,7 +322,7 @@ SchwarzBC_Base<EvalT, Traits>::computeBCs(
   Kokkos::DynRankView<RealType, PHX::Device> pp_reduced(
       "par_point", number_points, parametric_dimension);
 
-  for (auto j = 0; j < parametric_dimension; ++j) {
+  for (unsigned j = 0; j < parametric_dimension; ++j) {
     pp_reduced(0, j) = parametric_point(0, 0, j);
   }
   basis->getValues(basis_values, pp_reduced, Intrepid2::OPERATOR_VALUE);
@@ -328,7 +332,7 @@ SchwarzBC_Base<EvalT, Traits>::computeBCs(
   minitensor::Vector<double> value(
       coupled_dimension, minitensor::Filler::ZEROS);
 
-  for (auto i = 0; i < coupled_node_count; ++i) {
+  for (unsigned i = 0; i < coupled_node_count; ++i) {
     value += basis_values(i, 0) * coupled_element_solution[i];
   }
 
@@ -614,7 +618,6 @@ SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 
   value[0] = j_coeff;
 
-  size_t             numEntries;
   Teuchos::Array<ST> matrixEntries;
   Teuchos::Array<LO> matrixIndices;
 

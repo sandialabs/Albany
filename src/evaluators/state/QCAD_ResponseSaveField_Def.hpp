@@ -7,7 +7,9 @@
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 
+#include "Albany_SacadoTypes.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Adapt_NodalDataVector.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 
@@ -301,6 +303,7 @@ evaluateFields(typename Traits::EvalData workset)
     auto data = Albany::getNonconstLocalData(node_data_vector);
     if(!isVectorField) {
       int size = 2; //HACK - size always == 2 now since we assume Cell,Node
+      auto node_indexer = Albany::createGlobalLocalIndexer(owned_node_vs);
       switch (size) {  //Note: size should always == 2 now: node_scalar type or cell_scalar state registered
       case 2: 
         std::cout << "DEBUG: ResponseSaveField is saving nodal " << fieldName 
@@ -311,10 +314,10 @@ evaluateFields(typename Traits::EvalData workset)
 	        for (std::size_t node = 0; node < numNodes; ++node) {
 	          //sta(cell, node) = ADValue(field(cell,node));
 	          const GO global_row = wsElNodeID[cell][node];
-	          if (!Albany::locallyOwnedComponent(Albany::getSpmdVectorSpace(owned_node_vs),global_row)) {
+	          if (!node_indexer->isLocallyOwnedElement(global_row)) {
               continue;
             }
-            const LO lid = Albany::getLocalElement(owned_node_vs,global_row);
+            const LO lid = node_indexer->getLocalElement(global_row);
 	          data[node_var_offset][lid] += ADValue(field(cell,node));
 	          //data->sumIntoGlobalValue(global_row, node_var_offset, 10.0 ); //DEBUG - to get weighting correct
 

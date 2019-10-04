@@ -19,6 +19,7 @@
 
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #define loop(a, i, dim)                                                 \
   for (PHX::MDField<RealType>::size_type i = 0; i < static_cast<PHX::MDField<RealType>::size_type>(a.dimension(dim)); ++i)
@@ -226,6 +227,7 @@ fillMassMatrix (const PHAL::Workset& workset, const BasisField& bf,
     }
   }
   M_factory_->fillComplete();
+  auto indexer = Albany::createGlobalLocalIndexer(M_->range());
   for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
     for (size_type rnode = 0; rnode < num_node; ++rnode) {
       Teuchos::Array<ST> vals;
@@ -236,7 +238,7 @@ fillMassMatrix (const PHAL::Workset& workset, const BasisField& bf,
         vals.push_back(v);
       }
       const GO grow = workset.wsElNodeID[cell][rnode];
-      const LO lrow = Albany::getLocalElement(M_->range(),grow);
+      const LO lrow = indexer->getLocalElement(grow);
       Albany::setLocalRowValues(M_,lrow,vals);
     }
   }
@@ -257,11 +259,12 @@ fillRhs (const PHX::MDField<const RealType>& f_G_qp, Manager::Field& f,
     }
   }
 
+  auto indexer = Albany::createGlobalLocalIndexer(f.data_->mv[0]->range());
   const Transformation::Enum transformation = f.data_->transformation;
   for (int cell = 0; cell < (int) workset.numCells; ++cell) {
     for (int node = 0; node < num_node; ++node) {
       const GO grow = workset.wsElNodeID[cell][node];
-      const LO lrow = Albany::getLocalElement(f.data_->mv[0]->range(),grow);
+      const LO lrow = indexer->getLocalElement(grow);
       for (int qp = 0; qp < num_qp; ++qp) {
         switch (rank) {
           case 0:
@@ -355,6 +358,7 @@ interp (const Manager::Field& f, const PHAL::Workset& workset,
   Albany::MDArray* mdas[2]; mdas[0] = &mda1; mdas[1] = &mda2;
   const int nmv = f.num_g_fields;
 
+  auto indexer = Albany::createGlobalLocalIndexer(ol_node_vs_);
   for (int cell = 0; cell < (int) workset.numCells; ++cell)
     for (int qp = 0; qp < num_qp; ++qp) {
       switch (rank) {
@@ -368,7 +372,7 @@ interp (const Manager::Field& f, const PHAL::Workset& workset,
             mda1(cell, qp, i, j) = 0;
         for (int node = 0; node < num_node; ++node) {
           const GO grow = workset.wsElNodeID[cell][node];
-          const LO row = Albany::getLocalElement(ol_node_vs_,grow);
+          const LO row = indexer->getLocalElement(grow);
           for (int i = 0, col = 0; i < ndim; ++i) {
             for (int fi = 0; fi < nmv; ++fi) {
               auto data = Albany::getLocalData(f.data_->mv[fi].getConst());
@@ -1022,12 +1026,13 @@ void testProjector (
     p.project(f);
 
     if (test == 0) { // Compare with true values at NP.
+      auto indexer = Albany::createGlobalLocalIndexer(pc.get_node_vs());
       const int ncol = 9, nverts = pc.get_node_vs()->dim();
       std::vector<RealType> f_true(ncol * nverts); {
         std::vector<bool> evaled(nverts, false);
         loop(f_mdf, cell, 0) loop(coord_vert, node, 1) {
           const GO gid = workset.wsElNodeID[cell][node];
-          const LO lid = Albany::getLocalElement(pc.get_node_vs(),gid);
+          const LO lid = indexer->getLocalElement(gid);
           if ( ! evaled[lid]) {
             for (int k = 0; k < ncol; ++k)
               f_true[ncol*lid + k] = eval_f(

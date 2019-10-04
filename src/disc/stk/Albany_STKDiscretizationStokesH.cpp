@@ -10,6 +10,7 @@
 #include "Albany_NodalGraphUtils.hpp"
 #include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_BucketArray.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #include <string>
 #include <iostream>
@@ -71,6 +72,7 @@ void STKDiscretizationStokesH::computeGraphs()
   int numLayers = layeredMeshNumbering.numLayers;
 
   GO row, col;
+  auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
   for (std::size_t i=0; i < cells.size(); i++) {
     stk::mesh::Entity e = cells[i];
     stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
@@ -97,18 +99,18 @@ void STKDiscretizationStokesH::computeGraphs()
         row = this->getGlobalDOF(this->gid(rowNode), n3dEq);
         GO node_gid = this->gid(rowNode);
         LO base_id, ilayer;
-        int node_lid = getLocalElement(m_overlap_node_vs,node_gid);
+        int node_lid = ov_node_indexer->getLocalElement(node_gid);
         layeredMeshNumbering.getIndices(node_lid, base_id, ilayer);
         if(ilayer == 0) {
           for (std::size_t l=0; l < num_nodes; l++) {
             stk::mesh::Entity colNode = node_rels[l];
             node_gid = this->gid(colNode);
-            node_lid = getLocalElement(m_overlap_node_vs,node_gid);
+            node_lid = ov_node_indexer->getLocalElement(node_gid);
             layeredMeshNumbering.getIndices(node_lid, base_id, ilayer);
             if(ilayer == 0) {
               for (int il_col=0; il_col<numLayers+1; il_col++) {
                 LO inode = layeredMeshNumbering.getId(base_id, il_col);
-                GO gnode = getGlobalElement(m_overlap_node_vs,inode);
+                GO gnode = ov_node_indexer->getGlobalElement(inode);
                 for (std::size_t m=0; m < n3dEq; m++) {
                   col = getGlobalDOF(gnode, m);
                   m_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));

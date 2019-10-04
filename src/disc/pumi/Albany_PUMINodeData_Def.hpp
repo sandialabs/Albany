@@ -6,6 +6,7 @@
 
 #include "Albany_PUMINodeData.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 namespace Albany
 {
@@ -95,14 +96,16 @@ saveFieldVector(const Teuchos::RCP<const Thyra_MultiVector>& overlap_node_vec,
 {
   const auto& overlap_node_vs = overlap_node_vec->range();
 
+  auto node_vs_indexer    = Albany::createGlobalLocalIndexer(m_local_node_vs);
+  auto ov_node_vs_indexer = Albany::createGlobalLocalIndexer(overlap_node_vs);
   // loop over the dofs at this node
   for(int j=0; j<this->nfield_dofs; ++j) {
     auto const_overlap_node_view = getLocalData(overlap_node_vec->col(offset + j));
 
     // loop over all the nodes owned by this processor
     for(LO i=0; i<m_local_node_vs->localSubDim(); ++i)  {
-      const GO node_gid = getGlobalElement(m_local_node_vs,i);
-      const LO overlap_node_lid = getLocalElement(overlap_node_vs,node_gid);
+      const GO node_gid         = node_vs_indexer->getGlobalElement(i);
+      const LO overlap_node_lid = ov_node_vs_indexer->getLocalElement(node_gid);
 
       this->buffer[i * this->nfield_dofs + j] = const_overlap_node_view[overlap_node_lid];
     }

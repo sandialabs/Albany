@@ -10,6 +10,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_NodalDOFManager.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -80,13 +81,14 @@ evaluateFields(typename Traits::EvalData workset)
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
   }
 
+  auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     // const int neq = nodeID.extent(2);
     // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
+      const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
       MeshScalarT h;
@@ -168,13 +170,14 @@ evaluateFields(typename Traits::EvalData workset)
   for(int i=1; i<numLayers; ++i)
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
 
+  auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     // const int neq = nodeID.extent(2); 
     // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),elNodeID[node]);
+      const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
 //      MeshScalarT h = std::max(H(cell,node), MeshScalarT(minH));

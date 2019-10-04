@@ -34,7 +34,7 @@ class Schwarz_BoundaryJacobian : public Thyra_LinearOp
       int const this_app_index    = 0,
       int const coupled_app_index = 0);
 
-  ~Schwarz_BoundaryJacobian();
+  ~Schwarz_BoundaryJacobian() = default;
 
   /// Initialize the operator with everything needed to apply it
   // FIXME: add arguments

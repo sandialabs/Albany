@@ -18,6 +18,7 @@
 #include "Albany_Application.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_CombineAndScatterManager.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 namespace Albany
 {
@@ -99,16 +100,18 @@ private:
     const Teuchos::ArrayRCP<double>& ov_coords = disc->getCoordinates();
     Teuchos::RCP<const Thyra_SpmdVectorSpace> ov_node_vs = getSpmdVectorSpace(disc->getOverlapNodeVectorSpace());
     Teuchos::RCP<const Thyra_SpmdVectorSpace> node_vs = getSpmdVectorSpace(disc->getNodeVectorSpace());
+    auto ov_node_indexer = createGlobalLocalIndexer(ov_node_vs);
+    auto node_indexer = createGlobalLocalIndexer(node_vs);
     ndim = disc->getNumDim();
     const int neq = disc->getNumEq();
     for (int i=0; i<eq_gids.size(); ++i) {
       const GO node_gid = eq_gids[i] / neq;
-      if (!locallyOwnedComponent(node_vs,node_gid)) {
+      if (!node_indexer->isLocallyOwnedElement(node_gid)) {
         continue;
       }
       idxs.push_back(i);
       node_gids.push_back(node_gid);
-      const LO ov_node_lid = getLocalElement(ov_node_vs,node_gid);
+      const LO ov_node_lid = ov_node_indexer->getLocalElement(node_gid);
       coords.push_back(Point());
       for (int j = 0; j < ndim; ++j) {
         // 3 is used regardless of ndim.
@@ -251,12 +254,12 @@ evaluateGradient(const double /*current_time*/,
   if (!dg_dx.is_null()) {
     dg_dx->assign(0.0);
 
-    Teuchos::RCP<const Thyra_VectorSpace> replicatedVS = cas_manager->getOverlappedVectorSpace();
-    Teuchos::RCP<const Thyra_VectorSpace> derivVS = dg_dx->range();
+    auto ov_vs_indexer = createGlobalLocalIndexer(cas_manager->getOverlappedVectorSpace());
+    auto deriv_vs_indexer = createGlobalLocalIndexer(dg_dx->range());
     const int colCount = dg_dx->domain()->dim();
     for (int icol = 0; icol < colCount; ++icol) {
-      const GO gid = getGlobalElement(replicatedVS,icol);
-      const LO lid = getLocalElement(derivVS,gid);
+      const GO gid = ov_vs_indexer->getGlobalElement(icol);
+      const LO lid = deriv_vs_indexer->getLocalElement(gid);
       if (lid != -1) {
         auto dg_dx_localview = getNonconstLocalData(dg_dx->col(icol));
         dg_dx_localview[lid] = 1.0;

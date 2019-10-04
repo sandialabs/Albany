@@ -207,24 +207,24 @@ namespace Aeras
     ~SpectralDiscretization();
 
     //! Get node vector space (owned and overlapped)   
-    Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const; 
-    Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace() const; 
+    Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const override; 
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace() const override; 
 
     //! Get solution DOF vector space (owned and overlapped)  
-    Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace        () const; 
-    Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace () const; 
+    Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace        () const override; 
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace () const override; 
 
     //! Get Field node vector space (owned and overlapped)  
-    Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace        (const std::string& field_name) const;
-    Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace (const std::string& field_name) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace        (const std::string& field_name) const override;
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace (const std::string& field_name) const override;
 
     //! Get Field vector space (owned and overlapped)  
-    Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace        (const std::string& field_name) const;
-    Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace (const std::string& field_name) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace        (const std::string& field_name) const override;
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace (const std::string& field_name) const override;
 
     //! Create a Jacobian operator (owned and overlapped)
-    Teuchos::RCP<Thyra_LinearOp> createJacobianOp        () const {return m_jac_factory->createOp(); }
-    Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const { return m_overlap_jac_factory->createOp(); }
+    Teuchos::RCP<Thyra_LinearOp> createJacobianOp        () const override {return m_jac_factory->createOp(); }
+    Teuchos::RCP<Thyra_LinearOp> createOverlapJacobianOp () const override { return m_overlap_jac_factory->createOp(); }
 
     //! Create implicit Jacobian operator (owned and overlapped) (for Aeras)
     Teuchos::RCP<Thyra_LinearOp> createImplicitJacobianOp        () const { return m_implicit_jac_factory->createOp();         }
@@ -252,21 +252,21 @@ namespace Aeras
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID,
     //! works for both scalar and vector fields  
     const std::vector<Albany::IDArray>&
-    getElNodeEqID(const std::string& field_name) const override
+    getElNodeEqID(const std::string& /* field_name */) const override
     {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::SpectralDiscretization: getElNodeEqID(const std::string& field_name) const not implemented");
     }
 
     const Albany::NodalDOFManager&
-    getDOFManager(const std::string& field_name) const override
+    getDOFManager(const std::string& /* field_name */) const override
     {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::SpectralDiscretization: getDOFManager(const std::string& field_name) const not implemented");
     }
 
     const Albany::NodalDOFManager&
-    getOverlapDOFManager(const std::string& field_name) const override
+    getOverlapDOFManager(const std::string& /* field_name */) const override
     {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::SpectralDiscretization: getOverlapDOFManager(const std::string& field_name) const not implemented");
@@ -460,7 +460,7 @@ namespace Aeras
 
     const stk::mesh::BulkData& getSTKBulkData() { return bulkData; }
 
-    Teuchos::RCP<Albany::LayeredMeshNumbering<LO> > getLayeredMeshNumbering() const 
+    Teuchos::RCP<Albany::LayeredMeshNumbering<LO> > getLayeredMeshNumbering() const override
     {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::SpectralDiscretization: getLayeredMeshNumbering() not implemented");

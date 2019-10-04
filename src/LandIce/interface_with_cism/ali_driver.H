@@ -13,7 +13,6 @@
 
 #include "DyCoreModelRegistry.H"
 
-class DycoreToGlimmer;
 class AliToGlimmer : public DyCoreToGlimmer
 {
   private:

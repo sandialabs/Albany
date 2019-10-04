@@ -9,8 +9,9 @@
 
 #include "Albany_Application.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
-#include "Teuchos_TestForException.hpp"
+#include <Teuchos_TestForException.hpp>
 
 #include <functional>
 
@@ -495,6 +496,7 @@ void Aggregator_Scaled::Evaluate()
 
     Teuchos::RCP<Thyra_Vector> deriv = derivAggregated[itopo];
     deriv->assign(0.0);
+    auto deriv_range_indexer = Albany::createGlobalLocalIndexer(deriv->range());
 
     auto deriv_data = Albany::getNonconstLocalData(deriv);
     for (int sv=0; sv<numDerivatives; ++sv) {
@@ -506,7 +508,7 @@ void Aggregator_Scaled::Evaluate()
         const int numNodes = derSrc.dimension(1);
         for (int cell=0; cell<numCells; ++cell) {
           for (int node=0; node<numNodes; ++node) {
-            const LO lid = Albany::getLocalElement(deriv->range(),wsElNodeID[ws][cell][node]);
+            const LO lid = deriv_range_indexer->getLocalElement(wsElNodeID[ws][cell][node]);
             deriv_data[lid] += scaleValueAggregated*normalize[sv]*weights[sv]*derSrc(cell,node);
           }
         }
@@ -567,6 +569,7 @@ void Aggregator_Extremum<CompareType>::Evaluate()
 
       Teuchos::RCP<Thyra_Vector> deriv = derivAggregated[itopo];
       deriv->assign(0.0);
+      auto deriv_range_indexer = Albany::createGlobalLocalIndexer(deriv->range());
       auto deriv_data = Albany::getNonconstLocalData(deriv);
 
       for (int ws=0; ws<numWorksets; ++ws) {
@@ -575,7 +578,7 @@ void Aggregator_Extremum<CompareType>::Evaluate()
         int numNodes = derSrc.dimension(1);
         for (int cell=0; cell<numCells; ++cell) {
           for (int node=0; node<numNodes; ++node) {
-            const LO lid = Albany::getLocalElement(deriv->range(),wsElNodeID[ws][cell][node]);
+            const LO lid = deriv_range_indexer->getLocalElement(wsElNodeID[ws][cell][node]);
             deriv_data[lid] += derSrc(cell,node);
           }
         }

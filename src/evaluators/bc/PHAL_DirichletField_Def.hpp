@@ -12,6 +12,7 @@
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #include "PHAL_DirichletField.hpp"
 
@@ -63,10 +64,11 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::ArrayRCP<ST>       f_nonconstView = Albany::getNonconstLocalData(f);
 
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  auto field_node_indexer = Albany::createGlobalLocalIndexer(fieldNodeVs);
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
       GO node_gid = nsNodesGIDs[inode];
-      int lfield = fieldDofManager.getLocalDOF(Albany::getLocalElement(fieldNodeVs,node_gid),fieldOffset);
+      int lfield = fieldDofManager.getLocalDOF(field_node_indexer->getLocalElement(node_gid),fieldOffset);
       f_nonconstView[lunk] = x_constView[lunk] - p_constView[lfield];
   }
 }
@@ -117,6 +119,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::Array<ST> matrixEntries;
   Teuchos::Array<LO> matrixIndices;
 
+  auto field_node_indexer = Albany::createGlobalLocalIndexer(fieldNodeVs);
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     int lunk = nsNodes[inode][this->offset];
     index[0] = lunk;
@@ -129,7 +132,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
     if (fillResid) {
       GO node_gid = nsNodesGIDs[inode];
-      int lfield = fieldDofManager.getLocalDOF(Albany::getLocalElement(fieldNodeVs,node_gid),fieldOffset);
+      int lfield = fieldDofManager.getLocalDOF(field_node_indexer->getLocalElement(node_gid),fieldOffset);
       f_nonconstView[lunk] = x_constView[lunk] - p_constView[lfield];
     }
   }
@@ -189,12 +192,13 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
+  auto field_node_indexer = Albany::createGlobalLocalIndexer(fieldNodeVs);
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     int lunk = nsNodes[inode][this->offset];
 
     if (f != Teuchos::null) {
       GO node_gid = nsNodesGIDs[inode];
-      int lfield = fieldDofManager.getLocalDOF(Albany::getLocalElement(fieldNodeVs,node_gid),fieldOffset);
+      int lfield = fieldDofManager.getLocalDOF(field_node_indexer->getLocalElement(node_gid),fieldOffset);
       f_nonconstView[lunk] = x_constView[lunk] - p_constView[lfield];
     }
 
@@ -248,10 +252,11 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
       int fieldOffset = isFieldScalar ? 0 : this->offset;
       const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
       Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
+      auto field_node_indexer = Albany::createGlobalLocalIndexer(fieldNodeVs);
       for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
         int lunk = nsNodes[inode][this->offset];
         GO node_gid = nsNodesGIDs[inode];
-        int lfield = fieldDofManager.getLocalDOF(Albany::getLocalElement(fieldNodeVs,node_gid),fieldOffset);
+        int lfield = fieldDofManager.getLocalDOF(field_node_indexer->getLocalElement(node_gid),fieldOffset);
         for (int col=0; col<num_cols; ++col) {
           fpV_nonconst2dView[col][lfield] -= Vp_nonconst2dView[col][lunk];
           Vp_nonconst2dView[col][lunk] = 0.0;
@@ -277,10 +282,11 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
       bool isFieldScalar = (fieldNodeVs->dim() == fieldVs->dim());
       int fieldOffset = isFieldScalar ? 0 : this->offset;
       const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
+      auto field_node_indexer = Albany::createGlobalLocalIndexer(fieldNodeVs);
       for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
         int lunk = nsNodes[inode][this->offset];
         GO node_gid = nsNodesGIDs[inode];
-        int lfield = fieldDofManager.getLocalDOF(Albany::getLocalElement(fieldNodeVs,node_gid),fieldOffset);
+        int lfield = fieldDofManager.getLocalDOF(field_node_indexer->getLocalElement(node_gid),fieldOffset);
         for (int col=0; col<num_cols; ++col) {
           fpV_nonconst2dView[col][lunk] -= Vp_const2dView[col][lfield];
         }

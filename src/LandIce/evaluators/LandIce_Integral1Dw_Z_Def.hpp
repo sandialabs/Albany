@@ -14,6 +14,7 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #include "LandIce_Integral1Dw_Z.hpp"
 
@@ -101,11 +102,12 @@ evaluateFields(typename Traits::EvalData workset)
   const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
   LO baseId, ilayer;
   std::map<LO,std::pair<std::size_t,std::size_t> > basalCellsMap;
+  auto indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
   for ( std::size_t cell = 0; cell<workset.numCells; ++cell) {
     const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),nodeID[node]);
+      LO lnodeId = indexer->getLocalElement(nodeID[node]);
       layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
 
       if(ilayer==0) {
@@ -128,7 +130,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),nodeID[node]);
+      LO lnodeId = indexer->getLocalElement(nodeID[node]);
       layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
       this->int1Dw_z(cell,node) += this->basal_velocity(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
     }
@@ -163,11 +165,12 @@ evaluateFields(typename Traits::EvalData workset)
   LO baseId, ilevel, baseId_curr, ilevel_curr;
   std::map<LO,std::pair<std::size_t,std::size_t> > basalCellsMap;
 
+  auto indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
   for (std::size_t cell=0; cell<workset.numCells; ++cell) {
     const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),nodeID[node]);
+      LO lnodeId = indexer->getLocalElement(nodeID[node]);
       layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
 
       if(ilevel==0) {
@@ -190,7 +193,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = Albany::getLocalElement(workset.disc->getOverlapNodeVectorSpace(),nodeID[node]);
+      LO lnodeId = indexer->getLocalElement(nodeID[node]);
       layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
 
       // TODO implement the derivative for the extra term mb
