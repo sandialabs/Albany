@@ -896,6 +896,20 @@ class Topology
     return is_boundary_cell(e) == true && is_open(e) == true;
   }
 
+  int
+  get_proc_rank()
+  {
+    stk::ParallelMachine communicator = MPI_COMM_WORLD;
+    return stk::parallel_machine_rank(communicator);
+  }
+
+  stk::mesh::EntityId
+  get_gid(stk::mesh::Entity e)
+  {
+    auto& bulk_data = get_bulk_data();
+    return bulk_data.identifier(e);
+  }
+
   bool
   there_are_failed_cells();
 
