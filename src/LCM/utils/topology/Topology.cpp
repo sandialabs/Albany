@@ -6,6 +6,7 @@
 #include "Topology.h"
 #include <stk_mesh/base/FEMHelpers.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
+#include <stk_mesh/base/SkinMesh.hpp>
 #include "Subgraph.h"
 #include "Topology_FailureCriterion.h"
 #include "Topology_Utils.h"
@@ -186,12 +187,6 @@ Topology::setBoundaryIndicator()
   for (auto cell : cells) {
     auto const bi = is_boundary_cell(cell) == true ? EXTERIOR : INTERIOR;
     set_boundary_indicator(cell, bi);
-    if (bi == EXTERIOR) {
-      auto proc_rank = get_proc_rank();
-      auto gid       = get_gid(cell) - 1;
-      std::cout << "**** DEBUG TOPO PROC GID: " << proc_rank << " "
-                << std::setw(3) << std::setfill('0') << gid << "\n";
-    }
   }
 }
 
@@ -301,12 +296,36 @@ Topology::getCellVolume(stk::mesh::Entity const cell)
 }
 
 //
+// Create boundary
+//
+void
+Topology::createBoundary()
+{
+  stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
+  stk::mesh::EntityRank const face_rank = stk::topology::FACE_RANK;
+  auto&                       bulk_data = get_bulk_data();
+  auto&                       meta_data = get_meta_data();
+  stk::mesh::Part& del_part = meta_data.declare_part("Boundary", face_rank);
+  stk::mesh::Part& locally_owned = meta_data.locally_owned_part();
+  stk::mesh::PartVector add_parts(1, &del_part);
+  stk::mesh::skin_mesh(bulk_data, add_parts);
+  stk::mesh::Selector            del_selector = del_part & locally_owned;
+  const stk::mesh::BucketVector& face_buckets = bulk_data.buckets(face_rank);
+  stk::mesh::EntityVector        boundary_faces;
+  stk::mesh::get_selected_entities(del_selector, face_buckets, boundary_faces);
+  boundary_.clear();
+  for (auto face : boundary_faces) { boundary_.emplace(face); }
+}
+
+//
 // Create the full mesh representation. This must be done prior to
 // the adaptation query.
 //
 void
 Topology::graphInitialization()
 {
+  // Create boundary first
+  createBoundary();
   auto& bulk_data = get_bulk_data();
   set_output_type(UNIDIRECTIONAL_MULTILEVEL);
   createAllLevelsRelations();
@@ -1331,6 +1350,7 @@ Topology::erodeFailedElements()
   bulk_data.modification_end();
   Albany::fix_node_sharing(bulk_data);
   initializeCellFailureState();
+  createBoundary();
   setBoundaryIndicator();
 
   return eroded_volume;
@@ -1834,9 +1854,8 @@ bool
 Topology::is_internal(stk::mesh::Entity e)
 {
   assert(get_bulk_data().entity_rank(e) == get_boundary_rank());
-  size_t const number_in_edges = get_bulk_data().num_elements(e);
-  assert(number_in_edges == 1 || number_in_edges == 2);
-  return number_in_edges == 2;
+  auto iter = boundary_.find(e);
+  return iter == boundary_.end();
 }
 
 bool

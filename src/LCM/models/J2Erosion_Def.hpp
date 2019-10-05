@@ -353,15 +353,15 @@ J2ErosionKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   }
 
-  if (is_at_boundary == true) {
-    auto const proc_rank = Albany::getProcRank();
-    auto       ws_lid    = std::make_pair(ws_index_, cell);
-    auto       iter      = elemWsLIDGIDMap_.find(ws_lid);
-    ALBANY_ASSERT(iter != elemWsLIDGIDMap_.end());
-    auto gid = iter->second;
-    std::cout << "**** DEBUG MATE PROC GID: " << proc_rank << " "
-              << std::setw(3) << std::setfill('0') << gid << "\n";
-  }
+  // if (is_at_boundary == true) {
+  //   auto const proc_rank = Albany::getProcRank();
+  //   auto       ws_lid    = std::make_pair(ws_index_, cell);
+  //   auto       iter      = elemWsLIDGIDMap_.find(ws_lid);
+  //   ALBANY_ASSERT(iter != elemWsLIDGIDMap_.end());
+  //   auto gid = iter->second;
+  //   std::cout << "**** DEBUG MATE PROC GID: " << proc_rank << " "
+  //             << std::setw(3) << std::setfill('0') << gid << "\n";
+  // }
 
   // fill local tensors
   F.fill(def_grad_, cell, pt, 0, 0);
