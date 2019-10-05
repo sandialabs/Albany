@@ -33,6 +33,7 @@
 #include <Piro_PerformSolve.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <Kokkos_Core.hpp>
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -589,6 +590,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
      //The way it worked out, uVel_ptr and vVel_ptr have more nodes than the nodes in the mesh passed to Albany/CISM for the solve.  In particular,
      //there is 1 row of halo elements in uVel_ptr and vVel_ptr.  To account for this, we copy uVel_ptr and vVel_ptr into std::vectors, which do not have the halo elements.
+     auto indexer = Albany::createGlobalLocalIndexer(nodeVS);
      std::vector<double> uvel_vec(upn*nNodesProc2D);
      std::vector<double> vvel_vec(upn*nNodesProc2D);
      int counter1 = 0;
@@ -599,7 +601,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
          for (int k=0; k<upn; k++) {
            if (j >= nhalo-1 & j < nsn-nhalo) {
              if (i >= nhalo-1 & i < ewn-nhalo) {
-               local_nodeID = Albany::getLocalElement(nodeVS, cismToAlbanyNodeNumberMap[counter1]);
+               local_nodeID = indexer->getLocalElement(cismToAlbanyNodeNumberMap[counter1]);
                uvel_vec[counter1] = uVel_ptr[counter2];
                vvel_vec[counter1] = vVel_ptr[counter2];
                counter1++;
@@ -616,7 +618,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
      for (int i=0; i<nElementsActive; i++) {
        for (int j=0; j<8; j++) {
         int node_GID =  global_element_conn_active_Ptr[i + nElementsActive*j]; //node_GID is 1-based
-        auto node_LID = Albany::getLocalElement(nodeVS, node_GID); 
+        auto node_LID = indexer->getLocalElement(node_GID);
         stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, node_GID);
         double* sol = stk::mesh::field_data(*solutionField, node);
         //IK, 3/18/14: added division by velScale to convert uvel and vvel from dimensionless to having units of m/year (the Albany units)
