@@ -21,17 +21,19 @@ typename std::conditional<std::is_const<BucketArrayType>::value,const double&, d
 access (BucketArrayType& array, const int i, const int j);
 
 template<>
-const double& access<const BucketArray<AbstractSTKFieldContainer::ScalarFieldType>> (const BucketArray<AbstractSTKFieldContainer::ScalarFieldType>& array, const int /* j */, const int i)
+const double& access<const BucketArray<AbstractSTKFieldContainer::ScalarFieldType>> (const BucketArray<AbstractSTKFieldContainer::ScalarFieldType>& array, const int j, const int i)
 {
   ALBANY_EXPECT (j==0, "Error! Attempting to access 1d array with two indices.\n");
+  (void)j;
   return array(i);
 }
 
 
 template<>
-double& access<BucketArray<AbstractSTKFieldContainer::ScalarFieldType>> (BucketArray<AbstractSTKFieldContainer::ScalarFieldType>& array, const int /* j */, const int i)
+double& access<BucketArray<AbstractSTKFieldContainer::ScalarFieldType>> (BucketArray<AbstractSTKFieldContainer::ScalarFieldType>& array, const int j, const int i)
 {
   ALBANY_EXPECT (j==0, "Error! Attempting to access 1d array with two indices.\n");
+  (void) j;
   return array(i);
 }
 
