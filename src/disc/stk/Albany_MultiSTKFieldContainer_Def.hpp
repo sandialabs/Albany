@@ -46,8 +46,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     const Teuchos::RCP<stk::mesh::MetaData>&    metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&    bulkData_,
     const int                                   neq_,
-    const AbstractFieldContainer::FieldContainerRequirements&
-        /* req */,  // TODO: remove this altogether?
+    const AbstractFieldContainer::FieldContainerRequirements& req,  // TODO: remove this altogether?
               // AM: No, used in LCM for crystal plasticity and ACE
     const int                                          numDim_,
     const Teuchos::RCP<StateInfoStruct>&               sis,
