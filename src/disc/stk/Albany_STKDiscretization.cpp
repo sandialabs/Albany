@@ -1662,6 +1662,16 @@ STKDiscretization::computeNodalVectorSpaces(bool overlapped)
             (overlapped) ? dofs_struct->overlap_vs : dofs_struct->vs;
         vs = createVectorSpace(comm, indices());
       }
+
+      // Create the Global-Local indexers
+      if (overlapped) {
+        dofs_struct->overlap_node_vs_indexer = createGlobalLocalIndexer(dofs_struct->overlap_node_vs);
+        dofs_struct->overlap_vs_indexer = createGlobalLocalIndexer(dofs_struct->overlap_vs);
+
+      } else {
+        dofs_struct->node_vs_indexer = createGlobalLocalIndexer(dofs_struct->node_vs);
+        dofs_struct->vs_indexer      = createGlobalLocalIndexer(dofs_struct->vs);
+      }
     }
   }
 }
@@ -1728,8 +1738,8 @@ void
 STKDiscretization::computeGraphsUpToFillComplete()
 {
   std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
-  int                                       nodes_per_element =
-      metaData.get_cell_topology(*(pv->second)).getNodeCount();
+  const auto& topo = stk::mesh::get_cell_topology(metaData.get_topology(*pv->second));
+  int nodes_per_element = topo.getNodeCount();
 
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map,
   // coordinates, graphs
@@ -2100,7 +2110,7 @@ STKDiscretization::computeWorksetInfo()
 
       for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
            ++it) {
-        auto ov_indexer = createGlobalLocalIndexer(it->second.overlap_vs);
+        const auto& ov_indexer = it->second.overlap_vs_indexer;
         IDArray&  wsElNodeEqID_array = it->second.wsElNodeEqID[b];
         GIDArray& wsElNodeID_array   = it->second.wsElNodeID[b];
         int       nComp              = it->first.second;
