@@ -14,6 +14,8 @@
 
 namespace Albany {
 
+class GlobalLocalIndexer;
+
 template<class FieldType>
 struct STKFieldContainerHelper
 {
@@ -23,14 +25,14 @@ struct STKFieldContainerHelper
   // offset must be less than the dimension of the field.
   static void fillVector (Thyra_Vector& field_thyra,
                           const FieldType& field_stk,
-                          const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+                          const Teuchos::RCP<const GlobalLocalIndexer>& node_vs,
                           const stk::mesh::Bucket& bucket,
                           const NodalDOFManager& nodalDofManager,
                           const int offset);
 
   static void saveVector (const Thyra_Vector& field_thyra,
                           FieldType& field_stk,
-                          const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+                          const Teuchos::RCP<const GlobalLocalIndexer>& node_vs,
                           const stk::mesh::Bucket& bucket,
                           const NodalDOFManager& nodalDofManager,
                           const int offset);

@@ -21,7 +21,7 @@ typename std::conditional<std::is_const<BucketArrayType>::value,const double&, d
 access (BucketArrayType& array, const int i, const int j);
 
 template<>
-const double& access<const BucketArray<AbstractSTKFieldContainer::ScalarFieldType>> (const BucketArray<AbstractSTKFieldContainer::ScalarFieldType>& array, const int j, const int i)
+const double& access<const BucketArray<AbstractSTKFieldContainer::ScalarFieldType>> (const BucketArray<AbstractSTKFieldContainer::ScalarFieldType>& array, const int /* j */, const int i)
 {
   ALBANY_EXPECT (j==0, "Error! Attempting to access 1d array with two indices.\n");
   return array(i);
@@ -29,7 +29,7 @@ const double& access<const BucketArray<AbstractSTKFieldContainer::ScalarFieldTyp
 
 
 template<>
-double& access<BucketArray<AbstractSTKFieldContainer::ScalarFieldType>> (BucketArray<AbstractSTKFieldContainer::ScalarFieldType>& array, const int j, const int i)
+double& access<BucketArray<AbstractSTKFieldContainer::ScalarFieldType>> (BucketArray<AbstractSTKFieldContainer::ScalarFieldType>& array, const int /* j */, const int i)
 {
   ALBANY_EXPECT (j==0, "Error! Attempting to access 1d array with two indices.\n");
   return array(i);
@@ -65,7 +65,7 @@ template<class FieldType>
 void STKFieldContainerHelper<FieldType>::
 fillVector (Thyra_Vector&    field_thyra,
             const FieldType& field_stk,
-            const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+            const Teuchos::RCP<const GlobalLocalIndexer>& indexer,
             const stk::mesh::Bucket& bucket,
             const NodalDOFManager& nodalDofManager,
             const int offset)
@@ -90,7 +90,6 @@ fillVector (Thyra_Vector&    field_thyra,
   if (is_SFT == true) num_vec_components = 1; 
   else num_vec_components = nodalDofManager.numComponents();
 
-  auto indexer = createGlobalLocalIndexer(node_vs);
   for(int i=0; i<num_nodes_in_bucket; ++i)  {
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
     const LO node_lid = indexer->getLocalElement(node_gid);
@@ -105,7 +104,7 @@ template<class FieldType>
 void STKFieldContainerHelper<FieldType>::
 saveVector(const Thyra_Vector& field_thyra,
            FieldType& field_stk,
-           const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+           const Teuchos::RCP<const GlobalLocalIndexer>& indexer,
            const stk::mesh::Bucket& bucket,
            const NodalDOFManager& nodalDofManager,
            const int offset)
@@ -130,7 +129,6 @@ saveVector(const Thyra_Vector& field_thyra,
   if (is_SFT == true) num_vec_components = 1; 
   else num_vec_components = nodalDofManager.numComponents();
 
-  auto indexer = createGlobalLocalIndexer(node_vs);
   for(int i=0; i<num_nodes_in_bucket; ++i) {
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
     const LO node_lid = indexer->getLocalElement(node_gid);
