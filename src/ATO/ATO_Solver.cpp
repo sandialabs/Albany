@@ -765,7 +765,7 @@ void Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
   const auto& wsEBNames  = disc->getWsEBNames();
   const auto& wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
 
-  auto indexer = Albany::createGlobalLocalIndexer(m_localNodeVS);
+  auto indexer = Albany::createGlobalLocalIndexer(m_overlapNodeVS);
   const int ntopos = m_topologyInfoStructs.size();
   for (int itopo=0; itopo<ntopos; ++itopo) {
     Teuchos::RCP<TopologyInfoStruct> topoStruct = m_topologyInfoStructs[itopo];
