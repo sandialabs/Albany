@@ -1,6 +1,15 @@
 
+cmake_minimum_required (VERSION 2.8)
+set (CTEST_DO_SUBMIT ON)
+set (CTEST_TEST_TYPE Nightly)
+
+# What to build and test
+set (DOWNLOAD FALSE)
+set (BUILD_ALBANY FALSE)
+set (BUILD_CISM_PISCEES TRUE)
+
 # Begin User inputs:
-set (CTEST_SITE "mockba.ca.sandia.gov" ) # generally the output of hostname
+set (CTEST_SITE "camobap.ca.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
