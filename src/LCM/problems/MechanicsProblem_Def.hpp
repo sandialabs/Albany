@@ -205,7 +205,9 @@ MechanicsProblem::constructEvaluators(
   pFromProb->set<bool>("Use Composite Tet 10", composite_);
 
   // set flag for small strain option
-  bool small_strain{material_model_name == "Linear Elastic"};
+  bool small_strain =
+      material_model_name == "Linear Elastic" ||
+      material_model_name == "Linear Elastic Volumetric Deviatoric";
 
   if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
     small_strain = true;
