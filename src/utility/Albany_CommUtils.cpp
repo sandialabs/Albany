@@ -57,8 +57,11 @@ Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) 
 
 }
 
-Teuchos::RCP<Teuchos::Comm<int> > createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
-  return Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mc)));
+Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
+  // The default tag in the MpiComm is used in Teuchos send/recv operations *only if* the user
+  // does not specify a tag for the message. Here, I pick a weird large number, unlikely
+  // to ever be hit by a tag used by albany.
+  return Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mc),1984));
 }
 
 #else

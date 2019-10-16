@@ -59,7 +59,7 @@ Topology::Topology(
   Teuchos::RCP<Teuchos::ParameterList> adapt_params =
       Teuchos::sublist(problem_params, "Adaptation");
 
-  Teuchos::RCP<Teuchos_Comm> communicatorT =
+  Teuchos::RCP<const Teuchos_Comm> communicatorT =
       Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
   adapt_params->set<std::string>("Method", "Topmod");
   std::string const bulk_block_name = "Bulk Element";
@@ -524,7 +524,7 @@ Topology::restoreElementToNodeConnectivity()
   Albany::STKDiscretization& stk_discretization =
       static_cast<Albany::STKDiscretization&>(*discretization_);
 
-  Teuchos::RCP<Teuchos_Comm> communicatorT =
+  Teuchos::RCP<const Teuchos_Comm> communicatorT =
       Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   Albany::fix_node_sharing(get_bulk_data());

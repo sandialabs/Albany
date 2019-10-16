@@ -35,7 +35,7 @@ Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Co
 
 Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
 
-Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
+Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
 
 Teuchos::RCP<const Teuchos_Comm>
 createTeuchosCommFromThyraComm(const Teuchos::RCP<const Teuchos::Comm<Teuchos::Ordinal>>& tc_in);

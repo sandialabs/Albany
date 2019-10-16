@@ -16,7 +16,7 @@ NOX::StatusTest::ModelEvaluatorFlag::~ModelEvaluatorFlag() {}
 
 NOX::StatusTest::StatusType
 NOX::StatusTest::ModelEvaluatorFlag::checkStatus(
-    const Solver::Generic&     problem,
+    const Solver::Generic&     /* problem */,
     NOX::StatusTest::CheckType checkType)
 {
   syncFlag();
@@ -63,7 +63,7 @@ NOX::StatusTest::ModelEvaluatorFlag::syncFlag()
     localVal[0] = 3;
   }
 
-  Teuchos::RCP<Teuchos_Comm> teuchosComm =
+  Teuchos::RCP<const Teuchos_Comm> teuchosComm =
       Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
   Teuchos::reduceAll(
       *teuchosComm, Teuchos::REDUCE_MAX, 1, &localVal[0], &globalVal[0]);

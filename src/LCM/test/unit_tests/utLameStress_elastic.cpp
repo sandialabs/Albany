@@ -139,7 +139,7 @@ TEUCHOS_UNIT_TEST(LameStress_elastic, Instantiation)
   discretizationParameterList->set<int>("Number Of Time Derivatives", 0);
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name", "unitTestOutput.exo");  // Is this required?
-  Teuchos::RCP<Teuchos_Comm> commT =
+  Teuchos::RCP<const Teuchos_Comm> commT =
       Albany::createTeuchosCommFromMpiComm(MPI_COMM_WORLD);
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements
