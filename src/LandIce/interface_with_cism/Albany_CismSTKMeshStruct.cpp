@@ -511,10 +511,10 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
   }
 
   //set lateral face connectivity
+  auto west_face_vs_indexer = Albany::createGlobalLocalIndexer(west_face_vs);
   if (have_wf == true) {
     if (debug_output_verbosity != 0) *out << "Setting west lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    auto west_face_vs_indexer = Albany::createGlobalLocalIndexer(west_face_vs);
     for (int i=0; i<west_face_vs_indexer->getNumLocalElements(); i++) {
        sideID = west_face_vs_indexer->getGlobalElement(i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
@@ -538,10 +538,10 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
     }
     if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
+  auto east_face_vs_indexer = Albany::createGlobalLocalIndexer(east_face_vs);
   if (have_ef == true) {
     if (debug_output_verbosity != 0) *out << "Setting east lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    auto east_face_vs_indexer = Albany::createGlobalLocalIndexer(east_face_vs);
     for (int i=0; i<east_face_vs_indexer->getNumLocalElements(); i++) {
        sideID = east_face_vs_indexer->getGlobalElement(i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
@@ -564,10 +564,10 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
     }
     if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
+  auto south_face_vs_indexer = Albany::createGlobalLocalIndexer(south_face_vs);
   if (have_sf == true) {
     if (debug_output_verbosity != 0) *out << "Setting south lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    auto south_face_vs_indexer = Albany::createGlobalLocalIndexer(south_face_vs);
     for (int i=0; i<south_face_vs_indexer->getNumLocalElements(); i++) {
        sideID = south_face_vs_indexer->getGlobalElement(i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
@@ -590,10 +590,10 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
     }
     if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
+  auto north_face_vs_indexer = Albany::createGlobalLocalIndexer(north_face_vs);
   if (have_nf == true) {
     if (debug_output_verbosity != 0) *out << "Setting north lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    auto north_face_vs_indexer = Albany::createGlobalLocalIndexer(north_face_vs);
     for (int i=0; i<north_face_vs_indexer->getNumLocalElements(); i++) {
        sideID = north_face_vs_indexer->getGlobalElement(i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);

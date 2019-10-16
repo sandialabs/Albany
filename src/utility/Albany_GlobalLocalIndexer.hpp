@@ -37,6 +37,9 @@ protected:
   Teuchos::RCP<const Thyra_VectorSpace>   m_vs;
 };
 
+// Create an indexer from a vector space
+// WARNING: this is a COLLECTIVE operation. All ranks in the comm associated
+//          with the vector space MUST call this function.
 Teuchos::RCP<const GlobalLocalIndexer>
 createGlobalLocalIndexer (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
