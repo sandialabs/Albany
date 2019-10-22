@@ -11,6 +11,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
   ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.yaml
   ${CMAKE_CURRENT_BINARY_DIR}/cube.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/check_comparisons.py
+  ${CMAKE_CURRENT_BINARY_DIR}/check_comparisons.py COPYONLY)
 
 set(runtest.cmake ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 
