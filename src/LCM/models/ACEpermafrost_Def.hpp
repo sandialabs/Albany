@@ -43,7 +43,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::ACEpermafrostMiniKernel(
   element_size_         = p->get<RealType>("ACE Element Size", 0.0);
   critical_stress_      = p->get<RealType>("ACE Critical Stress", 0.0);
   critical_angle_       = p->get<RealType>("ACE Critical Angle", 0.0);
-  min_yield_strength_   = p->get<RealType>("ACE Minimum Yield Strength", 0.0);
+  soil_yield_strength_  = p->get<RealType>("ACE Soil Yield Strength", 0.0);
 
   if (p->isParameter("ACE Time File") == true) {
     std::string const filename = p->get<std::string>("ACE Time File");
@@ -341,12 +341,12 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const kappa = E / (3.0 * (1.0 - 2.0 * nu));
   ScalarT const mu    = E / (2.0 * (1.0 + nu));
   ScalarT const K     = hardening_modulus_(cell, pt);
-  ScalarT const Y     = yield_strength_(cell, pt);
   ScalarT const J1    = J_(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
   ScalarT const Tcurr = temperature_(cell, pt);
   ScalarT const Told  = T_old_(cell, pt);
   ScalarT const iold  = ice_saturation_old_(cell, pt);
+  ScalarT       Y     = yield_strength_(cell, pt);
 
   auto&& delta_time    = delta_time_(0);
   auto&& failed        = failed_(cell, 0);
@@ -373,7 +373,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   if (is_erodible_at_boundary == true) {
     if (is_exposed_to_water == true) { exposure_time += delta_time; }
     if (exposure_time >= critical_exposure_time) {
-      failed += 1.0;
+      // Disable temporarily
+      failed += 0.0;
       exposure_time = 0.0;
     }
   }
@@ -513,6 +514,9 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // Mechanical calculation
   //
 
+  // Compute effective yield strength
+  Y = (1.0 - porosity) * soil_yield_strength_ + porosity * icurr * Y;
+
   // fill local tensors
   F.fill(def_grad_, cell, pt, 0, 0);
 
@@ -616,12 +620,15 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   //
   // Determine if critical stress is exceeded
   //
+  Tensor normal;
+  Tensor principal;
+  std::tie(normal, principal) = minitensor::eig_sym(sigma);
 
-  // sigma_XX component for now
-  auto const critical_stress = critical_stress_;
+  // failure in tension only
+  auto const critical_stress = Y;
   if (critical_stress > 0.0) {
-    auto const stress_test = Sacado::Value<ScalarT>::eval(sigma(0, 0));
-    if (std::abs(stress_test) >= critical_stress) failed += 1.0;
+    auto const stress_test = Sacado::Value<ScalarT>::eval(principal(0, 0));
+    if (stress_test >= critical_stress) failed += 1.0;
   }
 
   //
