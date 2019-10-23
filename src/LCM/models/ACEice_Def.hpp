@@ -574,14 +574,15 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   //
   // Determine if critical stress is exceeded
   //
-  Tensor normal;
-  Tensor principal;
-  std::tie(normal, principal) = minitensor::eig_sym(sigma);
+  auto sig_val = Sacado::Value<decltype(sigma)>::eval(sigma);
+  auto normal = sig_val;
+  auto principal = sig_val;
+  std::tie(normal, principal) = minitensor::eig_sym(sig_val);
 
   // failure in tension only
-  auto const critical_stress = Y;
+  auto const critical_stress = Sacado::Value<ScalarT>::eval(Y);
   if (critical_stress > 0.0) {
-    auto const stress_test = Sacado::Value<ScalarT>::eval(principal(0, 0));
+    auto const stress_test = principal(0, 0);
     if (stress_test >= critical_stress) failed += 1.0;
   }
 
