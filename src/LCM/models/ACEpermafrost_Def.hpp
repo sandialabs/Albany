@@ -549,8 +549,9 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
               sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqps_old_(cell, pt))));
 
   RealType constexpr yield_tolerance = 1.0e-12;
+  bool const yielded = f > yield_tolerance;
 
-  if (f > yield_tolerance) {
+  if (yielded == true) {
     // Use minimization equivalent to return mapping
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
     using NLS    = ACE_NLS<EvalT>;
@@ -620,17 +621,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   //
   // Determine if critical stress is exceeded
   //
-  auto sig_val = Sacado::Value<decltype(sigma)>::eval(sigma);
-  auto normal = sig_val;
-  auto principal = sig_val;
-  std::tie(normal, principal) = minitensor::eig_sym(sig_val);
-
-  // failure in tension only
-  auto const critical_stress = Sacado::Value<ScalarT>::eval(Y);
-  if (critical_stress > 0.0) {
-    auto const stress_test = principal(0, 0);
-    if (stress_test >= critical_stress) failed += 1.0;
-  }
+  if (yielded == true) failed += 1.0;
 
   //
   // Determine if kinematic failure occurred
