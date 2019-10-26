@@ -932,7 +932,7 @@ buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
   auto space_indexer    = createGlobalLocalIndexer(space);
   auto subspace_indexer = createGlobalLocalIndexer(subspace);
 
-  ThyraCrsMatrixFactory factory(space,subspace,1,true);
+  ThyraCrsMatrixFactory factory(space,subspace);
 
   const int localSubDim = subspace_indexer->getNumLocalElements();
   for (LO lid=0; lid<localSubDim; ++lid) {
@@ -957,7 +957,7 @@ buildProlongationOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
   auto space_indexer    = createGlobalLocalIndexer(space);
   auto subspace_indexer = createGlobalLocalIndexer(subspace);
 
-  ThyraCrsMatrixFactory factory(subspace,space,1,true);
+  ThyraCrsMatrixFactory factory(subspace,space);
 
   const int localSubDim = subspace_indexer->getNumLocalElements();
   for (LO lid=0; lid<localSubDim; ++lid) {

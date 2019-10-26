@@ -7,9 +7,6 @@
 #endif
 #include "Albany_TpetraTypes.hpp"
 
-#include "Albany_TpetraThyraUtils.hpp"
-#include "Albany_EpetraThyraUtils.hpp"
-
 #include "Albany_Utils.hpp"
 #include "Albany_Macros.hpp"
 
@@ -28,34 +25,26 @@ struct ThyraCrsMatrixFactory::Impl {
 
 ThyraCrsMatrixFactory::
 ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
-                    const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
-                    const int nonzeros_per_row,
-                    const bool static_profile)
+                       const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
+                       const int /*nonzeros_per_row*/)
  : m_graph(new Impl())
  , m_domain_vs(domain_vs)
  , m_range_vs(range_vs)
  , m_filled (false)
- , m_static_profile (static_profile) 
 {
   auto bt = Albany::build_type();
   TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for albany.\n");
 
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
-    auto e_domain = getEpetraBlockMap(domain_vs);
-    auto e_range  = getEpetraBlockMap(range_vs);
-    m_graph->e_graph = Teuchos::rcp(new Epetra_CrsGraph(Copy,*e_range,nonzeros_per_row,static_profile));
+    e_range  = getEpetraBlockMap(range_vs);
+    e_local_graph.resize(e_range->NumMyElements());
 #else
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
   } else {
-    auto t_domain = getTpetraMap(domain_vs);
-    auto t_range = getTpetraMap(range_vs);
-    if (static_profile) {
-      m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,nonzeros_per_row,Tpetra::StaticProfile));
-    } else {
-      m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,nonzeros_per_row,Tpetra::DynamicProfile));
-    }
+    t_range = getTpetraMap(range_vs);
+    t_local_graph.resize(t_range->getNodeNumElements());
   }
 }
 
@@ -94,13 +83,13 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
     auto t_overlap_range = getTpetraMap(overlap_src->m_range_vs);
     auto t_overlap_graph = overlap_src->m_graph->t_graph;
 
-    m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,t_overlap_graph->getGlobalMaxNumRowEntries()));
+    //Creating an empty graph. The graph will be automatically resized when exported.
+    m_graph->t_graph = createCrsGraph(t_range);
 
     Tpetra_Export exporter(t_overlap_range,t_range);
     m_graph->t_graph->doExport(*t_overlap_graph,exporter,Tpetra::INSERT);
 
     auto t_domain = getTpetraMap(domain_vs);
-    auto t_overlap_domain = getTpetraMap(overlap_src->m_domain_vs);
     m_graph->t_graph->fillComplete(t_domain,t_range);
   }
 
@@ -108,6 +97,10 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
 }
 
 void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& indices) {
+  
+  // Indices are inserted in a temporary local graph. 
+  // The actual graph is created and filled when fillComplete is called
+
   auto bt = Albany::build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
@@ -118,44 +111,96 @@ void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::Ar
     // Epetra expects pointers to non-const, and Epetra_GO may differ from GO.
     const Epetra_GO e_row = static_cast<Epetra_GO>(row);
     const int e_size = indices.size();
-    if (sizeof(GO)==sizeof(Epetra_GO)) {
-      // Same size, potentially different type name. A reinterpret_cast will do.
-      Epetra_GO* e_indices = const_cast<Epetra_GO*>(reinterpret_cast<const Epetra_GO*>(indices.getRawPtr()));
-      m_graph->e_graph->InsertGlobalIndices(e_row, e_size,e_indices);
-    } else {
-      // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
-      Teuchos::Array<Epetra_GO> e_indices(indices.size());
-      for (int i=0; i<indices.size(); ++i) {
-        ALBANY_EXPECT(indices[i]<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
-        e_indices[i] = static_cast<Epetra_GO>(indices[i]);
-      }
-      m_graph->e_graph->InsertGlobalIndices(e_row, e_size,e_indices.getRawPtr());
+
+    int e_lrow = e_range->LID(e_row);
+
+    //ignore indices that are not owned by the this processor
+    if(e_lrow < 0) return;
+
+    auto& e_row_indices = e_local_graph[e_lrow];
+    for (int i=0; i<e_size; ++i) {
+      ALBANY_EXPECT(indices[i]<=max_safe_gid, "Error! Input gids exceed Epetra_GO ranges.\n");
+      e_row_indices.emplace(static_cast<Epetra_GO>(indices[i]));
     }
 #else
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
   } else {
     // Despite being both 64 bits, GO and Tpetra_GO *may* be different *types*.
-    Teuchos::ArrayView<const Tpetra_GO> t_indices(reinterpret_cast<const Tpetra_GO*>(indices.getRawPtr()),indices.size());
-    m_graph->t_graph->insertGlobalIndices(static_cast<Tpetra_GO>(row),t_indices);
+    int lrow = t_range->getLocalElement(static_cast<Tpetra_GO>(row));
+
+    //ignore indices that are not owned by the this processor
+    if(lrow < 0) return;
+    
+    auto& row_indices = t_local_graph[lrow];
+    for (int i=0; i<indices.size(); ++i) {
+      row_indices.emplace(static_cast<Tpetra_GO>(indices[i]));
+    }
   }
 }
 
 void ThyraCrsMatrixFactory::fillComplete () {
+
+  // We created the CrsGraph,
+  // insert indices from the temporary local graph,
+  // and call fill complete.
+
   auto bt = Albany::build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
+    Teuchos::ArrayRCP<int> nonzeros_per_row_array(e_range->NumMyElements());
+    for (int lrow=0; lrow<nonzeros_per_row_array.size(); ++lrow)
+      nonzeros_per_row_array[lrow] = e_local_graph[lrow].size();
+
+    m_graph->e_graph = Teuchos::rcp(new Epetra_CrsGraph(Copy,*e_range,nonzeros_per_row_array.getRawPtr(),true));
+
+    for (int lrow=0; lrow<nonzeros_per_row_array.size(); ++lrow) {
+      auto& row_indices = e_local_graph[lrow];
+      if(row_indices.size()>0) {
+        Teuchos::Array<Epetra_GO> e_indices(row_indices.size());
+        int i=0;
+        for (const auto &index : row_indices)
+          e_indices[i++] = index;
+        auto row = e_range->GID(lrow);
+        m_graph->e_graph->InsertGlobalIndices(row,e_indices.size(),e_indices.getRawPtr());
+      }
+    }
+
+    e_local_graph.clear();
     auto e_domain = getEpetraBlockMap(m_domain_vs);
-    auto e_range  = getEpetraBlockMap(m_range_vs);
     m_graph->e_graph->FillComplete(*e_domain,*e_range);
     m_graph->e_graph->OptimizeStorage();
+    e_range.reset();
 #else
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
   } else {
+
+    Teuchos::ArrayRCP<size_t> nonzeros_per_row_array(t_range->getNodeNumElements());
+
+    for (int lrow=0; lrow<nonzeros_per_row_array.size(); ++lrow) {
+      nonzeros_per_row_array[lrow] = t_local_graph[lrow].size();
+    }
+
+    m_graph->t_graph = Teuchos::rcp(new Tpetra_CrsGraph(t_range,nonzeros_per_row_array()));
+
+    for (int lrow=0; lrow<nonzeros_per_row_array.size(); ++lrow) {
+      auto& row_indices = t_local_graph[lrow];
+      if(row_indices.size()>0) {
+        Teuchos::Array<Tpetra_GO> t_indices(row_indices.size());
+        int i=0;
+        for (const auto &index : row_indices)
+          t_indices[i++] = index;
+        auto row = t_range->getGlobalElement(lrow);
+
+        m_graph->t_graph->insertGlobalIndices(row,t_indices);
+      }
+    }
+
+    t_local_graph.clear();
     auto t_domain = getTpetraMap(m_domain_vs);
-    auto t_range = getTpetraMap(m_range_vs);
     m_graph->t_graph->fillComplete(t_domain,t_range);
+    t_range.reset();
   }
 
   m_filled = true;
