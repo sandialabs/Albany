@@ -729,7 +729,7 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
     const size_t                                max_num_entries = 27;
     Teuchos::RCP<Albany::ThyraCrsMatrixFactory> ovl_graph_factory_nonconst =
         Teuchos::rcp(new Albany::ThyraCrsMatrixFactory(
-            ovl_vs, ovl_vs, max_num_entries, false));
+            ovl_vs, ovl_vs, max_num_entries));
     ovl_graph_factory_nonconst->fillComplete();
     mgr_->ovl_graph_factory =
         Teuchos::rcp_dynamic_cast<const Albany::ThyraCrsMatrixFactory>(
