@@ -97,6 +97,9 @@ struct J2ErosionKernel : public ParallelKernel<EvalT, Traits>
   std::vector<RealType> sea_level_;
   RealType              current_time_{0.0};
 
+  std::map<std::pair<int, int>, GO> elemWsLIDGIDMap_;
+  int ws_index_{0};
+
   void
   init(
       Workset&                 workset,

@@ -1,6 +1,6 @@
 <Project name="Albany">
-  <SubProject name="IKT_AlbanyDynRankView_NoFunctor">
+  <SubProject name="IKTAlbanyMockba">
   </SubProject>
-  <SubProject name="IKT_AlbanyDynRankView_FunctorSerial">
+  <SubProject name="IKTCismAlbany">
   </SubProject>
 </Project>

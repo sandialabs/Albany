@@ -78,7 +78,7 @@ Teuchos::RCP<Thyra_LinearOp> getOnlyNonzeros (const Teuchos::RCP<Thyra_LinearOp>
   }
   B->fillComplete();
   
-  return Albany::createThyraLinearOp(B);
+  return Albany::createThyraLinearOp(Teuchos::rcp_implicit_cast<Tpetra_Operator>(B));
 }
 } // namespace
 

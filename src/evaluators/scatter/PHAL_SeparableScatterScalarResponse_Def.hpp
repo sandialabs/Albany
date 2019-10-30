@@ -14,6 +14,7 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -169,6 +170,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
     auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
+    auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
@@ -183,7 +185,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
         LO base_id, ilayer;
         for (int i = 0; i < numSideNodes; ++i) {
           std::size_t node = side.node[i];
-          const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[node]);
+          const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
           layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
           for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
             const LO inode = layeredMeshNumbering.getId(base_id, il_col);
@@ -336,6 +338,8 @@ evaluateFields(typename Traits::EvalData workset)
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   auto overlap_p_vs = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
   auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
+  auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
+  auto ov_p_indexer = Albany::createGlobalLocalIndexer(overlap_p_vs);
 
   // Loop over cells in workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -346,12 +350,12 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Loop over nodes in cell
       for (int deriv=0; deriv<num_deriv; ++deriv) {
-        const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[deriv]);
+        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[deriv]);
         LO base_id, ilayer;
         layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
         const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
-        const LO row = Albany::getLocalElement(overlap_p_vs,ginode);
+        const GO ginode = ov_node_indexer->getGlobalElement(inode);
+        const LO row = ov_p_indexer->getLocalElement(ginode);
 
         // Set dg/dp
         if(row >=0){

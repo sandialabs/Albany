@@ -2,6 +2,7 @@
 #include "Albany_CommUtils.hpp"
 #include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_Macros.hpp"
 
@@ -91,59 +92,13 @@ GO getMaxAllGlobalIndex(const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getMaxAllGlobalIndex! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
 }
 
-GO getGlobalElement (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const LO lid) {
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmap = getTpetraMap(vs,false);
-  if (!tmap.is_null()) {
-    return static_cast<GO>(tmap->getGlobalElement(lid));
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emap = getEpetraBlockMap(vs,false);
-  if (!emap.is_null()) {
-    return static_cast<GO>(emap->GID(lid));
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getGlobalElement! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
-
-  // Silence compiler warning
-  TEUCHOS_UNREACHABLE_RETURN(-1);
-}
-
-LO getLocalElement  (const Teuchos::RCP<const Thyra_VectorSpace>& vs, const GO gid) {
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmap = getTpetraMap(vs,false);
-  if (!tmap.is_null()) {
-    return tmap->getLocalElement(static_cast<Tpetra_GO>(gid));
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emap = getEpetraBlockMap(vs,false);
-  if (!emap.is_null()) {
-    // Note: simply calling LID(gid) can be ambiguous, if GO!=int and GO!=long long.
-    //       Hence, we explicitly cast to whatever has size 64 bits (should *always* be long long, but the if is compile time, so no penalty)
-    const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
-    ALBANY_EXPECT(gid<=max_safe_gid, "Error in getLocalElement! Input gid exceed Epetra_GO ranges.\n");
-    (void) max_safe_gid;
-    return emap->LID(static_cast<Epetra_GO>(gid));
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getLocalElement! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
-
-  // Silence compiler warning
-  TEUCHOS_UNREACHABLE_RETURN(-1);
-}
-
 Teuchos::Array<GO> getGlobalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                                        const Teuchos::ArrayView<const LO>& lids)
 {
+  auto indexer = createGlobalLocalIndexer(vs);
   Teuchos::Array<GO> gids(lids.size());
   for (LO i=0; i<lids.size(); ++i) {
-    gids[i] = getGlobalElement(vs,lids[i]);
+    gids[i] = indexer->getGlobalElement(lids[i]);
   }
   return gids;
 }
@@ -151,92 +106,38 @@ Teuchos::Array<GO> getGlobalElements  (const Teuchos::RCP<const Thyra_VectorSpac
 Teuchos::Array<LO> getLocalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                                       const Teuchos::ArrayView<const GO>& gids)
 {
+  auto indexer = createGlobalLocalIndexer(vs);
   Teuchos::Array<LO> lids(gids.size());
   for (LO i=0; i<gids.size(); ++i) {
-    lids[i] = getLocalElement(vs,gids[i]);
+    lids[i] = indexer->getLocalElement(gids[i]);
   }
   return lids;
 }
 
 void getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
-                        Teuchos::Array<GO>& gids)
+                        const Teuchos::ArrayView<GO>& gids)
 {
-  auto spmd_vs = getSpmdVectorSpace(vs);
-  const LO localDim = spmd_vs->localSubDim();
-  gids.resize(localDim);
+  auto indexer = createGlobalLocalIndexer(vs);
+  const LO localDim = indexer->getNumLocalElements();
+  TEUCHOS_TEST_FOR_EXCEPTION(gids.size()!=localDim, std::runtime_error, "Error! ArrayView for gids not properly dimensioned.\n");
+
   for (LO i=0; i<localDim; ++i) {
-    gids[i] = getGlobalElement(vs,i);
+    gids[i] = indexer->getGlobalElement(i);
   }
 }
 
 Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs)
 {
-  Teuchos::Array<GO> gids;
-  getGlobalElements(vs,gids);
+  Teuchos::Array<GO> gids(getLocalSubdim(vs));
+  getGlobalElements(vs,gids());
   return gids;
 }
 
-LO getNumLocalElements( const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+LO getLocalSubdim( const Teuchos::RCP<const Thyra_VectorSpace>& vs)
 {
-  auto tmap = getTpetraMap(vs,false);
-  if (!tmap.is_null()) {
-    return tmap->getNodeNumElements(); 
-  }
-#if defined(ALBANY_EPETRA)
-  auto emap = getEpetraBlockMap(vs,false);
-  if (!emap.is_null()) {
-    return emap->NumMyElements(); 
-  }
-#endif
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getNumLocalElements! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+  auto spmd_vs = getSpmdVectorSpace(vs);
+  return spmd_vs->localSubDim();
 } 
-
-Teuchos::ArrayView<const GO> getNodeElementList(const Teuchos::RCP<const Thyra_VectorSpace>& vs)
-{
-  auto tmap = getTpetraMap(vs,false);
-  if (!tmap.is_null()) {
-    Teuchos::ArrayView<const Tpetra_GO> tarray = tmap->getNodeElementList(); 
-    Teuchos::ArrayView<const GO> array(reinterpret_cast<const GO*>(tarray().getRawPtr()),tarray.size());
-    return array;
-  }
-#if defined(ALBANY_EPETRA)
-  auto emap = getEpetraBlockMap(vs,false);
-  if (!emap.is_null()) {
-    ALBANY_ASSERT(true, "Error in getNumLocalElements: getNodeElementList not implemented for Epetra!\n");
-    return Teuchos::null; 
-  }
-#endif
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getNumLocalElements! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
-}
-
-bool locallyOwnedComponent (const Teuchos::RCP<const Thyra_SpmdVectorSpace>& vs, const GO gid)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmap = getTpetraMap(vs,false);
-  if (!tmap.is_null()) {
-    return tmap->isNodeGlobalElement(static_cast<Tpetra_GO>(gid));
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emap = getEpetraBlockMap(vs,false);
-  if (!emap.is_null()) {
-    // Note: simply calling LID(gid) can be ambiguous, if GO!=int and GO!=long long.
-    //       Hence, we explicitly cast to whatever has size 64 bits (should *always* be long long, but the if is compile time, so no penalty)
-    const GO max_safe_gid = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
-    ALBANY_EXPECT(gid<=max_safe_gid, "Error in locallyOwnedComponent! Input gid exceed Epetra_GO ranges.\n");
-    (void) max_safe_gid;
-    return emap->MyGID(static_cast<Epetra_GO>(gid));
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in locallyOwnedComponent! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
-
-  // Silence compiler warning
-  TEUCHOS_UNREACHABLE_RETURN(false);
-}
 
 bool sameAs (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
              const Teuchos::RCP<const Thyra_VectorSpace>& vs2)
@@ -1028,15 +929,15 @@ buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
                           const Teuchos::RCP<const Thyra_VectorSpace>& subspace)
 {
   // In the process, verify the that subspace is a subspace of space
-  auto spmd_space    = getSpmdVectorSpace(space);
-  auto spmd_subspace = getSpmdVectorSpace(subspace);
+  auto space_indexer    = createGlobalLocalIndexer(space);
+  auto subspace_indexer = createGlobalLocalIndexer(subspace);
 
-  ThyraCrsMatrixFactory factory(space,subspace,1,true);
+  ThyraCrsMatrixFactory factory(space,subspace);
 
-  const int localSubDim = spmd_subspace->localSubDim();
+  const int localSubDim = subspace_indexer->getNumLocalElements();
   for (LO lid=0; lid<localSubDim; ++lid) {
-    const GO gid = getGlobalElement(spmd_subspace,lid);
-    TEUCHOS_TEST_FOR_EXCEPTION (!locallyOwnedComponent(spmd_space,gid), std::logic_error,
+    const GO gid = subspace_indexer->getGlobalElement(lid);
+    TEUCHOS_TEST_FOR_EXCEPTION (space_indexer->isLocallyOwnedElement(gid), std::logic_error,
                                 "Error in buildRestrictionOperator! The input 'subspace' is not a subspace of the input 'space'.\n");
     factory.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
   }
@@ -1053,15 +954,15 @@ buildProlongationOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
                            const Teuchos::RCP<const Thyra_VectorSpace>& subspace)
 {
   // In the process, verify the that subspace is a subspace of space
-  auto spmd_space    = getSpmdVectorSpace(space);
-  auto spmd_subspace = getSpmdVectorSpace(subspace);
+  auto space_indexer    = createGlobalLocalIndexer(space);
+  auto subspace_indexer = createGlobalLocalIndexer(subspace);
 
-  ThyraCrsMatrixFactory factory(subspace,space,1,true);
+  ThyraCrsMatrixFactory factory(subspace,space);
 
-  const int localSubDim = spmd_subspace->localSubDim();
+  const int localSubDim = subspace_indexer->getNumLocalElements();
   for (LO lid=0; lid<localSubDim; ++lid) {
-    const GO gid = getGlobalElement(spmd_subspace,lid);
-    TEUCHOS_TEST_FOR_EXCEPTION (!locallyOwnedComponent(spmd_space,gid), std::logic_error,
+    const GO gid = subspace_indexer->getGlobalElement(lid);
+    TEUCHOS_TEST_FOR_EXCEPTION (space_indexer->isLocallyOwnedElement(gid), std::logic_error,
                                 "Error in buildProlongationOperator! The input 'subspace' is not a subspace of the input 'space'.\n");
     factory.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
   }

@@ -7,8 +7,10 @@
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
-#include "Teuchos_ParameterListExceptions.hpp"
-#include "Teuchos_TestForException.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
+
+#include <Teuchos_ParameterListExceptions.hpp>
+#include <Teuchos_TestForException.hpp>
 
 namespace LCM {
 
@@ -21,23 +23,18 @@ Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
     Teuchos::Array<Teuchos::RCP<Thyra_LinearOp>>                jacs,
     int const                                                   this_app_index,
     int const coupled_app_index)
-    : comm_(comm),
-      coupled_apps_(ca),
-      jacs_(jacs),
-      this_app_index_(this_app_index),
-      coupled_app_index_(coupled_app_index),
-      n_models_(0)
+    : coupled_apps_(ca)
+    , jacs_(jacs)
+    , this_app_index_(this_app_index)
+    , coupled_app_index_(coupled_app_index)
+    , comm_(comm)
+    , n_models_(0)
 {
   ALBANY_EXPECT(0 <= this_app_index && this_app_index < ca.size());
   ALBANY_EXPECT(0 <= coupled_app_index && coupled_app_index < ca.size());
   domain_vs_ = ca[coupled_app_index]->getVectorSpace();
   range_vs_  = ca[this_app_index]->getVectorSpace();
 }
-
-//
-//
-//
-Schwarz_BoundaryJacobian::~Schwarz_BoundaryJacobian() { return; }
 
 //
 // Initialize the operator with everything needed to apply it
@@ -54,7 +51,7 @@ Schwarz_BoundaryJacobian::initialize()
 Teuchos::RCP<Thyra_LinearOp>
 Schwarz_BoundaryJacobian::getExplicitOperator() const
 {
-  auto const max_num_cols = Albany::getNumLocalElements(this->domain());
+  auto const max_num_cols = Albany::getLocalSubdim(this->domain());
 
   // IKT: there may be problems here in creating jac_factory - will need to
   // check
@@ -75,11 +72,11 @@ Schwarz_BoundaryJacobian::getExplicitOperator() const
 //
 void
 Schwarz_BoundaryJacobian::applyImpl(
-    const Thyra::EOpTransp                 M_trans,
-    const Thyra_MultiVector&               X,
+    const Thyra::EOpTransp                 /* M_trans */,
+    const Thyra_MultiVector&               /* X */,
     const Teuchos::Ptr<Thyra_MultiVector>& Y,
-    const ST                               alpha,
-    const ST                               beta) const
+    const ST                               /* alpha */,
+    const ST                               /* beta */) const
 {
   auto const zero = Teuchos::ScalarTraits<ST>::zero();
 

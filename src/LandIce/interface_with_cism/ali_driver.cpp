@@ -16,23 +16,27 @@
 //computation of sensitivities and responses will be off in the case
 //we have an epetra build + reduced comm, as this was causing a hang.
 
-#include <iostream>
-#include <fstream>
 #include "ali_driver.H"
 #include "Albany_CismSTKMeshStruct.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Albany_Utils.hpp"
-#include "Albany_SolverFactory.hpp"
-#include "Teuchos_XMLParameterListHelpers.hpp"
-#include <stk_mesh/base/FieldBase.hpp>
-#include "Piro_PerformSolve.hpp"
-#include <stk_mesh/base/GetEntities.hpp>
-#include "Albany_OrdinarySTKFieldContainer.hpp"
-//#include "Teuchos_TestForException.hpp"
-#include "Kokkos_Core.hpp"
 
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_SolverFactory.hpp"
+#include "Albany_OrdinarySTKFieldContainer.hpp"
+
+//#include "Teuchos_TestForException.hpp"
+#include <Teuchos_XMLParameterListHelpers.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_RCP.hpp>
+#include <stk_mesh/base/FieldBase.hpp>
+#include <Piro_PerformSolve.hpp>
+#include <stk_mesh/base/GetEntities.hpp>
+#include <Kokkos_Core.hpp>
+#include "Albany_GlobalLocalIndexer.hpp"
+
+#include <iostream>
+#include <fstream>
 
 //FIXME: move static global variables to struct
 //
@@ -134,7 +138,7 @@ void createReducedMPI(int nLocalEntities, MPI_Comm& reduced_comm_id) {
 extern "C" void ali_driver_();
 
 //What is exec_mode??
-void ali_driver_init(int argc, int exec_mode, AliToGlimmer * ftg_ptr, const char * input_fname)
+void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr, const char * input_fname)
 {
    if (first_time_step)
      Kokkos::initialize();
@@ -586,6 +590,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
      //The way it worked out, uVel_ptr and vVel_ptr have more nodes than the nodes in the mesh passed to Albany/CISM for the solve.  In particular,
      //there is 1 row of halo elements in uVel_ptr and vVel_ptr.  To account for this, we copy uVel_ptr and vVel_ptr into std::vectors, which do not have the halo elements.
+     auto indexer = Albany::createGlobalLocalIndexer(nodeVS);
      std::vector<double> uvel_vec(upn*nNodesProc2D);
      std::vector<double> vvel_vec(upn*nNodesProc2D);
      int counter1 = 0;
@@ -596,7 +601,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
          for (int k=0; k<upn; k++) {
            if (j >= nhalo-1 & j < nsn-nhalo) {
              if (i >= nhalo-1 & i < ewn-nhalo) {
-               local_nodeID = Albany::getLocalElement(nodeVS, cismToAlbanyNodeNumberMap[counter1]);
+               local_nodeID = indexer->getLocalElement(cismToAlbanyNodeNumberMap[counter1]);
                uvel_vec[counter1] = uVel_ptr[counter2];
                vvel_vec[counter1] = vVel_ptr[counter2];
                counter1++;
@@ -613,7 +618,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
      for (int i=0; i<nElementsActive; i++) {
        for (int j=0; j<8; j++) {
         int node_GID =  global_element_conn_active_Ptr[i + nElementsActive*j]; //node_GID is 1-based
-        auto node_LID = Albany::getLocalElement(nodeVS, node_GID); 
+        auto node_LID = indexer->getLocalElement(node_GID);
         stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, node_GID);
         double* sol = stk::mesh::field_data(*solutionField, node);
         //IK, 3/18/14: added division by velScale to convert uvel and vvel from dimensionless to having units of m/year (the Albany units)
@@ -786,11 +791,12 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     int global_dof;
     double sol_value;
     int numDofs;
-    overlap_vs_num_my_elts = Albany::getNumLocalElements(overlapVS); 
+    auto ov_vs_indexer = Albany::createGlobalLocalIndexer(overlapVS);
+    overlap_vs_num_my_elts = ov_vs_indexer->getNumLocalElements(); 
 
     if (interleavedOrdering == true) {
       for (int i=0; i<overlap_vs_num_my_elts; i++) {
-        global_dof = Albany::getGlobalElement(overlapVS, i); 
+        global_dof = ov_vs_indexer->getGlobalElement(i); 
         sol_value = solutionOverlap_constView[i]; 
         int modulo = (global_dof % 2); //check if dof is for u or for v
         int vel_global_dof;
@@ -805,9 +811,9 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
       }
     }
     else { //note: the case with non-interleaved ordering has not been tested...
-      numDofs = Albany::getNumLocalElements(overlapVS); 
+      numDofs = ov_vs_indexer->getNumLocalElements(); 
       for (int i=0; i<overlap_vs_num_my_elts; i++) {
-        global_dof = Albany::getGlobalElement(overlapVS, i); 
+        global_dof = ov_vs_indexer->getGlobalElement(i); 
         sol_value = solutionOverlap_constView[i];
         int vel_global_dof;
         if (global_dof < numDofs/2) { //u dof

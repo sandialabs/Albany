@@ -4,13 +4,17 @@ set (CTEST_SITE "mockba.ca.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
-set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+IF (BUILD_ALBANY_FPE) 
+set (CTEST_BUILD_CONFIGURATION Debug) # What type of build do you want ?
+ELSE()
+set (CTEST_BUILD_CONFIGURATION Release) # What type of build do you want ?
+ENDIF() 
 
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_BUILD_NAME "rhel7-gcc6.1.0-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 
 
@@ -31,7 +35,6 @@ set (CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_BUILD_FLAGS "-j16")
-set (CTEST_FLAGS "-j16")
 
 set (CTEST_DROP_METHOD "http")
 
@@ -47,7 +50,7 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
 set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
-set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.git)
+set (cism-piscees_REPOSITORY_LOCATION  git@github.com:E3SM-Project/cism-piscees.git)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -73,7 +76,7 @@ if (DOWNLOAD)
 
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Albany_REPOSITORY_LOCATION} -b DynRankViewIntrepid2Refactor ${CTEST_SOURCE_DIRECTORY}/Albany
+      clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -92,7 +95,7 @@ if (DOWNLOAD)
   #
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/cism-piscees")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}"
-      clone ${cism-piscees_REPOSITORY_LOCATION} -b felix_interface ${CTEST_SOURCE_DIRECTORY}/cism-piscees
+      clone ${cism-piscees_REPOSITORY_LOCATION} -b ali_interface ${CTEST_SOURCE_DIRECTORY}/cism-piscees
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -131,8 +134,8 @@ if (DOWNLOAD)
   # Update Albany 
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKT_AlbanyDynRankView)
-  set_property (GLOBAL PROPERTY Label IKT_AlbanyDynRankView)
+  set_property (GLOBAL PROPERTY SubProject IKTAlbanyMockba)
+  set_property (GLOBAL PROPERTY Label IKTAlbanyMockba)
 
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
   CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
@@ -155,37 +158,48 @@ if (DOWNLOAD)
 endif ()
 
 
-if (BUILD_ALB_KDV_NOFUNCTOR)
+if (BUILD_ALBANY)
 
-  # Configure Albany 
+  # Builds everything!
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKT_AlbanyDynRankView_NoFunctor)
-  set_property (GLOBAL PROPERTY Label IKT_AlbanyDynRankView_NoFunctor)
+  set_property (GLOBAL PROPERTY SubProject IKTAlbanyMockba)
+  set_property (GLOBAL PROPERTY Label IKTAlbanyMockba)
 
-  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build-spirit/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
-    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_CONTACT:BOOL=OFF"
+    "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_LCM:BOOL=OFF"
+    "-DENABLE_TSUNAMI:BOOL=ON"
     "-DENABLE_AERAS:BOOL=ON"
-    "-DENABLE_SG:BOOL=OFF"
-    "-DENABLE_ENSEMBLE:BOOL=OFF"
-    "-DENABLE_ATO:BOOL=OFF"
-    "-DENABLE_MOR:BOOL=OFF"
-    "-DENABLE_PERFORMANCE_TESTS:BOOL=OFF"
-    "-DALBANY_LIBRARIES_ONLY=OFF")
+    "-DENABLE_ATO:BOOL=ON"
+    "-DENABLE_ALBANY_EPETRA:BOOL=ON"
+    "-DENABLE_ASCR:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DENABLE_MPAS_INTERFACE:BOOL=ON"
+    "-DENABLE_CISM_INTERFACE:BOOL=ON"
+    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
+    "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
+    "-DSEACAS_EPU=/home/ikalash/Trilinos/seacas-build/install/bin/epu"
+    "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"
+    "-DSEACAS_ALGEBRA=/home/ikalash/Trilinos/seacas-build/install/bin/algebra"
+    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
+    "-DINSTALL_ALBANY:BOOL=ON"
+    "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockbaInstall"
+    "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
+    "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON"
+    "-DENABLE_LAME:BOOL=OFF")
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_NoFunctor")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_NoFunctor)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockba")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockba)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_NoFunctor"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockba"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -210,13 +224,13 @@ if (BUILD_ALB_KDV_NOFUNCTOR)
   # Build Albany
   #
 
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
+  #set (CTEST_BUILD_TARGET all)
+  set (CTEST_BUILD_TARGET install)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_NoFunctor"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockba"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -243,9 +257,11 @@ if (BUILD_ALB_KDV_NOFUNCTOR)
   #
   # Run Albany tests
   #
+  
+  set (CTEST_TEST_TIMEOUT 600)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_NoFunctor"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockba"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
     #NUMBER_FAILED  TEST_NUM_FAILED
@@ -268,39 +284,40 @@ if (BUILD_ALB_KDV_NOFUNCTOR)
 
 endif ()
 
-if (BUILD_ALB_KDV_FUNCTOR_SERIAL)
+if (BUILD_CISM_PISCEES)
 
-  # Configure Albany 
+  # Configure the CISM-Albany build 
   #
+  set_property (GLOBAL PROPERTY SubProject IKTCismAlbany)
+  set_property (GLOBAL PROPERTY Label IKTCismAlbany)
 
-  set_property (GLOBAL PROPERTY SubProject IKT_AlbanyDynRankView_FunctorSerial)
-  set_property (GLOBAL PROPERTY Label IKT_AlbanyDynRankView_FunctorSerial)
-
-  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build-spirit/install")
 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
-    "-DENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_LCM:BOOL=OFF"
-    "-DENABLE_AERAS:BOOL=ON"
-    "-DENABLE_SG:BOOL=OFF"
-    "-DENABLE_ENSEMBLE:BOOL=OFF"
-    "-DENABLE_ATO:BOOL=OFF"
-    "-DENABLE_MOR:BOOL=OFF"
-    "-DENABLE_PERFORMANCE_TESTS:BOOL=OFF"
-    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-    "-DALBANY_LIBRARIES_ONLY=OFF")
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_FunctorSerial")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_FunctorSerial)
+    "-Wno-dev"
+    "-DCISM_USE_TRILINOS:BOOL=ON"
+    "-DCISM_TRILINOS_DIR=${TRILINSTALLDIR}"
+    "-DCISM_MPI_MODE:BOOL=ON"
+    "-DCISM_SERIAL_MODE:BOOL=OFF"
+    "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
+    "-DALBANY_LANDICE_DYCORE:BOOL=ON"
+    "-DALBANY_LANDICE_CTEST:BOOL=ON"
+    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockbaInstall"
+    "-DCISM_MPI_BASE_DIR=$ENV{SEMS_OPENMPI_ROOT}"
+    "-DCISM_NETCDF_DIR=$ENV{SEMS_NETCDF_ROOT}"
+    "-DCISM_NETCDF_LIBS='netcdff'"
+    "-DBUILD_SHARED_LIBS:BOOL=ON"
+    "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
+    "-DCMAKE_VERBOSE_MAKEFILE=OFF"
+  )
+
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTCismAlbany)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_FunctorSerial"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/cism-piscees"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     APPEND
@@ -312,27 +329,26 @@ if (BUILD_ALB_KDV_FUNCTOR_SERIAL)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany configure results!")
+      message(FATAL_ERROR "Cannot submit CISM-Albany configure results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany build!")
+    message(FATAL_ERROR "Cannot configure CISM-Albany build!")
   endif ()
+ 
+   #
+   # Build CISM-Albany
+   #
+   #
+    set (CTEST_TARGET all)
 
-  #
-  # Build Albany
-  #
-
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+  MESSAGE("\nBuilding target: '${CTEST_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_FunctorSerial"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
     RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+    NUMBER_ERRORS  LIBS_NUM_ERRORS
     APPEND
     )
 
@@ -342,27 +358,28 @@ if (BUILD_ALB_KDV_FUNCTOR_SERIAL)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany build results!")
+      message(FATAL_ERROR "Cannot submit CISM-Albany build results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany!")
+    message(FATAL_ERROR "Cannot build CISM-Albany!")
   endif ()
 
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+  if (LIBS_NUM_ERRORS GREATER 0)
+    message(FATAL_ERROR "Encountered build errors in CISM-Albany build. Exiting!")
   endif ()
 
   #
-  # Run Albany tests
+  # Run CISM-Albany tests
   #
+  set (CTEST_TEST_TIMEOUT 1500)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_FunctorSerial"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
+#                  PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+#                  INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+#    NUMBER_FAILED  TEST_NUM_FAILED
     RETURN_VALUE  HAD_ERROR
     )
 
@@ -372,128 +389,13 @@ if (BUILD_ALB_KDV_FUNCTOR_SERIAL)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
+      message(FATAL_ERROR "Cannot submit CISM-Albany test results!")
     endif ()
   endif ()
 
-  #if (HAD_ERROR)
-  #	message(FATAL_ERROR "Some Albany tests failed.")
-  #endif ()
-
-endif ()
-
-
-if (BUILD_ALB_KDV_FUNCTOR_OPENMP)
-
-  # Configure Albany 
-  #
-
-  set_property (GLOBAL PROPERTY SubProject IKT_AlbanyDynRankView_FunctorOpenMP)
-  set_property (GLOBAL PROPERTY Label IKT_AlbanyDynRankView_FunctorOpenMP)
-
-  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build-openmp/install")
-
-  set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
-    "-DENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_LCM:BOOL=OFF"
-    "-DENABLE_AERAS:BOOL=ON"
-    "-DENABLE_SG:BOOL=OFF"
-    "-DENABLE_ENSEMBLE:BOOL=OFF"
-    "-DENABLE_ATO:BOOL=OFF"
-    "-DENABLE_MOR:BOOL=OFF"
-    "-DENABLE_PERFORMANCE_TESTS:BOOL=OFF"
-    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-    "-DALBANY_LIBRARIES_ONLY=OFF")
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_FunctorOpenMP")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_FunctorOpenMP)
-  endif ()
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_FunctorOpenMP"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany build!")
-  endif ()
-
-  #
-  # Build Albany
-  #
-
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_FunctorOpenMP"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany build results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany!")
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
-  endif ()
-
-  #
-  # Run Albany tests
-  #
-
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKT_AlbanyDynRankView_FunctorOpenMP"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-    RETURN_VALUE  HAD_ERROR
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
-    endif ()
-  endif ()
-
-  #if (HAD_ERROR)
-  #	message(FATAL_ERROR "Some Albany tests failed.")
-  #endif ()
+#  if (HAD_ERROR)
+#  	message(FATAL_ERROR "Some CISM-Albany tests failed.")
+#  endif ()
 
 endif ()
 

@@ -49,7 +49,7 @@ cmake \
     -DKokkos_ENABLE_Pthread:BOOL=OFF \
     -DKokkos_ENABLE_Serial:BOOL=ON \
     -DKokkos_ENABLE_TESTS:BOOL=ON \
-    -DKOKKOS_ARCH:STRING='Power8\\;Pascal60' \
+    -DKOKKOS_ARCH:STRING='Power8;Pascal60' \
     -DKOKKOS_ENABLE_DEPRECATED_CODE=OFF \
     -DTPL_ENABLE_Thrust:BOOL=ON \
     -DTPL_ENABLE_CUDA:BOOL=ON \

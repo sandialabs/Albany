@@ -10,6 +10,7 @@
 #include "Adapt_ElementSizeField.hpp"
 #include "Adapt_NodalDataVector.hpp"
 #include "Albany_StateManager.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 template<typename T>
 T Sqr(T num)
@@ -209,6 +210,7 @@ evaluateFields(typename Traits::EvalData workset)
       this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
     auto owned_node_vs = node_data->getOwnedVectorSpace();
+    auto node_indexer = Albany::createGlobalLocalIndexer(owned_node_vs);
 
     int l_nV = this->numVertices;
     int l_nD = this->numDims;
@@ -240,11 +242,11 @@ evaluateFields(typename Traits::EvalData workset)
         
         for (int node = 0; node < l_nV; ++node) { // loop over all the "corners" of each element
           const GO global_row = wsElNodeID[cell][node];
-          if (!Albany::locallyOwnedComponent(Albany::getSpmdVectorSpace(owned_node_vs),global_row)) {
+          if (!node_indexer->isLocallyOwnedElement(global_row)) {
             continue;
           }
 
-          const LO lid = Albany::getLocalElement(owned_node_vs,global_row);
+          const LO lid = node_indexer->getLocalElement(global_row);
           // accumulate 1/2 of the element width in each dimension - into each element corner
           for (int k=0; k < node_var_ndofs; ++k) {
             data[node_var_offset+k][lid] += (maxCoord[k] - minCoord[k]) / 2.0;
@@ -258,11 +260,11 @@ evaluateFields(typename Traits::EvalData workset)
         // Note: code assumes blocksize of blockmap is 1 + 1 = 2 - the last entry accumulates the weight
         for (int node = 0; node < l_nV; ++node) { // loop over all the "corners" of each element
           const GO global_row = wsElNodeID[cell][node];
-          if (!Albany::locallyOwnedComponent(Albany::getSpmdVectorSpace(owned_node_vs),global_row)) {
+          if (!node_indexer->isLocallyOwnedElement(global_row)) {
             continue;
           }
 
-          const LO lid = Albany::getLocalElement(owned_node_vs,global_row);
+          const LO lid = node_indexer->getLocalElement(global_row);
 
           // save element radius, just a scalar
           for (int k=0; k < l_nD; ++k) {

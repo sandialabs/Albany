@@ -69,19 +69,8 @@ ANONYMOUS:
     Body Force: 
       Type: FO INTERP SURF GRAD
     Response Functions: 
-      Number: 4
-      Response 0: Solution Max Value
-      ResponseParams 0: 
-        Equation: 0
-      Response 1: Solution Max Value
-      ResponseParams 1: 
-        Equation: 1
-      Response 2: Solution Max Value
-      ResponseParams 2: 
-        Equation: 2
-      Response 3: Solution Max Value
-      ResponseParams 3: 
-        Equation: 3
+      Number: 1
+      Response 0: Solution Average
   Discretization: 
     Method: Extruded
     Number Of Time Derivatives: 0
@@ -154,12 +143,12 @@ ANONYMOUS:
             Field Origin: File
             File Name: ../AsciiMeshes/DomeEnth/basal_heat_flux.ascii
   Regression Results: 
-    Number of Comparisons: 4
-    Test Values: [5.94338847686000022e+01, 0.00000000000000000e+00, 2.54696534045999989e+00, 1.96960310493999984e+01]
+    Number of Comparisons: 1
+    Test Values: [5.056989615543e-01]
     Relative Tolerance: 1.00000000000000002e-02
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [3.892771352475e+01, 0.00000000000000000e+00, -1.056499312556e+01, 2.010235548098e+02]
+      Sensitivity Test Values 0: [-2.705839084403e+01]
   Piro: 
     LOCA: 
       Bifurcation: { }

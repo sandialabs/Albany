@@ -7,6 +7,7 @@
 #include "Albany_SolutionResponseFunction.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Application.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 namespace Albany {
 
@@ -58,9 +59,10 @@ void Albany::SolutionResponseFunction::setup()
 
 
   // Create graph for gradient operator -- diagonal matrix
-  cull_op_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(solution_vs,culled_vs,1,/* static_profile = */ true));
+  cull_op_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(solution_vs,culled_vs,1));
+  auto culled_vs_indexer = createGlobalLocalIndexer(culled_vs);
   for (int i=0; i<culled_vs->localSubDim(); i++) {
-    const GO row = getGlobalElement(culled_vs,i);
+    const GO row = culled_vs_indexer->getGlobalElement(i);
     cull_op_factory->insertGlobalIndices(row,Teuchos::arrayView(&row,1));
   }
   cull_op_factory->fillComplete();

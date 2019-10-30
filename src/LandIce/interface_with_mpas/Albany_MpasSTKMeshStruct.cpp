@@ -4,12 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <iostream>
-
 #include "Albany_MpasSTKMeshStruct.hpp"
 #include <Albany_STKNodeSharing.hpp>
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #include "Teuchos_VerboseObject.hpp"
 
@@ -27,6 +26,8 @@
 #endif
 
 #include <boost/algorithm/string/predicate.hpp>
+
+#include <iostream>
 
 //Wedge
 namespace Albany
@@ -130,18 +131,18 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
     stk::io::put_io_part_attribute(*ssPartVec[ssnLatFloat]);
 #endif
 
-  stk::mesh::set_cell_topology<shards::Wedge<6> >(*partVec[0]);
-  stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
-  stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
-  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLat]);
-  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLatFloat]);
+  stk::mesh::set_topology(*partVec[0],stk::topology::WEDGE_6);
+  stk::mesh::set_topology(*ssPartVec[ssnBottom],stk::topology::TRI_3);
+  stk::mesh::set_topology(*ssPartVec[ssnTop],stk::topology::TRI_3);
+  stk::mesh::set_topology(*ssPartVec[ssnLat],stk::topology::QUAD_4);
+  stk::mesh::set_topology(*ssPartVec[ssnLatFloat],stk::topology::QUAD_4);
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_vs->localSubDim());
 
-  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  const CellTopologyData& ctd = *stk::mesh::get_cell_topology(metaData->get_topology(*partVec[0])).getCellTopologyData();
 
   this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
@@ -248,18 +249,18 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
     stk::io::put_io_part_attribute(*ssPartVec[ssnLatFloat]);
 #endif
 
-  stk::mesh::set_cell_topology<shards::Tetrahedron<4> >(*partVec[0]);
-  stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
-  stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
-  stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnLat]);
-  stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnLatFloat]);
+  stk::mesh::set_topology(*partVec[0],stk::topology::TET_4);
+  stk::mesh::set_topology(*ssPartVec[ssnBottom],stk::topology::TRI_3);
+  stk::mesh::set_topology(*ssPartVec[ssnTop],stk::topology::TRI_3);
+  stk::mesh::set_topology(*ssPartVec[ssnLat],stk::topology::TRI_3);
+  stk::mesh::set_topology(*ssPartVec[ssnLatFloat],stk::topology::TRI_3);
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_vs->localSubDim());
 
-  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  const CellTopologyData& ctd = *stk::mesh::get_cell_topology(metaData->get_topology(*partVec[0])).getCellTopologyData();
 
   this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
@@ -365,6 +366,7 @@ void MpasSTKMeshStruct::constructMesh(
     bulkData->change_entity_parts(node, singlePartVec);
   }
 
+  auto elem_vs_indexer = Albany::createGlobalLocalIndexer(elem_vs);
   for (int i=0; i<elem_vs->localSubDim(); ++i) {
 	  int ib = (Ordering == LAYER)*(i%lElemColumnShift) + (Ordering == COLUMN)*(i/elemLayerShift);
 	  int il = (Ordering == LAYER)*(i/lElemColumnShift) + (Ordering == COLUMN)*(i%elemLayerShift);
@@ -373,7 +375,7 @@ void MpasSTKMeshStruct::constructMesh(
 
 	  singlePartVec[0] = partVec[ebNo];
     stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK,
-                                                       Albany::getGlobalElement(elem_vs,i)+1,
+                                                       elem_vs_indexer->getGlobalElement(i)+1,
                                                        singlePartVec);
 
     for(int j=0; j<3; ++j) {
@@ -548,6 +550,7 @@ void MpasSTKMeshStruct::constructMesh(
   }
 
   int tetrasLocalIdsOnPrism[3][4];
+  auto elem_vs_indexer = Albany::createGlobalLocalIndexer(elem_vs);
   for (int i=0; i<elem_vs->localSubDim()/3; i++) {
 	  int ib = (Ordering == LAYER)*(i%(lElemColumnShift/3)) + (Ordering == COLUMN)*(i/(elemLayerShift/3));
 	  int il = (Ordering == LAYER)*(i/(lElemColumnShift/3)) + (Ordering == COLUMN)*(i%(elemLayerShift/3));
@@ -568,7 +571,7 @@ void MpasSTKMeshStruct::constructMesh(
     tetrasFromPrismStructured (prismMpasIds, prismGlobalIds, tetrasLocalIdsOnPrism);
     for(int iTetra = 0; iTetra<3; ++iTetra) {
       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK,
-                                                         getGlobalElement(elem_vs,3*i+iTetra)+1,
+                                                         elem_vs_indexer->getGlobalElement(3*i+iTetra)+1,
                                                          singlePartVec);
 	 	  for(int j=0; j<4; ++j) {
 	 	    stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, tetrasLocalIdsOnPrism[iTetra][j]+1);

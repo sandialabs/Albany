@@ -7,6 +7,7 @@
 #include "Albany_APFDiscretization.hpp"
 
 #include "Albany_Utils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_PUMIOutput.hpp"
 #if defined(ALBANY_CONTACT)
 #include "Albany_ContactManager.hpp"
@@ -857,6 +858,7 @@ void APFDiscretization::computeWorksetInfo()
      wsElNodeID, and coords structures.
      These are (bucket, element, element_node, dof)-indexed
      structures to get numbers or coordinates */
+  auto ov_node_vs_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
   for (int b=0; b < numBuckets; b++) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
     wsElNodeID[b].resize(buck.size());
@@ -899,7 +901,7 @@ void APFDiscretization::computeWorksetInfo()
       const int spdim = getNumDim();
       for (int j=0; j < nodes_per_element; j++) {
         const GO node_gid = nodeIDs[j];
-        const LO node_lid = getLocalElement(m_overlap_node_vs,node_gid);
+        const LO node_lid = ov_node_vs_indexer->getLocalElement(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
             "PUMI: node_lid " << node_lid << " out of range\n");

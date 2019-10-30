@@ -107,6 +107,7 @@ SET(SOURCES ${SOURCES}
   utility/Albany_CombineAndScatterManagerTpetra.cpp
   utility/Albany_CommUtils.cpp
   utility/Albany_Gather.cpp
+  utility/Albany_GlobalLocalIndexer.cpp
   utility/Albany_ThyraCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
   utility/Albany_TpetraThyraUtils.cpp
@@ -126,6 +127,8 @@ SET(HEADERS ${HEADERS}
   utility/Albany_CombineAndScatterManagerTpetra.hpp
   utility/Albany_CommUtils.hpp
   utility/Albany_Gather.hpp
+  utility/Albany_GlobalLocalIndexer.hpp
+  utility/Albany_GlobalLocalIndexerTpetra.hpp
   utility/Albany_ThyraCrsMatrixFactory.hpp
   utility/Albany_ThyraUtils.hpp
   utility/Albany_TpetraThyraUtils.hpp
@@ -144,7 +147,8 @@ IF (ALBANY_EPETRA)
   )
   SET(HEADERS ${HEADERS}
     utility/Albany_EpetraThyraUtils.hpp
-  utility/Albany_CombineAndScatterManagerEpetra.hpp
+    utility/Albany_CombineAndScatterManagerEpetra.hpp
+    utility/Albany_GlobalLocalIndexerEpetra.hpp
   )
 ENDIF()
 

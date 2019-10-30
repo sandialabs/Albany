@@ -11,6 +11,7 @@
 #include "Albany_MultiSTKFieldContainer.hpp"
 #include "Albany_STKFieldContainerHelper.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 // Start of STK stuff
 #include <stk_mesh/base/FieldBase.hpp>
@@ -45,8 +46,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     const Teuchos::RCP<stk::mesh::MetaData>&    metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&    bulkData_,
     const int                                   neq_,
-    const AbstractFieldContainer::FieldContainerRequirements&
-        req,  // TODO: remove this altogether?
+    const AbstractFieldContainer::FieldContainerRequirements& req,  // TODO: remove this altogether?
               // AM: No, used in LCM for crystal plasticity and ACE
     const int                                          numDim_,
     const Teuchos::RCP<StateInfoStruct>&               sis,
@@ -627,6 +627,7 @@ MultiSTKFieldContainer<Interleaved>::fillVectorImpl(
       "Error! Something went wrong while retrieving a field.\n");
   const int rank = raw_field->field_array_rank();
 
+  auto field_node_vs_indexer = createGlobalLocalIndexer(field_node_vs);
   if (rank == 0) {
     using Helper     = STKFieldContainerHelper<SFT>;
     const SFT* field = this->metaData->template get_field<SFT>(
@@ -634,7 +635,7 @@ MultiSTKFieldContainer<Interleaved>::fillVectorImpl(
     for (auto it = all_elements.begin(); it != all_elements.end(); ++it) {
       const stk::mesh::Bucket& bucket = **it;
       Helper::fillVector(
-          field_vector, *field, field_node_vs, bucket, nodalDofManager, offset);
+          field_vector, *field, field_node_vs_indexer, bucket, nodalDofManager, offset);
     }
   } else if (rank == 1) {
     using Helper     = STKFieldContainerHelper<VFT>;
@@ -643,7 +644,7 @@ MultiSTKFieldContainer<Interleaved>::fillVectorImpl(
     for (auto it = all_elements.begin(); it != all_elements.end(); ++it) {
       const stk::mesh::Bucket& bucket = **it;
       Helper::fillVector(
-          field_vector, *field, field_node_vs, bucket, nodalDofManager, offset);
+          field_vector, *field, field_node_vs_indexer, bucket, nodalDofManager, offset);
     }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -678,6 +679,7 @@ MultiSTKFieldContainer<Interleaved>::saveVectorImpl(
   stk::mesh::BucketVector const& all_elements =
       this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
 
+  auto field_node_vs_indexer = createGlobalLocalIndexer(field_node_vs);
   if (rank == 0) {
     using Helper = STKFieldContainerHelper<SFT>;
     SFT* field   = this->metaData->template get_field<SFT>(
@@ -685,7 +687,7 @@ MultiSTKFieldContainer<Interleaved>::saveVectorImpl(
     for (auto it = all_elements.begin(); it != all_elements.end(); ++it) {
       const stk::mesh::Bucket& bucket = **it;
       Helper::saveVector(
-          field_vector, *field, field_node_vs, bucket, nodalDofManager, offset);
+          field_vector, *field, field_node_vs_indexer, bucket, nodalDofManager, offset);
     }
   } else if (rank == 1) {
     using Helper = STKFieldContainerHelper<VFT>;
@@ -694,7 +696,7 @@ MultiSTKFieldContainer<Interleaved>::saveVectorImpl(
     for (auto it = all_elements.begin(); it != all_elements.end(); ++it) {
       const stk::mesh::Bucket& bucket = **it;
       Helper::saveVector(
-          field_vector, *field, field_node_vs, bucket, nodalDofManager, offset);
+          field_vector, *field, field_node_vs_indexer, bucket, nodalDofManager, offset);
     }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(

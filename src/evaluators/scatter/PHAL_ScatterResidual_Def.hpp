@@ -16,6 +16,7 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -796,17 +797,19 @@ evaluateFields(typename Traits::EvalData workset)
 
     auto overlapVS = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
     auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
+    auto node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
+    auto indexer = Albany::createGlobalLocalIndexer(overlapVS);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
       const int num_deriv = this->numNodes;//local_Vp.size()/this->numFields;
       for (int i=0; i<num_deriv; i++) {
-        const LO lnodeId = Albany::getLocalElement(overlapNodeVS,elNodeID[i]);
+        const LO lnodeId = node_indexer->getLocalElement(elNodeID[i]);
         LO base_id, ilayer;
         layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
         const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const GO ginode = Albany::getGlobalElement(overlapNodeVS,inode);
+        const GO ginode = node_indexer->getGlobalElement(inode);
 
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
@@ -819,7 +822,7 @@ evaluateFields(typename Traits::EvalData workset)
               val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
-          const LO row = Albany::getLocalElement(overlapVS,ginode);
+          const LO row = indexer->getLocalElement(ginode);
           if(row >=0) {
             fpV_nonconst2dView[col][row] += val;
           }

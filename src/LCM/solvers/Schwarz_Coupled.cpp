@@ -5,16 +5,18 @@
 //*****************************************************************//
 #include "Schwarz_Coupled.hpp"
 
-#include <sstream>
-
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Schwarz_CoupledJacobian.hpp"
 #include "SolutionSniffer.hpp"
-#include "Teuchos_TestForException.hpp"
-#include "Teuchos_VerboseObject.hpp"
 
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
+
+#include <Teuchos_TestForException.hpp>
+#include <Teuchos_VerboseObject.hpp>
+
+#include <sstream>
 
 // uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
@@ -1003,6 +1005,8 @@ SchwarzCoupled::evalModelImpl(
     if (!W_prec_out.is_null()) {
       for (auto m = 0; m < num_models_; ++m) {
         if (!Albany::isFillActive(precs_[m])) Albany::resumeFill(precs_[m]);
+
+        auto jac_range_indexer = Albany::createGlobalLocalIndexer(jacs_[m]->range());
         if (mf_prec_type_ == JACOBI) {
           // With matrix-free, W_op_out is null, so computeJacobian does not
           // get called earlier.  We need to call it here to get the Jacobians.
@@ -1031,9 +1035,9 @@ SchwarzCoupled::evalModelImpl(
           Albany::resumeFill(precs_[m]);
           Albany::scale(precs_[m], 0.0);
           // Create Jacobi preconditioner
-          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range());
+          for (LO i = 0; i < jac_range_indexer->getNumLocalElements();
                ++i) {
-            GO global_row = Albany::getGlobalElement(jacs_[m]->range(), i);
+            const GO global_row = jac_range_indexer->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = invdiag_constView[i];
@@ -1061,9 +1065,9 @@ SchwarzCoupled::evalModelImpl(
           absrowsum->assign(0.0);
           auto absrowsum_nonconstView = Albany::getNonconstLocalData(absrowsum);
           // Compute abs sum of each row and store in absrowsum vector
-          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range());
+          for (LO i = 0; i < jac_range_indexer->getNumLocalElements();
                ++i) {
-            std::size_t NumEntries =
+            const std::size_t NumEntries =
                 Albany::getNumEntriesInLocalRow(jacs_[m], i);
             Teuchos::Array<LO> Indices(NumEntries);
             Teuchos::Array<ST> Values(NumEntries);
@@ -1083,9 +1087,9 @@ SchwarzCoupled::evalModelImpl(
           Albany::resumeFill(precs_[m]);
           Albany::scale(precs_[m], 0.0);
           // Create diagonal abs row sum preconditioner
-          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range());
+          for (LO i = 0; i < jac_range_indexer->getNumLocalElements();
                ++i) {
-            GO global_row = Albany::getGlobalElement(jacs_[m]->range(), i);
+            const GO global_row = jac_range_indexer->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = invabsrowsum_constView[i];
@@ -1095,9 +1099,9 @@ SchwarzCoupled::evalModelImpl(
           }
         } else if (mf_prec_type_ == ID) {
           // Create Identity
-          for (size_t i = 0; i < Albany::getNumLocalElements(jacs_[m]->range());
+          for (LO i = 0; i < jac_range_indexer->getNumLocalElements();
                ++i) {
-            GO global_row = Albany::getGlobalElement(jacs_[m]->range(), i);
+            const GO global_row = jac_range_indexer->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = 1.0;

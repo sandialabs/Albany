@@ -28,6 +28,7 @@
 
 #include "Teuchos_StackedTimer.hpp"
 #include "Teuchos_TimeMonitor.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -245,6 +246,8 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   error = !success;
 
   auto overlapVS = albanyApp->getDiscretization()->getOverlapVectorSpace();
+  
+  auto indexer = Albany::createGlobalLocalIndexer(overlapVS);
   for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
         + (ordering == 1) * (j / vertexLayerShift);
@@ -255,10 +258,10 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     int lId0, lId1;
 
     if (interleavedOrdering) {
-      lId0 = Albany::getLocalElement(overlapVS,neq * gId);
+      lId0 = indexer->getLocalElement(neq * gId);
       lId1 = lId0 + 1;
     } else {
-      lId0 = Albany::getLocalElement(overlapVS,gId);
+      lId0 = indexer->getLocalElement(gId);
       lId1 = lId0 + numVertices3D;
     }
     velocityOnVertices[j] = solution_constView[lId0];

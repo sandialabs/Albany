@@ -7,6 +7,7 @@
 #define LCM_Topology_Topology_h
 
 #include <iterator>
+#include <set>
 
 #include <stk_mesh/base/FieldBase.hpp>
 
@@ -155,6 +156,13 @@ class Topology
 
   std::vector<minitensor::Vector<double>>
   getNodalCoordinates();
+
+  ///
+  /// Create boundary using STK functionality.
+  /// This is needed for parallel consistency.
+  ///
+  void
+  createBoundary();
 
   ///
   /// \brief Output boundary
@@ -896,6 +904,20 @@ class Topology
     return is_boundary_cell(e) == true && is_open(e) == true;
   }
 
+  int
+  get_proc_rank()
+  {
+    stk::ParallelMachine communicator = MPI_COMM_WORLD;
+    return stk::parallel_machine_rank(communicator);
+  }
+
+  stk::mesh::EntityId
+  get_gid(stk::mesh::Entity e)
+  {
+    auto& bulk_data = get_bulk_data();
+    return bulk_data.identifier(e);
+  }
+
   bool
   there_are_failed_cells();
 
@@ -969,6 +991,7 @@ class Topology
   std::set<EntityPair>                   fractured_faces_;
   std::vector<stk::topology>             topologies_;
   std::vector<stk::mesh::EntityId>       highest_ids_;
+  std::set<stk::mesh::Entity>            boundary_;
   std::string                            bulk_block_name_{""};
   std::string                            interface_block_name_{""};
   OutputType                             output_type_;

@@ -731,7 +731,7 @@ ConnectivityArray::ConnectivityArray(
   disc_params->set<int>("Workset Size", 10000);
   disc_params->set<int>("Number Of Time Derivatives", 0);
 
-  Teuchos::RCP<Teuchos_Comm> communicator =
+  Teuchos::RCP<const Teuchos_Comm> communicator =
       Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   Albany::DiscretizationFactory disc_factory(params, communicator);

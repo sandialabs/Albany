@@ -33,6 +33,8 @@ namespace Albany {
 
 typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
 
+class GlobalLocalIndexer;
+
 struct DOFsStruct
 {
   Teuchos::RCP<const Thyra_VectorSpace> node_vs;
@@ -45,6 +47,11 @@ struct DOFsStruct
   std::vector<IDArray>                  wsElNodeEqID;
   std::vector<std::vector<GO>>          wsElNodeID_rawVec;
   std::vector<GIDArray>                 wsElNodeID;
+
+  Teuchos::RCP<const GlobalLocalIndexer> node_vs_indexer;
+  Teuchos::RCP<const GlobalLocalIndexer> overlap_node_vs_indexer;
+  Teuchos::RCP<const GlobalLocalIndexer> vs_indexer;
+  Teuchos::RCP<const GlobalLocalIndexer> overlap_vs_indexer;
 };
 
 struct NodalDOFsStructContainer

@@ -14,6 +14,7 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_CommUtils.hpp"
 
 #include "Piro_PerformSolve.hpp"
@@ -433,6 +434,7 @@ void MPMD_App::copyFieldIntoState(const std::string& name, const Plato::SharedDa
   // copy the field into the state manager
   Teuchos::RCP<const Thyra_VectorSpace> overlapNodeVS = m_overlapVector->space();
   Teuchos::ArrayRCP<double> otopo = Albany::getNonconstLocalData(m_overlapVector);
+  auto ov_node_vs_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
   for(int ws=0; ws<numWorksets; ws++){
     Albany::MDArray& wsTopo = dest[ws][name];
     const int numCells = wsTopo.dimension(0);
@@ -440,7 +442,7 @@ void MPMD_App::copyFieldIntoState(const std::string& name, const Plato::SharedDa
     for(int cell=0; cell<numCells; cell++)
       for(int node=0; node<numNodes; node++){
         int gid = wsElNodeID[ws][cell][node];
-        int lid = Albany::getLocalElement(overlapNodeVS,gid);
+        int lid = ov_node_vs_indexer->getLocalElement(gid);
         wsTopo(cell,node) = otopo[lid];
       }
   }
@@ -483,13 +485,14 @@ void MPMD_App::copyFieldFromState(const std::string& name, Plato::SharedData& sf
 
   // copy the field from the state manager
   auto data = Albany::getNonconstLocalData(m_overlapVector);
+  auto ov_vs_indexer = Albany::createGlobalLocalIndexer(m_overlapVector->space());
   for(int ws=0; ws<numWorksets; ws++){
     Albany::MDArray& wsSrc = src[ws][name];
     const int numCells = wsSrc.dimension(0);
     const int numNodes = wsSrc.dimension(1);
     for(int cell=0; cell<numCells; cell++)
       for(int node=0; node<numNodes; node++) {
-        int lid = Albany::getLocalElement(m_overlapVector->space(),wsElNodeID[ws][cell][node]);
+        int lid = ov_vs_indexer->getLocalElement(wsElNodeID[ws][cell][node]);
         data[lid] += wsSrc(cell,node);
       }
   }
@@ -530,11 +533,11 @@ void MPMD_App::exportDataMap(const Plato::data::layout_t & aDataLayout,
 
     if(aDataLayout == Plato::data::layout_t::SCALAR_FIELD)
     {
-      auto spmd_vs = Albany::getSpmdVectorSpace(m_localVector->space());
-      int numLocalVals = spmd_vs->localSubDim();
+      auto vs_indexer = Albany::createGlobalLocalIndexer(m_localVector->space());
+      int numLocalVals = vs_indexer->getNumLocalElements();
       aMyOwnedGlobalIDs.resize(numLocalVals);
       for(int lid=0; lid<numLocalVals; lid++){
-        aMyOwnedGlobalIDs[lid] = Albany::getGlobalElement(spmd_vs,lid)+1; // Albany's gids start from 0
+        aMyOwnedGlobalIDs[lid] = vs_indexer->getGlobalElement(lid)+1; // Albany's gids start from 0
       }
     }
 }

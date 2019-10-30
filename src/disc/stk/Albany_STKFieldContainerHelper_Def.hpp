@@ -7,6 +7,7 @@
 #include "Albany_AbstractSTKFieldContainer.hpp"
 #include "Albany_STKFieldContainerHelper.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_Macros.hpp"
 
 #include "Albany_BucketArray.hpp"
@@ -23,6 +24,7 @@ template<>
 const double& access<const BucketArray<AbstractSTKFieldContainer::ScalarFieldType>> (const BucketArray<AbstractSTKFieldContainer::ScalarFieldType>& array, const int j, const int i)
 {
   ALBANY_EXPECT (j==0, "Error! Attempting to access 1d array with two indices.\n");
+  (void)j;
   return array(i);
 }
 
@@ -31,6 +33,7 @@ template<>
 double& access<BucketArray<AbstractSTKFieldContainer::ScalarFieldType>> (BucketArray<AbstractSTKFieldContainer::ScalarFieldType>& array, const int j, const int i)
 {
   ALBANY_EXPECT (j==0, "Error! Attempting to access 1d array with two indices.\n");
+  (void) j;
   return array(i);
 }
 
@@ -64,7 +67,7 @@ template<class FieldType>
 void STKFieldContainerHelper<FieldType>::
 fillVector (Thyra_Vector&    field_thyra,
             const FieldType& field_stk,
-            const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+            const Teuchos::RCP<const GlobalLocalIndexer>& indexer,
             const stk::mesh::Bucket& bucket,
             const NodalDOFManager& nodalDofManager,
             const int offset)
@@ -88,9 +91,10 @@ fillVector (Thyra_Vector&    field_thyra,
   //Need to look into this more to come up with a better fix, hopefully.  
   if (is_SFT == true) num_vec_components = 1; 
   else num_vec_components = nodalDofManager.numComponents();
+
   for(int i=0; i<num_nodes_in_bucket; ++i)  {
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
-    const LO node_lid = getLocalElement(node_vs,node_gid);
+    const LO node_lid = indexer->getLocalElement(node_gid);
 
     for(int j=0; j<num_vec_components; ++j) {
       data[nodalDofManager.getLocalDOF(node_lid,offset+j)] = access(field_array,j,i);
@@ -102,7 +106,7 @@ template<class FieldType>
 void STKFieldContainerHelper<FieldType>::
 saveVector(const Thyra_Vector& field_thyra,
            FieldType& field_stk,
-           const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+           const Teuchos::RCP<const GlobalLocalIndexer>& indexer,
            const stk::mesh::Bucket& bucket,
            const NodalDOFManager& nodalDofManager,
            const int offset)
@@ -126,9 +130,10 @@ saveVector(const Thyra_Vector& field_thyra,
   //Need to look into this more to come up with a better fix, hopefully.  
   if (is_SFT == true) num_vec_components = 1; 
   else num_vec_components = nodalDofManager.numComponents();
+
   for(int i=0; i<num_nodes_in_bucket; ++i) {
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
-    const LO node_lid = getLocalElement(node_vs,node_gid);
+    const LO node_lid = indexer->getLocalElement(node_gid);
 
     for(int j = 0; j<num_vec_components; ++j) {
       access(field_array,j,i) = data[nodalDofManager.getLocalDOF(node_lid,offset+j)];

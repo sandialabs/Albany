@@ -7,6 +7,8 @@
 #include "Topology_FailureCriterion.h"
 #include "Topology.h"
 
+#include "Albany_GlobalLocalIndexer.hpp"
+
 namespace LCM {
 
 FractureCriterionTraction::FractureCriterionTraction(
@@ -163,17 +165,16 @@ FractureCriterionTraction::computeNormals()
   // Use low level id functions from BulkData instead of the mapping
   // functions for entity ids from the Topology class as the local
   // element mapping functions expect the former.
+
+  auto node_vs_indexer = Albany::createGlobalLocalIndexer(get_stk_discretization().getNodeVectorSpace());
   for (EntityVectorIndex i = 0; i < number_normals; ++i) {
     stk::mesh::Entity face = faces[i];
 
     stk::mesh::EntityId face_id = get_bulk_data().identifier(face);
 
-    stk::mesh::EntityVector nodes = get_topology().getBoundaryEntityNodes(face);
+    nodes = get_topology().getBoundaryEntityNodes(face);
 
     minitensor::Vector<double> normal(get_space_dimension());
-
-    Teuchos::RCP<const Thyra_VectorSpace> m_node_vs =
-        get_stk_discretization().getNodeVectorSpace();
 
     // Depending on the dimension is how the normal is computed.
     // TODO: generalize this for all topologies.
@@ -188,15 +189,13 @@ FractureCriterionTraction::computeNormals()
         stk::mesh::EntityId const gid0 =
             get_bulk_data().identifier(nodes[0]) - 1;
 
-        stk::mesh::EntityId const lid0 =
-            Albany::getLocalElement(m_node_vs, gid0);
+        stk::mesh::EntityId const lid0 = node_vs_indexer->getLocalElement(gid0);
 
         assert(lid0 < number_nodes);
 
         stk::mesh::EntityId gid1 = get_bulk_data().identifier(nodes[1]) - 1;
 
-        stk::mesh::EntityId const lid1 =
-            Albany::getLocalElement(m_node_vs, gid1);
+        stk::mesh::EntityId const lid1 = node_vs_indexer->getLocalElement(gid1);
 
         assert(lid1 < number_nodes);
 
@@ -212,22 +211,19 @@ FractureCriterionTraction::computeNormals()
         stk::mesh::EntityId const gid0 =
             get_bulk_data().identifier(nodes[0]) - 1;
 
-        stk::mesh::EntityId const lid0 =
-            Albany::getLocalElement(m_node_vs, gid0);
+        stk::mesh::EntityId const lid0 = node_vs_indexer->getLocalElement(gid0);
 
         assert(lid0 < number_nodes);
 
         stk::mesh::EntityId gid1 = get_bulk_data().identifier(nodes[1]) - 1;
 
-        stk::mesh::EntityId const lid1 =
-            Albany::getLocalElement(m_node_vs, gid1);
+        stk::mesh::EntityId const lid1 = node_vs_indexer->getLocalElement(gid1);
 
         assert(lid1 < number_nodes);
 
         stk::mesh::EntityId gid2 = get_bulk_data().identifier(nodes[2]) - 1;
 
-        stk::mesh::EntityId const lid2 =
-            Albany::getLocalElement(m_node_vs, gid2);
+        stk::mesh::EntityId const lid2 = node_vs_indexer->getLocalElement(gid2);
 
         assert(lid2 < number_nodes);
 
@@ -265,11 +261,11 @@ BulkFailureCriterion::BulkFailureCriterion(
 
 bool
 BulkFailureCriterion::check(
-    stk::mesh::BulkData& bulk_data,
+    stk::mesh::BulkData& /* bulk_data */,
     stk::mesh::Entity    element)
 {
   double const failure_state = *stk::mesh::field_data(*failure_state_, element);
-  return failure_state >= 0.5;
+  return failure_state > 0.0;
 }
 
 }  // namespace LCM

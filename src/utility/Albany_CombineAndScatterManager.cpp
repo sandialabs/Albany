@@ -9,6 +9,7 @@
 
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 namespace Albany
 {
@@ -36,10 +37,11 @@ void CombineAndScatterManager::create_aura_vss () const {
   auto data = getLocalData(ovNumProcs.getConst());
 
   // If an element is no longer 1.0, then it is in the aura
+  auto indexer = createGlobalLocalIndexer(overlapped_vs);
   Teuchos::Array<GO> aura_gids;
   for (int lid=0; lid<data.size(); ++lid) {
     if (data[lid]!=1.0) {
-      aura_gids.push_back(getGlobalElement(overlapped_vs,lid));
+      aura_gids.push_back(indexer->getGlobalElement(lid));
     }
   }
 

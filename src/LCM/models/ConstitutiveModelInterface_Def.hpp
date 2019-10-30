@@ -26,12 +26,13 @@
 #include "GursonHMRModel.hpp"
 #include "GursonModel.hpp"
 #include "HyperelasticDamageModel.hpp"
+#include "J2Erosion.hpp"
 #include "J2FiberModel.hpp"
 #include "J2HMCModel.hpp"
-#include "J2Erosion.hpp"
 #include "J2MiniSolver.hpp"
 #include "J2Model.hpp"
 #include "LinearElasticModel.hpp"
+#include "LinearElasticVolDevModel.hpp"
 #include "LinearHMCModel.hpp"
 #include "LinearPiezoModel.hpp"
 #include "MooneyRivlinModel.hpp"
@@ -314,6 +315,8 @@ ConstitutiveModelInterface<EvalT, Traits>::initializeModel(
     model = rcp(new AAAModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Linear Elastic") {
     model = rcp(new LinearElasticModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Linear Elastic Volumetric Deviatoric") {
+    model = rcp(new LinearElasticVolDevModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Hyperelastic Damage") {
     model = rcp(new HyperelasticDamageModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Cap Explicit") {
