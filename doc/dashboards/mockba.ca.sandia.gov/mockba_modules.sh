@@ -1,7 +1,7 @@
 
 module purge
 module load sems-env
-module load sems-gcc/6.1.0 
+module load sems-gcc/7.3.0
 module load sems-openmpi/1.8.7 
 module load sems-cmake
 module load sems-boost/1.55.0/base
