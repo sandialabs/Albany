@@ -46,7 +46,7 @@ public:
       const Thyra_MultiVector& solution,
       const ST stamp);
 
-  virtual void observeParameter(
+  virtual void parameterChanged(
       const std::string& param);
 
 private:

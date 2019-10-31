@@ -1313,8 +1313,8 @@ Application::writePhalanxGraph(
     *out << "Process using 'dot -Tpng -O " << graphName << std::endl;
     fm->writeGraphvizFile<EvalT>(graphName, detail, detail);
 
-    // Print phalanx field info
-    phxSetup->print_field_dependencies();
+    // Print phalanx setup info
+    phxSetup->print(*out);
   }
 }
 
@@ -2253,6 +2253,8 @@ Application::evaluateResponse(
     const Teuchos::Array<ParamVec>&         p,
     const Teuchos::RCP<Thyra_Vector>&       g)
 {
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "> Albany Fill: Response");
   double const this_time = fixTime(current_time);
   responses[response_index]->evaluateResponse(
       this_time, x, xdot, xdotdot, p, g);
@@ -2279,6 +2281,8 @@ Application::evaluateResponseTangent(
     const Teuchos::RCP<Thyra_MultiVector>&       gx,
     const Teuchos::RCP<Thyra_MultiVector>&       gp)
 {
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "> Albany Fill: Response Tangent");
   double const this_time = fixTime(current_time);
   responses[response_index]->evaluateTangent(
       alpha,
@@ -2315,6 +2319,8 @@ Application::evaluateResponseDerivative(
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "> Albany Fill: Response Derivative");
   double const this_time = fixTime(current_time);
 
   responses[response_index]->evaluateDerivative(

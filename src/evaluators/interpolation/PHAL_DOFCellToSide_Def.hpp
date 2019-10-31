@@ -83,7 +83,7 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
   this->addDependentField(val_cell);
   this->addEvaluatedField(val_side);
 
-  this->setName("DOFCellToSide (" + cell_field_name + " -> " + side_field_name + ")" + PHX::print<EvalT>());
+  this->setName("DOFCellToSide(" + cell_field_name + " -> " + side_field_name + ")" + PHX::print<EvalT>());
 
   if (layout==NODE_SCALAR || layout==NODE_VECTOR || layout==NODE_TENSOR || layout==VERTEX_VECTOR)
   {

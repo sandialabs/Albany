@@ -30,7 +30,7 @@ public:
   void observeSolution(
       double stamp, const Thyra_MultiVector& nonOverlappedSolution) override;
 
-  void observeParameter(
+  void parameterChanged(
       const std::string& param);
 };
 

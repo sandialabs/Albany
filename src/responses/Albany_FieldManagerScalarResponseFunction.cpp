@@ -28,6 +28,7 @@ FieldManagerScalarResponseFunction(
  , problem(problem_)
  , meshSpecs(meshSpecs_)
  , stateMgr(stateMgr_)
+ , vis_response_graph(0)
  , performedPostRegSetup(false)
 {
   setup(responseParams);
@@ -44,6 +45,9 @@ FieldManagerScalarResponseFunction(
  , problem(problem_)
  , meshSpecs(meshSpecs_)
  , stateMgr(stateMgr_)
+ , num_responses(0)
+ , vis_response_graph(0)
+ , element_block_index(0)
  , performedPostRegSetup(false)
 {
   // Nothing to be done here
@@ -64,7 +68,19 @@ setup(Teuchos::ParameterList& responseParams)
   // then an exception will be thrown. Quick and dirty fix:
   // Remove the option if it already exists before building
   // the evaluators, it will be added again below anyhow.
-  responseParams.remove("Phalanx Graph Visualization Detail", false);
+  const char* phx_graph_parm = "Phalanx Graph Visualization Detail";
+  const bool phx_graph_parm_present = responseParams.isType<int>(phx_graph_parm);
+  if (phx_graph_parm_present) {
+    vis_response_graph = responseParams.get(phx_graph_parm, 0);
+    responseParams.remove("Phalanx Graph Visualization Detail", false);
+  }
+
+  // Visualize rfm graph -- get file name from name of response function
+  // (with spaces replaced by _ and lower case)
+  vis_response_name = responseParams.get<std::string>("Name");
+  std::replace(vis_response_name.begin(), vis_response_name.end(), ' ', '_');
+  std::transform(vis_response_name.begin(), vis_response_name.end(),
+		 vis_response_name.begin(), ::tolower);
 
   // Restrict to the element block?
   const char* reb_parm = "Restrict to Element Block";
@@ -92,17 +108,87 @@ setup(Teuchos::ParameterList& responseParams)
   // which is now called in AlbanyApplications (at this point the derivative dimensions cannot be
   // computed correctly because the discretization has not been created yet). 
 
-  // Visualize rfm graph -- get file name from name of response function
-  // (with spaces replaced by _ and lower case)
-  vis_response_graph = 
-    responseParams.get("Phalanx Graph Visualization Detail", 0);
-  vis_response_name = responseParams.get<std::string>("Name");
-  std::replace(vis_response_name.begin(), vis_response_name.end(), ' ', '_');
-  std::transform(vis_response_name.begin(), vis_response_name.end(), 
-		 vis_response_name.begin(), ::tolower);
+  if (phx_graph_parm_present) responseParams.set<int>(phx_graph_parm, vis_response_graph);
+  if (reb_parm_present) responseParams.set<bool>(reb_parm, reb);
+}
 
-  if (reb_parm_present) {
-    responseParams.set<bool>(reb_parm, reb);
+template <typename EvalT>
+void FieldManagerScalarResponseFunction::
+postRegDerivImpl()
+{
+  const auto phxSetup = application->getPhxSetup();
+  std::vector<PHX::index_size_type> derivative_dimensions;
+  derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<EvalT>(application.get(), meshSpecs.get()));
+  rfm->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
+  rfm->postRegistrationSetupForType<EvalT>(*phxSetup);
+}
+
+template <>
+void FieldManagerScalarResponseFunction::
+postRegImpl<PHAL::AlbanyTraits::Residual>()
+{
+  using EvalT = PHAL::AlbanyTraits::Residual;
+  const auto phxSetup = application->getPhxSetup();
+  rfm->postRegistrationSetupForType<EvalT>(*phxSetup);
+}
+
+template <>
+void FieldManagerScalarResponseFunction::
+postRegImpl<PHAL::AlbanyTraits::Jacobian>()
+{
+  postRegDerivImpl<PHAL::AlbanyTraits::Jacobian>();
+}
+
+template <>
+void FieldManagerScalarResponseFunction::
+postRegImpl<PHAL::AlbanyTraits::Tangent>()
+{
+  postRegDerivImpl<PHAL::AlbanyTraits::Tangent>();
+}
+
+template <>
+void FieldManagerScalarResponseFunction::
+postRegImpl<PHAL::AlbanyTraits::DistParamDeriv>()
+{
+  postRegDerivImpl<PHAL::AlbanyTraits::DistParamDeriv>();
+}
+
+template <typename EvalT>
+void FieldManagerScalarResponseFunction::
+postReg()
+{
+  const auto phxSetup = application->getPhxSetup();
+
+  const std::string evalName = PHAL::evalName<EvalT>("RFM",0) + "_" + vis_response_name;
+  phxSetup->insert_eval(evalName);
+
+  postRegImpl<EvalT>();
+
+  // Update phalanx saved/unsaved fields based on field dependencies
+  phxSetup->check_fields(rfm->getFieldTagsForSizing<EvalT>());
+  phxSetup->update_fields();
+
+  writePhalanxGraph<EvalT>(evalName);
+}
+
+template <typename EvalT>
+void FieldManagerScalarResponseFunction::
+writePhalanxGraph(const std::string& evalName)
+{
+  if (vis_response_graph > 0) {
+    const bool detail = (vis_response_graph > 1) ? true : false;
+    Teuchos::RCP<Teuchos::FancyOStream> out =
+      Teuchos::VerboseObjectBase::getDefaultOStream();
+    *out << "Phalanx writing graphviz file for graph of " << evalName <<
+        " (detail = " << vis_response_graph << ")" << std::endl;
+    const std::string graphName = "phalanxGraph" + evalName;
+    *out << "Process using 'dot -Tpng -O " << graphName << std::endl;
+    rfm->writeGraphvizFile<EvalT>(graphName, detail, detail);
+
+    // Print phalanx setup info
+    const auto phxSetup = application->getPhxSetup();
+    phxSetup->print(*out);
   }
 }
 
@@ -112,40 +198,17 @@ setup(Teuchos::ParameterList& responseParams)
 void FieldManagerScalarResponseFunction::
 postRegSetup()
 {
-  { std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
-      derivative_dimensions);
-  }
-  { std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
-      derivative_dimensions);
-  }
-  // MP implementation gets deriv info from the regular evaluation types
-  { std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-      derivative_dimensions);
-  }
-  rfm->postRegistrationSetup(*application->getPhxSetup());
-  application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Residual>());
-  application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Jacobian>());
-  application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Tangent>());
-  application->getPhxSetup()->check_fields(rfm->getFieldTagsForSizing<PHAL::AlbanyTraits::DistParamDeriv>());
-  application->getPhxSetup()->update_fields();
+  postReg<PHAL::AlbanyTraits::Residual>();
+  postReg<PHAL::AlbanyTraits::Jacobian>();
+  postReg<PHAL::AlbanyTraits::Tangent>();
+  postReg<PHAL::AlbanyTraits::DistParamDeriv>();
   performedPostRegSetup = true;
 }
 
 template<typename EvalT>
 void FieldManagerScalarResponseFunction::
-evaluate (PHAL::Workset& workset) {
+evaluate(PHAL::Workset& workset)
+{
   const WorksetArray<int>::type&
     wsPhysIndex = application->getDiscretization()->getWsPhysIndex();
   rfm->preEvaluate<EvalT>(workset);
@@ -153,7 +216,7 @@ evaluate (PHAL::Workset& workset) {
        ws < numWorksets; ws++) {
     if (element_block_index >= 0 && element_block_index != wsPhysIndex[ws])
       continue;
-    const std::string evalName = PHAL::evalName<EvalT>("RFM", wsPhysIndex[ws]);
+    const std::string evalName = PHAL::evalName<EvalT>("RFM", wsPhysIndex[ws]) + "_" + vis_response_name;
     application->loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
     rfm->evaluateFields<EvalT>(workset);
   }
@@ -172,8 +235,6 @@ evaluateResponse(const double current_time,
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
       std::endl << "Post registration setup not performed in field manager " <<
       std::endl << "Forgot to call \"postRegSetup\"? ");
-
-  visResponseGraph<PHAL::AlbanyTraits::Residual>("");
 
   // Set data in Workset struct
   PHAL::Workset workset;
@@ -208,8 +269,6 @@ evaluateTangent(const double /* alpha */,
       std::endl << "Post registration setup not performed in field manager " <<
       std::endl << "Forgot to call \"postRegSetup\"? ");
 
-  visResponseGraph<PHAL::AlbanyTraits::Tangent>("_tangent");
-  
   // Set data in Workset struct
   PHAL::Workset workset;
   application->setupTangentWorksetInfo(workset, current_time, sum_derivs, 
@@ -239,8 +298,6 @@ evaluateGradient(const double current_time,
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
       std::endl << "Post registration setup not performed in field manager " <<
       std::endl << "Forgot to call \"postRegSetup\"? ");
-
-  visResponseGraph<PHAL::AlbanyTraits::Jacobian>("_gradient");
 
   // Set data in Workset struct
   PHAL::Workset workset;
