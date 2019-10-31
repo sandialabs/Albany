@@ -38,6 +38,9 @@ public:
   //! Check if memoization is activated
   bool memoizer_active() const;
 
+  //! Check if memoization for parameters is activated
+  bool memoizer_for_params_active() const;
+
   //! Setup data before app evaluation functions are called
   void pre_eval();
 
@@ -52,15 +55,15 @@ public:
   void fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag>>& depFields,
       const std::vector<Teuchos::RCP<PHX::FieldTag>>& evalFields, const bool saved = true);
 
-  //! Print MDField lists
-  void print_field_dependencies() const;
-
   //! Update list of _saved/_unsaved MDFields based on _unsaved MDFields and field dependencies
   void update_fields();
 
   //! Compare list of saved/unsaved MDFields to input
   //! (used to ensure all MDFields have been gathered by fill_field_dependencies())
   void check_fields(const std::vector<Teuchos::RCP<PHX::FieldTag>>& fields) const;
+
+  //! Print Setup information
+  void print() const;
 
   //! Print list of _saved/_unsaved MDFields
   void print_fields() const;
@@ -72,10 +75,14 @@ private:
   //! Update list of saved/unsaved MDFields based on unsaved MDFields and field dependencies
   void update_fields(Teuchos::RCP<StringSet> savedFields, Teuchos::RCP<StringSet> unsavedFields);
 
+  //! Update list of saved/unsaved MDFields with unsaved parameters
+  void update_fields_with_unsaved_params();
+
   //! Print list of _saved/_unsaved MDFields
   void print_fields(Teuchos::RCP<StringSet> savedFields,
       Teuchos::RCP<StringSet> unsavedFields) const;
 
+  //! Used to ensure postRegistrationSetup only occurs once
   const Teuchos::RCP<StringSet> _setupEvals;
 
   //! Data structures for general memoization
@@ -84,9 +91,10 @@ private:
   const Teuchos::RCP<StringSet> _savedFields, _unsavedFields;
 
   //! Data structures for memoization of parameters that change occasionally
-  std::string _unsavedParam, _savedParamStringSets;
-  Teuchos::RCP<StringSet> _unsavedParamEvals;
-  Teuchos::RCP<StringSet> _savedFieldsWOParam, _unsavedFieldsWParam;
+  bool _enableMemoizationForParams, _isParamsSetsSaved;
+  const Teuchos::RCP<StringSet> _unsavedParams;
+  Teuchos::RCP<StringSet> _unsavedParamsEvals;
+  Teuchos::RCP<StringSet> _savedFieldsWOParams, _unsavedFieldsWParams, _dummy;
 };
 
 } // namespace PHAL

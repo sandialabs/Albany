@@ -263,7 +263,7 @@ private:
 //! Return field manager name and evaluation type string
 template <typename EvalT>
 inline std::string evalName(const std::string& fmName, const int& ps) {
-  std::string evalName = PHX::typeAsString<EvalT>();
+  std::string evalName = PHX::print<EvalT>();
   evalName.erase(evalName.begin());
   evalName.pop_back();
   return fmName + std::to_string(ps) + evalName;

@@ -109,10 +109,6 @@ protected:
   // Do not hide base class setup method
   using ScalarResponseFunction::setup;
 
-  //! Helper function for visualizing response graph 
-  template <typename EvalT> 
-  void visResponseGraph(const std::string& res_type);
-
 protected:
 
   //! Application class
@@ -140,8 +136,20 @@ protected:
   std::string vis_response_name;
 
 private:
+  template <typename EvalT>
+  void postRegDerivImpl();
 
-  template <typename EvalT> void evaluate(PHAL::Workset& workset);
+  template <typename EvalT>
+  void postRegImpl();
+
+  template <typename EvalT>
+  void postReg();
+
+  template <typename EvalT>
+  void writePhalanxGraph(const std::string& evalName);
+
+  template <typename EvalT>
+  void evaluate(PHAL::Workset& workset);
 
   //! Restrict the field manager to an element block, as is done for fm and
   //! sfm in Application.
@@ -149,24 +157,6 @@ private:
 
   bool performedPostRegSetup;
 };
-
-template <typename EvalT> 
-void FieldManagerScalarResponseFunction::
-visResponseGraph(const std::string& res_type) {
-  // Only write out the graph file first time function is called
-  static bool first = true;
-  if (first && vis_response_graph > 0) {
-    bool detail = false; if (vis_response_graph > 1) detail=true;
-    Teuchos::RCP<Teuchos::FancyOStream> out = 
-      Teuchos::VerboseObjectBase::getDefaultOStream();
-    *out << "Phalanx writing graphviz file for graph of Response fill "
-         << "(detail = "<< vis_response_graph << ")"<< std::endl;
-    std::string detail_name = "responses_graph_" + vis_response_name + res_type;
-    *out << "Process using 'dot -Tpng -O ' " << detail_name << "\n" << std::endl;
-    rfm->writeGraphvizFile<EvalT>(detail_name,detail,detail);
-    first = false;
-  }
-}
 
 } // namespace Albany
 

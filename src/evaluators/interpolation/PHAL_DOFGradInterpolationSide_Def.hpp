@@ -31,7 +31,7 @@ DOFGradInterpolationSideBase(const Teuchos::ParameterList& p,
   this->addDependentField(gradBF.fieldTag());
   this->addEvaluatedField(grad_qp);
 
-  this->setName("DOFGradInterpolationSideBase");
+  this->setName("DOFGradInterpolationSide("+p.get<std::string>("Variable Name") + ")"+PHX::print<EvalT>());
 
   numSideNodes = dl_side->node_qp_gradient->extent(2);
   numSideQPs   = dl_side->node_qp_gradient->extent(3);

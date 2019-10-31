@@ -17,17 +17,26 @@ Setup::Setup() :
     _dep2EvalFields(Teuchos::rcp(new StringMap())),
     _savedFields(Teuchos::rcp(new StringSet())),
     _unsavedFields(Teuchos::rcp(new StringSet())),
-    _unsavedParamEvals(Teuchos::rcp(new StringSet())) {
+    _enableMemoizationForParams(false),
+    _isParamsSetsSaved(false),
+    _unsavedParams(Teuchos::rcp(new StringSet())),
+    _unsavedParamsEvals(Teuchos::rcp(new StringSet())),
+    _savedFieldsWOParams(Teuchos::rcp(new StringSet())),
+    _unsavedFieldsWParams(Teuchos::rcp(new StringSet())),
+    _dummy(Teuchos::rcp(new StringSet())) {
 }
 
 void Setup::init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> problemParams) {
   _enableMemoization = problemParams->get<bool>("Use MDField Memoization", false);
+  _enableMemoizationForParams = problemParams->get<bool>("Use MDField Memoization For Parameters", false);
+  if (_enableMemoizationForParams) _enableMemoization = true;
 }
 
 void Setup::init_unsaved_param(const std::string& param) {
-  if (_enableMemoization) {
-    _unsavedParam = param;
-    _unsavedParamEvals = Teuchos::rcp(new StringSet(*_setupEvals));
+  if (_enableMemoizationForParams) {
+    std::cout << "Disabling memoization for " << param << " and its dependencies." << std::endl;
+    _unsavedParams->insert(param);
+    _unsavedParamsEvals = Teuchos::rcp(new StringSet(*_setupEvals));
   }
 }
 
@@ -35,33 +44,39 @@ bool Setup::memoizer_active() const {
   return _enableMemoization;
 }
 
+bool Setup::memoizer_for_params_active() const {
+  return _enableMemoizationForParams;
+}
+
 void Setup::pre_eval() {
-  if (_enableMemoization) {
+  if (_enableMemoizationForParams) {
     // If the MDFields haven't been computed yet, everything will be computed
     // anyways so let's skip memoization pre_eval()
     if (_setupEvals->empty()) return;
 
     // If a parameter has changed and the saved/unsaved string sets haven't
     // been created yet then create the sets
-    if ((_unsavedParamEvals->size() == _setupEvals->size())
-        && (_unsavedParam != _savedParamStringSets)) {
-
-      // Copy saved/unsaved MDFields
-      _savedFieldsWOParam = Teuchos::rcp(new StringSet(*_savedFields));
-      _unsavedFieldsWParam = Teuchos::rcp(new StringSet(*_unsavedFields));
-
-      // If saved field has been changed, add field to list of unsaved
-      for (const auto & savedField: *_savedFields)
-        if (savedField.find(_unsavedParam) != std::string::npos) {
-          _unsavedFieldsWParam->insert(savedField);
-          _savedFieldsWOParam->erase(savedField);
-        }
-
-      // Update list of saved/unsaved fields
-      update_fields(_savedFieldsWOParam, _unsavedFieldsWParam);
+    if ((_unsavedParamsEvals->size() == _setupEvals->size()) && (!_isParamsSetsSaved)) {
+//      // Copy saved/unsaved MDFields
+//      _savedFieldsWOParams = Teuchos::rcp(new StringSet(*_savedFields));
+//      _unsavedFieldsWParams = Teuchos::rcp(new StringSet(*_unsavedFields));
+//
+//      // If saved field has been changed, add field to list of unsaved
+//      for (const auto & savedField: *_savedFields)
+//        for (const auto & unsavedParam: *_unsavedParams)
+//          if (savedField.find(unsavedParam) != std::string::npos) {
+//            _unsavedFieldsWParams->insert(savedField);
+//            _savedFieldsWOParams->erase(savedField);
+//          }
+//
+//      // Update list of saved/unsaved fields
+//      std::cout << "Update Param fields:" << std::endl;
+//      update_fields(_savedFieldsWOParams, _unsavedFieldsWParams);
+//      print_fields(_savedFieldsWOParams, _unsavedFieldsWParams);
 
       // Save param string sets for later use
-      _savedParamStringSets = _unsavedParam;
+      update_fields_with_unsaved_params();
+      _isParamsSetsSaved = true;
     }
   }
 }
@@ -91,29 +106,12 @@ void Setup::fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag
   }
 }
 
-void Setup::print_field_dependencies() const {
-  if (_enableMemoization) {
-    std::cout << "******************************************" << std::endl;
-    std::cout << "Phalanx MDField dependencies: " << std::endl;
-    std::cout << "Eval:";
-    for (const auto & eval: *_setupEvals)
-      std::cout << " " << eval;
-    std::cout << std::endl;
-
-    std::cout << "Field dependencies:" << std::endl;
-    for (const auto & depField: *_dep2EvalFields) {
-      std::cout << "  " << depField.first << " is a dependency of:" << std::endl;
-      for (const auto & evalField: depField.second)
-        std::cout << "    " << evalField << std::endl;
-    }
-    std::cout << std::endl;
-    print_fields();
-    std::cout << "******************************************" << std::endl;
-  }
-}
-
 void Setup::update_fields() {
-  if (_enableMemoization) update_fields(_savedFields, _unsavedFields);
+  if (_enableMemoization) {
+    update_fields(_savedFields, _unsavedFields);
+    if (_enableMemoizationForParams)
+      update_fields_with_unsaved_params();
+  }
 }
 
 void Setup::check_fields(const std::vector<Teuchos::RCP<PHX::FieldTag>>& fields) const {
@@ -135,15 +133,47 @@ void Setup::check_fields(const std::vector<Teuchos::RCP<PHX::FieldTag>>& fields)
   }
 }
 
+void Setup::print() const {
+  std::cout << "************* Phalanx Setup **************" << std::endl;
+  std::cout << "************ Evaluation Types ************" << std::endl;
+  for (const auto & eval: *_setupEvals)
+    std::cout << "  " << eval << std::endl;
+  std::cout << std::endl;
+
+  if (_enableMemoization) {
+    std::cout << "********** MDField Dependencies **********" << std::endl;
+    for (const auto & depField: *_dep2EvalFields) {
+      std::cout << "  " << depField.first << " is a dependency of:" << std::endl;
+      for (const auto & evalField: depField.second)
+        std::cout << "    " << evalField << std::endl;
+    }
+    std::cout << std::endl;
+    print_fields();
+  }
+
+  std::cout << "******************************************" << std::endl;
+}
+
 void Setup::print_fields() const {
+    std::cout << "**************** MDFields ****************" << std::endl;
   if (_enableMemoization) print_fields(_savedFields, _unsavedFields);
+  if (_enableMemoizationForParams) {
+    std::cout << "**** MDFields with parameter changes *****" << std::endl;
+    print_fields(_savedFieldsWOParams, _unsavedFieldsWParams);
+  }
 }
 
 Teuchos::RCP<const StringSet> Setup::get_saved_fields(const std::string& eval) const {
-  // If a parameter has changed, use saved fields w/o parameter for this evaluation type
-  if (_unsavedParamEvals->count(eval) > 0) {
-    _unsavedParamEvals->erase(eval);
-    return _savedFieldsWOParam;
+  if (_enableMemoizationForParams) {
+    // Always load params if evaluation type is DistParamDeriv
+    if (eval.find("DistParamDeriv") != std::string::npos)
+      return _savedFieldsWOParams;
+
+    // If a parameter has changed, use saved fields w/o parameter
+    if (_unsavedParamsEvals->count(eval) > 0) {
+      _unsavedParamsEvals->erase(eval);
+      return _savedFieldsWOParams;
+    }
   }
 
   return _savedFields;
@@ -171,6 +201,25 @@ void Setup::update_fields(Teuchos::RCP<StringSet> savedFields,
         }
       }
     }
+  }
+}
+
+void Setup::update_fields_with_unsaved_params() {
+  if (_enableMemoizationForParams && !_unsavedParams->empty()) {
+    // Copy saved/unsaved MDFields
+    _savedFieldsWOParams = Teuchos::rcp(new StringSet(*_savedFields));
+    _unsavedFieldsWParams = Teuchos::rcp(new StringSet(*_unsavedFields));
+
+    // If saved field has been changed, add field to list of unsaved
+    for (const auto & savedField: *_savedFields)
+      for (const auto & unsavedParam: *_unsavedParams)
+        if (savedField.find(unsavedParam) != std::string::npos) {
+          _unsavedFieldsWParams->insert(savedField);
+          _savedFieldsWOParams->erase(savedField);
+        }
+
+    // Update list of saved/unsaved fields
+    update_fields(_savedFieldsWOParams, _unsavedFieldsWParams);
   }
 }
 
