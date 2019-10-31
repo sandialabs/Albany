@@ -22,8 +22,7 @@ Setup::Setup() :
     _unsavedParams(Teuchos::rcp(new StringSet())),
     _unsavedParamsEvals(Teuchos::rcp(new StringSet())),
     _savedFieldsWOParams(Teuchos::rcp(new StringSet())),
-    _unsavedFieldsWParams(Teuchos::rcp(new StringSet())),
-    _dummy(Teuchos::rcp(new StringSet())) {
+    _unsavedFieldsWParams(Teuchos::rcp(new StringSet())) {
 }
 
 void Setup::init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> problemParams) {
@@ -57,23 +56,6 @@ void Setup::pre_eval() {
     // If a parameter has changed and the saved/unsaved string sets haven't
     // been created yet then create the sets
     if ((_unsavedParamsEvals->size() == _setupEvals->size()) && (!_isParamsSetsSaved)) {
-//      // Copy saved/unsaved MDFields
-//      _savedFieldsWOParams = Teuchos::rcp(new StringSet(*_savedFields));
-//      _unsavedFieldsWParams = Teuchos::rcp(new StringSet(*_unsavedFields));
-//
-//      // If saved field has been changed, add field to list of unsaved
-//      for (const auto & savedField: *_savedFields)
-//        for (const auto & unsavedParam: *_unsavedParams)
-//          if (savedField.find(unsavedParam) != std::string::npos) {
-//            _unsavedFieldsWParams->insert(savedField);
-//            _savedFieldsWOParams->erase(savedField);
-//          }
-//
-//      // Update list of saved/unsaved fields
-//      std::cout << "Update Param fields:" << std::endl;
-//      update_fields(_savedFieldsWOParams, _unsavedFieldsWParams);
-//      print_fields(_savedFieldsWOParams, _unsavedFieldsWParams);
-
       // Save param string sets for later use
       update_fields_with_unsaved_params();
       _isParamsSetsSaved = true;

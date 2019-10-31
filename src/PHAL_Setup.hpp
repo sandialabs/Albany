@@ -94,7 +94,7 @@ private:
   bool _enableMemoizationForParams, _isParamsSetsSaved;
   const Teuchos::RCP<StringSet> _unsavedParams;
   Teuchos::RCP<StringSet> _unsavedParamsEvals;
-  Teuchos::RCP<StringSet> _savedFieldsWOParams, _unsavedFieldsWParams, _dummy;
+  Teuchos::RCP<StringSet> _savedFieldsWOParams, _unsavedFieldsWParams;
 };
 
 } // namespace PHAL
