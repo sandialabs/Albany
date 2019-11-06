@@ -167,7 +167,6 @@ postReg()
 
   // Update phalanx saved/unsaved fields based on field dependencies
   phxSetup->check_fields(rfm->getFieldTagsForSizing<EvalT>());
-  std::cout << evalName << ":" <<std::endl;
   phxSetup->update_fields();
 
   writePhalanxGraph<EvalT>(evalName);

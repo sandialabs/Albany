@@ -146,7 +146,7 @@ void Setup::print_fields() const {
 }
 
 Teuchos::RCP<const StringSet> Setup::get_saved_fields(const std::string& eval) const {
-  if (_enableMemoizationForParams) {
+  if (_enableMemoizationForParams && !_unsavedParams->empty()) {
     // Always load params if evaluation type is DistParamDeriv
     if (eval.find("DistParamDeriv") != std::string::npos)
       return _savedFieldsWOParams;
