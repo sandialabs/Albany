@@ -41,11 +41,7 @@ int main(int argc, char *argv[]) {
       Teuchos::TimeMonitor::getNewTimer("AlbanyAnalysis: ***Total Time***");
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
 
-    using namespace std;
-
     *out << "\nStarting Albany Analysis via Piro!" << std::endl;
-
-    // Construct a ModelEvaluator for your application;
 
     Teuchos::RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
 
@@ -76,10 +72,6 @@ int main(int argc, char *argv[]) {
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
     status = Piro::PerformAnalysis(*appThyra, slvrfctry.getAnalysisParameters(), p); 
-
-//    Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();
-//    std::cout << "\nAlbany_Dakota: Final Values from Dakota = "
-//         << setprecision(8) << finalValues << std::endl;
 
     status = slvrfctry.checkAnalysisTestResults(0, p);
 

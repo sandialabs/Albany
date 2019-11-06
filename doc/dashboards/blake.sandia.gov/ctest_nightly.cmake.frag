@@ -30,8 +30,8 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_FLAGS "-j4")
-SET (CTEST_BUILD_FLAGS "-j4")
+set (CTEST_FLAGS "-j8")
+SET (CTEST_BUILD_FLAGS "-j8")
 
 #set (CTEST_DROP_METHOD "http")
 
@@ -139,7 +139,7 @@ if (DOWNLOAD_ALBANY)
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
-  message(STATUS "Output of Trilinos pull: ${_out}")
+  message(STATUS "Output of Albany pull: ${_out}")
   message(STATUS "Text sent to standard error stream: ${_err}")
   message(STATUS "command result status: ${HAD_ERROR}")
   if (HAD_ERROR)
@@ -392,6 +392,7 @@ if (BUILD_ALBANY_SERIAL)
     "-DALBANY_CTEST_TIMEOUT=500"
     "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DDISABLE_LCM_EXODIFF_SENSITIVE_TESTS:BOOL=ON"
+    "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4'"
     )
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerial")

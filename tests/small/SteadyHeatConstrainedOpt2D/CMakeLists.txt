@@ -27,7 +27,7 @@ endif()
 
 if (ALBANY_ROL)
   add_test(${testName}_Analysis ${AlbanyAnalysis.exe} input_dirichlet_dist_paramT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Analysis;ROL")
+  set_tests_properties(${testName}_Analysis PROPERTIES LABELS "Basic;Tpetra;Analysis;ROL")
 endif ()
 
 ####################################
