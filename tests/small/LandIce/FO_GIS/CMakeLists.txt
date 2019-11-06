@@ -80,11 +80,11 @@ if (ALBANY_IFPACK2)
                        LABELS "LandIce;Tpetra;Forward"
                        FIXTURES_REQUIRED PopulateMeshes)
 
-  # Performance run
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_perfT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_perfT.yaml)
-  add_test(${testName}_Performance ${Albany.exe} input_fo_gis_unstruct_perfT.yaml)
-  set_tests_properties(${testName}_Performance
+  # Memoization run
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_memT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_memT.yaml)
+  add_test(${testName}_Memoization ${Albany.exe} input_fo_gis_unstruct_memT.yaml)
+  set_tests_properties(${testName}_Memoization
                        PROPERTIES
                        LABELS "LandIce;Tpetra;Forward"
                        FIXTURES_REQUIRED PopulateMeshes)
@@ -203,6 +203,14 @@ if (ALBANY_IFPACK2)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_betaT.yaml)
   add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_analysis_betaT.yaml)
   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+
+  if (ALBANY_ROL)
+    set (testName ${testNameRoot}_Analysis_BasalFriction)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_betaT.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_betaT.yaml)
+    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_betaT.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+  endif()
 endif()
 
 # Basal friction and stiffening factor sensitivity
@@ -220,6 +228,14 @@ if (ALBANY_IFPACK2)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffeningT.yaml)
   add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_analysis_stiffeningT.yaml)
   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+
+  if (ALBANY_ROL)
+    set (testName ${testNameRoot}_Analysis_StiffeningBasalFriction)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffeningT.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffeningT.yaml)
+    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_stiffeningT.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+  endif()
 endif()
 
 if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
@@ -249,7 +265,6 @@ if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
   if (ALBANY_EPETRA)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_two_params.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_two_params.yaml)
-
     add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_analysis_two_params.yaml)
     set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
   endif()
@@ -257,7 +272,6 @@ if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
   if (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_two_paramsT.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_two_paramsT.yaml)
-
     add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_analysis_two_paramsT.yaml)
     set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
   endif()
