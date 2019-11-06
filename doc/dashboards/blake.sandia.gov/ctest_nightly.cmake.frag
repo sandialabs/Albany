@@ -139,7 +139,7 @@ if (DOWNLOAD_ALBANY)
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
-  message(STATUS "Output of Trilinos pull: ${_out}")
+  message(STATUS "Output of Albany pull: ${_out}")
   message(STATUS "Text sent to standard error stream: ${_err}")
   message(STATUS "command result status: ${HAD_ERROR}")
   if (HAD_ERROR)
