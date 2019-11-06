@@ -4,8 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <iostream>
 #include <stack>
+
+#include "Teuchos_VerboseObject.hpp"
 
 #include "PHAL_Setup.hpp"
 
@@ -33,7 +34,8 @@ void Setup::init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> probl
 
 void Setup::init_unsaved_param(const std::string& param) {
   if (_enableMemoizationForParams) {
-    std::cout << "Disabling memoization for " << param << " and its dependencies." << std::endl;
+    auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+    *out << "Disabling memoization for " << param << " and its dependencies." << std::endl;
     _unsavedParams->insert(param);
     _unsavedParamsEvals = Teuchos::rcp(new StringSet(*_setupEvals));
   }
@@ -115,33 +117,32 @@ void Setup::check_fields(const std::vector<Teuchos::RCP<PHX::FieldTag>>& fields)
   }
 }
 
-void Setup::print() const {
-  std::cout << "************* Phalanx Setup **************" << std::endl;
-  std::cout << "************ Evaluation Types ************" << std::endl;
+void Setup::print(std::ostream& os) const {
+  os << "************* Phalanx Setup **************" << std::endl;
+  os << "************ Evaluation Types ************" << std::endl;
   for (const auto & eval: *_setupEvals)
-    std::cout << "  " << eval << std::endl;
-  std::cout << std::endl;
+    os << "  " << eval << std::endl;
+  os << std::endl;
 
   if (_enableMemoization) {
-    std::cout << "********** MDField Dependencies **********" << std::endl;
+    os << "********** MDField Dependencies **********" << std::endl;
     for (const auto & depField: *_dep2EvalFields) {
-      std::cout << "  " << depField.first << " is a dependency of:" << std::endl;
+      os << "  " << depField.first << " is a dependency of:" << std::endl;
       for (const auto & evalField: depField.second)
-        std::cout << "    " << evalField << std::endl;
+        os << "    " << evalField << std::endl;
     }
-    std::cout << std::endl;
-    print_fields();
+    os << std::endl;
+    print_fields(os);
   }
-
-  std::cout << "******************************************" << std::endl;
+  os << "******************************************" << std::endl;
 }
 
-void Setup::print_fields() const {
-    std::cout << "**************** MDFields ****************" << std::endl;
-  if (_enableMemoization) print_fields(_savedFields, _unsavedFields);
+void Setup::print_fields(std::ostream& os) const {
+    os << "**************** MDFields ****************" << std::endl;
+  if (_enableMemoization) print_fields(os, _savedFields, _unsavedFields);
   if (_enableMemoizationForParams) {
-    std::cout << "**** MDFields with parameter changes *****" << std::endl;
-    print_fields(_savedFieldsWOParams, _unsavedFieldsWParams);
+    os << "**** MDFields with parameter changes *****" << std::endl;
+    print_fields(os, _savedFieldsWOParams, _unsavedFieldsWParams);
   }
 }
 
@@ -205,18 +206,18 @@ void Setup::update_fields_with_unsaved_params() {
   }
 }
 
-void Setup::print_fields(Teuchos::RCP<StringSet> savedFields,
+void Setup::print_fields(std::ostream& os, Teuchos::RCP<StringSet> savedFields,
     Teuchos::RCP<StringSet> unsavedFields) const {
   if (_enableMemoization) {
-    std::cout << "Saved fields:" << std::endl;
+    os << "Saved fields:" << std::endl;
     for (const auto & savedField: *savedFields)
-      std::cout << "  " << savedField << std::endl;
-    std::cout << std::endl;
+      os << "  " << savedField << std::endl;
+    os << std::endl;
 
-    std::cout << "Unsaved fields:" << std::endl;
+    os << "Unsaved fields:" << std::endl;
     for (const auto & unsavedField: *unsavedFields)
-      std::cout << "  " << unsavedField << std::endl;
-    std::cout << std::endl;
+      os << "  " << unsavedField << std::endl;
+    os << std::endl;
   }
 }
 

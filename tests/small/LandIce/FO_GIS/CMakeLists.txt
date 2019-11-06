@@ -210,6 +210,12 @@ if (ALBANY_IFPACK2)
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_betaT.yaml)
     add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_betaT.yaml)
     set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+
+    set (testName ${testNameRoot}_Analysis_BasalFriction_Memoization)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_memT.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_memT.yaml)
+    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta_memT.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
   endif()
 endif()
 
@@ -234,6 +240,12 @@ if (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffeningT.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffeningT.yaml)
     add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_stiffeningT.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+
+    set (testName ${testNameRoot}_Analysis_StiffeningBasalFriction_Memoization)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffening_memT.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffening_memT.yaml)
+    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_stiffening_memT.yaml)
     set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
   endif()
 endif()

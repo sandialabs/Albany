@@ -188,7 +188,7 @@ writePhalanxGraph(const std::string& evalName)
 
     // Print phalanx setup info
     const auto phxSetup = application->getPhxSetup();
-    phxSetup->print();
+    phxSetup->print(*out);
   }
 }
 

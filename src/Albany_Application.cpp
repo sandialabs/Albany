@@ -1314,7 +1314,7 @@ Application::writePhalanxGraph(
     fm->writeGraphvizFile<EvalT>(graphName, detail, detail);
 
     // Print phalanx setup info
-    phxSetup->print();
+    phxSetup->print(*out);
   }
 }
 

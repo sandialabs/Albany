@@ -7,6 +7,7 @@
 #ifndef PHAL_SETUP_HPP_
 #define PHAL_SETUP_HPP_
 
+#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -63,10 +64,10 @@ public:
   void check_fields(const std::vector<Teuchos::RCP<PHX::FieldTag>>& fields) const;
 
   //! Print Setup information
-  void print() const;
+  void print(std::ostream& os) const;
 
   //! Print list of _saved/_unsaved MDFields
-  void print_fields() const;
+  void print_fields(std::ostream& os) const;
 
   //! Get list of saved MDFields
   Teuchos::RCP<const StringSet> get_saved_fields(const std::string& eval) const;
@@ -79,7 +80,7 @@ private:
   void update_fields_with_unsaved_params();
 
   //! Print list of _saved/_unsaved MDFields
-  void print_fields(Teuchos::RCP<StringSet> savedFields,
+  void print_fields(std::ostream& os, Teuchos::RCP<StringSet> savedFields,
       Teuchos::RCP<StringSet> unsavedFields) const;
 
   //! Used to ensure postRegistrationSetup only occurs once
