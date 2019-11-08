@@ -21,12 +21,12 @@ public:
                     const Teuchos::RCP<const Teuchos_Comm>& commT,
                     const std::vector<GO>& indexToTriangleID,
                     const std::vector<int>& verticesOnTria,
-                    int nGlobalTriangles, int numLayers, int Ordering = 0);
+                    int globalTrianglesStride, int numLayers, int Ordering = 0);
 
   MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                     const Teuchos::RCP<const Teuchos_Comm>& commT,
                     const std::vector<GO>& indexToTriangleID,
-                    int nGlobalTriangles, int numLayers, int Ordering = 0);
+                    int globalTrianglesStride, int numLayers, int Ordering = 0);
 
 
   ~MpasSTKMeshStruct( ) = default;
@@ -61,19 +61,19 @@ public:
     const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const std::vector<int>& indexToVertexID,
+    const std::vector<int>& vertexProcIDs,
     const std::vector<int>& indexToMpasVertexID,
     const std::vector<double>& verticesCoords,
-    const std::vector<bool>& isVertexBoundary,
     int nGlobalVertices,
     const std::vector<int>& verticesOnTria,
     const std::vector<std::vector<int>>  procsSharingVertices,
     const std::vector<bool>& isBoundaryEdge,
     const std::vector<int>& trianglesOnEdge,
-    const std::vector<int>& trianglesPositionsOnEdge,
     const std::vector<int>& verticesOnEdge,
     const std::vector<int>& indexToEdgeID,
-    int nGlobalEdges,
+    int globalEdgesStride,
     const std::vector<GO>& indexToTriangleID,
+    int globalTrianglesStride,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& floating2dLateralEdgesIds,
     const unsigned int worksetSize,
@@ -99,27 +99,6 @@ private:
   void tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
 
   void setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos);
-
-protected:
-
-  /*
-  const std::vector<int>& indexToTriangleID;
-  const std::vector<int>& verticesOnTria;
-  const int nGlobalTriangles;
-  const std::vector<int>& indexToVertexID;
-  const std::vector<double>& verticesCoords;
-  const std::vector<bool>& isVertexBoundary;
-  const int nGlobalVertices;
-  const std::vector<bool>& isBoundaryEdge;
-  const std::vector<int>& trianglesOnEdge;
-  const std::vector<int>& trianglesPositionsOnEdge;
-  const std::vector<int>& verticesOnEdge;
-  const std::vector<int>& indexToEdgeID;
-  const int nGlobalEdges;
-  const int numDim;
-  const int numLayers;
-  const int Ordering;
-  */
 };
 
 } // namespace Albany

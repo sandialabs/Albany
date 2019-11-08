@@ -54,7 +54,7 @@
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
 Teuchos::RCP<Teuchos::ParameterList> paramList;
-Teuchos::RCP<const Teuchos_Comm> mpiComm;
+Teuchos::RCP<const Teuchos_Comm> mpiComm, mpiCommMPAS;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 Teuchos::RCP<double> MPAS_dt;
@@ -78,8 +78,8 @@ typedef struct TET_ {
 /***********************************************************/
 
 
-void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
-    int nGlobalTriangles, bool ordering, bool first_time_step,
+void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
+    int globalTrianglesStride, bool ordering, bool first_time_step,
     const std::vector<int>& indexToVertexID,
     const std::vector<int>& indexToTriangleID, double minBeta,
     const std::vector<double>& /* regulThk */,
@@ -101,11 +101,11 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   int numVertices3D = (nLayers + 1) * indexToVertexID.size();
   int numPrisms = nLayers * indexToTriangleID.size();
-  int vertexColumnShift = (ordering == 1) ? 1 : nGlobalVertices;
+  int vertexColumnShift = (ordering == 1) ? 1 : globalVerticesStride;
   int lVertexColumnShift = (ordering == 1) ? 1 : indexToVertexID.size();
   int vertexLayerShift = (ordering == 0) ? 1 : nLayers + 1;
 
-  int elemColumnShift = (ordering == 1) ? 3 : 3 * nGlobalTriangles;
+  int elemColumnShift = (ordering == 1) ? 3 : 3 * globalTrianglesStride;
   int lElemColumnShift = (ordering == 1) ? 3 : 3 * indexToTriangleID.size();
   int elemLayerShift = (ordering == 0) ? 3 : 3 * nLayers;
 
@@ -310,7 +310,8 @@ void velocity_solver_export_fo_velocity(MPI_Comm reducedComm) {
 #endif
 }
 
-int velocity_solver_init_mpi(int* /* fComm */) {
+int velocity_solver_init_mpi(MPI_Comm comm) {
+  mpiCommMPAS = Albany::createTeuchosCommFromMpiComm(comm);
   Kokkos::initialize();
   stackedTimer = Teuchos::rcp(new Teuchos::StackedTimer("Albany Velocity Solver"));
   Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
@@ -325,11 +326,12 @@ void velocity_solver_finalize() {
   slvrfctry = Teuchos::null;
   MPAS_dt = Teuchos::null;
   solver = Teuchos::null;
+  mpiComm = Teuchos::null;
 
   // Print Teuchos timers into file
   std::ostream* os = &std::cout;
   std::ofstream ofs;
-  if (mpiComm->getRank() == 0) {
+  if (mpiCommMPAS->getRank() == 0) {
     ofs.open("log.albany.timers.out", std::ofstream::out);
     os = &ofs;
   }
@@ -337,10 +339,10 @@ void velocity_solver_finalize() {
   Teuchos::StackedTimer::OutputOptions options;
   options.output_fraction = true;
   options.output_minmax = true;
-  stackedTimer->report(*os, mpiComm, options);
+  stackedTimer->report(*os, mpiCommMPAS, options);
   stackedTimer = Teuchos::null;
 
-  mpiComm = Teuchos::null;
+  mpiCommMPAS = Teuchos::null;
   Kokkos::finalize_all();
 }
 
@@ -371,17 +373,16 @@ void velocity_solver_set_physical_parameters(double const& gravity, double const
   MPAS_ClausiusClapeyoronCoeff = clausiusClapeyoronCoeff;
 }
 
-void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
-    int nGlobalVertices, int nGlobalEdges, int Ordering, MPI_Comm /* reducedComm */,
+void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
+    int globalVerticesStride, int globalEdgesStride, int Ordering, MPI_Comm /* reducedComm */,
     const std::vector<int>& indexToVertexID,
     const std::vector<int>& mpasIndexToVertexID,
+    const std::vector<int>& vertexProcIDs,
     const std::vector<double>& verticesCoords,
-    const std::vector<bool>& isVertexBoundary,
     const std::vector<int>& verticesOnTria,
     const std::vector<std::vector<int>>  procsSharingVertices,
     const std::vector<bool>& isBoundaryEdge,
     const std::vector<int>& trianglesOnEdge,
-    const std::vector<int>& trianglesPositionsOnEdge,
     const std::vector<int>& verticesOnEdge,
     const std::vector<int>& indexToEdgeID,
     const std::vector<int>& indexToTriangleID,
@@ -509,7 +510,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   Teuchos::ParameterList& viscosityList =  paramList->sublist("Problem").sublist("LandIce Viscosity"); //empty list if LandIceViscosity not in input file.
 
   viscosityList.set("Type", viscosityList.get("Type", "Glen's Law"));
-  double homotopy_param = (paramList->sublist("Problem").get("Solution Method", "Steady") == "Steady") ? 0.3 : 1e-6;
+  double homotopy_param = (paramList->sublist("Problem").get("Solution Method", "Steady") == "Steady") ? 0.3 : 1.0;
   viscosityList.set("Glen's Law Homotopy Parameter", viscosityList.get("Glen's Law Homotopy Parameter", homotopy_param));
   viscosityList.set("Glen's Law A", viscosityList.get("Glen's Law A", MPAS_flowParamA));
   viscosityList.set("Glen's Law n", viscosityList.get("Glen's Law n",  MPAS_flowLawExponent));
@@ -596,16 +597,16 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());
   meshStruct = Teuchos::rcp(
       new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleGOID,
-          nGlobalTriangles, nLayers, Ordering));
+          globalTrianglesStride, nLayers, Ordering));
   albanyApp->createMeshSpecs(meshStruct);
 
   albanyApp->buildProblem();
 
   meshStruct->constructMesh(mpiComm, discParams, neq, req,
       albanyApp->getStateMgr().getStateInfoStruct(), indexToVertexID,
-      mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
-      verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
-      verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleGOID,
+      mpasIndexToVertexID, vertexProcIDs, verticesCoords, globalVerticesStride,
+      verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,
+      verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,
       dirichletNodesIds, floating2dEdgesIds,
       meshStruct->getMeshSpecs()[0]->worksetSize, nLayers, Ordering);
 }
