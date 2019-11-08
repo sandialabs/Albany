@@ -255,12 +255,6 @@ ENDIF()
        problems/LandIce_StokesL1L2.hpp
   )
 
-IF(ENABLE_MPAS_INTERFACE)
-  SET(HEADERSMPAS
-       interface_with_mpas/Interface.hpp
-  )
-ENDIF()
-
 IF (ENABLE_CISM_INTERFACE)
   SET(HEADERSCISM
        interface_with_cism/ali_driver.H

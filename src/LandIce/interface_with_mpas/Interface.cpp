@@ -4,13 +4,28 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#define velocity_solver_init_mpi velocity_solver_init_mpi__
+#define velocity_solver_finalize velocity_solver_finalize__
+#define velocity_solver_init_fo velocity_solver_init_fo__
+#define velocity_solver_solve_fo velocity_solver_solve_fo__
+#define velocity_solver_compute_2d_grid velocity_solver_compute_2d_grid__
+#define velocity_solver_set_grid_data velocity_solver_set_grid_data__
+#define velocity_solver_extrude_3d_grid velocity_solver_extrude_3d_grid__
+#define velocity_solver_export_fo_velocity velocity_solver_export_fo_velocity__
+#define velocity_solver_set_physical_parameters velocity_solver_set_physical_parameters__
+
 // ===================================================
 //! Includes
 // ===================================================
 
 #include <fstream>
+#include <vector>
+#include <mpi.h>
+#include <list>
+#include <iostream>
+#include <limits>
+#include <cmath>
 
-#include "Interface.hpp"
 #include "Albany_MpasSTKMeshStruct.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
