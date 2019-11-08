@@ -9,11 +9,6 @@
 
 #include "Albany_GenericSTKMeshStruct.hpp"
 
-void tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
-void setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct,
-                        const std::vector<int>& prismFaceIds,
-                        std::vector<int>& tetraPos,
-                        std::vector<int>& facePos);
 void procsSharingVertex(const int vertex, std::vector<int>& procIds);
 
 namespace Albany {
@@ -66,34 +61,12 @@ public:
     const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const std::vector<int>& indexToVertexID,
-    const std::vector<double>& verticesCoords,
-    const std::vector<bool>& isVertexBoundary,
-    int nGlobalVertices,
-    const std::vector<int>& verticesOnTria,
-    const std::vector<bool>& isBoundaryEdge,
-    const std::vector<int>& trianglesOnEdge,
-    const std::vector<int>& trianglesPositionsOnEdge,
-    const std::vector<int>& verticesOnEdge,
-    const std::vector<int>& indexToEdgeID,
-    int nGlobalEdges,
-    const std::vector<GO>& indexToTriangleID,
-    const std::vector<int>& dirichletNodesIds,
-    const std::vector<int>& floating2dLateralEdgesIds,
-    const unsigned int worksetSize,
-    int numLayers, int Ordering = 0);
-
-  void constructMesh(
-    const Teuchos::RCP<const Teuchos_Comm>& commT,
-    const Teuchos::RCP<Teuchos::ParameterList>& params,
-    const unsigned int neq_,
-    const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
-    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-    const std::vector<int>& indexToVertexID,
     const std::vector<int>& indexToMpasVertexID,
     const std::vector<double>& verticesCoords,
     const std::vector<bool>& isVertexBoundary,
     int nGlobalVertices,
     const std::vector<int>& verticesOnTria,
+    const std::vector<std::vector<int>>  procsSharingVertices,
     const std::vector<bool>& isBoundaryEdge,
     const std::vector<int>& trianglesOnEdge,
     const std::vector<int>& trianglesPositionsOnEdge,
@@ -120,6 +93,12 @@ private:
   double restartTime;
   Teuchos::RCP<const Thyra_SpmdVectorSpace> elem_vs; //element vector space
   LayeredMeshOrdering Ordering;
+
+  int prismType(int const* prismVertexMpasIds, int& minIndex);
+
+  void tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
+
+  void setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos);
 
 protected:
 
