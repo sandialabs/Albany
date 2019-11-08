@@ -38,7 +38,7 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Teuchos_Comm>& comm,
                   const std::vector<GO>& indexToTriangleID,
                   const std::vector<int>& /* verticesOnTria */,
-                  int nGlobalTriangles, int numLayers, int ordering) :
+                  int globalTrianglesStride, int numLayers, int ordering) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -54,7 +54,7 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   std::vector<GO> indexToPrismID(indexToTriangleID.size()*numLayers);
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
-  int elemColumnShift = (Ordering == COLUMN) ? 1 : nGlobalTriangles;
+  int elemColumnShift = (Ordering == COLUMN) ? 1 : globalTrianglesStride;
   int lElemColumnShift = (Ordering == COLUMN) ? 1 : indexToTriangleID.size();
   int elemLayerShift = (Ordering == LAYER) ? 1 : numLayers;
 
@@ -70,6 +70,9 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   auto indexToPrismIDAV = Teuchos::arrayViewFromVector(indexToPrismID);
 
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
+
+  int nLocalTriangles = indexToTriangleID.size(), nGlobalTriangles;
+  Teuchos::reduceAll<int, int> (*comm, Teuchos::REDUCE_SUM, 1, &nLocalTriangles, &nGlobalTriangles);
   elem_vs = createVectorSpace(comm,indexToPrismIDAV,GO(nGlobalTriangles*numLayers));
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -156,7 +159,7 @@ MpasSTKMeshStruct::
 MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Teuchos_Comm>& comm,
                   const std::vector<GO>& indexToTriangleID,
-                  int nGlobalTriangles, int numLayers, int ordering) :
+                  int globalTrianglesStride, int numLayers, int ordering) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -172,7 +175,7 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   std::vector<GO> indexToTetraID(3*indexToTriangleID.size()*numLayers);
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
-  int elemColumnShift = (Ordering == COLUMN) ? 3 : 3*nGlobalTriangles;
+  int elemColumnShift = (Ordering == COLUMN) ? 3 : 3*globalTrianglesStride;
   int lElemColumnShift = (Ordering == COLUMN) ? 3 : 3*indexToTriangleID.size();
   int elemLayerShift = (Ordering == LAYER) ? 3 : 3*numLayers;
 
@@ -189,6 +192,8 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   auto indexToTetraIDAV = Teuchos::arrayViewFromVector(indexToTetraID);
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
+  int nLocalTriangles = indexToTriangleID.size(), nGlobalTriangles;
+  Teuchos::reduceAll<int, int> (*comm, Teuchos::REDUCE_SUM, 1, &nLocalTriangles, &nGlobalTriangles);
   elem_vs = createVectorSpace(comm,indexToTetraIDAV,GO(3*nGlobalTriangles*numLayers));
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -278,18 +283,18 @@ void MpasSTKMeshStruct::constructMesh(
   const Teuchos::RCP<StateInfoStruct>& sis,
   const std::vector<int>& indexToVertexID,
   const std::vector<int>& indexToMpasVertexID,
+  const std::vector<int>& vertexProcIDs,
   const std::vector<double>& verticesCoords,
-  const std::vector<bool>& /* isVertexBoundary */,
-  int nGlobalVertices,
+  int globalVerticesStride,
   const std::vector<int>& verticesOnTria,
   const std::vector<std::vector<int>>  procsSharingVertices,
   const std::vector<bool>& isBoundaryEdge,
   const std::vector<int>& trianglesOnEdge,
-  const std::vector<int>& /* trianglesPositionsOnEdge */,
   const std::vector<int>& verticesOnEdge,
   const std::vector<int>& indexToEdgeID,
-  int nGlobalEdges,
+  int globalEdgesStride,
   const std::vector<GO>& indexToTriangleID,
+  int globalTrianglesStride,
   const std::vector<int>& dirichletNodesIds,
   const std::vector<int>& floating2dLateralEdgesIds,
   const unsigned int worksetSize,
@@ -302,15 +307,15 @@ void MpasSTKMeshStruct::constructMesh(
 
   Ordering = (ordering==0) ? LAYER : COLUMN;
 
-  int elemColumnShift = (Ordering == COLUMN) ? 3 : elem_vs->dim()/numLayers;
+  int elemColumnShift = (Ordering == COLUMN) ? 3 : 3*globalTrianglesStride;
   int lElemColumnShift = (Ordering == COLUMN) ? 3 : 3*indexToTriangleID.size();
   int elemLayerShift = (Ordering == LAYER) ? 3 : 3*numLayers;
 
-  int vertexColumnShift = (Ordering == COLUMN) ? 1 : nGlobalVertices;
+  int vertexColumnShift = (Ordering == COLUMN) ? 1 : globalVerticesStride;
   int lVertexColumnShift = (Ordering == COLUMN) ? 1 : indexToVertexID.size();
   int vertexLayerShift = (Ordering == LAYER) ? 1 : numLayers+1;
 
-  int edgeColumnShift = (Ordering == COLUMN) ? 2 : 2*nGlobalEdges;
+  int edgeColumnShift = (Ordering == COLUMN) ? 2 : 2*globalEdgesStride;
   int lEdgeColumnShift = (Ordering == COLUMN) ? 1 : indexToEdgeID.size();
   int edgeLayerShift = (Ordering == LAYER) ? 1 : numLayers;
 
@@ -351,7 +356,7 @@ void MpasSTKMeshStruct::constructMesh(
       bulkData->add_node_sharing(node, sharing_procs[iproc]);
     }
 
-      double* coord = stk::mesh::field_data(*coordinates_field, node);
+    double* coord = stk::mesh::field_data(*coordinates_field, node);
 	  coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
   }
 
@@ -393,6 +398,38 @@ void MpasSTKMeshStruct::constructMesh(
 	 	  p_rank[0] = comm->getRank();
     }
   }
+
+  // we store the lower and upper faces of prisms, which corresponds to triangles of the basal mesh
+  int maxLocalTriangleId(0), maxGlobalTriangleId;
+  if( indexToTriangleID.size() > 0)
+    maxLocalTriangleId = *std::max_element(indexToTriangleID.begin(), indexToTriangleID.end());
+  Teuchos::reduceAll<int, int> (*comm, Teuchos::REDUCE_MAX, 1, &maxLocalTriangleId, &maxGlobalTriangleId);
+
+  singlePartVec[0] = ssPartVec["basalside"];
+  for (int i=0; i<static_cast<int>(indexToTriangleID.size()); ++i) {
+    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]+1, singlePartVec);
+    stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  indexToTriangleID[i]*elemLayerShift+1);
+    bulkData->declare_relation(elem, side,  3);
+    for(int j=0; j<3; ++j) {
+      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+1);
+      bulkData->declare_relation(side, node, j);
+    }
+  }
+
+  int upperBasalOffset = maxGlobalTriangleId+1;
+
+  singlePartVec[0] = ssPartVec["upperside"];
+  for (int i=0; i<static_cast<int>(indexToTriangleID.size()); ++i) {
+    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]+upperBasalOffset+1, singlePartVec);
+    stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  indexToTriangleID[i]*elemLayerShift+(numLayers-1)*elemColumnShift+1+2);
+    bulkData->declare_relation(elem, side,  1);
+    for(int j=0; j<3; ++j) {
+      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+numLayers*vertexColumnShift+1);
+      bulkData->declare_relation(side, node, j);
+    }
+  }
+
+  upperBasalOffset += maxGlobalTriangleId+1;
 
   singlePartVec[0] = ssPartVec["lateralside"];
   //first we store the lateral faces of prisms, which corresponds to edges of the basal mesh
@@ -449,7 +486,8 @@ void MpasSTKMeshStruct::constructMesh(
 		    int iFace = facePos[k];
 		    stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, il*elemColumnShift+elemLayerShift * basalElemId +iTetra+1);
 		    std::vector<int>& faceIds = prismStruct[iTetra][iFace];
-		    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), edgeColumnShift*il+basalEdgeId+k+1, singlePartVec);
+		    int sideId = edgeColumnShift*il+basalEdgeId+k+1 + upperBasalOffset;
+		    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), sideId, singlePartVec);
 		    bulkData->declare_relation(elem, side,  iFace );
 		    for(int j=0; j<3; ++j) {
 		   	 stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, faceIds[j]);
@@ -464,42 +502,29 @@ void MpasSTKMeshStruct::constructMesh(
     int basalEdgeId = floating2dLateralEdgesIds[i]*2*edgeLayerShift;
     for(int il=0; il<numLayers; ++il) {
       for(int k=0; k< 2; ++k) {
-        int sideId = edgeColumnShift*il+basalEdgeId+k+1;
+        int sideId = edgeColumnShift*il+basalEdgeId+k+1 + upperBasalOffset;
         stk::mesh::Entity side = bulkData->get_entity(metaData->side_rank(), sideId);
         bulkData->change_entity_parts(side, singlePartVec);
       }
     }
   }
 
-  //then we store the lower and upper faces of prisms, which corresponds to triangles of the basal mesh
-  edgeLayerShift = (Ordering == LAYER) ? 1 : numLayers+1;
-  edgeColumnShift = 2*(elemColumnShift/3);
-
-  singlePartVec[0] = ssPartVec["basalside"];
-  int edgeOffset = 2*nGlobalEdges*numLayers;
-  for (int i=0; i<static_cast<int>(indexToTriangleID.size()); ++i) {
-	  stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+edgeOffset+1, singlePartVec);
-	  stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  indexToTriangleID[i]*elemLayerShift+1);
-	  bulkData->declare_relation(elem, side,  3);
-	  for(int j=0; j<3; ++j) {
-		  stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+1);
-		  bulkData->declare_relation(side, node, j);
-	  }
-  }
-
-  singlePartVec[0] = ssPartVec["upperside"];
-  for (int i=0; i<static_cast<int>(indexToTriangleID.size()); ++i) {
-    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]*edgeLayerShift+numLayers*edgeColumnShift+edgeOffset+1, singlePartVec);
-    stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  indexToTriangleID[i]*elemLayerShift+(numLayers-1)*elemColumnShift+1+2);
-    bulkData->declare_relation(elem, side,  1);
-    for(int j=0; j<3; ++j) {
-      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+numLayers*vertexColumnShift+1);
-      bulkData->declare_relation(side, node, j);
-    }
-  }
-
-  //fix_node_sharing(*bulkData);
   bulkData->modification_end();
+
+  //change ownership to nodes to reflect MPAS one
+  stk::mesh::EntityProcVec node_to_proc;
+  for(int i=0; i< (numLayers+1)*static_cast<int>(indexToVertexID.size()); i++) {
+    int ib = (Ordering == LAYER)*(i%lVertexColumnShift) + (Ordering == COLUMN)*(i/vertexLayerShift);
+    int il = (Ordering == LAYER)*(i/lVertexColumnShift) + (Ordering == COLUMN)*(i%vertexLayerShift);
+
+    stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1);
+    int procID = vertexProcIDs[ib];
+    if(bulkData->bucket(node).owned() && (procID != bulkData->parallel_rank()))
+      node_to_proc.push_back(std::make_pair(node, procID));
+  }
+
+  bulkData->change_entity_owner(node_to_proc);
+
   this->finalizeSideSetMeshStructs(comm, {}, {}, worksetSize);
 }
 
