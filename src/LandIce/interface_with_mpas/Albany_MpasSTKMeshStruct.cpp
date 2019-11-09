@@ -282,7 +282,6 @@ void MpasSTKMeshStruct::constructMesh(
   const AbstractFieldContainer::FieldContainerRequirements& req,
   const Teuchos::RCP<StateInfoStruct>& sis,
   const std::vector<int>& indexToVertexID,
-  const std::vector<int>& indexToMpasVertexID,
   const std::vector<int>& vertexProcIDs,
   const std::vector<double>& verticesCoords,
   int globalVerticesStride,
@@ -376,16 +375,14 @@ void MpasSTKMeshStruct::constructMesh(
 
 	  singlePartVec[0] = partVec[ebNo];
     //TODO: this could be done only in the first layer and then copied into the other layers
-    int prismMpasIds[3], prismGlobalIds[6];
+    int prismGlobalIds[6];
     for (int j = 0; j < 3; ++j) {
-      int mpasLowerId = vertexLayerShift * indexToMpasVertexID[verticesOnTria[3*ib+j]];
       int lowerId = shift+vertexLayerShift * indexToVertexID[verticesOnTria[3*ib+j]];
-      prismMpasIds[j] = mpasLowerId;
 	 	 prismGlobalIds[j] = lowerId;
 	 	 prismGlobalIds[j + 3] = lowerId+vertexColumnShift;
 	  }
 
-    tetrasFromPrismStructured (prismMpasIds, prismGlobalIds, tetrasLocalIdsOnPrism);
+    tetrasFromPrismStructured (prismGlobalIds, tetrasLocalIdsOnPrism);
     for(int iTetra = 0; iTetra<3; ++iTetra) {
       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK,
                                                          elem_vs_indexer->getGlobalElement(3*i+iTetra)+1,
@@ -448,14 +445,12 @@ void MpasSTKMeshStruct::constructMesh(
 		  int prismMpasIds[3], prismGlobalIds[6];
 		  int shift = il*vertexColumnShift;
 		  for (int j = 0; j < 3; ++j) {
-		    int mpasLowerId = vertexLayerShift * indexToMpasVertexID[verticesOnTria[3*lBasalElemId+j]];
 		    int lowerId = shift+vertexLayerShift * indexToVertexID[verticesOnTria[3*lBasalElemId+j]];
-		    prismMpasIds[j] = mpasLowerId;
 		    prismGlobalIds[j] = lowerId;
 		    prismGlobalIds[j + 3] = lowerId+vertexColumnShift;
 		  }
 
-      tetrasFromPrismStructured (prismMpasIds, prismGlobalIds, tetrasLocalIdsOnPrism);
+      tetrasFromPrismStructured (prismGlobalIds, tetrasLocalIdsOnPrism);
 
 		  for(int iTetra = 0; iTetra<3; ++iTetra) {
 			  std::vector<std::vector<int> >& tetraStruct =prismStruct[iTetra];
@@ -539,19 +534,19 @@ MpasSTKMeshStruct::getValidDiscretizationParameters() const
 
 
 int
-MpasSTKMeshStruct::prismType(int const* prismVertexMpasIds, int& minIndex)
+MpasSTKMeshStruct::prismType(int const* prismVertexIds, int& minIndex)
 {
   int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
-  minIndex = std::min_element (prismVertexMpasIds, prismVertexMpasIds + 3) - prismVertexMpasIds;
+  minIndex = std::min_element (prismVertexIds, prismVertexIds + 3) - prismVertexIds;
 
-  int v1 (prismVertexMpasIds[PrismVerticesMap[minIndex][1]]);
-  int v2 (prismVertexMpasIds[PrismVerticesMap[minIndex][2]]);
+  int v1 (prismVertexIds[PrismVerticesMap[minIndex][1]]);
+  int v2 (prismVertexIds[PrismVerticesMap[minIndex][2]]);
 
   return v1  > v2;
 }
 
  void
- MpasSTKMeshStruct::tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4])
+ MpasSTKMeshStruct::tetrasFromPrismStructured (int const* prismVertexGIds, int tetrasIdsOnPrism[][4])
   {
       int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
 
@@ -565,7 +560,7 @@ MpasSTKMeshStruct::prismType(int const* prismVertexMpasIds, int& minIndex)
       int tetraFaceIdOnUpperFace = 0; //does not depend on type;
 
       int minIndex;
-      int prismType = this->prismType(prismVertexMpasIds, minIndex);
+      int prismType = this->prismType(prismVertexGIds, minIndex);
 
       GO reorderedPrismLIds[6];
 
