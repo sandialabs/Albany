@@ -1,2 +1,0 @@
-00 07 * * 1-7  cd /home/projects/albany/fromMayerNightlies; rm *; cp /mscratch/albany/mayer/nightlyCDashJenkins/* .; bash -l -c "source send_email.sh"
-
