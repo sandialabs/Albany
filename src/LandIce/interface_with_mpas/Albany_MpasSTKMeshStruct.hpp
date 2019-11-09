@@ -62,7 +62,6 @@ public:
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const std::vector<int>& indexToVertexID,
     const std::vector<int>& vertexProcIDs,
-    const std::vector<int>& indexToMpasVertexID,
     const std::vector<double>& verticesCoords,
     int nGlobalVertices,
     const std::vector<int>& verticesOnTria,
@@ -94,9 +93,9 @@ private:
   Teuchos::RCP<const Thyra_SpmdVectorSpace> elem_vs; //element vector space
   LayeredMeshOrdering Ordering;
 
-  int prismType(int const* prismVertexMpasIds, int& minIndex);
+  int prismType(int const* prismVertexIds, int& minIndex);
 
-  void tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
+  void tetrasFromPrismStructured( int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
 
   void setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos);
 };
