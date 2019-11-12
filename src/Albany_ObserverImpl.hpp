@@ -6,6 +6,8 @@
 #ifndef ALBANY_OBSERVER_IMPL_HPP
 #define ALBANY_OBSERVER_IMPL_HPP
 
+#include <string>
+
 #include "Albany_StatelessObserverImpl.hpp"
 
 namespace Albany {
@@ -25,7 +27,11 @@ public:
     const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
     const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot) override;
 
-  void observeSolution(double stamp, const Thyra_MultiVector& nonOverlappedSolution) override;
+  void observeSolution(
+      double stamp, const Thyra_MultiVector& nonOverlappedSolution) override;
+
+  void parameterChanged(
+      const std::string& param);
 };
 
 } // namespace Albany

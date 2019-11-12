@@ -7,6 +7,8 @@
 #ifndef PHAL_UTILITIES
 #define PHAL_UTILITIES
 
+#include <string>
+
 #include "Albany_CommTypes.hpp"
 
 #include "Teuchos_RCP.hpp"
@@ -212,13 +214,10 @@ struct ExtendLayout
   }
 };
 
-/* In the case of a single workset, an MDField may not need to be recomputed.
- * Currently, this memoizer (which is not really a true memoizer) checks to 
- * see whether the workset index has changed in order to determine whether an 
- * MDField has to be recomputed.
- *
- * WARNING: Use with caution. This class should not be used if an MDField
- * changes within the lifetime of the object.
+/*! In the case of a single workset, an MDField may not need to be recomputed.
+ *  Currently, this memoizer (which is not really a true memoizer) checks to
+ *  see whether the workset index has changed in order to determine whether an
+ *  MDField has to be recomputed.
  */
 template<typename Traits>
 class MDFieldMemoizer {
@@ -226,19 +225,19 @@ public:
 
   //! Constructor
   MDFieldMemoizer() :
-    _enableMemoizer(false),
+    _memoizerEnabled(false),
     _prevWorksetIndex(-1) {
   }
 
   //! Enable memoizer
   void enable_memoizer() {
-    _enableMemoizer = true;
+    _memoizerEnabled = true;
   }
 
   //! Check if evaluated MDFields are saved (only works on single workset)
   bool have_saved_data(const typename Traits::EvalData workset,
       const std::vector<Teuchos::RCP<PHX::FieldTag>>& evalFields) {
-    if (!_enableMemoizer) return false;
+    if (!_memoizerEnabled) return false;
 
     // Check workset index
     bool saved = false;
@@ -257,9 +256,18 @@ public:
   }
 
 private:
-  bool _enableMemoizer;
+  bool _memoizerEnabled;
   int _prevWorksetIndex;
 };
+
+//! Return field manager name and evaluation type string
+template <typename EvalT>
+inline std::string evalName(const std::string& fmName, const int& ps) {
+  std::string evalName = PHX::print<EvalT>();
+  evalName.erase(evalName.begin());
+  evalName.pop_back();
+  return fmName + std::to_string(ps) + evalName;
+}
 
 } // namespace PHAL
 

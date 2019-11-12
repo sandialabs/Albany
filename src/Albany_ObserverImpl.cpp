@@ -54,4 +54,13 @@ observeSolution(double stamp,
   StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution);
 }
 
+void ObserverImpl::
+parameterChanged(const std::string& param)
+{
+  //! If a parameter has changed in value, saved/unsaved fields must be updated
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << param << " has changed!" << std::endl;
+  app_->getPhxSetup()->init_unsaved_param(param);
+}
+
 } // namespace Albany

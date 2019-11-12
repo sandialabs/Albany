@@ -15,6 +15,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
+#include "PHAL_Utilities.hpp"
 #include "Albany_Layouts.hpp"
 
 namespace PHAL {
@@ -37,23 +38,23 @@ class GatherScalarNodalParameterBase
     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
-
-  GatherScalarNodalParameterBase(const Teuchos::ParameterList& p,
-                                 const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-                             PHX::FieldManager<Traits>& vm);
+  GatherScalarNodalParameterBase(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
+  void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& vm);
 
   // This function requires template specialization, in derived class below
   virtual void evaluateFields(typename Traits::EvalData d) = 0;
-  virtual ~GatherScalarNodalParameterBase(){};
+  virtual ~GatherScalarNodalParameterBase() = default;
 
 protected:
-
   typedef typename EvalT::ParamScalarT ParamScalarT;
+
+  const std::size_t numNodes;
+  const std::string param_name;
+
+  // Output:
   PHX::MDField<ParamScalarT,Cell,Node> val;
-  std::string param_name;
-  std::size_t numNodes;
+
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 // General version for most evaluation types
@@ -62,10 +63,10 @@ class GatherScalarNodalParameter :
     public GatherScalarNodalParameterBase<EvalT, Traits>  {
 
 public:
-  GatherScalarNodalParameter(const Teuchos::ParameterList& p,
-                       const Teuchos::RCP<Albany::Layouts>& dl);
+  GatherScalarNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
   // Old constructor, still needed by BCs that use PHX Factory
   GatherScalarNodalParameter(const Teuchos::ParameterList& p);
+//  void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& vm);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
@@ -77,16 +78,11 @@ class GatherScalarExtruded2DNodalParameter :
     public GatherScalarNodalParameterBase<EvalT, Traits>  {
 
 public:
-  GatherScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-    GatherScalarNodalParameterBase<EvalT, Traits>(p, dl) {
-    fieldLevel = p.get<int>("Field Level");
-    this->setName("Gather Extruded 2D Nodal Parameter" );
-  }
-
+  GatherScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
-  int fieldLevel;
+  const int fieldLevel;
 };
 
 
@@ -102,12 +98,10 @@ private:
 // **************************************************************
 template<typename Traits>
 class GatherScalarNodalParameter<PHAL::AlbanyTraits::DistParamDeriv,Traits> :
-    public GatherScalarNodalParameterBase<PHAL::AlbanyTraits::DistParamDeriv,
-                                          Traits>  {
+    public GatherScalarNodalParameterBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>  {
 
 public:
-  GatherScalarNodalParameter(const Teuchos::ParameterList& p,
-                             const Teuchos::RCP<Albany::Layouts>& dl);
+  GatherScalarNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
   // Old constructor, still needed by BCs that use PHX Factory
   GatherScalarNodalParameter(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
@@ -118,19 +112,14 @@ private:
 
 template<typename Traits>
 class GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::DistParamDeriv,Traits> :
-    public GatherScalarNodalParameterBase<PHAL::AlbanyTraits::DistParamDeriv,
-                                          Traits>  {
+    public GatherScalarNodalParameterBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>  {
 
 public:
-  GatherScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-    GatherScalarNodalParameterBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p, dl) {
-    fieldLevel = p.get<int>("Field Level");
-  }
-
+  GatherScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ParamScalarT ParamScalarT;
-  int fieldLevel;
+  const int fieldLevel;
 };
 
 } // namespace PHAL

@@ -79,6 +79,12 @@ observeSolution(const Thyra_MultiVector &solution,
 }
 
 void PiroObserver::
+parameterChanged(const std::string& param)
+{
+  impl_.parameterChanged(param);
+}
+
+void PiroObserver::
 observeSolutionImpl(const Thyra_Vector &solution,
                     const ST defaultStamp)
 {
