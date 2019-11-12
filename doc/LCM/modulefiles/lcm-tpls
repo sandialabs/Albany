@@ -38,7 +38,6 @@ if { [is-loaded lcm-scientific-linux] } {
   setenv                  NETCDF_INC      $netcdf_inc
   setenv                  NETCDF_LIB      $netcdf_lib
   prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
-  prepend-path            LD_LIBRARY_PATH /usr/local/netcdf/lib
   prepend-path            PATH            /usr/lib64/openmpi/bin
 }
 

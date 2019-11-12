@@ -616,10 +616,18 @@ SolverFactory::checkAnalysisTestResults(
         testParams->get<Teuchos::Array<double>>("Piro Analysis Test Values");
 
     TEUCHOS_TEST_FOR_EXCEPT(numPiroTests != testValues.size());
-    for (int i = 0; i < numPiroTests; i++) {
-      auto s = std::string("Piro Analysis Test ") + std::to_string(i);
-      failures += scaledCompare(p[i], testValues[i], relTol, absTol, s);
+    if (testParams->get<bool>("Piro Analysis Test Two Norm",false)) {
+      const auto norm = tvec->norm_2();
+      *out << "Parameter Vector Two Norm: " << norm << std::endl;
+      failures += scaledCompare(norm, testValues[0], relTol, absTol, "Piro Analysis Test Two Norm");
       comparisons++;
+    }
+    else {
+      for (int i = 0; i < numPiroTests; i++) {
+        auto s = std::string("Piro Analysis Test ") + std::to_string(i);
+        failures += scaledCompare(p[i], testValues[i], relTol, absTol, s);
+        comparisons++;
+      }
     }
   }
 
@@ -845,7 +853,7 @@ SolverFactory::getValidRegressionResultsParameters() const
   validPL->set<int>(
       "Number of Dakota Comparisons",
       0,
-      "Number of paramters from Dakota runs to regress against");
+      "Number of parameters from Dakota runs to regress against");
   validPL->set<Array<double>>(
       "Dakota Test Values",
       ta,
@@ -854,7 +862,11 @@ SolverFactory::getValidRegressionResultsParameters() const
   validPL->set<int>(
       "Number of Piro Analysis Comparisons",
       0,
-      "Number of paramters from Analysis to regress against");
+      "Number of parameters from Analysis to regress against");
+  validPL->set<bool>(
+      "Piro Analysis Test Two Norm",
+      false,
+      "Test l2 norm of final parameters from Analysis runs");
   validPL->set<Array<double>>(
       "Piro Analysis Test Values",
       ta,
