@@ -1,5 +1,7 @@
 #!/bin/bash -lxe
 
+#!/bin/bash -lxe
+
 
 cd /mscratch/albany/mayer/nightlyCDashJenkins
 rm -rf * 
@@ -16,7 +18,11 @@ export jenkins_trilinos_install_dir=/mscratch/albany/mayer/nightlyCDashJenkins/b
 
 cd ..
 
-cp repos/Albany/doc/dashboards/mayer.sandia.gov/* .
+cp -r repos/Albany/doc/dashboards/mayer.sandia.gov/* .
+cd jenkins
+mv * ../
+cd ..
+rm -rf cron jenkins
 
 
 bash -l -c "source mayer_arm_modules.sh >& modules_trilinos.out; bash nightly_cron_script_trilinos_mayer_jenkins.sh"
