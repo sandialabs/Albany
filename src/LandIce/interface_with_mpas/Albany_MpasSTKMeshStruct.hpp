@@ -18,28 +18,22 @@ class MpasSTKMeshStruct : public GenericSTKMeshStruct
 public:
 
   MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                    const Teuchos::RCP<const Teuchos_Comm>& commT,
-                    const std::vector<GO>& indexToTriangleID,
-                    const std::vector<int>& verticesOnTria,
-                    int globalTrianglesStride, int numLayers, int Ordering = 0);
-
-  MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                    const Teuchos::RCP<const Teuchos_Comm>& commT,
-                    const std::vector<GO>& indexToTriangleID,
-                    int globalTrianglesStride, int numLayers, int Ordering = 0);
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const std::vector<GO>& indexToTriangleID,
+      int globalTrianglesStride, int numLayers, int Ordering = 0);
 
 
   ~MpasSTKMeshStruct( ) = default;
 
   void setFieldAndBulkData(
-    const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-    const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
-    const unsigned int /* neq_ */,
-    const Albany::AbstractFieldContainer::FieldContainerRequirements& /* req */,
-    const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
-    const unsigned int /* worksetSize */,
-    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /* side_set_sis */ = {},
-    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /* side_set_req */ = {})
+      const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+      const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
+      const unsigned int /* neq_ */,
+      const Albany::AbstractFieldContainer::FieldContainerRequirements& /* req */,
+      const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
+      const unsigned int /* worksetSize */,
+      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /* side_set_sis */ = {},
+      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /* side_set_req */ = {})
   {
     // Do nothing
   }
@@ -55,35 +49,38 @@ public:
   double restartDataTime() const {return restartTime;}
 
   void constructMesh(
-    const Teuchos::RCP<const Teuchos_Comm>& commT,
-    const Teuchos::RCP<Teuchos::ParameterList>& params,
-    const unsigned int neq_,
-    const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
-    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-    const std::vector<int>& indexToVertexID,
-    const std::vector<int>& vertexProcIDs,
-    const std::vector<double>& verticesCoords,
-    int nGlobalVertices,
-    const std::vector<int>& verticesOnTria,
-    const std::vector<std::vector<int>>  procsSharingVertices,
-    const std::vector<bool>& isBoundaryEdge,
-    const std::vector<int>& trianglesOnEdge,
-    const std::vector<int>& verticesOnEdge,
-    const std::vector<int>& indexToEdgeID,
-    int globalEdgesStride,
-    const std::vector<GO>& indexToTriangleID,
-    int globalTrianglesStride,
-    const std::vector<int>& dirichletNodesIds,
-    const std::vector<int>& floating2dLateralEdgesIds,
-    const unsigned int worksetSize,
-    int numLayers, int Ordering = 0);
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const Teuchos::RCP<Teuchos::ParameterList>& params,
+      const unsigned int neq_,
+      const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+      const std::vector<int>& indexToVertexID,
+      const std::vector<int>& vertexProcIDs,
+      const std::vector<double>& verticesCoords,
+      int nGlobalVertices,
+      const std::vector<int>& verticesOnTria,
+      const std::vector<std::vector<int>>  procsSharingVertices,
+      const std::vector<bool>& isBoundaryEdge,
+      const std::vector<int>& trianglesOnEdge,
+      const std::vector<int>& verticesOnEdge,
+      const std::vector<int>& indexToEdgeID,
+      int globalEdgesStride,
+      const std::vector<GO>& indexToTriangleID,
+      int globalTrianglesStride,
+      const std::vector<int>& dirichletNodesIds,
+      const std::vector<int>& floating2dLateralEdgesIds,
+      const unsigned int worksetSize,
+      int numLayers, int Ordering = 0);
 
 
   bool getInterleavedOrdering() const {return this->interleavedOrdering;}
 
+  enum elemShapeType {Tetrahedron, Wedge};
+
 private:
 
   Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
+  elemShapeType ElemShape;
 
   Teuchos::RCP<Teuchos::FancyOStream> out;
   bool periodic;
