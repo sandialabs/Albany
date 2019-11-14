@@ -23,6 +23,8 @@ int main(int argc, char *argv[]) {
   Kokkos::initialize(argc, argv);
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
+  Albany::PrintHeader(*out);
+
   const auto stackedTimer = Teuchos::rcp(
       new Teuchos::StackedTimer("Albany Stacked Timer"));
   Teuchos::TimeMonitor::setStackedTimer(stackedTimer);

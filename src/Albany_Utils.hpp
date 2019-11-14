@@ -21,6 +21,10 @@
 
 namespace Albany {
 
+//! Print ascii art and version information
+void
+PrintHeader(std::ostream& os);
+
 // Helper function which replaces the diagonal of a matrix
 void
 ReplaceDiagonalEntries(

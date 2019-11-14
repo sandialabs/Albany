@@ -182,6 +182,8 @@ MPMD_App::MPMD_App(int argc, char **argv, MPI_Comm& localComm)
   Albany::CmdLineArgs cmd;
   cmd.parse_cmdline(argc, argv, *out);
 
+  Albany::PrintHeader(*out);
+
   try {
     auto totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
         *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));

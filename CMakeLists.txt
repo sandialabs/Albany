@@ -7,7 +7,7 @@
 
 # CMAKE File for Albany building against an installed Trilinos
 
-cmake_minimum_required(VERSION 2.7)
+cmake_minimum_required(VERSION 2.8.12)
 include(CMakeDependentOption)
 
 OPTION (USE_NEW_POLICY_CMP0060 "Flag to turn on new behavior for policy CMP0060" OFF)
@@ -37,31 +37,30 @@ OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers shoul
 
 # Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
 # This is needed to find SEACAS tools used during testing (epu, etc).
-
 SET(Trilinos_BIN_DIRS "${Trilinos_DIR}/../../../bin")
 SET(Trilinos_LIB_DIRS "${Trilinos_DIR}/../../../lib")
 
+# Set Trilinos commit id
+IF(EXISTS "${Trilinos_DIR}/../../../TrilinosRepoVersion.txt")
+  FILE(STRINGS "${Trilinos_DIR}/../../../TrilinosRepoVersion.txt" TRILINOS_VERSION_FILE)
+  SET(TRILINOS_GIT_COMMIT_ID_LINE_LOC 1)
+  LIST(GET TRILINOS_VERSION_FILE ${TRILINOS_GIT_COMMIT_ID_LINE_LOC} TRILINOS_GIT_COMMIT_ID_LINE)
+  STRING(REGEX MATCH "^[^ ]+" Trilinos_GIT_COMMIT_ID ${TRILINOS_GIT_COMMIT_ID_LINE})
+  SET(ALBANY_TRILINOS_GIT_COMMIT_ID ${Trilinos_GIT_COMMIT_ID})
+ENDIF()
+
 MESSAGE("\nFound Trilinos!  Here are the details: ")
-MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")
-MESSAGE("   Trilinos_VERSION = ${Trilinos_VERSION}")
-#MESSAGE("   Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
-#MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
-MESSAGE("   Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
-#MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
-#MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
-MESSAGE("   Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
-#MESSAGE("   Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
-#MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
-MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
-MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
-MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
+MESSAGE("-- Trilinos_DIR = ${Trilinos_DIR}")
+MESSAGE("-- Trilinos_VERSION = ${Trilinos_VERSION}")
+MESSAGE("-- Trilinos_GIT_COMMIT_ID = ${Trilinos_GIT_COMMIT_ID}")
+MESSAGE("-- Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
+MESSAGE("-- Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
+MESSAGE("-- Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
+MESSAGE("-- Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
+MESSAGE("-- Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
 
 # Compress Trilinos lists that are used
-#${Trilinos_INCLUDE_DIRS}
-#${Trilinos_TPL_INCLUDE_DIRS}
-#${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES} ${Trilinos_EXTRA_LD_FLAGS}
-
 LIST(REVERSE Trilinos_INCLUDE_DIRS)
 LIST(REMOVE_DUPLICATES Trilinos_INCLUDE_DIRS)
 LIST(REVERSE Trilinos_INCLUDE_DIRS)
@@ -83,25 +82,36 @@ IF (STKClassic_List_ID GREATER -1)
   MESSAGE(FATAL_ERROR "STKClassic is no longer used and conflicts with STKIo and STKMesh.")
 ENDIF()
 
+# Set Albany branch and commit id
+EXECUTE_PROCESS(
+  COMMAND git rev-parse --abbrev-ref HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE ALBANY_GIT_BRANCH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+EXECUTE_PROCESS(
+  COMMAND git log -1 --format=%h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE ALBANY_GIT_COMMIT_ID
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+MESSAGE("Albany version details:")
+MESSAGE("-- ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
+MESSAGE("-- ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
+MESSAGE("End of Albany version details\n")
+
 # Optional Installation helpers
 # Note that some of this functionality depends on CMAKE > 2.8.8
 SET (INSTALL_ALBANY FALSE CACHE BOOL "Whether Albany should be installed")
 IF (INSTALL_ALBANY)
-  IF (${CMAKE_VERSION} VERSION_GREATER 2.8.8 OR ${CMAKE_VERSION} VERSION_EQUAL 2.8.8)
-    MESSAGE("")
-    MESSAGE("Installation files for Albany will be created")
-    MESSAGE("-- install location = ${CMAKE_INSTALL_PREFIX}")
-    MESSAGE("")
-    set(BINARY_INSTALL_DIR bin)
-    set(INCLUDE_INSTALL_DIR include)
-    set(LIB_INSTALL_DIR lib)
-    include(CMakePackageConfigHelpers)
-  ELSE()
-    MESSAGE("")
-    MESSAGE("Installation has been requested, but cannot continue")
-    MESSAGE("-- Please upgrade CMAKE to version >= 2.8.8")
-    MESSAGE("")
-  ENDIF()
+  MESSAGE("")
+  MESSAGE("Installation files for Albany will be created")
+  MESSAGE("-- install location = ${CMAKE_INSTALL_PREFIX}")
+  MESSAGE("")
+  set(BINARY_INSTALL_DIR bin)
+  set(INCLUDE_INSTALL_DIR include)
+  set(LIB_INSTALL_DIR lib)
+  include(CMakePackageConfigHelpers)
 ENDIF()
 
 option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
@@ -152,7 +162,6 @@ else()
 endif()
 
 # Build Albany as shared libraries if Trilinos was compiled that way
-
 IF(Trilinos_BUILD_SHARED_LIBS)
   SET(Albany_LIBRARY_TYPE SHARED)
   SET(BUILD_SHARED_LIBS ON)
@@ -207,8 +216,6 @@ if (SET_COMPILERS_AUTOMATICALLY)
   SET(CMAKE_LINKER ${Trilinos_LINKER})
 endif()
 
-MESSAGE("-- Using ${Trilinos_CXX_COMPILER_ID} Compiler.")
-
 # No longer needed but keep for now as this shows how to silence specific warnings on Intel compiler
 #IF(${Trilinos_CXX_COMPILER_ID} MATCHES "Intel")
 #  SET(USING_INTEL TRUE)
@@ -218,10 +225,33 @@ MESSAGE("-- Using ${Trilinos_CXX_COMPILER_ID} Compiler.")
 #   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd2536,2196,858,488,161,47")
 #ENDIF()
 
-OPTION(ENABLE_ALBANY_EPETRA "Flag to turn on building of code depending on Epetra" ON)
+# Compiler details
+SET(ALBANY_CXX_COMPILER_ID ${CMAKE_CXX_COMPILER_ID})
+MESSAGE("-- ALBANY_CXX_COMPILER_ID = ${ALBANY_CXX_COMPILER_ID}")
+SET(ALBANY_CXX_COMPILER_VERSION ${CMAKE_CXX_COMPILER_VERSION})
+MESSAGE("-- ALBANY_CXX_COMPILER_VERSION = ${ALBANY_CXX_COMPILER_VERSION}")
+IF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
+  FILE(READ "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h" KOKKOS_CORE_CONFIG_FILE)
+  STRING(REGEX MATCH "KOKKOS_ENABLE_OPENMP" ALBANY_ENABLE_OPENMP ${KOKKOS_CORE_CONFIG_FILE})
+  IF(ALBANY_ENABLE_OPENMP)
+    MESSAGE("-- Kokkos is configured to use OpenMP, Albany will also.")
+  ENDIF()
+  STRING(REGEX MATCH "KOKKOS_ENABLE_CUDA" ALBANY_ENABLE_CUDA ${KOKKOS_CORE_CONFIG_FILE})
+  IF(ALBANY_ENABLE_CUDA)
+    MESSAGE("-- Kokkos is configured to use CUDA, Albany will also.")
+    STRING(REGEX MATCH "KOKKOS_COMPILER_CUDA_VERSION ([0-9]*)" _ ${KOKKOS_CORE_CONFIG_FILE})
+    SET(ALBANY_CUDA_COMPILER_VERSION "${CMAKE_MATCH_1}")
+    MESSAGE("-- ALBANY_CUDA_COMPILER_VERSION = ${ALBANY_CUDA_COMPILER_VERSION}")
+  ENDIF()
+ELSE()
+  MESSAGE(FATAL_ERROR "\nError: ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h not found!")
+ENDIF()
+MESSAGE("End of compiler details\n")
 
 ## Check for some required Trilinos package dependencies (Piro, Phalanx) ##
-MESSAGE("\nChecking Trilinos build for required and optional packages")
+MESSAGE("Checking Trilinos build for required and optional packages")
+
+OPTION(ENABLE_ALBANY_EPETRA "Flag to turn on building of code depending on Epetra" ON)
 
 ###############################
 ### Check REQUIRED packages ###
@@ -959,65 +989,41 @@ LIST(FIND Trilinos_PACKAGE_LIST Pamgen PAMGEN_List_ID)
 ## Other Miscellaneous Albany Options here:
 MESSAGE("\nMiscellaneous Albany Options:")
 
-# It is not currently possible to determine the status of "Kokkos_ENABLE_Cuda" from Albany. So we will deduce it
-# from ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h
-IF(NOT DEFINED Kokkos_ENABLE_Cuda)
-  SET(Kokkos_ENABLE_Cuda OFF)
-  IF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
-    FILE(READ ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h CURRENT_CONFIG)
-    STRING(REGEX MATCH "\#define KOKKOS_ENABLE_CUDA" KOKKOS_CUDA_IS_SET ${CURRENT_CONFIG})
-    IF("#define KOKKOS_ENABLE_CUDA" STREQUAL "${KOKKOS_CUDA_IS_SET}")
-      MESSAGE("-- Kokkos is configured to use CUDA, Albany will also.")
-      SET(Kokkos_ENABLE_Cuda ON)
-      IF (ENABLE_LCM) 
-        MESSAGE(FATAL_ERROR "\nError:  LCM does not work with a CUDA KokkosNode!  Recompile with LCM off.")
-      ENDIF()
-      SET(NUM_GPUS_PER_NODE 4 CACHE INT "set Number of GPUs per Node")
-      MESSAGE("-- NUM_GPUS_PER_NODE=${NUM_GPUS_PER_NODE}")
-      SET(KOKKOS_NDEVICES "--kokkos-ndevices=${NUM_GPUS_PER_NODE}")
-      IF (ENABLE_CUDA_ERROR_CHECK)
-        SET(ALBANY_CUDA_ERROR_CHECK ON)
-        MESSAGE("-- CUDA Error Check        is Enabled")
-      ELSE()
-        MESSAGE("-- CUDA Error Check        is NOT Enabled.")
-      ENDIF()
-      IF (ENABLE_ALBANY_EPETRA)
-        MESSAGE(FATAL_ERROR "\nError:  Albany with Epetra is not supported with CUDA KokkosNode!  Please re-configure w/o Epetra (ENABLE_ALBANY_EPETRA=OFF).")
-      ENDIF()
-      IF (ENABLE_CUDA_NVTX)
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lnvToolsExt")
-        SET(ALBANY_CUDA_NVTX ON)
-        MESSAGE("-- CUDA NVTX               is Enabled")
-      ELSE()
-        MESSAGE("-- CUDA NVTX               is NOT Enabled.")
-      ENDIF()
-    ELSE("#define KOKKOS_ENABLE_CUDA" STREQUAL "${KOKKOS_CUDA_IS_SET}")
-      MESSAGE("-- Kokkos is not configured to use CUDA, Albany will NOT be compiled for CUDA.")
-    ENDIF("#define KOKKOS_ENABLE_CUDA" STREQUAL "${KOKKOS_CUDA_IS_SET}")
-  ENDIF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
-ENDIF(NOT DEFINED Kokkos_ENABLE_Cuda)
+# Optional OpenMP settings
+IF(ALBANY_ENABLE_OPENMP)
+  IF (ENABLE_LARGE_TESTS AND ENABLE_LCM) 
+    MESSAGE("---> LCM WARNING: turning off OrientationOnMesh tests since KokkosNode = OpenMP (see issue #339)!")
+  ENDIF(ENABLE_LARGE_TESTS AND ENABLE_LCM)
+  IF (ENABLE_LCM) 
+    MESSAGE("---> LCM WARNING: turning off ACE tests since KokkosNode = OpenMP (see issue #501)!")
+  ENDIF(ENABLE_LCM)
+ENDIF()
 
-# It is not currently possible to determine the status of "Kokkos_ENABLE_Cuda" from Albany. So we will deduce it
-# from ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h
-IF(NOT DEFINED Kokkos_ENABLE_OpenMP)
-  SET(Kokkos_ENABLE_OpenMP OFF)
-  IF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
-    FILE(READ ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h CURRENT_CONFIG)
-    STRING(REGEX MATCH "\#define KOKKOS_ENABLE_OPENMP" KOKKOS_OPENMP_IS_SET ${CURRENT_CONFIG})
-    IF("#define KOKKOS_ENABLE_OPENMP" STREQUAL "${KOKKOS_OPENMP_IS_SET}")
-      MESSAGE("-- Kokkos is configured to use OpenMP, Albany will also.")
-      SET(Kokkos_ENABLE_OpenMP ON)
-      IF (ENABLE_LARGE_TESTS AND ENABLE_LCM) 
-        MESSAGE("   -> LCM WARNING: turning off OrientationOnMesh tests since KokkosNode = OpenMP (see issue #339)!")
-      ENDIF(ENABLE_LARGE_TESTS AND ENABLE_LCM)
-      IF (ENABLE_LCM) 
-        MESSAGE("   -> LCM WARNING: turning off ACE tests since KokkosNode = OpenMP (see issue #501)!")
-      ENDIF(ENABLE_LCM)
-    ELSE("#define KOKKOS_ENABLE_OPENMP" STREQUAL "${KOKKOS_OpenMP_IS_SET}")
-      MESSAGE("-- Kokkos is not configured to use OpenMP, Albany will NOT be compiled for OpenMP.")
-    ENDIF("#define KOKKOS_ENABLE_OPENMP" STREQUAL "${KOKKOS_OPENMP_IS_SET}")
-  ENDIF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
-ENDIF(NOT DEFINED Kokkos_ENABLE_OpenMP)
+# Optional CUDA settings
+IF(ALBANY_ENABLE_CUDA)
+  IF (ENABLE_ALBANY_EPETRA)
+    MESSAGE(FATAL_ERROR "\nError: Albany with Epetra is not supported with CUDA KokkosNode!  Please re-configure w/o Epetra (ENABLE_ALBANY_EPETRA=OFF).")
+  ENDIF()
+  IF (ENABLE_LCM) 
+    MESSAGE(FATAL_ERROR "\nError: LCM does not work with a CUDA KokkosNode!  Recompile with LCM off.")
+  ENDIF()
+  SET(NUM_GPUS_PER_NODE 4 CACHE INT "set Number of GPUs per Node")
+  MESSAGE("-- NUM_GPUS_PER_NODE=${NUM_GPUS_PER_NODE}")
+  SET(KOKKOS_NDEVICES "--kokkos-ndevices=${NUM_GPUS_PER_NODE}")
+  IF (ENABLE_CUDA_ERROR_CHECK)
+    SET(ALBANY_CUDA_ERROR_CHECK ON)
+    MESSAGE("-- CUDA Error Check        is Enabled")
+  ELSE()
+    MESSAGE("-- CUDA Error Check        is NOT Enabled.")
+  ENDIF()
+  IF (ENABLE_CUDA_NVTX)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lnvToolsExt")
+    SET(ALBANY_CUDA_NVTX ON)
+    MESSAGE("-- CUDA NVTX               is Enabled")
+  ELSE()
+    MESSAGE("-- CUDA NVTX               is NOT Enabled.")
+  ENDIF()
+ENDIF()
 
 # set optional dependency on the BGL, defaults to Enabled
 # This option is added due to issued with compiling BGL with the intel compilers

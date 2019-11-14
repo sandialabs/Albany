@@ -492,7 +492,7 @@ set(models-headers
   "${LCM_DIR}/parallel_models/ParallelNeohookeanModel_Def.hpp"
   "${LCM_DIR}/parallel_models/ParallelNeohookeanModel.hpp"
 )
-IF (NOT Kokkos_ENABLE_Cuda)
+IF (NOT ALBANY_ENABLE_CUDA)
 set(models-sources ${models-sources}
   "${LCM_DIR}/models/CrystalPlasticityModel.cpp"
   "${LCM_DIR}/models/FM_AlbanyInterface.cpp"
@@ -514,7 +514,7 @@ set(models-headers ${models-headers}
   "${LCM_DIR}/models/GursonModel.hpp"
   "${LCM_DIR}/models/GursonModel_Def.hpp"
 )
-ENDIF (NOT Kokkos_ENABLE_Cuda)
+ENDIF (NOT ALBANY_ENABLE_CUDA)
 
 #LCM utils
 set(utils-sources

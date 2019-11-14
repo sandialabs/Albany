@@ -19,7 +19,7 @@ add_test(Aeras_${testName}_Spectral_np2_RungeKutta4 ${Albany.exe} input_spectral
 set_tests_properties(Aeras_${testName}_Spectral_np2_RungeKutta4 PROPERTIES LABELS "Aeras;Tpetra;Forward")
 IF(NOT ALBANY_CHECK_FPE)
 IF(NOT ALBANY_STRONG_FPE_CHECK) 
-IF(NOT Kokkos_ENABLE_Cuda) 
+IF(NOT ALBANY_ENABLE_CUDA) 
 add_test(Aeras_${testName}_Spectral_np4_BackwardEuler ${Albany8.exe} input_spectral_np4_BE_T.yaml) 
 set_tests_properties(Aeras_${testName}_Spectral_np4_BackwardEuler PROPERTIES LABELS "Aeras;Tpetra;Forward")
 ENDIF()

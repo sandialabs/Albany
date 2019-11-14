@@ -94,6 +94,8 @@ int main(int argc, char *argv[])
   Albany::CmdLineArgs cmd("input.yaml");
   cmd.parse_cmdline(argc, argv, *out);
 
+  Albany::PrintHeader(*out);
+
   const auto stackedTimer = Teuchos::rcp(
       new Teuchos::StackedTimer("Albany Stacked Timer"));
   Teuchos::TimeMonitor::setStackedTimer(stackedTimer);

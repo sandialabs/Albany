@@ -20,8 +20,11 @@
 
 #include <cstdlib>
 #include <stdexcept>
+#include <time.h>
+
 #include "MatrixMarket_Tpetra.hpp"
 #include "Teuchos_TestForException.hpp"
+#include "Kokkos_Macros.hpp"
 
 // For vtune
 #include <sys/types.h>
@@ -33,6 +36,36 @@
 #include <cstdio>
 
 namespace Albany {
+
+void
+PrintHeader(std::ostream& os)
+{
+  os << R"(***************************************************************)" << std::endl;
+  os << R"(**  ______   __       ______   ______   __   __   __  __     **)" << std::endl;
+  os << R"(** /\  __ \ /\ \     /\  == \ /\  __ \ /\ "-.\ \ /\ \_\ \    **)" << std::endl;
+  os << R"(** \ \  __ \\ \ \____\ \  __< \ \  __ \\ \ \-.  \\ \____ \   **)" << std::endl;
+  os << R"(**  \ \_\ \_\\ \_____\\ \_____\\ \_\ \_\\ \_\\"\_\\/\_____\  **)" << std::endl;
+  os << R"(**   \/_/\/_/ \/_____/ \/_____/ \/_/\/_/ \/_/ \/_/ \/_____/  **)" << std::endl;
+  os << R"(**                                                           **)" << std::endl;
+  os << R"(***************************************************************)" << std::endl;
+  os << R"(** Trilinos git commit id - )" << ALBANY_TRILINOS_GIT_COMMIT_ID << std::endl;
+  os << R"(** Albany git branch ------ )" << ALBANY_GIT_BRANCH << std::endl;
+  os << R"(** Albany git commit id --- )" << ALBANY_GIT_COMMIT_ID << std::endl;
+  os << R"(** Albany cxx compiler ---- )" << ALBANY_CXX_COMPILER_ID << " " << ALBANY_CXX_COMPILER_VERSION << std::endl;
+
+#ifdef KOKKOS_COMPILER_CUDA_VERSION
+  os << R"(** Albany cuda compiler --- Cuda )" << KOKKOS_COMPILER_CUDA_VERSION << std::endl;
+#endif
+
+  // Print start time
+  time_t rawtime;
+  time(&rawtime);
+  struct tm* timeinfo = localtime(&rawtime);
+  char buffer[80];
+  strftime(buffer, 80, "%F at %T", timeinfo);
+  os << R"(** Simulation start time -- )" << buffer << std::endl;
+  os << R"(***************************************************************)" << std::endl;
+}
 
 void
 ReplaceDiagonalEntries(
