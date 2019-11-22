@@ -424,14 +424,17 @@ ACEiceMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT       dfdT{0.0};
   auto const    tol = 45.0;
 
-  if (std::abs(arg) < tol) {
+  // Update freeze curve slope and ice saturation
+  if (arg < -tol) {
+    dfdT = 0.0;
+    icurr = 0.0;
+  } else if (arg > tol) {
+    dfdT = 0.0;
+    icurr = 1.0;
+  } else {
     ScalarT const et   = std::exp(arg);
     ScalarT const etp1 = et + 1.0;
-
-    // Update freeze curve slope
     dfdT = -(W / 8.0) * et / etp1 / etp1;
-
-    // Update the ice saturation
     icurr = 1.0 - 1.0 / etp1;
   }
 
