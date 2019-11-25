@@ -37,11 +37,9 @@ Teuchos::RCP<Tpetra_CrsMatrix> alloc (const Teuchos::RCP<Tpetra_CrsMatrix>& A) {
 
   RCP<Tpetra_CrsMatrix> B;
   if (bound_same)
-    B = rcp(new Tpetra_CrsMatrix(A->getRowMap(), A->getColMap(), all_local_rows,
-                                 Tpetra::StaticProfile));
+    B = rcp(new Tpetra_CrsMatrix(A->getRowMap(), A->getColMap(), all_local_rows));
   else
-    B = rcp(new Tpetra_CrsMatrix(A->getRowMap(), A->getColMap(), per_local_row,
-                                 Tpetra::StaticProfile));
+    B = rcp(new Tpetra_CrsMatrix(A->getRowMap(), A->getColMap(), per_local_row()));
 
   return B;
 }
