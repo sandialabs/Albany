@@ -227,6 +227,8 @@ if (BUILD_TRILINOS)
     "-DXpetra_ENABLE_Epetra=OFF"
     "-DMueLu_ENABLE_Epetra=OFF"
     "-DBelos_ENABLE_Epetra=OFF"
+    "-DTpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
+    "-DXpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
     #
     "-DTPL_ENABLE_Matio:BOOL=OFF"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
