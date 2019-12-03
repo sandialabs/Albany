@@ -6,6 +6,7 @@
 #include "Topology.h"
 
 #include <Albany_STKNodeSharing.hpp>
+#include <stk_mesh/base/BulkData.hpp>
 #include <stk_mesh/base/FEMHelpers.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/SkinMesh.hpp>
@@ -1301,6 +1302,40 @@ Topology::printFailureState()
 }
 
 //
+// Destroy upward relations of a collection of entitties
+//
+void
+Topology::destroy_up_relations(stk::mesh::Entity entity)
+{
+  auto& bulk_data = get_bulk_data();
+  auto& meta_data = get_meta_data();
+  if (bulk_data.is_valid(entity) == false) return;
+  auto const              entity_rank = bulk_data.entity_rank(entity);
+  stk::mesh::EntityVector temp_entities;
+  std::vector<stk::mesh::ConnectivityOrdinal> temp_ordinals;
+  stk::mesh::Entity const*                    rel_entities = nullptr;
+  int                                         num_conn     = 0;
+  stk::mesh::ConnectivityOrdinal const*       rel_ordinals;
+  auto const                                  end_rank =
+      static_cast<stk::mesh::EntityRank>(meta_data.entity_rank_count() - 1);
+  auto const begin_rank = static_cast<stk::mesh::EntityRank>(entity_rank);
+  for (auto irank = end_rank; irank != begin_rank; --irank) {
+    assert(bulk_data.connectivity_map().valid(entity_rank, irank) == true);
+    num_conn     = bulk_data.num_connectivity(entity, irank);
+    rel_entities = bulk_data.begin(entity, irank);
+    rel_ordinals = bulk_data.begin_ordinals(entity, irank);
+    for (int j = num_conn - 1; j >= 0; --j) {
+      if (bulk_data.is_valid(rel_entities[j]) == true) {
+        // Must delete relation from higher-to-lower ranked entity
+        bulk_data.destroy_relation(rel_entities[j], entity, rel_ordinals[j]);
+      }
+    }
+  }
+  bool successfully_destroyed = bulk_data.destroy_entity(entity);
+  assert(successfully_destroyed == true);
+}
+
+//
 // Remove failed elements from the mesh
 //
 double
@@ -1328,6 +1363,7 @@ Topology::erodeFailedElements()
       auto cell_volume = getCellVolume(cell);
       eroded_volume += cell_volume;
       set_failure_state(cell, INTACT);
+      destroy_up_relations(cell);
       remove_entity(cell);
     }
   }
@@ -1338,21 +1374,30 @@ Topology::erodeFailedElements()
   stk::mesh::get_selected_entities(locally_owned, face_buckets, faces);
   for (auto face : faces) {
     auto const num_elems = bulk_data.num_elements(face);
-    if (num_elems == 0) { remove_entity(face); }
+    if (num_elems == 0) {
+      destroy_up_relations(face);
+      remove_entity(face);
+    }
   }
   auto const&             edge_buckets = bulk_data.buckets(edge_rank);
   stk::mesh::EntityVector edges;
   stk::mesh::get_selected_entities(locally_owned, edge_buckets, edges);
   for (auto edge : edges) {
     auto const num_elems = bulk_data.num_elements(edge);
-    if (num_elems == 0) { remove_entity(edge); }
+    if (num_elems == 0) {
+      destroy_up_relations(edge);
+      remove_entity(edge);
+    }
   }
   auto const&             node_buckets = bulk_data.buckets(node_rank);
   stk::mesh::EntityVector nodes;
   stk::mesh::get_selected_entities(locally_owned, node_buckets, nodes);
   for (auto node : nodes) {
     auto const num_elems = bulk_data.num_elements(node);
-    if (num_elems == 0) { remove_entity(node); }
+    if (num_elems == 0) {
+      destroy_up_relations(node);
+      remove_entity(node);
+    }
   }
   bulk_data.modification_end();
   Albany::fix_node_sharing(bulk_data);
@@ -1687,13 +1732,13 @@ void
 Topology::initializeTopologies()
 {
   auto const dimension = get_space_dimension();
-  auto const cell_rank     = stk::topology::ELEMENT_RANK;
-  auto const node_rank     = stk::topology::NODE_RANK;
+  auto const cell_rank = stk::topology::ELEMENT_RANK;
+  auto const node_rank = stk::topology::NODE_RANK;
 
   for (auto rank = node_rank; rank <= cell_rank; ++rank) {
     if (rank > dimension) break;
     std::vector<stk::mesh::Bucket*> buckets = get_bulk_data().buckets(rank);
-    stk::mesh::Bucket const& bucket = *(buckets[0]);
+    stk::mesh::Bucket const&        bucket  = *(buckets[0]);
     topologies_.push_back(bucket.topology());
   }
   return;

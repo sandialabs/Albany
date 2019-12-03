@@ -8,7 +8,6 @@
 
 #include <iterator>
 #include <set>
-
 #include <stk_mesh/base/FieldBase.hpp>
 
 #include "Topology_Types.h"
@@ -225,6 +224,12 @@ class Topology
   ///
   void
   splitOpenFaces();
+
+  ///
+  /// Destroy upward relations of a collection of entitties
+  ///
+  void
+  destroy_up_relations(stk::mesh::Entity entity);
 
   ///
   /// Iterate over all elements in the mesh and remove those
