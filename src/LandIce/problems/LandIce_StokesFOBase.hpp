@@ -37,6 +37,7 @@
 #include "LandIce_IceOverburden.hpp"
 #include "LandIce_ParamEnum.hpp"
 #include "LandIce_ProblemUtils.hpp"
+#include "LandIce_SimpleOperationEvaluator.hpp"
 #include "LandIce_SharedParameter.hpp"
 #include "LandIce_StokesFOBasalResid.hpp"
 #include "LandIce_StokesFOLateralResid.hpp"
@@ -123,6 +124,9 @@ protected:
   template <typename EvalT>
   void constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                const Albany::MeshSpecsStruct& meshSpecs);
+
+  template <typename EvalT>
+  void constructSimpleEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
   constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -248,6 +252,9 @@ constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 {
   // --- States/parameters --- //
   constructStatesEvaluators<EvalT> (fm0, meshSpecs, stateMgr);
+
+  // --- Automatic Simple Evaluator construction --- //
+  constructSimpleEvaluators<EvalT> (fm0);
 
   // --- Interpolation utilities for fields ---//
   constructInterpolationEvaluators<EvalT> (fm0);
@@ -1425,6 +1432,26 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
 
     ev = Teuchos::rcp(new LandIce::DOFDivInterpolationSide<EvalT,PHAL::AlbanyTraits>(*p,dl_side));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+}
+ 
+template <typename EvalT>
+void StokesFOBase::constructSimpleEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
+{
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+  auto& pl = params->sublist("Simple Evaluators");
+  for (int i=0; i<pl.get<int>("Number",0); ++i) {
+    const auto& ev_pl = pl.sublist(Albany::strint("Evaluator",i));
+
+    ev = buildSimpleEvaluator<EvalT,PHAL::AlbanyTraits>(ev_pl,dl);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    if (ev_pl.isParameter("Side Set Name")) {
+      auto ss_name = ev_pl.get<std::string>("Side Set Name");
+      is_ss_computed_field[ss_name][ev_pl.get<std::string>("Output Field Name")] = true;
+    } else {
+      is_computed_field[pl.get<std::string>("Output Field Name")] = true;
+    }
   }
 }
 

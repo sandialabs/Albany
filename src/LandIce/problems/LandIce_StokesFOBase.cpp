@@ -257,6 +257,7 @@ StokesFOBase::getStokesFOBaseProblemParameters () const
   validPL->sublist("LandIce L2 Projected Boundary Laplacian", false, "Parameters needed to compute the L2 Projected Boundary Laplacian");
   validPL->sublist("LandIce Surface Gradient", false, "");
   validPL->sublist("Variables Names",false,"Sublist where we can specify a user-defined name for variables.");
+  validPL->sublist("Simple Evaluators",false,"Sublist where we can request construction of simple evaluators.");
   validPL->set<std::string> ("Basal Side Name", "", "Name of the basal side set");
   validPL->set<std::string> ("Surface Side Name", "", "Name of the surface side set");
   validPL->sublist("Body Force", false, "");

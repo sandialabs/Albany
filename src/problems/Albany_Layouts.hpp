@@ -140,6 +140,11 @@ namespace Albany {
     std::map<std::string,Teuchos::RCP<Layouts>> side_layouts;
   };
 
+  // Free function that, given a name, returns the proper PHX layout
+  Teuchos::RCP<PHX::DataLayout>
+  getLayout(const std::string& name, const Layouts& dl);
+
+
 } // namespace Albany
 
 #endif // ALBANY_LAYOUTS_HPP

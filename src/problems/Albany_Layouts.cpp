@@ -9,9 +9,10 @@
 
 #include "PHAL_Dimension.hpp"
 
-/*********************** Helper Functions*********************************/
+namespace Albany
+{
 
-Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numCellDim, int vecDim, int numFace)
+Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numCellDim, int vecDim, int numFace)
 // numCellDim is the number of spatial dimensions
 // vecDim is the length of a vector quantity
 // -- For many problems, numCellDim is used for both since there are
@@ -105,7 +106,7 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   // have separate node_vector and node_gradient layouts.
 }
 
-Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim)
+Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim)
 // numSideDim is the number of spatial dimensions
 // vecDim is the length of a vector quantity
 // -- For many problems, numSideDim is used for both since there are
@@ -196,3 +197,51 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   // for displacements and velocities). Could be separated to
   // have separate node_vector and node_gradient layouts.
 }
+
+Teuchos::RCP<PHX::DataLayout>
+getLayout(const std::string& name, const Layouts& dl)
+{
+  Teuchos::RCP<PHX::DataLayout> layout;
+  if (name=="Shared Param") {
+    layout = dl.shared_param;
+  } else if (name=="Shared Param Vec") {
+    layout = dl.shared_param_vec;
+  } else if (name=="Cell Scalar") {
+    layout = dl.cell_scalar2;
+  } else if (name=="Cell Vector") {
+    layout = dl.cell_vector;
+  } else if (name=="Cell Tensor") {
+    layout = dl.cell_tensor;
+  } else if (name=="Cell Gradient") {
+    layout = dl.cell_gradient;
+  } else if (name=="Cell Vector Gradient") {
+    layout = dl.cell_vecgradient;
+  } else if (name=="Node Scalar") {
+    layout = dl.node_scalar;
+  } else if (name=="Node Vector") {
+    layout = dl.node_vector;
+  } else if (name=="Node Tensor") {
+    layout = dl.node_tensor;
+  } else if (name=="Node Gradient") {
+    layout = dl.node_gradient;
+  } else if (name=="Node Vector Gradient") {
+    layout = dl.node_gradient;
+  } else if (name=="QuadPoint Scalar") {
+    layout = dl.qp_scalar;
+  } else if (name=="QuadPoint Vector") {
+    layout = dl.qp_vector;
+  } else if (name=="QuadPoint Tensor") {
+    layout = dl.qp_tensor;
+  } else if (name=="QuadPoint Gradient") {
+    layout = dl.qp_gradient;
+  } else if (name=="QuadPoint Vector Gradient") {
+    layout = dl.qp_vecgradient;
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+                               "Error! Unrecognized/unsupported layout name.\n");
+  }
+
+  return layout;
+}
+
+} // namespace Albany

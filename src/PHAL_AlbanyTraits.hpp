@@ -256,6 +256,27 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType>;  \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_FUNCTION_WITH_TWO_SCALAR_TYPES_RESIDUAL(name,returnType,...) \
+  template returnType name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType>(__VA_ARGS__);
+
+#define PHAL_INSTANTIATE_TEMPLATE_FUNCTION_WITH_TWO_SCALAR_TYPES_JACOBIAN(name,returnType,...)               \
+  template returnType name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, RealType>(__VA_ARGS__);  \
+  template returnType name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, RealType>(__VA_ARGS__); \
+  template returnType name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType>(__VA_ARGS__);   \
+  template returnType name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, FadType>(__VA_ARGS__);
+
+#define PHAL_INSTANTIATE_TEMPLATE_FUNCTION_WITH_TWO_SCALAR_TYPES_TANGENT(name,returnType,...)                     \
+  template returnType name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, RealType>(__VA_ARGS__);   \
+  template returnType name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, RealType>(__VA_ARGS__);     \
+  template returnType name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType>(__VA_ARGS__); \
+  template returnType name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, TanFadType>(__VA_ARGS__);
+
+#define PHAL_INSTANTIATE_TEMPLATE_FUNCTION_WITH_TWO_SCALAR_TYPES_DISTPARAMDERIV(name,returnType,...)                     \
+  template returnType name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   RealType>(__VA_ARGS__);   \
+  template returnType name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, RealType>(__VA_ARGS__);   \
+  template returnType name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType>(__VA_ARGS__); \
+  template returnType name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>(__VA_ARGS__);
+
 // 5. General macros: you should call these in your cpp files,
 //    which in turn will call the ones above.
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
@@ -263,6 +284,12 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)
+
+#define PHAL_INSTANTIATE_TEMPLATE_FUNCTION(name,returnType,...)                                   \
+  template returnType name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(__VA_ARGS__);        \
+  template returnType name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits>(__VA_ARGS__);        \
+  template returnType name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits>(__VA_ARGS__);         \
+  template returnType name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits>(__VA_ARGS__);
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_RESIDUAL(name)         \
@@ -281,6 +308,12 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_DISTPARAMDERIV(name)
+
+#define PHAL_INSTANTIATE_TEMPLATE_FUNCTION_WITH_TWO_SCALAR_TYPES(name,returnType,...)                    \
+  PHAL_INSTANTIATE_TEMPLATE_FUNCTION_WITH_TWO_SCALAR_TYPES_RESIDUAL(name,returnType,__VA_ARGS__)         \
+  PHAL_INSTANTIATE_TEMPLATE_FUNCTION_WITH_TWO_SCALAR_TYPES_JACOBIAN(name,returnType,__VA_ARGS__)         \
+  PHAL_INSTANTIATE_TEMPLATE_FUNCTION_WITH_TWO_SCALAR_TYPES_TANGENT(name,returnType,__VA_ARGS__)          \
+  PHAL_INSTANTIATE_TEMPLATE_FUNCTION_WITH_TWO_SCALAR_TYPES_DISTPARAMDERIV(name,returnType,__VA_ARGS__)
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_RESIDUAL(name)         \

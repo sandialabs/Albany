@@ -10,7 +10,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include "Albany_DataTypes.hpp"
+#include "Albany_SacadoTypes.hpp"
 
 namespace LandIce
 {
@@ -45,7 +45,7 @@ private:
 template<typename ScalarT>
 struct Exp
 {
-  void setup (const Teuchos::ParameterList& p) { tau = p.isParameter("Tau") ? p.get<double>("Tau") : 0.0; }
+  void setup (const Teuchos::ParameterList& p) { tau = p.isParameter("Tau") ? p.get<double>("Tau") : 1.0; }
   ScalarT operator() (const ScalarT& x) const {
     return std::exp(tau*x);
   }
@@ -97,65 +97,93 @@ private:
 namespace BinaryOps
 {
 
-template<typename ScalarT>
+template<typename Scalar1T, typename Scalar2T>
 struct Scale
 {
+  using ResultT = typename Albany::StrongestScalarType<Scalar1T,Scalar2T>::type;
   void setup (const Teuchos::ParameterList& /*p*/) {}
-  ScalarT operator() (const ScalarT& x, const ScalarT& factor) const {
+  ResultT operator() (const Scalar1T& x, const Scalar2T& factor) const {
     return factor*x;
   }
 };
 
-template<typename ScalarT>
+template<typename Scalar1T, typename Scalar2T>
 struct Sum
 {
+  using ResultT = typename Albany::StrongestScalarType<Scalar1T,Scalar2T>::type;
+  void setup (const Teuchos::ParameterList& p) {
+    beta = alpha = 1.0;
+    if (p.isParameter("Alpha")) {
+      alpha = p.get<double>("Alpha");
+    }
+    if (p.isParameter("Beta")) {
+      beta = p.get<double>("Beta");
+    }
+  }
+  ResultT operator() (const Scalar1T& x, const Scalar2T& y) const {
+    return alpha*x+beta*y;
+  }
+
+  double alpha;
+  double beta;
+};
+
+template<typename Scalar1T, typename Scalar2T>
+struct Prod
+{
+  using ResultT = typename Albany::StrongestScalarType<Scalar1T,Scalar2T>::type;
   void setup (const Teuchos::ParameterList& /*p*/) {}
-  ScalarT operator() (const ScalarT& x, const ScalarT& y) const {
-    return y;
+  ResultT operator() (const Scalar1T& x, const Scalar2T& y) const {
+    return x*y;
   }
 };
 
-template<typename ScalarT>
+template<typename Scalar1T, typename Scalar2T>
 struct Log
 {
+  using ResultT = typename Albany::StrongestScalarType<Scalar1T,Scalar2T>::type;
   void setup (const Teuchos::ParameterList& /*p*/) {}
-  ScalarT operator() (const ScalarT& x, const ScalarT& a) const {
+  ResultT operator() (const Scalar1T& x, const Scalar2T& a) const {
     return std::log(a*x);
   }
 };
 
-template<typename ScalarT>
+template<typename Scalar1T, typename Scalar2T>
 struct Exp
 {
+  using ResultT = typename Albany::StrongestScalarType<Scalar1T,Scalar2T>::type;
   void setup (const Teuchos::ParameterList& /*p*/) {}
-  ScalarT operator() (const ScalarT& x, const ScalarT& tau) const {
+  ResultT operator() (const Scalar1T& x, const Scalar2T& tau) const {
     return std::exp(tau*x);
   }
 };
 
-template<typename ScalarT>
+template<typename Scalar1T, typename Scalar2T>
 struct LowPass
 {
+  using ResultT = typename Albany::StrongestScalarType<Scalar1T,Scalar2T>::type;
   void setup (const Teuchos::ParameterList& /*p*/) {}
-  ScalarT operator() (const ScalarT& x, const ScalarT& threshold_up) const {
+  ResultT operator() (const Scalar1T& x, const Scalar2T& threshold_up) const {
     return std::min(x,threshold_up);
   }
 };
 
-template<typename ScalarT>
+template<typename Scalar1T, typename Scalar2T>
 struct HighPass
 {
+  using ResultT = typename Albany::StrongestScalarType<Scalar1T,Scalar2T>::type;
   void setup (const Teuchos::ParameterList& /*p*/) {}
-  ScalarT operator() (const ScalarT& x, const ScalarT& threshold_lo) const {
+  ResultT operator() (const Scalar1T& x, const Scalar2T& threshold_lo) const {
     return std::max(x,threshold_lo);
   }
 };
 
-template<typename ScalarT>
+template<typename Scalar1T, typename Scalar2T>
 struct BandPassFixedUpper
 {
+  using ResultT = typename Albany::StrongestScalarType<Scalar1T,Scalar2T>::type;
   void setup (const Teuchos::ParameterList& p) { threshold_up = p.get<double>("Upper Threshold"); }
-  ScalarT operator() (const ScalarT& x, const ScalarT& threshold_lo) const {
+  ResultT operator() (const Scalar1T& x, const Scalar2T& threshold_lo) const {
     return std::max(std::min(x,threshold_up),threshold_lo);
     return std::max(x,threshold_lo);
   }
@@ -163,11 +191,12 @@ private:
   double threshold_up;
 };
 
-template<typename ScalarT>
+template<typename Scalar1T, typename Scalar2T>
 struct BandPassFixedLower
 {
+  using ResultT = typename Albany::StrongestScalarType<Scalar1T,Scalar2T>::type;
   void setup (const Teuchos::ParameterList& p) { threshold_lo = p.get<double>("Lower Threshold"); }
-  ScalarT operator() (const ScalarT& x, const ScalarT& threshold_up) const {
+  ResultT operator() (const Scalar1T& x, const Scalar2T& threshold_up) const {
     return std::max(std::min(x,threshold_up),threshold_lo);
   }
 private:
@@ -179,10 +208,11 @@ private:
 namespace TernaryOps
 {
 
-template<typename ScalarT>
+template<typename Scalar1T, typename Scalar2T>
 struct BandPass
 {
-  ScalarT operator() (const ScalarT& x, const ScalarT& threshold_lo, const ScalarT& threshold_up) const {
+  using ResultT = typename Albany::StrongestScalarType<Scalar1T,Scalar2T>::type;
+  ResultT operator() (const Scalar1T& x, const Scalar2T& threshold_lo, const Scalar2T& threshold_up) const {
     return std::max(std::min(x,threshold_up),threshold_lo);
   }
 };

@@ -11,14 +11,23 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
+#include "Albany_SacadoTypes.hpp"
 
 #include "LandIce_SimpleOperation.hpp"
 
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename Operation>
+namespace {
+
+Teuchos::RCP<PHX::DataLayout>
+getLayout(const std::string& layout_name,
+          const Teuchos::RCP<Albany::Layouts>& dl);
+}
+
+template<typename EvalT, typename Traits, typename InScalarT, typename OutScalarT, typename Operation>
 class SimpleOperationBase: public PHX::EvaluatorWithBaseImpl<Traits>,
                            public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -26,14 +35,17 @@ public:
   SimpleOperationBase (const Teuchos::ParameterList& p,
                        const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData /* d */,
+                              PHX::FieldManager<Traits>& /* fm */) {}
 protected:
+
+  using OutScalarType = OutScalarT;
+
   // Input:
-  PHX::MDField<const InOutScalarT> field_in;
+  PHX::MDField<const InScalarT> field_in;
 
   // Output:
-  PHX::MDField<InOutScalarT> field_out;
+  PHX::MDField<OutScalarT> field_out;
 
   // The operation
   Operation             op;
@@ -42,7 +54,7 @@ protected:
 // =================== Specializations For Unary Operations ================= //
 
 template<typename EvalT, typename Traits, typename InOutScalarT, template<typename> class UnaryOperation>
-class SimpleUnaryOperation : public SimpleOperationBase<EvalT,Traits,InOutScalarT,UnaryOperation<InOutScalarT>>
+class SimpleUnaryOperation : public SimpleOperationBase<EvalT,Traits,InOutScalarT,InOutScalarT,UnaryOperation<InOutScalarT>>
 {
 public:
   SimpleUnaryOperation (const Teuchos::ParameterList& p,
@@ -101,80 +113,100 @@ public:
 
 // =================== Specializations For Binary Operations ================= //
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> class BinaryOperation>
-class SimpleBinaryOperation : public SimpleOperationBase<EvalT,Traits,InOutScalarT,BinaryOperation<InOutScalarT>>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT, template<typename,typename> class BinaryOperation>
+class SimpleBinaryOperation :
+      public SimpleOperationBase<EvalT,Traits,InScalarT,
+                                 typename Albany::StrongestScalarType<InScalarT,
+                                                              FieldScalarT>::type,
+                                 BinaryOperation<InScalarT,FieldScalarT>>
 {
 public:
   SimpleBinaryOperation (const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData /* d */,
+                              PHX::FieldManager<Traits>& /* fm */) {}
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-  PHX::MDField<const FieldScalarT> field1;
+  using BaseType = SimpleOperationBase<EvalT,Traits,InScalarT,
+                                       typename Albany::StrongestScalarType<InScalarT,
+                                                                            FieldScalarT>::type,
+                                       BinaryOperation<InScalarT,FieldScalarT>>;
+  using OutScalarT = typename BaseType::OutScalarType;
+
+  PHX::MDField<const FieldScalarT> param_field;
+
+  int sizes_ratio;
 };
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
-class BinaryScaleOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Scale>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT>
+class BinaryScaleOp : public SimpleBinaryOperation<EvalT,Traits,InScalarT,FieldScalarT,BinaryOps::Scale>
 {
 public:
   BinaryScaleOp (const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
-class BinarySumOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Sum>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT>
+class BinarySumOp : public SimpleBinaryOperation<EvalT,Traits,InScalarT,FieldScalarT,BinaryOps::Sum>
 {
 public:
   BinarySumOp (const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
-class BinaryLogOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Log>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT>
+class BinaryProdOp : public SimpleBinaryOperation<EvalT,Traits,InScalarT,FieldScalarT,BinaryOps::Prod>
+{
+public:
+  BinaryProdOp (const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT>
+class BinaryLogOp : public SimpleBinaryOperation<EvalT,Traits,InScalarT,FieldScalarT,BinaryOps::Log>
 {
 public:
   BinaryLogOp (const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
-class BinaryExpOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Exp>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT>
+class BinaryExpOp : public SimpleBinaryOperation<EvalT,Traits,InScalarT,FieldScalarT,BinaryOps::Exp>
 {
 public:
   BinaryExpOp (const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
-class BinaryLowPassOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::LowPass>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT>
+class BinaryLowPassOp : public SimpleBinaryOperation<EvalT,Traits,InScalarT,FieldScalarT,BinaryOps::LowPass>
 {
 public:
   BinaryLowPassOp (const Teuchos::ParameterList& p,
                    const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
-class BinaryHighPassOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::HighPass>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT>
+class BinaryHighPassOp : public SimpleBinaryOperation<EvalT,Traits,InScalarT,FieldScalarT,BinaryOps::HighPass>
 {
 public:
   BinaryHighPassOp (const Teuchos::ParameterList& p,
                    const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
-class BinaryBandPassFixedLowerOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::BandPassFixedLower>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT>
+class BinaryBandPassFixedLowerOp : public SimpleBinaryOperation<EvalT,Traits,InScalarT,FieldScalarT,BinaryOps::BandPassFixedLower>
 {
 public:
   BinaryBandPassFixedLowerOp (const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
-class BinaryBandPassFixedUpperOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::BandPassFixedUpper>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT>
+class BinaryBandPassFixedUpperOp : public SimpleBinaryOperation<EvalT,Traits,InScalarT,FieldScalarT,BinaryOps::BandPassFixedUpper>
 {
 public:
   BinaryBandPassFixedUpperOp (const Teuchos::ParameterList& p,
@@ -183,31 +215,45 @@ public:
 
 // =================== Specializations For Ternary Operations ================= //
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> class TernaryOperation>
-class SimpleTernaryOperation : public SimpleOperationBase<EvalT,Traits,InOutScalarT,TernaryOperation<InOutScalarT>>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT, template<typename,typename> class TernaryOperation>
+class SimpleTernaryOperation : 
+    public SimpleOperationBase<EvalT,Traits,InScalarT,
+                               typename Albany::StrongestScalarType<InScalarT,
+                                                            FieldScalarT>::type,
+                               TernaryOperation<InScalarT,FieldScalarT>>
 {
 public:
   SimpleTernaryOperation (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData /* d */,
+                              PHX::FieldManager<Traits>& /* fm */) {}
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-  PHX::MDField<const FieldScalarT> field1;
-  PHX::MDField<const FieldScalarT> field2;
+  using BaseType = SimpleOperationBase<EvalT,Traits,InScalarT,
+                                       typename Albany::StrongestScalarType<InScalarT,
+                                                                            FieldScalarT>::type,
+                                       TernaryOperation<InScalarT,FieldScalarT>>;
+  using OutScalarT = typename BaseType::OutScalarType;
+
+  PHX::MDField<const FieldScalarT> param_field1;
+  PHX::MDField<const FieldScalarT> param_field2;
 };
 
-template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
-class TernaryBandPassOp : public SimpleTernaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,TernaryOps::BandPass>
+template<typename EvalT, typename Traits, typename InScalarT, typename FieldScalarT>
+class TernaryBandPassOp : public SimpleTernaryOperation<EvalT,Traits,InScalarT,FieldScalarT,TernaryOps::BandPass>
 {
 public:
   TernaryBandPassOp (const Teuchos::ParameterList& p,
                      const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
+template<typename EvalT, typename Traits>
+Teuchos::RCP<PHX::Evaluator<Traits> >
+buildSimpleEvaluator(const Teuchos::ParameterList& p,
+                     const Teuchos::RCP<Albany::Layouts>& dl);
 } // Namespace LandIce
 
 #endif // LANDICE_SIMPLE_OPERATION_EVALUATOR_HPP
