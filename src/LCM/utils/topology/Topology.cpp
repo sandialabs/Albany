@@ -4,14 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "Topology.h"
+
+#include <Albany_STKNodeSharing.hpp>
 #include <stk_mesh/base/FEMHelpers.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/SkinMesh.hpp>
+
 #include "Subgraph.h"
 #include "Topology_FailureCriterion.h"
 #include "Topology_Utils.h"
-
-#include <Albany_STKNodeSharing.hpp>
 
 namespace LCM {
 
@@ -310,7 +311,7 @@ Topology::createBoundary()
   stk::mesh::PartVector add_parts(1, &del_part);
   stk::mesh::skin_mesh(bulk_data, add_parts);
   stk::mesh::Selector            del_selector = del_part & locally_owned;
-  const stk::mesh::BucketVector& face_buckets = bulk_data.buckets(face_rank);
+  stk::mesh::BucketVector const& face_buckets = bulk_data.buckets(face_rank);
   stk::mesh::EntityVector        boundary_faces;
   stk::mesh::get_selected_entities(del_selector, face_buckets, boundary_faces);
   boundary_.clear();
@@ -1305,20 +1306,23 @@ Topology::printFailureState()
 double
 Topology::erodeFailedElements()
 {
-  stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
-  stk::mesh::EntityRank const face_rank = stk::topology::FACE_RANK;
-  stk::mesh::EntityRank const edge_rank = stk::topology::EDGE_RANK;
-  stk::mesh::EntityRank const node_rank = stk::topology::NODE_RANK;
-  stk::mesh::BulkData&        bulk_data = get_bulk_data();
+  auto const cell_rank     = stk::topology::ELEMENT_RANK;
+  auto const face_rank     = stk::topology::FACE_RANK;
+  auto const edge_rank     = stk::topology::EDGE_RANK;
+  auto const node_rank     = stk::topology::NODE_RANK;
+  auto&      bulk_data     = get_bulk_data();
+  auto&      meta_data     = get_meta_data();
+  auto&      locally_owned = meta_data.locally_owned_part();
+  double     eroded_volume = 0.0;
+
   // 3D only for now.
   assert(get_space_dimension() == cell_rank);
   bulk_data.modification_begin();
 
-  double eroded_volume{0.0};
-
   // Collect and remove failed cells
+  auto const&             cell_buckets = bulk_data.buckets(cell_rank);
   stk::mesh::EntityVector cells;
-  stk::mesh::get_entities(bulk_data, cell_rank, cells);
+  stk::mesh::get_selected_entities(locally_owned, cell_buckets, cells);
   for (auto cell : cells) {
     if (failure_criterion_->check(bulk_data, cell) == true) {
       auto cell_volume = getCellVolume(cell);
@@ -1329,20 +1333,23 @@ Topology::erodeFailedElements()
   }
 
   // Collect and remove entities no longer connected to an element
+  auto const&             face_buckets = bulk_data.buckets(face_rank);
   stk::mesh::EntityVector faces;
-  stk::mesh::get_entities(bulk_data, face_rank, faces);
+  stk::mesh::get_selected_entities(locally_owned, face_buckets, faces);
   for (auto face : faces) {
     auto const num_elems = bulk_data.num_elements(face);
     if (num_elems == 0) { remove_entity(face); }
   }
+  auto const&             edge_buckets = bulk_data.buckets(edge_rank);
   stk::mesh::EntityVector edges;
-  stk::mesh::get_entities(bulk_data, edge_rank, edges);
+  stk::mesh::get_selected_entities(locally_owned, edge_buckets, edges);
   for (auto edge : edges) {
     auto const num_elems = bulk_data.num_elements(edge);
     if (num_elems == 0) { remove_entity(edge); }
   }
+  auto const&             node_buckets = bulk_data.buckets(node_rank);
   stk::mesh::EntityVector nodes;
-  stk::mesh::get_entities(bulk_data, node_rank, nodes);
+  stk::mesh::get_selected_entities(locally_owned, node_buckets, nodes);
   for (auto node : nodes) {
     auto const num_elems = bulk_data.num_elements(node);
     if (num_elems == 0) { remove_entity(node); }
@@ -1679,17 +1686,14 @@ Topology::outputToGraphviz(std::string const& output_filename)
 void
 Topology::initializeTopologies()
 {
-  size_t const dimension = get_space_dimension();
+  auto const dimension = get_space_dimension();
+  auto const cell_rank     = stk::topology::ELEMENT_RANK;
+  auto const node_rank     = stk::topology::NODE_RANK;
 
-  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
-       rank <= stk::topology::ELEMENT_RANK;
-       ++rank) {
+  for (auto rank = node_rank; rank <= cell_rank; ++rank) {
     if (rank > dimension) break;
-
     std::vector<stk::mesh::Bucket*> buckets = get_bulk_data().buckets(rank);
-
     stk::mesh::Bucket const& bucket = *(buckets[0]);
-
     topologies_.push_back(bucket.topology());
   }
   return;

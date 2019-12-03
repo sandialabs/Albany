@@ -251,7 +251,6 @@ AAdapt::Erosion::adaptMesh()
                   << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
   // Save the current results and close the exodus file
-
   // Create a remeshed output file naming convention by
   // adding the remesh_file_index_ ahead of the period
   std::ostringstream ss;
