@@ -1320,7 +1320,6 @@ Topology::destroy_up_relations(stk::mesh::Entity entity)
       static_cast<stk::mesh::EntityRank>(meta_data.entity_rank_count() - 1);
   auto const begin_rank = static_cast<stk::mesh::EntityRank>(entity_rank);
   for (auto irank = end_rank; irank != begin_rank; --irank) {
-    assert(bulk_data.connectivity_map().valid(entity_rank, irank) == true);
     num_conn     = bulk_data.num_connectivity(entity, irank);
     rel_entities = bulk_data.begin(entity, irank);
     rel_ordinals = bulk_data.begin_ordinals(entity, irank);
