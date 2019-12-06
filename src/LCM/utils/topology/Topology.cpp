@@ -1305,7 +1305,7 @@ Topology::remove_entity_and_up_relations(stk::mesh::Entity entity)
   auto const entity_rank = bulk_data.entity_rank(entity);
   ALBANY_ASSERT(bulk_data.is_valid(entity) == true);
   for (auto rank = cell_rank; rank != entity_rank; --rank) {
-    auto const  num_conn     = bulk_data.num_connectivity(entity, rank);
+    auto const num_conn = bulk_data.num_connectivity(entity, rank);
     if (num_conn == 0) continue;
     auto const* rel_entities = bulk_data.begin(entity, rank);
     auto const* rel_ordinals = bulk_data.begin_ordinals(entity, rank);
@@ -1896,7 +1896,18 @@ Topology::is_boundary_cell(stk::mesh::Entity e)
 }
 
 bool
-Topology::there_are_failed_cells()
+Topology::there_are_failed_cells_global()
+{
+  int        global_count = 0;
+  bool const failed_local = there_are_failed_cells_local() == true;
+  int const  local_count  = failed_local == true ? 1 : 0;
+  auto       comm = static_cast<stk::ParallelMachine>(Albany_MPI_COMM_WORLD);
+  stk::all_reduce_sum(comm, &local_count, &global_count, 1);
+  return global_count > 0;
+}
+
+bool
+Topology::there_are_failed_cells_local()
 {
   stk::mesh::EntityRank const cell_rank = stk::topology::ELEMENT_RANK;
   stk::mesh::EntityVector     cells;

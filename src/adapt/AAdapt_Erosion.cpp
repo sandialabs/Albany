@@ -5,7 +5,9 @@
 //*****************************************************************//
 
 #include "AAdapt_Erosion.hpp"
+
 #include <Teuchos_TimeMonitor.hpp>
+
 #include "StateVarUtils.hpp"
 #include "Topology_FailureCriterion.h"
 
@@ -47,7 +49,7 @@ AAdapt::Erosion::Erosion(
 bool
 AAdapt::Erosion::queryAdaptationCriteria(int)
 {
-  return topology_->there_are_failed_cells();
+  return topology_->there_are_failed_cells_global();
 }
 
 namespace {

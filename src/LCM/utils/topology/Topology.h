@@ -942,7 +942,10 @@ class Topology
   }
 
   bool
-  there_are_failed_cells();
+  there_are_failed_cells_global();
+
+  bool
+  there_are_failed_cells_local();
 
   bool
   there_are_failed_boundary_cells();
