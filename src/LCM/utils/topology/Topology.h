@@ -229,7 +229,7 @@ class Topology
   /// Destroy upward relations of a collection of entitties
   ///
   void
-  destroy_up_relations(stk::mesh::Entity entity);
+  remove_entity_and_up_relations(stk::mesh::Entity entity);
 
   ///
   /// Iterate over all elements in the mesh and remove those
@@ -237,6 +237,12 @@ class Topology
   ///
   double
   erodeFailedElements();
+
+  double
+  erodeElements();
+
+  void
+  execute_entity_deletion_operations(stk::mesh::EntityVector & entities);
 
   bool
   isIsolatedNode(stk::mesh::Entity entity);
@@ -246,6 +252,18 @@ class Topology
 
   void
   printFailureState();
+
+  void
+  modification_begin()
+  {
+    ALBANY_ASSERT(get_bulk_data().modification_begin() == true);
+  }
+
+  void
+  modification_end()
+  {
+    ALBANY_ASSERT(get_bulk_data().modification_end() == true);
+  }
 
   ///
   /// \brief Adds a new entity of rank 3 to the mesh
@@ -973,11 +991,6 @@ class Topology
   get_normal(stk::mesh::Entity boundary_entity);
 
  private:
-  ///
-  /// \brief Create Albany discretization
-  ///
-  /// Called by constructor
-  ///
   void
   createDiscretization();
 

@@ -54,7 +54,7 @@ Topology::remove_entity(stk::mesh::Entity entity)
 {
   // remove the entity from stk mesh
   bool deleted = get_bulk_data().destroy_entity(entity);
-  assert(deleted);
+  ALBANY_ASSERT(deleted == true);
   return;
 }
 
@@ -527,7 +527,7 @@ Topology::barycentricSubdivision()
   initializeHighestIds();
 
   // Begin mesh update
-  get_bulk_data().modification_begin();
+  modification_begin();
 
   //--------------------------------------------------------------------------
   // I. Divide all the segments of the mesh by half
@@ -1227,7 +1227,7 @@ Topology::barycentricSubdivision()
 
   // End mesh update
   Albany::fix_node_sharing(get_bulk_data());
-  get_bulk_data().modification_end();
+  modification_end();
   // MEASURING TIME
   end11           = clock();
   cpu_time_used11 = ((double)(end11 - start11)) / CLOCKS_PER_SEC;
