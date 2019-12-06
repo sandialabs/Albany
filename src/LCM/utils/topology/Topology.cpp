@@ -1295,27 +1295,20 @@ Topology::printFailureState()
 }
 
 //
-// Destroy upward relations of a collection of entitties
+// Destroy upward relations of an entity
 //
 void
 Topology::remove_entity_and_up_relations(stk::mesh::Entity entity)
 {
-  auto& bulk_data = get_bulk_data();
-  auto& meta_data = get_meta_data();
+  auto&      bulk_data   = get_bulk_data();
+  auto const cell_rank   = stk::topology::ELEMENT_RANK;
+  auto const entity_rank = bulk_data.entity_rank(entity);
   ALBANY_ASSERT(bulk_data.is_valid(entity) == true);
-  auto const              entity_rank = bulk_data.entity_rank(entity);
-  stk::mesh::EntityVector temp_entities;
-  std::vector<stk::mesh::ConnectivityOrdinal> temp_ordinals;
-  stk::mesh::ConnectivityOrdinal const*       rel_ordinals;
-  stk::mesh::Entity const*                    rel_entities = nullptr;
-  int                                         num_conn     = 0;
-  auto const                                  end_rank =
-      static_cast<stk::mesh::EntityRank>(meta_data.entity_rank_count() - 1);
-  auto const begin_rank = static_cast<stk::mesh::EntityRank>(entity_rank);
-  for (auto irank = end_rank; irank != begin_rank; --irank) {
-    num_conn     = bulk_data.num_connectivity(entity, irank);
-    rel_entities = bulk_data.begin(entity, irank);
-    rel_ordinals = bulk_data.begin_ordinals(entity, irank);
+  for (auto rank = cell_rank; rank != entity_rank; --rank) {
+    auto const  num_conn     = bulk_data.num_connectivity(entity, rank);
+    if (num_conn == 0) continue;
+    auto const* rel_entities = bulk_data.begin(entity, rank);
+    auto const* rel_ordinals = bulk_data.begin_ordinals(entity, rank);
     // Must delete relation from higher-to-lower ranked entity
     for (auto j = num_conn - 1; j >= 0; --j) {
       ALBANY_ASSERT(bulk_data.is_valid(rel_entities[j]) == true);
@@ -1341,7 +1334,6 @@ Topology::erodeFailedElements()
   auto&      locally_owned = meta_data.locally_owned_part();
   double     eroded_volume = 0.0;
 
-  // 3D only for now.
   assert(get_space_dimension() == cell_rank);
   modification_begin();
 
@@ -1363,27 +1355,21 @@ Topology::erodeFailedElements()
   stk::mesh::get_selected_entities(locally_owned, face_buckets, faces);
   for (auto face : faces) {
     auto const num_elems = bulk_data.num_elements(face);
-    if (num_elems == 0) {
-      remove_entity_and_up_relations(face);
-    }
+    if (num_elems == 0) { remove_entity_and_up_relations(face); }
   }
   auto const&             edge_buckets = bulk_data.buckets(edge_rank);
   stk::mesh::EntityVector edges;
   stk::mesh::get_selected_entities(locally_owned, edge_buckets, edges);
   for (auto edge : edges) {
     auto const num_faces = bulk_data.num_faces(edge);
-    if (num_faces == 0) {
-      remove_entity_and_up_relations(edge);
-    }
+    if (num_faces == 0) { remove_entity_and_up_relations(edge); }
   }
   auto const&             node_buckets = bulk_data.buckets(node_rank);
   stk::mesh::EntityVector nodes;
   stk::mesh::get_selected_entities(locally_owned, node_buckets, nodes);
   for (auto node : nodes) {
     auto const num_edges = bulk_data.num_edges(node);
-    if (num_edges == 0) {
-      remove_entity_and_up_relations(node);
-    }
+    if (num_edges == 0) { remove_entity_and_up_relations(node); }
   }
   modification_end();
   Albany::fix_node_sharing(bulk_data);
@@ -1952,12 +1938,12 @@ Topology::num_connectivity(stk::mesh::Entity e)
 double
 Topology::erodeElements()
 {
-  auto const cell_rank     = stk::topology::ELEMENT_RANK;
-  auto&      bulk_data     = get_bulk_data();
-  auto&      meta_data     = get_meta_data();
-  auto&      locally_owned = meta_data.locally_owned_part();
-  double     eroded_volume = 0.0;
-  auto const&             cell_buckets = bulk_data.buckets(cell_rank);
+  auto const              cell_rank     = stk::topology::ELEMENT_RANK;
+  auto&                   bulk_data     = get_bulk_data();
+  auto&                   meta_data     = get_meta_data();
+  auto&                   locally_owned = meta_data.locally_owned_part();
+  double                  eroded_volume = 0.0;
+  auto const&             cell_buckets  = bulk_data.buckets(cell_rank);
   stk::mesh::EntityVector cells;
   stk::mesh::EntityVector failed_cells;
   stk::mesh::get_selected_entities(locally_owned, cell_buckets, cells);
@@ -1977,41 +1963,44 @@ Topology::erodeElements()
   return eroded_volume;
 }
 
-
 void
-Topology::execute_entity_deletion_operations(stk::mesh::EntityVector & entities)
+Topology::execute_entity_deletion_operations(stk::mesh::EntityVector& entities)
 {
-  auto& bulk_data = get_bulk_data();
-  auto& meta_data = get_meta_data();
+  auto&            bulk_data = get_bulk_data();
+  auto&            meta_data = get_meta_data();
   std::vector<int> num_local_changes(stk::topology::NUM_RANKS, 0);
   std::vector<int> num_global_changes(stk::topology::NUM_RANKS, 0);
   modification_begin();
   for (auto i = 0; i < entities.size(); ++i) {
     auto entity = entities[i];
-    auto rank = bulk_data.entity_rank(entity);
+    auto rank   = bulk_data.entity_rank(entity);
     ++num_local_changes[rank];
   }
   auto comm = static_cast<stk::ParallelMachine>(Albany_MPI_COMM_WORLD);
-  stk::all_reduce_sum(comm, num_local_changes.data(), num_global_changes.data(),
+  stk::all_reduce_sum(
+      comm,
+      num_local_changes.data(),
+      num_global_changes.data(),
       stk::topology::NUM_RANKS);
   // Must destroy upward relations before destory_entity() will remove
   // the entity.
   for (auto i = 0; i < entities.size(); ++i) {
     auto entity = entities[i];
     ALBANY_ASSERT(bulk_data.is_valid(entity) == true);
-    auto const entity_rank = bulk_data.entity_rank(entity);
+    auto const              entity_rank = bulk_data.entity_rank(entity);
     stk::mesh::EntityVector temp_entities;
     std::vector<stk::mesh::ConnectivityOrdinal> temp_ordinals;
     stk::mesh::Entity const*                    rel_entities = nullptr;
-    stk::mesh::ConnectivityOrdinal const * rel_ordinals;
-    int num_conn = 0;
-    auto const end_rank = static_cast<stk::mesh::EntityRank>(meta_data.entity_rank_count() - 1);
+    stk::mesh::ConnectivityOrdinal const*       rel_ordinals;
+    int                                         num_conn = 0;
+    auto const                                  end_rank =
+        static_cast<stk::mesh::EntityRank>(meta_data.entity_rank_count() - 1);
     auto const begin_rank = static_cast<stk::mesh::EntityRank>(entity_rank);
     for (stk::mesh::EntityRank irank = end_rank; irank != begin_rank; --irank) {
       num_conn     = bulk_data.num_connectivity(entity, irank);
       rel_entities = bulk_data.begin(entity, irank);
       rel_ordinals = bulk_data.begin_ordinals(entity, irank);
-      for (auto j = num_conn-1; j >= 0; --j) {
+      for (auto j = num_conn - 1; j >= 0; --j) {
         ALBANY_ASSERT(bulk_data.is_valid(rel_entities[j]) == true);
         bulk_data.destroy_relation(rel_entities[j], entity, rel_ordinals[j]);
       }

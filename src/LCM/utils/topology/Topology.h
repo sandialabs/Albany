@@ -226,7 +226,7 @@ class Topology
   splitOpenFaces();
 
   ///
-  /// Destroy upward relations of a collection of entitties
+  /// Destroy upward relations of an entity
   ///
   void
   remove_entity_and_up_relations(stk::mesh::Entity entity);
@@ -242,7 +242,7 @@ class Topology
   erodeElements();
 
   void
-  execute_entity_deletion_operations(stk::mesh::EntityVector & entities);
+  execute_entity_deletion_operations(stk::mesh::EntityVector& entities);
 
   bool
   isIsolatedNode(stk::mesh::Entity entity);
