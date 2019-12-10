@@ -444,10 +444,19 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     dfdT = 0.0;
     icurr = 1.0;
   } else {
+    auto const eps = minitensor::machine_epsilon<RealType>();
     ScalarT const et   = std::exp(arg);
-    ScalarT const etp1 = et + 1.0;
-    dfdT = -(W / 8.0) * et / etp1 / etp1;
-    icurr = 1.0 - 1.0 / etp1;
+    if (et < eps) { // etp1 ~ 1.0
+      dfdT = -(W / 8.0) * et;
+      icurr = 0.0;
+    } else if (1.0 / et < eps) { // etps ~ et
+      dfdT = -(W / 8.0) / et;
+      icurr = 1.0 - 1.0 / et;
+    } else {
+      ScalarT const etp1 = et + 1.0;
+      dfdT = -(W / 8.0) * et / etp1 / etp1;
+      icurr = 1.0 - 1.0 / etp1;
+    }
   }
 
   // Update the water saturation
