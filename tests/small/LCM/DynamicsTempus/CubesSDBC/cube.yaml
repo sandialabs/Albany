@@ -57,7 +57,7 @@ LCM:
     Exodus Write Interval: 1
   Regression Results:
     Number of Comparisons: 3
-    Test Values: [1.149192890563e-01, 0.000000000000e+00, -1.552421328312e-01]
+    Test Values: [1.149184988919e-01, 0.000000000000e+00, -1.552445033242e-01]
     Relative Tolerance: 1.0e-7
     Absolute Tolerance: 1.0e-7
   Piro:
