@@ -58,13 +58,16 @@ echo; echo "   Copying Dakota directory into Trilinos..."
 cp -r /home/ikalash/nightlyAlbanyTests/Dakota .
 echo; echo "   ...finished Dakota copy into Trilinos."
 
-echo; echo "   Copying DTK directory into Trilinos..."
+#echo; echo "   Copying DTK directory into Trilinos..."
+echo; echo "   Starting DTK checkout..."
 cd $TRILDIR
-cp -r /home/ikalash/nightlyAlbanyTests/DataTransferKit-2.0.0 DataTransferKit 
-#git clone git@github.com:ORNL-CEES/DataTransferKit.git
-#cd DataTransferKit
+#cp -r /home/ikalash/nightlyAlbanyTests/DataTransferKit-2.0.0 DataTransferKit 
+git clone git@github.com:ikalash/DataTransferKit.git
+cd DataTransferKit
+git checkout dtk-2.0-tpetra-static-graph
 #git clone git@github.com:ORNL-CEES/DTKData.git
-echo; echo "   ...finished DTK copy into Trilinos."
+#echo; echo "   ...finished DTK copy into Trilinos."
+echo; echo "   ...finished DTK checkout."
 
 echo; echo "   Starting SCOREC checkout..."
 git clone git@github.com:SCOREC/core.git SCOREC > $TRILOUTDIR/scorec_checkout.out 2>&1
