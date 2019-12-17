@@ -3,10 +3,6 @@
 BASE_DIR=/home/projects/albany/nightlyCDashAlbanyBlake
 cd $BASE_DIR
 
-rm -rf build
-rm -rf repos 
-rm -rf *log*
-rm -rf results_blake_serial
 rm -rf ctest_nightly.cmake 
 rm -rf modules.out 
 

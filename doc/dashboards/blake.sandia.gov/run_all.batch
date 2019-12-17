@@ -6,4 +6,12 @@
 #prior to entering the sbatch command. The env will propagate to the
 #batch job.
 
-bash send_email_serial.sh
+cd /home/projects/albany/nightlyCDashTrilinosBlake
+rm -rf *out*
+bash nightly_cron_script_trilinos_blake_serial.sh 
+bash nightly_cron_script_trilinos_blake_openmp.sh
+cd /home/projects/albany/nightlyCDashAlbanyBlake
+rm -rf *out*
+bash nightly_cron_script_albany_blake_serial.sh
+bash nightly_cron_script_albany_blake_openmp.sh
+bash nightly_cron_script_albany_blake_serial_sfad.sh
