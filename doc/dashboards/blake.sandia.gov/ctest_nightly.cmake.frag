@@ -304,6 +304,7 @@ if (BUILD_TRILINOS_SERIAL)
       "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
       "-DTpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
       "-DXpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
+
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildSerial")
@@ -477,6 +478,99 @@ if (BUILD_ALBANY_SERIAL)
       message(FATAL_ERROR "Cannot submit Albany test results!")
     endif ()
   endif ()
+endif ()
+
+if (BUILD_ALBANY_SERIAL_SFAD)
+
+  # Configure the Albany build 
+  #
+
+  set_property (GLOBAL PROPERTY SubProject IKTBlakeAlbanySerialSFad)
+  set_property (GLOBAL PROPERTY Label IKTBlakeAlbanySerialSFad)
+  
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_ATO:BOOL=OFF"
+    "-DENABLE_SCOREC:BOOL=OFF"
+    "-DENABLE_ASCR:BOOL=OFF"
+    "-DENABLE_TSUNAMI:BOOL=ON"
+    "-DENABLE_AERAS:BOOL=ON"
+    "-DENABLE_64BIT_INT:BOOL=OFF"
+    "-DENABLE_LAME:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DALBANY_CTEST_TIMEOUT=500"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DDISABLE_LCM_EXODIFF_SENSITIVE_TESTS:BOOL=ON"
+    "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4'"
+    "-DENABLE_FAD_TYPE:STRING='SFad'"
+    "-DALBANY_SFAD_SIZE=8"
+    )
+  
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad)
+  endif ()
+
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message ("Cannot submit Albany configure results!")
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Cannot configure Albany build!")
+  endif ()
+
+  #
+  # Build the rest of Albany and install everything
+  #
+
+  set_property (GLOBAL PROPERTY SubProject IKTBlakeAlbanySerialSFad)
+  set_property (GLOBAL PROPERTY Label IKTBlakeAlbanySerialSFad)
+  set (CTEST_BUILD_TARGET all)
+  #set (CTEST_BUILD_TARGET install)
+
+  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+  CTEST_BUILD(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad"
+    RETURN_VALUE  HAD_ERROR
+    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+    APPEND
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Build
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message ("Cannot submit Albany build results!")
+    endif ()
+
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Cannot build Albany!")
+  endif ()
+
+  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+    message ("Encountered build errors in Albany build. Exiting!")
+  endif ()
+
 endif ()
 
 
