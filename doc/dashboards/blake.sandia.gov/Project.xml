@@ -5,6 +5,8 @@
   </SubProject>
   <SubProject name="IKTBlakeAlbanySerial">
   </SubProject>
+  <SubProject name="IKTBlakeAlbanySerialSFad">
+  </SubProject>
   <SubProject name="IKTBlakeAlbanyOpenMP">
   </SubProject>
 </Project>
