@@ -96,9 +96,4 @@ LCM:
       Dakota:
         Input File: dakota.in
         Output File: dak.out
-      MOOCHO:
-        Parameter Guess:
-          Explicit Array: '{1.1, 1.1}'
-        Parameter Lower Bounds:
-          Explicit Array: '{0.0, 0.0}'
 ...

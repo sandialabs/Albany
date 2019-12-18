@@ -97,9 +97,4 @@ ANONYMOUS:
         Input File: dak.in
         Output File: dak.out
         Restart File To Read: dak.restart
-      MOOCHO: 
-        Parameter Guess: 
-          Explicit Array: '{1.1, 1.1}'
-        Parameter Lower Bounds: 
-          Explicit Array: '{0.0, 0.0}'
 ...

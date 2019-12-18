@@ -63,16 +63,13 @@ ANONYMOUS:
         Bound Constrained: true
 
         Use Old Reduced Space Interface: true
+        Full Space: false
+        Use NOX Solver: false
+        
         Step Method: "Line Search"
         bound_eps: 1.0e-01
         Max Iterations: 5
        
-
-        Full Space: false
-        Use NOX Solver: false
- 
-
-
         ROL Options: 
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
           SimOpt:

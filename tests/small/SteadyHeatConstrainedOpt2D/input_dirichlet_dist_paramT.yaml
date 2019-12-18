@@ -33,11 +33,16 @@ ANONYMOUS:
     Cubature Degree: 9
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [5.83333333332999970e-01]
-    Relative Tolerance: 1.00000000000000002e-03
+    Test Values: [5.8333333333e-01]
+    Relative Tolerance: 1.0e-03
+    Absolute Tolerance: 1.0e-04
     Sensitivity Comparisons 0: 
       Number of Sensitivity Comparisons: 1
       Sensitivity Test Values 0: [1.04748375675000005e-01]
+    Number of Piro Analysis Comparisons: 1
+    Piro Analysis Test Two Norm: true
+    Piro Analysis Test Values: [3.18968]
+      
   Piro: 
     Sensitivity Method: Adjoint
     Analysis: 
@@ -52,16 +57,13 @@ ANONYMOUS:
         Min And Max Of Random Parameter Guess: [-1.00000000000000000e+00, 2.00000000000000000e+00]
         Bound Constrained: true
 
-        Use Old Reduced Space Interface: true
+        Use Old Reduced Space Interface: false
+        Full Space: false
+        Use NOX Solver: true        
+        
         Step Method: "Line Search"
         bound_eps: 1.0e-01
         Max Iterations: 10
-       
-
-        Full Space: false
-        Use NOX Solver: false
- 
-
 
         ROL Options: 
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 

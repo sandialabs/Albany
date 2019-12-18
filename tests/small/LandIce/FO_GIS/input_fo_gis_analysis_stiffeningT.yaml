@@ -190,6 +190,11 @@ ANONYMOUS:
         Min And Max Of Random Parameter Guess: [1.00000000000000000e+00, 2.00000000000000000e+00]
         Bound Constrained: true
         bound_eps: 1.00000000000000006e-01
+        
+        Use Old Reduced Space Interface: false
+        Full Space: false
+        Use NOX Solver: true        
+        
         ROL Options: 
           General: 
             Variable Objective Function: false
@@ -256,7 +261,7 @@ ANONYMOUS:
             Gradient Tolerance: 1.00000000000000004e-10
             Constraint Tolerance: 1.00000000000000004e-10
             Step Tolerance: 9.99999999999999999e-15
-            Iteration Limit: 1000
+            Iteration Limit: 1
     LOCA: 
       Bifurcation: { }
       Constraints: { }

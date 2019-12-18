@@ -43,11 +43,6 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
   endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt
-                   ${CMAKE_CURRENT_BINARY_DIR}/Moocho.opt COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   add_test(${testName} ${AlbanyAnalysis.exe})
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml)
