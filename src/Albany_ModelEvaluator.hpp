@@ -129,6 +129,7 @@ public:
 
   //! Application object
   Teuchos::RCP<Albany::Application> app;
+  Teuchos::RCP<Teuchos::ParameterList> appParams;
 
   Teuchos::RCP<Teuchos::Time> timer;
 

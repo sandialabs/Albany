@@ -43,8 +43,9 @@ namespace Albany
 
 ModelEvaluator::
 ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
-                const Teuchos::RCP<Teuchos::ParameterList>& appParams)
+                const Teuchos::RCP<Teuchos::ParameterList>& appParams_)
  : app(app_)
+ , appParams(appParams_)
  , supplies_prec(app_->suppliesPreconditioner())
  , supports_xdot(false)
  , supports_xdotdot(false)
@@ -638,6 +639,23 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   //
   // Get the input arguments
   //
+
+  //! If a parameter has changed in value, saved/unsaved fields must be updated
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  auto analysisParams = appParams->sublist("Piro").sublist("Analysis");
+  if(analysisParams.isSublist("Optimization Status")) {
+    auto& opt_paramList = analysisParams.sublist("Optimization Status");
+    if(opt_paramList.isParameter("Optimization Variables Changed") && opt_paramList.get<bool>("Optimization Variables Changed")) {
+      if(opt_paramList.isParameter("Parameter Names")) {
+        auto& param_names = *opt_paramList.get<Teuchos::RCP<std::vector<std::string>>>("Parameter Names");
+        for (int k=0; k < param_names.size(); ++k) {
+          *out << param_names[k] << " has changed!" << std::endl;
+          app->getPhxSetup()->init_unsaved_param(param_names[k]);
+        }
+      }
+      opt_paramList.set("Optimization Variables Changed", false);
+    }
+  }
 
   // Thyra vectors
   const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
