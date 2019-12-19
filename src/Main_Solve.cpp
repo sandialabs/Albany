@@ -97,11 +97,9 @@ int main(int argc, char *argv[])
   Albany::PrintHeader(*out);
 
   const auto stackedTimer = Teuchos::rcp(
-      new Teuchos::StackedTimer("Albany Stacked Timer"));
+      new Teuchos::StackedTimer("Albany Total Time"));
   Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
   try {
-    auto totalTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
-        *Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")));
     auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
         *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
 
@@ -367,7 +365,7 @@ int main(int argc, char *argv[])
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status += 10000;
 
-  stackedTimer->stop("Albany Stacked Timer");
+  stackedTimer->stop("Albany Total Time");
   Teuchos::StackedTimer::OutputOptions options;
   options.output_fraction = true;
   options.output_minmax = true;

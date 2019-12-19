@@ -348,7 +348,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
 
   overwriteNominalValuesWithFinalPoint = appParams->get("Overwrite Nominal Values With Final Point",false);
 
-  timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
+  timer = Teuchos::TimeMonitor::getNewTimer("Albany: Total Fill Time");
 }
 
 void ModelEvaluator::allocateVectors()

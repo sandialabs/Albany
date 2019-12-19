@@ -15,7 +15,7 @@
 
 void Albany::fix_node_sharing(stk::mesh::BulkData& bulk_data) {
 
-    TEUCHOS_FUNC_TIME_MONITOR("> Albany Setup: fix_node_sharing");
+    TEUCHOS_FUNC_TIME_MONITOR("Albany Setup: fix_node_sharing");
 
     stk::CommSparse comm(bulk_data.parallel());
 

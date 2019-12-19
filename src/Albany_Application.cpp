@@ -1331,7 +1331,7 @@ Application::computeGlobalResidualImpl(
 {
   //#define DEBUG_OUTPUT
 
-  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
+  TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: Residual");
   using EvalT = PHAL::AlbanyTraits::Residual;
   postRegSetup<EvalT>();
 
@@ -1382,6 +1382,7 @@ Application::computeGlobalResidualImpl(
 
   // Set data in Workset struct, and perform fill via field manager
   {
+    TEUCHOS_FUNC_TIME_MONITOR("Albany Residual Fill: Evaluate");
     if (Teuchos::nonnull(rc_mgr)) { rc_mgr->init_x_if_not(x->space()); }
 
     PHAL::Workset workset;
@@ -1434,7 +1435,10 @@ Application::computeGlobalResidualImpl(
   }
 
   // Assemble the residual into a non-overlapping vector
-  cas_manager->combine(overlapped_f, f, CombineMode::ADD);
+  {
+    TEUCHOS_FUNC_TIME_MONITOR("Albany Residual Fill: Export");
+    cas_manager->combine(overlapped_f, f, CombineMode::ADD);
+  }
 
   // Allocate scaleVec_
 #ifdef ALBANY_MPI
@@ -1549,7 +1553,7 @@ Application::computeGlobalJacobianImpl(
     const Teuchos::RCP<Thyra_LinearOp>&     jac,
     const double                            dt)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
+  TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: Jacobian");
   using EvalT = PHAL::AlbanyTraits::Jacobian;
   postRegSetup<EvalT>();
 
@@ -1599,6 +1603,7 @@ Application::computeGlobalJacobianImpl(
 
   // Set data in Workset struct, and perform fill via field manager
   {
+    TEUCHOS_FUNC_TIME_MONITOR("Albany Jacobian Fill: Evaluate");
     PHAL::Workset workset;
 
     double const this_time = fixTime(current_time);
@@ -1645,56 +1650,57 @@ Application::computeGlobalJacobianImpl(
     }
   }
 
-  {
-    TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
-    // Allocate and populate scaleVec_
-    if (scale != 1.0) {
-      if (scaleVec_ == Teuchos::null ||
-          scaleVec_->space()->dim() != jac->domain()->dim()) {
-        scaleVec_ = Thyra::createMember(jac->range());
-        scaleVec_->assign(0.0);
-        setScale();
-      }
+  // Allocate and populate scaleVec_
+  if (scale != 1.0) {
+    if (scaleVec_ == Teuchos::null ||
+        scaleVec_->space()->dim() != jac->domain()->dim()) {
+      scaleVec_ = Thyra::createMember(jac->range());
+      scaleVec_->assign(0.0);
+      setScale();
     }
+  }
 
+  {
+    TEUCHOS_FUNC_TIME_MONITOR("Albany Jacobian Fill: Export");
     // Assemble global residual
     if (Teuchos::nonnull(f)) {
       cas_manager->combine(overlapped_f, f, CombineMode::ADD);
     }
     // Assemble global Jacobian
     cas_manager->combine(overlapped_jac, jac, CombineMode::ADD);
+  }
+
+  // scale Jacobian
+  if (scaleBCdofs == false && scale != 1.0) {
+    fillComplete(jac);
+#ifdef WRITE_TO_MATRIX_MARKET
+    writeMatrixMarket(jac, "jacUnscaled", countScale);
+    if (f != Teuchos::null) {
+      writeMatrixMarket(f, "resUnscaled", countScale);
+    }
+#endif
+    // set the scaling
+    setScale(jac);
 
     // scale Jacobian
-    if (scaleBCdofs == false && scale != 1.0) {
-      fillComplete(jac);
+    // We MUST be able to cast jac to ScaledLinearOpBase in order to left
+    // scale it.
+    auto jac_scaled_lop =
+        Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac, true);
+    jac_scaled_lop->scaleLeft(*scaleVec_);
+    resumeFill(jac);
+    // scale residual
+    /*IKTif (Teuchos::nonnull(f)) {
+      Thyra::ele_wise_scale<ST>(*scaleVec_,f.ptr());
+    }*/
 #ifdef WRITE_TO_MATRIX_MARKET
-      writeMatrixMarket(jac, "jacUnscaled", countScale);
-      if (f != Teuchos::null) {
-        writeMatrixMarket(f, "resUnscaled", countScale);
-      }
+    writeMatrixMarket(jac, "jacScaled", countScale);
+    if (f != Teuchos::null) { writeMatrixMarket(f, "resScaled", countScale); }
+    writeMatrixMarket(scaeleVec_, "scale", countScale);
 #endif
-      // set the scaling
-      setScale(jac);
+    countScale++;
+  }
 
-      // scale Jacobian
-      // We MUST be able to cast jac to ScaledLinearOpBase in order to left
-      // scale it.
-      auto jac_scaled_lop =
-          Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac, true);
-      jac_scaled_lop->scaleLeft(*scaleVec_);
-      resumeFill(jac);
-      // scale residual
-      /*IKTif (Teuchos::nonnull(f)) {
-        Thyra::ele_wise_scale<ST>(*scaleVec_,f.ptr());
-      }*/
-#ifdef WRITE_TO_MATRIX_MARKET
-      writeMatrixMarket(jac, "jacScaled", countScale);
-      if (f != Teuchos::null) { writeMatrixMarket(f, "resScaled", countScale); }
-      writeMatrixMarket(scaeleVec_, "scale", countScale);
-#endif
-      countScale++;
-    }
-  }  // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (Teuchos::nonnull(dfm)) {
     PHAL::Workset workset;
@@ -1855,7 +1861,7 @@ Application::computeGlobalTangent(
     const Teuchos::RCP<Thyra_MultiVector>&       JV,
     const Teuchos::RCP<Thyra_MultiVector>&       fp)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Tangent");
+  TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: Tangent");
   using EvalT = PHAL::AlbanyTraits::Tangent;
   postRegSetup<EvalT>();
 
@@ -1987,6 +1993,7 @@ Application::computeGlobalTangent(
 
   // Set data in Workset struct, and perform fill via field manager
   {
+    TEUCHOS_FUNC_TIME_MONITOR("Albany Tangent Fill: Evaluate");
     PHAL::Workset workset;
 
     double const this_time = fixTime(current_time);
@@ -2031,17 +2038,20 @@ Application::computeGlobalTangent(
 
   params = Teuchos::null;
 
-  // Assemble global residual
-  if (Teuchos::nonnull(f)) {
-    cas_manager->combine(overlapped_f, f, CombineMode::ADD);
-  }
+  {
+    TEUCHOS_FUNC_TIME_MONITOR("Albany Tangent Fill: Export");
+    // Assemble global residual
+    if (Teuchos::nonnull(f)) {
+      cas_manager->combine(overlapped_f, f, CombineMode::ADD);
+    }
 
-  // Assemble derivatives
-  if (Teuchos::nonnull(JV)) {
-    cas_manager->combine(overlapped_JV, JV, CombineMode::ADD);
-  }
-  if (Teuchos::nonnull(fp)) {
-    cas_manager->combine(overlapped_fp, fp, CombineMode::ADD);
+    // Assemble derivatives
+    if (Teuchos::nonnull(JV)) {
+      cas_manager->combine(overlapped_JV, JV, CombineMode::ADD);
+    }
+    if (Teuchos::nonnull(fp)) {
+      cas_manager->combine(overlapped_fp, fp, CombineMode::ADD);
+    }
   }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -2092,7 +2102,7 @@ Application::applyGlobalDistParamDerivImpl(
     const Teuchos::RCP<const Thyra_MultiVector>& V,
     const Teuchos::RCP<Thyra_MultiVector>&       fpV)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Distributed Parameter Derivative");
+  TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: Distributed Parameter Derivative");
   using EvalT = PHAL::AlbanyTraits::DistParamDeriv;
   postRegSetup<EvalT>();
 
@@ -2173,6 +2183,8 @@ Application::applyGlobalDistParamDerivImpl(
 
   // Set data in Workset struct, and perform fill via field manager
   {
+    TEUCHOS_FUNC_TIME_MONITOR("Albany Distributed Parameter Derivative Fill: Evaluate");
+
     PHAL::Workset workset;
 
     double const this_time = fixTime(current_time);
@@ -2198,7 +2210,7 @@ Application::applyGlobalDistParamDerivImpl(
 
   {
     TEUCHOS_FUNC_TIME_MONITOR(
-        "> Albany Fill: Distributed Parameter Derivative Export");
+        "Albany Distributed Parameter Derivative Fill: Export");
     // Assemble global df/dp*V
     if (trans) {
       Teuchos::RCP<const Thyra_MultiVector> temp = fpV->clone_mv();
@@ -2255,7 +2267,7 @@ Application::evaluateResponse(
     const Teuchos::RCP<Thyra_Vector>&       g)
 {
   TEUCHOS_FUNC_TIME_MONITOR(
-      "> Albany Fill: Response");
+      "Albany Fill: Response");
   double const this_time = fixTime(current_time);
   responses[response_index]->evaluateResponse(
       this_time, x, xdot, xdotdot, p, g);
@@ -2283,7 +2295,7 @@ Application::evaluateResponseTangent(
     const Teuchos::RCP<Thyra_MultiVector>&       gp)
 {
   TEUCHOS_FUNC_TIME_MONITOR(
-      "> Albany Fill: Response Tangent");
+      "Albany Fill: Response Tangent");
   double const this_time = fixTime(current_time);
   responses[response_index]->evaluateTangent(
       alpha,
@@ -2321,7 +2333,7 @@ Application::evaluateResponseDerivative(
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
   TEUCHOS_FUNC_TIME_MONITOR(
-      "> Albany Fill: Response Derivative");
+      "Albany Fill: Response Derivative");
   double const this_time = fixTime(current_time);
 
   responses[response_index]->evaluateDerivative(
@@ -2350,7 +2362,7 @@ Application::evaluateResponseDistParamDeriv(
     const Teuchos::RCP<Thyra_MultiVector>&  dg_dp)
 {
   TEUCHOS_FUNC_TIME_MONITOR(
-      "> Albany Fill: Response Distributed Parameter Derivative");
+      "Albany Fill: Response Distributed Parameter Derivative");
   double const this_time = fixTime(current_time);
 
   responses[response_index]->evaluateDistParamDeriv(
@@ -2397,7 +2409,7 @@ Application::evaluateStateFieldManager(
     Teuchos::Ptr<const Thyra_Vector> xdot,
     Teuchos::Ptr<const Thyra_Vector> xdotdot)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: State Residual");
+  TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: State Residual");
   {
     std::string evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>("SFM",0);
     if (!phxSetup->contain_eval(evalName)) {

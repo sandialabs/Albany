@@ -360,6 +360,7 @@ void velocity_solver_finalize() {
  */
 
 void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
+  auto grid2DTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Compute 2D Grid"));
   keptMesh = false;
   mpiComm = Albany::createTeuchosCommFromMpiComm(reducedComm);
 }
@@ -391,7 +392,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& floating2dEdgesIds) {
 
-  auto gridTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Extrude 3D Grid"));
+  auto grid3DTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Extrude 3D Grid"));
 
   paramList = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromYamlFileAndBroadcast("albany_input.yaml", paramList.ptr(), *mpiComm);
