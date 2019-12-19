@@ -42,15 +42,14 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   //written by IK, Feb. 2012
   //Check if we want to give ML RBMs (from parameterlist)
   int numRBMs = params_->get<int>("Number RBMs for ML", neq);
-  bool setRBMs = false;
   if (numRBMs > 0) {
-    setRBMs = true;
-    int numScalar = 0;
-    if (numRBMs == 2 || numRBMs == 3)
+    bool setRBMs = true;
+    int numScalar = std::max(int(neq)-2,0); //we assume that if neq>=2,  the first 2 equations are the FO equations, and the remaining ones are scalar equations
+    if (numRBMs - numScalar == 2 || numRBMs - numScalar == 3)
       rigidBodyModes->setParameters(neq, numDim, numScalar, numRBMs, setRBMs);
     else
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"The specified number of RBMs "
-                                     << numRBMs << " is not valid!  Valid values are 0, 2 and 3.");
+                                     << numRBMs << " is not valid!  Valid values are 0, " << 2 +numScalar<< " and " << 3 + numScalar << ".");
   }
 
   adjustSurfaceHeight = false;
@@ -227,6 +226,8 @@ void StokesFO::setupEvaluatorRequests () {
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;
     ss_utils_needed[ssName][UtilityRequest::NORMALS  ] = true;
   }
+  if (viscosity_use_corrected_temperature)
+    build_interp_ev["surface_height"][InterpolationRequest::CELL_VAL] = true;
 }
 
 } // namespace LandIce

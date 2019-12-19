@@ -18,6 +18,7 @@
 #cmakedefine ALBANY_AMESOS2
 #cmakedefine ALBANY_DTK
 #cmakedefine ALBANY_EPETRA
+#cmakedefine ALBANY_FROSCH
 #cmakedefine ALBANY_IFPACK2
 #cmakedefine ALBANY_MUELU
 #cmakedefine ALBANY_PAMGEN

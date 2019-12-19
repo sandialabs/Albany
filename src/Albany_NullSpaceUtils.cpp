@@ -284,7 +284,7 @@ struct TraitsImpl : public TraitsImplBase {
 
 RigidBodyModes::RigidBodyModes(int numPDEs_)
   : numPDEs(numPDEs_), numElasticityDim(0), numScalar(0), nullSpaceDim(0),
-    mlUsed(false), mueLuUsed(false), setNonElastRBM(false)
+    mlUsed(false), mueLuUsed(false), froschUsed(false), setNonElastRBM(false)
 {}
 
 void RigidBodyModes::
@@ -293,7 +293,7 @@ setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams)
   const Teuchos::RCP<Teuchos::ParameterList>
     stratList = Piro::extractStratimikosParams(piroParams);
 
-  mlUsed = mueLuUsed = false;
+  mlUsed = mueLuUsed = froschUsed = false;
   if (Teuchos::nonnull(stratList) &&
       stratList->isParameter("Preconditioner Type")) {
     const std::string&
@@ -307,7 +307,11 @@ setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams)
       plist = sublist(sublist(stratList, "Preconditioner Types"), ptype);
       mueLuUsed = true;
     }
-  }
+    else if (ptype == "FROSch") {
+      plist = sublist(sublist(stratList, "Preconditioner Types"), ptype);
+      froschUsed = true;
+    }
+  } 
 
   if (mlUsed) {
     traits = Teuchos::rcp( new TraitsImpl<Epetra_NullSpace_Traits>());
@@ -317,9 +321,9 @@ setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams)
 }
 
 void RigidBodyModes::
-updatePL(const Teuchos::RCP<Teuchos::ParameterList>& mlParams)
+updatePL(const Teuchos::RCP<Teuchos::ParameterList>& precParams)
 {
-  plist = mlParams;
+  plist = precParams;
 }
 
 void RigidBodyModes::setParameters(
@@ -339,9 +343,9 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
   coordMV = coordMV_;
 
   TEUCHOS_TEST_FOR_EXCEPTION(
-    !isMLUsed() && !isMueLuUsed(),
+    !isMLUsed() && !isMueLuUsed() && !isFROSchUsed(),
     std::logic_error,
-    "setCoordinates was called without setting an ML or MueLu parameter list.");
+    "setCoordinates was called without setting an ML, MueLu or FROSch parameter list.");
 
   int numSpaceDim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
 
@@ -377,7 +381,7 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
 
     plist->set("PDE equations", numPDEs);
 
-  } else {  // MueLu here
+  } else if (isMueLuUsed()) {  // MueLu here
     // It apperas MueLu only accepts Tpetra. Get the Tpetra MV then.
     auto t_coordMV = getTpetraMultiVector(coordMV);
     if (plist->isSublist("Factories") == true) {
@@ -390,12 +394,16 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
       plist->set("Coordinates", t_coordMV);
       plist->set("number of equations", numPDEs);
     }
+  } else { // FROSch here
+    auto t_coordMV = getTpetraMultiVector(coordMV);
+    plist->set("Coordinates List",t_coordMV);
   }
 }
 
 void RigidBodyModes::
 setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
-                           const Teuchos::RCP<const Thyra_VectorSpace>& soln_vs)
+                           const Teuchos::RCP<const Thyra_VectorSpace>& soln_vs,
+                           const Teuchos::RCP<const Thyra_VectorSpace>& soln_overlap_vs)
 {
   setCoordinates(coordMV_in);
 
@@ -436,7 +444,7 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
       plist->set("null space: vectors", &err[0]);
       plist->set("null space: add default vectors", false);
 
-    } else {
+    } else {  // MueLu and FROSch
       using Traits = Tpetra_NullSpace_Traits;
       auto t_traits = Teuchos::rcp_dynamic_cast<TraitsImpl<Traits>>(traits);
       auto& trr = t_traits->arr;
@@ -452,9 +460,19 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
 
       TEUCHOS_TEST_FOR_EXCEPTION(
         soln_vs.is_null(), std::logic_error,
-        "numElasticityDim > 0 and isMueLuUsed(): soln_map must be provided.");
-      plist->set("Nullspace", trr);
+        "numElasticityDim > 0 and (isMueLuUsed() or isFROSchUsed()): soln_map must be provided.");
+        if (isMueLuUsed()) {
+          plist->set("Nullspace", trr);
+        } else { // This means that FROSch is used
+          plist->set("Null Space",trr);
+        }
     }
+  }
+  if(isFROSchUsed()) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      soln_overlap_vs.is_null(), std::logic_error,
+      "isFROSchUsed(): soln_overlap_map must be provided.");
+    plist->set("Repeated Map",getTpetraMap(soln_overlap_vs));
   }
 }
 

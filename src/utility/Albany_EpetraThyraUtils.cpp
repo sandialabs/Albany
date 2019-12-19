@@ -485,7 +485,7 @@ getEpetraMultiVector (Thyra_MultiVector& mv,
                                "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
   } else {
     Teuchos::ArrayRCP<ST> vals;
-    GO leadingDim;
+    Teuchos::Ordinal leadingDim;
     spmd_mv->getNonconstLocalData(Teuchos::inOutArg(vals),Teuchos::inOutArg(leadingDim));
     auto emap = getEpetraMap(mv.range());
 
@@ -509,7 +509,7 @@ getConstEpetraMultiVector (const Thyra_MultiVector& mv,
                                "Error! Could not cast input Thyra_MultiVector to Thyra::DefaultSpmdMultiVector<ST>.\n");
   } else {
     Teuchos::ArrayRCP<const ST> vals;
-    GO leadingDim;
+    Teuchos::Ordinal leadingDim;
     spmd_mv->getLocalData(Teuchos::inOutArg(vals),Teuchos::inOutArg(leadingDim));
     auto emap = getEpetraMap(mv.range());
 

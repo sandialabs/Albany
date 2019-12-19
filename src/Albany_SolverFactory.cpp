@@ -42,6 +42,10 @@
 #include "Stratimikos_MueLuHelpers.hpp"
 #endif /* ALBANY_MUELU */
 
+#ifdef ALBANY_FROSCH
+#include <Stratimikos_FROSchXpetra.hpp>
+#endif /* ALBANY_FROSCH */
+
 #ifdef ALBANY_TEKO
 #include "Teko_StratimikosFactory.hpp"
 #endif
@@ -78,8 +82,15 @@ enableMueLu(
   Stratimikos::enableMueLu<LO, Tpetra_GO, KokkosNode>(linearSolverBuilder);
 #endif
 }
-}  // namespace
 
+void
+enableFROSch(Stratimikos::DefaultLinearSolverBuilder&    linearSolverBuilder)
+{
+#ifdef ALBANY_FROSCH
+    Stratimikos::enableFROSch<LO,Tpetra_GO, KokkosNode>(linearSolverBuilder);
+#endif
+}
+}  // namespace
 
 namespace Albany
 {
@@ -362,6 +373,7 @@ SolverFactory::createAndGetAlbanyApp(
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     enableIfpack2(linearSolverBuilder);
     enableMueLu(linearSolverBuilder);
+    enableFROSch(linearSolverBuilder);
 #ifdef ALBANY_TEKO
     Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
 #endif
