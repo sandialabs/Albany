@@ -90,6 +90,18 @@ if (ALBANY_IFPACK2)
                        FIXTURES_REQUIRED PopulateMeshes)
 endif()
 
+if (ALBANY_FROSCH)
+  # Normal run
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstructT_FROSch.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstructT_FROSch.yaml)
+  add_test(${testName}_Tpetra_FROSch ${Albany.exe} input_fo_gis_unstructT_FROSch.yaml)
+  set_tests_properties(${testName}_Tpetra_FROSch
+                       PROPERTIES
+                       LABELS "LandIce;Tpetra;Forward"
+                       FIXTURES_REQUIRED PopulateMeshes)
+endif()
+
+
 ####################################
 ###          20km tests          ###
 ####################################

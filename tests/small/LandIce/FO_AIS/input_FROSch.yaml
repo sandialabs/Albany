@@ -7,6 +7,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
+    Number RBMs for ML: 3
     Required Fields: [temperature]
     Basal Side Name: basalside
     Surface Side Name: upperside
@@ -183,7 +184,7 @@ ANONYMOUS:
                       Output Frequency: 20
                     Max Iterations: 400
                     Tolerance: 1e-6
-              Preconditioner Type: MueLu
+              Preconditioner Type: FROSch
               Preconditioner Types: 
                 MueLu:
                   verbosity: none
@@ -205,6 +206,44 @@ ANONYMOUS:
                     'relaxation: type': Gauss-Seidel
                     'relaxation: sweeps': 4
                   max levels: 5
+                FROSch:
+                  FROSch Preconditioner Type: TwoLevelPreconditioner
+                  OverlappingOperator Type: AlgebraicOverlappingOperator
+                  CoarseOperator Type: IPOUHarmonicCoarseOperator
+                  Recycling: true
+                  Dimension : 3
+                  DofsPerNode : 2
+                  Overlap: 2
+                  Null Space Type: Input
+                  AlgebraicOverlappingOperator:
+                    'Reuse: Symbolic Factorization': true
+                    Adding Layers Strategy: CrsGraph
+                    Solver:
+                      SolverType: Amesos2
+                      Solver: Klu
+                  IPOUHarmonicCoarseOperator:
+                    'Reuse: Coarse Basis': true
+                    'Reuse: Coarse Matrix': false
+                    'Reuse: Coarse Matrix Symbolic Factorization': true
+                    Blocks:
+                      1:
+                        InterfacePartitionOfUnity:
+                          Type: RGDSW
+                          GDSW:
+                            Type: Full
+                          RGDSW:
+                            Type: Full
+                            Distance Function: Inverse Euclidean
+                        Interface Communication Strategy: CreateOneToOneMap
+                    ExtensionSolver:
+                      SolverType: Amesos2
+                      Solver: Klu
+                    Distribution:
+                      Type: linear
+                      NumProcs: 1
+                    CoarseSolver:
+                      SolverType: Amesos2
+                      Solver: Klu
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 
