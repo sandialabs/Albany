@@ -445,6 +445,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
   "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
+  "-D Zoltan2_ENABLE_ParMETIS:BOOL=OFF"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
   "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11'"
 #
