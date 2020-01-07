@@ -208,7 +208,8 @@ void Albany::APFMeshStruct::init(
   }
 
   // Construct MeshSpecsStruct
-  const CellTopologyData* ctd = apf::getCellTopology(mesh);
+  const shards::CellTopology shards_ctd = apf::getCellTopology(mesh);
+  const CellTopologyData* ctd = shards_ctd.getCellTopologyData(); 
   if (!params->get("Separate Evaluators by Element Block",false))
   {
     // get elements in the first element block

@@ -9,9 +9,6 @@
 
 #include "Albany_GenericSTKMeshStruct.hpp"
 
-// TODO: implement as petra-agnostic
-#include "Albany_TpetraTypes.hpp"
-
 namespace Albany {
 
 /*!
@@ -80,10 +77,15 @@ class TmplSTKMeshStruct : public GenericSTKMeshStruct {
 
   //! Type of traits class being used
   typedef traits traits_type;
+  typedef stk::topology topology_type;
+ 
   //! Default and optional element types created by the class (only meaningful in 2D - quads and tris)
-  typedef typename traits_type::default_element_type default_element_type;
-  typedef typename traits_type::optional_element_type optional_element_type;
-  typedef typename traits_type::default_element_side_type default_element_side_type;
+  /*typedef typename stk::topology default_element_type;
+  typedef typename stk::topology optional_element_type;
+  typedef typename stk::topology default_element_side_type;*/
+  static constexpr auto default_element_type = stk::topology::INVALID_TOPOLOGY;
+  static constexpr auto optional_element_type = stk::topology::INVALID_TOPOLOGY;
+  static constexpr auto default_element_side_type = stk::topology::INVALID_TOPOLOGY; 
 
   //! Default constructor
   TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -144,9 +146,12 @@ template <>
 struct albany_stk_mesh_traits<0> {
 
   enum { size = 1 }; // stk wants one dimension
-  typedef shards::Particle default_element_type;
-  typedef shards::Particle optional_element_type;
-  typedef shards::Particle default_element_side_type; // No sides in 0D
+  /*typedef stk::topology::PARTICLE default_element_type;
+  typedef stk::topology::PARTICLE optional_element_type;
+  typedef stk::topology::PARTICLE default_element_side_type;*/
+  static constexpr auto default_element_type = stk::topology::PARTICLE;
+  static constexpr auto optional_element_type = stk::topology::PARTICLE;
+  static constexpr auto default_element_side_type = stk::topology::PARTICLE; // No sides in 0D
 
 };
 
@@ -154,9 +159,12 @@ template <>
 struct albany_stk_mesh_traits<1> {
 
   enum { size = 1 };
-  typedef shards::Line<2> default_element_type;
-  typedef shards::Line<2> optional_element_type;
-  typedef shards::Particle default_element_side_type; // No sides in 1D
+  /*typedef stk::topology::LINE_2 default_element_type;
+  typedef stk::topology::LINE_2 optional_element_type;
+  typedef stk::topology::PARTICLE default_element_side_type;*/
+  static constexpr auto default_element_type = stk::topology::LINE_2;
+  static constexpr auto optional_element_type = stk::topology::LINE_2;
+  static constexpr auto default_element_side_type = stk::topology::PARTICLE; // No sides in 1D
 
 };
 
@@ -164,9 +172,12 @@ template <>
 struct albany_stk_mesh_traits<2> {
 
   enum { size = 2 };
-  typedef shards::Quadrilateral<4> default_element_type;
-  typedef shards::Triangle<3> optional_element_type;
-  typedef shards::Line<2> default_element_side_type;
+  /*typedef stk::topology::QUAD_4_2D default_element_type;
+  typedef stk::topology::TRI_3 optional_element_type;
+  typedef stk::topology::LINE_2 default_element_side_type;*/
+  static constexpr auto default_element_type = stk::topology::QUAD_4_2D;
+  static constexpr auto optional_element_type = stk::topology::TRI_3;
+  static constexpr auto default_element_side_type =  stk::topology::LINE_2;
 
 };
 
@@ -174,9 +185,12 @@ template <>
 struct albany_stk_mesh_traits<3> {
 
   enum { size = 3 };
-  typedef shards::Hexahedron<8> default_element_type;
-  typedef shards::Hexahedron<8> optional_element_type;
-  typedef shards::Quadrilateral<4> default_element_side_type;
+  /*typedef stk::topology::HEX_8 default_element_type;
+  typedef stk::topology::HEX_8 optional_element_type;
+  typedef stk::topology::QUAD_4_2D default_element_side_type;*/
+  static constexpr auto default_element_type = stk::topology::HEX_8;
+  static constexpr auto optional_element_type = stk::topology::HEX_8;
+  static constexpr auto default_element_side_type = stk::topology::QUAD_4_2D;
 
 };
 

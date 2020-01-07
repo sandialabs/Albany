@@ -241,18 +241,25 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
 #endif
 
   Teuchos::broadcast<LO,LO>(*commT, 0, &NumElemNodes);
-  if(NumElemNodes == 3)
-    stk::mesh::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
-  else
-    stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
+  if(NumElemNodes == 3) {
+    stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3);
+  }
+  else {
+    stk::mesh::set_topology(*partVec[0], stk::topology::QUAD_4_2D); 
+  }
 
-  stk::mesh::set_cell_topology<shards::Line<2> >(*ssPartVec[ssn]);
+  stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::LINE_2);
   numDim = 2;
   int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   Teuchos::broadcast<LO,LO>(*commT, 0, &NumElems);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
-  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  
+
+  stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
+  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+
   cullSubsetParts(ssNames, ssPartVec);
   this->meshSpecs[0] = Teuchos::rcp (
       new Albany::MeshSpecsStruct (ctd, numDim, cub, nsNames, ssNames,

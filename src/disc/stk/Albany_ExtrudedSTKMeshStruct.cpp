@@ -139,27 +139,27 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   switch (ElemShape) {
   case Tetrahedron:
-    stk::mesh::set_cell_topology<shards::Tetrahedron<4> >(*partVec[0]);
-    stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
-    stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
+    stk::mesh::set_topology(*partVec[0], stk::topology::TET_4);
+    stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::TRI_3);
+    stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::TRI_3);
     for (auto it:ssPartVecLateral)
-      stk::mesh::set_cell_topology<shards::Triangle<3> >(*it.second);
+      stk::mesh::set_topology(*it.second, stk::topology::TRI_3);
     NumBaseElemeNodes = 3;
     break;
   case Wedge:
-    stk::mesh::set_cell_topology<shards::Wedge<6> >(*partVec[0]);
-    stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
-    stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
+    stk::mesh::set_topology(*partVec[0], stk::topology::WEDGE_6);
+    stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::TRI_3);
+    stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::TRI_3);
     for (auto it:ssPartVecLateral)
-      stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*it.second);
+      stk::mesh::set_topology(*it.second, stk::topology::QUAD_4);
     NumBaseElemeNodes = 3;
     break;
   case Hexahedron:
-    stk::mesh::set_cell_topology<shards::Hexahedron<8> >(*partVec[0]);
-    stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnBottom]);
-    stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnTop]);
+    stk::mesh::set_topology(*partVec[0], stk::topology::HEX_8);
+    stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::QUAD_4);
+    stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::QUAD_4);
     for (auto it:ssPartVecLateral)
-      stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*it.second);
+      stk::mesh::set_topology(*it.second, stk::topology::QUAD_4);
     NumBaseElemeNodes = 4;
     break;
   }
@@ -174,7 +174,9 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   int numElemsInColumn = numLayers*((ElemShape==Tetrahedron) ? 3 : 1);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSize*numElemsInColumn);
 
-  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
+  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(), ebNameToIndex, this->interleavedOrdering));
 
