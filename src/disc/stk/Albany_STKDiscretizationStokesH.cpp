@@ -48,9 +48,7 @@ STKDiscretizationStokesH(const Teuchos::RCP<Teuchos::ParameterList>& discParams,
 void STKDiscretizationStokesH::computeGraphs()
 {
   std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
-  stk::topology stk_topo_data = metaData.get_topology(*(pv->second)); 
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-  int nodes_per_element =  shards_ctd.getNodeCount();
+  int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
 
   //super bad hack based on current LandIce probelms.. make this general!!
   unsigned int n3dEq = (neq == 4) ? 4 : 2;

@@ -815,9 +815,8 @@ void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const 
       stk::mesh::Part* part = metaData->get_part(ssName);
       TEUCHOS_TEST_FOR_EXCEPTION (part==nullptr, std::runtime_error, "Error! One of the stored meshSpecs claims to have sideset " + ssName +
                                                                      " which, however, is not a part of the mesh.\n");
-      stk::topology stk_topo_data = metaData->get_topology( *part );
-      shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-      const auto* ctd = shards_ctd.getCellTopologyData();
+
+      const auto* ctd = metaData->get_cell_topology(*part).getCellTopologyData();;
 
       auto& ss_ms = ms->sideSetMeshSpecs[ssName];
 

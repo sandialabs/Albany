@@ -59,7 +59,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   std::string input_elem_name = inputMeshSpecs.ctd.base->name;
   if (input_elem_name=="Tetrahedron_4")
   {
-    stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3); 
+    stk::mesh::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
   }
   else if (input_elem_name=="Wedge_6") {
     // Wedges have different side topologies, depending on what side is requested.
@@ -68,9 +68,9 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
     std::string side_topo_name = params->get<std::string>("Side Topology Name","Triangle");
     if (side_topo_name=="Triangle") {
       // Top/bottom
-      stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3); 
+      stk::mesh::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
     } else if (side_topo_name=="Quadrilateral") {
-      stk::mesh::set_topology(*partVec[0], stk::topology::QUAD_4_2D); 
+      stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
     } else {
       // Invalid
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
@@ -79,11 +79,11 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   }
   else if (input_elem_name=="Hexahedron_8")
   {
-    stk::mesh::set_topology(*partVec[0], stk::topology::QUAD_4_2D); 
+    stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
   }
   else if (input_elem_name=="Triangle_3" || input_elem_name=="Quadrilateral_4")
   {
-    stk::mesh::set_topology(*partVec[0], stk::topology::LINE_2); 
+    stk::mesh::set_cell_topology<shards::Line<2> >(*partVec[0]);
   }
   else
   {
@@ -94,9 +94,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax,inputMeshSpecs.worksetSize);
-  auto stk_topo_data = metaData->get_topology(*partVec[0]);
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, this->numDim, cub, nsNames, ssNames, worksetSize,
                                                                 ebn, ebNameToIndex, this->interleavedOrdering));

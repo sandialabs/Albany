@@ -232,9 +232,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
 
-    stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-    const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+    const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
         ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(),
         ebNameToIndex, this->interleavedOrdering, false, cub_rule));
@@ -245,9 +243,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
     for (int eb=0; eb<numEB; eb++) {
-      stk::topology stk_topo_data = metaData->get_topology( *partVec[eb] );
-      shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-      const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+      const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
           ebNameToIndex, this->interleavedOrdering, true, cub_rule));

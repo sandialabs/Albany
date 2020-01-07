@@ -18,11 +18,9 @@ Albany::STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::Parameter
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
   std::cout << "---3DPoint constructor---" << std::endl;
-  stk::mesh::set_topology(*partVec[0], stk::topology::PARTICLE);
+  stk::mesh::set_cell_topology<shards::Particle>(*partVec[0]);
   std::cout << "finished setting cell topology to shards::Particle" << std::endl;
-  auto stk_topo_data = metaData->get_topology( *partVec[0] );
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
   std::cout << "finished extracting cell topology data" << std::endl;
   int cubDegree = 1;
   std::vector<std::string> nsNames;

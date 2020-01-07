@@ -301,18 +301,16 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   for(unsigned int i = 0; i < numEB; i++){
 
-    if (triangles) {
-      stk::mesh::set_topology(*partVec[i], optional_element_type);
-    }
-    else {
-      stk::mesh::set_topology(*partVec[i], default_element_type);
-    }
+    if (triangles)
+      stk::mesh::set_cell_topology<optional_element_type>(*partVec[i]);
+    else
+      stk::mesh::set_cell_topology<default_element_type>(*partVec[i]);
   }
 
   for(std::map<std::string, stk::mesh::Part*>::const_iterator it = ssPartVec.begin();
     it != ssPartVec.end(); ++it)
 
-    stk::mesh::set_topology(*it->second, default_element_side_type);
+    stk::mesh::set_cell_topology<default_element_side_type>(*it->second);
 
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get<int>("Workset Size",DEFAULT_WORKSET_SIZE);
@@ -348,10 +346,8 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
-    
-    stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-    const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+
+    const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                nsNames, ssNames, worksetSize, partVec[0]->name(),
@@ -366,9 +362,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
       // MeshSpecs holds all info needed to set up an Albany problem
 
-      stk::topology stk_topo_data = metaData->get_topology( *partVec[eb] );
-      shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-      const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+      const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
 
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                 nsNames, ssNames, worksetSize, partVec[eb]->name(),

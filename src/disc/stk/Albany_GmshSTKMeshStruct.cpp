@@ -96,41 +96,41 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   switch (this->numDim) {
     case 2:
       if (NumElemNodes==3) {
-        stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3); 
+        stk::mesh::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::LINE_2); 
+          stk::mesh::set_cell_topology<shards::Line<2> >(*ss.second);
         }
       }
       else if( NumElemNodes == 6)
       {
-        stk::mesh::set_topology(*partVec[0], stk::topology::TRI_6); 
+        stk::mesh::set_cell_topology<shards::Triangle<6> >(*partVec[0]);
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::LINE_3); 
+          stk::mesh::set_cell_topology<shards::Line<3> >(*ss.second);
         }
       } else {
-        stk::mesh::set_topology(*partVec[0], stk::topology::QUAD_4); 
+        stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::LINE_2); 
+          stk::mesh::set_cell_topology<shards::Line<2> >(*ss.second);
         }
       }
       break;
     case 3:
       if (NumElemNodes==4) {
-        stk::mesh::set_topology(*partVec[0], stk::topology::TET_4); 
+        stk::mesh::set_cell_topology<shards::Tetrahedron<4> >(*partVec[0]);
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::TRI_3); 
+          stk::mesh::set_cell_topology<shards::Triangle<3> >(*ss.second);
         }
       }
       else if( NumElemNodes == 10)
       {
-        stk::mesh::set_topology(*partVec[0], stk::topology::TET_10); 
+        stk::mesh::set_cell_topology<shards::Tetrahedron<10> >(*partVec[0]);
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::TRI_6); 
+          stk::mesh::set_cell_topology<shards::Triangle<6> >(*ss.second);
         }
       } else {
-        stk::mesh::set_topology(*partVec[0], stk::topology::HEX_8); 
+        stk::mesh::set_cell_topology<shards::Hexahedron<8> >(*partVec[0]);
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::QUAD_4); 
+          stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ss.second);
         }
       }
       break;
@@ -141,9 +141,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
-  stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
   cullSubsetParts(ssNames, ssPartVec);
   this->meshSpecs[0] = Teuchos::rcp (
       new Albany::MeshSpecsStruct (ctd, numDim, cub, nsNames, ssNames,
