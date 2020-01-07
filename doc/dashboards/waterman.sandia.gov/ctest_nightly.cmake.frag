@@ -199,7 +199,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
     "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="
     #
-    "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DKokkos_ENABLE_Cuda_UVM:BOOL=ON"
     "-DKokkos_ENABLE_EXAMPLES:BOOL=OFF"
     "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
@@ -285,7 +284,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
     "-DTrilinos_ENABLE_Teko:BOOL=ON"
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
-    "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
     "-DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON"
     "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
@@ -294,8 +292,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
     "-DTrilinos_ENABLE_Tempus:BOOL=ON"
     "-DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-    #
-    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
+    "-DTrilinos_ENABLE_ShyLU_NodeFastILU=ON"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
