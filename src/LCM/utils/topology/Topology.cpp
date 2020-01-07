@@ -1730,14 +1730,15 @@ Topology::AssignTopology(
   shards::CellTopology cell_topology =
       stk::mesh::get_cell_topology(stk_topology);
 
-  stk::mesh::Part& part =
-      get_meta_data().get_cell_topology_root_part(cell_topology);
-
-  stk::mesh::PartVector add_parts;
-
-  add_parts.push_back(&part);
-
-  get_bulk_data().change_entity_parts(entity, add_parts);
+  //IKTFIXME
+  //stk::mesh::Part& part =
+  //    get_meta_data().get_cell_topology_root_part(cell_topology);
+  //
+  //stk::mesh::PartVector add_parts;
+  //
+  //add_parts.push_back(&part);
+  //
+  //get_bulk_data().change_entity_parts(entity, add_parts);
 
   return;
 }

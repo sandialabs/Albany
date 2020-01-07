@@ -128,8 +128,9 @@ namespace {
         stk::mesh::Part &
                 bulk_part = *(meta_data.get_part(bulk_part_name));
 
-        shards::CellTopology const &
-                bulk_cell_topology = meta_data.get_cell_topology(bulk_part);
+        stk::topology stk_topo_data = meta_data.get_topology( bulk_part );
+        shards::CellTopology const & 
+          bulk_cell_topology = stk::mesh::get_cell_topology(stk_topo_data); 
 
         std::string const &
                 interface_part_name(adapt_params->get<std::string>("Interface Block Name"));
@@ -146,7 +147,8 @@ namespace {
                 interface_part =
                 meta_data.declare_part(interface_part_name, interface_dimension);
 
-        stk::mesh::set_cell_topology(interface_part, interface_cell_topology);
+        stk::topology stk_interface_topo = stk::mesh::get_topology(interface_cell_topology);
+        stk::mesh::set_topology(interface_part, stk_interface_topo);
 
 #ifdef ALBANY_SEACAS
         stk::io::put_io_part_attribute(interface_part);
