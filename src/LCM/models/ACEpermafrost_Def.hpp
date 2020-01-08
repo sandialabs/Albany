@@ -449,7 +449,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     if (et < eps) { // etp1 ~ 1.0
       dfdT = -(W / 8.0) * et;
       icurr = 0.0;
-    } else if (1.0 / et < eps) { // etps ~ et
+    } else if (1.0 / et < eps) { // etp1 ~ et
       dfdT = -(W / 8.0) / et;
       icurr = 1.0 - 1.0 / et;
     } else {
