@@ -7,6 +7,7 @@ rm -rf Trilinos
 git clone git@github.com:trilinos/Trilinos.git >& trilinos-clone.log
 cd Trilinos
 git checkout develop
+cd ..
 git clone git@github.com:SNLComputation/Albany.git >& albany-clone.log 
 module use --append $LCM_DIR/Albany/doc/LCM/modulefiles
 module load serial-intel-release
