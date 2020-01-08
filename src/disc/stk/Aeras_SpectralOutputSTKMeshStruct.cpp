@@ -78,12 +78,12 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
 
   if (element_name_ == "ShellQuadrilateral") {
     params->validateParameters(*getValidDiscretizationParametersQuads(),0);
-    stk::mesh::set_cell_topology<shards::ShellQuadrilateral<4> >(*partVec[0]);
+    stk::mesh::set_topology(*partVec[0], stk::topology::SHELL_QUAD_4);
     ElemType = QUAD;
   }
   else if (element_name_ == "Line") {
     params->validateParameters(*getValidDiscretizationParametersLines(),0);
-    stk::mesh::set_cell_topology<shards::Line<2> >(*partVec[0]);
+    stk::mesh::set_topology(*partVec[0], stk::topology::LINE_2_1D);
     ElemType = LINE;
   }
 
@@ -94,7 +94,9 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   //int worksetSizeMax = params->get("Workset Size",50);
   //int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
 
-  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
+  stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
+  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
 #ifdef OUTPUT_TO_SCREEN
   *out << "numDim, cub, worksetSize, points_per_edge, ctd name: " << numDim << ", "

@@ -1731,7 +1731,7 @@ Topology::AssignTopology(
       stk::mesh::get_cell_topology(stk_topology);
 
   stk::mesh::Part& part =
-      get_meta_data().get_cell_topology_root_part(cell_topology);
+      get_meta_data().get_topology_root_part(stk_topology);
 
   stk::mesh::PartVector add_parts;
 
