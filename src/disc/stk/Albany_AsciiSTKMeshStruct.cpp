@@ -385,7 +385,7 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 #endif
 
   stk::mesh::set_topology(*partVec[0], stk::topology::HEX_8); 
-  stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::QUAD_4_2D); 
+  stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::QUAD_4); 
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);

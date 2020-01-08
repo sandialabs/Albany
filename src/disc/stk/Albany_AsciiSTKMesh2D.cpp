@@ -248,7 +248,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
     stk::mesh::set_topology(*partVec[0], stk::topology::QUAD_4_2D); 
   }
 
-  stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::LINE_2_1D);
+  stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::LINE_2);
   numDim = 2;
   int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
