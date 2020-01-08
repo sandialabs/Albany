@@ -81,6 +81,28 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 #pragma clang diagnostic ignored "-Wtautological-compare"
 #endif
 
+  switch (Dim) {
+    case 0: //0D
+      default_element_type = stk::topology::PARTICLE;
+      optional_element_type = stk::topology::PARTICLE;
+      default_element_side_type = stk::topology::PARTICLE; // No sides in 0D
+      break;
+    case 1: //1D
+      default_element_type = stk::topology::LINE_2_1D;
+      optional_element_type = stk::topology::LINE_2_1D;
+      default_element_side_type = stk::topology::PARTICLE; // No sides in 1D
+      break; 
+    case 2: //2D
+      default_element_type = stk::topology::QUAD_4_2D;
+      optional_element_type = stk::topology::TRI_3_2D;
+      default_element_side_type = stk::topology::LINE_2; 
+      break;
+    case 3: //3D
+      default_element_type = stk::topology::HEX_8;
+      optional_element_type = stk::topology::HEX_8;
+      default_element_side_type = stk::topology::QUAD_4_2D;
+      break;
+  }
   scales.resize(Dim);
   for(unsigned i = 0; i < Dim; i++){ // Get the number of elements in each dimension from params
                                 // Note that nelem will default to 0 and scale to 1 if element
