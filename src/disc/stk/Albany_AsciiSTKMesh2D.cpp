@@ -242,13 +242,13 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
 
   Teuchos::broadcast<LO,LO>(*commT, 0, &NumElemNodes);
   if(NumElemNodes == 3) {
-    stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3);
+    stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3_2D);
   }
   else {
     stk::mesh::set_topology(*partVec[0], stk::topology::QUAD_4_2D); 
   }
 
-  stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::LINE_2);
+  stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::LINE_2_1D);
   numDim = 2;
   int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);

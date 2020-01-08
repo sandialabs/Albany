@@ -83,7 +83,7 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   }
   else if (element_name_ == "Line") {
     params->validateParameters(*getValidDiscretizationParametersLines(),0);
-    stk::mesh::set_topology(*partVec[0], stk::topology::LINE_2);
+    stk::mesh::set_topology(*partVec[0], stk::topology::LINE_2_1D);
     ElemType = LINE;
   }
 

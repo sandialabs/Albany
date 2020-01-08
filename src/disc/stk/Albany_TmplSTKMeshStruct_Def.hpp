@@ -95,7 +95,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
     case 2: //2D
       default_element_type = stk::topology::QUAD_4_2D;
       optional_element_type = stk::topology::TRI_3_2D;
-      default_element_side_type = stk::topology::LINE_2; 
+      default_element_side_type = stk::topology::LINE_2_1D; 
       break;
     case 3: //3D
       default_element_type = stk::topology::HEX_8;

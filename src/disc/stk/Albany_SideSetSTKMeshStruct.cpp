@@ -59,7 +59,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   std::string input_elem_name = inputMeshSpecs.ctd.base->name;
   if (input_elem_name=="Tetrahedron_4")
   {
-    stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3); 
+    stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3_2D); 
   }
   else if (input_elem_name=="Wedge_6") {
     // Wedges have different side topologies, depending on what side is requested.
@@ -68,7 +68,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
     std::string side_topo_name = params->get<std::string>("Side Topology Name","Triangle");
     if (side_topo_name=="Triangle") {
       // Top/bottom
-      stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3); 
+      stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3_2D); 
     } else if (side_topo_name=="Quadrilateral") {
       stk::mesh::set_topology(*partVec[0], stk::topology::QUAD_4_2D); 
     } else {
@@ -83,7 +83,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   }
   else if (input_elem_name=="Triangle_3" || input_elem_name=="Quadrilateral_4")
   {
-    stk::mesh::set_topology(*partVec[0], stk::topology::LINE_2); 
+    stk::mesh::set_topology(*partVec[0], stk::topology::LINE_2_1D); 
   }
   else
   {

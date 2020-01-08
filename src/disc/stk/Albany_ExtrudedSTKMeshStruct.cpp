@@ -140,26 +140,26 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   switch (ElemShape) {
   case Tetrahedron:
     stk::mesh::set_topology(*partVec[0], stk::topology::TET_4);
-    stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::TRI_3);
-    stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::TRI_3);
+    stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::TRI_3_2D);
+    stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::TRI_3_2D);
     for (auto it:ssPartVecLateral)
-      stk::mesh::set_topology(*it.second, stk::topology::TRI_3);
+      stk::mesh::set_topology(*it.second, stk::topology::TRI_3_2D);
     NumBaseElemeNodes = 3;
     break;
   case Wedge:
     stk::mesh::set_topology(*partVec[0], stk::topology::WEDGE_6);
-    stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::TRI_3);
-    stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::TRI_3);
+    stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::TRI_3_2D);
+    stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::TRI_3_2D);
     for (auto it:ssPartVecLateral)
-      stk::mesh::set_topology(*it.second, stk::topology::QUAD_4);
+      stk::mesh::set_topology(*it.second, stk::topology::QUAD_4_2D);
     NumBaseElemeNodes = 3;
     break;
   case Hexahedron:
     stk::mesh::set_topology(*partVec[0], stk::topology::HEX_8);
-    stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::QUAD_4);
-    stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::QUAD_4);
+    stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::QUAD_4_2D);
+    stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::QUAD_4_2D);
     for (auto it:ssPartVecLateral)
-      stk::mesh::set_topology(*it.second, stk::topology::QUAD_4);
+      stk::mesh::set_topology(*it.second, stk::topology::QUAD_4_2D);
     NumBaseElemeNodes = 4;
     break;
   }
