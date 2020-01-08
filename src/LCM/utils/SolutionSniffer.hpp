@@ -20,10 +20,8 @@ namespace LCM {
 class SolutionSniffer : public NOX::Abstract::PrePostOperator
 {
  public:
-  /// Constructor.
   SolutionSniffer();
 
-  /// Destructor.
   virtual ~SolutionSniffer();
 
   virtual void
@@ -38,7 +36,6 @@ class SolutionSniffer : public NOX::Abstract::PrePostOperator
   virtual void
   runPostSolve(NOX::Solver::Generic const& solver);
 
-  /// Set the status test
   void
   setStatusTest(Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test);
 
@@ -56,16 +53,11 @@ class SolutionSniffer : public NOX::Abstract::PrePostOperator
 
  private:
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test_{Teuchos::null};
-
   Teuchos::RCP<NOX::Abstract::Vector> soln_init_{Teuchos::null};
-
-  ST norm_init_{0.0};
-
-  ST norm_final_{0.0};
-
-  ST norm_diff_{0.0};
-
   Teuchos::RCP<NOX::Abstract::Vector> last_soln_{Teuchos::null};
+  ST norm_init_{0.0};
+  ST norm_final_{0.0};
+  ST norm_diff_{0.0};
 };
 
 }  // namespace LCM

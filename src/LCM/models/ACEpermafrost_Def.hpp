@@ -648,8 +648,6 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
     auto const theta  = std::acos(cosine);
     if (std::abs(theta) >= critical_angle) failed += 1.0;
   }
-
-  return;
 }
 
 }  // namespace LCM

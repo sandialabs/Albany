@@ -11,37 +11,16 @@
 
 namespace LCM {
 
-//
-//
-//
-SolutionSniffer::SolutionSniffer() { return; }
+SolutionSniffer::SolutionSniffer() {}
 
-//
-//
-//
-SolutionSniffer::~SolutionSniffer() { return; }
+SolutionSniffer::~SolutionSniffer() {}
 
-//
-//
-//
 void
-SolutionSniffer::runPreIterate(NOX::Solver::Generic const&)
-{
-  return;
-}
+SolutionSniffer::runPreIterate(NOX::Solver::Generic const&) {}
 
-//
-//
-//
 void
-SolutionSniffer::runPostIterate(NOX::Solver::Generic const&)
-{
-  return;
-}
+SolutionSniffer::runPostIterate(NOX::Solver::Generic const&) {}
 
-//
-//
-//
 void
 SolutionSniffer::runPreSolve(NOX::Solver::Generic const& solver)
 {
@@ -53,13 +32,8 @@ SolutionSniffer::runPreSolve(NOX::Solver::Generic const& solver)
   NOX::Abstract::Vector const& x = solver.getPreviousSolutionGroup().getX();
   norm_init_                     = x.norm();
   soln_init_                     = x.clone(NOX::DeepCopy);
-
-  return;
 }
 
-//
-//
-//
 void
 SolutionSniffer::runPostSolve(NOX::Solver::Generic const& solver)
 {
@@ -75,13 +49,8 @@ SolutionSniffer::runPostSolve(NOX::Solver::Generic const& solver)
 
   dx.update(1.0, y, -1.0, x, 0.0);
   norm_diff_ = dx.norm();
-
-  return;
 }
 
-//
-//
-//
 void
 SolutionSniffer::setStatusTest(
     Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test)
@@ -89,36 +58,24 @@ SolutionSniffer::setStatusTest(
   status_test_ = status_test;
 }
 
-//
-//
-//
 ST
 SolutionSniffer::getInitialNorm()
 {
   return norm_init_;
 }
 
-//
-//
-//
 ST
 SolutionSniffer::getFinalNorm()
 {
   return norm_final_;
 }
 
-//
-//
-//
 ST
 SolutionSniffer::getDifferenceNorm()
 {
   return norm_diff_;
 }
 
-//
-//
-//
 Teuchos::RCP<NOX::Abstract::Vector>
 SolutionSniffer::getLastSoln()
 {
