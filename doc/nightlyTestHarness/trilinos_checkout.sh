@@ -70,9 +70,6 @@ git checkout dtk-2.0-tpetra-static-graph
 echo; echo "   ...finished DTK checkout."
 
 echo; echo "   Starting SCOREC checkout..."
-cd $TRILDIR
 git clone git@github.com:SCOREC/core.git SCOREC > $TRILOUTDIR/scorec_checkout.out 2>&1
-cd SCOREC
-git checkout develop
-cd ..
+cd $TRILDIR/SCOREC
 echo; echo "   ...finished SCOREC checkout."
