@@ -18,7 +18,6 @@
 #include "LandIce_Integral1Dw_Z.hpp"
 #include "LandIce_LiquidWaterFraction.hpp"
 #include "LandIce_PressureMeltingEnthalpy.hpp"
-#include "LandIce_PressureMeltingTemperature.hpp"
 #include "LandIce_Temperature.hpp"
 #include "LandIce_w_Resid.hpp"
 #include "LandIce_w_ZResid.hpp"
@@ -359,28 +358,16 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Pressure Melting Enthalpy"));
 
   //Input
-  p->set<std::string>("Melting Temperature Variable Name", melting_temperature_name);
+  p->set<std::string>("Hydrostatic Pressure Variable Name", hydrostatic_pressure_name);
   p->set<std::string>("Surface Air Temperature Name", "surface_air_temperature");
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
   //Output
+  p->set<std::string>("Melting Temperature Variable Name", melting_temperature_name);
   p->set<std::string>("Enthalpy Hs Variable Name", melting_enthalpy_name);
   p->set<std::string>("Surface Air Enthalpy Name", surface_enthalpy_name);
 
   ev = createEvaluatorWithTwoScalarTypes<LandIce::PressureMeltingEnthalpy,EvalT>(p,dl,field_scalar_type[melting_temperature_name],field_scalar_type["surface_air_temperature"]);
-  fm0.template registerEvaluator<EvalT>(ev);
-
-  // --- LandIce pressure-melting temperature
-  p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Pressure Melting Temperature"));
-
-  //Input
-  p->set<std::string>("Hydrostatic Pressure Variable Name", hydrostatic_pressure_name);
-  p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-
-  //Output
-  p->set<std::string>("Melting Temperature Variable Name", melting_temperature_name);
-
-  ev = Teuchos::rcp(new LandIce::PressureMeltingTemperature<EvalT,PHAL::AlbanyTraits,typename EvalT::MeshScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce hydrostatic pressure

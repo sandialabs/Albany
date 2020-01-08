@@ -11,7 +11,6 @@
        evaluators/LandIce_BasalFrictionCoefficientGradient.cpp
        evaluators/LandIce_BasalFrictionHeat.cpp
        evaluators/LandIce_BasalMeltRate.cpp
-       evaluators/LandIce_DirichletEnthalpySurface.cpp
        evaluators/LandIce_Dissipation.cpp
        evaluators/LandIce_DOFDivInterpolationSide.cpp
        evaluators/LandIce_EffectivePressure.cpp
@@ -40,7 +39,6 @@
        evaluators/LandIce_L2ProjectedBoundaryLaplacianResidual.cpp
        evaluators/LandIce_LiquidWaterFraction.cpp
        evaluators/LandIce_MapThickness.cpp
-       evaluators/LandIce_PressureMeltingTemperature.cpp
        evaluators/LandIce_PressureCorrectedTemperature.cpp
        evaluators/LandIce_PressureMeltingEnthalpy.cpp
        evaluators/LandIce_ProlongateVector.cpp
@@ -113,8 +111,6 @@ ENDIF()
        evaluators/LandIce_BasalFrictionHeat_Def.hpp
        evaluators/LandIce_BasalMeltRate.hpp
        evaluators/LandIce_BasalMeltRate_Def.hpp
-       evaluators/LandIce_DirichletEnthalpySurface.hpp
-       evaluators/LandIce_DirichletEnthalpySurface_Def.hpp
        evaluators/LandIce_Dissipation.hpp
        evaluators/LandIce_Dissipation_Def.hpp
        evaluators/LandIce_DOFDivInterpolationSide.hpp
@@ -173,8 +169,6 @@ ENDIF()
        evaluators/LandIce_MapThickness.hpp
        evaluators/LandIce_PressureCorrectedTemperature.hpp
        evaluators/LandIce_PressureCorrectedTemperature_Def.hpp
-       evaluators/LandIce_PressureMeltingTemperature.hpp
-       evaluators/LandIce_PressureMeltingTemperature_Def.hpp
        evaluators/LandIce_PressureMeltingEnthalpy.hpp
        evaluators/LandIce_PressureMeltingEnthalpy_Def.hpp
        evaluators/LandIce_ProlongateVector.hpp
