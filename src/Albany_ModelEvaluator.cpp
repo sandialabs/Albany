@@ -664,6 +664,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       int write_interval = analysisParams.get("Write Interval",1);
       if((iter >= 0) && (iter != iteration) && (iteration%write_interval == 0))
       {
+        Teuchos::TimeMonitor timer(*Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"));
         const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
         const Teuchos::RCP<const Thyra_Vector> overlappedSolution =
           app->getAdaptSolMgr()->updateAndReturnOverlapSolution(*x);
