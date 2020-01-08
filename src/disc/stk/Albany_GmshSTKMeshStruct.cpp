@@ -96,21 +96,21 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   switch (this->numDim) {
     case 2:
       if (NumElemNodes==3) {
-        stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3); 
+        stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3_2D); 
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::LINE_2); 
+          stk::mesh::set_topology(*ss.second, stk::topology::LINE_2_1D); 
         }
       }
       else if( NumElemNodes == 6)
       {
-        stk::mesh::set_topology(*partVec[0], stk::topology::TRI_6); 
+        stk::mesh::set_topology(*partVec[0], stk::topology::TRI_6_2D); 
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::LINE_3); 
+          stk::mesh::set_topology(*ss.second, stk::topology::LINE_3_1D); 
         }
       } else {
-        stk::mesh::set_topology(*partVec[0], stk::topology::QUAD_4); 
+        stk::mesh::set_topology(*partVec[0], stk::topology::QUAD_4_2D); 
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::LINE_2); 
+          stk::mesh::set_topology(*ss.second, stk::topology::LINE_2_1D); 
         }
       }
       break;
@@ -118,19 +118,19 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
       if (NumElemNodes==4) {
         stk::mesh::set_topology(*partVec[0], stk::topology::TET_4); 
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::TRI_3); 
+          stk::mesh::set_topology(*ss.second, stk::topology::TRI_3_2D); 
         }
       }
       else if( NumElemNodes == 10)
       {
         stk::mesh::set_topology(*partVec[0], stk::topology::TET_10); 
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::TRI_6); 
+          stk::mesh::set_topology(*ss.second, stk::topology::TRI_6_2D); 
         }
       } else {
         stk::mesh::set_topology(*partVec[0], stk::topology::HEX_8); 
         for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::QUAD_4); 
+          stk::mesh::set_topology(*ss.second, stk::topology::QUAD_4_2D); 
         }
       }
       break;
