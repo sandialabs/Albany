@@ -40,10 +40,10 @@ ANONYMOUS:
     LandIce Enthalpy:
       Regularization: 
         Flux Regularization: 
-          alpha: 1.00000000000000006e-01
+          alpha: 5.00000000000000006e-02
           beta: 7.50000000000000000e+00
         Basal Melting Regularization: 
-          alpha: 1.00000000000000000e+00
+          alpha: 5.00000000000000000e-01
           beta: 1.00000000000000000e+01
       Stabilization: 
         Type: Streamline Upwind
@@ -88,11 +88,11 @@ ANONYMOUS:
             Field Origin: Mesh
   Regression Results: 
     Number of Comparisons: 2
-    Test Values: [2.21240269082999994e+01, 7.28622636010999969e+00]
-    Relative Tolerance: 1.00000000000000002e-02
+    Test Values: [2.205855360395e+01, 7.286226360111e+00]
+    Relative Tolerance: 1.00000000000000002e-03
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [-2.703728242420e+02, 1.526281625473e-14]
+      Sensitivity Test Values 0: [-2.826949501853e+02, 1.655413079037e-14]
   Piro: 
     LOCA: 
       Bifurcation: { }

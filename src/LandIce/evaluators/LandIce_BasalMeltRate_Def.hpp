@@ -109,8 +109,11 @@ evaluateFields(typename Traits::EvalData d)
       for (int node = 0; node < numSideNodes; ++node)
       {
         ScalarT diffEnthalpy = Enthalpy(cell,side,node) - EnthalpyHs(cell,side,node);
-        ScalarT basal_reg_scale = (diffEnthalpy > 0 || !isThereWater) ?  ScalarT(0.5 + atan(basal_reg_coeff * diffEnthalpy)/pi) :
-                                                               ScalarT(0.5 + basal_reg_coeff * diffEnthalpy /pi);
+        //ScalarT basal_reg_scale = (diffEnthalpy > 0 || !isThereWater) ?  ScalarT(0.5 + atan(basal_reg_coeff * diffEnthalpy)/pi) :
+        //                                                       ScalarT(0.5 + basal_reg_coeff * diffEnthalpy /pi);
+
+        ScalarT basal_reg_scale = (diffEnthalpy > 0 || !isThereWater) ?  ScalarT(0.5 + 0.5*tanh(basal_reg_coeff * diffEnthalpy)) :
+                                                                         ScalarT(0.5 + 0.5* basal_reg_coeff * diffEnthalpy);
 
         //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
         ScalarT mstar = geoFluxHeat(cell,side,node);
