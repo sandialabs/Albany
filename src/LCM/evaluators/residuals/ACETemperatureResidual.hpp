@@ -53,7 +53,6 @@ class ACETemperatureResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   // Input (MDFields):
   PHX::MDField<MeshScalarT const, Cell, Node, QuadPoint>      wbf_;
   PHX::MDField<MeshScalarT const, Cell, Node, QuadPoint, Dim> wgradbf_;
-  PHX::MDField<ScalarT const, Cell, QuadPoint>                temperature_;
   PHX::MDField<ScalarT const, Cell, QuadPoint>                tdot_;
   PHX::MDField<ScalarT const, Cell, QuadPoint, Dim>           tgrad_;
   PHX::MDField<ScalarT const, Cell, QuadPoint> thermal_conductivity_;
@@ -63,7 +62,7 @@ class ACETemperatureResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
   PHX::MDField<ScalarT, Cell, Node> residual_;
 
   // Workspace:
-  unsigned int num_qp_, num_dims_, num_nodes_, workset_size_;
+  unsigned int num_qp_{0}, num_dims_{0}, num_nodes_{0}, workset_size_{0};
   Kokkos::DynRankView<ScalarT, PHX::Device> heat_flux_;
   Kokkos::DynRankView<ScalarT, PHX::Device> accumulation_;
 };

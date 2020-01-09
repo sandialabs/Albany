@@ -24,9 +24,6 @@ ACETemperatureResidual<EvalT, Traits>::ACETemperatureResidual(
       wgradbf_(  // dependent
           p.get<std::string>("Weighted Gradient BF Name"),
           dl->node_qp_vector),
-      temperature_(  // dependent
-          p.get<std::string>("ACE Temperature Name"),
-          dl->qp_scalar),
       tdot_(  // dependent
           p.get<std::string>("ACE Temperature Dot Name"),
           dl->qp_scalar),
@@ -46,7 +43,6 @@ ACETemperatureResidual<EvalT, Traits>::ACETemperatureResidual(
   // List dependent fields
   this->addDependentField(wbf_);
   this->addDependentField(wgradbf_);
-  this->addDependentField(temperature_);
   this->addDependentField(tdot_);
   this->addDependentField(tgrad_);
 
@@ -81,7 +77,6 @@ ACETemperatureResidual<EvalT, Traits>::postRegistrationSetup(
   // List all fields
   this->utils.setFieldData(wbf_, fm);
   this->utils.setFieldData(wgradbf_, fm);
-  this->utils.setFieldData(temperature_, fm);
   this->utils.setFieldData(tdot_, fm);
   this->utils.setFieldData(tgrad_, fm);
 
@@ -92,9 +87,9 @@ ACETemperatureResidual<EvalT, Traits>::postRegistrationSetup(
 
   // Allocate workspace:
   heat_flux_ = Kokkos::createDynRankView(
-      temperature_.get_view(), "HF", workset_size_, num_qp_, num_dims_);
+      tdot_.get_view(), "HF", workset_size_, num_qp_, num_dims_);
   accumulation_ = Kokkos::createDynRankView(
-      temperature_.get_view(), "ACC", workset_size_, num_qp_);
+      tdot_.get_view(), "ACC", workset_size_, num_qp_);
 
   return;
 }
