@@ -344,8 +344,8 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
   ScalarT const J1    = J_(cell, pt);
   ScalarT const Jm23  = 1.0 / std::cbrt(J1 * J1);
   ScalarT const Tcurr = temperature_(cell, pt);
-  ScalarT const Told  = T_old_(cell, pt);
-  ScalarT const iold  = ice_saturation_old_(cell, pt);
+  auto const&   Told  = T_old_(cell, pt);
+  auto const&   iold  = ice_saturation_old_(cell, pt);
   ScalarT       Y     = yield_strength_(cell, pt);
 
   auto&& delta_time    = delta_time_(0);
@@ -438,24 +438,24 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Update freeze curve slope and ice saturation
   if (arg < -tol) {
-    dfdT = 0.0;
+    dfdT  = 0.0;
     icurr = 0.0;
   } else if (arg > tol) {
-    dfdT = 0.0;
+    dfdT  = 0.0;
     icurr = 1.0;
   } else {
-    auto const eps = minitensor::machine_epsilon<RealType>();
-    ScalarT const et   = std::exp(arg);
-    if (et < eps) { // etp1 ~ 1.0
-      dfdT = -(W / 8.0) * et;
+    auto const    eps = minitensor::machine_epsilon<RealType>();
+    ScalarT const et  = std::exp(arg);
+    if (et < eps) {  // etp1 ~ 1.0
+      dfdT  = -(W / 8.0) * et;
       icurr = 0.0;
-    } else if (1.0 / et < eps) { // etp1 ~ et
-      dfdT = -(W / 8.0) / et;
+    } else if (1.0 / et < eps) {  // etp1 ~ et
+      dfdT  = -(W / 8.0) / et;
       icurr = 1.0 - 1.0 / et;
     } else {
       ScalarT const etp1 = et + 1.0;
-      dfdT = -(W / 8.0) * et / etp1 / etp1;
-      icurr = 1.0 - 1.0 / etp1;
+      dfdT               = -(W / 8.0) * et / etp1 / etp1;
+      icurr              = 1.0 - 1.0 / etp1;
     }
   }
 
@@ -561,7 +561,7 @@ ACEpermafrostMiniKernel<EvalT, Traits>::operator()(int cell, int pt) const
               sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqps_old_(cell, pt))));
 
   RealType constexpr yield_tolerance = 1.0e-12;
-  bool const yielded = f > yield_tolerance;
+  bool const yielded                 = f > yield_tolerance;
 
   if (yielded == true) {
     // Use minimization equivalent to return mapping
