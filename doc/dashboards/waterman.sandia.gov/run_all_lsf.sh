@@ -15,6 +15,7 @@ ulimit -c 0
 #bash -c -l "source waterman_modules_cuda.sh >& modules_trilinos.out; bash nightly_cron_script_trilinos_waterman.sh"
 
 bash -c -l "source waterman_modules_cuda.sh >& modules_albany.out; bash nightly_cron_script_trilinos_waterman.sh; bash nightly_cron_script_albany_waterman.sh;"
-bash process_results_ctest.sh 
+bash process_results_ctest.sh
 #bash send_email_ctest.sh  
+bash -c -l "source waterman_modules_cuda.sh>& modules_albany.out; bash nightly_cron_script_albany_waterman_sfad.sh;"  
 

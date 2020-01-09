@@ -14,7 +14,6 @@ set (CTEST_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 set (CTEST_BUILD_NAME "waterman.sandia.gov")
 
-
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
 
@@ -172,8 +171,8 @@ if (BUILD_TRILINOS)
     "-DTPL_ENABLE_MPI:BOOL=ON"
     #
     "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_EXEC=mpirun"
-    "-DMPI_EXEC_NUMPROCS_FLAG:STRING=-n"
+    "-DMPIC=mpirun"
+    "-DMPIC_NUMPROCS_FLAG:STRING=-n"
     #
     "-DTPL_ENABLE_BLAS:BOOL=ON"
     "-DBLAS_LIBRARY_DIRS:PATH=$ENV{BLAS_ROOT}/lib"
@@ -199,6 +198,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
     "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="
     #
+    "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DKokkos_ENABLE_Cuda_UVM:BOOL=ON"
     "-DKokkos_ENABLE_EXAMPLES:BOOL=OFF"
     "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
@@ -284,6 +284,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
     "-DTrilinos_ENABLE_Teko:BOOL=ON"
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
+    "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
     "-DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON"
     "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
@@ -292,7 +293,8 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
     "-DTrilinos_ENABLE_Tempus:BOOL=ON"
     "-DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-    "-DTrilinos_ENABLE_ShyLU_NodeFastILU=ON"
+    #
+    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
@@ -464,3 +466,91 @@ if (BUILD_ALBANY)
 
 
 endif ()
+
+if (BUILD_ALBANY_SFAD)
+
+  # Configure the Albany build 
+  #
+
+  set_property (GLOBAL PROPERTY SubProject IKTWatermanAlbanyCUDASFad)
+  set_property (GLOBAL PROPERTY Label IKTWatermanAlbanyCUDASFad)
+  
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
+    "-DENABLE_LCM:BOOL=OFF"
+    "-DENABLE_AERAS:BOOL=ON"
+    "-DENABLE_ATO:BOOL=OFF"
+    "-DENABLE_PERFORMANCE_TESTS:BOOL=OFF"
+    "-DALBANY_LIBRARIES_ONLY=OFF"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DENABLE_FAD_TYPE:STRING='SFad'"
+    "-DALBANY_SFAD_SIZE=8"
+    )
+  
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSFad)
+  endif ()
+
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad"
+    SOURCE "/home/projects/albany/waterman/repos/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message ("Cannot submit Albany configure results!")
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Cannot configure Albany build!")
+  endif ()
+
+  #
+  # Build the rest of Albany and install everything
+  #
+
+  set_property (GLOBAL PROPERTY SubProject IKTWatermanAlbanyCUDASFad)
+  set_property (GLOBAL PROPERTY Label IKTWatermanAlbanyCUDASFad)
+  set (CTEST_BUILD_TARGET all)
+  #set (CTEST_BUILD_TARGET install)
+
+  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+  CTEST_BUILD(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad"
+    RETURN_VALUE  HAD_ERROR
+    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+    APPEND
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Build
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message ("Cannot submit Albany build results!")
+    endif ()
+
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Cannot build Albany!")
+  endif ()
+
+  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+    message ("Encountered build errors in Albany build. Exiting!")
+  endif ()
+
+endif()

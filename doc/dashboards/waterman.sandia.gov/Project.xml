@@ -3,4 +3,6 @@
   </SubProject>
   <SubProject name="IKTWatermanAlbanyCUDA">
   </SubProject>
+  <SubProject name="IKTWatermanAlbanyCUDASFad">
+  </SubProject>
 </Project>
