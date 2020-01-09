@@ -335,15 +335,10 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
 
 #if defined(DEBUG)
     bool const have_solver_opts = nox_params.isSublist("Solver Options");
-
     ALBANY_ASSERT(have_solver_opts == true);
-
     Teuchos::ParameterList& solver_opts = nox_params.sublist("Solver Options");
-
     std::string const ppo_str{"User Defined Pre/Post Operator"};
-
     bool const have_ppo = solver_opts.isParameter(ppo_str);
-
     Teuchos::RCP<NOX::Abstract::PrePostOperator> ppo{Teuchos::null};
 
     if (have_ppo == true) {
@@ -510,9 +505,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
 #if defined(ALBANY_LCM)
   // Check for Schwarz parameters
   bool const has_app_array = params->isParameter("Application Array");
-
   bool const has_app_index = params->isParameter("Application Index");
-
   bool const has_app_name_index_map =
       params->isParameter("Application Name Index Map");
 
@@ -531,9 +524,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
             "Application Name Index Map");
 
     this->setApplications(aa.create_weak());
-
     this->setAppIndex(ai);
-
     this->setAppNameIndexMap(anim);
   }
 #endif  // ALBANY_LCM
@@ -670,12 +661,6 @@ Application::setScaling(const Teuchos::RCP<Teuchos::ParameterList>& params)
 
   if (scale == 0.0) {
     scale = 1.0;
-    // If LCM problem with no scale specified and not using SDBCs, set
-    // scaleBCdofs = true with diagonal scale type
-    if ((isLCMProblem(params) == true) && (problem->useSDBCs() == false)) {
-      scaleBCdofs = true;
-      scaleType   = "Diagonal";
-    }
   }
 
   if (scaleType == "Constant") {
@@ -703,31 +688,6 @@ Application::setScaling(const Teuchos::RCP<Teuchos::ParameterList>& params)
         std::logic_error,
         "'Scaling' sublist not recognized when using SDBCs.");
   }
-}
-
-bool
-Application::isLCMProblem(
-    const Teuchos::RCP<Teuchos::ParameterList>& /* params */) const
-{
-  // FIXME: fill in this function to check if we have LCM problem
-  return false;
-  /*RCP<Teuchos::ParameterList> problemParams =
-      Teuchos::sublist(params, "Problem", true);
-  if ((problemParams->get("Name", "Heat 1D") == "Mechanics 2D") ||
-      (problemParams->get("Name", "Heat 1D") == "Mechanics 3D") ||
-      (problemParams->get("Name", "Heat 1D") == "Elasticity 1D") ||
-      (problemParams->get("Name", "Heat 1D") == "Elasticity 2D") ||
-      (problemParams->get("Name", "Heat 1D") == "Elasticity 3D") ||
-      (problemParams->get("Name", "Heat 1D") == "ThermoElasticity 1D") ||
-      (problemParams->get("Name", "Heat 1D") == "ThermoElasticity 2D") ||
-      (problemParams->get("Name", "Heat 1D") == "ThermoElasticity 3D") )
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }*/
 }
 
 void

@@ -553,10 +553,7 @@ class Application
   void
   setScaling(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
-  bool
-  isLCMProblem(const Teuchos::RCP<Teuchos::ParameterList>& params) const;
-
-#if defined(ALBANY_LCM)
+  #if defined(ALBANY_LCM)
   // Needed for coupled Schwarz
 
   void
@@ -705,9 +702,7 @@ class Application
       coupled_app_index_block_nodeset_names_map_;
 
   Teuchos::RCP<Thyra_Vector const> x_{Teuchos::null};
-
   Teuchos::RCP<Thyra_Vector const> xdot_{Teuchos::null};
-
   Teuchos::RCP<Thyra_Vector const> xdotdot_{Teuchos::null};
 
   bool is_schwarz_alternating_{false};
@@ -724,11 +719,8 @@ class Application
 
  protected:
   bool is_schwarz_;
-
   bool no_dir_bcs_;
-
   bool requires_sdbcs_;
-
   bool requires_orig_dbcs_;
 
   //! Teuchos communicator
