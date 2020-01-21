@@ -10,7 +10,7 @@
 #include "Albany_DistributedParameterDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
-
+#include "Albany_ObserverImpl.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 #include "Albany_Application.hpp"
@@ -666,10 +666,8 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       {
         Teuchos::TimeMonitor timer(*Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"));
         const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
-        const Teuchos::RCP<const Thyra_Vector> overlappedSolution =
-          app->getAdaptSolMgr()->updateAndReturnOverlapSolution(*x);
-        app->getDiscretization()->writeSolution(
-          *overlappedSolution, iter, /*overlapped =*/ true);
+        ObserverImpl observer(app);
+        observer.observeSolution(iter, *x, Teuchos::null, Teuchos::null);
         iteration = iter;
       }
     }
