@@ -1836,6 +1836,7 @@ void GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname, const s
       break;
     case 3:
       missing = (metaData->get_field<TFT> (entity_rank, fname)==0);
+      break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid field dimension.\n");
   }
