@@ -36,7 +36,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
-  enum STABILIZATION_TYPE {SUPG, SU, NONE} ;
+  enum STABILIZATION_TYPE {SUPG, SU, UPWIND, NONE} ;
   STABILIZATION_TYPE stabilization;
   bool haveSUPG;
   double delta;
@@ -86,7 +86,8 @@ private:
   double L;     //[J kg^{-1} ] Latent heat of fusion", 3e5);
   double a;     // [adim], Diffusivity homotopy exponent
   double drainage_coeff; //[kg s^{-3}]
-  double alpha_om;  //[adim], Omega exponent alpha
+  double alpha_om; //[adim], Omega exponent alpha
+  double scyr ;    // [s/yr] (3.1536e7);
 
   double flux_reg_alpha;
   double flux_reg_beta;
