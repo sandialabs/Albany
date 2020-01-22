@@ -111,13 +111,11 @@ namespace LandIce
 
     for (std::size_t cell = 0; cell < d.numCells; ++cell) {
       MeshScalarT diam_z(0);//, diam_xy(0), diam_z(0);
-      for (std::size_t i = 0; i < numNodes-1; ++i) {
-        for (std::size_t j = i + 1; j < numNodes; ++j) {
+      for (std::size_t i = 0; i < numNodes; ++i) {
         //  diam = std::max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
-        //                                              coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
-        //  diam_xy = std::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),coordVec(cell,j,0),coordVec(cell,j,1),MeshScalarT(0.0)));
-          diam_z = std::max(diam_z,std::fabs(coordVec(cell,i,2) - coordVec(cell,j,2)));
-        }
+        //                                              coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,j,2)));
+        //  diam_xy = std::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
+        diam_z = std::max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
       }
       for (std::size_t node = 0; node < numNodes; ++node)
         for (std::size_t qp = 0; qp < numQPs; ++qp)
@@ -137,9 +135,8 @@ namespace LandIce
         const int side = it_side.side_local_id;
         for (int snode=0; snode<numSideNodes; ++snode){
           int cnode = sideNodes[side][snode];
-        //  Residual(cell,cnode) =0;
-          Residual(cell,cnode) = w(cell,cnode) - basalVerticalVelocitySide(cell,side,snode);
-        }
+          Residual(cell,cnode) =0;
+         }
       }
       for (auto const& it_side : sideSet)
       {
