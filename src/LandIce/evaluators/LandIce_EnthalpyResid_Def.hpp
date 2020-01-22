@@ -272,15 +272,15 @@ evaluateFields(typename Traits::EvalData d)
 
         Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
                 Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
-//         Residual(cell,node) += (Albany::ADValue(Velocity(cell,qp,0))*EnthalpyGrad(cell,qp,0) +
-//                 Albany::ADValue(Velocity(cell,qp,1))*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
 
-        Residual(cell,node) += powm6*(1 - scale)*(k_i + rho_i*c_i*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+        Residual(cell,node) += powm6*(1 - scale) * k_i * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
             meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
             meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-        Residual(cell,node) -= powm3 * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp);
-       // Residual(cell,node) += powm6*(1 - scale) * drainage_coeff*pow(phi(cell,qp),alpha_om)*wGradBF(cell,node,qp,2);
+        Residual(cell,node) -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp) +
+                               nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+                                   phiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
+                                   phiGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
       }
     }
   }
