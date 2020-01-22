@@ -36,9 +36,8 @@ HydrostaticPressure(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
   // Setting parameters
   Teuchos::ParameterList& physics  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
 
-  rho_i = physics.get<double>("Ice Density",910);
-  g     = physics.get<double>("Gravity Acceleration",9.8);
-  p_atm = 101325.0; // kg * m^-1 * s^-2
+  rho_i = physics.get<double>("Ice Density");
+  g     = physics.get<double>("Gravity Acceleration");
 }
 
 template<typename EvalT, typename Traits, typename SurfHeightST>
@@ -55,10 +54,10 @@ template<typename EvalT, typename Traits, typename SurfHeightST>
 void HydrostaticPressure<EvalT,Traits,SurfHeightST>::
 evaluateFields(typename Traits::EvalData d)
 {
-  double pow3 = pow(10.0,3.0);
+  double pow3 = 1.0e3;
   for (std::size_t cell = 0; cell < d.numCells; ++cell)
     for (std::size_t node = 0; node < numNodes; ++node)
-      pressure(cell,node) = pow3 * rho_i * g * ( s(cell,node) - z(cell,node,2) ) + p_atm;
+      pressure(cell,node) = pow3 * rho_i * g * ( s(cell,node) - z(cell,node,2) );
 }
 
 } // namespace LandIce

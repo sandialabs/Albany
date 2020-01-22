@@ -57,7 +57,6 @@ private:
 
   double rho_i;  // [kg m^{-3}]
   double g;      // [m s^{-2}]
-  double p_atm;  // [Pa], [kg m^{-1} s^{-2}]
 };
 
 } // namespace LandIce
