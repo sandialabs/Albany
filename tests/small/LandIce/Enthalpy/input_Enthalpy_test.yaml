@@ -53,14 +53,8 @@ ANONYMOUS:
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'
     Response Functions: 
-      Number: 2
-      Response 0: Solution Max Value
-      ResponseParams 0: 
-        Equation: 0
-      Response 1: Solution Max Value
-      ResponseParams 1: 
-        Equation: 1
-      Response 2: Solution Average
+      Number: 1
+      Response 0: Solution Average
   Discretization: 
     Method: Exodus
     Number Of Time Derivatives: 0
@@ -87,12 +81,12 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: Mesh
   Regression Results: 
-    Number of Comparisons: 2
-    Test Values: [2.205855360395e+01, 7.286226360111e+00]
-    Relative Tolerance: 1.00000000000000002e-03
+    Number of Comparisons: 1
+    Test Values: [-1.007899885414e+01]
+    Relative Tolerance: 1.0e-04
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [-2.826949501853e+02, 1.655413079037e-14]
+      Sensitivity Test Values 0: [-3.228869485824e+01]
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -121,14 +115,14 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999955e-08
+            Tolerance: 1.0e-05
           Test 1: 
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000005e-04
-            Relative Tolerance: 9.99999999999999955e-08
+            Absolute Tolerance: 1.0e-04
+            Relative Tolerance: 1.0e-07
         Test 1: 
           Test Type: MaxIters
-          Maximum Iterations: 25
+          Maximum Iterations: 30
       Nonlinear Solver: Line Search Based
       Direction: 
         Method: Newton
@@ -137,7 +131,7 @@ ANONYMOUS:
           Linear Solver: 
             Write Linear System: false
             Max Iterations: 200
-            Tolerance: 1.00000000000000002e-08
+            Tolerance: 1.0e-07
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 

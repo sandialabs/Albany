@@ -196,7 +196,7 @@ evaluateFields(typename Traits::EvalData d)
 {
   const double powm3 = 1e-3;  //[k], k=1000
   const double powm6 = 1e-6;  //[k^2], k=1000
-  const double powm9 = 1e-9;  //[k^3], k=1000
+  const double pow3 = 1e3;  //[k^{-1}], k=1000
   ScalarT K;
   double pi = atan(1.) * 4.;
   ScalarT hom = homotopy(0);
@@ -227,8 +227,7 @@ evaluateFields(typename Traits::EvalData d)
         for (std::size_t qp = 0; qp < numQPs; ++qp)
         {
 //          ScalarT scale = 1+2000*std::max(ScalarT(0.1-std::pow(x-x_p,2)/2500 - std::pow(z-z_p,2)),ScalarT(0));
-//          Residual(cell,node) -= powm3*Albany::ADValue(diss(cell,qp))*wBF(cell,node,qp);
-          Residual(cell,node) -= powm3*(diss(cell,qp))*wBF(cell,node,qp);
+          Residual(cell,node) -= (diss(cell,qp))*wBF(cell,node,qp);
         }
       }
     }
@@ -249,8 +248,8 @@ evaluateFields(typename Traits::EvalData d)
       for (std::size_t node = 0; node < numNodes; ++node)
       {
         // Modify here if you want to impose different basal BC. NB: in case of temperate ice, we disregard the extra boundary term related to the gradient of the T_m. You might want to reconsider this in the future
-        //Residual(cell,node) -= powm6*( basalFricHeat(cell,node) + geoFluxHeat(cell,node) ) * scale;  //go to zero in temperate region
-        Residual(cell,node) += powm6*basalResid(cell,node);  //go to zero in temperate region
+        //Residual(cell,node) -= powm3*( basalFricHeat(cell,node) + geoFluxHeat(cell,node) ) * scale;  //go to zero in temperate region
+        Residual(cell,node) += powm3*basalResid(cell,node);  //go to zero in temperate region
       }
     }
   }
@@ -267,20 +266,20 @@ evaluateFields(typename Traits::EvalData d)
         //ScalarT scale = 0.5 - atan(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi;
         ScalarT scale = 0.5 - 0.5*tanh(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)));
         //scale = Albany::ADValue(scale);
-        Residual(cell,node) += powm3 * scale * K_i * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+        Residual(cell,node) += scale * K_i * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
             EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
             EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-        Residual(cell,node) += (Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
+        Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
                 Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
 //         Residual(cell,node) += (Albany::ADValue(Velocity(cell,qp,0))*EnthalpyGrad(cell,qp,0) +
 //                 Albany::ADValue(Velocity(cell,qp,1))*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
 
-        Residual(cell,node) += powm9*(1 - scale)*(k_i + rho_i*c_i*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+        Residual(cell,node) += powm6*(1 - scale)*(k_i + rho_i*c_i*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
             meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
             meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-        Residual(cell,node) -= powm6 * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp);
+        Residual(cell,node) -= powm3 * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp);
        // Residual(cell,node) += powm6*(1 - scale) * drainage_coeff*pow(phi(cell,qp),alpha_om)*wGradBF(cell,node,qp,2);
       }
     }
@@ -333,9 +332,9 @@ evaluateFields(typename Traits::EvalData d)
         {
           for (std::size_t qp = 0; qp < numQPs; ++qp)
           {
-            Residual(cell,node) += (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+            Residual(cell,node) += pow3*(EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
                                     EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1))*delta*diam_xy*vmax_xy/scyr;
-            Residual(cell,node) += EnthalpyGrad(cell,qp,2)* wGradBF(cell,node,qp,2)*delta*diam_z*vmax_z/scyr;
+            Residual(cell,node) += pow3*EnthalpyGrad(cell,qp,2)* wGradBF(cell,node,qp,2)*delta*diam_z*vmax_z/scyr;
           }
         }
       }
@@ -348,7 +347,7 @@ evaluateFields(typename Traits::EvalData d)
           {
             ScalarT w = verticalVel(cell,qp);
             wSUPG = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + w * wGradBF(cell,node,qp,2)); // +(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
-            Residual(cell,node) += (Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
+            Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
                 Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wSUPG/scyr;
           }
         }

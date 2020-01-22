@@ -68,7 +68,7 @@ private:
   PHX::MDField<const ScalarT,Dim>                               homotopy;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> Residual; // [k^{4} W]  = [km^3 kPa s^{-1} ], k =1000
+  PHX::MDField<ScalarT,Cell,Node> Residual; // [k^3 W]  = [km^3 Pa s^{-1} ], k =1000
 
   unsigned int numQPs, numNodes, vecDimFO;
 
