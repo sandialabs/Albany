@@ -22,21 +22,31 @@ Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_), discParams(discParams_), 
   use_sdbcs_(false)
 {
-	this->setNumEquations(2);
+  this->setNumEquations(2);
 
-	basalSideName = params->isParameter("Basal Side Name") ? params->get<std::string>("Basal Side Name") : "INVALID";
-	basalEBName = "INVALID";
-	needsDiss = params->get<bool> ("Needs Dissipation",true);
-	needsBasFric = params->get<bool> ("Needs Basal Friction",true);
-	isGeoFluxConst = params->get<bool> ("Constant Geothermal Flux",true);
+  basalSideName = params->isParameter("Basal Side Name") ? params->get<std::string>("Basal Side Name") : "INVALID";
+  basalEBName = "INVALID";
+  needsDiss = params->get<bool> ("Needs Dissipation",true);
+  needsBasFric = params->get<bool> ("Needs Basal Friction",true);
+  isGeoFluxConst = params->get<bool> ("Constant Geothermal Flux",true);
 
-	TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error, "Error! In order to specify basal requirements, you must also specify a valid 'Basal Side Name'.\n");
-    // Need to allocate a fields in basal mesh database
-    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
-    this->ss_requirements[basalSideName].reserve(req.size()); // Note: this is not for performance, but to guarantee
+  TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error, "Error! In order to specify basal requirements, you must also specify a valid 'Basal Side Name'.\n");
+  // Need to allocate a fields in basal mesh database
+  Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
+  this->ss_requirements[basalSideName].reserve(req.size()); // Note: this is not for performance, but to guarantee
 
-    for (int i(0); i<req.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
-    	this->ss_requirements[basalSideName].push_back(req[i]); //       throw, even if it's empty...
+  for (int i(0); i<req.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
+    this->ss_requirements[basalSideName].push_back(req[i]); //       throw, even if it's empty...
+
+  Teuchos::ParameterList& physics_list = params->sublist("LandIce Physical Parameters");
+
+  if (!physics_list.isParameter("Atmospheric Pressure Melting Temperature")) {
+    physics_list.set("Atmospheric Pressure Melting Temperature", 273.15);
+  }
+
+  if (!physics_list.isParameter("Seconds per Year")) {
+    physics_list.set("Seconds per Year", 3.1536e7);
+  }
 }
 
 LandIce::Enthalpy::

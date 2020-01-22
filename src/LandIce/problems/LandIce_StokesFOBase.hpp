@@ -890,6 +890,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     //Input
     p->set<std::string>("Viscosity QP Variable Name", "LandIce Viscosity");
     p->set<std::string>("EpsilonSq QP Variable Name", "LandIce EpsilonSq");
+    p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
     //Output
     p->set<std::string>("Dissipation QP Variable Name", "LandIce Dissipation");

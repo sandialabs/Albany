@@ -57,6 +57,8 @@ namespace LandIce
     int vecDimFO;
 
     bool haveSUPG;
+    double scyr ;    // [s/yr] (3.1536e7);
+
   };
 
 }	// Namespace LandIce

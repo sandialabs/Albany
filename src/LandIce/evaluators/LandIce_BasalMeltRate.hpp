@@ -61,11 +61,12 @@ private:
   double g;       //[m s^{-2}], Gravity Acceleration
   double a;       // [adim], Diffusivity homotopy exponent
 
-  double k_0;     //[m^2], Permeability factor
-  double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
-  double eta_w;   //[Pa s], Viscosity of water
+  double k_0;      //[m^2], Permeability factor
+  double k_i;      //[W m^{-1} K^{-1}], Conductivity of ice
+  double eta_w;    //[Pa s], Viscosity of water
   double alpha_om; //[adim], Omega exponent alpha
   double beta_p;
+  double scyr ;    // [s/yr] (3.1536e7);
 
   double flux_reg_alpha;
   double flux_reg_beta;

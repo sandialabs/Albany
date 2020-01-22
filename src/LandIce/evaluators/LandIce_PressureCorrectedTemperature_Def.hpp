@@ -32,8 +32,9 @@ PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP
   rho_i = physicsList->get<double>("Ice Density");
   g     = physicsList->get<double>("Gravity Acceleration");
   //p_atm = 101325.0; // kg * m^-1 * s^-2
-  beta  = physicsList->get<double>("Clausius-Clapeyron Coefficient");//,0);
+  beta  = physicsList->get<double>("Clausius-Clapeyron Coefficient");
   coeff = beta * 1000.0 * rho_i * g;
+  meltingT = physicsList->get<double>("Atmospheric Pressure Melting Temperature");
 }
 
 //**********************************************************************
@@ -54,7 +55,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-    correctedTemp(cell) = std::min(temp(cell) +coeff * (sHeight(cell) - coord(cell,2)), 273.15);
+    correctedTemp(cell) = std::min(temp(cell) +coeff * (sHeight(cell) - coord(cell,2)), meltingT);
 }
 
 } // namespace LandIce

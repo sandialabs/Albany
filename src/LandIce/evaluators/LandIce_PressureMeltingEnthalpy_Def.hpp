@@ -38,11 +38,12 @@ PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   this->setName("Pressure-melting Enthalpy");
 
   // Setting parameters
-  Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
-  rho_i = physics.get<double>("Ice Density"); //916
-  c_i   = physics.get<double>("Heat capacity of ice");  //2009
-  T0    = physics.get<double>("Reference Temperature"); //265
-  beta =  physics.get<double>("Clausius-Clapeyron Coefficient");
+  Teuchos::ParameterList& physics_list = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
+  rho_i = physics_list.get<double>("Ice Density"); //916
+  c_i   = physics_list.get<double>("Heat capacity of ice");  //2009
+  T0    = physics_list.get<double>("Reference Temperature"); //265
+  beta =  physics_list.get<double>("Clausius-Clapeyron Coefficient");
+  Tm = physics_list.get<double>("Atmospheric Pressure Melting Temperature");
 }
 
 template<typename EvalT, typename Traits, typename PressST, typename SurfTempST>
@@ -58,9 +59,9 @@ evaluateFields(typename Traits::EvalData d)
 
   for (std::size_t cell = 0; cell < d.numCells; ++cell)
     for (std::size_t node = 0; node < numNodes; ++node) {
-      meltingTemp(cell,node) = - beta * pressure(cell,node) + 273.15;
+      meltingTemp(cell,node) = - beta * pressure(cell,node) + Tm;
       enthalpyHs(cell,node) = rho_i * c_i * ( meltingTemp(cell,node) - T0 ) * powm6;
-      surfaceEnthalpy(cell,node) = rho_i * c_i * ( std::min(surfaceTemp(cell,node),273.15) - T0 ) * powm6;
+      surfaceEnthalpy(cell,node) = rho_i * c_i * ( std::min(surfaceTemp(cell,node),Tm) - T0 ) * powm6;
     }
 }
 

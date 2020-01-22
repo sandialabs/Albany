@@ -33,6 +33,9 @@ namespace LandIce
     w_measure   = PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
 
     haveSUPG = p.isParameter("LandIce Enthalpy Stabilization") ? (p.get<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization")->get<std::string>("Type") == "SUPG") : false;
+    Teuchos::ParameterList* physics_list = p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
+    scyr = physics_list->get<double>("Seconds per Year");
+
 
     this->addDependentField(velocity);
     this->addDependentField(beta);
@@ -101,8 +104,6 @@ namespace LandIce
     for (int cell = 0; cell < d.numCells; ++cell)
       for (int node = 0; node < numCellNodes; ++node)
         basalFricHeat(cell,node) = 0.;
-
-    const double scyr (3.1536e7);  // [s/yr];
 
     if (d.sideSets->find(basalSideName)==d.sideSets->end())
       return;

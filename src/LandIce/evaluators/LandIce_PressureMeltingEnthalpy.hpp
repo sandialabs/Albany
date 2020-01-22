@@ -56,6 +56,7 @@ private:
   double rho_i; //[kg m^{-3}]
   double T0;    //[K]
   double beta;  //[K Pa^{-1}]
+  double Tm; //[K], 273.15
 };
 
 } // Namespace LandIce

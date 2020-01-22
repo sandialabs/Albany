@@ -156,12 +156,6 @@ evaluateFields(typename Traits::EvalData d)
 
   const std::vector<Albany::SideStruct>& sideSet = d.sideSets->at(basalSideName);
 
-  // const double scyr (3.1536e7);  // [s/yr];
-  // double pi = atan(1.) * 4.;
-  // ScalarT hom = homotopy(0);
-
-  // bool isThereWater = false;
-
   for (auto const& it_side : sideSet)
   {
     // Get the local data of side and cell
@@ -172,33 +166,10 @@ evaluateFields(typename Traits::EvalData d)
     {
       int cnode = sideNodes[side][node];
       enthalpyBasalResid(cell,cnode) = 0.;
-//      isThereWater =(beta(cell,side,0)<5.0);
-
- //     ScalarT scale = (diffEnth(cell,cnode) > 0 || !isThereWater) ?  ScalarT(0.5 - atan(alpha * diffEnth(cell,cnode))/pi) :
-//                                                             ScalarT(0.5 - alpha * diffEnth(cell,cnode) /pi);
 
       for (int qp = 0; qp < numSideQPs; ++qp)
       {
-//          ScalarT diffEnthalpy = enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp);
-
-  //      isThereWater =(beta(cell,side,qp)<5.0);
-
- //       ScalarT scale = (diffEnthalpy > 0 || !isThereWater) ?  ScalarT(0.5 - atan(alpha * diffEnthalpy)/pi) :
- //                                                              ScalarT(0.5 - alpha * diffEnthalpy /pi);
- //       ScalarT M = geoFlux(cell,side,qp);
-
- //       for (int dim = 0; dim < vecDimFO; ++dim)
- //         M += 1000/scyr * beta(cell,side,qp) * std::pow(velocity(cell,side,qp,dim),2);
-
- //       double dTdz_melting =  beta_p*rho_i*g;  //[K m^{-1}]
- //       M += 1e-3* k_i * dTdz_melting;
-
-  //      ScalarT resid_tmp = -M*scale + 1e-3*k_i*dTdz_melting;
-  //      enthalpyBasalResid(cell,cnode) += resid_tmp *  BF(cell,side,node,qp) * w_measure(cell,side,qp);
-
-        enthalpyBasalResid(cell,cnode) += basalMeltRateQP(cell,side,qp) *  BF(cell,side,node,qp) * w_measure(cell,side,qp);
-//        ScalarT phiExp = pow(phi(cell,side,qp),alpha_om);
-     //   basalMeltRate(cell,side,qp) = scyr*(1-scale) * M / ((1 - rho_w/rho_i*phi(cell,side,qp))*L*rho_w) +  scyr * k_0 * (rho_w - rho_i) * g / eta_w * phiExp ;
+       enthalpyBasalResid(cell,cnode) += basalMeltRateQP(cell,side,qp) *  BF(cell,side,node,qp) * w_measure(cell,side,qp);
       }
     }
   }

@@ -43,6 +43,8 @@ class Dissipation : public PHX::EvaluatorWithBaseImpl<Traits>,
 		// Output:
 		PHX::MDField<ScalarT,Cell,QuadPoint> diss; // [W m^{-3}] = [Pa s^{-1}]
 
+		double scyr ;    // [s/yr] (3.1536e7);
+
 		unsigned int numQPs;
 };
 

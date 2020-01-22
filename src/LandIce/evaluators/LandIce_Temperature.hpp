@@ -68,6 +68,7 @@ private:
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
   double rho_i; //[kg m^{-3}]
   double T0;    //[K]
+  double Tm; //[K], 273.15
 };
 
 } // namespace LandIce

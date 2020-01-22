@@ -50,7 +50,11 @@ private:
   // Output:
   PHX::MDField<OutputScalarT,Cell> correctedTemp;
 
-  double beta, rho_i, g, coeff;
+  double beta;     //[K Pa^{-1}]
+  double rho_i;    //[kg m^{-3}]
+  double g;        //[m s^{-2}]
+  double coeff;    //[K km^{-1}]
+  double meltingT; //[K], 273.15
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 };

@@ -52,13 +52,24 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Basal side, where thickness-related diagnostics are computed (e.g., SMB)
   basalSideName = params->isParameter("Basal Side Name") ? params->get<std::string>("Basal Side Name") : INVALID_STR;
 
-  if (params->sublist("LandIce Physical Parameters").isParameter("Clausius-Clapeyron Coefficient") &&
-      params->sublist("LandIce Physical Parameters").get<double>("Clausius-Clapeyron Coefficient")!=0.0) {
+  Teuchos::ParameterList& physics_list = params->sublist("LandIce Physical Parameters");
+
+  if (physics_list.isParameter("Clausius-Clapeyron Coefficient") &&
+      physics_list.get<double>("Clausius-Clapeyron Coefficient")!=0.0) {
     viscosity_use_corrected_temperature = true;
   } else {
     viscosity_use_corrected_temperature = false;
   }
   compute_dissipation = params->sublist("LandIce Viscosity").get("Extract Strain Rate Sq", false);
+
+  if (!physics_list.isParameter("Atmospheric Pressure Melting Temperature")) {
+    physics_list.set("Atmospheric Pressure Melting Temperature", 273.15);
+  }
+
+  if (!physics_list.isParameter("Seconds per Year")) {
+    physics_list.set("Seconds per Year", 3.1536e7);
+  }
+
 
   // Setup velocity dof and resid names. Derived classes should _append_ to these
   dof_names.resize(1);

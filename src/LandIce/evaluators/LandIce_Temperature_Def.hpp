@@ -76,6 +76,7 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
   rho_i   = physics.get<double>("Ice Density"); //916
   c_i   = physics.get<double>("Heat capacity of ice"); //2009
   T0    = physics.get<double>("Reference Temperature"); //265
+  Tm    = physics.get<double>("Atmospheric Pressure Melting Temperature"); //273.15
 }
 
 template<typename EvalT, typename Traits, typename TemperatureST>
@@ -108,7 +109,7 @@ evaluateFields(typename Traits::EvalData d)
       else
         temperature(cell,node) = meltingTemp(cell,node);
 
-      correctedTemp(cell, node) = temperature(cell,node) + 273.15 - meltingTemp(cell,node);
+      correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
 
       diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
     }
