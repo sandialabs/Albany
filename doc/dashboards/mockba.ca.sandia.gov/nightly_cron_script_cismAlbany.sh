@@ -2,6 +2,9 @@
 
 cd /home/ikalash/nightlyAlbanyCDash
 
+unset http_proxy
+unset https_proxy
+
 cat cismAlbany ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
 #the following is a hack...

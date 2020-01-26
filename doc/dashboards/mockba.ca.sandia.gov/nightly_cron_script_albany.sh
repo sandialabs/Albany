@@ -9,6 +9,9 @@ rm -rf nightly_log*
 rm -rf results*
 rm -rf *out 
 
+unset http_proxy
+unset https_proxy
+
 cat albany ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
 now=$(date +"%m_%d_%Y-%H_%M")
