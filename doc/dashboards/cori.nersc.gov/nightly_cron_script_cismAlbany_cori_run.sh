@@ -5,6 +5,7 @@ EXE_DIR=/project/projectdirs/piscees/nightlyCoriCDashExe
 cd $BASE_DIR
 
 source cori_modules.sh 
+export CRAYPE_LINK_TYPE=STATIC
 
 rm -rf $BASE_DIR/ctest_nightly.cmake.work
 
