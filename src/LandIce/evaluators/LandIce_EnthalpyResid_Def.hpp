@@ -19,9 +19,11 @@ template<typename Type>
 Type distance (const Type& x0, const Type& x1, const Type& x2,
                const Type& y0, const Type& y1, const Type& y2)
 {
-  return std::sqrt(std::pow(x0-y0,2) +
-                   std::pow(x1-y1,2) +
-                   std::pow(x2-y2,2));
+  auto tmp = std::pow(x0-y0,2)+std::pow(x1-y1,2)+std::pow(x2-y2,2);
+  if(tmp > 0.0)    
+    return std::sqrt(tmp);
+  else 
+    return 0;
 }
 
 template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
@@ -304,7 +306,7 @@ evaluateFields(typename Traits::EvalData d)
         //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
         VelocityST val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
         VelocityST sqrtval = 0.0;
-        if (val != 0.0)
+        if (val > 0.0)
           sqrtval = std::sqrt(val); 
 
         vmax_xy = std::max(vmax_xy, sqrtval);
