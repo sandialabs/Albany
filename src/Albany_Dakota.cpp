@@ -118,8 +118,15 @@ int Albany_Dakota(int argc, char *argv[])
 
   if (dakota.rankZero()) {
     Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();
-    *out << "\nAlbany_DakotaT: Final Values from Dakota = "
-         << std::setprecision(8) << finalValues << endl;
+    *out << "\nAlbany_DakotaT: Final Values from Dakota = ";
+    for (auto i=0; i< finalValues.length(); i++) {
+      if (i < finalValues.length()-1) {
+        *out << finalValues[i] << ", "; 
+      }
+      else {
+        *out << finalValues[i] << "\n"; 
+      }
+    }
 
     return slvrfctry->checkDakotaTestResults(0, &finalValues);
   } else {
