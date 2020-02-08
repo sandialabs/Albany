@@ -19,7 +19,7 @@ template<typename Type>
 Type distance (const Type& x0, const Type& x1, const Type& x2,
                const Type& y0, const Type& y1, const Type& y2)
 {
-  auto tmp = std::pow(x0-y0,2)+std::pow(x1-y1,2)+std::pow(x2-y2,2);
+  Type tmp = std::pow(x0-y0,2)+std::pow(x1-y1,2)+std::pow(x2-y2,2);
   if(tmp > 0.0)    
     return std::sqrt(tmp);
   else 
