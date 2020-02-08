@@ -45,6 +45,7 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   this->addEvaluatedField(GradBF);
 
   compute_normals = p.isParameter("Side Normal Name");
+
   if(compute_normals) {
     normals  = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
     coordVec = decltype(coordVec)(p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector );
@@ -62,6 +63,8 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   numSideQPs   = dl_side->node_qp_gradient->extent(3);
   numCellDims  = dl_side->vertices_vector->extent(3);    // Vertices vector always has the ambient space dimension
   numSideDims  = numCellDims-1;
+
+  effectiveCoordDim = p.get<bool>("Side Set Is Planar") ? 2 : numCellDims;
 
   cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature Side");
   intrepidBasis = p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid Basis Side");
@@ -168,10 +171,9 @@ evaluateFields(typename Traits::EvalData workset)
         for (int qp=0; qp<numSideQPs; ++qp)
         {
           tangents(cell,side,qp,icoor,itan) = 0.;
-          for (int node=0; node<numSideNodes; ++node)
-          {
-            tangents(cell,side,qp,icoor,itan) += sideCoordVec(cell,side,node,icoor) * grad_at_cub_points(node,qp,itan);
-          }
+          if(icoor < effectiveCoordDim)   //if it's planar do not compute the z dimension
+            for (int node=0; node<numSideNodes; ++node)
+              tangents(cell,side,qp,icoor,itan) += sideCoordVec(cell,side,node,icoor) * grad_at_cub_points(node,qp,itan);
         }
       }
     }

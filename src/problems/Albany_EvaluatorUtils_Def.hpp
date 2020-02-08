@@ -527,8 +527,12 @@ Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFuncti
     const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
     const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
     const std::string& sideSetName,
-    const bool buildNormals) const
+    const bool buildNormals,
+    const bool planar) const
 {
+    TEUCHOS_TEST_FOR_EXCEPTION (buildNormals && planar, std::runtime_error,
+                                "Error! Cannot compute normal for planar sufaces at the moment.\n");
+
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                                 "Error! The layout structure for side set " << sideSetName << " was not found.\n");
 
@@ -536,6 +540,8 @@ Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFuncti
     using Teuchos::rcp;
     using Teuchos::ParameterList;
     using std::string;
+
+    std::string sideSetName_ = planar ? sideSetName + "_planar" : sideSetName;
 
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions Side"));
 
@@ -547,17 +553,19 @@ Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFuncti
     p->set<std::string>("Side Set Name",sideSetName);
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
-    p->set<std::string>("Weighted Measure Name",     weighted_measure_name + " "+sideSetName);
-    p->set<std::string>("Tangents Name",             tangents_name + " "+sideSetName);
-    p->set<std::string>("Metric Name",               metric_name + " "+sideSetName);
-    p->set<std::string>("Metric Determinant Name",   metric_det_name + " "+sideSetName);
-    p->set<std::string>("BF Name",                   bf_name + " "+sideSetName);
-    p->set<std::string>("Gradient BF Name",          grad_bf_name + " "+sideSetName);
-    p->set<std::string>("Inverse Metric Name",       metric_inv_name + " "+sideSetName);
+    p->set<std::string>("Weighted Measure Name",     weighted_measure_name + " "+sideSetName_);
+    p->set<std::string>("Tangents Name",             tangents_name + " "+sideSetName_);
+    p->set<std::string>("Metric Name",               metric_name + " "+sideSetName_);
+    p->set<std::string>("Metric Determinant Name",   metric_det_name + " "+sideSetName_);
+    p->set<std::string>("BF Name",                   bf_name + " "+sideSetName_);
+    p->set<std::string>("Gradient BF Name",          grad_bf_name + " "+sideSetName_);
+    p->set<std::string>("Inverse Metric Name",       metric_inv_name + " "+sideSetName_);
     if (buildNormals) {
-      p->set<std::string>("Side Normal Name",normal_name + " " + sideSetName);
+      p->set<std::string>("Side Normal Name",normal_name + " " + sideSetName_);
       p->set<std::string>("Coordinate Vector Name",coord_vec_name);
     }
+
+    p->set("Side Set Is Planar",planar);
 
     return rcp(new PHAL::ComputeBasisFunctionsSide<EvalT,Traits>(*p,dl));
 }
@@ -683,7 +691,8 @@ template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFGradInterpolationSideEvaluator(
        const std::string& dof_name,
-       const std::string& sideSetName) const
+       const std::string& sideSetName,
+       const bool planar) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                                 "Error! The layout structure for side set " << sideSetName << " was not found.\n");
@@ -692,15 +701,18 @@ Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFGradInterpolati
     using Teuchos::rcp;
     using Teuchos::ParameterList;
 
+    std::string sideSetName_ = planar ? sideSetName + "_planar" : sideSetName;
+    std::string gradientSuffixName = planar ? " Planar Gradient" : " Gradient";
+
     RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation Side "+dof_name));
 
     // Input
     p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
+    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName_);
     p->set<std::string> ("Side Set Name",sideSetName);
 
     // Output (assumes same Name as input)
-    p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
+    p->set<std::string>("Gradient Variable Name", dof_name+gradientSuffixName);
 
     return rcp(new PHAL::DOFGradInterpolationSideBase<EvalT,Traits,ScalarType>(*p,dl->side_layouts.at(sideSetName)));
 }

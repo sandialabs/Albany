@@ -253,7 +253,8 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructDOFGradInterpolationSideEvaluator(
       const std::string& dof_names,
-      const std::string& sideSetName) const = 0;
+      const std::string& sideSetName,
+      const bool planar = false) const = 0;
 
     //! Interpolation functions for gradient of vector quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -346,7 +347,8 @@ namespace Albany {
         const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
         const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
         const std::string& sideSetName,
-        const bool buildNormals = false) const = 0;
+        const bool buildNormals = false,
+        const bool palanar = false) const = 0;
 
     protected:
     Teuchos::ArrayRCP<std::string> arcp_str(const std::string& s) const {
@@ -581,7 +583,8 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFGradInterpolationSideEvaluator(
       const std::string& dof_names,
-      const std::string& sideSetName) const;
+      const std::string& sideSetName,
+      const bool planar = false) const;
 
     //! Interpolation functions for gradient of vector quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -674,7 +677,8 @@ namespace Albany {
         const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
         const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
         const std::string& sideSetName,
-        const bool buildNormals = false) const;
+        const bool buildNormals = false,
+        const bool planar = false) const;
 
   private:
 
