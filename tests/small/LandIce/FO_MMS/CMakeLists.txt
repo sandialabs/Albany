@@ -166,3 +166,27 @@ IF (ALBANY_PANZER_EXPR_EVAL)
   ENDIF()
 ENDIF()
 
+###################################################
+###     Surface Mass Balance Mismatch tests     ###
+###################################################
+
+IF (ALBANY_PANZER_EXPR_EVAL)
+  set(testName ${testNameRoot}_FO_SMB)
+
+  # Quads
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_smb_quad.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_smb_quad.yaml COPYONLY)
+
+  add_test(${testName}_QUAD ${SerialAlbany.exe} input_smb_quad.yaml)
+  set_tests_properties(${testName}_QUAD PROPERTIES LABELS "LandIce;Tpetra;Forward")
+
+  IF (ALBANY_PAMGEN)
+    # Triangles, nonconst velocity
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_smb_tri.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_smb_tri.yaml COPYONLY)
+
+    add_test(${testName}_TRI ${SerialAlbany.exe} input_smb_tri.yaml)
+    set_tests_properties(${testName}_TRI PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  ENDIF()
+ENDIF()
+

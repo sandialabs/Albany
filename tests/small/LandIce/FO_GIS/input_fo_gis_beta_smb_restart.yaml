@@ -8,6 +8,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
+    Compute Sensitivities: true
     Extruded Column Coupled in 2D Response: true
     Adjust Bed Topography to Account for Thickness Changes: true
     Required Fields: [temperature, ice_thickness, surface_height]
@@ -141,9 +142,10 @@ ANONYMOUS:
             Field Origin: Mesh
   Regression Results: 
     Number of Comparisons: 2
-    Test Values: [6.43652167412000011e+01, 3.85905377383999985e+03]
-    Number of Sensitivity Comparisons: 1
-    Sensitivity Test Values 0: [1.22237458222999997e+01, -9.61330657555999935e+00]
+    Test Values: [6.436521674120e+01, 3.907406428441e+03]
+    Sensitivity Comparisons 0: 
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [1.107433043522e+01, -9.095853157928e+00]
     Relative Tolerance: 1.00000000000000005e-04
     Absolute Tolerance: 1.00000000000000005e-04
   Piro: 

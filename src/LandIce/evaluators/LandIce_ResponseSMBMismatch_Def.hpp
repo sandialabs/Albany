@@ -25,7 +25,6 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   alpha = plist->get<double>("Regularization Coefficient", 0.0);
   alphaH = plist->get<double>("H Coefficient", 0.0);
   alphaSMB = plist->get<double>("SMB Coefficient", 0.0);
-  asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
 
   basalSideName = paramList->get<std::string> ("Basal Side Name");
 

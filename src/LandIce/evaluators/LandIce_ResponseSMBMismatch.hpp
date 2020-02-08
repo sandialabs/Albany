@@ -57,7 +57,7 @@ namespace LandIce {
     PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>       tangents;
 
     ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
-    double scaling, alpha, alphaH, alphaSMB, asinh_scaling;
+    double scaling, alpha, alphaH, alphaSMB;
 
     Teuchos::RCP<const CellTopologyData> cell_topo;
   };

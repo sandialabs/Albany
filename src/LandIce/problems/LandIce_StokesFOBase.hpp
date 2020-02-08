@@ -1359,6 +1359,19 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
   if (!isInvalid(basalSideName)) {
     auto dl_side = dl->side_layouts.at(basalSideName);
 
+    std::string basalSideNamePlanar = basalSideName + "_planar";
+
+    {
+      //---- Compute side basis functions
+      auto ss_util_needed = ss_utils_needed[basalSideName];
+      if (ss_util_needed[UtilityRequest::BFS] || ss_util_needed[UtilityRequest::NORMALS]) {
+        // BF, GradBF, w_measure, Tangents, Metric, Metric Det, Inverse Metric
+        ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis[basalSideName], sideCubature[basalSideName],
+            basalSideName, false, true);
+        fm0.template registerEvaluator<EvalT> (ev);
+      }
+    }
+
     // We may have more than 1 basal side set. 'basalSideName' should be the union of all of them.
     // However, some of the fields used here, may be used also to compute quantities defined on
     // only some of the sub-sidesets of 'basalSideName'. The layout of all the side fields is the
@@ -1366,6 +1379,7 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
 
     std::string velocity_side_name = dof_names[0] + "_" + basalSideName;
     std::string ice_thickness_side_name = ice_thickness_name + "_" + basalSideName;
+    std::string ice_thickness_side_name_planar = ice_thickness_name + "_" + basalSideNamePlanar;
     std::string surface_height_side_name = surface_height_name + "_" + basalSideName;
     std::string surface_mass_balance_side_name = "surface_mass_balance_" + basalSideName;
     std::string surface_mass_balance_RMS_side_name = "surface_mass_balance_RMS_" + basalSideName;
@@ -1385,6 +1399,27 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
 
     // -------------------------------- LandIce evaluators ------------------------- //
 
+    {
+
+      std::map<FieldScalarType,Teuchos::RCP<const Albany::EvaluatorUtilsBase<PHAL::AlbanyTraits>>> utils_map;
+      utils_map[FieldScalarType::Scalar]      = Teuchos::rcpFromRef(evalUtils.getSTUtils());
+      utils_map[FieldScalarType::ParamScalar] = Teuchos::rcpFromRef(evalUtils.getPSTUtils());
+      utils_map[FieldScalarType::MeshScalar]  = Teuchos::rcpFromRef(evalUtils.getMSTUtils());
+      utils_map[FieldScalarType::Real]        = Teuchos::rcpFromRef(evalUtils.getRTUtils());
+
+      // If there's no information about this field, we assume it is not needed, so we skip it.
+      // If it WAS indeed needed, Phalanx DAG will miss a node, and an exception will be thrown.
+      if (field_scalar_type.find(ice_thickness_name)!=field_scalar_type.end()) {
+
+        // Get the right evaluator utils for this field.
+        const FieldScalarType st = field_scalar_type.at(ice_thickness_name);
+        const auto& utils = *utils_map.at(st);
+
+        ev = utils.constructDOFGradInterpolationSideEvaluator (ice_thickness_side_name, basalSideName, true);
+        fm0.template registerEvaluator<EvalT> (ev);
+      }
+    }
+
     // Vertically averaged velocity
     p = Teuchos::rcp(new Teuchos::ParameterList("Gather Averaged Velocity"));
 
@@ -1403,8 +1438,8 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     p->set<std::string>("Averaged Velocity Side QP Variable Name", vertically_averaged_velocity_side_name);
     p->set<std::string>("Averaged Velocity Side QP Divergence Name", vertically_averaged_velocity_side_name + " Divergence");
     p->set<std::string>("Thickness Side QP Variable Name", ice_thickness_side_name);
-    p->set<std::string>("Thickness Gradient Name", ice_thickness_side_name + " Gradient");
-    p->set<std::string>("Side Tangents Name", Albany::tangents_name + " " + basalSideName);
+    p->set<std::string>("Thickness Gradient Name", ice_thickness_side_name + " Planar Gradient");
+    p->set<std::string>("Side Tangents Name", Albany::tangents_name + " " + basalSideNamePlanar);
 
     p->set<std::string>("Field Name",  "flux_divergence_basalside");
     p->set<std::string>("Side Set Name", basalSideName);
@@ -1417,8 +1452,8 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
 
     // Input
     p->set<std::string>("Variable Name", vertically_averaged_velocity_side_name);
-    p->set<std::string>("Gradient BF Name", Albany::grad_bf_name + " "+basalSideName);
-    p->set<std::string>("Tangents Name", "Tangents "+basalSideName);
+    p->set<std::string>("Gradient BF Name", Albany::grad_bf_name + " "+basalSideNamePlanar);
+    p->set<std::string>("Tangents Name", "Tangents "+basalSideNamePlanar);
     p->set<std::string>("Side Set Name",basalSideName);
 
     // Output (assumes same Name as input)
@@ -1472,7 +1507,7 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
     paramList->set<std::string>("Observed Thickness Side QP Variable Name","observed_ice_thickness_" + basalSideName);
     paramList->set<std::string>("SMB Side QP Variable Name","surface_mass_balance_" + basalSideName);
     paramList->set<std::string>("SMB RMS Side QP Variable Name","surface_mass_balance_RMS_" + basalSideName);
-    paramList->set<std::string>("Thickness Gradient Name", ice_thickness_name + "_" + basalSideName + " Gradient");
+    paramList->set<std::string>("Thickness Gradient Name", ice_thickness_name + "_" + basalSideName + " Planar Gradient");
     paramList->set<std::string>("Thickness Side QP Variable Name",ice_thickness_name + "_" + basalSideName);
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Weighted Measure Basal Name",Albany::weighted_measure_name + " " + basalSideName);
@@ -1481,7 +1516,7 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
     paramList->set<std::string>("Metric Basal Name",Albany::metric_name + " " + basalSideName);
     paramList->set<std::string>("Metric Surface Name",Albany::metric_name + " " + surfaceSideName);
     paramList->set<std::string>("Basal Side Tangents Name",Albany::tangents_name + " " + basalSideName);
-    paramList->set<std::string>("Weighted Measure 2D Name",Albany::weighted_measure_name + " " + basalSideName);
+    paramList->set<std::string>("Weighted Measure 2D Name",Albany::weighted_measure_name + " " + basalSideName + "_planar");
     paramList->set<std::string>("Inverse Metric Basal Name",Albany::metric_inv_name + " " + basalSideName);
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
     paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
