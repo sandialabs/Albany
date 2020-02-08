@@ -6,6 +6,8 @@ cd $BASE_DIR
 unset http_proxy
 unset https_proxy
 
+export OMPI_CXX=nvcc_wrapper_p100 
+
 cat albany ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
 now=$(date +"%m_%d_%Y-%H_%M")
