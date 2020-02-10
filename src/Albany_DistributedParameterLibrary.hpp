@@ -26,10 +26,10 @@ public:
   typedef typename param_map_type::const_iterator const_iterator;
 
   //! Constructor
-  DistributedParameterLibrary() : param_map() {}
+  DistributedParameterLibrary() = default;
 
   //! Destructor
-  ~DistributedParameterLibrary() {}
+  virtual ~DistributedParameterLibrary() = default;
 
   //! Number of parameters in the library
   size_t size() const { return param_map.size(); }

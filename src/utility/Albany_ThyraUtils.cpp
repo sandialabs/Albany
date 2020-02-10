@@ -549,7 +549,9 @@ void getDiagonalCopy (const Teuchos::RCP<const Thyra_LinearOp>& lop,
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getConstTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    tmat->getLocalDiagCopy(*Albany::getTpetraVector(diag,true));
+    auto tvec = *Albany::getTpetraVector(diag,true);
+    tvec.clear_sync_state();
+    tmat->getLocalDiagCopy(tvec);
     return;
   }
 
