@@ -216,9 +216,9 @@ if (BUILD_TRILINOS)
     "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=SERIAL"
     "-DPhalanx_INDEX_SIZE_TYPE:STRING=INT"
     "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
-    "-DKokkos_ENABLE_Serial:BOOL=ON"
-    "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
-    "-DKokkos_ENABLE_Pthread:BOOL=OFF"
+    "-DKokkos_ENABLE_SERIAL:BOOL=ON"
+    "-DKokkos_ENABLE_OPENMP:BOOL=OFF"
+    "-DKokkos_ENABLE_PTHREAD:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
     #
@@ -267,13 +267,10 @@ if (BUILD_TRILINOS)
     "-DMPI_EXEC_MAX_NUMPROCS:STRING=4"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING=-n"
     #
-    "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
     "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-    "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
-    "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
     "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Teko:BOOL=ON"

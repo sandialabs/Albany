@@ -171,8 +171,8 @@ if (BUILD_TRILINOS)
     "-DTPL_ENABLE_MPI:BOOL=ON"
     #
     "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPIC=mpirun"
-    "-DMPIC_NUMPROCS_FLAG:STRING=-n"
+    "-DMPI=mpirun"
+    "-DMPI_NUMPROCS_FLAG:STRING=-n"
     #
     "-DTPL_ENABLE_BLAS:BOOL=ON"
     "-DBLAS_LIBRARY_DIRS:PATH=$ENV{BLAS_ROOT}/lib"
@@ -198,14 +198,14 @@ if (BUILD_TRILINOS)
     "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
     "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="
     #
-    "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
-    "-DKokkos_ENABLE_Cuda_UVM:BOOL=ON"
+    "-DKokkos_ENABLE_CUDA_UVM:BOOL=ON"
     "-DKokkos_ENABLE_EXAMPLES:BOOL=OFF"
-    "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
-    "-DKokkos_ENABLE_Pthread:BOOL=OFF"
-    "-DKokkos_ENABLE_Serial:BOOL=ON"
+    "-DKokkos_ENABLE_OPENMP:BOOL=OFF"
+    "-DKokkos_ENABLE_PTHREAD:BOOL=OFF"
+    "-DKokkos_ENABLE_SERIAL:BOOL=ON"
     "-DKokkos_ENABLE_TESTS:BOOL=OFF"
-    "-DKOKKOS_ARCH:STRING='Power9\\;Volta70'"
+    "-DKokkos_ARCH_POWER9=ON"
+    "-DKokkos_ARCH_VOLTA70=ON"
     "-DTPL_ENABLE_Thrust:BOOL=ON"
     "-DTPL_ENABLE_CUDA:BOOL=ON"
     "-DTPL_ENABLE_CUSPARSE:BOOL=ON"
@@ -219,7 +219,7 @@ if (BUILD_TRILINOS)
     "-DSacado_ENABLE_COMPLEX:BOOL=OFF"
     "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
     "-DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON"
-    "-DKokkos_ENABLE_Cuda_Lambda:BOOL=ON"
+    "-DKokkos_ENABLE_CUDA_Lambda:BOOL=ON"
     "-DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=ON"
     "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
     "-DTpetra_INST_INT_INT:BOOL=OFF"
@@ -284,7 +284,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
     "-DTrilinos_ENABLE_Teko:BOOL=ON"
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
-    "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
     "-DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON"
     "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
@@ -293,8 +292,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
     "-DTrilinos_ENABLE_Tempus:BOOL=ON"
     "-DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-    #
-    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")

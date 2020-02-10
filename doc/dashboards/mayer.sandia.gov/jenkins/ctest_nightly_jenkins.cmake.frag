@@ -182,13 +182,12 @@ if (BUILD_TRILINOS)
 
   set (CONFIGURE_OPTIONS
     "-DCMAKE_INSTALL_PREFIX:PATH=$ENV{jenkins_trilinos_install_dir}"
-    "-DKokkos_ENABLE_Pthread=OFF"
-    "-DKokkos_ENABLE_Serial:BOOL=ON"
-    "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
+    "-DKokkos_ENABLE_PTHREAD=OFF"
+    "-DKokkos_ENABLE_SERIAL:BOOL=ON"
+    "-DKokkos_ENABLE_OPENMP:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTrilinos_ENABLE_DEBUG:BOOL=OFF"
-    "-DTrilinos_ENABLE_RELEASE:BOOL=ON"
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     #
     "-DCMAKE_C_COMPILER=mpicc"
@@ -239,7 +238,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
     "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
     "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING=''"
-    "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
     "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
     #
     "-DTPL_ENABLE_Matio=OFF"
@@ -270,9 +268,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-    "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
-    "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
-    "-DTrilinos_ENABLE_MOOCHO:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
     "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
@@ -331,9 +326,8 @@ if (BUILD_TRILINOS)
     "-DPhalanx_INDEX_SIZE_TYPE:STRING='INT'"
     "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
     "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
-    "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DTPL_ENABLE_HWLOC:STRING=OFF"
-    "-DKOKKOS_ARCH:STRING='ARMv8-TX2'"
+    "-DKokkos_ARCH_ARMV8-TX2=ON"
     #
     "-DTrilinos_ENABLE_Panzer:BOOL=OFF"
     "-DMPI_EXEC=${MPI_DIR}/bin/mpirun"
