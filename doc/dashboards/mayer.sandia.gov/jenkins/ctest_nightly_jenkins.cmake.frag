@@ -327,7 +327,7 @@ if (BUILD_TRILINOS)
     "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
     "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
     "-DTPL_ENABLE_HWLOC:STRING=OFF"
-    "-DKokkos_ARCH_ARMV8-TX2=ON"
+    "-DKokkos_ARCH_ARMV8_THUNDERX2=ON"
     #
     "-DTrilinos_ENABLE_Panzer:BOOL=OFF"
     "-DMPI_EXEC=${MPI_DIR}/bin/mpirun"
