@@ -106,7 +106,7 @@ macro(do_albany CONFIGURE_OPTIONS BTYPE)
   # Run Albany tests
   #
 
-  IF(BUILD_SUCCESS)
+  IF((BUILD_SUCCESS) OR (BTYPE MATCHES "Albany64BitClangDbg")) 
 
   IF((BTYPE MATCHES "Albany64BitDbg") OR (BTYPE MATCHES "Albany64BitClangDbg")) 
     set (CTEST_TEST_TIMEOUT 4200)
