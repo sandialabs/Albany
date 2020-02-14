@@ -514,13 +514,16 @@ MechanicsProblem::constructNeumannEvaluators(
 
   if (have_temperature_eq_ || have_ace_temperature_eq_) {
     neumannNames[index] = "T";
-    offsets[index]      = Teuchos::Array<int>(1, 1);
+    auto num_eq_mech = have_mech_eq_ ? num_dims_ : 0;
+    offsets[index]      = Teuchos::Array<int>(1, num_eq_mech);
     index++;
   }
 
   if (have_dislocation_density_eq_) {
     for (int i{0}; i < LCM::DislocationDensity::get_num_slip(num_dims_); ++i) {
       neumannNames[index] = strint("DF", i, '_');
+      //IKT, 2/14/2020: we may want to check that this is correct, given 
+      //the bug fix I made having to do with offsets for temp above...
       offsets[index]      = Teuchos::Array<int>(1, index);
       index++;
     }
