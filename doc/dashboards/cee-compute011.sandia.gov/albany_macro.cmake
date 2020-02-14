@@ -106,6 +106,10 @@ macro(do_albany CONFIGURE_OPTIONS BTYPE)
   # Run Albany tests
   #
 
+  # IKT, 2/14/2020: for some reason, in the clang dbg build, warnings 
+  # are intepreted as errors.  Therfore modifying the logic to run tests 
+  # in that build even if errors were present. Not a nice solution...
+
   IF((BUILD_SUCCESS) OR (BTYPE MATCHES "Albany64BitClangDbg")) 
 
   IF((BTYPE MATCHES "Albany64BitDbg") OR (BTYPE MATCHES "Albany64BitClangDbg")) 
@@ -134,7 +138,7 @@ macro(do_albany CONFIGURE_OPTIONS BTYPE)
     endif (S_HAD_ERROR)
   endif (CTEST_DO_SUBMIT)
 
-  ENDIF(BUILD_SUCCESS)
+  ENDIF((BUILD_SUCCESS) OR (BTYPE MATCHED "Albany64BitClangDbg"))
   ENDIF(CONFIG_SUCCESS)
 
 endmacro(do_albany CONFIGURE_OPTIONS BTYPE)
