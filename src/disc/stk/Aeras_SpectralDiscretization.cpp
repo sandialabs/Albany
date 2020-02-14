@@ -30,7 +30,6 @@
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/CreateEdges.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
-#include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/Selector.hpp>
 #include <PHAL_Dimension.hpp>
 #ifdef ALBANY_SEACAS
@@ -945,16 +944,14 @@ stk::mesh::EntityId
 Aeras::SpectralDiscretization::getMaximumID(const stk::mesh::EntityRank rank) const
 {
   // Get the local maximum ID
-  bulkData.begin_entities(rank);
-  stk::mesh::EntityId last_entity =
-     (--bulkData.end_entities(rank))->first.id();
+  stk::mesh::EntityId localMaxId = stk::mesh::get_max_id_on_local_proc(bulkData, rank);
 
   // Use a parallel MAX reduction to obtain the global maximum ID
   stk::mesh::EntityId result;
   Teuchos::reduceAll(*commT,
                      Teuchos::REDUCE_MAX,
                      1,
-                     (GO*)(&last_entity),
+                     (GO*)(&localMaxId),
                      (GO*)(&result));
   return result;
 }
