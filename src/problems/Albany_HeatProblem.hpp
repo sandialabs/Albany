@@ -87,14 +87,17 @@ namespace Albany {
 
   protected:
 
-    //! Boundary conditions on source term
-    bool periodic;
-    bool haveSource;
-    bool haveAbsorption;
-    bool conductivityIsDistParam;
-    bool dirichletIsDistParam;
-    std::string meshPartDirichlet;
-    int numDim;
+   //! Boundary conditions on source term
+   bool periodic;
+   bool haveSource;
+   bool haveAbsorption;
+   bool conductivityIsDistParam;
+   bool dirichletIsDistParam;
+   std::string meshPartDirichlet;
+   int numDim;
+
+   //! Problem PL 
+   const Teuchos::RCP<Teuchos::ParameterList> params; 
 
    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
    Teuchos::RCP<const Teuchos::Comm<int> > commT; 

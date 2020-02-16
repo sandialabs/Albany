@@ -17,6 +17,7 @@ HydrostaticProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
+  params(params_), 
   dof_names_tracers(arcpFromArray(params_->sublist("Hydrostatic Problem").
         get<Teuchos::Array<std::string> >("Tracers",
             Teuchos::Array<std::string>()))),
@@ -64,6 +65,13 @@ buildProblem(
 		  Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
   
+  // Check if have Neumann sublist; throw error if attempting to specify
+  // Neumann BCs, but there are no sidesets in the input mesh 
+  bool isNeumannPL = params->isSublist("Neumann BCs");
+  if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
+    ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
+  }
+
   // Build a sideset evaluator if sidesets are present
   if(meshSpecs[0]->ssNames.size() > 0)
      constructNeumannEvaluators(meshSpecs[0]);

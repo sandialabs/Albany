@@ -104,6 +104,10 @@ namespace Tsunami {
     std::string elementBlockName;
 
     bool use_params_on_mesh; //boolean to indicate whether to use parameters (viscosity, density) on mesh 
+
+    //! Problem PL 
+    const Teuchos::RCP<Teuchos::ParameterList> params;
+
   };
 
 }

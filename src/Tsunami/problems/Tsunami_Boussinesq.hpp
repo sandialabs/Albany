@@ -103,6 +103,10 @@ namespace Tsunami {
     int neq; 
 
     std::string elementBlockName;
+
+    /// Problem PL 
+    const Teuchos::RCP<Teuchos::ParameterList> params;
+
   };
 
 }

@@ -12,6 +12,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                         const Teuchos::RCP<ParamLib>& paramLib_,
                         const int numDim_)
  : Albany::AbstractProblem(params_, paramLib_, numDim_)
+ , params(params_) 
  , discParams (discParams_)
  , numDim(numDim_)
  , use_sdbcs_(false)
@@ -247,6 +248,13 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   // Build a dirichlet fm if nodesets are present
   if (meshSpecs[0]->nsNames.size() >0) {
     constructDirichletEvaluators(*meshSpecs[0]);
+  }
+
+  // Check if have Neumann sublist; throw error if attempting to specify
+  // Neumann BCs, but there are no sidesets in the input mesh 
+  bool isNeumannPL = params->isSublist("Neumann BCs");
+  if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
+    ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
   }
 
   // Build a neumann fm if sidesets are present

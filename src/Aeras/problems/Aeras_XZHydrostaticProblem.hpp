@@ -113,6 +113,9 @@ namespace Aeras {
     const int numDim;
     const int numLevels;
     const int numTracers;
+    //! Problem PL 
+    const Teuchos::RCP<Teuchos::ParameterList> params;
+
   };
 
 }

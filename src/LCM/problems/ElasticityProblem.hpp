@@ -127,6 +127,10 @@ class ElasticityProblem : public Albany::AbstractProblem
       newState;
 
   Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
+
+  /// Problem PL 
+  const Teuchos::RCP<Teuchos::ParameterList> params;
+
 };
 
 }  // namespace Albany

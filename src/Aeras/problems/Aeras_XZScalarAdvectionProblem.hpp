@@ -84,7 +84,8 @@ namespace Aeras {
     int numDim;
     int numLevels;
     Teuchos::RCP<Aeras::Layouts> dl;
-
+    //! Problem PL 
+    const Teuchos::RCP<Teuchos::ParameterList> params;
   };
 
 }

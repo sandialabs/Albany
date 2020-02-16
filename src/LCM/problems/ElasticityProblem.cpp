@@ -14,6 +14,7 @@ Albany::ElasticityProblem::ElasticityProblem(
     const int                                   numDim_,
     const Teuchos::RCP<AAdapt::rc::Manager>&    rc_mgr_)
     : Albany::AbstractProblem(params_, paramLib_, numDim_),
+      params(params_), 
       haveSource(false),
       numDim(numDim_),
       use_sdbcs_(false),
@@ -69,15 +70,20 @@ Albany::ElasticityProblem::buildProblem(
   buildEvaluators(
       *fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, Teuchos::null);
 
-  if (meshSpecs[0]->nsNames.size() >
-      0)  // Build a nodeset evaluator if nodesets are present
-
+  if (meshSpecs[0]->nsNames.size() > 0) {  // Build a nodeset evaluator if nodesets are present
     constructDirichletEvaluators(*meshSpecs[0]);
+  }
 
-  if (meshSpecs[0]->ssNames.size() >
-      0)  // Build a sideset evaluator if sidesets are present
+  // Check if have Neumann sublist; throw error if attempting to specify
+  // Neumann BCs, but there are no sidesets in the input mesh 
+  bool isNeumannPL = params->isSublist("Neumann BCs");
+  if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
+    ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
+  }
 
+  if (meshSpecs[0]->ssNames.size() > 0) {  // Build a sideset evaluator if sidesets are present
     constructNeumannEvaluators(meshSpecs[0]);
+  }
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>

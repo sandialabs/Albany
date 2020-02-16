@@ -181,6 +181,9 @@ class ElectroMechanicsProblem : public Albany::AbstractProblem
   ///
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>> new_state_;
 
+  /// Problem PL 
+  const Teuchos::RCP<Teuchos::ParameterList> params_;
+
   template <typename EvalT>
   void
   registerStateVariables(

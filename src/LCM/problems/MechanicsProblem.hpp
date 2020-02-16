@@ -335,6 +335,9 @@ class MechanicsProblem : public AbstractProblem
                                                    "HydroStress",
                                                    "Damage",
                                                    "Stabilized Pressure"};
+  /// Problem PL 
+  const Teuchos::RCP<Teuchos::ParameterList> params_;
+
 
 };  // class MechanicsProblem
 

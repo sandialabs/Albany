@@ -14,6 +14,7 @@ LinearElasticityModalProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_
 		        const int numDim_) :
   ATO::OptimizationProblem(params_, paramLib_, numDim_),
   Albany::AbstractProblem(params_, paramLib_, numDim_),
+  params(params_), 
   numDim(numDim_),
   use_sdbcs_(false)
 {
@@ -67,6 +68,13 @@ buildProblem(
     if (meshSpecs[ps]->ssNames.size() > 0) haveSidesets = true;
   }
   constructDirichletEvaluators(*meshSpecs[0]);
+
+  // Check if have Neumann sublist; throw error if attempting to specify
+  // Neumann BCs, but there are no sidesets in the input mesh 
+  bool isNeumannPL = params->isSublist("Neumann BCs");
+  if (isNeumannPL && !haveSidesets) {
+    ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
+  }
 
   if( haveSidesets )
     constructNeumannEvaluators(meshSpecs[0]);

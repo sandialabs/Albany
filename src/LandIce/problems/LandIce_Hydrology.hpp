@@ -139,6 +139,9 @@ protected:
   bool has_h_till;
   bool has_p_dot;
 
+  //! Problem PL 
+  const Teuchos::RCP<Teuchos::ParameterList> params;
+
   int numDim;
   std::string elementBlockName;
 

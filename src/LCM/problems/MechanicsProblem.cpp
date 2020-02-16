@@ -18,6 +18,7 @@ MechanicsProblem::MechanicsProblem(
     Teuchos::RCP<AAdapt::rc::Manager> const&    rc_mgr,
     Teuchos::RCP<const Teuchos::Comm<int>>&     commT)
     : AbstractProblem(params, param_lib),
+      params_(params), 
       have_source_(false),
       thermal_source_(SOURCE_TYPE_NONE),
       thermal_source_evaluated_(false),
@@ -317,6 +318,13 @@ MechanicsProblem::buildProblem(
   }
   *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
   constructDirichletEvaluators(*meshSpecs[0]);
+
+  // Check if have Neumann sublist; throw error if attempting to specify
+  // Neumann BCs, but there are no sidesets in the input mesh 
+  bool isNeumannPL = params_->isSublist("Neumann BCs");
+  if (isNeumannPL && !haveSidesets) {
+    ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
+  }
 
   if (haveSidesets) {
     *out << "Calling MechanicsProblem::constructNeumannEvaluators" << '\n';

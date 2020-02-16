@@ -99,7 +99,11 @@ protected:
   Teuchos::RCP<Albany::Layouts> dl_;
 
   /// Boolean marking whether SDBCs are used 
-  bool use_sdbcs_; 
+  bool use_sdbcs_;
+
+  /// Problem PL 
+  const Teuchos::RCP<Teuchos::ParameterList> params;
+ 
 };
 
 }

@@ -82,7 +82,10 @@ namespace Albany {
     Teuchos::RCP<Albany::Layouts> dl;
 
     /// Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
+    bool use_sdbcs_;
+
+    /// Problem params 
+    const Teuchos::RCP<Teuchos::ParameterList> params; 
 
   };
 

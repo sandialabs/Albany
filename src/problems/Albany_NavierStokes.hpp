@@ -115,7 +115,9 @@ namespace Albany {
     bool havePSPG;     //! have pressure stabilization
     bool haveSUPG;     //! have SUPG stabilization
     bool porousMedia;  //! flow through porous media problem
-    
+ 
+    const Teuchos::RCP<Teuchos::ParameterList> params; 
+  
     Teuchos::RCP<Albany::Layouts> dl;
   
     /// Boolean marking whether SDBCs are used 

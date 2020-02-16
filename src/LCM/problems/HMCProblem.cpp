@@ -28,6 +28,7 @@ Albany::HMCProblem::HMCProblem(
           params_,
           paramLib_,
           numDim_ + params_->get("Additional Scales", 1) * numDim_ * numDim_),
+      params(params_), 
       haveSource(false),
       use_sdbcs_(false),
       numDim(numDim_),
@@ -84,15 +85,20 @@ Albany::HMCProblem::buildProblem(
   buildEvaluators(
       *fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, Teuchos::null);
 
-  if (meshSpecs[0]->nsNames.size() >
-      0)  // Build a nodeset evaluator if nodesets are present
-
+  if (meshSpecs[0]->nsNames.size() > 0) {  // Build a nodeset evaluator if nodesets are present
     constructDirichletEvaluators(*meshSpecs[0]);
+  }
 
-  if (meshSpecs[0]->ssNames.size() >
-      0)  // Build a sideset evaluator if sidesets are present
+  // Check if have Neumann sublist; throw error if attempting to specify
+  // Neumann BCs, but there are no sidesets in the input mesh 
+  bool isNeumannPL = params->isSublist("Neumann BCs");
+  if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
+    ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
+  }
 
+  if (meshSpecs[0]->ssNames.size() > 0) { // Build a sideset evaluator if sidesets are present
     constructNeumannEvaluators(meshSpecs[0]);
+  }
 
 #ifdef ALBANY_ATO
   if (params->isType<Teuchos::RCP<ATO::Topology>>("Topology"))

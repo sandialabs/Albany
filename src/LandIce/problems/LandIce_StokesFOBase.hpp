@@ -237,6 +237,10 @@ protected:
   std::string stiffening_factor_name;
   std::string effective_pressure_name;
   std::string vertically_averaged_velocity_name;
+
+  //! Problem PL 
+  const Teuchos::RCP<Teuchos::ParameterList> params;
+
 };
 
 template <typename EvalT>

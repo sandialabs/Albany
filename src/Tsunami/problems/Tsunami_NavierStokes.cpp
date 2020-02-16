@@ -21,6 +21,7 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const bool haveAdvection_, 
              const bool haveUnsteady_) :
   Albany::AbstractProblem(params_, paramLib_),
+  params(params_), 
   haveSource(false),
   havePSPG(true),
   haveSUPG(false),
@@ -106,6 +107,14 @@ buildProblem(
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,
       Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
+  
+  // Check if have Neumann sublist; throw error if attempting to specify
+  // Neumann BCs, but there are no sidesets in the input mesh 
+  bool isNeumannPL = params->isSublist("Neumann BCs");
+  if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
+    ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
+  }
+
   //construct Neumann evaluators
   constructNeumannEvaluators(meshSpecs[0]);
 }

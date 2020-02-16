@@ -162,6 +162,10 @@ class HMCProblem :
       Albany::StateManager&                  stateMgr,
       std::string                            eb_name,
       int                                    numDim);
+
+  /// Problem PL 
+  const Teuchos::RCP<Teuchos::ParameterList> params;
+
 };
 
 }  // namespace Albany

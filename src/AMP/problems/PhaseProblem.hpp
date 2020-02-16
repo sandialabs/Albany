@@ -100,6 +100,10 @@ protected:
 
   /// Boolean marking whether SDBCs are used 
   bool use_sdbcs_; 
+
+  //1 Problem PL 
+  const Teuchos::RCP<Teuchos::ParameterList> params;
+
 };
 
 }

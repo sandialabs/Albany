@@ -82,6 +82,8 @@ namespace Aeras {
   protected:
     int numDim;
     Teuchos::RCP<Albany::Layouts> dl;
+    //! Problem PL 
+    const Teuchos::RCP<Teuchos::ParameterList> params;
 
   };
 
