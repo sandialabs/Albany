@@ -9,12 +9,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell.gen.4.3 ${CMAKE_CURRENT_BINA
 
 IF (ALBANY_EPETRA)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal.yaml ${CMAKE_CURRENT_BINARY_DIR}/nodal.yaml COPYONLY)
-  add_test(${testName}_Epetra ${Albany.exe} nodal.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "ATO;Epetra;Forward")
+  add_test(ATO_${testName}_Epetra ${Albany.exe} nodal.yaml)
+  set_tests_properties(ATO_${testName}_Epetra PROPERTIES LABELS "ATO;Epetra;Forward")
 ENDIF() 
 
 IF (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodalT.yaml ${CMAKE_CURRENT_BINARY_DIR}/nodalT.yaml COPYONLY)
-  add_test(${testName}_Tpetra ${Albany.exe} nodalT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "ATO;Tpetra;Forward")
+  add_test(ATO_${testName}_Tpetra ${Albany.exe} nodalT.yaml)
+  set_tests_properties(ATO_${testName}_Tpetra PROPERTIES LABELS "ATO;Tpetra;Forward")
 ENDIF()

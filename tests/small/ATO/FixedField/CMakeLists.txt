@@ -11,8 +11,8 @@ IF (SEACAS_EPU AND SEACAS_EXODIFF)
 
   IF (ALBANY_EPETRA) 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pcm_opt.yaml ${CMAKE_CURRENT_BINARY_DIR}/pcm_opt.yaml COPYONLY)
-    createExoDiffTest(${testName}_Epetra pcm_opt.yaml physics_0_pcm_opt)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "ATO;Epetra;Forward")
+    createExoDiffTest(ATO_${testName}_Epetra pcm_opt.yaml physics_0_pcm_opt)
+    set_tests_properties(ATO_${testName}_Epetra PROPERTIES LABELS "ATO;Epetra;Forward")
   ENDIF() 
 
   # This test currently fails, due to small differences in computed solution
