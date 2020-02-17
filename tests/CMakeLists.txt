@@ -69,6 +69,7 @@ IF (ALBANY_MPI)
   set(SerialAlbany.exe                 ${SERIAL_CALL} ${AlbanyPath})
   set(SerialAlbanyAnalysis.exe         ${SERIAL_CALL} ${AlbanyAnalysisPath})
   set(SerialAlbanyDakota.exe           ${SERIAL_CALL} ${AlbanyDakotaPath})
+  set(SerialAlbanyDakotaNoMpiRun.exe   ${AlbanyDakotaPath})
   # Do not test on greater than Trilinos_MPI_EXEC_MAX_NUMPROCS configured in Trilinos build
   # or explicity given at Albany configure time -D ALBANY_MPI_EXEC_MAX_NUMPROCS
   IF(DEFINED MPIMNP)
