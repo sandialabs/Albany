@@ -497,7 +497,13 @@ MechanicsProblem::constructNeumannEvaluators(
   // Last entry specifies behavior for setting NBC on "DOF all"
   // By "all", we mean components of the traction vector only
   // Other fields cannot use this specifier
-  neumannNames[neq] = "all";
+  if (have_temperature_eq_ || have_ace_temperature_eq_) {
+    neumannNames[neq] = "all-disp-dofs"; 
+  }
+  else {
+    neumannNames[neq] = "all";
+  }
+
 
   Teuchos::Array<Teuchos::Array<int>> offsets(neq + 1);
 

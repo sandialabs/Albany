@@ -36,19 +36,19 @@ LCM:
         Time Values: [0.00000000e+00, 985.20000000, 3600.00000000]
         BC Values: [300.00000000, 800.00000000, 800.00000000]
     Neumann BCs:
-      Time Dependent NBC on SS surface_1 for DOF all set P:
+      Time Dependent NBC on SS surface_1 for DOF all-disp-dofs set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
-      Time Dependent NBC on SS surface_1a for DOF all set P:
+      Time Dependent NBC on SS surface_1a for DOF all-disp-dofs set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
-      Time Dependent NBC on SS surface_1b for DOF all set P:
+      Time Dependent NBC on SS surface_1b for DOF all-disp-dofs set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
-      Time Dependent NBC on SS surface_1c for DOF all set P:
+      Time Dependent NBC on SS surface_1c for DOF all-disp-dofs set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
-      Time Dependent NBC on SS surface_1d for DOF all set P:
+      Time Dependent NBC on SS surface_1d for DOF all-disp-dofs set P:
         Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
         BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
     Initial Condition:
