@@ -80,7 +80,7 @@ if (ALBANY_DAKOTA)
                    ${CMAKE_CURRENT_BINARY_DIR}/inputDakota_uniform.yaml COPYONLY)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_uniform.in
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_uniform.in COPYONLY)
-    add_test(${testName}_uniform ${SerialAlbanyDakotaNoMpiRun.exe} inputDakota_uniform.yaml)
+    add_test(${testName}_uniform ${AlbanyDakota.exe} inputDakota_uniform.yaml)
     set_tests_properties(${testName}_uniform PROPERTIES LABELS "Epetra;Analysis;Dakota")
   endif()
 endif()
