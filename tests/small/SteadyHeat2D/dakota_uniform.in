@@ -7,10 +7,11 @@ method,
            seed = 17
            #response_levels = 100
 variables,
-        uniform_uncertain = 1 
-           lower_bounds   0.01
-           upper_bounds   1.00
-           descriptors  'ThermalConductivity' 
+        active uncertain 
+           uniform_uncertain = 1 
+              lower_bounds   0.01
+              upper_bounds   1.00
+              descriptors  'ThermalConductivity' 
 interface,
         direct
           #asynch
