@@ -17,7 +17,8 @@ interface,
           evaluation_servers = 1
 
 responses,
-        num_response_functions = 1
+        #num_response_functions = 1
+        num_objective_functions = 1
         no_gradients
         #analytic_gradients
         no_hessians
