@@ -24,9 +24,7 @@ mv * ../
 cd ..
 rm -rf cron jenkins
 
-
-bash -l -c "source mayer_arm_modules.sh >& modules_trilinos.out; bash nightly_cron_script_trilinos_mayer_jenkins.sh"
-bash -l -c "source mayer_arm_modules.sh >& modules_albany.out; bash nightly_cron_script_albany_mayer_jenkins.sh"
+bash -l -c "source mayer_arm_modules.sh >& modules_trilinos.out; bash nightly_cron_script_trilinos_mayer_jenkins.sh; sbatch batch.openmpi.bash"
 
 chgrp wg-albany -R /mscratch/albany/mayer/nightlyCDashJenkins/*
 chmod ug+rwX -R /mscratch/albany/mayer/nightlyCDashJenkins/*
