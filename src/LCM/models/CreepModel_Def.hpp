@@ -145,6 +145,8 @@ CreepModel<EvalT, Traits>::computeState(
   auto hardening_modulus = *dep_fields["Hardening Modulus"];
   auto delta_time        = *dep_fields["Delta Time"];
 
+  ScalarT dt = delta_time(0);
+
   // extract evaluated MDFields
   auto                  stress = *eval_fields[cauchy_string];
   auto                  Fp     = *eval_fields[Fp_string];
@@ -224,9 +226,23 @@ CreepModel<EvalT, Traits>::computeState(
 
       f = smag - sq23 * (Y + K * eqpsold(cell, pt));
 
+//      if( Albany::getProcRank() == 0)
+//      {
+//        std::cout
+//          << std::endl
+//          << std::endl
+//          << "At new quadrature point..." << std::endl
+//          << "|| dev( b_e) || = " << a0 << std::endl
+//          << "|| s || = " << smag << std::endl;
+//      }
+        
+
       // check yield condition
       if (f <= 0.0) {
+//      std::cout << "f = " << f << " <= 0. Not yielding." << std::endl;
         if (a0 > 1.0E-12) {
+//          std::cout << "a0 = " << a0 << " > 1E-12. Entered return mapping algorithm." 
+//            << std::endl;
           // return mapping algorithm
           bool      converged     = false;
           ScalarT   alpha         = 0.0;
@@ -250,7 +266,7 @@ CreepModel<EvalT, Traits>::computeState(
 
           X[0] = creep_initial_guess_;
 
-          F[0] = X[0] - delta_time(0) * temp_adj_relaxation_para_ *
+          F[0] = X[0] - dt * temp_adj_relaxation_para_ *
                             std::pow(mu, strain_rate_expo_) *
                             std::pow(
                                 (a0 - 2. / 3. * X[0] * a1) *
@@ -259,7 +275,7 @@ CreepModel<EvalT, Traits>::computeState(
 
           dFdX[0] =
               1. -
-              delta_time(0) * temp_adj_relaxation_para_ *
+              dt * temp_adj_relaxation_para_ *
                   std::pow(mu, strain_rate_expo_) * (strain_rate_expo_ / 2.) *
                   std::pow(
                       (a0 - 2. / 3. * X[0] * a1) * (a0 - 2. / 3. * X[0] * a1),
@@ -276,7 +292,7 @@ CreepModel<EvalT, Traits>::computeState(
             std::cerr << "strain_rate_expo_ is " << strain_rate_expo_ << 'n';
             std::cerr << "temp_adj_relaxation_para_ is "
                       << temp_adj_relaxation_para_ << 'n';
-            std::cerr << "dt is " << delta_time(0) << 'n';
+            std::cerr << "dt is " << dt << 'n';
           }
 
           debug_X[0]    = X[0];
@@ -286,10 +302,23 @@ CreepModel<EvalT, Traits>::computeState(
           original_res  = F[0];
 
           while (!converged && count <= max_count) {
+//            std::cout
+//              << std::endl
+//              << "Attempt " << count << " to converge creep's dGamma." << std::endl
+//              << "Important values: " << std::endl
+//              << "dt = " << dt << std::endl
+//              << "mu = " << mu << std::endl
+//              << "temp_adj_relaxation_para_ = " << temp_adj_relaxation_para_ << std::endl
+//              << "strain_rate_expo_ = " << strain_rate_expo_ << std::endl
+//              << "a0 = " << a0 << std::endl
+//              << "a1 = " << a1 << std::endl
+//              << "F[0] = residual = " << F[0] << std::endl
+//              << "X[0] = dGam = " << X[0] << std::endl
+//              << "dFdX[0] = " << dFdX[0] << std::endl;
             count++;
             solver.solve(dFdX, X, F);
 
-            F[0] = X[0] - delta_time(0) * temp_adj_relaxation_para_ *
+            F[0] = X[0] - dt * temp_adj_relaxation_para_ *
                               std::pow(mu, strain_rate_expo_) *
                               std::pow(
                                   (a0 - 2. / 3. * X[0] * a1) *
@@ -298,7 +327,7 @@ CreepModel<EvalT, Traits>::computeState(
 
             dFdX[0] =
                 1. -
-                delta_time(0) * temp_adj_relaxation_para_ *
+                dt * temp_adj_relaxation_para_ *
                     std::pow(mu, strain_rate_expo_) * (strain_rate_expo_ / 2.) *
                     std::pow(
                         (a0 - 2. / 3. * X[0] * a1) * (a0 - 2. / 3. * X[0] * a1),
@@ -321,7 +350,24 @@ CreepModel<EvalT, Traits>::computeState(
             res              = std::abs(F[0]);
             debug_res[count] = res;
             res_norm         = res/original_res;
-            if (res_norm < return_map_tolerance) { converged = true; }
+
+//            std::cout
+//              << "res_norm = " << res_norm << std::endl
+//              << "return_map_tolerance = " << return_map_tolerance << std::endl;
+
+
+            if (res_norm < return_map_tolerance || res < return_map_tolerance) 
+            { 
+
+//              std::cout  
+//                << "Converged!" << std::endl
+//                << "a0 - 2. / 3. * X[0] * a1 = " <<  (a0 - 2. / 3. * X[0] * a1)  << std::endl
+//                << "F[0] = residual = " << F[0] << std::endl
+//                << "X[0] = dGam = " << X[0] << std::endl
+//                << "dFdX[0] = " << dFdX[0] << std::endl;
+
+              converged = true; 
+            }
 
             if (count == max_count) {
               std::cerr << "detected NaN, here are the X, F, dfdX values at "
@@ -346,6 +392,7 @@ CreepModel<EvalT, Traits>::computeState(
           solver.computeFadInfo(dFdX, X, F);
 
           dgam = X[0];
+  
 
           // plastic direction
           N = s / minitensor::norm(s);
@@ -353,15 +400,17 @@ CreepModel<EvalT, Traits>::computeState(
           // update s
           s -= 2.0 * mubar * dgam * N;
 
+//          std::cout << "|| s || = " << minitensor::norm(s) << std::endl;
+
           // mechanical source
           /* The below source heat calculation is not correct.
            *  It is not correct because the yield strength (Y)
            *  is being added to the temperature (temperature_)
            *  which is dimensionally wrong.
            *
-           *  if (have_temperature_ && delta_time(0) > 0)
+           *  if (have_temperature_ && dt > 0)
            *  {
-           *  source(cell, pt) = 0.0 * (sq23 * dgam / delta_time(0)
+           *  source(cell, pt) = 0.0 * (sq23 * dgam / dt
            *    * (Y + temperature_(cell,pt))) / (density_ * heat_capacity_);
            *  }
            */
@@ -377,6 +426,8 @@ CreepModel<EvalT, Traits>::computeState(
             }
           }
         } else {
+//          std::cout << "a0 = " << a0 << " <= 1E-12. Skipped return mapping algorithm." 
+//            << std::endl;
           eqps(cell, pt) = eqpsold(cell, pt);
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
@@ -384,7 +435,9 @@ CreepModel<EvalT, Traits>::computeState(
             }
           }
         }
-      } else {
+      } 
+      else // Material is yielding...
+      {
         bool    converged = false;
         ScalarT H         = 0.0;
         ScalarT dH        = 0.0;
@@ -408,12 +461,12 @@ CreepModel<EvalT, Traits>::computeState(
         while (!converged) {
           count++;
           solver.solve(dFdX, X, F);
-          H = 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ *
+          H = 2. * mubar * dt * temp_adj_relaxation_para_ *
               std::pow(
                   (smag + 2. / 3. * (K * X[0]) - f) *
                       (smag + 2. / 3. * (K * X[0]) - f),
                   strain_rate_expo_ / 2.);
-          dH = strain_rate_expo_ * 2. * mubar * delta_time(0) *
+          dH = strain_rate_expo_ * 2. * mubar * dt *
                temp_adj_relaxation_para_ * (2. * K) / 3. *
                std::pow(
                    (smag + 2. / 3. * (K * X[0]) - f) *
@@ -446,7 +499,7 @@ CreepModel<EvalT, Traits>::computeState(
              2. * mubar * (1. + K / (3. * mubar)) * dgam_plastic * N;
 
         dgam =
-            dgam_plastic + delta_time(0) * temp_adj_relaxation_para_ *
+            dgam_plastic + dt * temp_adj_relaxation_para_ *
                                std::pow(minitensor::norm(s), strain_rate_expo_);
 
         alpha = eqpsold(cell, pt) + sq23 * dgam_plastic;
@@ -458,10 +511,10 @@ CreepModel<EvalT, Traits>::computeState(
         eqps(cell, pt) = alpha;
 
         // mechanical source
-        if (have_temperature_ && delta_time(0) > 0) {
+        if (have_temperature_ && dt > 0) {
           source(cell, pt) =
               0.0 *
-              (sq23 * dgam / delta_time(0) * (Y + H + temperature_(cell, pt))) /
+              (sq23 * dgam / dt * (Y + H + temperature_(cell, pt))) /
               (density_ * heat_capacity_);
         }
 
