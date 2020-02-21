@@ -1,0 +1,2 @@
+00 08 * * 1-6,7  cd /mscratch/ikalash/nightlyMayerCDash; rm -rf *; cp /mscratch/albany/mayer/nightlyCDashJenkins/nightly_log_mayerAlbany.txt .; cp /mscratch/albany/mayer/nightlyCDashJenkins/send_email.sh .; cp /mscratch/albany/mayer/nightlyCDashJenkins/results_arm .; bash send_email.sh
+
