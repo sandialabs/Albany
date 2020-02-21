@@ -27,7 +27,9 @@ Box (box_v) = { box_corner[0],  box_corner[1],  box_corner[2],
 Physical Surface("max_x") = {2};
 Physical Surface("min_x") = {1};
 Physical Surface("min_z") = {5};
+Physical Surface("max_z") = {6};
 Physical Surface("min_y") = {3};
+Physical Surface("max_y") = {4};
 
 
 // Save all elements to file, not just labeled ones
