@@ -684,14 +684,12 @@ include_directories (${ALBANY_PUMI_INCLUDE_DIRS}
                      ./LCM/utils/topology
                      ./LandIce/problems
                      ./LandIce/evaluators
+                     ./TDM/problems
+                     ./TDM/evaluators
                      ./Tsunami/problems
                      ./Tsunami/evaluators
                      ./Aeras/problems
                      ./Aeras/evaluators
-                     ./AMP
-                     ./AMP/problems
-                     ./AMP/evaluators
-                     ./AMP/responses
                      ./ATO
                      ./ATO/problems
                      ./ATO/evaluators
@@ -767,10 +765,6 @@ ELSE()
   SET(ALBANY_PUMI_INCLUDE_DIRS )
 ENDIF()
 
-IF (ALBANY_AMP)
-  add_subdirectory(AMP)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
-ENDIF()
 
 # Catalyst CoProcessing
 if(ALBANY_CATALYST)
@@ -856,6 +850,11 @@ ENDIF()
 IF (ALBANY_AERAS)
   add_subdirectory(Aeras)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Aeras)
+ENDIF()
+
+IF (ALBANY_TDM)
+  add_subdirectory(TDM)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} TDM)
 ENDIF()
 
 IF (ALBANY_TSUNAMI)

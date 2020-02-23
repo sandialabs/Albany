@@ -593,6 +593,18 @@ ELSE()
   SET(ALBANY_ATO FALSE)
 ENDIF()
 
+# Set optional dependency on TDM, defaults to Disabled
+OPTION(ENABLE_TDM "Flag to turn on TDM source code" OFF)
+IF (ENABLE_TDM)
+  SET(ALBANY_APF TRUE)
+  ADD_DEFINITIONS(-DALBANY_TDM)
+  MESSAGE("-- TDM       is Enabled, compiling with -DALBANY_TDM")
+  SET(ALBANY_TDM TRUE)
+ELSE()
+  MESSAGE("-- TDM       is NOT Enabled.")
+  SET(ALBANY_TDM FALSE)
+ENDIF()
+
 # set optional dependency on LCM, defaults to Disabled
 OPTION(ENABLE_LCM_TEST_EXES "Flag to turn on LCM Mechanics test executables" ON)
 OPTION(DISABLE_LCM_EXODIFF_SENSITIVE_TESTS "Flag to turn off LCM exodiff sensitive tests" OFF)
@@ -825,17 +837,6 @@ IF (ENABLE_ASCR)
 ELSE()
   MESSAGE("-- ASCR                            is NOT Enabled.")
   SET(ALBANY_ASCR FALSE)
-ENDIF()
-
-# Set optional dependency on AMP, defaults to Disabled
-OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
-IF (ENABLE_AMP)
-  SET(ALBANY_APF TRUE)
-  MESSAGE("-- AMP                             is Enabled")
-  SET(ALBANY_AMP TRUE)
-ELSE()
-  MESSAGE("-- AMP                             is NOT Enabled.")
-  SET(ALBANY_AMP FALSE)
 ENDIF()
 
 # Set optional dependency on SCOREC PUMI,  optional adaptivity
