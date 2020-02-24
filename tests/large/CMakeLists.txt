@@ -12,6 +12,12 @@ IF(ALBANY_LCM)
   add_subdirectory(LCM)
 ENDIF(ALBANY_LCM)
 
+# TDM ###############
+
+IF(ALBANY_TDM)
+  add_subdirectory(TDM)
+ENDIF(ALBANY_TDM)
+
 # Aeras ##################
 
 IF(ALBANY_AERAS)
