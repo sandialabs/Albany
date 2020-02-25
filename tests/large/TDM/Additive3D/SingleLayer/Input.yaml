@@ -39,7 +39,7 @@ ANONYMOUS:
         Continuation Method: Natural
         Initial Value: 0.0
         Continuation Parameter: Time
-        Max Steps: 10000
+        Max Steps: 2
         Max Value: 900.0
         Min Value: 0.0
         Compute Eigenvalues: false
