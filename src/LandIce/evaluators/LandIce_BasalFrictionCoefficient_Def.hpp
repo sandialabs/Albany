@@ -269,7 +269,7 @@ evaluateFields (typename Traits::EvalData workset)
 
     TEUCHOS_TEST_FOR_EXCEPTION (power<0, Teuchos::Exceptions::InvalidParameter,
                                 "\nError in LandIce::BasalFrictionCoefficient: 'Power Exponent' must be >= 0.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (mu<0, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (!distributedMu && mu<0, Teuchos::Exceptions::InvalidParameter,
                                 "\nError in LandIce::BasalFrictionCoefficient: 'Coulomb Friction Coefficient' must be >= 0.\n");
   }
 
