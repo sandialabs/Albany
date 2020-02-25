@@ -38,9 +38,9 @@ ANONYMOUS:
         Method: Constant
       Stepper: 
         Continuation Method: Natural
-        Initial Value: 0.000125
+        Initial Value: 0.00125
         Continuation Parameter: Time
-        Max Steps: 2
+        Max Steps: 4
         Max Value: 5.0
         Min Value: 0.00000025
         Compute Eigenvalues: false
@@ -49,7 +49,7 @@ ANONYMOUS:
           Operator: Jacobian Inverse
           Num Eigenvalues: 1
       Step Size: 
-        Initial Step Size: 0.000125
+        Initial Step Size: 0.00125
         Method: Constant
     NOX: 
       Direction: 
