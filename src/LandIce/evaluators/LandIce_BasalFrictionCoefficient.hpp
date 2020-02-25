@@ -67,6 +67,8 @@ private:
   PHX::MDField<const RealType>          BF;
   PHX::MDField<const VelocityST>        u_norm;          // [m yr^{-1}]
   PHX::MDField<const ParamScalarT>      lambdaField;     // [km],  q is the power in the Regularized Coulomb Friction and n is the Glen's law exponent
+  PHX::MDField<const ParamScalarT>      muPowerLawField; // [yr^q m^{-q}], friction coefficient of the power Law with exponent q
+  PHX::MDField<const ParamScalarT>      muCoulombField;  // [adim], Coulomb friction coefficient
   PHX::MDField<const EffPressureST>     N;               // [kPa]
   PHX::MDField<const MeshScalarT>       coordVec;        // [km]
 
@@ -93,7 +95,8 @@ private:
   int numQPs;
 
   bool logParameters;
-  bool distributedLambda; // [km]
+  bool distributedLambda;
+  bool distributedMu;
   bool nodal;
   bool is_side_equation;
   bool is_thickness_param;

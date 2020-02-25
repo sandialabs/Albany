@@ -697,8 +697,8 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       // Note: this does not check that the 3D field exists. You must ensure that.
       if ( needs[InterpolationRequest::CELL_TO_SIDE] &&
           !is_ss_input_field[ss_name][fname]         &&
-          !is_ss_computed_field[ss_name][fname]      &&
-          (is_input_field[fname] || is_computed_field[fname] || is_dist_param[fname])) {
+          !is_ss_computed_field[ss_name][fname]) {
+          // (is_input_field[fname] || is_computed_field[fname] || is_dist_param[fname])) {
         // Project from cell to side
         ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
         fm0.template registerEvaluator<EvalT> (ev);
@@ -841,7 +841,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       //Input
       if (viscosity_use_corrected_temperature) {
-        p->set<std::string>("Temperature Variable Name", "corrected_temperature_name");
+        p->set<std::string>("Temperature Variable Name", corrected_temperature_name);
       } else {
         // Avoid pointless calculation, and use original temperature in viscosity calculation
         p->set<std::string>("Temperature Variable Name", temperature_name);
@@ -1039,6 +1039,8 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     std::string ice_overburden_side_name = "ice_overburden_" + ssName;
     std::string effective_pressure_side_name = "effective_pressure_" + ssName;
     std::string bed_roughness_side_name = "bed_roughness_" + ssName;
+    std::string mu_coulomb_side_name = "mu_coulomb_" + ssName;
+    std::string mu_power_law_side_name = "mu_power_law_" + ssName;
     std::string bed_topography_side_name = bed_topography_name + "_" + ssName;
     std::string flow_factor_side_name = flow_factor_name +"_" + ssName;
 
@@ -1193,6 +1195,8 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set<std::string>("Effective Pressure QP Variable Name", effective_pressure_side_name);
     p->set<std::string>("Ice Softness Variable Name", flow_factor_side_name);
     p->set<std::string>("Bed Roughness Variable Name", bed_roughness_side_name);
+    p->set<std::string>("Coulomb Friction Coefficient Variable Name", mu_coulomb_side_name);
+    p->set<std::string>("Power Law Coefficient Variable Name", mu_power_law_side_name);
     p->set<std::string>("Side Set Name", ssName);
     p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name + " " + ssName);
     p->set<Teuchos::ParameterList*>("Parameter List", &pl->sublist("Basal Friction Coefficient"));

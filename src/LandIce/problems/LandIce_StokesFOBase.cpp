@@ -503,6 +503,7 @@ void StokesFOBase::setupEvaluatorRequests ()
   }
   if (viscosity_use_corrected_temperature && is_input_field[surface_height_name]) {
     build_interp_ev[surface_height_name][InterpolationRequest::CELL_VAL] = true;
+    build_interp_ev[corrected_temperature_name][InterpolationRequest::CELL_VAL] = true;
   }
 
   // Basal Friction BC requests
@@ -522,6 +523,22 @@ void StokesFOBase::setupEvaluatorRequests ()
       ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::QP_VAL ] = true;
     ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::GRAD_QP_VAL ] = true; 
     ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::CELL_TO_SIDE] = true; 
+    ss_build_interp_ev[ssName][flow_factor_name][InterpolationRequest::CELL_TO_SIDE] = true;
+
+    // These two are needed for coulomb friction
+    ss_build_interp_ev[ssName]["mu_coulomb"][InterpolationRequest::QP_VAL] = true;
+    ss_build_interp_ev[ssName]["mu_power_law"][InterpolationRequest::QP_VAL] = true;
+    ss_build_interp_ev[ssName]["bed_roughness"][InterpolationRequest::QP_VAL] = true;
+
+    if (is_dist_param["mu_coulomb"]) {
+      ss_build_interp_ev[ssName]["mu_coulomb"][InterpolationRequest::CELL_TO_SIDE] = true;
+    }
+    if (is_dist_param["mu_power_law"]) {
+      ss_build_interp_ev[ssName]["mu_power_law"][InterpolationRequest::CELL_TO_SIDE] = true;
+    }
+    if (is_dist_param["bed_roughness"]) {
+      ss_build_interp_ev[ssName]["bed_roughness"][InterpolationRequest::CELL_TO_SIDE] = true;
+    }
 
     // For "Given Field" and "Exponent of Given Field" we also need to interpolate the given field at the quadrature points
     auto& bfc = it->sublist("Basal Friction Coefficient");

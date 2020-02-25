@@ -106,13 +106,12 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Tr
 {
   ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam(0)) : ScalarT(0);
 #ifdef OUTPUT_TO_SCREEN
-    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+  Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-    if (std::fabs(printedFF-ff)>0.0001*ff)
-    {
-        *output << "[Basal Residual] ff = " << ff << "\n";
-        printedFF = ff;
-    }
+  if (std::fabs(printedFF-ff)>0.0001*ff) {
+      *output << "[Basal Residual] ff = " << ff << "\n";
+      printedFF = ff;
+  }
 #endif
 
   if (workset.sideSets->find(basalSideName)==workset.sideSets->end()) {
@@ -121,18 +120,16 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Tr
 
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
 
-  for (auto const& it_side : sideSet)
-  {
+  for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (int node=0; node<numSideNodes; ++node)
-    {
-      for (int dim=0; dim<vecDimFO; ++dim)
-      {
-        for (int qp=0; qp<numSideQPs; ++qp)
-        {
+    for (int node=0; node<numSideNodes; ++node) {
+      std::vector<ScalarT> res(2,0.0);
+      for (int dim=0; dim<vecDimFO; ++dim) {
+        for (int qp=0; qp<numSideQPs; ++qp) {
+          res[dim] += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
           residual(cell,sideNodes[side][node],dim) += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
         }
       }
