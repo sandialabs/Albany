@@ -18,11 +18,11 @@ ANONYMOUS:
       Parameter 0: Time
   Discretization: 
     Method: PUMI
-    PUMI Input File Name: ../Model&Mesh/Single_layer_mesh.smb
+    PUMI Input File Name: ../ModelAndMesh/Single_layer_mesh.smb
     PUMI Write Interval: 1
-    Mesh Model Input File Name: ../Model&Mesh/Single_layer.dmg
+    Mesh Model Input File Name: ../ModelAndMesh/Single_layer.dmg
     Write ASCII VTK Files: true
-    PUMI Output File Name: ./result/Single_layer.vtk
+    PUMI Output File Name: ./Single_layer.vtk
     Element Block Associations: [['92', '217'], [Top_Region, Bottom_Region]]
     Side Set Associations: [['42', '209'], [Top_Surface, Bottom_Surface]]
     Node Set Associations: [['42', '209'], [Top_Nodes, Bottom_Nodes]]

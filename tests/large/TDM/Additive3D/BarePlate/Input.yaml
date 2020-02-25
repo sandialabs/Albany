@@ -5,7 +5,7 @@ ANONYMOUS:
     Name: TDManufacturing 3D
     Number Of Time Derivatives: 1
     MaterialDB Filename: materials.yaml
-    Simulation Type: Additive Additive
+    Simulation Type: Additive
     Solution Method: Continuation
     Laser Path Input Filename: LaserCenter.txt
     Initial Condition: 
@@ -18,8 +18,8 @@ ANONYMOUS:
       Parameter 0: Time
   Discretization: 
     Method: PUMI
-    PUMI Input File Name: ../Model&Mesh/Bare_plate.smb
-    Mesh Model Input File Name: ../Model&Mesh/Bare_plate.dmg
+    PUMI Input File Name: ../ModelAndMesh/Bare_plate.smb
+    Mesh Model Input File Name: ../ModelAndMesh/Bare_plate.dmg
     Write ASCII VTK Files: true
     PUMI Output File Name: ./Bare_plate.vtk
     Element Block Associations: [['92'], [Bottom_Region]]

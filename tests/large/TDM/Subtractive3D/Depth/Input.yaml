@@ -18,12 +18,12 @@ ANONYMOUS:
       Parameter 0: Time
   Discretization: 
     Method: PUMI
-    PUMI Input File Name: ../Model&Mesh/Depth.smb
+    PUMI Input File Name: ../ModelAndMesh/Depth.smb
     PUMI Restart Time: 0.0
     PUMI Write Interval: 1
-    Mesh Model Input File Name: ../Model&Mesh/40x20x5umSi.dmg
+    Mesh Model Input File Name: ../ModelAndMesh/40x20x5umSi.dmg
     Write ASCII VTK Files: true
-    PUMI Output File Name: ./40x20x5umSi.vtk
+    PUMI Output File Name: ./Depth.vtk
     Element Block Associations: [['92'], [Bottom_Region]]
     Side Set Associations: [['42', '24'], [Top_Surface, Bottom_Surface]]
     Node Set Associations: [['42', '24'], [Top_Nodes, Bottom_Nodes]]

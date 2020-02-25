@@ -13,5 +13,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LaserCenter.txt
                ${CMAKE_CURRENT_BINARY_DIR}/LaserCenter.txt COPYONLY)
 
 #FIXME: add tests 
-#add_test(${testName} ${Albany.exe} input.yaml)
-#set_tests_properties(${testName} PROPERTIES LABELS "Basic;Tpetra;Forward")
+add_test(TDM_${testNameRoot}_Serial ${Albany.exe} Input.yaml)
+add_test(TDM_${testNameRoot}_Parallel ${Albany.exe} Input_Parallel.yaml)
+set_tests_properties(TDM_${testNameRoot}_Serial PROPERTIES LABELS "TDM;Tpetra;Forward")
+set_tests_properties(TDM_${testNameRoot}_Parallel PROPERTIES LABELS "TDM;Tpetra;Forward")
