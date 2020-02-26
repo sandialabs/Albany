@@ -473,6 +473,8 @@ void MpasSTKMeshStruct::constructMesh(
 
   bulkData->change_entity_owner(node_to_proc);
 
+  this->loadRequiredInputFields (req,comm);
+
   this->finalizeSideSetMeshStructs(comm, {}, {}, worksetSize);
 }
 
