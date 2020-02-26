@@ -61,6 +61,10 @@
 #include "Tsunami/problems/Tsunami_Boussinesq.hpp"
 #endif
 
+#ifdef ALBANY_TDM
+#include "TDM/problems/TDManufacturing.hpp"
+#endif
+
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
        const Teuchos::RCP<ParamLib>& paramLib_,
@@ -242,6 +246,17 @@ Albany::ProblemFactory::create()
   }
   else if (method == "LinearElasticityModal 3D") {
     strategy = rcp(new Albany::LinearElasticityModalProblem(problemParams, paramLib, 3));
+  }
+#endif
+#ifdef ALBANY_TDM
+  else if (method == "TDManufacturing 1D") {
+    strategy = rcp(new Albany::TDManufacturing(problemParams, paramLib, 1, commT));
+  }
+  else if (method == "TDManufacturing 2D") {
+    strategy = rcp(new Albany::TDManufacturing(problemParams, paramLib, 2, commT));
+  }
+  else if (method == "TDManufacturing 3D") {
+    strategy = rcp(new Albany::TDManufacturing(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_LANDICE

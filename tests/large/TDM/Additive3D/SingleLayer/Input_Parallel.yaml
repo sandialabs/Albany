@@ -1,0 +1,140 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: TDManufacturing 3D
+    Number Of Time Derivatives: 1
+    MaterialDB Filename: material.yaml
+    Simulation Type: Additive
+    Solution Method: Continuation
+    Laser Path Input Filename: LaserCenter.txt
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.3]
+    Dirichlet BCs:
+      SDBC on NS Bottom_Nodes for DOF Temperature: 0.3
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+  Discretization: 
+    Method: PUMI
+    PUMI Input File Name: ../ModelAndMesh/Single_layer_mesh_4P.smb
+    PUMI Write Interval: 1
+    Mesh Model Input File Name: ../ModelAndMesh/Single_layer.dmg
+    Write ASCII VTK Files: true
+    PUMI Output File Name: ./Single_layer_Parallel.vtk
+    Element Block Associations: [['92', '217'], [Top_Region, Bottom_Region]]
+    Side Set Associations: [['42', '209'], [Top_Surface, Bottom_Surface]]
+    Node Set Associations: [['42', '209'], [Top_Nodes, Bottom_Nodes]]
+    Separate Evaluators by Element Block: true
+    Cubature Degree: 1
+    QP Temperature from Nodes: true
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Method: Natural
+        Initial Value: 0.0
+        Continuation Parameter: Time
+        Max Steps: 10
+        Max Value: 900.0
+        Min Value: 0.0
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 1
+      Step Size: 
+        Initial Step Size: 0.5
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Tolerance: 1.0e-04
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: low
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.0e-05
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 1200
+                      Block Size: 20
+                      Num Blocks: 200
+                      Flexible Gmres: true
+                      Orthogonalization: DGKS
+                      Implicit Residual Scaling: Norm of Preconditioned Initial Residual
+                      Explicit Residual Scaling: Norm of RHS
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 2
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.0
+                    'fact: level-of-fill': 1
+                    'schwarz: filter singletons': true
+                    'schwarz: reordering type': rcm
+                Ifpack2: 
+                  Prec Type: RILUK
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.0
+                    'fact: iluk level-of-fill': 1
+                    'fact: ilut level-of-fill': 1.0
+                    'schwarz: filter singletons': true
+                    'schwarz: use reordering': true
+                    'schwarz: overlap level': 0
+      Line Search: 
+        Full Step: 
+          Full Step: 1.0
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: false
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 5.0e-06
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 20
+        Test 2: 
+          Test Type: FiniteValue
+        Test 3: 
+          Test Type: NormUpdate
+          Scale Type: Unscaled
+          Tolerance: 1.0e-7
+...

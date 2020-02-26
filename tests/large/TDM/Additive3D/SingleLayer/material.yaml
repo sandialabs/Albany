@@ -1,0 +1,117 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Subtractive: true  
+  ElementBlocks: 
+    Top_Region: 
+      material: INCONEL718_powder
+    Bottom_Region:
+      material: INCONEL718_dense
+  Materials: 
+    INCONEL718_dense:
+      Category: INCONEL718
+      Thermal Conductivity Pre-melted: 
+        a: 0.0059224
+        b: 0.0165
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      Thermal Conductivity Liquid: 
+        a: 0.0048985
+        b: 0.0136
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      Thermal Conductivity Post-melted: 
+        a: 0.0059224
+        b: 0.0165
+        c: 0.0
+        d: 0.0
+        e: 0.0        
+      Thermal Conductivity Vapor: 
+        a: 0.0048985
+        b: 0.0136
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      rho_Cp: 
+        Value: 0.00451
+      Powder Layer Initial Porosity:
+        Value: 0.0
+      Initial Psi1: 
+        Psi1: 0.0
+      Initial Psi2: 
+        Psi2: 0.0
+      Laser Source: 
+        Absortivity: 0.05
+        Reflectivity: 0.68
+        Powder Layer Thickness: 0.0
+        Powder Diameter: 0.0    
+        Laser Beam Radius: 50.0
+        Average Laser Power: 270.0
+        Frequency:1.0
+      Initial Phi1: 
+        Melting Temperature: 1.569
+        delta Temperature: 0.041
+      Initial Phi2: 
+        Vaporization Temperature:3.1 
+        delta Temperature: 0.041
+      Phase Change Properties: 
+        Volumetric Heat Capacity Liquid: 0.00518
+        Latent Heat of Melting: 0.00155
+        Latent Heat of Vaporization: 0.01
+        Volumetric Heat Capacity Vapour: 0.00518 
+    INCONEL718_powder:
+      Category: INCONEL718
+      Thermal Conductivity Pre-melted: 
+        a: 0.0059224
+        b: 0.0165
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      Thermal Conductivity Liquid: 
+        a: 0.0048985
+        b: 0.0136
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      Thermal Conductivity Post-melted: 
+        a: 0.0059224
+        b: 0.0165
+        c: 0.0
+        d: 0.0
+        e: 0.0        
+      Thermal Conductivity Vapor: 
+        a: 0.0048985
+        b: 0.0136
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      rho_Cp: 
+        Value: 0.00451
+      Powder Layer Initial Porosity:
+        Value: 0.85
+      Initial Psi1: 
+        Psi1: 0.0
+      Initial Psi2: 
+        Psi2: 0.0
+      Laser Source: 
+        Absortivity: 0.05
+        Reflectivity: 0.68
+        Powder Layer Thickness: 28.5
+        Powder Diameter: 28.5    
+        Laser Beam Radius: 50.0
+        Average Laser Power: 270.0
+        Frequency:1.0
+      Initial Phi1: 
+        Melting Temperature: 1.569
+        delta Temperature: 0.041
+      Initial Phi2: 
+        Vaporization Temperature:3.1 
+        delta Temperature: 0.041
+      Phase Change Properties: 
+        Volumetric Heat Capacity Liquid: 0.00518
+        Latent Heat of Melting: 0.00155
+        Latent Heat of Vaporization: 0.01
+        Volumetric Heat Capacity Vapour: 0.00518 
+...

@@ -593,8 +593,6 @@ ELSE()
   SET(ALBANY_ATO FALSE)
 ENDIF()
 
-# set optional dependency on LCM, defaults to Disabled
-OPTION(ENABLE_LCM_TEST_EXES "Flag to turn on LCM Mechanics test executables" ON)
 OPTION(DISABLE_LCM_EXODIFF_SENSITIVE_TESTS "Flag to turn off LCM exodiff sensitive tests" OFF)
 SET(LCM_TEST_EXES FALSE)
 IF (ENABLE_LCM OR ENABLE_ATO)
@@ -827,17 +825,6 @@ ELSE()
   SET(ALBANY_ASCR FALSE)
 ENDIF()
 
-# Set optional dependency on AMP, defaults to Disabled
-OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
-IF (ENABLE_AMP)
-  SET(ALBANY_APF TRUE)
-  MESSAGE("-- AMP                             is Enabled")
-  SET(ALBANY_AMP TRUE)
-ELSE()
-  MESSAGE("-- AMP                             is NOT Enabled.")
-  SET(ALBANY_AMP FALSE)
-ENDIF()
-
 # Set optional dependency on SCOREC PUMI,  optional adaptivity
 OPTION(ENABLE_SCOREC "Flag to turn on SCOREC dependency" OFF)
 SET(ALBANY_SCOREC_DIR "" CACHE PATH "Path to standalone SCOREC installation")
@@ -877,6 +864,25 @@ IF (ALBANY_APF)
 ELSE()
   MESSAGE("-- APF                             is NOT Enabled.")
 ENDIF()
+
+# Set optional dependency on TDM, defaults to Disabled
+OPTION(ENABLE_TDM "Flag to turn on TDM source code" OFF)
+IF (ENABLE_TDM)
+  IF (NOT ENABLE_SCOREC) 
+    MESSAGE(FATAL_ERROR
+    "\nError: TDM requires enabling SCOREC!  Re-compile with -DENABLE_SCOREC=ON!")
+  ENDIF()
+  SET(ALBANY_APF TRUE)
+  ADD_DEFINITIONS(-DALBANY_TDM)
+  MESSAGE("-- TDM       is Enabled, compiling with -DALBANY_TDM")
+  SET(ALBANY_TDM TRUE)
+ELSE()
+  MESSAGE("-- TDM       is NOT Enabled.")
+  SET(ALBANY_TDM FALSE)
+ENDIF()
+
+# set optional dependency on LCM, defaults to Disabled
+OPTION(ENABLE_LCM_TEST_EXES "Flag to turn on LCM Mechanics test executables" ON)
 
 OPTION(ENABLE_OMEGA_H "Enable Omega_h dependency for adaptation" OFF)
 SET(ALBANY_OMEGA_H_DIR "" CACHE PATH "Path to Omega_h installation")

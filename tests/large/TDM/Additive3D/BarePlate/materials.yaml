@@ -1,0 +1,65 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Subtractive: true  
+  ElementBlocks: 
+    Top_Region: 
+      material: INCONEL718
+    Bottom_Region:
+      material: INCONEL718
+  Materials: 
+    INCONEL718:
+      Category: INCONEL718
+      Thermal Conductivity Pre-melted: 
+        a: 0.0059224
+        b: 0.0165
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      Thermal Conductivity Liquid: 
+        a: 0.0048985
+        b: 0.0136
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      Thermal Conductivity Post-melted: 
+        a: 0.0059224
+        b: 0.0165
+        c: 0.0
+        d: 0.0
+        e: 0.0        
+      Thermal Conductivity Vapor: 
+        a: 0.0048985
+        b: 0.0136
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      rho_Cp: 
+        Value: 0.00451
+      Powder Layer Initial Porosity:
+        Value: 0.0
+      Initial Psi1: 
+        Psi1: 0.0
+      Initial Psi2: 
+        Psi2: 0.0
+      Laser Source: 
+        Absortivity: 0.0367
+        Reflectivity: 0.68
+        Powder Layer Thickness: 0.0
+        Powder Diameter: 0.0    
+        Laser Beam Radius: 60.0
+        Average Laser Power: 270.0
+        Frequency:1.0
+      Initial Phi1: 
+        Melting Temperature: 1.525
+        delta Temperature: 0.2
+      Initial Phi2: 
+        Vaporization Temperature:3.1 
+        delta Temperature: 0.2
+      Phase Change Properties: 
+        Volumetric Heat Capacity Liquid: 0.00518
+        Latent Heat of Melting: 0.001948
+        Latent Heat of Vaporization: 0.01
+        Volumetric Heat Capacity Vapour: 0.00518 
+
+...

@@ -1,0 +1,118 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Subtractive: true  
+  ElementBlocks: 
+    Top_Region: 
+      material: SiO2
+    Bottom_Region:
+      material: Si
+  Materials: 
+    SiO2:
+      Category: SiO2
+      Thermal Conductivity Pre-melted: 
+        a: 0.00271
+        b: 0.0
+        c: 0.0
+        d: 0.0250260
+        e: 0.005519600
+      Thermal Conductivity Liquid: 
+        a: 0.051
+        b: 0.0
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      Thermal Conductivity Post-melted: 
+        a: 0.00271
+        b: 0.0
+        c: 0.0
+        d: 0.0250260
+        e: 0.005519600        
+      Thermal Conductivity Vapor: 
+        a: 0.051
+        b: 0.0
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      rho_Cp: 
+        Value: 0.00189
+      Powder Layer Initial Porosity:
+        Value: 0.0
+      Initial Psi1: 
+        Psi1: 0.0
+      Initial Psi2: 
+        Psi2: 0.0
+      Laser Source: 
+        Absortivity: 4
+        Reflectivity: 0.523
+        Powder Layer Thickness: 0.0
+        Powder Diameter: 0.0    
+        Laser Beam Radius: 100e-6
+        Average Laser Power: 8.0
+      Initial Phi1: 
+        Melting Temperature: 1571.0
+        delta Temperature: 152.0
+      Initial Phi2: 
+        Vaporization Temperature: 
+        delta Temperature: 152.0
+      Phase Change Properties: 
+        Volumetric Heat Capacity Liquid: 5.247e+06
+        Latent Heat of Melting: 1.588e+09
+        Latent Heat of Vaporization: 
+        Volumetric Heat Capacity Vapour:
+        
+    Si:
+      Category: Si
+      Thermal Conductivity Pre-melted: 
+        a: 0.00271
+        b: 0.0
+        c: 0.0
+        d: 0.0250260
+        e: 0.005519600
+      Thermal Conductivity Liquid: 
+        a: 0.051
+        b: 0.0
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      Thermal Conductivity Post-melted: 
+        a: 0.00271
+        b: 0.0
+        c: 0.0
+        d: 0.0250260
+        e: 0.005519600        
+      Thermal Conductivity Vapor: 
+        a: 0.0025
+        b: 0.0
+        c: 0.0
+        d: 0.0
+        e: 0.0
+      rho_Cp: 
+        Value: 0.00189
+      Powder Layer Initial Porosity:
+        Value: 0.0
+      Initial Psi1: 
+        Psi1: 0.0
+      Initial Psi2: 
+        Psi2: 0.0
+      Laser Source: 
+        Absortivity: 4.0
+        Reflectivity: 0.523
+        Powder Layer Thickness: 0.0
+        Powder Diameter: 0.0    
+        Laser Beam Radius: 9.0
+        Average Laser Power: 50.0
+        Frequency: 200.0
+      Initial Phi1: 
+        Melting Temperature: 1.687
+        delta Temperature: 0.15
+      Initial Phi2: 
+        Vaporization Temperature: 3.538 
+        delta Temperature: 0.15
+      Phase Change Properties: 
+        Volumetric Heat Capacity Liquid: 0.00276
+        Latent Heat of Melting: 0.004105
+        Latent Heat of Vaporization: 0.02962 
+        Volumetric Heat Capacity Vapour: 0.00276
+
+...
