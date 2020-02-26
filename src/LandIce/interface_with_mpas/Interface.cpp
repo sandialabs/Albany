@@ -533,16 +533,18 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   discretizationList->set("Cubature Degree", discretizationList->get("Cubature Degree", cubatureDegree));  //set cubatureDegree if not defined
   discretizationList->set("Interleaved Ordering", discretizationList->get("Interleaved Ordering", true));  //set true if not define
 
-  discretizationList->sublist("Required Fields Info").set<int>("Number Of Fields",9);
-  Teuchos::ParameterList& field0 = discretizationList->sublist("Required Fields Info").sublist("Field 0");
-  Teuchos::ParameterList& field1 = discretizationList->sublist("Required Fields Info").sublist("Field 1");
-  Teuchos::ParameterList& field2 = discretizationList->sublist("Required Fields Info").sublist("Field 2");
-  Teuchos::ParameterList& field3 = discretizationList->sublist("Required Fields Info").sublist("Field 3");
-  Teuchos::ParameterList& field4 = discretizationList->sublist("Required Fields Info").sublist("Field 4");
-  Teuchos::ParameterList& field5 = discretizationList->sublist("Required Fields Info").sublist("Field 5");
-  Teuchos::ParameterList& field6 = discretizationList->sublist("Required Fields Info").sublist("Field 6");
-  Teuchos::ParameterList& field7 = discretizationList->sublist("Required Fields Info").sublist("Field 7");
-  Teuchos::ParameterList& field8 = discretizationList->sublist("Required Fields Info").sublist("Field 8");
+  auto& rfi = discretizationList->sublist("Required Fields Info");
+  int fp = rfi.get<int>("Number Of Fields",0);
+  discretizationList->sublist("Required Fields Info").set<int>("Number Of Fields",fp+9);
+  Teuchos::ParameterList& field0 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",0+fp));
+  Teuchos::ParameterList& field1 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",1+fp));
+  Teuchos::ParameterList& field2 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",2+fp));
+  Teuchos::ParameterList& field3 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",3+fp));
+  Teuchos::ParameterList& field4 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",4+fp));
+  Teuchos::ParameterList& field5 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",5+fp));
+  Teuchos::ParameterList& field6 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",6+fp));
+  Teuchos::ParameterList& field7 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",7+fp));
+  Teuchos::ParameterList& field8 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",8+fp));
 
   //set temperature
   field0.set<std::string>("Field Name", "temperature");
