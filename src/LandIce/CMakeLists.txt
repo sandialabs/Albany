@@ -287,7 +287,7 @@ add_library(LandIce ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 set_target_properties(LandIce PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
 IF(ENABLE_MPAS_INTERFACE)
-  add_library(mpasInterface STATIC ${SOURCESMPAS} ${HEADERSMPAS})
+  add_library(mpasInterface ${SOURCESMPAS} ${HEADERSMPAS})
   set_target_properties(mpasInterface PROPERTIES PUBLIC_HEADER "${HEADERSMPAS}")
   IF (INSTALL_ALBANY)
     install(TARGETS mpasInterface
