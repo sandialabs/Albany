@@ -535,7 +535,12 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     }
 
     // Get the right evaluator utils for this field.
+    TEUCHOS_TEST_FOR_EXCEPTION (field_scalar_type.find(fname)==field_scalar_type.end(), std::runtime_error,
+                                "Error! Scalar type for field '" + fname + "' not found.\n");
     const FieldScalarType st = field_scalar_type.at(fname);
+
+    TEUCHOS_TEST_FOR_EXCEPTION (utils_map.find(st)==utils_map.end(), std::runtime_error,
+                                "Error! Evaluators utils for scalar type '" + e2str(st) + "' not found.\n");
     const auto& utils = *utils_map.at(st);
 
     // Check whether we can use memoization for this field. Criteria:
@@ -562,12 +567,16 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
     // Get the needs of this field
     auto& needs = it.second;
+    TEUCHOS_TEST_FOR_EXCEPTION (field_rank.find(fname)==field_rank.end(), std::runtime_error,
+                                "Error! Rank of field '" + fname + "' not found.\n");
     int rank = field_rank.at(fname);
 
     // For dofs, we can get a faster interpolation, knowing the offset
     auto dof_it = std::find(dof_names.begin(),dof_names.end(),fname);
     int offset = dof_it==dof_names.end() ? -1 : dof_offsets[std::distance(dof_names.begin(),dof_it)];
 
+    TEUCHOS_TEST_FOR_EXCEPTION (field_location.find(fname)==field_location.end(), std::runtime_error,
+                                "Error! Location of field '" + fname + "' not found.\n");
     const FieldLocation entity = field_location.at(fname);
     if (needs[InterpolationRequest::QP_VAL]) {
       TEUCHOS_TEST_FOR_EXCEPTION(entity==FieldLocation::Cell, std::logic_error, "Error! Cannot interpolate a field not defined on nodes.\n");
@@ -630,12 +639,18 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
         continue;
       }
 
+      TEUCHOS_TEST_FOR_EXCEPTION (field_location.find(fname)==field_location.end(), std::runtime_error,
+                                  "Error! Location of field '" + fname + "' not found (ss name: " + ss_name + ").\n");
       const FieldLocation entity = field_location.at(fname);
+      TEUCHOS_TEST_FOR_EXCEPTION (field_rank.find(fname)==field_rank.end(), std::runtime_error,
+                                  "Error! Rank of field '" + fname + "' not found (ss name: " + ss_name + ").\n");
       const int rank = field_rank.at(fname);
 
       TEUCHOS_TEST_FOR_EXCEPTION (rank<0 || rank>1, std::logic_error, "Error! Interpolation on side only available for scalar and vector fields.\n");
 
       const std::string layout = e2str(entity) + " " + rank2str(rank);
+      TEUCHOS_TEST_FOR_EXCEPTION (field_scalar_type.find(fname)==field_scalar_type.end(), std::runtime_error,
+                                  "Error! Scalar type for field '" + fname + "' not found (ss name: " + ss_name + ").\n");
       const FieldScalarType st = field_scalar_type.at(fname);
 
       // Check whether we can use memoization for this field. Criteria:
@@ -661,6 +676,8 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 //      }
 
       // Get the right evaluator utils for this field.
+      TEUCHOS_TEST_FOR_EXCEPTION (utils_map.find(st)==utils_map.end(), std::runtime_error,
+                                  "Error! Evaluators utils for scalar type '" + e2str(st) + "' not found (ss name: " + ss_name + ").\n");
       const auto& utils = *utils_map.at(st);
 
       if (needs[InterpolationRequest::QP_VAL]) {
