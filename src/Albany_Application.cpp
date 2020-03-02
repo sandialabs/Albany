@@ -1799,6 +1799,36 @@ Application::computeGlobalJacobian(
       computeJacCondNum != 0) {
     countJac++;  // increment Jacobian counter
   }
+  // Debut output - residual 
+  if (f != Teuchos::null) { 
+    if (writeToMatrixMarketRes != 0) {  // If requesting writing to MatrixMarket of residual...
+      if (writeToMatrixMarketRes == -1) {  // write residual to MatrixMarket every time it arises
+        writeMatrixMarket(f, "rhs", countRes);
+      } 
+      else {
+        if (countRes == writeToMatrixMarketRes) {  // write residual only at requested count#
+          writeMatrixMarket(f, "rhs", countRes);
+        }
+      }
+    }
+    if (writeToCoutRes != 0) {     // If requesting writing of residual to cout...
+      if (writeToCoutRes == -1) {  // cout residual time it arises
+        std::cout << "Global Residual #" << countRes << ": " << std::endl;
+        describe(f.getConst(), *out, Teuchos::VERB_EXTREME);
+      } 
+      else {
+        if (countRes == writeToCoutRes) {  // cout residual only at requested
+                                         // count#
+          std::cout << "Global Residual #" << countRes << ": " << std::endl;
+          describe(f.getConst(), *out, Teuchos::VERB_EXTREME);
+        }
+      }
+    }
+  
+    if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) {
+      countRes++;  // increment residual counter
+    }
+  }
 }
 
 void
