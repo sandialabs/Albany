@@ -978,6 +978,15 @@ ELSE()
   SET(ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE TRUE)
   MESSAGE("-- FAD_TYPE is not TAN_FAD_TYPE")
 ENDIF()
+  
+LIST(FIND Trilinos_PACKAGE_LIST Pamgen PAMGEN_List_ID)
+IF (NOT PAMGEN_List_ID GREATER -1)
+  MESSAGE("-- Pamgen   is Enabled.  Building Pamgen tests")
+  set(ALBANY_PAMGEN TRUE)
+ELSE()
+  MESSAGE("-- Pamgen   is NOT Enabled.  Not building Pamgen tests")
+  set(ALBANY_PAMGEN FALSE)
+ENDIF()
 
 # optionally disable the use of the Trilinos stokhos package
 OPTION(ENABLE_STOKHOS "Flag to enable / disable the use of Stokhos in Albany" OFF)
