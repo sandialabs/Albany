@@ -502,6 +502,8 @@ ModelEvaluator::reportFinalPoint(
   if (overwriteNominalValuesWithFinalPoint && wasSolved) {
     nominalValues = finalPoint;
   }
+  Application::SolutionStatus status = wasSolved ? Application::SolutionStatus::Converged : Application::SolutionStatus::NotConverged;
+  app->setSolutionStatus(status);
 }
 
 Teuchos::RCP<Thyra_LinearOp>

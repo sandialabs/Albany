@@ -261,7 +261,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
 
-  error = !success;
+  error = albanyApp->getSolutionStatus() != Albany::Application::SolutionStatus::Converged;
 
   auto overlapVS = albanyApp->getDiscretization()->getOverlapVectorSpace();
 

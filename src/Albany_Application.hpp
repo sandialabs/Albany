@@ -56,6 +56,12 @@ class Application
     Eigensolve
   };
 
+  enum SolutionStatus
+  {
+    Converged,
+    NotConverged
+  } solutionStatus;
+
   //! Constructor(s) and Destructor
   Application(
       const Teuchos::RCP<const Teuchos_Comm>&     comm,
@@ -182,6 +188,15 @@ class Application
   //! Get response function
   Teuchos::RCP<AbstractResponseFunction>
   getResponse(int i) const;
+
+
+  SolutionStatus getSolutionStatus() const {
+    return solutionStatus;
+  }
+
+  void setSolutionStatus(SolutionStatus status) {
+    solutionStatus = status;
+  }
 
   //! Return whether problem wants to use its own preconditioner
   bool
