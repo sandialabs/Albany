@@ -191,7 +191,6 @@ namespace TDM {
     ScalarT dp2dphi2;
 	ScalarT A;
 	ScalarT B;
-	ScalarT initial_porosity;  //Added by Arshad, becuase initial_porosity may be deifned locally indside each template
     for (std::size_t cell = 0; cell < workset.numCells; ++cell){
 	  for (std::size_t qp = 0; qp < num_qps_; ++qp){
 	    // compute dT/dt using finite difference

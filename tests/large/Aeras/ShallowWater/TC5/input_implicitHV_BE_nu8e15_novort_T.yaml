@@ -1,11 +1,14 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Debug Output: 
+    Write Jacobian to MatrixMarket: 0
+    Write Residual to MatrixMarket: 0
   Build Type: Tpetra
   Problem:
     Use MDField Memoization: true 
     Name: Aeras Shallow Water 3D
-    Phalanx Graph Visualization Detail: 1
+    Phalanx Graph Visualization Detail: 0
     Solution Method: Transient
     Shallow Water Problem: 
       Use Prescribed Velocity: false
