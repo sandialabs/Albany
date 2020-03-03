@@ -75,15 +75,12 @@ namespace TDM {
     // current time
     const RealType t = workset.current_time;
 
-    if (t > 0.0)
-    {
-        for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-		{
-            for (std::size_t qp = 0; qp < num_qps_; ++qp)
-			{
-                phi1_(cell, qp) = 0.5 * (std::tanh((T_(cell, qp) - MeltingTemperature_) / deltaTemperature_) + 1.0);
-			}
-		}
+    if (t > 0.0){
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell){
+        for (std::size_t qp = 0; qp < num_qps_; ++qp)		{
+          phi1_(cell, qp) = 0.5 * (std::tanh((T_(cell, qp) - MeltingTemperature_) / deltaTemperature_) + 1.0);
+	}
+      }
     }
   }
 

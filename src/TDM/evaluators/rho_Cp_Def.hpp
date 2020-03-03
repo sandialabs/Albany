@@ -69,9 +69,9 @@ namespace TDM {
     const RealType time = workset.current_time;
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-	  for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-	    rho_cp_(cell, qp) = constant_value_ ;
-	  }
+      for (std::size_t qp = 0; qp < num_qps_; ++qp) {
+        rho_cp_(cell, qp) = constant_value_ ;
+      }
     } 
   }
 

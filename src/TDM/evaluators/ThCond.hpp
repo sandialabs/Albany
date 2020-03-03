@@ -72,10 +72,10 @@ namespace TDM {
 
     // Thermal conductivity in the pre-melted material
     ScalarT Kp_;
-	//Thermal conductivity of the post-melted material	
-	ScalarT Kd_;
+    //Thermal conductivity of the post-melted material	
+    ScalarT Kd_;
 	
-	//Thermal conductivity of the solid material, accounting for porosity
+    //Thermal conductivity of the solid material, accounting for porosity
     ScalarT Ks_;
 	
     // Thermal conductivity in the liquid phase

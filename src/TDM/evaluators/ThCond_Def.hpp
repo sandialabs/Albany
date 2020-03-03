@@ -135,31 +135,30 @@ namespace TDM {
 
     // thermal conductivity
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp = 0; qp < num_qps_; ++qp){
-	  if(depth_(cell,qp)<0){  // if element already vaporized, then set conductivity to 0
+      for (std::size_t qp = 0; qp < num_qps_; ++qp){
+        if(depth_(cell,qp)<0){  // if element already vaporized, then set conductivity to 0
 	  k_(cell,qp) = 0;
-	  }
-	  else{
-		    //calculating pre-melted k value
-		    Kp_ = (aPre + bPre*T_(cell, qp) + cPre*T_(cell, qp)*T_(cell, qp) + dPre/T_(cell, qp) + ePre/(T_(cell, qp)*T_(cell, qp)));  
-	    	//calculating liquid k value
-	    	Kl_ = (aL + bL*T_(cell, qp) + cL*T_(cell, qp)*T_(cell, qp) + dL/T_(cell, qp) + eL/(T_(cell, qp)*T_(cell, qp)));  
-	    	//calculating post-melted k value
-		    Kd_ = (aPo + bPo*T_(cell, qp) + cPo*T_(cell, qp)*T_(cell, qp) + dPo/T_(cell, qp) + ePo/(T_(cell, qp)*T_(cell, qp)));  
-		    //calculating vapor k value
-		    Kv_ = (aV + bV*T_(cell, qp) + cV*T_(cell, qp)*T_(cell, qp) + dV/T_(cell, qp) + eV/(T_(cell, qp)*T_(cell, qp)));  
-		    //calculating solid k value
-		    Ks_ = (1 - psi1_(cell,qp))*Kp_ + psi1_(cell,qp)*Kd_;
-		    // calculating the final k value
-		    if(psi2_(cell,qp)<1){	// if element never fully vaporized, use phi2 to reflect instant temperature
-		    	k_(cell, qp) = (Ks_*(1.0 - phi1_(cell, qp)) + Kl_*phi1_(cell, qp))*(1.0 - phi2_(cell, qp)) + Kv_*phi2_(cell, qp);
-			}
-			else{	// if element fully vaporized, use psi2
-		    	k_(cell, qp) = (Ks_*(1.0 - phi1_(cell, qp)) + Kl_*phi1_(cell, qp))*(1.0 - psi2_(cell, qp)) + Kv_*psi2_(cell, qp);
-			}
-			//std::cout<<"K = "<< k_(cell, qp) <<std::endl;
-	    }
 	}
+	else{
+	  //calculating pre-melted k value
+	  Kp_ = (aPre + bPre*T_(cell, qp) + cPre*T_(cell, qp)*T_(cell, qp) + dPre/T_(cell, qp) + ePre/(T_(cell, qp)*T_(cell, qp)));  
+	  //calculating liquid k value
+	  Kl_ = (aL + bL*T_(cell, qp) + cL*T_(cell, qp)*T_(cell, qp) + dL/T_(cell, qp) + eL/(T_(cell, qp)*T_(cell, qp)));  
+	  //calculating post-melted k value
+	  Kd_ = (aPo + bPo*T_(cell, qp) + cPo*T_(cell, qp)*T_(cell, qp) + dPo/T_(cell, qp) + ePo/(T_(cell, qp)*T_(cell, qp)));  
+	  //calculating vapor k value
+	  Kv_ = (aV + bV*T_(cell, qp) + cV*T_(cell, qp)*T_(cell, qp) + dV/T_(cell, qp) + eV/(T_(cell, qp)*T_(cell, qp)));  
+	  //calculating solid k value
+	  Ks_ = (1 - psi1_(cell,qp))*Kp_ + psi1_(cell,qp)*Kd_;
+	  // calculating the final k value
+	  if(psi2_(cell,qp)<1){	// if element never fully vaporized, use phi2 to reflect instant temperature
+	     k_(cell, qp) = (Ks_*(1.0 - phi1_(cell, qp)) + Kl_*phi1_(cell, qp))*(1.0 - phi2_(cell, qp)) + Kv_*phi2_(cell, qp);
+	  }
+	  else{	// if element fully vaporized, use psi2
+	     k_(cell, qp) = (Ks_*(1.0 - phi1_(cell, qp)) + Kl_*phi1_(cell, qp))*(1.0 - psi2_(cell, qp)) + Kv_*psi2_(cell, qp);
+	  }
+	}
+      }
     }
     //std::cout << "thCond has been finished\n" ; 
   }

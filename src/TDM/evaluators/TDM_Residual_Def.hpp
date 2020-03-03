@@ -116,13 +116,11 @@ namespace TDM {
   void Phase_Residual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-        //std::cout << "TDM residual has started\n" ; 
-       // std::cout << "initial PORO" << initial_porosity <<"\n";
     // time step
     ScalarT dt = deltaTime(0);
     typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
-  //  if (dt == 0.0) dt = 1.0e-15;
+    //  if (dt == 0.0) dt = 1.0e-15;
   
     //grab old temperature
     Albany::MDArray T_old = (*workset.stateArrayPtr)[Temperature_Name_];
@@ -138,33 +136,29 @@ namespace TDM {
     }
 	
     for (int cell = 0; cell < workset.numCells; ++cell) {
-		for (int qp = 0; qp < num_qps_; ++qp) {
-			for (int node = 0; node < num_nodes_; ++node) {
-				//if (sim_type == "SLM Additive"){
-					det_F = (1 - initial_porosity)/(1 - initial_porosity*(1-psi1_(cell,qp)));
-					F_inv = 1.0/det_F;
-				//}
-				//else{
-				//	det_F = 1;
-				//	F_inv = 1;
-				//}
-				//diffusive term
-				residual_(cell, node) += (     w_grad_bf_(cell, node, qp, 0) * term1_(cell, qp, 0)
-													+  w_grad_bf_(cell, node, qp, 1) * term1_(cell, qp, 1)
-													+ w_grad_bf_(cell, node, qp, 2) * term1_(cell, qp, 2) * F_inv*F_inv);
-			    // laser heat source term
-			    residual_(cell, node) -= (w_bf_(cell, node, qp) * laser_source_(cell, qp));
+      for (int qp = 0; qp < num_qps_; ++qp) {
+	for (int node = 0; node < num_nodes_; ++node) {
+	  //if (sim_type == "SLM Additive"){
+	  det_F = (1 - initial_porosity)/(1 - initial_porosity*(1-psi1_(cell,qp)));
+	  F_inv = 1.0/det_F;
+	  //}
+
+	  //diffusive term
+	  residual_(cell, node) += (w_grad_bf_(cell, node, qp, 0) * term1_(cell, qp, 0)
+				    +  w_grad_bf_(cell, node, qp, 1) * term1_(cell, qp, 1)
+				    + w_grad_bf_(cell, node, qp, 2) * term1_(cell, qp, 2) * F_inv*F_inv);
+	  // laser heat source term
+	  residual_(cell, node) -= (w_bf_(cell, node, qp) * laser_source_(cell, qp));
 			   
-			    // transient term		
-			    residual_(cell, node) += (w_bf_(cell, node, qp) * energyDot_(cell, qp));
+	  // transient term		
+	  residual_(cell, node) += (w_bf_(cell, node, qp) * energyDot_(cell, qp));
 				
-				//multiply by detF
-				residual_(cell, node) = residual_(cell, node)*det_F;
+	  //multiply by detF
+	  residual_(cell, node) = residual_(cell, node)*det_F;
 			
-			}
-		}
+	}
+      }
     } 
-    //std::cout << "TDM residual has finished\n" ; 
 
   }
   //*********************************************************************

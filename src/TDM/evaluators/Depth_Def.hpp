@@ -89,15 +89,13 @@ namespace TDM {
   void Depth<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    //std::cout << "Depth has started\n" ; 
-
     // get Abstract Discretization
 
     // below returns a Teuchos::RCP<const Thyra_VectorSpace>,  ( return Thyra::tepetraVectorSpace(ST)(getMapT()) ) 
-    auto vector_space = workset.disc->getVectorSpace();
-    Teuchos::RCP<Thyra_Vector> my_field = Thyra::createMember(vector_space);
-    Teuchos::RCP<Albany::AbstractDiscretization> discPtr = workset.disc;
-    auto APFDisc_ptr = Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(discPtr);
+    //auto vector_space = workset.disc->getVectorSpace();
+    //Teuchos::RCP<Thyra_Vector> my_field = Thyra::createMember(vector_space);
+    //Teuchos::RCP<Albany::AbstractDiscretization> discPtr = workset.disc;
+    //auto APFDisc_ptr = Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(discPtr);
     // apf::Mesh2* m = APFDisc_ptr -> getMesh();
 
 
@@ -112,26 +110,20 @@ namespace TDM {
 
     if (t == 0.0)  // if this is the overall time = 0
     {
-
-        for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-        {
-            for (std::size_t qp = 0; qp < num_qps_; ++qp)
-            {
-                MeshScalarT Z = coord_(cell,qp,2);
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell){
+        for (std::size_t qp = 0; qp < num_qps_; ++qp){
+          MeshScalarT Z = coord_(cell,qp,2);
                 depth_(cell, qp) = Z;
-            }
         }
+      }
     }
     else if ( (update > 0)&&(update < 0.000125) ){	// if this is the time = 0 at each pulse
 
-
-        for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-        {
-            for (std::size_t qp = 0; qp < num_qps_; ++qp)
-            {
-                depth_(cell, qp) = depth_old(cell,qp);
-            }
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell){
+        for (std::size_t qp = 0; qp < num_qps_; ++qp){
+             depth_(cell, qp) = depth_old(cell,qp);
         }
+      }
 	/*
       lion_set_verbosity(1);
       apf::FieldShape* IPShape = apf::getIPShape(3,1);
@@ -152,13 +144,11 @@ namespace TDM {
 
     }
     else {
-              for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-        {
-            for (std::size_t qp = 0; qp < num_qps_; ++qp)
-            {
-                depth_(cell, qp) = depth_old(cell,qp);
-            }
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell){
+        for (std::size_t qp = 0; qp < num_qps_; ++qp){
+          depth_(cell, qp) = depth_old(cell,qp);
         }
+      }
     }
 
 

@@ -91,8 +91,8 @@ namespace TDM {
 				  Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
 
     Cl_ = cond_list->get<double>("Volumetric Heat Capacity Liquid", 5.95e6);
-	Cv_ = cond_list->get<double>("Volumetric Heat Capacity Vapour", 5.95e6); 
-	Lm_ = cond_list->get<double>("Latent Heat of Melting", 2.18e9);
+    Cv_ = cond_list->get<double>("Volumetric Heat Capacity Vapour", 5.95e6); 
+    Lm_ = cond_list->get<double>("Latent Heat of Melting", 2.18e9);
     Lv_ = cond_list->get<double>("Latent Heat of Vaporization", 2.18e9);
 
 
@@ -144,92 +144,81 @@ namespace TDM {
   void Energy_Dot<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    //std::cout << "energydot has started\n" ; 
-    //std::cout << "cl"<< Cl_ << "cv"<< Cv_ << "Lm_"<< Lm_ << "Lv_"<< Lv_ << "Tm_" <<Tm_ << "Tv_"<< Tv_ << "Cd_"<< Cd_ << "initial_porosity"<< initial_porosity << "\n" ;
     // time step
     ScalarT dt = deltaTime_(0);
 
     typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-
-	//removed improper timestep change
    
    if (dt < 1.0e-15) {
-     //std::cout<< "energy dot entering first dt smaller than loop, dt is" << dt << "\n" ;
-	for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-      {
-		for (std::size_t qp = 0; qp < num_qps_; ++qp)
-		{
-			energyDot_(cell, qp) = 0.0;
-		}
-	  }
+     for (std::size_t cell = 0; cell < workset.numCells; ++cell){
+       for (std::size_t qp = 0; qp < num_qps_; ++qp){
+         energyDot_(cell, qp) = 0.0;
+       }
+     }
    } 
    else {
-    //grab old temperature
-     //std::cout<< "energy dot entering second greater than loop, dt is" << dt << "\n" ;
-    Albany::MDArray T_old = (*workset.stateArrayPtr)[Temperature_Name_];
-    //    T_old(0,0)=0.3;
-    //std::cout << " T old is set to "<< T_old(0, 0) <<"\n" ;
-    // grab old value of phi
-    Albany::MDArray phi1_old = (*workset.stateArrayPtr)[Phi1_old_name_];
-    Albany::MDArray phi2_old = (*workset.stateArrayPtr)[Phi2_old_name_];
+     //grab old temperature
+     Albany::MDArray T_old = (*workset.stateArrayPtr)[Temperature_Name_];
+     // grab old value of phi
+     Albany::MDArray phi1_old = (*workset.stateArrayPtr)[Phi1_old_name_];
+     Albany::MDArray phi2_old = (*workset.stateArrayPtr)[Phi2_old_name_];
 
-    // grab old value of psi
-    Albany::MDArray psi1_old = (*workset.stateArrayPtr)[Psi1_old_name_];
-    Albany::MDArray psi2_old = (*workset.stateArrayPtr)[Psi2_old_name_];
+     // grab old value of psi
+     Albany::MDArray psi1_old = (*workset.stateArrayPtr)[Psi1_old_name_];
+     Albany::MDArray psi2_old = (*workset.stateArrayPtr)[Psi2_old_name_];
 
-    // Compute Temp rate
+     // Compute Temp rate
 
-    ScalarT phi1;
-    ScalarT phi2;
-    ScalarT psi1;
-    ScalarT psi2;	
-    ScalarT Cs;
-	ScalarT dCsdpsi1;
-    ScalarT p1;
-    ScalarT p2;
-    ScalarT dp1dphi1;
-    ScalarT dp2dphi2;
-	ScalarT A;
-	ScalarT B;
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell){
-	  for (std::size_t qp = 0; qp < num_qps_; ++qp){
-	    // compute dT/dt using finite difference
-	    T_dot_(cell, qp) = (T_(cell, qp) - T_old(cell, qp)) / dt;
-	    phi1 = phi1_(cell, qp);
-	    phi2 = phi2_(cell, qp);
-	    phi1_dot_(cell,qp) = ( phi1_(cell,qp) - phi1_old(cell,qp) ) / dt;
-	    phi2_dot_(cell,qp) = ( phi2_(cell,qp) - phi2_old(cell,qp) ) / dt;
-		psi1 = psi1_(cell, qp);
-		psi2 = psi2_(cell, qp);
-	    psi1_dot_(cell,qp) = ( phi1_(cell,qp) - phi1_old(cell,qp) ) / dt;
-	    psi2_dot_(cell,qp) = ( phi2_(cell,qp) - phi2_old(cell,qp) ) / dt;
-	    p1 = phi1 * phi1 * phi1 * (10.0 - 15.0 * phi1 + 6.0 * phi1 * phi1);
-	    p2 = phi2 * phi2 * phi2 * (10.0 - 15.0 * phi2 + 6.0 * phi2 * phi2);
-		dp1dphi1 = 30.0 * phi1 * phi1 * (1.0 - 2.0 * phi1 + phi1 * phi1);
-	    dp2dphi2 = 30.0 * phi2 * phi2 * (1.0 - 2.0 * phi2 + phi2 * phi2);		
-	    Cs = (1 - initial_porosity * (1 - psi1)) * Cd_;
-		dCsdpsi1 = initial_porosity * Cd_;
+     ScalarT phi1;
+     ScalarT phi2;
+     ScalarT psi1;
+     ScalarT psi2;	
+     ScalarT Cs;
+     ScalarT dCsdpsi1;
+     ScalarT p1;
+     ScalarT p2;
+     ScalarT dp1dphi1;
+     ScalarT dp2dphi2;
+     ScalarT A;
+     ScalarT B;
+   for (std::size_t cell = 0; cell < workset.numCells; ++cell){
+     for (std::size_t qp = 0; qp < num_qps_; ++qp){
+       // compute dT/dt using finite difference
+       T_dot_(cell, qp) = (T_(cell, qp) - T_old(cell, qp)) / dt;
+       phi1 = phi1_(cell, qp);
+       phi2 = phi2_(cell, qp);
+       phi1_dot_(cell,qp) = ( phi1_(cell,qp) - phi1_old(cell,qp) ) / dt;
+       phi2_dot_(cell,qp) = ( phi2_(cell,qp) - phi2_old(cell,qp) ) / dt;
+       psi1 = psi1_(cell, qp);
+       psi2 = psi2_(cell, qp);
+       psi1_dot_(cell,qp) = ( phi1_(cell,qp) - phi1_old(cell,qp) ) / dt;
+       psi2_dot_(cell,qp) = ( phi2_(cell,qp) - phi2_old(cell,qp) ) / dt;
+       p1 = phi1 * phi1 * phi1 * (10.0 - 15.0 * phi1 + 6.0 * phi1 * phi1);
+       p2 = phi2 * phi2 * phi2 * (10.0 - 15.0 * phi2 + 6.0 * phi2 * phi2);
+       dp1dphi1 = 30.0 * phi1 * phi1 * (1.0 - 2.0 * phi1 + phi1 * phi1);
+       dp2dphi2 = 30.0 * phi2 * phi2 * (1.0 - 2.0 * phi2 + phi2 * phi2);		
+       Cs = (1 - initial_porosity * (1 - psi1)) * Cd_;
+       dCsdpsi1 = initial_porosity * Cd_;
 
-		//Main Energy Time Derivative Equation
-		A = Cs*T_(cell, qp) + p1*(Lm_ + Cl_*T_(cell, qp) - Cl_*Tm_ - Cs*T_(cell, qp) + Cs*Tm_)
+       //Main Energy Time Derivative Equation
+       A = Cs*T_(cell, qp) + p1*(Lm_ + Cl_*T_(cell, qp) - Cl_*Tm_ - Cs*T_(cell, qp) + Cs*Tm_)
 				+ p2*Lv_;
-		B = (Lm_ + Cl_*T_(cell, qp) - Cl_*Tm_ - Cs*T_(cell, qp) + Cs*Tm_);
-    /*
-		energyDot_(cell, qp) = -psi2_dot_(cell,qp)*A 
-							 + (1-psi2) * (dCsdpsi1*psi1_dot_(cell,qp)*T_(cell, qp)
-											+ Cs*T_dot_(cell, qp) + dp1dphi1*phi1_dot_(cell, qp)*B
-											+ p1*(Cl_*T_dot_(cell, qp) - dCsdpsi1*psi1_dot_(cell, qp)*T_(cell, qp) - Cs*T_dot_(cell, qp) + dCsdpsi1*psi1_dot_(cell, qp)*Tm_)
-											+ dp2dphi2*phi2_dot_(cell, qp)*Lv_)
-							 //+ Cv_*Tm_*psi2_dot_(cell, qp);		( this is by James, not sure if correct)
-							 + ( Cs*Tm_+ Lm_ + Cl_*(Tv_-Tm_) + Lv_ ) * psi2_dot_(cell,qp);					
-		//std::cout<< " energydot energydot_" <<energyDot_(cell,qp)<<"\n";
+       B = (Lm_ + Cl_*T_(cell, qp) - Cl_*Tm_ - Cs*T_(cell, qp) + Cs*Tm_);
+      /*
+      energyDot_(cell, qp) = -psi2_dot_(cell,qp)*A 
+		             + (1-psi2) * (dCsdpsi1*psi1_dot_(cell,qp)*T_(cell, qp)
+			     + Cs*T_dot_(cell, qp) + dp1dphi1*phi1_dot_(cell, qp)*B
+			     + p1*(Cl_*T_dot_(cell, qp) - dCsdpsi1*psi1_dot_(cell, qp)*T_(cell, qp) - Cs*T_dot_(cell, qp) + dCsdpsi1*psi1_dot_(cell, qp)*Tm_)
+			     + dp2dphi2*phi2_dot_(cell, qp)*Lv_)
+			     //+ Cv_*Tm_*psi2_dot_(cell, qp);		( this is by James, not sure if correct)
+			     + ( Cs*Tm_+ Lm_ + Cl_*(Tv_-Tm_) + Lv_ ) * psi2_dot_(cell,qp);					
 */
-			    energyDot_(cell, qp) = (Cs + p1 * (Cl_ - Cs) + p2 * (Cv_ - Cl_)) * T_dot_(cell, qp) + 
-	      dp1dphi1 * (Lm_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_)) * phi1_dot_(cell,qp) +
-	      dp2dphi2 * (Lv_ + (Cv_ - Cl_) * (T_(cell, qp) - Tv_)) * phi2_dot_(cell,qp);
+       energyDot_(cell, qp) = (Cs + p1 * (Cl_ - Cs) + p2 * (Cv_ - Cl_)) * T_dot_(cell, qp) + 
+	                      dp1dphi1 * (Lm_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_)) * phi1_dot_(cell,qp) +
+	                      dp2dphi2 * (Lv_ + (Cv_ - Cl_) * (T_(cell, qp) - Tv_)) * phi2_dot_(cell,qp);
 	      
-		}
-      }
+     }
+   }
    }
   }
 

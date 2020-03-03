@@ -527,7 +527,7 @@ Albany::TDManufacturing::constructEvaluators(
     p->set<string>("Coordinate Name","Coord Vec");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
-	  p->set<string>("Psi1 Name", "Psi1");	
+    p->set<string>("Psi1 Name", "Psi1");	
     p->set<string>("Psi2 Name", "Psi2");
     p->set<string>("Depth Name", "Depth");
     p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
@@ -643,7 +643,7 @@ Albany::TDManufacturing::constructEvaluators(
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
     //p->set<Teuchos::ParameterList*>("Input List", &params);
-        // take poweder layer porosity parameter list
+    // take poweder layer porosity parameter list
     Teuchos::ParameterList& param_list_initialporosity =
       material_db_->getElementBlockSublist(eb_name,"Powder Layer Initial Porosity");
     p->set<Teuchos::ParameterList*>("InitialPorosity Parameter List", &param_list_initialporosity);

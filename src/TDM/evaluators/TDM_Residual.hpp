@@ -66,10 +66,10 @@ namespace TDM {
     unsigned int num_nodes_;
     unsigned int workset_size_;
 	
-	std::string sim_type;
-	ScalarT initial_porosity;
-	ScalarT F_inv;
-	ScalarT det_F;
+    std::string sim_type;
+    ScalarT initial_porosity;
+    ScalarT F_inv;
+    ScalarT det_F;
   
     bool enable_transient_;
     std::string Temperature_Name_;
