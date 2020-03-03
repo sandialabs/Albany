@@ -87,6 +87,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Names of some common fields. User can set them in the problem section, in case they are
   // loaded from mesh, where they are saved with a different name
+  body_force_name             = params->sublist("Variables Names").get<std::string>("Body Force Name","body_force");
   surface_height_name         = params->sublist("Variables Names").get<std::string>("Surface Height Name","surface_height");
   ice_thickness_name          = params->sublist("Variables Names").get<std::string>("Ice Thickness Name" ,"ice_thickness");
   temperature_name            = params->sublist("Variables Names").get<std::string>("Temperature Name"   ,"temperature");
@@ -476,6 +477,7 @@ void StokesFOBase::setFieldsProperties ()
   //       If derived class changes the type of temp or surf height, need to adjust this too.
   setSingleFieldProperties(corrected_temperature_name, 0, field_scalar_type[temperature_name] | field_scalar_type[surface_height_name], FieldLocation::Cell);
   setSingleFieldProperties(bed_topography_name, 0, FieldScalarType::MeshScalar, FieldLocation::Node);
+  setSingleFieldProperties(body_force_name, 1, field_scalar_type[surface_height_name], FieldLocation::QuadPoint);
 
   // If the flow rate is given from file, we could just use RealType, but then we would need
   // to template ViscosityFO on 3 scalar types. For simplicity, we set it to be the same
@@ -505,6 +507,8 @@ void StokesFOBase::setupEvaluatorRequests ()
     build_interp_ev[surface_height_name][InterpolationRequest::CELL_VAL] = true;
     build_interp_ev[corrected_temperature_name][InterpolationRequest::CELL_VAL] = true;
   }
+
+  build_interp_ev[body_force_name][InterpolationRequest::CELL_VAL] = true;
 
   // Basal Friction BC requests
   for (auto it : landice_bcs[LandIceBC::BasalFriction]) {

@@ -227,6 +227,7 @@ protected:
   std::map<std::string,std::map<UtilityRequest,bool>>  ss_utils_needed;
 
   // Name of common variables (constructor provides defaults)
+  std::string body_force_name;
   std::string surface_height_name;
   std::string ice_thickness_name;
   std::string flux_divergence_name;
@@ -621,6 +622,17 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       }
       fm0.template registerEvaluator<EvalT> (ev);
     }
+
+    if (needs[InterpolationRequest::CELL_VAL] && entity==FieldLocation::QuadPoint) {
+      if (rank==0) {
+        ev = utils.constructQuadPointsToCellInterpolationEvaluator (fname, dl->qp_scalar, dl->cell_scalar2);
+      } else if (rank==1) {
+        ev = utils.constructQuadPointsToCellInterpolationEvaluator (fname, dl->qp_vector, dl->cell_vector);
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot interpolate to the cell a field of rank " + std::to_string(rank) << ".\n");
+      }
+      fm0.template registerEvaluator<EvalT> (ev);
+    }
   }
 
   // Loop on all side sets
@@ -829,7 +841,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
   p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
   p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
-  p->set<std::string>("Body Force Variable Name", "Body Force");
+  p->set<std::string>("Body Force Variable Name", body_force_name);
   p->set<std::string>("Viscosity QP Variable Name", "LandIce Viscosity");
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
@@ -1010,7 +1022,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
 
   //Output
-  p->set<std::string>("Body Force Variable Name", "Body Force");
+  p->set<std::string>("Body Force Variable Name", body_force_name);
 
   ev = Teuchos::rcp(new LandIce::StokesFOBodyForce<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);

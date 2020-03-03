@@ -104,14 +104,16 @@ inline FieldScalarType operator| (const FieldScalarType& st1,
 // Mesh entity where a field is located
 enum class FieldLocation : int {
   Cell,
-  Node
+  Node,
+  QuadPoint
 };
 
 inline std::string e2str (const FieldLocation e) {
   switch (e) {
-    case FieldLocation::Node:   return "Node";
-    case FieldLocation::Cell:   return "Cell";
-    default:                    return INVALID_STR;
+    case FieldLocation::Node:       return "Node";
+    case FieldLocation::QuadPoint:  return "QuadPoint";
+    case FieldLocation::Cell:       return "Cell";
+    default:                        return INVALID_STR;
   }
 
   TEUCHOS_UNREACHABLE_RETURN("");
