@@ -167,12 +167,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   const auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
   const auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type"));
   std::string mu_name;
+  auto ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
   if (betaType=="POWER LAW") {
-    auto ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
     betaField = ss_ms->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
     mu_name = "mu_power_law";
   } else if (betaType=="REGULARIZED COULOMB") {
-    auto ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
     betaField = ss_ms->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
     mu_name = "mu_coulomb";
   } else {
@@ -324,7 +323,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
 
     if (betaField!=nullptr && il == 0) {
-      stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, gId + 1);
+      stk::mesh::Entity node = ss_ms->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib] + 1);
       const double* betaVal = stk::mesh::field_data(*betaField,node);
       betaData[ib] = betaVal[0];
     }
@@ -342,16 +341,16 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
     dissipationHeatOnPrisms[elemLayerShift] = 0;
     if (il==0) {
-      bodyForceOnBasalCell[lId] = 0;
+      bodyForceOnBasalCell[ib] = 0;
     }
     for (int iElem = 0; iElem < numElemsInPrism; iElem++) {
       stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, ++gId);
       const double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
       dissipationHeatOnPrisms[lId] += dissipationHeat[0]/numElemsInPrism;
 
-      if (il==0) {
+      if (il==0 && bodyForceField!=nullptr) {
         const double* bodyForceVal = stk::mesh::field_data(*bodyForceField, elem);
-        bodyForceOnBasalCell[lId] += bodyForceVal[0]/numElemsInPrism;
+        bodyForceOnBasalCell[ib] += bodyForceVal[0]/numElemsInPrism;
       }
     }
   }
