@@ -168,10 +168,12 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   const auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type"));
   std::string mu_name;
   if (betaType=="POWER LAW") {
-    betaField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
+    auto ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
+    betaField = ss_ms->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
     mu_name = "mu_power_law";
   } else if (betaType=="REGULARIZED COULOMB") {
-    betaField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
+    auto ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
+    betaField = ss_ms->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
     mu_name = "mu_coulomb";
   } else {
     mu_name = "mu";
@@ -672,6 +674,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   field10.set<std::string>("Field Name", "body_force");
   field10.set<std::string>("Field Type", "Elem Vector");
   field10.set<std::string>("Field Usage", "Output");
+
+  // Side set outputs
   if (use_sliding_law(betaType)) {
     auto& ss_pl =discretizationList->sublist("Side Set Discretizations");
     Teuchos::Array<std::string> bsn (1,"basalside");
@@ -704,7 +708,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   albanyApp->buildProblem();
 
   meshStruct->constructMesh(mpiComm, discretizationList, neq, req,
-      albanyApp->getStateMgr().getStateInfoStruct(), indexToVertexID,
+      albanyApp->getStateMgr(), indexToVertexID,
       vertexProcIDs, verticesCoords, globalVerticesStride,
       verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,
       verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,
