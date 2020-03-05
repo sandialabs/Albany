@@ -6,8 +6,6 @@ cd $BASE_DIR
 unset http_proxy
 unset https_proxy
 
-export OMPI_CXX=nvcc_wrapper_p100 
-
 export jenkins_albany_dir=/home/projects/albany/waterman/repos/Albany
 export jenkins_trilinos_dir=/home/projects/albany/waterman/repos/Trilinos
 
