@@ -1,1 +1,1 @@
-00 22 * * 1-6,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; rm -rf out; rm -rf out_openMP; bash build_trilinos_all.sh; cd /home/ikalash/nightlyCDash; bash build_albany_all.sh
+00 21 * * 1-6,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; rm -rf out; rm -rf out_openMP; bash build_trilinos_all.sh; cd /home/ikalash/nightlyCDash; bash build_albany_all.sh; cd /home/ikalash/nightlyAlbanyTests; bash -l -c "source run_spack.sh >& run_spack.out"
