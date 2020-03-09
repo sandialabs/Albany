@@ -45,6 +45,7 @@
 #include "LandIce_Integral1Dw_Z.hpp"
 #include "LandIce_VerticalVelocity.hpp"
 #include "LandIce_BasalMeltRate.hpp"
+#include "LandIce_SurfaceAirEnthalpy.hpp"
 
 
 namespace LandIce
@@ -718,8 +719,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     //Input
     p->set<std::string>("Hydrostatic Pressure Variable Name", "Hydrostatic Pressure");
 
-    p->set<std::string>("Surface Air Temperature Name", "surface_air_temperature");
-
     p->set<ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
     //Output
@@ -727,9 +726,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
     p->set<std::string>("Enthalpy Hs Variable Name", "melting enthalpy");
 
-    p->set<std::string>("Surface Air Enthalpy Name", "surface_enthalpy");
-
-    ev = Teuchos::rcp(new LandIce::PressureMeltingEnthalpy<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>(*p,dl));
+    ev = Teuchos::rcp(new LandIce::PressureMeltingEnthalpy<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     { // Saving the melting temperature in the output mesh
@@ -746,6 +743,21 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       if ((fieldManagerChoice == Albany::BUILD_RESID_FM)&&(ev->evaluatedFields().size()>0))
         fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
     }
+  }
+
+  // --- LandIce Surface Air Enthalpy
+  {
+    p = rcp(new ParameterList("LandIce surface Air Enthalpy"));
+
+    //Input
+    p->set<ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
+    p->set<std::string>("Surface Air Temperature Name", "surface_air_temperature");
+
+    //Output
+    p->set<std::string>("Surface Air Enthalpy Name", "surface_enthalpy");
+
+    ev = Teuchos::rcp(new LandIce::SurfaceAirEnthalpy<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // --- LandIce Temperature: diff enthalpy is h - hs.

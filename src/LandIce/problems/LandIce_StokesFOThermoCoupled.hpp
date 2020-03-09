@@ -21,6 +21,7 @@
 #include "LandIce_Temperature.hpp"
 #include "LandIce_w_Resid.hpp"
 #include "LandIce_w_ZResid.hpp"
+#include "LandIce_SurfaceAirEnthalpy.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -359,16 +360,29 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //Input
   p->set<std::string>("Hydrostatic Pressure Variable Name", hydrostatic_pressure_name);
-  p->set<std::string>("Surface Air Temperature Name", "surface_air_temperature");
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
   //Output
   p->set<std::string>("Melting Temperature Variable Name", melting_temperature_name);
   p->set<std::string>("Enthalpy Hs Variable Name", melting_enthalpy_name);
-  p->set<std::string>("Surface Air Enthalpy Name", surface_enthalpy_name);
 
-  ev = createEvaluatorWithTwoScalarTypes<LandIce::PressureMeltingEnthalpy,EvalT>(p,dl,field_scalar_type[melting_temperature_name],field_scalar_type["surface_air_temperature"]);
+  ev = createEvaluatorWithOneScalarType<LandIce::PressureMeltingEnthalpy,EvalT>(p,dl,field_scalar_type[melting_temperature_name]);
   fm0.template registerEvaluator<EvalT>(ev);
+
+  // --- LandIce Surface Air Enthalpy
+  {
+    p = Teuchos::rcp(new Teuchos::ParameterList("LandIce surface Air Enthalpy"));
+
+    //Input
+    p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
+    p->set<std::string>("Surface Air Temperature Name", "surface_air_temperature");
+
+    //Output
+    p->set<std::string>("Surface Air Enthalpy Name", "surface_enthalpy");
+    ev = createEvaluatorWithOneScalarType<LandIce::SurfaceAirEnthalpy,EvalT>(p,dl,field_scalar_type["surface_air_temperature"]);
+
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   // --- LandIce hydrostatic pressure
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Hydrostatic Pressure"));

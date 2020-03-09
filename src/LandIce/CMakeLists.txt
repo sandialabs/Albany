@@ -64,6 +64,7 @@
        evaluators/LandIce_StokesL1L2Resid.cpp
        evaluators/LandIce_StokesRm.cpp
        evaluators/LandIce_StokesTauM.cpp
+       evaluators/LandIce_SurfaceAirEnthalpy.cpp
        evaluators/LandIce_Temperature.cpp
        evaluators/LandIce_ThicknessResid.cpp
        evaluators/LandIce_UpdateZCoordinate.cpp
@@ -217,6 +218,8 @@ ENDIF()
        evaluators/LandIce_StokesRm_Def.hpp
        evaluators/LandIce_StokesTauM.hpp
        evaluators/LandIce_StokesTauM_Def.hpp
+       evaluators/LandIce_SurfaceAirEnthalpy.hpp
+       evaluators/LandIce_SurfaceAirEnthalpy_Def.hpp
        evaluators/LandIce_Temperature.hpp
        evaluators/LandIce_Temperature_Def.hpp
        evaluators/LandIce_ThicknessResid_Def.hpp

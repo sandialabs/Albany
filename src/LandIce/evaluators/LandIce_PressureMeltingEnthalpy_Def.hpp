@@ -15,14 +15,12 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, typename PressST, typename SurfTempST>
-PressureMeltingEnthalpy<EvalT,Traits,PressST,SurfTempST>::
+template<typename EvalT, typename Traits, typename PressST>
+PressureMeltingEnthalpy<EvalT,Traits,PressST>::
 PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
   pressure       (p.get<std::string> ("Hydrostatic Pressure Variable Name"), dl->node_scalar),
-  surfaceTemp    (p.get<std::string> ("Surface Air Temperature Name"), dl->node_scalar),
   meltingTemp    (p.get<std::string> ("Melting Temperature Variable Name"), dl->node_scalar),
-  enthalpyHs     (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
-  surfaceEnthalpy(p.get<std::string> ("Surface Air Enthalpy Name"), dl->node_scalar)
+  enthalpyHs     (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar)
 {
   std::vector<PHX::Device::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
@@ -30,11 +28,9 @@ PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   numNodes = dims[1];
 
   this->addDependentField(pressure);
-  this->addDependentField(surfaceTemp);
 
   this->addEvaluatedField(meltingTemp);
   this->addEvaluatedField(enthalpyHs);
-  this->addEvaluatedField(surfaceEnthalpy);
   this->setName("Pressure-melting Enthalpy");
 
   // Setting parameters
@@ -46,13 +42,13 @@ PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   Tm = physics_list.get<double>("Atmospheric Pressure Melting Temperature");
 }
 
-template<typename EvalT, typename Traits, typename PressST, typename SurfTempST>
-void PressureMeltingEnthalpy<EvalT,Traits,PressST,SurfTempST>::
+template<typename EvalT, typename Traits, typename PressST>
+void PressureMeltingEnthalpy<EvalT,Traits,PressST>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {}
 
-template<typename EvalT, typename Traits, typename PressST, typename SurfTempST>
-void PressureMeltingEnthalpy<EvalT,Traits,PressST,SurfTempST>::
+template<typename EvalT, typename Traits, typename PressST>
+void PressureMeltingEnthalpy<EvalT,Traits,PressST>::
 evaluateFields(typename Traits::EvalData d)
 {
   const double powm6 = 1e-6; // [k^2], k=1000
@@ -61,7 +57,6 @@ evaluateFields(typename Traits::EvalData d)
     for (std::size_t node = 0; node < numNodes; ++node) {
       meltingTemp(cell,node) = - beta * pressure(cell,node) + Tm;
       enthalpyHs(cell,node) = rho_i * c_i * ( meltingTemp(cell,node) - T0 ) * powm6;
-      surfaceEnthalpy(cell,node) = rho_i * c_i * ( std::min(surfaceTemp(cell,node),Tm) - T0 ) * powm6;
     }
 }
 

@@ -1,12 +1,12 @@
 /*
- * LandIce_PressureMeltingEnthalpy.hpp
+ * LandIce_SurfaceAirEnthalpy.hpp
  *
- *  Created on: Jun 6, 2016
- *      Author: abarone
+ *  Created on: March 2, 2020
+ *      Author: mperego
  */
 
-#ifndef LANDICE_PRESSURE_MELTING_ENTHALPY_HPP
-#define LANDICE_PRESSURE_MELTING_ENTHALPY_HPP
+#ifndef LANDICE_SURFACE_AIR_ENTHALPY_HPP
+#define LANDICE_SURFACE_AIR_ENTHALPY_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -24,36 +24,33 @@ namespace LandIce
   This evaluator computes enthalpy of the ice at pressure-melting temperature Tm(p).
  */
 
-template<typename EvalT, typename Traits, typename PressST>
-class PressureMeltingEnthalpy: public PHX::EvaluatorWithBaseImpl<Traits>,
+template<typename EvalT, typename Traits, typename SurfTempST>
+class SurfaceAirEnthalpy: public PHX::EvaluatorWithBaseImpl<Traits>,
                                public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  PressureMeltingEnthalpy (const Teuchos::ParameterList& p,
+  SurfaceAirEnthalpy (const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
+  void postRegistrationSetup (typename Traits::SetupData workset,
                               PHX::FieldManager<Traits>& fm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void evaluateFields(typename Traits::EvalData workset);
 
 private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
-  // Input:
-  PHX::MDField<const PressST,Cell,Node>     pressure;    //[Pa], [kg m^{-1} s^{-2}]
-
   // Output:
-  PHX::MDField<PressST,Cell,Node>      meltingTemp; //[K]
-  PHX::MDField<PressST,Cell,Node>      enthalpyHs;       //[MW s m^{-3}]
+  PHX::MDField<SurfTempST,Cell,Node>   surfaceTemp;  //[K]
+  PHX::MDField<SurfTempST,Cell,Node>   surfaceEnthalpy;  //[MW s m^{-3}]
 
   int numNodes;
+  std::string fieldName;
 
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
   double rho_i; //[kg m^{-3}]
   double T0;    //[K]
-  double beta;  //[K Pa^{-1}]
   double Tm; //[K], 273.15
 };
 
