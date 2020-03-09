@@ -86,6 +86,26 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::SDirichlet(
 {
 }
 
+
+template <typename Traits>
+void
+SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::preEvaluate(
+    typename Traits::EvalData dirichlet_workset)
+{
+  if(Teuchos::nonnull(dirichlet_workset.f)) {
+    Teuchos::RCP<Thyra_Vector const> x = dirichlet_workset.x;
+    Teuchos::ArrayRCP<ST>            x_view =
+        Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
+    // Grab the vector of node GIDs for this Node Set ID
+    std::vector<std::vector<int>> const& ns_nodes =
+        dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+    for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
+      int const dof = ns_nodes[ns_node][this->offset];
+      x_view[dof]   = this->value.val();
+    }
+  }
+}
+
 //
 //
 //
@@ -154,15 +174,8 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
                     Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x)) :
                     Teuchos::null;
 
-  Teuchos::Array<GO> global_index(1);
-  Teuchos::Array<LO> index(1);
-  Teuchos::Array<ST> entry(1);
   Teuchos::Array<ST> entries;
   Teuchos::Array<LO> indices;
-
-#if defined(ALBANY_LCM)
-  auto const& fixed_dofs = dirichlet_workset.fixed_dofs_;
-#endif
 
   this->set_row_and_col_is_dbc(dirichlet_workset);
 
@@ -192,7 +205,6 @@ SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
     }
     Albany::setLocalRowValues(J, local_row, indices(), entries());
   }
-  return;
 }
 
 //
@@ -205,21 +217,78 @@ SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::SDirichlet(
 {
 }
 
+template <typename Traits>
+void
+SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::preEvaluate(
+    typename Traits::EvalData dirichlet_workset)
+{
+  if(Teuchos::nonnull(dirichlet_workset.f)) {
+    Teuchos::RCP<Thyra_Vector const> x = dirichlet_workset.x;
+    Teuchos::ArrayRCP<ST>            x_view =
+        Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
+    // Grab the vector of node GIDs for this Node Set ID
+    std::vector<std::vector<int>> const& ns_nodes =
+        dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+    for (size_t ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
+      int const dof = ns_nodes[ns_node][this->offset];
+      x_view[dof]   = this->value.val();
+    }
+  }
+}
+
 //
 //
 //
 
 template <typename Traits>
 void SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>::evaluateFields(
-    typename Traits::EvalData /* dirichlet_workset */)
+    typename Traits::EvalData dirichlet_workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      Teuchos::Exceptions::InvalidParameter,
-      std::endl
-          << "Error!  Tangent specialization for PHAL::SDirichlet "
-             "is not implemented!\n");
-  return;
+  Teuchos::RCP<const Thyra_Vector>       x  = dirichlet_workset.x;
+  Teuchos::RCP<const Thyra_MultiVector> Vx = dirichlet_workset.Vx;
+  Teuchos::RCP<Thyra_Vector>             f  = dirichlet_workset.f;
+  Teuchos::RCP<Thyra_MultiVector>       fp = dirichlet_workset.fp;
+  Teuchos::RCP<Thyra_MultiVector>       JV = dirichlet_workset.JV;
+
+  Teuchos::ArrayRCP<ST>       f_nonconstView;
+
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vx_const2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       JV_nonconst2dView;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>       fp_nonconst2dView;
+
+  if (f != Teuchos::null) {
+    f_nonconstView = Albany::getNonconstLocalData(f);
+  }
+  if (JV != Teuchos::null) {
+    JV_nonconst2dView = Albany::getNonconstLocalData(JV);
+    Vx_const2dView    = Albany::getLocalData(Vx);
+  }
+  if (fp != Teuchos::null) {
+    fp_nonconst2dView = Albany::getNonconstLocalData(fp);
+  }
+
+  const RealType j_coeff = dirichlet_workset.j_coeff;
+  const std::vector<std::vector<int> >& nsNodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+    int lunk = nsNodes[inode][this->offset];
+
+    if (dirichlet_workset.f != Teuchos::null) {
+      f_nonconstView[lunk] = 0.0;
+    }
+
+    if (JV != Teuchos::null) {
+      for (int i=0; i<dirichlet_workset.num_cols_x; i++) {
+        JV_nonconst2dView[i][lunk] = j_coeff*Vx_const2dView[i][lunk];
+      }
+    }
+
+    if (fp != Teuchos::null) {
+      for (int i=0; i<dirichlet_workset.num_cols_p; i++) {
+        fp_nonconst2dView[i][lunk] = -this->value.dx(dirichlet_workset.param_offset+i);
+      }
+    }
+  }
 }
 
 //
@@ -241,7 +310,6 @@ void
 SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
     typename Traits::EvalData dirichlet_workset)
 {
-  return;
   Teuchos::RCP<Thyra_MultiVector> fpV = dirichlet_workset.fpV;
 
   bool trans    = dirichlet_workset.transpose_dist_param_deriv;

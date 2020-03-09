@@ -445,6 +445,27 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     }
   }
 
+  for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+    for (std::size_t j = 0; j < bcNames.size(); j++) {
+      string ss = traits_type::constructSDBCNameField(nodeSetIDs[i], bcNames[j]);
+      if (BCparams.isParameter(ss)) {
+        RCP<ParameterList> p = rcp(new ParameterList);
+        p->set<int>("Type", traits_type::typeSF);
+        p->set<RCP<DataLayout>>("Data Layout", dummy);
+        p->set<string>("Dirichlet Name", ss);
+        p->set<RealType>("Dirichlet Value", 0.0);
+        p->set<string>("Field Name", BCparams.get<string>(ss));
+        p->set<string>("Node Set ID", nodeSetIDs[i]);
+        p->set<int>("Equation Offset", j);
+        offsets_[i].push_back(j);
+        p->set<RCP<ParamLib>>("Parameter Library", paramLib);
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
+        bcs->push_back(ss);
+        use_sdbcs_ = true;
+      }
+    }
+  }
+
   ///
   /// Time dependent BC specific
   ///
@@ -948,14 +969,14 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     delete value;
   }
 
-  if ((use_dbcs_ == true) && (use_sdbcs_ == true)) {
+/*  if ((use_dbcs_ == true) && (use_sdbcs_ == true)) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::logic_error,
         "You are attempting to prescribe a mix of SDBCs and DBCs, which is not "
         "allowed!\n");
   }
-
+*/
   string allBC = "Evaluator for all Dirichlet BCs";
   {
     RCP<ParameterList> p = rcp(new ParameterList);

@@ -64,6 +64,9 @@ class SDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>
   SDirichlet(Teuchos::ParameterList& p);
 
   void
+  preEvaluate(typename Traits::EvalData d);
+
+  void
   evaluateFields(typename Traits::EvalData d);
 
   void
@@ -85,6 +88,9 @@ class SDirichlet<PHAL::AlbanyTraits::Tangent, Traits>
   using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
 
   SDirichlet(Teuchos::ParameterList& p);
+
+  void
+  preEvaluate(typename Traits::EvalData d);
 
   void
   evaluateFields(typename Traits::EvalData d);
