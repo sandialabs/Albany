@@ -295,6 +295,7 @@ SET(SOURCES ${SOURCES}
   evaluators/bc/PHAL_SDirichlet.cpp
   evaluators/bc/PHAL_DirichletCoordinateFunction.cpp
   evaluators/bc/PHAL_DirichletField.cpp
+  evaluators/bc/PHAL_SDirichletField.cpp
   evaluators/bc/PHAL_DirichletOffNodeSet.cpp
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/bc/PHAL_Neumann.cpp
@@ -413,6 +414,8 @@ SET(HEADERS ${HEADERS}
   evaluators/bc/PHAL_DirichletCoordinateFunction_Def.hpp
   evaluators/bc/PHAL_DirichletField.hpp
   evaluators/bc/PHAL_DirichletField_Def.hpp
+  evaluators/bc/PHAL_SDirichletField.hpp
+  evaluators/bc/PHAL_SDirichletField_Def.hpp
   evaluators/bc/PHAL_DirichletOffNodeSet.hpp
   evaluators/bc/PHAL_DirichletOffNodeSet_Def.hpp
   evaluators/bc/PHAL_Dirichlet_Def.hpp

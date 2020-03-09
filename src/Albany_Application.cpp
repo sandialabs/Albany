@@ -1680,6 +1680,9 @@ Application::computeGlobalJacobianImpl(
 
     dfm_set(workset, x, xdot, xdotdot, rc_mgr);
 
+    if(problem->useSDBCs() == true)
+      dfm->preEvaluate<EvalT>(workset);
+
     loadWorksetNodesetInfo(workset);
 
     if (scaleBCdofs == true) {
