@@ -1493,6 +1493,8 @@ writeMatrixMarket<const Thyra_Vector>(
   auto tv = getConstTpetraVector(v,false);
   if (!tv.is_null()) {
     writeMatrixMarket(tv,prefix,counter);
+    //map needed to determine numbering of the rhs
+    writeMatrixMarket(tv->getMap(),prefix+"_map",counter);
     return;
   }
 
@@ -1502,6 +1504,8 @@ writeMatrixMarket<const Thyra_Vector>(
     // TODO: avoid petra conversion, and call EpetraExt I/O directly
     tv = Petra::EpetraVector_To_TpetraVectorConst(*ev,createTeuchosCommFromEpetraComm(ev->Comm()));
     writeMatrixMarket(tv,prefix,counter);
+    //map needed to determine numbering of the rhs
+    writeMatrixMarket(tv->getMap(),prefix+"_map",counter);
     return;
   }
 #endif
