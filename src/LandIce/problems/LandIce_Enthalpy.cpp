@@ -2,7 +2,7 @@
  * LandIce_Enthalpy.cpp
  *
  *  Created on: May 11, 2016
- *      Author: abarone
+ *      Author: A. Barone, M. Perego
  */
 #include "LandIce_Enthalpy.hpp"
 
@@ -22,7 +22,7 @@ Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_), discParams(discParams_), 
   use_sdbcs_(false)
 {
-  this->setNumEquations(2);
+  this->setNumEquations(1);
 
   basalSideName = params->isParameter("Basal Side Name") ? params->get<std::string>("Basal Side Name") : "INVALID";
   basalEBName = "INVALID";
@@ -160,7 +160,7 @@ void LandIce::Enthalpy::
 constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(neq-1);
+   std::vector<std::string> dirichletNames(neq);
 
    std::stringstream s;
    s << "Enth";
@@ -189,17 +189,13 @@ constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpec
 	// Construct BC evaluators for all side sets and names
 	// Note that the string index sets up the equation offset, so ordering is important
 
-	std::vector<std::string> neumannNames(neq + 1);
+	std::vector<std::string> neumannNames(neq);
 	Teuchos::Array<Teuchos::Array<int> > offsets;
-	offsets.resize(neq + 1);
+	offsets.resize(neq);
 
 	neumannNames[0] = "Enth";
 	offsets[0].resize(1);
 	offsets[0][0] = 0;
-	offsets[neq].resize(neq);
-	offsets[neq][0] = 0;
-
-    neumannNames[neq] = "all";
 
     // Construct BC evaluators for all possible names of conditions
     // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both

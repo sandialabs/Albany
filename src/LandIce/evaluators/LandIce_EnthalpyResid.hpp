@@ -52,7 +52,7 @@ private:
 
   PHX::MDField<const VelocityST,Cell,QuadPoint,VecDim>          Velocity; //[m yr^{-1}]
   PHX::MDField<const VelocityST,Cell,QuadPoint,VecDim, Dim>     velGrad; //[m yr^{-1}]
-  PHX::MDField<const ScalarT,Cell,QuadPoint>                    verticalVel; //[m yr^{-1}]
+  PHX::MDField<const VelocityST,Cell,QuadPoint>                 verticalVel; //[m yr^{-1}]
   PHX::MDField<const MeshScalarT,Cell,Node,Dim>                 coordVec; // [km]
   PHX::MDField<const ScalarT,Cell,QuadPoint>                    diss;  //[W m^{-3}] = [Pa s^{-1}]
   PHX::MDField<const ScalarT,Cell,Node>                         basalFricHeat;  // [MW] = [k^{-1} Pa s^{-1} km^3], k=1000
