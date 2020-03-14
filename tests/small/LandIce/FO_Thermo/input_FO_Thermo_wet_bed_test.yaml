@@ -127,27 +127,27 @@ ANONYMOUS:
             Field Name: basal_friction
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/DomeEnth/basal_friction.ascii
+            File Name: ../AsciiMeshes/Enthalpy/Dome/basal_friction.ascii
           Field 1: 
             Field Name: ice_thickness
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/DomeEnth/thickness.ascii
+            File Name: ../AsciiMeshes/Enthalpy/Dome/thickness.ascii
           Field 2: 
             Field Name: surface_height
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/DomeEnth/surface_height.ascii
+            File Name: ../AsciiMeshes/Enthalpy/Dome/surface_height.ascii
           Field 3: 
             Field Name: surface_air_temperature
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/DomeEnth/surface_air_temperature.ascii
+            File Name: ../AsciiMeshes/Enthalpy/Dome/surface_air_temperature.ascii
           Field 4: 
             Field Name: heat_flux
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/DomeEnth/basal_heat_flux.ascii
+            File Name: ../AsciiMeshes/Enthalpy/Dome/basal_heat_flux.ascii
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [8.959983869878e-01]
