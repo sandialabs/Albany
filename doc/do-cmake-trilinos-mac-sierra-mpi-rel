@@ -2,23 +2,25 @@
 #
 export TRILINOS_HOME=/Users/gahanse/Codes/Trilinos
 BUILD_DIR=`pwd`
-INSTALL_DIR=/usr/local/trilinos/MPI_DBG
+INSTALL_DIR=/usr/local/trilinos/MPI_REL
 BOOST_DIR=/usr/local/mpich-3.1.4
 LIB_DIR=/usr/local/mpich-3.1.4
 MPI_BASE_DIR=/usr/local/mpich-3.1.4
 NETCDF=/usr/local/mpich-3.1.4
 HDFDIR=/usr/local/mpich-3.1.4
 PARMETISDIR=/usr/local/mpich-3.1.4
+#SUPERLUDIR=/usr/local/xcode/SuperLU_4.3
+#SUPERLUDIR=/usr/local/mpich-3.1.4/SuperLU_5.2.1 # Wrong # arguments for
 SUPERLUDIR=/usr/local/mpich-3.1.4/SuperLU_4.3
 
 cmake \
     -Wno-dev \
 \
-    -D CMAKE_BUILD_TYPE:STRING=DEBUG \
-    -D CMAKE_CXX_FLAGS:STRING="-g -O0 -Wno-inconsistent-missing-override" \
+    -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+    -D CMAKE_CXX_FLAGS:STRING="-O3 -march=native -DNDEBUG -Wno-inconsistent-missing-override" \
     -D Trilinos_CXX11_FLAGS:STRING="-std=c++11" \
-    -D CMAKE_C_FLAGS:STRING="-g -O0 " \
-    -D CMAKE_Fortran_FLAGS:STRING="-g -O0 -Wa,-q" \
+    -D CMAKE_C_FLAGS:STRING="-O3 -march=native -DNDEBUG" \
+    -D CMAKE_Fortran_FLAGS:STRING="-O3 -march=native -DNDEBUG -Wa,-q" \
     -D Trilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
     -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
     -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
@@ -79,6 +81,7 @@ cmake \
     -D Trilinos_ENABLE_Thyra:BOOL=ON \
     -D Trilinos_ENABLE_Zoltan:BOOL=ON \
 \
+    -D SCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON \
     -D Rythmos_ENABLE_DEBUG:BOOL=ON \
     -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
     -D Tpetra_INST_INT_LONG:BOOL=OFF \
@@ -142,9 +145,9 @@ cmake \
     -D TPL_ENABLE_BLAS:STRING=ON \
     -D TPL_ENABLE_LAPACK:STRING=ON \
     -D BLAS_LIBRARY_DIRS:STRING="/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current" \
-    -D BLAS_INCLUDE_DIRS:STRING="/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers" \
+    -D BLAS_INCLUDE_DIRS:STRING="/Users/gahanse/Codes/include" \
     -D LAPACK_LIBRARY_DIRS:STRING="/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current" \
-    -D LAPACK_INCLUDE_DIRS:STRING="/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers" \
+    -D LAPACK_INCLUDE_DIRS:STRING="/Users/gahanse/Codes/include" \
 \
     -D TPL_ENABLE_ParMETIS:STRING=ON \
     -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}/include" \
@@ -160,5 +163,3 @@ exit 0
     -D Trilinos_ENABLE_DataTransferKitSTKMeshAdapters:BOOL=OFF \
     -D DataTransferKit_ENABLE_DBC:BOOL=OFF \
     -D Tpetra_INST_INT_UNSIGNED_LONG:BOOL=ON \
-    -D LAPACK_INCLUDE_DIRS:STRING="/Users/gahanse/Codes/include" \
-    -D BLAS_INCLUDE_DIRS:STRING="/Users/gahanse/Codes/include" \

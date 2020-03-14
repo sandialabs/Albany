@@ -17,6 +17,7 @@ cmake \
     -D Trilinos_CONFIGURE_OPTIONS_FILE:FILEPATH=$TRILINOS_HOME/sampleScripts/AlbanySettings.cmake \
     -D Trilinos_ENABLE_SCOREC:BOOL=ON \
     -D Trilinos_ENABLE_DataTransferKit:BOOL=ON \
+    -D Trilinos_ENABLE_STKSearch:BOOL=ON \
     -D SCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON \
     -D CMAKE_BUILD_TYPE:STRING=NONE \
     -D Trilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
