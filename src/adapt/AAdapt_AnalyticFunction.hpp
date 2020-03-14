@@ -636,6 +636,19 @@ class ExpressionParser : public AnalyticFunction {
 #endif
 };
 
+class ExpressionParserAllDOFs : public AnalyticFunction
+{
+ public:
+  ExpressionParserAllDOFs(int neq_, int dim_, Teuchos::Array<std::string>& expr);
+  void
+  compute(double* unknowns, double const* coords);
+
+ private:
+  int                         dim;  // size of coordinate vector X
+  int                         neq;  // size of solution vector x
+  Teuchos::Array<std::string> expr;
+};
+
 }
 
 #endif

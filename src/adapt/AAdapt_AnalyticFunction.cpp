@@ -11,6 +11,8 @@
 #include "AAdapt_AnalyticFunction.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_Exceptions.hpp"
+#include "Albany_Macros.hpp" 
+#include <stk_expreval/Evaluator.hpp>
 
 #include "Aeras_ShallowWaterConstants.hpp"
 
@@ -2909,4 +2911,32 @@ void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
 //   std::cout << "DEBUG CHECK ExpressionParser " << expressionZ << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[2] << std::endl;
 
   return;
+}
+
+AAdapt::ExpressionParserAllDOFs::ExpressionParserAllDOFs(
+    int                          neq_,
+    int                          dim_,
+    Teuchos::Array<std::string>& expr_)
+    : dim(dim_), neq(neq_), expr(expr_)
+{
+  ALBANY_ASSERT(
+      expr.size() == neq,
+      "Must have the same number of equations (" << neq << ") and expressions ("
+                                                 << expr.size() << ").");
+}
+
+void
+AAdapt::ExpressionParserAllDOFs::compute(double* unknowns, double const* coords)
+{
+  std::vector<std::string> coord_str{"x", "y", "z"};
+  double*                  X = const_cast<double*>(coords);
+  for (auto eq = 0; eq < neq; ++eq) {
+    auto const&         expr_str = expr[eq];
+    stk::expreval::Eval expr_eval(expr_str);
+    expr_eval.parse();
+    for (auto i = 0; i < dim; ++i) {
+      expr_eval.bindVariable(coord_str[i], X[i]);
+    }
+    unknowns[eq] = expr_eval.evaluate();
+  }
 }
