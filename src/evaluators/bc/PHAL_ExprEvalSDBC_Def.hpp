@@ -114,9 +114,6 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
   col_is_dbc_ = Thyra::createMember(col_vs);
   row_is_dbc_->assign(0.0);
   col_is_dbc_->assign(0.0);
-#ifdef ALBANY_LCM
-  auto const& fixed_dofs      = dbc_workset.fixed_dofs_;
-#endif
   auto        row_is_dbc_data = Albany::getNonconstLocalData(row_is_dbc_);
   if (dbc_workset.is_schwarz_bc_ == false) {  // regular SDBC
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
@@ -125,8 +122,8 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
     }
   } 
 #ifdef ALBANY_LCM
-  auto const& fixed_dofs      = dbc_workset.fixed_dofs_;
   else {  // special case for Schwarz SDBC
+    auto const& fixed_dofs      = dbc_workset.fixed_dofs_;
     auto const spatial_dimension = dbc_workset.spatial_dimension_;
 
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
