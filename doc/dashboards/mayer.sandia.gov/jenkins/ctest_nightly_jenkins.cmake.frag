@@ -286,6 +286,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
     "-DTrilinos_ENABLE_STKUnit_tests:BOOL=OFF"
     "-DTrilinos_ENABLE_STKUtil:BOOL=ON"
+    "-DTrilinos_ENABLE_STKExprEval:BOOL=ON"
     #
     "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
     "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"

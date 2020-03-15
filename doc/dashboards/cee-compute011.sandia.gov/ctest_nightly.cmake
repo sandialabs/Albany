@@ -540,6 +540,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_PyTrilinos:BOOL=OFF"
   #
   "-DTrilinos_ENABLE_STK:BOOL=ON"
+  "-DTrilinos_ENABLE_STKExprEval:BOOL=ON"
   "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
   "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
   "-DTrilinos_ENABLE_STKUtil:BOOL=ON"

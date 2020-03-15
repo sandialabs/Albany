@@ -299,6 +299,7 @@ if (BUILD_TRILINOS)
     "-DNetcdf_LIBRARY_DIRS:FILEPATH=$ENV{NETCDF_DIR}/lib"
     "-DTPL_Netcdf_INCLUDE_DIRS:PATH=$ENV{NETCDF_DIR}/include"
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
+    "-DTrilinos_ENABLE_STKExprEval:BOOL=ON"
     "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
     "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
     "-DTrilinos_ENABLE_SEACASAprepro_lib:BOOL=ON"

@@ -277,6 +277,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
     "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
+    "-DTrilinos_ENABLE_STKExprEval:BOOL=ON"
     "-DTrilinos_ENABLE_Sacado:BOOL=ON"
     "-DTrilinos_ENABLE_Shards:BOOL=ON"
     "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"

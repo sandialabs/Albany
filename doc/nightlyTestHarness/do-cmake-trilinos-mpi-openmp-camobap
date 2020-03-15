@@ -121,6 +121,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_STKDoc_tests:BOOL=OFF \
       -D Trilinos_ENABLE_STKIO:BOOL=ON \
       -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+      -D Trilinos_ENABLE_STKExprEval:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
       -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
