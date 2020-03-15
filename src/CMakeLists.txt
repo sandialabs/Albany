@@ -292,6 +292,7 @@ ENDIF ()
 #evaluators
 SET(SOURCES ${SOURCES}
   evaluators/bc/PHAL_Dirichlet.cpp
+  evaluators/bc/PHAL_ExprEvalSDBC.cpp
   evaluators/bc/PHAL_TimeDepDBC.cpp
   evaluators/bc/PHAL_TimeDepSDBC.cpp
   evaluators/bc/PHAL_SDirichlet.cpp
@@ -410,6 +411,7 @@ SET(PDE_SRCS ${PDE_SRCS}
 
 SET(HEADERS ${HEADERS}
   evaluators/bc/PHAL_Dirichlet.hpp
+  evaluators/bc/PHAL_ExprEvalSDBC.hpp
   evaluators/bc/PHAL_TimeDepDBC.hpp
   evaluators/bc/PHAL_TimeDepSDBC.hpp
   evaluators/bc/PHAL_SDirichlet.hpp
@@ -422,6 +424,7 @@ SET(HEADERS ${HEADERS}
   evaluators/bc/PHAL_DirichletOffNodeSet.hpp
   evaluators/bc/PHAL_DirichletOffNodeSet_Def.hpp
   evaluators/bc/PHAL_Dirichlet_Def.hpp
+  evaluators/bc/PHAL_ExprEvalSDBC_Def.hpp
   evaluators/bc/PHAL_TimeDepDBC_Def.hpp
   evaluators/bc/PHAL_TimeDepSDBC_Def.hpp
   evaluators/bc/PHAL_SDirichlet_Def.hpp

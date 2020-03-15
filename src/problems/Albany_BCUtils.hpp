@@ -62,6 +62,10 @@ struct DirichletTraits
   };
   enum
   {
+    typeEe = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_expreval_sdbc
+  };
+  enum
+  {
     typeSw = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_schwarz_bc
   };
   enum
@@ -118,7 +122,13 @@ struct DirichletTraits
   constructSDBCNameField(const std::string& ns, const std::string& dof);
 
   static std::string
+  constructExprEvalSDBCName(std::string const& ns, std::string const& dof);
+
+  static std::string
   constructScaledSDBCNameField(const std::string& ns, const std::string& dof);
+
+  static std::string
+  constructExprEvalSDBCNameField(std::string const& ns, std::string const& dof);
 
   static std::string
   constructTimeDepBCName(const std::string& ns, const std::string& dof);
