@@ -114,8 +114,13 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
   col_is_dbc_ = Thyra::createMember(col_vs);
   row_is_dbc_->assign(0.0);
   col_is_dbc_->assign(0.0);
-#ifdef ALBANY_LCM
   auto        row_is_dbc_data = Albany::getNonconstLocalData(row_is_dbc_);
+#ifndef ALBANY_LCM
+  for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    auto dof             = ns_nodes[ns_node][this->offset];
+    row_is_dbc_data[dof] = 1;
+  }
+#else 
   if (dbc_workset.is_schwarz_bc_ == false) {  // regular SDBC
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
       auto dof             = ns_nodes[ns_node][this->offset];
