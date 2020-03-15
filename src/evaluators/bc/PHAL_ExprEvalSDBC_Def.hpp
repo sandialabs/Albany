@@ -76,8 +76,10 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
   for (auto ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     auto const dof = ns_nodes[ns_node][this->offset];
     f_view[dof]    = 0.0;
+#ifdef ALBANY_LCM
     // Record DOFs to avoid setting Schwarz BCs on them.
     dbc_workset.fixed_dofs_.insert(dof);
+#endif
   }
 }
 
@@ -112,15 +114,19 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
   col_is_dbc_ = Thyra::createMember(col_vs);
   row_is_dbc_->assign(0.0);
   col_is_dbc_->assign(0.0);
-
+#ifdef ALBANY_LCM
   auto const& fixed_dofs      = dbc_workset.fixed_dofs_;
+#endif
   auto        row_is_dbc_data = Albany::getNonconstLocalData(row_is_dbc_);
   if (dbc_workset.is_schwarz_bc_ == false) {  // regular SDBC
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
       auto dof             = ns_nodes[ns_node][this->offset];
       row_is_dbc_data[dof] = 1;
     }
-  } else {  // special case for Schwarz SDBC
+  } 
+#ifdef ALBANY_LCM
+  auto const& fixed_dofs      = dbc_workset.fixed_dofs_;
+  else {  // special case for Schwarz SDBC
     auto const spatial_dimension = dbc_workset.spatial_dimension_;
 
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
@@ -132,6 +138,7 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
       }
     }
   }
+#endif
   auto cas_manager = Albany::createCombineAndScatterManager(domain_vs, col_vs);
   cas_manager->scatter(row_is_dbc_, col_is_dbc_, Albany::CombineMode::INSERT);
 }
@@ -157,9 +164,9 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
   Teuchos::Array<ST> entry(1);
   Teuchos::Array<ST> entries;
   Teuchos::Array<LO> indices;
-
+#ifdef ALBANY_LCM
   auto const& fixed_dofs = dbc_workset.fixed_dofs_;
-
+#endif
   this->set_row_and_col_is_dbc(dbc_workset);
 
   auto     col_is_dbc_data = Albany::getLocalData(col_is_dbc_.getConst());
