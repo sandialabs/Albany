@@ -114,6 +114,7 @@ cmake \
  -D Trilinos_ENABLE_STKClassic:BOOL=OFF \
  -D Trilinos_ENABLE_STKIO:BOOL=ON \
  -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+ -D Trilinos_ENABLE_STKExprEval:BOOL=ON \
  -D Trilinos_ENABLE_Sacado:BOOL=ON \
  -D Trilinos_ENABLE_Shards:BOOL=ON \
  -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
