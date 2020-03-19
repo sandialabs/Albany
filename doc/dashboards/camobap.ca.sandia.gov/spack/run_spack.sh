@@ -5,7 +5,7 @@ rm -rf spack_albany.out
 rm -rf spack 
 rm -rf spack_ctest.out 
 rm -rf results_spack 
-rm -rf /extradrive/spack*
+rm -rf /tmp/ikalash/spack*
  
 echo "Cloning spack repo..."
 git clone git@github.com:SNLComputation/spack.git
@@ -13,7 +13,7 @@ cd spack
 git checkout albany
 echo "...done."
 #change where build happens from tempdir 
-sed -i 's,$tempdir/$user,/extradrive,g' etc/spack/defaults/config.yaml
+#sed -i 's,$tempdir/$user,/extradrive,g' etc/spack/defaults/config.yaml
 export http_proxy=http://wwwproxy.sandia.gov:80
 export https_proxy=http://wwwproxy.sandia.gov:80
 . share/spack/setup-env.sh 
