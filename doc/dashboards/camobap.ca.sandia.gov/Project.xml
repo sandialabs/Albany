@@ -1,14 +1,2 @@
 <Project name="Albany">
-  <SubProject name="IKTAlbany">
-  </SubProject>
-  <SubProject name="IKTAlbanyFPECheckDbg">
-  </SubProject>
-  <SubProject name="IKTAlbanyNoEpetra">
-  </SubProject>
-  <SubProject name="IKTAlbanyFunctorOpenMP">
-  </SubProject>
-  <SubProject name="IKTCismAlbany">
-  </SubProject>
-  <SubProject name="IKTCismAlbanyEpetra">
-  </SubProject>
 </Project>

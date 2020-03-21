@@ -15,6 +15,6 @@ cat results5 results6 >& results7
 grep "\*Timeout" nightly_log_watermanAlbany.txt >& results8
 cat results7 results8 >& results_cuda
 echo "" >> results_cuda
-echo "The Albany CDash site can be accessed here: http://cdash.sandia.gov/CDash-2-3-0/index.php?project=Albany" >> results_cuda
+echo "The Albany CDash site can be accessed here: https://sems-cdash-son.sandia.gov/cdash/index.php?project=Albany" >> results_cuda
 echo "" >> results_cuda
 rm results0 results1 results11 results2 results3 results4 results5 results6 results7 results8

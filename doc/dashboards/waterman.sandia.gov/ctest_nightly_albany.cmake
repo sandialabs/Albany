@@ -1,4 +1,15 @@
 
+#cmake_minimum_required (VERSION 2.8)
+set (CTEST_DO_SUBMIT ON)
+set (CTEST_TEST_TYPE Nightly)
+
+# What to build and test
+set (DOWNLOAD_TRILINOS FALSE)
+set (BUILD_TRILINOS FALSE)
+set (DOWNLOAD_ALBANY TRUE) 
+set (BUILD_ALBANY TRUE)
+set (BUILD_ALBANY_SFAD FALSE) 
+
 # Begin User inputs:
 set (CTEST_SITE "waterman.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
@@ -10,9 +21,9 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_NAME "linux-gcc-CUDA-Albany")
 set (CTEST_BINARY_NAME build)
-set (CTEST_BUILD_NAME "waterman.sandia.gov")
+set (CTEST_BUILD_NAME "linux-gcc-CUDA-Albany")
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -33,12 +44,12 @@ set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_FLAGS "-j32")
 SET (CTEST_BUILD_FLAGS "-j32")
 
-set (CTEST_DROP_METHOD "http")
+set (CTEST_DROP_METHOD "https")
 
-if (CTEST_DROP_METHOD STREQUAL "http")
-  set (CTEST_DROP_SITE "cdash.sandia.gov")
+if (CTEST_DROP_METHOD STREQUAL "https")
+  set (CTEST_DROP_SITE "sems-cdash-son.sandia.gov")
   set (CTEST_PROJECT_NAME "Albany")
-  set (CTEST_DROP_LOCATION "/CDash-2-3-0/submit.php?project=Albany")
+  set (CTEST_DROP_LOCATION "/cdash/submit.php?project=Albany")
   set (CTEST_TRIGGER_SITE "")
   set (CTEST_DROP_SITE_CDASH TRUE)
 endif ()
@@ -155,8 +166,6 @@ if (BUILD_TRILINOS)
   #
   # Configure the Trilinos/SCOREC build
   #
-  set_property (GLOBAL PROPERTY SubProject IKTWatermanTrilinosCUDA)
-  set_property (GLOBAL PROPERTY Label IKTWatermanTrilinosCUDA)
 
     #"-DCMAKE_CXX_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpicxx" 
     #"-DCMAKE_C_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpicc" 
@@ -324,8 +333,6 @@ if (BUILD_TRILINOS)
   # Build the rest of Trilinos and install everything
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTWatermanTrilinosCUDA)
-  set_property (GLOBAL PROPERTY Label IKTWatermanTrilinosCUDA)
   #set (CTEST_BUILD_TARGET all)
   set (CTEST_BUILD_TARGET install)
 
@@ -364,9 +371,6 @@ if (BUILD_ALBANY)
   # Configure the Albany build 
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTWatermanAlbanyCUDA)
-  set_property (GLOBAL PROPERTY Label IKTWatermanAlbanyCUDA)
-  
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
@@ -412,8 +416,6 @@ if (BUILD_ALBANY)
   # Build the rest of Albany and install everything
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTWatermanAlbanyCUDA)
-  set_property (GLOBAL PROPERTY Label IKTWatermanAlbanyCUDA)
   set (CTEST_BUILD_TARGET all)
   #set (CTEST_BUILD_TARGET install)
 
@@ -470,9 +472,6 @@ if (BUILD_ALBANY_SFAD)
   # Configure the Albany build 
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTWatermanAlbanyCUDASFad)
-  set_property (GLOBAL PROPERTY Label IKTWatermanAlbanyCUDASFad)
-  
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
@@ -518,8 +517,6 @@ if (BUILD_ALBANY_SFAD)
   # Build the rest of Albany and install everything
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTWatermanAlbanyCUDASFad)
-  set_property (GLOBAL PROPERTY Label IKTWatermanAlbanyCUDASFad)
   set (CTEST_BUILD_TARGET all)
   #set (CTEST_BUILD_TARGET install)
 

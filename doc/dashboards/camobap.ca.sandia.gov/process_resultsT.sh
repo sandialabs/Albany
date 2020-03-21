@@ -1,5 +1,5 @@
 
-cd /home/ikalash/nightlyCDash
+cd /home/ikalash/nightlyCDashNewCDash
 grep "Test   #" nightly_logT.txt >& results0
 grep "Test  #" nightly_logT.txt >& results1 
 cat results0 results1 >& results11
@@ -12,6 +12,6 @@ cat results3 results4 >& results5
 grep "(Failed)" nightly_logT.txt >& results6 
 cat results5 results6 >& resultsT
 echo "" >> resultsT 
-echo "The Albany CDash site can be accessed here: http://cdash.sandia.gov/CDash-2-3-0/index.php?project=Albany" >> resultsT
+echo "The Albany CDash site can be accessed here: https://sems-cdash-son.sandia.gov/cdash/index.php?project=Albany" >> resultsT 
 echo "" >> resultsT 
 rm results0 results1 results11 results2 results3 results4 results5 results6

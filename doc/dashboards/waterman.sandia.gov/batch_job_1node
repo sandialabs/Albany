@@ -1,1 +1,0 @@
-bsub -Is -x -n 40 -q rhel7W -R "span[ptile=40]" /home/projects/albany/waterman/run_albany_lsf.sh

@@ -11,10 +11,7 @@
 ulimit -c 0
 
 
-#cat trilinos ctest_nightly.cmake.frag >& ctest_nightly.cmake  
-#bash -c -l "source waterman_modules_cuda.sh >& modules_trilinos.out; bash nightly_cron_script_trilinos_waterman.sh"
-
-bash -c -l "source waterman_modules_cuda.sh >& modules_albany.out; bash nightly_cron_script_trilinos_waterman.sh; bash nightly_cron_script_albany_waterman_sfad.sh; bash nightly_cron_script_albany_waterman.sh;"
+bash -c -l "source waterman_modules_cuda.sh >& modules_albany.out; bash nightly_cron_script_trilinos_waterman.sh; bash nightly_cron_script_albany_waterman.sh; bash nightly_cron_script_albany_waterman_sfad.sh;"
 bash process_results_ctest.sh
 #bash send_email_ctest.sh  
 

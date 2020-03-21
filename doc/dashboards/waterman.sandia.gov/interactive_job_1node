@@ -1,1 +1,0 @@
-bsub -x -n 40 -q rhel7W  -R "span[ptile=40]" -Is bash
