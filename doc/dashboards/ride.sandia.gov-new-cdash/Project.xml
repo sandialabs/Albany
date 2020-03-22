@@ -1,0 +1,6 @@
+<Project name="Albany">
+  <SubProject name="IKTRideTrilinosCUDA">
+  </SubProject>
+  <SubProject name="IKTRideAlbanyCUDA">
+  </SubProject>
+</Project>

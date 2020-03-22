@@ -1,0 +1,5 @@
+
+#run the following command to set off the 
+#Albany CDash automatic build
+
+bsub -q rhel7G < cronjob_hack.batch  
