@@ -5,15 +5,16 @@ set(SNL_HELPERS_CMAKE true)
 
 include(CMakeParseArguments)
 
-function(snl_move_xml PART)
-  message("expecting files to be in \"${CTEST_DROP_LOCATION}\"")
-  file(GLOB MATCHING_FILES "${CTEST_DROP_LOCATION}/*___XML___${PART}.xml")
-  get_property(SUBPROJECT GLOBAL PROPERTY SubProject)
-  foreach(MATCHING_FILE IN LISTS MATCHING_FILES)
-    message("mv ${MATCHING_FILE} -> ${CTEST_DROP_LOCATION}/${SUBPROJECT}_${PART}.xml")
-    file(RENAME "${MATCHING_FILE}" "${CTEST_DROP_LOCATION}/${SUBPROJECT}_${PART}.xml")
-  endforeach()
-endfunction(snl_move_xml)
+#IKT, 3/21/20: I don't think the following is needed if no subprojects...
+#function(snl_move_xml PART)
+#  message("expecting files to be in \"${CTEST_DROP_LOCATION}\"")
+#  file(GLOB MATCHING_FILES "${CTEST_DROP_LOCATION}/*___XML___${PART}.xml")
+#  get_property(SUBPROJECT GLOBAL PROPERTY SubProject)
+#  foreach(MATCHING_FILE IN LISTS MATCHING_FILES)
+#    message("mv ${MATCHING_FILE} -> ${CTEST_DROP_LOCATION}/${SUBPROJECT}_${PART}.xml")
+#    file(RENAME "${MATCHING_FILE}" "${CTEST_DROP_LOCATION}/${SUBPROJECT}_${PART}.xml")
+#  endforeach()
+#endfunction(snl_move_xml)
 
 function(snl_submit PART)
   if (CTEST_DO_SUBMIT)
@@ -22,8 +23,7 @@ function(snl_submit PART)
       RETRY_DELAY 10
       RETURN_VALUE SUBMIT_ERR)
     if(SUBMIT_ERR)
-      get_property(SUBPROJECT GLOBAL PROPERTY SubProject)
-      message(WARNING "Cannot submit ${SUBPROJECT} ${PART} results!")
+      message(WARNING "Cannot submit ${PART} results!")
     endif()
   endif()
   message("CTEST_DROP_METHOD \"${CTEST_DROP_METHOD}\"")
@@ -46,7 +46,7 @@ function(snl_mkdir DIR)
   endif()
 endfunction(snl_mkdir)
 
-function(snl_update SUBPROJECT REPO_URL BRANCH SOURCE_DIR ERR)
+function(snl_update REPO_URL BRANCH SOURCE_DIR ERR)
   if (NOT BRANCH)
     set(BRANCH "master")
   endif()
@@ -62,9 +62,8 @@ function(snl_update SUBPROJECT REPO_URL BRANCH SOURCE_DIR ERR)
   endif()
   ctest_update(SOURCE "${SOURCE_DIR}" RETURN_VALUE FILES_CHANGED)
   if (FILES_CHANGED LESS 0)
-    get_property(SUBPROJECT GLOBAL PROPERTY SubProject)
     # we can in theory proceed with the out-of-date code
-    message(WARNING "Cannot update ${REPO_URL} branch ${BRANCH} for ${SUBPROJECT}") 
+    message(WARNING "Cannot update ${REPO_URL} branch ${BRANCH}") 
   else()
     snl_submit("Update")
   endif()
@@ -82,8 +81,7 @@ function(snl_config SOURCE_DIR BUILD_DIR CONFIG_OPTS ERR)
   )
   snl_submit("Configure")
   if (CONFIG_ERR)
-    get_property(SUBPROJECT GLOBAL PROPERTY SubProject)
-    message(WARNING "Cannot configure ${SUBPROJECT}")
+    message(WARNING "Cannot configure!")
     set(${ERR} ${CONFIG_ERR} PARENT_SCOPE)
     return()
   endif()
@@ -106,8 +104,7 @@ function(snl_build BUILD_DIR NUM_THREADS TARGET ERR)
     set(BUILD_ERR "-${NERRS}")
   endif()
   if (BUILD_ERR)
-    get_property(SUBPROJECT GLOBAL PROPERTY SubProject)
-    message(WARNING "Cannot make ${TARGET} for ${SUBPROJECT}")
+    message(WARNING "Cannot make ${TARGET}!")
     set(${ERR} ${BUILD_ERR} PARENT_SCOPE)
     return()
   endif()
@@ -126,12 +123,6 @@ function(snl_test BUILD_DIR)
   snl_submit("Test")
 endfunction(snl_test)
 
-function(snl_set_subproject SUBPROJECT)
-  message("Setting SubProject to ${SUBPROJECT}")
-  SET_PROPERTY(GLOBAL PROPERTY SubProject ${SUBPROJECT})
-  SET_PROPERTY(GLOBAL PROPERTY Label ${SUBPROJECT})
-endfunction(snl_set_subproject)
-
 function(snl_submit_subprojects)
   if (NOT CTEST_DO_SUBMIT)
     return()
@@ -140,9 +131,6 @@ function(snl_submit_subprojects)
       "PROJECT"
       "FILE_DIR"
     )
-  set(MULTI_VALUE_OPTS
-      "SUBPROJECTS"
-    )
   cmake_parse_arguments(SNL "" "${ONE_VALUE_OPTS}" "${MULTI_VALUE_OPTS}" ${ARGN})
   if (SNL_UNPARSED_ARGUMENTS)
     message(FATAL_ERROR "snl_create_subprojects called with unrecognized arguments \"${SNL_UNPARSED_ARGUMENTS}\", all arguments were \"${ARGN}\"")
@@ -150,13 +138,6 @@ function(snl_submit_subprojects)
   set(CONTENT "<Project name=\"${SNL_PROJECT}\">")
   message("CONTENT
 ${CONTENT}")
-  foreach(SUBPROJECT IN LISTS SNL_SUBPROJECTS)
-    set(CONTENT "${CONTENT}
-  <SubProject name=\"${SUBPROJECT}\">
-  </SubProject>")
-    message("CONTENT
-${CONTENT}")
-  endforeach()
   set(CONTENT "${CONTENT}
 </Project>")
   message("CONTENT
@@ -185,7 +166,6 @@ function(snl_do_subproject)
       "DO_TEST")
   set(ONE_VALUE_OPTS
       "PROJECT"
-      "SUBPROJECT"
       "REPO_URL"
       "BRANCH"
       "SOURCE_DIR"
@@ -213,13 +193,11 @@ function(snl_do_subproject)
   if (SNL_DO_PROJECT)
     snl_submit_subprojects(
         "PROJECT" "${SNL_PROJECT}" 
-        SUBPROJECTS "${SNL_SUBPROJECT}"
         FILE_DIR "${SNL_BUILD_DIR}"
         )
   endif()
-  snl_set_subproject("${SNL_SUBPROJECT}")
   if (SNL_DO_UPDATE)
-    snl_update("${SNL_SUBPROJECT}" "${SNL_REPO_URL}" "${SNL_BRANCH}"
+    snl_update("${SNL_REPO_URL}" "${SNL_BRANCH}"
         "${SNL_SOURCE_DIR}" UPDATE_ERR)
     if (UPDATE_ERR)
       if (SNL_RESULT_VARIABLE)
@@ -239,7 +217,7 @@ function(snl_do_subproject)
   endif()
   if (SNL_DO_BUILD)
     snl_build("${SNL_BUILD_DIR}" "${SNL_BUILD_THREADS}" "all" BUILD_ERR)
-    message("snl_build() for ${SNL_SUBPROJECT} returned ${BUILD_ERR}")
+    message("snl_build()  returned ${BUILD_ERR}")
     if (BUILD_ERR)
       if (SNL_RESULT_VARIABLE)
         set(${SNL_RESULT_VARIABLE} ${BUILD_ERR} PARENT_SCOPE)

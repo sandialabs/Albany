@@ -17,7 +17,6 @@ function(lcm_do_albany)
   set(UNARY_OPTS
       "BUILD_THREADS"
       "RESULT_VARIABLE"
-      "CDASH_SUBPROJECT"
       "BUILD_ID_STRING"
     )
   message("lcm_do_albany(${ARGN})")
@@ -61,14 +60,13 @@ function(lcm_do_albany)
   snl_do_subproject(${ARG_BOOL_OPTS}
       DO_PROJECT
       "PROJECT" "Albany"
-      SUBPROJECT ${ARG_CDASH_SUBPROJECT}
       SOURCE_DIR "$ENV{LCM_DIR}/Albany"
       BUILD_DIR "$ENV{LCM_DIR}/albany-build-${ARG_BUILD_ID_STRING}"
       CONFIG_OPTS "${CONFIG_OPTS}"
       BUILD_THREADS "${ARG_BUILD_THREADS}"
-      RESULT_VARIABLE SUBPROJECT_ERR
+      RESULT_VARIABLE ERR
       )
   if (ARG_RESULT_VARIABLE)
-    set(${ARG_RESULT_VARIABLE} ${SUBPROJECT_ERR} PARENT_SCOPE)
+    set(${ARG_RESULT_VARIABLE} ${ERR} PARENT_SCOPE)
   endif()
 endfunction(lcm_do_albany)

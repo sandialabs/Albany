@@ -19,7 +19,6 @@ function(lcm_do_package)
       "PACKAGE"
       "BUILD_THREADS"
       "RESULT_VARIABLE"
-      "CDASH_SUBPROJECT"
       "BUILD_ID_STRING"
     )
   message("lcm_do_package(${ARGN})")
@@ -37,7 +36,6 @@ function(lcm_do_package)
   set(PASS_ARGS ${ARG_BOOL_OPTS}
       BUILD_THREADS "${ARG_BUILD_THREADS}"
       RESULT_VARIABLE "PACKAGE_ERR"
-      CDASH_SUBPROJECT "${ARG_CDASH_SUBPROJECT}"
       BUILD_ID_STRING "${ARG_BUILD_ID_STRING}"
      )
   # all other arguments passed to do_trilinos or do_albany
