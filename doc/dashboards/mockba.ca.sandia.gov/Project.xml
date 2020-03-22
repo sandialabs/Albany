@@ -1,6 +1,2 @@
 <Project name="Albany">
-  <SubProject name="IKTAlbanyMockba">
-  </SubProject>
-  <SubProject name="IKTCismAlbany">
-  </SubProject>
 </Project>

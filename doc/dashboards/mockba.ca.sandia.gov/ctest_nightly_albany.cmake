@@ -1,4 +1,13 @@
 
+cmake_minimum_required (VERSION 2.8)
+set (CTEST_DO_SUBMIT ON)
+set (CTEST_TEST_TYPE Nightly)
+
+# What to build and test
+set (DOWNLOAD TRUE)
+set (BUILD_ALBANY TRUE)
+set (BUILD_CISM_PISCEES FALSE)
+
 # Begin User inputs:
 set (CTEST_SITE "mockba.ca.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
@@ -14,7 +23,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "rhel7-gcc6.1.0-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_BUILD_NAME "mockba-rhel7-gcc6.1.0-${CTEST_BUILD_CONFIGURATION}-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -36,14 +45,15 @@ set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_BUILD_FLAGS "-j16")
 
-set (CTEST_DROP_METHOD "http")
+set (CTEST_DROP_METHOD "https")
 
-if (CTEST_DROP_METHOD STREQUAL "http")
-  set (CTEST_DROP_SITE "cdash.sandia.gov")
+
+if (CTEST_DROP_METHOD STREQUAL "https")
+  set(CTEST_DROP_METHOD "https")
   set (CTEST_PROJECT_NAME "Albany")
-  set (CTEST_DROP_LOCATION "/CDash-2-3-0/submit.php?project=Albany")
-  set (CTEST_TRIGGER_SITE "")
-  set (CTEST_DROP_SITE_CDASH TRUE)
+  set(CTEST_DROP_SITE "sems-cdash-son.sandia.gov")
+  set(CTEST_DROP_LOCATION "/cdash/submit.php?project=Albany")
+  set(CTEST_DROP_SITE_CDASH TRUE)
 endif ()
 
 find_program (CTEST_GIT_COMMAND NAMES git)
@@ -134,9 +144,6 @@ if (DOWNLOAD)
   # Update Albany 
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTAlbanyMockba)
-  set_property (GLOBAL PROPERTY Label IKTAlbanyMockba)
-
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
   CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
   message("Found ${count} changed files")
@@ -163,8 +170,6 @@ if (BUILD_ALBANY)
   # Builds everything!
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTAlbanyMockba)
-  set_property (GLOBAL PROPERTY Label IKTAlbanyMockba)
 
   set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build-spirit/install")
 
@@ -185,6 +190,7 @@ if (BUILD_ALBANY)
     "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
     "-DSEACAS_EPU=/home/ikalash/Trilinos/seacas-build/install/bin/epu"
+    "-DSEACAS_DECOMP=/home/ikalash/Trilinos/seacas-build/install/bin/decomp"
     "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"
     "-DSEACAS_ALGEBRA=/home/ikalash/Trilinos/seacas-build/install/bin/algebra"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
@@ -281,121 +287,6 @@ if (BUILD_ALBANY)
   #if (HAD_ERROR)
   #	message(FATAL_ERROR "Some Albany tests failed.")
   #endif ()
-
-endif ()
-
-if (BUILD_CISM_PISCEES)
-
-  # Configure the CISM-Albany build 
-  #
-  set_property (GLOBAL PROPERTY SubProject IKTCismAlbany)
-  set_property (GLOBAL PROPERTY Label IKTCismAlbany)
-
-  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build-spirit/install")
-
-  set (CONFIGURE_OPTIONS
-    "-Wno-dev"
-    "-DCISM_USE_TRILINOS:BOOL=ON"
-    "-DCISM_TRILINOS_DIR=${TRILINSTALLDIR}"
-    "-DCISM_MPI_MODE:BOOL=ON"
-    "-DCISM_SERIAL_MODE:BOOL=OFF"
-    "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
-    "-DALBANY_LANDICE_DYCORE:BOOL=ON"
-    "-DALBANY_LANDICE_CTEST:BOOL=ON"
-    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockbaInstall"
-    "-DCISM_MPI_BASE_DIR=$ENV{SEMS_OPENMPI_ROOT}"
-    "-DCISM_NETCDF_DIR=$ENV{SEMS_NETCDF_ROOT}"
-    "-DCISM_NETCDF_LIBS='netcdff'"
-    "-DBUILD_SHARED_LIBS:BOOL=ON"
-    "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
-    "-DCMAKE_VERBOSE_MAKEFILE=OFF"
-  )
-
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTCismAlbany)
-  endif ()
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/cism-piscees"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit CISM-Albany configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure CISM-Albany build!")
-  endif ()
- 
-   #
-   # Build CISM-Albany
-   #
-   #
-    set (CTEST_TARGET all)
-
-  MESSAGE("\nBuilding target: '${CTEST_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit CISM-Albany build results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build CISM-Albany!")
-  endif ()
-
-  if (LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in CISM-Albany build. Exiting!")
-  endif ()
-
-  #
-  # Run CISM-Albany tests
-  #
-  set (CTEST_TEST_TIMEOUT 1500)
-
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
-#                  PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-#                  INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-#    NUMBER_FAILED  TEST_NUM_FAILED
-    RETURN_VALUE  HAD_ERROR
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit CISM-Albany test results!")
-    endif ()
-  endif ()
-
-#  if (HAD_ERROR)
-#  	message(FATAL_ERROR "Some CISM-Albany tests failed.")
-#  endif ()
 
 endif ()
 
