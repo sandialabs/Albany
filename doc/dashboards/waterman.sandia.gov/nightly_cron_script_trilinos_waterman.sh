@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/home/projects/albany/watermanNewCDash
+BASE_DIR=/home/projects/albany/waterman
 cd $BASE_DIR
 
 rm -rf repos

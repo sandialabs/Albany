@@ -1,4 +1,3 @@
-01 00 * * 1-7  cd /home/projects/albany/watermanNewCDash; bash -l -c "bsub -Is -x -n 40 -q dev -R "span[ptile=40]" /home/projects/albany/watermanNewCDash/run_all_lsf.sh; bash send_email_ctest.sh"; cd /home/projects/albany/watermanNewCDash/aliPerfTests; bash -l -c "bsub -Is -x -n 8 -q dev -R "span[ptile=4]" /home/projects/albany/watermanNewCDash/aliPerfTests/run_perf_tests_lsf.sh; bash process_results_ctest.sh"
-05 06 * * 1-7 chgrp wg-albany -R /home/projects/albany/waterman*/*
-07 06 * * 1-7 chmod ug+rwX -R /home/projects/albany/waterman*/*
-
+01 00 * * 1-7  cd /home/projects/albany/waterman; bash -l -c "bsub -Is -x -n 40 -q dev -R "span[ptile=40]" /home/projects/albany/waterman/run_all_lsf.sh; bash send_email_ctest.sh"; cd /home/projects/albany/waterman/aliPerfTests; bash -l -c "bsub -Is -x -n 8 -q dev -R "span[ptile=4]" /home/projects/albany/waterman/aliPerfTests/run_perf_tests_lsf.sh; bash process_results_ctest.sh"
+05 06 * * 1-7 chgrp wg-albany -R /home/projects/albany/waterman/*
+07 06 * * 1-7 chmod ug+rwX -R /home/projects/albany/waterman/*
