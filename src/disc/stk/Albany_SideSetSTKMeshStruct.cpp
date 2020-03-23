@@ -164,7 +164,7 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
   {
     // Adding the node (same Id)
     nodeId = inputBulkData.identifier(nodes[inode]);
-    node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVec);
+    node = bulkData->declare_node(nodeId, singlePartVec);
 
     // Setting the coordinates_field
     double* coord = stk::mesh::field_data(coordinates_field, node);
@@ -193,7 +193,7 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
   {
     // Adding the element (same Id as the side)
     elemId = inputBulkData.identifier(sides[iside]);
-    elem = bulkData->declare_entity(stk::topology::ELEM_RANK, elemId, singlePartVec);
+    elem = bulkData->declare_element(elemId, singlePartVec);
 
     // Adding the relation elem->node
     stk::mesh::Entity const* node_rels = inputBulkData.begin_nodes(sides[iside]);

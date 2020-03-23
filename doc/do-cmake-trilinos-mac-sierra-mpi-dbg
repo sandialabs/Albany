@@ -3,13 +3,13 @@
 export TRILINOS_HOME=/Users/gahanse/Codes/Trilinos
 BUILD_DIR=`pwd`
 INSTALL_DIR=/usr/local/trilinos/MPI_DBG
-BOOST_DIR=/usr/local/mpich-3.1.4
-LIB_DIR=/usr/local/mpich-3.1.4
-MPI_BASE_DIR=/usr/local/mpich-3.1.4
-NETCDF=/usr/local/mpich-3.1.4
-HDFDIR=/usr/local/mpich-3.1.4
-PARMETISDIR=/usr/local/mpich-3.1.4
-SUPERLUDIR=/usr/local/mpich-3.1.4/SuperLU_4.3
+BOOST_DIR=/usr/local/openmpi-4.0.2
+LIB_DIR=/usr/local/openmpi-4.0.2
+MPI_BASE_DIR=/usr/local/openmpi-4.0.2
+NETCDF=/usr/local/openmpi-4.0.2
+HDFDIR=/usr/local/openmpi-4.0.2
+PARMETISDIR=/usr/local/openmpi-4.0.2
+SUPERLUDIR=/usr/local/openmpi-4.0.2/SuperLU_4.3
 
 cmake \
     -Wno-dev \
@@ -27,7 +27,7 @@ cmake \
     -D CMAKE_MACOSX_RPATH:BOOL=ON \
     -D CMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib \
 	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
-    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${LIB_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -Wl,-rpath,${LIB_DIR}/lib" \
+    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L/usr/local/lib -L${LIB_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -Wl,-rpath,${LIB_DIR}/lib:/usr/local/lib" \
     -D CMAKE_C_ARCHIVE_CREATE:STRING="<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>" \
     -D CMAKE_CXX_ARCHIVE_CREATE:STRING="<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>" \
     -D CMAKE_Fortran_ARCHIVE_CREATE:STRING="<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>" \
@@ -142,9 +142,9 @@ cmake \
     -D TPL_ENABLE_BLAS:STRING=ON \
     -D TPL_ENABLE_LAPACK:STRING=ON \
     -D BLAS_LIBRARY_DIRS:STRING="/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current" \
-    -D BLAS_INCLUDE_DIRS:STRING="/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers" \
+    -D BLAS_INCLUDE_DIRS:STRING="/usr/local/openmpi-4.0.2/include" \
     -D LAPACK_LIBRARY_DIRS:STRING="/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current" \
-    -D LAPACK_INCLUDE_DIRS:STRING="/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers" \
+    -D LAPACK_INCLUDE_DIRS:STRING="/usr/local/openmpi-4.0.2/include" \
 \
     -D TPL_ENABLE_ParMETIS:STRING=ON \
     -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}/include" \
@@ -160,5 +160,3 @@ exit 0
     -D Trilinos_ENABLE_DataTransferKitSTKMeshAdapters:BOOL=OFF \
     -D DataTransferKit_ENABLE_DBC:BOOL=OFF \
     -D Tpetra_INST_INT_UNSIGNED_LONG:BOOL=ON \
-    -D LAPACK_INCLUDE_DIRS:STRING="/Users/gahanse/Codes/include" \
-    -D BLAS_INCLUDE_DIRS:STRING="/Users/gahanse/Codes/include" \

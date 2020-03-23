@@ -311,8 +311,7 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
     *out << "[AsciiSTKMesh2D] Adding nodes... ";
     out->getOStream()->flush();
     for (int i = 0; i < NumNodes; i++) {
-      stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK,
-          coord_Ids[i], singlePartVec);
+      stk::mesh::Entity node = bulkData->declare_node(coord_Ids[i], singlePartVec);
 
       double* coord;
       coord = stk::mesh::field_data(*coordinates_field, node);
@@ -328,8 +327,7 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
     for (int i = 0; i < NumElems; i++) {
 
       singlePartVec[0] = partVec[ebNo];
-      stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK,
-          ele_Ids[i], singlePartVec);
+      stk::mesh::Entity elem = bulkData->declare_element(ele_Ids[i], singlePartVec);
 
       for (int j = 0; j < NumElemNodes; j++) {
         stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK,
@@ -356,10 +354,10 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
       //create parts for boundary nodes
       partName = bdTagToNodeSetName[coord_flags[node1_lid]];
       singlePartVec[0] = nsPartVec[partName];
-      /* stk::mesh::Entity node1 = */ bulkData->declare_entity(stk::topology::NODE_RANK,node1_id,singlePartVec);
+      /* stk::mesh::Entity node1 = */ bulkData->declare_node(node1_id,singlePartVec);
       partName = bdTagToNodeSetName[coord_flags[node2_lid]];
       singlePartVec[0] = nsPartVec[partName];
-      /* stk::mesh::Entity node2 = */ bulkData->declare_entity(stk::topology::NODE_RANK,node2_id,singlePartVec);
+      /* stk::mesh::Entity node2 = */ bulkData->declare_node(node2_id,singlePartVec);
     }
 
     *out << "done!\n";
@@ -384,9 +382,8 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
         {
           partName = bdTagToSideSetName.at(bdEdges[it->second][2]);
           multiPartVec[1] = ssPartVec.at(partName);
-          stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), be_Ids[it->second], multiPartVec);
           stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, ele_Ids[i]);
-          bulkData->declare_relation(elem, side, j /*local side id*/);
+          stk::mesh::Entity side = bulkData->declare_element_side(elem, j, multiPartVec);
           stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
           for (int k = 0; k < 2; k++)
           {

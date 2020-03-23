@@ -307,7 +307,7 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
     singlePartVec[0] = nsPartVec["Node"];
 
     for (int i = 0; i < NumNodes; i++) {
-      stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK, i + 1, singlePartVec);
+      stk::mesh::Entity node = bulkData->declare_node(i + 1, singlePartVec);
 
       double* coord;
       coord = stk::mesh::field_data(*coordinates_field, node);
@@ -319,7 +319,7 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
 
     for (int i = 0; i < NumElems; i++) {
       singlePartVec[0] = partVec[ebNo];
-      stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, i + 1, singlePartVec);
+      stk::mesh::Entity elem = bulkData->declare_element(i + 1, singlePartVec);
 
       for (int j = 0; j < NumElemNodes; j++) {
         stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, elems[j][i]);

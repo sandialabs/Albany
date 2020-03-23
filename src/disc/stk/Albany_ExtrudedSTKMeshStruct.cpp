@@ -378,11 +378,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     stk::mesh::EntityId node2dId = bulkData2D.identifier(node2d) - 1;
     GO nodeId = il * vertexColumnShift + vertexLayerShift * node2dId + 1;
     if (il == 0)
-      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVecBottom);
+      node = bulkData->declare_node(nodeId, singlePartVecBottom);
     else if (il == numLayers)
-      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVecTop);
+      node = bulkData->declare_node(nodeId, singlePartVecTop);
     else
-      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, nodePartVec);
+      node = bulkData->declare_node(nodeId, nodePartVec);
 
     std::vector<int> sharing_procs;
     bulkData2D.comm_shared_procs( bulkData2D.entity_key(node2d), sharing_procs );
@@ -434,7 +434,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
         stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * (bulkData2D.identifier(cells2D[ib]) - 1);
         for (int iTetra = 0; iTetra < 3; iTetra++) {
-          stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 3 * prismId + iTetra + 1, singlePartVec);
+          stk::mesh::Entity elem = bulkData->declare_element(3 * prismId + iTetra + 1, singlePartVec);
           for (int j = 0; j < 4; j++) {
             stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, tetrasLocalIdsOnPrism[iTetra][j] + 1);
             bulkData->declare_relation(elem, node, j);
@@ -448,7 +448,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       case Hexahedron:
       {
         stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * (bulkData2D.identifier(cells2D[ib]) - 1);
-        stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, prismId + 1, singlePartVec);
+        stk::mesh::Entity elem = bulkData->declare_element(prismId + 1, singlePartVec);
         for (int j = 0; j < 2 * NumBaseElemeNodes; j++) {
           stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, prismGlobalIds[j] + 1);
           bulkData->declare_relation(elem, node, j);

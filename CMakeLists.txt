@@ -1233,6 +1233,15 @@ ELSE()
   SET(ALBANY_PERFORMANCE_TESTS FALSE)
 ENDIF()
 
+# Add option to enable Albany unit tests.
+OPTION(ENABLE_UNIT_TESTS "Flag to turn on Unit Tests" OFF)
+IF (ENABLE_UNIT_TESTS)
+  MESSAGE("-- Unit Tests                are Enabled, adding tests/*/UnitTests")
+  SET(ALBANY_UNIT_TESTS TRUE)
+ELSE()
+  MESSAGE("-- Unit Tests                are NOT Enabled.")
+  SET(ALBANY_UNIT_TESTS FALSE)
+ENDIF()
 
 # Add option to enable performance tests. Results are machine-specific
 OPTION(ENABLE_LARGE_TESTS "Run tests from the Albany-large-tests repository" ON)
