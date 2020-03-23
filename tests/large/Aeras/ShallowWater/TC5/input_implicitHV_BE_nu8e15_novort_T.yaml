@@ -14,7 +14,7 @@ ANONYMOUS:
       Use Prescribed Velocity: false
       Use Implicit Hyperviscosity: true
       Hyperviscosity Type: Constant
-      Hyperviscosity Tau: 8.00000000000000000e+15
+      Hyperviscosity Tau: 8.00000000000000000e+05
       Plot Vorticity: false
     Dirichlet BCs: { }
     Aeras Surface Height: 
@@ -47,8 +47,8 @@ ANONYMOUS:
     Exodus Output File Name: implicit_BE_nu8e15_novort.exo
     Exodus Write Interval: 20
   Regression Results: 
-    Number of Comparisons: 5
-    Test Values: [-1.59715948642999983e-02, 2.13987579333999989e+01, -6.72804615727999966e+00, 2.32111330382999981e+00, 1.27141817995000000e+11]
+    Number of Comparisons: 8
+    Test Values: [-1.832888570252e-02, 2.141423744756e+01, -6.742537195305e+00, 2.301414682213e+00, 1.271418203959e+11, 3.688392056657e+08, 1.121612931032e+07, 1.271423558919e+11]
     Relative Tolerance: 1.00000000000000008e-05
     Absolute Tolerance: 1.00000000000000002e-03
     Number of Sensitivity Comparisons: 0
