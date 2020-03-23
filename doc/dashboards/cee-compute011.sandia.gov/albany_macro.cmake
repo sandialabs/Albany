@@ -4,8 +4,6 @@ macro(do_albany CONFIGURE_OPTIONS BTYPE)
 
   message ("ctest state: BUILD_${BTYPE}")
 
-  set_property (GLOBAL PROPERTY SubProject ${BTYPE})
-  set_property (GLOBAL PROPERTY Label ${BTYPE})
 
 # Clean up build area
   IF (CLEAN_BUILD)

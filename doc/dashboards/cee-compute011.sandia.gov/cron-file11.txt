@@ -1,5 +1,4 @@
 MAILTO=""
 # Run the script in the Albany repo in my home directory
 # This runs the base set of tests on cee-compute011
-00 21 * * * bash -l -c "rm -rf /scratch/albany/*; cd /projects/albany/nightlyAlbanyCDash; rm -rf test; rm -rf repos; source modules_base.sh; /projects/albany/nightlyAlbanyCDash/nightly_cron_script.sh base; bash process_results_base.sh; bash send_email_base.sh"; chgrp wg-albany -R /projects/albany/nightlyAlbanyCDash/*; chmod ug+rwX -R /projects/albany/nightlyAlbanyCDash/*; chgrp wg-albany -R /scratch/albany/*; chmod ug+rwX -R /scratch/albany/*;
-
+00 21 * * * bash -l -c "rm -rf /scratch/albany/*; cd /projects/albany/nightlyAlbanyCDashNewCDash; rm -rf test; rm -rf repos; /projects/albany/nightlyAlbanyCDashNewCDash/nightly_cron_script.sh base-trilinos; /projects/albany/nightlyAlbanyCDashNewCDash/nightly_cron_script.sh base-albany; bash process_results_base.sh; bash send_email_base.sh"; chgrp wg-albany -R /projects/albany/nightlyAlbanyCDashNewCDash/*; chmod ug+rwX -R /projects/albany/nightlyAlbanyCDashNewCDash/*; chgrp wg-albany -R /scratch/albany/*; chmod ug+rwX -R /scratch/albany/*;

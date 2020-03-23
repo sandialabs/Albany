@@ -2,8 +2,6 @@ macro(do_peridigm)
 
   message ("ctest state: BUILD_PERIDIGM")
 
-  set_property (GLOBAL PROPERTY SubProject Peridigm)
-  set_property (GLOBAL PROPERTY Label Peridigm)
 
   set (CONFIGURE_OPTIONS
     "-DTRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall/lib/cmake/Trilinos"

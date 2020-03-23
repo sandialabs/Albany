@@ -6,8 +6,6 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)
   # Configure the Trilinos/SCOREC build
   #
 
-  set_property (GLOBAL PROPERTY SubProject ${BTYPE})
-  set_property (GLOBAL PROPERTY Label ${BTYPE})
 
 # Clean up build area
   IF (CLEAN_BUILD)
@@ -54,8 +52,6 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)
     # Trilinos capabilities are also built here.
     #
 
-    set_property (GLOBAL PROPERTY SubProject SCOREC)
-    set_property (GLOBAL PROPERTY Label SCOREC)
     set (CTEST_BUILD_TARGET "SCOREC_libs")
 
     MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
@@ -97,8 +93,6 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)
   # Build the rest of Trilinos and install everything
   #
 
-  set_property (GLOBAL PROPERTY SubProject ${BTYPE})
-  set_property (GLOBAL PROPERTY Label ${BTYPE})
 
   #set (CTEST_BUILD_TARGET all)
   set (CTEST_BUILD_TARGET install)
