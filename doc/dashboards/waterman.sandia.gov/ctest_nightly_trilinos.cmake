@@ -59,18 +59,9 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
-#set (NVCC_WRAPPER "$ENV{jenkins_trilinos_dir}/packages/kokkos/config/nvcc_wrapper")
 set (NVCC_WRAPPER ${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper_volta)
 set (CUDA_MANAGED_FORCE_DEVICE_ALLOC 1)
 set( CUDA_LAUNCH_BLOCKING 1)
-
-#set(BOOST_ROOT "/home/projects/pwr8-rhel73-lsf/boost/1.60.0/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44")
-#set(NETCDF_ROOT "/home/projects/pwr8-rhel73-lsf/netcdf/4.4.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
-#set(PNETCDF_ROOT "/home/projects/pwr8-rhel73-lsf/pnetcdf/1.6.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
-#set(HDF5_ROOT "/home/projects/pwr8-rhel73-lsf/hdf5/1.8.17/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
-#set(BLAS_ROOT "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")  
-#set(LAPACKROOT "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")
-#set(ZLIB_DIR "/home/projects/pwr8-rhel73-lsf/zlib/1.2.8") 
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -109,36 +100,6 @@ if (DOWNLOAD_TRILINOS)
   endif ()
 
 endif()
-
-
-if (DOWNLOAD_ALBANY)
-
-  set (CTEST_CHECKOUT_COMMAND)
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-  
-  #
-  # Get Albany
-  #
-
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
-    execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Albany_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Albany
-      OUTPUT_VARIABLE _out
-      ERROR_VARIABLE _err
-      RESULT_VARIABLE HAD_ERROR)
-    
-    message(STATUS "out: ${_out}")
-    message(STATUS "err: ${_err}")
-    message(STATUS "res: ${HAD_ERROR}")
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot clone Albany repository!")
-    endif ()
-  endif ()
-
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-
-
-endif ()
 
 
 ctest_start(${CTEST_TEST_TYPE})
@@ -221,8 +182,6 @@ if (BUILD_TRILINOS)
     #
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
     "-DEpetraExt_USING_HDF5:BOOL=OFF"
-    "-DIntrepid_ENABLE_TESTS:BOOL=OFF"
-    "-DIntrepid2_ENABLE_TESTS:BOOL=OFF"
     "-DPhalanx_INDEX_SIZE_TYPE:STRING=UINT"
     "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=CUDA"
     "-DSacado_ENABLE_COMPLEX:BOOL=OFF"
@@ -258,7 +217,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
     "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
     "-DTrilinos_ENABLE_Belos:BOOL=ON"
-    "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTrilinos_ENABLE_Epetra:BOOL=ON"
     "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
     "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
@@ -363,189 +321,22 @@ if (BUILD_TRILINOS)
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
     message ("Encountered build errors in Trilinos build. Exiting!")
   endif ()
-
-endif()
-
-if (BUILD_ALBANY)
-
-  # Configure the Albany build 
-  #
-
-  set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
-    "-DENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
-    "-DENABLE_LCM:BOOL=OFF"
-    "-DENABLE_AERAS:BOOL=ON"
-    "-DENABLE_ATO:BOOL=OFF"
-    "-DENABLE_PERFORMANCE_TESTS:BOOL=OFF"
-    "-DALBANY_LIBRARIES_ONLY=OFF"
-    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-    "-DENABLE_TAN_FAD_TYPE:STRING=SLFad"
-    "-DALBANY_TAN_SLFAD_SIZE=100"
-    )
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuild")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuild)
-  endif ()
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
-    SOURCE "/home/projects/albany/waterman/repos/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
-  endif ()
-
   #
-  # Build the rest of Albany and install everything
-  #
-
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany build results!")
-    endif ()
-
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot build Albany!")
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Albany build. Exiting!")
-  endif ()
-
-  #
-  # Run Albany tests
+  # Run Trilinos tests
   #
 
   set (CTEST_TEST_TIMEOUT 1500)
   CTEST_TEST (
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
+    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
     RETURN_VALUE HAD_ERROR)
 
   if (CTEST_DO_SUBMIT)
     ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
 
     if (S_HAD_ERROR)
-      message ("Cannot submit Albany test results!")
+      message ("Cannot submit Trilinos test results!")
     endif ()
-  endif ()
-
-
-endif ()
-
-if (BUILD_ALBANY_SFAD)
-
-  # Configure the Albany build 
-  #
-
-  set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
-    "-DENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
-    "-DENABLE_LCM:BOOL=OFF"
-    "-DENABLE_AERAS:BOOL=ON"
-    "-DENABLE_ATO:BOOL=OFF"
-    "-DENABLE_PERFORMANCE_TESTS:BOOL=OFF"
-    "-DALBANY_LIBRARIES_ONLY=OFF"
-    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-    "-DENABLE_FAD_TYPE:STRING='SFad'"
-    "-DALBANY_SFAD_SIZE=8"
-    )
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSFad)
-  endif ()
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad"
-    SOURCE "/home/projects/albany/waterman/repos/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
-  endif ()
-
-  #
-  # Build the rest of Albany and install everything
-  #
-
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany build results!")
-    endif ()
-
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot build Albany!")
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Albany build. Exiting!")
   endif ()
 
 endif()
