@@ -1227,6 +1227,18 @@ ELSE()
   SET(ALBANY_PERFORMANCE_TESTS FALSE)
 ENDIF()
 
+# Add option to enable Albany unit tests.
+OPTION(ENABLE_UNIT_TESTS "Flag to turn on Unit Tests" OFF)
+IF (ENABLE_UNIT_TESTS)
+  MESSAGE("-- Unit Tests                are Enabled, adding tests/*/UnitTests")
+  IF(NOT DEFINED TRILINOS_SOURCE_DIR)
+    message(FATAL_ERROR "You must set the location of the source code of your Trilinos install\n-DTRILINOS_SOURCE_DIR=<path to Trilinos source code>")
+endif()
+  SET(ALBANY_UNIT_TESTS TRUE)
+ELSE()
+  MESSAGE("-- Unit Tests                are NOT Enabled.")
+  SET(ALBANY_UNIT_TESTS FALSE)
+ENDIF()
 
 # Add option to enable performance tests. Results are machine-specific
 OPTION(ENABLE_LARGE_TESTS "Run tests from the Albany-large-tests repository" ON)

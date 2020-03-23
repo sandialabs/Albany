@@ -117,3 +117,7 @@ add_subdirectory(small)
 IF (ALBANY_LARGE_TESTS)
   add_subdirectory(large)
 ENDIF()
+
+IF (ALBANY_UNIT_TESTS)
+  add_subdirectory(unit)
+ENDIF()

@@ -27,7 +27,7 @@ cmake \
     -D CMAKE_MACOSX_RPATH:BOOL=ON \
     -D CMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib \
 	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
-    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${LIB_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -Wl,-rpath,${LIB_DIR}/lib" \
+    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L/usr/local/lib -L${LIB_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -Wl,-rpath,${LIB_DIR}/lib:/usr/local/lib" \
     -D CMAKE_C_ARCHIVE_CREATE:STRING="<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>" \
     -D CMAKE_CXX_ARCHIVE_CREATE:STRING="<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>" \
     -D CMAKE_Fortran_ARCHIVE_CREATE:STRING="<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>" \
@@ -160,5 +160,3 @@ exit 0
     -D Trilinos_ENABLE_DataTransferKitSTKMeshAdapters:BOOL=OFF \
     -D DataTransferKit_ENABLE_DBC:BOOL=OFF \
     -D Tpetra_INST_INT_UNSIGNED_LONG:BOOL=ON \
-    -D LAPACK_INCLUDE_DIRS:STRING="/Users/gahanse/Codes/include" \
-    -D BLAS_INCLUDE_DIRS:STRING="/Users/gahanse/Codes/include" \
