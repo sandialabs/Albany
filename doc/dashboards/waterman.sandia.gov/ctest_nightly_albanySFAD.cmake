@@ -148,6 +148,7 @@ if (BUILD_ALBANY_SFAD)
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DENABLE_FAD_TYPE:STRING='SFad'"
     "-DALBANY_SFAD_SIZE=8"
+    "-DALBANY_LIBRARIES_ONLY:BOOL=ON"
     )
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad")
@@ -209,5 +210,23 @@ if (BUILD_ALBANY_SFAD)
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
     message ("Encountered build errors in Albany build. Exiting!")
   endif ()
+  
+  #
+  # Run Albany tests
+  #
+
+  set (CTEST_TEST_TIMEOUT 1500)
+  CTEST_TEST (
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad"
+    RETURN_VALUE HAD_ERROR)
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
+
+    if (S_HAD_ERROR)
+      message ("Cannot submit Albany test results!")
+    endif ()
+  endif ()
+
 
 endif()
