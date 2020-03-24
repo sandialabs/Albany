@@ -16,4 +16,5 @@ rm -rf trilinos-install-serial-intel-release
 rm -rf albany-build-serial-intel-release
 rm -rf slurm*
 ./clean-update-config-build-dash.sh trilinos 8
+./test-dash.sh trilinos
 sbatch batch.openmpi.bash
