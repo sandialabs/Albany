@@ -1144,6 +1144,12 @@ IF (ALBANY_LIBRARIES_ONLY)
   ENDIF()
 ENDIF()
 
+#Add option to disable all tests 
+OPTION(DISABLE_ALBANY_TESTS "Flag to disable tests" OFF)
+IF (DISABLE_ALBANY_TESTS)
+  MESSAGE("-- DISABLE_ALBANY_TESTS is ON.  Tests will not be built.")
+ENDIF()
+
 # Add option to include Dakota restart tests in the test suite
 IF (NOT APPLE)
   CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart tests" ON
@@ -1316,8 +1322,13 @@ IF (DEFINED ALBANY_SEACAS_PATH)
 ENDIF()
 
 # Add Albany test -- in the "tests" directory
-IF (ALBANY_LIBRARIES_ONLY)
-  MESSAGE("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
+IF (ALBANY_LIBRARIES_ONLY OR DISABLE_ALBANY_TESTS)
+  IF (ALBANY_LIBRARIES_ONLY) 
+    MESSAGE("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
+  ENDIF()
+  IF (DISABLE_ALBANY_TESTS) 
+    MESSAGE("\nDISABLE_ALBANY_TESTS has been set: turning off all tests.")
+  ENDIF()
 ELSE()
   add_subdirectory(tests)
 ENDIF()
