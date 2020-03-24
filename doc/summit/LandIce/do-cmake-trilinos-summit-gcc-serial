@@ -1,0 +1,146 @@
+#!/bin/bash
+# This is a sample Trilinos configuration script for Albany on summit
+
+# Cleanup old cmake files
+rm -rf CMake*
+
+# Set Trilinos build path
+BUILD_DIR=`pwd`
+
+cmake \
+    -DCMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
+    -DCMAKE_BUILD_TYPE:STRING=RELEASE \
+    \
+    -DCMAKE_CXX_COMPILER:FILEPATH=mpicxx \
+    -DCMAKE_C_COMPILER:FILEPATH=mpicc \
+    -DCMAKE_Fortran_COMPILER:FILEPATH=mpif90 \
+    -DCMAKE_SKIP_RULE_DEPENDENCY=ON \
+    \
+    -DTPL_ENABLE_MPI:BOOL=ON \
+    -DMPI_EXEC=mpirun \
+    -DMPI_EXEC_NUMPROCS_FLAG:STRING=-n \
+    \
+    -DTPL_ENABLE_BLAS:BOOL=ON \
+    -DBLAS_INCLUDE_DIRS:FILEPATH=${OLCF_NETLIB_LAPACK_ROOT}/include \
+    -DBLAS_LIBRARY_DIRS:FILEPATH=${OLCF_NETLIB_LAPACK_ROOT}/lib64 \
+    \
+    -DTPL_ENABLE_LAPACK:BOOL=ON \
+    -DLAPACK_INCLUDE_DIRS:FILEPATH=${OLCF_NETLIB_LAPACK_ROOT}/include \
+    -DLAPACK_LIBRARY_DIRS:FILEPATH=${OLCF_NETLIB_LAPACK_ROOT}/lib64 \
+    \
+    -DTPL_ENABLE_Boost:BOOL=ON \
+    -DTPL_Boost_INCLUDE_DIRS:FILEPATH=${OLCF_BOOST_ROOT}/include \
+    -DTPL_Boost_LIBRARY_DIRS:FILEPATH=${OLCF_BOOST_ROOT}/lib \
+    \
+    -DTPL_ENABLE_BoostLib:BOOL=ON \
+    -DTPL_BoostLib_INCLUDE_DIRS:FILEPATH=${OLCF_BOOST_ROOT}/include \
+    -DTPL_BoostLib_LIBRARY_DIRS:FILEPATH=${OLCF_BOOST_ROOT}/lib \
+    \
+    -DTPL_ENABLE_Netcdf:BOOL=ON \
+    -DTPL_Netcdf_PARALLEL:BOOL=ON \
+    -DTPL_Netcdf_INCLUDE_DIRS:FILEPATH=${OLCF_NETCDF_ROOT}/include \
+    -DTPL_Netcdf_LIBRARY_DIRS:FILEPATH=${OLCF_NETCDF_ROOT}/lib \
+    \
+    -DTPL_ENABLE_Pnetcdf:STRING=ON \
+    -DTPL_Pnetcdf_INCLUDE_DIRS:FILEPATH=${OLCF_PARALLEL_NETCDF_ROOT}/include \
+    -DTPL_Pnetcdf_LIBRARY_DIRS:FILEPATH=${OLCF_PARALLEL_NETCDF_ROOT}/lib \
+    \
+    -DTPL_ENABLE_HDF5:STRING=ON \
+    -DTPL_HDF5_INCLUDE_DIRS:FILEPATH=${OLCF_HDF5_ROOT}/include \
+    -DTPL_HDF5_LIBRARY_DIRS:FILEPATH=${OLCF_HDF5_ROOT}/lib \
+    \
+    -DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
+    -DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+    -DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+    -DTrilinos_ENABLE_CXX11:BOOL=ON \
+    -DTrilinos_ENABLE_EXAMPLES:BOOL=OFF \
+    -DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+    -DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF \
+    \
+    -DKokkos_ENABLE_Cuda_Lambda:BOOL=OFF \
+    -DKokkos_ENABLE_Cuda_UVM:BOOL=OFF \
+    -DKokkos_ENABLE_EXAMPLES:BOOL=OFF \
+    -DKokkos_ENABLE_OpenMP:BOOL=OFF \
+    -DKokkos_ENABLE_Pthread:BOOL=OFF \
+    -DKokkos_ENABLE_Serial:BOOL=ON \
+    -DKokkos_ENABLE_TESTS:BOOL=OFF \
+    -DKOKKOS_ARCH:STRING='Power9' \
+    -DTPL_ENABLE_Thrust:BOOL=OFF \
+    -DTPL_ENABLE_CUDA:BOOL=OFF \
+    -DTPL_ENABLE_CUSPARSE:BOOL=OFF \
+    \
+    -DAmesos2_ENABLE_KLU2:BOOL=ON \
+    -DEpetraExt_USING_HDF5:BOOL=OFF \
+    -DIntrepid_ENABLE_TESTS:BOOL=OFF \
+    -DIntrepid2_ENABLE_TESTS:BOOL=OFF \
+    -DPhalanx_INDEX_SIZE_TYPE:STRING=INT \
+    -DPhalanx_KOKKOS_DEVICE_TYPE:STRING=SERIAL \
+    -DSacado_ENABLE_COMPLEX:BOOL=OFF \
+    -DTeuchos_ENABLE_COMPLEX:BOOL=OFF \
+    -DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
+    -DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=OFF \
+    -DTpetra_INST_INT_LONG_LONG:BOOL=ON \
+    -DTpetra_INST_INT_INT:BOOL=OFF \
+    -DXpetra_ENABLE_Epetra=OFF \
+    -DMueLu_ENABLE_Epetra=OFF \
+    -DBelos_ENABLE_Epetra=OFF \
+    \
+    -DTPL_ENABLE_Matio:BOOL=OFF \
+    -DTPL_ENABLE_X11:BOOL=OFF \
+    \
+    -DTrilinos_ENABLE_Amesos2:BOOL=ON \
+    -DTrilinos_ENABLE_Amesos:BOOL=ON \
+    -DTrilinos_ENABLE_Anasazi:BOOL=ON \
+    -DTrilinos_ENABLE_AztecOO:BOOL=ON \
+    -DTrilinos_ENABLE_Belos:BOOL=ON \
+    -DTrilinos_ENABLE_EXAMPLES:BOOL=OFF \
+    -DTrilinos_ENABLE_Epetra:BOOL=ON \
+    -DTrilinos_ENABLE_EpetraExt:BOOL=ON \
+    -DTrilinos_ENABLE_Ifpack2:BOOL=ON \
+    -DTrilinos_ENABLE_Ifpack:BOOL=ON \
+    -DTrilinos_ENABLE_Intrepid:BOOL=ON \
+    -DTrilinos_ENABLE_Intrepid2:BOOL=ON \
+    -DTrilinos_ENABLE_Kokkos:BOOL=ON \
+    -DTrilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
+    -DTrilinos_ENABLE_KokkosContainers:BOOL=ON \
+    -DTrilinos_ENABLE_KokkosCore:BOOL=ON \
+    -DTrilinos_ENABLE_KokkosExample:BOOL=OFF \
+    -DTrilinos_ENABLE_ML:BOOL=OFF \
+    -DTrilinos_ENABLE_OpenMP:BOOL=OFF \
+    -DTrilinos_ENABLE_MiniTensor:BOOL=ON \
+    -DTrilinos_ENABLE_MueLu:BOOL=ON \
+    -DMueLu_ENABLE_Tutorial:BOOL=OFF \
+    -DTrilinos_ENABLE_NOX:BOOL=ON \
+    -DTrilinos_ENABLE_Pamgen:BOOL=ON \
+    -DTrilinos_ENABLE_PanzerExprEval:BOOL=ON \
+    -DTrilinos_ENABLE_Phalanx:BOOL=ON \
+    -DTrilinos_ENABLE_Piro:BOOL=ON \
+    -DTrilinos_ENABLE_ROL:BOOL=ON \
+    -DTrilinos_ENABLE_Rythmos:BOOL=ON \
+    -DTrilinos_ENABLE_SEACAS:BOOL=ON \
+    -DTrilinos_ENABLE_SEACASAprepro_lib:BOOL=ON \
+    -DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF \
+    -DTrilinos_ENABLE_STKIO:BOOL=ON \
+    -DTrilinos_ENABLE_STKMesh:BOOL=ON \
+    -DTrilinos_ENABLE_Sacado:BOOL=ON \
+    -DTrilinos_ENABLE_Shards:BOOL=ON \
+    -DTrilinos_ENABLE_Stokhos:BOOL=OFF \
+    -DTrilinos_ENABLE_Stratimikos:BOOL=ON \
+    -DTrilinos_ENABLE_TESTS:BOOL=OFF \
+    -DTrilinos_ENABLE_Teko:BOOL=OFF \
+    -DTrilinos_ENABLE_Teuchos:BOOL=ON \
+    -DTrilinos_ENABLE_Thyra:BOOL=ON \
+    -DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON \
+    -DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
+    -DTrilinos_ENABLE_Tpetra:BOOL=ON \
+    -DTrilinos_ENABLE_Zoltan2:BOOL=ON \
+    -DTrilinos_ENABLE_Zoltan:BOOL=ON \
+    -DTrilinos_ENABLE_Tempus:BOOL=ON \
+    -DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+..
+
+#    -DTPL_ENABLE_BLAS:BOOL=ON \
+#    -DTPL_BLAS_LIBRARIES:FILEPATH=${OLCF_NETLIB_SCALAPACK_ROOT}/lib/libscalapack.so \
+#    \
+#    -DTPL_ENABLE_LAPACK:BOOL=ON \
+#    -DTPL_LAPACK_LIBRARIES:FILEPATH=${OLCF_NETLIB_SCALAPACK_ROOT}/lib/libscalapack.so \
