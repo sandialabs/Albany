@@ -55,6 +55,6 @@ set_tests_properties(Aeras_${testName}_noAD_RungeKutta4 PROPERTIES LABELS "Aeras
 
 add_test(Aeras_${testName}_implicitHV_nu8e15_vort_BackwardEuler ${Albany.exe} input_implicitHV_BE_nu8e15_vort_T.yaml)
 set_tests_properties(Aeras_${testName}_implicitHV_nu8e15_vort_BackwardEuler PROPERTIES LABELS "Aeras;Tpetra;Forward")
-add_test(Aeras_${testName}_implicitHV_nu8e15_novort_BackwardEuler ${Albany.exe} input_implicitHV_BE_nu8e15_novort_T.yaml)
-set_tests_properties(Aeras_${testName}_implicitHV_nu8e15_novort_BackwardEuler PROPERTIES LABELS "Aeras;Tpetra;Forward")
+#add_test(Aeras_${testName}_implicitHV_nu8e15_novort_BackwardEuler ${Albany.exe} input_implicitHV_BE_nu8e15_novort_T.yaml)
+#set_tests_properties(Aeras_${testName}_implicitHV_nu8e15_novort_BackwardEuler PROPERTIES LABELS "Aeras;Tpetra;Forward")
 
