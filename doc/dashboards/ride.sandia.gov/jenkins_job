@@ -21,9 +21,9 @@ cp repos/Albany/doc/dashboards/ride.sandia.gov/* .
 
 bsub -Is -x -n 8 -W 23:55 -J $BUILD_TAG -q rhel7G -m ride20 /home/projects/albany/ride/run_all_lsf.sh
 
-echo "Sending email..."
-bash send_email_ctest.sh
-echo "...done"
+#echo "Sending email..."
+#bash send_email_ctest.sh
+#echo "...done"
 
 chgrp wg-albany -R /home/projects/albany/ride/*
 chmod ug+rwX -R /home/projects/albany/ride/*
