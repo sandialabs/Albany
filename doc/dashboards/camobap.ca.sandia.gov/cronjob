@@ -1,4 +1,4 @@
-00 21 * * 1-6,7  rm -rf /tmp/ikalash/spack-stage; cd /home/ikalash/nightlyAlbanyTests; rm -rf out; rm -rf out_openMP; bash build_trilinos_all.sh; cd /home/ikalash/nightlyCDashNewCDash; bash build_albany_all.sh; cd /home/ikalash/nightlyAlbanyTests; source /home/ikalash/nightlyAlbanyTests/run_spack.sh >& run_spack.out
+00 21 * * 1-6,7  rm -rf /tmp/ikalash/spack-stage; cd /home/ikalash/nightlyAlbanyTests; rm -rf out; rm -rf out_openMP; bash build_trilinos_all.sh; cd /home/ikalash/nightlyCDash; bash build_albany_all.sh; cd /home/ikalash/nightlyAlbanyTests; source /home/ikalash/nightlyAlbanyTests/run_spack.sh >& run_spack.out
 12 00 * * 7  scp -r /extradrive ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
 00 01 * * * cd /home/ikalash/CMDV/nightlyCDash; bash -l -c "source modules.sh >& modules.out; bash nightly_cron_script.sh; bash process_results.sh; bash send_email.sh"
 00 08 * * * cd /home/ikalash/Desktop/PerfTesting/ikalash.github.io/ali; rm -rf *out; bash -l -c "source process_tests.sh blake >& process_tests_blake.out"

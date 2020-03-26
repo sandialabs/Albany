@@ -14,9 +14,9 @@ if [ -z "$BUILD_OPT" ]; then
    exit 1;
 
 fi
-SCRIPT_DIR=/projects/albany/nightlyAlbanyCDashNewCDash
+SCRIPT_DIR=/projects/albany/nightlyAlbanyCDash
 # Install directory holds final installed versions of the build. This is cross-mounted usually.
-INSTALL_DIR=/projects/albany/nightlyAlbanyCDashNewCDash
+INSTALL_DIR=/projects/albany/nightlyAlbanyCDash
 # The build area where the nightly products are built
 SCRATCH_DIR=/scratch/albany
 
@@ -123,7 +123,7 @@ LOG_FILE=$SCRATCH_DIR/nightly_log_$BUILD_OPT.txt
 
 echo "Date and time is $now" > $LOG_FILE
 
-eval "env BUILD_OPTION=$BUILD_OPT DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE INSTALL_DIRECTORY=$INSTALL_DIR SCRATCH_DIRECTORY=$SCRATCH_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR ctest -VV -S /projects/albany/nightlyAlbanyCDashNewCDash/ctest_nightly.cmake" > $LOG_FILE 2>&1
+eval "env BUILD_OPTION=$BUILD_OPT DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE INSTALL_DIRECTORY=$INSTALL_DIR SCRATCH_DIRECTORY=$SCRATCH_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR ctest -VV -S /projects/albany/nightlyAlbanyCDash/ctest_nightly.cmake" > $LOG_FILE 2>&1
 
 # Copy a basic installation to /projects/albany for those who like a nightly
 # build.

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd /home/ikalash/nightlyCDashNewCDash
+cd /home/ikalash/nightlyCDash
 
 rm -rf repos
 rm -rf build
@@ -20,9 +20,9 @@ export http_proxy="http://wwwproxy.ca.sandia.gov:80"
 
 now=$(date +"%m_%d_%Y-%H_%M")
 #LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_$now
-LOG_FILE=/home/ikalash/nightlyCDashNewCDash/nightly_log.txt
+LOG_FILE=/home/ikalash/nightlyCDash/nightly_log.txt
 
-eval "env  TEST_DIRECTORY=/home/ikalash/nightlyCDashNewCDash SCRIPT_DIRECTORY=/home/ikalash/nightlyCDashNewCDash ctest -VV -S /home/ikalash/nightlyCDashNewCDash/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1
+eval "env  TEST_DIRECTORY=/home/ikalash/nightlyCDash SCRIPT_DIRECTORY=/home/ikalash/nightlyCDash ctest -VV -S /home/ikalash/nightlyCDash/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1
 
 # Copy a basic installation to /projects/albany for those who like a nightly
 # build.
