@@ -1,5 +1,9 @@
 #!/bin/sh
 
+export ALBANY_HOME=/projects/albany/src/Albany
+export ALB_ENABLE_UNIT_TESTS=ON
+# Must give Trilinos source location if using unit testing (need some files in Teuchos)
+export TRILINOS_SRC_DIR=/projects/albany/src/Trilinos
 export ALB_ENABLE_SCOREC=ON
 export ALB_ENABLE_LCM=ON
 export ALB_ENABLE_ASCR=OFF
@@ -19,6 +23,8 @@ cmake \
       -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINOS_INSTALL_DIR" \
       -D ENABLE_LCM:BOOL=${ALB_ENABLE_LCM} \
       -D ENABLE_AERAS:BOOL=${ALB_ENABLE_AERAS} \
+      -D ENABLE_UNIT_TESTS:BOOL=${ALB_ENABLE_UNIT_TESTS} \
+      -D TRILINOS_SOURCE_DIR:FILEPATH=${TRILINOS_SRC_DIR} \
       -D ENABLE_LCM_SPECULATIVE:BOOL=${ALB_ENABLE_SPECULATIVE} \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=${ALB_VERBOSE} \
       -D ENABLE_DEBUGGING:BOOL=${ALB_DEBUG} \
@@ -30,5 +36,5 @@ cmake \
       -D ENABLE_PERFORMANCE_TESTS:BOOL=${ALB_ENABLE_PERF_TESTS} \
       -D ALBANY_CTEST_TIMEOUT:INTEGER=70 \
 \
-../..
+${ALBANY_HOME}
 

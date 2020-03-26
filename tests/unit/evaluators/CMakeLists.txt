@@ -20,7 +20,17 @@ ADD_EXECUTABLE(
 
 TARGET_LINK_LIBRARIES(evaluator_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 
-ADD_TEST(
-  albany_unit_test_main evaluator_unit_tester
-)
+# We should always run the unit tests in both serial and parallel if possible (they should run quickly)
+IF (ALBANY_MPI)
+  ADD_TEST(
+    Albany_Serial_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
+  )
+  ADD_TEST(
+    Albany_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
+  )
+ELSE(ALBANY_MPI)
+  ADD_TEST(
+    Albany_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
+  )
+ENDIF(ALBANY_MPI)
 

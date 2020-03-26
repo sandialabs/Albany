@@ -23,6 +23,7 @@
 
 #include <vector>
 #include <functional>
+#include <stdexcept>
 
 namespace Albany {
 
@@ -378,7 +379,8 @@ public:
 
   std::map<std::pair<int, int>, GO>
   getElemWsLIDGIDMap() const 
-  {//do nothing
+  {
+	throw std::runtime_error("Calling getElemWsLIDGIDMap() in Albany_APFDiscretization.hpp");
   };
 
 private:

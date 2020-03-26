@@ -9,7 +9,7 @@
 #include <iostream>
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
-#include <Shards_BasicTopologies.hpp>
+//#include <Shards_BasicTopologies.hpp>
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>
@@ -662,12 +662,12 @@ Albany::TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
                                     // Only one block in 0D mesh
 
     // Declare element 1 is in that block
-    stk::mesh::Entity pt  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1, singlePartVec);
+    stk::mesh::Entity pt  = bulkData->declare_element(1, singlePartVec);
     // Declare node 1 is in the node part vector
-    stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK, 1, nodePartVec);
+    stk::mesh::Entity node = bulkData->declare_node(1, nodePartVec);
     // Declare that the node belongs to the element "pt"
     // "node" is the zeroth node of this element
-    bulkData->declare_relation(pt, node, 0);
+    bulkData->declare_relation(pt, node, 0, stk::mesh::DEFAULT_PERMUTATION);
 
     // No node sets or side sets in 0D
 
@@ -726,7 +726,6 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
     const GO left_node  = elem_GID;
     GO right_node = left_node+1;
     if (periodic_x) right_node %= elem_map->getGlobalNumElements();
-//    if (rightNode < right_node) rightNode = right_node;
 
     stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
 
@@ -756,14 +755,14 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
     singlePartVec[0] = partVec[ebNo];
 
     // Build element "1+elem_id" and put it in the element block
-    stk::mesh::Entity edge  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
+    stk::mesh::Entity edge  = bulkData->declare_element(1+elem_id, singlePartVec);
     // Build the left and right nodes of this element and put them in the node part Vec
-    stk::mesh::Entity lnode = bulkData->declare_entity(stk::topology::NODE_RANK, 1+left_node, nodePartVec);
-    stk::mesh::Entity rnode = bulkData->declare_entity(stk::topology::NODE_RANK, 1+right_node, nodePartVec);
+    stk::mesh::Entity lnode = bulkData->declare_node(1+left_node, nodePartVec);
+    stk::mesh::Entity rnode = bulkData->declare_node(1+right_node, nodePartVec);
     // node number 0 of this element
-    bulkData->declare_relation(edge, lnode, 0);
+    bulkData->declare_relation(edge, lnode, 0, stk::mesh::DEFAULT_PERMUTATION);
     // node number 1 of this element
-    bulkData->declare_relation(edge, rnode, 1);
+    bulkData->declare_relation(edge, rnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
     // set the coordinate values for these nodes
     double* lnode_coord = stk::mesh::field_data(*coordinates_field, lnode);
@@ -877,132 +876,104 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
 //if (x_GID==0 && y_GID==0) cout << " FOUND global node " << lower_left << endl;
 
     // Declare Nodes = (Add one to IDs because STK requires 1-based
-    stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, 1+lower_left, nodePartVec);
-    stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, 1+lower_right, nodePartVec);
-    stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, 1+upper_right, nodePartVec);
-    stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, 1+upper_left, nodePartVec);
+    stk::mesh::Entity llnode = bulkData->declare_node(1+lower_left, nodePartVec);
+    stk::mesh::Entity lrnode = bulkData->declare_node(1+lower_right, nodePartVec);
+    stk::mesh::Entity urnode = bulkData->declare_node(1+upper_right, nodePartVec);
+    stk::mesh::Entity ulnode = bulkData->declare_node(1+upper_left, nodePartVec);
 
     if (triangles) { // pair of 3-node triangles
 
-      stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+2*elem_id, singlePartVec);
-      bulkData->declare_relation(elem, llnode, 0);
-      bulkData->declare_relation(elem, lrnode, 1);
-      bulkData->declare_relation(elem, urnode, 2);
-      stk::mesh::Entity elem2 = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+2*elem_id+1, singlePartVec);
-      bulkData->declare_relation(elem2, llnode, 0);
-      bulkData->declare_relation(elem2, urnode, 1);
-      bulkData->declare_relation(elem2, ulnode, 2);
+      stk::mesh::Entity elem  = bulkData->declare_element(1+2*elem_id, singlePartVec);
+      bulkData->declare_relation(elem, llnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+      bulkData->declare_relation(elem, lrnode, 1, stk::mesh::DEFAULT_PERMUTATION);
+      bulkData->declare_relation(elem, urnode, 2, stk::mesh::DEFAULT_PERMUTATION);
+      stk::mesh::Entity elem2 = bulkData->declare_element(1+2*elem_id+1, singlePartVec);
+      bulkData->declare_relation(elem2, llnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+      bulkData->declare_relation(elem2, urnode, 1, stk::mesh::DEFAULT_PERMUTATION);
+      bulkData->declare_relation(elem2, ulnode, 2, stk::mesh::DEFAULT_PERMUTATION);
 
       // Triangle sideset construction
       if (x_GID==0) { // left edge of mesh, elem2 has side 2 on left boundary
 
          singlePartVec[0] = ssPartVec["SideSet0"];
-         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID));
+         stk::mesh::Entity side  = bulkData->declare_element_side(elem2, 2, singlePartVec);
 
-         stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem2, side,  2 /*local side id*/);
-
-         bulkData->declare_relation(side, ulnode, 0);
-         bulkData->declare_relation(side, llnode, 1);
+         bulkData->declare_relation(side, ulnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+         bulkData->declare_relation(side, llnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
       }
       if (x_GIDplus1==nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
 
          singlePartVec[0] = ssPartVec["SideSet1"];
-         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1);
+         stk::mesh::Entity side  = bulkData->declare_element_side(elem, 1, singlePartVec);
 
-         stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  1 /*local side id*/);
-
-         bulkData->declare_relation(side, lrnode, 0);
-         bulkData->declare_relation(side, urnode, 1);
+         bulkData->declare_relation(side, lrnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+         bulkData->declare_relation(side, urnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
       }
       if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
 
          singlePartVec[0] = ssPartVec["SideSet2"];
-         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID);
+         stk::mesh::Entity side  = bulkData->declare_element_side(elem, 0, singlePartVec);
 
-         stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  0 /*local side id*/);
-
-         bulkData->declare_relation(side, llnode, 0);
-         bulkData->declare_relation(side, lrnode, 1);
+         bulkData->declare_relation(side, llnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+         bulkData->declare_relation(side, lrnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
       }
       if (y_GIDplus1==nelem[1]) { // top edge of mesh, elem2 has side 1 on upper boundary
 
          singlePartVec[0] = ssPartVec["SideSet3"];
-         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID);
+         stk::mesh::Entity side  = bulkData->declare_element_side(elem2, 1, singlePartVec);
 
-         stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem2, side,  1 /*local side id*/);
-
-         bulkData->declare_relation(side, urnode, 0);
-         bulkData->declare_relation(side, ulnode, 1);
+         bulkData->declare_relation(side, urnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+         bulkData->declare_relation(side, ulnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
       }
     } // end pair of triangles
 
     else {  //4-node quad
 
-      stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
-      bulkData->declare_relation(elem, llnode, 0);
-      bulkData->declare_relation(elem, lrnode, 1);
-      bulkData->declare_relation(elem, urnode, 2);
-      bulkData->declare_relation(elem, ulnode, 3);
+      stk::mesh::Entity elem  = bulkData->declare_element(1+elem_id, singlePartVec);
+      bulkData->declare_relation(elem, llnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+      bulkData->declare_relation(elem, lrnode, 1, stk::mesh::DEFAULT_PERMUTATION);
+      bulkData->declare_relation(elem, urnode, 2, stk::mesh::DEFAULT_PERMUTATION);
+      bulkData->declare_relation(elem, ulnode, 3, stk::mesh::DEFAULT_PERMUTATION);
 
       // Quad sideset construction
       if (x_GID==0) { // left edge of mesh, elem has side 3 on left boundary
 
          singlePartVec[0] = ssPartVec["SideSet0"];
+         stk::mesh::Entity side  = bulkData->declare_element_side(elem, 3, singlePartVec);
 
-         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID));
-
-         stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  3 /*local side id*/);
-
-         bulkData->declare_relation(side, ulnode, 0);
-         bulkData->declare_relation(side, llnode, 1);
+         bulkData->declare_relation(side, ulnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+         bulkData->declare_relation(side, llnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
       }
       if (x_GIDplus1==nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
 
          singlePartVec[0] = ssPartVec["SideSet1"];
+         stk::mesh::Entity side  = bulkData->declare_element_side(elem, 1, singlePartVec);
 
-         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1);
-
-         stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  1 /*local side id*/);
-
-         bulkData->declare_relation(side, lrnode, 0);
-         bulkData->declare_relation(side, urnode, 1);
+         bulkData->declare_relation(side, lrnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+         bulkData->declare_relation(side, urnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
       }
       if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
 
          singlePartVec[0] = ssPartVec["SideSet2"];
+         stk::mesh::Entity side  = bulkData->declare_element_side(elem, 0, singlePartVec);
 
-         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID);
-
-         stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  0 /*local side id*/);
-
-         bulkData->declare_relation(side, llnode, 0);
-         bulkData->declare_relation(side, lrnode, 1);
+         bulkData->declare_relation(side, llnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+         bulkData->declare_relation(side, lrnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
       }
       if (y_GIDplus1==nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
 
          singlePartVec[0] = ssPartVec["SideSet3"];
+         stk::mesh::Entity side  = bulkData->declare_element_side(elem, 2, singlePartVec);
 
-         stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID);
-
-         stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  2 /*local side id*/);
-
-         bulkData->declare_relation(side, urnode, 0);
-         bulkData->declare_relation(side, ulnode, 1);
+         bulkData->declare_relation(side, urnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+         bulkData->declare_relation(side, ulnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
       }
     } // end 4 node quad
@@ -1155,23 +1126,23 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
     singlePartVec[0] = partVec[ebNo];
 
     // Add one to IDs because STK requires 1-based
-    stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
-    stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, 1+lower_left, nodePartVec);
-    stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, 1+lower_right, nodePartVec);
-    stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, 1+upper_right, nodePartVec);
-    stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, 1+upper_left, nodePartVec);
-    stk::mesh::Entity llnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, 1+lower_left_back, nodePartVec);
-    stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, 1+lower_right_back, nodePartVec);
-    stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, 1+upper_right_back, nodePartVec);
-    stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, 1+upper_left_back, nodePartVec);
-    bulkData->declare_relation(elem, llnode, 0);
-    bulkData->declare_relation(elem, lrnode, 1);
-    bulkData->declare_relation(elem, urnode, 2);
-    bulkData->declare_relation(elem, ulnode, 3);
-    bulkData->declare_relation(elem, llnodeb, 4);
-    bulkData->declare_relation(elem, lrnodeb, 5);
-    bulkData->declare_relation(elem, urnodeb, 6);
-    bulkData->declare_relation(elem, ulnodeb, 7);
+    stk::mesh::Entity elem  = bulkData->declare_element(1+elem_id, singlePartVec);
+    stk::mesh::Entity llnode = bulkData->declare_node(1+lower_left, nodePartVec);
+    stk::mesh::Entity lrnode = bulkData->declare_node(1+lower_right, nodePartVec);
+    stk::mesh::Entity urnode = bulkData->declare_node(1+upper_right, nodePartVec);
+    stk::mesh::Entity ulnode = bulkData->declare_node(1+upper_left, nodePartVec);
+    stk::mesh::Entity llnodeb = bulkData->declare_node(1+lower_left_back, nodePartVec);
+    stk::mesh::Entity lrnodeb = bulkData->declare_node(1+lower_right_back, nodePartVec);
+    stk::mesh::Entity urnodeb = bulkData->declare_node(1+upper_right_back, nodePartVec);
+    stk::mesh::Entity ulnodeb = bulkData->declare_node(1+upper_left_back, nodePartVec);
+    bulkData->declare_relation(elem, llnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+    bulkData->declare_relation(elem, lrnode, 1, stk::mesh::DEFAULT_PERMUTATION);
+    bulkData->declare_relation(elem, urnode, 2, stk::mesh::DEFAULT_PERMUTATION);
+    bulkData->declare_relation(elem, ulnode, 3, stk::mesh::DEFAULT_PERMUTATION);
+    bulkData->declare_relation(elem, llnodeb, 4, stk::mesh::DEFAULT_PERMUTATION);
+    bulkData->declare_relation(elem, lrnodeb, 5, stk::mesh::DEFAULT_PERMUTATION);
+    bulkData->declare_relation(elem, urnodeb, 6, stk::mesh::DEFAULT_PERMUTATION);
+    bulkData->declare_relation(elem, ulnodeb, 7, stk::mesh::DEFAULT_PERMUTATION);
 
 /*
     if(proc_rank_field){
@@ -1211,17 +1182,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
       // elem has side 3 (0473) on left boundary
 
      singlePartVec[0] = ssPartVec["SideSet0"];
+     stk::mesh::Entity side  = bulkData->declare_element_side(elem, 3, singlePartVec);
 
-     stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) +
-      (nelem[0] + nelem[1]) * 2 * z_GID);
-
-     stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-     bulkData->declare_relation(elem, side,  3 /*local side id*/);
-
-     bulkData->declare_relation(side, llnode, 0);
-     bulkData->declare_relation(side, llnodeb, 2);
-     bulkData->declare_relation(side, ulnodeb, 3);
-     bulkData->declare_relation(side, ulnode, 1);
+     bulkData->declare_relation(side, llnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, llnodeb, 2, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, ulnodeb, 3, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, ulnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
     }
     if ((x_GIDplus1)==nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
@@ -1230,17 +1196,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
       // elem has side 1 (1265) on right boundary
 
        singlePartVec[0] = ssPartVec["SideSet1"];
+       stk::mesh::Entity side  = bulkData->declare_element_side(elem, 1, singlePartVec);
 
-       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1 +
-        (nelem[0] + nelem[1]) * 2 * z_GID);
-
-       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-       bulkData->declare_relation(elem, side,  1 /*local side id*/);
-
-       bulkData->declare_relation(side, lrnode, 0);
-       bulkData->declare_relation(side, urnode, 1);
-       bulkData->declare_relation(side, urnodeb, 3);
-       bulkData->declare_relation(side, lrnodeb, 2);
+       bulkData->declare_relation(side, lrnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+       bulkData->declare_relation(side, urnode, 1, stk::mesh::DEFAULT_PERMUTATION);
+       bulkData->declare_relation(side, urnodeb, 3, stk::mesh::DEFAULT_PERMUTATION);
+       bulkData->declare_relation(side, lrnodeb, 2, stk::mesh::DEFAULT_PERMUTATION);
 
     }
     if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
@@ -1248,16 +1209,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
     // elem has side 0 (0154) on bottom boundary
 
        singlePartVec[0] = ssPartVec["SideSet2"];
+       stk::mesh::Entity side  = bulkData->declare_element_side(elem, 0, singlePartVec);
 
-       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID + (nelem[0] + nelem[1]) * 2 * z_GID);
-
-       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-       bulkData->declare_relation(elem, side,  0 /*local side id*/);
-
-       bulkData->declare_relation(side, llnode, 0);
-       bulkData->declare_relation(side, lrnode, 1);
-       bulkData->declare_relation(side, lrnodeb, 3);
-       bulkData->declare_relation(side, llnodeb, 2);
+       bulkData->declare_relation(side, llnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+       bulkData->declare_relation(side, lrnode, 1, stk::mesh::DEFAULT_PERMUTATION);
+       bulkData->declare_relation(side, lrnodeb, 3, stk::mesh::DEFAULT_PERMUTATION);
+       bulkData->declare_relation(side, llnodeb, 2, stk::mesh::DEFAULT_PERMUTATION);
 
     }
     if ((y_GIDplus1)==nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
@@ -1265,17 +1222,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
      // elem has side 2 (2376) on top boundary
 
      singlePartVec[0] = ssPartVec["SideSet3"];
+     stk::mesh::Entity side  = bulkData->declare_element_side(elem, 2, singlePartVec);
 
-     stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID +
-      (nelem[0] + nelem[1]) * 2 * z_GID);
-
-     stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-     bulkData->declare_relation(elem, side,  2 /*local side id*/);
-
-     bulkData->declare_relation(side, urnode, 0);
-     bulkData->declare_relation(side, ulnode, 1);
-     bulkData->declare_relation(side, ulnodeb, 3);
-     bulkData->declare_relation(side, urnodeb, 2);
+     bulkData->declare_relation(side, urnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, ulnode, 1, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, ulnodeb, 3, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, urnodeb, 2, stk::mesh::DEFAULT_PERMUTATION);
 
   }
   if (z_GID==0) {
@@ -1283,17 +1235,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
       // elem has side 4 (0321) on front boundary
 
      singlePartVec[0] = ssPartVec["SideSet4"];
+     stk::mesh::Entity side  = bulkData->declare_element_side(elem, 4, singlePartVec);
 
-     stk::mesh::EntityId side_id = (stk::mesh::EntityId)((nelem[0] + nelem[1]) * 2 * nelem[2] +
-      x_GID + (2 * nelem[0]) * y_GID);
-
-     stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-     bulkData->declare_relation(elem, side,  4 /*local side id*/);
-
-     bulkData->declare_relation(side, llnode, 0);
-     bulkData->declare_relation(side, ulnode, 3);
-     bulkData->declare_relation(side, urnode, 2);
-     bulkData->declare_relation(side, lrnode, 1);
+     bulkData->declare_relation(side, llnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, ulnode, 3, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, urnode, 2, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, lrnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
   }
   if ((z_GIDplus1)==nelem[2]) {
@@ -1301,16 +1248,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
       // elem has side 5 (4567) on back boundary
 
      singlePartVec[0] = ssPartVec["SideSet5"];
-     stk::mesh::EntityId side_id = (stk::mesh::EntityId)((nelem[0] + nelem[1]) * 2 * nelem[2] +
-      x_GID + (2 * nelem[0]) * y_GID + nelem[0]);
+     stk::mesh::Entity side  = bulkData->declare_element_side(elem, 5, singlePartVec);
 
-     stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-     bulkData->declare_relation(elem, side,  5 /*local side id*/);
-
-     bulkData->declare_relation(side, llnodeb, 0);
-     bulkData->declare_relation(side, lrnodeb, 1);
-     bulkData->declare_relation(side, urnodeb, 2);
-     bulkData->declare_relation(side, ulnodeb, 3);
+     bulkData->declare_relation(side, llnodeb, 0, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, lrnodeb, 1, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, urnodeb, 2, stk::mesh::DEFAULT_PERMUTATION);
+     bulkData->declare_relation(side, ulnodeb, 3, stk::mesh::DEFAULT_PERMUTATION);
 
     }
 

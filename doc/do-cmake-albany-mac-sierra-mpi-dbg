@@ -1,5 +1,6 @@
 #!/bin/sh
 
+export ALBANY_HOME=/Users/gahanse/Codes/Albany
 export ALB_FLAGS="-Wno-deprecated-declarations"
 export ALB_ENABLE_UNIT_TESTS=ON
 # Must give Trilinos source location if using unit testing (need some files in Teuchos)
@@ -34,4 +35,4 @@ cmake \
       -D ENABLE_PERFORMANCE_TESTS:BOOL=${ALB_ENABLE_PERF_TESTS} \
       -D ALBANY_CTEST_TIMEOUT:INTEGER=70 \
 \
-../../Albany
+${ALBANY_HOME}
