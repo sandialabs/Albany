@@ -7,7 +7,7 @@
 ##   INCLUDE(CTest)
 
 set(CTEST_PROJECT_NAME "Albany")
-set(CTEST_NIGHTLY_START_TIME "00:00:00 EST")
+set(CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 
 set(CTEST_DROP_METHOD "https")
 set(CTEST_DROP_SITE "sems-cdash-son.sandia.gov")
