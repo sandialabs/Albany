@@ -465,16 +465,16 @@ AsciiSTKMeshStruct::setFieldAndBulkData(
      //std::cout << "elem_GID: " << elem_GID << std::endl;
      stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
      singlePartVec[0] = partVec[ebNo];
-     stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
+     stk::mesh::Entity elem  = bulkData->declare_element(1+elem_id, singlePartVec);
      //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh
-     stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][0], nodePartVec);
-     stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][1], nodePartVec);
-     stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][2], nodePartVec);
-     stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][3], nodePartVec);
-     stk::mesh::Entity llnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][4], nodePartVec);
-     stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][5], nodePartVec);
-     stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][6], nodePartVec);
-     stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][7], nodePartVec);
+     stk::mesh::Entity llnode = bulkData->declare_node(eles[i][0], nodePartVec);
+     stk::mesh::Entity lrnode = bulkData->declare_node(eles[i][1], nodePartVec);
+     stk::mesh::Entity urnode = bulkData->declare_node(eles[i][2], nodePartVec);
+     stk::mesh::Entity ulnode = bulkData->declare_node(eles[i][3], nodePartVec);
+     stk::mesh::Entity llnodeb = bulkData->declare_node(eles[i][4], nodePartVec);
+     stk::mesh::Entity lrnodeb = bulkData->declare_node(eles[i][5], nodePartVec);
+     stk::mesh::Entity urnodeb = bulkData->declare_node(eles[i][6], nodePartVec);
+     stk::mesh::Entity ulnodeb = bulkData->declare_node(eles[i][7], nodePartVec);
      bulkData->declare_relation(elem, llnode, 0);
      bulkData->declare_relation(elem, lrnode, 1);
      bulkData->declare_relation(elem, urnode, 2);
@@ -630,13 +630,9 @@ AsciiSTKMeshStruct::setFieldAndBulkData(
      if (have_bf == false) {
        *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl;
        if ( xyz[eles[i][0]][2] == 0.0) {
-          //std::cout << "sideID: " << sideID << std::endl;
-          singlePartVec[0] = ssPartVec["Basal"];
-          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
-          sideID++;
+         singlePartVec[0] = ssPartVec["Basal"];
 
-         stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  4 /*local side id*/);
+         stk::mesh::Entity side  = bulkData->declare_element_side(elem, 4, singlePartVec);
 
          bulkData->declare_relation(side, llnode, 0);
          bulkData->declare_relation(side, ulnode, 3);
@@ -702,18 +698,15 @@ AsciiSTKMeshStruct::setFieldAndBulkData(
     for (unsigned int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
        singlePartVec[0] = ssPartVec["Basal"];
        sideID = basal_face_mapT->getGlobalElement(i);
-       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
-       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
 
        const unsigned int elem_GID = bf[i][0];
-       //std::cout << "elem_GID: " << elem_GID << std::endl;
        stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
-       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
-       bulkData->declare_relation(elem, side,  4 /*local side id*/);
-       stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][1], nodePartVec);
-       stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][2], nodePartVec);
-       stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][3], nodePartVec);
-       stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][4], nodePartVec);
+       stk::mesh::Entity elem  = bulkData->declare_element(elem_id, emptyPartVec);
+       stk::mesh::Entity side  = bulkData->declare_element_side(elem, 4, singlePartVec);
+       stk::mesh::Entity llnode = bulkData->declare_node(bf[i][1], nodePartVec);
+       stk::mesh::Entity lrnode = bulkData->declare_node(bf[i][2], nodePartVec);
+       stk::mesh::Entity urnode = bulkData->declare_node(bf[i][3], nodePartVec);
+       stk::mesh::Entity ulnode = bulkData->declare_node(bf[i][4], nodePartVec);
 
        bulkData->declare_relation(side, llnode, 0);
        bulkData->declare_relation(side, ulnode, 3);

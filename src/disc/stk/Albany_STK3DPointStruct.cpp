@@ -68,9 +68,9 @@ Albany::STK3DPointStruct::setFieldAndBulkData(
   stk::mesh::PartVector singlePartVec(1);
   singlePartVec[0] = partVec[0]; // Get the element block part to put the element in.
   // Declare element 1 is in that block
-  stk::mesh::Entity pt  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1, singlePartVec);
+  stk::mesh::Entity pt  = bulkData->declare_element(1, singlePartVec);
   // Declare node 1 is in the node part vector
-  stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK, 1, nodePartVec);
+  stk::mesh::Entity node = bulkData->declare_node(1, nodePartVec);
   // Declare that the node belongs to the element "pt"
   // "node" is the zeroth node of this element
   bulkData->declare_relation(pt, node, 0);

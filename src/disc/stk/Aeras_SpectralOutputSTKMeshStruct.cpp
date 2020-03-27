@@ -171,15 +171,13 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
             stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
             singlePartVec[0] = partVec[ebNo];
             //Add 1 to elem_id in the following line b/c STK is 1-based whereas wsElNodeID is 0-based
-            stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
-            stk::mesh::Entity node0 = bulkData->declare_entity(stk::topology::NODE_RANK,
-                                      1+wsElNodeID[ws][e][i+j*points_per_edge], nodePartVec);
-            stk::mesh::Entity node1 = bulkData->declare_entity(stk::topology::NODE_RANK,
-                                      1+wsElNodeID[ws][e][i+1+j*points_per_edge], nodePartVec);
-            stk::mesh::Entity node2 = bulkData->declare_entity(stk::topology::NODE_RANK,
-                                      1+wsElNodeID[ws][e][i+points_per_edge+1+j*points_per_edge], nodePartVec);
-            stk::mesh::Entity node3 = bulkData->declare_entity(stk::topology::NODE_RANK,
-                                      1+wsElNodeID[ws][e][i+points_per_edge+j*points_per_edge], nodePartVec);
+            stk::mesh::Entity elem = bulkData->declare_element(1+elem_id, singlePartVec);
+            stk::mesh::Entity node0 = bulkData->declare_node(1+wsElNodeID[ws][e][i+j*points_per_edge], nodePartVec);
+            stk::mesh::Entity node1 = bulkData->declare_node(1+wsElNodeID[ws][e][i+1+j*points_per_edge], nodePartVec);
+            stk::mesh::Entity node2 = bulkData->declare_node(1+wsElNodeID[ws][e][i+points_per_edge+1+j*points_per_edge], 
+                                                             nodePartVec);
+            stk::mesh::Entity node3 = bulkData->declare_node(1+wsElNodeID[ws][e][i+points_per_edge+j*points_per_edge], 
+                                                             nodePartVec);
 #ifdef OUTPUT_TO_SCREEN
             std::cout << "ws, e, i , j " << ws << ", " << e << ", " << i << ", " << j << std::endl;
             std::cout << "Output Mesh elem_GID, node0, node1, node2, node3: " << elem_GID << ", "
@@ -263,11 +261,9 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
           stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
           singlePartVec[0] = partVec[ebNo];
           //Add 1 to elem_id in the following line b/c STK is 1-based whereas wsElNodeID is 0-based
-          stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
-          stk::mesh::Entity node0 = bulkData->declare_entity(stk::topology::NODE_RANK,
-                                    1+wsElNodeID[ws][e][i], nodePartVec);
-          stk::mesh::Entity node1 = bulkData->declare_entity(stk::topology::NODE_RANK,
-                                    1+wsElNodeID[ws][e][i+1], nodePartVec);
+          stk::mesh::Entity elem = bulkData->declare_element(1+elem_id, singlePartVec);
+          stk::mesh::Entity node0 = bulkData->declare_node(1+wsElNodeID[ws][e][i], nodePartVec);
+          stk::mesh::Entity node1 = bulkData->declare_node(1+wsElNodeID[ws][e][i+1], nodePartVec);
 #ifdef OUTPUT_TO_SCREEN
           std::cout << "ws, e, i " << ws << ", " << e << ", " << i  << std::endl;
           std::cout << "Output Mesh elem_GID, node0, node1: " << elem_GID << ", "

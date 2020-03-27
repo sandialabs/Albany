@@ -307,7 +307,7 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
     singlePartVec[0] = nsPartVec["Node"];
 
     for (int i = 0; i < NumNodes; i++) {
-      stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK, i + 1, singlePartVec);
+      stk::mesh::Entity node = bulkData->declare_node(i + 1, singlePartVec);
 
       double* coord;
       coord = stk::mesh::field_data(*coordinates_field, node);
@@ -319,7 +319,7 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
 
     for (int i = 0; i < NumElems; i++) {
       singlePartVec[0] = partVec[ebNo];
-      stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, i + 1, singlePartVec);
+      stk::mesh::Entity elem = bulkData->declare_element(i + 1, singlePartVec);
 
       for (int j = 0; j < NumElemNodes; j++) {
         stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, elems[j][i]);
@@ -341,14 +341,16 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
       partName = bdTagToSideSetName[sides[NumSideNodes][i]];
       ssPartVec_i[1] = ssPartVec[partName];
 
-      stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), i + 1, ssPartVec_i);
-      for (int j=0; j<NumSideNodes; ++j) {
-        stk::mesh::Entity node_j = bulkData->get_entity(stk::topology::NODE_RANK,sides[j][i]);
-        bulkData->change_entity_parts (node_j,nsPartVec_i); // Add node to the boundary nodeset
-        bulkData->declare_relation(side, node_j, j);
+     // Loop over the nodes on this side. Save the entity number of the node and its location on the side
 
-        int num_e = bulkData->num_elements(node_j);
-        const stk::mesh::Entity* e = bulkData->begin_elements(node_j);
+      stk::mesh::Entity side;
+      std::vector<stk::mesh::Entity> nodev(NumSideNodes);
+      for (int j=0; j<NumSideNodes; ++j) {
+        nodev[j] = bulkData->get_entity(stk::topology::NODE_RANK,sides[j][i]);
+        bulkData->change_entity_parts (nodev[j], nsPartVec_i); // Add node to the boundary nodeset
+
+        int num_e = bulkData->num_elements(nodev[j]);
+        const stk::mesh::Entity* e = bulkData->begin_elements(nodev[j]);
         for (int k(0); k<num_e; ++k) {
           ++elm_count[bulkData->identifier(e[k])];
         }
@@ -359,13 +361,16 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
       bool found = false;
 
       for (auto e : elm_count)
-        if (e.second==NumSideNodes)
+        if (e.second == NumSideNodes)
         {
           stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEM_RANK, e.first);
           found = true;
           int num_sides = bulkData->num_sides(elem);
-          bulkData->declare_relation(elem,side,num_sides);
+          side  = bulkData->declare_element_side(elem, num_sides, ssPartVec_i);
+          for (int jj=0; jj<NumSideNodes; ++jj)
+             bulkData->declare_relation(side, nodev[jj], jj);
           break;
+
         }
 
       TEUCHOS_TEST_FOR_EXCEPTION (found==false, std::logic_error, "Error! Cannot find element connected to side " << i+1 << ".\n");
