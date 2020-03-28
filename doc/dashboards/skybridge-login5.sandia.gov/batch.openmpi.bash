@@ -15,8 +15,8 @@
                                       #           large:  greater than 50% of cluster (special request)
                                       #           priority: High priority jobs (special request)
 
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=ikalash@sandia.gov
+##SBATCH --mail-type=ALL
+##SBATCH --mail-user=ikalash@sandia.gov
 #nodes=$SLURM_JOB_NUM_NODES           # Number of nodes - the number of nodes you have requested (for a list of SLURM environment variables see "man sbatch")
 #cores=1                             # Number MPI processes to run on each node (a.k.a. PPN)
                                      # tlcc2 has 16 cores per node
