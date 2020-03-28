@@ -4,8 +4,8 @@
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=16
 #SBATCH --constraint=haswell
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=ikalash@sandia.gov
+##SBATCH --mail-type=ALL
+##SBATCH --mail-user=ikalash@sandia.gov
 
 source cori_modules.sh 
 export CRAYPE_LINK_TYPE=STATIC
