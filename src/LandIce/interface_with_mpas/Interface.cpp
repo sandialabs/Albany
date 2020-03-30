@@ -340,9 +340,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     int lId = il * lElemColumnShift + elemLayerShift * ib;
 
     dissipationHeatOnPrisms[elemLayerShift] = 0;
-    if (il==0) {
-      bodyForceOnBasalCell[ib] = 0;
-    }
+    double bf = 0;
     for (int iElem = 0; iElem < numElemsInPrism; iElem++) {
       stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, ++gId);
       const double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
@@ -350,9 +348,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
       if (il==0 && bodyForceField!=nullptr) {
         const double* bodyForceVal = stk::mesh::field_data(*bodyForceField, elem);
-        bodyForceOnBasalCell[ib] += bodyForceVal[0]/numElemsInPrism;
+        const double normSq = bodyForceVal[0]*bodyForceVal[0] + bodyForceVal[1]*bodyForceVal[1];
+        bf += normSq;
       }
     }
+    bodyForceOnBasalCell[ib] = std::sqrt(bf)/numElemsInPrism;
   }
 
   keptMesh = true;
