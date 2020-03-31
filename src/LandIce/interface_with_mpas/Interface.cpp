@@ -352,7 +352,9 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
         bf += normSq;
       }
     }
-    bodyForceOnBasalCell[ib] = std::sqrt(bf)/numElemsInPrism;
+    if (il==0 ) {
+      bodyForceOnBasalCell[ib] = std::sqrt(bf)/numElemsInPrism;
+    }
   }
 
   keptMesh = true;
