@@ -20,12 +20,9 @@ export OMP_NUM_THREADS=2
 export OMP_PLACES=threads
 export OMP_PROC_BIND=spread
 
-
-cat albany_openmp ctest_nightly.cmake.frag >& ctest_nightly.cmake  
-
 now=$(date +"%m_%d_%Y-%H_%M")
 LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanyOpenMP.txt
 
-eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly.cmake" > $LOG_FILE 2>&1
+eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany_openmp.cmake" > $LOG_FILE 2>&1
 
 bash process_results_ctest_openmp.sh
