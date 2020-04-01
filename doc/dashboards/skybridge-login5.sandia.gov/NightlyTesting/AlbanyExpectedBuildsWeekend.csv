@@ -1,4 +1,10 @@
 group, site, buildname 
+Nightly, blake.sandia.gov, blake-serial-Trilinos
+Nightly, blake.sandia.gov, blake-openmp-Trilinos
+Nightly, blake.sandia.gov, blake-serial-Albany
+Nightly, blake.sandia.gov, blake-openmp-Albany
+Nightly, blake.sandia.gov, blake-serial-sfad-Albany
+Nightly, blake.sandia.gov, blake-serial-sfad-Albany-PerfTests
 Nightly, cee-compute011, Linux-3.10.0-1062.9.1.el7.x86_64-base-trilinos-Release
 Nightly, cee-compute011, Linux-3.10.0-1062.9.1.el7.x86_64-base-albany-Release
 Nightly, cee-compute012, Linux-3.10.0-1062.9.1.el7.x86_64-clangdbg-trilinos-Debug
