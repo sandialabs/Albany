@@ -372,7 +372,7 @@ void ModelEvaluator::allocateVectors()
     // Set xdotdot in parent class to pass to time integrator
 
     // GAH set x_dotdot for transient simulations. Note that xDotDot is a member
-    // of Piro::TransientDecorator<ST, LO, GO, KokkosNode>
+    // of Piro::TransientDecorator<ST>
     const Teuchos::RCP<const Thyra_Vector> x_dotdot_init = xMV->col(2);
     const Teuchos::RCP<Thyra_Vector>       x_dotdot_init_nonconst = x_dotdot_init->clone_v();
     // IKT, 3/30/17: set x_dotdot in nominalValues for Tempus, now that

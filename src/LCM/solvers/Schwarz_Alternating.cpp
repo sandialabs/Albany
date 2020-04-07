@@ -679,8 +679,8 @@ SchwarzAlternating::SchwarzLoopDynamics() const
         Thyra::ResponseOnlyModelEvaluatorBase<ST>& solver =
             *(solvers_[subdomain]);
 
-        Piro::TempusSolver<ST, LO, Tpetra_GO, KokkosNode>& piro_tempus_solver =
-            dynamic_cast<Piro::TempusSolver<ST, LO, Tpetra_GO, KokkosNode>&>(
+        Piro::TempusSolver<ST>& piro_tempus_solver =
+            dynamic_cast<Piro::TempusSolver<ST>&>(
                 solver);
 
         piro_tempus_solver.setStartTime(current_time);
