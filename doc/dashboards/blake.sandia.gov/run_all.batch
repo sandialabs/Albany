@@ -5,6 +5,11 @@
 #Note: This script assumes you have pre-loaded the required modules
 #prior to entering the sbatch command. The env will propagate to the
 #batch job.
+#SBATCH --output=log.out  
+if [ X"$SLURM_STEP_ID" = "X" -a X"$SLURM_PROCID" = "X"0 ]
+then
+  echo "print SLURM_JOB_ID = $SLURM_JOB_ID"
+fi 
 
 cd /home/projects/albany/nightlyCDashTrilinosBlake
 rm -rf *out*
