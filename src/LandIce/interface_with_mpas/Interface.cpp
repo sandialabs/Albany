@@ -106,7 +106,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     const std::vector<double>& effectivePressureData,
     const std::vector<double>& muData,
     const std::vector<double>& temperatureDataOnPrisms,
-    std::vector<double>& bodyForceOnBasalCell,
+    std::vector<double>& bodyForceMagnitudeOnBasalCell,
     std::vector<double>& dissipationHeatOnPrisms,
     std::vector<double>& velocityOnVertices,
     int& error,
@@ -353,7 +353,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       }
     }
     if (il==0 ) {
-      bodyForceOnBasalCell[ib] = std::sqrt(bf)/numElemsInPrism;
+      bodyForceMagnitudeOnBasalCell[ib] = std::sqrt(bf)/numElemsInPrism;
     }
   }
 
