@@ -2,7 +2,7 @@
  * LandIce_enthalpyBasalResid_Def.hpp
  *
  *  Created on: May 31, 2016
- *      Author: abarone
+ *      Author: mperego, abarone
  */
 
 #include "Teuchos_TestForException.hpp"
@@ -23,7 +23,6 @@ template<typename EvalT, typename Traits, typename Type>
 EnthalpyBasalResid<EvalT,Traits,Type>::
 EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
  : enthalpyBasalResid(p.get<std::string> ("Enthalpy Basal Residual Variable Name"), dl->node_scalar)
- // , homotopy    (p.get<std::string> ("Continuation Parameter Name"), dl->shared_param)
 {
   basalSideName = p.get<std::string>("Side Set Name");
 
@@ -33,47 +32,13 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
   BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
   w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_basal->qp_scalar);
-  // velocity   = decltype(velocity)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-  // beta       = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
-  // basal_dTdz = decltype(basal_dTdz)(p.get<std::string> ("Basal dTdz Side QP Variable Name"), dl_basal->qp_scalar);
-  // enthalpy   = decltype(enthalpy)(p.get<std::string> ("Enthalpy Side QP Variable Name"), dl_basal->qp_scalar);
-  // enthalpyHs = decltype(enthalpyHs)(p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl_basal->qp_scalar);
-  // diffEnth   = decltype(diffEnth)(p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar);
   basalMeltRateQP = decltype(basalMeltRateQP)(p.get<std::string> ("Basal Melt Rate Side QP Variable Name"), dl_basal->qp_scalar);
-  // basalMeltRate = decltype(basalMeltRate)(p.get<std::string> ("Basal Melt Rate Side Variable Name"), dl_basal->node_scalar);
-  // phi        = decltype(phi)(p.get<std::string> ("Water Content Side QP Variable Name"),dl_basal->node_scalar);
-
-  // geoFlux   = decltype(geoFlux)(p.get<std::string> ("Geothermal Flux Side QP Variable Name"), dl_basal->qp_scalar);
-
-  // haveSUPG = p.isParameter("LandIce Enthalpy Stabilization") ? (p.get<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization")->get<std::string>("Type") == "SUPG") : false;
 
   this->addDependentField(BF);
   this->addDependentField(w_measure);
-  // this->addDependentField(geoFlux);
-  // this->addDependentField(velocity);
-  // this->addDependentField(beta);
-  // this->addDependentField(basal_dTdz);
-  // this->addDependentField(enthalpy);
-  // this->addDependentField(enthalpyHs);
-  // this->addDependentField(diffEnth);
-  // this->addDependentField(homotopy);
-  // this->addDependentField(phi);
   this->addDependentField(basalMeltRateQP);
 
   this->addEvaluatedField(enthalpyBasalResid);
-  // this->addEvaluatedField(basalMeltRate);
-//   this->addEvaluatedField(basalMeltRateQP);
-
-  // if (haveSUPG)
-  // {
-  //   GradBF         = decltype(GradBF)(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
-  //   verticalVel    = decltype(verticalVel)(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
-
-  //   this->addDependentField(verticalVel);
-  //   this->addDependentField(GradBF);
-
-  //   this->setName("Enthalpy Basal Residual SUPG");
-  // }
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
@@ -84,18 +49,6 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
   dl->node_vector->dimensions(dims);
   vecDimFO     = std::min((int)dims[2],2);
-
-  // Teuchos::ParameterList* physics_list = p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
-  // a = physics_list->get<double>("Diffusivity homotopy exponent");
-  // beta_p = physics_list->get<double>("Clausius-Clapeyron Coefficient");
-  // rho_i = physics_list->get<double>("Ice Density");
-  // rho_w = physics_list->get<double>("Water Density"); //, 1000.0);
-  // g     = physics_list->get<double>("Gravity Acceleration");
-  // L = physics_list->get<double>("Latent heat of fusion"); //, 3e5);
-  // k_0 = physics_list->get<double>("Permeability factor"); //, 0.0);
-  // k_i = physics_list->get<double>("Conductivity of ice"); //[W m^{-1} K^{-1}]
-  // eta_w = physics_list->get<double>("Viscosity of water"); //, 0.0018);
-  // alpha_om = physics_list->get<double>("Omega exponent alpha"); //, 2.0);
 
   // Index of the nodes on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType;
@@ -122,24 +75,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Trai
 {
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(w_measure,fm);
-  // this->utils.setFieldData(geoFlux,fm);
-  // this->utils.setFieldData(velocity,fm);
-  // this->utils.setFieldData(beta,fm);
-  // this->utils.setFieldData(basal_dTdz,fm);
-  // this->utils.setFieldData(enthalpy,fm);
-  // this->utils.setFieldData(enthalpyHs,fm);
-  // this->utils.setFieldData(diffEnth,fm);
-  // this->utils.setFieldData(homotopy,fm);
-
-  // this->utils.setFieldData(enthalpyBasalResid,fm);
-  // this->utils.setFieldData(basalMeltRate,fm);
   this->utils.setFieldData(basalMeltRateQP,fm);
-
-  // if (haveSUPG)
-  // {
-  //   this->utils.setFieldData(verticalVel,fm);
-  //   this->utils.setFieldData(GradBF,fm);
-  // }
 }
 
 template<typename EvalT, typename Traits, typename Type>

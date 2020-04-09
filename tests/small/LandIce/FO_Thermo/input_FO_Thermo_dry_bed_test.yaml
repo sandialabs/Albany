@@ -6,28 +6,46 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
     Compute Sensitivities: true
-    Name: LandIce Enthalpy 3D
+    Name: LandIce Stokes FO Thermo Coupled 3D
     Basal Side Name: basalside
-    Required Basal Fields: [basal_friction]
+    Required Fields: [basal_friction]
     Needs Dissipation: true
     Needs Basal Friction: true
     Constant Geothermal Flux: false
+    Compute W: false
     Dirichlet BCs: 
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
+      DBC on NS bottom for DOF U1: 0.00000000000000000e+00
+      DBC on NS lateral for DOF U1: 0.00000000000000000e+00
+    LandIce BCs:
+      Number : 1
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Given Field
+          Given Field Variable Name: basal_friction
+    Parameters: 
+      Number: 1
+      Parameter 0: 'Glen''s Law Homotopy Parameter'
+    Distributed Parameters: 
+      Number of Parameter Vectors: 0
+      Distributed Parameter 0: 
+        Name: surface_air_temperature
     LandIce Viscosity: 
       Extract Strain Rate Sq: true
       Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 1.00000000000000006e-01
+      'Glen''s Law Homotopy Parameter': 0.4e+00
       Continuous Homotopy With Constant Initial Viscosity: true
       Coefficient For Continuous Homotopy: 8.00000000000000000e+00
-      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law A': 7.56960000000000017e-05
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
     LandIce Physical Parameters: 
       Conductivity of ice: 2.10000000000000009e+00
-      Diffusivity temperate ice: 0.00000000000000000e+00
+      Diffusivity temperate ice: 1.09999999999999992e-08
       Heat capacity of ice: 2.00900000000000000e+03
-      Water Density: 1.02800000000000000e+03
+      Water Density: 1.00000000000000000e+03
       Ice Density: 9.16000000000000000e+02
       Gravity Acceleration: 9.80000000000000071e+00
       Reference Temperature: 2.65000000000000000e+02
@@ -36,57 +54,104 @@ ANONYMOUS:
       Permeability factor: 9.99999999999999980e-13
       Viscosity of water: 1.79999999999999995e-03
       Omega exponent alpha: 2.00000000000000000e+00
-      Diffusivity homotopy exponent: -1.00000000000000006e-01
+      Diffusivity homotopy exponent: -1.10000000000000009e+00
     LandIce Enthalpy:
       Regularization: 
         Flux Regularization: 
-          alpha: 5.00000000000000006e-02
+          alpha: 1.00000000000000006e-01
           beta: 7.50000000000000000e+00
         Basal Melting Regularization: 
-          alpha: 5.00000000000000000e-01
-          beta: 1.00000000000000000e+01
+          alpha: 1.00000000000000006e-01
+          beta: 7.50000000000000000e+00
       Stabilization: 
         Type: Streamline Upwind
-        Parameter Delta: 1.00000000000000000e+00
-      Bed Lubrication: Dry
-    Parameters: 
-      Number: 1
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
+        Parameter Delta: 2.00000000000000000e+00
+      Bed Lubrication: 'Dry'
+    Body Force: 
+      Type: FO INTERP SURF GRAD
     Response Functions: 
       Number: 1
       Response 0: Solution Average
   Discretization: 
-    Method: Exodus
+    Workset Size: -1
+    Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 3
-    Exodus Output File Name: gis_enthalpy.exo
-    Exodus Input File Name: ../ExoMeshes/gis_struct_enth.exo
-    Restart Index: 1
+    Cubature Degree: 4
+    Exodus Output File Name: enth_coupled.exo
+    Element Shape: Hexahedron
     Use Serial Mesh: true
     Interleaved Ordering: true
+    Columnwise Ordering: true
+    NumLayers: 10
+    Thickness Field Name: ice_thickness
+    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, surface_air_temperature]
+    Basal Node Fields Ranks: [1, 1, 1, 1, 1]
+    Use Glimmer Spacing: true
+    Required Fields Info: 
+      Number Of Fields: 5
+      Field 0: 
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1: 
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2: 
+        Field Name: basal_friction
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3: 
+        Field Name: surface_air_temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 4: 
+        Field Name: surface_enthalpy
+        Field Type: Node Scalar
+        Field Usage: Output
     Side Set Discretizations: 
       Side Sets: [basalside]
       basalside: 
+        Workset Size: -1
         Method: Exodus
         Number Of Time Derivatives: 0
-        Exodus Input File Name: ../ExoMeshes/gis_struct_enth_basal.exo
-        Exodus Output File Name: gis_enthalpy_basal.exo
-        Cubature Degree: 3
-        Restart Index: 1
+        Exodus Input File Name: ../ExoMeshes/slab_2d.exo
+        Cubature Degree: 4
         Use Serial Mesh: true
         Required Fields Info: 
-          Number Of Fields: 1
+          Number Of Fields: 5
           Field 0: 
             Field Name: basal_friction
             Field Type: Node Scalar
-            Field Origin: Mesh
+            Field Origin: File
+            File Name: ../AsciiMeshes/Enthalpy/Dome/basal_friction.ascii
+          Field 1: 
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Enthalpy/Dome/thickness.ascii
+          Field 2: 
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Enthalpy/Dome/surface_height.ascii
+          Field 3: 
+            Field Name: surface_air_temperature
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Enthalpy/Dome/surface_air_temperature.ascii
+          Field 4: 
+            Field Name: heat_flux
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Enthalpy/Dome/basal_heat_flux.ascii
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [-1.286110843350e+01]
+    Test Values: [5.307598209065e-01]
     Relative Tolerance: 1.0e-04
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [-7.765670312501e+01]
+      Sensitivity Test Values 0: [1.065062318420e+01]
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -97,12 +162,16 @@ ANONYMOUS:
         Initial Value: 0.00000000000000000e+00
         Continuation Parameter: 'Glen''s Law Homotopy Parameter'
         Continuation Method: Natural
-        Max Steps: 10
-        Max Value: 1.00000000000000000e+00
+        Max Steps: 100
+        Max Value: 4.00000000000000022e-01
         Min Value: 0.00000000000000000e+00
       Step Size: 
         Initial Step Size: 1.00000000000000006e-01
+        Max Step Size: 1.00000000000000006e-01
     NOX: 
+      Thyra Group Options: 
+        Function Scaling: None
+        Update Row Sum Scaling: Before Each Nonlinear Solve
       Status Tests: 
         Test Type: Combo
         Combo Type: OR
@@ -115,27 +184,21 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.0e-05
-          Test 1: 
-            Test Type: NormWRMS
-            Absolute Tolerance: 1.0e-04
-            Relative Tolerance: 1.0e-07
+            Tolerance: 1.0e-07
         Test 1: 
           Test Type: MaxIters
-          Maximum Iterations: 30
-      Nonlinear Solver: Line Search Based
+          Maximum Iterations: 100
       Direction: 
         Method: Newton
         Newton: 
           Forcing Term Method: Constant
           Linear Solver: 
             Write Linear System: false
-            Max Iterations: 200
-            Tolerance: 1.0e-07
+            Tolerance: 1.0e-8
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types: 
                 AztecOO: 
                   Forward Solve: 
@@ -144,11 +207,13 @@ ANONYMOUS:
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
+                    Max Iterations: 500
+                    Tolerance: 9.99999999999999955e-08
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 1.00000000000000002e-08
+                      Convergence Tolerance: 1.00000000000000005e-04
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -156,7 +221,7 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: ML
+              Preconditioner Type: Ifpack
               Preconditioner Types: 
                 Ifpack: 
                   Overlap: 0
@@ -193,6 +258,7 @@ ANONYMOUS:
         Full Step: 
           Full Step: 1.00000000000000000e+00
         Method: Backtrack
+      Nonlinear Solver: Line Search Based
       Printing: 
         Output Precision: 3
         Output Processor: 0

@@ -2,7 +2,7 @@
  * LandIce_VelocityZ_Def.hpp
  *
  *  Created on: Jun 7, 2016
- *      Author: abarone
+ *      Author: mperego, abarone
  */
 
 #include "Teuchos_TestForException.hpp"
@@ -36,7 +36,6 @@ namespace LandIce
   wBF          (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
   wGradBF      (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
   w_z        (p.get<std::string> ("w Gradient QP Variable Name"), dl->qp_gradient),
-  w        (p.get<std::string> ("w Variable Name"), dl->node_scalar),
   coordVec     (p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
   Residual     (p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
   {
@@ -53,7 +52,6 @@ namespace LandIce
     side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_side->qp_scalar);
     side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), dl_side->qp_scalar);
     basalVerticalVelocitySideQP = decltype(basalVerticalVelocitySideQP)(p.get<std::string>("Basal Vertical Velocity Side QP Variable Name"), dl_side->qp_scalar);
-    basalVerticalVelocitySide = decltype(basalVerticalVelocitySide)(p.get<std::string>("Basal Vertical Velocity Variable Name"), dl_side->node_scalar);
     normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
 
 
@@ -79,15 +77,12 @@ namespace LandIce
 
     this->addDependentField(GradVelocity);
     this->addDependentField(velocity);
-    //this->addDependentField(basalMeltRate);
     this->addDependentField(basalVerticalVelocitySideQP);
-    this->addDependentField(basalVerticalVelocitySide);
     this->addDependentField(wBF);
     this->addDependentField(wGradBF);
     this->addDependentField(sideBF);
     this->addDependentField(side_w_qp);
     this->addDependentField(side_w_measure);
-    this->addDependentField(w);
     this->addDependentField(w_z);
     this->addDependentField(coordVec);
     this->addDependentField(normals);
