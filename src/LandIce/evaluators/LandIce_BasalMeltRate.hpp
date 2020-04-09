@@ -37,23 +37,22 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,Side,Node>              phi;  // []
-  PHX::MDField<const VelocityST,Cell,Side,Node>    	      beta;  // [kPa yr/m]
-  PHX::MDField<const VelocityST,Cell,Side,Node,VecDim>    velocity; // [m/yr]
-  PHX::MDField<const ParamScalarT,Cell,Side,Node>         geoFluxHeat; // [W m^{-2}] = [Pa m s^{-1}]
-  PHX::MDField<const ScalarT,Cell,Side,Node> 	            Enthalpy; //[MW s m^{-3}]
-  // PHX::MDField<const ScalarT,Cell,Side,Node>              basal_dTdz; // [K km^{-1}]
-  PHX::MDField<const MeltEnthST,Cell,Side,Node>           EnthalpyHs; ////[MW s m^{-3}]
-  PHX::MDField<const ScalarT,Dim>                         homotopy;
+  PHX::MDField<const ScalarT>              phi;        // []
+  PHX::MDField<const VelocityST>           beta;       // [kPa yr/m]
+  PHX::MDField<const VelocityST>           velocity;   // [m/yr]
+  PHX::MDField<const ParamScalarT>         geoFluxHeat;// [W m^{-2}] = [Pa m s^{-1}]
+  PHX::MDField<const ScalarT>              Enthalpy;   //[MW s m^{-3}]
+  PHX::MDField<const MeltEnthST>           EnthalpyHs; //[MW s m^{-3}]
+  PHX::MDField<const ScalarT,Dim>          homotopy;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,Node> enthalpyBasalFlux; // [W m^{-2}]
-  PHX::MDField<ScalarT,Cell,Side,Node> basalVertVelocity; // [m/yr]
+  PHX::MDField<ScalarT> enthalpyBasalFlux; // [W m^{-2}]
+  PHX::MDField<ScalarT> basalVertVelocity; // [m/yr]
 
   std::vector<std::vector<int> >  sideNodes;
   std::string                     basalSideName;
 
-  int numCellNodes, numSideNodes, sideDim;
+  int numCellNodes, numSideNodes, numSideQPs, sideDim;
 
   double rho_w; 	// [kg m^{-3}] density of water
   double rho_i; 	// [kg m^{-3}] density of ice
@@ -73,6 +72,7 @@ private:
   double basalMelt_reg_alpha;
   double basalMelt_reg_beta;
   bool isThereWater;
+  bool nodal;
 };
 
 } // namespace LandIce

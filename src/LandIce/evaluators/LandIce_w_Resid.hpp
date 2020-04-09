@@ -42,13 +42,10 @@ private:
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint> side_w_measure;  // [km^2]
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   normals;
 
-  // PHX::MDField<const ScalarT,Cell,Node> basalMeltRate; // [m yr^{-1}]
-  PHX::MDField<const ScalarT,Cell,Side, Node> basalVerticalVelocitySide; // [m yr^{-1}]
   PHX::MDField<const ScalarT,Cell,Side, QuadPoint> basalVerticalVelocitySideQP; // [m yr^{-1}]
   PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim,Dim>  GradVelocity; // [k^{-1} yr^{-1}]
   PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim>  velocity; // [m yr^{-1}]
   PHX::MDField<const ScalarT,Cell,QuadPoint, Dim> w_z;  // [k^{-1} yr^{-1}]
-  PHX::MDField<const ScalarT,Cell,Node> w; // [m yr^{-1}]
   PHX::MDField<const ScalarT,Cell,Side,QuadPoint> side_w_qp; // [m yr^{-1}]
   PHX::MDField<const MeshScalarT,Cell,Node,Dim>  coordVec; // [km]
 

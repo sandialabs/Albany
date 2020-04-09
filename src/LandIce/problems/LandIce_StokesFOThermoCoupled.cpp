@@ -34,7 +34,7 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   needsDiss = params->get<bool> ("Needs Dissipation",true);
   needsBasFric = params->get<bool> ("Needs Basal Friction",true);
   isGeoFluxConst = params->get<bool> ("Constant Geothermal Flux",true);
-  compute_w = params->get<bool>("Compute W",false);
+  compute_w = params->get<bool>("Compute W",true);
 
   TEUCHOS_TEST_FOR_EXCEPTION (needsBasFric && basalSideName=="INVALID", std::logic_error,
                               "Error! If 'Needs Basal Friction' is true, you need a valid 'Basal Side Name'.\n");
@@ -253,14 +253,16 @@ void StokesFOThermoCoupled::setupEvaluatorRequests ()
     ss_build_interp_ev[basalSideName][dof_names[2]            ][InterpolationRequest::CELL_TO_SIDE] = true;
     ss_build_interp_ev[basalSideName]["W"                     ][InterpolationRequest::CELL_TO_SIDE] = true;
     ss_build_interp_ev[basalSideName]["W"                     ][InterpolationRequest::QP_VAL      ] = true;
-    ss_build_interp_ev[basalSideName]["basal_melt_rate"       ][InterpolationRequest::QP_VAL      ] = true;
+    if (!compute_w) {
+      ss_build_interp_ev[basalSideName]["basal_melt_rate"     ][InterpolationRequest::QP_VAL      ] = true;
+    }
     ss_build_interp_ev[basalSideName]["basal_dTdz"            ][InterpolationRequest::QP_VAL      ] = true;
     ss_build_interp_ev[basalSideName][melting_temperature_name][InterpolationRequest::GRAD_QP_VAL ] = true;
     ss_build_interp_ev[basalSideName][melting_temperature_name][InterpolationRequest::CELL_TO_SIDE] = true;
     ss_build_interp_ev[basalSideName][melting_enthalpy_name   ][InterpolationRequest::CELL_TO_SIDE] = true;
     ss_build_interp_ev[basalSideName][melting_enthalpy_name   ][InterpolationRequest::QP_VAL      ] = true;
     ss_build_interp_ev[basalSideName][water_content_name      ][InterpolationRequest::CELL_TO_SIDE] = true;
-    ss_build_interp_ev[basalSideName]["basal_vert_velocity"   ][InterpolationRequest::QP_VAL      ] = true;
+    ss_build_interp_ev[basalSideName][water_content_name      ][InterpolationRequest::QP_VAL      ] = true;
     ss_build_interp_ev[basalSideName]["basal_vert_velocity"   ][InterpolationRequest::SIDE_TO_CELL] = true;
 
     if(needsBasFric)

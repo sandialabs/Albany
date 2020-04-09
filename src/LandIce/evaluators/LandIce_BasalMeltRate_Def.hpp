@@ -25,11 +25,30 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
  , geoFluxHeat       (p.get<std::string> ("Geothermal Flux Side Variable Name"),dl_basal->node_scalar)
  , Enthalpy          (p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar)
  , EnthalpyHs        (p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar)
- // , basal_dTdz        (p.get<std::string> ("Basal dTdz Variable Name"),dl_basal->node_scalar)
  , homotopy          (p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
  , enthalpyBasalFlux     (p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar)
  , basalVertVelocity (p.get<std::string> ("Basal Vertical Velocity Variable Name"),dl_basal->node_scalar)
 {
+  nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
+  Teuchos::RCP<PHX::DataLayout> scalar_layout, vector_layout;
+  if (nodal) {
+    scalar_layout = dl_basal->node_scalar;
+    vector_layout = dl_basal->node_vector;
+  } else {
+    scalar_layout = dl_basal->qp_scalar;
+    vector_layout = dl_basal->qp_vector;
+  }
+
+  phi = decltype(phi)(p.get<std::string> ("Water Content Side Variable Name"),scalar_layout);
+  beta = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),scalar_layout);
+  velocity = decltype(velocity)(p.get<std::string> ("Velocity Side Variable Name"),vector_layout);
+  geoFluxHeat = decltype(geoFluxHeat)(p.get<std::string> ("Geothermal Flux Side Variable Name"),scalar_layout);
+  Enthalpy = decltype(Enthalpy)(p.get<std::string> ("Enthalpy Side Variable Name"),scalar_layout);
+  EnthalpyHs = decltype(EnthalpyHs)(p.get<std::string> ("Enthalpy Hs Side Variable Name"),scalar_layout);
+  homotopy = decltype(homotopy)(p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param);
+  enthalpyBasalFlux = decltype(enthalpyBasalFlux)(p.get<std::string> ("Basal Melt Rate Variable Name"),scalar_layout);
+  basalVertVelocity = decltype(basalVertVelocity)(p.get<std::string> ("Basal Vertical Velocity Variable Name"),scalar_layout);
+
   this->addDependentField(phi);
   this->addDependentField(geoFluxHeat);
   this->addDependentField(velocity);
@@ -37,7 +56,6 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   this->addDependentField(EnthalpyHs);
   this->addDependentField(Enthalpy);
   this->addDependentField(homotopy);
-  // this->addDependentField(basal_dTdz);
 
   this->addEvaluatedField(enthalpyBasalFlux);
   this->addEvaluatedField(basalVertVelocity);
@@ -45,6 +63,7 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
   numSideNodes = dims[2];
+  numSideQPs   = dims[3];
   sideDim      = dims[4];
   numCellNodes = enthalpyBasalFlux.fieldTag().dataLayout().extent(1);
 
@@ -97,6 +116,8 @@ evaluateFields(typename Traits::EvalData d)
   ScalarT basal_reg_coeff = basalMelt_reg_alpha*exp(basalMelt_reg_beta*hom); // [adim]
   ScalarT flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom); // [adim]
 
+  const int dim = nodal ? numSideNodes : numSideQPs;
+
   if (d.sideSets->find(basalSideName) != d.sideSets->end())
   {
     const std::vector<Albany::SideStruct>& sideSet = d.sideSets->at(basalSideName);
@@ -106,13 +127,12 @@ evaluateFields(typename Traits::EvalData d)
       const int cell = it_side.elem_LID;
       const int side = it_side.side_local_id;
 
-      for (int node = 0; node < numSideNodes; ++node)
+      for (int node = 0; node < dim; ++node)
       {
+        //always in presence of water on shelves (assuming that beta==0 <==> on shelves)
+        bool isThereWaterHere = isThereWater || (beta(cell,side,node) == 0.0);
         ScalarT diffEnthalpy = Enthalpy(cell,side,node) - EnthalpyHs(cell,side,node);
-        //ScalarT basal_reg_scale = (diffEnthalpy > 0 || !isThereWater) ?  ScalarT(0.5 + atan(basal_reg_coeff * diffEnthalpy)/pi) :
-        //                                                       ScalarT(0.5 + basal_reg_coeff * diffEnthalpy /pi);
-
-        ScalarT basal_reg_scale = (diffEnthalpy > 0 || !isThereWater) ?  ScalarT(0.5 + 0.5*tanh(basal_reg_coeff * diffEnthalpy)) :
+        ScalarT basal_reg_scale = (diffEnthalpy > 0 || !isThereWaterHere) ?  ScalarT(0.5 + 0.5*tanh(basal_reg_coeff * diffEnthalpy)) :
                                                                          ScalarT(0.5 + 0.5* basal_reg_coeff * diffEnthalpy);
 
         //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
@@ -126,8 +146,8 @@ evaluateFields(typename Traits::EvalData d)
         enthalpyBasalFlux(cell,side,node) =  (basal_reg_scale-1) *mstar + 1e-3*k_i*dTdz_melting;
 
         ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(cell,side,node),alpha_om); //[m yr^{-1}]
-        ScalarT meting = scyr * basal_reg_scale * mstar / (L*rho_i); //[m yr^{-1}]
-        basalVertVelocity(cell,side,node) =  - meting /(1 - rho_w/rho_i*std::min(phi(cell,side,node),0.5)) -  basal_water_flux;
+        ScalarT melting = scyr * basal_reg_scale * mstar / (L*rho_i); //[m yr^{-1}]
+        basalVertVelocity(cell,side,node) =  - melting /(1 - rho_w/rho_i*std::min(phi(cell,side,node),0.5)) -  basal_water_flux;
       }
     }
   } 

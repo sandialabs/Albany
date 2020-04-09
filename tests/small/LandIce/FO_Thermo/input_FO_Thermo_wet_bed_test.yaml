@@ -79,7 +79,7 @@ ANONYMOUS:
     Workset Size: -1
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 3
+    Cubature Degree: 4
     Exodus Output File Name: enth_coupled.exo
     Element Shape: Hexahedron
     Use Serial Mesh: true
@@ -119,7 +119,7 @@ ANONYMOUS:
         Method: Exodus
         Number Of Time Derivatives: 0
         Exodus Input File Name: ../ExoMeshes/slab_2d.exo
-        Cubature Degree: 3
+        Cubature Degree: 4
         Use Serial Mesh: true
         Required Fields Info: 
           Number Of Fields: 5
@@ -150,11 +150,11 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/Enthalpy/Dome/basal_heat_flux.ascii
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [8.959983869878e-01]
+    Test Values: [9.031913325557e-01]
     Relative Tolerance: 1.0e-04
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [6.793222234385e-01]
+      Sensitivity Test Values 0: [6.022273359868e-01]
   Piro: 
     LOCA: 
       Bifurcation: { }

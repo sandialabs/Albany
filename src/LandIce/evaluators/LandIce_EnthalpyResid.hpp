@@ -36,9 +36,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
-  enum STABILIZATION_TYPE {SUPG, SU, UPWIND, NONE} ;
+  enum STABILIZATION_TYPE {SU, UPWIND, NONE} ;
   STABILIZATION_TYPE stabilization;
-  bool haveSUPG;
   double delta;
 
   // Input:

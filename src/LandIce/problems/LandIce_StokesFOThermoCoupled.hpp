@@ -263,7 +263,6 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p = Teuchos::rcp(new Teuchos::ParameterList(resid_names[1]));
 
     //Input
-    p->set<std::string>("Basal Vertical Velocity Variable Name", "basal_vert_velocity_"+basalSideName);
     p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
     p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
     p->set<std::string>("BF Side Name", Albany::bf_name + " "+basalSideName);
@@ -272,7 +271,6 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Side Normal Name", Albany::normal_name + " " + basalSideName);
     p->set<std::string>("w Side QP Variable Name", "W_" + basalSideName);
     p->set<std::string>("w Gradient QP Variable Name", "W Gradient");
-    p->set<std::string>("w Variable Name", "W");
     p->set<std::string>("Basal Vertical Velocity Side QP Variable Name", "basal_vert_velocity_" + basalSideName);
     p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
     p->set<std::string>("Side Set Name", basalSideName);
@@ -314,13 +312,13 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Basal Melt Rate"));
 
   //Input
+  p->set<bool>("Nodal", !compute_w);
   p->set<std::string>("Water Content Side Variable Name", water_content_name + "_" + basalSideName);
   p->set<std::string>("Geothermal Flux Side Variable Name", geothermal_flux_name + "_" + basalSideName);
   p->set<std::string>("Velocity Side Variable Name", dof_names[0] + "_" + basalSideName);
   p->set<std::string>("Basal Friction Coefficient Side Variable Name", "beta_" + basalSideName);
   p->set<std::string>("Enthalpy Hs Side Variable Name", melting_enthalpy_name + "_" + basalSideName);
   p->set<std::string>("Enthalpy Side Variable Name", dof_names[2] + "_" + basalSideName);
-  // p->set<std::string>("Basal dTdz Variable Name", "basal_dTdz");
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
@@ -529,30 +527,9 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //Input
   p->set<std::string>("BF Side Name", Albany::bf_name + " "+basalSideName);
-  // p->set<std::string>("Gradient BF Side Name", Albany::grad_bf_name + " "+basalSideName);
   p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + " "+basalSideName);
-  // p->set<std::string>("Velocity Side QP Variable Name", dof_names[0] + "_" + basalSideName);
-  // p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "beta");
-  // p->set<std::string>("Vertical Velocity Side QP Variable Name", "w");
-  // p->set<std::string>("Water Content Side QP Variable Name",water_content_name);
-  // if(!isGeoFluxConst) {
-  //   p->set<std::string>("Geothermal Flux Side QP Variable Name", geothermal_flux_name + "_" + basalSideName);
-  // }
-  // p->set<bool>("Constant Geothermal Flux", isGeoFluxConst);
-  // p->set<std::string>("Enthalpy Side QP Variable Name", dof_names[1]);
-  // p->set<std::string>("Enthalpy Hs QP Variable Name", melting_enthalpy_name);
-  // p->set<std::string>("Diff Enthalpy Variable Name", "Diff Enth");
-  // p->set<std::string>("Basal dTdz Side QP Variable Name", "basal_dTdz");
-  // p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
   p->set<std::string>("Side Set Name", basalSideName);
   p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
-
-  // p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-  // if(params->isSublist("LandIce Enthalpy Stabilization")) {
-  //   p->set<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization", &params->sublist("LandIce Enthalpy Stabilization"));
-  // }
-  // p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-  // p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy Regularization", false));
   p->set<std::string>("Basal Melt Rate Side QP Variable Name", "basal_melt_rate_" + basalSideName);
 
   //Output
