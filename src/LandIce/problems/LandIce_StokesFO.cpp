@@ -227,7 +227,7 @@ void StokesFO::setupEvaluatorRequests () {
     ss_utils_needed[ssName][UtilityRequest::NORMALS  ] = true;
   }
   if (viscosity_use_corrected_temperature)
-    build_interp_ev["surface_height"][InterpolationRequest::CELL_VAL] = true;
+    build_interp_ev[surface_height_name][InterpolationRequest::CELL_VAL] = true;
 }
 
 } // namespace LandIce

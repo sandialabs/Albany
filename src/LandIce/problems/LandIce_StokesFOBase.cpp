@@ -87,6 +87,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Names of some common fields. User can set them in the problem section, in case they are
   // loaded from mesh, where they are saved with a different name
+  body_force_name             = params->sublist("Variables Names").get<std::string>("Body Force Name","body_force");
   surface_height_name         = params->sublist("Variables Names").get<std::string>("Surface Height Name","surface_height");
   ice_thickness_name          = params->sublist("Variables Names").get<std::string>("Ice Thickness Name" ,"ice_thickness");
   temperature_name            = params->sublist("Variables Names").get<std::string>("Temperature Name"   ,"temperature");
@@ -476,6 +477,7 @@ void StokesFOBase::setFieldsProperties ()
   //       If derived class changes the type of temp or surf height, need to adjust this too.
   setSingleFieldProperties(corrected_temperature_name, 0, field_scalar_type[temperature_name] | field_scalar_type[surface_height_name], FieldLocation::Cell);
   setSingleFieldProperties(bed_topography_name, 0, FieldScalarType::MeshScalar, FieldLocation::Node);
+  setSingleFieldProperties(body_force_name, 1, field_scalar_type[surface_height_name], FieldLocation::QuadPoint);
 
   // If the flow rate is given from file, we could just use RealType, but then we would need
   // to template ViscosityFO on 3 scalar types. For simplicity, we set it to be the same
@@ -503,7 +505,10 @@ void StokesFOBase::setupEvaluatorRequests ()
   }
   if (viscosity_use_corrected_temperature && is_input_field[surface_height_name]) {
     build_interp_ev[surface_height_name][InterpolationRequest::CELL_VAL] = true;
+    build_interp_ev[corrected_temperature_name][InterpolationRequest::CELL_VAL] = true;
   }
+
+  build_interp_ev[body_force_name][InterpolationRequest::CELL_VAL] = true;
 
   // Basal Friction BC requests
   for (auto it : landice_bcs[LandIceBC::BasalFriction]) {
@@ -522,6 +527,22 @@ void StokesFOBase::setupEvaluatorRequests ()
       ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::QP_VAL ] = true;
     ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::GRAD_QP_VAL ] = true; 
     ss_build_interp_ev[ssName][effective_pressure_name][InterpolationRequest::CELL_TO_SIDE] = true; 
+    ss_build_interp_ev[ssName][flow_factor_name][InterpolationRequest::CELL_TO_SIDE] = true;
+
+    // These two are needed for coulomb friction
+    ss_build_interp_ev[ssName]["mu_coulomb"][InterpolationRequest::QP_VAL] = true;
+    ss_build_interp_ev[ssName]["mu_power_law"][InterpolationRequest::QP_VAL] = true;
+    ss_build_interp_ev[ssName]["bed_roughness"][InterpolationRequest::QP_VAL] = true;
+
+    if (is_dist_param["mu_coulomb"]) {
+      ss_build_interp_ev[ssName]["mu_coulomb"][InterpolationRequest::CELL_TO_SIDE] = true;
+    }
+    if (is_dist_param["mu_power_law"]) {
+      ss_build_interp_ev[ssName]["mu_power_law"][InterpolationRequest::CELL_TO_SIDE] = true;
+    }
+    if (is_dist_param["bed_roughness"]) {
+      ss_build_interp_ev[ssName]["bed_roughness"][InterpolationRequest::CELL_TO_SIDE] = true;
+    }
 
     // For "Given Field" and "Exponent of Given Field" we also need to interpolate the given field at the quadrature points
     auto& bfc = it->sublist("Basal Friction Coefficient");

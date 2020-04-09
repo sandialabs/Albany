@@ -45,6 +45,8 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
+#include "string.hpp"
+
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #include <stk_io/StkMeshIoBroker.hpp>
@@ -76,9 +78,19 @@ typedef struct TET_ {
   char bound_type[4];
 } TET;
 
+bool use_sliding_law (const std::string& betaType) {
+  if (betaType=="GIVEN FIELD" ||
+      betaType=="EXPONENT OF GIVEN FIELD" ||
+      betaType=="GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD") {
+    return false;
+  }
+
+  return true;
+}
 /***********************************************************/
 
-
+// Note: betaData can be input (if prescribing basal friction)
+//       or output (if using a sliding law)
 void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     int globalTrianglesStride, bool ordering, bool first_time_step,
     const std::vector<int>& indexToVertexID,
@@ -87,12 +99,14 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     const std::vector<double>& levelsNormalizedThickness,
     const std::vector<double>& elevationData,
     const std::vector<double>& thicknessData,
-    const std::vector<double>& betaData,
+          std::vector<double>& betaData,
     const std::vector<double>& bedTopographyData,
     const std::vector<double>& smbData,
     const std::vector<double>& stiffeningFactorData,
     const std::vector<double>& effectivePressureData,
+    const std::vector<double>& muData,
     const std::vector<double>& temperatureDataOnPrisms,
+    std::vector<double>& bodyForceMagnitudeOnBasalCell,
     std::vector<double>& dissipationHeatOnPrisms,
     std::vector<double>& velocityOnVertices,
     int& error,
@@ -146,6 +160,24 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   ScalarFieldType* basalFrictionField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "basal_friction");
   ScalarFieldType* stiffeningFactorField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "stiffening_factor");
   ScalarFieldType* effectivePressureField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "effective_pressure");
+  ScalarFieldType* betaField;
+
+  const auto& landiceBcList = paramList->sublist("Problem").sublist("LandIce BCs");
+  const auto& basalParams = landiceBcList.sublist("BC 0");
+  const auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
+  const auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type"));
+  std::string mu_name;
+  auto ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
+  if (betaType=="POWER LAW") {
+    betaField = ss_ms->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
+    mu_name = "mu_power_law";
+  } else if (betaType=="REGULARIZED COULOMB") {
+    betaField = ss_ms->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
+    mu_name = "mu_coulomb";
+  } else {
+    mu_name = "mu";
+  }
+  ScalarFieldType* muField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, mu_name);
 
   bool nonEmptyEffectivePressure = effectivePressureData.size()>0;
   for (int j = 0; j < numVertices3D; ++j) {
@@ -185,9 +217,14 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     double* dirichletVel = stk::mesh::field_data(*dirichletField, node);
     dirichletVel[0]=velocityOnVertices[j]; //velocityOnVertices stores initial guess and dirichlet velocities.
     dirichletVel[1]=velocityOnVertices[j + numVertices3D];
-    if (il == 0) {
+    if (il == 0 && basalFrictionField!=nullptr) {
       double* beta = stk::mesh::field_data(*basalFrictionField, node);
       beta[0] = std::max(betaData[ib], minBeta);
+    }
+
+    if (muField != nullptr) {
+      double* muVal = stk::mesh::field_data(*muField, node);
+      muVal[0] = muData[ib];
     }
   }
 
@@ -284,9 +321,16 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
     velocityOnVertices[j] = solution_constView[lId0];
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
+
+    if (betaField!=nullptr && il == 0) {
+      stk::mesh::Entity node = ss_ms->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib] + 1);
+      const double* betaVal = stk::mesh::field_data(*betaField,node);
+      betaData[ib] = betaVal[0];
+    }
   }
 
   ScalarFieldType* dissipationHeatField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::ELEMENT_RANK, "dissipation_heat");
+  VectorFieldType* bodyForceField  = meshStruct->metaData->get_field <VectorFieldType> (stk::topology::ELEMENT_RANK, "body_force");
   for (int j = 0; j < numPrisms; ++j) {
     int ib = (ordering == 0) * (j % (lElemColumnShift))
             + (ordering == 1) * (j / (elemLayerShift));
@@ -294,11 +338,22 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
             + (ordering == 1) * (j % (elemLayerShift));
     int gId = numElemsInPrism * (il * elemColumnShift + elemLayerShift * indexToTriangleID[ib]);
     int lId = il * lElemColumnShift + elemLayerShift * ib;
-    dissipationHeatOnPrisms[lId] = 0;
+
+    dissipationHeatOnPrisms[elemLayerShift] = 0;
+    double bf = 0;
     for (int iElem = 0; iElem < numElemsInPrism; iElem++) {
       stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, ++gId);
-      double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
+      const double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
       dissipationHeatOnPrisms[lId] += dissipationHeat[0]/numElemsInPrism;
+
+      if (il==0 && bodyForceField!=nullptr) {
+        const double* bodyForceVal = stk::mesh::field_data(*bodyForceField, elem);
+        const double normSq = bodyForceVal[0]*bodyForceVal[0] + bodyForceVal[1]*bodyForceVal[1];
+        bf += normSq;
+      }
+    }
+    if (il==0 ) {
+      bodyForceMagnitudeOnBasalCell[ib] = std::sqrt(bf)/numElemsInPrism;
     }
   }
 
@@ -351,9 +406,9 @@ void velocity_solver_finalize() {
 
 /*duality:
  *
- *   mpas(F) |  lifev
+ *   mpas(F) |  albany
  *  ---------|---------
- *   cell    |  vertex
+ *   cell    |  node
  *   vertex  |  triangle
  *   edge    |  edge
  *
@@ -475,7 +530,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   basalParams.set("Side Set Name", basalParams.get("Side Set Name", "basalside"));
   basalParams.set("Type", basalParams.get("Type", "Basal Friction"));
   auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
-  basalFrictionParams.set("Type",basalFrictionParams.get("Type","Given Field"));
+  auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type","Given Field"));
+  basalFrictionParams.set("Type",betaType);
   basalFrictionParams.set("Given Field Variable Name",basalFrictionParams.get("Given Field Variable Name","basal_friction"));
   basalFrictionParams.set<bool>("Zero Beta On Floating Ice", basalFrictionParams.get<bool>("Zero Beta On Floating Ice", true));
 
@@ -533,16 +589,20 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   discretizationList->set("Cubature Degree", discretizationList->get("Cubature Degree", cubatureDegree));  //set cubatureDegree if not defined
   discretizationList->set("Interleaved Ordering", discretizationList->get("Interleaved Ordering", true));  //set true if not define
 
-  discretizationList->sublist("Required Fields Info").set<int>("Number Of Fields",9);
-  Teuchos::ParameterList& field0 = discretizationList->sublist("Required Fields Info").sublist("Field 0");
-  Teuchos::ParameterList& field1 = discretizationList->sublist("Required Fields Info").sublist("Field 1");
-  Teuchos::ParameterList& field2 = discretizationList->sublist("Required Fields Info").sublist("Field 2");
-  Teuchos::ParameterList& field3 = discretizationList->sublist("Required Fields Info").sublist("Field 3");
-  Teuchos::ParameterList& field4 = discretizationList->sublist("Required Fields Info").sublist("Field 4");
-  Teuchos::ParameterList& field5 = discretizationList->sublist("Required Fields Info").sublist("Field 5");
-  Teuchos::ParameterList& field6 = discretizationList->sublist("Required Fields Info").sublist("Field 6");
-  Teuchos::ParameterList& field7 = discretizationList->sublist("Required Fields Info").sublist("Field 7");
-  Teuchos::ParameterList& field8 = discretizationList->sublist("Required Fields Info").sublist("Field 8");
+  auto& rfi = discretizationList->sublist("Required Fields Info");
+  int fp = rfi.get<int>("Number Of Fields",0);
+  discretizationList->sublist("Required Fields Info").set<int>("Number Of Fields",fp+11);
+  Teuchos::ParameterList& field0  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",0+fp));
+  Teuchos::ParameterList& field1  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",1+fp));
+  Teuchos::ParameterList& field2  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",2+fp));
+  Teuchos::ParameterList& field3  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",3+fp));
+  Teuchos::ParameterList& field4  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",4+fp));
+  Teuchos::ParameterList& field5  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",5+fp));
+  Teuchos::ParameterList& field6  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",6+fp));
+  Teuchos::ParameterList& field7  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",7+fp));
+  Teuchos::ParameterList& field8  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",8+fp));
+  Teuchos::ParameterList& field9  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",9+fp));
+  Teuchos::ParameterList& field10 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",10+fp));
 
   //set temperature
   field0.set<std::string>("Field Name", "temperature");
@@ -568,6 +628,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   field4.set<std::string>("Field Name", "basal_friction");
   field4.set<std::string>("Field Type", "Node Scalar");
   field4.set<std::string>("Field Origin", "Mesh");
+  if (use_sliding_law(betaType)) {
+    field4.set<std::string>("Field Usage", "Unused");
+  }
 
   //set surface mass balance
   field5.set<std::string>("Field Name", "surface_mass_balance");
@@ -588,6 +651,46 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   field8.set<std::string>("Field Name", "effective_pressure");
   field8.set<std::string>("Field Type", "Node Scalar");
   field8.set<std::string>("Field Origin", "Mesh");
+  if (!use_sliding_law(betaType)) {
+    field8.set<std::string>("Field Usage", "Unused");
+  }
+
+  //set mu power law
+  std::string mu_name;
+  if (betaType=="POWER LAW") {
+    mu_name = "mu_power_law";
+  } else if (betaType=="REGULARIZED COULOMB") {
+    mu_name = "mu_coulomb";
+  } else {
+    mu_name = "mu";
+  }
+  field9.set<std::string>("Field Name", mu_name);
+  field9.set<std::string>("Field Type", "Node Scalar");
+  field9.set<std::string>("Field Origin", "Mesh");
+  if (!use_sliding_law(betaType)) {
+    field8.set<std::string>("Field Usage", "Unused");
+  }
+
+  // Outputs
+  field10.set<std::string>("Field Name", "body_force");
+  field10.set<std::string>("Field Type", "Elem Vector");
+  field10.set<std::string>("Field Usage", "Output");
+
+  // Side set outputs
+  if (use_sliding_law(betaType)) {
+    auto& ss_pl =discretizationList->sublist("Side Set Discretizations");
+    Teuchos::Array<std::string> bsn (1,"basalside");
+    ss_pl.set<Teuchos::Array<std::string>>("Side Sets", bsn);
+    auto& basal_pl = ss_pl.sublist("basalside");
+    basal_pl.set<std::string>("Method","SideSetSTK");
+    auto& basal_req = basal_pl.sublist("Required Fields Info");
+    basal_req.set<int>("Number Of Fields",1);
+
+    auto& ss_field0 = basal_req.sublist("Field 0");
+    ss_field0.set<std::string>("Field Name", "beta");
+    ss_field0.set<std::string>("Field Type", "Node Scalar");
+    ss_field0.set<std::string>("Field Usage", "Output");
+  }
 
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
   albanyApp = Teuchos::rcp(new Albany::Application(mpiComm));
@@ -606,7 +709,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   albanyApp->buildProblem();
 
   meshStruct->constructMesh(mpiComm, discretizationList, neq, req,
-      albanyApp->getStateMgr().getStateInfoStruct(), indexToVertexID,
+      albanyApp->getStateMgr(), indexToVertexID,
       vertexProcIDs, verticesCoords, globalVerticesStride,
       verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,
       verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,

@@ -53,7 +53,7 @@ public:
       const Teuchos::RCP<Teuchos::ParameterList>& params,
       const unsigned int neq_,
       const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
-      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+      const Albany::StateManager& stateMgr,
       const std::vector<int>& indexToVertexID,
       const std::vector<int>& vertexProcIDs,
       const std::vector<double>& verticesCoords,
