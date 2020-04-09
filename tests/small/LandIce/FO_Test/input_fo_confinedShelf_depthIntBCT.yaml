@@ -136,6 +136,7 @@ ANONYMOUS:
                     'fact: ilut level-of-fill': 2.00000000000000000e+00
                 MueLu: 
                   multigrid algorithm: sa
+                  'use kokkos refactor': false
                   'smoother: type': RELAXATION
                   'smoother: params': 
                     'relaxation: type': Symmetric Gauss-Seidel

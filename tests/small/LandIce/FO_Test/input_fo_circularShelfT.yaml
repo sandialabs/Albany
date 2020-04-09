@@ -126,19 +126,9 @@ ANONYMOUS:
                       Flexible Gmres: false
               Preconditioner Type: MueLu
               Preconditioner Types: 
-                Ifpack2: 
-                  Overlap: 1
-                  Prec Type: ILUT
-                  Ifpack2 Settings: 
-                    'fact: ilut level-of-fill': 2.00000000000000000e+00
-                ML: 
-                  Base Method Defaults: none
-                  ML Settings: 
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
-                    PDE equations: 4
+                MueLu: 
+                  multigrid algorithm: sa
+                  'use kokkos refactor': false
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 

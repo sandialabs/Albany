@@ -187,6 +187,7 @@ ANONYMOUS:
               Preconditioner Types: 
                 MueLu:
                   verbosity: none
+                  'use kokkos refactor': false
                   'repartition: enable': true
                   'repartition: partitioner': zoltan
                   'repartition: max imbalance': 1.32699999999999996e+00
