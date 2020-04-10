@@ -167,11 +167,13 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   const auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
   const auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type"));
   std::string mu_name;
-  auto ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct> ss_ms;
   if (betaType=="POWER LAW") {
+    ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
     betaField = ss_ms->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
     mu_name = "mu_power_law";
   } else if (betaType=="REGULARIZED COULOMB") {
+    ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
     betaField = ss_ms->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
     mu_name = "mu_coulomb";
   } else {
