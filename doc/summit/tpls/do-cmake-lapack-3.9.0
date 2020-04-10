@@ -1,0 +1,14 @@
+#!/bin/bash
+
+rm -rf CMake*
+
+LAPACK_ROOT=
+
+cmake \
+  -DCMAKE_INSTALL_PREFIX=${LAPACK_ROOT} \
+  -DCMAKE_BUILD_TYPE:STRING=RELEASE \
+  -DCBLAS:BOOL=ON \
+  ..
+
+#  -DCMAKE_C_COMPILER:FILEPATH=gcc \
+#  -DCMAKE_Fortran_COMPILER:FILEPATH=gfortran \
