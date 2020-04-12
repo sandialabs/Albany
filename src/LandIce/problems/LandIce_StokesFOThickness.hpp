@@ -226,8 +226,8 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<std::string>("Mesh Part", "upperside");
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<int>("Cubature Degree",3);
-  if (std::find(requirements.begin(),requirements.end(),"surface_mass_balance")!=requirements.end()) {
-    p->set<std::string>("SMB Name", "surface_mass_balance");
+  if (std::find(requirements.begin(),requirements.end(),"apparent_mass_balance")!=requirements.end()) {
+    p->set<std::string>("SMB Name", "apparent_mass_balance");
   }
   p->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", Teuchos::rcpFromRef(meshSpecs));
   if(this->params->isParameter("Time Step Ptr")) {

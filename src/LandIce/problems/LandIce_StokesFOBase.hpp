@@ -1426,8 +1426,8 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     std::string ice_thickness_side_name = ice_thickness_name + "_" + basalSideName;
     std::string ice_thickness_side_name_planar = ice_thickness_name + "_" + basalSideNamePlanar;
     std::string surface_height_side_name = surface_height_name + "_" + basalSideName;
-    std::string surface_mass_balance_side_name = "surface_mass_balance_" + basalSideName;
-    std::string surface_mass_balance_RMS_side_name = "surface_mass_balance_RMS_" + basalSideName;
+    std::string apparent_mass_balance_side_name = "apparent_mass_balance_" + basalSideName;
+    std::string apparent_mass_balance_RMS_side_name = "apparent_mass_balance_RMS_" + basalSideName;
     std::string stiffening_factor_side_name = stiffening_factor_name + "_" + basalSideName;
     std::string effective_pressure_side_name = effective_pressure_name + "_" + basalSideName;
     std::string vertically_averaged_velocity_side_name = vertically_averaged_velocity_name + "_" + basalSideName;
@@ -1550,8 +1550,8 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
     paramList->set<std::string>("Flux Divergence Side QP Variable Name","flux_divergence_basalside");
     paramList->set<std::string>("Thickness RMS Side QP Variable Name","observed_ice_thickness_RMS_" + basalSideName);
     paramList->set<std::string>("Observed Thickness Side QP Variable Name","observed_ice_thickness_" + basalSideName);
-    paramList->set<std::string>("SMB Side QP Variable Name","surface_mass_balance_" + basalSideName);
-    paramList->set<std::string>("SMB RMS Side QP Variable Name","surface_mass_balance_RMS_" + basalSideName);
+    paramList->set<std::string>("SMB Side QP Variable Name","apparent_mass_balance_" + basalSideName);
+    paramList->set<std::string>("SMB RMS Side QP Variable Name","apparent_mass_balance_RMS_" + basalSideName);
     paramList->set<std::string>("Thickness Gradient Name", ice_thickness_name + "_" + basalSideName + " Planar Gradient");
     paramList->set<std::string>("Thickness Side QP Variable Name",ice_thickness_name + "_" + basalSideName);
     paramList->set<std::string>("Basal Side Name", basalSideName);

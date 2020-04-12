@@ -634,11 +634,11 @@ void StokesFOBase::setupEvaluatorRequests ()
     ss_build_interp_ev[basalSideName][ice_thickness_name][InterpolationRequest::GRAD_QP_VAL ] = true; 
     ss_build_interp_ev[basalSideName][ice_thickness_name][InterpolationRequest::CELL_TO_SIDE] = true; 
     ss_build_interp_ev[basalSideName][flux_divergence_name][InterpolationRequest::CELL_VAL] = true;
-    if (is_ss_input_field[basalSideName]["surface_mass_balance"]) {
-      ss_build_interp_ev[basalSideName]["surface_mass_balance"][InterpolationRequest::QP_VAL] = true; 
+    if (is_ss_input_field[basalSideName]["apparent_mass_balance"]) {
+      ss_build_interp_ev[basalSideName]["apparent_mass_balance"][InterpolationRequest::QP_VAL] = true;
     }
-    if (is_ss_input_field[basalSideName]["surface_mass_balance_RMS"]) {
-      ss_build_interp_ev[basalSideName]["surface_mass_balance_RMS"][InterpolationRequest::QP_VAL] = true; 
+    if (is_ss_input_field[basalSideName]["apparent_mass_balance_RMS"]) {
+      ss_build_interp_ev[basalSideName]["apparent_mass_balance_RMS"][InterpolationRequest::QP_VAL] = true;
     }
     if (is_ss_input_field[basalSideName]["observed_ice_thickness"]) {
       ss_build_interp_ev[basalSideName]["observed_ice_thickness"][InterpolationRequest::QP_VAL] = true; 

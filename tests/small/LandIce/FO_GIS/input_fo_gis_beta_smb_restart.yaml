@@ -112,11 +112,11 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: Mesh
           Field 4: 
-            Field Name: surface_mass_balance
+            Field Name: apparent_mass_balance
             Field Type: Node Scalar
             Field Origin: Mesh
           Field 5: 
-            Field Name: surface_mass_balance_RMS
+            Field Name: apparent_mass_balance_RMS
             Field Type: Node Scalar
             Field Origin: Mesh
           Field 6: 
