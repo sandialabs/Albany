@@ -201,10 +201,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     bedTopography[0] = bedTopographyData[ib];
     double* stiffeningFactor = stk::mesh::field_data(*stiffeningFactorField, node);
     stiffeningFactor[0] = std::log(stiffeningFactorData[ib]);
-    double* effectivePressure = stk::mesh::field_data(*effectivePressureField, node);
 
-    if(nonEmptyEffectivePressure && (effectivePressure != NULL))
+    if(nonEmptyEffectivePressure && (effectivePressureField != nullptr)) {
+      double* effectivePressure = stk::mesh::field_data(*effectivePressureField, node);
       effectivePressure[0] = effectivePressureData[ib];
+    }
 
     if(smbField != NULL) {
       double* smb = stk::mesh::field_data(*smbField, node);
