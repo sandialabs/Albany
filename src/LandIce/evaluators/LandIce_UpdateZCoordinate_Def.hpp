@@ -98,7 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
         h = std::max(H0(cell,node) + dH(cell,node), MeshScalarT(minH));
       }
       MeshScalarT bed = bedTopo(cell,node);
-      auto floating = (rho_i*h + rho_w*bed < 0.0);// && (h+bed > 0.0);
+      auto floating = (rho_i*h + rho_w*bed) < 0.0;// && (h+bed > 0.0);
 
       MeshScalarT lowSurf = floating ? -h*rho_i/rho_w : bed;
       typename PHAL::Ref<MeshScalarT>::type vals = topSurface(cell,node);
@@ -180,28 +180,26 @@ evaluateFields(typename Traits::EvalData workset)
       const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
-//      MeshScalarT h = std::max(H(cell,node), MeshScalarT(minH));
-      MeshScalarT h = H(cell,node);
+     MeshScalarT h = H(cell,node);
       MeshScalarT top = topSurface(cell,node);
       typename PHAL::Ref<MeshScalarT>::type vals = topSurfaceOut(cell,node);
       typename PHAL::Ref<MeshScalarT>::type valb = bedTopoOut(cell,node);
       MeshScalarT bed = bedTopo(cell,node);
-      auto floating = ((rho_i*top + (rho_w-rho_i)*bed) < 0.0) && (top > 0.0);
+
+      //floating when the floating condition is met with the old bed
+      // or with the new (top-h) bed.
+      auto floating = (rho_i*h + rho_w*std::min(bed, MeshScalarT(top-h))) < 0.0;
+
       top = floating ? h*(1.0 - rho_i/rho_w) : top; //adjust surface when floating
-//      auto floating = (rho_i*h + rho_w*bed < 0.0) && (h+bed > 0.0);
-//      top = floating ? h*(1.0 - rho_i/rho_w) : MeshScalarT(h+bed); //adjust surface when floating
       vals = top;
-      bed = floating ? bed : top - h;
+      bed = floating ? std::min(bed, MeshScalarT(-rho_i/rho_w*h)) : top - h;
       valb = bed;
 
       for(std::size_t icomp=0; icomp< numDims; icomp++) {
         typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
         val = (icomp==2) ?
-            (h>minH) ? MeshScalarT(top - (1- sigmaLevel[ ilevel])*h)
-                    : MeshScalarT(top - (1-sigmaLevel[ ilevel])*minH)
+            MeshScalarT(top - (1.0- sigmaLevel[ ilevel])*h)
            : coordVecIn(cell,node,icomp);
-//        val = (icomp==2) ? MeshScalarT(top - (1- sigmaLevel[ ilevel])*h)
-//                         : coordVecIn(cell,node,icomp);
       }
     }
   }
