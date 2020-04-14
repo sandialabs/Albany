@@ -181,7 +181,6 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   }
   ScalarFieldType* muField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, mu_name);
 
-  bool nonEmptyEffectivePressure = effectivePressureData.size()>0;
   for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
             + (ordering == 1) * (j / vertexLayerShift);
@@ -202,7 +201,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     double* stiffeningFactor = stk::mesh::field_data(*stiffeningFactorField, node);
     stiffeningFactor[0] = std::log(stiffeningFactorData[ib]);
 
-    if(nonEmptyEffectivePressure && (effectivePressureField != nullptr)) {
+    if(!effectivePressureData.empty() && (effectivePressureField != nullptr)) {
       double* effectivePressure = stk::mesh::field_data(*effectivePressureField, node);
       effectivePressure[0] = effectivePressureData[ib];
     }
@@ -225,7 +224,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       beta[0] = std::max(betaData[ib], minBeta);
     }
 
-    if (muField != nullptr) {
+    if (!muData.empty() && (muField != nullptr)) {
       double* muVal = stk::mesh::field_data(*muField, node);
       muVal[0] = muData[ib];
     }
@@ -325,7 +324,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     velocityOnVertices[j] = solution_constView[lId0];
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
 
-    if (betaField!=nullptr && il == 0) {
+   if (Teuchos::nonnull(ss_ms) && !betaData.empty() && (betaField!=nullptr) && (il == 0)) {
       stk::mesh::Entity node = ss_ms->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib] + 1);
       const double* betaVal = stk::mesh::field_data(*betaField,node);
       betaData[ib] = betaVal[0];
@@ -342,20 +341,23 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     int gId = numElemsInPrism * (il * elemColumnShift + elemLayerShift * indexToTriangleID[ib]);
     int lId = il * lElemColumnShift + elemLayerShift * ib;
 
-    dissipationHeatOnPrisms[elemLayerShift] = 0;
+    if(!dissipationHeatOnPrisms.empty())
+      dissipationHeatOnPrisms[elemLayerShift] = 0;
     double bf = 0;
     for (int iElem = 0; iElem < numElemsInPrism; iElem++) {
       stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, ++gId);
-      const double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
-      dissipationHeatOnPrisms[lId] += dissipationHeat[0]/numElemsInPrism;
+      if(!dissipationHeatOnPrisms.empty() && dissipationHeatField != nullptr) {
+        const double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
+        dissipationHeatOnPrisms[lId] += dissipationHeat[0]/numElemsInPrism;
+      }
 
-      if (il==0 && bodyForceField!=nullptr) {
+      if ((il==0) && (bodyForceField!=nullptr)) {
         const double* bodyForceVal = stk::mesh::field_data(*bodyForceField, elem);
         const double normSq = bodyForceVal[0]*bodyForceVal[0] + bodyForceVal[1]*bodyForceVal[1];
         bf += normSq;
       }
     }
-    if (il==0 ) {
+    if (!bodyForceMagnitudeOnBasalCell.empty() && (il==0)) {
       bodyForceMagnitudeOnBasalCell[ib] = std::sqrt(bf)/numElemsInPrism;
     }
   }
