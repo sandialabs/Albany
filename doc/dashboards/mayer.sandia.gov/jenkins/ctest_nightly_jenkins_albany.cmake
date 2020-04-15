@@ -39,21 +39,11 @@ endif ()
 configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
   ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
-set (CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
+set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_FLAGS "-j8")
 SET (CTEST_BUILD_FLAGS "-j8")
-
-#set (CTEST_DROP_METHOD "http")
-
-#if (CTEST_DROP_METHOD STREQUAL "http")
-#  set (CTEST_DROP_SITE "cdash.sandia.gov")
-#  set (CTEST_PROJECT_NAME "Albany")
-#  set (CTEST_DROP_LOCATION "/CDash-2-3-0/submit.php?project=Albany")
-#  set (CTEST_TRIGGER_SITE "")
-#  set (CTEST_DROP_SITE_CDASH TRUE)
-#endif ()
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
