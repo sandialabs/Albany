@@ -21,6 +21,8 @@ Nightly, camobap.ca.sandia.gov, fedora31-gcc9.2.1-Release-Albany
 Nightly, camobap.ca.sandia.gov, fedora31-gcc9.2.1-Release-No-Epetra-Albany 
 Nightly, camobap.ca.sandia.gov, fedora31-gcc9.2.1-Release-Openmp-Albany
 Nightly, camobap.ca.sandia.gov, fedora31-gcc9.2.1-Debug-FPE-Albany
+Nightly, mayer.sandia.gov, mayer-Release-Trilinos
+Nightly, mayer.sandia.gov, mayer-Release-Albany
 Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc6.1.0-Release-Albany
 Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc6.1.0-Release-Cism-Albany
 Nightly, proxima.ca.sandia.gov, proxima.ca.sandia.gov-trilinos
