@@ -6,9 +6,9 @@ BUILD_DIR=`pwd`
 
 cmake \
     -DCMAKE_INSTALL_PREFIX:PATH="$BUILD_DIR/install" \
-    -DKokkos_ENABLE_Pthread=OFF \
-    -DKokkos_ENABLE_Serial:BOOL=ON \
-    -DKokkos_ENABLE_OpenMP:BOOL=OFF \
+    -DKokkos_ENABLE_PTHREAD=OFF \
+    -DKokkos_ENABLE_SERIAL:BOOL=ON \
+    -DKokkos_ENABLE_OPENMP:BOOL=OFF \
     \
     -DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
     -DTrilinos_ENABLE_DEBUG:BOOL=OFF \
