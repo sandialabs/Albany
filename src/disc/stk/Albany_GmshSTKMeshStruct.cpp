@@ -341,16 +341,14 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
       partName = bdTagToSideSetName[sides[NumSideNodes][i]];
       ssPartVec_i[1] = ssPartVec[partName];
 
-     // Loop over the nodes on this side. Save the entity number of the node and its location on the side
-
-      stk::mesh::Entity side;
-      std::vector<stk::mesh::Entity> nodev(NumSideNodes);
+      stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), i + 1, ssPartVec_i);
       for (int j=0; j<NumSideNodes; ++j) {
-        nodev[j] = bulkData->get_entity(stk::topology::NODE_RANK,sides[j][i]);
-        bulkData->change_entity_parts (nodev[j], nsPartVec_i); // Add node to the boundary nodeset
+        stk::mesh::Entity node_j = bulkData->get_entity(stk::topology::NODE_RANK,sides[j][i]);
+        bulkData->change_entity_parts (node_j,nsPartVec_i); // Add node to the boundary nodeset
+        bulkData->declare_relation(side, node_j, j);
 
-        int num_e = bulkData->num_elements(nodev[j]);
-        const stk::mesh::Entity* e = bulkData->begin_elements(nodev[j]);
+        int num_e = bulkData->num_elements(node_j);
+        const stk::mesh::Entity* e = bulkData->begin_elements(node_j);
         for (int k(0); k<num_e; ++k) {
           ++elm_count[bulkData->identifier(e[k])];
         }
@@ -361,16 +359,13 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
       bool found = false;
 
       for (auto e : elm_count)
-        if (e.second == NumSideNodes)
+        if (e.second==NumSideNodes)
         {
           stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEM_RANK, e.first);
           found = true;
           int num_sides = bulkData->num_sides(elem);
-          side  = bulkData->declare_element_side(elem, num_sides, ssPartVec_i);
-          for (int jj=0; jj<NumSideNodes; ++jj)
-             bulkData->declare_relation(side, nodev[jj], jj);
+          bulkData->declare_relation(elem,side,num_sides);
           break;
-
         }
 
       TEUCHOS_TEST_FOR_EXCEPTION (found==false, std::logic_error, "Error! Cannot find element connected to side " << i+1 << ".\n");

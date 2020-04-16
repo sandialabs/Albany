@@ -10,9 +10,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-#include "PHAL_Workset.hpp"
-#include "PHAL_Dimension.hpp"
-#include "Albany_ProblemUtils.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
 
 #include "PHAL_ConvertFieldType.hpp"
@@ -21,17 +19,16 @@
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 
 #include "Shards_CellTopology.hpp"
-#include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
-#include "Albany_EvaluatorUtils.hpp"
 #include "PHAL_ComputeBasisFunctions.hpp"
 
 
 namespace Albany {
 
 template<typename EvalType, typename Traits>
-Teuchos::RCP<Albany::Layouts>
-createTestLayout(const int worksetSize, const int cubatureDegree, const int numDim)
+Teuchos::RCP<PHAL::ComputeBasisFunctions<EvalType, Traits>>
+createTestLayoutAndBasis(Teuchos::RCP<Albany::Layouts> &dl, 
+         const int worksetSize, const int cubatureDegree, const int numDim)
 {
    using Teuchos::RCP;
    using Teuchos::rcp;
@@ -64,7 +61,7 @@ createTestLayout(const int worksetSize, const int cubatureDegree, const int numD
         << ", QuadPts= " << numQPtsCell
         << ", Dim= " << numDim << std::endl;
 
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPtsCell, numDim));
+   dl = rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPtsCell, numDim));
 
    RCP<ParameterList> bfp = rcp(new ParameterList("Compute Basis Functions"));
 
@@ -87,9 +84,7 @@ createTestLayout(const int worksetSize, const int cubatureDegree, const int numD
    bfp->set<std::string>("Gradient BF Name",          Albany::grad_bf_name);
    bfp->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);
 
-   PHAL::ComputeBasisFunctions<EvalType,Traits>(*bfp, dl);
-
-   return dl;
+   return Teuchos::rcp(new PHAL::ComputeBasisFunctions<EvalType,Traits>(*bfp, dl));
 
 }
 
