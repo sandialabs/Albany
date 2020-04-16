@@ -1,7 +1,5 @@
 #!/bin/bash -lxe
-
-#!/bin/bash -lxe
-
+#this runs daily at 19:00 
 
 cd /mscratch/albany/mayer/nightlyCDashJenkins
 rm -rf * 
