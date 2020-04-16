@@ -1,0 +1,1 @@
+00 06 * * 1-7  cd /mscratch/albany/mayer/nightlyCDashJenkins; bash nightly_cron_script_albany_mayer_jenkins_submit.sh;
