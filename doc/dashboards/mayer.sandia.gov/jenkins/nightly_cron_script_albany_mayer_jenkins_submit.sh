@@ -15,5 +15,5 @@ now="$(date +'%Y%m%d')"
 sed -i "s/XXX/$now/g" ctest_nightly_jenkins_albany_submit.cmake 
 
 
-#eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_jenkins_albany_submit.cmake" > $LOG_FILE 2>&1
+eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_jenkins_albany_submit.cmake" > $LOG_FILE 2>&1
 
