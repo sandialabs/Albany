@@ -207,7 +207,9 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
         }
       }
     }
-  } else if (name == "Expression Parser All DOFs") {
+  } 
+#ifdef ALBANY_STK_EXPR_EVAL
+  else if (name == "Expression Parser All DOFs") {
     Teuchos::Array<std::string> default_expr(neq);
     for (auto i = 0; i < default_expr.size(); ++i) { default_expr[i] = "0.0"; }
     Teuchos::Array<std::string> expr =
@@ -234,7 +236,9 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
         }
       }
     }
-  } else {
+  }
+#endif 
+  else {
     Teuchos::Array<double> defaultData(neq);
     Teuchos::Array<double> data = icParams.get("Function Data", defaultData);
   

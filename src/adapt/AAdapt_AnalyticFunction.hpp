@@ -636,6 +636,7 @@ class ExpressionParser : public AnalyticFunction {
 #endif
 };
 
+#ifdef ALBANY_STK_EXPR_EVAL
 class ExpressionParserAllDOFs : public AnalyticFunction
 {
  public:
@@ -648,7 +649,7 @@ class ExpressionParserAllDOFs : public AnalyticFunction
   int                         neq;  // size of solution vector x
   Teuchos::Array<std::string> expr;
 };
-
+#endif
 }
 
 #endif

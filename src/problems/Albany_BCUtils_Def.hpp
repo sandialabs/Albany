@@ -730,6 +730,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
       }
     }
   }
+#ifdef ALBANY_STK_EXPR_EVAL
   ///
   /// Expression Evaluated SDBC (S = "Symmetric", f.k.a. "Strong")
   ///
@@ -757,7 +758,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
       }
     }
   }
-
+#endif
   ///
   ///
   /// Scaled SDBC (S = "Symmetric", f.k.a. "Strong")

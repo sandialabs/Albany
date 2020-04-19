@@ -12,7 +12,9 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_Exceptions.hpp"
 #include "Albany_Macros.hpp" 
+#ifdef ALBANY_STK_EXPR_EVAL
 #include <stk_expreval/Evaluator.hpp>
+#endif
 
 #include "Aeras_ShallowWaterConstants.hpp"
 
@@ -2913,6 +2915,7 @@ void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
   return;
 }
 
+#ifdef ALBANY_STK_EXPR_EVAL
 AAdapt::ExpressionParserAllDOFs::ExpressionParserAllDOFs(
     int                          neq_,
     int                          dim_,
@@ -2940,3 +2943,4 @@ AAdapt::ExpressionParserAllDOFs::compute(double* unknowns, double const* coords)
     unknowns[eq] = expr_eval.evaluate();
   }
 }
+#endif

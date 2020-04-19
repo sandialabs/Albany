@@ -24,6 +24,7 @@ if (NOT SET_COMPILERS_AUTOMATICALLY)
   project(Albany CXX C Fortran)
 endif ()
 
+
 # Advertise that we support shared libs
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 
@@ -370,6 +371,16 @@ IF (have_stk_List_ID GREATER -1)
     SET(ALBANY_STK_PERCEPT FALSE)
   ENDIF()
 
+  #set optional dependency on STKExprEval
+  LIST(FIND Trilinos_PACKAGE_LIST STKExprEval STKExprEval_List_ID)
+  IF (STKExprEval_List_ID GREATER -1)
+    MESSAGE("  -- Looking for STKExprEval:        Found.  Compiling with -DALBANY_STK_EXPR_EVAL.")
+    SET(ALBANY_STK_EXPR_EVAL TRUE)
+    add_definitions(-DALBANY_STK_EXPR_EVAL) 
+  ELSE()
+    MESSAGE("  -- Looking for STKExprEval:        NOT Found.")
+    SET(ALBANY_STK_EXPR_EVAL FALSE)
+  ENDIF()
 ELSE()
   MESSAGE("-- Looking for STK:                  NOT found.")
   SET(ALBANY_STK FALSE)
