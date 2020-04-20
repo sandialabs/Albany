@@ -447,6 +447,11 @@ Albany::TDManufacturing::constructEvaluators(
       material_db_->getElementBlockSublist(eb_name, "Thermal Conductivity Post-melted");  
      Teuchos::ParameterList& param_list_vapor =
       material_db_->getElementBlockSublist(eb_name, "Thermal Conductivity Vapor");  
+   
+    // take poweder layer porosity parameter list
+     Teuchos::ParameterList& param_list_initialporosity =
+      material_db_->getElementBlockSublist(eb_name,"Powder Layer Initial Porosity");    
+        
            /*	
 	//If sim is additive, thermal cond properties of the powder are needed
 	//The powder element block will always be called "Powder_Region"
@@ -478,6 +483,7 @@ Albany::TDManufacturing::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List Liquid", &param_list_liquid);
     p->set<Teuchos::ParameterList*>("Parameter List Post-melted", &param_list_postmelted);
     p->set<Teuchos::ParameterList*>("Parameter List Vapor", &param_list_vapor);
+    p->set<Teuchos::ParameterList*>("InitialPorosity Parameter List", &param_list_initialporosity);
 
 
     //Teuchos::RCP<Teuchos::ParameterList>& params
@@ -499,10 +505,16 @@ Albany::TDManufacturing::constructEvaluators(
     Teuchos::ParameterList& param_list =
       material_db_->getElementBlockSublist(eb_name, "rho_Cp");    
 
+    // take poweder layer porosity parameter list
+    Teuchos::ParameterList& param_list_initialporosity =
+      material_db_->getElementBlockSublist(eb_name,"Powder Layer Initial Porosity");
+
     //Input
     p->set<string>("Coordinate Name","Coord Vec");
     p->set<string>("Porosity Name", "Porosity");
+    p->set<string>("Psi1 Name", "Psi1");      
     p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
+    p->set<Teuchos::ParameterList*>("InitialPorosity Parameter List", &param_list_initialporosity);
 
     //Output
     p->set<string>("rho_Cp Name", "rho_Cp");

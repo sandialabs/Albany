@@ -19,12 +19,13 @@ namespace TDM {
   rho_Cp<EvalT, Traits>::
   rho_Cp(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
     coord_      (p.get<std::string>("Coordinate Name"),dl->qp_vector),
+    psi1_           (p.get<std::string>("Psi1 Name"), dl->qp_scalar),
     //porosity_   (p.get<std::string>("Porosity Name"),dl->qp_scalar),
     rho_cp_     (p.get<std::string>("rho_Cp Name"),dl->qp_scalar)
   {
 
     this->addDependentField(coord_);
-    //this->addDependentField(porosity_);
+    this->addDependentField(psi1_);
     this->addEvaluatedField(rho_cp_);
  
     Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
@@ -35,6 +36,8 @@ namespace TDM {
 
     Teuchos::ParameterList* cond_list =
       p.get<Teuchos::ParameterList*>("Parameter List");
+    Teuchos::ParameterList* porosity_list =
+      p.get<Teuchos::ParameterList*>("InitialPorosity Parameter List");      
         
     Teuchos::RCP<const Teuchos::ParameterList> reflist =
       this->getValidrho_CpParameters();
@@ -43,7 +46,7 @@ namespace TDM {
 				  Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
 
     constant_value_ = cond_list->get("Value", 1.0);
-
+    initial_porosity_ = porosity_list->get("Value",0);
     this->setName("rho_Cp"+PHX::print<EvalT>());
   }
 
@@ -54,7 +57,9 @@ namespace TDM {
 			PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(coord_,fm);
-    this->utils.setFieldData(rho_cp_,fm);
+    this->utils.setFieldData(rho_cp_,fm); 
+    this->utils.setFieldData(psi1_,fm); 
+
     //this->utils.setFieldData(porosity_,fm);
   }
 
@@ -70,7 +75,7 @@ namespace TDM {
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-        rho_cp_(cell, qp) = constant_value_ ;
+        rho_cp_(cell,qp) = constant_value_ * ( 1 - initial_porosity_ * ( 1 - psi1_(cell,qp) ) ) ;
       }
     } 
   }

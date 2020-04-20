@@ -89,6 +89,12 @@ namespace TDM {
     dV = cond_list_vapor->get("d", 1.0);
     eV = cond_list_vapor->get("e", 1.0);
 
+  //Parameters for the initial porosity
+    Teuchos::ParameterList* porosity_list =
+    p.get<Teuchos::ParameterList*>("InitialPorosity Parameter List");
+
+    initial_porosity_ = porosity_list->get("Value", 1.0);
+
     /*
     Teuchos::ParameterList* input_list =
     		p.get<Teuchos::ParameterList*>("Input List");  
@@ -148,8 +154,16 @@ namespace TDM {
 	  Kd_ = (aPo + bPo*T_(cell, qp) + cPo*T_(cell, qp)*T_(cell, qp) + dPo/T_(cell, qp) + ePo/(T_(cell, qp)*T_(cell, qp)));  
 	  //calculating vapor k value
 	  Kv_ = (aV + bV*T_(cell, qp) + cV*T_(cell, qp)*T_(cell, qp) + dV/T_(cell, qp) + eV/(T_(cell, qp)*T_(cell, qp)));  
+    //calculating powder k value
+    Kpowder_ = 0.05 * Kd_;
 	  //calculating solid k value
-	  Ks_ = (1 - psi1_(cell,qp))*Kp_ + psi1_(cell,qp)*Kd_;
+    if (initial_porosity_== 0.0 ){
+      Ks_ = Kd_;
+    }
+    else {
+      Ks_ = (1 - psi1_(cell,qp))*Kpowder_ + psi1_(cell,qp)*Kd_;
+    }
+
 	  // calculating the final k value
 	  if(psi2_(cell,qp)<1){	// if element never fully vaporized, use phi2 to reflect instant temperature
 	     k_(cell, qp) = (Ks_*(1.0 - phi1_(cell, qp)) + Kl_*phi1_(cell, qp))*(1.0 - phi2_(cell, qp)) + Kv_*phi2_(cell, qp);

@@ -84,6 +84,11 @@ namespace TDM {
     // Thermal conductivity  in the vapor phase
     ScalarT Kv_;
 	
+    //  Thermal conductivity in the powder phase
+    ScalarT Kpowder_;
+
+    // Powder initial porosity (detecting if initially powder or solid)
+    ScalarT initial_porosity_;
 
 
     //	std::string sim_type;

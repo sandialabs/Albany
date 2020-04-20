@@ -45,10 +45,13 @@ namespace TDM {
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
     ScalarT constant_value_;
+    ScalarT initial_porosity_;
 
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
     PHX::MDField<ScalarT,Cell,QuadPoint> rho_cp_;
     PHX::MDField<ScalarT,Cell,QuadPoint> porosity_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> psi1_;
+  
 
     unsigned int num_qps_;
     unsigned int num_dims_;
