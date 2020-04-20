@@ -38,13 +38,13 @@ namespace TDM {
       p.get<Teuchos::ParameterList*>("Parameter List");
     Teuchos::ParameterList* porosity_list =
       p.get<Teuchos::ParameterList*>("InitialPorosity Parameter List");      
-        
+    /*
     Teuchos::RCP<const Teuchos::ParameterList> reflist =
       this->getValidrho_CpParameters();
 
     cond_list->validateParameters(*reflist, 0,
 				  Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
-
+    */
     constant_value_ = cond_list->get("Value", 1.0);
     initial_porosity_ = porosity_list->get("Value",0);
     this->setName("rho_Cp"+PHX::print<EvalT>());
