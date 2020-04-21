@@ -47,11 +47,10 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     const Teuchos::RCP<stk::mesh::BulkData>&    bulkData_,
     const int                                   neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,  // TODO: remove this altogether?
-              // AM: No, used in LCM for crystal plasticity and ACE
     const int                                          numDim_,
     const Teuchos::RCP<StateInfoStruct>&               sis,
     const Teuchos::Array<Teuchos::Array<std::string>>& solution_vector,
-    const Teuchos::Array<std::string>&                 residual_vector)
+    const Teuchos::Array<std::string>&                 residual_vector)  // TODO: remove this altogether?
     : GenericSTKFieldContainer<Interleaved>(
           params_,
           metaData_,
@@ -169,99 +168,8 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     }
   }
 
-#if defined(ALBANY_LCM)
-  // do the residual next
-
-  if (residual_vector.size() == 0) {  // Do the default residual vector
-
-    std::string name = params_->get<std::string>(res_tag_name, res_id_name);
-    VFT*        residual =
-        &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, name);
-    stk::mesh::put_field_on_mesh(
-        *residual, metaData_->universal_part(), neq_, nullptr);
-#ifdef ALBANY_SEACAS
-    stk::io::set_field_role(*residual, Ioss::Field::TRANSIENT);
-#endif
-
-    res_vector_name.push_back(name);
-    res_index.push_back(neq_);
-
-  } else if (residual_vector.size() == 1) {  // User is just renaming the entire
-                                             // residual vector
-
-    VFT* residual = &metaData_->declare_field<VFT>(
-        stk::topology::NODE_RANK, residual_vector[0]);
-    stk::mesh::put_field_on_mesh(
-        *residual, metaData_->universal_part(), neq_, nullptr);
-#ifdef ALBANY_SEACAS
-    stk::io::set_field_role(*residual, Ioss::Field::TRANSIENT);
-#endif
-
-    res_vector_name.push_back(residual_vector[0]);
-    res_index.push_back(neq_);
-
-  } else {  // user is breaking up the residual into multiple fields
-
-    // make sure the number of entries is even
-
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        (residual_vector.size() % 2),
-        std::logic_error,
-        "Error in input file: specification of residual vector layout is "
-        "incorrect."
-            << std::endl);
-
-    int len, accum = 0;
-
-    for (int i = 0; i < residual_vector.size(); i += 2) {
-      if (residual_vector[i + 1] == "V") {
-        len = numDim_;  // vector
-        accum += len;
-        VFT* residual = &metaData_->declare_field<VFT>(
-            stk::topology::NODE_RANK, residual_vector[i]);
-        stk::mesh::put_field_on_mesh(
-            *residual, metaData_->universal_part(), len, nullptr);
-#ifdef ALBANY_SEACAS
-        stk::io::set_field_role(*residual, Ioss::Field::TRANSIENT);
-#endif
-        res_vector_name.push_back(residual_vector[i]);
-        res_index.push_back(len);
-
-      } else if (residual_vector[i + 1] == "S") {
-        len = 1;  // scalar
-        accum += len;
-        SFT* residual = &metaData_->declare_field<SFT>(
-            stk::topology::NODE_RANK, residual_vector[i]);
-        stk::mesh::put_field_on_mesh(
-            *residual, metaData_->universal_part(), nullptr);
-#ifdef ALBANY_SEACAS
-        stk::io::set_field_role(*residual, Ioss::Field::TRANSIENT);
-#endif
-        res_vector_name.push_back(residual_vector[i]);
-        res_index.push_back(len);
-
-      } else {
-        TEUCHOS_TEST_FOR_EXCEPTION(
-            true,
-            std::logic_error,
-            "Error in input file: specification of residual vector layout is "
-            "incorrect."
-                << std::endl);
-      }
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        accum != neq_,
-        std::logic_error,
-        "Error in input file: specification of residual vector layout is "
-        "incorrect."
-            << std::endl);
-  }
-
-  haveResidual = true;
-#else
   // Silence compiler warning
   (void)residual_vector;
-#endif
 
   // Do the coordinates
   this->coordinates_field =
@@ -287,52 +195,9 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 #endif
   }
 
-#if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
-  // sphere volume is a mesh attribute read from a genesis mesh file containing
-  // sphere element (used for peridynamics)
-  this->sphereVolume_field = metaData_->template get_field<SVFT>(
-      stk::topology::ELEMENT_RANK, "volume");
-  if (this->sphereVolume_field != 0) {
-    buildSphereVolume = true;
-    stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
-  }
-  // lattice orientation is mesh attributes read from a genesis mesh file use
-  // with certain solid mechanics material models
-  bool hasLatticeOrientationFieldContainerRequirement =
-      (std::find(req.begin(), req.end(), "Lattice_Orientation") != req.end());
-  if (hasLatticeOrientationFieldContainerRequirement) {
-    // STK says that attributes are of type Field<double,anonymous>[ name:
-    // "extra_attribute_3" , #states: 1 ]
-    this->latticeOrientation_field =
-        metaData_->template get_field<stk::mesh::FieldBase>(
-            stk::topology::ELEMENT_RANK, "extra_attribute_9");
-    if (this->latticeOrientation_field != 0) {
-      buildLatticeOrientation = true;
-      stk::io::set_field_role(
-          *this->latticeOrientation_field, Ioss::Field::ATTRIBUTE);
-    }
-  }
-#endif
-
   this->addStateStructs(sis);
 
   initializeSTKAdaptation();
-
-#if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
-  bool has_boundary_indicator =
-      (std::find(req.begin(), req.end(), "boundary_indicator") != req.end());
-  if (has_boundary_indicator) {
-    // STK says that attributes are of type Field<double,anonymous>[ name:
-    // "extra_attribute_3" , #states: 1 ]
-    this->boundary_indicator =
-        metaData_->template get_field<stk::mesh::FieldBase>(
-            stk::topology::ELEMENT_RANK, "boundary_indicator");
-    ALBANY_ASSERT(this->boundary_indicator != nullptr);
-    build_boundary_indicator = true;
-    stk::io::set_field_role(
-        *this->boundary_indicator, Ioss::Field::INFORMATION);
-  }
-#endif
 }
 
 template <bool Interleaved>
@@ -355,33 +220,9 @@ MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
   stk::mesh::put_field_on_mesh(
       *this->refine_field, this->metaData->universal_part(), nullptr);
 
-#if defined(ALBANY_LCM)
-  // Failure state used for mesh adaptation
-  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
-       rank <= stk::topology::ELEMENT_RANK;
-       ++rank) {
-    this->failure_state[rank] =
-        &this->metaData->template declare_field<ISFT>(rank, "failure_state");
-    stk::mesh::put_field_on_mesh(
-        *this->failure_state[rank], this->metaData->universal_part(), nullptr);
-  }
-  // Boundary indicator
-  this->boundary_indicator = &this->metaData->template declare_field<SFT>(
-      stk::topology::ELEMENT_RANK, "boundary_indicator");
-  stk::mesh::put_field_on_mesh(
-      *this->boundary_indicator, this->metaData->universal_part(), nullptr);
-#endif  // ALBANY_LCM
-
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
   stk::io::set_field_role(*this->refine_field, Ioss::Field::MESH);
-#if defined(ALBANY_LCM)
-  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
-       rank <= stk::topology::ELEMENT_RANK;
-       ++rank) {
-    stk::io::set_field_role(*this->failure_state[rank], Ioss::Field::MESH);
-  }
-#endif  // ALBANY_LCM
 #endif
 }
 

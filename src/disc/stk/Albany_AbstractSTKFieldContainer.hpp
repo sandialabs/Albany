@@ -111,19 +111,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   {
     return refine_field;
   }
-#if defined(ALBANY_LCM)
-  IntScalarFieldType*
-  getFailureState(stk::topology::rank_t rank)
-  {
-    return failure_state[rank];
-  }
-  stk::mesh::FieldBase*
-  getBoundaryIndicator()
-  {
-    ALBANY_ASSERT(boundary_indicator != nullptr);
-    return boundary_indicator;
-  }
-#endif  // ALBANY_LCM
   SphereVolumeFieldType*
   getSphereVolumeField()
   {
@@ -208,11 +195,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   virtual bool
   hasLatticeOrientationField() const = 0;
 
-#if defined(ALBANY_LCM)
-  virtual bool
-  hasBoundaryIndicatorField() const = 0;
-#endif
-
   std::map<std::string, double>&
   getTime()
   {
@@ -284,17 +266,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   VectorFieldType*    coordinates_field;
   IntScalarFieldType* proc_rank_field;
   IntScalarFieldType* refine_field;
-#if defined(ALBANY_LCM)
-  IntScalarFieldType* failure_state[stk::topology::ELEMENT_RANK + 1];
-  stk::mesh::FieldBase* boundary_indicator;
-#endif  // ALBANY_LCM
-
-  // Required for Peridynamics in LCM
+  //Required by LCM
   SphereVolumeFieldType* sphereVolume_field;
 
-  // Required for certain LCM material models
-  stk::mesh::FieldBase* latticeOrientation_field;
-
+  //Required by LCM
+  stk::mesh::FieldBase*  latticeOrientation_field;
   ScalarValueState       scalarValue_states;
   MeshScalarState        mesh_scalar_states;
   MeshVectorState        mesh_vector_states;

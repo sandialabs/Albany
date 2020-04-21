@@ -187,11 +187,6 @@ public:
   //! Set the field vector into mesh database
   void setFieldT(const Tpetra_Vector &field_vector, const std::string& field_name, bool overlapped) override;
 
-  //! Set the residual field for output - Tpetra version
-#if defined(ALBANY_LCM)
-  void setResidualField (const Thyra_Vector& residual) override;
-#endif
-
   //! Write the solution to the output file - Tpetra version. Calls next two together.
   void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) override;
   void writeSolutionT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 

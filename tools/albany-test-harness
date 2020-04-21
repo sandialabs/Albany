@@ -29,12 +29,6 @@ ALBANY_BUILD_TYPES = \
     "trikota" : [
         ("TRILINOS_TRIKOTA",  "ON"),
     ],
-    "lcm" : [
-        ("ALBANY_LCM", "ON"),
-    ],
-    "ato" : [
-        ("ALBANY_ATO", "ON")
-    ],
     "aeras" : [
         ("ALBANY_AERAS", "ON"),
     ],

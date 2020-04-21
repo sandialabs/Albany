@@ -12,16 +12,6 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Macros.hpp"
 
-#ifdef ALBANY_ATO
-#include "ATO_Solver.hpp"
-#endif
-
-#if defined(ALBANY_LCM) && defined(ALBANY_STK)
-#include "Schwarz_Alternating.hpp"
-#include "Schwarz_Coupled.hpp"
-#include "Schwarz_PiroObserver.hpp"
-#endif
-
 #ifdef ALBANY_AERAS
 #include "Aeras/Aeras_HVDecorator.hpp"
 #endif
@@ -115,15 +105,13 @@ SolverFactory(const std::string&                      inputFile,
         inputFile, appParams.ptr(), *comm);
   }
 
-  // do not set default solver parameters for ATO::Solver problems,
-  // ... as they handle this themselves
+
   std::string solution_method =
       appParams->sublist("Problem").get("Solution Method", "Steady");
-  if (solution_method != "ATO Problem") {
-    Teuchos::RCP<Teuchos::ParameterList> defaultSolverParams = rcp(new Teuchos::ParameterList());
-    setSolverParamDefaults(defaultSolverParams.get(), comm->getRank());
-    appParams->setParametersNotAlreadySet(*defaultSolverParams);
-  }
+
+  Teuchos::RCP<Teuchos::ParameterList> defaultSolverParams = rcp(new Teuchos::ParameterList());
+  setSolverParamDefaults(defaultSolverParams.get(), comm->getRank());
+  appParams->setParametersNotAlreadySet(*defaultSolverParams);
 
   if (!appParams->isParameter("Build Type")) {
     if (comm->getRank()==0) {
@@ -152,16 +140,12 @@ SolverFactory(const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
  : appParams(input_appParams)
  , out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-  // do not set default solver parameters for ATO::Solver
-  // problems,
-  // ... as they handle this themselves
   std::string solution_method =
       appParams->sublist("Problem").get("Solution Method", "Steady");
-  if (solution_method != "ATO Problem") {
-    Teuchos::RCP<Teuchos::ParameterList> defaultSolverParams = rcp(new Teuchos::ParameterList());
-    setSolverParamDefaults(defaultSolverParams.get(), comm->getRank());
-    appParams->setParametersNotAlreadySet(*defaultSolverParams);
-  }
+
+  Teuchos::RCP<Teuchos::ParameterList> defaultSolverParams = rcp(new Teuchos::ParameterList());
+  setSolverParamDefaults(defaultSolverParams.get(), comm->getRank());
+  appParams->setParametersNotAlreadySet(*defaultSolverParams);
 
   if (!appParams->isParameter("Build Type")) {
     if (comm->getRank()==0) {
@@ -200,17 +184,6 @@ SolverFactory::createAndGetAlbanyApp(
 {
   const Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
-
-  if (solutionMethod == "ATO Problem") {
-#ifdef ALBANY_ATO
-    return rcp(new ATO::Solver(appParams, solverComm, initial_guess));
-#else  /* ALBANY_ATO */
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "Must activate ATO (topological optimization)\n");
-#endif /* ALBANY_ATO */
-  }
 
 #ifdef ALBANY_AERAS
   if (solutionMethod == "Aeras Hyperviscosity") {
@@ -295,55 +268,6 @@ SolverFactory::createAndGetAlbanyApp(
 
   }  // if Aeras HyperViscosity
 #endif
-
-#if defined(ALBANY_LCM) && defined(ALBANY_STK) 
-  bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
-                          solutionMethod == "Schwarz Alternating";
-
-  if (is_schwarz == true) {
-#if !defined(ALBANY_DTK)
-    ALBANY_ASSERT(appComm->getSize() == 1, "Parallel Schwarz requires DTK");
-#endif  // ALBANY_DTK
-  }
-  if (solutionMethod == "Coupled Schwarz") {
-    // IKT: We are assuming the "Piro" list will come from the main coupled
-    // Schwarz input file (not the sub-input
-    // files for each model).
-    const Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-
-    const Teuchos::RCP<Teuchos::ParameterList> stratList =
-        Piro::extractStratimikosParams(piroParams);
-    // Create and setup the Piro solver factory
-    Piro::SolverFactory piroFactory;
-    // Setup linear solver
-    Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-    enableIfpack2(linearSolverBuilder);
-    enableMueLu(linearSolverBuilder);
-
-#if defined(ALBANY_TEKO)
-    Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
-#endif
-    linearSolverBuilder.setParameterList(stratList);
-
-    const Teuchos::RCP<Thyra_LOWS_Factory> lowsFactory =
-        createLinearSolveStrategy(linearSolverBuilder);
-
-    const Teuchos::RCP<LCM::SchwarzCoupled> coupled_model_with_solve =
-        Teuchos::rcp(new LCM::SchwarzCoupled(
-            appParams, solverComm, initial_guess, lowsFactory));
-
-    observer_ = Teuchos::rcp(new LCM::Schwarz_PiroObserver(coupled_model_with_solve));
-
-    // WARNING: Coupled Schwarz does not contain a primary Application
-    // instance and so albanyApp is null.
-    return piroFactory.createSolver<ST>(
-        piroParams, coupled_model_with_solve, Teuchos::null, observer_);
-  }
-
-  if (solutionMethod == "Schwarz Alternating") {
-    return Teuchos::rcp(new LCM::SchwarzAlternating(appParams, solverComm));
-  }
-#endif /* LCM */
 
   model_ = createAlbanyAppAndModel(albanyApp, appComm, initial_guess, createAlbanyApp);
 

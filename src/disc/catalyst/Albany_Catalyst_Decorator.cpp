@@ -332,13 +332,6 @@ void Decorator::setFieldT(const Tpetra_Vector &field_vector,
   discretization->setFieldT(field_vector, field_name, overlapped);
 }
 
-#ifdef ALBANY_LCM
-void Decorator::setResidualField(const Thyra_Vector& residual) {
-  /* TODO: should react to this */
-  discretization->setResidualField(residual);
-}
-#endif
-
 #if defined(ALBANY_EPETRA)
 void Decorator::writeSolution(
     const Epetra_Vector& solution, const Epetra_Vector& solution_dot, 

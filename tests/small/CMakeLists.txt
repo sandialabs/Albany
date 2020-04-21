@@ -83,17 +83,7 @@ IF(ALBANY_STK)
 
 ENDIF(ALBANY_STK)
 
-# LCM ###############
-IF(ALBANY_LCM)
-   add_subdirectory(LCM)
-ENDIF()
-
 IF(ALBANY_STK)
-
-  # ATO ##################
-  IF(ALBANY_ATO)
-    add_subdirectory(ATO)
-  ENDIF()
 
   # LandIce ##################
   IF(ALBANY_LANDICE AND ALBANY_SEACAS )

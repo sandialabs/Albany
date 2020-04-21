@@ -43,51 +43,6 @@ IF(ALBANY_STK)
   )
 ENDIF()
 
-# Random Criterion & Stress Fracture depend on LCM
-# Speculative features and code, currently
-IF(ALBANY_LCM AND ALBANY_STK)
-  IF(LCM_SPECULATIVE)
-    SET(SOURCES ${SOURCES}
-        AAdapt_RandomCriterion.cpp
-        AAdapt_RandomFracture.cpp
-        AAdapt_StressFracture.cpp
-       )
-
-    SET(HEADERS ${HEADERS}
-        AAdapt_RandomCriterion.hpp
-        AAdapt_RandomFracture.hpp
-        AAdapt_StressFracture.hpp
-       )
-  ENDIF()
-
-  # Topology Modification depends on LCM and STK
-  IF(ALBANY_BGL)
-    SET(SOURCES ${SOURCES}
-        AAdapt_Erosion.cpp
-        AAdapt_TopologyModification.cpp
-       )
-
-    SET(HEADERS ${HEADERS}
-        AAdapt_Erosion.hpp
-        AAdapt_TopologyModification.hpp
-       )
-  ENDIF()
-
-  IF(ALBANY_STK_PERCEPT)
-    SET(SOURCES ${SOURCES}
-        AAdapt_STKAdapt.cpp
-        AAdapt_STKConstantSizeField.cpp
-       )
-
-    SET(HEADERS ${HEADERS}
-        AAdapt_STKAdapt.hpp
-        AAdapt_STKAdapt_Def.hpp
-        AAdapt_STKConstantSizeField.hpp
-       )
-
-  ENDIF()
-ENDIF()
-
 # Mesh Adapt depends on SCOREC tools and PUMI
 IF(ALBANY_SCOREC)
 
@@ -127,8 +82,7 @@ include_directories(${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                     ${Albany_SOURCE_DIR} / src / problems ${Albany_SOURCE_DIR} / src / responses
                     ${Albany_SOURCE_DIR} / src / disc
                     ${Albany_SOURCE_DIR} / src / utility 
-                    ${Albany_SOURCE_DIR} / src / disc / stk ${Albany_SOURCE_DIR} / src / LCM /
-                    ${Albany_SOURCE_DIR} / src / LCM / evaluators ${Albany_SOURCE_DIR} / src / LCM / utils
+                    ${Albany_SOURCE_DIR} / src / disc / stk 
                    )
 
 add_library(albanyAdapt ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})

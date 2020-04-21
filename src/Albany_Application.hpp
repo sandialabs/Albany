@@ -535,22 +535,6 @@ class Application
       const std::string& evalName, const int& phxGraphVisDetail);
 
  public:
-#if defined(ALBANY_LCM)
-  double
-  fixTime(double const current_time) const
-  {
-    bool const use_time_param = (paramLib->isParameter("Time") == true) &&
-                                (getSchwarzAlternating() == false) &&
-                                (solMethod != TransientTempus);
-
-    double const this_time =
-        use_time_param == true ?
-            paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") :
-            current_time;
-
-    return this_time;
-  }
-#else
   double
   fixTime(double const current_time) const
   {
@@ -563,166 +547,9 @@ class Application
 
     return this_time;
   }
-#endif  // ALBANY_LCM
 
   void
   setScaling(const Teuchos::RCP<Teuchos::ParameterList>& params);
-
-  #if defined(ALBANY_LCM)
-  // Needed for coupled Schwarz
-
-  void
-  setApplications(Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> ca)
-  {
-    apps_ = ca;
-  }
-
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-  getApplications() const
-  {
-    return apps_;
-  }
-
-  void
-  setAppIndex(int const i)
-  {
-    app_index_ = i;
-  }
-
-  int
-  getAppIndex() const
-  {
-    return app_index_;
-  }
-
-  void
-  setAppNameIndexMap(Teuchos::RCP<std::map<std::string, int>>& anim)
-  {
-    app_name_index_map_ = anim;
-  }
-
-  Teuchos::RCP<std::map<std::string, int>>
-  getAppNameIndexMap() const
-  {
-    return app_name_index_map_;
-  }
-
-  void
-  setCoupledAppBlockNodeset(
-      std::string const& app_name,
-      std::string const& block_name,
-      std::string const& nodeset_name);
-
-  std::string
-  getCoupledBlockName(int const app_index) const
-  {
-    auto it = coupled_app_index_block_nodeset_names_map_.find(app_index);
-    assert(it != coupled_app_index_block_nodeset_names_map_.end());
-    return it->second.first;
-  }
-
-  std::string
-  getNodesetName(int const app_index) const
-  {
-    auto it = coupled_app_index_block_nodeset_names_map_.find(app_index);
-    assert(it != coupled_app_index_block_nodeset_names_map_.end());
-    return it->second.second;
-  }
-
-  bool
-  isCoupled(int const app_index) const
-  {
-    return coupled_app_index_block_nodeset_names_map_.find(app_index) !=
-           coupled_app_index_block_nodeset_names_map_.end();
-  }
-
-  // Few coupled applications, so do this by brute force.
-  std::string
-  getAppName(int app_index = -1) const
-  {
-    if (app_index == -1) app_index = this->getAppIndex();
-
-    std::string name;
-
-    auto it = app_name_index_map_->begin();
-
-    for (; it != app_name_index_map_->end(); ++it) {
-      if (app_index == it->second) {
-        name = it->first;
-        break;
-      }
-    }
-
-    assert(it != app_name_index_map_->end());
-
-    return name;
-  }
-
-  Teuchos::RCP<Thyra_Vector const> const&
-  getX() const
-  {
-    return x_;
-  }
-
-  Teuchos::RCP<Thyra_Vector const> const&
-  getXdot() const
-  {
-    return xdot_;
-  }
-
-  Teuchos::RCP<Thyra_Vector const> const&
-  getXdotdot() const
-  {
-    return xdotdot_;
-  }
-
-  void
-  setX(Teuchos::RCP<Thyra_Vector const> const& x)
-  {
-    x_ = x;
-  }
-
-  void
-  setXdot(Teuchos::RCP<Thyra_Vector const> const& xdot)
-  {
-    xdot_ = xdot;
-  }
-
-  void
-  setXdotdot(Teuchos::RCP<Thyra_Vector const> const& xdotdot)
-  {
-    xdotdot_ = xdotdot;
-  }
-
-  void
-  setSchwarzAlternating(bool const isa)
-  {
-    is_schwarz_alternating_ = isa;
-  }
-
-  bool
-  getSchwarzAlternating() const
-  {
-    return is_schwarz_alternating_;
-  }
-
- private:
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
-
-  int app_index_{-1};
-
-  Teuchos::RCP<std::map<std::string, int>> app_name_index_map_{Teuchos::null};
-
-  std::map<int, std::pair<std::string, std::string>>
-      coupled_app_index_block_nodeset_names_map_;
-
-  Teuchos::RCP<Thyra_Vector const> x_{Teuchos::null};
-  Teuchos::RCP<Thyra_Vector const> xdot_{Teuchos::null};
-  Teuchos::RCP<Thyra_Vector const> xdotdot_{Teuchos::null};
-
-  bool is_schwarz_alternating_{false};
-
-#endif  // ALBANY_LCM
 
  public:
   //! Get Phalanx postRegistration data
@@ -882,9 +709,6 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
   auto const& wsEBNames          = disc->getWsEBNames();
   auto const& sphereVolume       = disc->getSphereVolume();
   auto const& latticeOrientation = disc->getLatticeOrientation();
-#ifdef ALBANY_LCM
-  auto const& boundary_indicator = disc->getBoundaryIndicator();
-#endif
 
   workset.numCells             = wsElNodeEqID[ws].extent(0);
   workset.wsElNodeEqID         = wsElNodeEqID[ws];
@@ -892,9 +716,6 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
   workset.wsCoords             = coords[ws];
   workset.wsSphereVolume       = sphereVolume[ws];
   workset.wsLatticeOrientation = latticeOrientation[ws];
-#ifdef ALBANY_LCM
-  workset.boundary_indicator   = boundary_indicator[ws];
-#endif
   workset.EBName               = wsEBNames[ws];
   workset.wsIndex              = ws;
 

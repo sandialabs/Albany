@@ -14,19 +14,6 @@
 
 // User Defined Evaluator Types
 
-#if defined(ALBANY_LCM)
-#include "LCM/evaluators/bc/EquilibriumConcentrationBC.hpp"
-#include "LCM/evaluators/bc/KfieldBC.hpp"
-#include "LCM/evaluators/bc/PDNeighborFitBC.hpp"
-#include "LCM/evaluators/bc/TimeTracBC.hpp"
-#include "LCM/evaluators/bc/TorsionBC.hpp"
-#include "LCM/evaluators/Time.hpp"
-#if defined(ALBANY_STK) 
-#include "LCM/evaluators/bc/SchwarzBC.hpp"
-#include "LCM/evaluators/bc/StrongSchwarzBC.hpp"
-#endif // ALBANY_STK
-#endif // ALBANY_LCM
-
 #include "PHAL_SDirichlet.hpp"
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_TimeDepDBC.hpp"
@@ -75,13 +62,7 @@ namespace PHAL {
     static const int id_timedep_sdbc                   =  6; 
     static const int id_sdbc                           =  7;
     static const int id_sdirichlet_field               =  8;
-    static const int id_kfield_bc                      =  9; // Only for LCM probs
-    static const int id_eq_concentration_bc            = 10; // Only for LCM probs
-    static const int id_time                           = 11; // Only for LCM probs
-    static const int id_torsion_bc                     = 12; // Only for LCM probs
-    static const int id_schwarz_bc                     = 13; // Only for LCM probs
-    static const int id_strong_schwarz_bc              = 14; // Only for LCM probs
-    static int const id_expreval_sdbc                  = 15; // Only if ALBANY_STK_EXPR_EVAL is ON
+    static int const id_expreval_sdbc                  =  9; // Only if ALBANY_STK_EXPR_EVAL is ON
 
     typedef Sacado::mpl::vector<
         PHAL::Dirichlet<_,Traits>,                //  0
@@ -93,22 +74,9 @@ namespace PHAL {
         PHAL::TimeDepSDBC<_, Traits>,             //  6
         PHAL::SDirichlet<_, Traits>,              //  7
         PHAL::SDirichletField<_, Traits>          //  8
-#if defined(ALBANY_LCM)
-        ,
-        LCM::KfieldBC<_,Traits>,                   // 9
-        LCM::EquilibriumConcentrationBC<_,Traits>, // 10
-        LCM::Time<_, Traits>,                      // 11
-        LCM::TorsionBC<_, Traits>                  // 12
-#endif
-#if defined(ALBANY_LCM) && defined(ALBANY_STK) 
-        ,
-        LCM::SchwarzBC<_, Traits>,                 // 13
-        LCM::StrongSchwarzBC<_, Traits>,           // 14
-        LCM::PDNeighborFitBC<_, Traits>            // 15
-#endif
 #ifdef ALBANY_STK_EXPR_EVAL
         ,
-        PHAL::ExprEvalSDBC<_, Traits>            //  16
+        PHAL::ExprEvalSDBC<_, Traits>            //   9
 #endif
         > EvaluatorTypes;
 };
@@ -123,7 +91,6 @@ namespace PHAL {
     static const int id_gather_solution            =  3;
     static const int id_load_stateField            =  4;
     static const int id_GatherScalarNodalParameter =  5;
-    static const int id_timedep_bc                 =  6; // Only for LCM probs
 
 
     typedef Sacado::mpl::vector<
@@ -133,9 +100,6 @@ namespace PHAL {
        PHAL::GatherSolution<_,Traits>,            //  3
        PHAL::LoadStateField<_,Traits>,            //  4
        PHAL::GatherScalarNodalParameter<_,Traits> //  5
-#if defined(ALBANY_LCM)
-       , LCM::TimeTracBC<_, Traits>               //  6
-#endif
     > EvaluatorTypes;
 };
 
