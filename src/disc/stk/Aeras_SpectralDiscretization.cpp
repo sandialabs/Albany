@@ -126,9 +126,7 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
     bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
   const int numBuckets = buckets.size();
   latticeOrientation.resize(numBuckets);
-#if defined(ALBANY_LCM)
-  boundary_indicator.resize(numBuckets);
-#endif
+
 #ifdef OUTPUT_TO_SCREEN
   *out << "points_per_edge: " << points_per_edge << std::endl;
   *out << "element name: " << element_name << std::endl;
@@ -2116,9 +2114,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 
   nodesOnElemStateVec.resize(numBuckets);
   stateArrays.elemStateArrays.resize(numBuckets);
-#if defined(ALBANY_LCM)
-  boundary_indicator.resize(numBuckets);
-#endif
+
   const Albany::StateInfoStruct& nodal_states =
     stkMeshStruct->getFieldContainer()->getNodalSIS();
 

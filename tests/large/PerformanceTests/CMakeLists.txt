@@ -25,20 +25,6 @@ IF(ALBANY_SEACAS)
   #add_subdirectory(SteadyHeat2DSS)
 ENDIF()
 
-# LCM ###############
-IF(ALBANY_LCM)
-
-  IF(ALBANY_SCOREC)
-# Not sure if this runs for anyone...
-  #  add_subdirectory(Necking3D)
-  ENDIF()
-
-  IF(ALBANY_HYDRIDE)
-    #add_subdirectory(LaplaceBeltrami)
-  ENDIF()
-
-ENDIF(ALBANY_LCM)
-
 # QCAD ##################
 
 IF(ALBANY_QCAD)

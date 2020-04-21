@@ -723,14 +723,10 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   bool const is_dynamic =
       Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot);
 
-#if defined(ALBANY_LCM)
-  ST const curr_time = is_dynamic == true ? inArgs.get_t() : getCurrentTime();
-#else
   const ST curr_time =
       (Teuchos::nonnull(x_dot) || Teuchos::nonnull(x_dotdot)) ?
           inArgs.get_t() :
           0.0;
-#endif  // ALBANY_LCM
 
   double dt = 0.0; //time step 
   if (is_dynamic == true) {
@@ -960,11 +956,6 @@ Thyra_InArgs ModelEvaluator::createInArgsImpl() const
   result.setModelEvalDescription(this->description());
 
   result.setSupports(Thyra_ModelEvaluator::IN_ARG_x, true);
-
-#if defined(ALBANY_LCM)
-  result.setSupports(Thyra_ModelEvaluator::IN_ARG_t, true);
-  result.setSupports(Thyra_ModelEvaluator::IN_ARG_step_size, true);
-#endif
 
   if (supports_xdot) {
     result.setSupports(Thyra_ModelEvaluator::IN_ARG_x_dot, true);

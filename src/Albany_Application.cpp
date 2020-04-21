@@ -31,10 +31,6 @@
 #include "Albany_ScalarResponseFunction.hpp"
 #include "PHAL_Utilities.hpp"
 
-#if defined(ALBANY_LCM)
-#include "SolutionSniffer.hpp"
-#endif  // ALBANY_LCM
-
 //#define WRITE_TO_MATRIX_MARKET
 //#define DEBUG_OUTPUT
 
@@ -332,24 +328,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     } else if (stepper_type == "Newmark Explicit a-Form") {
       requires_sdbcs_ = true;
     }
-
-#if defined(DEBUG)
-    bool const have_solver_opts = nox_params.isSublist("Solver Options");
-    ALBANY_ASSERT(have_solver_opts == true);
-    Teuchos::ParameterList& solver_opts = nox_params.sublist("Solver Options");
-    std::string const ppo_str{"User Defined Pre/Post Operator"};
-    bool const have_ppo = solver_opts.isParameter(ppo_str);
-    Teuchos::RCP<NOX::Abstract::PrePostOperator> ppo{Teuchos::null};
-
-    if (have_ppo == true) {
-      ppo = solver_opts.get<decltype(ppo)>(ppo_str);
-    } else {
-      ppo = Teuchos::rcp(new LCM::SolutionSniffer);
-      solver_opts.set(ppo_str, ppo);
-      ALBANY_ASSERT(solver_opts.isParameter(ppo_str) == true);
-    }
-#endif  // DEBUG
-
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
@@ -501,33 +479,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   countScale = 0;
   // Create discretization object
   discFactory = rcp(new Albany::DiscretizationFactory(params, comm, expl));
-
-#if defined(ALBANY_LCM)
-  // Check for Schwarz parameters
-  bool const has_app_array = params->isParameter("Application Array");
-  bool const has_app_index = params->isParameter("Application Index");
-  bool const has_app_name_index_map =
-      params->isParameter("Application Name Index Map");
-
-  // Only if all these are present set them in the app.
-  bool const has_all = has_app_array && has_app_index && has_app_name_index_map;
-
-  if (has_all == true) {
-    Teuchos::ArrayRCP<Teuchos::RCP<Application>> aa =
-        params->get<Teuchos::ArrayRCP<Teuchos::RCP<Application>>>(
-            "Application Array");
-
-    int const ai = params->get<int>("Application Index");
-
-    Teuchos::RCP<std::map<std::string, int>> anim =
-        params->get<Teuchos::RCP<std::map<std::string, int>>>(
-            "Application Name Index Map");
-
-    this->setApplications(aa.create_weak());
-    this->setAppIndex(ai);
-    this->setAppNameIndexMap(anim);
-  }
-#endif  // ALBANY_LCM
 }
 
 void
@@ -547,12 +498,6 @@ Application::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh)
 void
 Application::buildProblem()
 {
-#if defined(ALBANY_LCM)
-  // This is needed for Schwarz coupling so that when Dirichlet
-  // BCs are created we know what application is doing it.
-  problem->setApplication(Teuchos::rcp(this, false));
-#endif  // ALBANY_LCM
-
   problem->buildProblem(meshSpecs, stateMgr);
 
   if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false) &&
@@ -1121,12 +1066,6 @@ Application::set_dfm_workset(
 
   workset.current_time = this_time;
 
-#if defined(ALBANY_LCM)
-  // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-  workset.apps_        = apps_;
-  workset.current_app_ = Teuchos::rcp(this, false);
-#endif  // ALBANY_LCM
-
   workset.distParamLib = distParamLib;
   workset.disc         = disc;
 
@@ -1319,23 +1258,6 @@ Application::computeGlobalResidualImpl(
     }
   }
 
-#if defined(ALBANY_LCM)
-  // Store pointers to solution and time derivatives.
-  // Needed for Schwarz coupling.
-  if (x != Teuchos::null)
-    x_ = x;
-  else
-    x_ = Teuchos::null;
-  if (x_dot != Teuchos::null)
-    xdot_ = x_dot;
-  else
-    xdot_ = Teuchos::null;
-  if (x_dotdot != Teuchos::null)
-    xdotdot_ = x_dotdot;
-  else
-    xdotdot_ = Teuchos::null;
-#endif  // ALBANY_LCM
-
   // Zero out overlapped residual
   overlapped_f->assign(0.0);
   f->assign(0.0);
@@ -1434,14 +1356,6 @@ Application::computeGlobalResidualImpl(
   sprintf(nameResScaled, "resScaled%i_residual", countScale);
   writeMatrixMarket(f, nameResScaled);
 #endif
-
-#if defined(ALBANY_LCM)
-  // Push the assembled residual values back into the overlap vector
-  cas_manager->scatter(f, overlapped_f, CombineMode::INSERT);
-  // Write the residual to the discretization, which will later (optionally)
-  // be written to the output file
-  disc->setResidualField(*overlapped_f);
-#endif  // ALBANY_LCM
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
 
@@ -1696,12 +1610,6 @@ Application::computeGlobalJacobianImpl(
 
   workset.distParamLib = distParamLib;
   workset.disc         = disc;
-
-#if defined(ALBANY_LCM)
-  // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-  workset.apps_        = apps_;
-  workset.current_app_ = Teuchos::rcp(this, false);
-#endif  // ALBANY_LCM
 
   // FillType template argument used to specialize Sacado
   dfm->evaluateFields<EvalT>(workset);
@@ -2071,12 +1979,6 @@ Application::computeGlobalTangent(
     workset.current_time = this_time;
 
     workset.disc = disc;
-
-#if defined(ALBANY_LCM)
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.apps_        = apps_;
-    workset.current_app_ = Teuchos::rcp(this, false);
-#endif  // ALBANY_LCM
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<EvalT>(workset);
@@ -2960,30 +2862,5 @@ Application::removeEpetraRelatedPLs(
     }
   }
 }
-
-#if defined(ALBANY_LCM)
-void
-Application::setCoupledAppBlockNodeset(
-    std::string const& app_name,
-    std::string const& block_name,
-    std::string const& nodeset_name)
-{
-  // Check for valid application name
-  auto it = app_name_index_map_->find(app_name);
-
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      it == app_name_index_map_->end(),
-      std::logic_error,
-      "Trying to couple to an unknown Application: " << app_name << '\n');
-
-  int const app_index = it->second;
-
-  auto block_nodeset_names = std::make_pair(block_name, nodeset_name);
-
-  auto app_index_block_names = std::make_pair(app_index, block_nodeset_names);
-
-  coupled_app_index_block_nodeset_names_map_.insert(app_index_block_names);
-}
-#endif
 
 }  // namespace Albany

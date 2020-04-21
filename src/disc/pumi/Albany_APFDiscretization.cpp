@@ -430,20 +430,6 @@ double APFDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
-#if defined(ALBANY_LCM)
-void APFDiscretization::setResidualField(const Thyra_Vector& residual)
-{
-  Teuchos::ArrayRCP<const ST> data = getLocalData(residual);
-  if (solLayout.getDerivNames(0).size() == 0) {
-    // dont have split fields
-    this->setField(APFMeshStruct::residual_name,data.getRawPtr(),/*overlapped=*/false);
-  } else {
-    this->setSplitFields(resNames, solLayout.getDerivSizes(0), data.getRawPtr(), /*overlapped=*/false);
-  }
-  meshStruct->residualInitialized = true;
-}
-#endif
-
 Teuchos::RCP<Thyra_Vector>
 APFDiscretization::getSolutionField(bool overlapped) const
 {
@@ -845,9 +831,6 @@ void APFDiscretization::computeWorksetInfo()
   coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
   latticeOrientation.resize(numBuckets);
-#if defined(ALBANY_LCM)
-  boundary_indicator.resize(numBuckets);
-#endif
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) {

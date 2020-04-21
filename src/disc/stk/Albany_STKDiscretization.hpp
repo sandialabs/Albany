@@ -291,24 +291,6 @@ class STKDiscretization : public AbstractDiscretization
     return latticeOrientation;
   }
 
-#if defined(ALBANY_LCM)
-  WorksetArray<Teuchos::ArrayRCP<double*>>::type const&
-  getBoundaryIndicator() const
-  {
-    ALBANY_ASSERT(boundary_indicator.is_null() == false);
-    return boundary_indicator;
-  }
-
-  void
-  printElemGIDws() const;
-
-  std::map<std::pair<int, int>, GO>
-  getElemWsLIDGIDMap() const;
-
-  void
-  printWsElNodeID() const;
-#endif
-
   //! Print the coordinates for debugging
   void
   printCoords() const;
@@ -458,11 +440,6 @@ class STKDiscretization : public AbstractDiscretization
   getSolutionField(const bool overlapped = false) const;
   Teuchos::RCP<Thyra_MultiVector>
   getSolutionMV(const bool overlapped = false) const;
-
-#if defined(ALBANY_LCM)
-  void
-  setResidualField(const Thyra_Vector& residual);
-#endif
 
   void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const;
@@ -683,10 +660,6 @@ class STKDiscretization : public AbstractDiscretization
   WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type coords;
   WorksetArray<Teuchos::ArrayRCP<double>>::type  sphereVolume;
   WorksetArray<Teuchos::ArrayRCP<double*>>::type latticeOrientation;
-
-#if defined(ALBANY_LCM)
-  WorksetArray<Teuchos::ArrayRCP<double*>>::type boundary_indicator;
-#endif
 
 #ifdef ALBANY_CONTACT
   Teuchos::RCP<ContactManager> contactManager;

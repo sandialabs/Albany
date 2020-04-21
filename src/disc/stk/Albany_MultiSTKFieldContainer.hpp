@@ -45,14 +45,6 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
     return buildLatticeOrientation;
   }
 
-#if defined(ALBANY_LCM)
-  bool
-  hasBoundaryIndicatorField() const
-  {
-    return build_boundary_indicator;
-  }
-#endif
-
   void
   fillSolnVector(
       Thyra_Vector&                                soln,
@@ -134,10 +126,6 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
 
   bool buildSphereVolume;
   bool buildLatticeOrientation;
-
-#if defined(ALBANY_LCM)
-  bool build_boundary_indicator{false};
-#endif
 
   // Containers for residual and solution
 

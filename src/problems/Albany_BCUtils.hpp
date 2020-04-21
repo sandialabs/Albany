@@ -45,33 +45,11 @@ struct DirichletTraits
   };
   enum
   {
-    typeKf = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_kfield_bc
-  };
-  enum
-  {
-    typeEq =
-        PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_eq_concentration_bc
-  };
-  enum
-  {
-    typeTo = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_torsion_bc
-  };
-  enum
-  {
     typeSt = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_sdbc
   };
   enum
   {
     typeEe = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_expreval_sdbc
-  };
-  enum
-  {
-    typeSw = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_schwarz_bc
-  };
-  enum
-  {
-    typeSsw =
-        PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_strong_schwarz_bc
   };
   enum
   {
@@ -162,10 +140,6 @@ struct NeumannTraits
   enum
   {
     typeGS = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_solution
-  };
-  enum
-  {
-    typeTd = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc
   };
   enum
   {

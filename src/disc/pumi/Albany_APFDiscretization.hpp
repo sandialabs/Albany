@@ -317,10 +317,6 @@ public:
   Teuchos::RCP<Thyra_Vector>      getSolutionField (const bool overlapped) const override;
   Teuchos::RCP<Thyra_MultiVector> getSolutionMV    (const bool overlapped) const override;
 
-#if defined(ALBANY_LCM)
-  void setResidualField (const Thyra_Vector& residual) override;
-#endif
-
   void getField (Thyra_Vector& /* field_vector */, const std::string& /* field_name */) const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Method not yet implemented in APFDiscretization.\n";)
   }

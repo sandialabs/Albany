@@ -1,9 +1,0 @@
-LB 4/24/19:
-
-- The ATOT-ATO classes duplication has been eliminated: ATOT classes
-  have been removed, and ATO classes have been made to use Thyra
-  structures now. In no place in the ATO folder we now assume anything
-  about the underlying linear algebra. The only thing we assume (sometimes)
-  is that vector spaces are SpmdVectorSpace's.
-- XFEM classes have been removed, since they were not used, nor
-  tested. To revive them, check out 3600566

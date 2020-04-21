@@ -243,9 +243,6 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  //IKT, FIXME, 1/24/17: replace workset.dgdp below with workset.dgdpT 
-  //once ATO:Constraint_2D_adj test passes with this change.  Remove ifdef guards 
-  //when this is done. 
   Teuchos::RCP<Thyra_MultiVector> dgdp = workset.dgdp;
   Teuchos::RCP<Thyra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
   if (dgdp != Teuchos::null) {

@@ -6,12 +6,6 @@ IF(ALBANY_DEMO_PDES)
   ENDIF()
 ENDIF(ALBANY_DEMO_PDES)
 
-# LCM ###############
-
-IF(ALBANY_LCM)
-  add_subdirectory(LCM)
-ENDIF(ALBANY_LCM)
-
 # TDM ###############
 
 IF(ALBANY_TDM)

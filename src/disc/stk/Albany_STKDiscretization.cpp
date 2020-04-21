@@ -1228,82 +1228,6 @@ STKDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
-#if defined(ALBANY_LCM)
-void
-STKDiscretization::setResidualField(const Thyra_Vector& residual)
-{
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
-  if (container->hasResidualField()) {
-    // Write the overlapped data
-    stk::mesh::Selector select_owned_or_shared =
-        metaData.locally_owned_part() | metaData.globally_shared_part();
-    container->saveResVector(
-        residual, select_owned_or_shared, m_overlap_node_vs);
-  }
-
-  // Setting the residual on the side set meshes
-  for (auto it : sideSetDiscretizations) {
-    auto ss_residual = Thyra::createMember(it.second->getOverlapVectorSpace());
-    const Thyra_LinearOp& P = *ov_projectors.at(it.first);
-    P.apply(Thyra::NOTRANS, residual, ss_residual.ptr(), 1.0, 0.0);
-    it.second->setResidualField(*ss_residual);
-  }
-}
-
-void
-STKDiscretization::printElemGIDws() const
-{
-  auto&& gidwslid_map = getElemGIDws();
-  auto&  fos          = *Teuchos::VerboseObjectBase::getDefaultOStream();
-  for (auto gidwslid : gidwslid_map) {
-    auto const gid   = gidwslid.first;
-    auto const wslid = gidwslid.second;
-    auto const ws    = wslid.ws;
-    auto const lid   = wslid.LID;
-    fos << "**** GID : " << gid << " WS : " << ws << " LID : " << lid << "\n";
-  }
-}
-
-std::map<std::pair<int, int>, GO>
-STKDiscretization::getElemWsLIDGIDMap() const
-{
-  std::map<std::pair<int, int>, GO> wslidgid_map;
-  auto&&                            gidwslid_map = getElemGIDws();
-  for (auto gidwslid : gidwslid_map) {
-    auto const gid           = gidwslid.first;
-    auto const wslid         = gidwslid.second;
-    auto const ws            = wslid.ws;
-    auto const lid           = wslid.LID;
-    auto       wslid_pair    = std::make_pair(ws, lid);
-    wslidgid_map[wslid_pair] = gid;
-  }
-  return wslidgid_map;
-}
-
-void
-STKDiscretization::printWsElNodeID() const
-{
-  auto&&     wselnodegid = getWsElNodeID();
-  auto const num_ws      = wselnodegid.size();
-  auto&      fos         = *Teuchos::VerboseObjectBase::getDefaultOStream();
-  for (auto ws = 0; ws < num_ws; ++ws) {
-    auto&&     elnodegid = wselnodegid[ws];
-    auto const num_el    = elnodegid.size();
-    for (auto el = 0; el < num_el; ++el) {
-      auto&&     nodegid  = elnodegid[el];
-      auto const num_node = nodegid.size();
-      for (auto node = 0; node < num_node; ++node) {
-        auto const gid = nodegid[node];
-        fos << "**** GID : " << gid << " WS : " << ws << " EL : " << el
-            << " LID : " << node << "\n";
-      }
-    }
-  }
-}
-#endif
-
 Teuchos::RCP<Thyra_Vector>
 STKDiscretization::getSolutionField(bool overlapped) const
 {
@@ -1904,14 +1828,6 @@ STKDiscretization::computeWorksetInfo()
         stkMeshStruct->getFieldContainer()->getLatticeOrientationField();
   }
 
-#if defined(ALBANY_LCM)
-  stk::mesh::FieldBase* boundary_indicator_field{nullptr};
-  if (stkMeshStruct->getFieldContainer()->hasBoundaryIndicatorField()) {
-    boundary_indicator_field =
-        stkMeshStruct->getFieldContainer()->getBoundaryIndicator();
-  }
-#endif
-
   wsEBNames.resize(numBuckets);
   for (int i = 0; i < numBuckets; i++) {
     stk::mesh::PartVector const& bpv = buckets[i]->supersets();
@@ -1943,9 +1859,6 @@ STKDiscretization::computeWorksetInfo()
   coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
   latticeOrientation.resize(numBuckets);
-#if defined(ALBANY_LCM)
-  boundary_indicator.resize(numBuckets);
-#endif
 
   nodesOnElemStateVec.resize(numBuckets);
   stateArrays.elemStateArrays.resize(numBuckets);
@@ -2060,18 +1973,6 @@ STKDiscretization::computeWorksetInfo()
       }
     }
 
-#if defined(ALBANY_LCM)
-    if (stkMeshStruct->getFieldContainer()->hasSphereVolumeField()) {
-      sphereVolume[b].resize(buck.size());
-    }
-    if (stkMeshStruct->getFieldContainer()->hasLatticeOrientationField()) {
-      latticeOrientation[b].resize(buck.size());
-    }
-    if (stkMeshStruct->getFieldContainer()->hasBoundaryIndicatorField()) {
-      boundary_indicator[b].resize(buck.size());
-    }
-#endif
-
     stk::mesh::Entity element           = buck[0];
     int               nodes_per_element = bulkData.num_nodes(element);
     for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
@@ -2125,23 +2026,6 @@ STKDiscretization::computeWorksetInfo()
           }
         }
       }
-
-#if defined(ALBANY_LCM)
-      if (stkMeshStruct->getFieldContainer()->hasSphereVolumeField() &&
-          nodes_per_element == 1) {
-        double* volumeTemp =
-            stk::mesh::field_data(*sphereVolume_field, element);
-        if (volumeTemp) { sphereVolume[b][i] = volumeTemp[0]; }
-      }
-      if (stkMeshStruct->getFieldContainer()->hasLatticeOrientationField()) {
-        latticeOrientation[b][i] = static_cast<double*>(
-            stk::mesh::field_data(*latticeOrientation_field, element));
-      }
-      if (stkMeshStruct->getFieldContainer()->hasBoundaryIndicatorField()) {
-        boundary_indicator[b][i] = static_cast<double*>(
-            stk::mesh::field_data(*boundary_indicator_field, element));
-      }
-#endif
 
       // loop over local nodes
       DOFsStruct& dofs_struct =

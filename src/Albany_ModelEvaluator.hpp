@@ -75,28 +75,6 @@ public:
 
   //@}
 
-#if defined(ALBANY_LCM)
-  // This is here to have a sane way to handle time and avoid Thyra ME.
-  ST
-  getCurrentTime() const
-  {
-    return current_time_;
-  }
-
-  void
-  setCurrentTime(ST const t)
-  {
-    current_time_ = t;
-    return;
-  }
-
-  void
-  setNominalValues(Thyra_InArgs nv)
-  {
-    nominalValues = nv;
-  }
-#endif // ALBANY_LCM
-
  protected:
   /** \name Overridden from Thyra::ModelEvaluatorDefaultBase<ST> . */
   //@{
@@ -189,11 +167,6 @@ public:
 
   //! As it says, when reportFinalPoint is called.
   bool overwriteNominalValuesWithFinalPoint;
-
-#if defined(ALBANY_LCM)
-  // This is here to have a sane way to handle time and avoid Thyra ME.
-  ST current_time_{0.0};
-#endif // ALBANY_LCM
 };
 
 } // namespace Albany

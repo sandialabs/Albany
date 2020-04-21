@@ -14,10 +14,6 @@
 #include "Albany_SacadoTypes.hpp"
 #include "Albany_ThyraTypes.hpp"
 #include "Albany_TpetraTypes.hpp"
-
-#if defined(ALBANY_LCM)
-#include <set>
-#endif
 #include "PHAL_Setup.hpp"
 
 #include "Albany_DiscretizationUtils.hpp"
@@ -33,10 +29,7 @@ namespace Albany {
 class AbstractDiscretization;
 class CombineAndScatterManager;
 class DistributedParameterLibrary;
-#if defined(ALBANY_LCM)
-// Forward declaration needed for Schwarz coupling
-class Application;
-#endif
+
 #if defined(ALBANY_EPETRA)
 struct EigendataStruct;
 #endif
@@ -128,18 +121,6 @@ struct Workset
   // Needed for Schwarz coupling and for dirichlet conditions based on dist
   // parameters.
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
-#if defined(ALBANY_LCM)
-  // Needed for Schwarz coupling
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
-
-  Teuchos::RCP<Albany::Application> current_app_;
-
-  std::set<int> fixed_dofs_;
-
-  bool is_schwarz_bc_{false};
-
-  Teuchos::ArrayRCP<double*> boundary_indicator;
-#endif
 
   int spatial_dimension_{0};
 
