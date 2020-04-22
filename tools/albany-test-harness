@@ -29,40 +29,19 @@ ALBANY_BUILD_TYPES = \
     "trikota" : [
         ("TRILINOS_TRIKOTA",  "ON"),
     ],
-    "felix" : [
-        ("ALBANY_FELIX", "ON"),
-    ],
-    "peridigm" : [
-        ("ALBANY_PERIDIGM", "ON"),
+    "landice" : [
+        ("ALBANY_LANDICE", "ON"),
     ],
     "cism" : [
         "felix",
         ("ALBANY_CISM_INTERFACE", "OFF"),
     ],
     "mpas" : [
-        "felix",
+        "landice",
         ("ALBANY_MPAS_INTERFACE", "OFF"),
     ],
     "performance" : [
         ("ALBANY_PERFORMANCE_TESTS", "ON"),
-    ],
-    "lame" : [
-        ("ALBANY_LAME", "ON"),
-    ],
-    "lament" : [
-        ("ALBANY_LAMENT", "ON"),
-    ],
-    "ascr" : [
-        ("ALBANY_ASCR", "ON"),
-    ],
-    "hydride" : [
-        ("ALBANY_HYDRIDE", "ON"),
-    ],
-    "amp" : [
-        ("ALBANY_AMP", "ON"),
-    ],
-    "ci" : [
-        ("ALBANY_CI", "ON"),
     ],
     "scorec" : [
         ("ALBANY_SCOREC", "ON"),
@@ -71,17 +50,11 @@ ALBANY_BUILD_TYPES = \
     ],
     "complete" : [
         "trikota",
-        "felix",
-        "lcm",
-        "ascr",
-        "hydride",
-        "ato",
+        "landice",
         "performance"
     ],
     "irina-full" : [
         "complete",
-        "amp",
-        "lame",
         "mpas",
 
         ("TRILINOS_TRIKOTA",  "OFF"),

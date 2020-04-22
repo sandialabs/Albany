@@ -2,7 +2,6 @@
 # Each line is a file pattern followed by one or more owners.
 
 # These owners will be the default owners for everything in the repo.
-#*       @gahansen
 
 # Order is important. The last matching pattern has the most precedence.
 # So if a pull request only touches javascript files, only these owners
@@ -12,10 +11,4 @@
 # You can also use email addresses if you prefer.
 #docs/*  docs@example.com
 
-src/AFRL/*     @gahansen @tjcorona
-src/AMP/*      @ibaned
-src/ANISO/*    @ibaned
-src/CTM/*      @bgranzow
 src/LandIce/*  @mperego
-src/MOR/*      @plindsa @jfike
-src/QCAD/*     @enielse
