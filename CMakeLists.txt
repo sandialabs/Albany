@@ -824,22 +824,6 @@ ELSE()
   MESSAGE("-- APF                             is NOT Enabled.")
 ENDIF()
 
-# Set optional dependency on TDM, defaults to Disabled
-OPTION(ENABLE_TDM "Flag to turn on TDM source code" OFF)
-IF (ENABLE_TDM)
-  IF (NOT ENABLE_SCOREC) 
-    MESSAGE(FATAL_ERROR
-    "\nError: TDM requires enabling SCOREC!  Re-compile with -DENABLE_SCOREC=ON!")
-  ENDIF()
-  SET(ALBANY_APF TRUE)
-  ADD_DEFINITIONS(-DALBANY_TDM)
-  MESSAGE("-- TDM       is Enabled, compiling with -DALBANY_TDM")
-  SET(ALBANY_TDM TRUE)
-ELSE()
-  MESSAGE("-- TDM       is NOT Enabled.")
-  SET(ALBANY_TDM FALSE)
-ENDIF()
-
 OPTION(ENABLE_OMEGA_H "Enable Omega_h dependency for adaptation" OFF)
 SET(ALBANY_OMEGA_H_DIR "" CACHE PATH "Path to Omega_h installation")
 IF(ENABLE_OMEGA_H)
