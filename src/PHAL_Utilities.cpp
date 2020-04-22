@@ -54,19 +54,6 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
       int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
       return app->getNumEquations()*(node_count + side_node_count*numLevels);
     }
-#ifdef ALBANY_AERAS
-    if ((problemName == "Aeras Hydrostatic")  && (explicit_scheme == true))
-    {
-      return 1;
-    }
-    if (problemName == "Aeras Shallow Water No AD 3D") {
-      if (explicit_scheme == false) {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Implicit time-integration " <<
-                                   "not supported for Aeras Shallow Water No AD 3D problem type!\n"); 
-      }
-      return 1; 
-    }
-#endif
    }
    return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
      app, app->getEnrichedMeshSpecs()[ebi].get());

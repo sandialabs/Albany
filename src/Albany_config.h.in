@@ -3,7 +3,6 @@
 
 // ======================== Albany packages and subpackages macros ============================== //
 
-#cmakedefine ALBANY_AERAS
 #cmakedefine ALBANY_APF
 #cmakedefine ALBANY_AMP
 #cmakedefine ALBANY_CATALYST
@@ -116,10 +115,6 @@
 #cmakedefine ALBANY_BGL
 
 // ================ Package-specific macros ================= //
-
-#ifdef ALBANY_AERAS
-  #cmakedefine AERAS_IMPLICIT_HS
-#endif
 
 #ifdef ALBANY_LANDICE
   // --- LandIce

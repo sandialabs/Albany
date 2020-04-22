@@ -23,10 +23,6 @@
 #include "LandIce_ResponseGLFlux.hpp"
 #include "LandIce_ResponseBoundarySquaredL2Norm.hpp"
 #endif
-#ifdef ALBANY_AERAS
-#include "Aeras_ShallowWaterResponseL2Error.hpp"
-#include "Aeras_ShallowWaterResponseL2Norm.hpp"
-#endif
 
 template<typename EvalT, typename Traits>
 Albany::ResponseUtilities<EvalT,Traits>::ResponseUtilities(
@@ -202,17 +198,6 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     std::cout << "WARNING: 'PHAL Thermal EnergyT' is deprecated. You can just use 'PHAL Thermal Energy' (no T at the end).\n";
     res_ev = rcp(new PHAL::ResponseThermalEnergy<EvalT,Traits>(*p, dl));
   }
-
-#ifdef ALBANY_AERAS
-  else if (responseName == "Aeras Shallow Water L2 Error")
-  {
-    res_ev = rcp(new Aeras::ShallowWaterResponseL2Error<EvalT,Traits>(*p, dl));
-  }
-  else if (responseName == "Aeras Shallow Water L2 Norm")
-  {
-    res_ev = rcp(new Aeras::ShallowWaterResponseL2Norm<EvalT,Traits>(*p, dl));
-  }
-#endif
 
   else if (responseName == "Element Size Field")
   {

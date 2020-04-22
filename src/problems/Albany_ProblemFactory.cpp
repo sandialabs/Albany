@@ -26,15 +26,6 @@
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #endif
 
-#ifdef ALBANY_AERAS
-#include "Aeras/problems/Aeras_ShallowWaterProblem.hpp"
-#include "Aeras/problems/Aeras_ShallowWaterProblemNoAD.hpp"
-#include "Aeras/problems/Aeras_XZScalarAdvectionProblem.hpp"
-#include "Aeras/problems/Aeras_XScalarAdvectionProblem.hpp"
-#include "Aeras/problems/Aeras_XZHydrostaticProblem.hpp"
-#include "Aeras/problems/Aeras_HydrostaticProblem.hpp"
-#endif
-
 #ifdef ALBANY_LANDICE
 #include "LandIce/problems/LandIce_ProblemFactory.hpp"
 #endif
@@ -161,29 +152,6 @@ Albany::ProblemFactory::create()
   else if (LandIce::ProblemFactory::hasProblem(method)) {
     LandIce::ProblemFactory felix_factory(problemParams,discretizationParams,paramLib);
     strategy = felix_factory.create();
-  }
-#endif
-#ifdef ALBANY_AERAS
-  else if (method == "Aeras Shallow Water" ) {
-    strategy = rcp(new Aeras::ShallowWaterProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "Aeras Shallow Water 3D" ) {
-    strategy = rcp(new Aeras::ShallowWaterProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "Aeras Shallow Water No AD 3D" ) {
-    strategy = rcp(new Aeras::ShallowWaterProblemNoAD(problemParams, paramLib, 3));
-  }
-  else if (method == "Aeras XZ Scalar Advection" ) {
-    strategy = rcp(new Aeras::XZScalarAdvectionProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "Aeras X Scalar Advection" ) {
-    strategy = rcp(new Aeras::XScalarAdvectionProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "Aeras XZ Hydrostatic" ) {
-    strategy = rcp(new Aeras::XZHydrostaticProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "Aeras Hydrostatic" ) {
-    strategy = rcp(new Aeras::HydrostaticProblem(problemParams, paramLib, 2));
   }
 #endif
   else {

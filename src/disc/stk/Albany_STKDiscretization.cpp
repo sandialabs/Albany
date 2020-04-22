@@ -889,21 +889,6 @@ STKDiscretization::transformMesh()
       *stk::mesh::field_data(*surfaceHeight_field, overlapnodes[i]) = s;
     }
   }
-#ifdef ALBANY_AERAS
-  else if (transformType == "Aeras Schar Mountain") {
-    *out << "Aeras Schar Mountain transformation!" << endl;
-    double rhoOcean = 1028.0;  // ocean density, in kg/m^3
-    for (int i = 0; i < numOverlapNodes; i++) {
-      double* x    = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
-      x[0]         = x[0];
-      double hstar = 0.0, h;
-      if (std::abs(x[0] - 150.0) <= 25.0)
-        hstar = 3.0 * std::pow(cos(M_PI * (x[0] - 150.0) / 50.0), 2);
-      h    = hstar * std::pow(cos(M_PI * (x[0] - 150.0) / 8.0), 2);
-      x[1] = x[1] + h * (25.0 - x[1]) / 25.0;
-    }
-  }
-#endif
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,

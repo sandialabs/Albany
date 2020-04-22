@@ -126,11 +126,6 @@ createResponseFunction(
      name == "Surface Mass Balance Mismatch" ||
      name == "Grounding Line Flux" ||
      name == "Boundary Squared L2 Norm" ||
-     name == "Aeras Shallow Water L2 Error" ||
-     name == "Aeras Shallow Water L2 Norm" ||
-     name == "Aeras Hydrostatic L2 Norm" ||
-     name == "Aeras Hydrostatic L2 Error" ||
-     name == "Aeras Total Volume" ||
      name == "Center Of Mass" ||
      name == "Save Field" ||
      name == "Region Boundary" ||

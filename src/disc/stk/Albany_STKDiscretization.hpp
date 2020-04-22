@@ -167,20 +167,6 @@ class STKDiscretization : public AbstractDiscretization
     return m_overlap_jac_factory->createOp();
   }
 
-#ifdef ALBANY_AERAS
-  //! Create implicit Jacobian operator (owned and overlapped) (for Aeras)
-  Teuchos::RCP<Thyra_LinearOp>
-  createImplicitJacobianOp() const
-  {
-    return m_jac_factory->createOp();
-  }
-  Teuchos::RCP<Thyra_LinearOp>
-  createImplicitOverlapJacobianOp() const
-  {
-    return m_overlap_jac_factory->createOp();
-  }
-#endif
-
   bool
   isExplicitScheme() const
   {

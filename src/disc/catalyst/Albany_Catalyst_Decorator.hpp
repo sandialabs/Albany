@@ -42,19 +42,10 @@ public:
   //! Get Tpetra Jacobian graph
   Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const override;
 
-#ifdef ALBANY_AERAS 
-  //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
-  Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const override;
-#endif
-
   //! Get overlap Jacobian graph
   Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const override;
   //! Get Tpetra overlap Jacobian graph
   Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const override;
-#ifdef ALBANY_AERAS 
-  //! Get implicit Tpetra Jacobian graph (for Aeras hyperviscosity)
-  Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const override;
-#endif
 
   //! Get Node map
   Teuchos::RCP<const Epetra_Map> getNodeMap() const override;

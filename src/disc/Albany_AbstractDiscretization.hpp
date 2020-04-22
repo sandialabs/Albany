@@ -73,17 +73,6 @@ class AbstractDiscretization
   virtual Teuchos::RCP<Thyra_LinearOp>
   createOverlapJacobianOp() const = 0;
 
-#ifdef ALBANY_AERAS
-  //! Get implicit Jacobian linear operator (for Aeras hyperviscosity)
-  virtual Teuchos::RCP<Thyra_LinearOp>
-  createImplicitJacobianOp() const = 0;
-
-  //! Get overlapped implicit Jacobian linear operator operator (for Aeras
-  //! hyperviscosity)
-  virtual Teuchos::RCP<Thyra_LinearOp>
-  createImplicitOverlapJacobianOp() const = 0;
-#endif
-
   //! Returns boolean telling code whether explicit scheme is used (needed for
   //! Aeras problems only)
   virtual bool

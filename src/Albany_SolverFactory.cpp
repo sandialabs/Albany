@@ -12,10 +12,6 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Macros.hpp"
 
-#ifdef ALBANY_AERAS
-#include "Aeras/Aeras_HVDecorator.hpp"
-#endif
-
 #include "Piro_ProviderBase.hpp"
 #include "Piro_NOXSolver.hpp"
 #include "Piro_SolverFactory.hpp"
@@ -184,90 +180,6 @@ SolverFactory::createAndGetAlbanyApp(
 {
   const Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
-
-#ifdef ALBANY_AERAS
-  if (solutionMethod == "Aeras Hyperviscosity") {
-    // std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras
-    // Hyperviscosity" << std::endl;
-    // Check if HV coefficient tau is zero of "Explicit HV" is false. Then there
-    // is no need for Aeras HVDecorator.
-
-    double tau;
-    bool   useExplHyperviscosity;
-
-    std::string swProblem_name    = "Shallow Water Problem",
-                hydroProblem_name = "Hydrostatic Problem";
-
-    bool swProblem    = problemParams->isSublist(swProblem_name);
-    bool hydroProblem = problemParams->isSublist(hydroProblem_name);
-
-    if ((!swProblem) && (!hydroProblem)) {
-      *out << "Error: Hyperviscosity can only be used with Aeras:Shallow Water "
-              "or Aeras:Hydrostatic."
-           << std::endl;
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true,
-          std::logic_error,
-          "Error: cannot locate " << swProblem_name << " or "
-                                  << hydroProblem_name
-                                  << " sublist in the input file."
-                                  << "\n");
-    }
-
-    if (swProblem) {
-      tau = problemParams->sublist(swProblem_name)
-                .get<double>("Hyperviscosity Tau", 0.0);
-      useExplHyperviscosity =
-          problemParams->sublist(swProblem_name)
-              .get<bool>("Use Explicit Hyperviscosity", false);
-      *out << "Reading Shallow Water Problem List: Using explicit "
-              "hyperviscosity? "
-           << useExplHyperviscosity << "\n";
-    }
-    if (hydroProblem) {
-      tau = problemParams->sublist(hydroProblem_name)
-                .get<double>("Hyperviscosity Tau", 0.0);
-      useExplHyperviscosity =
-          problemParams->sublist(hydroProblem_name)
-              .get<bool>("Use Explicit Hyperviscosity", false);
-      *out
-          << "Reading Hydrostatic Problem List: Using explicit hyperviscosity? "
-          << useExplHyperviscosity << "\n";
-    }
-
-    if ((useExplHyperviscosity) && (tau != 0.0)) {
-      ///// make a solver, repeated code
-      const Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-      const Teuchos::RCP<Teuchos::ParameterList> stratList =
-          Piro::extractStratimikosParams(piroParams);
-      // Create and setup the Piro solver factory
-      Piro::SolverFactory piroFactory;
-      // Setup linear solver
-      Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-      enableIfpack2(linearSolverBuilder);
-      enableMueLu(linearSolverBuilder);
-      linearSolverBuilder.setParameterList(stratList);
-      const Teuchos::RCP<Thyra_LOWS_Factory> lowsFactory = createLinearSolveStrategy(linearSolverBuilder);
-
-      ///// create an app and a model evaluator
-
-      albanyApp = Teuchos::rcp (new Application(appComm, appParams, initial_guess, is_schwarz_));
-      Teuchos::RCP<Thyra_ModelEvaluator> modelHV(new Aeras::HVDecorator(albanyApp, appParams));
-
-      Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;
-
-      modelWithSolve = Teuchos::rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelHV, lowsFactory));
-
-      observer_ = Teuchos::rcp(new PiroObserver(albanyApp, modelWithSolve));
-
-      // Piro::SolverFactory
-      return piroFactory.createSolver<ST>(
-          piroParams, modelWithSolve, Teuchos::null, observer_);
-
-    }  // if useExplHV=true and tau <>0.
-
-  }  // if Aeras HyperViscosity
-#endif
 
   model_ = createAlbanyAppAndModel(albanyApp, appComm, initial_guess, createAlbanyApp);
 

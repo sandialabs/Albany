@@ -246,8 +246,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     solMethod = Transient;
   } else if (solutionMethod == "Eigensolve") {
     solMethod = Eigensolve;
-  } else if (solutionMethod == "Aeras Hyperviscosity") {
-    solMethod = Transient;
   } else if (
       solutionMethod == "Transient Tempus" || "Transient Tempus No Piro") {
 #ifdef ALBANY_TEMPUS
@@ -342,7 +340,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         std::logic_error,
         "Solution Method must be Steady, Transient, Transient Tempus, "
         "Transient Tempus No Piro, "
-            << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : "
+            << "Continuation, Eigensolve, not : "
             << solutionMethod);
   }
 
