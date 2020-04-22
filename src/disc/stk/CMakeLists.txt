@@ -55,13 +55,6 @@ IF (ALBANY_LANDICE)
   SET(HEADERS ${HEADERS} Albany_ExtrudedSTKMeshStruct.hpp)
 ENDIF()
 
-IF (ALBANY_AERAS)
-  SET(SOURCES ${SOURCES} Aeras_SpectralDiscretization.cpp
-                         Aeras_SpectralOutputSTKMeshStruct.cpp)
-  SET(HEADERS ${HEADERS} Aeras_SpectralDiscretization.hpp
-                         Aeras_SpectralOutputSTKMeshStruct.hpp)
-ENDIF()
-
 INCLUDE_DIRECTORIES (
   ${Trilinos_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}

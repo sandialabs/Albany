@@ -286,14 +286,7 @@ AdaptiveSolutionManager::resizeMeshDataArrays(
   //       You need to figure out how to pass the graph in a Tpetra-free way
   //       though...
   overlapped_f = Thyra::createMember(overlapped_vs);
-#ifdef ALBANY_AERAS
-  // IKT, 1/20/15: the following is needed to ensure Laplace matrix is
-  // non-diagonal for Aeras problems that have hyperviscosity and are integrated
-  // using an explicit time integration scheme.
-  overlapped_jac = disc->createImplicitOverlapJacobianOp();
-#else
   overlapped_jac = disc->createOverlapJacobianOp();
-#endif
 
   // This call allocates the non-overlapped MV
   current_soln = disc_->getSolutionMV();

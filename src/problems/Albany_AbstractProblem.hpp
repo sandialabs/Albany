@@ -52,7 +52,6 @@ enum SolutionMethodType {
   Transient,
   TransientTempus,
   Eigensolve,
-  AerasHyperviscosity,
   Unknown
 };
 

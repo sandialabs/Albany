@@ -29,9 +29,6 @@ ALBANY_BUILD_TYPES = \
     "trikota" : [
         ("TRILINOS_TRIKOTA",  "ON"),
     ],
-    "aeras" : [
-        ("ALBANY_AERAS", "ON"),
-    ],
     "felix" : [
         ("ALBANY_FELIX", "ON"),
     ],
@@ -76,7 +73,6 @@ ALBANY_BUILD_TYPES = \
         "trikota",
         "felix",
         "lcm",
-        "aeras",
         "ascr",
         "hydride",
         "ato",

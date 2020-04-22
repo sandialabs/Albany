@@ -6,12 +6,6 @@ IF(ALBANY_DEMO_PDES)
   ENDIF()
 ENDIF(ALBANY_DEMO_PDES)
 
-# Aeras ##################
-
-IF(ALBANY_AERAS)
-  add_subdirectory(Aeras)
-ENDIF()
-
 # LandIce ##################
 
 IF(ALBANY_LANDICE AND ALBANY_SEACAS)
