@@ -662,15 +662,6 @@ ELSE()
   ENDIF()
 ENDIF()
 
-OPTION(ENABLE_TSUNAMI "Flag to turn on TSUNAMI Source code" OFF)
-IF (ENABLE_TSUNAMI)
-  MESSAGE("-- TSUNAMI                         is Enabled")
-  SET(ALBANY_TSUNAMI TRUE)
-ELSE()
-  MESSAGE("-- TSUNAMI                         is NOT Enabled.")
-  SET(ALBANY_TSUNAMI FALSE)
-ENDIF()
-
 # set optional dependency of mesh on parameters, defaults to Disabled
 OPTION(ENABLE_MESH_DEPENDS_ON_PARAMETERS "Flag to turn on dependency of mesh on parameters, e.g for shape optimization" OFF)
 IF (ENABLE_MESH_DEPENDS_ON_PARAMETERS)

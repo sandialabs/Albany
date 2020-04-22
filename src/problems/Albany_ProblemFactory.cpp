@@ -39,11 +39,6 @@
 #include "LandIce/problems/LandIce_ProblemFactory.hpp"
 #endif
 
-#ifdef ALBANY_TSUNAMI
-#include "Tsunami/problems/Tsunami_NavierStokes.hpp"
-#include "Tsunami/problems/Tsunami_Boussinesq.hpp"
-#endif
-
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
        const Teuchos::RCP<ParamLib>& paramLib_,
@@ -189,23 +184,6 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Aeras Hydrostatic" ) {
     strategy = rcp(new Aeras::HydrostaticProblem(problemParams, paramLib, 2));
-  }
-#endif
-#ifdef ALBANY_TSUNAMI
-  else if (method == "Tsunami Steady Stokes 2D" ) {
-    strategy = rcp(new Tsunami::NavierStokes(problemParams, paramLib, 2, false, false));
-  }
-  else if (method == "Tsunami Navier Stokes 2D" ) {
-    strategy = rcp(new Tsunami::NavierStokes(problemParams, paramLib, 2));
-  }
-  else if (method == "Tsunami Navier Stokes 3D" ) {
-    strategy = rcp(new Tsunami::NavierStokes(problemParams, paramLib, 3));
-  }
-  else if (method == "Tsunami Boussinesq 1D" ) {
-    strategy = rcp(new Tsunami::Boussinesq(problemParams, paramLib, 1));
-  }
-  else if (method == "Tsunami Boussinesq 2D" ) {
-    strategy = rcp(new Tsunami::Boussinesq(problemParams, paramLib, 2));
   }
 #endif
   else {
