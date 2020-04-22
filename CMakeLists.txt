@@ -805,16 +805,6 @@ IF(ENABLE_OMEGA_H)
   SET(ALBANY_OMEGA_H TRUE)
 ENDIF()
 
-# ParaView's Catalyst CoProcessing package
-OPTION(ENABLE_CATALYST "Flag to turn on support for the Catalyst CoProcessing library" OFF)
-IF (ENABLE_CATALYST)
-  MESSAGE("-- Catalyst                        is Enabled")
-  SET(ALBANY_CATALYST TRUE)
-ELSE()
-  MESSAGE("-- Catalyst                        is NOT Enabled.")
-  SET(ALBANY_CATALYST FALSE)
-ENDIF()
-
 # Add option for CONTACT work, defaults to disabled
 OPTION(ENABLE_CONTACT "Flag to turn on CONTACT code in LCM" OFF)
 IF (ENABLE_CONTACT)

@@ -29,9 +29,6 @@
 #include "Albany_PUMIDiscretization.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #endif
-#ifdef ALBANY_CATALYST
-#include "Albany_Catalyst_Decorator.hpp"
-#endif
 
 Albany::DiscretizationFactory::DiscretizationFactory(
         const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
@@ -53,10 +50,6 @@ explicit_scheme(explicit_scheme_) {
         if (problemParams->isSublist("Adaptation"))
 
             adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
-
-        if (problemParams->isSublist("Catalyst"))
-
-            catalystParams = Teuchos::sublist(problemParams, "Catalyst", true);
     }
 }
 
@@ -198,15 +191,6 @@ Albany::DiscretizationFactory::createDiscretization(
     setupInternalMeshStruct(neq, sis, side_set_sis, req, side_set_req);
     Teuchos::RCP<Albany::AbstractDiscretization> result =
             createDiscretizationFromInternalMeshStruct(sideSetEquations, rigidBodyModes);
-
-    // Wrap the discretization in the catalyst decorator if needed.
-#ifdef ALBANY_CATALYST
-
-    if (Teuchos::nonnull(catalystParams) && catalystParams->get<bool>("Interface Activated", false))
-        result = Teuchos::rcp(static_cast<Albany::AbstractDiscretization*> (
-            new Catalyst::Decorator(result, catalystParams)));
-
-#endif
 
     return result;
 }

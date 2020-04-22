@@ -144,7 +144,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Dirichlet BCs", false, "");
   validPL->sublist("Neumann BCs", false, "");
   validPL->sublist("Adaptation", false, "");
-  validPL->sublist("Catalyst", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
   validPL->set<bool>("Overwrite Nominal Values With Final Point",false,
                      "Whether 'reportFinalPoint' should be allowed to overwrite nominal values");

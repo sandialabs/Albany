@@ -750,14 +750,6 @@ ELSE()
   SET(ALBANY_PUMI_INCLUDE_DIRS )
 ENDIF()
 
-
-# Catalyst CoProcessing
-if(ALBANY_CATALYST)
-  set(ALBANY_CATALYST_INCLUDE_DIRS ./disc/catalyst)
-  include_directories(${ALBANY_CATALYST_INCLUDE_DIRS})
-endif()
-
-
 # Now build executables from this library, tailored main()s, and Trilinos
 IF (NOT ALBANY_LIBRARIES_ONLY)
 
@@ -836,10 +828,6 @@ ENDIF()
 IF(ALBANY_APF)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPUMI)
 ENDIF()
-
-IF(ALBANY_CATALYST)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyCatalyst)
-endif()
 
 # Can remove this once rebalance is in Trilnos again
 IF(ALBANY_STK_REBALANCE)

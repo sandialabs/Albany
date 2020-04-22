@@ -114,9 +114,6 @@ class DiscretizationFactory {
     //! Parameter list specifying solver parameters
     Teuchos::RCP<Teuchos::ParameterList> piroParams;
 
-    //! Parameter list specifying parameters for Catalyst
-    Teuchos::RCP<Teuchos::ParameterList> catalystParams;
-
     Teuchos::RCP<const Teuchos_Comm> commT;
 
     //The following are for Aeras hydrostatic problems

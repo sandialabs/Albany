@@ -8,11 +8,3 @@ IF(ALBANY_APF)
   add_subdirectory(pumi)
 ENDIF()
 
-if(ALBANY_CATALYST)
-  add_subdirectory(catalyst)
-endif()
-
-IF(ALBANY_STK)
-  add_subdirectory(stk)
-ENDIF()
-
