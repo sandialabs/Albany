@@ -6,12 +6,6 @@ IF(ALBANY_DEMO_PDES)
   ENDIF()
 ENDIF(ALBANY_DEMO_PDES)
 
-# TDM ###############
-
-IF(ALBANY_TDM)
-  add_subdirectory(TDM)
-ENDIF(ALBANY_TDM)
-
 # Aeras ##################
 
 IF(ALBANY_AERAS)
