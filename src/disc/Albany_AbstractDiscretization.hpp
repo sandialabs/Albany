@@ -20,10 +20,6 @@
 
 namespace Albany {
 
-#ifdef ALBANY_CONTACT
-class ContactManager;
-#endif
-
 class AbstractDiscretization
 {
  public:
@@ -129,12 +125,6 @@ class AbstractDiscretization
   virtual void
   setReferenceConfigurationManager(
       const Teuchos::RCP<AAdapt::rc::Manager>& rcm) = 0;
-
-#ifdef ALBANY_CONTACT
-  //! Get the contact manager
-  virtual Teuchos::RCP<const ContactManager>
-  getContactManager() const = 0;
-#endif
 
   virtual const WorksetArray<Teuchos::ArrayRCP<double>>::type&
   getSphereVolume() const = 0;

@@ -276,19 +276,6 @@ SET(HEADERS ${HEADERS}
   disc/Albany_NodalDOFManager.hpp
   )
 
-IF (ALBANY_CONTACT)
-
-  SET(SOURCES ${SOURCES}
-    disc/Albany_ContactManager.cpp
-    evaluators/scatter/PHAL_MortarContactResidual.cpp
-  )
-  SET(HEADERS ${HEADERS}
-    disc/Albany_ContactManager.hpp
-    evaluators/scatter/PHAL_MortarContactResidual.hpp
-    evaluators/scatter/PHAL_MortarContactResidual_Def.hpp
-  )
-ENDIF ()
-
 #evaluators
 SET(SOURCES ${SOURCES}
   evaluators/bc/PHAL_Dirichlet.cpp

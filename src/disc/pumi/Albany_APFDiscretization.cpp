@@ -9,9 +9,6 @@
 #include "Albany_Utils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_PUMIOutput.hpp"
-#if defined(ALBANY_CONTACT)
-#include "Albany_ContactManager.hpp"
-#endif
 #include "PHAL_AlbanyTraits.hpp"
 #include <PHAL_Dimension.hpp>
 

@@ -252,15 +252,6 @@ class STKDiscretization : public AbstractDiscretization
   setReferenceConfigurationManager(
       const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
 
-#ifdef ALBANY_CONTACT
-  //! Get the contact manager
-  Teuchos::RCP<const ContactManager>
-  getContactManager() const
-  {
-    return contactManager;
-  }
-#endif
-
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   getCoords() const
   {
@@ -646,10 +637,6 @@ class STKDiscretization : public AbstractDiscretization
   WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type coords;
   WorksetArray<Teuchos::ArrayRCP<double>>::type  sphereVolume;
   WorksetArray<Teuchos::ArrayRCP<double*>>::type latticeOrientation;
-
-#ifdef ALBANY_CONTACT
-  Teuchos::RCP<ContactManager> contactManager;
-#endif
 
   //! Connectivity map from elementGID to workset and LID in workset
   WsLIDList elemGIDws;

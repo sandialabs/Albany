@@ -117,11 +117,6 @@ public:
   void setCoordinates(const Teuchos::ArrayRCP<const double>& c) override;
   void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm) override;
 
-#ifdef ALBANY_CONTACT
-//! Get the contact manager
-  Teuchos::RCP<const ContactManager> getContactManager() const override { return contactManager; }
-#endif
-
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const override {
     return coords;
   }
@@ -482,10 +477,6 @@ protected:
   WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
   WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
   WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
-
-#ifdef ALBANY_CONTACT
-  Teuchos::RCP<const ContactManager> contactManager;
-#endif
 
   //! Connectivity map from elementGID to workset and LID in workset
   WsLIDList  elemGIDws;
