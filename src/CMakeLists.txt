@@ -643,8 +643,7 @@ ELSE()
                        ${Trilinos_TPL_INCLUDE_DIRS})
 ENDIF()
 
-include_directories (${ALBANY_PUMI_INCLUDE_DIRS}
-                     ./
+include_directories (./
                      ./evaluators
                      ./evaluators/bc
                      ./evaluators/gather
@@ -666,14 +665,6 @@ include_directories (${ALBANY_PUMI_INCLUDE_DIRS}
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
-# RPI APF mesh interface
-IF(ALBANY_APF)
-  SET(ALBANY_PUMI_INCLUDE_DIRS ./disc/pumi)
-  include_directories (${ALBANY_PUMI_INCLUDE_DIRS})
-ELSE()
-  SET(ALBANY_PUMI_INCLUDE_DIRS )
-ENDIF()
-
 # Now build executables from this library, tailored main()s, and Trilinos
 IF (NOT ALBANY_LIBRARIES_ONLY)
 
@@ -693,11 +684,6 @@ ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
-
-IF (ALBANY_MESHDB_TOOLS)
-  add_executable(exopumiconvert disc/tools/exopumiconvert.cpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} exopumiconvert)
-ENDIF()
 
 ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 # End declaration of executables
@@ -738,11 +724,6 @@ IF (ALBANY_LANDICE)
   IF (ENABLE_CISM_INTERFACE)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
   ENDIF()
-ENDIF()
-
-# RPI APF mesh interface
-IF(ALBANY_APF)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPUMI)
 ENDIF()
 
 # Can remove this once rebalance is in Trilnos again

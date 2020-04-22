@@ -695,21 +695,6 @@ ELSE()
   SET(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION FALSE)
 ENDIF()
 
-# RPI APF mesh interface
-IF (ALBANY_APF)
-  MESSAGE("-- APF                             is Enabled")
-ELSE()
-  MESSAGE("-- APF                             is NOT Enabled.")
-ENDIF()
-
-OPTION(ENABLE_OMEGA_H "Enable Omega_h dependency for adaptation" OFF)
-SET(ALBANY_OMEGA_H_DIR "" CACHE PATH "Path to Omega_h installation")
-IF(ENABLE_OMEGA_H)
-  FIND_PACKAGE(Omega_h 9.0.0 REQUIRED PATHS "${ALBANY_OMEGA_H_DIR}")
-  MESSAGE(STATUS "Omega_h found at ${Omega_h_CONFIG}")
-  SET(ALBANY_OMEGA_H TRUE)
-ENDIF()
-
 ## Other Albany Template Options here:
 MESSAGE("\nAlbany Templated Data Type Options:")
 

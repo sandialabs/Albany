@@ -12,12 +12,6 @@ IF(ALBANY_LANDICE AND ALBANY_SEACAS)
   add_subdirectory(LandIce)
 ENDIF()
 
-# AMP   ##################
-
-IF(ALBANY_AMP)
-  add_subdirectory(AMP)
-ENDIF()
-
 IF(ALBANY_PERFORMANCE_TESTS)
   add_subdirectory(PerformanceTests)
 ENDIF()

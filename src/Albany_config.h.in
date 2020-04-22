@@ -3,10 +3,7 @@
 
 // ======================== Albany packages and subpackages macros ============================== //
 
-#cmakedefine ALBANY_APF
-#cmakedefine ALBANY_AMP
 #cmakedefine ALBANY_LANDICE
-#cmakedefine ALBANY_HYDRIDE
 
 // ===================== Macros to identify packages found in Trilinos ======================= //
 
@@ -103,12 +100,6 @@
 #cmakedefine ALBANY_TAN_FAD_TYPE_SLFAD
 #cmakedefine ALBANY_TAN_SLFAD_SIZE ${ALBANY_TAN_SLFAD_SIZE}
 #cmakedefine ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-
-// ============= Macros used to enable additional code, not limited to a particular package ============== //
-
-#cmakedefine ALBANY_OMEGA_H
-#cmakedefine ALBANY_ASCR
-#cmakedefine ALBANY_BGL
 
 // ================ Package-specific macros ================= //
 

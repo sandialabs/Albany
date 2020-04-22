@@ -655,8 +655,6 @@ Application::finalSetUp(
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->setSolutionManager(solMgr);
 
   try {
-    // dp-todo getNodalParameterSIS() needs to be implemented in PUMI. Until
-    // then, catch the exception and continue.
     // Create Distributed parameters and initialize them with data stored in the
     // mesh.
     const StateInfoStruct& distParamSIS = disc->getNodalParameterSIS();
