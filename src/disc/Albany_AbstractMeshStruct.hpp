@@ -76,10 +76,7 @@ struct AbstractMeshStruct {
 
     //! Internal mesh specs type needed
     enum msType {
-      STK_MS,
-#ifdef ALBANY_SCOREC
-      PUMI_MS,
-#endif
+      STK_MS
     };
 
     virtual void setFieldAndBulkData(

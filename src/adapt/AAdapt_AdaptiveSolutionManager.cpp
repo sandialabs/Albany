@@ -9,10 +9,6 @@
 #if defined(ALBANY_STK)
 #include "AAdapt_CopyRemesh.hpp"
 #endif
-#ifdef ALBANY_SCOREC
-#include "AAdapt_MeshAdapt.hpp"
-#include "Albany_APFDiscretization.hpp"
-#endif
 #include "AAdapt_RC_Manager.hpp"
 
 #include "Albany_CombineAndScatterManager.hpp"
@@ -158,14 +154,6 @@ AdaptiveSolutionManager::AdaptiveSolutionManager(
           Albany::CombineMode::INSERT);
     }
   }
-#if defined(ALBANY_SCOREC)
-  const Teuchos::RCP<Albany::APFDiscretization> apf_disc =
-      Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(disc_);
-  if (!apf_disc.is_null()) {
-    apf_disc->writeSolutionMVToMeshDatabase(*overlapped_soln, 0, true);
-    apf_disc->initTemperatureHack();
-  }
-#endif
 }
 
 void
@@ -180,16 +168,6 @@ AdaptiveSolutionManager::buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
         Teuchos::rcp(new CopyRemesh(adaptParams_, paramLib_, stateMgr_, comm_));
   } else
 #endif
-      if (first_three_chars == "RPI") {
-#ifdef ALBANY_SCOREC
-    adapter_ = Teuchos::rcp(
-        new MeshAdapt(adaptParams_, paramLib_, stateMgr_, rc_mgr, comm_));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::runtime_error, "Error! 'RPI' adaptation requires SCOREC.\n");
-    (void)rc_mgr;
-#endif
-  } else
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,

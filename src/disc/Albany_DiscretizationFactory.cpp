@@ -25,10 +25,6 @@
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #endif
 #endif
-#ifdef ALBANY_SCOREC
-#include "Albany_PUMIDiscretization.hpp"
-#include "Albany_PUMIMeshStruct.hpp"
-#endif
 
 Albany::DiscretizationFactory::DiscretizationFactory(
         const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
@@ -146,17 +142,6 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
                 << " requested, but no longe supported as of 10/2017" << std::endl);
     } else
 #endif // ALBANY_STK
-        if (method == "PUMI") {
-#ifdef ALBANY_SCOREC
-        return Teuchos::rcp(new Albany::PUMIMeshStruct(disc_params, comm));
-#else
-        TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI",
-                Teuchos::Exceptions::InvalidParameter,
-                "Error: Discretization method " << method
-                << " requested, but not compiled in" << std::endl);
-#endif
-    } 
-
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                 "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                 "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
@@ -254,14 +239,6 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       }
       disc->updateMesh();
       return disc;
-      break;
-    }
-#endif
-#ifdef ALBANY_SCOREC
-    case Albany::AbstractMeshStruct::PUMI_MS:
-    {
-      Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
-      return Teuchos::rcp(new Albany::PUMIDiscretization(ms, commT, rigidBodyModes));
       break;
     }
 #endif

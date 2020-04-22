@@ -43,40 +43,6 @@ IF(ALBANY_STK)
   )
 ENDIF()
 
-# Mesh Adapt depends on SCOREC tools and PUMI
-IF(ALBANY_SCOREC)
-
-  SET(SOURCES ${SOURCES}
-      AAdapt_MeshAdapt.cpp
-      AAdapt_MeshAdaptMethod.cpp
-      AAdapt_ConstantSizeField.cpp
-      AAdapt_ScaledSizeField.cpp
-      AAdapt_UniformRefine.cpp
-      AAdapt_AlbanySizeField.cpp
-      AAdapt_ExtrudedAdapt.cpp
-      AAdapt_SPRSizeField.cpp
-  )
-
-  SET(HEADERS ${HEADERS}
-      AAdapt_MeshAdaptMethod.hpp
-      AAdapt_MeshAdapt.hpp
-      AAdapt_ConstantSizeField.hpp
-      AAdapt_ScaledSizeField.hpp
-      AAdapt_UniformRefine.hpp
-      AAdapt_AlbanySizeField.hpp
-      AAdapt_ExtrudedAdapt.hpp
-      AAdapt_SPRSizeField.hpp
-  )
-
-  IF(ALBANY_OMEGA_H)
-    SET(SOURCES ${SOURCES} AAdapt_MeshAdapt_Omega_h.cpp)
-    SET(HEADERS ${HEADERS} AAdapt_MeshAdapt_Omega_h.hpp)
-  ENDIF()
-
-  include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
-
-ENDIF()
-
 include_directories(${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                     ${Albany_SOURCE_DIR} / src ${Albany_SOURCE_DIR} / src / evaluators
                     ${Albany_SOURCE_DIR} / src / problems ${Albany_SOURCE_DIR} / src / responses
@@ -89,11 +55,7 @@ add_library(albanyAdapt ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 
 set_target_properties(albanyAdapt PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
-target_link_libraries(albanyAdapt ${SCOREC_LIB})
-
-IF(ALBANY_OMEGA_H)
-  target_link_libraries(albanyAdapt Omega_h::omega_h)
-ENDIF()
+target_link_libraries(albanyAdapt)
 
 IF(INSTALL_ALBANY)
 install(TARGETS albanyAdapt EXPORT albany-export

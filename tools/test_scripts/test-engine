@@ -33,14 +33,6 @@ then
 fi
 
 #
-# Do SCOREC checkout
-#
-if [ ${TRILINOS_SCOREC:-OFF} = "ON" ]
-then
-    $ALBDIR/tools/checkout_scripts/scorec-checkout 2>&1 | tee $SCOROUTDIR/checkout
-fi
-
-#
 # Do Trilinos build
 #
 
