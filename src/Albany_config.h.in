@@ -21,8 +21,6 @@
 #cmakedefine ALBANY_RBGEN
 #cmakedefine ALBANY_ROL
 #cmakedefine ALBANY_RYTHMOS
-#cmakedefine ALBANY_SCOREC
-#cmakedefine ALBANY_SCOREC_SIMMODEL
 #cmakedefine ALBANY_SEACAS
 #cmakedefine ALBANY_STOKHOS
 #cmakedefine ALBANY_STK

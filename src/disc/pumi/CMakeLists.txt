@@ -4,7 +4,7 @@
 #    in the file "license.txt" in the top-level Albany directory  //
 #*****************************************************************//
 
-# SCOREC PUMI
+# PUMI
 
 SET(SOURCES
   Albany_APFMeshStruct.cpp
@@ -25,20 +25,6 @@ SET(HEADERS
   Albany_PUMINodeData_Def.hpp
   )
 
-IF(ALBANY_SCOREC)
-  SET(SOURCES
-      ${SOURCES}
-      Albany_PUMIMeshStruct.cpp
-      Albany_PUMIDiscretization.cpp
-      Albany_PUMIBuildBox.cpp
-     )
-  SET(HEADERS
-      ${HEADERS}
-      Albany_PUMIMeshStruct.hpp
-      Albany_PUMIDiscretization.hpp
-     )
-ENDIF()
-
 IF(ALBANY_STK)
   SET(SOURCES ${SOURCES} Albany_PUMIExodus.cpp)
   SET(HEADERS ${HEADERS} Albany_PUMIExodus.hpp)
@@ -52,7 +38,7 @@ include_directories(
   )
 
 add_library(albanyPUMI ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-target_link_libraries(albanyPUMI ${SCOREC_LIB})
+target_link_libraries(albanyPUMI)
 
 IF (INSTALL_ALBANY)
   install(TARGETS albanyPUMI EXPORT albany-export

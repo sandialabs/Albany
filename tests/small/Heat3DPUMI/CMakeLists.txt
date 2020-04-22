@@ -30,7 +30,7 @@ add_test(NAME ${testName}_Tpetra
          COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=input.yaml
          "-DFILENAME=coarse_cube_out.pvd" -P
          ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "SCOREC;Tpetra;Forward")
+set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Tpetra;Forward")
 
 IF(NOT ALBANY_PARALLEL_ONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSerial.yaml
@@ -39,12 +39,12 @@ IF(NOT ALBANY_PARALLEL_ONLY)
            COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbany.exe}" -DTEST_ARGS=inputSerial.yaml
            "-DFILENAME=serial_coarse_cube_out.pvd" -P
            ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-  set_tests_properties(${testName}_SERIAL_Tpetra PROPERTIES LABELS "SCOREC;Tpetra;Forward")
+  set_tests_properties(${testName}_SERIAL_Tpetra PROPERTIES LABELS "Tpetra;Forward")
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputRegressFail.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputRegressFail.yaml COPYONLY)
   add_test(NAME ${testName}_Tpetra_RegressFail
            COMMAND ${SerialAlbany.exe} inputRegressFail.yaml)
   set_tests_properties(${testName}_Tpetra_RegressFail PROPERTIES WILL_FAIL TRUE)
-  set_tests_properties(${testName}_Tpetra_RegressFail PROPERTIES LABELS "SCOREC;Tpetra;Forward")
+  set_tests_properties(${testName}_Tpetra_RegressFail PROPERTIES LABELS "Tpetra;Forward")
 ENDIF()

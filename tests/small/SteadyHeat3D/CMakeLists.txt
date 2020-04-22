@@ -69,17 +69,3 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_nodeGIDArrayResponse.yaml
 
 add_test(${testName}_Tpetra ${Albany.exe} inputT_nodeGIDArrayResponse.yaml)
 set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
-
-####################################
-###         PUMI tests           ###
-####################################
-
-# PUMI. Serial for now.
-if (NOT ALBANY_PARALLEL_ONLY AND ALBANY_SCOREC)
-  set(testName ${testNameRoot}_pumi)
-  configure_file (${CMAKE_CURRENT_SOURCE_DIR}/inputT_pumi.yaml
-                  ${CMAKE_CURRENT_BINARY_DIR}/inputT_pumi.yaml COPYONLY)
-
-  add_test (${testName}_Tpetra ${SerialAlbany.exe} inputT_pumi.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "SCOREC;Tpetra;Forward")
-endif ()

@@ -47,10 +47,6 @@ ENDIF()
   add_subdirectory(Utils)
 ENDIF(ALBANY_STK)
 
-IF(ALBANY_SCOREC)
-  add_subdirectory(Heat3DPUMI)
-ENDIF()
-
 IF(ALBANY_STK)
   # DEMO PDES ###############
   IF(ALBANY_DEMO_PDES)

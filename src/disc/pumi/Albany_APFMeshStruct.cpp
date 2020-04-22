@@ -16,17 +16,6 @@
 
 #include <sstream>
 
-#if defined(ALBANY_SCOREC)
-#include <PCU.h>
-#endif
-#if (defined(ALBANY_SCOREC) && defined(ALBANY_SCOREC_SIMMODEL))
-#include <SimUtil.h>
-#include <gmi_sim.h>
-#endif
-#ifdef ALBANY_SCOREC
-#include <gmi_mesh.h>
-#endif
-
 // Capitalize Solution so that it sorts before other fields in Paraview. Saves a
 // few button clicks, e.g. when warping by vector.
 const char* Albany::APFMeshStruct::solution_name[3] = {"Solution", "SolutionDot", "SolutionDotDot"};
@@ -347,15 +336,6 @@ Albany::APFMeshStruct::setFieldAndBulkData(
   for (std::size_t i=0; i<sis->size(); i++) {
     StateStruct& st = *((*sis)[i]);
 
-#ifdef ALBANY_SCOREC
-    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS) {
-      if(hasRestartSolution)
-        st.restartDataAvailable = true;
-      if((shouldLoadLandIceData) && (st.entity == StateStruct::NodalDataToElemNode))
-        st.restartDataAvailable = true;
-    }
-#endif
-
     if ( ! nameSet.insert(st.name).second)
       continue; //ignore duplicates
     std::vector<PHX::DataLayout::size_type>& dim = st.dim;
@@ -536,27 +516,9 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
 void
 Albany::APFMeshStruct::initialize_libraries(int* pargc, char*** pargv)
 {
-#if defined(ALBANY_SCOREC)
-  PCU_Comm_Init();
-#endif
-#if (defined(ALBANY_SCOREC) && defined(ALBANY_SCOREC_SIMMODEL))
-  Sim_readLicenseFile(0);
-  gmi_sim_start();
-  gmi_register_sim();
-#endif
-#ifdef ALBANY_SCOREC
-  gmi_register_mesh();
-#endif
 }
 
 void
 Albany::APFMeshStruct::finalize_libraries()
 {
-#if (defined(ALBANY_SCOREC) && defined(ALBANY_SCOREC_SIMMODEL))
-  gmi_sim_stop();
-  Sim_unregisterAllKeys();
-#endif
-#if defined(ALBANY_SCOREC)
-  PCU_Comm_Free();
-#endif
 }

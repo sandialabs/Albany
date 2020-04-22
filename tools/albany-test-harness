@@ -43,11 +43,6 @@ ALBANY_BUILD_TYPES = \
     "performance" : [
         ("ALBANY_PERFORMANCE_TESTS", "ON"),
     ],
-    "scorec" : [
-        ("ALBANY_SCOREC", "ON"),
-        ("TRILINOS_SCOREC", "ON"),
-        ("TRILINOS_PARMETIS", "ON"),
-    ],
     "complete" : [
         "trikota",
         "landice",
@@ -74,7 +69,6 @@ ALBANY_BUILD_TYPES = \
         ("TRILINOS_ISORROPIA", "ON"),
         ("TRILINOS_OPTIPACK", "ON"),
         ("TRILINOS_RBGEN", "ON"),
-        ("TRILINOS_SCOREC", "ON"),
         ("TRILINOS_THREADPOOL", "ON"),
         ("TRILINOS_COUPLINGS", "ON"),
         ("TRILINOS_ZOLTAN2_EXPERIMENTAL", "ON"),
@@ -397,8 +391,6 @@ is already configured for a certain compiler."""
             print " # Set up compiler env"
             if ("TRILINOS_TRIKOTA" in os.environ and os.environ["TRILINOS_TRIKOTA"] == "ON"):
                 print " > $ALBDIR/tools/checkout_scripts/dakota-checkout"
-            if ("TRILINOS_SCOREC" in os.environ and os.environ["TRILINOS_SCOREC"] == "ON"):
-                print " > $ALBDIR/tools/checkout_scripts/scorec-checkout"
             print " > %s" % tril_fragment
             print " > make -j N"
             print " > make install"
