@@ -4,10 +4,6 @@
 #    in the file "license.txt" in the top-level Albany directory  //
 #*****************************************************************//
 
-IF(ALBANY_APF)
-  add_subdirectory(pumi)
-ENDIF()
-
 IF(ALBANY_STK)
   add_subdirectory(stk)
 ENDIF()

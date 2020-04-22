@@ -46,10 +46,6 @@
 
 #include "Kokkos_Core.hpp"
 
-#if defined(ALBANY_APF)
-#include "Albany_APFMeshStruct.hpp"
-#endif
-
 int main(int argc, char *argv[])
 {
   int status = 0;  // 0 = pass, failures are incremented
@@ -78,10 +74,6 @@ int main(int argc, char *argv[])
          )
       );
 
-#endif
-
-#if defined(ALBANY_APF)
-  Albany::APFMeshStruct::initialize_libraries(&argc, &argv);
 #endif
 
   using Teuchos::RCP;
@@ -370,10 +362,6 @@ int main(int argc, char *argv[])
   options.output_fraction = true;
   options.output_minmax = true;
   stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
-
-#ifdef ALBANY_APF
-  Albany::APFMeshStruct::finalize_libraries();
-#endif
 
   Kokkos::finalize_all();
 

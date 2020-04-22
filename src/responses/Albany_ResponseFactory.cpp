@@ -141,8 +141,7 @@ createResponseFunction(
      name == "PHAL Field Integral" ||
      name == "PHAL Field IntegralT" ||
      name == "PHAL Thermal Energy" ||
-     name == "PHAL Thermal EnergyT" ||
-     name == "AMP Energy") {
+     name == "PHAL Thermal EnergyT") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
       responses.push_back(
