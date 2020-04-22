@@ -9,7 +9,6 @@
 #cmakedefine ALBANY_CATALYST
 #cmakedefine ALBANY_LANDICE
 #cmakedefine ALBANY_HYDRIDE
-#cmakedefine ALBANY_TSUNAMI
 
 // ===================== Macros to identify packages found in Trilinos ======================= //
 

@@ -90,11 +90,6 @@ IF(ALBANY_STK)
     add_subdirectory(LandIce)
   ENDIF()
 
-  # LandIce ##################
-  IF(ALBANY_TSUNAMI AND ALBANY_SEACAS )
-    # add_subdirectory(Tsunami)
-  ENDIF()
-
 ENDIF()
 
 ###################

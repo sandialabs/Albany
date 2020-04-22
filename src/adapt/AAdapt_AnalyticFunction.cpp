@@ -33,11 +33,6 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Step X")
     F = Teuchos::rcp(new AAdapt::StepX(neq, numDim, data));
 
-#ifdef ALBANY_TSUNAMI
-  else if(name == "Tsunami Boussinesq 1D Solitary Wave")
-    F = Teuchos::rcp(new AAdapt::TsunamiBoussinesq1DSolitaryWave(neq, numDim, data));
-#endif
-
   else if(name == "TemperatureStep")
     F = Teuchos::rcp(new AAdapt::TemperatureStep(neq, numDim, data));
 
@@ -167,11 +162,6 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras TC4Init")
     F = Teuchos::rcp(new AAdapt::AerasTC4Init(neq, numDim, data));
 
-#ifdef ALBANY_TSUNAMI 
-  else if(name == "Tsunami Boussinesq 1D Solitary Wave")
-    F = Teuchos::rcp(new AAdapt::TsunamiBoussinesq1DSolitaryWave(neq, numDim, data));
-#endif  
-
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
         std::logic_error,
@@ -225,28 +215,6 @@ void AAdapt::StepX::compute(double* x, const double* X) {
         x[0] = T;
     }
 }
-//*****************************************************************************
-#ifdef ALBANY_TSUNAMI 
-AAdapt::TsunamiBoussinesq1DSolitaryWave::TsunamiBoussinesq1DSolitaryWave(int neq_, int numDim_,
-    Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq != 3 || numDim != 1 || data.size() != 3) ,//ZW changed from 5 to 3
-                               std::logic_error,
-                               "Error! Invalid call of TsunamiBoussinesq1DSolitaryWave with " 
-                              << neq << " " << numDim << " " << data.size() << "!\n");
-}
-//ZW: only need A1 and c 
-void AAdapt::TsunamiBoussinesq1DSolitaryWave::compute(double* x, const double* X) {
-    double A1 = data[0];
-    double c = data[1];
-    double X_0 = data[2]; 
-  
-    //Coordinate x is given by X[0]  
-    //FIXME, FILL IN for Zhiheng and Xiaoshu!
-    x[0] = A1*exp(-0.5*(X[0]-X_0)*(X[0]-X_0));//initial eta 
-    x[1] = A1*exp(-0.25*(X[0]-X_0)*(X[0]-X_0));//initial ualpha 
-    x[2] = 0.25*A1*exp(-0.25*(X[0]-X_0)*(X[0]-X_0))*((X[0]-X_0)*(X[0]-X_0)-2);//initial E1 
-}
-#endif
 
 //*****************************************************************************
 AAdapt::TemperatureStep::TemperatureStep(int neq_, int numDim_,
