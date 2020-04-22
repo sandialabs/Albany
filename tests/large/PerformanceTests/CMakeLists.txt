@@ -25,22 +25,7 @@ IF(ALBANY_SEACAS)
   #add_subdirectory(SteadyHeat2DSS)
 ENDIF()
 
-# QCAD ##################
-
-IF(ALBANY_QCAD)
-  add_subdirectory(Poisson)
+# LANDICE ##################
+IF(ALBANY_LANDICE )
+  add_subdirectory(LANDICE_FO_MMS)
 ENDIF()
-
-# FELIX ##################
-
-IF(ALBANY_FELIX )
-  add_subdirectory(FELIX_FO_MMS)
-ENDIF()
-
-# MOR   ##################
-
-IF(ALBANY_MOR)
-  #add_subdirectory(MOR)
-ENDIF()
-
-###################

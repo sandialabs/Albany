@@ -818,16 +818,6 @@ ENDIF()
 ## Other Albany Template Options here:
 MESSAGE("\nAlbany Templated Data Type Options:")
 
-# Throw error if using ENABLE_FAST_FELIX
-IF(ENABLE_FAST_FELIX)
-  MESSAGE(FATAL_ERROR
-  "\nError: ENABLE_FAST_FELIX has been removed! Use ENABLE_FAD_TYPE instead.
-  Example for a tetrahedral mesh in LandIce:
-    -D ENABLE_FAD_TYPE:STRING=SFad
-    -D ALBANY_SFAD_SIZE=8
-  For a hexahedral mesh, use ALBANY_SFAD_SIZE=16")
-ENDIF()
-
 # Set FAD data type
 SET(ENABLE_FAD_TYPE "DFad" CACHE STRING "Sacado forward mode automatic differentiation data type")
 IF(ENABLE_FAD_TYPE STREQUAL "SFad")
