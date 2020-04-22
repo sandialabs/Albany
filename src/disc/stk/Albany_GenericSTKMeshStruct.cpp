@@ -1960,8 +1960,6 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->sublist("Required Fields Info", false, "Info for the creation of the required fields in the STK mesh");
 
   validPL->set<bool>("Ignore Side Maps", true, "If true, we ignore possible side maps already imported from the exodus file");
-  validPL->sublist("Contact", false, "Sublist used to specify contact parameters");
-
   // Uniform percept adaptation of input mesh prior to simulation
 
   validPL->set<std::string>("STK Initial Refine", "", "stk::percept refinement option to apply after the mesh is input");

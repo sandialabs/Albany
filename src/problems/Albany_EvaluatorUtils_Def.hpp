@@ -7,10 +7,6 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
 
-#ifdef ALBANY_CONTACT
-#include "PHAL_MortarContactResidual.hpp"
-#endif
-
 #include "PHAL_ComputeBasisFunctions.hpp"
 #include "PHAL_ComputeBasisFunctionsSide.hpp"
 #include "PHAL_DOFCellToSide.hpp"
@@ -386,27 +382,6 @@ Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterResidualEva
 
     return rcp(new PHAL::ScatterResidual<EvalT,Traits>(*p,dl));
 }
-
-#ifdef ALBANY_CONTACT
-template<typename EvalT, typename Traits, typename ScalarType>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructMortarContactResidualEvaluator(
-       Teuchos::ArrayRCP<std::string> resid_names,
-       int offsetToFirstDOF) const
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-    using std::string;
-
-    RCP<ParameterList> p = rcp(new ParameterList("Mortar Contact Residual"));
-    p->set< Teuchos::ArrayRCP<std::string> >("Residual Names", resid_names);
-
-    p->set<int>("Offset of First DOF", offsetToFirstDOF);
-
-    return rcp(new PHAL::MortarContactResidual<EvalT,Traits>(*p,dl));
-}
-#endif
 
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >

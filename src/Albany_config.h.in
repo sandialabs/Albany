@@ -108,7 +108,6 @@
 
 // ============= Macros used to enable additional code, not limited to a particular package ============== //
 
-#cmakedefine ALBANY_CONTACT
 #cmakedefine ALBANY_OMEGA_H
 #cmakedefine ALBANY_ASCR
 #cmakedefine ALBANY_BGL

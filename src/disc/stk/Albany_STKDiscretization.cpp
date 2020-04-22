@@ -16,10 +16,6 @@
 #include "Albany_Utils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
-#ifdef ALBANY_CONTACT
-#include "Albany_ContactManager.hpp"
-#endif
-
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -2323,11 +2319,6 @@ STKDiscretization::computeSideSets()
 
     ss++;
   }
-
-#ifdef ALBANY_CONTACT
-  contactManager = Teuchos::rcp(
-      new ContactManager(discParams, *this, stkMeshStruct->getMeshSpecs()));
-#endif
 }
 
 unsigned

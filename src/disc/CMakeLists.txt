@@ -8,3 +8,7 @@ IF(ALBANY_APF)
   add_subdirectory(pumi)
 ENDIF()
 
+IF(ALBANY_STK)
+  add_subdirectory(stk)
+ENDIF()
+

@@ -805,16 +805,6 @@ IF(ENABLE_OMEGA_H)
   SET(ALBANY_OMEGA_H TRUE)
 ENDIF()
 
-# Add option for CONTACT work, defaults to disabled
-OPTION(ENABLE_CONTACT "Flag to turn on CONTACT code in LCM" OFF)
-IF (ENABLE_CONTACT)
-  MESSAGE("-- CONTACT                         is Enabled")
-  SET(ALBANY_CONTACT TRUE)
-ELSE()
-  MESSAGE("-- CONTACT                         is NOT Enabled.")
-  SET(ALBANY_CONTACT FALSE)
-ENDIF()
-
 ## Other Albany Template Options here:
 MESSAGE("\nAlbany Templated Data Type Options:")
 
