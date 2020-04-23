@@ -19,12 +19,6 @@ set(performanceTestScript_2
      -machine ${machineName}_2
      -executable "${Albany_BINARY_DIR}/src")
 
-# Heat Transfer Problems ###############
-add_subdirectory(SteadyHeat2D)
-IF(ALBANY_SEACAS)
-  #add_subdirectory(SteadyHeat2DSS)
-ENDIF()
-
 # LANDICE ##################
 IF(ALBANY_LANDICE )
   add_subdirectory(LANDICE_FO_MMS)
