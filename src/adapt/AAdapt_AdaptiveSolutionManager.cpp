@@ -6,11 +6,6 @@
 
 #include "AAdapt_AdaptiveSolutionManager.hpp"
 
-#if defined(ALBANY_STK)
-#include "AAdapt_CopyRemesh.hpp"
-#endif
-#include "AAdapt_RC_Manager.hpp"
-
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_ModelEvaluator.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -24,7 +19,6 @@ AdaptiveSolutionManager::AdaptiveSolutionManager(
     Teuchos::RCP<Thyra_Vector const> const&     initial_guess,
     Teuchos::RCP<ParamLib> const&               param_lib,
     Albany::StateManager const&                 stateMgr,
-    Teuchos::RCP<rc::Manager> const&            rc_mgr,
     Teuchos::RCP<Teuchos_Comm const> const&     comm)
     : num_time_deriv(appParams->sublist("Discretization")
                          .get<int>("Number Of Time Derivatives")),
@@ -49,7 +43,6 @@ AdaptiveSolutionManager::AdaptiveSolutionManager(
     // Thyra_AdaptiveSolutionManager
     adaptParams_  = Teuchos::sublist(problemParams, "Adaptation", true);
     adaptiveMesh_ = true;
-    buildAdapter(rc_mgr);
   }
 
   // Want the initial time in the parameter library to be correct
@@ -154,39 +147,6 @@ AdaptiveSolutionManager::AdaptiveSolutionManager(
           Albany::CombineMode::INSERT);
     }
   }
-}
-
-void
-AdaptiveSolutionManager::buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
-{
-  std::string& method            = adaptParams_->get("Method", "");
-  std::string  first_three_chars = method.substr(0, 3);
-
-#if defined(ALBANY_STK)
-  if (method == "Copy Remesh") {
-    adapter_ =
-        Teuchos::rcp(new CopyRemesh(adaptParams_, paramLib_, stateMgr_, comm_));
-  } else
-#endif
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        Teuchos::Exceptions::InvalidParameter,
-        std::endl
-            << "Error! Unknown adaptivity method requested:" << method << " !"
-            << std::endl
-            << "Supplied parameter list is " << std::endl
-            << *adaptParams_);
-  }
-
-  // Teuchos::RCP<const Teuchos::ParameterList> valid_params =
-  //  adapter_->getValidAdapterParameters();
-  // adaptParams_->validateParameters(*valid_params);
-
-  *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
-       << " Mesh adapter has been initialized:\n"
-       << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
-       << std::endl;
 }
 
 bool

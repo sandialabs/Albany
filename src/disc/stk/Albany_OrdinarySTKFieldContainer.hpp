@@ -31,16 +31,6 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
   {
     return (residual_field != NULL);
   }
-  bool
-  hasSphereVolumeField() const
-  {
-    return buildSphereVolume;
-  }
-  bool
-  hasLatticeOrientationField() const
-  {
-    return false;
-  }
 
   Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>
   getSolutionFieldArray()
@@ -142,8 +132,6 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
 
   void
   initializeSTKAdaptation();
-
-  bool buildSphereVolume;
 
   Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*> solution_field;
   Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>

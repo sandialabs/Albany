@@ -56,8 +56,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
       QPVectorFieldType;
   // One scalar per QP   - (Cell, QP)
   typedef stk::mesh::Field<double, QPTag> QPScalarFieldType;
-  typedef stk::mesh::Field<double, stk::mesh::Cartesian3d>
-      SphereVolumeFieldType;
 
   typedef std::vector<const std::string*> ScalarValueState;
   typedef std::vector<QPScalarFieldType*> QPScalarState;
@@ -110,16 +108,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   getRefineField()
   {
     return refine_field;
-  }
-  SphereVolumeFieldType*
-  getSphereVolumeField()
-  {
-    return sphereVolume_field;
-  }
-  stk::mesh::FieldBase*
-  getLatticeOrientationField()
-  {
-    return latticeOrientation_field;
   }
 
   ScalarValueState&
@@ -187,13 +175,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   {
     return nodal_parameter_sis;
   }
-
-  virtual bool
-  hasResidualField() const = 0;
-  virtual bool
-  hasSphereVolumeField() const = 0;
-  virtual bool
-  hasLatticeOrientationField() const = 0;
 
   std::map<std::string, double>&
   getTime()
@@ -266,11 +247,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   VectorFieldType*    coordinates_field;
   IntScalarFieldType* proc_rank_field;
   IntScalarFieldType* refine_field;
-  //Required by LCM
-  SphereVolumeFieldType* sphereVolume_field;
 
-  //Required by LCM
-  stk::mesh::FieldBase*  latticeOrientation_field;
   ScalarValueState       scalarValue_states;
   MeshScalarState        mesh_scalar_states;
   MeshVectorState        mesh_vector_states;

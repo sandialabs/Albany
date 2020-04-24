@@ -13,12 +13,6 @@ SET(SOURCES
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
     AAdapt_SolutionObserver.cpp
-    AAdapt_RC_DataTypes.hpp
-    AAdapt_RC_Manager.cpp
-    AAdapt_RC_Field.cpp
-    AAdapt_RC_Reader.cpp
-    AAdapt_RC_Writer.cpp
-    AAdapt_RC_Projector_impl.cpp
    )
 
 SET(HEADERS
@@ -27,21 +21,7 @@ SET(HEADERS
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
     AAdapt_SolutionObserver.hpp
-    AAdapt_RC_Manager.hpp
-    AAdapt_RC_Field.hpp
-    AAdapt_RC_Reader.hpp
-    AAdapt_RC_Writer.hpp
-    AAdapt_RC_Projector_impl.hpp
    )
-
-IF(ALBANY_STK)
-  SET(SOURCES ${SOURCES}
-    AAdapt_CopyRemesh.cpp
-  )
-  SET(HEADERS ${HEADERS}
-    AAdapt_CopyRemesh.hpp
-  )
-ENDIF()
 
 include_directories(${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                     ${Albany_SOURCE_DIR} / src ${Albany_SOURCE_DIR} / src / evaluators
