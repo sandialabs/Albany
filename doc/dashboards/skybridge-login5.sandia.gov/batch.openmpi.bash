@@ -1,7 +1,7 @@
 #!/bin/bash
 ## Do not put any commands or blank lines before the #SBATCH lines
 #SBATCH --nodes=1                    # Number of nodes - all cores per node are allocated to the job
-#SBATCH --time=01:15:00               # Wall clock time (HH:MM:SS) - once the job exceeds this time, the job will be terminated (default is 5 minutes)
+#SBATCH --time=00:45:00               # Wall clock time (HH:MM:SS) - once the job exceeds this time, the job will be terminated (default is 5 minutes)
 #SBATCH --account=FY180068              # WC ID
 #SBATCH --job-name=AlbNightly               # Name of job
 #SBATCH --partition=short             # partition/queue name: short or batch
@@ -25,8 +25,8 @@ cd /home/ikalash/LCM
 export LCM_DIR=`pwd`
 module use --append $LCM_DIR/Albany/doc/LCM/modulefiles
 module load serial-intel-release
-./clean-update-config-build-dash.sh albany 8
-mv albany-serial-intel-release.log albany-serial-intel-release-build.log 
+#./clean-update-config-build-dash.sh albany 8
+#mv albany-serial-intel-release.log albany-serial-intel-release-build.log 
 ./test-dash.sh albany 
 bash process_results.sh
 bash send_email.sh
