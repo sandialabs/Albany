@@ -980,7 +980,7 @@ ELSE()
 ENDIF()
 
 # Add option to enable Albany unit tests.
-OPTION(ENABLE_UNIT_TESTS "Flag to turn on Unit Tests" OFF)
+OPTION(ENABLE_UNIT_TESTS "Flag to turn on Unit Tests" ON)
 IF (ENABLE_UNIT_TESTS)
   MESSAGE("-- Unit Tests                are Enabled, adding tests/*/UnitTests")
   SET(ALBANY_UNIT_TESTS TRUE)

@@ -63,12 +63,10 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
           metaData_,
           bulkData_,
           neq_,
-          numDim_),
-      buildSphereVolume(false)
+          numDim_)
 {
   typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
-  typedef typename AbstractSTKFieldContainer::SphereVolumeFieldType SVFT;
 
   int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
 

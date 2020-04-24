@@ -119,19 +119,6 @@ class AbstractDiscretization
   virtual void
   setCoordinates(const Teuchos::ArrayRCP<const double>& c) = 0;
 
-  //! The reference configuration manager handles updating the reference
-  //! configuration. This is only relevant, and also only optional, in the
-  //! case of mesh adaptation.
-  virtual void
-  setReferenceConfigurationManager(
-      const Teuchos::RCP<AAdapt::rc::Manager>& rcm) = 0;
-
-  virtual const WorksetArray<Teuchos::ArrayRCP<double>>::type&
-  getSphereVolume() const = 0;
-
-  virtual const WorksetArray<Teuchos::ArrayRCP<double*>>::type&
-  getLatticeOrientation() const = 0;
-
   //! Print the coords for mesh debugging
   virtual void
   printCoords() const = 0;

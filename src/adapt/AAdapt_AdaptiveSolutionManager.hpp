@@ -31,7 +31,6 @@ public:
         const Teuchos::RCP<const Thyra_Vector>& initial_guess,
         const Teuchos::RCP<ParamLib>& param_lib,
         const Albany::StateManager& StateMgr,
-        const Teuchos::RCP<rc::Manager>& rc_mgr,
         const Teuchos::RCP<const Teuchos_Comm>& comm);
 
    //! Method called by the solver implementation to determine if the mesh needs adapting
@@ -94,8 +93,6 @@ private:
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     Teuchos::RCP<AbstractAdapter> adapter_;
-
-    void buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr);
 
     void resizeMeshDataArrays(const Teuchos::RCP<const Albany::AbstractDiscretization>& disc);
 };

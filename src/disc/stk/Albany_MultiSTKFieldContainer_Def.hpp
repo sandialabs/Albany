@@ -46,24 +46,18 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     const Teuchos::RCP<stk::mesh::MetaData>&    metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&    bulkData_,
     const int                                   neq_,
-    const AbstractFieldContainer::FieldContainerRequirements& req,  // TODO: remove this altogether?
     const int                                          numDim_,
     const Teuchos::RCP<StateInfoStruct>&               sis,
-    const Teuchos::Array<Teuchos::Array<std::string>>& solution_vector,
-    const Teuchos::Array<std::string>&                 residual_vector)  // TODO: remove this altogether?
+    const Teuchos::Array<Teuchos::Array<std::string>>& solution_vector)
     : GenericSTKFieldContainer<Interleaved>(
           params_,
           metaData_,
           bulkData_,
           neq_,
-          numDim_),
-      haveResidual(false),
-      buildSphereVolume(false),
-      buildLatticeOrientation(false)
+          numDim_)
 {
   typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
-  typedef typename AbstractSTKFieldContainer::SphereVolumeFieldType SVFT;
 
   sol_vector_name.resize(solution_vector.size());
   sol_index.resize(solution_vector.size());
@@ -167,9 +161,6 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
               << std::endl);
     }
   }
-
-  // Silence compiler warning
-  (void)residual_vector;
 
   // Do the coordinates
   this->coordinates_field =

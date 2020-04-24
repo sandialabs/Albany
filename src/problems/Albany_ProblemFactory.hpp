@@ -34,10 +34,6 @@ namespace Albany {
     virtual Teuchos::RCP<Albany::AbstractProblem>
     create();
 
-    //! Set the ref config manager for use in certain problems.
-    void setReferenceConfigurationManager(
-      const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr);
-
   private:
 
     //! Private to prohibit copying
@@ -59,8 +55,6 @@ namespace Albany {
 
     //! MPI Communicator
     Teuchos::RCP<const Teuchos::Comm<int> > commT;
-
-    Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
 
   };
 

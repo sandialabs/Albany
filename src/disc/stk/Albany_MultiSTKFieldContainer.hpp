@@ -21,29 +21,11 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
       const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
       const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
       const int                                                 neq_,
-      const AbstractFieldContainer::FieldContainerRequirements& req,
       const int                                                 numDim_,
       const Teuchos::RCP<Albany::StateInfoStruct>&              sis,
-      const Teuchos::Array<Teuchos::Array<std::string>>&        solution_vector,
-      const Teuchos::Array<std::string>& residual_vector);
+      const Teuchos::Array<Teuchos::Array<std::string>>&        solution_vector);
 
   ~MultiSTKFieldContainer() = default;
-
-  bool
-  hasResidualField() const
-  {
-    return haveResidual;
-  }
-  bool
-  hasSphereVolumeField() const
-  {
-    return buildSphereVolume;
-  }
-  bool
-  hasLatticeOrientationField() const
-  {
-    return buildLatticeOrientation;
-  }
 
   void
   fillSolnVector(
@@ -121,11 +103,6 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
 
   void
   initializeSTKAdaptation();
-
-  bool haveResidual;
-
-  bool buildSphereVolume;
-  bool buildLatticeOrientation;
 
   // Containers for residual and solution
 

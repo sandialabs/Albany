@@ -219,10 +219,10 @@ void GenericSTKMeshStruct::SetupFieldData(
 
       if(interleavedOrdering)
         this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<true>(params,
-            metaData, bulkData, neq, req, numDim, sis, solution_vector, residual_vector));
+            metaData, bulkData, neq, numDim, sis, solution_vector));
       else
         this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<false>(params,
-            metaData, bulkData, neq, req, numDim, sis, solution_vector, residual_vector));
+            metaData, bulkData, neq, numDim, sis, solution_vector));
 
   }
 

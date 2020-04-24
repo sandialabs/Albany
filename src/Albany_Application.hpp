@@ -598,9 +598,6 @@ class Application
   //! Solution memory manager
   Teuchos::RCP<AAdapt::AdaptiveSolutionManager> solMgr;
 
-  //! Reference configuration (update) manager
-  Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
-
   //! Response functions
   Teuchos::Array<Teuchos::RCP<Albany::AbstractResponseFunction>> responses;
 
@@ -707,15 +704,11 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
   auto const& wsElNodeID         = disc->getWsElNodeID();
   auto const& coords             = disc->getCoords();
   auto const& wsEBNames          = disc->getWsEBNames();
-  auto const& sphereVolume       = disc->getSphereVolume();
-  auto const& latticeOrientation = disc->getLatticeOrientation();
 
   workset.numCells             = wsElNodeEqID[ws].extent(0);
   workset.wsElNodeEqID         = wsElNodeEqID[ws];
   workset.wsElNodeID           = wsElNodeID[ws];
   workset.wsCoords             = coords[ws];
-  workset.wsSphereVolume       = sphereVolume[ws];
-  workset.wsLatticeOrientation = latticeOrientation[ws];
   workset.EBName               = wsEBNames[ws];
   workset.wsIndex              = ws;
 

@@ -248,24 +248,11 @@ class STKDiscretization : public AbstractDiscretization
   getCoordinates() const;
   void
   setCoordinates(const Teuchos::ArrayRCP<const double>& c);
-  void
-  setReferenceConfigurationManager(
-      const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
 
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   getCoords() const
   {
     return coords;
-  }
-  const WorksetArray<Teuchos::ArrayRCP<double>>::type&
-  getSphereVolume() const
-  {
-    return sphereVolume;
-  }
-  const WorksetArray<Teuchos::ArrayRCP<double*>>::type&
-  getLatticeOrientation() const
-  {
-    return latticeOrientation;
   }
 
   //! Print the coordinates for debugging

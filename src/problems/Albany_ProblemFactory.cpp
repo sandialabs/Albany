@@ -164,9 +164,3 @@ Albany::ProblemFactory::create()
 
   return strategy;
 }
-
-void Albany::ProblemFactory::setReferenceConfigurationManager(
-  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr_)
-{
-  rc_mgr = rc_mgr_;
-}

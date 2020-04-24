@@ -6,7 +6,6 @@
 //#define DEBUG
 
 #include "Albany_Application.hpp"
-#include "AAdapt_RC_Manager.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_Macros.hpp"
@@ -173,11 +172,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   problemParams = Teuchos::sublist(params, "Problem", true);
 
   ProblemFactory problemFactory(params, paramLib, comm);
-  rc_mgr = AAdapt::rc::Manager::create(
-      Teuchos::rcp(&stateMgr, false), *problemParams);
-  if (Teuchos::nonnull(rc_mgr)) {
-    problemFactory.setReferenceConfigurationManager(rc_mgr);
-  }
   problem = problemFactory.create();
 
   // Validate Problem parameters against list for this specific problem
@@ -551,7 +545,6 @@ Application::buildProblem()
       responseList.get("Relative Responses Markers", defaultDataUnsignedInt);
 
   // Build state field manager
-  if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginBuildingSfm();
   sfm.resize(meshSpecs.size());
   Teuchos::RCP<PHX::DataLayout> dummy =
       Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
@@ -573,7 +566,6 @@ Application::buildProblem()
       sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
     }
   }
-  if (Teuchos::nonnull(rc_mgr)) rc_mgr->endBuildingSfm();
 }
 
 void
@@ -649,10 +641,7 @@ Application::finalSetUp(
       initial_guess,
       paramLib,
       stateMgr,
-      // Prevent a circular dependency.
-      Teuchos::rcp(rc_mgr.get(), false),
       comm));
-  if (Teuchos::nonnull(rc_mgr)) rc_mgr->setSolutionManager(solMgr);
 
   try {
     // Create Distributed parameters and initialize them with data stored in the
@@ -880,12 +869,11 @@ dfm_set(
     PHAL::Workset&                          workset,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xd,
-    const Teuchos::RCP<const Thyra_Vector>& xdd,
-    Teuchos::RCP<AAdapt::rc::Manager>&      rc_mgr)
+    const Teuchos::RCP<const Thyra_Vector>& xdd)
 {
-  workset.x              = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
-  workset.xdot           = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(xd) : xd;
-  workset.xdotdot        = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(xdd) : xdd;
+  workset.x              = x;
+  workset.xdot           = xd;
+  workset.xdotdot        = xdd;
   workset.transientTerms = Teuchos::nonnull(xd);
   workset.accelerationTerms = Teuchos::nonnull(xdd);
 }
@@ -1054,9 +1042,9 @@ Application::set_dfm_workset(
   }
 
   if (x_post_SDBCs == Teuchos::null)
-    dfm_set(workset, x, x_dot, x_dotdot, rc_mgr);
+    dfm_set(workset, x, x_dot, x_dotdot);
   else
-    dfm_set(workset, x_post_SDBCs, x_dot, x_dotdot, rc_mgr);
+    dfm_set(workset, x_post_SDBCs, x_dot, x_dotdot);
 
   double const this_time = fixTime(current_time);
 
@@ -1261,7 +1249,6 @@ Application::computeGlobalResidualImpl(
   // Set data in Workset struct, and perform fill via field manager
   {
     TEUCHOS_FUNC_TIME_MONITOR("Albany Residual Fill: Evaluate");
-    if (Teuchos::nonnull(rc_mgr)) { rc_mgr->init_x_if_not(x->space()); }
 
     PHAL::Workset workset;
 
@@ -1588,7 +1575,7 @@ Application::computeGlobalJacobianImpl(
     if (beta == 0.0 && perturbBetaForDirichlets > 0.0)
       workset.j_coeff = perturbBetaForDirichlets;
 
-    dfm_set(workset, x, xdot, xdotdot, rc_mgr);
+    dfm_set(workset, x, xdot, xdotdot);
 
     if(problem->useSDBCs() == true)
       dfm->preEvaluate<EvalT>(workset);
@@ -1965,7 +1952,7 @@ Application::computeGlobalTangent(
     workset.j_coeff = beta;
     workset.n_coeff = omega;
     workset.Vx      = Vx;
-    dfm_set(workset, x, xdot, xdotdot, rc_mgr);
+    dfm_set(workset, x, xdot, xdotdot);
 
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
@@ -2049,7 +2036,7 @@ Application::applyGlobalDistParamDerivImpl(
 
     workset.current_time = this_time;
 
-    dfm_set(workset, x, xdot, xdotdot, rc_mgr);
+    dfm_set(workset, x, xdot, xdotdot);
 
     loadWorksetNodesetInfo(workset);
 
@@ -2138,7 +2125,7 @@ Application::applyGlobalDistParamDerivImpl(
 
     workset.current_time = this_time;
 
-    dfm_set(workset, x, xdot, xdotdot, rc_mgr);
+    dfm_set(workset, x, xdot, xdotdot);
 
     loadWorksetNodesetInfo(workset);
 
@@ -2348,14 +2335,12 @@ Application::evaluateStateFieldManager(
   workset.f = overlapped_f;
 
   // Perform fill via field manager
-  if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginEvaluatingSfm();
   for (int ws = 0; ws < numWorksets; ws++) {
     const std::string evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>(
         "SFM", wsPhysIndex[ws]);
     loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws, evalName);
     sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
-  if (Teuchos::nonnull(rc_mgr)) rc_mgr->endEvaluatingSfm();
 }
 
 void

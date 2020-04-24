@@ -565,17 +565,6 @@ STKDiscretization::setCoordinates(
       "STKDiscretization::setCoordinates is not implemented.");
 }
 
-void
-STKDiscretization::setReferenceConfigurationManager(
-    const Teuchos::RCP<AAdapt::rc::Manager>& /* rcm */)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      std::logic_error,
-      "STKDiscretization::setReferenceConfigurationManager is not "
-      "implemented.");
-}
-
 // The function transformMesh() maps a unit cube domain by applying a
 // transformation to the mesh.
 void
@@ -1792,22 +1781,8 @@ STKDiscretization::computeWorksetInfo()
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   typedef AbstractSTKFieldContainer::TensorFieldType TensorFieldType;
-  typedef AbstractSTKFieldContainer::SphereVolumeFieldType
-      SphereVolumeFieldType;
 
   VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
-
-  SphereVolumeFieldType* sphereVolume_field;
-  if (stkMeshStruct->getFieldContainer()->hasSphereVolumeField()) {
-    sphereVolume_field =
-        stkMeshStruct->getFieldContainer()->getSphereVolumeField();
-  }
-
-  stk::mesh::FieldBase* latticeOrientation_field;
-  if (stkMeshStruct->getFieldContainer()->hasLatticeOrientationField()) {
-    latticeOrientation_field =
-        stkMeshStruct->getFieldContainer()->getLatticeOrientationField();
-  }
 
   wsEBNames.resize(numBuckets);
   for (int i = 0; i < numBuckets; i++) {
