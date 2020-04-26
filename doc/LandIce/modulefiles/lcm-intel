@@ -1,0 +1,17 @@
+#%Module 1.0
+
+module-whatis "LCM Intel compiler"
+
+if { [is-loaded lcm-sems] } {
+  module load sems-intel/17.0.1
+}
+
+if { [is-loaded lcm-cluster] } {
+  module load sierra-compiler/intel/17.0.2
+}
+
+setenv TOOL_CHAIN intel
+
+setenv CC [exec which icc]
+setenv CXX [exec which icpc]
+setenv FC [exec which ifort]

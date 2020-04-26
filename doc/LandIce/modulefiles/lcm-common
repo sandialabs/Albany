@@ -1,0 +1,7 @@
+#%Module 1.0
+module-whatis "Common LCM environment variables"
+set     lcm_dir         $env(LCM_DIR)
+set     alb_src_dir     $lcm_dir/Albany/src
+set     py_utils_dir    $alb_src_dir/LCM/utils/python
+
+prepend-path            PYTHONPATH      $py_utils_dir
