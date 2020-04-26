@@ -9,7 +9,7 @@ cd Trilinos
 git checkout develop
 cd ..
 git clone git@github.com:SNLComputation/Albany.git >& albany-clone.log 
-module use --append $LCM_DIR/Albany/doc/LCM/modulefiles
+module use --append $LCM_DIR/Albany/doc/LandIce/modulefiles
 module load serial-intel-release
 rm -rf trilinos-build-serial-intel-release
 rm -rf trilinos-install-serial-intel-release
