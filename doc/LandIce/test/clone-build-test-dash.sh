@@ -2,7 +2,7 @@
 
 source ./env-all.sh
 
-cd "$LCM_DIR"
+cd "$TEST_DIR"
 
 # Clone package repositories.
 for PACKAGE in $PACKAGES; do
@@ -22,7 +22,7 @@ for PACKAGE in $PACKAGES; do
 	    exit 1
 	    ;;
     esac
-    PACKAGE_DIR="$LCM_DIR/$PACKAGE_NAME"
+    PACKAGE_DIR="$TEST_DIR/$PACKAGE_NAME"
     CHECKOUT_LOG="$PACKAGE-checkout.log"
     if [ -d "$PACKAGE_DIR" ]; then
 	rm "$PACKAGE_DIR" -rf
@@ -30,7 +30,7 @@ for PACKAGE in $PACKAGES; do
     git clone -v -b "$BRANCH" "$REPO" "$PACKAGE_NAME" &> "$CHECKOUT_LOG"
 done
 
-# For now assume that if there is a DTK directory in the main LCM
+# For now assume that if there is a DTK directory in the main Albany
 # directory, it contains a DTK version that we can use for
 # Trilinos.
 if [ -e DataTransferKit ]; then
@@ -45,4 +45,4 @@ git clone git@github.com:SNLComputation/Albany.wiki.git
 
 ./clean-config-build-test-dash-all.sh
 
-cd "$LCM_DIR"
+cd "$TEST_DIR"
