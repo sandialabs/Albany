@@ -228,6 +228,6 @@ HOST=`hostname`
 FROM=`whoami`"@sandia.gov"
 TO="albany-regression@software.sandia.gov"
 PROJECT_XML_FILE="Project.xml"
-SUBPROJECT="LCM-$HOST-$BUILD"
+SUBPROJECT="nightlyAlbanyCDash-$HOST-$BUILD"
 CTEST_FILE="ctest.cmake"
 CTEST_TYPE="Nightly"

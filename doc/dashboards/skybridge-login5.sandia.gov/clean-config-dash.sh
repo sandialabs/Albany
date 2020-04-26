@@ -26,7 +26,7 @@ if [ -z $VERBOSITY ]; then
     VERBOSITY="-VV"
 fi
 
-ctest $VERBOSITY --timeout 180 -S $TEST_DIR/Albany/doc/LandIce/build/lcm_build.cmake \
+ctest $VERBOSITY --timeout 180 -S $TEST_DIR/Albany/doc/LandIce/build/ali_build.cmake \
 -DSCRIPT_NAME:STRING=`basename $0` \
 -DPACKAGE:STRING=$PACKAGE \
 -DBUILD_THREADS:STRING=$THREADS \

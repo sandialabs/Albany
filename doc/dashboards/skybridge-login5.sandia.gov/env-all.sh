@@ -2,7 +2,7 @@
 
 NUM_PROCS=`nproc`
 export TEST_DIR=`pwd`
-export MODULEPATH=$TEST_DIR/Albany/doc/LCM/modulefiles:$MODULEPATH
+export MODULEPATH=$TEST_DIR/Albany/doc/nightlyAlbanyCDash/modulefiles:$MODULEPATH
 
 # trilinos required before albany
 PACKAGES="trilinos albany"

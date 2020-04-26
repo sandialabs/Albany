@@ -7,7 +7,7 @@ update_wiki () {
     echo "STATUS_LOG=$STATUS_LOG"
     if [[ -f "$STATUS_LOG" && -d "$TEST_DIR/Albany.wiki" ]]; then
         echo "IN IF UPDATE"
-	SRC="$TEST_DIR/Albany/doc/LCM/test/$WIKI_TEMPLATE"
+	SRC="$TEST_DIR/Albany/doc/nightlyAlbanyCDash/test/$WIKI_TEMPLATE"
 	DEST="$TEST_DIR/Albany.wiki/$WIKI_TEMPLATE"
 	cd "$TEST_DIR/Albany.wiki"
         git pull
@@ -73,7 +73,7 @@ case "$SCRIPT_NAME" in
 	exit 1
 	;;
 esac
-WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
+WIKI_TEMPLATE="nightlyAlbanyCDash-Status:-Last-known-commits-that-work.md"
 
 KERNEL_VERSION=`uname -r`
 PLATFORM="unknown"
