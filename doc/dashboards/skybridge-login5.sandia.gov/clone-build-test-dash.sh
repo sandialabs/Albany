@@ -2,7 +2,7 @@
 
 source ./env-all.sh
 
-cd "$TEST_DIR"
+cd "$LCM_DIR"
 
 # Clone package repositories.
 for PACKAGE in $PACKAGES; do
@@ -22,7 +22,7 @@ for PACKAGE in $PACKAGES; do
 	    exit 1
 	    ;;
     esac
-    PACKAGE_DIR="$TEST_DIR/$PACKAGE_NAME"
+    PACKAGE_DIR="$LCM_DIR/$PACKAGE_NAME"
     CHECKOUT_LOG="$PACKAGE-checkout.log"
     if [ -d "$PACKAGE_DIR" ]; then
 	rm "$PACKAGE_DIR" -rf
@@ -45,4 +45,4 @@ git clone git@github.com:SNLComputation/Albany.git
 
 ./clean-config-build-test-dash-all.sh
 
-cd "$TEST_DIR"
+cd "$LCM_DIR"
