@@ -32,7 +32,7 @@ function(lcm_do_trilinos)
       "-DCMAKE_CXX_COMPILER:FILEPATH=$ENV{MPI_BIN}/mpicxx"
       "-DCMAKE_C_COMPILER:FILEPATH=$ENV{MPI_BIN}/mpicc"
       "-DCMAKE_Fortran_COMPILER:FILEPATH=$ENV{MPI_BIN}/mpif90"
-      "-DCMAKE_INSTALL_PREFIX:PATH=$ENV{TEST_DIR}/trilinos-install-${ARG_BUILD_ID_STRING}"
+      "-DCMAKE_INSTALL_PREFIX:PATH=$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_ID_STRING}"
       "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
       "-DTPL_ENABLE_MPI:BOOL=ON"
       "-DTPL_ENABLE_BinUtils:BOOL=OFF"
@@ -137,7 +137,7 @@ function(lcm_do_trilinos)
        )
   endif()
   set(EXTRA_REPOS)
-  set(SOURCE_DIR "$ENV{TEST_DIR}/Trilinos")
+  set(SOURCE_DIR "$ENV{LCM_DIR}/Trilinos")
   if (EXISTS "${SOURCE_DIR}/DataTransferKit")
     set(EXTRA_REPOS ${EXTRA_REPOS} DataTransferKit)
     set(CONFIG_OPTS ${CONFIG_OPTS}
@@ -172,9 +172,9 @@ function(lcm_do_trilinos)
       DO_PROJECT
       "PROJECT" "Albany"
       SUBPROJECT ${ARG_CDASH_SUBPROJECT}
-      SOURCE_DIR "$ENV{TEST_DIR}/Trilinos"
-      BUILD_DIR "$ENV{TEST_DIR}/trilinos-build-${ARG_BUILD_ID_STRING}"
-      INSTALL_DIR "$ENV{TEST_DIR}/trilinos-install-${ARG_BUILD_ID_STRING}"
+      SOURCE_DIR "$ENV{LCM_DIR}/Trilinos"
+      BUILD_DIR "$ENV{LCM_DIR}/trilinos-build-${ARG_BUILD_ID_STRING}"
+      INSTALL_DIR "$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_ID_STRING}"
       CONFIG_OPTS "${CONFIG_OPTS}"
       BUILD_THREADS "${ARG_BUILD_THREADS}"
       RESULT_VARIABLE SUBPROJECT_ERR

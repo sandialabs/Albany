@@ -30,7 +30,7 @@ for PACKAGE in $PACKAGES; do
     git clone -v -b "$BRANCH" "$REPO" "$PACKAGE_NAME" &> "$CHECKOUT_LOG"
 done
 
-# For now assume that if there is a DTK directory in the main nightlyAlbanyCDash
+# For now assume that if there is a DTK directory in the main LCM
 # directory, it contains a DTK version that we can use for
 # Trilinos.
 if [ -e DataTransferKit ]; then

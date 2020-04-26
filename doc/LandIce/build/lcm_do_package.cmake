@@ -3,8 +3,8 @@ if(LCM_DO_PACKAGE_CMAKE)
 endif()
 set(LCM_DO_PACKAGE_CMAKE true)
 
-include(${CMAKE_CURRENT_LIST_DIR}/ali_do_trilinos.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/ali_do_albany.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/lcm_do_trilinos.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/lcm_do_albany.cmake)
 
 function(lcm_do_package)
   set(BOOL_OPTS

@@ -2,34 +2,34 @@
 
 update_wiki () {
     echo "IN UPDATE WIKI"
-    cd "$TEST_DIR"
+    cd "$LCM_DIR"
     STATUS_LOG="$PACKAGE-$ARCH-$TOOL_CHAIN-$BUILD_TYPE-status.log"
     echo "STATUS_LOG=$STATUS_LOG"
-    if [[ -f "$STATUS_LOG" && -d "$TEST_DIR/Albany.wiki" ]]; then
+    if [[ -f "$STATUS_LOG" && -d "$LCM_DIR/Albany.wiki" ]]; then
         echo "IN IF UPDATE"
-	SRC="$TEST_DIR/Albany/doc/LandIce/test/$WIKI_TEMPLATE"
-	DEST="$TEST_DIR/Albany.wiki/$WIKI_TEMPLATE"
-	cd "$TEST_DIR/Albany.wiki"
+	SRC="$LCM_DIR/Albany/doc/LCM/test/$WIKI_TEMPLATE"
+	DEST="$LCM_DIR/Albany.wiki/$WIKI_TEMPLATE"
+	cd "$LCM_DIR/Albany.wiki"
         git pull
 	cp -p "$SRC" "$DEST"
-	cd "$TEST_DIR/Trilinos"
+	cd "$LCM_DIR/Trilinos"
 	TRILINOS_TAG=`git rev-parse HEAD`
 	sed -i -e "s|ttag|$TRILINOS_TAG|g;" "$DEST"
-	cd "$TEST_DIR/Albany"
+	cd "$LCM_DIR/Albany"
 	ALBANY_TAG=`git rev-parse HEAD`
 	sed -i -e "s|atag|$ALBANY_TAG|g;" "$DEST"
 	MSG="Update latest known good commits"
-	cd "$TEST_DIR/Albany.wiki"
+	cd "$LCM_DIR/Albany.wiki"
 	git add "$DEST"
 	git commit -m "$MSG"
 	git push
-	cd "$TEST_DIR"
+	cd "$LCM_DIR"
     fi
 }
 
 source ./env-all.sh
 
-cd "$TEST_DIR"
+cd "$LCM_DIR"
 SCRIPT_NAME=`basename $0`
 
 case "$SCRIPT_NAME" in
@@ -62,14 +62,14 @@ case "$SCRIPT_NAME" in
     build-test-dash-all.sh)
 	;&
     test-dash-all.sh)
-	COMMAND="$TEST_DIR/${SCRIPT_NAME%-*}.sh"
+	COMMAND="$LCM_DIR/${SCRIPT_NAME%-*}.sh"
 	;;
     *)
 	echo "Unrecognized script name in build-all: $SCRIPT_NAME"
 	exit 1
 	;;
 esac
-WIKI_TEMPLATE="Albany-Status-Last-known-commits-that-work.md"
+WIKI_TEMPLATE="LCM-Status-Last-known-commits-that-work.md"
 
 KERNEL_VERSION=`uname -r`
 PLATFORM="unknown"
@@ -132,4 +132,4 @@ for P in $PACKAGES; do
     done
 done
 
-cd "$TEST_DIR"
+cd "$LCM_DIR"

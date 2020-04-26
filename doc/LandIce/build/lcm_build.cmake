@@ -1,10 +1,10 @@
 # This script expects to be called as follows:
-# cmake -P ali_build.cmake
+# cmake -P lcm_build.cmake
 #       -DSCRIPT_NAME="config-build-test.sh"
 #       -DPACKAGE="trilinos"
 #       -DBUILD_THREADS="16"
 
-include("${CMAKE_CURRENT_LIST_DIR}/ali_do_package.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/lcm_do_package.cmake")
 
 set(CTEST_TEST_TYPE Nightly)
 set(CTEST_CMAKE_GENERATOR  "Unix Makefiles")
@@ -50,7 +50,7 @@ message("LCM_HOSTNAME ${LCM_HOSTNAME}")
 set(CTEST_BUILD_NAME "${LCM_HOSTNAME}")
 set(CTEST_SITE "${LCM_HOSTNAME}")
 set(CTEST_SOURCE_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")
-set(CTEST_BINARY_DIRECTORY "$ENV{TEST_DIR}/${PACKAGE}-build-${BUILD_ID_STRING}")
+set(CTEST_BINARY_DIRECTORY "$ENV{LCM_DIR}/${PACKAGE}-build-${BUILD_ID_STRING}")
 message("CTEST_BINARY_DIRECTORY ${CTEST_BINARY_DIRECTORY}")
 snl_mkdir("${CTEST_BINARY_DIRECTORY}")
 

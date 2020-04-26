@@ -21,9 +21,9 @@ nodes=$SLURM_JOB_NUM_NODES           # Number of nodes - the number of nodes you
 cores=16                             # Number MPI processes to run on each node (a.k.a. PPN)
                                      # tlcc2 has 16 cores per node
 # using openmpi-intel/1.10
-cd /home/ikalash/nightlyAlbanyCDash
+cd /home/ikalash/LCM
 #export TEST_DIR=`pwd`
-#module use --append $TEST_DIR/Albany/doc/nightlyAlbanyCDash/modulefiles
+#module use --append $TEST_DIR/Albany/doc/LCM/modulefiles
 #module load serial-intel-release
 ./clone-build-test-dash.sh
 bash process_results.sh

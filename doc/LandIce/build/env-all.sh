@@ -1,8 +1,8 @@
 #!/bin/bash
 
 NUM_PROCS=`nproc`
-export TEST_DIR=`pwd`
-export MODULEPATH=$TEST_DIR/Albany/doc/LandIce/modulefiles
+export LCM_DIR=`pwd`
+export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles
 unset https_proxy
 unset http_proxy
 
