@@ -22,8 +22,8 @@ cores=16                             # Number MPI processes to run on each node 
                                      # tlcc2 has 16 cores per node
 # using openmpi-intel/1.10
 cd /home/ikalash/LCM
-#export LCM_DIR=`pwd`
-#module use --append $LCM_DIR/Albany/doc/LCM/modulefiles
+#export TEST_DIR=`pwd`
+#module use --append $TEST_DIR/Albany/doc/LCM/modulefiles
 #module load serial-intel-release
 ./clone-build-test-dash.sh
 bash process_results.sh

@@ -22,8 +22,8 @@
                                      # tlcc2 has 16 cores per node
 # using openmpi-intel/1.10
 cd /home/ikalash/LCM
-export LCM_DIR=`pwd`
-module use --append $LCM_DIR/Albany/doc/LCM/modulefiles
+export TEST_DIR=`pwd`
+module use --append $TEST_DIR/Albany/doc/LCM/modulefiles
 module load serial-intel-release
 #./clean-update-config-build-dash.sh albany 8
 #mv albany-serial-intel-release.log albany-serial-intel-release-build.log 
