@@ -6,7 +6,7 @@ set(LCM_DO_PACKAGE_CMAKE true)
 include(${CMAKE_CURRENT_LIST_DIR}/ali_do_trilinos.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/ali_do_albany.cmake)
 
-function(ali_do_package)
+function(lcm_do_package)
   set(BOOL_OPTS
       "CLEAN_BUILD"
       "CLEAN_INSTALL"
@@ -22,11 +22,11 @@ function(ali_do_package)
       "CDASH_SUBPROJECT"
       "BUILD_ID_STRING"
     )
-  message("ali_do_package(${ARGN})")
+  message("lcm_do_package(${ARGN})")
   cmake_parse_arguments(ARG "${BOOL_OPTS}" "${UNARY_OPTS}" "" ${ARGN}) 
   if (ARG_UNPARSED_ARGUMENTS)
     message(FATAL_ERROR
-        "ali_do_trilinos called with unrecognized arguments ${ARG_UNPARSED_ARGUMENTS}")
+        "lcm_do_trilinos called with unrecognized arguments ${ARG_UNPARSED_ARGUMENTS}")
   endif()
   set(ARG_BOOL_OPTS)
   foreach (BOOL_OPT IN LISTS BOOL_OPTS)
@@ -42,9 +42,9 @@ function(ali_do_package)
      )
   # all other arguments passed to do_trilinos or do_albany
   if ("${ARG_PACKAGE}" STREQUAL "trilinos")
-    ali_do_trilinos(${PASS_ARGS})
+    lcm_do_trilinos(${PASS_ARGS})
   elseif ("${ARG_PACKAGE}" STREQUAL "albany")
-    ali_do_albany(${PASS_ARGS})
+    lcm_do_albany(${PASS_ARGS})
   else()
     message(FATAL_ERROR 
       "PACKAGE was \"${ARG_PACKAGE}\", should be \"trilinos\" or \"albany\"")
@@ -52,4 +52,4 @@ function(ali_do_package)
   if (ARG_RESULT_VARIABLE)
     set(${ARG_RESULT_VARIABLE} ${PACKAGE_ERR} PARENT_SCOPE)
   endif()
-endfunction(ali_do_package)
+endfunction(lcm_do_package)

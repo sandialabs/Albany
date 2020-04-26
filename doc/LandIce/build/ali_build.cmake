@@ -64,10 +64,10 @@ configure_file(
 
 ctest_start(${CTEST_TEST_TYPE})
 
-ali_do_package(${PASS_ARGS})
+lcm_do_package(${PASS_ARGS})
 
 if (PACKAGE_ERR)
-  message(FATAL_ERROR "ali_do_package returned \"${PACKAGE_ERR}\"")
+  message(FATAL_ERROR "lcm_do_package returned \"${PACKAGE_ERR}\"")
 else()
-  message("ali_do_package returned \"${PACKAGE_ERR}\"")
+  message("lcm_do_package returned \"${PACKAGE_ERR}\"")
 endif()
