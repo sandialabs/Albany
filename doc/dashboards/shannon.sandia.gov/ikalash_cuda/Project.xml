@@ -1,6 +1,0 @@
-<Project name="Albany">
-  <SubProject name="IKTShannonTrilinosCUDA">
-  </SubProject>
-  <SubProject name="IKTShannonAlbanyCUDA">
-  </SubProject>
-</Project>
