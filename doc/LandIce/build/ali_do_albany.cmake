@@ -5,7 +5,7 @@ set(LCM_DO_ALBANY_CMAKE true)
 
 include(${CMAKE_CURRENT_LIST_DIR}/snl_helpers.cmake)
 
-function(lcm_do_albany)
+function(ali_do_albany)
   set(BOOL_OPTS
       "CLEAN_BUILD"
       "CLEAN_INSTALL"
@@ -20,11 +20,11 @@ function(lcm_do_albany)
       "CDASH_SUBPROJECT"
       "BUILD_ID_STRING"
     )
-  message("lcm_do_albany(${ARGN})")
+  message("ali_do_albany(${ARGN})")
   cmake_parse_arguments(ARG "${BOOL_OPTS}" "${UNARY_OPTS}" "" ${ARGN}) 
   if (ARG_UNPARSED_ARGUMENTS)
     message(FATAL_ERROR
-        "lcm_do_albany called with unrecognized arguments ${ARG_UNPARSED_ARGUMENTS}")
+        "ali_do_albany called with unrecognized arguments ${ARG_UNPARSED_ARGUMENTS}")
   endif()
   set(CONFIG_OPTS
     "-DALBANY_CTEST_TIMEOUT:INTEGER=60"
@@ -61,4 +61,4 @@ function(lcm_do_albany)
   if (ARG_RESULT_VARIABLE)
     set(${ARG_RESULT_VARIABLE} ${SUBPROJECT_ERR} PARENT_SCOPE)
   endif()
-endfunction(lcm_do_albany)
+endfunction(ali_do_albany)
