@@ -168,6 +168,72 @@ Gather2DField(const Teuchos::ParameterList& p,
   // Nothing to do here
 }
 
+template<typename Traits>
+Gather2DField<PHAL::AlbanyTraits::HessianVec, Traits>::
+Gather2DField(const Teuchos::ParameterList& p,
+              const Teuchos::RCP<Albany::Layouts>& dl)
+ : Gather2DFieldBase<PHAL::AlbanyTraits::HessianVec, Traits>(p,dl)
+{
+  // Nothing to do here
+}
+
+template<typename Traits>
+void Gather2DField<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  auto nodeID = workset.wsElNodeEqID;
+  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
+  Teuchos::RCP<const Thyra_MultiVector> direction_x = workset.hessianWorkset.direction_x;
+  Teuchos::ArrayRCP<const ST> direction_x_constView;
+
+  bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
+  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
+  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
+
+  if(g_xx_is_active||g_px_is_active) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        direction_x.is_null(),
+        Teuchos::Exceptions::InvalidParameter,
+        "\nError in Gather2DField<HessianVec, Traits>: "
+        "direction_x is not set and hess_vec_prod_g_xx or"
+        "hess_vec_prod_g_px is set.\n");
+    direction_x_constView = Albany::getLocalData(direction_x->col(0));
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSets.is_null(), std::logic_error,
+                             "Side sets defined in input file but not properly specified on the mesh.\n");
+
+  int numLayers = workset.disc->getLayeredMeshNumbering()->numLayers;
+  this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
+
+  const Albany::SideSetList& ssList = *(workset.sideSets);
+  Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
+
+  if (it != ssList.end()) {
+    const std::vector<Albany::SideStruct>& sideSet = it->second;
+
+    // Loop over the sides that form the boundary condition
+    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
+
+      // Get the data that corresponds to the side
+      const int elem_LID = sideSet[iSide].elem_LID;
+      const int elem_side = sideSet[iSide].side_local_id;
+      const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
+      int numSideNodes = side.topology->node_count;
+
+      for (int i = 0; i < numSideNodes; ++i){
+        std::size_t node = side.node[i];
+        typename PHAL::Ref<ScalarT>::type val = (this->field2D)(elem_LID,node);
+        val = FadType(val.size(), x_constView[nodeID(elem_LID,node,this->offset)]);
+        if (g_xx_is_active||g_px_is_active)
+          val.val().fastAccessDx(0) = direction_x_constView[nodeID(elem_LID,node,this->offset)];
+        if (g_xx_is_active||g_xp_is_active)
+          val.fastAccessDx(numSideNodes*this->vecDim*this->fieldLevel+this->vecDim*i+this->offset).val() = workset.j_coeff;
+      }
+    }
+  }
+}
+
 //********************************
 
 template<typename Traits>
@@ -268,6 +334,66 @@ GatherExtruded2DField(const Teuchos::ParameterList& p,
  : Gather2DFieldBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl)
 {
   this->setName("GatherExtruded2DField DistParamDeriv");
+}
+
+template<typename Traits>
+GatherExtruded2DField<PHAL::AlbanyTraits::HessianVec, Traits>::
+GatherExtruded2DField(const Teuchos::ParameterList& p,
+                      const Teuchos::RCP<Albany::Layouts>& dl)
+ : Gather2DFieldBase<PHAL::AlbanyTraits::HessianVec, Traits>(p,dl)
+{
+  this->setName("GatherExtruded2DField HessianVec");
+}
+
+template<typename Traits>
+void GatherExtruded2DField<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  auto nodeID = workset.wsElNodeEqID;
+  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
+  Teuchos::RCP<const Thyra_MultiVector> direction_x = workset.hessianWorkset.direction_x;
+  Teuchos::ArrayRCP<const ST> direction_x_constView;
+
+  bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
+  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
+  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
+
+  if(g_xx_is_active||g_px_is_active) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        direction_x.is_null(),
+        Teuchos::Exceptions::InvalidParameter,
+        "\nError in GatherExtruded2DField<HessianVec, Traits>: "
+        "direction_x is not set and hess_vec_prod_g_xx or"
+        "hess_vec_prod_g_px is set.\n");
+    direction_x_constView = Albany::getLocalData(direction_x->col(0));
+  }
+
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+
+  int numLayers = layeredMeshNumbering.numLayers;
+  this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+
+  const auto& indexer = *workset.disc->getOverlapGlobalLocalIndexer();
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+    const int neq = nodeID.extent(2);
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      int firstunk = neq * node + this->offset;
+      const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
+      GO gnode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
+      GO gdof = solDOFManager.getGlobalDOF(gnode, this->offset);
+      LO ldof = indexer.getLocalElement(gdof);
+      typename PHAL::Ref<ScalarT>::type val = (this->field2D)(cell,node);
+      val = FadType(val.size(), x_constView[ldof]);
+      if (g_xx_is_active||g_px_is_active)
+        val.val().fastAccessDx(0) = direction_x_constView[ldof];
+      if (g_xx_is_active||g_xp_is_active)
+        val.fastAccessDx(firstunk).val() = workset.j_coeff;
+    }
+  }
 }
 
 } // namespace LandIce

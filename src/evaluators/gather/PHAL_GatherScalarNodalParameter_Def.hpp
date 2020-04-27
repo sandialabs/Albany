@@ -320,4 +320,156 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
+// **********************************************************************
+// Specialization: HessianVec
+// **********************************************************************
+template<typename Traits>
+GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec, Traits>::
+GatherScalarNodalParameter(const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherScalarNodalParameterBase<PHAL::AlbanyTraits::HessianVec, Traits>(p,dl)
+{
+  this->setName("GatherNodalParameter("+this->param_name+")"+PHX::print<PHAL::AlbanyTraits::HessianVec>());
+}
+
+// **********************************************************************
+template<typename Traits>
+GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec, Traits>::
+GatherScalarNodalParameter(const Teuchos::ParameterList& p) :
+  GatherScalarNodalParameterBase<PHAL::AlbanyTraits::HessianVec, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct"))
+{
+  this->setName("GatherNodalParameter("+this->param_name+")"+PHX::print<PHAL::AlbanyTraits::HessianVec>());
+}
+
+// **********************************************************************
+template<typename Traits>
+void GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
+  // Distributed parameter vector
+  Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
+  Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
+
+  // Direction vector for the Hessian-vector product
+  Teuchos::RCP<const Thyra_MultiVector> vvec = workset.hessianWorkset.direction_p;
+
+  auto nodeID = workset.wsElNodeEqID;
+  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
+
+  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
+  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
+  bool g_pp_is_active = !workset.hessianWorkset.hess_vec_prod_g_pp.is_null();
+
+  // Are we differentiating w.r.t. this parameter?
+  bool is_active = (workset.dist_param_deriv_name == this->param_name);
+  bool is_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name);
+
+  Teuchos::ArrayRCP<const ST> vvec_constView;
+  if(is_direction_active && (g_xp_is_active || g_pp_is_active)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        vvec.is_null(),
+        Teuchos::Exceptions::InvalidParameter,
+        "\nError in GatherScalarNodalParameter<HessianVec, Traits>: "
+        "direction_p is not set and hess_vec_prod_g_xp or "
+        "hess_vec_prod_g_pp is set.\n");
+    vvec_constView = Albany::getLocalData(vvec->col(0));
+  }
+
+  const int num_nodes = this->numNodes;
+
+  const int num_deriv = (this->val)(0,0).size();
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    for (std::size_t node = 0; node < num_nodes; ++node) {
+
+      // Initialize Fad type for parameter value
+      const LO id = wsElDofs((int)cell,(int)node,0);
+      RealType pvec_val = (id >= 0) ? pvec_constView[id] : 0;
+
+      auto val = (this->val)(cell,node);
+      val = FadType(num_deriv, pvec_val);
+      if (is_direction_active && (g_xp_is_active||g_pp_is_active))
+        val.val().fastAccessDx(0) = (id >= 0) ? vvec_constView[id] : 0;
+      if (is_active && (g_px_is_active||g_pp_is_active))
+        val.fastAccessDx(node).val() = 1;
+    }
+  }
+}
+
+// **********************************************************************
+template<typename Traits>
+GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec, Traits>::
+GatherScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p,
+                                     const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherScalarNodalParameterBase<PHAL::AlbanyTraits::HessianVec, Traits>(p, dl),
+  fieldLevel(p.get<int>("Field Level"))
+{
+  this->setName("GatherExtruded2DNodalParameter("+this->param_name+")"+
+    PHX::print<PHAL::AlbanyTraits::HessianVec>());
+}
+
+// **********************************************************************
+template<typename Traits>
+void GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
+  // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
+  Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
+  Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
+
+  // Direction vector for the Hessian-vector product
+  Teuchos::RCP<const Thyra_MultiVector> vvec = workset.hessianWorkset.direction_p;
+
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+  auto nodeID = workset.wsElNodeEqID;
+
+  // If active, intialize data needed for differentiation
+  auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
+  auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
+  auto p_indexer = Albany::createGlobalLocalIndexer(pvec->space());
+
+  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
+  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
+  bool g_pp_is_active = !workset.hessianWorkset.hess_vec_prod_g_pp.is_null();
+
+  // Are we differentiating w.r.t. this parameter?
+  bool is_active = (workset.dist_param_deriv_name == this->param_name);
+  bool is_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name);
+
+  Teuchos::ArrayRCP<const ST> vvec_constView;
+  if(is_direction_active && (g_xp_is_active || g_pp_is_active)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        vvec.is_null(),
+        Teuchos::Exceptions::InvalidParameter,
+        "\nError in GatherScalarExtruded2DNodalParameter<HessianVec, Traits>: "
+        "direction_p is not set and hess_vec_prod_g_xp or "
+        "hess_vec_prod_g_pp is set.\n");
+    vvec_constView = Albany::getLocalData(vvec->col(0));
+  }
+
+  const int num_deriv = this->numNodes;
+  const int num_nodes_res = this->numNodes;
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+    for (std::size_t node = 0; node < num_deriv; ++node) {
+      const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
+      const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
+      const LO p_lid= p_indexer->getLocalElement(ginode);
+      RealType pvec_val = (p_lid >= 0) ? pvec_constView[p_lid] : 0;
+
+      auto val = (this->val)(cell,node);
+      val = FadType(val.size(), pvec_val);
+      if (is_direction_active && (g_xp_is_active||g_pp_is_active))
+        val.val().fastAccessDx(0) = (p_lid >= 0) ? vvec_constView[p_lid] : 0;
+      if (is_active && (g_px_is_active||g_pp_is_active))
+        val.fastAccessDx(node).val() = 1;
+    }
+  }
+}
+
 } // namespace PHAL

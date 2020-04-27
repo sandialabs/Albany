@@ -154,6 +154,13 @@ postRegImpl<PHAL::AlbanyTraits::DistParamDeriv>()
   postRegDerivImpl<PHAL::AlbanyTraits::DistParamDeriv>();
 }
 
+template <>
+void FieldManagerScalarResponseFunction::
+postRegImpl<PHAL::AlbanyTraits::HessianVec>()
+{
+  postRegDerivImpl<PHAL::AlbanyTraits::HessianVec>();
+}
+
 template <typename EvalT>
 void FieldManagerScalarResponseFunction::
 postReg()
@@ -202,6 +209,7 @@ postRegSetup()
   postReg<PHAL::AlbanyTraits::Jacobian>();
   postReg<PHAL::AlbanyTraits::Tangent>();
   postReg<PHAL::AlbanyTraits::DistParamDeriv>();
+  postReg<PHAL::AlbanyTraits::HessianVec>();
   performedPostRegSetup = true;
 }
 
@@ -370,4 +378,140 @@ evaluateDistParamDeriv(
   }
 }
 
+void FieldManagerScalarResponseFunction::
+evaluateDistParamHessVecProd_xx(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+
+  application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
+
+  if(!v.is_null()) {
+    workset.hessianWorkset.direction_x = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
+    workset.x_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_x, Albany::CombineMode::INSERT);
+  }
+
+  if(!Hv_dp.is_null()) {
+    workset.j_coeff = 1.0;
+    workset.hessianWorkset.hess_vec_prod_g_xx = Hv_dp;
+    workset.hessianWorkset.overlapped_hess_vec_prod_g_xx = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_dp->domain()->dim());
+    evaluate<PHAL::AlbanyTraits::HessianVec>(workset);
+  }
+}
+
+void FieldManagerScalarResponseFunction::
+evaluateDistParamHessVecProd_xp(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+
+  application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
+
+  if(!v.is_null() && !Hv_dp.is_null()) {
+    workset.j_coeff = 1.0;
+    workset.hessianWorkset.dist_param_deriv_direction_name = dist_param_direction_name;
+    workset.hessianWorkset.p_direction_cas_manager = workset.distParamLib->get(dist_param_direction_name)->get_cas_manager();
+    workset.hessianWorkset.direction_p = Thyra::createMembers(workset.hessianWorkset.p_direction_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
+    workset.hessianWorkset.p_direction_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_p, Albany::CombineMode::INSERT);
+    workset.hessianWorkset.hess_vec_prod_g_xp = Hv_dp;
+    workset.hessianWorkset.overlapped_hess_vec_prod_g_xp = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_dp->domain()->dim());
+    evaluate<PHAL::AlbanyTraits::HessianVec>(workset);
+  }
+}
+
+void FieldManagerScalarResponseFunction::
+evaluateDistParamHessVecProd_px(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+
+  application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
+
+  if(!v.is_null()) {
+    workset.hessianWorkset.direction_x = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
+    workset.x_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_x, Albany::CombineMode::INSERT);
+  }
+
+  if(!Hv_dp.is_null()) {
+    workset.j_coeff = 1.0;
+    workset.dist_param_deriv_name = dist_param_name;
+    workset.p_cas_manager = workset.distParamLib->get(dist_param_name)->get_cas_manager();
+    workset.hessianWorkset.hess_vec_prod_g_px = Hv_dp;
+    workset.hessianWorkset.overlapped_hess_vec_prod_g_px = Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(),Hv_dp->domain()->dim());
+    evaluate<PHAL::AlbanyTraits::HessianVec>(workset);
+  }
+}
+
+void FieldManagerScalarResponseFunction::
+evaluateDistParamHessVecProd_pp(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const std::string& dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+
+  application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
+
+  if(!v.is_null() && !Hv_dp.is_null()) {
+    workset.dist_param_deriv_name = dist_param_name;
+    workset.hessianWorkset.dist_param_deriv_direction_name = dist_param_direction_name;
+    workset.hessianWorkset.p_direction_cas_manager = workset.distParamLib->get(dist_param_direction_name)->get_cas_manager();
+    workset.p_cas_manager = workset.distParamLib->get(dist_param_name)->get_cas_manager();
+    workset.hessianWorkset.direction_p = Thyra::createMembers(workset.hessianWorkset.p_direction_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
+    workset.hessianWorkset.p_direction_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_p, Albany::CombineMode::INSERT);
+    workset.hessianWorkset.hess_vec_prod_g_pp = Hv_dp;
+    workset.hessianWorkset.overlapped_hess_vec_prod_g_pp = Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(),Hv_dp->domain()->dim());
+    evaluate<PHAL::AlbanyTraits::HessianVec>(workset);
+  }
+}
 } // namespace Albany

@@ -82,6 +82,9 @@ public:
   //! Get the map associate with this response
   Teuchos::RCP<const Thyra_VectorSpace> responseVectorSpace() const override;
 
+  //! Get the dual map associate with this response
+  Teuchos::RCP<const Thyra_VectorSpace> responseDualVectorSpace() const override;
+
   void evaluateDerivative(
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,

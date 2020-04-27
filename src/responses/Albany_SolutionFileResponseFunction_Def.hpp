@@ -176,6 +176,74 @@ evaluateDistParamDeriv(
 }
 
 template<class Norm>
+void SolutionFileResponseFunction<Norm>::
+evaluateDistParamHessVecProd_xx(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (!Hv_dp.is_null()) {
+    Hv_dp->assign(0.0);
+  }
+}
+
+template<class Norm>
+void SolutionFileResponseFunction<Norm>::
+evaluateDistParamHessVecProd_xp(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (!Hv_dp.is_null()) {
+    Hv_dp->assign(0.0);
+  }
+}
+
+template<class Norm>
+void SolutionFileResponseFunction<Norm>::
+evaluateDistParamHessVecProd_px(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (!Hv_dp.is_null()) {
+    Hv_dp->assign(0.0);
+  }
+}
+
+template<class Norm>
+void SolutionFileResponseFunction<Norm>::
+evaluateDistParamHessVecProd_pp(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const std::string& dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (!Hv_dp.is_null()) {
+    Hv_dp->assign(0.0);
+  }
+}
+
+template<class Norm>
 int SolutionFileResponseFunction<Norm>::
 MatrixMarketFile (const char *filename, const Teuchos::RCP<Thyra_MultiVector>& mv)
 {

@@ -42,6 +42,16 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
   return ms->ctd.node_count;
 }
 
+template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
+  const Albany::Application* app, const Albany::MeshSpecsStruct* ms, bool responseEvaluation)
+{
+  const int derivativeDimension_x = getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(app, ms, responseEvaluation);
+  const int derivativeDimension_p = getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(app, ms, responseEvaluation);
+  const int derivativeDimension_max = derivativeDimension_x > derivativeDimension_p ? derivativeDimension_x : derivativeDimension_p;
+
+  return derivativeDimension_max;
+}
+
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
  const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
 {
@@ -71,6 +81,13 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
  const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
 {
   return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+    app, app->getEnrichedMeshSpecs()[ebi].get());
+}
+
+template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
+ const Albany::Application* app, const int ebi, const bool explicit_scheme)
+{
+  return getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(
     app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
@@ -184,11 +201,13 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
   macro(FadType)                                \
-  macro(TanFadType)
+  macro(TanFadType)                             \
+  macro(HessianVecFad)
 #  else
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
-  macro(FadType)
+  macro(FadType)                                \
+  macro(HessianVecFad)
 #  endif
 
 #define eti(T)                                                          \

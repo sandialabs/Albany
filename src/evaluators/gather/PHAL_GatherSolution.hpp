@@ -288,6 +288,23 @@ private:
   const std::size_t numFields;
 };
 
+// **************************************************************
+// HessianVec
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::HessianVec,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::HessianVec, Traits>  {
+
+public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
+  GatherSolution(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+  const std::size_t numFields;
+};
+
 } // namespace PHAL
 
 #endif // PHAL_GATHER_SOLUTION_HPP

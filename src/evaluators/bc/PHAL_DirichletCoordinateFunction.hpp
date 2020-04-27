@@ -110,6 +110,20 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits/*, cfunc
     void evaluateFields(typename Traits::EvalData d);
 };
 
+// **************************************************************
+// HessianVec
+//  -- Currently assuming no parameter derivative
+// **************************************************************
+
+template<typename Traits/*, typename cfunc_traits*/>
+class DirichletCoordFunction<PHAL::AlbanyTraits::HessianVec, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::HessianVec, Traits/*, cfunc_traits*/> {
+  public:
+    DirichletCoordFunction(Teuchos::ParameterList& p);
+    typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+    void evaluateFields(typename Traits::EvalData d);
+};
+
 }
 
 #endif

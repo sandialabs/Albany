@@ -165,6 +165,24 @@ protected:
   void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side);
 };
 
+// **************************************************************
+// Hessian vector products
+// **************************************************************
+template<typename Traits>
+class ScatterSideEqnResidual<AlbanyTraits::HessianVec,Traits>
+  : public ScatterSideEqnResidualBase<AlbanyTraits::HessianVec, Traits>  {
+public:
+  using base_type = ScatterSideEqnResidualBase<AlbanyTraits::HessianVec,Traits>;
+  using ScalarT = typename base_type::ScalarT;
+
+  ScatterSideEqnResidual (const Teuchos::ParameterList& p,
+                          const Teuchos::RCP<Albany::Layouts>& dl);
+
+protected:
+  void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
+  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side);
+};
+
 } // namespace PHAL
 
 #endif // PHAL_SCATTER_SIDE_EQN_RESIDUAL_HPP

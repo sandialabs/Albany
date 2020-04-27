@@ -276,6 +276,42 @@ private:
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
 };
 
+template<typename Traits>
+class ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec,Traits>
+  : public ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>  {
+public:
+  ScatterResidualWithExtrudedParams(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl)  :
+                    ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>(p,dl) {
+    extruded_params_levels = p.get< Teuchos::RCP<std::map<std::string, int> > >("Extruded Params Levels");
+  };
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm) {
+    ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::postRegistrationSetup(d,vm);
+  }
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+  Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
+};
+
+// **************************************************************
+// HessianVec
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::HessianVec, Traits>  {
+public:
+  ScatterResidual(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
+private:
+  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+};
+
 // **************************************************************
 
 } // namespace PHAL

@@ -868,4 +868,33 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
+// **********************************************************************
+// Specialization: HessianVec
+// **********************************************************************
+
+template<typename Traits>
+ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::
+ScatterResidual(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterResidualBase<PHAL::AlbanyTraits::HessianVec,Traits>(p,dl),
+  numFields(ScatterResidualBase<PHAL::AlbanyTraits::HessianVec,Traits>::numFieldsBase)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of ScatterResidual::evaluateFields is not implemented yet"<< std::endl);
+}
+
+// **********************************************************************
+template<typename Traits>
+void ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of ScatterResidualWithExtrudedParams::evaluateFields is not implemented yet"<< std::endl);
+}
+
 } // namespace PHAL

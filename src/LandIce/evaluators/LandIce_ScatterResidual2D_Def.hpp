@@ -163,6 +163,19 @@ ScatterResidual2D(const Teuchos::ParameterList& p,
 }
 
 // **********************************************************************
+// Specialization: HessianVec
+// **********************************************************************
+
+template<typename Traits>
+ScatterResidual2D<PHAL::AlbanyTraits::HessianVec, Traits>::
+ScatterResidual2D(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl)
+ : ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>(p,dl)
+{
+  // Nothing to do here
+}
+
+// **********************************************************************
 // Specialization: Residual
 // **********************************************************************
 template<typename Traits>
@@ -323,6 +336,19 @@ ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl)
  : ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl)
+{
+  // Nothing to do here
+}
+
+// **********************************************************************
+// Specialization: HessianVec
+// **********************************************************************
+
+template<typename Traits>
+ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::HessianVec, Traits>::
+ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl)
+ : ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>(p,dl)
 {
   // Nothing to do here
 }

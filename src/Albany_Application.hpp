@@ -94,6 +94,10 @@ public:
   Teuchos::RCP<const Thyra_VectorSpace>
   getVectorSpace() const;
 
+  //! Get Thyra DOF dual vector space
+  Teuchos::RCP<const Thyra_VectorSpace>
+  getDualVectorSpace() const;
+
   //! Create Jacobian operator
   Teuchos::RCP<Thyra_LinearOp>
   createJacobianOp() const;
@@ -360,6 +364,54 @@ public:
       const Teuchos::Array<ParamVec>&         param_array,
       const std::string&                      dist_param_name,
       const Teuchos::RCP<Thyra_MultiVector>&  dg_dp);
+
+  void
+  evaluateResponseDistParamHessVecProd_xx(
+      int                                     response_index,
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_MultiVector>& v,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_xx);
+
+  void
+  evaluateResponseDistParamHessVecProd_xp(
+      int                                     response_index,
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_MultiVector>& v,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const std::string&                      dist_param_name,
+      const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_xp);
+
+  void
+  evaluateResponseDistParamHessVecProd_px(
+      int                                     response_index,
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_MultiVector>& v,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const std::string&                      dist_param_name,
+      const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_px);
+
+  void
+  evaluateResponseDistParamHessVecProd_pp(
+      int                                     response_index,
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_MultiVector>& v,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const std::string&                      dist_param_name,
+      const std::string&                      dist_param_direction_name,
+      const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_pp);
 
   //! Provide access to shapeParameters -- no AD
   PHAL::AlbanyTraits::Residual::ScalarT&

@@ -112,6 +112,22 @@ class SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>
   evaluateFields(typename Traits::EvalData d);
 };
 
+//
+// HessianVec
+//
+template <typename Traits>
+class SDirichlet<PHAL::AlbanyTraits::HessianVec, Traits>
+    : public PHAL::DirichletBase<PHAL::AlbanyTraits::HessianVec, Traits>
+{
+ public:
+  using ScalarT = typename PHAL::AlbanyTraits::HessianVec::ScalarT;
+
+  SDirichlet(Teuchos::ParameterList& p);
+
+  void
+  evaluateFields(typename Traits::EvalData d);
+};
+
 }  // namespace PHAL
 
 #endif  // PHAL_SDirichlet_hpp

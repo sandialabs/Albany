@@ -113,6 +113,17 @@ public:
 };
 
 // **************************************************************
+// HessianVec
+// **************************************************************
+template<typename Traits>
+class Dirichlet<PHAL::AlbanyTraits::HessianVec,Traits>
+   : public DirichletBase<PHAL::AlbanyTraits::HessianVec, Traits> {
+public:
+  Dirichlet(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
 // **************************************************************
 // Evaluator to aggregate all Dirichlet BCs into one "field"
 // **************************************************************

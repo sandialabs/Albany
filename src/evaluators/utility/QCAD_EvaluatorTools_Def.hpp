@@ -154,4 +154,35 @@ getEvalType() const
 }
 
 // **********************************************************************
+//   HessianVec
+// **********************************************************************
+
+template<typename Traits>
+QCAD::EvaluatorTools<PHAL::AlbanyTraits::HessianVec,Traits>::
+EvaluatorTools()
+{
+}
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::HessianVec, Traits>::
+getDoubleValue(const ScalarT& t) const
+{
+  return t.val().val();
+}
+
+template<typename Traits>
+double QCAD::EvaluatorTools<PHAL::AlbanyTraits::HessianVec, Traits>::
+getMeshDoubleValue(const MeshScalarT& t) const
+{
+  return Albany::ADValue(t);
+}
+
+template<typename Traits>
+std::string QCAD::EvaluatorTools<PHAL::AlbanyTraits::HessianVec, Traits>::
+getEvalType() const
+{
+  return "HessianVec";
+}
+
+// **********************************************************************
 

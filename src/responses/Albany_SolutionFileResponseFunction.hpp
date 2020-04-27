@@ -84,6 +84,50 @@ public:
     const std::string& dist_param_name,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
+  virtual void
+  evaluateDistParamHessVecProd_xx(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
+
+  virtual void
+  evaluateDistParamHessVecProd_xp(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
+
+  virtual void
+  evaluateDistParamHessVecProd_px(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
+
+  virtual void
+  evaluateDistParamHessVecProd_pp(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const std::string& dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
+
 private:
 
   int MatrixMarketFile (const char *filename, const Teuchos::RCP<Thyra_MultiVector>& mv);

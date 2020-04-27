@@ -122,6 +122,35 @@ private:
   const int fieldLevel;
 };
 
+// **************************************************************
+// HessianVec
+// **************************************************************
+template<typename Traits>
+class GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits> :
+    public GatherScalarNodalParameterBase<PHAL::AlbanyTraits::HessianVec,Traits>  {
+
+public:
+  GatherScalarNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
+  // Old constructor, still needed by BCs that use PHX Factory
+  GatherScalarNodalParameter(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::HessianVec::ParamScalarT ParamScalarT;
+};
+
+
+template<typename Traits>
+class GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits> :
+    public GatherScalarNodalParameterBase<PHAL::AlbanyTraits::HessianVec,Traits>  {
+
+public:
+  GatherScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::HessianVec::ParamScalarT ParamScalarT;
+  const int fieldLevel;
+};
+
 } // namespace PHAL
 
 #endif // PHAL_GATHER_SCALAR_NODAL_PARAMETER_HPP

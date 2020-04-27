@@ -335,4 +335,165 @@ evaluateDistParamDeriv(
   }
 }
 
+void AggregateScalarResponseFunction::
+evaluateDistParamHessVecProd_xx(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (Hv_dp.is_null()) {
+    return;
+  }
+
+  unsigned int offset = 0;
+  for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = productVectorSpace->getBlock(i);
+
+    // Hv_dp for the i-th response is simply a subview of the columns
+    // of the corresponding input MV, at the proper offset
+    Teuchos::Range1D colRange(offset, offset+vs_i->dim()-1);
+
+    // Create Thyra_MultiVector for response function
+    Teuchos::RCP<Thyra_MultiVector> Hv_dp_i;
+    if (!Hv_dp.is_null()) {
+      Hv_dp_i = Hv_dp->subView(colRange);
+    }
+
+    // Evaluate response derivative
+    responses[i]->evaluateDistParamHessVecProd_xx(
+            current_time, v, x, xdot, xdotdot,
+            param_array,
+            Hv_dp_i);
+
+    // Update the offset
+    offset += vs_i->dim();
+  }
+}
+
+void AggregateScalarResponseFunction::
+evaluateDistParamHessVecProd_xp(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (Hv_dp.is_null()) {
+    return;
+  }
+
+  unsigned int offset = 0;
+  for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = productVectorSpace->getBlock(i);
+
+    // Hv_dp for the i-th response is simply a subview of the columns
+    // of the corresponding input MV, at the proper offset
+    Teuchos::Range1D colRange(offset, offset+vs_i->dim()-1);
+
+    // Create Thyra_MultiVector for response function
+    Teuchos::RCP<Thyra_MultiVector> Hv_dp_i;
+    if (!Hv_dp.is_null()) {
+      Hv_dp_i = Hv_dp->subView(colRange);
+    }
+
+    // Evaluate response derivative
+    responses[i]->evaluateDistParamHessVecProd_xp(
+            current_time, v, x, xdot, xdotdot,
+            param_array, dist_param_direction_name,
+            Hv_dp_i);
+
+    // Update the offset
+    offset += vs_i->dim();
+  }
+}
+
+void AggregateScalarResponseFunction::
+evaluateDistParamHessVecProd_px(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (Hv_dp.is_null()) {
+    return;
+  }
+
+  unsigned int offset = 0;
+  for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = productVectorSpace->getBlock(i);
+
+    // Hv_dp for the i-th response is simply a subview of the columns
+    // of the corresponding input MV, at the proper offset
+    Teuchos::Range1D colRange(offset, offset+vs_i->dim()-1);
+
+    // Create Thyra_MultiVector for response function
+    Teuchos::RCP<Thyra_MultiVector> Hv_dp_i;
+    if (!Hv_dp.is_null()) {
+      Hv_dp_i = Hv_dp->subView(colRange);
+    }
+
+    // Evaluate response derivative
+    responses[i]->evaluateDistParamHessVecProd_px(
+            current_time, v, x, xdot, xdotdot,
+            param_array, dist_param_name,
+            Hv_dp_i);
+
+    // Update the offset
+    offset += vs_i->dim();
+  }
+}
+
+void AggregateScalarResponseFunction::
+evaluateDistParamHessVecProd_pp(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const std::string& dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (Hv_dp.is_null()) {
+    return;
+  }
+
+  unsigned int offset = 0;
+  for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = productVectorSpace->getBlock(i);
+
+    // Hv_dp for the i-th response is simply a subview of the columns
+    // of the corresponding input MV, at the proper offset
+    Teuchos::Range1D colRange(offset, offset+vs_i->dim()-1);
+
+    // Create Thyra_MultiVector for response function
+    Teuchos::RCP<Thyra_MultiVector> Hv_dp_i;
+    if (!Hv_dp.is_null()) {
+      Hv_dp_i = Hv_dp->subView(colRange);
+    }
+
+    // Evaluate response derivative
+    responses[i]->evaluateDistParamHessVecProd_pp(
+            current_time, v, x, xdot, xdotdot,
+            param_array, dist_param_name,
+            dist_param_direction_name,
+            Hv_dp_i);
+
+    // Update the offset
+    offset += vs_i->dim();
+  }
+}
+
 } // namespace Albany

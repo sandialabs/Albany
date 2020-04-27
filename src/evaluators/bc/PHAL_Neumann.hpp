@@ -253,6 +253,19 @@ private:
 };
 
 // **************************************************************
+// HessianVec
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::HessianVec,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::HessianVec, Traits>  {
+public:
+  Neumann(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+};
+
+// **************************************************************
 // **************************************************************
 // Evaluator to aggregate all Neumann BCs into one "field"
 // **************************************************************

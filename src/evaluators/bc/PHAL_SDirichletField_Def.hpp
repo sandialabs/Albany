@@ -391,4 +391,20 @@ evaluateFields(typename Traits::EvalData dirichlet_workset) {
   }
 }
 
+// **********************************************************************
+// Specialization: HessianVec
+// **********************************************************************
+template<typename Traits>
+SDirichletField<PHAL::AlbanyTraits::HessianVec, Traits>::
+SDirichletField(Teuchos::ParameterList& p) :
+  SDirichletField_Base<PHAL::AlbanyTraits::HessianVec, Traits>(p) {
+}
+
+// **********************************************************************
+template<typename Traits>
+void SDirichletField<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData dirichlet_workset) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of SDirichletField::evaluateFields is not implemented yet"<< std::endl);
+}
+
 } // namespace PHAL
