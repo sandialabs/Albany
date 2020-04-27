@@ -4,7 +4,7 @@
 #       -DPACKAGE="trilinos"
 #       -DBUILD_THREADS="16"
 
-include("${CMAKE_CURRENT_LIST_DIR}/lcm_do_package.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/ali_do_package.cmake")
 
 set(CTEST_TEST_TYPE Nightly)
 set(CTEST_CMAKE_GENERATOR  "Unix Makefiles")
@@ -64,10 +64,10 @@ configure_file(
 
 ctest_start(${CTEST_TEST_TYPE})
 
-lcm_do_package(${PASS_ARGS})
+ali_do_package(${PASS_ARGS})
 
 if (PACKAGE_ERR)
-  message(FATAL_ERROR "lcm_do_package returned \"${PACKAGE_ERR}\"")
+  message(FATAL_ERROR "ali_do_package returned \"${PACKAGE_ERR}\"")
 else()
-  message("lcm_do_package returned \"${PACKAGE_ERR}\"")
+  message("ali_do_package returned \"${PACKAGE_ERR}\"")
 endif()

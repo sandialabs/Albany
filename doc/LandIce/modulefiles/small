@@ -1,7 +1,7 @@
 #%Module 1.0
 #
 # 
-# Environment for compiling and running Albany/LCM.
+# Environment for compiling and running Albany.
 #
 
 module load lcm-initialize
