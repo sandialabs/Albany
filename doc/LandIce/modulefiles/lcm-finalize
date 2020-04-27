@@ -8,7 +8,7 @@ set     arch            $env(ARCH)
 set     tool_chain      $env(TOOL_CHAIN)
 set     build_type      $env(BUILD_TYPE)
 set     build           $arch-$tool_chain-$build_type
-set     lcm_dir         $env(LCM_DIR)
+set     lcm_dir         $env(TEST_DIR)
 set     install_dir     $lcm_dir/trilinos-install-$build
 set     alb_exe_dir     $lcm_dir/albany-build-$build/src
 

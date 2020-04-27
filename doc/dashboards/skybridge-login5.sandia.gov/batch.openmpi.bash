@@ -21,9 +21,9 @@
 #cores=1                             # Number MPI processes to run on each node (a.k.a. PPN)
                                      # tlcc2 has 16 cores per node
 # using openmpi-intel/1.10
-cd /home/ikalash/LCM
-export LCM_DIR=`pwd`
-module use --append $LCM_DIR/Albany/doc/LCM/modulefiles
+cd /home/ikalash/nightlyAlbanyCDash
+export TEST_DIR=`pwd`
+module use --append $TEST_DIR/Albany/doc/LandIce/modulefiles
 module load serial-intel-release
 #./clean-update-config-build-dash.sh albany 8
 #mv albany-serial-intel-release.log albany-serial-intel-release-build.log 

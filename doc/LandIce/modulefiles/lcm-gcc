@@ -2,7 +2,7 @@
 
 module-whatis "LCM GCC compiler"
 
-set lcm_dir $env(LCM_DIR)
+set lcm_dir $env(TEST_DIR)
 
 if { [is-loaded lcm-sems] } {
   module load sems-gcc/6.1.0

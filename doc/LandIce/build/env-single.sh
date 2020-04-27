@@ -3,7 +3,7 @@
 SCRIPT_NAME=`basename $0`
 PACKAGE=$1
 NUM_PROCS=$2
-export LCM_DIR=`pwd`
+export TEST_DIR=`pwd`
 TRILINOS="trilinos"
 INTEL_DIR=/opt/intel
 
@@ -70,7 +70,7 @@ case "$ARCH" in
 	;;
 esac
 
-NVCC_WRAPPER="$LCM_DIR/Trilinos/packages/kokkos/config/nvcc_wrapper"
+NVCC_WRAPPER="$TEST_DIR/Trilinos/packages/kokkos/config/nvcc_wrapper"
 
 case "$TOOL_CHAIN" in
     gcc)
@@ -215,15 +215,15 @@ esac
 CONFIG_FILE="$PACKAGE-config.sh"
 DTK_FRAG="dtk-frag.sh"
 BUILD=$ARCH-$TOOL_CHAIN-$BUILD_TYPE
-PACKAGE_DIR="$LCM_DIR/$PACKAGE_NAME"
+PACKAGE_DIR="$TEST_DIR/$PACKAGE_NAME"
 # Install directory for trilinos only
-INSTALL_DIR="$LCM_DIR/$TRILINOS-install-$BUILD"
-BUILD_DIR="$LCM_DIR/$PACKAGE-build-$BUILD"
+INSTALL_DIR="$TEST_DIR/$TRILINOS-install-$BUILD"
+BUILD_DIR="$TEST_DIR/$PACKAGE-build-$BUILD"
 PREFIX="$PACKAGE-$BUILD"
-BUILD_LOG="$LCM_DIR/$PREFIX-build.log"
-ERROR_LOG="$LCM_DIR/$PREFIX-error.log"
-STATUS_LOG="$LCM_DIR/$PREFIX-status.log"
-TEST_LOG="$LCM_DIR/$PREFIX-test.log"
+BUILD_LOG="$TEST_DIR/$PREFIX-build.log"
+ERROR_LOG="$TEST_DIR/$PREFIX-error.log"
+STATUS_LOG="$TEST_DIR/$PREFIX-status.log"
+TEST_LOG="$TEST_DIR/$PREFIX-test.log"
 HOST=`hostname`
 FROM=`whoami`"@sandia.gov"
 TO="albany-regression@software.sandia.gov"

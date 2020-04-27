@@ -1,6 +1,6 @@
 #!/bin/bash
 ## Do not put any commands or blank lines before the #SBATCH lines
-export LCM_DIR=`pwd`
+export TEST_DIR=`pwd`
 rm -rf *log 
 rm -rf Albany
 rm -rf Trilinos
@@ -9,7 +9,7 @@ cd Trilinos
 git checkout develop
 cd ..
 git clone git@github.com:SNLComputation/Albany.git >& albany-clone.log 
-module use --append $LCM_DIR/Albany/doc/LandIce/modulefiles
+module use --append $TEST_DIR/Albany/doc/LandIce/modulefiles
 module load serial-intel-release
 rm -rf trilinos-build-serial-intel-release
 rm -rf trilinos-install-serial-intel-release

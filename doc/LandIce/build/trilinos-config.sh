@@ -22,7 +22,7 @@ export OMPI_FC=lcm_ompi_fc
 #
 cmake \
  -D BUILD_SHARED_LIBS:BOOL=ON \
- -D CMAKE_BUILD_TYPE:STRING="lcm_build_type" \
+ -D CMAKE_BUILD_TYPE:STRING="ali_build_type" \
  -D CMAKE_CXX_COMPILER:FILEPATH="$MPI_BIN/mpicxx" \
  -D CMAKE_C_COMPILER:FILEPATH="$MPI_BIN/mpicc" \
  -D CMAKE_Fortran_COMPILER:FILEPATH="$MPI_BIN/mpif90" \

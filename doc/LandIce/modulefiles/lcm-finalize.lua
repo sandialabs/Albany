@@ -1,4 +1,4 @@
-whatis("LCM wrap-up environment definitions")
+whatis("Albany wrap-up environment definitions")
 
 load("lcm-tpls")
 
@@ -6,7 +6,7 @@ local arch = os.getenv("ARCH")
 local tool_chain = os.getenv("TOOL_CHAIN")
 local build_type = os.getenv("BUILD_TYPE")
 local build = arch .. tool_chain .. build_type
-local lcm_dir = os.getenv("LCM_DIR")
+local lcm_dir = os.getenv("TEST_DIR")
 local install_dir = lcm_dir .. "/trilinos-install-" .. build
 local alb_exe_dir = lcm_dir .. "/albany-build-" .. build .. "/src"
 
