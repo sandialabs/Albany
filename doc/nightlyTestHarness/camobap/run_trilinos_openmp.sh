@@ -29,7 +29,7 @@ set -o errexit
 #-------------------------------------------
 
 if [ ! $1 ] ; then
-    echo "ERROR: run_tpetra_debug: run_tpetra_debug_tpetra.sh requires a file as an argument"
+    echo "ERROR: run_trilinos: run_trilinos_openmp.sh requires a file as an argument"
     echo "You must define env variables with required paths!"
     exit
 fi
@@ -38,7 +38,7 @@ if [ -s $1 ] ; then
   echo "Sourcing Environment variable file for required paths: " $1
   source $1
 else 
-  echo "ERROR: run_tpetra_debug: File not found: $1 argument = " $1
+  echo "ERROR: run_trilinos: File not found: $1 argument = " $1
   echo "You must define env variables with required paths!"
   exit
 fi
@@ -70,9 +70,9 @@ fi
 #time source $SCRIPTDIR/dakota_checkout.sh
 
 echo; echo "...Starting Trilinos full Build"
-time source $SCRIPTDIR/trilinos_build_debug.sh
+time source $SCRIPTDIR/trilinos_build_openmp.sh
 
-#rm -rf $NIGHTLYDIR/Albany 
+rm -rf $NIGHTLYDIR/Albany 
 
 #echo; echo "...Starting Albany Build (Albany and AlbanyT)"
 #time source $SCRIPTDIR/albany_build_tpetra.sh

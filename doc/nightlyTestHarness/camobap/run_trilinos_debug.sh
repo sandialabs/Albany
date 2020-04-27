@@ -29,7 +29,7 @@ set -o errexit
 #-------------------------------------------
 
 if [ ! $1 ] ; then
-    echo "ERROR: run_master: run_master_tpetra.sh requires a file as an argument"
+    echo "ERROR: run_trilinos_debug: run_trilinos_debug.sh requires a file as an argument"
     echo "You must define env variables with required paths!"
     exit
 fi
@@ -38,7 +38,7 @@ if [ -s $1 ] ; then
   echo "Sourcing Environment variable file for required paths: " $1
   source $1
 else 
-  echo "ERROR: run_master: File not found: $1 argument = " $1
+  echo "ERROR: run_trilinos_debug: File not found: $1 argument = " $1
   echo "You must define env variables with required paths!"
   exit
 fi
@@ -61,7 +61,7 @@ fi
 #time source /home/ikalash/.bashrc
 
 #echo; echo "...Starting Trilinos VOTD Checkout"
-#time source $SCRIPTDIR/trilinos_checkout.sh
+#time source $SCRIPTDIR/trilinos_checkout_openmp.sh
 
 #echo; echo "...Starting Albany VOTD Checkout"
 #time source $SCRIPTDIR/albany_checkout_tpetra.sh
@@ -69,8 +69,10 @@ fi
 #echo; echo "...Starting Dakota VOTD wget and untar"
 #time source $SCRIPTDIR/dakota_checkout.sh
 
-#echo; echo "...Starting Trilinos full Build"
-#time source $SCRIPTDIR/trilinos_build_tpetra.sh
+echo; echo "...Starting Trilinos full Build"
+time source $SCRIPTDIR/trilinos_build_debug.sh
+
+#rm -rf $NIGHTLYDIR/Albany 
 
 #echo; echo "...Starting Albany Build (Albany and AlbanyT)"
 #time source $SCRIPTDIR/albany_build_tpetra.sh
@@ -84,14 +86,14 @@ fi
 #-------------------------------------------
 # Execute scripts for building trilinos, dakota, and albany
 #-------------------------------------------
-echo; echo "...Starting Albany Build (AlbanyT only)"
-time source $SCRIPTDIR/albany_build_tpetra_albanyTonly.sh
+#echo; echo "...Starting Albany Build (AlbanyT only)"
+#time source $SCRIPTDIR/albany_build_tpetra_albanyTonly.sh
 
 #-------------------------------------------
 # Execute albany tests
 #-------------------------------------------
-echo; echo "...Starting Albany Tests (AlbanyT only)"
-time source $SCRIPTDIR/albany_runtest_tpetra_albanyTonly.sh
+#echo; echo "...Starting Albany Tests (AlbanyT only)"
+#time source $SCRIPTDIR/albany_runtest_tpetra_albanyTonly.sh
 
 #-------------------------------------------
 # Execute scripts for building trilinos, dakota, and albany
