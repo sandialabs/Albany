@@ -1029,6 +1029,25 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // **********************************************************************
+// Specialization: HessianVec
+// **********************************************************************
+
+template<typename Traits>
+Neumann<PHAL::AlbanyTraits::HessianVec, Traits>::
+Neumann(Teuchos::ParameterList& p)
+  : NeumannBase<PHAL::AlbanyTraits::HessianVec,Traits>(p)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void Neumann<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of Neumann::evaluateFields is not implemented yet"<< std::endl);
+}
+
+// **********************************************************************
 // Simple evaluator to aggregate all Neumann BCs into one "field"
 // **********************************************************************
 

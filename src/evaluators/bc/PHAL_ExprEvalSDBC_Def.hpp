@@ -217,6 +217,29 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       "DistParamDeriv specialization of ExprEvalSDBC is not implemented!");
 
 }
+
+// **********************************************************************
+// Specialization: HessianVec
+// **********************************************************************
+template<typename Traits>
+ExprEvalSDBC<PHAL::AlbanyTraits::HessianVec, Traits>::
+ExprEvalSDBC(Teuchos::ParameterList& p) :
+  DirichletBase<PHAL::AlbanyTraits::HessianVec, Traits>(p)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void ExprEvalSDBC<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
+{
+  // Not implemented!  
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "HessianVec specialization of ExprEvalSDBC is not implemented!");
+
+}
 }  // namespace PHAL
 
 #endif  // PHAL_EXPREVALSDBC_DEF_HPP

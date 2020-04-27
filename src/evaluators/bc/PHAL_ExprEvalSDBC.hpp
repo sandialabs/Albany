@@ -98,6 +98,17 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
+// **************************************************************
+// HessianVec
+// **************************************************************
+template<typename Traits>
+class ExprEvalSDBC<PHAL::AlbanyTraits::HessianVec,Traits>
+   : public PHAL::DirichletBase<PHAL::AlbanyTraits::HessianVec, Traits> {
+public:
+  ExprEvalSDBC(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+};
+
 }  // namespace PHAL
 
 #endif  // PHAL_ExprEvalSDBC_hpp

@@ -148,6 +148,18 @@ postEvaluate(typename Traits::PostEvalData workset)
 */
 }
 
+// **********************************************************************
+// Specialization: HessianVec
+// **********************************************************************
+
+template<typename Traits>
+void
+QCAD::FieldValueScatterScalarResponse<PHAL::AlbanyTraits::HessianVec, Traits>::
+postEvaluate(typename Traits::PostEvalData workset)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of QCAD::FieldValueScatterScalarResponse is not implemented yet"<< std::endl);
+}
+
 template<typename EvalT, typename Traits>
 QCAD::ResponseFieldValue<EvalT, Traits>::
 ResponseFieldValue(Teuchos::ParameterList& p,

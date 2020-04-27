@@ -120,6 +120,21 @@ private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 };
 
+template<typename Traits>
+class Gather2DField<PHAL::AlbanyTraits::HessianVec,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::HessianVec,Traits> {
+
+public:
+
+  Gather2DField(const Teuchos::ParameterList& p,
+                const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+};
+
 // ================ GatherExtruded2DField =============== //
 
 template<typename EvalT, typename Traits> class GatherExtruded2DField;
@@ -182,6 +197,21 @@ public:
 
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+};
+
+template<typename Traits>
+class GatherExtruded2DField<PHAL::AlbanyTraits::HessianVec,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::HessianVec,Traits> {
+
+public:
+
+  GatherExtruded2DField(const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
 };
 
 }

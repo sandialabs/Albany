@@ -325,6 +325,28 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
   }
 }
 
+//
+// Specialization: HessianVec
+//
+template <typename Traits>
+SDirichlet<PHAL::AlbanyTraits::HessianVec, Traits>::SDirichlet(
+    Teuchos::ParameterList& p)
+    : PHAL::DirichletBase<PHAL::AlbanyTraits::HessianVec, Traits>(p)
+{
+  return;
+}
+
+//
+//
+//
+template <typename Traits>
+void
+SDirichlet<PHAL::AlbanyTraits::HessianVec, Traits>::evaluateFields(
+    typename Traits::EvalData dirichlet_workset)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of SDirichlet::evaluateFields is not implemented yet"<< std::endl);
+}
+
 }  // namespace PHAL
 
 #endif  // PHAL_SDIRICHLET_DEF_HPP

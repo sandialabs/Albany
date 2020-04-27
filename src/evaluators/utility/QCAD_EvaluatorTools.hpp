@@ -75,6 +75,20 @@ namespace QCAD
     std::string getEvalType() const;
   };
 
+  // HessianVec
+  template<typename Traits>
+  class EvaluatorTools<PHAL::AlbanyTraits::HessianVec, Traits>
+  {
+  public:
+    typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+    typedef typename PHAL::AlbanyTraits::HessianVec::MeshScalarT MeshScalarT;
+
+    EvaluatorTools();
+    double getDoubleValue(const ScalarT& t) const;
+    double getMeshDoubleValue(const MeshScalarT& t) const;
+    std::string getEvalType() const;
+  };
+
 }
 
 #endif

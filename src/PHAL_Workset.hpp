@@ -40,6 +40,35 @@ class Epetra_MultiVector;
 
 namespace PHAL {
 
+struct HessianWorkset
+{
+  Teuchos::RCP<Thyra_MultiVector> direction_x;
+  Teuchos::RCP<Thyra_MultiVector> direction_p;
+
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xx;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xp;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_px;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_pp;
+
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_g_xx;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_g_xp;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_g_px;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_g_pp;
+
+  Teuchos::RCP<Thyra_MultiVector> overlapped_hess_vec_prod_f_xx;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_hess_vec_prod_f_xp;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_hess_vec_prod_f_px;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_hess_vec_prod_f_pp;
+
+  Teuchos::RCP<Thyra_MultiVector> overlapped_hess_vec_prod_g_xx;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_hess_vec_prod_g_xp;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_hess_vec_prod_g_px;
+  Teuchos::RCP<Thyra_MultiVector> overlapped_hess_vec_prod_g_pp;
+
+  std::string dist_param_deriv_direction_name;
+  Teuchos::RCP<const Albany::CombineAndScatterManager> p_direction_cas_manager;
+};
+
 struct Workset
 {
   Workset()
@@ -168,6 +197,8 @@ struct Workset
 
   // List of saved MDFields (needed for memoization)
   Teuchos::RCP<const StringSet> savedMDFields;
+
+  HessianWorkset hessianWorkset;
 
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT
   // where T is any lambda expression (typically a placeholder expression)

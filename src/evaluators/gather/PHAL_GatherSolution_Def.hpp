@@ -989,4 +989,110 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
+// **********************************************************************
+// Specialization: HessianVec
+// **********************************************************************
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::HessianVec, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+               const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::HessianVec, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::HessianVec,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::HessianVec, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::HessianVec, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::HessianVec,Traits>::numFieldsBase)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void GatherSolution<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  const auto& x       = workset.x;
+  const auto& xdot    = workset.xdot;
+  const auto& xdotdot = workset.xdotdot;
+
+  Teuchos::RCP<const Thyra_MultiVector> direction_x = workset.hessianWorkset.direction_x;
+
+  auto nodeID = workset.wsElNodeEqID;
+  Teuchos::ArrayRCP<const ST> x_constView, xdot_constView, xdotdot_constView, direction_x_constView;
+  bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
+  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
+  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
+  x_constView = Albany::getLocalData(x);
+  if(!xdot.is_null()) {
+    xdot_constView = Albany::getLocalData(xdot);
+  }
+  if(!xdotdot.is_null()) {
+    xdot_constView = Albany::getLocalData(xdot);
+  }
+  if(g_xx_is_active || g_px_is_active) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        direction_x.is_null(),
+        Teuchos::Exceptions::InvalidParameter,
+        "\nError in GatherSolution<HessianVec, Traits>: "
+        "direction_x is not set and hess_vec_prod_g_xx or "
+        "hess_vec_prod_g_px is set.\n");
+    direction_x_constView = Albany::getLocalData(direction_x->col(0));
+  }
+
+  int numDim = 0;
+  if (this->tensorRank==2) numDim = this->valTensor.extent(2); // only needed for tensor fields
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const int neq = nodeID.extent(2);
+    const std::size_t num_dof = neq * this->numNodes;
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      int firstunk = neq * node + this->offset;
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+        typename PHAL::Ref<ScalarT>::type
+          valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                    this->valTensor(cell,node, eq/numDim, eq%numDim));
+        RealType xvec_val = x_constView[nodeID(cell,node,this->offset + eq)];
+
+        valref = FadType(valref.size(), xvec_val);
+        if (g_xx_is_active||g_px_is_active)
+          valref.val().fastAccessDx(0) = direction_x_constView[nodeID(cell,node,this->offset + eq)];
+        if (g_xx_is_active||g_xp_is_active)
+          valref.fastAccessDx(firstunk + eq).val() = 1;
+      }
+    }
+  }
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const int neq = nodeID.extent(2);
+    const std::size_t num_dof = neq * this->numNodes;
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      if (workset.transientTerms && this->enableTransient) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          typename PHAL::Ref<ScalarT>::type
+            valref = (this->tensorRank == 0 ? this->val_dot[eq](cell,node) :
+                      this->tensorRank == 1 ? this->valVec_dot(cell,node,eq) :
+                      this->valTensor_dot(cell,node, eq/numDim, eq%numDim));
+          valref = xdot_constView[nodeID(cell,node,this->offset + eq)];
+        }
+      }
+      if (workset.accelerationTerms && this->enableAcceleration) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          typename PHAL::Ref<ScalarT>::type
+            valref = (this->tensorRank == 0 ? this->val_dotdot[eq](cell,node) :
+                      this->tensorRank == 1 ? this->valVec_dotdot(cell,node,eq) :
+                      this->valTensor_dotdot(cell,node, eq/numDim, eq%numDim));
+          valref = xdotdot_constView[nodeID(cell,node,this->offset + eq)];
+        }
+      }
+    }
+  }
+}
+
 } // namespace PHAL

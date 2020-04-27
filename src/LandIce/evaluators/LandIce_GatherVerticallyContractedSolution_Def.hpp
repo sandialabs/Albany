@@ -394,4 +394,120 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
+template<typename Traits>
+GatherVerticallyContractedSolution<PHAL::AlbanyTraits::HessianVec, Traits>::
+GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
+                                 const Teuchos::RCP<Albany::Layouts>& dl)
+ : GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::HessianVec, Traits>(p,dl)
+{
+  // Nothing to do here
+}
+
+template<typename Traits>
+void GatherVerticallyContractedSolution<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
+  Teuchos::RCP<const Thyra_MultiVector> direction_x = workset.hessianWorkset.direction_x;
+  Teuchos::ArrayRCP<const ST> direction_x_constView;
+
+  int neq = workset.wsElNodeEqID.extent(2);
+
+  bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
+  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
+  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
+
+  if(g_xx_is_active||g_px_is_active) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        direction_x.is_null(),
+        Teuchos::Exceptions::InvalidParameter,
+        "\nError in GatherSolution<HessianVec, Traits>: "
+        "direction_x is not set and hess_vec_prod_g_xx or"
+        "hess_vec_prod_g_px is set.\n");
+    direction_x_constView = Albany::getLocalData(direction_x->col(0));
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSets.is_null(), std::logic_error,
+                             "Side sets defined in input file but not properly specified on the mesh.\n");
+
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  int numLayers = layeredMeshNumbering.numLayers;
+
+  Kokkos::deep_copy(this->contractedSol.get_view(), ScalarT(0.0));
+
+  const Albany::SideSetList& ssList = *(workset.sideSets);
+  Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
+
+  if (it != ssList.end()) {
+    const std::vector<Albany::SideStruct>& sideSet = it->second;
+
+    // Loop over the sides that form the boundary condition
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+    const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+    const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
+
+
+    Teuchos::ArrayRCP<double> quadWeights(numLayers+1);
+    if(this->op == this->VerticalSum){
+      quadWeights.assign(quadWeights.size(),1.0);
+    } else  { //Average, doing trapezoidal rule
+      const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+      quadWeights[0] = 0.5*layers_ratio[0]; quadWeights[numLayers] = 0.5*layers_ratio[numLayers-1];
+      for(int i=1; i<numLayers; ++i)
+        quadWeights[i] = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
+    }
+
+    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
+      // Get the data that corresponds to the side
+      const int elem_LID = sideSet[iSide].elem_LID;
+      const int elem_side = sideSet[iSide].side_local_id;
+      const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
+      int numSideNodes = side.topology->node_count;
+
+      const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
+
+      //we only consider elements on the top.
+      GO baseId;
+      for (int i = 0; i < numSideNodes; ++i) {
+        std::size_t node = side.node[i];
+        baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
+        std::vector<double> contrSol(this->vecDim,0);
+        for(int il=0; il<numLayers+1; ++il) {
+          const GO gnode = layeredMeshNumbering.getId(baseId, il);
+          const LO inode = ov_node_indexer.getLocalElement(gnode);
+          for(int comp=0; comp<this->vecDim; ++comp)
+            contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
+        }
+        std::vector<double> contrDirection(this->vecDim,0);
+
+        if (g_xx_is_active||g_px_is_active)
+          for(int il=0; il<numLayers+1; ++il) {
+            const GO gnode = layeredMeshNumbering.getId(baseId, il);
+            const LO inode = ov_node_indexer.getLocalElement(gnode);
+            for(int comp=0; comp<this->vecDim; ++comp)
+              contrDirection[comp] += direction_x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
+          }
+
+        if(this->isVector) {
+          for(int comp=0; comp<this->vecDim; ++comp) {
+            this->contractedSol(elem_LID,elem_side,i,comp) = HessianVecFad(this->contractedSol(elem_LID,elem_side,i,comp).size(), contrSol[comp]);
+            if (g_xx_is_active||g_px_is_active)
+              this->contractedSol(elem_LID,elem_side,i,comp).val().fastAccessDx(0) = contrDirection[comp];
+            if (g_xx_is_active||g_xp_is_active)
+              for(int il=0; il<numLayers+1; ++il)
+                this->contractedSol(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset).val() = quadWeights[il] * workset.j_coeff;
+          }
+        } else {
+          this->contractedSol(elem_LID,elem_side,i) = HessianVecFad(this->contractedSol(elem_LID,elem_side,i).size(), contrSol[0]);
+          if (g_xx_is_active||g_px_is_active)
+            this->contractedSol(elem_LID,elem_side,i).val().fastAccessDx(0) = contrDirection[0];
+          if (g_xx_is_active||g_xp_is_active)
+            for(int il=0; il<numLayers+1; ++il)
+              this->contractedSol(elem_LID,elem_side,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset).val() = quadWeights[il] * workset.j_coeff;
+        }
+      }
+    }
+  }
+}
+
 } // namespace LandIce

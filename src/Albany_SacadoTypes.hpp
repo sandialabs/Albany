@@ -50,6 +50,26 @@ typedef Sacado::Fad::SLFad<RealType, ALBANY_TAN_SLFAD_SIZE> TanFadType;
 typedef Sacado::Fad::DFad<RealType> TanFadType;
 #endif
 
+typedef Sacado::Fad::SFad<RealType, 1> HessianVecInnerFad;
+#if defined(ALBANY_HES_VEC_FAD_TYPE_SFAD)
+typedef Sacado::Fad::SFad<HessianVecInnerFad, ALBANY_HES_VEC_SFAD_SIZE> HessianVecFad;
+#elif defined(ALBANY_HES_VEC_FAD_TYPE_SLFAD)
+typedef Sacado::Fad::SLFad<HessianVecInnerFad, ALBANY_HES_VEC_SLFAD_SIZE> HessianVecFad;
+#else
+typedef Sacado::Fad::DFad<HessianVecInnerFad> HessianVecFad;
+#endif
+
+#if defined(ALBANY_HES_FAD_TYPE_SFAD)
+typedef Sacado::Fad::SFad<RealType, ALBANY_HES_SFAD_SIZE> HessianInnerFad;
+typedef Sacado::Fad::SFad<HessianInnerFad, ALBANY_HES_SFAD_SIZE> HessianFad;
+#elif defined(ALBANY_HES_FAD_TYPE_SLFAD)
+typedef Sacado::Fad::SLFad<RealType, ALBANY_HES_SLFAD_SIZE> HessianInnerFad;
+typedef Sacado::Fad::SLFad<HessianInnerFad, ALBANY_HES_SLFAD_SIZE> HessianFad;
+#else
+typedef Sacado::Fad::DFad<RealType> HessianInnerFad;
+typedef Sacado::Fad::DFad<HessianInnerFad> HessianFad;
+#endif
+
 struct SPL_Traits {
   template <class T> struct apply {
     typedef typename T::ScalarT type;
@@ -68,6 +88,11 @@ namespace Albany
   typename Sacado::ScalarType<T>::type
   KOKKOS_INLINE_FUNCTION
   ADValue(const T& x) { return Sacado::ScalarValue<T>::eval(x); }
+
+  template <unsigned Size, unsigned Stride>
+  RealType
+  KOKKOS_INLINE_FUNCTION
+  ADValue(const Sacado::Fad::ViewFad<const HessianVecInnerFad, Size, Stride, HessianVecFad>& x) { return x.val().val(); }
 
   // Function to convert a ScalarType to a different one. This is used to convert
   // a ScalarT to a ParamScalarT.

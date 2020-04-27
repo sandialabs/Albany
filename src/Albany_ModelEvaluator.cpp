@@ -583,6 +583,8 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
         i + num_param_vecs,
         Thyra_ModelEvaluator::DERIV_LINEAR_OP);
 
+  result.setHessianSupports(true);
+
   for (int i = 0; i < n_g; ++i) {
     Thyra_ModelEvaluator::DerivativeSupport dgdx_support;
     if (app->getResponse(i)->isScalarResponse()) {
@@ -602,27 +604,62 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
     // result.setSupports(
     //    Thyra_ModelEvaluator::OUT_ARG_DgDx_dotdot, i, dgdx_support);
 
-    for (int l = 0; l < num_param_vecs; l++)
+    for (int l1 = 0; l1 < num_param_vecs; l1++) {
       result.setSupports(
           Thyra_ModelEvaluator::OUT_ARG_DgDp,
           i,
-          l,
+          l1,
           Thyra_ModelEvaluator::DERIV_MV_JACOBIAN_FORM);
+    }
+
+    const bool aDHessVec = appParams->sublist("Problem").sublist("Distributed Parameters").get("Hessian-vector products use AD", true);
+
+    bool hess_vec_prod_g_xx_support = aDHessVec;
+    bool hess_vec_prod_g_xp_support = aDHessVec;
+    bool hess_vec_prod_g_px_support = aDHessVec;
+    bool hess_vec_prod_g_pp_support = aDHessVec;
+
+    result.setSupports(
+      Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xx,
+      i,
+      hess_vec_prod_g_xx_support);
+    for (int j1 = 0; j1 < num_dist_param_vecs; j1++) {
+      result.setSupports(
+        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xp,
+        i,
+        j1 + num_param_vecs,
+        hess_vec_prod_g_xp_support);
+      result.setSupports(
+        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_px,
+        i,
+        j1 + num_param_vecs,
+        hess_vec_prod_g_px_support);
+      for (int j2 = 0; j2 < num_dist_param_vecs; j2++) {
+        result.setSupports(
+          Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_pp,
+          i,
+          j1 + num_param_vecs,
+          j2 + num_param_vecs,
+          hess_vec_prod_g_pp_support);
+      }
+    }
 
     if (app->getResponse(i)->isScalarResponse()) {
-      for (int j = 0; j < num_dist_param_vecs; j++)
+      for (int j1 = 0; j1 < num_dist_param_vecs; j1++) {
         result.setSupports(
             Thyra_ModelEvaluator::OUT_ARG_DgDp,
             i,
-            j + num_param_vecs,
+            j1 + num_param_vecs,
             Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM);
+      }
     } else {
-      for (int j = 0; j < num_dist_param_vecs; j++)
+      for (int j1 = 0; j1 < num_dist_param_vecs; j1++) {
         result.setSupports(
             Thyra_ModelEvaluator::OUT_ARG_DgDp,
             i,
-            j + num_param_vecs,
+            j1 + num_param_vecs,
             Thyra_ModelEvaluator::DERIV_LINEAR_OP);
+      }
     }
   }
 
@@ -928,6 +965,65 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       }
     }
 
+    // Need to handle hess_vec_prod_g
+
+    const Teuchos::RCP<const Thyra_MultiVector> delta_x = inArgs.get_x_direction();
+    const Teuchos::RCP<Thyra_MultiVector> g_hess_xx_v =
+      outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xx, j) ?
+      outArgs.get_hess_vec_prod_g_xx(j) : Teuchos::null;
+
+    if (Teuchos::nonnull(delta_x) && Teuchos::nonnull(g_hess_xx_v)) {
+      g_hess_xx_v->assign(0.);
+      app->evaluateResponseDistParamHessVecProd_xx(
+          j, curr_time, delta_x, x, x_dot, x_dotdot,
+          sacado_param_vec,
+          g_hess_xx_v);
+    }
+
+    for (int l1 = 0; l1 < num_dist_param_vecs; l1++) {
+      const Teuchos::RCP<const Thyra_MultiVector> delta_p_l1 = inArgs.get_p_direction(l1 + num_param_vecs);
+      const Teuchos::RCP<Thyra_MultiVector> g_hess_xp_v =
+        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xp, j, l1 + num_param_vecs) ?
+        outArgs.get_hess_vec_prod_g_xp(j, l1 + num_param_vecs) : Teuchos::null;
+      const Teuchos::RCP<Thyra_MultiVector> g_hess_px_v =
+        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_px, j, l1 + num_param_vecs) ?
+        outArgs.get_hess_vec_prod_g_px(j, l1 + num_param_vecs) : Teuchos::null;
+
+      if (Teuchos::nonnull(delta_p_l1) && Teuchos::nonnull(g_hess_xp_v)) {
+        g_hess_xp_v->assign(0.);
+        app->evaluateResponseDistParamHessVecProd_xp(
+            j, curr_time, delta_p_l1, x, x_dot, x_dotdot,
+            sacado_param_vec,
+            dist_param_names[l1],
+            g_hess_xp_v);
+      }
+      if (Teuchos::nonnull(delta_x) && Teuchos::nonnull(g_hess_px_v)) {
+        g_hess_px_v->assign(0.);
+        app->evaluateResponseDistParamHessVecProd_px(
+            j, curr_time, delta_x, x, x_dot, x_dotdot,
+            sacado_param_vec,
+            dist_param_names[l1],
+            g_hess_px_v);
+      }
+
+      for (int l2 = 0; l2 < num_dist_param_vecs; l2++) {
+        const Teuchos::RCP<const Thyra_MultiVector> delta_p_l2 = inArgs.get_p_direction(l2 + num_param_vecs);
+        const Teuchos::RCP<Thyra_MultiVector> g_hess_pp_v =
+          outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_pp, j, l1 + num_param_vecs, l2 + num_param_vecs) ?
+          outArgs.get_hess_vec_prod_g_pp(j, l1 + num_param_vecs, l2 + num_param_vecs) : Teuchos::null;
+
+        if (Teuchos::nonnull(delta_p_l2) && Teuchos::nonnull(g_hess_pp_v)) {
+          g_hess_pp_v->assign(0.);
+          app->evaluateResponseDistParamHessVecProd_pp(
+              j, curr_time, delta_p_l2, x, x_dot, x_dotdot,
+              sacado_param_vec,
+              dist_param_names[l1],
+              dist_param_names[l2],
+              g_hess_pp_v);
+        }
+      }
+    }
+
     if (Teuchos::nonnull(g_out)) {
       app->evaluateResponse(j, curr_time, x, x_dot, x_dotdot, sacado_param_vec, g_out);
     }
@@ -969,7 +1065,8 @@ Thyra_InArgs ModelEvaluator::createInArgsImpl() const
     result.setSupports(
         Thyra_ModelEvaluator::IN_ARG_W_x_dot_dot_coeff, true);
   }
-  result.set_Np(num_param_vecs + num_dist_param_vecs);
+  const int n_g = app->getNumResponses();
+  result.set_Np_Ng(num_param_vecs + num_dist_param_vecs, n_g);
 
   return static_cast<Thyra_InArgs>(result);
 }

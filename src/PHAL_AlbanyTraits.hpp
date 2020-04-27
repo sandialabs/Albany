@@ -42,6 +42,7 @@ namespace PHAL {
 #ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
   template<> struct Ref<TanFadType> : RefKokkos<TanFadType> {};
 #endif
+  template<> struct Ref<HessianVecFad> : RefKokkos<HessianVecFad> {};
 
   struct AlbanyTraits : public PHX::TraitsBase {
 
@@ -66,6 +67,13 @@ namespace PHAL {
     struct Jacobian : EvaluationType<FadType,  RealType, RealType> {};
 #endif
 
+#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    struct Hessian : EvaluationType<HessianFad,  HessianFad, HessianFad> {};
+#elif defined(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION)
+    struct Hessian : EvaluationType<HessianFad,  RealType, HessianFad> {};
+#else
+    struct Hessian : EvaluationType<HessianFad,  RealType, RealType> {};
+#endif
 
 #if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
     struct Tangent  : EvaluationType<TanFadType,TanFadType, TanFadType> {};
@@ -79,9 +87,14 @@ namespace PHAL {
     struct DistParamDeriv : EvaluationType<TanFadType, RealType, TanFadType> {};
 #endif
 
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    struct HessianVec : EvaluationType<HessianVecFad, HessianVecFad, HessianVecFad> {};
+#else
+    struct HessianVec : EvaluationType<HessianVecFad, RealType, HessianVecFad> {};
+#endif
 
-    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> EvalTypes;
-    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> BEvalTypes;
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv, HessianVec> EvalTypes;
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv, HessianVec> BEvalTypes;
 
     // ******************************************************************
     // *** Allocator Type
@@ -113,6 +126,9 @@ namespace PHX {
   template<> inline std::string print<PHAL::AlbanyTraits::DistParamDeriv>()
   { return "<DistParamDeriv>"; }
 
+  template<> inline std::string print<PHAL::AlbanyTraits::HessianVec>()
+  { return "<HessianVec>"; }
+
   // ******************************************************************
   // *** Data Types
   // ******************************************************************
@@ -130,6 +146,7 @@ namespace PHX {
   DECLARE_EVAL_SCALAR_TYPES(Jacobian, FadType, RealType)
   DECLARE_EVAL_SCALAR_TYPES(Tangent, TanFadType, RealType)
   DECLARE_EVAL_SCALAR_TYPES(DistParamDeriv, TanFadType, RealType)
+  DECLARE_EVAL_SCALAR_TYPES(HessianVec, HessianVecFad, RealType)
 
 #undef DECLARE_EVAL_SCALAR_TYPES
 }
@@ -145,7 +162,9 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name) \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits>;
-
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_HESSIANVEC(name) \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits>;
+  
 // 2. Versatile cases: after EvalT and Traits, accept any number of args
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_RESIDUAL(name,...) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits,__VA_ARGS__>;
@@ -155,6 +174,8 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits,__VA_ARGS__>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_DISTPARAMDERIV(name,...) \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits,__VA_ARGS__>;
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_HESSIANVEC(name,...) \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits,__VA_ARGS__>;  
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_MPTANGENT(name,...) \
   template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits,__VA_ARGS__>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_MPRESIDUAL(name,...) \
@@ -179,6 +200,10 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType>; \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_HESSIANVEC(name)          \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, HessianVecFad>; \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, RealType>;
+
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType>;
 
@@ -200,6 +225,12 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType>; \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_HESSIANVEC(name)                                                         \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, RealType,   RealType>;   \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, HessianVecFad, RealType>;   \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, RealType,   HessianVecFad>; \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, HessianVecFad, HessianVecFad>;
+  
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType, RealType>;
 
@@ -233,6 +264,16 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType, TanFadType>; \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType, TanFadType>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_HESSIANVEC(name)                                                         \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, RealType,   RealType, RealType>;   \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, HessianVecFad, RealType, RealType>;   \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, RealType,   HessianVecFad, RealType>; \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, HessianVecFad, HessianVecFad, RealType>; \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, RealType,   RealType, HessianVecFad>;   \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, HessianVecFad, RealType, HessianVecFad>;   \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, RealType,   HessianVecFad, HessianVecFad>; \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, HessianVecFad, HessianVecFad, HessianVecFad>;
+
 // 4. Input-output scalar type case: similar to the above one with two scalar types.
 //    However, the output scalar type MUST be constructible from the input one, so
 //    certain combinations are not allowed.
@@ -254,43 +295,54 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType,   TanFadType>;  \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_HESSIANVEC(name)                    \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, RealType,   RealType>;    \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, RealType,   HessianVecFad>;  \
+  template class name<PHAL::AlbanyTraits::HessianVec, PHAL::AlbanyTraits, HessianVecFad, HessianVecFad>;
+
 // 5. General macros: you should call these in your cpp files,
 //    which in turn will call the ones above.
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)          \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)   \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_HESSIANVEC(name)
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_TANGENT(name)          \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_DISTPARAMDERIV(name)
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_DISTPARAMDERIV(name)   \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_HESSIANVEC(name)
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_TANGENT(name)          \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_DISTPARAMDERIV(name)
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_DISTPARAMDERIV(name)   \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_HESSIANVEC(name)
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_TANGENT(name)          \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_DISTPARAMDERIV(name)
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_DISTPARAMDERIV(name)   \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_THREE_SCALAR_TYPES_HESSIANVEC(name)
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_TANGENT(name)          \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_DISTPARAMDERIV(name)
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_DISTPARAMDERIV(name)   \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_HESSIANVEC(name)
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(name,...)                  \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_RESIDUAL(name,__VA_ARGS__)       \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_JACOBIAN(name,__VA_ARGS__)       \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_TANGENT(name,__VA_ARGS__)        \
-  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_DISTPARAMDERIV(name,__VA_ARGS__)
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_DISTPARAMDERIV(name,__VA_ARGS__) \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_HESSIANVEC(name,__VA_ARGS__)
 
 #include "PHAL_Workset.hpp"
 

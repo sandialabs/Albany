@@ -741,6 +741,12 @@ Application::getVectorSpace() const
   return disc->getVectorSpace();
 }
 
+Teuchos::RCP<const Thyra_VectorSpace>
+Application::getDualVectorSpace() const
+{
+  return Teuchos::null;
+}
+
 RCP<Thyra_LinearOp>
 Application::createJacobianOp() const
 {
@@ -1066,6 +1072,13 @@ void
 Application::postRegSetup<PHAL::AlbanyTraits::DistParamDeriv>()
 {
   postRegSetupDImpl<PHAL::AlbanyTraits::DistParamDeriv>();
+}
+
+template <>
+void
+Application::postRegSetup<PHAL::AlbanyTraits::HessianVec>()
+{
+  postRegSetupDImpl<PHAL::AlbanyTraits::HessianVec>();
 }
 
 template <typename EvalT>
@@ -2215,6 +2228,118 @@ Application::evaluateResponseDistParamDeriv(
       scale_and_update(sensitivity_vec, 0.0, dg_dp->col(0), 1.0);
       distParamLib->get(sensitivity_name.str())->scatter();
     }
+  }
+}
+
+void
+Application::evaluateResponseDistParamHessVecProd_xx(
+    int                                     response_index,
+    const double                            current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>&         param_array,
+    const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_xx)
+{
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "Albany Fill: Response Distributed Parameter Hessian Vector Product");
+  double const this_time = fixTime(current_time);
+
+  using EvalT = PHAL::AlbanyTraits::HessianVec;
+  postRegSetup<EvalT>();
+
+  responses[response_index]->evaluateDistParamHessVecProd_xx(
+      this_time, v, x, xdot, xdotdot, param_array, Hv_g_xx);
+
+  if (!Hv_g_xx.is_null()) {
+    std::stringstream hessianvectorproduct_name;
+    hessianvectorproduct_name << "Hv_g_xx";
+  }
+}
+
+void
+Application::evaluateResponseDistParamHessVecProd_xp(
+    int                                     response_index,
+    const double                            current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>&         param_array,
+    const std::string&                      dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_xp)
+{
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "Albany Fill: Response Distributed Parameter Hessian Vector Product");
+  double const this_time = fixTime(current_time);
+
+  using EvalT = PHAL::AlbanyTraits::HessianVec;
+  postRegSetup<EvalT>();
+
+  responses[response_index]->evaluateDistParamHessVecProd_xp(
+      this_time, v, x, xdot, xdotdot, param_array, dist_param_direction_name, Hv_g_xp);
+
+  if (!Hv_g_xp.is_null()) {
+    std::stringstream hessianvectorproduct_name;
+    hessianvectorproduct_name << dist_param_direction_name << "_Hv_g_xp";
+  }
+}
+
+void
+Application::evaluateResponseDistParamHessVecProd_px(
+    int                                     response_index,
+    const double                            current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>&         param_array,
+    const std::string&                      dist_param_name,
+    const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_px)
+{
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "Albany Fill: Response Distributed Parameter Hessian Vector Product");
+  double const this_time = fixTime(current_time);
+
+  using EvalT = PHAL::AlbanyTraits::HessianVec;
+  postRegSetup<EvalT>();
+
+  responses[response_index]->evaluateDistParamHessVecProd_px(
+      this_time, v, x, xdot, xdotdot, param_array, dist_param_name, Hv_g_px);
+
+  if (!Hv_g_px.is_null()) {
+    std::stringstream hessianvectorproduct_name;
+    hessianvectorproduct_name << dist_param_name << "_Hv_g_px";
+  }
+}
+
+void
+Application::evaluateResponseDistParamHessVecProd_pp(
+    int                                     response_index,
+    const double                            current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>&         param_array,
+    const std::string&                      dist_param_name,
+    const std::string&                      dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_pp)
+{
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "Albany Fill: Response Distributed Parameter Hessian Vector Product");
+  double const this_time = fixTime(current_time);
+
+  using EvalT = PHAL::AlbanyTraits::HessianVec;
+  postRegSetup<EvalT>();
+
+  responses[response_index]->evaluateDistParamHessVecProd_pp(
+      this_time, v, x, xdot, xdotdot, param_array, dist_param_name, dist_param_direction_name, Hv_g_pp);
+
+  if (!Hv_g_pp.is_null()) {
+    std::stringstream hessianvectorproduct_name;
+    hessianvectorproduct_name << dist_param_name << "_" << dist_param_direction_name << "_Hv_g_pp";
   }
 }
 

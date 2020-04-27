@@ -267,3 +267,144 @@ evaluateDistParamDeriv(
     dg_dp->update(1.0, *dg_dp_i);
   }
 }
+
+void
+Albany::CumulativeScalarResponseFunction::
+evaluateDistParamHessVecProd_xx(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (Hv_dp.is_null()) {
+    return;
+  }
+
+  Hv_dp->assign(0.0);
+
+  for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = responses[i]->responseVectorSpace();
+
+    // Create Thyra_MultiVector for response derivative function
+    RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
+
+    // Evaluate response function
+    responses[i]->evaluateDistParamHessVecProd_xx(
+           current_time, v, x, xdot, xdotdot,
+           param_array,
+           Hv_dp_i);
+
+    // Copy results into combined result
+    Hv_dp->update(1.0, *Hv_dp_i);
+  }
+}
+
+void
+Albany::CumulativeScalarResponseFunction::
+evaluateDistParamHessVecProd_xp(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (Hv_dp.is_null()) {
+    return;
+  }
+
+  Hv_dp->assign(0.0);
+
+  for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = responses[i]->responseVectorSpace();
+
+    // Create Thyra_MultiVector for response derivative function
+    RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
+
+    // Evaluate response function
+    responses[i]->evaluateDistParamHessVecProd_xp(
+           current_time, v, x, xdot, xdotdot,
+           param_array, dist_param_direction_name,
+           Hv_dp_i);
+
+    // Copy results into combined result
+    Hv_dp->update(1.0, *Hv_dp_i);
+  }
+}
+
+void
+Albany::CumulativeScalarResponseFunction::
+evaluateDistParamHessVecProd_px(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (Hv_dp.is_null()) {
+    return;
+  }
+
+  Hv_dp->assign(0.0);
+
+  for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = responses[i]->responseVectorSpace();
+
+    // Create Thyra_MultiVector for response derivative function
+    RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
+
+    // Evaluate response function
+    responses[i]->evaluateDistParamHessVecProd_px(
+           current_time, v, x, xdot, xdotdot,
+           param_array, dist_param_name,
+           Hv_dp_i);
+
+    // Copy results into combined result
+    Hv_dp->update(1.0, *Hv_dp_i);
+  }
+}
+
+void
+Albany::CumulativeScalarResponseFunction::
+evaluateDistParamHessVecProd_pp(
+    const double current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    const std::string& dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
+{
+  if (Hv_dp.is_null()) {
+    return;
+  }
+
+  Hv_dp->assign(0.0);
+
+  for (unsigned int i=0; i<responses.size(); i++) {
+    auto vs_i = responses[i]->responseVectorSpace();
+
+    // Create Thyra_MultiVector for response derivative function
+    RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
+
+    // Evaluate response function
+    responses[i]->evaluateDistParamHessVecProd_pp(
+           current_time, v, x, xdot, xdotdot,
+           param_array, dist_param_name,
+           dist_param_direction_name,
+           Hv_dp_i);
+
+    // Copy results into combined result
+    Hv_dp->update(1.0, *Hv_dp_i);
+  }
+}

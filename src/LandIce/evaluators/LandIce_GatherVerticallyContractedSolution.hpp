@@ -139,6 +139,25 @@ private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 };
 
+
+template<typename Traits>
+class GatherVerticallyContractedSolution<PHAL::AlbanyTraits::HessianVec,Traits>
+    : public GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::HessianVec,Traits> {
+
+public:
+
+  GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
+
+private:
+  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+};
+
 }
 
 #endif

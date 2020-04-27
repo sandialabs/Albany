@@ -18,6 +18,16 @@ ScalarResponseFunction::responseVectorSpace() const
   return createLocallyReplicatedVectorSpace(num_responses,comm);
 }
 
+Teuchos::RCP<const Thyra_VectorSpace>
+ScalarResponseFunction::responseDualVectorSpace() const
+{
+  Teuchos::Array<GO> responseIndices(1);
+  responseIndices[0] = 0;
+
+  Teuchos::RCP<const Thyra_VectorSpace> dvs = createVectorSpace(comm,responseIndices);
+  return dvs;
+}
+
 Teuchos::RCP<Thyra_LinearOp>
 ScalarResponseFunction::createGradientOp() const
 {

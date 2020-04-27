@@ -722,4 +722,32 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
   }
 }
 
+// **********************************************************************
+// Specialization: HessianVec
+// **********************************************************************
+
+
+template<typename Traits>
+ScatterSideEqnResidual<AlbanyTraits::HessianVec, Traits>::
+ScatterSideEqnResidual (const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl)
+ : base_type(p,dl)
+{
+  // Nothing to do here
+}
+
+template<typename Traits>
+void ScatterSideEqnResidual<AlbanyTraits::HessianVec, Traits>::
+doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of ScatterSideEqnResidual::doEvaluateFieldsCell is not implemented yet"<< std::endl);
+}
+
+template<typename Traits>
+void ScatterSideEqnResidual<AlbanyTraits::HessianVec, Traits>::
+doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of ScatterSideEqnResidual::doEvaluateFieldsSide is not implemented yet"<< std::endl);
+}
+
 } // namespace PHAL

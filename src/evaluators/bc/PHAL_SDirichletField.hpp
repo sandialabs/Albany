@@ -115,6 +115,21 @@ class SDirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>
     void evaluateFields(typename Traits::EvalData d);
 };
 
+// **************************************************************
+// HessianVec
+//  -- Currently assuming no parameter derivative
+// **************************************************************
+template<typename Traits>
+class SDirichletField<PHAL::AlbanyTraits::HessianVec, Traits>
+    : public SDirichletField_Base<PHAL::AlbanyTraits::HessianVec, Traits> {
+  public:
+    using ScalarT = typename PHAL::AlbanyTraits::HessianVec::ScalarT;
+
+    SDirichletField(Teuchos::ParameterList& p);
+
+    void evaluateFields(typename Traits::EvalData d);
+};
+
 }
 
 #endif

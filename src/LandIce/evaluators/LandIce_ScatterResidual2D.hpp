@@ -87,6 +87,18 @@ public:
 };
 
 // **************************************************************
+// Distributed parameter derivative
+// **************************************************************
+template<typename Traits>
+class ScatterResidual2D<PHAL::AlbanyTraits::HessianVec,Traits>
+  : public ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>  {
+public:
+  ScatterResidual2D(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl);
+//  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
 // Residual
 // **************************************************************
 template<typename Traits>
@@ -132,6 +144,18 @@ public:
 template<typename Traits>
 class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::DistParamDeriv,Traits>
   : public ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+public:
+  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl);
+//  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
+// HessianVec
+// **************************************************************
+template<typename Traits>
+class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::HessianVec,Traits>
+  : public ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>  {
 public:
   ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl);
