@@ -46,7 +46,6 @@ ANONYMOUS:
     Number of Sensitivity Comparisons: 2
     Sensitivity Test Values 0: [1.00000000000000000e+00]
     Sensitivity Test Values 1: [3.33330000000000015e-01]
-    Number of Dakota Comparisons: 0
   Piro: 
     NOX: 
       Status Tests: 

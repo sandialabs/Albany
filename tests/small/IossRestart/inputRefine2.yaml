@@ -32,8 +32,6 @@ ANONYMOUS:
     Number of Comparisons: 1
     Test Values: [1.43913827362000002e+00]
     Relative Tolerance: 1.00000000000000002e-03
-    Number of Dakota Comparisons: 0
-    Dakota Test Values: [1.72755999999999998e+00]
   Piro: 
     LOCA: 
       Bifurcation: { }

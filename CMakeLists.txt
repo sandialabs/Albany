@@ -544,21 +544,9 @@ IF (ENABLE_ALBANY_EPETRA)
     MESSAGE("-- Looking for ThyraEpetraAdapters:  NOT found.")
     MESSAGE (FATAL_ERROR "ENABLE_ALBANY_EPETRA=ON requires ThyraEpetraAdapters in Trilinos.\n")
   ENDIF()
-
-  # DAKOTA uses Epetra currently
-  LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)
-  IF (TriKota_List_ID GREATER -1)
-    MESSAGE("-- Looking for Dakota via TriKota:   Found.")
-    SET(ALBANY_DAKOTA TRUE)
-  ELSE()
-    MESSAGE("-- Looking for Dakota via TriKota:   NOT found.")
-    SET(ALBANY_DAKOTA FALSE)
-  ENDIF()
-
 ELSE()
   MESSAGE("-- ALBANY_EPETRA     is NOT Enabled.")
   SET(ALBANY_EPETRA FALSE)
-  SET(ALBANY_DAKOTA FALSE)
 ENDIF()
 
 #################################################
@@ -895,25 +883,6 @@ OPTION(DISABLE_ALBANY_TESTS "Flag to disable tests" OFF)
 IF (DISABLE_ALBANY_TESTS)
   MESSAGE("-- DISABLE_ALBANY_TESTS is ON.  Tests will not be built.")
 ENDIF()
-
-# Add option to include Dakota restart tests in the test suite
-IF (NOT APPLE)
-  CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart tests" ON
-                         "ALBANY_DAKOTA" OFF)
-ELSE (NOT APPLE)
-  # Portable Dakota restart files is broken on MacOS, deactivate test by default
-  CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart tests" OFF
-                         "ALBANY_DAKOTA" OFF)
-ENDIF (NOT APPLE)
-IF (ENABLE_DAKOTA_RESTART_EXAMPLES)
-  MESSAGE("-- Dakota restart testing    is Enabled")
-  SET (ALBANY_DAKOTA_RESTART_EXAMPLES TRUE)
-ELSE (ENABLE_DAKOTA_RESTART_EXAMPLES)
-  IF (ALBANY_DAKOTA)
-    MESSAGE("-- Dakota restart testing    is NOT Enabled")
-  ENDIF (ALBANY_DAKOTA)
-  SET (ALBANY_DAKOTA_RESTART_EXAMPLES FALSE)
-ENDIF (ENABLE_DAKOTA_RESTART_EXAMPLES)
 
 # Set which memory analysis system routines are available.
 option(ENABLE_MALLINFO "Use mallinfo() in Albany::printMemoryAnalysis()" off)

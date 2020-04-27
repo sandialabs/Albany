@@ -66,16 +66,6 @@
 // Whether to allow deprecated code to compile without warnings
 #cmakedefine ALBANY_ENABLE_DEPRECATED
 
-// Whether we are supporting coupling with Dakota
-#cmakedefine ALBANY_DAKOTA
-
-// I'm not sure what HAVE_CONFIG_H is for, since it does not appear in Albany.
-// Before creating Albany_config.h, however, it was defined together with
-// ALBANY_DAKOTA, so I'm assuming it only matters in that case.
-#ifdef ALBANY_DAKOTA
-#define HAVE_CONFIG_H
-#endif
-
 // Macros for memory analysis
 #cmakedefine ALBANY_HAVE_MALLINFO
 #cmakedefine ALBANY_HAVE_GETRUSAGE

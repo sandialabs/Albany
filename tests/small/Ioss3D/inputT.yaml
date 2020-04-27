@@ -38,8 +38,6 @@ ANONYMOUS:
     Relative Tolerance: 1.00000000000000002e-03
     Number of Sensitivity Comparisons: 1
     Sensitivity Test Values 0: [1.90641599999999994e-01, 1.90639499999999990e-01, 2.05730799999999991e-01, 2.05724700000000010e-01, 2.30336999999999986e-01, 2.30336999999999986e-01, 7.82008000000000009e-02]
-    Number of Dakota Comparisons: 0
-    Dakota Test Values: [1.72755999999999998e+00]
   Piro: 
     LOCA: 
       Bifurcation: { }
