@@ -45,7 +45,6 @@ ANONYMOUS:
   Regression Results: 
     Number of Comparisons: 0
     Number of Sensitivity Comparisons: 0
-    Number of Dakota Comparisons: 0
     Relative Tolerance: 1.00000000000000002e-03
   Piro: 
     Solver Type: NOX

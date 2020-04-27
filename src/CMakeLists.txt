@@ -677,11 +677,6 @@ IF (ALBANY_MPMD)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
 ENDIF()
 
-IF (ALBANY_DAKOTA)
-  add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
-ENDIF ()
-
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
 

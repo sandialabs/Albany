@@ -24,7 +24,6 @@ ANONYMOUS:
     Relative Tolerance: 1.00000000000000005e-04
     Absolute Tolerance: 1.00000000000000008e-05
     Number of Sensitivity Comparisons: 0
-    Number of Dakota Comparisons: 0
   Piro: 
     LOCA: 
       Bifurcation: { }

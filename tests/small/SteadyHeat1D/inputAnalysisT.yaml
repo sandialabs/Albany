@@ -91,9 +91,4 @@ ANONYMOUS:
         Output Processor: 0
       Solver Options: 
         Status Test Check Type: Minimal
-    Analysis: 
-      Analysis Package: Dakota
-      Dakota: 
-        Input File: dakota.in
-        Output File: dak.out
 ...

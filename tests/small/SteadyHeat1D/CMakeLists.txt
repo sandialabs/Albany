@@ -19,35 +19,6 @@ if (ALBANY_IFPACK2)
   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
 endif ()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
-               ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.in
-               ${CMAKE_CURRENT_BINARY_DIR}/dak.in COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dak.restart
-               ${CMAKE_CURRENT_BINARY_DIR}/dak.restart COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
-               ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
-
-if (ALBANY_EPETRA AND ALBANY_DAKOTA)
-  # Repeat process for Dakota problems
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-  add_test(${testName}_Dakota_Epetra ${AlbanyDakota.exe} input.yaml)
-  set_tests_properties(${testName}_Dakota_Epetra PROPERTIES LABELS "Epetra;Analysis;Dakota")
-
-  # Additional files and tests for Dakota restart testing
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_restart.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_restart.yaml COPYONLY)
-  if (ALBANY_DAKOTA_RESTART_EXAMPLES)
-    add_test(${testName}_Dakota_restart_Epetra ${AlbanyDakota.exe} input_restart.yaml)
-    set_tests_properties(${testName}_Dakota_restart_Epetra PROPERTIES LABELS "Epetra;Analysis;Dakota")
-    set_tests_properties(${testName}_Dakota_restart_Epetra PROPERTIES DEPENDS  ${testName}_Dakota_Epetra)
-    if(ALBANY_CTEST_TIMEOUT)
-      set_tests_properties (${testName}_Dakota_restart_Epetra PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
-    endif()
-  endif ()
-endif(ALBANY_EPETRA AND ALBANY_DAKOTA)
-
 # Repeat process for Analysis problems
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysisT.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysisT.yaml COPYONLY)
