@@ -18,6 +18,7 @@ set( CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
 
 
 SET(SOURCES
+  Albany_RegressionTests.cpp
   Albany_SolverFactory.cpp
   Albany_Utils.cpp
   PHAL_Dimension.cpp
@@ -64,6 +65,7 @@ SET(HEADERS
   Albany_NullSpaceUtils.hpp
   Albany_ObserverImpl.hpp
   Albany_PiroObserver.hpp
+  Albany_RegressionTests.hpp
   Albany_ScalarOrdinalTypes.hpp
   Albany_SolverFactory.hpp
   Albany_StateManager.hpp

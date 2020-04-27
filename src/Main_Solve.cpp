@@ -9,6 +9,7 @@
 
 #include "Albany_Memory.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_RegressionTests.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_CommUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
 
     Albany::SolverFactory slvrfctry(cmd.yaml_filename, comm);
 
-    auto const& bt = slvrfctry.getParameters().get<std::string>("Build Type","NONE");
+    auto const& bt = slvrfctry.getParameters()->get<std::string>("Build Type","NONE");
 
     if (bt=="Tpetra") {
       // Set the static variable that denotes this as a Tpetra run
@@ -123,7 +124,7 @@ int main(int argc, char *argv[])
     setupTimer = Teuchos::null;
 
     std::string solnMethod =
-        slvrfctry.getParameters().sublist("Problem").get<std::string>(
+        slvrfctry.getParameters()->sublist("Problem").get<std::string>(
             "Solution Method");
     Teuchos::ParameterList &solveParams =
         slvrfctry.getAnalysisParameters().sublist(
@@ -160,9 +161,9 @@ int main(int argc, char *argv[])
          << std::setprecision(12) << std::endl;
 
     Teuchos::ParameterList &parameterParams =
-        slvrfctry.getParameters().sublist("Problem").sublist("Parameters");
+        slvrfctry.getParameters()->sublist("Problem").sublist("Parameters");
     Teuchos::ParameterList &responseParams =
-        slvrfctry.getParameters().sublist("Problem").sublist(
+        slvrfctry.getParameters()->sublist("Problem").sublist(
             "Response Functions");
 
     int num_param_vecs = parameterParams.get("Number of Parameter Vectors", 0);
@@ -280,6 +281,7 @@ int main(int argc, char *argv[])
       }
     }
 
+    Albany::RegressionTests regression(slvrfctry.getParameters());
     for (int i = 0; i < num_g - 1; i++) {
       const RCP<const Thyra_Vector> g = thyraResponses[i];
       if (!app->getResponse(i)->isScalarResponse()) continue;
@@ -293,7 +295,7 @@ int main(int argc, char *argv[])
       Albany::printThyraVector(*out, g);
 
       if (num_p == 0)  
-          status += slvrfctry.checkSolveTestResults(i, 0, g, Teuchos::null);
+          status += regression.checkSolveTestResults(i, 0, g, Teuchos::null);
       for (int j=0; j<num_p; j++) {
         Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
         if (Teuchos::nonnull(dgdp)) {
@@ -301,7 +303,7 @@ int main(int argc, char *argv[])
             Albany::printThyraMultiVector(
                 *out << "\nSensitivities (" << i << "," << j << "):\n", dgdp);
                 //check response and sensitivities for scalar parameters
-                status += slvrfctry.checkSolveTestResults(i, j, g, dgdp);
+                status += regression.checkSolveTestResults(i, j, g, dgdp);
           }
           else {
             auto small_vs = dgdp->domain()->smallVecSpcFcty()->createVecSpc(1);
@@ -316,18 +318,18 @@ int main(int argc, char *argv[])
             }
             *out << "\n" << std::endl;
             //check response and sensitivities for distributed parameters
-            status += slvrfctry.checkSolveTestResults(i, j, g, norms);
+            status += regression.checkSolveTestResults(i, j, g, norms);
           }
         }
         else //check response only, no sensitivities
-          status += slvrfctry.checkSolveTestResults(i, 0, g, Teuchos::null);
+          status += regression.checkSolveTestResults(i, 0, g, Teuchos::null);
       }
     }
 
     // Create debug output object
     if (thyraResponses.size()>0) {
       Teuchos::ParameterList &debugParams =
-          slvrfctry.getParameters().sublist("Debug Output", true);
+          slvrfctry.getParameters()->sublist("Debug Output", true);
       bool writeToMatrixMarketSoln =
           debugParams.get("Write Solution to MatrixMarket", false);
       bool writeToMatrixMarketDistrSolnMap = debugParams.get(

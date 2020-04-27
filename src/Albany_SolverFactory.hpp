@@ -68,55 +68,11 @@ public:
     return appParams->sublist("Piro").sublist("Analysis");
   }
 
-  Teuchos::ParameterList&
+  Teuchos::RCP<Teuchos::ParameterList>
   getParameters() const
   {
-    return *appParams;
+    return appParams;
   }
-
-  void
-  setSchwarz(const bool schwarz)
-  {
-    is_schwarz_ = schwarz;
-  }
-
-public:
-  // Functions to generate reference parameter lists for validation
-  //  EGN 9/2013: made these three functions public, as they pertain to valid
-  //    parameter lists for Albany::Application objects, which may get created
-  //    apart from Albany::SolverFactory.  It may be better to relocate these
-  //    to the Application class, or as functions "related to"
-  //    Albany::Application.
-  Teuchos::RCP<const Teuchos::ParameterList>  getValidAppParameters()       const;
-  Teuchos::RCP<const Teuchos::ParameterList>  getValidDebugParameters()     const; 
-  Teuchos::RCP<const Teuchos::ParameterList>  getValidScalingParameters()   const; 
-  Teuchos::RCP<const Teuchos::ParameterList>  getValidParameterParameters() const;
-  Teuchos::RCP<const Teuchos::ParameterList>  getValidResponseParameters()  const;
-
-private:
-  // Private functions to set default parameter values
-  void
-  setSolverParamDefaults(Teuchos::ParameterList* appParams, int myRank);
-
-  Teuchos::RCP<const Teuchos::ParameterList>
-  getValidRegressionResultsParameters() const;
-
-public:
-  int checkSolveTestResults(
-      int                                           response_index,
-      int                                           parameter_index,
-      const Teuchos::RCP<const Thyra_Vector>&       g,
-      const Teuchos::RCP<const Thyra_MultiVector>&  dgdp) const;
-
-  /** \brief Function that does regression testing for Dakota runs. */
-  int checkDakotaTestResults(
-      int                                            response_index,
-      const Teuchos::SerialDenseVector<int, double>* drdv) const;
-
-  /** \brief Function that does regression testing for Analysis runs. */
-  int checkAnalysisTestResults(
-      int                                            response_index,
-      const Teuchos::RCP<Thyra::VectorBase<double>>& tvec) const;
 
   Teuchos::RCP<Thyra::ModelEvaluator<ST>>
   returnModel() const
@@ -130,31 +86,30 @@ public:
     return observer_;
   };
 
-private:
-  /** \brief Testing utility that compares two numbers using two tolerances */
-  bool scaledCompare (double             x1,
-                      double             x2,
-                      double             relTol,
-                      double             absTol,
-                      std::string const& name) const;
+  // Functions to generate reference parameter lists for validation
+  //  EGN 9/2013: made these three functions public, as they pertain to valid
+  //    parameter lists for Albany::Application objects, which may get created
+  //    apart from Albany::SolverFactory.  It may be better to relocate these
+  //    to the Application class, or as functions "related to"
+  //    Albany::Application.
+  Teuchos::RCP<const Teuchos::ParameterList>  getValidAppParameters()       const;
+  Teuchos::RCP<const Teuchos::ParameterList>  getValidDebugParameters()     const; 
+  Teuchos::RCP<const Teuchos::ParameterList>  getValidScalingParameters()   const; 
+  Teuchos::RCP<const Teuchos::ParameterList>  getValidParameterParameters() const;
+  Teuchos::RCP<const Teuchos::ParameterList>  getValidResponseParameters()  const;
 
-  Teuchos::ParameterList*   getTestParameters(int response_index) const;
+protected:
 
-  void storeTestResults (Teuchos::ParameterList* testParams,
-                         int                     failures,
-                         int                     comparisons) const;
+  void setSolverParamDefaults(Teuchos::ParameterList* appParams, int myRank);
 
   Teuchos::RCP<Thyra::ModelEvaluator<ST>> model_;
 
   Teuchos::RCP<Piro::ObserverBase<double>> observer_;
 
-protected:
   //! Parameter list specifying what solver to create
   Teuchos::RCP<Teuchos::ParameterList> appParams;
 
   Teuchos::RCP<Teuchos::FancyOStream> out;
-
-  bool is_schwarz_{false};
 };
 
 }  // namespace Albany
