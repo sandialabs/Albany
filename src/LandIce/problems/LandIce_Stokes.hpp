@@ -126,7 +126,7 @@ namespace LandIce {
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
-#include "Albany_ResponseUtilities.hpp"
+#include "LandIce_ResponseUtilities.hpp"
 
 #include "LandIce_StokesContravarientMetricTensor.hpp"
 #include "PHAL_Neumann.hpp"
@@ -444,7 +444,7 @@ LandIce::Stokes::constructEvaluators(
     return ret_tag;
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+    LandIce::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, stateMgr);
   }
 

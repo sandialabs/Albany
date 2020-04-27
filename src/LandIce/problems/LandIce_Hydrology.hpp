@@ -15,7 +15,7 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
-#include "Albany_ResponseUtilities.hpp"
+#include "LandIce_ResponseUtilities.hpp"
 
 #include "PHAL_Dimension.hpp"
 #include "PHAL_FieldFrobeniusNorm.hpp"
@@ -923,7 +923,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     paramList->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
     paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+    LandIce::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
   }
 

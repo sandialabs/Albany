@@ -42,6 +42,7 @@
        evaluators/LandIce_PressureCorrectedTemperature.cpp
        evaluators/LandIce_PressureMeltingEnthalpy.cpp
        evaluators/LandIce_ProlongateVector.cpp
+       evaluators/LandIce_ResponseUtilities.cpp
        evaluators/LandIce_ResponseSurfaceVelocityMismatch.cpp
        evaluators/LandIce_ResponseSMBMismatch.cpp
        evaluators/LandIce_ResponseGLFlux.cpp
@@ -174,6 +175,8 @@ ENDIF()
        evaluators/LandIce_PressureMeltingEnthalpy_Def.hpp
        evaluators/LandIce_ProlongateVector.hpp
        evaluators/LandIce_ProlongateVector_Def.hpp
+       evaluators/LandIce_ResponseUtilities.hpp
+       evaluators/LandIce_ResponseUtilities_Def.hpp
        evaluators/LandIce_ResponseSurfaceVelocityMismatch.hpp
        evaluators/LandIce_ResponseSurfaceVelocityMismatch_Def.hpp
        evaluators/LandIce_ResponseBoundarySquaredL2Norm.hpp
