@@ -156,20 +156,12 @@ OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
   this->proc_rank_field = &this->metaData->template declare_field<ISFT>(
       stk::topology::ELEMENT_RANK, "proc_rank");
 
-  this->refine_field = &this->metaData->template declare_field<ISFT>(
-      stk::topology::ELEMENT_RANK, "refine_field");
-
   // Processor rank field, a scalar
   stk::mesh::put_field_on_mesh(
       *this->proc_rank_field, this->metaData->universal_part(), nullptr);
 
-  stk::mesh::put_field_on_mesh(
-      *this->refine_field, this->metaData->universal_part(), nullptr);
-
-
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
-  stk::io::set_field_role(*this->refine_field, Ioss::Field::MESH);
 #endif
 }
 

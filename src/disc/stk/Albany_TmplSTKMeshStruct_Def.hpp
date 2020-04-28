@@ -472,9 +472,6 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   this->setDefaultCoordinates3d();
   this->loadRequiredInputFields (req,commT);
 
-  // Refine the mesh before starting the simulation if indicated
-  uniformRefineMesh(commT);
-
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);
 

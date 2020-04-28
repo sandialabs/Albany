@@ -74,9 +74,6 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 
   // GenericSTKMeshStruct's constructor could not initialize metaData, cause the dimension was not set.
   std::vector<std::string> entity_rank_names = stk::mesh::entity_rank_names();
-  if(this->buildEMesh) {
-    entity_rank_names.push_back("FAMILY_TREE");
-  }
   metaData->initialize (this->numDim, entity_rank_names);
 
   params->validateParameters(*getValidDiscretizationParameters(), 0);
@@ -377,9 +374,6 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
 #ifdef ALBANY_ZOLTAN
   // Gmsh is for sure using a serial mesh. We hard code it here, in case the user did not set it
   params->set<bool>("Use Serial Mesh", true);
-
-  // Refine the mesh before starting the simulation if indicated
-  uniformRefineMesh(commT);
 
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);

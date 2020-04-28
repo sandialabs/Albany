@@ -10,10 +10,8 @@
 
 #include "PHAL_SaveStateField.hpp"
 
-#ifdef ALBANY_STK
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_AbstractSTKFieldContainer.hpp"
-#endif
 #include "Albany_AbstractDiscretization.hpp"
 
 namespace PHAL {
@@ -201,7 +199,6 @@ saveNodeState(typename Traits::EvalData workset)
   //       must extract entities from the bulk data and use them to access the values
   //       of the stk field.
 
-#ifdef ALBANY_STK
   Teuchos::RCP<Albany::AbstractDiscretization> disc = workset.disc;
   TEUCHOS_TEST_FOR_EXCEPTION (disc==Teuchos::null, std::runtime_error, "Error! Discretization is needed to save nodal state.\n");
 
@@ -255,11 +252,6 @@ saveNodeState(typename Traits::EvalData workset)
     default:  // error!
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");
   }
-#else
-  (void)workset;
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-      "Error! Nodal states only available for stk meshes, but Trilinos was compiled without STK!\n");
-#endif
 }
 
 } // namespace PHAL

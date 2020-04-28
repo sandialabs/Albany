@@ -39,13 +39,7 @@
 #include <percept/stk_rebalance/Rebalance.hpp>
 #include <percept/stk_rebalance/Partition.hpp>
 #include <percept/stk_rebalance/ZoltanPartition.hpp>
-#include <percept/stk_rebalance_utils/RebalanceUtils.hpp>
-#endif
-
-// Refinement
-#ifdef ALBANY_STK_PERCEPT
-#include <stk_adapt/UniformRefiner.hpp>
-#include <stk_adapt/UniformRefinerPattern.hpp>
+#include <percept/stk_rebalance/RebalanceUtils.hpp>
 #endif
 
 namespace {
@@ -121,23 +115,15 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
     int numDim_)
-    : buildEMesh(false),
-      params(params_),
-      adaptParams(adaptParams_),
-      uniformRefinementInitialized(false)
-//      , out(Teuchos::VerboseObjectBase::getDefaultOStream())
+    : params(params_),
+      adaptParams(adaptParams_)
 {
   metaData = Teuchos::rcp(new stk::mesh::MetaData());
-
-  buildEMesh = buildPerceptEMesh();
 
   // numDim = -1 is default flag value to postpone initialization
   if (numDim_>0) {
     this->numDim = numDim_;
     std::vector<std::string> entity_rank_names = stk::mesh::entity_rank_names();
-    // eMesh needs "FAMILY_TREE" entity
-    if(buildEMesh)
-      entity_rank_names.push_back("FAMILY_TREE");
     metaData->initialize(numDim_, entity_rank_names);
   }
 
@@ -269,25 +255,6 @@ void GenericSTKMeshStruct::SetupFieldData(
   writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false);
 
   transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
-
-#ifdef ALBANY_STK_PERCEPT
-  // Build the eMesh if needed
-  if(buildEMesh)
-
-   eMesh = Teuchos::rcp(new stk::percept::PerceptMesh(metaData, bulkData, false));
-
-  // Build  the requested refiners
-  if(!eMesh.is_null()){
-
-   if(buildUniformRefiner()) // cant currently build both types of refiners (FIXME)
-
-      return;
-
-   buildLocalRefiner();
-
-  }
-#endif
-
 }
 
 void GenericSTKMeshStruct::setAllPartsIO()
@@ -312,111 +279,6 @@ void GenericSTKMeshStruct::setAllPartsIO()
       stk::io::put_io_part_attribute(part);
   }
 #endif
-}
-
-bool GenericSTKMeshStruct::buildPerceptEMesh(){
-
-   // If there exists a nonempty "refine", "convert", or "enrich" string
-    std::string refine = params->get<std::string>("STK Initial Refine", "");
-    if(refine.length() > 0) return true;
-    std::string convert = params->get<std::string>("STK Initial Enrich", "");
-    if(convert.length() > 0) return true;
-    std::string enrich = params->get<std::string>("STK Initial Convert", "");
-    if(enrich.length() > 0) return true;
-
-    // Or, if a percept mesh is needed to support general adaptation indicated in the "Adaptation" sublist
-    if(!adaptParams.is_null()){
-
-      std::string& method = adaptParams->get("Method", "");
-
-      if (method == "Unif Size")
-        return true;
-
-    }
-
-    return false;
-
-}
-
-bool GenericSTKMeshStruct::buildUniformRefiner(){
-
-#ifdef ALBANY_STK_PERCEPT
-
-    stk::adapt::BlockNamesType block_names(stk::percept::EntityRankEnd+1u);
-
-    std::string refine = params->get<std::string>("STK Initial Refine", "");
-    std::string convert = params->get<std::string>("STK Initial Convert", "");
-    std::string enrich = params->get<std::string>("STK Initial Enrich", "");
-
-    std::string convert_options = stk::adapt::UniformRefinerPatternBase::s_convert_options;
-    std::string refine_options  = stk::adapt::UniformRefinerPatternBase::s_refine_options;
-    std::string enrich_options  = stk::adapt::UniformRefinerPatternBase::s_enrich_options;
-
-    // Has anything been specified?
-
-    if(refine.length() == 0 && convert.length() == 0 && enrich.length() == 0)
-
-       return false;
-
-    if (refine.length())
-
-      checkInput("refine", refine, refine_options);
-
-    if (convert.length())
-
-      checkInput("convert", convert, convert_options);
-
-    if (enrich.length())
-
-      checkInput("enrich", enrich, enrich_options);
-
-    refinerPattern = stk::adapt::UniformRefinerPatternBase::createPattern(refine, enrich, convert, *eMesh, block_names);
-    uniformRefinementInitialized = true;
-
-    return true;
-
-#else
-    return false;
-#endif
-
-}
-
-bool GenericSTKMeshStruct::buildLocalRefiner(){
-
-#ifdef ALBANY_STK_PERCEPT
-
-    if(adaptParams.is_null()) return false;
-
-//    stk::adapt::BlockNamesType block_names = stk::adapt::BlockNamesType();
-    stk::adapt::BlockNamesType block_names(stk::percept::EntityRankEnd+1u);
-
-    std::string adapt_method = adaptParams->get<std::string>("Method", "");
-
-    // Check if adaptation was specified
-    if(adapt_method.length() == 0) return false;
-
-    std::string pattern = adaptParams->get<std::string>("Refiner Pattern", "");
-
-    if(pattern == "Local_Tet4_Tet4_N"){
-
-//      refinerPattern = Teuchos::rcp(new stk::adapt::Local_Tet4_Tet4_N(*eMesh, block_names));
-      refinerPattern = Teuchos::rcp(new stk::adapt::Local_Tet4_Tet4_N(*eMesh));
-      return true;
-
-    }
-    else {
-
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
-         "Error!  Unknown local adaptation pattern in GenericSTKMeshStruct: " << pattern <<
-         "!" << std::endl << "Supplied parameter list is: " << std::endl << *adaptParams
-         << "\nValid patterns are: Local_Tet4_Tet4_N" << std::endl);
-    }
-
-
-#endif
-
-    return false;
-
 }
 
 void
@@ -587,51 +449,6 @@ void GenericSTKMeshStruct::setDefaultCoordinates3d ()
   }
 }
 
-void GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& comm){
-#ifdef ALBANY_STK_PERCEPT
-// Refine if requested
-  if(!uniformRefinementInitialized) return;
-
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
-
-
-  if(!refinerPattern.is_null() && proc_rank_field){
-
-    stk::adapt::UniformRefiner refiner(*eMesh, *refinerPattern, proc_rank_field);
-
-    int numRefinePasses = params->get<int>("Number of Refinement Passes", 1);
-
-    for(int pass = 0; pass < numRefinePasses; pass++){
-
-      if(comm->getRank() == 0)
-        std::cout << "Mesh refinement pass: " << pass + 1 << std::endl;
-
-      refiner.doBreak();
-
-    }
-
-// printCTD(*refinerPattern->getFromTopology());
-// printCTD(*refinerPattern->getToTopology());
-
-    // Need to reset cell topology if the cell topology has changed
-
-    if(refinerPattern->getFromTopology()->name != refinerPattern->getToTopology()->name){
-
-      int numEB = partVec.size();
-
-      for (int eb=0; eb<numEB; eb++) {
-
-        meshSpecs[eb]->ctd = *refinerPattern->getToTopology();
-
-      }
-    }
-  }
-#else
-  // Silence compiler warnings
-  (void) comm;
-#endif
-}
-
 void GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm){
   bool rebalance = params->get<bool>("Rebalance Mesh", false);
   bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
@@ -709,39 +526,6 @@ rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
     if(comm->getRank() == 0)
       std::cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
-
-#if 0 // Other experiments at rebalancing
-
-    // Configure Zoltan to use graph-based partitioning
-    Teuchos::ParameterList graph;
-    Teuchos::ParameterList lb_method;
-    lb_method.set("LOAD BALANCING METHOD"      , "4");
-    graph.sublist(stk::rebalance::Zoltan::default_parameters_name()) = lb_method;
-
-    stk::rebalance::Zoltan zoltan_partitiona(getMpiCommFromEpetraComm(*comm), numDim, graph);
-
-    *out << "Universal part " << comm->MyPID() << "  " <<
-      stk::mesh::count_selected_entities(selector, bulkData->buckets(metaData->element_rank())) << endl;
-    *out << "Owned part " << comm->MyPID() << "  " <<
-      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-    stk::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partitiona);
-
-    *out << "After rebal " << comm->MyPID() << "  " <<
-      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
-    *out << "After rebal nelements " << comm->MyPID() << "  " <<
-      stk::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-
-    imbalance = stk::rebalance::check_balance(*bulkData, NULL,
-      metaData->node_rank(), &selector);
-
-    if(comm->MyPID() == 0){
-
-      *out << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
-
-    }
-#endif
 
 #else
   // Silence compiler warnings
@@ -1860,27 +1644,6 @@ void GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname, const s
   }
 }
 
-void GenericSTKMeshStruct::checkInput(std::string option, std::string value, std::string allowed_values)
-{
-#ifdef ALBANY_STK_PERCEPT
-      std::vector<std::string> vals = stk::adapt::Util::split(allowed_values, ", ");
-      for (unsigned i = 0; i < vals.size(); i++)
-        {
-          if (vals[i] == value)
-            return;
-        }
-
-       TEUCHOS_TEST_FOR_EXCEPTION(true,
-         std::runtime_error,
-         "Adaptation input error in GenericSTKMeshStruct initialization: bar option: " << option << std::endl);
-#else
-  // Silence compiler warnings
-  (void) option;
-  (void) value;
-  (void) allowed_values;
-#endif
-}
-
 Teuchos::RCP<Teuchos::ParameterList>
 GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
 {
@@ -1962,11 +1725,7 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<bool>("Ignore Side Maps", true, "If true, we ignore possible side maps already imported from the exodus file");
   // Uniform percept adaptation of input mesh prior to simulation
 
-  validPL->set<std::string>("STK Initial Refine", "", "stk::percept refinement option to apply after the mesh is input");
-  validPL->set<std::string>("STK Initial Enrich", "", "stk::percept enrichment option to apply after the mesh is input");
-  validPL->set<std::string>("STK Initial Convert", "", "stk::percept conversion option to apply after the mesh is input");
   validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
-  validPL->set<int>("Number of Refinement Passes", 1, "Number of times to apply the refinement process");
 
   validPL->sublist("Side Set Discretizations", false, "A sublist containing info for storing side discretizations");
 

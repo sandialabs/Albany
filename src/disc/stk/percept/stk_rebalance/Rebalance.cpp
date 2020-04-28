@@ -23,7 +23,7 @@
 //#include <stk_mesh/fem/FEMMetaData.hpp>
 
 #include <percept/stk_rebalance/Rebalance.hpp>
-#include <percept/stk_rebalance_utils/RebalanceUtils.hpp>
+#include <percept/stk_rebalance/RebalanceUtils.hpp>
 #include <percept/stk_rebalance/Partition.hpp>
 
 using namespace stk;

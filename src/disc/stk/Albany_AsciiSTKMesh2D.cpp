@@ -405,9 +405,6 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
   params->set<bool>("Use Serial Mesh", true);
   params->set<bool>("Rebalance Mesh", true);
 
-  // Refine the mesh before starting the simulation if indicated
-  uniformRefineMesh(commT);
-
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);
 #endif

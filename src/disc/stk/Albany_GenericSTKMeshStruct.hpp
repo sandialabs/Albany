@@ -11,12 +11,6 @@
 
 #include "Teuchos_ParameterList.hpp"
 
-// Refinement
-#ifdef ALBANY_STK_PERCEPT
-#include <stk_percept/PerceptMesh.hpp>
-#include <stk_adapt/UniformRefinerPattern.hpp>
-#endif
-
 namespace Albany {
 
 // Forward declaration(s)
@@ -27,12 +21,6 @@ class GenericSTKMeshStruct : public AbstractSTKMeshStruct
 public:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
   const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const;
-
-#ifdef ALBANY_STK_PERCEPT
-  Teuchos::RCP<stk::percept::PerceptMesh> getPerceptMesh(){ return eMesh; }
-  Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> getRefinerPattern(){ return refinerPattern; }
-#endif
-
 
   //! Re-load balance adapted mesh
   void rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -63,10 +51,6 @@ protected:
                 const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                 const int worksetSize_);
 
-  bool buildUniformRefiner();
-
-  bool buildLocalRefiner();
-
   void printParts(stk::mesh::MetaData *metaData);
 
   void cullSubsetParts(std::vector<std::string>& ssNames,
@@ -80,13 +64,6 @@ protected:
 
   //! Sets all mesh parts as IO parts (will be written to file)
   void setAllPartsIO();
-
-  //! Determine if a percept mesh object is needed
-  bool buildEMesh;
-  bool buildPerceptEMesh();
-
-  //! Perform initial uniform refinement of the mesh
-  void uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   //! Creates a node set from a side set
   void addNodeSetsFromSideSets ();
@@ -175,13 +152,6 @@ protected:
   Teuchos::RCP<Teuchos::ParameterList> adaptParams;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
-
-#ifdef ALBANY_STK_PERCEPT
-  Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
-  Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
-#endif
-
-  bool uniformRefinementInitialized;
 
   bool requiresAutomaticAura;
 

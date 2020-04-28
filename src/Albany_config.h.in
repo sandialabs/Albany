@@ -20,8 +20,6 @@
 #cmakedefine ALBANY_RYTHMOS
 #cmakedefine ALBANY_SEACAS
 #cmakedefine ALBANY_STOKHOS
-#cmakedefine ALBANY_STK
-#cmakedefine ALBANY_STK_PERCEPT
 #cmakedefine ALBANY_STK_REBALANCE
 #cmakedefine ALBANY_TEKO
 #cmakedefine ALBANY_TEMPUS
