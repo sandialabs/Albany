@@ -11,11 +11,8 @@ cd $TRIBUILDDIR
 
 echo "    Starting Trilinos cmake" ; date
 if [ $MPI_BUILD ] ; then
-  cp $ALBDIR/doc/nightlyTestHarness/do-cmake-trilinos-mpi-camobap .
+  cp $ALBDIR/doc/nightlyTestHarness/camobap/do-cmake-trilinos-mpi-camobap .
   source ./do-cmake-trilinos-mpi-camobap > $TRILOUTDIR/trilinos_cmake.out 2>&1
-else
-  cp $ALBDIR/doc/nightlyTestHarness/do-cmake-trilinos-tpetra .
-  source ./do-cmake-trilinos-tpetra-no-scorec > $TRILOUTDIR/trilinos_cmake.out 2>&1
 fi
 
 echo "    Finished Trilinos cmake, starting make" ; date

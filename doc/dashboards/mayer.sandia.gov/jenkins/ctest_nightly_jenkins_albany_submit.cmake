@@ -52,11 +52,11 @@ endif ()
 ctest_submit (FILES "/mscratch/albany/mayer/nightlyCDashJenkins/build/Testing/XXX-0100/Build.xml" RETURN_VALUE  S_HAD_ERROR)
 
 if (S_HAD_ERROR)
-  message ("Cannot submit Albany configure results!")
+  message ("Cannot submit Albany build results!")
 endif ()
 
 ctest_submit (FILES "/mscratch/albany/mayer/nightlyCDashJenkins/build/Testing/XXX-0100/Test.xml" RETURN_VALUE  S_HAD_ERROR)
 
 if (S_HAD_ERROR)
-  message ("Cannot submit Albany configure results!")
+  message ("Cannot submit Albany test results!")
 endif ()
