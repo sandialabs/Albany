@@ -1,5 +1,5 @@
-
 #!/bin/bash
+
 #-------------------------------------------
 #  
 # Prototype script to checkout, compile Trilinos
@@ -29,7 +29,7 @@ set -o errexit
 #-------------------------------------------
 
 if [ ! $1 ] ; then
-    echo "ERROR: run_master: run_master.sh requires a file as an argument"
+    echo "ERROR: run_trilinos: run_trilinos.sh requires a file as an argument"
     echo "You must define env variables with required paths!"
     exit
 fi
@@ -38,7 +38,7 @@ if [ -s $1 ] ; then
   echo "Sourcing Environment variable file for required paths: " $1
   source $1
 else 
-  echo "ERROR: run_master: File not found: $1 argument = " $1
+  echo "ERROR: run_trilinos: File not found: $1 argument = " $1
   echo "You must define env variables with required paths!"
   exit
 fi
@@ -57,6 +57,9 @@ mkdir $NIGHTLYDIR
 # Execute scripts for building trilinos, dakota, and albany
 #-------------------------------------------
 
+#echo; echo "...Sourcing bashrc"
+#time source /home/ikalash/.bashrc
+
 echo; echo "...Starting Trilinos VOTD Checkout"
 time source $SCRIPTDIR/trilinos_checkout.sh
 
@@ -67,23 +70,36 @@ time source $SCRIPTDIR/albany_checkout.sh
 #time source $SCRIPTDIR/dakota_checkout.sh
 
 echo; echo "...Starting Trilinos full Build"
-time source $SCRIPTDIR/trilinos_build.sh
+time source $SCRIPTDIR/trilinos_build.sh.sh
 
-echo; echo "...Starting Albany Build"
-time source $SCRIPTDIR/albany_build.sh
+#rm -rf $SCRIPTDIR/Albany 
+
+#echo; echo "...Starting Albany Build (Albany and AlbanyT)"
+#time source $SCRIPTDIR/albany_build_tpetra.sh
+
+#-------------------------------------------
+# Execute albany tests
+#-------------------------------------------
+#echo; echo "...Starting Albany Tests (Albany and AlbanyT)"
+#time source $SCRIPTDIR/albany_runtest_tpetra.sh
+
+#-------------------------------------------
+# Execute scripts for building trilinos, dakota, and albany
+#-------------------------------------------
+#echo; echo "...Starting Albany Build (AlbanyT only)"
+#time source $SCRIPTDIR/albany_build_tpetra_albanyTonly.sh
+
+#-------------------------------------------
+# Execute albany tests
+#-------------------------------------------
+#echo; echo "...Starting Albany Tests (AlbanyT only)"
+#time source $SCRIPTDIR/albany_runtest_tpetra_albanyTonly.sh
+
+#-------------------------------------------
+# Execute scripts for building trilinos, dakota, and albany
 
 #-------------------------------------------
 # Execute parse output and send email scripts
 #-------------------------------------------
 # 
-echo; echo "...Sending out email with results"
-source $SCRIPTDIR/send_email.sh
-echo; echo "...Email sent!"
-
-#-------------------------------------------
-# Execute albany tests
-#-------------------------------------------
-echo; echo "...Starting Albany Tests"
-time source $SCRIPTDIR/albany_runtest.sh
-
-sleep 30m; mv $ALBDIR/build/examples/FELIX_Stokes/albany_runtests.out $ALBOUTDIR/albany_runtests.out
+#source $SCRIPTDIR/send_email_hack.sh
