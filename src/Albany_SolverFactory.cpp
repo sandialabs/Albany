@@ -140,14 +140,18 @@ setup(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
     debugPL->validateParametersAndSetDefaults(*getValidDebugParameters(), 0);
   }
+
+  m_appParams = appParams;
 }
 
 Teuchos::RCP<Application>
 SolverFactory::
-createApplication (const Teuchos::RCP<const Teuchos_Comm>&  appComm,
+createApplication (const Teuchos::RCP<const Teuchos_Comm>& appComm,
                    const Teuchos::RCP<const Thyra_Vector>& initial_guess)
 {
   auto albanyApp = Teuchos::rcp(new Application(appComm, m_appParams, initial_guess));
+
+  return albanyApp;
 }
 
 Teuchos::RCP<ModelEvaluator>

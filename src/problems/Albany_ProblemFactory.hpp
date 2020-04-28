@@ -4,60 +4,45 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_PROBLEMFACTORY_HPP
-#define ALBANY_PROBLEMFACTORY_HPP
+#ifndef ALBANY_PROBLEM_FACTORY_HPP
+#define ALBANY_PROBLEM_FACTORY_HPP
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
 #include "Albany_AbstractProblem.hpp"
-
-// Forward declarations.
-namespace AAdapt { namespace rc { class Manager; } }
+#include "Albany_AbstractFactory.hpp"
 
 namespace Albany {
 
-  /*!
-   * \brief A factory class to instantiate AbstractProblem objects
-   */
-  class ProblemFactory {
-  public:
+// A typedef for the base class for AbstractProblem factory classes
+using ProblemFactory = AbstractFactory<AbstractProblem,std::string,
+                                       const Teuchos::RCP<const Teuchos_Comm>&,
+                                       const Teuchos::RCP<Teuchos::ParameterList>&,
+                                       const Teuchos::RCP<ParamLib>&>;
 
-    //! Default constructor
-    ProblemFactory(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-                   const Teuchos::RCP<ParamLib>& paramLib,
-                   const Teuchos::RCP<const Teuchos::Comm<int> >& commT_);
+// A concrete problem factory class for basic albany problems
+class BasicProblemFactory : public ProblemFactory
+{
+public:
+  obj_ptr_type create (const std::string& key,
+                       const Teuchos::RCP<const Teuchos_Comm>&     comm,
+                       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
+                       const Teuchos::RCP<ParamLib>&               paramLib) const;
 
-    //! Destructor
-    virtual ~ProblemFactory() {}
+  bool provides (const std::string& key) const;
 
-    virtual Teuchos::RCP<Albany::AbstractProblem>
-    create();
+  static BasicProblemFactory& instance () {
+    static BasicProblemFactory factory;
+    return factory;
+  }
 
-  private:
+protected:
 
-    //! Private to prohibit copying
-    ProblemFactory(const ProblemFactory&);
+  //! Default constructor
+  BasicProblemFactory () = default;
+};
 
-    //! Private to prohibit copying
-    ProblemFactory& operator=(const ProblemFactory&);
+} // namespace Albany
 
-  protected:
-
-    //! Parameter list specifying what problem to create
-    Teuchos::RCP<Teuchos::ParameterList> problemParams;
-
-    //! Parameter list specifying what discretization to use.
-    Teuchos::RCP<Teuchos::ParameterList> discretizationParams;
-
-    //! Parameter library
-    Teuchos::RCP<ParamLib> paramLib;
-
-    //! MPI Communicator
-    Teuchos::RCP<const Teuchos::Comm<int> > commT;
-
-  };
-
-}
-
-#endif // ALBANY_PROBLEMFACTORY_HPP
+#endif // ALBANY_PROBLEM_FACTORY_HPP

@@ -26,10 +26,10 @@ namespace Albany {
   public:
   
     //! Default constructor
-    CahnHillProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<ParamLib>& paramLib,
-		const int numDim_,
-                Teuchos::RCP<const Teuchos::Comm<int> >& commT_); 
+    CahnHillProblem (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                 		 const Teuchos::RCP<ParamLib>& paramLib,
+		                 const int numDim_,
+                     const Teuchos::RCP<const Teuchos::Comm<int> >& comm); 
 
     //! Destructor
     ~CahnHillProblem();
@@ -57,15 +57,8 @@ namespace Albany {
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-  private:
-
-    //! Private to prohibit copying
-    CahnHillProblem(const CahnHillProblem&);
-    
-    //! Private to prohibit copying
-    CahnHillProblem& operator=(const CahnHillProblem&);
-
-  public:
+    CahnHillProblem(const CahnHillProblem&) = delete;
+    CahnHillProblem& operator=(const CahnHillProblem&) = delete;
 
     //! Main problem setup routine. Not directly called, but indirectly by following functions
     template <typename EvalT> 
@@ -85,7 +78,7 @@ namespace Albany {
 
     bool haveNoise; // Langevin noise present
 
-    Teuchos::RCP<const Teuchos::Comm<int> > commT;  
+    Teuchos::RCP<const Teuchos::Comm<int> > comm;  
 
     Teuchos::RCP<Albany::Layouts> dl;
 

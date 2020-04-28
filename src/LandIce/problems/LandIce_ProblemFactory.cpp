@@ -19,82 +19,65 @@
 namespace LandIce
 {
 
-ProblemFactory::ProblemFactory (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
-                                const Teuchos::RCP<Teuchos::ParameterList>& discretizationParams_,
-                                const Teuchos::RCP<ParamLib>& paramLib_) :
-  problemParams(problemParams_),
-  discretizationParams(discretizationParams_),
-  paramLib(paramLib_)
+bool LandIceProblemFactory::provides (const std::string& key) const
 {
-  // Nothing to be done here
+  return key == "LandIce Stokes" ||
+         key == "LandIce Stokes 3D" ||
+         key == "LandIce Stokes 2D" ||
+         key == "LandIce Stokes First Order 2D" ||
+         key == "LandIce Stokes FO 2D" ||
+         key == "LandIce Stokes First Order 2D XZ" ||
+         key == "LandIce Stokes FO 2D XZ" ||
+         key == "LandIce Stokes First Order 3D" ||
+         key == "LandIce Stokes FO 3D" ||
+         key == "LandIce Coupled FO H 3D" ||
+         key == "LandIce Stokes L1L2 2D" ||
+         key == "LandIce Hydrology 2D" ||
+         key == "LandIce Enthalpy 3D" ||
+         key == "LandIce Stokes FO Thermo Coupled 3D" ||
+         key == "LandIce Schoof Fit" ||
+         key == "LandIce Laplacian Sampling";
 }
 
-bool ProblemFactory::hasProblem (const std::string& problemName)
+Albany::ProblemFactory::obj_ptr_type
+LandIceProblemFactory::
+create (const std::string& key,
+        const Teuchos::RCP<const Teuchos_Comm>&     /* comm */,
+        const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
+        const Teuchos::RCP<ParamLib>&               paramLib) const
 {
-  if (problemName == "LandIce Stokes" ||
-      problemName == "LandIce Stokes 3D" ||
-      problemName == "LandIce Stokes 2D" ||
-      problemName == "LandIce Stokes First Order 2D" ||
-      problemName == "LandIce Stokes FO 2D" ||
-      problemName == "LandIce Stokes First Order 2D XZ" ||
-      problemName == "LandIce Stokes FO 2D XZ" ||
-      problemName == "LandIce Stokes First Order 3D" ||
-      problemName == "LandIce Stokes FO 3D" ||
-      problemName == "LandIce Coupled FO H 3D" ||
-      problemName == "LandIce Stokes L1L2 2D" ||
-      problemName == "LandIce Hydrology 2D" ||
-      problemName == "LandIce Enthalpy 3D" ||
-      problemName == "LandIce Stokes FO Thermo Coupled 3D" ||
-      problemName == "LandIce Schoof Fit" ||
-      problemName == "LandIce Laplacian Sampling")
-  {
-    return true;
-  }
+  obj_ptr_type problem;
 
-  return false;
-}
+  auto problemParams = Teuchos::sublist(topLevelParams, "Problem", true);
+  auto discParams = Teuchos::sublist(topLevelParams, "Discretization");
 
-Teuchos::RCP<Albany::AbstractProblem>
-ProblemFactory::create() const
-{
-  Teuchos::RCP<Albany::AbstractProblem> problem;
-  using Teuchos::rcp;
 
-  std::string& method = problemParams->get("Name", "");
-
-  if (method == "LandIce Stokes" || method == "LandIce Stokes 3D" ) {
-    problem = rcp(new LandIce::Stokes(problemParams, paramLib, 3));
-  }
-  else if (method == "LandIce Stokes 2D" ) {
-    problem = rcp(new LandIce::Stokes(problemParams, paramLib, 2));
-  }
-  else if (method == "LandIce Stokes First Order 2D" || method == "LandIce Stokes FO 2D" ||
-           method == "LandIce Stokes First Order 2D XZ" || method == "LandIce Stokes FO 2D XZ") {
-    problem = rcp(new LandIce::StokesFO(problemParams, discretizationParams, paramLib, 2));
-  }
-  else if (method == "LandIce Stokes First Order 3D" || method == "LandIce Stokes FO 3D" ) {
-    problem = rcp(new LandIce::StokesFO(problemParams, discretizationParams, paramLib, 3));
-  }
-  else if (method == "LandIce Coupled FO H 3D" ) {
-    problem = rcp(new LandIce::StokesFOThickness(problemParams, discretizationParams, paramLib, 3));
-  }
-  else if (method == "LandIce Stokes L1L2 2D") {
-    problem = rcp(new LandIce::StokesL1L2(problemParams, paramLib, 2));
-  }
-  else if (method == "LandIce Hydrology 2D") {
-    problem = rcp(new LandIce::Hydrology(problemParams, discretizationParams, paramLib, 2));
-  }
-  else if (method == "LandIce Enthalpy 3D") {
-    problem = rcp(new LandIce::Enthalpy(problemParams, discretizationParams, paramLib, 3));
-  }
-  else if (method == "LandIce Stokes FO Thermo Coupled 3D") {
-    problem = rcp(new LandIce::StokesFOThermoCoupled(problemParams, discretizationParams, paramLib, 3));
-  }
-  else if (method == "LandIce Schoof Fit") {
-    problem = rcp(new LandIce::SchoofFit(problemParams, paramLib, 2));
-  }
-  else if (method == "LandIce Laplacian Sampling") {
-    problem = rcp(new LandIce::LaplacianSampling(problemParams, discretizationParams, paramLib, 2));
+  if (key == "LandIce Stokes" || key == "LandIce Stokes 3D" ) {
+    problem = Teuchos::rcp(new LandIce::Stokes(problemParams, paramLib, 3));
+  } else if (key == "LandIce Stokes 2D" ) {
+    problem = Teuchos::rcp(new LandIce::Stokes(problemParams, paramLib, 2));
+  } else if (key == "LandIce Stokes First Order 2D" || key == "LandIce Stokes FO 2D" ||
+             key == "LandIce Stokes First Order 2D XZ" || key == "LandIce Stokes FO 2D XZ") {
+    problem = Teuchos::rcp(new LandIce::StokesFO(problemParams, discParams, paramLib, 2));
+  } else if (key == "LandIce Stokes First Order 3D" || key == "LandIce Stokes FO 3D" ) {
+    problem = Teuchos::rcp(new LandIce::StokesFO(problemParams, discParams, paramLib, 3));
+  } else if (key == "LandIce Coupled FO H 3D" ) {
+    problem = Teuchos::rcp(new LandIce::StokesFOThickness(problemParams, discParams, paramLib, 3));
+  } else if (key == "LandIce Stokes L1L2 2D") {
+    problem = Teuchos::rcp(new LandIce::StokesL1L2(problemParams, paramLib, 2));
+  } else if (key == "LandIce Hydrology 2D") {
+    problem = Teuchos::rcp(new LandIce::Hydrology(problemParams, discParams, paramLib, 2));
+  } else if (key == "LandIce Enthalpy 3D") {
+    problem = Teuchos::rcp(new LandIce::Enthalpy(problemParams, discParams, paramLib, 3));
+  } else if (key == "LandIce Stokes FO Thermo Coupled 3D") {
+    problem = Teuchos::rcp(new LandIce::StokesFOThermoCoupled(problemParams, discParams, paramLib, 3));
+  } else if (key == "LandIce Schoof Fit") {
+    problem = Teuchos::rcp(new LandIce::SchoofFit(problemParams, paramLib, 2));
+  } else if (key == "LandIce Laplacian Sampling") {
+    problem = Teuchos::rcp(new LandIce::LaplacianSampling(problemParams, discParams, paramLib, 2));
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+      "Error! Unrecognized key in LandIceProblemFactory. Did you forget to check with 'provides(key)' first?\n");
   }
 
   return problem;

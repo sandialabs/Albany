@@ -34,19 +34,13 @@
 #include "PHAL_Setup.hpp"
 #include "PHAL_Workset.hpp"
 
-// Forward declarations.
-namespace AAdapt {
-namespace rc {
-class Manager;
-}
-}  // namespace AAdapt
-
 namespace Albany {
 
 class Application
     : public Sacado::ParameterAccessor<PHAL::AlbanyTraits::Residual, SPL_Traits>
 {
- public:
+public:
+
   enum SolutionMethod
   {
     Steady,
@@ -63,11 +57,9 @@ class Application
   } solutionStatus;
 
   //! Constructor(s) and Destructor
-  Application(
-      const Teuchos::RCP<const Teuchos_Comm>&     comm,
-      const Teuchos::RCP<Teuchos::ParameterList>& params,
-      const Teuchos::RCP<const Thyra_Vector>&     initial_guess = Teuchos::null,
-      const bool                                  schwarz       = false);
+  Application (const Teuchos::RCP<const Teuchos_Comm>&     comm,
+               const Teuchos::RCP<Teuchos::ParameterList>& params,
+               const Teuchos::RCP<const Thyra_Vector>&     initial_guess = Teuchos::null);
 
   Application(const Teuchos::RCP<const Teuchos_Comm>& comm);
 
@@ -76,25 +68,16 @@ class Application
   ~Application() = default;
 
   //! Prohibit copying/moving
-  Application&
-  operator=(const Application&) = delete;
-  Application&
-  operator=(Application&&) = delete;
+  Application& operator=(const Application&) = delete;
+  Application& operator=(Application&&) = delete;
 
-  void
-  initialSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params);
-  void
-  createMeshSpecs();
-  void
-  createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruct> mesh);
-  void
-  buildProblem();
-  void
-  createDiscretization();
-  void
-  finalSetUp(
-      const Teuchos::RCP<Teuchos::ParameterList>& params,
-      const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null);
+  void initialSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params);
+  void createMeshSpecs();
+  void createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruct> mesh);
+  void buildProblem();
+  void createDiscretization();
+  void finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null);
 
   //! Get underlying abstract discretization
   Teuchos::RCP<Albany::AbstractDiscretization>
@@ -560,7 +543,6 @@ class Application
   }
 
  protected:
-  bool is_schwarz_;
   bool no_dir_bcs_;
   bool requires_sdbcs_;
   bool requires_orig_dbcs_;

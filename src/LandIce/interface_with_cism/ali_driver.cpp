@@ -25,6 +25,7 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_RegressionTests.hpp"
 #include "Albany_OrdinarySTKFieldContainer.hpp"
+#include "LandIce_ProblemFactory.hpp"
 
 //#include "Teuchos_TestForException.hpp"
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -486,6 +487,10 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     field7.set<std::string>("Field Name", "ygrad_surface_height");
     field7.set<std::string>("Field Type", "Node Scalar");
     field7.set<std::string>("Field Origin", "Mesh");
+
+    // Register LandIce problems
+    auto& pb_factories = FactoriesContainer<ProblemFactory>::instance();
+    pb_factories.add_factory(LandIce::LandIceProblemFactory::instance());
 
     albanyApp = Teuchos::rcp(new Albany::Application(reducedMpiCommT));
     albanyApp->initialSetUp(parameterList);

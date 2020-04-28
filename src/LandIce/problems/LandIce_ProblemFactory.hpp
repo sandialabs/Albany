@@ -7,11 +7,7 @@
 #ifndef LANDICE_PROBLEM_FACTORY_HPP
 #define LANDICE_PROBLEM_FACTORY_HPP
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-
-#include "Albany_AbstractProblem.hpp"
-
+#include "Albany_ProblemFactory.hpp"
 
 namespace LandIce
 {
@@ -20,38 +16,21 @@ namespace LandIce
    * \brief A factory class to instantiate LandIce objects
    */
 
-class ProblemFactory {
+class LandIceProblemFactory : public Albany::ProblemFactory {
 public:
+  obj_ptr_type create (const std::string& key,
+                       const Teuchos::RCP<const Teuchos_Comm>&     comm,
+                       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
+                       const Teuchos::RCP<ParamLib>&               paramLib) const;
 
-  //! Default constructor
-  ProblemFactory (const Teuchos::RCP<Teuchos::ParameterList>& problemParams,
-                  const Teuchos::RCP<Teuchos::ParameterList>& discretizaitonParams,
-                  const Teuchos::RCP<ParamLib>& paramLib_);
+  bool provides (const std::string& key) const;
 
-  //! Destructor
-  virtual ~ProblemFactory() {}
-
-  virtual Teuchos::RCP<Albany::AbstractProblem> create() const;
-
-  static bool hasProblem (const std::string& problemName);
+  static LandIceProblemFactory& instance () {
+    static LandIceProblemFactory factory;
+    return factory;
+  }
 private:
-
-  //! Private to prohibit copying
-  ProblemFactory(const ProblemFactory&) = delete;
-
-  //! Private to prohibit copying
-  ProblemFactory& operator=(const ProblemFactory&) = delete;
-
-protected:
-
-  //! Parameter list specifying what problem to create
-  Teuchos::RCP<Teuchos::ParameterList> problemParams;
-
-  //! Parameter list specifying what discretization to use.
-  Teuchos::RCP<Teuchos::ParameterList> discretizationParams;
-
-  //! Parameter library
-  Teuchos::RCP<ParamLib> paramLib;
+  LandIceProblemFactory () = default;
 };
 
 } // Namespace LandIce

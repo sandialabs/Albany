@@ -34,10 +34,10 @@ namespace Albany {
       const Teuchos::RCP<ParamLib>& paramLib,
       //const Teuchos::RCP<DistributedParameterLibrary>& distParamLib,
       const int numDim_,
-      Teuchos::RCP<const Teuchos::Comm<int> >& commT_); 
+      const Teuchos::RCP<const Teuchos_Comm >& commT_); 
 
     //! Destructor
-    ~HeatProblem();
+    ~HeatProblem() = default;
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
@@ -100,7 +100,7 @@ namespace Albany {
    const Teuchos::RCP<Teuchos::ParameterList> params; 
 
    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
-   Teuchos::RCP<const Teuchos::Comm<int> > commT; 
+   Teuchos::RCP<const Teuchos_Comm> commT; 
 
    Teuchos::RCP<Albany::Layouts> dl;
 

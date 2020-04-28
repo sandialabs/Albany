@@ -14,6 +14,8 @@
 #include "Albany_CommUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 
+#include "Albany_FactoriesHelpers.hpp"
+
 #include "Piro_PerformSolve.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -117,7 +119,12 @@ int main(int argc, char *argv[])
                                  "       Valid choices are 'Epetra', 'Tpetra'.\n");
     }
 
-    const auto albanyApp   = slvrfctry.createApplication(comm);
+    // Make sure all the pb factories are registered *before* the Application
+    // is created (since in the App ctor the pb factories are queried)
+    Albany::register_pb_factories();
+
+    // Create app (null initial guess)
+    const auto albanyApp = slvrfctry.createApplication(comm);
     const auto albanyModel = slvrfctry.createModel(albanyApp);
     const auto solver      = slvrfctry.createSolver(albanyModel,comm);
 

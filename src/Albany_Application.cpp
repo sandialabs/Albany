@@ -78,10 +78,8 @@ namespace Albany {
 Application::Application(
     const RCP<const Teuchos_Comm>&     comm_,
     const RCP<Teuchos::ParameterList>& params,
-    const RCP<const Thyra_Vector>&     initial_guess,
-    const bool                         schwarz)
-    : is_schwarz_{schwarz},
-      no_dir_bcs_(false),
+    const RCP<const Thyra_Vector>&     initial_guess)
+    : no_dir_bcs_(false),
       requires_sdbcs_(false),
       requires_orig_dbcs_(false),
       comm(comm_),
@@ -171,8 +169,11 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
 
-  ProblemFactory problemFactory(params, paramLib, comm);
-  problem = problemFactory.create();
+  const auto& problem_type = problemParams->get<std::string>("Name");
+  const auto& pb_factories = FactoriesContainer<ProblemFactory>::instance();
+  problem = pb_factories.create(problem_type,comm,params,paramLib);
+  TEUCHOS_TEST_FOR_EXCEPTION (problem.is_null(), std::runtime_error,
+    "Error! Could not create problem '" + problem_type + "'.\n");
 
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()), 0);
@@ -203,13 +204,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     discParams.set<int>("Number Of Time Derivatives", num_time_deriv);
   else
     num_time_deriv = num_time_deriv_from_input;
-
-#ifdef ALBANY_DTK
-  if (is_schwarz_ == true) {
-    // Write DTK Field to Exodus if Schwarz is used
-    discParams.set<bool>("Output DTK Field to Exodus", true);
-  }
-#endif
 
   TEUCHOS_TEST_FOR_EXCEPTION(
       num_time_deriv > 2,

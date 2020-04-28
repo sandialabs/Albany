@@ -34,7 +34,7 @@ namespace Albany {
       const Teuchos::RCP<ParamLib>& paramLib,
       //const Teuchos::RCP<DistributedParameterLibrary>& distParamLib,
       const int numDim_,
-      Teuchos::RCP<const Teuchos::Comm<int> >& commT_); 
+      const Teuchos::RCP<const Teuchos_Comm >& commT_); 
 
     //! Destructor
     ~ThermalProblem();
@@ -95,7 +95,7 @@ namespace Albany {
    //! Problem PL 
    const Teuchos::RCP<Teuchos::ParameterList> params; 
 
-   Teuchos::RCP<const Teuchos::Comm<int> > commT; 
+   Teuchos::RCP<const Teuchos_Comm> commT; 
 
    Teuchos::RCP<Albany::Layouts> dl;
 
@@ -104,7 +104,7 @@ namespace Albany {
 
   };
 
-}
+} //  namespace Albany
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
