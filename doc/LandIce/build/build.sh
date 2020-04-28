@@ -1,13 +1,13 @@
 #!/bin/bash -ex
 
-cd "$LCM_DIR"
+cd "$TEST_DIR"
 
 PACKAGE=$1
 THREADS=$2
 VERBOSITY=$3
 BUILD_ID_STRING=$ARCH-$TOOL_CHAIN-$BUILD_TYPE
 PREFIX=$PACKAGE-$BUILD_ID_STRING
-LOG_FILE="$LCM_DIR/${PREFIX}.log"
+LOG_FILE="$TEST_DIR/${PREFIX}.log"
 
 case "$THREADS" in
     -V)
@@ -26,7 +26,7 @@ if [ -z $VERBOSITY ]; then
     VERBOSITY="-VV"
 fi
 
-ctest $VERBOSITY --timeout 180 -S $LCM_DIR/Albany/doc/LCM/build/ali_build.cmake \
+ctest $VERBOSITY --timeout 180 -S $TEST_DIR/Albany/doc/LCM/build/ali_build.cmake \
 -DSCRIPT_NAME:STRING=`basename $0` \
 -DPACKAGE:STRING=$PACKAGE \
 -DBUILD_THREADS:STRING=$THREADS \
