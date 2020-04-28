@@ -686,17 +686,11 @@ link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 # Now build executables from this library, tailored main()s, and Trilinos
 IF (NOT ALBANY_LIBRARIES_ONLY)
 
-add_executable(Albany Main_Solve.cpp)
+  add_executable(Albany Main_Solve.cpp)
+  SET(ALBANY_EXECUTABLES Albany)
 
-SET(ALBANY_EXECUTABLES Albany)
-
-IF (ALBANY_MPMD)
-  add_executable(AlbanyMPMD Main_Solve_MPMD.cpp)
-  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
-ENDIF()
-
-add_executable(AlbanyAnalysis Main_Analysis.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
+  add_executable(AlbanyAnalysis Main_Analysis.cpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
 
 ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 # End declaration of executables
