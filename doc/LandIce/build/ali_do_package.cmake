@@ -1,7 +1,7 @@
-if(ALI_DO_PACKAGE_CMAKE)
+if(LCM_DO_PACKAGE_CMAKE)
   return()
 endif()
-set(ALI_DO_PACKAGE_CMAKE true)
+set(LCM_DO_PACKAGE_CMAKE true)
 
 include(${CMAKE_CURRENT_LIST_DIR}/ali_do_trilinos.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/ali_do_albany.cmake)
@@ -19,7 +19,6 @@ function(ali_do_package)
       "PACKAGE"
       "BUILD_THREADS"
       "RESULT_VARIABLE"
-      "CDASH_SUBPROJECT"
       "BUILD_ID_STRING"
     )
   message("ali_do_package(${ARGN})")
@@ -37,7 +36,6 @@ function(ali_do_package)
   set(PASS_ARGS ${ARG_BOOL_OPTS}
       BUILD_THREADS "${ARG_BUILD_THREADS}"
       RESULT_VARIABLE "PACKAGE_ERR"
-      CDASH_SUBPROJECT "${ARG_CDASH_SUBPROJECT}"
       BUILD_ID_STRING "${ARG_BUILD_ID_STRING}"
      )
   # all other arguments passed to do_trilinos or do_albany

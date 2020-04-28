@@ -1,7 +1,7 @@
-if(ALI_DO_TRILINOS_CMAKE)
+if(LCM_DO_TRILINOS_CMAKE)
   return()
 endif()
-set(ALI_DO_TRILINOS_CMAKE true)
+set(LCM_DO_TRILINOS_CMAKE true)
 
 include(${CMAKE_CURRENT_LIST_DIR}/snl_helpers.cmake)
 
@@ -17,7 +17,6 @@ function(ali_do_trilinos)
   set(UNARY_OPTS
       "BUILD_THREADS"
       "RESULT_VARIABLE"
-      "CDASH_SUBPROJECT"
       "BUILD_ID_STRING"
     )
   message("ali_do_trilinos(${ARGN})")
@@ -32,7 +31,7 @@ function(ali_do_trilinos)
       "-DCMAKE_CXX_COMPILER:FILEPATH=$ENV{MPI_BIN}/mpicxx"
       "-DCMAKE_C_COMPILER:FILEPATH=$ENV{MPI_BIN}/mpicc"
       "-DCMAKE_Fortran_COMPILER:FILEPATH=$ENV{MPI_BIN}/mpif90"
-      "-DCMAKE_INSTALL_PREFIX:PATH=$ENV{TEST_DIR}/trilinos-install-${ARG_BUILD_ID_STRING}"
+      "-DCMAKE_INSTALL_PREFIX:PATH=$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_ID_STRING}"
       "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
       "-DTPL_ENABLE_MPI:BOOL=ON"
       "-DTPL_ENABLE_BinUtils:BOOL=OFF"
@@ -101,6 +100,7 @@ function(ali_do_trilinos)
       "-DTrilinos_ENABLE_NOX:BOOL=ON"
       "-DTrilinos_ENABLE_OpenMP:BOOL=$ENV{LCM_ENABLE_OPENMP}"
       "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+      "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
       "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
       "-DTrilinos_ENABLE_Piro:BOOL=ON"
       "-DTrilinos_ENABLE_ROL:BOOL=ON"
@@ -110,6 +110,7 @@ function(ali_do_trilinos)
       "-DTrilinos_ENABLE_STKClassic:BOOL=OFF"
       "-DTrilinos_ENABLE_STKIO:BOOL=ON"
       "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
+      "-DTrilinos_ENABLE_STKExprEval:BOOL=ON"
       "-DTrilinos_ENABLE_Sacado:BOOL=ON"
       "-DTrilinos_ENABLE_Shards:BOOL=ON"
       "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
@@ -126,6 +127,9 @@ function(ali_do_trilinos)
       "-DTempus_ENABLE_TESTS:BOOL=OFF"
       "-DTempus_ENABLE_EXAMPLES:BOOL=OFF"
       "-DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
+      "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
+      "-DTpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
+      "-DXpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
       )
   if (DEFINED ENV{LCM_SLFAD_SIZE})
     set(CONFIG_OPTS ${CONFIG_OPTS} $ENV{LCM_SLFAD_SIZE})
@@ -137,11 +141,11 @@ function(ali_do_trilinos)
        )
   endif()
   set(EXTRA_REPOS)
-  set(SOURCE_DIR "$ENV{TEST_DIR}/Trilinos")
+  set(SOURCE_DIR "$ENV{LCM_DIR}/Trilinos")
   if (EXISTS "${SOURCE_DIR}/DataTransferKit")
     set(EXTRA_REPOS ${EXTRA_REPOS} DataTransferKit)
     set(CONFIG_OPTS ${CONFIG_OPTS}
-      "-DTpetra_INST_INT_UNSIGNED_LONG:BOOL=ON" 
+      "-DTpetra_INST_INT_UNSIGNED_LONG:BOOL=ON"
       "-DTrilinos_ENABLE_DataTransferKit:BOOL=ON"
       "-DDataTransferKit_ENABLE_DBC:BOOL=ON"
       "-DDataTransferKit_ENABLE_TESTS:BOOL=OFF"
@@ -171,15 +175,14 @@ function(ali_do_trilinos)
   snl_do_subproject(${ARG_BOOL_OPTS}
       DO_PROJECT
       "PROJECT" "Albany"
-      SUBPROJECT ${ARG_CDASH_SUBPROJECT}
-      SOURCE_DIR "$ENV{TEST_DIR}/Trilinos"
-      BUILD_DIR "$ENV{TEST_DIR}/trilinos-build-${ARG_BUILD_ID_STRING}"
-      INSTALL_DIR "$ENV{TEST_DIR}/trilinos-install-${ARG_BUILD_ID_STRING}"
+      SOURCE_DIR "$ENV{LCM_DIR}/Trilinos"
+      BUILD_DIR "$ENV{LCM_DIR}/trilinos-build-${ARG_BUILD_ID_STRING}"
+      INSTALL_DIR "$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_ID_STRING}"
       CONFIG_OPTS "${CONFIG_OPTS}"
       BUILD_THREADS "${ARG_BUILD_THREADS}"
-      RESULT_VARIABLE SUBPROJECT_ERR
+      RESULT_VARIABLE ERR
       )
   if (ARG_RESULT_VARIABLE)
-    set(${ARG_RESULT_VARIABLE} ${SUBPROJECT_ERR} PARENT_SCOPE)
+    set(${ARG_RESULT_VARIABLE} ${ERR} PARENT_SCOPE)
   endif()
 endfunction(ali_do_trilinos)

@@ -1,10 +1,8 @@
 #!/bin/bash
 
 NUM_PROCS=`nproc`
-export TEST_DIR=`pwd`
-export MODULEPATH=$TEST_DIR/Albany/doc/LCM/modulefiles
-unset https_proxy
-unset http_proxy
+export LCM_DIR=`pwd`
+export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles
 
 # trilinos required before albany
 PACKAGES="trilinos albany"
