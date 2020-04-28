@@ -5,8 +5,6 @@
  *      Author: mperego
  */
 
-#include "Teuchos_TestForException.hpp"
-#include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 #include "PHAL_Utilities.hpp"
@@ -41,11 +39,6 @@ SurfaceAirEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
   T0    = physics_list.get<double>("Reference Temperature"); //265
   Tm = physics_list.get<double>("Atmospheric Pressure Melting Temperature");
 }
-
-template<typename EvalT, typename Traits, typename SurfTempST>
-void SurfaceAirEnthalpy<EvalT,Traits,SurfTempST>::
-postRegistrationSetup(typename Traits::SetupData workset, PHX::FieldManager<Traits>& fm)
-{}
 
 template<typename EvalT, typename Traits, typename SurfTempST>
 void SurfaceAirEnthalpy<EvalT,Traits,SurfTempST>::

@@ -26,23 +26,25 @@ namespace LandIce
 
 template<typename EvalT, typename Traits, typename SurfTempST>
 class SurfaceAirEnthalpy: public PHX::EvaluatorWithBaseImpl<Traits>,
-                               public PHX::EvaluatorDerived<EvalT, Traits>
+                          public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   SurfaceAirEnthalpy (const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl);
+                      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData workset,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData /* workset */,
+                              PHX::FieldManager<Traits>& /* fm */) {}
 
   void evaluateFields(typename Traits::EvalData workset);
 
 private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
+  // Input
+  PHX::MDField<const SurfTempST,Cell,Node>   surfaceTemp;  //[K]
+
   // Output:
-  PHX::MDField<SurfTempST,Cell,Node>   surfaceTemp;  //[K]
   PHX::MDField<SurfTempST,Cell,Node>   surfaceEnthalpy;  //[MW s m^{-3}]
 
   int numNodes;
