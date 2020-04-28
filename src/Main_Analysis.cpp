@@ -64,13 +64,15 @@ int main(int argc, char *argv[]) {
                                  "       Valid choices are 'Epetra', 'Tpetra'.\n");
     }
 
-    Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > appThyra = slvrfctry.create(comm, comm);
+    auto albanyApp   = slvrfctry.createApplication(comm);
+    auto albanyModel = slvrfctry.createModel(albanyApp);
+    auto fwd_solver  = slvrfctry.createSolver(albanyModel,comm);
 
     Teuchos::RCP< Thyra::VectorBase<double> > p;
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
-    status = Piro::PerformAnalysis(*appThyra, slvrfctry.getAnalysisParameters(), p); 
+    status = Piro::PerformAnalysis(*fwd_solver, slvrfctry.getAnalysisParameters(), p);
 
     Albany::RegressionTests regression(slvrfctry.getParameters());
     status = regression.checkAnalysisTestResults(0, p);

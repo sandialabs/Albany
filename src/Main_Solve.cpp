@@ -117,9 +117,9 @@ int main(int argc, char *argv[])
                                  "       Valid choices are 'Epetra', 'Tpetra'.\n");
     }
 
-    RCP<Albany::Application> app;
-    const RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>> solver =
-        slvrfctry.createAndGetAlbanyApp(app, comm, comm);
+    const auto albanyApp   = slvrfctry.createApplication(comm);
+    const auto albanyModel = slvrfctry.createModel(albanyApp);
+    const auto solver      = slvrfctry.createSolver(albanyModel,comm);
 
     setupTimer = Teuchos::null;
 
@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
     Albany::RegressionTests regression(slvrfctry.getParameters());
     for (int i = 0; i < num_g - 1; i++) {
       const RCP<const Thyra_Vector> g = thyraResponses[i];
-      if (!app->getResponse(i)->isScalarResponse()) continue;
+      if (!albanyApp->getResponse(i)->isScalarResponse()) continue;
 
       if (response_names[i] != Teuchos::null) {
         *out << "\nResponse vector " << i << ": " << *response_names[i]
