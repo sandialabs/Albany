@@ -8,14 +8,37 @@
 # and add its folder to the include directories
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h)
-include_directories (${CMAKE_CURRENT_BINARY_DIR})
-
 
 include(CheckCXXSourceCompiles)
-set(CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
-set(CMAKE_REQUIRED_LIBRARIES ${Trilinos_LIBRARY_DIRS})
-set( CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
 
+set (CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
+set (CMAKE_REQUIRED_LIBRARIES ${Trilinos_LIBRARY_DIRS})
+set (CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
+
+# Add Albany external libraries
+set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
+
+set (ALBANY_INCLUDE_DIRS
+     ${CMAKE_CURRENT_BINARY_DIR}
+     ${Albany_SOURCE_DIR}/src
+     ${Albany_SOURCE_DIR}/src/evaluators
+     ${Albany_SOURCE_DIR}/src/evaluators/bc
+     ${Albany_SOURCE_DIR}/src/evaluators/gather
+     ${Albany_SOURCE_DIR}/src/evaluators/interpolation
+     ${Albany_SOURCE_DIR}/src/evaluators/pde
+     ${Albany_SOURCE_DIR}/src/evaluators/response
+     ${Albany_SOURCE_DIR}/src/evaluators/scatter
+     ${Albany_SOURCE_DIR}/src/evaluators/state
+     ${Albany_SOURCE_DIR}/src/evaluators/utility
+     ${Albany_SOURCE_DIR}/src/problems
+     ${Albany_SOURCE_DIR}/src/responses
+     ${Albany_SOURCE_DIR}/src/disc/stk
+     ${Albany_SOURCE_DIR}/src/adapt
+     ${Albany_SOURCE_DIR}/src/disc
+     ${Albany_SOURCE_DIR}/src/utility
+)
+
+link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
 set(SOURCES
   Albany_RegressionTests.cpp
@@ -174,6 +197,10 @@ add_executable(xml2yaml utility/xml2yaml.cpp)
 add_executable(yaml2xml utility/yaml2xml.cpp)
 target_link_libraries(xml2yaml teuchosparameterlist)
 target_link_libraries(yaml2xml teuchosparameterlist)
+target_include_directories(yaml2xml SYSTEM PUBLIC
+                          "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+target_include_directories(xml2yaml SYSTEM PUBLIC
+                          "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 
 #problems
 set(SOURCES ${SOURCES}
@@ -704,56 +731,18 @@ set(PDE_HDRS ${PDE_HDRS}
   evaluators/pde/PNP_PotentialResid_Def.hpp
   )
 
-add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES})
 target_link_libraries(albanyLib ${Trilinos_LIBRARIES})
-
-# Add Albany external libraries
-
-set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
-
-# We may not want warnings from Trilinos and/or its TPLs...
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
-  include_directories (SYSTEM
-                       ${Trilinos_INCLUDE_DIRS}
-                       ${Trilinos_TPL_INCLUDE_DIRS})
+  target_include_directories(albanyLib SYSTEM PUBLIC
+                            "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 else()
-  include_directories (${Trilinos_INCLUDE_DIRS}
-                       ${Trilinos_TPL_INCLUDE_DIRS})
+  target_include_directories(albanyLib PUBLIC
+                            "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 endif()
-
-include_directories (./
-                     ./evaluators
-                     ./evaluators/bc
-                     ./evaluators/gather
-                     ./evaluators/interpolation
-                     ./evaluators/pde
-                     ./evaluators/response
-                     ./evaluators/scatter
-                     ./evaluators/state
-                     ./evaluators/utility
-                     ./problems
-                     ./responses
-                     ./disc/stk
-                     ./adapt
-                     ./disc
-                     ./utility
-                     ./LandIce/problems
-                     ./LandIce/evaluators
-                    )
-
-link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
-
-# Now build executables from this library, tailored main()s, and Trilinos
-if (NOT ALBANY_LIBRARIES_ONLY)
-
-  add_executable(Albany Main_Solve.cpp)
-  set(ALBANY_EXECUTABLES Albany)
-
-  add_executable(AlbanyAnalysis Main_Analysis.cpp)
-  set(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
-
-endif (NOT ALBANY_LIBRARIES_ONLY)
-# End declaration of executables
+target_include_directories(albanyLib PUBLIC
+                            $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
+                           "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>")
 
 # Note: Albany_EXTRA_LIBRARIES is to allow users to specify
 # libraries that one cannot get out of Trilinos directly.
@@ -769,8 +758,19 @@ set(ALL_LIBRARIES
 set(ALBANY_LIBRARIES albanyLib)
 
 if(ALBANY_DEMO_PDES)
-  add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS} ${PDE_HDRS})
+  add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS})
   set(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPDEs)
+  target_link_libraries(albanyPDEs PUBLIC albanyLib)
+  if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
+    target_include_directories(albanyPDEs SYSTEM PUBLIC
+                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+  else()
+    target_include_directories(albanyPDEs PUBLIC
+                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+  endif()
+  target_include_directories(albanyPDEs PUBLIC
+                             "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
+                              $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
 endif()
 
 if (ALBANY_LANDICE)
@@ -786,16 +786,36 @@ if (ALBANY_LANDICE)
   endif()
 endif()
 
-message("\n-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
+# Now build executables from this library, tailored main()s, and Trilinos
+if (NOT ALBANY_LIBRARIES_ONLY)
 
-if (Albany_BUILD_STATIC_EXE)
-  foreach(ALB_EXEC ${ALBANY_EXECUTABLES})
-    set_property(TARGET ${ALB_EXEC} PROPERTY LINK_SEARCH_START_STATIC 1)
-  endforeach()
-endif()
+  message("\n-- Albany Executables: Albany; AlbanyAnalysis")
+
+  add_executable(Albany Main_Solve.cpp)
+  set(ALBANY_EXECUTABLES Albany)
+
+  add_executable(AlbanyAnalysis Main_Analysis.cpp)
+  set(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
+
+endif (NOT ALBANY_LIBRARIES_ONLY)
 
 foreach(ALB_EXEC ${ALBANY_EXECUTABLES})
+  
+  if (Albany_BUILD_STATIC_EXE)
+    set_target_properties(${ALB_EXEC} PROPERTY LINK_SEARCH_START_STATIC 1)
+  endif()
   target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  target_include_directories(${ALB_EXEC} PUBLIC
+      $<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>
+      $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+  # We may not want warnings from Trilinos and/or its TPLs...
+  if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
+    target_include_directories(${ALB_EXEC} SYSTEM PUBLIC
+                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+  else()
+    target_include_directories(${ALB_EXEC} PUBLIC
+                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+  endif()
 endforeach()
 
 if (INSTALL_ALBANY)

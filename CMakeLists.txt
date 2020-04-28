@@ -34,7 +34,7 @@ IF (DEFINED ALBANY_TRILINOS_DIR)
 ENDIF()
 FIND_PACKAGE(Trilinos REQUIRED)
 
-OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers should be treated as 'system' headers (hence, without issuing warnings)" OFF)
+OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers should be treated as 'system' headers (hence, without issuing warnings)" ON)
 
 # Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
 # This is needed to find SEACAS tools used during testing (epu, etc).
@@ -56,6 +56,7 @@ MESSAGE("-- Trilinos_VERSION = ${Trilinos_VERSION}")
 MESSAGE("-- Trilinos_GIT_COMMIT_ID = ${Trilinos_GIT_COMMIT_ID}")
 MESSAGE("-- Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
 MESSAGE("-- Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
+MESSAGE("-- Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
 MESSAGE("-- Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("-- Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("-- Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
@@ -580,7 +581,7 @@ MESSAGE("\nAlbany physics packages:\n")
 # set optional dependency on demoPDEs, defaults to Enabled
 OPTION(ENABLE_DEMO_PDES "Flag to turn on demonstration PDEs problems" ON)
 IF (ENABLE_DEMO_PDES)
-  MESSAGE("-- DEMO_PDES                             Enabled")
+  MESSAGE("-- DEMO_PDES                               Enabled")
   SET(ALBANY_DEMO_PDES TRUE)
 ELSE()
   MESSAGE("-- DEMO_PDES                           NOT Enabled.")
@@ -608,7 +609,7 @@ IF (ENABLE_LANDICE)
   # Set optional build of MPAS Interface for LandIce (Land Ice SciDAC project),
   # defaults to Disabled
   IF (ENABLE_MPAS_INTERFACE)
-    MESSAGE("-- MPAS_INTERFACE                          Enabled")
+    MESSAGE("  -- MPAS_INTERFACE                          Enabled")
     SET(MPAS_HAS_LANDICE TRUE)
   ELSE()
     MESSAGE("  -- MPAS_INTERFACE                    NOT Enabled.")
