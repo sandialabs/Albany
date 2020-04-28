@@ -23,6 +23,7 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_RegressionTests.hpp"
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 
 //#include "Teuchos_TestForException.hpp"
@@ -660,7 +661,8 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
     //if (!first_time_step)
     //  std::cout << "previousSolution: " << *previousSolution << std::endl;
-    solver = slvrfctry->createAndGetAlbanyApp(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
+    auto albanyModel = slvrfctry->createModel(albanyApp);
+    solver = slvrfctry->createSolver(albanyModel, reducedMpiCommT);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
@@ -714,6 +716,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     }
    }
 
+    Albany::RegressionTests regression(slvrfctry->getParameters()):
     for (int i=0; i<num_g-1; i++) {
       const Teuchos::RCP<const Thyra_Vector> g = thyraResponses[i];
 
@@ -729,7 +732,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
         if (num_p == 0 && cur_time_yr == final_time) {
           // Just calculate regression data -- only if in final time step
-          status += slvrfctry->checkSolveTestResults(i, 0, g, Teuchos::null);
+          status += regression.checkSolveTestResults(i, 0, g, Teuchos::null);
         } else {
           for (int j=0; j<num_p; j++) {
             Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
@@ -740,7 +743,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
               }
             }
             if (cur_time_yr == final_time) {
-              status += slvrfctry->checkSolveTestResults(i, j, g, dgdp);
+              status += regression.checkSolveTestResults(i, j, g, dgdp);
             }
           }
         }
