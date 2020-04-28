@@ -171,11 +171,12 @@ if (BUILD_ALBANY)
   #
 
 
-  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build-spirit/install")
+  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
     "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_UNIT_TESTS:BOOL=OFF"
     "-DENABLE_ALBANY_EPETRA:BOOL=ON"
     "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"

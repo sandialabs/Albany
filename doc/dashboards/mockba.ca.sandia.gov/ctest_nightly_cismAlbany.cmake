@@ -168,7 +168,7 @@ if (BUILD_CISM_PISCEES)
 
   # Configure the CISM-Albany build 
   #
-  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build-spirit/install")
+  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-Wno-dev"
