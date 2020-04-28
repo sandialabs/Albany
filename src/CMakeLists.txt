@@ -98,6 +98,22 @@ IF(ALBANY_EPETRA)
   ENDIF()
 ENDIF()
 
+#adapt
+SET (SOURCES ${SOURCES}
+  adapt/AAdapt_AbstractAdapter.cpp
+  adapt/AAdapt_AdaptiveSolutionManager.cpp
+  adapt/AAdapt_InitialCondition.cpp
+  adapt/AAdapt_AnalyticFunction.cpp
+  adapt/AAdapt_SolutionObserver.cpp
+)
+SET (HEADERS ${HEADERS}
+  adapt/AAdapt_AbstractAdapter.hpp
+  adapt/AAdapt_AdaptiveSolutionManager.hpp
+  adapt/AAdapt_InitialCondition.hpp
+  adapt/AAdapt_AnalyticFunction.hpp
+  adapt/AAdapt_SolutionObserver.hpp
+)
+
 #utility
 SET(SOURCES ${SOURCES}
   utility/Counter.cpp
@@ -696,7 +712,6 @@ set(ALL_LIBRARIES
 
 # Add Albany internal libraries/physics sets, as enabled.
 
-add_subdirectory(adapt)
 add_subdirectory(disc)
 
 IF(ALBANY_STK)
