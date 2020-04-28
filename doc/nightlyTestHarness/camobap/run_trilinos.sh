@@ -70,7 +70,7 @@ time source $SCRIPTDIR/albany_checkout.sh
 #time source $SCRIPTDIR/dakota_checkout.sh
 
 echo; echo "...Starting Trilinos full Build"
-time source $SCRIPTDIR/trilinos_build.sh.sh
+time source $SCRIPTDIR/trilinos_build.sh
 
 #rm -rf $SCRIPTDIR/Albany 
 
