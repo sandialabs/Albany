@@ -261,89 +261,6 @@ target_include_directories(LandIce PUBLIC
                            "$<BUILD_INTERFACE:${LANDICE_INCLUDE_DIRS}>"
                             $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
 
-###################################
-###     CISM interface lib     ####
-###################################
-
-if(ENABLE_CISM_INTERFACE)
-  set(HEADERS_CISM
-    interface_with_cism/ali_driver.H
-    evaluators/LandIce_CismSurfaceGradFO_Def.hpp
-    evaluators/LandIce_CismSurfaceGradFO.hpp
-    ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H
-  )
-
-  set(SOURCES_CISM
-    interface_with_cism/Albany_CismSTKMeshStruct.cpp
-    interface_with_cism/ali_driver.cpp
-    evaluators/LandIce_CismSurfaceGradFO.cpp
-    ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.cpp
-  )
-  add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCES_CISM})
-
-  set_target_properties(cismInterface PROPERTIES PUBLIC_HEADER "${HEADERS_CISM}")
-  target_link_libraries(cismInterface PUBLIC albanyLib LandIce)
-  if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
-    target_include_directories(cismInterface SYSTEM PUBLIC
-                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
-  else()
-    target_include_directories(cismInterface PUBLIC
-                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
-  endif()
-
-  set (CISM_INTERFACE_INCLUDE_DIRS
-       ${LANDICE_INCLUDE_DIRS}
-       ${CMAKE_CURRENT_SOURCE_DIR}/interface_with_cism)
-  target_include_directories(cismInterface PUBLIC
-                             "$<BUILD_INTERFACE:${CISM_INTERFACE_INCLUDE_DIRS}>"
-                              $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
-  if (INSTALL_ALBANY)
-    install(TARGETS cismInterface EXPORT albany-export
-      LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
-      ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
-      PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-  endif()
-endif()
-
-###################################
-###     MPAS interface lib     ####
-###################################
-
-if(ENABLE_MPAS_INTERFACE)
-  set(SOURCES_MPAS
-    interface_with_mpas/Albany_MpasSTKMeshStruct.cpp
-    interface_with_mpas/Interface.cpp
-  )
-  set(HEADERS_MPAS
-    interface_with_mpas/Albany_MpasSTKMeshStruct.hpp
-  )
-
-  add_library(mpasInterface ${SOURCES_MPAS})
-  target_link_libraries(mpasInterface PUBLIC albanyLib LandIce)
-  set_target_properties(mpasInterface PROPERTIES PUBLIC_HEADER "${HEADERSMPAS}")
-
-  if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
-    target_include_directories(mpasInterface SYSTEM PUBLIC
-                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
-  else()
-    target_include_directories(mpasInterface PUBLIC
-                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
-  endif()
-
-  set (MPAS_INTERFACE_INCLUDE_DIRS
-       ${LANDICE_INCLUDE_DIRS}
-       ${CMAKE_CURRENT_SOURCE_DIR}/interface_with_mpas)
-  target_include_directories(mpasInterface PUBLIC
-                             "$<BUILD_INTERFACE:${MPAS_INTERFACE_INCLUDE_DIRS}>"
-                              $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
-  if (INSTALL_ALBANY)
-    install(TARGETS mpasInterface
-      LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
-      ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
-      PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-  endif()
-endif()
-
 if (INSTALL_ALBANY)
   install(TARGETS LandIce EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
@@ -351,4 +268,18 @@ if (INSTALL_ALBANY)
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 endif()
 
+###################################
+###     CISM interface lib     ####
+###################################
 
+if(ENABLE_CISM_INTERFACE)
+  add_subdirectory(interface_with_cism)
+endif()
+
+###################################
+###     MPAS interface lib     ####
+###################################
+
+if(ENABLE_MPAS_INTERFACE)
+  add_subdirectory(interface_with_mpas)
+endif()
