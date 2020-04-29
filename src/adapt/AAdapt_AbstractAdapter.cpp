@@ -8,13 +8,15 @@
 
 // Generic implementations that can be used by derived adapters
 
+namespace Albany {
+
 namespace AAdapt {
 
 //----------------------------------------------------------------------------
 AbstractAdapter::
 AbstractAdapter (const Teuchos::RCP<Teuchos::ParameterList>& params,
                  const Teuchos::RCP<ParamLib>& param_lib,
-                 const Albany::StateManager& state_mgr,
+                 const StateManager& state_mgr,
                  const Teuchos::RCP<const Teuchos_Comm>& comm)
  : output_stream_(Teuchos::VerboseObjectBase::getDefaultOStream())
  , adapt_params_(params)
@@ -41,3 +43,5 @@ getGenericAdapterParams(std::string listname) const {
 //----------------------------------------------------------------------------
 
 } // namespace AAdapt
+
+} // namespace Albany

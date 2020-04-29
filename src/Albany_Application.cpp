@@ -634,7 +634,7 @@ Application::finalSetUp(
       params,
       initial_guess,
       paramLib,
-      stateMgr,
+      disc,
       comm));
 
   try {
@@ -1179,16 +1179,16 @@ Application::postRegSetupDImpl()
 template <typename EvalT>
 void
 Application::writePhalanxGraph(
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm,
-    const std::string& evalName, const int& phxGraphVisDetail)
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fieldMgr,
+    const std::string& evalName, const int& phxGraphVizDetail)
 {
   if (phxGraphVisDetail > 0) {
-    const bool detail = (phxGraphVisDetail > 1) ? true : false;
+    const bool detail = (phxGraphVizDetail > 1) ? true : false;
     *out << "Phalanx writing graphviz file for graph of " << evalName << " (detail = "
         << phxGraphVisDetail << ")" << std::endl;
     const std::string graphName = "phalanxGraph" + evalName;
     *out << "Process using 'dot -Tpng -O " << graphName << std::endl;
-    fm->writeGraphvizFile<EvalT>(graphName, detail, detail);
+    fieldMgr->writeGraphvizFile<EvalT>(graphName, detail, detail);
 
     // Print phalanx setup info
     phxSetup->print(*out);

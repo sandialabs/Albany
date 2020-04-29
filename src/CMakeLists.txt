@@ -129,14 +129,12 @@ list (APPEND SOURCES
   adapt/AAdapt_AdaptiveSolutionManager.cpp
   adapt/AAdapt_InitialCondition.cpp
   adapt/AAdapt_AnalyticFunction.cpp
-  adapt/AAdapt_SolutionObserver.cpp
 )
 list (APPEND HEADERS
   adapt/AAdapt_AbstractAdapter.hpp
   adapt/AAdapt_AdaptiveSolutionManager.hpp
   adapt/AAdapt_InitialCondition.hpp
   adapt/AAdapt_AnalyticFunction.hpp
-  adapt/AAdapt_SolutionObserver.hpp
 )
 
 #utility

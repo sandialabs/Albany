@@ -4,33 +4,27 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_ANALYTICFUNCTION_HPP
-#define AADAPT_ANALYTICFUNCTION_HPP
+#ifndef AADAPT_ANALYTIC_FUNCTION_HPP
+#define AADAPT_ANALYTIC_FUNCTION_HPP
 
 #include "Albany_config.h"
-
-#include <string>
-
-// Random and Gaussian number distribution
-#include <boost/random.hpp>
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/variate_generator.hpp>
 
 #include "Teuchos_Array.hpp"
 #ifdef ALBANY_PAMGEN
 #include "RTC_FunctionRTC.hh"
 #endif
 
-namespace AAdapt {
+#include <string>
+#include <random>
 
-// generate seed convenience function
-long seedgen(int worksetID);
+namespace Albany {
+namespace AAdapt {
 
 // Base class for initial condition functions
 class AnalyticFunction {
   public:
     virtual ~AnalyticFunction() {}
+    // Inputs: solution (x), coordinates (X)
     virtual void compute(double* x, const double* X) = 0;
 };
 
@@ -103,8 +97,9 @@ class DispConstTemperatureLinear : public AnalyticFunction {
 
 class ConstantFunctionPerturbed : public AnalyticFunction {
   public:
-    ConstantFunctionPerturbed(int neq_, int numDim_, int worksetID,
-                              Teuchos::Array<double> const_data_, Teuchos::Array<double> pert_mag_);
+    ConstantFunctionPerturbed(int neq_, int numDim_,
+                              Teuchos::Array<double> const_data_,
+                              Teuchos::Array<double> pert_mag_);
     void compute(double* x, const double* X);
   private:
     int numDim; // size of coordinate vector X
@@ -112,15 +107,15 @@ class ConstantFunctionPerturbed : public AnalyticFunction {
     Teuchos::Array<double> data;
     Teuchos::Array<double> pert_mag;
 
-    // random number generator convenience function
-    double udrand(double lo, double hi);
-
+    std::mt19937_64 engine;
+    Teuchos::Array<std::uniform_real_distribution<double>> pdfs;
 };
 
 class ConstantFunctionGaussianPerturbed : public AnalyticFunction {
   public:
-    ConstantFunctionGaussianPerturbed(int neq_, int numDim_, int worksetID,
-                                      Teuchos::Array<double> const_data_, Teuchos::Array<double> pert_mag_);
+    ConstantFunctionGaussianPerturbed(int neq_, int numDim_,
+                                      Teuchos::Array<double> const_data_,
+                                      Teuchos::Array<double> pert_mag_);
     void compute(double* x, const double* X);
   private:
     int numDim; // size of coordinate vector X
@@ -128,11 +123,8 @@ class ConstantFunctionGaussianPerturbed : public AnalyticFunction {
     Teuchos::Array<double> data;
     Teuchos::Array<double> pert_mag;
 
-    boost::mt19937 rng;
-    Teuchos::Array<Teuchos::RCP<boost::normal_distribution<double> > > nd;
-    Teuchos::Array < Teuchos::RCP < boost::variate_generator < boost::mt19937&,
-            boost::normal_distribution<double> > > > var_nor;
-
+    std::mt19937_64 engine;
+    Teuchos::Array<std::normal_distribution<double>> normal_pdfs;
 };
 
 class GaussSin : public AnalyticFunction {
@@ -285,7 +277,6 @@ class AcousticWave : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
-
 class ExpressionParser : public AnalyticFunction {
   public:
     ExpressionParser(int neq_, int spatialDim_, std::string expressionX_, std::string expressionY_, std::string expressionZ_);
@@ -300,7 +291,7 @@ class ExpressionParser : public AnalyticFunction {
     PG_RuntimeCompiler::Function rtcFunctionX;
     PG_RuntimeCompiler::Function rtcFunctionY;
     PG_RuntimeCompiler::Function rtcFunctionZ;
-#endif
+#endif // ALBANY_PAMGEN
 };
 
 #ifdef ALBANY_STK_EXPR_EVAL
@@ -316,7 +307,9 @@ class ExpressionParserAllDOFs : public AnalyticFunction
   int                         neq;  // size of solution vector x
   Teuchos::Array<std::string> expr;
 };
-#endif
-}
+#endif // ALBANY_STK_EXPR_EVAL
 
-#endif
+} // namespace AAdapt
+} // namespace Albany
+
+#endif // AADAPT_ANALYTIC_FUNCTION_HPP
