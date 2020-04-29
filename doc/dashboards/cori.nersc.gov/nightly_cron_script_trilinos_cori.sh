@@ -15,8 +15,8 @@ rm -rf $BASE_DIR/*out
 rm -rf $BASE_DIR/slurm* 
 rm -rf $BASE_DIR/results*
 rm -rf $BASE_DIR/test_summary.txt
+rm -rf $BASE_DIR/ctest_nightly_cismAlbany_submit.cmake
 
-now=$(date +"%m_%d_%Y-%H_%M")
 LOG_FILE=$BASE_DIR/nightly_log_coriTrilinos.txt
 
 eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_trilinos.cmake" > $LOG_FILE 2>&1
