@@ -93,10 +93,9 @@ cmake \
     -DTrilinos_ENABLE_Stratimikos:BOOL=ON \
     -DTrilinos_ENABLE_Thyra:BOOL=ON \
     -DTrilinos_ENABLE_Rythmos:BOOL=ON \
-    -DTrilinos_ENABLE_OptiPack:BOOL=ON \
     -DTrilinos_ENABLE_GlobiPack:BOOL=ON \
     -DTrilinos_ENABLE_MOOCHO:BOOL=ON \
-    -DTrilinos_ENABLE_Stokhos:BOOL=ON \
+    -DTrilinos_ENABLE_Stokhos:BOOL=OFF \
     -DTrilinos_ENABLE_Piro:BOOL=ON \
     -DTrilinos_ENABLE_Pamgen:BOOL=ON \
     -DTrilinos_ENABLE_PanzerExprEval:BOOL=ON \
@@ -134,7 +133,6 @@ cmake \
     -DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
     -DTrilinos_ENABLE_FEI:BOOL=OFF \
     -DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
-    -DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
     -DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
     -DTrilinos_ENABLE_MueLu:BOOL=ON \
     -DAmesos2_ENABLE_KLU2:BOOL=ON \

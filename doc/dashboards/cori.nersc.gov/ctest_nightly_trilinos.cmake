@@ -213,7 +213,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-    "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
     "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
     "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"

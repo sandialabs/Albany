@@ -1,4 +1,0 @@
-02 00 * * 1-7  cd /mscratch/albany/mayer/oldInactiveCronNightlies/nightlyCDashTrilinos; rm -rf *out*; bash -l -c "source mayer_arm_modules.sh >& modules.out; bash nightly_cron_script_trilinos_mayer.sh"
-00 02 * * 1-7  cd /mscratch/albany/mayer/oldInactiveCronNightlies/nightlyCDashAlbany; rm -rf *out*; bash -l -c "source mayer_arm_modules.sh >& modules.out; bash nightly_cron_script_albany_mayer.sh"
-05 06 * * 1-7 chgrp wg-albany -R /mscratch/albany/mayer/*
-07 06 * * 1-7 chmod ug+rwX -R /mscratch/albany/mayer/*

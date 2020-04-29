@@ -215,7 +215,6 @@ if (BUILD_TRILINOS_OPENMP)
       "-DTrilinos_ENABLE_OpenMP:BOOL=ON"
       "-DTrilinos_ENABLE_MueLu:BOOL=ON"
       "-DTrilinos_ENABLE_NOX:BOOL=ON"
-      "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
       "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
       "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
       "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
