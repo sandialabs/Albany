@@ -1,28 +1,25 @@
 #!/bin/bash
   
-if [ $# -ne 2 ]; then
+if [ $# -ne 1 ]; then
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"
    exit 1
+elif [ $1 = "-d" ]; then
+   INSTALL_DIR=/projects/albany/trilinos/MPI_DBG
+   BTYPE=DEBUG
+   CCFLAGS="-g -O0 -Wno-inconsistent-missing-override"
+   CFLAGS="-g -O0"
+   FFLAGS="-g -O0 -Wa,-q"
+elif [ $1 = "-r" ]; then
+   INSTALL_DIR=/projects/albany/trilinos/MPI_REL
+   BTYPE=RELEASE
+   CCFLAGS="-O3 -march=native -DNDEBUG -Wno-inconsistent-missing-override"
+   CFLAGS="-O3 -march=native -DNDEBUG"
+   FFLAGS="-O3 -march=native -DNDEBUG -Wa,-q"
 else
-   if [ $1 = "-d"]; then
-      INSTALL_DIR=/projects/albany/trilinos/MPI_DBG
-      BTYPE=DEBUG
-      CCFLAGS="-g -O0 -Wno-inconsistent-missing-override"
-      CFLAGS="-g -O0"
-      FFLAGS="-g -O0 -Wa,-q"
-   elif [ $1 = -r" ]; then
-      INSTALL_DIR=/projects/albany/trilinos/MPI_REL
-      BTYPE=RELEASE
-      CCFLAGS="-O3 -march=native -DNDEBUG -Wno-inconsistent-missing-override"
-      CFLAGS="-O3 -march=native -DNDEBUG"
-      FFLAGS="-O3 -march=native -DNDEBUG -Wa,-q"
-
-   else
-     echo "Usage: $0 -d (debug)"
-     echo "Usage: $0 -r (release)"
-     exit 1
-   fi
+   echo "Usage: $0 -d (debug)"
+   echo "Usage: $0 -r (release)"
+   exit 1
 fi
 
 export TRILINOS_HOME=/projects/albany/src/Trilinos

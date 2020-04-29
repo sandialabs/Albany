@@ -1,19 +1,17 @@
 #!/bin/bash
   
-if [ $# -ne 2 ]; then
+if [ $# -ne 1 ]; then
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"
    exit 1
+elif [ $1 = "-d" ]; then
+   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_DBG
+elif [ $1 = "-r" ]; then
+   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_REL
 else
-   if [ $1 = "-d"]; then
-      export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_DBG
-   elif [ $1 = -r" ]; then
-      export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_REL
-   else
-     echo "Usage: $0 -d (debug)"
-     echo "Usage: $0 -r (release)"
-     exit 1
-   fi
+   echo "Usage: $0 -d (debug)"
+   echo "Usage: $0 -r (release)"
+   exit 1
 fi
 
 export ALBANY_HOME=~/Codes/Albany
