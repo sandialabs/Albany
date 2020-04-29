@@ -585,7 +585,8 @@ void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val)
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in scale! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 
-} 
+}
+
 void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                         const LO lrow,
                         Teuchos::Array<LO>& indices,
@@ -863,45 +864,6 @@ int getGlobalMaxNumRowEntries (const Teuchos::RCP<const Thyra_LinearOp>& lop)
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getGlobalMaxNumRowEntries! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 
 }
-
-bool isStaticGraph(const Teuchos::RCP<Thyra_LinearOp>& lop) 
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->isStaticGraph(); 
-  }
-#if defined(ALBANY_EPETRA)
-  auto emat = getEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    return emat->StaticGraph(); 
-  }
-#endif
- 
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in isStaticGraph! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-  
-} 
-
-bool isStaticGraph(const Teuchos::RCP<const Thyra_LinearOp>& lop) 
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->isStaticGraph(); 
-  }
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    ALBANY_ASSERT(true, "Error: isStaticGraph with const input not implemented for Epetra!\n");
-    return false; 
-  }
-#endif
- 
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in isStaticGraph! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-  
-} 
 
 //The following routine creates a one-to-one version of the given Map where each GID lives on only one process. 
 //Therefore it is an owned (unique) map.

@@ -127,9 +127,6 @@ void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val);
 Teuchos::RCP<const Thyra_VectorSpace>
 createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs); 
 
-bool isStaticGraph(const Teuchos::RCP<Thyra_LinearOp>& lop);
-bool isStaticGraph(const Teuchos::RCP<const Thyra_LinearOp>& lop);
-
 Teuchos::RCP<const Thyra_LinearOp>
 buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
                           const Teuchos::RCP<const Thyra_VectorSpace>& subspace);
