@@ -18,9 +18,9 @@ export OMP_NUM_THREADS=2
 export OMP_PLACES=threads
 export OMP_PROC_BIND=spread
 
+export INTEL_LICENSE_FILE=/home/projects/x86-64/intel/licenses/USE_SERVER-ohpc.lic
 source blake_intel_modules.sh >& modules.out  
 
-now=$(date +"%m_%d_%Y-%H_%M")
 LOG_FILE=$BASE_DIR/nightly_log_blakeTrilinosOpenMP.txt
 
 eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_trilinos_openmp.cmake" > $LOG_FILE 2>&1
