@@ -703,7 +703,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
 
   // Register LandIce problems
-  auto& pb_factories = FactoriesContainer<ProblemFactory>::instance();
+  auto& pb_factories = Albany::FactoriesContainer<Albany::ProblemFactory>::instance();
   pb_factories.add_factory(LandIce::LandIceProblemFactory::instance());
 
   // Create albany app

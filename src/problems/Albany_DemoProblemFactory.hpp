@@ -13,7 +13,6 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_ProblemFactory.hpp"
 
-
 namespace Albany {
 
 // A concrete problem factory class for basic albany problems

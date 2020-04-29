@@ -609,7 +609,7 @@ IF (ENABLE_LANDICE)
   # Set optional build of MPAS Interface for LandIce (Land Ice SciDAC project),
   # defaults to Disabled
   IF (ENABLE_MPAS_INTERFACE)
-    MESSAGE("  -- MPAS_INTERFACE                          Enabled")
+    MESSAGE("  -- MPAS_INTERFACE                        Enabled")
     SET(MPAS_HAS_LANDICE TRUE)
   ELSE()
     MESSAGE("  -- MPAS_INTERFACE                    NOT Enabled.")
@@ -622,7 +622,7 @@ IF (ENABLE_LANDICE)
   OPTION(ENABLE_CISM_CHECK_COMPARISONS "Flag to turn on comparisons checking for CISM-Albany" OFF)
 
   IF (ENABLE_CISM_INTERFACE)
-    MESSAGE("  -- CISM_INTERFACE                      Enabled")
+    MESSAGE("  -- CISM_INTERFACE                        Enabled")
     SET(CISM_HAS_LANDICE TRUE)
     IF (ENABLE_CISM_CHECK_COMPARISONS)
       SET(CISM_CHECK_COMPARISONS TRUE)

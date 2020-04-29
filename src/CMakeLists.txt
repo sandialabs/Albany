@@ -40,7 +40,7 @@ set (ALBANY_INCLUDE_DIRS
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
-set(SOURCES
+set (SOURCES
   Albany_RegressionTests.cpp
   Albany_SolverFactory.cpp
   Albany_Utils.cpp
@@ -59,18 +59,20 @@ set(SOURCES
   )
 
 if (ALBANY_EPETRA)
-  set(SOURCES ${SOURCES} Albany_ObserverFactory.cpp)
-  set(SOURCES ${SOURCES} Petra_Converters_64.cpp)
+  list (APPEND SOURCES
+    Albany_ObserverFactory.cpp
+    Petra_Converters_64.cpp
+  )
 endif()
 
 
 if(ALBANY_EPETRA)
-  set(SOURCES ${SOURCES}
+  list (APPEND SOURCES
     Albany_NOXObserver.cpp
     Albany_NOXStatelessObserver.cpp
   )
   if(ALBANY_RYTHMOS)
-    set(SOURCES ${SOURCES} Albany_RythmosObserver.cpp)
+    list (APPEND SOURCES Albany_RythmosObserver.cpp)
   endif()
 endif()
 
@@ -109,7 +111,7 @@ set(HEADERS
   )
 
 if(ALBANY_EPETRA)
-  set(HEADERS ${HEADERS}
+  list (APPEND HEADERS
     Albany_EigendataInfoStruct.hpp
     Albany_NOXObserver.hpp
     Albany_NOXStatelessObserver.hpp
@@ -117,19 +119,19 @@ if(ALBANY_EPETRA)
     Petra_Converters.hpp
   )
   if(ALBANY_RYTHMOS)
-    set(SOURCES ${SOURCES} Albany_RythmosObserver.hpp)
+    list (APPEND SOURCES Albany_RythmosObserver.hpp)
   endif()
 endif()
 
 #adapt
-set (SOURCES ${SOURCES}
+list (APPEND SOURCES
   adapt/AAdapt_AbstractAdapter.cpp
   adapt/AAdapt_AdaptiveSolutionManager.cpp
   adapt/AAdapt_InitialCondition.cpp
   adapt/AAdapt_AnalyticFunction.cpp
   adapt/AAdapt_SolutionObserver.cpp
 )
-set (HEADERS ${HEADERS}
+list (APPEND HEADERS
   adapt/AAdapt_AbstractAdapter.hpp
   adapt/AAdapt_AdaptiveSolutionManager.hpp
   adapt/AAdapt_InitialCondition.hpp
@@ -138,7 +140,7 @@ set (HEADERS ${HEADERS}
 )
 
 #utility
-set(SOURCES ${SOURCES}
+list (APPEND SOURCES
   utility/Counter.cpp
   utility/CounterMonitor.cpp
   utility/DisplayTable.cpp
@@ -155,7 +157,7 @@ set(SOURCES ${SOURCES}
   utility/VariableMonitor.cpp
   utility/StaticAllocator.cpp
   )
-set(HEADERS ${HEADERS}
+list (APPEND HEADERS
   utility/Counter.hpp
   utility/CounterMonitor.hpp
   utility/DisplayTable.hpp
@@ -182,11 +184,11 @@ set(HEADERS ${HEADERS}
   )
 
 if (ALBANY_EPETRA)
-  set(SOURCES ${SOURCES}
+  list (APPEND SOURCES
     utility/Albany_EpetraThyraUtils.cpp
     utility/Albany_CombineAndScatterManagerEpetra.cpp
   )
-  set(HEADERS ${HEADERS}
+  list (APPEND HEADERS
     utility/Albany_EpetraThyraUtils.hpp
     utility/Albany_CombineAndScatterManagerEpetra.hpp
     utility/Albany_GlobalLocalIndexerEpetra.hpp
@@ -203,7 +205,7 @@ target_include_directories(xml2yaml SYSTEM PUBLIC
                           "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 
 #problems
-set(SOURCES ${SOURCES}
+list (APPEND SOURCES
   problems/Albany_AbstractProblem.cpp
   problems/Albany_BCUtils.cpp
   problems/Albany_EvaluatorUtils.cpp
@@ -217,19 +219,7 @@ set(SOURCES ${SOURCES}
   problems/Albany_SideLaplacianProblem.cpp
   problems/Albany_MaterialDatabase.cpp
   )
-set(PDE_SRCS
-  problems/Albany_AdvDiffProblem.cpp
-  problems/Albany_ReactDiffSystem.cpp
-  problems/Albany_CahnHillProblem.cpp
-  problems/Albany_ComprNSProblem.cpp
-  problems/Albany_Helmholtz2DProblem.cpp
-  problems/Albany_LinComprNSProblem.cpp
-  problems/Albany_ODEProblem.cpp
-  problems/Albany_NavierStokes.cpp
-  problems/Albany_PNPProblem.cpp
-  problems/Albany_ThermoElectrostaticsProblem.cpp
-  )
-set(HEADERS ${HEADERS}
+list (APPEND HEADERS
   problems/Albany_AbstractProblem.hpp
   problems/Albany_BCUtils.hpp
   problems/Albany_BCUtils_Def.hpp
@@ -247,21 +237,9 @@ set(HEADERS ${HEADERS}
   problems/Albany_SideLaplacianProblem.hpp
   problems/Albany_MaterialDatabase.hpp
   )
-set(PDE_HDRS
-  problems/Albany_AdvDiffProblem.hpp
-  problems/Albany_ReactDiffSystem.hpp
-  problems/Albany_CahnHillProblem.hpp
-  problems/Albany_ComprNSProblem.hpp
-  problems/Albany_Helmholtz2DProblem.hpp
-  problems/Albany_LinComprNSProblem.hpp
-  problems/Albany_NavierStokes.hpp
-  problems/Albany_ODEProblem.hpp
-  problems/Albany_PNPProblem.hpp
-  problems/Albany_ThermoElectrostaticsProblem.hpp
-  )
 
 #responses
-set(SOURCES ${SOURCES}
+list (APPEND SOURCES
   responses/Albany_AggregateScalarResponseFunction.cpp
   responses/Albany_CumulativeScalarResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
@@ -280,7 +258,7 @@ set(SOURCES ${SOURCES}
   responses/Albany_SolutionTwoNormResponseFunction.cpp
   responses/Albany_SolutionValuesResponseFunction.cpp
   )
-set(HEADERS ${HEADERS}
+list (APPEND HEADERS
   responses/Albany_AbstractResponseFunction.hpp
   responses/Albany_AggregateScalarResponseFunction.hpp
   responses/Albany_CumulativeScalarResponseFunction.hpp
@@ -301,13 +279,13 @@ set(HEADERS ${HEADERS}
   )
 
 #discretization
-set(SOURCES ${SOURCES}
+list (APPEND SOURCES
   disc/Adapt_NodalDataBase.cpp
   disc/Adapt_NodalDataVector.cpp
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
   )
-set(HEADERS ${HEADERS}
+list (APPEND HEADERS
   disc/Adapt_NodalDataBase.hpp
   disc/Adapt_NodalDataVector.hpp
   disc/Adapt_NodalFieldUtils.hpp
@@ -322,7 +300,7 @@ set(HEADERS ${HEADERS}
   )
 
 #stk
-set(SOURCES
+list(APPEND SOURCES
   disc/stk/Albany_AsciiSTKMesh2D.cpp
   disc/stk/Albany_AsciiSTKMeshStruct.cpp
   disc/stk/Albany_ExtrudedSTKMeshStruct.cpp
@@ -341,7 +319,7 @@ set(SOURCES
   disc/stk/Albany_STK3DPointStruct.cpp
   disc/stk/Albany_TmplSTKMeshStruct.cpp
 )
-set(HEADERS
+list (APPEND HEADERS
   disc/stk/Albany_AbstractSTKFieldContainer.hpp
   disc/stk/Albany_AbstractSTKMeshStruct.hpp
   disc/stk/Albany_AsciiSTKMeshStruct.hpp
@@ -370,14 +348,14 @@ set(HEADERS
 )
 
 if (ALBANY_STK_REBALANCE)
-  set (SOURCES ${SOURCES}
+  list (APPEND SOURCES
     disc/stk/percept/stk_rebalance/GeomDecomp.cpp
     disc/stk/percept/stk_rebalance/Partition.cpp
     disc/stk/percept/stk_rebalance/Rebalance.cpp
     disc/stk/percept/stk_rebalance/RebalanceUtils.cpp
     disc/stk/percept/stk_rebalance/ZoltanPartition.cpp
   )
-  set (HEADERS ${HEADERS}
+  list (APPEND HEADERS
     disc/stk/percept/PerceptMesh.hpp
     disc/stk/percept/Percept_MyPairIterRelation.hpp
     disc/stk/percept/stk_rebalance/GeomDecomp.hpp
@@ -389,7 +367,7 @@ if (ALBANY_STK_REBALANCE)
 endif()
 
 #evaluators
-set(SOURCES ${SOURCES}
+list (APPEND SOURCES
   evaluators/bc/PHAL_Dirichlet.cpp
   evaluators/bc/PHAL_TimeDepDBC.cpp
   evaluators/bc/PHAL_TimeDepSDBC.cpp
@@ -465,50 +443,18 @@ set(SOURCES ${SOURCES}
   )
 
 if(ALBANY_STK_EXPR_EVAL)
-  set(SOURCES ${SOURCES} 
+  list (APPEND SOURCES 
     evaluators/bc/PHAL_ExprEvalSDBC.cpp)
 endif()
 
 if (ALBANY_EPETRA)
-  set(SOURCES ${SOURCES}
+  list (APPEND SOURCES
     evaluators/gather/PHAL_GatherEigenData.cpp
     evaluators/gather/PHAL_GatherEigenvectors.cpp
   )
 endif()
 
-set(PDE_SRCS ${PDE_SRCS}
-  evaluators/pde/PHAL_AdvDiffResid.cpp
-  evaluators/pde/PHAL_ReactDiffSystemResid.cpp
-  evaluators/pde/PHAL_CahnHillChemTerm.cpp
-  evaluators/pde/PHAL_CahnHillRhoResid.cpp
-  evaluators/pde/PHAL_CahnHillWResid.cpp
-  evaluators/pde/PHAL_ComprNSBodyForce.cpp
-  evaluators/pde/PHAL_ComprNSResid.cpp
-  evaluators/pde/PHAL_ComprNSViscosity.cpp
-  evaluators/pde/PHAL_HelmholtzResid.cpp
-  evaluators/pde/PHAL_JouleHeating.cpp
-  evaluators/pde/PHAL_LinComprNSBodyForce.cpp
-  evaluators/pde/PHAL_LinComprNSResid.cpp
-  evaluators/pde/PHAL_NSBodyForce.cpp
-  evaluators/pde/PHAL_NSContinuityResid.cpp
-  evaluators/pde/PHAL_NSContravarientMetricTensor.cpp
-  evaluators/pde/PHAL_NSForchheimerTerm.cpp
-  evaluators/pde/PHAL_NSMomentumResid.cpp
-  evaluators/pde/PHAL_NSNeutronEqResid.cpp
-  evaluators/pde/PHAL_NSPermeabilityTerm.cpp
-  evaluators/pde/PHAL_NSRm.cpp
-  evaluators/pde/PHAL_NSTauM.cpp
-  evaluators/pde/PHAL_NSTauT.cpp
-  evaluators/pde/PHAL_NSThermalEqResid.cpp
-  evaluators/pde/PHAL_ODEResid.cpp
-  evaluators/pde/PHAL_PoissonResid.cpp
-  evaluators/pde/PHAL_Permittivity.cpp
-  evaluators/pde/PHAL_TEProp.cpp
-  evaluators/pde/PNP_ConcentrationResid.cpp
-  evaluators/pde/PNP_PotentialResid.cpp
-  )
-
-set(HEADERS ${HEADERS}
+list (APPEND HEADERS
   evaluators/bc/PHAL_Dirichlet.hpp
   evaluators/bc/PHAL_TimeDepDBC.hpp
   evaluators/bc/PHAL_TimeDepSDBC.hpp
@@ -653,14 +599,14 @@ set(HEADERS ${HEADERS}
   )
   
 if(ALBANY_STK_EXPR_EVAL)
-  set(HEADERS ${HEADERS} 
+  list (APPEND HEADERS
     evaluators/bc/PHAL_ExprEvalSDBC.hpp
     evaluators/bc/PHAL_ExprEvalSDBC_Def.hpp)
 endif()
 
 
 if (ALBANY_EPETRA)
-  set(HEADERS ${HEADERS}
+  list (APPEND HEADERS
     evaluators/gather/PHAL_GatherEigenvectors.hpp
     evaluators/gather/PHAL_GatherEigenvectors_Def.hpp
     evaluators/gather/PHAL_GatherEigenData.hpp
@@ -670,68 +616,8 @@ if (ALBANY_EPETRA)
   )
 endif()
 
-set(PDE_HDRS ${PDE_HDRS}
-  evaluators/pde/PHAL_AdvDiffResid.hpp
-  evaluators/pde/PHAL_AdvDiffResid_Def.hpp
-  evaluators/pde/PHAL_ReactDiffSystemResid.hpp
-  evaluators/pde/PHAL_ReactDiffSystemResid_Def.hpp
-  evaluators/pde/PHAL_CahnHillRhoResid.hpp
-  evaluators/pde/PHAL_CahnHillRhoResid_Def.hpp
-  evaluators/pde/PHAL_CahnHillWResid.hpp
-  evaluators/pde/PHAL_CahnHillWResid_Def.hpp
-  evaluators/pde/PHAL_CahnHillChemTerm.hpp
-  evaluators/pde/PHAL_CahnHillChemTerm_Def.hpp
-  evaluators/pde/PHAL_ComprNSBodyForce.hpp
-  evaluators/pde/PHAL_ComprNSBodyForce_Def.hpp
-  evaluators/pde/PHAL_ComprNSResid.hpp
-  evaluators/pde/PHAL_ComprNSResid_Def.hpp
-  evaluators/pde/PHAL_ComprNSViscosity.hpp
-  evaluators/pde/PHAL_ComprNSViscosity_Def.hpp
-  evaluators/pde/PHAL_HelmholtzResid.hpp
-  evaluators/pde/PHAL_HelmholtzResid_Def.hpp
-  evaluators/pde/PHAL_JouleHeating.hpp
-  evaluators/pde/PHAL_JouleHeating_Def.hpp
-  evaluators/pde/PHAL_LinComprNSBodyForce.hpp
-  evaluators/pde/PHAL_LinComprNSBodyForce_Def.hpp
-  evaluators/pde/PHAL_LinComprNSResid.hpp
-  evaluators/pde/PHAL_LinComprNSResid_Def.hpp
-  evaluators/pde/PHAL_NSContinuityResid.hpp
-  evaluators/pde/PHAL_NSContinuityResid_Def.hpp
-  evaluators/pde/PHAL_NSBodyForce.hpp
-  evaluators/pde/PHAL_NSBodyForce_Def.hpp
-  evaluators/pde/PHAL_NSContravarientMetricTensor.hpp
-  evaluators/pde/PHAL_NSContravarientMetricTensor_Def.hpp
-  evaluators/pde/PHAL_NSForchheimerTerm.hpp
-  evaluators/pde/PHAL_NSForchheimerTerm_Def.hpp
-  evaluators/pde/PHAL_NSMomentumResid.hpp
-  evaluators/pde/PHAL_NSMomentumResid_Def.hpp
-  evaluators/pde/PHAL_NSNeutronEqResid.hpp
-  evaluators/pde/PHAL_NSNeutronEqResid_Def.hpp
-  evaluators/pde/PHAL_NSPermeabilityTerm.hpp
-  evaluators/pde/PHAL_NSPermeabilityTerm_Def.hpp
-  evaluators/pde/PHAL_NSRm.hpp
-  evaluators/pde/PHAL_NSRm_Def.hpp
-  evaluators/pde/PHAL_NSTauM.hpp
-  evaluators/pde/PHAL_NSTauM_Def.hpp
-  evaluators/pde/PHAL_NSTauT.hpp
-  evaluators/pde/PHAL_NSTauT_Def.hpp
-  evaluators/pde/PHAL_NSThermalEqResid.hpp
-  evaluators/pde/PHAL_NSThermalEqResid_Def.hpp
-  evaluators/pde/PHAL_ODEResid.hpp
-  evaluators/pde/PHAL_ODEResid_Def.hpp
-  evaluators/pde/PHAL_PoissonResid.hpp
-  evaluators/pde/PHAL_PoissonResid_Def.hpp
-  evaluators/pde/PHAL_Permittivity.hpp
-  evaluators/pde/PHAL_Permittivity_Def.hpp
-  evaluators/pde/PHAL_TEProp.hpp
-  evaluators/pde/PHAL_TEProp_Def.hpp
-  evaluators/pde/PNP_ConcentrationResid.hpp
-  evaluators/pde/PNP_ConcentrationResid_Def.hpp
-  evaluators/pde/PNP_PotentialResid.hpp
-  evaluators/pde/PNP_PotentialResid_Def.hpp
-  )
-
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES})
+set_target_properties(albanyLib PROPERTIES PUBLIC_HEADER "${HEADERS}")
 target_link_libraries(albanyLib ${Trilinos_LIBRARIES})
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
   target_include_directories(albanyLib SYSTEM PUBLIC
@@ -758,8 +644,122 @@ set(ALL_LIBRARIES
 set(ALBANY_LIBRARIES albanyLib)
 
 if(ALBANY_DEMO_PDES)
+  set(PDE_SRCS
+    problems/Albany_AdvDiffProblem.cpp
+    problems/Albany_ReactDiffSystem.cpp
+    problems/Albany_CahnHillProblem.cpp
+    problems/Albany_ComprNSProblem.cpp
+    problems/Albany_DemoProblemFactory.cpp
+    problems/Albany_Helmholtz2DProblem.cpp
+    problems/Albany_LinComprNSProblem.cpp
+    problems/Albany_ODEProblem.cpp
+    problems/Albany_NavierStokes.cpp
+    problems/Albany_PNPProblem.cpp
+    problems/Albany_ThermoElectrostaticsProblem.cpp
+    evaluators/pde/PHAL_AdvDiffResid.cpp
+    evaluators/pde/PHAL_ReactDiffSystemResid.cpp
+    evaluators/pde/PHAL_CahnHillChemTerm.cpp
+    evaluators/pde/PHAL_CahnHillRhoResid.cpp
+    evaluators/pde/PHAL_CahnHillWResid.cpp
+    evaluators/pde/PHAL_ComprNSBodyForce.cpp
+    evaluators/pde/PHAL_ComprNSResid.cpp
+    evaluators/pde/PHAL_ComprNSViscosity.cpp
+    evaluators/pde/PHAL_HelmholtzResid.cpp
+    evaluators/pde/PHAL_JouleHeating.cpp
+    evaluators/pde/PHAL_LinComprNSBodyForce.cpp
+    evaluators/pde/PHAL_LinComprNSResid.cpp
+    evaluators/pde/PHAL_NSBodyForce.cpp
+    evaluators/pde/PHAL_NSContinuityResid.cpp
+    evaluators/pde/PHAL_NSContravarientMetricTensor.cpp
+    evaluators/pde/PHAL_NSForchheimerTerm.cpp
+    evaluators/pde/PHAL_NSMomentumResid.cpp
+    evaluators/pde/PHAL_NSNeutronEqResid.cpp
+    evaluators/pde/PHAL_NSPermeabilityTerm.cpp
+    evaluators/pde/PHAL_NSRm.cpp
+    evaluators/pde/PHAL_NSTauM.cpp
+    evaluators/pde/PHAL_NSTauT.cpp
+    evaluators/pde/PHAL_NSThermalEqResid.cpp
+    evaluators/pde/PHAL_ODEResid.cpp
+    evaluators/pde/PHAL_PoissonResid.cpp
+    evaluators/pde/PHAL_Permittivity.cpp
+    evaluators/pde/PHAL_TEProp.cpp
+    evaluators/pde/PNP_ConcentrationResid.cpp
+    evaluators/pde/PNP_PotentialResid.cpp
+  )
+
+  set(PDE_HDRS
+    problems/Albany_AdvDiffProblem.hpp
+    problems/Albany_ReactDiffSystem.hpp
+    problems/Albany_CahnHillProblem.hpp
+    problems/Albany_ComprNSProblem.hpp
+    problems/Albany_Helmholtz2DProblem.hpp
+    problems/Albany_LinComprNSProblem.hpp
+    problems/Albany_NavierStokes.hpp
+    problems/Albany_ODEProblem.hpp
+    problems/Albany_PNPProblem.hpp
+    problems/Albany_ThermoElectrostaticsProblem.hpp
+    evaluators/pde/PHAL_AdvDiffResid.hpp
+    evaluators/pde/PHAL_AdvDiffResid_Def.hpp
+    evaluators/pde/PHAL_ReactDiffSystemResid.hpp
+    evaluators/pde/PHAL_ReactDiffSystemResid_Def.hpp
+    evaluators/pde/PHAL_CahnHillRhoResid.hpp
+    evaluators/pde/PHAL_CahnHillRhoResid_Def.hpp
+    evaluators/pde/PHAL_CahnHillWResid.hpp
+    evaluators/pde/PHAL_CahnHillWResid_Def.hpp
+    evaluators/pde/PHAL_CahnHillChemTerm.hpp
+    evaluators/pde/PHAL_CahnHillChemTerm_Def.hpp
+    evaluators/pde/PHAL_ComprNSBodyForce.hpp
+    evaluators/pde/PHAL_ComprNSBodyForce_Def.hpp
+    evaluators/pde/PHAL_ComprNSResid.hpp
+    evaluators/pde/PHAL_ComprNSResid_Def.hpp
+    evaluators/pde/PHAL_ComprNSViscosity.hpp
+    evaluators/pde/PHAL_ComprNSViscosity_Def.hpp
+    evaluators/pde/PHAL_HelmholtzResid.hpp
+    evaluators/pde/PHAL_HelmholtzResid_Def.hpp
+    evaluators/pde/PHAL_JouleHeating.hpp
+    evaluators/pde/PHAL_JouleHeating_Def.hpp
+    evaluators/pde/PHAL_LinComprNSBodyForce.hpp
+    evaluators/pde/PHAL_LinComprNSBodyForce_Def.hpp
+    evaluators/pde/PHAL_LinComprNSResid.hpp
+    evaluators/pde/PHAL_LinComprNSResid_Def.hpp
+    evaluators/pde/PHAL_NSContinuityResid.hpp
+    evaluators/pde/PHAL_NSContinuityResid_Def.hpp
+    evaluators/pde/PHAL_NSBodyForce.hpp
+    evaluators/pde/PHAL_NSBodyForce_Def.hpp
+    evaluators/pde/PHAL_NSContravarientMetricTensor.hpp
+    evaluators/pde/PHAL_NSContravarientMetricTensor_Def.hpp
+    evaluators/pde/PHAL_NSForchheimerTerm.hpp
+    evaluators/pde/PHAL_NSForchheimerTerm_Def.hpp
+    evaluators/pde/PHAL_NSMomentumResid.hpp
+    evaluators/pde/PHAL_NSMomentumResid_Def.hpp
+    evaluators/pde/PHAL_NSNeutronEqResid.hpp
+    evaluators/pde/PHAL_NSNeutronEqResid_Def.hpp
+    evaluators/pde/PHAL_NSPermeabilityTerm.hpp
+    evaluators/pde/PHAL_NSPermeabilityTerm_Def.hpp
+    evaluators/pde/PHAL_NSRm.hpp
+    evaluators/pde/PHAL_NSRm_Def.hpp
+    evaluators/pde/PHAL_NSTauM.hpp
+    evaluators/pde/PHAL_NSTauM_Def.hpp
+    evaluators/pde/PHAL_NSTauT.hpp
+    evaluators/pde/PHAL_NSTauT_Def.hpp
+    evaluators/pde/PHAL_NSThermalEqResid.hpp
+    evaluators/pde/PHAL_NSThermalEqResid_Def.hpp
+    evaluators/pde/PHAL_ODEResid.hpp
+    evaluators/pde/PHAL_ODEResid_Def.hpp
+    evaluators/pde/PHAL_PoissonResid.hpp
+    evaluators/pde/PHAL_PoissonResid_Def.hpp
+    evaluators/pde/PHAL_Permittivity.hpp
+    evaluators/pde/PHAL_Permittivity_Def.hpp
+    evaluators/pde/PHAL_TEProp.hpp
+    evaluators/pde/PHAL_TEProp_Def.hpp
+    evaluators/pde/PNP_ConcentrationResid.hpp
+    evaluators/pde/PNP_ConcentrationResid_Def.hpp
+    evaluators/pde/PNP_PotentialResid.hpp
+    evaluators/pde/PNP_PotentialResid_Def.hpp
+  )
+
   add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS})
-  set(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPDEs)
+  set_target_properties(albanyPDEs PROPERTIES PUBLIC_HEADER "${PDE_HDRS}")
   target_link_libraries(albanyPDEs PUBLIC albanyLib)
   if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
     target_include_directories(albanyPDEs SYSTEM PUBLIC
@@ -771,6 +771,7 @@ if(ALBANY_DEMO_PDES)
   target_include_directories(albanyPDEs PUBLIC
                              "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
                               $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+  list(APPEND ALBANY_LIBRARIES albanyPDEs)
 endif()
 
 if (ALBANY_LANDICE)
