@@ -1,26 +1,35 @@
-#!/bin/sh
+#!/bin/bash
+  
+if [ $# -ne 2 ]; then
+   echo "Usage: $0 -d (debug)"
+   echo "Usage: $0 -r (release)"
+   exit 1
+else
+   if [ $1 = "-d"]; then
+      export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_DBG
+   elif [ $1 = -r" ]; then
+      export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_REL
+   else
+     echo "Usage: $0 -d (debug)"
+     echo "Usage: $0 -r (release)"
+     exit 1
+   fi
+fi
 
-export ALBANY_HOME=/Users/gahanse/Codes/Albany
-export ALB_FLAGS="-Wno-deprecated-declarations"
-export ALB_ENABLE_UNIT_TESTS=ON
+export ALBANY_HOME=~/Codes/Albany
 export ALB_ENABLE_LANDICE=ON
 export ALB_DEBUG=OFF
 export ALB_ENABLE_CHECK_FPE=ON
-export ALB_FLUSH_DENORMALS=OFF
-export ALB_ENABLE_SPECULATIVE=OFF
 export ALB_ENABLE_PERF_TESTS=ON
-export TRILINOS_INSTALL_DIR=/usr/local/trilinos/MPI_DBG
 export ALB_VERBOSE=OFF
 
 cmake \
       -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINOS_INSTALL_DIR" \
-      -D ENABLE_UNIT_TESTS:BOOL=${ALB_ENABLE_UNIT_TESTS} \
       -D ENABLE_LANDICE:BOOL=${ALB_ENABLE_LANDICE} \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=${ALB_VERBOSE} \
       -D ENABLE_DEBUGGING:BOOL=${ALB_DEBUG} \
       -D ENABLE_CHECK_FPE:BOOL=${ALB_ENABLE_CHECK_FPE} \
       -D ENABLE_STRONG_FPE_CHECK:BOOL=${ALB_ENABLE_CHECK_FPE} \
-      -D ENABLE_FLUSH_DENORMALS:BOOL=${ALB_FLUSH_DENORMALS} \
       -D ENABLE_PERFORMANCE_TESTS:BOOL=${ALB_ENABLE_PERF_TESTS} \
       -D ALBANY_CTEST_TIMEOUT:INTEGER=70 \
 \
