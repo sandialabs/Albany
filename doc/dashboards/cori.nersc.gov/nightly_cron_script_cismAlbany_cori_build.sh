@@ -7,7 +7,6 @@ cd $BASE_DIR
 source cori_modules.sh >& modules.out 
 export CRAYPE_LINK_TYPE=STATIC
 
-now=$(date +"%m_%d_%Y-%H_%M")
 LOG_FILE=$BASE_DIR/nightly_log_coriCismAlbanyBuild.txt
 
 eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_cismAlbany_build.cmake" > $LOG_FILE 2>&1

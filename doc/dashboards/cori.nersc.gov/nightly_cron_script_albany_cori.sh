@@ -8,9 +8,9 @@ cd $BASE_DIR
 source cori_modules.sh >& modules.out 
 export CRAYPE_LINK_TYPE=STATIC
 
-rm -rf $BASE_DIR/ctest_nightly.cmake.work
+cp $BASE_DIR/repos/Albany/doc/dashboards/cori.nersc.gov/nightly_cron_script_cismAlbany_cori_submit.sh .
 
-now=$(date +"%m_%d_%Y-%H_%M")
+
 LOG_FILE=$BASE_DIR/nightly_log_coriAlbany.txt
 
 eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1
