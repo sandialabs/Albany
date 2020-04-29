@@ -256,7 +256,7 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
       std::logic_error,
-      "Reached end of createAndGetAlbanyAppT()"
+      "Reached end of createModel()"
           << "\n");
 
   // Silence compiler warning in case it wasn't used (due to ifdef logic)
