@@ -59,7 +59,7 @@ void Albany::SolutionResponseFunction::setup()
 
 
   // Create graph for gradient operator -- diagonal matrix
-  cull_op_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(solution_vs,culled_vs,1));
+  cull_op_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(solution_vs,culled_vs));
   auto culled_vs_indexer = createGlobalLocalIndexer(culled_vs);
   for (int i=0; i<culled_vs->localSubDim(); i++) {
     const GO row = culled_vs_indexer->getGlobalElement(i);

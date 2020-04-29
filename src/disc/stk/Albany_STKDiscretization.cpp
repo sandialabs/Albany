@@ -1243,7 +1243,7 @@ STKDiscretization::computeGraphsUpToFillComplete()
   // coordinates, graphs
 
   m_overlap_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(
-      m_overlap_vs, m_overlap_vs, neq * nodes_per_element));
+      m_overlap_vs, m_overlap_vs));
 
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData.universal_part()) &
@@ -2131,7 +2131,7 @@ STKDiscretization::meshToGraph()
   // required for first-order hexahedral elements.
 
   nodalMatrixFactory = Teuchos::rcp(
-      new ThyraCrsMatrixFactory(m_overlap_node_vs, m_overlap_node_vs, 27));
+      new ThyraCrsMatrixFactory(m_overlap_node_vs, m_overlap_node_vs));
 
   // Elements that surround a given node, in the form of Entity's.
   std::vector<std::vector<stk::mesh::Entity>> sur_elem;
@@ -2284,7 +2284,7 @@ STKDiscretization::buildSideSetProjectors()
 
     // The projector: first the overlapped...
     ov_graphP = Teuchos::rcp(
-        new ThyraCrsMatrixFactory(getOverlapVectorSpace(), ss_ov_vs, 1));
+        new ThyraCrsMatrixFactory(getOverlapVectorSpace(), ss_ov_vs));
 
     const std::map<GO, GO>& side_cell_map = sideToSideSetCellMap.at(it.first);
     const std::map<GO, std::vector<int>>& node_numeration_map =

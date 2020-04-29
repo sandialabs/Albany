@@ -25,8 +25,7 @@ struct ThyraCrsMatrixFactory::Impl {
 
 ThyraCrsMatrixFactory::
 ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
-                       const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
-                       const int /*nonzeros_per_row*/)
+                       const Teuchos::RCP<const Thyra_VectorSpace> range_vs)
  : m_graph(new Impl())
  , m_domain_vs(domain_vs)
  , m_range_vs(range_vs)
@@ -63,7 +62,7 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
   TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for albany.\n");
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
-    auto e_range = getEpetraBlockMap(range_vs);
+    e_range = getEpetraBlockMap(range_vs);
     auto e_overlap_range = getEpetraBlockMap(overlap_src->m_range_vs);
     auto e_overlap_graph = overlap_src->m_graph->e_graph;
 
@@ -79,7 +78,7 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
   } else {
-    auto t_range = getTpetraMap(range_vs);
+    t_range = getTpetraMap(range_vs);
     auto t_overlap_range = getTpetraMap(overlap_src->m_range_vs);
     auto t_overlap_graph = overlap_src->m_graph->t_graph;
 

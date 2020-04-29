@@ -50,13 +50,12 @@ void STKDiscretizationStokesH::computeGraphs()
   std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
   stk::topology stk_topo_data = metaData.get_topology(*(pv->second)); 
   shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-  int nodes_per_element =  shards_ctd.getNodeCount();
 
   //super bad hack based on current LandIce probelms.. make this general!!
   unsigned int n3dEq = (neq >= 4) ? neq : 2;
   n3dEq = std::min(n3dEq,neq);
 
-  m_overlap_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs,neq*nodes_per_element));
+  m_overlap_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs));
 
   stk::mesh::Selector select_owned_in_part =
     stk::mesh::Selector( metaData.universal_part() ) &
