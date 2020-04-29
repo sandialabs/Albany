@@ -2,8 +2,6 @@
 
 cd /home/ikalash/nightlyAlbanyCDash
 
-now=$(date +"%m_%d_%Y-%H_%M")
-
 source mockba_modules.sh >& modules.out 
 LOG_FILE=/home/ikalash/nightlyAlbanyCDash/nightly_log_cismAlbany.txt
 

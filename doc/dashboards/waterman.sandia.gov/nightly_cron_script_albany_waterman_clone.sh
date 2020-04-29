@@ -11,7 +11,6 @@ export jenkins_trilinos_dir=/home/projects/albany/waterman/repos/Trilinos
 
 cat albany_clone ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
-now=$(date +"%m_%d_%Y-%H_%M")
 LOG_FILE=$BASE_DIR/nightly_log_watermanAlbany_clone.txt
 
 eval "env TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR  ctest -VV -S $BASE_DIR/ctest_nightly.cmake" > $LOG_FILE 2>&1

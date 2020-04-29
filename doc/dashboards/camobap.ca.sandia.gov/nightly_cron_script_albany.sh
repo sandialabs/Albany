@@ -18,8 +18,6 @@ export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib
 export https_proxy="https://wwwproxy.ca.sandia.gov:80"
 export http_proxy="http://wwwproxy.ca.sandia.gov:80"
 
-now=$(date +"%m_%d_%Y-%H_%M")
-#LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_$now
 LOG_FILE=/home/ikalash/nightlyCDash/nightly_log.txt
 
 eval "env  TEST_DIRECTORY=/home/ikalash/nightlyCDash SCRIPT_DIRECTORY=/home/ikalash/nightlyCDash ctest -VV -S /home/ikalash/nightlyCDash/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1

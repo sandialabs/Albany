@@ -12,8 +12,6 @@ export OMP_PROC_BIND=spread
 export https_proxy="https://wwwproxy.ca.sandia.gov:80"
 export http_proxy="http://wwwproxy.ca.sandia.gov:80"
 
-now=$(date +"%m_%d_%Y-%H_%M")
-#LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_$now
 LOG_FILE=/home/ikalash/nightlyCDash/nightly_log_kokkosnode_openmp.txt
 
 eval "env  TEST_DIRECTORY=/home/ikalash/nightlyCDash SCRIPT_DIRECTORY=/home/ikalash/nightlyCDash ctest -VV -S /home/ikalash/nightlyCDash/ctest_nightly_kokkosnode_openmp.cmake" > $LOG_FILE 2>&1

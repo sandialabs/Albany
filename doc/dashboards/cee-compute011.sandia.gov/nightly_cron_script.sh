@@ -106,8 +106,6 @@ fi
 
 cd $SCRATCH_DIR
 
-now=$(date +"%m_%d_%Y-%H_%M")
-#LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_$now
 LOG_FILE=$SCRATCH_DIR/nightly_log_$BUILD_OPT.txt
 
 # I want to run incremental builds to reduce the length of the nightly; with the
