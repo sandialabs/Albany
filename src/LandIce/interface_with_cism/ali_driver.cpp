@@ -300,7 +300,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
       std::cout << "In ali_driver: creating Albany mesh struct..." << std::endl;
     slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, reducedMpiCommT));
-    const auto& bt = slvrfctry->getParameters().get("Build Type","Tpetra");
+    const auto& bt = slvrfctry->getParameters()->get("Build Type","Tpetra");
     if (bt=="Tpetra") {
       // Set the static variable that denotes this as a Tpetra run
       static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
@@ -328,7 +328,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
                                  "       Valid choices are 'Epetra', 'Tpetra'.\n");
     }
 
-    parameterList = Teuchos::rcp(&slvrfctry->getParameters(),false);
+    parameterList = slvrfctry->getParameters();
     discParams = Teuchos::sublist(parameterList, "Discretization", true);
     discParams->set<bool>("Output DTK Field to Exodus", true);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -489,7 +489,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     field7.set<std::string>("Field Origin", "Mesh");
 
     // Register LandIce problems
-    auto& pb_factories = FactoriesContainer<ProblemFactory>::instance();
+    auto& pb_factories = Albany::FactoriesContainer<Albany::ProblemFactory>::instance();
     pb_factories.add_factory(LandIce::LandIceProblemFactory::instance());
 
     albanyApp = Teuchos::rcp(new Albany::Application(reducedMpiCommT));
@@ -721,7 +721,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     }
    }
 
-    Albany::RegressionTests regression(slvrfctry->getParameters()):
+    Albany::RegressionTests regression(slvrfctry->getParameters());
     for (int i=0; i<num_g-1; i++) {
       const Teuchos::RCP<const Thyra_Vector> g = thyraResponses[i];
 
