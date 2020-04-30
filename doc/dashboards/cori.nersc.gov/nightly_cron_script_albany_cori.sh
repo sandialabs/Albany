@@ -8,7 +8,7 @@ cd $BASE_DIR
 source cori_modules.sh >& modules.out 
 export CRAYPE_LINK_TYPE=STATIC
 
-cp $BASE_DIR/repos/Albany/doc/dashboards/cori.nersc.gov/nightly_cron_script_cismAlbany_cori_submit.sh .
+cp $BASE_DIR/repos/Albany/doc/dashboards/cori.nersc.gov/nightly_cron_script_cismAlbany_cori_submit.sh $BASE_DIR
 
 
 LOG_FILE=$BASE_DIR/nightly_log_coriAlbany.txt
