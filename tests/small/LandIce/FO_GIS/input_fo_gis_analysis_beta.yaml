@@ -19,6 +19,7 @@ ANONYMOUS:
         Basal Friction Coefficient:
           Type: Exponent Of Given Field
           Given Field Variable Name: basal_friction
+          Interpolate Then Exponentiate Given Field: false
       BC 1:
         Type: Lateral
         Cubature Degree: 3
@@ -151,12 +152,12 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_Magnitude_RMS.ascii
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [1.13523015029099994e+02]
+    Test Values: [1.124209272918e+02]
     Sensitivity Comparisons 0: 
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [4.53304824162499997e+00]
-    Relative Tolerance: 1.00000000000000005e-04
-    Absolute Tolerance: 1.00000000000000005e-04
+      Sensitivity Test Values 0: [ 4.272184851912e+00]
+    Relative Tolerance: 1.0e-04
+    Absolute Tolerance: 1.0e-04
   Piro: 
     Sensitivity Method: Adjoint
     Analysis: 
