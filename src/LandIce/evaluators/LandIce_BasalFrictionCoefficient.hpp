@@ -83,7 +83,7 @@ private:
 
   std::string                 basalSideName;  // Only if is_side_equation=true
 
-  bool use_stereographic_map, zero_on_floating;
+  bool use_stereographic_map, zero_on_floating, interpolate_then_exponentiate;
 
   double x_0;             // [km]
   double y_0;             // [km]
@@ -102,7 +102,7 @@ private:
   bool is_thickness_param;
   bool is_given_field_param;
 
-  enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
+  enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;

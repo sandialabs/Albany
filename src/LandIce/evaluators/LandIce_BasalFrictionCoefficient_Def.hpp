@@ -40,6 +40,9 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
 
+  //whether to first interpolate the given field and then exponetiate it (on quad points) or the other way around.
+  interpolate_then_exponentiate = beta_list.get<bool> ("Interpolate Then Exponentiate Given Field", true); 
+
   std::string betaType = util::upper_case((beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field"));
 
   is_side_equation = p.isParameter("Side Set Name");
@@ -81,36 +84,32 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 #ifdef OUTPUT_TO_SCREEN
     *output << "Given constant and uniform beta, value = " << given_val << " (loaded from xml input file).\n";
 #endif
-  } else if ((betaType == "GIVEN FIELD")|| (betaType == "EXPONENT OF GIVEN FIELD") || (betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD")) {
+  } else if ((betaType == "GIVEN FIELD")|| (betaType == "EXPONENT OF GIVEN FIELD")) {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Given constant beta field, loaded from mesh or file.\n";
 #endif
     if (betaType == "GIVEN FIELD") {
       beta_type = GIVEN_FIELD;
-    } else if (betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD") {
-      beta_type = GAL_PROJ_EXP_GIVEN_FIELD;
-      if (nodal) {
-        // There's no Galerkin projection to do. It's just like EXP_GIVEN_FIELD
-        beta_type = EXP_GIVEN_FIELD;
-      }
     } else {
       beta_type = EXP_GIVEN_FIELD;
     }
 
+    auto layout_given_field = layout;
     std::string given_field_name = beta_list.get<std::string> ("Given Field Variable Name");
     is_given_field_param = is_dist_param.is_null() ? false : (*is_dist_param)[given_field_name];
     if (is_side_equation) {
       given_field_name += "_" + basalSideName;
     }
-    if(beta_type == GAL_PROJ_EXP_GIVEN_FIELD) {
+    if( (beta_type == EXP_GIVEN_FIELD) && !interpolate_then_exponentiate ) {
       BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+      layout_given_field = dl->node_scalar;
       this->addDependentField (BF);
     }
     if (is_given_field_param) {
-      given_field_param = PHX::MDField<const ParamScalarT>(given_field_name, layout);
+      given_field_param = PHX::MDField<const ParamScalarT>(given_field_name, layout_given_field);
       this->addDependentField (given_field_param);
     } else {
-      given_field = PHX::MDField<const RealType>(given_field_name, layout);
+      given_field = PHX::MDField<const RealType>(given_field_name, layout_given_field);
       this->addDependentField (given_field);
     }
   } else if (betaType == "POWER LAW") {
@@ -405,33 +404,33 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
         break;
 
       case EXP_GIVEN_FIELD:
-        if (is_given_field_param) {
-          for (int ipt=0; ipt<dim; ++ipt) {
-            beta(cell,side,ipt) = std::exp(given_field_param(cell,side,ipt));
+        if(nodal || interpolate_then_exponentiate) {
+          if (is_given_field_param) {
+            for (int ipt=0; ipt<dim; ++ipt) {
+              beta(cell,side,ipt) = std::exp(given_field_param(cell,side,ipt));
+            }
+          } else {
+            for (int ipt=0; ipt<dim; ++ipt) {
+              beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt));
+            }
           }
         } else {
-          for (int ipt=0; ipt<dim; ++ipt) {
-            beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt));
+          if (is_given_field_param) {
+            for (int qp=0; qp<numQPs; ++qp) {
+              beta(cell,side,qp) = 0;
+              for (int node=0; node<numNodes; ++node)
+                beta(cell,side,qp) += std::exp(given_field_param(cell,side,node))*BF(cell,side,node,qp);
+            }
+          } else {
+            for (int qp=0; qp<numQPs; ++qp) {
+              beta(cell,side,qp) = 0;
+              for (int node=0; node<numNodes; ++node)
+                beta(cell,side,qp) += std::exp(given_field(cell,side,node))*BF(cell,side,node,qp);
+            }
           }
         }
         break;
-
-      case GAL_PROJ_EXP_GIVEN_FIELD:
-        if (is_given_field_param) {
-          for (int qp=0; qp<numQPs; ++qp) {
-            beta(cell,side,qp) = 0;
-            for (int node=0; node<numNodes; ++node)
-              beta(cell,side,qp) += std::exp(given_field_param(cell,side,node))*BF(cell,side,node,qp);
-          }
-        } else {
-          for (int qp=0; qp<numQPs; ++qp) {
-            beta(cell,side,qp) = 0;
-            for (int node=0; node<numNodes; ++node)
-              beta(cell,side,qp) += std::exp(given_field(cell,side,node))*BF(cell,side,node,qp);
-          }
-        }
-      break;
-    }
+     }
 
     if(zero_on_floating) {
       if (is_thickness_param) {
@@ -526,35 +525,36 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       break;
 
     case EXP_GIVEN_FIELD:
-      if (is_given_field_param) {
-        for (int cell=0; cell<workset.numCells; ++cell)
-          for (int ipt=0; ipt<dim; ++ipt) {
-            beta(cell,ipt) = std::exp(given_field_param(cell,ipt));
-          }
+      if(nodal || interpolate_then_exponentiate) {
+        if (is_given_field_param) {
+          for (int cell=0; cell<workset.numCells; ++cell)
+            for (int ipt=0; ipt<dim; ++ipt) {
+              beta(cell,ipt) = std::exp(given_field_param(cell,ipt));
+            }
+        } else {
+          for (int cell=0; cell<workset.numCells; ++cell)
+            for (int ipt=0; ipt<dim; ++ipt) {
+              beta(cell,ipt) = std::exp(given_field(cell,ipt));
+            }
+        } 
       } else {
-        for (int cell=0; cell<workset.numCells; ++cell)
-          for (int ipt=0; ipt<dim; ++ipt) {
-            beta(cell,ipt) = std::exp(given_field(cell,ipt));
-          }
+        if (is_given_field_param) {
+          for (int cell=0; cell<workset.numCells; ++cell)
+            for (int ipt=0; ipt<dim; ++ipt) {
+              beta(cell,ipt) = 0;
+              for (int node=0; node<numNodes; ++node)
+                beta(cell,ipt) += std::exp(given_field_param(cell,node))*BF(cell,node,ipt);
+            }
+        } else {
+          for (int cell=0; cell<workset.numCells; ++cell)
+            for (int ipt=0; ipt<dim; ++ipt) {
+              beta(cell,ipt) = 0;
+              for (int node=0; node<numNodes; ++node)
+                beta(cell,ipt) += std::exp(given_field(cell,node))*BF(cell,node,ipt);
+            }
+        }
       }
       break;
-
-    case GAL_PROJ_EXP_GIVEN_FIELD:
-      if (is_given_field_param) {
-        for (int cell=0; cell<workset.numCells; ++cell)
-          for (int ipt=0; ipt<dim; ++ipt) {
-            beta(cell,ipt) = 0;
-            for (int node=0; node<numNodes; ++node)
-              beta(cell,ipt) += std::exp(given_field_param(cell,node))*BF(cell,node,ipt);
-          }
-      } else {
-        for (int cell=0; cell<workset.numCells; ++cell)
-          for (int ipt=0; ipt<dim; ++ipt) {
-            beta(cell,ipt) = 0;
-            for (int node=0; node<numNodes; ++node)
-              beta(cell,ipt) += std::exp(given_field(cell,node))*BF(cell,node,ipt);
-          }
-      }
   }
 
   // Correct the value if we are using a stereographic map
