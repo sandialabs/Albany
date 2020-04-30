@@ -562,20 +562,6 @@ ELSE()
   SET(ALBANY_MESH_DEPENDS_ON_SOLUTION FALSE)
 ENDIF()
 
-# set optional dependency of dist parameters on solution, defaults to Disabled
-OPTION(ENABLE_PARAMETERS_DEPEND_ON_SOLUTION "Flag to turn on dependency of mesh on solution" OFF)
-IF (ENABLE_PARAMETERS_DEPEND_ON_SOLUTION)
-  MESSAGE("-- PARAMETERS_DEPEND_ON_SOLUTION           Enabled")
-  SET(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION TRUE)
-ELSEIF (ENABLE_MESH_DEPENDS_ON_SOLUTION)
-  MESSAGE("-- PARAMETERS_DEPEND_ON_SOLUTION           Enabled because MESH_DEPENDS_ON_SOLUTION is enabled")
-  SET(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION TRUE)
-ELSE()
-  MESSAGE("-- PARAMETERS_DEPEND_ON_SOLUTION       NOT Enabled.")
-  SET(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION FALSE)
-ENDIF()
-
-
 MESSAGE("\nAlbany physics packages:\n")
 
 # set optional dependency on demoPDEs, defaults to Enabled

@@ -58,12 +58,10 @@ namespace PHAL {
     };
 
     struct Residual : EvaluationType<RealType, RealType, RealType> {};
-#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION) && defined(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION)
+#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
     struct Jacobian : EvaluationType<FadType,  FadType, FadType> {};
 #elif defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
     struct Jacobian : EvaluationType<FadType,  FadType, FadType> {};
-#elif defined(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION)
-    struct Jacobian : EvaluationType<FadType,  RealType, FadType> {};
 #else
     struct Jacobian : EvaluationType<FadType,  RealType, RealType> {};
 #endif
