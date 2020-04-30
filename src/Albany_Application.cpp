@@ -1586,40 +1586,39 @@ Application::computeGlobalJacobianImpl(
       setScaleBCDofs(workset, jac);
 #ifdef WRITE_TO_MATRIX_MARKET
       writeMatrixMarket(scaleVec_, scale, countScale);
-    }
 #endif
-    countScale++;
+      countScale++;
+    }
+
+    workset.distParamLib = distParamLib;
+    workset.disc         = disc;
+
+    // FillType template argument used to specialize Sacado
+    dfm->evaluateFields<EvalT>(workset);
+  }
+  fillComplete(jac);
+
+  // Apply scaling to residual and Jacobian
+  if (scaleBCdofs == true) {
+    if (Teuchos::nonnull(f)) { Thyra::ele_wise_scale<ST>(*scaleVec_, f.ptr()); }
+    // We MUST be able to cast jac to ScaledLinearOpBase in order to left scale
+    // it.
+    auto jac_scaled_lop =
+        Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac, true);
+    jac_scaled_lop->scaleLeft(*scaleVec_);
   }
 
-  workset.distParamLib = distParamLib;
-  workset.disc         = disc;
-
-  // FillType template argument used to specialize Sacado
-  dfm->evaluateFields<EvalT>(workset);
-}
-fillComplete(jac);
-
-// Apply scaling to residual and Jacobian
-if (scaleBCdofs == true) {
-  if (Teuchos::nonnull(f)) { Thyra::ele_wise_scale<ST>(*scaleVec_, f.ptr()); }
-  // We MUST be able to cast jac to ScaledLinearOpBase in order to left scale
-  // it.
-  auto jac_scaled_lop =
-      Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac, true);
-  jac_scaled_lop->scaleLeft(*scaleVec_);
-}
-
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-if (isFillActive(overlapped_jac)) {
-  // Makes getLocalMatrix() valid.
-  fillComplete(overlapped_jac);
-}
+  if (isFillActive(overlapped_jac)) {
+    // Makes getLocalMatrix() valid.
+    fillComplete(overlapped_jac);
+  }
 #endif
-if (derivatives_check_ > 0) {
-  checkDerivatives(
-      *this, current_time, x, xdot, xdotdot, p, f, jac, derivatives_check_);
+  if (derivatives_check_ > 0) {
+    checkDerivatives(
+        *this, current_time, x, xdot, xdotdot, p, f, jac, derivatives_check_);
+  }
 }
-}  // namespace Albany
 
 void
 Application::computeGlobalJacobian(
