@@ -33,6 +33,8 @@ Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace
 bool sameAs (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
              const Teuchos::RCP<const Thyra_VectorSpace>& vs2);
 
+bool isOneToOne (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
+
 // Remove a set of local components from a vector space
 Teuchos::RCP<const Thyra_VectorSpace>
 removeComponents (const Teuchos::RCP<const Thyra_VectorSpace>& vs,

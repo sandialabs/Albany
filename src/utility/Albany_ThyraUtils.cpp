@@ -164,6 +164,27 @@ bool sameAs (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
   TEUCHOS_UNREACHABLE_RETURN(false);
 }
 
+bool isOneToOne (const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+{
+  auto tmap = getTpetraMap(vs,false);
+  if (!tmap.is_null()) {
+    return tmap->isOneToOne();
+  }
+#if defined(ALBANY_EPETRA)
+  auto emap = getEpetraBlockMap(vs,false);
+  if (!emap.is_null()) {
+    // We don't allow two vs with different linear algebra back ends
+    return emap->IsOneToOne();
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in sameAs! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+
+  // Silence compiler warning
+  TEUCHOS_UNREACHABLE_RETURN(false);
+}
+
 Teuchos::RCP<const Thyra_VectorSpace>
 removeComponents (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                   const Teuchos::ArrayView<const LO>& local_components)
