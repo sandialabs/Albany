@@ -106,7 +106,6 @@ if (BUILD_CISM_PISCEES)
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DCISM_STATIC_LINKING:BOOL=ON"
     "-DCISM_Fortran_FLAGS='-ffree-line-length-none'" 
-    "-DCISM_GNU:BOOL=ON"
   )
  
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany")
