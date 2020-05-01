@@ -161,11 +161,6 @@ class STKDiscretization : public AbstractDiscretization
   {
     return m_jac_factory->createOp();
   }
-  Teuchos::RCP<Thyra_LinearOp>
-  createOverlapJacobianOp() const
-  {
-    return m_overlap_jac_factory->createOp();
-  }
 
   bool
   isExplicitScheme() const
@@ -588,9 +583,8 @@ class STKDiscretization : public AbstractDiscretization
   Teuchos::RCP<const Thyra_VectorSpace> m_overlap_vs;
   Teuchos::RCP<const Thyra_VectorSpace> m_overlap_node_vs;
 
-  //! Jacobian matrix graph proxy (owned and overlap)
+  //! Jacobian matrix operator factory
   Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
-  Teuchos::RCP<ThyraCrsMatrixFactory> m_overlap_jac_factory;
 
   NodalDOFsStructContainer nodalDOFsStructContainer;
 
@@ -700,11 +694,6 @@ class STKDiscretization : public AbstractDiscretization
 
   void
   printVertexConnectivity();
-
-  void
-  computeGraphsUpToFillComplete();
-  void
-  fillCompleteGraphs();
 };
 
 }  // namespace Albany

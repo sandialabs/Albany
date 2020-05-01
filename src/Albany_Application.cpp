@@ -1390,8 +1390,7 @@ Application::computeGlobalJacobianImpl(
   Teuchos::RCP<Thyra_Vector> overlapped_f;
   if (Teuchos::nonnull(f)) { overlapped_f = solMgr->get_overlapped_f(); }
 
-  Teuchos::RCP<Thyra_LinearOp> overlapped_jac = solMgr->get_overlapped_jac();
-  auto                         cas_manager    = solMgr->get_cas_manager();
+  auto cas_manager = solMgr->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distribution
   solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
@@ -1416,15 +1415,6 @@ Application::computeGlobalJacobianImpl(
   resumeFill(jac);
   assign(jac, 0.0);
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (!isFillActive(overlapped_jac)) { resumeFill(overlapped_jac); }
-#endif
-  assign(overlapped_jac, 0.0);
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (isFillActive(overlapped_jac)) { fillComplete(overlapped_jac); }
-  if (!isFillActive(overlapped_jac)) { resumeFill(overlapped_jac); }
-#endif
-
   // Set data in Workset struct, and perform fill via field manager
   {
     TEUCHOS_FUNC_TIME_MONITOR("Albany Jacobian Fill: Evaluate");
@@ -1443,7 +1433,7 @@ Application::computeGlobalJacobianImpl(
 #endif
 
     workset.f   = overlapped_f;
-    workset.Jac = overlapped_jac;
+    workset.Jac = jac;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
     // fill Jacobian derivative dimensions:
@@ -1490,13 +1480,13 @@ Application::computeGlobalJacobianImpl(
     if (Teuchos::nonnull(f)) {
       cas_manager->combine(overlapped_f, f, CombineMode::ADD);
     }
-    // Assemble global Jacobian
-    cas_manager->combine(overlapped_jac, jac, CombineMode::ADD);
   }
+
+  // This will also assemble global jacobian (i.e., do import/export)
+  fillComplete(jac);
 
   // scale Jacobian
   if (scaleBCdofs == false && scale != 1.0) {
-    fillComplete(jac);
 #ifdef WRITE_TO_MATRIX_MARKET
     writeMatrixMarket(jac, "jacUnscaled", countScale);
     if (f != Teuchos::null) {
@@ -1512,7 +1502,6 @@ Application::computeGlobalJacobianImpl(
     auto jac_scaled_lop =
         Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac, true);
     jac_scaled_lop->scaleLeft(*scaleVec_);
-    resumeFill(jac);
     // scale residual
     /*IKTif (Teuchos::nonnull(f)) {
       Thyra::ele_wise_scale<ST>(*scaleVec_,f.ptr());
@@ -1575,12 +1564,6 @@ Application::computeGlobalJacobianImpl(
     jac_scaled_lop->scaleLeft(*scaleVec_);
   }
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (isFillActive(overlapped_jac)) {
-    // Makes getLocalMatrix() valid.
-    fillComplete(overlapped_jac);
-  }
-#endif
   if (derivatives_check_ > 0) {
     checkDerivatives(
         *this, current_time, x, xdot, xdotdot, p, f, jac, derivatives_check_);

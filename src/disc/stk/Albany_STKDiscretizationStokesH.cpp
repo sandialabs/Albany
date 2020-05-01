@@ -55,7 +55,7 @@ void STKDiscretizationStokesH::computeGraphs()
   unsigned int n3dEq = (neq >= 4) ? neq : 2;
   n3dEq = std::min(n3dEq,neq);
 
-  m_overlap_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(m_overlap_vs,m_overlap_vs));
+  m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(m_vs,m_vs,m_overlap_vs));
 
   stk::mesh::Selector select_owned_in_part =
     stk::mesh::Selector( metaData.universal_part() ) &
@@ -90,7 +90,7 @@ void STKDiscretizationStokesH::computeGraphs()
           stk::mesh::Entity colNode = node_rels[l];
           for (std::size_t m=0; m < n3dEq; m++) {
             col = this->getGlobalDOF(this->gid(colNode), m);
-            m_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));
+            m_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));
           }
         }
       }
@@ -114,25 +114,22 @@ void STKDiscretizationStokesH::computeGraphs()
                 GO gnode = ov_node_indexer->getGlobalElement(inode);
                 for (std::size_t m=0; m < n3dEq; m++) {
                   col = getGlobalDOF(gnode, m);
-                  m_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));
-                  m_overlap_jac_factory->insertGlobalIndices(col, Teuchos::arrayView(&row, 1));
+                  m_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));
+                  m_jac_factory->insertGlobalIndices(col, Teuchos::arrayView(&row, 1));
                 }
                 col = getGlobalDOF(gnode, n3dEq);
-                m_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));
+                m_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));
               }
             }
           }
         } else {
           // Insert diagonal elements
-          m_overlap_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&row, 1));
+          m_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&row, 1));
         }
       }
     }
   }
-  m_overlap_jac_factory->fillComplete();
-
-  // Create Owned graph by exporting overlap with known row map
-  m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(m_vs, m_vs, m_overlap_jac_factory));
+  m_jac_factory->fillComplete();
 }
 
 } // namespace Albany

@@ -891,35 +891,6 @@ evaluateFields(typename Traits::EvalData workset)
       } // has fast access
     }
   }
-/*#else
-
-  fT = workset.fT;
-  //fT_nonconstView = fT->get1dViewNonConst();
-  if (this->fT != Teuchos::null)
-    fT_nonconstView = fT->get1dViewNonConst();
-  else
-    fT_nonconstView = Teuchos::null;
-  JacT = workset.JacT;
-
-
-  // Fill in "neumann" array
-  this->evaluateNeumannContribution(workset);
-
- //  if ( !JacT->isFillActive())
-//    JacT->resumeFill();
-
-   jacobian=JacT->getLocalMatrix();
-
-   Index=workset.wsElNodeEqID_kokkos;
-
-   is_adjoint=workset.is_adjoint;
-
-   Kokkos::parallel_for(Neumann_Policy(0,workset.numCells),*this);
-
-//   if ( !JacT->isFillActive())
-//    JacT->fillComplete();
-
-#endif*/
 }
 
 // **********************************************************************

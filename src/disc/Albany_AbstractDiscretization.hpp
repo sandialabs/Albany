@@ -61,11 +61,9 @@ class AbstractDiscretization
   virtual Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapVectorSpace(const std::string& field_name) const = 0;
 
-  //! Create a Jacobian operator (owned and overlapped)
+  //! Create a Jacobian operator
   virtual Teuchos::RCP<Thyra_LinearOp>
   createJacobianOp() const = 0;
-  virtual Teuchos::RCP<Thyra_LinearOp>
-  createOverlapJacobianOp() const = 0;
 
   //! Returns boolean telling code whether explicit scheme is used (needed for
   //! Aeras problems only)
