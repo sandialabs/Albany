@@ -19,7 +19,7 @@ if (1)
     set (BUILD_ALB64 TRUE) 
   ENDIF() 
   set (CLEAN_BUILD TRUE)
-  set (BUILD_SCOREC TRUE)
+  set (BUILD_SCOREC FALSE)
 # Drop the gcc 32bit build
   set (BUILD_ALB32 FALSE)
 # Drop the functor dev build - is this still of interest?
@@ -689,7 +689,7 @@ if (BUILD_TRILINOS)
 #    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
 #    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
 #
-    "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+    "-DTPL_ENABLE_ParMETIS:BOOL=OFF"
     "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
     "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
 #
@@ -825,7 +825,7 @@ if (BUILD_TRILINOSCLANG)
 #    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
 #    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
   #
-    "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+    "-DTPL_ENABLE_ParMETIS:BOOL=OFF"
     "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
     "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
   #
@@ -899,7 +899,7 @@ if (BUILD_TRILINOSCLANGDBG)
 #    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
 #    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
   #
-    "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+    "-DTPL_ENABLE_ParMETIS:BOOL=OFF"
     "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
     "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
   #
@@ -1021,7 +1021,7 @@ if (BUILD_TRILINOSDBG)
 #    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
 #    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
 #
-    "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+    "-DTPL_ENABLE_ParMETIS:BOOL=OFF"
     "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
     "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
 #
