@@ -803,7 +803,7 @@ endif (NOT ALBANY_LIBRARIES_ONLY)
 foreach(ALB_EXEC ${ALBANY_EXECUTABLES})
   
   if (Albany_BUILD_STATIC_EXE)
-    set_target_properties(${ALB_EXEC} PROPERTY LINK_SEARCH_START_STATIC 1)
+    set_target_properties(${ALB_EXEC} PROPERTIES LINK_SEARCH_START_STATIC 1)
   endif()
   target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_include_directories(${ALB_EXEC} PUBLIC
