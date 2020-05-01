@@ -9,6 +9,7 @@
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "Epetra_CrsMatrix.h"
+#include "Epetra_FECrsMatrix.h"
 
 // The type of an Epetra global id.
 // Epetra uses long long for their 64 bits integers and int for their 32 bits integers.

@@ -481,7 +481,13 @@ void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop)
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    tmat->resumeFill();
+    // If it is a FECrsMatrix, we need a more specialized call
+    auto femat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(tmat);
+    if (!femat.is_null()) {
+      femat->beginFill();
+    } else {
+      tmat->resumeFill();
+    }
     return;
   }
 
@@ -503,15 +509,26 @@ void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop)
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    tmat->fillComplete();
+    // If it is a FECrsMatrix, we need a more specialized call
+    auto femat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(tmat);
+    if (!femat.is_null()) {
+      femat->endFill();
+    } else {
+      tmat->fillComplete();
+    }
     return;
   }
 
 #if defined(ALBANY_EPETRA)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
-    emat->FillComplete();
-    emat->OptimizeStorage();  // This allows to extract data with 'ExtractCrsDataPointers
+    // If it is a FECrsMatrix, we need a more specialized call
+    auto femat = Teuchos::rcp_dynamic_cast<Epetra_FECrsMatrix>(emat);
+    if (!femat.is_null()) {
+      femat->GlobalAssemble();
+    } else {
+      emat->FillComplete();
+    }
     return;
   }
 #endif
