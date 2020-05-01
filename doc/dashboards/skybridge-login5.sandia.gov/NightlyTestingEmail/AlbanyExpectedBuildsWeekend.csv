@@ -25,8 +25,8 @@ Nightly, cori.nersc.gov, cori-Albany
 Nightly, cori.nersc.gov, cori-CISM-Albany
 Nightly, mayer.sandia.gov, mayer-Release-Trilinos
 Nightly, mayer.sandia.gov, mayer-Release-Albany
-Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc6.1.0-Release-Albany
-Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc6.1.0-Release-Cism-Albany
+Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Albany
+Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Cism-Albany
 Nightly, ride.sandia.gov, ride-CUDA-Trilinos
 Nightly, ride.sandia.gov, ride-CUDA-Albany
 Nightly, skybridge-login5, skybridge-login5-trilinos
