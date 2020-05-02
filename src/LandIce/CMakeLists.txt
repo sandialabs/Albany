@@ -19,6 +19,7 @@ set(SOURCES
   evaluators/LandIce_EpsilonL1L2.cpp
   evaluators/LandIce_FlowRate.cpp
   evaluators/LandIce_FluxDiv.cpp
+  evaluators/LandIce_FluxDivergenceResidual.cpp
   evaluators/LandIce_Gather2DField.cpp
   evaluators/LandIce_GatherVerticallyContractedSolution.cpp
   evaluators/LandIce_GeoFluxHeat.cpp
@@ -114,6 +115,8 @@ set(HEADERS
   evaluators/LandIce_FlowRate_Def.hpp
   evaluators/LandIce_FluxDiv.hpp
   evaluators/LandIce_FluxDiv_Def.hpp
+  evaluators/LandIce_FluxDivergenceResidual.hpp
+  evaluators/LandIce_FluxDivergenceResidual_Def.hpp
   evaluators/LandIce_Gather2DField.hpp
   evaluators/LandIce_Gather2DField_Def.hpp
   evaluators/LandIce_GatherVerticallyContractedSolution.hpp
