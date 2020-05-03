@@ -23,7 +23,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "mockba-rhel7-gcc6.1.0-${CTEST_BUILD_CONFIGURATION}-Cism-Albany")
+set (CTEST_BUILD_NAME "mockba-rhel7-gcc9.2.0-${CTEST_BUILD_CONFIGURATION}-Cism-Albany")
 set (CTEST_BINARY_NAME build)
 
 
