@@ -3,7 +3,7 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)
   message ("ctest state: BUILD_${BTYPE}")
 
   #
-  # Configure the Trilinos/SCOREC build
+  # Configure the Trilinos build
   #
 
 
@@ -31,61 +31,14 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)
       )
 
     if (S_HAD_ERROR)
-      message ("Cannot submit Trilinos/SCOREC configure results!")
+      message ("Cannot submit Trilinos configure results!")
     endif (S_HAD_ERROR)
   endif (CTEST_DO_SUBMIT)
 
   if (HAD_ERROR)
 # No sense in going on if Trilinos will not config!
-    message (FATAL_ERROR "Cannot configure Trilinos/SCOREC build!")
+    message (FATAL_ERROR "Cannot configure Trilinos build!")
   endif (HAD_ERROR)
-
-  SET(SEPARATE_BUILD_SCOREC FALSE)
-
-  if (SEPARATE_BUILD_SCOREC)
-    #
-    # SCOREC tools build inside Trilinos
-    #
-    # Note that we do a trick here, and just build the SCOREC_libs target, as we
-    # build SCOREC as a Trilinos packages and its not possible to do that
-    # independent of Trilinos. So, while this builds most of SCOREC, other
-    # Trilinos capabilities are also built here.
-    #
-
-    set (CTEST_BUILD_TARGET "SCOREC_libs")
-
-    MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-    CTEST_BUILD(
-      BUILD "${CTEST_BINARY_DIRECTORY}/${BTYPE}"
-      RETURN_VALUE  HAD_ERROR
-      NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-      )
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Build
-        RETURN_VALUE  S_HAD_ERROR
-        )
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit SCOREC build results!")
-        set (BUILD_SCOREC FALSE)
-      endif (S_HAD_ERROR)
-    endif (CTEST_DO_SUBMIT)
-
-    if (HAD_ERROR)
-# No sense in going on if SCOREC is requested and it will not build!
-      message (FATAL_ERROR "Cannot build SCOREC!")
-      set (BUILD_SCOREC FALSE)
-    endif (HAD_ERROR)
-
-    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-# No sense in going on if SCOREC is requested and it will not build!
-      message (FATAL_ERROR "Encountered build errors in SCOREC build. Exiting!")
-      set (BUILD_SCOREC FALSE)
-    endif (BUILD_LIBS_NUM_ERRORS GREATER 0)
-
-  endif (SEPARATE_BUILD_SCOREC)
 
   #
   # Trilinos
@@ -119,7 +72,7 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)
       )
 
     if (S_HAD_ERROR)
-      message ("Cannot submit Trilinos/SCOREC build results!")
+      message ("Cannot submit Trilinos build results!")
     endif (S_HAD_ERROR)
 
   endif (CTEST_DO_SUBMIT)
