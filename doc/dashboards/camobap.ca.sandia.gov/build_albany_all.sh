@@ -1,5 +1,9 @@
 #!/bin/bash
 
+rm -rf repos
+rm -rf build
+rm -rf nightly_log*
+rm -rf results*
 bash nightly_cron_script_albany.sh; bash process_results.sh #Albany
 bash nightly_cron_script_cismAlbany.sh; bash process_results_cismAlbany.sh #CISM-Albany
 bash nightly_cron_script_albanyT.sh; bash process_resultsT.sh #Albany, No Epetra

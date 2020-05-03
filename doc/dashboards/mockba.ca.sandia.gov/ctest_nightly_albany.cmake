@@ -43,7 +43,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_BUILD_FLAGS "-j16")
+set (CTEST_BUILD_FLAGS "-j8")
 
 set (CTEST_DROP_METHOD "https")
 
