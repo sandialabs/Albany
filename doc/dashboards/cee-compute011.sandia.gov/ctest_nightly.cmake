@@ -19,7 +19,6 @@ if (1)
     set (BUILD_ALB64 TRUE) 
   ENDIF() 
   set (CLEAN_BUILD TRUE)
-  set (BUILD_SCOREC FALSE)
 # Drop the gcc 32bit build
   set (BUILD_ALB32 FALSE)
 # Drop the functor dev build - is this still of interest?
@@ -173,7 +172,6 @@ else ()
   # See if we can get away with this for speed, at least until we get onto a
   # machine that can support a lengthy nightly.
   set (CLEAN_BUILD FALSE)
-  set (BUILD_SCOREC FALSE)
   set (BUILD_TRILINOS FALSE)
   set (BUILD_PERIDIGM TRUE)
   set (BUILD_ALB32 FALSE)
@@ -281,7 +279,6 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
-set (SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 #set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
 
@@ -321,31 +318,6 @@ if (DOWNLOAD_TRILINOS)
   endif ()
 
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-
-  #
-  # Get the SCOREC repo
-  #
-
-  if (BUILD_SCOREC AND (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC"))
-    #  execute_process (COMMAND "${CTEST_SVN_COMMAND}" 
-    #    checkout ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC
-    #    OUTPUT_VARIABLE _out
-    #    ERROR_VARIABLE _err
-    #    RESULT_VARIABLE HAD_ERROR)
-    execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone --branch develop ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC
-      OUTPUT_VARIABLE _out
-      ERROR_VARIABLE _err
-      RESULT_VARIABLE HAD_ERROR)
-    
-    message(STATUS "out: ${_out}")
-    message(STATUS "err: ${_err}")
-    message(STATUS "res: ${HAD_ERROR}")
-    if (HAD_ERROR)
-      message ("Cannot checkout SCOREC repository!")
-      set (BUILD_SCOREC FALSE)
-    endif ()
-  endif ()
 
 ENDIF()
 
@@ -426,32 +398,6 @@ if (DOWNLOAD_TRILINOS)
     message(FATAL_ERROR "Cannot update Trilinos!")
   endif ()
 
-
-  #
-  # Update the SCOREC repo
-  #
-  if (BUILD_SCOREC)
-
-    set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-    CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC" RETURN_VALUE count)
-    # assumes that we are already on the desired tracking branch, i.e.,
-    # git checkout -b branch --track origin/branch
-    message("Found ${count} changed files")
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Update RETURN_VALUE  HAD_ERROR)
-
-      if (HAD_ERROR)
-        message ("Cannot update SCOREC!")
-        set (BUILD_SCOREC FALSE)
-      endif ()
-    endif ()
-
-    if (count LESS 0)
-      message ("Cannot update SCOREC!")
-      set (BUILD_SCOREC FALSE)
-    endif ()
-  endif ()
 
 ENDIF()
 
@@ -703,13 +649,6 @@ if (BUILD_TRILINOS)
     "${COMMON_CONFIGURE_OPTIONS}"
   )
 
-    if (BUILD_SCOREC)
-      set (CONF_OPTS
-        "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
-        "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"      
-        "${CONF_OPTS}")
-    endif (BUILD_SCOREC)
-
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_trilinos("${CONF_OPTS}" "Trilinos" "${INSTALL_LOCATION}")
 
@@ -730,16 +669,6 @@ if (BUILD_ALB32)
     "-DENABLE_UNIT_TESTS:BOOL=OFF"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     )
-  if (BUILD_SCOREC)
-    set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
-  endif (BUILD_SCOREC)
-  #if (BUILD_PERIDIGM)
-  #  set (CONF_OPTIONS ${CONF_OPTIONS}
-  #    "-DENABLE_PERIDIGM:BOOL=ON"
-  #    "-DPeridigm_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
-  #endif (BUILD_PERIDIGM)
-
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany32Bit")
 
@@ -759,10 +688,6 @@ if (BUILD_ALB64)
     "-DENABLE_UNIT_TESTS:BOOL=OFF"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     )
-  if (BUILD_SCOREC)
-    set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
-  endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany64Bit")
@@ -789,10 +714,8 @@ if (BUILD_TRILINOSCLANG)
     "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang/bin/mpifort"
     #"-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
     "-DCMAKE_Fortran_FLAGS:STRING='-march=native -g'"
-    "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
 #    "-DMDS_ID_TYPE:STRING='long long int'"
     "-DMDS_ID_TYPE:STRING='long int'"
-    "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../compiler/lib/intel64'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
@@ -863,10 +786,8 @@ if (BUILD_TRILINOSCLANGDBG)
     "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang/bin/mpifort"
     #"-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
     "-DCMAKE_Fortran_FLAGS:STRING='-march=native -g'"
-    "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
 #    "-DMDS_ID_TYPE:STRING='long long int'"
     "-DMDS_ID_TYPE:STRING='long int'"
-    "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../compiler/lib/intel64'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
@@ -936,10 +857,6 @@ if (BUILD_ALB64CLANG)
     "-DENABLE_PARAMETERS_DEPENDS_ON_SOLUTION:BOOL=ON" 
     "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g'"
     )
-  if (BUILD_SCOREC)
-    set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
-  endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany64BitClang")
@@ -960,10 +877,6 @@ if (BUILD_ALB64CLANGDBG)
     "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g'"
     "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
     )
-  if (BUILD_SCOREC)
-    set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
-  endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany64BitClangDbg")
@@ -986,9 +899,7 @@ if (BUILD_TRILINOSDBG)
     "-DCMAKE_C_FLAGS:STRING='-g -march=native'"
     "-DCMAKE_Fortran_COMPILER:STRING=${GCC_DBG_MPI_DIR}/bin/mpifort"
     "-DCMAKE_Fortran_FLAGS:STRING='-g -march=native'"
-    "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DMDS_ID_TYPE:STRING='long int'"
-    "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../compiler/lib/intel64'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
@@ -1051,10 +962,6 @@ if (BUILD_ALB64DBG)
     "-DENABLE_UNIT_TESTS:BOOL=OFF"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     )
-  if (BUILD_SCOREC)
-    set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
-  endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany64BitDbg")
@@ -1073,10 +980,6 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     )
-  if (BUILD_SCOREC)
-    set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
-  endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "AlbanyFunctorDev")

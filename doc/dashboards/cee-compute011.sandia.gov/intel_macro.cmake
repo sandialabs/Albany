@@ -62,16 +62,6 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
   "-DTPL_LAPACK_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
     )
 
-  if (BUILD_SCOREC)
-    set (CONFIGURE_OPTIONS
-      "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
-      "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-      "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
-      "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
-      "-DZoltan_ENABLE_ULONG_IDS:Bool=ON"
-      "${CONFIGURE_OPTIONS}")
-  endif (BUILD_SCOREC)
-
   if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
 #   Set -g to enable retaining symbols
     set (CONFIGURE_OPTIONS
@@ -119,7 +109,7 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
     ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
 
     if (S_HAD_ERROR)
-      message ("Cannot submit Trilinos/SCOREC configure results.")
+      message ("Cannot submit Trilinos configure results.")
     endif (S_HAD_ERROR)
   endif (CTEST_DO_SUBMIT)
 
@@ -206,11 +196,6 @@ if (BUILD_INTEL_ALBANY)
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
    )
-
-  if (BUILD_SCOREC)
-    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
-  endif (BUILD_SCOREC)
 
 # Clean up build area
    IF (CLEAN_BUILD)
