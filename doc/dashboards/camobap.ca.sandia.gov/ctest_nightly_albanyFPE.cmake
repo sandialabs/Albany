@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora31-gcc9.2.1-${CTEST_BUILD_CONFIGURATION}-FPE-Albany")
+set (CTEST_BUILD_NAME "fedora31-gcc9.3.1-${CTEST_BUILD_CONFIGURATION}-FPE-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -192,7 +192,6 @@ if (BUILD_ALBANY_FPE)
     "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"
     "-DSEACAS_ALGEBRA=/home/ikalash/Trilinos/seacas-build/install/bin/algebra"
     "-DINSTALL_ALBANY:BOOL=OFF"
-    "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg")
