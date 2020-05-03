@@ -180,7 +180,6 @@ if (BUILD_CISM_PISCEES)
     "-DALBANY_LANDICE_DYCORE:BOOL=ON"
     "-DALBANY_LANDICE_CTEST:BOOL=ON"
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbanyInstall"
-    "-DPYTHON_EXE=/usr/bin/python2.7"
     "-DCISM_MPI_BASE_DIR=/usr/lib64/openmpi"
     "-DCISM_NETCDF_DIR=/home/ikalash/albany-tpls-gcc-9.3.1"
     "-DCISM_NETCDF_LIBS='netcdff'"
