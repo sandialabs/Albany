@@ -44,8 +44,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D MPI_BASE_DIR:PATH=/usr/lib64/openmpi \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=/usr/lib64 \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/ikalash/albany-tpls-gcc-9.3.1/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=/albany-tpls-gcc-9.3.1/lib \
 \
       -D TPL_ENABLE_HDF5:BOOL=OFF \
 \
