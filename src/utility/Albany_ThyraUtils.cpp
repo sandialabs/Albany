@@ -2,6 +2,7 @@
 #include "Albany_CommUtils.hpp"
 #include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_TpetraThyraTypes.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_Macros.hpp"
@@ -481,13 +482,41 @@ void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop)
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    // If it is a FECrsMatrix, we need a more specialized call
-    auto femat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(tmat);
-    if (!femat.is_null()) {
-      femat->beginFill();
-    } else {
-      tmat->resumeFill();
-    }
+    tmat->resumeFill();
+    return;
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emat = getConstEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    // Nothing to do in Epetra. As long as you only need to change the values (not the graph),
+    // Epetra already let's you do it on a filled matrix
+    return;
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in resumeFill! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+void beginFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    // We're asking for FE assembly, so this *should* be a FE matrix
+    auto femat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(tmat,true);
+    femat->beginFill();
+
+    // Note: we 're-initialize' the linear op, cause it's the only way
+    //       to get the range/domain vector spaces to be consitent with
+    //       the matrix maps. Unfortunately, Thyra builds range/domain
+    //       vs of the LinearOp only at initialization time.
+    // TODO: This may be expensive. Consider having a FELinearOp class.
+    auto tlop = Teuchos::rcp_dynamic_cast<Thyra_TpetraLinearOp>(lop);
+    auto range  = createThyraVectorSpace(femat->getRangeMap());
+    auto domain = createThyraVectorSpace(femat->getDomainMap());
+    tlop->initialize(range,domain,tmat);
     return;
   }
 
@@ -509,26 +538,49 @@ void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop)
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    // If it is a FECrsMatrix, we need a more specialized call
-    auto femat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(tmat);
-    if (!femat.is_null()) {
-      femat->endFill();
-    } else {
-      tmat->fillComplete();
-    }
+    tmat->fillComplete();
     return;
   }
 
 #if defined(ALBANY_EPETRA)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
-    // If it is a FECrsMatrix, we need a more specialized call
-    auto femat = Teuchos::rcp_dynamic_cast<Epetra_FECrsMatrix>(emat);
-    if (!femat.is_null()) {
-      femat->GlobalAssemble();
-    } else {
-      emat->FillComplete();
-    }
+    emat->FillComplete();
+    return;
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in fillComplete! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+void endFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    // We're asking for FE assembly, so this *should* be a FE matrix
+    auto femat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(tmat,true);
+    femat->endFill();
+
+    // Note: we 're-initialize' the linear op, cause it's the only way
+    //       to get the range/domain vector spaces to be consitent with
+    //       the matrix maps. Unfortunately, Thyra builds range/domain
+    //       vs of the LinearOp only at initialization time.
+    // TODO: This may be expensive. Consider having a FELinearOp class.
+    auto tlop = Teuchos::rcp_dynamic_cast<Thyra_TpetraLinearOp>(lop);
+    auto range  = createThyraVectorSpace(femat->getRangeMap());
+    auto domain = createThyraVectorSpace(femat->getDomainMap());
+    tlop->initialize(range,domain,tmat);
+    return;
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emat = getEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    // We're asking for FE assembly, so this *should* be a FE matrix
+    auto femat = Teuchos::rcp_dynamic_cast<Epetra_FECrsMatrix>(emat, true);
+    femat->GlobalAssemble();
     return;
   }
 #endif

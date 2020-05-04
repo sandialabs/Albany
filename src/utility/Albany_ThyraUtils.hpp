@@ -81,9 +81,11 @@ getNumEntriesInLocalRow (const Teuchos::RCP<const Thyra_LinearOp>& lop, const LO
 
 // Fill related helpers
 bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop);
-void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop);
 bool isFillComplete (const Teuchos::RCP<const Thyra_LinearOp>& lop);
+void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop);
 void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop);
+void beginFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop);
+void endFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop);
 
 // Entries manipulation helpers
 void assign (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST value);

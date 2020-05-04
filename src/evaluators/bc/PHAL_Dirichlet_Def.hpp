@@ -288,7 +288,7 @@ DirichletAggregator(Teuchos::ParameterList& p)
 template<typename EvalT, typename Traits>
 void DirichletAggregator<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm)
+                      PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
