@@ -5,7 +5,7 @@ ANONYMOUS:
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Name: AdvDiff 2D
-    Solution Method: Transient
+    Solution Method: Transient Tempus
     Number of PDE Equations: 1
     Dirichlet BCs: { }
     Initial Condition: 
@@ -19,7 +19,7 @@ ANONYMOUS:
     Parameters: 
       Number: 0
     Response Functions: 
-      Number: 0
+      Number: 3
       Response 0: Solution Max Value
       ResponseParams 0: 
         Equation: 0
@@ -39,22 +39,81 @@ ANONYMOUS:
     Method: STK2D
     Exodus Output File Name: advdiff2D_out.exo
   Regression Results: 
-    Number of Comparisons: 0
-    Test Values: [9.99973644855999960e-02, 2.83707252836000012e-01, 2.81800790799999998e-09]
+    Number of Comparisons: 3
+    Test Values: [ 2.435402154398e-01, 2.915474759851e-01, 5.749999999897e-02]
     Relative Tolerance: 1.00000000000000005e-04
   Piro: 
-    Rythmos: 
-      Nonlinear Solver Type: Rythmos
-      Final Time: 5.00000000000000000e-01
-      Rythmos Stepper: 
-        VerboseObject: 
-          Verbosity Level: low
-      Rythmos Integration Control: 
-        Take Variable Steps: false
-        Number of Time Steps: 20
-      Rythmos Integrator: 
-        VerboseObject: 
-          Verbosity Level: none
+    Analysis: 
+      Compute Sensitivities: false
+    Tempus: 
+      Integrator Name: Tempus Integrator
+      Tempus Integrator: 
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 100
+        Stepper Name: Tempus Stepper
+        Solution History: 
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control: 
+          Initial Time: 0.00000000000000000e+00
+          Initial Time Index: 0
+          Initial Time Step: 0.025
+          Initial Order: 0
+          Final Time: 5.00000000000000006e-01
+          Final Time Index: 10000
+          Maximum Absolute Error: 1.00000000000000002e-08
+          Maximum Relative Error: 1.00000000000000002e-08
+          Integrator Step Type: Constant
+          Output Time List: ''
+          Output Index List: ''
+          Output Time Interval: 1.00000000000000000e+01
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper: 
+        Stepper Type: Backward Euler
+        Solver Name: Demo Solver
+        Predictor Name: None
+        Demo Solver: 
+          NOX: 
+            Direction: 
+              Method: Newton
+              Newton: 
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+                Linear Solver: 
+                  Tolerance: 1.00000000000000008e-05
+            Line Search: 
+              Full Step: 
+                Full Step: 1.00000000000000000e+00
+              Method: Full Step
+            Nonlinear Solver: Line Search Based
+            Printing: 
+              Output Precision: 3
+              Output Processor: 0
+              Output Information: 
+                Error: true
+                Warning: true
+                Outer Iteration: false
+                Parameters: true
+                Details: false
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options: 
+              Status Test Check Type: Minimal
+            Status Tests: 
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0: 
+                Test Type: NormF
+                Tolerance: 1.00000000000000002e-08
+              Test 1: 
+                Test Type: MaxIters
+                Maximum Iterations: 10
       Stratimikos: 
         Linear Solver Type: Belos
         Linear Solver Types: 
@@ -77,18 +136,4 @@ ANONYMOUS:
             Overlap: 1
             Ifpack2 Settings: 
               'fact: ilut level-of-fill': 1.00000000000000000e+00
-          ML: 
-            Base Method Defaults: SA
-            ML Settings: 
-              'aggregation: type': Uncoupled
-              'coarse: max size': 20
-              'coarse: pre or post': post
-              'coarse: sweeps': 1
-              'coarse: type': Amesos-KLU
-              prec type: MGV
-              'smoother: type': Gauss-Seidel
-              'smoother: damping factor': 6.60000000000000031e-01
-              'smoother: pre or post': both
-              'smoother: sweeps': 1
-              ML output: 1
 ...
