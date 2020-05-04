@@ -23,7 +23,9 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_RegressionTests.hpp"
 #include "Albany_OrdinarySTKFieldContainer.hpp"
+#include "LandIce_ProblemFactory.hpp"
 
 //#include "Teuchos_TestForException.hpp"
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -298,7 +300,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
       std::cout << "In ali_driver: creating Albany mesh struct..." << std::endl;
     slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, reducedMpiCommT));
-    const auto& bt = slvrfctry->getParameters().get("Build Type","Tpetra");
+    const auto& bt = slvrfctry->getParameters()->get("Build Type","Tpetra");
     if (bt=="Tpetra") {
       // Set the static variable that denotes this as a Tpetra run
       static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
@@ -326,7 +328,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
                                  "       Valid choices are 'Epetra', 'Tpetra'.\n");
     }
 
-    parameterList = Teuchos::rcp(&slvrfctry->getParameters(),false);
+    parameterList = slvrfctry->getParameters();
     discParams = Teuchos::sublist(parameterList, "Discretization", true);
     discParams->set<bool>("Output DTK Field to Exodus", true);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -485,6 +487,10 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     field7.set<std::string>("Field Name", "ygrad_surface_height");
     field7.set<std::string>("Field Type", "Node Scalar");
     field7.set<std::string>("Field Origin", "Mesh");
+
+    // Register LandIce problems
+    auto& pb_factories = Albany::FactoriesContainer<Albany::ProblemFactory>::instance();
+    pb_factories.add_factory(LandIce::LandIceProblemFactory::instance());
 
     albanyApp = Teuchos::rcp(new Albany::Application(reducedMpiCommT));
     albanyApp->initialSetUp(parameterList);
@@ -660,7 +666,8 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
     //if (!first_time_step)
     //  std::cout << "previousSolution: " << *previousSolution << std::endl;
-    solver = slvrfctry->createAndGetAlbanyApp(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
+    auto albanyModel = slvrfctry->createModel(albanyApp);
+    solver = slvrfctry->createSolver(albanyModel, reducedMpiCommT);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
@@ -714,6 +721,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     }
    }
 
+    Albany::RegressionTests regression(slvrfctry->getParameters());
     for (int i=0; i<num_g-1; i++) {
       const Teuchos::RCP<const Thyra_Vector> g = thyraResponses[i];
 
@@ -729,7 +737,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
         if (num_p == 0 && cur_time_yr == final_time) {
           // Just calculate regression data -- only if in final time step
-          status += slvrfctry->checkSolveTestResults(i, 0, g, Teuchos::null);
+          status += regression.checkSolveTestResults(i, 0, g, Teuchos::null);
         } else {
           for (int j=0; j<num_p; j++) {
             Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
@@ -740,7 +748,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
               }
             }
             if (cur_time_yr == final_time) {
-              status += slvrfctry->checkSolveTestResults(i, j, g, dgdp);
+              status += regression.checkSolveTestResults(i, j, g, dgdp);
             }
           }
         }

@@ -31,8 +31,6 @@ class AbstractDiscretization
 
   //! Prohibit copying
   AbstractDiscretization(const AbstractDiscretization&) = delete;
-
-  //! Private to prohibit copying
   AbstractDiscretization&
   operator=(const AbstractDiscretization&) = default;
 

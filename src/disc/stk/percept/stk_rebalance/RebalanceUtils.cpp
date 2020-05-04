@@ -6,7 +6,7 @@
 /*  United States Government.                                             */
 /*------------------------------------------------------------------------*/
 
-#include <percept/stk_rebalance_utils/RebalanceUtils.hpp>
+#include <percept/stk_rebalance/RebalanceUtils.hpp>
 
 #include <stk_util/parallel/ParallelReduce.hpp>
 #include <stk_mesh/base/GetEntities.hpp>

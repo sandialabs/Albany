@@ -22,7 +22,6 @@ getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet=false);
 
 bool mesh_depends_on_solution ();
 bool mesh_depends_on_parameters ();
-bool params_depend_on_solution ();
 
 } // namespace Albany
 

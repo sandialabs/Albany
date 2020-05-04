@@ -235,12 +235,4 @@ bool mesh_depends_on_parameters () {
 #endif
 }
 
-bool params_depend_on_solution () {
-#ifdef ALBANY_PARAMETERS_DEPEND_ON_SOLUTION
-  return true;
-#else
-  return false;
-#endif
-}
-
 } // namespace Albany

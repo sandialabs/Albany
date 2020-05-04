@@ -15,12 +15,6 @@
 #include "Albany_ScalarOrdinalTypes.hpp"
 #include "Teuchos_ArrayRCP.hpp"
 
-namespace AAdapt {
-namespace rc {
-class Manager;
-}
-}  // namespace AAdapt
-
 namespace Albany {
 
 using NodeSetList      = std::map<std::string, std::vector<std::vector<int>>>;

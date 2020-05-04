@@ -74,7 +74,6 @@ ANONYMOUS:
     Number of Sensitivity Comparisons: 2
     Sensitivity Test Values 0: [2.36729000000000002e-02, 3.06330999999999984e-09]
     Sensitivity Test Values 1: [7.63868000000000012e-03, 2.19156999999999989e-03]
-    Number of Dakota Comparisons: 0
     Relative Tolerance: 1.00000000000000002e-03
     Absolute Tolerance: 1.00000000000000008e-05
   Piro: 

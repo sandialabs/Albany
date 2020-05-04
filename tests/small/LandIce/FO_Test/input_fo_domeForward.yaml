@@ -143,9 +143,4 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options: 
         Status Test Check Type: Minimal
-    Analysis: 
-      Analysis Package: Dakota
-      Dakota: 
-        Input File: dakota.in
-        Output File: dakota.out
 ...

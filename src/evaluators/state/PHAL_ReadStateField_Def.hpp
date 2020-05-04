@@ -12,10 +12,8 @@
 #include "Phalanx_DataLayout_MDALayout.hpp"
 #include "Teuchos_TestForException.hpp"
 
-#ifdef ALBANY_STK
 #include "Albany_AbstractSTKFieldContainer.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
-#endif
 
 namespace PHAL {
 
@@ -119,7 +117,6 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readElemState(
   //       with stk fields. To do this we must extract entities from the bulk
   //       data and use them to access the values of the stk field.
 
-#ifdef ALBANY_STK
   auto disc = workset.disc;
   ALBANY_ASSERT(disc != Teuchos::null, "Null discretization");
   auto mesh = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(
@@ -170,10 +167,6 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readElemState(
     default:
       ALBANY_ASSERT(false, "Unexpected dimension: only cell scalar/vector");
   }
-#else
-  (void)workset;
-  ALBANY_ASSERT(false, "STK is required");
-#endif
 }
 
 template <typename Traits>
@@ -189,7 +182,6 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readNodalState(
   //       with stk fields. To do this we must extract entities from the bulk
   //       data and use them to access the values of the stk field.
 
-#ifdef ALBANY_STK
   auto disc = workset.disc;
   ALBANY_ASSERT(disc != Teuchos::null, "Null discretization");
   auto mesh = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(
@@ -234,9 +226,6 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readNodalState(
     default:
       ALBANY_ASSERT(false, "Unexpected dimension: only cell scalar/vector");
   }
-#else
-  (void)workset;
-  ALBANY_ASSERT(false, "STK is required");
-#endif
 }
+
 }  // namespace PHAL

@@ -13,16 +13,18 @@
 #include <string>
 #include "Teuchos_ParameterList.hpp"
 
+namespace Albany {
 namespace AAdapt {
 
-void InitialConditions (const Teuchos::RCP<Thyra_Vector>& solnT,
-                       const Albany::Conn& wsElNodeEqID,
-                       const Teuchos::ArrayRCP<std::string>& wsEBNames,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
-                       const int neq, const int numDim,
-                       Teuchos::ParameterList& icParams,
-                       const bool gasRestartSolution = false);
+void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
+                        const Albany::Conn& wsElNodeEqID,
+                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
+                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
+                        const int neq, const int numDim,
+                        Teuchos::ParameterList& icParams,
+                        const bool gasRestartSolution = false);
 
 } // namespace AAdapt
+} // namespace Albany
 
 #endif // AADAPT_INITIAL_CONDITION_HPP

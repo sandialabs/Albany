@@ -75,6 +75,7 @@ public:
 
   //@}
 
+  Teuchos::RCP<Application> getAlbanyApp () const { return app; }
  protected:
   /** \name Overridden from Thyra::ModelEvaluatorDefaultBase<ST> . */
   //@{
@@ -125,7 +126,6 @@ public:
 
   //@}
 
- protected:
   //! Number of parameter vectors
   int num_param_vecs;
 

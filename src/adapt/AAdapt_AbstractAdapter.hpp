@@ -15,6 +15,8 @@
 
 #include "Albany_StateManager.hpp"
 
+namespace Albany {
+
 namespace AAdapt {
 
 ///
@@ -81,7 +83,7 @@ protected:
   ///
   /// State Manager
   ///
-  const Albany::StateManager& state_mgr_;
+  const StateManager& state_mgr_;
 
   ///
   /// Teuchos communicator
@@ -90,5 +92,7 @@ protected:
 };
 
 } // namespace AAdapt
+
+} // namespace Albany
 
 #endif // AADAPT_ABSTRACT_ADAPTERT_HPP

@@ -27,24 +27,19 @@ class StateManager;
  */
 
 template<typename EvalT, typename Traits>
-class ResponseUtilities {
-
-  public:
+class ResponseUtilities
+{
+public:
 
   ResponseUtilities(Teuchos::RCP<Albany::Layouts> dl);
 
   //! Utility for parsing response requests and creating response field manager
-  Teuchos::RCP<const PHX::FieldTag>
+  virtual Teuchos::RCP<const PHX::FieldTag>
   constructResponses(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     Teuchos::ParameterList& responseList,
     Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem,
-    Albany::StateManager& stateMgr,
-    // Optionally provide the MeshSpecsStruct. This is relevant only if the
-    // response function needs to know whether there are separate field
-    // managers for each element block. We can't use an RCP here because at
-    // the caller's level meshSpecs is a raw ref, so ownership is unknown.
-    const Albany::MeshSpecsStruct* meshSpecs = NULL);
+    Albany::StateManager& stateMgr);
 
   //! Utility for parsing response requests and creating response field manager
   //! (Convenience overload in the absence of parameters list from problem)
@@ -52,14 +47,15 @@ class ResponseUtilities {
   constructResponses(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     Teuchos::ParameterList& responseList,
-    Albany::StateManager& stateMgr) {
+    Albany::StateManager& stateMgr)
+  {
     return constructResponses(fm0, responseList, Teuchos::null, stateMgr);
   }
 
   //! Accessor
   Teuchos::RCP<Albany::Layouts> get_dl() { return dl;};
 
- private:
+protected:
 
   //! Struct of PHX::DataLayout objects defined all together.
   Teuchos::RCP<Albany::Layouts> dl;

@@ -6,18 +6,42 @@
 
 # Configure the file containing Albany configuration macros,
 # and add its folder to the include directories
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h)
-INCLUDE_DIRECTORIES (${CMAKE_CURRENT_BINARY_DIR})
 
+include(CheckCXXSourceCompiles)
 
-INCLUDE(CheckCXXSourceCompiles)
-set(CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
-set(CMAKE_REQUIRED_LIBRARIES ${Trilinos_LIBRARY_DIRS})
-set( CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
+set (CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
+set (CMAKE_REQUIRED_LIBRARIES ${Trilinos_LIBRARY_DIRS})
+set (CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
 
+# Add Albany external libraries
+set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
-SET(SOURCES
+set (ALBANY_INCLUDE_DIRS
+     ${CMAKE_CURRENT_BINARY_DIR}
+     ${Albany_SOURCE_DIR}/src
+     ${Albany_SOURCE_DIR}/src/evaluators
+     ${Albany_SOURCE_DIR}/src/evaluators/bc
+     ${Albany_SOURCE_DIR}/src/evaluators/gather
+     ${Albany_SOURCE_DIR}/src/evaluators/interpolation
+     ${Albany_SOURCE_DIR}/src/evaluators/pde
+     ${Albany_SOURCE_DIR}/src/evaluators/response
+     ${Albany_SOURCE_DIR}/src/evaluators/scatter
+     ${Albany_SOURCE_DIR}/src/evaluators/state
+     ${Albany_SOURCE_DIR}/src/evaluators/utility
+     ${Albany_SOURCE_DIR}/src/problems
+     ${Albany_SOURCE_DIR}/src/responses
+     ${Albany_SOURCE_DIR}/src/disc/stk
+     ${Albany_SOURCE_DIR}/src/adapt
+     ${Albany_SOURCE_DIR}/src/disc
+     ${Albany_SOURCE_DIR}/src/utility
+)
+
+link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
+
+set (SOURCES
+  Albany_RegressionTests.cpp
   Albany_SolverFactory.cpp
   Albany_Utils.cpp
   PHAL_Dimension.cpp
@@ -34,23 +58,25 @@ SET(SOURCES
   PHAL_Utilities.cpp
   )
 
-IF (ALBANY_EPETRA)
-  SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp)
-  SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
-ENDIF()
+if (ALBANY_EPETRA)
+  list (APPEND SOURCES
+    Albany_ObserverFactory.cpp
+    Petra_Converters_64.cpp
+  )
+endif()
 
 
-IF(ALBANY_EPETRA)
-  SET(SOURCES ${SOURCES}
+if(ALBANY_EPETRA)
+  list (APPEND SOURCES
     Albany_NOXObserver.cpp
     Albany_NOXStatelessObserver.cpp
   )
-  IF(ALBANY_RYTHMOS)
-    SET(SOURCES ${SOURCES} Albany_RythmosObserver.cpp)
-  ENDIF()
-ENDIF()
+  if(ALBANY_RYTHMOS)
+    list (APPEND SOURCES Albany_RythmosObserver.cpp)
+  endif()
+endif()
 
-SET(HEADERS
+set(HEADERS
   Albany_Application.hpp
   Albany_DataTypes.hpp
   Albany_DistributedParameter.hpp
@@ -64,6 +90,7 @@ SET(HEADERS
   Albany_NullSpaceUtils.hpp
   Albany_ObserverImpl.hpp
   Albany_PiroObserver.hpp
+  Albany_RegressionTests.hpp
   Albany_ScalarOrdinalTypes.hpp
   Albany_SolverFactory.hpp
   Albany_StateManager.hpp
@@ -83,21 +110,35 @@ SET(HEADERS
   PHAL_Workset.hpp
   )
 
-IF(ALBANY_EPETRA)
-  SET(HEADERS ${HEADERS}
+if(ALBANY_EPETRA)
+  list (APPEND HEADERS
     Albany_EigendataInfoStruct.hpp
     Albany_NOXObserver.hpp
     Albany_NOXStatelessObserver.hpp
     Albany_ObserverFactory.hpp
     Petra_Converters.hpp
   )
-  IF(ALBANY_RYTHMOS)
-    SET(SOURCES ${SOURCES} Albany_RythmosObserver.hpp)
-  ENDIF()
-ENDIF()
+  if(ALBANY_RYTHMOS)
+    list (APPEND SOURCES Albany_RythmosObserver.hpp)
+  endif()
+endif()
+
+#adapt
+list (APPEND SOURCES
+  adapt/AAdapt_AbstractAdapter.cpp
+  adapt/AAdapt_AdaptiveSolutionManager.cpp
+  adapt/AAdapt_InitialCondition.cpp
+  adapt/AAdapt_AnalyticFunction.cpp
+)
+list (APPEND HEADERS
+  adapt/AAdapt_AbstractAdapter.hpp
+  adapt/AAdapt_AdaptiveSolutionManager.hpp
+  adapt/AAdapt_InitialCondition.hpp
+  adapt/AAdapt_AnalyticFunction.hpp
+)
 
 #utility
-SET(SOURCES ${SOURCES}
+list (APPEND SOURCES
   utility/Counter.cpp
   utility/CounterMonitor.cpp
   utility/DisplayTable.cpp
@@ -114,7 +155,7 @@ SET(SOURCES ${SOURCES}
   utility/VariableMonitor.cpp
   utility/StaticAllocator.cpp
   )
-SET(HEADERS ${HEADERS}
+list (APPEND HEADERS
   utility/Counter.hpp
   utility/CounterMonitor.hpp
   utility/DisplayTable.hpp
@@ -140,25 +181,29 @@ SET(HEADERS ${HEADERS}
   utility/math/TensorImpl.hpp
   )
 
-IF (ALBANY_EPETRA)
-  SET(SOURCES ${SOURCES}
+if (ALBANY_EPETRA)
+  list (APPEND SOURCES
     utility/Albany_EpetraThyraUtils.cpp
     utility/Albany_CombineAndScatterManagerEpetra.cpp
   )
-  SET(HEADERS ${HEADERS}
+  list (APPEND HEADERS
     utility/Albany_EpetraThyraUtils.hpp
     utility/Albany_CombineAndScatterManagerEpetra.hpp
     utility/Albany_GlobalLocalIndexerEpetra.hpp
   )
-ENDIF()
+endif()
 
 add_executable(xml2yaml utility/xml2yaml.cpp)
 add_executable(yaml2xml utility/yaml2xml.cpp)
 target_link_libraries(xml2yaml teuchosparameterlist)
 target_link_libraries(yaml2xml teuchosparameterlist)
+target_include_directories(yaml2xml SYSTEM PUBLIC
+                          "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+target_include_directories(xml2yaml SYSTEM PUBLIC
+                          "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 
 #problems
-SET(SOURCES ${SOURCES}
+list (APPEND SOURCES
   problems/Albany_AbstractProblem.cpp
   problems/Albany_BCUtils.cpp
   problems/Albany_EvaluatorUtils.cpp
@@ -172,19 +217,7 @@ SET(SOURCES ${SOURCES}
   problems/Albany_SideLaplacianProblem.cpp
   problems/Albany_MaterialDatabase.cpp
   )
-SET(PDE_SRCS
-  problems/Albany_AdvDiffProblem.cpp
-  problems/Albany_ReactDiffSystem.cpp
-  problems/Albany_CahnHillProblem.cpp
-  problems/Albany_ComprNSProblem.cpp
-  problems/Albany_Helmholtz2DProblem.cpp
-  problems/Albany_LinComprNSProblem.cpp
-  problems/Albany_ODEProblem.cpp
-  problems/Albany_NavierStokes.cpp
-  problems/Albany_PNPProblem.cpp
-  problems/Albany_ThermoElectrostaticsProblem.cpp
-  )
-SET(HEADERS ${HEADERS}
+list (APPEND HEADERS
   problems/Albany_AbstractProblem.hpp
   problems/Albany_BCUtils.hpp
   problems/Albany_BCUtils_Def.hpp
@@ -202,21 +235,9 @@ SET(HEADERS ${HEADERS}
   problems/Albany_SideLaplacianProblem.hpp
   problems/Albany_MaterialDatabase.hpp
   )
-SET(PDE_HDRS
-  problems/Albany_AdvDiffProblem.hpp
-  problems/Albany_ReactDiffSystem.hpp
-  problems/Albany_CahnHillProblem.hpp
-  problems/Albany_ComprNSProblem.hpp
-  problems/Albany_Helmholtz2DProblem.hpp
-  problems/Albany_LinComprNSProblem.hpp
-  problems/Albany_NavierStokes.hpp
-  problems/Albany_ODEProblem.hpp
-  problems/Albany_PNPProblem.hpp
-  problems/Albany_ThermoElectrostaticsProblem.hpp
-  )
 
 #responses
-SET(SOURCES ${SOURCES}
+list (APPEND SOURCES
   responses/Albany_AggregateScalarResponseFunction.cpp
   responses/Albany_CumulativeScalarResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
@@ -235,7 +256,7 @@ SET(SOURCES ${SOURCES}
   responses/Albany_SolutionTwoNormResponseFunction.cpp
   responses/Albany_SolutionValuesResponseFunction.cpp
   )
-SET(HEADERS ${HEADERS}
+list (APPEND HEADERS
   responses/Albany_AbstractResponseFunction.hpp
   responses/Albany_AggregateScalarResponseFunction.hpp
   responses/Albany_CumulativeScalarResponseFunction.hpp
@@ -256,13 +277,13 @@ SET(HEADERS ${HEADERS}
   )
 
 #discretization
-SET(SOURCES ${SOURCES}
+list (APPEND SOURCES
   disc/Adapt_NodalDataBase.cpp
   disc/Adapt_NodalDataVector.cpp
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
   )
-SET(HEADERS ${HEADERS}
+list (APPEND HEADERS
   disc/Adapt_NodalDataBase.hpp
   disc/Adapt_NodalDataVector.hpp
   disc/Adapt_NodalFieldUtils.hpp
@@ -276,8 +297,75 @@ SET(HEADERS ${HEADERS}
   disc/Albany_NodalDOFManager.hpp
   )
 
+#stk
+list(APPEND SOURCES
+  disc/stk/Albany_AsciiSTKMesh2D.cpp
+  disc/stk/Albany_AsciiSTKMeshStruct.cpp
+  disc/stk/Albany_ExtrudedSTKMeshStruct.cpp
+  disc/stk/Albany_GenericSTKFieldContainer.cpp
+  disc/stk/Albany_GenericSTKMeshStruct.cpp
+  disc/stk/Albany_GmshSTKMeshStruct.cpp
+  disc/stk/Albany_IossSTKMeshStruct.cpp
+  disc/stk/Albany_MultiSTKFieldContainer.cpp
+  disc/stk/Albany_OrdinarySTKFieldContainer.cpp
+  disc/stk/Albany_SideSetSTKMeshStruct.cpp
+  disc/stk/Albany_STKDiscretization.cpp
+  disc/stk/Albany_STKDiscretizationStokesH.cpp
+  disc/stk/Albany_STKFieldContainerHelper.cpp
+  disc/stk/Albany_STKNodeFieldContainer.cpp
+  disc/stk/Albany_STKNodeSharing.cpp
+  disc/stk/Albany_STK3DPointStruct.cpp
+  disc/stk/Albany_TmplSTKMeshStruct.cpp
+)
+list (APPEND HEADERS
+  disc/stk/Albany_AbstractSTKFieldContainer.hpp
+  disc/stk/Albany_AbstractSTKMeshStruct.hpp
+  disc/stk/Albany_AsciiSTKMeshStruct.hpp
+  disc/stk/Albany_AsciiSTKMesh2D.hpp
+  disc/stk/Albany_ExtrudedSTKMeshStruct.hpp
+  disc/stk/Albany_GenericSTKMeshStruct.hpp
+  disc/stk/Albany_GmshSTKMeshStruct.hpp
+  disc/stk/Albany_GenericSTKFieldContainer.hpp
+  disc/stk/Albany_GenericSTKFieldContainer_Def.hpp
+  disc/stk/Albany_IossSTKMeshStruct.hpp
+  disc/stk/Albany_MultiSTKFieldContainer.hpp
+  disc/stk/Albany_MultiSTKFieldContainer_Def.hpp
+  disc/stk/Albany_NodalGraphUtils.hpp
+  disc/stk/Albany_OrdinarySTKFieldContainer.hpp
+  disc/stk/Albany_OrdinarySTKFieldContainer_Def.hpp
+  disc/stk/Albany_SideSetSTKMeshStruct.hpp
+  disc/stk/Albany_STKDiscretization.hpp
+  disc/stk/Albany_STKDiscretizationStokesH.hpp
+  disc/stk/Albany_STKFieldContainerHelper.hpp
+  disc/stk/Albany_STKNodeFieldContainer.hpp
+  disc/stk/Albany_STKNodeFieldContainer_Def.hpp
+  disc/stk/Albany_STKNodeSharing.hpp
+  disc/stk/Albany_STK3DPointStruct.hpp
+  disc/stk/Albany_TmplSTKMeshStruct.hpp
+  disc/stk/Albany_TmplSTKMeshStruct_Def.hpp
+)
+
+if (ALBANY_STK_REBALANCE)
+  list (APPEND SOURCES
+    disc/stk/percept/stk_rebalance/GeomDecomp.cpp
+    disc/stk/percept/stk_rebalance/Partition.cpp
+    disc/stk/percept/stk_rebalance/Rebalance.cpp
+    disc/stk/percept/stk_rebalance/RebalanceUtils.cpp
+    disc/stk/percept/stk_rebalance/ZoltanPartition.cpp
+  )
+  list (APPEND HEADERS
+    disc/stk/percept/PerceptMesh.hpp
+    disc/stk/percept/Percept_MyPairIterRelation.hpp
+    disc/stk/percept/stk_rebalance/GeomDecomp.hpp
+    disc/stk/percept/stk_rebalance/Partition.hpp
+    disc/stk/percept/stk_rebalance/Rebalance.hpp
+    disc/stk/percept/stk_rebalance/RebalanceUtils.hpp
+    disc/stk/percept/stk_rebalance/ZoltanPartition.hpp
+  )
+endif()
+
 #evaluators
-SET(SOURCES ${SOURCES}
+list (APPEND SOURCES
   evaluators/bc/PHAL_Dirichlet.cpp
   evaluators/bc/PHAL_TimeDepDBC.cpp
   evaluators/bc/PHAL_TimeDepSDBC.cpp
@@ -330,6 +418,7 @@ SET(SOURCES ${SOURCES}
   evaluators/state/PHAL_ReadStateField.cpp
   evaluators/state/PHAL_SaveCellStateField.cpp
   evaluators/state/PHAL_SaveNodalField.cpp
+  evaluators/state/PHAL_SaveSideSetStateField.cpp
   evaluators/state/PHAL_SaveStateField.cpp
   evaluators/state/QCAD_ResponseSaveField.cpp
   evaluators/utility/Adapt_ElementSizeField.cpp
@@ -351,55 +440,19 @@ SET(SOURCES ${SOURCES}
   evaluators/utility/QCAD_MeshRegion.cpp
   )
 
-IF (ALBANY_STK)
- SET(SOURCES ${SOURCES}
-   evaluators/state/PHAL_SaveSideSetStateField.cpp)
-  IF(ALBANY_STK_EXPR_EVAL)
-    SET(SOURCES ${SOURCES} 
-      evaluators/bc/PHAL_ExprEvalSDBC.cpp)
-  ENDIF()
-ENDIF()
+if(ALBANY_STK_EXPR_EVAL)
+  list (APPEND SOURCES 
+    evaluators/bc/PHAL_ExprEvalSDBC.cpp)
+endif()
 
-IF (ALBANY_EPETRA)
-  SET(SOURCES ${SOURCES}
+if (ALBANY_EPETRA)
+  list (APPEND SOURCES
     evaluators/gather/PHAL_GatherEigenData.cpp
     evaluators/gather/PHAL_GatherEigenvectors.cpp
   )
-ENDIF()
+endif()
 
-SET(PDE_SRCS ${PDE_SRCS}
-  evaluators/pde/PHAL_AdvDiffResid.cpp
-  evaluators/pde/PHAL_ReactDiffSystemResid.cpp
-  evaluators/pde/PHAL_CahnHillChemTerm.cpp
-  evaluators/pde/PHAL_CahnHillRhoResid.cpp
-  evaluators/pde/PHAL_CahnHillWResid.cpp
-  evaluators/pde/PHAL_ComprNSBodyForce.cpp
-  evaluators/pde/PHAL_ComprNSResid.cpp
-  evaluators/pde/PHAL_ComprNSViscosity.cpp
-  evaluators/pde/PHAL_HelmholtzResid.cpp
-  evaluators/pde/PHAL_JouleHeating.cpp
-  evaluators/pde/PHAL_LinComprNSBodyForce.cpp
-  evaluators/pde/PHAL_LinComprNSResid.cpp
-  evaluators/pde/PHAL_NSBodyForce.cpp
-  evaluators/pde/PHAL_NSContinuityResid.cpp
-  evaluators/pde/PHAL_NSContravarientMetricTensor.cpp
-  evaluators/pde/PHAL_NSForchheimerTerm.cpp
-  evaluators/pde/PHAL_NSMomentumResid.cpp
-  evaluators/pde/PHAL_NSNeutronEqResid.cpp
-  evaluators/pde/PHAL_NSPermeabilityTerm.cpp
-  evaluators/pde/PHAL_NSRm.cpp
-  evaluators/pde/PHAL_NSTauM.cpp
-  evaluators/pde/PHAL_NSTauT.cpp
-  evaluators/pde/PHAL_NSThermalEqResid.cpp
-  evaluators/pde/PHAL_ODEResid.cpp
-  evaluators/pde/PHAL_PoissonResid.cpp
-  evaluators/pde/PHAL_Permittivity.cpp
-  evaluators/pde/PHAL_TEProp.cpp
-  evaluators/pde/PNP_ConcentrationResid.cpp
-  evaluators/pde/PNP_PotentialResid.cpp
-  )
-
-SET(HEADERS ${HEADERS}
+list (APPEND HEADERS
   evaluators/bc/PHAL_Dirichlet.hpp
   evaluators/bc/PHAL_TimeDepDBC.hpp
   evaluators/bc/PHAL_TimeDepSDBC.hpp
@@ -502,6 +555,8 @@ SET(HEADERS ${HEADERS}
   evaluators/state/PHAL_SaveCellStateField_Def.hpp
   evaluators/state/PHAL_SaveNodalField.hpp
   evaluators/state/PHAL_SaveNodalField_Def.hpp
+  evaluators/state/PHAL_SaveSideSetStateField.hpp
+  evaluators/state/PHAL_SaveSideSetStateField_Def.hpp
   evaluators/state/PHAL_SaveStateField.hpp
   evaluators/state/PHAL_SaveStateField_Def.hpp
   evaluators/state/QCAD_ResponseSaveField.hpp
@@ -541,21 +596,15 @@ SET(HEADERS ${HEADERS}
   evaluators/utility/QCAD_MeshRegion_Def.hpp
   )
   
-
-IF (ALBANY_STK)
-  SET(HEADERS ${HEADERS}
-    evaluators/state/PHAL_SaveSideSetStateField.hpp
-    evaluators/state/PHAL_SaveSideSetStateField_Def.hpp)
-  IF(ALBANY_STK_EXPR_EVAL)
-    SET(HEADERS ${HEADERS} 
-      evaluators/bc/PHAL_ExprEvalSDBC.hpp
-      evaluators/bc/PHAL_ExprEvalSDBC_Def.hpp)
-  ENDIF()
-ENDIF()
+if(ALBANY_STK_EXPR_EVAL)
+  list (APPEND HEADERS
+    evaluators/bc/PHAL_ExprEvalSDBC.hpp
+    evaluators/bc/PHAL_ExprEvalSDBC_Def.hpp)
+endif()
 
 
-IF (ALBANY_EPETRA)
-  SET(HEADERS ${HEADERS}
+if (ALBANY_EPETRA)
+  list (APPEND HEADERS
     evaluators/gather/PHAL_GatherEigenvectors.hpp
     evaluators/gather/PHAL_GatherEigenvectors_Def.hpp
     evaluators/gather/PHAL_GatherEigenData.hpp
@@ -563,130 +612,21 @@ IF (ALBANY_EPETRA)
     evaluators/scatter/PHAL_SeparableScatterScalarResponse.hpp
     evaluators/scatter/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
-ENDIF()
+endif()
 
-SET(PDE_HDRS ${PDE_HDRS}
-  evaluators/pde/PHAL_AdvDiffResid.hpp
-  evaluators/pde/PHAL_AdvDiffResid_Def.hpp
-  evaluators/pde/PHAL_ReactDiffSystemResid.hpp
-  evaluators/pde/PHAL_ReactDiffSystemResid_Def.hpp
-  evaluators/pde/PHAL_CahnHillRhoResid.hpp
-  evaluators/pde/PHAL_CahnHillRhoResid_Def.hpp
-  evaluators/pde/PHAL_CahnHillWResid.hpp
-  evaluators/pde/PHAL_CahnHillWResid_Def.hpp
-  evaluators/pde/PHAL_CahnHillChemTerm.hpp
-  evaluators/pde/PHAL_CahnHillChemTerm_Def.hpp
-  evaluators/pde/PHAL_ComprNSBodyForce.hpp
-  evaluators/pde/PHAL_ComprNSBodyForce_Def.hpp
-  evaluators/pde/PHAL_ComprNSResid.hpp
-  evaluators/pde/PHAL_ComprNSResid_Def.hpp
-  evaluators/pde/PHAL_ComprNSViscosity.hpp
-  evaluators/pde/PHAL_ComprNSViscosity_Def.hpp
-  evaluators/pde/PHAL_HelmholtzResid.hpp
-  evaluators/pde/PHAL_HelmholtzResid_Def.hpp
-  evaluators/pde/PHAL_JouleHeating.hpp
-  evaluators/pde/PHAL_JouleHeating_Def.hpp
-  evaluators/pde/PHAL_LinComprNSBodyForce.hpp
-  evaluators/pde/PHAL_LinComprNSBodyForce_Def.hpp
-  evaluators/pde/PHAL_LinComprNSResid.hpp
-  evaluators/pde/PHAL_LinComprNSResid_Def.hpp
-  evaluators/pde/PHAL_NSContinuityResid.hpp
-  evaluators/pde/PHAL_NSContinuityResid_Def.hpp
-  evaluators/pde/PHAL_NSBodyForce.hpp
-  evaluators/pde/PHAL_NSBodyForce_Def.hpp
-  evaluators/pde/PHAL_NSContravarientMetricTensor.hpp
-  evaluators/pde/PHAL_NSContravarientMetricTensor_Def.hpp
-  evaluators/pde/PHAL_NSForchheimerTerm.hpp
-  evaluators/pde/PHAL_NSForchheimerTerm_Def.hpp
-  evaluators/pde/PHAL_NSMomentumResid.hpp
-  evaluators/pde/PHAL_NSMomentumResid_Def.hpp
-  evaluators/pde/PHAL_NSNeutronEqResid.hpp
-  evaluators/pde/PHAL_NSNeutronEqResid_Def.hpp
-  evaluators/pde/PHAL_NSPermeabilityTerm.hpp
-  evaluators/pde/PHAL_NSPermeabilityTerm_Def.hpp
-  evaluators/pde/PHAL_NSRm.hpp
-  evaluators/pde/PHAL_NSRm_Def.hpp
-  evaluators/pde/PHAL_NSTauM.hpp
-  evaluators/pde/PHAL_NSTauM_Def.hpp
-  evaluators/pde/PHAL_NSTauT.hpp
-  evaluators/pde/PHAL_NSTauT_Def.hpp
-  evaluators/pde/PHAL_NSThermalEqResid.hpp
-  evaluators/pde/PHAL_NSThermalEqResid_Def.hpp
-  evaluators/pde/PHAL_ODEResid.hpp
-  evaluators/pde/PHAL_ODEResid_Def.hpp
-  evaluators/pde/PHAL_PoissonResid.hpp
-  evaluators/pde/PHAL_PoissonResid_Def.hpp
-  evaluators/pde/PHAL_Permittivity.hpp
-  evaluators/pde/PHAL_Permittivity_Def.hpp
-  evaluators/pde/PHAL_TEProp.hpp
-  evaluators/pde/PHAL_TEProp_Def.hpp
-  evaluators/pde/PNP_ConcentrationResid.hpp
-  evaluators/pde/PNP_ConcentrationResid_Def.hpp
-  evaluators/pde/PNP_PotentialResid.hpp
-  evaluators/pde/PNP_PotentialResid_Def.hpp
-  )
-
-add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES})
+set_target_properties(albanyLib PROPERTIES PUBLIC_HEADER "${HEADERS}")
 target_link_libraries(albanyLib ${Trilinos_LIBRARIES})
-
-# Add Albany external libraries
-
-set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
-
-# We may not want warnings from Trilinos and/or its TPLs...
-IF (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
-  include_directories (SYSTEM
-                       ${Trilinos_INCLUDE_DIRS}
-                       ${Trilinos_TPL_INCLUDE_DIRS})
-ELSE()
-  include_directories (${Trilinos_INCLUDE_DIRS}
-                       ${Trilinos_TPL_INCLUDE_DIRS})
-ENDIF()
-
-include_directories (./
-                     ./evaluators
-                     ./evaluators/bc
-                     ./evaluators/gather
-                     ./evaluators/interpolation
-                     ./evaluators/pde
-                     ./evaluators/response
-                     ./evaluators/scatter
-                     ./evaluators/state
-                     ./evaluators/utility
-                     ./problems
-                     ./responses
-                     ./disc/stk
-                     ./adapt
-                     ./disc
-                     ./utility
-                     ./LandIce/problems
-                     ./LandIce/evaluators
-                    )
-
-link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
-
-# Now build executables from this library, tailored main()s, and Trilinos
-IF (NOT ALBANY_LIBRARIES_ONLY)
-
-add_executable(Albany Main_Solve.cpp)
-
-SET(ALBANY_EXECUTABLES Albany)
-
-IF (ALBANY_MPMD)
-  add_executable(AlbanyMPMD Main_Solve_MPMD.cpp)
-  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
-ENDIF()
-
-IF (ALBANY_DAKOTA)
-  add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
-ENDIF ()
-
-add_executable(AlbanyAnalysis Main_Analysis.cpp)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
-
-ENDIF (NOT ALBANY_LIBRARIES_ONLY)
-# End declaration of executables
+if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
+  target_include_directories(albanyLib SYSTEM PUBLIC
+                            "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+else()
+  target_include_directories(albanyLib PUBLIC
+                            "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+endif()
+target_include_directories(albanyLib PUBLIC
+                            $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
+                           "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>")
 
 # Note: Albany_EXTRA_LIBRARIES is to allow users to specify
 # libraries that one cannot get out of Trilinos directly.
@@ -697,56 +637,187 @@ set(ALL_LIBRARIES
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
   )
 
-# Add Albany internal libraries/physics sets, as enabled.
+# Add Albany physics libraries, as enabled.
 
-add_subdirectory(adapt)
-add_subdirectory(disc)
+set(ALBANY_LIBRARIES albanyLib)
 
-IF(ALBANY_STK)
-SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK)
-ELSE()
-SET(ALBANY_LIBRARIES albanyLib albanyAdapt)
-ENDIF()
+if(ALBANY_DEMO_PDES)
+  set(PDE_SRCS
+    problems/Albany_AdvDiffProblem.cpp
+    problems/Albany_ReactDiffSystem.cpp
+    problems/Albany_CahnHillProblem.cpp
+    problems/Albany_ComprNSProblem.cpp
+    problems/Albany_DemoProblemFactory.cpp
+    problems/Albany_Helmholtz2DProblem.cpp
+    problems/Albany_LinComprNSProblem.cpp
+    problems/Albany_ODEProblem.cpp
+    problems/Albany_NavierStokes.cpp
+    problems/Albany_PNPProblem.cpp
+    problems/Albany_ThermoElectrostaticsProblem.cpp
+    evaluators/pde/PHAL_AdvDiffResid.cpp
+    evaluators/pde/PHAL_ReactDiffSystemResid.cpp
+    evaluators/pde/PHAL_CahnHillChemTerm.cpp
+    evaluators/pde/PHAL_CahnHillRhoResid.cpp
+    evaluators/pde/PHAL_CahnHillWResid.cpp
+    evaluators/pde/PHAL_ComprNSBodyForce.cpp
+    evaluators/pde/PHAL_ComprNSResid.cpp
+    evaluators/pde/PHAL_ComprNSViscosity.cpp
+    evaluators/pde/PHAL_HelmholtzResid.cpp
+    evaluators/pde/PHAL_JouleHeating.cpp
+    evaluators/pde/PHAL_LinComprNSBodyForce.cpp
+    evaluators/pde/PHAL_LinComprNSResid.cpp
+    evaluators/pde/PHAL_NSBodyForce.cpp
+    evaluators/pde/PHAL_NSContinuityResid.cpp
+    evaluators/pde/PHAL_NSContravarientMetricTensor.cpp
+    evaluators/pde/PHAL_NSForchheimerTerm.cpp
+    evaluators/pde/PHAL_NSMomentumResid.cpp
+    evaluators/pde/PHAL_NSNeutronEqResid.cpp
+    evaluators/pde/PHAL_NSPermeabilityTerm.cpp
+    evaluators/pde/PHAL_NSRm.cpp
+    evaluators/pde/PHAL_NSTauM.cpp
+    evaluators/pde/PHAL_NSTauT.cpp
+    evaluators/pde/PHAL_NSThermalEqResid.cpp
+    evaluators/pde/PHAL_ODEResid.cpp
+    evaluators/pde/PHAL_PoissonResid.cpp
+    evaluators/pde/PHAL_Permittivity.cpp
+    evaluators/pde/PHAL_TEProp.cpp
+    evaluators/pde/PNP_ConcentrationResid.cpp
+    evaluators/pde/PNP_PotentialResid.cpp
+  )
 
-IF(ALBANY_DEMO_PDES)
-  add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS} ${PDE_HDRS})
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPDEs)
-ENDIF()
+  set(PDE_HDRS
+    problems/Albany_AdvDiffProblem.hpp
+    problems/Albany_ReactDiffSystem.hpp
+    problems/Albany_CahnHillProblem.hpp
+    problems/Albany_ComprNSProblem.hpp
+    problems/Albany_Helmholtz2DProblem.hpp
+    problems/Albany_LinComprNSProblem.hpp
+    problems/Albany_NavierStokes.hpp
+    problems/Albany_ODEProblem.hpp
+    problems/Albany_PNPProblem.hpp
+    problems/Albany_ThermoElectrostaticsProblem.hpp
+    evaluators/pde/PHAL_AdvDiffResid.hpp
+    evaluators/pde/PHAL_AdvDiffResid_Def.hpp
+    evaluators/pde/PHAL_ReactDiffSystemResid.hpp
+    evaluators/pde/PHAL_ReactDiffSystemResid_Def.hpp
+    evaluators/pde/PHAL_CahnHillRhoResid.hpp
+    evaluators/pde/PHAL_CahnHillRhoResid_Def.hpp
+    evaluators/pde/PHAL_CahnHillWResid.hpp
+    evaluators/pde/PHAL_CahnHillWResid_Def.hpp
+    evaluators/pde/PHAL_CahnHillChemTerm.hpp
+    evaluators/pde/PHAL_CahnHillChemTerm_Def.hpp
+    evaluators/pde/PHAL_ComprNSBodyForce.hpp
+    evaluators/pde/PHAL_ComprNSBodyForce_Def.hpp
+    evaluators/pde/PHAL_ComprNSResid.hpp
+    evaluators/pde/PHAL_ComprNSResid_Def.hpp
+    evaluators/pde/PHAL_ComprNSViscosity.hpp
+    evaluators/pde/PHAL_ComprNSViscosity_Def.hpp
+    evaluators/pde/PHAL_HelmholtzResid.hpp
+    evaluators/pde/PHAL_HelmholtzResid_Def.hpp
+    evaluators/pde/PHAL_JouleHeating.hpp
+    evaluators/pde/PHAL_JouleHeating_Def.hpp
+    evaluators/pde/PHAL_LinComprNSBodyForce.hpp
+    evaluators/pde/PHAL_LinComprNSBodyForce_Def.hpp
+    evaluators/pde/PHAL_LinComprNSResid.hpp
+    evaluators/pde/PHAL_LinComprNSResid_Def.hpp
+    evaluators/pde/PHAL_NSContinuityResid.hpp
+    evaluators/pde/PHAL_NSContinuityResid_Def.hpp
+    evaluators/pde/PHAL_NSBodyForce.hpp
+    evaluators/pde/PHAL_NSBodyForce_Def.hpp
+    evaluators/pde/PHAL_NSContravarientMetricTensor.hpp
+    evaluators/pde/PHAL_NSContravarientMetricTensor_Def.hpp
+    evaluators/pde/PHAL_NSForchheimerTerm.hpp
+    evaluators/pde/PHAL_NSForchheimerTerm_Def.hpp
+    evaluators/pde/PHAL_NSMomentumResid.hpp
+    evaluators/pde/PHAL_NSMomentumResid_Def.hpp
+    evaluators/pde/PHAL_NSNeutronEqResid.hpp
+    evaluators/pde/PHAL_NSNeutronEqResid_Def.hpp
+    evaluators/pde/PHAL_NSPermeabilityTerm.hpp
+    evaluators/pde/PHAL_NSPermeabilityTerm_Def.hpp
+    evaluators/pde/PHAL_NSRm.hpp
+    evaluators/pde/PHAL_NSRm_Def.hpp
+    evaluators/pde/PHAL_NSTauM.hpp
+    evaluators/pde/PHAL_NSTauM_Def.hpp
+    evaluators/pde/PHAL_NSTauT.hpp
+    evaluators/pde/PHAL_NSTauT_Def.hpp
+    evaluators/pde/PHAL_NSThermalEqResid.hpp
+    evaluators/pde/PHAL_NSThermalEqResid_Def.hpp
+    evaluators/pde/PHAL_ODEResid.hpp
+    evaluators/pde/PHAL_ODEResid_Def.hpp
+    evaluators/pde/PHAL_PoissonResid.hpp
+    evaluators/pde/PHAL_PoissonResid_Def.hpp
+    evaluators/pde/PHAL_Permittivity.hpp
+    evaluators/pde/PHAL_Permittivity_Def.hpp
+    evaluators/pde/PHAL_TEProp.hpp
+    evaluators/pde/PHAL_TEProp_Def.hpp
+    evaluators/pde/PNP_ConcentrationResid.hpp
+    evaluators/pde/PNP_ConcentrationResid_Def.hpp
+    evaluators/pde/PNP_PotentialResid.hpp
+    evaluators/pde/PNP_PotentialResid_Def.hpp
+  )
 
-IF (ALBANY_LANDICE)
-  add_subdirectory(LandIce)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LandIce)
-
-  IF (ENABLE_MPAS_INTERFACE)
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
-  ENDIF()
-
-  IF (ENABLE_CISM_INTERFACE)
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
-  ENDIF()
-ENDIF()
-
-# Can remove this once rebalance is in Trilnos again
-IF(ALBANY_STK_REBALANCE)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanySTKRebalance)
+  add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS})
+  set_target_properties(albanyPDEs PROPERTIES PUBLIC_HEADER "${PDE_HDRS}")
+  target_link_libraries(albanyPDEs PUBLIC albanyLib)
+  if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
+    target_include_directories(albanyPDEs SYSTEM PUBLIC
+                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+  else()
+    target_include_directories(albanyPDEs PUBLIC
+                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+  endif()
+  target_include_directories(albanyPDEs PUBLIC
+                             "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
+                              $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+  list(APPEND ALBANY_LIBRARIES albanyPDEs)
 endif()
 
-# Repeat libraries twice to catch circular dependencies
-SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
+if (ALBANY_LANDICE)
+  add_subdirectory(LandIce)
+  list (APPEND ALBANY_LIBRARIES LandIce)
 
-MESSAGE("\n-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
+  if (ENABLE_MPAS_INTERFACE)
+    list (APPEND ALBANY_LIBRARIES mpasInterface)
+  endif()
 
-IF (Albany_BUILD_STATIC_EXE)
-  FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})
-    SET_PROPERTY(TARGET ${ALB_EXEC} PROPERTY LINK_SEARCH_START_STATIC 1)
-  ENDFOREACH()
-ENDIF()
+  if (ENABLE_CISM_INTERFACE)
+    list (APPEND ALBANY_LIBRARIES cismInterface)
+  endif()
+endif()
 
-FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})
+# Now build executables from this library, tailored main()s, and Trilinos
+if (NOT ALBANY_LIBRARIES_ONLY)
+
+  message("\n-- Albany Executables: Albany; AlbanyAnalysis")
+
+  add_executable(Albany Main_Solve.cpp)
+  set(ALBANY_EXECUTABLES Albany)
+
+  add_executable(AlbanyAnalysis Main_Analysis.cpp)
+  set(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
+
+endif (NOT ALBANY_LIBRARIES_ONLY)
+
+foreach(ALB_EXEC ${ALBANY_EXECUTABLES})
+  
+  if (Albany_BUILD_STATIC_EXE)
+    set_target_properties(${ALB_EXEC} PROPERTIES LINK_SEARCH_START_STATIC 1)
+  endif()
   target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
-ENDFOREACH()
+  target_include_directories(${ALB_EXEC} PUBLIC
+      $<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>
+      $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+  # We may not want warnings from Trilinos and/or its TPLs...
+  if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
+    target_include_directories(${ALB_EXEC} SYSTEM PUBLIC
+                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+  else()
+    target_include_directories(${ALB_EXEC} PUBLIC
+                              "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+  endif()
+endforeach()
 
-IF (INSTALL_ALBANY)
+if (INSTALL_ALBANY)
   configure_package_config_file(AlbanyConfig.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
     INSTALL_DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake
@@ -763,20 +834,20 @@ IF (INSTALL_ALBANY)
   install(TARGETS albanyLib EXPORT albany-export
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  IF (ENABLE_DEMO_PDES)
+  if (ENABLE_DEMO_PDES)
     install(TARGETS albanyPDEs EXPORT albany-export
       LIBRARY DESTINATION ${LIB_INSTALL_DIR}
       ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  ENDIF()
-  INSTALL(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
+  endif()
+  install(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
 
-  SET(TMP1 ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  set(TMP1 ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
 
-  MESSAGE("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
-  STRING(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
-  STRING(REPLACE ";" " -l" ALBANY_LINK_LIBS
+  message("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
+  string(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
+  string(REPLACE ";" " -l" ALBANY_LINK_LIBS
         "-L${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
         " -L${Trilinos_LIBRARY_DIRS}" " -l${TMP2}")
-  CONFIGURE_FILE(export_albany.in ${CMAKE_INSTALL_PREFIX}/export_albany.in)
+  configure_file(export_albany.in ${CMAKE_INSTALL_PREFIX}/export_albany.in)
 
-ENDIF()
+endif()

@@ -16,7 +16,7 @@ if (ALBANY_EPETRA AND ALBANY_IOPX)
 
   # Create the test
   add_test(${testName}_Kleiner_B ${SerialAlbany.exe} input_kleiner_B.yaml)
-  set_tests_properties(${testName}_Kleiner_B PROPERTIES LABELS "LandIce;Epetra;Forward,Serial")
+  set_tests_properties(${testName}_Kleiner_B PROPERTIES LABELS "LandIce;Epetra;Forward;Serial")
   
   
   # Copy input file from source to binary dir
@@ -25,6 +25,6 @@ if (ALBANY_EPETRA AND ALBANY_IOPX)
 
   # Create the test
   add_test(${testName}_Kleiner_A ${SerialAlbany.exe} input_kleiner_A.yaml)
-  set_tests_properties(${testName}_Kleiner_A PROPERTIES LABELS "LandIce;Epetra;Forward,Serial")
+  set_tests_properties(${testName}_Kleiner_A PROPERTIES LABELS "LandIce;Epetra;Forward;Serial")
 endif()
 

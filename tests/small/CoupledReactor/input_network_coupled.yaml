@@ -74,6 +74,5 @@ ANONYMOUS:
     Number of Comparisons: 2
     Test Values: [2.42131000000000000e+02, 3.07105000000000018e+02]
     Number of Sensitivity Comparisons: 0
-    Number of Dakota Comparisons: 0
     Relative Tolerance: 1.00000000000000002e-03
 ...

@@ -104,11 +104,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   {
     return proc_rank_field;
   }
-  IntScalarFieldType*
-  getRefineField()
-  {
-    return refine_field;
-  }
 
   ScalarValueState&
   getScalarValueStates()
@@ -246,7 +241,6 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   VectorFieldType*    coordinates_field3d;
   VectorFieldType*    coordinates_field;
   IntScalarFieldType* proc_rank_field;
-  IntScalarFieldType* refine_field;
 
   ScalarValueState       scalarValue_states;
   MeshScalarState        mesh_scalar_states;

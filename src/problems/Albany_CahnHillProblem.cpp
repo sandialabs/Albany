@@ -13,28 +13,30 @@
 #include "Albany_BCUtils.hpp"
 
 
-Albany::CahnHillProblem::
-CahnHillProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_,
-             Teuchos::RCP<const Teuchos::Comm<int> >& commT_) :
-  Albany::AbstractProblem(params_, paramLib_, 2),
+namespace Albany {
+
+CahnHillProblem::
+CahnHillProblem (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                 const Teuchos::RCP<ParamLib>& paramLib_,
+                 const int numDim_,
+                 const Teuchos::RCP<const Teuchos::Comm<int> >& comm_) :
+  AbstractProblem(params_, paramLib_, 2),
   numDim(numDim_),
   haveNoise(false),
-  commT(commT_),
+  comm(comm_),
   use_sdbcs_(false)
 {}
 
-Albany::CahnHillProblem::
+CahnHillProblem::
 ~CahnHillProblem()
 {
 }
 
 void
-Albany::CahnHillProblem::
+CahnHillProblem::
 buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-  Albany::StateManager& stateMgr)
+  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >  meshSpecs,
+  StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
@@ -51,12 +53,12 @@ buildProblem(
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
-Albany::CahnHillProblem::
+CahnHillProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecsStruct& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
+  const MeshSpecsStruct& meshSpecs,
+  StateManager& stateMgr,
+  FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
@@ -69,12 +71,12 @@ buildEvaluators(
 
 // Dirichlet BCs
 void
-Albany::CahnHillProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
+CahnHillProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
    // Construct BC evaluators for all node sets and names
    std::vector<std::string> bcNames(neq);
    bcNames[0] = "rho";
-   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
+   BCUtils<DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
    use_sdbcs_ = bcUtils.useSDBCs(); 
@@ -83,7 +85,7 @@ Albany::CahnHillProblem::constructDirichletEvaluators(const std::vector<std::str
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::CahnHillProblem::getValidProblemParameters() const
+CahnHillProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidCahnHillProblemParams");
@@ -100,3 +102,4 @@ Albany::CahnHillProblem::getValidProblemParameters() const
   return validPL;
 }
 
+} // namespace Albany

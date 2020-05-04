@@ -4,89 +4,91 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <cmath>
-#include <ctime>
-#include <cstdlib>
-
 #include "AAdapt_AnalyticFunction.hpp"
+#include "Albany_Macros.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_Exceptions.hpp"
-#include "Albany_Macros.hpp" 
+
 #ifdef ALBANY_STK_EXPR_EVAL
 #include <stk_expreval/Evaluator.hpp>
 #endif
 
-const double pi = 3.141592653589793;
+#include <cmath>    // For general math functions
 
+static const double pi = 4.0 * std::atan(1.0);
+
+namespace Albany {
+namespace AAdapt {
 
 // Factory method to build functions based on a string
-Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
+Teuchos::RCP<AnalyticFunction> createAnalyticFunction(
   std::string name, int neq, int numDim,
   Teuchos::Array<double> data) { 
-  Teuchos::RCP<AAdapt::AnalyticFunction> F;
+  Teuchos::RCP<AnalyticFunction> F;
 
   if(name == "Constant")
-    F = Teuchos::rcp(new AAdapt::ConstantFunction(neq, numDim, data));
+    F = Teuchos::rcp(new ConstantFunction(neq, numDim, data));
 
   else if(name == "Step X")
-    F = Teuchos::rcp(new AAdapt::StepX(neq, numDim, data));
+    F = Teuchos::rcp(new StepX(neq, numDim, data));
 
   else if(name == "TemperatureStep")
-    F = Teuchos::rcp(new AAdapt::TemperatureStep(neq, numDim, data));
+    F = Teuchos::rcp(new TemperatureStep(neq, numDim, data));
 
   else if(name == "Displacement Constant TemperatureStep")
-    F = Teuchos::rcp(new AAdapt::DispConstTemperatureStep(neq, numDim, data));
+    F = Teuchos::rcp(new DispConstTemperatureStep(neq, numDim, data));
 
   else if(name == "Displacement Constant TemperatureLinear")
-    F = Teuchos::rcp(new AAdapt::DispConstTemperatureLinear(neq, numDim, data));
+    F = Teuchos::rcp(new DispConstTemperatureLinear(neq, numDim, data));
 
   else if(name == "TemperatureLinear")
-    F = Teuchos::rcp(new AAdapt::TemperatureLinear(neq, numDim, data));
+    F = Teuchos::rcp(new TemperatureLinear(neq, numDim, data));
   
   else if(name == "1D Gauss-Sin")
-    F = Teuchos::rcp(new AAdapt::GaussSin(neq, numDim, data));
+    F = Teuchos::rcp(new GaussSin(neq, numDim, data));
 
   else if(name == "1D Gauss-Cos")
-    F = Teuchos::rcp(new AAdapt::GaussCos(neq, numDim, data));
+    F = Teuchos::rcp(new GaussCos(neq, numDim, data));
 
   else if(name == "Linear Y")
-    F = Teuchos::rcp(new AAdapt::LinearY(neq, numDim, data));
+    F = Teuchos::rcp(new LinearY(neq, numDim, data));
   
   else if(name == "Linear")
-    F = Teuchos::rcp(new AAdapt::Linear(neq, numDim, data));
+    F = Teuchos::rcp(new Linear(neq, numDim, data));
 
   else if(name == "Constant Box")
-    F = Teuchos::rcp(new AAdapt::ConstantBox(neq, numDim, data));
+    F = Teuchos::rcp(new ConstantBox(neq, numDim, data));
 
   else if(name == "About Z")
-    F = Teuchos::rcp(new AAdapt::AboutZ(neq, numDim, data));
+    F = Teuchos::rcp(new AboutZ(neq, numDim, data));
 
   else if(name == "Radial Z")
-    F = Teuchos::rcp(new AAdapt::RadialZ(neq, numDim, data));
+    F = Teuchos::rcp(new RadialZ(neq, numDim, data));
 
   else if(name == "About Linear Z")
-    F = Teuchos::rcp(new AAdapt::AboutLinearZ(neq, numDim, data));
+    F = Teuchos::rcp(new AboutLinearZ(neq, numDim, data));
 
   else if(name == "Gaussian Z")
-    F = Teuchos::rcp(new AAdapt::GaussianZ(neq, numDim, data));
+    F = Teuchos::rcp(new GaussianZ(neq, numDim, data));
 
   else if(name == "Circle")
-    F = Teuchos::rcp(new AAdapt::Circle(neq, numDim, data));
+    F = Teuchos::rcp(new Circle(neq, numDim, data));
 
   else if(name == "Gaussian Pressure")
-    F = Teuchos::rcp(new AAdapt::GaussianPress(neq, numDim, data));
+    F = Teuchos::rcp(new GaussianPress(neq, numDim, data));
 
   else if(name == "Sin-Cos")
-    F = Teuchos::rcp(new AAdapt::SinCos(neq, numDim, data));
+    F = Teuchos::rcp(new SinCos(neq, numDim, data));
 
   else if(name == "Sin Scalar")
-    F = Teuchos::rcp(new AAdapt::SinScalar(neq, numDim, data));
+    F = Teuchos::rcp(new SinScalar(neq, numDim, data));
 
   else if(name == "Taylor-Green Vortex")
-    F = Teuchos::rcp(new AAdapt::TaylorGreenVortex(neq, numDim, data));
+    F = Teuchos::rcp(new TaylorGreenVortex(neq, numDim, data));
 
   else if(name == "1D Acoustic Wave")
-    F = Teuchos::rcp(new AAdapt::AcousticWave(neq, numDim, data));
+    F = Teuchos::rcp(new AcousticWave(neq, numDim, data));
   
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
@@ -98,27 +100,27 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
 
 
 //*****************************************************************************
-AAdapt::ConstantFunction::ConstantFunction(int neq_, int numDim_,
+ConstantFunction::ConstantFunction(int neq_, int numDim_,
     Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != neq),
                              std::logic_error,
                              "Error! Invalid specification of initial condition: incorrect length of Function Data for Constant Function; neq = " << neq << ", data.size() = " << data.size() <<  std::endl) ;
 }
-void AAdapt::ConstantFunction::compute(double* x, const double* X) {
+void ConstantFunction::compute(double* x, const double* /* X */) {
   if(data.size() > 0)
     for(int i = 0; i < neq; i++)
       x[i] = data[i];
 }
 
 //*****************************************************************************
-AAdapt::StepX::StepX(int neq_, int numDim_,
+StepX::StepX(int neq_, int numDim_,
     Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 5),
                              std::logic_error,
                              "Error! Invalid specification of initial condition: incorrect length of Function Data for Step X; Length = " << 5 << ", data.size() = " << data.size() <<  std::endl) ;
 }
 
-void AAdapt::StepX::compute(double* x, const double* X) {
+void StepX::compute(double* x, const double* X) {
     // Temperature bottom
     double T0 = data[0];
     // Temperature top
@@ -143,14 +145,14 @@ void AAdapt::StepX::compute(double* x, const double* X) {
 }
 
 //*****************************************************************************
-AAdapt::TemperatureStep::TemperatureStep(int neq_, int numDim_,
+TemperatureStep::TemperatureStep(int neq_, int numDim_,
     Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 6),
                              std::logic_error,
                              "Error! Invalid specification of initial condition: incorrect length of Function Data for TemperatureStep; Length = " << 6 << ", data.size() = " << data.size() <<  std::endl) ;
 }
 
-void AAdapt::TemperatureStep::compute(double* x, const double* X) {
+void TemperatureStep::compute(double* x, const double* X) {
     // Temperature bottom
     double T0 = data[0];
     // Temperature top
@@ -187,14 +189,14 @@ void AAdapt::TemperatureStep::compute(double* x, const double* X) {
 }
 
 //*****************************************************************************
-AAdapt::DispConstTemperatureStep::DispConstTemperatureStep(int neq_, int numDim_,
+DispConstTemperatureStep::DispConstTemperatureStep(int neq_, int numDim_,
     Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 9),
                              std::logic_error,
                              "Error! Invalid specification of initial condition: incorrect length of Function Data for Displacement Constant TemperatureStep; Length = " << 9 << ", data.size() = " << data.size() <<  std::endl) ;
 }
 
-void AAdapt::DispConstTemperatureStep::compute(double* x, const double* X) {
+void DispConstTemperatureStep::compute(double* x, const double* X) {
     // Get displacement
     for(int i = 0; i < 3; i++)
       x[i] = data[i];
@@ -234,14 +236,14 @@ void AAdapt::DispConstTemperatureStep::compute(double* x, const double* X) {
 }
 
 //*****************************************************************************
-AAdapt::DispConstTemperatureLinear::DispConstTemperatureLinear(int neq_, int numDim_,
+DispConstTemperatureLinear::DispConstTemperatureLinear(int neq_, int numDim_,
     Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 8),
                              std::logic_error,
                              "Error! Invalid specification of initial condition: incorrect length of Function Data for Displacement Constant TemperatureLinear; Length = " << 8 << ", data.size() = " << data.size() <<  std::endl) ;
 }
 
-void AAdapt::DispConstTemperatureLinear::compute(double* x, const double* X) {
+void DispConstTemperatureLinear::compute(double* x, const double* X) {
     // Get displacement
     for(int i = 0; i < 3; i++)
       x[i] = data[i];
@@ -293,14 +295,14 @@ void AAdapt::DispConstTemperatureLinear::compute(double* x, const double* X) {
 }
 
 //*****************************************************************************
-AAdapt::TemperatureLinear::TemperatureLinear(int neq_, int numDim_,
+TemperatureLinear::TemperatureLinear(int neq_, int numDim_,
     Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 5),
                              std::logic_error,
                              "Error! Invalid specification of initial condition: incorrect length of Function Data for TemperatureLinear; Length = " << 5 << ", data.size() = " << data.size() <<  std::endl) ;
 }
 
-void AAdapt::TemperatureLinear::compute(double* x, const double* X) {
+void TemperatureLinear::compute(double* x, const double* X) {
     // Temperature bottom
     double T0 = data[0];
     // Temperature top
@@ -349,24 +351,18 @@ void AAdapt::TemperatureLinear::compute(double* x, const double* X) {
 }
 
 //*****************************************************************************
-// Private convenience function
-long AAdapt::seedgen(int worksetID) {
-  long seconds, s, seed, pid;
 
-  pid = getpid();
-  s = time(&seconds);    /* get CPU seconds since 01/01/1970 */
-
-  // Use worksetID to give more randomness between calls
-
-  seed = std::abs(((s * 181) * ((pid - 83) * 359) * worksetID) % 104729);
-  return seed;
-}
-
-AAdapt::ConstantFunctionPerturbed::ConstantFunctionPerturbed(int neq_, int numDim_,
-    int worksetID,
-    Teuchos::Array<double> data_,  Teuchos::Array<double> pert_mag_)
-  : numDim(numDim_), neq(neq_), data(data_), pert_mag(pert_mag_) {
-
+ConstantFunctionPerturbed::
+ConstantFunctionPerturbed(int neq_, int numDim_,
+                          Teuchos::Array<double> data_,
+                          Teuchos::Array<double> pert_mag_)
+ : numDim(numDim_)
+ , neq(neq_)
+ , data(data_)
+ , pert_mag(pert_mag_)
+ , engine (std::random_device{}())
+ , pdfs(neq_)
+{
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != neq || pert_mag.size() != neq),
                              std::logic_error,
                              "Error! Invalid specification of initial condition: incorrect length of " <<
@@ -375,36 +371,30 @@ AAdapt::ConstantFunctionPerturbed::ConstantFunctionPerturbed(int neq_, int numDi
                              << ", pert_mag.size() = " << pert_mag.size()
                              <<  std::endl) ;
 
-  //  srand( time(NULL) ); // seed the random number gen
-  srand(seedgen(worksetID)); // seed the random number gen
-
+  
+  for (int i=0; i<neq; ++i) {
+    pdfs[i] = std::uniform_real_distribution<double>(-pert_mag[i],pert_mag[i]);
+  }
 }
 
-void AAdapt::ConstantFunctionPerturbed::compute(double* x, const double* X) {
-  for(int i = 0; i < neq; i++)
-    x[i] = data[i] + udrand(-pert_mag[i], pert_mag[i]);
+
+void ConstantFunctionPerturbed::compute(double* x, const double* /* X */) {
+  for(int i = 0; i < neq; i++) {
+    x[i] = data[i] + pdfs[i](engine);
+  }
 }
 
-// Private convenience function
-double AAdapt::ConstantFunctionPerturbed::udrand(double lo, double hi) {
-  static const double base = 1.0 / (RAND_MAX + 1.0);
-  double deviate = std::rand() * base;
-  return lo + deviate * (hi - lo);
-}
 //*****************************************************************************
-AAdapt::ConstantFunctionGaussianPerturbed::ConstantFunctionGaussianPerturbed(int neq_, int numDim_,
-    int worksetID,
-    Teuchos::Array<double> data_,  Teuchos::Array<double> pert_mag_)
+ConstantFunctionGaussianPerturbed::
+ConstantFunctionGaussianPerturbed(int neq_, int numDim_,
+                                  Teuchos::Array<double> data_,  Teuchos::Array<double> pert_mag_)
   : numDim(numDim_),
     neq(neq_),
     data(data_),
     pert_mag(pert_mag_),
-    //      rng(boost::random::random_device()()), // seed the rng
-    rng(seedgen(worksetID)), // seed the rng
-    nd(neq_),
-    var_nor(neq_) {
-
-
+    engine(std::random_device{}()),
+    normal_pdfs(neq_)
+{
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != neq || pert_mag.size() != neq),
                              std::logic_error,
                              "Error! Invalid specification of initial condition: incorrect length of " <<
@@ -413,76 +403,72 @@ AAdapt::ConstantFunctionGaussianPerturbed::ConstantFunctionGaussianPerturbed(int
                              << ", pert_mag.size() = " << pert_mag.size()
                              <<  std::endl) ;
 
-  if(data.size() > 0 && pert_mag.size() > 0)
-    for(int i = 0; i < neq; i++)
+  if(data.size() > 0 && pert_mag.size() > 0) {
+    for(int i = 0; i < neq; i++) {
       if(pert_mag[i] > std::numeric_limits<double>::epsilon()) {
-
-        nd[i] = Teuchos::rcp(new boost::normal_distribution<double>(data[i], pert_mag[i]));
-        var_nor[i] = Teuchos::rcp(new
-                                  boost::variate_generator<boost::mt19937&, boost::normal_distribution<double> >(rng, *nd[i]));
-
+        normal_pdfs[i] = std::normal_distribution<double>(data[i],pert_mag[i]);
       }
-
+    }
+  }
 }
 
-void AAdapt::ConstantFunctionGaussianPerturbed::compute(double* x, const double* X) {
-
-  for(int i = 0; i < neq; i++)
-    if(var_nor[i] != Teuchos::null)
-      x[i] = (*var_nor[i])();
-
-    else
+void ConstantFunctionGaussianPerturbed::compute(double* x, const double* /* X */) {
+  for(int i = 0; i < neq; i++) {
+    if(pert_mag[i] > std::numeric_limits<double>::epsilon()) {
+      x[i] = normal_pdfs[i](engine);
+    } else {
       x[i] = data[i];
-
+    }
+  }
 }
 
 
 //*****************************************************************************
-AAdapt::GaussSin::GaussSin(int neq_, int numDim_, Teuchos::Array<double> data_)
+GaussSin::GaussSin(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq != 1) || (numDim != 1) || (data.size() != 1),
                              std::logic_error,
                              "Error! Invalid call of GaussSin with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::GaussSin::compute(double* x, const double* X) {
+void GaussSin::compute(double* x, const double* X) {
   x[0] =     sin(pi * X[0]) + 0.5 * data[0] * X[0] * (1.0 - X[0]);
 }
 
 //*****************************************************************************
-AAdapt::GaussCos::GaussCos(int neq_, int numDim_, Teuchos::Array<double> data_)
+GaussCos::GaussCos(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq != 1) || (numDim != 1) || (data.size() != 1),
                              std::logic_error,
                              "Error! Invalid call of GaussCos with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::GaussCos::compute(double* x, const double* X) {
+void GaussCos::compute(double* x, const double* X) {
   x[0] = 1 + cos(2 * pi * X[0]) + 0.5 * data[0] * X[0] * (1.0 - X[0]);
 }
 //*****************************************************************************
-AAdapt::LinearY::LinearY(int neq_, int numDim_, Teuchos::Array<double> data_)
+LinearY::LinearY(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq < 2) || (numDim < 2) || (data.size() != 1),
                              std::logic_error,
                              "Error! Invalid call of LinearY with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::LinearY::compute(double* x, const double* X) {
+void LinearY::compute(double* x, const double* X) {
   x[0] = 0.0;
   x[1] = data[0] * X[0];
 
   if(numDim > 2) x[2] = 0.0;
 }
 //*****************************************************************************
-AAdapt::Linear::Linear(int neq_, int numDim_, Teuchos::Array<double> data_)
+Linear::Linear(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != neq * numDim),
                              std::logic_error,
                              "Error! Invalid call of Linear with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::Linear::compute(double* x, const double* X) {
+void Linear::compute(double* x, const double* X) {
 
   for (auto eq = 0; eq < neq; ++eq) {
     double s{0.0};
@@ -493,14 +479,14 @@ void AAdapt::Linear::compute(double* x, const double* X) {
   }
 }
 //*****************************************************************************
-AAdapt::ConstantBox::ConstantBox(int neq_, int numDim_, Teuchos::Array<double> data_)
+ConstantBox::ConstantBox(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 2 * numDim + neq),
                              std::logic_error,
                              "Error! Invalid call of Linear with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::ConstantBox::compute(double* x, const double* X) {
+void ConstantBox::compute(double* x, const double* X) {
 
   bool in_box{true};
   for (auto dim = 0; dim < numDim; ++dim) {
@@ -516,55 +502,55 @@ void AAdapt::ConstantBox::compute(double* x, const double* X) {
   }
 }
 //*****************************************************************************
-AAdapt::AboutZ::AboutZ(int neq_, int numDim_, Teuchos::Array<double> data_)
+AboutZ::AboutZ(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq < 2) || (numDim < 2) || (data.size() != 1),
                              std::logic_error,
                              "Error! Invalid call of AboutZ with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::AboutZ::compute(double* x, const double* X) {
+void AboutZ::compute(double* x, const double* X) {
   x[0] = -data[0] * X[1];
   x[1] =  data[0] * X[0];
 
   if(neq > 2) x[2] = 0.0;
 }
 //*****************************************************************************
-AAdapt::RadialZ::RadialZ(int neq_, int numDim_, Teuchos::Array<double> data_)
+RadialZ::RadialZ(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq < 2) || (numDim < 2) || (data.size() != 1),
                              std::logic_error,
                              "Error! Invalid call of RadialZ with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::RadialZ::compute(double* x, const double* X) {
+void RadialZ::compute(double* x, const double* X) {
   x[0] =  data[0] * X[0];
   x[1] =  data[0] * X[1];
 
   if(neq > 2) x[2] = 0.0;
 }
 //*****************************************************************************
-AAdapt::AboutLinearZ::AboutLinearZ(int neq_, int numDim_, Teuchos::Array<double> data_)
+AboutLinearZ::AboutLinearZ(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq < 3) || (numDim < 3) || (data.size() != 1),
                              std::logic_error,
                              "Error! Invalid call of AboutLinearZ with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::AboutLinearZ::compute(double* x, const double* X) {
+void AboutLinearZ::compute(double* x, const double* X) {
   x[0] = -data[0] * X[1] * X[2];
   x[1] =  data[0] * X[0] * X[2];
   x[2] = 0.0;
 }
 //*****************************************************************************
-AAdapt::GaussianZ::GaussianZ(int neq_, int numDim_, Teuchos::Array<double> data_)
+GaussianZ::GaussianZ(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq < 2) || (numDim < 2) || (data.size() != 3),
                              std::logic_error,
                              "Error! Invalid call of GaussianZ with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::GaussianZ::compute(double* x, const double* X) {
+void GaussianZ::compute(double* x, const double* X) {
 
   double const a = data[0];
   double const b = data[1];
@@ -576,7 +562,7 @@ void AAdapt::GaussianZ::compute(double* x, const double* X) {
   x[2] =  a * std::exp(- d * d / c / c / 2.0);
 }
 //*****************************************************************************
-AAdapt::Circle::Circle(int neq_, int numDim_, Teuchos::Array<double> data_)
+Circle::Circle(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   bool error = true; 
   if (neq == 1 || neq == 3) error = false; 
@@ -585,7 +571,7 @@ AAdapt::Circle::Circle(int neq_, int numDim_, Teuchos::Array<double> data_)
                              "Error! Invalid call of Circle with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::Circle::compute(double* x, const double* X) {
+void Circle::compute(double* x, const double* X) {
   if( ((X[0]-.5)*(X[0]-.5) + (X[1]-.5)*(X[1]-.5))< 1.0/16.0  )
     x[0] = 1.0;
   else
@@ -599,14 +585,14 @@ void AAdapt::Circle::compute(double* x, const double* X) {
   }*/
 }
 //*****************************************************************************
-AAdapt::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)
+GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq < 3) || (numDim < 2) || (data.size() != 4),
                              std::logic_error,
                              "Error! Invalid call of GaussianPress with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::GaussianPress::compute(double* x, const double* X) {
+void GaussianPress::compute(double* x, const double* X) {
   for(int i = 0; i < neq - 1; i++) {
     x[i] = 0.0;
   }
@@ -614,55 +600,55 @@ void AAdapt::GaussianPress::compute(double* x, const double* X) {
   x[neq - 1] = data[0] * exp(-data[1] * ((X[0] - data[2]) * (X[0] - data[2]) + (X[1] - data[3]) * (X[1] - data[3])));
 }
 //*****************************************************************************
-AAdapt::SinCos::SinCos(int neq_, int numDim_, Teuchos::Array<double> data_)
+SinCos::SinCos(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq < 3) || (numDim < 2),
                              std::logic_error,
                              "Error! Invalid call of SinCos with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::SinCos::compute(double* x, const double* X) {
+void SinCos::compute(double* x, const double* X) {
   x[0] = sin(2.0 * pi * X[0]) * cos(2.0 * pi * X[1]);
   x[1] = cos(2.0 * pi * X[0]) * sin(2.0 * pi * X[1]);
   x[2] = sin(2.0 * pi * X[0]) * sin(2.0 * pi * X[1]);
 }
 //*****************************************************************************
-AAdapt::SinScalar::SinScalar(int neq_, int numDim_, Teuchos::Array<double> data_)
+SinScalar::SinScalar(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION(neq != 1 || numDim < 2 || data.size() != numDim,
                              std::logic_error,
                              "Error! Invalid call of SinScalar with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::SinScalar::compute(double* x, const double* X) {
+void SinScalar::compute(double* x, const double* X) {
   x[0] = 1.0;
   for (int dim{0}; dim < numDim; ++dim) {
     x[0] *= sin(pi / data[dim] * X[dim]);
   }
 }
 //*****************************************************************************
-AAdapt::TaylorGreenVortex::TaylorGreenVortex(int neq_, int numDim_, Teuchos::Array<double> data_)
+TaylorGreenVortex::TaylorGreenVortex(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq < 3) || (numDim != 2),
                              std::logic_error,
                              "Error! Invalid call of TaylorGreenVortex with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::TaylorGreenVortex::compute(double* x, const double* X) {
+void TaylorGreenVortex::compute(double* x, const double* X) {
   x[0] = 1.0; //initial density
   x[1] = -cos(2.0 * pi * X[0]) * sin(2.0 * pi * X[1]); //initial u-velocity
   x[2] = sin(2.0 * pi * X[0]) * cos(2.0 * pi * X[1]); //initial v-velocity
   x[3] = cos(2.0 * pi * X[0]) + cos(2.0 * pi * X[1]); //initial temperature
 }
 //*****************************************************************************
-AAdapt::AcousticWave::AcousticWave(int neq_, int numDim_, Teuchos::Array<double> data_)
+AcousticWave::AcousticWave(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((neq > 3) || (numDim > 2) || (data.size() != 3),
                              std::logic_error,
                              "Error! Invalid call of AcousticWave with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::AcousticWave::compute(double* x, const double* X) {
+void AcousticWave::compute(double* x, const double* X) {
   const double U0 = data[0];
   const double n = data[1];
   const double L = data[2];
@@ -677,13 +663,13 @@ void AAdapt::AcousticWave::compute(double* x, const double* X) {
 //*****************************************************************************
 //ExpressionParser
 
-AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::string expressionX_, std::string expressionY_, std::string expressionZ_)
+ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::string expressionX_, std::string expressionY_, std::string expressionZ_)
   : spatialDim(spatialDim_), neq(neq_), expressionX(expressionX_), expressionY(expressionY_), expressionZ(expressionZ_)
 {
 
   TEUCHOS_TEST_FOR_EXCEPTION( neq < 1 || neq > spatialDim || spatialDim!=3,
 			      std::logic_error,
-			      "Error! Invalid call AAdapt::ExpressionParser::ExpressionParser(), neq = " << neq
+			      "Error! Invalid call ExpressionParser::ExpressionParser(), neq = " << neq
 			      << ", spatialDim = " << spatialDim << ".");
 
   bool success;
@@ -696,7 +682,7 @@ AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::strin
   rtcFunctionX.addVar("double", "value");
   success = rtcFunctionX.addBody(expressionX);
   if(!success){
-    std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+    std::string msg = "\n**** Error in ExpressionParser::ExpressionParser().\n";
     msg += "**** " + rtcFunctionX.getErrors() + "\n";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
   }
@@ -708,7 +694,7 @@ AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::strin
     rtcFunctionY.addVar("double", "value");
     success = rtcFunctionY.addBody(expressionY);
     if(!success){
-      std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+      std::string msg = "\n**** Error in ExpressionParser::ExpressionParser().\n";
       msg += "**** " + rtcFunctionY.getErrors() + "\n";
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
     }
@@ -721,7 +707,7 @@ AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::strin
     rtcFunctionZ.addVar("double", "value");
     success = rtcFunctionZ.addBody(expressionZ);
     if(!success){
-      std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+      std::string msg = "\n**** Error in ExpressionParser::ExpressionParser().\n";
       msg += "**** " + rtcFunctionZ.getErrors() + "\n";
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
     }
@@ -729,56 +715,50 @@ AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::strin
 #endif
 }
 
-void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
-
-  bool success;
-  double value;
-
+void ExpressionParser::compute(double* solution, const double* X) {
 #ifdef ALBANY_PAMGEN
+  bool success;
   for(int i=0 ; i<spatialDim ; i++){
     success = rtcFunctionX.varValueFill(i, X[i]);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.varValueFill(), " + rtcFunctionX.getErrors());
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inExpressionParser::compute(), rtcFunctionX.varValueFill(), " + rtcFunctionX.getErrors());
   }
   success = rtcFunctionX.varValueFill(spatialDim, 0.0);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.varValueFill(), " + rtcFunctionX.getErrors());
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inExpressionParser::compute(), rtcFunctionX.varValueFill(), " + rtcFunctionX.getErrors());
   success = rtcFunctionX.execute();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.execute(), " + rtcFunctionX.getErrors());
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inExpressionParser::compute(), rtcFunctionX.execute(), " + rtcFunctionX.getErrors());
   solution[0] = rtcFunctionX.getValueOfVar("value");
 
   if(neq > 1) {
     for(int i=0 ; i<spatialDim ; i++){
       success = rtcFunctionY.varValueFill(i, X[i]);
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
     }
     success = rtcFunctionY.varValueFill(spatialDim, 0.0);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
     success = rtcFunctionY.execute();
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.execute(), " + rtcFunctionY.getErrors());
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inExpressionParser::compute(), rtcFunctionY.execute(), " + rtcFunctionY.getErrors());
     solution[1] = rtcFunctionY.getValueOfVar("value");
   }
 
   if(neq > 2) {
     for(int i=0 ; i<spatialDim ; i++){
       success = rtcFunctionZ.varValueFill(i, X[i]);
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
     }
     success = rtcFunctionZ.varValueFill(spatialDim, 0.0);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
     success = rtcFunctionZ.execute();
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.execute(), " + rtcFunctionZ.getErrors());
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inExpressionParser::compute(), rtcFunctionZ.execute(), " + rtcFunctionZ.getErrors());
     solution[2] = rtcFunctionZ.getValueOfVar("value");
   }
-#endif
-
-//   std::cout << "DEBUG CHECK ExpressionParser " << expressionX << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[0] << std::endl;
-//   std::cout << "DEBUG CHECK ExpressionParser " << expressionY << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[1] << std::endl;
-//   std::cout << "DEBUG CHECK ExpressionParser " << expressionZ << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[2] << std::endl;
-
-  return;
+#else
+  (void) solution;
+  (void) X;
+#endif // ALBANY_PAMGEN
 }
 
 #ifdef ALBANY_STK_EXPR_EVAL
-AAdapt::ExpressionParserAllDOFs::ExpressionParserAllDOFs(
+ExpressionParserAllDOFs::ExpressionParserAllDOFs(
     int                          neq_,
     int                          dim_,
     Teuchos::Array<std::string>& expr_)
@@ -790,8 +770,7 @@ AAdapt::ExpressionParserAllDOFs::ExpressionParserAllDOFs(
                                                  << expr.size() << ").");
 }
 
-void
-AAdapt::ExpressionParserAllDOFs::compute(double* unknowns, double const* coords)
+void ExpressionParserAllDOFs::compute(double* unknowns, double const* coords)
 {
   std::vector<std::string> coord_str{"x", "y", "z"};
   double*                  X = const_cast<double*>(coords);
@@ -805,4 +784,8 @@ AAdapt::ExpressionParserAllDOFs::compute(double* unknowns, double const* coords)
     unknowns[eq] = expr_eval.evaluate();
   }
 }
-#endif
+
+#endif // ALBANY_STK_EXPR_EVAL
+
+} // namespace Albany
+} // namespace AAdapt

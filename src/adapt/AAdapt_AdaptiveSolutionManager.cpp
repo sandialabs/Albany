@@ -6,11 +6,14 @@
 
 #include "AAdapt_AdaptiveSolutionManager.hpp"
 
+#include "AAdapt_InitialCondition.hpp"
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_ModelEvaluator.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
 #include "Thyra_ModelEvaluatorDelegatorBase.hpp"
+
+namespace Albany {
 
 namespace AAdapt {
 
@@ -18,14 +21,13 @@ AdaptiveSolutionManager::AdaptiveSolutionManager(
     Teuchos::RCP<Teuchos::ParameterList> const& appParams,
     Teuchos::RCP<Thyra_Vector const> const&     initial_guess,
     Teuchos::RCP<ParamLib> const&               param_lib,
-    Albany::StateManager const&                 stateMgr,
+    Teuchos::RCP<Albany::AbstractDiscretization>const & disc,
     Teuchos::RCP<Teuchos_Comm const> const&     comm)
     : num_time_deriv(appParams->sublist("Discretization")
                          .get<int>("Number Of Time Derivatives")),
       appParams_(appParams),
-      disc_(stateMgr.getDiscretization()),
+      disc_(disc),
       paramLib_(param_lib),
-      stateMgr_(stateMgr),
       comm_(comm),
       out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
@@ -326,3 +328,4 @@ AdaptiveSolutionManager::projectCurrentSolution()
 }
 
 }  // namespace AAdapt
+}  // namespace Albany

@@ -4,163 +4,62 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Teuchos_TestForException.hpp"
 #include "Albany_ProblemFactory.hpp"
 
-// Always enable HeatProblem and SideLaplacianProblem
 #include "Albany_HeatProblem.hpp"
 #include "Albany_ThermalProblem.hpp"
 #include "Albany_PopulateMesh.hpp"
 #include "Albany_SideLaplacianProblem.hpp"
 
-#ifdef ALBANY_DEMO_PDES
-#include "Albany_CahnHillProblem.hpp"
-#include "Albany_Helmholtz2DProblem.hpp"
-#include "Albany_NavierStokes.hpp"
-#include "Albany_LinComprNSProblem.hpp"
-#include "Albany_AdvDiffProblem.hpp"
-#include "Albany_ReactDiffSystem.hpp"
-#include "Albany_ComprNSProblem.hpp"
-#include "Albany_ODEProblem.hpp"
-#include "Albany_PNPProblem.hpp"
-#include "Albany_ThermoElectrostaticsProblem.hpp"
-#endif
-
-#ifdef ALBANY_LANDICE
-#include "LandIce/problems/LandIce_ProblemFactory.hpp"
-#endif
-
-Albany::ProblemFactory::ProblemFactory(
-       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-       const Teuchos::RCP<ParamLib>& paramLib_,
-       const Teuchos::RCP<const Teuchos::Comm<int> >& commT_) :
-  problemParams(Teuchos::sublist(topLevelParams, "Problem", true)),
-  discretizationParams(Teuchos::sublist(topLevelParams, "Discretization")),
-  paramLib(paramLib_),
-  commT(commT_)
+namespace Albany
 {
-}
 
-namespace {
-// In "Mechanics 3D", extract "Mechanics".
-inline std::string getName (const std::string& method) {
-  if (method.size() < 3) return method;
-  return method.substr(0, method.size() - 3);
-}
-// In "Mechanics 3D", extract 3.
-inline int getNumDim (const std::string& method) {
-  if (method.size() < 3) return -1;
-  return static_cast<int>(method[method.size() - 2] - '0');
-}
-} // namespace
-
-Teuchos::RCP<Albany::AbstractProblem>
-Albany::ProblemFactory::create()
+bool BasicProblemFactory::provides (const std::string& key) const 
 {
-  Teuchos::RCP<Albany::AbstractProblem> strategy;
-  using Teuchos::rcp;
-
-  std::string& method = problemParams->get("Name", "Heat 1D");
-
-  if (method == "Heat 1D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 1, commT));
-  }
-  else if (method == "Heat 2D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 2, commT));
-  }
-  else if (method == "Heat 3D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3, commT));
-  }
-  else if (method == "Thermal 1D") {
-    strategy = rcp(new Albany::ThermalProblem(problemParams, paramLib, 1, commT));
-  }
-  else if (method == "Thermal 2D") {
-    strategy = rcp(new Albany::ThermalProblem(problemParams, paramLib, 2, commT));
-  }
-  else if (method == "Thermal 3D") {
-    strategy = rcp(new Albany::ThermalProblem(problemParams, paramLib, 3, commT));
-  }
-  else if (method == "Populate Mesh") {
-    strategy = rcp(new Albany::PopulateMesh(problemParams, discretizationParams, paramLib));
-  }
-  else if (method == "Side Laplacian 3D") {
-    strategy = rcp(new Albany::SideLaplacian(problemParams, paramLib, 1));
-  }
-#ifdef ALBANY_DEMO_PDES
-  else if (method == "CahnHill 2D") {
-    strategy = rcp(new Albany::CahnHillProblem(problemParams, paramLib, 2, commT));
-  }
-  else if (method == "ODE") {
-    strategy = rcp(new Albany::ODEProblem(problemParams, paramLib, 0));
-  }
-  else if (method == "Helmholtz 2D") {
-    strategy = rcp(new Albany::Helmholtz2DProblem(problemParams, paramLib));
-  }
-  else if (method == "NavierStokes 1D") {
-    strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 1));
-  }
-  else if (method == "NavierStokes 2D") {
-    strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 2));
-  }
-  else if (method == "NavierStokes 3D") {
-    strategy = rcp(new Albany::NavierStokes(problemParams, paramLib, 3));
-  }
-  else if (method == "LinComprNS 1D") {
-    strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "AdvDiff 1D") {
-    strategy = rcp(new Albany::AdvDiffProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "AdvDiff 2D") {
-    strategy = rcp(new Albany::AdvDiffProblem(problemParams, paramLib, 2));
-  }
-  else if ((method == "Reaction-Diffusion System 3D") || (method == "Reaction-Diffusion System")) {
-    strategy = rcp(new Albany::ReactDiffSystem(problemParams, paramLib, 3));
-  }
-  else if (method == "LinComprNS 2D") {
-    strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "LinComprNS 3D") {
-    strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "ComprNS 2D") {
-    strategy = rcp(new Albany::ComprNSProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "ComprNS 3D") {
-    strategy = rcp(new Albany::ComprNSProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "PNP 1D") {
-    strategy = rcp(new Albany::PNPProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "PNP 2D") {
-    strategy = rcp(new Albany::PNPProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "PNP 3D") {
-    strategy = rcp(new Albany::PNPProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "ThermoElectrostatics 1D") {
-    strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "ThermoElectrostatics 2D") {
-    strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "ThermoElectrostatics 3D") {
-    strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 3));
-  }
-#endif
-#ifdef ALBANY_LANDICE
-  else if (LandIce::ProblemFactory::hasProblem(method)) {
-    LandIce::ProblemFactory felix_factory(problemParams,discretizationParams,paramLib);
-    strategy = felix_factory.create();
-  }
-#endif
-  else {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                       std::endl <<
-                       "Error!  Unknown problem " << method <<
-                       "!" << std::endl << "Supplied parameter list is " <<
-                       std::endl << *problemParams);
-  }
-
-  return strategy;
+  return key == "Heat 1D" ||
+         key == "Heat 2D" ||
+         key == "Heat 3D" ||
+         key == "Thermal 1D" ||
+         key == "Thermal 2D" ||
+         key == "Thermal 3D" ||
+         key == "Populate Mesh" ||
+         key == "Side Laplacian 3D";
 }
+
+BasicProblemFactory::obj_ptr_type
+BasicProblemFactory::
+create (const std::string& key,
+        const Teuchos::RCP<const Teuchos_Comm>&     comm,
+        const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
+        const Teuchos::RCP<ParamLib>&               paramLib) const
+{
+  obj_ptr_type problem;
+
+  auto problemParams = Teuchos::sublist(topLevelParams, "Problem", true);
+  auto discParams = Teuchos::sublist(topLevelParams, "Discretization");
+
+  if (key == "Heat 1D") {
+    problem = Teuchos::rcp(new HeatProblem(problemParams, paramLib, 1, comm));
+  } else if (key == "Heat 2D") {
+    problem = Teuchos::rcp(new HeatProblem(problemParams, paramLib, 2, comm));
+  } else if (key == "Heat 3D") {
+    problem = Teuchos::rcp(new HeatProblem(problemParams, paramLib, 3, comm));
+  } else if (key == "Thermal 1D") {
+    problem = Teuchos::rcp(new ThermalProblem(problemParams, paramLib, 1, comm));
+  } else if (key == "Thermal 2D") {
+    problem = Teuchos::rcp(new ThermalProblem(problemParams, paramLib, 2, comm));
+  } else if (key == "Thermal 3D") {
+    problem = Teuchos::rcp(new ThermalProblem(problemParams, paramLib, 3, comm));
+  } else if (key == "Populate Mesh") {
+    problem = Teuchos::rcp(new PopulateMesh(problemParams, discParams, paramLib));
+  } else if (key == "Side Laplacian 3D") {
+    problem = Teuchos::rcp(new SideLaplacian(problemParams, paramLib, 1));
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+      "Error! Unrecognized key in BasicProblemFactory. Did you forget to check with 'provides(key)' first?\n");
+  }
+
+  return problem;
+}
+
+} // namespace Albany

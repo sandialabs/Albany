@@ -35,8 +35,6 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   // Initializing the MetaData (default numDim=-1 prevents that in GenericSTKMeshStruct)
   this->numDim = inputMeshSpecs.numDim - 1;
   std::vector<std::string> entity_rank_names = stk::mesh::entity_rank_names();
-  if (this->buildEMesh)
-    entity_rank_names.push_back("FAMILY_TREE");
   metaData->initialize(this->numDim, entity_rank_names);
 
   std::string ebn = "Element Block 0";

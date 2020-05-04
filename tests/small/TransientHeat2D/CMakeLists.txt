@@ -17,29 +17,30 @@ if (ALBANY_EPETRA)
   set_tests_properties(${testName} PROPERTIES LABELS "Basic;Epetra;Forward")
 endif()
 
-if (ALBANY_IFPACK2)
-  # RK 4 test
-  set (testName ${testNameRoot}_Rythmos_RK4)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_rk4.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/rythmos_rk4.yaml COPYONLY)
-  add_test(${testName} ${Albany.exe} rythmos_rk4.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "Basic;Rythmos;Tpetra;Forward")
+# TODO: remove these?
+# if (ALBANY_IFPACK2)
+#   # RK 4 test
+#   set (testName ${testNameRoot}_Rythmos_RK4)
+#   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_rk4.yaml
+#                  ${CMAKE_CURRENT_BINARY_DIR}/rythmos_rk4.yaml COPYONLY)
+#   add_test(${testName} ${Albany.exe} rythmos_rk4.yaml)
+#   set_tests_properties(${testName} PROPERTIES LABELS "Basic;Rythmos;Tpetra;Forward")
 
-  # BE tests
-  # Rythmos solver
-  set (testName ${testNameRoot}_Rythmos_BackwardEuler_RythmosSolver)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_be_nox_solver.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/rythmos_be_nox_solver.yaml COPYONLY)
-  add_test(${testName} ${Albany.exe} rythmos_be_rythmos_solver.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "Basic;Rythmos;Tpetra;Forward")
+#   # BE tests
+#   # Rythmos solver
+#   set (testName ${testNameRoot}_Rythmos_BackwardEuler_RythmosSolver)
+#   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_be_nox_solver.yaml
+#                  ${CMAKE_CURRENT_BINARY_DIR}/rythmos_be_nox_solver.yaml COPYONLY)
+#   add_test(${testName} ${Albany.exe} rythmos_be_rythmos_solver.yaml)
+#   set_tests_properties(${testName} PROPERTIES LABELS "Basic;Rythmos;Tpetra;Forward")
 
-  # NOX solver
-  set (testName ${testNameRoot}_Rythmos_BackwardEuler_NOXSolver)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_be_rythmos_solver.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/rythmos_be_rythmos_solver.yaml COPYONLY)
-  add_test(${testName} ${Albany.exe} rythmos_be_nox_solver.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "Basic;Rythmos;Tpetra;Forward")
-endif ()
+#   # NOX solver
+#   set (testName ${testNameRoot}_Rythmos_BackwardEuler_NOXSolver)
+#   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_be_rythmos_solver.yaml
+#                  ${CMAKE_CURRENT_BINARY_DIR}/rythmos_be_rythmos_solver.yaml COPYONLY)
+#   add_test(${testName} ${Albany.exe} rythmos_be_nox_solver.yaml)
+#   set_tests_properties(${testName} PROPERTIES LABELS "Basic;Rythmos;Tpetra;Forward")
+# endif ()
 
 ####################################
 ###         Tempus tests         ###

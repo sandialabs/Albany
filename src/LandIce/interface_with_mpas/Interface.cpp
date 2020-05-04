@@ -26,6 +26,8 @@
 #include <limits>
 #include <cmath>
 
+#include "LandIce_ProblemFactory.hpp"
+
 #include "Albany_MpasSTKMeshStruct.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
@@ -272,7 +274,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   bool success = true;
   Teuchos::ArrayRCP<const ST> solution_constView;
   try {
-    solver = slvrfctry->createAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
+    auto model = slvrfctry->createModel(albanyApp);
+    solver = slvrfctry->createSolver(model, mpiComm);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
@@ -698,6 +701,12 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   }
 
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
+
+  // Register LandIce problems
+  auto& pb_factories = Albany::FactoriesContainer<Albany::ProblemFactory>::instance();
+  pb_factories.add_factory(LandIce::LandIceProblemFactory::instance());
+
+  // Create albany app
   albanyApp = Teuchos::rcp(new Albany::Application(mpiComm));
   albanyApp->initialSetUp(paramList);
 

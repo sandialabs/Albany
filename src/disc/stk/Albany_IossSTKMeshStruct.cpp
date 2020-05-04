@@ -64,11 +64,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
   std::vector<std::string> entity_rank_names = stk::mesh::entity_rank_names();
 
-  // eMesh needs "FAMILY_TREE" entity
-  if(buildEMesh) {
-    entity_rank_names.push_back("FAMILY_TREE");
-  }
-
   const Teuchos::MpiComm<int>* theComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
 
   mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(*theComm->getRawMpiComm()));
@@ -525,9 +520,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
   // Loading required input fields from file
   this->loadRequiredInputFields (req,commT);
-
-  // Refine the mesh before starting the simulation if indicated
-  uniformRefineMesh(commT);
 
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);

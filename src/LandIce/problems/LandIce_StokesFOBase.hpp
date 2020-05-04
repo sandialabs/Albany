@@ -25,7 +25,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
-#include "Albany_ResponseUtilities.hpp"
+#include "LandIce_ResponseUtilities.hpp"
 
 #include "LandIce_BasalFrictionCoefficient.hpp"
 #include "LandIce_BasalFrictionCoefficientGradient.hpp"
@@ -1568,7 +1568,7 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
     paramList->set<std::vector<Teuchos::RCP<Teuchos::ParameterList>>*>("Basal Regularization Params",&landice_bcs[LandIceBC::BasalFriction]);
     paramList->set<std::string>("Ice Thickness Scalar Type",e2str(field_scalar_type[ice_thickness_name]));
 
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+    LandIce::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
   }
 

@@ -7,23 +7,20 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Albany_DiscretizationFactory.hpp"
-#if defined(ALBANY_STK)
+
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_STK3DPointStruct.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_SideSetSTKMeshStruct.hpp"
-
-#ifdef ALBANY_SEACAS
-#include "Albany_IossSTKMeshStruct.hpp"
-#endif
 #include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_GmshSTKMeshStruct.hpp"
-#ifdef ALBANY_LANDICE
 #include "Albany_STKDiscretizationStokesH.hpp"
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
-#endif
+
+#ifdef ALBANY_SEACAS
+#include "Albany_IossSTKMeshStruct.hpp"
 #endif
 
 Albany::DiscretizationFactory::DiscretizationFactory(
@@ -63,7 +60,6 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
         Teuchos::RCP<const Teuchos_Comm> comm)
 {
     std::string& method = disc_params->get("Method", "STK1D");
-#if defined(ALBANY_STK)
     if (method == "STK1D") {
         return Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(disc_params, adapt_params, comm));
     } else if (method == "STK0D") {
@@ -109,7 +105,6 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
     } else if (method == "Gmsh") {
         return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, comm));
     }
-#ifdef ALBANY_LANDICE
     else if (method == "Extruded") {
         Teuchos::RCP<Albany::AbstractMeshStruct> basalMesh;
         Teuchos::RCP<Teuchos::ParameterList> basal_params;
@@ -134,20 +129,18 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
         basalMesh = createMeshStruct(basal_params, Teuchos::null, comm);
         return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, comm, basalMesh));
     }
-#endif // ALBANY_LANDICE
     else if (method == "Cubit") {
         TEUCHOS_TEST_FOR_EXCEPTION(method == "Cubit",
                 Teuchos::Exceptions::InvalidParameter,
                 "Error: Discretization method " << method
                 << " requested, but no longe supported as of 10/2017" << std::endl);
     } else
-#endif // ALBANY_STK
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
-                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
-                "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
-                "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss," <<
-                " Exodus, Ascii," <<
-                " Ascii2D, Extruded" << std::endl);
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
+                  "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
+                  "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
+                  "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss," <<
+                  " Exodus, Ascii," <<
+                  " Ascii2D, Extruded" << std::endl);
 
   return Teuchos::null;
 }
@@ -224,16 +217,13 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 
 
     switch (meshStruct->meshSpecsType()) {
-#if defined(ALBANY_STK)
     case Albany::AbstractMeshStruct::STK_MS:
     {
       Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
       Teuchos::RCP<Albany::STKDiscretization> disc;
-#ifdef ALBANY_LANDICE
       if (method=="Extruded") {
         disc = Teuchos::rcp(new Albany::STKDiscretizationStokesH(discParams, ms, commT, rigidBodyModes));
       } else
-#endif
       {
         disc = Teuchos::rcp(new Albany::STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
       }
@@ -241,7 +231,6 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       return disc;
       break;
     }
-#endif
     }
     return Teuchos::null;
 }

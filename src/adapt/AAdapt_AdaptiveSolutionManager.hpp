@@ -9,10 +9,8 @@
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_AbstractDiscretization.hpp"
-#include "Albany_StateManager.hpp"
 #include "Albany_CombineAndScatterManager.hpp"
 
-#include "AAdapt_InitialCondition.hpp"
 #include "AAdapt_AbstractAdapter.hpp"
 
 #include "Thyra_AdaptiveSolutionManager.hpp"
@@ -20,9 +18,9 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-namespace AAdapt {
+namespace Albany {
 
-namespace rc { class Manager; }
+namespace AAdapt {
 
 class AdaptiveSolutionManager : public Thyra::AdaptiveSolutionManager {
 public:
@@ -30,19 +28,19 @@ public:
         const Teuchos::RCP<Teuchos::ParameterList>& appParams,
         const Teuchos::RCP<const Thyra_Vector>& initial_guess,
         const Teuchos::RCP<ParamLib>& param_lib,
-        const Albany::StateManager& StateMgr,
+        const Teuchos::RCP<AbstractDiscretization>& disc,
         const Teuchos::RCP<const Teuchos_Comm>& comm);
 
    //! Method called by the solver implementation to determine if the mesh needs adapting
    // A return type of true means that the mesh should be adapted
-   virtual bool queryAdaptationCriteria(){ return adapter_->queryAdaptationCriteria(iter_); }
+   bool queryAdaptationCriteria(){ return adapter_->queryAdaptationCriteria(iter_); }
 
    //! Method called by solver implementation to actually adapt the mesh
    //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
    virtual bool adaptProblem();
 
    //! Remap "old" solution into new data structures
-   virtual void projectCurrentSolution();
+   void projectCurrentSolution();
 
    Teuchos::RCP<const Thyra_MultiVector> getInitialSolution() const { return current_soln; }
 
@@ -57,21 +55,21 @@ public:
    Teuchos::RCP<Thyra_Vector>   get_overlapped_f()   const {return overlapped_f;}
    Teuchos::RCP<Thyra_LinearOp> get_overlapped_jac() const {return overlapped_jac;}
 
-   Teuchos::RCP<const Albany::CombineAndScatterManager> get_cas_manager() const { return cas_manager; }
+   Teuchos::RCP<const CombineAndScatterManager> get_cas_manager() const { return cas_manager; }
 
    Teuchos::RCP<Thyra_MultiVector> getCurrentSolution() { return current_soln; }
 
-   void scatterX(
-       const Thyra_Vector& x,
-       const Teuchos::Ptr<const Thyra_Vector> x_dot,
-       const Teuchos::Ptr<const Thyra_Vector> x_dotdot);
+   void scatterX (const Thyra_Vector& x,
+                  const Teuchos::Ptr<const Thyra_Vector> x_dot,
+                  const Teuchos::Ptr<const Thyra_Vector> x_dotdot);
 
-   void scatterX(
-       const Thyra_MultiVector& soln);
+   void scatterX (const Thyra_MultiVector& soln);
 
 private:
 
-    Teuchos::RCP<const Albany::CombineAndScatterManager> cas_manager;
+    void resizeMeshDataArrays(const Teuchos::RCP<const AbstractDiscretization>& disc);
+
+    Teuchos::RCP<const CombineAndScatterManager> cas_manager;
 
     Teuchos::RCP<Thyra_Vector>   overlapped_f;
     Teuchos::RCP<Thyra_LinearOp> overlapped_jac;
@@ -84,19 +82,18 @@ private:
     const int num_time_deriv;
 
     const Teuchos::RCP<Teuchos::ParameterList> appParams_;
-    const Teuchos::RCP<Albany::AbstractDiscretization> disc_;
+    const Teuchos::RCP<AbstractDiscretization> disc_;
     const Teuchos::RCP<ParamLib>& paramLib_;
-    const Albany::StateManager& stateMgr_;
     const Teuchos::RCP<const Teuchos_Comm> comm_;
 
     //! Output stream, defaults to printing just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     Teuchos::RCP<AbstractAdapter> adapter_;
-
-    void resizeMeshDataArrays(const Teuchos::RCP<const Albany::AbstractDiscretization>& disc);
 };
 
 } // namespace AAdapt
+
+} // namespace Albany
 
 #endif // AADAPT_ADAPTIVE_SOLUTION_MANAGER_HPP

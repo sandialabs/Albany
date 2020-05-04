@@ -4,41 +4,41 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <cmath>
-
-#include <Teuchos_CommHelpers.hpp>
-
 #include "AAdapt_InitialCondition.hpp"
 #include "AAdapt_AnalyticFunction.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
 
+#include <Teuchos_CommHelpers.hpp>
+
+#include <cmath>
+
+namespace Albany {
 namespace AAdapt {
 
-const double pi = 3.141592653589793;
+static const double pi = 4.0 * std::atan(4.0);
 
-Teuchos::RCP<const Teuchos::ParameterList>
+Teuchos::ParameterList
 getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNames) {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    rcp(new Teuchos::ParameterList("ValidInitialConditionParams"));;
-  validPL->set<std::string>("Function", "", "");
+  Teuchos::ParameterList validPL ("ValidInitialConditionParams");
+  validPL.set<std::string>("Function", "", "");
   Teuchos::Array<double> defaultData;
-  validPL->set<Teuchos::Array<double> >("Function Data", defaultData, "");
-  validPL->set<std::string >("Function Expression for DOF X", "None", "");
-  validPL->set<std::string >("Function Expression for DOF Y", "None", "");
-  validPL->set<std::string >("Function Expression for DOF Z", "None", "");
+  validPL.set<Teuchos::Array<double> >("Function Data", defaultData, "");
+  validPL.set<std::string >("Function Expression for DOF X", "None", "");
+  validPL.set<std::string >("Function Expression for DOF Y", "None", "");
+  validPL.set<std::string >("Function Expression for DOF Z", "None", "");
   Teuchos::Array<std::string> expr;
-  validPL->set<Teuchos::Array<std::string>>("Function Expressions", expr);
+  validPL.set<Teuchos::Array<std::string>>("Function Expressions", expr);
 
   // Validate element block constant data
 
   for(int i = 0; i < wsEBNames.size(); i++)
 
-    validPL->set<Teuchos::Array<double> >(wsEBNames[i], defaultData, "");
+    validPL.set<Teuchos::Array<double> >(wsEBNames[i], defaultData, "");
 
   // For EBConstant data, we can optionally randomly perturb the IC on each variable some amount
 
-  validPL->set<Teuchos::Array<double> >("Perturb IC", defaultData, "");
+  validPL.set<Teuchos::Array<double> >("Perturb IC", defaultData, "");
 
   return validPL;
 }
@@ -53,13 +53,16 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
   auto soln_data = Albany::getNonconstLocalData(soln);
 
   // Called three times, with x, xdot, and xdotdot. Different param lists are sent in.
-  icParams.validateParameters(*AAdapt::getValidInitialConditionParameters(wsEBNames), 0);
+  icParams.validateParameters(getValidInitialConditionParameters(wsEBNames), 0);
 
   // Default function is Constant, unless a Restart solution vector
   // was used, in which case the Init COnd defaults to Restart.
   std::string name;
-  if (!hasRestartSolution) name = icParams.get("Function","Constant");
-  else                     name = icParams.get("Function","Restart");
+  if (!hasRestartSolution) {
+    name = icParams.get("Function","Constant");
+  } else {
+    name = icParams.get("Function","Restart");
+  }
 
   if (name=="Restart") {
     return;
@@ -118,18 +121,17 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
 
       if(perturb_values){
 
-        if(name == "EBPerturb")
-          initFunc = Teuchos::rcp(new AAdapt::ConstantFunctionPerturbed(neq, numDim, ws, data, perturb_mag));
+        if(name == "EBPerturb") {
+          initFunc = Teuchos::rcp(new AAdapt::ConstantFunctionPerturbed(neq, numDim, data, perturb_mag));
         
-        else // name == EBGaussianPerturb
+        } else { // name == EBGaussianPerturb
 
           initFunc = Teuchos::rcp(new 
-            AAdapt::ConstantFunctionGaussianPerturbed(neq, numDim, ws, data, perturb_mag));
-      }
-
-      else
-
+            ConstantFunctionGaussianPerturbed(neq, numDim, data, perturb_mag));
+        }
+      } else {
         initFunc = Teuchos::rcp(new AAdapt::ConstantFunction(neq, numDim, data));
+      }
 
       std::vector<double> X(neq);
 
@@ -266,3 +268,4 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
 }
 
 } // namespace AAdapt
+} // namespace Albany

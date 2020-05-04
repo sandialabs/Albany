@@ -9,6 +9,9 @@
 #include "Albany_Utils.hpp"
 #include "Albany_CommUtils.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_RegressionTests.hpp"
+
+#include "Albany_FactoriesHelpers.hpp"
 
 #include <Piro_PerformAnalysis.hpp>
 #include <Teuchos_GlobalMPISession.hpp>
@@ -50,7 +53,7 @@ int main(int argc, char *argv[]) {
 
     Albany::SolverFactory slvrfctry (cmd.yaml_filename, comm);
 
-    const auto& bt = slvrfctry.getParameters().get("Build Type","Tpetra");
+    const auto& bt = slvrfctry.getParameters()->get("Build Type","Tpetra");
     if (bt=="Tpetra") {
       // Set the static variable that denotes this as a Tpetra run
       static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
@@ -63,15 +66,22 @@ int main(int argc, char *argv[]) {
                                  "       Valid choices are 'Epetra', 'Tpetra'.\n");
     }
 
-    Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > appThyra = slvrfctry.create(comm, comm);
+    // Make sure all the pb factories are registered *before* the Application
+    // is created (since in the App ctor the pb factories are queried)
+    Albany::register_pb_factories();
+
+    auto albanyApp   = slvrfctry.createApplication(comm);
+    auto albanyModel = slvrfctry.createModel(albanyApp);
+    auto fwd_solver  = slvrfctry.createSolver(albanyModel,comm);
 
     Teuchos::RCP< Thyra::VectorBase<double> > p;
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
-    status = Piro::PerformAnalysis(*appThyra, slvrfctry.getAnalysisParameters(), p); 
+    status = Piro::PerformAnalysis(*fwd_solver, slvrfctry.getAnalysisParameters(), p);
 
-    status = slvrfctry.checkAnalysisTestResults(0, p);
+    Albany::RegressionTests regression(slvrfctry.getParameters());
+    status = regression.checkAnalysisTestResults(0, p);
 
     // Regression comparisons for Dakota runs only valid on Proc 0.
     if (mpiSession.getRank()>0)  status=0;
