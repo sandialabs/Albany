@@ -1,14 +1,11 @@
 set(HEADERS_CISM
   ali_driver.H
-  ../evaluators/LandIce_CismSurfaceGradFO_Def.hpp
-  ../evaluators/LandIce_CismSurfaceGradFO.hpp
   ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H
 )
 
 set(SOURCES_CISM
   Albany_CismSTKMeshStruct.cpp
   ali_driver.cpp
-  ../evaluators/LandIce_CismSurfaceGradFO.cpp
   ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.cpp
 )
 add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCES_CISM})

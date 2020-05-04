@@ -240,6 +240,16 @@ set(HEADERS
   problems/LandIce_StokesL1L2.hpp
 )
 
+# This is not very satisfactory, since it injects CISM specific stuff into
+# the main LandIce library. But StokesFO needs the definition of these
+# when building for CISM, or we run into a link error.
+if(ENABLE_CISM_INTERFACE)
+  list (APPEND SOURCES evaluators/LandIce_CismSurfaceGradFO.cpp)
+  list (APPEND HEADERS
+    evaluators/LandIce_CismSurfaceGradFO.hpp
+    evaluators/LandIce_CismSurfaceGradFO_Def.hpp)
+endif()
+
 add_library(LandIce ${Albany_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(LandIce PROPERTIES PUBLIC_HEADER "${HEADERS}")
 target_link_libraries(LandIce PUBLIC albanyLib)
