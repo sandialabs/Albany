@@ -5,7 +5,7 @@ ANONYMOUS:
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Name: ComprNS 2D
-    Solution Method: Transient
+    Solution Method: Transient Tempus
     Number of PDE Equations: 4
     Dirichlet BCs: 
       SDBC on NS NodeSet0 for DOF qFluct2: 0.00000000000000000e+00
@@ -42,108 +42,88 @@ ANONYMOUS:
     Test Values: [-5.17882027672999980e-03]
     Relative Tolerance: 1.00000000000000005e-04
   Piro: 
-    Rythmos: 
-      Nonlinear Solver Type: NOX
-      Final Time: 1.00000000000000000e+00
-      Max State Error: 1.00000000000000005e-04
-      Alpha: 0.00000000000000000e+00
-      Rythmos Stepper: 
-        VerboseObject: 
-          Verbosity Level: low
-      Rythmos Integration Control: 
-        Take Variable Steps: false
-        Number of Time Steps: 200
-      Rythmos Integrator: 
-        VerboseObject: 
-          Verbosity Level: none
-      Stratimikos: { }
-    NOX: 
-      Status Tests: 
-        Test Type: Combo
-        Combo Type: OR
-        Number of Tests: 2
-        Test 0: 
-          Test Type: Combo
-          Combo Type: AND
-          Number of Tests: 2
-          Test 0: 
-            Test Type: NormF
-            Norm Type: Two Norm
-            Scale Type: Scaled
-            Tolerance: 9.99999999999999980e-13
-          Test 1: 
-            Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000005e-04
-            Relative Tolerance: 1.00000000000000002e-08
-        Test 1: 
-          Test Type: MaxIters
-          Maximum Iterations: 20
-      Direction: 
-        Method: Newton
-        Newton: 
-          Forcing Term Method: Constant
-          Linear Solver: 
-            Write Linear System: false
-          Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
-            Stratimikos: 
-              Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 9.99999999999999955e-07
-                Belos: 
-                  Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-07
-                      Output Frequency: 20
-                      Output Style: 1
-                      Verbosity: 33
-                      Maximum Iterations: 200
-                      Block Size: 1
-                      Num Blocks: 200
-                      Flexible Gmres: false
-              Preconditioner Type: Ifpack
-              Preconditioner Types: 
-                Ifpack: 
-                  Overlap: 0
-                  Prec Type: ILU
-                  Ifpack Settings: 
-                    'fact: level-of-fill': 0
-                ML: 
-                  Base Method Defaults: none
-                  ML Settings: 
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
-                    PDE equations: 4
-          Rescue Bad Newton Solve: true
-      Line Search: 
-        Full Step: 
-          Full Step: 1.00000000000000000e+00
-        Method: Full Step
-      Nonlinear Solver: Line Search Based
-      Printing: 
-        Output Precision: 3
-        Output Processor: 0
-        Output Information: 
-          Error: true
-          Warning: true
-          Outer Iteration: true
-          Parameters: false
-          Details: false
-          Linear Solver Details: false
-          Stepper Iteration: true
-          Stepper Details: true
-          Stepper Parameters: true
-      Solver Options: 
-        Status Test Check Type: Minimal
+    Analysis: 
+      Compute Sensitivities: false
+    Tempus: 
+      Integrator Name: Tempus Integrator
+      Tempus Integrator: 
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 100
+        Stepper Name: Tempus Stepper
+        Solution History: 
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control: 
+          Initial Time: 0.00000000000000000e+00
+          Initial Time Index: 0
+          Initial Time Step: 5.00000000000000010e-03
+          Initial Order: 0
+          Final Time: 1.00000000000000000e+00
+          Final Time Index: 10000
+          Maximum Absolute Error: 1.00000000000000002e-08
+          Maximum Relative Error: 1.00000000000000002e-08
+          Integrator Step Type: Constant
+          Output Time List: ''
+          Output Index List: ''
+          Output Time Interval: 1.00000000000000000e+01
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper: 
+        Stepper Type: Backward Euler
+        Solver Name: Demo Solver
+        Predictor Name: None
+        Demo Solver: 
+          NOX: 
+            Direction: 
+              Method: Newton
+              Newton: 
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+                Linear Solver: 
+                  Tolerance: 9.99999999999999955e-07
+            Line Search: 
+              Full Step: 
+                Full Step: 1.00000000000000000e+00
+              Method: Full Step
+            Nonlinear Solver: Line Search Based
+            Printing: 
+              Output Precision: 3
+              Output Processor: 0
+              Output Information: 
+                Error: true
+                Warning: true
+                Outer Iteration: false
+                Parameters: true
+                Details: false
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options: 
+              Status Test Check Type: Minimal
+            Status Tests: 
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0: 
+                Test Type: NormF
+                Tolerance: 1.00000000000000002e-08
+              Test 1: 
+                Test Type: MaxIters
+                Maximum Iterations: 10
+      Stratimikos: 
+        Linear Solver Type: AztecOO
+        Linear Solver Types: 
+          AztecOO: 
+            Forward Solve: 
+              AztecOO Settings: 
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+                Output Frequency: 1
+              Max Iterations: 100
+              Tolerance: 9.99999999999999955e-07
+        Preconditioner Type: Ifpack
 ...
