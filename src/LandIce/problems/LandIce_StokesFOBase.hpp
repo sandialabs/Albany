@@ -7,6 +7,7 @@
 #ifndef LANDICE_STOKES_FO_BASE_HPP
 #define LANDICE_STOKES_FO_BASE_HPP
 
+#include "LandIce_GatherVerticallyContractedSolution.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -32,7 +33,6 @@
 #include "LandIce_DOFDivInterpolationSide.hpp"
 #include "LandIce_EffectivePressure.hpp"
 #include "LandIce_FlowRate.hpp"
-#include "LandIce_GatherVerticallyAveragedVelocity.hpp"
 #include "LandIce_FluxDiv.hpp"
 #include "LandIce_IceOverburden.hpp"
 #include "LandIce_ParamEnum.hpp"
@@ -1468,12 +1468,17 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     // Vertically averaged velocity
     p = Teuchos::rcp(new Teuchos::ParameterList("Gather Averaged Velocity"));
 
-    p->set<std::string>("Averaged Velocity Name", vertically_averaged_velocity_name + "_" + basalSideName);
+    p->set<std::string>("Contracted Solution Name", vertically_averaged_velocity_name + "_" + basalSideName);
     p->set<std::string>("Mesh Part", "basalside");
+    p->set<int>("Solution Offset", dof_offsets[0]);
     p->set<std::string>("Side Set Name", basalSideName);
+    p->set<bool>("Is Vector", true);
+    p->set<std::string>("Contraction Operator", "Vertical Average");
+
+
     p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
-    ev = Teuchos::rcp(new GatherVerticallyAveragedVelocity<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev = Teuchos::rcp(new GatherVerticallyContractedSolution<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Flux divergence
