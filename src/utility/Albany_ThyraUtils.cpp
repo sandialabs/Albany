@@ -432,51 +432,6 @@ getNumEntriesInLocalRow (const Teuchos::RCP<const Thyra_LinearOp>& lop, const LO
 
 }
 
-
-bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->isFillActive();
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    return !emat->Filled();
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in isFillActive! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
-  // Dummy return value, to silence compiler warnings
-  return false;
-}
-
-bool isFillComplete (const Teuchos::RCP<const Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->isFillComplete();
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    return emat->Filled();
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in isFillComplete! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
-  // Dummy return value, to silence compiler warnings
-  return false;
-}
-
 void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
@@ -545,7 +500,9 @@ void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop)
 #if defined(ALBANY_EPETRA)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
-    emat->FillComplete();
+    // Epetra considers 'FillComplete' only in terms of the graph/storage.
+    // Since we use static graph, the matrix is already 'filled', so no
+    // action is needed here.
     return;
   }
 #endif
@@ -720,8 +677,9 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   if (!tmat.is_null()) {
     auto returned_val = tmat->sumIntoLocalValues(lrow,indices,values);
     //std::cout << "IKT returned_val, indices size = " << returned_val << ", " << indices.size() << std::endl; 
-    ALBANY_ASSERT(returned_val != -1 , "Error: addToLocalRowValues returned -1, meaning linear op is not fillActive \n" 
-                       << "or does not have an underlying non-null static graph!\n"); 
+    ALBANY_ASSERT(returned_val != -1 ,
+                  "Error: addToLocalRowValues returned -1, meaning linear op is not fillActive \n"
+                  "or does not have an underlying non-null static graph!\n");
     //Tpetra's replaceLocalValues routine returns the number of indices for which values were actually replaced; the number of "correct" indices.
     //This should be size of indices array.  Therefore if returned_val != indices.size() something went wrong 
     if (returned_val != indices.size()) integer_error_code = 1; 
@@ -739,7 +697,7 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
 #endif
 
   // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in addToLocalRowValues! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,"Error in addToLocalRowValues! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 
 void insertGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
@@ -882,7 +840,10 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    tmat->replaceLocalValues(lrow,indices,values);
+    ALBANY_EXPECT (tmat->isFillActive(), "Error! Matrix fill is not active.\n");
+    auto err = tmat->replaceLocalValues(lrow,indices,values);
+    ALBANY_EXPECT (err!=Teuchos::OrdinalTraits<LO>::invalid(),
+      "Error! Something went wrong while replacinv local row values.\n");
     return;
   }
 
