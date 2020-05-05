@@ -4,7 +4,7 @@ ANONYMOUS:
   Build Type: Epetra
   Problem: 
     Name: Heat 2D
-    Solution Method: Transient
+    Solution Method: Transient Tempus
     Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: materials.yaml
     Initial Condition: 
@@ -30,21 +30,78 @@ ANONYMOUS:
     Absolute Tolerance: 1.00000000000000005e-04
     Relative Tolerance: 1.00000000000000005e-04
   Piro: 
-    Rythmos: 
-      Nonlinear Solver Type: Rythmos
-      Final Time: 4.00000000000000000e+00
-      Max State Error: 1.00000000000000002e-03
-      Alpha: 0.00000000000000000e+00
-      Rythmos Stepper: 
-        VerboseObject: 
-          Verbosity Level: none
+    Analysis: 
+      Compute Sensitivities: false
+    Tempus: 
+      Integrator Name: Tempus Integrator
+      Tempus Integrator: 
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 100
+        Stepper Name: Tempus Stepper
+        Solution History: 
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control: 
+          Initial Time: 0.00000000000000000e+00
+          Initial Time Index: 0
+          Initial Time Step: 0.8 
+          Initial Order: 0
+          Final Time: 4.00000000000000000e+00
+          Final Time Index: 10000
+          Maximum Absolute Error: 1.00000000000000002e-08
+          Maximum Relative Error: 1.00000000000000002e-08
+          Integrator Step Type: Constant
+          Output Time List: ''
+          Output Index List: ''
+          Output Time Interval: 1.00000000000000000e+01
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper: 
+        Stepper Type: Backward Euler
+        Solver Name: Demo Solver
+        Predictor Name: None
+        Demo Solver: 
+          NOX: 
+            Direction: 
+              Method: Newton
+              Newton: 
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+                Linear Solver: 
+                  Tolerance: 1.00000000000000002e-02
+            Line Search: 
+              Full Step: 
+                Full Step: 1.00000000000000000e+00
+              Method: Full Step
+            Nonlinear Solver: Line Search Based
+            Printing: 
+              Output Precision: 3
+              Output Processor: 0
+              Output Information: 
+                Error: true
+                Warning: true
+                Outer Iteration: false
+                Parameters: true
+                Details: false
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options: 
+              Status Test Check Type: Minimal
+            Status Tests: 
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0: 
+                Test Type: NormF
+                Tolerance: 1.00000000000000002e-08
+              Test 1: 
+                Test Type: MaxIters
+                Maximum Iterations: 10
       Stratimikos: 
         Linear Solver Type: AztecOO
         Preconditioner Type: Ifpack
-      Rythmos Integration Control: 
-        Take Variable Steps: false
-        Number of Time Steps: 5
-      Rythmos Integrator: 
-        VerboseObject: 
-          Verbosity Level: low
 ...
