@@ -28,6 +28,10 @@ set -o errexit
 # Get paths as environment variabls from input file $1
 #-------------------------------------------
 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:/usr/include/boost:/home/ikalash/Downloads/libiconv-1.14/lib/.libs
+export PATH=$PATH:/usr/lib64/openmpi/bin:/home/ikalash/Install/ParaView-4.4.0-Qt4-Linux-64bit/bin:/ascldap/users/ikalash/Trilinos/seacas-build/install/bin:/home/ikalash/Install/Cubit:/ascldap/users/ikalash/Install/MATLAB/R2018b/bin:/ascldap/users/ikalash/Trilinos/seacas-build/install/bin
+
+
 if [ ! $1 ] ; then
     echo "ERROR: run_trilinos: run_trilinos.sh requires a file as an argument"
     echo "You must define env variables with required paths!"
