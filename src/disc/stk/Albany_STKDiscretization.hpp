@@ -517,21 +517,14 @@ class STKDiscretization : public AbstractDiscretization
   double
   monotonicTimeLabel(const double time);
 
-  void
-  computeNodalVectorSpaces(bool overlapped);
+  void computeVectorSpaces();
 
   //! Process STK mesh for CRS Graphs
   virtual void
   computeGraphs();
-  //! Process STK mesh for Owned nodal quantitites
-  void
-  computeOwnedNodesAndUnknowns();
   //! Process coords for ML
   void
   setupMLCoords();
-  //! Process STK mesh for Overlap nodal quantitites
-  void
-  computeOverlapNodesAndUnknowns();
   //! Process STK mesh for Workset/Bucket Info
   void
   computeWorksetInfo();
@@ -560,9 +553,6 @@ class STKDiscretization : public AbstractDiscretization
   buildSideSetProjectors();
 
   double previous_time_label;
-
-  int
-  nonzeroesPerRow(const int neq) const;
 
   // ==================== Members =================== //
 
