@@ -48,8 +48,11 @@ struct ThyraCrsMatrixFactory {
 
   // Creates an operator after the graph has been created
   //  PreCondition: is_filled() == true
-  // If ignoreNonLocalRows is true, the operator's graph will only contain
-  // rows corresponding to range_vs. Only relevant if row_vs != range_vs
+  // Notes:
+  //  - If ignoreNonLocalRows is true, the operator's graph will only contain
+  //    rows corresponding to range_vs. Only relevant if row_vs != range_vs
+  //  - The operator is guaranteed to have a static filled graph, have its
+  //    storage allocated (and optimized, if possible), and all entries set to 0.
   Teuchos::RCP<Thyra_LinearOp>  createOp (const bool ignoreNonLocalRows = false) const;
 
 private:

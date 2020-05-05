@@ -100,23 +100,23 @@ void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::Ar
 
 void ThyraCrsMatrixFactory::fillComplete () {
 
-  // We created the CrsGraph,
-  // insert indices from the temporary local graph,
+  // We create the CrsGraph, insert indices from the temporary local graph,
   // and call fill complete.
-  // For some reason Tpetra_FECrsGraph does not have a ctor that takes an Teuchos::ArrayView,
-  // so we must create a DualView.
-  using exec_space = Tpetra_CrsGraph::execution_space;
-  using DView = Kokkos::DualView<size_t*, exec_space>;
-  DView nnz_per_row("nnz",getLocalSubdim(m_range_vs));
-  for (int lrow=0; lrow<nnz_per_row.extent_int(0); ++lrow) {
-    nnz_per_row.h_view[lrow] = m_graph->temp_graph[lrow].size();
-  }
+  // Note: we can't compute the nnz per row here, cause Epetra wants the
+  //       array for the non-overlapped range map, while Tpetra wants
+  //       the array for the overlapped row map.
 
   const auto bt = Albany::build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
-    int* nnz_per_row_ptr = reinterpret_cast<int*>(nnz_per_row.h_view.data());
-    m_graph->e_graph = Teuchos::rcp(new Epetra_FECrsGraph(Copy,*m_graph->e_range,nnz_per_row_ptr,!m_row_same_as_range));
+    const int numLocalRows = getLocalSubdim(m_range_vs);
+    Teuchos::Array<int> nnz_per_row(numLocalRows);
+    for (const auto& it : m_graph->temp_graph) {
+      int lrow = m_graph->e_row->LID(static_cast<Epetra_GO>(it.first));
+      nnz_per_row[lrow] = it.second.size();
+    }
+
+    m_graph->e_graph = Teuchos::rcp(new Epetra_FECrsGraph(Copy,*m_graph->e_range,nnz_per_row.data(),!m_row_same_as_range));
 
     // Insder rows.
     for (const auto& it : m_graph->temp_graph) {
@@ -145,6 +145,16 @@ void ThyraCrsMatrixFactory::fillComplete () {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
   } else {
+    // For some reason Tpetra_FECrsGraph does not have a ctor that takes an Teuchos::ArrayView,
+    // so we must create a DualView.
+    using exec_space = Tpetra_CrsGraph::execution_space;
+    using DView = Kokkos::DualView<size_t*, exec_space>;
+    DView nnz_per_row("nnz",getLocalSubdim(m_row_vs));
+    for (const auto& it : m_graph->temp_graph) {
+      LO lrow = m_graph->t_row->getLocalElement(static_cast<Tpetra_GO>(it.first));
+      nnz_per_row.h_view[lrow] = it.second.size();
+    }
+
     m_graph->t_graph = Teuchos::rcp(new Tpetra_FECrsGraph(m_graph->t_range,m_graph->t_row,nnz_per_row));
 
     for (const auto& it : m_graph->temp_graph) {
