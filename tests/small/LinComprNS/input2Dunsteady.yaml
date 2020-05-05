@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Epetra
+  Build Type: Tpetra
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Name: LinComprNS 2D
@@ -134,11 +134,11 @@ ANONYMOUS:
                 Output Frequency: 1
               Max Iterations: 100
               Tolerance: 1.00000000000000002e-08
-        Preconditioner Type: Ifpack
+        Preconditioner Type: Ifpack2
         Preconditioner Types: 
-          Ifpack: 
-            Prec Type: ILU
+          Ifpack2: 
+            Prec Type: ILUT
             Overlap: 1
-            Ifpack Settings: 
-              'fact: level-of-fill': 1
+            Ifpack2 Settings: 
+              'fact: ilut level-of-fill': 1.0
 ...
