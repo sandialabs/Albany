@@ -40,7 +40,7 @@ ANONYMOUS:
   Discretization: 
     Method: Ioss
     Exodus Input File Name: ns-m4-bKL.par
-    Exodus Output File Name: ns_out.exo
+    Exodus Output File Name: ns_tempus_out.exo
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [3.95846771020999988e+00]
