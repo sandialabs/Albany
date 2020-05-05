@@ -7,6 +7,7 @@
 #ifndef LANDICE_STOKES_FO_THICKNESS_PROBLEM_HPP
 #define LANDICE_STOKES_FO_THICKNESS_PROBLEM_HPP
 
+#include "LandIce_GatherVerticallyContractedSolution.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -23,7 +24,6 @@
 
 #include "LandIce_MapThickness.hpp"
 #include "LandIce_Gather2DField.hpp"
-#include "LandIce_GatherVerticallyAveragedVelocity.hpp"
 #include "LandIce_PressureCorrectedTemperature.hpp"
 #include "LandIce_ScatterResidual2D.hpp"
 #include "LandIce_SimpleOperationEvaluator.hpp"
@@ -167,12 +167,15 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     //--- LandIce Gather Vertically Averaged Velocity ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("Gather Averaged Velocity"));
     //Input
-    p->set<std::string>("Averaged Velocity Name", "Averaged Velocity");
+    p->set<std::string>("Contracted Solution Name", "Averaged Velocity");
     p->set<std::string>("Mesh Part", "upperside");
     p->set<std::string>("Side Set Name", surfaceSideName);
     p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+    p->set<int>("Solution Offset", dof_offsets[0]);
+    p->set<bool>("Is Vector", true);
+    p->set<std::string>("Contraction Operator", "Vertical Average");
 
-    ev = Teuchos::rcp(new LandIce::GatherVerticallyAveragedVelocity<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev = Teuchos::rcp(new LandIce::GatherVerticallyContractedSolution<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

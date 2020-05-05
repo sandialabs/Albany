@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LANDICE_GATHERVERTICALLYAVERAGEDVELOCITY_HPP
-#define LANDICE_GATHERVERTICALLYAVERAGEDVELOCITY_HPP
+#ifndef LANDICE_GATHER_VERTICALLY_CONTRACTED_SOLUTION_HPP
+#define LANDICE_GATHER_VERTICALLY_CONTRACTED_SOLUTION_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -23,20 +23,22 @@ namespace LandIce {
 */
 
 template<typename EvalT, typename Traits>
-class GatherVerticallyAveragedVelocityBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+class GatherVerticallyContractedSolutionBase : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
-  GatherVerticallyAveragedVelocityBase(const Teuchos::ParameterList& p,
+  GatherVerticallyContractedSolutionBase(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
-  virtual ~GatherVerticallyAveragedVelocityBase(){};
+  virtual ~GatherVerticallyContractedSolutionBase(){};
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
   virtual void evaluateFields(typename Traits::EvalData d)=0;
+
+  enum ContractionOperator {VerticalAverage, VerticalSum};
 
 protected:
 
@@ -44,28 +46,34 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
 
   // Output:
-  PHX::MDField<ScalarT,Side,Cell,Node,VecDim>  averagedVel;
+  PHX::MDField<ScalarT>  contractedSol;
 
-  std::size_t vecDimFO;
+  bool isVector;
+
+  int offset;
+
+  std::size_t vecDim;
   std::size_t numNodes;
 
   std::string meshPart;
 
   Teuchos::RCP<const CellTopologyData> cell_topo;
+
+  ContractionOperator op;
 };
 
 
-template<typename EvalT, typename Traits> class GatherVerticallyAveragedVelocity;
+template<typename EvalT, typename Traits> class GatherVerticallyContractedSolution;
 
 
 
 template<typename Traits>
-class GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::Residual,Traits>
-    : public GatherVerticallyAveragedVelocityBase<PHAL::AlbanyTraits::Residual,Traits> {
+class GatherVerticallyContractedSolution<PHAL::AlbanyTraits::Residual,Traits>
+    : public GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::Residual,Traits> {
 
 public:
 
-  GatherVerticallyAveragedVelocity(const Teuchos::ParameterList& p,
+  GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -78,12 +86,12 @@ private:
 };
 
 template<typename Traits>
-class GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::Jacobian,Traits>
-    : public GatherVerticallyAveragedVelocityBase<PHAL::AlbanyTraits::Jacobian,Traits> {
+class GatherVerticallyContractedSolution<PHAL::AlbanyTraits::Jacobian,Traits>
+    : public GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::Jacobian,Traits> {
 
 public:
 
-  GatherVerticallyAveragedVelocity(const Teuchos::ParameterList& p,
+  GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -96,12 +104,12 @@ private:
 };
 
 template<typename Traits>
-class GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::Tangent,Traits>
-    : public GatherVerticallyAveragedVelocityBase<PHAL::AlbanyTraits::Tangent,Traits> {
+class GatherVerticallyContractedSolution<PHAL::AlbanyTraits::Tangent,Traits>
+    : public GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::Tangent,Traits> {
 
 public:
 
-  GatherVerticallyAveragedVelocity(const Teuchos::ParameterList& p,
+  GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -114,12 +122,12 @@ private:
 };
 
 template<typename Traits>
-class GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-    : public GatherVerticallyAveragedVelocityBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
+class GatherVerticallyContractedSolution<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+    : public GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
 
 public:
 
-  GatherVerticallyAveragedVelocity(const Teuchos::ParameterList& p,
+  GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
