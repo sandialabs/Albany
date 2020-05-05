@@ -173,7 +173,7 @@ if (BUILD_ALBFUNCTOR_OPENMP)
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
     "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=OFF"
+    "-DENABLE_UNIT_TESTS:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA:BOOL=ON"
     "-DSEACAS_EPU=/home/ikalash/Trilinos/seacas-build/install/bin/epu"
     "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"
