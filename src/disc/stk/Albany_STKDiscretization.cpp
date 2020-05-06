@@ -1054,18 +1054,19 @@ void STKDiscretization::computeVectorSpaces()
   const auto& part    = metaData.locally_owned_part();
   const auto& ov_part = metaData.globally_shared_part();
 
-  std::vector<stk::mesh::Entity> nodes, ov_nodes;;
+  std::vector<stk::mesh::Entity> nodes, ghosted_nodes;;
 
   const auto& buckets = bulkData.buckets(stk::topology::NODE_RANK);
   stk::mesh::get_selected_entities(part, buckets, nodes);
 
   // Compute NumGlobalNodes (the same for both unique and overlapped maps)
-  GO maxID(0), maxGID(0);
-  for (size_t i = 0; i < nodes.size(); ++i) {
-    maxID = std::max(maxID, gid(nodes[i]));
+  GO maxID = -1;
+  GO maxNodeGID;
+  for (const auto& node : nodes) {
+    maxID = std::max(maxID, gid(node));
   }
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &maxID, &maxGID);
-  maxGlobalNodeGID = maxGID;
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &maxID, &maxNodeGID);
+  maxGlobalNodeGID = maxNodeGID;
 
   // Use a different container for the dofs struct, just for the purposes of
   // this method. We do it in order to easily recycle vector spaces, since:
@@ -1080,98 +1081,79 @@ void STKDiscretization::computeVectorSpaces()
   }
 
   // Build vector spaces. First owned, then shared.
-  Teuchos::Array<GO> indices;
-  int numNodes, numOvNodes;
+  int numNodes, numGhostedNodes;
   for (auto& it1 : tmp_map) {
     stk::mesh::Selector selector(part);
-    stk::mesh::Selector ov_selector(ov_part);
+    stk::mesh::Selector ghosted_selector(ov_part);
     const std::string&  name = it1.first;
     if (name.size()) {
       auto it2 = stkMeshStruct->nsPartVec.find(name);
       TEUCHOS_TEST_FOR_EXCEPTION (it2==stkMeshStruct->nsPartVec.end(), std::runtime_error,
         "STKDiscretization::computeNodalMaps():\n  Part " + name + " is not in  stkMeshStruct->nsPartVec.\n");
       selector &= *(it2->second);
-      ov_selector &= *(it2->second);
+      ghosted_selector &= *(it2->second);
     }
 
     stk::mesh::get_selected_entities(selector,    buckets, nodes);
-    stk::mesh::get_selected_entities(ov_selector, buckets, ov_nodes);
+    stk::mesh::get_selected_entities(ghosted_selector, buckets, ghosted_nodes);
     numNodes = nodes.size();
-    numOvNodes = ov_nodes.size();
+    numGhostedNodes = ghosted_nodes.size();
 
     // First, compute the nodal vs. We compute them once, for all dofs on this part
-    // To do it, we need a NodalDOFManager. Simply grab it from the first
-    // dofstruct on this part
-    DOFsStruct*      random_dofs_struct = it1.second.begin()->second;
+    Teuchos::Array<GO> indices;
+    indices.reserve(numNodes+numGhostedNodes);
 
     // Owned
-    auto& nodal_dofManager    = random_dofs_struct->dofManager;
-    nodal_dofManager.setup(1, numNodes, maxGlobalNodeGID, false);
-    indices.resize(nodes.size());
-    for (int i = 0; i < numNodes; i++) {
+    for (const auto& node : nodes) {
       // STK ids start from 1. Subtract 1 to get 0-based indexing.
-      const GO nodeId = bulkData.identifier(nodes[i]) - 1;
-      indices[i] = nodal_dofManager.getGlobalDOF(nodeId, 0);
+      const GO nodeId = bulkData.identifier(node) - 1;
+      indices.push_back(nodeId);
     }
     auto part_node_vs = createVectorSpace(comm, indices());
 
-    // Overlapped
-    auto& ov_nodal_dofManager = random_dofs_struct->overlap_dofManager;
-    ov_nodal_dofManager.setup(1, numNodes+numOvNodes, maxGlobalNodeGID, false);
-    indices.resize(numNodes+numOvNodes);
-    for (int i=0; i<numOvNodes; ++i) {
+    // Overlapped.
+    // IMPORTANT: make sure the ghosted nodes come *after* the owned ones
+    for (const auto& node : ghosted_nodes) {
       // STK ids start from 1. Subtract 1 to get 0-based indexing.
-      const GO nodeId = bulkData.identifier(nodes[i]) - 1;
-      indices[numNodes+i] = ov_nodal_dofManager.getGlobalDOF(nodeId,0);
+      const GO nodeId = bulkData.identifier(node) - 1;
+      indices.push_back(nodeId);
     }
     auto ov_part_node_vs = createVectorSpace(comm, indices());
 
     // Now that the node vs are created, we can loop over the dofs struct on this part
     for (auto& it2 : it1.second) {
-      const int        numComponents = it2.first;
-      DOFsStruct*      dofs_struct   = it2.second;
+      const int   numComponents = it2.first;
+      DOFsStruct* dofs   = it2.second;
 
-      for (auto overlapped : {true, false}) {
-        NodalDOFManager& dofManager =
-            (overlapped ? dofs_struct->overlap_dofManager :
-                          dofs_struct->dofManager);
+      // Set nodal vs and indexers right away
+      dofs->overlap_node_vs_indexer = createGlobalLocalIndexer(ov_part_node_vs);
+      dofs->node_vs_indexer = createGlobalLocalIndexer(part_node_vs);
+      dofs->overlap_node_vs = ov_part_node_vs;
+      dofs->node_vs = part_node_vs;
 
-        auto& node_vs = (overlapped) ? dofs_struct->overlap_node_vs : dofs_struct->node_vs;
-        node_vs = overlapped ? ov_part_node_vs : part_node_vs;
-
-        const int numPartNodes = getLocalSubdim(node_vs);
-        dofManager.setup(numComponents, numPartNodes, maxGlobalNodeGID, interleavedOrdering);
-
-        if (numComponents == 1) {
-          // Life is easy: copy node_vs into the dofs_struct's dof vs
-          (overlapped ? dofs_struct->overlap_vs : dofs_struct->vs) = node_vs;
-        } else {
-          // We need to build the vs from scratch.
-          auto node_gids = getGlobalElements(node_vs);
-          indices.resize(numPartNodes * numComponents);
-          for (int i = 0; i < numPartNodes; i++) {
-            for (int j = 0; j < numComponents; j++) {
-              indices[dofManager.getLocalDOF(i,j)] = dofManager.getGlobalDOF(node_gids[i], j);
-            }
-          }
-          auto vs = createVectorSpace(comm, indices());
-          if (overlapped) {
-            dofs_struct->overlap_vs = vs;
-          } else {
-            dofs_struct->vs = vs;
-          }
-        }
-
-        // Create the Global-Local indexers
-        if (overlapped) {
-          dofs_struct->overlap_node_vs_indexer = createGlobalLocalIndexer(dofs_struct->overlap_node_vs);
-          dofs_struct->overlap_vs_indexer = createGlobalLocalIndexer(dofs_struct->overlap_vs);
-
-        } else {
-          dofs_struct->node_vs_indexer = createGlobalLocalIndexer(dofs_struct->node_vs);
-          dofs_struct->vs_indexer      = createGlobalLocalIndexer(dofs_struct->vs);
-        }
+      if (numComponents == 1) {
+        // Life is easy: copy node_vs into the dofs's dof vs
+        dofs->overlap_vs = dofs->overlap_node_vs;
+        dofs->vs         = dofs->node_vs;
+        dofs->overlap_vs_indexer = dofs->overlap_node_vs_indexer;
+        dofs->vs_indexer         = dofs->node_vs_indexer;
+      } else {
+        // Create dof vs by replicating the nodal one (possibly interleaved)
+        dofs->vs         = createVectorSpace(dofs->node_vs,numComponents,interleavedOrdering);
+        dofs->overlap_vs = createVectorSpace(dofs->overlap_node_vs,numComponents,interleavedOrdering);
+        dofs->overlap_vs_indexer = createGlobalLocalIndexer(dofs->overlap_vs);
+        dofs->vs_indexer         = createGlobalLocalIndexer(dofs->vs);
       }
+
+      dofs->dofManager.setup(numComponents,
+                             numNodes,
+                             maxGlobalNodeGID,
+                             interleavedOrdering);
+
+      dofs->overlap_dofManager.setup(numComponents,
+                             numNodes+numGhostedNodes,
+                             maxGlobalNodeGID,
+                             interleavedOrdering);
     }
   }
 

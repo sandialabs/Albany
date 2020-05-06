@@ -15,6 +15,7 @@
 #include "Albany_DataTypes.hpp"
 #include "utility/Albany_ThyraCrsMatrixFactory.hpp"
 #include "utility/Albany_ThyraUtils.hpp"
+#include "utility/Albany_GlobalLocalIndexer.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
 
@@ -32,8 +33,6 @@
 namespace Albany {
 
 typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
-
-class GlobalLocalIndexer;
 
 struct DOFsStruct
 {
