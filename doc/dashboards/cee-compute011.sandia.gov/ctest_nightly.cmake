@@ -209,7 +209,8 @@ set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
 #set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
-set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}-${CTEST_BUILD_CONFIGURATION}")
+#set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}")
 set (CTEST_BINARY_NAME build)
 set (CTEST_INSTALL_NAME test)
 
