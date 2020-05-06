@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_MULTISTKFIELDCONT_HPP
-#define ALBANY_MULTISTKFIELDCONT_HPP
+#ifndef ALBANY_MULTI_STK_FIELD_CONTAINER_HPP
+#define ALBANY_MULTI_STK_FIELD_CONTAINER_HPP
 
 #include "Albany_GenericSTKFieldContainer.hpp"
 #include "Teuchos_Array.hpp"
@@ -120,14 +120,4 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
 
 }  // namespace Albany
 
-// Define macro for explicit template instantiation
-#define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
-  template class name<Albany::DiscType::BlockedMono>;
-#define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name) \
-  template class name<Albany::DiscType::Interleaved>;
-
-#define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name)          \
-  MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
-  MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name)
-
-#endif
+#endif // ALBANY_MULTI_STK_FIELD_CONTAINER_HPP

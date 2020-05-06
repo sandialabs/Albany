@@ -11,5 +11,6 @@ namespace Albany {
 
 template class OrdinarySTKFieldContainer<DiscType::BlockedMono>;
 template class OrdinarySTKFieldContainer<DiscType::Interleaved>;
+template class OrdinarySTKFieldContainer<DiscType::BlockedDisc>;
 
 }  // namespace Albany
