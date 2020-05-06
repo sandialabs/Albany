@@ -30,6 +30,9 @@ public:
 
   virtual bool isLocallyOwnedElement (const GO gid) const = 0;
 
+  virtual GO getMaxGlobalGID () const = 0;
+  virtual GO getMaxLocalGID  () const = 0;
+
   Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace () const { return m_vs; }
 
 protected:

@@ -40,6 +40,9 @@ public:
   LO getNumLocalElements  () const { return m_emap->NumMyElements();     }
   GO getNumGlobalElements () const { return m_emap->NumGlobalElements(); }
 
+  GO getMaxGlobalGID () const { return m_emap->MaxAllGID(); }
+  GO getMaxLocalGID  () const { return m_emap->MaxMyGID(); }
+
   Teuchos::RCP<const Teuchos_Comm> getComm () const { return m_comm; }
 
 protected:
