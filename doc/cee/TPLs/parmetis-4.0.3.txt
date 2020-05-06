@@ -1,0 +1,22 @@
+This readme contains the steps to build parmetis-4.0.3 as installed in
+
+/projects/albany/gcc-9.1.0
+
+Source is at
+
+/projects/albany/src/parmetis-4.0.3
+
+1. Edit metis.h to use an IDXTYPEWIDTH of 64 (Zoltan build issues may happen if you miss this)
+
+  cd metis/include
+  vi metis.h
+  #define IDXTYPEWIDTH 64
+
+2. mkdir build
+3. cp parmetis-4.0.3_do-configure to do-configure in the build directory
+4. ./do-configure
+5. make -j 8
+6. make install
+
+7. cp libmetis/libmetis.a /projects/albany/gcc-9.1.0/lib
+8. cp ../metis/include/metis.h /projects/albany/gcc-9.1.0/include
