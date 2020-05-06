@@ -119,7 +119,7 @@ postRegDerivImpl()
   const auto phxSetup = application->getPhxSetup();
   std::vector<PHX::index_size_type> derivative_dimensions;
   derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<EvalT>(application.get(), meshSpecs.get()));
+      PHAL::getDerivativeDimensions<EvalT>(application.get(), meshSpecs.get(), true));
   rfm->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
   rfm->postRegistrationSetupForType<EvalT>(*phxSetup);
 }
