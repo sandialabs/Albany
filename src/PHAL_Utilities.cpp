@@ -12,11 +12,12 @@
 namespace PHAL {
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
-  const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
+  const Albany::Application* app, const Albany::MeshSpecsStruct* ms, bool responseEvaluation)
 {
   const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
   if (Teuchos::nonnull(pl)) {
-    const bool extrudedColumnCoupled = pl->isParameter("Extruded Column Coupled in 2D Response") ? pl->get<bool>("Extruded Column Coupled in 2D Response") : false;
+    const bool extrudedColumnCoupled = (responseEvaluation && pl->isParameter("Extruded Column Coupled in 2D Response")) ?
+        pl->get<bool>("Extruded Column Coupled in 2D Response") : false;
     if(extrudedColumnCoupled)
       { //all column is coupled
         int side_node_count = ms->ctd.side[3].topology->node_count;
@@ -29,13 +30,13 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
-  const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
+  const Albany::Application* app, const Albany::MeshSpecsStruct* ms, bool responseEvaluation)
 {
   return app->getTangentDerivDimension();
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
-  const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
+  const Albany::Application* app, const Albany::MeshSpecsStruct* ms, bool responseEvaluation)
 {
   //Mauro: currently distributed derivatives work only with scalar parameters, to be updated.
   return ms->ctd.node_count;

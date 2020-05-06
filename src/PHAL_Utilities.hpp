@@ -29,7 +29,8 @@ namespace PHAL {
 //! Get derivative dimensions for Phalanx fields.
 template<typename EvalT>
 int getDerivativeDimensions (const Albany::Application* app,
-                             const Albany::MeshSpecsStruct* ms);
+                             const Albany::MeshSpecsStruct* ms,
+                             bool responseEvaluation = false);
 //! Get derivative dimensions for Phalanx fields. Convenience wrapper. Can call
 //! this once app has the discretization.
 template<typename EvalT>
