@@ -47,8 +47,9 @@ namespace {
 // handled is not acted on.
 //   It appears that the output boolean is used only in this file in the context
 // of role type, so for now I'm applying this fix only to this file.
+//IKT, 5/9/2020: INFORMATION has gone away in Ioss_Field.h; replaced it with COMMUNICATION. 
 inline Ioss::Field::RoleType role_type(const bool output) {
-  return output ? Ioss::Field::TRANSIENT : Ioss::Field::INFORMATION;
+  return output ? Ioss::Field::TRANSIENT : Ioss::Field::COMMUNICATION;
 }
 }
 #endif
