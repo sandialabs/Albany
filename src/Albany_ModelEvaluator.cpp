@@ -575,7 +575,7 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
     result.setSupports(
         Thyra_ModelEvaluator::OUT_ARG_DfDp,
         l,
-        Thyra_ModelEvaluator::DERIV_MV_BY_COL);
+        Thyra_ModelEvaluator::DERIV_MV_JACOBIAN_FORM);
   }
   for (int i = 0; i < num_dist_param_vecs; i++)
     result.setSupports(
@@ -586,7 +586,7 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
   for (int i = 0; i < n_g; ++i) {
     Thyra_ModelEvaluator::DerivativeSupport dgdx_support;
     if (app->getResponse(i)->isScalarResponse()) {
-      dgdx_support = Thyra_ModelEvaluator::DERIV_TRANS_MV_BY_ROW;
+      dgdx_support = Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM;
     } else {
       dgdx_support = Thyra_ModelEvaluator::DERIV_LINEAR_OP;
     }
@@ -607,7 +607,7 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
           Thyra_ModelEvaluator::OUT_ARG_DgDp,
           i,
           l,
-          Thyra_ModelEvaluator::DERIV_MV_BY_COL);
+          Thyra_ModelEvaluator::DERIV_MV_JACOBIAN_FORM);
 
     if (app->getResponse(i)->isScalarResponse()) {
       for (int j = 0; j < num_dist_param_vecs; j++)
@@ -615,7 +615,7 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
             Thyra_ModelEvaluator::OUT_ARG_DgDp,
             i,
             j + num_param_vecs,
-            Thyra_ModelEvaluator::DERIV_TRANS_MV_BY_ROW);
+            Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM);
     } else {
       for (int j = 0; j < num_dist_param_vecs; j++)
         result.setSupports(
@@ -841,7 +841,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
 
   // f
   if (app->is_adjoint) {
-    const Thyra_Derivative f_deriv(outArgs.get_f(), Thyra_ModelEvaluator::DERIV_TRANS_MV_BY_ROW);
+    const Thyra_Derivative f_deriv(outArgs.get_f(), Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM);
 
     const Thyra_Derivative dummy_deriv;
 
