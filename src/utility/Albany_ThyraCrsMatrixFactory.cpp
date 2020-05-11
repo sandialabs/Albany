@@ -207,7 +207,13 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp (const bool ignoreN
       // FECrsGraph *is* a CrsGraph. CrsMatrix will only deal with CrsGraph stuff
       matrix = Teuchos::rcp(new Tpetra_CrsMatrix(m_graph->t_graph));
     } else {
-      matrix = Teuchos::rcp (new Tpetra_FECrsMatrix(m_graph->t_graph));
+      auto fe_matrix = Teuchos::rcp (new Tpetra_FECrsMatrix(m_graph->t_graph));
+      // Tpetra creates FECrsMatrix already in assembly mode.
+      // We want linear ops to be in assembly mode *only when explicitly requested*.
+      // If the Thyra LinearOp is created with the matrix in assembly mode,
+      // its range/domain vs's would be the overlapped ones.
+      fe_matrix->endFill();
+      matrix = fe_matrix;
     }
     matrix->resumeFill(); 
     matrix->setAllToScalar(zero);
