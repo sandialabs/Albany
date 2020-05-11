@@ -35,7 +35,6 @@ set(SOURCES
   evaluators/LandIce_HydrostaticPressure.cpp
   evaluators/LandIce_IceOverburden.cpp
   evaluators/LandIce_IceSoftness.cpp
-  evaluators/LandIce_Integral1Dw_Z.cpp
   evaluators/LandIce_LaplacianRegularizationResidual.cpp
   evaluators/LandIce_L2ProjectedBoundaryLaplacianResidual.cpp
   evaluators/LandIce_LiquidWaterFraction.cpp
@@ -74,7 +73,6 @@ set(SOURCES
   evaluators/LandIce_Viscosity.cpp
   evaluators/LandIce_ViscosityFO.cpp
   evaluators/LandIce_ViscosityL1L2.cpp
-  evaluators/LandIce_w_ZResid.cpp
   evaluators/LandIce_w_Resid.cpp
   evaluators/LandIce_Time.cpp
   problems/LandIce_Enthalpy.cpp
@@ -147,8 +145,6 @@ set(HEADERS
   evaluators/LandIce_IceOverburden_Def.hpp
   evaluators/LandIce_IceSoftness.hpp
   evaluators/LandIce_IceSoftness_Def.hpp
-  evaluators/LandIce_Integral1Dw_Z.hpp
-  evaluators/LandIce_Integral1Dw_Z_Def.hpp
   evaluators/LandIce_LaplacianRegularizationResidual.hpp
   evaluators/LandIce_LaplacianRegularizationResidual_Def.hpp
   evaluators/LandIce_L2ProjectedBoundaryLaplacianResidual.hpp
@@ -223,8 +219,6 @@ set(HEADERS
   evaluators/LandIce_ViscosityFO_Def.hpp
   evaluators/LandIce_ViscosityL1L2.hpp
   evaluators/LandIce_ViscosityL1L2_Def.hpp
-  evaluators/LandIce_w_ZResid.hpp
-  evaluators/LandIce_w_ZResid_Def.hpp
   evaluators/LandIce_w_Resid.hpp
   evaluators/LandIce_w_Resid_Def.hpp
   evaluators/LandIce_Time.hpp

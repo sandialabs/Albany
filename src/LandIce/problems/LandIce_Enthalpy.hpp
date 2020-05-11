@@ -32,7 +32,6 @@
 
 #include "LandIce_EnthalpyResid.hpp"
 #include "LandIce_EnthalpyBasalResid.hpp"
-#include "LandIce_w_ZResid.hpp"
 #include "LandIce_w_Resid.hpp"
 #include "LandIce_ViscosityFO.hpp"
 #include "LandIce_Dissipation.hpp"
@@ -42,7 +41,6 @@
 #include "LandIce_LiquidWaterFraction.hpp"
 #include "LandIce_PressureMeltingEnthalpy.hpp"
 #include "LandIce_Temperature.hpp"
-#include "LandIce_Integral1Dw_Z.hpp"
 #include "LandIce_VerticalVelocity.hpp"
 #include "LandIce_BasalMeltRate.hpp"
 #include "LandIce_SurfaceAirEnthalpy.hpp"

@@ -14,7 +14,6 @@ ANONYMOUS:
     Needs Dissipation: true
     Needs Basal Friction: true
     Constant Geothermal Flux: false
-    Compute W: true
     Dirichlet BCs: 
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
       DBC on NS bottom for DOF U1: 0.00000000000000000e+00
