@@ -1,0 +1,2 @@
+using mpi : /projects/albany/clang-10.0.0/bin/mpicxx ;
+

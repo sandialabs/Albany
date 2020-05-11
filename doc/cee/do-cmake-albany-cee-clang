@@ -1,0 +1,35 @@
+#!/bin/bash
+  
+if [ $# -ne 1 ]; then
+   echo "Usage: $0 -d (debug)"
+   echo "Usage: $0 -r (release)"
+   exit 1
+elif [ $1 = "-d" ]; then
+   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_CL_DBG
+elif [ $1 = "-r" ]; then
+   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_CL_REL
+else
+   echo "Usage: $0 -d (debug)"
+   echo "Usage: $0 -r (release)"
+   exit 1
+fi
+
+export ALBANY_HOME=~/Codes/Albany
+export ALB_ENABLE_LANDICE=ON
+export ALB_DEBUG=OFF
+export ALB_ENABLE_CHECK_FPE=ON
+export ALB_ENABLE_PERF_TESTS=ON
+export ALB_VERBOSE=OFF
+
+cmake \
+      -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINOS_INSTALL_DIR" \
+      -D ENABLE_LANDICE:BOOL=${ALB_ENABLE_LANDICE} \
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=${ALB_VERBOSE} \
+      -D ENABLE_DEBUGGING:BOOL=${ALB_DEBUG} \
+      -D ENABLE_CHECK_FPE:BOOL=${ALB_ENABLE_CHECK_FPE} \
+      -D ENABLE_STRONG_FPE_CHECK:BOOL=${ALB_ENABLE_CHECK_FPE} \
+      -D ENABLE_PERFORMANCE_TESTS:BOOL=${ALB_ENABLE_PERF_TESTS} \
+      -D ALBANY_CTEST_TIMEOUT:INTEGER=70 \
+\
+${ALBANY_HOME}
+

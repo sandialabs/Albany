@@ -1,0 +1,16 @@
+#!/bin/sh
+
+export metis=/projects/albany/src/parmetis-4.0.3/metis
+
+cmake \
+-DCMAKE_INSTALL_PREFIX=/projects/albany/clang-10.0.0 \
+-DMETIS_PATH=$metis \
+-DGKLIB_PATH=$metis/GKlib \
+-DCMAKE_C_COMPILER=mpicc \
+-DCMAKE_CXX_COMPILER=mpicxx \
+-DCMAKE_C_FLAGS="-O3 -DNDEBUG -march=native -fPIC" \
+-DCMAKE_CXX_FLAGS="-O3 -DNDEBUG -march=native -fPIC"  \
+..
+
+#cp libmetis/libmetis.a /projects/albany/clang-10.0.0/lib
+#cp $metis/include/metis.h /projects/albany/clang-10.0.0/include

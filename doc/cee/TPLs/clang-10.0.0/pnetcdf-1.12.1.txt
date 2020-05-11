@@ -1,0 +1,12 @@
+This readme contains the steps to build pnetcdf-1.12.1 as installed in
+
+/projects/albany/clang-10.0.0
+
+Source is at
+
+/projects/albany/src/pnetcdf-1.12.1
+
+1. ./configure CC=/projects/albany/clang-10.0.0/bin/mpicc FC=/projects/albany/clang-10.0.0/bin/mpifort CXX=/projects/albany/clang-10.0.0/bin/mpicxx CXXFLAGS="-O3 -fPIC -DNDEBUG -march=native" CFLAGS="-O3 -fPIC -DNDEBUG -march=native" FCFLAGS="-O3 -fPIC -DNDEBUG -march=native" --prefix=/projects/albany/clang-10.0.0
+
+2. make -j 8
+3. make install
