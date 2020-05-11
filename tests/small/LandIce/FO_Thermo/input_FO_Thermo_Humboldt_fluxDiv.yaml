@@ -19,7 +19,6 @@ ANONYMOUS:
     Needs Dissipation: true
     Needs Basal Friction: true
     Constant Geothermal Flux: false
-    Compute W: true
     LandIce Field Norm:
       sliding_velocity_basalside:
         Regularization Type: Given Value

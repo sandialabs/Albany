@@ -12,7 +12,6 @@ ANONYMOUS:
     Needs Dissipation: true
     Needs Basal Friction: true
     Constant Geothermal Flux: false
-    Compute W: false
     Dirichlet BCs: 
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
       DBC on NS bottom for DOF U1: 0.00000000000000000e+00
@@ -147,11 +146,11 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/Enthalpy/Dome/basal_heat_flux.ascii
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [5.307598209065e-01]
+    Test Values: [5.61027285e-01]
     Relative Tolerance: 1.0e-04
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [1.065062318420e+01]
+      Sensitivity Test Values 0: [2.039408613810e-01]
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -194,7 +193,7 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver: 
             Write Linear System: false
-            Tolerance: 1.0e-8
+            Tolerance: 1.0e-9
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
