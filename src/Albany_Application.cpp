@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-//#define DEBUG
 
 #include "Albany_Application.hpp"
 #include "Albany_DiscretizationFactory.hpp"
@@ -1378,6 +1377,10 @@ Application::computeGlobalJacobianImpl(
     const double                            dt)
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: Jacobian");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (jac.is_null(), std::logic_error,
+    "Error! When calling 'computeGlobalJacobianImpl', the Jacobian pointer must be valid.\n");
+
   using EvalT = PHAL::AlbanyTraits::Jacobian;
   postRegSetup<EvalT>();
 
@@ -1448,9 +1451,7 @@ Application::computeGlobalJacobianImpl(
     if (!workset.f.is_null()) {
       workset.f_kokkos = getNonconstDeviceData(workset.f);
     }
-    if (!workset.Jac.is_null()) {
-      workset.Jac_kokkos = getNonconstDeviceData(workset.Jac);
-    }
+    workset.Jac_kokkos = getNonconstDeviceData(workset.Jac);
 #endif
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
