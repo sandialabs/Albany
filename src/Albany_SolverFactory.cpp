@@ -357,7 +357,8 @@ SolverFactory::getValidDebugParameters() const
   validPL->set<bool>("Write Distributed Solution and Map to MatrixMarket", false, "Flag to Write Distributed Solution and Map to MatrixMarket");
   validPL->set<int>("Write Solution to Standard Output", 0, "Residual Number to Dump to Standard Output");
   validPL->set<bool>("Analyze Memory", false, "Flag to Analyze Memory");
-  return validPL;
+  validPL->set<bool>("Report Timers", true, "Whether to report timers at the end of execution");
+  return validPL; 
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
