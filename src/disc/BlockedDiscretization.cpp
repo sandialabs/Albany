@@ -108,30 +108,6 @@ Albany::BlockedDiscretization::transformMesh()
 
 }
 
-GO
-Albany::BlockedDiscretization::gid(const stk::mesh::Entity node) const
-{
-  return BlockDiscretization[0]->gid(node);
-}
-
-int
-Albany::BlockedDiscretization::getOwnedDOF(const int inode, const int eq) const
-{
-	return getOwnedDOF(inode, eq);
-}
-
-int
-Albany::BlockedDiscretization::getOverlapDOF(const int inode, const int eq) const
-{
-	return BlockDiscretization[0]->getOverlapDOF(inode, eq);
-}
-
-GO
-Albany::BlockedDiscretization::getGlobalDOF(const GO inode, const int eq) const
-{
-	return BlockDiscretization[0]->getGlobalDOF(inode, eq);
-}
-
 void
 Albany::BlockedDiscretization::reNameExodusOutput(std::string& filename)
 {

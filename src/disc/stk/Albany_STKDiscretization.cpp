@@ -156,8 +156,9 @@ STKDiscretization::getCoordinates() const
 
   const int meshDim = stkMeshStruct->numDim;
   auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
+  auto numOverlapNodes = ov_node_indexer->getNumLocalElements();
   for (int i = 0; i < numOverlapNodes; i++) {
-    GO  node_gid = gid(overlapnodes[i]);
+    GO  node_gid = stk_gid(overlapnodes[i]);
     int node_lid = ov_node_indexer->getLocalElement(node_gid);
 
     double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -200,6 +201,7 @@ STKDiscretization::transformMesh()
     *out << "Spherical!" << endl;
 #endif
     const int numDim = stkMeshStruct->numDim;
+    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       double  r = 0.0;
@@ -219,6 +221,7 @@ STKDiscretization::transformMesh()
     // zshift << '\n';
     const int numDim = stkMeshStruct->numDim;
     //*out << "numDim = " << numDim << '\n';
+    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     if (numDim >= 0) {
       for (int i = 0; i < numOverlapNodes; i++) {
         double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -273,6 +276,7 @@ STKDiscretization::transformMesh()
       beta  = betas[0];
       scale = scales[0];
       if (abs(beta) > 1.0e-12) {
+        const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
         for (int i = 0; i < numOverlapNodes; i++) {
           double* x =
               stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -285,6 +289,7 @@ STKDiscretization::transformMesh()
       beta  = betas[1];
       scale = scales[1];
       if (abs(beta) > 1.0e-12) {
+        const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
         for (int i = 0; i < numOverlapNodes; i++) {
           double* x =
               stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -297,6 +302,7 @@ STKDiscretization::transformMesh()
       beta  = betas[2];
       scale = scales[2];
       if (abs(beta) > 1.0e-12) {
+        const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
         for (int i = 0; i < numOverlapNodes; i++) {
           double* x =
               stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -326,6 +332,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData.get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
+    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -356,6 +363,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData.get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
+    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -387,6 +395,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData.get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
+    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -406,6 +415,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData.get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
+    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -425,6 +435,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData.get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
+    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -449,6 +460,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData.get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
+    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -479,6 +491,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData.get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
+    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0] = L * (x[0] - 1.0);  // test case assumes domain is from [-L, L],
@@ -512,18 +525,21 @@ STKDiscretization::setupMLCoords()
   auto coordMV_data = getNonconstLocalData(coordMV);
 
   auto node_indexer = createGlobalLocalIndexer(m_node_vs);
-  for (int i = 0; i < numOwnedNodes; i++) {
-    GO      node_gid = gid(ownednodes[i]);
+
+  std::vector<stk::mesh::Entity> ownedNodes;
+  const auto& part    = metaData.locally_owned_part();
+  const auto& buckets = bulkData.buckets(stk::topology::NODE_RANK);
+  stk::mesh::get_selected_entities(part, buckets, ownedNodes);
+
+  for (const auto node : ownedNodes) {
+    GO      node_gid = stk_gid(node);
     int     node_lid = node_indexer->getLocalElement(node_gid);
-    double* X        = stk::mesh::field_data(*coordinates_field, ownednodes[i]);
-    for (int j = 0; j < numDim; j++) { coordMV_data[j][node_lid] = X[j]; }
+    double* X        = stk::mesh::field_data(*coordinates_field, node);
+    for (int j = 0; j < numDim; j++) {
+      coordMV_data[j][node_lid] = X[j];
+    }
   }
-
   rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV, interleavedOrdering, m_vs, m_overlap_vs);
-
-  // Some optional matrix-market output was tagged on here; keep that
-  // functionality.
-  writeCoordsToMatrixMarket();
 }
 
 void
@@ -992,59 +1008,6 @@ STKDiscretization::setSolutionFieldMV(
   container->saveSolnMultiVector(soln, soln_dxdp, part, node_vs);
 }
 
-GO
-STKDiscretization::gid(const stk::mesh::Entity node) const
-{
-  return bulkData.identifier(node) - 1;
-}
-
-int
-STKDiscretization::getOwnedDOF(const int inode, const int eq) const
-{
-  if (interleavedOrdering == DiscType::Interleaved) {
-    return inode * neq + eq;
-  } else {
-    return inode + numOwnedNodes * eq;
-  }
-}
-
-int
-STKDiscretization::getOverlapDOF(const int inode, const int eq) const
-{
-  if (interleavedOrdering == DiscType::Interleaved) {
-    return inode * neq + eq;
-  } else {
-    return inode + numOverlapNodes * eq;
-  }
-}
-
-GO
-STKDiscretization::getGlobalDOF(const GO inode, const int eq) const
-{
-  if (interleavedOrdering == DiscType::Interleaved) {
-    return inode * neq + eq;
-  } else {
-    return inode + maxGlobalNodeGID * eq;
-  }
-}
-
-int
-STKDiscretization::nonzeroesPerRow(const int num_eq) const
-{
-  int numDim = stkMeshStruct->numDim;
-  int estNonzeroesPerRow;
-  switch (numDim) {
-    case 0: estNonzeroesPerRow = 1 * num_eq; break;
-    case 1: estNonzeroesPerRow = 3 * num_eq; break;
-    case 2: estNonzeroesPerRow = 9 * num_eq; break;
-    case 3: estNonzeroesPerRow = 27 * num_eq; break;
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true, std::logic_error, "STKDiscretization:  Bad numDim" << numDim);
-  }
-  return estNonzeroesPerRow;
-}
-
 void STKDiscretization::computeVectorSpaces()
 {
   // Loads member data:  ownednodes, numOwnedNodes, node_map, maxGlobalNodeGID,
@@ -1063,7 +1026,7 @@ void STKDiscretization::computeVectorSpaces()
   GO maxID = -1;
   GO maxNodeGID;
   for (const auto& node : nodes) {
-    maxID = std::max(maxID, gid(node));
+    maxID = std::max(maxID, stk_gid(node));
   }
   Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &maxID, &maxNodeGID);
   maxGlobalNodeGID = maxNodeGID;
@@ -1106,7 +1069,7 @@ void STKDiscretization::computeVectorSpaces()
     // Owned
     for (const auto& node : nodes) {
       // STK ids start from 1. Subtract 1 to get 0-based indexing.
-      const GO nodeId = bulkData.identifier(node) - 1;
+      const GO nodeId = stk_gid(node);
       indices.push_back(nodeId);
     }
     auto part_node_vs = createVectorSpace(comm, indices());
@@ -1115,7 +1078,7 @@ void STKDiscretization::computeVectorSpaces()
     // IMPORTANT: make sure the ghosted nodes come *after* the owned ones
     for (const auto& node : ghosted_nodes) {
       // STK ids start from 1. Subtract 1 to get 0-based indexing.
-      const GO nodeId = bulkData.identifier(node) - 1;
+      const GO nodeId = stk_gid(node);
       indices.push_back(nodeId);
     }
     auto ov_part_node_vs = createVectorSpace(comm, indices());
@@ -1206,6 +1169,8 @@ STKDiscretization::computeGraphs()
     }
   }
 
+  // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
+  const auto dofMgr = getDOFManager("ordinary_solution");
   for (std::size_t i = 0; i < cells.size(); i++) {
     stk::mesh::Entity        e         = cells[i];
     stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
@@ -1217,11 +1182,11 @@ STKDiscretization::computeGraphs()
 
       // loop over eqs
       for (std::size_t k = 0; k < globalEqns.size(); ++k) {
-        row = getGlobalDOF(gid(rowNode), globalEqns[k]);
+        row = dofMgr.getGlobalDOF(stk_gid(rowNode), globalEqns[k]);
         for (std::size_t l = 0; l < num_nodes; l++) {
           stk::mesh::Entity colNode = node_rels[l];
           for (std::size_t m = 0; m < globalEqns.size(); ++m) {
-            col   = getGlobalDOF(gid(colNode), globalEqns[m]);
+            col   = dofMgr.getGlobalDOF(stk_gid(colNode), globalEqns[m]);
             colAV = Teuchos::arrayView(&col, 1);
             m_jac_factory->insertGlobalIndices(row, colAV);
           }
@@ -1244,7 +1209,7 @@ STKDiscretization::computeGraphs()
       //       the redundant indices will be discarded
       for (std::size_t inode = 0; inode < overlapnodes.size(); ++inode) {
         stk::mesh::Entity node = overlapnodes[inode];
-        row                    = getGlobalDOF(gid(node), eq);
+        row                    = dofMgr.getGlobalDOF(stk_gid(node), eq);
         colAV                  = Teuchos::arrayView(&row, 1);
         m_jac_factory->insertGlobalIndices(row, colAV);
       }
@@ -1276,7 +1241,7 @@ STKDiscretization::computeGraphs()
           // loop over local nodes of the side (row)
           for (std::size_t i = 0; i < num_nodes; i++) {
             stk::mesh::Entity rowNode = node_rels[i];
-            row                       = getGlobalDOF(gid(rowNode), eq);
+            row                       = dofMgr.getGlobalDOF(stk_gid(rowNode), eq);
 
             // loop over local nodes of the side (col)
             for (std::size_t j = 0; j < num_nodes; j++) {
@@ -1285,7 +1250,7 @@ STKDiscretization::computeGraphs()
               // loop on all the equations (the eq may be coupled with other
               // eqns)
               for (std::size_t m = 0; m < neq; m++) {
-                col = getGlobalDOF(gid(colNode), m);
+                col = dofMgr.getGlobalDOF(stk_gid(colNode), m);
                 m_jac_factory->insertGlobalIndices(
                     row, Teuchos::arrayView(&col, 1));
                 m_jac_factory->insertGlobalIndices(
@@ -1489,10 +1454,10 @@ STKDiscretization::computeWorksetInfo()
       element = buck[i];
 
       // Now, save a map from element GID to workset on this PE
-      elemGIDws[gid(element)].ws = b;
+      elemGIDws[stk_gid(element)].ws = b;
 
       // Now, save a map from element GID to local id on this workset on this PE
-      elemGIDws[gid(element)].LID = i;
+      elemGIDws[stk_gid(element)].LID = i;
 
       stk::mesh::Entity const* node_rels = bulkData.begin_nodes(element);
       nodes_per_element                  = bulkData.num_nodes(element);
@@ -1508,10 +1473,10 @@ STKDiscretization::computeWorksetInfo()
         int       nComp              = it->first.second;
         for (int j = 0; j < nodes_per_element; j++) {
           stk::mesh::Entity node      = node_rels[j];
-          wsElNodeID_array((int)i, j) = gid(node);
+          wsElNodeID_array((int)i, j) = stk_gid(node);
           for (int k = 0; k < nComp; k++) {
             const GO node_gid = it->second.overlap_dofManager.getGlobalDOF(
-                bulkData.identifier(node) - 1, k);
+                stk_gid(node), k);
             const int node_lid = ov_indexer->getLocalElement(node_gid);
             wsElNodeEqID_array((int)i, j, k) = node_lid;
           }
@@ -1525,7 +1490,7 @@ STKDiscretization::computeWorksetInfo()
       IDArray&  node_eq_array = dofs_struct.wsElNodeEqID[b];
       for (int j = 0; j < nodes_per_element; j++) {
         const stk::mesh::Entity rowNode  = node_rels[j];
-        const GO                node_gid = gid(rowNode);
+        const GO                node_gid = stk_gid(rowNode);
         const LO node_lid = ov_node_indexer->getLocalElement(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(
@@ -1793,7 +1758,7 @@ STKDiscretization::computeSideSets()
       sStruct.side_GID = bulkData.identifier(sidee) - 1;
 
       // Save elem id. This is the global element id
-      sStruct.elem_GID = gid(elem);
+      sStruct.elem_GID = bulkData.identifier(elem) - 1;
 
       int workset = elemGIDws[sStruct.elem_GID]
                         .ws;  // Get the ws that this element lives in
@@ -1941,6 +1906,8 @@ STKDiscretization::computeNodeSets()
       stkMeshStruct->getCoordinatesField();
 
   auto node_indexer = createGlobalLocalIndexer(m_node_vs);
+  // A dof manager, to get the correct numbering (interleaved vs blocked)
+  const auto dofMgr = getDOFManager("ordinary_solution");
   while (ns != stkMeshStruct->nsPartVec.end()) {  // Iterate over Node Sets
     // Get all owned nodes in this node set
     stk::mesh::Selector select_owned_in_nspart =
@@ -1960,12 +1927,12 @@ STKDiscretization::computeNodeSets()
     *out << "STKDisc: nodeset " << ns->first << " has size " << nodes.size()
          << "  on Proc 0." << std::endl;
     for (std::size_t i = 0; i < nodes.size(); i++) {
-      GO  node_gid              = gid(nodes[i]);
+      GO  node_gid              = bulkData.identifier(nodes[i]) - 1;
       int node_lid              = node_indexer->getLocalElement(node_gid);
       nodeSetGIDs[ns->first][i] = node_gid;
       nodeSets[ns->first][i].resize(neq);
       for (std::size_t eq = 0; eq < neq; ++eq) {
-        nodeSets[ns->first][i][eq] = getOwnedDOF(node_lid, eq);
+        nodeSets[ns->first][i][eq] = dofMgr.getLocalDOF(node_lid, eq);
       }
       nodeSetCoords[ns->first][i] =
           stk::mesh::field_data(*coordinates_field, nodes[i]);
@@ -2049,148 +2016,21 @@ STKDiscretization::reNameExodusOutput(std::string& filename)
 #endif
 }
 
-// Convert the stk mesh on this processor to a nodal graph.
-// todo Dev/tested on linear elements only.
-void
-STKDiscretization::meshToGraph()
-{
-  if (Teuchos::is_null(stkMeshStruct->nodal_data_base)) { return; }
-  if (!stkMeshStruct->nodal_data_base->isNodeDataPresent()) { return; }
-
-  // Set up the CRS graph used for solution transfer and projection mass
-  // matrices. Assume the Crs row size is 27, which is the maximum number
-  // required for first-order hexahedral elements.
-
-  nodalMatrixFactory = Teuchos::rcp(
-      new ThyraCrsMatrixFactory(m_overlap_node_vs, m_overlap_node_vs));
-
-  // Elements that surround a given node, in the form of Entity's.
-  std::vector<std::vector<stk::mesh::Entity>> sur_elem;
-  // numOverlapNodes are the total # of nodes seen by this pe
-  // numOwnedNodes are the total # of nodes owned by this pe
-  sur_elem.resize(numOverlapNodes);
-
-  // Get the elements owned by the current processor
-  const stk::mesh::Selector select_owned_in_part =
-      stk::mesh::Selector(metaData.universal_part()) &
-      stk::mesh::Selector(metaData.locally_owned_part());
-
-  const stk::mesh::BucketVector& buckets =
-      bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned_in_part);
-
-  auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
-  for (size_t b = 0; b < buckets.size(); ++b) {
-    const stk::mesh::Bucket& buck_cells = *buckets[b];
-    // Find the surrounding elements for each node owned by this processor.
-    for (std::size_t ecnt = 0; ecnt < buck_cells.size(); ecnt++) {
-      const stk::mesh::Entity  e             = buck_cells[ecnt];
-      const stk::mesh::Entity* node_rels     = bulkData.begin_nodes(e);
-      const size_t             num_node_rels = bulkData.num_nodes(e);
-
-      // Loop over nodes within the element.
-      for (std::size_t ncnt = 0; ncnt < num_node_rels; ++ncnt) {
-        const stk::mesh::Entity rowNode = node_rels[ncnt];
-        GO                      nodeGID = gid(rowNode);
-        int nodeLID = ov_node_indexer->getLocalElement(nodeGID);
-        // In the case of degenerate elements, where a node can be entered into
-        // the connect table twice, need to check to make sure that this element
-        // is not already listed as surrounding this node.
-        const std::vector<stk::mesh::Entity> sur_elem_node_lid =
-            sur_elem[nodeLID];
-        if (sur_elem[nodeLID].empty() || !in_list(e, sur_elem_node_lid)) {
-          sur_elem[nodeLID].push_back(e);
-        }
-      }
-    }
-  }
-
-  std::size_t max_nsur = 0;
-  for (int ncnt = 0; ncnt < numOverlapNodes; ncnt++) {
-    if (sur_elem[ncnt].empty()) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true,
-          std::logic_error,
-          "Node = " << ncnt + 1 << " has no elements" << std::endl);
-    } else {
-      std::size_t nsur = sur_elem[ncnt].size();
-      if (nsur > max_nsur) max_nsur = nsur;
-    }
-  }
-
-  // end find_surrnd_elems
-
-  // find_adjacency
-
-  // Note that the center node of a subgraph must be owned by this pe, but we
-  // want all nodes in the overlap graph to be covered in the nodal graph.
-
-  // loop over all the nodes owned by this PE
-  for (LO ncnt = 0; ncnt < numOverlapNodes; ++ncnt) {
-    Teuchos::Array<GO> adjacency;
-    GO                 globalrow = ov_node_indexer->getGlobalElement(ncnt);
-    // loop over the elements surrounding node ncnt
-    for (std::size_t ecnt = 0; ecnt < sur_elem[ncnt].size(); ecnt++) {
-      const stk::mesh::Entity  elem          = sur_elem[ncnt][ecnt];
-      const stk::mesh::Entity* node_rels     = bulkData.begin_nodes(elem);
-      const size_t             num_node_rels = bulkData.num_nodes(elem);
-      // loop over the nodes in the surrounding element elem
-      for (std::size_t lnode = 0; lnode < num_node_rels; ++lnode) {
-        const stk::mesh::Entity node_a = node_rels[lnode];
-        // entry is the GID of each node
-        GO entry = gid(node_a);
-        // Every node in an element adjacent to node 'globalrow' is in this
-        // graph.
-        if (!in_list(entry, adjacency)) { adjacency.push_back(entry); }
-      }
-    }
-    nodalMatrixFactory->insertGlobalIndices(globalrow, adjacency());
-  }
-
-  // end find_adjacency
-
-  nodalMatrixFactory->fillComplete();
-  // Pass the graph RCP to the nodal data block
-  stkMeshStruct->nodal_data_base->updateNodalGraph(
-      nodalMatrixFactory.getConst());
-}
-
-void
-STKDiscretization::printVertexConnectivity()
-{
-  if (Teuchos::is_null(nodalMatrixFactory)) { return; }
-
-  auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
-  auto dummy_op = nodalMatrixFactory->createOp();
-  Teuchos::Array<LO> indices;
-  Teuchos::Array<ST> vals;
-  for (int i = 0; i < numOverlapNodes; ++i) {
-    GO globalvert = ov_node_indexer->getGlobalElement(i);
-
-    std::cout << "Center vert is : " << globalvert + 1 << std::endl;
-
-    getLocalRowValues(dummy_op, i, indices, vals);
-
-    for (int j = 0; j < indices.size(); j++) {
-      std::cout << "                  "
-                << ov_node_indexer->getGlobalElement(indices[j]) + 1
-                << std::endl;
-    }
-  }
-}
-
 void
 STKDiscretization::buildSideSetProjectors()
 {
   // Note: the Global index of a node should be the same in both this and the
   // side discretizations
   //       since the underlying STK entities should have the same ID
-  Teuchos::RCP<const Thyra_VectorSpace> ss_ov_vs, ss_vs;
   Teuchos::RCP<ThyraCrsMatrixFactory>   ov_graphP;
   Teuchos::RCP<Thyra_LinearOp>          P, ov_P;
 
   Teuchos::Array<GO> cols(1);
   Teuchos::Array<ST> vals(1);
   vals[0] = 1.0;
+
+  // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
+  const auto dofMgr = getDOFManager("ordinary_solution");
 
   Teuchos::ArrayView<const GO> ss_indices;
   stk::mesh::EntityRank        SIDE_RANK = stkMeshStruct->metaData->side_rank();
@@ -2200,9 +2040,13 @@ STKDiscretization::buildSideSetProjectors()
     const STKDiscretization&     disc        = *it.second;
     const AbstractSTKMeshStruct& ss_mesh     = *disc.stkMeshStruct;
 
-    // Get the maps
-    ss_ov_vs = disc.getOverlapVectorSpace();
-    ss_vs    = disc.getVectorSpace();
+    // Get the vector spaces
+    auto ss_ov_vs   = disc.getOverlapVectorSpace();
+    auto ss_vs      = disc.getVectorSpace();
+    auto ss_node_vs = disc.getNodeVectorSpace();
+
+    // A dof manager, to figure out interleaved vs blocked numbering
+    const auto ss_dofMgr = disc.getDOFManager("ordinary_solution");
 
     // Extract the sides
     stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.find(it.first)->second;
@@ -2225,7 +2069,7 @@ STKDiscretization::buildSideSetProjectors()
     std::pair<std::set<GO>::iterator, bool> check;
     stk::mesh::Entity                       ss_cell;
     for (auto side : sides) {
-      side_gid    = gid(side);
+      side_gid    = stk_gid(side);
       ss_cell_gid = side_cell_map.at(side_gid);
       ss_cell     = ss_mesh.bulkData->get_entity(
           stk::topology::ELEM_RANK, ss_cell_gid + 1);
@@ -2236,17 +2080,17 @@ STKDiscretization::buildSideSetProjectors()
       const stk::mesh::Entity* ss_cell_nodes =
           ss_mesh.bulkData->begin_nodes(ss_cell);
       for (int i(0); i < num_side_nodes; ++i) {
-        node_gid = gid(side_nodes[i]);
+        node_gid = stk_gid(side_nodes[i]);
         check    = processed_node.insert(node_gid);
         if (check.second) {
           // This node was not processed before. Let's do it.
           ss_node_gid =
-              disc.gid(ss_cell_nodes[node_numeration_map.at(side_gid)[i]]);
+              disc.stk_gid(ss_cell_nodes[node_numeration_map.at(side_gid)[i]]);
 
           for (int eq(0); eq < static_cast<int>(neq); ++eq) {
-            cols[0] = getGlobalDOF(node_gid, eq);
+            cols[0] = dofMgr.getGlobalDOF(node_gid, eq);
             ov_graphP->insertGlobalIndices(
-                disc.getGlobalDOF(ss_node_gid, eq), cols());
+                ss_dofMgr.getGlobalDOF(ss_node_gid, eq), cols());
           }
         }
       }
@@ -2310,14 +2154,6 @@ STKDiscretization::updateMesh()
 
   setupExodusOutput();
 
-  // Build the node graph needed for the mass matrix for solution transfer and
-  // projection operations
-  // FIXME this only needs to be called if we are using the L2 Projection
-  // response
-  meshToGraph();
-  //  printVertexConnectivity();
-  // meshToGraph();
-  // printVertexConnectivity();
 
 #ifdef OUTPUT_TO_SCREEN
   printCoords();

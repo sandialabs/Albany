@@ -359,22 +359,6 @@ class STKDiscretization : public AbstractDiscretization
     return neq;
   }
 
-  //! Locate nodal dofs in non-overlapping vectors using local indexing
-  int
-  getOwnedDOF(const int inode, const int eq) const;
-
-  //! Locate nodal dofs in overlapping vectors using local indexing
-  int
-  getOverlapDOF(const int inode, const int eq) const;
-
-  //! Get global id of the stk entity
-  GO
-  gid(const stk::mesh::Entity entity) const;
-
-  //! Locate nodal dofs using global indexing
-  GO
-  getGlobalDOF(const GO inode, const int eq) const;
-
   Teuchos::RCP<LayeredMeshNumbering<LO>>
   getLayeredMeshNumbering() const
   {
@@ -390,6 +374,12 @@ class STKDiscretization : public AbstractDiscretization
   getSTKBulkData() const
   {
     return bulkData;
+  }
+
+  // Used very often, so make it a function
+  GO stk_gid (const stk::mesh::Entity e) const {
+    // STK numbering is 1-based, while we want 0-based.
+    return getSTKBulkData().identifier(e) - 1;
   }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
@@ -488,6 +478,7 @@ class STKDiscretization : public AbstractDiscretization
   };
 
  protected:
+
   void
   getSolutionField(Thyra_Vector& result, bool overlapped) const;
   void
@@ -540,10 +531,6 @@ class STKDiscretization : public AbstractDiscretization
   //! Find the local side id number within parent element
   unsigned
   determine_local_side_id(const stk::mesh::Entity elem, stk::mesh::Entity side);
-
-  //! Convert the stk mesh on this processor to a nodal graph using SEACAS
-  void
-  meshToGraph();
 
   void
   writeCoordsToMatrixMarket() const;
@@ -620,15 +607,12 @@ class STKDiscretization : public AbstractDiscretization
   std::vector<std::vector<std::vector<double>>> nodesOnElemStateVec;
 
   //! list of all owned nodes, saved for setting solution
-  std::vector<stk::mesh::Entity> ownednodes;
   std::vector<stk::mesh::Entity> cells;
 
   //! list of all overlap nodes, saved for getting coordinates for mesh motion
   std::vector<stk::mesh::Entity> overlapnodes;
 
   //! Number of elements on this processor
-  int numOwnedNodes;
-  int numOverlapNodes;
   GO  maxGlobalNodeGID;
 
   // Needed to pass coordinates to ML.
@@ -669,7 +653,6 @@ class STKDiscretization : public AbstractDiscretization
   DiscType interleavedOrdering;
 
  private:
-  Teuchos::RCP<ThyraCrsMatrixFactory> nodalMatrixFactory;
 
   template <typename T, typename ContainerType>
   bool
@@ -680,9 +663,6 @@ class STKDiscretization : public AbstractDiscretization
     }
     return false;
   }
-
-  void
-  printVertexConnectivity();
 };
 
 }  // namespace Albany

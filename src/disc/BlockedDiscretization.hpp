@@ -340,22 +340,6 @@ class BlockedDiscretization : public AbstractDiscretization
     return BlockDiscretization[0]->getNumEq();
   }
 
-  //! Locate nodal dofs in non-overlapping vectors using local indexing
-  int
-  getOwnedDOF(const int inode, const int eq) const;
-
-  //! Locate nodal dofs in overlapping vectors using local indexing
-  int
-  getOverlapDOF(const int inode, const int eq) const;
-
-  //! Get global id of the stk entity
-  GO
-  gid(const stk::mesh::Entity entity) const;
-
-  //! Locate nodal dofs using global indexing
-  GO
-  getGlobalDOF(const GO inode, const int eq) const;
-
   Teuchos::RCP<LayeredMeshNumbering<LO>>
   getLayeredMeshNumbering() const
   {
@@ -383,6 +367,7 @@ class BlockedDiscretization : public AbstractDiscretization
 
   void
   getField(Thyra_MultiVector& field_vector, const std::string& field_name) const;
+
   void
   setField(
       const Thyra_MultiVector& field_vector,

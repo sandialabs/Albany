@@ -74,6 +74,9 @@ void STKDiscretizationStokesH::computeGraphs()
 
   GO row, col;
   auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
+
+  // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
+  auto dofMgr = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").dofManager;
   for (std::size_t i=0; i < cells.size(); i++) {
     stk::mesh::Entity e = cells[i];
     stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
@@ -85,11 +88,11 @@ void STKDiscretizationStokesH::computeGraphs()
 
       // loop over eqs
       for (std::size_t k=0; k < n3dEq; k++) {
-        row = this->getGlobalDOF(this->gid(rowNode), k);
+        row = dofMgr.getGlobalDOF(stk_gid(rowNode), k);
         for (std::size_t l=0; l < num_nodes; l++) {
           stk::mesh::Entity colNode = node_rels[l];
           for (std::size_t m=0; m < n3dEq; m++) {
-            col = this->getGlobalDOF(this->gid(colNode), m);
+            col = dofMgr.getGlobalDOF(stk_gid(colNode), m);
             m_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));
           }
         }
@@ -97,15 +100,15 @@ void STKDiscretizationStokesH::computeGraphs()
 
       if(neq > n3dEq)
       {
-        row = this->getGlobalDOF(this->gid(rowNode), n3dEq);
-        GO node_gid = this->gid(rowNode);
+        row = dofMgr.getGlobalDOF(stk_gid(rowNode), n3dEq);
+        GO node_gid = stk_gid(rowNode);
         LO base_id, ilayer;
         int node_lid = ov_node_indexer->getLocalElement(node_gid);
         layeredMeshNumbering.getIndices(node_lid, base_id, ilayer);
         if(ilayer == 0) {
           for (std::size_t l=0; l < num_nodes; l++) {
             stk::mesh::Entity colNode = node_rels[l];
-            node_gid = this->gid(colNode);
+            node_gid = stk_gid(colNode);
             node_lid = ov_node_indexer->getLocalElement(node_gid);
             layeredMeshNumbering.getIndices(node_lid, base_id, ilayer);
             if(ilayer == 0) {
@@ -113,11 +116,11 @@ void STKDiscretizationStokesH::computeGraphs()
                 LO inode = layeredMeshNumbering.getId(base_id, il_col);
                 GO gnode = ov_node_indexer->getGlobalElement(inode);
                 for (std::size_t m=0; m < n3dEq; m++) {
-                  col = getGlobalDOF(gnode, m);
+                  col = dofMgr.getGlobalDOF(gnode, m);
                   m_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));
                   m_jac_factory->insertGlobalIndices(col, Teuchos::arrayView(&row, 1));
                 }
-                col = getGlobalDOF(gnode, n3dEq);
+                col = dofMgr.getGlobalDOF(gnode, n3dEq);
                 m_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));
               }
             }

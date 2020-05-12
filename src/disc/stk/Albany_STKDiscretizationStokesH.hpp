@@ -7,9 +7,6 @@
 #ifndef ALBANY_STK_DISCRETIZATION_STOKES_H_HPP
 #define ALBANY_STK_DISCRETIZATION_STOKES_H_HPP
 
-#include <vector>
-#include <utility>
-
 #include "Albany_STKDiscretization.hpp"
 
 namespace Albany {
