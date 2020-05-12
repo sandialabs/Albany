@@ -41,9 +41,6 @@ struct ThyraCrsMatrixFactory {
   // Fills the actual graph optimizing storage (exact count of nnz per row).
   void fillComplete ();
 
-  Teuchos::RCP<const Thyra_VectorSpace> getDomainVectorSpace () const { return m_domain_vs; }
-  Teuchos::RCP<const Thyra_VectorSpace> getRangeVectorSpace  () const { return m_range_vs; }
-
   bool is_filled () const { return m_filled; }
 
   // Creates an operator after the graph has been created

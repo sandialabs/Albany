@@ -27,12 +27,8 @@ struct ThyraCrsMatrixFactory::Impl {
   std::map<GO,std::set<GO>> temp_graph;
 #ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_FECrsGraph> e_graph;
-  Teuchos::RCP<const Epetra_BlockMap> e_range;
-  Teuchos::RCP<const Epetra_BlockMap> e_row;
 #endif
   Teuchos::RCP<Tpetra_FECrsGraph> t_graph;
-  Teuchos::RCP<const Tpetra_Map> t_range;
-  Teuchos::RCP<const Tpetra_Map> t_row;
 };
 
 ThyraCrsMatrixFactory::
@@ -58,15 +54,9 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
   }
 
   if (bt==BuildType::Epetra) {
-#ifdef ALBANY_EPETRA
-    m_graph->e_range  = getEpetraBlockMap(range_vs);
-    m_graph->e_row    = getEpetraBlockMap(row_vs);
-#else
+#ifndef ALBANY_EPETRA
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
-  } else {
-    m_graph->t_range = getTpetraMap(range_vs);
-    m_graph->t_row   = getTpetraMap(row_vs);
   }
 }
 
@@ -109,14 +99,15 @@ void ThyraCrsMatrixFactory::fillComplete () {
   const auto bt = Albany::build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
+    auto e_range  = getEpetraMap(m_range_vs);
     const int numLocalRows = getLocalSubdim(m_range_vs);
     Teuchos::Array<int> nnz_per_row(numLocalRows);
-    for (const auto& it : m_graph->temp_graph) {
-      int lrow = m_graph->e_row->LID(static_cast<Epetra_GO>(it.first));
-      nnz_per_row[lrow] = it.second.size();
+    for (int lrow=0; lrow<numLocalRows; ++lrow) {
+      const GO gid = e_range->GID(lrow);
+      nnz_per_row[lrow] = m_graph->temp_graph.at(gid).size();
     }
 
-    m_graph->e_graph = Teuchos::rcp(new Epetra_FECrsGraph(Copy,*m_graph->e_range,nnz_per_row.data(),!m_row_same_as_range));
+    m_graph->e_graph = Teuchos::rcp(new Epetra_FECrsGraph(Copy,*e_range,nnz_per_row.data(),!m_row_same_as_range,true));
 
     // Insder rows.
     for (const auto& it : m_graph->temp_graph) {
@@ -134,28 +125,30 @@ void ThyraCrsMatrixFactory::fillComplete () {
       }
     }
 
-    auto e_domain = getEpetraBlockMap(m_domain_vs);
-    m_graph->e_graph->FillComplete(*e_domain,*m_graph->e_range);
+    auto e_domain = getEpetraMap(m_domain_vs);
+    m_graph->e_graph->GlobalAssemble(*e_domain,*e_range);
     m_graph->e_graph->OptimizeStorage();
 
     // Cleanup temporaries
     m_graph->temp_graph.clear();
-    m_graph->e_range = m_graph->e_row = Teuchos::null;
 #else
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
   } else {
+    auto t_range = getTpetraMap(m_range_vs);
+    auto t_row   = getTpetraMap(m_row_vs);
+
     // For some reason Tpetra_FECrsGraph does not have a ctor that takes an Teuchos::ArrayView,
     // so we must create a DualView.
     using exec_space = Tpetra_CrsGraph::execution_space;
     using DView = Kokkos::DualView<size_t*, exec_space>;
     DView nnz_per_row("nnz",getLocalSubdim(m_row_vs));
     for (const auto& it : m_graph->temp_graph) {
-      LO lrow = m_graph->t_row->getLocalElement(static_cast<Tpetra_GO>(it.first));
+      LO lrow = t_row->getLocalElement(static_cast<Tpetra_GO>(it.first));
       nnz_per_row.h_view[lrow] = it.second.size();
     }
 
-    m_graph->t_graph = Teuchos::rcp(new Tpetra_FECrsGraph(m_graph->t_range,m_graph->t_row,nnz_per_row));
+    m_graph->t_graph = Teuchos::rcp(new Tpetra_FECrsGraph(t_range,t_row,nnz_per_row));
 
     for (const auto& it : m_graph->temp_graph) {
       const auto& row_indices = it.second;
@@ -171,18 +164,17 @@ void ThyraCrsMatrixFactory::fillComplete () {
     }
 
     auto t_domain = getTpetraMap(m_domain_vs);
-    m_graph->t_graph->fillComplete(t_domain,m_graph->t_range);
+    m_graph->t_graph->fillComplete(t_domain,t_range);
 
     // Cleanup temporaries
     m_graph->temp_graph.clear();
-    m_graph->t_range = m_graph->t_row = Teuchos::null;
   }
 
   m_filled = true;
 }
 
 Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp (const bool ignoreNonLocalRows) const {
-  TEUCHOS_TEST_FOR_EXCEPTION (!m_filled, std::logic_error, "Error! Cannot create a linear operator if the graph is not filled.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (!is_filled(), std::logic_error, "Error! Cannot create a linear operator if the graph is not filled.\n");
 
   auto const zero = Teuchos::ScalarTraits<ST>::zero();
   Teuchos::RCP<Thyra_LinearOp> op;
