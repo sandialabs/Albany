@@ -45,11 +45,14 @@ namespace {
 // INFORMATION is never actually used; second, I/O behavior is based on chained
 // 'else if's with no trailing 'else'; hence, any role type not explicitly
 // handled is not acted on.
-//   It appears that the output boolean is used only in this file in the context
+// It appears that the output boolean is used only in this file in the context
 // of role type, so for now I'm applying this fix only to this file.
-//IKT, 5/9/2020: INFORMATION has gone away in Ioss_Field.h; replaced it with COMMUNICATION. 
+//
+// IKT, 5/9/2020: INFORMATION has gone away in Ioss_Field.h; replaced it with MESH_REDUCTION,
+// per Greg Sjaardema's suggestion.  INFORMATION was an alias for MESH_REDUCTION.
+
 inline Ioss::Field::RoleType role_type(const bool output) {
-  return output ? Ioss::Field::TRANSIENT : Ioss::Field::COMMUNICATION;
+  return output ? Ioss::Field::TRANSIENT : Ioss::Field::MESH_REDUCTION;
 }
 }
 #endif
