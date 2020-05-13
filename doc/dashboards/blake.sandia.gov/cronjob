@@ -3,3 +3,5 @@
 30 06 * * 1-7 cd /home/projects/albany/miniEM/nightlyCDash; rm -rf *out* slurm*;  bash -l -c "source blake_intel_modules.sh >& modules.out; bash nightly_cron_script_miniem_blake.sh"; cd /home/projects/albany/miniEM/nightlyCDashPerfTests; bash -l -c "source blake_intel_modules.sh >& modules.out; sbatch batch.openmpi.bash"
 35 07 * * 1-7 chgrp wg-albany -R /home/projects/albany/*
 37 07 * * 1-7 chmod ug+rwX -R /home/projects/albany/*
+40 07 * * 1-7 chmod ug+rwX -R /home/projects/albany
+
