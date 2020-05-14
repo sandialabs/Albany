@@ -2,6 +2,7 @@
 
 rm -rf run_spack.out 
 rm -rf spack_albany.out 
+rm -rf spack_libiconv.out 
 rm -rf spack 
 rm -rf spack_ctest.out 
 rm -rf results_spack 
@@ -18,9 +19,11 @@ export http_proxy=http://wwwproxy.sandia.gov:80
 export https_proxy=http://wwwproxy.sandia.gov:80
 . share/spack/setup-env.sh 
 echo "Starting spack build..."
+spack --insecure install --dirty --keep-stage libiconv >& spack_libiconv.out
 spack --insecure install --dirty --keep-stage albany >& spack_albany.out 
 cd /home/ikalash/nightlyAlbanyTests
 mv spack/spack_albany.out .
+mv spack/spack_libiconv.out .
 echo "...done."
 cd spack
 spack cd albany
