@@ -1017,7 +1017,7 @@ void STKDiscretization::computeVectorSpaces()
   const auto& part    = metaData.locally_owned_part();
   const auto& ov_part = metaData.globally_shared_part();
 
-  std::vector<stk::mesh::Entity> nodes, ghosted_nodes;;
+  std::vector<stk::mesh::Entity> nodes, ghosted_nodes;
 
   const auto& buckets = bulkData.buckets(stk::topology::NODE_RANK);
   stk::mesh::get_selected_entities(part, buckets, nodes);
@@ -1048,6 +1048,7 @@ void STKDiscretization::computeVectorSpaces()
   for (auto& it1 : tmp_map) {
     stk::mesh::Selector selector(part);
     stk::mesh::Selector ghosted_selector(ov_part);
+    ghosted_selector &= !selector;
     const std::string&  name = it1.first;
     if (name.size()) {
       auto it2 = stkMeshStruct->nsPartVec.find(name);
