@@ -5,9 +5,7 @@
 #include "Albany_EpetraThyraUtils.hpp"
 
 #ifdef ALBANY_EPETRA
-#include "Epetra_FECrsGraph.h"
-#include "Epetra_FECrsMatrix.h"
-#include "Epetra_Export.h"
+#include "Albany_Epetra_FECrsMatrix.hpp"
 #endif
 #include "Albany_TpetraTypes.hpp"
 
@@ -26,7 +24,7 @@ struct ThyraCrsMatrixFactory::Impl {
 
   std::map<GO,std::set<GO>> temp_graph;
 #ifdef ALBANY_EPETRA
-  Teuchos::RCP<Epetra_FECrsGraph> e_graph;
+  Teuchos::RCP<EpetraFECrsGraph> e_graph;
 #endif
   Teuchos::RCP<Tpetra_FECrsGraph> t_graph;
 };
@@ -100,6 +98,7 @@ void ThyraCrsMatrixFactory::fillComplete () {
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
     auto e_range  = getEpetraMap(m_range_vs);
+    auto e_row    = getEpetraMap(m_row_vs);
     const int numLocalRows = getLocalSubdim(m_range_vs);
     Teuchos::Array<int> nnz_per_row(numLocalRows);
     for (int lrow=0; lrow<numLocalRows; ++lrow) {
@@ -107,21 +106,21 @@ void ThyraCrsMatrixFactory::fillComplete () {
       nnz_per_row[lrow] = m_graph->temp_graph.at(gid).size();
     }
 
-    m_graph->e_graph = Teuchos::rcp(new Epetra_FECrsGraph(Copy,*e_range,nnz_per_row.data(),!m_row_same_as_range,true));
+    m_graph->e_graph = Teuchos::rcp(new EpetraFECrsGraph(Copy,*e_range,*e_row,nnz_per_row.data(),!m_row_same_as_range,true));
 
     // Insder rows.
     for (const auto& it : m_graph->temp_graph) {
       const auto& row_indices = it.second;
       const int row_size = row_indices.size();
       if(row_size>0) {
-        Teuchos::Array<Epetra_GO> e_indices(row_indices.size());
+        Teuchos::Array<Epetra_GO> e_indices(row_size);
         int i=0;
         for (const auto index : row_indices) {
           e_indices[i] = index;
           ++i;
         }
         const Epetra_GO row = static_cast<Epetra_GO>(it.first);
-        m_graph->e_graph->InsertGlobalIndices(row,row_size,e_indices.getRawPtr());
+        m_graph->e_graph->InsertGlobalIndices(1,&row,row_size,e_indices.getRawPtr());
       }
     }
 
@@ -134,6 +133,7 @@ void ThyraCrsMatrixFactory::fillComplete () {
 #else
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
+    m_graph->e_graph->Print(std::cout);
   } else {
     auto t_range = getTpetraMap(m_range_vs);
     auto t_row   = getTpetraMap(m_row_vs);
@@ -186,7 +186,7 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp (const bool ignoreN
       // FECrsGraph *is* a CrsGraph. CrsMatrix will only deal with CrsGraph stuff
       matrix = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *m_graph->e_graph));
     } else {
-      matrix = Teuchos::rcp(new Epetra_FECrsMatrix(Copy, *m_graph->e_graph, !m_row_same_as_range)); 
+      matrix = Teuchos::rcp(new EpetraFECrsMatrix(*m_graph->e_graph, !m_row_same_as_range)); 
     }
     matrix->PutScalar(zero); 
     op = createThyraLinearOp(Teuchos::rcp_implicit_cast<Epetra_Operator>(matrix));

@@ -174,6 +174,7 @@ if (ALBANY_EPETRA)
     utility/Albany_CombineAndScatterManagerEpetra.cpp
   )
   list (APPEND HEADERS
+    utility/Albany_Epetra_FECrsMatrix.hpp
     utility/Albany_EpetraThyraUtils.hpp
     utility/Albany_CombineAndScatterManagerEpetra.hpp
     utility/Albany_GlobalLocalIndexerEpetra.hpp

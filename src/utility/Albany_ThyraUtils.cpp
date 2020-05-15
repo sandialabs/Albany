@@ -561,7 +561,7 @@ void endFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
     // We're asking for FE assembly, so this *should* be a FE matrix
-    auto femat = Teuchos::rcp_dynamic_cast<Epetra_FECrsMatrix>(emat, true);
+    auto femat = Teuchos::rcp_dynamic_cast<EpetraFECrsMatrix>(emat, true);
     femat->GlobalAssemble();
     return;
   }
@@ -694,9 +694,6 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const Teuchos::ArrayView<const LO> indices,
                           const Teuchos::ArrayView<const ST> values)
 {
-  //The following is an integer error code, to be returned by this 
-  //routine if something doesn't go right.  0 means success, 1 means failure 
-  int integer_error_code = 0; 
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
@@ -707,22 +704,44 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                   "or does not have an underlying non-null static graph!\n");
     //Tpetra's replaceLocalValues routine returns the number of indices for which values were actually replaced; the number of "correct" indices.
     //This should be size of indices array.  Therefore if returned_val != indices.size() something went wrong 
-    if (returned_val != indices.size()) integer_error_code = 1; 
-    return integer_error_code; 
+    if (returned_val != indices.size()) {
+      return 1;
+    }
+    return 0;
   }
 
 #if defined(ALBANY_EPETRA)
+  auto fe_emat = getEpetraFECrsMatrix(lop,false);
+  if (!fe_emat.is_null()) {
+    // Unfortunately, Epetra_FECrsMatrix does not support a 'SumIntoMyValues'.
+    // Or, better, if you call SumIntoMyValues, you end up calling the base class
+    // version (from Epetra_CrsMatrix), which discards non-local rows.
+    // The only way out is to convert column indices to global, and call the
+    // specific method SumIntoGlobalValues.
+    // TODO: this costs a tiny bit, in terms of col lids/gids conversion.
+    //       Any idea how to avoid this?
+    std::vector<Epetra_GO> col_gids;
+    col_gids.reserve(indices.size());
+    for (auto lid : indices) {
+      col_gids.push_back(fe_emat->ColMap().GID(lid));
+    }
+
+    const Epetra_GO grow = fe_emat->OverlapRangeMap().GID(lrow);
+
+    return fe_emat->SumIntoGlobalValues(grow,col_gids.size(),values.getRawPtr(),col_gids.data());
+  }
+
+  // Try the more general Epetra_CrsMatrix
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
-    //Epetra's ReplaceMyValues routine returns integer error code, set to 0 if successful, set to 1 if one or more indices are not 
-    //associated with the calling processor.  We can just return that value for the Epetra case. 
-    integer_error_code = emat->SumIntoMyValues(lrow,indices.size(),values.getRawPtr(),indices.getRawPtr());
-    return integer_error_code;
+    return emat->SumIntoMyValues(lrow,indices.size(),values.getRawPtr(),indices.data());
   }
 #endif
 
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,"Error in addToLocalRowValues! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+
+  return -1;
 }
 
 void insertGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
@@ -1051,6 +1070,13 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
 #if defined(ALBANY_EPETRA)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
+    // For FE matrices, we do not support device data, since the
+    // Epetra_FECrsMatrix class does not allow to get a hold of
+    // off-node entries
+    TEUCHOS_TEST_FOR_EXCEPTION(!getEpetraFECrsMatrix(lop,false).is_null(), std::logic_error,
+      "Error! We cannot get a handle to the device data of an Epetra_FECrsMatrix.\n"
+      "       To modify entries, use the 'sumIntoLocalValues' utility function.\n");
+
     TEUCHOS_TEST_FOR_EXCEPTION ((!std::is_same<PHX::Device::memory_space,Kokkos::HostSpace>::value),
                                 std::logic_error,
                                 "Error in getNonconstDeviceData! Cannot use Epetra if the memory space of PHX::Device is not the HostSpace.\n");
@@ -1058,9 +1084,14 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
     // If you want the output DeviceLocalMatrix to have view semantic on the matrix values,
     // you need to use the constructor that 'views' the input arrays.
     // So we need to create views unmanaged, which need to view the matrix data.
-    // If it's not possible to view the matrix data, we need to create temporaries,
-    // and view those. If that's the case, we need to attach the temporaries to the
+    // This is not possible for the view containing the nnz per row, since the
+    // expected data type is size_t, while Epetra uses int. Therefore, we need
+    // to create a temporary (storing size_t entries), and copy entries into it.
+    // This would create a dangling temporary, so we attach the temporary to the
     // input RCP, so that they live as long as the input LinearOp.
+    // TODO: is there a cleaner way to do this, while preserving view semantic?
+    //       The only solution would be to roll our own LocalMatrixType, which
+    //       would have to be compatible with Tpetra, and allow non-size_t inputs.
     // WARNING: This is *highly* relying on Epetra_CrsMatrix internal storage.
     //          More precisely, I'm not even sure this routine could be fixed
     //          if Epetra_CrsMatrix changes the internal storage scheme.
@@ -1071,15 +1102,16 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
     // Some data from the matrix
     const int numMyRows = emat->NumMyRows();
     const int numMyCols = emat->NumMyCols();
-    const int numMyNonzeros = emat->NumMyNonzeros();
+    const int numMyNnzs = emat->NumMyNonzeros();
 
     // Grab the data
     LO* row_map;
     LO* indices;
     ST* values;
     int err_code = emat->ExtractCrsDataPointers(row_map,indices,values);
-    ALBANY_EXPECT(err_code==0, "Error in getNonconstDeviceData! Something went wrong while extracting Epetra_CrsMatrix local data pointers.\n");
-    (void) err_code;
+    TEUCHOS_TEST_FOR_EXCEPTION(err_code!=0, std::runtime_error,
+      "Error! Something went wrong while extracting Epetra_CrsMatrix local data pointers.\n");
+
     Teuchos::ArrayRCP<size_type> row_map_size_type(numMyRows+1);
     for (int i=0; i<numMyRows+1; ++i) {
       row_map_size_type[i] = static_cast<size_type>(row_map[i]);
@@ -1090,11 +1122,11 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
 
     // Create unmanaged views
     DeviceLocalMatrix<ST>::row_map_type row_map_view(row_map_size_type.getRawPtr(),numMyRows+1);
-    DeviceLocalMatrix<ST>::index_type   indices_view(indices,numMyNonzeros);
-    DeviceLocalMatrix<ST>::values_type  values_view(values,numMyNonzeros);
+    DeviceLocalMatrix<ST>::index_type   indices_view(indices,numMyNnzs);
+    DeviceLocalMatrix<ST>::values_type  values_view(values,numMyNnzs);
 
     // Build the matrix.
-    DeviceLocalMatrix<ST> data("Epetra device data", numMyRows, numMyCols, numMyNonzeros, values_view, row_map_view, indices_view);
+    DeviceLocalMatrix<ST> data("Epetra device data", numMyRows, numMyCols, numMyNnzs, values_view, row_map_view, indices_view);
     return data;
   }
 #endif
