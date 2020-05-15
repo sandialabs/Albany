@@ -115,16 +115,6 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const Teuchos::ArrayView<const LO> indices,
                           const Teuchos::ArrayView<const ST> values);
 
-int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                          const GO grow,
-                          const Teuchos::ArrayView<const GO> indices,
-                          const Teuchos::ArrayView<const ST> values);
-
-void replaceGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                         const GO gid,
-                         const Teuchos::ArrayView<const GO> indices,
-                         const Teuchos::ArrayView<const ST> values);
-
 void insertGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                          const GO grow,
                          const Teuchos::ArrayView<const GO> cols,
