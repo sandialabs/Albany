@@ -82,7 +82,7 @@ cmake \
     -D Trilinos_ENABLE_SCOREC:BOOL=ON \
     -D Trilinos_ENABLE_SEACAS:BOOL=ON \
     -D Trilinos_ENABLE_Shards:BOOL=ON \
-    -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+    -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
     -D Trilinos_ENABLE_STK:BOOL=ON \
     -D Trilinos_ENABLE_STKSearch:BOOL=ON \
     -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
@@ -166,7 +166,6 @@ cmake \
     -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}/include" \
     -D ParMETIS_LIBRARY_DIRS:PATH="${PARMETISDIR}/lib" \
 \
-	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
     -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${HDFDIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran" \
 \
     -D Trilinos_ENABLE_TriKota:BOOL=OFF \
