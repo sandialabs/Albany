@@ -731,7 +731,7 @@ if (BUILD_TRILINOSCLANG)
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
     "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
     "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-    "-DTPL_Netcdf_PARALLEL:BOOL=OFF"
+    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
     "-DTPL_ENABLE_Pnetcdf:STRING=ON"
     "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
     "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/clang/lib"
