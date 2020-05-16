@@ -87,7 +87,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include \
       -D Netcdf_LIBRARY_DIRS:PATH=/usr/lib64 \
-      -D TPL_Netcdf_PARALLEL:BOOL=OFF \
+      -D TPL_Netcdf_PARALLEL:BOOL=ON \
       -D TPL_ENABLE_X11:BOOL=OFF \
       -D Trilinos_EXTRA_LINK_FLAGS:STRING='-L/usr/lib64 -lhdf5_hl -lhdf5 ' \
 \
