@@ -91,6 +91,7 @@ namespace Albany {
    Teuchos::Array<double> kappa;  // thermal conductivity
    double                 C;      // heat capacity
    double                 rho;    // density
+   std::string            thermal_source; //thermal source name 
 
    //! Problem PL 
    const Teuchos::RCP<Teuchos::ParameterList> params; 
@@ -112,12 +113,9 @@ namespace Albany {
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
-
-#include "PHAL_ThermalConductivity.hpp"
-#include "PHAL_Absorption.hpp"
-#include "PHAL_Source.hpp"
 //#include "PHAL_Neumann.hpp"
 #include "PHAL_ThermalResid.hpp"
+#include "PHAL_ThermalSource.hpp"
 
 
 template <typename EvalT>
@@ -207,6 +205,26 @@ Albany::ThermalProblem::constructEvaluators(
         evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
+  {  // Temperature Source
+    RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
+    p->set<RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
+    p->set<RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+    p->set<RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    
+    p->set<Teuchos::Array<double>>("Thermal Conductivity", kappa);
+    p->set<double>("Heat Capacity", C);
+    p->set<double>("Density", rho);
+    p->set<std::string>("Thermal Source", thermal_source); 
+    
+    // Output
+    p->set<string>("Source Name", "Temperature Source");
+    p->set<RCP<DataLayout>>("Node Scalar Data Layout", dl->node_scalar);
+
+    ev = rcp(new PHAL::ThermalSource<EvalT, AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   {  // Temperature Resid
     RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
 
@@ -215,6 +233,7 @@ Albany::ThermalProblem::constructEvaluators(
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<string>("Source Name", "Temperature Source");
 
     p->set<RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);

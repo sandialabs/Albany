@@ -36,6 +36,7 @@ ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
   rho = params->get<double>("Density", 1.0);
   C = params->get<double>("Heat Capacity", 1.0);
+  thermal_source = params->get<std::string>("Thermal Source", "None"); 
 }
 
 Albany::ThermalProblem::
@@ -178,6 +179,8 @@ Albany::ThermalProblem::getValidProblemParameters() const
       "Heat Capacity", 1.0, "Value of heat capacity [required]");
   validPL->set<double>(
       "Density", 1.0, "Value of density [required]");
+  validPL->set<std::string>(
+      "Thermal Source", "None", "Value of thermal source [required]");
 
   return validPL;
 }

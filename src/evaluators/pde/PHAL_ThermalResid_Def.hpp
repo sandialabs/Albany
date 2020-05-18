@@ -26,6 +26,8 @@ ThermalResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   TResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+  Source   (p.get<std::string>                   ("Source Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   kappa(p.get<Teuchos::Array<double>>("Thermal Conductivity")),
   rho(p.get<double>("Density")),
   C(p.get<double>("Heat Capacity"))
@@ -35,6 +37,7 @@ ThermalResid(const Teuchos::ParameterList& p) :
   this->addDependentField(Tdot);
   this->addDependentField(TGrad);
   this->addDependentField(wGradBF);
+  this->addDependentField(Source);
   this->addEvaluatedField(TResidual);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -58,6 +61,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(TGrad, fm);
   this->utils.setFieldData(wGradBF, fm);
   this->utils.setFieldData(Tdot, fm);
+  this->utils.setFieldData(Source, fm);
   this->utils.setFieldData(TResidual, fm);
 }
 
@@ -74,7 +78,9 @@ evaluateFields(typename Traits::EvalData workset)
       TResidual(cell, node) = 0.0;
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
         // Time-derivative contribution to residual
-        TResidual(cell, node) += rho * C * Tdot(cell, qp) * wBF(cell, node, qp);
+        TResidual(cell, node) += rho * C * Tdot(cell, qp) * wBF(cell, node, qp) 
+        // Source contribution to residual
+                               + Source(cell,qp) * wBF(cell, node, qp); 
         // Diffusion part of residual
         for (std::size_t ndim = 0; ndim < numDims; ++ndim) {
           TResidual(cell, node) += kappa[ndim] * TGrad(cell, qp, ndim) *

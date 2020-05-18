@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_THERMALRESID_HPP
-#define PHAL_THERMALRESID_HPP
+#ifndef PHAL_THERMALSOURCE_HPP
+#define PHAL_THERMALSOURCE_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -21,12 +21,12 @@ namespace PHAL {
 */
 
 template<typename EvalT, typename Traits>
-class ThermalResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class ThermalSource : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  ThermalResid(Teuchos::ParameterList const& p);
+  ThermalSource(Teuchos::ParameterList const& p);
 
   void
   postRegistrationSetup(
@@ -42,19 +42,18 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint>      wBF;
-  PHX::MDField<ScalarT const, Cell, QuadPoint>                Tdot;
-  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
-  PHX::MDField<ScalarT const, Cell, QuadPoint, Dim>           TGrad;
   Teuchos::Array<double> kappa;  // Thermal Conductivity array
   double                 C;      // Heat Capacity
   double                 rho;    // Density
-  PHX::MDField<ScalarT, Cell, QuadPoint> Source;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> coordVec;
 
   // Output:
-  PHX::MDField<ScalarT, Cell, Node> TResidual;
+  PHX::MDField<ScalarT, Cell, QuadPoint> Source;
 
-  unsigned int numQPs, numDims, numNodes, worksetSize;
+  unsigned int numQPs, numDims, numNodes;
+  
+  enum FTYPE {NONE};
+  FTYPE force_type;
 };
 }
 

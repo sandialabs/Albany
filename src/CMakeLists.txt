@@ -398,6 +398,7 @@ list (APPEND SOURCES
   evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation.cpp
   evaluators/pde/PHAL_HeatEqResid.cpp
   evaluators/pde/PHAL_ThermalResid.cpp
+  evaluators/pde/PHAL_ThermalSource.cpp
   evaluators/pde/PHAL_NSMaterialProperty.cpp
   evaluators/pde/PHAL_SideLaplacianResidual.cpp
   evaluators/pde/PHAL_ThermalConductivity.cpp
@@ -517,6 +518,8 @@ list (APPEND HEADERS
   evaluators/pde/PHAL_HeatEqResid_Def.hpp
   evaluators/pde/PHAL_ThermalResid.hpp
   evaluators/pde/PHAL_ThermalResid_Def.hpp
+  evaluators/pde/PHAL_ThermalSource.hpp
+  evaluators/pde/PHAL_ThermalSource_Def.hpp
   evaluators/pde/PHAL_NSMaterialProperty.hpp
   evaluators/pde/PHAL_NSMaterialProperty_Def.hpp
   evaluators/pde/PHAL_SideLaplacianResidual.hpp
