@@ -378,11 +378,11 @@ ENDIF()
 #set optional dependency on STKExprEval
 LIST(FIND Trilinos_PACKAGE_LIST STKExprEval STKExprEval_List_ID)
 IF (STKExprEval_List_ID GREATER -1)
-  MESSAGE("  -- Looking for STKExprEval:          Found.")
+  MESSAGE("-- Looking for STKExprEval:          Found.")
   SET(ALBANY_STK_EXPR_EVAL TRUE)
   add_definitions(-DALBANY_STK_EXPR_EVAL) 
 ELSE()
-  MESSAGE("  -- Looking for STKExprEval:      NOT Found.")
+  MESSAGE("-- Looking for STKExprEval:      NOT Found.")
   SET(ALBANY_STK_EXPR_EVAL FALSE)
 ENDIF()
 
