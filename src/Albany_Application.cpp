@@ -1451,7 +1451,9 @@ Application::computeGlobalJacobianImpl(
     if (!workset.f.is_null()) {
       workset.f_kokkos = getNonconstDeviceData(workset.f);
     }
-    workset.Jac_kokkos = getNonconstDeviceData(workset.Jac);
+    if (build_type()!=BuildType::Epetra) {
+      workset.Jac_kokkos = getNonconstDeviceData(workset.Jac);
+    }
 #endif
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
