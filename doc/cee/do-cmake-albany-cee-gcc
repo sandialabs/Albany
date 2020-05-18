@@ -1,5 +1,10 @@
 #!/bin/bash
   
+#Warning: this will not work on cee-compute nodes <21.  
+#Script has only been testsed on cee-compute025 and cee-compute026. 
+module load sems-env
+module load sems-cmake 
+  
 if [ $# -ne 1 ]; then
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"
