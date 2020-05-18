@@ -592,62 +592,167 @@ endif ()
 
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 
-if (BUILD_TRILINOS)
+if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
 
-  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstall")
+  if (BUILD_TRILINOS) 
+    set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstall")
+    set(BTYPE "RELEASE") 
+    set(CCFLAGS "-O3 -march=native -DNDEBUG -Wno-inconsistent-missing-override")
+    set(CFLAGS "-O3 -march=native -DNDEBUG")
+    set(FFLAGS "-O3 -march=native -DNDEBUG -Wa,-q")
+  endif()
+  if (BUILD_TRILINOSDBG) 
+    set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosDbg")
+    set(BTYPE "DEBUG") 
+    set(CCFLAGS "-g -O0 -Wno-inconsistent-missing-override") 
+    set(CFLAGS "-g -O0")
+    set(FFLAGS "-g -O0 -Wa,-q") 
+  endif() 
+  set(BOOST_DIR "/projects/albany/gcc-9.1.0")
+  set(LIB_DIR "/projects/albany/gcc-9.1.0")
+  set(MPI_BASE_DIR "/projects/albany/gcc-9.1.0")
+  set(NETCDF "/projects/albany/gcc-9.1.0") 
+  set(HDFDIR "/projects/albany/gcc-9.1.0")
+  set(PARMETISDIR "/projects/albany/gcc-9.1.0")
+  set(MKL_PATH "/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281") 
+  set(SUPERLUDIR "/projects/albany/gcc-9.1.0/SuperLU_4.3") 
+  set(LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group") 
 
   set (CONF_OPTS
+    "-DCMAKE_BUILD_TYPE:STRING=${BTYPE}"
+    "-DCMAKE_CXX_COMPILER:STRING=${MPI_BASE_DIR}/bin/mpicxx"
+    "-DCMAKE_CXX_FLAGS:STRING=${CCFLAGS}"
+    "-DCMAKE_C_COMPILER:STRING=${MPI_BASE_DIR}/bin/mpicc"
+    "-DCMAKE_C_FLAGS:STRING=${CFLAGS}"
+    "-DCMAKE_Fortran_COMPILER:STRING=${MPI_BASE_DIR}/bin/mpif90"
+    "-DCMAKE_Fortran_FLAGS:STRING=${FFLAGS}"
+    "-DTrilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
+    "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
+    "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
     "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${GCC_MPI_DIR}"
-    "-DCMAKE_CXX_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG ${extra_cxx_flags}'"
-    "-DCMAKE_C_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
-    "-DCMAKE_Fortran_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
-#
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../compiler/lib/intel64'"
+    "-DMPI_BASE_DIR:PATH=${MPI_BASE_DIR}"
+    "-DCMAKE_MACOSX_RPATH:BOOL=ON"
+    "-DCMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib"
     "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
-    "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-    "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-    "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-    "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-    "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-    "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-#
-    "-DTPL_ENABLE_Netcdf:BOOL=ON"
-    "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-    "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+    "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${LIB_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -Wl,-rpath,${LIB_DIR}/lib'"
+    #
+    "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
+    "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
+    "-DTrilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON"
+    "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
+    "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
+    "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
+    #
+    "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
+    "-DTrilinos_ENABLE_Amesos:BOOL=ON"
+    "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
+    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
+    "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
+    "-DTrilinos_ENABLE_Belos:BOOL=ON"
+    "-DTrilinos_ENABLE_Epetra:BOOL=ON"
+    "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
+    "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
+    #
+    "-DTrilinos_ENABLE_ROL:BOOL=ON"
+    "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
+    "-DTrilinos_ENABLE_ML:BOOL=ON"
+    "-DTrilinos_ENABLE_MueLu:BOOL=ON"
+    "-DMueLu_ENABLE_Tutorial:BOOL=OFF"
+    "-DTrilinos_ENABLE_Moertel:BOOL=OFF"
+    "-DTrilinos_ENABLE_NOX:BOOL=ON"
+    "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
+    "-DTrilinos_ENABLE_Sacado:BOOL=ON"
+    "-DTrilinos_ENABLE_SCOREC:BOOL=OFF"
+    "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
+    "-DTrilinos_ENABLE_Shards:BOOL=ON"
+    "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
+    "-DTrilinos_ENABLE_STK:BOOL=ON"
+    "-DTrilinos_ENABLE_STKSearch:BOOL=ON"
+    "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
+    "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
+    "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
+    "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+    "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
+    "-DTrilinos_ENABLE_Piro:BOOL=ON"
+    "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
+    "-DTrilinos_ENABLE_Teko:BOOL=ON"
+    "-DTrilinos_ENABLE_Tempus:BOOL=ON"
+    "-DTrilinos_ENABLE_Thyra:BOOL=ON"
+    "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+    #
+    "-DRythmos_ENABLE_DEBUG:BOOL=ON"
+    "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
+    "-DTpetra_INST_INT_LONG:BOOL=OFF"
+    "-DTpetra_INST_INT_INT:BOOL=OFF"
+    "-DTpetra_INST_DOUBLE:BOOL=ON"
+    "-DTpetra_INST_FLOAT:BOOL=OFF"
+    "-DTpetra_INST_COMPLEX_FLOAT:BOOL=OFF"
+    "-DTpetra_INST_COMPLEX_DOUBLE:BOOL=OFF"
+    "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
+    "-DTpetra_INST_INT_UNSIGNED_LONG:BOOL=OFF"
+    "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
+    "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
+    "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
+    "-DPhalanx_INDEX_SIZE_TYPE:STRING='KOKKOS'"
+    "-DKokkos_ENABLE_SERIAL:BOOL=ON"
+    "-DKokkos_ENABLE_OPENMP:BOOL=OFF"
+    "-DKokkos_ENABLE_PTHREAD:BOOL=OFF"
+    #
+    "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
+    "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
+    "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
+    "-DTrilinos_ENABLE_SEACASPLT:BOOL=OFF"
+    "-DTPL_ENABLE_X11:BOOL=OFF"
+    "-DTPL_ENABLE_Matio:BOOL=OFF"
+    #
+    "-D TPL_ENABLE_MPI:BOOL=ON"
+    "-DMPI_BASE_DIR:PATH=${MPI_BASE_DIR}"
+    "-DMPI_EXEC=${MPI_BASE_DIR}/bin/mpiexec"
+    #
+    "-DTPL_ENABLE_Pthread:BOOL=OFF"
+    #
+    "-DTPL_ENABLE_Boost:BOOL=ON"
+    "-DTPL_ENABLE_BoostLib:BOOL=ON"
+    "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
+    "-DBoost_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
+    "-DBoost_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
+    "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
+    "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
+    "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
+    "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
+    #
     "-DTPL_Netcdf_PARALLEL:BOOL=ON"
-    "-DTPL_ENABLE_Pnetcdf:STRING=ON"
-    "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-    "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/lib"
-#
-    "-DTPL_ENABLE_HDF5:BOOL=ON"
-    "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-    "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-    "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
-#
-    "-DTPL_ENABLE_Zlib:BOOL=ON"
-    "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-    "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-#
-#    "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
-#    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-#    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-#
-    "-DTPL_ENABLE_ParMETIS:BOOL=OFF"
-    "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-    "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-#
-    "-DTPL_ENABLE_SuperLU:BOOL=ON"
-    "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-    "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
-#
+    "-DTPL_ENABLE_Netcdf:STRING=ON"
+    "-DNetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include"
+    "-DNetcdf_LIBRARY_DIRS:PATH=${NETCDF}/lib"
+    "-DTPL_ENABLE_Pnetcdf:BOOL=ON"
+    "-DPnetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include"
+    "-DPnetcdf_LIBRARY_DIRS=${NETCDF}/lib"
+    #
+    "-DTPL_ENABLE_HDF5:STRING=ON"
+    "-DHDF5_INCLUDE_DIRS:PATH=${HDFDIR}/include"
+    "-DHDF5_LIBRARY_DIRS:PATH=${HDFDIR}/lib"
+    #
+    "-DTPL_ENABLE_Zlib:STRING=ON"
+    "-DZlib_INCLUDE_DIRS:PATH=${LIB_DIR}/include"
+    "-DZlib_LIBRARY_DIRS:PATH=${LIB_DIR}/lib"
+    #
+    "-DTPL_ENABLE_SuperLU:STRING=ON"
+    "-DSuperLU_INCLUDE_DIRS:STRING=${SUPERLUDIR}/include"
+    "-DSuperLU_LIBRARY_DIRS:STRING=${SUPERLUDIR}/lib"
+    #
+    "-DTPL_ENABLE_BLAS:STRING=ON"
+    "-DTPL_ENABLE_LAPACK:STRING=ON"
+    "-DTPL_BLAS_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
+    "-DTPL_LAPACK_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
+    #
+    "-DTPL_ENABLE_ParMETIS:STRING=OFF"
+    #
+    "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${HDFDIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran'"
+    #
+    "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
-    "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/lib"
-    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
-    "${COMMON_CONFIGURE_OPTIONS}"
+    "-DCMAKE_INSTALL_RPATH:STRING='/projects/albany/gcc-9.1.0/lib'"
   )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -883,71 +988,6 @@ if (BUILD_ALB64CLANGDBG)
 
 endif (BUILD_ALB64CLANGDBG)
 
-if (BUILD_TRILINOSDBG)
-
-  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosDbg")
-
-  set (CONFIGURE_OPTIONS
-    "${COMMON_CONFIGURE_OPTIONS}"
-    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
-    "-DTPL_ENABLE_MPI:BOOL=ON"
-    #
-    "-DMPI_BASE_DIR:PATH=${GCC_DBG_MPI_DIR}"
-    "-DCMAKE_CXX_COMPILER:STRING=${GCC_DBG_MPI_DIR}/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING='-g -march=native '"
-    "-DCMAKE_C_COMPILER:STRING=${GCC_DBG_MPI_DIR}/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-g -march=native'"
-    "-DCMAKE_Fortran_COMPILER:STRING=${GCC_DBG_MPI_DIR}/bin/mpifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-g -march=native'"
-    "-DMDS_ID_TYPE:STRING='long int'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../compiler/lib/intel64'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
-    "-DBUILD_SHARED_LIBS:BOOL=OFF"
-    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
-    "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-    "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-    "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-    "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-    "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-    "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-#
-    "-DTPL_ENABLE_Netcdf:BOOL=ON"
-    "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-    "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
-    "-DTPL_ENABLE_Pnetcdf:STRING=ON"
-    "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-    "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/lib"
-#
-    "-DTPL_ENABLE_HDF5:BOOL=ON"
-    "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-    "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-    "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
-#
-    "-DTPL_ENABLE_Zlib:BOOL=ON"
-    "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-    "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-#
-#    "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
-#    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-#    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-#
-    "-DTPL_ENABLE_ParMETIS:BOOL=OFF"
-    "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-    "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-#
-    "-DTPL_ENABLE_SuperLU:BOOL=ON"
-    "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-    "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
-    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
-    "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/lib"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
-  )
-
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosDbg" "${INSTALL_LOCATION}")
-
-endif (BUILD_TRILINOSDBG)
 #
 # Configure the Albany build using GO = long
 #
