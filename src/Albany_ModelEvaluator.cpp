@@ -643,17 +643,17 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   //
 
   //! If a parameter has changed in value, saved/unsaved fields must be updated
+
+  ObserverImpl observer(app);
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  auto analysisParams = appParams->sublist("Piro").sublist("Analysis");
+  auto& analysisParams = appParams->sublist("Piro").sublist("Analysis");
   if(analysisParams.isSublist("Optimization Status")) {
     auto& opt_paramList = analysisParams.sublist("Optimization Status");
     if(opt_paramList.isParameter("Optimization Variables Changed") && opt_paramList.get<bool>("Optimization Variables Changed")) {
       if(opt_paramList.isParameter("Parameter Names")) {
-        auto& param_names = *opt_paramList.get<Teuchos::RCP<std::vector<std::string>>>("Parameter Names");
-        for (int k=0; k < param_names.size(); ++k) {
-          *out << param_names[k] << " has changed!" << std::endl;
-          app->getPhxSetup()->init_unsaved_param(param_names[k]);
-        }
+        const auto& param_names = *opt_paramList.get<Teuchos::RCP<std::vector<std::string>>>("Parameter Names");
+        for (int k=0; k < param_names.size(); ++k)
+          observer.parameterChanged(param_names[k]);
       }
       opt_paramList.set("Optimization Variables Changed", false);
     }
@@ -668,7 +668,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       {
         Teuchos::TimeMonitor timer(*Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"));
         const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
-        ObserverImpl observer(app);
         observer.observeSolution(iter, *x, Teuchos::null, Teuchos::null);
         iteration = iter;
       }
