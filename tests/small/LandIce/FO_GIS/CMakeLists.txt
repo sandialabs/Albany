@@ -188,6 +188,11 @@ if (ALBANY_IFPACK2)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivityT.yaml)
   add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_adjoint_sensitivityT.yaml)
   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  set (testName ${testNameRoot}_ForwardSensitivity)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_forward_sensitivityT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_forward_sensitivityT.yaml)
+  add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_forward_sensitivityT.yaml)
+  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
 endif()
 
 # Wedge

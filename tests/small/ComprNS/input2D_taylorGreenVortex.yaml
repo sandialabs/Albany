@@ -42,8 +42,6 @@ ANONYMOUS:
     Test Values: [-5.17882027672999980e-03]
     Relative Tolerance: 1.00000000000000005e-04
   Piro: 
-    Analysis: 
-      Compute Sensitivities: false
     Tempus: 
       Integrator Name: Tempus Integrator
       Tempus Integrator: 

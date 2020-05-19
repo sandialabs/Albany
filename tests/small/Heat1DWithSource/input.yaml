@@ -33,8 +33,6 @@ ANONYMOUS:
     Number of Sensitivity Comparisons: 1
     Sensitivity Test Values 0: [4.65129000000000015e-01, 4.65129000000000015e-01]
   Piro: 
-    Analysis: 
-      Compute Sensitivities: false
     Tempus: 
       Integrator Name: Tempus Integrator
       Tempus Integrator: 
