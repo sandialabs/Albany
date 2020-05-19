@@ -235,9 +235,9 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   } else if (solutionMethod == "Eigensolve") {
     solMethod = Eigensolve;
   } else if (
-      solutionMethod == "Transient Tempus" || "Transient Tempus No Piro") {
+      solutionMethod == "Transient") {
 #ifdef ALBANY_TEMPUS
-    solMethod = TransientTempus;
+    solMethod = Transient;
 
     // Add NOX pre-post-operator for debugging.
     bool const have_piro = params->isSublist("Piro");
@@ -326,15 +326,14 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::logic_error,
-        "Solution Method must be Steady, Transient, Transient Tempus, "
-        "Transient Tempus No Piro, "
+        "Solution Method must be Steady, Transient, Transient, "
             << "Continuation, Eigensolve, not : "
             << solutionMethod);
   }
 
   bool        expl = false;
   std::string stepperType;
-  if (solMethod == TransientTempus) {
+  if (solMethod == Transient) {
     // Get Piro PL
     Teuchos::RCP<Teuchos::ParameterList> piroParams =
         Teuchos::sublist(params, "Piro", true);
@@ -2379,7 +2378,7 @@ Application::determinePiroSolver(
       piroSolverToken = "NOX";
     } else if (solMethod == Continuation) {
       piroSolverToken = "LOCA";
-    } else if (solMethod == TransientTempus) {
+    } else if (solMethod == Transient) {
       piroSolverToken = (secondOrder == "No") ? "Tempus" : secondOrder;
     } else {
       // Piro cannot handle the corresponding problem

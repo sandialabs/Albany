@@ -45,7 +45,6 @@ public:
   {
     Steady,
     Transient,
-    TransientTempus,
     Continuation,
     Eigensolve
   };

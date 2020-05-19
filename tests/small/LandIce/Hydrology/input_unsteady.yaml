@@ -7,7 +7,7 @@ ANONYMOUS:
     Write Solution to MatrixMarket: false
   Problem: 
     Phalanx Graph Visualization Detail: 0
-    Solution Method: Transient Tempus
+    Solution Method: Transient
     Name: LandIce Hydrology 2D
     Response Functions: 
       Number of Response Vectors: 1

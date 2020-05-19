@@ -188,7 +188,7 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
     if (solutionMethod == "Steady") {
       piroSolverToken = "NOX";
 #ifdef ALBANY_TEMPUS
-    } else if (solutionMethod == "Transient Tempus") {
+    } else if (solutionMethod == "Transient") {
       piroSolverToken = "Tempus";
 #endif
     } else {

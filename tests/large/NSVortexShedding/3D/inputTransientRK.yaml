@@ -4,7 +4,7 @@ ANONYMOUS:
   Build Type: Epetra 
   Problem:
     Name: NavierStokes 3D
-    Solution Method: Transient Tempus
+    Solution Method: Transient
     Dirichlet BCs: 
       Time Dependent DBC on NS inlet for DOF ux: 
         Time Values: [0.00000000000000000e+00, 1.00000000000000000e+00, 1.20000000000000000e+01]

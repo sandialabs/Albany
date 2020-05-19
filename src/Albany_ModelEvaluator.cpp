@@ -58,7 +58,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
   Teuchos::ParameterList& parameterParams = problemParams.sublist("Parameters");
 
   const std::string soln_method = problemParams.get("Solution Method", "Steady"); 
-  if (soln_method == "Transient Tempus") {
+  if (soln_method == "Transient") {
     use_tempus = true; 
   }
 

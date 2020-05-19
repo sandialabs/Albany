@@ -4,7 +4,7 @@ ANONYMOUS:
   Build Type: Epetra
   Problem: 
     Name: Heat 2D
-    Solution Method: Transient Tempus
+    Solution Method: Transient
     Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: materials.yaml
     Initial Condition: 

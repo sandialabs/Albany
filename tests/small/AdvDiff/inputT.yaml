@@ -5,7 +5,7 @@ ANONYMOUS:
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Name: AdvDiff 2D
-    Solution Method: Transient Tempus
+    Solution Method: Transient
     Number of PDE Equations: 1
     Dirichlet BCs: { }
     Initial Condition: 

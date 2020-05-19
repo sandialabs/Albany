@@ -3,7 +3,7 @@
 ANONYMOUS:
   Build Type: Epetra
   Problem: 
-    Solution Method: Transient Tempus
+    Solution Method: Transient
     Phalanx Graph Visualization Detail: 0
     Name: NavierStokes 2D
     Heat: 

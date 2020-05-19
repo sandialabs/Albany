@@ -4,7 +4,7 @@ ANONYMOUS:
   Build Type: Tpetra
   Problem: 
     Name: Heat 1D
-    Solution Method: Transient Tempus
+    Solution Method: Transient
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF T: 0.00000000000000000e+00
       DBC on NS NodeSet1 for DOF T: 0.00000000000000000e+00

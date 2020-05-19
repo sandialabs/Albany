@@ -5,7 +5,7 @@ ANONYMOUS:
   Problem: 
     Name: Heat 1D
     Periodic BC: true
-    Solution Method: Transient Tempus
+    Solution Method: Transient
     Dirichlet BCs: { }
     Initial Condition: 
       Function: 1D Gauss-Cos

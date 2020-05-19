@@ -4,7 +4,7 @@ ALBANY:
   #  Write Residual to MatrixMarket: -1
   Problem: 
     Name: Thermal 2D
-    Solution Method: Transient Tempus
+    Solution Method: Transient
     Dirichlet BCs: 
       ExpressionEvaluated SDBC on NS NodeSet3 for DOF T: '200.0 + 5.0e-04 * t'
       #ExpressionEvaluated SDBC on NS NodeSet3 for DOF T: '250.0 *cosh(5.421312110550360e-02) * exp(0.0015*0.0015*t)'

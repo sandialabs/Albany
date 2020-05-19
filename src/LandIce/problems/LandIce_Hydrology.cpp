@@ -33,7 +33,7 @@ Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_
   has_p_dot   = params->sublist("LandIce Hydrology").get<double>("Englacial Porosity",0.0) > 0.0;
 
   std::string sol_method = params->get<std::string>("Solution Method");
-  if (sol_method=="Transient" || sol_method=="Transient Tempus") {
+  if (sol_method=="Transient") {
     unsteady = true;
   } else {
     unsteady = false;

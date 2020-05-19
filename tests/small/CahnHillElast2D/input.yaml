@@ -4,7 +4,7 @@ ANONYMOUS:
   Build Type: Epetra
   Problem: 
     Name: CahnHill 2D
-    Solution Method: Transient Tempus
+    Solution Method: Transient
     Phalanx Graph Visualization Detail: 0
     Initial Condition: 
       Function: EBPerturb

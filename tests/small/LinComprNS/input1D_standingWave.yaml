@@ -5,7 +5,7 @@ ANONYMOUS:
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Name: LinComprNS 1D
-    Solution Method: Transient Tempus
+    Solution Method: Transient
     Number of PDE Equations: 2
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF qFluct1: 0.00000000000000000e+00
