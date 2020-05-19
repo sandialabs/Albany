@@ -32,7 +32,8 @@ struct ThyraCrsMatrixFactory {
   // superset of range_vs, containing owned and shared dofs.
   ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
                          const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
-                         const Teuchos::RCP<const Thyra_VectorSpace> row_vs = Teuchos::null);
+                         const Teuchos::RCP<const Thyra_VectorSpace> ov_domain_vs = Teuchos::null,
+                         const Teuchos::RCP<const Thyra_VectorSpace> ov_range_vs = Teuchos::null);
 
   // Inserts global indices in a temporary local structure. 
   // The actual graph is created when fillComplete is called
@@ -61,10 +62,11 @@ private:
 
   Teuchos::RCP<const Thyra_VectorSpace> m_domain_vs;
   Teuchos::RCP<const Thyra_VectorSpace> m_range_vs;
+  Teuchos::RCP<const Thyra_VectorSpace> m_col_vs;
   Teuchos::RCP<const Thyra_VectorSpace> m_row_vs;
 
-  bool m_filled;              // Whether fill of the graph has happened
-  bool m_row_same_as_range;   // Whether row_vs and range_vs are the same
+  bool m_filled;   // Whether fill of the graph has happened
+  bool m_fe_crs;   // Whether row_vs and range_vs are the same
 };
 
 } // namespace Albany

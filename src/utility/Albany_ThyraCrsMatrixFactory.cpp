@@ -32,11 +32,13 @@ struct ThyraCrsMatrixFactory::Impl {
 ThyraCrsMatrixFactory::
 ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
                        const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
-                       const Teuchos::RCP<const Thyra_VectorSpace> row_vs)
+                       const Teuchos::RCP<const Thyra_VectorSpace> ov_domain_vs,
+                       const Teuchos::RCP<const Thyra_VectorSpace> ov_range_vs)
  : m_graph(new Impl())
  , m_domain_vs(domain_vs)
  , m_range_vs(range_vs)
- , m_row_vs(row_vs)
+ , m_col_vs(ov_domain_vs)
+ , m_row_vs(ov_range_vs)
  , m_filled (false)
 {
   auto bt = Albany::build_type();
@@ -44,11 +46,20 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
 
   if (m_row_vs.is_null()) {
     m_row_vs = m_range_vs;
-    m_row_same_as_range = false;
+    m_col_vs = m_domain_vs;
+    m_fe_crs = false;
   } else {
+    // When building a FECrs matrix, we REQUIRE the overlapped domain vs.
+    // This is because if we let Tpetra/Epetra build the column map, even if the
+    // the owned gids come first, the remaining ones would be in an order that is
+    // different from what we have in the overlapped maps in the discretization.
+    // This would cause the GID<->LID mapping inside Epetra to be different
+    // from the one we get using the overlapped maps from the discretization.
     TEUCHOS_TEST_FOR_EXCEPTION (!isOneToOne(range_vs), std::logic_error,
-      "[ThyraCrsMatrixFactory] Error! When providing a row vs, the range vs must be one-to-one.\n");
-    m_row_same_as_range = true;
+      "[ThyraCrsMatrixFactory] Error! When providing an overlapped range vs, the range vs must be one-to-one.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (!m_col_vs.is_null(), std::logic_error,
+      "[ThyraCrsMatrixFactory] Error! When providing an overlapped range vs, you must provide also an overlapped domain vs.\n");
+    m_fe_crs = true;
   }
 
   if (bt==BuildType::Epetra) {
@@ -97,8 +108,8 @@ void ThyraCrsMatrixFactory::fillComplete () {
   const auto bt = Albany::build_type();
   if (bt==BuildType::Epetra) {
 #ifdef ALBANY_EPETRA
-    auto e_range  = getEpetraMap(m_range_vs);
-    auto e_row    = getEpetraMap(m_row_vs);
+    auto e_range = getEpetraMap(m_range_vs);
+    auto e_row   = getEpetraMap(m_row_vs);
     const int numLocalRows = getLocalSubdim(m_range_vs);
     Teuchos::Array<int> nnz_per_row(numLocalRows);
     for (int lrow=0; lrow<numLocalRows; ++lrow) {
@@ -106,7 +117,12 @@ void ThyraCrsMatrixFactory::fillComplete () {
       nnz_per_row[lrow] = m_graph->temp_graph.at(gid).size();
     }
 
-    m_graph->e_graph = Teuchos::rcp(new EpetraFECrsGraph(Copy,*e_range,*e_row,nnz_per_row.data(),!m_row_same_as_range,true));
+    if (m_fe_crs) {
+      auto e_col = getEpetraMap(m_col_vs);
+      m_graph->e_graph = Teuchos::rcp(new EpetraFECrsGraph(Copy,*e_range,*e_col,*e_row,nnz_per_row.data(),!m_fe_crs,true));
+    } else {
+      m_graph->e_graph = Teuchos::rcp(new EpetraFECrsGraph(Copy,*e_range,*e_row,nnz_per_row.data(),!m_fe_crs,true));
+    }
 
     // Insder rows.
     for (const auto& it : m_graph->temp_graph) {
@@ -186,7 +202,7 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp (const bool ignoreN
       // FECrsGraph *is* a CrsGraph. CrsMatrix will only deal with CrsGraph stuff
       matrix = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *m_graph->e_graph));
     } else {
-      matrix = Teuchos::rcp(new EpetraFECrsMatrix(*m_graph->e_graph, !m_row_same_as_range)); 
+      matrix = Teuchos::rcp(new EpetraFECrsMatrix(*m_graph->e_graph, !m_fe_crs));
     }
     matrix->PutScalar(zero); 
     op = createThyraLinearOp(Teuchos::rcp_implicit_cast<Epetra_Operator>(matrix));

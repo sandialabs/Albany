@@ -36,6 +36,19 @@ public:
     // Nothing to do
   }
 
+  EpetraFECrsGraph (Epetra_DataAccess CV,
+        const Epetra_Map& rowMap,
+        const Epetra_Map& colMap,
+        const Epetra_Map& ovRowMap,
+        int* NumIndicesPerRow,
+        bool ignoreNonLocalEntries = false,
+        bool buildNonlocalGraph = false)
+    : Epetra_FECrsGraph(CV,rowMap,colMap,NumIndicesPerRow,ignoreNonLocalEntries,buildNonlocalGraph)
+    , m_ovRowMap(ovRowMap)
+  {
+    // Nothing to do
+  }
+
   virtual ~EpetraFECrsGraph () = default;
   EpetraFECrsGraph(const EpetraFECrsGraph&) = default;
 
