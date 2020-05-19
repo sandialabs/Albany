@@ -334,44 +334,11 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
 
   bool        expl = false;
   std::string stepperType;
-  if (solMethod == Transient) {
+  if (solMethod == TransientTempus) {
     // Get Piro PL
     Teuchos::RCP<Teuchos::ParameterList> piroParams =
         Teuchos::sublist(params, "Piro", true);
-    // Check if there is Rythmos Solver sublist, and get the stepper type
-    if (piroParams->isSublist("Rythmos Solver")) {
-      Teuchos::RCP<Teuchos::ParameterList> rythmosSolverParams =
-          Teuchos::sublist(piroParams, "Rythmos Solver", true);
-      if (rythmosSolverParams->isSublist("Rythmos")) {
-        Teuchos::RCP<Teuchos::ParameterList> rythmosParams =
-            Teuchos::sublist(rythmosSolverParams, "Rythmos", true);
-        if (rythmosParams->isSublist("Stepper Settings")) {
-          Teuchos::RCP<Teuchos::ParameterList> stepperSettingsParams =
-              Teuchos::sublist(rythmosParams, "Stepper Settings", true);
-          if (stepperSettingsParams->isSublist("Stepper Selection")) {
-            Teuchos::RCP<Teuchos::ParameterList> stepperSelectionParams =
-                Teuchos::sublist(
-                    stepperSettingsParams, "Stepper Selection", true);
-            stepperType =
-                stepperSelectionParams->get("Stepper Type", "Backward Euler");
-          }
-        }
-      }
-    }
-    // Check if there is Rythmos sublist, and get the stepper type
-    else if (piroParams->isSublist("Rythmos")) {
-      Teuchos::RCP<Teuchos::ParameterList> rythmosParams =
-          Teuchos::sublist(piroParams, "Rythmos", true);
-      stepperType = rythmosParams->get("Stepper Type", "Backward Euler");
-    }
-    // Search for "Explicit" in the stepperType name.  If it's found, set expl
-    // to true.
-    if (stepperType.find("Explicit") != std::string::npos) expl = true;
-  } else if (solMethod == TransientTempus) {
-    // Get Piro PL
-    Teuchos::RCP<Teuchos::ParameterList> piroParams =
-        Teuchos::sublist(params, "Piro", true);
-    // Check if there is Rythmos Solver sublist, and get the stepper type
+    // Check if there is Tempus Solver sublist, and get the stepper type
     if (piroParams->isSublist("Tempus")) {
       Teuchos::RCP<Teuchos::ParameterList> rythmosSolverParams =
           Teuchos::sublist(piroParams, "Tempus", true);
@@ -2412,8 +2379,6 @@ Application::determinePiroSolver(
       piroSolverToken = "NOX";
     } else if (solMethod == Continuation) {
       piroSolverToken = "LOCA";
-    } else if (solMethod == Transient) {
-      piroSolverToken = (secondOrder == "No") ? "Rythmos" : secondOrder;
     } else if (solMethod == TransientTempus) {
       piroSolverToken = (secondOrder == "No") ? "Tempus" : secondOrder;
     } else {
@@ -2793,22 +2758,6 @@ Application::removeEpetraRelatedPLs(
 {
   if (params->isSublist("Piro")) {
     Teuchos::ParameterList& piroPL = params->sublist("Piro", true);
-    if (piroPL.isSublist("Rythmos")) {
-      Teuchos::ParameterList& rytPL = piroPL.sublist("Rythmos", true);
-      if (rytPL.isSublist("Stratimikos")) {
-        Teuchos::ParameterList& strataPL = rytPL.sublist("Stratimikos", true);
-        if (strataPL.isSublist("Linear Solver Types")) {
-          Teuchos::ParameterList& lsPL =
-              strataPL.sublist("Linear Solver Types", true);
-          if (lsPL.isSublist("AztecOO")) { lsPL.remove("AztecOO", true); }
-          if (strataPL.isSublist("Preconditioner Types")) {
-            Teuchos::ParameterList& precPL =
-                strataPL.sublist("Preconditioner Types", true);
-            if (precPL.isSublist("ML")) { precPL.remove("ML", true); }
-          }
-        }
-      }
-    }
     if (piroPL.isSublist("NOX")) {
       Teuchos::ParameterList& noxPL = piroPL.sublist("NOX", true);
       if (noxPL.isSublist("Direction")) {

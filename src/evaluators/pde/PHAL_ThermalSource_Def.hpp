@@ -9,6 +9,7 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "PHAL_Utilities.hpp"
+#include <math.h> 
 
 namespace PHAL {
 
@@ -33,12 +34,22 @@ ThermalSource(const Teuchos::ParameterList& p) :
   std::string thermal_source = p.get<std::string>("Thermal Source"); 
   if (thermal_source == "None") {
     force_type = NONE;
+  }
+  else if (thermal_source == "OneDCost") {
+    force_type = ONEDCOST;
+    if (numDims > 1) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "Thermal Source = OneDCostT is not valid for > 1 spatial dimensions!  " << 
+          "Your problem has numDims = " << numDims << " dimensions. \n"); 
+    }
   } 
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::logic_error,
-        "Unknonwn 'Thermal Source' = " << thermal_source << "!  Valid options are: 'None'. \n"); 
+        "Unknown Thermal Source = " << thermal_source << "!  Valid options are: 'None' and 'OneDCost'. \n"); 
   }
   
   this->addDependentField(coordVec);
@@ -62,10 +73,20 @@ template<typename EvalT, typename Traits>
 void ThermalSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (force_type == NONE) { //No body force 
+  if (force_type == NONE) { //No source term
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {      
         Source(cell, qp) = 0.0;
+      }
+    }
+  }
+  else if (force_type == ONEDCOST) { //Source term such that T = a*x*(1-x)*cos(2*pi*kappa[0]*t/rho/C) with a = 16.0
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {      
+        const ScalarT x = coordVec(cell, qp, 0); 
+        const RealType a = 16.0; 
+        const RealType t = workset.current_time; 
+        Source(cell, qp) = -2.0*a*kappa[0]*(M_PI*x*(1-x)*sin(2.0*M_PI*kappa[0]*t/rho/C) - cos(2.0*M_PI*kappa[0]*t/rho/C)); 
       }
     }
   }

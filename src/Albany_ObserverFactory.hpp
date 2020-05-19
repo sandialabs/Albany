@@ -9,9 +9,6 @@
 #include "Albany_config.h"
 
 #include "NOX_Epetra_Observer.H"
-#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
-#include "Rythmos_IntegrationObserverBase.hpp"
-#endif
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
@@ -38,18 +35,6 @@ public:
 private:
   Teuchos::RCP<Application> app_;
 };
-
-#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
-class RythmosObserverFactory {
-public:
-  explicit RythmosObserverFactory(const Teuchos::RCP<Application> &app);
-
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > createInstance();
-
-private:
-  Teuchos::RCP<Application> app_;
-};
-#endif
 
 } // namespace Albany
 

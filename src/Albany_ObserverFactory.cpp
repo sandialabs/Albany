@@ -9,9 +9,6 @@
 #include "Albany_NOXObserver.hpp"
 #include "Albany_NOXStatelessObserver.hpp"
 #endif
-#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
-#include "Albany_RythmosObserver.hpp"
-#endif
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -39,19 +36,6 @@ NOXStatelessObserverFactory (const Teuchos::RCP<Application> &app)
 Teuchos::RCP<NOX::Epetra::Observer>
 NOXStatelessObserverFactory::createInstance () {
   Teuchos::RCP<NOX::Epetra::Observer> result(new NOXStatelessObserver(app_));
-  return result;
-}
-#endif
-
-#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
-RythmosObserverFactory::RythmosObserverFactory(const Teuchos::RCP<Application> &app) :
-  app_(app)
-{}
-
-Teuchos::RCP<Rythmos::IntegrationObserverBase<double> >
-RythmosObserverFactory::createInstance()
-{
-  Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > result(new RythmosObserver(app_));
   return result;
 }
 #endif

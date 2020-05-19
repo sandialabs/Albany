@@ -49,7 +49,6 @@ namespace Albany {
 enum SolutionMethodType {
   Steady,
   Continuation,
-  Transient,
   TransientTempus,
   Eigensolve,
   Unknown

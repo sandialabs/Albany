@@ -87,7 +87,7 @@ struct Workset
   double m_coeff;  // d(x_dot)/dx_{new}
   double n_coeff;  // d(x_dotdot)/dx_{new}
 
-  // Current Time as defined by Rythmos
+  // Current Time as defined by Tempus
   double current_time;
   // amb Nowhere set. We should either set it or remove it.
   double previous_time;

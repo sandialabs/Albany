@@ -6,8 +6,6 @@ if (ALBANY_EPETRA)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTempus.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputTempus.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns-m4-bKL.par
                  ${CMAKE_CURRENT_BINARY_DIR}/ns-m4-bKL.par COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ns-m4-bKL.par.4.0

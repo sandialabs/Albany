@@ -473,15 +473,6 @@ ELSE()
   SET(ALBANY_FROSCH FALSE)
 ENDIF()
 
-LIST(FIND Trilinos_PACKAGE_LIST Rythmos Rythmos_List_ID)
-IF (Rythmos_List_ID GREATER -1)
-  MESSAGE("-- Looking for Rythmos:                Found.")
-  SET(ALBANY_RYTHMOS TRUE)
-ELSE()
-  MESSAGE("-- Looking for Rythmos:            NOT found.")
-  SET(ALBANY_RYTHMOS FALSE)
-ENDIF()
-
 # Check if Trilinos has ROL
 LIST(FIND Trilinos_PACKAGE_LIST ROL ROL_List_ID)
 IF (ROL_List_ID GREATER -1)

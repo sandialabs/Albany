@@ -47,11 +47,6 @@ Albany::AbstractProblem::AbstractProblem(
     number_of_time_deriv = 0;
     SolutionMethodName = Continuation;
   }
-  else if(solutionMethod == "Transient")
-  {
-    number_of_time_deriv = 1;
-    SolutionMethodName = Transient;
-  }
   else if(solutionMethod == "Transient Tempus" || solutionMethod == "Transient Tempus No Piro")
   {
     number_of_time_deriv = 1;
@@ -64,7 +59,7 @@ Albany::AbstractProblem::AbstractProblem(
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
-            std::logic_error, "Solution Method must be Steady, Transient, Transient Tempus, "
+            std::logic_error, "Solution Method must be Steady, Transient Tempus, "
             << "Continuation, Eigensolve, not : " << solutionMethod);
 
    // Set the number in the Problem PL

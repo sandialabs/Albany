@@ -71,9 +71,6 @@ if(ALBANY_EPETRA)
     Albany_NOXObserver.cpp
     Albany_NOXStatelessObserver.cpp
   )
-  if(ALBANY_RYTHMOS)
-    list (APPEND SOURCES Albany_RythmosObserver.cpp)
-  endif()
 endif()
 
 set(HEADERS
@@ -118,9 +115,6 @@ if(ALBANY_EPETRA)
     Albany_ObserverFactory.hpp
     Petra_Converters.hpp
   )
-  if(ALBANY_RYTHMOS)
-    list (APPEND SOURCES Albany_RythmosObserver.hpp)
-  endif()
 endif()
 
 #adapt

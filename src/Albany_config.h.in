@@ -17,7 +17,6 @@
 #cmakedefine ALBANY_PANZER_EXPR_EVAL
 #cmakedefine ALBANY_RBGEN
 #cmakedefine ALBANY_ROL
-#cmakedefine ALBANY_RYTHMOS
 #cmakedefine ALBANY_SEACAS
 #cmakedefine ALBANY_STOKHOS
 #cmakedefine ALBANY_STK_REBALANCE
