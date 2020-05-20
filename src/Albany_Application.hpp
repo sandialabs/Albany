@@ -610,14 +610,17 @@ public:
   // writeToMatrixMarketJac =-1: write to MatrixMarket every time a Jacobian
   // arises writeToMatrixMarketJac = N: write N^th Jacobian to MatrixMarket
   // ...and similarly for writeToMatrixMarketRes (integer specifying whether
-  // user wants to write residual to MatrixMarket file)
+  // user wants to write residual to MatrixMarket file) and writeToMatrixMarketSoln 
+  // (integer specifying whether user wants to write solution to MatrixMarket file)
   int writeToMatrixMarketJac;
   int writeToMatrixMarketRes;
+  int writeToMatrixMarketSoln;
   int computeJacCondNum;
-  //! Integer specifying whether user wants to write Jacobian and residual to
+  //! Integer specifying whether user wants to write Jacobian, residual and solution to
   //! Standard output (cout)
   int writeToCoutJac;
   int writeToCoutRes;
+  int writeToCoutSoln;
 
   // Value to scale Jacobian/Residual by to possibly improve conditioning
   double scale;

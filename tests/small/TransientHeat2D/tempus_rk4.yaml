@@ -3,9 +3,9 @@
 ANONYMOUS:
   Build Type: Tpetra
   Debug Output: 
-    Write Solution to MatrixMarket: false
+    Write Solution to MatrixMarket: 0
     Write Distributed Solution and Map to MatrixMarket: false
-    Write Solution to Standard Output: true
+    Write Solution to Standard Output: 0
   Problem: 
     Name: Heat 2D
     Solution Method: Transient

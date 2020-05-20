@@ -38,9 +38,9 @@ ANONYMOUS:
   Debug Output: 
     Write Jacobian to MatrixMarket: -1
     Write Residual to MatrixMarket: -1
-    Write Solution to MatrixMarket: true
+    Write Solution to MatrixMarket: -1
     Write Distributed Solution and Map to MatrixMarket: true
-    Write Solution to Standard Output: true
+    Write Solution to Standard Output: -1
   Discretization: 
     Periodic_x BC: true
     Periodic_y BC: true

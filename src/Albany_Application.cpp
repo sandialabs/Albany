@@ -41,8 +41,9 @@ using Teuchos::rcp_dynamic_cast;
 using Teuchos::rcpFromRef;
 using Teuchos::TimeMonitor;
 
-int countJac;  // counter which counts instances of Jacobian (for debug output)
-int countRes;  // counter which counts instances of residual (for debug output)
+int countJac;   // counter which counts instances of Jacobian (for debug output)
+int countRes;   // counter which counts instances of residual (for debug output)
+int countSoln;  // counter which counts instances of solution (for debug output)
 int countScale;
 
 namespace {
@@ -366,63 +367,74 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   computeJacCondNum = debugParams->get("Compute Jacobian Condition Number", 0);
   writeToMatrixMarketRes =
       debugParams->get("Write Residual to MatrixMarket", 0);
+  writeToMatrixMarketSoln =
+      debugParams->get("Write Solution to MatrixMarket", 0);
   writeToCoutJac     = debugParams->get("Write Jacobian to Standard Output", 0);
   writeToCoutRes     = debugParams->get("Write Residual to Standard Output", 0);
+  writeToCoutSoln    = debugParams->get("Write Solution to Standard Output", 0);
   derivatives_check_ = debugParams->get<int>("Derivative Check", 0);
   // the above 4 parameters cannot have values < -1
   if (writeToMatrixMarketJac < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         Teuchos::Exceptions::InvalidParameter,
-        std::endl
-            << "Error in Albany::Application constructor:  "
+            "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Write Jacobian to MatrixMarket.  Acceptable "
-               "values are -1, 0, 1, 2, ... "
-            << std::endl);
+               "values are -1, 0, 1, 2, ...\n "); 
   }
   if (writeToMatrixMarketRes < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         Teuchos::Exceptions::InvalidParameter,
-        std::endl
-            << "Error in Albany::Application constructor:  "
+            "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Write Residual to MatrixMarket.  Acceptable "
-               "values are -1, 0, 1, 2, ... "
-            << std::endl);
+               "values are -1, 0, 1, 2, ...\n"); 
+  }
+  if (writeToMatrixMarketSoln < -1) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        Teuchos::Exceptions::InvalidParameter,
+            "\nError in Albany::Application constructor:  "
+         << "Invalid Parameter Write Solution to MatrixMarket.  Acceptable "
+            "values are -1, 0, 1, 2, ... \n"); 
   }
   if (writeToCoutJac < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         Teuchos::Exceptions::InvalidParameter,
-        std::endl
-            << "Error in Albany::Application constructor:  "
+             "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Write Jacobian to Standard Output.  "
-               "Acceptable values are -1, 0, 1, 2, ... "
-            << std::endl);
+               "Acceptable values are -1, 0, 1, 2, ...\n"); 
   }
   if (writeToCoutRes < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         Teuchos::Exceptions::InvalidParameter,
-        std::endl
-            << "Error in Albany::Application constructor:  "
+             "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Write Residual to Standard Output.  "
-               "Acceptable values are -1, 0, 1, 2, ... "
-            << std::endl);
+               "Acceptable values are -1, 0, 1, 2, ... \n"); 
+  }
+  if (writeToCoutSoln < -1) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        Teuchos::Exceptions::InvalidParameter,
+             "\nError in Albany::Application constructor:  "
+            << "Invalid Parameter Write Solution to Standard Output.  "
+               "Acceptable values are -1, 0, 1, 2, ... \n"); 
   }
   if (computeJacCondNum < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         Teuchos::Exceptions::InvalidParameter,
-        std::endl
-            << "Error in Albany::Application constructor:  "
+             "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Compute Jacobian Condition Number.  "
-               "Acceptable values are -1, 0, 1, 2, ... "
-            << std::endl);
+               "Acceptable values are -1, 0, 1, 2, ...\n"); 
   }
   countJac = 0;  // initiate counter that counts instances of Jacobian matrix to
                  // 0
   countRes = 0;  // initiate counter that counts instances of residual vector to
+                 // 0
+  countSoln = 0; // initiate counter that counts instances of solution vector to
                  // 0
 
   // FIXME: call setScaleBCDofs only on first step rather than at every Newton
@@ -1326,16 +1338,24 @@ Application::computeGlobalResidual(
 {
   this->computeGlobalResidualImpl(current_time, x, x_dot, x_dotdot, p, f, dt);
 
-  // Debut output
-  if (writeToMatrixMarketRes !=
-      0) {  // If requesting writing to MatrixMarket of residual...
-    if (writeToMatrixMarketRes ==
-        -1) {  // write residual to MatrixMarket every time it arises
+  // Debug output
+  if (writeToMatrixMarketRes != 0) {  // If requesting writing to MatrixMarket of residual...
+    if (writeToMatrixMarketRes == -1) {  // write residual to MatrixMarket every time it arises
       writeMatrixMarket(f, "rhs", countRes);
-    } else {
-      if (countRes ==
-          writeToMatrixMarketRes) {  // write residual only at requested count#
+    } 
+    else {
+      if (countRes == writeToMatrixMarketRes) {  // write residual only at requested count#
         writeMatrixMarket(f, "rhs", countRes);
+      }
+    }
+  }
+  if (writeToMatrixMarketSoln != 0) {  // If requesting writing to MatrixMarket of solution...
+    if (writeToMatrixMarketSoln == -1) {  // write solution to MatrixMarket every time it arises
+      writeMatrixMarket(x, "sol", countSoln);
+    } 
+    else {
+      if (countRes == writeToMatrixMarketSoln) {  // write residual only at requested count#
+        writeMatrixMarket(x, "sol", countSoln);
       }
     }
   }
@@ -1351,8 +1371,23 @@ Application::computeGlobalResidual(
       }
     }
   }
+  if (writeToCoutSoln != 0) {    // If requesting writing of solution to cout...
+    if (writeToCoutSoln == -1) {  // cout solution time it arises
+      std::cout << "Global Solution #" << countSoln << ": " << std::endl;
+      describe(x.getConst(), *out, Teuchos::VERB_EXTREME);
+    } else {
+      if (countSoln == writeToCoutSoln) {  // cout solution only at requested
+                                           // count #
+        std::cout << "Global Solution #" << countSoln << ": " << std::endl;
+        describe(x.getConst(), *out, Teuchos::VERB_EXTREME);
+      }
+    }
+  }
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) {
     countRes++;  // increment residual counter
+  }
+  if (writeToMatrixMarketSoln != 0 || writeToCoutSoln != 0) {
+    countSoln++;  // increment solution counter
   }
 }
 

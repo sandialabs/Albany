@@ -3,7 +3,7 @@
 ANONYMOUS:
   Build Type: Tpetra
   Debug Output: 
-    Write Solution to MatrixMarket: false
+    Write Solution to MatrixMarket: 0
   Problem: 
     Solution Method: Steady
     Name: Populate Mesh

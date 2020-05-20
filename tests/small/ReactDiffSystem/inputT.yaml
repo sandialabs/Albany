@@ -39,7 +39,7 @@ ANONYMOUS:
         Equation: 1
       Response 2: Solution Average
   Debug Output: 
-    Write Solution to MatrixMarket: true
+    Write Solution to MatrixMarket: -1 
   Discretization: 
     1D Elements: 20
     1D Scale: 1.00000000000000000e+00

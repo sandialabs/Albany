@@ -2,7 +2,7 @@
 ---
 ANONYMOUS:
   Debug Output: 
-    Write Solution to MatrixMarket: false
+    Write Solution to MatrixMarket: 0
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
