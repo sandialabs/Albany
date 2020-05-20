@@ -35,13 +35,13 @@ ThermalSource(const Teuchos::ParameterList& p) :
   if (thermal_source == "None") {
     force_type = NONE;
   }
-  else if (thermal_source == "OneDCost") {
+  else if (thermal_source == "1D Cost") {
     force_type = ONEDCOST;
     if (numDims > 1) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::logic_error,
-          "Thermal Source = OneDCostT is not valid for > 1 spatial dimensions!  " << 
+          "Thermal Source = 1D Cost is not valid for > 1 spatial dimensions!  " << 
           "Your problem has numDims = " << numDims << " dimensions. \n"); 
     }
   } 

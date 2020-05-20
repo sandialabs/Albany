@@ -80,7 +80,7 @@ evaluateFields(typename Traits::EvalData workset)
         // Time-derivative contribution to residual
         TResidual(cell, node) += rho * C * Tdot(cell, qp) * wBF(cell, node, qp) 
         // Source contribution to residual
-                               + Source(cell,qp) * wBF(cell, node, qp); 
+                               - Source(cell,qp) * wBF(cell, node, qp); 
         // Diffusion part of residual
         for (std::size_t ndim = 0; ndim < numDims; ++ndim) {
           TResidual(cell, node) += kappa[ndim] * TGrad(cell, qp, ndim) *

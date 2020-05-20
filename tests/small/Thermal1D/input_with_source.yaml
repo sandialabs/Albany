@@ -1,20 +1,19 @@
 ALBANY:
-  #Debug Output: 
-  #  Write Jacobian to MatrixMarket: -1
-  #  Write Residual to MatrixMarket: -1
+  Debug Output: 
+    Write Solution to MatrixMarket: 0
   Problem: 
     Name: Thermal 1D
     Solution Method: Transient
     Dirichlet BCs: 
-      #ExpressionEvaluated SDBC on NS NodeSet1 for DOF T: '250.0 + 5.0e-04 * t'
-      ExpressionEvaluated SDBC on NS NodeSet1 for DOF T: '250.0 *cosh(5.421312110550360e-02) * exp(0.0015*0.0015*t)'
+      SDBC on NS NodeSet0 for DOF T: 0.0
+      SDBC on NS NodeSet1 for DOF T: 0.0
     Initial Condition:
       Function: Expression Parser All DOFs
-      #Function Expressions: ['250']
-      Function Expressions: ['250 * cosh(5.421312110550360e-02*x)']
+      Function Expressions: ['16*x*(1-x)']
     Thermal Conductivity: [1.6] 
-    Heat Capacity: 2.09e3 
-    Density: 1.0 
+    Heat Capacity: 1.0 
+    Density: 1.0
+    Thermal Source: 1D Cost  
     Response Functions: 
       Number: 1
       Response 0: Solution Average
@@ -23,10 +22,10 @@ ALBANY:
     1D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: thermal1D_out.exo
+    Exodus Output File Name: thermal1D_with_source_out.exo
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [3.132382379221e+02]
+    Test Values: [-1.983408347195e+00]
     Relative Tolerance: 1.00000000000000002e-03
     Absolute Tolerance: 1.00000000000000008e-05
   Piro: 
@@ -43,13 +42,13 @@ ALBANY:
         Time Step Control: 
           Initial Time: 0.00000000000000000e+00
           Initial Time Index: 0
-          Initial Time Step: 1.0e+03
+          Initial Time Step: 1.0e-2
           Initial Order: 0
-          Final Time: 1.0e+5
+          Final Time: 1.0
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
-          Integrator Step Type: Variable
+          Integrator Step Type: Constant
           Time Step Control Strategy: 
             Time Step Control Strategy List: basic_vs
             basic_vs: 
@@ -76,7 +75,7 @@ ALBANY:
                 Forcing Term Method: Constant
                 Rescue Bad Newton Solve: true
                 Linear Solver: 
-                  Tolerance: 1.00000000000000002e-02
+                  Tolerance: 1.00000000000000002e-06
             Line Search: 
               Full Step: 
                 Full Step: 1.00000000000000000e+00
@@ -107,8 +106,6 @@ ALBANY:
               Test 1: 
                 Test Type: MaxIters
                 Maximum Iterations: 10
-        Demo Predictor: 
-          Stepper Type: Forward Euler
       Stratimikos: 
         Linear Solver Type: Belos
         Linear Solver Types: 
