@@ -52,7 +52,7 @@ private:
 
   unsigned int numQPs, numDims, numNodes;
   
-  enum FTYPE {NONE, ONEDCOST};
+  enum FTYPE {NONE, ONEDCOST, TWODCOSTEXPT};
   FTYPE force_type;
 };
 }

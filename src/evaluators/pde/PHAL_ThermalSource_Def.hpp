@@ -41,7 +41,17 @@ ThermalSource(const Teuchos::ParameterList& p) :
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::logic_error,
-          "Thermal Source = 1D Cost is not valid for > 1 spatial dimensions!  " << 
+          "'Thermal Source = 1D Cost' is not valid for > 1 spatial dimensions!  " << 
+          "Your problem has numDims = " << numDims << " dimensions. \n"); 
+    }
+  } 
+  else if (thermal_source == "2D Cost Expt") {
+    force_type = TWODCOSTEXPT;
+    if (numDims > 2) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "'Thermal Source = 2D Cost Expt' is only valid for 2 spatial dimensions!  " << 
           "Your problem has numDims = " << numDims << " dimensions. \n"); 
     }
   } 
@@ -49,7 +59,7 @@ ThermalSource(const Teuchos::ParameterList& p) :
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::logic_error,
-        "Unknown Thermal Source = " << thermal_source << "!  Valid options are: 'None' and 'OneDCost'. \n"); 
+        "Unknown Thermal Source = " << thermal_source << "!  Valid options are: 'None', '1D Cost' and '2D Cost Expt'. \n"); 
   }
   
   this->addDependentField(coordVec);
@@ -87,6 +97,20 @@ evaluateFields(typename Traits::EvalData workset)
         const RealType a = 16.0; 
         const RealType t = workset.current_time; 
         Source(cell, qp) = -2.0*a*kappa[0]*(M_PI*x*(1-x)*sin(2.0*M_PI*kappa[0]*t/rho/C) - cos(2.0*M_PI*kappa[0]*t/rho/C)); 
+      }
+    }
+  }
+  else if (force_type == TWODCOSTEXPT) { //Source term such that T = a*x*(1-x)*y*(1-y)*
+                                         //cos(2*pi*kappa[0]*t/rho/C)*exp(2*pi*kappa[1]*t/rho/C) with a = 16.0
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {      
+        const ScalarT x = coordVec(cell, qp, 0); 
+        const ScalarT y = coordVec(cell, qp, 1); 
+        const RealType a = 16.0; 
+        const RealType t = workset.current_time; 
+        Source(cell, qp) = 2.0*M_PI*a*x*(1.0-x)*y*(1.0-y)*exp(2.0*M_PI*kappa[1]*t/rho/C)*(kappa[1]*cos(2*M_PI*kappa[0]*t/rho/C)
+                          -kappa[0]*sin(2.0*M_PI*kappa[0]*t/rho/C)) + 2.0*a*cos(2.0*M_PI*kappa[0]*t/rho/C)
+                          *exp(2.0*M_PI*kappa[1]*t/rho/C)*(kappa[0]*y*(1-y) + kappa[1]*x*(1-x)); 
       }
     }
   }
