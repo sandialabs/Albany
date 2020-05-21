@@ -84,7 +84,7 @@ ANONYMOUS:
       basalside: 
         Method: Ioss
         Number Of Time Derivatives: 0
-        Use Serial Mesh: ${USE_SERIAL_MESH}
+        Use Serial Mesh: false
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Exodus Output File Name: gis_unstruct_adjoint_sensitivity_basal.exo
         Cubature Degree: 3
@@ -131,7 +131,7 @@ ANONYMOUS:
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [1.07835792062000006e+08]
-    Sensitivity Comparisons 0: 
+    Sensitivity Comparisons 1: 
       Number of Sensitivity Comparisons: 1
       Sensitivity Test Values 0: [1.86580896757000014e+07]
     Relative Tolerance: 1.00000000000000005e-04
