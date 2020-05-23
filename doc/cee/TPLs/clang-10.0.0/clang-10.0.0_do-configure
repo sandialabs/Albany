@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# To build clang-10.0.0:
+# git tag --list
+# checkout the appropriate tag
+# git checkout llvmorg-10.0.0-rc6
+
+
+export CC=/projects/albany/gcc-9.1.0/bin/gcc
+export CXX=/projects/albany/gcc-9.1.0/bin/g++
+
+cmake \
+-DCMAKE_BUILD_TYPE=Release \
+-DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;clang-tools-extra;lldb" \
+-DCMAKE_INSTALL_PREFIX=/projects/albany/clang-10.0.0 \
+-DLLVM_Z3_INSTALL_DIR=/projects/albany/clang-10.0.0 \
+-DLLVM_Zlib_INSTALL_DIR=/projects/albany/clang-10.0.0 \
+-G "Unix Makefiles" \
+../llvm

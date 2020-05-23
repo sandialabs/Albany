@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# To build clang-9.0.1:
+# git tag --list
+# checkout the appropriate tag
+# git checkout llvmorg-9.0.1-rc3
+
+
+export CC=/projects/albany/gcc-9.1.0/bin/gcc
+export CXX=/projects/albany/gcc-9.1.0/bin/g++
+
+cmake \
+-DCMAKE_BUILD_TYPE=Release \
+-DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;clang-tools-extra;lldb" \
+-DCMAKE_INSTALL_PREFIX=/projects/albany/clang-9.0.1 \
+-DLLVM_Z3_INSTALL_DIR=/projects/albany/clang-9.0.1 \
+-DLLVM_Zlib_INSTALL_DIR=/projects/albany/clang-9.0.1 \
+-DLLVM_libEdit_INSTALL_DIR=/projects/albany/clang-9.0.1 \
+-Dlibedit_INCLUDE_DIRS=/projects/albany/clang-9.0.1/include \
+-Dlibedit_LIB_DIRS=/projects/albany/clang-9.0.1/lib \
+-DLLDB_DISABLE_PYTHON:BOOL=ON \
+-G "Unix Makefiles" \
+../llvm

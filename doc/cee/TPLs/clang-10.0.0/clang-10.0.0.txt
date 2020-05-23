@@ -1,0 +1,18 @@
+Notes on building the clang compiler version 10.0.0
+
+get the source for llvm:
+
+1. git clone https://github.com/llvm/llvm-project.git
+2. cd llvm-project
+
+Checkout the tag you want:
+
+3. git checkout llvmorg-10.0.0-rc6
+
+Do an out of source build:
+
+4. mkdir build-10.0.0
+
+5. Build openmpi
+./configure FC=/projects/albany/gcc-9.1.0/bin/gfortran CC=/projects/albany/clang-10.0.0/bin/clang CXX=/projects/albany/clang-10.0.0/bin/clang++ --prefix=/projects/albany/clang-10.0.0
+

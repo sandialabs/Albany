@@ -1,0 +1,27 @@
+Notes on building the clang compiler version 9.0.1
+
+get the source for llvm:
+
+1. git clone https://github.com/llvm/llvm-project.git
+2. cd llvm-project
+
+Checkout the tag you want:
+
+3. git checkout llvmorg-9.0.1-rc3
+
+Do an out of source build:
+
+4. mkdir build-9.0.1
+
+5. cd build-9.0.1 ; cp Albany/doc/cee/TPLs/clang-9.0.1/cland-9.0.1_do-configure do-configure
+
+6. ./do-configure
+
+7. make -j 16
+
+8. make -j 16 install
+
+9. Build openmpi
+
+./configure FC=/projects/albany/gcc-9.1.0/bin/gfortran CC=/projects/albany/clang-9.0.1/bin/clang CXX=/projects/albany/clang-9.0.1/bin/clang++ --prefix=/projects/albany/clang-9.0.1
+
