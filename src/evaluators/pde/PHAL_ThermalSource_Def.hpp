@@ -30,6 +30,13 @@ ThermalSource(const Teuchos::ParameterList& p) :
   numQPs = dims[1];
   numDims = dims[2];
   coordVec = decltype(coordVec)(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
+  
+  if (kappa.size() != numDims) {      
+    TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "Thermal Conductivity size " << kappa.size() << " != # dimensions " << numDims << "\n"); 
+  }
 
   std::string thermal_source = p.get<std::string>("Thermal Source"); 
   if (thermal_source == "None") {
