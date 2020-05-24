@@ -758,7 +758,7 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_trilinos("${CONF_OPTS}" "Trilinos" "${INSTALL_LOCATION}")
 
-endif (BUILD_TRILINOS)
+endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
 
 if (BUILD_PERIDIGM)
   INCLUDE(${CTEST_SCRIPT_DIRECTORY}/peridigm_macro.cmake)
