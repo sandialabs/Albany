@@ -5,13 +5,13 @@ if [ $# -ne 1 ]; then
    echo "Usage: $0 -r (release)"
    exit 1
 elif [ $1 = "-d" ]; then
-   INSTALL_DIR=/projects/albany/trilinos/MPI_CL_DBG
+   INSTALL_DIR=/projects/albany/trilinos/MPI_CL10_DBG
    BTYPE=DEBUG
    CCFLAGS="-g -O0"
    CFLAGS="-g -O0"
    FFLAGS="-g -O0 -Wa,-q"
 elif [ $1 = "-r" ]; then
-   INSTALL_DIR=/projects/albany/trilinos/MPI_CL_REL
+   INSTALL_DIR=/projects/albany/trilinos/MPI_CL10_REL
    BTYPE=RELEASE
    CCFLAGS="-O3 -march=native -DNDEBUG=1"
    CFLAGS="-O3 -march=native -DNDEBUG=1"
@@ -26,6 +26,7 @@ export TRILINOS_HOME=/projects/albany/src/Trilinos
 BUILD_DIR=`pwd`
 BOOST_DIR=/projects/albany/clang-10.0.0
 LIB_DIR=/projects/albany/clang-10.0.0
+GCC_LIB_DIR=/projects/albany/gcc-9.1.0
 MPI_BASE_DIR=/projects/albany/clang-10.0.0
 NETCDF=/projects/albany/clang-10.0.0
 HDFDIR=/projects/albany/clang-10.0.0
@@ -53,7 +54,6 @@ cmake \
     -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
     -D CMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib \
     -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
-    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${LIB_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -Wl,-rpath,${LIB_DIR}/lib" \
 \
     -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
     -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
@@ -169,11 +169,10 @@ cmake \
     -D ParMETIS_LIBRARY_DIRS:PATH="${PARMETISDIR}/lib" \
 \
 	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
-    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${HDFDIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran" \
+    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${LIB_DIR}/lib -L${LIB_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran -Wl,-rpath,${GCC_LIB_DIR}/lib:${GCC_LIB_DIR}/lib64" \
+    -D CMAKE_SKIP_RPATH:BOOL=ON \
 \
     -D Trilinos_ENABLE_TriKota:BOOL=OFF \
-    -D CMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON \
-    -D CMAKE_INSTALL_RPATH:STRING="/projects/albany/clang-10.0.0/lib" \
 \
 $EXTRA_ARGS \
 ${TRILINOS_HOME}

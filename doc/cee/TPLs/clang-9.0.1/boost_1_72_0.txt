@@ -1,0 +1,13 @@
+This readme contains the steps to build boost_1_72_0 as installed in
+
+/projects/albany/clang-9.0.1
+
+Source is at
+
+/projects/albany/src/boost_1_72_0
+
+1. Copy the "boost_1_72_0_user-config.jam" to ~/user-config.jam
+
+   ./bootstrap.sh --with-libraries=all --with-toolset=clang --prefix=/projects/albany/clang-9.0.1
+  ./b2 -j 8
+  ./b2 -j 8 install

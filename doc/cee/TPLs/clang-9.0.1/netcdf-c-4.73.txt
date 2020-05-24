@@ -1,0 +1,36 @@
+This readme contains the steps to build netcdf-c-4.73 as installed in
+
+/projects/albany/clang-9.0.1
+
+Source is at
+
+/projects/albany/src/netcdf-c-4.7.3
+
+1. Edit include/netcdf.h, near line 273, to be:
+
+#define NC_MAX_DIMS     65536 /* not enforced after 4.5.0 */
+#define NC_MAX_ATTRS    8192 /* not enforced after 4.5.0 */
+#define NC_MAX_VARS     524288 /* not enforced after 4.5.0 */
+#define NC_MAX_NAME     256
+#define NC_MAX_VAR_DIMS 8 /**< max per variable dimensions */
+
+2. cd into the above and type:
+
+./configure CC=/projects/albany/clang-9.0.1/bin/mpicc FC=/projects/albany/clang-9.0.1/bin/mpifort CXX=/projects/albany/clang-9.0.1/bin/mpicxx CPPFLAGS="-fPIC -I/projects/albany/clang-9.0.1/include -O3 -march=native" CFLAGS="-fPIC -I/projects/albany/clang-9.0.1/include -O3 -march=native" FCFLAGS="-fPIC -I/projects/albany/clang-9.0.1/include -O3 -march=native" LDFLAGS="-fPIC -I/projects/albany/clang-9.0.1/lib -O3 -march=native" --prefix=/projects/albany/clang-9.0.1 --disable-doxygen --enable-netcdf4 --enable-pnetcdf --enable-remote-fortran-bootstrap
+
+make -j 8
+
+make -j 8 install
+
+make -j 8 build-netcdf-fortran
+
+make -j 8 install-netcdf-fortran
+
+Note: the above edit will cause both "make check" and "make -j 8 build-netcdf-fortran" to fail. 
+I do not run "make check" and I ignore the build-netcdf-fortran error and proceed to the fortran install step. Everything
+appears to be fine when I do this.
+
+The netcdf people say the above edit is not needed and has no effect. Why is it there then? Greg Sjaardema said to me that
+these changes are needed, and I have experienced errors and failures on large exodus files if you do not do them. So I do them.
+
+Glen Hansen - gahanse@sandia.gov

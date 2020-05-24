@@ -1,26 +1,21 @@
 #!/bin/bash
-
-#Warning: this will not work on cee-compute nodes <21.  
-#Script has only been testsed on cee-compute025 and cee-compute026. 
-module load sems-env
-module load sems-cmake 
   
 if [ $# -ne 1 ]; then
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"
    exit 1
 elif [ $1 = "-d" ]; then
-   INSTALL_DIR=/projects/albany/trilinos/MPI_DBG
+   INSTALL_DIR=/projects/albany/trilinos/MPI_CL9_DBG
    BTYPE=DEBUG
-   CCFLAGS="-g -O0 -Wno-inconsistent-missing-override"
+   CCFLAGS="-g -O0"
    CFLAGS="-g -O0"
    FFLAGS="-g -O0 -Wa,-q"
 elif [ $1 = "-r" ]; then
-   INSTALL_DIR=/projects/albany/trilinos/MPI_REL
+   INSTALL_DIR=/projects/albany/trilinos/MPI_CL9_REL
    BTYPE=RELEASE
-   CCFLAGS="-O3 -march=native -DNDEBUG -Wno-inconsistent-missing-override"
-   CFLAGS="-O3 -march=native -DNDEBUG"
-   FFLAGS="-O3 -march=native -DNDEBUG -Wa,-q"
+   CCFLAGS="-O3 -march=native -DNDEBUG=1"
+   CFLAGS="-O3 -march=native -DNDEBUG=1"
+   FFLAGS="-O3 -march=native -DNDEBUG=1 -Wa,-q"
 else
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"
@@ -29,14 +24,15 @@ fi
 
 export TRILINOS_HOME=/projects/albany/src/Trilinos
 BUILD_DIR=`pwd`
-BOOST_DIR=/projects/albany/gcc-9.1.0
-LIB_DIR=/projects/albany/gcc-9.1.0
-MPI_BASE_DIR=/projects/albany/gcc-9.1.0
-NETCDF=/projects/albany/gcc-9.1.0
-HDFDIR=/projects/albany/gcc-9.1.0
-PARMETISDIR=/projects/albany/gcc-9.1.0
+BOOST_DIR=/projects/albany/clang-9.0.1
+LIB_DIR=/projects/albany/clang-9.0.1
+GCC_LIB_DIR=/projects/albany/gcc-9.1.0
+MPI_BASE_DIR=/projects/albany/clang-9.0.1
+NETCDF=/projects/albany/clang-9.0.1
+HDFDIR=/projects/albany/clang-9.0.1
+PARMETISDIR=/projects/albany/clang-9.0.1
 MKL_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281
-SUPERLUDIR=/projects/albany/gcc-9.1.0/SuperLU_4.3
+SUPERLUDIR=/projects/albany/clang-9.0.1/SuperLU_4.3
 LABLAS_LIBRARIES="-L$MKL_PATH/lib/intel64 -Wl,--start-group $MKL_PATH/mkl/lib/intel64/libmkl_intel_lp64.a $MKL_PATH/mkl/lib/intel64/libmkl_core.a $MKL_PATH/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group"
 
 #print all variables
@@ -45,15 +41,17 @@ LABLAS_LIBRARIES="-L$MKL_PATH/lib/intel64 -Wl,--start-group $MKL_PATH/mkl/lib/in
 cmake \
     -Wno-dev \
     -D CMAKE_BUILD_TYPE:STRING=$BTYPE \
+    -D CMAKE_CXX_COMPILER:PATH=/projects/albany/clang-9.0.1/bin/mpicxx \
     -D CMAKE_CXX_FLAGS:STRING=$CCFLAGS \
+    -D CMAKE_C_COMPILER:PATH=/projects/albany/clang-9.0.1/bin/mpicc \
     -D CMAKE_C_FLAGS:STRING=$CFLAGS \
+    -D CMAKE_Fortran_COMPILER:PATH=/projects/albany/clang-9.0.1/bin/mpifort \
     -D CMAKE_Fortran_FLAGS:STRING=$FFLAGS \
     -D Trilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
     -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
     -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
     -D TPL_ENABLE_MPI:BOOL=ON \
     -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
-    -D CMAKE_MACOSX_RPATH:BOOL=ON \
     -D CMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib \
     -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
 \
@@ -86,7 +84,7 @@ cmake \
     -D Trilinos_ENABLE_SCOREC:BOOL=ON \
     -D Trilinos_ENABLE_SEACAS:BOOL=ON \
     -D Trilinos_ENABLE_Shards:BOOL=ON \
-    -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
+    -D Trilinos_ENABLE_Stokhos:BOOL=ON \
     -D Trilinos_ENABLE_STK:BOOL=ON \
     -D Trilinos_ENABLE_STKSearch:BOOL=ON \
     -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
@@ -170,7 +168,8 @@ cmake \
     -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}/include" \
     -D ParMETIS_LIBRARY_DIRS:PATH="${PARMETISDIR}/lib" \
 \
-    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${LIB_DIR}/lib -L${LIB_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran -Wl,-rpath,${LIB_DIR}/lib:${LIB_DIR}/lib64" \
+	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
+    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${LIB_DIR}/lib -L${LIB_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran -Wl,-rpath,${GCC_LIB_DIR}/lib:${GCC_LIB_DIR}/lib64" \
     -D CMAKE_SKIP_RPATH:BOOL=ON \
 \
     -D Trilinos_ENABLE_TriKota:BOOL=OFF \

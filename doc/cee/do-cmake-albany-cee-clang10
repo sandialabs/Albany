@@ -5,9 +5,9 @@ if [ $# -ne 1 ]; then
    echo "Usage: $0 -r (release)"
    exit 1
 elif [ $1 = "-d" ]; then
-   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_CL_DBG
+   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_CL10_DBG
 elif [ $1 = "-r" ]; then
-   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_CL_REL
+   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_CL10_REL
 else
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"
