@@ -2,7 +2,7 @@ ALBANY:
   Debug Output: 
     Write Solution to MatrixMarket: 0
   Problem: 
-    Name: Thermal 1D
+    Name: Thermal With Sensitivities 1D
     Solution Method: Transient
     Dirichlet BCs: 
       SDBC on NS NodeSet0 for DOF T: 0.0

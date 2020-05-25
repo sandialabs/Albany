@@ -8,11 +8,26 @@
 
 #include "Albany_HeatProblem.hpp"
 #include "Albany_ThermalProblem.hpp"
+#include "Albany_ThermalProblemWithSensitivities.hpp"
 #include "Albany_PopulateMesh.hpp"
 #include "Albany_SideLaplacianProblem.hpp"
 
 namespace Albany
 {
+
+std::string getName(std::string const& key)
+{
+  if (key.size() < 3) return key;
+  return key.substr(0, key.size() - 3);
+}
+// In "Thermal 3D", extract 3.
+int getNumDim(std::string const& key)
+{
+  if (key.size() < 3) return -1;
+  return static_cast<int>(key[key.size() - 2] - '0');
+} 
+
+
 
 bool BasicProblemFactory::provides (const std::string& key) const 
 {
@@ -22,6 +37,9 @@ bool BasicProblemFactory::provides (const std::string& key) const
          key == "Thermal 1D" ||
          key == "Thermal 2D" ||
          key == "Thermal 3D" ||
+         key == "Thermal With Sensitivities 1D" ||
+         key == "Thermal With Sensitivities 2D" ||
+         key == "Thermal With Sensitivities 3D" ||
          key == "Populate Mesh" ||
          key == "Side Laplacian 3D";
 }
@@ -44,12 +62,12 @@ create (const std::string& key,
     problem = Teuchos::rcp(new HeatProblem(problemParams, paramLib, 2, comm));
   } else if (key == "Heat 3D") {
     problem = Teuchos::rcp(new HeatProblem(problemParams, paramLib, 3, comm));
-  } else if (key == "Thermal 1D") {
-    problem = Teuchos::rcp(new ThermalProblem(problemParams, paramLib, 1, comm));
-  } else if (key == "Thermal 2D") {
-    problem = Teuchos::rcp(new ThermalProblem(problemParams, paramLib, 2, comm));
-  } else if (key == "Thermal 3D") {
-    problem = Teuchos::rcp(new ThermalProblem(problemParams, paramLib, 3, comm));
+  } else if (getName(key) == "Thermal") {
+    problem =
+        Teuchos::rcp(new ThermalProblem(problemParams, paramLib, getNumDim(key), comm));
+  } else if (getName(key) == "Thermal With Sensitivities") {
+    problem =
+        Teuchos::rcp(new ThermalProblemWithSensitivities(problemParams, paramLib, getNumDim(key), comm));
   } else if (key == "Populate Mesh") {
     problem = Teuchos::rcp(new PopulateMesh(problemParams, discParams, paramLib));
   } else if (key == "Side Laplacian 3D") {

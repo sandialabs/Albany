@@ -203,6 +203,7 @@ list (APPEND SOURCES
   problems/Albany_EvaluatorUtils.cpp
   problems/Albany_HeatProblem.cpp
   problems/Albany_ThermalProblem.cpp
+  problems/Albany_ThermalProblemWithSensitivities.cpp
   problems/Albany_Layouts.cpp
   problems/Albany_PopulateMesh.cpp
   problems/Albany_ProblemFactory.cpp
@@ -220,6 +221,7 @@ list (APPEND HEADERS
   problems/Albany_GeneralPurposeFieldsNames.hpp
   problems/Albany_HeatProblem.hpp
   problems/Albany_ThermalProblem.hpp
+  problems/Albany_ThermalProblemWithSensitivities.hpp
   problems/Albany_Layouts.hpp
   problems/Albany_PopulateMesh.hpp
   problems/Albany_ProblemFactory.hpp
@@ -393,6 +395,7 @@ list (APPEND SOURCES
   evaluators/pde/PHAL_HeatEqResid.cpp
   evaluators/pde/PHAL_ThermalResid.cpp
   evaluators/pde/PHAL_ThermalSource.cpp
+  evaluators/pde/PHAL_ThermalResidWithSensitivities.cpp
   evaluators/pde/PHAL_NSMaterialProperty.cpp
   evaluators/pde/PHAL_SideLaplacianResidual.cpp
   evaluators/pde/PHAL_ThermalConductivity.cpp
@@ -514,6 +517,8 @@ list (APPEND HEADERS
   evaluators/pde/PHAL_ThermalResid_Def.hpp
   evaluators/pde/PHAL_ThermalSource.hpp
   evaluators/pde/PHAL_ThermalSource_Def.hpp
+  evaluators/pde/PHAL_ThermalResidWithSensitivities.hpp
+  evaluators/pde/PHAL_ThermalResidWithSensitivities_Def.hpp
   evaluators/pde/PHAL_NSMaterialProperty.hpp
   evaluators/pde/PHAL_NSMaterialProperty_Def.hpp
   evaluators/pde/PHAL_SideLaplacianResidual.hpp
