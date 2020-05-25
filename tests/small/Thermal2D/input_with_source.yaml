@@ -4,7 +4,7 @@ ALBANY:
   Problem: 
     Name: Thermal With Sensitivities 2D
     Solution Method: Transient
-    Compute Sensitivities: true
+    Compute Sensitivities: false
     Dirichlet BCs: 
       SDBC on NS NodeSet0 for DOF T: 0.0
       SDBC on NS NodeSet1 for DOF T: 0.0
@@ -42,7 +42,7 @@ ALBANY:
     Relative Tolerance: 1.00000000000000002e-03
     Absolute Tolerance: 1.00000000000000008e-05
   Piro: 
-    Sensitivity Method: Forward
+    #Sensitivity Method: Forward
     Tempus: 
       Integrator Name: Tempus Integrator
       Tempus Integrator: 
