@@ -6,8 +6,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_with_source.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_and_sens.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_and_sens.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/compute_errs.m
                ${CMAKE_CURRENT_BINARY_DIR}/compute_errs.m COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/compute_errs_no_movie2avi.m
