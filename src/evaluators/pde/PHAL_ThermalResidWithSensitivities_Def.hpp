@@ -105,6 +105,8 @@ ThermalResidWithSensitivities(const Teuchos::ParameterList& p) :
     // Add kappa[2] wavelength as a Sacado-ized parameter
     this->registerSacadoParameter("kappa_z", paramLib);
   }
+  this->registerSacadoParameter("C", paramLib);
+  this->registerSacadoParameter("rho", paramLib);
   this->setName("ThermalResidWithSensitivities" );
 }
 
@@ -135,6 +137,12 @@ ThermalResidWithSensitivities<EvalT,Traits>::getValue(const std::string &n)
   }
   else if (n == "kappa_z") {
     value = kappa[2]; 
+  }
+  else if (n == "C") {
+    value = C; 
+  }
+  else if (n == "rho") {
+    value = rho; 
   }
   return value;
 }
