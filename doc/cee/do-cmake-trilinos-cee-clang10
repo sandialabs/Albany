@@ -84,7 +84,7 @@ cmake \
     -D Trilinos_ENABLE_SCOREC:BOOL=ON \
     -D Trilinos_ENABLE_SEACAS:BOOL=ON \
     -D Trilinos_ENABLE_Shards:BOOL=ON \
-    -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+    -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
     -D Trilinos_ENABLE_STK:BOOL=ON \
     -D Trilinos_ENABLE_STKSearch:BOOL=ON \
     -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
