@@ -1,0 +1,151 @@
+# Trilinos/Albany configure script
+rm -rf CMake*
+
+BUILD_DIR=`pwd`
+
+# point to tpls
+NVCC_WRAPPER=nvcc_wrapper_volta
+BOOST_ROOT=
+HDF5_ROOT=
+BLAS_ROOT=
+LAPACK_ROOT=
+NETCDF_ROOT=
+PNETCDF_ROOT=
+ZLIB_ROOT=
+
+cmake \
+    -DCMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
+    -DCMAKE_BUILD_TYPE:STRING=RELEASE \
+    \
+    -DCMAKE_CXX_COMPILER:FILEPATH=${NVCC_WRAPPER} \
+    -DCMAKE_C_COMPILER=mpicc \
+    -DCMAKE_Fortran_COMPILER=mpif90 \
+    -DCMAKE_SKIP_RULE_DEPENDENCY=ON \
+    \
+    -DTPL_ENABLE_MPI:BOOL=ON \
+    -DMPI_EXEC=jsrun \
+    -DMPI_EXEC_NUMPROCS_FLAG:STRING=-n \
+    \
+    -DTPL_ENABLE_BLAS:BOOL=ON \
+    -DBLAS_LIBRARY_DIRS:PATH=${BLAS_ROOT}/lib64 \
+    -DBLAS_LIBRARY_NAMES:STRING=blas \
+    \
+    -DTPL_ENABLE_LAPACK:BOOL=ON \
+    -DLAPACK_LIBRARY_DIRS:PATH=${LAPACK_ROOT}/lib64 \
+    -DLAPACK_LIBRARY_NAMES:STRING=lapack \
+    \
+    -DTPL_ENABLE_Boost:BOOL=ON \
+    -DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
+    -DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
+    \
+    -DTPL_ENABLE_BoostLib:BOOL=ON \
+    -DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
+    -DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
+    \
+    -DTPL_ENABLE_Netcdf:BOOL=ON \
+    -DNetCDF_ROOT:PATH=${NETCDF_ROOT} \
+    -DTPL_Netcdf_PARALLEL:BOOL=ON \
+    \
+    -DTPL_ENABLE_Pnetcdf:STRING=ON \
+    -DPNetCDF_ROOT:PATH=${PNETCDF_ROOT} \
+    -DTPL_Pnetcdf_INCLUDE_DIRS:PATH=${PNETCDF_ROOT}/include \
+    -DTPL_Pnetcdf_LIBRARIES=${PNETCDF_ROOT}/lib/libpnetcdf.a \
+    \
+    -DTPL_ENABLE_HDF5:STRING=ON \
+    -DHDF5_ROOT:PATH=${HDF5_ROOT} \
+    \
+    -DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
+    -DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+    -DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+    -DTrilinos_ENABLE_CXX11:BOOL=ON \
+    -DTrilinos_ENABLE_EXAMPLES:BOOL=OFF \
+    -DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+    -DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF \
+    -DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING= \
+    \
+    -DKokkos_ENABLE_Cuda_UVM:BOOL=ON \
+    -DKokkos_ENABLE_EXAMPLES:BOOL=OFF \
+    -DKokkos_ENABLE_OpenMP:BOOL=OFF \
+    -DKokkos_ENABLE_Pthread:BOOL=OFF \
+    -DKokkos_ENABLE_Serial:BOOL=ON \
+    -DKokkos_ENABLE_TESTS:BOOL=OFF \
+    -DKOKKOS_ARCH:STRING='Power9;Volta70' \
+    -DTPL_ENABLE_Thrust:BOOL=ON \
+    -DTPL_ENABLE_CUDA:BOOL=ON \
+    -DTPL_ENABLE_CUSPARSE:BOOL=ON \
+    \
+    -DAmesos2_ENABLE_KLU2:BOOL=ON \
+    -DEpetraExt_USING_HDF5:BOOL=OFF \
+    -DIntrepid_ENABLE_TESTS:BOOL=OFF \
+    -DIntrepid2_ENABLE_TESTS:BOOL=OFF \
+    -DPhalanx_INDEX_SIZE_TYPE:STRING=UINT \
+    -DPhalanx_KOKKOS_DEVICE_TYPE:STRING=CUDA \
+    -DSacado_ENABLE_COMPLEX:BOOL=OFF \
+    -DTeuchos_ENABLE_COMPLEX:BOOL=OFF \
+    -DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
+    -DKokkos_ENABLE_Cuda_Lambda:BOOL=ON \
+    -DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=ON \
+    -DTpetra_INST_INT_LONG_LONG:BOOL=ON \
+    -DTpetra_INST_INT_INT:BOOL=OFF \
+    -DXpetra_ENABLE_Epetra=OFF \
+    -DMueLu_ENABLE_Epetra=OFF \
+    -DBelos_ENABLE_Epetra=OFF \
+    \
+    -DTPL_ENABLE_Matio:BOOL=OFF \
+    -DTPL_ENABLE_X11:BOOL=OFF \
+    \
+    -DTrilinos_ENABLE_Amesos2:BOOL=ON \
+    -DTrilinos_ENABLE_Amesos:BOOL=ON \
+    -DTrilinos_ENABLE_Anasazi:BOOL=ON \
+    -DTrilinos_ENABLE_AztecOO:BOOL=ON \
+    -DTrilinos_ENABLE_Belos:BOOL=ON \
+    -DTrilinos_ENABLE_EXAMPLES:BOOL=OFF \
+    -DTrilinos_ENABLE_Epetra:BOOL=ON \
+    -DTrilinos_ENABLE_EpetraExt:BOOL=ON \
+    -DTrilinos_ENABLE_Ifpack2:BOOL=ON \
+    -DTrilinos_ENABLE_Ifpack:BOOL=ON \
+    -DTrilinos_ENABLE_Intrepid:BOOL=ON \
+    -DTrilinos_ENABLE_Intrepid2:BOOL=ON \
+    -DTrilinos_ENABLE_Kokkos:BOOL=ON \
+    -DTrilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
+    -DTrilinos_ENABLE_KokkosContainers:BOOL=ON \
+    -DTrilinos_ENABLE_KokkosCore:BOOL=ON \
+    -DTrilinos_ENABLE_KokkosExample:BOOL=OFF \
+    -DTrilinos_ENABLE_ML:BOOL=ON \
+    -DTrilinos_ENABLE_OpenMP:BOOL=OFF \
+    -DTrilinos_ENABLE_MiniTensor:BOOL=ON \
+    -DTrilinos_ENABLE_MueLu:BOOL=ON \
+    -DMueLu_ENABLE_Tutorial:BOOL=OFF \
+    -DTrilinos_ENABLE_NOX:BOOL=ON \
+    -DTrilinos_ENABLE_Pamgen:BOOL=ON \
+    -DTrilinos_ENABLE_PanzerExprEval:BOOL=ON \
+    -DTrilinos_ENABLE_Phalanx:BOOL=ON \
+    -DTrilinos_ENABLE_Piro:BOOL=ON \
+    -DTrilinos_ENABLE_Rythmos:BOOL=ON \
+    -DTrilinos_ENABLE_SEACAS:BOOL=ON \
+    -DTrilinos_ENABLE_SEACASAprepro_lib:BOOL=OFF \
+    -DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF \
+    -DTrilinos_ENABLE_STKIO:BOOL=ON \
+    -DTrilinos_ENABLE_STKMesh:BOOL=ON \
+    -DTrilinos_ENABLE_Sacado:BOOL=ON \
+    -DTrilinos_ENABLE_Shards:BOOL=ON \
+    -DTrilinos_ENABLE_Stokhos:BOOL=OFF \
+    -DTrilinos_ENABLE_Stratimikos:BOOL=ON \
+    -DTrilinos_ENABLE_TESTS:BOOL=OFF \
+    -DTrilinos_ENABLE_Teko:BOOL=ON \
+    -DTrilinos_ENABLE_Teuchos:BOOL=ON \
+    -DTrilinos_ENABLE_Thyra:BOOL=ON \
+    -DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON \
+    -DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
+    -DTrilinos_ENABLE_Tpetra:BOOL=ON \
+    -DTrilinos_ENABLE_Zoltan2:BOOL=ON \
+    -DTrilinos_ENABLE_Zoltan:BOOL=ON \
+    -DTrilinos_ENABLE_Tempus:BOOL=ON \
+    -DTempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+    \
+    -DTrilinos_ENABLE_ShyLU_NodeFastILU=ON \
+    \
+    -DHAVE_dggsvd3_POST=1 \
+    \
+..
+
