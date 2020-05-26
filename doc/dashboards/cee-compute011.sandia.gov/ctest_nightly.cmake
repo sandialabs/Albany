@@ -592,7 +592,7 @@ endif ()
 
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 
-if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
+if (BUILD_TRILINOS OR BUILD_TRILINOSDBG OR BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG)
 
   if (BUILD_TRILINOS) 
     set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstall")
@@ -600,24 +600,51 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
     set(CCFLAGS "-O3 -march=native -DNDEBUG -Wno-inconsistent-missing-override")
     set(CFLAGS "-O3 -march=native -DNDEBUG")
     set(FFLAGS "-O3 -march=native -DNDEBUG -Wa,-q")
-  endif()
+  endif(BUILD_TRILINOS)
+  if (BUILD_TRILINOSCLANG) 
+    set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11")
+    set(BTYPE "RELEASE") 
+    set(CCFLAGS "-O3 -march=native -DNDEBUG=1")
+    set(CFLAGS "-O3 -march=native -DNDEBUG=1")
+    set(FFLAGS "-O3 -march=native -DNDEBUG=1 -Wa,-q")
+  endif (BUILD_TRILINOSCLANG) 
   if (BUILD_TRILINOSDBG) 
     set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosDbg")
     set(BTYPE "DEBUG") 
     set(CCFLAGS "-g -O0 -Wno-inconsistent-missing-override") 
     set(CFLAGS "-g -O0")
     set(FFLAGS "-g -O0 -Wa,-q") 
-  endif() 
-  set(BOOST_DIR "/projects/albany/gcc-9.1.0")
-  set(LIB_DIR "/projects/albany/gcc-9.1.0")
-  set(MPI_BASE_DIR "/projects/albany/gcc-9.1.0")
-  set(NETCDF "/projects/albany/gcc-9.1.0") 
-  set(HDFDIR "/projects/albany/gcc-9.1.0")
-  set(PARMETISDIR "/projects/albany/gcc-9.1.0")
-  set(MKL_PATH "/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281") 
-  set(SUPERLUDIR "/projects/albany/gcc-9.1.0/SuperLU_4.3") 
-  set(LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group") 
-
+  endif(BUILD_TRILINOSDBG)
+  if (BUILD_TRILINOSCLANGDBG) 
+    set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11Dbg")
+    set(BTYPE "DEBUG")
+    set(CCFLAGS "-g -O0")
+    set(CFLAGS "-g -O0")
+    set(FFLAGS "-g -O0 -Wa,-q")
+  endif (BUILD_TRILINOSCLANGDBG) 
+  if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)  
+    set(BOOST_DIR "/projects/albany/gcc-9.1.0")
+    set(LIB_DIR "/projects/albany/gcc-9.1.0")
+    set(MPI_BASE_DIR "/projects/albany/gcc-9.1.0")
+    set(NETCDF "/projects/albany/gcc-9.1.0") 
+    set(HDFDIR "/projects/albany/gcc-9.1.0")
+    set(PARMETISDIR "/projects/albany/gcc-9.1.0")
+    set(MKL_PATH "/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281") 
+    set(SUPERLUDIR "/projects/albany/gcc-9.1.0/SuperLU_4.3") 
+    set(LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group") 
+  endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG)  
+  if (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG) 
+    set(BOOST_DIR "/projects/albany/clang-9.0.1")
+    set(LIB_DIR "/projects/albany/clang-9.0.1")
+    set(GCC_LIB_DIR "/projects/albany/gcc-9.1.0")
+    set(MPI_BASE_DIR "/projects/albany/clang-9.0.1")
+    set(NETCDF "/projects/albany/clang-9.0.1")
+    set(HDFDIR "/projects/albany/clang-9.0.1")
+    set(PARMETISDIR "/projects/albany/clang-9.0.1")
+    set(MKL_PATH "/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281")
+    set(SUPERLUDIR "/projects/albany/clang-9.0.1/SuperLU_4.3")
+    set(LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
+  endif (BUILD_TRILINNOSCLANG OR BUILD_TRILINOSCLANGDBG) 
   set (CONF_OPTS
     "-DCMAKE_BUILD_TYPE:STRING=${BTYPE}"
     "-DCMAKE_CXX_COMPILER:STRING=${MPI_BASE_DIR}/bin/mpicxx"
@@ -631,10 +658,11 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
     "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${MPI_BASE_DIR}"
+if (BUILD_TRILINOS OR BUILD_TRILINOSDBG) 
     "-DCMAKE_MACOSX_RPATH:BOOL=ON"
+endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG) 
     "-DCMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib"
     "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
-    "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${LIB_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -Wl,-rpath,${LIB_DIR}/lib'"
     #
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
@@ -748,7 +776,12 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
     #
     "-DTPL_ENABLE_ParMETIS:STRING=OFF"
     #
+if (BUILD_TRILINOS OR BUILD_TRILINOSDBG) 
     "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${HDFDIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran'"
+endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG) 
+if (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG) 
+    "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${LIB_DIR}/lib -L${LIB_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran -Wl,-rpath,${GCC_LIB_DIR}/lib:${GCC_LIB_DIR}/lib64'"
+endif (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG) 
     #
     "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
@@ -758,7 +791,7 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_trilinos("${CONF_OPTS}" "Trilinos" "${INSTALL_LOCATION}")
 
-endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
+endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG OR BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG)
 
 if (BUILD_PERIDIGM)
   INCLUDE(${CTEST_SCRIPT_DIRECTORY}/peridigm_macro.cmake)
@@ -800,151 +833,6 @@ if (BUILD_ALB64)
 
 endif (BUILD_ALB64)
 
-if (BUILD_TRILINOSCLANG)
-
-  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11")
-
-  set (CONFIGURE_OPTIONS
-    "${COMMON_CONFIGURE_OPTIONS}"
-    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
-    "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
-    #
-    "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang/bin/mpicxx"
-#    "-DCMAKE_CXX_FLAGS:STRING='-msoft-float -march=native -O3 -Wno-inconsistent-missing-override -DNDEBUG ${extra_cxx_flags}'"
-#    "-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
-    "-DCMAKE_CXX_FLAGS:STRING='-march=native -g -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
-    "-DCMAKE_C_COMPILER:STRING=/projects/albany/clang/bin/mpicc"
-    #"-DCMAKE_C_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
-    "-DCMAKE_C_FLAGS:STRING='-march=native -g'"
-    "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang/bin/mpifort"
-    #"-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
-    "-DCMAKE_Fortran_FLAGS:STRING='-march=native -g'"
-#    "-DMDS_ID_TYPE:STRING='long long int'"
-    "-DMDS_ID_TYPE:STRING='long int'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../compiler/lib/intel64'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
-    "-DBUILD_SHARED_LIBS:BOOL=OFF"
-    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
-    "-DBoost_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
-    "-DBoost_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
-    "-DBoostLib_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
-    "-DBoostLib_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
-    "-DBoostAlbLib_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
-    "-DBoostAlbLib_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
-#
-    "-DTPL_ENABLE_Netcdf:BOOL=ON"
-    "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-    "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
-    "-DTPL_ENABLE_Pnetcdf:STRING=ON"
-    "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-    "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/clang/lib"
-  #
-    "-DTPL_ENABLE_HDF5:BOOL=ON"
-    "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-    "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-    "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
-  #
-    "-DTPL_ENABLE_Zlib:BOOL=ON"
-    "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-    "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-  #
-#    "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
-#    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-#    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-  #
-    "-DTPL_ENABLE_ParMETIS:BOOL=OFF"
-    "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-    "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-  #
-    "-DTPL_ENABLE_SuperLU:BOOL=ON"
-    #"-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/SuperLU_4.3/include"
-    "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-    "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/SuperLU_4.3/lib"
-    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
-    "-DTrilinos_ENABLE_STKBalance:BOOL=OFF" 
-    "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/clang/lib"
-)
-
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClang" "${INSTALL_LOCATION}")
-
-endif (BUILD_TRILINOSCLANG)
-
-if (BUILD_TRILINOSCLANGDBG)
-
-  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11Dbg")
-
-  set (CONFIGURE_OPTIONS
-    "${COMMON_CONFIGURE_OPTIONS}"
-    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
-    "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
-    #
-    "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang/bin/mpicxx"
-#    "-DCMAKE_CXX_FLAGS:STRING='-msoft-float -march=native -O3 -Wno-inconsistent-missing-override -DNDEBUG ${extra_cxx_flags}'"
-#    "-DCMAKE_CXX_FLAGS:STRING='-march=native -O3 -DNDEBUG -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
-    "-DCMAKE_CXX_FLAGS:STRING='-march=native -g -Wno-inconsistent-missing-override ${extra_cxx_flags}'"
-    "-DCMAKE_C_COMPILER:STRING=/projects/albany/clang/bin/mpicc"
-    #"-DCMAKE_C_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
-    "-DCMAKE_C_FLAGS:STRING='-march=native -g'"
-    "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang/bin/mpifort"
-    #"-DCMAKE_Fortran_FLAGS:STRING='-march=native -O3 -DNDEBUG'"
-    "-DCMAKE_Fortran_FLAGS:STRING='-march=native -g'"
-#    "-DMDS_ID_TYPE:STRING='long long int'"
-    "-DMDS_ID_TYPE:STRING='long int'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang/lib:$ENV{LIBRARY_PATH}:$ENV{MKLHOME}/../compiler/lib/intel64'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
-    "-DBUILD_SHARED_LIBS:BOOL=OFF"
-    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
-    "-DBoost_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
-    "-DBoost_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
-    "-DBoostLib_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
-    "-DBoostLib_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
-    "-DBoostAlbLib_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
-    "-DBoostAlbLib_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
-#
-    "-DTPL_ENABLE_Netcdf:BOOL=ON"
-    "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-    "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
-    "-DTPL_ENABLE_Pnetcdf:STRING=ON"
-    "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-    "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/clang/lib"
-  #
-    "-DTPL_ENABLE_HDF5:BOOL=ON"
-    "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-    "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-    "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
-  #
-    "-DTPL_ENABLE_Zlib:BOOL=ON"
-    "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-    "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-  #
-#    "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
-#    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-#    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-  #
-    "-DTPL_ENABLE_ParMETIS:BOOL=OFF"
-    "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/include"
-    "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/lib"
-  #
-    "-DTPL_ENABLE_SuperLU:BOOL=ON"
-    #"-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang/SuperLU_4.3/include"
-    "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-    "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang/SuperLU_4.3/lib"
-    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
-    "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/clang/lib"
-    "-DTrilinos_ENABLE_STKBalance:BOOL=OFF" 
-    "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
-)
-
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClangDbg" "${INSTALL_LOCATION}")
-
-endif (BUILD_TRILINOSCLANGDBG)
-
 #
 # Configure the Albany Clang build using GO = long
 #
@@ -960,7 +848,6 @@ if (BUILD_ALB64CLANG)
     "-DENABLE_UNIT_TESTS:BOOL=ON"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=OFF"
     "-DENABLE_MESH_DEPENDS_ON_SOLUTION:BOOL=ON"
-    "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g'"
     )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -979,7 +866,6 @@ if (BUILD_ALB64CLANGDBG)
     "-DENABLE_UNIT_TESTS:BOOL=ON"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     "-DENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON"
-    "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g'"
     "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
     )
 
