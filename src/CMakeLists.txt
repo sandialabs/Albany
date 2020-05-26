@@ -632,7 +632,7 @@ target_include_directories(albanyLib PUBLIC
 
 # Note: Albany_EXTRA_LIBRARIES is to allow users to specify
 # libraries that one cannot get out of Trilinos directly.
-set(ALL_LIBRARIES
+set(TPL_LIBRARIES
   ${ALB_TRILINOS_LIBS}
   ${Trilinos_EXTRA_LD_FLAGS}
   ${Albany_EXTRA_LIBRARIES}
@@ -805,7 +805,7 @@ foreach(ALB_EXEC ${ALBANY_EXECUTABLES})
   if (Albany_BUILD_STATIC_EXE)
     set_target_properties(${ALB_EXEC} PROPERTIES LINK_SEARCH_START_STATIC 1)
   endif()
-  target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
   target_include_directories(${ALB_EXEC} PUBLIC
       $<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>
       $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
@@ -843,7 +843,11 @@ if (INSTALL_ALBANY)
   endif()
   install(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
 
-  set(TMP1 ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  # Reverse albany libraries, so that they link correctly.
+  # Recall, -lA -lB means B *cannot* need stuff from A.
+  list (REVERSE ALBANY_LIBRARIES)
+
+  set(TMP1 ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
 
   message("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
   string(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
