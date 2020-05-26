@@ -48,6 +48,7 @@ elif [ "$BUILD_OPT" = "debug-trilinos" ] ||  [ "$BUILD_OPT" = "debug-albany" ]; 
   fi
   module load sems-env
   module load sems-cmake
+  export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/projects/albany/gcc-9.1.0/lib:/projects/albany/gcc-9.1.0/lib64
 
 elif [ "$BUILD_OPT" = "clang-trilinos" ] || [ "$BUILD_OPT" = "clang-albany" ] || [ "$BUILD_OPT" = "clangdbg-trilinos" ] || [ "$BUILD_OPT" = "clangdbg-albany" ]; then
 
@@ -58,17 +59,8 @@ elif [ "$BUILD_OPT" = "clang-trilinos" ] || [ "$BUILD_OPT" = "clang-albany" ] ||
   fi
 
   module purge
-  module load sparc-cmake 
-  module load sierra-git/2.6.1
-  module load sierra-devel/clang-7.0-openmpi-1.10.2
-  #  module load sierra-mkl/18.0-2018.1.163
-  module load sierra-mkl/19.0-2019.0.117
-  #module unload sierra-compiler/clang/7.0
-  module unload sierra-mpi/openmpi/1.10.2
-
-#  export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
-
-#  export LD_LIBRARY_PATH=/projects/sierra/linux_rh6/SDK/compilers/intel/composer_xe_2018.1.163/compilers_and_libraries/linux/mkl/lib/intel64:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/hwloc/lib:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib64:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib
+  module load sems-env
+  module load sems-cmake 
 
 else
 
