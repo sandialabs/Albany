@@ -47,10 +47,10 @@ ARCHFLAGS    = cr
 RANLIB       = ranlib
 
 CC           = /projects/albany/clang-9.0.1/bin/mpicc
-CFLAGS       = -DPRNTlevel=0 -O3 -fPIC
+CFLAGS       = -DPRNTlevel=0 -O3 -fPIC -march=native
 NOOPTS       = 
 FORTRAN	     = /projects/albany/clang-9.0.1/bin/mpifort
-FFLAGS       = -O3 -fPIC
+FFLAGS       = -O3 -fPIC -march=native
 LOADER       = $(CC)
 LOADOPTS     =
 

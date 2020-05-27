@@ -3,5 +3,5 @@
 cmake \
 -DCMAKE_INSTALL_PREFIX=/projects/albany/clang-10.0.0 \
 -DCMAKE_C_COMPILER=/projects/albany/clang-10.0.0/bin/clang \
--DCMAKE_C_FLAGS="-march=native -m64 -fPIC" \
+-DCMAKE_C_FLAGS="-O3 -march=native -m64 -fPIC" \
 ..
