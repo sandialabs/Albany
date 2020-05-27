@@ -202,7 +202,6 @@ list (APPEND SOURCES
   problems/Albany_BCUtils.cpp
   problems/Albany_EvaluatorUtils.cpp
   problems/Albany_HeatProblem.cpp
-  problems/Albany_ThermalProblem.cpp
   problems/Albany_Layouts.cpp
   problems/Albany_PopulateMesh.cpp
   problems/Albany_ProblemFactory.cpp
@@ -211,6 +210,13 @@ list (APPEND SOURCES
   problems/Albany_SideLaplacianProblem.cpp
   problems/Albany_MaterialDatabase.cpp
   )
+#IKT, 5/27/2020: Albany::ThermalProblem uses LandIce::SharedParameter
+#and therefore has a dependency on ALBANY_LANDICE
+if (ALBANY_LANDICE)
+  list (APPEND SOURCES
+    problems/Albany_ThermalProblem.cpp
+  )
+endif()
 list (APPEND HEADERS
   problems/Albany_AbstractProblem.hpp
   problems/Albany_BCUtils.hpp
@@ -219,7 +225,6 @@ list (APPEND HEADERS
   problems/Albany_EvaluatorUtils_Def.hpp
   problems/Albany_GeneralPurposeFieldsNames.hpp
   problems/Albany_HeatProblem.hpp
-  problems/Albany_ThermalProblem.hpp
   problems/Albany_Layouts.hpp
   problems/Albany_PopulateMesh.hpp
   problems/Albany_ProblemFactory.hpp
@@ -229,6 +234,12 @@ list (APPEND HEADERS
   problems/Albany_SideLaplacianProblem.hpp
   problems/Albany_MaterialDatabase.hpp
   )
+
+if (ALBANY_LANDICE)
+  list (APPEND HEADERS
+    problems/Albany_ThermalProblem.hpp
+  )
+endif()
 
 #responses
 list (APPEND SOURCES
@@ -391,7 +402,6 @@ list (APPEND SOURCES
   evaluators/interpolation/PHAL_QuadPointsToCellInterpolation.cpp
   evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation.cpp
   evaluators/pde/PHAL_HeatEqResid.cpp
-  evaluators/pde/PHAL_ThermalResid.cpp
   evaluators/pde/PHAL_NSMaterialProperty.cpp
   evaluators/pde/PHAL_SideLaplacianResidual.cpp
   evaluators/pde/PHAL_ThermalConductivity.cpp
@@ -437,6 +447,12 @@ list (APPEND SOURCES
 if(ALBANY_STK_EXPR_EVAL)
   list (APPEND SOURCES 
     evaluators/bc/PHAL_ExprEvalSDBC.cpp)
+endif()
+
+if (ALBANY_LANDICE)
+  list (APPEND SOURCES 
+    evaluators/pde/PHAL_ThermalResid.cpp
+  )
 endif()
 
 if (ALBANY_EPETRA)
@@ -509,8 +525,6 @@ list (APPEND HEADERS
   evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation_Def.hpp
   evaluators/pde/PHAL_HeatEqResid.hpp
   evaluators/pde/PHAL_HeatEqResid_Def.hpp
-  evaluators/pde/PHAL_ThermalResid.hpp
-  evaluators/pde/PHAL_ThermalResid_Def.hpp
   evaluators/pde/PHAL_NSMaterialProperty.hpp
   evaluators/pde/PHAL_NSMaterialProperty_Def.hpp
   evaluators/pde/PHAL_SideLaplacianResidual.hpp
@@ -596,6 +610,12 @@ if(ALBANY_STK_EXPR_EVAL)
     evaluators/bc/PHAL_ExprEvalSDBC_Def.hpp)
 endif()
 
+if (ALBANY_LANDICE) 
+  list (APPEND HEADERS
+    evaluators/pde/PHAL_ThermalResid.hpp
+    evaluators/pde/PHAL_ThermalResid_Def.hpp
+  )
+endif()
 
 if (ALBANY_EPETRA)
   list (APPEND HEADERS
