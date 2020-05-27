@@ -212,7 +212,6 @@ Albany::ThermalProblemWithSensitivities::constructEvaluators(
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<string>("Source Name", "Temperature Source");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set<string>("Source Name", "Temperature Source");
 
