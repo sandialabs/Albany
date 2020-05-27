@@ -2,7 +2,7 @@ ALBANY:
   Debug Output: 
     Write Solution to MatrixMarket: 0
   Problem: 
-    Name: Thermal With Sensitivities 2D
+    Name: Thermal 2D
     Solution Method: Transient
     Compute Sensitivities: true
     Dirichlet BCs: 

@@ -8,8 +8,6 @@
 
 #include "Albany_HeatProblem.hpp"
 #include "Albany_ThermalProblem.hpp"
-#include "Albany_ThermalProblemWithSensitivities.hpp"
-#include "Albany_SteadyThermalProblemWithSensitivities.hpp"
 #include "Albany_PopulateMesh.hpp"
 #include "Albany_SideLaplacianProblem.hpp"
 
@@ -41,9 +39,6 @@ bool BasicProblemFactory::provides (const std::string& key) const
          key == "Thermal With Sensitivities 1D" ||
          key == "Thermal With Sensitivities 2D" ||
          key == "Thermal With Sensitivities 3D" ||
-         key == "Steady Thermal With Sensitivities 1D" ||
-         key == "Steady Thermal With Sensitivities 2D" ||
-         key == "Steady Thermal With Sensitivities 3D" ||
          key == "Populate Mesh" ||
          key == "Side Laplacian 3D";
 }
@@ -69,12 +64,6 @@ create (const std::string& key,
   } else if (getName(key) == "Thermal") {
     problem =
         Teuchos::rcp(new ThermalProblem(problemParams, paramLib, getNumDim(key), comm));
-  } else if (getName(key) == "Thermal With Sensitivities") {
-    problem =
-        Teuchos::rcp(new ThermalProblemWithSensitivities(problemParams, paramLib, getNumDim(key), comm));
-  } else if (getName(key) == "Steady Thermal With Sensitivities") {
-    problem =
-        Teuchos::rcp(new SteadyThermalProblemWithSensitivities(problemParams, paramLib, getNumDim(key), comm));
   } else if (key == "Populate Mesh") {
     problem = Teuchos::rcp(new PopulateMesh(problemParams, discParams, paramLib));
   } else if (key == "Side Laplacian 3D") {
