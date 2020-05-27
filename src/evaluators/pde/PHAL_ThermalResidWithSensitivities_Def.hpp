@@ -17,7 +17,8 @@ namespace PHAL {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ThermalResidWithSensitivities<EvalT, Traits>::
-ThermalResidWithSensitivities(const Teuchos::ParameterList& p) :
+ThermalResidWithSensitivities(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
   wBF         (p.get<std::string>                   ("Weighted BF Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
   Tdot        (p.get<std::string>                   ("QP Time Derivative Variable Name"),
@@ -30,15 +31,18 @@ ThermalResidWithSensitivities(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
   Source   (p.get<std::string>                   ("Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  kappa(p.get<Teuchos::Array<double>>("Thermal Conductivity")),
   rho(p.get<double>("Density")),
-  C(p.get<double>("Heat Capacity"))
+  C(p.get<double>("Heat Capacity")),
+  kappa_x("kappa_x Parameter", dl->shared_param),
+  kappa_y(p.get<double>("kappa_y")),
+  kappa_z(p.get<double>("kappa_z"))
 {
 
   this->addDependentField(wBF);
   this->addDependentField(Tdot);
   this->addDependentField(TGrad);
   this->addDependentField(wGradBF);
+  this->addDependentField(kappa_x);
   this->addEvaluatedField(Source);
   this->addEvaluatedField(TResidual);
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -55,12 +59,13 @@ ThermalResidWithSensitivities(const Teuchos::ParameterList& p) :
   numQPs      = dims[2];
   numDims     = dims[3];
 
-  if (kappa.size() != numDims) {      
+  //IKT FIXME: add error checking to ensure size(kappa) == numDims 
+  /*if (kappa.size() != numDims) {      
     TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::logic_error,
           "Thermal Conductivity size " << kappa.size() << " != # dimensions " << numDims << "\n"); 
-  }
+  }*/
   
   std::string thermal_source = p.get<std::string>("Thermal Source"); 
   if (thermal_source == "None") {
@@ -93,20 +98,6 @@ ThermalResidWithSensitivities(const Teuchos::ParameterList& p) :
         "Unknown Thermal Source = " << thermal_source << "!  Valid options are: 'None', '1D Cost' and '2D Cost Expt'. \n"); 
   }
 
-  // Add kappa[0] wavelength as a Sacado-ized parameter
-  Teuchos::RCP<ParamLib> paramLib =
-    p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
-  this->registerSacadoParameter("kappa_x", paramLib);
-  if (numDims > 1) {
-    // Add kappa[1] wavelength as a Sacado-ized parameter
-    this->registerSacadoParameter("kappa_y", paramLib);
-  }
-  if (numDims > 2) {
-    // Add kappa[2] wavelength as a Sacado-ized parameter
-    this->registerSacadoParameter("kappa_z", paramLib);
-  }
-  this->registerSacadoParameter("C", paramLib);
-  this->registerSacadoParameter("rho", paramLib);
   this->setName("ThermalResidWithSensitivities" );
 }
 
@@ -123,28 +114,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Source, fm);
   this->utils.setFieldData(coordVec, fm);
   this->utils.setFieldData(TResidual, fm);
-}
-// **********************************************************************
-template<typename EvalT,typename Traits>
-typename ThermalResidWithSensitivities<EvalT,Traits>::ScalarT&
-ThermalResidWithSensitivities<EvalT,Traits>::getValue(const std::string &n)
-{
-  if (n == "kappa_x") {
-    value = kappa[0]; 
-  }
-  else if (n == "kappa_y") {
-    value = kappa[1]; 
-  }
-  else if (n == "kappa_z") {
-    value = kappa[2]; 
-  }
-  else if (n == "C") {
-    value = C; 
-  }
-  else if (n == "rho") {
-    value = rho; 
-  }
-  return value;
+  this->utils.setFieldData(kappa_x, fm);
 }
 
 //**********************************************************************
@@ -160,27 +130,27 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  else if (force_type == ONEDCOST) { //Source term such that T = a*x*(1-x)*cos(2*pi*kappa[0]*t/rho/C) with a = 16.0
+  else if (force_type == ONEDCOST) { //Source term such that T = a*x*(1-x)*cos(2*pi*kappa_x*t/rho/C) with a = 16.0
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {      
         const ScalarT x = coordVec(cell, qp, 0); 
         const RealType a = 16.0; 
         const RealType t = workset.current_time; 
-        Source(cell, qp) = -2.0*a*kappa[0]*(M_PI*x*(1-x)*sin(2.0*M_PI*kappa[0]*t/rho/C) - cos(2.0*M_PI*kappa[0]*t/rho/C)); 
+        Source(cell, qp) = -2.0*a*kappa_x(0)*(M_PI*x*(1-x)*sin(2.0*M_PI*kappa_x(0)*t/rho/C) - cos(2.0*M_PI*kappa_x(0)*t/rho/C)); 
       }
     }
   }
   else if (force_type == TWODCOSTEXPT) { //Source term such that T = a*x*(1-x)*y*(1-y)*
-                                         //cos(2*pi*kappa[0]*t/rho/C)*exp(2*pi*kappa[1]*t/rho/C) with a = 16.0
+                                         //cos(2*pi*kappa_x*t/rho/C)*exp(2*pi*kappa_y*t/rho/C) with a = 16.0
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {      
         const ScalarT x = coordVec(cell, qp, 0); 
         const ScalarT y = coordVec(cell, qp, 1); 
         const RealType a = 16.0; 
         const RealType t = workset.current_time; 
-        Source(cell, qp) = 2.0*M_PI*a*x*(1.0-x)*y*(1.0-y)*exp(2.0*M_PI*kappa[1]*t/rho/C)*(kappa[1]*cos(2*M_PI*kappa[0]*t/rho/C)
-                          -kappa[0]*sin(2.0*M_PI*kappa[0]*t/rho/C)) + 2.0*a*cos(2.0*M_PI*kappa[0]*t/rho/C)
-                          *exp(2.0*M_PI*kappa[1]*t/rho/C)*(kappa[0]*y*(1-y) + kappa[1]*x*(1-x)); 
+        Source(cell, qp) = 2.0*M_PI*a*x*(1.0-x)*y*(1.0-y)*exp(2.0*M_PI*kappa_y*t/rho/C)*(kappa_y*cos(2*M_PI*kappa_x(0)*t/rho/C)
+                          -kappa_x(0)*sin(2.0*M_PI*kappa_x(0)*t/rho/C)) + 2.0*a*cos(2.0*M_PI*kappa_x(0)*t/rho/C)
+                          *exp(2.0*M_PI*kappa_y*t/rho/C)*(kappa_x(0)*y*(1-y) + kappa_y*x*(1-x)); 
       }
     }
   }
@@ -197,9 +167,12 @@ evaluateFields(typename Traits::EvalData workset)
         // Source contribution to residual
                                - Source(cell,qp) * wBF(cell, node, qp); 
         // Diffusion part of residual
-        for (std::size_t ndim = 0; ndim < numDims; ++ndim) {
-          TResidual(cell, node) += kappa[ndim] * TGrad(cell, qp, ndim) *
-                                   wGradBF(cell, node, qp, ndim);
+        TResidual(cell, node) += kappa_x(0) * TGrad(cell, qp, 0) * wGradBF(cell, node, qp, 0); 
+        if (numDims > 1) {
+          TResidual(cell, node) += kappa_y * TGrad(cell, qp, 1) * wGradBF(cell, node, qp, 1); 
+        }
+        if (numDims > 2) {
+          TResidual(cell, node) += kappa_z * TGrad(cell, qp, 2) * wGradBF(cell, node, qp, 2); 
         }
       }
     }

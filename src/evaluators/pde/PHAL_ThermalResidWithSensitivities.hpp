@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace PHAL {
 
@@ -23,12 +24,12 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class ThermalResidWithSensitivities : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>,
-                    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
-  ThermalResidWithSensitivities(Teuchos::ParameterList const& p);
+  ThermalResidWithSensitivities(Teuchos::ParameterList const& p,
+                                const Teuchos::RCP<Albany::Layouts>& dl); 
 
   void
   postRegistrationSetup(
@@ -37,8 +38,6 @@ public:
 
   void
   evaluateFields(typename Traits::EvalData d);
-
-  typename EvalT::ScalarT& getValue(const std::string &n);
 
 private:
 
@@ -53,9 +52,11 @@ private:
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
   PHX::MDField<ScalarT const, Cell, QuadPoint, Dim>           TGrad;
   PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>       coordVec;
-  Teuchos::Array<double> kappa;  // Thermal Conductivity array
   double                 C;      // Heat Capacity
   double                 rho;    // Density
+  PHX::MDField<const ScalarT> kappa_x;
+  double kappa_y;
+  double kappa_z;
 
   // Output:
   PHX::MDField<ScalarT, Cell, QuadPoint> Source;

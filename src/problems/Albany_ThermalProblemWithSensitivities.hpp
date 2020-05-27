@@ -18,7 +18,6 @@
 
 #include "PHAL_ConvertFieldType.hpp"
 #include "Albany_MaterialDatabase.hpp"
-
 namespace Albany {
 
   /*!
@@ -115,7 +114,9 @@ namespace Albany {
 #include "Albany_ResponseUtilities.hpp"
 //#include "PHAL_Neumann.hpp"
 #include "PHAL_ThermalResidWithSensitivities.hpp"
-
+//IKT FIXME - add dependence on LandIce
+#include "../../LandIce/evaluators/LandIce_SharedParameter.hpp"
+#include "../../LandIce/problems/LandIce_ParamEnum.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -204,6 +205,17 @@ Albany::ThermalProblemWithSensitivities::constructEvaluators(
         evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
+  {  //Shared parameters for sensitivity analysis 
+    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity Parameters"));
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+    const std::string param_name = "kappa_x Parameter";
+    p->set<std::string>("Parameter Name", param_name);
+    RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>> ptr_kappa_x;
+    ptr_kappa_x = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>(*p,dl));
+    ptr_kappa_x->setNominalValue(params->sublist("Parameters"), kappa[0]); 
+    fm0.template registerEvaluator<EvalT>(ptr_kappa_x);
+  }
+
   {  // Temperature Resid
     RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
 
@@ -221,17 +233,17 @@ Albany::ThermalProblemWithSensitivities::constructEvaluators(
     p->set<RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
     p->set<RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
     p->set<RCP<DataLayout>>("Node Scalar Data Layout", dl->node_scalar);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    p->set<Teuchos::Array<double>>("Thermal Conductivity", kappa);
+    p->set<std::string>("Continuation Parameter Name","kappa_x Parameter");
     p->set<double>("Heat Capacity", C);
     p->set<double>("Density", rho);
+    p->set<double>("kappa_y", kappa[1]);
+    p->set<double>("kappa_z", kappa[2]);
     p->set<std::string>("Thermal Source", thermal_source); 
 
     // Output
     p->set<string>("Residual Name", "Temperature Residual");
 
-    ev = rcp(new PHAL::ThermalResidWithSensitivities<EvalT, AlbanyTraits>(*p));
+    ev = rcp(new PHAL::ThermalResidWithSensitivities<EvalT, AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
