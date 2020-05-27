@@ -30,9 +30,9 @@ ALBANY:
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [-1.983408347195e+00]
-    #Sensitivity Comparisons 0: 
-    #  Number of Sensitivity Comparisons: 1
-    #  Sensitivity Test Values 0: [5.62650000000000025e-02]
+    Sensitivity Comparisons 0: 
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [9.395066921520e+00]
     Relative Tolerance: 1.00000000000000002e-03
     Absolute Tolerance: 1.00000000000000008e-05
   Piro: 
