@@ -33,10 +33,11 @@ ThermalResid(const Teuchos::ParameterList& p,
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   rho(p.get<double>("Density")),
   C(p.get<double>("Heat Capacity")),
+  disable_transient(p.get<bool>("Disable Transient")), 
   kappa_x(p.get<std::string>("Thermal Conductivity: kappa_x"), dl->shared_param)
 {
   this->addDependentField(wBF);
-  this->addDependentField(Tdot);
+  if (!disable_transient) this->addDependentField(Tdot);
   this->addDependentField(TGrad);
   this->addDependentField(wGradBF);
   this->addDependentField(kappa_x);
@@ -70,6 +71,12 @@ ThermalResid(const Teuchos::ParameterList& p,
   }
   else if (thermal_source == "1D Cost") {
     force_type = ONEDCOST;
+    if (disable_transient) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "'Thermal Source = 1D Cost' is only valid for transient problems!\n"); 
+    }
   } 
   else if (thermal_source == "2D Cost Expt") {
     force_type = TWODCOSTEXPT;
@@ -79,6 +86,12 @@ ThermalResid(const Teuchos::ParameterList& p,
           std::logic_error,
           "'Thermal Source = 2D Cost Expt' is only valid for 2 or more spatial dimensions!  " << 
           "Your problem has numDims = " << numDims << " dimensions. \n"); 
+    }
+    if (disable_transient) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "'Thermal Source = 2D Cost Expt' is only valid for transient problems!\n"); 
     }
   } 
   else {
@@ -100,7 +113,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF, fm);
   this->utils.setFieldData(TGrad, fm);
   this->utils.setFieldData(wGradBF, fm);
-  this->utils.setFieldData(Tdot, fm);
+  if (!disable_transient) this->utils.setFieldData(Tdot, fm);
   this->utils.setFieldData(Source, fm);
   this->utils.setFieldData(coordVec, fm);
   this->utils.setFieldData(TResidual, fm);
@@ -155,9 +168,10 @@ evaluateFields(typename Traits::EvalData workset)
       TResidual(cell, node) = 0.0;
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
         // Time-derivative contribution to residual
-        TResidual(cell, node) += rho * C * Tdot(cell, qp) * wBF(cell, node, qp) 
+        if (!disable_transient)
+          TResidual(cell, node) += rho * C * Tdot(cell, qp) * wBF(cell, node, qp);
         // Source contribution to residual
-                               - Source(cell,qp) * wBF(cell, node, qp); 
+        TResidual(cell, node) -= Source(cell,qp) * wBF(cell, node, qp); 
         // Diffusion part of residual
         TResidual(cell, node) += kappa_x(0) * TGrad(cell, qp, 0) * wGradBF(cell, node, qp, 0); 
         if (numDims > 1) {

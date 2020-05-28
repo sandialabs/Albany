@@ -153,11 +153,24 @@ Albany::ThermalProblem::constructEvaluators(
   int const numQPtsCell = cellCubature->getNumPoints();
   int const numVertices = cellType->getNodeCount();
 
-  // Problem is steady or transient
+  // Get the solution method type
+  SolutionMethodType SolutionType = getSolutionMethod();
+
   ALBANY_PANIC(
-      number_of_time_deriv != 1,
-      "Albany_ThermalProblem must be defined as transient "
-      "calculation.");
+      SolutionType == SolutionMethodType::Unknown,
+      "Solution Method must be Steady, Transient, "
+      "Continuation, or Eigensolve");
+  
+  if (SolutionType == SolutionMethodType::Transient) { // Problem is transient
+    ALBANY_PANIC(
+        number_of_time_deriv != 1,
+        "You are using a transient solution method in Albany::ThermalProblem but number of time derivatives != 1!"); 
+  }
+  else { //Problem is steady
+    ALBANY_PANIC(
+        number_of_time_deriv > 0,
+        "You are using a steady solution method in Albany::ThermalProblem but number of time derivatives > 0!");
+  } 
 
   *out << "Field Dimensions: Workset=" << worksetSize
        << ", Vertices= " << numVertices << ", Nodes= " << numNodes
@@ -255,6 +268,12 @@ Albany::ThermalProblem::constructEvaluators(
     p->set<std::string>("Thermal Conductivity: kappa_x","kappa_x Parameter");
     if (numDim > 1) p->set<std::string>("Thermal Conductivity: kappa_y","kappa_y Parameter");
     if (numDim > 2) p->set<std::string>("Thermal Conductivity: kappa_z","kappa_z Parameter");
+    if (SolutionType != SolutionMethodType::Transient) {
+      p->set<bool>("Disable Transient", true);
+    }
+    else {
+      p->set<bool>("Disable Transient", false);
+    }
     p->set<double>("Heat Capacity", C);
     p->set<double>("Density", rho);
     p->set<std::string>("Thermal Source", thermal_source); 

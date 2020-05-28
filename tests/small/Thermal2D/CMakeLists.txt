@@ -5,6 +5,8 @@ if(NOT ALBANY_PARALLEL_ONLY)
   # Copy Input file from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_steady.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_steady.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_with_source.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/compute_errs_source_no_movie2avi.m

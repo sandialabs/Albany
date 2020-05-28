@@ -54,6 +54,7 @@ private:
   PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>       coordVec;
   double                 C;      // Heat Capacity
   double                 rho;    // Density
+  bool                   disable_transient; //Boolean to disable transient terms 
   // Thermal conductivity components
   PHX::MDField<const ScalarT> kappa_x;
   PHX::MDField<const ScalarT> kappa_y;
