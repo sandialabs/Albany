@@ -33,11 +33,8 @@ ThermalResid(const Teuchos::ParameterList& p,
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   rho(p.get<double>("Density")),
   C(p.get<double>("Heat Capacity")),
-  kappa_x("kappa_x Parameter", dl->shared_param),
-  kappa_y(p.get<double>("kappa_y")),
-  kappa_z(p.get<double>("kappa_z"))
+  kappa_x(p.get<std::string>("Thermal Conductivity: kappa_x"), dl->shared_param)
 {
-
   this->addDependentField(wBF);
   this->addDependentField(Tdot);
   this->addDependentField(TGrad);
@@ -59,35 +56,28 @@ ThermalResid(const Teuchos::ParameterList& p,
   numQPs      = dims[2];
   numDims     = dims[3];
 
-  //IKT FIXME: add error checking to ensure size(kappa) == numDims 
-  /*if (kappa.size() != numDims) {      
-    TEUCHOS_TEST_FOR_EXCEPTION(
-          true,
-          std::logic_error,
-          "Thermal Conductivity size " << kappa.size() << " != # dimensions " << numDims << "\n"); 
-  }*/
-  
+  if (numDims > 1) {
+    kappa_y = decltype(kappa_y)(p.get<std::string>("Thermal Conductivity: kappa_y"), dl->shared_param);
+    this->addDependentField(kappa_y);
+  }
+  if (numDims > 2) {
+    kappa_z = decltype(kappa_z)(p.get<std::string>("Thermal Conductivity: kappa_y"), dl->shared_param);
+    this->addDependentField(kappa_z);
+  }
   std::string thermal_source = p.get<std::string>("Thermal Source"); 
   if (thermal_source == "None") {
     force_type = NONE;
   }
   else if (thermal_source == "1D Cost") {
     force_type = ONEDCOST;
-    if (numDims > 1) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true,
-          std::logic_error,
-          "'Thermal Source = 1D Cost' is not valid for > 1 spatial dimensions!  " << 
-          "Your problem has numDims = " << numDims << " dimensions. \n"); 
-    }
   } 
   else if (thermal_source == "2D Cost Expt") {
     force_type = TWODCOSTEXPT;
-    if (numDims > 2) {
+    if (numDims < 2) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::logic_error,
-          "'Thermal Source = 2D Cost Expt' is only valid for 2 spatial dimensions!  " << 
+          "'Thermal Source = 2D Cost Expt' is only valid for 2 or more spatial dimensions!  " << 
           "Your problem has numDims = " << numDims << " dimensions. \n"); 
     }
   } 
@@ -115,6 +105,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(coordVec, fm);
   this->utils.setFieldData(TResidual, fm);
   this->utils.setFieldData(kappa_x, fm);
+  if (numDims > 1) this->utils.setFieldData(kappa_y, fm);
+  if (numDims > 2) this->utils.setFieldData(kappa_z, fm);
 }
 
 //**********************************************************************
@@ -148,9 +140,9 @@ evaluateFields(typename Traits::EvalData workset)
         const ScalarT y = coordVec(cell, qp, 1); 
         const RealType a = 16.0; 
         const RealType t = workset.current_time; 
-        Source(cell, qp) = 2.0*M_PI*a*x*(1.0-x)*y*(1.0-y)*exp(2.0*M_PI*kappa_y*t/rho/C)*(kappa_y*cos(2*M_PI*kappa_x(0)*t/rho/C)
+        Source(cell, qp) = 2.0*M_PI*a*x*(1.0-x)*y*(1.0-y)*exp(2.0*M_PI*kappa_y(0)*t/rho/C)*(kappa_y(0)*cos(2*M_PI*kappa_x(0)*t/rho/C)
                           -kappa_x(0)*sin(2.0*M_PI*kappa_x(0)*t/rho/C)) + 2.0*a*cos(2.0*M_PI*kappa_x(0)*t/rho/C)
-                          *exp(2.0*M_PI*kappa_y*t/rho/C)*(kappa_x(0)*y*(1-y) + kappa_y*x*(1-x)); 
+                          *exp(2.0*M_PI*kappa_y(0)*t/rho/C)*(kappa_x(0)*y*(1-y) + kappa_y(0)*x*(1-x)); 
       }
     }
   }
@@ -169,10 +161,10 @@ evaluateFields(typename Traits::EvalData workset)
         // Diffusion part of residual
         TResidual(cell, node) += kappa_x(0) * TGrad(cell, qp, 0) * wGradBF(cell, node, qp, 0); 
         if (numDims > 1) {
-          TResidual(cell, node) += kappa_y * TGrad(cell, qp, 1) * wGradBF(cell, node, qp, 1); 
+          TResidual(cell, node) += kappa_y(0) * TGrad(cell, qp, 1) * wGradBF(cell, node, qp, 1); 
         }
         if (numDims > 2) {
-          TResidual(cell, node) += kappa_z * TGrad(cell, qp, 2) * wGradBF(cell, node, qp, 2); 
+          TResidual(cell, node) += kappa_z(0) * TGrad(cell, qp, 2) * wGradBF(cell, node, qp, 2); 
         }
       }
     }

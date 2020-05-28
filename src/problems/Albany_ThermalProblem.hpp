@@ -205,15 +205,35 @@ Albany::ThermalProblem::constructEvaluators(
         evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
-  {  //Shared parameters for sensitivity analysis 
-    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity Parameters"));
+  {  //Shared parameter for sensitivity analysis: kappa_x
+    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_x"));
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     const std::string param_name = "kappa_x Parameter";
     p->set<std::string>("Parameter Name", param_name);
     RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>> ptr_kappa_x;
     ptr_kappa_x = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>(*p,dl));
-    ptr_kappa_x->setNominalValue(params->sublist("Parameters"), kappa[0]); 
+    ptr_kappa_x->setNominalValue(params->sublist("Parameters"), kappa[0]);
     fm0.template registerEvaluator<EvalT>(ptr_kappa_x);
+  }
+  if (numDim > 1) {  //Shared parameter for sensitivity analysis: kappa_y
+    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_y"));
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+    const std::string param_name = "kappa_y Parameter";
+    p->set<std::string>("Parameter Name", param_name);
+    RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>> ptr_kappa_y;
+    ptr_kappa_y = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>(*p,dl));
+    ptr_kappa_y->setNominalValue(params->sublist("Parameters"), kappa[1]); 
+    fm0.template registerEvaluator<EvalT>(ptr_kappa_y);
+  }
+  if (numDim > 2) {  //Shared parameter for sensitivity analysis: kappa_z
+    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_z"));
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+    const std::string param_name = "kappa_z Parameter";
+    p->set<std::string>("Parameter Name", param_name);
+    RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>> ptr_kappa_z;
+    ptr_kappa_z = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>(*p,dl));
+    ptr_kappa_z->setNominalValue(params->sublist("Parameters"), kappa[2]); 
+    fm0.template registerEvaluator<EvalT>(ptr_kappa_z);
   }
 
   {  // Temperature Resid
@@ -226,18 +246,17 @@ Albany::ThermalProblem::constructEvaluators(
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<string>("Source Name", "Temperature Source");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set<string>("Source Name", "Temperature Source");
 
     p->set<RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
     p->set<RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
     p->set<RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
     p->set<RCP<DataLayout>>("Node Scalar Data Layout", dl->node_scalar);
-    p->set<std::string>("Continuation Parameter Name","kappa_x Parameter");
+    p->set<std::string>("Thermal Conductivity: kappa_x","kappa_x Parameter");
+    if (numDim > 1) p->set<std::string>("Thermal Conductivity: kappa_y","kappa_y Parameter");
+    if (numDim > 2) p->set<std::string>("Thermal Conductivity: kappa_z","kappa_z Parameter");
     p->set<double>("Heat Capacity", C);
     p->set<double>("Density", rho);
-    p->set<double>("kappa_y", kappa[1]);
-    p->set<double>("kappa_z", kappa[2]);
     p->set<std::string>("Thermal Source", thermal_source); 
 
     // Output

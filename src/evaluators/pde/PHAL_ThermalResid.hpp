@@ -54,9 +54,10 @@ private:
   PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>       coordVec;
   double                 C;      // Heat Capacity
   double                 rho;    // Density
+  // Thermal conductivity components
   PHX::MDField<const ScalarT> kappa_x;
-  double kappa_y;
-  double kappa_z;
+  PHX::MDField<const ScalarT> kappa_y;
+  PHX::MDField<const ScalarT> kappa_z;
 
   // Output:
   PHX::MDField<ScalarT, Cell, QuadPoint> Source;
