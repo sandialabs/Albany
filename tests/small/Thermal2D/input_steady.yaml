@@ -10,12 +10,7 @@ ALBANY:
       SDBC on NS NodeSet1 for DOF T: 50.0
       SDBC on NS NodeSet2 for DOF T: 0.0
       SDBC on NS NodeSet3 for DOF T: 0.0
-    Initial Condition:
-      Function: Constant
-      Function Data: [0.0]
     Thermal Conductivity: [1.6, 0.8]  
-    Heat Capacity: 1.0 
-    Density: 1.0 
     Thermal Source: None
     Response Functions: 
       Number: 1
