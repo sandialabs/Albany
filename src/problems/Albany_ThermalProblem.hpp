@@ -223,8 +223,8 @@ Albany::ThermalProblem::constructEvaluators(
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     const std::string param_name = "kappa_x Parameter";
     p->set<std::string>("Parameter Name", param_name);
-    RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>> ptr_kappa_x;
-    ptr_kappa_x = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>(*p,dl));
+    RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Kappa_x>> ptr_kappa_x;
+    ptr_kappa_x = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Kappa_x>(*p,dl));
     ptr_kappa_x->setNominalValue(params->sublist("Parameters"), kappa[0]);
     fm0.template registerEvaluator<EvalT>(ptr_kappa_x);
   }
@@ -233,8 +233,8 @@ Albany::ThermalProblem::constructEvaluators(
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     const std::string param_name = "kappa_y Parameter";
     p->set<std::string>("Parameter Name", param_name);
-    RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>> ptr_kappa_y;
-    ptr_kappa_y = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>(*p,dl));
+    RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Kappa_y>> ptr_kappa_y;
+    ptr_kappa_y = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Kappa_y>(*p,dl));
     ptr_kappa_y->setNominalValue(params->sublist("Parameters"), kappa[1]); 
     fm0.template registerEvaluator<EvalT>(ptr_kappa_y);
   }
@@ -243,8 +243,8 @@ Albany::ThermalProblem::constructEvaluators(
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     const std::string param_name = "kappa_z Parameter";
     p->set<std::string>("Parameter Name", param_name);
-    RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>> ptr_kappa_z;
-    ptr_kappa_z = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Homotopy>(*p,dl));
+    RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Kappa_z>> ptr_kappa_z;
+    ptr_kappa_z = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,LandIce::ParamEnum,LandIce::ParamEnum::Kappa_z>(*p,dl));
     ptr_kappa_z->setNominalValue(params->sublist("Parameters"), kappa[2]); 
     fm0.template registerEvaluator<EvalT>(ptr_kappa_z);
   }

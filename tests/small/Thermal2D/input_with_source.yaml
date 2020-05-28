@@ -17,24 +17,13 @@ ALBANY:
     Heat Capacity: 1.0 
     Density: 1.0 
     Thermal Source: 2D Cost Expt
-    #Thermal Source: 1D Cost
     Response Functions: 
       Number: 1
       Response 0: Solution Average
     Parameters:
-      Number of Parameter Vectors: 2
-      Parameter Vector 0:
-        Number: 1
-        Parameter 0: 'kappa_x Parameter'
-        Nominal Values: [1.6]
-      Parameter Vector 1:
-        Number: 1
-        Parameter 0: 'kappa_y Parameter'
-        Nominal Values: [0.8]
-    #Parameters: 
-    #  Number: 2
-    #  Parameter 0: 'kappa_x Parameter'
-    #  Parameter 1: 'kappa_y Parameter'
+      Number: 2
+      Parameter 0: 'kappa_x Parameter'
+      Parameter 1: 'kappa_y Parameter'
   Discretization: 
     1D Elements: 3
     2D Elements: 3

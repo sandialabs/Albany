@@ -20,20 +20,10 @@ ALBANY:
     Response Functions: 
       Number: 1
       Response 0: Solution Average
-    Parameters:
-      Number of Parameter Vectors: 2
-      Parameter Vector 0:
-        Number: 1
-        Parameter 0: 'kappa_x Parameter'
-        Nominal Values: [1.6]
-      Parameter Vector 1:
-        Number: 1
-        Parameter 0: 'kappa_y Parameter'
-        Nominal Values: [0.8]
-    #Parameters: 
-    #  Number: 2
-    #  Parameter 0: 'kappa_x Parameter'
-    #  Parameter 1: 'kappa_y Parameter'
+    Parameters: 
+      Number: 2
+      Parameter 0: 'kappa_x Parameter'
+      Parameter 1: 'kappa_y Parameter'
   Discretization: 
     1D Elements: 3
     2D Elements: 3
@@ -41,10 +31,10 @@ ALBANY:
     2D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK2D
-    Exodus Output File Name: thermal2D_with_source_out.exo
+    Exodus Output File Name: thermal2D_steady_out.exo
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [-4.391538524980e+01]
+    Test Values: [8.42895275298]
     #Sensitivity Comparisons 0: 
     #  Number of Sensitivity Comparisons: 2
     #  Sensitivity Test Values 0: [0.0] 
