@@ -162,14 +162,23 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Evaluate residual:
   // We are solving the following PDE
-  // rho*CdT/dt - kappa_1*dT/dx - kappa_2*dT/dy - kappa_3*dT/dz = f in 3D
+  // rho*CdT/dt - kappa_x*dT/dx - kappa_y*dT/dy - kappa_z*dT/dz = f in 3D
+
+  if (!disable_transient) { //Inertia terms
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t node = 0; node < numNodes; ++node) {
+        TResidual(cell, node) = 0.0;
+        for (std::size_t qp = 0; qp < numQPs; ++qp) {
+          // Time-derivative contribution to residual
+          TResidual(cell, node) += rho * C * Tdot(cell, qp) * wBF(cell, node, qp);
+        }
+      }
+    }
+  }
+  //Diffusion and source terms 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t node = 0; node < numNodes; ++node) {
-      TResidual(cell, node) = 0.0;
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
-        // Time-derivative contribution to residual
-        if (!disable_transient)
-          TResidual(cell, node) += rho * C * Tdot(cell, qp) * wBF(cell, node, qp);
         // Source contribution to residual
         TResidual(cell, node) -= Source(cell,qp) * wBF(cell, node, qp); 
         // Diffusion part of residual
