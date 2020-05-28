@@ -644,7 +644,6 @@ evaluateFields(typename Traits::EvalData workset)
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor(cell,node, eq/numDim, eq%numDim));
         valref = FadType(valref.size(), x_constView[nodeID(cell,node,this->offset + eq)]);
-        // valref.setUpdateValue(!workset.ignore_residual); Not used anymore
         valref.fastAccessDx(firstunk + eq) = workset.j_coeff;
       }
       if (workset.transientTerms && this->enableTransient) {
