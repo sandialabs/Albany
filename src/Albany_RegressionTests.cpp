@@ -87,12 +87,14 @@ checkSolveTestResults(
         dgdp != Teuchos::null,
         "There are Sensitivity Tests but the sensitivity vector ("
             << response_index << ", " << parameter_index << ") is null!");
-    ALBANY_ASSERT(
-        numSensTests <= dgdp->range()->dim(),
-        "Number of sensitivity tests ("
-            << numSensTests << ") != number of sensitivities ["
-            << response_index << "][" << parameter_index << "] ("
-            << dgdp->range()->dim() << ") !");
+    if (numSensTests != dgdp->range()->dim()) {
+      ALBANY_ASSERT(
+          false,
+          "Number of sensitivity tests ("
+              << numSensTests << ") != number of sensitivities ["
+              << response_index << "][" << parameter_index << "] ("
+              << dgdp->range()->dim() << ") !");
+    }
   }
   for (int i = 0; i < numSensTests; i++) {
     const int numVecs = dgdp->domain()->dim();
