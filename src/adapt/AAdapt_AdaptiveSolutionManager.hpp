@@ -29,7 +29,8 @@ public:
         const Teuchos::RCP<const Thyra_Vector>& initial_guess,
         const Teuchos::RCP<ParamLib>& param_lib,
         const Teuchos::RCP<AbstractDiscretization>& disc,
-        const Teuchos::RCP<const Teuchos_Comm>& comm);
+        const Teuchos::RCP<const Teuchos_Comm>& comm,
+        const int num_params); 
 
    //! Method called by the solver implementation to determine if the mesh needs adapting
    // A return type of true means that the mesh should be adapted
@@ -61,9 +62,11 @@ public:
 
    void scatterX (const Thyra_Vector& x,
                   const Teuchos::Ptr<const Thyra_Vector> x_dot,
-                  const Teuchos::Ptr<const Thyra_Vector> x_dotdot);
+                  const Teuchos::Ptr<const Thyra_Vector> x_dotdot,
+                  const Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
-   void scatterX (const Thyra_MultiVector& soln);
+   void scatterX (const Thyra_MultiVector& soln,
+                  const Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
 private:
 
@@ -77,6 +80,7 @@ private:
     // The solution directly from the discretization class
     Teuchos::RCP<Thyra_MultiVector> current_soln;
     Teuchos::RCP<Thyra_MultiVector> overlapped_soln;
+    Teuchos::RCP<Thyra_MultiVector> overlapped_soln_dxdp;
 
     // Number of time derivative vectors that we need to support
     const int num_time_deriv;
@@ -90,6 +94,9 @@ private:
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     Teuchos::RCP<AbstractAdapter> adapter_;
+  
+    //! Number parameters
+    int num_params_{0};
 };
 
 } // namespace AAdapt

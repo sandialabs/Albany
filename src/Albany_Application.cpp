@@ -46,34 +46,6 @@ int countRes;   // counter which counts instances of residual (for debug output)
 int countSoln;  // counter which counts instances of solution (for debug output)
 int countScale;
 
-namespace {
-int
-calcTangentDerivDimension(
-    const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
-{
-  Teuchos::ParameterList& parameterParams =
-      problemParams->sublist("Parameters");
-  int  num_param_vecs = parameterParams.get("Number of Parameter Vectors", 0);
-  bool using_old_parameter_list = false;
-  if (parameterParams.isType<int>("Number")) {
-    int numParameters = parameterParams.get<int>("Number");
-    if (numParameters > 0) {
-      num_param_vecs           = 1;
-      using_old_parameter_list = true;
-    }
-  }
-  int np = 0;
-  for (int i = 0; i < num_param_vecs; ++i) {
-    Teuchos::ParameterList& pList =
-        using_old_parameter_list ?
-            parameterParams :
-            parameterParams.sublist(Albany::strint("Parameter Vector", i));
-    np += pList.get<int>("Number");
-  }
-  return std::max(1, np);
-}
-}  // namespace
-
 namespace Albany {
 
 Application::Application(
@@ -613,7 +585,8 @@ Application::finalSetUp(
       initial_guess,
       paramLib,
       disc,
-      comm));
+      comm,
+      num_params_));
 
   try {
     // Create Distributed parameters and initialize them with data stored in the
@@ -1755,7 +1728,7 @@ Application::computeGlobalTangent(
   auto cas_manager = solMgr->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distrbution
-  solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
+  solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr()); 
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2285,6 +2258,7 @@ Application::evaluateStateFieldManager(
     Teuchos::Ptr<const Thyra_MultiVector> dxdp )
 {
   std::cout << "IKT evaluateStateFieldManager2, dxdp = " << dxdp << "\n"; 
+  std::cout << "IKT evaluateStateFieldManager2 numParams = " << dxdp->domain()->dim() << "\n"; 
   TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: State Residual");
   {
     std::string evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>("SFM",0);
@@ -2322,8 +2296,7 @@ Application::evaluateStateFieldManager(
   int numWorksets = wsElNodeEqID.size();
 
   // Scatter to the overlapped distrbution
-  //IKT FIXME - extend the following routine to use dxdp 
-  solMgr->scatterX(x, xdot, xdotdot);
+  solMgr->scatterX(x, xdot, xdotdot, dxdp);
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2683,6 +2656,33 @@ Application::setupBasicWorksetInfo(
   workset.comm = comm;
 
   workset.x_cas_manager = solMgr->get_cas_manager();
+}
+
+int
+Application::calcTangentDerivDimension(
+    const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
+{
+  Teuchos::ParameterList& parameterParams =
+      problemParams->sublist("Parameters");
+  int  num_param_vecs = parameterParams.get("Number of Parameter Vectors", 0);
+  bool using_old_parameter_list = false;
+  if (parameterParams.isType<int>("Number")) {
+    int numParameters = parameterParams.get<int>("Number");
+    if (numParameters > 0) {
+      num_param_vecs           = 1;
+      using_old_parameter_list = true;
+    }
+  }
+  int np = 0;
+  for (int i = 0; i < num_param_vecs; ++i) {
+    Teuchos::ParameterList& pList =
+        using_old_parameter_list ?
+            parameterParams :
+            parameterParams.sublist(Albany::strint("Parameter Vector", i));
+    np += pList.get<int>("Number");
+  }
+  num_params_ = np; 
+  return std::max(1, np);
 }
 
 void

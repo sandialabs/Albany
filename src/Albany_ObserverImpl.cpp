@@ -53,6 +53,7 @@ observeSolution(double stamp,
                 const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
 {
   std::cout << "IKT ObserverImpl observeSolution1 dxdp\n"; 
+  std::cout << "IKT ObserverImpl numParams = " << nonOverlappedSolution_dxdp->domain()->dim() << "\n"; 
   app_->evaluateStateFieldManager (stamp,
                                    nonOverlappedSolution,
                                    nonOverlappedSolutionDot,

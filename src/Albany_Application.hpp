@@ -504,6 +504,9 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp);
 
+  int 
+  calcTangentDerivDimension(const Teuchos::RCP<Teuchos::ParameterList>& problemParams); 
+
  private:
   template <typename EvalT>
   void
@@ -547,6 +550,9 @@ public:
   bool no_dir_bcs_;
   bool requires_sdbcs_;
   bool requires_orig_dbcs_;
+  
+  //! Number of params   
+  int num_params_{0}; 
 
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;

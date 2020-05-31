@@ -160,6 +160,8 @@ observeSolutionImpl(const Thyra_Vector &solution,
                     const Thyra_MultiVector &solution_dxdp, 
                     const ST defaultStamp)
 {
+  std::cout << "IKT PiroObserver observeSolutionImpl1 dxdp\n"; 
+  std::cout << "IKT PiroObserver numParams = " << solution_dxdp.domain()->dim() << "\n"; 
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
   impl_.observeSolution(stamp, solution, Teuchos::constPtr(solution_dxdp), Teuchos::null, Teuchos::null);
@@ -195,6 +197,8 @@ observeSolutionImpl(const Thyra_Vector &solution,
                     const Thyra_Vector &solution_dot,
                     const ST defaultStamp)
 {
+  std::cout << "IKT PiroObserver observeSolutionImpl2 dxdp\n"; 
+  std::cout << "IKT PiroObserver numParams = " << solution_dxdp.domain()->dim() << "\n"; 
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
   impl_.observeSolution(stamp, solution, Teuchos::constPtr(solution_dxdp), Teuchos::constPtr(solution_dot), Teuchos::null);
@@ -236,6 +240,8 @@ observeSolutionImpl(const Thyra_Vector &solution,
                     const Thyra_Vector &solution_dotdot,
                     const ST defaultStamp)
 {
+  std::cout << "IKT PiroObserver observeSolutionImpl3 dxdp\n"; 
+  std::cout << "IKT PiroObserver numParams = " << solution_dxdp.domain()->dim() << "\n"; 
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
   impl_.observeSolution(stamp, solution, Teuchos::constPtr(solution_dxdp), 
@@ -263,6 +269,8 @@ observeSolutionImpl(const Thyra_MultiVector &solution,
                     const Thyra_MultiVector &solution_dxdp, 
                     const ST defaultStamp)
 {
+  std::cout << "IKT PiroObserver observeSolutionImpl4 dxdp\n"; 
+  std::cout << "IKT PiroObserver numParams = " << solution_dxdp.domain()->dim() << "\n"; 
   impl_.observeSolution(defaultStamp, solution, 
                         Teuchos::constPtr(solution_dxdp));
 }
