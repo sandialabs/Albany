@@ -162,7 +162,7 @@ observeSolutionImpl(const Thyra_Vector &solution,
 {
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
-  impl_.observeSolution(stamp, solution, solution_dxdp, Teuchos::null, Teuchos::null);
+  impl_.observeSolution(stamp, solution, Teuchos::constPtr(solution_dxdp), Teuchos::null, Teuchos::null);
   
   // observe responses 
   if (observe_responses_ == true) {
@@ -197,7 +197,7 @@ observeSolutionImpl(const Thyra_Vector &solution,
 {
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
-  impl_.observeSolution(stamp, solution, solution_dxdp, Teuchos::constPtr(solution_dot), Teuchos::null);
+  impl_.observeSolution(stamp, solution, Teuchos::constPtr(solution_dxdp), Teuchos::constPtr(solution_dot), Teuchos::null);
 
   // observe responses 
   if (observe_responses_ == true) {
@@ -238,7 +238,7 @@ observeSolutionImpl(const Thyra_Vector &solution,
 {
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
-  impl_.observeSolution(stamp, solution, solution_dxdp, 
+  impl_.observeSolution(stamp, solution, Teuchos::constPtr(solution_dxdp), 
                   Teuchos::constPtr(solution_dot), Teuchos::constPtr(solution_dotdot));
 
   // observe responses 
@@ -263,7 +263,8 @@ observeSolutionImpl(const Thyra_MultiVector &solution,
                     const Thyra_MultiVector &solution_dxdp, 
                     const ST defaultStamp)
 {
-  impl_.observeSolution(defaultStamp, solution, solution_dxdp);
+  impl_.observeSolution(defaultStamp, solution, 
+                        Teuchos::constPtr(solution_dxdp));
 }
 
 

@@ -65,7 +65,7 @@ void StatelessObserverImpl::observeSolution (
 void StatelessObserverImpl::observeSolution (
   double stamp,
   const Thyra_Vector &nonOverlappedSolution,
-  const Thyra_MultiVector &nonOverlappedSolution_dxdp,
+  const Teuchos::Ptr<const Thyra_MultiVector> &nonOverlappedSolution_dxdp,
   const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot)
 {
   //IKT FIXME - fill in
@@ -102,7 +102,7 @@ void StatelessObserverImpl::observeSolution (
 void StatelessObserverImpl::observeSolution (
   double stamp,
   const Thyra_Vector &nonOverlappedSolution,
-  const Thyra_MultiVector &nonOverlappedSolution_dxdp,
+  const Teuchos::Ptr<const Thyra_MultiVector> &nonOverlappedSolution_dxdp,
   const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
   const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
 {
@@ -121,7 +121,7 @@ void StatelessObserverImpl::observeSolution (
 
 void StatelessObserverImpl::observeSolution (
   double stamp, const Thyra_MultiVector &nonOverlappedSolution,
-  const Thyra_MultiVector &nonOverlappedSolution_dxdp) 
+  const Teuchos::Ptr<const Thyra_MultiVector> &nonOverlappedSolution_dxdp)
 {
   //IKT FIXME - fill in
 }

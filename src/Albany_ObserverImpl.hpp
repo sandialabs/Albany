@@ -29,7 +29,7 @@ public:
 
   void observeSolution(
     double stamp, const Thyra_Vector& nonOverlappedSolution,
-    const Thyra_MultiVector& nonOverlappedSolution_dxdp,
+    const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,
     const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
     const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot) override;
 
@@ -38,7 +38,7 @@ public:
   
   void observeSolution(
       double stamp, const Thyra_MultiVector& nonOverlappedSolution, 
-      const Thyra_MultiVector& nonOverlappedSolution_dxdp) override;
+      const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp) override;
 
   void parameterChanged(
       const std::string& param);

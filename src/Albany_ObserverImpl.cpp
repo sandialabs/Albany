@@ -48,7 +48,7 @@ observeSolution(double stamp,
 void ObserverImpl::
 observeSolution(double stamp,
                 const Thyra_Vector& nonOverlappedSolution,
-                const Thyra_MultiVector& nonOverlappedSolution_dxdp,
+                const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,
                 const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
                 const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
 {
@@ -68,7 +68,7 @@ observeSolution(double stamp,
 void ObserverImpl::
 observeSolution(double stamp,
                 const Thyra_MultiVector& nonOverlappedSolution, 
-                const Thyra_MultiVector& nonOverlappedSolution_dxdp)
+                const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp)
 {
   //IKT FIXME - fill in
   std::cout << "IKT ObserverImpl observeSolution2 dxdp\n"; 
