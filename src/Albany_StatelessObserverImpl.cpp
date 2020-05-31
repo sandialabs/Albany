@@ -65,6 +65,15 @@ void StatelessObserverImpl::observeSolution (
 void StatelessObserverImpl::observeSolution (
   double stamp,
   const Thyra_Vector &nonOverlappedSolution,
+  const Thyra_MultiVector &nonOverlappedSolution_dxdp,
+  const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot)
+{
+  //IKT FIXME - fill in
+}
+
+void StatelessObserverImpl::observeSolution (
+  double stamp,
+  const Thyra_Vector &nonOverlappedSolution,
   const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
   const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
 {
@@ -91,6 +100,16 @@ void StatelessObserverImpl::observeSolution (
 }
 
 void StatelessObserverImpl::observeSolution (
+  double stamp,
+  const Thyra_Vector &nonOverlappedSolution,
+  const Thyra_MultiVector &nonOverlappedSolution_dxdp,
+  const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
+  const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
+{
+  //IKT FIXME - fill in
+}
+
+void StatelessObserverImpl::observeSolution (
   double stamp, const Thyra_MultiVector &nonOverlappedSolution)
 {
   Teuchos::TimeMonitor timer(*solOutTime_);
@@ -98,6 +117,13 @@ void StatelessObserverImpl::observeSolution (
     app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionMV(nonOverlappedSolution);
   app_->getDiscretization()->writeSolutionMV(
     *overlappedSolution, stamp, /*overlapped =*/ true);
+}
+
+void StatelessObserverImpl::observeSolution (
+  double stamp, const Thyra_MultiVector &nonOverlappedSolution,
+  const Thyra_MultiVector &nonOverlappedSolution_dxdp) 
+{
+  //IKT FIXME - fill in
 }
 
 } // namespace Albany

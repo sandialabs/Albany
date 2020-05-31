@@ -47,11 +47,31 @@ observeSolution(double stamp,
 
 void ObserverImpl::
 observeSolution(double stamp,
+                const Thyra_Vector& nonOverlappedSolution,
+                const Thyra_MultiVector& nonOverlappedSolution_dxdp,
+                const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
+                const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
+{
+  //IKT FIXME - fill in
+  std::cout << "IKT ObserverImpl observeSolution1 dxdp\n"; 
+}
+
+void ObserverImpl::
+observeSolution(double stamp,
                 const Thyra_MultiVector& nonOverlappedSolution)
 {
   app_->evaluateStateFieldManager(stamp, nonOverlappedSolution);
   app_->getStateMgr().updateStates();
   StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution);
+}
+
+void ObserverImpl::
+observeSolution(double stamp,
+                const Thyra_MultiVector& nonOverlappedSolution, 
+                const Thyra_MultiVector& nonOverlappedSolution_dxdp)
+{
+  //IKT FIXME - fill in
+  std::cout << "IKT ObserverImpl observeSolution2 dxdp\n"; 
 }
 
 void ObserverImpl::

@@ -29,10 +29,25 @@ public:
 
   virtual void observeSolution(
       const Thyra_Vector& solution,
+      const Thyra_MultiVector& solution_dxdp);
+
+  virtual void observeSolution(
+      const Thyra_Vector& solution,
+      const ST stamp);
+  
+  virtual void observeSolution(
+      const Thyra_Vector& solution,
+      const Thyra_MultiVector& solution_dxdp,
       const ST stamp);
 
   virtual void observeSolution(
       const Thyra_Vector& solution,
+      const Thyra_Vector& solution_dot,
+      const ST stamp);
+  
+  virtual void observeSolution(
+      const Thyra_Vector& solution,
+      const Thyra_MultiVector& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const ST stamp);
   
@@ -43,7 +58,19 @@ public:
       const ST stamp);
 
   virtual void observeSolution(
+      const Thyra_Vector& solution,
+      const Thyra_MultiVector& solution_dxdp,
+      const Thyra_Vector& solution_dot,
+      const Thyra_Vector& solution_dotdot,
+      const ST stamp);
+  
+  virtual void observeSolution(
       const Thyra_MultiVector& solution,
+      const ST stamp);
+  
+  virtual void observeSolution(
+      const Thyra_MultiVector& solution,
+      const Thyra_MultiVector& solution_dxdp,
       const ST stamp);
 
   virtual void parameterChanged(
@@ -56,6 +83,17 @@ private:
 
   void observeSolutionImpl(
       const Thyra_Vector& solution,
+      const Thyra_MultiVector& solution_dxdp,
+      const ST defaultStamp);
+
+  void observeSolutionImpl(
+      const Thyra_Vector& solution,
+      const Thyra_Vector& solution_dot,
+      const ST defaultStamp);
+  
+  void observeSolutionImpl(
+      const Thyra_Vector& solution,
+      const Thyra_MultiVector& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const ST defaultStamp);
   
@@ -66,7 +104,19 @@ private:
       const ST defaultStamp);
 
   void observeSolutionImpl(
+      const Thyra_Vector& solution,
+      const Thyra_MultiVector& solution_dxdp,
+      const Thyra_Vector& solution_dot,
+      const Thyra_Vector& solution_dotdot,
+      const ST defaultStamp);
+
+  void observeSolutionImpl(
       const Thyra_MultiVector &solution,
+      const ST defaultStamp);
+
+  void observeSolutionImpl(
+      const Thyra_MultiVector &solution,
+      const Thyra_MultiVector &solution_dxdp,
       const ST defaultStamp);
 
   void observeTpetraSolutionImpl(
@@ -74,7 +124,7 @@ private:
       Teuchos::Ptr<const Tpetra_Vector> solution_dot,
       Teuchos::Ptr<const Tpetra_Vector> solution_dotdot,
       const ST defaultStamp);
-
+  
   // The following function is for calculating / printing responses every step.
   // It is currently not implemented for the case of an Teuchos::RCP<const Thyra_MultiVector>
   // argument; this may be desired at some point in the future. 

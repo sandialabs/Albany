@@ -45,9 +45,30 @@ observeSolution(const Thyra_Vector &solution)
 
 void PiroObserver::
 observeSolution(const Thyra_Vector &solution,
+                const Thyra_MultiVector &solution_dxdp)
+{
+  std::cout << "IKT PiroObserver observeSolution1 dxdp\n"; 
+  std::cout << "IKT PiroObserver numParams = " << solution_dxdp.domain()->dim() << "\n"; 
+  this->observeSolutionImpl(solution, solution_dxdp, Teuchos::ScalarTraits<ST>::zero());
+  stepper_counter_++;
+}
+
+void PiroObserver::
+observeSolution(const Thyra_Vector &solution,
                 const ST stamp)
 {
   this->observeSolutionImpl(solution, stamp);
+  stepper_counter_++; 
+}
+
+void PiroObserver::
+observeSolution(const Thyra_Vector &solution,
+                const Thyra_MultiVector &solution_dxdp, 
+                const ST stamp)
+{
+  std::cout << "IKT PiroObserver observeSolution2 dxdp\n"; 
+  std::cout << "IKT PiroObserver numParams = " << solution_dxdp.domain()->dim() << "\n"; 
+  this->observeSolutionImpl(solution, solution_dxdp, stamp);
   stepper_counter_++; 
 }
 
@@ -62,6 +83,18 @@ observeSolution(const Thyra_Vector &solution,
 
 void PiroObserver::
 observeSolution(const Thyra_Vector &solution,
+                const Thyra_MultiVector &solution_dxdp,
+                const Thyra_Vector &solution_dot,
+                const ST stamp)
+{
+  std::cout << "IKT PiroObserver observeSolution3 dxdp\n"; 
+  std::cout << "IKT PiroObserver numParams = " << solution_dxdp.domain()->dim() << "\n"; 
+  this->observeSolutionImpl(solution, solution_dxdp, solution_dot, stamp);
+  stepper_counter_++; 
+}
+
+void PiroObserver::
+observeSolution(const Thyra_Vector &solution,
                 const Thyra_Vector &solution_dot,
                 const Thyra_Vector &solution_dotdot,
                 const ST stamp)
@@ -71,10 +104,33 @@ observeSolution(const Thyra_Vector &solution,
 }
 
 void PiroObserver::
+observeSolution(const Thyra_Vector &solution,
+                const Thyra_MultiVector &solution_dxdp,
+                const Thyra_Vector &solution_dot,
+                const Thyra_Vector &solution_dotdot,
+                const ST stamp)
+{
+  std::cout << "IKT PiroObserver observeSolution4 dxdp\n"; 
+  std::cout << "IKT PiroObserver numParams = " << solution_dxdp.domain()->dim() << "\n"; 
+  this->observeSolutionImpl(solution, solution_dxdp, solution_dot, solution_dotdot, stamp);
+  stepper_counter_++; 
+}
+
+void PiroObserver::
 observeSolution(const Thyra_MultiVector &solution,
                 const ST stamp)
 {
   this->observeSolutionImpl(solution, stamp);
+  stepper_counter_++; 
+}
+
+void PiroObserver::
+observeSolution(const Thyra_MultiVector &solution,
+                const Thyra_MultiVector &solution_dxdp, const ST stamp)
+{
+  std::cout << "IKT PiroObserver observeSolution5 dxdp\n"; 
+  std::cout << "IKT PiroObserver numParams = " << solution_dxdp.domain()->dim() << "\n"; 
+  this->observeSolutionImpl(solution, solution_dxdp, stamp);
   stepper_counter_++; 
 }
 
@@ -100,6 +156,22 @@ observeSolutionImpl(const Thyra_Vector &solution,
 }
 
 void PiroObserver::
+observeSolutionImpl(const Thyra_Vector &solution, 
+                    const Thyra_MultiVector &solution_dxdp, 
+                    const ST defaultStamp)
+{
+  // Determine the stamp associated with the snapshot
+  const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
+  impl_.observeSolution(stamp, solution, solution_dxdp, Teuchos::null, Teuchos::null);
+  
+  // observe responses 
+  if (observe_responses_ == true) {
+    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
+      this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution));
+   }
+}
+
+void PiroObserver::
 observeSolutionImpl(const Thyra_Vector &solution,
                     const Thyra_Vector &solution_dot,
                     const ST defaultStamp)
@@ -107,6 +179,25 @@ observeSolutionImpl(const Thyra_Vector &solution,
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
   impl_.observeSolution(stamp, solution, Teuchos::constPtr(solution_dot), Teuchos::null);
+
+  // observe responses 
+  if (observe_responses_ == true) {
+    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
+      this->observeResponse(defaultStamp,
+                            Teuchos::rcpFromRef(solution),
+                            Teuchos::rcpFromRef(solution_dot));
+   }
+}
+
+void PiroObserver::
+observeSolutionImpl(const Thyra_Vector &solution,
+                    const Thyra_MultiVector &solution_dxdp, 
+                    const Thyra_Vector &solution_dot,
+                    const ST defaultStamp)
+{
+  // Determine the stamp associated with the snapshot
+  const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
+  impl_.observeSolution(stamp, solution, solution_dxdp, Teuchos::constPtr(solution_dot), Teuchos::null);
 
   // observe responses 
   if (observe_responses_ == true) {
@@ -139,6 +230,28 @@ observeSolutionImpl(const Thyra_Vector &solution,
 
 
 void PiroObserver::
+observeSolutionImpl(const Thyra_Vector &solution,
+                    const Thyra_MultiVector &solution_dxdp,
+                    const Thyra_Vector &solution_dot,
+                    const Thyra_Vector &solution_dotdot,
+                    const ST defaultStamp)
+{
+  // Determine the stamp associated with the snapshot
+  const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
+  impl_.observeSolution(stamp, solution, solution_dxdp, 
+                  Teuchos::constPtr(solution_dot), Teuchos::constPtr(solution_dotdot));
+
+  // observe responses 
+  if (observe_responses_ == true) {
+    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
+      this->observeResponse(defaultStamp,
+                            Teuchos::rcpFromRef(solution),
+                            Teuchos::rcpFromRef(solution_dot), 
+                            Teuchos::rcpFromRef(solution_dotdot));
+   }
+} 
+
+void PiroObserver::
 observeSolutionImpl(const Thyra_MultiVector &solution,
                     const ST defaultStamp)
 {
@@ -146,12 +259,21 @@ observeSolutionImpl(const Thyra_MultiVector &solution,
 }
 
 void PiroObserver::
+observeSolutionImpl(const Thyra_MultiVector &solution,
+                    const Thyra_MultiVector &solution_dxdp, 
+                    const ST defaultStamp)
+{
+  impl_.observeSolution(defaultStamp, solution, solution_dxdp);
+}
+
+
+void PiroObserver::
 observeResponse(const ST defaultStamp, 
                 Teuchos::RCP<const Thyra_Vector> solution,
                 Teuchos::RCP<const Thyra_Vector> solution_dot,
                 Teuchos::RCP<const Thyra_Vector> /* solution_dotdot */)
 {
-  //IKT, 5/10/17: note that this function takes solution_dotdot as an input 
+  //IKT 5/10/17: note that this function takes solution_dotdot as an input 
   //argument but does not do anything with it yet.  This can be modified 
   //if desired.
 
