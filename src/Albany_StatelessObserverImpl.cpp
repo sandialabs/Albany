@@ -68,6 +68,7 @@ void StatelessObserverImpl::observeSolution (
   const Teuchos::Ptr<const Thyra_MultiVector> &nonOverlappedSolution_dxdp,
   const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot)
 {
+  std::cout << "IKT StatelessObserverImpl1 dxdp\n"; 
   //IKT FIXME - fill in
 }
 
@@ -107,6 +108,7 @@ void StatelessObserverImpl::observeSolution (
   const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
 {
   //IKT FIXME - fill in
+  std::cout << "IKT StatelessObserverImpl2 dxdp\n"; 
 }
 
 void StatelessObserverImpl::observeSolution (
@@ -124,6 +126,7 @@ void StatelessObserverImpl::observeSolution (
   const Teuchos::Ptr<const Thyra_MultiVector> &nonOverlappedSolution_dxdp)
 {
   //IKT FIXME - fill in
+  std::cout << "IKT StatelessObserverImpl3 dxdp\n"; 
 }
 
 } // namespace Albany

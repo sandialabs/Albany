@@ -52,8 +52,30 @@ observeSolution(double stamp,
                 const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
                 const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
 {
-  //IKT FIXME - fill in
   std::cout << "IKT ObserverImpl observeSolution1 dxdp\n"; 
+  app_->evaluateStateFieldManager (stamp,
+                                   nonOverlappedSolution,
+                                   nonOverlappedSolutionDot,
+                                   nonOverlappedSolutionDotDot,
+                                   nonOverlappedSolution_dxdp);
+
+  app_->getStateMgr().updateStates();
+
+  //! update distributed parameters in the mesh
+  auto distParamLib = app_->getDistributedParameterLibrary();
+  auto disc = app_->getDiscretization();
+  distParamLib->scatter();
+  for(auto it : *distParamLib) {
+    disc->setField(*it.second->overlapped_vector(),
+                    it.second->name(),
+                   /*overlapped*/ true);
+  }
+
+  StatelessObserverImpl::observeSolution (stamp,
+                                          nonOverlappedSolution,
+                                          nonOverlappedSolution_dxdp,
+                                          nonOverlappedSolutionDot,
+                                          nonOverlappedSolutionDotDot);
 }
 
 void ObserverImpl::
@@ -70,8 +92,12 @@ observeSolution(double stamp,
                 const Thyra_MultiVector& nonOverlappedSolution, 
                 const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp)
 {
-  //IKT FIXME - fill in
   std::cout << "IKT ObserverImpl observeSolution2 dxdp\n"; 
+  app_->evaluateStateFieldManager(stamp, nonOverlappedSolution, 
+                                  nonOverlappedSolution_dxdp);
+  app_->getStateMgr().updateStates();
+  StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution, 
+                                         nonOverlappedSolution_dxdp);
 }
 
 void ObserverImpl::

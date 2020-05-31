@@ -2258,19 +2258,21 @@ Application::evaluateResponseDistParamDeriv(
 void
 Application::evaluateStateFieldManager(
     const double             current_time,
-    const Thyra_MultiVector& x)
+    const Thyra_MultiVector& x, 
+    Teuchos::Ptr<const Thyra_MultiVector> dxdp)
 {
+  std::cout << "IKT evaluateStateFieldManager1, dxdp = " << dxdp << "\n"; 
   int num_vecs = x.domain()->dim();
 
   if (num_vecs == 1) {
     this->evaluateStateFieldManager(
-        current_time, *x.col(0), Teuchos::null, Teuchos::null);
+        current_time, *x.col(0), Teuchos::null, Teuchos::null, dxdp);
   } else if (num_vecs == 2) {
     this->evaluateStateFieldManager(
-        current_time, *x.col(0), x.col(1).ptr(), Teuchos::null);
+        current_time, *x.col(0), x.col(1).ptr(), Teuchos::null, dxdp);
   } else {
     this->evaluateStateFieldManager(
-        current_time, *x.col(0), x.col(1).ptr(), x.col(2).ptr());
+        current_time, *x.col(0), x.col(1).ptr(), x.col(2).ptr(), dxdp);
   }
 }
 
@@ -2279,8 +2281,10 @@ Application::evaluateStateFieldManager(
     const double                     current_time,
     const Thyra_Vector&              x,
     Teuchos::Ptr<const Thyra_Vector> xdot,
-    Teuchos::Ptr<const Thyra_Vector> xdotdot)
+    Teuchos::Ptr<const Thyra_Vector> xdotdot, 
+    Teuchos::Ptr<const Thyra_MultiVector> dxdp )
 {
+  std::cout << "IKT evaluateStateFieldManager2, dxdp = " << dxdp << "\n"; 
   TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: State Residual");
   {
     std::string evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>("SFM",0);
@@ -2318,6 +2322,7 @@ Application::evaluateStateFieldManager(
   int numWorksets = wsElNodeEqID.size();
 
   // Scatter to the overlapped distrbution
+  //IKT FIXME - extend the following routine to use dxdp 
   solMgr->scatterX(x, xdot, xdotdot);
 
   // Scatter distributed parameters

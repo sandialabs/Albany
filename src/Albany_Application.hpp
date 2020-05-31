@@ -378,12 +378,14 @@ public:
       const double                     current_time,
       const Thyra_Vector&              x,
       Teuchos::Ptr<const Thyra_Vector> xdot,
-      Teuchos::Ptr<const Thyra_Vector> xdotdot);
+      Teuchos::Ptr<const Thyra_Vector> xdotdot,
+      Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
   void
   evaluateStateFieldManager(
       const double             current_time,
-      const Thyra_MultiVector& x);
+      const Thyra_MultiVector& x, 
+      Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
   //! Access to number of worksets - needed for working with StateManager
   int
