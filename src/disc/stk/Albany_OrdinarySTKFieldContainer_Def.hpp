@@ -30,20 +30,23 @@ static const char* sol_id_name[3] = {"solution",
                                      "solution_dotdot"};
 
 #ifdef ALBANY_DTK
+static const char* sol_dtk_tag_name[3] = {"Exodus Solution DTK Name",
+                                          "Exodus SolutionDot DTK Name",
+                                          "Exodus SolutionDotDot DTK Name"};
+
 static const char* sol_dtk_id_name[3] = {"solution dtk",
                                          "solution_dot dtk",
                                          "solution_dotdot dtk"};
 #endif
 
+//IKT FIXME - will ultimately want to set size dynamically 
+//base on number of sensitivities requested 
+static const char* sol_dxdp_tag_name[1] = {"Exodus Solution Sensitivity Name"};
+static const char* sol_dxdp_id_name[1]  = {"solution dxdp"}; 
+
 static const char* res_tag_name[1] = {
     "Exodus Residual Name",
 };
-
-#ifdef ALBANY_DTK
-static const char* sol_dtk_tag_name[3] = {"Exodus Solution DTK Name",
-                                          "Exodus SolutionDot DTK Name",
-                                          "Exodus SolutionDotDot DTK Name"};
-#endif
 
 static const char* res_id_name[1] = {
     "residual",
@@ -69,11 +72,14 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
 
   int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
-
+  //IKT FIXME - get the following from code rather than hard-coding 
+  int num_params = 1; 
 #ifdef ALBANY_DTK
-  int output_dtk_field =
+  bool output_dtk_field =
       params_->get<bool>("Output DTK Field to Exodus", false);
 #endif
+  //IKT FIXME - get the following from code/input file rather than hard-coding
+  bool output_dxdp_field = true; 
 
   // Start STK stuff
   this->coordinates_field =
@@ -100,6 +106,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
   solution_field.resize(num_time_deriv + 1);
   solution_field_dtk.resize(num_time_deriv + 1);
+  solution_field_dxdp.resize(num_params);
 
   for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
     solution_field[num_vecs] = &metaData_->declare_field<VFT>(
@@ -133,6 +140,25 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 #endif
   }
 
+  //Forward transient sensitivities dx/dp
+  for (int np = 0; np < num_params; np++) {
+    if (output_dxdp_field == true) {
+      solution_field_dxdp[np] = &metaData_->declare_field<VFT>(
+          stk::topology::NODE_RANK,
+          params_->get<std::string>(
+              sol_dxdp_tag_name[np], sol_dxdp_id_name[np]));
+      stk::mesh::put_field_on_mesh(
+          *solution_field_dxdp[np],
+          metaData_->universal_part(),
+          neq_,
+          nullptr);
+    }
+#ifdef ALBANY_SEACAS
+    if (output_dxdp_field == true)
+      stk::io::set_field_role(
+          *solution_field_dxdp[np], Ioss::Field::TRANSIENT);
+#endif
+  }
   // If the problem requests that the initial guess at the solution equals the
   // input node coordinates, set that here
   /*

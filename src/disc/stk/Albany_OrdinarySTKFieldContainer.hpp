@@ -136,6 +136,8 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
   Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*> solution_field;
   Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>
                                               solution_field_dtk;
+  Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>
+                                              solution_field_dxdp;
   AbstractSTKFieldContainer::VectorFieldType* residual_field;
 };
 
