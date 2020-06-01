@@ -52,6 +52,7 @@ public:
    Teuchos::RCP<const Thyra_Vector> updateAndReturnOverlapSolutionDot(const Thyra_Vector& solution_dot /*not overlapped*/);
    Teuchos::RCP<const Thyra_Vector> updateAndReturnOverlapSolutionDotDot(const Thyra_Vector& solution_dotdot /*not overlapped*/);
    Teuchos::RCP<const Thyra_MultiVector> updateAndReturnOverlapSolutionMV(const Thyra_MultiVector& solution /*not overlapped*/);
+   Teuchos::RCP<Thyra_MultiVector> updateAndReturnOverlapSolutionDxDp(const Thyra_MultiVector& solution_dxdp /*not overlapped*/);
 
    Teuchos::RCP<Thyra_Vector>   get_overlapped_f()   const {return overlapped_f;}
    Teuchos::RCP<Thyra_LinearOp> get_overlapped_jac() const {return overlapped_jac;}

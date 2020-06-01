@@ -274,6 +274,14 @@ AdaptiveSolutionManager::updateAndReturnOverlapSolutionMV(
   return overlapped_soln;
 }
 
+Teuchos::RCP<Thyra_MultiVector>
+AdaptiveSolutionManager::updateAndReturnOverlapSolutionDxDp(
+    const Thyra_MultiVector& solution_dxdp /* not overlapped */)
+{
+  cas_manager->scatter(solution_dxdp, *overlapped_soln_dxdp, Albany::CombineMode::INSERT);
+  return overlapped_soln_dxdp;
+}
+
 void
 AdaptiveSolutionManager::scatterX(
     const Thyra_MultiVector& solution /* not overlapped */, 
