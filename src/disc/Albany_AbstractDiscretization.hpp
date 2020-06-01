@@ -204,17 +204,20 @@ class AbstractDiscretization
   virtual void
   writeSolution(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double        time,
       const bool          overlapped = false) = 0;
   virtual void
   writeSolution(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const double        time,
       const bool          overlapped = false) = 0;
   virtual void
   writeSolution(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const Thyra_Vector& solution_dotdot,
       const double        time,
@@ -222,23 +225,27 @@ class AbstractDiscretization
   virtual void
   writeSolutionMV(
       const Thyra_MultiVector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double             time,
       const bool               overlapped = false) = 0;
   //! Write the solution to the mesh database.
   virtual void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double        time,
       const bool          overlapped = false) = 0;
   virtual void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const double        time,
       const bool          overlapped = false) = 0;
   virtual void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const Thyra_Vector& solution_dotdot,
       const double        time,
@@ -246,6 +253,7 @@ class AbstractDiscretization
   virtual void
   writeSolutionMVToMeshDatabase(
       const Thyra_MultiVector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double             time,
       const bool               overlapped = false) = 0;
 

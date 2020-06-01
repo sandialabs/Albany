@@ -56,7 +56,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const int                                                 numDim_,
     const Teuchos::RCP<StateInfoStruct>&                      sis, 
-    const int                                                 num_params)
+    const int                                                 num_params_)
     : GenericSTKFieldContainer<Interleaved>(
           params_,
           metaData_,
@@ -67,8 +67,9 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
 
+  num_params = num_params_; 
+
   int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
-  std::cout << "IKT OrdinarySTKField constructor num_params = " << num_params << "\n";  
 #ifdef ALBANY_DTK
   bool output_dtk_field =
       params_->get<bool>("Output DTK Field to Exodus", false);
@@ -76,14 +77,14 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   //IKT FIXME? - currently won't write dxdp to output file if problem is steady, 
   //as this output doesn't work in same way.  May want to change in the future.
   bool output_dxdp_field = false; 
-  if (num_params > 0 && num_time_deriv > 0) output_dxdp_field = true; 
+  if (num_params_ > 0 && num_time_deriv > 0) output_dxdp_field = true; 
 
   //Create tag and id arrays for dxdp 
   std::vector<std::string> sol_dxdp_tag_name_vec;
-  sol_dxdp_tag_name_vec.resize(num_params); 
+  sol_dxdp_tag_name_vec.resize(num_params_); 
   std::vector<std::string> sol_dxdp_id_name_vec;
-  sol_dxdp_id_name_vec.resize(num_params); 
-  for (int np = 0; np<num_params; np++) {
+  sol_dxdp_id_name_vec.resize(num_params_); 
+  for (int np = 0; np<num_params_; np++) {
     std::string prefix = "Exodus Solution Sensitivity Name ";
     std::string tag_name = prefix + std::to_string(np);
     sol_dxdp_tag_name_vec[np] = tag_name; 
@@ -117,7 +118,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
   solution_field.resize(num_time_deriv + 1);
   solution_field_dtk.resize(num_time_deriv + 1);
-  solution_field_dxdp.resize(num_params);
+  solution_field_dxdp.resize(num_params_);
 
   for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
     solution_field[num_vecs] = &metaData_->declare_field<VFT>(
@@ -152,7 +153,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   }
 
   //Forward transient sensitivities dx/dp
-  for (int np = 0; np < num_params; np++) {
+  for (int np = 0; np < num_params_; np++) {
     if (output_dxdp_field == true) {
       solution_field_dxdp[np] = &metaData_->declare_field<VFT>(
           stk::topology::NODE_RANK,
@@ -286,6 +287,7 @@ template <bool Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
@@ -302,12 +304,28 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
 
   saveVectorImpl(
       solution, solution_field[0]->name(), sel, node_vs, nodalDofManager);
+
+  if (soln_dxdp != Teuchos::null) {
+    if (soln_dxdp->domain()->dim() != num_params) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::runtime_error,
+          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim() 
+	  << ") != num_params (" << num_params << ").\n");
+    }
+    for (int np = 0; np < num_params; np++) {
+      saveVectorImpl(
+        *soln_dxdp->col(np), solution_field_dxdp[0]->name(), sel, node_vs, nodalDofManager);
+    }
+  }
+
 }
 
 template <bool Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const Thyra_Vector&                          solution_dot,
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
@@ -327,12 +345,27 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
       solution, solution_field[0]->name(), sel, node_vs, nodalDofManager);
   saveVectorImpl(
       solution_dot, solution_field[1]->name(), sel, node_vs, nodalDofManager);
+  
+  if (soln_dxdp != Teuchos::null) {
+    if (soln_dxdp->domain()->dim() != num_params) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::runtime_error,
+          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim() 
+	  << ") != num_params (" << num_params << ").\n");
+    }
+    for (int np = 0; np < num_params; np++) {
+      saveVectorImpl(
+        *soln_dxdp->col(np), solution_field_dxdp[0]->name(), sel, node_vs, nodalDofManager);
+    }
+  }
 }
 
 template <bool Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const Thyra_Vector&                          solution_dot,
     const Thyra_Vector&                          solution_dotdot,
     stk::mesh::Selector&                         sel,
@@ -359,12 +392,27 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
       sel,
       node_vs,
       nodalDofManager);
+  
+  if (soln_dxdp != Teuchos::null) {
+    if (soln_dxdp->domain()->dim() != num_params) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::runtime_error,
+          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim() 
+	  << ") != num_params (" << num_params << ").\n");
+    }
+    for (int np = 0; np < num_params; np++) {
+      saveVectorImpl(
+        *soln_dxdp->col(np), solution_field_dxdp[0]->name(), sel, node_vs, nodalDofManager);
+    }
+  }
 }
 
 template <bool Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnMultiVector(
     const Thyra_MultiVector&                     solution,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
@@ -383,6 +431,20 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnMultiVector(
         sel,
         node_vs,
         nodalDofManager);
+  }
+  
+  if (soln_dxdp != Teuchos::null) {
+    if (soln_dxdp->domain()->dim() != num_params) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::runtime_error,
+          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim() 
+	  << ") != num_params (" << num_params << ").\n");
+    }
+    for (int np = 0; np < num_params; np++) {
+      saveVectorImpl(
+        *soln_dxdp->col(np), solution_field_dxdp[0]->name(), sel, node_vs, nodalDofManager);
+    }
   }
 }
 

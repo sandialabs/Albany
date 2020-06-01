@@ -303,6 +303,7 @@ template <bool Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
@@ -327,6 +328,7 @@ template <bool Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector& solution,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const Thyra_Vector& /* solution_dot */,
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
@@ -340,13 +342,14 @@ MultiSTKFieldContainer<Interleaved>::saveSolnVector(
           "the Exodus file.  Exodus "
        << "file will contain only soln, not soln_dot.\n";
 
-  saveSolnVector(solution, sel, node_vs);
+  saveSolnVector(solution, soln_dxdp, sel, node_vs);
 }
 
 template <bool Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector& solution,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const Thyra_Vector& /* solution_dot */,
     const Thyra_Vector& /* solution_dotdot */,
     stk::mesh::Selector&                         sel,
@@ -362,13 +365,14 @@ MultiSTKFieldContainer<Interleaved>::saveSolnVector(
        << "and soln_dotdotT properly to the Exodus file.  Exodus "
        << "file will contain only soln, not soln_dot and soln_dotdot.\n";
 
-  saveSolnVector(solution, sel, node_vs);
+  saveSolnVector(solution, soln_dxdp, sel, node_vs);
 }
 
 template <bool Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveSolnMultiVector(
     const Thyra_MultiVector&                     solution,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {

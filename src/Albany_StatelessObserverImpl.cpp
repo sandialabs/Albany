@@ -59,13 +59,11 @@ void StatelessObserverImpl::observeSolution (
   if (nonOverlappedSolutionDot != Teuchos::null) {
     const Teuchos::RCP<const Thyra_Vector> overlappedSolutionDot =
       app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionDot(*nonOverlappedSolutionDot);
-    //IKT FIXME - extend writeSolution to take dxdp 
     app_->getDiscretization()->writeSolution(
-      *overlappedSolution, *overlappedSolutionDot, stamp, true);
+      *overlappedSolution, overlappedSolutionDxDp, *overlappedSolutionDot, stamp, true);
   } 
   else {
-    //IKT FIXME - extend writeSolution to take dxdp 
-    app_->getDiscretization()->writeSolution(*overlappedSolution, stamp, true);
+    app_->getDiscretization()->writeSolution(*overlappedSolution, overlappedSolutionDxDp, stamp, true);
   }
 }
 
@@ -89,21 +87,18 @@ void StatelessObserverImpl::observeSolution (
     if (nonOverlappedSolutionDotDot != Teuchos::null) {
       const Teuchos::RCP<const Thyra_Vector> overlappedSolutionDotDot =
         app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionDotDot(*nonOverlappedSolutionDotDot);
-      //IKT FIXME - extend writeSolution to take dxdp 
       app_->getDiscretization()->writeSolution(
-        *overlappedSolution, *overlappedSolutionDot, *overlappedSolutionDotDot, 
+        *overlappedSolution, overlappedSolutionDxDp, *overlappedSolutionDot, *overlappedSolutionDotDot, 
         stamp, true);
     } 
     else {
-      //IKT FIXME - extend writeSolution to take dxdp
       app_->getDiscretization()->writeSolution(
-        *overlappedSolution, *overlappedSolutionDot, stamp, true);
+        *overlappedSolution, overlappedSolutionDxDp, *overlappedSolutionDot, stamp, true);
     }
   } 
   else {
-    //IKT FIXME - extend writeSolution to take dxdp
     app_->getDiscretization()->writeSolution(
-      *overlappedSolution, stamp, true);
+      *overlappedSolution, overlappedSolutionDxDp, stamp, true);
   }
 }
 
@@ -118,8 +113,7 @@ void StatelessObserverImpl::observeSolution (
   if (nonOverlappedSolution_dxdp != Teuchos::null) {
     overlappedSolutionDxDp = app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionDxDp(*nonOverlappedSolution_dxdp);
   }
-  //IKT FIXME - extend writeSolutionMV to take dxdp 
-  app_->getDiscretization()->writeSolutionMV(*overlappedSolution, stamp, true);
+  app_->getDiscretization()->writeSolutionMV(*overlappedSolution, overlappedSolutionDxDp, stamp, true);
 }
 
 } // namespace Albany
