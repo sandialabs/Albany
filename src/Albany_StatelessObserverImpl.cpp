@@ -46,8 +46,10 @@ StatelessObserverImpl::getNonOverlappedVectorSpace () const {
 void StatelessObserverImpl::observeSolution (
   double stamp,
   const Thyra_Vector &nonOverlappedSolution,
+  const Teuchos::Ptr<const Thyra_MultiVector> &nonOverlappedSolution_dxdp,
   const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot)
 {
+  //IKT FIXME - fill in for dxdp 
   Teuchos::TimeMonitor timer(*solOutTime_);
   const Teuchos::RCP<const Thyra_Vector> overlappedSolution =
     app_->getAdaptSolMgr()->updateAndReturnOverlapSolution(nonOverlappedSolution);
@@ -55,10 +57,10 @@ void StatelessObserverImpl::observeSolution (
     const Teuchos::RCP<const Thyra_Vector> overlappedSolutionDot =
       app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionDot(*nonOverlappedSolutionDot);
     app_->getDiscretization()->writeSolution(
-      *overlappedSolution, *overlappedSolutionDot, stamp, /*overlapped =*/ true);
+      *overlappedSolution, *overlappedSolutionDot, stamp, true);
   } else {
     app_->getDiscretization()->writeSolution(
-      *overlappedSolution, stamp, /*overlapped =*/ true);
+      *overlappedSolution, stamp, true);
   }
 }
 
@@ -66,18 +68,10 @@ void StatelessObserverImpl::observeSolution (
   double stamp,
   const Thyra_Vector &nonOverlappedSolution,
   const Teuchos::Ptr<const Thyra_MultiVector> &nonOverlappedSolution_dxdp,
-  const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot)
-{
-  std::cout << "IKT StatelessObserverImpl1 dxdp\n"; 
-  //IKT FIXME - fill in
-}
-
-void StatelessObserverImpl::observeSolution (
-  double stamp,
-  const Thyra_Vector &nonOverlappedSolution,
   const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
   const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
 {
+  //IKT FIXME - fill in for dxdp
   Teuchos::TimeMonitor timer(*solOutTime_);
   const Teuchos::RCP<const Thyra_Vector> overlappedSolution =
     app_->getAdaptSolMgr()->updateAndReturnOverlapSolution(nonOverlappedSolution);
@@ -89,44 +83,27 @@ void StatelessObserverImpl::observeSolution (
         app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionDotDot(*nonOverlappedSolutionDotDot);
       app_->getDiscretization()->writeSolution(
         *overlappedSolution, *overlappedSolutionDot, *overlappedSolutionDotDot, 
-        stamp, /*overlapped =*/ true);
+        stamp, true);
     } else {
       app_->getDiscretization()->writeSolution(
-        *overlappedSolution, *overlappedSolutionDot, stamp, /*overlapped =*/ true);
+        *overlappedSolution, *overlappedSolutionDot, stamp, true);
     }
   } else {
     app_->getDiscretization()->writeSolution(
-      *overlappedSolution, stamp, /*overlapped =*/ true);
+      *overlappedSolution, stamp, true);
   }
-}
-
-void StatelessObserverImpl::observeSolution (
-  double stamp,
-  const Thyra_Vector &nonOverlappedSolution,
-  const Teuchos::Ptr<const Thyra_MultiVector> &nonOverlappedSolution_dxdp,
-  const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
-  const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
-{
-  //IKT FIXME - fill in
-  std::cout << "IKT StatelessObserverImpl2 dxdp\n"; 
-}
-
-void StatelessObserverImpl::observeSolution (
-  double stamp, const Thyra_MultiVector &nonOverlappedSolution)
-{
-  Teuchos::TimeMonitor timer(*solOutTime_);
-  const Teuchos::RCP<const Thyra_MultiVector> overlappedSolution =
-    app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionMV(nonOverlappedSolution);
-  app_->getDiscretization()->writeSolutionMV(
-    *overlappedSolution, stamp, /*overlapped =*/ true);
 }
 
 void StatelessObserverImpl::observeSolution (
   double stamp, const Thyra_MultiVector &nonOverlappedSolution,
   const Teuchos::Ptr<const Thyra_MultiVector> &nonOverlappedSolution_dxdp)
 {
-  //IKT FIXME - fill in
-  std::cout << "IKT StatelessObserverImpl3 dxdp\n"; 
+  //IKT FIXME - fill in for dxdp
+  Teuchos::TimeMonitor timer(*solOutTime_);
+  const Teuchos::RCP<const Thyra_MultiVector> overlappedSolution =
+    app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionMV(nonOverlappedSolution);
+  app_->getDiscretization()->writeSolutionMV(
+    *overlappedSolution, stamp, true);
 }
 
 } // namespace Albany

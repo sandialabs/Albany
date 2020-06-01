@@ -2234,7 +2234,6 @@ Application::evaluateStateFieldManager(
     const Thyra_MultiVector& x, 
     Teuchos::Ptr<const Thyra_MultiVector> dxdp)
 {
-  std::cout << "IKT evaluateStateFieldManager1, dxdp = " << dxdp << "\n"; 
   int num_vecs = x.domain()->dim();
 
   if (num_vecs == 1) {
@@ -2257,7 +2256,6 @@ Application::evaluateStateFieldManager(
     Teuchos::Ptr<const Thyra_Vector> xdotdot, 
     Teuchos::Ptr<const Thyra_MultiVector> dxdp )
 {
-  std::cout << "IKT evaluateStateFieldManager2, dxdp = " << dxdp << "\n"; 
   TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: State Residual");
   {
     std::string evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>("SFM",0);

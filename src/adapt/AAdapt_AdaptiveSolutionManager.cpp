@@ -331,7 +331,6 @@ AdaptiveSolutionManager::scatterX(
           "AdaptiveSolutionManager::scatterX error: size dxdp (" << 
           np << ") != num_params (" << num_params_ << ").\n"); 
     } 
-    std::cout << "IKT scatterX2 num_params, np = " << num_params_  << ", " << np << "\n";
     cas_manager->scatter(
         *dxdp, *overlapped_soln_dxdp, Albany::CombineMode::INSERT);
   }
