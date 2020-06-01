@@ -22,7 +22,8 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
       const int                                                 neq_,
       const AbstractFieldContainer::FieldContainerRequirements& req,
       const int                                                 numDim_,
-      const Teuchos::RCP<Albany::StateInfoStruct>&              sis);
+      const Teuchos::RCP<Albany::StateInfoStruct>&              sis, 
+      const int                                                 num_params);
 
   ~OrdinarySTKFieldContainer() = default;
 

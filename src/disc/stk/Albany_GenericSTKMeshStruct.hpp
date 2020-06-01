@@ -36,11 +36,13 @@ public:
                                        std::map<GO,GO>& sideMap,
                                        std::map<GO,std::vector<int>>& sideNodeMap);
 
+  int getNumParams() const {return num_params; }
 protected:
   GenericSTKMeshStruct(
                 const Teuchos::RCP<Teuchos::ParameterList>& params,
                 const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
-                const int numDim=-1);
+                const int numDim /*old default: -1*/,
+		const int numParams);  
 
   virtual ~GenericSTKMeshStruct() = default;
 
@@ -49,7 +51,7 @@ protected:
                 const int neq_,
                 const AbstractFieldContainer::FieldContainerRequirements& req,
                 const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                const int worksetSize_);
+                const int worksetSize_);  
 
   void printParts(stk::mesh::MetaData *metaData);
 
@@ -158,6 +160,8 @@ protected:
   bool compositeTet;
 
   std::vector<std::string>  m_nodesets_from_sidesets;
+
+  int num_params; 
 };
 
 } // namespace Albany

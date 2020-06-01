@@ -156,7 +156,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   } catch (...) {
     tangent_deriv_dim = 1;
   }
-
   // Initialize Phalanx postRegistration setup
   phxSetup = Teuchos::rcp(new PHAL::Setup());
   phxSetup->init_problem_params(problemParams);
@@ -414,7 +413,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   // Schwarz problems.
   countScale = 0;
   // Create discretization object
-  discFactory = rcp(new Albany::DiscretizationFactory(params, comm, expl));
+  discFactory = rcp(new Albany::DiscretizationFactory(params, comm, num_params_, expl));
 }
 
 void
@@ -523,7 +522,7 @@ Application::createDiscretization()
       stateMgr.getSideSetStateInfoStruct(),
       problem->getFieldRequirements(),
       problem->getSideSetFieldRequirements(),
-      problem->getNullSpace());
+      problem->getNullSpace()); 
   // The following is for Aeras problems.
   explicit_scheme = disc->isExplicitScheme();
 }

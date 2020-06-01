@@ -34,8 +34,9 @@ const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size
 
 Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                      const Teuchos::RCP<const Teuchos_Comm>& comm,
-                                                     Teuchos::RCP<Albany::AbstractMeshStruct> inputBasalMesh) :
-    GenericSTKMeshStruct(params, Teuchos::null, 3), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false)
+                                                     Teuchos::RCP<Albany::AbstractMeshStruct> inputBasalMesh,
+						     const int numParams) :
+    GenericSTKMeshStruct(params, Teuchos::null, 3, numParams), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false)
 {
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 

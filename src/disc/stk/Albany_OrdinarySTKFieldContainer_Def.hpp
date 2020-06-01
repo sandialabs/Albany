@@ -60,7 +60,8 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     const int                                                 neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const int                                                 numDim_,
-    const Teuchos::RCP<StateInfoStruct>&                      sis)
+    const Teuchos::RCP<StateInfoStruct>&                      sis, 
+    const int                                                 num_params)
     : GenericSTKFieldContainer<Interleaved>(
           params_,
           metaData_,
@@ -72,14 +73,16 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
 
   int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
-  //IKT FIXME - get the following from code rather than hard-coding 
-  int num_params = 1; 
+  std::cout << "IKT num_time_deriv = " << num_time_deriv << "\n"; 
+  std::cout << "IKT OrdinarySTKField constructor num_params = " << num_params << "\n";  
 #ifdef ALBANY_DTK
   bool output_dtk_field =
       params_->get<bool>("Output DTK Field to Exodus", false);
 #endif
-  //IKT FIXME - get the following from code/input file rather than hard-coding
-  bool output_dxdp_field = true; 
+  //IKT FIXME? - currently won't write dxdp to output file if problem is steady, 
+  //as this output doesn't work in same way.  May want to change in the future.
+  bool output_dxdp_field = false; 
+  if (num_params > 0 && num_time_deriv > 0) output_dxdp_field = true; 
 
   // Start STK stuff
   this->coordinates_field =

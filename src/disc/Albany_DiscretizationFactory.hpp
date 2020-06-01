@@ -31,6 +31,7 @@ class DiscretizationFactory {
     DiscretizationFactory(
       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
       const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const int numParams,
       const bool explicit_scheme_ = false
     );
 
@@ -40,7 +41,8 @@ class DiscretizationFactory {
     static Teuchos::RCP<Albany::AbstractMeshStruct>
     createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
                       Teuchos::RCP<Teuchos::ParameterList> adapt_params,
-                      Teuchos::RCP<const Teuchos_Comm> comm);
+                      Teuchos::RCP<const Teuchos_Comm> comm,
+		      const int numParams);
 
     Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() {
       return meshStruct;
@@ -63,7 +65,7 @@ class DiscretizationFactory {
                          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
                          const AbstractFieldContainer::FieldContainerRequirements& req,
-                         const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
+                         const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req, 
                          const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
     void
@@ -119,12 +121,14 @@ class DiscretizationFactory {
     //The following are for Aeras hydrostatic problems
     int numLevels;
     int numTracers;
-
+    
     //Flag for explicit time-integration scheme, used in Aeras
     bool explicit_scheme;
 
     Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct;
 
+    //Number of parameters
+    int num_params;
 };
 
 }

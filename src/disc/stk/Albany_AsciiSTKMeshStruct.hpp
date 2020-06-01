@@ -20,7 +20,8 @@ class AsciiSTKMeshStruct : public GenericSTKMeshStruct
 public:
 
   AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                     const Teuchos::RCP<const Teuchos_Comm>& comm);
+                     const Teuchos::RCP<const Teuchos_Comm>& comm,
+		     const int numParams);
 
   ~AsciiSTKMeshStruct();
 

@@ -10,8 +10,9 @@
 
 //Constructor for meshes read from ASCII file
 Albany::STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                           const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  GenericSTKMeshStruct(params,Teuchos::null,3)
+                                           const Teuchos::RCP<const Teuchos_Comm>& commT,
+					   const int numParams) :
+  GenericSTKMeshStruct(params, Teuchos::null, 3, numParams)
 {
   partVec[0] = &metaData->declare_part("Block0", stk::topology::ELEMENT_RANK);
 #ifdef ALBANY_SEACAS

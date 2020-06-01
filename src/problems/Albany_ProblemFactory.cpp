@@ -7,9 +7,7 @@
 #include "Albany_ProblemFactory.hpp"
 
 #include "Albany_HeatProblem.hpp"
-#ifdef ALBANY_LANDICE
 #include "Albany_ThermalProblem.hpp"
-#endif
 #include "Albany_PopulateMesh.hpp"
 #include "Albany_SideLaplacianProblem.hpp"
 
@@ -63,11 +61,9 @@ create (const std::string& key,
     problem = Teuchos::rcp(new HeatProblem(problemParams, paramLib, 2, comm));
   } else if (key == "Heat 3D") {
     problem = Teuchos::rcp(new HeatProblem(problemParams, paramLib, 3, comm));
-#ifdef ALBANY_LANDICE
   } else if (getName(key) == "Thermal") {
     problem =
         Teuchos::rcp(new ThermalProblem(problemParams, paramLib, getNumDim(key), comm));
-#endif
   } else if (key == "Populate Mesh") {
     problem = Teuchos::rcp(new PopulateMesh(problemParams, discParams, paramLib));
   } else if (key == "Side Laplacian 3D") {

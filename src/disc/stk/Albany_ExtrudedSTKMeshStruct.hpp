@@ -21,7 +21,8 @@ namespace Albany {
     ExtrudedSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Teuchos_Comm>& comm,
-                  Teuchos::RCP<AbstractMeshStruct> basalMesh);
+                  Teuchos::RCP<AbstractMeshStruct> basalMesh,
+		  const int numParams);
 
     ~ExtrudedSTKMeshStruct();
 

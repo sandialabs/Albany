@@ -23,7 +23,8 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   public:
 
   GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                     const Teuchos::RCP<const Teuchos_Comm>& commT);
+                     const Teuchos::RCP<const Teuchos_Comm>& commT,
+		     const int numParams);
 
   ~GmshSTKMeshStruct();
 

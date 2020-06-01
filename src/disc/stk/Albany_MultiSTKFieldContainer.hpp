@@ -23,7 +23,8 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
       const int                                                 neq_,
       const int                                                 numDim_,
       const Teuchos::RCP<Albany::StateInfoStruct>&              sis,
-      const Teuchos::Array<Teuchos::Array<std::string>>&        solution_vector);
+      const Teuchos::Array<Teuchos::Array<std::string>>&        solution_vector, 
+      const int                                                 num_params);
 
   ~MultiSTKFieldContainer() = default;
 

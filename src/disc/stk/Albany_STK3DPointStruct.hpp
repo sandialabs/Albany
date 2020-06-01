@@ -22,7 +22,8 @@ namespace Albany {
 
     //! Default constructor
     STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                     const Teuchos::RCP<const Teuchos_Comm>& commT);
+                     const Teuchos::RCP<const Teuchos_Comm>& commT,
+		     const int numParams);
 
     ~STK3DPointStruct();
 

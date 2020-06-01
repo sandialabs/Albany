@@ -114,9 +114,11 @@ namespace Albany
 GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
-    int numDim_)
+    const int numDim_,
+    const int numParams_)
     : params(params_),
-      adaptParams(adaptParams_)
+      adaptParams(adaptParams_),
+      num_params(numParams_) 
 {
   metaData = Teuchos::rcp(new stk::mesh::MetaData());
 
@@ -147,7 +149,7 @@ void GenericSTKMeshStruct::SetupFieldData(
     const int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<StateInfoStruct>& sis,
-    const int worksetSize)
+    const int worksetSize) 
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(),
        std::logic_error,
@@ -205,10 +207,10 @@ void GenericSTKMeshStruct::SetupFieldData(
 
       if(interleavedOrdering)
         this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<true>(params,
-            metaData, bulkData, neq, numDim, sis, solution_vector));
+            metaData, bulkData, neq, numDim, sis, solution_vector, num_params));
       else
         this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<false>(params,
-            metaData, bulkData, neq, numDim, sis, solution_vector));
+            metaData, bulkData, neq, numDim, sis, solution_vector, num_params));
 
   }
 
@@ -216,10 +218,10 @@ void GenericSTKMeshStruct::SetupFieldData(
 
       if(interleavedOrdering)
         this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<true>(params,
-            metaData, bulkData, neq, req, numDim, sis));
+            metaData, bulkData, neq, req, numDim, sis, num_params));
       else
         this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<false>(params,
-            metaData, bulkData, neq, req, numDim, sis));
+            metaData, bulkData, neq, req, numDim, sis, num_params));
 
   }
 
@@ -655,14 +657,14 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
         TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
                                     "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
 
-        this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, comm));
+        this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, comm, num_params));
       } else {
         // We must check whether a side mesh was already created elsewhere.
         // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
         // This happens, for instance, for the basal mesh for extruded meshes.
         if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end())
         {
-          ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,adaptParams,comm);
+          ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,adaptParams,comm, num_params);
           this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
           TEUCHOS_TEST_FOR_EXCEPTION (this->sideSetMeshStructs[ss_name]==Teuchos::null, std::runtime_error,
                                       "Error! Could not cast side mesh to AbstractSTKMeshStruct.\n");
