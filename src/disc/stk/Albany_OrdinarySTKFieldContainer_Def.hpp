@@ -39,11 +39,6 @@ static const char* sol_dtk_id_name[3] = {"solution dtk",
                                          "solution_dotdot dtk"};
 #endif
 
-//IKT FIXME - will ultimately want to set size dynamically 
-//base on number of sensitivities requested 
-static const char* sol_dxdp_tag_name[1] = {"Exodus Solution Sensitivity Name"};
-static const char* sol_dxdp_id_name[1]  = {"solution dxdp"}; 
-
 static const char* res_tag_name[1] = {
     "Exodus Residual Name",
 };
@@ -73,7 +68,6 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
 
   int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
-  std::cout << "IKT num_time_deriv = " << num_time_deriv << "\n"; 
   std::cout << "IKT OrdinarySTKField constructor num_params = " << num_params << "\n";  
 #ifdef ALBANY_DTK
   bool output_dtk_field =
@@ -83,6 +77,20 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   //as this output doesn't work in same way.  May want to change in the future.
   bool output_dxdp_field = false; 
   if (num_params > 0 && num_time_deriv > 0) output_dxdp_field = true; 
+
+  //Create tag and id arrays for dxdp 
+  std::vector<std::string> sol_dxdp_tag_name_vec;
+  sol_dxdp_tag_name_vec.resize(num_params); 
+  std::vector<std::string> sol_dxdp_id_name_vec;
+  sol_dxdp_id_name_vec.resize(num_params); 
+  for (int np = 0; np<num_params; np++) {
+    std::string prefix = "Exodus Solution Sensitivity Name ";
+    std::string tag_name = prefix + std::to_string(np);
+    sol_dxdp_tag_name_vec[np] = tag_name; 
+    prefix = "solution dxdp";
+    std::string id_name = prefix + std::to_string(np); 
+    sol_dxdp_id_name_vec[np] = id_name; 
+  }
 
   // Start STK stuff
   this->coordinates_field =
@@ -149,7 +157,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
       solution_field_dxdp[np] = &metaData_->declare_field<VFT>(
           stk::topology::NODE_RANK,
           params_->get<std::string>(
-              sol_dxdp_tag_name[np], sol_dxdp_id_name[np]));
+              sol_dxdp_tag_name_vec[np], sol_dxdp_id_name_vec[np]));
       stk::mesh::put_field_on_mesh(
           *solution_field_dxdp[np],
           metaData_->universal_part(),
