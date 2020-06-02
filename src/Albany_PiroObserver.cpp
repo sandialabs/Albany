@@ -95,7 +95,18 @@ observeSolution(const Thyra_Vector &solution,
 {
 #ifdef DEBUG_OUTPUT
   std::cout << "IKT PiroObserver observeSolution3 dxdp\n"; 
-  std::cout << "IKT PiroObserver numParams = " << solution_dxdp.domain()->dim() << "\n"; 
+  auto out_ = Teuchos::VerboseObjectBase::getDefaultOStream(); 
+  int num_param = solution_dxdp.domain()->dim(); 
+  for (int np = 0; np < num_param; np++) {
+    *out_ << "\n*** PiroObserver::observeSolution dxdp" << np << " ***\n";
+    Teuchos::RCP<const Thyra::VectorBase<double>> solution_dxdp_np = solution_dxdp.col(np);
+    Teuchos::Range1D range;
+    RTOpPack::ConstSubVectorView<double> dxdpv;
+    solution_dxdp_np->acquireDetachedView(range, &dxdpv);
+    auto dxdpa = dxdpv.values();
+    for (auto i = 0; i < dxdpa.size(); ++i) *out_ << dxdpa[i] << " ";
+    *out_ << "\n*** PiroObserver::observeSolution dxdp" << np << " ***\n";
+  }
 #endif
   this->observeSolutionImpl(solution, solution_dxdp, solution_dot, stamp);
   stepper_counter_++; 

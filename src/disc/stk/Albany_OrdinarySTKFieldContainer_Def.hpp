@@ -315,7 +315,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     }
     for (int np = 0; np < num_params; np++) {
       saveVectorImpl(
-        *soln_dxdp->col(np), solution_field_dxdp[0]->name(), sel, node_vs, nodalDofManager);
+        *soln_dxdp->col(np), solution_field_dxdp[np]->name(), sel, node_vs, nodalDofManager);
     }
   }
 
@@ -356,7 +356,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     }
     for (int np = 0; np < num_params; np++) {
       saveVectorImpl(
-        *soln_dxdp->col(np), solution_field_dxdp[0]->name(), sel, node_vs, nodalDofManager);
+        *soln_dxdp->col(np), solution_field_dxdp[np]->name(), sel, node_vs, nodalDofManager);
     }
   }
 }
@@ -403,7 +403,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     }
     for (int np = 0; np < num_params; np++) {
       saveVectorImpl(
-        *soln_dxdp->col(np), solution_field_dxdp[0]->name(), sel, node_vs, nodalDofManager);
+        *soln_dxdp->col(np), solution_field_dxdp[np]->name(), sel, node_vs, nodalDofManager);
     }
   }
 }
@@ -443,7 +443,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnMultiVector(
     }
     for (int np = 0; np < num_params; np++) {
       saveVectorImpl(
-        *soln_dxdp->col(np), solution_field_dxdp[0]->name(), sel, node_vs, nodalDofManager);
+        *soln_dxdp->col(np), solution_field_dxdp[np]->name(), sel, node_vs, nodalDofManager);
     }
   }
 }

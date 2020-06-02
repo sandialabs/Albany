@@ -55,6 +55,18 @@ void StatelessObserverImpl::observeSolution (
   Teuchos::RCP<Thyra_MultiVector> overlappedSolutionDxDp = Teuchos::null; 
   if (nonOverlappedSolution_dxdp != Teuchos::null) {
     overlappedSolutionDxDp = app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionDxDp(*nonOverlappedSolution_dxdp);
+    /*auto out_ = Teuchos::VerboseObjectBase::getDefaultOStream(); 
+    int num_param = overlappedSolutionDxDp->domain()->dim(); 
+    for (int np = 0; np < num_param; np++) {
+      *out_ << "\n*** StatelessObserverImpl::observeSolution overlappedSolutionDxDp" << np << " ***\n";
+      Teuchos::RCP<const Thyra::VectorBase<double>> solution_dxdp_np = overlappedSolutionDxDp->col(np);
+      Teuchos::Range1D range;
+      RTOpPack::ConstSubVectorView<double> dxdpv;
+      solution_dxdp_np->acquireDetachedView(range, &dxdpv);
+      auto dxdpa = dxdpv.values();
+      for (auto i = 0; i < dxdpa.size(); ++i) *out_ << dxdpa[i] << " ";
+      *out_ << "\n*** StatelessObserverImpl::observeSolution overlappedSolutionDxDp" << np << " ***\n";
+    }*/
   }
   if (nonOverlappedSolutionDot != Teuchos::null) {
     const Teuchos::RCP<const Thyra_Vector> overlappedSolutionDot =
