@@ -172,6 +172,13 @@ void Coord2RBM_nonElasticity(
         }
       }
       break;
+    case 1:
+      for (ii=0; ii<1+NscalarDof; ii++) {
+        for (jj=0; jj<1+NscalarDof; jj++) {
+          traits_class.ArrObj(dof, ii, jj) = (ii==jj) ? 1.0 : 0.0;
+        }
+      }
+      break;
 
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(

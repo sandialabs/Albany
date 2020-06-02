@@ -47,6 +47,17 @@ Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (!physics_list.isParameter("Seconds per Year")) {
     physics_list.set("Seconds per Year", 3.1536e7);
   }
+
+  // Check if we want to give ML RBMs (from parameterlist)
+  const int numRBMs = params_->get<int>("Number RBMs for ML", neq);
+  const int numScalar = std::max(int(neq)-1,0);
+  if (numRBMs - numScalar == 1) {
+    const bool setRBMs = true;
+    rigidBodyModes->setParameters(neq, numDim, numScalar, numRBMs, setRBMs);
+  }
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "The specified number of RBMs " << numRBMs
+      << " is not valid!  Valid values are " << 1 + numScalar << ".");
 }
 
 LandIce::Enthalpy::
