@@ -18,9 +18,11 @@ ALBANY:
     Response Functions: 
       Number: 1
       Response 0: Solution Average
-    Parameters: 
-      Number: 1
-      Parameter 0: 'kappa_x Parameter'
+    Parameters:
+      Number of Parameter Vectors: 1
+      Parameter Vector 0:
+        Number: 1
+        Parameter 0: 'kappa_x Parameter'
   Discretization: 
     1D Elements: 20
     1D Scale: 1.00000000000000000e+00
