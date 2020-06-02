@@ -9,7 +9,6 @@
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 
-//#define DEBUG_OUTPUT
 
 namespace Albany {
 
@@ -25,12 +24,6 @@ observeSolution(double stamp,
                 const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
                 const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
 {
-#ifdef DEBUG_OUTPUT
-  std::cout << "IKT ObserverImpl observeSolution1 dxdp\n"; 
-  if (nonOverlappedSolution_dxdp != Teuchos::null) {
-    std::cout << "IKT ObserverImpl numParams = " << nonOverlappedSolution_dxdp->domain()->dim() << "\n"; 
-  }
-#endif
   app_->evaluateStateFieldManager (stamp,
                                    nonOverlappedSolution,
                                    nonOverlappedSolutionDot,
@@ -61,9 +54,6 @@ observeSolution(double stamp,
                 const Thyra_MultiVector& nonOverlappedSolution, 
                 const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp)
 {
-#ifdef DEBUG_OUTPUT
-  std::cout << "IKT ObserverImpl observeSolution2 dxdp\n"; 
-#endif
   app_->evaluateStateFieldManager(stamp, nonOverlappedSolution, 
                                   nonOverlappedSolution_dxdp);
   app_->getStateMgr().updateStates();
