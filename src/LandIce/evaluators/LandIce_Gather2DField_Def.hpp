@@ -251,7 +251,6 @@ evaluateFields(typename Traits::EvalData workset)
       typename PHAL::Ref<ScalarT>::type val = (this->field2D)(cell,node);
 
       val = FadType(val.size(), x_constView[solDOFManager.getLocalDOF(inode, this->offset)]);
-      val.setUpdateValue(!workset.ignore_residual);
       val.fastAccessDx(firstunk) = workset.j_coeff;
     }
   }

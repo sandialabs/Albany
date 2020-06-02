@@ -21,62 +21,25 @@ INSTALL_DIR=/projects/albany/nightlyAlbanyCDash
 SCRATCH_DIR=/scratch/albany
 
 export LM_LICENSE_FILE=7500@sitelicense.sandia.gov
+  
+if [ "${MODULESHOME:-}" = "" ]; then
+  # Modules have not been set
+  . /usr/share/Modules/init/bash
+fi
 
 if [ "$BUILD_OPT" = "intel-trilinos" ] || [ "$BUILD_OPT" = "intel-albany" ]; then
 
-  # Load a gcc as the intel compiler needs it
-  if [ "${MODULESHOME:-}" = "" ]; then
-    # Modules have not been set
-    . /usr/share/Modules/init/bash
-  fi
+  #intel build
   module purge
   module load sierra-git/2.6.1
   module load sierra-devel/intel-18.0.3-intelmpi-5.1
   module load sparc-cmake
 
-#   . /sierra/sntools/SDK/compilers/intel/composer_xe_2018.1.163/compilers_and_libraries/linux/bin/compilervars.sh intel64
-
-   # Argh! The 2018.1.163 compiler install is apparently broken
-#   export I_MPI_ROOT=/projects/sierra/linux_rh6/SDK/mpi/intel/5.1.2.150
-
-elif [ "$BUILD_OPT" = "debug-trilinos" ] ||  [ "$BUILD_OPT" = "debug-albany" ]; then
-
-  # Load latest gcc
-  if [ "${MODULESHOME:-}" = "" ]; then
-    # Modules have not been set
-    . /usr/share/Modules/init/bash
-  fi
-  module load sems-env
-  module load sems-cmake
-  export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/projects/albany/gcc-9.1.0/lib:/projects/albany/gcc-9.1.0/lib64
-
-elif [ "$BUILD_OPT" = "clang-trilinos" ] || [ "$BUILD_OPT" = "clang-albany" ] || [ "$BUILD_OPT" = "clangdbg-trilinos" ] || [ "$BUILD_OPT" = "clangdbg-albany" ]; then
-
-  # Need a gcc for stuff associated with clang
-  if [ "${MODULESHOME:-}" = "" ]; then
-    # Modules have not been set
-    . /usr/share/Modules/init/bash
-  fi
-
-  module purge
-  module load sems-env
-  module load sems-cmake 
-
 else
 
-  # Base gcc build
-  if [ "${MODULESHOME:-}" = "" ]; then
-    # Modules have not been set
-    . /usr/share/Modules/init/bash
-  fi
+  # gcc and clang build
   module load sems-env
   module load sems-cmake
-
-  export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/projects/albany/gcc-9.1.0/lib:/projects/albany/gcc-9.1.0/lib64
-
-#  export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
-
-#  export LD_LIBRARY_PATH=/projects/sierra/linux_rh6/SDK/compilers/intel/composer_xe_2018.1.163/compilers_and_libraries/linux/mkl/lib/intel64:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/hwloc/lib:/projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib64:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib
 
 fi
 
@@ -104,7 +67,7 @@ LOG_FILE=$SCRATCH_DIR/nightly_log_$BUILD_OPT.txt
 #done
 
 echo "Date and time is $now" > $LOG_FILE
-
+echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH" > ld_lib.path
 eval "env BUILD_OPTION=$BUILD_OPT DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE INSTALL_DIRECTORY=$INSTALL_DIR SCRATCH_DIRECTORY=$SCRATCH_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR ctest -VV -S /projects/albany/nightlyAlbanyCDash/ctest_nightly.cmake" > $LOG_FILE 2>&1
 
 # Copy a basic installation to /projects/albany for those who like a nightly

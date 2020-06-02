@@ -185,7 +185,6 @@ evaluateFields(typename Traits::EvalData workset)
         const LO id = wsElDofs((int)cell,(int)node,0);
         double pvec_id = (id >= 0) ? pvec_constView[id] : 0;
         ParamScalarT v(num_deriv, node, pvec_id);
-        v.setUpdateValue(!workset.ignore_residual);
         (this->val)(cell,node) = v;
       }
 
@@ -278,7 +277,6 @@ evaluateFields(typename Traits::EvalData workset)
         double pvec_id = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
 
         ParamScalarT v(num_deriv, node, pvec_id);
-        v.setUpdateValue(!workset.ignore_residual);
         if(p_lid < 0) {
           v.fastAccessDx(node) = 0;
         }

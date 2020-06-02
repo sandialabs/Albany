@@ -514,6 +514,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
   "-DTrilinos_ENABLE_Shards:BOOL=ON"
   "-DTrilinos_ENABLE_Sacado:BOOL=ON"
+  "-DSacado_NEW_FAD_DESIGN_IS_DEFAULT:BOOL=OFF"
   "-DTrilinos_ENABLE_Epetra:BOOL=ON"
   "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
@@ -578,6 +579,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DSTK_HIDE_DEPRECATED_CODE:BOOL=OFF"
   "-DTpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
   "-DXpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
+  "-DUSE_NEW_POLICY_CMP0060=NEW"
   )
 
 if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
@@ -625,6 +627,7 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG OR BUILD_TRILINOSCLANG OR BUILD_TRILINOS
   if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)  
     set(BOOST_DIR "/projects/albany/gcc-9.1.0")
     set(LIB_DIR "/projects/albany/gcc-9.1.0")
+    set(GCC_LIB_DIR "/projects/albany/gcc-9.1.0")
     set(MPI_BASE_DIR "/projects/albany/gcc-9.1.0")
     set(NETCDF "/projects/albany/gcc-9.1.0") 
     set(HDFDIR "/projects/albany/gcc-9.1.0")
@@ -644,7 +647,7 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG OR BUILD_TRILINOSCLANG OR BUILD_TRILINOS
     set(MKL_PATH "/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281")
     set(SUPERLUDIR "/projects/albany/clang-9.0.1/SuperLU_4.3")
     set(LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
-  endif (BUILD_TRILINNOSCLANG OR BUILD_TRILINOSCLANGDBG) 
+  endif (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG) 
   set (CONF_OPTS
     "-DCMAKE_BUILD_TYPE:STRING=${BTYPE}"
     "-DCMAKE_CXX_COMPILER:STRING=${MPI_BASE_DIR}/bin/mpicxx"
@@ -690,6 +693,7 @@ endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
     "-DTrilinos_ENABLE_Sacado:BOOL=ON"
+    "-DSacado_NEW_FAD_DESIGN_IS_DEFAULT:BOOL=OFF"
     "-DTrilinos_ENABLE_SCOREC:BOOL=OFF"
     "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
     "-DTrilinos_ENABLE_Shards:BOOL=ON"
@@ -776,12 +780,7 @@ endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
     #
     "-DTPL_ENABLE_ParMETIS:STRING=OFF"
     #
-if (BUILD_TRILINOS OR BUILD_TRILINOSDBG) 
-    "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${HDFDIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran'"
-endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG) 
-if (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG) 
     "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${LIB_DIR}/lib -L${LIB_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran -Wl,-rpath,${GCC_LIB_DIR}/lib:${GCC_LIB_DIR}/lib64'"
-endif (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG) 
     #
     "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"

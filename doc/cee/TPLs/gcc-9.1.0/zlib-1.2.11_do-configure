@@ -3,5 +3,5 @@
 cmake \
 -DCMAKE_INSTALL_PREFIX=/projects/albany/gcc-9.1.0 \
 -DCMAKE_C_COMPILER=/projects/albany/gcc-9.1.0/bin/gcc \
--DCMAKE_C_FLAGS="-march=native -m64 -fPIC" \
+-DCMAKE_C_FLAGS="-O3 -march=native -m64 -fPIC" \
 ..

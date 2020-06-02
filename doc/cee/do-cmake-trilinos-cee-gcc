@@ -12,13 +12,13 @@ if [ $# -ne 1 ]; then
 elif [ $1 = "-d" ]; then
    INSTALL_DIR=/projects/albany/trilinos/MPI_DBG
    BTYPE=DEBUG
-   CCFLAGS="-g -O0 -Wno-inconsistent-missing-override"
-   CFLAGS="-g -O0"
-   FFLAGS="-g -O0 -Wa,-q"
+   CCFLAGS="-g -ggdb -O0"
+   CFLAGS="-g -ggdb -O0"
+   FFLAGS="-g -ggdb -O0 -Wa,-q"
 elif [ $1 = "-r" ]; then
    INSTALL_DIR=/projects/albany/trilinos/MPI_REL
    BTYPE=RELEASE
-   CCFLAGS="-O3 -march=native -DNDEBUG -Wno-inconsistent-missing-override"
+   CCFLAGS="-O3 -march=native -DNDEBUG"
    CFLAGS="-O3 -march=native -DNDEBUG"
    FFLAGS="-O3 -march=native -DNDEBUG -Wa,-q"
 else
@@ -45,16 +45,14 @@ LABLAS_LIBRARIES="-L$MKL_PATH/lib/intel64 -Wl,--start-group $MKL_PATH/mkl/lib/in
 cmake \
     -Wno-dev \
     -D CMAKE_BUILD_TYPE:STRING=$BTYPE \
-    -D CMAKE_CXX_FLAGS:STRING=$CCFLAGS \
-    -D CMAKE_C_FLAGS:STRING=$CFLAGS \
-    -D CMAKE_Fortran_FLAGS:STRING=$FFLAGS \
+    -D CMAKE_CXX_FLAGS:STRING="$CCFLAGS" \
+    -D CMAKE_C_FLAGS:STRING="$CFLAGS" \
+    -D CMAKE_Fortran_FLAGS:STRING="$FFLAGS" \
     -D Trilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
     -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
     -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
     -D TPL_ENABLE_MPI:BOOL=ON \
     -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
-    -D CMAKE_MACOSX_RPATH:BOOL=ON \
-    -D CMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib \
     -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
 \
     -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
@@ -125,9 +123,6 @@ cmake \
     -D Trilinos_ENABLE_SEACASPLT:BOOL=OFF \
     -D TPL_ENABLE_X11:BOOL=OFF \
     -D TPL_ENABLE_Matio:BOOL=OFF \
-\
-    -D TPL_ENABLE_MPI:BOOL=ON \
-    -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
 \
     -D TPL_ENABLE_Pthread:BOOL=OFF \
 \

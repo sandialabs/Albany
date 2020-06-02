@@ -42,17 +42,16 @@ cmake \
     -Wno-dev \
     -D CMAKE_BUILD_TYPE:STRING=$BTYPE \
     -D CMAKE_CXX_COMPILER:PATH=/projects/albany/clang-10.0.0/bin/mpicxx \
-    -D CMAKE_CXX_FLAGS:STRING=$CCFLAGS \
+    -D CMAKE_CXX_FLAGS:STRING="$CCFLAGS" \
     -D CMAKE_C_COMPILER:PATH=/projects/albany/clang-10.0.0/bin/mpicc \
-    -D CMAKE_C_FLAGS:STRING=$CFLAGS \
+    -D CMAKE_C_FLAGS:STRING="$CFLAGS" \
     -D CMAKE_Fortran_COMPILER:PATH=/projects/albany/clang-10.0.0/bin/mpifort \
-    -D CMAKE_Fortran_FLAGS:STRING=$FFLAGS \
+    -D CMAKE_Fortran_FLAGS:STRING="$FFLAGS" \
     -D Trilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
     -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
     -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
     -D TPL_ENABLE_MPI:BOOL=ON \
     -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
-    -D CMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib \
     -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
 \
     -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
@@ -123,9 +122,6 @@ cmake \
     -D Trilinos_ENABLE_SEACASPLT:BOOL=OFF \
     -D TPL_ENABLE_X11:BOOL=OFF \
     -D TPL_ENABLE_Matio:BOOL=OFF \
-\
-    -D TPL_ENABLE_MPI:BOOL=ON \
-    -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
 \
     -D TPL_ENABLE_Pthread:BOOL=OFF \
 \
