@@ -12,9 +12,10 @@ t = [0:dt:tf];
 dx = 1/20; 
 x = [0:dx:1]; 
 T = ncread('thermal1D_with_source_out.exo', 'vals_nod_var1'); 
+dTdkappa = ncread('thermal1D_with_source_out.exo', 'vals_nod_var2'); 
 %size(T)
 Texact = 0*T;
-dTdkappa = 0*T;  
+dTdkappaExact = 0*T;  
 for i=1:length(x)
   Texact(i,:) = a*x(i)*(1.0-x(i))*cos(2.0*pi*kappa*t/rho/c); 
   dTdkappaExact(i, :) = -2.0*pi/rho/c*a*x(i)*(1.0-x(i))*t.*sin(2.0*pi*kappa*t/rho/c); 
@@ -29,6 +30,7 @@ K = length(t);
 %set(fig1,'NextPlot','replacechildren')
 
 rel_err = []; 
+rel_err_dxdp = []; 
 soln_avg_rel_err = [];  
 for i=1:K
   %set(gca,'NextPlot','replacechildren') ; 
@@ -39,7 +41,13 @@ for i=1:K
   soln_avg_exact = mean(Texact(:,i));
   dgdp_exact = mean(dTdkappaExact(:,i));  
   err = norm(T(:,i)-Texact(:,i))/norm(Texact(:,i)); 
+  if (norm(dTdkappaExact(:,i)) > 0) 
+    err_dxdp = norm(dTdkappa(:,i)-dTdkappaExact(:,i))/norm(dTdkappaExact(:,i)); 
+  else 
+    err_dxdp = norm(dTdkappa(:,i)-dTdkappaExact(:,i));
+  end  
   rel_err = [rel_err; err]; 
+  rel_err_dxdp = [rel_err_dxdp; err_dxdp]; 
   soln_avg_rel_err = [soln_avg_rel_err; norm(soln_avg_computed-soln_avg_exact)/norm(soln_avg_exact)]; 
   %xlabel('x'); 
   %ylabel('Temp'); 
@@ -61,6 +69,9 @@ X = ['Average solution relative error over time = ', num2str(mean(rel_err))];
 disp(X) 
 disp([' ']); 
 X = ['Average response relative error over time = ', num2str(mean(soln_avg_rel_err))]; 
+disp(X) 
+disp([' ']); 
+X = ['Average dxdp relative error over time = ', num2str(mean(rel_err_dxdp))]; 
 disp(X) 
 disp([' ']); 
 figure(); 
