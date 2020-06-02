@@ -10,13 +10,15 @@ a = 16.0;
 dt = 0.01; %time step
 tf = 1.0; %final time 
 t = [0:dt:tf]; 
-dx = 1/80; dy = 1/80;  
+dx = 1/10; dy = 1/10;  
 [xorig,yorig] = meshgrid(0:dx:1, 0:dx:1);
 szx = size(xorig);
 szy = size(yorig); 
 x = reshape(xorig, 1, szx(1)*szx(2)); 
 y = reshape(yorig, 1, szy(1)*szy(2)); 
-T = ncread('thermal2D_with_source_out.exo', 'vals_nod_var1'); 
+T = ncread('thermal2D_with_source_out.exo', 'vals_nod_var1');
+dTdkappa1 = ncread('thermal2D_with_source_out.exo', 'vals_nod_var2');  
+dTdkappa2 = ncread('thermal2D_with_source_out.exo', 'vals_nod_var3');  
 %size(T)
 Texact = 0*T; 
 for i=1:length(x)
@@ -35,10 +37,24 @@ K = length(t);
 
 rel_err = []; 
 soln_avg_rel_err = [];  
+rel_err_dxdp1 = []; 
+rel_err_dxdp2 = []; 
  
 for i=1:K
   err = norm(T(:,i)-Texact(:,i))/norm(Texact(:,i)); 
   rel_err = [rel_err; err];
+  if (norm(dTdkappa1(:,i)) > 0) 
+    err_dxdp1 = norm(dTdkappa1(:,i) - dTdkappa1Exact(:,i))/norm(dTdkappa1(:,i));
+  else
+    err_dxdp1 = norm(dTdkappa1(:,i) - dTdkappa1Exact(:,i));
+  end
+  rel_err_dxdp1 = [rel_err_dxdp1; err_dxdp1]; 
+  if (norm(dTdkappa2(:,i)) > 0) 
+    err_dxdp2 = norm(dTdkappa2(:,i) - dTdkappa2Exact(:,i))/norm(dTdkappa2(:,i));
+  else
+    err_dxdp2 = norm(dTdkappa2(:,i) - dTdkappa2Exact(:,i));
+  end
+  rel_err_dxdp2 = [rel_err_dxdp2; err_dxdp2]; 
   soln_avg_computed = mean(T(:,i));  
   soln_avg_exact = mean(Texact(:,i));
   dgdp1_exact = mean(dTdkappa1Exact(:,i));  
@@ -78,6 +94,12 @@ X = ['Average solution relative error over time = ', num2str(mean(rel_err))];
 disp(X) 
 disp([' ']); 
 X = ['Average response relative error over time = ', num2str(mean(soln_avg_rel_err))]; 
+disp(X) 
+disp([' ']); 
+X = ['Average dxdp1 relative error over time = ', num2str(mean(rel_err_dxdp1))]; 
+disp(X) 
+disp([' ']); 
+X = ['Average dxdp2 relative error over time = ', num2str(mean(rel_err_dxdp2))]; 
 disp(X) 
 disp([' ']); 
 %figure(); 
