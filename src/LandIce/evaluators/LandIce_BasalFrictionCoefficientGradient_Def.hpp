@@ -13,7 +13,6 @@
 #include "Albany_Layouts.hpp"
 
 #include "LandIce_BasalFrictionCoefficientGradient.hpp"
-#include "LandIce_SharedParameter.hpp"
 #include "LandIce_ParamEnum.hpp"
 
 #include <string.hpp> // for 'upper_case' (comes from src/utility; not to be confused with <string>)

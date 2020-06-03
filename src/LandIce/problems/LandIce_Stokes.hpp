@@ -130,7 +130,7 @@ namespace LandIce {
 
 #include "LandIce_StokesContravarientMetricTensor.hpp"
 #include "PHAL_Neumann.hpp"
-#include "LandIce_SharedParameter.hpp"
+#include "PHAL_SharedParameter.hpp"
 #include "LandIce_ParamEnum.hpp"
 #include "LandIce_StokesBodyForce.hpp"
 #include "LandIce_StokesRm.hpp"
@@ -332,8 +332,8 @@ LandIce::Stokes::constructEvaluators(
     p->set<std::string>("Parameter Name", param_name);
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
 
-    RCP<LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>> ptr_homotopy;
-    ptr_homotopy = rcp(new LandIce::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>(*p,dl));
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>> ptr_homotopy;
+    ptr_homotopy = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>(*p,dl));
     ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("LandIce Viscosity").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_homotopy);
   }

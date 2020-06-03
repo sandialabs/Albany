@@ -209,14 +209,9 @@ list (APPEND SOURCES
   problems/Albany_ResponseUtilities.cpp
   problems/Albany_SideLaplacianProblem.cpp
   problems/Albany_MaterialDatabase.cpp
+  problems/Albany_ThermalProblem.cpp
   )
-#IKT, 5/27/2020: Albany::ThermalProblem uses LandIce::SharedParameter
-#and therefore has a dependency on ALBANY_LANDICE
-if (ALBANY_LANDICE)
-  list (APPEND SOURCES
-    problems/Albany_ThermalProblem.cpp
-  )
-endif()
+
 list (APPEND HEADERS
   problems/Albany_AbstractProblem.hpp
   problems/Albany_BCUtils.hpp
@@ -233,13 +228,10 @@ list (APPEND HEADERS
   problems/Albany_ResponseUtilities_Def.hpp
   problems/Albany_SideLaplacianProblem.hpp
   problems/Albany_MaterialDatabase.hpp
+  problems/Albany_ThermalProblem.hpp
+  problems/Albany_ParamEnum.hpp
   )
 
-if (ALBANY_LANDICE)
-  list (APPEND HEADERS
-    problems/Albany_ThermalProblem.hpp
-  )
-endif()
 
 #responses
 list (APPEND SOURCES
@@ -438,6 +430,7 @@ list (APPEND SOURCES
   evaluators/utility/PHAL_MapToPhysicalFrame.cpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide.cpp
   evaluators/utility/PHAL_SharedParameter.cpp
+  evaluators/pde/PHAL_ThermalResid.cpp
   evaluators/utility/PHAL_Source.cpp
   evaluators/utility/QCAD_EvaluatorTools.cpp
   evaluators/utility/QCAD_MathVector.cpp
@@ -447,12 +440,6 @@ list (APPEND SOURCES
 if(ALBANY_STK_EXPR_EVAL)
   list (APPEND SOURCES 
     evaluators/bc/PHAL_ExprEvalSDBC.cpp)
-endif()
-
-if (ALBANY_LANDICE)
-  list (APPEND SOURCES 
-    evaluators/pde/PHAL_ThermalResid.cpp
-  )
 endif()
 
 if (ALBANY_EPETRA)
@@ -531,6 +518,7 @@ list (APPEND HEADERS
   evaluators/pde/PHAL_SideLaplacianResidual_Def.hpp
   evaluators/pde/PHAL_ThermalConductivity.hpp
   evaluators/pde/PHAL_ThermalConductivity_Def.hpp
+  evaluators/pde/PHAL_SharedParameter.hpp
   evaluators/response/PHAL_ResponseFieldIntegral.hpp
   evaluators/response/PHAL_ResponseFieldIntegral_Def.hpp
   evaluators/response/PHAL_ResponseSquaredL2Difference.hpp
@@ -597,6 +585,8 @@ list (APPEND HEADERS
   evaluators/utility/PHAL_SharedParameter_Def.hpp
   evaluators/utility/PHAL_Source.hpp
   evaluators/utility/PHAL_Source_Def.hpp
+  evaluators/pde/PHAL_ThermalResid.hpp
+  evaluators/pde/PHAL_ThermalResid_Def.hpp
   evaluators/utility/QCAD_EvaluatorTools.hpp
   evaluators/utility/QCAD_EvaluatorTools_Def.hpp
   evaluators/utility/QCAD_MathVector.hpp
@@ -608,13 +598,6 @@ if(ALBANY_STK_EXPR_EVAL)
   list (APPEND HEADERS
     evaluators/bc/PHAL_ExprEvalSDBC.hpp
     evaluators/bc/PHAL_ExprEvalSDBC_Def.hpp)
-endif()
-
-if (ALBANY_LANDICE) 
-  list (APPEND HEADERS
-    evaluators/pde/PHAL_ThermalResid.hpp
-    evaluators/pde/PHAL_ThermalResid_Def.hpp
-  )
 endif()
 
 if (ALBANY_EPETRA)

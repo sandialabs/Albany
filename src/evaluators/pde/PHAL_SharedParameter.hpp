@@ -1,5 +1,5 @@
-#ifndef LANDICE_SHARED_PARAMETER_HPP
-#define LANDICE_SHARED_PARAMETER_HPP 1
+#ifndef PHAL_SHARED_PARAMETER_HPP
+#define PHAL_SHARED_PARAMETER_HPP 1
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -7,7 +7,7 @@
 
 #include "Albany_Utils.hpp"
 
-namespace LandIce
+namespace PHAL
 {
 
 template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
@@ -130,6 +130,6 @@ typename EvalT::ScalarT SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::d
 template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
 std::string SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::param_name;
 
-} // Namespace LandIce
+} // Namespace PHAL
 
-#endif // LANDICE_SHARED_PARAMETER_HPP
+#endif // PHAL_SHARED_PARAMETER_HPP
