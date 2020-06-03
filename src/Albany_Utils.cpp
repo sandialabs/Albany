@@ -67,6 +67,30 @@ PrintHeader(std::ostream& os)
   os << R"(***************************************************************)" << std::endl;
 }
 
+int
+CalculateNumberParams(const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
+{
+  Teuchos::ParameterList& parameterParams =
+      problemParams->sublist("Parameters");
+  int  num_param_vecs = parameterParams.get("Number of Parameter Vectors", 0);
+  bool using_old_parameter_list = false;
+  if (parameterParams.isType<int>("Number")) {
+    int numParameters = parameterParams.get<int>("Number");
+    if (numParameters > 0) {
+      num_param_vecs           = 1;
+      using_old_parameter_list = true;
+    }
+  }
+  int np = 0;
+  for (int i = 0; i < num_param_vecs; ++i) {
+    Teuchos::ParameterList& pList =
+        using_old_parameter_list ?
+            parameterParams :
+            parameterParams.sublist(Albany::strint("Parameter Vector", i));
+    np += pList.get<int>("Number");
+  }
+  return np; 
+}
 void
 ReplaceDiagonalEntries(
     const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,

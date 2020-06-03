@@ -29,8 +29,7 @@ public:
         const Teuchos::RCP<const Thyra_Vector>& initial_guess,
         const Teuchos::RCP<ParamLib>& param_lib,
         const Teuchos::RCP<AbstractDiscretization>& disc,
-        const Teuchos::RCP<const Teuchos_Comm>& comm,
-        const int num_params); 
+        const Teuchos::RCP<const Teuchos_Comm>& comm);
 
    //! Method called by the solver implementation to determine if the mesh needs adapting
    // A return type of true means that the mesh should be adapted

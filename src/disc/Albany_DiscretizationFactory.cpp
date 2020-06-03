@@ -26,26 +26,19 @@
 Albany::DiscretizationFactory::DiscretizationFactory(
         const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
         const Teuchos::RCP<const Teuchos_Comm>& commT_,
-	const int numParams_,
         const bool explicit_scheme_) :
           commT(commT_),
-          num_params(numParams_), 
           explicit_scheme(explicit_scheme_) 
 {
-    discParams = Teuchos::sublist(topLevelParams, "Discretization", true);
-
-    if (topLevelParams->isSublist("Piro"))
-
-        piroParams = Teuchos::sublist(topLevelParams, "Piro", true);
-
-    if (topLevelParams->isSublist("Problem")) {
-
-        Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", true);
-
-        if (problemParams->isSublist("Adaptation"))
-
-            adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
-    }
+  discParams = Teuchos::sublist(topLevelParams, "Discretization", true);
+  if (topLevelParams->isSublist("Piro"))
+    piroParams = Teuchos::sublist(topLevelParams, "Piro", true);
+  if (topLevelParams->isSublist("Problem")) {
+    Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", true);
+      if (problemParams->isSublist("Adaptation"))
+        adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
+    num_params = Albany::CalculateNumberParams(problemParams); 
+  }
 }
 
 

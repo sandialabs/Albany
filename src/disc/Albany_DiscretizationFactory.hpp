@@ -31,9 +31,7 @@ class DiscretizationFactory {
     DiscretizationFactory(
       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
       const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const int numParams,
-      const bool explicit_scheme_ = false
-    );
+      const bool explicit_scheme_ = false);
 
     //! Destructor
     ~DiscretizationFactory() {}
@@ -128,7 +126,7 @@ class DiscretizationFactory {
     Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct;
 
     //Number of parameters
-    int num_params;
+    int num_params{0};
 };
 
 }

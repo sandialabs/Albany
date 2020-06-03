@@ -10,6 +10,7 @@
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_ModelEvaluator.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "Albany_Utils.hpp" 
 
 #include "Thyra_ModelEvaluatorDelegatorBase.hpp"
 
@@ -22,21 +23,19 @@ AdaptiveSolutionManager::AdaptiveSolutionManager(
     Teuchos::RCP<Thyra_Vector const> const&     initial_guess,
     Teuchos::RCP<ParamLib> const&               param_lib,
     Teuchos::RCP<Albany::AbstractDiscretization>const & disc,
-    Teuchos::RCP<Teuchos_Comm const> const&     comm, 
-    const int num_params)
+    Teuchos::RCP<Teuchos_Comm const> const&     comm) 
     : num_time_deriv(appParams->sublist("Discretization")
                          .get<int>("Number Of Time Derivatives")),
       appParams_(appParams),
       disc_(disc),
       paramLib_(param_lib),
       comm_(comm),
-      num_params_(num_params), 
       out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   // Create problem PL
   Teuchos::RCP<Teuchos::ParameterList> problemParams =
       Teuchos::sublist(appParams_, "Problem", true);
-
+  num_params_ = Albany::CalculateNumberParams(problemParams);
   // Note that piroParams_ is a member of Thyra_AdaptiveSolutionManager
   piroParams_ = Teuchos::sublist(appParams_, "Piro", true);
 

@@ -25,6 +25,10 @@ namespace Albany {
 void
 PrintHeader(std::ostream& os);
 
+//! Helper function to calculate the number of parameters in a problem
+int
+CalculateNumberParams(const Teuchos::RCP<Teuchos::ParameterList>& problemParams); 
+
 // Helper function which replaces the diagonal of a matrix
 void
 ReplaceDiagonalEntries(

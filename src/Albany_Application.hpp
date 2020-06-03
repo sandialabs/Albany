@@ -551,9 +551,6 @@ public:
   bool requires_sdbcs_;
   bool requires_orig_dbcs_;
   
-  //! Number of params   
-  int num_params_{0}; 
-
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
 
