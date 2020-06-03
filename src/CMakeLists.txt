@@ -429,7 +429,6 @@ list (APPEND SOURCES
   evaluators/utility/PHAL_LangevinNoiseTerm.cpp
   evaluators/utility/PHAL_MapToPhysicalFrame.cpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide.cpp
-  evaluators/utility/PHAL_SharedParameter.cpp
   evaluators/pde/PHAL_ThermalResid.cpp
   evaluators/utility/PHAL_Source.cpp
   evaluators/utility/QCAD_EvaluatorTools.cpp
@@ -581,8 +580,6 @@ list (APPEND HEADERS
   evaluators/utility/PHAL_MapToPhysicalFrameSide.hpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide_Def.hpp
   evaluators/utility/PHAL_MapToPhysicalFrame_Def.hpp
-  evaluators/utility/PHAL_SharedParameter.hpp
-  evaluators/utility/PHAL_SharedParameter_Def.hpp
   evaluators/utility/PHAL_Source.hpp
   evaluators/utility/PHAL_Source_Def.hpp
   evaluators/pde/PHAL_ThermalResid.hpp
