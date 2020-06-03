@@ -517,7 +517,7 @@ list (APPEND HEADERS
   evaluators/pde/PHAL_SideLaplacianResidual_Def.hpp
   evaluators/pde/PHAL_ThermalConductivity.hpp
   evaluators/pde/PHAL_ThermalConductivity_Def.hpp
-  evaluators/pde/PHAL_SharedParameter.hpp
+  evaluators/utility/PHAL_SharedParameter.hpp
   evaluators/response/PHAL_ResponseFieldIntegral.hpp
   evaluators/response/PHAL_ResponseFieldIntegral_Def.hpp
   evaluators/response/PHAL_ResponseSquaredL2Difference.hpp
