@@ -15,6 +15,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "PHAL_Dimension.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace LandIce
 {
@@ -73,6 +74,8 @@ private:
   double basalMelt_reg_beta;
   bool isThereWater;
   bool nodal;
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 
 } // namespace LandIce

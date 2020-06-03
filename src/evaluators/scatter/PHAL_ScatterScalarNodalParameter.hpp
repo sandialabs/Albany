@@ -16,6 +16,7 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL {
 
@@ -55,6 +56,8 @@ class ScatterScalarNodalParameterBase
   PHX::MDField<const ParamScalarT,Cell,Node> val;
   std::string param_name;
   std::size_t numNodes;
+
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 // General version for most evaluation types

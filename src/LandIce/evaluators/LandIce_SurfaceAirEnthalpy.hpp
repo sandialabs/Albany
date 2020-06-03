@@ -15,6 +15,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "PHAL_Dimension.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace LandIce
 {
@@ -33,8 +34,8 @@ public:
   SurfaceAirEnthalpy (const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData /* workset */,
-                              PHX::FieldManager<Traits>& /* fm */) {}
+  void postRegistrationSetup (typename Traits::SetupData d,
+                              PHX::FieldManager<Traits>& fm);
 
   void evaluateFields(typename Traits::EvalData workset);
 
@@ -54,6 +55,8 @@ private:
   double rho_i; //[kg m^{-3}]
   double T0;    //[K]
   double Tm; //[K], 273.15
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 
 } // Namespace LandIce

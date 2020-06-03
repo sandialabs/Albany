@@ -44,13 +44,16 @@ namespace LandIce
 
     this->utils.setFieldData(diss,fm);
     d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+    if (d.memoizer_active()) memoizer.enable_memoizer();
   }
 
   template<typename EvalT, typename Traits>
   void Dissipation<EvalT,Traits>::
-  evaluateFields(typename Traits::EvalData d)
+  evaluateFields(typename Traits::EvalData workset)
   {
-    for (std::size_t cell = 0; cell < d.numCells; ++cell)
+    if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
       for (std::size_t qp = 0; qp < numQPs; ++qp)
         diss(cell,qp) = 1.0/scyr * 4.0 * mu(cell,qp) * epsilonSq(cell,qp);
   }

@@ -71,11 +71,12 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
 template<typename EvalT, typename Traits, typename Type>
 void EnthalpyBasalResid<EvalT,Traits,Type>::
-postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(w_measure,fm);
   this->utils.setFieldData(basalMeltRateQP,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 template<typename EvalT, typename Traits, typename Type>

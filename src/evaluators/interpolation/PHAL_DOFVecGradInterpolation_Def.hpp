@@ -49,6 +49,7 @@ namespace PHAL {
     this->utils.setFieldData(GradBF,fm);
     this->utils.setFieldData(grad_val_qp,fm);
     d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+    if (d.memoizer_active()) memoizer.enable_memoizer();
   }
 
   //*********************************************************************
@@ -84,6 +85,7 @@ namespace PHAL {
   void DOFVecGradInterpolationBase<EvalT, Traits, ScalarT>::
   evaluateFields(typename Traits::EvalData workset)
   {
+    if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {

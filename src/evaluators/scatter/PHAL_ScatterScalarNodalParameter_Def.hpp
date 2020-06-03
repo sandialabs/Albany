@@ -33,11 +33,14 @@ ScatterScalarNodalParameterBase(const Teuchos::ParameterList& p,
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void ScatterScalarNodalParameterBase<EvalT,Traits>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(val,fm);
   numNodes = val.extent(1);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 // **********************************************************************
@@ -79,6 +82,8 @@ template<typename Traits>
 void ScatterScalarNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
   Teuchos::RCP<Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->vector();
   Teuchos::ArrayRCP<ST> pvec_view = Albany::getNonconstLocalData(pvec);
@@ -120,6 +125,8 @@ template<typename Traits>
 void ScatterScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
   Teuchos::RCP<Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->vector();
   Teuchos::ArrayRCP<ST> pvec_view = Albany::getNonconstLocalData(pvec);

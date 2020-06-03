@@ -42,20 +42,25 @@ HydrostaticPressure(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
 
 template<typename EvalT, typename Traits, typename SurfHeightST>
 void HydrostaticPressure<EvalT,Traits,SurfHeightST>::
-postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(s,fm);
   this->utils.setFieldData(z,fm);
 
   this->utils.setFieldData(pressure,fm);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 template<typename EvalT, typename Traits, typename SurfHeightST>
 void HydrostaticPressure<EvalT,Traits,SurfHeightST>::
-evaluateFields(typename Traits::EvalData d)
+evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   double pow3 = 1.0e3;
-  for (std::size_t cell = 0; cell < d.numCells; ++cell)
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t node = 0; node < numNodes; ++node)
       pressure(cell,node) = pow3 * rho_i * g * ( s(cell,node) - z(cell,node,2) );
 }

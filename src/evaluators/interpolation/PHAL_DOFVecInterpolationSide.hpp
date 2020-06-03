@@ -14,6 +14,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "Albany_DataTypes.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL {
 /** \brief Finite Element InterpolationSide Evaluator
@@ -55,6 +56,8 @@ private:
   int numSideNodes;
   int numSideQPs;
   int vecDim;
+
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 // Some shortcut names

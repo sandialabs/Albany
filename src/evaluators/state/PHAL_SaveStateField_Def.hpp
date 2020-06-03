@@ -87,12 +87,15 @@ postRegistrationSetup(typename Traits::SetupData d,
                                 "Error! To save a nodal state, the second tag of the layout MUST be 'Node'.\n");
   }
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 // **********************************************************************
 template<typename Traits>
 void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   if (this->nodalState)
     saveNodeState(workset);
   else if (this->worksetState)

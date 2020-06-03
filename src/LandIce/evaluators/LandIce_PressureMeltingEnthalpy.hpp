@@ -15,6 +15,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "PHAL_Dimension.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace LandIce
 {
@@ -55,6 +56,8 @@ private:
   double T0;    //[K]
   double beta;  //[K Pa^{-1}]
   double Tm; //[K], 273.15
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 
 } // Namespace LandIce

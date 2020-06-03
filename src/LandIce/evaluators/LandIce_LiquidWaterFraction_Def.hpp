@@ -48,17 +48,22 @@ namespace LandIce
     this->utils.setFieldData(enthalpy,fm);
 
     this->utils.setFieldData(phi,fm);
+
+    d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+    if (d.memoizer_active()) memoizer.enable_memoizer();
   }
 
   template<typename EvalT, typename Traits, typename Type>
   void LiquidWaterFraction<EvalT,Traits,Type>::
-  evaluateFields(typename Traits::EvalData d)
+  evaluateFields(typename Traits::EvalData workset)
   {
+    if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
     const double pow6 = 1e6; //[k^{-2}], k =1000
     //  double pi = atan(1.) * 4.;
     ScalarT phiNode;
 
-    for (std::size_t cell = 0; cell < d.numCells; ++cell)
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     {
       for (std::size_t node = 0; node < numNodes; ++node)
       {

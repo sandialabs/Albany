@@ -13,6 +13,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace LandIce
 {
@@ -46,6 +47,7 @@ class Dissipation : public PHX::EvaluatorWithBaseImpl<Traits>,
 		double scyr ;    // [s/yr] (3.1536e7);
 
 		unsigned int numQPs;
+    PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 
 }	// Namespace LandIce

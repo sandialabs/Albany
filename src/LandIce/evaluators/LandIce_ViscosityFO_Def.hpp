@@ -201,7 +201,9 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(coordVec,fm);
   }
   this->utils.setFieldData(homotopyParam, fm);
+
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 //**********************************************************************
@@ -460,6 +462,8 @@ template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   switch (visc_type)
   {
     case CONSTANT:

@@ -15,6 +15,7 @@
 #include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
 #include "Albany_SacadoTypes.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
@@ -89,6 +90,8 @@ private:
   enum FLOWRATETYPE {UNIFORM, TEMPERATUREBASED, FROMFILE, FROMCISM};
   VISCTYPE visc_type;
   FLOWRATETYPE flowRate_type;
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 
 public:
   typedef typename PHX::Device execution_space;

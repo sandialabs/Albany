@@ -81,7 +81,7 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
 template<typename EvalT, typename Traits, typename TemperatureST>
 void Temperature<EvalT,Traits,TemperatureST>::
-postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(meltingTemp,fm);
   this->utils.setFieldData(enthalpyHs,fm);
@@ -92,15 +92,20 @@ postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Trai
   this->utils.setFieldData(correctedTemp,fm);
   this->utils.setFieldData(diffEnth,fm);
   // this->utils.setFieldData(dTdz,fm);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 template<typename EvalT, typename Traits, typename TemperatureST>
 void Temperature<EvalT,Traits,TemperatureST>::
-evaluateFields(typename Traits::EvalData d)
+evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   double pow6 = 1e6; //[k^{-2}], k=1000
 
-  for (std::size_t cell = 0; cell < d.numCells; ++cell)
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
   {
     for (std::size_t node = 0; node < numNodes; ++node)
     {
@@ -116,15 +121,15 @@ evaluateFields(typename Traits::EvalData d)
   }
 
 
-  // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = d.disc->getWsElNodeID()[d.wsIndex];
-  // const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *d.disc->getLayeredMeshNumbering();
+  // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+  // const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   // const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
   // int numLayers = layeredMeshNumbering.numLayers;
   // LO baseId, ilayer;
 
-  // if (d.sideSets->find(sideName) != d.sideSets->end())
+  // if (workset.sideSets->find(sideName) != workset.sideSets->end())
   // {
-  //   const std::vector<Albany::SideStruct>& sideSet = d.sideSets->at(sideName);
+  //   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideName);
   //   for (auto const& it_side : sideSet)
   //   {
   //     // Get the local data of side and cell
@@ -133,7 +138,7 @@ evaluateFields(typename Traits::EvalData d)
   //     const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
   //     for (int inode=0; inode<numSideNodes; ++inode) {
   //       int cnode0=sideNodes[side][inode];
-  //       int lnodeId = d.disc->getOverlapNodeMapT()->getLocalElement(nodeID[cnode0]);
+  //       int lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[cnode0]);
   //       layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
   //       LO lnodeId0 = layeredMeshNumbering.getId(baseId,  ilayer);
   //       LO lnodeId1 = layeredMeshNumbering.getId(baseId,  ilayer+1);
@@ -142,7 +147,7 @@ evaluateFields(typename Traits::EvalData d)
   //         exit(1);
   //       }
   //       for (std::size_t cnode1 = 0; cnode1 < numNodes; ++cnode1) {
-  //         if(lnodeId1 == d.disc->getOverlapNodeMapT()->getLocalElement(nodeID[cnode1])) {
+  //         if(lnodeId1 == workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[cnode1])) {
   //           dTdz(cell,side, inode) = (temperature(cell, cnode1) - temperature(cell, cnode0))/(thickness(cell,cnode0)*layers_ratio[ilayer]);
   //           break;
   //         }

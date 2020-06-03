@@ -14,6 +14,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL {
 /** \brief SaveStateField
@@ -69,6 +70,8 @@ private:
 
   bool nodalState;
   bool worksetState;
+
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 } // Namespace PHAL

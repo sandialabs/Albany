@@ -45,15 +45,20 @@ PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Alba
 template<typename EvalT, typename Traits, typename PressST>
 void PressureMeltingEnthalpy<EvalT,Traits,PressST>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
-{}
+{
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
+}
 
 template<typename EvalT, typename Traits, typename PressST>
 void PressureMeltingEnthalpy<EvalT,Traits,PressST>::
-evaluateFields(typename Traits::EvalData d)
+evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   const double powm6 = 1e-6; // [k^2], k=1000
 
-  for (std::size_t cell = 0; cell < d.numCells; ++cell)
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t node = 0; node < numNodes; ++node) {
       meltingTemp(cell,node) = - beta * pressure(cell,node) + Tm;
       enthalpyHs(cell,node) = rho_i * c_i * ( meltingTemp(cell,node) - T0 ) * powm6;

@@ -46,6 +46,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(val_qp,fm);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 //**********************************************************************
 //Kokkos kernel for Residual
@@ -93,6 +94,7 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void DOFVecInterpolationBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {

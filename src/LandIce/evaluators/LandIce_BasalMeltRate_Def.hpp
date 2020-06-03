@@ -101,15 +101,19 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
 template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
 void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
-postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
-{}
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+{
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
+}
 
 template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
 void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
-evaluateFields(typename Traits::EvalData d)
+evaluateFields(typename Traits::EvalData workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (d.sideSets==Teuchos::null, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::runtime_error,
                               "Side sets defined in input file but not properly specified on the mesh.\n");
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
   int vecDimFO = 2;
   double pi = atan(1.) * 4.;
   ScalarT hom = homotopy(0);
@@ -118,9 +122,9 @@ evaluateFields(typename Traits::EvalData d)
 
   const int dim = nodal ? numSideNodes : numSideQPs;
 
-  if (d.sideSets->find(basalSideName) != d.sideSets->end())
+  if (workset.sideSets->find(basalSideName) != workset.sideSets->end())
   {
-    const std::vector<Albany::SideStruct>& sideSet = d.sideSets->at(basalSideName);
+    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
     for (auto const& it_side : sideSet)
     {
       // Get the local data of side and cell

@@ -16,6 +16,7 @@
 #include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
 #include "Albany_SacadoTypes.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace LandIce
 {
@@ -57,6 +58,8 @@ private:
 
   double rho_i;  // [kg m^{-3}]
   double g;      // [m s^{-2}]
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 
 } // namespace LandIce
