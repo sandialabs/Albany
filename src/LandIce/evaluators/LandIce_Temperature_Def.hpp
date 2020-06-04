@@ -80,6 +80,23 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 }
 
 template<typename EvalT, typename Traits, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void Temperature<EvalT,Traits,TemperatureST>::
+operator() (const int &node, const int &cell) const{
+
+  if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
+    temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
+  else
+    temperature(cell,node) = meltingTemp(cell,node);
+
+  correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
+
+  diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
+
+}
+
+
+template<typename EvalT, typename Traits, typename TemperatureST>
 void Temperature<EvalT,Traits,TemperatureST>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
@@ -103,22 +120,24 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  double pow6 = 1e6; //[k^{-2}], k=1000
+  // double pow6 = 1e6; //[k^{-2}], k=1000
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-  {
-    for (std::size_t node = 0; node < numNodes; ++node)
-    {
-      if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-        temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
-      else
-        temperature(cell,node) = meltingTemp(cell,node);
+  // for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+  // {
+  //   for (std::size_t node = 0; node < numNodes; ++node)
+  //   {
+  //     if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
+  //       temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
+  //     else
+  //       temperature(cell,node) = meltingTemp(cell,node);
 
-      correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
+  //     correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
 
-      diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
-    }
-  }
+  //     diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
+  //   }
+  // }
+
+  Kokkos::parallel_for(TEMPERATURE_Policy({0,0}, {numNodes,workset.numCells}), *this);
 
 
   // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];

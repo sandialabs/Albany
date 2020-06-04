@@ -41,6 +41,15 @@ namespace LandIce
   }
 
   template<typename EvalT, typename Traits, typename Type>
+  KOKKOS_INLINE_FUNCTION
+  void LiquidWaterFraction<EvalT,Traits,Type>::
+  operator() (const int& node, const int& cell) const{
+
+      phi(cell,node) =  ( enthalpy(cell,node) < enthalpyHs(cell,node) ) ? ScalarT(0) : pow6 * (enthalpy(cell,node) - enthalpyHs(cell,node)) / (rho_w * L);
+
+  }
+
+  template<typename EvalT, typename Traits, typename Type>
   void LiquidWaterFraction<EvalT,Traits,Type>::
   postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
   {
@@ -59,17 +68,18 @@ namespace LandIce
   {
     if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-    const double pow6 = 1e6; //[k^{-2}], k =1000
+    // const double pow6 = 1e6; //[k^{-2}], k =1000
     //  double pi = atan(1.) * 4.;
-    ScalarT phiNode;
+    //  ScalarT phiNode;
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-    {
-      for (std::size_t node = 0; node < numNodes; ++node)
-      {
-        phi(cell,node) =  ( enthalpy(cell,node) < enthalpyHs(cell,node) ) ? ScalarT(0) : pow6 * (enthalpy(cell,node) - enthalpyHs(cell,node)) / (rho_w * L);
-      }
-    }
+    Kokkos::parallel_for(Phi_Policy({0,0}, {numNodes,workset.numCells}), *this);
+    // for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+    // {
+    //   for (std::size_t node = 0; node < numNodes; ++node)
+    //   {
+    //     phi(cell,node) =  ( enthalpy(cell,node) < enthalpyHs(cell,node) ) ? ScalarT(0) : pow6 * (enthalpy(cell,node) - enthalpyHs(cell,node)) / (rho_w * L);
+    //   }
+    // }
   }
 
 

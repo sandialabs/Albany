@@ -91,7 +91,38 @@ private:
   double flux_reg_alpha;
   double flux_reg_beta;
 
+  const double powm3 = 1e-3;  //[k], k=1000
+  const double powm6 = 1e-6;  //[k^2], k=1000
+  const double pow3 = 1e3;  //[k^{-1}], k=1000
+
+  ScalarT flux_reg_coeff;
   ScalarT printedRegCoeff;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct Upwind_Stabilization_Tag{};
+  struct SU_Stabilization_Tag{};
+  struct Other_Stabilization_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,Upwind_Stabilization_Tag> Upwind_Stabilization_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,SU_Stabilization_Tag> SU_Stabilization_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,Other_Stabilization_Tag> Other_Stabilization_Policy;
+
+  // KOKKOS_INLINE_FUNCTION
+  // void stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, ScalarT& vmax_z, 
+  //   MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z, ScalarT& wSU);
+  // KOKKOS_INLINE_FUNCTION
+  // void evaluateResidNode(int cell, int node);
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Upwind_Stabilization_Tag& tag, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const SU_Stabilization_Tag& tag, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Other_Stabilization_Tag& tag, const int& cell) const;
+
 };
 
 } // namespace LandIce
