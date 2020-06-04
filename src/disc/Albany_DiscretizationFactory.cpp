@@ -27,53 +27,49 @@ Albany::DiscretizationFactory::DiscretizationFactory(
         const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
         const Teuchos::RCP<const Teuchos_Comm>& commT_,
         const bool explicit_scheme_) :
-commT(commT_),
-explicit_scheme(explicit_scheme_) {
-
-    discParams = Teuchos::sublist(topLevelParams, "Discretization", true);
-
-    if (topLevelParams->isSublist("Piro"))
-
-        piroParams = Teuchos::sublist(topLevelParams, "Piro", true);
-
-    if (topLevelParams->isSublist("Problem")) {
-
-        Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", true);
-
-        if (problemParams->isSublist("Adaptation"))
-
-            adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
-    }
+          commT(commT_),
+          explicit_scheme(explicit_scheme_) 
+{
+  discParams = Teuchos::sublist(topLevelParams, "Discretization", true);
+  if (topLevelParams->isSublist("Piro"))
+    piroParams = Teuchos::sublist(topLevelParams, "Piro", true);
+  if (topLevelParams->isSublist("Problem")) {
+    Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", true);
+      if (problemParams->isSublist("Adaptation"))
+        adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
+    num_params = Albany::CalculateNumberParams(problemParams); 
+  }
 }
 
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
 Albany::DiscretizationFactory::createMeshSpecs() {
     // First, create the mesh struct
-    meshStruct = createMeshStruct(discParams, adaptParams, commT);
+    meshStruct = createMeshStruct(discParams, adaptParams, commT, num_params);
     return meshStruct->getMeshSpecs();
 }
 
 Teuchos::RCP<Albany::AbstractMeshStruct>
 Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> disc_params,
         Teuchos::RCP<Teuchos::ParameterList> adapt_params,
-        Teuchos::RCP<const Teuchos_Comm> comm)
+        Teuchos::RCP<const Teuchos_Comm> comm,
+	const int numParams)
 {
     std::string& method = disc_params->get("Method", "STK1D");
     if (method == "STK1D") {
-        return Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(disc_params, adapt_params, comm));
+        return Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(disc_params, adapt_params, comm, numParams));
     } else if (method == "STK0D") {
-        return Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(disc_params, adapt_params, comm));
+        return Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(disc_params, adapt_params, comm, numParams));
     } else if (method == "STK2D") {
-        return Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(disc_params, adapt_params, comm));
+        return Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(disc_params, adapt_params, comm, numParams));
     } else if (method == "STK3D") {
-        return Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(disc_params, adapt_params, comm));
+        return Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(disc_params, adapt_params, comm, numParams));
     } else if (method == "STK3DPoint") {
-        return Teuchos::rcp(new Albany::STK3DPointStruct(disc_params, comm));
+        return Teuchos::rcp(new Albany::STK3DPointStruct(disc_params, comm, numParams));
     } else if (method == "Ioss" || method == "Exodus" || method == "Pamgen") {
 
 #ifdef ALBANY_SEACAS
-        return Teuchos::rcp(new Albany::IossSTKMeshStruct(disc_params, adapt_params, comm));
+        return Teuchos::rcp(new Albany::IossSTKMeshStruct(disc_params, adapt_params, comm, numParams));
 #else
         TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" || method == "Pamgen",
                 Teuchos::Exceptions::InvalidParameter,
@@ -82,14 +78,14 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
 #endif // ALBANY_SEACAS
     }
     else if (method == "Ascii") {
-        return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, comm));
+        return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, comm, numParams));
     } else if (method == "Ascii2D") {
-        return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
+        return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm, numParams));
 #ifdef ALBANY_SEACAS  // Fails to compile without SEACAS
     } else if (method == "Hacky Ascii2D") {
         //FixME very hacky! needed for printing 2d mesh
         Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
-        meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
+        meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm, numParams));
         Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
         Albany::AbstractFieldContainer::FieldContainerRequirements req;
         int neq = 2;
@@ -103,7 +99,7 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
         mesh_data->process_output_request(idx, 0.0);
 #endif // ALBANY_SEACAS
     } else if (method == "Gmsh") {
-        return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, comm));
+        return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, comm, numParams));
     }
     else if (method == "Extruded") {
         Teuchos::RCP<Albany::AbstractMeshStruct> basalMesh;
@@ -126,8 +122,8 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
             basal_params->set("Exodus Input File Name", disc_params->get("Exodus Input File Name", "basalmesh.exo"));
             basal_params->set("Workset Size", basal_ws_size);
         }
-        basalMesh = createMeshStruct(basal_params, Teuchos::null, comm);
-        return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, comm, basalMesh));
+        basalMesh = createMeshStruct(basal_params, Teuchos::null, comm, numParams);
+        return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, comm, basalMesh, numParams));
     }
     else if (method == "Cubit") {
         TEUCHOS_TEST_FOR_EXCEPTION(method == "Cubit",
@@ -149,8 +145,8 @@ Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
         const Teuchos::RCP<Albany::StateInfoStruct>& sis,
         const AbstractFieldContainer::FieldContainerRequirements& req,
-        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
-
+        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) 
+{
     return createDiscretization(neq, empty_side_set_equations, sis, empty_side_set_sis, req, empty_side_set_req, rigidBodyModes);
 }
 
@@ -161,12 +157,14 @@ Albany::DiscretizationFactory::createDiscretization(
         const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
         const AbstractFieldContainer::FieldContainerRequirements& req,
         const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
-        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
+        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) 
+{
     TEUCHOS_TEST_FOR_EXCEPTION(meshStruct == Teuchos::null,
             std::logic_error,
             "meshStruct accessed, but it has not been constructed" << std::endl);
 
-    setupInternalMeshStruct(neq, sis, side_set_sis, req, side_set_req);
+    setupInternalMeshStruct(neq, sis, side_set_sis, req, 
+                            side_set_req);
     Teuchos::RCP<Albany::AbstractDiscretization> result =
             createDiscretizationFromInternalMeshStruct(sideSetEquations, rigidBodyModes);
 
@@ -184,7 +182,8 @@ Albany::DiscretizationFactory::setupInternalMeshStruct(
         unsigned int neq,
         const Teuchos::RCP<Albany::StateInfoStruct>& sis,
         const AbstractFieldContainer::FieldContainerRequirements& req) {
-    setupInternalMeshStruct(neq, sis, empty_side_set_sis, req, empty_side_set_req);
+    setupInternalMeshStruct(neq, sis, empty_side_set_sis, req, 
+                            empty_side_set_req);
 }
 
 void
@@ -193,9 +192,11 @@ Albany::DiscretizationFactory::setupInternalMeshStruct(
         const Teuchos::RCP<Albany::StateInfoStruct>& sis,
         const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
         const AbstractFieldContainer::FieldContainerRequirements& req,
-        const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) {
+        const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) 
+{
     meshStruct->setFieldAndBulkData(commT, discParams, neq, req, sis,
-            meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, side_set_req);
+            meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, 
+            side_set_req);
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>

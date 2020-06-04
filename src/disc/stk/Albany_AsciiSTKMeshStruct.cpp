@@ -41,8 +41,9 @@ namespace Albany {
 //Constructor for meshes read from ASCII file
 AsciiSTKMeshStruct::
 AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                   const Teuchos::RCP<const Teuchos_Comm>& comm) :
-  GenericSTKMeshStruct(params,Teuchos::null,3),
+                   const Teuchos::RCP<const Teuchos_Comm>& comm,
+		   const int numParams) :
+  GenericSTKMeshStruct(params, Teuchos::null, 3, numParams),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
   contigIDs(false),

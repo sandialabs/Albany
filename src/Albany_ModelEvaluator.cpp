@@ -668,7 +668,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       {
         Teuchos::TimeMonitor timer(*Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"));
         const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
-        observer.observeSolution(iter, *x, Teuchos::null, Teuchos::null);
+        observer.observeSolution(iter, *x, Teuchos::null, Teuchos::null, Teuchos::null);
         iteration = iter;
       }
     }

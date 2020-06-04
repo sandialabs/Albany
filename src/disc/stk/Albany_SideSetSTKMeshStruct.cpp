@@ -26,8 +26,9 @@ namespace Albany
 
 SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
                                             const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                            const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  GenericSTKMeshStruct(params, Teuchos::null)
+                                            const Teuchos::RCP<const Teuchos_Comm>& commT,
+					    const int numParams) :
+  GenericSTKMeshStruct(params, Teuchos::null, -1, numParams)
 {
 
   params->validateParameters(*getValidDiscretizationParameters(),0);

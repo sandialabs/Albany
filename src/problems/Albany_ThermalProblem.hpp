@@ -18,7 +18,6 @@
 
 #include "PHAL_ConvertFieldType.hpp"
 #include "Albany_MaterialDatabase.hpp"
-
 namespace Albany {
 
   /*!
@@ -115,8 +114,8 @@ namespace Albany {
 #include "Albany_ResponseUtilities.hpp"
 //#include "PHAL_Neumann.hpp"
 #include "PHAL_ThermalResid.hpp"
-#include "PHAL_ThermalSource.hpp"
-
+#include "PHAL_SharedParameter.hpp"
+#include "Albany_ParamEnum.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -153,11 +152,24 @@ Albany::ThermalProblem::constructEvaluators(
   int const numQPtsCell = cellCubature->getNumPoints();
   int const numVertices = cellType->getNodeCount();
 
-  // Problem is steady or transient
+  // Get the solution method type
+  SolutionMethodType SolutionType = getSolutionMethod();
+
   ALBANY_PANIC(
-      number_of_time_deriv != 1,
-      "Albany_ThermalProblem must be defined as transient "
-      "calculation.");
+      SolutionType == SolutionMethodType::Unknown,
+      "Solution Method must be Steady, Transient, "
+      "Continuation, or Eigensolve");
+  
+  if (SolutionType == SolutionMethodType::Transient) { // Problem is transient
+    ALBANY_PANIC(
+        number_of_time_deriv != 1,
+        "You are using a transient solution method in Albany::ThermalProblem but number of time derivatives != 1!"); 
+  }
+  else { //Problem is steady
+    ALBANY_PANIC(
+        number_of_time_deriv > 0,
+        "You are using a steady solution method in Albany::ThermalProblem but number of time derivatives > 0!");
+  } 
 
   *out << "Field Dimensions: Workset=" << worksetSize
        << ", Vertices= " << numVertices << ", Nodes= " << numNodes
@@ -205,24 +217,35 @@ Albany::ThermalProblem::constructEvaluators(
         evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
-  {  // Temperature Source
-    RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
-    p->set<RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
-    p->set<RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
-    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
-    
-    p->set<Teuchos::Array<double>>("Thermal Conductivity", kappa);
-    p->set<double>("Heat Capacity", C);
-    p->set<double>("Density", rho);
-    p->set<std::string>("Thermal Source", thermal_source); 
-    
-    // Output
-    p->set<string>("Source Name", "Temperature Source");
-    p->set<RCP<DataLayout>>("Node Scalar Data Layout", dl->node_scalar);
-
-    ev = rcp(new PHAL::ThermalSource<EvalT, AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+  {  //Shared parameter for sensitivity analysis: kappa_x
+    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_x"));
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+    const std::string param_name = "kappa_x Parameter";
+    p->set<std::string>("Parameter Name", param_name);
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>> ptr_kappa_x;
+    ptr_kappa_x = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>(*p,dl));
+    ptr_kappa_x->setNominalValue(params->sublist("Parameters"), kappa[0]);
+    fm0.template registerEvaluator<EvalT>(ptr_kappa_x);
+  }
+  if (numDim > 1) {  //Shared parameter for sensitivity analysis: kappa_y
+    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_y"));
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+    const std::string param_name = "kappa_y Parameter";
+    p->set<std::string>("Parameter Name", param_name);
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>> ptr_kappa_y;
+    ptr_kappa_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>(*p,dl));
+    ptr_kappa_y->setNominalValue(params->sublist("Parameters"), kappa[1]); 
+    fm0.template registerEvaluator<EvalT>(ptr_kappa_y);
+  }
+  if (numDim > 2) {  //Shared parameter for sensitivity analysis: kappa_z
+    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_z"));
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+    const std::string param_name = "kappa_z Parameter";
+    p->set<std::string>("Parameter Name", param_name);
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>> ptr_kappa_z;
+    ptr_kappa_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>(*p,dl));
+    ptr_kappa_z->setNominalValue(params->sublist("Parameters"), kappa[2]); 
+    fm0.template registerEvaluator<EvalT>(ptr_kappa_z);
   }
 
   {  // Temperature Resid
@@ -234,21 +257,30 @@ Albany::ThermalProblem::constructEvaluators(
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<string>("Source Name", "Temperature Source");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
     p->set<RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
     p->set<RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
     p->set<RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
-
-    p->set<Teuchos::Array<double>>("Thermal Conductivity", kappa);
+    p->set<RCP<DataLayout>>("Node Scalar Data Layout", dl->node_scalar);
+    p->set<std::string>("Thermal Conductivity: kappa_x","kappa_x Parameter");
+    if (numDim > 1) p->set<std::string>("Thermal Conductivity: kappa_y","kappa_y Parameter");
+    if (numDim > 2) p->set<std::string>("Thermal Conductivity: kappa_z","kappa_z Parameter");
+    if (SolutionType != SolutionMethodType::Transient) {
+      p->set<bool>("Disable Transient", true);
+    }
+    else {
+      p->set<bool>("Disable Transient", false);
+    }
     p->set<double>("Heat Capacity", C);
     p->set<double>("Density", rho);
+    p->set<std::string>("Thermal Source", thermal_source); 
 
     // Output
     p->set<string>("Residual Name", "Temperature Residual");
-    p->set<RCP<DataLayout>>("Node Scalar Data Layout", dl->node_scalar);
 
-    ev = rcp(new PHAL::ThermalResid<EvalT, AlbanyTraits>(*p));
+    ev = rcp(new PHAL::ThermalResid<EvalT, AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

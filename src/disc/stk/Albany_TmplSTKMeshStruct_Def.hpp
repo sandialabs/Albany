@@ -35,14 +35,14 @@ template<unsigned Dim, class traits>
 Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
-                  const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  GenericSTKMeshStruct(params, adaptParams_, traits_type::size),
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+		  const int numParams) :
+  GenericSTKMeshStruct(params, adaptParams_, traits_type::size, numParams),
   periodic_x(params->get("Periodic_x BC", false)),
   periodic_y(params->get("Periodic_y BC", false)),
   periodic_z(params->get("Periodic_z BC", false)),
   triangles(false)
 {
-
 /*
   There are two use cases of interest here.
 
@@ -684,7 +684,6 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
                   const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /*side_set_sis*/,
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
-
   SetupFieldData(commT, neq_, req, sis, worksetSize);
 
   metaData->commit();

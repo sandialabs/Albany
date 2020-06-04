@@ -11,6 +11,8 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Sacado_ParameterAccessor.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace PHAL {
 
@@ -22,11 +24,12 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class ThermalResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>  {
+		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
-  ThermalResid(Teuchos::ParameterList const& p);
+  ThermalResid(Teuchos::ParameterList const& p,
+                                const Teuchos::RCP<Albany::Layouts>& dl); 
 
   void
   postRegistrationSetup(
@@ -41,20 +44,29 @@ private:
   typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
+  ScalarT value;  
+  
   // Input:
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint>      wBF;
   PHX::MDField<ScalarT const, Cell, QuadPoint>                Tdot;
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
   PHX::MDField<ScalarT const, Cell, QuadPoint, Dim>           TGrad;
-  Teuchos::Array<double> kappa;  // Thermal Conductivity array
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>       coordVec;
   double                 C;      // Heat Capacity
   double                 rho;    // Density
-  PHX::MDField<ScalarT, Cell, QuadPoint> Source;
+  bool                   disable_transient; //Boolean to disable transient terms 
+  // Thermal conductivity components
+  PHX::MDField<const ScalarT> kappa_x;
+  PHX::MDField<const ScalarT> kappa_y;
+  PHX::MDField<const ScalarT> kappa_z;
 
   // Output:
+  PHX::MDField<ScalarT, Cell, QuadPoint> Source;
   PHX::MDField<ScalarT, Cell, Node> TResidual;
 
   unsigned int numQPs, numDims, numNodes, worksetSize;
+  enum FTYPE {NONE, ONEDCOST, TWODCOSTEXPT};
+  FTYPE force_type;
 };
 }
 

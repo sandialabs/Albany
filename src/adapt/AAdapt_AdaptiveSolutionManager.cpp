@@ -10,6 +10,7 @@
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_ModelEvaluator.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "Albany_Utils.hpp" 
 
 #include "Thyra_ModelEvaluatorDelegatorBase.hpp"
 
@@ -22,7 +23,7 @@ AdaptiveSolutionManager::AdaptiveSolutionManager(
     Teuchos::RCP<Thyra_Vector const> const&     initial_guess,
     Teuchos::RCP<ParamLib> const&               param_lib,
     Teuchos::RCP<Albany::AbstractDiscretization>const & disc,
-    Teuchos::RCP<Teuchos_Comm const> const&     comm)
+    Teuchos::RCP<Teuchos_Comm const> const&     comm) 
     : num_time_deriv(appParams->sublist("Discretization")
                          .get<int>("Number Of Time Derivatives")),
       appParams_(appParams),
@@ -34,7 +35,7 @@ AdaptiveSolutionManager::AdaptiveSolutionManager(
   // Create problem PL
   Teuchos::RCP<Teuchos::ParameterList> problemParams =
       Teuchos::sublist(appParams_, "Problem", true);
-
+  num_params_ = Albany::CalculateNumberParams(problemParams);
   // Note that piroParams_ is a member of Thyra_AdaptiveSolutionManager
   piroParams_ = Teuchos::sublist(appParams_, "Piro", true);
 
@@ -221,6 +222,7 @@ AdaptiveSolutionManager::resizeMeshDataArrays(
   auto overlapped_vs = disc->getOverlapVectorSpace();
 
   overlapped_soln = Thyra::createMembers(overlapped_vs, num_time_deriv + 1);
+  overlapped_soln_dxdp = Thyra::createMembers(overlapped_vs, num_params_);
 
   // TODO: ditch the overlapped_*T and keep only overlapped_*.
   //       You need to figure out how to pass the graph in a Tpetra-free way
@@ -271,18 +273,39 @@ AdaptiveSolutionManager::updateAndReturnOverlapSolutionMV(
   return overlapped_soln;
 }
 
+Teuchos::RCP<Thyra_MultiVector>
+AdaptiveSolutionManager::updateAndReturnOverlapSolutionDxDp(
+    const Thyra_MultiVector& solution_dxdp /* not overlapped */)
+{
+  cas_manager->scatter(solution_dxdp, *overlapped_soln_dxdp, Albany::CombineMode::INSERT);
+  return overlapped_soln_dxdp;
+}
+
 void
 AdaptiveSolutionManager::scatterX(
-    const Thyra_MultiVector& solution) /* not overlapped */
+    const Thyra_MultiVector& solution /* not overlapped */, 
+    const Teuchos::Ptr<const Thyra_MultiVector> solution_dxdp /* not overlapped */)
 {
   cas_manager->scatter(solution, *overlapped_soln, Albany::CombineMode::INSERT);
+  if (solution_dxdp != Teuchos::null) {
+    const int np = solution_dxdp->domain()->dim();  
+    if (np != num_params_) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "AdaptiveSolutionManager::scatterX error: size dxdp (" << 
+          np << ") != num_params (" << num_params_ << ").\n"); 
+    } 
+    cas_manager->scatter(*solution_dxdp, *overlapped_soln_dxdp, Albany::CombineMode::INSERT);
+  }
 }
 
 void
 AdaptiveSolutionManager::scatterX(
     const Thyra_Vector&                    x,
     const Teuchos::Ptr<const Thyra_Vector> x_dot,
-    const Teuchos::Ptr<const Thyra_Vector> x_dotdot)
+    const Teuchos::Ptr<const Thyra_Vector> x_dotdot, 
+    const Teuchos::Ptr<const Thyra_MultiVector> dxdp)
 {
   cas_manager->scatter(
       x, *overlapped_soln->col(0), Albany::CombineMode::INSERT);
@@ -305,6 +328,18 @@ AdaptiveSolutionManager::scatterX(
         "vectors are available");
     cas_manager->scatter(
         *x_dotdot, *overlapped_soln->col(2), Albany::CombineMode::INSERT);
+  }
+  if (!dxdp.is_null()) {
+    const int np = dxdp->domain()->dim(); 
+    if (np != num_params_) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "AdaptiveSolutionManager::scatterX error: size dxdp (" << 
+          np << ") != num_params (" << num_params_ << ").\n"); 
+    } 
+    cas_manager->scatter(
+        *dxdp, *overlapped_soln_dxdp, Albany::CombineMode::INSERT);
   }
 }
 

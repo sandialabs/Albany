@@ -25,7 +25,8 @@ namespace Albany {
 
     IossSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
                        const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
-                       const Teuchos::RCP<const Teuchos_Comm>& commT);
+                       const Teuchos::RCP<const Teuchos_Comm>& commT,
+		       const int numParams);
 
     ~IossSTKMeshStruct();
 

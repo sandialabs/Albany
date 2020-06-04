@@ -33,8 +33,9 @@
 #include "Albany_Utils.hpp"
 
 Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                        const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  GenericSTKMeshStruct (params, Teuchos::null, 2),
+                                        const Teuchos::RCP<const Teuchos_Comm>& commT,
+					const int numParams) :
+  GenericSTKMeshStruct (params, Teuchos::null, 2, numParams),
   periodic             (false)
 {
   NumElemNodes = NumNodes = NumElems = NumBdEdges = 0;

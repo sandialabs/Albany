@@ -2,9 +2,9 @@ ALBANY:
   Debug Output: 
     Write Solution to MatrixMarket: 0
   Problem: 
-    Name: Thermal With Sensitivities 2D
+    Name: Thermal 2D
     Solution Method: Transient
-    Compute Sensitivities: false
+    Compute Sensitivities: true
     Dirichlet BCs: 
       SDBC on NS NodeSet0 for DOF T: 0.0
       SDBC on NS NodeSet1 for DOF T: 0.0
@@ -20,10 +20,12 @@ ALBANY:
     Response Functions: 
       Number: 1
       Response 0: Solution Average
-    Parameters: 
-      Number: 2
-      Parameter 0: 'kappa_x'
-      Parameter 1: 'kappa_y'
+    Parameters:
+      Number of Parameter Vectors: 1
+      Parameter Vector 0:
+        Number: 2
+        Parameter 0: 'kappa_x Parameter'
+        Parameter 1: 'kappa_y Parameter'
   Discretization: 
     1D Elements: 10
     2D Elements: 10
@@ -32,17 +34,18 @@ ALBANY:
     Workset Size: -1
     Method: STK2D
     Exodus Output File Name: thermal2D_with_source_out.exo
+    Exodus Write Interval: 1
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [-4.391538524980e+01]
-    #Sensitivity Comparisons 0: 
-    #  Number of Sensitivity Comparisons: 2
-    #  Sensitivity Test Values 0: [0.0] 
-    #  Sensitivity Test Values 1: [5.62650000000000025e-02]
+    Sensitivity Comparisons 0: 
+      Number of Sensitivity Comparisons: 2
+      Sensitivity Test Values 0: [2.103917477841e+02] 
+      Sensitivity Test Values 1: [-2.765211450559e+02]
     Relative Tolerance: 1.00000000000000002e-03
     Absolute Tolerance: 1.00000000000000008e-05
   Piro: 
-    #Sensitivity Method: Forward
+    Sensitivity Method: Forward
     Tempus: 
       Integrator Name: Tempus Integrator
       Tempus Integrator: 

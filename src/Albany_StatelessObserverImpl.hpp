@@ -59,18 +59,20 @@ public:
   virtual void observeSolution (
     double stamp,
     const Thyra_Vector& nonOverlappedSolution,
+    const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,
     const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
     const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot);
-
 
   virtual void observeSolution (
     double stamp,
     const Thyra_Vector& nonOverlappedSolution,
+    const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,
     const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot);
 
   virtual void observeSolution (
     double stamp,
-    const Thyra_MultiVector& nonOverlappedSolution);
+    const Thyra_MultiVector& nonOverlappedSolution,
+    const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp);
 
 protected:
   Teuchos::RCP<Application> app_;

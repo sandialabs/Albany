@@ -1,75 +1,137 @@
-//*****************************************************************//
-//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
-//    This Software is released under the BSD license detailed     //
-//    in the file "license.txt" in the top-level Albany directory  //
-//*****************************************************************//
-
 #ifndef PHAL_SHARED_PARAMETER_HPP
-#define PHAL_SHARED_PARAMETER_HPP
+#define PHAL_SHARED_PARAMETER_HPP 1
 
-#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
-#include "PHAL_Dimension.hpp"
-
-#include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
-#include "Teuchos_Array.hpp"
 
+#include "Albany_Utils.hpp"
 
-namespace PHAL {
-/** \brief SharedParameter
+//IKT 6/3/2020 TODO: implement support for vector parameters, which is not available currently.
 
-*/
+namespace PHAL
+{
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
 class SharedParameter : public PHX::EvaluatorWithBaseImpl<Traits>,
                         public PHX::EvaluatorDerived<EvalT, Traits>,
                         public Sacado::ParameterAccessor<EvalT, SPL_Traits>
 {
 public:
-  typedef typename EvalT::ScalarT ScalarT;
 
-  SharedParameter(const Teuchos::ParameterList& p);
+  typedef typename EvalT::ScalarT   ScalarT;
+  typedef ParamNameEnum             EnumType;
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+  SharedParameter (const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
+  {
+    param_name   = p.get<std::string>("Parameter Name");
+    param_as_field = PHX::MDField<ScalarT,Dim>(param_name,dl->shared_param);
 
-  void evaluateFields(typename Traits::EvalData d);
+    // Never actually evaluated, but creates the evaluation tag
+    this->addEvaluatedField(param_as_field);
 
-  ScalarT& getValue(const std::string &n);
+    // Sacado-ized parameter
+    Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib>>("Parameter Library");
+    this->registerSacadoParameter(param_name, paramLib);
+    this->setName("Shared Parameter " + param_name + PHX::print<EvalT>());
+  }
 
-private:
-  std::string paramName;
-  ScalarT     paramValue;
-  PHX::MDField<ScalarT,Dim> paramAsField;
+  void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+  {
+    this->utils.setFieldData(param_as_field,fm);
+    d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
+  }
+
+  static void setNominalValue (const Teuchos::ParameterList& p, double default_value);
+
+  static ScalarT getValue ()
+  {
+    return value;
+  }
+
+  ScalarT& getValue(const std::string &n)
+  {
+    if (n==param_name)
+      return value;
+
+    return dummy;
+  }
+
+  void evaluateFields(typename Traits::EvalData /*d*/)
+  {
+    param_as_field(0) = value;
+  }
+
+protected:
+
+  static ScalarT              value;
+  static ScalarT              dummy;
+  static std::string          param_name;
+
+  PHX::MDField<ScalarT,Dim>   param_as_field;
 };
 
-template<typename EvalT, typename Traits>
-class SharedParameterVec : public PHX::EvaluatorWithBaseImpl<Traits>,
-                           public PHX::EvaluatorDerived<EvalT, Traits>,
-                           public Sacado::ParameterAccessor<EvalT, SPL_Traits>
+template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
+void SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::
+setNominalValue (const Teuchos::ParameterList& p, double default_value)
 {
-public:
-  typedef typename EvalT::ScalarT ScalarT;
+  // First we scan the Parameter list to see if this parameter is listed in it,
+  // in which case we use the nominal value.
+  bool found = false;
+  if (p.isParameter("Number of Parameter Vectors"))
+  {
+    int n = p.get<int>("Number of Parameter Vectors");
+    for (int i=0; (found==false) && i<n; ++i)
+    {
+      const Teuchos::ParameterList& pvi = p.sublist(Albany::strint("Parameter Vector",i));
+      if (!pvi.isParameter("Nominal Values"))
+        continue; // Pointless to check the parameter names, since we don't have nominal values
 
-  SharedParameterVec(const Teuchos::ParameterList& p);
+      int m = pvi.get<int>("Number");
+      for (int j=0; j<m; ++j)
+      {
+        if (pvi.get<std::string>(Albany::strint("Parameter",j))==param_name)
+        {
+          Teuchos::Array<double> nom_vals = pvi.get<Teuchos::Array<double>>("Nominal Values");
+          value = nom_vals[j];
+          found = true;
+          break;
+        }
+      }
+    }
+  }
+  else if (p.isParameter("Number") && !p.isParameter("Nominal Values"))
+  {
+    int m = p.get<int>("Number");
+    for (int j=0; j<m; ++j)
+    {
+      if (p.get<std::string>(Albany::strint("Parameter",j))==param_name)
+      {
+        Teuchos::Array<double> nom_vals = p.get<Teuchos::Array<double>>("Nominal Values");
+        value = nom_vals[j];
+        found = true;
+        break;
+      }
+    }
+  }
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+  if (!found)
+  {
+    value = default_value;
+  }
 
-  void evaluateFields(typename Traits::EvalData d);
+  dummy = 0;
+}
 
-  ScalarT& getValue(const std::string &n);
+template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
+typename EvalT::ScalarT SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::value;
 
-private:
-  int                           numParams;
-  Teuchos::Array<std::string>   paramNames;
-  Teuchos::Array<ScalarT>       paramValues;
-  PHX::MDField<ScalarT,Dim>     paramAsField;
-};
+template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
+typename EvalT::ScalarT SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::dummy;
 
-} // namespace PHAL
+template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
+std::string SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::param_name;
+
+} // Namespace PHAL
 
 #endif // PHAL_SHARED_PARAMETER_HPP

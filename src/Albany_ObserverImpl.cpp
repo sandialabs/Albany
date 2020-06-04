@@ -9,6 +9,7 @@
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 
+
 namespace Albany {
 
 ObserverImpl::
@@ -19,13 +20,15 @@ ObserverImpl (const Teuchos::RCP<Application> &app)
 void ObserverImpl::
 observeSolution(double stamp,
                 const Thyra_Vector& nonOverlappedSolution,
+                const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,
                 const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
                 const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
 {
   app_->evaluateStateFieldManager (stamp,
                                    nonOverlappedSolution,
                                    nonOverlappedSolutionDot,
-                                   nonOverlappedSolutionDotDot);
+                                   nonOverlappedSolutionDotDot,
+                                   nonOverlappedSolution_dxdp);
 
   app_->getStateMgr().updateStates();
 
@@ -41,17 +44,21 @@ observeSolution(double stamp,
 
   StatelessObserverImpl::observeSolution (stamp,
                                           nonOverlappedSolution,
+                                          nonOverlappedSolution_dxdp,
                                           nonOverlappedSolutionDot,
                                           nonOverlappedSolutionDotDot);
 }
 
 void ObserverImpl::
 observeSolution(double stamp,
-                const Thyra_MultiVector& nonOverlappedSolution)
+                const Thyra_MultiVector& nonOverlappedSolution, 
+                const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp)
 {
-  app_->evaluateStateFieldManager(stamp, nonOverlappedSolution);
+  app_->evaluateStateFieldManager(stamp, nonOverlappedSolution, 
+                                  nonOverlappedSolution_dxdp);
   app_->getStateMgr().updateStates();
-  StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution);
+  StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution, 
+                                         nonOverlappedSolution_dxdp);
 }
 
 void ObserverImpl::

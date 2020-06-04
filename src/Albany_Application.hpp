@@ -378,12 +378,14 @@ public:
       const double                     current_time,
       const Thyra_Vector&              x,
       Teuchos::Ptr<const Thyra_Vector> xdot,
-      Teuchos::Ptr<const Thyra_Vector> xdotdot);
+      Teuchos::Ptr<const Thyra_Vector> xdotdot,
+      Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
   void
   evaluateStateFieldManager(
       const double             current_time,
-      const Thyra_MultiVector& x);
+      const Thyra_MultiVector& x, 
+      Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
   //! Access to number of worksets - needed for working with StateManager
   int
@@ -502,6 +504,9 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp);
 
+  int 
+  calcTangentDerivDimension(const Teuchos::RCP<Teuchos::ParameterList>& problemParams); 
+
  private:
   template <typename EvalT>
   void
@@ -545,7 +550,7 @@ public:
   bool no_dir_bcs_;
   bool requires_sdbcs_;
   bool requires_orig_dbcs_;
-
+  
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
 

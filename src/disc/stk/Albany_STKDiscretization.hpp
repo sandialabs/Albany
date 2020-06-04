@@ -418,17 +418,20 @@ class STKDiscretization : public AbstractDiscretization
   void
   writeSolution(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double        time,
       const bool          overlapped = false);
   void
   writeSolution(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const double        time,
       const bool          overlapped = false);
   void
   writeSolution(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const Thyra_Vector& solution_dotdot,
       const double        time,
@@ -436,6 +439,7 @@ class STKDiscretization : public AbstractDiscretization
   void
   writeSolutionMV(
       const Thyra_MultiVector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double             time,
       const bool               overlapped = false);
 
@@ -443,17 +447,20 @@ class STKDiscretization : public AbstractDiscretization
   void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double /* time */,
       const bool overlapped = false);
   void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const double /* time */,
       const bool overlapped = false);
   void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const Thyra_Vector& solution_dotdot,
       const double /* time */,
@@ -461,6 +468,7 @@ class STKDiscretization : public AbstractDiscretization
   void
   writeSolutionMVToMeshDatabase(
       const Thyra_MultiVector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double /* time */,
       const bool overlapped = false);
 
@@ -492,20 +500,24 @@ class STKDiscretization : public AbstractDiscretization
   getSolutionMV(Thyra_MultiVector& result, bool overlapped) const;
 
   void
-  setSolutionField(const Thyra_Vector& soln, const bool overlapped);
+  setSolutionField(const Thyra_Vector& soln, const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp, const bool overlapped);
   void
   setSolutionField(
       const Thyra_Vector& soln,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& soln_dot,
       const bool          overlapped);
   void
   setSolutionField(
       const Thyra_Vector& soln,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& soln_dot,
       const Thyra_Vector& soln_dotdot,
       const bool          overlapped);
   void
-  setSolutionFieldMV(const Thyra_MultiVector& solnT, const bool overlapped);
+  setSolutionFieldMV(const Thyra_MultiVector& solnT, 
+		  const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+		  const bool overlapped);
 
   double
   monotonicTimeLabel(const double time);

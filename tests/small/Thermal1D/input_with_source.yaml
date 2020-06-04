@@ -2,9 +2,9 @@ ALBANY:
   Debug Output: 
     Write Solution to MatrixMarket: 0
   Problem: 
-    Name: Thermal With Sensitivities 1D
+    Name: Thermal 1D
     Solution Method: Transient
-    Compute Sensitivities: false
+    Compute Sensitivities: true
     Dirichlet BCs: 
       SDBC on NS NodeSet0 for DOF T: 0.0
       SDBC on NS NodeSet1 for DOF T: 0.0
@@ -18,9 +18,11 @@ ALBANY:
     Response Functions: 
       Number: 1
       Response 0: Solution Average
-    Parameters: 
-      Number: 1
-      Parameter 0: 'kappa_x'
+    Parameters:
+      Number of Parameter Vectors: 1
+      Parameter Vector 0:
+        Number: 1
+        Parameter 0: 'kappa_x Parameter'
   Discretization: 
     1D Elements: 20
     1D Scale: 1.00000000000000000e+00
@@ -30,13 +32,13 @@ ALBANY:
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [-1.983408347195e+00]
-    #Sensitivity Comparisons 0: 
-    #  Number of Sensitivity Comparisons: 1
-    #  Sensitivity Test Values 0: [5.62650000000000025e-02]
+    Sensitivity Comparisons 0: 
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [9.395066921520e+00]
     Relative Tolerance: 1.00000000000000002e-03
     Absolute Tolerance: 1.00000000000000008e-05
   Piro: 
-    #Sensitivity Method: Forward
+    Sensitivity Method: Forward
     Tempus: 
       Integrator Name: Tempus Integrator
       Tempus Integrator: 

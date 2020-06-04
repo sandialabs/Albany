@@ -51,6 +51,7 @@ public:
    Teuchos::RCP<const Thyra_Vector> updateAndReturnOverlapSolutionDot(const Thyra_Vector& solution_dot /*not overlapped*/);
    Teuchos::RCP<const Thyra_Vector> updateAndReturnOverlapSolutionDotDot(const Thyra_Vector& solution_dotdot /*not overlapped*/);
    Teuchos::RCP<const Thyra_MultiVector> updateAndReturnOverlapSolutionMV(const Thyra_MultiVector& solution /*not overlapped*/);
+   Teuchos::RCP<Thyra_MultiVector> updateAndReturnOverlapSolutionDxDp(const Thyra_MultiVector& solution_dxdp /*not overlapped*/);
 
    Teuchos::RCP<Thyra_Vector>   get_overlapped_f()   const {return overlapped_f;}
    Teuchos::RCP<Thyra_LinearOp> get_overlapped_jac() const {return overlapped_jac;}
@@ -61,9 +62,11 @@ public:
 
    void scatterX (const Thyra_Vector& x,
                   const Teuchos::Ptr<const Thyra_Vector> x_dot,
-                  const Teuchos::Ptr<const Thyra_Vector> x_dotdot);
+                  const Teuchos::Ptr<const Thyra_Vector> x_dotdot,
+                  const Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
-   void scatterX (const Thyra_MultiVector& soln);
+   void scatterX (const Thyra_MultiVector& soln,
+                  const Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
 private:
 
@@ -77,6 +80,7 @@ private:
     // The solution directly from the discretization class
     Teuchos::RCP<Thyra_MultiVector> current_soln;
     Teuchos::RCP<Thyra_MultiVector> overlapped_soln;
+    Teuchos::RCP<Thyra_MultiVector> overlapped_soln_dxdp;
 
     // Number of time derivative vectors that we need to support
     const int num_time_deriv;
@@ -90,6 +94,9 @@ private:
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     Teuchos::RCP<AbstractAdapter> adapter_;
+  
+    //! Number parameters
+    int num_params_{0};
 };
 
 } // namespace AAdapt

@@ -47,8 +47,9 @@ void get_element_block_sizes(stk::io::StkMeshIoBroker &mesh_data,
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params_,
                                              const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
-                                             const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  GenericSTKMeshStruct(params_, adaptParams_),
+                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
+					     const int numParams_) :
+  GenericSTKMeshStruct(params_, adaptParams_, -1, numParams_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   useSerialMesh(false),
   periodic(params->get("Periodic BC", false)),

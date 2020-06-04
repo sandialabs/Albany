@@ -171,7 +171,6 @@ set(HEADERS
   evaluators/LandIce_ResponseGLFlux_Def.hpp
   evaluators/LandIce_ScatterResidual2D.hpp
   evaluators/LandIce_ScatterResidual2D_Def.hpp
-  evaluators/LandIce_SharedParameter.hpp
   evaluators/LandIce_SimpleOperation.hpp
   evaluators/LandIce_SimpleOperationEvaluator.hpp
   evaluators/LandIce_SimpleOperationEvaluator_Def.hpp

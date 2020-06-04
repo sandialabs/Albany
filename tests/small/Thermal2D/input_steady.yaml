@@ -1,0 +1,101 @@
+ALBANY:
+  Debug Output: 
+    Write Solution to MatrixMarket: 0
+  Problem: 
+    Name: Thermal 2D
+    Solution Method: Steady
+    Compute Sensitivities: true
+    Dirichlet BCs: 
+      SDBC on NS NodeSet0 for DOF T: 0.0
+      SDBC on NS NodeSet1 for DOF T: 50.0
+      SDBC on NS NodeSet2 for DOF T: 0.0
+      SDBC on NS NodeSet3 for DOF T: 0.0
+    Thermal Conductivity: [1.6, 0.8]  
+    Thermal Source: None
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+    Parameters: 
+      Number: 2
+      Parameter 0: 'kappa_x Parameter'
+      Parameter 1: 'kappa_y Parameter'
+  Discretization: 
+    1D Elements: 3
+    2D Elements: 3
+    1D Scale: 1.00000000000000000e+00
+    2D Scale: 1.00000000000000000e+00
+    Workset Size: -1
+    Method: STK2D
+    Exodus Output File Name: thermal2D_steady_out.exo
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [8.42895275298]
+    #Sensitivity Comparisons 0: 
+    #  Number of Sensitivity Comparisons: 2
+    #  Sensitivity Test Values 0: [0.0] 
+    #  Sensitivity Test Values 1: [5.62650000000000025e-02]
+    Relative Tolerance: 1.00000000000000002e-03
+    Absolute Tolerance: 1.00000000000000008e-05
+  Piro: 
+    Sensitivity Method: Forward
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000000000008e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000000000008e-05
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

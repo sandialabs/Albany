@@ -8,7 +8,6 @@
 
 #include "Albany_HeatProblem.hpp"
 #include "Albany_ThermalProblem.hpp"
-#include "Albany_ThermalProblemWithSensitivities.hpp"
 #include "Albany_PopulateMesh.hpp"
 #include "Albany_SideLaplacianProblem.hpp"
 
@@ -65,9 +64,6 @@ create (const std::string& key,
   } else if (getName(key) == "Thermal") {
     problem =
         Teuchos::rcp(new ThermalProblem(problemParams, paramLib, getNumDim(key), comm));
-  } else if (getName(key) == "Thermal With Sensitivities") {
-    problem =
-        Teuchos::rcp(new ThermalProblemWithSensitivities(problemParams, paramLib, getNumDim(key), comm));
   } else if (key == "Populate Mesh") {
     problem = Teuchos::rcp(new PopulateMesh(problemParams, discParams, paramLib));
   } else if (key == "Side Laplacian 3D") {

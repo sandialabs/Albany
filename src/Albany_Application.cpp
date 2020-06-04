@@ -12,6 +12,7 @@
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Utils.hpp"
 #include "Thyra_MultiVectorStdOps.hpp"
 #include "Thyra_VectorBase.hpp"
 #include "Thyra_VectorStdOps.hpp"
@@ -45,34 +46,6 @@ int countJac;   // counter which counts instances of Jacobian (for debug output)
 int countRes;   // counter which counts instances of residual (for debug output)
 int countSoln;  // counter which counts instances of solution (for debug output)
 int countScale;
-
-namespace {
-int
-calcTangentDerivDimension(
-    const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
-{
-  Teuchos::ParameterList& parameterParams =
-      problemParams->sublist("Parameters");
-  int  num_param_vecs = parameterParams.get("Number of Parameter Vectors", 0);
-  bool using_old_parameter_list = false;
-  if (parameterParams.isType<int>("Number")) {
-    int numParameters = parameterParams.get<int>("Number");
-    if (numParameters > 0) {
-      num_param_vecs           = 1;
-      using_old_parameter_list = true;
-    }
-  }
-  int np = 0;
-  for (int i = 0; i < num_param_vecs; ++i) {
-    Teuchos::ParameterList& pList =
-        using_old_parameter_list ?
-            parameterParams :
-            parameterParams.sublist(Albany::strint("Parameter Vector", i));
-    np += pList.get<int>("Number");
-  }
-  return std::max(1, np);
-}
-}  // namespace
 
 namespace Albany {
 
@@ -184,7 +157,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   } catch (...) {
     tangent_deriv_dim = 1;
   }
-
   // Initialize Phalanx postRegistration setup
   phxSetup = Teuchos::rcp(new PHAL::Setup());
   phxSetup->init_problem_params(problemParams);
@@ -551,7 +523,7 @@ Application::createDiscretization()
       stateMgr.getSideSetStateInfoStruct(),
       problem->getFieldRequirements(),
       problem->getSideSetFieldRequirements(),
-      problem->getNullSpace());
+      problem->getNullSpace()); 
   // The following is for Aeras problems.
   explicit_scheme = disc->isExplicitScheme();
 }
@@ -613,7 +585,7 @@ Application::finalSetUp(
       initial_guess,
       paramLib,
       disc,
-      comm));
+      comm)); 
 
   try {
     // Create Distributed parameters and initialize them with data stored in the
@@ -1755,7 +1727,7 @@ Application::computeGlobalTangent(
   auto cas_manager = solMgr->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distrbution
-  solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
+  solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr()); 
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2258,19 +2230,20 @@ Application::evaluateResponseDistParamDeriv(
 void
 Application::evaluateStateFieldManager(
     const double             current_time,
-    const Thyra_MultiVector& x)
+    const Thyra_MultiVector& x, 
+    Teuchos::Ptr<const Thyra_MultiVector> dxdp)
 {
   int num_vecs = x.domain()->dim();
 
   if (num_vecs == 1) {
     this->evaluateStateFieldManager(
-        current_time, *x.col(0), Teuchos::null, Teuchos::null);
+        current_time, *x.col(0), Teuchos::null, Teuchos::null, dxdp);
   } else if (num_vecs == 2) {
     this->evaluateStateFieldManager(
-        current_time, *x.col(0), x.col(1).ptr(), Teuchos::null);
+        current_time, *x.col(0), x.col(1).ptr(), Teuchos::null, dxdp);
   } else {
     this->evaluateStateFieldManager(
-        current_time, *x.col(0), x.col(1).ptr(), x.col(2).ptr());
+        current_time, *x.col(0), x.col(1).ptr(), x.col(2).ptr(), dxdp);
   }
 }
 
@@ -2279,7 +2252,8 @@ Application::evaluateStateFieldManager(
     const double                     current_time,
     const Thyra_Vector&              x,
     Teuchos::Ptr<const Thyra_Vector> xdot,
-    Teuchos::Ptr<const Thyra_Vector> xdotdot)
+    Teuchos::Ptr<const Thyra_Vector> xdotdot, 
+    Teuchos::Ptr<const Thyra_MultiVector> dxdp )
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: State Residual");
   {
@@ -2318,7 +2292,7 @@ Application::evaluateStateFieldManager(
   int numWorksets = wsElNodeEqID.size();
 
   // Scatter to the overlapped distrbution
-  solMgr->scatterX(x, xdot, xdotdot);
+  solMgr->scatterX(x, xdot, xdotdot, dxdp);
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2678,6 +2652,14 @@ Application::setupBasicWorksetInfo(
   workset.comm = comm;
 
   workset.x_cas_manager = solMgr->get_cas_manager();
+}
+
+int
+Application::calcTangentDerivDimension(
+    const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
+{
+  int np = Albany::CalculateNumberParams(problemParams);
+  return std::max(1, np);
 }
 
 void

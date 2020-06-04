@@ -27,7 +27,7 @@ void NOXObserver::observeSolution(const Epetra_Vector& solution,
 {
   auto solution_ptr = Teuchos::rcpFromRef(solution);
   auto solution_thyra = createConstThyraVector(solution_ptr);
-  impl->observeSolution(time_or_param_val, *solution_thyra, Teuchos::null, Teuchos::null);
+  impl->observeSolution(time_or_param_val, *solution_thyra, Teuchos::null, Teuchos::null, Teuchos::null);
 }
 
 } // namespace Albany
