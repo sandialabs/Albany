@@ -437,6 +437,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
       parameterList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
     }
 
+
     discParams->set<std::string>("Method", "Cism");
     discParams->sublist("Required Fields Info").set<int>("Number Of Fields",8);
     Teuchos::ParameterList& field0 = discParams->sublist("Required Fields Info").sublist("Field 0");
@@ -494,6 +495,9 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
 
     albanyApp = Teuchos::rcp(new Albany::Application(reducedMpiCommT));
     albanyApp->initialSetUp(parameterList);
+
+    //Get number of params in problem - needed for MeshStruct constructor
+    int num_params = Albany::CalculateNumberParams(Teuchos::sublist(parameterList, "Problem", true)); 
     meshStruct = Teuchos::rcp(new Albany::CismSTKMeshStruct(discParams, reducedMpiCommT, xyz_at_nodes_Ptr, global_node_id_owned_map_Ptr,
                                                            global_element_id_active_owned_map_Ptr,
                                                            global_element_conn_active_Ptr,
@@ -518,7 +522,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
                                                            nNodes, nElementsActive, nCellsActive,
                                                            nWestFacesActive, nEastFacesActive,
                                                            nSouthFacesActive, nNorthFacesActive,
-                                                           debug_output_verbosity));
+                                                           num_params, debug_output_verbosity));
 
     albanyApp->createMeshSpecs(meshStruct);
     albanyApp->buildProblem();

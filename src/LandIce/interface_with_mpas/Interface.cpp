@@ -715,9 +715,11 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   //temporary fix, TODO: use GO for indexToTriangleID (need to synchronize with MPAS).
   std::vector<GO> indexToTriangleGOID;
   indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());
+  //Get number of params in problem - needed for MeshStruct constructor
+  int num_params = Albany::CalculateNumberParams(Teuchos::sublist(paramList, "Problem", true)); 
   meshStruct = Teuchos::rcp(
       new Albany::MpasSTKMeshStruct(discretizationList, mpiComm, indexToTriangleGOID,
-          globalTrianglesStride, nLayers, Ordering));
+          globalTrianglesStride, nLayers, num_params, Ordering));
   albanyApp->createMeshSpecs(meshStruct);
 
   albanyApp->buildProblem();
