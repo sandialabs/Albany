@@ -222,7 +222,12 @@ AdaptiveSolutionManager::resizeMeshDataArrays(
   auto overlapped_vs = disc->getOverlapVectorSpace();
 
   overlapped_soln = Thyra::createMembers(overlapped_vs, num_time_deriv + 1);
-  overlapped_soln_dxdp = Thyra::createMembers(overlapped_vs, num_params_);
+  if (num_params_ > 0) { 
+    overlapped_soln_dxdp = Thyra::createMembers(overlapped_vs, num_params_);
+  }
+  else {
+    overlapped_soln_dxdp = Teuchos::null; 
+  }
 
   // TODO: ditch the overlapped_*T and keep only overlapped_*.
   //       You need to figure out how to pass the graph in a Tpetra-free way
