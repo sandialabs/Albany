@@ -52,6 +52,7 @@ namespace Albany {
                   const int nCellsActive, 
                   const int nWestFacesActive, const int nEastFacesActive, 
                   const int nSouthFacesActive, const int nNorthFacesActive, 
+                  const int numParams,
                   const int verbosity); 
 
     ~CismSTKMeshStruct() = default;

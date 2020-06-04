@@ -20,7 +20,7 @@ public:
   MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
       const Teuchos::RCP<const Teuchos_Comm>& commT,
       const std::vector<GO>& indexToTriangleID,
-      int globalTrianglesStride, int numLayers, int Ordering = 0);
+      int globalTrianglesStride, int numLayers, const int numParams, int Ordering = 0);
 
 
   ~MpasSTKMeshStruct( ) = default;

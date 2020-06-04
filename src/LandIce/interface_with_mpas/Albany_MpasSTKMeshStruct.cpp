@@ -36,8 +36,8 @@ MpasSTKMeshStruct::
 MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
     const Teuchos::RCP<const Teuchos_Comm>& comm,
     const std::vector<GO>& indexToTriangleID,
-    int globalTrianglesStride, int numLayers, int ordering) :
-    GenericSTKMeshStruct(params,Teuchos::null,3),
+    int globalTrianglesStride, int numLayers, const int numParams, int ordering) :
+    GenericSTKMeshStruct(params, Teuchos::null, 3, numParams),
     out(Teuchos::VerboseObjectBase::getDefaultOStream()),
     periodic(false),
     NumEles(indexToTriangleID.size()),
