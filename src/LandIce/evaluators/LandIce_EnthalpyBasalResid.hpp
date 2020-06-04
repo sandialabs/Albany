@@ -60,6 +60,8 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> enthalpyBasalResid;      // [MW] = [k^{-2} kPa s^{-1} km^3]
   // PHX::MDField<ScalarT,Cell,Side, Node> basalMeltRate;      // [MW] = [m/yr]
+  
+  Albany::SideStructViews sideSet;
 
   std::vector<std::vector<int> >  sideNodes;
   std::string                     basalSideName;

@@ -72,6 +72,8 @@ private:
   double Tm; //[K], 273.15
   double temperature_scaling; // [MW^{-1} s^{-1} K m^{3}]
 
+  const double pow6 = 1e6; //[k^{-2}], k=1000
+
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
 public:

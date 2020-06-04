@@ -1854,6 +1854,55 @@ STKDiscretization::computeSideSets()
 
     ss++;
   }
+
+  // =============================================================
+  // (Kokkos Refactor) Clean up existing sideset view structure if remeshing
+  for (size_t i = 0; i < sideSetViews.size(); ++i) {
+    sideSetViews[i].clear();  // empty the ith map
+  }
+
+  // (Kokkos Refactor) Convert sideSets to sideSetViews
+  sideSetViews.resize(sideSets.size());
+  for (size_t i = 0; i < sideSets.size(); ++i) {
+    SideSetList& ssList = sideSets[i];
+    SideSetViewList& ssViewList = sideSetViews[i];
+    std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
+
+    while (ss_it != ssList.end()) {
+      std::string             ss_key = ss_it->first;
+      std::vector<SideStruct> ss_val = ss_it->second;
+
+      //ssViewList[ss_key] = {nullptr, nullptr, nullptr, nullptr, nullptr};
+      // SideStructViews& ssv_val = ssViewList[ss_key];
+      // ssv_val.size          = ss_val.size();
+      // ssv_val.side_GID      = Kokkos::View<GO*>      ("side_GID",      ss_val.size());
+      // ssv_val.elem_GID      = Kokkos::View<GO*>      ("elem_GID",      ss_val.size());
+      // ssv_val.elem_LID      = Kokkos::View<int*>     ("elem_LID",      ss_val.size());
+      // ssv_val.elem_ebIndex  = Kokkos::View<int*>     ("elem_ebIndex",  ss_val.size());
+      // ssv_val.side_local_id = Kokkos::View<unsigned*>("side_local_id", ss_val.size());
+
+      ssViewList[ss_key] = {
+        Kokkos::View<GO*>      ("side_GID",      ss_val.size()),
+        Kokkos::View<GO*>      ("elem_GID",      ss_val.size()),
+        Kokkos::View<int*>     ("elem_LID",      ss_val.size()),
+        Kokkos::View<int*>     ("elem_ebIndex",  ss_val.size()),
+        Kokkos::View<unsigned*>("side_local_id", ss_val.size()),
+        ss_val.size()
+      };
+
+      for (size_t j = 0; j < ss_val.size(); ++j) {
+        ssViewList[ss_key].side_GID(j)      = ss_val[j].side_GID;
+        ssViewList[ss_key].elem_GID(j)      = ss_val[j].elem_GID;
+        ssViewList[ss_key].elem_LID(j)      = ss_val[j].elem_LID;
+        ssViewList[ss_key].elem_ebIndex(j)  = ss_val[j].elem_ebIndex;
+        ssViewList[ss_key].side_local_id(j) = ss_val[j].side_local_id;
+      }
+
+      ss_it++;
+    }
+  }
+
+  
 }
 
 unsigned

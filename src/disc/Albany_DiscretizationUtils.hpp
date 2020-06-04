@@ -38,7 +38,19 @@ class SideStruct
   unsigned side_local_id;  // local id of side relative to owning element
 };
 
+class SideStructViews
+{
+ public:
+  Kokkos::View<GO*>       side_GID;
+  Kokkos::View<GO*>       elem_GID;
+  Kokkos::View<int*>      elem_LID;
+  Kokkos::View<int*>      elem_ebIndex;
+  Kokkos::View<unsigned*> side_local_id;
+  int                     size;
+};
+
 using SideSetList = std::map<std::string, std::vector<SideStruct>>;
+using SideSetViewList = std::map<std::string, SideStructViews>;
 
 class wsLid
 {

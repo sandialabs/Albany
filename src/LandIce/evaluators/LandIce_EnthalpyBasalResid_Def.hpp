@@ -91,13 +91,13 @@ evaluateFields(typename Traits::EvalData d)
   if (d.sideSets->find(basalSideName)==d.sideSets->end())
     return;
 
-  const std::vector<Albany::SideStruct>& sideSet = d.sideSets->at(basalSideName);
+  sideSet = d.sideSetViews->at(basalSideName);
 
-  for (auto const& it_side : sideSet)
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
     // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
     for (int node = 0; node < numSideNodes; ++node)
     {
@@ -110,6 +110,8 @@ evaluateFields(typename Traits::EvalData d)
       }
     }
   }
+#endif
+
 }
 
 } // namespace LandIce
