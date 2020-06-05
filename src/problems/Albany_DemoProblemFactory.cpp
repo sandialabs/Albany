@@ -16,9 +16,23 @@
 #include "Albany_ODEProblem.hpp"
 #include "Albany_PNPProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
+#include "Albany_ThermalProblem.hpp"
 
 namespace Albany
 {
+
+std::string getName(std::string const& key)
+{
+  if (key.size() < 3) return key;
+  return key.substr(0, key.size() - 3);
+}
+// In "Thermal 3D", extract 3.
+int getNumDim(std::string const& key)
+{
+  if (key.size() < 3) return -1;
+  return static_cast<int>(key[key.size() - 2] - '0');
+} 
+
 
 bool DemoProblemFactory::provides (const std::string& key) const
 {
@@ -40,6 +54,9 @@ bool DemoProblemFactory::provides (const std::string& key) const
          key == "PNP 1D" ||
          key == "PNP 2D" ||
          key == "PNP 3D" ||
+         key == "Thermal 1D" ||
+         key == "Thermal 2D" ||
+         key == "Thermal 3D" ||
          key == "ThermoElectrostatics 1D" ||
          key == "ThermoElectrostatics 2D" ||
          key == "ThermoElectrostatics 3D";
@@ -98,6 +115,9 @@ create (const std::string& key,
     problem = Teuchos::rcp(new ThermoElectrostaticsProblem(problemParams, paramLib, 2));
   } else if (key == "ThermoElectrostatics 3D") {
     problem = Teuchos::rcp(new ThermoElectrostaticsProblem(problemParams, paramLib, 3));
+  } else if (getName(key) == "Thermal") {
+    problem =
+        Teuchos::rcp(new ThermalProblem(problemParams, paramLib, getNumDim(key), comm));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
       "Error! Unrecognized key in DemoProblemFactory. Did you forget to check with 'provides(key)' first?\n");

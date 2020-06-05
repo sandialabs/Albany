@@ -209,7 +209,6 @@ list (APPEND SOURCES
   problems/Albany_ResponseUtilities.cpp
   problems/Albany_SideLaplacianProblem.cpp
   problems/Albany_MaterialDatabase.cpp
-  problems/Albany_ThermalProblem.cpp
   )
 
 list (APPEND HEADERS
@@ -228,7 +227,6 @@ list (APPEND HEADERS
   problems/Albany_ResponseUtilities_Def.hpp
   problems/Albany_SideLaplacianProblem.hpp
   problems/Albany_MaterialDatabase.hpp
-  problems/Albany_ThermalProblem.hpp
   problems/Albany_ParamEnum.hpp
   )
 
@@ -429,7 +427,6 @@ list (APPEND SOURCES
   evaluators/utility/PHAL_LangevinNoiseTerm.cpp
   evaluators/utility/PHAL_MapToPhysicalFrame.cpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide.cpp
-  evaluators/pde/PHAL_ThermalResid.cpp
   evaluators/utility/PHAL_Source.cpp
   evaluators/utility/QCAD_EvaluatorTools.cpp
   evaluators/utility/QCAD_MathVector.cpp
@@ -582,8 +579,6 @@ list (APPEND HEADERS
   evaluators/utility/PHAL_MapToPhysicalFrame_Def.hpp
   evaluators/utility/PHAL_Source.hpp
   evaluators/utility/PHAL_Source_Def.hpp
-  evaluators/pde/PHAL_ThermalResid.hpp
-  evaluators/pde/PHAL_ThermalResid_Def.hpp
   evaluators/utility/QCAD_EvaluatorTools.hpp
   evaluators/utility/QCAD_EvaluatorTools_Def.hpp
   evaluators/utility/QCAD_MathVector.hpp
@@ -648,6 +643,7 @@ if(ALBANY_DEMO_PDES)
     problems/Albany_NavierStokes.cpp
     problems/Albany_PNPProblem.cpp
     problems/Albany_ThermoElectrostaticsProblem.cpp
+    problems/Albany_ThermalProblem.cpp
     evaluators/pde/PHAL_AdvDiffResid.cpp
     evaluators/pde/PHAL_ReactDiffSystemResid.cpp
     evaluators/pde/PHAL_CahnHillChemTerm.cpp
@@ -667,6 +663,7 @@ if(ALBANY_DEMO_PDES)
     evaluators/pde/PHAL_NSMomentumResid.cpp
     evaluators/pde/PHAL_NSNeutronEqResid.cpp
     evaluators/pde/PHAL_NSPermeabilityTerm.cpp
+    evaluators/pde/PHAL_ThermalResid.cpp
     evaluators/pde/PHAL_NSRm.cpp
     evaluators/pde/PHAL_NSTauM.cpp
     evaluators/pde/PHAL_NSTauT.cpp
@@ -690,6 +687,7 @@ if(ALBANY_DEMO_PDES)
     problems/Albany_ODEProblem.hpp
     problems/Albany_PNPProblem.hpp
     problems/Albany_ThermoElectrostaticsProblem.hpp
+    problems/Albany_ThermalProblem.hpp
     evaluators/pde/PHAL_AdvDiffResid.hpp
     evaluators/pde/PHAL_AdvDiffResid_Def.hpp
     evaluators/pde/PHAL_ReactDiffSystemResid.hpp
@@ -748,6 +746,8 @@ if(ALBANY_DEMO_PDES)
     evaluators/pde/PNP_ConcentrationResid_Def.hpp
     evaluators/pde/PNP_PotentialResid.hpp
     evaluators/pde/PNP_PotentialResid_Def.hpp
+    evaluators/pde/PHAL_ThermalResid.hpp
+    evaluators/pde/PHAL_ThermalResid_Def.hpp
   )
 
   add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS})
