@@ -112,7 +112,6 @@ function(ali_do_trilinos)
       "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
       "-DTrilinos_ENABLE_STKExprEval:BOOL=ON"
       "-DTrilinos_ENABLE_Sacado:BOOL=ON"
-      "-DSacado_NEW_FAD_DESIGN_IS_DEFAULT:BOOL=OFF"
       "-DTrilinos_ENABLE_Shards:BOOL=ON"
       "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
       "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"

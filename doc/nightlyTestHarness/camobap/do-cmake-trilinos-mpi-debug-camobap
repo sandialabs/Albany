@@ -99,7 +99,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_ROL:BOOL=ON \
       -D Trilinos_ENABLE_Rythmos:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
-      -D Sacado_NEW_FAD_DESIGN_IS_DEFAULT:BOOL=OFF \
       -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
       -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
       -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=ON \

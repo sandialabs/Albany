@@ -142,7 +142,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_ML:BOOL=ON"
     "-DTrilinos_ENABLE_MueLu:BOOL=ON"
     "-DMueLu_ENABLE_TESTS:BOOL=OFF"
-    "-DSacado_NEW_FAD_DESIGN_IS_DEFAULT:BOOL=OFF"
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
     "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"

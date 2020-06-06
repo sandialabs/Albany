@@ -188,7 +188,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
     "-DTrilinos_ENABLE_Shards:BOOL=ON"
     "-DTrilinos_ENABLE_Sacado:BOOL=ON"
-    "-DSacado_NEW_FAD_DESIGN_IS_DEFAULT:BOOL=OFF"
     "-DTrilinos_ENABLE_Epetra:BOOL=ON"
     "-DTrilinos_ENABLE_Tempus:BOOL=ON"
     "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
