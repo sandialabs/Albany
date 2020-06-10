@@ -1,16 +1,43 @@
 #cmake_minimum_required (VERSION 2.8)
 set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
+SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 
 # What to build and test
 set (CLEAN_BUILD FALSE)
-set (DOWNLOAD_TRILINOS FALSE)
-set (BUILD_TRILINOS_SERIAL FALSE)
-set (BUILD_TRILINOS_OPENMP FALSE)
 set (DOWNLOAD_ALBANY FALSE) 
-set (BUILD_ALBANY_SERIAL FALSE) 
-set (BUILD_ALBANY_SERIAL_SFAD TRUE) 
-set (BUILD_ALBANY_OPENMP FALSE) 
+if (1)
+  # What to build and test
+  IF(CTEST_BUILD_OPTION MATCHES "sfad4")
+    set (BUILD_ALBANY_SERIAL_SFAD4 TRUE) 
+    set (BUILD_ALBANY_SERIAL_SFAD6 FALSE) 
+    set (BUILD_ALBANY_SERIAL_SFAD8 FALSE) 
+    set (BUILD_ALBANY_SERIAL_SFAD12 FALSE) 
+    set (CTEST_BUILD_NAME "blake-serial-sfad4-Albany")
+  ENDIF()
+  IF(CTEST_BUILD_OPTION MATCHES "sfad6")
+    set (BUILD_ALBANY_SERIAL_SFAD4 FALSE) 
+    set (BUILD_ALBANY_SERIAL_SFAD6 TRUE) 
+    set (BUILD_ALBANY_SERIAL_SFAD8 FALSE) 
+    set (BUILD_ALBANY_SERIAL_SFAD12 FALSE) 
+    set (CTEST_BUILD_NAME "blake-serial-sfad6-Albany")
+  ENDIF()
+  IF(CTEST_BUILD_OPTION MATCHES "sfad8")
+    set (BUILD_ALBANY_SERIAL_SFAD4 FALSE) 
+    set (BUILD_ALBANY_SERIAL_SFAD6 FALSE) 
+    set (BUILD_ALBANY_SERIAL_SFAD8 TRUE) 
+    set (BUILD_ALBANY_SERIAL_SFAD12 FALSE) 
+    set (CTEST_BUILD_NAME "blake-serial-sfad8-Albany")
+  ENDIF()
+  IF(CTEST_BUILD_OPTION MATCHES "sfad12")
+    set (BUILD_ALBANY_SERIAL_SFAD4 FALSE) 
+    set (BUILD_ALBANY_SERIAL_SFAD6 FALSE) 
+    set (BUILD_ALBANY_SERIAL_SFAD8 FALSE) 
+    set (BUILD_ALBANY_SERIAL_SFAD12 TRUE) 
+    set (CTEST_BUILD_NAME "blake-serial-sfad12-Albany")
+  ENDIF()
+ENDIF()
+
 
 
 # Begin User inputs:
@@ -24,7 +51,6 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "blake-serial-sfad-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -118,14 +144,63 @@ endif ()
 
 ctest_start(${CTEST_TEST_TYPE})
 
-if (BUILD_ALBANY_SERIAL_SFAD)
 
-  # Configure the Albany build 
-  #
+# Configure the Albany build 
+#
 
+IF (BUILD_ALBANY_SERIAL_SFAD4) 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
     "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_64BIT_INT:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DALBANY_CTEST_TIMEOUT=500"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4'"
+    "-DENABLE_FAD_TYPE:STRING='SFad'"
+    "-DALBANY_SFAD_SIZE=4"
+    "-DDISABLE_ALBANY_TESTS:BOOL=ON"
+  )
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad4")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad4)
+  endif ()
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad4"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    )
+ENDIF()
+IF (BUILD_ALBANY_SERIAL_SFAD6) 
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
+    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_64BIT_INT:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DALBANY_CTEST_TIMEOUT=500"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4'"
+    "-DENABLE_FAD_TYPE:STRING='SFad'"
+    "-DALBANY_SFAD_SIZE=6"
+    "-DDISABLE_ALBANY_TESTS:BOOL=ON"
+  )
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad6")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad6)
+  endif ()
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad6"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    )
+ENDIF()
+IF (BUILD_ALBANY_SERIAL_SFAD8) 
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
+    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_64BIT_INT:BOOL=OFF"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DALBANY_CTEST_TIMEOUT=500"
@@ -134,85 +209,155 @@ if (BUILD_ALBANY_SERIAL_SFAD)
     "-DENABLE_FAD_TYPE:STRING='SFad'"
     "-DALBANY_SFAD_SIZE=8"
     "-DDISABLE_ALBANY_TESTS:BOOL=ON"
-    )
-  
+  )
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad)
   endif ()
-
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
-    endif ()
+ENDIF()
+IF (BUILD_ALBANY_SERIAL_SFAD12) 
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
+    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_64BIT_INT:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DALBANY_CTEST_TIMEOUT=500"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4'"
+    "-DENABLE_FAD_TYPE:STRING='SFad'"
+    "-DALBANY_SFAD_SIZE=12"
+    "-DDISABLE_ALBANY_TESTS:BOOL=ON"
+  )
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad12")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad12)
   endif ()
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad12"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    )
+ENDIF()
 
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
+
+if (CTEST_DO_SUBMIT)
+  ctest_submit (PARTS Configure
+    RETURN_VALUE  S_HAD_ERROR
+    )
+
+  if (S_HAD_ERROR)
+    message ("Cannot submit Albany configure results!")
   endif ()
+endif ()
 
-  #
-  # Build the rest of Albany and install everything
-  #
+if (HAD_ERROR)
+  message ("Cannot configure Albany build!")
+endif ()
 
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
+#
+# Build the rest of Albany and install everything
+#
 
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+set (CTEST_BUILD_TARGET all)
+#set (CTEST_BUILD_TARGET install)
 
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+IF (BUILD_ALBANY_SERIAL_SFAD4) 
+  CTEST_BUILD(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad4"
+    RETURN_VALUE  HAD_ERROR
+    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+    APPEND
+    )
+ENDIF()
+IF (BUILD_ALBANY_SERIAL_SFAD6) 
+  CTEST_BUILD(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad6"
+    RETURN_VALUE  HAD_ERROR
+    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+    APPEND
+    )
+ENDIF()
+IF (BUILD_ALBANY_SERIAL_SFAD8) 
   CTEST_BUILD(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
     )
+ENDIF()
+IF (BUILD_ALBANY_SERIAL_SFAD12) 
+  CTEST_BUILD(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad12"
+    RETURN_VALUE  HAD_ERROR
+    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+    APPEND
+    )
+ENDIF()
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
+if (CTEST_DO_SUBMIT)
+  ctest_submit (PARTS Build
+    RETURN_VALUE  S_HAD_ERROR
+    )
 
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany build results!")
-    endif ()
-
+  if (S_HAD_ERROR)
+    message ("Cannot submit Albany build results!")
   endif ()
 
-  if (HAD_ERROR)
-    message ("Cannot build Albany!")
-  endif ()
+endif ()
 
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Albany build. Exiting!")
-  endif ()
-  #
-  # Run Albany tests
-  #
-  set (CTEST_TEST_TIMEOUT 600)
+if (HAD_ERROR)
+  message ("Cannot build Albany!")
+endif ()
 
+if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+  message ("Encountered build errors in Albany build. Exiting!")
+endif ()
+
+#
+# Run Albany tests
+#
+set (CTEST_TEST_TIMEOUT 600)
+
+IF (BUILD_ALBANY_SERIAL_SFAD4) 
+  CTEST_TEST(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad4"
+    RETURN_VALUE  HAD_ERROR
+    )
+ENDIF()
+IF (BUILD_ALBANY_SERIAL_SFAD6) 
+  CTEST_TEST(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad6"
+    RETURN_VALUE  HAD_ERROR
+    )
+ENDIF()
+IF (BUILD_ALBANY_SERIAL_SFAD8) 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad"
     RETURN_VALUE  HAD_ERROR
     )
+ENDIF()
+IF (BUILD_ALBANY_SERIAL_SFAD12) 
+  CTEST_TEST(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialSFad12"
+    RETURN_VALUE  HAD_ERROR
+    )
+ENDIF()
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  S_HAD_ERROR
-      )
+if (CTEST_DO_SUBMIT)
+  ctest_submit (PARTS Test
+    RETURN_VALUE  S_HAD_ERROR
+    )
 
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
-    endif ()
+  if (S_HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Albany test results!")
   endif ()
-
 endif ()
+
