@@ -2,13 +2,43 @@
 #cmake_minimum_required (VERSION 2.8)
 set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
+SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 
 # What to build and test
-set (DOWNLOAD_TRILINOS FALSE)
-set (BUILD_TRILINOS FALSE)
 set (DOWNLOAD_ALBANY FALSE) 
-set (BUILD_ALBANY FALSE)
-set (BUILD_ALBANY_SFAD TRUE) 
+
+if (1)
+  # What to build and test
+  IF(CTEST_BUILD_OPTION MATCHES "sfad4")
+    set (BUILD_ALBANY_SFAD4 TRUE)
+    set (BUILD_ALBANY_SFAD6 FALSE)
+    set (BUILD_ALBANY_SFAD8 FALSE)
+    set (BUILD_ALBANY_SFAD12 FALSE)
+    set (CTEST_BUILD_NAME "waterman-CUDA-Albany-SFAD4")
+  ENDIF()
+  IF(CTEST_BUILD_OPTION MATCHES "sfad6")
+    set (BUILD_ALBANY_SFAD4 FALSE)
+    set (BUILD_ALBANY_SFAD6 TRUE)
+    set (BUILD_ALBANY_SFAD8 FALSE)
+    set (BUILD_ALBANY_SFAD12 FALSE)
+    set (CTEST_BUILD_NAME "waterman-CUDA-Albany-SFAD6")
+  ENDIF()
+  IF(CTEST_BUILD_OPTION MATCHES "sfad8")
+    set (BUILD_ALBANY_SFAD4 FALSE)
+    set (BUILD_ALBANY_SFAD6 FALSE)
+    set (BUILD_ALBANY_SFAD8 TRUE)
+    set (BUILD_ALBANY_SFAD12 FALSE)
+    set (CTEST_BUILD_NAME "waterman-CUDA-Albany-SFAD8")
+  ENDIF()
+ IF(CTEST_BUILD_OPTION MATCHES "sfad12")
+    set (BUILD_ALBANY_SFAD4 FALSE)
+    set (BUILD_ALBANY_SFAD6 FALSE)
+    set (BUILD_ALBANY_SFAD8 FALSE)
+    set (BUILD_ALBANY_SFAD12 TRUE)
+    set (CTEST_BUILD_NAME "waterman-CUDA-Albany-SFAD12")
+  ENDIF()
+ENDIF()
+
 
 # Begin User inputs:
 set (CTEST_SITE "waterman.sandia.gov" ) # generally the output of hostname
@@ -21,9 +51,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_NAME "waterman-CUDA-Albany-SFAD")
 set (CTEST_BINARY_NAME build)
-set (CTEST_BUILD_NAME "waterman-CUDA-Albany-SFAD")
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -129,7 +157,69 @@ ctest_start(${CTEST_TEST_TYPE})
 # Set the common Trilinos config options & build Trilinos
 # 
 
-if (BUILD_ALBANY_SFAD)
+if (BUILD_ALBANY_SFAD4)
+
+  # Configure the Albany build 
+  #
+
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
+    "-DENABLE_PERFORMANCE_TESTS:BOOL=OFF"
+    "-DALBANY_LIBRARIES_ONLY=OFF"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DENABLE_FAD_TYPE:STRING='SFad'"
+    "-DALBANY_SFAD_SIZE=4"
+    "-DDISABLE_ALBANY_TESTS:BOOL=ON"
+    )
+  
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad4")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSFad4)
+  endif ()
+
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad4"
+    SOURCE "/home/projects/albany/waterman/repos/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    )
+ENDIF()
+
+if (BUILD_ALBANY_SFAD6)
+
+  # Configure the Albany build 
+  #
+
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
+    "-DENABLE_PERFORMANCE_TESTS:BOOL=OFF"
+    "-DALBANY_LIBRARIES_ONLY=OFF"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DENABLE_FAD_TYPE:STRING='SFad'"
+    "-DALBANY_SFAD_SIZE=6"
+    "-DDISABLE_ALBANY_TESTS:BOOL=ON"
+    )
+  
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad6")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSFad6)
+  endif ()
+
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad6"
+    SOURCE "/home/projects/albany/waterman/repos/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    )
+ENDIF()
+
+if (BUILD_ALBANY_SFAD8)
 
   # Configure the Albany build 
   #
@@ -158,72 +248,152 @@ if (BUILD_ALBANY_SFAD)
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
+ENDIF()
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
-  endif ()
-
-  #
-  # Build the rest of Albany and install everything
+if (BUILD_ALBANY_SFAD12)
+  # Configure the Albany build 
   #
 
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
+    "-DENABLE_PERFORMANCE_TESTS:BOOL=OFF"
+    "-DALBANY_LIBRARIES_ONLY=OFF"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DENABLE_FAD_TYPE:STRING='SFad'"
+    "-DALBANY_SFAD_SIZE=12"
+    "-DDISABLE_ALBANY_TESTS:BOOL=ON"
+    )
+  
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad12")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSFad12)
+  endif ()
 
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad12"
+    SOURCE "/home/projects/albany/waterman/repos/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    )
+ENDIF()
 
+if (CTEST_DO_SUBMIT)
+  ctest_submit (PARTS Configure
+    RETURN_VALUE  S_HAD_ERROR
+    )
+
+  if (S_HAD_ERROR)
+    message ("Cannot submit Albany configure results!")
+  endif ()
+endif ()
+
+
+if (CTEST_DO_SUBMIT)
+  ctest_submit (PARTS Configure
+    RETURN_VALUE  S_HAD_ERROR
+    )
+
+  if (S_HAD_ERROR)
+    message ("Cannot submit Albany configure results!")
+  endif ()
+endif ()
+
+#
+# Build the rest of Albany and install everything
+#
+
+set (CTEST_BUILD_TARGET all)
+#set (CTEST_BUILD_TARGET install)
+
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+
+IF (BUILD_ALBANY_SFAD4)
+  CTEST_BUILD(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad4"
+    RETURN_VALUE  HAD_ERROR
+    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+    APPEND
+    )
+ENDIF()
+IF (BUILD_ALBANY_SFAD6)
+  CTEST_BUILD(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad6"
+    RETURN_VALUE  HAD_ERROR
+    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+    APPEND
+    )
+ENDIF()
+IF (BUILD_ALBANY_SFAD8)
   CTEST_BUILD(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
     )
+ENDIF()
+IF (BUILD_ALBANY_SFAD12)
+  CTEST_BUILD(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad12"
+    RETURN_VALUE  HAD_ERROR
+    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+    APPEND
+    )
+ENDIF()
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
+if (CTEST_DO_SUBMIT)
+  ctest_submit (PARTS Build
+    RETURN_VALUE  S_HAD_ERROR
+    )
 
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany build results!")
-    endif ()
-
+  if (S_HAD_ERROR)
+    message ("Cannot submit Albany build results!")
   endif ()
 
-  if (HAD_ERROR)
-    message ("Cannot build Albany!")
-  endif ()
+endif ()
 
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Albany build. Exiting!")
-  endif ()
+if (HAD_ERROR)
+  message ("Cannot build Albany!")
+endif ()
+
+if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+  message ("Encountered build errors in Albany build. Exiting!")
+endif ()
   
-  #
-  # Run Albany tests
-  #
+#
+# Run Albany tests
+#
 
-  set (CTEST_TEST_TIMEOUT 1500)
+set (CTEST_TEST_TIMEOUT 1500)
+IF (BUILD_ALBANY_SFAD4)
+  CTEST_TEST (
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad4"
+    RETURN_VALUE HAD_ERROR)
+ENDIF()
+IF (BUILD_ALBANY_SFAD6)
+  CTEST_TEST (
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad6"
+    RETURN_VALUE HAD_ERROR)
+ENDIF()
+IF (BUILD_ALBANY_SFAD8)
   CTEST_TEST (
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad"
     RETURN_VALUE HAD_ERROR)
+ENDIF()
+IF (BUILD_ALBANY_SFAD12)
+  CTEST_TEST (
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad12"
+    RETURN_VALUE HAD_ERROR)
+ENDIF()
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
+if (CTEST_DO_SUBMIT)
+  ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
 
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany test results!")
-    endif ()
+  if (S_HAD_ERROR)
+    message ("Cannot submit Albany test results!")
   endif ()
+endif ()
 
-
-endif()
