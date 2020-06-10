@@ -5,7 +5,10 @@ Nightly, blake.sandia.gov, blake-serial-Trilinos
 Nightly, blake.sandia.gov, blake-openmp-Trilinos
 Nightly, blake.sandia.gov, blake-serial-Albany
 Nightly, blake.sandia.gov, blake-openmp-Albany
-Nightly, blake.sandia.gov, blake-serial-sfad-Albany
+Nightly, blake.sandia.gov, blake-serial-sfad4-Albany
+Nightly, blake.sandia.gov, blake-serial-sfad6-Albany
+Nightly, blake.sandia.gov, blake-serial-sfad8-Albany
+Nightly, blake.sandia.gov, blake-serial-sfad12-Albany
 Nightly, blake.sandia.gov, blake-serial-sfad-Albany-PerfTests
 Nightly, camobap.ca.sandia.gov, fedora31-gcc9.3.1-Release-Albany
 Nightly, camobap.ca.sandia.gov, fedora31-gcc9.3.1-Release-Cism-Albany
@@ -37,5 +40,8 @@ Nightly, skybridge-login5, skybridge-login5-trilinos
 Nightly, skybridge-login5, skybridge-login5-albany
 Nightly, waterman.sandia.gov, waterman-CUDA-Trilinos
 Nightly, waterman.sandia.gov, waterman-CUDA-Albany
-Nightly, waterman.sandia.gov, waterman-CUDA-Albany-SFAD 
+Nightly, waterman.sandia.gov, waterman-CUDA-Albany-SFAD4 
+Nightly, waterman.sandia.gov, waterman-CUDA-Albany-SFAD6
+Nightly, waterman.sandia.gov, waterman-CUDA-Albany-SFAD8
+Nightly, waterman.sandia.gov, waterman-CUDA-Albany-SFAD12
 Nightly, waterman.sandia.gov, waterman-CUDA-Albany-Perf-Tests
