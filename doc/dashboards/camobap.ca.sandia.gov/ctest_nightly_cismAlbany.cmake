@@ -181,7 +181,7 @@ if (BUILD_CISM_PISCEES)
     "-DALBANY_LANDICE_CTEST:BOOL=ON"
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbanyInstall"
     "-DCISM_MPI_BASE_DIR=/usr/lib64/openmpi"
-    "-DCISM_NETCDF_DIR=/home/ikalash/albany-tpls-gcc-9.3.1"
+    "-DCISM_NETCDF_DIR=/nightlyCDash/albany-tpls-gcc-10.1.1"
     "-DCISM_NETCDF_LIBS='netcdff'"
     "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
