@@ -1,8 +1,6 @@
 #!/bin/sh
 
-cd /home/ikalash/nightlyCDash
-
-export PATH=$PATH:/usr/lib64/openmpi/bin:/home/ikalash/Install/ParaView-4.3.1-Linux-64bit/bin:/home/ikalash/Install:/home/ikalash/Install/Cubit:/home/ikalash/Install/R2015a/bin:/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build-openmp/install
+cd /nightlyCDash
 
 export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib
 export OMP_NUM_THREADS=2
@@ -12,9 +10,9 @@ export OMP_PROC_BIND=spread
 export https_proxy="https://wwwproxy.ca.sandia.gov:80"
 export http_proxy="http://wwwproxy.ca.sandia.gov:80"
 
-LOG_FILE=/home/ikalash/nightlyCDash/nightly_log_kokkosnode_openmp.txt
+LOG_FILE=/nightlyCDash/nightly_log_kokkosnode_openmp.txt
 
-eval "env  TEST_DIRECTORY=/home/ikalash/nightlyCDash SCRIPT_DIRECTORY=/home/ikalash/nightlyCDash ctest -VV -S /home/ikalash/nightlyCDash/ctest_nightly_kokkosnode_openmp.cmake" > $LOG_FILE 2>&1
+eval "env  TEST_DIRECTORY=/nightlyCDash SCRIPT_DIRECTORY=/nightlyCDash ctest -VV -S /nightlyCDash/ctest_nightly_kokkosnode_openmp.cmake" > $LOG_FILE 2>&1
 
 # Copy a basic installation to /projects/albany for those who like a nightly
 # build.
