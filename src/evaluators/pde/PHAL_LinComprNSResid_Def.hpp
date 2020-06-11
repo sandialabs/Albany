@@ -101,11 +101,11 @@ if (baseFlowData.size()!=numDims+2) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::E
                                   "baseFlow data should have length numDims + 2 =  " << numDims+2 << "." << std::endl);} 
 
 
-if (eqn_type == EULER & vecDim != numDims+1) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+if ((eqn_type == EULER) && (vecDim != numDims+1)) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in PHAL::LinComprNS constructor:  " <<
                                   "Invalid Parameter vecDim.  vecDim should be numDims + 1 = " << numDims + 1 << " for Euler equations." << std::endl);}  
 
-if (eqn_type == NS & vecDim != numDims+2) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+if ((eqn_type == NS) && (vecDim != numDims+2)) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in PHAL::LinComprNS constructor:  " <<
                                   "Invalid Parameter vecDim.  vecDim should be numDims + 2 = " << numDims + 2 << " for Navier-Stokes equations." << std::endl);}  
 
