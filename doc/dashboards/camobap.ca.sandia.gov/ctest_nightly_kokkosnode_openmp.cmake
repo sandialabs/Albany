@@ -24,7 +24,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora31-gcc9.3.1-${CTEST_BUILD_CONFIGURATION}-Openmp-Albany")
+set (CTEST_BUILD_NAME "fedora32-gcc10.1.1-${CTEST_BUILD_CONFIGURATION}-Openmp-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -168,16 +168,17 @@ endif ()
 if (BUILD_ALBFUNCTOR_OPENMP)
   # ALBANY_KOKKOS_UNDER_DEVELOPMENT build with OpenMP KokkosNode
 
-  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build-openmp/install")
+  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-openmp/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_UNIT_TESTS:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA:BOOL=ON"
-    "-DSEACAS_EPU=/home/ikalash/Trilinos/seacas-build/install/bin/epu"
-    "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"
-    "-DSEACAS_ALGEBRA=/home/ikalash/Trilinos/seacas-build/install/bin/algebra"
+    "-DSEACAS_EPU=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu"
+    "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
+    "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
+    "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
     "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"

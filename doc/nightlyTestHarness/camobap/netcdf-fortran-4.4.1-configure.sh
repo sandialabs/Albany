@@ -1,3 +1,3 @@
 
   
-./configure --disable-fortran-type-check --prefix=/home/ikalash/albany-tpls-gcc-9.3.1 FLAGS=-I/home/ikalash/albany-tpls-gcc-9.3.1/include LDFLAGS=-L/home/ikalash/albany-tpls-gcc-9.3.1/lib
+./configure --disable-fortran-type-check --prefix=/nightlyCDash/albany-tpls-gcc-10.1.1 FLAGS=-I/nightlyCDash/albany-tpls-gcc-10.1.1/include LDFLAGS=-L/nightlyCDash/albany-tpls-gcc-10.1.1/lib

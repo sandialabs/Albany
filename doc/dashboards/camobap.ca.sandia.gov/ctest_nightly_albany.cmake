@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora31-gcc9.3.1-${CTEST_BUILD_CONFIGURATION}-Albany")
+set (CTEST_BUILD_NAME "fedora32-gcc10.1.1-${CTEST_BUILD_CONFIGURATION}-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -174,7 +174,7 @@ if (BUILD_ALBANY)
   # Builds everything!
   #
 
-  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -186,10 +186,10 @@ if (BUILD_ALBANY)
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
-    "-DSEACAS_EPU=/home/ikalash/Trilinos/seacas-build/install/bin/epu"
-    "-DSEACAS_DECOMP=/home/ikalash/Trilinos/seacas-build/install/bin/decomp"
-    "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"
-    "-DSEACAS_ALGEBRA=/home/ikalash/Trilinos/seacas-build/install/bin/algebra"
+    "-DSEACAS_EPU=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu"
+    "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
+    "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
+    "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DINSTALL_ALBANY:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbanyInstall"
