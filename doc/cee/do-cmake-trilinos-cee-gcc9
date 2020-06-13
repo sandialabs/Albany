@@ -1,0 +1,189 @@
+#!/bin/bash
+
+#Warning: this will not work on cee-compute nodes <21.  
+#Script has only been testsed on cee-compute025 and cee-compute026. 
+#module load sems-env
+#module load sems-cmake 
+
+# Pick up CMake (only if /projects/albany/bin is not already in path)
+[[ ":$PATH:" != *":/projects/albany/bin:"* ]] && PATH="${PATH}:/projects/albany/bin"
+export PATH
+
+# Grab the GCC 9.1.0 TPLs (again, only if not already on LD_LIBRARY_PATH)
+[[ ":$LD_LIBRARY_PATH:" != *":/projects/albany/gcc-9.1.0/lib:"* ]] && LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/projects/albany/gcc-9.1.0/lib"
+[[ ":$LD_LIBRARY_PATH:" != *":/projects/albany/gcc-9.1.0/lib64:"* ]] && LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/projects/albany/gcc-9.1.0/lib64"
+export LD_LIBRARY_PATH
+  
+if [ $# -ne 1 ]; then
+   echo "Usage: $0 -d (debug)"
+   echo "Usage: $0 -r (release)"
+   exit 1
+elif [ $1 = "-d" ]; then
+   INSTALL_DIR=/projects/albany/trilinos/MPI_GCC9_DBG
+   BTYPE=DEBUG
+   CCFLAGS="-g -ggdb -O0"
+   CFLAGS="-g -ggdb -O0"
+   FFLAGS="-g -ggdb -O0 -Wa,-q"
+elif [ $1 = "-r" ]; then
+   INSTALL_DIR=/projects/albany/trilinos/MPI_GCC9_REL
+   BTYPE=RELEASE
+   CCFLAGS="-O3 -march=native -DNDEBUG"
+   CFLAGS="-O3 -march=native -DNDEBUG"
+   FFLAGS="-O3 -march=native -DNDEBUG -Wa,-q"
+else
+   echo "Usage: $0 -d (debug)"
+   echo "Usage: $0 -r (release)"
+   exit 1
+fi
+
+export TRILINOS_HOME=/projects/albany/src/Trilinos
+BUILD_DIR=`pwd`
+GCC_DIR=/projects/albany/gcc-9.1.0
+BOOST_DIR=${GCC_DIR}
+LIB_DIR=${GCC_DIR}
+MPI_BASE_DIR=${GCC_DIR}
+NETCDF=${GCC_DIR}
+HDFDIR=${GCC_DIR}
+PARMETISDIR=${GCC_DIR}
+SUPERLUDIR=${GCC_DIR}/SuperLU_4.3
+MKL_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2020.1.217
+LABLAS_LIBRARIES="-L$MKL_PATH/lib/intel64 -Wl,--start-group $MKL_PATH/mkl/lib/intel64/libmkl_intel_lp64.a $MKL_PATH/mkl/lib/intel64/libmkl_core.a $MKL_PATH/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group"
+
+#print all variables
+#cmake -LAH
+
+cmake \
+    -Wno-dev \
+    -D CMAKE_BUILD_TYPE:STRING=$BTYPE \
+    -D CMAKE_CXX_COMPILER:PATH=${MPI_BASE_DIR}/bin/mpicxx \
+    -D CMAKE_C_COMPILER:PATH=${MPI_BASE_DIR}/bin/mpicc \
+    -D CMAKE_Fortran_COMPILER:PATH=${MPI_BASE_DIR}/bin/mpifort \
+    -D CMAKE_CXX_FLAGS:STRING="$CCFLAGS" \
+    -D CMAKE_C_FLAGS:STRING="$CFLAGS" \
+    -D CMAKE_Fortran_FLAGS:STRING="$FFLAGS" \
+    -D Trilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+    -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+    -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
+    -D TPL_ENABLE_MPI:BOOL=ON \
+    -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
+    -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
+\
+    -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+    -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+    -D Trilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON \
+    -D Trilinos_ENABLE_TESTS:BOOL=OFF \
+    -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+    -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
+\
+    -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+    -D Trilinos_ENABLE_Amesos:BOOL=ON \
+    -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+    -D Amesos2_ENABLE_KLU2:BOOL=ON \
+    -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+    -D Trilinos_ENABLE_Belos:BOOL=ON \
+    -D Trilinos_ENABLE_Epetra:BOOL=ON \
+    -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+    -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
+\
+    -D Trilinos_ENABLE_ROL:BOOL=ON \
+    -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
+    -D Trilinos_ENABLE_ML:BOOL=ON \
+    -D Trilinos_ENABLE_MueLu:BOOL=ON \
+    -D MueLu_ENABLE_Tutorial:BOOL=OFF \
+    -D Trilinos_ENABLE_Moertel:BOOL=OFF \
+    -D Trilinos_ENABLE_NOX:BOOL=ON \
+    -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+    -D Trilinos_ENABLE_Sacado:BOOL=ON \
+    -D Trilinos_ENABLE_SCOREC:BOOL=ON \
+    -D Trilinos_ENABLE_SEACAS:BOOL=ON \
+    -D Trilinos_ENABLE_Shards:BOOL=ON \
+    -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
+    -D Trilinos_ENABLE_STK:BOOL=ON \
+    -D Trilinos_ENABLE_STKSearch:BOOL=ON \
+    -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+    -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+    -D Trilinos_ENABLE_Isorropia:BOOL=ON \
+    -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+    -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+    -D Trilinos_ENABLE_Piro:BOOL=ON \
+    -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+    -D Trilinos_ENABLE_Teko:BOOL=ON \
+    -D Trilinos_ENABLE_Tempus:BOOL=ON \
+    -D Trilinos_ENABLE_Thyra:BOOL=ON \
+    -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+\
+    -D Rythmos_ENABLE_DEBUG:BOOL=ON \
+    -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
+    -D Tpetra_INST_INT_LONG:BOOL=OFF \
+    -D Tpetra_INST_INT_INT:BOOL=OFF \
+    -D Tpetra_INST_DOUBLE:BOOL=ON \
+    -D Tpetra_INST_FLOAT:BOOL=OFF \
+    -D Tpetra_INST_COMPLEX_FLOAT:BOOL=OFF \
+    -D Tpetra_INST_COMPLEX_DOUBLE:BOOL=OFF \
+    -D Tpetra_INST_INT_UNSIGNED:BOOL=OFF \
+    -D Tpetra_INST_INT_UNSIGNED_LONG:BOOL=OFF \
+    -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
+    -D Teuchos_ENABLE_COMPLEX:BOOL=OFF \
+    -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
+    -D Phalanx_INDEX_SIZE_TYPE:STRING="KOKKOS" \
+    -D Kokkos_ENABLE_SERIAL:BOOL=ON \
+    -D Kokkos_ENABLE_OPENMP:BOOL=OFF \
+    -D Kokkos_ENABLE_PTHREAD:BOOL=OFF \
+\
+    -D SEACAS_ENABLE_SEACASSVDI:BOOL=OFF \
+    -D Trilinos_ENABLE_SEACASFastq:BOOL=OFF \
+    -D Trilinos_ENABLE_SEACASBlot:BOOL=OFF \
+    -D Trilinos_ENABLE_SEACASPLT:BOOL=OFF \
+    -D TPL_ENABLE_X11:BOOL=OFF \
+    -D TPL_ENABLE_Matio:BOOL=OFF \
+\
+    -D TPL_ENABLE_Pthread:BOOL=OFF \
+\
+    -D TPL_ENABLE_Boost:BOOL=ON \
+    -D TPL_ENABLE_BoostLib:BOOL=ON \
+    -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
+    -D Boost_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
+    -D Boost_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
+    -D BoostLib_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
+    -D BoostLib_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
+    -D BoostAlbLib_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
+    -D BoostAlbLib_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
+\
+    -D TPL_Netcdf_PARALLEL:BOOL=ON \
+    -D TPL_ENABLE_Netcdf:STRING=ON \
+    -D Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
+    -D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib \
+    -D TPL_ENABLE_Pnetcdf:BOOL=ON \
+    -D Pnetcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
+    -D Pnetcdf_LIBRARY_DIRS=$NETCDF/lib \
+\
+    -D TPL_ENABLE_HDF5:STRING=ON \
+    -D HDF5_INCLUDE_DIRS:PATH="${HDFDIR}/include" \
+    -D HDF5_LIBRARY_DIRS:PATH="${HDFDIR}/lib" \
+\
+    -D TPL_ENABLE_Zlib:STRING=ON \
+    -D Zlib_INCLUDE_DIRS:PATH=$LIB_DIR/include \
+    -D Zlib_LIBRARY_DIRS:PATH=$LIB_DIR/lib \
+\
+    -D TPL_ENABLE_SuperLU:STRING=ON \
+    -D SuperLU_INCLUDE_DIRS:STRING="${SUPERLUDIR}/include" \
+    -D SuperLU_LIBRARY_DIRS:STRING="${SUPERLUDIR}/lib" \
+\
+    -D TPL_ENABLE_BLAS:STRING=ON \
+    -D TPL_ENABLE_LAPACK:STRING=ON \
+    -D TPL_BLAS_LIBRARIES:STRING="$LABLAS_LIBRARIES" \
+    -D TPL_LAPACK_LIBRARIES:STRING="$LABLAS_LIBRARIES" \
+\
+    -D TPL_ENABLE_ParMETIS:STRING=ON \
+    -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}/include" \
+    -D ParMETIS_LIBRARY_DIRS:PATH="${PARMETISDIR}/lib" \
+\
+    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${LIB_DIR}/lib -L${LIB_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran -Wl,-rpath,${LIB_DIR}/lib:${LIB_DIR}/lib64" \
+    -D CMAKE_SKIP_RPATH:BOOL=ON \
+\
+    -D Trilinos_ENABLE_TriKota:BOOL=OFF \
+\
+$EXTRA_ARGS \
+${TRILINOS_HOME}
+
+exit 0

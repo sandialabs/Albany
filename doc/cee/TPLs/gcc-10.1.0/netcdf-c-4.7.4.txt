@@ -1,0 +1,30 @@
+This readme contains the steps to build netcdf-c-4.7.4 as installed in
+
+/projects/albany/gcc-10.1.0
+
+Source is at
+
+/projects/albany/src/netcdf-c-4.7.4
+
+1. Edit include/netcdf.h, near line 273, to be:
+
+#define NC_MAX_DIMS     65536 /* not enforced after 4.5.0 */
+#define NC_MAX_ATTRS    8192 /* not enforced after 4.5.0 */
+#define NC_MAX_VARS     524288 /* not enforced after 4.5.0 */
+#define NC_MAX_NAME     256
+#define NC_MAX_VAR_DIMS 8 /**< max per variable dimensions */
+
+2. cd into the above and type:
+
+./configure CC=/projects/albany/gcc-10.1.0/bin/mpicc FC=/projects/albany/gcc-10.1.0/bin/mpifort CXX=/projects/albany/gcc-10.1.0/bin/mpicxx CPPFLAGS="-fPIC -I/projects/albany/gcc-10.1.0/include -O3 -march=native" CFLAGS="-fPIC -I/projects/albany/gcc-10.1.0/include -O3 -march=native" FCFLAGS="-fPIC -I/projects/albany/gcc-10.1.0/include -O3 -march=native" LDFLAGS="-fPIC -I/projects/albany/gcc-10.1.0/lib -O3 -march=native" --prefix=/projects/albany/gcc-10.1.0 --disable-doxygen --enable-netcdf4 --enable-pnetcdf
+
+make -j 8
+
+make -j 8 install
+
+The gcc-10.1.0 gfortran compiler will not compile the fortran interface in this version of netcdf.
+
+The netcdf people say the above edit is not needed and has no effect. Why is it there then? Greg Sjaardema said to me that
+these changes are needed, and I have experienced errors and failures on large exodus files if you do not do them. So I do them.
+
+Glen Hansen - gahanse@sandia.gov

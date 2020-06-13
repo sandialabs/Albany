@@ -1,10 +1,10 @@
-This readme contains the steps to build netcdf-c-4.73 as installed in
+This readme contains the steps to build netcdf-c-4.7.4 as installed in
 
 /projects/albany/gcc-9.1.0
 
 Source is at
 
-/projects/albany/src/netcdf-c-4.7.3
+/projects/albany/src/netcdf-c-4.7.4
 
 1. Edit include/netcdf.h, near line 273, to be:
 
@@ -16,11 +16,13 @@ Source is at
 
 2. cd into the above and type:
 
-./configure CC=mpicc FC=mpifort CXX=mpicxx CPPFLAGS="-fPIC -I/projects/albany/gcc-9.1.0/include -O3 -march=native" CFLAGS="-fPIC -I/projects/albany/gcc-9.1.0/include -O3 -march=native" FCFLAGS="-fPIC -I/projects/albany/gcc-9.1.0/include -O3 -march=native" LDFLAGS="-fPIC -I/projects/albany/gcc-9.1.0/lib -O3 -march=native" --prefix=/projects/albany/gcc-9.1.0 --disable-doxygen --enable-netcdf4 --enable-pnetcdf --enable-remote-fortran-bootstrap
+./configure CC=/projects/albany/gcc-9.1.0/bin/mpicc FC=/projects/albany/gcc-9.1.0/bin/mpifort CXX=/projects/albany/gcc-9.1.0/bin/mpicxx CPPFLAGS="-fPIC -I/projects/albany/gcc-9.1.0/include -O3 -march=native" CFLAGS="-fPIC -I/projects/albany/gcc-9.1.0/include -O3 -march=native" FCFLAGS="-fPIC -I/projects/albany/gcc-9.1.0/include -O3 -march=native" LDFLAGS="-fPIC -I/projects/albany/gcc-9.1.0/lib -O3 -march=native" --prefix=/projects/albany/gcc-9.1.0 --disable-doxygen --enable-netcdf4 --enable-pnetcdf --enable-remote-fortran-bootstrap
 
 make -j 8
 
 make -j 8 install
+
+( cd netcdf-fortran ; make clean )
 
 make -j 8 build-netcdf-fortran
 

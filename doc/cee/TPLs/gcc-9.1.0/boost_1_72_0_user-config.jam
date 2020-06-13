@@ -1,2 +1,2 @@
-using mpi : /projects/albany/gcc-9.1.0/bin/mpicxx ;
-
+using mpi : /projects/albany/gcc-9.1.0/bin/mpicxx : <cxxflags>"-O3 -march=native -DNDEBUG" <include>/projects/albany/gcc-9.1.0/include <library-path>/projects/albany/gcc-9.1.0/lib <library-path>/projects/albany/gcc-9.1.0/lib64 ;
+using gcc : : /projects/albany/gcc-9.1.0/bin/g++ : <cxxflags>"-O3 -march=native -DNDEBUG" ;

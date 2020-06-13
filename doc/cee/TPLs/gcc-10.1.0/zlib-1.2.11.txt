@@ -1,0 +1,15 @@
+This readme contains the steps to build zlib-1.2.11 as installed in
+
+/projects/albany/gcc-10.1.0
+
+Source is at
+
+/projects/albany/src/zlib-1.2.11
+
+1. mkdir build
+2. cp zlib-1.2.11_do-configure to /projects/albany/src/zlib-1.2.11/build/do-configure
+3. ./do-configure
+
+make -j 8
+make install
+

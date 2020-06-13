@@ -2,17 +2,26 @@
   
 #Warning: this will not work on cee-compute nodes <21.  
 #Script has only been testsed on cee-compute025 and cee-compute026. 
-module load sems-env
-module load sems-cmake 
+#module load sems-env
+#module load sems-cmake 
+
+# Pick up CMake (only if /projects/albany/bin is not already in path)
+[[ ":$PATH:" != *":/projects/albany/bin:"* ]] && PATH="${PATH}:/projects/albany/bin"
+export PATH
+
+# Grab the GCC 9.1.0 TPLs (again, only if not already on LD_LIBRARY_PATH)
+[[ ":$LD_LIBRARY_PATH:" != *":/projects/albany/gcc-9.1.0/lib:"* ]] && LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/projects/albany/gcc-9.1.0/lib"
+[[ ":$LD_LIBRARY_PATH:" != *":/projects/albany/gcc-9.1.0/lib64:"* ]] && LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/projects/albany/gcc-9.1.0/lib64"
+export LD_LIBRARY_PATH
   
 if [ $# -ne 1 ]; then
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"
    exit 1
 elif [ $1 = "-d" ]; then
-   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_DBG
+   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_GCC9_DBG
 elif [ $1 = "-r" ]; then
-   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_REL
+   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_GCC9_REL
 else
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"

@@ -1,0 +1,50 @@
+#!/bin/bash
+  
+#Warning: this will not work on cee-compute nodes <21.  
+#Script has only been testsed on cee-compute025 and cee-compute026. 
+#module load sems-env
+#module load sems-cmake 
+
+# Pick up CMake (only if /projects/albany/bin is not already in path)
+[[ ":$PATH:" != *":/projects/albany/bin:"* ]] && PATH="${PATH}:/projects/albany/bin"
+export PATH
+
+# Grab the GCC 10.1.0 TPLs (again, only if not already on LD_LIBRARY_PATH)
+[[ ":$LD_LIBRARY_PATH:" != *":/projects/albany/gcc-10.1.0/lib:"* ]] && LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/projects/albany/gcc-10.1.0/lib"
+[[ ":$LD_LIBRARY_PATH:" != *":/projects/albany/gcc-10.1.0/lib64:"* ]] && LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/projects/albany/gcc-10.1.0/lib64"
+export LD_LIBRARY_PATH
+  
+if [ $# -ne 1 ]; then
+   echo "Usage: $0 -d (debug)"
+   echo "Usage: $0 -r (release)"
+   exit 1
+elif [ $1 = "-d" ]; then
+   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_GCC10_DBG
+elif [ $1 = "-r" ]; then
+   export TRILINOS_INSTALL_DIR=/projects/albany/trilinos/MPI_GCC10_REL
+else
+   echo "Usage: $0 -d (debug)"
+   echo "Usage: $0 -r (release)"
+   exit 1
+fi
+
+export ALBANY_HOME=~/Codes/Albany
+export ALB_ENABLE_LANDICE=ON
+export ALB_DEBUG=OFF
+export ALB_ENABLE_CHECK_FPE=ON
+export ALB_ENABLE_PERF_TESTS=ON
+export ALB_VERBOSE=OFF
+
+cmake \
+      -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINOS_INSTALL_DIR" \
+      -D USE_NEW_POLICY_CMP0060=NEW \
+      -D ENABLE_LANDICE:BOOL=${ALB_ENABLE_LANDICE} \
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=${ALB_VERBOSE} \
+      -D ENABLE_DEBUGGING:BOOL=${ALB_DEBUG} \
+      -D ENABLE_CHECK_FPE:BOOL=${ALB_ENABLE_CHECK_FPE} \
+      -D ENABLE_STRONG_FPE_CHECK:BOOL=${ALB_ENABLE_CHECK_FPE} \
+      -D ENABLE_PERFORMANCE_TESTS:BOOL=${ALB_ENABLE_PERF_TESTS} \
+      -D ALBANY_CTEST_TIMEOUT:INTEGER=70 \
+\
+${ALBANY_HOME}
+

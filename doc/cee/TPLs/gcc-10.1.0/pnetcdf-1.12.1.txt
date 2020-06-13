@@ -1,0 +1,14 @@
+This readme contains the steps to build pnetcdf-1.12.1 as installed in
+
+/projects/albany/gcc-10.1.0
+
+Source is at
+
+/projects/albany/src/pnetcdf-1.12.1
+
+Note: gcc-10.1.0 - gfortran hase compile errors so I disabled the fortran interface
+
+1. ./configure CC=/projects/albany/gcc-10.1.0/bin/mpicc CXX=/projects/albany/gcc-10.1.0/bin/mpicxx CXXFLAGS="-O3 -fPIC -DNDEBUG -march=native" CFLAGS="-O3 -fPIC -DNDEBUG -march=native"  --disable-fortran --prefix=/projects/albany/gcc-10.1.0
+
+2. make -j 8
+3. make install

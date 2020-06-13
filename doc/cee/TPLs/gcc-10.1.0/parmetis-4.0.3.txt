@@ -1,6 +1,6 @@
 This readme contains the steps to build parmetis-4.0.3 as installed in
 
-/projects/albany/gcc-9.1.0
+/projects/albany/gcc-10.1.0
 
 Source is at
 

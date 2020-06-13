@@ -210,6 +210,8 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
 
       TEUCHOS_TEST_FOR_EXCEPTION (mesh_vector_states.find(tmp_str)!=mesh_vector_states.end(), std::logic_error,
                                   "Error! Another layered state with the same name already exists.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (dim.back()<=0, std::logic_error, 
+                                  "Error! Invalid layer dimension for state " + st.name + ".\n");
       mesh_vector_states[tmp_str] = std::vector<double>(dim.back());
     }
   }

@@ -6,7 +6,7 @@ Source is at
 
 /projects/albany/src/hdf5-1.10.6
 
-1. ./configure CC=mpicc FC=mpifort CXX=mpicxx CXXFLAGS="-O3 -fPIC -DNDEBUG -march=native" CFLAGS="-O3 -fPIC -DNDEBUG -march=native" FCFLAGS="-O3 -fPIC -DNDEBUG -march=native" --enable-parallel --with-zlib=/projects/albany/gcc-9.1.0 --prefix=/projects/albany/gcc-9.1.0
+1. ./configure CC=/projects/albany/gcc-9.1.0/bin/mpicc FC=/projects/albany/gcc-9.1.0/bin/mpifort CXX=/projects/albany/gcc-9.1.0/bin/mpicxx CXXFLAGS="-O3 -fPIC -DNDEBUG -march=native" CFLAGS="-O3 -fPIC -DNDEBUG -march=native" FCFLAGS="-O3 -fPIC -DNDEBUG -march=native" --enable-parallel --with-zlib=/projects/albany/gcc-9.1.0 --prefix=/projects/albany/gcc-9.1.0
 
 2. make -j 8
 3. make install

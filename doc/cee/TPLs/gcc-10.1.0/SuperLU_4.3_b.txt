@@ -1,6 +1,6 @@
 This readme contains the steps to build SuperLU_4.3_b as installed in
 
-/projects/albany/gcc-9.1.0
+/projects/albany/gcc-10.1.0
 
 Source is at
 
@@ -10,9 +10,9 @@ Source is at
 
 2. Need to manually make install paths for the software or the build will fail:
 
-  mkdir /projects/albany/gcc-9.1.0/SuperLU_4.3
-  mkdir /projects/albany/gcc-9.1.0/SuperLU_4.3/include
-  mkdir /projects/albany/gcc-9.1.0/SuperLU_4.3/lib
+  mkdir /projects/albany/gcc-10.1.0/SuperLU_4.3
+  mkdir /projects/albany/gcc-10.1.0/SuperLU_4.3/include
+  mkdir /projects/albany/gcc-10.1.0/SuperLU_4.3/lib
 
 3. make (do not use parallel make or the build might fail)
 
@@ -20,4 +20,4 @@ Source is at
 
 4. Need to manually install the headers
   cd SRC
-  cp *.h /projects/albany/gcc-9.1.0/SuperLU_4.3/include	
+  cp *.h /projects/albany/gcc-10.1.0/SuperLU_4.3/include	

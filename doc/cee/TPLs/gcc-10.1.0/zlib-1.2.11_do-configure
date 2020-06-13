@@ -1,0 +1,7 @@
+#!/bin/sh
+
+cmake \
+-DCMAKE_INSTALL_PREFIX=/projects/albany/gcc-10.1.0 \
+-DCMAKE_C_COMPILER=/projects/albany/gcc-10.1.0/bin/gcc \
+-DCMAKE_C_FLAGS="-O3 -march=native -m64 -fPIC" \
+..

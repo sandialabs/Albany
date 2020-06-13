@@ -2,21 +2,30 @@
 
 #Warning: this will not work on cee-compute nodes <21.  
 #Script has only been testsed on cee-compute025 and cee-compute026. 
-module load sems-env
-module load sems-cmake 
+#module load sems-env
+#module load sems-cmake 
+
+# Pick up CMake (only if /projects/albany/bin is not already in path)
+[[ ":$PATH:" != *":/projects/albany/bin:"* ]] && PATH="${PATH}:/projects/albany/bin"
+export PATH
+
+# Grab the GCC 10.1.0 TPLs (again, only if not already on LD_LIBRARY_PATH)
+[[ ":$LD_LIBRARY_PATH:" != *":/projects/albany/gcc-10.1.0/lib:"* ]] && LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/projects/albany/gcc-10.1.0/lib"
+[[ ":$LD_LIBRARY_PATH:" != *":/projects/albany/gcc-10.1.0/lib64:"* ]] && LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/projects/albany/gcc-10.1.0/lib64"
+export LD_LIBRARY_PATH
   
 if [ $# -ne 1 ]; then
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"
    exit 1
 elif [ $1 = "-d" ]; then
-   INSTALL_DIR=/projects/albany/trilinos/MPI_DBG
+   INSTALL_DIR=/projects/albany/trilinos/MPI_GCC10_DBG
    BTYPE=DEBUG
    CCFLAGS="-g -ggdb -O0"
    CFLAGS="-g -ggdb -O0"
    FFLAGS="-g -ggdb -O0 -Wa,-q"
 elif [ $1 = "-r" ]; then
-   INSTALL_DIR=/projects/albany/trilinos/MPI_REL
+   INSTALL_DIR=/projects/albany/trilinos/MPI_GCC10_REL
    BTYPE=RELEASE
    CCFLAGS="-O3 -march=native -DNDEBUG"
    CFLAGS="-O3 -march=native -DNDEBUG"
@@ -29,14 +38,15 @@ fi
 
 export TRILINOS_HOME=/projects/albany/src/Trilinos
 BUILD_DIR=`pwd`
-BOOST_DIR=/projects/albany/gcc-9.1.0
-LIB_DIR=/projects/albany/gcc-9.1.0
-MPI_BASE_DIR=/projects/albany/gcc-9.1.0
-NETCDF=/projects/albany/gcc-9.1.0
-HDFDIR=/projects/albany/gcc-9.1.0
-PARMETISDIR=/projects/albany/gcc-9.1.0
-MKL_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281
-SUPERLUDIR=/projects/albany/gcc-9.1.0/SuperLU_4.3
+GCC_DIR=/projects/albany/gcc-10.1.0
+BOOST_DIR=${GCC_DIR}
+LIB_DIR=${GCC_DIR}
+MPI_BASE_DIR=${GCC_DIR}
+NETCDF=${GCC_DIR}
+HDFDIR=${GCC_DIR}
+PARMETISDIR=${GCC_DIR}
+SUPERLUDIR=${GCC_DIR}/SuperLU_4.3
+MKL_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2020.1.217
 LABLAS_LIBRARIES="-L$MKL_PATH/lib/intel64 -Wl,--start-group $MKL_PATH/mkl/lib/intel64/libmkl_intel_lp64.a $MKL_PATH/mkl/lib/intel64/libmkl_core.a $MKL_PATH/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group"
 
 #print all variables
@@ -45,6 +55,9 @@ LABLAS_LIBRARIES="-L$MKL_PATH/lib/intel64 -Wl,--start-group $MKL_PATH/mkl/lib/in
 cmake \
     -Wno-dev \
     -D CMAKE_BUILD_TYPE:STRING=$BTYPE \
+    -D CMAKE_CXX_COMPILER:PATH=${MPI_BASE_DIR}/bin/mpicxx \
+    -D CMAKE_C_COMPILER:PATH=${MPI_BASE_DIR}/bin/mpicc \
+    -D CMAKE_Fortran_COMPILER:PATH=${MPI_BASE_DIR}/bin/mpifort \
     -D CMAKE_CXX_FLAGS:STRING="$CCFLAGS" \
     -D CMAKE_C_FLAGS:STRING="$CFLAGS" \
     -D CMAKE_Fortran_FLAGS:STRING="$FFLAGS" \

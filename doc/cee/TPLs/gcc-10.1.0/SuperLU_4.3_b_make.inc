@@ -21,7 +21,7 @@ PLAT = _linux
 #
 #  The name of the libraries to be created/linked to
 #
-SuperLUroot	= /projects/albany/gcc-9.1.0/SuperLU_4.3
+SuperLUroot	= /projects/albany/gcc-10.1.0/SuperLU_4.3
 SUPERLULIB   	= $(SuperLUroot)/lib/libsuperlu_4.3.a
 TMGLIB       	= libtmglib.a
 
@@ -46,10 +46,10 @@ ARCH         = ar
 ARCHFLAGS    = cr
 RANLIB       = ranlib
 
-CC           = /projects/albany/gcc-9.1.0/bin/gcc
+CC           = /projects/albany/gcc-10.1.0/bin/gcc
 CFLAGS       = -DPRNTlevel=0 -O3 -fPIC -march=native
 NOOPTS       = 
-FORTRAN	     = /projects/albany/gcc-9.1.0/gfortran
+FORTRAN	     = /projects/albany/gcc-10.1.0/gfortran
 FFLAGS       = -O3 -fPIC -march=native
 LOADER       = $(CC)
 LOADOPTS     =

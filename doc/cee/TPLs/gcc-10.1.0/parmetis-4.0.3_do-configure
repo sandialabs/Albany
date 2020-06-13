@@ -1,14 +1,14 @@
 #!/bin/sh -x
 
 export metis=/projects/albany/src/parmetis-4.0.3/metis
-export inst_metis=/projects/albany/gcc-9.1.0
+export inst_metis=/projects/albany/gcc-10.1.0
 
 cmake \
 -DCMAKE_INSTALL_PREFIX=$inst_metis \
 -DMETIS_PATH=$metis \
 -DGKLIB_PATH=$metis/GKlib \
--DCMAKE_C_COMPILER=/projects/albany/gcc-9.1.0/bin/mpicc \
--DCMAKE_CXX_COMPILER=/projects/albany/gcc-9.1.0/bin/mpicxx \
+-DCMAKE_C_COMPILER=$inst_metis/bin/mpicc \
+-DCMAKE_CXX_COMPILER=$inst_metis/bin/mpicxx \
 -DCMAKE_C_FLAGS="-O3 -DNDEBUG -fPIC -march=native" \
 -DCMAKE_CXX_FLAGS="-O3 -DNDEBUG -fPIC -march=native"  \
 ..

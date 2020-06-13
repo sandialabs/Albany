@@ -1,0 +1,13 @@
+This readme contains the steps to build boost_1_72_0 as installed in
+
+/projects/albany/gcc-10.1.0
+
+Source is at
+
+/projects/albany/src/boost_1_72_0
+
+1. Copy the "boost_1_72_0_user-config.jam" to ~/user-config.jam
+
+   ./bootstrap.sh --with-libraries=all --prefix=/projects/albany/gcc-10.1.0
+  ./b2 -j 8
+  ./b2 -j 8 install
