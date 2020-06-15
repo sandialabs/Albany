@@ -3,9 +3,8 @@
 
 #IKT, WARNING: the following 2 lines are specific to Irina Tezaur's machine, camobap!
 #They need to be changed for other machines! 
-export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib:/usr/lib:/home/ikalash/oldNetcdfLibs
-export PATH=$PATH:/home/ikalash/Trilinos/seacas-build/install/bin:/usr/lib64/openmpi/bin:/home/ikalash/Install/ParaView-4.4.0-Qt4-Linux-64bit/bin:/home/ikalash/Install/Cubit:/home/ikalash/Install/R2015a/bin:/usr/local/netcdf/bin
-
+export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib:/usr/lib
+export PATH=$PATH:/install/ParaView-5.8.0-Linux-Sandia/bin:/install/cubit-15.4b:/usr/local/MATLAB/R2019b/bin:/install/seacas-utils:/usr/lib64/openmpi/bin
 
 rm -rf *exo*
 rm -rf albanyMesh/*exo*
@@ -15,7 +14,7 @@ rm -rf albanyMesh/*exo*
 # run cism-albany after modifying (if needed) the paths of the input nc "name" file and the "dycore_input_file" in the file inputFiles/cism-albanyT.config.
 cd inputFiles
 rm -rf *exo* 
-mpirun -np 8 ../cism_driver/cism_driver cism-albanyT.config
+mpiexec -np 8 ../cism_driver/cism_driver cism-albanyT.config
 epu --auto greenland_cism-albanyT.exo.8.0
 cd ..
 
