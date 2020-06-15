@@ -59,15 +59,17 @@ private:
   double rho_i;  // [kg m^{-3}]
   double g;      // [m s^{-2}]
 
+  const double pow3 = 1.0e3;
+
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-  typedef Kokkos::MDRangePolicy< ExecutionSpace, Kokkos::Rank<2> > HYDROSTATIC_PRESSURE_Policy;
+  typedef Kokkos::MDRangePolicy< ExecutionSpace, Kokkos::Rank<2> > Hydrostatic_Pressure_Policy;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i, const int& j) const;
-  
+
 };
 
 } // namespace LandIce

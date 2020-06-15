@@ -120,25 +120,24 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  // double pow6 = 1e6; //[k^{-2}], k=1000
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::parallel_for(Temperature_Policy({0,0}, {numNodes,workset.numCells}), *this);
+#else
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+  {
+    for (std::size_t node = 0; node < numNodes; ++node)
+    {
+      if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
+        temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
+      else
+        temperature(cell,node) = meltingTemp(cell,node);
 
-  // for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-  // {
-  //   for (std::size_t node = 0; node < numNodes; ++node)
-  //   {
-  //     if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-  //       temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
-  //     else
-  //       temperature(cell,node) = meltingTemp(cell,node);
+      correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
 
-  //     correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
-
-  //     diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
-  //   }
-  // }
-
-  Kokkos::parallel_for(TEMPERATURE_Policy({0,0}, {numNodes,workset.numCells}), *this);
-
+      diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
+    }
+  }
+#endif
 
   // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   // const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();

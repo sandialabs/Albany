@@ -135,71 +135,68 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   flux_reg_beta = flux_reg_list.get<double>("beta");
 }
 
-// template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
-// KOKKOS_INLINE_FUNCTION
-// void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
-// stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, ScalarT& vmax_z, 
-//   MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z, ScalarT& wSU) 
-// {
-//   for (std::size_t qp = 0; qp < numQPs; ++qp) {
-//       ScalarT w = verticalVel(cell,qp);
-//       ScalarT arg = Velocity(cell,qp,0)*Velocity(cell,qp,0) + Velocity(cell,qp,1)*Velocity(cell,qp,1) + w*w;
-//       ScalarT arg2 = 0.0; 
-//       if (arg > 0) arg2 = std::sqrt(arg); 
-//       vmax = deviceMax<ScalarT>(vmax, arg2);
-//       //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
-//       VelocityST val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
-//       VelocityST sqrtval = 0.0;
-//       if (val > 0.0)
-//         sqrtval = std::sqrt(val); 
+template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+KOKKOS_INLINE_FUNCTION
+void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
+stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, ScalarT& vmax_z, 
+  MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z, ScalarT& wSU) const {
+  for (std::size_t qp = 0; qp < numQPs; ++qp) {
+      ScalarT w = verticalVel(cell,qp);
+      ScalarT arg = Velocity(cell,qp,0)*Velocity(cell,qp,0) + Velocity(cell,qp,1)*Velocity(cell,qp,1) + w*w;
+      ScalarT arg2 = 0.0; 
+      if (arg > 0) arg2 = std::sqrt(arg); 
+      vmax = deviceMax<ScalarT>(vmax, arg2);
+      //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
+      VelocityST val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
+      VelocityST sqrtval = 0.0;
+      if (val > 0.0)
+        sqrtval = std::sqrt(val); 
 
-//       vmax_xy = deviceMax<VelocityST>(vmax_xy, sqrtval);
+      vmax_xy = deviceMax<VelocityST>(vmax_xy, sqrtval);
 
-//       vmax_z = deviceMax<ScalarT>( vmax_z,std::abs(w));
-//     }
+      vmax_z = deviceMax<ScalarT>( vmax_z,std::abs(w));
+    }
 
-//     for (std::size_t i = 0; i < numNodes; ++i)
-//     {
-//       diam = deviceMax<MeshScalarT>(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
-//                                                     coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,0,2)));
-//       diam_xy = deviceMax<MeshScalarT>(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),
-//                                                           coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
-//       diam_z = deviceMax<MeshScalarT>(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
-//     }
-// }
+    for (std::size_t i = 0; i < numNodes; ++i) {
+      diam = deviceMax<MeshScalarT>(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+                                                    coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,0,2)));
+      diam_xy = deviceMax<MeshScalarT>(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),
+                                                          coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
+      diam_z = deviceMax<MeshScalarT>(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
+    }
+}
 
-// template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
-// KOKKOS_INLINE_FUNCTION
-// void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
-// evaluateResidNode(int cell, int node) {
-//   Residual(cell,node) = 0.0;
+template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+KOKKOS_INLINE_FUNCTION
+void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
+evaluateResidNode(int cell, int node) const {
+  Residual(cell,node) = 0.0;
 
-//   Residual(cell,node) += powm3*basalResid(cell,node);  //go to zero in temperate region
+  Residual(cell,node) += powm3*basalResid(cell,node);  //go to zero in temperate region
 
-//   for (std::size_t qp = 0; qp < numQPs; ++qp)
-//   {
-//     if (needsDiss)
-//       Residual(cell,node) -= (diss(cell,qp))*wBF(cell,node,qp);
+  for (std::size_t qp = 0; qp < numQPs; ++qp) {
+    if (needsDiss)
+      Residual(cell,node) -= (diss(cell,qp))*wBF(cell,node,qp);
 
-//     ScalarT w = verticalVel(cell,qp);
-//     ScalarT scale = 0.5 - 0.5*tanh(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)));
-//     Residual(cell,node) += scale * K_i * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-//         EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-//         EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
+    ScalarT w = verticalVel(cell,qp);
+    ScalarT scale = 0.5 - 0.5*tanh(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)));
+    Residual(cell,node) += scale * K_i * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+        EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
+        EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-//     Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
-//             Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
+    Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
+            Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
 
-//     Residual(cell,node) += powm6*(1 - scale) * k_i * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-//         meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-//         meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
+    Residual(cell,node) += powm6*(1 - scale) * k_i * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+        meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
+        meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-//     Residual(cell,node) -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp) +
-//                             nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-//                                 phiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-//                                 phiGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-//   }
-// }
+    Residual(cell,node) -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp) +
+                            nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+                                phiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
+                                phiGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
+  }
+}
 
 template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
 KOKKOS_INLINE_FUNCTION
@@ -211,64 +208,12 @@ operator() (const Upwind_Stabilization_Tag& tag, const int& cell) const{
   MeshScalarT diam = 0.0, diam_xy = 0.0, diam_z = 0.0;
   ScalarT wSU = 0.0;
 
-  for (std::size_t qp = 0; qp < numQPs; ++qp) {
-    ScalarT w = verticalVel(cell,qp);
-    ScalarT arg = Velocity(cell,qp,0)*Velocity(cell,qp,0) + Velocity(cell,qp,1)*Velocity(cell,qp,1) + w*w;
-    ScalarT arg2 = 0.0; 
-    if (arg > 0) arg2 = std::sqrt(arg); 
-    vmax = deviceMax<ScalarT>(vmax, arg2);
-    //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
-    VelocityST val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
-    VelocityST sqrtval = 0.0;
-    if (val > 0.0)
-      sqrtval = std::sqrt(val); 
+  stabilizationInitialization(cell, vmax_xy, vmax, vmax_z, diam, diam_xy, diam_z, wSU);
 
-    vmax_xy = deviceMax<VelocityST>(vmax_xy, sqrtval);
+  for (std::size_t node = 0; node < numNodes; ++node) {
+    evaluateResidNode(cell, node);
 
-    vmax_z = deviceMax<ScalarT>( vmax_z,std::abs(w));
-  }
-
-  for (std::size_t i = 0; i < numNodes; ++i)
-  {
-    diam = deviceMax<MeshScalarT>(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
-                                                  coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,0,2)));
-    diam_xy = deviceMax<MeshScalarT>(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),
-                                                        coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
-    diam_z = deviceMax<MeshScalarT>(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
-  }
-
-  for (std::size_t node = 0; node < numNodes; ++node)
-  {
-    Residual(cell,node) = 0.0;
-
-    Residual(cell,node) += powm3*basalResid(cell,node);  //go to zero in temperate region
-
-    for (std::size_t qp = 0; qp < numQPs; ++qp)
-    {
-      if (needsDiss)
-        Residual(cell,node) -= (diss(cell,qp))*wBF(cell,node,qp);
-
-      ScalarT w = verticalVel(cell,qp);
-      ScalarT scale = 0.5 - 0.5*tanh(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)));
-      Residual(cell,node) += scale * K_i * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-          EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-          EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-
-      Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
-              Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
-
-      Residual(cell,node) += powm6*(1 - scale) * k_i * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-          meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-          meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-
-      Residual(cell,node) -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp) +
-                              nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-                                  phiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-                                  phiGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-    }
-
-    for (std::size_t qp = 0; qp < numQPs; ++qp)
-    {
+    for (std::size_t qp = 0; qp < numQPs; ++qp) {
       Residual(cell,node) += pow3*(EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
                               EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1))*delta*diam_xy*vmax_xy/scyr;
       Residual(cell,node) += pow3*EnthalpyGrad(cell,qp,2)* wGradBF(cell,node,qp,2)*delta*diam_z*vmax_z/scyr;
@@ -286,64 +231,12 @@ operator() (const SU_Stabilization_Tag& tag, const int& cell) const{
   MeshScalarT diam = 0.0, diam_xy = 0.0, diam_z = 0.0;
   ScalarT wSU = 0.0;
 
-  for (std::size_t qp = 0; qp < numQPs; ++qp) {
-    ScalarT w = verticalVel(cell,qp);
-    ScalarT arg = Velocity(cell,qp,0)*Velocity(cell,qp,0) + Velocity(cell,qp,1)*Velocity(cell,qp,1) + w*w;
-    ScalarT arg2 = 0.0; 
-    if (arg > 0) arg2 = std::sqrt(arg); 
-    vmax = deviceMax<ScalarT>(vmax, arg2);
-    //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
-    VelocityST val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
-    VelocityST sqrtval = 0.0;
-    if (val > 0.0)
-      sqrtval = std::sqrt(val); 
+  stabilizationInitialization(cell, vmax_xy, vmax, vmax_z, diam, diam_xy, diam_z, wSU);
 
-    vmax_xy = deviceMax<VelocityST>(vmax_xy, sqrtval);
+  for (std::size_t node = 0; node < numNodes; ++node) {
+    evaluateResidNode(cell, node);
 
-    vmax_z = deviceMax<ScalarT>( vmax_z,std::abs(w));
-  }
-
-    for (std::size_t i = 0; i < numNodes; ++i)
-    {
-      diam = deviceMax<MeshScalarT>(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
-                                                    coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,0,2)));
-      diam_xy = deviceMax<MeshScalarT>(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),
-                                                          coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
-      diam_z = deviceMax<MeshScalarT>(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
-    }
-
-  for (std::size_t node = 0; node < numNodes; ++node)
-  {
-    Residual(cell,node) = 0.0;
-
-    Residual(cell,node) += powm3*basalResid(cell,node);  //go to zero in temperate region
-
-    for (std::size_t qp = 0; qp < numQPs; ++qp)
-    {
-      if (needsDiss)
-        Residual(cell,node) -= (diss(cell,qp))*wBF(cell,node,qp);
-
-      ScalarT w = verticalVel(cell,qp);
-      ScalarT scale = 0.5 - 0.5*tanh(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)));
-      Residual(cell,node) += scale * K_i * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-          EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-          EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-
-      Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
-              Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
-
-      Residual(cell,node) += powm6*(1 - scale) * k_i * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-          meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-          meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-
-      Residual(cell,node) -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp) +
-                              nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-                                  phiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-                                  phiGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-    }
-
-    for (std::size_t qp = 0; qp < numQPs; ++qp)
-    {
+    for (std::size_t qp = 0; qp < numQPs; ++qp) {
       ScalarT w = verticalVel(cell,qp);
       wSU = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + w * wGradBF(cell,node,qp,2)); // +(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
       Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
@@ -358,35 +251,8 @@ KOKKOS_INLINE_FUNCTION
 void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
 operator() (const Other_Stabilization_Tag& tag, const int& cell) const{
 
-  for (std::size_t node = 0; node < numNodes; ++node)
-  {
-    Residual(cell,node) = 0.0;
-
-    Residual(cell,node) += powm3*basalResid(cell,node);  //go to zero in temperate region
-
-    for (std::size_t qp = 0; qp < numQPs; ++qp)
-    {
-      if (needsDiss)
-        Residual(cell,node) -= (diss(cell,qp))*wBF(cell,node,qp);
-
-      ScalarT w = verticalVel(cell,qp);
-      ScalarT scale = 0.5 - 0.5*tanh(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)));
-      Residual(cell,node) += scale * K_i * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-          EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-          EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-
-      Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
-              Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
-
-      Residual(cell,node) += powm6*(1 - scale) * k_i * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-          meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-          meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-
-      Residual(cell,node) -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp) +
-                              nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-                                  phiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-                                  phiGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-    }
+  for (std::size_t node = 0; node < numNodes; ++node) {
+    evaluateResidNode(cell, node);
   }
   
 }
@@ -436,6 +302,7 @@ evaluateFields(typename Traits::EvalData d)
   }
 #endif
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if(stabilization == STABILIZATION_TYPE::UPWIND){
     Kokkos::parallel_for(Upwind_Stabilization_Policy(0,d.numCells), *this);
   }
@@ -445,103 +312,104 @@ evaluateFields(typename Traits::EvalData d)
   else{
     Kokkos::parallel_for(Other_Stabilization_Policy(0,d.numCells), *this);
   }
+#else
+  for (std::size_t cell = 0; cell < d.numCells; ++cell)
+  {
+    VelocityST  vmax_xy = 1e-3; //set to a minimum threshold
+    ScalarT vmax = 1e-3, vmax_z=1e-5; //set to a minimum threshold
+    MeshScalarT diam = 0.0, diam_xy = 0.0, diam_z = 0.0;
+    ScalarT wSU = 0.0;
 
-  // for (std::size_t cell = 0; cell < d.numCells; ++cell)
-  // {
-  //   VelocityST  vmax_xy = 1e-3; //set to a minimum threshold
-  //   ScalarT vmax = 1e-3, vmax_z=1e-5; //set to a minimum threshold
-  //   MeshScalarT diam = 0.0, diam_xy = 0.0, diam_z = 0.0;
-  //   ScalarT wSU = 0.0;
-
-  //   if((stabilization == STABILIZATION_TYPE::UPWIND) || (stabilization == STABILIZATION_TYPE::SU))
-  //   {
+    if((stabilization == STABILIZATION_TYPE::UPWIND) || (stabilization == STABILIZATION_TYPE::SU))
+    {
       
-  //     for (std::size_t qp = 0; qp < numQPs; ++qp) {
-  //       ScalarT w = verticalVel(cell,qp);
-  //       ScalarT arg = Velocity(cell,qp,0)*Velocity(cell,qp,0) + Velocity(cell,qp,1)*Velocity(cell,qp,1) + w*w;
-  //       ScalarT arg2 = 0.0; 
-  //       if (arg > 0) arg2 = std::sqrt(arg); 
-  //       vmax = std::max(vmax, arg2);
-  //       //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
-  //       VelocityST val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
-  //       VelocityST sqrtval = 0.0;
-  //       if (val > 0.0)
-  //         sqrtval = std::sqrt(val); 
+      for (std::size_t qp = 0; qp < numQPs; ++qp) {
+        ScalarT w = verticalVel(cell,qp);
+        ScalarT arg = Velocity(cell,qp,0)*Velocity(cell,qp,0) + Velocity(cell,qp,1)*Velocity(cell,qp,1) + w*w;
+        ScalarT arg2 = 0.0; 
+        if (arg > 0) arg2 = std::sqrt(arg); 
+        vmax = std::max(vmax, arg2);
+        //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
+        VelocityST val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
+        VelocityST sqrtval = 0.0;
+        if (val > 0.0)
+          sqrtval = std::sqrt(val); 
 
-  //       vmax_xy = std::max(vmax_xy, sqrtval);
+        vmax_xy = std::max(vmax_xy, sqrtval);
 
-  //       vmax_z = std::max( vmax_z,std::abs(w));
-  //     }
+        vmax_z = std::max( vmax_z,std::abs(w));
+      }
 
-  //     for (std::size_t i = 0; i < numNodes; ++i)
-  //     {
-  //       diam = std::max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
-  //                                                     coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,0,2)));
-  //       diam_xy = std::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),
-  //                                                           coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
-  //       diam_z = std::max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
-  //     }
-  //   }
+      for (std::size_t i = 0; i < numNodes; ++i)
+      {
+        diam = std::max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+                                                      coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,0,2)));
+        diam_xy = std::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),
+                                                            coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
+        diam_z = std::max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
+      }
+    }
     
-  //   for (std::size_t node = 0; node < numNodes; ++node)
-  //   {
-  //     Residual(cell,node) = 0.0;
+    for (std::size_t node = 0; node < numNodes; ++node)
+    {
+      Residual(cell,node) = 0.0;
 
-  //     Residual(cell,node) += powm3*basalResid(cell,node);  //go to zero in temperate region
+      Residual(cell,node) += powm3*basalResid(cell,node);  //go to zero in temperate region
 
-  //     for (std::size_t qp = 0; qp < numQPs; ++qp)
-  //     {
-  //       if (needsDiss)
-  //         Residual(cell,node) -= (diss(cell,qp))*wBF(cell,node,qp);
+      for (std::size_t qp = 0; qp < numQPs; ++qp)
+      {
+        if (needsDiss)
+          Residual(cell,node) -= (diss(cell,qp))*wBF(cell,node,qp);
 
-  //       ScalarT w = verticalVel(cell,qp);
-  //       ScalarT scale = 0.5 - 0.5*tanh(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)));
-  //       Residual(cell,node) += scale * K_i * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-  //           EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-  //           EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
+        ScalarT w = verticalVel(cell,qp);
+        ScalarT scale = 0.5 - 0.5*tanh(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)));
+        Residual(cell,node) += scale * K_i * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+            EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
+            EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-  //       Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
-  //               Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
+        Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
+                Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp)/scyr ;
 
-  //       Residual(cell,node) += powm6*(1 - scale) * k_i * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-  //           meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-  //           meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
+        Residual(cell,node) += powm6*(1 - scale) * k_i * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+            meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
+            meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-  //       Residual(cell,node) -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp) +
-  //                              nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-  //                                  phiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-  //                                  phiGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
-  //     }
+        Residual(cell,node) -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp) +
+                               nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+                                   phiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
+                                   phiGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
+      }
 
-  //     if(stabilization == STABILIZATION_TYPE::UPWIND) 
-  //     {
-  //       for (std::size_t node = 0; node < numNodes; ++node)
-  //       {
-  //         for (std::size_t qp = 0; qp < numQPs; ++qp)
-  //         {
-  //           Residual(cell,node) += pow3*(EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-  //                                   EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1))*delta*diam_xy*vmax_xy/scyr;
-  //           Residual(cell,node) += pow3*EnthalpyGrad(cell,qp,2)* wGradBF(cell,node,qp,2)*delta*diam_z*vmax_z/scyr;
-  //         }
-  //       }
-  //     }
+      if(stabilization == STABILIZATION_TYPE::UPWIND) 
+      {
+        for (std::size_t node = 0; node < numNodes; ++node)
+        {
+          for (std::size_t qp = 0; qp < numQPs; ++qp)
+          {
+            Residual(cell,node) += pow3*(EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+                                    EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1))*delta*diam_xy*vmax_xy/scyr;
+            Residual(cell,node) += pow3*EnthalpyGrad(cell,qp,2)* wGradBF(cell,node,qp,2)*delta*diam_z*vmax_z/scyr;
+          }
+        }
+      }
 
 
-  //     else if(stabilization == STABILIZATION_TYPE::SU) 
-  //     {
-  //       for (std::size_t node = 0; node < numNodes; ++node)
-  //       {
-  //         for (std::size_t qp = 0; qp < numQPs; ++qp)
-  //         {
-  //           ScalarT w = verticalVel(cell,qp);
-  //           wSU = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + w * wGradBF(cell,node,qp,2)); // +(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
-  //           Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
-  //               Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wSU/scyr;
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
+      else if(stabilization == STABILIZATION_TYPE::SU) 
+      {
+        for (std::size_t node = 0; node < numNodes; ++node)
+        {
+          for (std::size_t qp = 0; qp < numQPs; ++qp)
+          {
+            ScalarT w = verticalVel(cell,qp);
+            wSU = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + w * wGradBF(cell,node,qp,2)); // +(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
+            Residual(cell,node) += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
+                Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wSU/scyr;
+          }
+        }
+      }
+    }
+  }
+#endif
 
 }
 

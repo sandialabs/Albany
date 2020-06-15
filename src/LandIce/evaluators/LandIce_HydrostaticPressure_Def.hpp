@@ -15,8 +15,6 @@
 namespace LandIce
 {
 
-const double pow3 = 1.0e3;
-
 template<typename EvalT, typename Traits, typename SurfHeightST>
 HydrostaticPressure<EvalT,Traits,SurfHeightST>::
 HydrostaticPressure(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
@@ -68,13 +66,18 @@ template<typename EvalT, typename Traits, typename SurfHeightST>
 void HydrostaticPressure<EvalT,Traits,SurfHeightST>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  // double pow3 = 1.0e3;
-  // for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-  //   for (std::size_t node = 0; node < numNodes; ++node)
-  //     pressure(cell,node) = pow3 * rho_i * g * ( s(cell,node) - z(cell,node,2) );
-  Kokkos::parallel_for(HYDROSTATIC_PRESSURE_Policy({0,0}, {numNodes,workset.numCells}), *this);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::parallel_for(Hydrostatic_Pressure_Policy({0,0}, {numNodes,workset.numCells}), *this);
+#else
+  double pow3 = 1.0e3;
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+    for (std::size_t node = 0; node < numNodes; ++node)
+      pressure(cell,node) = pow3 * rho_i * g * ( s(cell,node) - z(cell,node,2) );
+#endif
+
 }
 
 } // namespace LandIce

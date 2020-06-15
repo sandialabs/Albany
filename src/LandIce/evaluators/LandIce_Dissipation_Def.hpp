@@ -60,12 +60,17 @@ namespace LandIce
   void Dissipation<EvalT,Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+    
     if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-    // for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-    //   for (std::size_t qp = 0; qp < numQPs; ++qp)
-    //     diss(cell,qp) = 1.0/scyr * 4.0 * mu(cell,qp) * epsilonSq(cell,qp);
-    Kokkos::parallel_for(DISSIPATION_Policy({0,0}, {numQPs,workset.numCells}), *this);
+  #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    Kokkos::parallel_for(Dissipation_Policy({0,0}, {numQPs,workset.numCells}), *this);
+  #else
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+      for (std::size_t qp = 0; qp < numQPs; ++qp)
+        diss(cell,qp) = 1.0/scyr * 4.0 * mu(cell,qp) * epsilonSq(cell,qp);
+  #endif
+
   }
 
 

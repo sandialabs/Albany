@@ -110,11 +110,11 @@ public:
   typedef Kokkos::RangePolicy<ExecutionSpace,SU_Stabilization_Tag> SU_Stabilization_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,Other_Stabilization_Tag> Other_Stabilization_Policy;
 
-  // KOKKOS_INLINE_FUNCTION
-  // void stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, ScalarT& vmax_z, 
-  //   MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z, ScalarT& wSU);
-  // KOKKOS_INLINE_FUNCTION
-  // void evaluateResidNode(int cell, int node);
+  KOKKOS_INLINE_FUNCTION
+  void stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, ScalarT& vmax_z, 
+    MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z, ScalarT& wSU) const;
+  KOKKOS_INLINE_FUNCTION
+  void evaluateResidNode(int cell, int node) const;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const Upwind_Stabilization_Tag& tag, const int& cell) const;
