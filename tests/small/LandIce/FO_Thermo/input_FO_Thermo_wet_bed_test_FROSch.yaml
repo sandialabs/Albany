@@ -118,7 +118,7 @@ ANONYMOUS:
         Number Of Time Derivatives: 0
         Exodus Input File Name: ../ExoMeshes/slab_2d.exo
         Cubature Degree: 4
-        Use Serial Mesh: true
+        Use Serial Mesh: false
         Required Fields Info: 
           Number Of Fields: 5
           Field 0: 
