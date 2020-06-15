@@ -230,14 +230,6 @@ void GenericSTKMeshStruct::SetupFieldData(
   if (exoOutput)
     exoOutFile = params->get<std::string>("Exodus Output File Name");
   exoOutputInterval = params->get<int>("Exodus Write Interval", 1);
-  cdfOutput = params->isType<std::string>("NetCDF Output File Name");
-  if (cdfOutput)
-    cdfOutFile = params->get<std::string>("NetCDF Output File Name");
-
-  nLat       =  params->get("NetCDF Output Number of Latitudes",100);
-  nLon       =  params->get("NetCDF Output Number of Longitudes",100);
-  cdfOutputInterval = params->get<int>("NetCDF Write Interval", 1);
-
 
   //get the type of transformation of STK mesh
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh
@@ -1672,13 +1664,6 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
 #endif
   validPL->set<bool>("Output DTK Field to Exodus", true, "Boolean indicating whether to write dtk field to exodus file");
   validPL->set<int>("Exodus Write Interval", 3, "Step interval to write solution data to Exodus file");
-  validPL->set<std::string>("NetCDF Output File Name", "",
-      "Request NetCDF output to given file name. Requires SEACAS build");
-  validPL->set<int>("NetCDF Write Interval", 1, "Step interval to write solution data to NetCDF file");
-  validPL->set<int>("NetCDF Output Number of Latitudes", 1,
-      "Number of samples in Latitude direction for NetCDF output. Default is 100.");
-  validPL->set<int>("NetCDF Output Number of Longitudes", 1,
-      "Number of samples in Longitude direction for NetCDF output. Default is 100.");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
