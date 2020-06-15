@@ -105,7 +105,7 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   // have separate node_vector and node_gradient layouts.
 }
 
-Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim)
+Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim, bool collapsed_sidesets)
 // numSideDim is the number of spatial dimensions
 // vecDim is the length of a vector quantity
 // -- For many problems, numSideDim is used for both since there are
@@ -195,4 +195,14 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   // the vector fields are length numSideDim (which tends to be true
   // for displacements and velocities). Could be separated to
   // have separate node_vector and node_gradient layouts.
+
+
+  // This flag lets evaluators know to use the collapsed sideset layouts
+  useCollapsedSidesets = collapsed_sidesets;
+
+  // Collapsed sideset layouts to ensure contiguous memory access for efficient GPU evaluation
+  qp_scalar_sideset   = rcp(new MDALayout<Side,QuadPoint>(worksetSize*numSides,numQPts));
+  node_scalar_sideset = rcp(new MDALayout<Side,QuadPoint>(worksetSize*numSides,numQPts));
+  node_vector_sideset = rcp(new MDALayout<Side,Node,Dim>(worksetSize*numSides,numNodes,vecDim));
+  qp_vector_sideset   = rcp(new MDALayout<Side,QuadPoint,Dim>(worksetSize*numSides,numQPts,vecDim));
 }

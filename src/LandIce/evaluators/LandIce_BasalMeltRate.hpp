@@ -75,7 +75,23 @@ private:
   bool isThereWater;
   bool nodal;
 
+  const int vecDimFO = 2;
+  ScalarT hom;
+  ScalarT basal_reg_coeff;
+  ScalarT flux_reg_coeff;
+
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+  Albany::SideStructViews sideSet;
+
+  public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::MDRangePolicy<ExecutionSpace,Kokkos::Rank<2>> Basal_Melt_Rate_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int& i, const int& j) const;
 };
 
 } // namespace LandIce

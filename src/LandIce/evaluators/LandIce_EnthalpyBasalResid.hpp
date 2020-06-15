@@ -55,11 +55,16 @@ private:
   // PHX::MDField<const ScalarT,Cell,Node>                         diffEnth;  //[MW s m^{-3}]
   // PHX::MDField<const ScalarT,Cell,Side,QuadPoint>               phi;  // []
   // PHX::MDField<const ScalarT,Dim>                               homotopy;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>               basalMeltRateQP;      // [MW] = [m/yr]
+  PHX::MDField<const ScalarT,Side,QuadPoint>               basalMeltRateQP;      // [MW] = [m/yr]
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> enthalpyBasalResid;      // [MW] = [k^{-2} kPa s^{-1} km^3]
   // PHX::MDField<ScalarT,Cell,Side, Node> basalMeltRate;      // [MW] = [m/yr]
+
+  // Temporary Views
+  // Kokkos::DynRankView<ScalarT, PHX::Device> basalMeltRateQP_reorder;
+  Kokkos::DynRankView<RealType, PHX::Device> BF_reorder;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> w_measure_reorder;
   
   Albany::SideStructViews sideSet;
 

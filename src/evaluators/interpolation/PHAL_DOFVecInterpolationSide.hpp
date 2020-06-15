@@ -51,13 +51,16 @@ private:
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ParamScalarT,Side,Cell,QuadPoint,Dim> val_qp;
+  PHX::MDField<ParamScalarT> val_qp;
 
   int numSideNodes;
   int numSideQPs;
   int vecDim;
+  bool useCollapsedSidesets;
 
   MDFieldMemoizer<Traits> memoizer;
+
+  Albany::SideStructViews sideSet;
 };
 
 // Some shortcut names

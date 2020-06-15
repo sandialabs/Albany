@@ -32,7 +32,7 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
   BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
   w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_basal->qp_scalar);
-  basalMeltRateQP = decltype(basalMeltRateQP)(p.get<std::string> ("Basal Melt Rate Side QP Variable Name"), dl_basal->qp_scalar);
+  basalMeltRateQP = decltype(basalMeltRateQP)(p.get<std::string> ("Basal Melt Rate Side QP Variable Name"), dl_basal->qp_scalar_sideset);
 
   this->addDependentField(BF);
   this->addDependentField(w_measure);
@@ -70,6 +70,29 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 }
 
 template<typename EvalT, typename Traits, typename Type>
+KOKKOS_INLINE_FUNCTION
+void EnthalpyBasalResid<EvalT,Traits,Type>::
+operator() (const Side_Node_Evaluation_Tag& tag, const int& sideSet_idx) const{
+  
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  ScalarT val[4] = {0., 0., 0., 0.};
+  for (int node = 0; node < numSideNodes; ++node) {
+      for (int qp = 0; qp < numSideQPs; ++qp) {
+      val[node] += basalMeltRateQP(sideSet_idx,qp) 
+                 * BF_reorder(sideSet_idx,node,qp) 
+                 * w_measure_reorder(sideSet_idx,qp);
+    }
+  }
+  
+  for (int node = 0; node < numSideNodes; ++node) {
+    enthalpyBasalResid(cell, sideNodes(side,node)) += val[node];
+  }
+
+}
+
+template<typename EvalT, typename Traits, typename Type>
 void EnthalpyBasalResid<EvalT,Traits,Type>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
@@ -93,6 +116,27 @@ evaluateFields(typename Traits::EvalData d)
 
   sideSet = d.sideSetViews->at(basalSideName);
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  // basalMeltRateQP_reorder = Kokkos::createDynRankView(basalMeltRateQP.get_view(), 
+  //   "basalMeltRateQP_reorder", sideSet.size, numSideQPs); // (sideSet_idx, qp)
+  BF_reorder = Kokkos::createDynRankView(BF.get_view(), 
+    "BF_reorder", sideSet.size, numSideNodes, numSideQPs); // (sideSet_idx, node, qp)
+  w_measure_reorder = Kokkos::createDynRankView(w_measure.get_view(), 
+    "w_measure_reorder", sideSet.size, numSideQPs); // (sideSet_idx, qp)
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
+    for (int qp = 0; qp < numSideQPs; ++qp) {
+      // basalMeltRateQP_reorder(sideSet_idx,qp) = basalMeltRateQP(cell,side,qp);
+      w_measure_reorder(sideSet_idx,qp) = w_measure(cell,side,qp);
+      for (int node = 0; node < numSideNodes; ++node) {
+        BF_reorder(sideSet_idx,node,qp) = BF(cell,side,node,qp);
+      }
+    }    
+  }
+  Kokkos::parallel_for(Side_Node_Evaluation_Policy(0, sideSet.size), *this);
+#else
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
     // Get the local data of side and cell
@@ -106,7 +150,7 @@ evaluateFields(typename Traits::EvalData d)
 
       for (int qp = 0; qp < numSideQPs; ++qp)
       {
-       enthalpyBasalResid(cell,cnode) += basalMeltRateQP(cell,side,qp) *  BF(cell,side,node,qp) * w_measure(cell,side,qp);
+       enthalpyBasalResid(cell,cnode) += basalMeltRateQP(sideSet_idx,qp) *  BF(cell,side,node,qp) * w_measure(cell,side,qp);
       }
     }
   }
