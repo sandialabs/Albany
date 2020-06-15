@@ -14,5 +14,5 @@ eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BAS
 cp -r build/CoriCismAlbany/cism_driver/cism_driver $EXE_DIR
 chmod -R 0755 $EXE_DIR
 
-bash process_output.sh 
+#bash process_output.sh 
 #bash send_email.sh  
