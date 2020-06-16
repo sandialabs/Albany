@@ -90,7 +90,7 @@ namespace Albany {
     void setRestartDataTime(double restartT) {restartTime = restartT; }
 
     //Is this necessary here? 
-    bool getInterleavedOrdering() const {return this->interleavedOrdering;}
+    DiscType getInterleavedOrdering() const {return this->interleavedOrdering;}
 
     private:
     //Ioss::Init::Initializer ioInit;

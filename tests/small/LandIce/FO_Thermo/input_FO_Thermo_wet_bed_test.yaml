@@ -82,7 +82,6 @@ ANONYMOUS:
     Exodus Output File Name: enth_coupled.exo
     Element Shape: Hexahedron
     Use Serial Mesh: true
-    Interleaved Ordering: true
     Columnwise Ordering: true
     NumLayers: 10
     Thickness Field Name: ice_thickness

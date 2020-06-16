@@ -6,9 +6,6 @@
 #include "Albany_StatelessObserverImpl.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
-#if defined(ALBANY_EPETRA)
-#include "AAdapt_AdaptiveSolutionManager.hpp"
-#endif
 
 #include "Teuchos_TimeMonitor.hpp"
 

@@ -44,6 +44,9 @@ createConstThyraMultiVector (const Teuchos::RCP<const Epetra_MultiVector>& mv);
 Teuchos::RCP<Thyra_LinearOp>
 createThyraLinearOp (const Teuchos::RCP<Epetra_Operator>& op);
 
+Teuchos::RCP<Thyra_BlockedLinearOp>
+createThyraBlockedLinearOp (const Teuchos::RCP<Epetra_Operator>& op);
+
 Teuchos::RCP<const Thyra_LinearOp>
 createConstThyraLinearOp (const Teuchos::RCP<const Epetra_Operator>& op);
 

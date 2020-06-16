@@ -129,7 +129,7 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
     metaData->initialize(numDim_, entity_rank_names);
   }
 
-  interleavedOrdering = params->get("Interleaved Ordering",true);
+  interleavedOrdering = params->get("Interleaved Ordering", DiscType::Interleaved);
   allElementBlocksHaveSamePhysics = true;
   compositeTet = params->get<bool>("Use Composite Tet 10", false);
   num_time_deriv = params->get<int>("Number Of Time Derivatives");
@@ -205,22 +205,22 @@ void GenericSTKMeshStruct::SetupFieldData(
   // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
   if(user_specified_solution_components && (residual_vector.length() > 0)){
 
-      if(interleavedOrdering)
-        this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<true>(params,
+      if(interleavedOrdering == DiscType::Interleaved)
+        this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::Interleaved>(params,
             metaData, bulkData, neq, numDim, sis, solution_vector, num_params));
       else
-        this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<false>(params,
+        this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::BlockedMono>(params,
             metaData, bulkData, neq, numDim, sis, solution_vector, num_params));
 
   }
 
   else {
 
-      if(interleavedOrdering)
-        this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<true>(params,
+      if(interleavedOrdering == DiscType::Interleaved)
+        this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::Interleaved>(params,
             metaData, bulkData, neq, req, numDim, sis, num_params));
       else
-        this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<false>(params,
+        this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::BlockedMono>(params,
             metaData, bulkData, neq, req, numDim, sis, num_params));
 
   }
@@ -1670,7 +1670,7 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<std::string>("Cubature Rule", "", "Integration rule sent to Intrepid2: GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, GAUSS_LOBATTO");
   validPL->set<int>("Workset Size", DEFAULT_WORKSET_SIZE, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Use Automatic Aura", false, "Use automatic aura with BulkData");
-  validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
+  validPL->set<DiscType>("Interleaved Ordering", DiscType::Interleaved, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
   validPL->set<std::string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for LandIce problem that require tranformation of STK mesh

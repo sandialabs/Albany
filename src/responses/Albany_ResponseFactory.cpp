@@ -51,7 +51,8 @@ createResponseFunction(
   else if (name == "Solution Max Value") {
     int eq = responseParams.get("Equation", 0);
     int neq = app->getNumEquations();
-    bool inor =  responseParams.get("Interleaved Ordering", true);
+//    DiscType inor =  responseParams.get("Interleaved Ordering", DiscType::Interleaved);
+    DiscType inor =  meshSpecs[0]->interleavedOrdering;
 
     responses.push_back(
       rcp(new Albany::SolutionMaxValueResponseFunction(comm, neq, eq, inor)));
@@ -60,7 +61,8 @@ createResponseFunction(
   else if (name == "Solution Min Value") {
     int eq = responseParams.get("Equation", 0);
     int neq = app->getNumEquations();
-    bool inor =  responseParams.get("Interleaved Ordering", true);
+//    DiscType inor =  responseParams.get("Interleaved Ordering", DiscType::Interleaved);
+    DiscType inor =  meshSpecs[0]->interleavedOrdering;
 
     responses.push_back(
       rcp(new Albany::SolutionMinValueResponseFunction(comm, neq, eq, inor)));

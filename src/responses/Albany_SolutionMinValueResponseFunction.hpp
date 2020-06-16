@@ -7,6 +7,7 @@
 #ifndef ALBANY_SOLUTION_MIN_VALUE_RESPONSE_FUNCTION_HPP
 #define ALBANY_SOLUTION_MIN_VALUE_RESPONSE_FUNCTION_HPP
 
+#include "Albany_MeshSpecs.hpp"
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
 namespace Albany {
@@ -20,7 +21,7 @@ public:
   //! Default constructor
   SolutionMinValueResponseFunction(
     const Teuchos::RCP<const Teuchos_Comm>& comm, 
-    int neq = 1, int eq = 0, bool interleavedOrdering=true);
+    int neq = 1, int eq = 0, DiscType interleavedOrdering = DiscType::Interleaved);
 
   //! Destructor
   ~SolutionMinValueResponseFunction() = default;
@@ -92,7 +93,7 @@ protected:
   Teuchos::RCP<const Teuchos_Comm> comm_; 
 
   //! Flag for interleaved verus blocked unknown ordering
-  bool interleavedOrdering;
+  DiscType interleavedOrdering;
 };
 
 } // namespace Albany

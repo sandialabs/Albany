@@ -7,6 +7,7 @@
 #ifndef ALBANY_SOLUTION_MAX_VALUE_RESPONSE_FUNCTION_HPP
 #define ALBANY_SOLUTION_MAX_VALUE_RESPONSE_FUNCTION_HPP
 
+#include "Albany_MeshSpecs.hpp"
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
 namespace Albany {
@@ -21,7 +22,7 @@ public:
   //! Default constructor
   SolutionMaxValueResponseFunction(
     const Teuchos::RCP<const Teuchos_Comm>& comm, 
-    int neq = 1, int eq = 0, bool interleavedOrdering = true);
+    int neq = 1, int eq = 0, DiscType interleavedOrdering = DiscType::Interleaved);
 
   //! Destructor
   ~SolutionMaxValueResponseFunction() = default;
@@ -90,7 +91,7 @@ protected:
   Teuchos::RCP<const Teuchos_Comm> comm_; 
 
   //! Flag for interleaved verus blocked unknown ordering
-  bool interleavedOrdering;
+  DiscType interleavedOrdering;
 
   //! Compute max value
   void computeMaxValue(const Teuchos::RCP<const Thyra_Vector>& x, ST& val);

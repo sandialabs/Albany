@@ -7,6 +7,7 @@
 #ifndef ALBANY_NODAL_DOF_MANAGER_HPP
 #define ALBANY_NODAL_DOF_MANAGER_HPP
 
+#include "Albany_MeshSpecs.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 
 namespace Albany {
@@ -14,9 +15,9 @@ namespace Albany {
 class NodalDOFManager {
 public:
   NodalDOFManager() :
-    _numComponents(0), _numLocalDOF(0), _numGlobalDOF(0), _interleaved(true){};
+    _numComponents(0), _numLocalDOF(0), _numGlobalDOF(0), _interleaved(DiscType::Interleaved){};
 
-  void setup(int numComponents, LO numLocalDOF, GO numGlobalDOF, bool interleaved=true) {
+  void setup(int numComponents, LO numLocalDOF, GO numGlobalDOF, DiscType interleaved = DiscType::Interleaved) {
     _numComponents = numComponents;
     _numLocalDOF = numLocalDOF;
     _numGlobalDOF = numGlobalDOF;
@@ -33,7 +34,7 @@ private:
   int _numComponents;
   LO  _numLocalDOF;
   GO  _numGlobalDOF;
-  bool _interleaved;
+  DiscType _interleaved;
 };
 
 } // namespace Albany

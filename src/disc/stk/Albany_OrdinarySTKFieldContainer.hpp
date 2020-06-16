@@ -11,7 +11,7 @@
 
 namespace Albany {
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
 {
  public:

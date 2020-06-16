@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "AAdapt_AnalyticFunction.hpp"
+#include "AnalyticFunction.hpp"
 #include "Albany_Macros.hpp"
 
 #include "Teuchos_TestForException.hpp"
@@ -19,7 +19,6 @@
 static const double pi = 4.0 * std::atan(1.0);
 
 namespace Albany {
-namespace AAdapt {
 
 // Factory method to build functions based on a string
 Teuchos::RCP<AnalyticFunction> createAnalyticFunction(
@@ -788,4 +787,3 @@ void ExpressionParserAllDOFs::compute(double* unknowns, double const* coords)
 #endif // ALBANY_STK_EXPR_EVAL
 
 } // namespace Albany
-} // namespace AAdapt

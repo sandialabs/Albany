@@ -33,7 +33,6 @@ set (ALBANY_INCLUDE_DIRS
      ${Albany_SOURCE_DIR}/src/problems
      ${Albany_SOURCE_DIR}/src/responses
      ${Albany_SOURCE_DIR}/src/disc/stk
-     ${Albany_SOURCE_DIR}/src/adapt
      ${Albany_SOURCE_DIR}/src/disc
      ${Albany_SOURCE_DIR}/src/utility
 )
@@ -41,12 +40,14 @@ set (ALBANY_INCLUDE_DIRS
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
 set (SOURCES
+  AnalyticFunction.cpp
   Albany_RegressionTests.cpp
   Albany_SolverFactory.cpp
   Albany_Utils.cpp
   PHAL_Dimension.cpp
   PHAL_Setup.cpp
   Albany_Application.cpp
+  InitialCondition.cpp
   Albany_Memory.cpp
   Albany_ModelEvaluator.cpp
   Albany_NullSpaceUtils.cpp
@@ -56,6 +57,7 @@ set (SOURCES
   Albany_StateManager.cpp
   Albany_StateInfoStruct.cpp
   PHAL_Utilities.cpp
+  SolutionManager.cpp
   )
 
 if (ALBANY_EPETRA)
@@ -74,6 +76,7 @@ if(ALBANY_EPETRA)
 endif()
 
 set(HEADERS
+  AnalyticFunction.hpp
   Albany_Application.hpp
   Albany_DataTypes.hpp
   Albany_DistributedParameter.hpp
@@ -81,6 +84,7 @@ set(HEADERS
   Albany_DistributedParameterDerivativeOp.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_EigendataInfoStructT.hpp
+  InitialCondition.hpp
   Albany_KokkosTypes.hpp
   Albany_Memory.hpp
   Albany_ModelEvaluator.hpp
@@ -105,6 +109,7 @@ set(HEADERS
   PHAL_Utilities.hpp
   PHAL_Utilities_Def.hpp
   PHAL_Workset.hpp
+  SolutionManager.hpp
   )
 
 if(ALBANY_EPETRA)
@@ -116,20 +121,6 @@ if(ALBANY_EPETRA)
     Petra_Converters.hpp
   )
 endif()
-
-#adapt
-list (APPEND SOURCES
-  adapt/AAdapt_AbstractAdapter.cpp
-  adapt/AAdapt_AdaptiveSolutionManager.cpp
-  adapt/AAdapt_InitialCondition.cpp
-  adapt/AAdapt_AnalyticFunction.cpp
-)
-list (APPEND HEADERS
-  adapt/AAdapt_AbstractAdapter.hpp
-  adapt/AAdapt_AdaptiveSolutionManager.hpp
-  adapt/AAdapt_InitialCondition.hpp
-  adapt/AAdapt_AnalyticFunction.hpp
-)
 
 #utility
 list (APPEND SOURCES
@@ -144,6 +135,7 @@ list (APPEND SOURCES
   utility/Albany_Gather.cpp
   utility/Albany_GlobalLocalIndexer.cpp
   utility/Albany_ThyraCrsMatrixFactory.cpp
+  utility/Albany_ThyraBlockedCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
   utility/Albany_TpetraThyraUtils.cpp
   utility/VariableMonitor.cpp
@@ -165,6 +157,7 @@ list (APPEND HEADERS
   utility/Albany_GlobalLocalIndexer.hpp
   utility/Albany_GlobalLocalIndexerTpetra.hpp
   utility/Albany_ThyraCrsMatrixFactory.hpp
+  utility/Albany_ThyraBlockedCrsMatrixFactory.hpp
   utility/Albany_ThyraUtils.hpp
   utility/Albany_TpetraThyraUtils.hpp
   utility/VariableMonitor.hpp
@@ -277,6 +270,7 @@ list (APPEND SOURCES
   disc/Adapt_NodalDataVector.cpp
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
+  disc/BlockedDiscretization.cpp
   )
 list (APPEND HEADERS
   disc/Adapt_NodalDataBase.hpp
@@ -290,6 +284,8 @@ list (APPEND HEADERS
   disc/Albany_DiscretizationFactory.hpp
   disc/Albany_MeshSpecs.hpp
   disc/Albany_NodalDOFManager.hpp
+  disc/BlockedDiscretization.hpp
+  disc/BlockedDiscretization_Def.hpp
   )
 
 #stk

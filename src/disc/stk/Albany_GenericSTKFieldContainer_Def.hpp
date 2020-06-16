@@ -20,7 +20,7 @@
 
 namespace Albany {
 
-template<bool Interleaved>
+template<DiscType Interleaved>
 GenericSTKFieldContainer<Interleaved>::GenericSTKFieldContainer(
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
   const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
@@ -57,7 +57,7 @@ inline Ioss::Field::RoleType role_type(const bool output) {
 }
 #endif
 
-template<bool Interleaved>
+template<DiscType Interleaved>
 void GenericSTKFieldContainer<Interleaved>::
 addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
 {

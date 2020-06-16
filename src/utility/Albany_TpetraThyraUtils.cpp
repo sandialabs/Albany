@@ -82,6 +82,18 @@ createThyraLinearOp (const Teuchos::RCP<Tpetra_Operator>& op)
   return lop;
 }
 
+Teuchos::RCP<Thyra_BlockedLinearOp>
+createThyraBlockedLinearOp (const Teuchos::RCP<Tpetra_Operator>& op)
+{
+  Teuchos::RCP<Thyra_BlockedLinearOp> lop;
+// GAH fill in functionality here
+//  if (!op.is_null()) {
+//    lop = Thyra::createLinearOp(op);
+//  }
+
+  return lop;
+}
+
 Teuchos::RCP<const Thyra_LinearOp>
 createConstThyraLinearOp (const Teuchos::RCP<const Tpetra_Operator>& op)
 {

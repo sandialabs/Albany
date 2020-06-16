@@ -44,7 +44,8 @@ cmake \
     -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
     -D TPL_ENABLE_MPI:BOOL=ON \
     -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
-    -D CMAKE_SKIP_RPATH:BOOL=ON \
+    -D CMAKE_MACOSX_RPATH:BOOL=ON \
+    -D CMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib \
 	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
     -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L/usr/local/lib -L${LIB_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -Wl,-rpath,${LIB_DIR}/lib:/usr/local/lib" \
     -D CMAKE_C_ARCHIVE_CREATE:STRING="<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>" \
@@ -112,9 +113,9 @@ cmake \
     -D Teuchos_ENABLE_COMPLEX:BOOL=OFF \
     -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
     -D Phalanx_INDEX_SIZE_TYPE:STRING="KOKKOS" \
-    -D Kokkos_ENABLE_Serial:BOOL=ON \
-    -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
-    -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+    -D Kokkos_ENABLE_SERIAL:BOOL=ON \
+	-D Kokkos_ENABLE_OPENMP:BOOL=OFF \
+    -D Kokkos_ENABLE_PTHREAD:BOOL=OFF \
 \
     -D SEACAS_ENABLE_SEACASSVDI:BOOL=OFF \
     -D Trilinos_ENABLE_SEACASFastq:BOOL=OFF \
@@ -176,3 +177,4 @@ exit 0
     -D Trilinos_ENABLE_DataTransferKitSTKMeshAdapters:BOOL=OFF \
     -D DataTransferKit_ENABLE_DBC:BOOL=OFF \
     -D Tpetra_INST_INT_UNSIGNED_LONG:BOOL=ON \
+    -D CMAKE_SKIP_RPATH:BOOL=ON \

@@ -73,7 +73,7 @@ public:
       int numLayers, int Ordering = 0);
 
 
-  bool getInterleavedOrdering() const {return this->interleavedOrdering;}
+  DiscType getInterleavedOrdering() const {return this->interleavedOrdering;}
 
   enum elemShapeType {Tetrahedron, Wedge};
 

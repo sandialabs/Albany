@@ -12,7 +12,7 @@
 
 namespace Albany {
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
 {
  public:
@@ -122,9 +122,9 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
 
 // Define macro for explicit template instantiation
 #define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
-  template class name<false>;
+  template class name<Albany::DiscType::BlockedMono>;
 #define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name) \
-  template class name<true>;
+  template class name<Albany::DiscType::Interleaved>;
 
 #define MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name)          \
   MULTISTKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_ANALYTIC_FUNCTION_HPP
-#define AADAPT_ANALYTIC_FUNCTION_HPP
+#ifndef ANALYTIC_FUNCTION_HPP
+#define ANALYTIC_FUNCTION_HPP
 
 #include "Albany_config.h"
 
@@ -18,7 +18,6 @@
 #include <random>
 
 namespace Albany {
-namespace AAdapt {
 
 // Base class for initial condition functions
 class AnalyticFunction {
@@ -309,7 +308,6 @@ class ExpressionParserAllDOFs : public AnalyticFunction
 };
 #endif // ALBANY_STK_EXPR_EVAL
 
-} // namespace AAdapt
 } // namespace Albany
 
-#endif // AADAPT_ANALYTIC_FUNCTION_HPP
+#endif // ANALYTIC_FUNCTION_HPP

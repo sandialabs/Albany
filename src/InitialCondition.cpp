@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "AAdapt_InitialCondition.hpp"
-#include "AAdapt_AnalyticFunction.hpp"
+#include "InitialCondition.hpp"
+#include "AnalyticFunction.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
 
@@ -14,7 +14,6 @@
 #include <cmath>
 
 namespace Albany {
-namespace AAdapt {
 
 static const double pi = 4.0 * std::atan(4.0);
 
@@ -112,7 +111,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     std::vector<double> x; 
     x.resize(neq);
 
-    Teuchos::RCP<AAdapt::AnalyticFunction> initFunc;
+    Teuchos::RCP<AnalyticFunction> initFunc;
 
     for (int ws=0; ws < wsElNodeEqID.size(); ws++) { // loop over worksets
 
@@ -122,7 +121,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
       if(perturb_values){
 
         if(name == "EBPerturb") {
-          initFunc = Teuchos::rcp(new AAdapt::ConstantFunctionPerturbed(neq, numDim, data, perturb_mag));
+          initFunc = Teuchos::rcp(new ConstantFunctionPerturbed(neq, numDim, data, perturb_mag));
         
         } else { // name == EBGaussianPerturb
 
@@ -130,7 +129,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
             ConstantFunctionGaussianPerturbed(neq, numDim, data, perturb_mag));
         }
       } else {
-        initFunc = Teuchos::rcp(new AAdapt::ConstantFunction(neq, numDim, data));
+        initFunc = Teuchos::rcp(new ConstantFunction(neq, numDim, data));
       }
 
       std::vector<double> X(neq);
@@ -191,7 +190,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     std::string expressionY = icParams.get("Function Expression for DOF Y", defaultExpression);
     std::string expressionZ = icParams.get("Function Expression for DOF Z", defaultExpression);
 
-    Teuchos::RCP<AAdapt::AnalyticFunction> initFunc = Teuchos::rcp(new AAdapt::ExpressionParser(neq, numDim, expressionX, expressionY, expressionZ));
+    Teuchos::RCP<AnalyticFunction> initFunc = Teuchos::rcp(new ExpressionParser(neq, numDim, expressionX, expressionY, expressionZ));
 
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
     std::vector<double> x; x.resize(neq);
@@ -217,8 +216,8 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     Teuchos::Array<std::string> expr =
         icParams.get("Function Expressions", default_expr);
 
-    Teuchos::RCP<AAdapt::AnalyticFunction> initFunc =
-        Teuchos::rcp(new AAdapt::ExpressionParserAllDOFs(neq, numDim, expr));
+    Teuchos::RCP<AnalyticFunction> initFunc =
+        Teuchos::rcp(new ExpressionParserAllDOFs(neq, numDim, expr));
 
     // Loop over all worksets, elements, all local nodes: compute soln as a
     // function of coord
@@ -245,7 +244,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     Teuchos::Array<double> data = icParams.get("Function Data", defaultData);
   
     // Call factory method from library of initial condition functions
-    Teuchos::RCP<AAdapt::AnalyticFunction> initFunc
+    Teuchos::RCP<AnalyticFunction> initFunc
       = createAnalyticFunction(name, neq, numDim, data);
   
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
@@ -267,5 +266,4 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
   }
 }
 
-} // namespace AAdapt
 } // namespace Albany

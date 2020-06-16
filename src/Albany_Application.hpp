@@ -21,7 +21,7 @@
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
 
-#include "AAdapt_AdaptiveSolutionManager.hpp"
+#include "SolutionManager.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 
 #include "Sacado_ParameterAccessor.hpp"
@@ -120,7 +120,7 @@ public:
     return relative_responses;
   }
 
-  Teuchos::RCP<AAdapt::AdaptiveSolutionManager>
+  Teuchos::RCP<Albany::SolutionManager>
   getAdaptSolMgr()
   {
     return solMgr;
@@ -582,7 +582,7 @@ public:
   Teuchos::RCP<DistributedParameterLibrary> distParamLib;
 
   //! Solution memory manager
-  Teuchos::RCP<AAdapt::AdaptiveSolutionManager> solMgr;
+  Teuchos::RCP<Albany::SolutionManager> solMgr;
 
   //! Response functions
   Teuchos::Array<Teuchos::RCP<Albany::AbstractResponseFunction>> responses;

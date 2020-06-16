@@ -238,13 +238,8 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
 
   Piro::SolverFactory piroFactory;
   m_observer = Teuchos::rcp(new PiroObserver(app, modelWithSolve));
-  if (solMgr->isAdaptive()) {
-    return piroFactory.createSolver<ST>(
-        piroParams, modelWithSolve, solMgr, m_observer);
-  } else {
-    return piroFactory.createSolver<ST>(
-        piroParams, modelWithSolve, Teuchos::null, m_observer);
-  }
+  return piroFactory.createSolver<ST>(
+       piroParams, modelWithSolve, Teuchos::null, m_observer);
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
       std::logic_error,

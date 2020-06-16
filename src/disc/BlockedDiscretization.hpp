@@ -4,108 +4,37 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_STK_DISCRETIZATION_HPP
-#define ALBANY_STK_DISCRETIZATION_HPP
+#ifndef BLOCKED_DISCRETIZATION_HPP
+#define BLOCKED_DISCRETIZATION_HPP
 
 #include <utility>
 #include <vector>
 
 #include "Albany_AbstractDiscretization.hpp"
-#include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_STKDiscretization.hpp"
 #include "Albany_DataTypes.hpp"
-#include "utility/Albany_ThyraCrsMatrixFactory.hpp"
+#include "utility/Albany_ThyraBlockedCrsMatrixFactory.hpp"
 #include "utility/Albany_ThyraUtils.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
 
-// Start of STK stuff
-#include <stk_mesh/base/BulkData.hpp>
-#include <stk_mesh/base/Field.hpp>
-#include <stk_mesh/base/FieldTraits.hpp>
-#include <stk_mesh/base/MetaData.hpp>
-#include <stk_mesh/base/Types.hpp>
-#include <stk_util/parallel/Parallel.hpp>
-#ifdef ALBANY_SEACAS
-#include <stk_io/StkMeshIoBroker.hpp>
-#endif
-
 namespace Albany {
 
-typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
+struct DiscTraits {};
 
-class GlobalLocalIndexer;
+// This BlockedDiscretization class implements multiple discretization blocks and serves them up as Thyra_ProductVectors.
+// In this implementation, each block has to be the same, and the discretization for each block is passed in
+// as the Disc template argument (e.g., Albany_STKDiscretization)
 
-struct DOFsStruct
+template <class traits = DiscTraits>
+class BlockedDiscretization : public AbstractDiscretization
 {
-  Teuchos::RCP<const Thyra_VectorSpace> node_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> overlap_node_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> vs;
-  Teuchos::RCP<const Thyra_VectorSpace> overlap_vs;
-  NodalDOFManager                       dofManager;
-  NodalDOFManager                       overlap_dofManager;
-  std::vector<std::vector<LO>>          wsElNodeEqID_rawVec;
-  std::vector<IDArray>                  wsElNodeEqID;
-  std::vector<std::vector<GO>>          wsElNodeID_rawVec;
-  std::vector<GIDArray>                 wsElNodeID;
 
-  Teuchos::RCP<const GlobalLocalIndexer> node_vs_indexer;
-  Teuchos::RCP<const GlobalLocalIndexer> overlap_node_vs_indexer;
-  Teuchos::RCP<const GlobalLocalIndexer> vs_indexer;
-  Teuchos::RCP<const GlobalLocalIndexer> overlap_vs_indexer;
-};
+ typedef traits traits_type;
 
-struct NodalDOFsStructContainer
-{
-  typedef std::map<std::pair<std::string, int>, DOFsStruct> MapOfDOFsStructs;
-
-  MapOfDOFsStructs                                        mapOfDOFsStructs;
-  std::map<std::string, MapOfDOFsStructs::const_iterator> fieldToMap;
-
-  const DOFsStruct&
-  getDOFsStruct(const std::string& field_name) const
-  {
-    return fieldToMap.find(field_name)->second->second;
-  };  // TODO handole errors
-
-  // IKT: added the following function, which may be useful for debugging.
-  void
-  printFieldToMap() const
-  {
-    typedef std::map<std::string, MapOfDOFsStructs::const_iterator>::
-        const_iterator                  MapIterator;
-    Teuchos::RCP<Teuchos::FancyOStream> out =
-        Teuchos::VerboseObjectBase::getDefaultOStream();
-    for (MapIterator iter = fieldToMap.begin(); iter != fieldToMap.end();
-         iter++) {
-      std::string key = iter->first;
-      *out << "IKT Key: " << key << "\n";
-      auto vs = getDOFsStruct(key).vs;
-      *out << "IKT Vector Space \n: ";
-      describe(vs, *out, Teuchos::VERB_EXTREME);
-    }
-  }
-
-  void
-  addEmptyDOFsStruct(
-      const std::string& field_name,
-      const std::string& meshPart,
-      int                numComps)
-  {
-    if (numComps != 1)
-      mapOfDOFsStructs.insert(make_pair(make_pair(meshPart, 1), DOFsStruct()));
-
-    fieldToMap[field_name] =
-        mapOfDOFsStructs
-            .insert(make_pair(make_pair(meshPart, numComps), DOFsStruct()))
-            .first;
-  }
-};
-
-class STKDiscretization : public AbstractDiscretization
-{
  public:
   //! Constructor
-  STKDiscretization(
+  BlockedDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
       Teuchos::RCP<AbstractSTKMeshStruct>&        stkMeshStruct,
       const Teuchos::RCP<const Teuchos_Comm>&     comm,
@@ -114,7 +43,7 @@ class STKDiscretization : public AbstractDiscretization
           std::map<int, std::vector<std::string>>());
 
   //! Destructor
-  virtual ~STKDiscretization();
+  virtual ~BlockedDiscretization();
 
   void
   printConnectivity() const;
@@ -123,24 +52,25 @@ class STKDiscretization : public AbstractDiscretization
   Teuchos::RCP<const Thyra_VectorSpace>
   getNodeVectorSpace() const
   {
-    return m_node_vs;
+    return Traits->getNodeVectorSpace();
   }
   Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapNodeVectorSpace() const
   {
-    return m_overlap_node_vs;
+    return Traits->getOverlapNodeVectorSpace();
   }
 
   //! Get solution DOF vector space (owned and overlapped).
   Teuchos::RCP<const Thyra_VectorSpace>
   getVectorSpace() const
   {
-    return m_vs;
+    return Traits->getVectorSpace();
   }
+
   Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapVectorSpace() const
   {
-    return m_overlap_vs;
+    return Traits->getOverlapVectorSpace();
   }
 
   //! Get Field node vector space (owned and overlapped)
@@ -163,6 +93,56 @@ class STKDiscretization : public AbstractDiscretization
   }
   Teuchos::RCP<Thyra_LinearOp>
   createOverlapJacobianOp() const
+  {
+    return m_overlap_jac_factory->createOp();
+  }
+
+  //! Get node vector space (owned and overlapped)
+  Teuchos::RCP<const Thyra_ProductVectorSpace>
+  getNodeProductVectorSpace() const
+  {
+    return m_node_pvs;
+  }
+  Teuchos::RCP<const Thyra_ProductVectorSpace>
+  getOverlapNodeProductVectorSpace() const
+  {
+    return m_overlap_node_pvs;
+  }
+
+  //! Get solution DOF vector space (owned and overlapped).
+  Teuchos::RCP<const Thyra_ProductVectorSpace>
+  getProductVectorSpace() const
+  {
+    return m_pvs;
+  }
+
+  Teuchos::RCP<const Thyra_ProductVectorSpace>
+  getOverlapProductVectorSpace() const
+  {
+    return m_overlap_pvs;
+  }
+
+  //! Get Field node vector space (owned and overlapped)
+  Teuchos::RCP<const Thyra_ProductVectorSpace>
+  getNodeProductVectorSpace(const std::string& field_name) const;
+  Teuchos::RCP<const Thyra_ProductVectorSpace>
+  getOverlapNodeProductVectorSpace(const std::string& field_name) const;
+
+  //! Get Field vector space (owned and overlapped)
+  Teuchos::RCP<const Thyra_ProductVectorSpace>
+  getProductVectorSpace(const std::string& field_name) const;
+  Teuchos::RCP<const Thyra_ProductVectorSpace>
+  getOverlapProductVectorSpace(const std::string& field_name) const;
+
+  //! Create a Jacobian operator (owned and overlapped)
+  Teuchos::RCP<Thyra_BlockedLinearOp>
+  createBlockedJacobianOp() const
+  {
+    return m_jac_factory->createOp();
+  }
+
+  Teuchos::RCP<Thyra_BlockedLinearOp>
+  createOverlapBlockedJacobianOp() const
   {
     return m_overlap_jac_factory->createOp();
   }
@@ -227,20 +207,19 @@ class STKDiscretization : public AbstractDiscretization
   const std::vector<IDArray>&
   getElNodeEqID(const std::string& field_name) const
   {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
+    return Traits->getElNodeEqID(field_name);
   }
 
   const NodalDOFManager&
   getDOFManager(const std::string& field_name) const
   {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;
+    return Traits->getDOFManager(field_name);
   }
 
   const NodalDOFManager&
   getOverlapDOFManager(const std::string& field_name) const
   {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name)
-        .overlap_dofManager;
+    return Traits->getOverlapDOFManager(field_name);
   }
 
   //! Retrieve coodinate vector (num_used_nodes * 3)
@@ -362,7 +341,7 @@ class STKDiscretization : public AbstractDiscretization
   int
   getNumEq() const
   {
-    return neq;
+    return Traits->getNumEq();
   }
 
   //! Locate nodal dofs in non-overlapping vectors using local indexing
@@ -390,26 +369,27 @@ class STKDiscretization : public AbstractDiscretization
   const stk::mesh::MetaData&
   getSTKMetaData() const
   {
-    return metaData;
+    return Traits->getSTKMetaData();
   }
   const stk::mesh::BulkData&
   getSTKBulkData() const
   {
-    return bulkData;
+    return Traits->getSTKBulkData();
   }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
 
-  Teuchos::RCP<Thyra_Vector>
-  getSolutionField(const bool overlapped = false) const;
   Teuchos::RCP<Thyra_MultiVector>
-  getSolutionMV(const bool overlapped = false) const;
+  getBlockedSolutionField(const bool overlapped = false) const;
+  // These are identical for a blocked discretization, keep the below to keep the interface the same
+  Teuchos::RCP<Thyra_MultiVector>
+  getBlockedSolutionMV(const bool overlapped = false) const;
 
   void
-  getField(Thyra_Vector& field_vector, const std::string& field_name) const;
+  getField(Thyra_MultiVector& field_vector, const std::string& field_name) const;
   void
   setField(
-      const Thyra_Vector& field_vector,
+      const Thyra_MultiVector& field_vector,
       const std::string&  field_name,
       const bool          overlapped = false);
 
@@ -417,23 +397,20 @@ class STKDiscretization : public AbstractDiscretization
 
   void
   writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+      const Thyra_MultiVector& solution,
       const double        time,
       const bool          overlapped = false);
   void
   writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
+      const Thyra_MultiVector& solution,
+      const Thyra_MultiVector& solution_dot,
       const double        time,
       const bool          overlapped = false);
   void
   writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const Thyra_Vector& solution_dotdot,
+      const Thyra_MultiVector& solution,
+      const Thyra_MultiVector& solution_dot,
+      const Thyra_MultiVector& solution_dotdot,
       const double        time,
       const bool          overlapped = false);
   void
@@ -446,36 +423,32 @@ class STKDiscretization : public AbstractDiscretization
   //! Write the solution to the mesh database.
   void
   writeSolutionToMeshDatabase(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+      const Thyra_MultiVector& solution,
       const double /* time */,
       const bool overlapped = false);
   void
   writeSolutionToMeshDatabase(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
+      const Thyra_MultiVector& solution,
+      const Thyra_MultiVector& solution_dot,
       const double /* time */,
       const bool overlapped = false);
   void
   writeSolutionToMeshDatabase(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const Thyra_Vector& solution_dotdot,
+      const Thyra_MultiVector& solution,
+      const Thyra_MultiVector& solution_dot,
+      const Thyra_MultiVector& solution_dotdot,
       const double /* time */,
       const bool overlapped = false);
   void
   writeSolutionMVToMeshDatabase(
       const Thyra_MultiVector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double /* time */,
       const bool overlapped = false);
 
   //! Write the solution to file. Must call writeSolution first.
   void
   writeSolutionToFile(
-      const Thyra_Vector& solution,
+      const Thyra_MultiVector& solution,
       const double        time,
       const bool          overlapped = false);
   void
@@ -493,112 +466,27 @@ class STKDiscretization : public AbstractDiscretization
     std::pair<unsigned, unsigned> latitude_longitude;
   };
 
- protected:
-  void
-  getSolutionField(Thyra_Vector& result, bool overlapped) const;
-  void
-  getSolutionMV(Thyra_MultiVector& result, bool overlapped) const;
-
-  void
-  setSolutionField(const Thyra_Vector& soln, const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp, const bool overlapped);
-  void
-  setSolutionField(
-      const Thyra_Vector& soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& soln_dot,
-      const bool          overlapped);
-  void
-  setSolutionField(
-      const Thyra_Vector& soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& soln_dot,
-      const Thyra_Vector& soln_dotdot,
-      const bool          overlapped);
-  void
-  setSolutionFieldMV(const Thyra_MultiVector& solnT, 
-		  const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-		  const bool overlapped);
-
-  double
-  monotonicTimeLabel(const double time);
-
-  void
-  computeNodalVectorSpaces(bool overlapped);
-
-  //! Process STK mesh for CRS Graphs
-  virtual void
-  computeGraphs();
-  //! Process STK mesh for Owned nodal quantitites
-  void
-  computeOwnedNodesAndUnknowns();
-  //! Process coords for ML
-  void
-  setupMLCoords();
-  //! Process STK mesh for Overlap nodal quantitites
-  void
-  computeOverlapNodesAndUnknowns();
-  //! Process STK mesh for Workset/Bucket Info
-  void
-  computeWorksetInfo();
-  //! Process STK mesh for NodeSets
-  void
-  computeNodeSets();
-  //! Process STK mesh for SideSets
-  void
-  computeSideSets();
-  //! Call stk_io for creating exodus output file
-  void
-  setupExodusOutput();
-
-  //! Find the local side id number within parent element
-  unsigned
-  determine_local_side_id(const stk::mesh::Entity elem, stk::mesh::Entity side);
-
-  //! Convert the stk mesh on this processor to a nodal graph using SEACAS
-  void
-  meshToGraph();
-
-  void
-  writeCoordsToMatrixMarket() const;
-
-  void
-  buildSideSetProjectors();
-
-  double previous_time_label;
-
-  int
-  nonzeroesPerRow(const int neq) const;
-
   // ==================== Members =================== //
 
   Teuchos::RCP<Teuchos::FancyOStream> out;
-
-  //! Stk Mesh Objects
-  stk::mesh::MetaData& metaData;
-  stk::mesh::BulkData& bulkData;
 
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
 
   //! Unknown map and node map
-  Teuchos::RCP<const Thyra_VectorSpace> m_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> m_node_vs;
+  Teuchos::RCP<const Thyra_ProductVectorSpace> m_pvs;
+  Teuchos::RCP<const Thyra_ProductVectorSpace> m_node_pvs;
 
   //! Overlapped unknown map and node map
-  Teuchos::RCP<const Thyra_VectorSpace> m_overlap_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> m_overlap_node_vs;
+  Teuchos::RCP<const Thyra_ProductVectorSpace> m_overlap_pvs;
+  Teuchos::RCP<const Thyra_ProductVectorSpace> m_overlap_node_pvs;
 
   //! Jacobian matrix graph proxy (owned and overlap)
-  Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
-  Teuchos::RCP<ThyraCrsMatrixFactory> m_overlap_jac_factory;
-
-  NodalDOFsStructContainer nodalDOFsStructContainer;
+  Teuchos::RCP<ThyraBlockedCrsMatrixFactory> m_jac_factory;
+  Teuchos::RCP<ThyraBlockedCrsMatrixFactory> m_overlap_jac_factory;
 
   //! Processor ID
   unsigned int myPID;
-
-  //! Number of equations (and unknowns) per node
-  const unsigned int neq;
 
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> sideSetEquations;
@@ -655,8 +543,6 @@ class STKDiscretization : public AbstractDiscretization
   size_t           netCDFOutputRequest;
   std::vector<int> varSolns;
 
-  WorksetArray<Teuchos::ArrayRCP<std::vector<interp>>>::type interpolateData;
-
   // Storage used in periodic BCs to un-roll coordinates. Pointers saved for
   // destructor.
   std::vector<double*> toDelete;
@@ -668,12 +554,10 @@ class STKDiscretization : public AbstractDiscretization
   // Sideset discretizations
   std::map<std::string, Teuchos::RCP<AbstractDiscretization>>
       sideSetDiscretizations;
-  std::map<std::string, Teuchos::RCP<STKDiscretization>>
-                                                        sideSetDiscretizationsSTK;
   std::map<std::string, std::map<GO, GO>>               sideToSideSetCellMap;
   std::map<std::string, std::map<GO, std::vector<int>>> sideNodeNumerationMap;
-  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>   projectors;
-  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>   ov_projectors;
+  std::map<std::string, Teuchos::RCP<Thyra_BlockedLinearOp>>   projectors;
+  std::map<std::string, Teuchos::RCP<Thyra_BlockedLinearOp>>   ov_projectors;
 
 // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
@@ -686,7 +570,9 @@ class STKDiscretization : public AbstractDiscretization
   DiscType interleavedOrdering;
 
  private:
-  Teuchos::RCP<ThyraCrsMatrixFactory> nodalMatrixFactory;
+  Teuchos::RCP<ThyraBlockedCrsMatrixFactory> nodalMatrixFactory;
+
+  Teuchos::RCP<traits_type> Traits;
 
   template <typename T, typename ContainerType>
   bool
@@ -709,4 +595,8 @@ class STKDiscretization : public AbstractDiscretization
 
 }  // namespace Albany
 
-#endif  // ALBANY_STK_DISCRETIZATION_HPP
+// Define macro for explicit template instantiation
+#define BLOCKDISC_INSTANTIATE_TEMPLATE_CLASS(name, type) \
+  template class name<type>;
+
+#endif  // BLOCKED_DISCRETIZATION_HPP

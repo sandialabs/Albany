@@ -9,7 +9,6 @@
 #include <iostream>
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
-//#include <Shards_BasicTopologies.hpp>
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>

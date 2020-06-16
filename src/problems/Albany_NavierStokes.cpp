@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_NavierStokes.hpp"
-#include "AAdapt_InitialCondition.hpp"
+#include "InitialCondition.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"

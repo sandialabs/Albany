@@ -1112,7 +1112,7 @@ STKDiscretization::computeNodalVectorSpaces(bool overlapped)
     NodalDOFManager& nodal_dofManager =
         (overlapped) ? random_dofs_struct->overlap_dofManager :
                        random_dofs_struct->dofManager;
-    nodal_dofManager.setup(1, numNodes, maxGlobalNodeGID, false);
+    nodal_dofManager.setup(1, numNodes, maxGlobalNodeGID, DiscType::BlockedMono);
 
     indices.resize(numNodes);
     for (int i = 0; i < numNodes; i++) {

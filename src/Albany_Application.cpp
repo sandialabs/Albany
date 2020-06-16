@@ -580,7 +580,7 @@ Application::finalSetUp(
   // If the states have been already allocated, skip this.
   if (!stateMgr.areStateVarsAllocated()) stateMgr.setupStateArrays(disc);
 
-  solMgr = rcp(new AAdapt::AdaptiveSolutionManager(
+  solMgr = rcp(new SolutionManager(
       params,
       initial_guess,
       paramLib,

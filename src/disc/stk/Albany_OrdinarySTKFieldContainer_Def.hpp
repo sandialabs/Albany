@@ -47,7 +47,7 @@ static const char* res_id_name[1] = {
     "residual",
 };
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     const Teuchos::RCP<Teuchos::ParameterList>&               params_,
     const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
@@ -184,7 +184,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   initializeSTKAdaptation();
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
 {
@@ -203,7 +203,7 @@ OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
 #endif
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::fillVector(
     Thyra_Vector&                                field_vector,
@@ -220,7 +220,7 @@ OrdinarySTKFieldContainer<Interleaved>::fillVector(
       nodalDofManager);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::fillSolnVector(
     Thyra_Vector&                                solution,
@@ -239,7 +239,7 @@ OrdinarySTKFieldContainer<Interleaved>::fillSolnVector(
       solution, solution_field[0]->name(), sel, node_vs, nodalDofManager);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::fillSolnMultiVector(
     Thyra_MultiVector&                           solution,
@@ -266,7 +266,7 @@ OrdinarySTKFieldContainer<Interleaved>::fillSolnMultiVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveVector(
     const Thyra_Vector&                          field_vector,
@@ -283,7 +283,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveVector(
       nodalDofManager);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
@@ -321,7 +321,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
 
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
@@ -361,7 +361,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
@@ -408,7 +408,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnMultiVector(
     const Thyra_MultiVector&                     solution,
@@ -448,7 +448,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnMultiVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveResVector(
     const Thyra_Vector&                          res,
@@ -466,7 +466,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveResVector(
   saveVectorImpl(res, residual_field->name(), sel, node_vs, nodalDofManager);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::transferSolutionToCoords()
 {
@@ -475,7 +475,7 @@ OrdinarySTKFieldContainer<Interleaved>::transferSolutionToCoords()
   Helper::copySTKField(*solution_field[0], *this->coordinates_field);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::fillVectorImpl(
     Thyra_Vector&                                field_vector,
@@ -530,7 +530,7 @@ OrdinarySTKFieldContainer<Interleaved>::fillVectorImpl(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveVectorImpl(
     const Thyra_Vector&                          field_vector,

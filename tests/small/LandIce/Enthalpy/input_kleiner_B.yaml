@@ -63,7 +63,6 @@ ANONYMOUS:
     Exodus Output File Name: kleiner_B.exo
     Element Shape: Hexahedron
     Use Serial Mesh: true
-    Interleaved Ordering: true
     Columnwise Ordering: true
     NumLayers: 80
     Thickness Field Name: thickness

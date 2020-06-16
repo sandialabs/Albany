@@ -63,7 +63,6 @@ ANONYMOUS:
     Exodus Input File Name: ../ExoMeshes/gis_struct_enth.exo
     Restart Index: 1
     Use Serial Mesh: true
-    Interleaved Ordering: true
     Side Set Discretizations: 
       Side Sets: [basalside]
       basalside: 

@@ -17,7 +17,7 @@ namespace Albany
 
 SolutionMaxValueResponseFunction::
 SolutionMaxValueResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& comm,
-                        				 int neq_, int eq_, bool interleavedOrdering_)
+                                  int neq_, int eq_, DiscType interleavedOrdering_)
  : SamplingBasedScalarResponseFunction(comm)
  , neq(neq_)
  , eq(eq_)
@@ -32,7 +32,7 @@ evaluateResponse(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
-		const Teuchos::Array<ParamVec>& /*p*/,
+    const Teuchos::Array<ParamVec>& /*p*/,
     const Teuchos::RCP<Thyra_Vector>& g)
 {
   Teuchos::ArrayRCP<ST> g_nonconstView = getNonconstLocalData(g);
@@ -40,23 +40,23 @@ evaluateResponse(const double /*current_time*/,
 }
 
 void SolutionMaxValueResponseFunction::
-evaluateTangent(const double /* alpha */, 
-	const double /*beta*/,
-	const double /*omega*/,
-	const double current_time,
-	bool /*sum_derivs*/,
-  const Teuchos::RCP<const Thyra_Vector>& x,
-  const Teuchos::RCP<const Thyra_Vector>& xdot,
-  const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-	const Teuchos::Array<ParamVec>& p,
-	ParamVec* deriv_p,
-  const Teuchos::RCP<const Thyra_MultiVector>& Vx,
-  const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
-  const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
-  const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
-  const Teuchos::RCP<Thyra_Vector>& g,
-  const Teuchos::RCP<Thyra_MultiVector>& gx,
-  const Teuchos::RCP<Thyra_MultiVector>& gp)
+evaluateTangent(const double /* alpha */,
+    const double /*beta*/,
+    const double /*omega*/,
+    const double current_time,
+    bool /*sum_derivs*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>& p,
+    ParamVec* deriv_p,
+    const Teuchos::RCP<const Thyra_MultiVector>& Vx,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& /*Vp*/,
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& gx,
+    const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
   if (!gx.is_null() || !gp.is_null()) {
     evaluateGradient(current_time, x, xdot, xdotdot, p, deriv_p, g, gx, Teuchos::null, Teuchos::null, gp);
@@ -76,20 +76,20 @@ evaluateTangent(const double /* alpha */,
 
 void SolutionMaxValueResponseFunction::
 evaluateGradient(const double /*current_time*/,
-  const Teuchos::RCP<const Thyra_Vector>& x,
-  const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
-  const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
-	const Teuchos::Array<ParamVec>& /*p*/,
-	ParamVec* /*deriv_p*/,
-	const Teuchos::RCP<Thyra_Vector>& g,
-	const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
-	const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
-	const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
-	const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
+    const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
+    const Teuchos::Array<ParamVec>& /*p*/,
+    ParamVec* /*deriv_p*/,
+    const Teuchos::RCP<Thyra_Vector>& g,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
+    const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   ST max_val;
   computeMaxValue(x, max_val);
-  
+
   // Evaluate response g
   if (!g.is_null()) {
     Teuchos::ArrayRCP<ST> g_nonconstView = getNonconstLocalData(g);
@@ -145,13 +145,13 @@ void SolutionMaxValueResponseFunction::
 computeMaxValue(const Teuchos::RCP<const Thyra_Vector>& x, ST& global_max)
 {
   auto x_local = getLocalData(x);
-  
+
   // Loop over nodes to find max value for equation eq
   int num_my_nodes = x_local.size() / neq;
   int index;
   ST my_max = std::numeric_limits<ST>::lowest();
   for (int node=0; node<num_my_nodes; node++) {
-    if (interleavedOrdering) {
+    if (interleavedOrdering == DiscType::Interleaved) {
       index = node*neq+eq;
     } else {
       index = node + eq*num_my_nodes;
@@ -167,7 +167,7 @@ computeMaxValue(const Teuchos::RCP<const Thyra_Vector>& x, ST& global_max)
   //     dimension. I also believe Albany makes sure this does not happen, so I *think*
   //     these lines *should* be safe to remove...
   if (num_my_nodes*neq+eq < x_local.size()) {
-    if (interleavedOrdering) {
+    if (interleavedOrdering == DiscType::Interleaved) {
       index = num_my_nodes*neq+eq;
     } else {
       index = num_my_nodes + eq*num_my_nodes;
@@ -178,7 +178,7 @@ computeMaxValue(const Teuchos::RCP<const Thyra_Vector>& x, ST& global_max)
   }
 
   // Get max value across all proc's
-  Teuchos::reduceAll(*comm_, Teuchos::REDUCE_MAX, 1, &my_max, &global_max); 
+  Teuchos::reduceAll(*comm_, Teuchos::REDUCE_MAX, 1, &my_max, &global_max);
 }
 
 } // namespace Albany

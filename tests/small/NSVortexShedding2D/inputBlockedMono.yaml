@@ -21,7 +21,6 @@ ANONYMOUS:
       Response 0: Solution Max Value
       ResponseParams 0: 
         Equation: 0
-        Interleaved Ordering: false
   Discretization: 
     Method: Exodus
     Exodus Input File Name: vortex.exo

@@ -3,13 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include "BlockedDiscretization.hpp"
+#include "BlockedDiscretization_Def.hpp"
 
-#include "Albany_GenericSTKFieldContainer.hpp"
-#include "Albany_GenericSTKFieldContainer_Def.hpp"
-
-namespace Albany {
-
-template class GenericSTKFieldContainer<DiscType::BlockedMono>;
-template class GenericSTKFieldContainer<DiscType::Interleaved>;
-
-} // namespace Albany
+BLOCKDISC_INSTANTIATE_TEMPLATE_CLASS(Albany::BlockedDiscretization, Albany::STKDiscretization)

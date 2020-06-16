@@ -52,7 +52,6 @@ ANONYMOUS:
     Cubature Degree: 1
     Exodus Output File Name: gis_coupled.exo
     Columnwise Ordering: false
-    Interleaved Ordering: true
     Element Shape: Tetrahedron
     NumLayers: 5
     Thickness Field Name: ice_thickness
