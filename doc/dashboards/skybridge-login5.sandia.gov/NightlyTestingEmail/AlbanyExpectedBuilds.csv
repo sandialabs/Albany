@@ -1,6 +1,6 @@
 group, site, buildname 
 Nightly, algol.ca.sandia.gov, algol.ca.sandia.gov-trilinos
-Nightly, algol.ca.sandia.gov, algol.ca.sandia.gov-albany
+Nightly, algol.ca.sandia.gov, algol.ca.sandia.gov-lcm
 Nightly, blake.sandia.gov, blake-serial-Trilinos
 Nightly, blake.sandia.gov, blake-openmp-Trilinos
 Nightly, blake.sandia.gov, blake-serial-Albany
@@ -33,7 +33,7 @@ Nightly, mayer.sandia.gov, mayer-Release-Albany
 Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Albany
 Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Cism-Albany
 Nightly, proxima.ca.sandia.gov, proxima.ca.sandia.gov-trilinos
-Nightly, proxima.ca.sandia.gov, proxima.ca.sandia.gov-albany
+Nightly, proxima.ca.sandia.gov, proxima.ca.sandia.gov-lcm
 Nightly, ride.sandia.gov, ride-CUDA-Trilinos
 Nightly, ride.sandia.gov, ride-CUDA-Albany
 Nightly, skybridge-login5, skybridge-login5-trilinos
