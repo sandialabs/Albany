@@ -22,8 +22,7 @@ namespace LandIce
 template<typename EvalT, typename Traits, typename Type>
 EnthalpyBasalResid<EvalT,Traits,Type>::
 EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
- : enthalpyBasalResid(p.get<std::string> ("Enthalpy Basal Residual Variable Name"), dl->node_scalar),
-   sideNodes("sideNodes", 1, 1)
+ : enthalpyBasalResid(p.get<std::string> ("Enthalpy Basal Residual Variable Name"), dl->node_scalar)
 {
   basalSideName = p.get<std::string>("Side Set Name");
 
@@ -52,64 +51,22 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
   vecDimFO     = std::min((int)dims[2],2);
 
   // Index of the nodes on the sides in the numeration of the cell
-  // Teuchos::RCP<shards::CellTopology> cellType;
-  // cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-  // sideDim      = cellType->getDimension()-1;
-  // sideNodes.resize(numSides);
-  // for (int side=0; side<numSides; ++side)
-  // {
-  //   // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-  //   int thisSideNodes = cellType->getNodeCount(sideDim,side);
-  //   sideNodes[side].resize(thisSideNodes);
-  //   for (int node=0; node<thisSideNodes; ++node)
-  //   {
-  //     sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
-  //   }
-  // }
-
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
   sideDim      = cellType->getDimension()-1;
-  int nodeMax = 0;
-  for (int side=0; side<numSides; ++side) {
+  sideNodes.resize(numSides);
+  for (int side=0; side<numSides; ++side)
+  {
+    // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    nodeMax = std::max(nodeMax, thisSideNodes);
-  }
-  Kokkos::resize(sideNodes, numSides, nodeMax);
-  for (int side=0; side<numSides; ++side) {
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    for (int node=0; node<thisSideNodes; ++node) {
-      sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
+    sideNodes[side].resize(thisSideNodes);
+    for (int node=0; node<thisSideNodes; ++node)
+    {
+      sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
     }
   }
 
   this->setName("Enthalpy Basal Residual" + PHX::print<EvalT>());
-}
-
-template<typename EvalT, typename Traits, typename Type>
-KOKKOS_INLINE_FUNCTION
-void EnthalpyBasalResid<EvalT,Traits,Type>::
-operator() (const Clear_Residual_Tag& tag, const int& node, const int& cell) const{
-  // enthalpyBasalResid(cell,node) = 0.;
-}
-
-template<typename EvalT, typename Traits, typename Type>
-KOKKOS_INLINE_FUNCTION
-void EnthalpyBasalResid<EvalT,Traits,Type>::
-operator() (const Enthalpy_Basil_Resid_Tag& tag, const int& idx) const{
-  // // Get the local data of side and cell
-  // const int cell = sideSet[idx].elem_LID;
-  // const int side = sideSet[idx].side_local_id;
-
-  // for (int node = 0; node < numSideNodes; ++node)
-  // {
-  //   int cnode = sideNodes[side][node];
-
-  //   for (int qp = 0; qp < numSideQPs; ++qp)
-  //   {
-  //     enthalpyBasalResid(cell,cnode) += basalMeltRateQP(cell,side,qp) *  BF(cell,side,node,qp) * w_measure(cell,side,qp);
-  //   }
-  // }
 }
 
 template<typename EvalT, typename Traits, typename Type>
@@ -131,14 +88,10 @@ evaluateFields(typename Traits::EvalData d)
     for (int node = 0; node < numCellNodes; ++node)
       enthalpyBasalResid(cell,node) = 0.;
 
-  // Kokkos::parallel_for(Clear_Residual_Policy({0,0}, {numCellNodes,d.numCells}), *this);
-
   if (d.sideSets->find(basalSideName)==d.sideSets->end())
     return;
 
   const std::vector<Albany::SideStruct>& sideSet = d.sideSets->at(basalSideName);
-
-  // Kokkos::parallel_for(Enthalpy_Basil_Resid_Policy(0, sideSet.size()), *this);
 
   for (auto const& it_side : sideSet)
   {
@@ -148,8 +101,7 @@ evaluateFields(typename Traits::EvalData d)
 
     for (int node = 0; node < numSideNodes; ++node)
     {
-      // int cnode = sideNodes[side][node];
-      int cnode = sideNodes(side,node);
+      int cnode = sideNodes[side][node];
       enthalpyBasalResid(cell,cnode) = 0.;
 
       for (int qp = 0; qp < numSideQPs; ++qp)

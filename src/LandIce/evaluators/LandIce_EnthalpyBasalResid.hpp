@@ -61,8 +61,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node> enthalpyBasalResid;      // [MW] = [k^{-2} kPa s^{-1} km^3]
   // PHX::MDField<ScalarT,Cell,Side, Node> basalMeltRate;      // [MW] = [m/yr]
 
-  //std::vector<std::vector<int> >  sideNodes;
-  Kokkos::View<int**> sideNodes;
+  std::vector<std::vector<int> >  sideNodes;
   std::string                     basalSideName;
 
   int numCellNodes;
@@ -83,24 +82,6 @@ private:
   // double alpha_om; //[]
 
   // bool haveSUPG;
-
-  //std::vector<Albany::SideStruct> sideSet;
-
-  public:
-
-  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-  struct Clear_Residual_Tag{};
-  struct Enthalpy_Basil_Resid_Tag{};
-
-  typedef Kokkos::MDRangePolicy<ExecutionSpace,Clear_Residual_Tag,Kokkos::Rank<2>> Clear_Residual_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,Enthalpy_Basil_Resid_Tag> Enthalpy_Basil_Resid_Policy;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const Clear_Residual_Tag& tag, const int& i, const int& j) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const Enthalpy_Basil_Resid_Tag& tag, const int& i) const;
-
 };
 
 } // namespace LandIce
