@@ -27,7 +27,6 @@ if (1)
   IF(CTEST_BUILD_OPTION MATCHES "debug-trilinos")
     set (BUILD_TRILINOS FALSE)
     set (BUILD_TRILINOSDBG TRUE)
-    set (BUILD_PERIDIGM FALSE)
     set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_ALB64DBG FALSE)
@@ -45,7 +44,6 @@ if (1)
   IF(CTEST_BUILD_OPTION MATCHES "debug-albany")
     set (BUILD_TRILINOS FALSE)
     set (BUILD_TRILINOSDBG FALSE)
-    set (BUILD_PERIDIGM FALSE)
     set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_ALB64DBG TRUE)
@@ -62,7 +60,6 @@ if (1)
   ENDIF() 
   IF(CTEST_BUILD_OPTION MATCHES "clang-trilinos")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_PERIDIGM FALSE)
     set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG TRUE)
@@ -79,7 +76,6 @@ if (1)
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "clang-albany")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_PERIDIGM FALSE)
     set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
@@ -96,7 +92,6 @@ if (1)
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "clangdbg-trilinos")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_PERIDIGM FALSE)
     set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
@@ -113,7 +108,6 @@ if (1)
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "clangdbg-albany")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_PERIDIGM FALSE)
     set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
@@ -130,7 +124,6 @@ if (1)
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "intel-trilinos")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_PERIDIGM FALSE)
     set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
@@ -147,7 +140,6 @@ if (1)
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "intel-albany")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_PERIDIGM FALSE)
     set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
@@ -173,7 +165,6 @@ else ()
   # machine that can support a lengthy nightly.
   set (CLEAN_BUILD FALSE)
   set (BUILD_TRILINOS FALSE)
-  set (BUILD_PERIDIGM TRUE)
   set (BUILD_ALB32 FALSE)
   set (BUILD_ALB64 FALSE)
   set (BUILD_TRILINOSCLANG FALSE)
@@ -221,19 +212,6 @@ endif ()
 
 set (PREFIX_DIR /projects/albany)
 set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
-#set (GCC_MPI_DIR /projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6)
-#set (GCC_DBG_MPI_DIR /projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-7.2.0-RHEL6)
-set (GCC_MPI_DIR $ENV{MPI_HOME})
-set (GCC_DBG_MPI_DIR $ENV{MPI_HOME})
-
-set (BOOST_ROOT /projects/albany)
-set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.1)
-#set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang)
-set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang/boost_1_55_0_clang)
-
-SET (INTEL_MPI_DIR $ENV{MPI_HOME})
-SET (MPI_BIN_DIR $ENV{MPI_BIN})
-SET (MPI_LIB_DIR $ENV{MPI_LIB})
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 # Build all results in a scratch space
@@ -281,21 +259,6 @@ find_program (CTEST_SVN_COMMAND NAMES svn)
 
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
-#set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
-
-#if (CLEAN_BUILD)
-#  # Initial cache info
-#  set (CACHE_CONTENTS "
-#  SITE:STRING=${CTEST_SITE}
-#  CMAKE_BUILD_TYPE:STRING=Release
-#  CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
-#  BUILD_TESTING:BOOL=OFF
-#  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
-#  " )
-#
-##  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
-#  file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
-#endif ()
 
 if (DOWNLOAD_TRILINOS)
   #
@@ -342,21 +305,6 @@ IF (DOWNLOAD_ALBANY)
     endif ()
   endif ()
 
-  # Get Peridigm. Nonfatal if error.
-  #if (BUILD_PERIDIGM AND (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Peridigm"))
-  #  execute_process (COMMAND ${CTEST_GIT_COMMAND}
-  #    clone ${Peridigm_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Peridigm
-  #    OUTPUT_VARIABLE _out
-  #    ERROR_VARIABLE _err
-  #    RESULT_VARIABLE HAD_ERROR)
-  #  message(STATUS "out: ${_out}")
-  #  message(STATUS "err: ${_err}")
-  #  message(STATUS "res: ${HAD_ERROR}")
-  #  if (HAD_ERROR)
-  #    message (FATAL_ERROR "Cannot clone Peridigm repository.")
-  #    set (BUILD_PERIDIGM FALSE)
-  #  endif ()    
-  #endif ()
 ENDIF ()
 
 ctest_start(${CTEST_TEST_TYPE})
@@ -424,23 +372,6 @@ IF(DOWNLOAD_ALBANY)
   if (count LESS 0)
     message(FATAL_ERROR "Cannot update Albany!")
   endif ()
-
-  # Peridigm
-  #if (BUILD_PERIDIGM)
-
- #   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
- #   CTEST_UPDATE (SOURCE "${CTEST_SOURCE_DIRECTORY}/Peridigm" RETURN_VALUE count)
- #   message ("Found ${count} changed files")
- #   if (count LESS 0)
- #     set (BUILD_PERIDIGM FALSE)
- #   endif ()
-
-  #  if (CTEST_DO_SUBMIT)
-  #    ctest_submit (PARTS Update RETURN_VALUE HAD_ERROR)
-  #  endif ()
-
-   # message ("After downloading, BUILD_PERIDIGM = ${BUILD_PERIDIGM}")
-  #endif ()
 
 endif ()
 
@@ -578,7 +509,6 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DSTK_HIDE_DEPRECATED_CODE:BOOL=OFF"
   "-DTpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
   "-DXpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
-  "-DUSE_NEW_POLICY_CMP0060=NEW"
   )
 
 if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
@@ -593,7 +523,7 @@ endif ()
 
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 
-if (BUILD_TRILINOS OR BUILD_TRILINOSDBG OR BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG)
+if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
 
   if (BUILD_TRILINOS) 
     set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstall")
@@ -602,13 +532,6 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG OR BUILD_TRILINOSCLANG OR BUILD_TRILINOS
     set(CFLAGS "-O3 -march=native -DNDEBUG")
     set(FFLAGS "-O3 -march=native -DNDEBUG -Wa,-q")
   endif(BUILD_TRILINOS)
-  if (BUILD_TRILINOSCLANG) 
-    set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11")
-    set(BTYPE "RELEASE") 
-    set(CCFLAGS "-O3 -march=native -DNDEBUG=1")
-    set(CFLAGS "-O3 -march=native -DNDEBUG=1")
-    set(FFLAGS "-O3 -march=native -DNDEBUG=1 -Wa,-q")
-  endif (BUILD_TRILINOSCLANG) 
   if (BUILD_TRILINOSDBG) 
     set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosDbg")
     set(BTYPE "DEBUG") 
@@ -616,6 +539,142 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG OR BUILD_TRILINOSCLANG OR BUILD_TRILINOS
     set(CFLAGS "-g -O0")
     set(FFLAGS "-g -O0 -Wa,-q") 
   endif(BUILD_TRILINOSDBG)
+  set (CONF_OPTS
+    "-Wno-dev"
+    "-DCMAKE_BUILD_TYPE:STRING=${BTYPE}"
+    #"-DCMAKE_CXX_FLAGS:STRING=$CCFLAGS"
+    #"-DCMAKE_C_FLAGS:STRING=$CFLAGS"
+    #"-DCMAKE_Fortran_FLAGS:STRING=$FFLAGS"
+    "-DTPL_ENABLE_BLAS:STRING=ON"
+    "-DTPL_ENABLE_LAPACK:STRING=ON"
+    "-DTPL_BLAS_LIBRARIES:FILEPATH='/usr/lib64/libblas.so.3'"
+    "-DTPL_LAPACK_LIBRARIES:FILEPATH='/usr/lib64/liblapack.so.3'"
+    "-DTrilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
+    "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
+    "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
+    #
+    "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
+    "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
+    "-DTrilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON"
+    "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
+    "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
+    "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
+    #
+    "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
+    "-DTrilinos_ENABLE_Amesos:BOOL=ON"
+    "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
+    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
+    "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
+    "-DTrilinos_ENABLE_Belos:BOOL=ON"
+    "-DTrilinos_ENABLE_Epetra:BOOL=ON"
+    "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
+    "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
+    #
+    "-DTrilinos_ENABLE_ROL:BOOL=ON"
+    "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
+    "-DTrilinos_ENABLE_ML:BOOL=ON"
+    "-DTrilinos_ENABLE_MueLu:BOOL=ON"
+    "-DMueLu_ENABLE_Tutorial:BOOL=OFF"
+    "-DTrilinos_ENABLE_Moertel:BOOL=OFF"
+    "-DTrilinos_ENABLE_NOX:BOOL=ON"
+    "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
+    "-DTrilinos_ENABLE_Sacado:BOOL=ON"
+    "-DSacado_NEW_FAD_DESIGN_IS_DEFAULT:BOOL=OFF"
+    "-DTrilinos_ENABLE_SCOREC:BOOL=OFF"
+    "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
+    "-DTrilinos_ENABLE_Shards:BOOL=ON"
+    "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
+    "-DTrilinos_ENABLE_STK:BOOL=ON"
+    "-DTrilinos_ENABLE_STKSearch:BOOL=ON"
+    "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
+    "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
+    "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
+    "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+    "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
+    "-DTrilinos_ENABLE_Piro:BOOL=ON"
+    "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
+    "-DTrilinos_ENABLE_Teko:BOOL=ON"
+    "-DTrilinos_ENABLE_Tempus:BOOL=ON"
+    "-DTrilinos_ENABLE_Thyra:BOOL=ON"
+    "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+    #
+    "-DRythmos_ENABLE_DEBUG:BOOL=ON"
+    "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
+    "-DTpetra_INST_INT_LONG:BOOL=OFF"
+    "-DTpetra_INST_INT_INT:BOOL=OFF"
+    "-DTpetra_INST_DOUBLE:BOOL=ON"
+    "-DTpetra_INST_FLOAT:BOOL=OFF"
+    "-DTpetra_INST_COMPLEX_FLOAT:BOOL=OFF"
+    "-DTpetra_INST_COMPLEX_DOUBLE:BOOL=OFF"
+    "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
+    "-DTpetra_INST_INT_UNSIGNED_LONG:BOOL=OFF"
+    "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
+    "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
+    "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
+    "-DKokkos_ENABLE_SERIAL:BOOL=ON"
+    "-DKokkos_ENABLE_OPENMP:BOOL=OFF"
+    "-DKokkos_ENABLE_PTHREAD:BOOL=OFF"
+    #
+    "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
+    "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
+    "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
+    "-DTrilinos_ENABLE_SEACASPLT:BOOL=OFF"
+    "-DTPL_ENABLE_X11:BOOL=OFF"
+    "-DTPL_ENABLE_Matio:BOOL=OFF"
+    #
+    "-DTPL_ENABLE_MPI:BOOL=ON"
+    "-DMPI_BASE_DIR:PATH=$ENV{SEMS_OPENMPI_ROOT}"
+    "-DCMAKE_CXX_COMPILER:FILEPATH=$ENV{SEMS_OPENMPI_ROOT}/bin/mpicxx"
+    "-DCMAKE_C_COMPILER:FILEPATH=$ENV{SEMS_OPENMPI_ROOT}/bin/mpicc"
+    "-DCMAKE_Fortran_COMPILER:FILEPATH=$ENV{SEMS_OPENMPI_ROOT}/bin/mpifort"
+    #
+    "-DTPL_ENABLE_Pthread:BOOL=OFF"
+    #
+    "-DTPL_ENABLE_Boost:BOOL=ON"
+    "-DTPL_ENABLE_BoostLib:BOOL=ON"
+    "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
+    "-DBoost_INCLUDE_DIRS:FILEPATH=$ENV{SEMS_BOOST_INCLUDE_PATH}"
+    "-DBoost_LIBRARY_DIRS:FILEPATH=$ENV{SEMS_BOOST_LIBRARY_PATH}"
+    "-DBoostLib_INCLUDE_DIRS:FILEPATH=$ENV{SEMS_BOOST_INCLUDE_PATH}"
+    "-DBoostLib_LIBRARY_DIRS:FILEPATH=$ENV{SEMS_BOOST_LIBRARY_PATH}"
+    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=$ENV{SEMS_BOOST_INCLUDE_PATH}"
+    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=$ENV{SEMS_BOOST_LIBRARY_PATH}"
+    #
+    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+    "-DTPL_ENABLE_Netcdf:BOOL=ON"
+    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=$ENV{SEMS_NETCDF_ROOT}/include"
+    "-DNetcdf_LIBRARY_DIRS:PATH=$ENV{SEMS_NETCDF_ROOT}/lib"
+    #
+    "-DTPL_ENABLE_HDF5:STRING=ON"
+    "-DHDF5_INCLUDE_DIRS:PATH=$ENV{SEMS_HDF5_INCLUDE_PATH}"
+    "-DHDF5_LIBRARY_DIRS:PATH=$ENV{SEMS_HDF5_LIBRARY_PATH}"
+    #"-DTrilinos_EXTRA_LINK_FLAGS:STRING=-L$ENV{SEMS_HDF5_LIBRARY_PATH} -lhdf5_hl -lhdf5'"
+    "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L$ENV{SEMS_HDF5_LIBRARY_PATH} -lhdf5_hl -lhdf5'"
+    #
+    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
+    "-DTPL_ENABLE_SuperLU:BOOL=OFF"
+    #
+    "-DTPL_ENABLE_ParMETIS:BOOL=OFF"
+    #
+    "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
+  )
+
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_trilinos("${CONF_OPTS}" "Trilinos" "${INSTALL_LOCATION}")
+
+endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
+
+
+if (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG)
+
+  if (BUILD_TRILINOSCLANG) 
+    set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11")
+    set(BTYPE "RELEASE") 
+    set(CCFLAGS "-O3 -march=native -DNDEBUG=1")
+    set(CFLAGS "-O3 -march=native -DNDEBUG=1")
+    set(FFLAGS "-O3 -march=native -DNDEBUG=1 -Wa,-q")
+  endif (BUILD_TRILINOSCLANG) 
   if (BUILD_TRILINOSCLANGDBG) 
     set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11Dbg")
     set(BTYPE "DEBUG")
@@ -623,30 +682,17 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG OR BUILD_TRILINOSCLANG OR BUILD_TRILINOS
     set(CFLAGS "-g -O0")
     set(FFLAGS "-g -O0 -Wa,-q")
   endif (BUILD_TRILINOSCLANGDBG) 
-  if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)  
-    set(BOOST_DIR "/projects/albany/gcc-9.1.0")
-    set(LIB_DIR "/projects/albany/gcc-9.1.0")
-    set(GCC_LIB_DIR "/projects/albany/gcc-9.1.0")
-    set(MPI_BASE_DIR "/projects/albany/gcc-9.1.0")
-    set(NETCDF "/projects/albany/gcc-9.1.0") 
-    set(HDFDIR "/projects/albany/gcc-9.1.0")
-    set(PARMETISDIR "/projects/albany/gcc-9.1.0")
-    set(MKL_PATH "/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281") 
-    set(SUPERLUDIR "/projects/albany/gcc-9.1.0/SuperLU_4.3") 
-    set(LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group") 
-  endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG)  
-  if (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG) 
-    set(BOOST_DIR "/projects/albany/clang-9.0.1")
-    set(LIB_DIR "/projects/albany/clang-9.0.1")
-    set(GCC_LIB_DIR "/projects/albany/gcc-9.1.0")
-    set(MPI_BASE_DIR "/projects/albany/clang-9.0.1")
-    set(NETCDF "/projects/albany/clang-9.0.1")
-    set(HDFDIR "/projects/albany/clang-9.0.1")
-    set(PARMETISDIR "/projects/albany/clang-9.0.1")
-    set(MKL_PATH "/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281")
-    set(SUPERLUDIR "/projects/albany/clang-9.0.1/SuperLU_4.3")
-    set(LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
-  endif (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG) 
+  set(BOOST_DIR "/projects/albany/clang-9.0.1")
+  set(LIB_DIR "/projects/albany/clang-9.0.1")
+  set(GCC_LIB_DIR "/projects/albany/gcc-9.1.0")
+  set(MPI_BASE_DIR "/projects/albany/clang-9.0.1")
+  set(NETCDF "/projects/albany/clang-9.0.1")
+  set(HDFDIR "/projects/albany/clang-9.0.1")
+  set(PARMETISDIR "/projects/albany/clang-9.0.1")
+  set(MKL_PATH "/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281")
+  set(SUPERLUDIR "/projects/albany/clang-9.0.1/SuperLU_4.3")
+  set(LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
+  
   set (CONF_OPTS
     "-DCMAKE_BUILD_TYPE:STRING=${BTYPE}"
     "-DCMAKE_CXX_COMPILER:STRING=${MPI_BASE_DIR}/bin/mpicxx"
@@ -660,9 +706,6 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG OR BUILD_TRILINOSCLANG OR BUILD_TRILINOS
     "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${MPI_BASE_DIR}"
-if (BUILD_TRILINOS OR BUILD_TRILINOSDBG) 
-    "-DCMAKE_MACOSX_RPATH:BOOL=ON"
-endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG) 
     "-DCMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib"
     "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     #
@@ -692,6 +735,7 @@ endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
     "-DTrilinos_ENABLE_Sacado:BOOL=ON"
+    "-DSacado_NEW_FAD_DESIGN_IS_DEFAULT:BOOL=OFF"
     "-DTrilinos_ENABLE_SCOREC:BOOL=OFF"
     "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
     "-DTrilinos_ENABLE_Shards:BOOL=ON"
@@ -783,17 +827,13 @@ endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
     "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
     "-DCMAKE_INSTALL_RPATH:STRING='/projects/albany/gcc-9.1.0/lib'"
+    "-DUSE_NEW_POLICY_CMP0060=NEW"
   )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_trilinos("${CONF_OPTS}" "Trilinos" "${INSTALL_LOCATION}")
 
-endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG OR BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG)
-
-if (BUILD_PERIDIGM)
-  INCLUDE(${CTEST_SCRIPT_DIRECTORY}/peridigm_macro.cmake)
-  do_peridigm()
-endif (BUILD_PERIDIGM)
+endif (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG)
 
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/albany_macro.cmake)
 
