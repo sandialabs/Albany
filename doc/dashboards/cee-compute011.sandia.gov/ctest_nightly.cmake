@@ -189,6 +189,12 @@ getuname(osname -s)
 getuname(osrel  -r)
 getuname(cpu    -m)
 
+set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
+set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.1)
+SET (INTEL_MPI_DIR $ENV{MPI_HOME})
+SET (MPI_BIN_DIR $ENV{MPI_BIN})
+SET (MPI_LIB_DIR $ENV{MPI_LIB})
+
 # Begin User inputs:
 #set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
 SITE_NAME(CTEST_SITE) # directly set CTEST_SITE to the output of `hostname`
