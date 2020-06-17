@@ -26,6 +26,9 @@
 #include "Thyra_LinearOpBase.hpp"
 #include "Thyra_LinearOpWithSolveBase.hpp"
 #include "Thyra_LinearOpWithSolveFactoryBase.hpp"
+#include "Thyra_BlockedLinearOpBase.hpp"
+#include "Thyra_BlockedLinearOpWithSolveBase.hpp"
+//#include "Thyra_BlockedLinearOpWithSolveFactoryBase.hpp"
 
 // Spmd Thyra types
 #include "Thyra_SpmdVectorSpaceBase.hpp"
@@ -45,6 +48,7 @@ typedef Thyra::ProductVectorSpaceBase<ST>         Thyra_ProductVectorSpace;
 typedef Thyra::ProductMultiVectorBase<ST>         Thyra_ProductMultiVector;
 typedef Thyra::ProductVectorBase<ST>              Thyra_ProductVector;
 typedef Thyra::LinearOpBase<ST>                   Thyra_LinearOp;
+typedef Thyra::BlockedLinearOpBase<ST>            Thyra_BlockedLinearOp;
 typedef Thyra::PreconditionerBase<ST>             Thyra_Preconditioner;
 typedef Thyra::LinearOpWithSolveBase<ST>          Thyra_LOWS;
 typedef Thyra::LinearOpWithSolveFactoryBase<ST>   Thyra_LOWS_Factory;

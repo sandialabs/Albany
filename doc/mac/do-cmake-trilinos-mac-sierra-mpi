@@ -1,5 +1,5 @@
 #!/bin/bash
-
+  
 if [ $# -ne 1 ]; then
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"
@@ -177,4 +177,3 @@ exit 0
     -D Trilinos_ENABLE_DataTransferKitSTKMeshAdapters:BOOL=OFF \
     -D DataTransferKit_ENABLE_DBC:BOOL=OFF \
     -D Tpetra_INST_INT_UNSIGNED_LONG:BOOL=ON \
-    -D CMAKE_SKIP_RPATH:BOOL=ON \

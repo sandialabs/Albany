@@ -135,7 +135,7 @@ list (APPEND SOURCES
   utility/Albany_Gather.cpp
   utility/Albany_GlobalLocalIndexer.cpp
   utility/Albany_ThyraCrsMatrixFactory.cpp
-#  utility/Albany_ThyraBlockedCrsMatrixFactory.cpp
+  utility/Albany_ThyraBlockedCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
   utility/Albany_TpetraThyraUtils.cpp
   utility/VariableMonitor.cpp
@@ -157,7 +157,7 @@ list (APPEND HEADERS
   utility/Albany_GlobalLocalIndexer.hpp
   utility/Albany_GlobalLocalIndexerTpetra.hpp
   utility/Albany_ThyraCrsMatrixFactory.hpp
-#  utility/Albany_ThyraBlockedCrsMatrixFactory.hpp
+  utility/Albany_ThyraBlockedCrsMatrixFactory.hpp
   utility/Albany_ThyraUtils.hpp
   utility/Albany_TpetraThyraUtils.hpp
   utility/VariableMonitor.hpp
@@ -270,7 +270,7 @@ list (APPEND SOURCES
   disc/Adapt_NodalDataVector.cpp
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
-#  disc/BlockedDiscretization.cpp
+  disc/BlockedDiscretization.cpp
   )
 list (APPEND HEADERS
   disc/Adapt_NodalDataBase.hpp
@@ -284,8 +284,7 @@ list (APPEND HEADERS
   disc/Albany_DiscretizationFactory.hpp
   disc/Albany_MeshSpecs.hpp
   disc/Albany_NodalDOFManager.hpp
-#  disc/BlockedDiscretization.hpp
-#  disc/BlockedDiscretization_Def.hpp
+  disc/BlockedDiscretization.hpp
   )
 
 #stk
