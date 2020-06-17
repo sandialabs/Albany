@@ -38,6 +38,7 @@ HydrostaticPressure(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
 
   rho_i = physics.get<double>("Ice Density");
   g     = physics.get<double>("Gravity Acceleration");
+  pressure_scaling = 1.0e3 * rho_i * g;
 }
 
 template<typename EvalT, typename Traits, typename SurfHeightST>
@@ -45,7 +46,7 @@ KOKKOS_INLINE_FUNCTION
 void HydrostaticPressure<EvalT, Traits, SurfHeightST>::
 operator() (const int& node, const int& cell) const{
 
-    pressure(cell,node) = pow3 * rho_i * g * ( s(cell,node) - z(cell,node,2) ); 
+    pressure(cell,node) = pressure_scaling * ( s(cell,node) - z(cell,node,2) ); 
 
 }
 
@@ -72,10 +73,9 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Kokkos::parallel_for(Hydrostatic_Pressure_Policy({0,0}, {numNodes,workset.numCells}), *this);
 #else
-  double pow3 = 1.0e3;
   for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t node = 0; node < numNodes; ++node)
-      pressure(cell,node) = pow3 * rho_i * g * ( s(cell,node) - z(cell,node,2) );
+      pressure(cell,node) = pressure_scaling * ( s(cell,node) - z(cell,node,2) );
 #endif
 
 }

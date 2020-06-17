@@ -91,10 +91,6 @@ private:
   double flux_reg_alpha;
   double flux_reg_beta;
 
-  const double powm3 = 1e-3;  //[k], k=1000
-  const double powm6 = 1e-6;  //[k^2], k=1000
-  const double pow3 = 1e3;  //[k^{-1}], k=1000
-
   ScalarT flux_reg_coeff;
   ScalarT printedRegCoeff;
 
@@ -114,7 +110,7 @@ public:
   void stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, ScalarT& vmax_z, 
     MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z, ScalarT& wSU) const;
   KOKKOS_INLINE_FUNCTION
-  void evaluateResidNode(int cell, int node) const;
+  void evaluateResidNode(int cell, int node, ScalarT *retval) const;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const Upwind_Stabilization_Tag& tag, const int& cell) const;

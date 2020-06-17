@@ -77,6 +77,7 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
   c_i   = physics.get<double>("Heat capacity of ice"); //2009
   T0    = physics.get<double>("Reference Temperature"); //265
   Tm    = physics.get<double>("Atmospheric Pressure Melting Temperature"); //273.15
+  temperature_scaling = 1e6/(rho_i * c_i);
 }
 
 template<typename EvalT, typename Traits, typename TemperatureST>
@@ -85,7 +86,7 @@ void Temperature<EvalT,Traits,TemperatureST>::
 operator() (const int &node, const int &cell) const{
 
   if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-    temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
+    temperature(cell,node) = temperature_scaling * enthalpy(cell,node) + T0;
   else
     temperature(cell,node) = meltingTemp(cell,node);
 
@@ -128,7 +129,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < numNodes; ++node)
     {
       if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-        temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
+        temperature(cell,node) = temperature_scaling * enthalpy(cell,node) + T0;
       else
         temperature(cell,node) = meltingTemp(cell,node);
 

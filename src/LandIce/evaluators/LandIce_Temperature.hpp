@@ -70,8 +70,7 @@ private:
   double rho_i; //[kg m^{-3}]
   double T0;    //[K]
   double Tm; //[K], 273.15
-
-  const double pow6 = 1e6; //[k^{-2}], k=1000
+  double temperature_scaling; // [MW^{-1} s^{-1} K m^{3}]
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
