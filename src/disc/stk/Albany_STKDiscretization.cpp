@@ -46,7 +46,7 @@ extern "C" {
 #endif  // ALBANY_SEACAS
 
 #include <algorithm>
-#include <math.h> 
+#include <math.h>
 #include <PHAL_Dimension.hpp>
 
 // Uncomment the following line if you want debug output to be printed to screen
@@ -1001,7 +1001,7 @@ STKDiscretization::gid(const stk::mesh::Entity node) const
 int
 STKDiscretization::getOwnedDOF(const int inode, const int eq) const
 {
-  if (interleavedOrdering) {
+  if (interleavedOrdering == DiscType::Interleaved) {
     return inode * neq + eq;
   } else {
     return inode + numOwnedNodes * eq;
@@ -1011,7 +1011,7 @@ STKDiscretization::getOwnedDOF(const int inode, const int eq) const
 int
 STKDiscretization::getOverlapDOF(const int inode, const int eq) const
 {
-  if (interleavedOrdering) {
+  if (interleavedOrdering == DiscType::Interleaved) {
     return inode * neq + eq;
   } else {
     return inode + numOverlapNodes * eq;
@@ -1021,7 +1021,7 @@ STKDiscretization::getOverlapDOF(const int inode, const int eq) const
 GO
 STKDiscretization::getGlobalDOF(const GO inode, const int eq) const
 {
-  if (interleavedOrdering) {
+  if (interleavedOrdering == DiscType::Interleaved) {
     return inode * neq + eq;
   } else {
     return inode + maxGlobalNodeGID * eq;
@@ -1112,7 +1112,7 @@ STKDiscretization::computeNodalVectorSpaces(bool overlapped)
     NodalDOFManager& nodal_dofManager =
         (overlapped) ? random_dofs_struct->overlap_dofManager :
                        random_dofs_struct->dofManager;
-    nodal_dofManager.setup(1, numNodes, maxGlobalNodeGID, false);
+    nodal_dofManager.setup(1, numNodes, maxGlobalNodeGID, DiscType::BlockedMono);
 
     indices.resize(numNodes);
     for (int i = 0; i < numNodes; i++) {
@@ -2370,7 +2370,7 @@ STKDiscretization::updateMesh()
   computeNodalVectorSpaces(true);
 
   computeOverlapNodesAndUnknowns();
-    
+
   setupMLCoords();
 
   transformMesh();

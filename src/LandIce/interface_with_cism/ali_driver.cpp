@@ -58,7 +58,7 @@ Teuchos::RCP<Teuchos::ParameterList> parameterList;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 MPI_Comm comm, reducedComm;
-bool interleavedOrdering;
+DiscType interleavedOrdering;
 int nNodes2D; //number global nodes in the domain in 2D
 int nNodesProc2D; //number of nodes on each processor in 2D
 //vector used to renumber nodes on each processor from the Albany convention (horizontal levels first) to the CISM convention (vertical layers first)
@@ -306,13 +306,13 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
       static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
 //if we have tpetra build, compute sensitivities and responses.
 #define COMPUTE_SENS_AND_RESP
-    } 
+    }
     else if (bt=="Epetra") {
 #ifndef ALBANY_EPETRA
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
                                  "Error! You are attempting to run CALI with 'Build Type = Epetra', \n"
-                                 "but Albany was configured with -DALBANY_EPETRA=OFF.  To run with this \n" 
-                                 "build time, rebuild Albany with -DALBANY_EPETRA=ON.\n"); 
+                                 "but Albany was configured with -DALBANY_EPETRA=OFF.  To run with this \n"
+                                 "build time, rebuild Albany with -DALBANY_EPETRA=ON.\n");
 #endif
       // Set the static variable that denotes this as a Epetra run
       static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
@@ -321,7 +321,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
 #ifndef REDUCED_COMM
 #define COMPUTE_SENS_AND_RESP
 #endif
-    } 
+    }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
                                  "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
@@ -497,7 +497,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     albanyApp->initialSetUp(parameterList);
 
     //Get number of params in problem - needed for MeshStruct constructor
-    int num_params = Albany::CalculateNumberParams(Teuchos::sublist(parameterList, "Problem", true)); 
+    int num_params = Albany::CalculateNumberParams(Teuchos::sublist(parameterList, "Problem", true));
     meshStruct = Teuchos::rcp(new Albany::CismSTKMeshStruct(discParams, reducedMpiCommT, xyz_at_nodes_Ptr, global_node_id_owned_map_Ptr,
                                                            global_element_id_active_owned_map_Ptr,
                                                            global_element_conn_active_Ptr,
@@ -535,7 +535,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     for (int i=0; i<nNodes; i++) {
       global_node_id_owned_map[i] = global_node_id_owned_map_Ptr[i];
     }
-    nodeVS = Albany::createVectorSpace(reducedMpiCommT, global_node_id_owned_map(), INVALID);  
+    nodeVS = Albany::createVectorSpace(reducedMpiCommT, global_node_id_owned_map(), INVALID);
  }
 
 
@@ -578,10 +578,12 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     //Check what kind of ordering you have in the solution & create solutionField object.
     interleavedOrdering = meshStruct->getInterleavedOrdering();
     Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
-    if(interleavedOrdering)
-      solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true> >(meshStruct->getFieldContainer())->getSolutionField();
+    if(interleavedOrdering == DiscType::Interleaved)
+      solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true> >
+            (meshStruct->getFieldContainer())->getSolutionField();
     else
-      solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<false> >(meshStruct->getFieldContainer())->getSolutionField();
+      solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<false> >
+            (meshStruct->getFieldContainer())->getSolutionField();
 
      //Create vector used to renumber nodes on each processor from the Albany convention (horizontal levels first) to the CISM convention (vertical layers first)
      nNodes2D = (global_ewn + 1)*(global_nsn+1); //number global nodes in the domain in 2D
@@ -685,14 +687,14 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     auto cas_manager = Albany::createCombineAndScatterManager(ownedVS,overlapVS);
     auto solutionOverlap = Thyra::createMember(overlapVS);
     cas_manager->scatter(*disc->getSolutionField(),*solutionOverlap,Albany::CombineMode::INSERT);
-    auto solutionOverlap_constView = Albany::getLocalData(Teuchos::rcp_dynamic_cast<const Thyra_Vector>(solutionOverlap)); 
+    auto solutionOverlap_constView = Albany::getLocalData(Teuchos::rcp_dynamic_cast<const Thyra_Vector>(solutionOverlap));
 
 #ifdef WRITE_TO_MATRIX_MARKET
     //For debug: write solution and maps to matrix market file
-    Albany::writeMatrixMarket(nodeVS, "nodeVS");  
-    Albany::writeMatrixMarket(ownedVS, "ownedVs");  
-    Albany::writeMatrixMarket(overlapVS, "overlapVs");  
-    Albany::writeMatrixMarket(albanyApp->getDiscretization()->getSolutionField(), "solution");  
+    Albany::writeMatrixMarket(nodeVS, "nodeVS");
+    Albany::writeMatrixMarket(ownedVS, "ownedVs");
+    Albany::writeMatrixMarket(overlapVS, "overlapVs");
+    Albany::writeMatrixMarket(albanyApp->getDiscretization()->getSolutionField(), "solution");
 #endif
 
    //set previousSolution (used as initial guess for next time step) to final Albany solution.
@@ -748,7 +750,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
             if (debug_output_verbosity != 0) {
               if (Teuchos::nonnull(dgdp)) {
-                Albany::printThyraMultiVector(*out <<"\nSensitivities (" << i << ", " << j << "):\n", dgdp); 
+                Albany::printThyraMultiVector(*out <<"\nSensitivities (" << i << ", " << j << "):\n", dgdp);
               }
             }
             if (cur_time_yr == final_time) {
@@ -788,7 +790,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     //correctly in parallel for all geometries/decompositions.
 
     int numGlobalNodes;
-    numGlobalNodes = nodeVS->dim(); 
+    numGlobalNodes = nodeVS->dim();
 
     //IKT, 10/6/17: ensure size of *vel_local* and *vec_global* std::vecs
     //is large enough when reduced comm is used.
@@ -804,12 +806,12 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     double sol_value;
     int numDofs;
     auto ov_vs_indexer = Albany::createGlobalLocalIndexer(overlapVS);
-    overlap_vs_num_my_elts = ov_vs_indexer->getNumLocalElements(); 
+    overlap_vs_num_my_elts = ov_vs_indexer->getNumLocalElements();
 
-    if (interleavedOrdering == true) {
+    if (interleavedOrdering == DiscType::Interleaved) {
       for (int i=0; i<overlap_vs_num_my_elts; i++) {
-        global_dof = ov_vs_indexer->getGlobalElement(i); 
-        sol_value = solutionOverlap_constView[i]; 
+        global_dof = ov_vs_indexer->getGlobalElement(i);
+        sol_value = solutionOverlap_constView[i];
         int modulo = (global_dof % 2); //check if dof is for u or for v
         int vel_global_dof;
         if (modulo == 0) { //u dof
@@ -823,9 +825,9 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
       }
     }
     else { //note: the case with non-interleaved ordering has not been tested...
-      numDofs = ov_vs_indexer->getNumLocalElements(); 
+      numDofs = ov_vs_indexer->getNumLocalElements();
       for (int i=0; i<overlap_vs_num_my_elts; i++) {
-        global_dof = ov_vs_indexer->getGlobalElement(i); 
+        global_dof = ov_vs_indexer->getGlobalElement(i);
         sol_value = solutionOverlap_constView[i];
         int vel_global_dof;
         if (global_dof < numDofs/2) { //u dof

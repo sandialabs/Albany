@@ -21,39 +21,39 @@ namespace Albany {
 
 // Constructor for arrays passed from CISM through Albany-CISM interface
     CismSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Teuchos_Comm>& comm, 
-                  const double * xyz_at_nodes_Ptr, 
-                  const int * global_node_id_owned_map_Ptr, 
-                  const int * global_element_id_active_owned_map_Ptr, 
-                  const int * global_element_conn_active_Ptr, 
-                  const int * global_basal_face_active_owned_map_Ptr, 
-                  const int * global_top_face_active_owned_map_Ptr, 
-                  const int * global_basal_face_conn_active_Ptr, 
-                  const int * global_top_face_conn_active_Ptr, 
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
+                  const double * xyz_at_nodes_Ptr,
+                  const int * global_node_id_owned_map_Ptr,
+                  const int * global_element_id_active_owned_map_Ptr,
+                  const int * global_element_conn_active_Ptr,
+                  const int * global_basal_face_active_owned_map_Ptr,
+                  const int * global_top_face_active_owned_map_Ptr,
+                  const int * global_basal_face_conn_active_Ptr,
+                  const int * global_top_face_conn_active_Ptr,
                   const int * global_west_face_active_owned_map_Ptr,
-                  const int * global_west_face_conn_active_Ptr, 
+                  const int * global_west_face_conn_active_Ptr,
                   const int * global_east_face_active_owned_map_Ptr,
-                  const int * global_east_face_conn_active_Ptr, 
+                  const int * global_east_face_conn_active_Ptr,
                   const int * global_south_face_active_owned_map_Ptr,
-                  const int * global_south_face_conn_active_Ptr, 
+                  const int * global_south_face_conn_active_Ptr,
                   const int * global_north_face_active_owned_map_Ptr,
                   const int * global_north_face_conn_active_Ptr,
-                  const int * dirichlet_node_mask_Ptr, 
-                  const double * uvel_at_nodes_Ptr, 
-                  const double * vvel_at_nodes_Ptr, 
-                  const double * beta_at_nodes_Ptr, 
-                  const double * surf_height_at_nodes_Ptr, 
-                  const double * dsurf_height_at_nodes_dx_Ptr, 
-                  const double * dsurf_height_at_nodes_dy_Ptr, 
-                  const double * thick_at_nodes_Ptr, 
+                  const int * dirichlet_node_mask_Ptr,
+                  const double * uvel_at_nodes_Ptr,
+                  const double * vvel_at_nodes_Ptr,
+                  const double * beta_at_nodes_Ptr,
+                  const double * surf_height_at_nodes_Ptr,
+                  const double * dsurf_height_at_nodes_dx_Ptr,
+                  const double * dsurf_height_at_nodes_dy_Ptr,
+                  const double * thick_at_nodes_Ptr,
                   const double * flwa_at_active_elements_Ptr,
-                  const int nNodes, const int nElementsActive, 
-                  const int nCellsActive, 
-                  const int nWestFacesActive, const int nEastFacesActive, 
-                  const int nSouthFacesActive, const int nNorthFacesActive, 
+                  const int nNodes, const int nElementsActive,
+                  const int nCellsActive,
+                  const int nWestFacesActive, const int nEastFacesActive,
+                  const int nSouthFacesActive, const int nNorthFacesActive,
                   const int numParams,
-                  const int verbosity); 
+                  const int verbosity);
 
     ~CismSTKMeshStruct() = default;
 
@@ -69,7 +69,7 @@ namespace Albany {
     {
       // Nothing to do here
     }
-    
+
     void constructMesh(
                   const Teuchos::RCP<const Teuchos_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -86,11 +86,11 @@ namespace Albany {
 
     //! If restarting, convenience function to return restart data time
     double restartDataTime() const {return restartTime;}
-    
+
     void setRestartDataTime(double restartT) {restartTime = restartT; }
 
-    //Is this necessary here? 
-    bool getInterleavedOrdering() const {return this->interleavedOrdering;}
+    //Is this necessary here?
+    DiscType getInterleavedOrdering() const {return this->interleavedOrdering;}
 
     private:
     //Ioss::Init::Initializer ioInit;
@@ -100,54 +100,54 @@ namespace Albany {
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
-    bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run 
+    bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run
     int NumNodes; //number of nodes
     int NumEles; //number of elements
     int NumBasalFaces; //number of faces on basal boundary
-    int NumWestFaces; 
-    int NumEastFaces; 
-    int NumSouthFaces; 
-    int NumNorthFaces; 
+    int NumWestFaces;
+    int NumEastFaces;
+    int NumSouthFaces;
+    int NumNorthFaces;
     std::vector<std::vector<double> > xyz;
     std::vector<double> sh; //surface height
     std::vector<double> thck; //thickness
     std::vector<std::vector<double> >shGrad; //surface height gradient (ds/dx, ds/dy)
     std::vector<double> beta;
-    std::vector<GO> dirichletNodeMask;  
-    std::vector<std::vector<int>> eles; //hard-coded for 3D hexes for now 
-    std::vector<double> flwa; //double array that gives value of flow factor  
+    std::vector<GO> dirichletNodeMask;
+    std::vector<std::vector<int>> eles; //hard-coded for 3D hexes for now
+    std::vector<double> flwa; //double array that gives value of flow factor
     bool have_sh; // Does surface height data exist?
-    bool have_thck; // Does thickness data field exist? 
+    bool have_thck; // Does thickness data field exist?
     bool have_shGrad; // Does surface height gradient data exist?
     bool have_bf; // Does basal face connectivity file exist?
     bool have_tf; // Does top face connectivity file exist?
-    bool have_wf, have_ef, have_sf, have_nf; 
+    bool have_wf, have_ef, have_sf, have_nf;
     bool have_flwa; // Does flwa (flow factor) file exist?
     bool have_beta; // Does beta (basal fraction) file exist?
     bool have_dirichlet;
     std::vector<double> uvel; //arrays to hold Dirichlet values for Dirichlet BC passed from CISM
-    std::vector<double> vvel;  
+    std::vector<double> vvel;
     std::vector<std::vector<int>> bf; //hard-coded for 3D hexes for now (meaning boundary faces are quads)
     std::vector<std::vector<int>> tf;
-    std::vector<std::vector<int>> wf; 
-    std::vector<std::vector<int>> ef; 
-    std::vector<std::vector<int>> sf; 
+    std::vector<std::vector<int>> wf;
+    std::vector<std::vector<int>> ef;
+    std::vector<std::vector<int>> sf;
     std::vector<std::vector<int>> nf;
-    Teuchos::RCP<const Thyra_VectorSpace> elem_vs; //element map 
-    Teuchos::RCP<const Thyra_VectorSpace> node_vs; //node map 
-    Teuchos::RCP<const Thyra_VectorSpace> basal_face_vs; //basalface map 
-    Teuchos::RCP<const Thyra_VectorSpace> top_face_vs; //topface map 
+    Teuchos::RCP<const Thyra_VectorSpace> elem_vs; //element map
+    Teuchos::RCP<const Thyra_VectorSpace> node_vs; //node map
+    Teuchos::RCP<const Thyra_VectorSpace> basal_face_vs; //basalface map
+    Teuchos::RCP<const Thyra_VectorSpace> top_face_vs; //topface map
     Teuchos::RCP<const Thyra_VectorSpace> west_face_vs; //westface map
     Teuchos::RCP<const Thyra_VectorSpace> east_face_vs; //eastface map
     Teuchos::RCP<const Thyra_VectorSpace> south_face_vs; //southface map
     Teuchos::RCP<const Thyra_VectorSpace> north_face_vs; //northface map
     bool hasRestartSol;
     double restartTime;
-    int debug_output_verbosity; 
-    void resizeVec(std::vector<std::vector<double> > &vec , const unsigned int rows , const unsigned int columns); 
-    void resizeVec(std::vector<std::vector<int> > &vec , const unsigned int rows , const unsigned int columns); 
-    
-    protected: 
+    int debug_output_verbosity;
+    void resizeVec(std::vector<std::vector<double> > &vec , const unsigned int rows , const unsigned int columns);
+    void resizeVec(std::vector<std::vector<int> > &vec , const unsigned int rows , const unsigned int columns);
+
+    protected:
   };
 
 }

@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "AAdapt_AnalyticFunction.hpp"
+#include "AnalyticFunction.hpp"
 #include "Albany_Macros.hpp"
 
 #include "Teuchos_TestForException.hpp"
@@ -19,12 +19,11 @@
 static const double pi = 4.0 * std::atan(1.0);
 
 namespace Albany {
-namespace AAdapt {
 
 // Factory method to build functions based on a string
 Teuchos::RCP<AnalyticFunction> createAnalyticFunction(
   std::string name, int neq, int numDim,
-  Teuchos::Array<double> data) { 
+  Teuchos::Array<double> data) {
   Teuchos::RCP<AnalyticFunction> F;
 
   if(name == "Constant")
@@ -44,7 +43,7 @@ Teuchos::RCP<AnalyticFunction> createAnalyticFunction(
 
   else if(name == "TemperatureLinear")
     F = Teuchos::rcp(new TemperatureLinear(neq, numDim, data));
-  
+
   else if(name == "1D Gauss-Sin")
     F = Teuchos::rcp(new GaussSin(neq, numDim, data));
 
@@ -53,7 +52,7 @@ Teuchos::RCP<AnalyticFunction> createAnalyticFunction(
 
   else if(name == "Linear Y")
     F = Teuchos::rcp(new LinearY(neq, numDim, data));
-  
+
   else if(name == "Linear")
     F = Teuchos::rcp(new Linear(neq, numDim, data));
 
@@ -89,7 +88,7 @@ Teuchos::RCP<AnalyticFunction> createAnalyticFunction(
 
   else if(name == "1D Acoustic Wave")
     F = Teuchos::rcp(new AcousticWave(neq, numDim, data));
-  
+
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
         std::logic_error,
@@ -131,9 +130,9 @@ void StepX::compute(double* x, const double* X) {
     double X0 = data[3];
     // top x-coordinate
     double X1 = data[4];
-    
+
     const double TOL = 1.0e-12;
-    
+
     // bottom
     if ( X[0] < ( X0 + TOL) ) {
         x[0] = T0;
@@ -168,16 +167,16 @@ void TemperatureStep::compute(double* x, const double* X) {
     // 1 == y-coordinate
     // 2 == z-cordinate
     int coord = static_cast<int>(data[5]);
-    
+
     // check that coordinate is valid
     if ( ( coord > 2 ) || ( coord < 0 ) )
       {
 	TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-				   "Error! Coordinate not valid!" <<  std::endl) ;	
+				   "Error! Coordinate not valid!" <<  std::endl) ;
       }
-    
+
     const double TOL = 1.0e-12;
-    
+
     // bottom
     if ( X[coord] < ( Z0 + TOL) ) {
         x[0] = T0;
@@ -215,16 +214,16 @@ void DispConstTemperatureStep::compute(double* x, const double* X) {
     // 1 == y-coordinate
     // 2 == z-cordinate
     int coord = static_cast<int>(data[8]);
-    
+
     // check that coordinate is valid
     if ( ( coord > 2 ) || ( coord < 0 ) )
       {
 	TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-				   "Error! Coordinate not valid!" <<  std::endl) ;	
+				   "Error! Coordinate not valid!" <<  std::endl) ;
       }
-    
+
     const double TOL = 1.0e-12;
-    
+
     // bottom
     if ( X[coord] < ( Z0 + TOL) ) {
         x[3] = T0;
@@ -265,7 +264,7 @@ void DispConstTemperatureLinear::compute(double* x, const double* X) {
     if ( ( coord > 2 ) || ( coord < 0 ) )
       {
 	TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-				   "Error! Coordinate not valid!" <<  std::endl) ;	
+				   "Error! Coordinate not valid!" <<  std::endl) ;
       }
 
     const double TOL = 1.0e-12;
@@ -321,7 +320,7 @@ void TemperatureLinear::compute(double* x, const double* X) {
     if ( ( coord > 2 ) || ( coord < 0 ) )
       {
 	TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-				   "Error! Coordinate not valid!" <<  std::endl) ;	
+				   "Error! Coordinate not valid!" <<  std::endl) ;
       }
 
     const double TOL = 1.0e-12;
@@ -371,7 +370,7 @@ ConstantFunctionPerturbed(int neq_, int numDim_,
                              << ", pert_mag.size() = " << pert_mag.size()
                              <<  std::endl) ;
 
-  
+
   for (int i=0; i<neq; ++i) {
     pdfs[i] = std::uniform_real_distribution<double>(-pert_mag[i],pert_mag[i]);
   }
@@ -564,8 +563,8 @@ void GaussianZ::compute(double* x, const double* X) {
 //*****************************************************************************
 Circle::Circle(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
-  bool error = true; 
-  if (neq == 1 || neq == 3) error = false; 
+  bool error = true;
+  if (neq == 1 || neq == 3) error = false;
   TEUCHOS_TEST_FOR_EXCEPTION(error || (numDim != 2),
                              std::logic_error,
                              "Error! Invalid call of Circle with " << neq
@@ -577,11 +576,11 @@ void Circle::compute(double* x, const double* X) {
   else
     x[0] = 0.0;
 
-  //This would be the initial condition for the auxiliary variables, but it should not 
-  //be needed. 
+  //This would be the initial condition for the auxiliary variables, but it should not
+  //be needed.
   /*if (neq == 3) {
-    x[1] = 0.0; 
-    x[2] = 0.0; 
+    x[1] = 0.0;
+    x[2] = 0.0;
   }*/
 }
 //*****************************************************************************
@@ -788,4 +787,3 @@ void ExpressionParserAllDOFs::compute(double* unknowns, double const* coords)
 #endif // ALBANY_STK_EXPR_EVAL
 
 } // namespace Albany
-} // namespace AAdapt

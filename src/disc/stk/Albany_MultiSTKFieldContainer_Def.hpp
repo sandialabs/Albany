@@ -1,4 +1,4 @@
-//*****************************************************************//
+	//*****************************************************************//
 //    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
@@ -40,7 +40,7 @@ static const char* res_id_name = {
     "residual",
 };
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const Teuchos::RCP<stk::mesh::MetaData>&    metaData_,
@@ -48,7 +48,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     const int                                   neq_,
     const int                                          numDim_,
     const Teuchos::RCP<StateInfoStruct>&               sis,
-    const Teuchos::Array<Teuchos::Array<std::string>>& solution_vector, 
+    const Teuchos::Array<Teuchos::Array<std::string>>& solution_vector,
     const int                                          num_params)
     : GenericSTKFieldContainer<Interleaved>(
           params_,
@@ -192,7 +192,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   initializeSTKAdaptation();
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
 {
@@ -211,7 +211,7 @@ MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
 #endif
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::fillVector(
     Thyra_Vector&                                field_vector,
@@ -229,7 +229,7 @@ MultiSTKFieldContainer<Interleaved>::fillVector(
       0);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::fillSolnVector(
     Thyra_Vector&                                solution,
@@ -248,7 +248,7 @@ MultiSTKFieldContainer<Interleaved>::fillSolnVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::fillSolnMultiVector(
     Thyra_MultiVector&                           solution,
@@ -281,7 +281,7 @@ MultiSTKFieldContainer<Interleaved>::fillSolnMultiVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveVector(
     const Thyra_Vector&                          field_vector,
@@ -299,7 +299,7 @@ MultiSTKFieldContainer<Interleaved>::saveVector(
       0);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
@@ -324,7 +324,7 @@ MultiSTKFieldContainer<Interleaved>::saveSolnVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector& solution,
@@ -345,7 +345,7 @@ MultiSTKFieldContainer<Interleaved>::saveSolnVector(
   saveSolnVector(solution, soln_dxdp, sel, node_vs);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector& solution,
@@ -368,7 +368,7 @@ MultiSTKFieldContainer<Interleaved>::saveSolnVector(
   saveSolnVector(solution, soln_dxdp, sel, node_vs);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveSolnMultiVector(
     const Thyra_MultiVector&                     solution,
@@ -399,7 +399,7 @@ MultiSTKFieldContainer<Interleaved>::saveSolnMultiVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveResVector(
     const Thyra_Vector&                          res,
@@ -422,7 +422,7 @@ MultiSTKFieldContainer<Interleaved>::saveResVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::transferSolutionToCoords()
 {
@@ -432,7 +432,7 @@ MultiSTKFieldContainer<Interleaved>::transferSolutionToCoords()
       MultiSTKFieldContainer_transferSolutionToCoords_not_implemented);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::fillVectorImpl(
     Thyra_Vector&                                field_vector,
@@ -484,7 +484,7 @@ MultiSTKFieldContainer<Interleaved>::fillVectorImpl(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::saveVectorImpl(
     const Thyra_Vector&                          field_vector,

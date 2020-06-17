@@ -17,7 +17,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex.exo.4.3
 ###         Steady tests         ###
 ####################################
 
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA)
   set (testName ${testNameRoot}_Steady)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
@@ -25,10 +25,10 @@ if (ALBANY_EPETRA)
   add_test(${testName} ${Albany.exe} input.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "Demo;Epetra;Forward")
 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlocked.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputBlocked.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlockedMono.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputBlockedMono.yaml COPYONLY)
 
-  add_test(${testName}_Blocked ${Albany.exe} inputBlocked.yaml)
+  add_test(${testName}_Blocked ${Albany.exe} inputBlockedMono.yaml)
   set_tests_properties(${testName}_Blocked PROPERTIES LABELS "Demo;Epetra;Forward")
 endif()
 

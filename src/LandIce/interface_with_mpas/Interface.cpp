@@ -130,7 +130,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   int neq = meshStruct->neq;
 
-  const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
+  const DiscType interleavedOrdering = meshStruct->getInterleavedOrdering();
 
   *MPAS_dt =  deltat;
 
@@ -144,7 +144,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   VectorFieldType* solutionField;
 
-  if (interleavedOrdering) {
+  if (interleavedOrdering == DiscType::Interleaved) {
     solutionField = Teuchos::rcp_dynamic_cast<
         Albany::OrdinarySTKFieldContainer<true> >(
             meshStruct->getFieldContainer())->getSolutionField();
@@ -317,7 +317,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
     int lId0, lId1;
 
-    if (interleavedOrdering) {
+    if (interleavedOrdering == DiscType::Interleaved) {
       lId0 = indexer->getLocalElement(neq * gId);
       lId1 = lId0 + 1;
     } else {
@@ -460,7 +460,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   paramList = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromYamlFileAndBroadcast("albany_input.yaml", paramList.ptr(), *mpiComm);
 
-  // Set build Type 
+  // Set build Type
   auto bt = paramList->get<std::string>("Build Type", "NONE");
 #ifdef ALBANY_EPETRA
   if(bt == "NONE") {
@@ -506,7 +506,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   Teuchos::ParameterList& physParamList = paramList->sublist("Problem").sublist("LandIce Physical Parameters");
 
-  double rho_ice, rho_seawater; 
+  double rho_ice, rho_seawater;
   physParamList.set("Gravity Acceleration", physParamList.get("Gravity Acceleration", MPAS_gravity));
   physParamList.set("Ice Density", rho_ice = physParamList.get("Ice Density", MPAS_rho_ice));
   physParamList.set("Water Density", rho_seawater = physParamList.get("Water Density", MPAS_rho_seawater));
@@ -595,7 +595,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   discretizationList->set("Method", discretizationList->get("Method", "Extruded")); //set to Extruded is not defined
   int cubatureDegree = (elemShape=="Tetrahedron") ? 1 : 4;
   discretizationList->set("Cubature Degree", discretizationList->get("Cubature Degree", cubatureDegree));  //set cubatureDegree if not defined
-  discretizationList->set("Interleaved Ordering", discretizationList->get("Interleaved Ordering", true));  //set true if not define
+  discretizationList->set<DiscType>("Interleaved Ordering", discretizationList->get<DiscType>("Interleaved Ordering", DiscType::Interleaved));  //set true if not define
 
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);
@@ -716,7 +716,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   std::vector<GO> indexToTriangleGOID;
   indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());
   //Get number of params in problem - needed for MeshStruct constructor
-  int num_params = Albany::CalculateNumberParams(Teuchos::sublist(paramList, "Problem", true)); 
+  int num_params = Albany::CalculateNumberParams(Teuchos::sublist(paramList, "Problem", true));
   meshStruct = Teuchos::rcp(
       new Albany::MpasSTKMeshStruct(discretizationList, mpiComm, indexToTriangleGOID,
           globalTrianglesStride, nLayers, num_params, Ordering));

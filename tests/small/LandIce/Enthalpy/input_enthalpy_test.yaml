@@ -2,7 +2,7 @@
 ---
 ANONYMOUS:
   Build Type: Epetra
-  Problem: 
+  Problem:
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
     Compute Sensitivities: true
@@ -12,9 +12,9 @@ ANONYMOUS:
     Needs Dissipation: true
     Needs Basal Friction: true
     Constant Geothermal Flux: false
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
-    LandIce Viscosity: 
+    LandIce Viscosity:
       Extract Strain Rate Sq: true
       Type: 'Glen''s Law'
       'Glen''s Law Homotopy Parameter': 0.4
@@ -23,7 +23,7 @@ ANONYMOUS:
       'Glen''s Law A': 1.0e-04
       'Glen''s Law n': 3.0e+00
       Flow Rate Type: Temperature Based
-    LandIce Physical Parameters: 
+    LandIce Physical Parameters:
       Conductivity of ice: 2.1e+00
       Diffusivity temperate ice: 0.0e+00
       Heat capacity of ice: 2.009e+03
@@ -38,24 +38,24 @@ ANONYMOUS:
       Omega exponent alpha: 2.0e+00
       Diffusivity homotopy exponent: -1.0e-01
     LandIce Enthalpy:
-      Regularization: 
-        Flux Regularization: 
+      Regularization:
+        Flux Regularization:
           alpha: 1.0e-01
           beta: 7.5e+00
-        Basal Melting Regularization: 
+        Basal Melting Regularization:
           alpha: 1.0e-01
           beta: 7.5e+00
-      Stabilization: 
+      Stabilization:
         Type: Upwind
         Parameter Delta: 0.5
       Bed Lubrication: Dry
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     Method: Exodus
     Number Of Time Derivatives: 0
     Cubature Degree: 4
@@ -63,10 +63,9 @@ ANONYMOUS:
     Exodus Input File Name: ../ExoMeshes/gis_struct_enth.exo
     Restart Index: 1
     Use Serial Mesh: true
-    Interleaved Ordering: true
-    Side Set Discretizations: 
+    Side Set Discretizations:
       Side Sets: [basalside]
-      basalside: 
+      basalside:
         Method: Exodus
         Number Of Time Derivatives: 0
         Exodus Input File Name: ../ExoMeshes/gis_struct_enth_basal.exo
@@ -74,81 +73,81 @@ ANONYMOUS:
         Cubature Degree: 4
         Restart Index: 1
         Use Serial Mesh: true
-        Required Fields Info: 
+        Required Fields Info:
           Number Of Fields: 1
-          Field 0: 
+          Field 0:
             Field Name: basal_friction
             Field Type: Node Scalar
             Field Origin: Mesh
             #Field Value: 0.0
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [-3.160074121543e-01]
     Relative Tolerance: 1.0e-04
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
       Sensitivity Test Values 0: [-1.325654644224e+00]
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Constant
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000000000000e+00
         Continuation Parameter: 'Glen''s Law Homotopy Parameter'
         Continuation Method: Natural
         Max Steps: 10
         Max Value: 0.4
         Min Value: 0.0
-      Step Size: 
+      Step Size:
         Initial Step Size: 1.0e-01
-    NOX: 
-      Status Tests: 
+    NOX:
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: Combo
           Combo Type: AND
           Number of Tests: 1
-          Test 0: 
+          Test 0:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
             Tolerance: 1.0e-05
-          Test 1: 
+          Test 1:
             Test Type: NormWRMS
             Absolute Tolerance: 1.0e-04
             Relative Tolerance: 1.0e-07
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 50
       Nonlinear Solver: Line Search Based
-      Direction: 
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
-          Linear Solver: 
+          Linear Solver:
             Write Linear System: false
             Max Iterations: 200
             Tolerance: 1.0e-07
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: AztecOO
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
-                Belos: 
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000000000002e-08
                       Output Frequency: 20
                       Output Style: 1
@@ -158,15 +157,15 @@ ANONYMOUS:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: ML
-              Preconditioner Types: 
-                Ifpack: 
+              Preconditioner Types:
+                Ifpack:
                   Overlap: 0
                   Prec Type: Amesos
-                  Ifpack Settings: 
+                  Ifpack Settings:
                     'fact: level-of-fill': 0
-                ML: 
+                ML:
                   Base Method Defaults: none
-                  ML Settings: 
+                  ML Settings:
                     default values: SA
                     ML output: 0
                     'repartition: enable': 1
@@ -190,14 +189,14 @@ ANONYMOUS:
                     'coarse: sweeps': 4
                     max levels: 7
           Rescue Bad Newton Solve: true
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000000000000e+00
         Method: Backtrack
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -207,6 +206,6 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

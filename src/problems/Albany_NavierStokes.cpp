@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_NavierStokes.hpp"
-#include "AAdapt_InitialCondition.hpp"
+#include "InitialCondition.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
@@ -53,7 +53,7 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  params(params_), 
+  params(params_),
   haveFlow(false),
   haveHeat(false),
   haveNeut(false),
@@ -72,11 +72,11 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   else           periodic = false;
   if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
 
-  getVariableType(params->sublist("Flow"), "DOF", flowType, 
+  getVariableType(params->sublist("Flow"), "DOF", flowType,
 		  haveFlow, haveFlowEq);
-  getVariableType(params->sublist("Heat"), "None", heatType, 
+  getVariableType(params->sublist("Heat"), "None", heatType,
 		  haveHeat, haveHeatEq);
-  getVariableType(params->sublist("Neutronics"), "None", neutType, 
+  getVariableType(params->sublist("Neutronics"), "None", neutType,
 		  haveNeut, haveNeutEq);
 
   if (haveFlowEq) {
@@ -103,11 +103,11 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Print out a summary of the problem
   *out << "Navier-Stokes problem:" << std::endl
        << "\tSpatial dimension:      " << numDim << std::endl
-       << "\tFlow variables:         " << variableTypeToString(flowType) 
+       << "\tFlow variables:         " << variableTypeToString(flowType)
        << std::endl
-       << "\tHeat variables:         " << variableTypeToString(heatType) 
+       << "\tHeat variables:         " << variableTypeToString(heatType)
        << std::endl
-       << "\tNeutronics variables:   " << variableTypeToString(neutType) 
+       << "\tNeutronics variables:   " << variableTypeToString(neutType)
        << std::endl
        << "\tPressure stabilization: " << havePSPG << std::endl
        << "\tUpwind stabilization:   " << haveSUPG << std::endl
@@ -132,7 +132,7 @@ buildProblem(
 
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM,
 		  Teuchos::null);
 
   if (meshSpecs[0]->nsNames.size() > 0) { // Build a nodeset evaluator if nodesets are present
@@ -140,7 +140,7 @@ buildProblem(
   }
 
   // Check if have Neumann sublist; throw error if attempting to specify
-  // Neumann BCs, but there are no sidesets in the input mesh 
+  // Neumann BCs, but there are no sidesets in the input mesh
   bool isNeumannPL = params->isSublist("Neumann BCs");
   if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
     ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
@@ -148,7 +148,7 @@ buildProblem(
 
 
   if (meshSpecs[0]->ssNames.size() > 0) { // Build a sideset evaluator if sidesets are present
-     constructNeumannEvaluators(meshSpecs[0]); 
+     constructNeumannEvaluators(meshSpecs[0]);
   }
 
 }
@@ -188,8 +188,8 @@ Albany::NavierStokes::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(nodeSetIDs, dirichletNames,
                                           this->params, this->paramLib);
-   use_sdbcs_ = dirUtils.useSDBCs(); 
-   offsets_ = dirUtils.getOffsets(); 
+   use_sdbcs_ = dirUtils.useSDBCs();
+   offsets_ = dirUtils.getOffsets();
    nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
@@ -215,13 +215,13 @@ Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 
    // Currently we aren't exactly doing this right.  I think to do this
    // correctly we need different neumann evaluators for each DOF (velocity,
-   // pressure, temperature, flux) since velocity is a vector and the 
+   // pressure, temperature, flux) since velocity is a vector and the
    // others are scalars.  The dof_names stuff is only used
    // for robin conditions, so at this point, as long as we don't enable
    // robin conditions, this should work.
 
    std::vector<std::string> nbcNames;
-   Teuchos::RCP< Teuchos::Array<std::string> > dof_names = 
+   Teuchos::RCP< Teuchos::Array<std::string> > dof_names =
      Teuchos::rcp(new Teuchos::Array<std::string>);
    Teuchos::Array<Teuchos::Array<int> > offsets;
    int idx = 0;
@@ -251,13 +251,13 @@ Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
      offsets.push_back(Teuchos::Array<int>(1,idx++));
      dof_names->push_back("Neutron Flux");
    }
-   
+
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
    std::vector<std::string> condNames(2); //dudx, dudy, dudz, dudn
 
    // Note that sidesets are only supported for two and 3D currently
-   if(numDim == 2) 
+   if(numDim == 2)
     condNames[0] = "(dudx, dudy)";
    else if(numDim == 3)
     condNames[0] = "(dudx, dudy, dudz)";
@@ -269,8 +269,8 @@ Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 
    nfm.resize(1);
 
-   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, nbcNames, 
-					   Teuchos::arcp(dof_names), 
+   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, nbcNames,
+					   Teuchos::arcp(dof_names),
 					   false, 0, condNames, offsets, dl,
 					   this->params, this->paramLib);
 }
@@ -299,7 +299,7 @@ Albany::NavierStokes::getValidProblemParameters() const
   validPL->sublist("Porosity", false, "");
   validPL->sublist("Permeability", false, "");
   validPL->sublist("Forchheimer", false, "");
-  
+
   validPL->sublist("Neutron Source", false, "");
   validPL->sublist("Neutron Diffusion Coefficient", false, "");
   validPL->sublist("Absorption Cross Section", false, "");

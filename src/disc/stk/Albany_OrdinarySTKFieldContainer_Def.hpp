@@ -47,7 +47,7 @@ static const char* res_id_name[1] = {
     "residual",
 };
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     const Teuchos::RCP<Teuchos::ParameterList>&               params_,
     const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
@@ -55,7 +55,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     const int                                                 neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const int                                                 numDim_,
-    const Teuchos::RCP<StateInfoStruct>&                      sis, 
+    const Teuchos::RCP<StateInfoStruct>&                      sis,
     const int                                                 num_params_)
     : GenericSTKFieldContainer<Interleaved>(
           params_,
@@ -67,30 +67,30 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
 
-  num_params = num_params_; 
+  num_params = num_params_;
 
   int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
 #ifdef ALBANY_DTK
   bool output_dtk_field =
       params_->get<bool>("Output DTK Field to Exodus", false);
 #endif
-  //IKT FIXME? - currently won't write dxdp to output file if problem is steady, 
+  //IKT FIXME? - currently won't write dxdp to output file if problem is steady,
   //as this output doesn't work in same way.  May want to change in the future.
-  bool output_dxdp_field = false; 
-  if (num_params_ > 0 && num_time_deriv > 0) output_dxdp_field = true; 
+  bool output_dxdp_field = false;
+  if (num_params_ > 0 && num_time_deriv > 0) output_dxdp_field = true;
 
-  //Create tag and id arrays for dxdp 
+  //Create tag and id arrays for dxdp
   std::vector<std::string> sol_dxdp_tag_name_vec;
-  sol_dxdp_tag_name_vec.resize(num_params_); 
+  sol_dxdp_tag_name_vec.resize(num_params_);
   std::vector<std::string> sol_dxdp_id_name_vec;
-  sol_dxdp_id_name_vec.resize(num_params_); 
+  sol_dxdp_id_name_vec.resize(num_params_);
   for (int np = 0; np<num_params_; np++) {
     std::string prefix = "Exodus Solution Sensitivity Name ";
     std::string tag_name = prefix + std::to_string(np);
-    sol_dxdp_tag_name_vec[np] = tag_name; 
+    sol_dxdp_tag_name_vec[np] = tag_name;
     prefix = "solution dxdp";
-    std::string id_name = prefix + std::to_string(np); 
-    sol_dxdp_id_name_vec[np] = id_name; 
+    std::string id_name = prefix + std::to_string(np);
+    sol_dxdp_id_name_vec[np] = id_name;
   }
 
   // Start STK stuff
@@ -184,7 +184,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   initializeSTKAdaptation();
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
 {
@@ -203,7 +203,7 @@ OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
 #endif
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::fillVector(
     Thyra_Vector&                                field_vector,
@@ -220,7 +220,7 @@ OrdinarySTKFieldContainer<Interleaved>::fillVector(
       nodalDofManager);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::fillSolnVector(
     Thyra_Vector&                                solution,
@@ -239,7 +239,7 @@ OrdinarySTKFieldContainer<Interleaved>::fillSolnVector(
       solution, solution_field[0]->name(), sel, node_vs, nodalDofManager);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::fillSolnMultiVector(
     Thyra_MultiVector&                           solution,
@@ -266,7 +266,7 @@ OrdinarySTKFieldContainer<Interleaved>::fillSolnMultiVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveVector(
     const Thyra_Vector&                          field_vector,
@@ -283,7 +283,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveVector(
       nodalDofManager);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
@@ -310,7 +310,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::runtime_error,
-          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim() 
+          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim()
 	  << ") != num_params (" << num_params << ").\n");
     }
     for (int np = 0; np < num_params; np++) {
@@ -321,7 +321,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
 
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
@@ -345,13 +345,13 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
       solution, solution_field[0]->name(), sel, node_vs, nodalDofManager);
   saveVectorImpl(
       solution_dot, solution_field[1]->name(), sel, node_vs, nodalDofManager);
-  
+
   if (soln_dxdp != Teuchos::null) {
     if (soln_dxdp->domain()->dim() != num_params) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::runtime_error,
-          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim() 
+          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim()
 	  << ") != num_params (" << num_params << ").\n");
     }
     for (int np = 0; np < num_params; np++) {
@@ -361,7 +361,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
     const Thyra_Vector&                          solution,
@@ -392,13 +392,13 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
       sel,
       node_vs,
       nodalDofManager);
-  
+
   if (soln_dxdp != Teuchos::null) {
     if (soln_dxdp->domain()->dim() != num_params) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::runtime_error,
-          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim() 
+          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim()
 	  << ") != num_params (" << num_params << ").\n");
     }
     for (int np = 0; np < num_params; np++) {
@@ -408,7 +408,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveSolnMultiVector(
     const Thyra_MultiVector&                     solution,
@@ -432,13 +432,13 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnMultiVector(
         node_vs,
         nodalDofManager);
   }
-  
+
   if (soln_dxdp != Teuchos::null) {
     if (soln_dxdp->domain()->dim() != num_params) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::runtime_error,
-          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim() 
+          "Error in saveSolnVector! Number of vectors in soln_dxdp (" << soln_dxdp->domain()->dim()
 	  << ") != num_params (" << num_params << ").\n");
     }
     for (int np = 0; np < num_params; np++) {
@@ -448,7 +448,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveSolnMultiVector(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveResVector(
     const Thyra_Vector&                          res,
@@ -466,7 +466,7 @@ OrdinarySTKFieldContainer<Interleaved>::saveResVector(
   saveVectorImpl(res, residual_field->name(), sel, node_vs, nodalDofManager);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::transferSolutionToCoords()
 {
@@ -475,7 +475,7 @@ OrdinarySTKFieldContainer<Interleaved>::transferSolutionToCoords()
   Helper::copySTKField(*solution_field[0], *this->coordinates_field);
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::fillVectorImpl(
     Thyra_Vector&                                field_vector,
@@ -530,7 +530,7 @@ OrdinarySTKFieldContainer<Interleaved>::fillVectorImpl(
   }
 }
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 void
 OrdinarySTKFieldContainer<Interleaved>::saveVectorImpl(
     const Thyra_Vector&                          field_vector,

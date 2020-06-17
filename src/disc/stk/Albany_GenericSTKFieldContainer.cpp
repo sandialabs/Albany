@@ -9,7 +9,7 @@
 
 namespace Albany {
 
-template class GenericSTKFieldContainer<true>;
-template class GenericSTKFieldContainer<false>;
+template class GenericSTKFieldContainer<DiscType::BlockedMono>;
+template class GenericSTKFieldContainer<DiscType::Interleaved>;
 
 } // namespace Albany

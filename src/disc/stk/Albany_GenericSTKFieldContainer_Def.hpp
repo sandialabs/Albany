@@ -20,7 +20,7 @@
 
 namespace Albany {
 
-template<bool Interleaved>
+template<DiscType Interleaved>
 GenericSTKFieldContainer<Interleaved>::GenericSTKFieldContainer(
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
   const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
@@ -57,7 +57,7 @@ inline Ioss::Field::RoleType role_type(const bool output) {
 }
 #endif
 
-template<bool Interleaved>
+template<DiscType Interleaved>
 void GenericSTKFieldContainer<Interleaved>::
 addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
 {
@@ -143,7 +143,7 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
         else if(dim.size() == 4){ // Tensor at QPs
           qptensor_states.push_back(& metaData->declare_field< QPTFT >(stk::topology::ELEMENT_RANK, st.name));
           // Multi-dim order is Fortran Ordering, so reversed here
-#ifdef IKT_DEBUG 
+#ifdef IKT_DEBUG
           //Debug
           std::cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
                       " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ")" << std::endl;
@@ -153,13 +153,13 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
                            metaData->universal_part(), dim[3], dim[2], dim[1], nullptr);
           }
           else {
-            //IKT, 12/20/18: this changes the way the qp_tensor field 
+            //IKT, 12/20/18: this changes the way the qp_tensor field
             //for 1D and 3D problems appears in the output exodus field.
             //Fields appear like: Cauchy_Stress_1_1, ...  Cauchy_Stress_8_9,
-            //instead of Cauchy_Stress_1_01 .. Cauchy_Stress_3_24 to make it 
+            //instead of Cauchy_Stress_1_01 .. Cauchy_Stress_3_24 to make it
             //more clear which entry corresponds to which component/quad point.
             //I believe for 2D problems the original layout is correct, hence
-            //the if statement above here.  
+            //the if statement above here.
             stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
                              metaData->universal_part(), dim[1], dim[2], dim[3], nullptr);
           }
@@ -210,7 +210,7 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
 
       TEUCHOS_TEST_FOR_EXCEPTION (mesh_vector_states.find(tmp_str)!=mesh_vector_states.end(), std::logic_error,
                                   "Error! Another layered state with the same name already exists.\n");
-      TEUCHOS_TEST_FOR_EXCEPTION (dim.back()<=0, std::logic_error, 
+      TEUCHOS_TEST_FOR_EXCEPTION (dim.back()<=0, std::logic_error,
                                   "Error! Invalid layer dimension for state " + st.name + ".\n");
       mesh_vector_states[tmp_str] = std::vector<double>(dim.back());
     }

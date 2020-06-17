@@ -15,7 +15,7 @@ namespace Albany
 
 SolutionMinValueResponseFunction::
 SolutionMinValueResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& comm,
-	                        			 int neq_, int eq_, bool interleavedOrdering_)
+	                        			 int neq_, int eq_, DiscType interleavedOrdering_)
  : SamplingBasedScalarResponseFunction(comm)
  , neq(neq_)
  , eq(eq_)
@@ -40,7 +40,7 @@ evaluateResponse(const double /*current_time*/,
 
 void
 SolutionMinValueResponseFunction::
-evaluateTangent(const double alpha, 
+evaluateTangent(const double alpha,
 		const double /*beta*/,
 		const double /*omega*/,
 		const double current_time,
@@ -89,7 +89,7 @@ evaluateGradient(const double /* current_time */,
 {
   ST min_val;
   computeMinValue(x, min_val);
-  
+
   // Evaluate response g
   if (!g.is_null()) {
     Teuchos::ArrayRCP<ST> g_nonconstView = getNonconstLocalData(g);
@@ -145,13 +145,13 @@ void SolutionMinValueResponseFunction::
 computeMinValue(const Teuchos::RCP<const Thyra_Vector>& x, ST& global_min)
 {
   auto x_local = getLocalData(x);
-  
+
   // Loop over nodes to find max value for equation eq
   int num_my_nodes = x_local.size() / neq;
   int index;
   ST my_min = std::numeric_limits<ST>::max();
   for (int node=0; node<num_my_nodes; node++) {
-    if (interleavedOrdering) {
+    if (interleavedOrdering == DiscType::Interleaved) {
       index = node*neq+eq;
     } else {
       index = node + eq*num_my_nodes;
@@ -167,7 +167,7 @@ computeMinValue(const Teuchos::RCP<const Thyra_Vector>& x, ST& global_min)
   //     dimension. I also believe Albany makes sure this does not happen, so I *think*
   //     these lines *should* be safe to remove...
   if (num_my_nodes*neq+eq < x_local.size()) {
-    if (interleavedOrdering) {
+    if (interleavedOrdering == DiscType::Interleaved) {
       index = num_my_nodes*neq+eq;
     } else {
       index = num_my_nodes + eq*num_my_nodes;

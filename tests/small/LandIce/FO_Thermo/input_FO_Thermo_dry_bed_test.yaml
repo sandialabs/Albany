@@ -2,7 +2,7 @@
 ---
 ANONYMOUS:
   Build Type: Epetra
-  Problem: 
+  Problem:
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
     Compute Sensitivities: true
@@ -12,7 +12,7 @@ ANONYMOUS:
     Needs Dissipation: true
     Needs Basal Friction: true
     Constant Geothermal Flux: false
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
       DBC on NS bottom for DOF U1: 0.00000000000000000e+00
       DBC on NS lateral for DOF U1: 0.00000000000000000e+00
@@ -24,14 +24,14 @@ ANONYMOUS:
         Basal Friction Coefficient:
           Type: Given Field
           Given Field Variable Name: basal_friction
-    Parameters: 
+    Parameters:
       Number: 1
       Parameter 0: 'Glen''s Law Homotopy Parameter'
-    Distributed Parameters: 
+    Distributed Parameters:
       Number of Parameter Vectors: 0
-      Distributed Parameter 0: 
+      Distributed Parameter 0:
         Name: surface_air_temperature
-    LandIce Viscosity: 
+    LandIce Viscosity:
       Extract Strain Rate Sq: true
       Type: 'Glen''s Law'
       'Glen''s Law Homotopy Parameter': 0.4e+00
@@ -40,7 +40,7 @@ ANONYMOUS:
       'Glen''s Law A': 7.56960000000000017e-05
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
-    LandIce Physical Parameters: 
+    LandIce Physical Parameters:
       Conductivity of ice: 2.10000000000000009e+00
       Diffusivity temperate ice: 1.09999999999999992e-08
       Heat capacity of ice: 2.00900000000000000e+03
@@ -55,23 +55,23 @@ ANONYMOUS:
       Omega exponent alpha: 2.00000000000000000e+00
       Diffusivity homotopy exponent: -1.10000000000000009e+00
     LandIce Enthalpy:
-      Regularization: 
-        Flux Regularization: 
+      Regularization:
+        Flux Regularization:
           alpha: 1.00000000000000006e-01
           beta: 7.50000000000000000e+00
-        Basal Melting Regularization: 
+        Basal Melting Regularization:
           alpha: 1.00000000000000006e-01
           beta: 7.50000000000000000e+00
-      Stabilization: 
+      Stabilization:
         Type: Streamline Upwind
         Parameter Delta: 2.00000000000000000e+00
       Bed Lubrication: 'Dry'
-    Body Force: 
+    Body Force:
       Type: FO INTERP SURF GRAD
-    Response Functions: 
+    Response Functions:
       Number: 1
       Response 0: Solution Average
-  Discretization: 
+  Discretization:
     Workset Size: -1
     Method: Extruded
     Number Of Time Derivatives: 0
@@ -79,139 +79,138 @@ ANONYMOUS:
     Exodus Output File Name: enth_coupled.exo
     Element Shape: Hexahedron
     Use Serial Mesh: true
-    Interleaved Ordering: true
     Columnwise Ordering: true
     NumLayers: 10
     Thickness Field Name: ice_thickness
     Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, surface_air_temperature]
     Basal Node Fields Ranks: [1, 1, 1, 1, 1]
     Use Glimmer Spacing: true
-    Required Fields Info: 
+    Required Fields Info:
       Number Of Fields: 5
-      Field 0: 
+      Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 1: 
+      Field 1:
         Field Name: surface_height
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 2: 
+      Field 2:
         Field Name: basal_friction
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 3: 
+      Field 3:
         Field Name: surface_air_temperature
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 4: 
+      Field 4:
         Field Name: surface_enthalpy
         Field Type: Node Scalar
         Field Usage: Output
-    Side Set Discretizations: 
+    Side Set Discretizations:
       Side Sets: [basalside]
-      basalside: 
+      basalside:
         Workset Size: -1
         Method: Exodus
         Number Of Time Derivatives: 0
         Exodus Input File Name: ../ExoMeshes/slab_2d.exo
         Cubature Degree: 4
         Use Serial Mesh: true
-        Required Fields Info: 
+        Required Fields Info:
           Number Of Fields: 5
-          Field 0: 
+          Field 0:
             Field Name: basal_friction
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Enthalpy/Dome/basal_friction.ascii
-          Field 1: 
+          Field 1:
             Field Name: ice_thickness
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Enthalpy/Dome/thickness.ascii
-          Field 2: 
+          Field 2:
             Field Name: surface_height
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Enthalpy/Dome/surface_height.ascii
-          Field 3: 
+          Field 3:
             Field Name: surface_air_temperature
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Enthalpy/Dome/surface_air_temperature.ascii
-          Field 4: 
+          Field 4:
             Field Name: heat_flux
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Enthalpy/Dome/basal_heat_flux.ascii
-  Regression Results: 
+  Regression Results:
     Number of Comparisons: 1
     Test Values: [5.61027285e-01]
     Relative Tolerance: 1.0e-04
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
       Sensitivity Test Values 0: [2.039408613810e-01]
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Constant
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000000000000e+00
         Continuation Parameter: 'Glen''s Law Homotopy Parameter'
         Continuation Method: Natural
         Max Steps: 100
         Max Value: 4.00000000000000022e-01
         Min Value: 0.00000000000000000e+00
-      Step Size: 
+      Step Size:
         Initial Step Size: 1.00000000000000006e-01
         Max Step Size: 1.00000000000000006e-01
-    NOX: 
-      Thyra Group Options: 
+    NOX:
+      Thyra Group Options:
         Function Scaling: None
         Update Row Sum Scaling: Before Each Nonlinear Solve
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: Combo
           Combo Type: AND
           Number of Tests: 1
-          Test 0: 
+          Test 0:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
             Tolerance: 1.0e-07
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 100
-      Direction: 
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
-          Linear Solver: 
+          Linear Solver:
             Write Linear System: false
             Tolerance: 1.0e-9
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 500
                     Tolerance: 9.99999999999999955e-08
-                Belos: 
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000000000005e-04
                       Output Frequency: 20
                       Output Style: 1
@@ -221,15 +220,15 @@ ANONYMOUS:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: Ifpack
-              Preconditioner Types: 
-                Ifpack: 
+              Preconditioner Types:
+                Ifpack:
                   Overlap: 0
                   Prec Type: Amesos
-                  Ifpack Settings: 
+                  Ifpack Settings:
                     'fact: level-of-fill': 0
-                ML: 
+                ML:
                   Base Method Defaults: none
-                  ML Settings: 
+                  ML Settings:
                     default values: SA
                     ML output: 0
                     'repartition: enable': 1
@@ -253,15 +252,15 @@ ANONYMOUS:
                     'coarse: sweeps': 4
                     max levels: 7
           Rescue Bad Newton Solve: true
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000000000000e+00
         Method: Backtrack
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -271,6 +270,6 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

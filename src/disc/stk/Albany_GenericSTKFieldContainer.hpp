@@ -21,7 +21,7 @@ class MetaData;
 
 namespace Albany {
 
-template<bool Interleaved>
+template<DiscType Interleaved>
 class GenericSTKFieldContainer : public AbstractSTKFieldContainer
 {
 public:

@@ -133,7 +133,7 @@ setup(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   }
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(), 0);
   if (appParams->isSublist("Debug Output")) {
-    Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false)); 
+    Teuchos::RCP<Teuchos::ParameterList> debugPL = Teuchos::rcpFromRef(appParams->sublist("Debug Output", false));
     debugPL->validateParametersAndSetDefaults(*getValidDebugParameters(), 0);
   }
 
@@ -238,13 +238,8 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
 
   Piro::SolverFactory piroFactory;
   m_observer = Teuchos::rcp(new PiroObserver(app, modelWithSolve));
-  if (solMgr->isAdaptive()) {
-    return piroFactory.createSolver<ST>(
-        piroParams, modelWithSolve, solMgr, m_observer);
-  } else {
-    return piroFactory.createSolver<ST>(
-        piroParams, modelWithSolve, Teuchos::null, m_observer);
-  }
+  return piroFactory.createSolver<ST>(
+       piroParams, modelWithSolve, Teuchos::null, m_observer);
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
       std::logic_error,
@@ -358,11 +353,11 @@ SolverFactory::getValidDebugParameters() const
   validPL->set<int>("Write Jacobian to Standard Output", 0, "Jacobian Number to Dump to Standard Output");
   validPL->set<int>("Write Residual to Standard Output", 0, "Residual Number to Dump to Standard Output");
   validPL->set<int>("Derivative Check", 0, "Derivative check");
-  validPL->set<int>("Write Solution to MatrixMarket", 0, "Solution Number to Dump to MatrixMarket"); 
-  validPL->set<bool>("Write Distributed Solution and Map to MatrixMarket", false, "Flag to Write Distributed Solution and Map to MatrixMarket"); 
+  validPL->set<int>("Write Solution to MatrixMarket", 0, "Solution Number to Dump to MatrixMarket");
+  validPL->set<bool>("Write Distributed Solution and Map to MatrixMarket", false, "Flag to Write Distributed Solution and Map to MatrixMarket");
   validPL->set<int>("Write Solution to Standard Output", 0, "Residual Number to Dump to Standard Output");
   validPL->set<bool>("Analyze Memory", false, "Flag to Analyze Memory");
-  return validPL; 
+  return validPL;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -371,8 +366,8 @@ SolverFactory::getValidScalingParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidScalingParams"));
   validPL->set<double>("Scale", 0.0, "Value of Scaling to Apply to Jacobian/Residual");
   validPL->set<bool>("Scale BC Dofs", false, "Flag to Scale Jacobian/Residual Rows Corresponding to DBC Dofs");
-  validPL->set<std::string>("Type", "Constant", "Scaling Type (Constant, Diagonal, AbsRowSum)"); 
-  return validPL; 
+  validPL->set<std::string>("Type", "Constant", "Scaling Type (Constant, Diagonal, AbsRowSum)");
+  return validPL;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

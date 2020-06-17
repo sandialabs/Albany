@@ -352,7 +352,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         Teuchos::Exceptions::InvalidParameter,
             "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Write Jacobian to MatrixMarket.  Acceptable "
-               "values are -1, 0, 1, 2, ...\n "); 
+               "values are -1, 0, 1, 2, ...\n ");
   }
   if (writeToMatrixMarketRes < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -360,7 +360,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         Teuchos::Exceptions::InvalidParameter,
             "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Write Residual to MatrixMarket.  Acceptable "
-               "values are -1, 0, 1, 2, ...\n"); 
+               "values are -1, 0, 1, 2, ...\n");
   }
   if (writeToMatrixMarketSoln < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -368,7 +368,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         Teuchos::Exceptions::InvalidParameter,
             "\nError in Albany::Application constructor:  "
          << "Invalid Parameter Write Solution to MatrixMarket.  Acceptable "
-            "values are -1, 0, 1, 2, ... \n"); 
+            "values are -1, 0, 1, 2, ... \n");
   }
   if (writeToCoutJac < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -376,7 +376,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         Teuchos::Exceptions::InvalidParameter,
              "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Write Jacobian to Standard Output.  "
-               "Acceptable values are -1, 0, 1, 2, ...\n"); 
+               "Acceptable values are -1, 0, 1, 2, ...\n");
   }
   if (writeToCoutRes < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -384,7 +384,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         Teuchos::Exceptions::InvalidParameter,
              "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Write Residual to Standard Output.  "
-               "Acceptable values are -1, 0, 1, 2, ... \n"); 
+               "Acceptable values are -1, 0, 1, 2, ... \n");
   }
   if (writeToCoutSoln < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -392,7 +392,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         Teuchos::Exceptions::InvalidParameter,
              "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Write Solution to Standard Output.  "
-               "Acceptable values are -1, 0, 1, 2, ... \n"); 
+               "Acceptable values are -1, 0, 1, 2, ... \n");
   }
   if (computeJacCondNum < -1) {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -400,7 +400,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         Teuchos::Exceptions::InvalidParameter,
              "\nError in Albany::Application constructor:  "
             << "Invalid Parameter Compute Jacobian Condition Number.  "
-               "Acceptable values are -1, 0, 1, 2, ...\n"); 
+               "Acceptable values are -1, 0, 1, 2, ...\n");
   }
   countJac = 0;  // initiate counter that counts instances of Jacobian matrix to
                  // 0
@@ -523,7 +523,7 @@ Application::createDiscretization()
       stateMgr.getSideSetStateInfoStruct(),
       problem->getFieldRequirements(),
       problem->getSideSetFieldRequirements(),
-      problem->getNullSpace()); 
+      problem->getNullSpace());
   // The following is for Aeras problems.
   explicit_scheme = disc->isExplicitScheme();
 }
@@ -580,12 +580,12 @@ Application::finalSetUp(
   // If the states have been already allocated, skip this.
   if (!stateMgr.areStateVarsAllocated()) stateMgr.setupStateArrays(disc);
 
-  solMgr = rcp(new AAdapt::AdaptiveSolutionManager(
+  solMgr = rcp(new SolutionManager(
       params,
       initial_guess,
       paramLib,
       disc,
-      comm)); 
+      comm));
 
   try {
     // Create Distributed parameters and initialize them with data stored in the
@@ -1314,7 +1314,7 @@ Application::computeGlobalResidual(
   if (writeToMatrixMarketRes != 0) {  // If requesting writing to MatrixMarket of residual...
     if (writeToMatrixMarketRes == -1) {  // write residual to MatrixMarket every time it arises
       writeMatrixMarket(f, "rhs", countRes);
-    } 
+    }
     else {
       if (countRes == writeToMatrixMarketRes) {  // write residual only at requested count#
         writeMatrixMarket(f, "rhs", countRes);
@@ -1324,7 +1324,7 @@ Application::computeGlobalResidual(
   if (writeToMatrixMarketSoln != 0) {  // If requesting writing to MatrixMarket of solution...
     if (writeToMatrixMarketSoln == -1) {  // write solution to MatrixMarket every time it arises
       writeMatrixMarket(x, "sol", countSoln);
-    } 
+    }
     else {
       if (countRes == writeToMatrixMarketSoln) {  // write residual only at requested count#
         writeMatrixMarket(x, "sol", countSoln);
@@ -1659,12 +1659,12 @@ Application::computeGlobalJacobian(
       computeJacCondNum != 0) {
     countJac++;  // increment Jacobian counter
   }
-  // Debut output - residual 
-  if (f != Teuchos::null) { 
+  // Debut output - residual
+  if (f != Teuchos::null) {
     if (writeToMatrixMarketRes != 0) {  // If requesting writing to MatrixMarket of residual...
       if (writeToMatrixMarketRes == -1) {  // write residual to MatrixMarket every time it arises
         writeMatrixMarket(f, "rhs", countRes);
-      } 
+      }
       else {
         if (countRes == writeToMatrixMarketRes) {  // write residual only at requested count#
           writeMatrixMarket(f, "rhs", countRes);
@@ -1675,7 +1675,7 @@ Application::computeGlobalJacobian(
       if (writeToCoutRes == -1) {  // cout residual time it arises
         std::cout << "Global Residual #" << countRes << ": " << std::endl;
         describe(f.getConst(), *out, Teuchos::VERB_EXTREME);
-      } 
+      }
       else {
         if (countRes == writeToCoutRes) {  // cout residual only at requested
                                          // count#
@@ -1684,7 +1684,7 @@ Application::computeGlobalJacobian(
         }
       }
     }
-  
+
     if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) {
       countRes++;  // increment residual counter
     }
@@ -1727,7 +1727,7 @@ Application::computeGlobalTangent(
   auto cas_manager = solMgr->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distrbution
-  solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr()); 
+  solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -2230,7 +2230,7 @@ Application::evaluateResponseDistParamDeriv(
 void
 Application::evaluateStateFieldManager(
     const double             current_time,
-    const Thyra_MultiVector& x, 
+    const Thyra_MultiVector& x,
     Teuchos::Ptr<const Thyra_MultiVector> dxdp)
 {
   int num_vecs = x.domain()->dim();
@@ -2252,7 +2252,7 @@ Application::evaluateStateFieldManager(
     const double                     current_time,
     const Thyra_Vector&              x,
     Teuchos::Ptr<const Thyra_Vector> xdot,
-    Teuchos::Ptr<const Thyra_Vector> xdotdot, 
+    Teuchos::Ptr<const Thyra_Vector> xdotdot,
     Teuchos::Ptr<const Thyra_MultiVector> dxdp )
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: State Residual");

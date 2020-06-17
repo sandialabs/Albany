@@ -11,7 +11,7 @@
 
 namespace Albany {
 
-template <bool Interleaved>
+template <DiscType Interleaved>
 class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
 {
  public:
@@ -22,7 +22,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
       const int                                                 neq_,
       const AbstractFieldContainer::FieldContainerRequirements& req,
       const int                                                 numDim_,
-      const Teuchos::RCP<Albany::StateInfoStruct>&              sis, 
+      const Teuchos::RCP<Albany::StateInfoStruct>&              sis,
       const int                                                 num_params);
 
   ~OrdinarySTKFieldContainer() = default;
@@ -85,7 +85,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
       const NodalDOFManager&                       nodalDofManager);
   void
   saveSolnVector(
-      const Thyra_Vector&                          soln, 
+      const Thyra_Vector&                          soln,
       const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
       stk::mesh::Selector&                         sel,
       const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
@@ -145,7 +145,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
                                               solution_field_dxdp;
   AbstractSTKFieldContainer::VectorFieldType* residual_field;
 
-  int num_params{0}; 
+  int num_params{0};
 };
 
 }  // namespace Albany

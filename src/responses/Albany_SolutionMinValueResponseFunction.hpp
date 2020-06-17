@@ -7,6 +7,7 @@
 #ifndef ALBANY_SOLUTION_MIN_VALUE_RESPONSE_FUNCTION_HPP
 #define ALBANY_SOLUTION_MIN_VALUE_RESPONSE_FUNCTION_HPP
 
+#include "Albany_MeshSpecs.hpp"
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
 namespace Albany {
@@ -19,8 +20,8 @@ class SolutionMinValueResponseFunction : public SamplingBasedScalarResponseFunct
 public:
   //! Default constructor
   SolutionMinValueResponseFunction(
-    const Teuchos::RCP<const Teuchos_Comm>& comm, 
-    int neq = 1, int eq = 0, bool interleavedOrdering=true);
+    const Teuchos::RCP<const Teuchos_Comm>& comm,
+    int neq = 1, int eq = 0, DiscType interleavedOrdering = DiscType::Interleaved);
 
   //! Destructor
   ~SolutionMinValueResponseFunction() = default;
@@ -37,7 +38,7 @@ public:
     const Teuchos::RCP<Thyra_Vector>& g);
 
   //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-  void evaluateTangent(const double alpha, 
+  void evaluateTangent(const double alpha,
     const double beta,
     const double omega,
     const double current_time,
@@ -54,7 +55,7 @@ public:
     const Teuchos::RCP<Thyra_Vector>& g,
     const Teuchos::RCP<Thyra_MultiVector>& gx,
     const Teuchos::RCP<Thyra_MultiVector>& gp);
-  
+
   //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
   void evaluateGradient(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -89,10 +90,10 @@ protected:
   //! Equation we want to get the max value from
   int eq;
 
-  Teuchos::RCP<const Teuchos_Comm> comm_; 
+  Teuchos::RCP<const Teuchos_Comm> comm_;
 
   //! Flag for interleaved verus blocked unknown ordering
-  bool interleavedOrdering;
+  DiscType interleavedOrdering;
 };
 
 } // namespace Albany

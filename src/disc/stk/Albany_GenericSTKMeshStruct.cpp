@@ -118,7 +118,7 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
     const int numParams_)
     : params(params_),
       adaptParams(adaptParams_),
-      num_params(numParams_) 
+      num_params(numParams_)
 {
   metaData = Teuchos::rcp(new stk::mesh::MetaData());
 
@@ -129,7 +129,7 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
     metaData->initialize(numDim_, entity_rank_names);
   }
 
-  interleavedOrdering = params->get("Interleaved Ordering",true);
+  interleavedOrdering = static_cast<DiscType>(params->get<int>("Interleaved Ordering", 1));
   allElementBlocksHaveSamePhysics = true;
   compositeTet = params->get<bool>("Use Composite Tet 10", false);
   num_time_deriv = params->get<int>("Number Of Time Derivatives");
@@ -149,7 +149,7 @@ void GenericSTKMeshStruct::SetupFieldData(
     const int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<StateInfoStruct>& sis,
-    const int worksetSize) 
+    const int worksetSize)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(),
        std::logic_error,
@@ -205,22 +205,22 @@ void GenericSTKMeshStruct::SetupFieldData(
   // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
   if(user_specified_solution_components && (residual_vector.length() > 0)){
 
-      if(interleavedOrdering)
-        this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<true>(params,
+      if(interleavedOrdering == DiscType::Interleaved)
+        this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::Interleaved>(params,
             metaData, bulkData, neq, numDim, sis, solution_vector, num_params));
       else
-        this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<false>(params,
+        this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::BlockedMono>(params,
             metaData, bulkData, neq, numDim, sis, solution_vector, num_params));
 
   }
 
   else {
 
-      if(interleavedOrdering)
-        this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<true>(params,
+      if(interleavedOrdering == DiscType::Interleaved)
+        this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::Interleaved>(params,
             metaData, bulkData, neq, req, numDim, sis, num_params));
       else
-        this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<false>(params,
+        this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::BlockedMono>(params,
             metaData, bulkData, neq, req, numDim, sis, num_params));
 
   }
@@ -594,7 +594,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const 
       TEUCHOS_TEST_FOR_EXCEPTION (part==nullptr, std::runtime_error, "Error! One of the stored meshSpecs claims to have sideset " + ssName +
                                                                      " which, however, is not a part of the mesh.\n");
       stk::topology stk_topo_data = metaData->get_topology( *part );
-      shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
+      shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data);
       const auto* ctd = shards_ctd.getCellTopologyData();
 
       auto& ss_ms = ms->sideSetMeshSpecs[ssName];
@@ -619,7 +619,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const 
 
         continue;
       }
-      
+
       ss_ms.resize(1);
       ss_ms[0] = Teuchos::rcp( new MeshSpecsStruct() );
       ss_ms[0]->ctd = *ctd;
@@ -1670,7 +1670,7 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<std::string>("Cubature Rule", "", "Integration rule sent to Intrepid2: GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, GAUSS_LOBATTO");
   validPL->set<int>("Workset Size", DEFAULT_WORKSET_SIZE, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Use Automatic Aura", false, "Use automatic aura with BulkData");
-  validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
+  validPL->set<int>("Interleaved Ordering", 1, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
   validPL->set<std::string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for LandIce problem that require tranformation of STK mesh

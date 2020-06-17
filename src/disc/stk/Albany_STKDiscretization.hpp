@@ -515,7 +515,7 @@ class STKDiscretization : public AbstractDiscretization
       const Thyra_Vector& soln_dotdot,
       const bool          overlapped);
   void
-  setSolutionFieldMV(const Thyra_MultiVector& solnT, 
+  setSolutionFieldMV(const Thyra_MultiVector& solnT,
 		  const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
 		  const bool overlapped);
 
@@ -683,7 +683,7 @@ class STKDiscretization : public AbstractDiscretization
 
   size_t outputFileIdx;
 #endif
-  bool interleavedOrdering;
+  DiscType interleavedOrdering;
 
  private:
   Teuchos::RCP<ThyraCrsMatrixFactory> nodalMatrixFactory;

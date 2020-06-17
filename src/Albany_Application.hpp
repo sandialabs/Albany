@@ -21,7 +21,7 @@
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
 
-#include "AAdapt_AdaptiveSolutionManager.hpp"
+#include "SolutionManager.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 
 #include "Sacado_ParameterAccessor.hpp"
@@ -120,7 +120,7 @@ public:
     return relative_responses;
   }
 
-  Teuchos::RCP<AAdapt::AdaptiveSolutionManager>
+  Teuchos::RCP<Albany::SolutionManager>
   getAdaptSolMgr()
   {
     return solMgr;
@@ -384,7 +384,7 @@ public:
   void
   evaluateStateFieldManager(
       const double             current_time,
-      const Thyra_MultiVector& x, 
+      const Thyra_MultiVector& x,
       Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
   //! Access to number of worksets - needed for working with StateManager
@@ -504,8 +504,8 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp);
 
-  int 
-  calcTangentDerivDimension(const Teuchos::RCP<Teuchos::ParameterList>& problemParams); 
+  int
+  calcTangentDerivDimension(const Teuchos::RCP<Teuchos::ParameterList>& problemParams);
 
  private:
   template <typename EvalT>
@@ -550,7 +550,7 @@ public:
   bool no_dir_bcs_;
   bool requires_sdbcs_;
   bool requires_orig_dbcs_;
-  
+
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
 
@@ -582,7 +582,7 @@ public:
   Teuchos::RCP<DistributedParameterLibrary> distParamLib;
 
   //! Solution memory manager
-  Teuchos::RCP<AAdapt::AdaptiveSolutionManager> solMgr;
+  Teuchos::RCP<Albany::SolutionManager> solMgr;
 
   //! Response functions
   Teuchos::Array<Teuchos::RCP<Albany::AbstractResponseFunction>> responses;
@@ -615,7 +615,7 @@ public:
   // writeToMatrixMarketJac =-1: write to MatrixMarket every time a Jacobian
   // arises writeToMatrixMarketJac = N: write N^th Jacobian to MatrixMarket
   // ...and similarly for writeToMatrixMarketRes (integer specifying whether
-  // user wants to write residual to MatrixMarket file) and writeToMatrixMarketSoln 
+  // user wants to write residual to MatrixMarket file) and writeToMatrixMarketSoln
   // (integer specifying whether user wants to write solution to MatrixMarket file)
   int writeToMatrixMarketJac;
   int writeToMatrixMarketRes;

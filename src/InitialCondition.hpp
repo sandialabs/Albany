@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_INITIAL_CONDITION_HPP
-#define AADAPT_INITIAL_CONDITION_HPP
+#ifndef INITIAL_CONDITION_HPP
+#define INITIAL_CONDITION_HPP
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_DiscretizationUtils.hpp"
@@ -14,7 +14,6 @@
 #include "Teuchos_ParameterList.hpp"
 
 namespace Albany {
-namespace AAdapt {
 
 void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
                         const Albany::Conn& wsElNodeEqID,
@@ -24,7 +23,6 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
                         Teuchos::ParameterList& icParams,
                         const bool gasRestartSolution = false);
 
-} // namespace AAdapt
 } // namespace Albany
 
-#endif // AADAPT_INITIAL_CONDITION_HPP
+#endif // INITIAL_CONDITION_HPP

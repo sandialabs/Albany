@@ -9,7 +9,6 @@
 #include <iostream>
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
-//#include <Shards_BasicTopologies.hpp>
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>
@@ -91,11 +90,11 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
       default_element_type = stk::topology::LINE_2_1D;
       optional_element_type = stk::topology::LINE_2_1D;
       default_element_side_type = stk::topology::PARTICLE; // No sides in 1D
-      break; 
+      break;
     case 2: //2D
       default_element_type = stk::topology::QUAD_4_2D;
       optional_element_type = stk::topology::TRI_3_2D;
-      default_element_side_type = stk::topology::LINE_2; 
+      default_element_side_type = stk::topology::LINE_2;
       break;
     case 3: //3D
       default_element_type = stk::topology::HEX_8;
@@ -370,10 +369,10 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
-    
+
     stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-    const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data);
+    const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                nsNames, ssNames, worksetSize, partVec[0]->name(),
@@ -389,8 +388,8 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
       // MeshSpecs holds all info needed to set up an Albany problem
 
       stk::topology stk_topo_data = metaData->get_topology( *partVec[eb] );
-      shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-      const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+      shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data);
+      const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                 nsNames, ssNames, worksetSize, partVec[eb]->name(),
