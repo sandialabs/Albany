@@ -51,7 +51,7 @@ SideQuadPointsToSideInterpolationBase (const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits, typename ScalarT>
 void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData (field_qp,fm);
@@ -59,6 +59,9 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
 
   this->utils.setFieldData (field_side,fm);
   field_qp.dimensions(dims);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -66,6 +69,8 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
+
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet)

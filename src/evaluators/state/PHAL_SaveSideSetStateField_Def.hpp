@@ -93,16 +93,20 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
 // **********************************************************************
 template<typename Traits>
 void SaveSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 // **********************************************************************
 template<typename Traits>
 void SaveSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   if (this->nodalState)
     saveNodeState(workset);
   else

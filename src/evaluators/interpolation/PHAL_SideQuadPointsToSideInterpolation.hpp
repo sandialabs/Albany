@@ -14,6 +14,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "Albany_SacadoTypes.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL
 {
@@ -47,6 +48,8 @@ private:
   std::vector<int> dims;
 
   std::string sideSetName;
+
+  MDFieldMemoizer<Traits> memoizer;
 
   // Input:
   PHX::MDField<const ScalarT>                         field_qp;

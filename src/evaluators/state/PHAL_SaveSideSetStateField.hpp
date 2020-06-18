@@ -14,6 +14,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Utilities.hpp"
 #include "Albany_Layouts.hpp"
 
 namespace PHAL
@@ -70,6 +71,8 @@ private:
 
   bool nodalState;
   std::vector<std::vector<int> >  sideNodes;
+
+  MDFieldMemoizer<Traits> memoizer;
 };
 
 } // Namespace PHAL

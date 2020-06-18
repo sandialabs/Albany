@@ -107,6 +107,7 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::postRegis
   this->utils.setFieldData(tangents, fm);
 
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************

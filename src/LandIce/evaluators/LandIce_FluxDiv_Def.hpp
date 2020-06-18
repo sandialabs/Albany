@@ -63,6 +63,9 @@ void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::postRegistrationSetup(ty
   this->utils.setFieldData(grad_thickness, fm);
   this->utils.setFieldData(side_tangents, fm);
   this->utils.setFieldData(flux_div, fm);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 // **********************************************************************
@@ -71,6 +74,8 @@ void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::evaluateFields(typename 
 {
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::runtime_error,
                               "Side sets defined in input file but not properly specified on the mesh.\n");
+
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
   {

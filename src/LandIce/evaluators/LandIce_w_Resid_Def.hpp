@@ -93,8 +93,10 @@ namespace LandIce
 
   template<typename EvalT, typename Traits, typename VelocityType>
   void w_Resid<EvalT,Traits,VelocityType>::
-  postRegistrationSetup(typename Traits::SetupData /* d */, PHX::FieldManager<Traits>& fm)
-  {  }
+  postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+  {  
+    d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  }
 
   template<typename EvalT, typename Traits, typename VelocityType>
   void w_Resid<EvalT,Traits,VelocityType>::

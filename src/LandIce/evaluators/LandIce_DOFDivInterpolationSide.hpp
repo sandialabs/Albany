@@ -14,6 +14,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "Albany_SacadoTypes.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace LandIce {
 
@@ -52,6 +53,8 @@ private:
   int numSideNodes;
   int numSideQPs;
   int numDims;
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 };
 
 // Some shortcut names
