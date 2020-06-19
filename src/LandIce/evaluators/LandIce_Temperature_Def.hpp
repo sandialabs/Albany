@@ -83,19 +83,21 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 template<typename EvalT, typename Traits, typename TemperatureST>
 KOKKOS_INLINE_FUNCTION
 void Temperature<EvalT,Traits,TemperatureST>::
-operator() (const int &node, const int &cell) const{
+operator() (const int &cell) const{
 
-  if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-    temperature(cell,node) = temperature_scaling * enthalpy(cell,node) + T0;
-  else
-    temperature(cell,node) = meltingTemp(cell,node);
+  for (int node = 0; node < numNodes; ++node) {
+    if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
+      temperature(cell,node) = temperature_scaling * enthalpy(cell,node) + T0;
+    else
+      temperature(cell,node) = meltingTemp(cell,node);
 
-  correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
+    correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
 
-  diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
+    diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
+  }
+  
 
 }
-
 
 template<typename EvalT, typename Traits, typename TemperatureST>
 void Temperature<EvalT,Traits,TemperatureST>::
@@ -122,7 +124,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::parallel_for(Temperature_Policy({0,0}, {numNodes,workset.numCells}), *this);
+  Kokkos::parallel_for(Temperature_Policy(0, workset.numCells), *this);
 #else
   for (std::size_t cell = 0; cell < workset.numCells; ++cell)
   {

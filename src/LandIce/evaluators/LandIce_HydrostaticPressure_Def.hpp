@@ -44,11 +44,14 @@ HydrostaticPressure(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
 template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
 void HydrostaticPressure<EvalT, Traits, SurfHeightST>::
-operator() (const int& node, const int& cell) const{
+operator() (const int& cell) const{
 
+  for (int node = 0; node < numNodes; ++node) {
     pressure(cell,node) = pressure_scaling * ( s(cell,node) - z(cell,node,2) ); 
-
+  }
+    
 }
+
 
 template<typename EvalT, typename Traits, typename SurfHeightST>
 void HydrostaticPressure<EvalT,Traits,SurfHeightST>::
@@ -71,7 +74,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::parallel_for(Hydrostatic_Pressure_Policy({0,0}, {numNodes,workset.numCells}), *this);
+  Kokkos::parallel_for(Hydrostatic_Pressure_Policy(0, workset.numCells), *this);
 #else
   for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t node = 0; node < numNodes; ++node)

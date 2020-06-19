@@ -76,10 +76,10 @@ private:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-  typedef Kokkos::MDRangePolicy< ExecutionSpace, Kokkos::Rank<2> > Temperature_Policy;
+  typedef Kokkos::RangePolicy< ExecutionSpace > Temperature_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const int& i, const int& j) const;
+  void operator() (const int& i) const;
 };
 
 } // namespace LandIce

@@ -44,9 +44,11 @@ LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
 template<typename EvalT, typename Traits, typename Type>
 KOKKOS_INLINE_FUNCTION
 void LiquidWaterFraction<EvalT,Traits,Type>::
-operator() (const int& node, const int& cell) const{
+operator() (const int& cell) const{
 
+  for (int node = 0; node < numNodes; ++node) {
     phi(cell,node) =  ( enthalpy(cell,node) < enthalpyHs(cell,node) ) ? ScalarT(0) : phi_scaling * (enthalpy(cell,node) - enthalpyHs(cell,node));
+  }
 
 }
 
@@ -71,7 +73,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Kokkos::parallel_for(Phi_Policy({0,0}, {numNodes,workset.numCells}), *this);
+  Kokkos::parallel_for(Phi_Policy(0, workset.numCells), *this);
 #else
   for (std::size_t cell = 0; cell < workset.numCells; ++cell)
   {
