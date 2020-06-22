@@ -56,6 +56,7 @@ template<typename EvalT, typename Traits, typename ThicknessScalarT>
 void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 
