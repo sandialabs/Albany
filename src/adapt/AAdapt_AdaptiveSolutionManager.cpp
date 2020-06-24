@@ -124,7 +124,8 @@ AdaptiveSolutionManager::AdaptiveSolutionManager(
           coords,
           neq,
           numDim,
-          pbParams->sublist("Initial Condition Dot"));
+          pbParams->sublist("Initial Condition Dot"),
+          disc_->hasRestartSolution());
       cas_manager->combine(
           overlapped_soln->col(1),
           current_soln->col(1),
@@ -143,7 +144,8 @@ AdaptiveSolutionManager::AdaptiveSolutionManager(
           coords,
           neq,
           numDim,
-          pbParams->sublist("Initial Condition DotDot"));
+          pbParams->sublist("Initial Condition DotDot"),
+          disc_->hasRestartSolution());
       cas_manager->combine(
           overlapped_soln->col(1),
           current_soln->col(1),
