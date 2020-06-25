@@ -166,42 +166,9 @@ struct StateStruct
 
 // typedef std::vector<Teuchos::RCP<StateStruct> >  StateInfoStruct;
 // New container class approach
-class StateInfoStruct
+class StateInfoStruct : public std::vector<Teuchos::RCP<StateStruct>>
 {
- public:
-  typedef std::vector<Teuchos::RCP<StateStruct>>::const_iterator const_iterator;
-
-  Teuchos::RCP<StateStruct>&      operator[](int index) { return sis[index]; }
-  const Teuchos::RCP<StateStruct> operator[](int index) const
-  {
-    return sis[index];
-  }
-  void
-  push_back(const Teuchos::RCP<StateStruct>& ss)
-  {
-    sis.push_back(ss);
-  }
-  std::size_t
-  size() const
-  {
-    return sis.size();
-  }
-  Teuchos::RCP<StateStruct>&
-  back()
-  {
-    return sis.back();
-  }
-  const_iterator
-  begin() const
-  {
-    return sis.begin();
-  }
-  const_iterator
-  end() const
-  {
-    return sis.end();
-  }
-
+public:
   // Create storage on access - only if used
   Teuchos::RCP<Adapt::NodalDataBase>
   createNodalDataBase()
@@ -217,7 +184,6 @@ class StateInfoStruct
   }
 
  private:
-  std::vector<Teuchos::RCP<StateStruct>> sis;
   Teuchos::RCP<Adapt::NodalDataBase>     nodal_data_base;
 };
 
