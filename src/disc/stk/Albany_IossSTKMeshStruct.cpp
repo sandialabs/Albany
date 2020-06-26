@@ -420,47 +420,55 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
   if(m_hasRestartSolution){
 
-    Teuchos::Array<std::string> default_field;
-    default_field.push_back("solution");
-    Teuchos::Array<std::string> restart_fields =
-      params->get<Teuchos::Array<std::string> >("Restart Fields", default_field);
+    Teuchos::Array<std::string> default_field = {{"solution", "solution_dot", "solution_dotdot"}};
+    auto& restart_fields = params->get<Teuchos::Array<std::string> >("Restart Fields", default_field);
 
     // Get the fields to be used for restart
 
     // See what state data was initialized from the stk::io request
     // This should be propagated into stk::io
-    const Ioss::ElementBlockContainer& elem_blocks = region.get_element_blocks();
+    const Ioss::NodeBlockContainer&    node_blocks = region.get_node_blocks();
 
-    /*
     // Uncomment to print what fields are in the exodus file
-    Ioss::NameList exo_fld_names;
-    elem_blocks[0]->field_describe(&exo_fld_names);
-    for(std::size_t i = 0; i < exo_fld_names.size(); i++){
-    *out << "Found field \"" << exo_fld_names[i] << "\" in exodus file" << std::endl; } */
+    // const Ioss::ElementBlockContainer& elem_blocks = region.get_element_blocks();
+    // for (const auto& block : elem_blocks) {
+    //   Ioss::NameList exo_eb_fld_names;
+    //   block->field_describe(&exo_eb_fld_names);
+    //   for (const auto& name : exo_eb_fld_names) {
+    //     *out << "Found field \"" << name << "\" in elem blocks of exodus file\n";
+    //   }
+    // }
+    // for (const auto& block : node_blocks) {
+    //   Ioss::NameList exo_nb_fld_names;
+    //   block->field_describe(&exo_nb_fld_names);
+    //   for (const auto& name : exo_nb_fld_names) {
+    //     *out << "Found field \"" << name << "\" in node blocks of exodus file\n";
+    //   }
+    // }
 
-    for (std::size_t i=0; i<sis->size(); i++) { Albany::StateStruct& st = *((*sis)[i]);
-      if(elem_blocks[0]->field_exists(st.name))
-
-        for(std::size_t j = 0; j < restart_fields.size(); j++)
-
-          if(boost::iequals(st.name, restart_fields[j])){
-
-            *out << "Restarting from field \"" << st.name << "\" found in exodus file." << std::endl;
-            st.restartDataAvailable = true;
-            break;
-
+    for (const auto& st_ptr : *sis) {
+      auto& st = *st_ptr;
+      for (const auto& block : node_blocks) {
+        if (block->field_exists(st.name)) {
+          for (const auto& restart_field : restart_fields) {
+            if (st.name==restart_field) {
+              *out << "Restarting from field \"" << st.name << "\" found in exodus file.\n";
+              st.restartDataAvailable = true;
+              break;
+            }
           }
+        }
+      }
     }
 
     // Read global mesh variables. Should we emit warnings at all?
-    for (auto& it : fieldContainer->getMeshVectorStates())
-    {
+    for (auto& it : fieldContainer->getMeshVectorStates()) {
       bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
       if (!found)
         *out << "  *** WARNING *** Mesh vector state '" << it.first << "' was not found in the mesh database.\n";
     }
-    for (auto& it : fieldContainer->getMeshScalarIntegerStates())
-    {
+
+    for (auto& it : fieldContainer->getMeshScalarIntegerStates()) {
       bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
       if (!found)
         *out << "  *** WARNING *** Mesh scalar integer state '" << it.first << "' was not found in the mesh database.\n";
