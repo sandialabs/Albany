@@ -130,7 +130,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   int neq = meshStruct->neq;
 
-  const DiscType interleavedOrdering = meshStruct->getInterleavedOrdering();
+  const Albany::DiscType interleavedOrdering = meshStruct->getInterleavedOrdering();
 
   *MPAS_dt =  deltat;
 
@@ -144,13 +144,13 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   VectorFieldType* solutionField;
 
-  if (interleavedOrdering == DiscType::Interleaved) {
+  if (interleavedOrdering == Albany::DiscType::Interleaved) {
     solutionField = Teuchos::rcp_dynamic_cast<
-        Albany::OrdinarySTKFieldContainer<true> >(
+        Albany::OrdinarySTKFieldContainer<Albany::DiscType::Interleaved> >(
             meshStruct->getFieldContainer())->getSolutionField();
   } else {
     solutionField = Teuchos::rcp_dynamic_cast<
-        Albany::OrdinarySTKFieldContainer<false> >(
+        Albany::OrdinarySTKFieldContainer<Albany::DiscType::BlockedMono> >(
             meshStruct->getFieldContainer())->getSolutionField();
   }
 
@@ -317,7 +317,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
     int lId0, lId1;
 
-    if (interleavedOrdering == DiscType::Interleaved) {
+    if (interleavedOrdering == Albany::DiscType::Interleaved) {
       lId0 = indexer->getLocalElement(neq * gId);
       lId1 = lId0 + 1;
     } else {
@@ -595,7 +595,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   discretizationList->set("Method", discretizationList->get("Method", "Extruded")); //set to Extruded is not defined
   int cubatureDegree = (elemShape=="Tetrahedron") ? 1 : 4;
   discretizationList->set("Cubature Degree", discretizationList->get("Cubature Degree", cubatureDegree));  //set cubatureDegree if not defined
-  discretizationList->set<DiscType>("Interleaved Ordering", discretizationList->get<DiscType>("Interleaved Ordering", DiscType::Interleaved));  //set true if not define
+  discretizationList->set<Albany::DiscType>("Interleaved Ordering", discretizationList->get<Albany::DiscType>("Interleaved Ordering", Albany::DiscType::Interleaved));  //set true if not define
 
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);
