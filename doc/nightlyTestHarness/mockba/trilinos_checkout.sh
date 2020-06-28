@@ -42,10 +42,9 @@ git clone git@github.com:trilinos/Trilinos.git > $TRILOUTDIR/trilinos_checkout.o
 
 cd $TRILDIR
 #git checkout `git rev-list -n 1 --before="2014-11-19 00:00" master`
-#echo; echo "   Starting SCOREC checkout..."
-#git clone git@github.com:SCOREC/core.git SCOREC > $TRILOUTDIR/scorec_checkout.out 2>&1
-#cd $TRILDIR/SCOREC
-#echo; echo "   ...finished SCOREC checkout."
+echo; echo "   Starting SCOREC checkout..."
+git clone git@github.com:SCOREC/core.git SCOREC > $TRILOUTDIR/scorec_checkout.out 2>&1
+echo; echo "   ...finished SCOREC checkout."
 echo "Switching Trilinos to branch ", $TRILINOS_BRANCH
 git checkout $TRILINOS_BRANCH
 echo "Finished Trilinos checkout."
