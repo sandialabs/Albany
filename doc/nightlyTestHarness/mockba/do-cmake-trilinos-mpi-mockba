@@ -31,7 +31,7 @@
 rm -f CMakeCache.txt
 rm -rf CMakeFiles
 
-PARMETISDIR=/home/ikalash/Install/parmetis/build/install
+PARMETISDIR=/home/ikalash/Install/parmetis-4.0.3
 
 BUILD_DIR=`pwd`
 
@@ -151,6 +151,11 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D MPI_EXEC=${SEMS_MPI_ROOT}/bin/mpiexec \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
+\
+      -D Trilinos_ENABLE_SCOREC:BOOL=ON \
+      -D TPL_ENABLE_ParMETIS:STRING=ON \
+      -D ParMETIS_INCLUDE_DIRS:PATH=${PARMETISDIR}/include \
+      -D ParMETIS_LIBRARY_DIRS:PATH=${PARMETISDIR}/lib \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
