@@ -12,12 +12,13 @@ namespace Albany
  * 
  * The FE classes in Epetra do not expose the information about the overlapped
  * distribution. The col map could be used to retrieve it in most cases,
- * but it relies on the assumption that Range=Domain. That's not always true.
- * Therefore, we roll our own version, whish simply adds a getter for
- * the OverlapRangeMap.
+ * but it can only retrieve Domain information (if Range!=Domain, we can't
+ * retrieve information on the overlapped range map).
+ * Therefore, we roll our own version, which simply stores the overlapped
+ * range/domain maps, and exposes them with a getter.
  * 
  * All the other functionalities are simply inherited from their base classes,
- * and no additional method is implemented.
+ * and no additional method is implemented or overridden.
  */
 
 // Extension of Epetra_FECrsGraph
@@ -27,24 +28,13 @@ public:
   EpetraFECrsGraph (Epetra_DataAccess CV,
         const Epetra_Map& rowMap,
         const Epetra_Map& ovRowMap,
+        const Epetra_Map& ovDomainMap,
         int* NumIndicesPerRow,
         bool ignoreNonLocalEntries = false,
         bool buildNonlocalGraph = false)
     : Epetra_FECrsGraph(CV,rowMap,NumIndicesPerRow,ignoreNonLocalEntries,buildNonlocalGraph)
     , m_ovRowMap(ovRowMap)
-  {
-    // Nothing to do
-  }
-
-  EpetraFECrsGraph (Epetra_DataAccess CV,
-        const Epetra_Map& rowMap,
-        const Epetra_Map& colMap,
-        const Epetra_Map& ovRowMap,
-        int* NumIndicesPerRow,
-        bool ignoreNonLocalEntries = false,
-        bool buildNonlocalGraph = false)
-    : Epetra_FECrsGraph(CV,rowMap,colMap,NumIndicesPerRow,ignoreNonLocalEntries,buildNonlocalGraph)
-    , m_ovRowMap(ovRowMap)
+    , m_ovDomainMap(ovDomainMap)
   {
     // Nothing to do
   }
@@ -53,9 +43,11 @@ public:
   EpetraFECrsGraph(const EpetraFECrsGraph&) = default;
 
   const Epetra_BlockMap& OverlapRangeMap () const { return m_ovRowMap; }
+  const Epetra_BlockMap& OverlapDomainMap () const { return m_ovDomainMap; }
 protected:
 
   Epetra_BlockMap m_ovRowMap;
+  Epetra_BlockMap m_ovDomainMap;
 };
 
 // Extension of Epetra_FECrsMatrix
@@ -75,6 +67,9 @@ public:
 
   const Epetra_BlockMap& OverlapRangeMap () const {
     return m_feGraph.OverlapRangeMap();
+  }
+  const Epetra_BlockMap& OverlapDomainMap () const {
+    return m_feGraph.OverlapDomainMap();
   }
 
 protected:
