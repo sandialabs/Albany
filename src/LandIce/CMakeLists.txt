@@ -9,7 +9,6 @@
 set(SOURCES
   evaluators/LandIce_BasalFrictionCoefficient.cpp
   evaluators/LandIce_BasalFrictionCoefficientGradient.cpp
-  evaluators/LandIce_BasalFrictionHeat.cpp
   evaluators/LandIce_BasalMeltRate.cpp
   evaluators/LandIce_Dissipation.cpp
   evaluators/LandIce_DOFDivInterpolationSide.cpp
@@ -22,7 +21,6 @@ set(SOURCES
   evaluators/LandIce_FluxDivergenceResidual.cpp
   evaluators/LandIce_Gather2DField.cpp
   evaluators/LandIce_GatherVerticallyContractedSolution.cpp
-  evaluators/LandIce_GeoFluxHeat.cpp
   evaluators/LandIce_HydraulicPotential.cpp
   evaluators/LandIce_HydrologyBasalGravitationalWaterPotential.cpp
   evaluators/LandIce_HydrologyMeltingRate.cpp
@@ -93,8 +91,6 @@ set(HEADERS
   evaluators/LandIce_BasalFrictionCoefficient_Def.hpp
   evaluators/LandIce_BasalFrictionCoefficientGradient.hpp
   evaluators/LandIce_BasalFrictionCoefficientGradient_Def.hpp
-  evaluators/LandIce_BasalFrictionHeat.hpp
-  evaluators/LandIce_BasalFrictionHeat_Def.hpp
   evaluators/LandIce_BasalMeltRate.hpp
   evaluators/LandIce_BasalMeltRate_Def.hpp
   evaluators/LandIce_Dissipation.hpp
@@ -119,8 +115,6 @@ set(HEADERS
   evaluators/LandIce_Gather2DField_Def.hpp
   evaluators/LandIce_GatherVerticallyContractedSolution.hpp
   evaluators/LandIce_GatherVerticallyContractedSolution_Def.hpp
-  evaluators/LandIce_GeoFluxHeat.hpp
-  evaluators/LandIce_GeoFluxHeat_Def.hpp
   evaluators/LandIce_HydraulicPotential.hpp
   evaluators/LandIce_HydraulicPotential_Def.hpp
   evaluators/LandIce_HydrologyBasalGravitationalWaterPotential.hpp

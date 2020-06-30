@@ -11,7 +11,6 @@ ANONYMOUS:
     Required Fields: [basal_friction]
     Needs Dissipation: true
     Needs Basal Friction: true
-    Constant Geothermal Flux: false
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
       DBC on NS bottom for DOF U1: 0.00000000000000000e+00
@@ -115,7 +114,7 @@ ANONYMOUS:
         Number Of Time Derivatives: 0
         Exodus Input File Name: ../ExoMeshes/slab_2d.exo
         Cubature Degree: 4
-        Use Serial Mesh: true
+        Use Serial Mesh: false
         Required Fields Info:
           Number Of Fields: 5
           Field 0:
@@ -146,7 +145,7 @@ ANONYMOUS:
   Regression Results:
     Number of Comparisons: 1
     Test Values: [5.61027285e-01]
-    Relative Tolerance: 1.0e-04
+    Relative Tolerance: 1.0e-02
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
       Sensitivity Test Values 0: [2.039408613810e-01]

@@ -2,6 +2,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/humboldt_2d.exo
                ${CMAKE_CURRENT_BINARY_DIR}/humboldt_2d.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basal_friction.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/basal_friction.ascii COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basal_friction_zeroed.ascii
+               ${CMAKE_CURRENT_BINARY_DIR}/basal_friction_zeroed.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basal_friction_log.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/basal_friction_log.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_height.ascii
@@ -30,3 +32,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_air_temperature.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/surface_air_temperature.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basal_heat_flux.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/basal_heat_flux.ascii COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/temperature.ascii
+               ${CMAKE_CURRENT_BINARY_DIR}/temperature.ascii COPYONLY)

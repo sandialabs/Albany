@@ -10,9 +10,8 @@ ANONYMOUS:
     Basal Side Name: basalside
     Needs Dissipation: true
     Needs Basal Friction: true
-    Constant Geothermal Flux: false
-    Required Fields: [thickness]
-    Required Basal Fields: [thickness]
+    Required Fields: [ice_thickness]
+    Required Basal Fields: [ice_thickness]
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
     LandIce Viscosity:
@@ -65,8 +64,8 @@ ANONYMOUS:
     Use Serial Mesh: true
     Columnwise Ordering: true
     NumLayers: 80
-    Thickness Field Name: thickness
-    Extrude Basal Node Fields: [thickness, surface_height, surface_air_temperature]
+    Thickness Field Name: ice_thickness
+    Extrude Basal Node Fields: [ice_thickness, surface_height, surface_air_temperature]
     Basal Node Fields Ranks: [1, 1, 1]
     Interpolate Basal Node Layered Fields: [velocity, vertical_velocity]
     Basal Node Layered Fields Ranks: [2, 1]
@@ -75,7 +74,7 @@ ANONYMOUS:
     Required Fields Info:
       Number Of Fields: 4
       Field 0:
-        Field Name: thickness
+        Field Name: ice_thickness
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 1:
@@ -102,7 +101,7 @@ ANONYMOUS:
         Required Fields Info:
           Number Of Fields: 6
           Field 0:
-            Field Name: thickness
+            Field Name: ice_thickness
             Field Type: Node Scalar
             Field Origin: File
             Field Value: 0.2
@@ -117,7 +116,7 @@ ANONYMOUS:
             Field Origin: File
             Field Value: 270.15
           Field 3:
-            Field Name: basal_heat_flux
+            Field Name: heat_flux
             Field Type: Node Scalar
             Field Origin: File
             Field Value: 0.0

@@ -1,13 +1,23 @@
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-if (ALBANY_EPETRA AND ALBANY_IOPX)
-  # Copy input file from source to binary dir
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_test.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_test.yaml COPYONLY)
+if (ALBANY_IOPX)
+  set (USE_SERIAL_MESH "true")
+else ()
+  # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
+  # OR execute with only one rank.
+  IF (ALBANY_MPI AND NOT ${ALBANY_SEACAS_PATH})
+    MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
+  ENDIF()
+ set (USE_SERIAL_MESH "false")
+endif()
 
+if (ALBANY_EPETRA)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt.yaml)
+ 
   # Create the test
-  add_test(${testName}_GIS ${Albany.exe} input_enthalpy_test.yaml)
-  set_tests_properties(${testName}_GIS PROPERTIES LABELS "LandIce;Epetra;Forward")
+  add_test(${testName}_Humboldt ${Albany.exe} input_enthalpy_humboldt.yaml)
+  set_tests_properties(${testName}_Humboldt PROPERTIES LABELS "LandIce;Epetra;Forward")
   
   
   # Copy input file from source to binary dir
