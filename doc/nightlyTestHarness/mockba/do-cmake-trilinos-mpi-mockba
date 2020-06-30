@@ -102,7 +102,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
       -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=ON \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
-      -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
+      -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=OFF \
       -D Trilinos_ENABLE_STKUnit_tests:BOOL=ON \
       -D Trilinos_ENABLE_STKIO:BOOL=ON \
       -D Trilinos_ENABLE_STKMesh:BOOL=ON \
@@ -121,7 +121,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON\
       -D Zoltan_ENABLE_ULONG_IDS:BOOL=OFF \
       -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
-      -D Zoltan2_ENABLE_Experimental:BOOL=ON\
       -D Trilinos_ENABLE_DEBUG:BOOL=OFF \
 \
       -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
