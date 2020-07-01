@@ -136,6 +136,10 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> node_vector_sideset;
     //! Data Layout for vector quantity that lives at QPs that belong to a sideset
     Teuchos::RCP<PHX::DataLayout> qp_vector_sideset;
+    //! Data Layout for vector quantity that lives at vertices (coordinates) that belong to a sideset //FIXME: dont oords live at nodes, not vertices?
+    Teuchos::RCP<PHX::DataLayout> vertices_vector_sideset;
+    //! Data Layout for scalar basis functions that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> node_qp_scalar_sideset;
 
     // For backward compatibility, and simplicitiy, we want to check if
     // the vector length is the same as the spatial dimension. This

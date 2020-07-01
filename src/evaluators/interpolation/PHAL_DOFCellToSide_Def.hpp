@@ -54,12 +54,26 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
 
     layout = NODE_SCALAR;
   }
+  else if (layout_str=="Node Scalar Sideset")
+  {
+    val_cell = decltype(val_cell)(cell_field_name, dl->node_scalar);
+    val_side = decltype(val_side)(side_field_name, dl_side->node_scalar_sideset);
+
+    layout = NODE_SCALAR_SIDESET;
+  }
   else if (layout_str=="Node Vector")
   {
     val_cell = decltype(val_cell)(cell_field_name, dl->node_vector);
     val_side = decltype(val_side)(side_field_name, dl_side->node_vector);
 
     layout = NODE_VECTOR;
+  }
+  else if (layout_str=="Node Vector Sideset")
+  {
+    val_cell = decltype(val_cell)(cell_field_name, dl->node_vector);
+    val_side = decltype(val_side)(side_field_name, dl_side->node_vector_sideset);
+
+    layout = NODE_VECTOR_SIDESET;
   }
   else if (layout_str=="Node Tensor")
   {
@@ -75,6 +89,13 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
 
     layout = VERTEX_VECTOR;
   }
+  else if (layout_str=="Vertex Vector Sideset")
+  {
+    val_cell = decltype(val_cell)(cell_field_name, dl->vertices_vector);
+    val_side = decltype(val_side)(side_field_name, dl_side->vertices_vector_sideset);
+
+    layout = VERTEX_VECTOR_SIDESET;
+  }
   else
   {
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout.\n");
@@ -85,22 +106,24 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
 
   this->setName("DOFCellToSide(" + cell_field_name + " -> " + side_field_name + ")" + PHX::print<EvalT>());
 
-  if (layout==NODE_SCALAR || layout==NODE_VECTOR || layout==NODE_TENSOR || layout==VERTEX_VECTOR)
+  if (layout==NODE_SCALAR || layout==NODE_SCALAR_SIDESET || layout==NODE_VECTOR || layout==NODE_VECTOR_SIDESET || layout==NODE_TENSOR || layout==VERTEX_VECTOR || layout==VERTEX_VECTOR_SIDESET)
   {
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
     int sideDim = cellType->getDimension()-1;
     int numSides = cellType->getSideCount();
-    sideNodes.resize(numSides);
-    for (int side=0; side<numSides; ++side)
-    {
+    int nodeMax = 0;
+    for (int side=0; side<numSides; ++side) {
+      int thisSideNodes = cellType->getNodeCount(sideDim,side);
+      nodeMax = std::max(nodeMax, thisSideNodes);
+    }
+    sideNodes = Kokkos::DynRankView<int, PHX::Device>("sideNodes", numSides, nodeMax);
+    for (int side=0; side<numSides; ++side) {
       // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
       int thisSideNodes = cellType->getNodeCount(sideDim,side);
-      sideNodes[side].resize(thisSideNodes);
-      for (int node=0; node<thisSideNodes; ++node)
-      {
-        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+      for (int node=0; node<thisSideNodes; ++node) {
+        sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
       }
     }
   }
@@ -126,15 +149,16 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
+  sideSet = workset.sideSetViews->at(sideSetName);
+
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
     // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
     switch (layout)
     {
@@ -155,21 +179,35 @@ evaluateFields(typename Traits::EvalData workset)
 
       case NODE_SCALAR:
         for (int node=0; node<dims[2]; ++node)
-          val_side(cell,side,node) = val_cell(cell,sideNodes[side][node]);
+          val_side(cell,side,node) = val_cell(cell,sideNodes(side,node));
+        break;
+
+      case NODE_SCALAR_SIDESET:
+        for (int node=0; node<dims[1]; ++node)
+          val_side(sideSet_idx,node) = val_cell(cell,sideNodes(side,node));
         break;
 
       case NODE_VECTOR:
       case VERTEX_VECTOR:
         for (int node=0; node<dims[2]; ++node)
           for (int i=0; i<dims[3]; ++i)
-            val_side(cell,side,node,i) = val_cell(cell,sideNodes[side][node],i);
+            val_side(cell,side,node,i) = val_cell(cell,sideNodes(side,node),i);
         break;
+
+      case NODE_VECTOR_SIDESET:
+      case VERTEX_VECTOR_SIDESET:
+        for (int node=0; node<dims[1]; ++node)
+          for (int i=0; i<dims[2]; ++i)
+            val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes(side,node),i);
+        break;
+
       case NODE_TENSOR:
         for (int node=0; node<dims[2]; ++node)
           for (int i=0; i<dims[3]; ++i)
             for (int j=0; j<dims[4]; ++j)
-              val_side(cell,side,node,i,j) = val_cell(cell,sideNodes[side][node],i,j);
+              val_side(cell,side,node,i,j) = val_cell(cell,sideNodes(side,node),i,j);
         break;
+
       default:
         TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid layout (this error should have happened earlier though).\n");
     }

@@ -40,8 +40,11 @@ public:
 private:
 
   std::string                     sideSetName;
-  std::vector<std::vector<int> >  sideNodes;
   std::vector<int>                dims;
+
+  Kokkos::DynRankView<int, PHX::Device> sideNodes;
+
+  Albany::SideStructViews sideSet;
 
   Teuchos::RCP<shards::CellTopology> cellType;
 
@@ -59,9 +62,12 @@ private:
     CELL_VECTOR,
     CELL_TENSOR,
     NODE_SCALAR,
+    NODE_SCALAR_SIDESET,
     NODE_VECTOR,
+    NODE_VECTOR_SIDESET,
     NODE_TENSOR,
-    VERTEX_VECTOR
+    VERTEX_VECTOR,
+    VERTEX_VECTOR_SIDESET
   };
 
   LayoutType layout;

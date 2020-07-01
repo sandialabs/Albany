@@ -45,7 +45,7 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<const ParamScalarT,Cell,Side,Node,Dim> val_node;
+  PHX::MDField<const ParamScalarT> val_node;
   //! Basis Functions
   PHX::MDField<const RealType,Cell,Side,Node,QuadPoint> BF;
 
@@ -57,6 +57,8 @@ private:
   int numSideQPs;
   int vecDim;
   bool useCollapsedSidesets;
+  bool newLayout_in;
+  bool newLayout_out;
 
   MDFieldMemoizer<Traits> memoizer;
 

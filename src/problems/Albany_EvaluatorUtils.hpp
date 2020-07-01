@@ -269,13 +269,17 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructDOFInterpolationSideEvaluator(
         const std::string& dof_names,
-        const std::string& sideSetName) const = 0;
+        const std::string& sideSetName,
+        bool newLayout_in=false,
+        bool newLayout_out=false) const = 0;
 
     //! Interpolation functions for vector defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructDOFVecInterpolationSideEvaluator(
        const std::string& dof_names,
-       const std::string& sideSetName) const = 0;
+       const std::string& sideSetName,
+       bool newLayout_in=false,
+       bool newLayout_out=false) const = 0;
 
     //! Interpolation functions for gradient of quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -608,13 +612,17 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFInterpolationSideEvaluator(
         const std::string& dof_names,
-        const std::string& sideSetName) const;
+        const std::string& sideSetName,
+        bool newLayout_in=false,
+        bool newLayout_out=false) const;
 
     //! Interpolation functions for vector defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecInterpolationSideEvaluator(
        const std::string& dof_names,
-       const std::string& sideSetName) const;
+       const std::string& sideSetName,
+       bool newLayout_in=false,
+       bool newLayout_out=false) const;
 
     //! Interpolation functions for gradient of quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >

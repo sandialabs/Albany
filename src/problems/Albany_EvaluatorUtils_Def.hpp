@@ -777,8 +777,8 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationEvaluator(
 
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationSideEvaluator(
-    const std::string& dof_name, const std::string& sideSetName) const
+Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationSideEvaluator(
+    const std::string& dof_name, const std::string& sideSetName, bool newLayout_in, bool newLayout_out) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                                 "Error! The layout structure for side set " << sideSetName << " was not found.\n");
@@ -793,6 +793,10 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationSideEvalua
     p->set<std::string>("Variable Name", dof_name);
     p->set<std::string>("BF Name", "BF "+sideSetName);
     p->set<std::string>("Side Set Name",sideSetName);
+    
+    // Temporary flags for controlling new collapsed layouts
+    p->set<bool>("Use Collapsed Layout (In)", newLayout_in);
+    p->set<bool>("Use Collapsed Layout (Out)", newLayout_out);
 
     // Output (assumes same Name as input)
 
@@ -926,7 +930,9 @@ template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecInterpolationSideEvaluator(
        const std::string& dof_name,
-       const std::string& sideSetName) const
+       const std::string& sideSetName,
+       bool newLayout_in, 
+       bool newLayout_out) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                                 "Error! The layout structure for side set " << sideSetName << " was not found.\n");
@@ -941,6 +947,10 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecInterpolationSideEva
     p->set<std::string>("Variable Name", dof_name);
     p->set<std::string>("BF Name", "BF "+sideSetName);
     p->set<std::string>("Side Set Name",sideSetName);
+
+    // Temporary flags for controlling new collapsed layouts
+    p->set<bool>("Use Collapsed Layout (In)", newLayout_in);
+    p->set<bool>("Use Collapsed Layout (Out)", newLayout_out);
 
     // Output (assumes same Name as input)
 
