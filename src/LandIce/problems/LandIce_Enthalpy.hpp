@@ -231,9 +231,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, true, &entity);
-    p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl_basal->node_scalar_sideset);
-    p->set<const bool>("Use Collapsed Layout", true);
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar_sideset, basalEBName, true, &entity, "", true);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -246,9 +244,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, true, &entity);
-    p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl_basal->node_scalar_sideset);
-    p->set<const bool>("Use Collapsed Layout", true);
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar_sideset, basalEBName, true, &entity, "", true);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -274,9 +270,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, true, &entity);
-    p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl_basal->node_scalar_sideset);
-    p->set<const bool>("Use Collapsed Layout", true);
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar_sideset, basalEBName, true, &entity, "", true);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
