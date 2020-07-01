@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
 
   try {
     *out << "\nStarting Albany Analysis via Piro!" << std::endl;
+    stackedTimer->start("Albany: Setup Time");
 
     Teuchos::RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
 
@@ -73,6 +74,8 @@ int main(int argc, char *argv[]) {
     auto albanyApp   = slvrfctry.createApplication(comm);
     auto albanyModel = slvrfctry.createModel(albanyApp);
     auto fwd_solver  = slvrfctry.createSolver(albanyModel,comm);
+
+    stackedTimer->stop("Albany: Setup Time");
 
     Teuchos::RCP< Thyra::VectorBase<double> > p;
 

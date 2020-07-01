@@ -95,8 +95,7 @@ int main(int argc, char *argv[])
       new Teuchos::StackedTimer("Albany Total Time"));
   Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
   try {
-    auto setupTimer = Teuchos::rcp(new Teuchos::TimeMonitor(
-        *Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")));
+    stackedTimer->start("Albany: Setup Time");
 
     RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
 
@@ -128,7 +127,7 @@ int main(int argc, char *argv[])
     const auto albanyModel = slvrfctry.createModel(albanyApp);
     const auto solver      = slvrfctry.createSolver(albanyModel,comm);
 
-    setupTimer = Teuchos::null;
+    stackedTimer->stop("Albany: Setup Time");
 
     std::string solnMethod =
         slvrfctry.getParameters()->sublist("Problem").get<std::string>(
