@@ -722,10 +722,10 @@ int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
     //       Any idea how to avoid this?
     std::vector<Epetra_GO> col_gids;
     col_gids.reserve(indices.size());
+    const auto& ovDomainMap = fe_emat->OverlapDomainMap();
     for (auto lid : indices) {
-      col_gids.push_back(fe_emat->ColMap().GID(lid));
+      col_gids.push_back(ovDomainMap.GID(lid));
     }
-
     const Epetra_GO grow = fe_emat->OverlapRangeMap().GID(lrow);
 
     return fe_emat->SumIntoGlobalValues(grow,col_gids.size(),values.getRawPtr(),col_gids.data());
@@ -887,56 +887,6 @@ createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs)
 #endif
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in createOneToOneVectorSpace! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
-}
-
-Teuchos::RCP<const Thyra_LinearOp>
-buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
-                          const Teuchos::RCP<const Thyra_VectorSpace>& subspace)
-{
-  // In the process, verify the that subspace is a subspace of space
-  auto space_indexer    = createGlobalLocalIndexer(space);
-  auto subspace_indexer = createGlobalLocalIndexer(subspace);
-
-  ThyraCrsMatrixFactory factory(space,subspace);
-
-  const int localSubDim = subspace_indexer->getNumLocalElements();
-  for (LO lid=0; lid<localSubDim; ++lid) {
-    const GO gid = subspace_indexer->getGlobalElement(lid);
-    TEUCHOS_TEST_FOR_EXCEPTION (space_indexer->isLocallyOwnedElement(gid), std::logic_error,
-                                "Error in buildRestrictionOperator! The input 'subspace' is not a subspace of the input 'space'.\n");
-    factory.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
-  }
-
-  factory.fillComplete();
-  Teuchos::RCP<Thyra_LinearOp> P = factory.createOp();
-  assign(P,1.0);
-
-  return P;
-}
-
-Teuchos::RCP<const Thyra_LinearOp>
-buildProlongationOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
-                           const Teuchos::RCP<const Thyra_VectorSpace>& subspace)
-{
-  // In the process, verify the that subspace is a subspace of space
-  auto space_indexer    = createGlobalLocalIndexer(space);
-  auto subspace_indexer = createGlobalLocalIndexer(subspace);
-
-  ThyraCrsMatrixFactory factory(subspace,space);
-
-  const int localSubDim = subspace_indexer->getNumLocalElements();
-  for (LO lid=0; lid<localSubDim; ++lid) {
-    const GO gid = subspace_indexer->getGlobalElement(lid);
-    TEUCHOS_TEST_FOR_EXCEPTION (space_indexer->isLocallyOwnedElement(gid), std::logic_error,
-                                "Error in buildProlongationOperator! The input 'subspace' is not a subspace of the input 'space'.\n");
-    factory.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
-  }
-
-  factory.fillComplete();
-  Teuchos::RCP<Thyra_LinearOp> P = factory.createOp();
-  assign(P,1.0);
-
-  return P;
 }
 
 double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop)

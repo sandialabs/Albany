@@ -1145,7 +1145,7 @@ STKDiscretization::computeGraphs()
   // coordinates, graphs
 
   m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(
-      m_vs, m_vs, m_overlap_vs));
+      m_vs, m_vs, m_overlap_vs, m_overlap_vs));
 
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData.universal_part()) &
@@ -1171,9 +1171,8 @@ STKDiscretization::computeGraphs()
   }
 
   // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
-  const auto dofMgr = getDOFManager("ordinary_solution");
-  for (std::size_t i = 0; i < cells.size(); i++) {
-    stk::mesh::Entity        e         = cells[i];
+  const auto dofMgr = getOverlapDOFManager("ordinary_solution");
+  for (const auto& e : cells) {
     stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
     const size_t             num_nodes = bulkData.num_nodes(e);
 
@@ -1181,7 +1180,7 @@ STKDiscretization::computeGraphs()
     for (std::size_t j = 0; j < num_nodes; j++) {
       stk::mesh::Entity rowNode = node_rels[j];
 
-      // loop over eqs
+      // loop over global eqs
       for (std::size_t k = 0; k < globalEqns.size(); ++k) {
         row = dofMgr.getGlobalDOF(stk_gid(rowNode), globalEqns[k]);
         for (std::size_t l = 0; l < num_nodes; l++) {
@@ -1193,33 +1192,42 @@ STKDiscretization::computeGraphs()
           }
         }
       }
+      // For sideset equations, we set a diagonal jacobian outside the side set.
+      // Namely, we will set res=solution outside the side set (not res=0, otherwise
+      // jac is singular).
+      // Note: if this node happens to be on the side set, we will add the entry
+      //       again in the next loop. But that's fine, cause ThyraCrsMatrixFactory
+      //       is storing GIDs of each row in a std::set (until fill complete time).
+      for (const auto& it : sideSetEquations) {
+        int eq = it.first;
+        row = dofMgr.getGlobalDOF(stk_gid(rowNode), eq);
+        colAV = Teuchos::arrayView(&row, 1);
+        m_jac_factory->insertGlobalIndices(row, colAV);
+      }
     }
   }
 
   if (sideSetEquations.size() > 0) {
     // iterator over all sideSet-defined equations
-    std::map<int, std::vector<std::string>>::iterator it;
-    for (it = sideSetEquations.begin(); it != sideSetEquations.end(); ++it) {
+    for (const auto& it : sideSetEquations) {
       // Get the eq number
-      int eq = it->first;
+      int eq = it.first;
 
       // In case we only have equations on side sets (no "volume" eqns),
       // there would be problem with linear solvers. To avoid this, we
       // put one diagonal entry for every side set equation.
       // NOTE: some nodes will be processed twice, but this is safe:
       //       the redundant indices will be discarded
-      for (std::size_t inode = 0; inode < overlapnodes.size(); ++inode) {
-        stk::mesh::Entity node = overlapnodes[inode];
+      for (const auto& node : overlapnodes) {
         row                    = dofMgr.getGlobalDOF(stk_gid(node), eq);
         colAV                  = Teuchos::arrayView(&row, 1);
         m_jac_factory->insertGlobalIndices(row, colAV);
       }
 
       // Number of side sets this eq is defined on
-      int numSideSets = it->second.size();
-      for (int ss(0); ss < numSideSets; ++ss) {
+      for (const auto& ss_name : it.second) {
         stk::mesh::Part& part =
-            *stkMeshStruct->ssPartVec.find(it->second[ss])->second;
+            *stkMeshStruct->ssPartVec.find(ss_name)->second;
 
         // Get all owned sides in this side set
         stk::mesh::Selector select_owned_in_sspart =
@@ -1233,9 +1241,7 @@ STKDiscretization::computeGraphs()
             sides);  // store the result in "sides"
 
         // Loop on all the sides of this sideset
-        for (std::size_t localSideID = 0; localSideID < sides.size();
-             localSideID++) {
-          stk::mesh::Entity        sidee     = sides[localSideID];
+        for (const auto& sidee : sides) {
           stk::mesh::Entity const* node_rels = bulkData.begin_nodes(sidee);
           const size_t             num_nodes = bulkData.num_nodes(sidee);
 
@@ -1254,8 +1260,6 @@ STKDiscretization::computeGraphs()
                 col = dofMgr.getGlobalDOF(stk_gid(colNode), m);
                 m_jac_factory->insertGlobalIndices(
                     row, Teuchos::arrayView(&col, 1));
-                m_jac_factory->insertGlobalIndices(
-                    col, Teuchos::arrayView(&row, 1));
               }
             }
           }
@@ -1505,23 +1509,6 @@ STKDiscretization::computeWorksetInfo()
         for (int eq = 0; eq < static_cast<int>(neq); ++eq)
           wsElNodeEqID[b](i, j, eq) = node_eq_array((int)i, j, eq);
       }
-      /*
-            for (int j=0; j < nodes_per_element; j++) {
-              const stk::mesh::Entity rowNode = node_rels[j];
-              const GO node_gid = gid(rowNode);
-              const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
-
-              TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-               "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
-              coords[b][i][j] = stk::mesh::field_data(*coordinates_field,
-         rowNode);
-              wsElNodeID[b][i][j] = node_gid;
-
-              wsElNodeEqID[b][i][j].resize(neq);
-              for (std::size_t eq=0; eq < neq; eq++)
-                wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
-            }
-      */
     }
   }
 
@@ -2023,7 +2010,7 @@ STKDiscretization::buildSideSetProjectors()
   // Note: the Global index of a node should be the same in both this and the
   // side discretizations
   //       since the underlying STK entities should have the same ID
-  Teuchos::RCP<ThyraCrsMatrixFactory>   ov_graphP;
+  Teuchos::RCP<ThyraCrsMatrixFactory>   ov_graphP, graphP;
   Teuchos::RCP<Thyra_LinearOp>          P, ov_P;
 
   Teuchos::Array<GO> cols(1);
@@ -2035,6 +2022,8 @@ STKDiscretization::buildSideSetProjectors()
 
   Teuchos::ArrayView<const GO> ss_indices;
   stk::mesh::EntityRank        SIDE_RANK = stkMeshStruct->metaData->side_rank();
+  auto vs = getVectorSpace();
+  auto ov_vs = getOverlapVectorSpace();
   for (auto it : sideSetDiscretizationsSTK) {
     // Extract the discretization
     const std::string&           sideSetName = it.first;
@@ -2045,6 +2034,8 @@ STKDiscretization::buildSideSetProjectors()
     auto ss_ov_vs   = disc.getOverlapVectorSpace();
     auto ss_vs      = disc.getVectorSpace();
     auto ss_node_vs = disc.getNodeVectorSpace();
+
+    auto ss_indexer = createGlobalLocalIndexer(ss_vs);
 
     // A dof manager, to figure out interleaved vs blocked numbering
     const auto ss_dofMgr = disc.getDOFManager("ordinary_solution");
@@ -2058,9 +2049,9 @@ STKDiscretization::buildSideSetProjectors()
     stk::mesh::get_selected_entities(
         selector, stkMeshStruct->bulkData->buckets(SIDE_RANK), sides);
 
-    // The projector: build one with overlapped range vs first...
-    ov_graphP = Teuchos::rcp(
-        new ThyraCrsMatrixFactory(getOverlapVectorSpace(), ss_ov_vs));
+    // The projector: build both overlapped and non-overlapped range vs
+    graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(vs, ss_vs));
+    ov_graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(ov_vs, ss_ov_vs));
 
     const std::map<GO, GO>& side_cell_map = sideToSideSetCellMap.at(it.first);
     const std::map<GO, std::vector<int>>& node_numeration_map =
@@ -2090,20 +2081,25 @@ STKDiscretization::buildSideSetProjectors()
 
           for (int eq(0); eq < static_cast<int>(neq); ++eq) {
             cols[0] = dofMgr.getGlobalDOF(node_gid, eq);
-            ov_graphP->insertGlobalIndices(
-                ss_dofMgr.getGlobalDOF(ss_node_gid, eq), cols());
+            const GO row = ss_dofMgr.getGlobalDOF(ss_node_gid, eq);
+            ov_graphP->insertGlobalIndices(row, cols());
+            if (ss_indexer->isLocallyOwnedElement(row)) {
+              graphP->insertGlobalIndices(row,cols());
+            }
           }
         }
       }
     }
 
+    // Fill graphs
     ov_graphP->fillComplete();
-    ov_P = ov_graphP->createOp();
+    graphP->fillComplete();
+
+    ov_P = ov_graphP->createOp(true);
     assign(ov_P, 1.0);
     ov_projectors[sideSetName] = ov_P;
 
-    // ... then import to one with non-overlapped range vs
-    P = ov_graphP->createOp(true);
+    P = graphP->createOp(true);
     assign(P, 1.0);
     projectors[sideSetName] = P;
   }

@@ -25,15 +25,18 @@ namespace Albany {
 struct ThyraCrsMatrixFactory {
 
   // Prepares the factory for the creation of a graph with given domain/range
-  // vector spaces. If row_vs is null, off-rank row insertions will be ignored.
-  // If row_vs is not null, this class will assume insertion in a FE style.
-  // In particular, it will be assumed (and checked) that range_vs is a one-to-one vs,
-  // and we will also assume (checked only in Tpetra builds) that row_vs is a
-  // superset of range_vs, containing owned and shared dofs.
+  // vector spaces. Off-rank rows insertion is not allowed.
+  ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
+                         const Teuchos::RCP<const Thyra_VectorSpace> range_vs);
+
+  // Prepares the factory for the creation of a graph with given domain/range vector spaces.
+  // If ov_range_vs does not coincide with range_vs, we will assume FE assembly,
+  // meaning entering off-rank rows is allowed. In this case, we will check that
+  // domain_vs and range_vs are indeed one-to-one.
   ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
                          const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
-                         const Teuchos::RCP<const Thyra_VectorSpace> ov_domain_vs = Teuchos::null,
-                         const Teuchos::RCP<const Thyra_VectorSpace> ov_range_vs = Teuchos::null);
+                         const Teuchos::RCP<const Thyra_VectorSpace> ov_domain_vs,
+                         const Teuchos::RCP<const Thyra_VectorSpace> ov_range_vs);
 
   // Inserts global indices in a temporary local structure. 
   // The actual graph is created when fillComplete is called
@@ -62,8 +65,8 @@ private:
 
   Teuchos::RCP<const Thyra_VectorSpace> m_domain_vs;
   Teuchos::RCP<const Thyra_VectorSpace> m_range_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> m_col_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> m_row_vs;
+  Teuchos::RCP<const Thyra_VectorSpace> m_ov_domain_vs;
+  Teuchos::RCP<const Thyra_VectorSpace> m_ov_range_vs;
 
   bool m_filled;   // Whether fill of the graph has happened
   bool m_fe_crs;   // Whether row_vs and range_vs are the same

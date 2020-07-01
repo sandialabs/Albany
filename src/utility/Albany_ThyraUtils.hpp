@@ -127,14 +127,6 @@ void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val);
 Teuchos::RCP<const Thyra_VectorSpace>
 createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs); 
 
-Teuchos::RCP<const Thyra_LinearOp>
-buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
-                          const Teuchos::RCP<const Thyra_VectorSpace>& subspace);
-
-Teuchos::RCP<const Thyra_LinearOp>
-buildProlongationOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
-                           const Teuchos::RCP<const Thyra_VectorSpace>& subspace);
-
 // Math properties helpers
 double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 

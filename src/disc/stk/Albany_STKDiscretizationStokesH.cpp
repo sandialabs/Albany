@@ -55,7 +55,7 @@ void STKDiscretizationStokesH::computeGraphs()
   unsigned int n3dEq = (neq >= 4) ? neq : 2;
   n3dEq = std::min(n3dEq,neq);
 
-  m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(m_vs,m_vs,m_overlap_vs));
+  m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(m_vs,m_vs,m_overlap_vs,m_overlap_vs));
 
   stk::mesh::Selector select_owned_in_part =
     stk::mesh::Selector( metaData.universal_part() ) &
