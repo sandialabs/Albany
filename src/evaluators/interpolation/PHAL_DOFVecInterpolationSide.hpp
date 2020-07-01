@@ -57,8 +57,6 @@ private:
   int numSideQPs;
   int vecDim;
   bool useCollapsedSidesets;
-  bool newLayout_in;
-  bool newLayout_out;
 
   MDFieldMemoizer<Traits> memoizer;
 
