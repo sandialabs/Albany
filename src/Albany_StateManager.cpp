@@ -473,6 +473,7 @@ Albany::StateManager::registerSideSetStateVariable(
   p->set<const std::string>("Field Name", fieldName);
   p->set<const std::string>("Side Set Name", sideSetName);
   p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl);
+  p->set<bool>("Use Collapsed Layout", false);
 
   if (sideSetStatesToStore[sideSetName][ebName].find(stateName) !=
       sideSetStatesToStore[sideSetName][ebName].end()) {

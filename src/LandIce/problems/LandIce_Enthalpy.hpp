@@ -232,6 +232,8 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     fm0.template registerEvaluator<EvalT>(ev);
 
     p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, true, &entity);
+    p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl_basal->node_scalar_sideset);
+    p->set<const bool>("Use Collapsed Layout", true);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -245,6 +247,8 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     fm0.template registerEvaluator<EvalT>(ev);
 
     p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, true, &entity);
+    p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl_basal->node_scalar_sideset);
+    p->set<const bool>("Use Collapsed Layout", true);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -271,6 +275,8 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     fm0.template registerEvaluator<EvalT>(ev);
 
     p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, true, &entity);
+    p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl_basal->node_scalar_sideset);
+    p->set<const bool>("Use Collapsed Layout", true);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -359,7 +365,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   if(needsBasFric)
   {
     // --- Interpolate Beta Given on QP on side
-    fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName, false, true));
+    fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName, true, true));
   }
 
   // --- Utilities for Basal Melt Rate
@@ -371,7 +377,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   // --- Utilities for Geothermal flux
 
   // --- Interpolate geothermal_flux on QP on side
-  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("heat_flux", basalSideName, false, true));
+  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("heat_flux", basalSideName, true, true));
 
   fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFSideToCellEvaluator("basal_vert_velocity",basalSideName,"Node Scalar",cellType,"basal_vert_velocity"));
 

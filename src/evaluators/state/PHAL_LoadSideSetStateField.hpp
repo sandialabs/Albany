@@ -42,6 +42,10 @@ private:
   std::string fieldName;
   std::string stateName;
 
+  bool useCollapsedLayouts;
+
+  Albany::SideStructViews sideSet;
+
   MDFieldMemoizer<Traits> memoizer;
 };
 
