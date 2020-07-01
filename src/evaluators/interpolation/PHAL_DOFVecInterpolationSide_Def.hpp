@@ -18,7 +18,7 @@ DOFVecInterpolationSideBase(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
   val_node    (p.get<std::string> ("Variable Name"), (p.get<bool> ("Use Collapsed Layout (In)")) ? dl_side->node_vector_sideset : dl_side->node_vector),
-  BF          (p.get<std::string> ("BF Name"), dl_side->node_qp_scalar),
+  BF          (p.get<std::string> ("BF Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_qp_scalar_sideset : dl_side->node_qp_scalar),
   val_qp      (p.get<std::string> ("Variable Name"), (p.get<bool> ("Use Collapsed Layout (Out)")) ? dl_side->qp_vector_sideset : dl_side->qp_vector)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
@@ -71,36 +71,64 @@ evaluateFields(typename Traits::EvalData workset)
     if (newLayout_in && newLayout_out) {
       for (int dim=0; dim<vecDim; ++dim) {
         for (int qp=0; qp<numSideQPs; ++qp) {
-          val_qp(sideSet_idx,qp,dim) = val_node(sideSet_idx,0,dim) * BF(cell,side,0,qp);
-          for (int node=1; node<numSideNodes; ++node) {
-            val_qp(sideSet_idx,qp,dim) += val_node(sideSet_idx,node,dim) * BF(cell,side,node,qp);
+          if (useCollapsedSidesets) {
+            val_qp(sideSet_idx,qp,dim) = val_node(sideSet_idx,0,dim) * BF(sideSet_idx,0,qp);
+            for (int node=1; node<numSideNodes; ++node) {
+              val_qp(sideSet_idx,qp,dim) += val_node(sideSet_idx,node,dim) * BF(sideSet_idx,node,qp);
+            }
+          } else {
+            val_qp(sideSet_idx,qp,dim) = val_node(sideSet_idx,0,dim) * BF(cell,side,0,qp);
+            for (int node=1; node<numSideNodes; ++node) {
+              val_qp(sideSet_idx,qp,dim) += val_node(sideSet_idx,node,dim) * BF(cell,side,node,qp);
+            }
           }
         }
       }
     } else if (!newLayout_in && newLayout_out) {
       for (int dim=0; dim<vecDim; ++dim) {
         for (int qp=0; qp<numSideQPs; ++qp) {
-          val_qp(sideSet_idx,qp,dim) = val_node(cell,side,0,dim) * BF(cell,side,0,qp);
-          for (int node=1; node<numSideNodes; ++node) {
-            val_qp(sideSet_idx,qp,dim) += val_node(cell,side,node,dim) * BF(cell,side,node,qp);
+          if (useCollapsedSidesets) {
+            val_qp(sideSet_idx,qp,dim) = val_node(cell,side,0,dim) * BF(sideSet_idx,0,qp);
+            for (int node=1; node<numSideNodes; ++node) {
+              val_qp(sideSet_idx,qp,dim) += val_node(cell,side,node,dim) * BF(sideSet_idx,node,qp);
+            }
+          } else {
+            val_qp(sideSet_idx,qp,dim) = val_node(cell,side,0,dim) * BF(cell,side,0,qp);
+            for (int node=1; node<numSideNodes; ++node) {
+              val_qp(sideSet_idx,qp,dim) += val_node(cell,side,node,dim) * BF(cell,side,node,qp);
+            } 
           }
         }
       }
     } else if (newLayout_in && !newLayout_out) {
       for (int dim=0; dim<vecDim; ++dim) {
         for (int qp=0; qp<numSideQPs; ++qp) {
-          val_qp(cell,side,qp,dim) = val_node(sideSet_idx,0,dim) * BF(cell,side,0,qp);
-          for (int node=1; node<numSideNodes; ++node) {
-            val_qp(cell,side,qp,dim) += val_node(sideSet_idx,node,dim) * BF(cell,side,node,qp);
+          if (useCollapsedSidesets) {
+            val_qp(cell,side,qp,dim) = val_node(sideSet_idx,0,dim) * BF(sideSet_idx,0,qp);
+            for (int node=1; node<numSideNodes; ++node) {
+              val_qp(cell,side,qp,dim) += val_node(sideSet_idx,node,dim) * BF(sideSet_idx,node,qp);
+            }
+          } else {
+            val_qp(cell,side,qp,dim) = val_node(sideSet_idx,0,dim) * BF(cell,side,0,qp);
+            for (int node=1; node<numSideNodes; ++node) {
+              val_qp(cell,side,qp,dim) += val_node(sideSet_idx,node,dim) * BF(cell,side,node,qp);
+            } 
           }
         }
       }
     } else {
       for (int dim=0; dim<vecDim; ++dim) {
         for (int qp=0; qp<numSideQPs; ++qp) {
-          val_qp(cell,side,qp,dim) = val_node(cell,side,0,dim) * BF(cell,side,0,qp);
-          for (int node=1; node<numSideNodes; ++node) {
-            val_qp(cell,side,qp,dim) += val_node(cell,side,node,dim) * BF(cell,side,node,qp);
+          if (useCollapsedSidesets) {
+            val_qp(cell,side,qp,dim) = val_node(cell,side,0,dim) * BF(sideSet_idx,0,qp);
+            for (int node=1; node<numSideNodes; ++node) {
+              val_qp(cell,side,qp,dim) += val_node(cell,side,node,dim) * BF(sideSet_idx,node,qp);
+            }
+          } else {
+            val_qp(cell,side,qp,dim) = val_node(cell,side,0,dim) * BF(cell,side,0,qp);
+            for (int node=1; node<numSideNodes; ++node) {
+              val_qp(cell,side,qp,dim) += val_node(cell,side,node,dim) * BF(cell,side,node,qp);
+            } 
           }
         }
       }

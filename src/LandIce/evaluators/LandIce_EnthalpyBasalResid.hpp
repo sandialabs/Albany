@@ -42,8 +42,8 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>         BF;          // []
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>           w_measure;   // [km^2]
+  PHX::MDField<const RealType,Side,Node,QuadPoint>         BF;          // []
+  PHX::MDField<const MeshScalarT,Side,QuadPoint>           w_measure;   // [km^2]
   // PHX::MDField<const RealType,Cell,Side,QuadPoint>              geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
   // PHX::MDField<const Type,Cell,Side,QuadPoint>                  beta; // [kPa m / yr]
   // PHX::MDField<const ScalarT,Cell,Side,QuadPoint>               basal_dTdz; // [K  km^{-1}]
@@ -60,11 +60,6 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> enthalpyBasalResid;      // [MW] = [k^{-2} kPa s^{-1} km^3]
   // PHX::MDField<ScalarT,Cell,Side, Node> basalMeltRate;      // [MW] = [m/yr]
-
-  // Temporary Views
-  // Kokkos::DynRankView<ScalarT, PHX::Device> basalMeltRateQP_reorder;
-  Kokkos::DynRankView<RealType, PHX::Device> BF_reorder;
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> w_measure_reorder;
   
   Albany::SideStructViews sideSet;
 
@@ -89,6 +84,18 @@ private:
   // double alpha_om; //[]
 
   // bool haveSUPG;
+
+  //std::vector<Albany::SideStruct> sideSet;
+
+  public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::RangePolicy<ExecutionSpace> Enthalpy_Basal_Residual_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int& i) const;
+
 };
 
 } // namespace LandIce

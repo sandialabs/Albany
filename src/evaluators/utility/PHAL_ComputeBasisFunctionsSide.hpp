@@ -42,7 +42,7 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  int numSides, numSideNodes, numSideQPs, numCellDims, numSideDims, numNodes, effectiveCoordDim;
+  int numCells, numSides, numSideNodes, numSideQPs, numCellDims, numSideDims, numNodes, effectiveCoordDim;
   MDFieldMemoizer<Traits> memoizer;
 
   //! The side set where to compute the Basis Functions
@@ -50,8 +50,8 @@ private:
 
   // Input:
   //! Coordinate vector at side's vertices
-  PHX::MDField<const MeshScalarT,Cell,Side,Vertex,Dim> sideCoordVec;
-  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim>      coordVec;
+  PHX::MDField<const MeshScalarT>                 sideCoordVec;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
 
   // Temporary Kokkos Views
   Kokkos::DynRankView<RealType, PHX::Device> val_at_cub_points;
@@ -67,17 +67,20 @@ private:
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>           metric_det;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   tangents;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   metric;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>           w_measure;
+  PHX::MDField<MeshScalarT>                               w_measure;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   inv_metric;
-  PHX::MDField<RealType,Cell,Side,Node,QuadPoint>         BF;
+  PHX::MDField<RealType>                                  BF;
   PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       normals;
 
-  std::vector<std::vector<int> > sideNodes;
   std::vector<Kokkos::DynRankView<int, PHX::Device>> cellsOnSides;
   std::vector<int> numCellsOnSide;
   Teuchos::RCP<shards::CellTopology> cellType;
   bool compute_normals;
+
+  Albany::SideStructViews sideSet;
+
+  bool useCollapsedSidesets;
 };
 
 } // Namespace PHAL

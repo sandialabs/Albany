@@ -332,7 +332,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   // --- Special evaluators for side handling --- //
 
   // --- Restrict vertex coordinates from cell-based to cell-side-based
-  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,
+  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector Sideset",cellType,
                                                                                                  "Coord Vec " + basalSideName));
 
   // --- Compute side basis functions
