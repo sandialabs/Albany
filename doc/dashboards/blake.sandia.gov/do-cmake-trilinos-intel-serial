@@ -48,7 +48,7 @@ cmake \
     -DTPL_ENABLE_SimMesh=OFF \
     -DTPL_ENABLE_SimModel=OFF \
     -DTPL_ENABLE_X11=OFF \
-    -DKOKKOS_ARCH:STRING='SKX' \
+    -DKokkos_ARCH_SKX=ON \
     -DKokkos_ENABLE_Cuda_Lambda:BOOL=OFF \
     -DKokkos_ENABLE_Cuda_UVM:BOOL=OFF \
     -DKokkos_ENABLE_EXAMPLES:BOOL=OFF \
@@ -73,7 +73,6 @@ cmake \
     -DTpetra_ASSUME_CUDA_AWARE_MPI:BOOL=OFF \
     -DTpetra_INST_INT_LONG_LONG:BOOL=ON \
     -DTpetra_INST_INT_INT:BOOL=OFF \
-    -DZoltan2_ENABLE_Experimental:BOOL=ON \
     -DZoltan_ENABLE_ULONG_IDS:BOOL=ON \
     -DTrilinos_ENABLE_Amesos2:BOOL=ON \
     -DTrilinos_ENABLE_Amesos:BOOL=ON \
@@ -125,7 +124,6 @@ cmake \
     -DTrilinos_ENABLE_TriKota:BOOL=OFF \
     -DTrilinos_ENABLE_Zoltan2:BOOL=ON \
     -DTrilinos_ENABLE_Zoltan:BOOL=ON \
-    -DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
     -DTpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF \
     -DXpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF \
 ..
