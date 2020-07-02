@@ -108,16 +108,6 @@ Albany::BlockedDiscretization::transformMesh()
 
 }
 
-void
-Albany::BlockedDiscretization::writeSolutionMV(
-    const Thyra_MultiVector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-    const double             time,
-    const bool               overlapped)
-{
-  BlockDiscretization[0]->writeSolutionMV(soln, solution_dxdp, time, overlapped);
-}
-
 GO
 Albany::BlockedDiscretization::gid(const stk::mesh::Entity node) const
 {

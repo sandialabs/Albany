@@ -94,7 +94,6 @@ cmake \
     -D Trilinos_ENABLE_NOX:BOOL=ON \
     -D Trilinos_ENABLE_Rythmos:BOOL=ON \
     -D Trilinos_ENABLE_Sacado:BOOL=ON \
-    -D Trilinos_ENABLE_SCOREC:BOOL=ON \
     -D Trilinos_ENABLE_SEACAS:BOOL=ON \
     -D Trilinos_ENABLE_Shards:BOOL=ON \
     -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
@@ -178,7 +177,7 @@ cmake \
     -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}/include" \
     -D ParMETIS_LIBRARY_DIRS:PATH="${PARMETISDIR}/lib" \
 \
-    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${LIB_DIR}/lib -L${LIB_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran -Wl,-rpath,${LIB_DIR}/lib:${LIB_DIR}/lib64" \
+    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-Wl,--no-undefined -Wl,--no-allow-shlib-undefined -L${LIB_DIR}/lib -L${LIB_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran -Wl,-rpath,${LIB_DIR}/lib:${LIB_DIR}/lib64" \
     -D CMAKE_SKIP_RPATH:BOOL=ON \
 \
     -D Trilinos_ENABLE_TriKota:BOOL=OFF \
