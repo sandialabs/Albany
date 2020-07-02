@@ -74,6 +74,8 @@ private:
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
+public:
+
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
   typedef Kokkos::RangePolicy< ExecutionSpace > Temperature_Policy;

@@ -50,6 +50,8 @@ class Dissipation : public PHX::EvaluatorWithBaseImpl<Traits>,
     	
 		PHAL::MDFieldMemoizer<Traits> memoizer;
 
+	public:
+
 		typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
 		typedef Kokkos::RangePolicy< ExecutionSpace > Dissipation_Policy;
