@@ -279,6 +279,8 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp (const bool ignoreN
     if (ignoreNonLocalRows) {
       // FECrsGraph *is* a CrsGraph. CrsMatrix will only deal with CrsGraph stuff
       matrix = Teuchos::rcp(new Tpetra_CrsMatrix(m_graph->t_graph));
+      matrix->setAllToScalar(zero);
+      matrix->fillComplete();
     } else {
       auto fe_matrix = Teuchos::rcp (new Tpetra_FECrsMatrix(m_graph->t_graph));
       // Tpetra creates FECrsMatrix already in assembly mode.

@@ -1014,22 +1014,20 @@ void STKDiscretization::computeVectorSpaces()
   // map
   // maps for owned nodes and unknowns
 
-  const auto& part    = metaData.locally_owned_part();
-  const auto& ov_part = metaData.globally_shared_part();
+  const auto& owned_part = metaData.locally_owned_part();
+  const auto& ov_part    = metaData.globally_shared_part();
 
   std::vector<stk::mesh::Entity> nodes, ghosted_nodes;
 
   const auto& buckets = bulkData.buckets(stk::topology::NODE_RANK);
-  stk::mesh::get_selected_entities(part, buckets, nodes);
+  stk::mesh::get_selected_entities(owned_part, buckets, nodes);
 
   // Compute NumGlobalNodes (the same for both unique and overlapped maps)
   GO maxID = -1;
-  GO maxNodeGID;
   for (const auto& node : nodes) {
     maxID = std::max(maxID, stk_gid(node));
   }
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &maxID, &maxNodeGID);
-  maxGlobalNodeGID = maxNodeGID;
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &maxID, &maxGlobalNodeGID);
 
   // Use a different container for the dofs struct, just for the purposes of
   // this method. We do it in order to easily recycle vector spaces, since:
@@ -1046,7 +1044,7 @@ void STKDiscretization::computeVectorSpaces()
   // Build vector spaces. First owned, then shared.
   int numNodes, numGhostedNodes;
   for (auto& it1 : tmp_map) {
-    stk::mesh::Selector selector(part);
+    stk::mesh::Selector selector(owned_part);
     stk::mesh::Selector ghosted_selector(ov_part);
     ghosted_selector &= !selector;
     const std::string&  name = it1.first;
