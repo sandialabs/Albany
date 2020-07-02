@@ -9,6 +9,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 #include "LandIce_EnthalpyResid.hpp"
 
@@ -138,24 +139,24 @@ stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, Scalar
       ScalarT arg = Velocity(cell,qp,0)*Velocity(cell,qp,0) + Velocity(cell,qp,1)*Velocity(cell,qp,1) + w*w;
       ScalarT arg2 = 0.0; 
       if (arg > 0) arg2 = std::sqrt(arg); 
-      vmax = max(vmax, arg2);
+      vmax = KU::max(vmax, arg2);
       //vmax_xy = std::max(vmax_xy,std::sqrt(std::pow(Velocity(cell,qp,0),2)+std::pow(Velocity(cell,qp,1),2)));
       VelocityST val = Velocity(cell,qp,0)*Velocity(cell,qp,0)+Velocity(cell,qp,1)*Velocity(cell,qp,1); 
       VelocityST sqrtval = 0.0;
       if (val > 0.0)
         sqrtval = std::sqrt(val); 
 
-      vmax_xy = max(vmax_xy, sqrtval);
+      vmax_xy = KU::max(vmax_xy, sqrtval);
 
-      vmax_z = max( vmax_z,std::abs(w));
+      vmax_z = KU::max( vmax_z,std::abs(w));
     }
 
     for (std::size_t i = 0; i < numNodes; ++i) {
-      diam = max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+      diam = KU::max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
                                                     coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,0,2)));
-      diam_xy = max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),
+      diam_xy = KU::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),
                                                           coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
-      diam_z = max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
+      diam_z = KU::max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
     }
 }
 
