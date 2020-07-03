@@ -11,6 +11,8 @@
 #include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_BucketArray.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 #include <string>
 #include <iostream>
@@ -70,14 +72,14 @@ void STKDiscretizationStokesH::computeGraphs()
     *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
   }
 
-  const LayeredMeshNumbering<LO>& layeredMeshNumbering = *getLayeredMeshNumbering();
+  const LayeredMeshNumbering<GO>& layeredMeshNumbering = *getLayeredMeshGlobalNumbering();
   int numLayers = layeredMeshNumbering.numLayers;
 
   GO row, col;
   auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
 
   // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
-  auto dofMgr = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").dofManager;
+  const auto dofMgr = getOverlapDOFManager("ordinary_solution");
   for (std::size_t i=0; i < cells.size(); i++) {
     stk::mesh::Entity e = cells[i];
     stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
@@ -86,10 +88,11 @@ void STKDiscretizationStokesH::computeGraphs()
     // loop over local nodes
     for (std::size_t j=0; j < num_nodes; j++) {
       stk::mesh::Entity rowNode = node_rels[j];
+      GO node_gid = stk_gid(rowNode);
 
       // loop over eqs
       for (std::size_t k=0; k < n3dEq; k++) {
-        row = dofMgr.getGlobalDOF(stk_gid(rowNode), k);
+        row = dofMgr.getGlobalDOF(node_gid, k);
         for (std::size_t l=0; l < num_nodes; l++) {
           stk::mesh::Entity colNode = node_rels[l];
           for (std::size_t m=0; m < n3dEq; m++) {
@@ -102,20 +105,19 @@ void STKDiscretizationStokesH::computeGraphs()
       if(neq > n3dEq)
       {
         row = dofMgr.getGlobalDOF(stk_gid(rowNode), n3dEq);
-        GO node_gid = stk_gid(rowNode);
-        LO base_id, ilayer;
-        int node_lid = ov_node_indexer->getLocalElement(node_gid);
-        layeredMeshNumbering.getIndices(node_lid, base_id, ilayer);
+        GO base_id, ilayer;
+        // int node_lid = ov_node_indexer->getLocalElement(node_gid);
+        layeredMeshNumbering.getIndices(node_gid, base_id, ilayer);
         if(ilayer == 0) {
           for (std::size_t l=0; l < num_nodes; l++) {
             stk::mesh::Entity colNode = node_rels[l];
             node_gid = stk_gid(colNode);
-            node_lid = ov_node_indexer->getLocalElement(node_gid);
-            layeredMeshNumbering.getIndices(node_lid, base_id, ilayer);
+            // node_lid = ov_node_indexer->getLocalElement(node_gid);
+            layeredMeshNumbering.getIndices(node_gid, base_id, ilayer);
             if(ilayer == 0) {
               for (int il_col=0; il_col<numLayers+1; il_col++) {
-                LO inode = layeredMeshNumbering.getId(base_id, il_col);
-                GO gnode = ov_node_indexer->getGlobalElement(inode);
+                GO gnode = layeredMeshNumbering.getId(base_id, il_col);
+                // GO gnode = ov_node_indexer->getGlobalElement(inode);
                 for (std::size_t m=0; m < n3dEq; m++) {
                   col = dofMgr.getGlobalDOF(gnode, m);
                   m_jac_factory->insertGlobalIndices(row, Teuchos::arrayView(&col, 1));

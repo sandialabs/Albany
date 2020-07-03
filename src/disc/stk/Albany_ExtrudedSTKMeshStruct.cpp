@@ -326,6 +326,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   this->layered_mesh_numbering = (Ordering==LAYER) ?
       Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
       Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
+  this->layered_mesh_global_numbering = (Ordering==LAYER) ?
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(vertexColumnShift,Ordering,layerThicknessRatio)):
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(static_cast<GO>(vertexLayerShift),Ordering,layerThicknessRatio));
 
   std::vector<double> ltr(layerThicknessRatio.size());
   for(size_t i=0; i< ltr.size(); ++i) {

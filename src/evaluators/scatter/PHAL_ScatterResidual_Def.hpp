@@ -810,13 +810,11 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (trans) {
     const int neq = nodeID.extent(2);
-    const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
     auto overlapVS = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
-    auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-    auto node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
     auto indexer = Albany::createGlobalLocalIndexer(overlapVS);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
@@ -824,11 +822,9 @@ evaluateFields(typename Traits::EvalData workset)
         workset.local_Vp[cell];
       const int num_deriv = this->numNodes;//local_Vp.size()/this->numFields;
       for (int i=0; i<num_deriv; i++) {
-        const LO lnodeId = node_indexer->getLocalElement(elNodeID[i]);
-        LO base_id, ilayer;
-        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-        const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const GO ginode = node_indexer->getGlobalElement(inode);
+        GO base_id, ilayer;
+        layeredMeshNumbering.getIndices(elNodeID[i], base_id, ilayer);
+        const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
 
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
