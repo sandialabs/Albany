@@ -8,7 +8,9 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
-    Number RBMs for ML: 3
+    LandIce Rigid Body Modes For Preconditioner:
+      Compute Constant Modes: true
+      Compute Rotation Modes: true
     Compute Sensitivities: true
     Required Fields: [temperature]
     Basal Side Name: basalside

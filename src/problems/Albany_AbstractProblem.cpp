@@ -20,7 +20,7 @@ Albany::AbstractProblem::AbstractProblem(
   params(params_),
   paramLib(paramLib_),
   //distParamLib(distParamLib_),
-  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq_)))
+  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes()))
 {
 
  /* 
@@ -86,7 +86,6 @@ void
 Albany::AbstractProblem::setNumEquations(const int neq_)
 {
   neq = neq_;
-  rigidBodyModes->setNumPDEs(neq_);
 }
 
 
@@ -115,8 +114,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      Teuchos::rcp(new Teuchos::ParameterList(listname));;
   validPL->set<std::string>("Name", "", "String to designate Problem Class");
-  //The following is for LandIce problems.
-  validPL->set<int>("Number RBMs for ML", 0, "Number of RBMs provided to ML");
   validPL->set<int>("Number of Spatial Processors", -1, "Number of spatial processors in multi-level parallelism");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0,
                     "Flag to select outpuy of Phalanx Graph and level of detail");

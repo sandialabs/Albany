@@ -588,6 +588,14 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   paramList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
 
+  //! set Rigid body modes for prec. near null space
+  if(!paramList->sublist("Problem").isSublist("LandIce Rigid Body Modes For Preconditioner")) {
+    Teuchos::ParameterList& rbmList = paramList->sublist("Problem").sublist("LandIce Rigid Body Modes For Preconditioner");
+    rbmList.set<bool>("Compute Constant Modes", true);
+    rbmList.set<bool>("Compute Rotation Modes", true);
+  }
+
+
   auto discretizationList = Teuchos::sublist(paramList, "Discretization", true);
   discretizationList->set("Element Shape", discretizationList->get("Element Shape", "Tetrahedron")); //set to Extruded is not defined
   elemShape = discretizationList->get<std::string>("Element Shape");

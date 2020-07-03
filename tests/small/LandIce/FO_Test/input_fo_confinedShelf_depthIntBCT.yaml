@@ -4,7 +4,9 @@ ANONYMOUS:
   Build Type: Tpetra
   Problem: 
     Phalanx Graph Visualization Detail: 2
-    Number RBMs for ML: 2
+    LandIce Rigid Body Modes For Preconditioner:
+      Compute Constant Modes: true
+      Compute Rotation Modes: false
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
     Dirichlet BCs: 

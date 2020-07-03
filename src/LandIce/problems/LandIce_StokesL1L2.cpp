@@ -26,7 +26,7 @@ StokesL1L2( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   neq = 2; //there are 2 PDEs for L1L2 equations
 
   // Set the num PDEs for the null space object to pass to ML
-  this->rigidBodyModes->setNumPDEs(neq);
+  //this->rigidBodyModes->setParameters(neq);
 
   // Need to allocate a surface height and temperature fields in mesh database
   this->requirements.push_back("surface_height");

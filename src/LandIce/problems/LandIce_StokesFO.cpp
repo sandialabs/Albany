@@ -38,19 +38,8 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   neq =  params_->sublist("Equation Set").get<int>("Num Equations", neq);
 
-  // the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
-  //written by IK, Feb. 2012
-  //Check if we want to give ML RBMs (from parameterlist)
-  int numRBMs = params_->get<int>("Number RBMs for ML", neq);
-  if (numRBMs > 0) {
-    bool setRBMs = true;
-    int numScalar = std::max(int(neq)-2,0); //we assume that if neq>=2,  the first 2 equations are the FO equations, and the remaining ones are scalar equations
-    if (numRBMs - numScalar == 2 || numRBMs - numScalar == 3)
-      rigidBodyModes->setParameters(neq, numDim, numScalar, numRBMs, setRBMs);
-    else
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"The specified number of RBMs "
-                                     << numRBMs << " is not valid!  Valid values are 0, " << 2 +numScalar<< " and " << 3 + numScalar << ".");
-  }
+  // Set parameters for passing coords/near-null space to preconditioner
+  rigidBodyModes->setParameters(neq, computeConstantModes, vecDimFO, computeRotationModes);
 
   adjustSurfaceHeight = false;
   adjustBedTopo = false;
