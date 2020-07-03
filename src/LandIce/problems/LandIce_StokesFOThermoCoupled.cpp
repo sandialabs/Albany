@@ -86,14 +86,8 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   adjustSurfaceHeight = false;
   adjustBedTopo = false;
 
-  int numRBMs = params_->get<int>("Number RBMs for ML", neq);
-  bool setRBMs = true;
-  int numScalar = neq-2; //the first 2 equations are the FO equations, and the remaining ones are scalar equations
-  if (numRBMs == neq || numRBMs == neq+1)  //
-    rigidBodyModes->setParameters(neq, numDim, numScalar, numRBMs, setRBMs);
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"The specified number of RBMs "
-                               << numRBMs << " is not valid!  Valid values are " << neq << " and " << neq+1 << ".");
+  // Set parameters for passing coords/near-null space to preconditioner
+  rigidBodyModes->setParameters(neq, computeConstantModes, vecDimFO, computeRotationModes);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >

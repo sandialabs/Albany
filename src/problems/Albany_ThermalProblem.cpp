@@ -37,6 +37,10 @@ ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   rho = params->get<double>("Density", 1.0);
   C = params->get<double>("Heat Capacity", 1.0);
   thermal_source = params->get<std::string>("Thermal Source", "None"); 
+
+  // Set Parameters for passing coords/near null space to preconditioners
+  const bool computeConstantModes = false;
+  rigidBodyModes->setParameters(neq, computeConstantModes);
 }
 
 Albany::ThermalProblem::

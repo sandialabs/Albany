@@ -115,6 +115,10 @@ Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_
       }
     }
   }
+
+  // Compute Rigid Body Modes for near null space to pass to preconditioners
+  const bool computeConstantModes = false;
+  rigidBodyModes->setParameters(neq, computeConstantModes);
 }
 
 void Hydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,

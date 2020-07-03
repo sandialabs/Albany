@@ -62,6 +62,9 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
         break;
     } 
   }
+  // Set parameters for passing coords/near null space to preconditioners
+  const bool computeConstantModes = false;
+  rigidBodyModes->setParameters(neq, computeConstantModes);
 }
 
 void

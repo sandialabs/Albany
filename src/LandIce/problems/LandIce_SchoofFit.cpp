@@ -30,7 +30,7 @@ SchoofFit (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   neq = 1;
 
   // Set the num PDEs for the null space object to pass to ML
-  this->rigidBodyModes->setNumPDEs(neq);
+  //this->rigidBodyModes->setParameters(neq);
 
   // Need to allocate a fields in mesh database
   Teuchos::Array<std::string> s_req = params->get<Teuchos::Array<std::string> > ("Required Scalar Fields");

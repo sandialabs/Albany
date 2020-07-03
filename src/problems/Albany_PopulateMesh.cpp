@@ -23,9 +23,6 @@ PopulateMesh::PopulateMesh (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   use_sdbcs_(false)
 {
   neq = 1;
-
-  // Set the num PDEs for the null space object to pass to ML
-  this->rigidBodyModes->setNumPDEs(neq);
 }
 
 PopulateMesh::~PopulateMesh()

@@ -201,6 +201,9 @@ protected:
   bool viscosity_use_corrected_temperature;
   bool compute_dissipation;
 
+  //Wether to compute rigid body modes
+  bool computeConstantModes, computeRotationModes;
+
   // Variables used to track properties of fields and parameters
   std::map<std::string, bool>               is_input_field;
   std::map<std::string, bool>               is_computed_field;

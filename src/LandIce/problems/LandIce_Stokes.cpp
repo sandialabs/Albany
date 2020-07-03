@@ -69,8 +69,6 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   haveSource = true;
 
-
-
   // Compute number of equations
   int num_eq = 0;
   if (haveFlowEq) num_eq += numDim+1;
@@ -84,6 +82,10 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     for (int i(0); i<req.size(); ++i)
       this->requirements.push_back(req[i]);
   }
+
+  // Compute Rigid Body Modes for near null space to pass to preconditioners
+  const bool computeConstantModes = false;
+  rigidBodyModes->setParameters(num_eq, computeConstantModes);
 
   // Print out a summary of the problem
   *out << "Stokes problem:" << std::endl

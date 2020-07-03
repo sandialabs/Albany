@@ -519,7 +519,7 @@ STKDiscretization::setupMLCoords()
     for (int j = 0; j < numDim; j++) { coordMV_data[j][node_lid] = X[j]; }
   }
 
-  rigidBodyModes->setCoordinatesAndNullspace(coordMV, m_vs, m_overlap_vs);
+  rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV, interleavedOrdering, m_vs, m_overlap_vs);
 
   // Some optional matrix-market output was tagged on here; keep that
   // functionality.

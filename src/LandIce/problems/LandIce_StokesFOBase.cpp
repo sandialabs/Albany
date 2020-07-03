@@ -105,6 +105,17 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // By default, we are not coupled to any other physics
   temperature_coupled = false;
   hydrology_coupled = false;
+
+  // Determine what Rigid Body Modes to compute and pass to the preconditioner
+  std::string rmb_list_name = "LandIce Rigid Body Modes For Preconditioner";
+  if(params->isSublist(rmb_list_name)) {
+    auto rbm_list = params_->sublist("LandIce Rigid Body Modes For Preconditioner");
+    computeConstantModes = params->sublist(rmb_list_name).get<bool>("Compute Constant Modes");
+    computeRotationModes = params->sublist(rmb_list_name).get<bool>("Compute Rotation Modes");
+  } else {
+    computeConstantModes = true;
+    computeRotationModes = false;
+  }
 }
 
 void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
@@ -285,7 +296,7 @@ StokesFOBase::getStokesFOBaseProblemParameters () const
   validPL->sublist("LandIce Noise", false, "");
   validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
   validPL->set<bool>("Print Stress Tensor", false, "Whether to save stress tensor in the mesh");
-
+  validPL->sublist("LandIce Rigid Body Modes For Preconditioner", false, "");
   return validPL;
 }
 
