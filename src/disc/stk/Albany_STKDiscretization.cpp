@@ -151,17 +151,17 @@ STKDiscretization::getCoordinates() const
   // Coordinates are computed here, and not precomputed,
   // since the mesh can move in shape opt problems
 
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
-      stkMeshStruct->getCoordinatesField();
+  const auto& coordinates_field = *stkMeshStruct->getCoordinatesField();
 
+  const auto& nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes");
+  const auto& ov_node_indexer = nodeDofStruct.overlap_node_vs_indexer;
+  const int numOverlapNodes = ov_node_indexer->getNumLocalElements();
   const int meshDim = stkMeshStruct->numDim;
-  auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
-  auto numOverlapNodes = ov_node_indexer->getNumLocalElements();
-  for (int i = 0; i < numOverlapNodes; i++) {
-    GO  node_gid = stk_gid(overlapnodes[i]);
-    int node_lid = ov_node_indexer->getLocalElement(node_gid);
+  for (int node_lid = 0; node_lid < numOverlapNodes; ++node_lid) {
+    GO node_gid = ov_node_indexer->getGlobalElement(node_lid);
 
-    double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+    const auto ov_node = bulkData.get_entity(stk::topology::NODE_RANK, node_gid + 1);
+    double* x = stk::mesh::field_data(coordinates_field, ov_node);
     for (int dim = 0; dim < meshDim; ++dim) {
       coordinates[meshDim * node_lid + dim] = x[dim];
     }
@@ -192,6 +192,12 @@ STKDiscretization::transformMesh()
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
       stkMeshStruct->getCoordinatesField();
   std::string transformType = stkMeshStruct->transformType;
+
+  std::vector<stk::mesh::Entity> overlapnodes;
+  stk::mesh::Selector selector(metaData.locally_owned_part());
+  selector |= metaData.globally_shared_part();
+  const auto& buckets = bulkData.buckets(stk::topology::NODE_RANK);
+  stk::mesh::get_selected_entities(selector, buckets, overlapnodes);
 
   if (transformType == "None") {
   } else if (transformType == "Spherical") {
@@ -1149,6 +1155,7 @@ STKDiscretization::computeGraphs()
       stk::mesh::Selector(metaData.universal_part()) &
       stk::mesh::Selector(metaData.locally_owned_part());
 
+  std::vector<stk::mesh::Entity> cells;
   stk::mesh::get_selected_entities(
       select_owned_in_part,
       bulkData.buckets(stk::topology::ELEMENT_RANK),
@@ -1206,6 +1213,10 @@ STKDiscretization::computeGraphs()
   }
 
   if (sideSetEquations.size() > 0) {
+    const auto& nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes");
+    const auto& ov_node_indexer = nodeDofStruct.overlap_node_vs_indexer;
+    const int numOverlapNodes = ov_node_indexer->getNumLocalElements();
+
     // iterator over all sideSet-defined equations
     for (const auto& it : sideSetEquations) {
       // Get the eq number
@@ -1216,8 +1227,9 @@ STKDiscretization::computeGraphs()
       // put one diagonal entry for every side set equation.
       // NOTE: some nodes will be processed twice, but this is safe:
       //       the redundant indices will be discarded
-      for (const auto& node : overlapnodes) {
-        row                    = dofMgr.getGlobalDOF(stk_gid(node), eq);
+      for (int inode=0; inode<numOverlapNodes; ++inode) {
+        const GO node_gid = ov_node_indexer->getGlobalElement(inode);
+        row                    = dofMgr.getGlobalDOF(node_gid, eq);
         colAV                  = Teuchos::arrayView(&row, 1);
         m_jac_factory->insertGlobalIndices(row, colAV);
       }

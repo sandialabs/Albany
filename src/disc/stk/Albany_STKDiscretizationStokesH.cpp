@@ -61,6 +61,7 @@ void STKDiscretizationStokesH::computeGraphs()
     stk::mesh::Selector( metaData.universal_part() ) &
     stk::mesh::Selector( metaData.locally_owned_part() );
 
+  std::vector<stk::mesh::Entity> cells;
   stk::mesh::get_selected_entities( select_owned_in_part ,
             bulkData.buckets( stk::topology::ELEMENT_RANK ) ,
             cells );

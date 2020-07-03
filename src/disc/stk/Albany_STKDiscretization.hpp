@@ -606,12 +606,6 @@ class STKDiscretization : public AbstractDiscretization
   StateArrays                                   stateArrays;
   std::vector<std::vector<std::vector<double>>> nodesOnElemStateVec;
 
-  //! list of all owned nodes, saved for setting solution
-  std::vector<stk::mesh::Entity> cells;
-
-  //! list of all overlap nodes, saved for getting coordinates for mesh motion
-  std::vector<stk::mesh::Entity> overlapnodes;
-
   //! Number of elements on this processor
   GO  maxGlobalNodeGID;
 
