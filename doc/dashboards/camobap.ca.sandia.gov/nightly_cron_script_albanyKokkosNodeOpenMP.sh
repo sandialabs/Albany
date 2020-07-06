@@ -2,7 +2,7 @@
 
 cd /nightlyCDash
 
-export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib
+#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib
 export OMP_NUM_THREADS=2
 export OMP_PLACES=threads
 export OMP_PROC_BIND=spread
