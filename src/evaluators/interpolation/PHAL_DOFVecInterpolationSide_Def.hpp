@@ -50,6 +50,44 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename Type>
+KOKKOS_INLINE_FUNCTION
+void DOFVecInterpolationSideBase<EvalT, Traits, Type>::
+operator() (const DOFVecInterpolationSideBase_Tag& tag, const int& sideSet_idx) const {
+  
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+  
+  for (int dim=0; dim<vecDim; ++dim) {
+    for (int qp=0; qp<numSideQPs; ++qp) {
+      val_qp(cell,side,qp,dim) = val_node(cell,side,0,dim) * BF(cell,side,0,qp);
+      for (int node=1; node<numSideNodes; ++node) {
+        val_qp(cell,side,qp,dim) += val_node(cell,side,node,dim) * BF(cell,side,node,qp);
+      }
+    }
+  }
+
+}
+
+template<typename EvalT, typename Traits, typename Type>
+KOKKOS_INLINE_FUNCTION
+void DOFVecInterpolationSideBase<EvalT, Traits, Type>::
+operator() (const DOFVecInterpolationSideBase_Collapsed_Tag& tag, const int& sideSet_idx) const {
+  
+  for (int dim=0; dim<vecDim; ++dim) {
+    for (int qp=0; qp<numSideQPs; ++qp) {
+      val_qp(sideSet_idx,qp,dim) = val_node(sideSet_idx,0,dim) * BF(sideSet_idx,0,qp);
+      for (int node=1; node<numSideNodes; ++node) {
+        val_qp(sideSet_idx,qp,dim) += val_node(sideSet_idx,node,dim) * BF(sideSet_idx,node,qp);
+      }
+    }
+  }
+
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, typename Type>
 void DOFVecInterpolationSideBase<EvalT, Traits, Type>::
@@ -60,6 +98,13 @@ evaluateFields(typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   sideSet = workset.sideSetViews->at(sideSetName);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+if (useCollapsedSidesets) {
+    Kokkos::parallel_for(DOFVecInterpolationSideBase_Collapsed_Policy(0, sideSet.size), *this);
+  } else {
+    Kokkos::parallel_for(DOFVecInterpolationSideBase_Policy(0, sideSet.size), *this);
+  }
+#else
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
     // Get the local data of side and cell
@@ -86,6 +131,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
+
 }
 
 } // Namespace PHAL

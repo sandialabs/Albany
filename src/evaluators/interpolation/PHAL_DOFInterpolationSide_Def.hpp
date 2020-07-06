@@ -49,6 +49,40 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void DOFInterpolationSideBase<EvalT, Traits, ScalarT>::
+operator() (const DOFInterpolationSideBase_Tag& tag, const int& sideSet_idx) const {
+  
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+  
+  for (int qp=0; qp<numSideQPs; ++qp) {
+    val_qp(cell,side,qp) = 0;
+    for (int node=0; node<numSideNodes; ++node) {
+      val_qp(cell,side,qp) += val_node(cell,side,node) * BF(cell,side,node,qp);
+    }
+  }
+
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void DOFInterpolationSideBase<EvalT, Traits, ScalarT>::
+operator() (const DOFInterpolationSideBase_Collapsed_Tag& tag, const int& sideSet_idx) const {
+
+  for (int qp=0; qp<numSideQPs; ++qp) {
+    val_qp(sideSet_idx,qp) = 0;
+    for (int node=0; node<numSideNodes; ++node) {
+      val_qp(sideSet_idx,qp) += val_node(sideSet_idx,node) * BF(sideSet_idx,node,qp);
+    }
+  }
+
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFInterpolationSideBase<EvalT, Traits, ScalarT>::
@@ -59,6 +93,13 @@ evaluateFields(typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   sideSet = workset.sideSetViews->at(sideSetName);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (useCollapsedSidesets) {
+    Kokkos::parallel_for(DOFInterpolationSideBase_Collapsed_Policy(0, sideSet.size), *this);
+  } else {
+    Kokkos::parallel_for(DOFInterpolationSideBase_Policy(0, sideSet.size), *this);
+  }
+#else
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
     // Get the local data of side and cell
@@ -81,6 +122,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
+
 }
 
 } // Namespace PHAL

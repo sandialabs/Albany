@@ -73,6 +73,55 @@ private:
   LayoutType layout;
 
   MDFieldMemoizer<Traits> memoizer;
+
+  Kokkos::DynRankView<int, PHX::Device> dimsView;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DOFCellToSide_CellScalar_Tag{};
+  struct DOFCellToSide_CellVector_Tag{};
+  struct DOFCellToSide_CellTensor_Tag{};
+  struct DOFCellToSide_NodeScalar_Tag{};
+  struct DOFCellToSide_NodeScalarSideset_Tag{};
+  struct DOFCellToSide_NodeVector_Tag{};
+  struct DOFCellToSide_NodeVectorSideset_Tag{};
+  struct DOFCellToSide_NodeTensor_Tag{};
+  struct DOFCellToSide_VertexVector_Tag{};
+  struct DOFCellToSide_VertexVectorSideset_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_CellScalar_Tag> DOFCellToSide_CellScalar_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_CellVector_Tag> DOFCellToSide_CellVector_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_CellTensor_Tag> DOFCellToSide_CellTensor_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_NodeScalar_Tag> DOFCellToSide_NodeScalar_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_NodeScalarSideset_Tag> DOFCellToSide_NodeScalarSideset_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_NodeVector_Tag> DOFCellToSide_NodeVector_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_NodeVectorSideset_Tag> DOFCellToSide_NodeVectorSideset_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_NodeTensor_Tag> DOFCellToSide_NodeTensor_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_VertexVector_Tag> DOFCellToSide_VertexVector_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_VertexVectorSideset_Tag> DOFCellToSide_VertexVectorSideset_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFCellToSide_CellScalar_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFCellToSide_CellVector_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFCellToSide_CellTensor_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFCellToSide_NodeScalar_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFCellToSide_NodeScalarSideset_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFCellToSide_NodeVector_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFCellToSide_NodeVectorSideset_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFCellToSide_NodeTensor_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFCellToSide_VertexVector_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFCellToSide_VertexVectorSideset_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 // Some shortcut names
