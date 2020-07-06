@@ -1861,6 +1861,10 @@ STKDiscretization::computeSideSets()
     sideSetViews[i].clear();  // empty the ith map
   }
 
+  for (size_t i = 0; i < sideSets.size(); ++i) {
+
+  }
+
   // (Kokkos Refactor) Convert sideSets to sideSetViews
   sideSetViews.resize(sideSets.size());
   for (size_t i = 0; i < sideSets.size(); ++i) {
@@ -1872,14 +1876,23 @@ STKDiscretization::computeSideSets()
       std::string             ss_key = ss_it->first;
       std::vector<SideStruct> ss_val = ss_it->second;
 
-      //ssViewList[ss_key] = {nullptr, nullptr, nullptr, nullptr, nullptr};
-      // SideStructViews& ssv_val = ssViewList[ss_key];
-      // ssv_val.size          = ss_val.size();
-      // ssv_val.side_GID      = Kokkos::View<GO*>      ("side_GID",      ss_val.size());
-      // ssv_val.elem_GID      = Kokkos::View<GO*>      ("elem_GID",      ss_val.size());
-      // ssv_val.elem_LID      = Kokkos::View<int*>     ("elem_LID",      ss_val.size());
-      // ssv_val.elem_ebIndex  = Kokkos::View<int*>     ("elem_ebIndex",  ss_val.size());
-      // ssv_val.side_local_id = Kokkos::View<unsigned*>("side_local_id", ss_val.size());
+      int numSides = 0;
+      for (size_t j = 0; j < ss_val.size(); ++j)
+        numSides = std::max(numSides, (int) ss_val[j].side_local_id);
+      numSides++;
+
+      int numCells_ = 0;
+      std::vector<int> numCellsOnSide(numSides);
+      std::vector<std::vector<int>> cellsOnSide(numSides);
+      for (size_t j = 0; j < ss_val.size(); ++j) {
+        int cell = ss_val[j].elem_LID;
+        int side = ss_val[j].side_local_id;
+        cellsOnSide[side].push_back(cell);
+      }
+      for (size_t side = 0; side < numSides; ++side) {
+        numCellsOnSide[side] = cellsOnSide[side].size();
+        numCells_ = std::max(numCells_, numCellsOnSide[side]);
+      }
 
       ssViewList[ss_key] = {
         Kokkos::View<GO*>      ("side_GID",      ss_val.size()),
@@ -1887,8 +1900,21 @@ STKDiscretization::computeSideSets()
         Kokkos::View<int*>     ("elem_LID",      ss_val.size()),
         Kokkos::View<int*>     ("elem_ebIndex",  ss_val.size()),
         Kokkos::View<unsigned*>("side_local_id", ss_val.size()),
-        ss_val.size()
+        ss_val.size(),
+        numSides,
+        Kokkos::View<int*>     ("numCellsOnSide", numSides),
+        Kokkos::View<int**>    ("cellsOnSide", numSides, numCells_)
       };
+
+      for (size_t side = 0; side < numSides; ++side) {
+        ssViewList[ss_key].numCellsOnSide(side) = numCellsOnSide[side];
+        for (size_t j = 0; j < numCellsOnSide[side]; ++j) {
+          ssViewList[ss_key].cellsOnSide(side, j) = cellsOnSide[side][j];
+        }
+        for (size_t j = numCellsOnSide[side]; j < numCells_; ++j) {
+          ssViewList[ss_key].cellsOnSide(side, j) = -1;
+        }
+      }
 
       for (size_t j = 0; j < ss_val.size(); ++j) {
         ssViewList[ss_key].side_GID(j)      = ss_val[j].side_GID;
@@ -1896,12 +1922,12 @@ STKDiscretization::computeSideSets()
         ssViewList[ss_key].elem_LID(j)      = ss_val[j].elem_LID;
         ssViewList[ss_key].elem_ebIndex(j)  = ss_val[j].elem_ebIndex;
         ssViewList[ss_key].side_local_id(j) = ss_val[j].side_local_id;
+        
       }
 
       ss_it++;
     }
   }
-
   
 }
 

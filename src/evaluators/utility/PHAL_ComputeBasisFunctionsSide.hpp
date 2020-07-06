@@ -64,23 +64,38 @@ private:
 
   // Output:
   //! Basis Functions and other quantities at quadrature points
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>           metric_det;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   tangents;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   metric;
+  PHX::MDField<MeshScalarT>                               metric_det;
+  PHX::MDField<MeshScalarT>                               tangents;
+  PHX::MDField<MeshScalarT>                               metric;
   PHX::MDField<MeshScalarT>                               w_measure;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   inv_metric;
+  PHX::MDField<MeshScalarT>                               inv_metric;
   PHX::MDField<RealType>                                  BF;
-  PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
+  PHX::MDField<MeshScalarT>                               GradBF;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       normals;
 
-  std::vector<Kokkos::DynRankView<int, PHX::Device>> cellsOnSides;
-  std::vector<int> numCellsOnSide;
+  //std::vector<Kokkos::DynRankView<int, PHX::Device>> cellsOnSides;
+  //std::vector<int> numCellsOnSide;
   Teuchos::RCP<shards::CellTopology> cellType;
   bool compute_normals;
 
   Albany::SideStructViews sideSet;
 
   bool useCollapsedSidesets;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct ComputeBasisFunctionsSide_Collapsed_Tag{};
+  struct ComputeBasisFunctionsSide_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctionsSide_Collapsed_Tag> ComputeBasisFunctionsSide_Collapsed_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctionsSide_Tag> ComputeBasisFunctionsSide_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ComputeBasisFunctionsSide_Collapsed_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ComputeBasisFunctionsSide_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 } // Namespace PHAL

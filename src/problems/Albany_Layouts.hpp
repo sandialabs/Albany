@@ -140,6 +140,12 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> vertices_vector_sideset;
     //! Data Layout for scalar basis functions that belong to a sideset
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar_sideset;
+    //! Data Layout for gradient basis functions that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> node_qp_gradient_sideset;
+    //! Data Layout for tensor quantity that lives at quad points that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> qp_tensor_sideset;
+    //! Data Layout for tensor quantity (cellDim x sideDim) that lives at quad points that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> qp_tensor_cd_sd_sideset;
 
     // For backward compatibility, and simplicitiy, we want to check if
     // the vector length is the same as the spatial dimension. This

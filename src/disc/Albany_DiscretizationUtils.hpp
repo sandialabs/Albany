@@ -47,6 +47,9 @@ class SideStructViews
   Kokkos::View<int*>      elem_ebIndex;
   Kokkos::View<unsigned*> side_local_id;
   int                     size;
+  int                     numSides;
+  Kokkos::View<int*>      numCellsOnSide;
+  Kokkos::View<int**>     cellsOnSide;
 };
 
 using SideSetList = std::map<std::string, std::vector<SideStruct>>;
