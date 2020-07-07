@@ -348,7 +348,7 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
 
       plist->set("null space: type", "pre-computed");
       plist->set("null space: dimension", nullSpaceDim);
-      plist->set("null space: vectors", nullSpace.getData());
+      plist->set<double*>("null space: vectors", nullSpace.getData());
       plist->set("null space: add default vectors", false);
 
     } else {  // MueLu and FROSch
