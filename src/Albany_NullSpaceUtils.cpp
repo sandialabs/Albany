@@ -126,16 +126,11 @@ struct TpetraNullSpaceTraits {
      Teuchos::ArrayRCP<ST> rdata = array->getDataNonConst(j);
      return rdata[DOF + i];
   }
-
-  Teuchos::RCP<base_array_type> getData() const {
-    return array;
-  }
-
 };
 
 struct EpetraNullSpaceTraits {
 
-  typedef Teuchos::ArrayRCP<ST> array_type;
+  typedef std::vector<ST> array_type;
   const array_type::size_type stride_;
   array_type& array;
 
@@ -149,10 +144,6 @@ struct EpetraNullSpaceTraits {
 
   double& operator()(const array_type::size_type DOF, const int i, const int j){
      return array[DOF + i + j * stride_];
-  }
-
-  double* getData() {
-    return array.getRawPtr();
   }
 };
 
@@ -348,7 +339,7 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
 
       plist->set("null space: type", "pre-computed");
       plist->set("null space: dimension", nullSpaceDim);
-      plist->set<double*>("null space: vectors", nullSpace.getData());
+      plist->set<double*>("null space: vectors", epetraTraitsArray.data());
       plist->set("null space: add default vectors", false);
 
     } else {  // MueLu and FROSch
@@ -365,9 +356,9 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
         soln_vs.is_null(), std::logic_error,
         "numElasticityDim > 0 and (isMueLuUsed() or isFROSchUsed()): soln_map must be provided.");
         if (isMueLuUsed()) {
-          plist->set("Nullspace", nullSpace.getData());
+          plist->set("Nullspace", tpetraTraitsArray);
         } else { // This means that FROSch is used
-          plist->set("Null Space",nullSpace.getData());
+          plist->set("Null Space", tpetraTraitsArray);
         }
     }
   }
