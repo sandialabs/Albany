@@ -134,7 +134,7 @@ struct EpetraNullSpaceTraits {
   const array_type::size_type stride_;
   array_type& array;
 
-  EpetraNullSpaceTraits(array_type array_, const array_type::size_type stride)
+  EpetraNullSpaceTraits(array_type& array_, const array_type::size_type stride)
    : array(array_), stride_(stride) {}
 
 
