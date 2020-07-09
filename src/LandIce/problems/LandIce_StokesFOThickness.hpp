@@ -296,8 +296,8 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   //Input
   p->set<std::string>("Residual Name", resid_names[1]);
   p->set<int>("Tensor Rank", 0);
-  p->set<int>("Field Level", discParams->get<int>("NumLayers"));
-  p->set<std::string>("Mesh Part", surfaceSideName);
+  p->set<int>("Field Level", 0);
+  p->set<std::string>("Mesh Part", basalSideName);
   p->set<int>("Offset of First DOF", dof_offsets[1]);
   p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
