@@ -23,7 +23,6 @@ ANONYMOUS:
       DBC on NS NodeSet1 for DOF U: 0.00000000000000000e+00
       DBC on NS NodeSet4 for DOF U: 0.00000000000000000e+00
       DBC on NS NodeSet5 for DOF U: 0.00000000000000000e+00
-      DBC off NS SideSet2 for DOF U: 0.00000000000000000e+00
   Discretization: 
     Method: STK3D
     Cubature Degree: 2

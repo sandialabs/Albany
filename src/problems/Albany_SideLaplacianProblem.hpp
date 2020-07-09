@@ -146,7 +146,6 @@ SideLaplacian::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
   // Service variables for registering state variables and evaluators
-  Albany::StateStruct::MeshFieldEntity entity;
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
@@ -234,7 +233,6 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
   // Service variables for registering state variables and evaluators
-  Albany::StateStruct::MeshFieldEntity entity;
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
@@ -253,7 +251,7 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   ev = evalUtils.constructGatherCoordinateVectorEvaluator();
   fm0.template registerEvaluator<EvalT> (ev);
 
-  ev = evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter SideLaplacian");
+  ev = evalUtils.constructScatterSideEqnResidualEvaluator(cellType, sideSetName, true, false, resid_names, offset, "Scatter SideLaplacian");
   fm0.template registerEvaluator<EvalT> (ev);
 
   ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature);

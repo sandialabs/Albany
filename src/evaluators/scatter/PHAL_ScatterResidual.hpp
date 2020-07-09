@@ -277,6 +277,7 @@ private:
 };
 
 // **************************************************************
-}
 
-#endif
+} // namespace PHAL
+
+#endif // PHAL_SCATTER_RESIDUAL_HPP

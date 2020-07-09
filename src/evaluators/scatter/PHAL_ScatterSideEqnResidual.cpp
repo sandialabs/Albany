@@ -4,8 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "PHAL_DirichletOffNodeSet.hpp"
-#include "PHAL_DirichletOffNodeSet_Def.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DirichletOffNodeSet)
+#include "PHAL_ScatterSideEqnResidual.hpp"
+#include "PHAL_ScatterSideEqnResidual_Def.hpp"
 
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ScatterSideEqnResidual)

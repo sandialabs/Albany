@@ -364,7 +364,6 @@ list (APPEND SOURCES
   evaluators/bc/PHAL_DirichletCoordinateFunction.cpp
   evaluators/bc/PHAL_DirichletField.cpp
   evaluators/bc/PHAL_SDirichletField.cpp
-  evaluators/bc/PHAL_DirichletOffNodeSet.cpp
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/bc/PHAL_Neumann.cpp
   evaluators/gather/PHAL_GatherAuxData.cpp
@@ -400,6 +399,7 @@ list (APPEND SOURCES
   evaluators/response/QCAD_ResponseFieldIntegral.cpp
   evaluators/response/QCAD_ResponseFieldValue.cpp
   evaluators/scatter/PHAL_ScatterResidual.cpp
+  evaluators/scatter/PHAL_ScatterSideEqnResidual.cpp
   evaluators/scatter/PHAL_ScatterScalarNodalParameter.cpp
   evaluators/scatter/PHAL_ScatterScalarResponse.cpp
   evaluators/scatter/PHAL_SeparableScatterScalarResponse.cpp
@@ -452,8 +452,6 @@ list (APPEND HEADERS
   evaluators/bc/PHAL_DirichletField_Def.hpp
   evaluators/bc/PHAL_SDirichletField.hpp
   evaluators/bc/PHAL_SDirichletField_Def.hpp
-  evaluators/bc/PHAL_DirichletOffNodeSet.hpp
-  evaluators/bc/PHAL_DirichletOffNodeSet_Def.hpp
   evaluators/bc/PHAL_Dirichlet_Def.hpp
   evaluators/bc/PHAL_TimeDepDBC_Def.hpp
   evaluators/bc/PHAL_TimeDepSDBC_Def.hpp
@@ -529,6 +527,8 @@ list (APPEND HEADERS
   evaluators/response/QCAD_ResponseFieldValue_Def.hpp
   evaluators/scatter/PHAL_ScatterResidual.hpp
   evaluators/scatter/PHAL_ScatterResidual_Def.hpp
+  evaluators/scatter/PHAL_ScatterSideEqnResidual.hpp
+  evaluators/scatter/PHAL_ScatterSideEqnResidual_Def.hpp
   evaluators/scatter/PHAL_ScatterScalarNodalParameter.hpp
   evaluators/scatter/PHAL_ScatterScalarNodalParameter_Def.hpp
   evaluators/scatter/PHAL_ScatterScalarResponse.hpp
