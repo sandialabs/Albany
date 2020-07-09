@@ -301,7 +301,6 @@ list(APPEND SOURCES
   disc/stk/Albany_OrdinarySTKFieldContainer.cpp
   disc/stk/Albany_SideSetSTKMeshStruct.cpp
   disc/stk/Albany_STKDiscretization.cpp
-  disc/stk/Albany_STKDiscretizationStokesH.cpp
   disc/stk/Albany_STKFieldContainerHelper.cpp
   disc/stk/Albany_STKNodeFieldContainer.cpp
   disc/stk/Albany_STKNodeSharing.cpp
@@ -326,7 +325,6 @@ list (APPEND HEADERS
   disc/stk/Albany_OrdinarySTKFieldContainer_Def.hpp
   disc/stk/Albany_SideSetSTKMeshStruct.hpp
   disc/stk/Albany_STKDiscretization.hpp
-  disc/stk/Albany_STKDiscretizationStokesH.hpp
   disc/stk/Albany_STKFieldContainerHelper.hpp
   disc/stk/Albany_STKNodeFieldContainer.hpp
   disc/stk/Albany_STKNodeFieldContainer_Def.hpp
