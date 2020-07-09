@@ -18,6 +18,8 @@ Setup::Setup() :
     _dep2EvalFields(Teuchos::rcp(new StringMap())),
     _savedFields(Teuchos::rcp(new StringSet())),
     _unsavedFields(Teuchos::rcp(new StringSet())),
+    _rebootEvals(Teuchos::rcp(new StringSet())),
+    _rebootFields(Teuchos::rcp(new StringSet())),
     _enableMemoizationForParams(false),
     _isParamsSetsSaved(false),
     _unsavedParams(Teuchos::rcp(new StringSet())),
@@ -47,6 +49,14 @@ bool Setup::memoizer_active() const {
 
 bool Setup::memoizer_for_params_active() const {
   return _enableMemoizationForParams;
+}
+
+void Setup::reboot_memoizer() {
+  if (_enableMemoization) {
+    auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+    *out << "Rebooting memoizer." << std::endl;
+    _rebootEvals = Teuchos::rcp(new StringSet(*_setupEvals));
+  }
 }
 
 void Setup::pre_eval() {
@@ -147,6 +157,12 @@ void Setup::print_fields(std::ostream& os) const {
 }
 
 Teuchos::RCP<const StringSet> Setup::get_saved_fields(const std::string& eval) const {
+  // If reboot memoizer active, use empty set of fields
+  if (_enableMemoization && _rebootEvals->count(eval) > 0) {
+    _rebootEvals->erase(eval);
+    return _rebootFields;
+  }
+
   if (_enableMemoizationForParams && !_unsavedParams->empty()) {
     // Always load params if evaluation type is DistParamDeriv
     if (eval.find("DistParamDeriv") != std::string::npos)

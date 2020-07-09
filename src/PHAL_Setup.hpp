@@ -42,6 +42,9 @@ public:
   //! Check if memoization for parameters is activated
   bool memoizer_for_params_active() const;
 
+  //! Reboot memoizer (all fields are unsaved on next eval)
+  void reboot_memoizer();
+
   //! Setup data before app evaluation functions are called
   void pre_eval();
 
@@ -90,6 +93,10 @@ private:
   bool _enableMemoization;
   const Teuchos::RCP<StringMap> _dep2EvalFields;
   const Teuchos::RCP<StringSet> _savedFields, _unsavedFields;
+
+  //! Data structures for rebooting memoizer
+  Teuchos::RCP<StringSet> _rebootEvals;
+  const Teuchos::RCP<StringSet> _rebootFields;
 
   //! Data structures for memoization of parameters that change occasionally
   bool _enableMemoizationForParams, _isParamsSetsSaved;

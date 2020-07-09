@@ -271,6 +271,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   }
   albanyApp->finalSetUp(paramList);
 
+  if (keptMesh) albanyApp->getPhxSetup()->reboot_memoizer();
+
   bool success = true;
   Teuchos::ArrayRCP<const ST> solution_constView;
   try {
