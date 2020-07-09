@@ -17,6 +17,7 @@
 #include "Shards_CellTopologyData.h"
 
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 namespace Albany {
 
@@ -102,6 +103,22 @@ class AbstractDiscretization
   //! Get Dof Manager of field field_name
   virtual const NodalDOFManager&
   getOverlapDOFManager(const std::string& field_name) const = 0;
+
+  //! Get Dof Manager of field field_name
+  virtual Teuchos::RCP<const GlobalLocalIndexer>
+  getGlobalLocalIndexer () const { return getGlobalLocalIndexer("ordinary_solution"); }
+
+  //! Get Dof Manager of field field_name
+  virtual Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer("ordinary_solution"); }
+
+  //! Get Dof Manager of field field_name
+  virtual Teuchos::RCP<const GlobalLocalIndexer>
+  getGlobalLocalIndexer(const std::string& field_name) const = 0;
+
+  //! Get Dof Manager of field field_name
+  virtual Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapGlobalLocalIndexer(const std::string& field_name) const = 0;
 
   //! Retrieve coodinate ptr_field (ws, el, node)
   virtual const WorksetArray<

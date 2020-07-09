@@ -224,6 +224,19 @@ class STKDiscretization : public AbstractDiscretization
     return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
   }
 
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getGlobalLocalIndexer(const std::string& field_name) const
+  {
+    return nodalDOFsStructContainer.getDOFsStruct(field_name).vs_indexer;
+  }
+
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapGlobalLocalIndexer(const std::string& field_name) const
+  {
+    return nodalDOFsStructContainer.getDOFsStruct(field_name)
+        .overlap_vs_indexer;
+  }
+
   const NodalDOFManager&
   getDOFManager(const std::string& field_name) const
   {

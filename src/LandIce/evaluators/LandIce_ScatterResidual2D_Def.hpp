@@ -59,13 +59,6 @@ evaluateFields(typename Traits::EvalData workset)
   }
   double diagonal_value = 1;
 
-  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  int numLayers = layeredMeshNumbering.numLayers;
-  lcols.reserve(neq*this->numNodes*(numLayers+1));
-
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-
   if (workset.sideSets == Teuchos::null) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets not properly specified on the mesh" << std::endl);
   }
@@ -82,9 +75,15 @@ evaluateFields(typename Traits::EvalData workset)
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    auto indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
-    // Loop over the sides that form the boundary condition
+    const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+    auto solIndexer = workset.disc->getOverlapGlobalLocalIndexer();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+    int numLayers = layeredMeshNumbering.numLayers;
+    lcols.reserve(neq*this->numNodes*(numLayers+1));
 
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+
+    // Loop over the sides that form the boundary condition
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
       const int elem_LID = sideSet[iSide].elem_LID;
@@ -95,18 +94,19 @@ evaluateFields(typename Traits::EvalData workset)
       lcols.resize(neq*numSideNodes*(numLayers+1));
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
-      LO base_id, ilayer;
+      GO base_id, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        LO lnodeId = indexer->getLocalElement(elNodeID[node]);
-        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
+        layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
         for (int il_col=0; il_col<numLayers+1; il_col++) {
-          LO inode = layeredMeshNumbering.getId(base_id, il_col);
+          GO gnode = layeredMeshNumbering.getId(base_id, il_col);
           for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-            lcols[il_col*neq*numSideNodes + neq*i + eq_col] = solDOFManager.getLocalDOF(inode, eq_col);
+            GO gcol  = solDOFManager.getGlobalDOF(gnode, eq_col);
+            lcols[il_col*neq*numSideNodes + neq*i + eq_col] = solIndexer->getLocalElement(gcol);
           }
           if(il_col != fieldLevel) {
-            const LO lrow = solDOFManager.getLocalDOF(inode, this->offset); //insert diagonal values
+            const GO grow = solDOFManager.getGlobalDOF(gnode, this->offset); //insert diagonal values
+            const LO lrow = solIndexer->getLocalElement(grow);
             Albany::setLocalRowValues(Jac,lrow,Teuchos::arrayView(&lrow,1), Teuchos::arrayView(&diagonal_value,1));
           }
         }
@@ -114,11 +114,15 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
+        layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
         for (std::size_t eq = 0; eq < numFields; eq++) {
           typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](elem_LID,node) :
                     this->tensorRank == 1 ? this->valVec(elem_LID,node,eq) :
                     this->valTensor(elem_LID,node, eq/numDim, eq%numDim));
+          // GO gnode = layeredMeshNumbering.getId(base_id, fieldLevel);
+          // GO grow  = solDOFManager.getGlobalDOF(gnode,this->offset + eq);
+          // const LO lrow = solIndexer->getLocalElement(grow);
           const LO lrow = nodeID(elem_LID,node,this->offset + eq);
           if (loadResid) {
             f_data[lrow] += valptr.val();
@@ -256,7 +260,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  auto solIndexer = workset.disc->getOverlapGlobalLocalIndexer();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
   lcols.resize(this->numNodes);
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
@@ -265,12 +270,12 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     Teuchos::ArrayRCP<LO> basalIds(this->numNodes);
-    LO base_id, ilayer;
+    GO base_id, ilayer;
     for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-      LO lnodeId = indexer->getLocalElement(elNodeID[node_col]);
-      layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-      LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-      lcols[node_col] = solDOFManager.getLocalDOF(inode, offset2DField);
+      layeredMeshNumbering.getIndices(elNodeID[node_col], base_id, ilayer);
+      GO gnode = layeredMeshNumbering.getId(base_id, fieldLevel);
+      GO gcol  = solDOFManager.getGlobalDOF(gnode, offset2DField);
+      lcols[node_col] = solIndexer->getLocalElement(gcol);
     }
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
