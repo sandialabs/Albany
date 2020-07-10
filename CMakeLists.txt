@@ -573,16 +573,6 @@ IF (ENABLE_LANDICE)
   MESSAGE("-- LandIce                                 Enabled")
   SET(ALBANY_LANDICE TRUE)
 
-  # set optional dependency of mesh on parameters, defaults to Disabled
-  OPTION(ENABLE_USE_CISM_FLOW_PARAMETERS "Flag to use the parameters of Glen's law used by Cism" ON)
-  IF (ENABLE_USE_CISM_FLOW_PARAMETERS)
-    MESSAGE("  -- USE_CISM_FLOW_PARAMETERS              Enabled.")
-    SET(USE_CISM_FLOW_PARAMETERS TRUE)
-  ELSE()
-    SET(USE_CISM_FLOW_PARAMETERS FALSE)
-    MESSAGE("  -- USE_CISM_FLOW_PARAMETERS          NOT Enabled.")
-  ENDIF()
-
   # Set optional build of MPAS Interface for LandIce (Land Ice SciDAC project),
   # defaults to Disabled
   IF (ENABLE_MPAS_INTERFACE)

@@ -191,8 +191,7 @@ if (BUILD_ALBANY_FPE)
     "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
     "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
     "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
-    "-DINSTALL_ALBANY:BOOL=OFF"
-    "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
+    "-DINSTALL_ALBANY:BOOL=OFF")
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg)

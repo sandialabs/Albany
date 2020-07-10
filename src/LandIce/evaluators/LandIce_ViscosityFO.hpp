@@ -49,9 +49,7 @@ private:
   TemperatureT flowRate(const TemperatureT& T) const;
 
   const double pi, actenh, actenl, gascon, switchingT;
-#ifdef USE_CISM_FLOW_PARAMETERS
   const double arrmlh, arrmll, k4scyr;
-#endif
   const double arrmh, arrml;
 
   bool extractStrainRateSq;

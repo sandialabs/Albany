@@ -33,16 +33,11 @@ ViscosityFO(const Teuchos::ParameterList& p,
   actenl (6.0e4),         // [J mol-1]
   gascon (8.314),         // [J mol-1 K-1]
   switchingT (263.15),    // [K]
-#ifdef USE_CISM_FLOW_PARAMETERS
   arrmlh (1.733e3),       // [Pa-3 s-1]
   arrmll (3.613e-13),     // [Pa-3 s-1]
   k4scyr (3.1536e19),     // [s y-1]
   arrmh (k4scyr*arrmlh),  // [Pa-3 yr-1]
   arrml (k4scyr*arrmll),  // [Pa-3 yr-1]
-#else
-  arrmh (6.26e22),        // [Pa-3 yr-1]
-  arrml (1.3e7),          // [Pa-3 yr-1]
-#endif
   homotopyParam("Glen's Law Homotopy Parameter", dl->shared_param)
 {
   Teuchos::ParameterList* visc_list =

@@ -96,7 +96,6 @@
   #cmakedefine CISM_CHECK_COMPARISONS
   #cmakedefine REDUCED_COMM
   #cmakedefine CISM_USE_EPETRA
-  #cmakedefine USE_CISM_FLOW_PARAMETERS
 #endif
 
 #endif // ALBANY_CONFIG_H
