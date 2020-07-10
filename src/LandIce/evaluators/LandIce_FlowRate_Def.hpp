@@ -98,11 +98,22 @@ void FlowRate<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
         flowRate(cell) = given_flow_rate(cell);
       break;
 
-    case TEMPERATURE_BASED:
+    case TEMPERATURE_BASED: {
+      constexpr double actenh (1.39e5);       // [J mol-1]
+      constexpr double actenl (6.0e4);        // [J mol-1]
+      constexpr double gascon (8.314);        // [J mol-1 K-1]
+      constexpr double switchingT (263.15);   // [K]
+      constexpr double arrmlh (1.733e3);      // [Pa-3 s-1]
+      constexpr double arrmll (3.613e-13);    // [Pa-3 s-1]
+      constexpr double k4scyr (3.1536e19);    // [s y-1]
+      constexpr double arrmh (k4scyr*arrmlh); // [Pa-3 yr-1]
+      constexpr double arrml (k4scyr*arrmll); // [Pa-3 yr-1]
+
       for (int cell=0; cell<workset.numCells; ++cell)
-        flowRate(cell) = (temperature(cell) < 263) ? 1.3e7 / std::exp (6.0e4 / 8.314 / temperature(cell))
-                                                   : 6.26e22 / std::exp (1.39e5 / 8.314 / temperature(cell));
+        flowRate(cell) = (temperature(cell) < switchingT) ? arrml / std::exp (actenl / gascon / temperature(cell))
+                                                   : arrmh / std::exp (actenh / gascon / temperature(cell));
       break;
+    }
 
     default:
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid flow rate type. However, you should have got an error before...\n");
