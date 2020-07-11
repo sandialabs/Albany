@@ -477,22 +477,36 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
     //Read info for layered mehes.
     bool hasLayeredStructure=true;
     std::vector<double> ltr;
-    int ordering, stride;
+    int ordering, stride,global_stride;
+    boost::any temp_any;
 
     std::string state_name = "layer_thickness_ratio";
-    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, ltr, false);
+    hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
     if(hasLayeredStructure) fieldContainer->getMeshVectorStates()[state_name] = ltr;
     state_name = "ordering";
-    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, ordering, false);
+    hasLayeredStructure &= mesh_data->get_global (state_name, ordering, false);
     if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
     state_name = "stride";
-    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, stride, false);
+    hasLayeredStructure &= mesh_data->get_global (state_name, stride, false);
     if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = stride;
+    state_name = "global_stride";
+    bool old_has = hasLayeredStructure;
+    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, stk::util::ParameterType::INT64, false);
+    if (old_has && !hasLayeredStructure) {
+      std::cout << "mesh has layered info, but not the global stride!\n";
+    }
+    if(hasLayeredStructure) {
+      global_stride = boost::any_cast<int64_t>(temp_any);
+      fieldContainer->getMeshScalarInteger64States()[state_name] = global_stride;
+    }
 
     if(hasLayeredStructure) {
       Teuchos::ArrayRCP<double> layerThicknessRatio(ltr.size());
-      for(int i=0; i< ltr.size(); ++i) layerThicknessRatio[i] = ltr[i];
-        this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<LO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
+      for(decltype(ltr.size()) i=0; i< ltr.size(); ++i) {
+        layerThicknessRatio[i] = ltr[i];
+      }
+      this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<LO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
+      this->layered_mesh_global_numbering = Teuchos::rcp(new LayeredMeshNumbering<GO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
     }
   }
   else

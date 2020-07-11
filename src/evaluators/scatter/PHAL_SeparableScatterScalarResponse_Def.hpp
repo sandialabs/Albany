@@ -169,8 +169,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-    auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
+    auto ov_node_indexer = workset.disc->getOverlapNodeGlobalLocalIndexer();
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
@@ -334,9 +333,8 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   auto overlap_p_vs = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
-  auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-  auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
-  auto ov_p_indexer = Albany::createGlobalLocalIndexer(overlap_p_vs);
+  auto ov_node_indexer = workset.disc->getOverlapNodeGlobalLocalIndexer();
+  auto ov_p_indexer = workset.disc->getOverlapGlobalLocalIndexer(workset.dist_param_deriv_name);
 
   // Loop over cells in workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {

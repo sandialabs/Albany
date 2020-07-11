@@ -279,10 +279,9 @@ evaluateFields(typename Traits::EvalData workset)
     }
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        const LO lrow = nodeID(cell,node,eq);
         if(eq != offset2DField) {
+          const LO lrow = nodeID(cell,node,eq);
           typename PHAL::Ref<ScalarT const>::type valptr = this->valVec(cell,node,eq);
 
           if (loadResid) {

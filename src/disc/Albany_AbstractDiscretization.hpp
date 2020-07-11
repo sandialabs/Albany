@@ -27,6 +27,9 @@ class AbstractDiscretization
   typedef std::map<std::string, Teuchos::RCP<AbstractDiscretization>>
       SideSetDiscretizationsType;
 
+  static const char* solution_dof_name () { return "ordinary_solution"; }
+  static const char* nodes_dof_name    () { return "mesh_nodes"; }
+
   //! Constructor
   AbstractDiscretization() = default;
 
@@ -106,19 +109,27 @@ class AbstractDiscretization
 
   //! Get Dof Manager of field field_name
   virtual Teuchos::RCP<const GlobalLocalIndexer>
-  getGlobalLocalIndexer () const { return getGlobalLocalIndexer("ordinary_solution"); }
-
-  //! Get Dof Manager of field field_name
-  virtual Teuchos::RCP<const GlobalLocalIndexer>
-  getOverlapGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer("ordinary_solution"); }
-
-  //! Get Dof Manager of field field_name
-  virtual Teuchos::RCP<const GlobalLocalIndexer>
   getGlobalLocalIndexer(const std::string& field_name) const = 0;
 
   //! Get Dof Manager of field field_name
   virtual Teuchos::RCP<const GlobalLocalIndexer>
   getOverlapGlobalLocalIndexer(const std::string& field_name) const = 0;
+
+  //! Get GlobalLocalIndexer for solution field
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getGlobalLocalIndexer () const { return getGlobalLocalIndexer(solution_dof_name()); }
+
+  //! Get GlobalLocalIndexer for overlapped solution field
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(solution_dof_name()); }
+
+  //! Get GlobalLocalIndexer for node field
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getNodeGlobalLocalIndexer () const { return getGlobalLocalIndexer(nodes_dof_name()); }
+
+  //! Get GlobalLocalIndexer for overlapped node field
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapNodeGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(nodes_dof_name()); }
 
   //! Retrieve coodinate ptr_field (ws, el, node)
   virtual const WorksetArray<

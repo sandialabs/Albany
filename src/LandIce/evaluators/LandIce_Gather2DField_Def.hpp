@@ -230,27 +230,29 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = workset.wsElNodeEqID;
   Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
 
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+  const auto& indexer = workset.disc->getOverlapGlobalLocalIndexer();
 
   int numLayers = layeredMeshNumbering.numLayers;
   this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
-  auto indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     const int neq = nodeID.extent(2);
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstunk = neq * node + this->offset;
-      LO lnodeId = indexer->getLocalElement(elNodeID[node]);
-      LO base_id, ilayer;
-      layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-      LO inode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
+      GO base_id, ilayer;
+      layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
+      GO gnode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
+      GO gdof = solDOFManager.getGlobalDOF(gnode, this->offset);
       typename PHAL::Ref<ScalarT>::type val = (this->field2D)(cell,node);
 
-      val = FadType(val.size(), x_constView[solDOFManager.getLocalDOF(inode, this->offset)]);
+      LO ldof = indexer->getLocalElement(gdof);
+      val = FadType(val.size(), x_constView[ldof]);
+      val.setUpdateValue(!workset.ignore_residual);
       val.fastAccessDx(firstunk) = workset.j_coeff;
     }
   }

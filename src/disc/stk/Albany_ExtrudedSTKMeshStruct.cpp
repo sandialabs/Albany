@@ -337,6 +337,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   fieldContainer->getMeshVectorStates()["layer_thickness_ratio"] = ltr;
   fieldContainer->getMeshScalarIntegerStates()["ordering"] = static_cast<int>(Ordering);
   fieldContainer->getMeshScalarIntegerStates()["stride"] = (Ordering==LAYER) ? lVertexColumnShift : vertexLayerShift;
+  fieldContainer->getMeshScalarInteger64States()["global_stride"] = (Ordering==LAYER) ? vertexColumnShift : vertexLayerShift;
 
   metaData->commit();
 

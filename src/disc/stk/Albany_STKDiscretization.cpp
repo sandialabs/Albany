@@ -153,7 +153,7 @@ STKDiscretization::getCoordinates() const
 
   const auto& coordinates_field = *stkMeshStruct->getCoordinatesField();
 
-  const auto& nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes");
+  const auto& nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct(nodes_dof_name());
   const auto& ov_node_indexer = nodeDofStruct.overlap_node_vs_indexer;
   const int numOverlapNodes = ov_node_indexer->getNumLocalElements();
   const int meshDim = stkMeshStruct->numDim;
@@ -695,12 +695,17 @@ STKDiscretization::writeSolutionToFile(
     mesh_data->begin_output_step(outputFileIdx, time_label);
     int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
     // Writing mesh global variables
-    for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates()) {
+    auto fc = stkMeshStruct->getFieldContainer();
+    for (auto& it : fc->getMeshVectorStates()) {
       mesh_data->write_global(outputFileIdx, it.first, it.second);
     }
-    for (auto& it :
-         stkMeshStruct->getFieldContainer()->getMeshScalarIntegerStates()) {
+    for (const auto& it : fc->getMeshScalarIntegerStates()) {
       mesh_data->write_global(outputFileIdx, it.first, it.second);
+    }
+    for (const auto& it : fc->getMeshScalarInteger64States()) {
+      boost::any value;
+      value = static_cast<int64_t>(it.second);
+      mesh_data->write_global(outputFileIdx, it.first, value, stk::util::ParameterType::INT64);
     }
     mesh_data->end_output_step(outputFileIdx);
 
@@ -758,12 +763,17 @@ STKDiscretization::writeSolutionMVToFile(
     mesh_data->begin_output_step(outputFileIdx, time_label);
     int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
     // Writing mesh global variables
-    for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates()) {
+    auto fc = stkMeshStruct->getFieldContainer();
+    for (auto& it : fc->getMeshVectorStates()) {
       mesh_data->write_global(outputFileIdx, it.first, it.second);
     }
-    for (auto& it :
-         stkMeshStruct->getFieldContainer()->getMeshScalarIntegerStates()) {
+    for (const auto& it : fc->getMeshScalarIntegerStates()) {
       mesh_data->write_global(outputFileIdx, it.first, it.second);
+    }
+    for (const auto& it : fc->getMeshScalarInteger64States()) {
+      boost::any value;
+      value = static_cast<int64_t>(it.second);
+      mesh_data->write_global(outputFileIdx, it.first, value, stk::util::ParameterType::INT64);
     }
     mesh_data->end_output_step(outputFileIdx);
 
@@ -1125,8 +1135,8 @@ void STKDiscretization::computeVectorSpaces()
     }
   }
 
-  const auto& solDOF  = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution");
-  const auto& meshDOF = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes");
+  const auto& solDOF  = nodalDOFsStructContainer.getDOFsStruct(solution_dof_name());
+  const auto& meshDOF = nodalDOFsStructContainer.getDOFsStruct(nodes_dof_name());
 
   m_node_vs = meshDOF.vs;
   m_vs      = solDOF.vs;
@@ -1176,7 +1186,7 @@ STKDiscretization::computeGraphs()
   }
 
   // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
-  const auto dofMgr = getOverlapDOFManager("ordinary_solution");
+  const auto dofMgr = getOverlapDOFManager(solution_dof_name());
   for (const auto& e : cells) {
     stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
     const size_t             num_nodes = bulkData.num_nodes(e);
@@ -1213,7 +1223,8 @@ STKDiscretization::computeGraphs()
   }
 
   if (sideSetEquations.size() > 0) {
-    const auto& nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes");
+    const auto& lmn = getLayeredMeshGlobalNumbering();
+    const auto& nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct(nodes_dof_name());
     const auto& ov_node_indexer = nodeDofStruct.overlap_node_vs_indexer;
     const int numOverlapNodes = ov_node_indexer->getNumLocalElements();
 
@@ -1264,12 +1275,44 @@ STKDiscretization::computeGraphs()
             for (std::size_t j = 0; j < num_nodes; j++) {
               stk::mesh::Entity colNode = node_rels[j];
 
-              // loop on all the equations (the eq may be coupled with other
-              // eqns)
-              for (std::size_t m = 0; m < neq; m++) {
-                col = dofMgr.getGlobalDOF(stk_gid(colNode), m);
-                m_jac_factory->insertGlobalIndices(
-                    row, Teuchos::arrayView(&col, 1));
+              // TODO: this is to accommodate the scenario where the side equation is coupled with
+              //       the volume equations over a whole column of a layered mesh. However, this
+              //       introduces pointless nonzeros if such coupling is not needed.
+              //       The only way to fix this would be to access more information from the problem.
+              //       Until then, couple with *all* equations, over the whole column.
+              if (!lmn.is_null()) {
+                // It's a layered mesh. Assume the worst, and add coupling of the whole column
+                for (int il=0; il<=lmn->numLayers; ++il) {
+                  const GO node3d = lmn->getId(stk_gid(colNode),il);
+                  for (unsigned int m=0; m<neq; ++m) {
+                    col = dofMgr.getGlobalDOF(node3d, m);
+                    m_jac_factory->insertGlobalIndices(
+                        row, Teuchos::arrayView(&col, 1));
+                    m_jac_factory->insertGlobalIndices(
+                        col, Teuchos::arrayView(&row, 1));
+                  }
+                }
+              } else {
+                // We couple this equation with all global equations,
+                // as well as all equations defined on this sideset.
+                for (auto m : globalEqns) {
+                  col = dofMgr.getGlobalDOF(stk_gid(colNode), m);
+                  m_jac_factory->insertGlobalIndices(
+                      row, Teuchos::arrayView(&col, 1));
+                  m_jac_factory->insertGlobalIndices(
+                      col, Teuchos::arrayView(&row, 1));
+                }
+                for (auto ssEqIt : sideSetEquations) {
+                  for (const auto& ssEq_ss_name : ssEqIt.second) {
+                    if (ssEq_ss_name == ss_name) {
+                      col = dofMgr.getGlobalDOF(stk_gid(colNode),ssEqIt.first);
+                      m_jac_factory->insertGlobalIndices(
+                          row, Teuchos::arrayView(&col, 1));
+                      m_jac_factory->insertGlobalIndices(
+                          col, Teuchos::arrayView(&row, 1));
+                    }
+                  }
+                }
               }
             }
           }
@@ -1905,7 +1948,7 @@ STKDiscretization::computeNodeSets()
 
   auto node_indexer = createGlobalLocalIndexer(m_node_vs);
   // A dof manager, to get the correct numbering (interleaved vs blocked)
-  const auto dofMgr = getDOFManager("ordinary_solution");
+  const auto dofMgr = getDOFManager(solution_dof_name());
   while (ns != stkMeshStruct->nsPartVec.end()) {  // Iterate over Node Sets
     // Get all owned nodes in this node set
     stk::mesh::Selector select_owned_in_nspart =
@@ -1958,17 +2001,34 @@ STKDiscretization::setupExodusOutput()
     mesh_data->property_add(Ioss::Property("FLUSH_INTERVAL", 1));
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
-    const auto& field_container = stkMeshStruct->getFieldContainer();
     // Adding mesh global variables
-    for (auto& it : field_container->getMeshVectorStates()) {
+    /*
+     * for (auto& it : field_container->getMeshVectorStates()) {
+     *   const auto DV_Type = stk::util::ParameterType::DOUBLEVECTOR;
+     *   boost::any mvs     = it.second;
+     *   mesh_data->add_global(outputFileIdx, it.first, mvs, DV_Type);
+     * }
+     * for (auto& it : field_container->getMeshScalarIntegerStates()) {
+     *   const auto INT_Type = stk::util::ParameterType::INTEGER;
+     *   boost::any mvs      = it.second;
+     *   mesh_data->add_global(outputFileIdx, it.first, mvs, INT_Type);
+     * }
+     */
+    auto fc = stkMeshStruct->getFieldContainer();
+    for (auto& it : fc->getMeshVectorStates()) {
       const auto DV_Type = stk::util::ParameterType::DOUBLEVECTOR;
       boost::any mvs     = it.second;
       mesh_data->add_global(outputFileIdx, it.first, mvs, DV_Type);
     }
-    for (auto& it : field_container->getMeshScalarIntegerStates()) {
-      const auto INT_Type = stk::util::ParameterType::INTEGER;
-      boost::any mvs      = it.second;
-      mesh_data->add_global(outputFileIdx, it.first, mvs, INT_Type);
+    for (const auto& it : fc->getMeshScalarIntegerStates()) {
+     const auto INT_Type = stk::util::ParameterType::INTEGER;
+     boost::any ms      = it.second;
+     mesh_data->add_global(outputFileIdx, it.first, ms, INT_Type);
+    }
+    for (const auto& it : fc->getMeshScalarInteger64States()) {
+     const auto INT64_Type = stk::util::ParameterType::INT64;
+     boost::any ms      = it.second;
+     mesh_data->add_global(outputFileIdx, it.first, ms, INT64_Type);
     }
 
     // STK and Ioss/Exodus only allow TRANSIENT fields to be exported.
@@ -2028,7 +2088,7 @@ STKDiscretization::buildSideSetProjectors()
   vals[0] = 1.0;
 
   // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
-  const auto dofMgr = getDOFManager("ordinary_solution");
+  const auto dofMgr = getDOFManager(solution_dof_name());
 
   Teuchos::ArrayView<const GO> ss_indices;
   stk::mesh::EntityRank        SIDE_RANK = stkMeshStruct->metaData->side_rank();
@@ -2048,7 +2108,7 @@ STKDiscretization::buildSideSetProjectors()
     auto ss_indexer = createGlobalLocalIndexer(ss_vs);
 
     // A dof manager, to figure out interleaved vs blocked numbering
-    const auto ss_dofMgr = disc.getDOFManager("ordinary_solution");
+    const auto ss_dofMgr = disc.getDOFManager(solution_dof_name());
 
     // Extract the sides
     stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.find(it.first)->second;
@@ -2120,8 +2180,8 @@ STKDiscretization::updateMesh()
 {
   const StateInfoStruct& nodal_param_states =
       stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
-  nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
-  nodalDOFsStructContainer.addEmptyDOFsStruct("mesh_nodes", "", 1);
+  nodalDOFsStructContainer.addEmptyDOFsStruct(solution_dof_name(), "", neq);
+  nodalDOFsStructContainer.addEmptyDOFsStruct(nodes_dof_name(), "", 1);
   for (size_t is = 0; is < nodal_param_states.size(); is++) {
     const StateStruct&            param_state = *nodal_param_states[is];
     const StateStruct::FieldDims& dim         = param_state.dim;
