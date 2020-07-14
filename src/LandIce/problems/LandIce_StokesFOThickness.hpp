@@ -135,7 +135,7 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   //Input
   p->set<std::string>("Residual Name", resid_names[0]);
   p->set<int>("Tensor Rank", 1); 
-  p->set<int>("Field Level", 0);
+  p->set<int>("Field Level", discParams->get<int>("NumLayers"));
   p->set<int>("Offset of First DOF", dof_offsets[0]); 
   p->set<int>("Offset 2D Field", dof_offsets[1]); 
 
@@ -226,7 +226,6 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<std::string>("Thickness Increment Variable Name", dof_names[1]);
   p->set<std::string>("Past Thickness Name", initial_ice_thickness_name);
   p->set<std::string>("Side Set Name", surfaceSideName);
-  p->set<std::string>("Mesh Part", "upperside");
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<int>("Cubature Degree",3);
   if (std::find(requirements.begin(),requirements.end(),"apparent_mass_balance")!=requirements.end()) {
@@ -296,8 +295,8 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   //Input
   p->set<std::string>("Residual Name", resid_names[1]);
   p->set<int>("Tensor Rank", 0);
-  p->set<int>("Field Level", 0);
-  p->set<std::string>("Mesh Part", basalSideName);
+  p->set<int>("Field Level", discParams->get<int>("NumLayers"));
+  p->set<std::string>("Mesh Part", surfaceSideName);
   p->set<int>("Offset of First DOF", dof_offsets[1]);
   p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
