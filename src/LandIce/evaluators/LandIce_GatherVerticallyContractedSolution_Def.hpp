@@ -108,11 +108,11 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
-    auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
-    int numLayers = layeredMeshNumbering.numLayers;
+    const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
+    const int numLayers = layeredMeshNumbering.numLayers;
 
     Teuchos::ArrayRCP<double> quadWeights(numLayers+1); //doing trapezoidal rule
     if(this->op == this->VerticalSum){
@@ -129,19 +129,19 @@ evaluateFields(typename Traits::EvalData workset)
       const int elem_LID = sideSet[iSide].elem_LID;
       const int elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      int numSideNodes = side.topology->node_count;
+      const int numSideNodes = side.topology->node_count;
 
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       //we only consider elements on the top.
-      LO baseId, ilayer;
+      GO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
-        std::size_t node = side.node[i];
-        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
-        layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
+        const std::size_t node = side.node[i];
+        layeredMeshNumbering.getIndices(elNodeID[node], baseId, ilayer);
         std::vector<double> contrSol(this->vecDim,0);
         for(int il=0; il<numLayers+1; ++il) {
-          LO inode = layeredMeshNumbering.getId(baseId, il);
+          const GO gnode = layeredMeshNumbering.getId(baseId, il);
+          const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(int comp=0; comp<this->vecDim; ++comp)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
         }
@@ -170,13 +170,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
   
-  int neq = workset.wsElNodeEqID.extent(2);
-
   TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSets.is_null(), std::logic_error,
                              "Side sets defined in input file but not properly specified on the mesh.\n");
-
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  int numLayers = layeredMeshNumbering.numLayers;
 
   Kokkos::deep_copy(this->contractedSol.get_view(), ScalarT(0.0));
 
@@ -184,14 +179,16 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
 
   if (it != ssList.end()) {
+    const int neq = workset.wsElNodeEqID.extent(2);
+
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+    const int numLayers = layeredMeshNumbering.numLayers;
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-    auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
-
-
+    const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
     Teuchos::ArrayRCP<double> quadWeights(numLayers+1);
     if(this->op == this->VerticalSum){
@@ -213,14 +210,14 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
       std::vector<double> velx(this->numNodes,0), vely(this->numNodes,0);
 
-      LO baseId, ilayer;
+      GO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
-        std::size_t node = side.node[i];
-        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
-        layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
+        const std::size_t node = side.node[i];
+        layeredMeshNumbering.getIndices(elNodeID[node], baseId, ilayer);
         std::vector<double> contrSol(this->vecDim,0);
         for(int il=0; il<numLayers+1; ++il) {
-          LO inode = layeredMeshNumbering.getId(baseId, il);
+          const GO gnode = layeredMeshNumbering.getId(baseId, il);
+          const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(int comp=0; comp<this->vecDim; ++comp)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
         }
@@ -269,12 +266,11 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-    auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
+    const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
-
-    int numLayers = layeredMeshNumbering.numLayers;
+    const int numLayers = layeredMeshNumbering.numLayers;
 
     Teuchos::ArrayRCP<double> quadWeights(numLayers+1);
     if(this->op == this->VerticalSum){
@@ -296,14 +292,14 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       //we only consider elements on the top.
-      LO baseId, ilayer;
+      GO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
-        std::size_t node = side.node[i];
-        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
-        layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
+        const std::size_t node = side.node[i];
+        layeredMeshNumbering.getIndices(elNodeID[node], baseId, ilayer);
         std::vector<double> contrSol(this->vecDim,0);
         for(int il=0; il<numLayers+1; ++il) {
-          LO inode = layeredMeshNumbering.getId(baseId, il);
+          const GO gnode = layeredMeshNumbering.getId(baseId, il);
+          const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(int comp=0; comp<this->vecDim; ++comp)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
         }
@@ -349,11 +345,11 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-    auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
+    const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
-    int numLayers = layeredMeshNumbering.numLayers;
+    const int numLayers = layeredMeshNumbering.numLayers;
     Teuchos::ArrayRCP<double> quadWeights(numLayers+1); //doing trapezoidal rule
 
     if(this->op == this->VerticalSum){
@@ -375,14 +371,14 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       //we only consider elements on the top.
-      LO baseId, ilayer;
+      GO baseId, ilayer;
       for (int i = 0; i < numSideNodes; ++i) {
-        std::size_t node = side.node[i];
-        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
-        layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
+        const std::size_t node = side.node[i];
+        layeredMeshNumbering.getIndices(elNodeID[node], baseId, ilayer);
         std::vector<double> contrSol(this->vecDim,0);
         for(int il=0; il<numLayers+1; ++il) {
-          LO inode = layeredMeshNumbering.getId(baseId, il);
+          const GO gnode = layeredMeshNumbering.getId(baseId, il);
+          const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(int comp=0; comp<this->vecDim; ++comp)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
         }

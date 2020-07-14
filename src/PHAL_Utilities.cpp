@@ -22,7 +22,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
       { //all column is coupled
         int side_node_count = ms->ctd.side[3].topology->node_count;
         int node_count = ms->ctd.node_count;
-        int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
+        int numLevels = app->getDiscretization()->getLayeredMeshGlobalNumbering()->numLayers+1;
         return app->getNumEquations()*(node_count + side_node_count*numLevels);
       }
   }
@@ -30,20 +30,20 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
-  const Albany::Application* app, const Albany::MeshSpecsStruct* ms, bool responseEvaluation)
+  const Albany::Application* app, const Albany::MeshSpecsStruct* /* ms */, bool /* responseEvaluation */)
 {
   return app->getTangentDerivDimension();
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
-  const Albany::Application* app, const Albany::MeshSpecsStruct* ms, bool responseEvaluation)
+  const Albany::Application* /* app */, const Albany::MeshSpecsStruct* ms, bool /* responseEvaluation */)
 {
   //Mauro: currently distributed derivatives work only with scalar parameters, to be updated.
   return ms->ctd.node_count;
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
- const Albany::Application* app, const int ebi, const bool explicit_scheme)
+ const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
 {
   const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
   if (Teuchos::nonnull(pl)) {
@@ -52,7 +52,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
     { //all column is coupled
       int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[3].topology->node_count;
       int node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.node_count;
-      int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
+      int numLevels = app->getDiscretization()->getLayeredMeshGlobalNumbering()->numLayers+1;
       return app->getNumEquations()*(node_count + side_node_count*numLevels);
     }
    }
@@ -61,14 +61,14 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
- const Albany::Application* app, const int ebi, const bool explicit_scheme)
+ const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
 {
   return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
     app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
- const Albany::Application* app, const int ebi, const bool explicit_scheme)
+ const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
 {
   return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
     app, app->getEnrichedMeshSpecs()[ebi].get());

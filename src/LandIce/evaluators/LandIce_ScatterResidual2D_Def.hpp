@@ -94,10 +94,10 @@ evaluateFields(typename Traits::EvalData workset)
       lcols.resize(neq*numSideNodes*(numLayers+1));
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
-      GO base_id, ilayer;
+      GO base_id;
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
+        base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
         for (int il_col=0; il_col<numLayers+1; il_col++) {
           GO gnode = layeredMeshNumbering.getId(base_id, il_col);
           for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
@@ -114,7 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
-        layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
+        base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
         for (std::size_t eq = 0; eq < numFields; eq++) {
           typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](elem_LID,node) :
@@ -270,9 +270,9 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     Teuchos::ArrayRCP<LO> basalIds(this->numNodes);
-    GO base_id, ilayer;
+    GO base_id;
     for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-      layeredMeshNumbering.getIndices(elNodeID[node_col], base_id, ilayer);
+      base_id = layeredMeshNumbering.getColumnId(elNodeID[node_col]);
       GO gnode = layeredMeshNumbering.getId(base_id, fieldLevel);
       GO gcol  = solDOFManager.getGlobalDOF(gnode, offset2DField);
       lcols[node_col] = solIndexer->getLocalElement(gcol);

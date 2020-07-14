@@ -140,8 +140,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      GO base_id, ilayer;
-      layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
+      const GO ilayer = layeredMeshNumbering.getLayerId(elNodeID[node]);
       if(ilayer==fieldLevel) {
         const LO lid = param_indexer->getLocalElement(elNodeID[node]);
         if(lid>=0) {

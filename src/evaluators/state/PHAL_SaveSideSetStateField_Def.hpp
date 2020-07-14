@@ -379,7 +379,7 @@ saveNodeState(typename Traits::EvalData workset)
     // It is a layered mesh, with column-wise ordering. This means that the GID of the node in the 2D mesh
     // will not coincide with the GID of the node in the 3D mesh.
 
-    GO nodeId2d, layer_id;
+    GO nodeId2d;
 
     // Loop on the sides of this sideSet that are in this workset
     const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
@@ -397,7 +397,7 @@ saveNodeState(typename Traits::EvalData workset)
           for (size_t node=0; node<dims[2]; ++node)
           {
             nodeId3d = ElNodeID[cell][sideNodes[side][node]];
-            layeredMeshNumbering->getIndices(nodeId3d,nodeId2d,layer_id);
+            nodeId2d = layeredMeshNumbering->getColumnId(nodeId3d);
             stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId2d+1);
             e = bulkData.get_entity(key);
             values = stk::mesh::field_data(*scalar_field, e);
@@ -410,7 +410,7 @@ saveNodeState(typename Traits::EvalData workset)
           for (size_t node=0; node<dims[2]; ++node)
           {
             nodeId3d = ElNodeID[cell][sideNodes[side][node]];
-            layeredMeshNumbering->getIndices(nodeId3d,nodeId2d,layer_id);
+            nodeId2d = layeredMeshNumbering->getColumnId(nodeId3d);
             stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId2d+1);
             e = bulkData.get_entity(key);
             values = stk::mesh::field_data(*vector_field, e);

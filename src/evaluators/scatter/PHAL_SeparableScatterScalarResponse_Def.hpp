@@ -181,10 +181,10 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
       for (std::size_t res = 0; res < this->global_response.size(); res++) {
         auto val = this->local_response(elem_LID, res);
-        GO base_id, ilayer;
+        GO base_id;
         for (int i = 0; i < numSideNodes; ++i) {
           std::size_t node = side.node[i];
-          layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
+          base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
           for (GO il_col=0; il_col<numLayers+1; il_col++) {
             const GO ginode = layeredMeshNumbering.getId(base_id, il_col);
             const LO  inode = ov_node_indexer->getLocalElement(ginode);
@@ -345,8 +345,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Loop over nodes in cell
       for (int deriv=0; deriv<num_deriv; ++deriv) {
-        GO base_id, ilayer;
-        layeredMeshNumbering.getIndices(elNodeID[deriv], base_id, ilayer);
+        const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[deriv]);
         const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
         const LO row = ov_p_indexer->getLocalElement(ginode);
 

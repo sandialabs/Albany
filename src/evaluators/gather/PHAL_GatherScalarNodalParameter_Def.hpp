@@ -110,8 +110,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      GO base_id, ilayer;
-      layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
+      const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
       const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
       const LO p_lid= pspace_indexer->getLocalElement(ginode);
       (this->val)(cell,node) = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
@@ -264,8 +263,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       for (std::size_t node = 0; node < num_deriv; ++node) {
-        GO base_id, ilayer;
-        layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
+        const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
         const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
         const LO p_lid= p_indexer->getLocalElement(ginode);
         double pvec_id = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
@@ -297,8 +295,7 @@ evaluateFields(typename Traits::EvalData workset)
         } else {
           local_Vp.resize(num_deriv);
           for (std::size_t node = 0; node < num_deriv; ++node) {
-            GO base_id, ilayer;
-            layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
+            const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
             const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
             const LO id = p_indexer->getLocalElement(ginode);
             local_Vp[node].resize(num_cols);
@@ -314,8 +311,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node) {
-        GO base_id, ilayer;
-        layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
+        const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
         const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
         const LO p_lid= p_indexer->getLocalElement(ginode);
         (this->val)(cell,node) = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;

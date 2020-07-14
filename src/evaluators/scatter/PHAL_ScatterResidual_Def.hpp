@@ -822,8 +822,7 @@ evaluateFields(typename Traits::EvalData workset)
         workset.local_Vp[cell];
       const int num_deriv = this->numNodes;//local_Vp.size()/this->numFields;
       for (int i=0; i<num_deriv; i++) {
-        GO base_id, ilayer;
-        layeredMeshNumbering.getIndices(elNodeID[i], base_id, ilayer);
+        const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[i]);
         const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
 
         for (int col=0; col<num_cols; col++) {

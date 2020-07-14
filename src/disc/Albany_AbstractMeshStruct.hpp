@@ -64,6 +64,14 @@ struct LayeredMeshNumbering {
       column_id = id%stride;
     }
   }
+
+  T getColumnId (const T id) const {
+    return ordering==LayeredMeshOrdering::COLUMN ? id / stride : id % stride;
+  }
+
+  T getLayerId (const T id) const {
+    return ordering==LayeredMeshOrdering::COLUMN ? id % stride : id / stride;
+  }
 };
 
 struct AbstractMeshStruct {
