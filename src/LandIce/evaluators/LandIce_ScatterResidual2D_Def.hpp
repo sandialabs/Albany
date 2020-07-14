@@ -77,7 +77,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     auto solIndexer = workset.disc->getOverlapGlobalLocalIndexer();
-    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     int numLayers = layeredMeshNumbering.numLayers;
     lcols.reserve(neq*this->numNodes*(numLayers+1));
 
@@ -261,7 +261,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
   auto solIndexer = workset.disc->getOverlapGlobalLocalIndexer();
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   lcols.resize(this->numNodes);
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];

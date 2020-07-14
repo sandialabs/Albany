@@ -108,7 +108,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
@@ -185,7 +185,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const int numLayers = layeredMeshNumbering.numLayers;
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
@@ -266,7 +266,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
@@ -345,7 +345,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 

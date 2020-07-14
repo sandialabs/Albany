@@ -69,10 +69,10 @@ evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
 
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshGlobalNumbering().is_null(),
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
     std::runtime_error, "Error! No layered numbering in the mesh.\n");
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   const int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
@@ -158,10 +158,10 @@ evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
 
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshGlobalNumbering().is_null(),
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
     std::runtime_error, "Error! No layered numbering in the mesh.\n");
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   const int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];

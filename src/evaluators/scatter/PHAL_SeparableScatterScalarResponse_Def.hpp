@@ -156,7 +156,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
 
   const int neq = workset.wsElNodeEqID.extent(2);
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
@@ -330,7 +330,7 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = workset.wsElNodeEqID;
   int fieldLevel = level_it->second;
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   auto overlap_p_vs = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
   auto ov_node_indexer = workset.disc->getOverlapNodeGlobalLocalIndexer();

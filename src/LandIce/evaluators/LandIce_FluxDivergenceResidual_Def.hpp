@@ -68,7 +68,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
   using std::pow;
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   auto layersRatio = layeredMeshNumbering.layers_ratio;
   const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
   const int numLayers = layeredMeshNumbering.numLayers;

@@ -372,16 +372,10 @@ class STKDiscretization : public AbstractDiscretization
     return neq;
   }
 
-  Teuchos::RCP<LayeredMeshNumbering<LO>>
+  Teuchos::RCP<LayeredMeshNumbering<GO>>
   getLayeredMeshNumbering() const
   {
     return stkMeshStruct->layered_mesh_numbering;
-  }
-
-  Teuchos::RCP<LayeredMeshNumbering<GO>>
-  getLayeredMeshGlobalNumbering() const
-  {
-    return stkMeshStruct->layered_mesh_global_numbering;
   }
 
   const stk::mesh::MetaData&

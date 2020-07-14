@@ -274,7 +274,7 @@ saveNodeState(typename Traits::EvalData workset)
                               "Error! The workset must store a valid discretization pointer.\n");
   Teuchos::RCP<Albany::AbstractDiscretization> disc = workset.disc;
 
-  Teuchos::RCP<Albany::LayeredMeshNumbering<GO>> layeredMeshNumbering = disc->getLayeredMeshGlobalNumbering();
+  Teuchos::RCP<Albany::LayeredMeshNumbering<GO>> layeredMeshNumbering = disc->getLayeredMeshNumbering();
 
   const Albany::AbstractDiscretization::SideSetDiscretizationsType& ssDiscs = disc->getSideSetDiscretizations();
 

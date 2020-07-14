@@ -131,7 +131,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->vector();
   Teuchos::ArrayRCP<ST> pvec_view = Albany::getNonconstLocalData(pvec);
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   auto param_vs = pvec->range();

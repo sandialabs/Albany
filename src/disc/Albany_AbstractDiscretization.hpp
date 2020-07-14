@@ -206,12 +206,8 @@ class AbstractDiscretization
   getNumEq() const = 0;
 
   //! Get Numbering for layered mesh (mesh structred in one direction)
-  virtual Teuchos::RCP<LayeredMeshNumbering<LO>>
-  getLayeredMeshNumbering() const = 0;
-
-  //! Get Numbering for layered mesh (mesh structred in one direction)
   virtual Teuchos::RCP<LayeredMeshNumbering<GO>>
-  getLayeredMeshGlobalNumbering() const = 0;
+  getLayeredMeshNumbering() const = 0;
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   virtual Teuchos::RCP<Thyra_Vector>

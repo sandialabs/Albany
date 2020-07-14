@@ -185,10 +185,10 @@ evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
 
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshGlobalNumbering().is_null(),
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
     std::runtime_error, "Error! No layered numbering in the mesh.\n");
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager(workset.disc->solution_dof_name());
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   const auto& indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
@@ -222,10 +222,10 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = workset.wsElNodeEqID;
   Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
 
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshGlobalNumbering().is_null(),
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
     std::runtime_error, "Error! No layered numbering in the mesh.\n");
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
   const auto& indexer = *workset.disc->getOverlapGlobalLocalIndexer();
 

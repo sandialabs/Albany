@@ -1223,7 +1223,7 @@ STKDiscretization::computeGraphs()
   }
 
   if (sideSetEquations.size() > 0) {
-    const auto& lmn = getLayeredMeshGlobalNumbering();
+    const auto lmn = getLayeredMeshNumbering();
     const auto& nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct(nodes_dof_name());
     const auto& ov_node_indexer = nodeDofStruct.overlap_node_vs_indexer;
     const int numOverlapNodes = ov_node_indexer->getNumLocalElements();

@@ -22,7 +22,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
       { //all column is coupled
         int side_node_count = ms->ctd.side[3].topology->node_count;
         int node_count = ms->ctd.node_count;
-        int numLevels = app->getDiscretization()->getLayeredMeshGlobalNumbering()->numLayers+1;
+        int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
         return app->getNumEquations()*(node_count + side_node_count*numLevels);
       }
   }
@@ -52,7 +52,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
     { //all column is coupled
       int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[3].topology->node_count;
       int node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.node_count;
-      int numLevels = app->getDiscretization()->getLayeredMeshGlobalNumbering()->numLayers+1;
+      int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
       return app->getNumEquations()*(node_count + side_node_count*numLevels);
     }
    }
