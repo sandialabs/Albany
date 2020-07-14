@@ -16,80 +16,69 @@
 
 #include "BlockedDiscretization.hpp"
 
+namespace Albany {
+
 //Assume we only have one block right now
-Albany::BlockedDiscretization::BlockedDiscretization(
+BlockedDiscretization::BlockedDiscretization(
     const Teuchos::RCP<Teuchos::ParameterList>&    discParams_,
-    Teuchos::RCP<Albany::AbstractSTKMeshStruct>&   stkMeshStruct_,
+    Teuchos::RCP<AbstractSTKMeshStruct>&   stkMeshStruct_,
     const Teuchos::RCP<const Teuchos_Comm>&        comm_,
-    const Teuchos::RCP<Albany::RigidBodyModes>&    rigidBodyModes_,
-    const std::map<int, std::vector<std::string>>& sideSetEquations_){
+    const Teuchos::RCP<RigidBodyModes>&    rigidBodyModes_,
+    const std::map<int, std::vector<std::string>>& sideSetEquations_)
+{
+  m_blocks.resize(1);
 
-    BlockDiscretization.resize(1);
-
-	BlockDiscretization[0] = Teuchos::rcp(new BlckDisc(discParams_, stkMeshStruct_, comm_,
+	m_blocks[0] = Teuchos::rcp(new disc_type(discParams_, stkMeshStruct_, comm_,
 		rigidBodyModes_, sideSetEquations_));
 }
 
-Albany::BlockedDiscretization::~BlockedDiscretization()
-{
-
-	// explicitly destroy the object the pointer points at
-
-    BlockDiscretization[0] = Teuchos::null;
-
-}
-
 void
-Albany::BlockedDiscretization::printConnectivity() const
+BlockedDiscretization::printConnectivity() const
 {
-
-	BlockDiscretization[0]->printConnectivity();
-
+	m_blocks[0]->printConnectivity();
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
-Albany::BlockedDiscretization::getVectorSpace(const std::string& field_name) const
+BlockedDiscretization::getVectorSpace(const std::string& field_name) const
 {
-  return BlockDiscretization[0]->getVectorSpace();
+  return m_blocks[0]->getVectorSpace(field_name);
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
-Albany::BlockedDiscretization::getNodeVectorSpace(const std::string& field_name) const
+BlockedDiscretization::getNodeVectorSpace(const std::string& field_name) const
 {
-  return BlockDiscretization[0]->getNodeVectorSpace();
+  return m_blocks[0]->getNodeVectorSpace(field_name);
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
-Albany::BlockedDiscretization::getOverlapVectorSpace(const std::string& field_name) const
+BlockedDiscretization::getOverlapVectorSpace(const std::string& field_name) const
 {
-  return BlockDiscretization[0]->getOverlapVectorSpace();
+  return m_blocks[0]->getOverlapVectorSpace(field_name);
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
-Albany::BlockedDiscretization::getOverlapNodeVectorSpace(
+BlockedDiscretization::getOverlapNodeVectorSpace(
     const std::string& field_name) const
 {
-  return BlockDiscretization[0]->getOverlapNodeVectorSpace();
+  return m_blocks[0]->getOverlapNodeVectorSpace(field_name);
 }
 
 void
-Albany::BlockedDiscretization::printCoords() const
+BlockedDiscretization::printCoords() const
 {
-	BlockDiscretization[0]->printCoords();
+	m_blocks[0]->printCoords();
 }
 
 const Teuchos::ArrayRCP<double>&
-Albany::BlockedDiscretization::getCoordinates() const
+BlockedDiscretization::getCoordinates() const
 {
-
-  return BlockDiscretization[0]->getCoordinates();
-
+  return m_blocks[0]->getCoordinates();
 }
 
 // These methods were added to support mesh adaptation, which is currently
 // limited to PUMIDiscretization.
 void
-Albany::BlockedDiscretization::setCoordinates(
+BlockedDiscretization::setCoordinates(
     const Teuchos::ArrayRCP<const double>& /* c */)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -101,21 +90,21 @@ Albany::BlockedDiscretization::setCoordinates(
 // The function transformMesh() maps a unit cube domain by applying a
 // transformation to the mesh.
 void
-Albany::BlockedDiscretization::transformMesh()
+BlockedDiscretization::transformMesh()
 {
-
-	BlockDiscretization[0]->transformMesh();
-
+	m_blocks[0]->transformMesh();
 }
 
 void
-Albany::BlockedDiscretization::reNameExodusOutput(std::string& filename)
+BlockedDiscretization::reNameExodusOutput(std::string& filename)
 {
-	BlockDiscretization[0]->reNameExodusOutput(filename);
+	m_blocks[0]->reNameExodusOutput(filename);
 }
 
 void
-Albany::BlockedDiscretization::updateMesh()
+BlockedDiscretization::updateMesh()
 {
-	BlockDiscretization[0]->updateMesh();
+	m_blocks[0]->updateMesh();
 }
+
+} // namespace Albany
