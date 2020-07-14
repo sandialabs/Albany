@@ -183,6 +183,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p = Teuchos::rcp(new Teuchos::ParameterList("Gather Thickness"));
 
   //Input
+  p->set<int>("Field Level",discParams->get<int>("NumLayers"));
   p->set<std::string>("2D Field Name", dof_names[1]);
   p->set<int>("Offset of First DOF", dof_offsets[1]);
   p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
@@ -194,6 +195,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p = Teuchos::rcp(new Teuchos::ParameterList("Gather ExtrudedThickness"));
 
   //Input
+  p->set<int>("Field Level",discParams->get<int>("NumLayers"));
   p->set<std::string>("2D Field Name", "Extruded " + dof_names[1]);
   p->set<int>("Offset of First DOF", dof_offsets[1]);
   p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));

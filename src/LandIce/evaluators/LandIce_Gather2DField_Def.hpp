@@ -48,11 +48,7 @@ Gather2DFieldBase(const Teuchos::ParameterList& p,
     offset = 2;
   }
 
-  if (p.isType<int>("Field Level")) {
-    fieldLevel = p.get<int>("Field Level");
-  } else {
-    fieldLevel = -1;
-  }
+  fieldLevel = p.get<int>("Field Level");
 }
 
 //**********************************************************************
@@ -129,9 +125,6 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSets.is_null(), std::logic_error,
                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
-  int numLayers = workset.disc->getLayeredMeshNumbering()->numLayers;
-  this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
-
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
 
@@ -192,24 +185,24 @@ evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
 
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+  TEUCHOS_TEST_FOR_EXCEPTION (!workset.disc->getLayeredMeshGlobalNumbering().is_null(),
+    std::runtime_error, "Error! No layered numbering in the mesh.\n");
 
-  int numLayers = layeredMeshNumbering.numLayers;
-  this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
+  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager();
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+  const auto& indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
-  auto indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      LO lnodeId = indexer->getLocalElement(elNodeID[node]);
-      LO base_id, ilayer;
-      layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-      LO inode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
-
-      (this->field2D)(cell,node) = x_constView[solDOFManager.getLocalDOF(inode, this->offset)];
+      // Retrieve corresponding 2D node
+      GO base_id, ilayer;
+      layeredMeshNumbering.getIndices(elNodeID[node], base_id, ilayer);
+      GO gnode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
+      LO lnode = indexer.getLocalElement(gnode);
+      (this->field2D)(cell,node) = x_constView[solDOFManager.getLocalDOF(lnode, this->offset)];
     }
   }
 }
@@ -230,9 +223,12 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = workset.wsElNodeEqID;
   Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
 
+  TEUCHOS_TEST_FOR_EXCEPTION (!workset.disc->getLayeredMeshGlobalNumbering().is_null(),
+    std::runtime_error, "Error! No layered numbering in the mesh.\n");
+
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshGlobalNumbering();
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-  const auto& indexer = workset.disc->getOverlapGlobalLocalIndexer();
+  const auto& indexer = *workset.disc->getOverlapGlobalLocalIndexer();
 
   int numLayers = layeredMeshNumbering.numLayers;
   this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
@@ -250,7 +246,7 @@ evaluateFields(typename Traits::EvalData workset)
       GO gdof = solDOFManager.getGlobalDOF(gnode, this->offset);
       typename PHAL::Ref<ScalarT>::type val = (this->field2D)(cell,node);
 
-      LO ldof = indexer->getLocalElement(gdof);
+      LO ldof = indexer.getLocalElement(gdof);
       val = FadType(val.size(), x_constView[ldof]);
       val.setUpdateValue(!workset.ignore_residual);
       val.fastAccessDx(firstunk) = workset.j_coeff;
