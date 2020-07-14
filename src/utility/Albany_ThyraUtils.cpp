@@ -593,7 +593,6 @@ void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
     auto returned_val = tmat->sumIntoLocalValues(lrow,indices,values);
-    //std::cout << "IKT returned_val, indices size = " << returned_val << ", " << indices.size() << std::endl; 
     ALBANY_ASSERT(returned_val != Teuchos::OrdinalTraits<LO>::invalid() ,
                   "Error: Tpetra's sumIntoLocalValues returned -1, meaning linear op is not fillActive\n"
                   "or does not have an underlying non-null static graph!\n");

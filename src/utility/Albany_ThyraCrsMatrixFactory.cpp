@@ -115,6 +115,8 @@ void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::Ar
   const GO max_safe_gid = Teuchos::OrdinalTraits<GO>::max();
 #endif
 
+  ALBANY_EXPECT (createGlobalLocalIndexer(m_ov_range_vs)->isLocallyOwnedElement(row),
+                 "Error! Row " + std::to_string(row) + " is not in the overlap range map.\n");
   auto& row_indices = m_graph->temp_graph[row];
   const int size = indices.size();
   for (int i=0; i<size; ++i) {
