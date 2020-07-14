@@ -24,7 +24,7 @@ public:
               const GO maxGlobalNodeID, const DiscType discType) {
     m_numComponents = numComponents;
     m_numLocalNodes = numLocalNodes;
-    m_maxGlobalNodeID = maxGlobalNodeID;
+    m_maxGlobalNodeIDp1 = maxGlobalNodeID + 1;
     m_discType = discType;
   }
 
@@ -47,7 +47,7 @@ public:
     if (m_discType == DiscType::Interleaved) {
       return node*m_numComponents + icomp;
     } else {
-      return node + m_numLocalNodes*icomp;
+      return node + m_maxGlobalNodeIDp1*icomp;
     }
   }
 
@@ -58,7 +58,7 @@ public:
 private:
   int       m_numComponents;
   LO        m_numLocalNodes;
-  GO        m_maxGlobalNodeID;
+  GO        m_maxGlobalNodeIDp1;
   DiscType  m_discType;
 };
 
