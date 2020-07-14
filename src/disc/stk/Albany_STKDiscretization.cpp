@@ -1245,7 +1245,13 @@ STKDiscretization::computeGraphs()
         m_jac_factory->insertGlobalIndices(row, colAV);
       }
 
-      // Number of side sets this eq is defined on
+      // Do a first loop on all sideset, to establish whether column couplling is allowed.
+      // We store the sides while we're at it, to avoid redoing it later
+      // Note: column coupling means that 1) the mesh is layered, and 2) the ss eqn is
+      //       defined ONLY on side sets at the top or bottom.
+      bool allowColumnCoupling = !lmn.is_null();
+      std::map<std::string,std::vector<stk::mesh::Entity>> all_sides;
+      GO baseId, iLayer;
       for (const auto& ss_name : it.second) {
         stk::mesh::Part& part =
             *stkMeshStruct->ssPartVec.find(ss_name)->second;
@@ -1255,11 +1261,22 @@ STKDiscretization::computeGraphs()
             stk::mesh::Selector(part) &
             stk::mesh::Selector(metaData.locally_owned_part());
 
-        std::vector<stk::mesh::Entity> sides;
+        auto& sides = all_sides[ss_name];
         stk::mesh::get_selected_entities(
             select_owned_in_sspart,
             bulkData.buckets(metaData.side_rank()),
             sides);  // store the result in "sides"
+
+        if (allowColumnCoupling && sides.size()>0) {
+          const auto& side = sides[0];
+          const auto& node = bulkData.begin_nodes(side)[0];
+          lmn->getIndices(stk_gid(node),baseId,iLayer);
+          allowColumnCoupling = (iLayer==0 || iLayer==lmn->numLayers);
+        }
+      }
+
+      for (const auto& ss_name : it.second) {
+        const auto& sides = all_sides[ss_name];
 
         // Loop on all the sides of this sideset
         for (const auto& sidee : sides) {
@@ -1280,10 +1297,12 @@ STKDiscretization::computeGraphs()
               //       introduces pointless nonzeros if such coupling is not needed.
               //       The only way to fix this would be to access more information from the problem.
               //       Until then, couple with *all* equations, over the whole column.
-              if (!lmn.is_null()) {
+              if (allowColumnCoupling) {
                 // It's a layered mesh. Assume the worst, and add coupling of the whole column
+                // with all the equations.
+                lmn->getIndices(stk_gid(colNode),baseId,iLayer);
                 for (int il=0; il<=lmn->numLayers; ++il) {
-                  const GO node3d = lmn->getId(stk_gid(colNode),il);
+                  const GO node3d = lmn->getId(baseId,il);
                   for (unsigned int m=0; m<neq; ++m) {
                     col = dofMgr.getGlobalDOF(node3d, m);
                     m_jac_factory->insertGlobalIndices(
@@ -1293,8 +1312,8 @@ STKDiscretization::computeGraphs()
                   }
                 }
               } else {
-                // We couple this equation with all global equations,
-                // as well as all equations defined on this sideset.
+                // Not a layered mesh, or the eqn is not defined on top/bottom.
+                // Couple locally with volume eqn and the other ss eqn on this sideSet
                 for (auto m : globalEqns) {
                   col = dofMgr.getGlobalDOF(stk_gid(colNode), m);
                   m_jac_factory->insertGlobalIndices(
