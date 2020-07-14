@@ -88,8 +88,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      GO base_id, ilevel;
-      layeredMeshNumbering.getIndices(elNodeID[node], base_id,  ilevel);
+      const GO ilevel = layeredMeshNumbering.getLayerId(elNodeID[node]);
       MeshScalarT h;
       if(haveThickness) {
         h = std::max(H(cell,node), MeshScalarT(minH));
@@ -178,8 +177,7 @@ evaluateFields(typename Traits::EvalData workset)
     // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      GO base_id, ilevel;
-      layeredMeshNumbering.getIndices(elNodeID[node], base_id,  ilevel);
+      const GO ilevel = layeredMeshNumbering.getLayerId(elNodeID[node]);
       MeshScalarT h = H(cell,node);
       MeshScalarT top = topSurface(cell,node);
       typename PHAL::Ref<MeshScalarT>::type vals = topSurfaceOut(cell,node);

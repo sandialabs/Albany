@@ -134,10 +134,10 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       //we only consider elements on the top.
-      GO baseId, ilayer;
+      GO baseId;
       for (int i = 0; i < numSideNodes; ++i) {
         const std::size_t node = side.node[i];
-        layeredMeshNumbering.getIndices(elNodeID[node], baseId, ilayer);
+        baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
         for(int il=0; il<numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
@@ -210,10 +210,10 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
       std::vector<double> velx(this->numNodes,0), vely(this->numNodes,0);
 
-      GO baseId, ilayer;
+      GO baseId;
       for (int i = 0; i < numSideNodes; ++i) {
         const std::size_t node = side.node[i];
-        layeredMeshNumbering.getIndices(elNodeID[node], baseId, ilayer);
+        baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
         for(int il=0; il<numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
@@ -292,10 +292,10 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       //we only consider elements on the top.
-      GO baseId, ilayer;
+      GO baseId;
       for (int i = 0; i < numSideNodes; ++i) {
         const std::size_t node = side.node[i];
-        layeredMeshNumbering.getIndices(elNodeID[node], baseId, ilayer);
+        baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
         for(int il=0; il<numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
@@ -371,10 +371,10 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       //we only consider elements on the top.
-      GO baseId, ilayer;
+      GO baseId;
       for (int i = 0; i < numSideNodes; ++i) {
         const std::size_t node = side.node[i];
-        layeredMeshNumbering.getIndices(elNodeID[node], baseId, ilayer);
+        baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
         for(int il=0; il<numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
