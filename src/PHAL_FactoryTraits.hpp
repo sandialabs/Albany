@@ -22,7 +22,6 @@
 #include "PHAL_DirichletCoordinateFunction.hpp"
 #include "PHAL_DirichletField.hpp"
 #include "PHAL_SDirichletField.hpp"
-#include "PHAL_DirichletOffNodeSet.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_GatherSolution.hpp"
@@ -57,23 +56,21 @@ namespace PHAL {
     static const int id_dirichlet_aggregator           =  1;
     static const int id_dirichlet_coordinate_function  =  2;
     static const int id_dirichlet_field                =  3;
-    static const int id_dirichlet_off_nodeset          =  4; // To handle equations on side set (see PHAL_DirichletOffNodeSet)
-    static const int id_timedep_bc                     =  5; 
-    static const int id_timedep_sdbc                   =  6; 
-    static const int id_sdbc                           =  7;
-    static const int id_sdirichlet_field               =  8;
-    static int const id_expreval_sdbc                  =  9; // Only if ALBANY_STK_EXPR_EVAL is ON
+    static const int id_timedep_bc                     =  4; 
+    static const int id_timedep_sdbc                   =  5; 
+    static const int id_sdbc                           =  6;
+    static const int id_sdirichlet_field               =  7;
+    static int const id_expreval_sdbc                  =  8; // Only if ALBANY_STK_EXPR_EVAL is ON
 
     typedef Sacado::mpl::vector<
         PHAL::Dirichlet<_,Traits>,                //  0
         PHAL::DirichletAggregator<_,Traits>,      //  1
         PHAL::DirichletCoordFunction<_,Traits>,   //  2
         PHAL::DirichletField<_,Traits>,           //  3
-        PHAL::DirichletOffNodeSet<_,Traits>,      //  4
-        PHAL::TimeDepDBC<_, Traits>,              //  5
-        PHAL::TimeDepSDBC<_, Traits>,             //  6
-        PHAL::SDirichlet<_, Traits>,              //  7
-        PHAL::SDirichletField<_, Traits>          //  8
+        PHAL::TimeDepDBC<_, Traits>,              //  4
+        PHAL::TimeDepSDBC<_, Traits>,             //  5
+        PHAL::SDirichlet<_, Traits>,              //  6
+        PHAL::SDirichletField<_, Traits>          //  7
 #ifdef ALBANY_STK_EXPR_EVAL
         ,
         PHAL::ExprEvalSDBC<_, Traits>            //   9

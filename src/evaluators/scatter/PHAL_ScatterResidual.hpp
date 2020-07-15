@@ -200,6 +200,8 @@ public:
   void operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const;
 
 private:
+  void evaluateFieldsDevice(typename Traits::EvalData d);
+  void evaluateFieldsHost(typename Traits::EvalData d);
   int neq, nunk, numDims;
   Albany::DeviceLocalMatrix<ST> Jac_kokkos;
 
@@ -275,6 +277,7 @@ private:
 };
 
 // **************************************************************
-}
 
-#endif
+} // namespace PHAL
+
+#endif // PHAL_SCATTER_RESIDUAL_HPP

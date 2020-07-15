@@ -13,6 +13,7 @@
 
 #include "PHAL_ScatterResidual.hpp"
 #include "Albany_Macros.hpp"
+#include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
@@ -203,7 +204,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Get map for local data structures
   nodeID = workset.wsElNodeEqID;
 
-  // Get Tpetra vector view from a specific device
+  // Get device data
   f_kokkos = Albany::getNonconstDeviceData(f);
 
   if (this->tensorRank == 0) {
@@ -489,61 +490,22 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Teuchos::RCP<Thyra_Vector>   f   = workset.f;
-  Teuchos::RCP<Thyra_LinearOp> Jac = workset.Jac;
-
-  auto nodeID = workset.wsElNodeEqID;
-  const bool loadResid = Teuchos::nonnull(f);
-  Teuchos::Array<LO> col;
-  const int neq = nodeID.extent(2);
-  const int nunk = neq*this->numNodes;
-  col.resize(nunk);
-  int numDims = 0;
-  if (this->tensorRank==2) {
-    numDims = this->valTensor.extent(2);
-  }
-  Teuchos::ArrayRCP<ST> f_nonconstView;
-  if (loadResid) {
-    f_nonconstView = Albany::getNonconstLocalData(f);
-  }
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    // Local Unks: Loop over nodes in element, Loop over equations per node
-    for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
-      for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-        col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
-      }
-    }
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT const>::type
-          valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
-                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                    this->valTensor(cell,node, eq/numDims, eq%numDims));
-        const LO row = nodeID(cell,node,this->offset + eq);
-        if (loadResid) {
-          f_nonconstView[row] += valptr.val();
-        }
-        // Check derivative array is nonzero
-        if (valptr.hasFastAccess()) {
-          if (workset.is_adjoint) {
-            // Sum Jacobian transposed
-            for (unsigned int lunk = 0; lunk < nunk; lunk++)
-              Albany::addToLocalRowValues(Jac,
-                col[lunk], Teuchos::arrayView(&row, 1),
-                Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
-          } else {
-            // Sum Jacobian entries all at once
-            Albany::addToLocalRowValues(Jac,
-              row, col, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
-          }
-        } // has fast access
-      }
-    }
-  }
-
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  const bool use_device = Albany::build_type()==Albany::BuildType::Tpetra;
 #else
+  const bool use_device = false;
+#endif
+  if (use_device) {
+    evaluateFieldsDevice(workset);
+  } else {
+    evaluateFieldsHost(workset);
+  }
+}
+
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
+evaluateFieldsDevice(typename Traits::EvalData workset)
+{
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
 #endif
@@ -615,7 +577,64 @@ evaluateFields(typename Traits::EvalData workset)
   long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
   std::cout<< "Scatter Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
 #endif 
-#endif
+}
+
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
+evaluateFieldsHost(typename Traits::EvalData workset)
+{
+  Teuchos::RCP<Thyra_Vector>   f   = workset.f;
+  Teuchos::RCP<Thyra_LinearOp> Jac = workset.Jac;
+
+  auto nodeID = workset.wsElNodeEqID;
+  const bool loadResid = Teuchos::nonnull(f);
+  Teuchos::Array<LO> col;
+  neq = nodeID.extent(2);
+  nunk = neq*this->numNodes;
+  col.resize(nunk);
+  numDims = 0;
+  if (this->tensorRank==2) {
+    numDims = this->valTensor.extent(2);
+  }
+  Teuchos::ArrayRCP<ST> f_nonconstView;
+  if (loadResid) {
+    f_nonconstView = Albany::getNonconstLocalData(f);
+  }
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    // Local Unks: Loop over nodes in element, Loop over equations per node
+    for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+      for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+        col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
+      }
+    }
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+        typename PHAL::Ref<ScalarT const>::type
+          valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                    this->valTensor(cell,node, eq/numDims, eq%numDims));
+        const LO row = nodeID(cell,node,this->offset + eq);
+        if (loadResid) {
+          f_nonconstView[row] += valptr.val();
+        }
+        // Check derivative array is nonzero
+        if (valptr.hasFastAccess()) {
+          if (workset.is_adjoint) {
+            // Sum Jacobian transposed
+            for (unsigned int lunk = 0; lunk < nunk; lunk++)
+              Albany::addToLocalRowValues(Jac,
+                col[lunk], Teuchos::arrayView(&row, 1),
+                Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
+          } else {
+            // Sum Jacobian entries all at once
+            Albany::addToLocalRowValues(Jac,
+              row, col, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
+          }
+        } // has fast access
+      }
+    }
+  }
 }
 
 // **********************************************************************
@@ -791,13 +810,11 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (trans) {
     const int neq = nodeID.extent(2);
-    const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
     auto overlapVS = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
-    auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-    auto node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
     auto indexer = Albany::createGlobalLocalIndexer(overlapVS);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
@@ -805,11 +822,8 @@ evaluateFields(typename Traits::EvalData workset)
         workset.local_Vp[cell];
       const int num_deriv = this->numNodes;//local_Vp.size()/this->numFields;
       for (int i=0; i<num_deriv; i++) {
-        const LO lnodeId = node_indexer->getLocalElement(elNodeID[i]);
-        LO base_id, ilayer;
-        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-        const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const GO ginode = node_indexer->getGlobalElement(inode);
+        const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[i]);
+        const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
 
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;

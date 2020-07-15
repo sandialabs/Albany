@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef BLOCKED_DISCRETIZATION_HPP
-#define BLOCKED_DISCRETIZATION_HPP
+#ifndef ALBANY_BLOCKED_DISCRETIZATION_HPP
+#define ALBANY_BLOCKED_DISCRETIZATION_HPP
 
 #include <utility>
 #include <vector>
@@ -23,12 +23,13 @@ namespace Albany {
 // This BlockedDiscretization class implements multiple discretization blocks and serves them up as Thyra_ProductVectors.
 // In this implementation, each block has to be the same, and the discretization for each block is defined here
 
-using BlckDisc = STKDiscretization;
-
 class BlockedDiscretization : public AbstractDiscretization
 {
+public:
+  // The type of discretization stored internally. For now, only STK.
+  // TODO: generalize
+  using disc_type = STKDiscretization;
 
- public:
   //! Constructor
   BlockedDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
@@ -39,7 +40,7 @@ class BlockedDiscretization : public AbstractDiscretization
           std::map<int, std::vector<std::string>>());
 
   //! Destructor
-  virtual ~BlockedDiscretization();
+  virtual ~BlockedDiscretization() = default;
 
   void
   printConnectivity() const;
@@ -48,25 +49,25 @@ class BlockedDiscretization : public AbstractDiscretization
   Teuchos::RCP<const Thyra_VectorSpace>
   getNodeVectorSpace() const
   {
-    return BlockDiscretization[0]->getNodeVectorSpace();
+    return m_blocks[0]->getNodeVectorSpace();
   }
   Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapNodeVectorSpace() const
   {
-    return BlockDiscretization[0]->getOverlapNodeVectorSpace();
+    return m_blocks[0]->getOverlapNodeVectorSpace();
   }
 
   //! Get solution DOF vector space (owned and overlapped).
   Teuchos::RCP<const Thyra_VectorSpace>
   getVectorSpace() const
   {
-    return BlockDiscretization[0]->getVectorSpace();
+    return m_blocks[0]->getVectorSpace();
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapVectorSpace() const
   {
-    return BlockDiscretization[0]->getOverlapVectorSpace();
+    return m_blocks[0]->getOverlapVectorSpace();
   }
 
   //! Get Field node vector space (owned and overlapped)
@@ -203,19 +204,19 @@ class BlockedDiscretization : public AbstractDiscretization
   const std::vector<IDArray>&
   getElNodeEqID(const std::string& field_name) const
   {
-    return BlockDiscretization[0]->getElNodeEqID(field_name);
+    return m_blocks[0]->getElNodeEqID(field_name);
   }
 
   const NodalDOFManager&
   getDOFManager(const std::string& field_name) const
   {
-    return BlockDiscretization[0]->getDOFManager(field_name);
+    return m_blocks[0]->getDOFManager(field_name);
   }
 
   const NodalDOFManager&
   getOverlapDOFManager(const std::string& field_name) const
   {
-    return BlockDiscretization[0]->getOverlapDOFManager(field_name);
+    return m_blocks[0]->getOverlapDOFManager(field_name);
   }
 
   //! Retrieve coodinate vector (num_used_nodes * 3)
@@ -337,26 +338,10 @@ class BlockedDiscretization : public AbstractDiscretization
   int
   getNumEq() const
   {
-    return BlockDiscretization[0]->getNumEq();
+    return m_blocks[0]->getNumEq();
   }
 
-  //! Locate nodal dofs in non-overlapping vectors using local indexing
-  int
-  getOwnedDOF(const int inode, const int eq) const;
-
-  //! Locate nodal dofs in overlapping vectors using local indexing
-  int
-  getOverlapDOF(const int inode, const int eq) const;
-
-  //! Get global id of the stk entity
-  GO
-  gid(const stk::mesh::Entity entity) const;
-
-  //! Locate nodal dofs using global indexing
-  GO
-  getGlobalDOF(const GO inode, const int eq) const;
-
-  Teuchos::RCP<LayeredMeshNumbering<LO>>
+  Teuchos::RCP<LayeredMeshNumbering<GO>>
   getLayeredMeshNumbering() const
   {
     return stkMeshStruct->layered_mesh_numbering;
@@ -365,12 +350,12 @@ class BlockedDiscretization : public AbstractDiscretization
   const stk::mesh::MetaData&
   getSTKMetaData() const
   {
-    return BlockDiscretization[0]->getSTKMetaData();
+    return m_blocks[0]->getSTKMetaData();
   }
   const stk::mesh::BulkData&
   getSTKBulkData() const
   {
-    return BlockDiscretization[0]->getSTKBulkData();
+    return m_blocks[0]->getSTKBulkData();
   }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
@@ -381,13 +366,16 @@ class BlockedDiscretization : public AbstractDiscretization
   Teuchos::RCP<Thyra_MultiVector>
   getBlockedSolutionMV(const bool overlapped = false) const;
 
-  void
-  getField(Thyra_MultiVector& field_vector, const std::string& field_name) const;
-  void
-  setField(
-      const Thyra_MultiVector& field_vector,
+  void getField (Thyra_Vector& field_vector, const std::string& field_name) const {
+    return m_blocks[0]->getField(field_vector, field_name);
+  }
+
+  void setField(
+      const Thyra_Vector& field_vector,
       const std::string&  field_name,
-      const bool          overlapped = false);
+      const bool          overlapped = false) {
+    m_blocks[0]->setField(field_vector, field_name, overlapped);
+  }
 
   //! used when NetCDF output on a latitude-longitude grid is requested.
   // Each struct contains a latitude/longitude index and it's parametric
@@ -503,7 +491,7 @@ class BlockedDiscretization : public AbstractDiscretization
 
  private:
 
-  Teuchos::Array<Teuchos::RCP<BlckDisc> > BlockDiscretization;
+  Teuchos::Array<Teuchos::RCP<disc_type> > m_blocks;
 
   Teuchos::RCP<ThyraBlockedCrsMatrixFactory> nodalMatrixFactory;
 
@@ -511,4 +499,4 @@ class BlockedDiscretization : public AbstractDiscretization
 
 }  // namespace Albany
 
-#endif  // BLOCKED_DISCRETIZATION_HPP
+#endif  // ALBANY_BLOCKED_DISCRETIZATION_HPP

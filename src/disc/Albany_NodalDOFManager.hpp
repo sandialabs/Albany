@@ -9,32 +9,57 @@
 
 #include "Albany_MeshSpecs.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
+#include "Albany_ThyraTypes.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
+
+#include "Teuchos_RCP.hpp"
 
 namespace Albany {
 
 class NodalDOFManager {
 public:
-  NodalDOFManager() :
-    _numComponents(0), _numLocalDOF(0), _numGlobalDOF(0), _interleaved(DiscType::Interleaved){};
+  NodalDOFManager ()  = default;
 
-  void setup(int numComponents, LO numLocalDOF, GO numGlobalDOF, DiscType interleaved = DiscType::Interleaved) {
-    _numComponents = numComponents;
-    _numLocalDOF = numLocalDOF;
-    _numGlobalDOF = numGlobalDOF;
-    _interleaved = interleaved;
+  void setup (const int numComponents, const LO numLocalNodes,
+              const GO maxGlobalNodeID, const DiscType discType) {
+    m_numComponents = numComponents;
+    m_numLocalNodes = numLocalNodes;
+    m_maxGlobalNodeIDp1 = maxGlobalNodeID + 1;
+    m_discType = discType;
   }
 
-  inline LO getLocalDOF(LO inode, int icomp) const
-    { return (_interleaved == DiscType::Interleaved) ? inode*_numComponents + icomp : inode + _numLocalDOF*icomp; }
-  inline GO getGlobalDOF(GO node, int icomp) const
-    { return (_interleaved == DiscType::Interleaved) ? node *_numComponents + icomp : node + _numGlobalDOF*icomp; }
-  int numComponents() const {return _numComponents;}
+  void setup (const int numComponents, const Teuchos::RCP<const Thyra_VectorSpace>& node_vs,
+              const DiscType discType) {
+    const auto indexer = createGlobalLocalIndexer(node_vs);
+    const int numLocalNodes = indexer->getNumLocalElements();
+    const int maxGlobalGID  = indexer->getMaxGlobalGID();
+    setup(numComponents,numLocalNodes,maxGlobalGID,discType);
+  }
+
+  inline LO getLocalDOF(LO inode, int icomp) const {
+    if (m_discType == DiscType::Interleaved) {
+      return inode*m_numComponents + icomp;
+    } else {
+      return inode + m_numLocalNodes*icomp;
+    }
+  }
+  inline GO getGlobalDOF(GO node, int icomp) const {
+    if (m_discType == DiscType::Interleaved) {
+      return node*m_numComponents + icomp;
+    } else {
+      return node + m_maxGlobalNodeIDp1*icomp;
+    }
+  }
+
+  int numComponents() const {
+    return m_numComponents;
+  }
 
 private:
-  int _numComponents;
-  LO  _numLocalDOF;
-  GO  _numGlobalDOF;
-  DiscType _interleaved;
+  int       m_numComponents;
+  LO        m_numLocalNodes;
+  GO        m_maxGlobalNodeIDp1;
+  DiscType  m_discType;
 };
 
 } // namespace Albany

@@ -174,6 +174,7 @@ if (ALBANY_EPETRA)
     utility/Albany_CombineAndScatterManagerEpetra.cpp
   )
   list (APPEND HEADERS
+    utility/Albany_Epetra_FECrsMatrix.hpp
     utility/Albany_EpetraThyraUtils.hpp
     utility/Albany_CombineAndScatterManagerEpetra.hpp
     utility/Albany_GlobalLocalIndexerEpetra.hpp
@@ -300,7 +301,6 @@ list(APPEND SOURCES
   disc/stk/Albany_OrdinarySTKFieldContainer.cpp
   disc/stk/Albany_SideSetSTKMeshStruct.cpp
   disc/stk/Albany_STKDiscretization.cpp
-  disc/stk/Albany_STKDiscretizationStokesH.cpp
   disc/stk/Albany_STKFieldContainerHelper.cpp
   disc/stk/Albany_STKNodeFieldContainer.cpp
   disc/stk/Albany_STKNodeSharing.cpp
@@ -325,7 +325,6 @@ list (APPEND HEADERS
   disc/stk/Albany_OrdinarySTKFieldContainer_Def.hpp
   disc/stk/Albany_SideSetSTKMeshStruct.hpp
   disc/stk/Albany_STKDiscretization.hpp
-  disc/stk/Albany_STKDiscretizationStokesH.hpp
   disc/stk/Albany_STKFieldContainerHelper.hpp
   disc/stk/Albany_STKNodeFieldContainer.hpp
   disc/stk/Albany_STKNodeFieldContainer_Def.hpp
@@ -363,7 +362,6 @@ list (APPEND SOURCES
   evaluators/bc/PHAL_DirichletCoordinateFunction.cpp
   evaluators/bc/PHAL_DirichletField.cpp
   evaluators/bc/PHAL_SDirichletField.cpp
-  evaluators/bc/PHAL_DirichletOffNodeSet.cpp
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/bc/PHAL_Neumann.cpp
   evaluators/gather/PHAL_GatherAuxData.cpp
@@ -399,6 +397,7 @@ list (APPEND SOURCES
   evaluators/response/QCAD_ResponseFieldIntegral.cpp
   evaluators/response/QCAD_ResponseFieldValue.cpp
   evaluators/scatter/PHAL_ScatterResidual.cpp
+  evaluators/scatter/PHAL_ScatterSideEqnResidual.cpp
   evaluators/scatter/PHAL_ScatterScalarNodalParameter.cpp
   evaluators/scatter/PHAL_ScatterScalarResponse.cpp
   evaluators/scatter/PHAL_SeparableScatterScalarResponse.cpp
@@ -451,8 +450,6 @@ list (APPEND HEADERS
   evaluators/bc/PHAL_DirichletField_Def.hpp
   evaluators/bc/PHAL_SDirichletField.hpp
   evaluators/bc/PHAL_SDirichletField_Def.hpp
-  evaluators/bc/PHAL_DirichletOffNodeSet.hpp
-  evaluators/bc/PHAL_DirichletOffNodeSet_Def.hpp
   evaluators/bc/PHAL_Dirichlet_Def.hpp
   evaluators/bc/PHAL_TimeDepDBC_Def.hpp
   evaluators/bc/PHAL_TimeDepSDBC_Def.hpp
@@ -528,6 +525,8 @@ list (APPEND HEADERS
   evaluators/response/QCAD_ResponseFieldValue_Def.hpp
   evaluators/scatter/PHAL_ScatterResidual.hpp
   evaluators/scatter/PHAL_ScatterResidual_Def.hpp
+  evaluators/scatter/PHAL_ScatterSideEqnResidual.hpp
+  evaluators/scatter/PHAL_ScatterSideEqnResidual_Def.hpp
   evaluators/scatter/PHAL_ScatterScalarNodalParameter.hpp
   evaluators/scatter/PHAL_ScatterScalarNodalParameter_Def.hpp
   evaluators/scatter/PHAL_ScatterScalarResponse.hpp

@@ -4,11 +4,6 @@
 #include "Teuchos_RCP.hpp"
 #include "Albany_ThyraTypes.hpp"
 
-#include "Albany_TpetraThyraUtils.hpp"
-#include "Albany_EpetraThyraUtils.hpp"
-
-#include <set>
-
 namespace Albany {
 
 /*
@@ -29,32 +24,37 @@ namespace Albany {
 
 struct ThyraCrsMatrixFactory {
 
-  // Create an empty graph, that needs to be filled later
+  // Prepares the factory for the creation of a graph with given domain/range
+  // vector spaces. Off-rank rows insertion is not allowed.
+  ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
+                         const Teuchos::RCP<const Thyra_VectorSpace> range_vs);
+
+  // Prepares the factory for the creation of a graph with given domain/range vector spaces.
+  // If ov_range_vs does not coincide with range_vs, we will assume FE assembly,
+  // meaning entering off-rank rows is allowed. In this case, we will check that
+  // domain_vs and range_vs are indeed one-to-one.
   ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
                          const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
-                         const int nonzeros_per_row=-1); //currently not used
+                         const Teuchos::RCP<const Thyra_VectorSpace> ov_domain_vs,
+                         const Teuchos::RCP<const Thyra_VectorSpace> ov_range_vs);
 
-  // Create a graph from an overlapped one
-  ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
-                         const Teuchos::RCP<const Thyra_VectorSpace> range_vs,
-                         const Teuchos::RCP<const ThyraCrsMatrixFactory> overlap_src);
-
-  // Inserts global indices in a temporary local graph. 
-  // Indices that are not owned by callig processor are ignored
-  // The actual graph is created when FillComplete is called
+  // Inserts global indices in a temporary local structure. 
+  // The actual graph is created when fillComplete is called
   void insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& indices);
 
-  // Creates the CrsGraph,
-  // inserting indices from the temporary local graph,
-  // and calls fillComplete.
+  // Fills the actual graph optimizing storage (exact count of nnz per row).
   void fillComplete ();
-
-  Teuchos::RCP<const Thyra_VectorSpace> getDomainVectorSpace () const { return m_domain_vs; }
-  Teuchos::RCP<const Thyra_VectorSpace> getRangeVectorSpace  () const { return m_range_vs; }
 
   bool is_filled () const { return m_filled; }
 
-  Teuchos::RCP<Thyra_LinearOp>  createOp () const;
+  // Creates an operator after the graph has been created
+  //  PreCondition: is_filled() == true
+  // Notes:
+  //  - If ignoreNonLocalRows is true, the operator's graph will only contain
+  //    rows corresponding to range_vs. Only relevant if row_vs != range_vs
+  //  - The operator is guaranteed to have a static filled graph, have its
+  //    storage allocated (and optimized, if possible), and all entries set to 0.
+  Teuchos::RCP<Thyra_LinearOp>  createOp (const bool ignoreNonLocalRows = false) const;
 
 private:
 
@@ -65,16 +65,11 @@ private:
 
   Teuchos::RCP<const Thyra_VectorSpace> m_domain_vs;
   Teuchos::RCP<const Thyra_VectorSpace> m_range_vs;
+  Teuchos::RCP<const Thyra_VectorSpace> m_ov_domain_vs;
+  Teuchos::RCP<const Thyra_VectorSpace> m_ov_range_vs;
 
-#ifdef ALBANY_EPETRA
-  std::vector<std::set<Epetra_GO>> e_local_graph;
-  Teuchos::RCP<const Epetra_BlockMap> e_range;
-#endif
-
-  std::vector<std::set<Tpetra_GO>> t_local_graph;
-  Teuchos::RCP<const Tpetra_Map> t_range;
-
-  bool m_filled;
+  bool m_filled;   // Whether fill of the graph has happened
+  bool m_fe_crs;   // Whether row_vs and range_vs are the same
 };
 
 } // namespace Albany

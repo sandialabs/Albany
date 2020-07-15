@@ -62,7 +62,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   usePamgen = (params->get("Method","Exodus") == "Pamgen");
 
 
-  const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
   std::vector<std::string> entity_rank_names = stk::mesh::entity_rank_names();
 
   const Teuchos::MpiComm<int>* theComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
@@ -477,29 +476,36 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
     //Read info for layered mehes.
     bool hasLayeredStructure=true;
     std::vector<double> ltr;
-    int ordering, stride;
+    int ordering;
+    GO stride;
+    boost::any temp_any;
 
     std::string state_name = "layer_thickness_ratio";
-    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, ltr, false);
+    hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
     if(hasLayeredStructure) fieldContainer->getMeshVectorStates()[state_name] = ltr;
     state_name = "ordering";
-    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, ordering, false);
+    hasLayeredStructure &= mesh_data->get_global (state_name, ordering, false);
     if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
     state_name = "stride";
-    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, stride, false);
-    if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = stride;
+    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, stk::util::ParameterType::INT64, false);
+    if(hasLayeredStructure) {
+      stride = boost::any_cast<int64_t>(temp_any);
+      fieldContainer->getMeshScalarInteger64States()[state_name] = stride;
+    }
 
     if(hasLayeredStructure) {
       Teuchos::ArrayRCP<double> layerThicknessRatio(ltr.size());
-      for(int i=0; i< ltr.size(); ++i) layerThicknessRatio[i] = ltr[i];
-        this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<LO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
+      for(decltype(ltr.size()) i=0; i< ltr.size(); ++i) {
+        layerThicknessRatio[i] = ltr[i];
+      }
+      this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<GO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
     }
   }
   else
   {
     // We put all the fields as 'missing'
     const stk::mesh::FieldVector& fields = metaData->get_fields();
-    for (int i(0); i<fields.size(); ++i) {
+    for (decltype(fields.size()) i=0; i<fields.size(); ++i) {
 //      TODO, when compiler allows, replace following with this for performance: missing.emplace_back(fields[i],fields[i]->name());
         missing.push_back(stk::io::MeshField(fields[i],fields[i]->name()));
     }

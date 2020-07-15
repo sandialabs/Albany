@@ -69,10 +69,12 @@ evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
 
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  // const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
+    std::runtime_error, "Error! No layered numbering in the mesh.\n");
 
-  int numLayers = layeredMeshNumbering.numLayers;
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+
+  const int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
@@ -81,16 +83,12 @@ evaluateFields(typename Traits::EvalData workset)
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
   }
 
-  auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
+  const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    // const int neq = nodeID.extent(2);
-    // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
-      LO base_id, ilevel;
-      layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
+      const GO ilevel = layeredMeshNumbering.getLayerId(elNodeID[node]);
       MeshScalarT h;
       if(haveThickness) {
         h = std::max(H(cell,node), MeshScalarT(minH));
@@ -159,10 +157,12 @@ evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
 
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  // const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
+    std::runtime_error, "Error! No layered numbering in the mesh.\n");
 
-  int numLayers = layeredMeshNumbering.numLayers;
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+
+  const int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
@@ -170,17 +170,15 @@ evaluateFields(typename Traits::EvalData workset)
   for(int i=1; i<numLayers; ++i)
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
 
-  auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
+  const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     // const int neq = nodeID.extent(2); 
     // const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
-      LO base_id, ilevel;
-      layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
-     MeshScalarT h = H(cell,node);
+      const GO ilevel = layeredMeshNumbering.getLayerId(elNodeID[node]);
+      MeshScalarT h = H(cell,node);
       MeshScalarT top = topSurface(cell,node);
       typename PHAL::Ref<MeshScalarT>::type vals = topSurfaceOut(cell,node);
       typename PHAL::Ref<MeshScalarT>::type valb = bedTopoOut(cell,node);

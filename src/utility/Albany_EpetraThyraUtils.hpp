@@ -9,6 +9,9 @@
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "Epetra_CrsMatrix.h"
+#include "Epetra_FECrsMatrix.h"
+
+#include "Albany_Epetra_FECrsMatrix.hpp"
 
 // The type of an Epetra global id.
 // Epetra uses long long for their 64 bits integers and int for their 32 bits integers.
@@ -91,6 +94,12 @@ getEpetraMatrix (const Teuchos::RCP<Thyra_LinearOp>& lop,
 Teuchos::RCP<const Epetra_CrsMatrix>
 getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp>& lop,
                       const bool throw_if_not_epetra = true);
+
+// For insertion, we need the in-house EpetraFECrsMatrix (see header for why)
+Teuchos::RCP<EpetraFECrsMatrix>
+getEpetraFECrsMatrix (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                      const bool throw_if_not_epetra = true);
+
 
 // --- Conversion from references rather than RCPs --- //
 // Note: return pointers cause we want to allow failure,

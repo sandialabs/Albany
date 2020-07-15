@@ -17,6 +17,13 @@
 
 namespace Albany {
 
+enum class DiscType
+{
+  BlockedMono = 0,
+  Interleaved = 1,
+  BlockedDisc = 2
+};
+
 using NodeSetList      = std::map<std::string, std::vector<std::vector<int>>>;
 using NodeSetGIDsList  = std::map<std::string, std::vector<GO>>;
 using NodeSetCoordList = std::map<std::string, std::vector<double*>>;

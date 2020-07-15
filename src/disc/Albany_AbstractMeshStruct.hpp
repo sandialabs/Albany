@@ -64,6 +64,14 @@ struct LayeredMeshNumbering {
       column_id = id%stride;
     }
   }
+
+  T getColumnId (const T id) const {
+    return ordering==LayeredMeshOrdering::COLUMN ? id / stride : id % stride;
+  }
+
+  T getLayerId (const T id) const {
+    return ordering==LayeredMeshOrdering::COLUMN ? id % stride : id / stride;
+  }
 };
 
 struct AbstractMeshStruct {
@@ -94,7 +102,7 @@ struct AbstractMeshStruct {
 
     virtual msType meshSpecsType() = 0;
 
-    Teuchos::RCP<LayeredMeshNumbering<LO> > layered_mesh_numbering;
+    Teuchos::RCP<LayeredMeshNumbering<GO> > layered_mesh_numbering;
 
     Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
 

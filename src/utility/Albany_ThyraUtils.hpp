@@ -10,6 +10,9 @@
 // Get Kokkos types (for the 1d device view)
 #include "Albany_KokkosTypes.hpp"
 
+// Get DiscType
+#include "Albany_DiscretizationUtils.hpp"
+
 namespace Albany
 {
 
@@ -21,8 +24,6 @@ createLocallyReplicatedVectorSpace (const int size, const Teuchos::RCP<const Teu
 Teuchos::RCP<const Teuchos_Comm> getComm (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 Teuchos::Array<GO> getGlobalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                                        const Teuchos::ArrayView<const LO>& lids);
-Teuchos::Array<LO> getLocalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
-                                      const Teuchos::ArrayView<const GO>& gids);
 void getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                         const Teuchos::ArrayView<GO>& gids);
 LO getLocalSubdim( const Teuchos::RCP<const Thyra_VectorSpace>& vs);
@@ -33,10 +34,7 @@ Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace
 bool sameAs (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
              const Teuchos::RCP<const Thyra_VectorSpace>& vs2);
 
-// Remove a set of local components from a vector space
-Teuchos::RCP<const Thyra_VectorSpace>
-removeComponents (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
-                  const Teuchos::ArrayView<const LO>& local_components);
+bool isOneToOne (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
 // The complement of the above: the specified components are the ones to keep
 Teuchos::RCP<const Thyra_VectorSpace>
@@ -48,6 +46,11 @@ Teuchos::RCP<const Thyra_SpmdVectorSpace>
 createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
                    const Teuchos::ArrayView<const GO>& gids,
                    const GO globalDim = Teuchos::OrdinalTraits<GO>::invalid());
+
+// Create a vector VectorSpace from a scalar one.
+Teuchos::RCP<const Thyra_VectorSpace>
+createVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& scalar_vs,
+                   const int numComponents, const DiscType discType);
 
 // Intersects vectors spaces
 Teuchos::RCP<const Thyra_VectorSpace>
@@ -68,20 +71,16 @@ createVectorSpacesDifference (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
 // so we can abstract from the concrete linear algebra package, and rely
 // only on the Thyra interfaces.
 
+// In some places, we need to access information on the column indices
+// of the underlying sparse linear operator
 Teuchos::RCP<const Thyra_VectorSpace>
 getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
-Teuchos::RCP<const Thyra_VectorSpace>
-getRowSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
-
-std::size_t
-getNumEntriesInLocalRow (const Teuchos::RCP<const Thyra_LinearOp>& lop, const LO lrow);
-
 // Fill related helpers
-bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop);
-bool isFillComplete (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop);
+void beginFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop);
+void endFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop);
 
 // Entries manipulation helpers
 void assign (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST value);
@@ -96,47 +95,13 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                         const LO lrow,
                         const Teuchos::ArrayView<const LO> indices,
                         const Teuchos::ArrayView<const ST> values);
-void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                        const LO lrow,
-                        const Teuchos::ArrayView<const ST> values);
 
-int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const LO lrow,
                           const Teuchos::ArrayView<const LO> indices,
                           const Teuchos::ArrayView<const ST> values);
 
-int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                          const GO grow,
-                          const Teuchos::ArrayView<const GO> indices,
-                          const Teuchos::ArrayView<const ST> values);
-
-void replaceGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                         const GO gid,
-                         const Teuchos::ArrayView<const GO> indices,
-                         const Teuchos::ArrayView<const ST> values);
-
-void insertGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                         const GO grow,
-                         const Teuchos::ArrayView<const GO> cols,
-                         const Teuchos::ArrayView<const ST> values);
-
-int getGlobalMaxNumRowEntries (const Teuchos::RCP<const Thyra_LinearOp>& lop);
-
 void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val); 
-
-Teuchos::RCP<const Thyra_VectorSpace>
-createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs); 
-
-bool isStaticGraph(const Teuchos::RCP<Thyra_LinearOp>& lop);
-bool isStaticGraph(const Teuchos::RCP<const Thyra_LinearOp>& lop);
-
-Teuchos::RCP<const Thyra_LinearOp>
-buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
-                          const Teuchos::RCP<const Thyra_VectorSpace>& subspace);
-
-Teuchos::RCP<const Thyra_LinearOp>
-buildProlongationOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
-                           const Teuchos::RCP<const Thyra_VectorSpace>& subspace);
 
 // Math properties helpers
 double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop);
@@ -160,8 +125,6 @@ Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> getLocalData (const Thyra_MultiVe
 
 DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v);
 DeviceView1d<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v);
-
-int getNumVectors (const Teuchos::RCP<const Thyra_MultiVector>& mv);
 
 // This is just a utility routine, that mildly extend the update method of Thyra_Vector,
 // but does not have the complex signature of the linear_combination method of Thyra_Vector.

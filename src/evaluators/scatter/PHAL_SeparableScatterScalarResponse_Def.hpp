@@ -156,7 +156,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
 
   const int neq = workset.wsElNodeEqID.extent(2);
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
@@ -169,8 +169,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-    auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
+    auto ov_node_indexer = workset.disc->getOverlapNodeGlobalLocalIndexer();
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
@@ -182,13 +181,13 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
       for (std::size_t res = 0; res < this->global_response.size(); res++) {
         auto val = this->local_response(elem_LID, res);
-        LO base_id, ilayer;
+        GO base_id;
         for (int i = 0; i < numSideNodes; ++i) {
           std::size_t node = side.node[i];
-          const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
-          layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-          for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
-            const LO inode = layeredMeshNumbering.getId(base_id, il_col);
+          base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
+          for (GO il_col=0; il_col<numLayers+1; il_col++) {
+            const GO ginode = layeredMeshNumbering.getId(base_id, il_col);
+            const LO  inode = ov_node_indexer->getLocalElement(ginode);
             for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
               const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
               int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
@@ -331,12 +330,11 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = workset.wsElNodeEqID;
   int fieldLevel = level_it->second;
 
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   auto overlap_p_vs = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
-  auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-  auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
-  auto ov_p_indexer = Albany::createGlobalLocalIndexer(overlap_p_vs);
+  auto ov_node_indexer = workset.disc->getOverlapNodeGlobalLocalIndexer();
+  auto ov_p_indexer = workset.disc->getOverlapGlobalLocalIndexer(workset.dist_param_deriv_name);
 
   // Loop over cells in workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -347,11 +345,8 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Loop over nodes in cell
       for (int deriv=0; deriv<num_deriv; ++deriv) {
-        const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[deriv]);
-        LO base_id, ilayer;
-        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-        const LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const GO ginode = ov_node_indexer->getGlobalElement(inode);
+        const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[deriv]);
+        const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
         const LO row = ov_p_indexer->getLocalElement(ginode);
 
         // Set dg/dp

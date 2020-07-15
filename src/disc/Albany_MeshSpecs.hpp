@@ -7,6 +7,8 @@
 #ifndef ALBANY_MESH_SPECS_HPP
 #define ALBANY_MESH_SPECS_HPP
 
+#include "Albany_DiscretizationUtils.hpp"
+
 #include "Shards_CellTopologyData.h"
 #include "Intrepid2_Polylib.hpp"
 
@@ -24,13 +26,6 @@
 // This includes worksetSize, CellTopologyData, etc.
 
 namespace Albany {
-
-enum class DiscType
-{
-  BlockedMono = 0,
-  Interleaved = 1,
-  BlockedDisc = 2
-};
 
 struct MeshSpecsStruct
 {

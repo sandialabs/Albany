@@ -2,6 +2,7 @@
 #include "Albany_CommUtils.hpp"
 #include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_TpetraThyraTypes.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_Macros.hpp"
@@ -103,17 +104,6 @@ Teuchos::Array<GO> getGlobalElements  (const Teuchos::RCP<const Thyra_VectorSpac
   return gids;
 }
 
-Teuchos::Array<LO> getLocalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
-                                      const Teuchos::ArrayView<const GO>& gids)
-{
-  auto indexer = createGlobalLocalIndexer(vs);
-  Teuchos::Array<LO> lids(gids.size());
-  for (LO i=0; i<gids.size(); ++i) {
-    lids[i] = indexer->getLocalElement(gids[i]);
-  }
-  return lids;
-}
-
 void getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
                         const Teuchos::ArrayView<GO>& gids)
 {
@@ -164,54 +154,25 @@ bool sameAs (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
   TEUCHOS_UNREACHABLE_RETURN(false);
 }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-removeComponents (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
-                  const Teuchos::ArrayView<const LO>& local_components)
+bool isOneToOne (const Teuchos::RCP<const Thyra_VectorSpace>& vs)
 {
-  // Allow failure, since we don't know what the underlying linear algebra is
   auto tmap = getTpetraMap(vs,false);
   if (!tmap.is_null()) {
-    const LO num_node_lids = tmap->getNodeNumElements();
-    const LO num_reduced_node_lids = num_node_lids - local_components.size();
-    TEUCHOS_TEST_FOR_EXCEPTION(num_reduced_node_lids<0, std::logic_error, "Error in removeComponents! Cannot remove more components than are actually present.\n");
-    Teuchos::Array<Tpetra_GO> reduced_gids(num_reduced_node_lids);
-    for (LO lid=0,k=0; lid<num_node_lids; ++lid) {
-      if (std::find(local_components.begin(),local_components.end(),lid)==local_components.end()) {
-        reduced_gids[k] = tmap->getGlobalElement(lid);
-        ++k;
-      }
-    }
-
-    Tpetra::global_size_t inv_gs = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
-    Teuchos::RCP<const Tpetra_Map> reduced_map(new Tpetra_Map(inv_gs,reduced_gids().getConst(),tmap->getIndexBase(),tmap->getComm()));
-
-    return createThyraVectorSpace(reduced_map);
+    return tmap->isOneToOne();
   }
-
 #if defined(ALBANY_EPETRA)
   auto emap = getEpetraBlockMap(vs,false);
   if (!emap.is_null()) {
-    const LO num_node_lids = emap->NumMyElements();
-    const LO num_reduced_node_lids = num_node_lids - local_components.size();
-    TEUCHOS_TEST_FOR_EXCEPTION(num_reduced_node_lids<0, std::logic_error, "Error in removeComponents! Cannot remove more components than are actually present.\n");
-    Teuchos::Array<Epetra_GO> reduced_gids(num_reduced_node_lids);
-    for (LO lid=0,k=0; lid<num_node_lids; ++lid) {
-      if (std::find(local_components.begin(),local_components.end(),lid)==local_components.end()) {
-        reduced_gids[k] = emap->GID(lid);
-        ++k;
-      }
-    }
-
-    Teuchos::RCP<const Epetra_BlockMap> reduced_map(new Epetra_BlockMap(-1,reduced_gids().size(),reduced_gids.getRawPtr(),1,emap->IndexBase(),emap->Comm()));
-    return createThyraVectorSpace(reduced_map);
+    // We don't allow two vs with different linear algebra back ends
+    return emap->IsOneToOne();
   }
 #endif
 
   // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in removeComponents! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in sameAs! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
 
   // Silence compiler warning
-  TEUCHOS_UNREACHABLE_RETURN(Teuchos::null);
+  TEUCHOS_UNREACHABLE_RETURN(false);
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
@@ -300,6 +261,31 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
+createVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& scalar_vs,
+                   const int numComponents, const DiscType discType)
+{
+  if (numComponents==1) {
+    return scalar_vs;
+  }
+
+  auto scalar_gids = getGlobalElements(scalar_vs);
+  auto scalar_indexer = createGlobalLocalIndexer(scalar_vs);
+  const GO maxGlobalGID = scalar_indexer->getMaxGlobalGID();
+  const int numMyGids = scalar_indexer->getNumLocalElements();
+  NodalDOFManager mgr;
+  mgr.setup(numComponents,numMyGids,maxGlobalGID,discType);
+
+  Teuchos::Array<GO> indices(numMyGids*numComponents);
+  for (int i=0; i<numMyGids; ++i) {
+    for (int j=0; j<numComponents; ++j) {
+      indices[mgr.getLocalDOF(i,j)] = mgr.getGlobalDOF(scalar_gids[i],j);
+    }
+  }
+
+  return createVectorSpace(getComm(scalar_vs),indices);
+}
+
+Teuchos::RCP<const Thyra_VectorSpace>
 createVectorSpacesIntersection(const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
                                const Teuchos::RCP<const Thyra_VectorSpace>& vs2,
                                const Teuchos::RCP<const Teuchos_Comm>& comm)
@@ -362,105 +348,46 @@ getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop)
   return Teuchos::null;
 }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-getRowSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return createThyraVectorSpace(tmat->getRowMap());
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    Teuchos::RCP<const Epetra_BlockMap> row_map = Teuchos::rcpFromRef(emat->RowMap());
-    return createThyraVectorSpace(row_map);
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getRowSpace! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
-  // Dummy return value, to silence compiler warnings
-  return Teuchos::null;
-}
-
-std::size_t
-getNumEntriesInLocalRow (const Teuchos::RCP<const Thyra_LinearOp>& lop, const LO lrow)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->getNumEntriesInLocalRow(lrow);
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    return emat->NumMyEntries(lrow);
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getNumEntriesInLocalRow! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
-  // Dummy return value, to silence compiler warnings
-  return Teuchos::null;
-
-}
-
-
-bool isFillActive (const Teuchos::RCP<const Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->isFillActive();
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    return !emat->Filled();
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in isFillActive! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
-  // Dummy return value, to silence compiler warnings
-  return false;
-}
-
-bool isFillComplete (const Teuchos::RCP<const Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->isFillComplete();
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    return emat->Filled();
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in isFillComplete! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
-  // Dummy return value, to silence compiler warnings
-  return false;
-}
-
 void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
     tmat->resumeFill();
+    return;
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emat = getConstEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    // Nothing to do in Epetra. As long as you only need to change the values (not the graph),
+    // Epetra already let's you do it on a filled matrix
+    return;
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in resumeFill! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+void beginFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    // We're asking for FE assembly, so this *should* be a FE matrix
+    auto femat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(tmat,true);
+    femat->beginFill();
+
+    // Note: we 're-initialize' the linear op, cause it's the only way
+    //       to get the range/domain vector spaces to be consitent with
+    //       the matrix maps. Unfortunately, Thyra builds range/domain
+    //       vs of the LinearOp only at initialization time.
+    // TODO: This may be expensive. Consider having a FELinearOp class.
+    auto tlop = Teuchos::rcp_dynamic_cast<Thyra_TpetraLinearOp>(lop);
+    auto range  = createThyraVectorSpace(femat->getRangeMap());
+    auto domain = createThyraVectorSpace(femat->getDomainMap());
+    tlop->initialize(range,domain,tmat);
     return;
   }
 
@@ -489,8 +416,44 @@ void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop)
 #if defined(ALBANY_EPETRA)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
-    emat->FillComplete();
-    emat->OptimizeStorage();  // This allows to extract data with 'ExtractCrsDataPointers
+    // Epetra considers 'FillComplete' only in terms of the graph/storage.
+    // Since we use static graph, the matrix is already 'filled', so no
+    // action is needed here.
+    return;
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in fillComplete! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+void endFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    // We're asking for FE assembly, so this *should* be a FE matrix
+    auto femat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(tmat,true);
+    femat->endFill();
+
+    // Note: we 're-initialize' the linear op, cause it's the only way
+    //       to get the range/domain vector spaces to be consitent with
+    //       the matrix maps. Unfortunately, Thyra builds range/domain
+    //       vs of the LinearOp only at initialization time.
+    // TODO: This may be expensive. Consider having a FELinearOp class.
+    auto tlop = Teuchos::rcp_dynamic_cast<Thyra_TpetraLinearOp>(lop);
+    auto range  = createThyraVectorSpace(femat->getRangeMap());
+    auto domain = createThyraVectorSpace(femat->getDomainMap());
+    tlop->initialize(range,domain,tmat);
+    return;
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emat = getEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    // We're asking for FE assembly, so this *should* be a FE matrix
+    auto femat = Teuchos::rcp_dynamic_cast<EpetraFECrsMatrix>(emat, true);
+    femat->GlobalAssemble();
     return;
   }
 #endif
@@ -585,7 +548,8 @@ void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val)
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in scale! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 
-} 
+}
+
 void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                         const LO lrow,
                         Teuchos::Array<LO>& indices,
@@ -616,171 +580,68 @@ void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getLocalRowValues! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 
-int addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const LO lrow,
                           const Teuchos::ArrayView<const LO> indices,
                           const Teuchos::ArrayView<const ST> values)
 {
-  //The following is an integer error code, to be returned by this 
-  //routine if something doesn't go right.  0 means success, 1 means failure 
-  int integer_error_code = 0; 
+  // Sanity check
+  TEUCHOS_TEST_FOR_EXCEPTION (indices.size()!=values.size(), std::logic_error,
+      "Error! Input indices and values arrays have different lengths.\n");
+
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
     auto returned_val = tmat->sumIntoLocalValues(lrow,indices,values);
-    //std::cout << "IKT returned_val, indices size = " << returned_val << ", " << indices.size() << std::endl; 
-    ALBANY_ASSERT(returned_val != -1 , "Error: addToLocalRowValues returned -1, meaning linear op is not fillActive \n" 
-                       << "or does not have an underlying non-null static graph!\n"); 
-    //Tpetra's replaceLocalValues routine returns the number of indices for which values were actually replaced; the number of "correct" indices.
-    //This should be size of indices array.  Therefore if returned_val != indices.size() something went wrong 
-    if (returned_val != indices.size()) integer_error_code = 1; 
-    return integer_error_code; 
-  }
+    ALBANY_ASSERT(returned_val != Teuchos::OrdinalTraits<LO>::invalid() ,
+                  "Error: Tpetra's sumIntoLocalValues returned -1, meaning linear op is not fillActive\n"
+                  "or does not have an underlying non-null static graph!\n");
 
-#if defined(ALBANY_EPETRA)
-  auto emat = getEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    //Epetra's ReplaceMyValues routine returns integer error code, set to 0 if successful, set to 1 if one or more indices are not 
-    //associated with the calling processor.  We can just return that value for the Epetra case. 
-    integer_error_code = emat->SumIntoMyValues(lrow,indices.size(),values.getRawPtr(),indices.getRawPtr());
-    return integer_error_code;
-  }
-#endif
+    // Tpetra's routine returns the number of indices for which values were actually replaced; the number of "correct" indices.
+    // This should be size of the input array 'indices'.  If returned_val != indices.size() something went wrong.
+    // Note: if you see in the error that the returned value is 0, it might mean lrow is not a local row
 
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in addToLocalRowValues! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-}
-
-void insertGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                         const GO grow,
-                         const Teuchos::ArrayView<const GO> cols,
-                         const Teuchos::ArrayView<const ST> values)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    const Tpetra_GO tgrow = grow;
-    Teuchos::ArrayView<const Tpetra_GO> tcols(reinterpret_cast<const Tpetra_GO*>(cols.getRawPtr()),cols.size());
-    tmat->insertGlobalValues(tgrow, tcols, values); 
-    return; 
-  }
-#if defined(ALBANY_EPETRA)
-  auto emat = getEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    const Epetra_GO egrow = grow;
-    if (sizeof(GO)==sizeof(Epetra_GO)) {
-      Teuchos::ArrayView<const Epetra_GO> ecols(reinterpret_cast<const Epetra_GO*>(ecols.getRawPtr()),ecols.size());
-      emat->InsertGlobalValues(egrow, ecols.size(), values.getRawPtr(), ecols.getRawPtr());
-    }
-    else {
-      // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
-      Teuchos::Array<Epetra_GO> ecols(cols.size());
-      const GO max_safe_col = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
-      for (int i=0; i<cols.size(); ++i) {
-        ALBANY_EXPECT(cols[i]<=max_safe_col, "Error in insertGlobalValues! Input cols exceed Epetra_GO ranges.\n");
-        ecols[i] = static_cast<Epetra_GO>(cols[i]);
-      }
-      ALBANY_EXPECT(grow<=max_safe_col, "Error in insertGlobalValues! Input grow exceeds Epetra_GO ranges.\n");
-      (void) max_safe_col;
-      emat->InsertGlobalValues(egrow, ecols.size(), values.getRawPtr(), ecols.getRawPtr());
-    }
-    return; 
-  }
-#endif
-}
-
-void replaceGlobalValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                             const GO gid,
-                             const Teuchos::ArrayView<const GO> indices,
-                             const Teuchos::ArrayView<const ST> values)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    const Tpetra_GO tgid = gid;
-    Teuchos::ArrayView<const Tpetra_GO> tindices(reinterpret_cast<const Tpetra_GO*>(indices.getRawPtr()),indices.size());
-    tmat->replaceGlobalValues(tgid,tindices,values);
+    TEUCHOS_TEST_FOR_EXCEPTION (returned_val!=indices.size(), std::runtime_error,
+            "Error when adding to local row values. Tpetra only processed " << returned_val << " values out of " << indices.size() << ".\n");
     return;
   }
+
 #if defined(ALBANY_EPETRA)
+  auto fe_emat = getEpetraFECrsMatrix(lop,false);
+  if (!fe_emat.is_null()) {
+    // Unfortunately, Epetra_FECrsMatrix does not support a 'SumIntoMyValues'.
+    // Or, better, if you call SumIntoMyValues, you end up calling the base class
+    // version (from Epetra_CrsMatrix), which discards non-local rows.
+    // The only way out is to convert column indices to global, and call the
+    // specific method SumIntoGlobalValues.
+    // TODO: this costs a tiny bit, in terms of col lids/gids conversion.
+    //       Any idea how to avoid this?
+    std::vector<Epetra_GO> col_gids;
+    col_gids.reserve(indices.size());
+    const auto& ovDomainMap = fe_emat->OverlapDomainMap();
+    for (auto lid : indices) {
+      col_gids.push_back(ovDomainMap.GID(lid));
+    }
+    const Epetra_GO grow = fe_emat->OverlapRangeMap().GID(lrow);
+
+    auto err = fe_emat->SumIntoGlobalValues(grow,col_gids.size(),values.getRawPtr(),col_gids.data());
+    TEUCHOS_TEST_FOR_EXCEPTION (err!=0, std::runtime_error,
+      "Error! Something went wrong when inserting into the Epetra FECrs matrix.\n");
+    return;
+  }
+
+  // Try the more general Epetra_CrsMatrix
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
-    const Epetra_GO egid = gid;
-    if (sizeof(GO)==sizeof(Epetra_GO)) {
-      Teuchos::ArrayView<const Epetra_GO> eindices(reinterpret_cast<const Epetra_GO*>(indices.getRawPtr()),indices.size());
-      emat->ReplaceGlobalValues(egid, eindices.size(), values.getRawPtr(), eindices.getRawPtr());
-    }
-    else {
-      // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
-      Teuchos::Array<Epetra_GO> eindices(indices.size());
-      const GO max_safe_index = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
-      for (int i=0; i<indices.size(); ++i) {
-        ALBANY_EXPECT(indices[i]<=max_safe_index, "Error in replaceGlobalValues! Input indices exceed Epetra_GO ranges.\n");
-        eindices[i] = static_cast<Epetra_GO>(indices[i]);
-      }
-      ALBANY_EXPECT(gid<=max_safe_index, "Error in replaceGlobalValues! Input grow exceeds Epetra_GO ranges.\n");
-      (void) max_safe_index;
-      emat->ReplaceGlobalValues(egid, eindices.size(), values.getRawPtr(), eindices.getRawPtr());
-    }
+    auto err = emat->SumIntoMyValues(lrow,indices.size(),values.getRawPtr(),indices.data());
+    TEUCHOS_TEST_FOR_EXCEPTION (err!=0, std::runtime_error,
+      "Error! Something went wrong when inserting into the Epetra FECrs matrix.\n");
     return;
   }
 #endif
 
   // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in replaceGlobalValues! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-}
-
-int addToGlobalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                          const GO grow,
-                          const Teuchos::ArrayView<const GO> indices,
-                          const Teuchos::ArrayView<const ST> values)
-{
-  //The following is an integer error code, to be returned by this 
-  //routine if something doesn't go right.  0 means success, 1 means failure 
-  int integer_error_code = 0; 
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    const Tpetra_GO tgrow = grow;
-    Teuchos::ArrayView<const Tpetra_GO> tindices(reinterpret_cast<const Tpetra_GO*>(indices.getRawPtr()),indices.size());
-    auto returned_val = tmat->sumIntoGlobalValues(tgrow,tindices,values);
-    //std::cout << "IKT returned_val, indices size = " << returned_val << ", " << indices.size() << std::endl; 
-    ALBANY_ASSERT(returned_val != -1, "Error: addToGlobalRowValues returned -1, meaning linear op is not fillActive \n" 
-                       << "or does not have an underlying non-null static graph!\n"); 
-    //Tpetra's replaceGlobalValues routine returns the number of indices for which values were actually replaced; the number of "correct" indices.
-    //This should be size of indices array.  Therefore if returned_val != indices.size() something went wrong 
-    if (returned_val != indices.size()) integer_error_code = 1; 
-    return integer_error_code; 
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    //Epetra's ReplaceGlobalValues routine returns integer error code, set to 0 if successful, set to 1 if one or more indices are not 
-    //associated with the calling processor.  We can just return that value for the Epetra case. 
-    const Epetra_GO egrow = grow;
-    if (sizeof(GO)==sizeof(Epetra_GO)) {
-      Teuchos::ArrayView<const Epetra_GO> eindices(reinterpret_cast<const Epetra_GO*>(indices.getRawPtr()),indices.size());
-      integer_error_code = emat->SumIntoGlobalValues(egrow, eindices.size(), values.getRawPtr(), eindices.getRawPtr());
-    }
-    else {
-      // Cannot reinterpret cast. Need to copy gids into Epetra_GO array
-      Teuchos::Array<Epetra_GO> eindices(indices.size());
-      const GO max_safe_index = static_cast<GO>(Teuchos::OrdinalTraits<Epetra_GO>::max());
-      for (int i=0; i<indices.size(); ++i) {
-        ALBANY_EXPECT(indices[i]<=max_safe_index, "Error in addToGlobalRowValues! Input indices exceed Epetra_GO ranges.\n");
-        eindices[i] = static_cast<Epetra_GO>(indices[i]);
-      }
-      ALBANY_EXPECT(grow<=max_safe_index, "Error in addToGlobalRowValues! Input grow exceeds Epetra_GO ranges.\n");
-      (void) max_safe_index;
-      integer_error_code = emat->SumIntoGlobalValues(egrow, eindices.size(), values.getRawPtr(), eindices.getRawPtr());
-    }
-    return integer_error_code;
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in addToGlobalRowValues! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,"Error in addToLocalRowValues! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 
 void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
@@ -791,7 +652,12 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    tmat->replaceLocalValues(lrow,indices,values);
+    ALBANY_EXPECT (tmat->isFillActive(), "Error! Matrix fill is not active.\n");
+    auto err = tmat->replaceLocalValues(lrow,indices,values);
+    TEUCHOS_TEST_FOR_EXCEPTION(err!=indices.size(), std::runtime_error, "Some indices were not found in the matrix.\n");
+
+    ALBANY_EXPECT (err!=Teuchos::OrdinalTraits<LO>::invalid(),
+      "Error! Something went wrong while replacinv local row values.\n");
     return;
   }
 
@@ -805,175 +671,6 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
 
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in setLocalRowValues! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-}
-
-void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
-                        const LO lrow,
-                        const Teuchos::ArrayView<const ST> values)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    Teuchos::ArrayView<const LO> indices;
-    tmat->getGraph()->getLocalRowView(lrow,indices);
-    TEUCHOS_TEST_FOR_EXCEPTION(indices.size()!=values.size(), std::logic_error,
-                               "Error! This routine is meant for setting *all* values in a row, "
-                               "but the length of the input values array does not match the number of indices in the local row.\n");
-    tmat->replaceLocalValues(lrow,indices,values);
-    return;
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    int numIndices;
-    int* indices;
-    emat->Graph().ExtractMyRowView (lrow, numIndices, indices);
-    TEUCHOS_TEST_FOR_EXCEPTION(numIndices!=values.size(), std::logic_error,
-                               "Error! This routine is meant for setting *all* values in a row, "
-                               "but the length of the input values array does not match the number of indices in the local row.\n");
-    emat->ReplaceMyValues(lrow,numIndices,values.getRawPtr(),indices);
-    return;
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in setLocalRowValues! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
-}
-
-int getGlobalMaxNumRowEntries (const Teuchos::RCP<const Thyra_LinearOp>& lop) 
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    auto return_value = tmat->getGlobalMaxNumRowEntries();
-    return return_value; 
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    auto return_value = emat->GlobalMaxNumEntries(); 
-    return return_value;
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getGlobalMaxNumRowEntries! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-
-}
-
-bool isStaticGraph(const Teuchos::RCP<Thyra_LinearOp>& lop) 
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->isStaticGraph(); 
-  }
-#if defined(ALBANY_EPETRA)
-  auto emat = getEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    return emat->StaticGraph(); 
-  }
-#endif
- 
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in isStaticGraph! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-  
-} 
-
-bool isStaticGraph(const Teuchos::RCP<const Thyra_LinearOp>& lop) 
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getConstTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    return tmat->isStaticGraph(); 
-  }
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    ALBANY_ASSERT(true, "Error: isStaticGraph with const input not implemented for Epetra!\n");
-    return false; 
-  }
-#endif
- 
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in isStaticGraph! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-  
-} 
-
-//The following routine creates a one-to-one version of the given Map where each GID lives on only one process. 
-//Therefore it is an owned (unique) map.
-Teuchos::RCP<const Thyra_VectorSpace>
-createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace> vs)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmap = getTpetraMap(vs,false);
-  if (!tmap.is_null()) {
-    const Teuchos::RCP<const Tpetra_Map> map = Tpetra::createOneToOne(tmap);
-    return createThyraVectorSpace(map);
-  }
-#if defined(ALBANY_EPETRA)
-  auto emap = getEpetraMap(vs,false);
-  if (!emap.is_null()) {
-    const auto map = Epetra_Util::Create_OneToOne_Map(*emap);
-    const Teuchos::RCP<const Epetra_BlockMap> map_rcp = Teuchos::rcpFromRef(map); 
-    return createThyraVectorSpace(map_rcp);
-  }
-#endif
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in createOneToOneVectorSpace! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
-}
-
-Teuchos::RCP<const Thyra_LinearOp>
-buildRestrictionOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
-                          const Teuchos::RCP<const Thyra_VectorSpace>& subspace)
-{
-  // In the process, verify the that subspace is a subspace of space
-  auto space_indexer    = createGlobalLocalIndexer(space);
-  auto subspace_indexer = createGlobalLocalIndexer(subspace);
-
-  ThyraCrsMatrixFactory factory(space,subspace);
-
-  const int localSubDim = subspace_indexer->getNumLocalElements();
-  for (LO lid=0; lid<localSubDim; ++lid) {
-    const GO gid = subspace_indexer->getGlobalElement(lid);
-    TEUCHOS_TEST_FOR_EXCEPTION (space_indexer->isLocallyOwnedElement(gid), std::logic_error,
-                                "Error in buildRestrictionOperator! The input 'subspace' is not a subspace of the input 'space'.\n");
-    factory.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
-  }
-
-  factory.fillComplete();
-  Teuchos::RCP<Thyra_LinearOp> P = factory.createOp();
-  assign(P,1.0);
-
-  return P;
-}
-
-Teuchos::RCP<const Thyra_LinearOp>
-buildProlongationOperator (const Teuchos::RCP<const Thyra_VectorSpace>& space,
-                           const Teuchos::RCP<const Thyra_VectorSpace>& subspace)
-{
-  // In the process, verify the that subspace is a subspace of space
-  auto space_indexer    = createGlobalLocalIndexer(space);
-  auto subspace_indexer = createGlobalLocalIndexer(subspace);
-
-  ThyraCrsMatrixFactory factory(subspace,space);
-
-  const int localSubDim = subspace_indexer->getNumLocalElements();
-  for (LO lid=0; lid<localSubDim; ++lid) {
-    const GO gid = subspace_indexer->getGlobalElement(lid);
-    TEUCHOS_TEST_FOR_EXCEPTION (space_indexer->isLocallyOwnedElement(gid), std::logic_error,
-                                "Error in buildProlongationOperator! The input 'subspace' is not a subspace of the input 'space'.\n");
-    factory.insertGlobalIndices(gid,Teuchos::arrayView(&gid,1));
-  }
-
-  factory.fillComplete();
-  Teuchos::RCP<Thyra_LinearOp> P = factory.createOp();
-  assign(P,1.0);
-
-  return P;
 }
 
 double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop)
@@ -1107,6 +804,13 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
 #if defined(ALBANY_EPETRA)
   auto emat = getEpetraMatrix(lop,false);
   if (!emat.is_null()) {
+    // For FE matrices, we do not support device data, since the
+    // Epetra_FECrsMatrix class does not allow to get a hold of
+    // off-node entries
+    TEUCHOS_TEST_FOR_EXCEPTION(!getEpetraFECrsMatrix(lop,false).is_null(), std::logic_error,
+      "Error! We cannot get a handle to the device data of an Epetra_FECrsMatrix.\n"
+      "       To modify entries, use the 'sumIntoLocalValues' utility function.\n");
+
     TEUCHOS_TEST_FOR_EXCEPTION ((!std::is_same<PHX::Device::memory_space,Kokkos::HostSpace>::value),
                                 std::logic_error,
                                 "Error in getNonconstDeviceData! Cannot use Epetra if the memory space of PHX::Device is not the HostSpace.\n");
@@ -1114,9 +818,14 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
     // If you want the output DeviceLocalMatrix to have view semantic on the matrix values,
     // you need to use the constructor that 'views' the input arrays.
     // So we need to create views unmanaged, which need to view the matrix data.
-    // If it's not possible to view the matrix data, we need to create temporaries,
-    // and view those. If that's the case, we need to attach the temporaries to the
+    // This is not possible for the view containing the nnz per row, since the
+    // expected data type is size_t, while Epetra uses int. Therefore, we need
+    // to create a temporary (storing size_t entries), and copy entries into it.
+    // This would create a dangling temporary, so we attach the temporary to the
     // input RCP, so that they live as long as the input LinearOp.
+    // TODO: is there a cleaner way to do this, while preserving view semantic?
+    //       The only solution would be to roll our own LocalMatrixType, which
+    //       would have to be compatible with Tpetra, and allow non-size_t inputs.
     // WARNING: This is *highly* relying on Epetra_CrsMatrix internal storage.
     //          More precisely, I'm not even sure this routine could be fixed
     //          if Epetra_CrsMatrix changes the internal storage scheme.
@@ -1127,15 +836,16 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
     // Some data from the matrix
     const int numMyRows = emat->NumMyRows();
     const int numMyCols = emat->NumMyCols();
-    const int numMyNonzeros = emat->NumMyNonzeros();
+    const int numMyNnzs = emat->NumMyNonzeros();
 
     // Grab the data
     LO* row_map;
     LO* indices;
     ST* values;
     int err_code = emat->ExtractCrsDataPointers(row_map,indices,values);
-    ALBANY_EXPECT(err_code==0, "Error in getNonconstDeviceData! Something went wrong while extracting Epetra_CrsMatrix local data pointers.\n");
-    (void) err_code;
+    TEUCHOS_TEST_FOR_EXCEPTION(err_code!=0, std::runtime_error,
+      "Error! Something went wrong while extracting Epetra_CrsMatrix local data pointers.\n");
+
     Teuchos::ArrayRCP<size_type> row_map_size_type(numMyRows+1);
     for (int i=0; i<numMyRows+1; ++i) {
       row_map_size_type[i] = static_cast<size_type>(row_map[i]);
@@ -1146,11 +856,11 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
 
     // Create unmanaged views
     DeviceLocalMatrix<ST>::row_map_type row_map_view(row_map_size_type.getRawPtr(),numMyRows+1);
-    DeviceLocalMatrix<ST>::index_type   indices_view(indices,numMyNonzeros);
-    DeviceLocalMatrix<ST>::values_type  values_view(values,numMyNonzeros);
+    DeviceLocalMatrix<ST>::index_type   indices_view(indices,numMyNnzs);
+    DeviceLocalMatrix<ST>::values_type  values_view(values,numMyNnzs);
 
     // Build the matrix.
-    DeviceLocalMatrix<ST> data("Epetra device data", numMyRows, numMyCols, numMyNonzeros, values_view, row_map_view, indices_view);
+    DeviceLocalMatrix<ST> data("Epetra device data", numMyRows, numMyCols, numMyNnzs, values_view, row_map_view, indices_view);
     return data;
   }
 #endif
@@ -1214,23 +924,6 @@ Teuchos::ArrayRCP<const ST> getLocalData (const Teuchos::RCP<const Thyra_Vector>
 
   return vals;
 }
-
-int getNumVectors (const Teuchos::RCP<const Thyra_MultiVector>& mv)
-{
-  auto tv = getConstTpetraMultiVector(mv,false);
-  if (!tv.is_null()) {
-    return tv->getNumVectors(); 
-  }
-#if defined(ALBANY_EPETRA)
-  auto ev = getConstEpetraMultiVector(mv,false);
-  if (!ev.is_null()) {
-    return ev->NumVectors(); 
-  }
-#endif 
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getNumVectors! Could not cast Thyra_MultiVector to any of the supported concrete types.\n");
-}
-
 
 Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>
 getNonconstLocalData (const Teuchos::RCP<Thyra_MultiVector>& mv)

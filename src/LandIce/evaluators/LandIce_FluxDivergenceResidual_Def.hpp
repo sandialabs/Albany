@@ -68,14 +68,14 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
   using std::pow;
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   auto layersRatio = layeredMeshNumbering.layers_ratio;
-  auto ov_node_indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
-  int numLayers = layeredMeshNumbering.numLayers;
+  const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
+  const int numLayers = layeredMeshNumbering.numLayers;
 
-  int lNodesBase[3], //local (to this proc) ids of the nodes at the base of the prism
-      lNodesILP1[3], //local (to this proc) ids of the nodes at the top of the prism
-      nodes[3],      //local (to the prism) ids of the nodes at the base of the prism
+  GO gnodesBase[3], // global ids of the nodes at the base of the prism
+     gnodesILP1[3]; // global ids of the nodes at the top of the prism
+  int nodes[3],      //local (to the prism) ids of the nodes at the base of the prism
       nodesP1_tmp[3],
       nodesP1[3];    //local (to the prism) ids of the nodes at the top of the prism
   std::vector<std::map<int,LO>> triaLNodesIds(numLayers+1);
@@ -91,24 +91,23 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     //we also detect in what layer the prism is, so that we can compute the layer thickness
     for (int inode=0; inode<numNodes; ++inode) {
       residual(cell,inode) = 0;
-      const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[inode]);
-      int ilevel, baseId;
-      layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
+      GO ilevel, baseId;
+      layeredMeshNumbering.getIndices(elNodeID[inode], baseId, ilevel);
       if(ilevel < iLayer) {count=0; iLayer=ilevel;}
       if(ilevel == iLayer) {
-        lNodesBase[count] = baseId;
+        gnodesBase[count] = baseId;
         nodes[count++] = inode;
       }
       if(ilevel > iLayerPlus1) {countP1=0; iLayerPlus1=ilevel;}
       if(ilevel == iLayerPlus1) {
-        lNodesILP1[countP1] = lnodeId;
+        gnodesILP1[countP1] = elNodeID[inode];
         nodesP1_tmp[countP1++] = inode;
       }
     }
     for(int i=0; i<3; i++) {
-      int lnodeId = layeredMeshNumbering.getId(lNodesBase[i], iLayerPlus1);
+      const GO nodeId = layeredMeshNumbering.getId(gnodesBase[i], iLayerPlus1);
       int j=0;
-      while ((lNodesILP1[j++] != lnodeId) && (j<3));
+      while ((gnodesILP1[j++] != nodeId) && (j<3));
       nodesP1[i] = nodesP1_tmp[j-1];
     }
     TEUCHOS_TEST_FOR_EXCEPTION ((count != 3) || (countP1 != 3) || (iLayerPlus1 != iLayer+1), std::runtime_error,
@@ -174,7 +173,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     ScalarT vel0[2] = {2*x0+y0,-x0-3.0*y0},
         vel1[2]={2*x1+y1,-x1-3.0*y1},
         vel2[2]={2*x2+y2,-x2-3.0*y2};
-/*/
+*/
 
     //computing thickness of the layer at the triangle nodes
     ThicknessScalarT H0 = H(cell,node0)*lRatio, H1 = H(cell,node1)*lRatio, H2 = H(cell,node2)*lRatio;
@@ -384,7 +383,6 @@ void LandIce::FluxDivergenceResidual<EvalT, Traits>::evaluateFields(typename Tra
       MeshScalarT A1 = e01_c*e01/4. + e12_c*e12/4.;
       MeshScalarT A2 = e12_c*e12/4. + e20_c*e20/4.;
 
-      /*
       ParamScalarT H0 = 1;//2*x0+3*y0;
       ParamScalarT H1 = 1;//2*x1+3*y1;
       ParamScalarT H2 = 1;//2*x2+3*y2;
@@ -393,14 +391,12 @@ void LandIce::FluxDivergenceResidual<EvalT, Traits>::evaluateFields(typename Tra
       ScalarT vel0[2] = {2*x0+y0,-x0-3.0*y0},
           vel1[2]={2*x1+y1,-x1-3.0*y1},
           vel2[2]={2*x2+y2,-x2-3.0*y2};
-       /* /
 
       ParamScalarT H0 = H(cell,node0), H1 = H(cell,node1), H2 = H(cell,node2);
       ScalarT vel0[2] = {vel(cell, side, 0, 0), vel(cell, side, 0, 1)},
           vel1[2] = {vel(cell, side, 1, 0), vel(cell, side, 1, 1)},
           vel2[2] = {vel(cell, side, 2, 0), vel(cell, side, 2, 1)};
 
-      //* /
       ParamScalarT H_c = H0*lmbd0_c+H1*lmbd1_c+H2*lmbd2_c;
 
       ScalarT velc[2] = {lmbd0_c*vel0[0] + lmbd1_c*vel1[0] + lmbd2_c*vel2[0],

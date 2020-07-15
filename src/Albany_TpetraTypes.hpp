@@ -22,6 +22,8 @@
 #include "Tpetra_Map.hpp"
 #include "Tpetra_CrsGraph.hpp"
 #include "Tpetra_CrsMatrix.hpp"
+#include "Tpetra_FECrsGraph.hpp"
+#include "Tpetra_FECrsMatrix.hpp"
 #include "Tpetra_DistObject.hpp"
 #include "Tpetra_Operator.hpp"
 #include "Tpetra_Import.hpp"
@@ -52,6 +54,8 @@ typedef Tpetra::Export<Tpetra_LO, Tpetra_GO, KokkosNode>              Tpetra_Exp
 typedef Tpetra::Import<Tpetra_LO, Tpetra_GO, KokkosNode>              Tpetra_Import;
 typedef Tpetra::CrsGraph<Tpetra_LO, Tpetra_GO, KokkosNode>            Tpetra_CrsGraph;
 typedef Tpetra::CrsMatrix<ST, Tpetra_LO, Tpetra_GO, KokkosNode>       Tpetra_CrsMatrix;
+typedef Tpetra::FECrsGraph<Tpetra_LO, Tpetra_GO, KokkosNode>          Tpetra_FECrsGraph;
+typedef Tpetra::FECrsMatrix<ST, Tpetra_LO, Tpetra_GO, KokkosNode>     Tpetra_FECrsMatrix;
 typedef Tpetra::RowMatrix<ST, Tpetra_LO, Tpetra_GO, KokkosNode>       Tpetra_RowMatrix;
 typedef Tpetra::Operator<ST, Tpetra_LO, Tpetra_GO, KokkosNode>        Tpetra_Operator;
 typedef Tpetra::Vector<ST, Tpetra_LO, Tpetra_GO, KokkosNode>          Tpetra_Vector;

@@ -70,6 +70,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   typedef std::map<std::string, std::vector<double>> MeshVectorState;
 
   typedef std::map<std::string, int>              MeshScalarIntegerState;
+  typedef std::map<std::string, GO>               MeshScalarInteger64State;
   typedef std::map<std::string, std::vector<int>> MeshVectorIntegerState;
   //! Destructor
   virtual ~AbstractSTKFieldContainer(){};
@@ -124,6 +125,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   getMeshScalarIntegerStates()
   {
     return mesh_scalar_integer_states;
+  }
+  MeshScalarInteger64State&
+  getMeshScalarInteger64States()
+  {
+    return mesh_scalar_integer_64_states;
   }
   MeshVectorIntegerState&
   getMeshVectorIntegerStates()
@@ -246,17 +252,18 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   VectorFieldType*    coordinates_field;
   IntScalarFieldType* proc_rank_field;
 
-  ScalarValueState       scalarValue_states;
-  MeshScalarState        mesh_scalar_states;
-  MeshVectorState        mesh_vector_states;
-  MeshScalarIntegerState mesh_scalar_integer_states;
-  MeshVectorIntegerState mesh_vector_integer_states;
-  ScalarState            cell_scalar_states;
-  VectorState            cell_vector_states;
-  TensorState            cell_tensor_states;
-  QPScalarState          qpscalar_states;
-  QPVectorState          qpvector_states;
-  QPTensorState          qptensor_states;
+  ScalarValueState          scalarValue_states;
+  MeshScalarState           mesh_scalar_states;
+  MeshVectorState           mesh_vector_states;
+  MeshScalarIntegerState    mesh_scalar_integer_states;
+  MeshScalarInteger64State  mesh_scalar_integer_64_states;
+  MeshVectorIntegerState    mesh_vector_integer_states;
+  ScalarState               cell_scalar_states;
+  VectorState               cell_vector_states;
+  TensorState               cell_tensor_states;
+  QPScalarState             qpscalar_states;
+  QPVectorState             qpvector_states;
+  QPTensorState             qptensor_states;
 
   StateInfoStruct nodal_sis;
   StateInfoStruct nodal_parameter_sis;

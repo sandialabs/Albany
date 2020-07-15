@@ -17,6 +17,7 @@
 #include "Shards_CellTopologyData.h"
 
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 
 namespace Albany {
 
@@ -25,6 +26,9 @@ class AbstractDiscretization
  public:
   typedef std::map<std::string, Teuchos::RCP<AbstractDiscretization>>
       SideSetDiscretizationsType;
+
+  static const char* solution_dof_name () { return "ordinary_solution"; }
+  static const char* nodes_dof_name    () { return "mesh_nodes"; }
 
   //! Constructor
   AbstractDiscretization() = default;
@@ -61,11 +65,9 @@ class AbstractDiscretization
   virtual Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapVectorSpace(const std::string& field_name) const = 0;
 
-  //! Create a Jacobian operator (owned and overlapped)
+  //! Create a Jacobian operator
   virtual Teuchos::RCP<Thyra_LinearOp>
   createJacobianOp() const = 0;
-  virtual Teuchos::RCP<Thyra_LinearOp>
-  createOverlapJacobianOp() const = 0;
 
   //! Returns boolean telling code whether explicit scheme is used (needed for
   //! Aeras problems only)
@@ -104,6 +106,30 @@ class AbstractDiscretization
   //! Get Dof Manager of field field_name
   virtual const NodalDOFManager&
   getOverlapDOFManager(const std::string& field_name) const = 0;
+
+  //! Get Dof Manager of field field_name
+  virtual Teuchos::RCP<const GlobalLocalIndexer>
+  getGlobalLocalIndexer(const std::string& field_name) const = 0;
+
+  //! Get Dof Manager of field field_name
+  virtual Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapGlobalLocalIndexer(const std::string& field_name) const = 0;
+
+  //! Get GlobalLocalIndexer for solution field
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getGlobalLocalIndexer () const { return getGlobalLocalIndexer(solution_dof_name()); }
+
+  //! Get GlobalLocalIndexer for overlapped solution field
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(solution_dof_name()); }
+
+  //! Get GlobalLocalIndexer for node field
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getNodeGlobalLocalIndexer () const { return getGlobalLocalIndexer(nodes_dof_name()); }
+
+  //! Get GlobalLocalIndexer for overlapped node field
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapNodeGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(nodes_dof_name()); }
 
   //! Retrieve coodinate ptr_field (ws, el, node)
   virtual const WorksetArray<
@@ -180,7 +206,7 @@ class AbstractDiscretization
   getNumEq() const = 0;
 
   //! Get Numbering for layered mesh (mesh structred in one direction)
-  virtual Teuchos::RCP<LayeredMeshNumbering<LO>>
+  virtual Teuchos::RCP<LayeredMeshNumbering<GO>>
   getLayeredMeshNumbering() const = 0;
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //

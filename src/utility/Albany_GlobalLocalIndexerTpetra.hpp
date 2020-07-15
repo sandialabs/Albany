@@ -25,6 +25,9 @@ public:
   LO getNumLocalElements  () const { return m_tmap->getNodeNumElements();   }
   GO getNumGlobalElements () const { return m_tmap->getGlobalNumElements(); }
 
+  GO getMaxGlobalGID () const { return m_tmap->getMaxGlobalIndex(); }
+  GO getMaxLocalGID  () const { return m_tmap->getMaxLocalIndex(); }
+
   bool isLocallyOwnedElement (const GO gid) const { return m_tmap->isNodeGlobalElement(gid); }
 
   Teuchos::RCP<const Teuchos_Comm> getComm () const { return m_tmap->getComm(); }

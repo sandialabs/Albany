@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
 
   Albany::PrintHeader(*out);
 
+  bool reportTimers = true;
   const auto stackedTimer = Teuchos::rcp(
       new Teuchos::StackedTimer("Albany Total Time"));
   Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
@@ -53,6 +54,9 @@ int main(int argc, char *argv[]) {
     }
 
     Albany::SolverFactory slvrfctry (cmd.yaml_filename, comm);
+    Teuchos::ParameterList &debugParams =
+        slvrfctry.getParameters()->sublist("Debug Output", true);
+    reportTimers = debugParams.get<bool>("Report Timers", true);
 
     const auto& bt = slvrfctry.getParameters()->get("Build Type","Tpetra");
     if (bt=="Tpetra") {
@@ -94,10 +98,12 @@ int main(int argc, char *argv[]) {
   if (!success) status+=10000;
 
   stackedTimer->stop("Albany Total Time");
-  Teuchos::StackedTimer::OutputOptions options;
-  options.output_fraction = true;
-  options.output_minmax = true;
-  stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
+  if (reportTimers) {
+    Teuchos::StackedTimer::OutputOptions options;
+    options.output_fraction = true;
+    options.output_minmax = true;
+    stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
+  }
 
   Kokkos::finalize_all();
 

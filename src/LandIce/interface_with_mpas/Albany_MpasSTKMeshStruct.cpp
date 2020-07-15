@@ -215,7 +215,7 @@ void MpasSTKMeshStruct::constructMesh(
   int lElemColumnShift = (Ordering == COLUMN) ? numElemsInPrism : numElemsInPrism*indexToTriangleID.size();
   int elemLayerShift = (Ordering == LAYER) ? numElemsInPrism : numElemsInPrism*numLayers;
 
-  int vertexColumnShift = (Ordering == COLUMN) ? 1 : globalVerticesStride;
+  GO vertexColumnShift = (Ordering == COLUMN) ? 1 : globalVerticesStride;
   int lVertexColumnShift = (Ordering == COLUMN) ? 1 : indexToVertexID.size();
   int vertexLayerShift = (Ordering == LAYER) ? 1 : numLayers+1;
 
@@ -225,8 +225,8 @@ void MpasSTKMeshStruct::constructMesh(
 
   Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers, 1.0/double(numLayers));
   this->layered_mesh_numbering = (Ordering == LAYER) ?
-      Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
-      Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(vertexColumnShift,Ordering,layerThicknessRatio)):
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(vertexLayerShift,Ordering,layerThicknessRatio));
 
 
   metaData->commit();
@@ -509,13 +509,6 @@ MpasSTKMeshStruct::tetrasFromPrismStructured (int const* prismVertexGIds, int te
 
   int tetraOfPrism[2][3][4] = {{{0, 1, 2, 5}, {0, 1, 5, 4}, {0, 4, 5, 3}}, {{0, 1, 2, 4}, {0, 4, 2, 5}, {0, 4, 5, 3}}};
 
-  int tetraAdjacentToPrismLateralFace[2][3][2] = {{{1, 2}, {0, 1}, {0, 2}}, {{0, 2}, {0, 1}, {1, 2}}};
-  int tetraFaceIdOnPrismLateralFace[2][3][2] = {{{0, 0}, {1, 1}, {2, 2}}, {{0, 0}, {1, 1}, {2, 2}}};
-  int tetraAdjacentToBottomFace = 0; //does not depend on type;
-  int tetraAdjacentToUpperFace = 2; //does not depend on type;
-  int tetraFaceIdOnBottomFace = 3; //does not depend on type;
-  int tetraFaceIdOnUpperFace = 0; //does not depend on type;
-
   int minIndex;
   int prismType = this->prismType(prismVertexGIds, minIndex);
 
@@ -550,7 +543,7 @@ MpasSTKMeshStruct::setBdFacesOnPrism (const std::vector<std::vector<std::vector<
       for (int ip (0); ip < 3 && found; ip++)
       {
         int localId = prismStruct[iTetra][jFaceLocalId][ip];
-        int j = 0;
+        decltype(prismFaceIds.size()) j = 0;
         found = false;
         while ( (j < prismFaceIds.size()) && !found )
         {

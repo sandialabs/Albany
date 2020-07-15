@@ -31,10 +31,10 @@ StokesFOThickness::StokesFOThickness(
   // Set the num PDEs for the null space object to pass to ML
   // this->rigidBodyModes->setNumPDEs(neq);
 
-  if (basalSideName!="__INVALID__") {
-    // Defining the thickness equation only in 2D (basal side)
-    sideSetEquations[2].push_back(basalSideName);
-  }
+  TEUCHOS_TEST_FOR_EXCEPTION (surfaceSideName=="__INVALID__", std::runtime_error,
+    "Error! StokesFOThickness requires a valid surfaceSideName, since the thickness equation is solved on the surface.\n");
+  // Defining the thickness equation only in 2D (basal side)
+  sideSetEquations[2].push_back(surfaceSideName);
 
   dof_names.resize(2);
   dof_names[1] = "ice_thickness Increment";

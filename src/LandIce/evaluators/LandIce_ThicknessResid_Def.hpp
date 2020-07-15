@@ -46,11 +46,10 @@ ThicknessResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
   dt = p.get<Teuchos::RCP<double> >("Time Step Ptr");
-  meshPart = p.get<std::string>("Mesh Part");
 
   Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = p.get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
 
-  std::string sideSetName  = p.get<std::string> ("Side Set Name");
+  sideSetName  = p.get<std::string> ("Side Set Name");
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                               "Error! Layout for side set " << sideSetName << " not found.\n");
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
@@ -88,7 +87,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
 template<typename EvalT, typename Traits>
 void ThicknessResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData /* d */,
-                      PHX::FieldManager<Traits>& fm)
+                      PHX::FieldManager<Traits>& /* fm */)
 {
   physPointsCell = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, cellDims);
 }
@@ -104,8 +103,7 @@ evaluateFields(typename Traits::EvalData workset)
   Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it_ss = ssList.find(meshPart);
-
+  Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
 
   if (it_ss != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it_ss->second;

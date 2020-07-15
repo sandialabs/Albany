@@ -60,7 +60,7 @@ private:
   int  cellDims, numNodes, cubatureDegree;
   Teuchos::RCP<double> dt;
   bool have_SMB;
-  std::string meshPart;
+  std::string sideSetName;
 
   std::size_t numVecFODims;
 

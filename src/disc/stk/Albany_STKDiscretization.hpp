@@ -15,6 +15,7 @@
 #include "Albany_DataTypes.hpp"
 #include "utility/Albany_ThyraCrsMatrixFactory.hpp"
 #include "utility/Albany_ThyraUtils.hpp"
+#include "utility/Albany_GlobalLocalIndexer.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
 
@@ -32,8 +33,6 @@
 namespace Albany {
 
 typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
-
-class GlobalLocalIndexer;
 
 struct DOFsStruct
 {
@@ -161,11 +160,6 @@ class STKDiscretization : public AbstractDiscretization
   {
     return m_jac_factory->createOp();
   }
-  Teuchos::RCP<Thyra_LinearOp>
-  createOverlapJacobianOp() const
-  {
-    return m_overlap_jac_factory->createOp();
-  }
 
   bool
   isExplicitScheme() const
@@ -228,6 +222,19 @@ class STKDiscretization : public AbstractDiscretization
   getElNodeEqID(const std::string& field_name) const
   {
     return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
+  }
+
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getGlobalLocalIndexer(const std::string& field_name) const
+  {
+    return nodalDOFsStructContainer.getDOFsStruct(field_name).vs_indexer;
+  }
+
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapGlobalLocalIndexer(const std::string& field_name) const
+  {
+    return nodalDOFsStructContainer.getDOFsStruct(field_name)
+        .overlap_vs_indexer;
   }
 
   const NodalDOFManager&
@@ -365,23 +372,7 @@ class STKDiscretization : public AbstractDiscretization
     return neq;
   }
 
-  //! Locate nodal dofs in non-overlapping vectors using local indexing
-  int
-  getOwnedDOF(const int inode, const int eq) const;
-
-  //! Locate nodal dofs in overlapping vectors using local indexing
-  int
-  getOverlapDOF(const int inode, const int eq) const;
-
-  //! Get global id of the stk entity
-  GO
-  gid(const stk::mesh::Entity entity) const;
-
-  //! Locate nodal dofs using global indexing
-  GO
-  getGlobalDOF(const GO inode, const int eq) const;
-
-  Teuchos::RCP<LayeredMeshNumbering<LO>>
+  Teuchos::RCP<LayeredMeshNumbering<GO>>
   getLayeredMeshNumbering() const
   {
     return stkMeshStruct->layered_mesh_numbering;
@@ -396,6 +387,12 @@ class STKDiscretization : public AbstractDiscretization
   getSTKBulkData() const
   {
     return bulkData;
+  }
+
+  // Used very often, so make it a function
+  GO stk_gid (const stk::mesh::Entity e) const {
+    // STK numbering is 1-based, while we want 0-based.
+    return getSTKBulkData().identifier(e) - 1;
   }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
@@ -494,6 +491,7 @@ class STKDiscretization : public AbstractDiscretization
   };
 
  protected:
+
   void
   getSolutionField(Thyra_Vector& result, bool overlapped) const;
   void
@@ -522,21 +520,14 @@ class STKDiscretization : public AbstractDiscretization
   double
   monotonicTimeLabel(const double time);
 
-  void
-  computeNodalVectorSpaces(bool overlapped);
+  void computeVectorSpaces();
 
   //! Process STK mesh for CRS Graphs
   virtual void
   computeGraphs();
-  //! Process STK mesh for Owned nodal quantitites
-  void
-  computeOwnedNodesAndUnknowns();
   //! Process coords for ML
   void
   setupMLCoords();
-  //! Process STK mesh for Overlap nodal quantitites
-  void
-  computeOverlapNodesAndUnknowns();
   //! Process STK mesh for Workset/Bucket Info
   void
   computeWorksetInfo();
@@ -554,10 +545,6 @@ class STKDiscretization : public AbstractDiscretization
   unsigned
   determine_local_side_id(const stk::mesh::Entity elem, stk::mesh::Entity side);
 
-  //! Convert the stk mesh on this processor to a nodal graph using SEACAS
-  void
-  meshToGraph();
-
   void
   writeCoordsToMatrixMarket() const;
 
@@ -565,9 +552,6 @@ class STKDiscretization : public AbstractDiscretization
   buildSideSetProjectors();
 
   double previous_time_label;
-
-  int
-  nonzeroesPerRow(const int neq) const;
 
   // ==================== Members =================== //
 
@@ -588,9 +572,8 @@ class STKDiscretization : public AbstractDiscretization
   Teuchos::RCP<const Thyra_VectorSpace> m_overlap_vs;
   Teuchos::RCP<const Thyra_VectorSpace> m_overlap_node_vs;
 
-  //! Jacobian matrix graph proxy (owned and overlap)
+  //! Jacobian matrix operator factory
   Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
-  Teuchos::RCP<ThyraCrsMatrixFactory> m_overlap_jac_factory;
 
   NodalDOFsStructContainer nodalDOFsStructContainer;
 
@@ -636,16 +619,7 @@ class STKDiscretization : public AbstractDiscretization
   StateArrays                                   stateArrays;
   std::vector<std::vector<std::vector<double>>> nodesOnElemStateVec;
 
-  //! list of all owned nodes, saved for setting solution
-  std::vector<stk::mesh::Entity> ownednodes;
-  std::vector<stk::mesh::Entity> cells;
-
-  //! list of all overlap nodes, saved for getting coordinates for mesh motion
-  std::vector<stk::mesh::Entity> overlapnodes;
-
   //! Number of elements on this processor
-  int numOwnedNodes;
-  int numOverlapNodes;
   GO  maxGlobalNodeGID;
 
   // Needed to pass coordinates to ML.
@@ -686,7 +660,6 @@ class STKDiscretization : public AbstractDiscretization
   DiscType interleavedOrdering;
 
  private:
-  Teuchos::RCP<ThyraCrsMatrixFactory> nodalMatrixFactory;
 
   template <typename T, typename ContainerType>
   bool
@@ -697,14 +670,6 @@ class STKDiscretization : public AbstractDiscretization
     }
     return false;
   }
-
-  void
-  printVertexConnectivity();
-
-  void
-  computeGraphsUpToFillComplete();
-  void
-  fillCompleteGraphs();
 };
 
 }  // namespace Albany

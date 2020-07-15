@@ -437,6 +437,20 @@ getConstEpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp>& lop,
   return mat;
 }
 
+Teuchos::RCP<EpetraFECrsMatrix>
+getEpetraFECrsMatrix (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                      const bool throw_if_not_epetra)
+{
+  Teuchos::RCP<EpetraFECrsMatrix> mat;
+  if (!lop.is_null()) {
+    auto op = getEpetraOperator(lop,throw_if_not_epetra);
+    mat = Teuchos::rcp_dynamic_cast<EpetraFECrsMatrix>(op,throw_if_not_epetra);
+  }
+
+  return mat;
+}
+
+
 // --- Casts taking references as inputs --- //
 
 Teuchos::RCP<Epetra_Vector>

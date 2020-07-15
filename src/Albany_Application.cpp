@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-//#define DEBUG
 
 #include "Albany_Application.hpp"
 #include "Albany_DiscretizationFactory.hpp"
@@ -1378,6 +1377,10 @@ Application::computeGlobalJacobianImpl(
     const double                            dt)
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: Jacobian");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (jac.is_null(), std::logic_error,
+    "Error! When calling 'computeGlobalJacobianImpl', the Jacobian pointer must be valid.\n");
+
   using EvalT = PHAL::AlbanyTraits::Jacobian;
   postRegSetup<EvalT>();
 
@@ -1390,8 +1393,7 @@ Application::computeGlobalJacobianImpl(
   Teuchos::RCP<Thyra_Vector> overlapped_f;
   if (Teuchos::nonnull(f)) { overlapped_f = solMgr->get_overlapped_f(); }
 
-  Teuchos::RCP<Thyra_LinearOp> overlapped_jac = solMgr->get_overlapped_jac();
-  auto                         cas_manager    = solMgr->get_cas_manager();
+  auto cas_manager = solMgr->get_cas_manager();
 
   // Scatter x and xdot to the overlapped distribution
   solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
@@ -1413,17 +1415,8 @@ Application::computeGlobalJacobianImpl(
   }
 
   // Zero out Jacobian
-  resumeFill(jac);
+  beginFEAssembly(jac);
   assign(jac, 0.0);
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (!isFillActive(overlapped_jac)) { resumeFill(overlapped_jac); }
-#endif
-  assign(overlapped_jac, 0.0);
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (isFillActive(overlapped_jac)) { fillComplete(overlapped_jac); }
-  if (!isFillActive(overlapped_jac)) { resumeFill(overlapped_jac); }
-#endif
 
   // Set data in Workset struct, and perform fill via field manager
   {
@@ -1443,7 +1436,7 @@ Application::computeGlobalJacobianImpl(
 #endif
 
     workset.f   = overlapped_f;
-    workset.Jac = overlapped_jac;
+    workset.Jac = jac;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
     // fill Jacobian derivative dimensions:
@@ -1458,7 +1451,7 @@ Application::computeGlobalJacobianImpl(
     if (!workset.f.is_null()) {
       workset.f_kokkos = getNonconstDeviceData(workset.f);
     }
-    if (!workset.Jac.is_null()) {
+    if (build_type()!=BuildType::Epetra) {
       workset.Jac_kokkos = getNonconstDeviceData(workset.Jac);
     }
 #endif
@@ -1473,6 +1466,9 @@ Application::computeGlobalJacobianImpl(
             ->evaluateFields<EvalT>(workset);
     }
   }
+
+  // This will also assemble global jacobian (i.e., do import/export)
+  endFEAssembly(jac);
 
   // Allocate and populate scaleVec_
   if (scale != 1.0) {
@@ -1490,13 +1486,10 @@ Application::computeGlobalJacobianImpl(
     if (Teuchos::nonnull(f)) {
       cas_manager->combine(overlapped_f, f, CombineMode::ADD);
     }
-    // Assemble global Jacobian
-    cas_manager->combine(overlapped_jac, jac, CombineMode::ADD);
   }
 
   // scale Jacobian
   if (scaleBCdofs == false && scale != 1.0) {
-    fillComplete(jac);
 #ifdef WRITE_TO_MATRIX_MARKET
     writeMatrixMarket(jac, "jacUnscaled", countScale);
     if (f != Teuchos::null) {
@@ -1512,7 +1505,6 @@ Application::computeGlobalJacobianImpl(
     auto jac_scaled_lop =
         Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac, true);
     jac_scaled_lop->scaleLeft(*scaleVec_);
-    resumeFill(jac);
     // scale residual
     /*IKTif (Teuchos::nonnull(f)) {
       Thyra::ele_wise_scale<ST>(*scaleVec_,f.ptr());
@@ -1527,6 +1519,9 @@ Application::computeGlobalJacobianImpl(
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (Teuchos::nonnull(dfm)) {
+    // Re-open the jacobian
+    resumeFill(jac);
+
     PHAL::Workset workset;
 
     workset.f       = f;
@@ -1562,8 +1557,10 @@ Application::computeGlobalJacobianImpl(
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<EvalT>(workset);
+
+    // Close the jacobian
+    fillComplete(jac);
   }
-  fillComplete(jac);
 
   // Apply scaling to residual and Jacobian
   if (scaleBCdofs == true) {
@@ -1575,12 +1572,6 @@ Application::computeGlobalJacobianImpl(
     jac_scaled_lop->scaleLeft(*scaleVec_);
   }
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (isFillActive(overlapped_jac)) {
-    // Makes getLocalMatrix() valid.
-    fillComplete(overlapped_jac);
-  }
-#endif
   if (derivatives_check_ > 0) {
     checkDerivatives(
         *this, current_time, x, xdot, xdotdot, p, f, jac, derivatives_check_);
