@@ -263,10 +263,18 @@ doEvaluateFieldsSideResidual(typename Traits::EvalData workset, int cell, int si
   }
 }
 
-
 // **********************************************************************
 // Specialization: Residual
 // **********************************************************************
+
+template<typename Traits>
+ScatterSideEqnResidual<AlbanyTraits::Residual, Traits>::
+ScatterSideEqnResidual (const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl)
+ : base_type(p,dl)
+{
+  // Nothing to do here
+}
 
 template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::Residual, Traits>::
@@ -287,6 +295,15 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
 // **********************************************************************
 // Specialization: Jacobian
 // **********************************************************************
+
+template<typename Traits>
+ScatterSideEqnResidual<AlbanyTraits::Jacobian, Traits>::
+ScatterSideEqnResidual (const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl)
+ : base_type(p,dl)
+{
+  // Nothing to do here
+}
 
 template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::Jacobian, Traits>::
@@ -423,6 +440,15 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
 // **********************************************************************
 
 template<typename Traits>
+ScatterSideEqnResidual<AlbanyTraits::Tangent, Traits>::
+ScatterSideEqnResidual (const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl)
+ : base_type(p,dl)
+{
+  // Nothing to do here
+}
+
+template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::Tangent, Traits>::
 doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
 {
@@ -544,6 +570,15 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
 // Specialization: DistParamDeriv
 // **********************************************************************
 
+
+template<typename Traits>
+ScatterSideEqnResidual<AlbanyTraits::DistParamDeriv, Traits>::
+ScatterSideEqnResidual (const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl)
+ : base_type(p,dl)
+{
+  // Nothing to do here
+}
 
 template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::DistParamDeriv, Traits>::

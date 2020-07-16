@@ -103,8 +103,7 @@ public:
   using ScalarT = typename base_type::ScalarT;
 
   ScatterSideEqnResidual (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-    base_type(p,dl) {}
+                          const Teuchos::RCP<Albany::Layouts>& dl);
 
 protected:
   void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
@@ -122,8 +121,7 @@ public:
   using ScalarT = typename base_type::ScalarT;
 
   ScatterSideEqnResidual (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-    base_type(p,dl) {}
+                          const Teuchos::RCP<Albany::Layouts>& dl);
 
 protected:
   void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
@@ -142,8 +140,7 @@ public:
   using ScalarT = typename base_type::ScalarT;
 
   ScatterSideEqnResidual (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-    base_type(p,dl) {}
+                          const Teuchos::RCP<Albany::Layouts>& dl);
 
 protected:
   void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
@@ -161,8 +158,7 @@ public:
   using ScalarT = typename base_type::ScalarT;
 
   ScatterSideEqnResidual (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-    base_type(p,dl) {}
+                          const Teuchos::RCP<Albany::Layouts>& dl);
 
 protected:
   void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
