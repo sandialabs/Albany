@@ -484,7 +484,8 @@ LandIce::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   fm0.template registerEvaluator<EvalT> (ev);
 
   // If temperature is loaded as node-based field, then interpolate it as a cell-based field
-  ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator("temperature", false);
+  std::string interpolationType = "Value At Cell Barycenter";
+  ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator("temperature", interpolationType, false, cellBasis);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // -------------------- Special evaluators for basal side handling ----------------- //
