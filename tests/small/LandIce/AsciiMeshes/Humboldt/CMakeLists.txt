@@ -16,8 +16,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/thickness.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/thickness.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/thickness_uncertainty.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/thickness_uncertainty.ascii COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/velocity.ascii
-               ${CMAKE_CURRENT_BINARY_DIR}/velocity.ascii COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/extruded_surface_velocity.ascii
+               ${CMAKE_CURRENT_BINARY_DIR}/extruded_surface_velocity.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/horizontal_velocity.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/horizontal_velocity.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vertical_velocity.ascii
@@ -32,5 +32,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_air_temperature.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/surface_air_temperature.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basal_heat_flux.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/basal_heat_flux.ascii COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/temperature.ascii
-               ${CMAKE_CURRENT_BINARY_DIR}/temperature.ascii COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cell_temperature.ascii
+               ${CMAKE_CURRENT_BINARY_DIR}/cell_temperature.ascii COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_temperature.ascii
+               ${CMAKE_CURRENT_BINARY_DIR}/nodal_temperature.ascii COPYONLY)
