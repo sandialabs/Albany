@@ -950,16 +950,22 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecInterpolationSideEva
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructNodesToCellInterpolationEvaluator(
-    const std::string& dof_name, bool isVectorField) const
+    const std::string& dof_name,
+    const std::string& interpolationType,
+    bool isVectorField,
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis
+    ) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p;
   p = Teuchos::rcp(new Teuchos::ParameterList("DOF Nodes to Cell Interpolation "+dof_name));
 
   // Input
+  p->set<std::string>("Interpolation Type", interpolationType);
   p->set<std::string>("BF Variable Name", "BF");
   p->set<std::string>("Field Node Name", dof_name);
   p->set<std::string>("Weighted Measure Name", "Weights");
   p->set<bool>("Is Vector Field", isVectorField);
+  p->set<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >("Intrepid2 Basis", intrepidBasis);
 
   // Output
   p->set<std::string>("Field Cell Name", dof_name);

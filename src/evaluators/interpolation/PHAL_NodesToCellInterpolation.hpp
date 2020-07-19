@@ -16,6 +16,8 @@
 #include "PHAL_Utilities.hpp"
 #include "Albany_SacadoTypes.hpp"
 
+#include "Intrepid2_CellTools.hpp"
+
 namespace PHAL
 {
 /** \brief Average from Qp to Cell
@@ -49,6 +51,11 @@ private:
   int vecDim;
 
   bool isVectorField;
+
+  enum {ValueAtCellBarycenter, CellAverage} interpolationType;
+
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+  Kokkos::DynRankView<RealType, PHX::Device>                       basis_at_barycenter;
 
   MDFieldMemoizer<Traits> memoizer;
 
