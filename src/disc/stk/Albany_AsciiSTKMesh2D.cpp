@@ -104,6 +104,10 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
           ifile >> coords[i][0] >> coords[i][1] >> coord_flags[i];
       }
 
+      TEUCHOS_TEST_FOR_EXCEPTION (!std::is_sorted(coord_Ids.begin(), coord_Ids.end()), std::runtime_error,
+          "The global coodinate IDs need to be sorted");
+
+
       int temp(0);
       if(shape == "Triangle")
       {
@@ -124,6 +128,9 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
         }
       }
 
+      TEUCHOS_TEST_FOR_EXCEPTION (!std::is_sorted(ele_Ids.begin(), ele_Ids.end()), std::runtime_error,
+          "The global element IDs need to be sorted");
+
 
       for (int i = 0; i < NumBdEdges; i++)
       {
@@ -132,6 +139,11 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
         else
           ifile >> bdEdges[i][0] >> bdEdges[i][1] >> bdEdges[i][2];
       }
+
+      TEUCHOS_TEST_FOR_EXCEPTION (!std::is_sorted(be_Ids.begin(), be_Ids.end()), std::runtime_error,
+          "The global edges IDs need to be sorted");
+
+
       ifile.close();
     }
     else
