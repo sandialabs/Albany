@@ -17,10 +17,9 @@ ANONYMOUS:
         Regularization Type: Given Value
         Type: Exponent Of Given Field
         Regularization Value: 1.0e-05
-    Dirichlet BCs: {}
-#      DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
-#      DBC on NS extruded_boundary_node_set_3 for DOF U0 prescribe Field: velocity
-#      DBC on NS extruded_boundary_node_set_3 for DOF U1 prescribe Field: velocity
+    Dirichlet BCs:
+      DBC on NS extruded_boundary_node_set_3 for DOF U0 prescribe Field: velocity
+      DBC on NS extruded_boundary_node_set_3 for DOF U1 prescribe Field: velocity
     LandIce BCs:
       Number : 2
       BC 0:
@@ -109,9 +108,11 @@ ANONYMOUS:
     Basal Node Fields Ranks: [1, 1, 1, 1, 1, 1]
     Interpolate Basal Elem Layered Fields: [temperature]
     Basal Elem Layered Fields Ranks: [1]
+    Interpolate Basal Node Layered Fields: [velocity]
+    Basal Node Layered Fields Ranks: [2]
     Use Glimmer Spacing: true
     Required Fields Info:
-      Number Of Fields: 9
+      Number Of Fields: 10
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -150,6 +151,10 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
         Field Usage: Output
+      Field 9: 
+        Field Name: velocity
+        Field Type: Node Vector
+        Field Origin: Mesh
     Side Set Discretizations:
       Side Sets: [basalside, upperside]
       basalside:
@@ -162,7 +167,7 @@ ANONYMOUS:
         Exodus Output File Name: output/humboldt_basal.exo
         Cubature Degree: 4
         Required Fields Info:
-          Number Of Fields: 10
+          Number Of Fields: 11
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
@@ -202,7 +207,7 @@ ANONYMOUS:
             Field Type: Elem Layered Scalar
             Number Of Layers: 10
             Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/temperature.ascii
+            File Name: ../AsciiMeshes/Humboldt/cell_temperature.ascii
           Field 8:
             Field Name: apparent_mass_balance
             Field Type: Node Scalar
@@ -213,6 +218,13 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/apparent_mass_balance_uncertainty.ascii
+          Field 10: 
+            Field Name: velocity
+            Field Origin: File
+            Field Type: Node Layered Vector
+            Number Of Layers: 2 
+            Vector Dim: 2
+            File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
       upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
@@ -233,7 +245,7 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
   Regression Results:
     Number of Comparisons: 1
-    Test Values: [ 5.493476655068e+06]
+    Test Values: [1.760622217838e+01]
     Relative Tolerance: 1.0e-04
   #  Number of Sensitivity Comparisons: 0
   #  Sensitivity Test Values 0: [1.90715449153000007e-06, 0.00000000000000000e+00, -4.28824139453999975e-08, -1.08451424140999999e-06]
