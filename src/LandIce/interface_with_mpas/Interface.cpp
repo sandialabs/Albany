@@ -96,7 +96,7 @@ bool use_sliding_law (const std::string& betaType) {
 void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     int globalTrianglesStride, bool ordering, bool first_time_step,
     const std::vector<int>& indexToVertexID,
-    const std::vector<int>& indexToTriangleID, double minBeta,
+    const std::vector<int>& indexToTriangleID, double /*minBeta*/,
     const std::vector<double>& /* regulThk */,
     const std::vector<double>& levelsNormalizedThickness,
     const std::vector<double>& elevationData,
@@ -191,7 +191,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     int gId = il * vertexColumnShift + vertexLayerShift * indexToVertexID[ib];
     stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, gId + 1);
     double* coord = stk::mesh::field_data(*meshStruct->getCoordinatesField(), node);
-    coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers - il] * thicknessData[ib];
+    coord[2] = elevationData[ib] + (levelsNormalizedThickness[il]-1.0) * thicknessData[ib];
 
 
     double* thickness = stk::mesh::field_data(*thicknessField, node);
@@ -223,7 +223,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     dirichletVel[1]=velocityOnVertices[j + numVertices3D];
     if (il == 0 && basalFrictionField!=nullptr) {
       double* beta = stk::mesh::field_data(*basalFrictionField, node);
-      beta[0] = std::max(betaData[ib], minBeta);
+      beta[0] = betaData[ib];
     }
 
     if (!muData.empty() && (muField != nullptr)) {
@@ -338,6 +338,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   ScalarFieldType* dissipationHeatField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::ELEMENT_RANK, "dissipation_heat");
   VectorFieldType* bodyForceField  = meshStruct->metaData->get_field <VectorFieldType> (stk::topology::ELEMENT_RANK, "body_force");
+  if(!dissipationHeatOnPrisms.empty())
+    std::fill(dissipationHeatOnPrisms.begin(), dissipationHeatOnPrisms.end(), 0.0);
   for (int j = 0; j < numPrisms; ++j) {
     int ib = (ordering == 0) * (j % (lElemColumnShift))
             + (ordering == 1) * (j / (elemLayerShift));
@@ -346,8 +348,6 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     int gId = numElemsInPrism * (il * elemColumnShift + elemLayerShift * indexToTriangleID[ib]);
     int lId = il * lElemColumnShift + elemLayerShift * ib;
 
-    if(!dissipationHeatOnPrisms.empty())
-      dissipationHeatOnPrisms[elemLayerShift] = 0;
     double bf = 0;
     for (int iElem = 0; iElem < numElemsInPrism; iElem++) {
       stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, ++gId);
@@ -440,6 +440,10 @@ void velocity_solver_set_physical_parameters(double const& gravity, double const
   MPAS_dynamic_thickness = dynamic_thickness;
   MPAS_useGLP = use_GLP;
   MPAS_ClausiusClapeyoronCoeff = clausiusClapeyoronCoeff;
+
+  //std::cout << "\nMPAS_gravity:" <<MPAS_gravity << " MPAS_rho_ice:" <<MPAS_rho_ice << " MPAS_rho_seawater:" << MPAS_rho_seawater <<
+  //    " MPAS_sea_level:" << MPAS_sea_level << " MPAS_dynamic_thickness:" << MPAS_dynamic_thickness <<
+  //    " MPAS_ClausiusClapeyoronCoeff:" << MPAS_ClausiusClapeyoronCoeff <<std::endl;
 }
 
 void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
@@ -547,11 +551,13 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   //Lateral floating ice BCs
   int lateral_cub_degree = 3;
-  double immersed_ratio =  rho_ice/rho_seawater;
   auto& lateralParams = landiceBcList.sublist("BC 1");
   lateralParams.set<int>("Cubature Degree",lateralParams.get<int>("Cubature Degree", lateral_cub_degree));
-  lateralParams.set<double>("Immersed Ratio",lateralParams.get<double>("Immersed Ratio",immersed_ratio));
-  lateralParams.set("Side Set Name", lateralParams.get("Side Set Name", "floatinglateralside"));
+  //If the following option is not specified (recommended) 
+  // Albany will compute it based on the geometry
+  if(lateralParams.isParameter("Immersed Ratio"))
+    lateralParams.set<double>("Immersed Ratio",lateralParams.get<double>("Immersed Ratio"));
+  lateralParams.set("Side Set Name", lateralParams.get("Side Set Name", "lateralside"));
   lateralParams.set("Type", lateralParams.get("Type", "Lateral"));
 
   //Dirichlet BCs
@@ -570,7 +576,6 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   fieldNormList.set("Regularization Type", fieldNormList.get("Regularization Type", "Given Value"));
   double reg_value = 1e-6;
   fieldNormList.set("Regularization Value", fieldNormList.get("Regularization Value", reg_value));
-  fieldNormList.set("Regularization Parameter Name", fieldNormList.get("Regularization Parameter Name","Glen's Law Homotopy Parameter"));
 
 
   if(paramList->sublist("Problem").isSublist("LandIce Viscosity"))
