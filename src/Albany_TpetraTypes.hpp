@@ -61,4 +61,13 @@ typedef Tpetra::Operator<ST, Tpetra_LO, Tpetra_GO, KokkosNode>        Tpetra_Ope
 typedef Tpetra::Vector<ST, Tpetra_LO, Tpetra_GO, KokkosNode>          Tpetra_Vector;
 typedef Tpetra::MultiVector<ST, Tpetra_LO, Tpetra_GO, KokkosNode>     Tpetra_MultiVector;
 
+// Make sure our Kokkos types are compatible with what tpetra uses
+// This will make it easier to debug problems such as the one in issue #612 on GitHub
+static_assert (std::is_same<typename Tpetra_CrsGraph::local_graph_type,Albany::DeviceLocalGraph>::value,
+               "Error! Tpetra's local_graph_type does not match Albany's DeviceLocalGraph.\n"
+               "       Most likely there was a change in Tpetra, and you need to update Albany_KokkosTypes.hpp.\n");
+static_assert (std::is_same<typename Tpetra_CrsMatrix::local_matrix_type,Albany::DeviceLocalMatrix<ST>>::value,
+               "Error! Tpetra's local_graph_type does not match Albany's DeviceLocalGraph.\n"
+               "       Most likely there was a change in Tpetra, and you need to update Albany_KokkosTypes.hpp.\n");
+
 #endif // ALBANY_TPETRA_TYPES_HPP
