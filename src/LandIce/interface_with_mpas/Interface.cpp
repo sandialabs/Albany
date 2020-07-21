@@ -532,6 +532,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   if(paramList->sublist("Problem").isSublist("LandIce BCs"))
     std::cout<<"\nWARNING: Using LandIce BCs provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"LandIce BCs\" sublist from Albany input file.\n"<<std::endl;
+  
+  // ---- Setting Memoization ---- //
+  paramList->sublist("Problem").set<bool>("Use MDField Memoization", paramList->sublist("Problem").get<bool>("Use MDField Memoization", true));
 
   // ---- Setting parameters for LandIce BCs ---- //
   Teuchos::ParameterList& landiceBcList = paramList->sublist("Problem").sublist("LandIce BCs");
@@ -539,15 +542,16 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   // Basal Friction BC
   auto& basalParams = landiceBcList.sublist("BC 0");
-  int basal_cub_degree = physParamList.get<bool>("Use GLP") ? 8 : 3;
+  auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
+  bool zeroBetaOnShelf = basalFrictionParams.get<bool>("Zero Beta On Floating Ice", true);
+  int basal_cub_degree = physParamList.get<bool>("Use GLP") ? 8 : (zeroBetaOnShelf ? 4 : 3);
   basalParams.set<int>("Cubature Degree",basalParams.get<int>("Cubature Degree", basal_cub_degree));
   basalParams.set("Side Set Name", basalParams.get("Side Set Name", "basalside"));
   basalParams.set("Type", basalParams.get("Type", "Basal Friction"));
-  auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
   auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type","Given Field"));
   basalFrictionParams.set("Type",betaType);
   basalFrictionParams.set("Given Field Variable Name",basalFrictionParams.get("Given Field Variable Name","basal_friction"));
-  basalFrictionParams.set<bool>("Zero Beta On Floating Ice", basalFrictionParams.get<bool>("Zero Beta On Floating Ice", true));
+  basalFrictionParams.set<bool>("Zero Beta On Floating Ice", zeroBetaOnShelf);
 
   //Lateral floating ice BCs
   int lateral_cub_degree = 3;
