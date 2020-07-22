@@ -29,6 +29,8 @@ using std::min;
 
 using Sacado::Fad::max;
 using Sacado::Fad::min;
+using Sacado::Fad::Exp::max;
+using Sacado::Fad::Exp::min;
 
 }
 
