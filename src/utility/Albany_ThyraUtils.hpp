@@ -103,6 +103,8 @@ void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
 
 void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val); 
 
+Teuchos::RCP<Thyra_LinearOp> transpose (const Teuchos::RCP<const Thyra_LinearOp>& lop); 
+
 // Math properties helpers
 double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 

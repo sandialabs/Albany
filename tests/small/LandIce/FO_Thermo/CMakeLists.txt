@@ -36,7 +36,22 @@ if (ALBANY_EPETRA)
   
   set (testName ${testNameRoot}_Humboldt_fluxDiv)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_fluxDiv.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
+  # If Iopx is not present, we must decompose the input mesh first
+  if (NOT ALBANY_IOPX AND ALBANY_MPI)
+    add_test (NAME FO_GIS_HUMBOLDT_decompMesh
+            COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
+    set_tests_properties (FO_GIS_HUMBOLDT_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
+
+    set_tests_properties(${testName}
+                       PROPERTIES
+                       LABELS            "LandIce;Epetra;Forward"
+                       FIXTURES_REQUIRED humboldtMeshSetup)
+    else ()
+    set_tests_properties(${testName}
+                       PROPERTIES
+                       LABELS         "LandIce;Epetra;Forward")
+  endif()
 endif()
 
 if (ALBANY_FROSCH)

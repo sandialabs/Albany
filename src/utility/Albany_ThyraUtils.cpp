@@ -8,6 +8,7 @@
 #include "Albany_Macros.hpp"
 
 #include "Petra_Converters.hpp"
+#include "Tpetra_RowMatrixTransposer.hpp"
 
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_DefaultSpmdVectorSpace.hpp"
@@ -21,6 +22,7 @@
 #include "AztecOO_ConditionNumber.h"
 #include "Albany_EpetraThyraUtils.hpp"
 #include "Epetra_LocalMap.h"
+#include "EpetraExt_Transpose_RowMatrix.h"
 #include <type_traits>
 #endif
 
@@ -549,6 +551,36 @@ void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val)
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in scale! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 
 }
+
+Teuchos::RCP<Thyra_LinearOp> transpose (const Teuchos::RCP<const Thyra_LinearOp>& lop) {
+  Teuchos::RCP<Thyra_LinearOp> lopt;
+
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getConstTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    Tpetra::RowMatrixTransposer<ST,LO,Tpetra_GO,KokkosNode> transposer(tmat);
+    auto tmat_t = transposer.createTranspose();
+    lopt = createThyraLinearOp(Teuchos::rcp_implicit_cast<Tpetra_Operator>(tmat_t));
+  }
+#if defined(ALBANY_EPETRA)
+  auto emat = getConstEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    EpetraExt::RowMatrix_Transpose transposer;
+    // Epetra uses a non-const input, which forces us to use const_cast.
+    Epetra_RowMatrix* emat_t = &transposer(*const_cast<Epetra_CrsMatrix*>(emat.getRawPtr()));
+    Teuchos::RCP<Epetra_Operator> eop_t(emat_t);
+    transposer.ReleaseTranspose(); // So that transposer's destructor won't clean up A^T
+
+    lopt = createThyraLinearOp(eop_t);
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (lopt.is_null(), std::runtime_error,
+    "Error in transpose! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+
+  return lopt;
+} 
 
 void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                         const LO lrow,

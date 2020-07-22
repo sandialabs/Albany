@@ -615,11 +615,12 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       fm0.template registerEvaluator<EvalT> (ev);
     }
 
+    std::string interpolationType = "Value At Cell Barycenter";
     if (needs[InterpolationRequest::CELL_VAL] && entity==FieldLocation::Node) {
       if (rank==0) {
-        ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ false);
+        ev = utils.constructNodesToCellInterpolationEvaluator (fname, interpolationType, /*isVectorField = */ false, cellBasis);
       } else if (rank==1) {
-        ev = utils.constructNodesToCellInterpolationEvaluator (fname, /*isVectorField = */ true);
+        ev = utils.constructNodesToCellInterpolationEvaluator (fname, interpolationType, /*isVectorField = */ true, cellBasis);
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot interpolate to the cell a field of rank " + std::to_string(rank) << ".\n");
       }

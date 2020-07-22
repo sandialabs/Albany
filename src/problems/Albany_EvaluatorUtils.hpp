@@ -343,7 +343,9 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructNodesToCellInterpolationEvaluator(
         const std::string& dof_name,
-        bool isVectorField = false) const = 0;
+        const std::string& interpolationType,
+        bool isVectorField = false,
+        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis = Teuchos::null) const = 0;
 
     //! Function to create evaluator QuadPointsToCellInterpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -680,7 +682,9 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructNodesToCellInterpolationEvaluator(
         const std::string& dof_name,
-        bool isVectorField = false) const;
+        const std::string& interpolationType,
+        bool isVectorField = false,
+        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis = Teuchos::null) const;
 
     //! Function to create evaluator QuadPointsToCellInterpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >

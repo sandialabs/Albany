@@ -160,7 +160,7 @@ ANONYMOUS:
         Field Usage: Output
       Field 5: 
         Field Name: temperature
-        Field Type: Node Scalar
+        Field Type: Elem Scalar
         Field Usage: Output
       Field 6: 
         Field Name: bed_topography
@@ -248,7 +248,8 @@ ANONYMOUS:
             Field Name: heat_flux
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/basal_heat_flux.ascii
+            Field Value: 0.042
+            #File Name: ../AsciiMeshes/Humboldt/basal_heat_flux.ascii
           Field 9: 
             Field Name: apparent_mass_balance
             Field Type: Node Scalar
@@ -265,7 +266,7 @@ ANONYMOUS:
             Field Type: Node Layered Vector
             Number Of Layers: 2 
             Vector Dim: 2
-            File Name: ../AsciiMeshes/Humboldt/velocity.ascii
+            File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
       upperside: 
         Workset Size: -1
         Method: SideSetSTK
@@ -287,11 +288,11 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [9.520027534855e+00]
+    Test Values: [9.511569942150e+00]
     Relative Tolerance: 1.0e-04
     Sensitivity Comparisons 0:
       Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [1.394606109333e+00]
+      Sensitivity Test Values 0: [1.394408454849e+00]
   Piro: 
     Sensitivity Method: Adjoint
     Write Only Converged Solution: false
