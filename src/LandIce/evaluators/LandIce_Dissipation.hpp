@@ -47,7 +47,17 @@ class Dissipation : public PHX::EvaluatorWithBaseImpl<Traits>,
 		double scyr ;    // [s/yr] (3.1536e7);
 
 		unsigned int numQPs;
-    PHAL::MDFieldMemoizer<Traits> memoizer;
+    	
+		PHAL::MDFieldMemoizer<Traits> memoizer;
+
+	public:
+
+		typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+		typedef Kokkos::RangePolicy< ExecutionSpace > Dissipation_Policy;
+
+		KOKKOS_INLINE_FUNCTION
+		void operator() (const int& i) const;
 };
 
 }	// Namespace LandIce

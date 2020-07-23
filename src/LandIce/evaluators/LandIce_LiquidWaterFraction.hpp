@@ -57,10 +57,20 @@ private:
 
   double L;      //[J kg^{-1}] = [ m^2 s^{-2}]
   double rho_w;  //[kg m^{-3}]
+  double phi_scaling; //[MW^{-1} s^{-1} m^{3}]
 
   ScalarT printedAlpha;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::RangePolicy< ExecutionSpace > Phi_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int& i) const;
 };
 
 } // Namespace LandIce

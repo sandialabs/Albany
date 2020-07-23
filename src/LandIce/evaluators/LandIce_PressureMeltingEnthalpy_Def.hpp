@@ -40,6 +40,7 @@ PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   T0    = physics_list.get<double>("Reference Temperature"); //265
   beta =  physics_list.get<double>("Clausius-Clapeyron Coefficient");
   Tm = physics_list.get<double>("Atmospheric Pressure Melting Temperature");
+  enthalpyHs_scaling = 1e-6 * rho_i * c_i;
 }
 
 template<typename EvalT, typename Traits, typename PressST>
@@ -51,18 +52,34 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 }
 
 template<typename EvalT, typename Traits, typename PressST>
+KOKKOS_INLINE_FUNCTION
+void PressureMeltingEnthalpy<EvalT,Traits,PressST>::
+operator() (const int& cell) const {
+
+  for (int node = 0; node < numNodes; ++node) {
+    meltingTemp(cell,node) = - beta * pressure(cell,node) + Tm;
+    enthalpyHs(cell,node) = enthalpyHs_scaling * ( meltingTemp(cell,node) - T0 );
+  }
+
+}
+
+template<typename EvalT, typename Traits, typename PressST>
 void PressureMeltingEnthalpy<EvalT,Traits,PressST>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::parallel_for(PressureMeltingEnthalpy_Policy(0, workset.numCells), *this);
+#else
   const double powm6 = 1e-6; // [k^2], k=1000
-
   for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t node = 0; node < numNodes; ++node) {
       meltingTemp(cell,node) = - beta * pressure(cell,node) + Tm;
       enthalpyHs(cell,node) = rho_i * c_i * ( meltingTemp(cell,node) - T0 ) * powm6;
     }
+#endif
+
 }
 
 } // namespace LandIce

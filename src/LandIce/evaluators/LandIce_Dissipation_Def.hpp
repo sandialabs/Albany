@@ -36,6 +36,17 @@ namespace LandIce
   }
 
   template<typename EvalT, typename Traits>
+  KOKKOS_INLINE_FUNCTION
+  void Dissipation<EvalT,Traits>::
+  operator() (const int &cell) const{
+
+    for (int qp = 0; qp < numQPs; ++qp) {
+      diss(cell,qp) = 1.0/scyr * 4.0 * mu(cell,qp) * epsilonSq(cell,qp);
+    }
+    
+  }
+
+  template<typename EvalT, typename Traits>
   void Dissipation<EvalT,Traits>::
   postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
   {
@@ -51,11 +62,17 @@ namespace LandIce
   void Dissipation<EvalT,Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+    
     if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
+  #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    Kokkos::parallel_for(Dissipation_Policy(0, workset.numCells), *this);
+  #else
     for (std::size_t cell = 0; cell < workset.numCells; ++cell)
       for (std::size_t qp = 0; qp < numQPs; ++qp)
         diss(cell,qp) = 1.0/scyr * 4.0 * mu(cell,qp) * epsilonSq(cell,qp);
+  #endif
+
   }
 
 

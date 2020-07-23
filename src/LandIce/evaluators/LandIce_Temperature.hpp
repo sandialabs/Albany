@@ -70,8 +70,18 @@ private:
   double rho_i; //[kg m^{-3}]
   double T0;    //[K]
   double Tm; //[K], 273.15
+  double temperature_scaling; // [MW^{-1} s^{-1} K m^{3}]
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::RangePolicy< ExecutionSpace > Temperature_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int& i) const;
 };
 
 } // namespace LandIce

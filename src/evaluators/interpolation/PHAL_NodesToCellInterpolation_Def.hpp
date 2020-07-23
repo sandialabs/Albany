@@ -61,6 +61,82 @@ NodesToCellInterpolationBase (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
+// Kokkos operators
+template<typename EvalT, typename Traits, typename ScalarT>
+void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::
+operator() (const Cell_Average_Vector_Field_Tag& tag, const int& cell) const{
+
+  ScalarT field_qp_device;
+
+  MeshScalarT meas_device = 0.0;
+  for (int qp(0); qp<numQPs; ++qp)
+  {
+    meas_device += w_measure(cell,qp);
+  }
+
+  for (int dim(0); dim<vecDim; ++dim)
+  {
+    field_cell(cell,dim) = 0;
+    for (int qp(0); qp<numQPs; ++qp)
+    {
+      field_qp_device = 0;
+      for (int node(0); node<numNodes; ++node)
+        field_qp_device += field_node(cell,node,dim)*BF(cell,node,qp);
+      field_cell(cell,dim) += field_qp_device*w_measure(cell,qp);
+    }
+    field_cell(cell,dim) /= meas_device;
+  }
+
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::
+operator() (const Cell_Average_Scalar_Field_Tag& tag, const int& cell) const{
+
+  ScalarT field_qp_device;
+
+  MeshScalarT meas_device = 0.0;
+  for (int qp(0); qp<numQPs; ++qp)
+  {
+    meas_device += w_measure(cell,qp);
+  }
+
+  field_cell(cell) = 0;
+  for (int qp(0); qp<numQPs; ++qp)
+  {
+    field_qp_device = 0;
+    for (int node(0); node<numNodes; ++node)
+      field_qp_device += field_node(cell,node)*BF(cell,node,qp);
+    field_cell(cell) += field_qp_device*w_measure(cell,qp);
+  }
+  field_cell(cell) /= meas_device;
+
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::
+operator() (const Cell_Barycenter_Vector_Field_Tag& tag, const int& cell) const {
+  
+  for (int dim = 0; dim<vecDim; ++dim)
+  {
+    field_cell(cell,dim) = 0;
+    for (int node = 0; node<numNodes; ++node)
+      field_cell(cell,dim) += field_node(cell,node,dim)*basis_at_barycenter(node,0);
+  }
+
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::
+operator() (const Cell_Barycenter_Scalar_Field_Tag& tag, const int& cell) const {
+  
+  field_cell(cell) = 0;
+  for (int node = 0; node<numNodes; ++node)
+    field_cell(cell) += field_node(cell,node)*basis_at_barycenter(node,0);
+
+}
+
+//**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
@@ -97,6 +173,21 @@ void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (typen
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (interpolationType == CellAverage) {
+    if (isVectorField) {
+      Kokkos::parallel_for(Cell_Average_Vector_Field_Policy(0, workset.numCells), *this);
+    } else {
+      Kokkos::parallel_for(Cell_Average_Scalar_Field_Policy(0, workset.numCells), *this);
+    }
+  } else {
+    if (isVectorField) {
+      Kokkos::parallel_for(Cell_Barycenter_Vector_Field_Policy(0, workset.numCells), *this);
+    } else {
+      Kokkos::parallel_for(Cell_Barycenter_Scalar_Field_Policy(0, workset.numCells), *this);
+    }
+  }
+#else
   MeshScalarT meas;
   ScalarT field_qp;
 
@@ -155,6 +246,7 @@ void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (typen
       }
     }
   }
+#endif
 }
 
 } // Namespace PHAL

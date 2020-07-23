@@ -58,8 +58,19 @@ private:
 
   double rho_i;  // [kg m^{-3}]
   double g;      // [m s^{-2}]
+  double pressure_scaling; // [kg m^{-2} s^{-2}]
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::RangePolicy< ExecutionSpace > Hydrostatic_Pressure_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int& i) const;
+
 };
 
 } // namespace LandIce

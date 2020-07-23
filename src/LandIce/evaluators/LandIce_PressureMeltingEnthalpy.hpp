@@ -56,8 +56,19 @@ private:
   double T0;    //[K]
   double beta;  //[K Pa^{-1}]
   double Tm; //[K], 273.15
+  double enthalpyHs_scaling;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+  public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::RangePolicy< ExecutionSpace > PressureMeltingEnthalpy_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int& i) const;
+
 };
 
 } // Namespace LandIce
