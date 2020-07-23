@@ -133,7 +133,7 @@ postRegistrationSetup(typename Traits::SetupData d,
       }
     }
   } else {
-    for (int cellside = 0; cellside < numCells*numSides; ++cellside)
+    for (int cellside = 0; cellside < BF.extent(0); ++cellside)
     {
       for (int node=0; node<numSideNodes; ++node)
       {

@@ -131,7 +131,12 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 		  numBasalSideNodes    = basalSideBasis->getCardinality();
 		  numBasalSideQPs      = basalCubature->getNumPoints();
 
-	      dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,numDim-1,numDim,numCellSides,vecDim,true));
+		  *out << "Sideset Field Dimensions: Workset=" << basalMeshSpecs.worksetSize
+			   << ", SideVertices= " << numBasalSideVertices
+	           << ", SideNodes= " << numBasalSideNodes
+	           << ", SideQuadPts= " << numBasalSideQPs << std::endl;
+
+	      dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,numDim-1,numDim,numCellSides,vecDim,true,basalMeshSpecs.worksetSize));
 
 	      dl->side_layouts[basalSideName] = dl_basal;
 	  }
