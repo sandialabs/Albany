@@ -328,33 +328,33 @@ if (CTEST_DO_SUBMIT)
   endif (HAD_ERROR)
 endif (CTEST_DO_SUBMIT)
 
-if (DOWNLOAD_TRILINOS)
+# Commenting out the following as part of patch
+#if (DOWNLOAD_TRILINOS)
 
-  #
-  # Update Trilinos
-  #
+#  #
+#  # Update Trilinos
+#  #
 
-  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos" RETURN_VALUE count)
-  # assumes that we are already on the desired tracking branch, i.e.,
-  # git checkout -b branch --track origin/branch
-  message("Found ${count} changed files")
+#  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos" RETURN_VALUE count)
+#  # assumes that we are already on the desired tracking branch, i.e.,
+#  # git checkout -b branch --track origin/branch
+#  message("Found ${count} changed files")
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Update
-      RETURN_VALUE  HAD_ERROR
-      )
+#  if (CTEST_DO_SUBMIT)
+#    ctest_submit (PARTS Update
+#      RETURN_VALUE  HAD_ERROR
+#      )
 
-    if (HAD_ERROR)
-      message("Cannot update Trilinos!")
-    endif ()
-  endif ()
+#    if (HAD_ERROR)
+#      message("Cannot update Trilinos!")
+#    endif ()
+#  endif ()
 
-  if (count LESS 0)
-    message(FATAL_ERROR "Cannot update Trilinos!")
-  endif ()
+#  if (count LESS 0)
+#    message(FATAL_ERROR "Cannot update Trilinos!")
+#  endif ()
 
-
-ENDIF()
+#ENDIF()
 
 IF(DOWNLOAD_ALBANY) 
   #
