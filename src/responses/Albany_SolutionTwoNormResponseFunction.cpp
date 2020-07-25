@@ -158,8 +158,13 @@ evaluateDistParamHessVecProd_xx(
     const Teuchos::Array<ParamVec>& param_array,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
+  Teuchos::ScalarTraits<ST>::magnitudeType nrm = x->norm_2();
+  Teuchos::ScalarTraits<ST>::magnitudeType nrm3 = std::pow(nrm,3);
+
   if (!Hv_dp.is_null()) {
-    Hv_dp->assign(0.0);
+    for (int j=0; j<Hv_dp->domain()->dim(); ++j) {
+      Thyra::V_StVpStV(Hv_dp->col(j).ptr(),1.0/nrm,*v->col(j),-1.0*x->dot(*v->col(j))/nrm3,*x);
+    }
   }
 }
 
