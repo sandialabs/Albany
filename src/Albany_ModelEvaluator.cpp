@@ -979,6 +979,10 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
           sacado_param_vec,
           g_hess_xx_v);
     }
+    else if (Teuchos::nonnull(g_hess_xx_v)) {
+      *out << "WARNING: hess_vec_prod_g_xx(" << j <<") is set in outArgs but x_direction "
+           << "is not set in inArgs. \n";
+    }
 
     for (int l1 = 0; l1 < num_dist_param_vecs; l1++) {
       const Teuchos::RCP<const Thyra_MultiVector> delta_p_l1 = inArgs.get_p_direction(l1 + num_param_vecs);
@@ -997,6 +1001,11 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
             dist_param_names[l1],
             g_hess_xp_v);
       }
+      else if (Teuchos::nonnull(g_hess_xp_v)) {
+        *out << "WARNING: hess_vec_prod_g_xp(" << j <<","<< l1 + num_param_vecs <<") is set in outArgs but "
+             << "p_direction(" << l1 + num_param_vecs << ") is not set in inArgs. \n";
+      }
+
       if (Teuchos::nonnull(delta_x) && Teuchos::nonnull(g_hess_px_v)) {
         g_hess_px_v->assign(0.);
         app->evaluateResponseDistParamHessVecProd_px(
@@ -1004,6 +1013,10 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
             sacado_param_vec,
             dist_param_names[l1],
             g_hess_px_v);
+      }
+      else if (Teuchos::nonnull(g_hess_px_v)) {
+        *out << "WARNING: hess_vec_prod_g_px(" << j <<","<< l1 + num_param_vecs <<") is set in outArgs but "
+             << "x_direction is not set in inArgs. \n";
       }
 
       for (int l2 = 0; l2 < num_dist_param_vecs; l2++) {
@@ -1020,6 +1033,10 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
               dist_param_names[l1],
               dist_param_names[l2],
               g_hess_pp_v);
+        }
+        else if (Teuchos::nonnull(g_hess_pp_v)) {
+          *out << "WARNING: hess_vec_prod_g_pp(" << j <<","<< l1 + num_param_vecs <<","<< l2 + num_param_vecs
+               << ") is set in outArgs but p_direction(" << l2 + num_param_vecs << ") is not set in inArgs. \n";
         }
       }
     }
