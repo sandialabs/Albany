@@ -32,7 +32,7 @@ if [ "$BUILD_OPT" = "intel-trilinos" ] || [ "$BUILD_OPT" = "intel-albany" ]; the
   #intel build
   module purge
   module load sierra-git/2.6.1
-  module load sierra-devel/intel-18.0.3-intelmpi-5.1
+  module load sierra-devel/intel-19.0.1-intelmpi-5.1
   module load sparc-cmake
 
 elif [ "$BUILD_OPT" = "base-trilinos" ] || [ "$BUILD_OPT" = "base-albany" ] || [ "$BUILD_OPT" = "debug-trilinos" ] || [ "$BUILD_OPT" = "debug-albany" ]; then
