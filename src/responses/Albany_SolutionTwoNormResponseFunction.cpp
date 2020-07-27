@@ -160,12 +160,14 @@ evaluateDistParamHessVecProd_xx(
 {
   if (!Hv_dxdx.is_null()) {
     Teuchos::ScalarTraits<ST>::magnitudeType nrm = x->norm_2();
-    if (nrm!=0.0) {
-      Teuchos::ScalarTraits<ST>::magnitudeType nrm3 = std::pow(nrm,3);
-      for (int j=0; j<Hv_dxdx->domain()->dim(); ++j) {
-        // Evaluate Hv_dxdx_j = v_j/||x|| - (v_j,x) x/||x||^3 where (.,.) is the usual dot product:
-        Thyra::V_StVpStV(Hv_dxdx->col(j).ptr(),1.0/nrm,*v->col(j),-1.0*x->dot(*v->col(j))/nrm3,*x);
-      }
+    TEUCHOS_TEST_FOR_EXCEPTION (nrm == 0,
+          std::runtime_error,
+          "Second derivative not defined when x is zero");
+
+    Teuchos::ScalarTraits<ST>::magnitudeType nrm3 = std::pow(nrm,3);
+    for (int j=0; j<Hv_dxdx->domain()->dim(); ++j) {
+      // Evaluate Hv_dxdx_j = v_j/||x|| - (v_j,x) x/||x||^3 where (.,.) is the usual dot product:
+      Thyra::V_StVpStV(Hv_dxdx->col(j).ptr(),1.0/nrm,*v->col(j),-1.0*x->dot(*v->col(j))/nrm3,*x);
     }
   }
 }
