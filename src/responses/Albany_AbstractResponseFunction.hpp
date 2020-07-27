@@ -34,9 +34,6 @@ namespace Albany {
     //! Get the vector space associated with this response.
     virtual Teuchos::RCP<const Thyra_VectorSpace> responseVectorSpace() const = 0;
 
-    //! Get the dual vector space associated with this response.
-    virtual Teuchos::RCP<const Thyra_VectorSpace> responseDualVectorSpace() const = 0;
-
     /*!
      * \brief Is this response function "scalar" valued, i.e., has a replicated
      * local response map.

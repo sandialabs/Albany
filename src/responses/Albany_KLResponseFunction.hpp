@@ -43,11 +43,6 @@ public:
     return response->responseVectorSpace();
   }
 
-  //! Get the dual vector space associated with this response
-  Teuchos::RCP<const Thyra_VectorSpace> responseDualVectorSpace() const override {
-    return response->responseDualVectorSpace();
-  }
-
   /*! 
    * \brief Is this response function "scalar" valued, i.e., has a replicated
    * local response map.

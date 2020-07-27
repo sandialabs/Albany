@@ -36,9 +36,6 @@ public:
   //! Get the map associate with this response
   Teuchos::RCP<const Thyra_VectorSpace> responseVectorSpace() const override { return culled_vs; }
 
-  //! Get the dual map associate with this response
-  Teuchos::RCP<const Thyra_VectorSpace> responseDualVectorSpace() const override { return Teuchos::null; }
-
   //! Create operator for gradient
   Teuchos::RCP<Thyra_LinearOp> createGradientOp() const override;
 
