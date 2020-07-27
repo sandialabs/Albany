@@ -158,13 +158,14 @@ evaluateDistParamHessVecProd_xx(
     const Teuchos::Array<ParamVec>& param_array,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dxdx)
 {
-  Teuchos::ScalarTraits<ST>::magnitudeType nrm = x->norm_2();
-  Teuchos::ScalarTraits<ST>::magnitudeType nrm3 = std::pow(nrm,3);
-
   if (!Hv_dxdx.is_null()) {
-    for (int j=0; j<Hv_dxdx->domain()->dim(); ++j) {
-      // Evaluate Hv_dxdx_j = v_j/||x|| - (v_j,x) x/||x||^3 where (.,.) is the usual dot product:
-      Thyra::V_StVpStV(Hv_dxdx->col(j).ptr(),1.0/nrm,*v->col(j),-1.0*x->dot(*v->col(j))/nrm3,*x);
+    Teuchos::ScalarTraits<ST>::magnitudeType nrm = x->norm_2();
+    if (nrm!=0.0) {
+      Teuchos::ScalarTraits<ST>::magnitudeType nrm3 = std::pow(nrm,3);
+      for (int j=0; j<Hv_dxdx->domain()->dim(); ++j) {
+        // Evaluate Hv_dxdx_j = v_j/||x|| - (v_j,x) x/||x||^3 where (.,.) is the usual dot product:
+        Thyra::V_StVpStV(Hv_dxdx->col(j).ptr(),1.0/nrm,*v->col(j),-1.0*x->dot(*v->col(j))/nrm3,*x);
+      }
     }
   }
 }
