@@ -363,17 +363,16 @@ evaluateFields(typename Traits::EvalData workset)
   bool g_pp_is_active = !workset.hessianWorkset.hess_vec_prod_g_pp.is_null();
 
   // Are we differentiating w.r.t. this parameter?
-  bool is_active = (workset.dist_param_deriv_name == this->param_name);
-  bool is_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name);
+  const bool is_active = (workset.dist_param_deriv_name == this->param_name) && (g_px_is_active||g_pp_is_active);
+  const bool is_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name) && (g_xp_is_active || g_pp_is_active);
 
   Teuchos::ArrayRCP<const ST> vvec_constView;
-  if(is_direction_active && (g_xp_is_active || g_pp_is_active)) {
+  if(is_direction_active) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         vvec.is_null(),
         Teuchos::Exceptions::InvalidParameter,
         "\nError in GatherScalarNodalParameter<HessianVec, Traits>: "
-        "direction_p is not set and hess_vec_prod_g_xp or "
-        "hess_vec_prod_g_pp is set.\n");
+        "direction_p is not set and the direction is active.\n");
     vvec_constView = Albany::getLocalData(vvec->col(0));
   }
 
@@ -389,10 +388,14 @@ evaluateFields(typename Traits::EvalData workset)
 
       auto val = (this->val)(cell,node);
       val = FadType(num_deriv, pvec_val);
-      if (is_direction_active && (g_xp_is_active||g_pp_is_active))
-        val.val().fastAccessDx(0) = (id >= 0) ? vvec_constView[id] : 0;
-      if (is_active && (g_px_is_active||g_pp_is_active))
+      // If we differentiate w.r.t. this parameter, we have to set the first
+      // derivative to 1
+      if (is_active)
         val.fastAccessDx(node).val() = 1;
+      // If we differentiate w.r.t. this parameter direction, we have to set
+      // the second derivative to the related direction value
+      if (is_direction_active)
+        val.val().fastAccessDx(0) = (id >= 0) ? vvec_constView[id] : 0;
     }
   }
 }
@@ -438,17 +441,16 @@ evaluateFields(typename Traits::EvalData workset)
   bool g_pp_is_active = !workset.hessianWorkset.hess_vec_prod_g_pp.is_null();
 
   // Are we differentiating w.r.t. this parameter?
-  bool is_active = (workset.dist_param_deriv_name == this->param_name);
-  bool is_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name);
+  const bool is_active = (workset.dist_param_deriv_name == this->param_name) && (g_px_is_active||g_pp_is_active);
+  const bool is_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name) && (g_xp_is_active || g_pp_is_active);
 
   Teuchos::ArrayRCP<const ST> vvec_constView;
-  if(is_direction_active && (g_xp_is_active || g_pp_is_active)) {
+  if(is_direction_active) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         vvec.is_null(),
         Teuchos::Exceptions::InvalidParameter,
         "\nError in GatherScalarExtruded2DNodalParameter<HessianVec, Traits>: "
-        "direction_p is not set and hess_vec_prod_g_xp or "
-        "hess_vec_prod_g_pp is set.\n");
+        "direction_p is not set and the direction is acrive.\n");
     vvec_constView = Albany::getLocalData(vvec->col(0));
   }
 
@@ -464,10 +466,14 @@ evaluateFields(typename Traits::EvalData workset)
 
       auto val = (this->val)(cell,node);
       val = FadType(val.size(), pvec_val);
-      if (is_direction_active && (g_xp_is_active||g_pp_is_active))
-        val.val().fastAccessDx(0) = (p_lid >= 0) ? vvec_constView[p_lid] : 0;
-      if (is_active && (g_px_is_active||g_pp_is_active))
+      // If we differentiate w.r.t. this parameter, we have to set the first
+      // derivative to 1
+      if (is_active)
         val.fastAccessDx(node).val() = 1;
+      // If we differentiate w.r.t. this parameter direction, we have to set
+      // the second derivative to the related direction value
+      if (is_direction_active)
+        val.val().fastAccessDx(0) = (p_lid >= 0) ? vvec_constView[p_lid] : 0;
     }
   }
 }

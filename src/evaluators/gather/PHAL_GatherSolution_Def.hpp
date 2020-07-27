@@ -1033,13 +1033,16 @@ evaluateFields(typename Traits::EvalData workset)
   if(!xdotdot.is_null()) {
     xdot_constView = Albany::getLocalData(xdot);
   }
-  if(g_xx_is_active || g_px_is_active) {
+
+  const bool is_active = g_xx_is_active || g_xp_is_active;
+  const bool is_direction_active = g_xx_is_active || g_px_is_active;
+
+  if(is_direction_active) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         direction_x.is_null(),
         Teuchos::Exceptions::InvalidParameter,
         "\nError in GatherSolution<HessianVec, Traits>: "
-        "direction_x is not set and hess_vec_prod_g_xx or "
-        "hess_vec_prod_g_px is set.\n");
+        "direction_x is not set and the direction is active.\n");
     direction_x_constView = Albany::getLocalData(direction_x->col(0));
   }
 
@@ -1060,10 +1063,14 @@ evaluateFields(typename Traits::EvalData workset)
         RealType xvec_val = x_constView[nodeID(cell,node,this->offset + eq)];
 
         valref = FadType(valref.size(), xvec_val);
-        if (g_xx_is_active||g_px_is_active)
-          valref.val().fastAccessDx(0) = direction_x_constView[nodeID(cell,node,this->offset + eq)];
-        if (g_xx_is_active||g_xp_is_active)
+        // If we differentiate w.r.t. the solution, we have to set the first
+        // derivative to 1
+        if (is_active)
           valref.fastAccessDx(firstunk + eq).val() = 1;
+        // If we differentiate w.r.t. the solution direction, we have to set
+        // the second derivative to the related direction value
+        if (is_direction_active)
+          valref.val().fastAccessDx(0) = direction_x_constView[nodeID(cell,node,this->offset + eq)];
       }
     }
   }
