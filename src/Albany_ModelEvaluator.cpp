@@ -972,16 +972,19 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xx, j) ?
       outArgs.get_hess_vec_prod_g_xx(j) : Teuchos::null;
 
-    if (Teuchos::nonnull(delta_x) && Teuchos::nonnull(g_hess_xx_v)) {
+    if (Teuchos::nonnull(g_hess_xx_v)) {
+      if (delta_x.is_null()) {
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            Teuchos::Exceptions::InvalidParameter,
+            "hess_vec_prod_g_xx(" << j <<") is set in outArgs but x_direction "
+            << "is not set in inArgs.\n");
+      }
       g_hess_xx_v->assign(0.);
       app->evaluateResponseDistParamHessVecProd_xx(
           j, curr_time, delta_x, x, x_dot, x_dotdot,
           sacado_param_vec,
           g_hess_xx_v);
-    }
-    else if (Teuchos::nonnull(g_hess_xx_v)) {
-      *out << "WARNING: hess_vec_prod_g_xx(" << j <<") is set in outArgs but x_direction "
-           << "is not set in inArgs. \n";
     }
 
     for (int l1 = 0; l1 < num_dist_param_vecs; l1++) {
@@ -993,7 +996,14 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_px, j, l1 + num_param_vecs) ?
         outArgs.get_hess_vec_prod_g_px(j, l1 + num_param_vecs) : Teuchos::null;
 
-      if (Teuchos::nonnull(delta_p_l1) && Teuchos::nonnull(g_hess_xp_v)) {
+      if (Teuchos::nonnull(g_hess_xp_v)) {
+        if (delta_p_l1.is_null()) {
+          TEUCHOS_TEST_FOR_EXCEPTION(
+              true,
+              Teuchos::Exceptions::InvalidParameter,
+              "hess_vec_prod_g_xp(" << j <<","<< l1 + num_param_vecs <<") is set in outArgs but "
+              << "p_direction(" << l1 + num_param_vecs << ") is not set in inArgs.\n");
+        }
         g_hess_xp_v->assign(0.);
         app->evaluateResponseDistParamHessVecProd_xp(
             j, curr_time, delta_p_l1, x, x_dot, x_dotdot,
@@ -1001,22 +1011,21 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
             dist_param_names[l1],
             g_hess_xp_v);
       }
-      else if (Teuchos::nonnull(g_hess_xp_v)) {
-        *out << "WARNING: hess_vec_prod_g_xp(" << j <<","<< l1 + num_param_vecs <<") is set in outArgs but "
-             << "p_direction(" << l1 + num_param_vecs << ") is not set in inArgs. \n";
-      }
 
-      if (Teuchos::nonnull(delta_x) && Teuchos::nonnull(g_hess_px_v)) {
+      if (Teuchos::nonnull(g_hess_px_v)) {
+        if (delta_x.is_null()) {
+          TEUCHOS_TEST_FOR_EXCEPTION(
+              true,
+              Teuchos::Exceptions::InvalidParameter,
+              "hess_vec_prod_g_px(" << j <<","<< l1 + num_param_vecs <<") is set in outArgs but "
+              << "x_direction is not set in inArgs.\n");
+        }
         g_hess_px_v->assign(0.);
         app->evaluateResponseDistParamHessVecProd_px(
             j, curr_time, delta_x, x, x_dot, x_dotdot,
             sacado_param_vec,
             dist_param_names[l1],
             g_hess_px_v);
-      }
-      else if (Teuchos::nonnull(g_hess_px_v)) {
-        *out << "WARNING: hess_vec_prod_g_px(" << j <<","<< l1 + num_param_vecs <<") is set in outArgs but "
-             << "x_direction is not set in inArgs. \n";
       }
 
       for (int l2 = 0; l2 < num_dist_param_vecs; l2++) {
@@ -1025,7 +1034,14 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
           outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_pp, j, l1 + num_param_vecs, l2 + num_param_vecs) ?
           outArgs.get_hess_vec_prod_g_pp(j, l1 + num_param_vecs, l2 + num_param_vecs) : Teuchos::null;
 
-        if (Teuchos::nonnull(delta_p_l2) && Teuchos::nonnull(g_hess_pp_v)) {
+        if (Teuchos::nonnull(g_hess_pp_v)) {
+          if (delta_p_l2.is_null()) {
+            TEUCHOS_TEST_FOR_EXCEPTION(
+                true,
+                Teuchos::Exceptions::InvalidParameter,
+                "hess_vec_prod_g_pp(" << j <<","<< l1 + num_param_vecs <<","<< l2 + num_param_vecs
+                << ") is set in outArgs but p_direction(" << l2 + num_param_vecs << ") is not set in inArgs.\n");
+          }
           g_hess_pp_v->assign(0.);
           app->evaluateResponseDistParamHessVecProd_pp(
               j, curr_time, delta_p_l2, x, x_dot, x_dotdot,
@@ -1033,10 +1049,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
               dist_param_names[l1],
               dist_param_names[l2],
               g_hess_pp_v);
-        }
-        else if (Teuchos::nonnull(g_hess_pp_v)) {
-          *out << "WARNING: hess_vec_prod_g_pp(" << j <<","<< l1 + num_param_vecs <<","<< l2 + num_param_vecs
-               << ") is set in outArgs but p_direction(" << l2 + num_param_vecs << ") is not set in inArgs. \n";
         }
       }
     }
