@@ -8,7 +8,6 @@
 #include "Albany_Utils.hpp"
 
 #include "PHAL_ResponseFieldIntegral.hpp"
-#include "Adapt_ElementSizeField.hpp"
 #include "PHAL_ResponseSquaredL2Difference.hpp"
 #include "PHAL_ResponseSquaredL2DifferenceSide.hpp"
 #include "PHAL_SaveNodalField.hpp"
@@ -122,15 +121,6 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
     // Leave this for backward compatibility
     std::cout << "WARNING: 'PHAL Field IntegralT' is deprecated. You can just use 'PHAL Field Integral' (no T at the end).\n";
     res_ev = rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
-  }
-  else if (responseName == "Element Size Field")
-  {
-    p->set< StateManager* >("State Manager Ptr", &stateMgr );
-    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set<std::string>("Weights Name",  "Weights");
-
-    res_ev = rcp(new Adapt::ElementSizeField<EvalT,Traits>(*p, dl));
   }
   else if (responseName == "Save Nodal Fields")
   {
