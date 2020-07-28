@@ -391,7 +391,6 @@ list (APPEND SOURCES
   evaluators/response/PHAL_ResponseFieldIntegral.cpp
   evaluators/response/PHAL_ResponseSquaredL2Difference.cpp
   evaluators/response/PHAL_ResponseSquaredL2DifferenceSide.cpp
-  evaluators/response/PHAL_ResponseThermalEnergy.cpp
   evaluators/response/QCAD_ResponseFieldAverage.cpp
   evaluators/response/QCAD_ResponseFieldIntegral.cpp
   evaluators/response/QCAD_ResponseFieldValue.cpp
@@ -512,8 +511,6 @@ list (APPEND HEADERS
   evaluators/response/PHAL_ResponseSquaredL2DifferenceSide.hpp
   evaluators/response/PHAL_ResponseSquaredL2DifferenceSide_Def.hpp
   evaluators/response/PHAL_ResponseSquaredL2Difference_Def.hpp
-  evaluators/response/PHAL_ResponseThermalEnergy.hpp
-  evaluators/response/PHAL_ResponseThermalEnergy_Def.hpp
   evaluators/response/QCAD_ResponseFieldAverage.hpp
   evaluators/response/QCAD_ResponseFieldAverage_Def.hpp
   evaluators/response/QCAD_ResponseFieldIntegral.hpp

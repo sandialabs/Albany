@@ -12,7 +12,6 @@
 #include "QCAD_ResponseFieldAverage.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
-#include "PHAL_ResponseThermalEnergy.hpp"
 #include "Adapt_ElementSizeField.hpp"
 #include "PHAL_ResponseSquaredL2Difference.hpp"
 #include "PHAL_ResponseSquaredL2DifferenceSide.hpp"
@@ -146,17 +145,6 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
     std::cout << "WARNING: 'PHAL Field IntegralT' is deprecated. You can just use 'PHAL Field Integral' (no T at the end).\n";
     res_ev = rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
   }
-  else if (responseName == "PHAL Thermal Energy")
-  {
-    res_ev = rcp(new PHAL::ResponseThermalEnergy<EvalT,Traits>(*p, dl));
-  }
-  else if (responseName == "PHAL Thermal EnergyT")
-  {
-    // Leave this for backward compatibility
-    std::cout << "WARNING: 'PHAL Thermal EnergyT' is deprecated. You can just use 'PHAL Thermal Energy' (no T at the end).\n";
-    res_ev = rcp(new PHAL::ResponseThermalEnergy<EvalT,Traits>(*p, dl));
-  }
-
   else if (responseName == "Element Size Field")
   {
     p->set< StateManager* >("State Manager Ptr", &stateMgr );
