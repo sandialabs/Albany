@@ -8,7 +8,6 @@
 #include "Albany_Utils.hpp"
 
 #include "QCAD_ResponseFieldIntegral.hpp"
-#include "QCAD_ResponseFieldAverage.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
 #include "Adapt_ElementSizeField.hpp"
@@ -47,10 +46,6 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   if (responseName == "Field Integral")
   {
     res_ev = rcp(new QCAD::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
-  }
-  else if (responseName == "Field Average")
-  {
-    res_ev = rcp(new QCAD::ResponseFieldAverage<EvalT,Traits>(*p,dl));
   }
   else if (responseName == "Squared L2 Difference Source ST Target ST")
   {
