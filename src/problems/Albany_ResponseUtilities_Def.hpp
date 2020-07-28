@@ -8,7 +8,6 @@
 #include "Albany_Utils.hpp"
 
 #include "QCAD_ResponseFieldIntegral.hpp"
-#include "QCAD_ResponseFieldValue.hpp"
 #include "QCAD_ResponseFieldAverage.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
@@ -48,10 +47,6 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   if (responseName == "Field Integral")
   {
     res_ev = rcp(new QCAD::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
-  }
-  else if (responseName == "Field Value")
-  {
-    res_ev = rcp(new QCAD::ResponseFieldValue<EvalT,Traits>(*p,dl));
   }
   else if (responseName == "Field Average")
   {

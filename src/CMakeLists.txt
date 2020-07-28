@@ -393,7 +393,6 @@ list (APPEND SOURCES
   evaluators/response/PHAL_ResponseSquaredL2DifferenceSide.cpp
   evaluators/response/QCAD_ResponseFieldAverage.cpp
   evaluators/response/QCAD_ResponseFieldIntegral.cpp
-  evaluators/response/QCAD_ResponseFieldValue.cpp
   evaluators/scatter/PHAL_ScatterResidual.cpp
   evaluators/scatter/PHAL_ScatterSideEqnResidual.cpp
   evaluators/scatter/PHAL_ScatterScalarNodalParameter.cpp
@@ -515,8 +514,6 @@ list (APPEND HEADERS
   evaluators/response/QCAD_ResponseFieldAverage_Def.hpp
   evaluators/response/QCAD_ResponseFieldIntegral.hpp
   evaluators/response/QCAD_ResponseFieldIntegral_Def.hpp
-  evaluators/response/QCAD_ResponseFieldValue.hpp
-  evaluators/response/QCAD_ResponseFieldValue_Def.hpp
   evaluators/scatter/PHAL_ScatterResidual.hpp
   evaluators/scatter/PHAL_ScatterResidual_Def.hpp
   evaluators/scatter/PHAL_ScatterSideEqnResidual.hpp
