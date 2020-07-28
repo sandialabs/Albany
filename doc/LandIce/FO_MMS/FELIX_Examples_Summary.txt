@@ -300,11 +300,6 @@ input_ismip-hom_testA.xml
     (stabilization parameter: tau = delta*h^2) is used to solve the problem. 
 
 
-
-input_l1l2_sincos.xml
-    in progress
-
-
 input_sacado.xml
     not going there
 

@@ -15,7 +15,6 @@ set(SOURCES
   evaluators/LandIce_EffectivePressure.cpp
   evaluators/LandIce_EnthalpyResid.cpp
   evaluators/LandIce_EnthalpyBasalResid.cpp
-  evaluators/LandIce_EpsilonL1L2.cpp
   evaluators/LandIce_FlowRate.cpp
   evaluators/LandIce_FluxDiv.cpp
   evaluators/LandIce_FluxDivergenceResidual.cpp
@@ -59,8 +58,6 @@ set(SOURCES
   evaluators/LandIce_StokesBodyForce.cpp
   evaluators/LandIce_StokesFOBodyForce.cpp
   evaluators/LandIce_StokesFOImplicitThicknessUpdateResid.cpp
-  evaluators/LandIce_StokesL1L2BodyForce.cpp
-  evaluators/LandIce_StokesL1L2Resid.cpp
   evaluators/LandIce_StokesRm.cpp
   evaluators/LandIce_StokesTauM.cpp
   evaluators/LandIce_SurfaceAirEnthalpy.cpp
@@ -70,7 +67,6 @@ set(SOURCES
   evaluators/LandIce_VerticalVelocity.cpp
   evaluators/LandIce_Viscosity.cpp
   evaluators/LandIce_ViscosityFO.cpp
-  evaluators/LandIce_ViscosityL1L2.cpp
   evaluators/LandIce_w_Resid.cpp
   evaluators/LandIce_Time.cpp
   problems/LandIce_Enthalpy.cpp
@@ -83,7 +79,6 @@ set(SOURCES
   problems/LandIce_StokesFOBase.cpp
   problems/LandIce_StokesFOThermoCoupled.cpp
   problems/LandIce_StokesFOThickness.cpp
-  problems/LandIce_StokesL1L2.cpp
 )
 
 set(HEADERS
@@ -103,8 +98,6 @@ set(HEADERS
   evaluators/LandIce_EnthalpyResid_Def.hpp
   evaluators/LandIce_EnthalpyBasalResid.hpp
   evaluators/LandIce_EnthalpyBasalResid_Def.hpp
-  evaluators/LandIce_EpsilonL1L2.hpp
-  evaluators/LandIce_EpsilonL1L2_Def.hpp
   evaluators/LandIce_FlowRate.hpp
   evaluators/LandIce_FlowRate_Def.hpp
   evaluators/LandIce_FluxDiv.hpp
@@ -190,8 +183,6 @@ set(HEADERS
   evaluators/LandIce_StokesFOStress_Def.hpp
   evaluators/LandIce_StokesFOSynteticTestBC.hpp
   evaluators/LandIce_StokesFOSynteticTestBC_Def.hpp
-  evaluators/LandIce_StokesL1L2Resid_Def.hpp
-  evaluators/LandIce_StokesL1L2Resid.hpp
   evaluators/LandIce_StokesMomentumResid.hpp
   evaluators/LandIce_StokesMomentumResid_Def.hpp
   evaluators/LandIce_StokesRm.hpp
@@ -210,8 +201,6 @@ set(HEADERS
   evaluators/LandIce_VerticalVelocity_Def.hpp
   evaluators/LandIce_ViscosityFO.hpp
   evaluators/LandIce_ViscosityFO_Def.hpp
-  evaluators/LandIce_ViscosityL1L2.hpp
-  evaluators/LandIce_ViscosityL1L2_Def.hpp
   evaluators/LandIce_w_Resid.hpp
   evaluators/LandIce_w_Resid_Def.hpp
   evaluators/LandIce_Time.hpp
@@ -227,7 +216,6 @@ set(HEADERS
   problems/LandIce_StokesFO.hpp
   problems/LandIce_StokesFOThermoCoupled.hpp
   problems/LandIce_StokesFOThickness.hpp
-  problems/LandIce_StokesL1L2.hpp
 )
 
 # This is not very satisfactory, since it injects CISM specific stuff into

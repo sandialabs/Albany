@@ -11,7 +11,6 @@ add_subdirectory(FO_Thermo)
 add_subdirectory(Stokes_MMS)
 add_subdirectory(Stokes_ISMIP)
 add_subdirectory(Stokes_Test)
-# add_subdirectory(L1L2_MMS)
 
 add_subdirectory(Hydrology)
 
