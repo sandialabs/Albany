@@ -37,8 +37,7 @@ LangevinNoiseTerm(const Teuchos::ParameterList& p) :
 
 //  nd = Teuchos::rcp(new boost::normal_distribution<ScalarT>(0.0, sd));
 //  nd = Teuchos::rcp(new boost::normal_distribution<double>(0.0, sd.val()));
-  nd = Teuchos::rcp(new boost::normal_distribution<double>(0.0, 
-    QCAD::EvaluatorTools<EvalT,Traits>::getDoubleValue(sd)));
+  nd = Teuchos::rcp(new boost::normal_distribution<double>(0.0, Albany::ADValue(sd)));
   var_nor = Teuchos::rcp(new 
       boost::variate_generator<boost::mt19937&, boost::normal_distribution<double> >(rng, *nd));
 //      boost::variate_generator<boost::mt19937&, boost::normal_distribution<ScalarT> >(rng, *nd));
