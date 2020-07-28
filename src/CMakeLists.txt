@@ -417,7 +417,6 @@ list (APPEND SOURCES
   evaluators/utility/PHAL_MapToPhysicalFrameSide.cpp
   evaluators/utility/PHAL_Source.cpp
   evaluators/utility/QCAD_MathVector.cpp
-  evaluators/utility/QCAD_MeshRegion.cpp
   )
 
 if(ALBANY_STK_EXPR_EVAL)
@@ -555,8 +554,6 @@ list (APPEND HEADERS
   evaluators/utility/PHAL_Source.hpp
   evaluators/utility/PHAL_Source_Def.hpp
   evaluators/utility/QCAD_MathVector.hpp
-  evaluators/utility/QCAD_MeshRegion.hpp
-  evaluators/utility/QCAD_MeshRegion_Def.hpp
   )
 
 if(ALBANY_STK_EXPR_EVAL)
