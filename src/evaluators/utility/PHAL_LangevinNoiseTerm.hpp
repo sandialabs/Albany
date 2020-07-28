@@ -12,8 +12,6 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "QCAD_EvaluatorTools.hpp"
-
 // Random and Gaussian number distribution
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -29,8 +27,7 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class LangevinNoiseTerm : public PHX::EvaluatorWithBaseImpl<Traits>,
-	     public PHX::EvaluatorDerived<EvalT, Traits>,
-       public QCAD::EvaluatorTools<EvalT, Traits>
+	     public PHX::EvaluatorDerived<EvalT, Traits>
 {
 
 public:
