@@ -125,7 +125,6 @@ createResponseFunction(
      name == "Grounding Line Flux" ||
      name == "Boundary Squared L2 Norm" ||
      name == "Region Boundary" ||
-     name == "Element Size Field" ||
      name == "Save Nodal Fields" ||
      name == "Stiffness Objective" ||
      name == "Interface Energy" ||
