@@ -11,7 +11,6 @@
 #include "QCAD_ResponseFieldValue.hpp"
 #include "QCAD_ResponseFieldAverage.hpp"
 #include "QCAD_ResponseSaveField.hpp"
-#include "QCAD_ResponseCenterOfMass.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
 #include "PHAL_ResponseThermalEnergy.hpp"
 #include "Adapt_ElementSizeField.hpp"
@@ -130,10 +129,6 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Squared L2 Difference Side Source MST Target PST")
   {
     res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSMST_TPST<EvalT,Traits>(*p,dl));
-  }
-  else if (responseName == "Center Of Mass")
-  {
-    res_ev = rcp(new QCAD::ResponseCenterOfMass<EvalT,Traits>(*p, dl));
   }
   else if (responseName == "Save Field")
   {

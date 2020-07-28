@@ -126,7 +126,6 @@ createResponseFunction(
      name == "Surface Mass Balance Mismatch" ||
      name == "Grounding Line Flux" ||
      name == "Boundary Squared L2 Norm" ||
-     name == "Center Of Mass" ||
      name == "Save Field" ||
      name == "Region Boundary" ||
      name == "Element Size Field" ||
