@@ -7,7 +7,6 @@
 #include "Albany_ResponseUtilities.hpp"
 #include "Albany_Utils.hpp"
 
-#include "QCAD_ResponseFieldIntegral.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
 #include "Adapt_ElementSizeField.hpp"
@@ -43,11 +42,7 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   p->set<RCP<ParameterList> >("Parameters From Problem", paramsFromProblem);
   RCP<PHX::Evaluator<Traits>> res_ev;
 
-  if (responseName == "Field Integral")
-  {
-    res_ev = rcp(new QCAD::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
-  }
-  else if (responseName == "Squared L2 Difference Source ST Target ST")
+  if (responseName == "Squared L2 Difference Source ST Target ST")
   {
     res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSST_TST<EvalT,Traits>(*p,dl));
   }
