@@ -102,7 +102,6 @@ createResponseFunction(
   }
 
   else if (name == "Field Integral" ||
-     name == "Field Average" ||
      name == "Squared L2 Difference Source ST Target ST" ||
      name == "Squared L2 Difference Source ST Target MST" ||
      name == "Squared L2 Difference Source ST Target PST" ||
