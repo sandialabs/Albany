@@ -7,7 +7,6 @@
 #include "Albany_ResponseUtilities.hpp"
 #include "Albany_Utils.hpp"
 
-#include "QCAD_ResponseSaveField.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
 #include "Adapt_ElementSizeField.hpp"
 #include "PHAL_ResponseSquaredL2Difference.hpp"
@@ -113,12 +112,6 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Squared L2 Difference Side Source MST Target PST")
   {
     res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSMST_TPST<EvalT,Traits>(*p,dl));
-  }
-  else if (responseName == "Save Field")
-  {
-    p->set< StateManager* >("State Manager Ptr", &stateMgr );
-
-    res_ev = rcp(new QCAD::ResponseSaveField<EvalT,Traits>(*p, dl));
   }
   else if (responseName == "PHAL Field Integral")
   {
