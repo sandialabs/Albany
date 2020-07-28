@@ -9,7 +9,6 @@
 #include "LandIce_SchoofFit.hpp"
 #include "LandIce_Stokes.hpp"
 #include "LandIce_StokesFO.hpp"
-#include "LandIce_StokesL1L2.hpp"
 #include "LandIce_Hydrology.hpp"
 #include "LandIce_Enthalpy.hpp"
 #include "LandIce_StokesFOThermoCoupled.hpp"
@@ -31,7 +30,6 @@ bool LandIceProblemFactory::provides (const std::string& key) const
          key == "LandIce Stokes First Order 3D" ||
          key == "LandIce Stokes FO 3D" ||
          key == "LandIce Coupled FO H 3D" ||
-         key == "LandIce Stokes L1L2 2D" ||
          key == "LandIce Hydrology 2D" ||
          key == "LandIce Enthalpy 3D" ||
          key == "LandIce Stokes FO Thermo Coupled 3D" ||
@@ -63,8 +61,6 @@ create (const std::string& key,
     problem = Teuchos::rcp(new LandIce::StokesFO(problemParams, discParams, paramLib, 3));
   } else if (key == "LandIce Coupled FO H 3D" ) {
     problem = Teuchos::rcp(new LandIce::StokesFOThickness(problemParams, discParams, paramLib, 3));
-  } else if (key == "LandIce Stokes L1L2 2D") {
-    problem = Teuchos::rcp(new LandIce::StokesL1L2(problemParams, paramLib, 2));
   } else if (key == "LandIce Hydrology 2D") {
     problem = Teuchos::rcp(new LandIce::Hydrology(problemParams, discParams, paramLib, 2));
   } else if (key == "LandIce Enthalpy 3D") {
