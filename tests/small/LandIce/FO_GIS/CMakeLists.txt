@@ -30,11 +30,6 @@ IF (NOT ALBANY_IOPX AND ALBANY_MPI)
             COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} gis_unstruct_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
   set_tests_properties (FO_GIS_decompMesh PROPERTIES FIXTURES_SETUP meshSetup)
-  
-  add_test (NAME FO_GIS_HUMBOLDT_decompMesh
-            COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-  set_tests_properties (FO_GIS_HUMBOLDT_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
 
   set_tests_properties(${testName}
                        PROPERTIES
@@ -109,9 +104,22 @@ if (ALBANY_FROSCH)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch.yaml)
   add_test(${testNameRoot}_Humboldt_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch.yaml)
-  set_tests_properties(${testNameRoot}_Humboldt_Tpetra_FROSch
+  if (NOT ALBANY_IOPX AND ALBANY_MPI)
+    add_test (NAME FO_GIS_HUMBOLDT_decompMesh
+            COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
+    set_tests_properties (FO_GIS_HUMBOLDT_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
+
+    set_tests_properties(${testNameRoot}_Humboldt_Tpetra_FROSch
                        PROPERTIES
-                       LABELS "LandIce;Tpetra;Forward")
+                       LABELS            "LandIce;Epetra;Forward"
+                       FIXTURES_REQUIRED humboldtMeshSetup)
+    else ()
+    set_tests_properties(${testNameRoot}_Humboldt_Tpetra_FROSch
+                       PROPERTIES
+                       LABELS         "LandIce;Epetra;Forward")
+  endif()
+  
 endif()
 
 
