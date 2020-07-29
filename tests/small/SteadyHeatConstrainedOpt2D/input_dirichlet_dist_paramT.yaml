@@ -17,6 +17,7 @@ ANONYMOUS:
         Upper Bound: 2.00000000000000000e+00
         Initial Uniform Value: -5.00000000000000000e-01
         Mesh Part: NodeSet0
+      Hessian-vector products use AD: false
     Response Functions: 
       Collection Method: Sum Responses
       Number: 1
