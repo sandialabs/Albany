@@ -44,7 +44,7 @@ private:
 
   Kokkos::DynRankView<int, PHX::Device> sideNodes;
 
-  Albany::SideStructViews sideSet;
+  Albany::LocalSideStruct sideSet;
 
   Teuchos::RCP<shards::CellTopology> cellType;
 

@@ -78,7 +78,7 @@ private:
   Teuchos::RCP<shards::CellTopology> cellType;
   bool compute_normals;
 
-  Albany::SideStructViews sideSet;
+  Albany::LocalSideStruct sideSet;
 
   bool useCollapsedSidesets;
 

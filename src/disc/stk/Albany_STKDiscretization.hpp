@@ -192,10 +192,10 @@ class STKDiscretization : public AbstractDiscretization
   }
 
   //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const SideSetViewList&
+  const LocalSideStructList&
   getSideSetViews(const int workset) const
   {
-    return sideSetViews[workset];
+    return sideSetViews.at(workset);
   }
 
   //! Get connectivity map from elementGID to workset
@@ -604,7 +604,8 @@ class STKDiscretization : public AbstractDiscretization
   //! side sets stored as std::map(string ID, SideArray classes) per workset
   //! (std::vector across worksets)
   std::vector<SideSetList> sideSets;
-  std::vector<SideSetViewList> sideSetViews;
+  GlobalSideSetList globalSideSetViews;
+  std::map<int, LocalSideStructList> sideSetViews;
 
   //! Connectivity array [workset, element, local-node, Eq] => LID
   Conn wsElNodeEqID;

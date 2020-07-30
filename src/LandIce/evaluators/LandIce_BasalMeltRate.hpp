@@ -82,7 +82,7 @@ private:
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
-  Albany::SideStructViews sideSet;
+  Albany::LocalSideStruct sideSet;
 
   public:
 

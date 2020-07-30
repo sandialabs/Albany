@@ -28,6 +28,7 @@ using NodeSetList      = std::map<std::string, std::vector<std::vector<int>>>;
 using NodeSetGIDsList  = std::map<std::string, std::vector<GO>>;
 using NodeSetCoordList = std::map<std::string, std::vector<double*>>;
 
+// Legacy SideStruct and SideSetList for compatability until all problems are converted to new layouts
 class SideStruct
 {
  public:
@@ -37,23 +38,49 @@ class SideStruct
   int      elem_ebIndex;   // index of element block that contains element
   unsigned side_local_id;  // local id of side relative to owning element
 };
-
-class SideStructViews
-{
- public:
-  Kokkos::View<GO*>       side_GID;
-  Kokkos::View<GO*>       elem_GID;
-  Kokkos::View<int*>      elem_LID;
-  Kokkos::View<int*>      elem_ebIndex;
-  Kokkos::View<unsigned*> side_local_id;
-  int                     size;
-  int                     numSides;
-  Kokkos::View<int*>      numCellsOnSide;
-  Kokkos::View<int**>     cellsOnSide;
-};
-
 using SideSetList = std::map<std::string, std::vector<SideStruct>>;
-using SideSetViewList = std::map<std::string, SideStructViews>;
+
+
+// This is a stucture that holds all of the sideset information over all worksets. When running populate mesh,
+//   there can be a huge number of worksets with only a handful (1-20) of entries each, which causes a huge
+//   performance hit on GPUs since each of these tiny views must be allocated serially on the GPU. These global/local
+//   side structs avoid this issue by allocating once after computing the global view extents and then providing
+//   local subviews to each workset.
+// Memory layout is enforced to be LayoutRight regardless of architecture since Kokkos parallel sections
+//   will only ever operate on the last extent of any of these Views and therefore they should be contiguous.
+class GlobalSideStruct
+{
+public:
+  int num_local_worksets;
+  int max_sideset_length;
+  Kokkos::View<int*, Kokkos::LayoutRight> sideset_sizes;       // (num_local_worksets)
+  Kokkos::View<GO**, Kokkos::LayoutRight>       side_GID;      // (num_local_worksets, max_sideset_length)
+  Kokkos::View<GO**, Kokkos::LayoutRight>       elem_GID;      // (num_local_worksets, max_sideset_length)
+  Kokkos::View<int**, Kokkos::LayoutRight>      elem_LID;      // (num_local_worksets, max_sideset_length)
+  Kokkos::View<int**, Kokkos::LayoutRight>      elem_ebIndex;  // (num_local_worksets, max_sideset_length)
+  Kokkos::View<unsigned**, Kokkos::LayoutRight> side_local_id; // (num_local_worksets, max_sideset_length)
+
+  int max_sides;
+  Kokkos::View<int**, Kokkos::LayoutRight>      numCellsOnSide; // (num_local_worksets, max_sides)
+  Kokkos::View<int***, Kokkos::LayoutRight>     cellsOnSide;    // (num_local_worksets, max_sides, max_sideset_length)
+};
+using GlobalSideSetList = std::map<std::string, GlobalSideStruct>;
+
+class LocalSideStruct
+{
+public:
+  int size;
+  Kokkos::View<GO*, Kokkos::LayoutRight>       side_GID;      // (size)
+  Kokkos::View<GO*, Kokkos::LayoutRight>       elem_GID;      // (size)
+  Kokkos::View<int*, Kokkos::LayoutRight>      elem_LID;      // (size)
+  Kokkos::View<int*, Kokkos::LayoutRight>      elem_ebIndex;  // (size)
+  Kokkos::View<unsigned*, Kokkos::LayoutRight> side_local_id; // (size)
+
+  int numSides;
+  Kokkos::View<int*, Kokkos::LayoutRight>      numCellsOnSide; // (sides)
+  Kokkos::View<int**, Kokkos::LayoutRight>     cellsOnSide;    // (numSides, sides)
+};
+using LocalSideStructList = std::map<std::string, LocalSideStruct>;
 
 class wsLid
 {
