@@ -21,8 +21,6 @@ if (1)
   set (CLEAN_BUILD TRUE)
 # Drop the gcc 32bit build
   set (BUILD_ALB32 FALSE)
-# Drop the functor dev build - is this still of interest?
-  set (BUILD_ALBFUNCTOR FALSE)
   set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
   IF(CTEST_BUILD_OPTION MATCHES "debug-trilinos")
     set (BUILD_TRILINOS FALSE)
@@ -34,7 +32,6 @@ if (1)
     set (BUILD_ALB64CLANG FALSE)
     set (BUILD_TRILINOSCLANGDBG FALSE)
     set (BUILD_ALB64CLANGDBG FALSE)
-    set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
     set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
@@ -51,7 +48,6 @@ if (1)
     set (BUILD_ALB64CLANG FALSE)
     set (BUILD_TRILINOSCLANGDBG FALSE)
     set (BUILD_ALB64CLANGDBG FALSE)
-    set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
     set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
@@ -66,7 +62,6 @@ if (1)
     set (BUILD_ALB64CLANG FALSE)
     set (BUILD_TRILINOSCLANGDBG FALSE)
     set (BUILD_ALB64CLANGDBG FALSE)
-    set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
     set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
@@ -82,7 +77,6 @@ if (1)
     set (BUILD_ALB64CLANG TRUE)
     set (BUILD_TRILINOSCLANGDBG FALSE)
     set (BUILD_ALB64CLANGDBG FALSE)
-    set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
     set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
@@ -98,7 +92,6 @@ if (1)
     set (BUILD_ALB64CLANG FALSE)
     set (BUILD_TRILINOSCLANGDBG TRUE)
     set (BUILD_ALB64CLANGDBG FALSE)
-    set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
     set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
@@ -114,7 +107,6 @@ if (1)
     set (BUILD_ALB64CLANG FALSE)
     set (BUILD_TRILINOSCLANGDBG FALSE)
     set (BUILD_ALB64CLANGDBG TRUE)
-    set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
     set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
@@ -130,7 +122,6 @@ if (1)
     set (BUILD_ALB64CLANG FALSE)
     set (BUILD_TRILINOSCLANGDBG FALSE)
     set (BUILD_ALB64CLANGDBG FALSE)
-    set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS TRUE)
     set (BUILD_INTEL_ALBANY FALSE)
     set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
@@ -146,7 +137,6 @@ if (1)
     set (BUILD_ALB64CLANG FALSE)
     set (BUILD_TRILINOSCLANGDBG FALSE)
     set (BUILD_ALB64CLANGDBG FALSE)
-    set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY TRUE)
     set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
@@ -171,7 +161,6 @@ else ()
   set (BUILD_ALB64CLANG FALSE)
   set (BUILD_TRILINOSCLANGDBG FALSE)
   set (BUILD_ALB64CLANGDBG FALSE)
-  set (BUILD_ALBFUNCTOR FALSE)
   set (BUILD_INTEL_TRILINOS FALSE)
   set (BUILD_INTEL_ALBANY FALSE)
   set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
@@ -189,9 +178,6 @@ getuname(osname -s)
 getuname(osrel  -r)
 getuname(cpu    -m)
 
-set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
-set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.1)
-SET (INTEL_MPI_DIR $ENV{MPI_HOME})
 SET (MPI_BIN_DIR $ENV{MPI_BIN})
 SET (MPI_LIB_DIR $ENV{MPI_LIB})
 
@@ -217,7 +203,6 @@ if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
 endif ()
 
 set (PREFIX_DIR /projects/albany)
-set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 # Build all results in a scratch space
@@ -528,6 +513,16 @@ else ()
 endif ()
 
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
+
+if (BUILD_INTEL_TRILINOS)
+  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall")
+  set (CONF_OPTS
+    CDASH-TRILINOS-INTEL-FILE.TXT
+  )
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_trilinos("${CONF_OPTS}" "TrilinosIntel" "${INSTALL_LOCATION}")
+  
+endif (BUILD_INTEL_TRILINOS)
 
 if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
 
@@ -876,6 +871,21 @@ if (BUILD_ALB64)
 
 endif (BUILD_ALB64)
 
+if (BUILD_INTEL_ALBANY)
+
+  set (CONF_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall"
+    "-DENABLE_64BIT_INT:BOOL=ON"
+#    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
+    "-DENABLE_LANDICE:BOOL=ON"
+    "-DENABLE_UNIT_TESTS:BOOL=ON"
+    "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
+    )
+
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_albany("${CONF_OPTIONS}" "AlbanyIntel")
+
+endif (BUILD_INTEL_ALBANY)
 #
 # Configure the Albany Clang build using GO = long
 #
@@ -937,28 +947,3 @@ if (BUILD_ALB64DBG)
 
 endif (BUILD_ALB64DBG)
 
-
-if (BUILD_ALBFUNCTOR)
-
-  set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_64BIT_INT:BOOL=ON"
-    "-DENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-    "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
-    )
-
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_albany("${CONF_OPTIONS}" "AlbanyFunctorDev")
-
-endif (BUILD_ALBFUNCTOR)
-
-if (BUILD_INTEL_TRILINOS OR BUILD_INTEL_ALBANY)
-  INCLUDE(${CTEST_SCRIPT_DIRECTORY}/intel_macro.cmake)
-
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-   do_intel("${COMMON_CONFIGURE_OPTIONS}" "TrilinosIntel")
-
-endif (BUILD_INTEL_TRILINOS OR BUILD_INTEL_ALBANY)
