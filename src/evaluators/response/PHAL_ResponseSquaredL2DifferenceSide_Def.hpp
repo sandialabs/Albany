@@ -54,6 +54,8 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
     target_fname = plist->get<std::string>("Target Field Name");
     targetField = decltype(targetField)(target_fname,layout);
     this->addDependentField(targetField);
+
+    target_value = false;
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(!plist->isParameter("Target Value"), std::logic_error,
                                "[ResponseSquaredL2DifferenceSideBase] Error! No target value or target field provided.\n")
