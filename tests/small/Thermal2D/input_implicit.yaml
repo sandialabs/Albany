@@ -1,37 +1,36 @@
 ALBANY:
+  #Debug Output: 
+  #  Write Jacobian to MatrixMarket: -1
+  #  Write Residual to MatrixMarket: -1
   Problem: 
-    Name: Heat 2D
+    Name: Thermal 2D
     Solution Method: Transient
     Dirichlet BCs: 
-      DBC on NS NodeSet0 for DOF T: 1.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF T: 1.00000000000000000e+00
-      #DBC on NS NodeSet2 for DOF T: 1.00000000000000000e+00
-      #DBC on NS NodeSet3 for DOF T: 1.00000000000000000e+00
-    Initial Condition: 
-      Function: Constant
-      Function Data: [5.00000000000000000e+00]
+      ExpressionEvaluated SDBC on NS NodeSet3 for DOF T: '200.0 + 5.0e-04 * t'
+      #ExpressionEvaluated SDBC on NS NodeSet3 for DOF T: '250.0 *cosh(5.421312110550360e-02) * exp(0.0015*0.0015*t)'
+    Initial Condition:
+      Function: Expression Parser
+      Function Expressions: ['200']
+      #Function Expressions: ['250 * cosh(5.421312110550360e-02*x)']
+    Thermal Conductivity: [1.6, 1.6]  
+    Heat Capacity: 2.09e3 
+    Density: 920.0 
     Response Functions: 
       Number: 1
       Response 0: Solution Average
-    Parameters: 
-      Number: 1
-      Parameter 0: DBC on NS NodeSet0 for DOF T
-        #Parameter 1: DBC on NS NodeSet2 for DOF T
   Discretization: 
     1D Elements: 10
     2D Elements: 10
     1D Scale: 1.00000000000000000e+00
     2D Scale: 1.00000000000000000e+00
-    Workset Size: 50
+    Workset Size: -1
     Method: STK2D
-    Exodus Output File Name: tran2d_tpetra_tempus_be.exo
+    Exodus Output File Name: thermal2D_implicit_sdbc_out.exo
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [1.001245460418e+00]
+    Test Values: [2.122588137382e+02]
     Relative Tolerance: 1.00000000000000002e-03
     Absolute Tolerance: 1.00000000000000008e-05
-    Number of Sensitivity Comparisons: 0
-    Sensitivity Test Values 0: [3.05378999999999998e-02, 3.30262109999999998e-01]
   Piro: 
     Tempus: 
       Integrator Name: Tempus Integrator
@@ -46,21 +45,21 @@ ALBANY:
         Time Step Control: 
           Initial Time: 0.00000000000000000e+00
           Initial Time Index: 0
-          Initial Time Step: 5.00000000000000010e-03
+          Initial Time Step: 1.0e+03
           Initial Order: 0
-          Final Time: 8.00000000000000006e-1
+          Final Time: 1.0e+5
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
-          Integrator Step Type: Constant
+          Integrator Step Type: Variable
           Time Step Control Strategy: 
             Time Step Control Strategy List: basic_vs
             basic_vs: 
               Name: Basic VS
               Reduction Factor: 5.00000000000000000e-01
-              Amplification Factor: 2.00000000000000000e+00
-              Minimum Value Monitoring Function: 4.00000000000000008e-02
-              Maximum Value Monitoring Function: 5.00000000000000028e-02
+              Amplification Factor: 1.50000000000000000e+00
+              Minimum Value Monitoring Function: 1.0e-12
+              Maximum Value Monitoring Function: 1.0e20
           Output Time List: ''
           Output Index List: ''
           Output Time Interval: 1.00000000000000000e+01

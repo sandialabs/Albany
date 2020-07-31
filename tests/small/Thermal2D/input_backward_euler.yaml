@@ -25,7 +25,7 @@ ALBANY:
     2D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK2D
-    Exodus Output File Name: thermal2D_out.exo
+    Exodus Output File Name: thermal2D_implicit_sdbc_out.exo
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [2.122588137382e+02]
