@@ -608,7 +608,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
 
   auto discretizationList = Teuchos::sublist(paramList, "Discretization", true);
-  discretizationList->set("Element Shape", discretizationList->get("Element Shape", "Tetrahedron")); //set to Extruded is not defined
+
+  discretizationList->set("Workset Size", discretizationList->get("Workset Size", -1));
+  discretizationList->set("Element Shape", discretizationList->get("Element Shape", "Prism")); //set to Extruded is not defined
   elemShape = discretizationList->get<std::string>("Element Shape");
 
   discretizationList->set("Method", discretizationList->get("Method", "Extruded")); //set to Extruded is not defined
