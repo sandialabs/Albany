@@ -459,7 +459,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
     const std::vector<int>& indexToEdgeID,
     const std::vector<int>& indexToTriangleID,
     const std::vector<int>& dirichletNodesIds,
-    const std::vector<int>& floating2dEdgesIds) {
+    const std::vector<int>& iceMarginEdgesIds) {
 
   auto grid3DTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Extrude 3D Grid"));
 
@@ -561,13 +561,13 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   // Albany will compute it based on the geometry
   if(lateralParams.isParameter("Immersed Ratio"))
     lateralParams.set<double>("Immersed Ratio",lateralParams.get<double>("Immersed Ratio"));
-  lateralParams.set("Side Set Name", lateralParams.get("Side Set Name", "lateralside"));
+  lateralParams.set("Side Set Name", lateralParams.get("Side Set Name", "ice_margin_side"));
   lateralParams.set("Type", lateralParams.get("Type", "Lateral"));
 
   //Dirichlet BCs
   if(!paramList->sublist("Problem").isSublist("Dirichlet BCs")) {
-    paramList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS dirichlet for DOF U0 prescribe Field", "dirichlet_field");
-    paramList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS dirichlet for DOF U1 prescribe Field", "dirichlet_field");
+    paramList->sublist("Problem").sublist("Dirichlet BCs").set("SDBC on NS dirichlet for DOF U0 prescribe Field", "dirichlet_field");
+    paramList->sublist("Problem").sublist("Dirichlet BCs").set("SDBC on NS dirichlet for DOF U1 prescribe Field", "dirichlet_field");
   }
   else {
     std::cout<<"\nWARNING: Using Dirichlet BCs options provided in Albany input file. In order to use those provided by MPAS, remove \"Dirichlet BCs\" sublist from Albany input file.\n"<<std::endl;
@@ -748,6 +748,6 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
       vertexProcIDs, verticesCoords, globalVerticesStride,
       verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,
       verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,
-      dirichletNodesIds, floating2dEdgesIds,
+      dirichletNodesIds, iceMarginEdgesIds,
       meshStruct->getMeshSpecs()[0]->worksetSize, nLayers, Ordering);
 }

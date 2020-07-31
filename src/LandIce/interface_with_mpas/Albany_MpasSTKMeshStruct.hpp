@@ -68,7 +68,7 @@ public:
       const std::vector<GO>& indexToTriangleID,
       int globalTrianglesStride,
       const std::vector<int>& dirichletNodesIds,
-      const std::vector<int>& floating2dLateralEdgesIds,
+      const std::vector<int>& iceMarginEdgesIds,
       const unsigned int worksetSize,
       int numLayers, int Ordering = 0);
 

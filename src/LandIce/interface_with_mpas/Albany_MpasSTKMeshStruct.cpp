@@ -127,7 +127,7 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   std::string ssnLat="lateralside";
   std::string ssnBottom="basalside";
   std::string ssnTop="upperside";
-  std::string ssnLatFloat="floatinglateralside";
+  std::string ssnLatFloat="ice_margin_side";
 
   ssNames.push_back(ssnLat);
   ssNames.push_back(ssnBottom);
@@ -196,7 +196,7 @@ void MpasSTKMeshStruct::constructMesh(
     const std::vector<GO>& indexToTriangleID,
     int globalTrianglesStride,
     const std::vector<int>& dirichletNodesIds,
-    const std::vector<int>& floating2dLateralEdgesIds,
+    const std::vector<int>& iceMarginEdgesIds,
     const unsigned int worksetSize,
     int numLayers, int ordering)
 {
@@ -446,9 +446,9 @@ void MpasSTKMeshStruct::constructMesh(
     }
   }
 
-  singlePartVec[0] = ssPartVec["floatinglateralside"];
-  for(int i=0; i<static_cast<int>(floating2dLateralEdgesIds.size()); ++i) {
-    int basalEdgeId = floating2dLateralEdgesIds[i]*edgeLayerShift;
+  singlePartVec[0] = ssPartVec["ice_margin_side"];
+  for(int i=0; i<static_cast<int>(iceMarginEdgesIds.size()); ++i) {
+    int basalEdgeId = iceMarginEdgesIds[i]*edgeLayerShift;
     for(int il=0; il<numLayers; ++il) {
       for(int k=0; k< numLatSidesInQuad; ++k) {
         int sideId = edgeColumnShift*il+numLatSidesInQuad*basalEdgeId+k+1 + upperBasalOffset;
