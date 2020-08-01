@@ -21,7 +21,7 @@ INSTALL_DIR=/projects/albany/nightlyAlbanyCDash
 SCRATCH_DIR=/scratch/albany
 
 export LM_LICENSE_FILE=7500@sitelicense.sandia.gov
-  
+
 if [ "${MODULESHOME:-}" = "" ]; then
   # Modules have not been set
   . /usr/share/Modules/init/bash
@@ -30,27 +30,16 @@ fi
 if [ "$BUILD_OPT" = "intel-trilinos" ] || [ "$BUILD_OPT" = "intel-albany" ]; then
 
   source $SCRIPT_DIR/sems-intel-modules.sh >& $SCRATCH_DIR/sems-intel-modules.out 
-  if [ "$BUILD_OPT" = "intel-trilinos" ]; then
-    source $SCRIPT_DIR/convert-cmake-to-cdash-intel.sh
-    source $SCRIPT_DIR/create-new-cdash-cmake-script.sh 
-  fi
 
 elif [ "$BUILD_OPT" = "base-trilinos" ] || [ "$BUILD_OPT" = "base-albany" ] || [ "$BUILD_OPT" = "debug-trilinos" ] || [ "$BUILD_OPT" = "debug-albany" ]; then
   
   #gcc builds
-  module purge
-  module load sems-env
-  module load sems-gcc/9.2.0
-  module load sems-openmpi/1.10.1
-  module load sems-cmake/3.12.2
-  module load sems-boost/1.55.0/base
-  module load sems-netcdf/4.4.1/exo_parallel
+  source $SCRIPT_DIR/sems-gcc-modules.sh >& $SCRATCH_DIR/sems-gcc-modules.out 
 
 else
 
   # clang builds
-  module load sems-env
-  module load sems-cmake
+  source $SCRIPT_DIR/sems-clang-modules.sh >& $SCRATCH_DIR/sems-clang-modules.out 
 
 fi
 

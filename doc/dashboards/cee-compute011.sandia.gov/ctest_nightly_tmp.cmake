@@ -19,13 +19,10 @@ if (1)
     set (BUILD_ALB64 TRUE) 
   ENDIF() 
   set (CLEAN_BUILD TRUE)
-# Drop the gcc 32bit build
-  set (BUILD_ALB32 FALSE)
   set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
   IF(CTEST_BUILD_OPTION MATCHES "debug-trilinos")
     set (BUILD_TRILINOS FALSE)
     set (BUILD_TRILINOSDBG TRUE)
-    set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_ALB64DBG FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
@@ -41,7 +38,6 @@ if (1)
   IF(CTEST_BUILD_OPTION MATCHES "debug-albany")
     set (BUILD_TRILINOS FALSE)
     set (BUILD_TRILINOSDBG FALSE)
-    set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_ALB64DBG TRUE)
     set (BUILD_TRILINOSCLANG FALSE)
@@ -56,7 +52,6 @@ if (1)
   ENDIF() 
   IF(CTEST_BUILD_OPTION MATCHES "clang-trilinos")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG TRUE)
     set (BUILD_ALB64CLANG FALSE)
@@ -71,7 +66,6 @@ if (1)
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "clang-albany")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG TRUE)
@@ -86,7 +80,6 @@ if (1)
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "clangdbg-trilinos")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG FALSE)
@@ -101,7 +94,6 @@ if (1)
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "clangdbg-albany")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG FALSE)
@@ -116,7 +108,6 @@ if (1)
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "intel-trilinos")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG FALSE)
@@ -131,7 +122,6 @@ if (1)
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "intel-albany")
     set (BUILD_TRILINOS FALSE)
-    set (BUILD_ALB32 FALSE)
     set (BUILD_ALB64 FALSE)
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG FALSE)
@@ -155,7 +145,6 @@ else ()
   # machine that can support a lengthy nightly.
   set (CLEAN_BUILD FALSE)
   set (BUILD_TRILINOS FALSE)
-  set (BUILD_ALB32 FALSE)
   set (BUILD_ALB64 FALSE)
   set (BUILD_TRILINOSCLANG FALSE)
   set (BUILD_ALB64CLANG FALSE)
@@ -366,152 +355,6 @@ IF(DOWNLOAD_ALBANY)
 
 endif ()
 
-#
-# Set the common Trilinos config options
-#
-
-set (COMMON_CONFIGURE_OPTIONS
-  "-Wno-dev"
-  #
-  "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
-  "-DTrilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON"
-  "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
-  "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
-  "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
-  "-DTrilinos_ENABLE_MueLu:BOOL=ON"
-  "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11'"
-#
-  "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:BOOL=OFF"
-  "-DTrilinos_ENABLE_STRONG_C_COMPILE_WARNINGS:BOOL=OFF"
-  "-DTrilinos_ENABLE_STRONG_CXX_COMPILE_WARNINGS:BOOL=OFF"
-  "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-  "-DTrilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
-  #
-  "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
-  "-DMDS_ID_TYPE:STRING='long int'"
-  "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
-  "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
-  "-DTpetra_INST_INT_LONG:BOOL=OFF"
-  "-DTpetra_INST_INT_INT:BOOL=OFF"
-  "-DXpetra_ENABLE_Epetra=OFF"
-  "-DMueLu_ENABLE_Epetra=OFF"
-  "-DBelos_ENABLE_Epetra=OFF"
-  "-DTpetra_INST_DOUBLE:BOOL=ON"
-  "-DTpetra_INST_FLOAT:BOOL=OFF"
-  "-DTpetra_INST_COMPLEX_FLOAT:BOOL=OFF"
-  "-DTpetra_INST_COMPLEX_DOUBLE:BOOL=OFF"
-  "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
-  "-DTpetra_INST_INT_UNSIGNED_LONG:BOOL=OFF"
-  "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
-  #
-  "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
-  "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
-  "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
-  "-DTrilinos_ENABLE_SEACASPLT:BOOL=OFF"
-  "-DTPL_ENABLE_X11:BOOL=OFF"
-  "-DTPL_ENABLE_Matio:BOOL=OFF"
-  #
-  "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
-  "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
-  #
-  "-DTPL_ENABLE_Boost:BOOL=ON"
-  "-DTPL_ENABLE_BoostLib:BOOL=ON"
-  "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-  #
-  #
-  "-DTPL_BLAS_LIBRARIES:STRING='-L$ENV{LIBRARY_PATH} -L$ENV{MKLHOME}/../compiler/lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential -lmkl_core -lirc -limf -lsvml -lintlc'"
-  "-DTPL_LAPACK_LIBRARIES:STRING='-L$ENV{LIBRARY_PATH} -lmkl_lapack95_lp64'"
-  #
-  "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
-  "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
-  "-DMueLu_ENABLE_Tutorial:BOOL=OFF"
-  "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
-  "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
-  "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
-  #
-  "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
-  "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
-  "-DTrilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON"
-  #
-  "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
-  "-DTrilinos_ENABLE_Shards:BOOL=ON"
-  "-DTrilinos_ENABLE_Sacado:BOOL=ON"
-  "-DTrilinos_ENABLE_Epetra:BOOL=ON"
-  "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
-  "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
-  "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
-  "-DTrilinos_ENABLE_Amesos:BOOL=ON"
-  "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
-  "-DAnasazi_ENABLE_RBGen:BOOL=ON"
-  "-DTrilinos_ENABLE_TpetraTSQR:BOOL=ON"
-  "-DTpetraCore_ENABLE_TSQR:BOOL=ON"
-  "-DBelos_ENABLE_TSQR:BOOL=ON"
-  "-DTrilinos_ENABLE_Belos:BOOL=ON"
-  "-DTrilinos_ENABLE_ML:BOOL=ON"
-  "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
-  "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
-  "-DTrilinos_ENABLE_ROL:BOOL=ON"
-  "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
-  "-DTrilinos_ENABLE_NOX:BOOL=ON"
-  "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
-  "-DTrilinos_ENABLE_Thyra:BOOL=ON"
-  "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-  "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
-  "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
-  "-DTrilinos_ENABLE_Piro:BOOL=ON"
-  "-DTrilinos_ENABLE_Teko:BOOL=ON"
-  "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
-  #
-  "-DTrilinos_ENABLE_FEI:BOOL=OFF"
-  #
-  "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-  "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-  #
-  "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
-  "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
-  "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"
-  "-DTrilinos_ENABLE_PyTrilinos:BOOL=OFF"
-  #
-  #"-DTrilinos_ENABLE_STK:BOOL=ON"
-  #"-DTrilinos_ENABLE_STKExprEval:BOOL=ON"
-  "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
-  "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
-  #"-DTrilinos_ENABLE_STKUtil:BOOL=ON"
-  #"-DTrilinos_ENABLE_STKTopology:BOOL=ON"
-  "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
-  "-DTrilinos_ENABLE_STKIO:BOOL=ON"
-  "-DTrilinos_ENABLE_STKExprEval:BOOL=ON"
-  #"-DTrilinos_ENABLE_STKExp:BOOL=OFF"
-  #"-DTrilinos_ENABLE_STKSearch:BOOL=ON"
-  #"-DTrilinos_ENABLE_STKSearchUtil:BOOL=ON"
-  #"-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
-  #"-DTrilinos_ENABLE_STKUnit_tests:BOOL=OFF"
-  #"-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
-  #
-  "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
-  "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
-  "-DPhalanx_INDEX_SIZE_TYPE:STRING=KOKKOS"
-  "-DKokkos_ENABLE_SERIAL:BOOL=ON"
-  "-DKokkos_ENABLE_OPENMP:BOOL=OFF"
-  "-DKokkos_ENABLE_PTHREAD:BOOL=OFF"
-  #
-  "-DTrilinos_ENABLE_Tempus:BOOL=ON"
-  #
-  "-DSTK_HIDE_DEPRECATED_CODE:BOOL=OFF"
-  "-DTpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
-  "-DXpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
-  )
-
-if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
-   set (COMMON_CONFIGURE_OPTIONS ${COMMON_CONFIGURE_OPTIONS}
-     "-DDART_TESTING_TIMEOUT:STRING=4200"
-   )
-else ()
-   set (COMMON_CONFIGURE_OPTIONS ${COMMON_CONFIGURE_OPTIONS}
-     "-DDART_TESTING_TIMEOUT:STRING=600"
-   )
-endif ()
-
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 
 if (BUILD_INTEL_TRILINOS)
@@ -542,123 +385,7 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
   endif(BUILD_TRILINOSDBG)
   set (CONF_OPTS
     "-Wno-dev"
-    "-DCMAKE_BUILD_TYPE:STRING=${BTYPE}"
-    #"-DCMAKE_CXX_FLAGS:STRING=$CCFLAGS"
-    #"-DCMAKE_C_FLAGS:STRING=$CFLAGS"
-    #"-DCMAKE_Fortran_FLAGS:STRING=$FFLAGS"
-    "-DTPL_ENABLE_BLAS:STRING=ON"
-    "-DTPL_ENABLE_LAPACK:STRING=ON"
-    "-DTPL_BLAS_LIBRARIES:FILEPATH='/usr/lib64/libblas.so.3'"
-    "-DTPL_LAPACK_LIBRARIES:FILEPATH='/usr/lib64/liblapack.so.3'"
-    "-DTrilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
-    "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-    "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
-    #
-    "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
-    "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
-    "-DTrilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON"
-    "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
-    "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
-    "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
-    #
-    "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
-    "-DTrilinos_ENABLE_Amesos:BOOL=ON"
-    "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
-    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
-    "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
-    "-DTrilinos_ENABLE_Belos:BOOL=ON"
-    "-DTrilinos_ENABLE_Epetra:BOOL=ON"
-    "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
-    "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
-    #
-    "-DTrilinos_ENABLE_ROL:BOOL=ON"
-    "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
-    "-DTrilinos_ENABLE_ML:BOOL=ON"
-    "-DTrilinos_ENABLE_MueLu:BOOL=ON"
-    "-DMueLu_ENABLE_Tutorial:BOOL=OFF"
-    "-DTrilinos_ENABLE_Moertel:BOOL=OFF"
-    "-DTrilinos_ENABLE_NOX:BOOL=ON"
-    "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-    "-DTrilinos_ENABLE_Sacado:BOOL=ON"
-    "-DSacado_NEW_FAD_DESIGN_IS_DEFAULT:BOOL=OFF"
-    "-DTrilinos_ENABLE_SCOREC:BOOL=OFF"
-    "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
-    "-DTrilinos_ENABLE_Shards:BOOL=ON"
-    "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
-    "-DTrilinos_ENABLE_STK:BOOL=ON"
-    "-DTrilinos_ENABLE_STKSearch:BOOL=ON"
-    "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
-    "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
-    "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
-    "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
-    "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
-    "-DTrilinos_ENABLE_Piro:BOOL=ON"
-    "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
-    "-DTrilinos_ENABLE_Teko:BOOL=ON"
-    "-DTrilinos_ENABLE_Tempus:BOOL=ON"
-    "-DTrilinos_ENABLE_Thyra:BOOL=ON"
-    "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
-    #
-    "-DRythmos_ENABLE_DEBUG:BOOL=ON"
-    "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
-    "-DTpetra_INST_INT_LONG:BOOL=OFF"
-    "-DTpetra_INST_INT_INT:BOOL=OFF"
-    "-DTpetra_INST_DOUBLE:BOOL=ON"
-    "-DTpetra_INST_FLOAT:BOOL=OFF"
-    "-DTpetra_INST_COMPLEX_FLOAT:BOOL=OFF"
-    "-DTpetra_INST_COMPLEX_DOUBLE:BOOL=OFF"
-    "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
-    "-DTpetra_INST_INT_UNSIGNED_LONG:BOOL=OFF"
-    "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
-    "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
-    "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
-    "-DKokkos_ENABLE_SERIAL:BOOL=ON"
-    "-DKokkos_ENABLE_OPENMP:BOOL=OFF"
-    "-DKokkos_ENABLE_PTHREAD:BOOL=OFF"
-    #
-    "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
-    "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
-    "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
-    "-DTrilinos_ENABLE_SEACASPLT:BOOL=OFF"
-    "-DTPL_ENABLE_X11:BOOL=OFF"
-    "-DTPL_ENABLE_Matio:BOOL=OFF"
-    #
-    "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=$ENV{SEMS_OPENMPI_ROOT}"
-    "-DCMAKE_CXX_COMPILER:FILEPATH=$ENV{SEMS_OPENMPI_ROOT}/bin/mpicxx"
-    "-DCMAKE_C_COMPILER:FILEPATH=$ENV{SEMS_OPENMPI_ROOT}/bin/mpicc"
-    "-DCMAKE_Fortran_COMPILER:FILEPATH=$ENV{SEMS_OPENMPI_ROOT}/bin/mpifort"
-    #
-    "-DTPL_ENABLE_Pthread:BOOL=OFF"
-    #
-    "-DTPL_ENABLE_Boost:BOOL=ON"
-    "-DTPL_ENABLE_BoostLib:BOOL=ON"
-    "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-    "-DBoost_INCLUDE_DIRS:FILEPATH=$ENV{SEMS_BOOST_INCLUDE_PATH}"
-    "-DBoost_LIBRARY_DIRS:FILEPATH=$ENV{SEMS_BOOST_LIBRARY_PATH}"
-    "-DBoostLib_INCLUDE_DIRS:FILEPATH=$ENV{SEMS_BOOST_INCLUDE_PATH}"
-    "-DBoostLib_LIBRARY_DIRS:FILEPATH=$ENV{SEMS_BOOST_LIBRARY_PATH}"
-    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=$ENV{SEMS_BOOST_INCLUDE_PATH}"
-    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=$ENV{SEMS_BOOST_LIBRARY_PATH}"
-    #
-    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
-    "-DTPL_ENABLE_Netcdf:BOOL=ON"
-    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=$ENV{SEMS_NETCDF_ROOT}/include"
-    "-DNetcdf_LIBRARY_DIRS:PATH=$ENV{SEMS_NETCDF_ROOT}/lib"
-    #
-    "-DTPL_ENABLE_HDF5:STRING=ON"
-    "-DHDF5_INCLUDE_DIRS:PATH=$ENV{SEMS_HDF5_INCLUDE_PATH}"
-    "-DHDF5_LIBRARY_DIRS:PATH=$ENV{SEMS_HDF5_LIBRARY_PATH}"
-    #"-DTrilinos_EXTRA_LINK_FLAGS:STRING=-L$ENV{SEMS_HDF5_LIBRARY_PATH} -lhdf5_hl -lhdf5'"
-    "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L$ENV{SEMS_HDF5_LIBRARY_PATH} -lhdf5_hl -lhdf5'"
-    #
-    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
-    "-DTPL_ENABLE_SuperLU:BOOL=OFF"
-    #
-    "-DTPL_ENABLE_ParMETIS:BOOL=OFF"
-    #
-    "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
+    CDASH-TRILINOS-GCC-FILE.TXT
   )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -683,152 +410,10 @@ if (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG)
     set(CFLAGS "-g -O0")
     set(FFLAGS "-g -O0 -Wa,-q")
   endif (BUILD_TRILINOSCLANGDBG) 
-  set(BOOST_DIR "/projects/albany/clang-9.0.1")
-  set(LIB_DIR "/projects/albany/clang-9.0.1")
-  set(GCC_LIB_DIR "/projects/albany/gcc-9.1.0")
-  set(MPI_BASE_DIR "/projects/albany/clang-9.0.1")
-  set(NETCDF "/projects/albany/clang-9.0.1")
-  set(HDFDIR "/projects/albany/clang-9.0.1")
-  set(PARMETISDIR "/projects/albany/clang-9.0.1")
-  set(MKL_PATH "/sierra/sntools/SDK/compilers/intel/composer_xe_2019.5.281")
-  set(SUPERLUDIR "/projects/albany/clang-9.0.1/SuperLU_4.3")
-  set(LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
   
   set (CONF_OPTS
-    "-DCMAKE_BUILD_TYPE:STRING=${BTYPE}"
-    "-DCMAKE_CXX_COMPILER:STRING=${MPI_BASE_DIR}/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING=${CCFLAGS}"
-    "-DCMAKE_C_COMPILER:STRING=${MPI_BASE_DIR}/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING=${CFLAGS}"
-    "-DCMAKE_Fortran_COMPILER:STRING=${MPI_BASE_DIR}/bin/mpif90"
-    "-DCMAKE_Fortran_FLAGS:STRING=${FFLAGS}"
-    "-DTrilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
-    "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-    "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
-    "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${MPI_BASE_DIR}"
-    "-DCMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
-    #
-    "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
-    "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
-    "-DTrilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON"
-    "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
-    "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
-    "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
-    #
-    "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
-    "-DTrilinos_ENABLE_Amesos:BOOL=ON"
-    "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
-    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
-    "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
-    "-DTrilinos_ENABLE_Belos:BOOL=ON"
-    "-DTrilinos_ENABLE_Epetra:BOOL=ON"
-    "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
-    "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
-    #
-    "-DTrilinos_ENABLE_ROL:BOOL=ON"
-    "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
-    "-DTrilinos_ENABLE_ML:BOOL=ON"
-    "-DTrilinos_ENABLE_MueLu:BOOL=ON"
-    "-DMueLu_ENABLE_Tutorial:BOOL=OFF"
-    "-DTrilinos_ENABLE_Moertel:BOOL=OFF"
-    "-DTrilinos_ENABLE_NOX:BOOL=ON"
-    "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-    "-DTrilinos_ENABLE_Sacado:BOOL=ON"
-    "-DSacado_NEW_FAD_DESIGN_IS_DEFAULT:BOOL=OFF"
-    "-DTrilinos_ENABLE_SCOREC:BOOL=OFF"
-    "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
-    "-DTrilinos_ENABLE_Shards:BOOL=ON"
-    "-DTrilinos_ENABLE_Stokhos:BOOL=OFF"
-    "-DTrilinos_ENABLE_STK:BOOL=ON"
-    "-DTrilinos_ENABLE_STKSearch:BOOL=ON"
-    "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
-    "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
-    "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
-    "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
-    "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
-    "-DTrilinos_ENABLE_Piro:BOOL=ON"
-    "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
-    "-DTrilinos_ENABLE_Teko:BOOL=ON"
-    "-DTrilinos_ENABLE_Tempus:BOOL=ON"
-    "-DTrilinos_ENABLE_Thyra:BOOL=ON"
-    "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
-    #
-    "-DRythmos_ENABLE_DEBUG:BOOL=ON"
-    "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
-    "-DTpetra_INST_INT_LONG:BOOL=OFF"
-    "-DTpetra_INST_INT_INT:BOOL=OFF"
-    "-DTpetra_INST_DOUBLE:BOOL=ON"
-    "-DTpetra_INST_FLOAT:BOOL=OFF"
-    "-DTpetra_INST_COMPLEX_FLOAT:BOOL=OFF"
-    "-DTpetra_INST_COMPLEX_DOUBLE:BOOL=OFF"
-    "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
-    "-DTpetra_INST_INT_UNSIGNED_LONG:BOOL=OFF"
-    "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
-    "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
-    "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
-    "-DPhalanx_INDEX_SIZE_TYPE:STRING='KOKKOS'"
-    "-DKokkos_ENABLE_SERIAL:BOOL=ON"
-    "-DKokkos_ENABLE_OPENMP:BOOL=OFF"
-    "-DKokkos_ENABLE_PTHREAD:BOOL=OFF"
-    #
-    "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
-    "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
-    "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
-    "-DTrilinos_ENABLE_SEACASPLT:BOOL=OFF"
-    "-DTPL_ENABLE_X11:BOOL=OFF"
-    "-DTPL_ENABLE_Matio:BOOL=OFF"
-    #
-    "-D TPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${MPI_BASE_DIR}"
-    "-DMPI_EXEC=${MPI_BASE_DIR}/bin/mpiexec"
-    #
-    "-DTPL_ENABLE_Pthread:BOOL=OFF"
-    #
-    "-DTPL_ENABLE_Boost:BOOL=ON"
-    "-DTPL_ENABLE_BoostLib:BOOL=ON"
-    "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-    "-DBoost_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
-    "-DBoost_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
-    "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
-    "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
-    "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
-    "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
-    #
-    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
-    "-DTPL_ENABLE_Netcdf:STRING=ON"
-    "-DNetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include"
-    "-DNetcdf_LIBRARY_DIRS:PATH=${NETCDF}/lib"
-    "-DTPL_ENABLE_Pnetcdf:BOOL=ON"
-    "-DPnetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include"
-    "-DPnetcdf_LIBRARY_DIRS=${NETCDF}/lib"
-    #
-    "-DTPL_ENABLE_HDF5:STRING=ON"
-    "-DHDF5_INCLUDE_DIRS:PATH=${HDFDIR}/include"
-    "-DHDF5_LIBRARY_DIRS:PATH=${HDFDIR}/lib"
-    #
-    "-DTPL_ENABLE_Zlib:STRING=ON"
-    "-DZlib_INCLUDE_DIRS:PATH=${LIB_DIR}/include"
-    "-DZlib_LIBRARY_DIRS:PATH=${LIB_DIR}/lib"
-    #
-    "-DTPL_ENABLE_SuperLU:STRING=ON"
-    "-DSuperLU_INCLUDE_DIRS:STRING=${SUPERLUDIR}/include"
-    "-DSuperLU_LIBRARY_DIRS:STRING=${SUPERLUDIR}/lib"
-    #
-    "-DTPL_ENABLE_BLAS:STRING=ON"
-    "-DTPL_ENABLE_LAPACK:STRING=ON"
-    "-DTPL_BLAS_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
-    "-DTPL_LAPACK_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
-    #
-    "-DTPL_ENABLE_ParMETIS:STRING=OFF"
-    #
-    "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${LIB_DIR}/lib -L${LIB_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran -Wl,-rpath,${GCC_LIB_DIR}/lib:${GCC_LIB_DIR}/lib64'"
-    #
-    "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
-    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
-    "-DCMAKE_INSTALL_RPATH:STRING='/projects/albany/gcc-9.1.0/lib'"
-    "-DUSE_NEW_POLICY_CMP0060=NEW"
+    "-Wno-dev"
+    CDASH-TRILINOS-CLANG-FILE.TXT
   )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -838,112 +423,67 @@ endif (BUILD_TRILINOSCLANG OR BUILD_TRILINOSCLANGDBG)
 
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/albany_macro.cmake)
 
-if (BUILD_ALB32)
-
-  set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
-    )
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_albany("${CONF_OPTIONS}" "Albany32Bit")
-
-endif (BUILD_ALB32)
-
 #
 # Configure the Albany build using GO = long
 #
 
-if (BUILD_ALB64)
+if (BUILD_ALB64 OR BUILD_ALB64DBG OR BUILD_ALB64CLANG OR BUILD_ALB64CLANGDBG OR BUILD_INTEL_ALBANY)
 
-  set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
-    "-DENABLE_64BIT_INT:BOOL=ON"
-#    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
-    )
-
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_albany("${CONF_OPTIONS}" "Albany64Bit")
-
-endif (BUILD_ALB64)
-
+if (BUILD_ALB64) 
+  set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosInstall) 
+  set(BUILDTYPE "RELEASE")
+  set(FPE_CHECK "OFF")
+endif(BUILD_ALB64) 
 if (BUILD_INTEL_ALBANY)
-
-  set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall"
-    "-DENABLE_64BIT_INT:BOOL=ON"
-#    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
-    )
-
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_albany("${CONF_OPTIONS}" "AlbanyIntel")
-
+  set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall)
+  set(BUILDTYPE "RELEASE")
+  set(FPE_CHECK "OFF")
 endif (BUILD_INTEL_ALBANY)
-#
-# Configure the Albany Clang build using GO = long
-#
-
 if (BUILD_ALB64CLANG)
-
-  set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11"
-    "-DENABLE_64BIT_INT:BOOL=ON"
-# Run even the epetra tests
-#    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_STRONG_FPE_CHECK:BOOL=OFF"
-    "-DENABLE_MESH_DEPENDS_ON_SOLUTION:BOOL=ON"
-    )
-
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_albany("${CONF_OPTIONS}" "Albany64BitClang")
-
+  set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11)
+  set(BUILDTYPE "RELEASE")
+  set(FPE_CHECK "OFF")
 endif (BUILD_ALB64CLANG)
-
 if (BUILD_ALB64CLANGDBG)
+  set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11Dbg) 
+  set(BUILDTYPE "DEBUG")
+  set(FPE_CHECK "ON")
+endif (BUILD_ALB64CLANGDBG)
+if (BUILD_ALB64DBG)
+  set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosDbg)
+  set(BUILDTYPE "DEBUG")
+  set(FPE_CHECK "ON")
+endif (BUILD_ALB64DBG)
 
   set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11Dbg"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
     "-DENABLE_64BIT_INT:BOOL=ON"
-# Run even the epetra tests
 #    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_UNIT_TESTS:BOOL=ON"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
-    "-DENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON"
-    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
+    "-DENABLE_MESH_DEPENDS_ON_SOLUTION:BOOL=ON"
+    "-DCMAKE_BUILD_TYPE:STRING=${BUILDTYPE}"
+    "-DENABLE_STRONG_FPE_CHECK:${FPE_CHECK}"
     )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+if (BUILD_ALB64) 
+  do_albany("${CONF_OPTIONS}" "Albany64Bit")
+endif(BUILD_ALB64) 
+if (BUILD_INTEL_ALBANY)
+  do_albany("${CONF_OPTIONS}" "AlbanyIntel")
+endif (BUILD_INTEL_ALBANY)
+if (BUILD_ALB64CLANG)
+  do_albany("${CONF_OPTIONS}" "Albany64BitClang")
+endif (BUILD_ALB64CLANG)
+if (BUILD_ALB64CLANGDBG)
   do_albany("${CONF_OPTIONS}" "Albany64BitClangDbg")
-
 endif (BUILD_ALB64CLANGDBG)
-
-#
-# Configure the Albany build using GO = long
-#
-
 if (BUILD_ALB64DBG)
-
-  set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosDbg"
-    "-DENABLE_64BIT_INT:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA:BOOL=ON"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
-    )
-
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany64BitDbg")
-
 endif (BUILD_ALB64DBG)
+
+endif (BUILD_ALB64 OR BUILD_ALB64DBG OR BUILD_ALB64CLANG OR BUILD_ALB64CLANGDBG OR BUILD_INTEL_ALBANY)
+
 
