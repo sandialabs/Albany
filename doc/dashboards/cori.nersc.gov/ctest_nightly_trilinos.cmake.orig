@@ -57,7 +57,7 @@ set (cism-piscees_REPOSITORY_LOCATION  git@github.com:E3SM-Project/cism-piscees.
 
 
 set (BOOST_DIR /project/projectdirs/piscees/tpl/boost_1_55_0) 
-#set (NETCDF_DIR /opt/cray/pe/netcdf-hdf5parallel/4.4.0/GNU/5.1) 
+set (NETCDF $ENV{NETCDF_DIR}) 
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -239,8 +239,8 @@ if (BUILD_TRILINOS)
     "-DTPL_ENABLE_BoostLib:BOOL=ON"
     "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
-    "-DNetcdf_LIBRARY_DIRS:FILEPATH=$ENV{NETCDF_DIR}/lib"
-    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=$ENV{NETCDF_DIR}/include"
+    "-DNetcdf_LIBRARY_DIRS:FILEPATH=${NETCDF}/lib"
+    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF}/include"
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
     "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
     "-DTrilinos_ENABLE_STKExprEval:BOOL=ON"
