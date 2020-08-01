@@ -15,7 +15,11 @@ unset https_proxy
 
 export OMP_NUM_THREADS=1
 export INTEL_LICENSE_FILE=/home/projects/x86-64/intel/licenses/USE_SERVER-ohpc.lic
+
+source clean-up.sh 
 source blake_intel_modules.sh >& modules.out  
+source convert-cmake-to-cdash.sh serial
+source create-new-cdash-cmake-script.sh serial
 
 LOG_FILE=$BASE_DIR/nightly_log_blakeTrilinosSerial.txt
 
