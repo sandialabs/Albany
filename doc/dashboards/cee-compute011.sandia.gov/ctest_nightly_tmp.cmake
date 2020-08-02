@@ -463,7 +463,7 @@ endif (BUILD_ALB64DBG)
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
     "-DENABLE_MESH_DEPENDS_ON_SOLUTION:BOOL=ON"
     "-DCMAKE_BUILD_TYPE:STRING=${BUILDTYPE}"
-    "-DENABLE_STRONG_FPE_CHECK:${FPE_CHECK}"
+    "-DENABLE_STRONG_FPE_CHECK:BOOL=${FPE_CHECK}"
     )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
