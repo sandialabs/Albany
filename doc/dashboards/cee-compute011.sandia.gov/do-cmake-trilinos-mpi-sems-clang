@@ -36,9 +36,9 @@ INSTALL_LOCATION=$BUILD_DIR/install
 BTYPE=RELEASE 
 
 #Release flags 
-CCFLAGS="-O3 -march=native -DNDEBUG=1")
-CFLAGS="-O3 -march=native -DNDEBUG=1")
-FFLAGS="-O3 -march=native -DNDEBUG=1 -Wa,-q")
+CCFLAGS="-O3 -march=native -DNDEBUG=1"
+CFLAGS="-O3 -march=native -DNDEBUG=1"
+FFLAGS="-O3 -march=native -DNDEBUG=1 -Wa,-q"
 
 #Debug flags
 #CCFLAGS="-g -O0"
