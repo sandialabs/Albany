@@ -229,8 +229,17 @@ void ThyraCrsMatrixFactory::fillComplete () {
     nnz_per_row.modify_host();
     nnz_per_row.sync_device();
 
+    // Tpetra::FECrsGraph has a check to ensure that at least one of the col gids in a given row
+    // is owned in the unique map (meaning "if you own an element, you should own at least one of its nodes").
+    // This check is too restrictive for albany. Giving it up, means that we will have a column map
+    // that may contain more ids than it is actually necessary (in the owned graph), but since there
+    // is no way around it right now, we have to accept it.
+    // TODO: A better way to do this would be to fix node sharing (or, better, element sharing) in the stk bulk data.
+    Teuchos::RCP<Teuchos::ParameterList> pl(new Teuchos::ParameterList());
+    pl->set<bool>("Enforce At Least One Owned Col Index Per Row",false);
+
     // Now that we have the exact count of nnz for the unique graph, we can create the FECrs graph.
-    m_graph->t_graph = Teuchos::rcp(new Tpetra_FECrsGraph(t_range,t_ov_range,nnz_per_row,t_ov_domain,Teuchos::null,t_domain));
+    m_graph->t_graph = Teuchos::rcp(new Tpetra_FECrsGraph(t_range,t_ov_range,nnz_per_row,t_ov_domain,Teuchos::null,t_domain,t_range,pl));
 
     // Loop over the temp auxiliary structure, and fill the actual Tpetra graph
     for (const auto& it : m_graph->temp_graph) {
