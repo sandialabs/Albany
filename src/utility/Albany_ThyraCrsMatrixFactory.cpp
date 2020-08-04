@@ -239,7 +239,14 @@ void ThyraCrsMatrixFactory::fillComplete () {
     pl->set<bool>("Enforce At Least One Owned Col Index Per Row",false);
 
     // Now that we have the exact count of nnz for the unique graph, we can create the FECrs graph.
-    m_graph->t_graph = Teuchos::rcp(new Tpetra_FECrsGraph(t_range,t_ov_range,nnz_per_row,t_ov_domain,Teuchos::null,t_domain,t_range,pl));
+    m_graph->t_graph = Teuchos::rcp(new Tpetra_FECrsGraph(t_range,t_ov_range,nnz_per_row,t_ov_domain,Teuchos::null,t_domain));
+
+    // Now we can set the parameter list
+    // Note: you CAN'T set it in the c-tor, since the ctor of the base class (CrsGraph) calls getValidParameters.
+    //       Since you're in the c-tor, you DON'T get virtual dispatch, and you only get the valid parameters
+    //       of CrsGraph, which do NOT include the one we need, causing an error during the input pl call to
+    //       validateParametersAndSetDefaults.
+    m_graph->t_graph->setParameterList(pl);
 
     // Loop over the temp auxiliary structure, and fill the actual Tpetra graph
     for (const auto& it : m_graph->temp_graph) {
