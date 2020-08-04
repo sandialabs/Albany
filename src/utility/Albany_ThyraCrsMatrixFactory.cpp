@@ -236,7 +236,7 @@ void ThyraCrsMatrixFactory::fillComplete () {
     // is no way around it right now, we have to accept it.
     // TODO: A better way to do this would be to fix node sharing (or, better, element sharing) in the stk bulk data.
     Teuchos::RCP<Teuchos::ParameterList> pl(new Teuchos::ParameterList());
-    pl->set<bool>("Enforce At Least One Owned Col Index Per Row",false);
+    pl->set<bool>("Check Col GIDs In At Least One Owned Row",false);
 
     // Now that we have the exact count of nnz for the unique graph, we can create the FECrs graph.
     m_graph->t_graph = Teuchos::rcp(new Tpetra_FECrsGraph(t_range,t_ov_range,nnz_per_row,t_ov_domain,Teuchos::null,t_domain));
