@@ -48,7 +48,7 @@ using SideSetList = std::map<std::string, std::vector<SideStruct>>;
 //   local subviews to each workset.
 // Memory layout is enforced to be LayoutRight regardless of architecture since Kokkos parallel sections
 //   will only ever operate on the last extent of any of these Views and therefore they should be contiguous.
-class GlobalSideStruct
+class GlobalSideSetInfo
 {
 public:
   int num_local_worksets;
@@ -64,9 +64,9 @@ public:
   Kokkos::View<int**, Kokkos::LayoutRight>      numCellsOnSide; // (num_local_worksets, max_sides)
   Kokkos::View<int***, Kokkos::LayoutRight>     cellsOnSide;    // (num_local_worksets, max_sides, max_sideset_length)
 };
-using GlobalSideSetList = std::map<std::string, GlobalSideStruct>;
+using GlobalSideSetList = std::map<std::string, GlobalSideSetInfo>;
 
-class LocalSideStruct
+class LocalSideSetInfo
 {
 public:
   int size;
@@ -80,7 +80,7 @@ public:
   Kokkos::View<int*, Kokkos::LayoutRight>      numCellsOnSide; // (sides)
   Kokkos::View<int**, Kokkos::LayoutRight>     cellsOnSide;    // (numSides, sides)
 };
-using LocalSideStructList = std::map<std::string, LocalSideStruct>;
+using LocalSideSetInfoList = std::map<std::string, LocalSideSetInfo>;
 
 class wsLid
 {

@@ -42,8 +42,8 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<const RealType,Side,Node,QuadPoint>         BF;          // []
-  PHX::MDField<const MeshScalarT,Side,QuadPoint>           w_measure;   // [km^2]
+  PHX::MDField<const RealType>         BF;          // []
+  PHX::MDField<const MeshScalarT>           w_measure;   // [km^2]
   // PHX::MDField<const RealType,Cell,Side,QuadPoint>              geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
   // PHX::MDField<const Type,Cell,Side,QuadPoint>                  beta; // [kPa m / yr]
   // PHX::MDField<const ScalarT,Cell,Side,QuadPoint>               basal_dTdz; // [K  km^{-1}]
@@ -55,15 +55,15 @@ private:
   // PHX::MDField<const ScalarT,Cell,Node>                         diffEnth;  //[MW s m^{-3}]
   // PHX::MDField<const ScalarT,Cell,Side,QuadPoint>               phi;  // []
   // PHX::MDField<const ScalarT,Dim>                               homotopy;
-  PHX::MDField<const ScalarT,Side,QuadPoint>               basalMeltRateQP;      // [MW] = [m/yr]
+  PHX::MDField<const ScalarT>               basalMeltRateQP;      // [MW] = [m/yr]
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> enthalpyBasalResid;      // [MW] = [k^{-2} kPa s^{-1} km^3]
+  PHX::MDField<ScalarT> enthalpyBasalResid;      // [MW] = [k^{-2} kPa s^{-1} km^3]
   // PHX::MDField<ScalarT,Cell,Side, Node> basalMeltRate;      // [MW] = [m/yr]
   
-  Albany::LocalSideStruct sideSet;
+  Albany::LocalSideSetInfo sideSet;
 
-  std::vector<std::vector<int> >  sideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
   std::string                     basalSideName;
 
   int numCellNodes;
@@ -71,6 +71,8 @@ private:
   int numSideQPs;
   int sideDim;
   int vecDimFO;
+
+  bool useCollapsedSidesets;
 
   // double a;
   // double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
@@ -85,16 +87,20 @@ private:
 
   // bool haveSUPG;
 
-  //std::vector<Albany::SideStruct> sideSet;
-
   public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-  typedef Kokkos::RangePolicy<ExecutionSpace> Enthalpy_Basal_Residual_Policy;
+  struct Enthalpy_Basal_Residual_Tag{};
+  struct Enthalpy_Basal_Residual_Collapsed_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,Enthalpy_Basal_Residual_Tag> Enthalpy_Basal_Residual_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,Enthalpy_Basal_Residual_Collapsed_Tag> Enthalpy_Basal_Residual_Collapsed_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const int& i) const;
+  void operator() (const Enthalpy_Basal_Residual_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Enthalpy_Basal_Residual_Collapsed_Tag& tag, const int& i) const;
 
 };
 

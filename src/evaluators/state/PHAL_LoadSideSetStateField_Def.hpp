@@ -97,13 +97,13 @@ evaluateFields(typename Traits::EvalData workset)
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
   int size = dims.size();
-  const std::string& tag2 = size>2 ? field.fieldTag().dataLayout().name(2) : "";
-  TEUCHOS_TEST_FOR_EXCEPTION (size>2 && tag2!="Node" && tag2!="Dim" && tag2!="VecDim", std::logic_error,
+  // Check the tag of the first extent after (cell,side,) to determine if field is nodal
+  const std::string& leading_field_tag = size>2 ? field.fieldTag().dataLayout().name(2) : "";
+  TEUCHOS_TEST_FOR_EXCEPTION (size>2 && leading_field_tag!="Node" && leading_field_tag!="Dim" && leading_field_tag!="VecDim", std::logic_error,
                               "Error! Invalid field layout in LoadSideSetStateField.\n");
 
-  // Temporary tag for new sideset layout
-  // TODO: replace this check
-  const std::string& tag3 = size>1 ? field.fieldTag().dataLayout().name(1) : "";
+  // For collapsed layouts, the tag to check is of the first extent after (side,) to determine if field is nodal
+  const std::string& leading_field_tag_sideset = size>1 ? field.fieldTag().dataLayout().name(1) : "";
 
   // Loop on the sides of this sideSet that are in this workset
   sideSet = workset.sideSetViews->at(sideSetName);
@@ -149,7 +149,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
 
         case 2:
-          if (tag3=="Node")
+          if (leading_field_tag_sideset=="Node")
           {
             // side set node scalar
             for (int node=0; node<dims[1]; ++node)
@@ -168,7 +168,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
 
         case 3:
-          if (tag3=="Node")
+          if (leading_field_tag_sideset=="Node")
           {
             // side set node vector/gradient
             for (int node=0; node<dims[1]; ++node)
@@ -201,7 +201,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
 
         case 3:
-          if (tag2=="Node")
+          if (leading_field_tag=="Node")
           {
             // side set node scalar
             for (int node=0; node<dims[2]; ++node)
@@ -220,7 +220,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
 
         case 4:
-          if (tag2=="Node")
+          if (leading_field_tag=="Node")
           {
             // side set node vector/gradient
             for (int node=0; node<dims[2]; ++node)

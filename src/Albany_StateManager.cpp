@@ -502,11 +502,7 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
   if (sideSetStateInfo.find(sideSetName) == sideSetStateInfo.end()) {
     // It's the first time we register states on this side set, so we initiate
     // the pointer
-    // TODO, when compiler allows, replace following with this for performance:
-    // sideSetStateInfo.emplace(sideSetName,Teuchos::rcp(new
-    // StateInfoStruct()));
-    sideSetStateInfo.insert(
-        std::make_pair(sideSetName, Teuchos::rcp(new StateInfoStruct())));
+    sideSetStateInfo.emplace(sideSetName, Teuchos::rcp(new StateInfoStruct()));
   }
 
   const Teuchos::RCP<StateInfoStruct>& sis_ptr =
@@ -565,12 +561,6 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
   } else if (
       stateRef.entity == StateStruct::NodalDataToElemNode ||
       stateRef.entity == Albany::StateStruct::NodalDistParameter) {
-    // Strip one dimension out cause it's Side
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->rank() < 2,
-        std::logic_error,
-        "Error! The given layout does not appear to be that of a side set "
-        "field.\n");
 
     dl->dimensions(stateRef.dim);
 
@@ -578,8 +568,6 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase =
         getSideSetNodalDataBase(sideSetName);
 
-    // These entities store data as <Cell,Side,Node,...>, so the dl has one more
-    // rank
     if (dl->rank() == 2)  // node scalar
       nodalDataBase->registerVectorState(stateName, 1);
     else if (dl->rank() == 3)  // node vector
@@ -588,14 +576,13 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
       nodalDataBase->registerVectorState(
           stateName, stateRef.dim[1] * stateRef.dim[2]);
   } else {
-    // Strip one dimension out cause it's Side
+
     TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->rank() < 2,
+        true,
         std::logic_error,
-        "Error! The given layout does not appear to be that of a side set "
+        "Error! The given layout does not appear to be that of a collapsed side set "
         "field.\n");
 
-    dl->dimensions(stateRef.dim);
   }
   stateRef.output              = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
@@ -668,10 +655,7 @@ Albany::StateManager::registerSideSetStateVariable(
     // It's the first time we register states on this side set, so we initiate
     // the pointer
     // TODO, when compiler allows, replace following with this for performance:
-    // sideSetStateInfo.emplace(sideSetName,Teuchos::rcp(new
-    // StateInfoStruct()));
-    sideSetStateInfo.insert(
-        std::make_pair(sideSetName, Teuchos::rcp(new StateInfoStruct())));
+    sideSetStateInfo.emplace(sideSetName,Teuchos::rcp(new StateInfoStruct()));
   }
 
   const Teuchos::RCP<StateInfoStruct>& sis_ptr =

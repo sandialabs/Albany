@@ -60,8 +60,6 @@ private:
   double g;      // [m s^{-2}]
   double pressure_scaling; // [kg m^{-2} s^{-2}]
 
-  const double pow3 = 1.0e3;
-
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
 public:

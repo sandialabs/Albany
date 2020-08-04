@@ -118,7 +118,7 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
       int thisSideNodes = cellType->getNodeCount(sideDim,side);
       nodeMax = std::max(nodeMax, thisSideNodes);
     }
-    sideNodes = Kokkos::DynRankView<int, PHX::Device>("sideNodes", numSides, nodeMax);
+    sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
     for (int side=0; side<numSides; ++side) {
       // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
       int thisSideNodes = cellType->getNodeCount(sideDim,side);
@@ -140,9 +140,10 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   val_side.dimensions(dims);
 
-  dimsView = Kokkos::DynRankView<int, PHX::Device>("dimsView", dims.size());
+  TEUCHOS_TEST_FOR_EXCEPTION (dims.size() > 5, Teuchos::Exceptions::InvalidParameter, "Error! val_side has more dimensions than expected.\n");
+
   for (int i = 0; i < dims.size(); ++i)
-    dimsView(i) = dims[i];
+    dimsArray[i] = dims[i];
 
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
@@ -153,7 +154,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFCellToSide_CellScalar_Tag& tag, const int& sideSet_idx) const {
+operator() (const CellScalar_Tag& tag, const int& sideSet_idx) const {
   
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
@@ -166,13 +167,13 @@ operator() (const DOFCellToSide_CellScalar_Tag& tag, const int& sideSet_idx) con
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFCellToSide_CellVector_Tag& tag, const int& sideSet_idx) const {
+operator() (const CellVector_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int i=0; i<dimsView(2); ++i) {
+  for (int i=0; i<dimsArray[2]; ++i) {
     val_side(cell,side,i) = val_cell(cell,i);
   }
 
@@ -181,14 +182,14 @@ operator() (const DOFCellToSide_CellVector_Tag& tag, const int& sideSet_idx) con
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFCellToSide_CellTensor_Tag& tag, const int& sideSet_idx) const {
+operator() (const CellTensor_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int i=0; i<dimsView(2); ++i) {
-    for (int j=0; j<dimsView(3); ++j) {
+  for (int i=0; i<dimsArray[2]; ++i) {
+    for (int j=0; j<dimsArray[3]; ++j) {
       val_side(cell,side,i,j) = val_cell(cell,i,j);
     }
   }
@@ -198,13 +199,13 @@ operator() (const DOFCellToSide_CellTensor_Tag& tag, const int& sideSet_idx) con
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFCellToSide_NodeScalar_Tag& tag, const int& sideSet_idx) const {
+operator() (const NodeScalar_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int node=0; node<dimsView(2); ++node) {
+  for (int node=0; node<dimsArray[2]; ++node) {
       val_side(cell,side,node) = val_cell(cell,sideNodes(side,node));
   }
 
@@ -213,13 +214,13 @@ operator() (const DOFCellToSide_NodeScalar_Tag& tag, const int& sideSet_idx) con
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFCellToSide_NodeScalarSideset_Tag& tag, const int& sideSet_idx) const {
+operator() (const NodeScalarSideset_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int node=0; node<dimsView(1); ++node) {
+  for (int node=0; node<dimsArray[1]; ++node) {
     val_side(sideSet_idx,node) = val_cell(cell,sideNodes(side,node));
   }
 
@@ -228,14 +229,14 @@ operator() (const DOFCellToSide_NodeScalarSideset_Tag& tag, const int& sideSet_i
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFCellToSide_NodeVector_Tag& tag, const int& sideSet_idx) const {
+operator() (const NodeVector_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int node=0; node<dimsView(2); ++node) {
-    for (int i=0; i<dimsView(3); ++i) {
+  for (int node=0; node<dimsArray[2]; ++node) {
+    for (int i=0; i<dimsArray[3]; ++i) {
       val_side(cell,side,node,i) = val_cell(cell,sideNodes(side,node),i);
     }
   }
@@ -245,14 +246,14 @@ operator() (const DOFCellToSide_NodeVector_Tag& tag, const int& sideSet_idx) con
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFCellToSide_NodeVectorSideset_Tag& tag, const int& sideSet_idx) const {
+operator() (const NodeVectorSideset_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int node=0; node<dimsView(1); ++node) {
-    for (int i=0; i<dimsView(2); ++i) {
+  for (int node=0; node<dimsArray[1]; ++node) {
+    for (int i=0; i<dimsArray[2]; ++i) {
       val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes(side,node),i);
     }
   }
@@ -262,15 +263,15 @@ operator() (const DOFCellToSide_NodeVectorSideset_Tag& tag, const int& sideSet_i
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFCellToSide_NodeTensor_Tag& tag, const int& sideSet_idx) const {
+operator() (const NodeTensor_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int node=0; node<dimsView(2); ++node) {
-    for (int i=0; i<dimsView(3); ++i) {
-      for (int j=0; j<dimsView(4); ++j) {
+  for (int node=0; node<dimsArray[2]; ++node) {
+    for (int i=0; i<dimsArray[3]; ++i) {
+      for (int j=0; j<dimsArray[4]; ++j) {
         val_side(cell,side,node,i,j) = val_cell(cell,sideNodes(side,node),i,j);
       }
     }
@@ -281,14 +282,14 @@ operator() (const DOFCellToSide_NodeTensor_Tag& tag, const int& sideSet_idx) con
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFCellToSide_VertexVector_Tag& tag, const int& sideSet_idx) const {
+operator() (const VertexVector_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int node=0; node<dimsView(2); ++node) {
-    for (int i=0; i<dimsView(3); ++i) {
+  for (int node=0; node<dimsArray[2]; ++node) {
+    for (int i=0; i<dimsArray[3]; ++i) {
       val_side(cell,side,node,i) = val_cell(cell,sideNodes(side,node),i);
     }
   }
@@ -298,14 +299,14 @@ operator() (const DOFCellToSide_VertexVector_Tag& tag, const int& sideSet_idx) c
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFCellToSide_VertexVectorSideset_Tag& tag, const int& sideSet_idx) const {
+operator() (const VertexVectorSideset_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int node=0; node<dimsView(1); ++node) {
-    for (int i=0; i<dimsView(2); ++i) {
+  for (int node=0; node<dimsArray[1]; ++node) {
+    for (int i=0; i<dimsArray[2]; ++i) {
       val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes(side,node),i);
     }
   }
@@ -326,34 +327,34 @@ evaluateFields(typename Traits::EvalData workset)
   switch (layout)
   {
     case CELL_SCALAR:
-      Kokkos::parallel_for(DOFCellToSide_CellScalar_Policy(0, sideSet.size), *this);
+      Kokkos::parallel_for(CellScalar_Policy(0, sideSet.size), *this);
       break;
     case CELL_VECTOR:
-      Kokkos::parallel_for(DOFCellToSide_CellVector_Policy(0, sideSet.size), *this);
+      Kokkos::parallel_for(CellVector_Policy(0, sideSet.size), *this);
       break;
     case CELL_TENSOR:
-      Kokkos::parallel_for(DOFCellToSide_CellTensor_Policy(0, sideSet.size), *this);
+      Kokkos::parallel_for(CellTensor_Policy(0, sideSet.size), *this);
       break;
     case NODE_SCALAR:
-      Kokkos::parallel_for(DOFCellToSide_NodeScalar_Policy(0, sideSet.size), *this);
+      Kokkos::parallel_for(NodeScalar_Policy(0, sideSet.size), *this);
       break;
     case NODE_SCALAR_SIDESET:
-      Kokkos::parallel_for(DOFCellToSide_NodeScalarSideset_Policy(0, sideSet.size), *this);
+      Kokkos::parallel_for(NodeScalarSideset_Policy(0, sideSet.size), *this);
       break;
     case NODE_VECTOR:
-      Kokkos::parallel_for(DOFCellToSide_NodeVector_Policy(0, sideSet.size), *this);
+      Kokkos::parallel_for(NodeVector_Policy(0, sideSet.size), *this);
       break;
     case NODE_VECTOR_SIDESET:
-      Kokkos::parallel_for(DOFCellToSide_NodeVectorSideset_Policy(0, sideSet.size), *this);
+      Kokkos::parallel_for(NodeVectorSideset_Policy(0, sideSet.size), *this);
       break;
     case NODE_TENSOR:
-      Kokkos::parallel_for(DOFCellToSide_NodeTensor_Policy(0, sideSet.size), *this);
+      Kokkos::parallel_for(NodeTensor_Policy(0, sideSet.size), *this);
       break;
     case VERTEX_VECTOR:
-      Kokkos::parallel_for(DOFCellToSide_VertexVector_Policy(0, sideSet.size), *this);
+      Kokkos::parallel_for(VertexVector_Policy(0, sideSet.size), *this);
       break;
     case VERTEX_VECTOR_SIDESET:
-      Kokkos::parallel_for(DOFCellToSide_VertexVectorSideset_Policy(0, sideSet.size), *this);
+      Kokkos::parallel_for(VertexVectorSideset_Policy(0, sideSet.size), *this);
       break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid layout (this error should have happened earlier though).\n");

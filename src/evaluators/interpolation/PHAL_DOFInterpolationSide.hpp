@@ -58,7 +58,7 @@ private:
 
   MDFieldMemoizer<Traits> memoizer;
 
-  Albany::LocalSideStruct sideSet;
+  Albany::LocalSideSetInfo sideSet;
 
 public:
 

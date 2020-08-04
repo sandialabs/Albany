@@ -100,23 +100,6 @@ operator() (const int &cell) const{
 }
 
 template<typename EvalT, typename Traits, typename TemperatureST>
-KOKKOS_INLINE_FUNCTION
-void Temperature<EvalT,Traits,TemperatureST>::
-operator() (const int &node, const int &cell) const{
-
-  if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-    temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
-  else
-    temperature(cell,node) = meltingTemp(cell,node);
-
-  correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
-
-  diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
-
-}
-
-
-template<typename EvalT, typename Traits, typename TemperatureST>
 void Temperature<EvalT,Traits,TemperatureST>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
@@ -152,7 +135,7 @@ evaluateFields(typename Traits::EvalData workset)
       else
         temperature(cell,node) = meltingTemp(cell,node);
 
-  //     correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
+      correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
 
       diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
     }

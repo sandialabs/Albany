@@ -777,7 +777,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationEvaluator(
 
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationSideEvaluator(
+EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationSideEvaluator(
     const std::string& dof_name, const std::string& sideSetName) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,

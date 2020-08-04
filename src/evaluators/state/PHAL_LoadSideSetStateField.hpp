@@ -44,7 +44,7 @@ private:
 
   bool useCollapsedLayouts;
 
-  Albany::LocalSideStruct sideSet;
+  Albany::LocalSideSetInfo sideSet;
 
   MDFieldMemoizer<Traits> memoizer;
 };

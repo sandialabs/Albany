@@ -1891,7 +1891,7 @@ STKDiscretization::computeSideSets()
     }
   }
 
-  // 2) Construct GlobalSideSetList (map of GlobalSideStruct)
+  // 2) Construct GlobalSideSetList (map of GlobalSideSetInfo)
   std::map<std::string, int>::iterator ss_it = num_local_worksets.begin();
   while (ss_it != num_local_worksets.end()) {
     std::string             ss_key = ss_it->first;
@@ -1969,9 +1969,10 @@ STKDiscretization::computeSideSets()
     counter_it++;
   }
 
-  // 5) Populate map of LocalSideStructs
+  // 5) Populate map of LocalSideSetInfos
   for (int i = 0; i < sideSets.size(); ++i) {
     SideSetList& ssList = sideSets[i];
+    LocalSideSetInfoList& lssList = sideSetViews[i];
     std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
 
     while (ss_it != ssList.end()) {
@@ -1981,15 +1982,15 @@ STKDiscretization::computeSideSets()
       int current_index = current_local_index[ss_key];
       std::pair<int,int> range(0, ss_val.size());
 
-      sideSetViews[i][ss_key].size           = ss_val.size();
-      sideSetViews[i][ss_key].side_GID       = Kokkos::subview(globalSideSetViews[ss_key].side_GID, current_index, range );
-      sideSetViews[i][ss_key].elem_GID       = Kokkos::subview(globalSideSetViews[ss_key].elem_GID, current_index, range );
-      sideSetViews[i][ss_key].elem_LID       = Kokkos::subview(globalSideSetViews[ss_key].elem_LID, current_index, range );
-      sideSetViews[i][ss_key].elem_ebIndex   = Kokkos::subview(globalSideSetViews[ss_key].elem_ebIndex,  current_index, range );
-      sideSetViews[i][ss_key].side_local_id  = Kokkos::subview(globalSideSetViews[ss_key].side_local_id, current_index, range );
-      sideSetViews[i][ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
-      sideSetViews[i][ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
-      sideSetViews[i][ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
+      lssList[ss_key].size           = ss_val.size();
+      lssList[ss_key].side_GID       = Kokkos::subview(globalSideSetViews[ss_key].side_GID, current_index, range );
+      lssList[ss_key].elem_GID       = Kokkos::subview(globalSideSetViews[ss_key].elem_GID, current_index, range );
+      lssList[ss_key].elem_LID       = Kokkos::subview(globalSideSetViews[ss_key].elem_LID, current_index, range );
+      lssList[ss_key].elem_ebIndex   = Kokkos::subview(globalSideSetViews[ss_key].elem_ebIndex,  current_index, range );
+      lssList[ss_key].side_local_id  = Kokkos::subview(globalSideSetViews[ss_key].side_local_id, current_index, range );
+      lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
+      lssList[ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
+      lssList[ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
 
       current_local_index[ss_key]++;
 

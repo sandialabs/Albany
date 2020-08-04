@@ -42,9 +42,9 @@ private:
   std::string                     sideSetName;
   std::vector<int>                dims;
 
-  Kokkos::DynRankView<int, PHX::Device> sideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
 
-  Albany::LocalSideStruct sideSet;
+  Albany::LocalSideSetInfo sideSet;
 
   Teuchos::RCP<shards::CellTopology> cellType;
 
@@ -74,53 +74,53 @@ private:
 
   MDFieldMemoizer<Traits> memoizer;
 
-  Kokkos::DynRankView<int, PHX::Device> dimsView;
+  int dimsArray[5];
 
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct DOFCellToSide_CellScalar_Tag{};
-  struct DOFCellToSide_CellVector_Tag{};
-  struct DOFCellToSide_CellTensor_Tag{};
-  struct DOFCellToSide_NodeScalar_Tag{};
-  struct DOFCellToSide_NodeScalarSideset_Tag{};
-  struct DOFCellToSide_NodeVector_Tag{};
-  struct DOFCellToSide_NodeVectorSideset_Tag{};
-  struct DOFCellToSide_NodeTensor_Tag{};
-  struct DOFCellToSide_VertexVector_Tag{};
-  struct DOFCellToSide_VertexVectorSideset_Tag{};
+  struct CellScalar_Tag{};
+  struct CellVector_Tag{};
+  struct CellTensor_Tag{};
+  struct NodeScalar_Tag{};
+  struct NodeScalarSideset_Tag{};
+  struct NodeVector_Tag{};
+  struct NodeVectorSideset_Tag{};
+  struct NodeTensor_Tag{};
+  struct VertexVector_Tag{};
+  struct VertexVectorSideset_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_CellScalar_Tag> DOFCellToSide_CellScalar_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_CellVector_Tag> DOFCellToSide_CellVector_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_CellTensor_Tag> DOFCellToSide_CellTensor_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_NodeScalar_Tag> DOFCellToSide_NodeScalar_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_NodeScalarSideset_Tag> DOFCellToSide_NodeScalarSideset_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_NodeVector_Tag> DOFCellToSide_NodeVector_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_NodeVectorSideset_Tag> DOFCellToSide_NodeVectorSideset_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_NodeTensor_Tag> DOFCellToSide_NodeTensor_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_VertexVector_Tag> DOFCellToSide_VertexVector_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFCellToSide_VertexVectorSideset_Tag> DOFCellToSide_VertexVectorSideset_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, CellScalar_Tag> CellScalar_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, CellVector_Tag> CellVector_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, CellTensor_Tag> CellTensor_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, NodeScalar_Tag> NodeScalar_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, NodeScalarSideset_Tag> NodeScalarSideset_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, NodeVector_Tag> NodeVector_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, NodeVectorSideset_Tag> NodeVectorSideset_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, NodeTensor_Tag> NodeTensor_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, VertexVector_Tag> VertexVector_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, VertexVectorSideset_Tag> VertexVectorSideset_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFCellToSide_CellScalar_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const CellScalar_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFCellToSide_CellVector_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const CellVector_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFCellToSide_CellTensor_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const CellTensor_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFCellToSide_NodeScalar_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const NodeScalar_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFCellToSide_NodeScalarSideset_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const NodeScalarSideset_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFCellToSide_NodeVector_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const NodeVector_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFCellToSide_NodeVectorSideset_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const NodeVectorSideset_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFCellToSide_NodeTensor_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const NodeTensor_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFCellToSide_VertexVector_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const VertexVector_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFCellToSide_VertexVectorSideset_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const VertexVectorSideset_Tag& tag, const int& sideSet_idx) const;
 
 };
 

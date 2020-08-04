@@ -72,6 +72,8 @@ private:
   double flux_reg_beta;
   double basalMelt_reg_alpha;
   double basalMelt_reg_beta;
+  double dTdz_melting_scaling;
+  double geofluxheat_scaling;
   bool isThereWater;
   bool nodal;
 
@@ -82,16 +84,25 @@ private:
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
-  Albany::LocalSideStruct sideSet;
+  Albany::LocalSideSetInfo sideSet;
+
+  bool useCollapsedSidesets;
 
   public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-  typedef Kokkos::MDRangePolicy<ExecutionSpace,Kokkos::Rank<2>> Basal_Melt_Rate_Policy;
+  struct Basal_Melt_Rate_Tag{};
+  struct Basal_Melt_Rate_Collapsed_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,Basal_Melt_Rate_Tag> Basal_Melt_Rate_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,Basal_Melt_Rate_Collapsed_Tag> Basal_Melt_Rate_Collapsed_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const int& i, const int& j) const;
+  void operator() (const Basal_Melt_Rate_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Basal_Melt_Rate_Collapsed_Tag& tag, const int& i) const;
+
 };
 
 } // namespace LandIce

@@ -73,12 +73,10 @@ private:
   PHX::MDField<MeshScalarT>                               GradBF;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       normals;
 
-  //std::vector<Kokkos::DynRankView<int, PHX::Device>> cellsOnSides;
-  //std::vector<int> numCellsOnSide;
   Teuchos::RCP<shards::CellTopology> cellType;
   bool compute_normals;
 
-  Albany::LocalSideStruct sideSet;
+  Albany::LocalSideSetInfo sideSet;
 
   bool useCollapsedSidesets;
 

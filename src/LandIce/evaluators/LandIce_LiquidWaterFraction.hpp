@@ -59,8 +59,6 @@ private:
   double rho_w;  //[kg m^{-3}]
   double phi_scaling; //[MW^{-1} s^{-1} m^{3}]
 
-  const double pow6 = 1e6; //[k^{-2}], k =1000
-
   ScalarT printedAlpha;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;

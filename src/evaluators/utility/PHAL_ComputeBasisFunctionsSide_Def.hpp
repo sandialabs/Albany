@@ -145,11 +145,6 @@ postRegistrationSetup(typename Traits::SetupData d,
     }
   }
 
-  // cellsOnSides.resize(numSides);
-  // numCellsOnSide.resize(numSides, 0);
-  // for (int i=0; i<numSides; i++)
-  //   cellsOnSides[i] = Kokkos::DynRankView<int, PHX::Device>("cellOnSide_i", numCells);
-
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
@@ -338,8 +333,6 @@ evaluateFields(typename Traits::EvalData workset)
     const int cell = sideSet.elem_LID(sideSet_idx);
     const int side = sideSet.side_local_id(sideSet_idx);
 
-    //cellsOnSides[side](numCellsOnSide[side]++) = cell;
-
     // Computing tangents (the basis for the manifold)
     for (int itan=0; itan<numSideDims; ++itan)
     {
@@ -472,7 +465,6 @@ evaluateFields(typename Traits::EvalData workset)
     int numSides_ = sideSet.numCellsOnSide.extent(0);
     for (int side = 0; side < numSides_; ++side)
     {
-      //int numCells_ =  numCellsOnSide[side];
       int numCells_ = sideSet.numCellsOnSide(side);
       if( numCells_ == 0) continue;
 
@@ -482,7 +474,6 @@ evaluateFields(typename Traits::EvalData workset)
       Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide = Kokkos::createDynRankView(sideCoordVec.get_view(),"physPointsSide", numCells_, numSideQPs, numCellDims);
       Kokkos::DynRankView<RealType, PHX::Device> refPointsSide("refPointsSide", numSideQPs, numCellDims);
       Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell = Kokkos::createDynRankView(coordVec.get_view(), "XXX", numCells_, numNodes, numCellDims);
-      //Kokkos::DynRankView<int, PHX::Device> cellVec  = cellsOnSides[side];
 
       for (std::size_t iCell=0; iCell < numCells_; ++iCell)
         for (std::size_t node=0; node < numNodes; ++node)
