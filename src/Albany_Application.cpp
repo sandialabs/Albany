@@ -1481,7 +1481,10 @@ Application::computeGlobalJacobianImpl(
   }
 
   // This will also assemble global jacobian (i.e., do import/export)
-  endFEAssembly(jac);
+  {
+    TEUCHOS_FUNC_TIME_MONITOR("Albany Jacobian Fill: Export");
+    endFEAssembly(jac);
+  }
 
   // Allocate and populate scaleVec_
   if (scale != 1.0) {
@@ -1493,12 +1496,9 @@ Application::computeGlobalJacobianImpl(
     }
   }
 
-  {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany Jacobian Fill: Export");
-    // Assemble global residual
-    if (Teuchos::nonnull(f)) {
-      cas_manager->combine(overlapped_f, f, CombineMode::ADD);
-    }
+  // Assemble global residual
+  if (Teuchos::nonnull(f)) {
+    cas_manager->combine(overlapped_f, f, CombineMode::ADD);
   }
 
   // scale Jacobian
