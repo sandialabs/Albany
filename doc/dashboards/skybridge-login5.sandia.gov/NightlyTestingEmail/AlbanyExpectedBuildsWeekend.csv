@@ -36,4 +36,5 @@ Nightly, skybridge-login5, skybridge-login5-trilinos
 Nightly, skybridge-login5, skybridge-login5-albany
 Nightly, weaver.sandia.gov, weaver-CUDA-Trilinos
 Nightly, weaver.sandia.gov, weaver-CUDA-Albany
+Nightly, weaver.sandia.gov, weaver-CUDA-Albany-SFAD
 Nightly, weaver.sandia.gov, weaver-CUDA-Albany-Perf-Tests
