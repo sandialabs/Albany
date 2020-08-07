@@ -17,7 +17,7 @@ export jenkins_albany_dir=/home/projects/albany/nightlyCDashWeaver/repos/Albany
 export jenkins_trilinos_dir=/home/projects/albany/nightlyCDashWeaver/repos/Trilinos
 
 source convert-cmake-to-cdash.sh
-create-new-cdash-cmake-script.sh
+source create-new-cdash-cmake-script.sh
 
 LOG_FILE=$BASE_DIR/nightly_log_weaverTrilinos.txt
 
