@@ -33,7 +33,6 @@ ALBANY:
     Absolute Tolerance: 1.00000000000000008e-05
   Piro: 
     Tempus: 
-      Invert Mass Matrix: true
       Lump Mass Matrix: true
       Integrator Name: Tempus Integrator
       Tempus Integrator: 

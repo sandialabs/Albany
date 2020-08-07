@@ -39,7 +39,6 @@ ALBANY:
     Sensitivity Test Values 0: [3.05378999999999998e-02, 3.30262109999999998e-01]
   Piro: 
     Tempus: 
-      Invert Mass Matrix: true
       Lump Mass Matrix: true
       Integrator Name: Tempus Integrator
       Tempus Integrator: 
