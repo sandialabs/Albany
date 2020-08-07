@@ -133,6 +133,9 @@ if (BUILD_TRILINOS)
   # Configure the Trilinos/SCOREC build
   #
 
+  
+  set(TRILINOS_INSTALL ${CTEST_BINARY_DIRECTORY}/TrilinosInstall) 
+
   set (CONFIGURE_OPTIONS
     CDASH-TRILINOS-FILE.TXT
   )

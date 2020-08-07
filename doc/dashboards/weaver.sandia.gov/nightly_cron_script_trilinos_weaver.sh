@@ -8,12 +8,16 @@ rm -rf build
 rm -rf nightly_log*
 rm -rf results*
 rm -rf modules*out 
+source clean-up.sh 
 
 unset http_proxy
 unset https_proxy
 
 export jenkins_albany_dir=/home/projects/albany/nightlyCDashWeaver/repos/Albany
 export jenkins_trilinos_dir=/home/projects/albany/nightlyCDashWeaver/repos/Trilinos
+
+source convert-cmake-to-cdash.sh
+create-new-cdash-cmake-script.sh
 
 LOG_FILE=$BASE_DIR/nightly_log_weaverTrilinos.txt
 
