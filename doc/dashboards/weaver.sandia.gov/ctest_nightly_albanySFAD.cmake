@@ -14,34 +14,34 @@ if (1)
     set (BUILD_ALBANY_SFAD6 FALSE)
     set (BUILD_ALBANY_SFAD8 FALSE)
     set (BUILD_ALBANY_SFAD12 FALSE)
-    set (CTEST_BUILD_NAME "waterman-CUDA-Albany-SFAD4")
+    set (CTEST_BUILD_NAME "weaver-CUDA-Albany-SFAD4")
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "sfad6")
     set (BUILD_ALBANY_SFAD4 FALSE)
     set (BUILD_ALBANY_SFAD6 TRUE)
     set (BUILD_ALBANY_SFAD8 FALSE)
     set (BUILD_ALBANY_SFAD12 FALSE)
-    set (CTEST_BUILD_NAME "waterman-CUDA-Albany-SFAD6")
+    set (CTEST_BUILD_NAME "weaver-CUDA-Albany-SFAD6")
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "sfad8")
     set (BUILD_ALBANY_SFAD4 FALSE)
     set (BUILD_ALBANY_SFAD6 FALSE)
     set (BUILD_ALBANY_SFAD8 TRUE)
     set (BUILD_ALBANY_SFAD12 FALSE)
-    set (CTEST_BUILD_NAME "waterman-CUDA-Albany-SFAD8")
+    set (CTEST_BUILD_NAME "weaver-CUDA-Albany-SFAD8")
   ENDIF()
  IF(CTEST_BUILD_OPTION MATCHES "sfad12")
     set (BUILD_ALBANY_SFAD4 FALSE)
     set (BUILD_ALBANY_SFAD6 FALSE)
     set (BUILD_ALBANY_SFAD8 FALSE)
     set (BUILD_ALBANY_SFAD12 TRUE)
-    set (CTEST_BUILD_NAME "waterman-CUDA-Albany-SFAD12")
+    set (CTEST_BUILD_NAME "weaver-CUDA-Albany-SFAD12")
   ENDIF()
 ENDIF()
 
 
 # Begin User inputs:
-set (CTEST_SITE "waterman.sandia.gov" ) # generally the output of hostname
+set (CTEST_SITE "weaver.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
@@ -182,7 +182,7 @@ if (BUILD_ALBANY_SFAD4)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad4"
-    SOURCE "/home/projects/albany/waterman/repos/Albany"
+    SOURCE "/home/projects/albany/nightlyCDashWeaver/repos/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
@@ -213,7 +213,7 @@ if (BUILD_ALBANY_SFAD6)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad6"
-    SOURCE "/home/projects/albany/waterman/repos/Albany"
+    SOURCE "/home/projects/albany/nightlyCDashWeaver/repos/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
@@ -244,7 +244,7 @@ if (BUILD_ALBANY_SFAD8)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad"
-    SOURCE "/home/projects/albany/waterman/repos/Albany"
+    SOURCE "/home/projects/albany/nightlyCDashWeaver/repos/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
@@ -274,7 +274,7 @@ if (BUILD_ALBANY_SFAD12)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSFad12"
-    SOURCE "/home/projects/albany/waterman/repos/Albany"
+    SOURCE "/home/projects/albany/nightlyCDashWeaver/repos/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )

@@ -11,7 +11,7 @@ set (BUILD_ALBANY TRUE)
 set (BUILD_ALBANY_SFAD FALSE) 
 
 # Begin User inputs:
-set (CTEST_SITE "waterman.sandia.gov" ) # generally the output of hostname
+set (CTEST_SITE "weaver.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
@@ -21,9 +21,9 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_NAME "waterman-CUDA-Albany")
+set (CTEST_NAME "weaver-CUDA-Albany")
 set (CTEST_BINARY_NAME build)
-set (CTEST_BUILD_NAME "waterman-CUDA-Albany")
+set (CTEST_BUILD_NAME "weaver-CUDA-Albany")
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -153,7 +153,7 @@ if (BUILD_ALBANY)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
-    SOURCE "/home/projects/albany/waterman/repos/Albany"
+    SOURCE "/home/projects/albany/nightlyCDashWeaver/repos/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )

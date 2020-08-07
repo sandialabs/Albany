@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/home/projects/albany/waterman
+BASE_DIR=/home/projects/albany/nightlyCDashWeaver
 cd $BASE_DIR
 
 rm -rf repos
@@ -12,10 +12,10 @@ rm -rf modules*out
 unset http_proxy
 unset https_proxy
 
-export jenkins_albany_dir=/home/projects/albany/waterman/repos/Albany
-export jenkins_trilinos_dir=/home/projects/albany/waterman/repos/Trilinos
+export jenkins_albany_dir=/home/projects/albany/nightlyCDashWeaver/repos/Albany
+export jenkins_trilinos_dir=/home/projects/albany/nightlyCDashWeaver/repos/Trilinos
 
-LOG_FILE=$BASE_DIR/nightly_log_watermanTrilinos.txt
+LOG_FILE=$BASE_DIR/nightly_log_weaverTrilinos.txt
 
 eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_trilinos.cmake" > $LOG_FILE 2>&1
 
