@@ -27,6 +27,8 @@ LoadSideSetStateFieldBase (const Teuchos::ParameterList& p)
 
   field  = PHX::MDField<ScalarType>(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
 
+  useCollapsedLayouts = p.get<bool>("Use Collapsed Layout");
+
   this->addEvaluatedField (field);
 
   this->setName ("Load Side Set Field " + fieldName + " from Side Set State " + stateName 
@@ -95,21 +97,26 @@ evaluateFields(typename Traits::EvalData workset)
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
   int size = dims.size();
-  const std::string& tag2 = size>2 ? field.fieldTag().dataLayout().name(2) : "";
-  TEUCHOS_TEST_FOR_EXCEPTION (size>2 && tag2!="Node" && tag2!="Dim" && tag2!="VecDim", std::logic_error,
+  // Check the tag of the first extent after (cell,side,) to determine if field is nodal
+  const std::string& leading_field_tag = size>2 ? field.fieldTag().dataLayout().name(2) : "";
+  TEUCHOS_TEST_FOR_EXCEPTION (size>2 && leading_field_tag!="Node" && leading_field_tag!="Dim" && leading_field_tag!="VecDim", std::logic_error,
                               "Error! Invalid field layout in LoadSideSetStateField.\n");
 
+  // For collapsed layouts, the tag to check is of the first extent after (side,) to determine if field is nodal
+  const std::string& leading_field_tag_sideset = size>1 ? field.fieldTag().dataLayout().name(1) : "";
+
   // Loop on the sides of this sideSet that are in this workset
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
     // Get the data that corresponds to the side
-    const int side_GID = it_side.side_GID;
-    const int cell     = it_side.elem_LID;
-    const int side     = it_side.side_local_id;
+    const int elem_GID = sideSet.elem_GID(sideSet_idx);
+    const int side_GID = sideSet.side_GID(sideSet_idx);
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
     // Not sure if this is even possible, but just for debug pourposes
-    TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ it_side.elem_GID ].ws != workset.wsIndex, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ elem_GID ].ws != workset.wsIndex, std::logic_error,
                                 "Error! This workset has a side that belongs to an element not in the workset.\n");
 
     // We know the side ID, so we can fetch two things:
@@ -133,56 +140,110 @@ evaluateFields(typename Traits::EvalData workset)
     // Now we have the two arrays: 3D and 2D. We need to take the 2D one
     // and put it at the right place in the 3D one
 
-    switch (size)
-    {
-      case 2:
-        // side set cell scalar
-        field(cell,side) = state(ss_cell);
-        break;
+    if (useCollapsedLayouts) {
+      switch (size)
+      {
+        case 1:
+          // side set cell scalar
+          field(sideSet_idx) = state(ss_cell);
+          break;
 
-      case 3:
-        if (tag2=="Node")
-        {
-          // side set node scalar
-          for (int node=0; node<dims[2]; ++node)
+        case 2:
+          if (leading_field_tag_sideset=="Node")
           {
-            field(cell,side,node) = state(ss_cell,nodeMap[node]);
+            // side set node scalar
+            for (int node=0; node<dims[1]; ++node)
+            {
+              field(sideSet_idx,node) = state(ss_cell,nodeMap[node]);
+            }
           }
-        }
-        else
-        {
-          // side set cell vector/gradient
-          for (int idim=0; idim<dims[2]; ++idim)
+          else
           {
-            field(cell,side,idim) = state(ss_cell,idim);
+            // side set cell vector/gradient
+            for (int idim=0; idim<dims[1]; ++idim)
+            {
+              field(sideSet_idx,idim) = state(ss_cell,idim);
+            }
           }
-        }
-        break;
+          break;
 
-      case 4:
-        if (tag2=="Node")
-        {
-          // side set node vector/gradient
-          for (int node=0; node<dims[2]; ++node)
+        case 3:
+          if (leading_field_tag_sideset=="Node")
           {
-            for (int dim=0; dim<dims[3]; ++dim)
-              field(cell,side,node,dim) = state(ss_cell,nodeMap[node],dim);
+            // side set node vector/gradient
+            for (int node=0; node<dims[1]; ++node)
+            {
+              for (int dim=0; dim<dims[2]; ++dim)
+                field(sideSet_idx,node,dim) = state(ss_cell,nodeMap[node],dim);
+            }
           }
-        }
-        else
-        {
-          // side set cell tensor
-          for (int idim=0; idim<dims[2]; ++idim)
+          else
           {
-            for (int jdim=0; jdim<dims[3]; ++jdim)
-              field(cell,side,idim,jdim) = state(ss_cell,idim,jdim);
+            // side set cell tensor
+            for (int idim=0; idim<dims[1]; ++idim)
+            {
+              for (int jdim=0; jdim<dims[2]; ++jdim)
+                field(sideSet_idx,idim,jdim) = state(ss_cell,idim,jdim);
+            }
           }
-        }
-        break;
+          break;
 
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                                    "Error! Unexpected array dimensions in LoadSideSetStateField: " << size << ".\n");
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                      "Error! Unexpected array dimensions in LoadSideSetStateField: " << size << ".\n");
+      }
+    } else {
+      switch (size)
+      {
+        case 2:
+          // side set cell scalar
+          field(cell,side) = state(ss_cell);
+          break;
+
+        case 3:
+          if (leading_field_tag=="Node")
+          {
+            // side set node scalar
+            for (int node=0; node<dims[2]; ++node)
+            {
+              field(cell,side,node) = state(ss_cell,nodeMap[node]);
+            }
+          }
+          else
+          {
+            // side set cell vector/gradient
+            for (int idim=0; idim<dims[2]; ++idim)
+            {
+              field(cell,side,idim) = state(ss_cell,idim);
+            }
+          }
+          break;
+
+        case 4:
+          if (leading_field_tag=="Node")
+          {
+            // side set node vector/gradient
+            for (int node=0; node<dims[2]; ++node)
+            {
+              for (int dim=0; dim<dims[3]; ++dim)
+                field(cell,side,node,dim) = state(ss_cell,nodeMap[node],dim);
+            }
+          }
+          else
+          {
+            // side set cell tensor
+            for (int idim=0; idim<dims[2]; ++idim)
+            {
+              for (int jdim=0; jdim<dims[3]; ++jdim)
+                field(cell,side,idim,jdim) = state(ss_cell,idim,jdim);
+            }
+          }
+          break;
+
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                      "Error! Unexpected array dimensions in LoadSideSetStateField: " << size << ".\n");
+      }
     }
   }
 }

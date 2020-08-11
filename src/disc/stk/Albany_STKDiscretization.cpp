@@ -1854,6 +1854,150 @@ STKDiscretization::computeSideSets()
 
     ss++;
   }
+
+  // =============================================================
+  // (Kokkos Refactor) Convert sideSets to sideSetViews
+
+  // 1) Compute view extents (num_local_worksets, max_sideset_length, max_sides) and local workset counter (current_local_index)
+  std::map<std::string, int> num_local_worksets;
+  std::map<std::string, int> max_sideset_length;
+  std::map<std::string, int> max_sides;
+  std::map<std::string, int> current_local_index;
+  for (int i = 0; i < sideSets.size(); ++i) {
+    SideSetList& ssList = sideSets[i];
+    std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
+
+    while (ss_it != ssList.end()) {
+      std::string             ss_key = ss_it->first;
+      std::vector<SideStruct> ss_val = ss_it->second;
+
+      // Initialize values if this is the first time seeing a sideset key
+      if (num_local_worksets.find(ss_key) == num_local_worksets.end())
+        num_local_worksets[ss_key] = 0;
+      if (max_sideset_length.find(ss_key) == max_sideset_length.end())
+        max_sideset_length[ss_key] = 0;
+      if (max_sides.find(ss_key) == max_sides.end())
+        max_sides[ss_key] = 0;
+      if (current_local_index.find(ss_key) == current_local_index.end())
+        current_local_index[ss_key] = 0;
+
+      // Update extents for given workset/sideset
+      num_local_worksets[ss_key]++;
+      max_sideset_length[ss_key] = std::max(max_sideset_length[ss_key], (int) ss_val.size());
+      for (size_t j = 0; j < ss_val.size(); ++j)
+        max_sides[ss_key] = std::max(max_sides[ss_key], (int) ss_val[j].side_local_id);
+
+      ss_it++;
+    }
+  }
+
+  // 2) Construct GlobalSideSetList (map of GlobalSideSetInfo)
+  std::map<std::string, int>::iterator ss_it = num_local_worksets.begin();
+  while (ss_it != num_local_worksets.end()) {
+    std::string             ss_key = ss_it->first;
+
+    max_sides[ss_key]++; // max sides is the largest local ID + 1 and needs to be incremented once for each key here
+
+    globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
+    globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
+    globalSideSetViews[ss_key].side_GID       = Kokkos::View<GO**,       Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_GID       = Kokkos::View<GO**,       Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_LID       = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_ebIndex   = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_local_id  = Kokkos::View<unsigned**, Kokkos::LayoutRight>("side_local_id", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].max_sides      = max_sides[ss_key];
+    globalSideSetViews[ss_key].numCellsOnSide = Kokkos::View<int**,      Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
+    globalSideSetViews[ss_key].cellsOnSide    = Kokkos::View<int***,     Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+
+    ss_it++;
+  }
+
+  // 3) Populate global views
+  for (int i = 0; i < sideSets.size(); ++i) {
+    SideSetList& ssList = sideSets[i];
+    std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
+
+    while (ss_it != ssList.end()) {
+      std::string             ss_key = ss_it->first;
+      std::vector<SideStruct> ss_val = ss_it->second;
+
+      int current_index = current_local_index[ss_key];
+      int numSides = max_sides[ss_key];
+
+      int max_cells_on_side = 0;
+      std::vector<int> numCellsOnSide(numSides);
+      std::vector<std::vector<int>> cellsOnSide(numSides);
+      for (size_t j = 0; j < ss_val.size(); ++j) {
+        int cell = ss_val[j].elem_LID;
+        int side = ss_val[j].side_local_id;
+        cellsOnSide[side].push_back(cell);
+      }
+      for (size_t side = 0; side < numSides; ++side) {
+        numCellsOnSide[side] = cellsOnSide[side].size();
+        max_cells_on_side = std::max(max_cells_on_side, numCellsOnSide[side]);
+      }
+
+      for (size_t side = 0; side < numSides; ++side) {
+        globalSideSetViews[ss_key].numCellsOnSide(current_index, side) = numCellsOnSide[side];
+        for (size_t j = 0; j < numCellsOnSide[side]; ++j) {
+          globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = cellsOnSide[side][j];
+        }
+        for (size_t j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
+          globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = -1;
+        }
+      }
+
+      for (size_t j = 0; j < ss_val.size(); ++j) {
+        globalSideSetViews[ss_key].side_GID(current_index, j)      = ss_val[j].side_GID;
+        globalSideSetViews[ss_key].elem_GID(current_index, j)      = ss_val[j].elem_GID;
+        globalSideSetViews[ss_key].elem_LID(current_index, j)      = ss_val[j].elem_LID;
+        globalSideSetViews[ss_key].elem_ebIndex(current_index, j)  = ss_val[j].elem_ebIndex;
+        globalSideSetViews[ss_key].side_local_id(current_index, j) = ss_val[j].side_local_id;
+      }
+
+      current_local_index[ss_key]++;
+
+      ss_it++;
+    }
+  }
+
+  // 4) Reset current_local_index
+  std::map<std::string, int>::iterator counter_it = current_local_index.begin();
+  while (counter_it != current_local_index.end()) {
+    std::string counter_key = counter_it->first;
+    current_local_index[counter_key] = 0;
+    counter_it++;
+  }
+
+  // 5) Populate map of LocalSideSetInfos
+  for (int i = 0; i < sideSets.size(); ++i) {
+    SideSetList& ssList = sideSets[i];
+    LocalSideSetInfoList& lssList = sideSetViews[i];
+    std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
+
+    while (ss_it != ssList.end()) {
+      std::string             ss_key = ss_it->first;
+      std::vector<SideStruct> ss_val = ss_it->second;
+
+      int current_index = current_local_index[ss_key];
+      std::pair<int,int> range(0, ss_val.size());
+
+      lssList[ss_key].size           = ss_val.size();
+      lssList[ss_key].side_GID       = Kokkos::subview(globalSideSetViews[ss_key].side_GID, current_index, range );
+      lssList[ss_key].elem_GID       = Kokkos::subview(globalSideSetViews[ss_key].elem_GID, current_index, range );
+      lssList[ss_key].elem_LID       = Kokkos::subview(globalSideSetViews[ss_key].elem_LID, current_index, range );
+      lssList[ss_key].elem_ebIndex   = Kokkos::subview(globalSideSetViews[ss_key].elem_ebIndex,  current_index, range );
+      lssList[ss_key].side_local_id  = Kokkos::subview(globalSideSetViews[ss_key].side_local_id, current_index, range );
+      lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
+      lssList[ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
+      lssList[ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
+
+      current_local_index[ss_key]++;
+
+      ss_it++;
+    }
+  }
+  
 }
 
 unsigned

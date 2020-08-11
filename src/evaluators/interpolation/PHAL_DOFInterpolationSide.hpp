@@ -44,18 +44,37 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<const ScalarT,Cell,Side,Node> val_node;
+  PHX::MDField<const ScalarT> val_node;
   //! Basis Functions
-  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint> BF;
+  PHX::MDField<const RealType> BF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Side,Cell,QuadPoint> val_qp;
+  PHX::MDField<ScalarT> val_qp;
 
   int numSideNodes;
   int numSideQPs;
+  bool useCollapsedSidesets;
 
   MDFieldMemoizer<Traits> memoizer;
+
+  Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DOFInterpolationSideBase_Tag{};
+  struct DOFInterpolationSideBase_Collapsed_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFInterpolationSideBase_Tag> DOFInterpolationSideBase_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFInterpolationSideBase_Collapsed_Tag> DOFInterpolationSideBase_Collapsed_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFInterpolationSideBase_Tag& tag, const int& sideSet_idx) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFInterpolationSideBase_Collapsed_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 // Some shortcut names

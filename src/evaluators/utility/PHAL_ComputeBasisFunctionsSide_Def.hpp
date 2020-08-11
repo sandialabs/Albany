@@ -26,14 +26,16 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
   // Build output fields
-  sideCoordVec = decltype(sideCoordVec)(p.get<std::string> ("Side Coordinate Vector Name"), dl_side->vertices_vector );
-  tangents     = decltype(tangents    )(p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd );
-  metric       = decltype(metric      )(p.get<std::string> ("Metric Name"), dl_side->qp_tensor );
-  w_measure    = decltype(w_measure   )(p.get<std::string> ("Weighted Measure Name"), dl_side->qp_scalar );
-  inv_metric   = decltype(inv_metric  )(p.get<std::string> ("Inverse Metric Name"), dl_side->qp_tensor );
-  metric_det   = decltype(metric_det  )(p.get<std::string> ("Metric Determinant Name"), dl_side->qp_scalar );
-  BF           = decltype(BF          )(p.get<std::string> ("BF Name"), dl_side->node_qp_scalar);
-  GradBF       = decltype(GradBF      )(p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient);
+  sideCoordVec = decltype(sideCoordVec)(p.get<std::string> ("Side Coordinate Vector Name"), (dl_side->useCollapsedSidesets) ? dl_side->vertices_vector_sideset : dl_side->vertices_vector );
+  tangents     = decltype(tangents    )(p.get<std::string> ("Tangents Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_tensor_cd_sd_sideset : dl_side->qp_tensor_cd_sd );
+  metric       = decltype(metric      )(p.get<std::string> ("Metric Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_tensor_sideset : dl_side->qp_tensor );
+  w_measure    = decltype(w_measure   )(p.get<std::string> ("Weighted Measure Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_scalar_sideset : dl_side->qp_scalar );
+  inv_metric   = decltype(inv_metric  )(p.get<std::string> ("Inverse Metric Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_tensor_sideset : dl_side->qp_tensor );
+  metric_det   = decltype(metric_det  )(p.get<std::string> ("Metric Determinant Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_scalar_sideset : dl_side->qp_scalar );
+  BF           = decltype(BF          )(p.get<std::string> ("BF Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_qp_scalar_sideset : dl_side->node_qp_scalar);
+  GradBF       = decltype(GradBF      )(p.get<std::string> ("Gradient BF Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_qp_gradient_sideset : dl_side->node_qp_gradient);
+
+  useCollapsedSidesets = dl_side->useCollapsedSidesets;
 
   this->addDependentField(sideCoordVec);
   this->addEvaluatedField(tangents);
@@ -57,7 +59,7 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
   // Get Dimensions
-  int numCells = dl_side->node_qp_gradient->extent(0);
+  numCells     = dl_side->node_qp_gradient->extent(0);
   numSides     = dl_side->node_qp_gradient->extent(1);
   numSideNodes = dl_side->node_qp_gradient->extent(2);
   numSideQPs   = dl_side->node_qp_gradient->extent(3);
@@ -116,30 +118,192 @@ postRegistrationSetup(typename Traits::SetupData d,
   intrepidBasis->getValues(grad_at_cub_points, cub_points, Intrepid2::OPERATOR_GRAD);
 
   // BF does not depend on the current element, so we fill it now
-  std::vector<PHX::DataLayout::size_type> dims;
-  BF.fieldTag().dataLayout().dimensions(dims);
-  int numCells = dims[0];
-  for(int cell=0; cell<numCells; ++cell)
-  {
-    for (int side=0; side<numSides; ++side)
+  if (!useCollapsedSidesets) {
+    for(int cell=0; cell<numCells; ++cell)
+    {
+      for (int side=0; side<numSides; ++side)
+      {
+        for (int node=0; node<numSideNodes; ++node)
+        {
+          for (int qp=0; qp<numSideQPs; ++qp)
+          {
+            BF(cell,side,node,qp) = val_at_cub_points(node,qp);
+          }
+        }
+      }
+    }
+  } else {
+    for (int cellside = 0; cellside < BF.extent(0); ++cellside)
     {
       for (int node=0; node<numSideNodes; ++node)
       {
         for (int qp=0; qp<numSideQPs; ++qp)
         {
-          BF(cell,side,node,qp) = val_at_cub_points(node,qp);
+          BF(cellside,node,qp) = val_at_cub_points(node,qp);
         }
       }
     }
   }
 
-  cellsOnSides.resize(numSides);
-  numCellsOnSide.resize(numSides, 0);
-  for (int i=0; i<numSides; i++)
-    cellsOnSides[i] = Kokkos::DynRankView<int, PHX::Device>("cellOnSide_i", numCells);
-
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
+}
+
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctionsSide<EvalT, Traits>::
+operator() (const ComputeBasisFunctionsSide_Collapsed_Tag& tag, const int& sideSet_idx) const {
+
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  // Computing tangents (the basis for the manifold)
+  for (int itan=0; itan<numSideDims; ++itan) {
+    for (int icoor=0; icoor<numCellDims; ++icoor) {
+      for (int qp=0; qp<numSideQPs; ++qp) {
+        tangents(sideSet_idx,qp,icoor,itan) = 0.;
+        if(icoor < effectiveCoordDim)   //if it's planar do not compute the z dimension
+        for (int node=0; node<numSideNodes; ++node) {
+          tangents(sideSet_idx,qp,icoor,itan) += sideCoordVec(sideSet_idx,node,icoor) * grad_at_cub_points(node,qp,itan);
+        }
+      }
+    }
+  }
+
+  // Computing the metric
+  for (int qp=0; qp<numSideQPs; ++qp) {
+    for (int idim=0; idim<numSideDims; ++idim) {
+      // Diagonal
+      metric(sideSet_idx,qp,idim,idim) = 0.;
+      for (int coor=0; coor<numCellDims; ++coor) {
+        metric(sideSet_idx,qp,idim,idim) += tangents(sideSet_idx,qp,coor,idim)*tangents(sideSet_idx,qp,coor,idim); // g = J'*J
+      }
+
+      // Extra-diagonal
+      for (int jdim=idim+1; jdim<numSideDims; ++jdim) {
+        metric(sideSet_idx,qp,idim,jdim) = 0.;
+        for (int coor=0; coor<numCellDims; ++coor) {
+          metric(sideSet_idx,qp,idim,jdim) += tangents(sideSet_idx,qp,coor,idim)*tangents(sideSet_idx,qp,coor,jdim); // g = J'*J
+        }
+        metric(sideSet_idx,qp,jdim,idim) =  metric(sideSet_idx,qp,idim,jdim);
+      }
+    }
+  }
+
+  // Computing the metric determinant, the weighted measure and the inverse of the metric
+  switch (numSideDims) {
+    case 1:
+      for (int qp=0; qp<numSideQPs; ++qp) {
+        metric_det(sideSet_idx,qp) =  metric(sideSet_idx,qp,0,0);
+        w_measure(sideSet_idx,qp) = cub_weights(qp)*std::sqrt( metric(sideSet_idx,qp,0,0));
+        inv_metric(sideSet_idx,qp,0,0) = 1./ metric(sideSet_idx,qp,0,0);
+      }
+      break;
+    case 2:
+      for (int qp=0; qp<numSideQPs; ++qp) {
+        metric_det(sideSet_idx,qp) =  metric(sideSet_idx,qp,0,0)* metric(sideSet_idx,qp,1,1) -  metric(sideSet_idx,qp,0,1)* metric(sideSet_idx,qp,1,0);
+        w_measure(sideSet_idx,qp) = cub_weights(qp)*std::sqrt(metric_det(sideSet_idx,qp));
+        inv_metric(sideSet_idx,qp,0,0) =  metric(sideSet_idx,qp,1,1)/metric_det(sideSet_idx,qp);
+        inv_metric(sideSet_idx,qp,1,1) =  metric(sideSet_idx,qp,0,0)/metric_det(sideSet_idx,qp);
+        inv_metric(sideSet_idx,qp,0,1) = inv_metric(sideSet_idx,qp,1,0) = - metric(sideSet_idx,qp,0,1)/metric_det(sideSet_idx,qp); 
+      }
+      break;
+    default:
+      break;
+      // TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! The dimension of the side should be 1 or 2.\n");
+  }
+
+  for (int node=0; node<numSideNodes; ++node) {
+    for (int qp=0; qp<numSideQPs; ++qp) {
+      for (int ider=0; ider<numSideDims; ++ider) {
+        GradBF(sideSet_idx,node,qp,ider)=0;
+        for(int jder=0; jder< numSideDims; ++jder) {
+          GradBF(sideSet_idx,node,qp,ider) += inv_metric(sideSet_idx,qp,ider,jder)*grad_at_cub_points(node,qp,jder);
+        }
+      }
+    }
+  }
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctionsSide<EvalT, Traits>::
+operator() (const ComputeBasisFunctionsSide_Tag& tag, const int& sideSet_idx) const {
+
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  // Computing tangents (the basis for the manifold)
+  for (int itan=0; itan<numSideDims; ++itan) {
+    for (int icoor=0; icoor<numCellDims; ++icoor) {
+      for (int qp=0; qp<numSideQPs; ++qp) {
+        tangents(cell,side,qp,icoor,itan) = 0.;
+        if(icoor < effectiveCoordDim)   //if it's planar do not compute the z dimension
+        for (int node=0; node<numSideNodes; ++node) {
+          tangents(cell,side,qp,icoor,itan) += sideCoordVec(cell,side,node,icoor) * grad_at_cub_points(node,qp,itan);
+        }
+      }
+    }
+  }
+
+  // Computing the metric
+  for (int qp=0; qp<numSideQPs; ++qp) {
+    for (int idim=0; idim<numSideDims; ++idim) {
+      // Diagonal
+      metric(cell,side,qp,idim,idim) = 0.;
+      for (int coor=0; coor<numCellDims; ++coor) {
+        metric(cell,side,qp,idim,idim) += tangents(cell,side,qp,coor,idim)*tangents(cell,side,qp,coor,idim); // g = J'*J
+      }
+
+      // Extra-diagonal
+      for (int jdim=idim+1; jdim<numSideDims; ++jdim) {
+        metric(cell,side,qp,idim,jdim) = 0.;
+        for (int coor=0; coor<numCellDims; ++coor) {
+          metric(cell,side,qp,idim,jdim) += tangents(cell,side,qp,coor,idim)*tangents(cell,side,qp,coor,jdim); // g = J'*J
+        }
+        metric(cell,side,qp,jdim,idim) =  metric(cell,side,qp,idim,jdim);
+      }
+    }
+  }
+
+  // Computing the metric determinant, the weighted measure and the inverse of the metric
+  switch (numSideDims) {
+    case 1:
+      for (int qp=0; qp<numSideQPs; ++qp) {
+        metric_det(cell,side,qp) =  metric(cell,side,qp,0,0);
+        w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt( metric(cell,side,qp,0,0));
+        inv_metric(cell,side,qp,0,0) = 1./ metric(cell,side,qp,0,0);
+      }
+      break;
+    case 2:
+      for (int qp=0; qp<numSideQPs; ++qp) {
+        metric_det(cell,side,qp) =  metric(cell,side,qp,0,0)* metric(cell,side,qp,1,1) -  metric(cell,side,qp,0,1)* metric(cell,side,qp,1,0);
+        w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt(metric_det(cell,side,qp));
+        inv_metric(cell,side,qp,0,0) =  metric(cell,side,qp,1,1)/metric_det(cell,side,qp);
+        inv_metric(cell,side,qp,1,1) =  metric(cell,side,qp,0,0)/metric_det(cell,side,qp);
+        inv_metric(cell,side,qp,0,1) = inv_metric(cell,side,qp,1,0) = - metric(cell,side,qp,0,1)/metric_det(cell,side,qp); 
+      }
+      break;
+    default:
+      break;
+  }
+
+  for (int node=0; node<numSideNodes; ++node) {
+    for (int qp=0; qp<numSideQPs; ++qp) {
+      for (int ider=0; ider<numSideDims; ++ider) {
+        GradBF(cell,side,node,qp,ider)=0;
+        for(int jder=0; jder< numSideDims; ++jder) {
+          GradBF(cell,side,node,qp,ider) += inv_metric(cell,side,qp,ider,jder)*grad_at_cub_points(node,qp,jder);
+        }
+      }
+    }
+  }
+
 }
 
 //**********************************************************************
@@ -150,18 +314,24 @@ evaluateFields(typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   //TODO: use Intrepid routines as much as possible
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end())
     return;
 
-  numCellsOnSide.assign(numSides, 0);
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
+  //numCellsOnSide.assign(numSides, 0);
+  sideSet = workset.sideSetViews->at(sideSetName);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (useCollapsedSidesets) {
+    Kokkos::parallel_for(ComputeBasisFunctionsSide_Collapsed_Policy(0,sideSet.size), *this);
+  } else {
+    Kokkos::parallel_for(ComputeBasisFunctionsSide_Policy(0,sideSet.size), *this);
+  }
+#else
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
     // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
-
-    cellsOnSides[side](numCellsOnSide[side]++) = cell;
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
     // Computing tangents (the basis for the manifold)
     for (int itan=0; itan<numSideDims; ++itan)
@@ -170,10 +340,19 @@ evaluateFields(typename Traits::EvalData workset)
       {
         for (int qp=0; qp<numSideQPs; ++qp)
         {
-          tangents(cell,side,qp,icoor,itan) = 0.;
-          if(icoor < effectiveCoordDim)   //if it's planar do not compute the z dimension
-            for (int node=0; node<numSideNodes; ++node)
+          if (useCollapsedSidesets) {
+            tangents(sideSet_idx,qp,icoor,itan) = 0.;
+            if(icoor < effectiveCoordDim)   //if it's planar do not compute the z dimension
+            for (int node=0; node<numSideNodes; ++node) {
+              tangents(sideSet_idx,qp,icoor,itan) += sideCoordVec(sideSet_idx,node,icoor) * grad_at_cub_points(node,qp,itan);
+            }
+          } else {
+            tangents(cell,side,qp,icoor,itan) = 0.;
+            if(icoor < effectiveCoordDim)   //if it's planar do not compute the z dimension
+            for (int node=0; node<numSideNodes; ++node) {
               tangents(cell,side,qp,icoor,itan) += sideCoordVec(cell,side,node,icoor) * grad_at_cub_points(node,qp,itan);
+            }
+          }
         }
       }
     }
@@ -182,22 +361,42 @@ evaluateFields(typename Traits::EvalData workset)
     {
       for (int idim=0; idim<numSideDims; ++idim)
       {
-        // Diagonal
-        metric(cell,side,qp,idim,idim) = 0.;
-        for (int coor=0; coor<numCellDims; ++coor)
-        {
-          metric(cell,side,qp,idim,idim) += tangents(cell,side,qp,coor,idim)*tangents(cell,side,qp,coor,idim); // g = J'*J
-        }
-
-        // Extra-diagonal
-        for (int jdim=idim+1; jdim<numSideDims; ++jdim)
-        {
-           metric(cell,side,qp,idim,jdim) = 0.;
+        if (useCollapsedSidesets) {
+          // Diagonal
+          metric(sideSet_idx,qp,idim,idim) = 0.;
           for (int coor=0; coor<numCellDims; ++coor)
           {
-             metric(cell,side,qp,idim,jdim) += tangents(cell,side,qp,coor,idim)*tangents(cell,side,qp,coor,jdim); // g = J'*J
+            metric(sideSet_idx,qp,idim,idim) += tangents(sideSet_idx,qp,coor,idim)*tangents(sideSet_idx,qp,coor,idim); // g = J'*J
           }
-           metric(cell,side,qp,jdim,idim) =  metric(cell,side,qp,idim,jdim);
+
+          // Extra-diagonal
+          for (int jdim=idim+1; jdim<numSideDims; ++jdim)
+          {
+            metric(sideSet_idx,qp,idim,jdim) = 0.;
+            for (int coor=0; coor<numCellDims; ++coor)
+            {
+              metric(sideSet_idx,qp,idim,jdim) += tangents(sideSet_idx,qp,coor,idim)*tangents(sideSet_idx,qp,coor,jdim); // g = J'*J
+            }
+            metric(sideSet_idx,qp,jdim,idim) =  metric(sideSet_idx,qp,idim,jdim);
+          }
+        } else {
+          // Diagonal
+          metric(cell,side,qp,idim,idim) = 0.;
+          for (int coor=0; coor<numCellDims; ++coor)
+          {
+            metric(cell,side,qp,idim,idim) += tangents(cell,side,qp,coor,idim)*tangents(cell,side,qp,coor,idim); // g = J'*J
+          }
+
+          // Extra-diagonal
+          for (int jdim=idim+1; jdim<numSideDims; ++jdim)
+          {
+            metric(cell,side,qp,idim,jdim) = 0.;
+            for (int coor=0; coor<numCellDims; ++coor)
+            {
+              metric(cell,side,qp,idim,jdim) += tangents(cell,side,qp,coor,idim)*tangents(cell,side,qp,coor,jdim); // g = J'*J
+            }
+            metric(cell,side,qp,jdim,idim) =  metric(cell,side,qp,idim,jdim);
+          }
         }
       }
     }
@@ -208,19 +407,33 @@ evaluateFields(typename Traits::EvalData workset)
       case 1:
         for (int qp=0; qp<numSideQPs; ++qp)
         {
-          metric_det(cell,side,qp) =  metric(cell,side,qp,0,0);
-          w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt( metric(cell,side,qp,0,0));
-          inv_metric(cell,side,qp,0,0) = 1./ metric(cell,side,qp,0,0);
+          if (useCollapsedSidesets) {
+            metric_det(sideSet_idx,qp) =  metric(sideSet_idx,qp,0,0);
+            w_measure(sideSet_idx,qp) = cub_weights(qp)*std::sqrt( metric(sideSet_idx,qp,0,0));
+            inv_metric(sideSet_idx,qp,0,0) = 1./ metric(sideSet_idx,qp,0,0);
+          } else {
+            metric_det(cell,side,qp) =  metric(cell,side,qp,0,0);
+            w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt( metric(cell,side,qp,0,0));
+            inv_metric(cell,side,qp,0,0) = 1./ metric(cell,side,qp,0,0);
+          }
         }
         break;
       case 2:
         for (int qp=0; qp<numSideQPs; ++qp)
         {
-          metric_det(cell,side,qp) =  metric(cell,side,qp,0,0)* metric(cell,side,qp,1,1) -  metric(cell,side,qp,0,1)* metric(cell,side,qp,1,0);
-          w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt(metric_det(cell,side,qp));
-          inv_metric(cell,side,qp,0,0) =  metric(cell,side,qp,1,1)/metric_det(cell,side,qp);
-          inv_metric(cell,side,qp,1,1) =  metric(cell,side,qp,0,0)/metric_det(cell,side,qp);
-          inv_metric(cell,side,qp,0,1) = inv_metric(cell,side,qp,1,0) = - metric(cell,side,qp,0,1)/metric_det(cell,side,qp);
+          if (useCollapsedSidesets) {
+            metric_det(sideSet_idx,qp) =  metric(sideSet_idx,qp,0,0)* metric(sideSet_idx,qp,1,1) -  metric(sideSet_idx,qp,0,1)* metric(sideSet_idx,qp,1,0);
+            w_measure(sideSet_idx,qp) = cub_weights(qp)*std::sqrt(metric_det(sideSet_idx,qp));
+            inv_metric(sideSet_idx,qp,0,0) =  metric(sideSet_idx,qp,1,1)/metric_det(sideSet_idx,qp);
+            inv_metric(sideSet_idx,qp,1,1) =  metric(sideSet_idx,qp,0,0)/metric_det(sideSet_idx,qp);
+            inv_metric(sideSet_idx,qp,0,1) = inv_metric(sideSet_idx,qp,1,0) = - metric(sideSet_idx,qp,0,1)/metric_det(sideSet_idx,qp); 
+          } else {
+            metric_det(cell,side,qp) =  metric(cell,side,qp,0,0)* metric(cell,side,qp,1,1) -  metric(cell,side,qp,0,1)* metric(cell,side,qp,1,0);
+            w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt(metric_det(cell,side,qp));
+            inv_metric(cell,side,qp,0,0) =  metric(cell,side,qp,1,1)/metric_det(cell,side,qp);
+            inv_metric(cell,side,qp,1,1) =  metric(cell,side,qp,0,0)/metric_det(cell,side,qp);
+            inv_metric(cell,side,qp,0,1) = inv_metric(cell,side,qp,1,0) = - metric(cell,side,qp,0,1)/metric_det(cell,side,qp); 
+          }
         }
         break;
       default:
@@ -233,18 +446,26 @@ evaluateFields(typename Traits::EvalData workset)
       {
         for (int ider=0; ider<numSideDims; ++ider)
         {
-          GradBF(cell,side,node,qp,ider)=0;
-          for(int jder=0; jder< numSideDims; ++jder)
-            GradBF(cell,side,node,qp,ider) += inv_metric(cell,side,qp,ider,jder)*grad_at_cub_points(node,qp,jder);
+          if (useCollapsedSidesets) {
+            GradBF(sideSet_idx,node,qp,ider)=0;
+            for(int jder=0; jder< numSideDims; ++jder)
+              GradBF(sideSet_idx,node,qp,ider) += inv_metric(sideSet_idx,qp,ider,jder)*grad_at_cub_points(node,qp,jder);
+          } else {
+            GradBF(sideSet_idx,node,qp,ider)=0;
+            for(int jder=0; jder< numSideDims; ++jder)
+              GradBF(sideSet_idx,node,qp,ider) += inv_metric(sideSet_idx,qp,ider,jder)*grad_at_cub_points(node,qp,jder);
+          }
         }
       }
     }
   }
+#endif
 
   if(compute_normals){
-    for (int side = 0; side < numSides; ++side)
+    int numSides_ = sideSet.numCellsOnSide.extent(0);
+    for (int side = 0; side < numSides_; ++side)
     {
-      int numCells_ =  numCellsOnSide[side];
+      int numCells_ = sideSet.numCellsOnSide(side);
       if( numCells_ == 0) continue;
 
       Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths = Kokkos::createDynRankView(sideCoordVec.get_view(),"normal_lengths", numCells_, numSideQPs);
@@ -253,14 +474,11 @@ evaluateFields(typename Traits::EvalData workset)
       Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide = Kokkos::createDynRankView(sideCoordVec.get_view(),"physPointsSide", numCells_, numSideQPs, numCellDims);
       Kokkos::DynRankView<RealType, PHX::Device> refPointsSide("refPointsSide", numSideQPs, numCellDims);
       Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell = Kokkos::createDynRankView(coordVec.get_view(), "XXX", numCells_, numNodes, numCellDims);
-      Kokkos::DynRankView<int, PHX::Device> cellVec  = cellsOnSides[side];
 
-
-
-      for (std::size_t node=0; node < numNodes; ++node)
-        for (std::size_t dim=0; dim < numCellDims; ++dim)
-          for (std::size_t iCell=0; iCell < numCells_; ++iCell)
-            physPointsCell(iCell, node, dim) = coordVec(cellVec(iCell),node,dim);
+      for (std::size_t iCell=0; iCell < numCells_; ++iCell)
+        for (std::size_t node=0; node < numNodes; ++node)
+          for (std::size_t dim=0; dim < numCellDims; ++dim)
+            physPointsCell(iCell, node, dim) = coordVec(sideSet.cellsOnSide(side,iCell),node,dim);
 
       // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
       Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell
@@ -278,12 +496,13 @@ evaluateFields(typename Traits::EvalData workset)
       Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, normals_view, Intrepid2::NORM_TWO);
       Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(normals_view, normal_lengths, normals_view, true);
 
-      for (int icoor=0; icoor<numCellDims; ++icoor)
-        for (int qp=0; qp<numSideQPs; ++qp)
-          for (std::size_t iCell=0; iCell < numCells_; ++iCell)
-            normals(cellVec(iCell),side,qp, icoor) = normals_view(iCell,qp,icoor);
+      for (std::size_t iCell=0; iCell < numCells_; ++iCell)
+        for (int icoor=0; icoor<numCellDims; ++icoor)
+          for (int qp=0; qp<numSideQPs; ++qp)
+            normals(sideSet.cellsOnSide(side,iCell),side,qp, icoor) = normals_view(iCell,qp,icoor);
     }
   }
+
 }
 
 } // Namespace PHAL

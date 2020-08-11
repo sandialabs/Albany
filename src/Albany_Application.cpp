@@ -2718,6 +2718,7 @@ void
 Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws)
 {
   workset.sideSets = Teuchos::rcpFromRef(disc->getSideSets(ws));
+  workset.sideSetViews = Teuchos::rcpFromRef(disc->getSideSetViews(ws));
 }
 
 void

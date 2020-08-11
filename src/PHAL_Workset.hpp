@@ -110,6 +110,7 @@ struct Workset
   Teuchos::RCP<const Albany::NodeSetCoordList> nodeSetCoords;
 
   Teuchos::RCP<const Albany::SideSetList> sideSets;
+  Teuchos::RCP<const Albany::LocalSideSetInfoList> sideSetViews;
 
   // jacobian and mass matrix coefficients for matrix fill
   double j_coeff;

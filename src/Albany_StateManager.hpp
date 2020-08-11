@@ -154,6 +154,22 @@ class StateManager
       const std::string&                   ebName,
       const bool                           outputToExodus,
       StateStruct::MeshFieldEntity const*  fieldEntity  = NULL,
+      const std::string&                   meshPartName = "",
+      const bool                           useCollapsedLayout = false);
+
+  Teuchos::RCP<Teuchos::ParameterList>
+  registerSideSetStateVariable_collapsed(
+      const std::string&                   sideSetName,
+      const std::string&                   stateName,
+      const std::string&                   fieldName,
+      const Teuchos::RCP<PHX::DataLayout>& dl,
+      const std::string&                   ebName,
+      const std::string&                   init_type,
+      const double                         init_val,
+      const bool                           registerOldState,
+      const bool                           outputToExodus,
+      const std::string&                   responseIDtoRequire,
+      StateStruct::MeshFieldEntity const*  fieldEntity,
       const std::string&                   meshPartName = "");
 
   Teuchos::RCP<Teuchos::ParameterList>

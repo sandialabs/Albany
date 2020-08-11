@@ -20,7 +20,7 @@ namespace Albany {
   struct Layouts {
 
     Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numCellDim, int vecDim=-1, int numFace=0);
-    Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim);
+    Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim, bool collapsed_sidesets=false, int sidesetWorksetSize=1);
 
     //! Data Layout for scalar quantity that lives at nodes
     Teuchos::RCP<PHX::DataLayout> node_scalar;
@@ -128,6 +128,25 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> shared_param_vec; // same length as other vectors
     Teuchos::RCP<PHX::DataLayout> dummy;
 
+    //! Data Layout for scalar quantity that lives at nodes that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> node_scalar_sideset;
+    //! Data Layout for scalar quantity that lives at QPs that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> qp_scalar_sideset;
+    //! Data Layout for vector quantity that lives at nodes that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> node_vector_sideset;
+    //! Data Layout for vector quantity that lives at QPs that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> qp_vector_sideset;
+    //! Data Layout for vector quantity that lives at vertices (coordinates) that belong to a sideset //FIXME: dont oords live at nodes, not vertices?
+    Teuchos::RCP<PHX::DataLayout> vertices_vector_sideset;
+    //! Data Layout for scalar basis functions that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> node_qp_scalar_sideset;
+    //! Data Layout for gradient basis functions that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> node_qp_gradient_sideset;
+    //! Data Layout for tensor quantity that lives at quad points that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> qp_tensor_sideset;
+    //! Data Layout for tensor quantity (cellDim x sideDim) that lives at quad points that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> qp_tensor_cd_sd_sideset;
+
     // For backward compatibility, and simplicitiy, we want to check if
     // the vector length is the same as the spatial dimension. This
     // assumption is hardwired in mechanics problems and we want to
@@ -136,6 +155,9 @@ namespace Albany {
 
     // A flag to check whether this layouts structure belongs to a sideset
     bool isSideLayouts;
+    
+    // A flag to check whether this layouts structure is using collapsed sideset layouts
+    bool useCollapsedSidesets;
 
     std::map<std::string,Teuchos::RCP<Layouts>> side_layouts;
   };
