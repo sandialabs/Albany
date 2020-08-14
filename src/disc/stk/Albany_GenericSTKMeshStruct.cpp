@@ -447,7 +447,9 @@ void GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<const Teucho
   bool rebalance = params->get<bool>("Rebalance Mesh", false);
   bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
 
-  if(rebalance || (useSerialMesh && comm->getSize() > 1)) {
+  if(rebalance) {
+    TEUCHOS_TEST_FOR_EXCEPTION (this->side_maps_present, std::runtime_error,
+                                "Error! Rebalance is not supported when side maps are present.\n");
     rebalanceAdaptedMeshT(params, comm);
   }
 }
@@ -1700,9 +1702,7 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
 
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
-
   validPL->set<bool>("Set All Parts IO", false, "If true, all parts are marked as io parts");
-  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid");
   validPL->set<bool>("Build Node Sets From Side Sets",false,"Flag to build node sets from side sets");
   validPL->set<bool>("Export 3d coordinates field",false,"If true AND the mesh dimension is not already 3, export a 3d version of the coordinate field.");
