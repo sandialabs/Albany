@@ -583,8 +583,6 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
         i + num_param_vecs,
         Thyra_ModelEvaluator::DERIV_LINEAR_OP);
 
-  result.setHessianSupports(true);
-
   for (int i = 0; i < n_g; ++i) {
     Thyra_ModelEvaluator::DerivativeSupport dgdx_support;
     if (app->getResponse(i)->isScalarResponse()) {
@@ -619,10 +617,18 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
     bool hess_vec_prod_g_px_support = aDHessVec;
     bool hess_vec_prod_g_pp_support = aDHessVec;
 
+    bool hess_vec_prod_f_xx_support = aDHessVec;
+    bool hess_vec_prod_f_xp_support = aDHessVec;
+    bool hess_vec_prod_f_px_support = aDHessVec;
+    bool hess_vec_prod_f_pp_support = aDHessVec;
+
     result.setSupports(
       Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xx,
       i,
       hess_vec_prod_g_xx_support);
+    result.setSupports(
+      Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xx,
+      hess_vec_prod_f_xx_support);
     for (int j1 = 0; j1 < num_dist_param_vecs; j1++) {
       result.setSupports(
         Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xp,
@@ -630,10 +636,18 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
         j1 + num_param_vecs,
         hess_vec_prod_g_xp_support);
       result.setSupports(
+        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xp,
+        j1 + num_param_vecs,
+        hess_vec_prod_f_xp_support);
+      result.setSupports(
         Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_px,
         i,
         j1 + num_param_vecs,
         hess_vec_prod_g_px_support);
+      result.setSupports(
+        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_px,
+        j1 + num_param_vecs,
+        hess_vec_prod_f_px_support);
       for (int j2 = 0; j2 < num_dist_param_vecs; j2++) {
         result.setSupports(
           Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_pp,
@@ -641,6 +655,11 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
           j1 + num_param_vecs,
           j2 + num_param_vecs,
           hess_vec_prod_g_pp_support);
+        result.setSupports(
+          Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_pp,
+          j1 + num_param_vecs,
+          j2 + num_param_vecs,
+          hess_vec_prod_f_pp_support);
       }
     }
 
