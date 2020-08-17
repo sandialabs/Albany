@@ -681,6 +681,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
 
   //! If a parameter has changed in value, saved/unsaved fields must be updated
 
+  bool transposeJacobian = false;
   ObserverImpl observer(app);
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
   auto& analysisParams = appParams->sublist("Piro").sublist("Analysis");
@@ -709,6 +710,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         iteration = iter;
       }
     }
+    transposeJacobian = opt_paramList.get("Compute Transposed Jacobian", false);
   }
 
   // Thyra vectors
@@ -842,6 +844,10 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         x, x_dot, x_dotdot,
         sacado_param_vec,
         f_out, W_op_out, dt);
+    if(transposeJacobian) {
+      Albany::transpose(W_op_out);
+    }
+
     f_already_computed = true;
   }
 
