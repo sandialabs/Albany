@@ -552,7 +552,7 @@ void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val)
 
 }
 
-Teuchos::RCP<Thyra_LinearOp> transpose (const Teuchos::RCP<const Thyra_LinearOp>& lop) {
+Teuchos::RCP<Thyra_LinearOp> getTransposedOp (const Teuchos::RCP<const Thyra_LinearOp>& lop) {
   Teuchos::RCP<Thyra_LinearOp> lopt;
 
   // Allow failure, since we don't know what the underlying linear algebra is
@@ -581,6 +581,33 @@ Teuchos::RCP<Thyra_LinearOp> transpose (const Teuchos::RCP<const Thyra_LinearOp>
 
   return lopt;
 } 
+
+void transpose (const Teuchos::RCP<Thyra_LinearOp> lop) {
+  Teuchos::RCP<Thyra_LinearOp> lopt;
+
+  bool is_cast_null=true;
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    Tpetra::RowMatrixTransposer<ST,LO,Tpetra_GO,KokkosNode> transposer(tmat);
+    *tmat = *transposer.createTranspose();
+    is_cast_null=false;
+  }
+#if defined(ALBANY_EPETRA)
+  auto emat = getEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    EpetraExt::RowMatrix_Transpose transposer;
+    // Epetra uses a non-const input, which forces us to use const_cast.
+    *emat = dynamic_cast<Epetra_CrsMatrix&>(transposer(*const_cast<Epetra_CrsMatrix*>(emat.getRawPtr())));
+    transposer.ReleaseTranspose(); // So that transposer's destructor won't clean up A^T
+    is_cast_null=false;
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (is_cast_null, std::runtime_error,
+    "Error in transpose! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
 
 void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                         const LO lrow,
