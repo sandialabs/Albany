@@ -327,91 +327,31 @@ evaluateFields(typename Traits::EvalData workset)
   switch (layout)
   {
     case CELL_SCALAR:
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-
-        val_side(cell,side) = val_cell(cell);
-      }
+      Kokkos::parallel_for(CellScalar_Policy(0, sideSet.size), *this);
       break;
     case CELL_VECTOR:
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-        
-        for (int i=0; i<dims[2]; ++i)
-          val_side(cell,side,i) = val_cell(cell,i);
-      }
+      Kokkos::parallel_for(CellVector_Policy(0, sideSet.size), *this);
       break;
     case CELL_TENSOR:
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-        
-        for (int i=0; i<dims[2]; ++i)
-          for (int j=0; j<dims[3]; ++j)
-            val_side(cell,side,i,j) = val_cell(cell,i,j);
-      }
+      Kokkos::parallel_for(CellTensor_Policy(0, sideSet.size), *this);
       break;
     case NODE_SCALAR:
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-        
-        for (int node=0; node<dims[2]; ++node)
-          val_side(cell,side,node) = val_cell(cell,sideNodes(side,node));
-      }
+      Kokkos::parallel_for(NodeScalar_Policy(0, sideSet.size), *this);
       break;
     case NODE_SCALAR_SIDESET:
       Kokkos::parallel_for(NodeScalarSideset_Policy(0, sideSet.size), *this);
       break;
     case NODE_VECTOR:
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-        
-        for (int node=0; node<dims[2]; ++node)
-          for (int i=0; i<dims[3]; ++i)
-            val_side(cell,side,node,i) = val_cell(cell,sideNodes(side,node),i);
-      }
+      Kokkos::parallel_for(NodeVector_Policy(0, sideSet.size), *this);
       break;
     case NODE_VECTOR_SIDESET:
       Kokkos::parallel_for(NodeVectorSideset_Policy(0, sideSet.size), *this);
       break;
     case NODE_TENSOR:
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-        
-        for (int node=0; node<dims[2]; ++node)
-          for (int i=0; i<dims[3]; ++i)
-            for (int j=0; j<dims[4]; ++j)
-              val_side(cell,side,node,i,j) = val_cell(cell,sideNodes(side,node),i,j);
-      }
+      Kokkos::parallel_for(NodeTensor_Policy(0, sideSet.size), *this);
       break;
     case VERTEX_VECTOR:
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-        
-        for (int node=0; node<dims[2]; ++node)
-          for (int i=0; i<dims[3]; ++i)
-            val_side(cell,side,node,i) = val_cell(cell,sideNodes(side,node),i);
-      }
+      Kokkos::parallel_for(VertexVector_Policy(0, sideSet.size), *this);
       break;
     case VERTEX_VECTOR_SIDESET:
       Kokkos::parallel_for(VertexVectorSideset_Policy(0, sideSet.size), *this);
