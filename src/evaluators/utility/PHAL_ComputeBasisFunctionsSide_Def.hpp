@@ -317,14 +317,85 @@ evaluateFields(typename Traits::EvalData workset)
   if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end())
     return;
 
-  //numCellsOnSide.assign(numSides, 0);
   sideSet = workset.sideSetViews->at(sideSetName);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (useCollapsedSidesets) {
     Kokkos::parallel_for(ComputeBasisFunctionsSide_Collapsed_Policy(0,sideSet.size), *this);
   } else {
-    Kokkos::parallel_for(ComputeBasisFunctionsSide_Policy(0,sideSet.size), *this);
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    {
+      // Get the local data of side and cell
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
+
+      // Computing tangents (the basis for the manifold)
+      for (int itan=0; itan<numSideDims; ++itan) {
+        for (int icoor=0; icoor<numCellDims; ++icoor) {
+          for (int qp=0; qp<numSideQPs; ++qp) {
+            tangents(cell,side,qp,icoor,itan) = 0.;
+            if(icoor < effectiveCoordDim)   //if it's planar do not compute the z dimension
+            for (int node=0; node<numSideNodes; ++node) {
+              tangents(cell,side,qp,icoor,itan) += sideCoordVec(cell,side,node,icoor) * grad_at_cub_points(node,qp,itan);
+            }
+          }
+        }
+      }
+
+      // Computing the metric
+      for (int qp=0; qp<numSideQPs; ++qp) {
+        for (int idim=0; idim<numSideDims; ++idim) {
+          // Diagonal
+          metric(cell,side,qp,idim,idim) = 0.;
+          for (int coor=0; coor<numCellDims; ++coor) {
+            metric(cell,side,qp,idim,idim) += tangents(cell,side,qp,coor,idim)*tangents(cell,side,qp,coor,idim); // g = J'*J
+          }
+
+          // Extra-diagonal
+          for (int jdim=idim+1; jdim<numSideDims; ++jdim) {
+            metric(cell,side,qp,idim,jdim) = 0.;
+            for (int coor=0; coor<numCellDims; ++coor) {
+              metric(cell,side,qp,idim,jdim) += tangents(cell,side,qp,coor,idim)*tangents(cell,side,qp,coor,jdim); // g = J'*J
+            }
+            metric(cell,side,qp,jdim,idim) =  metric(cell,side,qp,idim,jdim);
+          }
+        }
+      }
+
+      // Computing the metric determinant, the weighted measure and the inverse of the metric
+      switch (numSideDims) {
+        case 1:
+          for (int qp=0; qp<numSideQPs; ++qp) {
+            metric_det(cell,side,qp) =  metric(cell,side,qp,0,0);
+            w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt( metric(cell,side,qp,0,0));
+            inv_metric(cell,side,qp,0,0) = 1./ metric(cell,side,qp,0,0);
+          }
+          break;
+        case 2:
+          for (int qp=0; qp<numSideQPs; ++qp) {
+            metric_det(cell,side,qp) =  metric(cell,side,qp,0,0)* metric(cell,side,qp,1,1) -  metric(cell,side,qp,0,1)* metric(cell,side,qp,1,0);
+            w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt(metric_det(cell,side,qp));
+            inv_metric(cell,side,qp,0,0) =  metric(cell,side,qp,1,1)/metric_det(cell,side,qp);
+            inv_metric(cell,side,qp,1,1) =  metric(cell,side,qp,0,0)/metric_det(cell,side,qp);
+            inv_metric(cell,side,qp,0,1) = inv_metric(cell,side,qp,1,0) = - metric(cell,side,qp,0,1)/metric_det(cell,side,qp); 
+          }
+          break;
+        default:
+          break;
+      }
+
+      for (int node=0; node<numSideNodes; ++node) {
+        for (int qp=0; qp<numSideQPs; ++qp) {
+          for (int ider=0; ider<numSideDims; ++ider) {
+            GradBF(cell,side,node,qp,ider)=0;
+            for(int jder=0; jder< numSideDims; ++jder) {
+              GradBF(cell,side,node,qp,ider) += inv_metric(cell,side,qp,ider,jder)*grad_at_cub_points(node,qp,jder);
+            }
+          }
+        }
+      }
+    }
+
   }
 #else
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
