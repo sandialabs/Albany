@@ -413,6 +413,54 @@ public:
       const std::string&                      dist_param_direction_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_pp);
 
+void
+  evaluateResidual_HessVecProd_xx(
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_MultiVector>& v,
+      const Teuchos::RCP<const Thyra_Vector>& z,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_xx);
+
+  void
+  evaluateResidual_HessVecProd_xp(
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_MultiVector>& v,
+      const Teuchos::RCP<const Thyra_Vector>& z,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const std::string&                      dist_param_name,
+      const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_xp);
+
+  void
+  evaluateResidual_HessVecProd_px(
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_MultiVector>& v,
+      const Teuchos::RCP<const Thyra_Vector>& z,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const std::string&                      dist_param_name,
+      const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_px);
+
+  void
+  evaluateResidual_HessVecProd_pp(
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_MultiVector>& v,
+      const Teuchos::RCP<const Thyra_Vector>& z,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const std::string&                      dist_param_name,
+      const std::string&                      dist_param_direction_name,
+      const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_pp);
+
   //! Provide access to shapeParameters -- no AD
   PHAL::AlbanyTraits::Residual::ScalarT&
   getValue(const std::string& n);

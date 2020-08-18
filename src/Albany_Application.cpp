@@ -2371,6 +2371,293 @@ Application::evaluateResponseDistParamHessVecProd_pp(
 }
 
 void
+Application::evaluateResidual_HessVecProd_xx(
+    const double                            current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& z,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>&         param_array,
+    const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_xx)
+{
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "Albany Fill: Residual Distributed Parameter Hessian Vector Product");
+  double const this_time = fixTime(current_time);
+
+  using EvalT = PHAL::AlbanyTraits::HessianVec;
+  postRegSetup<EvalT>();
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
+
+  if(!v.is_null()) {
+    workset.hessianWorkset.direction_x = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
+    workset.x_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_x, Albany::CombineMode::INSERT);
+  }
+
+  if(!z.is_null()) {
+    workset.hessianWorkset.f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
+    workset.x_cas_manager->scatter(z->clone_v(), workset.hessianWorkset.f_multiplier, Albany::CombineMode::INSERT);
+  }
+
+  if(!Hv_f_xx.is_null()) {
+    workset.j_coeff = 1.0;
+    workset.hessianWorkset.hess_vec_prod_f_xx = Hv_f_xx;
+    workset.hessianWorkset.overlapped_hess_vec_prod_f_xx = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_f_xx->domain()->dim());
+    workset.hessianWorkset.overlapped_hess_vec_prod_f_xx->assign(0.0);
+
+    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+    const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
+    if (dfm != Teuchos::null) {
+      dfm_set(workset, x, xdot, xdotdot);
+      loadWorksetNodesetInfo(workset);
+
+      dfm->preEvaluate<EvalT>(workset);
+    }
+
+    int const numWorksets = wsElNodeEqID.size();
+
+    for (int ws = 0; ws < numWorksets; ws++) {
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
+      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
+    }
+
+    if (dfm != Teuchos::null) {
+      dfm->evaluateFields<EvalT>(workset);
+    }
+
+    workset.x_cas_manager->combine(workset.hessianWorkset.overlapped_hess_vec_prod_f_xx, workset.hessianWorkset.hess_vec_prod_f_xx, Albany::CombineMode::ADD);
+
+    std::stringstream hessianvectorproduct_name;
+    hessianvectorproduct_name << "Hv_f_xx";
+  }
+}
+
+void
+Application::evaluateResidual_HessVecProd_xp(
+    const double                            current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& z,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>&         param_array,
+    const std::string&                      dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_xp)
+{
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "Albany Fill: Response Distributed Parameter Hessian Vector Product");
+  double const this_time = fixTime(current_time);
+
+  using EvalT = PHAL::AlbanyTraits::HessianVec;
+  postRegSetup<EvalT>();
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
+
+  if(!v.is_null()) {
+    workset.hessianWorkset.p_direction_cas_manager = workset.distParamLib->get(dist_param_direction_name)->get_cas_manager();
+    workset.hessianWorkset.direction_p = Thyra::createMembers(workset.hessianWorkset.p_direction_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
+    workset.hessianWorkset.p_direction_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_p, Albany::CombineMode::INSERT);
+  }
+
+  if(!z.is_null()) {
+    workset.hessianWorkset.f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
+    workset.x_cas_manager->scatter(z->clone_v(), workset.hessianWorkset.f_multiplier, Albany::CombineMode::INSERT);
+  }
+
+  if(!Hv_f_xp.is_null()) {
+    workset.j_coeff = 1.0;
+    workset.hessianWorkset.dist_param_deriv_direction_name = dist_param_direction_name;
+    workset.hessianWorkset.hess_vec_prod_f_xp = Hv_f_xp;
+    workset.hessianWorkset.overlapped_hess_vec_prod_f_xp = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_f_xp->domain()->dim());
+    workset.hessianWorkset.overlapped_hess_vec_prod_f_xp->assign(0.0);
+
+    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+    const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
+    if (dfm != Teuchos::null) {
+      dfm_set(workset, x, xdot, xdotdot);
+      loadWorksetNodesetInfo(workset);
+
+      dfm->preEvaluate<EvalT>(workset);
+    }
+
+    int const numWorksets = wsElNodeEqID.size();
+
+    for (int ws = 0; ws < numWorksets; ws++) {
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
+      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
+    }
+
+    if (dfm != Teuchos::null) {
+      dfm->evaluateFields<EvalT>(workset);
+    }
+
+    workset.x_cas_manager->combine(workset.hessianWorkset.overlapped_hess_vec_prod_f_xp, workset.hessianWorkset.hess_vec_prod_f_xp, Albany::CombineMode::ADD);
+
+    std::stringstream hessianvectorproduct_name;
+    hessianvectorproduct_name << "Hv_f_xp";
+  }
+}
+
+void
+Application::evaluateResidual_HessVecProd_px(
+    const double                            current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& z,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>&         param_array,
+    const std::string&                      dist_param_name,
+    const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_px)
+{
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "Albany Fill: Response Distributed Parameter Hessian Vector Product");
+  double const this_time = fixTime(current_time);
+
+  using EvalT = PHAL::AlbanyTraits::HessianVec;
+  postRegSetup<EvalT>();
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
+
+  if(!v.is_null()) {
+    workset.hessianWorkset.direction_x = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
+    workset.x_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_x, Albany::CombineMode::INSERT);
+  }
+
+  if(!z.is_null()) {
+    workset.hessianWorkset.f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
+    workset.x_cas_manager->scatter(z->clone_v(), workset.hessianWorkset.f_multiplier, Albany::CombineMode::INSERT);
+  }
+
+  if(!Hv_f_px.is_null()) {
+    workset.j_coeff = 1.0;
+    workset.dist_param_deriv_name = dist_param_name;
+    workset.p_cas_manager = workset.distParamLib->get(dist_param_name)->get_cas_manager();
+    workset.hessianWorkset.hess_vec_prod_f_px = Hv_f_px;
+    workset.hessianWorkset.overlapped_hess_vec_prod_f_px = Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(),Hv_f_px->domain()->dim());
+    workset.hessianWorkset.overlapped_hess_vec_prod_f_px->assign(0.0);
+
+    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+    const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
+    if (dfm != Teuchos::null) {
+      dfm_set(workset, x, xdot, xdotdot);
+      loadWorksetNodesetInfo(workset);
+
+      dfm->preEvaluate<EvalT>(workset);
+    }
+
+    int const numWorksets = wsElNodeEqID.size();
+
+    for (int ws = 0; ws < numWorksets; ws++) {
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
+      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
+    }
+
+    if (dfm != Teuchos::null) {
+      dfm->evaluateFields<EvalT>(workset);
+    }
+
+    workset.p_cas_manager->combine(workset.hessianWorkset.overlapped_hess_vec_prod_f_px, workset.hessianWorkset.hess_vec_prod_f_px, Albany::CombineMode::ADD);
+
+    std::stringstream hessianvectorproduct_name;
+    hessianvectorproduct_name << "Hv_f_px";
+  }
+}
+
+void
+Application::evaluateResidual_HessVecProd_pp(
+    const double                            current_time,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& z,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>&         param_array,
+    const std::string&                      dist_param_name,
+    const std::string&                      dist_param_direction_name,
+    const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_pp)
+{
+  TEUCHOS_FUNC_TIME_MONITOR(
+      "Albany Fill: Response Distributed Parameter Hessian Vector Product");
+  double const this_time = fixTime(current_time);
+
+  using EvalT = PHAL::AlbanyTraits::HessianVec;
+  postRegSetup<EvalT>();
+
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
+
+  if(!v.is_null()) {
+    workset.hessianWorkset.p_direction_cas_manager = workset.distParamLib->get(dist_param_direction_name)->get_cas_manager();
+    workset.hessianWorkset.direction_p = Thyra::createMembers(workset.hessianWorkset.p_direction_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
+    workset.hessianWorkset.p_direction_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_p, Albany::CombineMode::INSERT);
+  }
+
+  if(!z.is_null()) {
+    workset.hessianWorkset.f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
+    workset.x_cas_manager->scatter(z->clone_v(), workset.hessianWorkset.f_multiplier, Albany::CombineMode::INSERT);
+  }
+
+  if(!Hv_f_pp.is_null()) {
+    workset.dist_param_deriv_name = dist_param_name;
+    workset.hessianWorkset.dist_param_deriv_direction_name = dist_param_direction_name;
+    workset.p_cas_manager = workset.distParamLib->get(dist_param_name)->get_cas_manager();
+    workset.hessianWorkset.hess_vec_prod_f_pp = Hv_f_pp;
+    workset.hessianWorkset.overlapped_hess_vec_prod_f_pp = Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(),Hv_f_pp->domain()->dim());
+    workset.hessianWorkset.overlapped_hess_vec_prod_f_pp->assign(0.0);
+
+    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+    const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
+    if (dfm != Teuchos::null) {
+      dfm_set(workset, x, xdot, xdotdot);
+      loadWorksetNodesetInfo(workset);
+
+      dfm->preEvaluate<EvalT>(workset);
+    }
+
+    int const numWorksets = wsElNodeEqID.size();
+
+    for (int ws = 0; ws < numWorksets; ws++) {
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
+      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+
+      // FillType template argument used to specialize Sacado
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
+    }
+
+    if (dfm != Teuchos::null) {
+      dfm->evaluateFields<EvalT>(workset);
+    }
+
+    workset.p_cas_manager->combine(workset.hessianWorkset.overlapped_hess_vec_prod_f_pp, workset.hessianWorkset.hess_vec_prod_f_pp, Albany::CombineMode::ADD);
+
+    std::stringstream hessianvectorproduct_name;
+    hessianvectorproduct_name << "Hv_f_pp";
+  }
+}
+
+void
 Application::evaluateStateFieldManager(
     const double             current_time,
     const Thyra_MultiVector& x,

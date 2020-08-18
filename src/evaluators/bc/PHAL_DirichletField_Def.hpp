@@ -313,10 +313,27 @@ DirichletField(Teuchos::ParameterList& p) :
 }
 
 // **********************************************************************
+
+template<typename Traits>
+void DirichletField<PHAL::AlbanyTraits::HessianVec, Traits>::
+preEvaluate(typename Traits::EvalData dirichletWorkset) {
+  const bool f_multiplier_is_active = !dirichletWorkset.hessianWorkset.f_multiplier.is_null();
+
+  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+
+  if(f_multiplier_is_active) {
+    auto f_multiplier_data = Albany::getNonconstLocalData(dirichletWorkset.hessianWorkset.f_multiplier);
+
+    for (size_t ns_node = 0; ns_node < nsNodes.size(); ns_node++) {
+      int const dof = nsNodes[ns_node][this->offset];
+      f_multiplier_data[dof] = 0.;
+    }
+  }
+}
+
 template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::HessianVec, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of DirichletField::evaluateFields is not implemented yet"<< std::endl);
 }
 
 } // namespace PHAL

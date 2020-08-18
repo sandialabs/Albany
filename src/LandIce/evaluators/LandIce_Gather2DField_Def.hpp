@@ -189,8 +189,23 @@ evaluateFields(typename Traits::EvalData workset)
   bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
   bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
   bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
+  bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
+  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
+  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
 
-  if(g_xx_is_active||g_px_is_active) {
+  // is_x_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_xx, Hv_g_xp, Hv_f_xx, or Hv_f_xp, i.e. if the first derivative is w.r.t. the solution.
+  // If one of those is active, we have to initialize the first level of AD derivatives:
+  // .fastAccessDx().val().
+  const bool is_x_active = g_xx_is_active || g_xp_is_active || f_xx_is_active || f_xp_is_active;
+
+  // is_x_direction_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_xx, Hv_g_px, Hv_f_xx, or Hv_f_px, i.e. if the second derivative is w.r.t. the solution direction.
+  // If one of those is active, we have to initialize the second level of AD derivatives:
+  // .val().fastAccessDx().
+  const bool is_x_direction_active = g_xx_is_active || g_px_is_active || f_xx_is_active || f_px_is_active;
+
+  if(is_x_direction_active) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         direction_x.is_null(),
         Teuchos::Exceptions::InvalidParameter,
@@ -225,10 +240,14 @@ evaluateFields(typename Traits::EvalData workset)
         std::size_t node = side.node[i];
         typename PHAL::Ref<ScalarT>::type val = (this->field2D)(elem_LID,node);
         val = FadType(val.size(), x_constView[nodeID(elem_LID,node,this->offset)]);
-        if (g_xx_is_active||g_px_is_active)
-          val.val().fastAccessDx(0) = direction_x_constView[nodeID(elem_LID,node,this->offset)];
-        if (g_xx_is_active||g_xp_is_active)
+        // If we differentiate w.r.t. the solution, we have to set the first
+        // derivative to workset.j_coeff
+        if (is_x_active)
           val.fastAccessDx(numSideNodes*this->vecDim*this->fieldLevel+this->vecDim*i+this->offset).val() = workset.j_coeff;
+        // If we differentiate w.r.t. the solution direction, we have to set
+        // the second derivative to the related direction value
+        if (is_x_direction_active)
+          val.val().fastAccessDx(0) = direction_x_constView[nodeID(elem_LID,node,this->offset)];
       }
     }
   }
@@ -357,8 +376,23 @@ evaluateFields(typename Traits::EvalData workset)
   bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
   bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
   bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
+  bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
+  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
+  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
 
-  if(g_xx_is_active||g_px_is_active) {
+  // is_x_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_xx, Hv_g_xp, Hv_f_xx, or Hv_f_xp, i.e. if the first derivative is w.r.t. the solution.
+  // If one of those is active, we have to initialize the first level of AD derivatives:
+  // .fastAccessDx().val().
+  const bool is_x_active = g_xx_is_active || g_xp_is_active || f_xx_is_active || f_xp_is_active;
+
+  // is_x_direction_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_xx, Hv_g_px, Hv_f_xx, or Hv_f_px, i.e. if the second derivative is w.r.t. the solution direction.
+  // If one of those is active, we have to initialize the second level of AD derivatives:
+  // .val().fastAccessDx().
+  const bool is_x_direction_active = g_xx_is_active || g_px_is_active || f_xx_is_active || f_px_is_active;
+
+  if(is_x_direction_active) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         direction_x.is_null(),
         Teuchos::Exceptions::InvalidParameter,
@@ -388,10 +422,14 @@ evaluateFields(typename Traits::EvalData workset)
       LO ldof = indexer.getLocalElement(gdof);
       typename PHAL::Ref<ScalarT>::type val = (this->field2D)(cell,node);
       val = FadType(val.size(), x_constView[ldof]);
-      if (g_xx_is_active||g_px_is_active)
-        val.val().fastAccessDx(0) = direction_x_constView[ldof];
-      if (g_xx_is_active||g_xp_is_active)
+      // If we differentiate w.r.t. the solution, we have to set the first
+      // derivative to workset.j_coeff
+      if (is_x_active)
         val.fastAccessDx(firstunk).val() = workset.j_coeff;
+      // If we differentiate w.r.t. the solution direction, we have to set
+      // the second derivative to the related direction value
+      if (is_x_direction_active)
+        val.val().fastAccessDx(0) = direction_x_constView[ldof];
     }
   }
 }

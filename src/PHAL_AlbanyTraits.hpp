@@ -87,6 +87,10 @@ namespace PHAL {
     struct DistParamDeriv : EvaluationType<TanFadType, RealType, TanFadType> {};
 #endif
 
+/**
+ * @brief EvaluationType used to compute Hessian-vector products using automatic differentation
+ * by nesting FAD types.
+ */
 #if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
     struct HessianVec : EvaluationType<HessianVecFad, HessianVecFad, HessianVecFad> {};
 #else

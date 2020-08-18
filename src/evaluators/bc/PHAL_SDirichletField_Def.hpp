@@ -403,8 +403,44 @@ SDirichletField(Teuchos::ParameterList& p) :
 // **********************************************************************
 template<typename Traits>
 void SDirichletField<PHAL::AlbanyTraits::HessianVec, Traits>::
+preEvaluate(typename Traits::EvalData dirichlet_workset) {
+  const bool f_multiplier_is_active = !dirichlet_workset.hessianWorkset.f_multiplier.is_null();
+
+  const std::vector<std::vector<int> >& nsNodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+
+  if(f_multiplier_is_active) {
+    auto f_multiplier_data = Albany::getNonconstLocalData(dirichlet_workset.hessianWorkset.f_multiplier);
+
+    for (size_t ns_node = 0; ns_node < nsNodes.size(); ns_node++) {
+      int const dof = nsNodes[ns_node][this->offset];
+      f_multiplier_data[dof] = 0.;
+    }
+  }
+}
+
+template<typename Traits>
+void SDirichletField<PHAL::AlbanyTraits::HessianVec, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of SDirichletField::evaluateFields is not implemented yet"<< std::endl);
+  const bool f_xx_is_active = !dirichlet_workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
+  const bool f_xp_is_active = !dirichlet_workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
+
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST> > hess_vec_prod_f_xx_data, hess_vec_prod_f_xp_data;
+
+  if(f_xx_is_active)
+    hess_vec_prod_f_xx_data = Albany::getNonconstLocalData(dirichlet_workset.hessianWorkset.overlapped_hess_vec_prod_f_xx);
+  if(f_xp_is_active)
+    hess_vec_prod_f_xp_data = Albany::getNonconstLocalData(dirichlet_workset.hessianWorkset.overlapped_hess_vec_prod_f_xp);
+
+  const std::vector<std::vector<int> >& nsNodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+
+  for (size_t ns_node = 0; ns_node < nsNodes.size(); ns_node++) {
+    int const dof = nsNodes[ns_node][this->offset];
+
+    if(f_xx_is_active)
+      hess_vec_prod_f_xx_data[0][dof] = 0.;
+    if(f_xp_is_active)
+      hess_vec_prod_f_xp_data[0][dof] = 0.;
+  }
 }
 
 } // namespace PHAL
