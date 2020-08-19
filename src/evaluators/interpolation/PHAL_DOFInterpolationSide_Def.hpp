@@ -106,9 +106,6 @@ evaluateFields(typename Traits::EvalData workset)
       for (int qp=0; qp<numSideQPs; ++qp) {
         val_qp(cell,side,qp) = 0;
         for (int node=0; node<numSideNodes; ++node) {
-          if (cell > val_qp.extent(0) || side >= val_qp.extent(1) || qp >= val_qp.extent(2))
-              printf("Bad access on val_qp in InterpolationSide: (%d/%d, %d/%d, %d/%d)\n", 
-                cell, val_qp.extent(0), side, val_qp.extent(1), qp, val_qp.extent(2));
           val_qp(cell,side,qp) += val_node(cell,side,node) * BF(cell,side,node,qp);
         }
       }

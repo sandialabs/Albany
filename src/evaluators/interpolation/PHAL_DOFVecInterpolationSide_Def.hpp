@@ -112,9 +112,6 @@ if (useCollapsedSidesets) {
         for (int qp=0; qp<numSideQPs; ++qp) {
           val_qp(cell,side,qp,dim) = val_node(cell,side,0,dim) * BF(cell,side,0,qp);
           for (int node=1; node<numSideNodes; ++node) {
-            if (cell > val_qp.extent(0) || side >= val_qp.extent(1) || qp >= val_qp.extent(2) || dim >= val_qp.extent(3))
-              printf("Bad access on val_qp in VecInterpolationSide: (%d/%d, %d/%d, %d/%d, %d/%d)\n", 
-                cell, val_qp.extent(0), side, val_qp.extent(1), qp, val_qp.extent(2), dim, val_qp.extent(3));
             val_qp(cell,side,qp,dim) += val_node(cell,side,node,dim) * BF(cell,side,node,qp);
           }
         }
