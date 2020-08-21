@@ -34,6 +34,7 @@ ALBANY:
   Piro: 
     Tempus: 
       Lump Mass Matrix: true
+      Constant Mass Matrix: true
       Integrator Name: Tempus Integrator
       Tempus Integrator: 
         Integrator Type: Integrator Basic
