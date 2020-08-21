@@ -72,6 +72,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   typedef std::map<std::string, int>              MeshScalarIntegerState;
   typedef std::map<std::string, GO>               MeshScalarInteger64State;
   typedef std::map<std::string, std::vector<int>> MeshVectorIntegerState;
+
+
+  AbstractSTKFieldContainer() : proc_rank_field(nullptr){};
+
+
   //! Destructor
   virtual ~AbstractSTKFieldContainer(){};
 
@@ -100,6 +105,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   {
     return coordinates_field;
   }
+
   IntScalarFieldType*
   getProcRankField()
   {

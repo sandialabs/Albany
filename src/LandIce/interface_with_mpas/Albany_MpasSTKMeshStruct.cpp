@@ -37,7 +37,7 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
     const Teuchos::RCP<const Teuchos_Comm>& comm,
     const std::vector<GO>& indexToTriangleID,
     int globalTrianglesStride, int numLayers, const int numParams, int ordering) :
-    GenericSTKMeshStruct(params, Teuchos::null, 3, numParams),
+    GenericSTKMeshStruct(params, 3, numParams),
     out(Teuchos::VerboseObjectBase::getDefaultOStream()),
     periodic(false),
     NumEles(indexToTriangleID.size()),
@@ -90,8 +90,9 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   std::string ebn="Element Block 0";
   partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
-  std::map<std::string,int> ebNameToIndex;
-  ebNameToIndex[ebn] = 0;
+  stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data);
+  this->addElementBlockInfo(0, ebn, partVec[0], shards_ctd);
 
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*partVec[0]);
@@ -166,7 +167,7 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int worksetSizeMax = params->get("Workset Size",50);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_vs->localSubDim());
 
-  const CellTopologyData& ctd = *stk::mesh::get_cell_topology(metaData->get_topology(*partVec[0])).getCellTopologyData();
+  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
   this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
       nsNames, ssNames, worksetSize, partVec[0]->name(),
@@ -300,8 +301,11 @@ void MpasSTKMeshStruct::constructMesh(
           stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, tetrasLocalIdsOnPrism[iTetra][j]+1);
           bulkData->declare_relation(elem, node, j);
         }
-        int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
-        p_rank[0] = comm->getRank();
+        if(proc_rank_field){
+          int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
+          if(p_rank) 
+			p_rank[0] = comm->getRank();
+        }
       }
       break;
     }
@@ -312,8 +316,11 @@ void MpasSTKMeshStruct::constructMesh(
         stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, prismGlobalIds[j] + 1);
         bulkData->declare_relation(elem, node, j);
       }
-      int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
-      p_rank[0] = comm->getRank();
+      if(proc_rank_field){
+        int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
+        if(p_rank)
+          p_rank[0] = comm->getRank();
+      }
     }
     }
   }

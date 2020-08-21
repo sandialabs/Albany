@@ -86,11 +86,14 @@ cmake \
     -D Trilinos_ENABLE_Stokhos:BOOL=ON \
     -D Trilinos_ENABLE_STK:BOOL=ON \
     -D Trilinos_ENABLE_STKSearch:BOOL=ON \
+    -D Trilinos_ENABLE_STKUnit_tests:BOOL=OFF \
+    -D Trilinos_ENABLE_STKUnit_test_utils:BOOL=OFF \
     -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
     -D Trilinos_ENABLE_Ifpack:BOOL=ON \
     -D Trilinos_ENABLE_Isorropia:BOOL=ON \
     -D Trilinos_ENABLE_Pamgen:BOOL=ON \
     -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+    -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
     -D Trilinos_ENABLE_Piro:BOOL=ON \
     -D Trilinos_ENABLE_Teuchos:BOOL=ON \
     -D Trilinos_ENABLE_Teko:BOOL=ON \
@@ -176,3 +179,4 @@ exit 0
     -D Trilinos_ENABLE_DataTransferKitSTKMeshAdapters:BOOL=OFF \
     -D DataTransferKit_ENABLE_DBC:BOOL=OFF \
     -D Tpetra_INST_INT_UNSIGNED_LONG:BOOL=ON \
+    -D Trilinos_ENABLE_Panzer:BOOL=ON \

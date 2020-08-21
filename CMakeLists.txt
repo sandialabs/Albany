@@ -255,9 +255,18 @@ ELSE()
   MESSAGE(FATAL_ERROR "Albany REQUIRES Piro. Please, configure Trilinos with guidance from trilinos-cmake script in doc directory.")
 ENDIF()
 
+# Panzer (new blocked data structures use Panzer DOF manager
+LIST(FIND Trilinos_PACKAGE_LIST PanzerDofMgr Panzer_List_ID)
+IF (Panzer_List_ID GREATER -1)
+  MESSAGE("-- Looking for PanzerDofMgr (required) in Trilinos ...             Found!")
+ELSE()
+  MESSAGE("-- Looking for PanzerDofMgr (required) in Trilinos ...             NOT Found!")
+  MESSAGE(FATAL_ERROR "Albany REQUIRES PanzerDofMgr. Please, configure Trilinos with guidance from trilinos-cmake script in doc directory.")
+ENDIF()
+
 # Phalanx
 LIST(FIND Trilinos_PACKAGE_LIST Phalanx Phalanx_List_ID)
-IF (Piro_List_ID GREATER -1)
+IF (Phalanx_List_ID GREATER -1)
   MESSAGE("-- Looking for Phalanx (required) in Trilinos ...             Found!")
 ELSE()
   MESSAGE("-- Looking for Phalanx (required) in Trilinos ...             NOT Found!")
@@ -266,7 +275,7 @@ ENDIF()
 
 # NOX
 LIST(FIND Trilinos_PACKAGE_LIST NOX NOX_List_ID)
-IF (Piro_List_ID GREATER -1)
+IF (NOX_List_ID GREATER -1)
   MESSAGE("-- Looking for NOX (required) in Trilinos ...                 Found!")
 ELSE()
   MESSAGE("-- Looking for NOX (required) in Trilinos ...                 NOT Found!")
@@ -275,7 +284,7 @@ ENDIF()
 
 # ThyraTpetraAdapters
 LIST(FIND Trilinos_PACKAGE_LIST ThyraTpetraAdapters ThyraTpetraAdapters_List_ID)
-IF (Piro_List_ID GREATER -1)
+IF (ThyraTpetraAdapters_List_ID GREATER -1)
   MESSAGE("-- Looking for ThyraTpetraAdapters (required) in Trilinos ... Found!")
 ELSE()
   MESSAGE("-- Looking for ThyraTpetraAdapters (required) in Trilinos ... NOT Found!")
@@ -284,20 +293,11 @@ ENDIF()
 
 # Intrepid2
 LIST(FIND Trilinos_PACKAGE_LIST Intrepid2 Intrepid2_List_ID)
-IF (Piro_List_ID GREATER -1)
+IF (Intrepid2_List_ID GREATER -1)
   MESSAGE("-- Looking for Intrepid2 (required) in Trilinos ...           Found!")
 ELSE()
   MESSAGE("-- Looking for Intrepid2 (required) in Trilinos ...           NOT Found!")
   MESSAGE(FATAL_ERROR "Albany REQUIRES Intrepid2. Please, configure Trilinos with guidance from trilinos-cmake script in doc directory.")
-ENDIF()
-
-# MiniTensor
-LIST(FIND Trilinos_PACKAGE_LIST MiniTensor MiniTensor_List_ID)
-IF (Piro_List_ID GREATER -1)
-  MESSAGE("-- Looking for MiniTensor (required) in Trilinos ...          Found!")
-ELSE()
-  MESSAGE("-- Looking for MiniTensor (required) in Trilinos ...          NOT Found!")
-  MESSAGE(FATAL_ERROR "Albany REQUIRES MiniTensor. Please, configure Trilinos with guidance from trilinos-cmake script in doc directory.")
 ENDIF()
 
 # stk

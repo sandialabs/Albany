@@ -25,7 +25,6 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-//#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "Albany_Utils.hpp"
@@ -36,18 +35,10 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
                                                      const Teuchos::RCP<const Teuchos_Comm>& comm,
                                                      Teuchos::RCP<Albany::AbstractMeshStruct> inputBasalMesh,
 						     const int numParams) :
-    GenericSTKMeshStruct(params, Teuchos::null, 3, numParams), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false)
+    GenericSTKMeshStruct(params, 3, numParams), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false)
 {
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 
-  std::string ebn = "Element Block 0";
-  partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
-  std::map<std::string,int> ebNameToIndex;
-  ebNameToIndex[ebn] = 0;
-
-#ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*partVec[0]);
-#endif
 
   std::vector<std::string> nsNames;
   std::string nsn = "lateral";
@@ -138,9 +129,11 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   TEUCHOS_TEST_FOR_EXCEPTION(basalside_elem_name != elem2d_name, Teuchos::Exceptions::InvalidParameterValue,
                 std::endl << "Error in ExtrudedSTKMeshStruct: Expecting topology name of elements of 2d mesh to be " <<  basalside_elem_name << " but it is " << elem2d_name);
 
+  stk::topology etopology;
+
   switch (ElemShape) {
   case Tetrahedron:
-    stk::mesh::set_topology(*partVec[0], stk::topology::TET_4);
+    etopology = stk::topology::TET_4;
     stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::TRI_3);
     stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::TRI_3);
     for (auto it:ssPartVecLateral)
@@ -148,7 +141,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     NumBaseElemeNodes = 3;
     break;
   case Wedge:
-    stk::mesh::set_topology(*partVec[0], stk::topology::WEDGE_6);
+    etopology = stk::topology::WEDGE_6;
     stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::TRI_3);
     stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::TRI_3);
     for (auto it:ssPartVecLateral)
@@ -156,7 +149,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     NumBaseElemeNodes = 3;
     break;
   case Hexahedron:
-    stk::mesh::set_topology(*partVec[0], stk::topology::HEX_8);
+    etopology = stk::topology::HEX_8;
     stk::mesh::set_topology(*ssPartVec[ssnBottom], stk::topology::QUAD_4);
     stk::mesh::set_topology(*ssPartVec[ssnTop], stk::topology::QUAD_4);
     for (auto it:ssPartVecLateral)
@@ -164,6 +157,15 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     NumBaseElemeNodes = 4;
     break;
   }
+
+  std::string ebn = "Element Block 0";
+  partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(etopology);
+  this->addElementBlockInfo(0, ebn, partVec[0], shards_ctd);
+
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*partVec[0]);
+#endif
 
   numDim = 3;
   numLayers = params->get<int>("NumLayers");
@@ -175,11 +177,10 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   int numElemsInColumn = numLayers*((ElemShape==Tetrahedron) ? 3 : 1);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSize*numElemsInColumn);
 
-  stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(), ebNameToIndex, this->interleavedOrdering));
+  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, 
+     ebn, ebNameToIndex, this->interleavedOrdering));
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false))
@@ -441,8 +442,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
             stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, tetrasLocalIdsOnPrism[iTetra][j] + 1);
             bulkData->declare_relation(elem, node, j);
           }
-          int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
-          p_rank[0] = comm->getRank();
+          if(proc_rank_field){
+            int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
+            if(p_rank)
+              p_rank[0] = comm->getRank();
+          }
         }
         break;
       }
@@ -455,8 +459,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
           stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, prismGlobalIds[j] + 1);
           bulkData->declare_relation(elem, node, j);
         }
-        int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
-        p_rank[0] = comm->getRank();
+        if(proc_rank_field){
+          int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
+          if(p_rank)
+            p_rank[0] = comm->getRank();
+        }
       }
     }
   }

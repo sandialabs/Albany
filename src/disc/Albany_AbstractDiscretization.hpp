@@ -143,9 +143,6 @@ class AbstractDiscretization
   //! Get coordinates (overlap map).
   virtual const Teuchos::ArrayRCP<double>&
   getCoordinates() const = 0;
-  //! Set coordinates (overlap map) for mesh adaptation.
-  virtual void
-  setCoordinates(const Teuchos::ArrayRCP<const double>& c) = 0;
 
   //! Print the coords for mesh debugging
   virtual void

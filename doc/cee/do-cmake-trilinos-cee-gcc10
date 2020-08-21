@@ -23,13 +23,13 @@ elif [ $1 = "-d" ]; then
    BTYPE=DEBUG
    CCFLAGS="-g -ggdb -O0"
    CFLAGS="-g -ggdb -O0"
-   FFLAGS="-g -ggdb -O0 -Wa,-q"
+   FFLAGS="-g -ggdb -O0"
 elif [ $1 = "-r" ]; then
    INSTALL_DIR=/projects/albany/trilinos/MPI_GCC10_REL
    BTYPE=RELEASE
    CCFLAGS="-O3 -march=native -DNDEBUG"
    CFLAGS="-O3 -march=native -DNDEBUG"
-   FFLAGS="-O3 -march=native -DNDEBUG -Wa,-q"
+   FFLAGS="-O3 -march=native -DNDEBUG"
 else
    echo "Usage: $0 -d (debug)"
    echo "Usage: $0 -r (release)"
@@ -86,7 +86,6 @@ cmake \
     -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
 \
     -D Trilinos_ENABLE_ROL:BOOL=ON \
-    -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
     -D Trilinos_ENABLE_ML:BOOL=ON \
     -D Trilinos_ENABLE_MueLu:BOOL=ON \
     -D MueLu_ENABLE_Tutorial:BOOL=OFF \
@@ -104,6 +103,7 @@ cmake \
     -D Trilinos_ENABLE_Isorropia:BOOL=ON \
     -D Trilinos_ENABLE_Pamgen:BOOL=ON \
     -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+    -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
     -D Trilinos_ENABLE_Piro:BOOL=ON \
     -D Trilinos_ENABLE_Teuchos:BOOL=ON \
     -D Trilinos_ENABLE_Teko:BOOL=ON \

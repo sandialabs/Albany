@@ -16,7 +16,7 @@
 #include "utility/Albany_ThyraBlockedCrsMatrixFactory.hpp"
 #include "utility/Albany_ThyraUtils.hpp"
 
-#include "Albany_NullSpaceUtils.hpp"
+//#include "Albany_NullSpaceUtils.hpp"
 
 namespace Albany {
 
@@ -41,6 +41,21 @@ public:
 
   //! Destructor
   virtual ~BlockedDiscretization() = default;
+
+  /** Does a fieldOrder string require blocking? 
+    * A field order is basically stetup like this
+    *    blocked: <field 0> <field 1> 
+    * where two blocks will be created. To merge fields
+    * between blocks use a hyphen, i.e.
+    *    blocked: <field 0> <field 1> - <field 2> - <field 3>
+    * This will create 2 blocks, the first contains only <field 0>
+    * and the second combines <field 1>, <field 2> and <field 3>. Note
+    * the spaces before and after the hyphen, these are important!
+    */
+
+  static bool requiresBlocking(const std::string & fieldorder);
+
+  static void buildBlocking(const std::string & fieldorder,std::vector<std::vector<std::string> > & blocks);
 
   void
   printConnectivity() const;
@@ -171,7 +186,14 @@ public:
   const SideSetList&
   getSideSets(const int workset) const
   {
-    return sideSets[workset];
+    return m_blocks[0]->getSideSets(workset);
+  }
+
+  //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
+  const LocalSideSetInfoList&
+  getSideSetViews(const int workset) const
+  {
+    return m_blocks[0]->getSideSetViews(workset);
   }
 
   //! Get connectivity map from elementGID to workset
@@ -218,12 +240,6 @@ public:
   {
     return m_blocks[0]->getOverlapDOFManager(field_name);
   }
-
-  //! Retrieve coodinate vector (num_used_nodes * 3)
-  const Teuchos::ArrayRCP<double>&
-  getCoordinates() const;
-  void
-  setCoordinates(const Teuchos::ArrayRCP<const double>& c);
 
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   getCoords() const
@@ -322,11 +338,6 @@ public:
   void
   transformMesh();
 
-  //! Close current exodus file in stk_io and create a new one for an adapted
-  //! mesh and new results
-  void
-  reNameExodusOutput(std::string& filename);
-
   //! Get number of spatial dimensions
   int
   getNumDim() const
@@ -366,25 +377,165 @@ public:
   Teuchos::RCP<Thyra_MultiVector>
   getBlockedSolutionMV(const bool overlapped = false) const;
 
-  void getField (Thyra_Vector& field_vector, const std::string& field_name) const {
-    return m_blocks[0]->getField(field_vector, field_name);
+// GAH - These all need a serious look, they are just stubbed in to get things compiling
+
+  //! Retrieve coordinate vector (num_used_nodes * 3)
+  const Teuchos::ArrayRCP<double>&
+  getCoordinates() const {
+     return m_blocks[0]->getCoordinates();
   }
 
-  void setField(
-      const Thyra_Vector& field_vector,
-      const std::string&  field_name,
-      const bool          overlapped = false) {
-    m_blocks[0]->setField(field_vector, field_name, overlapped);
-  }
-
-  //! used when NetCDF output on a latitude-longitude grid is requested.
-  // Each struct contains a latitude/longitude index and it's parametric
-  // coordinates in an element.
-  struct interp
+  Teuchos::RCP<Thyra_Vector>
+  getSolutionField(bool overlapped) const
   {
-    std::pair<double, double>     parametric_coords;
-    std::pair<unsigned, unsigned> latitude_longitude;
-  };
+    return m_blocks[0]->getSolutionField(overlapped);
+  }
+
+  Teuchos::RCP<Thyra_MultiVector>
+  getSolutionMV(bool overlapped) const
+  {
+    return m_blocks[0]->getSolutionMV(overlapped);
+  }
+
+  void
+  getField(Thyra_Vector& result, const std::string& name) const
+  {
+    m_blocks[0]->getField(result, name);
+  }
+
+  void
+  getSolutionField(Thyra_Vector& result, const bool overlapped) const
+  {
+    m_blocks[0]->getSolutionField(result, overlapped);
+  }
+
+  void
+  setField(
+    const Thyra_Vector& result,
+    const std::string&  name,
+    bool                overlapped)
+  {
+    m_blocks[0]->setField(result, name, overlapped);
+  }
+
+  void
+  writeSolution(
+    const Thyra_Vector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const double        time,
+    const bool          overlapped)
+  {
+    m_blocks[0]->writeSolution(soln, soln_dxdp, time, overlapped);
+  }
+
+  void
+  writeSolution(
+    const Thyra_Vector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const Thyra_Vector& soln_dot,
+    const double        time,
+    const bool          overlapped)
+  {
+    m_blocks[0]->writeSolution(soln, soln_dxdp, soln_dot, time, overlapped);
+  }
+
+  void
+  writeSolution(
+    const Thyra_Vector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const Thyra_Vector& soln_dot,
+    const Thyra_Vector& soln_dotdot,
+    const double        time,
+    const bool          overlapped)
+  {
+    m_blocks[0]->writeSolution(soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped);
+  }
+
+  void
+  writeSolutionMV(
+    const Thyra_MultiVector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const double             time,
+    const bool               overlapped)
+  {
+    m_blocks[0]->writeSolutionMV(soln, soln_dxdp, time, overlapped);
+  }
+
+  void
+  writeSolutionToMeshDatabase(
+    const Thyra_Vector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const double /* time */,
+    const bool overlapped)
+  {
+    m_blocks[0]->writeSolutionToMeshDatabase(soln, soln_dxdp, 0.0, overlapped);
+  }
+
+  void
+  writeSolutionToMeshDatabase(
+    const Thyra_Vector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const Thyra_Vector& soln_dot,
+    const double /* time */,
+    const bool overlapped)
+  { 
+    m_blocks[0]->writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, 0.0, overlapped);
+  }
+
+  void
+  writeSolutionToMeshDatabase(
+    const Thyra_Vector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const Thyra_Vector& soln_dot,
+    const Thyra_Vector& soln_dotdot,
+    const double /* time */,
+    const bool overlapped)
+  {
+    m_blocks[0]->writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, soln_dotdot, 0.0, overlapped);
+  }
+
+  void
+  writeSolutionMVToMeshDatabase(
+    const Thyra_MultiVector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const double /* time */,
+    const bool overlapped)
+  { 
+    m_blocks[0]->writeSolutionMVToMeshDatabase(soln, soln_dxdp, 0.0, overlapped);
+  }
+
+  void
+  writeSolutionToFile(
+    const Thyra_Vector& soln,
+    const double        time,
+    const bool          overlapped)
+  {
+    m_blocks[0]->writeSolutionToFile(soln, time, overlapped);
+  }
+
+  void
+  writeSolutionMVToFile(
+    const Thyra_MultiVector& soln,
+    const double             time,
+    const bool               overlapped)
+  {
+    m_blocks[0]->writeSolutionMVToFile(soln, time, overlapped);
+  }
+
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getGlobalLocalIndexer(const std::string& field_name) const
+  {
+    return m_blocks[0]->getGlobalLocalIndexer(field_name);
+  }
+
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapGlobalLocalIndexer(const std::string& field_name) const
+  {
+    return m_blocks[0]->getOverlapGlobalLocalIndexer(field_name);
+  }
+
+
+// GAH - End serious look
 
   // ==================== Members =================== //
 
@@ -405,9 +556,6 @@ public:
   Teuchos::RCP<ThyraBlockedCrsMatrixFactory> m_jac_factory;
   Teuchos::RCP<ThyraBlockedCrsMatrixFactory> m_overlap_jac_factory;
 
-  //! Processor ID
-  unsigned int myPID;
-
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> sideSetEquations;
 
@@ -418,10 +566,6 @@ public:
   NodeSetList      nodeSets;
   NodeSetGIDsList  nodeSetGIDs;
   NodeSetCoordList nodeSetCoords;
-
-  //! side sets stored as std::map(string ID, SideArray classes) per workset
-  //! (std::vector across worksets)
-  std::vector<SideSetList> sideSets;
 
   //! Connectivity array [workset, element, local-node, Eq] => LID
   Conn wsElNodeEqID;
@@ -459,14 +603,6 @@ public:
   // Needed to pass coordinates to ML.
   Teuchos::RCP<RigidBodyModes> rigidBodyModes;
 
-  int              netCDFp;
-  size_t           netCDFOutputRequest;
-  std::vector<int> varSolns;
-
-  // Storage used in periodic BCs to un-roll coordinates. Pointers saved for
-  // destructor.
-  std::vector<double*> toDelete;
-
   Teuchos::RCP<AbstractSTKMeshStruct> stkMeshStruct;
 
   Teuchos::RCP<Teuchos::ParameterList> discParams;
@@ -478,16 +614,6 @@ public:
   std::map<std::string, std::map<GO, std::vector<int>>> sideNodeNumerationMap;
   std::map<std::string, Teuchos::RCP<Thyra_BlockedLinearOp>>   projectors;
   std::map<std::string, Teuchos::RCP<Thyra_BlockedLinearOp>>   ov_projectors;
-
-// Used in Exodus writing capability
-#ifdef ALBANY_SEACAS
-  Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
-
-  int outputInterval;
-
-  size_t outputFileIdx;
-#endif
-  DiscType interleavedOrdering;
 
  private:
 

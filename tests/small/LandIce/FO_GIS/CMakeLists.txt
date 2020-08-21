@@ -29,7 +29,7 @@ IF (NOT ALBANY_IOPX AND ALBANY_MPI)
   add_test (NAME FO_GIS_decompMesh
             COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} gis_unstruct_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
-  set_tests_properties (FO_GIS_decompMesh PROPERTIES FIXTURES_SETUP meshSetup)
+  set_tests_properties (FO_GIS_decompMesh PROPERTIES FIXTURES_SETUP meshSetup RUN_SERIAL TRUE)
 
   set_tests_properties(${testName}
                        PROPERTIES

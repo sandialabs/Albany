@@ -33,7 +33,7 @@
 Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
 					      const int numParams) :
-  GenericSTKMeshStruct (params, Teuchos::null, -1, numParams)
+  GenericSTKMeshStruct (params, -1, numParams)
 {
   fname = params->get("Gmsh Input Mesh File Name", "mesh.msh");
 
@@ -79,34 +79,29 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 
-  create_element_block();
-
-#ifdef ALBANY_SEACAS
-  //  stk::io::put_io_part_attribute(metaData->universal_part());
-  stk::io::put_io_part_attribute(*partVec[0]);
-#endif
-
   // Set boundary (sideset, nodeset) information
   std::vector < std::string > nsNames;
   std::vector < std::string > ssNames;
   set_boundaries( commT, ssNames, nsNames);
 
+  stk::topology etopology;
+
   switch (this->numDim) {
     case 2:
       if (NumElemNodes==3) {
-        stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3_2D); 
+        etopology = stk::topology::TRI_3_2D;
         for (auto ss : ssPartVec) {
           stk::mesh::set_topology(*ss.second, stk::topology::LINE_2); 
         }
       }
       else if( NumElemNodes == 6)
       {
-        stk::mesh::set_topology(*partVec[0], stk::topology::TRI_6_2D); 
+        etopology = stk::topology::TRI_6_2D;
         for (auto ss : ssPartVec) {
           stk::mesh::set_topology(*ss.second, stk::topology::LINE_3); 
         }
       } else {
-        stk::mesh::set_topology(*partVec[0], stk::topology::QUAD_4_2D); 
+        etopology = stk::topology::QUAD_4_2D;
         for (auto ss : ssPartVec) {
           stk::mesh::set_topology(*ss.second, stk::topology::LINE_2); 
         }
@@ -114,19 +109,19 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
       break;
     case 3:
       if (NumElemNodes==4) {
-        stk::mesh::set_topology(*partVec[0], stk::topology::TET_4); 
+        etopology = stk::topology::TET_4;
         for (auto ss : ssPartVec) {
           stk::mesh::set_topology(*ss.second, stk::topology::TRI_3); 
         }
       }
       else if( NumElemNodes == 10)
       {
-        stk::mesh::set_topology(*partVec[0], stk::topology::TET_10); 
+        etopology = stk::topology::TET_10;
         for (auto ss : ssPartVec) {
           stk::mesh::set_topology(*ss.second, stk::topology::TRI_6); 
         }
       } else {
-        stk::mesh::set_topology(*partVec[0], stk::topology::HEX_8); 
+        etopology = stk::topology::HEX_8;
         for (auto ss : ssPartVec) {
           stk::mesh::set_topology(*ss.second, stk::topology::QUAD_4); 
         }
@@ -136,11 +131,18 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid number of element nodes (you should have got an error before though).\n");
   }
 
+  std::string ebn = "Element Block 0";
+  partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(etopology);
+  this->addElementBlockInfo(0, ebn, partVec[0], shards_ctd);
+
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*partVec[0]);
+#endif
+
   int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
-  stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
   cullSubsetParts(ssNames, ssPartVec);
   this->meshSpecs[0] = Teuchos::rcp (
@@ -323,9 +325,11 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
         stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, elems[j][i]);
         bulkData->declare_relation(elem, node, j);
       }
-
-      int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
-      p_rank[0] = commT->getRank();
+      if(proc_rank_field){
+        int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+        if(p_rank)
+          p_rank[0] = commT->getRank();
+      }
     }
 
     std::string partName;
@@ -1084,14 +1088,6 @@ void Albany::GmshSTKMeshStruct::loadAsciiMesh ()
   ifile.close();
 }
 
-void Albany::GmshSTKMeshStruct::create_element_block()
-{
-  std::string ebn = "Element Block 0";
-  partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
-  ebNameToIndex[ebn] = 0;
-
-  return;
-}
 
 void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
 {

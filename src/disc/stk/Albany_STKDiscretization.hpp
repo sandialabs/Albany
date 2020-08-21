@@ -260,8 +260,6 @@ class STKDiscretization : public AbstractDiscretization
   //! Retrieve coodinate vector (num_used_nodes * 3)
   const Teuchos::ArrayRCP<double>&
   getCoordinates() const;
-  void
-  setCoordinates(const Teuchos::ArrayRCP<const double>& c);
 
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   getCoords() const
@@ -359,11 +357,6 @@ class STKDiscretization : public AbstractDiscretization
   //! Function that transforms an STK mesh of a unit cube (for LandIce problems)
   void
   transformMesh();
-
-  //! Close current exodus file in stk_io and create a new one for an adapted
-  //! mesh and new results
-  void
-  reNameExodusOutput(std::string& filename);
 
   //! Get number of spatial dimensions
   int
@@ -488,6 +481,19 @@ class STKDiscretization : public AbstractDiscretization
       const double             time,
       const bool               overlapped = false);
 
+   /** Add a solution field
+     */
+   void addSolutionField(const std::string & fieldName,const std::string & blockId);
+
+   /** Add a solution field
+     */
+   void addCellField(const std::string & fieldName,const std::string & blockId);
+
+   //! get the dimension
+   unsigned getDimension() const
+   { return getNumDim(); }
+
+
   //! used when NetCDF output on a latitude-longitude grid is requested.
   // Each struct contains a latitude/longitude index and it's parametric
   // coordinates in an element.
@@ -498,6 +504,9 @@ class STKDiscretization : public AbstractDiscretization
   };
 
  protected:
+
+  friend class BlockedDiscretization;
+  friend class STKConnManager;
 
   void
   getSolutionField(Thyra_Vector& result, bool overlapped) const;
@@ -583,9 +592,6 @@ class STKDiscretization : public AbstractDiscretization
   Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 
   NodalDOFsStructContainer nodalDOFsStructContainer;
-
-  //! Processor ID
-  unsigned int myPID;
 
   //! Number of equations (and unknowns) per node
   const unsigned int neq;

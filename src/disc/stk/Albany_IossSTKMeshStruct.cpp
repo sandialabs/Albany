@@ -22,7 +22,6 @@
 #include <stk_io/IossBridge.hpp>
 #include <Ioss_SubSystem.h>
 
-//#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "Albany_Utils.hpp"
@@ -46,10 +45,9 @@ void get_element_block_sizes(stk::io::StkMeshIoBroker &mesh_data,
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                                             const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT,
 					     const int numParams_) :
-  GenericSTKMeshStruct(params_, adaptParams_, -1, numParams_),
+  GenericSTKMeshStruct(params_, -1, numParams_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   useSerialMesh(false),
   periodic(params->get("Periodic BC", false)),
@@ -141,7 +139,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       if ( part->primary_entity_rank() == stk::topology::ELEMENT_RANK) {
 
         //*out << "IOSS-STK: Element part \"" << part->name() << "\" found " << std::endl;
-        partVec[numEB] = part;
+        partVec.push_back(part);
         numEB++;
       }
       else if ( part->primary_entity_rank() == stk::topology::NODE_RANK) {
@@ -219,17 +217,17 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Build a map to get the EB name given the index
-  std::map<std::string,int> ebNameToIndex;
   for (int eb=0; eb<numEB; eb++) {
-    ebNameToIndex[partVec[eb]->name()] = eb;
+    stk::topology stk_topo_data = metaData->get_topology( *partVec[eb] );
+    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
+// Fill in all the various element block lists in Albany_AbstractSTKMeshStruct base class
+    this->addElementBlockInfo(eb, partVec[eb]->name(), partVec[eb], shards_ctd);
   }
 
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
 
-    stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-    const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+    const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
         ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(),
         ebNameToIndex, this->interleavedOrdering, false, cub_rule));
@@ -240,9 +238,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
     for (int eb=0; eb<numEB; eb++) {
-      stk::topology stk_topo_data = metaData->get_topology( *partVec[eb] );
-      shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
-      const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+      const CellTopologyData& ctd = *elementBlockTopologies_[eb].getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
           ebNameToIndex, this->interleavedOrdering, true, cub_rule));
@@ -538,9 +534,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);
-
-  // Build additional mesh connectivity needed for mesh fracture (if indicated)
-  computeAddlConnectivity();
 
   // Check that the nodeset created from sidesets contain the right number of nodes
   this->checkNodeSetsFromSideSetsIntegrity ();

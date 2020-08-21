@@ -43,7 +43,7 @@ AsciiSTKMeshStruct::
 AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                    const Teuchos::RCP<const Teuchos_Comm>& comm,
 		   const int numParams) :
-  GenericSTKMeshStruct(params, Teuchos::null, 3, numParams),
+  GenericSTKMeshStruct(params, 3, numParams),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
   contigIDs(false),
@@ -77,6 +77,7 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
    char flwafilename[100]; //flow factor file
    char tempfilename[100]; //temperature file
    char betafilename[100]; //basal friction coefficient file
+
    if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs
 #ifdef OUTPUT_TO_SCREEN
      std::cout << "Ascii mesh has contiguous IDs; no bfIDs, geIDs, gnIDs files required." << std::endl;
@@ -321,11 +322,12 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-
+// Code above assumes all hex elements, lets stay with that theme
   std::string ebn="Element Block 0";
-  partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
-  std::map<std::string,int> ebNameToIndex;
-  ebNameToIndex[ebn] = 0;
+  stk::topology hex8 = stk::topology::HEX_8;
+  partVec.push_back(&metaData->declare_part_with_topology(ebn, hex8));
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(hex8);
+  this->addElementBlockInfo(0, ebn, partVec[0], shards_ctd);
 
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*partVec[0]);
@@ -385,7 +387,6 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
     stk::io::put_io_part_attribute(*ssPartVec[ssn]);
 #endif
 
-  stk::mesh::set_topology(*partVec[0], stk::topology::HEX_8); 
   stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::QUAD_4); 
 
   numDim = 3;
@@ -393,12 +394,10 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int worksetSizeMax = params->get<int>("Workset Size",DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
 
-  stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
   this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
-                             nsNames, ssNames, worksetSize, partVec[0]->name(),
+                             nsNames, ssNames, worksetSize, ebn,
                              ebNameToIndex, this->interleavedOrdering));
 
 

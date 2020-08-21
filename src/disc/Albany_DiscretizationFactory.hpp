@@ -38,9 +38,7 @@ class DiscretizationFactory {
 
     static Teuchos::RCP<Albany::AbstractMeshStruct>
     createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
-                      Teuchos::RCP<Teuchos::ParameterList> adapt_params,
-                      Teuchos::RCP<const Teuchos_Comm> comm,
-		      const int numParams);
+                      Teuchos::RCP<const Teuchos_Comm> comm, const int numParams);
 
     Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() {
       return meshStruct;
@@ -107,9 +105,6 @@ class DiscretizationFactory {
 
     //! Parameter list specifying what element to create
     Teuchos::RCP<Teuchos::ParameterList> discParams;
-
-    //! Parameter list specifying adaptation parameters (null if problem isn't adaptive)
-    Teuchos::RCP<Teuchos::ParameterList> adaptParams;
 
     //! Parameter list specifying solver parameters
     Teuchos::RCP<Teuchos::ParameterList> piroParams;

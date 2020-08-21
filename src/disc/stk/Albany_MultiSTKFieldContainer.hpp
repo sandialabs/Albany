@@ -107,7 +107,8 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
       const int                                    offset);
 
   void
-  initializeSTKAdaptation();
+  initializeProcRankField();
+
 
   // Containers for residual and solution
 

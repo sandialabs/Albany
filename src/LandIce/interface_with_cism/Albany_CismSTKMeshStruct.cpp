@@ -69,7 +69,7 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const int nNorthFacesActive,
                   const int numParams, 
                   const int verbosity)
- : GenericSTKMeshStruct(params, Teuchos::null, 3, numParams)
+ : GenericSTKMeshStruct(params, 3, numParams)
  , out(Teuchos::VerboseObjectBase::getDefaultOStream())
  , periodic(false)
  , hasRestartSol(false)
