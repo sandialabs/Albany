@@ -3,7 +3,7 @@ rm -rf CMake*
 PWD=`pwd`
 
 TRILINOS_INSTALL=$PWD/install 
-NVCC_WRAPPER=nvcc_wrapper_volta
+NVCC_WRAPPER=nvcc_wrapper
 BLAS_DIR=${BLAS_ROOT} 
 BOOST_DIR=${BOOST_ROOT}
 NETCDF_DIR=${NETCDF_ROOT}
@@ -35,6 +35,7 @@ cmake \
     -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
     -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
     -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING='' \
+    -D Kokkos_ENABLE_CUDA:BOOL=ON \
     -D Kokkos_ENABLE_CUDA_UVM:BOOL=ON \
     -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
     -D Kokkos_ENABLE_OPENMP:BOOL=OFF \
@@ -53,7 +54,7 @@ cmake \
     -D Sacado_ENABLE_COMPLEX:BOOL=OFF \
     -D Teuchos_ENABLE_COMPLEX:BOOL=OFF \
     -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
-    -D Kokkos_ENABLE_CUDA_Lambda:BOOL=ON \
+    -D Kokkos_ENABLE_CUDA_LAMBDA:BOOL=ON \
     -D Tpetra_ASSUME_CUDA_AWARE_MPI:BOOL=ON \
     -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
     -D Tpetra_INST_INT_INT:BOOL=OFF \
