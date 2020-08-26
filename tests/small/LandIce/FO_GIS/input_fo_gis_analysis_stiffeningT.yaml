@@ -51,7 +51,7 @@ ANONYMOUS:
         Lower Bound: -5.00000000000000000e+00
         Upper Bound: 5.00000000000000000e+00
         Mesh Part: bottom
-      Hessian-vector products use AD: false
+      Hessian-vector products use AD: true
     LandIce Physical Parameters: 
       Water Density: 1.02800000000000000e+03
       Ice Density: 9.10000000000000000e+02

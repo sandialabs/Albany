@@ -23,7 +23,7 @@ ANONYMOUS:
         Lower Bound: -1.00000000000000000e+00
         Upper Bound: 2.00000000000000000e+00
         Initial Uniform Value: -5.00000000000000000e-01
-      Hessian-vector products use AD: false
+      Hessian-vector products use AD: true
     Response Functions: 
       Collection Method: Sum Responses
       Number: 1
