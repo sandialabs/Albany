@@ -23,6 +23,9 @@ if(NOT ALBANY_PARALLEL_ONLY)
   add_test(${testName}_BackwardEuler_with_Source ${Albany.exe} input_be_with_source.yaml)
   set_tests_properties(${testName}_BackwardEuler_with_Source PROPERTIES LABELS "Demo;Tpetra;Forward")
 
+  add_test(${testName}_ForwardEuler_with_Source ${Albany.exe} input_fe_with_source.yaml)
+  set_tests_properties(${testName}_ForwardEuler_with_Source PROPERTIES LABELS "Demo;Tpetra;Forward")
+
   add_test(${testName}_ForwardEuler ${Albany.exe} input_forward_euler.yaml)
   set_tests_properties(${testName}_ForwardEuler PROPERTIES LABELS "Demo;Tpetra;Forward")
 endif()
