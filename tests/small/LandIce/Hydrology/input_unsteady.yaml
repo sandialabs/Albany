@@ -62,7 +62,6 @@ ANONYMOUS:
   Discretization: 
     Number Of Time Derivatives: 1
     Method: Gmsh
-    Rebalance Mesh: true
     Cubature Degree: 3
     Workset Size: 10
     Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle.msh

@@ -373,11 +373,14 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
   bulkData->modification_end();
 
 #ifdef ALBANY_ZOLTAN
-  // Gmsh is for sure using a serial mesh. We hard code it here, in case the user did not set it
-  params->set<bool>("Use Serial Mesh", true);
+  // Gmsh loads the mesh only on rank 0, so rebalance is necessary.
+  params->set<bool>("Rebalance Mesh", true);
 
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(commT->getSize()>1, std::runtime_error,
+    "Error! If you use a Gmsh mesh, you need to either have ALBANY_ZOLTAN on, or run serially.\n");
 #endif
 
   // Setting the default 3d coordinates
