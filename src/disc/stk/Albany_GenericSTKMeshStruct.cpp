@@ -445,7 +445,6 @@ void GenericSTKMeshStruct::setDefaultCoordinates3d ()
 
 void GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm){
   bool rebalance = params->get<bool>("Rebalance Mesh", false);
-  bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
 
   if(rebalance) {
     TEUCHOS_TEST_FOR_EXCEPTION (this->side_maps_present, std::runtime_error,
@@ -1362,14 +1361,14 @@ computeField (const std::string& field_name,
                              "Expected length >=" << field_dim << ". Got " << num_expr << " instead.\n");
 
   *out << "  - Computing " << field_type << " field '" << field_name << "' from mathematical expression(s):";
-  int num_params = num_expr - field_dim;
-  for (int idim=num_params; idim<num_expr; ++idim) {
+  int num_expr_params = num_expr - field_dim;
+  for (int idim=num_expr_params; idim<num_expr; ++idim) {
     *out << " " << expressions[idim] << (idim==num_expr-1 ? "" : ";");
   }
-  if (num_params>0) {
+  if (num_expr_params>0) {
     *out << " (with";
-    for (int idim=0; idim<num_params; ++idim) {
-      *out << " " << expressions[idim] << (idim==num_params-1 ? "" : ";");
+    for (int idim=0; idim<num_expr_params; ++idim) {
+      *out << " " << expressions[idim] << (idim==num_expr_params-1 ? "" : ";");
     }
     *out << ")";
   }
@@ -1408,13 +1407,13 @@ computeField (const std::string& field_name,
 
   // Start by reading the parameters used in the field expression(s)
   Teuchos::any result;
-  for (int iparam=0; iparam<num_params; ++iparam) {
+  for (int iparam=0; iparam<num_expr_params; ++iparam) {
     eval.read_string(result,expressions[iparam]+";","params");
   }
 
   // Parse and evaluate all the expressions
   for (int idim=0; idim<field_dim; ++idim) {
-    eval.read_string(result,expressions[num_params+idim],"field expression");
+    eval.read_string(result,expressions[num_expr_params+idim],"field expression");
     auto result_view = Teuchos::any_cast<const_view_type>(result);
     auto result_view_1d = DeviceView1d<const double>(result_view.data(),result_view.extent_int(0));
     Kokkos::deep_copy(getNonconstDeviceData(field_mv->col(idim)),result_view_1d);
