@@ -102,8 +102,7 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
   basalMelt_reg_alpha = basalMelt_reg_list.get<double>("alpha");
   basalMelt_reg_beta = basalMelt_reg_list.get<double>("beta");
-  dTdz_melting_scaling = 1e-3*k_i;
-  geofluxheat_scaling = 1000./scyr;
+  beta_scaling = 1000./scyr;
 
   this->setName("Basal Melt Rate" + PHX::print<EvalT>());
 }
@@ -138,16 +137,16 @@ operator() (const Basal_Melt_Rate_Collapsed_Tag& tag, const int& sideSet_idx) co
     //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
     ScalarT mstar = geoFluxHeat(sideSet_idx,node);
     for (int dim = 0; dim < vecDimFO; dim++)
-      mstar += geofluxheat_scaling * beta(sideSet_idx,node) * velocity(sideSet_idx,node,dim) * velocity(sideSet_idx,node,dim);
+      mstar += beta_scaling * beta(sideSet_idx,node) * velocity(sideSet_idx,node,dim) * velocity(sideSet_idx,node,dim);
 
     double dTdz_melting = beta_p * rho_i * g;
-    mstar += dTdz_melting_scaling * dTdz_melting;
+    mstar += k_i * dTdz_melting;
 
-    enthalpyBasalFlux(sideSet_idx,node) =  (basal_reg_scale-1) *mstar + dTdz_melting_scaling*dTdz_melting;
+    enthalpyBasalFlux(sideSet_idx,node) =  (basal_reg_scale-1) *mstar + k_i*dTdz_melting;
 
-    ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(sideSet_idx,node),alpha_om); //[m yr^{-1}]
+    //ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(sideSet_idx,node),alpha_om); //[m yr^{-1}]
     ScalarT melting = scyr * basal_reg_scale * mstar / (L*rho_i); //[m yr^{-1}]
-    basalVertVelocity(sideSet_idx,node) =  - melting /(1 - rho_w/rho_i*KU::min(phi(sideSet_idx,node),0.5)) -  basal_water_flux;
+    basalVertVelocity(sideSet_idx,node) =  - melting /(1 - rho_w/rho_i*KU::min(phi(sideSet_idx,node),0.5));
   }
 
 }
@@ -174,16 +173,16 @@ operator() (const Basal_Melt_Rate_Tag& tag, const int& sideSet_idx) const {
     //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
     ScalarT mstar = geoFluxHeat(cell,side,node);
     for (int dim = 0; dim < vecDimFO; dim++)
-      mstar += geofluxheat_scaling * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);
+      mstar += beta_scaling * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);
 
     double dTdz_melting = beta_p * rho_i * g;
-    mstar += dTdz_melting_scaling * dTdz_melting;
+    mstar += k_i * dTdz_melting;
 
-    enthalpyBasalFlux(cell,side,node) =  (basal_reg_scale-1) *mstar + dTdz_melting_scaling*dTdz_melting;
+    enthalpyBasalFlux(cell,side,node) =  (basal_reg_scale-1) *mstar + k_i*dTdz_melting;
 
-    ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(cell,side,node),alpha_om); //[m yr^{-1}]
+    //ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(cell,side,node),alpha_om); //[m yr^{-1}]
     ScalarT melting = scyr * basal_reg_scale * mstar / (L*rho_i); //[m yr^{-1}]
-    basalVertVelocity(cell,side,node) =  - melting /(1 - rho_w/rho_i*KU::min(phi(cell,side,node),0.5)) -  basal_water_flux;
+    basalVertVelocity(cell,side,node) =  - melting /(1 - rho_w/rho_i*KU::min(phi(cell,side,node),0.5));
   }
 
 }
@@ -231,16 +230,16 @@ evaluateFields(typename Traits::EvalData workset)
           //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
           ScalarT mstar = geoFluxHeat(sideSet_idx,node);
           for (int dim = 0; dim < vecDimFO; dim++)
-            mstar += geofluxheat_scaling * beta(sideSet_idx,node) * velocity(sideSet_idx,node,dim) * velocity(sideSet_idx,node,dim);
+            mstar += beta_scaling * beta(sideSet_idx,node) * velocity(sideSet_idx,node,dim) * velocity(sideSet_idx,node,dim);
 
           double dTdz_melting = beta_p * rho_i * g;
-          mstar += dTdz_melting_scaling * dTdz_melting;
+          mstar += k_i * dTdz_melting;
 
-          enthalpyBasalFlux(sideSet_idx,node) =  (basal_reg_scale-1) *mstar + dTdz_melting_scaling*dTdz_melting;
+          enthalpyBasalFlux(sideSet_idx,node) =  (basal_reg_scale-1) *mstar + k_i*dTdz_melting;
 
-          ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(sideSet_idx,node),alpha_om); //[m yr^{-1}]
+          //ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(sideSet_idx,node),alpha_om); //[m yr^{-1}]
           ScalarT melting = scyr * basal_reg_scale * mstar / (L*rho_i); //[m yr^{-1}]
-          basalVertVelocity(cell,side,node) =  - melting /(1 - rho_w/rho_i*std::min(phi(sideSet_idx,node),0.5)) -  basal_water_flux;
+          basalVertVelocity(cell,side,node) =  - melting /(1 - rho_w/rho_i*std::min(phi(sideSet_idx,node),0.5));
         }
       }
     } else {
@@ -262,16 +261,16 @@ evaluateFields(typename Traits::EvalData workset)
           //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
           ScalarT mstar = geoFluxHeat(cell,side,node);
           for (int dim = 0; dim < vecDimFO; dim++)
-            mstar += geofluxheat_scaling * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);
+            mstar += beta_scaling * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);
 
           double dTdz_melting = beta_p * rho_i * g;
-          mstar += dTdz_melting_scaling * dTdz_melting;
+          mstar += k_i * dTdz_melting;
 
-          enthalpyBasalFlux(cell,side,node) =  (basal_reg_scale-1) *mstar + dTdz_melting_scaling*dTdz_melting;
+          enthalpyBasalFlux(cell,side,node) =  (basal_reg_scale-1) *mstar + k_i*dTdz_melting;
 
-          ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(cell,side,node),alpha_om); //[m yr^{-1}]
+          //ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(cell,side,node),alpha_om); //[m yr^{-1}]
           ScalarT melting = scyr * basal_reg_scale * mstar / (L*rho_i); //[m yr^{-1}]
-          basalVertVelocity(cell,side,node) =  - melting /(1 - rho_w/rho_i*std::min(phi(cell,side,node),0.5)) -  basal_water_flux;
+          basalVertVelocity(cell,side,node) =  - melting /(1 - rho_w/rho_i*std::min(phi(cell,side,node),0.5));
         }
       }
     }

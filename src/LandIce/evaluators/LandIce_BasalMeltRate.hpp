@@ -65,15 +65,15 @@ private:
   double k_i;      //[W m^{-1} K^{-1}], Conductivity of ice
   double eta_w;    //[Pa s], Viscosity of water
   double alpha_om; //[adim], Omega exponent alpha
-  double beta_p;
+  double beta_p;   //[K Pa^{-1}], Clausius-Clapeyron ~7e-8
   double scyr ;    // [s/yr] (3.1536e7);
+  double beta_scaling;  //[s yr^{-1} k^{-1}]
+
 
   double flux_reg_alpha;
   double flux_reg_beta;
   double basalMelt_reg_alpha;
   double basalMelt_reg_beta;
-  double dTdz_melting_scaling;
-  double geofluxheat_scaling;
   bool isThereWater;
   bool nodal;
 
