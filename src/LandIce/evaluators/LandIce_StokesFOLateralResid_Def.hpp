@@ -45,6 +45,17 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
     this->addDependentField(elevation);
   }
 
+  add_melange_force=false;
+  melange_force_value = melange_thickness_threshold =0;
+
+  if (bc_pl.isParameter("Melange Force")) {
+    melange_force_value = bc_pl.get<double>("Melange Force");
+    if (melange_force_value != 0) {
+      add_melange_force = true;
+      melange_thickness_threshold = bc_pl.get<double>("Melange Submerged Thickness Threshold");
+    }
+  }
+
   // Create evaluated field
   residual = decltype(residual)(p.get<std::string> ("Residual Variable Name"),dl->node_vector);
   this->addContributedField(residual);
@@ -64,9 +75,9 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
 
   // Get physical parameters
   const Teuchos::ParameterList& physical_params = *p.get<Teuchos::ParameterList*>("Physical Parameters");
-  rho_w = physical_params.get<double>("Water Density");
-  rho_i = physical_params.get<double>("Ice Density");
-  g     = physical_params.get<double>("Gravity Acceleration");
+  rho_w = physical_params.get<double>("Water Density"); // [Kg m^{-3}]
+  rho_i = physical_params.get<double>("Ice Density"); // [Kg m^{-3}]
+  g     = physical_params.get<double>("Gravity Acceleration"); // [m s^{-2}]
 
   // Get dimensions
   std::vector<PHX::DataLayout::size_type> dims;
@@ -138,16 +149,22 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_comput
   const ThicknessScalarT threshold (1e-8);
   const OutputScalarT one (1.0);
 
+  double scale = 1e-6; //[k^2]
   for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
     for (int qp=0; qp<numSideQPs; ++qp) {
-      const ThicknessScalarT H = thickness(cell,side,qp);
-      const MeshScalarT      s = elevation(cell,side,qp);
+      const ThicknessScalarT H = thickness(cell,side,qp); //[km]
+      const MeshScalarT      s = elevation(cell,side,qp); //[km]
       const OutputScalarT immersed_ratio = H>threshold ? std::max(zero,std::min(one,1-s/H)) : zero;
-      OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio) * w_measure(cell,side,qp);
+      OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio); //[kPa]
+      if(add_melange_force)
+        w_normal_stress += scale * melange_force_value * std::min(immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
+
+      w_normal_stress *= w_measure(cell,side,qp);
+
       if (use_stereographic_map) {
         const MeshScalarT x = coords_qp(cell,side,qp,0) - X_0;
         const MeshScalarT y = coords_qp(cell,side,qp,1) - Y_0;
@@ -174,14 +191,20 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_given_
 {
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(lateralSideName);
 
+  double scale = 1e-6; //[k^2]
   for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
     for (int qp=0; qp<numSideQPs; ++qp) {
-      const ThicknessScalarT H = thickness(cell,side,qp);
-      OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*given_immersed_ratio*given_immersed_ratio) * w_measure(cell,side,qp);
+      const ThicknessScalarT H = thickness(cell,side,qp); //[km]
+      OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*given_immersed_ratio*given_immersed_ratio); //[kPa]
+      if(add_melange_force)
+        w_normal_stress += scale * melange_force_value * std::min(given_immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
+
+      w_normal_stress *= w_measure(cell,side,qp);
+
       if (use_stereographic_map) {
         const MeshScalarT x = coords_qp(cell,side,qp,0) - X_0;
         const MeshScalarT y = coords_qp(cell,side,qp,1) - Y_0;

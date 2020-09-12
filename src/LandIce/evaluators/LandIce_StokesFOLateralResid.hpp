@@ -63,15 +63,18 @@ private:
   std::vector<std::vector<int> >  sideNodes;
   std::string                     lateralSideName;
 
-  double rho_w;
-  double rho_i;
-  double g;
-  double given_immersed_ratio;
-  double X_0;
-  double Y_0;
-  double R2;
+  double rho_w;  // [Kg m^{-3}]
+  double rho_i;  // [Kg m^{-3}]
+  double g;      // [m s^{-2}]
+  double given_immersed_ratio; //[]
+  double melange_force_value;  //[N m^{-1}]
+  double melange_thickness_threshold; //[km]
+  double X_0; //[km]
+  double Y_0; //[km]
+  double R2; //[km]
 
   bool immerse_ratio_provided;
+  bool add_melange_force;
   bool use_stereographic_map;
 
   int numSideNodes;

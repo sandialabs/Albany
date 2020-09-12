@@ -34,6 +34,8 @@ ANONYMOUS:
         Type: Lateral
         Cubature Degree: 3
         Side Set Name: extruded_boundary_side_set_1
+        Melange Force: 6.0e+07 #[N/m]
+        Melange Submerged Thickness Threshold: 0.1 #[km]
         #Immersed Ratio: 0.893
     Parameters:
       Number: 0
@@ -245,7 +247,7 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
   Regression Results:
     Number of Comparisons: 1
-    Test Values: [1.760622217838e+01]
+    Test Values: [1.762330021661e+01]
     Relative Tolerance: 1.0e-04
   #  Number of Sensitivity Comparisons: 0
   #  Sensitivity Test Values 0: [1.90715449153000007e-06, 0.00000000000000000e+00, -4.28824139453999975e-08, -1.08451424140999999e-06]
