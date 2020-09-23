@@ -194,10 +194,8 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
           ScalarT diff2 = std::pow(velocity(cell, side, qp, 0)  - observedVelocity (cell, side, qp, 0),2) 
                                + std::pow(velocity(cell, side, qp, 1)  - observedVelocity (cell, side, qp, 1),2);
 
-          // If diff2 is zero, we have to add a small number to it, otherwise the derivative computations will generate NaNs.
-          if(diff2 == Teuchos::ScalarTraits<ScalarT>::zero())
-            //Note: use a = instead of a += would erase all derivative information from diff2 which is unwanted.
-            diff2 += Teuchos::ScalarTraits<ScalarT>::eps();
+          // We have to add a small number to diff2, otherwise the derivative computations can generate NaNs.
+          diff2 += Teuchos::ScalarTraits<ScalarT>::eps();
 
           ScalarT weightedDiff = std::sqrt(diff2)/observedVelocityMagnitudeRMS(cell, side, qp);
           ScalarT weightedDiff2 = std::pow(asinh(weightedDiff/ asinh_scaling)*asinh_scaling,2);
