@@ -617,10 +617,10 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
     bool hess_vec_prod_g_px_support = aDHessVec;
     bool hess_vec_prod_g_pp_support = aDHessVec;
 
-    bool hess_vec_prod_f_xx_support = aDHessVec;
-    bool hess_vec_prod_f_xp_support = aDHessVec;
-    bool hess_vec_prod_f_px_support = aDHessVec;
-    bool hess_vec_prod_f_pp_support = aDHessVec;
+    bool hess_vec_prod_f_xx_support = false;
+    bool hess_vec_prod_f_xp_support = false;
+    bool hess_vec_prod_f_px_support = false;
+    bool hess_vec_prod_f_pp_support = false;
 
     result.setSupports(
       Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xx,
