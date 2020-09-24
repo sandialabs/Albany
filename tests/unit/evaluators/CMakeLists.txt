@@ -24,6 +24,18 @@ SET(SOURCES
           ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
 )
 
+SET(SOURCES_gatherSolution
+          ./gatherSolution.cpp
+          ../Albany_UnitTestMain.cpp
+          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
+)
+
+SET(SOURCES_gatherDistributedParameters
+          ./gatherDistributedParameters.cpp
+          ../Albany_UnitTestMain.cpp
+          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
+)
+
 SET(HEADERS
           ${CMAKE_SOURCE_DIR}/src/evaluators/utility/PHAL_ComputeBasisFunctions.hpp
           ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.hpp
@@ -38,10 +50,30 @@ ADD_EXECUTABLE(
   ${HEADERS} ${SOURCES}
 )
 
+ADD_EXECUTABLE(
+  gatherSolution_unit_tester
+  ${HEADERS} ${SOURCES_gatherSolution}
+)
+
+ADD_EXECUTABLE(
+  gatherDistributedParameters_unit_tester
+  ${HEADERS} ${SOURCES_gatherDistributedParameters}
+)
+
 set_target_properties(evaluator_unit_tester PROPERTIES
   PUBLIC_HEADER "${HEADERS}")
 
 TARGET_LINK_LIBRARIES(evaluator_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+
+set_target_properties(gatherSolution_unit_tester PROPERTIES
+  PUBLIC_HEADER "${HEADERS}")
+
+TARGET_LINK_LIBRARIES(gatherSolution_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+
+set_target_properties(gatherDistributedParameters_unit_tester PROPERTIES
+  PUBLIC_HEADER "${HEADERS}")
+
+TARGET_LINK_LIBRARIES(gatherDistributedParameters_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 
 # We should always run the unit tests in both serial and parallel if possible (they should run quickly)
 IF (ALBANY_MPI)
@@ -51,9 +83,27 @@ IF (ALBANY_MPI)
   ADD_TEST(
     Albany_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
   )
+  ADD_TEST(
+    Albany_Serial_GatherSolution_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
+  )
+  ADD_TEST(
+    Albany_Parallel_GatherSolution_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
+  )
+  ADD_TEST(
+    Albany_Serial_GatherDistributedParameters_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
+  )
+  ADD_TEST(
+    Albany_Parallel_GatherDistributedParameters_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
+  )
 ELSE(ALBANY_MPI)
   ADD_TEST(
     Albany_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
+  )
+  ADD_TEST(
+    Albany_GatherSolution_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
+  )
+  ADD_TEST(
+    Albany_GatherDistributedParameters_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
   )
 ENDIF(ALBANY_MPI)
 
