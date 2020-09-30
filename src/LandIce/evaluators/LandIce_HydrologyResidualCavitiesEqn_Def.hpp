@@ -7,6 +7,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
+#include "LandIce_HydrologyResidualCavitiesEqn.hpp"
+
 namespace LandIce {
 
 template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
@@ -48,15 +50,16 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
 
   // Setting parameters
   Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("LandIce Hydrology Parameters");
+  Teuchos::ParameterList& cav_eqn_params   = hydrology_params.sublist("Cavities Equation");
   Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
 
   unsteady = p.get<bool>("Unsteady");
 
   rho_i = physical_params.get<double>("Ice Density");
-  h_r = hydrology_params.get<double>("Bed Bumps Height");
-  l_r = hydrology_params.get<double>("Bed Bumps Length");
-  c_creep = hydrology_params.get<double>("Creep Closure Coefficient",1.0);
-  phi0 = hydrology_params.get<double>("Englacial Porosity",0.0);
+  h_r = cav_eqn_params.get<double>("Bed Bumps Height");
+  l_r = cav_eqn_params.get<double>("Bed Bumps Length");
+  c_creep = cav_eqn_params.get<double>("Creep Closure Coefficient",1.0);
+  phi0 = cav_eqn_params.get<double>("Englacial Porosity",0.0);
   if (phi0>0 && unsteady) {
     has_p_dot = true;
     double rho_w = physical_params.get<double>("Water Density");
@@ -66,7 +69,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
     has_p_dot = false;
   }
 
-  use_melting = hydrology_params.get<bool>("Use Melting In Cavities Equation", false);
+  use_melting = cav_eqn_params.get<bool>("Use Melting", false);
 
   /*
    * Scalings, needed to account for different units: ice velocity
@@ -100,7 +103,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   phi0 *= 1e3;
 
   // We can solve this equation as a nodal equation
-  nodal_equation = hydrology_params.isParameter("Cavities Equation Nodal") ? hydrology_params.get<bool>("Cavities Equation Nodal") : false;
+  nodal_equation = cav_eqn_params.isParameter("Nodal") ? cav_eqn_params.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
   if (nodal_equation) {
     layout = dl->node_scalar;
@@ -141,7 +144,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
 void HydrologyResidualCavitiesEqn<EvalT, Traits, IsStokes, ThermoCoupled>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(u_b,fm);
@@ -190,7 +193,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     return;
   }
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
+  const auto& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
     const int cell = it_side.elem_LID;

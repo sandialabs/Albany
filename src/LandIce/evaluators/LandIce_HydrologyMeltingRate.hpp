@@ -17,9 +17,18 @@
 namespace LandIce
 {
 
-/** \brief Hydrology Residual Evaluator
+/** \brief Hydrology Melting Rate evaluator
 
-    This evaluator evaluates the residual of the Hydrology model
+    This evaluator evaluates the following:
+
+      m = (G + \beta |ub|^2) /L
+
+    where
+      - G: geothermal flux
+      - \beta: basal friction parameter in ice b.c. : sigma*n + \beta u = 0
+      - ub: sliding velocity
+      - L: ice latent heat
+    See below for units
 */
 
 template<typename EvalT, typename Traits, bool IsStokes>
@@ -44,21 +53,21 @@ public:
 private:
 
   // Input:
-  PHX::MDField<const IceScalarT>    u_b;
-  PHX::MDField<const ScalarT>       beta;
-  PHX::MDField<const ParamScalarT>  G;
+  PHX::MDField<const IceScalarT>    u_b;    // [ m yr^-1 ]
+  PHX::MDField<const ScalarT>       beta;   // [ kPa yr m^-1 ]
+  PHX::MDField<const ParamScalarT>  G;      // [ W m^-2 ]
 
   // Output:
-  PHX::MDField<ScalarT>             m;
+  PHX::MDField<ScalarT>             m;      // [ kg m^-3 m yr^-1 ], that is, [ kg m^-2 yr ^-1 ] (density*speed)
 
   bool              nodal;
 
   unsigned int               numQPs;
   unsigned int               numNodes;
-  double            L;
-  double            scaling_G;
+  double            L;            // Ice Latent Heat [J kg^-1]
+  double            scaling_G;    // Used internally
 
-  std::string       sideSetName; // Only needed if IsStokes=true
+  std::string       sideSetName;  // Only needed if IsStokes=true
 };
 
 } // Namespace LandIce

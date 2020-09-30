@@ -7,11 +7,14 @@
 #ifndef LANDICE_HYDROLOGY_RESIDUAL_CAVITIES_EQN_HPP
 #define LANDICE_HYDROLOGY_RESIDUAL_CAVITIES_EQN_HPP 1
 
+#include "Albany_Layouts.hpp"
+
+#include "Albany_ScalarOrdinalTypes.hpp"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Albany_Layouts.hpp"
 
 namespace LandIce
 {

@@ -53,13 +53,16 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   this->addEvaluatedField(q);
 
   // Setting parameters
-  Teuchos::ParameterList& hydrology = *p.get<Teuchos::ParameterList*>("LandIce Hydrology");
+  Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("LandIce Hydrology");
+  Teuchos::ParameterList& darcy_law_params = hydrology_params.sublist("Darcy Law");
 
-  k_0   = hydrology.get<double>("Darcy Law Transmissivity");
-  alpha = hydrology.get<double>("Darcy Law Water Thickness Exponent");
-  beta  = hydrology.get<double>("Darcy Law Potential Gradient Norm Exponent");
+  k_0   = darcy_law_params.get<double>("Transmissivity");
+  alpha = darcy_law_params.get<double>("Water Thickness Exponent");
+  beta  = darcy_law_params.get<double>("Potential Gradient Norm Exponent");
 
-  TEUCHOS_TEST_FOR_EXCEPTION (beta<=1, Teuchos::Exceptions::InvalidParameter, "Error! 'Darcy Law: Potential Gradient Norm Exponent' must be larger than 1.0.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      beta<=1, Teuchos::Exceptions::InvalidParameter,
+      "Error! 'Darcy Law: Potential Gradient Norm Exponent' must be larger than 1.0.\n");
 
   if (beta==2.0) {
     needsGradPhiNorm = false;
@@ -72,7 +75,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
     this->addDependentField(gradPhiNorm);
   }
 
-  regularize = hydrology.get<bool>("Regularize With Continuation", false);
+  regularize = darcy_law_params.get<bool>("Regularize With Continuation", false);
   if (regularize)
   {
     regularizationParam = PHX::MDField<ScalarT,Dim>(p.get<std::string>("Regularization Parameter Name"),dl->shared_param);

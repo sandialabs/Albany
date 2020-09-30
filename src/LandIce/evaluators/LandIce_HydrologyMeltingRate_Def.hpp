@@ -7,6 +7,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
+#include "LandIce_HydrologyMeltingRate.hpp"
+
 namespace LandIce {
 
 //**************************************************************
@@ -42,19 +44,19 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
    * is in m/yr, the mesh is in km, and hydrology time unit is s.
    *
    * The melting rate has 2 terms (forget about signs), with the following
-   * units (including the km^2 from dx):
+   * units:
    *
-   * 1) G                 [W m^-2 km^2] = [Pa m s^-1 km^2]
-   * 2) beta*|u|^2        [kPa m yr^-1 km^2]
+   * 1) G                 [W m^-2] = [Pa m s^-1]
+   * 2) beta*|u|^2        [kPa m yr^-1]
    *
    * To sum apples to apples, we need to convert one to the units of the other.
-   * We choose to keep [kPa m yr^-1 km^2], which are the units used in the residuals,
+   * We choose to keep [kPa m yr^-1], which are the units used in the residuals,
    * and we rescale G by
    *
    *  scaling_G = yr_to_s/1000
    *
    * where yr_to_s=365.25*24*3600 (the number of seconds in a year).
-   * Furthermore, we scale J to be in kJ/kg = kPa*m^3/kg, so that kPa cancel out.
+   * Furthermore, we scale L to be in kJ/kg = kPa*m^3/kg, so that kPa cancels out.
    *
    * With this choice, considering G~10^-1 W/m^2, |u|~1000 m/yr, beta~10 kPa*yr/m, L~10^5 J/kg
    * we get m ~ 100 kg/(m^2 yr). When multiplied by 1/rho_i in the residual, this gives a term of
@@ -87,7 +89,7 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes>
 void HydrologyMeltingRate<EvalT, Traits, IsStokes>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(u_b,fm);
@@ -100,14 +102,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, bool IsStokes>
 void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Traits::EvalData workset)
 {
-  // m = \frac{ G - \beta |u_b|^2 + \nabla (phiH-N)\cdot q }{L} %% The nonlinear term \nabla (phiH-N)\cdot q can be ignored
+  // m = ( G - \beta |u_b|^2 ) / L
 
   if (IsStokes)
   {
     if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
       return;
 
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
+    const auto& sideSet = workset.sideSets->at(sideSetName);
     for (auto const& it_side : sideSet)
     {
       // Get the local data of side and cell

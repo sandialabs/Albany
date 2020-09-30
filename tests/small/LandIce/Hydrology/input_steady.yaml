@@ -47,16 +47,21 @@ ANONYMOUS:
       Cavities Equation Nodal: true
       Lump Mass In Mass Equation: false
       Use Water Thickness In Effective Pressure Formula: true
-      Use Melting In Conservation Of Mass: false
-      Use Melting In Cavities Equation: false
-      Regularize With Continuation: true
-      Creep Closure Coefficient: 4.00000000000000008e-02
-      Darcy Law Water Thickness Exponent: 1.00000000000000000e+00
-      Darcy Law Potential Gradient Norm Exponent: 2.00000000000000000e+00
-      Darcy Law Transmissivity: 1.00000000000000004e-04
-      Bed Bumps Height: 1.00000000000000000e+00
-      Bed Bumps Length: 2.00000000000000000e+00
-      Surface Water Input:
+      Cavities Equation:
+        Nodal: true
+        Use Melting: false
+        Creep Closure Coefficient: 4.00000000000000008e-02
+      Mass Equation:
+        Lump Mass: false
+        Use Melting: false
+        Bed Bumps Height: 1.00000000000000000e+00
+        Bed Bumps Length: 2.00000000000000000e+00
+      Darcy Law:
+        Regularize With Continuation: true
+        Water Thickness Exponent: 1.00000000000000000e+00
+        Potential Gradient Norm Exponent: 2.00000000000000000e+00
+        Transmissivity: 1.00000000000000005e-04
+      Surface Water Input: 
         Type: Given Field
     LandIce Basal Friction Coefficient:
       Type: Regularized Coulomb
