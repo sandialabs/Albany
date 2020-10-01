@@ -130,6 +130,8 @@ function(ali_do_trilinos)
       "-DPhalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON"
       "-DTpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
       "-DXpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
+      "-DTrilinos_ENABLE_PanzerDofMgr:BOOL=ON"
+      "-DKOKKOS_ENABLE_LIBDL:BOOL=ON"
       )
   if (DEFINED ENV{LCM_SLFAD_SIZE})
     set(CONFIG_OPTS ${CONFIG_OPTS} $ENV{LCM_SLFAD_SIZE})
@@ -151,7 +153,6 @@ function(ali_do_trilinos)
       "-DDataTransferKit_ENABLE_TESTS:BOOL=OFF"
       "-DDataTransferKit_ENABLE_EXAMPLES:BOOL=OFF"
       "-DTPL_ENABLE_MOAB:BOOL=OFF"
-      "-DTrilinos_ENABLE_PanzerDofMgr:BOOL=ON"
       "-DTPL_ENABLE_Libmesh:BOOL=OFF"
       )
   else()
