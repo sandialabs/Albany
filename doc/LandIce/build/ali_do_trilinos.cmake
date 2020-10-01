@@ -151,6 +151,7 @@ function(ali_do_trilinos)
       "-DDataTransferKit_ENABLE_TESTS:BOOL=OFF"
       "-DDataTransferKit_ENABLE_EXAMPLES:BOOL=OFF"
       "-DTPL_ENABLE_MOAB:BOOL=OFF"
+      "-DTrilinos_ENABLE_PanzerDofMgr:BOOL=ON"
       "-DTPL_ENABLE_Libmesh:BOOL=OFF"
       )
   else()
