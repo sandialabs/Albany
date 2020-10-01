@@ -265,6 +265,8 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
     "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
     "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING='SERIAL'"
+    "-DKOKKOS_ENABLE_LIBDL:BOOL=ON"
+    "-DTrilinos_ENABLE_PanzerDofMgr:BOOL=ON"
     "-DPhalanx_INDEX_SIZE_TYPE:STRING='INT'"
     "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
     "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"

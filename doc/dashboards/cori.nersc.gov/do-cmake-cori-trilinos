@@ -136,4 +136,6 @@ cmake \
     -D Trilinos_ENABLE_Pamgen:BOOL=ON \
     -D CMAKE_SKIP_INSTALL_RPATH=TRUE \
     -D TPL_Netcdf_PARALLEL:BOOL=ON \
+    -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
+    -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
 ../

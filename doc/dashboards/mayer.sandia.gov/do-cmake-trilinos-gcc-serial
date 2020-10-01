@@ -162,5 +162,7 @@ cmake \
     -DMPI_EXEC=${MPI_DIR}/bin/mpirun \
     -DMPI_EXEC_MAX_NUMPROCS:STRING='4' \
     -DMPI_EXEC_NUMPROCS_FLAG:STRING='-np' \
+    -DKOKKOS_ENABLE_LIBDL:BOOL=ON \
+    -DTrilinos_ENABLE_PanzerDofMgr:BOOL=ON \
 ..
 

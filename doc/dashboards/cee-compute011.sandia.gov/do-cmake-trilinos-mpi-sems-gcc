@@ -159,4 +159,6 @@ cmake \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
       -D TPL_ENABLE_Matio=OFF \
+      -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
+      -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
        ..
