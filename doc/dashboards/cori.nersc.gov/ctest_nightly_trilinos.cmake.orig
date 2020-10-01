@@ -172,7 +172,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
     "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
     "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
-    "-DZoltan2_ENABLE_Experimental:BOOL=ON"
     "-DTrilinos_ENABLE_FEI:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_TESTS:BOOL=OFF"

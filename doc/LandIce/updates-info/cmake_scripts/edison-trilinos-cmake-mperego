@@ -103,7 +103,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON\
       -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
       -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
-      -D Zoltan2_ENABLE_Experimental:BOOL=ON\
       -D Trilinos_ENABLE_FEI:BOOL=OFF\
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \

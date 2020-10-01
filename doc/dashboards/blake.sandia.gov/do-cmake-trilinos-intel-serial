@@ -78,7 +78,6 @@ cmake \
       -D Tpetra_ASSUME_CUDA_AWARE_MPI:BOOL=OFF \
       -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
       -D Tpetra_INST_INT_INT:BOOL=OFF \
-      -D Zoltan2_ENABLE_Experimental:BOOL=ON \
       -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
       -D Trilinos_ENABLE_Amesos2:BOOL=ON \
       -D Trilinos_ENABLE_Amesos:BOOL=ON \

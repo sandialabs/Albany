@@ -121,7 +121,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON\
       -D Zoltan_ENABLE_ULONG_IDS:BOOL=OFF \
       -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
-      -D Zoltan2_ENABLE_Experimental:BOOL=ON\
       -D Trilinos_ENABLE_DEBUG:BOOL=OFF \
 \
       -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
@@ -158,6 +157,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D MPI_EXEC=mpiexec \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
+      -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
+      -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \

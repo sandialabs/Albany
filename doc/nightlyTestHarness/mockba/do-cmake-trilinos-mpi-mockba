@@ -155,6 +155,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_ENABLE_ParMETIS:STRING=ON \
       -D ParMETIS_INCLUDE_DIRS:PATH=${PARMETISDIR}/include \
       -D ParMETIS_LIBRARY_DIRS:PATH=${PARMETISDIR}/lib \
+      -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
+      -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
