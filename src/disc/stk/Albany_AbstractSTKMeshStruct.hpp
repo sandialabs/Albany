@@ -54,9 +54,29 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;
 
-  std::map<int, stk::mesh::Part*> partVec;            // Element blocks
+  stk::mesh::PartVector partVec;            // Element blocks
   std::map<std::string, stk::mesh::Part*> nsPartVec;  // Node Sets
   std::map<std::string, stk::mesh::Part*> ssPartVec;  // Side Sets
+
+// This is all of the various element block lists that are used in STKConnManager
+// Looks like lots of redundancy in here, but that can be cleaned up later
+
+   std::vector<std::string> ebNames_;
+   std::vector<shards::CellTopology> elementBlockTopologies_; // Save topology wrt element block index in partVec
+   std::map<std::string, stk::mesh::Part*> elementBlockParts_;   // Element block name to parts
+   std::map<std::string, shards::CellTopology > elementBlockCT_; // Element block name to cell topology
+   std::map<std::string, int> ebNameToIndex; // Save mapping from element block name to index in partVec
+
+   std::map<std::string, stk::mesh::Part*> sidesets_; // Side set name to parts
+
+  void addElementBlockInfo(int ebnum, std::string ebName, stk::mesh::Part* part, shards::CellTopology ct){
+   // add element block part and cell topology
+   elementBlockParts_.insert(std::make_pair(ebName, part));
+   elementBlockCT_.insert(std::make_pair(ebName, ct));
+   elementBlockTopologies_.push_back(ct);
+   ebNameToIndex[ebName] = ebnum;
+   ebNames_.push_back(ebName);
+  }
 
   Teuchos::RCP<AbstractSTKFieldContainer>
   getFieldContainer()

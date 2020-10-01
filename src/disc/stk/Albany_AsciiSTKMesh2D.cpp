@@ -35,7 +35,7 @@
 Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
                                         const Teuchos::RCP<const Teuchos_Comm>& commT,
 					const int numParams) :
-  GenericSTKMeshStruct (params, Teuchos::null, 2, numParams),
+  GenericSTKMeshStruct (params, 2, numParams),
   periodic             (false)
 {
   NumElemNodes = NumNodes = NumElems = NumBdEdges = 0;
@@ -45,6 +45,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
   std::string shape, word;
   int number;
   bool globalIds = false;
+  stk::topology etopology;
   if (commT->getRank() == 0)
   {
     std::ifstream ifile;
@@ -111,6 +112,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
       int temp(0);
       if(shape == "Triangle")
       {
+        etopology = stk::topology::TRI_3;
         for (int i = 0; i < NumElems; i++)
         {
           if(globalIds)
@@ -119,6 +121,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
             ifile >> elems[i][0] >> elems[i][1] >> elems[i][2] >>  temp;
         }
       } else { // Quadrilateral
+        etopology = stk::topology::QUAD_4;
         for (int i = 0; i < NumElems; i++)
         {
           if(globalIds)
@@ -156,12 +159,11 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 
   std::string ebn = "Element Block 0";
-  partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
-  std::map<std::string,int> ebNameToIndex;
-  ebNameToIndex[ebn] = 0;
+  partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(etopology);
+  this->addElementBlockInfo(0, ebn, partVec[0], shards_ctd);
 
 #ifdef ALBANY_SEACAS
-  //  stk::io::put_io_part_attribute(metaData->universal_part());
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
 
@@ -269,8 +271,6 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
   int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
   
 
-  stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
   cullSubsetParts(ssNames, ssPartVec);
@@ -347,9 +347,11 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
             coord_Ids[elems[i][j]-1]);
         bulkData->declare_relation(elem, node, j);
       }
-
-      int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
-      p_rank[0] = commT->getRank();
+      if(proc_rank_field){
+        int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+        if(p_rank)
+          p_rank[0] = commT->getRank();
+      }
     }
     *out << "done!\n";
     out->getOStream()->flush();

@@ -29,6 +29,7 @@
 
 #include "Albany_ScalarResponseFunction.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 //#define WRITE_TO_MATRIX_MARKET
 //#define DEBUG_OUTPUT
@@ -1153,6 +1154,14 @@ Application::postRegSetupDImpl()
     phxSetup->update_fields();
 
     writePhalanxGraph<EvalT>(dfm,evalName,phxGraphVisDetail);
+  }
+
+  // postRegSetup is where most of the memory is allocated. Let's check device
+  // memory consumption and print a warning if it's near the device limit
+  if (KU::IsNearDeviceMemoryLimit()) {
+    *out << "WARNING: Running low on device memory. Performance degradation "
+         << "may occur due to host<->device data migration. Consider using "
+         << "more devices." << std::endl;
   }
 }
 

@@ -5,3 +5,4 @@
 ##*****************************************************************//
 
 add_subdirectory(evaluators)
+add_subdirectory(disc)

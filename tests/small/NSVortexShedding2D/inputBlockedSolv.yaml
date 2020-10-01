@@ -26,6 +26,33 @@ ANONYMOUS:
     Exodus Input File Name: vortex.exo
     Exodus Output File Name: vortex-out.exo
     Interleaved Ordering: 2
+  Block ID to Physics ID Mapping:
+    Eblock-0_0: fluid
+  Field Order:
+    blocked: TEMPERATURE TEST_TEMPERATURE
+  Physics Blocks:
+    domain:
+      EQ 0:
+        Type: Continuity
+        Basis Type: HGrad
+        Basis Order: 1
+        Integration Order: 2
+        Model ID: fluid model
+        Prefix: ION_
+        Options:
+          TAU_C: NONE
+          PSPG Stabilization: ON
+      EQ 1:
+        Type: Momentum
+        Basis Type: HGrad
+        Basis Order: 1
+        Integration Order: 2
+        Model ID: fluid model
+        Prefix: ION_
+        Options:
+          TAU_M: SHAKIB
+          SUPG Stabilization: ON
+
   Regression Results:
     Number of Comparisons: 1
     Test Values: [6.02549462100000000e+01]

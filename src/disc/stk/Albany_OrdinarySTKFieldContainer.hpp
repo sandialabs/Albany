@@ -136,7 +136,8 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
       const NodalDOFManager&                       nodalDofManager);
 
   void
-  initializeSTKAdaptation();
+  initializeProcRankField();
+
 
   Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*> solution_field;
   Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>

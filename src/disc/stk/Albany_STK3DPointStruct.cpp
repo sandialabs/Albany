@@ -12,17 +12,19 @@
 Albany::STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                            const Teuchos::RCP<const Teuchos_Comm>& commT,
 					   const int numParams) :
-  GenericSTKMeshStruct(params, Teuchos::null, 3, numParams)
+  GenericSTKMeshStruct(params, 3, numParams)
 {
-  partVec[0] = &metaData->declare_part("Block0", stk::topology::ELEMENT_RANK);
+  std::cout << "---3DPoint constructor---" << std::endl;
+  partVec.push_back(&metaData->declare_part_with_topology("Block0", stk::topology::PARTICLE));
+  std::cout << "finished setting cell topology to shards::Particle" << std::endl;
+
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
-  std::cout << "---3DPoint constructor---" << std::endl;
-  stk::mesh::set_topology(*partVec[0], stk::topology::PARTICLE);
-  std::cout << "finished setting cell topology to shards::Particle" << std::endl;
-  auto stk_topo_data = metaData->get_topology( *partVec[0] );
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
+
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk::topology::PARTICLE);
+  this->addElementBlockInfo(0, "Block0", partVec[0], shards_ctd);
+
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
   std::cout << "finished extracting cell topology data" << std::endl;
   int cubDegree = 1;
@@ -31,13 +33,10 @@ Albany::STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::Parameter
   int worksetSize = 1;
 
   std::cout << "--- creating a new MeshSpecsStruct ---" << std::endl;
-  std::map<std::string,int> ebNameToIndex;
-  ebNameToIndex[partVec[0]->name()] = 0;
   this->meshSpecs[0] =
     Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cubDegree,
-                                             nsNames, ssNames, worksetSize, partVec[0]->name(),
-                                             ebNameToIndex,
-                                             this->interleavedOrdering));
+                                             nsNames, ssNames, worksetSize, "Block0",
+                                             ebNameToIndex, this->interleavedOrdering));
   std::cout << "---3DPoint constructor done---" << std::endl;
 
   // Create a mesh specs object for EACH side set

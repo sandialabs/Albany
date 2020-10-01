@@ -9,6 +9,7 @@
 
 #include "Albany_DiscretizationUtils.hpp"
 
+#include "Shards_CellTopology.hpp"
 #include "Shards_CellTopologyData.h"
 #include "Intrepid2_Polylib.hpp"
 
@@ -66,7 +67,7 @@ struct MeshSpecsStruct
   // Element block name for the EB that this struct corresponds to
   std::string ebName;
 
-  // If there are multiple element block, store the name and index of all blocks
+  // If there are multiple element blocks, store the name and index of all blocks
   std::map<std::string, int> ebNameToIndex;
 
   DiscType interleavedOrdering;

@@ -170,18 +170,6 @@ STKDiscretization::getCoordinates() const
   return coordinates;
 }
 
-// These methods were added to support mesh adaptation, which is currently
-// limited to PUMIDiscretization.
-void
-STKDiscretization::setCoordinates(
-    const Teuchos::ArrayRCP<const double>& /* c */)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      std::logic_error,
-      "STKDiscretization::setCoordinates is not implemented.");
-}
-
 // The function transformMesh() maps a unit cube domain by applying a
 // transformation to the mesh.
 void
@@ -801,6 +789,51 @@ STKDiscretization::writeSolutionMVToFile(
       it.second->writeSolutionMVToFile(*ss_soln, time, overlapped);
     }
   }
+#endif
+}
+
+void STKDiscretization::addSolutionField(const std::string & fieldName,const std::string & blockId)
+{
+#if 0
+   TEUCHOS_TEST_FOR_EXCEPTION(!validBlockId(blockId),ElementBlockException,
+                      "Unknown element block \"" << blockId << "\"");
+   std::pair<std::string,std::string> key = std::make_pair(fieldName,blockId);
+
+   // add & declare field if not already added...currently assuming linears
+   if(fieldNameToSolution_.find(key)==fieldNameToSolution_.end()) {
+      SolutionFieldType * field = metaData_->get_field<SolutionFieldType>(stk::topology::NODE_RANK, fieldName);
+      if(field==0)
+         field = &metaData_->declare_field<SolutionFieldType>(stk::topology::NODE_RANK, fieldName);
+      if ( initialized_ )  {
+        metaData_->enable_late_fields();
+        stk::mesh::FieldTraits<SolutionFieldType>::data_type* init_sol = nullptr;
+        stk::mesh::put_field_on_mesh(*field, metaData_->universal_part(),init_sol );
+      }
+      fieldNameToSolution_[key] = field;
+   }
+#endif
+}
+
+void STKDiscretization::addCellField(const std::string & fieldName,const std::string & blockId)
+{
+#if 0
+   TEUCHOS_TEST_FOR_EXCEPTION(!validBlockId(blockId),ElementBlockException,
+                      "Unknown element block \"" << blockId << "\"");
+   std::pair<std::string,std::string> key = std::make_pair(fieldName,blockId);
+
+   // add & declare field if not already added...currently assuming linears
+   if(fieldNameToCellField_.find(key)==fieldNameToCellField_.end()) {
+      SolutionFieldType * field = metaData_->get_field<SolutionFieldType>(stk::topology::ELEMENT_RANK, fieldName);
+      if(field==0)
+         field = &metaData_->declare_field<SolutionFieldType>(stk::topology::ELEMENT_RANK, fieldName);
+
+      if ( initialized_ )  {
+        metaData_->enable_late_fields();
+        stk::mesh::FieldTraits<SolutionFieldType>::data_type* init_sol = nullptr;
+        stk::mesh::put_field_on_mesh(*field, metaData_->universal_part(),init_sol );
+      }
+      fieldNameToCellField_[key] = field;
+   }
 #endif
 }
 
@@ -2207,28 +2240,6 @@ STKDiscretization::setupExodusOutput()
     }
   }
 
-#else
-  if (stkMeshStruct->exoOutput) {
-    *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
-         << " disabling exodus output \n";
-  }
-#endif
-}
-
-void
-STKDiscretization::reNameExodusOutput(std::string& filename)
-{
-#ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput && !mesh_data.is_null()) {
-    // Delete the mesh data object and recreate it
-    mesh_data = Teuchos::null;
-
-    stkMeshStruct->exoOutFile = filename;
-
-    // reset reference value for monotonic time function call as we are writing
-    // to a new file
-    previous_time_label = -1.0e32;
-  }
 #else
   if (stkMeshStruct->exoOutput) {
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"

@@ -33,10 +33,9 @@ const GO StartIndex = 0;
 template<unsigned Dim, class traits>
 Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
 		  const int numParams) :
-  GenericSTKMeshStruct(params, adaptParams_, traits_type::size, numParams),
+  GenericSTKMeshStruct(params, traits_type::size, numParams),
   periodic_x(params->get("Periodic_x BC", false)),
   periodic_y(params->get("Periodic_y BC", false)),
   periodic_z(params->get("Periodic_z BC", false)),
@@ -361,21 +360,22 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->getNodeNumElements() * (triangles ? 2 : 1));
 
-  // Build a map to get the EB name given the index
-  std::map<std::string,int> ebNameToIndex;
-  for (unsigned int eb=0; eb<numEB; eb++)
+  for (unsigned int eb=0; eb<numEB; eb++){
 
-    ebNameToIndex[partVec[eb]->name()] = eb;
+    stk::topology stk_topo_data = metaData->get_topology( *partVec[eb] );
+    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data);
+// Fill in all the various element block lists in Albany_AbstractSTKMeshStruct base class
+    this->addElementBlockInfo(eb, EBSpecs[eb].name, partVec[eb], shards_ctd);
+
+  }
 
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
 
-    stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data);
-    const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
+    const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
 
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                               nsNames, ssNames, worksetSize, partVec[0]->name(),
+                               nsNames, ssNames, worksetSize, EBSpecs[0].name,
                                ebNameToIndex, this->interleavedOrdering, false, cub_rule));
   } else {
 
@@ -387,12 +387,10 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
       // MeshSpecs holds all info needed to set up an Albany problem
 
-      stk::topology stk_topo_data = metaData->get_topology( *partVec[eb] );
-      shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data);
-      const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
+      const CellTopologyData& ctd = *elementBlockTopologies_[eb].getCellTopologyData();
 
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                                nsNames, ssNames, worksetSize, partVec[eb]->name(),
+                                nsNames, ssNames, worksetSize, EBSpecs[eb].name,
                                 ebNameToIndex, this->interleavedOrdering, true, cub_rule));
     }
   }
@@ -474,9 +472,6 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);
 
-  // Build additional mesh connectivity needed for mesh fracture (if indicated)
-  computeAddlConnectivity();
-
   fieldAndBulkDataSet = true;
 
   // Finally, setup the side set meshes (if any)
@@ -493,7 +488,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::DeclareParts(
   // Element blocks
   for (std::size_t i=0; i<ebStructArray.size(); i++) {
     // declare each element block present in the mesh
-    partVec[i] = & metaData->declare_part(ebStructArray[i].name, stk::topology::ELEMENT_RANK );
+    partVec.push_back(& metaData->declare_part(ebStructArray[i].name, stk::topology::ELEMENT_RANK ));
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*partVec[i]);
 #endif
@@ -708,6 +703,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
   std::vector<GO> elemNumber(1);
   unsigned int ebNo;
 
+  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
@@ -750,14 +746,14 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
     singlePartVec[0] = partVec[ebNo];
 
     // Build element "1+elem_id" and put it in the element block
-    stk::mesh::Entity edge  = bulkData->declare_element(1+elem_id, singlePartVec);
+    stk::mesh::Entity elem  = bulkData->declare_element(1+elem_id, singlePartVec);
     // Build the left and right nodes of this element and put them in the node part Vec
     stk::mesh::Entity lnode = bulkData->declare_node(1+left_node, nodePartVec);
     stk::mesh::Entity rnode = bulkData->declare_node(1+right_node, nodePartVec);
     // node number 0 of this element
-    bulkData->declare_relation(edge, lnode, 0, stk::mesh::DEFAULT_PERMUTATION);
+    bulkData->declare_relation(elem, lnode, 0, stk::mesh::DEFAULT_PERMUTATION);
     // node number 1 of this element
-    bulkData->declare_relation(edge, rnode, 1, stk::mesh::DEFAULT_PERMUTATION);
+    bulkData->declare_relation(elem, rnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
     // set the coordinate values for these nodes
     double* lnode_coord = stk::mesh::field_data(*coordinates_field, lnode);
@@ -765,12 +761,11 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
     double* rnode_coord = stk::mesh::field_data(*coordinates_field, rnode);
     rnode_coord[0] = x[0][right_node];
 
-/*
     if(proc_rank_field){
-      int* p_rank = stk::mesh::field_data(*proc_rank_field, edge);
-      p_rank[0] = comm->MyPID();
+      int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+      if(p_rank)
+        p_rank[0] = commT->getRank();
     }
-*/
 
     // Set node sets. There are no side sets currently with 1D problems (only 2D and 3D)
     if (left_node==StartIndex) {
@@ -1054,6 +1049,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
   const GO mod_y    = periodic_y ? nelem[1] : std::numeric_limits<GO>::max();
   const GO mod_z    = periodic_z ? nelem[2] : std::numeric_limits<GO>::max();
 
+  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
@@ -1139,12 +1135,11 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
     bulkData->declare_relation(elem, urnodeb, 6, stk::mesh::DEFAULT_PERMUTATION);
     bulkData->declare_relation(elem, ulnodeb, 7, stk::mesh::DEFAULT_PERMUTATION);
 
-/*
     if(proc_rank_field){
       int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
-      p_rank[0] = comm->MyPID();
+      if(p_rank)
+        p_rank[0] = commT->getRank();
     }
-*/
 
     double* coord;
     coord = stk::mesh::field_data(*coordinates_field, llnode);

@@ -9,6 +9,7 @@
 #include "Albany_DiscretizationFactory.hpp"
 
 #include "Albany_STKDiscretization.hpp"
+#include "BlockedDiscretization.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_STK3DPointStruct.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
@@ -36,8 +37,6 @@ DiscretizationFactory::DiscretizationFactory(
     piroParams = Teuchos::sublist(topLevelParams, "Piro", true);
   if (topLevelParams->isSublist("Problem")) {
     Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(topLevelParams, "Problem", true);
-      if (problemParams->isSublist("Adaptation"))
-        adaptParams = Teuchos::sublist(problemParams, "Adaptation", true);
     num_params = CalculateNumberParams(problemParams); 
   }
 }
@@ -46,31 +45,29 @@ DiscretizationFactory::DiscretizationFactory(
 Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >
 DiscretizationFactory::createMeshSpecs() {
     // First, create the mesh struct
-    meshStruct = createMeshStruct(discParams, adaptParams, commT, num_params);
+    meshStruct = createMeshStruct(discParams, commT, num_params);
     return meshStruct->getMeshSpecs();
 }
 
 Teuchos::RCP<AbstractMeshStruct>
 DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> disc_params,
-        Teuchos::RCP<Teuchos::ParameterList> adapt_params,
-        Teuchos::RCP<const Teuchos_Comm> comm,
-	const int numParams)
+        Teuchos::RCP<const Teuchos_Comm> comm, const int numParams)
 {
     std::string& method = disc_params->get("Method", "STK1D");
     if (method == "STK1D") {
-        return Teuchos::rcp(new TmplSTKMeshStruct<1>(disc_params, adapt_params, comm, numParams));
+        return Teuchos::rcp(new TmplSTKMeshStruct<1>(disc_params, comm, numParams));
     } else if (method == "STK0D") {
-        return Teuchos::rcp(new TmplSTKMeshStruct<0>(disc_params, adapt_params, comm, numParams));
+        return Teuchos::rcp(new TmplSTKMeshStruct<0>(disc_params, comm, numParams));
     } else if (method == "STK2D") {
-        return Teuchos::rcp(new TmplSTKMeshStruct<2>(disc_params, adapt_params, comm, numParams));
+        return Teuchos::rcp(new TmplSTKMeshStruct<2>(disc_params, comm, numParams));
     } else if (method == "STK3D") {
-        return Teuchos::rcp(new TmplSTKMeshStruct<3>(disc_params, adapt_params, comm, numParams));
+        return Teuchos::rcp(new TmplSTKMeshStruct<3>(disc_params, comm, numParams));
     } else if (method == "STK3DPoint") {
         return Teuchos::rcp(new STK3DPointStruct(disc_params, comm, numParams));
     } else if (method == "Ioss" || method == "Exodus" || method == "Pamgen") {
 
 #ifdef ALBANY_SEACAS
-        return Teuchos::rcp(new IossSTKMeshStruct(disc_params, adapt_params, comm, numParams));
+        return Teuchos::rcp(new IossSTKMeshStruct(disc_params, comm, numParams));
 #else
         TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" || method == "Pamgen",
                 Teuchos::Exceptions::InvalidParameter,
@@ -123,7 +120,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
             basal_params->set("Exodus Input File Name", disc_params->get("Exodus Input File Name", "basalmesh.exo"));
             basal_params->set("Workset Size", basal_ws_size);
         }
-        basalMesh = createMeshStruct(basal_params, Teuchos::null, comm, numParams);
+        basalMesh = createMeshStruct(basal_params, comm, numParams);
         return Teuchos::rcp(new ExtrudedSTKMeshStruct(disc_params, comm, basalMesh, numParams));
     }
     else if (method == "Cubit") {
@@ -222,9 +219,16 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
     case AbstractMeshStruct::STK_MS:
     {
       auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-      auto disc = Teuchos::rcp(new STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
-      disc->updateMesh();
-      return disc;
+      if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
+        auto disc = Teuchos::rcp(new BlockedDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
+        disc->updateMesh();
+        return disc;
+      } else
+      {
+        auto disc = Teuchos::rcp(new STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
+        disc->updateMesh();
+        return disc;
+      }
       break;
     }
   }

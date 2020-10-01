@@ -113,11 +113,9 @@ namespace Albany
 
 GenericSTKMeshStruct::GenericSTKMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
-    const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
     const int numDim_,
     const int numParams_)
     : params(params_),
-      adaptParams(adaptParams_),
       num_params(numParams_)
 {
   metaData = Teuchos::rcp(new stk::mesh::MetaData());
@@ -256,7 +254,7 @@ void GenericSTKMeshStruct::setAllPartsIO()
 #ifdef ALBANY_SEACAS
   for (auto& it : partVec)
   {
-    stk::mesh::Part& part = *it.second;
+    stk::mesh::Part& part = *it;
     if (!stk::io::is_part_io_part(part))
       stk::io::put_io_part_attribute(part);
   }
@@ -277,7 +275,7 @@ void GenericSTKMeshStruct::setAllPartsIO()
 
 void
 GenericSTKMeshStruct::cullSubsetParts(std::vector<std::string>& ssNames,
-    std::map<std::string, stk::mesh::Part*>& partVec){
+    std::map<std::string, stk::mesh::Part*>& partMap){
 
 /*
 When dealing with sideset lists, it is common to have parts that are subsets of other parts, like:
@@ -299,7 +297,7 @@ This function gets rid of the subset in the list.
   map<std::string, stk::mesh::Part*>::iterator it;
   std::vector<stk::mesh::Part*>::const_iterator p;
 
-  for(it = partVec.begin(); it != partVec.end(); ++it){ // loop over the parts in the map
+  for(it = partMap.begin(); it != partMap.end(); ++it){ // loop over the parts in the map
 
     // for each part in turn, get the name of parts that are a subset of it
 
@@ -308,14 +306,14 @@ This function gets rid of the subset in the list.
     for ( p = subsets.begin() ; p != subsets.end() ; ++p ) {
       const std::string & n = (*p)->name();
 //      std::cout << "Erasing: " << n << std::endl;
-      partVec.erase(n); // erase it if it is in the base map
+      partMap.erase(n); // erase it if it is in the base map
     }
   }
 
 //  ssNames.clear();
 
   // Build the remaining data structures
-  for(it = partVec.begin(); it != partVec.end(); ++it){ // loop over the parts in the map
+  for(it = partMap.begin(); it != partMap.end(); ++it){ // loop over the parts in the map
 
     std::string ssn = it->first;
     ssNames.push_back(ssn);
@@ -352,71 +350,6 @@ int GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
   }
 }
 
-void GenericSTKMeshStruct::computeAddlConnectivity()
-{
-
-  if(adaptParams.is_null()) return;
-
-  std::string& method = adaptParams->get("Method", "");
-
-  // Mesh fracture requires full mesh connectivity, created here
-  if(method == "Random"){
-
-    stk::mesh::PartVector add_parts;
-    stk::mesh::create_adjacent_entities(*bulkData, add_parts);
-
-    stk::mesh::EntityRank sideRank = metaData->side_rank();
-
-    std::vector<stk::mesh::Entity> element_lst;
-  //  stk::mesh::get_entities(*(bulkData),stk::topology::ELEMENT_RANK,element_lst);
-
-    stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
-    stk::mesh::Selector select_owned = metaData->locally_owned_part();
-
-  /*
-        stk::mesh::Selector select_owned_in_part =
-        stk::mesh::Selector( metaData->universal_part() ) &
-        stk::mesh::Selector( metaData->locally_owned_part() );
-
-        stk::mesh::get_selected_entities( select_owned_in_part ,
-  */
-
-     // Loop through only on-processor elements as we are just deleting entities inside the element
-     stk::mesh::get_selected_entities( select_owned,
-        bulkData->buckets( stk::topology::ELEMENT_RANK ) ,
-        element_lst );
-
-    bulkData->modification_begin();
-
-    // remove all relationships from element unless to faces(segments
-    //   in 2D) or nodes
-    for (unsigned int i = 0; i < element_lst.size(); ++i){
-      stk::mesh::Entity element = element_lst[i];
-      only_keep_connectivity_to_specified_ranks(*bulkData, element, stk::topology::NODE_RANK, sideRank);
-    }
-
-    if (bulkData->mesh_meta_data().spatial_dimension() == 3){
-      // Remove extra relations from face
-      std::vector<stk::mesh::Entity> face_lst;
-      //stk::mesh::get_entities(*(bulkData),stk::topology::ELEMENT_RANK-1,face_lst);
-      // Loop through all faces visible to this processor, as a face can be visible on two processors
-      stk::mesh::get_selected_entities( select_owned_or_shared,
-                                        bulkData->buckets( sideRank ) ,
-                                        face_lst );
-
-      for (unsigned int i = 0; i < face_lst.size(); ++i) {
-        stk::mesh::Entity face = face_lst[i];
-
-        only_keep_connectivity_to_specified_ranks(*bulkData, face, stk::topology::ELEMENT_RANK, stk::topology::EDGE_RANK);
-      }
-    }
-
-    fix_node_sharing(*bulkData);
-    bulkData->modification_end();
-  }
-
-}
-
 void GenericSTKMeshStruct::setDefaultCoordinates3d ()
 {
   // If the mesh is already a 3d mesh, coordinates_field==coordinates_field3d
@@ -444,6 +377,7 @@ void GenericSTKMeshStruct::setDefaultCoordinates3d ()
 }
 
 void GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm){
+
   bool rebalance = params->get<bool>("Rebalance Mesh", false);
 
   if(rebalance) {
@@ -522,12 +456,14 @@ rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     if(comm->getRank() == 0)
       std::cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
 
+
 #else
   // Silence compiler warnings
   (void) params_;
   (void) comm;
 #endif  //ALBANY_ZOLTAN
 }
+
 
 void GenericSTKMeshStruct::addNodeSetsFromSideSets ()
 {
@@ -657,7 +593,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
         // This happens, for instance, for the basal mesh for extruded meshes.
         if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end())
         {
-          ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,adaptParams,comm, num_params);
+          ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,comm, num_params);
           this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
           TEUCHOS_TEST_FOR_EXCEPTION (this->sideSetMeshStructs[ss_name]==Teuchos::null, std::runtime_error,
                                       "Error! Could not cast side mesh to AbstractSTKMeshStruct.\n");
@@ -1709,8 +1645,8 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->sublist("Required Fields Info", false, "Info for the creation of the required fields in the STK mesh");
 
   validPL->set<bool>("Ignore Side Maps", true, "If true, we ignore possible side maps already imported from the exodus file");
-  // Uniform percept adaptation of input mesh prior to simulation
 
+// Uniform percept adaptation of input mesh prior to simulation
   validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
 
   validPL->sublist("Side Set Discretizations", false, "A sublist containing info for storing side discretizations");

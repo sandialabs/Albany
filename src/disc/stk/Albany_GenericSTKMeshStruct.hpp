@@ -40,9 +40,7 @@ public:
 protected:
   GenericSTKMeshStruct(
                 const Teuchos::RCP<Teuchos::ParameterList>& params,
-                const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
-                const int numDim /*old default: -1*/,
-		const int numParams);  
+                const int numDim /*old default: -1*/, const int numParams);  
 
   virtual ~GenericSTKMeshStruct() = default;
 
@@ -137,21 +135,12 @@ protected:
 
   void checkFieldIsInMesh (const std::string& fname, const std::string& ftype) const;
 
-  //! Perform initial adaptation input checking
-  void checkInput(std::string option, std::string value, std::string allowed_values);
-
-  //! Rebuild the mesh with elem->face->segment->node connectivity for adaptation
-  void computeAddlConnectivity();
-
   void setDefaultCoordinates3d ();
 
   Teuchos::RCP<Teuchos::ParameterList> getValidGenericSTKParameters(
        std::string listname = "Discretization Param Names") const;
 
   Teuchos::RCP<Teuchos::ParameterList> params;
-
-  //! The adaptation parameter list (null if the problem isn't adaptive)
-  Teuchos::RCP<Teuchos::ParameterList> adaptParams;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
 

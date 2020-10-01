@@ -332,6 +332,9 @@ SolverFactory::getValidAppParameters() const
   validPL->sublist("Piro", false, "Piro sublist");
   validPL->sublist("Coupled System", false, "Coupled system sublist");
   validPL->sublist("Alternating System", false, "Alternating system sublist");
+  validPL->sublist("Block ID to Physics ID Mapping", false, "Block to physics sublist");
+  validPL->sublist("Physics Blocks", false, "Physics blocks sublist");
+  validPL->sublist("Field Order", false, "Field order sublist");
 
   // validPL->set<std::string>("Jacobian Operator", "Have Jacobian", "Flag to
   // allow Matrix-Free specification in Piro");

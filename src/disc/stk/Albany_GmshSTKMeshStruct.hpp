@@ -132,10 +132,6 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                            std::vector<int>& tags,
                            std::stringstream& ss);
 
-  // Create the element blocks
-  // Current only creates `Element Block 0` 
-  void create_element_block();
-
   // Creates a nodeset will all nodes
   void set_all_nodes_boundary( std::vector<std::string>& nsNames);
 

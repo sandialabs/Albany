@@ -306,6 +306,7 @@ list(APPEND SOURCES
   disc/stk/Albany_STKNodeSharing.cpp
   disc/stk/Albany_STK3DPointStruct.cpp
   disc/stk/Albany_TmplSTKMeshStruct.cpp
+  disc/stk/STKConnManager.cpp
 )
 list (APPEND HEADERS
   disc/stk/Albany_AbstractSTKFieldContainer.hpp
@@ -332,6 +333,7 @@ list (APPEND HEADERS
   disc/stk/Albany_STK3DPointStruct.hpp
   disc/stk/Albany_TmplSTKMeshStruct.hpp
   disc/stk/Albany_TmplSTKMeshStruct_Def.hpp
+  disc/stk/STKConnManager.hpp
 )
 
 if (ALBANY_STK_REBALANCE)

@@ -189,12 +189,13 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 
   this->addStateStructs(sis);
 
-  initializeSTKAdaptation();
+  initializeProcRankField();
+
 }
 
 template <DiscType Interleaved>
 void
-MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
+MultiSTKFieldContainer<Interleaved>::initializeProcRankField()
 {
   using ISFT = AbstractSTKFieldContainer::IntScalarFieldType;
   using SFT  = AbstractSTKFieldContainer::ScalarFieldType;
@@ -209,7 +210,7 @@ MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
 #endif
-}
+ }
 
 template <DiscType Interleaved>
 void
