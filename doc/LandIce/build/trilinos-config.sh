@@ -128,4 +128,6 @@ cmake \
  -D Trilinos_ENABLE_Tpetra:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+ -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
+ -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
  lcm_package_dir
