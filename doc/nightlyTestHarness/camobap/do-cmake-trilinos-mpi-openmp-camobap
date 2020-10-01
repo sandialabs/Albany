@@ -66,7 +66,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Kokkos_ENABLE_OPENMP:BOOL=ON \
       -D Kokkos_ENABLE_PTHREAD:BOOL=OFF \
       -D Kokkos_ENABLE_SERIAL:BOOL=ON \
-      -D Kokkos_ENABLE_TESTS:BOOL=ON \
+      -D Kokkos_ENABLE_TESTS:BOOL=OFF \
       -D TPL_ENABLE_Thrust:BOOL=OFF \
       -D TPL_ENABLE_CUDA:BOOL=OFF \
       -D TPL_ENABLE_CUSPARSE:BOOL=OFF \
@@ -145,6 +145,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
       -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
+      -D Kokkos_ENABLE_TESTS:BOOL=OFF \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
