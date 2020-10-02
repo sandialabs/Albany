@@ -267,7 +267,7 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
 
   std::string ebn="Element Block 0";
-  partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
+  partVec.push_back(&metaData->declare_part(ebn, stk::topology::ELEMENT_RANK));
   std::map<std::string, int> ebNameToIndex;
   ebNameToIndex[ebn] = 0;
 
