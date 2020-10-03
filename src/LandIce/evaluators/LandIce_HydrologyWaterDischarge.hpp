@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {
@@ -73,6 +74,7 @@ private:
   double k_0;
   double alpha;
   double beta;
+  int alpha_N, alpha_D;
 
   bool regularize;
   bool needsGradPhiNorm;

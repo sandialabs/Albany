@@ -8,6 +8,8 @@
 #include "Phalanx_Print.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
+#include "LandIce_HydrologyWaterDischarge.hpp"
+
 namespace LandIce
 {
 
@@ -57,7 +59,17 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& darcy_law_params = hydrology_params.sublist("Darcy Law");
 
   k_0   = darcy_law_params.get<double>("Transmissivity");
-  alpha = darcy_law_params.get<double>("Water Thickness Exponent");
+  if (darcy_law_params.isParameter("Water Thickness Exponent")) {
+    alpha = darcy_law_params.get<double>("Water Thickness Exponent");
+    alpha_N = alpha_D = 0;
+  } else {
+    alpha_N = darcy_law_params.get<int>("Water Thickness Exponent Num");
+    alpha_D = darcy_law_params.get<int>("Water Thickness Exponent Den");
+    TEUCHOS_TEST_FOR_EXCEPTION (
+        alpha_D!=3 && alpha_D!=9,
+        Teuchos::Exceptions::InvalidParameter,
+        "Error! 'Darcy Law: Water Thickness Exponent Den' must be 3 or 9.\n");
+  }
   beta  = darcy_law_params.get<double>("Potential Gradient Norm Exponent");
 
   TEUCHOS_TEST_FOR_EXCEPTION (
@@ -88,7 +100,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes>
 void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(gradPhi,fm);
@@ -133,10 +145,20 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
 
   if (needsGradPhiNorm) {
     double grad_norm_exponent = beta - 2.0;
+    ScalarT hpow(0.0);
     for (unsigned int cell=0; cell < workset.numCells; ++cell) {
       for (unsigned int qp=0; qp < numQPs; ++qp) {
+        if (alpha_D==3 || alpha_D==9) {
+          hpow = std::pow(h(cell,qp),alpha_N);
+          hpow = std::cbrt(hpow);
+          if (alpha_D==9) {
+            hpow = std::cbrt(hpow);
+          }
+        } else {
+          hpow = std::pow(h(cell,qp),alpha);
+        }
         for (unsigned int dim(0); dim<numDim; ++dim) {
-          q(cell,qp,dim) = -k_0 * (std::pow(h(cell,qp),alpha)+regularization)
+          q(cell,qp,dim) = -k_0 * (hpow+regularization)
                                 * std::pow(gradPhiNorm(cell,qp),grad_norm_exponent)
                                 * gradPhi(cell,qp,dim);
         }
@@ -177,7 +199,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     printedReg = regularization;
   }
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
+  const auto& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet)
   {
     // Get the local data of side and cell
