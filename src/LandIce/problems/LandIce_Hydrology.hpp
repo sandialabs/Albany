@@ -662,23 +662,25 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ------- Sliding Velocity -------- //
-  p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Velocity Norm"));
+  if (!is_input_state_scalar[sliding_velocity_name]) {
+    p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Velocity Norm"));
 
-  // Input
-  p->set<std::string>("Field Name",basal_velocity_name);
-  p->set<std::string>("Field Layout","Cell QuadPoint Vector");
-  p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Field Norm"));
+    // Input
+    p->set<std::string>("Field Name",basal_velocity_name);
+    p->set<std::string>("Field Layout","Cell QuadPoint Vector");
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Field Norm"));
 
-  // Output
-  p->set<std::string>("Field Norm Name",sliding_velocity_name);
+    // Output
+    p->set<std::string>("Field Norm Name",sliding_velocity_name);
 
-  ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
+    ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
 
-  // ------- Sliding Velocity at nodes (for output in the mesh, if needed) -------- //
-  p->set<std::string>("Field Layout","Cell Node Vector");
-  ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
+    // ------- Sliding Velocity at nodes (for output in the mesh, if needed) -------- //
+    p->set<std::string>("Field Layout","Cell Node Vector");
+    ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   // ------- Hydraulic Potential Gradient Norm -------- //
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Velocity Norm"));
