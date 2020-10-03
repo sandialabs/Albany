@@ -93,6 +93,7 @@ private:
   bool use_melting;
   bool nodal_equation;
   bool penalization;
+  bool use_eff_cavity;
 
   // Variables necessary for stokes coupling
   bool                            stokes_coupling;

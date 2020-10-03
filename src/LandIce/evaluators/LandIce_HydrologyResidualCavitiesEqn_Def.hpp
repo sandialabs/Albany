@@ -68,6 +68,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   } else {
     has_p_dot = false;
   }
+  use_eff_cavity = cav_eqn_params.get<bool>("Use Effective Cavity",true);
 
   use_melting = cav_eqn_params.get<bool>("Use Melting", false);
 
@@ -203,7 +204,8 @@ evaluateFieldsSide (typename Traits::EvalData workset)
       res_node = 0;
       if (nodal_equation) {
         res_node = (use_melting ? m(cell,side,node)/rho_i : zero)
-                 + (h_r - h(cell,side,node))*u_b(cell,side,node)/l_r
+                 + (use_eff_cavity ? (h_r - h(cell,side,node))*u_b(cell,side,node)/l_r
+                                   : ScalarT(h_r*u_b(cell,side,node)))
                  - c_creep*h(cell,side,node)*ice_softness(cell)*std::pow(N(cell,side,node),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,node) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,side,node) : zero);
@@ -236,7 +238,8 @@ evaluateFieldsCell (typename Traits::EvalData workset)
       res_node = 0;
       if (nodal_equation) {
         res_node = (use_melting ? m(cell,node)/rho_i : zero)
-                 + (h_r - h(cell,node))*u_b(cell,node)/l_r
+                 + (use_eff_cavity ? (h_r - h(cell,node))*u_b(cell,node)/l_r
+                                   : ScalarT(h_r*u_b(cell,node)))
                  - c_creep*h(cell,node)*ice_softness(cell)*std::pow(N(cell,node),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,node) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,node) : zero);
