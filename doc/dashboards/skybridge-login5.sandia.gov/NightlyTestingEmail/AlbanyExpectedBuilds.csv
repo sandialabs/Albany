@@ -1,6 +1,4 @@
 group, site, buildname 
-Nightly, algol.ca.sandia.gov, algol.ca.sandia.gov-trilinos
-Nightly, algol.ca.sandia.gov, algol.ca.sandia.gov-lcm
 Nightly, blake.sandia.gov, blake-serial-Trilinos
 Nightly, blake.sandia.gov, blake-openmp-Trilinos
 Nightly, blake.sandia.gov, blake-serial-Albany
@@ -25,15 +23,11 @@ Nightly, cee-compute025, Linux-3.10.0-1062.9.1.el7.x86_64-base-trilinos
 Nightly, cee-compute025, Linux-3.10.0-1062.9.1.el7.x86_64-base-albany
 Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-trilinos
 Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-albany
-Nightly, ceerws1006, ceerws1006-trilinos
-Nightly, ceerws1006, ceerws1006-lcm
 Nightly, cori.nersc.gov, cori-Trilinos
 Nightly, cori.nersc.gov, cori-Albany
 Nightly, cori.nersc.gov, cori-CISM-Albany
 Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Albany
 Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Cism-Albany
-Nightly, proxima.ca.sandia.gov, proxima.ca.sandia.gov-trilinos
-Nightly, proxima.ca.sandia.gov, proxima.ca.sandia.gov-lcm
 Nightly, ride.sandia.gov, ride-CUDA-Trilinos
 Nightly, ride.sandia.gov, ride-CUDA-Albany
 Nightly, skybridge-login5, skybridge-login5-trilinos
