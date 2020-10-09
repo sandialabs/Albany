@@ -14,6 +14,30 @@ else ()
  set (USE_SERIAL_MESH "false")
 endif()
 
+
+###########################################
+###     Import 2d ascii mesh (test)     ###
+###########################################
+
+set (testName ${testNameRoot}_Import2DAsciiMesh)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_create_exo_from_msh.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_create_exo_from_msh.yaml)
+ 
+IF (ALBANY_IOPX AND ALBANY_MPI)
+  add_test(${testName} ${Albany.exe} input_create_exo_from_msh.yaml)  
+  set_tests_properties(${testName}
+                       PROPERTIES
+                       LABELS         "LandIce")  
+ENDIF ()
+
+add_test(${testName}_Serial ${SerialAlbany.exe} input_create_exo_from_msh.yaml)
+          
+set_tests_properties(${testName}_Serial
+                       PROPERTIES
+                       LABELS         "LandIce")
+
+
 ####################################
 ###     Populate mesh (test)     ###
 ####################################
