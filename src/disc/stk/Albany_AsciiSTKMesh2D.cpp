@@ -112,7 +112,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
       int temp(0);
       if(shape == "Triangle")
       {
-        etopology = stk::topology::TRI_3;
+        etopology = stk::topology::TRI_3_2D;
         for (int i = 0; i < NumElems; i++)
         {
           if(globalIds)
@@ -121,7 +121,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
             ifile >> elems[i][0] >> elems[i][1] >> elems[i][2] >>  temp;
         }
       } else { // Quadrilateral
-        etopology = stk::topology::QUAD_4;
+        etopology = stk::topology::QUAD_4_2D;
         for (int i = 0; i < NumElems; i++)
         {
           if(globalIds)
