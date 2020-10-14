@@ -159,6 +159,11 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 
   std::string ebn = "Element Block 0";
+  if (commT->getSize() > 0){ // running in parallel, need to exchange the topology with PE 0
+     int enum_to_int = static_cast<int>(etopology);
+     Teuchos::broadcast(*commT,0,1,&enum_to_int);
+     etopology = static_cast<stk::topology::topology_t>(enum_to_int);
+  }
   partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
   shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(etopology);
   this->addElementBlockInfo(0, ebn, partVec[0], shards_ctd);
