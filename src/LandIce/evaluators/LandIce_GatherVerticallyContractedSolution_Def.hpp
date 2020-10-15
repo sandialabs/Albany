@@ -416,8 +416,23 @@ evaluateFields(typename Traits::EvalData workset)
   bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
   bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
   bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
+  bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
+  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
+  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
 
-  if(g_xx_is_active||g_px_is_active) {
+  // is_x_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_xx, Hv_g_xp, Hv_f_xx, or Hv_f_xp, i.e. if the first derivative is w.r.t. the solution.
+  // If one of those is active, we have to initialize the first level of AD derivatives:
+  // .fastAccessDx().val().
+  const bool is_x_active = g_xx_is_active || g_xp_is_active || f_xx_is_active || f_xp_is_active;
+
+  // is_x_direction_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_xx, Hv_g_px, Hv_f_xx, or Hv_f_px, i.e. if the second derivative is w.r.t. the solution direction.
+  // If one of those is active, we have to initialize the second level of AD derivatives:
+  // .val().fastAccessDx().
+  const bool is_x_direction_active = g_xx_is_active || g_px_is_active || f_xx_is_active || f_px_is_active;
+
+  if(is_x_direction_active) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         direction_x.is_null(),
         Teuchos::Exceptions::InvalidParameter,
@@ -480,7 +495,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
         std::vector<double> contrDirection(this->vecDim,0);
 
-        if (g_xx_is_active||g_px_is_active)
+        if (is_x_direction_active)
           for(int il=0; il<numLayers+1; ++il) {
             const GO gnode = layeredMeshNumbering.getId(baseId, il);
             const LO inode = ov_node_indexer.getLocalElement(gnode);
@@ -491,19 +506,27 @@ evaluateFields(typename Traits::EvalData workset)
         if(this->isVector) {
           for(int comp=0; comp<this->vecDim; ++comp) {
             this->contractedSol(elem_LID,elem_side,i,comp) = HessianVecFad(this->contractedSol(elem_LID,elem_side,i,comp).size(), contrSol[comp]);
-            if (g_xx_is_active||g_px_is_active)
-              this->contractedSol(elem_LID,elem_side,i,comp).val().fastAccessDx(0) = contrDirection[comp];
-            if (g_xx_is_active||g_xp_is_active)
+            // If we differentiate w.r.t. the solution, we have to set the first
+            // derivative to 1
+            if (is_x_active)
               for(int il=0; il<numLayers+1; ++il)
                 this->contractedSol(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset).val() = quadWeights[il] * workset.j_coeff;
+            // If we differentiate w.r.t. the solution direction, we have to set
+            // the second derivative to the related direction value
+            if (is_x_direction_active)
+              this->contractedSol(elem_LID,elem_side,i,comp).val().fastAccessDx(0) = contrDirection[comp];
           }
         } else {
           this->contractedSol(elem_LID,elem_side,i) = HessianVecFad(this->contractedSol(elem_LID,elem_side,i).size(), contrSol[0]);
-          if (g_xx_is_active||g_px_is_active)
-            this->contractedSol(elem_LID,elem_side,i).val().fastAccessDx(0) = contrDirection[0];
-          if (g_xx_is_active||g_xp_is_active)
+          // If we differentiate w.r.t. the solution, we have to set the first
+          // derivative to 1
+          if (is_x_active)
             for(int il=0; il<numLayers+1; ++il)
               this->contractedSol(elem_LID,elem_side,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset).val() = quadWeights[il] * workset.j_coeff;
+          // If we differentiate w.r.t. the solution direction, we have to set
+          // the second derivative to the related direction value
+          if (is_x_direction_active)
+            this->contractedSol(elem_LID,elem_side,i).val().fastAccessDx(0) = contrDirection[0];
         }
       }
     }

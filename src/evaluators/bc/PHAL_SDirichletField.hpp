@@ -127,6 +127,15 @@ class SDirichletField<PHAL::AlbanyTraits::HessianVec, Traits>
 
     SDirichletField(Teuchos::ParameterList& p);
 
+    /**
+    * @brief preEvaluate phase for PHAL::AlbanyTraits::HessianVec EvaluationType.
+    *
+    * During the computation of the Hessian-vector product of the residual
+    * multiplied by Lagrange multipliers, a preEvaluate phase is used to zero
+    * out the Lagrange multipliers associated to degrees of freedom constrained
+    * by a Dirichlet boundary condition.
+    */
+    void preEvaluate(typename Traits::EvalData d);
     void evaluateFields(typename Traits::EvalData d);
 };
 

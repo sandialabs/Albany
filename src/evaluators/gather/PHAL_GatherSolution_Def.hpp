@@ -1026,6 +1026,9 @@ evaluateFields(typename Traits::EvalData workset)
   bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
   bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
   bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
+  bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
+  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
+  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
   x_constView = Albany::getLocalData(x);
   if(!xdot.is_null()) {
     xdot_constView = Albany::getLocalData(xdot);
@@ -1034,10 +1037,19 @@ evaluateFields(typename Traits::EvalData workset)
     xdot_constView = Albany::getLocalData(xdot);
   }
 
-  const bool is_active = g_xx_is_active || g_xp_is_active;
-  const bool is_direction_active = g_xx_is_active || g_px_is_active;
+  // is_x_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_xx, Hv_g_xp, Hv_f_xx, or Hv_f_xp, i.e. if the first derivative is w.r.t. the solution.
+  // If one of those is active, we have to initialize the first level of AD derivatives:
+  // .fastAccessDx().val().
+  const bool is_x_active = g_xx_is_active || g_xp_is_active || f_xx_is_active || f_xp_is_active;
 
-  if(is_direction_active) {
+  // is_x_direction_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_xx, Hv_g_px, Hv_f_xx, or Hv_f_px, i.e. if the second derivative is w.r.t. the solution direction.
+  // If one of those is active, we have to initialize the second level of AD derivatives:
+  // .val().fastAccessDx().
+  const bool is_x_direction_active = g_xx_is_active || g_px_is_active || f_xx_is_active || f_px_is_active;
+
+  if(is_x_direction_active) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         direction_x.is_null(),
         Teuchos::Exceptions::InvalidParameter,
@@ -1065,11 +1077,11 @@ evaluateFields(typename Traits::EvalData workset)
         valref = FadType(valref.size(), xvec_val);
         // If we differentiate w.r.t. the solution, we have to set the first
         // derivative to 1
-        if (is_active)
+        if (is_x_active)
           valref.fastAccessDx(firstunk + eq).val() = 1;
         // If we differentiate w.r.t. the solution direction, we have to set
         // the second derivative to the related direction value
-        if (is_direction_active)
+        if (is_x_direction_active)
           valref.val().fastAccessDx(0) = direction_x_constView[nodeID(cell,node,this->offset + eq)];
       }
     }

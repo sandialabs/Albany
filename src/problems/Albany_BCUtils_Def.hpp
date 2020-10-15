@@ -912,6 +912,9 @@ Albany::BCUtils<BCTraits>::buildFieldManager(
   PHX::Tag<AlbanyTraits::DistParamDeriv::ScalarT> dpd_tag0(allBC, dummy);
   fm->requireField<AlbanyTraits::DistParamDeriv>(dpd_tag0);
 
+  PHX::Tag<AlbanyTraits::HessianVec::ScalarT> Hv_tag0(allBC, dummy);
+  fm->requireField<AlbanyTraits::HessianVec>(Hv_tag0);
+
   return fm;
 }
 

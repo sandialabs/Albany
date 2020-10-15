@@ -276,6 +276,69 @@ private:
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
 };
 
+// **************************************************************
+// HessianVec
+// **************************************************************
+
+/**
+ * @brief Template specialization of the ScatterResidual Class for PHAL::AlbanyTraits::HessianVec EvaluationType.
+ *
+ * This specialization is used to scatter the residual for the computation of:
+ * <ul>
+ *  <li> The @f$ H_{xx}(f,z)v_{x} @f$ contribution of the Hessian-vector product of the residual:
+ *       \f[
+ *         H_{xx}(f,z)v_{x}=\left.\frac{\partial}{\partial r} \nabla_{x} \left\langle f(x+ r\,v_{x},p_1, p_2),z\right\rangle\right|_{r=0},
+ *       \f]
+ *  <li> The @f$ H_{xp_1}(f,z)v_{p_1} @f$ contribution of the Hessian-vector product of the residual:
+ *       \f[
+ *         H_{xp_1}(f,z)v_{p_1}=\left.\frac{\partial}{\partial r} \nabla_{x} \left\langle f(x, p_1+ r\,v_{p_1}, p_2),z\right\rangle\right|_{r=0},
+ *       \f]
+ *  <li> The @f$ H_{p_2x}(f,z)v_{x} @f$ contribution of the Hessian-vector product of the residual:
+ *       \f[
+ *         H_{p_2x}(f,z)v_{x}=\left.\frac{\partial}{\partial r} \nabla_{p_2} \left\langle f(x+ r\,v_{x},p_1, p_2),z\right\rangle\right|_{r=0},
+ *       \f]
+ *  <li> The @f$ H_{p_2p_1}(f,z)v_{p_1} @f$ contribution of the Hessian-vector product of the residual:
+ *       \f[
+ *         H_{p_2p_1}(f,z)v_{p_1}=\left.\frac{\partial}{\partial r} \nabla_{p_2} \left\langle f(x, p_1+ r\,v_{p_1}, p_2),z\right\rangle\right|_{r=0},
+ *       \f]
+ * </ul>
+ *
+ *  where  @f$ x @f$  is the solution,  @f$ p_1 @f$  is a first distributed parameter,  @f$ p_2 @f$  is a potentially different second distributed parameter,
+ *  @f$  f @f$  is the residual, @f$  z  @f$ is the Lagrange multiplier vector,  @f$ v_{x} @f$  is a direction vector
+ *  with the same dimension as the vector  @f$ x @f$, and @f$ v_{p_1} @f$  is a direction vector with the same dimension as the vector  @f$ p_1 @f$.
+ */
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::HessianVec, Traits>  {
+public:
+  ScatterResidual(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
+private:
+  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+};
+
+/**
+ * @brief Template specialization of the ScatterResidualWithExtrudedParams Class for PHAL::AlbanyTraits::HessianVec EvaluationType.
+ *
+ * This specialization is used to scatter the residual for the computation of:
+ * <ul>
+ *  <li> The @f$ H_{p_2x}(f,z)v_{x} @f$ contribution of the Hessian-vector product of the residual:
+ *       \f[
+ *         H_{p_2x}(f,z)v_{x}=\left.\frac{\partial}{\partial r} \nabla_{p_2} \left\langle f(x+ r\,v_{x},p_1, p_2),z\right\rangle\right|_{r=0},
+ *       \f]
+ *  <li> The @f$ H_{p_2p_1}(f,z)v_{p_1} @f$ contribution of the Hessian-vector product of the residual:
+ *       \f[
+ *         H_{p_2p_1}(f,z)v_{p_1}=\left.\frac{\partial}{\partial r} \nabla_{p_2} \left\langle f(x, p_1+ r\,v_{p_1}, p_2),z\right\rangle\right|_{r=0},
+ *       \f]
+ * </ul>
+ *
+ *  where  @f$ x @f$  is the solution,  @f$ p_1 @f$  is a first distributed parameter,  @f$ p_2 @f$  is a potentially different second distributed parameter
+ *  which is extruded, @f$  f @f$  is the residual, @f$  z  @f$ is the Lagrange multiplier vector,  @f$ v_{x} @f$  is a direction vector
+ *  with the same dimension as the vector  @f$ x @f$, and @f$ v_{p_1} @f$  is a direction vector with the same dimension as the vector  @f$ p_1 @f$.
+ */
 template<typename Traits>
 class ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec,Traits>
   : public ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>  {
@@ -290,26 +353,11 @@ public:
                       PHX::FieldManager<Traits>& vm) {
     ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::postRegistrationSetup(d,vm);
   }
+  void evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData d);
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
-};
-
-// **************************************************************
-// HessianVec
-// **************************************************************
-template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::HessianVec, Traits>  {
-public:
-  ScatterResidual(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d);
-protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
 };
 
 // **************************************************************

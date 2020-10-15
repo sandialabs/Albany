@@ -361,13 +361,26 @@ evaluateFields(typename Traits::EvalData workset)
   bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
   bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
   bool g_pp_is_active = !workset.hessianWorkset.hess_vec_prod_g_pp.is_null();
+  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
+  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
+  bool f_pp_is_active = !workset.hessianWorkset.hess_vec_prod_f_pp.is_null();
 
-  // Are we differentiating w.r.t. this parameter?
-  const bool is_active = (workset.dist_param_deriv_name == this->param_name) && (g_px_is_active||g_pp_is_active);
-  const bool is_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name) && (g_xp_is_active || g_pp_is_active);
+  // is_p_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_px, Hv_g_pp, Hv_f_px, or Hv_f_pp, i.e. if the first derivative is w.r.t. this parameter.
+  // If one of those is active, we have to initialize the first level of AD derivatives:
+  // .fastAccessDx().val().
+  const bool is_p_active = (workset.dist_param_deriv_name == this->param_name)
+    && (g_px_is_active||g_pp_is_active||f_px_is_active||f_pp_is_active);
+
+  // is_p_direction_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_xp, Hv_g_pp, Hv_f_xp, or Hv_f_pp, i.e. if the second derivative is w.r.t. this parameter direction.
+  // If one of those is active, we have to initialize the second level of AD derivatives:
+  // .val().fastAccessDx().
+  const bool is_p_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name)
+    && (g_xp_is_active || g_pp_is_active || f_xp_is_active || f_pp_is_active);
 
   Teuchos::ArrayRCP<const ST> vvec_constView;
-  if(is_direction_active) {
+  if(is_p_direction_active) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         vvec.is_null(),
         Teuchos::Exceptions::InvalidParameter,
@@ -390,11 +403,11 @@ evaluateFields(typename Traits::EvalData workset)
       val = FadType(num_deriv, pvec_val);
       // If we differentiate w.r.t. this parameter, we have to set the first
       // derivative to 1
-      if (is_active)
+      if (is_p_active)
         val.fastAccessDx(node).val() = 1;
       // If we differentiate w.r.t. this parameter direction, we have to set
       // the second derivative to the related direction value
-      if (is_direction_active)
+      if (is_p_direction_active)
         val.val().fastAccessDx(0) = (id >= 0) ? vvec_constView[id] : 0;
     }
   }
@@ -439,13 +452,26 @@ evaluateFields(typename Traits::EvalData workset)
   bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
   bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
   bool g_pp_is_active = !workset.hessianWorkset.hess_vec_prod_g_pp.is_null();
+  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
+  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
+  bool f_pp_is_active = !workset.hessianWorkset.hess_vec_prod_f_pp.is_null();
 
-  // Are we differentiating w.r.t. this parameter?
-  const bool is_active = (workset.dist_param_deriv_name == this->param_name) && (g_px_is_active||g_pp_is_active);
-  const bool is_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name) && (g_xp_is_active || g_pp_is_active);
+  // is_p_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_px, Hv_g_pp, Hv_f_px, or Hv_f_pp, i.e. if the first derivative is w.r.t. this parameter.
+  // If one of those is active, we have to initialize the first level of AD derivatives:
+  // .dx().fastAccessDx().
+  const bool is_p_active = (workset.dist_param_deriv_name == this->param_name)
+    && (g_px_is_active||g_pp_is_active||f_px_is_active||f_pp_is_active);
+
+  // is_p_direction_active is true if we compute the Hessian-vector product contributions of either:
+  // Hv_g_xp, Hv_g_pp, Hv_f_xp, or Hv_f_pp, i.e. if the second derivative is w.r.t. this parameter direction.
+  // If one of those is active, we have to initialize the second level of AD derivatives:
+  // .fastAccessDx().dx().
+  const bool is_p_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name)
+    && (g_xp_is_active || g_pp_is_active || f_xp_is_active || f_pp_is_active);
 
   Teuchos::ArrayRCP<const ST> vvec_constView;
-  if(is_direction_active) {
+  if(is_p_direction_active) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         vvec.is_null(),
         Teuchos::Exceptions::InvalidParameter,
@@ -468,11 +494,11 @@ evaluateFields(typename Traits::EvalData workset)
       val = FadType(val.size(), pvec_val);
       // If we differentiate w.r.t. this parameter, we have to set the first
       // derivative to 1
-      if (is_active)
+      if (is_p_active)
         val.fastAccessDx(node).val() = 1;
       // If we differentiate w.r.t. this parameter direction, we have to set
       // the second derivative to the related direction value
-      if (is_direction_active)
+      if (is_p_direction_active)
         val.val().fastAccessDx(0) = (p_lid >= 0) ? vvec_constView[p_lid] : 0;
     }
   }

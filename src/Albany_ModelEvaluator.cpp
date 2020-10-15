@@ -617,10 +617,10 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
     bool hess_vec_prod_g_px_support = aDHessVec;
     bool hess_vec_prod_g_pp_support = aDHessVec;
 
-    bool hess_vec_prod_f_xx_support = false;
-    bool hess_vec_prod_f_xp_support = false;
-    bool hess_vec_prod_f_px_support = false;
-    bool hess_vec_prod_f_pp_support = false;
+    bool hess_vec_prod_f_xx_support = aDHessVec;
+    bool hess_vec_prod_f_xp_support = aDHessVec;
+    bool hess_vec_prod_f_px_support = aDHessVec;
+    bool hess_vec_prod_f_pp_support = aDHessVec;
 
     result.setSupports(
       Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xx,
@@ -926,6 +926,94 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         dt);
   }
 
+  // Need to handle hess_vec_prod_f
+
+  const Teuchos::RCP<const Thyra_MultiVector> delta_x = inArgs.get_x_direction();
+  const Teuchos::RCP<const Thyra_Vector> z = inArgs.get_f_multiplier();
+  const Teuchos::RCP<Thyra_MultiVector> f_hess_xx_v =
+    outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xx) ?
+    outArgs.get_hess_vec_prod_f_xx() : Teuchos::null;
+
+  if (Teuchos::nonnull(f_hess_xx_v)) {
+    if (delta_x.is_null()) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          Teuchos::Exceptions::InvalidParameter,
+          "hess_vec_prod_f_xx() is set in outArgs but x_direction "
+          << "is not set in inArgs.\n");
+    }
+    f_hess_xx_v->assign(0.);
+    app->evaluateResidual_HessVecProd_xx(
+        curr_time, delta_x, z, x, x_dot, x_dotdot,
+        sacado_param_vec,
+        f_hess_xx_v);
+  }
+
+  for (int l1 = 0; l1 < num_dist_param_vecs; l1++) {
+    const Teuchos::RCP<const Thyra_MultiVector> delta_p_l1 = inArgs.get_p_direction(l1 + num_param_vecs);
+    const Teuchos::RCP<Thyra_MultiVector> f_hess_xp_v =
+      outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xp, l1 + num_param_vecs) ?
+      outArgs.get_hess_vec_prod_f_xp(l1 + num_param_vecs) : Teuchos::null;
+    const Teuchos::RCP<Thyra_MultiVector> f_hess_px_v =
+      outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_px, l1 + num_param_vecs) ?
+      outArgs.get_hess_vec_prod_f_px(l1 + num_param_vecs) : Teuchos::null;
+
+    if (Teuchos::nonnull(f_hess_xp_v)) {
+      if (delta_p_l1.is_null()) {
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            Teuchos::Exceptions::InvalidParameter,
+            "hess_vec_prod_f_xp(" << l1 + num_param_vecs <<") is set in outArgs but "
+            << "p_direction(" << l1 + num_param_vecs << ") is not set in inArgs.\n");
+      }
+      f_hess_xp_v->assign(0.);
+      app->evaluateResidual_HessVecProd_xp(
+          curr_time, delta_p_l1, z, x, x_dot, x_dotdot,
+          sacado_param_vec,
+          dist_param_names[l1],
+          f_hess_xp_v);
+    }
+
+    if (Teuchos::nonnull(f_hess_px_v)) {
+      if (delta_x.is_null()) {
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            Teuchos::Exceptions::InvalidParameter,
+            "hess_vec_prod_f_px(" << l1 + num_param_vecs <<") is set in outArgs but "
+            << "x_direction is not set in inArgs.\n");
+      }
+      f_hess_px_v->assign(0.);
+      app->evaluateResidual_HessVecProd_px(
+          curr_time, delta_x, z, x, x_dot, x_dotdot,
+          sacado_param_vec,
+          dist_param_names[l1],
+          f_hess_px_v);
+    }
+
+    for (int l2 = 0; l2 < num_dist_param_vecs; l2++) {
+      const Teuchos::RCP<const Thyra_MultiVector> delta_p_l2 = inArgs.get_p_direction(l2 + num_param_vecs);
+      const Teuchos::RCP<Thyra_MultiVector> f_hess_pp_v =
+        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_pp, l1 + num_param_vecs, l2 + num_param_vecs) ?
+        outArgs.get_hess_vec_prod_f_pp(l1 + num_param_vecs, l2 + num_param_vecs) : Teuchos::null;
+
+      if (Teuchos::nonnull(f_hess_pp_v)) {
+        if (delta_p_l2.is_null()) {
+          TEUCHOS_TEST_FOR_EXCEPTION(
+              true,
+              Teuchos::Exceptions::InvalidParameter,
+              "hess_vec_prod_f_pp(" << l1 + num_param_vecs <<","<< l2 + num_param_vecs
+              << ") is set in outArgs but p_direction(" << l2 + num_param_vecs << ") is not set in inArgs.\n");
+        }
+        f_hess_pp_v->assign(0.);
+        app->evaluateResidual_HessVecProd_pp(
+            curr_time, delta_p_l2, z, x, x_dot, x_dotdot,
+            sacado_param_vec,
+            dist_param_names[l1],
+            dist_param_names[l2],
+            f_hess_pp_v);
+      }
+    }
+  }
   // Response functions
   for (int j = 0; j < outArgs.Ng(); ++j) {
     Teuchos::RCP<Thyra_Vector> g_out = outArgs.get_g(j);

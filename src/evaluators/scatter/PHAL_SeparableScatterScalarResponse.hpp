@@ -234,6 +234,35 @@ private:
 // **************************************************************
 // HessianVec
 // **************************************************************
+
+/**
+ * @brief Template specialization of the SeparableScatterScalarResponse Class for PHAL::AlbanyTraits::HessianVec EvaluationType.
+ *
+ * This specialization is used to scatter the solution for the computation of:
+ * <ul>
+ *  <li> The @f$ H_{xx}(g)v_{x} @f$ contribution of the Hessian-vector product of the response function:
+ *       \f[
+ *         H_{xx}(g)v_{x}=\left.\frac{\partial}{\partial r} \nabla_{x} g(x+ r\,v_{x},p_1, p_2)\right|_{r=0},
+ *       \f]
+ *  <li> The @f$ H_{xp_1}(g)v_{p_1} @f$ contribution of the Hessian-vector product of the response function:
+ *       \f[
+ *         H_{xp_1}(g)v_{p_1}=\left.\frac{\partial}{\partial r} \nabla_{x} g(x, p_1+ r\,v_{p_1}, p_2)\right|_{r=0},
+ *       \f]
+ *  <li> The @f$ H_{p_2x}(g)v_{x} @f$ contribution of the Hessian-vector product of the response function:
+ *       \f[
+ *         H_{p_2x}(g)v_{x}=\left.\frac{\partial}{\partial r} \nabla_{p_2} g(x+ r\,v_{x},p_1, p_2)\right|_{r=0},
+ *       \f]
+ *  <li> The @f$ H_{p_2p_1}(g)v_{p_1} @f$ contribution of the Hessian-vector product of the response function:
+ *       \f[
+ *         H_{p_2p_1}(g)v_{p_1}=\left.\frac{\partial}{\partial r} \nabla_{p_2} g(x, p_1+ r\,v_{p_1}, p_2)\right|_{r=0},
+ *       \f]
+ * </ul>
+ *
+ *  where  @f$ x @f$  is the solution,  @f$ p_1 @f$  is a first distributed parameter,  @f$ p_2 @f$  is a potentially different second distributed parameter,
+ *  @f$  g @f$  is the response function,  @f$ v_{x} @f$  is a direction vector
+ *  with the same dimension as the vector  @f$ x @f$, and @f$ v_{p_1} @f$  is a direction vector with the same dimension as the vector  @f$ p_1 @f$.
+ */
+
 template<typename Traits>
 class SeparableScatterScalarResponse<PHAL::AlbanyTraits::HessianVec,Traits>
   : public ScatterScalarResponseBase<PHAL::AlbanyTraits::HessianVec, Traits>,

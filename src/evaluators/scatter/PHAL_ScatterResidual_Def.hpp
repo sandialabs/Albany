@@ -886,7 +886,78 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of ScatterResidual::evaluateFields is not implemented yet"<< std::endl);
+  // Here we scatter the *local* response derivative
+  auto nodeID = workset.wsElNodeEqID;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xx = workset.hessianWorkset.overlapped_hess_vec_prod_f_xx;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xp = workset.hessianWorkset.overlapped_hess_vec_prod_f_xp;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_px = workset.hessianWorkset.overlapped_hess_vec_prod_f_px;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_pp = workset.hessianWorkset.overlapped_hess_vec_prod_f_pp;
+
+  Teuchos::RCP<Thyra_Vector> f_multiplier = workset.hessianWorkset.f_multiplier;
+
+  const bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
+  const bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
+  const bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
+  const bool f_pp_is_active = !workset.hessianWorkset.hess_vec_prod_f_pp.is_null();
+
+  if (!f_xx_is_active && !f_xp_is_active && !f_px_is_active && !f_pp_is_active)
+    return;
+
+  const int neq = nodeID.extent(2);
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST> > hess_vec_prod_f_xx_data, hess_vec_prod_f_xp_data, hess_vec_prod_f_px_data, hess_vec_prod_f_pp_data;
+
+  auto f_multiplier_data = Albany::getNonconstLocalData(f_multiplier);
+
+  int numDims= (this->tensorRank==2) ? this->valTensor.extent(2) : 0;
+
+  if(f_xx_is_active)
+    hess_vec_prod_f_xx_data = Albany::getNonconstLocalData(hess_vec_prod_f_xx);
+  if(f_xp_is_active)
+    hess_vec_prod_f_xp_data = Albany::getNonconstLocalData(hess_vec_prod_f_xp);
+  if(f_px_is_active)
+    hess_vec_prod_f_px_data = Albany::getNonconstLocalData(hess_vec_prod_f_px);
+  if(f_pp_is_active)
+    hess_vec_prod_f_pp_data = Albany::getNonconstLocalData(hess_vec_prod_f_pp);
+
+  Albany::IDArray  wsElDofs;
+  if(f_px_is_active||f_pp_is_active)
+    wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
+
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell ) {
+    ScalarT value=0.0;
+    for (unsigned int node=0; node<this->numNodes; ++node) {
+      for (unsigned int eq=0; eq<numFields; ++eq) {
+        typename PHAL::Ref<ScalarT const>::type valref = (
+            this->tensorRank == 0 ? this->val[eq] (cell, node) :
+            this->tensorRank == 1 ? this->valVec (cell, node, eq) :
+            this->valTensor (cell, node, eq / numDims, eq % numDims));
+
+        value += valref * f_multiplier_data[nodeID(cell,node,this->offset + eq)];
+      }
+    }
+
+    for (unsigned int node=0; node<this->numNodes; ++node) {
+      if(f_xx_is_active || f_xp_is_active) {
+        for (unsigned int eq=0; eq<numFields; ++eq) {
+          const int row = nodeID(cell,node,this->offset + eq);
+          const int deriv = neq * node + eq;
+          if (f_xx_is_active)
+            hess_vec_prod_f_xx_data[0][row] += value.dx(deriv).dx(0);
+          if (f_xp_is_active)
+            hess_vec_prod_f_xp_data[0][row] += value.dx(deriv).dx(0);
+        }
+      }
+      if(f_px_is_active || f_pp_is_active) {
+        const int row = wsElDofs((int)cell,(int)node,0);
+        if(row >=0){
+          if(f_px_is_active)
+            hess_vec_prod_f_px_data[0][row] += value.dx(node).dx(0);
+          if(f_pp_is_active)
+            hess_vec_prod_f_pp_data[0][row] += value.dx(node).dx(0);
+        }
+      }
+    } // node
+  } // cell
 }
 
 // **********************************************************************
@@ -894,7 +965,91 @@ template<typename Traits>
 void ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of ScatterResidualWithExtrudedParams::evaluateFields is not implemented yet"<< std::endl);
+  const bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
+  const bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
+  const bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
+  const bool f_pp_is_active = !workset.hessianWorkset.hess_vec_prod_f_pp.is_null();
+
+  if (!f_xx_is_active && !f_xp_is_active && !f_px_is_active && !f_pp_is_active)
+    return;
+
+  auto level_it = extruded_params_levels->find(workset.dist_param_deriv_name);
+
+  if(f_xx_is_active || f_xp_is_active)
+    ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::evaluateFields(workset);
+  if((f_px_is_active || f_pp_is_active) && level_it == extruded_params_levels->end()) //if parameter is not extruded use usual scatter.
+    return ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::evaluateFields(workset);
+  if(f_px_is_active || f_pp_is_active)
+    return ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec, Traits>::evaluate2DFieldsDerivativesDueToExtrudedParams(workset);
+  return;
+}
+
+template<typename Traits>
+void ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec, Traits>::
+evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset)
+{
+  const bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
+  const bool f_pp_is_active = !workset.hessianWorkset.hess_vec_prod_f_pp.is_null();
+
+  auto level_it = extruded_params_levels->find(workset.dist_param_deriv_name);
+
+  // Here we scatter the *local* response derivative
+  auto nodeID = workset.wsElNodeEqID;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_px = workset.hessianWorkset.overlapped_hess_vec_prod_f_px;
+  Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_pp = workset.hessianWorkset.overlapped_hess_vec_prod_f_pp;
+
+  Teuchos::RCP<Thyra_Vector> f_multiplier = workset.hessianWorkset.f_multiplier;
+
+  if (!f_px_is_active && !f_pp_is_active)
+    return;
+
+  const int neq = nodeID.extent(2);
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST> > hess_vec_prod_f_px_data, hess_vec_prod_f_pp_data;
+
+  auto f_multiplier_data = Albany::getNonconstLocalData(f_multiplier);
+
+  int numDims= (this->tensorRank==2) ? this->valTensor.extent(2) : 0;
+
+  int fieldLevel = level_it->second;
+
+  if(f_px_is_active)
+    hess_vec_prod_f_px_data = Albany::getNonconstLocalData(hess_vec_prod_f_px);
+  if(f_pp_is_active)
+    hess_vec_prod_f_pp_data = Albany::getNonconstLocalData(hess_vec_prod_f_pp);
+
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+
+  auto overlapVS = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
+  auto indexer = Albany::createGlobalLocalIndexer(overlapVS);
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    ScalarT value=0.0;
+    for (unsigned int node=0; node<this->numNodes; ++node) {
+      for (unsigned int eq=0; eq<this->numFields; ++eq) {
+        typename PHAL::Ref<ScalarT const>::type valref = (
+            this->tensorRank == 0 ? this->val[eq] (cell, node) :
+            this->tensorRank == 1 ? this->valVec (cell, node, eq) :
+            this->valTensor (cell, node, eq / numDims, eq % numDims));
+
+        value += valref * f_multiplier_data[nodeID(cell,node,this->offset + eq)];
+      }
+    }
+
+    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+    for (unsigned int node=0; node<this->numNodes; ++node) {
+      const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
+      const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
+
+      const LO row = indexer->getLocalElement(ginode);
+      if(row >=0) {
+        if (f_px_is_active)
+          hess_vec_prod_f_px_data[0][row] += value.dx(node).dx(0);
+        if (f_pp_is_active)
+          hess_vec_prod_f_pp_data[0][row] += value.dx(node).dx(0);
+      }
+    }
+  }
 }
 
 } // namespace PHAL
