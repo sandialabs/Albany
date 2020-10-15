@@ -2412,7 +2412,6 @@ Application::evaluateResidual_HessVecProd_xx(
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
 
     if (dfm != Teuchos::null) {
-      dfm_set(workset, x, xdot, xdotdot);
       loadWorksetNodesetInfo(workset);
 
       dfm->preEvaluate<EvalT>(workset);
@@ -2484,7 +2483,6 @@ Application::evaluateResidual_HessVecProd_xp(
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
 
     if (dfm != Teuchos::null) {
-      dfm_set(workset, x, xdot, xdotdot);
       loadWorksetNodesetInfo(workset);
 
       dfm->preEvaluate<EvalT>(workset);
@@ -2556,7 +2554,6 @@ Application::evaluateResidual_HessVecProd_px(
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
 
     if (dfm != Teuchos::null) {
-      dfm_set(workset, x, xdot, xdotdot);
       loadWorksetNodesetInfo(workset);
 
       dfm->preEvaluate<EvalT>(workset);
@@ -2630,7 +2627,6 @@ Application::evaluateResidual_HessVecProd_pp(
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
 
     if (dfm != Teuchos::null) {
-      dfm_set(workset, x, xdot, xdotdot);
       loadWorksetNodesetInfo(workset);
 
       dfm->preEvaluate<EvalT>(workset);
