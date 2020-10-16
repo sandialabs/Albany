@@ -2,85 +2,82 @@
 ---
 ANONYMOUS:
   Build Type: Tpetra
-  Problem: 
+  Problem:
     Name: CahnHill 2D
     Solution Method: Transient
     Phalanx Graph Visualization Detail: 0
-    Initial Condition: 
+    Initial Condition:
       Function: EBPerturb
       block_1: [0.00000000000000000e+00, 0.00000000000000000e+00]
-      Perturb IC: [1.00000000000000006e-01, 0.00000000000000000e+00]
+      Perturb IC: [1.00000000000000005e-01, 0.00000000000000000e+00]
     b: 2.00000000000000011e-01
-    gamma: 1.00000000000000005e-04
+    gamma: 1.00000000000000004e-04
     Lump Mass: true
-    Response Functions: 
-      Number: 1
-      Response 0: Solution Average
-  Discretization: 
+    Response Functions:
+      Number of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+  Discretization:
     Method: Ioss
     Exodus Input File Name: domain.exo
     Exodus Output File Name: domain_out_tpetra_tempus.exo
     Use Serial Mesh: true
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [0.00000000000000000e+00]
-    Relative Tolerance: 1.00000000000000006e-01
-    Absolute Tolerance: 1.00000000000000006e-01
-  Piro: 
-    Tempus: 
+  Piro:
+    Tempus:
       Integrator Name: Tempus Integrator
-      Tempus Integrator: 
+      Tempus Integrator:
         Integrator Type: Integrator Basic
         Screen Output Index List: '1'
         Screen Output Index Interval: 100
         Stepper Name: Tempus Stepper
-        Solution History: 
+        Solution History:
           Storage Type: Unlimited
           Storage Limit: 20
-        Time Step Control: 
+        Time Step Control:
           Initial Time: 0.00000000000000000e+00
           Initial Time Index: 0
-          Initial Time Step: 1.00000000000000006e-01
+          Initial Time Step: 1.00000000000000005e-01
           Initial Order: 0
           Final Time: 5.00000000000000000e-01
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
           Integrator Step Type: Variable
-          Time Step Control Strategy: 
+          Time Step Control Strategy:
             Time Step Control Strategy List: basic_vs
-            basic_vs: 
+            basic_vs:
               Name: Basic VS
               Reduction Factor: 5.00000000000000000e-01
               Amplification Factor: 1.75000000000000000e+00
               Minimum Value Monitoring Function: 4.00000000000000008e-02
-              Maximum Value Monitoring Function: 5.00000000000000028e-02
+              Maximum Value Monitoring Function: 5.00000000000000027e-02
           Output Time List: ''
           Output Index List: ''
           Output Time Interval: 1.00000000000000000e+01
           Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
-      Tempus Stepper: 
+      Tempus Stepper:
         Stepper Type: Backward Euler
         Solver Name: Demo Solver
         Predictor Name: None
-        Demo Solver: 
-          NOX: 
-            Direction: 
+        Demo Solver:
+          NOX:
+            Direction:
               Method: Newton
-              Newton: 
+              Newton:
                 Forcing Term Method: Constant
                 Rescue Bad Newton Solve: true
-            Line Search: 
-              Full Step: 
+            Line Search:
+              Full Step:
                 Full Step: 1.00000000000000000e+00
               Method: Full Step
             Nonlinear Solver: Line Search Based
-            Printing: 
+            Printing:
               Output Precision: 3
               Output Processor: 0
-              Output Information: 
+              Output Information:
                 Error: true
                 Warning: true
                 Outer Iteration: false
@@ -90,27 +87,27 @@ ANONYMOUS:
                 Stepper Iteration: true
                 Stepper Details: true
                 Stepper Parameters: true
-            Solver Options: 
+            Solver Options:
               Status Test Check Type: Minimal
-            Status Tests: 
+            Status Tests:
               Test Type: Combo
               Combo Type: OR
               Number of Tests: 2
-              Test 0: 
+              Test 0:
                 Test Type: NormF
                 Tolerance: 1.00000000000000002e-08
-              Test 1: 
+              Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 10
-        Demo Predictor: 
+        Demo Predictor:
           Stepper Type: Forward Euler
-      Stratimikos: 
+      Stratimikos:
         Linear Solver Type: Belos
         Preconditioner Type: Ifpack2
-        Preconditioner Types: 
-          ML: 
+        Preconditioner Types:
+          ML:
             Base Method Defaults: SA
-            ML Settings: 
+            ML Settings:
               'aggregation: type': Uncoupled
               'coarse: max size': 20
               'coarse: pre or post': post
@@ -122,4 +119,8 @@ ANONYMOUS:
               'smoother: pre or post': both
               'smoother: sweeps': 1
               ML output: 1
+  Regression For Response 0:
+    Absolute Tolerance: 1.00000000000000005e-01
+    Test Value: 0.00000000000000000e+00
+    Relative Tolerance: 1.00000000000000005e-01
 ...

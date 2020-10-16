@@ -249,6 +249,7 @@ getValidResponseParameters() const
   validPL->setParameters(*baseValidPL);
 
   validPL->set<std::string>("Name", "", "Name of response function");
+  validPL->set<std::string>("Type", "Scalar Response", "Type of response function");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<std::string>("Field Type", "", "Type of field (scalar, vector, ...)");
   validPL->set<std::string>(

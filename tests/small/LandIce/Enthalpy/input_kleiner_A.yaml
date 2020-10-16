@@ -50,11 +50,15 @@ ANONYMOUS:
         Parameter Delta: 1.0e+00
       Bed Lubrication: Dry
     Parameters:
-      Number: 1
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: 'Glen''s Law Homotopy Parameter'
     Response Functions:
-      Number: 1
-      Response 0: Solution Average
+      Number of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
@@ -125,14 +129,10 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: File
             Field Value: 0.042
-  Regression Results:
-    Number of Comparisons: 1
-    Test Values: [6.078669879412e+01]
-    Relative Tolerance: 1.0e-04
   Piro:
     LOCA:
-      Bifurcation: { }
-      Constraints: { }
+      Bifurcation: {}
+      Constraints: {}
       Predictor:
         Method: Constant
       Stepper:
@@ -143,8 +143,8 @@ ANONYMOUS:
         Max Value: 4.00000000000000022e-01
         Min Value: 0.00000000000000000e+00
       Step Size:
-        Initial Step Size: 1.00000000000000006e-01
-        Max Step Size: 1.00000000000000006e-01
+        Initial Step Size: 1.00000000000000005e-01
+        Max Step Size: 1.00000000000000005e-01
     NOX:
       Thyra Group Options:
         Function Scaling: Row Sum
@@ -173,7 +173,7 @@ ANONYMOUS:
             Write Linear System: false
             Tolerance: 1.0e-13
           Stratimikos Linear Solver:
-            NOX Stratimikos Options: { }
+            NOX Stratimikos Options: {}
             Stratimikos:
               Linear Solver Type: AztecOO
               Linear Solver Types:
@@ -189,7 +189,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.00000000000000005e-04
+                      Convergence Tolerance: 1.00000000000000004e-04
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -210,7 +210,7 @@ ANONYMOUS:
                     default values: SA
                     ML output: 0
                     'repartition: enable': 1
-                    'repartition: max min ratio': 1.32699999999999996e+00
+                    'repartition: max min ratio': 1.32699999999999995e+00
                     'repartition: min per proc': 600
                     'repartition: Zoltan dimensions': 2
                     'repartition: start level': 4
@@ -218,7 +218,7 @@ ANONYMOUS:
                     'semicoarsen: coarsen rate': 12
                     'smoother: sweeps': 4
                     'smoother: type': Chebyshev
-                    'smoother: Chebyshev eig boost': 1.19999999999999996e+00
+                    'smoother: Chebyshev eig boost': 1.19999999999999995e+00
                     'smoother: sweeps (level 0)': 1
                     'smoother: sweeps (level 1)': 4
                     'smoother: type (level 0)': line Jacobi
@@ -250,4 +250,7 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Test Value: 6.078669879412e+01
+    Relative Tolerance: 1.0e-04
 ...

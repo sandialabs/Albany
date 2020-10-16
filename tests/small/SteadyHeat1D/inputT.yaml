@@ -4,6 +4,7 @@ ANONYMOUS:
   Build Type: Tpetra
   Problem: 
     Name: Heat 1D
+    Compute Sensitivities: true
     Solution Method: Steady
     Phalanx Graph Visualization Detail: 1
     Dirichlet BCs: 
@@ -13,26 +14,51 @@ ANONYMOUS:
       Quadratic: 
         Nonlinear Factor: 2.00000000000000000e+00
     Parameters: 
-      Number: 3
-      Parameter 0: DBC on NS NodeSet0 for DOF T
-      Parameter 1: DBC on NS NodeSet1 for DOF T
-      Parameter 2: Quadratic Nonlinear Factor
+      Number of Parameters: 3
+      Parameter 0:
+        Name: DBC on NS NodeSet0 for DOF T
+      Parameter 1:
+        Name: DBC on NS NodeSet1 for DOF T
+      Parameter 2:
+        Name: Quadratic Nonlinear Factor
     Response Functions: 
-      Number: 3
-      Response 0: Solution Average
-      Response 1: Solution Two Norm
-      Response 2: Solution Max Value
+      Number of Responses: 3
+      Response 0:
+        Name: Solution Average
+      Response 1:
+        Name: Solution Two Norm
+      Response 2:
+        Name: Solution Max Value
   Discretization: 
     1D Elements: 100
     Method: STK1D
-  Regression Results: 
-    Number of Comparisons: 3
-    Test Values: [1.54847000000000001e+00, 1.69218499999999992e+01, 2.20519499999999979e+00]
+  Regression For Response 0:
+    Test Value: 1.54847000000000001e+00
     Relative Tolerance: 1.00000000000000005e-04
-    Number of Sensitivity Comparisons: 3
-    Sensitivity Test Values 0: [1.56217999999999990e+00, 1.28730000000000011e+00, 8.52306000000000008e-01]
-    Sensitivity Test Values 1: [1.66396000000000015e+01, 1.14771699999999992e+01, 8.75256599999999985e+00]
-    Sensitivity Test Values 2: [2.01329000000000002e+00, 1.01805999999999996e+00, 9.61594999999999978e-01]
+    Sensitivity For Parameter 0:
+      Test Value: 1.56217999999999990e+00
+    Sensitivity For Parameter 1:
+      Test Value: 1.28730000000000011e+00
+    Sensitivity For Parameter 2:
+      Test Value: 8.52306000000000008e-01
+  Regression For Response 1:
+    Test Value: 1.69218499999999992e+01
+    Relative Tolerance: 1.00000000000000005e-04
+    Sensitivity For Parameter 0:
+      Test Value: 1.66396000000000015e+01
+    Sensitivity For Parameter 1:
+      Test Value: 1.14771699999999992e+01
+    Sensitivity For Parameter 2:
+      Test Value: 8.75256599999999985e+00
+  Regression For Response 2:
+    Test Value: 2.20519499999999979e+00
+    Relative Tolerance: 1.00000000000000005e-04
+    Sensitivity For Parameter 0:
+      Test Value: 2.01329000000000002e+00
+    Sensitivity For Parameter 1:
+      Test Value: 1.01805999999999996e+00
+    Sensitivity For Parameter 2:
+      Test Value: 9.61594999999999978e-01
   Piro: 
     LOCA: 
       Bifurcation: { }

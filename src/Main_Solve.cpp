@@ -177,79 +177,75 @@ int main(int argc, char *argv[])
         slvrfctry.getParameters()->sublist("Problem").sublist(
             "Response Functions");
 
-    int num_param_vecs = parameterParams.get("Number of Parameter Vectors", 0);
-    bool using_old_parameter_list = false;
-    if (parameterParams.isType<int>("Number")) {
-      int numParameters = parameterParams.get<int>("Number");
-      if (numParameters > 0) {
-        num_param_vecs = 1;
-        using_old_parameter_list = true;
-      }
-    }
+    int total_num_param_vecs, num_param_vecs, numDistParams;
+    Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, numDistParams);
 
-    int num_response_vecs = responseParams.get("Number of Response Vectors", 0);
-    bool using_old_response_list = false;
+    int num_responses = responseParams.get("Number of Responses", 0);
     if (responseParams.isType<int>("Number")) {
       int numParameters = responseParams.get<int>("Number");
-      if (numParameters > 0) {
-        num_response_vecs = 1;
-        using_old_response_list = true;
-      }
+      num_responses = numParameters;
     }
 
     Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>> param_names;
     param_names.resize(num_param_vecs);
     for (int l = 0; l < num_param_vecs; ++l) {
-      const Teuchos::ParameterList *pList =
-          using_old_parameter_list
-              ? &parameterParams
-              : &(parameterParams.sublist(
-                    Albany::strint("Parameter Vector", l)));
+      Teuchos::ParameterList* pList =
+          &(parameterParams.sublist(Albany::strint("Parameter", l)));
 
-      const int numParameters = pList->get<int>("Number");
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          numParameters == 0, Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  In Albany::ModelEvaluator constructor:  "
-              << "Parameter vector " << l << " has zero parameters!"
-              << std::endl);
+      std::string parameterType = pList->get<std::string>("Type", "Scalar");
+      if(parameterType == "Scalar") {
+        param_names[l] =
+            Teuchos::rcp(new Teuchos::Array<std::string>(1));
+        (*param_names[l])[0] =
+            pList->get<std::string>("Name");
+      }
+      if(parameterType == "Vector") {
+        const int numParameters = pList->get<int>("Dimension");
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            numParameters == 0,
+            Teuchos::Exceptions::InvalidParameter,
+            std::endl
+                << "Error!  In Albany::ModelEvaluator constructor:  "
+                << "Parameter vector "
+                << l
+                << " has zero parameters!"
+                << std::endl);
 
-      param_names[l] =
-          Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
-      for (int k = 0; k < numParameters; ++k) {
-        (*param_names[l])[k] =
-            pList->get<std::string>(Albany::strint("Parameter", k));
+        param_names[l] =
+            Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
+        for (int k = 0; k < numParameters; ++k) {
+          (*param_names[l])[k] =
+              pList->sublist(Albany::strint("Scalar", k)).get<std::string>("Name");
+        }
       }
     }
 
-    Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>> response_names;
-    response_names.resize(num_response_vecs);
-    for (int l = 0; l < num_response_vecs; ++l) {
-      const Teuchos::ParameterList *pList =
-          using_old_response_list
-              ? &responseParams
-              : &(responseParams.sublist(Albany::strint("Response Vector", l)));
+    Teuchos::Array<std::string> response_names;
+    response_names.resize(num_responses);
+    for (int l = 0; l < num_responses; ++l) {
+      Teuchos::ParameterList *pList =
+        &(responseParams.sublist(Albany::strint("Response", l)));
 
-      bool number_exists = pList->getEntryPtr("Number");
+      std::string type = pList->get<std::string>("Type", "Scalar Response");
+      bool number_exists = pList->getEntryPtr("Number of Responses");
 
-      if (number_exists) {
-        const int numParameters = pList->get<int>("Number");
+      if (type=="Sum Of Responses") {
+        const int num_sub_responses = pList->get<int>("Number of Responses");
         TEUCHOS_TEST_FOR_EXCEPTION(
-            numParameters == 0, Teuchos::Exceptions::InvalidParameter,
+            num_sub_responses == 0, Teuchos::Exceptions::InvalidParameter,
             std::endl
                 << "Error!  In Albany::ModelEvaluator constructor:  "
                 << "Response vector " << l << " has zero parameters!"
                 << std::endl);
-
-        response_names[l] =
-            Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
-        for (int k = 0; k < numParameters; ++k) {
-          (*response_names[l])[k] =
-              pList->get<std::string>(Albany::strint("Response", k));
+        response_names[l] = "Sum Of Responses: ";
+        for (int k = 0; k < num_sub_responses; ++k) {
+          response_names[l] += pList->sublist(Albany::strint("Response", 0)).get<std::string>("Name");
+          if( k != num_sub_responses-1)
+            response_names[l] += " + ";
         }
-      } else {
-        response_names[l] = Teuchos::null;
       }
+      else
+        response_names[l] = pList->get<std::string>("Name");
     }
 
     const Thyra_InArgs nominal = solver->getNominalValues();
@@ -297,16 +293,12 @@ int main(int argc, char *argv[])
       const RCP<const Thyra_Vector> g = thyraResponses[i];
       if (!albanyApp->getResponse(i)->isScalarResponse()) continue;
 
-      if (response_names[i] != Teuchos::null) {
-        *out << "\nResponse vector " << i << ": " << *response_names[i]
-             << "\n";
-      } else {
-        *out << "\nResponse vector " << i << ":\n";
-      }
+      *out << "\nResponse " << i << ": " << response_names[i] << "\n";
+
       Albany::printThyraVector(*out, g);
 
       if (num_p == 0)  
-          status += regression.checkSolveTestResults(i, 0, g, Teuchos::null);
+          status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
       for (int j=0; j<num_p; j++) {
         Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
         if (Teuchos::nonnull(dgdp)) {
@@ -333,7 +325,7 @@ int main(int argc, char *argv[])
           }
         }
         else //check response only, no sensitivities
-          status += regression.checkSolveTestResults(i, 0, g, Teuchos::null);
+          status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
       }
     }
 

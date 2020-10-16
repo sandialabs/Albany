@@ -13,12 +13,14 @@ ANONYMOUS:
     Basal Side Name: basalside
     Surface Side Name: upperside
     Response Functions:
-      Number: 1
-      Response 0: Surface Velocity Mismatch
-    Dirichlet BCs: { }
-    Neumann BCs: { }
+      Number of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Surface Velocity Mismatch
+    Dirichlet BCs: {}
+    Neumann BCs: {}
     LandIce BCs:
-      Number : 2
+      Number: 2
       BC 0:
         Type: Basal Friction
         Side Set Name: basalside
@@ -30,10 +32,10 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: lateralside
     Parameters:
-      Number: 1
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
-    Distributed Parameters:
-      Number of Parameter Vectors: 0
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: 'Glen''s Law Homotopy Parameter'
     LandIce Physical Parameters:
       Water Density: 1.02800000000000000e+03
       Ice Density: 9.10000000000000000e+02
@@ -41,8 +43,8 @@ ANONYMOUS:
       Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
     LandIce Viscosity:
       Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 1.00000000000000006e-01
-      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law Homotopy Parameter': 1.00000000000000005e-01
+      'Glen''s Law A': 1.00000000000000004e-04
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
     Body Force:
@@ -125,21 +127,14 @@ ANONYMOUS:
             Field Type: Node Vector
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
-  Regression Results:
-    Number of Comparisons: 1
-    Test Values: [1.07667918238000005e+08]
-    Number of Sensitivity Comparisons: 1
-    Sensitivity Test Values 0: [1.86797608016000018e+07]
-    Relative Tolerance: 1.00000000000000005e-04
-    Absolute Tolerance: 1.00000000000000005e-04
   Piro:
     LOCA:
-      Bifurcation: { }
-      Constraints: { }
+      Bifurcation: {}
+      Constraints: {}
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 1.00000000000000006e-01
+        Initial Value: 1.00000000000000005e-01
         Continuation Parameter: 'Glen''s Law Homotopy Parameter'
         Continuation Method: Natural
         Max Steps: 10
@@ -175,7 +170,7 @@ ANONYMOUS:
           Linear Solver:
             Write Linear System: false
           Stratimikos Linear Solver:
-            NOX Stratimikos Options: { }
+            NOX Stratimikos Options: {}
             Stratimikos:
               Linear Solver Type: AztecOO
               Linear Solver Types:
@@ -187,14 +182,14 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 200
-                    Tolerance: 9.99999999999999955e-07
+                    Tolerance: 9.99999999999999954e-07
                 Belos:
                   VerboseObject:
                     Verbosity Level: medium
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999955e-08
+                      Convergence Tolerance: 9.99999999999999954e-08
                       Output Frequency: 10
                       Output Style: 1
                       Maximum Iterations: 100
@@ -236,4 +231,10 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.00000000000000004e-04
+    Sensitivity For Parameter 0:
+      Test Value: 1.86797608016000017e+07
+    Test Value: 1.07667918238000005e+08
+    Relative Tolerance: 1.00000000000000004e-04
 ...

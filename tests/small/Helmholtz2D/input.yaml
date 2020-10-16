@@ -2,12 +2,12 @@
 ---
 ANONYMOUS:
   Build Type: Epetra
-  Problem: 
+  Problem:
     Name: Helmholtz 2D
-    Ksqr: 1.10000000000000009e+00
+    Ksqr: 1.10000000000000008e+00
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 2
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS NodeSet0 for DOF U: 0.00000000000000000e+00
       DBC on NS NodeSet1 for DOF U: 0.00000000000000000e+00
       DBC on NS NodeSet2 for DOF U: 0.00000000000000000e+00
@@ -16,27 +16,33 @@ ANONYMOUS:
       DBC on NS NodeSet1 for DOF V: 0.00000000000000000e+00
       DBC on NS NodeSet2 for DOF V: 0.00000000000000000e+00
       DBC on NS NodeSet3 for DOF V: 0.00000000000000000e+00
-    Initial Condition: 
+    Initial Condition:
       Function: Constant
-      Function Data: [1.00000000000000006e-01, 1.00000000000000006e-01]
-    Source Functions: 
-      Point: 
+      Function Data: [1.00000000000000005e-01, 1.00000000000000005e-01]
+    Source Functions:
+      Point:
         Number: 1
         Center 0: [1.30000000000000004e+00, 8.00000000000000044e-01]
-        Time Wavelet: 
+        Time Wavelet:
           Type: Monotone
-        Spatial: 
+        Spatial:
           Type: Gaussian
           Amplitude: 5.00000000000000000e+00
-          Radius: 1.00000000000000006e-01
-    Parameters: 
-      Number: 1
-      Parameter 0: Ksqr
-    Response Functions: 
-      Number: 2
-      Response 0: Solution Average
-      Response 1: Solution Two Norm
-  Discretization: 
+          Radius: 1.00000000000000005e-01
+    Parameters:
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: Ksqr
+    Response Functions:
+      Number of Responses: 2
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Two Norm
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+  Discretization:
     1D Elements: 50
     2D Elements: 50
     1D Scale: 4.00000000000000000e+00
@@ -44,18 +50,11 @@ ANONYMOUS:
     Workset Size: 100
     Method: STK2D
     Exodus Output File Name: helm2d.exo
-  Regression Results: 
-    Number of Comparisons: 2
-    Test Values: [-2.89202100000000017e-01, 5.14155530000000027e+01]
-    Relative Tolerance: 1.00000000000000005e-04
-    Number of Sensitivity Comparisons: 2
-    Sensitivity Test Values 0: [4.20882170000000000e-01]
-    Sensitivity Test Values 1: [7.30462879999999970e+00]
-  Piro: 
-    LOCA: 
-      Predictor: 
+  Piro:
+    LOCA:
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000000000000e+00
         Continuation Parameter: Ksqr
         Continuation Method: Natural
@@ -63,33 +62,33 @@ ANONYMOUS:
         Max Value: 2.00000000000000000e+02
         Min Value: 0.00000000000000000e+00
         Compute Eigenvalues: false
-      Step Size: 
+      Step Size:
         Initial Step Size: 2.00000000000000011e-01
         Method: Constant
-    NOX: 
-      Direction: 
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
-            Stratimikos: 
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
                     Tolerance: 1.00000000000000008e-05
-                Belos: 
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000000000008e-05
                       Output Frequency: 10
                       Output Style: 1
@@ -99,22 +98,22 @@ ANONYMOUS:
                       Num Blocks: 50
                       Flexible Gmres: false
               Preconditioner Type: Ifpack
-              Preconditioner Types: 
-                Ifpack: 
+              Preconditioner Types:
+                Ifpack:
                   Overlap: 1
                   Prec Type: ILU
-                  Ifpack Settings: 
+                  Ifpack Settings:
                     'fact: drop tolerance': 0.00000000000000000e+00
                     'fact: ilut level-of-fill': 1.00000000000000000e+00
                     'fact: level-of-fill': 1
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000000000000e+00
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 3
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -124,6 +123,16 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Sensitivity For Parameter 0:
+      Test Value: 4.20882169999999999e-01
+    Test Value: -2.89202100000000017e-01
+    Relative Tolerance: 1.00000000000000004e-04
+  Regression For Response 1:
+    Sensitivity For Parameter 0:
+      Test Value: 7.30462879999999969e+00
+    Test Value: 5.14155530000000027e+01
+    Relative Tolerance: 1.00000000000000004e-04
 ...

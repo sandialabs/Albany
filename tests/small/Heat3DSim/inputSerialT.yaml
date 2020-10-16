@@ -1,63 +1,59 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Problem: 
+  Problem:
     Name: Heat 3D
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS Node_Set_1 for DOF T: 1.00000000000000000e+00
       DBC on NS Node_Set_2 for DOF T: 0.00000000000000000e+00
-    Parameters: 
-      Number: 0
-    Response Functions: 
-      Number: 1
-      Response 0: Solution Average
-  Discretization: 
+    Parameters:
+      Number of Parameters: 0
+    Response Functions:
+      Number of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+  Discretization:
     Method: Sim
     Sim Input File Name: cube-serial.sms
     Sim Model Input File Name: cube.smd
     Sim Output File Name: serial_out.sms
     Element Block Associations: [['98', '198'], [Element_Block_98, Element_Block_198]]
     Node Set Associations: [['1', '192'], [Node_Set_1, Node_Set_2]]
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [5.09523809524000004e-01]
-    Relative Tolerance: 1.00000000000000005e-04
-    Absolute Tolerance: 1.00000000000000008e-05
-    Number of Sensitivity Comparisons: 0
-  Piro: 
-    LOCA: 
-      Bifurcation: { }
-      Constraints: { }
-      Predictor: 
-        First Step Predictor: { }
-        Last Step Predictor: { }
-      Step Size: { }
-      Stepper: 
-        Eigensolver: { }
-    NOX: 
-      Direction: 
+  Piro:
+    LOCA:
+      Bifurcation: {}
+      Constraints: {}
+      Predictor:
+        First Step Predictor: {}
+        Last Step Predictor: {}
+      Step Size: {}
+      Stepper:
+        Eigensolver: {}
+    NOX:
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
-            Stratimikos: 
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
                     Tolerance: 1.00000000000000008e-05
-                Belos: 
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.00000000000000008e-05
                       Output Frequency: 10
                       Output Style: 1
@@ -67,22 +63,26 @@ ANONYMOUS:
                       Num Blocks: 50
                       Flexible Gmres: false
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Overlap: 1
                   Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: drop tolerance': 0.00000000000000000e+00
                     'fact: ilut level-of-fill': 1.00000000000000000e+00
                     'fact: level-of-fill': 1
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000000000000e+00
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Test Value: 5.09523809524000004e-01
+    Relative Tolerance: 1.00000000000000004e-04
 ...

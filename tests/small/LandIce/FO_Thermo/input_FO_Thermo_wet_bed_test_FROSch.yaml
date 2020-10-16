@@ -18,7 +18,7 @@ ANONYMOUS:
       DBC on NS bottom for DOF U1: 0.00000000000000000e+00
       DBC on NS lateral for DOF U1: 0.00000000000000000e+00
     LandIce BCs:
-      Number : 1
+      Number: 1
       BC 0:
         Type: Basal Friction
         Side Set Name: basalside
@@ -26,42 +26,40 @@ ANONYMOUS:
           Type: Given Field
           Given Field Variable Name: basal_friction
     Parameters:
-      Number: 1
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
-    Distributed Parameters:
-      Number of Parameter Vectors: 0
-      Distributed Parameter 0:
-        Name: surface_air_temperature
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: 'Glen''s Law Homotopy Parameter'
     LandIce Viscosity:
       Extract Strain Rate Sq: true
       Type: 'Glen''s Law'
       'Glen''s Law Homotopy Parameter': 0.4e+00
       Continuous Homotopy With Constant Initial Viscosity: true
       Coefficient For Continuous Homotopy: 8.00000000000000000e+00
-      'Glen''s Law A': 7.56960000000000017e-05
+      'Glen''s Law A': 7.56960000000000016e-05
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
     LandIce Physical Parameters:
-      Conductivity of ice: 2.10000000000000009e+00
+      Conductivity of ice: 2.10000000000000008e+00
       Diffusivity temperate ice: 1.09999999999999992e-08
       Heat capacity of ice: 2.00900000000000000e+03
       Water Density: 1.00000000000000000e+03
       Ice Density: 9.16000000000000000e+02
       Gravity Acceleration: 9.80000000000000071e+00
       Reference Temperature: 2.65000000000000000e+02
-      Clausius-Clapeyron Coefficient: 7.90000000000000060e-08
+      Clausius-Clapeyron Coefficient: 7.90000000000000059e-08
       Latent heat of fusion: 3.34000000000000000e+05
-      Permeability factor: 9.99999999999999980e-13
+      Permeability factor: 9.99999999999999979e-13
       Viscosity of water: 1.79999999999999995e-03
       Omega exponent alpha: 2.00000000000000000e+00
-      Diffusivity homotopy exponent: -1.10000000000000009e+00
+      Diffusivity homotopy exponent: -1.10000000000000008e+00
     LandIce Enthalpy:
       Regularization:
         Flux Regularization:
-          alpha: 1.00000000000000006e-01
+          alpha: 1.00000000000000005e-01
           beta: 7.50000000000000000e+00
         Basal Melting Regularization:
-          alpha: 1.00000000000000006e-01
+          alpha: 1.00000000000000005e-01
           beta: 7.50000000000000000e+00
       Stabilization:
         Type: Streamline Upwind
@@ -70,8 +68,10 @@ ANONYMOUS:
     Body Force:
       Type: FO INTERP SURF GRAD
     Response Functions:
-      Number: 1
-      Response 0: Solution Average
+      Number of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
   Discretization:
     Workset Size: -1
     Method: Extruded
@@ -144,17 +144,10 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Enthalpy/Dome/basal_heat_flux.ascii
-  Regression Results:
-    Number of Comparisons: 1
-    Test Values: [9.189270361965e-01]
-    Relative Tolerance: 1.0e-02
-    Sensitivity Comparisons 0:
-      Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [6.343733690585e-01]
   Piro:
     LOCA:
-      Bifurcation: { }
-      Constraints: { }
+      Bifurcation: {}
+      Constraints: {}
       Predictor:
         Method: Constant
       Stepper:
@@ -165,8 +158,8 @@ ANONYMOUS:
         Max Value: 4.00000000000000022e-01
         Min Value: 0.00000000000000000e+00
       Step Size:
-        Initial Step Size: 1.00000000000000006e-01
-        Max Step Size: 1.00000000000000006e-01
+        Initial Step Size: 1.00000000000000005e-01
+        Max Step Size: 1.00000000000000005e-01
     NOX:
       Thyra Group Options:
         Function Scaling: None
@@ -195,7 +188,7 @@ ANONYMOUS:
             Write Linear System: false
             Tolerance: 1.0e-7
           Stratimikos Linear Solver:
-            NOX Stratimikos Options: { }
+            NOX Stratimikos Options: {}
             Stratimikos:
               Linear Solver Type: AztecOO
               Linear Solver Types:
@@ -207,12 +200,12 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 500
-                    Tolerance: 9.99999999999999955e-08
+                    Tolerance: 9.99999999999999954e-08
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.00000000000000005e-04
+                      Convergence Tolerance: 1.00000000000000004e-04
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -233,7 +226,7 @@ ANONYMOUS:
                     default values: SA
                     ML output: 0
                     'repartition: enable': 1
-                    'repartition: max min ratio': 1.32699999999999996e+00
+                    'repartition: max min ratio': 1.32699999999999995e+00
                     'repartition: min per proc': 600
                     'repartition: Zoltan dimensions': 2
                     'repartition: start level': 4
@@ -241,7 +234,7 @@ ANONYMOUS:
                     'semicoarsen: coarsen rate': 12
                     'smoother: sweeps': 4
                     'smoother: type': Chebyshev
-                    'smoother: Chebyshev eig boost': 1.19999999999999996e+00
+                    'smoother: Chebyshev eig boost': 1.19999999999999995e+00
                     'smoother: sweeps (level 0)': 1
                     'smoother: sweeps (level 1)': 4
                     'smoother: type (level 0)': line Jacobi
@@ -257,8 +250,8 @@ ANONYMOUS:
                   OverlappingOperator Type: AlgebraicOverlappingOperator    # First Level: AlgebrAlgebraicOverlappingOperator determines the overlap based on the graph of the matrix
                   CoarseOperator Type: IPOUHarmonicCoarseOperator           # Second Level: IPOUHarmonicCoarseOperator work for all kinds of GDSW type coarse spaces
                   Recycling: true                                           # This enables the possibility to re-use parts of the preconditioner in a Newton or time iteration
-                  Dimension : 3                                             # Spatial dimension of the problem
-                  DofsPerNode : 4                                           # Number of degrees of freedom per node
+                  Dimension: 3                                              # Spatial dimension of the problem
+                  DofsPerNode: 4                                            # Number of degrees of freedom per node
                   Overlap: 2                                                # Number of layers of elements in the overlap
                   Null Space Type: Input                                    # Null space is provided by Albany
                   AlgebraicOverlappingOperator:
@@ -309,4 +302,9 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Sensitivity For Parameter 0:
+      Test Value: 6.343733690585e-01
+    Test Value: 9.189270361965e-01
+    Relative Tolerance: 1.0e-02
 ...

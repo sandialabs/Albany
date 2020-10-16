@@ -14,11 +14,10 @@ ANONYMOUS:
     Source Functions: 
       Quadratic: 
         Nonlinear Factor: 3.39999999999999991e+00
-    Parameters: 
-      Number: 0
     Response Functions: 
-      Number: 1
-      Response 0: Solution Average
+      Number of Responses: 1
+      Response 0:
+        Name: Solution Average
   Discretization: 
     Method: Ioss
     Exodus Input File Name: quadOut.exo
@@ -28,9 +27,8 @@ ANONYMOUS:
     Use Serial Mesh: true
     STK Initial Refine: Quad4_Quad4_4
     Number of Refinement Passes: 2
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [1.43913827362000002e+00]
+  Regression For Response 0: 
+    Test Value: 1.43913827362000002e+00
     Relative Tolerance: 1.00000000000000002e-03
   Piro: 
     LOCA: 

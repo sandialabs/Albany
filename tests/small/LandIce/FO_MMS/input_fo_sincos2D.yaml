@@ -12,8 +12,9 @@ ANONYMOUS:
       DBC on NS NodeSet2 for DOF U1: 0.00000000000000000e+00
       DBC on NS NodeSet3 for DOF U1: -9.42477796000000012e+00
     Parameters: 
-      Number: 1
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
+      Number of Parameters: 1
+      Parameter 0:
+        Name: 'Glen''s Law Homotopy Parameter'
     LandIce Viscosity: 
       Type: 'Glen''s Law'
       'Glen''s Law Homotopy Parameter': 2.99999999999999989e-01
@@ -24,14 +25,15 @@ ANONYMOUS:
       'Glen''s Law A': 1.00000000000000000e+00
       'Glen''s Law n': 3.00000000000000000e+00
     Response Functions: 
-      Number: 3
-      Response 0: Solution Max Value
-      ResponseParams 0: 
+      Number of Responses: 3
+      Response 0:
+        Name: Solution Max Value
         Equation: 0
-      Response 1: Solution Max Value
-      ResponseParams 1: 
+      Response 1:
+        Name: Solution Max Value
         Equation: 1
-      Response 2: Solution Average
+      Response 2:
+        Name: Solution Average
   Discretization: 
     1D Elements: 5
     2D Elements: 5
@@ -39,12 +41,21 @@ ANONYMOUS:
     2D Scale: 1.00000000000000000e+00
     Method: STK2D
     Exodus Output File Name: felix_stokes_fo_sincos2D_out.exo
-  Regression Results: 
-    Number of Comparisons: 3
-    Test Values: [9.42477796000000012e+00, 0.00000000000000000e+00, 9.47390314346999935e-15]
+  Regression For Response 0: 
+    Test Value: 9.42477796000000012e+00
     Relative Tolerance: 1.00000000000000005e-04
-    Number of Sensitivity Comparisons: 0
-    Sensitivity Test Values 0: [2.08812026833999992e-01, 2.43439246662000008e-01, 5.45756230980999971e-02]
+    Sensitivity For Parameter 0:
+      Test Values: 2.08812026833999992e-01
+  Regression For Response 1: 
+    Test Value: 0.00000000000000000e+00
+    Relative Tolerance: 1.00000000000000005e-04
+    Sensitivity For Parameter 0:
+      Test Values: 2.43439246662000008e-01
+  Regression For Response 2: 
+    Test Value: 9.47390314346999935e-15
+    Relative Tolerance: 1.00000000000000005e-04
+    Sensitivity For Parameter 0:
+      Test Values: 5.45756230980999971e-02
   Piro: 
     LOCA: 
       Bifurcation: { }

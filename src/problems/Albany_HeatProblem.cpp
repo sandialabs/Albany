@@ -42,25 +42,19 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 
   conductivityIsDistParam = false;
-  if(params->isSublist("Distributed Parameters")) {
-    int numDistParams = params->sublist("Distributed Parameters").get<int>("Number of Parameter Vectors",0);
-    for (int i=0; i<numDistParams; ++i) {
-      Teuchos::ParameterList p = params->sublist("Distributed Parameters").sublist(Albany::strint("Distributed Parameter", i));
-      if(p.get<std::string>("Name","")== "thermal_conductivity")
-        conductivityIsDistParam = true;
-        break;
-    } 
-  }
   dirichletIsDistParam = false;
-  if(params->isSublist("Distributed Parameters")) {
-    int numDistParams = params->sublist("Distributed Parameters").get<int>("Number of Parameter Vectors",0);
+  if(params->isSublist("Parameters")) {
+    int total_num_param_vecs, num_param_vecs, numDistParams;
+    Albany::getParameterSizes(params->sublist("Parameters"), total_num_param_vecs, num_param_vecs, numDistParams);
     for (int i=0; i<numDistParams; ++i) {
-      Teuchos::ParameterList p = params->sublist("Distributed Parameters").sublist(Albany::strint("Distributed Parameter", i));
-      if(p.get<std::string>("Name","")== "dirichlet_field")
+      Teuchos::ParameterList p = params->sublist("Parameters").sublist(Albany::strint("Parameter", i+num_param_vecs));
+      if(p.get<std::string>("Name") == "thermal_conductivity" && p.get<std::string>("Type") == "Distributed")
+        conductivityIsDistParam = true;
+      if(p.get<std::string>("Name") == "dirichlet_field" && p.get<std::string>("Type") == "Distributed") {
         dirichletIsDistParam = true;
         meshPartDirichlet = p.get<std::string>("Mesh Part", "");
-        break;
-    } 
+      }
+    }
   }
   // Set parameters for passing coords/near null space to preconditioners
   const bool computeConstantModes = false;

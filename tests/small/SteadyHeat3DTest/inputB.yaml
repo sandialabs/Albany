@@ -13,16 +13,22 @@ ANONYMOUS:
       ThermalConductivity Type: Constant
       Value: 5.00000000000000000e+01
     Parameters: 
-      Number: 3
-      Parameter 0: DBC on NS nodelist_1 for DOF T
-      Parameter 1: NBC on SS surface_3 for DOF T set dudn
-      Parameter 2: ThermalConductivity
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Vector
+        Dimension: 3
+        Scalar 0:
+          Name: DBC on NS nodelist_1 for DOF T
+        Scalar 1:
+          Name: NBC on SS surface_3 for DOF T set dudn
+        Scalar 2:
+          Name: ThermalConductivity
   Discretization: 
     Method: Pamgen
     Exodus Output File Name: beamB.exo
     Pamgen Input File Name: beam.pg
     Workset Size: 1
     Cubature Degree: 2
-  Regression Results: 
+  Regression For Response 0:
     Relative Tolerance: 1.00000000000000002e-03
 ...

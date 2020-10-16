@@ -2,10 +2,10 @@
 ---
 ANONYMOUS:
   Build Type: Epetra
-  Problem: 
+  Problem:
     Phalanx Graph Visualization Detail: 0
     Name: LandIce Stokes 2D
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS NodeSet99 for DOF p: 0.00000000000000000e+00
       DBC on NS NodeSet99 for DOF ux: 0.00000000000000000e+00
       DBC on NS NodeSet99 for DOF uy: 1.00000000000000000e+00
@@ -15,23 +15,28 @@ ANONYMOUS:
       DBC on NS NodeSet3 for DOF ux: 0.00000000000000000e+00
       DBC on NS NodeSet2 for DOF p: 0.00000000000000000e+00
       DBC on NS NodeSet3 for DOF p: 0.00000000000000000e+00
-    Body Force: 
+    Body Force:
       Type: SinSin
-    LandIce Viscosity: 
+    LandIce Viscosity:
       Type: Constant
-    Initial Condition: 
+    Initial Condition:
       Function: Constant
       Function Data: [5.00000000000000000e-01, 5.00000000000000000e-01, 5.00000000000000000e-01]
-    Parameters: 
-      Number: 1
-      Parameter 0: DBC on NS NodeSet99 for DOF ux
-    Response Functions: 
-      Number: 2
-      Response 0: Solution Max Value
-      ResponseParams 0: 
+    Parameters:
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: DBC on NS NodeSet99 for DOF ux
+    Response Functions:
+      Number of Responses: 2
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Average
+      Response 0:
         Equation: 0
-      Response 1: Solution Average
-  Discretization: 
+        Type: Scalar Response
+        Name: Solution Max Value
+  Discretization:
     Periodic_x BC: false
     Periodic_y BC: false
     Workset Size: 100
@@ -44,61 +49,53 @@ ANONYMOUS:
     Block 3: 'begins at (39, 39) ends at (40, 40) length (0.025, 0.025) named TopCorner'
     Method: STK2D
     Exodus Output File Name: sinsin_out.exo
-  Regression Results: 
-    Number of Comparisons: 2
-    Test Values: [1.00000000000000000e+00, 0.00000000000000000e+00]
-    Relative Tolerance: 1.00000000000000002e-02
-    Absolute Tolerance: 1.00000000000000006e-01
-    Number of Sensitivity Comparisons: 0
-    Sensitivity Test Values 0: [1.00000000000000000e+00]
-    Sensitivity Test Values 1: [3.33330000000000015e-01]
-  Piro: 
-    NOX: 
-      Status Tests: 
+  Piro:
+    NOX:
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: Combo
           Combo Type: AND
           Number of Tests: 2
-          Test 0: 
+          Test 0:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
             Tolerance: 1.00000000000000002e-08
-          Test 1: 
+          Test 1:
             Test Type: NormWRMS
             Absolute Tolerance: 1.00000000000000002e-03
             Relative Tolerance: 1.00000000000000002e-03
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 10
-      Direction: 
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
-          Linear Solver: 
+          Linear Solver:
             Write Linear System: false
-          Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
-            Stratimikos: 
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 250
                       Output Frequency: 10
                     Max Iterations: 250
-                    Tolerance: 9.99999999999999955e-07
-                Belos: 
+                    Tolerance: 9.99999999999999954e-07
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-07
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 9.99999999999999954e-07
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 0
@@ -107,22 +104,34 @@ ANONYMOUS:
                       Num Blocks: 250
                       Flexible Gmres: false
               Preconditioner Type: Ifpack
-              Preconditioner Types: 
-                Ifpack: 
+              Preconditioner Types:
+                Ifpack:
                   Overlap: 1
                   Prec Type: ILU
-                  Ifpack Settings: 
+                  Ifpack Settings:
                     'fact: level-of-fill': 1
           Rescue Bad Newton Solve: true
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000000000000e+00
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Information: 103
         Output Precision: 3
         Output Processor: 0
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.00000000000000005e-01
+    Sensitivity For Parameter 0:
+      Test Value: 1.00000000000000000e+00
+    Test Value: 1.00000000000000000e+00
+    Relative Tolerance: 1.00000000000000002e-02
+  Regression For Response 1:
+    Absolute Tolerance: 1.00000000000000005e-01
+    Sensitivity For Parameter 0:
+      Test Value: 3.33330000000000015e-01
+    Test Value: 0.00000000000000000e+00
+    Relative Tolerance: 1.00000000000000002e-02
 ...

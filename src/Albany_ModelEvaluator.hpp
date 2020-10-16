@@ -126,6 +126,9 @@ public:
 
   //@}
 
+  //! Total number of parameter vectors (num_param_vecs+num_dist_param_vecs)
+  int total_num_param_vecs;
+
   //! Number of parameter vectors
   int num_param_vecs;
 

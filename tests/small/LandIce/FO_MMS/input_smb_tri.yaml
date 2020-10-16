@@ -30,9 +30,9 @@ ANONYMOUS:
     Basal Side Name: basalside
     Extruded Column Coupled in 2D Response: true
     Response Functions: 
-      Number: 1
-      Response 0: Surface Mass Balance Mismatch
-      ResponseParams 0: 
+      Number of Responses: 1
+      Response 0:
+        Name: Surface Mass Balance Mismatch
         Regularization Coefficient: 2.0
         H Coefficient: 3.0
         SMB Coefficient: 3.0
@@ -49,11 +49,6 @@ ANONYMOUS:
         Basal Friction Coefficient:
           Type: Given Constant
           Constant Given Beta Value: 1.0
-    Parameters: 
-      Number: 0
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
-    Distributed Parameters: 
-      Number of Parameter Vectors: 0
     LandIce Physical Parameters: 
       Water Density: 1.028e+03
       Ice Density: 9.10e+02
@@ -138,9 +133,8 @@ ANONYMOUS:
             Field Origin: File
             Field Type: Node Scalar
             Field Expression: ['2.0+0.0*x']
-      Regression Results: 
-        Number of Comparisons: 1
-        Test Values: [4.0]
+  Regression For Response 0:
+    Test Value: 4.0
   Piro: 
     LOCA: 
       Bifurcation: { }

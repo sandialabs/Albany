@@ -72,25 +72,87 @@ CalculateNumberParams(const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
 {
   Teuchos::ParameterList& parameterParams =
       problemParams->sublist("Parameters");
-  int  num_param_vecs = parameterParams.get("Number of Parameter Vectors", 0);
-  bool using_old_parameter_list = false;
-  if (parameterParams.isType<int>("Number")) {
-    int numParameters = parameterParams.get<int>("Number");
-    if (numParameters > 0) {
-      num_param_vecs           = 1;
-      using_old_parameter_list = true;
-    }
-  }
   int np = 0;
-  for (int i = 0; i < num_param_vecs; ++i) {
-    Teuchos::ParameterList& pList =
-        using_old_parameter_list ?
-            parameterParams :
-            parameterParams.sublist(Albany::strint("Parameter Vector", i));
-    np += pList.get<int>("Number");
+  if(parameterParams.isParameter("Number of Parameters")) {
+    int  num_param_vecs = parameterParams.get<int>("Number of Parameters");
+    for (int i = 0; i < num_param_vecs; ++i) {
+      Teuchos::ParameterList& pList =
+          parameterParams.sublist(Albany::strint("Parameter", i));
+      std::string parameterType = pList.get<std::string>("Type", "Scalar");
+      if(parameterType == "Scalar" || parameterType == "Distributed")
+        ++np;
+      else if (parameterType =="Vector")
+        np += pList.get<int>("Dimension");
+      else
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            Teuchos::Exceptions::InvalidParameter,
+            std::endl
+                << "Error!  In Albany::CalculateNumberParams:  "
+                << "Parameter vector "
+                << i
+                << " is of the type: \""
+                << parameterType
+                << "\"; this type is unsupported.\n"
+                << "Please use a valid type: \"Scalar\", \"Vector\", or \"Distributed\"."
+                << std::endl);
+    }
   }
   return np; 
 }
+
+void
+getParameterSizes(Teuchos::ParameterList parameterParams, int &total_num_param_vecs, int &num_param_vecs, int &num_dist_param_vecs ) {
+  total_num_param_vecs = 0;
+  num_param_vecs = 0;
+  num_dist_param_vecs = 0;
+  if(parameterParams.isParameter("Number of Parameters")) {
+    total_num_param_vecs = parameterParams.get<int>("Number of Parameters");
+    bool previous_param_is_distributed = false;
+
+    for (int l = 0; l < total_num_param_vecs; ++l) {
+      Teuchos::ParameterList* pList =
+          &(parameterParams.sublist(Albany::strint("Parameter", l)));
+
+      std::string parameterType = pList->get<std::string>("Type", "Scalar");
+
+      if(parameterType == "Scalar" || parameterType == "Vector") {
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            previous_param_is_distributed,
+            Teuchos::Exceptions::InvalidParameter,
+            std::endl
+                << "Error!  In Albany::getParameterSizes:  "
+                << "Parameter vector "
+                << l
+                << " is not distributed and the parameter "
+                << l-1
+                << " was distributed; please reorder the parameters swapping them.\n"
+                << "All non-distributed parameters (\"Scalar\" and \"Vector\") must be listed before the distributed parameters"
+                << std::endl);
+        ++num_param_vecs;
+      }
+      else if (parameterType =="Distributed") {
+        ++num_dist_param_vecs;
+        previous_param_is_distributed = true;
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            Teuchos::Exceptions::InvalidParameter,
+            std::endl
+                << "Error!  In Albany::getParameterSizes:  "
+                << "Parameter vector "
+                << l
+                << " is of the type: \""
+                << parameterType
+                << "\"; this type is unsupported.\n"
+                << "Please use a valid type: \"Scalar\", \"Vector\", or \"Distributed\"."
+                << std::endl);
+      }
+    }
+  }
+}
+
 void
 ReplaceDiagonalEntries(
     const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,

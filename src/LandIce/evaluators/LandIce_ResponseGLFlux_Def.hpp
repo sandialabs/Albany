@@ -199,6 +199,7 @@ Teuchos::RCP<const Teuchos::ParameterList> LandIce::ResponseGLFlux<EvalT, Traits
   validPL->setParameters(*baseValidPL);
 
   validPL->set<std::string>("Name", "", "Name of response function");
+  validPL->set<std::string>("Type", "Scalar Response", "Type of response function");
   validPL->set<double>("Scaling Coefficient", 1.0, "Coefficient that scales the response");
   validPL->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::RCP<const CellTopologyData>(),"Cell Topology Data");
   validPL->set<int>("Cubature Degree", 3, "degree of cubature used to compute the velocity mismatch");

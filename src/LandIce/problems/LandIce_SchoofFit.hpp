@@ -162,21 +162,24 @@ LandIce::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
     save_state[states_to_save[i]] = true;
   }
 
-  Teuchos::ParameterList& dist_params_list =  this->params->sublist("Distributed Parameters");
-  Teuchos::ParameterList* param_list;
-  int numParams = dist_params_list.get<int>("Number of Parameter Vectors",0);
-  for (int p_index=0; p_index< numParams; ++p_index)
-  {
-    std::string parameter_sublist_name = Albany::strint("Distributed Parameter", p_index);
-    TEUCHOS_TEST_FOR_EXCEPTION (!dist_params_list.isSublist(parameter_sublist_name), std::logic_error,
-                                "Error! Missing sublist '" << parameter_sublist_name << "'.\n");
-    param_list = &dist_params_list.sublist(parameter_sublist_name);
-    std::string stateName = param_list->get<std::string>("Name", "");
-    TEUCHOS_TEST_FOR_EXCEPTION (is_state_a_parameter.find(stateName)==is_state_a_parameter.end(), Teuchos::Exceptions::InvalidParameter,
-                                "Error! Distributed parameter '" << stateName << "' was not found in the list of required fields.\n");
+  if (this->params->isSublist("Parameters")) {
+    Teuchos::ParameterList& parameterParams = this->params->sublist("Parameters");
+    int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
+    Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
-    is_state_a_parameter[stateName] = true;
-    state_mesh_part[stateName]      = param_list->get<std::string>("Mesh Part","");
+    for (int p_index=0; p_index< num_dist_param_vecs; ++p_index)
+    {
+      std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
+      TEUCHOS_TEST_FOR_EXCEPTION (!parameterParams.isSublist(parameter_sublist_name), std::logic_error,
+                                  "Error! Missing sublist '" << parameter_sublist_name << "'.\n");
+      Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
+      std::string stateName = param_list.get<std::string>("Name");
+      TEUCHOS_TEST_FOR_EXCEPTION (is_state_a_parameter.find(stateName)==is_state_a_parameter.end(), Teuchos::Exceptions::InvalidParameter,
+                                  "Error! Distributed parameter '" << stateName << "' was not found in the list of required fields.\n");
+
+      is_state_a_parameter[stateName] = true;
+      state_mesh_part[stateName]      = param_list.get<std::string>("Mesh Part","");
+    }
   }
 
   for (int i=0; i<this->requirements.size(); ++i)

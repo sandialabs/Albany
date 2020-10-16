@@ -15,24 +15,30 @@ ANONYMOUS:
       Quadratic: 
         Nonlinear Factor: 0.00000000000000000e+00
     Response Functions: 
-      Number: 1
-      Response 0: Solution Average
+      Number of Responses: 1
+      Response 0:
+        Name: Solution Average
     Parameters: 
-      Number: 3
-      Parameter 0: DBC on NS NodeSet0 for DOF T
-      Parameter 1: DBC on NS NodeSet1 for DOF T
-      Parameter 2: Quadratic Nonlinear Factor
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Vector
+        Dimension: 3
+        Scalar 0:
+          Name: DBC on NS NodeSet0 for DOF T
+        Scalar 1:
+          Name: DBC on NS NodeSet1 for DOF T
+        Scalar 2:
+          Name: Quadratic Nonlinear Factor
   Discretization: 
     1D Elements: 100
     Method: STK1D
     Exodus Output File Name: th1d.exo
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [3.41879999999999986e-05]
+  Regression For Response 0: 
+    Test Value: 3.41879999999999986e-05
     Relative Tolerance: 1.00000000000000002e-02
     Absolute Tolerance: 1.00000000000000005e-04
-    Number of Sensitivity Comparisons: 1
-    Sensitivity Test Values 0: [5.00000000000000000e-01, 5.00000000000000000e-01, 3.00000000000000008e-06]
+    Sensitivity For Parameter 0:
+      Test Values: [5.00000000000000000e-01, 5.00000000000000000e-01, 3.00000000000000008e-06]
   Piro: 
     Tempus: 
       Integrator Name: Tempus Integrator

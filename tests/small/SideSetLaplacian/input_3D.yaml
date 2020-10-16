@@ -10,9 +10,9 @@ ANONYMOUS:
     Name: Side Laplacian 3D
     Solve As Side Set Equation: true
     Side Set Name: SideSet2
-    Response Functions: 
-      Number of Response Vectors: 1
-      Response Vector 0: 
+    Response Functions:
+      Number of Responses: 1
+      Response 0:
         Name: Squared L2 Difference Side Source ST Target PST
         Side Set Name: SideSet2
         Field Rank: Scalar
@@ -37,10 +37,8 @@ ANONYMOUS:
         Method: SideSetSTK
         Exodus Output File Name: side_laplacian_3d.exo
         Cubature Degree: 2
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [9.76562500000000000e-04]
-    Number of Sensitivity Comparisons: 0
+  Regression For Response 0: 
+    Test Value: 9.76562500000000000e-04
     Relative Tolerance: 1.00000000000000005e-04
     Absolute Tolerance: 1.00000000000000005e-04
   Piro: 

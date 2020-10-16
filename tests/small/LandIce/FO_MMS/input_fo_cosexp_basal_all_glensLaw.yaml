@@ -6,6 +6,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 2
     Name: LandIce Stokes First Order 2D
     Solution Method: Continuation
+    Compute Sensitivities: true
     LandIce Physical Parameters: 
       Water Density: 1.02800000000000000e+03
       Ice Density: 9.10000000000000000e+02
@@ -57,8 +58,9 @@ ANONYMOUS:
           beta: -7.2832
           n: 3.0
     Parameters: 
-      Number: 1
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
+      Number of Parameters: 1
+      Parameter 0:
+        Name: 'Glen''s Law Homotopy Parameter'
     LandIce Viscosity: 
       Type: 'Glen''s Law'
       'Glen''s Law A': 1.00000000000000000e+00
@@ -69,25 +71,35 @@ ANONYMOUS:
       'Glen''s Law A': 1.00000000000000000e+00
       'Glen''s Law n': 3.00000000000000000e+00
     Response Functions: 
-      Number: 3
-      Response 0: Solution Max Value
-      ResponseParams 0: 
+      Number of Responses: 3
+      Response 0:
+        Name: Solution Max Value
         Equation: 0
-      Response 1: Solution Max Value
-      ResponseParams 1: 
+      Response 1:
+        Name: Solution Max Value
         Equation: 1
-      Response 2: Solution Average
+      Response 2:
+        Name: Solution Average
   Discretization: 
     Method: Exodus
     Restart Index: 1
     Exodus Input File Name: ../ExoMeshes/felix_stokes_fo_cosexp2Dall_in.exo
     Exodus Output File Name: felix_stokes_fo_cosexp2Dall_out2.exo
-  Regression Results: 
-    Number of Comparisons: 3
-    Test Values: [2.71788352459999993e+00, 2.72108540199999993e+00, 1.06136878822000007e-02]
+  Regression For Response 0:
+    Test Value: 2.71788352459999993e+00
     Relative Tolerance: 1.00000000000000005e-04
-    Number of Sensitivity Comparisons: 0
-    Sensitivity Test Values 0: [2.08812026833999992e-01, 2.43439246662000008e-01, 5.45756230980999971e-02]
+    Sensitivity For Parameter 0:
+      Test Value: -3.611340211318e-11
+  Regression For Response 1:
+    Test Value: 2.72108540199999993e+00
+    Relative Tolerance: 1.00000000000000005e-04
+    Sensitivity For Parameter 0:
+      Test Value: 4.904146161288e-11
+  Regression For Response 2:
+    Test Value: 1.06136878822000007e-02
+    Relative Tolerance: 1.00000000000000005e-04
+    Sensitivity For Parameter 0:
+      Test Value: -1.201436874276e-12
   Piro: 
     LOCA: 
       Bifurcation: { }

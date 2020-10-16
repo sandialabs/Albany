@@ -2,11 +2,11 @@
 ---
 ANONYMOUS:
   Build Type: Tpetra
-  Debug Output: 
+  Debug Output:
     Write Solution to MatrixMarket: 0
     Write Residual to MatrixMarket: -1
     Write Jacobian to MatrixMarket: -1
-  Problem: 
+  Problem:
     Phalanx Graph Visualization Detail: 2
     Solution Method: Steady
     Compute Sensitivities: true
@@ -18,16 +18,16 @@ ANONYMOUS:
     Required Basal Fields: [ice_thickness]
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
-    LandIce Viscosity: 
+    LandIce Viscosity:
       Extract Strain Rate Sq: true
       Type: 'Glen''s Law'
       'Glen''s Law Homotopy Parameter': 0.5e+00
       Continuous Homotopy With Constant Initial Viscosity: true
       Coefficient For Continuous Homotopy: 8.00000000000000000e+00
-      'Glen''s Law A': 7.56960000000000017e-05
+      'Glen''s Law A': 7.56960000000000016e-05
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
-    LandIce Physical Parameters: 
+    LandIce Physical Parameters:
       Conductivity of ice: 2.1e+00
       Diffusivity temperate ice: 1.1e-08
       Heat capacity of ice: 2.009e+03
@@ -42,25 +42,29 @@ ANONYMOUS:
       Omega exponent alpha: 2.0e+00
       Diffusivity homotopy exponent: -1.1e+00
     LandIce Enthalpy:
-      Regularization: 
-        Flux Regularization: 
+      Regularization:
+        Flux Regularization:
           alpha: 2.5
-          beta: 0.0e+00
-        Basal Melting Regularization: 
+          beta: 0.0e+02
+        Basal Melting Regularization:
           alpha: 2.5
-          beta: 0.0e+00
-      Stabilization: 
+          beta: 0.0e+02
+      Stabilization:
         Type: Upwind
         Parameter Delta: 0.5
       Bed Lubrication: Dry
-    Parameters: 
-      Number: 1
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
-    Response Functions: 
+    Parameters:
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: 'Glen''s Law Homotopy Parameter'
+    Response Functions:
       #Collection Method: Sum Responses
-      Number: 1
-      Response 0: Solution Average
-  Discretization: 
+      Number of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+  Discretization:
     Workset Size: -1
     Method: Extruded
     Surface Height Field Name: surface_height
@@ -78,51 +82,51 @@ ANONYMOUS:
     Basal Node Layered Fields Ranks: [2, 1]
 
     Use Glimmer Spacing: true
-    Required Fields Info: 
+    Required Fields Info:
       Number Of Fields: 10
-      Field 0: 
+      Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 1: 
+      Field 1:
         Field Name: surface_height
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 2: 
+      Field 2:
         Field Name: surface_enthalpy
         Field Type: Node Scalar
         Field Usage: Output
-      Field 3: 
+      Field 3:
         Field Name: surface_air_temperature
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 4: 
+      Field 4:
         Field Name: basal_friction
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 5: 
+      Field 5:
         Field Name: melting_temperature
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 6: 
+      Field 6:
         Field Name: phi
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 7: 
+      Field 7:
         Field Name: heat_dissipation
         Field Type: Elem Scalar
         Field Origin: Mesh
-      Field 8: 
+      Field 8:
         Field Name: Diff Enth
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 9: 
+      Field 9:
         Field Name: temperature
         Field Type: Node Scalar
         Field Origin: Mesh
-    Side Set Discretizations: 
+    Side Set Discretizations:
       Side Sets: [basalside]
-      basalside: 
+      basalside:
         Workset Size: -1
         Method: Ioss
         Number Of Time Derivatives: 0
@@ -130,14 +134,14 @@ ANONYMOUS:
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
         Cubature Degree: 4
-        Required Fields Info: 
+        Required Fields Info:
           Number Of Fields: 7
-          Field 0: 
+          Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/thickness.ascii
-          Field 1: 
+          Field 1:
             Field Name: surface_height
             Field Type: Node Scalar
             Field Origin: File
@@ -147,123 +151,116 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/basal_friction_zeroed.ascii
-          Field 3: 
+          Field 3:
             Field Name: surface_air_temperature
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/surface_air_temperature.ascii
-          Field 4: 
+          Field 4:
             Field Name: heat_flux
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/basal_heat_flux.ascii
-          Field 5: 
-            Number Of Layers: 11 
+          Field 5:
+            Number Of Layers: 11
             Vector Dim: 2
             Field Name: velocity
             Field Type: Node Layered Vector
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/horizontal_velocity.ascii
           Field 6:
-            Number Of Layers: 11 
+            Number Of Layers: 11
             Field Name: vertical_velocity
             Field Type: Node Layered Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/vertical_velocity.ascii
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [-1.056815219796e+01]
-    Relative Tolerance: 1.0e-04
-    Sensitivity Comparisons 0:
-      Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [-9.934290990211e-02]
-  Piro: 
+  Piro:
     Sensitivity Method: Adjoint
     Write Only Converged Solution: false
-    Analysis: 
+    Analysis:
       Analysis Package: ROL
       ROL:
-        Number of Parameters: 1 
+        Number of Parameters: 1
         Check Gradient: false
-        Gradient Tolerance: 1.00000000000000005e-04
-        Step Tolerance: 1.00000000000000005e-08
+        Gradient Tolerance: 1.00000000000000004e-04
+        Step Tolerance: 1.00000000000000002e-08
         Max Iterations: 1000
         Print Output: true
         Parameter Initial Guess Type: From Model Evaluator
         Uniform Parameter Guess: 0.00000000000000000e+00
         Min And Max Of Random Parameter Guess: [1.00000000000000000e+00, 2.00000000000000000e+00]
         Bound Constrained: true
-        bound_eps: 1.00000000000000006e-01
+        bound_eps: 1.00000000000000005e-01
 
         Step Method: "Trust Region"
 
         Use Old Reduced Space Interface: false
         Full Space: false
-        Use NOX Solver: true        
+        Use NOX Solver: true
 
-        ROL Options: 
+        ROL Options:
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
           SimOpt:
             Solve:
-              Absolute Residual Tolerance:   1.0e-5
-              Relative Residual Tolerance:   1.0e-0
-              Iteration Limit:               20
+              Absolute Residual Tolerance: 1.0e-5
+              Relative Residual Tolerance: 1.0e+0
+              Iteration Limit: 20
               Sufficient Decrease Tolerance: 1.e-4
-              Step Tolerance:                1.e-8
-              Backtracking Factor:           0.5
-              Output Iteration History:      false
-              Zero Initial Guess:            true
-              Solver Type:                   0    
-          
-          Status Test: 
+              Step Tolerance: 1.e-8
+              Backtracking Factor: 0.5
+              Output Iteration History: false
+              Zero Initial Guess: true
+              Solver Type: 0
+
+          Status Test:
             Gradient Tolerance: 1.0e-4
             Constraint Tolerance: 1.0e-5
             Step Tolerance: 1.0e-10
             Iteration Limit: 1000
 
-          General: 
+          General:
             Variable Objective Function: false
             Scale for Epsilon Active Sets: 1.00000000000000000e+00
             Inexact Objective Function: false
             Inexact Gradient: false
             Inexact Hessian-Times-A-Vector: false
             Projected Gradient Criticality Measure: false
-            Secant: 
+            Secant:
               Type: Limited-Memory BFGS
               Use as Preconditioner: false
               Use as Hessian: true
               Maximum Storage: 50
               Barzilai-Borwein Type: 1
-            Krylov: 
+            Krylov:
               Type: Conjugate Gradients
-              Absolute Tolerance: 1.00000000000000005e-04
+              Absolute Tolerance: 1.00000000000000004e-04
               Relative Tolerance: 1.00000000000000002e-02
               Iteration Limit: 100
 
           Step:
             Type: "Augmented Lagrangian" #"Moreau-Yosida Penalty" 
-            Line Search: 
+            Line Search:
               Function Evaluation Limit: 60
               Sufficient Decrease Tolerance: 9.99999999999999945e-21
               Initial Step Size: 1.00000000000000000e+00
               User Defined Initial Step Size: false
               Accept Linesearch Minimizer: false
               Accept Last Alpha: false
-              Descent Method: 
+              Descent Method:
                 Type: Quasi-Newton
                 Nonlinear CG Type: Hestenes-Stiefel
-              Curvature Condition: 
+              Curvature Condition:
                 Type: Strong Wolfe Conditions
                 General Parameter: 9.00000000000000022e-01
-                Generalized Wolfe Parameter: 5.99999999999999978e-01
-              Line-Search Method: 
+                Generalized Wolfe Parameter: 5.99999999999999977e-01
+              Line-Search Method:
                 Type: Cubic Interpolation
                 Backtracking Rate: 5.00000000000000000e-01
                 Bracketing Tolerance: 1.00000000000000002e-08
-                Path-Based Target Level: 
+                Path-Based Target Level:
                   Target Relaxation Parameter: 1.00000000000000000e+00
                   Upper Bound on Path Length: 1.00000000000000000e+00
-            Trust Region: 
+            Trust Region:
               Subproblem Solver: Truncated CG
               Initial Radius: 10.0
               Step Acceptance Threshold: 5.0e-02
@@ -273,15 +270,15 @@ ANONYMOUS:
               Radius Shrinking Rate (Positive rho): 2.50000000000000000e-01
               Radius Growing Rate: 2.50000000000000000e+00
               Safeguard Size: 1.0e+01
-              Inexact: 
-                Value: 
-                  Tolerance Scaling: 1.00000000000000006e-01
+              Inexact:
+                Value:
+                  Tolerance Scaling: 1.00000000000000005e-01
                   Exponent: 9.00000000000000022e-01
                   Forcing Sequence Initial Value: 1.00000000000000000e+00
                   Forcing Sequence Update Frequency: 10
-                  Forcing Sequence Reduction Factor: 1.00000000000000006e-01
-                Gradient: 
-                  Tolerance Scaling: 1.00000000000000006e-01
+                  Forcing Sequence Reduction Factor: 1.00000000000000005e-01
+                Gradient:
+                  Tolerance Scaling: 1.00000000000000005e-01
                   Relative Tolerance: 2.00000000000000000e+00
 
             Moreau-Yosida Penalty:
@@ -301,12 +298,12 @@ ANONYMOUS:
               Output Level: 2
               #Initial Radius: 1.0e+2
               Use Constraint Hessian: false
-              
+
               # ===========  OPTIMALITY SYSTEM SOLVER  =========== -->
               Optimality System Solver:
                 Nominal Relative Tolerance: 2.0e-1
                 Fix Tolerance: true
-      
+
               # ===========  TANGENTIAL SUBPROBLEM SOLVER  =========== -->
               Tangential Subproblem Solver:
                 Iteration Limit: 100
@@ -337,67 +334,67 @@ ANONYMOUS:
               Subproblem Step Type: "Trust Region"
               Subproblem Iteration Limit: 50
 
-    LOCA: 
-      Bifurcation: { }
-      Constraints: { }
-      Predictor: 
+    LOCA:
+      Bifurcation: {}
+      Constraints: {}
+      Predictor:
         Method: Constant
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000000000000e+00
         Continuation Parameter: 'Glen''s Law Homotopy Parameter'
         Continuation Method: Natural
         Max Steps: 100
         Max Value: 4.00000000000000022e-01
         Min Value: 0.00000000000000000e+00
-      Step Size: 
-        Initial Step Size: 1.00000000000000006e-01
-        Max Step Size: 1.00000000000000006e-01
-    NOX: 
-      Thyra Group Options: 
+      Step Size:
+        Initial Step Size: 1.00000000000000005e-01
+        Max Step Size: 1.00000000000000005e-01
+    NOX:
+      Thyra Group Options:
         Function Scaling: None
         Update Row Sum Scaling: Before Each Nonlinear Solve
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: Combo
           Combo Type: AND
           Number of Tests: 1
-          Test 0: 
+          Test 0:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
             Tolerance: 1.0e-05
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 60
-      Direction: 
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
-          Linear Solver: 
+          Linear Solver:
             Write Linear System: false
             Tolerance: 1.0e-7
-          Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
-            Stratimikos: 
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
               Linear Solver Type: AztecOO
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 500
-                    Tolerance: 9.99999999999999955e-08
-                Belos: 
+                    Tolerance: 9.99999999999999954e-08
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
-                      Convergence Tolerance: 1.00000000000000005e-04
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.00000000000000004e-04
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -406,11 +403,11 @@ ANONYMOUS:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack: 
+              Preconditioner Types:
+                Ifpack:
                   Overlap: 0
                   Prec Type: Amesos
-                  Ifpack Settings: 
+                  Ifpack Settings:
                     'fact: level-of-fill': 0
 #                 FROSch:
 #                   FROSch Preconditioner Type: TwoLevelPreconditioner        # FROSch preconditioner type. Options: OneLevelPreconditioner, TwoLevelPreconditioner
@@ -450,13 +447,13 @@ ANONYMOUS:
 #                     CoarseSolver:                                           # Solver for the coarse problem
 #                       SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
 #                       Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
-                ML: 
+                ML:
                   Base Method Defaults: none
-                  ML Settings: 
+                  ML Settings:
                     default values: SA
                     ML output: 0
                     'repartition: enable': 1
-                    'repartition: max min ratio': 1.32699999999999996e+00
+                    'repartition: max min ratio': 1.32699999999999995e+00
                     'repartition: min per proc': 600
                     'repartition: Zoltan dimensions': 2
                     'repartition: start level': 4
@@ -464,7 +461,7 @@ ANONYMOUS:
                     'semicoarsen: coarsen rate': 12
                     'smoother: sweeps': 4
                     'smoother: type': Chebyshev
-                    'smoother: Chebyshev eig boost': 1.19999999999999996e+00
+                    'smoother: Chebyshev eig boost': 1.19999999999999995e+00
                     'smoother: sweeps (level 0)': 1
                     'smoother: sweeps (level 1)': 4
                     'smoother: type (level 0)': line Jacobi
@@ -476,15 +473,15 @@ ANONYMOUS:
                     'coarse: sweeps': 4
                     max levels: 7
           Rescue Bad Newton Solve: true
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000000000000e+00
         Method: Backtrack
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -494,6 +491,11 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Sensitivity For Parameter 0:
+      Test Value: -9.934290990211e-02
+    Test Value: -1.056815219796e+01
+    Relative Tolerance: 1.0e-04
 ...

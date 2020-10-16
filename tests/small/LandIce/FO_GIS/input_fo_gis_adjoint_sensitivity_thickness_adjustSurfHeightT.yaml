@@ -2,9 +2,9 @@
 ---
 ANONYMOUS:
   Build Type: Tpetra
-  Debug Output: 
+  Debug Output:
     Write Solution to MatrixMarket: 0
-  Problem: 
+  Problem:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
@@ -14,10 +14,10 @@ ANONYMOUS:
     Required Fields: [temperature]
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Dirichlet BCs: { }
-    Neumann BCs: { }
+    Dirichlet BCs: {}
+    Neumann BCs: {}
     LandIce BCs:
-      Number : 2
+      Number: 2
       BC 0:
         Type: Basal Friction
         Side Set Name: basalside
@@ -28,40 +28,38 @@ ANONYMOUS:
         Type: Lateral
         Cubature Degree: 3
         Side Set Name: lateralside
-    Response Functions: 
-      Number: 1
-      Response 0: Surface Mass Balance Mismatch
-      ResponseParams 0: 
-        Regularization Coefficient: 1.00000000000000000e+00
+    Response Functions:
+      Number of Responses: 1
+      Response 0:
+        Name: Surface Mass Balance Mismatch
         SMB Coefficient: 1.00000000000000000e+00
+        Regularization Coefficient: 1.00000000000000000e+00
+        Scaling Coefficient: 5.88239999999999978e-07
+        Type: Scalar Response
         H Coefficient: 1.00000000000000000e+00
-        Scaling Coefficient: 5.88239999999999979e-07
-    Parameters: 
-      Number: 0
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
-    Distributed Parameters: 
-      Number of Parameter Vectors: 1
-      Parameter 0: ice_thickness
-      Distributed Parameter 0: 
-        Name: ice_thickness
+    Parameters:
+      Number of Parameters: 1
+      Parameter 0:
         Lower Bound: 1.00000000000000002e-03
-        Upper Bound: 4.00000000000000000e+00
+        Name: ice_thickness
         Extruded: true
         Mesh Part: bottom
-    LandIce Physical Parameters: 
+        Upper Bound: 4.00000000000000000e+00
+        Type: Distributed
+    LandIce Physical Parameters:
       Water Density: 1.02800000000000000e+03
       Ice Density: 9.10000000000000000e+02
       Gravity Acceleration: 9.80000000000000071e+00
       Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
-    LandIce Viscosity: 
+    LandIce Viscosity:
       Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 1.00000000000000006e-01
-      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law Homotopy Parameter': 1.00000000000000005e-01
+      'Glen''s Law A': 1.00000000000000004e-04
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
-    Body Force: 
+    Body Force:
       Type: FO INTERP SURF GRAD
-  Discretization: 
+  Discretization:
     Method: Extruded
     Surface Height Field Name: observed_surface_height
     Number Of Time Derivatives: 0
@@ -76,172 +74,164 @@ ANONYMOUS:
     Basal Node Fields Ranks: [1, 1, 1]
     Interpolate Basal Node Layered Fields: [temperature]
     Basal Node Layered Fields Ranks: [1]
-    Required Fields Info: 
+    Required Fields Info:
       Number Of Fields: 4
-      Field 0: 
+      Field 0:
         Field Name: temperature
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 1: 
+      Field 1:
         Field Name: observed_surface_height
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 2: 
+      Field 2:
         Field Name: ice_thickness
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 3: 
+      Field 3:
         Field Name: bed_topography
         Field Type: Node Scalar
         Field Origin: Mesh
-    Side Set Discretizations: 
+    Side Set Discretizations:
       Side Sets: [basalside, upperside]
-      basalside: 
+      basalside:
         Method: Ioss
         Number Of Time Derivatives: 0
         Cubature Degree: 3
         Exodus Output File Name: gis_unstruct_adjoint_sensitivity_thickness_basal.exo
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
-        Required Fields Info: 
+        Required Fields Info:
           Number Of Fields: 9
-          Field 0: 
+          Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
-          Field 1: 
+          Field 1:
             Field Name: observed_surface_height
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/surface_height.ascii
-          Field 2: 
+          Field 2:
             Field Name: temperature
             Field Type: Node Layered Scalar
             Number Of Layers: 11
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
-          Field 3: 
+          Field 3:
             Field Name: basal_friction
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/basal_friction.ascii
-          Field 4: 
+          Field 4:
             Field Name: observed_ice_thickness
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
-          Field 5: 
+          Field 5:
             Field Name: observed_ice_thickness_RMS
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/thickness_RMS.ascii
-          Field 6: 
+          Field 6:
             Field Name: apparent_mass_balance
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/surface_mass_balance.ascii
-          Field 7: 
+          Field 7:
             Field Name: apparent_mass_balance_RMS
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/surface_mass_balance_RMS.ascii
-          Field 8: 
+          Field 8:
             Field Name: bed_topography
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/bed_topography.ascii
-      upperside: 
+      upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: gis_unstruct_adjoint_sensitivity_thickness_surface.exo
         Cubature Degree: 3
-        Required Fields Info: 
+        Required Fields Info:
           Number Of Fields: 2
-          Field 0: 
+          Field 0:
             Field Name: observed_surface_velocity
             Field Type: Node Vector
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
-          Field 1: 
+          Field 1:
             Field Name: observed_surface_velocity_RMS
             Field Type: Node Vector
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [3.907992140855e+01]
-    Sensitivity Comparisons 0: 
-      Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [1.829714204895e+02]
-    Relative Tolerance: 1.0e-05
-    Absolute Tolerance: 1.0e-05
-  Piro: 
+  Piro:
     Sensitivity Method: Adjoint
-    LOCA: 
-      Bifurcation: { }
-      Constraints: { }
-      Predictor: 
+    LOCA:
+      Bifurcation: {}
+      Constraints: {}
+      Predictor:
         Method: Constant
-      Stepper: 
-        Initial Value: 1.00000000000000006e-01
+      Stepper:
+        Initial Value: 1.00000000000000005e-01
         Continuation Parameter: 'Glen''s Law Homotopy Parameter'
         Continuation Method: Natural
         Max Steps: 10
         Max Value: 1.00000000000000000e+00
         Min Value: 0.00000000000000000e+00
-      Step Size: 
+      Step Size:
         Initial Step Size: 2.00000000000000011e-01
-    NOX: 
-      Status Tests: 
+    NOX:
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: Combo
           Combo Type: OR
           Number of Tests: 2
-          Test 0: 
+          Test 0:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
             Tolerance: 1.00000000000000008e-05
-          Test 1: 
+          Test 1:
             Test Type: NormWRMS
             Absolute Tolerance: 1.00000000000000008e-05
             Relative Tolerance: 1.00000000000000002e-03
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 25
       Nonlinear Solver: Line Search Based
-      Direction: 
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Rescue Bad Newton Solve: true
           Forcing Term Method: Constant
-          Linear Solver: 
+          Linear Solver:
             Write Linear System: false
-          Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
-            Stratimikos: 
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
               Linear Solver Type: AztecOO
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 200
-                    Tolerance: 9.99999999999999955e-07
-                Belos: 
-                  VerboseObject: 
+                    Tolerance: 9.99999999999999954e-07
+                Belos:
+                  VerboseObject:
                     Verbosity Level: medium
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-08
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 9.99999999999999954e-08
                       Output Frequency: 10
                       Output Style: 1
                       Maximum Iterations: 100
@@ -249,27 +239,27 @@ ANONYMOUS:
                       Num Blocks: 50
                       Flexible Gmres: false
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Overlap: 0
                   Prec Type: RILUK
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: iluk level-of-fill': 0
-                ML: 
+                ML:
                   Base Method Defaults: none
-                  ML Settings: 
+                  ML Settings:
                     default values: SA
                     'smoother: type': ML symmetric Gauss-Seidel
                     'smoother: pre or post': both
                     'coarse: type': Amesos-KLU
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000000000000e+00
         Method: Backtrack
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -279,6 +269,12 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-05
+    Sensitivity For Parameter 0:
+      Test Value: 1.829714204895e+02
+    Test Value: 3.907992140855e+01
+    Relative Tolerance: 1.0e-05
 ...

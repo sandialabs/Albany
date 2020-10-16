@@ -8,10 +8,10 @@ ANONYMOUS:
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF T prescribe Field: dirichlet_field
       DBC on NS NodeSet1 for DOF T: -1.00000000000000000e+00
-    Parameters: { }
-    Distributed Parameters: 
-      Number of Parameter Vectors: 1
-      Distributed Parameter 0: 
+    Parameters:
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Distributed
         Name: dirichlet_field
         Lower Bound: -1.00000000000000000e+00
         Upper Bound: 2.00000000000000000e+00
@@ -19,10 +19,10 @@ ANONYMOUS:
         Mesh Part: NodeSet0
       Hessian-vector products use AD: true
     Response Functions: 
-      Collection Method: Sum Responses
-      Number: 1
-      Response 0: Squared L2 Difference Source ST Target PST
-      ResponseParams 0: 
+      Number of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Squared L2 Difference Source ST Target PST
         Field Rank: Scalar
         Source Field Name: Temperature
         Target Value: 0.0
@@ -32,14 +32,12 @@ ANONYMOUS:
     Method: STK2D
     Exodus Output File Name: steady2d.exo
     Cubature Degree: 9
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [5.8333333333e-01]
+  Regression For Response 0:
+    Test Value: 5.8333333333e-01
     Relative Tolerance: 1.0e-03
     Absolute Tolerance: 1.0e-04
-    Sensitivity Comparisons 0: 
-      Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [1.04748375675000005e-01]
+    Sensitivity For Parameter 0:
+      Test Value: 1.04748375675000005e-01
     Number of Piro Analysis Comparisons: 1
     Piro Analysis Test Two Norm: true
     Piro Analysis Test Values: [3.18968]

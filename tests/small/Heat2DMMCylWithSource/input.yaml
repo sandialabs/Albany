@@ -11,17 +11,22 @@ ANONYMOUS:
     ThermalConductivity: 
       ThermalConductivity Type: Block Dependent
     Response Functions: 
-      Number: 2
-      Response 0: Solution Max Value
-      Response 1: Solution Inf Norm File
+      Number of Responses: 2
+      Response 0:
+        Name: Solution Max Value
+      Response 1:
+        Name: Solution Inf Norm File
   Discretization: 
     Method: Exodus
     Exodus Input File Name: fuel_volume.exo
     Exodus Output File Name: fuel_volume-out.exo
     Separate Evaluators by Element Block: true
-  Regression Results: 
-    Number of Comparisons: 2
-    Test Values: [6.72655999999999949e+02, 0.00000000000000000e+00]
+  Regression For Response 0:
+    Test Value: 6.72655999999999949e+02
+    Absolute Tolerance: 1.00000000000000000e+00
+    Relative Tolerance: 1.00000000000000000e+00
+  Regression For Response 1:
+    Test Value: 0.00000000000000000e+00
     Absolute Tolerance: 1.00000000000000000e+00
     Relative Tolerance: 1.00000000000000000e+00
   Piro: 
