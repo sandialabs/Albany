@@ -5,12 +5,14 @@ ANONYMOUS:
   Problem: 
     Phalanx Graph Visualization Detail: 1
     Solution Method: Continuation
+    Compute Sensitivities: true
     Name: LandIce Stokes First Order 3D
     Required Fields: [flow_factor]
     Basal Side Name: Basal
     Parameters: 
-      Number: 1
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
+      Number of Parameters: 1
+      Parameter 0:
+        Name: 'Glen''s Law Homotopy Parameter'
     LandIce Viscosity: 
       Type: 'Glen''s Law'
       'Glen''s Law Homotopy Parameter': 1.00000000000000000e+00
@@ -33,14 +35,15 @@ ANONYMOUS:
     Body Force: 
       Type: FO INTERP SURF GRAD
     Response Functions: 
-      Number: 3
-      Response 0: Solution Max Value
-      ResponseParams 0: 
+      Number of Responses: 3
+      Response 0:
+        Name: Solution Max Value
         Equation: 0
-      Response 1: Solution Max Value
-      ResponseParams 1: 
+      Response 1:
+        Name: Solution Max Value
         Equation: 1
-      Response 2: Solution Average
+      Response 2:
+        Name: Solution Average
   Discretization: 
     Method: Ascii
     Number Of Time Derivatives: 0
@@ -62,13 +65,22 @@ ANONYMOUS:
         Number Of Time Derivatives: 0
         Exodus Output File Name: dome_ascii_basal_out.exo
         Cubature Degree: 3
-  Regression Results: 
-    Number of Comparisons: 3
-    Test Values: [7.79162527533000002e+01, 7.79162527533000002e+01, 0.00000000000000000e+00]
-    Number of Sensitivity Comparisons: 3
-    Sensitivity Test Values 0: [0.00000000000000000e+00]
-    Sensitivity Test Values 1: [0.00000000000000000e+00]
-    Sensitivity Test Values 2: [0.00000000000000000e+00]
+  Regression For Response 0:
+    Test Value: 7.79162527533000002e+01
+    Sensitivity For Parameter 0:
+      Test Value: 0.00000000000000000e+00
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000005e-04
+  Regression For Response 1:
+    Test Value: 7.79162527533000002e+01
+    Sensitivity For Parameter 0:
+      Test Value: 0.00000000000000000e+00
+    Relative Tolerance: 1.00000000000000005e-04
+    Absolute Tolerance: 1.00000000000000005e-04
+  Regression For Response 2:
+    Test Value: 0.00000000000000000e+00
+    Sensitivity For Parameter 0:
+      Test Value: 0.00000000000000000e+00
     Relative Tolerance: 1.00000000000000005e-04
     Absolute Tolerance: 1.00000000000000005e-04
   Piro: 

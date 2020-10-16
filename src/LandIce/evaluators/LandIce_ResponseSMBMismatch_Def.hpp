@@ -262,6 +262,7 @@ LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::getValidRespon
   validPL->setParameters(*baseValidPL);
 
   validPL->set<std::string>("Name", "", "Name of response function");
+  validPL->set<std::string>("Type", "Scalar Response", "Type of response function");
   validPL->set<std::string>("Field Name", "Solution", "Not used");
   validPL->set<double>("Regularization Coefficient", 1.0, "Regularization Coefficient");
   validPL->set<double>("H Coefficient", 1.0, "Thickness Mismatch Coefficient");

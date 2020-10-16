@@ -10,9 +10,9 @@ ANONYMOUS:
     Name: Side Laplacian 3D
     Solve As Side Set Equation: false
     Side Set Name: bottom
-    Response Functions: 
-      Number of Response Vectors: 1
-      Response Vector 0: 
+    Response Functions:
+      Number of Responses: 1
+      Response 0:
         Name: Squared L2 Difference Source ST Target PST
         Field Rank: Scalar
         Source Field Name: u

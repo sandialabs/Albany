@@ -23,9 +23,9 @@ ANONYMOUS:
     Basal Side Name: basalside
     Extruded Column Coupled in 2D Response: true
     Response Functions: 
-      Number: 1
-      Response 0: Grounding Line Flux
-      ResponseParams 1:
+      Number of Responses: 1
+      Response 0:
+        Name: Grounding Line Flux
         Scaling Coefficient: 1.0
     Dirichlet BCs: { }
     Neumann BCs: { }
@@ -37,11 +37,6 @@ ANONYMOUS:
         Basal Friction Coefficient:
           Type: Given Constant
           Constant Given Beta Value: 1.0
-    Parameters: 
-      Number: 0
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
-    Distributed Parameters: 
-      Number of Parameter Vectors: 0
     LandIce Physical Parameters: 
       Water Density: 1.028e+03
       Ice Density: 9.10e+02
@@ -120,9 +115,8 @@ ANONYMOUS:
             #Field Expression: ['rho_i=910', '-rho_i/1000.0*(1.0-0.5*y)']
             Field Expression: ['rho_i=910', '-rho_i/1000.0*5/4+0.0*x']
             #Field Expression: ['rho_i=910', '-rho_i/1000.0*5/4*(1+x)']
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [1169350000.0]
+  Regression For Response 0:
+    Test Value: 1169350000.0
   Piro: 
     LOCA: 
       Bifurcation: { }

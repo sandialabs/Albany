@@ -25,18 +25,19 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: lateralside
     Response Functions: 
-      Number: 1
-      Response 0: Surface Velocity Mismatch
-      ResponseParams 0: 
+      Number of Responses: 1
+      Response 0:
+        Name: Surface Velocity Mismatch
         Regularization Coefficient: 1.00000000000000000e+00
     Dirichlet BCs: { }
     Neumann BCs: { }
     Parameters: 
-      Number: 1
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
-    Distributed Parameters: 
-      Number of Parameter Vectors: 1
-      Distributed Parameter 0: 
+      Number of Parameters: 2
+      Parameter 0:
+        Type: Scalar
+        Name: 'Glen''s Law Homotopy Parameter'
+      Parameter 1:
+        Type: Distributed
         Name: basal_friction
     LandIce Physical Parameters: 
       Water Density: 1.02800000000000000e+03
@@ -132,15 +133,12 @@ ANONYMOUS:
             Field Type: Node Vector
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [1.07835792062000006e+08]
-    Sensitivity Comparisons 2: 
-      Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [1.86580896757000014e+07]
-    Sensitivity Comparisons 1: 
-      Number of Sensitivity Comparisons: 1
-      Sensitivity Test Values 0: [1.97888630229000002e+06]
+  Regression For Response 0:
+    Test Value: 1.07835792062000006e+08
+    Sensitivity For Parameter 0:
+      Test Value: 1.86580896757000014e+07
+    Sensitivity For Parameter 1:
+      Test Value: 1.97888630229000002e+06
     Relative Tolerance: 1.00000000000000005e-04
     Absolute Tolerance: 1.00000000000000005e-04
   Piro: 

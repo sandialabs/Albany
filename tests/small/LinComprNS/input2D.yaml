@@ -2,45 +2,43 @@
 ---
 ANONYMOUS:
   Build Type: Epetra
-  Problem: 
+  Problem:
     Phalanx Graph Visualization Detail: 1
     Name: LinComprNS 2D
     Number of PDE Equations: 3
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS NodeSet0 for DOF qFluct0: 0.00000000000000000e+00
       DBC on NS NodeSet0 for DOF qFluct1: 0.00000000000000000e+00
       DBC on NS NodeSet0 for DOF qFluct2: 0.00000000000000000e+00
-    Body Force: 
+    Body Force:
       Type: Steady Euler
-    Equation Set: 
+    Equation Set:
       Type: Euler
       Base Flow Data: [1.00000000000000000e+00, 1.00000000000000000e+00, 1.00000000000000000e+00, 0.00000000000000000e+00]
-    Initial Condition: 
+    Initial Condition:
       Function: Constant
       Function Data: [1.00000000000000000e+00, 1.00000000000000000e+00, 1.00000000000000000e+00]
-    Parameters: 
-      Number: 0
-    Response Functions: 
-      Number: 1
-      Response 0: Solution Average
-  Discretization: 
+    Parameters:
+      Number of Parameters: 0
+    Response Functions:
+      Number of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+  Discretization:
     1D Elements: 10
     2D Elements: 10
     1D Scale: 1.00000000000000000e+00
     2D Scale: 1.00000000000000000e+00
     Method: STK2D
     Exodus Output File Name: lincomprns2D_out.exo
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [1.31293490402000002e-01]
-    Relative Tolerance: 1.00000000000000005e-04
-  Piro: 
-    LOCA: 
-      Bifurcation: { }
-      Constraints: { }
-      Predictor: 
+  Piro:
+    LOCA:
+      Bifurcation: {}
+      Constraints: {}
+      Predictor:
         Method: Tangent
-      Stepper: 
+      Stepper:
         Initial Value: 1.00000000000000000e+00
         Continuation Method: Natural
         Continuation Parameter: DBC on NS cylinder for DOF qFluct0
@@ -48,7 +46,7 @@ ANONYMOUS:
         Max Value: 4.50000000000000000e+01
         Min Value: 5.00000000000000000e-01
         Compute Eigenvalues: true
-        Eigensolver: 
+        Eigensolver:
           Method: Anasazi
           Operator: Cayley
           Num Blocks: 100
@@ -59,54 +57,54 @@ ANONYMOUS:
           Cayley Pole: 1.00000000000000000e+01
           Cayley Zero: -1.00000000000000000e+01
           Normalize Eigenvectors with Mass Matrix: false
-      Step Size: 
+      Step Size:
         Initial Step Size: 2.00000000000000000e+00
-    NOX: 
-      Status Tests: 
+    NOX:
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: Combo
           Combo Type: AND
           Number of Tests: 2
-          Test 0: 
+          Test 0:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999980e-13
-          Test 1: 
+            Tolerance: 9.99999999999999979e-13
+          Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000005e-04
+            Absolute Tolerance: 1.00000000000000004e-04
             Relative Tolerance: 1.00000000000000002e-08
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 20
-      Direction: 
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
-          Linear Solver: 
+          Linear Solver:
             Write Linear System: false
-          Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
-            Stratimikos: 
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
                       Aztec Solver: GMRES
                       Convergence Test: r0
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 200
-                    Tolerance: 9.99999999999999955e-07
-                Belos: 
+                    Tolerance: 9.99999999999999954e-07
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-07
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 9.99999999999999954e-07
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -115,30 +113,30 @@ ANONYMOUS:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: Ifpack
-              Preconditioner Types: 
-                Ifpack: 
+              Preconditioner Types:
+                Ifpack:
                   Overlap: 0
                   Prec Type: ILU
-                  Ifpack Settings: 
+                  Ifpack Settings:
                     'fact: level-of-fill': 0
-                ML: 
+                ML:
                   Base Method Defaults: none
-                  ML Settings: 
+                  ML Settings:
                     default values: SA
                     'smoother: type': ML symmetric Gauss-Seidel
                     'smoother: pre or post': both
                     'coarse: type': Amesos-KLU
                     PDE equations: 4
           Rescue Bad Newton Solve: true
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000000000000e+00
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -148,6 +146,9 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Test Value: 1.31293490402000001e-01
+    Relative Tolerance: 1.00000000000000004e-04
 ...

@@ -16,28 +16,39 @@ ANONYMOUS:
       Quadratic: 
         Nonlinear Factor: 3.00000000000000000e+00
     Parameters: 
-      Number: 7
-      Parameter 0: DBC on NS nodelist_1 for DOF T
-      Parameter 1: DBC on NS nodelist_2 for DOF T
-      Parameter 2: DBC on NS nodelist_3 for DOF T
-      Parameter 3: DBC on NS nodelist_4 for DOF T
-      Parameter 4: DBC on NS nodelist_5 for DOF T
-      Parameter 5: DBC on NS nodelist_6 for DOF T
-      Parameter 6: Quadratic Nonlinear Factor
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Vector
+        Dimension: 7
+        Scalar 0:
+          Name: DBC on NS nodelist_1 for DOF T
+        Scalar 1:
+          Name: DBC on NS nodelist_2 for DOF T
+        Scalar 2:
+          Name: DBC on NS nodelist_3 for DOF T
+        Scalar 3:
+          Name: DBC on NS nodelist_4 for DOF T
+        Scalar 4:
+          Name: DBC on NS nodelist_5 for DOF T
+        Scalar 5:
+          Name: DBC on NS nodelist_6 for DOF T
+        Scalar 6:
+          Name: Quadratic Nonlinear Factor
     Response Functions: 
-      Number: 1
-      Response 0: Solution Average
-      Response 1: Solution Two Norm
+      Number of Responses: 2
+      Response 0:
+        Name: Solution Average
+      Response 1:
+        Name: Solution Two Norm
   Discretization: 
     Method: Ioss
     Exodus Input File Name: cube.exo
     Exodus Output File Name: cubeOut_tpetra.exo
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [1.63043300000000002e+00]
+  Regression For Response 0:
+    Test Value: 1.63043300000000002e+00
     Relative Tolerance: 1.00000000000000002e-03
-    Number of Sensitivity Comparisons: 1
-    Sensitivity Test Values 0: [1.90641599999999994e-01, 1.90639499999999990e-01, 2.05730799999999991e-01, 2.05724700000000010e-01, 2.30336999999999986e-01, 2.30336999999999986e-01, 7.82008000000000009e-02]
+    Sensitivity For Parameter 0:
+      Test Values: [1.90641599999999994e-01, 1.90639499999999990e-01, 2.05730799999999991e-01, 2.05724700000000010e-01, 2.30336999999999986e-01, 2.30336999999999986e-01, 7.82008000000000009e-02]
   Piro: 
     LOCA: 
       Bifurcation: { }

@@ -22,14 +22,23 @@ ANONYMOUS:
       Quadratic: 
         Nonlinear Factor: 3.00000000000000000e+00
     Parameters: 
-      Number: 1
-      Parameter 0: DBC on NS NodeSet0 for DOF T
+      Number of Parameters: 1
+      Parameter 0:
+        Name: DBC on NS NodeSet0 for DOF T
     Response Functions: 
-      Number: 1
-      Response 0: Solution Values
-      ResponseParams 0: 
+      Number of Responses: 3
+      Response 0:
+        Name: Solution Values
         Culling Strategy: Node GIDs
-        Node GID Array: [58, 193, 194]
+        Node GID Array: [58]
+      Response 1:
+        Name: Solution Values
+        Culling Strategy: Node GIDs
+        Node GID Array: [193]
+      Response 2:
+        Name: Solution Values
+        Culling Strategy: Node GIDs
+        Node GID Array: [194]
   Discretization: 
     1D Elements: 10
     2D Elements: 11
@@ -38,11 +47,15 @@ ANONYMOUS:
     Method: STK3D
     Cubature Degree: 3
     Exodus Output File Name: demo.exo
-  Regression Results: 
-    Number of Comparisons: 3
-    Test Values: [1.50000000000000000e+00, 1.54466999999999999e+00, 1.55048000000000008e+00]
+  Regression For Response 0:
+    Test Value: 1.50000000000000000e+00
     Relative Tolerance: 1.00000000000000002e-03
-    Number of Sensitivity Comparisons: 0
+  Regression For Response 1:
+    Test Value: 1.54466999999999999e+00
+    Relative Tolerance: 1.00000000000000002e-03
+  Regression For Response 2:
+    Test Value: 1.55048000000000008e+00
+    Relative Tolerance: 1.00000000000000002e-03
   Piro: 
     LOCA: 
       Bifurcation: { }

@@ -327,7 +327,10 @@ SolverFactory::getValidAppParameters() const
       .sublist("Point Cloud", false, "DTK Point Cloud sublist");
   validPL->sublist("Discretization", false, "Discretization sublist");
   validPL->sublist("Quadrature", false, "Quadrature sublist");
-  validPL->sublist("Regression Results", false, "Regression Results sublist");
+  const int maxRegression = 10;
+  for (int i = 0; i < maxRegression; i++) {
+    validPL->sublist(strint("Regression For Response", i), false, "Regression Results sublist");
+  }
   validPL->sublist("VTK", false, "DEPRECATED  VTK sublist");
   validPL->sublist("Piro", false, "Piro sublist");
   validPL->sublist("Coupled System", false, "Coupled system sublist");
@@ -394,7 +397,7 @@ SolverFactory::getValidResponseParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidResponseParams"));
   ;
   validPL->set<std::string>("Collection Method", "Sum Responses");
-  validPL->set<int>("Number of Response Vectors", 0);
+  validPL->set<int>("Number of Responses", 0);
   validPL->set<bool>("Observe Responses", true);
   validPL->set<int>("Responses Observation Frequency", 1);
   Teuchos::Array<unsigned int> defaultDataUnsignedInt;
@@ -406,11 +409,8 @@ SolverFactory::getValidResponseParameters() const
   validPL->set<int>("Number", 0);
   validPL->set<int>("Equation", 0);
   const int maxParameters = 500;
-  for (int i = 0; i < maxParameters; i++) {
-    validPL->set<std::string>(strint("Response", i), "");
-    validPL->sublist(strint("ResponseParams", i));
-    validPL->sublist(strint("Response Vector", i));
-  }
+  for (int i = 0; i < maxParameters; i++)
+    validPL->sublist(strint("Response", i), false, "Response sublist");
   return validPL;
 }
 

@@ -2,12 +2,12 @@
 ---
 ANONYMOUS:
   Build Type: Tpetra
-  Problem: 
+  Problem:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
     LandIce BCs:
-      Number : 1
+      Number: 1
       BC 0:
         Type: Basal Friction
         Cubature Degree: 3
@@ -15,93 +15,90 @@ ANONYMOUS:
         Basal Friction Coefficient:
           Type: Given Constant
           Constant Given Beta Value: 1e7
-    Parameters: 
-      Number: 1
-      Parameter 0: 'Glen''s Law Homotopy Parameter'
-    LandIce Viscosity: 
+    Parameters:
+      Number of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: 'Glen''s Law Homotopy Parameter'
+    LandIce Viscosity:
       Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 2.99999999999999989e-01
-      'Glen''s Law A': 1.00000000000000005e-04
+      'Glen''s Law Homotopy Parameter': 2.99999999999999988e-01
+      'Glen''s Law A': 1.00000000000000004e-04
       'Glen''s Law n': 3.00000000000000000e+00
-    Body Force: 
+    Body Force:
       Type: FO INTERP SURF GRAD
-    Response Functions: 
-      Number: 3
-      Response 0: Solution Max Value
-      ResponseParams 0: 
-        Equation: 0
-      Response 1: Solution Max Value
-      ResponseParams 1: 
+    Response Functions:
+      Response 2:
+        Type: Scalar Response
+        Name: Solution Average
+      Number of Responses: 3
+      Response 1:
         Equation: 1
-      Response 2: Solution Average
-  Discretization: 
+        Type: Scalar Response
+        Name: Solution Max Value
+      Response 0:
+        Equation: 0
+        Type: Scalar Response
+        Name: Solution Max Value
+  Discretization:
     Method: Exodus
     Restart Index: 1
     Exodus Input File Name: ../ExoMeshes/gis20km_in.exo
     Exodus Output File Name: gis20km_out_tpetra.exo
-    Required Fields Info: 
+    Required Fields Info:
       Number Of Fields: 1
-      Field 0: 
+      Field 0:
         Field Name: surface_height
         Field Type: Node Scalar
         Field Origin: Mesh
-  Regression Results: 
-    Number of Comparisons: 3
-    Test Values: [4.14425230839999983e+02, 2.11243655313999994e+02, -3.63645413969000009e+00]
-    Number of Sensitivity Comparisons: 0
-    Sensitivity Test Values 0: [-1.83781780322999993e-03]
-    Sensitivity Test Values 1: [8.97897488035000039e-04]
-    Sensitivity Test Values 2: [-3.35933961813999994e-03]
-    Relative Tolerance: 1.00000000000000005e-04
-    Absolute Tolerance: 1.00000000000000005e-04
-  Piro: 
-    LOCA: 
-      Bifurcation: { }
-      Constraints: { }
-      Predictor: 
+  Piro:
+    LOCA:
+      Bifurcation: {}
+      Constraints: {}
+      Predictor:
         Method: Constant
-      Stepper: 
+      Stepper:
         Initial Value: 0.00000000000000000e+00
         Continuation Parameter: 'Glen''s Law Homotopy Parameter'
         Continuation Method: Natural
         Max Steps: 15
         Max Value: 1.00000000000000000e+00
         Min Value: 0.00000000000000000e+00
-      Step Size: 
-        Initial Step Size: 5.00000000000000028e-02
+      Step Size:
+        Initial Step Size: 5.00000000000000027e-02
         Aggressiveness: 5.00000000000000000e-01
-    NOX: 
-      Status Tests: 
+    NOX:
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Scaled
-          Tolerance: 9.99999999999999955e-07
-        Test 1: 
+          Tolerance: 9.99999999999999954e-07
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 15
-      Direction: 
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
-          Linear Solver: 
+          Linear Solver:
             Write Linear System: false
-            Tolerance: 9.99999999999999955e-07
-          Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
-            Stratimikos: 
+            Tolerance: 9.99999999999999954e-07
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                Belos: 
-                  VerboseObject: 
+              Linear Solver Types:
+                Belos:
+                  VerboseObject:
                     Verbosity Level: medium
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-07
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 9.99999999999999954e-07
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -110,22 +107,22 @@ ANONYMOUS:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Overlap: 0
                   Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: level-of-fill': 0
           Rescue Bad Newton Solve: true
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000000000000e+00
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -135,6 +132,24 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.00000000000000004e-04
+    Sensitivity For Parameter 0:
+      Test Value: -1.83781780322999992e-03
+    Test Value: 4.14425230839999983e+02
+    Relative Tolerance: 1.00000000000000004e-04
+  Regression For Response 1:
+    Absolute Tolerance: 1.00000000000000004e-04
+    Sensitivity For Parameter 0:
+      Test Value: 8.97897488035000039e-04
+    Test Value: 2.11243655313999994e+02
+    Relative Tolerance: 1.00000000000000004e-04
+  Regression For Response 2:
+    Absolute Tolerance: 1.00000000000000004e-04
+    Sensitivity For Parameter 0:
+      Test Value: -3.35933961813999993e-03
+    Test Value: -3.63645413969000008e+00
+    Relative Tolerance: 1.00000000000000004e-04
 ...

@@ -13,14 +13,19 @@ ANONYMOUS:
       DBC on NS cylinder for DOF uy: 0.00000000000000000e+00
       DBC on NS sides for DOF uy: 0.00000000000000000e+00
     Parameters:
-      Number: 2
-      Parameter 0: DBC on NS inlet for DOF ux
-      Parameter 1: DBC on NS cylinder for DOF ux
+      Number of Parameters: 2
+      Parameter 0:
+        Type: Scalar
+        Name: DBC on NS inlet for DOF ux
+      Parameter 1:
+        Type: Scalar
+        Name: DBC on NS cylinder for DOF ux
     Response Functions:
-      Number: 1
-      Response 0: Solution Max Value
-      ResponseParams 0:
+      Number of Responses: 1
+      Response 0:
         Equation: 0
+        Type: Scalar Response
+        Name: Solution Max Value
   Discretization:
     Method: Exodus
     Exodus Input File Name: vortex.exo
@@ -41,7 +46,7 @@ ANONYMOUS:
         Prefix: ION_
         Options:
           TAU_C: NONE
-          PSPG Stabilization: ON
+          PSPG Stabilization: true
       EQ 1:
         Type: Momentum
         Basis Type: HGrad
@@ -51,18 +56,12 @@ ANONYMOUS:
         Prefix: ION_
         Options:
           TAU_M: SHAKIB
-          SUPG Stabilization: ON
+          SUPG Stabilization: true
 
-  Regression Results:
-    Number of Comparisons: 1
-    Test Values: [6.02549462100000000e+01]
-    Relative Tolerance: 1.00000000000000002e-03
-    Number of Sensitivity Comparisons: 1
-    Sensitivity Test Values 0: [1.41496696000000011e+00, -4.02275570000000027e-01]
   Piro:
     LOCA:
-      Bifurcation: { }
-      Constraints: { }
+      Bifurcation: {}
+      Constraints: {}
       Predictor:
         Method: Tangent
       Stepper:
@@ -99,10 +98,10 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999980e-13
+            Tolerance: 9.99999999999999979e-13
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000005e-04
+            Absolute Tolerance: 1.00000000000000004e-04
             Relative Tolerance: 1.00000000000000002e-08
         Test 1:
           Test Type: MaxIters
@@ -114,7 +113,7 @@ ANONYMOUS:
           Linear Solver:
             Write Linear System: false
           Stratimikos Linear Solver:
-            NOX Stratimikos Options: { }
+            NOX Stratimikos Options: {}
             Stratimikos:
               Linear Solver Type: Belos
               Linear Solver Types:
@@ -131,7 +130,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999955e-08
+                      Convergence Tolerance: 9.99999999999999954e-08
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -168,4 +167,11 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Sensitivity For Parameter 0:
+      Test Value: 1.41496696000000010e+00
+    Sensitivity For Parameter 1:
+      Test Value: -4.02275570000000026e-01
+    Test Value: 6.02549462099999999e+01
+    Relative Tolerance: 1.00000000000000002e-03
 ...

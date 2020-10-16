@@ -55,76 +55,72 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
 
   // Parameters (e.g., for sensitivities, SG expansions, ...)
   Teuchos::ParameterList& problemParams   = appParams->sublist("Problem");
-  Teuchos::ParameterList& parameterParams = problemParams.sublist("Parameters");
+  Teuchos::ParameterList parameterParams;
+  if (problemParams.isSublist("Parameters"))
+    parameterParams = problemParams.sublist("Parameters");
+  else {
+    parameterParams.set("Number of Parameters", 0);
+  }
 
   const std::string soln_method = problemParams.get("Solution Method", "Steady"); 
   if (soln_method == "Transient") {
     use_tempus = true; 
   }
 
-  num_param_vecs = parameterParams.get("Number of Parameter Vectors", 0);
-  bool using_old_parameter_list = false;
-  if (parameterParams.isType<int>("Number")) {
-    int numParameters = parameterParams.get<int>("Number");
-    if (numParameters > 0) {
-      num_param_vecs           = 1;
-      using_old_parameter_list = true;
-    }
-  }
+  getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
-  *out << "Number of parameter vectors  = " << num_param_vecs << std::endl;
+  *out << "Total number of parameters  = " << total_num_param_vecs << std::endl;
+  *out << "Number of non-distributed parameters  = " << num_param_vecs << std::endl;
 
   Teuchos::ParameterList& responseParams =
       problemParams.sublist("Response Functions");
 
-  int  num_response_vecs       = app->getNumResponses();
-  bool using_old_response_list = false;
-  if (responseParams.isType<int>("Number")) {
-    int numParameters = responseParams.get<int>("Number");
-    if (numParameters > 0) {
-      num_response_vecs       = 1;
-      using_old_response_list = true;
-    }
-  }
+  int  num_response_vecs = app->getNumResponses();
 
   param_names.resize(num_param_vecs);
   param_lower_bds.resize(num_param_vecs);
   param_upper_bds.resize(num_param_vecs);
   for (int l = 0; l < num_param_vecs; ++l) {
-    const Teuchos::ParameterList* pList =
-        using_old_parameter_list ?
-            &parameterParams :
-            &(parameterParams.sublist(Albany::strint("Parameter Vector", l)));
+    Teuchos::ParameterList* pList =
+        &(parameterParams.sublist(Albany::strint("Parameter", l)));
 
-    const int numParameters = pList->get<int>("Number");
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        numParameters == 0,
-        Teuchos::Exceptions::InvalidParameter,
-        std::endl
-            << "Error!  In Albany::ModelEvaluator constructor:  "
-            << "Parameter vector "
-            << l
-            << " has zero parameters!"
-            << std::endl);
+    std::string parameterType = pList->get<std::string>("Type", "Scalar");
 
-    param_names[l] =
-        Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
-    for (int k = 0; k < numParameters; ++k) {
-      (*param_names[l])[k] =
-          pList->get<std::string>(Albany::strint("Parameter", k));
+    if(parameterType == "Scalar") {
+      param_names[l] =
+          Teuchos::rcp(new Teuchos::Array<std::string>(1));
+      (*param_names[l])[0] =
+          pList->get<std::string>("Name");
+      *out << "Number of parameters in parameter vector " << l << " = 1" << std::endl;
     }
+    if(parameterType == "Vector") {
+      const int numParameters = pList->get<int>("Dimension");
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          numParameters == 0,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  In Albany::ModelEvaluator constructor:  "
+              << "Parameter vector "
+              << l
+              << " has zero parameters!"
+              << std::endl);
 
-    *out << "Number of parameters in parameter vector " << l << " = "
-         << numParameters << std::endl;
+      param_names[l] =
+          Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
+      for (int k = 0; k < numParameters; ++k) {
+        (*param_names[l])[k] =
+            pList->sublist(Albany::strint("Scalar", k)).get<std::string>("Name");
+      }
+      *out << "Number of parameters in parameter vector " << l << " = "
+          << numParameters << std::endl;
+    }
   }
 
-  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>> response_names;
+  Teuchos::Array<std::string> response_names;
   response_names.resize(num_response_vecs);
   for (int l = 0; l < num_response_vecs; ++l) {
     const Teuchos::ParameterList* pList =
-        using_old_response_list ?
-            &responseParams :
-            &(responseParams.sublist(Albany::strint("Response Vector", l)));
+      &(responseParams.sublist(Albany::strint("Response Vector", l)));
 
     bool number_exists = pList->getEntryPtr("Number");
 
@@ -141,11 +137,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
               << std::endl);
 
       response_names[l] =
-          Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
-      for (int k = 0; k < numParameters; ++k) {
-        (*response_names[l])[k] =
-            pList->get<std::string>(strint("Response", k));
-      }
+          pList->get<std::string>(strint("Response", l));
     }
   }
 
@@ -184,127 +176,135 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
     // Create Thyra vector for parameters
     param_vecs[l] = Thyra::createMember(param_vss[l]);
 
-    Teuchos::ParameterList* pList;
-    if (using_old_parameter_list) {
-      pList = &parameterParams;
-    } else {
-      pList = &(parameterParams.sublist(strint("Parameter Vector",l)));
-    }
+    Teuchos::ParameterList* pList = &(parameterParams.sublist(strint("Parameter",l)));
 
     int numParameters = param_vss[l]->dim();
 
-    // Loading lower bounds (if any)
-    if (pList->isParameter("Lower Bounds"))
-    {
+    // Loading lower and upper bounds (if any)
+    const std::string parameterType = pList->get<std::string>("Type", "Scalar");
+
+    if(parameterType == "Scalar") {
+      // Loading lower bounds (if any)
+      if (pList->isParameter("Lower Bound")) {
+        param_lower_bds[l] = Thyra::createMember(param_vss[l]);
+        ST lb = pList->get<ST>("Lower Bound");
+        TEUCHOS_TEST_FOR_EXCEPTION (1!=numParameters, Teuchos::Exceptions::InvalidParameter,
+                                    "Error! numParameters!=1.\n");
+
+        auto param_lower_bd_nonConstView = getNonconstLocalData(param_lower_bds[l]);
+        param_lower_bd_nonConstView[0] = lb;
+      }
+
+      // Loading upper bounds (if any)
+      if (pList->isParameter("Upper Bound")) {
+        param_upper_bds[l] = Thyra::createMember(param_vss[l]);
+        ST ub = pList->get<ST>("Upper Bound");
+        TEUCHOS_TEST_FOR_EXCEPTION (1!=numParameters, Teuchos::Exceptions::InvalidParameter,
+                                    "Error! numParameters!=1.\n");
+
+        auto param_upper_bd_nonConstView = getNonconstLocalData(param_upper_bds[l]);
+        param_upper_bd_nonConstView[0] = ub;
+      }
+
+      // Loading nominal values (if any)
+      auto param_vec_nonConstView = getNonconstLocalData(param_vecs[l]);
+      if (pList->isParameter("Nominal Value")) {
+        ST nvals = pList->get<ST>("Nominal Value");
+        TEUCHOS_TEST_FOR_EXCEPTION (1!=numParameters, Teuchos::Exceptions::InvalidParameter,
+                                    "Error! numParameters!=1.\n");
+
+        sacado_param_vec[l][0].baseValue = param_vec_nonConstView[0] = nvals;
+      } else {
+        param_vec_nonConstView[0] = sacado_param_vec[l][0].baseValue;
+      }
+    }
+
+    if(parameterType == "Vector") {
       param_lower_bds[l] = Thyra::createMember(param_vss[l]);
-      Teuchos::Array<ST> lb = pList->get<Teuchos::Array<ST>>("Lower Bounds");
-      TEUCHOS_TEST_FOR_EXCEPTION (lb.size()!=numParameters, Teuchos::Exceptions::InvalidParameter,
-                                  "Error! Input lower bounds array has the wrong dimension.\n");
+      param_upper_bds[l] = Thyra::createMember(param_vss[l]);
 
       auto param_lower_bd_nonConstView = getNonconstLocalData(param_lower_bds[l]);
-      for (int k = 0; k < numParameters; ++k) {
-        param_lower_bd_nonConstView[k] = lb[k];
-      }
-    }
-
-    // Loading upper bounds (if any)
-    if (pList->isParameter("Upper Bounds"))
-    {
-      param_upper_bds[l] = Thyra::createMember(param_vss[l]);
-      Teuchos::Array<ST> ub = pList->get<Teuchos::Array<ST>>("Upper Bounds");
-      TEUCHOS_TEST_FOR_EXCEPTION (ub.size()!=numParameters, Teuchos::Exceptions::InvalidParameter,
-                                  "Error! Input upper bounds array has the wrong dimension.\n");
-
       auto param_upper_bd_nonConstView = getNonconstLocalData(param_upper_bds[l]);
-      for (int k = 0; k < numParameters; ++k) {
-        param_upper_bd_nonConstView[k] = ub[k];
-      }
-    }
-
-    // Loading nominal values (if any)
-    auto param_vec_nonConstView = getNonconstLocalData(param_vecs[l]);
-    if (pList->isParameter("Nominal Values"))
-    {
-      Teuchos::Array<ST> nvals = pList->get<Teuchos::Array<ST>>("Nominal Values");
-      TEUCHOS_TEST_FOR_EXCEPTION (nvals.size()!=numParameters, Teuchos::Exceptions::InvalidParameter,
-                                  "Error! Input nominal values array has the wrong dimension.\n");
+      auto param_vec_nonConstView = getNonconstLocalData(param_vecs[l]);
 
       for (int k = 0; k < numParameters; ++k) {
-        sacado_param_vec[l][k].baseValue = param_vec_nonConstView[k] = nvals[k];
-      }
-    } else {
-      for (int k = 0; k < numParameters; ++k) {
-        param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
+        std::string sublistName = strint("Scalar",k);
+        if (pList->sublist(sublistName).isParameter("Lower Bound")) {
+          ST lb = pList->get<ST>("Lower Bound");
+          param_lower_bd_nonConstView[k] = lb;
+        }
+        if (pList->sublist(sublistName).isParameter("Upper Bound")) {
+          ST ub = pList->get<ST>("Upper Bound");
+          param_upper_bd_nonConstView[k] = ub;
+        }
+        if (pList->sublist(sublistName).isParameter("Upper Bound")) {
+          ST nvals = pList->get<ST>("Nominal Value");
+          sacado_param_vec[l][k].baseValue = param_vec_nonConstView[k] = nvals;
+        } else {
+          param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
+        }
       }
     }
   }
 
   // Setup distributed parameters
   distParamLib = app->getDistributedParameterLibrary();
-  Teuchos::ParameterList& distParameterParams =
-      problemParams.sublist("Distributed Parameters");
-  Teuchos::ParameterList* param_list;
-  num_dist_param_vecs =
-      distParameterParams.get("Number of Parameter Vectors", 0);
   dist_param_names.resize(num_dist_param_vecs);
   *out << "Number of distributed parameters vectors  = " << num_dist_param_vecs
        << std::endl;
-  const std::string* p_name_ptr;
-  const std::string  emptyString("");
-  for (int i = 0; i < num_dist_param_vecs; i++) {
-    const std::string& p_sublist_name = strint("Distributed Parameter", i);
-    param_list = distParameterParams.isSublist(p_sublist_name) ?
-                     &distParameterParams.sublist(p_sublist_name) :
-                     NULL;
+  std::string p_name;
+  std::string  emptyString("");
+  for (int i = num_param_vecs; i < total_num_param_vecs; i++) {
+    const std::string& p_sublist_name = strint("Parameter", i);
+    Teuchos::ParameterList param_list = parameterParams.sublist(p_sublist_name);
 
-    p_name_ptr = &distParameterParams.get<std::string>(strint("Parameter", i), emptyString);
-
-    if (param_list != NULL) {
-      const std::string& name_from_list =
-          param_list->get<std::string>("Name", emptyString);
-
-      p_name_ptr = (*p_name_ptr != emptyString) ? p_name_ptr : &name_from_list;
-
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          (*p_name_ptr != name_from_list) && (name_from_list != emptyString),
-          Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  In Albany::ModelEvaluator constructor:  Provided "
-                 "two different names for same parameter in Distributed "
-                 "Parameters list: \""
-              << *p_name_ptr
-              << "\" and \""
-              << name_from_list
-              << "\""
-              << std::endl);
-    }
+    p_name = param_list.get<std::string>("Name");
 
     TEUCHOS_TEST_FOR_EXCEPTION(
-        !distParamLib->has(*p_name_ptr),
+        !distParamLib->has(p_name),
         Teuchos::Exceptions::InvalidParameter,
         std::endl
             << "Error!  In Albany::ModelEvaluator constructor:  "
             << "Invalid distributed parameter name \""
-            << *p_name_ptr
+            << p_name
             << "\""
             << std::endl);
 
-    dist_param_names[i] = *p_name_ptr;
+    dist_param_names[i-num_param_vecs] = p_name;
     // set parameters bonuds
-    if (param_list) {
-      Teuchos::RCP<const DistributedParameter> distParam = distParamLib->get(*p_name_ptr);
-      if (param_list->isParameter("Lower Bound") &&
-          (distParam->lower_bounds_vector() != Teuchos::null))
-        distParam->lower_bounds_vector()->assign(
-            param_list->get<ST>("Lower Bound"));
-      if (param_list->isParameter("Upper Bound") &&
-          (distParam->upper_bounds_vector() != Teuchos::null))
-        distParam->upper_bounds_vector()->assign(
-            param_list->get<ST>("Upper Bound"));
-      if (param_list->isParameter("Initial Uniform Value") &&
-          (distParam->vector() != Teuchos::null))
-        distParam->vector()->assign(
-            param_list->get<ST>("Initial Uniform Value"));
+    Teuchos::RCP<const DistributedParameter> distParam = distParamLib->get(p_name);
+    if (param_list.isParameter("Lower Bound")) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          distParam->lower_bounds_vector() == Teuchos::null,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  In Albany::ModelEvaluator constructor:  "
+              << "distParam->lower_bounds_vector() == Teuchos::null"
+              << std::endl);
+      distParam->lower_bounds_vector()->assign(
+          param_list.get<ST>("Lower Bound"));
+    }
+    if (param_list.isParameter("Upper Bound")) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          distParam->upper_bounds_vector() == Teuchos::null,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  In Albany::ModelEvaluator constructor:  "
+              << "distParam->upper_bounds_vector() == Teuchos::null"
+              << std::endl);
+      distParam->upper_bounds_vector()->assign(
+          param_list.get<ST>("Upper Bound"));
+    }
+    if (param_list.isParameter("Initial Uniform Value")) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          distParam->vector() == Teuchos::null,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  In Albany::ModelEvaluator constructor:  "
+              << "distParam->vector() == Teuchos::null"
+              << std::endl);
+      distParam->vector()->assign(
+          param_list.get<ST>("Initial Uniform Value"));
     }
   }
 
@@ -610,7 +610,7 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
           Thyra_ModelEvaluator::DERIV_MV_JACOBIAN_FORM);
     }
 
-    const bool aDHessVec = appParams->sublist("Problem").sublist("Distributed Parameters").get("Hessian-vector products use AD", true);
+    const bool aDHessVec = appParams->sublist("Problem").sublist("Parameters").get("Hessian-vector products use AD", true);
 
     bool hess_vec_prod_g_xx_support = aDHessVec;
     bool hess_vec_prod_g_xp_support = aDHessVec;

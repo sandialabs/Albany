@@ -10,24 +10,20 @@ ANONYMOUS:
       DBC on NS NodeSet5 for DOF U0: 0.00000000000000000e+00
       DBC on NS NodeSet4 for DOF U1: 0.00000000000000000e+00
       DBC on NS NodeSet5 for DOF U1: 0.00000000000000000e+00
-    Parameters: 
-      Number: 0
-      Parameter 0: DBC on NS cylinder for DOF U0
-      Parameter 1: DBC on NS cylinder for DOF U1
-      Parameter 2: DBC on NS cylinder for DOF U2
     LandIce Viscosity: 
       Type: Constant
     Body Force: 
       Type: FOSinCosZ
     Response Functions: 
-      Number: 3
-      Response 0: Solution Max Value
-      ResponseParams 0: 
+      Number of Responses: 3
+      Response 0:
+        Name: Solution Max Value
         Equation: 0
-      Response 1: Solution Max Value
-      ResponseParams 1: 
+      Response 1:
+        Name: Solution Max Value
         Equation: 1
-      Response 2: Solution Average
+      Response 2:
+        Name: Solution Average
   Discretization: 
     Periodic_x BC: true
     Periodic_y BC: true
@@ -40,12 +36,21 @@ ANONYMOUS:
     3D Scale: 1.00000000000000000e+00
     Method: STK3D
     Exodus Output File Name: felix_stokes_fo_sincosz_out.exo
-  Regression Results: 
-    Number of Comparisons: 3
-    Test Values: [9.86721213035000044e-02, 9.86721213035000044e-02, 1.13599367626000007e-15]
+  Regression For Response 0: 
+    Test Value: 9.86721213035000044e-02
     Relative Tolerance: 1.00000000000000005e-04
-    Number of Sensitivity Comparisons: 0
-    Sensitivity Test Values 0: [2.08812026833999992e-01, 2.43439246662000008e-01, 5.45756230980999971e-02]
+    Sensitivity For Parameter 0:
+      Test Values: 2.08812026833999992e-01
+  Regression For Response 1: 
+    Test Value: 9.86721213035000044e-02
+    Relative Tolerance: 1.00000000000000005e-04
+    Sensitivity For Parameter 0:
+      Test Values: 2.43439246662000008e-01
+  Regression For Response 2: 
+    Test Value: 1.13599367626000007e-15
+    Relative Tolerance: 1.00000000000000005e-04
+    Sensitivity For Parameter 0:
+      Test Values: 5.45756230980999971e-02
   Piro: 
     LOCA: 
       Bifurcation: { }

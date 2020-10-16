@@ -12,18 +12,16 @@ ANONYMOUS:
     Source Functions: 
       Quadratic: 
         Nonlinear Factor: 3.39999999999999991e+00
-    Parameters: 
-      Number: 0
     Response Functions: 
-      Number: 1
-      Response 0: Solution Average
+      Number of Responses: 1
+      Response 0:
+        Name: Solution Average
   Discretization: 
     Method: Ioss
     Exodus Input File Name: quadQuad.exo
     Exodus Output File Name: quadOut.exo
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [1.42910000000000004e+00]
+  Regression For Response 0: 
+    Test Value: 1.42910000000000004e+00
     Relative Tolerance: 1.00000000000000002e-03
   Piro: 
     LOCA: 

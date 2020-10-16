@@ -16,19 +16,24 @@ ANONYMOUS:
       ThermalConductivity Type: Constant
       Value: 1.00000000000000000e+00
     Parameters: 
-      Number: 1
-      Parameter 0: 'NBC on SS surface_1 for DOF T set robin[0]'
+      Number of Parameters: 1
+      Parameter 0:
+        Name: 'NBC on SS surface_1 for DOF T set robin[0]'
     Response Functions: 
-      Number: 2
-      Response 0: Solution Average
-      Response 1: Solution Max Value
+      Number of Responses: 2
+      Response 0:
+        Name: Solution Average
+      Response 1:
+        Name: Solution Max Value
   Discretization: 
     Method: Ioss
     Exodus Input File Name: mesh.exo
     Exodus Output File Name: mesh_output.exo
-  Regression Results: 
-    Number of Comparisons: 2
-    Test Values: [4.09090909092000021e-01, 8.18181818184000043e-01]
+  Regression For Response 0:
+    Test Value: 4.09090909092000021e-01
+    Absolute Tolerance: 1.00000000000000005e-04
+  Regression For Response 1:
+    Test Value: 8.18181818184000043e-01
     Absolute Tolerance: 1.00000000000000005e-04
   Piro: 
     NOX: 

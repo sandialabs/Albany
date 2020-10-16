@@ -305,26 +305,20 @@ void StokesFOBase::parseInputFields ()
   std::string stateName, fieldName, param_name;
 
   // Getting the names of the distributed parameters (they won't have to be loaded as states)
-  if (this->params->isSublist("Distributed Parameters")) {
-    Teuchos::ParameterList& dist_params_list =  this->params->sublist("Distributed Parameters");
-    Teuchos::ParameterList* param_list;
-    int numParams = dist_params_list.get<int>("Number of Parameter Vectors",0);
-    for (int p_index=0; p_index< numParams; ++p_index) {
-      std::string parameter_sublist_name = Albany::strint("Distributed Parameter", p_index);
-      if (dist_params_list.isSublist(parameter_sublist_name)) {
-        // The better way to specify dist params: with sublists
-        param_list = &dist_params_list.sublist(parameter_sublist_name);
-        param_name = param_list->get<std::string>("Name");
-        dist_params_name_to_mesh_part[param_name] = param_list->get<std::string>("Mesh Part","");
-        is_extruded_param[param_name] = param_list->get<bool>("Extruded",false);
-        int extruded_param_level = param_list->get<int>("Extruded Param Level",0);
-        extruded_params_levels.insert(std::make_pair(param_name, extruded_param_level));
-        save_sensitivities[param_name]=param_list->get<bool>("Save Sensitivity",false);
-      } else {
-        // Legacy way to specify dist params: with parameter entries. Note: no mesh part can be specified.
-        param_name = dist_params_list.get<std::string>(Albany::strint("Parameter", p_index));
-        dist_params_name_to_mesh_part[param_name] = "";
-      }
+  if (this->params->isSublist("Parameters")) {
+    Teuchos::ParameterList& parameterParams = this->params->sublist("Parameters");
+    int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
+    Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
+
+    for (int p_index=0; p_index< num_dist_param_vecs; ++p_index) {
+      std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
+      Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
+      param_name = param_list.get<std::string>("Name");
+      dist_params_name_to_mesh_part[param_name] = param_list.get<std::string>("Mesh Part","");
+      is_extruded_param[param_name] = param_list.get<bool>("Extruded",false);
+      int extruded_param_level = param_list.get<int>("Extruded Param Level",0);
+      extruded_params_levels.insert(std::make_pair(param_name, extruded_param_level));
+      save_sensitivities[param_name]=param_list.get<bool>("Save Sensitivity",false);
       is_dist_param[param_name] = true;
       is_input_field[param_name] = true;
       is_dist[param_name] = true;

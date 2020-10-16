@@ -78,24 +78,40 @@ setNominalValue (const Teuchos::ParameterList& p, double default_value)
   // First we scan the Parameter list to see if this parameter is listed in it,
   // in which case we use the nominal value.
   bool found = false;
-  if (p.isParameter("Number of Parameter Vectors"))
+  if (p.isParameter("Number of Parameters"))
   {
-    int n = p.get<int>("Number of Parameter Vectors");
+    int n = p.get<int>("Number of Parameters");
     for (int i=0; (found==false) && i<n; ++i)
     {
-      const Teuchos::ParameterList& pvi = p.sublist(Albany::strint("Parameter Vector",i));
-      if (!pvi.isParameter("Nominal Values"))
-        continue; // Pointless to check the parameter names, since we don't have nominal values
+      const Teuchos::ParameterList& pvi = p.sublist(Albany::strint("Parameter",i));
+      std::string parameterType = "Scalar";
+      if(!pvi.isParameter("Type"))
+        parameterType = pvi.get<std::string>("Type");
+      if (parameterType == "Distributed")
+        break; // Pointless to check the remaining parameters as they are all distributed
 
-      int m = pvi.get<int>("Number");
-      for (int j=0; j<m; ++j)
-      {
-        if (pvi.get<std::string>(Albany::strint("Parameter",j))==param_name)
+      if (parameterType == "Scalar") {
+        if (!pvi.isParameter("Nominal Values"))
+          continue; // Pointless to check the parameter names, since we don't have nominal values
+        if (pvi.get<std::string>("Name")==param_name)
         {
-          Teuchos::Array<double> nom_vals = pvi.get<Teuchos::Array<double>>("Nominal Values");
-          value = nom_vals[j];
+          double nom_val = pvi.get<double>("Nominal Value");
+          value = nom_val;
           found = true;
           break;
+        }
+      }
+      else {
+        int m = pvi.get<int>("Dimension");
+        for (int j=0; j<m; ++j)
+        {
+          if (pvi.sublist(Albany::strint("Scalar",j)).get<std::string>("Name")==param_name)
+          {
+            double nom_val = pvi.get<double>("Nominal Value");
+            value = nom_val;
+            found = true;
+            break;
+          }
         }
       }
     }

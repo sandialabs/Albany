@@ -38,85 +38,104 @@ checkSolveTestResults(
 
   int          failures    = 0;
   int          comparisons = 0;
-  const double relTol      = testParams->get<double>("Relative Tolerance");
-  const double absTol      = testParams->get<double>("Absolute Tolerance");
 
-  // Get number of responses (g) to test
-  const int numResponseTests = testParams->get<int>("Number of Comparisons");
-  if (numResponseTests > 0) {
+  if (testParams != NULL) {
+    const double relTol      = testParams->get<double>("Relative Tolerance");
+    const double absTol      = testParams->get<double>("Absolute Tolerance");
+
+    // Test the response (g)
     ALBANY_ASSERT(
         g != Teuchos::null,
-        "There are Response Tests but the response vector is null!");
+        "There is Response Test but the response vector is null!");
     ALBANY_ASSERT(
-        numResponseTests <= g->space()->dim(),
-        "Number of Response Tests (" << numResponseTests
-                                     << ") greater than number of responses ("
-                                     << g->space()->dim() << ") !");
-    Teuchos::Array<double> testValues =
-        testParams->get<Teuchos::Array<double>>("Test Values");
-
-    ALBANY_ASSERT(
-        numResponseTests == testValues.size(),
-        "Number of Response Tests (" << numResponseTests
-                                     << ") != number of Test Values ("
-                                     << testValues.size() << ") !");
+        g->space()->dim() == 1,
+        "The responses are assumed to be scalar responses; the response " << response_index
+                                      << " is not scalar and its dimension is "
+                                      << g->space()->dim() << " !");
+    double testValue =
+        testParams->get<double>("Test Value");
 
     Teuchos::ArrayRCP<const ST> g_view = getLocalData(g);
-    for (int i = 0; i < testValues.size(); i++) {
-      auto s = std::string("Response Test ") + std::to_string(i);
-      failures += scaledCompare(g_view[i], testValues[i], relTol, absTol, s);
-      comparisons++;
-    }
-  }
+    auto s = std::string("Response Test ") + std::to_string(response_index);
+    failures += scaledCompare(g_view[0], testValue, relTol, absTol, s);
+    comparisons++;
 
-  // Repeat comparisons for sensitivities
-  Teuchos::ParameterList* sensitivityParams = 0;
-  std::string             sensitivity_sublist_name =
-      strint("Sensitivity Comparisons", parameter_index);
-  if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
-    sensitivityParams = testParams;
-  else if (testParams->isSublist(sensitivity_sublist_name))
-    sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
-  int numSensTests = 0;
-  if (sensitivityParams != 0) {
-    numSensTests =
-        sensitivityParams->get<int>("Number of Sensitivity Comparisons", 0);
-  }
-  if (numSensTests > 0) {
+    std::string sensitivity_sublist_name =
+        strint("Sensitivity For Parameter", parameter_index);
+
+    if (parameter_index == -1 || !(testParams->isSublist(sensitivity_sublist_name))) {
+      storeTestResults(testParams, failures, comparisons);
+
+      return failures;
+    }
+
+    // Repeat comparisons for sensitivities
+    Teuchos::ParameterList* sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
     ALBANY_ASSERT(
         dgdp != Teuchos::null,
         "There are Sensitivity Tests but the sensitivity vector ("
             << response_index << ", " << parameter_index << ") is null!");
-    if (numSensTests != dgdp->range()->dim()) {
-      ALBANY_ASSERT(
-          false,
-          "Number of sensitivity tests ("
-              << numSensTests << ") != number of sensitivities ["
-              << response_index << "][" << parameter_index << "] ("
-              << dgdp->range()->dim() << ") !");
-    }
-  }
-  for (int i = 0; i < numSensTests; i++) {
+    const int numSensTests = dgdp->range()->dim();
     const int numVecs = dgdp->domain()->dim();
-    Teuchos::Array<double> testSensValues =
-        sensitivityParams->get<Teuchos::Array<double>>(
-            strint("Sensitivity Test Values", i));
-    ALBANY_ASSERT(
-        numVecs== testSensValues.size(),
-        "Number of Sensitivity Test Values ("
-            << testSensValues.size() << " != number of sensitivity vectors ("
-            << numVecs << ") !");
-    auto dgdp_view = getLocalData(dgdp);
-    for (int jvec = 0; jvec < numVecs; jvec++) {
-      auto s = std::string("Sensitivity Test ") + std::to_string(i) + "," +
-               std::to_string(jvec);
-      failures +=
-          scaledCompare(dgdp_view[jvec][i], testSensValues[jvec], relTol, absTol, s);
-      comparisons++;
-    }
-  }
+    for (int i = 0; i < numSensTests; i++) {
+      Teuchos::Array<double> testSensValues;
 
-  storeTestResults(testParams, failures, comparisons);
+      Teuchos::ParameterList paramSublist = appParams->sublist("Problem").sublist("Parameters").sublist(
+        strint("Parameter", parameter_index));
+      std::string parameterType = paramSublist.get<std::string>("Type", "Scalar");
+      if (parameterType == "Vector") {
+        if (sensitivityParams->isType<Teuchos::Array<double>>("Test Values")) {
+          int dimension = paramSublist.get<int>("Dimension");
+          testSensValues = sensitivityParams->get<Teuchos::Array<double>>("Test Values");
+          TEUCHOS_TEST_FOR_EXCEPTION(
+              testSensValues.size() != dimension,
+              Teuchos::Exceptions::InvalidParameter,
+              std::endl
+                  << "Error!  In Albany::RegressionTests:: checkSolveTestResults:  "
+                  << "The dimension of the parameter vector "<< parameter_index << " which is " << dimension
+                  << " and the size of the \"Test Values\" which is " << testSensValues.size()
+                  << " are not equal."
+                  << std::endl);
+        }
+        else {
+          storeTestResults(testParams, failures, comparisons);
+
+          return failures;
+        }
+      }
+      else if (parameterType == "Scalar" || parameterType == "Distributed") {
+        if (sensitivityParams->isType<double>("Test Value")) {
+          testSensValues.resize(1);
+          testSensValues[0] = sensitivityParams->get<double>("Test Value");
+        }
+        else {
+          storeTestResults(testParams, failures, comparisons);
+
+          return failures;
+        }
+      }
+      else
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            Teuchos::Exceptions::InvalidParameter,
+            std::endl
+                << "Error!  In Albany::RegressionTests:: checkSolveTestResults:  "
+                << "Parameter "<< parameter_index << " is of type \"" << parameterType << "\" which is not supported."
+                << std::endl);
+
+      auto dgdp_view = getLocalData(dgdp);
+
+      for (int jvec = 0; jvec < numVecs; jvec++) {
+        auto s = std::string("Sensitivity Test ") + std::to_string(i) + "," +
+                std::to_string(jvec);
+        failures +=
+            scaledCompare(dgdp_view[jvec][i], testSensValues[i], relTol, absTol, s);
+        comparisons++;
+      }
+    }
+
+    storeTestResults(testParams, failures, comparisons);
+  }
 
   return failures;
 }
@@ -129,40 +148,43 @@ int RegressionTests::checkAnalysisTestResults(
 
   int          failures    = 0;
   int          comparisons = 0;
-  const double relTol      = testParams->get<double>("Relative Tolerance");
-  const double absTol      = testParams->get<double>("Absolute Tolerance");
 
-  int numPiroTests =
-      testParams->get<int>("Number of Piro Analysis Comparisons");
-  if (numPiroTests > 0 && tvec != Teuchos::null) {
-    // Create indexable thyra vector
-    ::Thyra::DetachedVectorView<double> p(tvec);
+  if (testParams != NULL) {
+    const double relTol      = testParams->get<double>("Relative Tolerance");
+    const double absTol      = testParams->get<double>("Absolute Tolerance");
 
-    ALBANY_ASSERT(
-        numPiroTests <= p.subDim(),
-        "more Piro Analysis Comparisons (" << numPiroTests << ") than values ("
-                                           << p.subDim() << ") !\n");
-    // Read accepted test results
-    Teuchos::Array<double> testValues =
-        testParams->get<Teuchos::Array<double>>("Piro Analysis Test Values");
+    int numPiroTests =
+        testParams->get<int>("Number of Piro Analysis Comparisons");
+    if (numPiroTests > 0 && tvec != Teuchos::null) {
+      // Create indexable thyra vector
+      ::Thyra::DetachedVectorView<double> p(tvec);
 
-    TEUCHOS_TEST_FOR_EXCEPT(numPiroTests != testValues.size());
-    if (testParams->get<bool>("Piro Analysis Test Two Norm",false)) {
-      const auto norm = tvec->norm_2();
-      *out << "Parameter Vector Two Norm: " << norm << std::endl;
-      failures += scaledCompare(norm, testValues[0], relTol, absTol, "Piro Analysis Test Two Norm");
-      comparisons++;
-    }
-    else {
-      for (int i = 0; i < numPiroTests; i++) {
-        auto s = std::string("Piro Analysis Test ") + std::to_string(i);
-        failures += scaledCompare(p[i], testValues[i], relTol, absTol, s);
+      ALBANY_ASSERT(
+          numPiroTests <= p.subDim(),
+          "more Piro Analysis Comparisons (" << numPiroTests << ") than values ("
+                                            << p.subDim() << ") !\n");
+      // Read accepted test results
+      Teuchos::Array<double> testValues =
+          testParams->get<Teuchos::Array<double>>("Piro Analysis Test Values");
+
+      TEUCHOS_TEST_FOR_EXCEPT(numPiroTests != testValues.size());
+      if (testParams->get<bool>("Piro Analysis Test Two Norm",false)) {
+        const auto norm = tvec->norm_2();
+        *out << "Parameter Vector Two Norm: " << norm << std::endl;
+        failures += scaledCompare(norm, testValues[0], relTol, absTol, "Piro Analysis Test Two Norm");
         comparisons++;
       }
+      else {
+        for (int i = 0; i < numPiroTests; i++) {
+          auto s = std::string("Piro Analysis Test ") + std::to_string(i);
+          failures += scaledCompare(p[i], testValues[i], relTol, absTol, s);
+          comparisons++;
+        }
+      }
     }
-  }
 
-  storeTestResults(testParams, failures, comparisons);
+    storeTestResults(testParams, failures, comparisons);
+  }
 
   return failures;
 }
@@ -170,21 +192,13 @@ int RegressionTests::checkAnalysisTestResults(
 Teuchos::ParameterList*
 RegressionTests::getTestParameters(int response_index) const
 {
-  Teuchos::ParameterList* result;
-
-  if (response_index == 0 && appParams->isSublist("Regression Results")) {
-    result = &(appParams->sublist("Regression Results"));
-  } else {
-    result = &(appParams->sublist(
-        strint("Regression Results", response_index)));
-  }
-
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      result->isType<std::string>("Test Values"),
-      std::logic_error,
-      "Array information in XML file must now be of type Array(double)\n");
-  result->validateParametersAndSetDefaults(
-      *getValidRegressionResultsParameters(), 0);
+  Teuchos::ParameterList* result = &(appParams->sublist(
+      strint("Regression For Response", response_index)));
+  if(result->isParameter("Test Value"))
+    result->validateParametersAndSetDefaults(
+        *getValidRegressionResultsParameters(), 0);
+  else
+    result = NULL;
 
   return result;
 }
@@ -238,27 +252,24 @@ RegressionTests::getValidRegressionResultsParameters() const
       1.0e-8,
       "Absolute Tolerance used in regression testing");
 
-  validPL->set<int>(
-      "Number of Comparisons", 0, "Number of responses to regress against");
-  validPL->set<Array<double>>(
-      "Test Values", ta, "Array of regression values for responses");
-
-  validPL->set<int>(
-      "Number of Sensitivity Comparisons",
-      0,
-      "Number of sensitivity vectors to regress against");
+  validPL->set<double>(
+      "Test Value", 0., "Regression value for responses");
 
   const int maxSensTests = 10;
   for (int i = 0; i < maxSensTests; i++) {
-    validPL->set<Array<double>>(
-        strint("Sensitivity Test Values", i),
-        ta,
+    std::string sublist_name = strint("Sensitivity For Parameter", i);
+    validPL->sublist(sublist_name, false, "Sensitivity regression sublist");
+
+    validPL->sublist(sublist_name).set<double>(
+        strint("Test Value", i),
+        0.,
         strint(
             "Array of regression values for Sensitivities w.r.t parameter", i));
-    validPL->sublist(
-        strint("Sensitivity Comparisons", i),
-        false,
-        "Sensitivity Comparisons sublist");
+    validPL->sublist(sublist_name).set<Array<double>>(
+        strint("Test Values", i),
+        ta,
+        strint(
+            "Array of regression values for Sensitivities w.r.t parameters", i));
   }
 
   validPL->set<int>(

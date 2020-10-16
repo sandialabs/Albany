@@ -14,9 +14,11 @@ ANONYMOUS:
     ThermalConductivity: 
       ThermalConductivity Type: Block Dependent
     Response Functions: 
-      Number: 2
-      Response 0: Solution Max Value
-      Response 1: Solution Average
+      Number of Responses: 2
+      Response 0:
+        Name: Solution Max Value
+      Response 1:
+        Name: Solution Average
   Discretization: 
     Method: Exodus
     Exodus Input File Name: ebs-steady.exo
@@ -24,9 +26,12 @@ ANONYMOUS:
     Separate Evaluators by Element Block: true
     Restart Index: 1
     Use Serial Mesh: true
-  Regression Results: 
-    Number of Comparisons: 2
-    Test Values: [2.05234966931999998e+03, 1.59885245362000001e+03]
+  Regression For Response 0:
+    Test Value: 2.05234966931999998e+03
+    Absolute Tolerance: 1.00000000000000005e-04
+    Relative Tolerance: 1.00000000000000005e-04
+  Regression For Response 1:
+    Test Value: 1.59885245362000001e+03
     Absolute Tolerance: 1.00000000000000005e-04
     Relative Tolerance: 1.00000000000000005e-04
   Piro: 

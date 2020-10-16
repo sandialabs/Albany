@@ -2,45 +2,48 @@
 ---
 ANONYMOUS:
   Build Type: Tpetra
-  Debug Output: 
+  Debug Output:
     Write Jacobian to MatrixMarket: 0
     Write Solution to MatrixMarket: 0
-  Problem: 
+  Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Continuation
     Name: LandIce Hydrology 2D
-    Response Functions: 
-      Number of Response Vectors: 1
-      Response Vector 0: 
-        Name: Squared L2 Difference Source ST Target PST
-        Field Rank: Scalar
-        Source Field Name: water_thickness
+    Response Functions:
+      Number of Responses: 1
+      Response 0:
         Target Value: 0.0
-    Initial Condition: 
+        Field Rank: Scalar
+        Type: Scalar Response
+        Name: Squared L2 Difference Source ST Target PST
+        Source Field Name: water_thickness
+    Initial Condition:
       Function: Constant
-      Function Data: [1.00000000000000000e+02, 1.00000000000000006e-01]
-    Dirichlet BCs: 
+      Function Data: [1.00000000000000000e+02, 1.00000000000000005e-01]
+    Dirichlet BCs:
       DBC on NS BoundaryNodeSet1 for DOF water_pressure: 0.00000000000000000e+00
-    Neumann BCs: { }
-    Parameters: 
-      Number of Parameter Vectors: 1
-      Parameter Vector 0: 
-        Number: 1
+    Neumann BCs: {}
+    Parameters:
+      Number of Parameters: 1
+      Parameter 0:
+        Nominal Value: 0.00000000000000000e+00
+        Type: Scalar
+        Name: Homotopy Parameter
         Parameter 0: Homotopy Parameter
-        Nominal Values: [0.00000000000000000e+00]
-    LandIce Physical Parameters: 
+        Number: 1
+    LandIce Physical Parameters:
       Water Density: 1.00000000000000000e+03
       Ice Density: 9.10000000000000000e+02
       Ice Softness: 3.16889999999999988e-15
       Ice Latent Heat: 3.35000000000000000e+05
       Gravity Acceleration: 9.80000000000000071e+00
-    LandIce Field Norm: 
-      sliding_velocity: 
+    LandIce Field Norm:
+      sliding_velocity:
         Regularization Type: Given Value
-        Regularization Value: 1.00000000000000004e-10
-    LandIce Viscosity: 
+        Regularization Value: 1.00000000000000003e-10
+    LandIce Viscosity:
       Glen's Law n: 3.00000000000000000e+00
-    LandIce Hydrology: 
+    LandIce Hydrology:
       Cavities Equation Nodal: true
       Lump Mass In Mass Equation: false
       Use Water Thickness In Effective Pressure Formula: true
@@ -50,123 +53,117 @@ ANONYMOUS:
       Creep Closure Coefficient: 4.00000000000000008e-02
       Darcy Law Water Thickness Exponent: 1.00000000000000000e+00
       Darcy Law Potential Gradient Norm Exponent: 2.00000000000000000e+00
-      Darcy Law Transmissivity: 1.00000000000000005e-04
+      Darcy Law Transmissivity: 1.00000000000000004e-04
       Bed Bumps Height: 1.00000000000000000e+00
       Bed Bumps Length: 2.00000000000000000e+00
-      Surface Water Input: 
+      Surface Water Input:
         Type: Given Field
-    LandIce Basal Friction Coefficient: 
+    LandIce Basal Friction Coefficient:
       Type: Regularized Coulomb
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [3.29235970000000009e+02]
-    Number of Sensitivity Comparisons: 0
-    Relative Tolerance: 1.00000000000000005e-04
-    Absolute Tolerance: 1.00000000000000005e-04
-  Discretization: 
+  Discretization:
     Number Of Time Derivatives: 0
     Method: Gmsh
     Cubature Degree: 3
     Workset Size: 100
     Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle.msh
     Exodus Output File Name: ./hydrology_steady.exo
-    Required Fields Info: 
+    Required Fields Info:
       Number Of Fields: 9
-      Field 0: 
+      Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
         Field Origin: File
         Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
-      Field 1: 
+      Field 1:
         Field Name: surface_height
         Field Type: Node Scalar
         Field Origin: File
         Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
-      Field 2: 
+      Field 2:
         Field Name: surface_water_input
         Field Type: Node Scalar
         Field Origin: File
-        Field Value: [5.47999999999999972e+01]
-      Field 3: 
+        Field Value: [5.47999999999999971e+01]
+      Field 3:
         Field Name: basal_velocity
         Field Type: Node Vector
         Vector Dim: 2
         Field Origin: File
         Field Expression: ['R1=5', 'L=22.5', 'r=(x^2+y^2)^0.5', 'tmp=(r>=R1 ? 1.0 : 0.0)', '0*r', 'tmp*100*((r-R1)/(L-R1))^5']
-      Field 4: 
+      Field 4:
         Field Name: effective_pressure
         Field Type: Node Scalar
         Field Usage: Output
-      Field 5: 
+      Field 5:
         Field Name: water_thickness
         Field Type: Node Scalar
         Field Usage: Output
-      Field 6: 
+      Field 6:
         Field Name: hydraulic_potential
         Field Type: Node Scalar
         Field Usage: Output
-      Field 7: 
+      Field 7:
         Field Name: ice_overburden
         Field Type: Node Scalar
         Field Usage: Output
-      Field 8: 
+      Field 8:
         Field Name: water_discharge
         Field Type: Elem Vector
         Field Usage: Output
-  Piro: 
-    LOCA: 
-      Predictor: 
+  Piro:
+    LOCA:
+      Predictor:
         Method: Constant
-      Stepper: 
-        Initial Value: 5.00000000000000028e-02
+      Stepper:
+        Initial Value: 5.00000000000000027e-02
         Continuation Parameter: Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 50
         Max Value: 1.00000000000000000e+00
         Min Value: 0.00000000000000000e+00
-      Step Size: 
-        Initial Step Size: 5.00000000000000028e-02
-    NOX: 
-      Thyra Group Options: 
+      Step Size:
+        Initial Step Size: 5.00000000000000027e-02
+    NOX:
+      Thyra Group Options:
         Function Scaling: Row Sum
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: MaxIters
           Maximum Iterations: 10
-        Test 1: 
+        Test 1:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Unscaled
           Tolerance: 1.00000000000000002e-03
-        Test 2: 
+        Test 2:
           Test Type: NormWRMS
-          Absolute Tolerance: 1.00000000000000005e-04
+          Absolute Tolerance: 1.00000000000000004e-04
           Relative Tolerance: 1.00000000000000002e-03
       Nonlinear Solver: Line Search Based
-      Direction: 
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Linear Solver: 
+          Linear Solver:
             Write Linear System: false
-          Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
-            Stratimikos: 
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
               Linear Solver Type: Belos
               Preconditioner Type: Ifpack2
-              Linear Solver Types: 
-                Belos: 
-                  VerboseObject: { }
+              Linear Solver Types:
+                Belos:
+                  VerboseObject: {}
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-07
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 9.99999999999999954e-07
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -174,38 +171,38 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Overlap: 0
                   Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: ilut level-of-fill': 1.00000000000000000e+00
-                    'fact: absolute threshold': 9.99999999999999955e-07
-                MueLu: 
+                    'fact: absolute threshold': 9.99999999999999954e-07
+                MueLu:
                   verbosity: none
                   max levels: 5
                   'coarse: max size': 512
                   multigrid algorithm: sa
                   'aggregation: type': uncoupled
                   'smoother: type': RELAXATION
-                  'smoother: params': 
+                  'smoother: params':
                     'relaxation: type': Jacobi
                     'relaxation: sweeps': 1
                     'relaxation: damping factor': 2.50000000000000000e-01
-      Line Search: 
+      Line Search:
         Method: Backtrack
-        Full Step: 
+        Full Step:
           Full Step: 1.00000000000000000e+00
-        Backtrack: 
+        Backtrack:
           Max Iters: 10
           Default Step: 1.00000000000000000e+00
-          Minimum Step: 9.99999999999999955e-07
+          Minimum Step: 9.99999999999999954e-07
           Reduction Factor: 5.00000000000000000e-01
           Recovery Step: 1.00000000000000002e-03
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -215,4 +212,8 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
+  Regression For Response 0:
+    Absolute Tolerance: 1.00000000000000004e-04
+    Test Value: 3.29235970000000008e+02
+    Relative Tolerance: 1.00000000000000004e-04
 ...
