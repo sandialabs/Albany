@@ -36,6 +36,18 @@ SET(SOURCES_gatherDistributedParameters
           ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
 )
 
+SET(SOURCES_scatterScalarResponse
+          ./scatterScalarResponse.cpp
+          ../Albany_UnitTestMain.cpp
+          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
+)
+
+SET(SOURCES_scatterResidual
+          ./scatterResidual.cpp
+          ../Albany_UnitTestMain.cpp
+          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
+)
+
 SET(HEADERS
           ${CMAKE_SOURCE_DIR}/src/evaluators/utility/PHAL_ComputeBasisFunctions.hpp
           ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.hpp
@@ -60,6 +72,16 @@ ADD_EXECUTABLE(
   ${HEADERS} ${SOURCES_gatherDistributedParameters}
 )
 
+ADD_EXECUTABLE(
+  scatterScalarResponse_unit_tester
+  ${HEADERS} ${SOURCES_scatterScalarResponse}
+)
+
+ADD_EXECUTABLE(
+  scatterResidual_unit_tester
+  ${HEADERS} ${SOURCES_scatterResidual}
+)
+
 set_target_properties(evaluator_unit_tester PROPERTIES
   PUBLIC_HEADER "${HEADERS}")
 
@@ -74,6 +96,16 @@ set_target_properties(gatherDistributedParameters_unit_tester PROPERTIES
   PUBLIC_HEADER "${HEADERS}")
 
 TARGET_LINK_LIBRARIES(gatherDistributedParameters_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+
+set_target_properties(scatterScalarResponse_unit_tester PROPERTIES
+  PUBLIC_HEADER "${HEADERS}")
+
+TARGET_LINK_LIBRARIES(scatterScalarResponse_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+
+set_target_properties(scatterResidual_unit_tester PROPERTIES
+  PUBLIC_HEADER "${HEADERS}")
+
+TARGET_LINK_LIBRARIES(scatterResidual_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 
 # We should always run the unit tests in both serial and parallel if possible (they should run quickly)
 IF (ALBANY_MPI)
@@ -95,6 +127,18 @@ IF (ALBANY_MPI)
   ADD_TEST(
     Albany_Parallel_GatherDistributedParameters_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
   )
+  ADD_TEST(
+    Albany_Serial_ScatterScalarResponse_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
+  )
+  ADD_TEST(
+    Albany_Parallel_ScatterScalarResponse_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
+  )
+  ADD_TEST(
+    Albany_Serial_ScatterResidual_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
+  )
+  ADD_TEST(
+    Albany_Parallel_ScatterResidual_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
+  )
 ELSE(ALBANY_MPI)
   ADD_TEST(
     Albany_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
@@ -104,6 +148,12 @@ ELSE(ALBANY_MPI)
   )
   ADD_TEST(
     Albany_GatherDistributedParameters_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
+  )
+  ADD_TEST(
+    Albany_ScatterScalarResponse_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
+  )
+  ADD_TEST(
+    Albany_ScatterResidual_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
   )
 ENDIF(ALBANY_MPI)
 

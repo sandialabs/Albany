@@ -92,11 +92,10 @@ createTestLayoutAndBasis(Teuchos::RCP<Albany::Layouts> &dl,
 
 }
 
-void createTestMapsAndWorksetConns(
+Albany::WorksetConn createTestMapsAndWorksetConns(
    Teuchos::RCP<Tpetra_Map> &cell_map,
    Teuchos::RCP<Tpetra_Map> &overlapped_node_map,
    Albany::WorksetConn wsGlobalElNodeEqID,
-   Albany::WorksetConn wsLocalElNodeEqID,
    int numCells,
    int nodes_per_element,
    int neq,
@@ -189,11 +188,13 @@ void createTestMapsAndWorksetConns(
 
    overlapped_node_map = Teuchos::rcp(new Tpetra_Map(x_size, overlapped_nodes, 0, comm));
 
-   Kokkos::resize(wsLocalElNodeEqID, cell_map->getNodeNumElements(), nodes_per_element, neq);
+   Albany::WorksetConn wsLocalElNodeEqID("wsLocalElNodeEqID", cell_map->getNodeNumElements(), nodes_per_element, neq);
 
    for (int cell=0; cell<cell_map->getNodeNumElements(); ++cell)
       for(int node=0; node<nodes_per_element; ++node)
          wsLocalElNodeEqID(cell,node,0) = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell),node,0));
+
+   return wsLocalElNodeEqID;
 }
 
 }

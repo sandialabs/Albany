@@ -35,7 +35,6 @@ PHX_EXTENT(R)
 
 // requires the dim tags defined above
 #include "PHAL_DOFInterpolation.hpp"
-#include "PHAL_GatherSolution.hpp"
 #include "PHAL_GatherScalarNodalParameter.hpp"
 #include "EvalTestSetup.hpp"
 
@@ -63,10 +62,9 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
 
   RCP<Tpetra_Map> cell_map, overlapped_node_map;
   Albany::WorksetConn wsGlobalElNodeEqID("wsGlobalElNodeEqID", numCells, nodes_per_element, neq);
-  Albany::WorksetConn wsLocalElNodeEqID("wsLocalElNodeEqID", numCells, nodes_per_element, neq);
   RCP<const Teuchos::Comm<int>> comm = rcp(new Teuchos::MpiComm<int>(MPI_COMM_WORLD));
 
-  Albany::createTestMapsAndWorksetConns(cell_map,overlapped_node_map,wsGlobalElNodeEqID,wsLocalElNodeEqID,numCells,nodes_per_element,neq,x_size,comm);
+  Albany::WorksetConn wsLocalElNodeEqID = Albany::createTestMapsAndWorksetConns(cell_map,overlapped_node_map,wsGlobalElNodeEqID,numCells,nodes_per_element,neq,x_size,comm);
 
   Teuchos::RCP<const Thyra_VectorSpace> overlapped_x_space = Albany::createThyraVectorSpace(overlapped_node_map);
 
@@ -124,7 +122,6 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
   const int num_dim = 3;
 
   std::string param_name("Thermal conductivity");
-  std::string param_name_none("None");
 
   const int tensorRank = 0;
 
