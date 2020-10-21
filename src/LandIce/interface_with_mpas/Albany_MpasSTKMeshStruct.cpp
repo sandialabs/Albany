@@ -88,16 +88,6 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  std::string ebn="Element Block 0";
-  partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
-  stk::topology stk_topo_data = metaData->get_topology( *partVec[0] );
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data);
-  this->addElementBlockInfo(0, ebn, partVec[0], shards_ctd);
-
-#ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*partVec[0]);
-#endif
-
   std::vector<std::string> nsNames;
   std::string nsn="lateral";
   nsNames.push_back(nsn);
@@ -145,22 +135,33 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   stk::io::put_io_part_attribute(*ssPartVec[ssnLatFloat]);
 #endif
 
+  stk::topology etopology;
+
   switch (ElemShape) {
   case Tetrahedron:
-    stk::mesh::set_topology(*partVec[0],stk::topology::TET_4);
+    etopology = stk::topology::TET_4;
     stk::mesh::set_topology(*ssPartVec[ssnBottom],stk::topology::TRI_3);
     stk::mesh::set_topology(*ssPartVec[ssnTop],stk::topology::TRI_3);
     stk::mesh::set_topology(*ssPartVec[ssnLat],stk::topology::TRI_3);
     stk::mesh::set_topology(*ssPartVec[ssnLatFloat],stk::topology::TRI_3);
     break;
   case Wedge:
-    stk::mesh::set_topology(*partVec[0],stk::topology::WEDGE_6);
+    etopology = stk::topology::WEDGE_6;
     stk::mesh::set_topology(*ssPartVec[ssnBottom],stk::topology::TRI_3);
     stk::mesh::set_topology(*ssPartVec[ssnTop],stk::topology::TRI_3);
     stk::mesh::set_topology(*ssPartVec[ssnLat],stk::topology::QUAD_4);
     stk::mesh::set_topology(*ssPartVec[ssnLatFloat],stk::topology::QUAD_4);
     break;
   }
+
+  std::string ebn = "Element Block 0";
+  partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(etopology);
+  this->addElementBlockInfo(0, ebn, partVec[0], shards_ctd);
+
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*partVec[0]);
+#endif
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
@@ -169,9 +170,8 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
-      nsNames, ssNames, worksetSize, partVec[0]->name(),
-      ebNameToIndex, this->interleavedOrdering));
+  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize,
+     ebn, ebNameToIndex, this->interleavedOrdering));
 
   this->initializeSideSetMeshSpecs(comm);
   this->initializeSideSetMeshStructs(comm);
