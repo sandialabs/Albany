@@ -45,8 +45,27 @@ PHX_EXTENT(R)
 
 /**
 * gatherDistributedParametersHessianVec test
-* 
+*
 * This unit test is used to test the gathering of a distributed parameter with HessianVec EvaluationType.
+*
+* The GatherScalarNodalParameter evaluator is tested as follows:
+* - A PHAL::Workset phxWorkset is created for a 2x2x2 hexahedral mesh,
+* - The entries of a distributed parameter are set to the value 6,
+* - 5 cases are then tested: not setting phxWorkset.hessianWorkset.hess_vec_prod_g_**,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_g_xx,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_g_xp,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_g_px,
+*                            and only setting phxWorkset.hessianWorkset.hess_vec_prod_g_pp,
+* - If phxWorkset.hessianWorkset.hess_vec_prod_g_xx or phxWorkset.hessianWorkset.hess_vec_prod_g_px is set,
+*   the direction phxWorkset.hessianWorkset.direction_x is set and its entries are set to 0.4,
+* - If phxWorkset.hessianWorkset.hess_vec_prod_g_xp or phxWorkset.hessianWorkset.hess_vec_prod_g_pp is set,
+*   the direction phxWorkset.hessianWorkset.direction_p is set and its entries are set to 0.4,
+* - The evaluator is then evaluated,
+* - A 2D MDField called solution_out is created with the expected ouput of the GatherScalarNodalParameter,
+* - The entries of solution_out are set to 6: solution_out.deep_copy(6.0);
+* - Depending on whether phxWorkset.hessianWorkset.hess_vec_prod_g_** is set, the values of the derivatives
+*   of solution_out are set accordingly,
+* - The output of the evaluator is compared to the solution_out MDField comparing every entry one by one.
 */
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
 {

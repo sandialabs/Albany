@@ -52,6 +52,18 @@ PHX_EXTENT(R)
 * Hessian-vector products with rank 0 solution.
 *
 * The xx, xp, px, and pp contributions are tested.
+*
+* The ScatterResidual evaluator is tested as follows:
+* - A PHAL::Workset phxWorkset is created for a 2x2x2 hexahedral mesh,
+* - A 2D MDField called residual is created and is used as the input of the ScatterResidual evaluator,
+* - 5 cases are then tested: not setting phxWorkset.hessianWorkset.hess_vec_prod_f_**,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_f_xx,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_f_xp,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_f_px,
+*                            and only setting phxWorkset.hessianWorkset.hess_vec_prod_f_pp,
+* - The evaluator is then evaluated,
+* - A Thyra vector is created with the expected ouput of the ScatterResidual based on the 2D MDField residual,
+* - The output of the evaluator is compared to the Thyra vector comparing the relative norm of their difference.
 */
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
 {
@@ -431,6 +443,18 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
 * Hessian-vector products with rank 1 solution.
 *
 * The xx, xp, px, and pp contributions are tested.
+*
+* The ScatterResidual evaluator is tested as follows:
+* - A PHAL::Workset phxWorkset is created for a 2x2x2 hexahedral mesh,
+* - A 3D MDField called residual is created and is used as the input of the ScatterResidual evaluator,
+* - 5 cases are then tested: not setting phxWorkset.hessianWorkset.hess_vec_prod_f_**,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_f_xx,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_f_xp,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_f_px,
+*                            and only setting phxWorkset.hessianWorkset.hess_vec_prod_f_pp,
+* - The evaluator is then evaluated,
+* - A Thyra vector is created with the expected ouput of the ScatterResidual based on the 3D MDField residual,
+* - The output of the evaluator is compared to the Thyra vector comparing the relative norm of their difference.
 */
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
 {
