@@ -36,7 +36,6 @@ PHX_EXTENT(R)
 // requires the dim tags defined above
 #include "PHAL_DOFInterpolation.hpp"
 #include "PHAL_GatherSolution.hpp"
-#include "PHAL_GatherScalarNodalParameter.hpp"
 #include "EvalTestSetup.hpp"
 
 #include "Albany_TpetraThyraUtils.hpp"
@@ -44,6 +43,19 @@ PHX_EXTENT(R)
 #include "Albany_DistributedParameterLibrary.hpp"
 #include <stk_mesh/base/CoordinateSystems.hpp>
 
+/**
+* gatherSolutionResidual test
+*
+* This unit test is used to test the gathering of the solution with Residual EvaluationType.
+*
+* The GatherSolution evaluator is tested as follows:
+* - A PHAL::Workset phxWorkset is created for a 2x2x2 hexahedral mesh,
+* - The entries of the vector phxWorkset.x are set to the value 6,
+* - The evaluator is then evaluated,
+* - A 2D MDField called solution_out is created with the expected ouput of the GatherSolution,
+* - The entries of solution_out are set to 6: solution_out.deep_copy(6.0);
+* - The output of the evaluator is compared to the solution_out MDField comparing every entry one by one.
+*/
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
 {
   using namespace std;
@@ -56,19 +68,22 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
   PHAL::Setup phxSetup;
   PHAL::Workset phxWorkset;
 
-  const int x_size = 27;
-  const int numCells = 8;
+  const int numCells_per_direction = 2;
   const int nodes_per_element = 8;
   const int neq = 1;
 
-  RCP<Tpetra_Map> cell_map, overlapped_node_map;
+  const int numCells = numCells_per_direction * numCells_per_direction * numCells_per_direction;
+
+  RCP<Tpetra_Map> cell_map, overlapped_node_map, overlapped_dof_map;
   Albany::WorksetConn wsGlobalElNodeEqID("wsGlobalElNodeEqID", numCells, nodes_per_element, neq);
   Albany::WorksetConn wsLocalElNodeEqID("wsLocalElNodeEqID", numCells, nodes_per_element, neq);
   RCP<const Teuchos::Comm<int>> comm = rcp(new Teuchos::MpiComm<int>(MPI_COMM_WORLD));
 
-  Albany::createTestMapsAndWorksetConns(cell_map,overlapped_node_map,wsGlobalElNodeEqID,wsLocalElNodeEqID,numCells,nodes_per_element,neq,x_size,comm);
+  Albany::createTestMapsAndWorksetConns(cell_map, overlapped_node_map, overlapped_dof_map, wsGlobalElNodeEqID, wsLocalElNodeEqID, numCells_per_direction, nodes_per_element, neq, comm);
 
-  Teuchos::RCP<const Thyra_VectorSpace> overlapped_x_space = Albany::createThyraVectorSpace(overlapped_node_map);
+  Kokkos::resize(wsLocalElNodeEqID, cell_map->getNodeNumElements(), nodes_per_element, neq);
+
+  Teuchos::RCP<const Thyra_VectorSpace> overlapped_x_space = Albany::createThyraVectorSpace(overlapped_dof_map);
 
   const Teuchos::RCP<Thyra_Vector> overlapped_x = Thyra::createMember(overlapped_x_space);
 
@@ -78,7 +93,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
   phxWorkset.wsElNodeEqID = wsLocalElNodeEqID;
 
   auto x_array = Albany::getNonconstLocalData(overlapped_x);
-  for (size_t i=0; i<x_array.size(); ++i)
+  for (size_t i = 0; i < x_array.size(); ++i)
     x_array[i] = 6.;
 
   phxWorkset.numCells = cell_map->getNodeNumElements();
@@ -98,12 +113,12 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
 
   // Need dl->node_scalar, dl->node_qp_scalar, dl->qp_scalar for this evaluator (PHAL_DOFInterpolation_Def.hpp line 20)
   RCP<Albany::Layouts> dl;
-  RCP<PHAL::ComputeBasisFunctions<EvalType,PHAL::AlbanyTraits>> FEBasis =
-     Albany::createTestLayoutAndBasis<EvalType,PHAL::AlbanyTraits>(dl, phxWorkset.numCells, cubature_degree, num_dim);
+  RCP<PHAL::ComputeBasisFunctions<EvalType, PHAL::AlbanyTraits>> FEBasis =
+      Albany::createTestLayoutAndBasis<EvalType, PHAL::AlbanyTraits>(dl, phxWorkset.numCells, cubature_degree, num_dim);
 
   // Same as DOFInterpolationBase<EvalType,AlbanyTraits,Evalt::ScalarT>
-  RCP<PHAL::GatherSolution<EvalType,PHAL::AlbanyTraits>> GatherSolution =
-        rcp(new PHAL::GatherSolution<EvalType,PHAL::AlbanyTraits>(*p, dl));
+  RCP<PHAL::GatherSolution<EvalType, PHAL::AlbanyTraits>> GatherSolution =
+      rcp(new PHAL::GatherSolution<EvalType, PHAL::AlbanyTraits>(*p, dl));
 
   // Build a proper instance of the tester (see $TRILINOS_DIR/includes/Phalanx_Evaluator_UnitTester.hpp)
   PHX::EvaluatorUnitTester<EvalType, PHAL::AlbanyTraits> tester;
@@ -112,7 +127,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
   Kokkos::fence();
 
   // This is the "gold_field" - what is the solution that we should get?
-  MDField<Scalar,CELL,NODE> solution_out = allocateUnmanagedMDField<Scalar,CELL,NODE>(dof_name, dl->node_scalar);
+  MDField<Scalar, CELL, NODE> solution_out = allocateUnmanagedMDField<Scalar, CELL, NODE>(dof_name, dl->node_scalar);
   solution_out.deep_copy(6.0);
   const Scalar tol = 1000.0 * std::numeric_limits<Scalar>::epsilon();
 
@@ -120,6 +135,30 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
   tester.checkFloatValues2(solution_out, tol, success, out);
 }
 
+/**
+* gatherSolutionHessianVec test
+*
+* This unit test is used to test the gathering of the solution with HessianVec EvaluationType.
+*
+* The GatherSolution evaluator is tested as follows:
+* - A PHAL::Workset phxWorkset is created for a 2x2x2 hexahedral mesh,
+* - The entries of the vector phxWorkset.x are set to the value 6,
+* - 5 cases are then tested: not setting phxWorkset.hessianWorkset.hess_vec_prod_g_**,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_g_xx,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_g_xp,
+*                            only setting phxWorkset.hessianWorkset.hess_vec_prod_g_px,
+*                            and only setting phxWorkset.hessianWorkset.hess_vec_prod_g_pp,
+* - If phxWorkset.hessianWorkset.hess_vec_prod_g_xx or phxWorkset.hessianWorkset.hess_vec_prod_g_px is set,
+*   the direction phxWorkset.hessianWorkset.direction_x is set and its entries are set to 0.4,
+* - If phxWorkset.hessianWorkset.hess_vec_prod_g_xp or phxWorkset.hessianWorkset.hess_vec_prod_g_pp is set,
+*   the direction phxWorkset.hessianWorkset.direction_p is set and its entries are set to 0.4,
+* - The evaluator is then evaluated,
+* - A 2D MDField called solution_out is created with the expected ouput of the GatherSolution,
+* - The entries of solution_out are set to 6: solution_out.deep_copy(6.0);
+* - Depending on whether phxWorkset.hessianWorkset.hess_vec_prod_g_** is set, the values of the derivatives
+*   of solution_out are set accordingly,
+* - The output of the evaluator is compared to the solution_out MDField comparing every entry one by one.
+*/
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 {
   using namespace std;
@@ -132,28 +171,33 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
   PHAL::Setup phxSetup;
   PHAL::Workset phxWorkset;
 
-  const int x_size = 27;
-  const int numCells = 8;
+  const int numCells_per_direction = 2;
   const int nodes_per_element = 8;
   const int neq = 1;
 
-  RCP<Tpetra_Map> cell_map, overlapped_node_map;
+  const int numCells = numCells_per_direction * numCells_per_direction * numCells_per_direction;
+
+  RCP<Tpetra_Map> cell_map, overlapped_node_map, overlapped_dof_map;
   Albany::WorksetConn wsGlobalElNodeEqID("wsGlobalElNodeEqID", numCells, nodes_per_element, neq);
   Albany::WorksetConn wsLocalElNodeEqID("wsLocalElNodeEqID", numCells, nodes_per_element, neq);
   RCP<const Teuchos::Comm<int>> comm = rcp(new Teuchos::MpiComm<int>(MPI_COMM_WORLD));
 
-  Albany::createTestMapsAndWorksetConns(cell_map,overlapped_node_map,wsGlobalElNodeEqID,wsLocalElNodeEqID,numCells,nodes_per_element,neq,x_size,comm);
+  Albany::createTestMapsAndWorksetConns(cell_map, overlapped_node_map, overlapped_dof_map, wsGlobalElNodeEqID, wsLocalElNodeEqID, numCells_per_direction, nodes_per_element, neq, comm);
 
-  Teuchos::RCP<const Thyra_VectorSpace> overlapped_x_space = Albany::createThyraVectorSpace(overlapped_node_map);
+  Kokkos::resize(wsLocalElNodeEqID, cell_map->getNodeNumElements(), nodes_per_element, neq);
+
+  Teuchos::RCP<const Thyra_VectorSpace> overlapped_x_space = Albany::createThyraVectorSpace(overlapped_dof_map);
+
+  Teuchos::RCP<const Thyra_VectorSpace> overlapped_p_space = Albany::createThyraVectorSpace(overlapped_node_map);
 
   const Teuchos::RCP<Thyra_Vector> overlapped_x = Thyra::createMember(overlapped_x_space);
   const Teuchos::RCP<Thyra_Vector> direction_x = Thyra::createMember(overlapped_x_space);
-  const Teuchos::RCP<Thyra_Vector> direction_p = Thyra::createMember(overlapped_x_space);
+  const Teuchos::RCP<Thyra_Vector> direction_p = Thyra::createMember(overlapped_p_space);
 
   const Teuchos::RCP<Thyra_Vector> hess_vec_prod_g_xx = Thyra::createMember(overlapped_x_space);
   const Teuchos::RCP<Thyra_Vector> hess_vec_prod_g_xp = Thyra::createMember(overlapped_x_space);
-  const Teuchos::RCP<Thyra_Vector> hess_vec_prod_g_px = Thyra::createMember(overlapped_x_space);
-  const Teuchos::RCP<Thyra_Vector> hess_vec_prod_g_pp = Thyra::createMember(overlapped_x_space);
+  const Teuchos::RCP<Thyra_Vector> hess_vec_prod_g_px = Thyra::createMember(overlapped_p_space);
+  const Teuchos::RCP<Thyra_Vector> hess_vec_prod_g_pp = Thyra::createMember(overlapped_p_space);
 
   Kokkos::fence();
 
@@ -161,15 +205,15 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
   phxWorkset.wsElNodeEqID = wsLocalElNodeEqID;
 
   auto x_array = Albany::getNonconstLocalData(overlapped_x);
-  for (size_t i=0; i<x_array.size(); ++i)
+  for (size_t i = 0; i < x_array.size(); ++i)
     x_array[i] = 6.;
 
   auto direction_x_array = Albany::getNonconstLocalData(direction_x);
-  for (size_t i=0; i<direction_x_array.size(); ++i)
+  for (size_t i = 0; i < direction_x_array.size(); ++i)
     direction_x_array[i] = 0.4;
 
   auto direction_p_array = Albany::getNonconstLocalData(direction_p);
-  for (size_t i=0; i<direction_p_array.size(); ++i)
+  for (size_t i = 0; i < direction_p_array.size(); ++i)
     direction_p_array[i] = 0.4;
 
   phxWorkset.numCells = cell_map->getNodeNumElements();
@@ -189,12 +233,12 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
   // Need dl->node_scalar, dl->node_qp_scalar, dl->qp_scalar for this evaluator (PHAL_DOFInterpolation_Def.hpp line 20)
   RCP<Albany::Layouts> dl;
-  RCP<PHAL::ComputeBasisFunctions<EvalType,PHAL::AlbanyTraits>> FEBasis =
-     Albany::createTestLayoutAndBasis<EvalType,PHAL::AlbanyTraits>(dl, phxWorkset.numCells, cubature_degree, num_dim);
+  RCP<PHAL::ComputeBasisFunctions<EvalType, PHAL::AlbanyTraits>> FEBasis =
+      Albany::createTestLayoutAndBasis<EvalType, PHAL::AlbanyTraits>(dl, phxWorkset.numCells, cubature_degree, num_dim);
 
   // Same as DOFInterpolationBase<EvalType,AlbanyTraits,Evalt::ScalarT>
-  RCP<PHAL::GatherSolution<EvalType,PHAL::AlbanyTraits>> GatherSolution =
-        rcp(new PHAL::GatherSolution<EvalType,PHAL::AlbanyTraits>(*p, dl));
+  RCP<PHAL::GatherSolution<EvalType, PHAL::AlbanyTraits>> GatherSolution =
+      rcp(new PHAL::GatherSolution<EvalType, PHAL::AlbanyTraits>(*p, dl));
 
   std::vector<PHX::index_size_type> derivative_dimensions;
   derivative_dimensions.push_back(8);
@@ -203,7 +247,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
   const scalarType tol = 1000.0 * std::numeric_limits<scalarType>::epsilon();
 
   // This is the "gold_field" - what is the solution that we should get?
-  MDField<Scalar,CELL,NODE> solution_out = allocateUnmanagedMDField<Scalar,CELL,NODE>(dof_name, dl->node_scalar, derivative_dimensions);
+  MDField<Scalar, CELL, NODE> solution_out = allocateUnmanagedMDField<Scalar, CELL, NODE>(dof_name, dl->node_scalar, derivative_dimensions);
 
   // Test without setting hess_vec_prod_g_**
   {
@@ -235,10 +279,12 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
     auto solution_out_field = Kokkos::create_mirror_view(solution_out.get_view());
 
-    for (std::size_t cell=0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell) {
-      for (std::size_t node=0; node < static_cast<int>(solution_out_field.extent(1)); ++node) {
-        solution_out_field(cell,node).fastAccessDx(node).val() = 1;
-        solution_out_field(cell,node).val().fastAccessDx(0) = direction_x_array[wsLocalElNodeEqID(cell,node,0)];
+    for (std::size_t cell = 0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell)
+    {
+      for (std::size_t node = 0; node < static_cast<int>(solution_out_field.extent(1)); ++node)
+      {
+        solution_out_field(cell, node).fastAccessDx(node).val() = 1;
+        solution_out_field(cell, node).val().fastAccessDx(0) = direction_x_array[wsLocalElNodeEqID(cell, node, 0)];
       }
     }
 
@@ -265,9 +311,11 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
     auto solution_out_field = Kokkos::create_mirror_view(solution_out.get_view());
 
-    for (std::size_t cell=0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell) {
-      for (std::size_t node=0; node < static_cast<int>(solution_out_field.extent(1)); ++node) {
-        solution_out_field(cell,node).fastAccessDx(node).val() = 1;
+    for (std::size_t cell = 0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell)
+    {
+      for (std::size_t node = 0; node < static_cast<int>(solution_out_field.extent(1)); ++node)
+      {
+        solution_out_field(cell, node).fastAccessDx(node).val() = 1;
       }
     }
 
@@ -294,9 +342,11 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
     auto solution_out_field = Kokkos::create_mirror_view(solution_out.get_view());
 
-    for (std::size_t cell=0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell) {
-      for (std::size_t node=0; node < static_cast<int>(solution_out_field.extent(1)); ++node) {
-        solution_out_field(cell,node).val().fastAccessDx(0) = direction_x_array[wsLocalElNodeEqID(cell,node,0)];
+    for (std::size_t cell = 0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell)
+    {
+      for (std::size_t node = 0; node < static_cast<int>(solution_out_field.extent(1)); ++node)
+      {
+        solution_out_field(cell, node).val().fastAccessDx(0) = direction_x_array[wsLocalElNodeEqID(cell, node, 0)];
       }
     }
 
