@@ -187,6 +187,156 @@ public:
   GatherScalarNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
   // Old constructor, still needed by BCs that use PHX Factory
   GatherScalarNodalParameter(const Teuchos::ParameterList& p);
+
+  /**
+   * @brief Gather the parameter for the Hessian-vector product computations.
+   * 
+   * The PHAL::AlbanyTraits::HessianVec::ScalarT is a nested Sacado::FAD type with two levels of
+   * differentiation. 
+   * 
+   * This member function behaves in four different ways depending on which Hessian-vector product
+   * contribution is currently computed, for a current parameter \f$\boldsymbol{p}_1\f$:
+   * 
+   * <ol>
+   * 
+   * <li> If the contribution which is currently computed is one of the following contributions:
+   * <ul>
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_1}(g)\boldsymbol{v}_{\boldsymbol{p}_1}\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_1}\f$,
+   * </ul>
+   * the first derivative and the second derivative are w.r.t the parameter \f$\boldsymbol{p}_1\f$ and the values of the FAD types have to be
+   * initialized for both first and second derivatives.
+   * 
+   * Such a case is illustrated in the following table; the value of the parameter, the first derivative, and the second derivative have to be set.
+   * 
+   * <table>
+   * <caption id="multi_row">Example of the initialization of a parameter</caption>
+   * <tr><th class="background">     
+   * <div><span class="bottom">First derivative</span>
+   *   <span class="top">Second derivative</span>
+   *   <div class="line"></div>
+   * </div>                    <th class="cell">val        <th class="cell">dx(0)
+   * <tr><th>val                  <td>65          <td>0.4
+   * <tr><th>dx(0)                <td>1          <td>0
+   * <tr><th>dx(1)                <td>0          <td>0
+   * <tr><th>dx(2)                <td>0          <td>0
+   * <tr><th>dx(3)                <td>0          <td>0
+   * </table>
+   * 
+   * In the implementation, this is translated as follows:
+   * <tt>
+   *  is_p_active = true;
+   *  is_p_direction_active = true;
+   * </tt>
+   * 
+   * </li>
+   * 
+   * <li> If the contribution which is currently computed is one of the following contributions:
+   * <ul>
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j}\f$ where \f$j\neq1\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j}\f$ where \f$j\neq1\f$,
+   * </ul>
+   * only the first derivative is w.r.t the current parameter \f$\boldsymbol{p}_1\f$ and the values of the FAD types have to be
+   * initialized for the first derivatives.
+   * 
+   * Such a case is illustrated in the following table; the value of the parameter and the first derivative have to be set.
+   * 
+   * <table>
+   * <caption id="multi_row">Example of the initialization of a parameter</caption>
+   * <tr><th class="background">     
+   * <div><span class="bottom">First derivative</span>
+   *   <span class="top">Second derivative</span>
+   *   <div class="line"></div>
+   * </div>                    <th class="cell">val        <th class="cell">dx(0)
+   * <tr><th>val                  <td>65          <td>0
+   * <tr><th>dx(0)                <td>1          <td>0
+   * <tr><th>dx(1)                <td>0          <td>0
+   * <tr><th>dx(2)                <td>0          <td>0
+   * <tr><th>dx(3)                <td>0          <td>0
+   * </table>
+   * 
+   * In the implementation, this is translated as follows:
+   * <tt>
+   *  is_x_active = true;
+   *  is_x_direction_active = false;
+   * </tt>
+   * 
+   * </li>
+   * 
+   * <li> If the contribution which is currently computed is one of the following contributions:
+   * <ul>
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(g)\boldsymbol{v}_{\boldsymbol{p}_1}\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_1}\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_1}(g)\boldsymbol{v}_{\boldsymbol{p}_1}\f$ where \f$i\neq1\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_1}\f$ where \f$i\neq1\f$,
+   * </ul>
+   * only the second derivative is w.r.t the current parameter \f$\boldsymbol{p}_1\f$ and the values of the FAD types have to be
+   * initialized for the second derivatives.
+   * 
+   * Such a case is illustrated in the following table; the value of the parameter and the second derivative have to be set.
+   * 
+   * <table>
+   * <caption id="multi_row">Example of the initialization of a parameter</caption>
+   * <tr><th class="background">     
+   * <div><span class="bottom">First derivative</span>
+   *   <span class="top">Second derivative</span>
+   *   <div class="line"></div>
+   * </div>                    <th class="cell">val        <th class="cell">dx(0)
+   * <tr><th>val                  <td>65          <td>0.4
+   * <tr><th>dx(0)                <td>0          <td>0
+   * <tr><th>dx(1)                <td>0          <td>0
+   * <tr><th>dx(2)                <td>0          <td>0
+   * <tr><th>dx(3)                <td>0          <td>0
+   * </table>
+   * 
+   * In the implementation, this is translated as follows:
+   * <tt>
+   *  is_p_active = false;
+   *  is_p_direction_active = true;
+   * </tt>
+   * 
+   * </li>
+   * 
+   * <li> If the contribution which is currently computed is one of the following contributions:
+   * <ul>
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j}\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j}\f$  where \f$j\neq1\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}\f$  where \f$j\neq1\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}\f$  where \f$i\neq1\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j}\f$  where \f$i\neq1\neq j\f$,
+   *   <li> \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j}\f$  where \f$i\neq1\neq j\f$,
+   * </ul>
+   * none of the derivative is w.r.t the current parameter \f$\boldsymbol{p}_1\f$. 
+   * The values of the derivatives of the FAD types should not be initialized during this function call.
+   * 
+   * Such a case is illustrated in the following table; only the value of the parameter has to be set.
+   * 
+   * <table>
+   * <caption id="multi_row">Example of the initialization of a parameter</caption>
+   * <tr><th class="background">     
+   * <div><span class="bottom">First derivative</span>
+   *   <span class="top">Second derivative</span>
+   *   <div class="line"></div>
+   * </div>                    <th class="cell">val        <th class="cell">dx(0)
+   * <tr><th>val                  <td>65          <td>0
+   * <tr><th>dx(0)                <td>0          <td>0
+   * <tr><th>dx(1)                <td>0          <td>0
+   * <tr><th>dx(2)                <td>0          <td>0
+   * <tr><th>dx(3)                <td>0          <td>0
+   * </table>
+   * 
+   * In the implementation, this is translated as follows:
+   * <tt> is_p_active = false;
+   *  is_p_direction_active = false;
+   * </tt>
+   * 
+   * </li>
+   * </ol>
+   */
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::HessianVec::ParamScalarT ParamScalarT;
@@ -252,6 +402,12 @@ class GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits
 
 public:
   GatherScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
+
+  /**
+   * @brief Gather the extruded parameter for the Hessian-vector product computations.
+   * 
+   * See PHAL::GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits> for more details on the implementation.
+   */
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::HessianVec::ParamScalarT ParamScalarT;
