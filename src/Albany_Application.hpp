@@ -365,6 +365,61 @@ public:
       const std::string&                      dist_param_name,
       const Teuchos::RCP<Thyra_MultiVector>&  dg_dp);
 
+  /**
+   * \brief evaluateResponseDistParamHessVecProd_xx function
+   * 
+   * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(g)\f$ of the <tt>response[response_index]</tt> 
+   * (i.e. the response_index-th response) to a direction vector \f$\boldsymbol{v}\f$.
+   * 
+   * Representing the Hessian \f$\boldsymbol{H}(g)\f$ as a block matrix:
+   * \f[
+   *   \boldsymbol{H}(g) := 
+   *   \begin{bmatrix} 
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{x}^{2}} & \frac{\partial^{2} g}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{n}} \\
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{x}} & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1}^{2}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{p}_{n}} \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n} \partial \boldsymbol{x}} & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n}\partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n}^{2}}
+   *   \end{bmatrix} =
+   *   \begin{bmatrix} 
+   *     \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_n}(g) \\ 
+   *     \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_n}(g) \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(g) 
+   *   \end{bmatrix},
+   * \f]
+   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   * (distributed) parameter, this function computes the contribution:
+   * \f[
+   *   \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}.
+   * \f]
+   * 
+   * This function can currently compute only one block contribution at a time; for one function call \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}\f$
+   * can be computed only for one fixed response index at a time.
+   * 
+   * \param response_index [in] Response index of the response which the Hessian is computed.
+   * 
+   * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
+   * 
+   * \param v [in] Direction vector on which the Hessian is applied: \f$\boldsymbol{v}_{\boldsymbol{x}}\f$.
+   * 
+   * \param x [in] Solution vector for the current time step: \f$\boldsymbol{x}\f$.
+   * 
+   * \param xdot [in] Velocity vector for the current time step.
+   * 
+   * \param xdotdot [in] Acceleration vector for the current time step.
+   * 
+   * \param param_array [in] Array of the parameters vectors.
+   * 
+   * \param Hv_g_xx [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}\f$.
+   * 
+   * This implementation relies on:
+   * <ul>
+   *  <li> PHAL::GatherSolution<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::SeparableScatterScalarResponse<PHAL::AlbanyTraits::HessianVec,Traits>.
+   * </ul>
+   */
   void
   evaluateResponseDistParamHessVecProd_xx(
       int                                     response_index,
@@ -376,6 +431,64 @@ public:
       const Teuchos::Array<ParamVec>&         param_array,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_xx);
 
+  /**
+   * \brief evaluateResponseDistParamHessVecProd_xp function
+   * 
+   * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(g)\f$ of the <tt>response[response_index]</tt> 
+   * (i.e. the response_index-th response) to a direction vector \f$\boldsymbol{v}\f$.
+   * 
+   * Representing the Hessian \f$\boldsymbol{H}(g)\f$ as a block matrix:
+   * \f[
+   *   \boldsymbol{H}(g) := 
+   *   \begin{bmatrix} 
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{x}^{2}} & \frac{\partial^{2} g}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{n}} \\
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{x}} & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1}^{2}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{p}_{n}} \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n} \partial \boldsymbol{x}} & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n}\partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n}^{2}}
+   *   \end{bmatrix} =
+   *   \begin{bmatrix} 
+   *     \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_n}(g) \\ 
+   *     \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_n}(g) \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(g) 
+   *   \end{bmatrix},
+   * \f]
+   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   * (distributed) parameter, this function computes the contribution:
+   * \f[
+   *   \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j},
+   * \f]
+   * where \f$i\f$ and \f$j\f$ are 2 (potentially different) indices included in the range \f$\left[1,n\right]\f$.
+   * 
+   * This function can currently compute only one block contribution at a time; for one function call \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j}\f$
+   * can be computed only for one fixed \f$j\f$ and one fixed response index at a time.
+   * 
+   * \param response_index [in] Response index of the response which the Hessian is computed.
+   * 
+   * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
+   * 
+   * \param v [in] Direction vector on which the Hessian is applied: \f$\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
+   * 
+   * \param x [in] Solution vector for the current time step: \f$\boldsymbol{x}\f$.
+   * 
+   * \param xdot [in] Velocity vector for the current time step.
+   * 
+   * \param xdotdot [in] Acceleration vector for the current time step.
+   * 
+   * \param param_array [in] Array of the parameters vectors.
+   * 
+   * \param dist_param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
+   * 
+   * \param Hv_g_xp [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
+   * 
+   * This implementation relies on:
+   * <ul>
+   *  <li> PHAL::GatherSolution<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::SeparableScatterScalarResponse<PHAL::AlbanyTraits::HessianVec,Traits>.
+   * </ul>
+   */
   void
   evaluateResponseDistParamHessVecProd_xp(
       int                                     response_index,
@@ -388,6 +501,64 @@ public:
       const std::string&                      dist_param_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_xp);
 
+  /**
+   * \brief evaluateResponseDistParamHessVecProd_px function
+   * 
+   * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(g)\f$ of the <tt>response[response_index]</tt> 
+   * (i.e. the response_index-th response) to a direction vector \f$\boldsymbol{v}\f$.
+   * 
+   * Representing the Hessian \f$\boldsymbol{H}(g)\f$ as a block matrix:
+   * \f[
+   *   \boldsymbol{H}(g) := 
+   *   \begin{bmatrix} 
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{x}^{2}} & \frac{\partial^{2} g}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{n}} \\
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{x}} & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1}^{2}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{p}_{n}} \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n} \partial \boldsymbol{x}} & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n}\partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n}^{2}}
+   *   \end{bmatrix} =
+   *   \begin{bmatrix} 
+   *     \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_n}(g) \\ 
+   *     \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_n}(g) \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(g) 
+   *   \end{bmatrix},
+   * \f]
+   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   * (distributed) parameter, this function computes the contribution:
+   * \f[
+   *   \boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}},
+   * \f]
+   * where \f$i\f$ is an index included in the range \f$\left[1,n\right]\f$.
+   * 
+   * This function can currently compute only one block contribution at a time; for one function call \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}\f$
+   * can be computed only for one fixed \f$i\f$ and one fixed response index at a time.
+   * 
+   * \param response_index [in] Response index of the response which the Hessian is computed.
+   * 
+   * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
+   * 
+   * \param v [in] Direction vector on which the Hessian is applied: \f$\boldsymbol{v}_{\boldsymbol{x}}\f$
+   * 
+   * \param x [in] Solution vector for the current time step: \f$\boldsymbol{x}\f$
+   * 
+   * \param xdot [in] Velocity vector for the current time step.
+   * 
+   * \param xdotdot [in] Acceleration vector for the current time step.
+   * 
+   * \param param_array [in] Array of the parameters vectors.
+   * 
+   * \param dist_param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
+   * 
+   * \param Hv_g_px [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}\f$.
+   * 
+   * This implementation relies on:
+   * <ul>
+   *  <li> PHAL::GatherSolution<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::SeparableScatterScalarResponse<PHAL::AlbanyTraits::HessianVec,Traits>.
+   * </ul>
+   */
   void
   evaluateResponseDistParamHessVecProd_px(
       int                                     response_index,
@@ -400,6 +571,66 @@ public:
       const std::string&                      dist_param_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_px);
 
+  /**
+   * \brief evaluateResponseDistParamHessVecProd_pp function
+   * 
+   * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(g)\f$ of the <tt>response[response_index]</tt> 
+   * (i.e. the response_index-th response) to a direction vector \f$\boldsymbol{v}\f$.
+   * 
+   * Representing the Hessian \f$\boldsymbol{H}(g)\f$ as a block matrix:
+   * \f[
+   *   \boldsymbol{H}(g) := 
+   *   \begin{bmatrix} 
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{x}^{2}} & \frac{\partial^{2} g}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{n}} \\
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{x}} & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1}^{2}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{p}_{n}} \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n} \partial \boldsymbol{x}} & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n}\partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} g}{\partial \boldsymbol{p}_{n}^{2}}
+   *   \end{bmatrix} =
+   *   \begin{bmatrix} 
+   *     \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_n}(g) \\ 
+   *     \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_n}(g) \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(g) 
+   *   \end{bmatrix},
+   * \f]
+   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   * (distributed) parameter, this function computes the contribution:
+   * \f[
+   *   \boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j},
+   * \f]
+   * where \f$i\f$ and \f$j\f$ are 2 (potentially different) indices included in the range \f$\left[1,n\right]\f$.
+   * 
+   * This function can currently compute only one block contribution at a time; for one function call \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j}\f$
+   * can be computed only for one fixed \f$i\f$, one fixed \f$j\f$, and one fixed response index at a time.
+   * 
+   * \param response_index [in] Response index of the response which the Hessian is computed.
+   * 
+   * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
+   * 
+   * \param v [in] Direction vector on which the Hessian is applied: \f$\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
+   * 
+   * \param x [in] Solution vector for the current time step: \f$\boldsymbol{x}\f$.
+   * 
+   * \param xdot [in] Velocity vector for the current time step.
+   * 
+   * \param xdotdot [in] Acceleration vector for the current time step.
+   * 
+   * \param param_array [in] Array of the parameters vectors.
+   * 
+   * \param dist_param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
+   * 
+   * \param dist_param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
+   * 
+   * \param Hv_g_pp [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
+   * 
+   * This implementation relies on:
+   * <ul>
+   *  <li> PHAL::GatherSolution<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::SeparableScatterScalarResponse<PHAL::AlbanyTraits::HessianVec,Traits>.
+   * </ul>
+   */
   void
   evaluateResponseDistParamHessVecProd_pp(
       int                                     response_index,
@@ -413,6 +644,59 @@ public:
       const std::string&                      dist_param_direction_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_pp);
 
+  /**
+   * \brief evaluateResidual_HessVecProd_xx function
+   * 
+   * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\f$ of the inner product of the residual vector \f$\boldsymbol{f}\f$
+   * and a Lagrange multiplier vector \f$\boldsymbol{z}\f$ to a direction vector \f$\boldsymbol{v}\f$.
+   * 
+   * Representing the Hessian \f$\boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\f$ as a block matrix:
+   * \f[
+   *   \boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) := 
+   *   \begin{bmatrix} 
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x}^{2}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{n}} \\
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{x}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1}^{2}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{p}_{n}} \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n} \partial \boldsymbol{x}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n}\partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n}^{2}}
+   *   \end{bmatrix} =
+   *   \begin{bmatrix} 
+   *     \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) \\ 
+   *     \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) 
+   *   \end{bmatrix},
+   * \f]
+   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   * (distributed) parameter, this function computes the contribution:
+   * \f[
+   *   \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}.
+   * \f]
+   * 
+   * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
+   * 
+   * \param v [in] Direction vector on which the Hessian is applied: \f$\boldsymbol{v}_{\boldsymbol{x}}\f$.
+   * 
+   * \param z [in] Lagrange multiplier vector: \f$\boldsymbol{z}\f$.
+   * 
+   * \param x [in] Solution vector for the current time step: \f$\boldsymbol{x}\f$.
+   * 
+   * \param xdot [in] Velocity vector for the current time step.
+   * 
+   * \param xdotdot [in] Acceleration vector for the current time step.
+   * 
+   * \param param_array [in] Array of the parameters vectors.
+   * 
+   * \param Hv_f_xx [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}\f$.
+   * 
+   * This implementation relies on:
+   * <ul>
+   *  <li> PHAL::GatherSolution<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec,Traits>.
+   * </ul>
+   */
 void
   evaluateResidual_HessVecProd_xx(
       const double                            current_time,
@@ -424,6 +708,65 @@ void
       const Teuchos::Array<ParamVec>&         param_array,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_xx);
 
+  /**
+   * \brief evaluateResidual_HessVecProd_xp function
+   * 
+   * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\f$ of the inner product of the residual vector \f$\boldsymbol{f}\f$
+   * and a Lagrange multiplier vector \f$\boldsymbol{z}\f$ to a direction vector \f$\boldsymbol{v}\f$.
+   * 
+   * Representing the Hessian \f$\boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\f$ as a block matrix:
+   * \f[
+   *   \boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) := 
+   *   \begin{bmatrix} 
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x}^{2}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{n}} \\
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{x}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1}^{2}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{p}_{n}} \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n} \partial \boldsymbol{x}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n}\partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n}^{2}}
+   *   \end{bmatrix} =
+   *   \begin{bmatrix} 
+   *     \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) \\ 
+   *     \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) 
+   *   \end{bmatrix},
+   * \f]
+   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   * (distributed) parameter, this function computes the contribution:
+   * \f[
+   *   \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j},
+   * \f]
+   * where \f$j\f$ is an index included in the range \f$\left[1,n\right]\f$.
+   * 
+   * This function can currently compute only one block contribution at a time; for one function call \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j}\f$
+   * can be computed for only one fixed \f$j\f$ at a time.
+   * 
+   * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
+   * 
+   * \param v [in] Direction vector on which the Hessian is applied: \f$\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
+   * 
+   * \param z [in] Lagrange multiplier vector: \f$\boldsymbol{z}\f$.
+   * 
+   * \param x [in] Solution vector for the current time step: \f$\boldsymbol{x}\f$.
+   * 
+   * \param xdot [in] Velocity vector for the current time step.
+   * 
+   * \param xdotdot [in] Acceleration vector for the current time step.
+   * 
+   * \param param_array [in] Array of the parameters vectors.
+   * 
+   * \param dist_param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
+   * 
+   * \param Hv_f_xp [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
+   * 
+   * This implementation relies on:
+   * <ul>
+   *  <li> PHAL::GatherSolution<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec,Traits>.
+   * </ul>
+   */
   void
   evaluateResidual_HessVecProd_xp(
       const double                            current_time,
@@ -433,9 +776,68 @@ void
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>&         param_array,
-      const std::string&                      dist_param_name,
+      const std::string&                      dist_param_direction_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_xp);
 
+  /**
+   * \brief evaluateResidual_HessVecProd_px function
+   * 
+   * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\f$ of the inner product of the residual vector \f$\boldsymbol{f}\f$
+   * and a Lagrange multiplier vector \f$\boldsymbol{z}\f$ to a direction vector \f$\boldsymbol{v}\f$.
+   * 
+   * Representing the Hessian \f$\boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\f$ as a block matrix:
+   * \f[
+   *   \boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) := 
+   *   \begin{bmatrix} 
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x}^{2}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{n}} \\
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{x}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1}^{2}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{p}_{n}} \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n} \partial \boldsymbol{x}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n}\partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n}^{2}}
+   *   \end{bmatrix} =
+   *   \begin{bmatrix} 
+   *     \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) \\ 
+   *     \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) 
+   *   \end{bmatrix},
+   * \f]
+   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   * (distributed) parameter, this function computes the contribution:
+   * \f[
+   *   \boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}},
+   * \f]
+   * where \f$i\f$ is an index included in the range \f$\left[1,n\right]\f$.
+   * 
+   * This function can currently compute only one block contribution at a time; for one function call \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}\f$
+   * can be computed for only one fixed \f$i\f$ at a time.
+   * 
+   * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
+   * 
+   * \param v [in] Direction vector on which the Hessian is applied: \f$\boldsymbol{v}_{\boldsymbol{x}}\f$.
+   * 
+   * \param z [in] Lagrange multiplier vector: \f$\boldsymbol{z}\f$.
+   * 
+   * \param x [in] Solution vector for the current time step: \f$\boldsymbol{x}\f$.
+   * 
+   * \param xdot [in] Velocity vector for the current time step.
+   * 
+   * \param xdotdot [in] Acceleration vector for the current time step.
+   * 
+   * \param param_array [in] Array of the parameters vectors.
+   * 
+   * \param dist_param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
+   * 
+   * \param Hv_f_px [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}\f$.
+   * 
+   * This implementation relies on:
+   * <ul>
+   *  <li> PHAL::GatherSolution<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec,Traits>.
+   * </ul>
+   */
   void
   evaluateResidual_HessVecProd_px(
       const double                            current_time,
@@ -448,6 +850,67 @@ void
       const std::string&                      dist_param_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_px);
 
+  /**
+   * \brief evaluateResidual_HessVecProd_pp function
+   * 
+   * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\f$ of the inner product of the residual vector \f$\boldsymbol{f}\f$
+   * and a Lagrange multiplier vector \f$\boldsymbol{z}\f$ to a direction vector \f$\boldsymbol{v}\f$.
+   * 
+   * Representing the Hessian \f$\boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\f$ as a block matrix:
+   * \f[
+   *   \boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) := 
+   *   \begin{bmatrix} 
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x}^{2}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{x} \partial \boldsymbol{p}_{n}} \\
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{x}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1}^{2}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{1} \partial \boldsymbol{p}_{n}} \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n} \partial \boldsymbol{x}} & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n}\partial \boldsymbol{p}_{1}} & \cdots & \frac{\partial^{2} \left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle}{\partial \boldsymbol{p}_{n}^{2}}
+   *   \end{bmatrix} =
+   *   \begin{bmatrix} 
+   *     \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) \\ 
+   *     \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_1\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) \\
+   *     \vdots & \vdots & \ddots & \vdots\\
+   *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) 
+   *   \end{bmatrix},
+   * \f]
+   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   * (distributed) parameter, this function computes the contribution:
+   * \f[
+   *   \boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j},
+   * \f]
+   * where \f$i\f$ and \f$j\f$ are 2 (potentially different) indices included in the range \f$\left[1,n\right]\f$.
+   * 
+   * This function can currently compute only one block contribution at a time; for one function call \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j}\f$
+   * can be computed for only one fixed \f$i\f$ and one fixed \f$j\f$ at a time.
+   * 
+   * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
+   * 
+   * \param v [in] Direction vector on which the Hessian is applied: \f$\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
+   * 
+   * \param z [in] Lagrange multiplier vector: \f$\boldsymbol{z}\f$.
+   * 
+   * \param x [in] Solution vector for the current time step: \f$\boldsymbol{x}\f$.
+   * 
+   * \param xdot [in] Velocity vector for the current time step.
+   * 
+   * \param xdotdot [in] Acceleration vector for the current time step.
+   * 
+   * \param param_array [in] Array of the parameters vectors.
+   * 
+   * \param dist_param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
+   * 
+   * \param dist_param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
+   * 
+   * \param Hv_f_pp [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
+   * 
+   * This implementation relies on:
+   * <ul>
+   *  <li> PHAL::GatherSolution<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>,
+   *  <li> PHAL::ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec,Traits>.
+   * </ul>
+   */
   void
   evaluateResidual_HessVecProd_pp(
       const double                            current_time,

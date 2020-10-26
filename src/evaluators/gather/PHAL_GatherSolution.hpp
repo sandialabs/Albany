@@ -297,35 +297,53 @@ private:
  *
  * This specialization is used to gather the solution for the computation of:
  * <ul>
- *  <li> The @f$ H_{xx}(g)v_{x} @f$ contribution of the Hessian-vector product of the response function:
+ *  <li> The \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}\f$ contribution of the Hessian-vector product of the response function:
  *       \f[
- *         H_{xx}(g)v_{x}=\left.\frac{\partial}{\partial r} \nabla_{x} g(x+ r\,v_{x},p_1, p_2)\right|_{r=0},
+ *         \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}=
+ *         \left.\frac{\partial}{\partial r} \nabla_{\boldsymbol{x}} g(\boldsymbol{x}+ r\,\boldsymbol{v}_{\boldsymbol{x}},\boldsymbol{p}_1, \boldsymbol{p}_2)\right|_{r=0},
  *       \f]
- *  <li> The @f$ H_{xp_1}(g)v_{p_1} @f$ contribution of the Hessian-vector product of the response function:
+ *  <li> The \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(g)\boldsymbol{v}_{\boldsymbol{p}_1} \f$ contribution of the Hessian-vector product of the response function:
  *       \f[
- *         H_{xp_1}(g)v_{p_1}=\left.\frac{\partial}{\partial r} \nabla_{x} g(x, p_1+ r\,v_{p_1}, p_2)\right|_{r=0},
+ *         \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(g)\boldsymbol{v}_{\boldsymbol{p}_1}=
+ *         \left.\frac{\partial}{\partial r} \nabla_{\boldsymbol{x}} g(\boldsymbol{x}, \boldsymbol{p}_1+ r\,\boldsymbol{v}_{\boldsymbol{p}_1}, \boldsymbol{p}_2)\right|_{r=0},
  *       \f]
- *  <li> The @f$ H_{p_2x}(g)v_{x} @f$ contribution of the Hessian-vector product of the response function:
+ *  <li> The \f$ \boldsymbol{H}_{\boldsymbol{p}_2\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}} \f$ contribution of the Hessian-vector product of the response function:
  *       \f[
- *         H_{p_2x}(g)v_{x}=\left.\frac{\partial}{\partial r} \nabla_{p_2} g(x+ r\,v_{x},p_1, p_2)\right|_{r=0},
+ *         \boldsymbol{H}_{\boldsymbol{p}_2\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}=
+ *         \left.\frac{\partial}{\partial r} \nabla_{\boldsymbol{p}_2} g(\boldsymbol{x}+ r\,\boldsymbol{v}_{\boldsymbol{x}},\boldsymbol{p}_1, \boldsymbol{p}_2)\right|_{r=0},
  *       \f]
- *  <li> The @f$ H_{xx}(f,z)v_{x} @f$ contribution of the Hessian-vector product of the residual:
+ *  <li> The \f$ \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}} \f$ contribution of the Hessian-vector product of the residual:
  *       \f[
- *         H_{xx}(f,z)v_{x}=\left.\frac{\partial}{\partial r} \nabla_{x} \left\langle f(x+ r\,v_{x},p_1, p_2),z\right\rangle\right|_{r=0},
+ *         \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}=
+ *         \left.\frac{\partial}{\partial r} \nabla_{\boldsymbol{x}} \left\langle \boldsymbol{f}(\boldsymbol{x}+ r\,\boldsymbol{v}_{\boldsymbol{x}},\boldsymbol{p}_1, \boldsymbol{p}_2),\boldsymbol{z}\right\rangle\right|_{r=0},
  *       \f]
- *  <li> The @f$ H_{xp_1}(f,z)v_{p_1} @f$ contribution of the Hessian-vector product of the residual:
+ *  <li> The \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_1} \f$ contribution of the Hessian-vector product of the residual:
  *       \f[
- *         H_{xp_1}(f,z)v_{p_1}=\left.\frac{\partial}{\partial r} \nabla_{x} \left\langle f(x, p_1+ r\,v_{p_1}, p_2),z\right\rangle\right|_{r=0},
+ *         \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_1}=
+ *         \left.\frac{\partial}{\partial r} \nabla_{\boldsymbol{x}} \left\langle \boldsymbol{f}(\boldsymbol{x}, \boldsymbol{p}_1+ r\,\boldsymbol{v}_{\boldsymbol{p}_1}, \boldsymbol{p}_2),\boldsymbol{z}\right\rangle\right|_{r=0},
  *       \f]
- *  <li> The @f$ H_{p_2x}(f,z)v_{x} @f$ contribution of the Hessian-vector product of the residual:
+ *  <li> The \f$\boldsymbol{H}_{\boldsymbol{p}_2\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}} \f$ contribution of the Hessian-vector product of the residual:
  *       \f[
- *         H_{p_2x}(f,z)v_{x}=\left.\frac{\partial}{\partial r} \nabla_{p_2} \left\langle f(x+ r\,v_{x},p_1, p_2),z\right\rangle\right|_{r=0},
+ *         \boldsymbol{H}_{\boldsymbol{p}_2\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}=
+ *         \left.\frac{\partial}{\partial r} \nabla_{\boldsymbol{p}_2} \left\langle \boldsymbol{f}(\boldsymbol{x}+ r\,\boldsymbol{v}_{\boldsymbol{x}},\boldsymbol{p}_1, \boldsymbol{p}_2),\boldsymbol{z}\right\rangle\right|_{r=0},
  *       \f]
  * </ul>
  *
- *  where  @f$ x @f$  is the solution,  @f$ p_1 @f$  is a first distributed parameter,  @f$ p_2 @f$  is a potentially different second distributed parameter,
- *  @f$  g @f$  is the response function, @f$  f @f$  is the residual, @f$  z  @f$ is the Lagrange multiplier vector,  @f$ v_{x} @f$  is a direction vector
- *  with the same dimension as the vector  @f$ x @f$, and @f$ v_{p_1} @f$  is a direction vector with the same dimension as the vector  @f$ p_1 @f$.
+ *  where \f$\boldsymbol{x}\f$ is the solution, \f$\boldsymbol{p}_1\f$ is a first distributed parameter, \f$\boldsymbol{p}_2\f$ is a potentially different second distributed parameter,
+ * \f$g\f$ is the response function, \f$\boldsymbol{f}\f$ is the residual, \f$\boldsymbol{z}\f$ is the Lagrange multiplier vector, \f$\boldsymbol{v}_{\boldsymbol{x}}\f$ is a direction vector
+ *  with the same dimension as the vector \f$\boldsymbol{x}\f$, and \f$\boldsymbol{v}_{\boldsymbol{p}_1} \f$ is a direction vector with the same dimension as the vector \f$\boldsymbol{p}_1\f$.
+ * 
+ * This gather is used when calling: 
+ * <ul>
+ *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_xx,
+ *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_xp,
+ *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_px, 
+ *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_pp,
+ *   <li> Albany::Application::evaluateResidual_HessVecProd_xx,
+ *   <li> Albany::Application::evaluateResidual_HessVecProd_xp,
+ *   <li> Albany::Application::evaluateResidual_HessVecProd_px, 
+ *   <li> Albany::Application::evaluateResidual_HessVecProd_pp.
+ * </ul>
  */
 
 template<typename Traits>
