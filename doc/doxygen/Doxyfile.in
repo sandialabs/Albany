@@ -814,6 +814,8 @@ HTML_FOOTER            =
 
 HTML_STYLESHEET        =
 
+HTML_EXTRA_STYLESHEET  = extra_style.css
+
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output.
 # Doxygen will adjust the colors in the stylesheet and background images
 # according to this color. Hue is specified as an angle on a colorwheel,
