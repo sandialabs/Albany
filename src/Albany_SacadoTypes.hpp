@@ -59,17 +59,6 @@ typedef Sacado::Fad::SLFad<HessianVecInnerFad, ALBANY_HES_VEC_SLFAD_SIZE> Hessia
 typedef Sacado::Fad::DFad<HessianVecInnerFad> HessianVecFad;
 #endif
 
-#if defined(ALBANY_HES_FAD_TYPE_SFAD)
-typedef Sacado::Fad::SFad<RealType, ALBANY_HES_SFAD_SIZE> HessianInnerFad;
-typedef Sacado::Fad::SFad<HessianInnerFad, ALBANY_HES_SFAD_SIZE> HessianFad;
-#elif defined(ALBANY_HES_FAD_TYPE_SLFAD)
-typedef Sacado::Fad::SLFad<RealType, ALBANY_HES_SLFAD_SIZE> HessianInnerFad;
-typedef Sacado::Fad::SLFad<HessianInnerFad, ALBANY_HES_SLFAD_SIZE> HessianFad;
-#else
-typedef Sacado::Fad::DFad<RealType> HessianInnerFad;
-typedef Sacado::Fad::DFad<HessianInnerFad> HessianFad;
-#endif
-
 struct SPL_Traits {
   template <class T> struct apply {
     typedef typename T::ScalarT type;

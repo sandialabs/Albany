@@ -67,14 +67,6 @@ namespace PHAL {
     struct Jacobian : EvaluationType<FadType,  RealType, RealType> {};
 #endif
 
-#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-    struct Hessian : EvaluationType<HessianFad,  HessianFad, HessianFad> {};
-#elif defined(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION)
-    struct Hessian : EvaluationType<HessianFad,  RealType, HessianFad> {};
-#else
-    struct Hessian : EvaluationType<HessianFad,  RealType, RealType> {};
-#endif
-
 #if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
     struct Tangent  : EvaluationType<TanFadType,TanFadType, TanFadType> {};
 #else

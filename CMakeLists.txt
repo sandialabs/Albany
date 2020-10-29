@@ -657,6 +657,26 @@ ELSE()
   Options: SFad, SLFad, DFad")
 ENDIF()
 
+# Set FAD data type for Hessian
+SET(ENABLE_HES_VEC_FAD_TYPE "DFad" CACHE STRING "Sacado forward mode automatic differentiation data type for Hessian-vector product")
+IF(ENABLE_HES_VEC_FAD_TYPE STREQUAL "SFad")
+  SET(ALBANY_HES_VEC_FAD_TYPE_SFAD TRUE)
+  SET(ALBANY_HES_VEC_SFAD_SIZE 32 CACHE INT "Number of derivative components chosen at compile-time for Hessian-vector AD")
+  MESSAGE("-- HES_VEC_FAD_TYPE is SFad, ALBANY_HES_VEC_SFAD_SIZE=${ALBANY_HES_VEC_SFAD_SIZE}")
+  MESSAGE("---> WARNING: problems with elemental DOFs > ${ALBANY_HES_VEC_SFAD_SIZE} will fail")
+ELSEIF(ENABLE_HES_VEC_FAD_TYPE STREQUAL "SLFad")
+  SET(ALBANY_HES_VEC_FAD_TYPE_SLFAD TRUE)
+  SET(ALBANY_HES_VEC_SLFAD_SIZE 32 CACHE INT "Maximum number of derivative components chosen at compile-time for Hessian-vector AD")
+  MESSAGE("-- HES_VEC_FAD_TYPE is SLFad, ALBANY_HES_VEC_SLFAD_SIZE=${ALBANY_HES_VEC_SLFAD_SIZE}")
+  MESSAGE("---> WARNING: problems with elemental DOFs > ${ALBANY_HES_VEC_SLFAD_SIZE} will fail")
+ELSEIF(ENABLE_HES_VEC_FAD_TYPE STREQUAL "DFad")
+  MESSAGE("-- HES_VEC_FAD_TYPE is DFad (default)")
+ELSE()
+  MESSAGE(FATAL_ERROR
+  "\nError: ENABLE_HES_VEC_FAD_TYPE = ${ENABLE_HES_VEC_FAD_TYPE} is not recognized!
+  Options: SFad, SLFad, DFad")
+ENDIF()
+
 # Check if FAD data type is the same
 IF(ENABLE_FAD_TYPE STREQUAL ENABLE_TAN_FAD_TYPE)
   IF(ALBANY_FAD_TYPE_SFAD AND NOT ALBANY_SFAD_SIZE EQUAL ALBANY_TAN_SFAD_SIZE)
