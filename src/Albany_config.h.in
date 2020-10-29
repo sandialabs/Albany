@@ -85,6 +85,10 @@
 #cmakedefine ALBANY_TAN_SFAD_SIZE ${ALBANY_TAN_SFAD_SIZE}
 #cmakedefine ALBANY_TAN_FAD_TYPE_SLFAD
 #cmakedefine ALBANY_TAN_SLFAD_SIZE ${ALBANY_TAN_SLFAD_SIZE}
+#cmakedefine ALBANY_HES_VEC_FAD_TYPE_SFAD
+#cmakedefine ALBANY_HES_VEC_SFAD_SIZE ${ALBANY_HES_VEC_SFAD_SIZE}
+#cmakedefine ALBANY_HES_VEC_FAD_TYPE_SLFAD
+#cmakedefine ALBANY_HES_VEC_SLFAD_SIZE ${ALBANY_HES_VEC_SLFAD_SIZE}
 #cmakedefine ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 
 // ================ Package-specific macros ================= //
