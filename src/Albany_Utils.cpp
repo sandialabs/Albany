@@ -106,49 +106,46 @@ getParameterSizes(Teuchos::ParameterList parameterParams, int &total_num_param_v
   total_num_param_vecs = 0;
   num_param_vecs = 0;
   num_dist_param_vecs = 0;
-  if(parameterParams.isParameter("Number of Parameters")) {
-    total_num_param_vecs = parameterParams.get<int>("Number of Parameters");
-    bool previous_param_is_distributed = false;
+  total_num_param_vecs = parameterParams.get<int>("Number of Parameters");
+  bool previous_param_is_distributed = false;
 
-    for (int l = 0; l < total_num_param_vecs; ++l) {
-      Teuchos::ParameterList* pList =
-          &(parameterParams.sublist(Albany::strint("Parameter", l)));
+  for (int l = 0; l < total_num_param_vecs; ++l) {
+    Teuchos::ParameterList* pList =
+        &(parameterParams.sublist(Albany::strint("Parameter", l)));
 
-      std::string parameterType = pList->get<std::string>("Type", "Scalar");
-
-      if(parameterType == "Scalar" || parameterType == "Vector") {
-        TEUCHOS_TEST_FOR_EXCEPTION(
-            previous_param_is_distributed,
-            Teuchos::Exceptions::InvalidParameter,
-            std::endl
-                << "Error!  In Albany::getParameterSizes:  "
-                << "Parameter vector "
-                << l
-                << " is not distributed and the parameter "
-                << l-1
-                << " was distributed; please reorder the parameters swapping them.\n"
-                << "All non-distributed parameters (\"Scalar\" and \"Vector\") must be listed before the distributed parameters"
-                << std::endl);
-        ++num_param_vecs;
-      }
-      else if (parameterType =="Distributed") {
-        ++num_dist_param_vecs;
-        previous_param_is_distributed = true;
-      }
-      else {
-        TEUCHOS_TEST_FOR_EXCEPTION(
-            true,
-            Teuchos::Exceptions::InvalidParameter,
-            std::endl
-                << "Error!  In Albany::getParameterSizes:  "
-                << "Parameter vector "
-                << l
-                << " is of the type: \""
-                << parameterType
-                << "\"; this type is unsupported.\n"
-                << "Please use a valid type: \"Scalar\", \"Vector\", or \"Distributed\"."
-                << std::endl);
-      }
+    std::string parameterType = pList->get<std::string>("Type", "Scalar");
+    if(parameterType == "Scalar" || parameterType == "Vector") {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          previous_param_is_distributed,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  In Albany::getParameterSizes:  "
+              << "Parameter vector "
+              << l
+              << " is not distributed and the parameter "
+              << l-1
+              << " was distributed; please reorder the parameters swapping them.\n"
+              << "All non-distributed parameters (\"Scalar\" and \"Vector\") must be listed before the distributed parameters"
+              << std::endl);
+      ++num_param_vecs;
+    }
+    else if (parameterType =="Distributed") {
+      ++num_dist_param_vecs;
+      previous_param_is_distributed = true;
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  In Albany::getParameterSizes:  "
+              << "Parameter vector "
+              << l
+              << " is of the type: \""
+              << parameterType
+              << "\"; this type is unsupported.\n"
+              << "Please use a valid type: \"Scalar\", \"Vector\", or \"Distributed\"."
+              << std::endl);
     }
   }
 }

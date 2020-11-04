@@ -183,7 +183,7 @@ createResponseFunctions(Teuchos::ParameterList& responseList) const
   using Teuchos::ParameterList;
   using Teuchos::Array;
 
-  int num_response_vecs = responseList.get("Number of Responses", 0);
+  int num_response_vecs = responseList.get<int>("Number of Responses");
   Array<RCP<AbstractResponseFunction> > responses;
 
   for (int i=0; i<num_response_vecs; i++) {

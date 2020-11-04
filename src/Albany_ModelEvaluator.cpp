@@ -55,12 +55,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
 
   // Parameters (e.g., for sensitivities, SG expansions, ...)
   Teuchos::ParameterList& problemParams   = appParams->sublist("Problem");
-  Teuchos::ParameterList parameterParams;
-  if (problemParams.isSublist("Parameters"))
-    parameterParams = problemParams.sublist("Parameters");
-  else {
-    parameterParams.set("Number of Parameters", 0);
-  }
+  Teuchos::ParameterList& parameterParams = problemParams.sublist("Parameters");
 
   const std::string soln_method = problemParams.get("Solution Method", "Steady"); 
   if (soln_method == "Transient") {
