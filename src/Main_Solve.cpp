@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
     int total_num_param_vecs, num_param_vecs, numDistParams;
     Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, numDistParams);
 
-    int num_responses = responseParams.get("Number of Responses", 0);
+    int num_responses = responseParams.get<int>("Number of Responses");
     if (responseParams.isType<int>("Number")) {
       int numParameters = responseParams.get<int>("Number");
       num_responses = numParameters;

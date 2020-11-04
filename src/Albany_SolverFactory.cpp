@@ -117,6 +117,14 @@ setup(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   std::string solution_method =
       appParams->sublist("Problem").get("Solution Method", "Steady");
 
+  //Initialize "Number of Parameters" to zero if the "Parameters" sublist is not present
+  if(!appParams->sublist("Problem").isSublist("Parameters"))
+     appParams->sublist("Problem").sublist("Parameters").set("Number of Parameters", 0);
+  
+  //Initialize "Number of Responses" to zero if the "Responses" sublist is not present
+  if(!appParams->sublist("Problem").isSublist("Response Functions"))
+     appParams->sublist("Problem").sublist("Response Functions").set("Number of Responses", 0);
+
   Teuchos::RCP<Teuchos::ParameterList> defaultSolverParams = rcp(new Teuchos::ParameterList());
   setSolverParamDefaults(defaultSolverParams.get(), comm->getRank());
   appParams->setParametersNotAlreadySet(*defaultSolverParams);
