@@ -22,10 +22,14 @@ def write_yaml(dictionary, filename):
 def convert_parameters(problem_dictionary, gather_scalar_params, verbosity):
     new_problem = problem_dictionary
     has_changed = False
+    use_AD_defined = False
     # Check if the parameters have to be updated:
     if 'Distributed Parameters' in problem_dictionary or ('Parameters' in problem_dictionary and not 'Number of Parameters' in problem_dictionary['Parameters']):
         if 'Distributed Parameters' in problem_dictionary:
             dist_params_dictionary = problem_dictionary['Distributed Parameters']
+            if 'Hessian-vector products use AD' in dist_params_dictionary:
+                use_AD_defined = True
+                use_AD = problem_dictionary['Distributed Parameters']['Hessian-vector products use AD']
             if 'Number of Parameter Vectors' in dist_params_dictionary:
                 dist_new_format = True
                 num_dist_params = int(
@@ -116,6 +120,8 @@ def convert_parameters(problem_dictionary, gather_scalar_params, verbosity):
                     new_params[key] = val
             new_problem['Parameters']['Parameter ' +
                                       str(i+first_dist_id)] = new_params
+        if use_AD_defined:
+            new_problem['Parameters']['Hessian-vector products use AD'] = use_AD
         has_changed = True
     else:
         if verbosity:
