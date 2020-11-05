@@ -1,24 +1,28 @@
+%YAML 1.1
+---
 ALBANY:
   #Debug Output: 
   #  Write Jacobian to MatrixMarket: -1
   #  Write Residual to MatrixMarket: -1
-  Problem: 
+  Problem:
     Name: Thermal 2D
     Solution Method: Transient
-    Dirichlet BCs: 
+    Dirichlet BCs:
       ExpressionEvaluated SDBC on NS NodeSet3 for DOF T: '200.0 + 5.0e-04 * t'
       #ExpressionEvaluated SDBC on NS NodeSet3 for DOF T: '250.0 *cosh(5.421312110550360e-02) * exp(0.0015*0.0015*t)'
     Initial Condition:
       Function: Expression Parser All DOFs
       Function Expressions: ['200']
       #Function Expressions: ['250 * cosh(5.421312110550360e-02*x)']
-    Thermal Conductivity: [1.6, 1.6]  
-    Heat Capacity: 2.09e3 
-    Density: 920.0 
-    Response Functions: 
-      Number: 1
-      Response 0: Solution Average
-  Discretization: 
+    Thermal Conductivity: [1.6, 1.6]
+    Heat Capacity: 2.09e3
+    Density: 920.0
+    Response Functions:
+      Number of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+  Discretization:
     1D Elements: 10
     2D Elements: 10
     1D Scale: 1.00000000000000000e+00
@@ -26,26 +30,21 @@ ALBANY:
     Workset Size: -1
     Method: STK2D
     Exodus Output File Name: thermal2D_forward_euler_out.exo
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [2.125179890866e+02]
-    Relative Tolerance: 1.00000000000000002e-03
-    Absolute Tolerance: 1.00000000000000008e-05
-  Piro: 
-    Tempus: 
+  Piro:
+    Tempus:
       Lump Mass Matrix: true
       Constant Mass Matrix: true
       Integrator Name: Tempus Integrator
-      Tempus Integrator: 
+      Tempus Integrator:
         Integrator Type: Integrator Basic
         Screen Output Index List: '1'
         Screen Output Index Interval: 100
         Stepper Name: Tempus Stepper
-        Solution History: 
+        Solution History:
           Storage Type: Unlimited
           Storage Limit: 20
-        Time Step Control: 
-          Initial Time: 0.00000000000000000e+00
+        Time Step Control:
+          Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
           Initial Time Step: 1.0e+03
           Initial Order: 0
@@ -54,20 +53,24 @@ ALBANY:
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
           Integrator Step Type: Constant
-          Time Step Control Strategy: 
+          Time Step Control Strategy:
             Time Step Control Strategy List: basic_vs
-            basic_vs: 
+            basic_vs:
               Name: Basic VS
               Reduction Factor: 5.00000000000000000e-01
               Amplification Factor: 2.00000000000000000e+00
               Minimum Value Monitoring Function: 4.00000000000000008e-02
-              Maximum Value Monitoring Function: 5.00000000000000028e-02
+              Maximum Value Monitoring Function: 5.00000000000000027e-02
           Output Time List: ''
           Output Index List: ''
           Output Time Interval: 1.00000000000000000e+01
           Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
-      Tempus Stepper: 
+      Tempus Stepper:
         Stepper Type: Forward Euler
+  Regression For Response 0:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Test Value: 2.125179890866e+02
+    Relative Tolerance: 1.00000000000000002e-03
 ...

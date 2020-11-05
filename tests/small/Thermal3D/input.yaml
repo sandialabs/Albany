@@ -1,46 +1,45 @@
+%YAML 1.1
+---
 ALBANY:
   #Debug Output: 
   #  Write Jacobian to MatrixMarket: -1
   #  Write Residual to MatrixMarket: -1
-  Problem: 
+  Problem:
     Name: Thermal 3D
     Solution Method: Transient
-    Dirichlet BCs: 
+    Dirichlet BCs:
       ExpressionEvaluated SDBC on NS +z for DOF T: '200.0 + 5.0e-04 * t'
       #ExpressionEvaluated SDBC on NS NodeSet5 for DOF T: '250.0 *cosh(5.421312110550360e-02) * exp(0.0015*0.0015*t)'
     Initial Condition:
       Function: Expression Parser All DOFs
       Function Expressions: ['200']
       #Function Expressions: ['250 * cosh(5.421312110550360e-02*x)']
-    Thermal Conductivity: [1.6, 1.6, 1.6] 
-    Heat Capacity: 2.09e3 
-    Density: 920.0 
-    Response Functions: 
-      Number: 1
-      Response 0: Solution Average
-  Discretization: 
+    Thermal Conductivity: [1.6, 1.6, 1.6]
+    Heat Capacity: 2.09e3
+    Density: 920.0
+    Response Functions:
+      Number of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+  Discretization:
     Workset Size: -1
     Method: Ioss
     Exodus Input File Name: 'cube.g'
     Exodus Output File Name: thermal3D_out.e
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [2.125838018737e+02]
-    Relative Tolerance: 1.00000000000000002e-03
-    Absolute Tolerance: 1.00000000000000008e-05
-  Piro: 
-    Tempus: 
+  Piro:
+    Tempus:
       Integrator Name: Tempus Integrator
-      Tempus Integrator: 
+      Tempus Integrator:
         Integrator Type: Integrator Basic
         Screen Output Index List: '1'
         Screen Output Index Interval: 100
         Stepper Name: Tempus Stepper
-        Solution History: 
+        Solution History:
           Storage Type: Unlimited
           Storage Limit: 20
-        Time Step Control: 
-          Initial Time: 0.00000000000000000e+00
+        Time Step Control:
+          Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
           Initial Time Step: 1.0e+03
           Initial Order: 0
@@ -49,9 +48,9 @@ ALBANY:
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
           Integrator Step Type: Variable
-          Time Step Control Strategy: 
+          Time Step Control Strategy:
             Time Step Control Strategy List: basic_vs
-            basic_vs: 
+            basic_vs:
               Name: Basic VS
               Reduction Factor: 5.00000000000000000e-01
               Amplification Factor: 1.50000000000000000e+00
@@ -63,28 +62,28 @@ ALBANY:
           Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
-      Tempus Stepper: 
+      Tempus Stepper:
         Stepper Type: Backward Euler
         Solver Name: Demo Solver
         Predictor Name: None
-        Demo Solver: 
-          NOX: 
-            Direction: 
+        Demo Solver:
+          NOX:
+            Direction:
               Method: Newton
-              Newton: 
+              Newton:
                 Forcing Term Method: Constant
                 Rescue Bad Newton Solve: true
-                Linear Solver: 
+                Linear Solver:
                   Tolerance: 1.00000000000000002e-02
-            Line Search: 
-              Full Step: 
+            Line Search:
+              Full Step:
                 Full Step: 1.00000000000000000e+00
               Method: Full Step
             Nonlinear Solver: Line Search Based
-            Printing: 
+            Printing:
               Output Precision: 3
               Output Processor: 0
-              Output Information: 
+              Output Information:
                 Error: true
                 Warning: true
                 Outer Iteration: false
@@ -94,27 +93,27 @@ ALBANY:
                 Stepper Iteration: true
                 Stepper Details: true
                 Stepper Parameters: true
-            Solver Options: 
+            Solver Options:
               Status Test Check Type: Minimal
-            Status Tests: 
+            Status Tests:
               Test Type: Combo
               Combo Type: OR
               Number of Tests: 2
-              Test 0: 
+              Test 0:
                 Test Type: NormF
                 Tolerance: 1.00000000000000002e-08
-              Test 1: 
+              Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 10
-        Demo Predictor: 
+        Demo Predictor:
           Stepper Type: Forward Euler
-      Stratimikos: 
+      Stratimikos:
         Linear Solver Type: Belos
-        Linear Solver Types: 
-          Belos: 
+        Linear Solver Types:
+          Belos:
             Solver Type: Block GMRES
-            Solver Types: 
-              Block GMRES: 
+            Solver Types:
+              Block GMRES:
                 Convergence Tolerance: 1.00000000000000002e-02
                 Output Frequency: 1
                 Output Style: 1
@@ -124,10 +123,14 @@ ALBANY:
                 Num Blocks: 100
                 Flexible Gmres: false
         Preconditioner Type: Ifpack2
-        Preconditioner Types: 
-          Ifpack2: 
+        Preconditioner Types:
+          Ifpack2:
             Prec Type: ILUT
             Overlap: 1
-            Ifpack2 Settings: 
+            Ifpack2 Settings:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
+  Regression For Response 0:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Test Value: 2.125838018737e+02
+    Relative Tolerance: 1.00000000000000002e-03
 ...
