@@ -743,7 +743,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 
         if (num_p == 0 && cur_time_yr == final_time) {
           // Just calculate regression data -- only if in final time step
-          status += regression.checkSolveTestResults(i, 0, g, Teuchos::null);
+          status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
         } else {
           for (int j=0; j<num_p; j++) {
             Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
@@ -754,7 +754,10 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
               }
             }
             if (cur_time_yr == final_time) {
-              status += regression.checkSolveTestResults(i, j, g, dgdp);
+              if (Teuchos::nonnull(dgdp))
+                status += regression.checkSolveTestResults(i, j, g, dgdp);
+              else
+                status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
             }
           }
         }
