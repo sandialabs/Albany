@@ -243,7 +243,7 @@ def convert_regression(dictionary, verbosity):
                 first_index = 0
                 for j in range(0, n_params):
                     if 'Type' in dictionary['Problem']['Parameters']['Parameter '+str(j)] and dictionary['Problem']['Parameters']['Parameter '+str(j)]['Type'] == 'Vector':
-                        dimension = dictionary['Problem']['Parameters']['Parameters '+str(
+                        dimension = dictionary['Problem']['Parameters']['Parameter '+str(
                             j)]['Dimension']
                         if first_index+dimension <= n_values:
                             current_values = values[first_index:first_index+dimension]
@@ -268,20 +268,20 @@ def update_file(filename, verbosity, aggregate):
     print("Update file: " + filename)
     dict = read_yaml(filename)
     has_changed = False
-    if 'ANONYMOUS' in dict:
-        if 'Problem' in dict['ANONYMOUS']:
+    for key, val in dict.items():
+        if 'Problem' in dict[key]:
             new_problem, has_p_changed = convert_parameters(
-                dict['ANONYMOUS']['Problem'], verbosity, aggregate)
+                dict[key]['Problem'], verbosity, aggregate)
             new_problem, has_r_changed = convert_responses(
                 new_problem, verbosity)
-            dict['ANONYMOUS']['Problem'] = new_problem
+            dict[key]['Problem'] = new_problem
             if has_p_changed or has_r_changed:
                 has_changed = True
         new_ANONYMOUS, has_r_changed = convert_regression(
-            dict['ANONYMOUS'], verbosity)
+            dict[key], verbosity)
         if has_r_changed:
             has_changed = True
-        dict['ANONYMOUS'] = new_ANONYMOUS
+        dict[key] = new_ANONYMOUS
     if has_changed:
         # At least one of the parameter sublist, result sublist, or regression
         # sublists has changed and we have to overwrite the file.
