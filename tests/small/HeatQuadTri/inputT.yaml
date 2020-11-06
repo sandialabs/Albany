@@ -11,7 +11,7 @@ ANONYMOUS:
       Quadratic: 
         Nonlinear Factor: 3.29999999999999982e+00
     Parameters: 
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Vector
         Dimension: 2
@@ -20,7 +20,7 @@ ANONYMOUS:
         Scalar 1:
           Name: Quadratic Nonlinear Factor
     Response Functions: 
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Name: Solution Max Value
   Discretization: 

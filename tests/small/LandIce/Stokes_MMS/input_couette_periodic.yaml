@@ -12,14 +12,14 @@ ANONYMOUS:
       DBC on NS NodeSet3 for DOF uy: 0.00000000000000000e+00
       DBC on NS NodeSet99 for DOF p: 1.00000000000000000e+00
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: DBC on NS NodeSet2 for DOF ux
     LandIce Viscosity:
       Type: Constant
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Equation: 0
         Type: Scalar Response

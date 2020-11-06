@@ -30,7 +30,7 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: lateralside
     Response Functions:
-      Number of Responses: 2
+      Number Of Responses: 2
       Response 1:
         Scaling Coefficient: 1.0
         Type: Scalar Response
@@ -43,7 +43,7 @@ ANONYMOUS:
         Type: Scalar Response
         H Coefficient: 1.0e+00
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Lower Bound: 1.0e-03
         Name: ice_thickness

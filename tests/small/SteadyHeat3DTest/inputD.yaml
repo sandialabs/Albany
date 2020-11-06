@@ -14,7 +14,7 @@ ANONYMOUS:
       ThermalConductivity Type: Constant
       Value: 5.00000000000000000e+01
     Parameters: 
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Vector
         Dimension: 3

@@ -27,7 +27,7 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: lateralside
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Name: Surface Mass Balance Mismatch
         SMB Coefficient: 1.00000000000000000e+00
@@ -38,7 +38,7 @@ ANONYMOUS:
     Dirichlet BCs: {}
     Neumann BCs: {}
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Lower Bound: 1.00000000000000002e-03
         Name: ice_thickness

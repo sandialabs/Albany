@@ -10,7 +10,7 @@ ANONYMOUS:
     Solution Method: Continuation
     Name: LandIce Hydrology 2D
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Target Value: 0.0
         Field Rank: Scalar
@@ -24,7 +24,7 @@ ANONYMOUS:
       DBC on NS BoundaryNodeSet1 for DOF water_pressure: 0.00000000000000000e+00
     Neumann BCs: {}
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Nominal Value: 0.00000000000000000e+00
         Type: Scalar

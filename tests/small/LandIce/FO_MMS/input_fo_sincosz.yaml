@@ -15,7 +15,7 @@ ANONYMOUS:
     Body Force: 
       Type: FOSinCosZ
     Response Functions: 
-      Number of Responses: 3
+      Number Of Responses: 3
       Response 0:
         Name: Solution Max Value
         Equation: 0

@@ -15,10 +15,10 @@ ANONYMOUS:
       Type: LandIce
       Num Equations: 3
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Sum Of Responses
-        Number of Responses: 2
+        Number Of Responses: 2
         Response 1:
           Scaling Coefficient: 7.2e-05
           Name: Boundary Squared L2 Norm
@@ -31,7 +31,7 @@ ANONYMOUS:
           Regularization Coefficient: 0.0
     Dirichlet BCs: {}
     Parameters:
-      Number of Parameters: 2
+      Number Of Parameters: 2
       Parameter 0:
         Lower Bound: -1.5e+01
         Mesh Part: bottom
@@ -188,7 +188,7 @@ ANONYMOUS:
     Analysis:
       Analysis Package: ROL
       ROL:
-        Number of Parameters: 2
+        Number Of Parameters: 2
         Check Gradient: false
         Gradient Tolerance: 1.0e-04
         Step Tolerance: 0.0

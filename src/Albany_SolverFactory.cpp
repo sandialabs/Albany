@@ -117,13 +117,13 @@ setup(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   std::string solution_method =
       appParams->sublist("Problem").get("Solution Method", "Steady");
 
-  //Initialize "Number of Parameters" to zero if the "Parameters" sublist is not present
+  //Initialize "Number Of Parameters" to zero if the "Parameters" sublist is not present
   if(!appParams->sublist("Problem").isSublist("Parameters"))
-     appParams->sublist("Problem").sublist("Parameters").set("Number of Parameters", 0);
+     appParams->sublist("Problem").sublist("Parameters").set("Number Of Parameters", 0);
   
-  //Initialize "Number of Responses" to zero if the "Responses" sublist is not present
+  //Initialize "Number Of Responses" to zero if the "Responses" sublist is not present
   if(!appParams->sublist("Problem").isSublist("Response Functions"))
-     appParams->sublist("Problem").sublist("Response Functions").set("Number of Responses", 0);
+     appParams->sublist("Problem").sublist("Response Functions").set("Number Of Responses", 0);
 
   Teuchos::RCP<Teuchos::ParameterList> defaultSolverParams = rcp(new Teuchos::ParameterList());
   setSolverParamDefaults(defaultSolverParams.get(), comm->getRank());
@@ -403,7 +403,7 @@ Teuchos::RCP<const Teuchos::ParameterList>
 SolverFactory::getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidResponseParams"));
-  validPL->set<int>("Number of Responses", 0);
+  validPL->set<int>("Number Of Responses", 0);
   validPL->set<bool>("Observe Responses", true);
   validPL->set<int>("Responses Observation Frequency", 1);
   Teuchos::Array<unsigned int> defaultDataUnsignedInt;

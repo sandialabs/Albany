@@ -15,7 +15,7 @@ ANONYMOUS:
       NBC on SS SideSet0 for DOF U0 set robin: [0.00000000000000000e+00, 4.00000000000000000e+00]
       NBC on SS SideSet1 for DOF U0 set robin: [0.00000000000000000e+00,-4.00000000000000000e+00]
     Parameters: 
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Name: 'Glen''s Law Homotopy Parameter'
     LandIce Viscosity: 
@@ -23,7 +23,7 @@ ANONYMOUS:
     Body Force: 
       Type: FOCosExp2D
     Response Functions: 
-      Number of Responses: 3
+      Number Of Responses: 3
       Response 0:
         Name: Solution Max Value
         Equation: 0

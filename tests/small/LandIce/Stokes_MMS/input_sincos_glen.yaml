@@ -29,7 +29,7 @@ ANONYMOUS:
       Function: Constant
       Function Data: [5.00000000000000000e-01, 5.00000000000000000e-01, 5.00000000000000000e-01]
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: 'Glen''s Law Homotopy Parameter'
@@ -41,7 +41,7 @@ ANONYMOUS:
       Response 3:
         Type: Scalar Response
         Name: Solution Average
-      Number of Responses: 4
+      Number Of Responses: 4
       Response 1:
         Equation: 1
         Type: Scalar Response

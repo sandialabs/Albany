@@ -21,7 +21,7 @@ ANONYMOUS:
       Function: Constant
       Function Data: [5.00000000000000000e-01, 5.00000000000000000e-01, 5.00000000000000000e-01, 5.00000000000000000e-01]
     Parameters:
-      Number of Parameters: 0
+      Number Of Parameters: 0
     Response Functions:
       Response 4:
         Type: Scalar Response
@@ -42,7 +42,7 @@ ANONYMOUS:
         Equation: 0
         Type: Scalar Response
         Name: Solution Max Value
-      Number of Responses: 5
+      Number Of Responses: 5
   Discretization:
     Periodic_x BC: true
     Periodic_y BC: true

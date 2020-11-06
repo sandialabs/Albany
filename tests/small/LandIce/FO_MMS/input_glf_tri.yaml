@@ -23,7 +23,7 @@ ANONYMOUS:
     Basal Side Name: basalside
     Extruded Column Coupled in 2D Response: true
     Response Functions: 
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Name: Grounding Line Flux
         Scaling Coefficient: 1.0

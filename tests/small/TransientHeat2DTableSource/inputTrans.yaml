@@ -14,7 +14,7 @@ ANONYMOUS:
     ThermalConductivity: 
       ThermalConductivity Type: Block Dependent
     Response Functions: 
-      Number of Responses: 2
+      Number Of Responses: 2
       Response 0:
         Name: Solution Max Value
       Response 1:

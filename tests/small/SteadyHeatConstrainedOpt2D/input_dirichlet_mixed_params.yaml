@@ -10,7 +10,7 @@ ANONYMOUS:
       DBC on NS NodeSet2 for DOF T: 0.00000000000000000e+00
       DBC on NS NodeSet1 for DOF T: -1.00000000000000000e+00
     Parameters:
-      Number of Parameters: 2
+      Number Of Parameters: 2
       Parameter 0:
         Type: Scalar
         Name: DBC on NS NodeSet2 for DOF T
@@ -24,7 +24,7 @@ ANONYMOUS:
         Initial Uniform Value: -5.00000000000000000e-01
       Hessian-vector products use AD: true
     Response Functions: 
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Squared L2 Difference Source ST Target PST
@@ -50,7 +50,7 @@ ANONYMOUS:
     Analysis: 
       Analysis Package: ROL
       ROL: 
-        Number of Parameters: 2
+        Number Of Parameters: 2
         Check Gradient: true
         Gradient Tolerance: 1.0e-01
         Step Tolerance: 1.0e-04

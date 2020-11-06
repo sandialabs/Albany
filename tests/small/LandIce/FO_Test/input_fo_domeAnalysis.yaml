@@ -12,7 +12,7 @@ ANONYMOUS:
       NBC on SS basalss for DOF all set basal: [0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
       BetaXY: Dome UQ
     Parameters:
-      Number of Parameters: 4
+      Number Of Parameters: 4
       Parameter 2:
         Type: Scalar
         Name: 'NBC on SS basalss for DOF all set basal[3]'
@@ -33,7 +33,7 @@ ANONYMOUS:
     Body Force:
       Type: FO Dome
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Num Values: 100
         Type: Scalar Response

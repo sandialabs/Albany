@@ -14,7 +14,7 @@ ANONYMOUS:
     Basal Side Name: basalside
     Surface Side Name: upperside
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Regularization Coefficient Stiffening: 1.5e+00
         Asinh Scaling: 1.0e+01
@@ -38,7 +38,7 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: lateralside
     Parameters:
-      Number of Parameters: 2
+      Number Of Parameters: 2
       Parameter 0:
         Lower Bound: -1.00000000000000000e+00
         Name: stiffening_factor
@@ -167,7 +167,7 @@ ANONYMOUS:
     Analysis:
       Analysis Package: ROL
       ROL:
-        Number of Parameters: 2
+        Number Of Parameters: 2
         Check Gradient: true
         Gradient Tolerance: 1.00000000000000004e-04
         Step Tolerance: 1.00000000000000004e-04

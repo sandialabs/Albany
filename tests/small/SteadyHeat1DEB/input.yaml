@@ -13,13 +13,13 @@ ANONYMOUS:
     ThermalConductivity: 
       ThermalConductivity Type: Block Dependent
     Parameters: 
-      Number of Parameters: 2
+      Number Of Parameters: 2
       Parameter 0:
         Name: DBC on NS NodeSet0 for DOF T
       Parameter 1:
         Name: DBC on NS NodeSet1 for DOF T
     Response Functions: 
-      Number of Responses: 3
+      Number Of Responses: 3
       Response 0:
         Name: Solution Average
       Response 1:

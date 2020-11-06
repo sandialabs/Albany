@@ -18,12 +18,12 @@ ALBANY:
     Density: 1.0
     Thermal Source: 1D Cost
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: 'kappa_x Parameter'

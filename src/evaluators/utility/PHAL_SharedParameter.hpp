@@ -78,9 +78,9 @@ setNominalValue (const Teuchos::ParameterList& p, double default_value)
   // First we scan the Parameter list to see if this parameter is listed in it,
   // in which case we use the nominal value.
   bool found = false;
-  if (p.isParameter("Number of Parameters"))
+  if (p.isParameter("Number Of Parameters"))
   {
-    int n = p.get<int>("Number of Parameters");
+    int n = p.get<int>("Number Of Parameters");
     for (int i=0; (found==false) && i<n; ++i)
     {
       const Teuchos::ParameterList& pvi = p.sublist(Albany::strint("Parameter",i));

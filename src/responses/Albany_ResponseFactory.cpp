@@ -76,7 +76,7 @@ createResponseFunction(
   }
 
   else if (name == "Sum Of Responses") {
-    int num_responses = responseParams.get<int>("Number of Responses");
+    int num_responses = responseParams.get<int>("Number Of Responses");
     Array< RCP<AbstractResponseFunction> > aggregated_responses;
     Array< RCP<ScalarResponseFunction> > scalar_responses;
     for (int i=0; i<num_responses; i++) {
@@ -181,7 +181,7 @@ createResponseFunctions(Teuchos::ParameterList& responseList) const
   using Teuchos::ParameterList;
   using Teuchos::Array;
 
-  int num_response_vecs = responseList.get<int>("Number of Responses");
+  int num_response_vecs = responseList.get<int>("Number Of Responses");
   Array<RCP<AbstractResponseFunction> > responses;
 
   for (int i=0; i<num_response_vecs; i++) {

@@ -13,7 +13,7 @@ ANONYMOUS:
       BetaXY: ISMIP-HOM Test D
       L: 5.00000000000000000e+00
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: 'Glen''s Law Homotopy Parameter'
@@ -45,7 +45,7 @@ ANONYMOUS:
         Equation: 0
         Type: Scalar Response
         Name: Solution Max Value
-      Number of Responses: 5
+      Number Of Responses: 5
   Discretization:
     Periodic_x BC: true
     Periodic_y BC: true

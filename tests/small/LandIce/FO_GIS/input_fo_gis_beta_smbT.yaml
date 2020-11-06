@@ -15,7 +15,7 @@ ANONYMOUS:
     Basal Side Name: basalside
     Surface Side Name: upperside
     Response Functions:
-      Number of Responses: 2
+      Number Of Responses: 2
       Response 1:
         Cubature Degree: 3
         Name: Surface Mass Balance Mismatch
@@ -48,7 +48,7 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: lateralside
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: 'Glen''s Law Homotopy Parameter'

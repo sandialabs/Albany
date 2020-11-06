@@ -58,7 +58,7 @@ ANONYMOUS:
           beta: -7.2832
           n: 3.0
     Parameters: 
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Name: 'Glen''s Law Homotopy Parameter'
     LandIce Viscosity: 
@@ -71,7 +71,7 @@ ANONYMOUS:
       'Glen''s Law A': 1.00000000000000000e+00
       'Glen''s Law n': 3.00000000000000000e+00
     Response Functions: 
-      Number of Responses: 3
+      Number Of Responses: 3
       Response 0:
         Name: Solution Max Value
         Equation: 0

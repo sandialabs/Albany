@@ -60,9 +60,9 @@ ANONYMOUS:
       DBC on NS NodeSet0 for DOF T: 3.00000000000000000e+02
       DBC on NS NodeSet1 for DOF T: 3.00000000000000000e+02
     Parameters:
-      Number of Parameters: 0
+      Number Of Parameters: 0
     Response Functions:
-      Number of Responses: 2
+      Number Of Responses: 2
       Response 1:
         Type: Scalar Response
         Name: Field Integral
