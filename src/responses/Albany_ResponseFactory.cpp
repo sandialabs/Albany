@@ -13,7 +13,6 @@
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_SolutionMinValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
-#include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_CumulativeScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
@@ -132,7 +131,6 @@ createResponseFunction(
      name == "Modal Objective" ||
      name == "PHAL Field Integral" ||
      name == "PHAL Field IntegralT") {
-    responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
       responses.push_back(
           rcp(new Albany::FieldManagerScalarResponseFunction(

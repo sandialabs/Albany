@@ -171,9 +171,9 @@ int main(int argc, char *argv[])
     *out << "Finished eval of first model: Params, Responses "
          << std::setprecision(12) << std::endl;
 
-    Teuchos::ParameterList &parameterParams =
+    const Teuchos::ParameterList &parameterParams =
         slvrfctry.getParameters()->sublist("Problem").sublist("Parameters");
-    Teuchos::ParameterList &responseParams =
+    const Teuchos::ParameterList &responseParams =
         slvrfctry.getParameters()->sublist("Problem").sublist(
             "Response Functions");
 
@@ -189,18 +189,19 @@ int main(int argc, char *argv[])
     Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>> param_names;
     param_names.resize(num_param_vecs);
     for (int l = 0; l < num_param_vecs; ++l) {
-      Teuchos::ParameterList* pList =
-          &(parameterParams.sublist(Albany::strint("Parameter", l)));
+      const Teuchos::ParameterList & pList =
+          parameterParams.sublist(Albany::strint("Parameter", l));
 
-      std::string parameterType = pList->get<std::string>("Type", "Scalar");
+      const std::string& parameterType = pList.isParameter("Type") ?
+          pList.get<std::string>("Type") : std::string("Scalar");
       if(parameterType == "Scalar") {
         param_names[l] =
             Teuchos::rcp(new Teuchos::Array<std::string>(1));
         (*param_names[l])[0] =
-            pList->get<std::string>("Name");
+            pList.get<std::string>("Name");
       }
       if(parameterType == "Vector") {
-        const int numParameters = pList->get<int>("Dimension");
+        const int numParameters = pList.get<int>("Dimension");
         TEUCHOS_TEST_FOR_EXCEPTION(
             numParameters == 0,
             Teuchos::Exceptions::InvalidParameter,
@@ -215,7 +216,7 @@ int main(int argc, char *argv[])
             Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
         for (int k = 0; k < numParameters; ++k) {
           (*param_names[l])[k] =
-              pList->sublist(Albany::strint("Scalar", k)).get<std::string>("Name");
+              pList.sublist(Albany::strint("Scalar", k)).get<std::string>("Name");
         }
       }
     }
@@ -223,14 +224,15 @@ int main(int argc, char *argv[])
     Teuchos::Array<std::string> response_names;
     response_names.resize(num_responses);
     for (int l = 0; l < num_responses; ++l) {
-      Teuchos::ParameterList *pList =
-        &(responseParams.sublist(Albany::strint("Response", l)));
+      const Teuchos::ParameterList& pList =
+        responseParams.sublist(Albany::strint("Response", l));
 
-      std::string type = pList->get<std::string>("Type", "Scalar Response");
-      bool number_exists = pList->getEntryPtr("Number of Responses");
+      const std::string& type = pList.isParameter("Type") ?
+          pList.get<std::string>("Type") : std::string("Scalar Response");
+      bool number_exists = pList.getEntryPtr("Number of Responses");
 
       if (type=="Sum Of Responses") {
-        const int num_sub_responses = pList->get<int>("Number of Responses");
+        const int num_sub_responses = pList.get<int>("Number of Responses");
         TEUCHOS_TEST_FOR_EXCEPTION(
             num_sub_responses == 0, Teuchos::Exceptions::InvalidParameter,
             std::endl
@@ -239,13 +241,13 @@ int main(int argc, char *argv[])
                 << std::endl);
         response_names[l] = "Sum Of Responses: ";
         for (int k = 0; k < num_sub_responses; ++k) {
-          response_names[l] += pList->sublist(Albany::strint("Response", 0)).get<std::string>("Name");
+          response_names[l] += pList.sublist(Albany::strint("Response", 0)).get<std::string>("Name");
           if( k != num_sub_responses-1)
             response_names[l] += " + ";
         }
       }
       else
-        response_names[l] = pList->get<std::string>("Name");
+        response_names[l] = pList.get<std::string>("Name");
     }
 
     const Thyra_InArgs nominal = solver->getNominalValues();

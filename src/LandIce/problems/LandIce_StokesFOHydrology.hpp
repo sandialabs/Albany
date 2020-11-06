@@ -200,7 +200,7 @@ LandIce::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   std::map<std::string,std::set<std::string>> ss_inputs_found;
 
   if (this->params->isSublist("Parameters")) {
-    Teuchos::ParameterList& parameterParams = this->params->sublist("Parameters");
+    const Teuchos::ParameterList& parameterParams = this->params->sublist("Parameters");
     int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
     Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
