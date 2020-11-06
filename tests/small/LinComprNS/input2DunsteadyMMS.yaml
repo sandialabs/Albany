@@ -16,9 +16,9 @@ ANONYMOUS:
     Initial Condition:
       Function: Sin-Cos
     Parameters:
-      Number of Parameters: 0
+      Number Of Parameters: 0
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average

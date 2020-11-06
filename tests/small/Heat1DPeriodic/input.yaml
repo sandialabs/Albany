@@ -14,11 +14,11 @@ ANONYMOUS:
       Quadratic: 
         Nonlinear Factor: 0.00000000000000000e+00
     Response Functions: 
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Name: Solution Average
     Parameters: 
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Name: Quadratic Nonlinear Factor
   Discretization: 

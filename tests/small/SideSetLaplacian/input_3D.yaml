@@ -11,7 +11,7 @@ ANONYMOUS:
     Solve As Side Set Equation: true
     Side Set Name: SideSet2
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Name: Squared L2 Difference Side Source ST Target PST
         Side Set Name: SideSet2

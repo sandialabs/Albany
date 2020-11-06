@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
     int total_num_param_vecs, num_param_vecs, numDistParams;
     Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, numDistParams);
 
-    int num_responses = responseParams.get<int>("Number of Responses");
+    int num_responses = responseParams.get<int>("Number Of Responses");
     if (responseParams.isType<int>("Number")) {
       int numParameters = responseParams.get<int>("Number");
       num_responses = numParameters;
@@ -229,10 +229,10 @@ int main(int argc, char *argv[])
 
       const std::string& type = pList.isParameter("Type") ?
           pList.get<std::string>("Type") : std::string("Scalar Response");
-      bool number_exists = pList.getEntryPtr("Number of Responses");
+      bool number_exists = pList.getEntryPtr("Number Of Responses");
 
       if (type=="Sum Of Responses") {
-        const int num_sub_responses = pList.get<int>("Number of Responses");
+        const int num_sub_responses = pList.get<int>("Number Of Responses");
         TEUCHOS_TEST_FOR_EXCEPTION(
             num_sub_responses == 0, Teuchos::Exceptions::InvalidParameter,
             std::endl

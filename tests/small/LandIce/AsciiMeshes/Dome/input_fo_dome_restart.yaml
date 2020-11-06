@@ -10,7 +10,7 @@ ANONYMOUS:
     Required Fields: [flow_factor]
     Basal Side Name: basal
     Parameters: 
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Name: 'Glen''s Law Homotopy Parameter'
     LandIce Viscosity: 
@@ -35,7 +35,7 @@ ANONYMOUS:
     Body Force: 
       Type: FO INTERP SURF GRAD
     Response Functions: 
-      Number of Responses: 3
+      Number Of Responses: 3
       Response 0:
         Name: Solution Max Value
         Equation: 0

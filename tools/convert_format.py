@@ -24,7 +24,7 @@ def convert_parameters(problem_dictionary, gather_scalar_params, verbosity):
     has_changed = False
     use_AD_defined = False
     # Check if the parameters have to be updated:
-    if 'Distributed Parameters' in problem_dictionary or ('Parameters' in problem_dictionary and not 'Number of Parameters' in problem_dictionary['Parameters']):
+    if 'Distributed Parameters' in problem_dictionary or ('Parameters' in problem_dictionary and not 'Number Of Parameters' in problem_dictionary['Parameters']):
         if 'Distributed Parameters' in problem_dictionary:
             dist_params_dictionary = problem_dictionary['Distributed Parameters']
             if 'Hessian-vector products use AD' in dist_params_dictionary:
@@ -67,7 +67,7 @@ def convert_parameters(problem_dictionary, gather_scalar_params, verbosity):
 
         new_problem.pop('Distributed Parameters', None)
 
-        new_problem['Parameters'] = {'Number of Parameters': total_params}
+        new_problem['Parameters'] = {'Number Of Parameters': total_params}
         for i in range(0, num_params):
             if not gather_scalar_params:
                 if new_format:
@@ -136,7 +136,7 @@ def convert_responses(problem_dictionary, verbosity):
     if 'Response Functions' in problem_dictionary:
         responses_dictionary = problem_dictionary['Response Functions']
         # Check if the responses have to be updated:
-        if not 'Number of Responses' in responses_dictionary:
+        if not 'Number Of Responses' in responses_dictionary:
 
             # Check the format:
             if 'Number of Response Vectors' in responses_dictionary:
@@ -156,7 +156,7 @@ def convert_responses(problem_dictionary, verbosity):
 
             if not summed_responses:
                 new_problem['Response Functions'] = {
-                    'Number of Responses': num_responses}
+                    'Number Of Responses': num_responses}
                 for i in range(0, num_responses):
                     if new_format:
                         new_response = {
@@ -173,9 +173,9 @@ def convert_responses(problem_dictionary, verbosity):
                     new_problem['Response Functions']['Response ' +
                                                       str(i)] = new_response
             else:
-                new_problem['Response Functions'] = {'Number of Responses': 1}
+                new_problem['Response Functions'] = {'Number Of Responses': 1}
                 new_problem['Response Functions']['Response 0'] = {
-                    'Number of Responses': num_responses, 'Type': 'Sum Of Responses'}
+                    'Number Of Responses': num_responses, 'Type': 'Sum Of Responses'}
                 for i in range(0, num_responses):
                     if new_format:
                         new_response = {
@@ -239,7 +239,7 @@ def convert_regression(dictionary, verbosity):
                         i)]['Sensitivity Test Values '+str(i)]
                 n_values = len(values)
                 # Loop over the parameters:
-                n_params = dictionary['Problem']['Parameters']['Number of Parameters']
+                n_params = dictionary['Problem']['Parameters']['Number Of Parameters']
                 first_index = 0
                 for j in range(0, n_params):
                     if 'Type' in dictionary['Problem']['Parameters']['Parameter '+str(j)] and dictionary['Problem']['Parameters']['Parameter '+str(j)]['Type'] == 'Vector':

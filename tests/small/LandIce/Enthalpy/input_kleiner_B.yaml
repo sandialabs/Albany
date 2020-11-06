@@ -50,12 +50,12 @@ ANONYMOUS:
         Parameter Delta: 1.0e+00
       Bed Lubrication: Dry
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: 'Glen''s Law Homotopy Parameter'
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average

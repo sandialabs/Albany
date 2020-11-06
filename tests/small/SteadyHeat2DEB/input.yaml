@@ -13,7 +13,7 @@ ANONYMOUS:
     ThermalConductivity: 
       ThermalConductivity Type: Block Dependent
     Parameters: 
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Vector
         Dimension: 2
@@ -22,7 +22,7 @@ ANONYMOUS:
         Scalar 1:
           Name: DBC on NS NodeSet1 for DOF T
     Response Functions:
-      Number of Responses: 3
+      Number Of Responses: 3
       Response 0:
         Name: Solution Average
       Response 1:

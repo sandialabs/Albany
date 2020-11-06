@@ -23,12 +23,12 @@ ANONYMOUS:
       Function: Constant
       Function Data: [5.00000000000000000e-01, 5.00000000000000000e-01, 5.00000000000000000e-01]
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: DBC on NS NodeSet99 for DOF ux
     Response Functions:
-      Number of Responses: 2
+      Number Of Responses: 2
       Response 1:
         Type: Scalar Response
         Name: Solution Average

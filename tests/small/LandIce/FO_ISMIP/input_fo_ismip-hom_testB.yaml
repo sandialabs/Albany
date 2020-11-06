@@ -10,7 +10,7 @@ ANONYMOUS:
       DBC on NS NodeSet4 for DOF U0: 0.00000000000000000e+00
       DBC on NS NodeSet4 for DOF U1: 0.00000000000000000e+00
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: 'Glen''s Law Homotopy Parameter'
@@ -42,7 +42,7 @@ ANONYMOUS:
         Equation: 0
         Type: Scalar Response
         Name: Solution Max Value
-      Number of Responses: 5
+      Number Of Responses: 5
   Debug Output:
     Write Jacobian to MatrixMarket: -1
     Write Residual to MatrixMarket: -1

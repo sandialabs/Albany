@@ -25,14 +25,14 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: lateralside
     Response Functions: 
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Name: Surface Velocity Mismatch
         Regularization Coefficient: 1.00000000000000000e+00
     Dirichlet BCs: { }
     Neumann BCs: { }
     Parameters: 
-      Number of Parameters: 2
+      Number Of Parameters: 2
       Parameter 0:
         Type: Scalar
         Name: 'Glen''s Law Homotopy Parameter'

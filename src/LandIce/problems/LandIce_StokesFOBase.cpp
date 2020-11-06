@@ -560,12 +560,12 @@ void StokesFOBase::setupEvaluatorRequests ()
     bool has_GLF_resp = false;
     if(this->params->isSublist("Response Functions")) {
       const Teuchos::ParameterList& resp = this->params->sublist("Response Functions",true);
-      int num_resps = resp.get<int>("Number of Responses");
+      int num_resps = resp.get<int>("Number Of Responses");
       for(int i=0; i<num_resps; i++) {
         const std::string responseType = resp.sublist(Albany::strint("Response", i)).isParameter("Type") ?
          resp.sublist(Albany::strint("Response", i)).get<std::string>("Type") : std::string("Scalar Response");
         if(responseType == "Sum Of Responses") {
-          int num_sub_resps = resp.sublist(Albany::strint("Response", i)).get<int>("Number of Responses");
+          int num_sub_resps = resp.sublist(Albany::strint("Response", i)).get<int>("Number Of Responses");
           for(int j=0; j<num_sub_resps; j++) {
             if(resp.sublist(Albany::strint("Response", i)).sublist(Albany::strint("Response", j)).get<std::string>("Name") == "Grounding Line Flux") {
               has_GLF_resp = true;

@@ -9,7 +9,7 @@ ANONYMOUS:
       NBC on SS Basal for DOF U0 set basal: [1.00000000000000000e+07, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
       NBC on SS Basal for DOF U1 set basal: [1.00000000000000000e+07, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: 'Glen''s Law Homotopy Parameter'
@@ -27,7 +27,7 @@ ANONYMOUS:
       Response 2:
         Type: Scalar Response
         Name: Solution Average
-      Number of Responses: 3
+      Number Of Responses: 3
       Response 1:
         Equation: 1
         Type: Scalar Response

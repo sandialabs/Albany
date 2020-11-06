@@ -16,7 +16,7 @@ ANONYMOUS:
       Quadratic: 
         Nonlinear Factor: 3.00000000000000000e+00
     Parameters: 
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Vector
         Dimension: 7
@@ -35,7 +35,7 @@ ANONYMOUS:
         Scalar 6:
           Name: Quadratic Nonlinear Factor
     Response Functions: 
-      Number of Responses: 2
+      Number Of Responses: 2
       Response 0:
         Name: Solution Average
       Response 1:

@@ -73,8 +73,8 @@ CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemPa
   const Teuchos::ParameterList& parameterParams =
       problemParams->sublist("Parameters");
   int np = 0;
-  if(parameterParams.isParameter("Number of Parameters")) {
-    int  num_param_vecs = parameterParams.get<int>("Number of Parameters");
+  if(parameterParams.isParameter("Number Of Parameters")) {
+    int  num_param_vecs = parameterParams.get<int>("Number Of Parameters");
     for (int i = 0; i < num_param_vecs; ++i) {
       const Teuchos::ParameterList& pList =
           parameterParams.sublist(Albany::strint("Parameter", i));
@@ -107,7 +107,7 @@ getParameterSizes(const Teuchos::ParameterList parameterParams, int &total_num_p
   total_num_param_vecs = 0;
   num_param_vecs = 0;
   num_dist_param_vecs = 0;
-  total_num_param_vecs = parameterParams.get<int>("Number of Parameters");
+  total_num_param_vecs = parameterParams.get<int>("Number Of Parameters");
   bool previous_param_is_distributed = false;
 
   for (int l = 0; l < total_num_param_vecs; ++l) {

@@ -12,9 +12,9 @@ ANONYMOUS:
     Basal Side Name: basalside
     Surface Side Name: upperside
     Response Functions:
-      Number of Responses: 0
+      Number Of Responses: 0
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: 'Glen''s Law Homotopy Parameter'

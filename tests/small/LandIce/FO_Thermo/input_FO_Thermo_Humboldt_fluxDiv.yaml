@@ -43,7 +43,7 @@ ANONYMOUS:
         Side Set Name: extruded_boundary_side_set_1
         #Immersed Ratio: 0.893
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Lower Bound: -12.0
         Mesh Part: bottom
@@ -91,10 +91,10 @@ ANONYMOUS:
         Parameter Delta: 0.5
       Bed Lubrication: Dry
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Sum Of Responses
-        Number of Responses: 1
+        Number Of Responses: 1
         Response 0:
           Cubature Degree: 4
           Name: Surface Mass Balance Mismatch
@@ -276,7 +276,7 @@ ANONYMOUS:
     Analysis:
       Analysis Package: ROL
       ROL:
-        Number of Parameters: 2
+        Number Of Parameters: 2
         Check Gradient: false
         Gradient Tolerance: 1.00000000000000004e-04
         Step Tolerance: 1.00000000000000002e-08

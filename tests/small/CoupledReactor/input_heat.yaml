@@ -33,12 +33,12 @@ ANONYMOUS:
       Domain Upper Bounds: '{10.0}'
       Correlation Lengths: '{6.0}'
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: Neutron Flux
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average

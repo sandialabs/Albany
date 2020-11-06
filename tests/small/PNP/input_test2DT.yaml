@@ -15,12 +15,12 @@ ANONYMOUS:
       DBC on NS NodeSet0 for DOF C2: 0.00000000000000000e+00
       DBC on NS NodeSet1 for DOF C2: 3.00000000000000000e+00
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: DBC on NS NodeSet0 for DOF Phi
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average

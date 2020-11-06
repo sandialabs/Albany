@@ -28,10 +28,10 @@ ANONYMOUS:
       Type: LandIce
       Num Equations: 3
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Sum Of Responses
-        Number of Responses: 2
+        Number Of Responses: 2
         Response 1:
           Scaling Coefficient: 5.88239999999999978e-07
           Asinh Scaling: 1.00000000000000000e+01
@@ -44,7 +44,7 @@ ANONYMOUS:
     Dirichlet BCs: {}
     Neumann BCs: {}
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Lower Bound: -1.20000000000000000e+01
         Mesh Part: bottom

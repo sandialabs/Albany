@@ -24,7 +24,7 @@ ANONYMOUS:
       NBC on SS inlet_ss for DOF T set dudn: [-7.00000000000000000e+00]
       NBC on SS outlet_ss for DOF T set dudn: [3.70000000000000000e+01]
     Parameters:
-      Number of Parameters: 2
+      Number Of Parameters: 2
       Parameter 0:
         Type: Scalar
         Name: NBC on SS inlet_ss for DOF T set dudn
@@ -32,7 +32,7 @@ ANONYMOUS:
         Type: Scalar
         Name: NBC on SS outlet_ss for DOF T set dudn
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Name: Aggregate Responses
         Response 1: PHAL Field Integral

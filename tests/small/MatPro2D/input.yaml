@@ -24,7 +24,7 @@ ANONYMOUS:
       Poissons Ratio Type: Constant
       Value: 2.50000000000000000e-01
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average

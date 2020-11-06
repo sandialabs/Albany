@@ -9,7 +9,7 @@ ANONYMOUS:
       DBC on NS NodeSet0 for DOF T prescribe Field: dirichlet_field
       DBC on NS NodeSet1 for DOF T: -1.00000000000000000e+00
     Parameters:
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Type: Distributed
         Name: dirichlet_field
@@ -19,7 +19,7 @@ ANONYMOUS:
         Mesh Part: NodeSet0
       Hessian-vector products use AD: true
     Response Functions: 
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Squared L2 Difference Source ST Target PST

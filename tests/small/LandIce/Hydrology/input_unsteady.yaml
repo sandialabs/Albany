@@ -10,7 +10,7 @@ ANONYMOUS:
     Solution Method: Transient
     Name: LandIce Hydrology 2D
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Target Value: 0.0
         Field Rank: Scalar
@@ -24,7 +24,7 @@ ANONYMOUS:
       DBC on NS BoundaryNodeSet1 for DOF water_pressure: 0.00000000000000000e+00
     Neumann BCs: {}
     Parameters:
-      Number of Parameters: 0
+      Number Of Parameters: 0
     LandIce Physical Parameters:
       Water Density: 1.00000000000000000e+03
       Ice Density: 9.10000000000000000e+02

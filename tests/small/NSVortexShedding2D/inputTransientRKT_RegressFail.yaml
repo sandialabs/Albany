@@ -13,9 +13,9 @@ ANONYMOUS:
       DBC on NS cylinder for DOF uy: 0.00000000000000000e+00
       DBC on NS sides for DOF uy: 0.00000000000000000e+00
     Parameters:
-      Number of Parameters: 0
+      Number Of Parameters: 0
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Equation: 0
         Type: Scalar Response

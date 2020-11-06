@@ -20,9 +20,9 @@ ANONYMOUS:
     LandIce Viscosity:
       Type: Constant
     Parameters:
-      Number of Parameters: 0
+      Number Of Parameters: 0
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Equation: 0
         Type: Scalar Response

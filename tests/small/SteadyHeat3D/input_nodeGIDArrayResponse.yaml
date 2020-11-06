@@ -22,11 +22,11 @@ ANONYMOUS:
       Quadratic: 
         Nonlinear Factor: 3.00000000000000000e+00
     Parameters: 
-      Number of Parameters: 1
+      Number Of Parameters: 1
       Parameter 0:
         Name: DBC on NS NodeSet0 for DOF T
     Response Functions: 
-      Number of Responses: 3
+      Number Of Responses: 3
       Response 0:
         Name: Solution Values
         Culling Strategy: Node GIDs

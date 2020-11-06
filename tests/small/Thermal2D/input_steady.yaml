@@ -15,12 +15,12 @@ ALBANY:
     Thermal Conductivity: [1.6, 0.8]
     Thermal Source: None
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average
     Parameters:
-      Number of Parameters: 2
+      Number Of Parameters: 2
       Parameter 0:
         Type: Scalar
         Name: 'kappa_x Parameter'

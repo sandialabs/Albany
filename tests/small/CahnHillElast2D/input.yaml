@@ -14,7 +14,7 @@ ANONYMOUS:
     gamma: 1.00000000000000004e-04
     Lump Mass: true
     Response Functions:
-      Number of Responses: 1
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average
