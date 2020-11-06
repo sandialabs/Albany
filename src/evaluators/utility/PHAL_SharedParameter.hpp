@@ -85,7 +85,7 @@ setNominalValue (const Teuchos::ParameterList& p, double default_value)
     {
       const Teuchos::ParameterList& pvi = p.sublist(Albany::strint("Parameter",i));
       std::string parameterType = "Scalar";
-      if(!pvi.isParameter("Type"))
+      if(pvi.isParameter("Type"))
         parameterType = pvi.get<std::string>("Type");
       if (parameterType == "Distributed")
         break; // Pointless to check the remaining parameters as they are all distributed
