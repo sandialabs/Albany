@@ -503,8 +503,6 @@ Application::buildProblem()
   observe_responses    = responseList.get("Observe Responses", true);
   response_observ_freq = responseList.get("Responses Observation Frequency", 1);
   const Teuchos::Array<unsigned int> defaultDataUnsignedInt;
-  relative_responses =
-      responseList.get("Relative Responses Markers", defaultDataUnsignedInt);
 
   // Build state field manager
   sfm.resize(meshSpecs.size());

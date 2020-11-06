@@ -80,9 +80,10 @@ checkSolveTestResults(
     for (int i = 0; i < numSensTests; i++) {
       Teuchos::Array<double> testSensValues;
 
-      Teuchos::ParameterList paramSublist = appParams->sublist("Problem").sublist("Parameters").sublist(
-        strint("Parameter", parameter_index));
-      std::string parameterType = paramSublist.get<std::string>("Type", "Scalar");
+      const Teuchos::ParameterList& paramList = appParams->sublist("Problem").sublist("Parameters");
+      const Teuchos::ParameterList& paramSublist = paramList.sublist(strint("Parameter", parameter_index));
+      const std::string parameterType = paramSublist.isParameter("Type") ?
+          paramSublist.get<std::string>("Type") : std::string("Scalar");
       if (parameterType == "Vector") {
         if (sensitivityParams->isType<Teuchos::Array<double>>("Test Values")) {
           int dimension = paramSublist.get<int>("Dimension");

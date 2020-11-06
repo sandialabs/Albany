@@ -403,8 +403,6 @@ Teuchos::RCP<const Teuchos::ParameterList>
 SolverFactory::getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidResponseParams"));
-  ;
-  validPL->set<std::string>("Collection Method", "Sum Responses");
   validPL->set<int>("Number of Responses", 0);
   validPL->set<bool>("Observe Responses", true);
   validPL->set<int>("Responses Observation Frequency", 1);
@@ -413,11 +411,8 @@ SolverFactory::getValidResponseParameters() const
       "Relative Responses Markers",
       defaultDataUnsignedInt,
       "Array of responses for which relative change will be obtained");
-
-  validPL->set<int>("Number", 0);
-  validPL->set<int>("Equation", 0);
-  const int maxParameters = 500;
-  for (int i = 0; i < maxParameters; i++)
+  const int maxNumResponses = 50;
+  for (int i = 0; i < maxNumResponses; i++)
     validPL->sublist(strint("Response", i), false, "Response sublist");
   return validPL;
 }

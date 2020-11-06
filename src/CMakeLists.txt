@@ -227,7 +227,6 @@ list (APPEND HEADERS
 
 #responses
 list (APPEND SOURCES
-  responses/Albany_AggregateScalarResponseFunction.cpp
   responses/Albany_CumulativeScalarResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
   responses/Albany_FieldManagerScalarResponseFunction.cpp
@@ -247,7 +246,6 @@ list (APPEND SOURCES
   )
 list (APPEND HEADERS
   responses/Albany_AbstractResponseFunction.hpp
-  responses/Albany_AggregateScalarResponseFunction.hpp
   responses/Albany_CumulativeScalarResponseFunction.hpp
   responses/Albany_DistributedResponseFunction.hpp
   responses/Albany_FieldManagerScalarResponseFunction.hpp

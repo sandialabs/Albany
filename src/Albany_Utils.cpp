@@ -68,17 +68,18 @@ PrintHeader(std::ostream& os)
 }
 
 int
-CalculateNumberParams(const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
+CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemParams)
 {
-  Teuchos::ParameterList& parameterParams =
+  const Teuchos::ParameterList& parameterParams =
       problemParams->sublist("Parameters");
   int np = 0;
   if(parameterParams.isParameter("Number of Parameters")) {
     int  num_param_vecs = parameterParams.get<int>("Number of Parameters");
     for (int i = 0; i < num_param_vecs; ++i) {
-      Teuchos::ParameterList& pList =
+      const Teuchos::ParameterList& pList =
           parameterParams.sublist(Albany::strint("Parameter", i));
-      std::string parameterType = pList.get<std::string>("Type", "Scalar");
+      const std::string& parameterType = pList.isParameter("Type") ?
+          pList.get<std::string>("Type") : std::string("Scalar");
       if(parameterType == "Scalar" || parameterType == "Distributed")
         ++np;
       else if (parameterType =="Vector")
@@ -102,7 +103,7 @@ CalculateNumberParams(const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
 }
 
 void
-getParameterSizes(Teuchos::ParameterList parameterParams, int &total_num_param_vecs, int &num_param_vecs, int &num_dist_param_vecs ) {
+getParameterSizes(const Teuchos::ParameterList parameterParams, int &total_num_param_vecs, int &num_param_vecs, int &num_dist_param_vecs ) {
   total_num_param_vecs = 0;
   num_param_vecs = 0;
   num_dist_param_vecs = 0;
@@ -110,10 +111,11 @@ getParameterSizes(Teuchos::ParameterList parameterParams, int &total_num_param_v
   bool previous_param_is_distributed = false;
 
   for (int l = 0; l < total_num_param_vecs; ++l) {
-    Teuchos::ParameterList* pList =
-        &(parameterParams.sublist(Albany::strint("Parameter", l)));
+    const Teuchos::ParameterList& pList =
+        parameterParams.sublist(Albany::strint("Parameter", l));
 
-    std::string parameterType = pList->get<std::string>("Type", "Scalar");
+    const std::string parameterType = pList.isParameter("Type") ?
+        pList.get<std::string>("Type") : std::string("Scalar");
     if(parameterType == "Scalar" || parameterType == "Vector") {
       TEUCHOS_TEST_FOR_EXCEPTION(
           previous_param_is_distributed,

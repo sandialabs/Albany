@@ -306,7 +306,7 @@ void StokesFOBase::parseInputFields ()
 
   // Getting the names of the distributed parameters (they won't have to be loaded as states)
   if (this->params->isSublist("Parameters")) {
-    Teuchos::ParameterList& parameterParams = this->params->sublist("Parameters");
+    const Teuchos::ParameterList& parameterParams = this->params->sublist("Parameters");
     int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
     Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
@@ -559,10 +559,10 @@ void StokesFOBase::setupEvaluatorRequests ()
 
     bool has_GLF_resp = false;
     if(this->params->isSublist("Response Functions")) {
-      auto resp = this->params->sublist("Response Functions",true);
-      int num_resps = resp.get("Number", 0);
+      const Teuchos::ParameterList& resp = this->params->sublist("Response Functions",true);
+      int num_resps = resp.get<int>("Number of Responses");
       for(int i=0; i<num_resps; i++) {
-        if(resp.get<std::string>(Albany::strint("Response", i)) == "Grounding Line Flux") {
+        if(resp.sublist(Albany::strint("Response", i)).get<std::string>("Name") == "Grounding Line Flux") {
           has_GLF_resp = true;
           break;
         }

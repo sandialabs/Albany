@@ -55,7 +55,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
 
   // Parameters (e.g., for sensitivities, SG expansions, ...)
   Teuchos::ParameterList& problemParams   = appParams->sublist("Problem");
-  Teuchos::ParameterList& parameterParams = problemParams.sublist("Parameters");
+  const Teuchos::ParameterList& parameterParams = problemParams.sublist("Parameters");
 
   const std::string soln_method = problemParams.get("Solution Method", "Steady"); 
   if (soln_method == "Transient") {
@@ -67,7 +67,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
   *out << "Total number of parameters  = " << total_num_param_vecs << std::endl;
   *out << "Number of non-distributed parameters  = " << num_param_vecs << std::endl;
 
-  Teuchos::ParameterList& responseParams =
+  const Teuchos::ParameterList& responseParams =
       problemParams.sublist("Response Functions");
 
   int  num_response_vecs = app->getNumResponses();
@@ -76,20 +76,20 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
   param_lower_bds.resize(num_param_vecs);
   param_upper_bds.resize(num_param_vecs);
   for (int l = 0; l < num_param_vecs; ++l) {
-    Teuchos::ParameterList* pList =
-        &(parameterParams.sublist(Albany::strint("Parameter", l)));
+    const Teuchos::ParameterList& pList = parameterParams.sublist(Albany::strint("Parameter", l));
 
-    std::string parameterType = pList->get<std::string>("Type", "Scalar");
+    const std::string& parameterType = pList.isParameter("Type") ?
+        pList.get<std::string>("Type") : std::string("Scalar");
 
     if(parameterType == "Scalar") {
       param_names[l] =
           Teuchos::rcp(new Teuchos::Array<std::string>(1));
       (*param_names[l])[0] =
-          pList->get<std::string>("Name");
+          pList.get<std::string>("Name");
       *out << "Number of parameters in parameter vector " << l << " = 1" << std::endl;
     }
     if(parameterType == "Vector") {
-      const int numParameters = pList->get<int>("Dimension");
+      const int numParameters = pList.get<int>("Dimension");
       TEUCHOS_TEST_FOR_EXCEPTION(
           numParameters == 0,
           Teuchos::Exceptions::InvalidParameter,
@@ -104,35 +104,10 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
           Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
       for (int k = 0; k < numParameters; ++k) {
         (*param_names[l])[k] =
-            pList->sublist(Albany::strint("Scalar", k)).get<std::string>("Name");
+            pList.sublist(Albany::strint("Scalar", k)).get<std::string>("Name");
       }
       *out << "Number of parameters in parameter vector " << l << " = "
           << numParameters << std::endl;
-    }
-  }
-
-  Teuchos::Array<std::string> response_names;
-  response_names.resize(num_response_vecs);
-  for (int l = 0; l < num_response_vecs; ++l) {
-    const Teuchos::ParameterList* pList =
-      &(responseParams.sublist(Albany::strint("Response Vector", l)));
-
-    bool number_exists = pList->getEntryPtr("Number");
-
-    if (number_exists) {
-      const int numParameters = pList->get<int>("Number");
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          numParameters == 0,
-          Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  In Albany::ModelEvaluator constructor:  "
-              << "Response vector "
-              << l
-              << " has zero parameters!"
-              << std::endl);
-
-      response_names[l] =
-          pList->get<std::string>(strint("Response", l));
     }
   }
 
@@ -171,18 +146,19 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
     // Create Thyra vector for parameters
     param_vecs[l] = Thyra::createMember(param_vss[l]);
 
-    Teuchos::ParameterList* pList = &(parameterParams.sublist(strint("Parameter",l)));
+    const Teuchos::ParameterList& pList = parameterParams.sublist(strint("Parameter",l));
 
     int numParameters = param_vss[l]->dim();
 
     // Loading lower and upper bounds (if any)
-    const std::string parameterType = pList->get<std::string>("Type", "Scalar");
+    const std::string& parameterType = pList.isParameter("Type") ?
+        pList.get<std::string>("Type") : std::string("Scalar");
 
     if(parameterType == "Scalar") {
       // Loading lower bounds (if any)
-      if (pList->isParameter("Lower Bound")) {
+      if (pList.isParameter("Lower Bound")) {
         param_lower_bds[l] = Thyra::createMember(param_vss[l]);
-        ST lb = pList->get<ST>("Lower Bound");
+        ST lb = pList.get<ST>("Lower Bound");
         TEUCHOS_TEST_FOR_EXCEPTION (1!=numParameters, Teuchos::Exceptions::InvalidParameter,
                                     "Error! numParameters!=1.\n");
 
@@ -191,9 +167,9 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
       }
 
       // Loading upper bounds (if any)
-      if (pList->isParameter("Upper Bound")) {
+      if (pList.isParameter("Upper Bound")) {
         param_upper_bds[l] = Thyra::createMember(param_vss[l]);
-        ST ub = pList->get<ST>("Upper Bound");
+        ST ub = pList.get<ST>("Upper Bound");
         TEUCHOS_TEST_FOR_EXCEPTION (1!=numParameters, Teuchos::Exceptions::InvalidParameter,
                                     "Error! numParameters!=1.\n");
 
@@ -203,8 +179,8 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
 
       // Loading nominal values (if any)
       auto param_vec_nonConstView = getNonconstLocalData(param_vecs[l]);
-      if (pList->isParameter("Nominal Value")) {
-        ST nvals = pList->get<ST>("Nominal Value");
+      if (pList.isParameter("Nominal Value")) {
+        ST nvals = pList.get<ST>("Nominal Value");
         TEUCHOS_TEST_FOR_EXCEPTION (1!=numParameters, Teuchos::Exceptions::InvalidParameter,
                                     "Error! numParameters!=1.\n");
 
@@ -224,16 +200,16 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
 
       for (int k = 0; k < numParameters; ++k) {
         std::string sublistName = strint("Scalar",k);
-        if (pList->sublist(sublistName).isParameter("Lower Bound")) {
-          ST lb = pList->get<ST>("Lower Bound");
+        if (pList.sublist(sublistName).isParameter("Lower Bound")) {
+          ST lb = pList.get<ST>("Lower Bound");
           param_lower_bd_nonConstView[k] = lb;
         }
-        if (pList->sublist(sublistName).isParameter("Upper Bound")) {
-          ST ub = pList->get<ST>("Upper Bound");
+        if (pList.sublist(sublistName).isParameter("Upper Bound")) {
+          ST ub = pList.get<ST>("Upper Bound");
           param_upper_bd_nonConstView[k] = ub;
         }
-        if (pList->sublist(sublistName).isParameter("Upper Bound")) {
-          ST nvals = pList->get<ST>("Nominal Value");
+        if (pList.sublist(sublistName).isParameter("Upper Bound")) {
+          ST nvals = pList.get<ST>("Nominal Value");
           sacado_param_vec[l][k].baseValue = param_vec_nonConstView[k] = nvals;
         } else {
           param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
@@ -605,7 +581,9 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
           Thyra_ModelEvaluator::DERIV_MV_JACOBIAN_FORM);
     }
 
-    const bool aDHessVec = appParams->sublist("Problem").sublist("Parameters").get("Hessian-vector products use AD", true);
+    const Teuchos::ParameterList& parameterParams = appParams->sublist("Problem").sublist("Parameters");
+    const bool aDHessVec = parameterParams.isParameter("Hessian-vector products use AD") ?
+        parameterParams.get<bool>("Hessian-vector products use AD") : true;
 
     bool hess_vec_prod_g_xx_support = aDHessVec;
     bool hess_vec_prod_g_xp_support = aDHessVec;

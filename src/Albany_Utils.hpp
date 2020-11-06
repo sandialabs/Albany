@@ -27,11 +27,11 @@ PrintHeader(std::ostream& os);
 
 //! Helper function to calculate the number of parameters in a problem
 int
-CalculateNumberParams(const Teuchos::RCP<Teuchos::ParameterList>& problemParams); 
+CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemParams);
 
 //! Helper function to calculate the number of non-distributed parameters and distributed parameters in a problem
 void
-getParameterSizes(Teuchos::ParameterList parameterParams, int &total_num_param_vecs, int &num_param_vecs, int &num_dist_param_vecs );
+getParameterSizes(const Teuchos::ParameterList parameterParams, int &total_num_param_vecs, int &num_param_vecs, int &num_dist_param_vecs );
 
 // Helper function which replaces the diagonal of a matrix
 void
