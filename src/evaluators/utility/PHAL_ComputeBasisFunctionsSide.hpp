@@ -71,7 +71,7 @@ private:
   PHX::MDField<MeshScalarT>                               inv_metric;
   PHX::MDField<RealType>                                  BF;
   PHX::MDField<MeshScalarT>                               GradBF;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       normals;
+  PHX::MDField<MeshScalarT>                               normals;
 
   Teuchos::RCP<shards::CellTopology> cellType;
   bool compute_normals;

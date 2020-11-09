@@ -201,14 +201,21 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   useCollapsedSidesets = collapsed_sidesets;
 
   // Collapsed sideset layouts to ensure contiguous memory access for efficient GPU evaluation
+  sidesetWorksetSize = (sidesetWorksetSize > 0) ? sidesetWorksetSize : worksetSize*numSides;
   qp_scalar_sideset       = rcp(new MDALayout<Side,QuadPoint>(sidesetWorksetSize,numQPts));
   node_scalar_sideset     = rcp(new MDALayout<Side,Node>(sidesetWorksetSize,numNodes));
   node_vector_sideset     = rcp(new MDALayout<Side,Node,Dim>(sidesetWorksetSize,numNodes,vecDim));
   qp_vector_sideset       = rcp(new MDALayout<Side,QuadPoint,Dim>(sidesetWorksetSize,numQPts,vecDim));
+  qp_vecgradient_sideset   = rcp(new MDALayout<Side,QuadPoint,Dim,Dim>(sidesetWorksetSize,numQPts,vecDim,numSideDim));
   vertices_vector_sideset = rcp(new MDALayout<Side,Vertex,Dim>(sidesetWorksetSize,numVertices,numSpaceDim));
+  qp_coords_sideset       = rcp(new MDALayout<Side,QuadPoint,Dim>(sidesetWorksetSize,numQPts,numSpaceDim));
   node_qp_scalar_sideset  = rcp(new MDALayout<Side,Node,QuadPoint>(sidesetWorksetSize,numNodes,numQPts));
   node_qp_gradient_sideset = rcp(new MDALayout<Side,Node,QuadPoint,Dim>(sidesetWorksetSize,numNodes,numQPts,numSideDim));
+  qp_gradient_sideset   = rcp(new MDALayout<Side,QuadPoint,Dim>(sidesetWorksetSize,numQPts,numSideDim));
   qp_tensor_sideset       = rcp(new MDALayout<Side,QuadPoint,Dim,Dim>(sidesetWorksetSize,numQPts,numSideDim,numSideDim));
   qp_tensor_cd_sd_sideset = rcp(new MDALayout<Side,QuadPoint,Dim,Dim>(sidesetWorksetSize,numQPts,numSideDim+1,numSideDim));
-  
+  qp_vector_spacedim_sideset = rcp(new MDALayout<Side,QuadPoint,Dim>(sidesetWorksetSize,numQPts,numSpaceDim));
+  cell_scalar2_sideset = rcp(new MDALayout<Side>(sidesetWorksetSize));
+  cell_vector_sideset  = rcp(new MDALayout<Side,Dim>(sidesetWorksetSize,vecDim));
+  cell_tensor_sideset  = rcp(new MDALayout<Side,Dim,Dim>(sidesetWorksetSize,numSideDim,numSideDim));
 }

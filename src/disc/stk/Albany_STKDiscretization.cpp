@@ -1933,14 +1933,15 @@ STKDiscretization::computeSideSets()
 
     globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
     globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
-    globalSideSetViews[ss_key].side_GID       = Kokkos::View<GO**,       Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_GID       = Kokkos::View<GO**,       Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_LID       = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_ebIndex   = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].side_local_id  = Kokkos::View<unsigned**, Kokkos::LayoutRight>("side_local_id", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].max_sides      = max_sides[ss_key];
-    globalSideSetViews[ss_key].numCellsOnSide = Kokkos::View<int**,      Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
-    globalSideSetViews[ss_key].cellsOnSide    = Kokkos::View<int***,     Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_GID         = Kokkos::View<GO**,       Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_GID         = Kokkos::View<GO**,       Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_LID         = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_local_id    = Kokkos::View<unsigned**, Kokkos::LayoutRight>("side_local_id", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].max_sides        = max_sides[ss_key];
+    globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::View<int**,      Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
+    globalSideSetViews[ss_key].cellsOnSide      = Kokkos::View<int***,     Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::View<int***,     Kokkos::LayoutRight>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
 
     ss_it++;
   }
@@ -1960,10 +1961,12 @@ STKDiscretization::computeSideSets()
       int max_cells_on_side = 0;
       std::vector<int> numCellsOnSide(numSides);
       std::vector<std::vector<int>> cellsOnSide(numSides);
+      std::vector<std::vector<int>> sideSetIdxOnSide(numSides);
       for (size_t j = 0; j < ss_val.size(); ++j) {
         int cell = ss_val[j].elem_LID;
         int side = ss_val[j].side_local_id;
         cellsOnSide[side].push_back(cell);
+        sideSetIdxOnSide[side].push_back(j);
       }
       for (int side = 0; side < numSides; ++side) {
         numCellsOnSide[side] = cellsOnSide[side].size();
@@ -1974,9 +1977,11 @@ STKDiscretization::computeSideSets()
         globalSideSetViews[ss_key].numCellsOnSide(current_index, side) = numCellsOnSide[side];
         for (int j = 0; j < numCellsOnSide[side]; ++j) {
           globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = cellsOnSide[side][j];
+          globalSideSetViews[ss_key].sideSetIdxOnSide(current_index, side, j) = sideSetIdxOnSide[side][j];
         }
         for (int j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
           globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = -1;
+          globalSideSetViews[ss_key].sideSetIdxOnSide(current_index, side, j) = -1;
         }
       }
 
@@ -2024,6 +2029,7 @@ STKDiscretization::computeSideSets()
       lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
       lssList[ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
       lssList[ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
+      lssList[ss_key].sideSetIdxOnSide    = Kokkos::subview(globalSideSetViews[ss_key].sideSetIdxOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
 
       current_local_index[ss_key]++;
 

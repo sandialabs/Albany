@@ -59,6 +59,7 @@ private:
   enum LayoutType
   {
     CELL_SCALAR = 1,
+    CELL_SCALAR_SIDESET,
     CELL_VECTOR,
     CELL_TENSOR,
     NODE_SCALAR,
@@ -80,6 +81,7 @@ public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
   struct CellScalar_Tag{};
+  struct CellScalarSideset_Tag{};
   struct CellVector_Tag{};
   struct CellTensor_Tag{};
   struct NodeScalar_Tag{};
@@ -91,6 +93,7 @@ public:
   struct VertexVectorSideset_Tag{};
 
   typedef Kokkos::RangePolicy<ExecutionSpace, CellScalar_Tag> CellScalar_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, CellScalarSideset_Tag> CellScalarSideset_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, CellVector_Tag> CellVector_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, CellTensor_Tag> CellTensor_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, NodeScalar_Tag> NodeScalar_Policy;
@@ -103,6 +106,8 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const CellScalar_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const CellScalarSideset_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
   void operator() (const CellVector_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION

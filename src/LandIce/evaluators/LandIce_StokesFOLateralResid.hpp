@@ -50,19 +50,21 @@ private:
   void evaluate_with_computed_immersed_ratio(typename Traits::EvalData d);
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Side,Node,Dim>        coords_qp;
-  PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint>  thickness;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       elevation;
-  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>     BF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   normals;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       w_measure;
+  PHX::MDField<const MeshScalarT>        coords_qp;
+  PHX::MDField<const ThicknessScalarT>   thickness;
+  PHX::MDField<const MeshScalarT>        elevation;
+  PHX::MDField<const RealType>           BF;
+  PHX::MDField<const MeshScalarT>        normals;
+  PHX::MDField<const MeshScalarT>        w_measure;
 
   // Output:
   PHX::MDField<OutputScalarT,Cell,Node,VecDim>              residual;
 
-  std::vector<std::vector<int> >  sideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
   std::string                     lateralSideName;
 
+  bool useCollapsedSidesets;
+  
   double rho_w;  // [Kg m^{-3}]
   double rho_i;  // [Kg m^{-3}]
   double g;      // [m s^{-2}]
@@ -80,6 +82,8 @@ private:
   unsigned int numSideNodes;
   unsigned int numSideQPs;
   unsigned int vecDimFO;
+
+  Albany::LocalSideSetInfo sideSet;
 };
 
 } // Namespace LandIce

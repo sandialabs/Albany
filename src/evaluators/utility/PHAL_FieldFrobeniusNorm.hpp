@@ -59,6 +59,9 @@ private:
   // Output:
   PHX::MDField<ScalarT> field_norm;
 
+  Albany::LocalSideSetInfo sideSet;
+  bool useCollapsedSidesets;
+
   std::string sideSetName;
   std::vector<PHX::DataLayout::size_type> dims;
   int numDims;

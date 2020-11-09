@@ -62,12 +62,14 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     numNodes  = dl->node_scalar->extent(1);
   }
 
+  useCollapsedSidesets = dl->useCollapsedSidesets;
+
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
-  if (nodal) {
-    layout = dl->node_scalar;
+  if (dl->isSideLayouts && useCollapsedSidesets) {
+    layout = nodal ? dl->node_scalar_sideset : dl->qp_scalar_sideset;
   } else {
-    layout = dl->qp_scalar;
+    layout = nodal ? dl->node_scalar : dl->qp_scalar;
   }
 
   beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
@@ -329,16 +331,17 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambda, ScalarT power)
 {
-  if (workset.sideSets->find(basalSideName)==workset.sideSets->end())
-    return;
+  if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
+
+  sideSet = workset.sideSetViews->at(basalSideName);
 
   const unsigned int dim = nodal ? numNodes : numQPs;
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
-  for (auto const& it_side : sideSet) {
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
     // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
     switch (beta_type) {
       case GIVEN_CONSTANT:
@@ -346,12 +349,20 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
 
       case GIVEN_FIELD:
         if (is_given_field_param) {
-          for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            beta(cell,side,ipt) = given_field_param(cell,side,ipt);
+          for (int ipt=0; ipt<dim; ++ipt) {
+            if (useCollapsedSidesets) {
+              beta(sideSet_idx,ipt) = given_field_param(sideSet_idx,ipt);
+            } else {
+              beta(cell,side,ipt) = given_field_param(cell,side,ipt);
+            }
           }
         } else {
-          for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            beta(cell,side,ipt) = given_field(cell,side,ipt);
+          for (int ipt=0; ipt<dim; ++ipt) {
+            if (useCollapsedSidesets) {
+              beta(sideSet_idx,ipt) = given_field(sideSet_idx,ipt);
+            } else {
+              beta(cell,side,ipt) = given_field(cell,side,ipt);
+            }
           }
         }
         break;
@@ -406,12 +417,20 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       case EXP_GIVEN_FIELD:
         if(nodal || interpolate_then_exponentiate) {
           if (is_given_field_param) {
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              beta(cell,side,ipt) = std::exp(given_field_param(cell,side,ipt));
+            for (int ipt=0; ipt<dim; ++ipt) {
+              if (useCollapsedSidesets) {
+                beta(sideSet_idx,ipt) = std::exp(given_field_param(sideSet_idx,ipt));
+              } else {
+                beta(cell,side,ipt) = std::exp(given_field_param(cell,side,ipt));
+              }
             }
           } else {
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt));
+            for (int ipt=0; ipt<dim; ++ipt) {
+              if (useCollapsedSidesets) {
+                beta(sideSet_idx,ipt) = std::exp(given_field(sideSet_idx,ipt));
+              } else {
+                beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt)); 
+              }
             }
           }
         } else {
@@ -430,18 +449,35 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
           }
         }
         break;
+
+      default:
+        break;
      }
 
     if(zero_on_floating) {
-      if (is_thickness_param) {
-        for (unsigned int ipt=0; ipt<dim; ++ipt) {
-          ParamScalarT isGrounded = rho_i*thickness_param_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
-          beta(cell,side,ipt) *=  isGrounded;
+      if (useCollapsedSidesets) {
+        if (is_thickness_param) {
+          for (int ipt=0; ipt<dim; ++ipt) {
+            ParamScalarT isGrounded = rho_i*thickness_param_field(sideSet_idx,ipt) > -rho_w*bed_topo_field(sideSet_idx,ipt);
+            beta(sideSet_idx,ipt) *=  isGrounded;
+          }
+        } else {
+          for (int ipt=0; ipt<dim; ++ipt) {
+            ParamScalarT isGrounded = rho_i*thickness_field(sideSet_idx,ipt) > -rho_w*bed_topo_field(sideSet_idx,ipt);
+            beta(sideSet_idx,ipt) *=  isGrounded;
+          }
         }
-      } else {
-        for (unsigned int ipt=0; ipt<dim; ++ipt) {
-          ParamScalarT isGrounded = rho_i*thickness_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
-          beta(cell,side,ipt) *=  isGrounded;
+      }  else {
+        if (is_thickness_param) {
+          for (int ipt=0; ipt<dim; ++ipt) {
+            ParamScalarT isGrounded = rho_i*thickness_param_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
+            beta(cell,side,ipt) *=  isGrounded;
+          }
+        } else {
+          for (int ipt=0; ipt<dim; ++ipt) {
+            ParamScalarT isGrounded = rho_i*thickness_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
+            beta(cell,side,ipt) *=  isGrounded;
+          }
         }
       }
     }

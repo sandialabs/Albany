@@ -56,8 +56,7 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
                               "Error! The mesh does not store any side set.\n");
 
-  if(workset.sideSets->find(sideSetName) ==workset.sideSets->end())
-    return; // Side set not present in this workset
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return; // Side set not present in this workset
 
   TEUCHOS_TEST_FOR_EXCEPTION (workset.disc==Teuchos::null, std::logic_error,
                               "Error! The workset must store a valid discretization pointer.\n");

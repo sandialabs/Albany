@@ -91,8 +91,10 @@ private:
 
   double rho_i, rho_w;    // [kg m^{-3}]
 
-  unsigned int numNodes;
-  unsigned int numQPs;
+  bool useCollapsedSidesets;
+
+  int numNodes;
+  int numQPs;
 
   bool logParameters;
   bool distributedLambda;
@@ -106,6 +108,8 @@ private:
   BETA_TYPE beta_type;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+  Albany::LocalSideSetInfo sideSet;
 };
 
 } // Namespace LandIce

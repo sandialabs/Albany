@@ -57,6 +57,8 @@ protected:
 
   std::string meshPart;
 
+  bool useCollapsedSidesets;
+
   Teuchos::RCP<const CellTopologyData> cell_topo;
 
   ContractionOperator op;

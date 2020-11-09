@@ -41,20 +41,24 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<const ScalarT,Cell,Side,Node, Dim> val_node;
+  PHX::MDField<const ScalarT> val_node;
   //! Basis Functions and side tangents
-  PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim> gradBF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  tangents;
+  PHX::MDField<const MeshScalarT> gradBF;
+  PHX::MDField<const MeshScalarT>  tangents;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<OutputScalarT,Cell,Side,QuadPoint> val_qp;
+  PHX::MDField<OutputScalarT> val_qp;
 
   unsigned int numSideNodes;
   unsigned int numSideQPs;
   unsigned int numDims;
 
+  bool useCollapsedSidesets;
+
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+  Albany::LocalSideSetInfo sideSet;
 };
 
 // Some shortcut names

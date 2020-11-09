@@ -45,13 +45,17 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<const ScalarT,Side,Cell,Node,VecDim> val_node;
+  PHX::MDField<const ScalarT> val_node;
   //! Basis Functions
-  PHX::MDField<const MeshScalarT,Side,Cell,Node,QuadPoint,Dim> gradBF;
+  PHX::MDField<const MeshScalarT> gradBF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<OutputScalarT,Cell,Side,QuadPoint,VecDim,Dim> grad_qp;
+  PHX::MDField<OutputScalarT> grad_qp;
+
+  bool useCollapsedSidesets;
+
+  Albany::LocalSideSetInfo sideSet;
 
   int numSideNodes;
   int numSideQPs;

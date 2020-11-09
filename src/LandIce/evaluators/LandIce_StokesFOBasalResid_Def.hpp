@@ -33,10 +33,12 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
 
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-  u         = decltype(u)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-  beta      = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),dl_basal->qp_scalar);
-  BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
-  w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
+  useCollapsedSidesets = dl_basal->useCollapsedSidesets;
+
+  u         = decltype(u)(p.get<std::string> ("Velocity Side QP Variable Name"), useCollapsedSidesets ? dl_basal->qp_vector_sideset : dl_basal->qp_vector);
+  beta      = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),useCollapsedSidesets ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
+  BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), useCollapsedSidesets ? dl_basal->node_qp_scalar_sideset : dl_basal->node_qp_scalar);
+  w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), useCollapsedSidesets ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
 
   this->addDependentField(u);
   this->addDependentField(beta);
@@ -47,7 +49,6 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
-  unsigned int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
 
@@ -66,16 +67,19 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   // Index of the nodes on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-  sideNodes.resize(numSides);
-  sideDim = cellType->getDimension()-1;
-  for (unsigned int side=0; side<numSides; ++side)
-  {
+  int sideDim = cellType->getDimension()-1;
+  int numSides = cellType->getSideCount();
+  int nodeMax = 0;
+  for (int side=0; side<numSides; ++side) {
+    int thisSideNodes = cellType->getNodeCount(sideDim,side);
+    nodeMax = std::max(nodeMax, thisSideNodes);
+  }
+  sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+  for (int side=0; side<numSides; ++side) {
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    sideNodes[side].resize(thisSideNodes);
-    for (unsigned int node=0; node<thisSideNodes; ++node)
-    {
-      sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+    int thisSideNodes = cellType->getNodeCount(sideDim,side);
+    for (int node=0; node<thisSideNodes; ++node) {
+      sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
 
@@ -114,23 +118,45 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Tr
   }
 #endif
 
-  if (workset.sideSets->find(basalSideName)==workset.sideSets->end()) {
-    return;
-  }
+  if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
+  sideSet = workset.sideSetViews->at(basalSideName);
 
-  for (auto const& it_side : sideSet) {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+  ScalarT local_res[2];
 
-    for (unsigned int node=0; node<numSideNodes; ++node) {
-      std::vector<ScalarT> res(2,0.0);
-      for (unsigned int dim=0; dim<vecDimFO; ++dim) {
-        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-          res[dim] += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
-          residual(cell,sideNodes[side][node],dim) += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
+  if (useCollapsedSidesets) {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    {
+      // Get the local data of side and cell
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
+
+      for (int node=0; node<numSideNodes; ++node) {
+        local_res[0] = 0.0;
+        local_res[1] = 0.0;
+        for (int dim=0; dim<vecDimFO; ++dim) {
+          for (int qp=0; qp<numSideQPs; ++qp) {
+            local_res[dim] += (ff + beta(sideSet_idx,qp)*u(sideSet_idx,qp,dim))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
+          }
+          residual(cell,sideNodes(side,node),dim) += local_res[dim];
+        }
+      }
+    }
+  } else {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    {
+      // Get the local data of side and cell
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
+
+      for (int node=0; node<numSideNodes; ++node) {
+        local_res[0] = 0.0;
+        local_res[1] = 0.0;
+        for (int dim=0; dim<vecDimFO; ++dim) {
+          for (int qp=0; qp<numSideQPs; ++qp) {
+            local_res[dim] += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
+          }
+          residual(cell,sideNodes(side,node),dim) += local_res[dim];
         }
       }
     }

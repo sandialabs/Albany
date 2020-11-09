@@ -47,19 +47,24 @@ private:
 
   // Input:
   PHX::MDField<const ScalarT> field;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>       averaged_velocity;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>              div_averaged_velocity;
-  PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint>     thickness;
-  PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint,Dim> grad_thickness;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  side_tangents;
+  PHX::MDField<const ScalarT>       averaged_velocity;
+  PHX::MDField<const ScalarT>              div_averaged_velocity;
+  PHX::MDField<const ThicknessScalarT>     thickness;
+  PHX::MDField<const ThicknessScalarT> grad_thickness;
+  PHX::MDField<const MeshScalarT>  side_tangents;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>              flux_div;
+  PHX::MDField<ScalarT>              flux_div;
 
   std::string sideSetName;
   unsigned int numSideQPs, numSideDims;
 
+  bool useCollapsedSidesets;
+
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+  Albany::LocalSideSetInfo sideSet;
+
 };
 
 } // Namespace LandIce

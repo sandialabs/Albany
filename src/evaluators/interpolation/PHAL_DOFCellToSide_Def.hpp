@@ -33,6 +33,13 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
 
     layout = CELL_SCALAR;
   }
+  else if (layout_str =="Cell Scalar Sideset")
+  {
+    val_cell = decltype(val_cell)(cell_field_name, dl->cell_scalar2);
+    val_side = decltype(val_side)(side_field_name, dl_side->cell_scalar2_sideset);
+
+    layout = CELL_SCALAR_SIDESET;
+  }
   else if (layout_str=="Cell Vector")
   {
     val_cell = decltype(val_cell)(cell_field_name, dl->cell_vector);
@@ -98,7 +105,7 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
   }
   else
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout. (" + layout_str + ")\n");
   }
 
   this->addDependentField(val_cell);
@@ -161,6 +168,19 @@ operator() (const CellScalar_Tag& tag, const int& sideSet_idx) const {
   const int side = sideSet.side_local_id(sideSet_idx);
 
   val_side(cell,side) = val_cell(cell);
+
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void DOFCellToSideBase<EvalT, Traits, ScalarT>::
+operator() (const CellScalarSideset_Tag& tag, const int& sideSet_idx) const {
+  
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  val_side(sideSet_idx) = val_cell(cell);
 
 }
 
@@ -323,7 +343,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   sideSet = workset.sideSetViews->at(sideSetName);
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   switch (layout)
   {
     case CELL_SCALAR:
@@ -335,6 +354,9 @@ evaluateFields(typename Traits::EvalData workset)
 
         val_side(cell,side) = val_cell(cell);
       }
+      break;
+    case CELL_SCALAR_SIDESET:
+      Kokkos::parallel_for(CellScalarSideset_Policy(0, sideSet.size), *this);
       break;
     case CELL_VECTOR:
       for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
@@ -419,66 +441,6 @@ evaluateFields(typename Traits::EvalData workset)
     default:
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid layout (this error should have happened earlier though).\n");
   }
-#else
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
-    // Get the local data of side and cell
-    const int cell = sideSet.elem_LID(sideSet_idx);
-    const int side = sideSet.side_local_id(sideSet_idx);
-
-    switch (layout)
-    {
-      case CELL_SCALAR:
-        val_side(cell,side) = val_cell(cell);
-        break;
-
-      case CELL_VECTOR:
-        for (int i=0; i<dims[2]; ++i)
-          val_side(cell,side,i) = val_cell(cell,i);
-        break;
-
-      case CELL_TENSOR:
-        for (int i=0; i<dims[2]; ++i)
-          for (int j=0; j<dims[3]; ++j)
-            val_side(cell,side,i,j) = val_cell(cell,i,j);
-        break;
-
-      case NODE_SCALAR:
-        for (int node=0; node<dims[2]; ++node)
-          val_side(cell,side,node) = val_cell(cell,sideNodes(side,node));
-        break;
-
-      case NODE_SCALAR_SIDESET:
-        for (int node=0; node<dims[1]; ++node)
-          val_side(sideSet_idx,node) = val_cell(cell,sideNodes(side,node));
-        break;
-
-      case NODE_VECTOR:
-      case VERTEX_VECTOR:
-        for (int node=0; node<dims[2]; ++node)
-          for (int i=0; i<dims[3]; ++i)
-            val_side(cell,side,node,i) = val_cell(cell,sideNodes(side,node),i);
-        break;
-
-      case NODE_VECTOR_SIDESET:
-      case VERTEX_VECTOR_SIDESET:
-        for (int node=0; node<dims[1]; ++node)
-          for (int i=0; i<dims[2]; ++i)
-            val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes(side,node),i);
-        break;
-
-      case NODE_TENSOR:
-        for (int node=0; node<dims[2]; ++node)
-          for (int i=0; i<dims[3]; ++i)
-            for (int j=0; j<dims[4]; ++j)
-              val_side(cell,side,node,i,j) = val_cell(cell,sideNodes(side,node),i,j);
-        break;
-
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid layout (this error should have happened earlier though).\n");
-    }
-  }
-#endif
 
 }
 

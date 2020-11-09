@@ -14,11 +14,13 @@ IceOverburden<EvalT, Traits, IsStokes>::
 IceOverburden (const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl)
 {
+  useCollapsedSidesets = (dl->isSideLayouts && dl->useCollapsedSidesets);
+
   Teuchos::RCP<PHX::DataLayout> layout;
   if (p.isParameter("Nodal") && p.get<bool>("Nodal")) {
-    layout = dl->node_scalar;
+    layout = useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar;
   } else {
-    layout = dl->qp_scalar;
+    layout = useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar;
   }
 
   if (IsStokes) {
@@ -26,9 +28,9 @@ IceOverburden (const Teuchos::ParameterList& p,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
     basalSideName = p.get<std::string>("Side Set Name");
-    numPts = layout->extent(2);
+    numPts = useCollapsedSidesets ? layout->extent(1) : layout->extent(2);
   } else {
-    numPts = layout->extent(1);
+    numPts = useCollapsedSidesets ? layout->extent(0) : layout->extent(1);
   }
 
   H   = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
@@ -73,24 +75,33 @@ template<typename EvalT, typename Traits, bool IsStokes>
 void IceOverburden<EvalT, Traits, IsStokes>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it_ss = ssList.find(basalSideName);
+  if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
+  
+  sideSet = workset.sideSetViews->at(basalSideName);
+  if (useCollapsedSidesets) {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    {
+      // Get the local data of side and cell
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
 
-  if (it_ss==ssList.end()) {
-    return;
-  }
+      for (int pt=0; pt<numPts; ++pt) {
+        P_o (sideSet_idx,pt) = rho_i*g*H(sideSet_idx,pt);
+      }
+    }
+  } else {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    {
+      // Get the local data of side and cell
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
 
-  const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-  std::vector<Albany::SideStruct>::const_iterator iter_s;
-  for (const auto& it : sideSet) {
-    // Get the local data of side and cell
-    const int cell = it.elem_LID;
-    const int side = it.side_local_id;
-
-    for (unsigned int pt=0; pt<numPts; ++pt) {
-      P_o (cell,side,pt) = rho_i*g*H(cell,side,pt);
+      for (int pt=0; pt<numPts; ++pt) {
+        P_o (cell,side,pt) = rho_i*g*H(cell,side,pt);
+      }
     }
   }
+
 }
 
 //**********************************************************************

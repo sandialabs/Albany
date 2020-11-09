@@ -138,6 +138,7 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> qp_vector_sideset;
     //! Data Layout for vector quantity that lives at vertices (coordinates) that belong to a sideset //FIXME: dont oords live at nodes, not vertices?
     Teuchos::RCP<PHX::DataLayout> vertices_vector_sideset;
+    Teuchos::RCP<PHX::DataLayout> qp_coords_sideset;
     //! Data Layout for scalar basis functions that belong to a sideset
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar_sideset;
     //! Data Layout for gradient basis functions that belong to a sideset
@@ -146,6 +147,18 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> qp_tensor_sideset;
     //! Data Layout for tensor quantity (cellDim x sideDim) that lives at quad points that belong to a sideset
     Teuchos::RCP<PHX::DataLayout> qp_tensor_cd_sd_sideset;
+    //! Data Layout for vector quantity that lives at quad points, with dimension of the ambient space
+    Teuchos::RCP<PHX::DataLayout> qp_vector_spacedim_sideset;
+    //! Data Layout for scalar quantity that lives on a cell that belongs to a sideset
+    Teuchos::RCP<PHX::DataLayout> cell_scalar2_sideset;
+    //! Data Layout for vector quantity that lives on a cell that belongs to a sideset
+    Teuchos::RCP<PHX::DataLayout> cell_vector_sideset;
+    //! Data Layout for tensor quantity that lives on a cell that belongs to a sideset
+    Teuchos::RCP<PHX::DataLayout> cell_tensor_sideset;
+    //! Data Layout for vector gradient quantity that lives at quad points that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> qp_vecgradient_sideset;
+    //! Data Layout for gradient quantity that lives at quad points that belong to a sideset
+    Teuchos::RCP<PHX::DataLayout> qp_gradient_sideset;
 
     // For backward compatibility, and simplicitiy, we want to check if
     // the vector length is the same as the spatial dimension. This

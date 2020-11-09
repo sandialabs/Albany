@@ -575,14 +575,9 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
     else if (dl->rank() == 4)  // node tensor
       nodalDataBase->registerVectorState(
           stateName, stateRef.dim[1] * stateRef.dim[2]);
-  } else {
-
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "Error! The given layout does not appear to be that of a collapsed side set "
-        "field.\n");
-
+  }
+  else {
+    dl->dimensions(stateRef.dim);
   }
   stateRef.output              = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;

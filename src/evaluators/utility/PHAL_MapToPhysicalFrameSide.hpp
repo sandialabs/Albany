@@ -57,13 +57,17 @@ private:
 
   MDFieldMemoizer<Traits> memoizer;
 
+  Albany::LocalSideSetInfo sideSet;
+
+  bool useCollapsedSidesets;
+
   // Input:
   //! Values at vertices
-  PHX::MDField<const MeshScalarT,Cell,Side,Vertex,Dim>      coords_side_vertices;
+  PHX::MDField<const MeshScalarT>      coords_side_vertices;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>   coords_side_qp;
+  PHX::MDField<MeshScalarT>   coords_side_qp;
 };
 
 } // Namespace PHAL

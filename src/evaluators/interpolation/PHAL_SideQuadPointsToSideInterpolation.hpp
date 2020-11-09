@@ -47,16 +47,20 @@ private:
   int fieldDim;
   std::vector<int> dims;
 
+  bool useCollapsedSidesets;
+
   std::string sideSetName;
 
   MDFieldMemoizer<Traits> memoizer;
 
+  Albany::LocalSideSetInfo sideSet;
+
   // Input:
-  PHX::MDField<const ScalarT>                         field_qp;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint> w_measure;
+  PHX::MDField<const ScalarT>     field_qp;
+  PHX::MDField<const MeshScalarT> w_measure;
 
   // Output:
-  PHX::MDField<OutputScalarT>                         field_side;
+  PHX::MDField<OutputScalarT>     field_side;
 };
 
 // Some shortcut names

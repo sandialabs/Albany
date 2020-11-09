@@ -59,6 +59,8 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
 
   savestate_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
 
+  useCollapsedSidesets = dl->useCollapsedSidesets;
+
   this->addDependentField (field.fieldTag());
   this->addEvaluatedField (*savestate_operation);
 
@@ -72,17 +74,19 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
-    int numSides = dl->cell_gradient->extent(1);
-    int sideDim  = cellType->getDimension()-1;
-    sideNodes.resize(numSides);
-    for (int side=0; side<numSides; ++side)
-    {
+    int sideDim = cellType->getDimension()-1;
+    int numSides = cellType->getSideCount();
+    int nodeMax = 0;
+    for (int side=0; side<numSides; ++side) {
+      int thisSideNodes = cellType->getNodeCount(sideDim,side);
+      nodeMax = std::max(nodeMax, thisSideNodes);
+    }
+    sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+    for (int side=0; side<numSides; ++side) {
       // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
       int thisSideNodes = cellType->getNodeCount(sideDim,side);
-      sideNodes[side].resize(thisSideNodes);
-      for (int node=0; node<thisSideNodes; ++node)
-      {
-        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+      for (int node=0; node<thisSideNodes; ++node) {
+        sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
       }
     }
   }
@@ -120,8 +124,7 @@ saveElemState(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
                               "Error! The mesh does not store any side set.\n");
 
-  if(workset.sideSets->find(sideSetName) ==workset.sideSets->end())
-    return; // Side set not present in this workset
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return; // Side set not present in this workset
 
   TEUCHOS_TEST_FOR_EXCEPTION (workset.disc==Teuchos::null, std::logic_error,
                               "Error! The workset must store a valid discretization pointer.\n");
@@ -160,21 +163,25 @@ saveElemState(typename Traits::EvalData workset)
   // Establishing the kind of field layout
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
+  const std::string& tag1 = dims.size()>1 ? field.fieldTag().dataLayout().name(1) : "";
   const std::string& tag2 = dims.size()>2 ? field.fieldTag().dataLayout().name(2) : "";
-  TEUCHOS_TEST_FOR_EXCEPTION (dims.size()>2 && tag2!="Node" && tag2!="Dim" && tag2!="VecDim", std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (useCollapsedSidesets && dims.size()>1 && tag1!="Node" && tag1!="Dim" && tag1!="VecDim", std::logic_error,
+                              "Error! Invalid field layout in SaveSideSetStateField.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (!useCollapsedSidesets && dims.size()>2 && tag2!="Node" && tag2!="Dim" && tag2!="VecDim", std::logic_error,
                               "Error! Invalid field layout in SaveSideSetStateField.\n");
 
   // Loop on the sides of this sideSet that are in this workset
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
     // Get the data that corresponds to the side
-    const int side_GID = it_side.side_GID;
-    const int cell     = it_side.elem_LID;
-    const int side     = it_side.side_local_id;
+    const int elem_GID = sideSet.elem_GID(sideSet_idx);
+    const int side_GID = sideSet.side_GID(sideSet_idx);
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
     // Not sure if this is even possible, but just for debug pourposes
-    TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ it_side.elem_GID ].ws != (int) workset.wsIndex, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ elem_GID ].ws != (int) workset.wsIndex, std::logic_error,
                                 "Error! This workset has a side that belongs to an element not in the workset.\n");
 
     // We know the side ID, so we can fetch two things:
@@ -201,55 +208,108 @@ saveElemState(typename Traits::EvalData workset)
     field.dimensions(dims);
     int size = dims.size();
 
-    switch (size)
-    {
-      case 2:
-        // side set cell scalar
-        state(ss_cell) = field(cell,side);
-        break;
+    if (useCollapsedSidesets) {
+      switch (size)
+      {
+        case 1:
+          // side set cell scalar
+          state(ss_cell) = field(sideSet_idx);
+          break;
 
-      case 3:
-        if (tag2=="Node")
-        {
-          // side set node scalar
-          for (unsigned int node=0; node<dims[2]; ++node)
+        case 2:
+          if (tag1=="Node")
           {
-            state(ss_cell,nodeMap[node]) = field(cell,side,node);
+            // side set node scalar
+            for (unsigned int node=0; node<dims[1]; ++node)
+            {
+              state(ss_cell,nodeMap[node]) = field(sideSet_idx,node);
+            }
+          } else {
+            // side set cell vector/gradient
+            for (unsigned int idim=0; idim<dims[1]; ++idim)
+            {
+              state(ss_cell,idim) = field(sideSet_idx,idim);
+            }
           }
-        } else {
-          // side set cell vector/gradient
-          for (unsigned int idim=0; idim<dims[2]; ++idim)
-          {
-            state(ss_cell,(int) idim) = field(cell,side,idim);
-          }
-        }
-        break;
+          break;
 
-      case 4:
-        if (tag2=="Node")
-        {
-          // side set node vector/gradient
-          for (unsigned int node=0; node<dims[2]; ++node)
+        case 3:
+          if (tag1=="Node")
           {
-            for (unsigned int dim=0; dim<dims[3]; ++dim)
-              state(ss_cell,nodeMap[node],(int) dim) = field(cell,side,node,(int) dim);
+            // side set node vector/gradient
+            for (unsigned int node=0; node<dims[1]; ++node)
+            {
+              for (unsigned int dim=0; dim<dims[2]; ++dim)
+                state(ss_cell,nodeMap[node],dim) = field(sideSet_idx,node,dim);
+            }
           }
-        }
-        else
-        {
-          // side set cell tensor
-          for (unsigned int idim=0; idim<dims[2]; ++idim)
+          else
           {
-            for (unsigned int jdim=0; jdim<dims[3]; ++jdim)
-              state(ss_cell,(int) idim,(int) jdim) = field(cell,side,idim,(int) jdim);
+            // side set cell tensor
+            for (unsigned int idim=0; idim<dims[1]; ++idim)
+            {
+              for (unsigned int jdim=0; jdim<dims[2]; ++jdim)
+                state(ss_cell,idim,jdim) = field(sideSet_idx,idim,jdim);
+            }
           }
-        }
-        break;
+          break;
 
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                                    "Error! Unexpected array dimensions in SaveSideSetStateField: " << size << ".\n");
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                      "Error! Unexpected array dimensions in SaveSideSetStateField: " << size << ".\n");
+      }
+    } else {
+      switch (size)
+      {
+        case 2:
+          // side set cell scalar
+          state(ss_cell) = field(cell,side);
+          break;
+
+        case 3:
+          if (tag2=="Node")
+          {
+            // side set node scalar
+            for (unsigned int node=0; node<dims[2]; ++node)
+            {
+              state(ss_cell,nodeMap[node]) = field(cell,side,node);
+            }
+          } else {
+            // side set cell vector/gradient
+            for (unsigned int idim=0; idim<dims[2]; ++idim)
+            {
+              state(ss_cell,idim) = field(cell,side,idim);
+            }
+          }
+          break;
+
+        case 4:
+          if (tag2=="Node")
+          {
+            // side set node vector/gradient
+            for (unsigned int node=0; node<dims[2]; ++node)
+            {
+              for (unsigned int dim=0; dim<dims[3]; ++dim)
+                state(ss_cell,nodeMap[node],dim) = field(cell,side,node,dim);
+            }
+          }
+          else
+          {
+            // side set cell tensor
+            for (unsigned int idim=0; idim<dims[2]; ++idim)
+            {
+              for (unsigned int jdim=0; jdim<dims[3]; ++jdim)
+                state(ss_cell,idim,jdim) = field(cell,side,idim,jdim);
+            }
+          }
+          break;
+
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                      "Error! Unexpected array dimensions in SaveSideSetStateField: " << size << ".\n");
+      }
     }
+
   }
 }
 
@@ -260,8 +320,7 @@ saveNodeState(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
                               "Error! The mesh does not store any side set.\n");
 
-  if(workset.sideSets->find(sideSetName) ==workset.sideSets->end())
-    return; // Side set not present in this workset
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return; // Side set not present in this workset
 
   // Note: to save nodal fields, we need to open up the mesh, and work directly on it.
   //       For this reason, we assume the mesh is stk. Moreover, since the cell buckets
@@ -332,12 +391,12 @@ saveNodeState(typename Traits::EvalData workset)
     // nodes will coincide with the GID of the 3D mesh nodes.
 
     // Loop on the sides of this sideSet that are in this workset
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-    for (auto const& it_side : sideSet)
+    sideSet = workset.sideSetViews->at(sideSetName);
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the data that corresponds to the side
-      const int cell     = it_side.elem_LID;
-      const int side     = it_side.side_local_id;
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
 
       // Notice: in the following, we retrieve the id of the stk node using the 3d mesh.
       //         This is because the id of entities is the same (please don't change that)
@@ -350,11 +409,11 @@ saveNodeState(typename Traits::EvalData workset)
           TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
           for (size_t node=0; node<dims[2]; ++node)
           {
-            nodeId3d = ElNodeID[cell][sideNodes[side][node]];
+            nodeId3d = ElNodeID[cell][sideNodes(side,node)];
             stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId3d+1);
             e = bulkData.get_entity(key);
             values = stk::mesh::field_data(*scalar_field, e);
-            values[0] = field(cell,side,node);
+            values[0] = useCollapsedSidesets ? field(sideSet_idx,node) : field(cell,side,node);
           }
           break;
         case 4:   // node_vector
@@ -362,11 +421,11 @@ saveNodeState(typename Traits::EvalData workset)
           TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
           for (size_t node=0; node<dims[2]; ++node)
           {
-            nodeId3d = ElNodeID[cell][sideNodes[side][node]];
+            nodeId3d = ElNodeID[cell][sideNodes(side,node)];
             e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId3d+1);
             values = stk::mesh::field_data(*vector_field, e);
             for (unsigned int i=0; i<dims[3]; ++i)
-              values[i] = field(cell,side,node,i);
+              values[i] = useCollapsedSidesets ? field(sideSet_idx,node,i) : field(cell,side,node,i);
           }
           break;
         default:  // error!
@@ -382,12 +441,12 @@ saveNodeState(typename Traits::EvalData workset)
     GO nodeId2d;
 
     // Loop on the sides of this sideSet that are in this workset
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-    for (auto const& it_side : sideSet)
+    sideSet = workset.sideSetViews->at(sideSetName);
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the data that corresponds to the side
-      const int cell     = it_side.elem_LID;
-      const int side     = it_side.side_local_id;
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
 
       switch (dims.size())
       {
@@ -396,12 +455,12 @@ saveNodeState(typename Traits::EvalData workset)
           TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
           for (size_t node=0; node<dims[2]; ++node)
           {
-            nodeId3d = ElNodeID[cell][sideNodes[side][node]];
+            nodeId3d = ElNodeID[cell][sideNodes(side,node)];
             nodeId2d = layeredMeshNumbering->getColumnId(nodeId3d);
             stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId2d+1);
             e = bulkData.get_entity(key);
             values = stk::mesh::field_data(*scalar_field, e);
-            values[0] = field(cell,side,node);
+            values[0] = useCollapsedSidesets ? field(sideSet_idx,node) : field(cell,side,node);
           }
           break;
         case 4:   // node_vector
@@ -409,13 +468,13 @@ saveNodeState(typename Traits::EvalData workset)
           TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
           for (size_t node=0; node<dims[2]; ++node)
           {
-            nodeId3d = ElNodeID[cell][sideNodes[side][node]];
+            nodeId3d = ElNodeID[cell][sideNodes(side,node)];
             nodeId2d = layeredMeshNumbering->getColumnId(nodeId3d);
             stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId2d+1);
             e = bulkData.get_entity(key);
             values = stk::mesh::field_data(*vector_field, e);
             for (size_t i=0; i<dims[3]; ++i)
-              values[i] = field(cell,side,node,i);
+              values[i] = useCollapsedSidesets ? field(sideSet_idx,node,i) : field(cell,side,node,i);
           }
           break;
         default:  // error!
