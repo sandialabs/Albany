@@ -59,6 +59,17 @@ private:
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
   Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DivInterpolation_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DivInterpolation_Tag> DivInterpolation_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DivInterpolation_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 // Some shortcut names

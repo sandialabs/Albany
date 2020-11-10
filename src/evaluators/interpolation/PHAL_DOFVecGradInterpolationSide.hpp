@@ -61,6 +61,17 @@ private:
   int numSideQPs;
   int numDims;
   int vecDim;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct VecGradInterpolationSide_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, VecGradInterpolationSide_Tag> VecGradInterpolationSide_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const VecGradInterpolationSide_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 // Some shortcut names

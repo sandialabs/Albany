@@ -84,6 +84,21 @@ private:
   unsigned int vecDimFO;
 
   Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct GivenImmersedRatio_Tag{};
+  struct ComputedImmersedRatio_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, GivenImmersedRatio_Tag> GivenImmersedRatio_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ComputedImmersedRatio_Tag> ComputedImmersedRatio_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const GivenImmersedRatio_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const;
+  
 };
 
 } // Namespace LandIce

@@ -46,6 +46,7 @@ private:
 
   int fieldDim;
   std::vector<int> dims;
+  int dimsArray[5];
 
   bool useCollapsedSidesets;
 
@@ -61,6 +62,25 @@ private:
 
   // Output:
   PHX::MDField<OutputScalarT>     field_side;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct Dim0_Tag{};
+  struct Dim1_Tag{};
+  struct Dim2_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, Dim0_Tag> Dim0_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Dim1_Tag> Dim1_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Dim2_Tag> Dim2_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Dim0_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Dim1_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Dim2_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 // Some shortcut names

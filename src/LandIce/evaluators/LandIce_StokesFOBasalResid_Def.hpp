@@ -104,45 +104,48 @@ postRegistrationSetup(typename Traits::SetupData d,
   d.fill_field_dependencies(this->dependentFields(),this->contributedFields());
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename BetaScalarT>
+KOKKOS_INLINE_FUNCTION
+void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::
+operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const {
+  
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  const ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam(0)) : ScalarT(0);
+
+  ScalarT local_res[2];
+
+  for (int node=0; node<numSideNodes; ++node) {
+    local_res[0] = 0.0;
+    local_res[1] = 0.0;
+    for (int dim=0; dim<vecDimFO; ++dim) {
+      for (int qp=0; qp<numSideQPs; ++qp) {
+        local_res[dim] += (ff + beta(sideSet_idx,qp)*u(sideSet_idx,qp,dim))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
+      }
+      residual(cell,sideNodes(side,node),dim) += local_res[dim];
+    }
+  }
+
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, typename BetaScalarT>
 void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
-  ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam(0)) : ScalarT(0);
-#ifdef OUTPUT_TO_SCREEN
-  Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-  if (std::fabs(printedFF-ff)>0.0001*ff) {
-      *output << "[Basal Residual] ff = " << ff << "\n";
-      printedFF = ff;
-  }
-#endif
 
   if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
 
   sideSet = workset.sideSetViews->at(basalSideName);
 
-  ScalarT local_res[2];
-
   if (useCollapsedSidesets) {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      for (int node=0; node<numSideNodes; ++node) {
-        local_res[0] = 0.0;
-        local_res[1] = 0.0;
-        for (int dim=0; dim<vecDimFO; ++dim) {
-          for (int qp=0; qp<numSideQPs; ++qp) {
-            local_res[dim] += (ff + beta(sideSet_idx,qp)*u(sideSet_idx,qp,dim))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
-          }
-          residual(cell,sideNodes(side,node),dim) += local_res[dim];
-        }
-      }
-    }
+    Kokkos::parallel_for(StokesFOBasalResid_Policy(0, sideSet.size), *this);
   } else {
+    ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam(0)) : ScalarT(0);
+    ScalarT local_res[2];
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell

@@ -65,6 +65,16 @@ private:
 
   Albany::LocalSideSetInfo sideSet;
 
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct FluxDiv_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, FluxDiv_Tag> FluxDiv_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FluxDiv_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 } // Namespace LandIce

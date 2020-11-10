@@ -131,6 +131,87 @@ postRegistrationSetup(typename Traits::SetupData d,
   d.fill_field_dependencies(this->dependentFields(),this->contributedFields());
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+KOKKOS_INLINE_FUNCTION
+void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::
+operator() (const GivenImmersedRatio_Tag& tag, const int& sideSet_idx) const {
+  
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  for (int qp=0; qp<numSideQPs; ++qp) {
+    const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
+    OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*given_immersed_ratio*given_immersed_ratio); //[kPa]
+    if(add_melange_force)
+      w_normal_stress += scale * melange_force_value * std::min(given_immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
+
+    w_normal_stress *= w_measure(sideSet_idx,qp);
+
+    if (use_stereographic_map) {
+      const MeshScalarT x = coords_qp(sideSet_idx,qp,0) - X_0;
+      const MeshScalarT y = coords_qp(sideSet_idx,qp,1) - Y_0;
+      const MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+      w_normal_stress *= h;
+    }
+    for (unsigned int node=0; node<numSideNodes; ++node) {
+      int sideNode = sideNodes(side,node);
+      // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
+      const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(sideSet_idx,node,qp);
+      for (unsigned int dim=0; dim<vecDimFO; ++dim) {
+        residual(cell,sideNode,dim) += w_normal_stress_bf * normals(sideSet_idx,qp,dim);
+      }
+    }
+  }
+
+}
+
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+KOKKOS_INLINE_FUNCTION
+void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::
+operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const {
+  
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  const OutputScalarT zero (0.0);
+  const ThicknessScalarT threshold (1e-8);
+  const OutputScalarT one (1.0);
+
+  for (int qp=0; qp<numSideQPs; ++qp) {
+    const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
+    const MeshScalarT      s = elevation(sideSet_idx,qp); //[km]
+    const OutputScalarT immersed_ratio = H>threshold ? std::max(zero,std::min(one,1-s/H)) : zero;
+    OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio); //[kPa]
+    if(add_melange_force)
+      w_normal_stress += scale * melange_force_value * std::min(immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
+    
+    w_normal_stress *= w_measure(sideSet_idx,qp);
+
+    if (use_stereographic_map) {
+      const MeshScalarT x = coords_qp(sideSet_idx,qp,0) - X_0;
+      const MeshScalarT y = coords_qp(sideSet_idx,qp,1) - Y_0;
+      const MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+      w_normal_stress *= h;
+    }
+    for (unsigned int node=0; node<numSideNodes; ++node) {
+      int sideNode = sideNodes(side,node);
+      // The immersed ratio should be between 0 and 1. If s>=H, it is 0, since the ice bottom is at s-H, which is >=0.
+      // If s<=0, it is 1, since the top is already under water. If 0<s<H it is somewhere in (0,1), since the top is above the sea level,
+      // but the bottom is s-H<0, which is below the sea level.
+      // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
+      const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(sideSet_idx,node,qp);
+      for (unsigned int dim=0; dim<vecDimFO; ++dim) {
+        residual(cell,sideNode,dim) += w_normal_stress_bf * normals(sideSet_idx,qp,dim);
+      }
+    }
+  }
+  
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluateFields (typename Traits::EvalData workset)
@@ -149,48 +230,15 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluateFields (type
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_computed_immersed_ratio (typename Traits::EvalData workset)
 {
-  const OutputScalarT zero (0.0);
-  const ThicknessScalarT threshold (1e-8);
-  const OutputScalarT one (1.0);
 
   double scale = 1e-6; //[k^2]
   if (useCollapsedSidesets) {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-        const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
-        const MeshScalarT      s = elevation(sideSet_idx,qp); //[km]
-        const OutputScalarT immersed_ratio = H>threshold ? std::max(zero,std::min(one,1-s/H)) : zero;
-        OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio); //[kPa]
-        if(add_melange_force)
-          w_normal_stress += scale * melange_force_value * std::min(immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
-        
-        w_normal_stress *= w_measure(sideSet_idx,qp);
-
-        if (use_stereographic_map) {
-          const MeshScalarT x = coords_qp(sideSet_idx,qp,0) - X_0;
-          const MeshScalarT y = coords_qp(sideSet_idx,qp,1) - Y_0;
-          const MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-          w_normal_stress *= h;
-        }
-        for (unsigned int node=0; node<numSideNodes; ++node) {
-          int sideNode = sideNodes(side,node);
-          // The immersed ratio should be between 0 and 1. If s>=H, it is 0, since the ice bottom is at s-H, which is >=0.
-          // If s<=0, it is 1, since the top is already under water. If 0<s<H it is somewhere in (0,1), since the top is above the sea level,
-          // but the bottom is s-H<0, which is below the sea level.
-          // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
-          const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(sideSet_idx,node,qp);
-          for (unsigned int dim=0; dim<vecDimFO; ++dim) {
-            residual(cell,sideNode,dim) += w_normal_stress_bf * normals(sideSet_idx,qp,dim);
-          }
-        }
-      }
-    }
+    Kokkos::parallel_for(ComputedImmersedRatio_Policy(0, sideSet.size), *this);
   } else {
+    const OutputScalarT zero (0.0);
+    const ThicknessScalarT threshold (1e-8);
+    const OutputScalarT one (1.0);
+
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
@@ -227,6 +275,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_comput
       }
     }
   }
+
 }
 
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
@@ -234,36 +283,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_given_
 {
   double scale = 1e-6; //[k^2]
   if (useCollapsedSidesets) {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-        const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
-        OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*given_immersed_ratio*given_immersed_ratio); //[kPa]
-        if(add_melange_force)
-          w_normal_stress += scale * melange_force_value * std::min(given_immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
-
-        w_normal_stress *= w_measure(sideSet_idx,qp);
-
-        if (use_stereographic_map) {
-          const MeshScalarT x = coords_qp(sideSet_idx,qp,0) - X_0;
-          const MeshScalarT y = coords_qp(sideSet_idx,qp,1) - Y_0;
-          const MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-          w_normal_stress *= h;
-        }
-        for (unsigned int node=0; node<numSideNodes; ++node) {
-          int sideNode = sideNodes(side,node);
-          // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
-          const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(sideSet_idx,node,qp);
-          for (unsigned int dim=0; dim<vecDimFO; ++dim) {
-            residual(cell,sideNode,dim) += w_normal_stress_bf * normals(sideSet_idx,qp,dim);
-          }
-        }
-      }
-    }
+    Kokkos::parallel_for(GivenImmersedRatio_Policy(0, sideSet.size), *this);
   } else {
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {

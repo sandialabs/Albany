@@ -79,6 +79,42 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   }
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
+KOKKOS_INLINE_FUNCTION
+void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
+operator() (const Surrogate_Tag& tag, const int& sideSet_idx) const {
+
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  const ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
+
+  for (int pt=0; pt<numPts; ++pt) {
+    // N = P_o-P_w
+    N (sideSet_idx,pt) = (1-alpha)*P_o(sideSet_idx,pt);
+  }
+
+}
+
+template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
+KOKKOS_INLINE_FUNCTION
+void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
+operator() (const NonSurrogate_Tag& tag, const int& sideSet_idx) const {
+
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  for (int node=0; node<numPts; ++node) {
+    // N = P_o - P_w
+    N (sideSet_idx,node) = P_o(sideSet_idx,node) - P_w(sideSet_idx,node);
+  }
+
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
 void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
@@ -100,28 +136,12 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   sideSet = workset.sideSetViews->at(basalSideName);
 
   if (Surrogate) {
-    ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
 
-#ifdef OUTPUT_TO_SCREEN
-    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-    if (std::fabs(printedAlpha-alpha)>1e-10) {
-      *output << "[Effective Pressure<" << PHX::print<EvalT>() << ">]] alpha = " << alpha << "\n";
-      printedAlpha = alpha;
-    }
-#endif
     if (useCollapsedSidesets) {
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-
-        for (int pt=0; pt<numPts; ++pt) {
-          // N = P_o-P_w
-          N (sideSet_idx,pt) = (1-alpha)*P_o(sideSet_idx,pt);
-        }
-      }
+      Kokkos::parallel_for(Surrogate_Policy(0, sideSet.size), *this);
     } else {
+      ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
+
       for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
       {
         // Get the local data of side and cell
@@ -137,17 +157,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 
   } else {
     if (useCollapsedSidesets) {
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-
-        for (int node=0; node<numPts; ++node) {
-          // N = P_o - P_w
-          N (sideSet_idx,node) = P_o(sideSet_idx,node) - P_w(sideSet_idx,node);
-        }
-      }
+      Kokkos::parallel_for(NonSurrogate_Policy(0, sideSet.size), *this);
     } else {
       for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
       {

@@ -70,6 +70,36 @@ void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::postRegistrationSetup(ty
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+KOKKOS_INLINE_FUNCTION
+void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::
+operator() (const FluxDiv_Tag& tag, const int& sideSet_idx) const {
+
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  ScalarT t = 0;
+  for (int qp=0; qp<numSideQPs; ++qp)
+  {
+    ScalarT grad_thickness_tmp[2] = {0.0, 0.0};
+    for (std::size_t dim = 0; dim < numSideDims; ++dim)
+    {
+      grad_thickness_tmp[0] += side_tangents(sideSet_idx,qp,0,dim)*grad_thickness(sideSet_idx,qp,dim);
+      grad_thickness_tmp[1] += side_tangents(sideSet_idx,qp,1,dim)*grad_thickness(sideSet_idx,qp,dim);
+    }
+
+    ScalarT divHV = div_averaged_velocity(sideSet_idx,qp)* thickness(sideSet_idx,qp);
+    for (std::size_t dim = 0; dim < numSideDims; ++dim) {
+      divHV += grad_thickness_tmp[dim]*averaged_velocity(sideSet_idx,qp,dim);
+    }
+    flux_div(sideSet_idx,qp) = divHV;
+  }
+
+}
+
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::evaluateFields(typename Traits::EvalData workset)
@@ -82,29 +112,7 @@ void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::evaluateFields(typename 
 
   sideSet = workset.sideSetViews->at(sideSetName);
   if (useCollapsedSidesets) {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      ScalarT t = 0;
-      for (int qp=0; qp<numSideQPs; ++qp)
-      {
-        ScalarT grad_thickness_tmp[2] = {0.0, 0.0};
-        for (std::size_t dim = 0; dim < numSideDims; ++dim)
-        {
-          grad_thickness_tmp[0] += side_tangents(sideSet_idx,qp,0,dim)*grad_thickness(sideSet_idx,qp,dim);
-          grad_thickness_tmp[1] += side_tangents(sideSet_idx,qp,1,dim)*grad_thickness(sideSet_idx,qp,dim);
-        }
-
-        ScalarT divHV = div_averaged_velocity(sideSet_idx,qp)* thickness(sideSet_idx,qp);
-        for (std::size_t dim = 0; dim < numSideDims; ++dim) {
-          divHV += grad_thickness_tmp[dim]*averaged_velocity(sideSet_idx,qp,dim);
-        }
-        flux_div(sideSet_idx,qp) = divHV;
-      }
-    }
+    Kokkos::parallel_for(FluxDiv_Policy(0, sideSet.size), *this);
   } else {
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {

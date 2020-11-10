@@ -72,6 +72,16 @@ private:
 
   Albany::LocalSideSetInfo sideSet;
 
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct StokesFOBasalResid_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, StokesFOBasalResid_Tag> StokesFOBasalResid_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 } // Namespace LandIce

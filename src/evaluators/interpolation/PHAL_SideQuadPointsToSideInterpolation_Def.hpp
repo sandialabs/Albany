@@ -62,8 +62,88 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData (field_side,fm);
   field_qp.dimensions(dims);
 
+  TEUCHOS_TEST_FOR_EXCEPTION (dims.size() > 5, Teuchos::Exceptions::InvalidParameter, "Error! val_side has more dimensions than expected.\n");
+
+  for (int i = 0; i < dims.size(); ++i)
+    dimsArray[i] = dims[i];
+
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
+}
+
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
+operator() (const Dim0_Tag& tag, const int& sideSet_idx) const {
+  
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  MeshScalarT meas = 0.0;
+      
+  for (int qp(0); qp<dimsArray[1]; ++qp)
+    meas += w_measure(sideSet_idx,qp);
+
+  field_side(sideSet_idx) = 0.0;
+  for (int qp(0); qp<dimsArray[1]; ++qp) {
+    field_side(sideSet_idx) += field_qp(sideSet_idx,qp)*w_measure(sideSet_idx,qp);
+  }
+  field_side(sideSet_idx) /= meas;
+
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
+operator() (const Dim1_Tag& tag, const int& sideSet_idx) const {
+  
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  MeshScalarT meas = 0.0;
+      
+  for (int qp(0); qp<dimsArray[1]; ++qp)
+    meas += w_measure(sideSet_idx,qp);
+
+  for (int i(0); i<dimsArray[2]; ++i)
+  {
+    field_side(sideSet_idx,i) = 0;
+    for (int qp(0); qp<dimsArray[1]; ++qp)
+      field_side(sideSet_idx,i) += field_qp(sideSet_idx,qp,i)*w_measure(sideSet_idx,qp);
+    field_side(sideSet_idx,i) /= meas;
+  }
+
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
+operator() (const Dim2_Tag& tag, const int& sideSet_idx) const {
+  
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  MeshScalarT meas = 0.0;
+      
+  for (int qp(0); qp<dimsArray[1]; ++qp)
+    meas += w_measure(sideSet_idx,qp);
+
+  for (int i(0); i<dimsArray[2]; ++i)
+  {
+    for (int j(0); j<dimsArray[3]; ++j)
+    {
+      field_side(sideSet_idx,i,j) = 0;
+      for (int qp(0); qp<dimsArray[1]; ++qp)
+        field_side(sideSet_idx,i,j) += field_qp(sideSet_idx,qp,i,j)*w_measure(sideSet_idx,qp);
+      field_side(sideSet_idx,i,j) /= meas;
+    }
+  }
+
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -73,78 +153,47 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   sideSet = workset.sideSetViews->at(sideSetName);
-  if (useCollapsedSidesets) {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
 
-      MeshScalarT meas = 0.0;
-      
-      for (int qp(0); qp<dims[1]; ++qp)
-        meas += w_measure(sideSet_idx,qp);
+  switch (fieldDim)
+  {
+    case 0:
+      if (useCollapsedSidesets) {
+        Kokkos::parallel_for(Dim0_Policy(0, sideSet.size), *this);
+      } else {
+        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+        {
+          // Get the local data of side and cell
+          const int cell = sideSet.elem_LID(sideSet_idx);
+          const int side = sideSet.side_local_id(sideSet_idx);
 
-      switch (fieldDim)
-      {
-        case 0:
-          field_side(sideSet_idx) = 0.0;
-          for (int qp(0); qp<dims[1]; ++qp) {
-            field_side(sideSet_idx) += field_qp(sideSet_idx,qp)*w_measure(sideSet_idx,qp);
-          }
-          field_side(sideSet_idx) /= meas;
-          break;
+          MeshScalarT meas = 0.0;
+          
+          for (int qp(0); qp<dims[2]; ++qp)
+            meas += w_measure(cell,side,qp);
 
-        case 1:
-          for (int i(0); i<dims[2]; ++i)
-          {
-            field_side(sideSet_idx,i) = 0;
-            for (int qp(0); qp<dims[1]; ++qp)
-              field_side(sideSet_idx,i) += field_qp(sideSet_idx,qp,i)*w_measure(sideSet_idx,qp);
-            field_side(sideSet_idx,i) /= meas;
-          }
-          break;
-
-        case 2:
-          for (int i(0); i<dims[2]; ++i)
-          {
-            for (int j(0); j<dims[3]; ++j)
-            {
-              field_side(sideSet_idx,i,j) = 0;
-              for (int qp(0); qp<dims[1]; ++qp)
-                field_side(sideSet_idx,i,j) += field_qp(sideSet_idx,qp,i,j)*w_measure(sideSet_idx,qp);
-              field_side(sideSet_idx,i,j) /= meas;
-            }
-          }
-          break;
-
-        default:
-          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Field dimension not supported (this error should have already appeared).\n");
-      }
-    }
-  } else {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      MeshScalarT meas = 0.0;
-      
-      for (int qp(0); qp<dims[2]; ++qp)
-        meas += w_measure(cell,side,qp);
-
-      switch (fieldDim)
-      {
-        case 0:
           field_side(cell,side) = 0.0;
           for (int qp(0); qp<dims[2]; ++qp) {
             field_side(cell,side) += field_qp(cell,side,qp)*w_measure(cell,side,qp);
           }
           field_side(cell,side) /= meas;
-          break;
+        }
+      }
+      break;
+    case 1:
+      if (useCollapsedSidesets) {
+        Kokkos::parallel_for(Dim1_Policy(0, sideSet.size), *this);
+      } else {
+        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+        {
+          // Get the local data of side and cell
+          const int cell = sideSet.elem_LID(sideSet_idx);
+          const int side = sideSet.side_local_id(sideSet_idx);
 
-        case 1:
+          MeshScalarT meas = 0.0;
+          
+          for (int qp(0); qp<dims[2]; ++qp)
+            meas += w_measure(cell,side,qp);
+
           for (int i(0); i<dims[3]; ++i)
           {
             field_side(cell,side,i) = 0;
@@ -152,9 +201,24 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
               field_side(cell,side,i) += field_qp(cell,side,qp,i)*w_measure(cell,side,qp);
             field_side(cell,side,i) /= meas;
           }
-          break;
+        }
+      }
+      break;
+    case 2:
+      if (useCollapsedSidesets) {
+        Kokkos::parallel_for(Dim2_Policy(0, sideSet.size), *this);
+      } else {
+        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+        {
+          // Get the local data of side and cell
+          const int cell = sideSet.elem_LID(sideSet_idx);
+          const int side = sideSet.side_local_id(sideSet_idx);
 
-        case 2:
+          MeshScalarT meas = 0.0;
+          
+          for (int qp(0); qp<dims[2]; ++qp)
+            meas += w_measure(cell,side,qp);
+
           for (int i(0); i<dims[3]; ++i)
           {
             for (int j(0); j<dims[4]; ++j)
@@ -165,13 +229,14 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
               field_side(cell,side,i,j) /= meas;
             }
           }
-          break;
-
-        default:
-          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Field dimension not supported (this error should have already appeared).\n");
+        }
       }
-    }
+      break;
+
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Field dimension not supported (this error should have already appeared).\n");
   }
+
 }
 
 } // Namespace PHAL

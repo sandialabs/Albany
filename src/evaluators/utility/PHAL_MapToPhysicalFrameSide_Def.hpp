@@ -42,6 +42,9 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
   numDim       = dl_side->qp_coords->extent(3);
   int sideDim  = numDim-1;
 
+  TEUCHOS_TEST_FOR_EXCEPTION (numSides > 6, Teuchos::Exceptions::InvalidParameter,
+                              "Error! Too many sides (MapToPhysicalFrameSide)\n");
+
   // Compute cubature points in reference elements
   auto cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature");
   Kokkos::DynRankView<RealType, PHX::Device> ref_cub_points, ref_weights;
@@ -51,14 +54,12 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
 
   // Index of the vertices on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-  numSideVertices.resize(numSides);
-  phi_at_cub_points.resize(numSides);
   for (int side=0; side<numSides; ++side)
   {
     // Since sides may be different (and we don't know on which local side this side set is), we build one basis per side.
     auto sideBasis = Albany::getIntrepid2Basis (*cellType->getCellTopologyData(sideDim,side));
     numSideVertices[side] = cellType->getVertexCount(sideDim,side);
-    phi_at_cub_points[side] = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideVertices[side],numSideQPs);
+    phi_at_cub_points[side] = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideVertices[side], numSideQPs);
     sideBasis->getValues(phi_at_cub_points[side], ref_cub_points, Intrepid2::OPERATOR_VALUE);
   }
 
@@ -78,6 +79,27 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void MapToPhysicalFrameSide<EvalT, Traits>::
+operator() (const MapToPhysicalFrameSide_Tag& tag, const int& sideSet_idx) const {
+  
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  for (int qp=0; qp<numSideQPs; ++qp) {
+    for (int dim=0; dim<numDim; ++dim) {
+      coords_side_qp(sideSet_idx,qp,dim) = 0;
+      for (int v=0; v<numSideVertices[side]; ++v)
+        coords_side_qp(sideSet_idx,qp,dim) += coords_side_vertices(sideSet_idx,v,dim)*phi_at_cub_points[side](v,qp);
+    }
+  }
+
+}
+
 template<typename EvalT, typename Traits>
 void MapToPhysicalFrameSide<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
@@ -86,22 +108,7 @@ void MapToPhysicalFrameSide<EvalT, Traits>::evaluateFields(typename Traits::Eval
 
   sideSet = workset.sideSetViews->at(sideSetName);
   if (useCollapsedSidesets) {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      for (int qp=0; qp<numSideQPs; ++qp)
-      {
-        for (int dim=0; dim<numDim; ++dim)
-        {
-          coords_side_qp(sideSet_idx,qp,dim) = 0;
-          for (int v=0; v<numSideVertices[side]; ++v)
-            coords_side_qp(sideSet_idx,qp,dim) += coords_side_vertices(sideSet_idx,v,dim)*phi_at_cub_points[side](v,qp);
-        }
-      }
-    }
+    Kokkos::parallel_for(MapToPhysicalFrameSide_Policy(0, sideSet.size), *this);
   } else {
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {

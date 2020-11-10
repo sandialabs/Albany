@@ -51,6 +51,36 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
+operator() (const DivInterpolation_Tag& tag, const int& sideSet_idx) const {
+
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  for (int qp=0; qp<numSideQPs; ++qp)
+  {
+    val_qp(sideSet_idx,qp) = 0.;
+    for (int dim=0; dim<numDims; ++dim)
+    {
+      for (int node=0; node<numSideNodes; ++node)
+      {
+        MeshScalarT gradBF_non_intrinsic = 0.0;
+        for (int itan=0; itan<numDims; ++itan)
+        {
+          gradBF_non_intrinsic += tangents(sideSet_idx,qp,dim,itan)*gradBF(sideSet_idx,node,qp,itan);
+        }
+        val_qp(sideSet_idx,qp) += val_node(sideSet_idx,node,dim) * gradBF_non_intrinsic;
+      }
+    }
+  }
+
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
@@ -63,29 +93,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   sideSet = workset.sideSetViews->at(sideSetName);
   if (useCollapsedSidesets) {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      for (int qp=0; qp<numSideQPs; ++qp)
-      {
-        val_qp(sideSet_idx,qp) = 0.;
-        for (int dim=0; dim<numDims; ++dim)
-        {
-          for (int node=0; node<numSideNodes; ++node)
-          {
-            MeshScalarT gradBF_non_intrinsic = 0.0;
-            for (int itan=0; itan<numDims; ++itan)
-            {
-              gradBF_non_intrinsic += tangents(sideSet_idx,qp,dim,itan)*gradBF(sideSet_idx,node,qp,itan);
-            }
-            val_qp(sideSet_idx,qp) += val_node(sideSet_idx,node,dim) * gradBF_non_intrinsic;
-          }
-        }
-      }
-    }
+    Kokkos::parallel_for(DivInterpolation_Policy(0, sideSet.size), *this);
   } else {
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {

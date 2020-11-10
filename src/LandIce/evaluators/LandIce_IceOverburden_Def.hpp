@@ -59,6 +59,23 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(P_o,fm);
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, bool IsStokes>
+KOKKOS_INLINE_FUNCTION
+void IceOverburden<EvalT, Traits, IsStokes>::
+operator() (const IceOverburden_Tag& tag, const int& sideSet_idx) const {
+
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  for (int pt=0; pt<numPts; ++pt) {
+    P_o (sideSet_idx,pt) = rho_i*g*H(sideSet_idx,pt);
+  }
+
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes>
 void IceOverburden<EvalT, Traits, IsStokes>::
@@ -79,16 +96,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   
   sideSet = workset.sideSetViews->at(basalSideName);
   if (useCollapsedSidesets) {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      for (int pt=0; pt<numPts; ++pt) {
-        P_o (sideSet_idx,pt) = rho_i*g*H(sideSet_idx,pt);
-      }
-    }
+    Kokkos::parallel_for(IceOverburden_Policy(0, sideSet.size), *this);
   } else {
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {

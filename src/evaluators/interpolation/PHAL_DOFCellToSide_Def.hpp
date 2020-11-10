@@ -161,19 +161,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const CellScalar_Tag& tag, const int& sideSet_idx) const {
-  
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
-  val_side(cell,side) = val_cell(cell);
-
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-KOKKOS_INLINE_FUNCTION
-void DOFCellToSideBase<EvalT, Traits, ScalarT>::
 operator() (const CellScalarSideset_Tag& tag, const int& sideSet_idx) const {
   
   // Get the local data of side and cell
@@ -181,53 +168,6 @@ operator() (const CellScalarSideset_Tag& tag, const int& sideSet_idx) const {
   const int side = sideSet.side_local_id(sideSet_idx);
 
   val_side(sideSet_idx) = val_cell(cell);
-
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-KOKKOS_INLINE_FUNCTION
-void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const CellVector_Tag& tag, const int& sideSet_idx) const {
-
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
-  for (int i=0; i<dimsArray[2]; ++i) {
-    val_side(cell,side,i) = val_cell(cell,i);
-  }
-
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-KOKKOS_INLINE_FUNCTION
-void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const CellTensor_Tag& tag, const int& sideSet_idx) const {
-
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
-  for (int i=0; i<dimsArray[2]; ++i) {
-    for (int j=0; j<dimsArray[3]; ++j) {
-      val_side(cell,side,i,j) = val_cell(cell,i,j);
-    }
-  }
-
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-KOKKOS_INLINE_FUNCTION
-void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const NodeScalar_Tag& tag, const int& sideSet_idx) const {
-
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
-  for (int node=0; node<dimsArray[2]; ++node) {
-      val_side(cell,side,node) = val_cell(cell,sideNodes(side,node));
-  }
 
 }
 
@@ -249,23 +189,6 @@ operator() (const NodeScalarSideset_Tag& tag, const int& sideSet_idx) const {
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const NodeVector_Tag& tag, const int& sideSet_idx) const {
-
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
-  for (int node=0; node<dimsArray[2]; ++node) {
-    for (int i=0; i<dimsArray[3]; ++i) {
-      val_side(cell,side,node,i) = val_cell(cell,sideNodes(side,node),i);
-    }
-  }
-
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-KOKKOS_INLINE_FUNCTION
-void DOFCellToSideBase<EvalT, Traits, ScalarT>::
 operator() (const NodeVectorSideset_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
@@ -275,42 +198,6 @@ operator() (const NodeVectorSideset_Tag& tag, const int& sideSet_idx) const {
   for (int node=0; node<dimsArray[1]; ++node) {
     for (int i=0; i<dimsArray[2]; ++i) {
       val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes(side,node),i);
-    }
-  }
-
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-KOKKOS_INLINE_FUNCTION
-void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const NodeTensor_Tag& tag, const int& sideSet_idx) const {
-
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
-  for (int node=0; node<dimsArray[2]; ++node) {
-    for (int i=0; i<dimsArray[3]; ++i) {
-      for (int j=0; j<dimsArray[4]; ++j) {
-        val_side(cell,side,node,i,j) = val_cell(cell,sideNodes(side,node),i,j);
-      }
-    }
-  }
-
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-KOKKOS_INLINE_FUNCTION
-void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const VertexVector_Tag& tag, const int& sideSet_idx) const {
-
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
-  for (int node=0; node<dimsArray[2]; ++node) {
-    for (int i=0; i<dimsArray[3]; ++i) {
-      val_side(cell,side,node,i) = val_cell(cell,sideNodes(side,node),i);
     }
   }
 

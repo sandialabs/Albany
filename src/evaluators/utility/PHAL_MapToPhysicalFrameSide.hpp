@@ -47,9 +47,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Accessory variables
-  std::vector<Kokkos::DynRankView<RealType, PHX::Device> >     phi_at_cub_points;
-  std::vector<std::vector<int>>                       sideVertices;
-  std::vector<int>                                    numSideVertices;
+  Kokkos::DynRankView<RealType, PHX::Device> phi_at_cub_points[6];
+  int numSideVertices[6];
 
   int numDim;
   int numSideQPs;
@@ -68,6 +67,17 @@ private:
   // Output:
   //! Values at quadrature points
   PHX::MDField<MeshScalarT>   coords_side_qp;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct MapToPhysicalFrameSide_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, MapToPhysicalFrameSide_Tag> MapToPhysicalFrameSide_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const MapToPhysicalFrameSide_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 } // Namespace PHAL

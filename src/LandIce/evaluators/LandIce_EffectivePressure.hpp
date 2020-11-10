@@ -61,6 +61,20 @@ private:
   bool useCollapsedSidesets;
   
   Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct Surrogate_Tag{};
+  struct NonSurrogate_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, Surrogate_Tag> Surrogate_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, NonSurrogate_Tag> NonSurrogate_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Surrogate_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const NonSurrogate_Tag& tag, const int& sideSet_idx) const;
   
 };
 

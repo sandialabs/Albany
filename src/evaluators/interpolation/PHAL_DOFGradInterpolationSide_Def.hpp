@@ -54,6 +54,28 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void DOFGradInterpolationSideBase<EvalT, Traits, ScalarT>::
+operator() (const GradInterpolationSide_Tag& tag, const int& sideSet_idx) const {
+
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  for (int qp=0; qp<numSideQPs; ++qp) {
+    for (int dim=0; dim<numDims; ++dim) {
+      grad_qp(sideSet_idx,qp,dim) = 0.;
+      for (int node=0; node<numSideNodes; ++node) {
+        grad_qp(sideSet_idx,qp,dim) += val_node(sideSet_idx,node) * gradBF(sideSet_idx,node,qp,dim);
+      }
+    }
+  }
+
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFGradInterpolationSideBase<EvalT, Traits, ScalarT>::
@@ -64,24 +86,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   sideSet = workset.sideSetViews->at(sideSetName);
   if (useCollapsedSidesets) {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the data that corresponds to the side
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      for (int qp=0; qp<numSideQPs; ++qp)
-      {
-        for (int dim=0; dim<numDims; ++dim)
-        {
-          grad_qp(sideSet_idx,qp,dim) = 0.;
-          for (int node=0; node<numSideNodes; ++node)
-          {
-            grad_qp(sideSet_idx,qp,dim) += val_node(sideSet_idx,node) * gradBF(sideSet_idx,node,qp,dim);
-          }
-        }
-      }
-    }
+    Kokkos::parallel_for(GradInterpolationSide_Policy(0, sideSet.size), *this);
   } else {
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
@@ -89,13 +94,10 @@ evaluateFields(typename Traits::EvalData workset)
       const int cell = sideSet.elem_LID(sideSet_idx);
       const int side = sideSet.side_local_id(sideSet_idx);
 
-      for (int qp=0; qp<numSideQPs; ++qp)
-      {
-        for (int dim=0; dim<numDims; ++dim)
-        {
+      for (int qp=0; qp<numSideQPs; ++qp) {
+        for (int dim=0; dim<numDims; ++dim) {
           grad_qp(cell,side,qp,dim) = 0.;
-          for (int node=0; node<numSideNodes; ++node)
-          {
+          for (int node=0; node<numSideNodes; ++node) {
             grad_qp(cell,side,qp,dim) += val_node(cell,side,node) * gradBF(cell,side,node,qp,dim);
           }
         }
