@@ -49,7 +49,6 @@ ANONYMOUS:
           Initial Time: 0.00000000000000000e+00
           Initial Time Index: 0
           Initial Time Step: 0.8 
-          Initial Order: 0
           Final Time: 4.00000000000000000e+00
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08

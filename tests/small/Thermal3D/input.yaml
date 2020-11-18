@@ -42,7 +42,6 @@ ALBANY:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
           Initial Time Step: 1.0e+03
-          Initial Order: 0
           Final Time: 1.0e+5
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
