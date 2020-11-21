@@ -30,7 +30,6 @@
 #
 rm -f CMakeCache.txt
 rm -rf CMakeFiles
-PARMETISDIR=/home/ikalash/Install/parmetis/build/install
 
 
 BUILD_DIR=`pwd`
@@ -43,10 +42,13 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
       -D MPI_BASE_DIR:PATH=/usr/lib64/openmpi \
+      -D CMAKE_C_COMPILER=/usr/lib64/openmpi/bin/mpicc \
+      -D CMAKE_CXX_COMPILER=/usr/lib64/openmpi/bin/mpicxx \
+      -D CMAKE_Fortran_COMPILER=/usr/lib64/openmpi/bin/mpif90 \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=/usr/lib64 \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1/lib \
 \
       -D TPL_ENABLE_HDF5:BOOL=OFF \
 \
