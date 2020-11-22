@@ -2,8 +2,6 @@
 
 cd /nightlyCDash
 
-export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib
-
 #unset http_proxy
 #unset https_proxy
 
