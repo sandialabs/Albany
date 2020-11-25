@@ -184,14 +184,15 @@ if (BUILD_ALBANY)
     "-DENABLE_DEMO_PDES:BOOL=OFF"
     "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
-    "-DSEACAS_EPU=/home/ikalash/Trilinos/seacas-build/install/bin/epu"
-    "-DSEACAS_DECOMP=/home/ikalash/Trilinos/seacas-build/install/bin/decomp"
-    "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"
-    "-DSEACAS_ALGEBRA=/home/ikalash/Trilinos/seacas-build/install/bin/algebra"
+    "-DSEACAS_EPU=$TRILINSTALLDIR/bin/epu"
+    "-DSEACAS_DECOMP=$TRILINSTALLDIR/bin/decomp"
+    "-DSEACAS_EXODIFF=$TRILINSTALLDIR/bin/exodiff"
+    "-DSEACAS_ALGEBRA=$TRILINSTALLDIR/bin/algebra"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DINSTALL_ALBANY:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockbaInstall"
-    "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON")
+    "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
+    "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockba")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockba)
