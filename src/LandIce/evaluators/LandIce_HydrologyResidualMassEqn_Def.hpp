@@ -7,6 +7,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
+#include "LandIce_HydrologyResidualMassEqn.hpp"
+
 namespace LandIce {
 
 //**********************************************************************
@@ -140,7 +142,7 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
 void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(BF,fm);
@@ -189,7 +191,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     return;
 
   ScalarT res_qp, res_node;
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
+  const auto& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet)
   {
     // Get the local data of side and cell

@@ -31,7 +31,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
    *  alpha>1, beta>1. The units of q follow from those of the mesh, h, k and Phi.
    *  We assume h is in [m], Phi in [kPa], the mesh is in [km], and k has units
    *     [k] =  m^(2*beta-alpha) s^(2*beta-3) kg^(1-beta).
-   *  In the common case of beta=2, alpha=1, we have [k] = m^3 s^-1 kg^-1
+   *  In the common case of beta=2, alpha=1, we have [k] = m^3 s kg^-1
    *  Putting everything togeter, we get
    *     [q] = m^2/s
    */
@@ -168,7 +168,7 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
     for (unsigned int cell=0; cell < workset.numCells; ++cell) {
       for (unsigned int qp=0; qp < numQPs; ++qp) {
         for (unsigned int dim(0); dim<numDim; ++dim) {
-          q(cell,qp,dim) = -(k_0+1e-3*regularization) * (std::pow(h(cell,qp),alpha)+regularization) * gradPhi(cell,qp,dim);
+          q(cell,qp,dim) = - k_0 * (std::pow(h(cell,qp),alpha)+regularization) * gradPhi(cell,qp,dim);
         }
       }
     }

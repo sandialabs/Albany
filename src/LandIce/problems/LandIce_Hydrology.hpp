@@ -37,6 +37,7 @@
 #include "LandIce_HydrologySurfaceWaterInput.hpp"
 #include "LandIce_HydrologyWaterThickness.hpp"
 #include "LandIce_ParamEnum.hpp"
+
 #include "PHAL_SharedParameter.hpp"
 #include "LandIce_SimpleOperationEvaluator.hpp"
 #include "LandIce_ProblemUtils.hpp"
@@ -591,6 +592,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //Input
   p->set<std::string>("Basal Gravitational Water Potential Variable Name",basal_grav_water_potential_name);
+  p->set<std::string>("Ice Overburden Variable Name",ice_overburden_name);
   p->set<std::string>("Water Pressure Variable Name", water_pressure_name);
   p->set<std::string>("Water Thickness Variable Name", water_thickness_name);
   p->set<bool>("Nodal", false);
@@ -604,7 +606,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = Teuchos::rcp(new LandIce::HydraulicPotential<EvalT,PHAL::AlbanyTraits,false>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
-  // ------- Hydrology Water Pressure (Nodes) -------- //
+  // ------- Hydraulic Potential (Nodes) -------- //
 
   p->set<bool>("Nodal", true);
   ev = Teuchos::rcp(new LandIce::HydraulicPotential<EvalT,PHAL::AlbanyTraits,false>(*p,dl));
@@ -746,16 +748,10 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string> ("Gradient BF Name", Albany::grad_bf_name);
   p->set<std::string> ("Weighted Measure Name", Albany::weights_name);
   p->set<std::string> ("Water Discharge Variable Name", water_discharge_name);
-  p->set<std::string> ("Effective Pressure Variable Name", effective_pressure_name);
   p->set<std::string> ("Till Water Storage Dot Variable Name", till_water_storage_dot_name);
-  p->set<std::string> ("Water Thickness Variable Name", water_thickness_name);
   p->set<std::string> ("Water Thickness Dot Variable Name", water_thickness_dot_name);
-  p->set<std::string> ("Ice Overburden Variable Name", ice_overburden_name);
-  p->set<std::string> ("Water Pressure Variable Name", water_pressure_name);
   p->set<std::string> ("Melting Rate Variable Name",melting_rate_name);
   p->set<std::string> ("Surface Water Input Variable Name",surface_water_input_name);
-  p->set<std::string> ("Sliding Velocity Variable Name",sliding_velocity_name);
-  p->set<std::string> ("Ice Softness Variable Name",ice_softness_name);
   p->set<bool>("Unsteady",unsteady);
   p->set<bool>("Has Till Storage",has_h_till);
 

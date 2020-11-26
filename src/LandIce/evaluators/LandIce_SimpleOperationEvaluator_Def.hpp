@@ -7,6 +7,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
+#include "LandIce_SimpleOperationEvaluator.hpp"
+
 #include "PHAL_Utilities.hpp"
 
 namespace LandIce {
@@ -15,7 +17,7 @@ namespace LandIce {
 template<typename EvalT, typename Traits, typename InOutScalarT, typename Operation>
 SimpleOperationBase<EvalT, Traits, InOutScalarT, Operation>::
 SimpleOperationBase (const Teuchos::ParameterList& p,
-                 const Teuchos::RCP<Albany::Layouts>& dl)
+                 const Teuchos::RCP<Albany::Layouts>& /* dl */)
 {
   std::string fieldInName  = p.get<std::string> ("Input Field Name");
   std::string fieldOutName = p.get<std::string> ("Output Field Name");
@@ -35,7 +37,7 @@ SimpleOperationBase (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename InOutScalarT, typename Operation>
 void SimpleOperationBase<EvalT, Traits, InOutScalarT, Operation>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field_in,fm);
@@ -55,7 +57,7 @@ SimpleUnaryOperation (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename InOutScalarT, template<typename> class UnaryOperation>
 void SimpleUnaryOperation<EvalT, Traits, InOutScalarT, UnaryOperation>::
-evaluateFields (typename Traits::EvalData workset)
+evaluateFields (typename Traits::EvalData /* workset */)
 {
   PHAL::MDFieldIterator<const InOutScalarT> in(this->field_in);
   PHAL::MDFieldIterator<InOutScalarT> out(this->field_out);
@@ -126,7 +128,7 @@ postRegistrationSetup (typename Traits::SetupData d,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> class BinaryOperation>
 void SimpleBinaryOperation<EvalT, Traits, InOutScalarT, FieldScalarT, BinaryOperation>::
-evaluateFields (typename Traits::EvalData workset)
+evaluateFields (typename Traits::EvalData /* workset */)
 {
   PHAL::MDFieldIterator<const InOutScalarT> in(this->field_in);
   PHAL::MDFieldIterator<const FieldScalarT> param1(field1);
@@ -214,7 +216,7 @@ postRegistrationSetup (typename Traits::SetupData d,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT, template<typename> class TernaryOperation>
 void SimpleTernaryOperation<EvalT, Traits, InOutScalarT, FieldScalarT, TernaryOperation>::
-evaluateFields (typename Traits::EvalData workset)
+evaluateFields (typename Traits::EvalData /* workset */)
 {
   PHAL::MDFieldIterator<const InOutScalarT> in(this->field_in);
   PHAL::MDFieldIterator<const FieldScalarT> param1(field1);

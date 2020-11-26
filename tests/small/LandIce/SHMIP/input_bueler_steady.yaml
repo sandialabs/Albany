@@ -10,7 +10,7 @@ ANONYMOUS:
     Solution Method: Continuation
     Name: LandIce Hydrology 2D
     Response Functions: 
-      Number of Response Vectors: 1
+      Number of Response Vectors: 0
       Response Vector 0: 
         Name: Squared L2 Difference Source ST Target PST
         Field Rank: Scalar
@@ -35,7 +35,7 @@ ANONYMOUS:
       Ice Latent Heat:      3.35e+05      # [ J kg^-1 ]
       Gravity Acceleration: 9.8           # [ m s^-2]
     LandIce Field Norm: 
-      sliding_velocity: 
+      sliding_velocity:
         Regularization Type: Given Value
         Regularization Value: 1.0e-10
       hydraulic_potential Gradient Norm: 
@@ -44,28 +44,25 @@ ANONYMOUS:
     LandIce Viscosity: 
       Glen's Law n: 3.0
     LandIce Hydrology: 
-      Cavities Equation Nodal: true
-      Lump Mass In Mass Equation: false
       Use Water Thickness In Effective Pressure Formula: true
-      Use Melting In Conservation Of Mass: false
-      Use Melting In Cavities Equation: false
-      Regularize With Continuation: true
-      Creep Closure Coefficient: 4.0e-02
-      Darcy Law Water Thickness Exponent: 1.0
-      Darcy Law Potential Gradient Norm Exponent: 2.0
-      Darcy Law Transmissivity: 1.0e-04
-      Bed Bumps Height: 1.0
-      Bed Bumps Length: 2.0
+      Cavities Equation:
+        Use Melting: false
+        Nodal: true
+        Creep Closure Coefficient: 4.0e-02
+        Bed Bumps Height: 1.0
+        Bed Bumps Length: 2.0
+      Mass Equation:
+        Use Melting: false
+        Lump Mass: false
+      Darcy Law:
+        Water Thickness Exponent: 1.0
+        Potential Gradient Norm Exponent: 2.0
+        Transmissivity: 1.0e-02
+        Regularize With Continuation: true
       Surface Water Input: 
         Type: Given Field
     LandIce Basal Friction Coefficient: 
       Type: Regularized Coulomb
-  Regression Results: 
-    Number of Comparisons: 1
-    Test Values: [3.29235970000000009e+02]
-    Number of Sensitivity Comparisons: 0
-    Relative Tolerance: 1.0e-04
-    Absolute Tolerance: 1.0e-04
   Discretization: 
     Number Of Time Derivatives: 0
     Method: Gmsh
@@ -89,7 +86,7 @@ ANONYMOUS:
         Field Name: surface_water_input
         Field Type: Node Scalar
         Field Origin: File
-        Field Value: [5.47999999999999972e+01]
+        Field Value: [5.47999999999999972e+03]
       Field 3: 
         Field Name: basal_velocity
         Field Type: Node Vector
@@ -121,7 +118,7 @@ ANONYMOUS:
       Predictor: 
         Method: Constant
       Stepper: 
-        Initial Value: 5.00000000000000028e-02
+        Initial Value: 0.0
         Continuation Parameter: Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 50
@@ -145,7 +142,7 @@ ANONYMOUS:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Unscaled
-          Tolerance: 1.0e-03
+          Tolerance: 1.0e-02
         Test 2: 
           Test Type: NormWRMS
           Absolute Tolerance: 1.0e-04

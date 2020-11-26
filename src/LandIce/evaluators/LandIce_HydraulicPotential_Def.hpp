@@ -7,6 +7,10 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
+#include "LandIce_HydraulicPotential.hpp"
+
+#include "Albany_DiscretizationUtils.hpp"
+
 namespace LandIce {
 
 template<typename EvalT, typename Traits, bool IsStokes>
@@ -61,7 +65,7 @@ HydraulicPotential (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes>
 void HydraulicPotential<EvalT, Traits, IsStokes>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(P_w,fm);
@@ -97,7 +101,6 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 
   ScalarT zero(0.0);
   const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-  std::vector<Albany::SideStruct>::const_iterator iter_s;
   for (const auto& it : sideSet) {
     // Get the local data of side and cell
     const int cell = it.elem_LID;
