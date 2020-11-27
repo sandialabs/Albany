@@ -90,7 +90,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     const int cell = it.elem_LID;
     const int side = it.side_local_id;
 
-    for (int node=0; node<numNodes; ++node) {
+    for (unsigned int node=0; node<numNodes; ++node) {
       phi_0 (cell,side,node) = rho_w*g*(z_s(cell,side,node) - H(cell,side,node));
     }
   }
@@ -100,9 +100,9 @@ template<typename EvalT, typename Traits, bool IsStokes>
 void BasalGravitationalWaterPotential<EvalT, Traits, IsStokes>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
-  for (int cell=0; cell<workset.numCells; ++cell)
+  for (unsigned int cell=0; cell<workset.numCells; ++cell)
   {
-    for (int node=0; node<numNodes; ++node)
+    for (unsigned int node=0; node<numNodes; ++node)
     {
       phi_0 (cell,node) = rho_w*g*(z_s(cell,node) - H(cell,node));
     }

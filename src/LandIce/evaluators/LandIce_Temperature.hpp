@@ -60,11 +60,11 @@ private:
   PHX::MDField<OutputScalarT,Cell,Node> 	diffEnth;    //[MW s m^{-3}]
   // PHX::MDField<ScalarT,Cell, Side, Node> dTdz;   //[K km^{-1}]
 
-  int numNodes;
+  unsigned int numNodes;
 
   std::string sideName;
   std::vector<std::vector<int> >  sideNodes;
-  int numSideNodes;
+  unsigned int numSideNodes;
 
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
   double rho_i; //[kg m^{-3}]

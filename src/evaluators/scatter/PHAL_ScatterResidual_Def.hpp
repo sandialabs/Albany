@@ -153,8 +153,8 @@ void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const
 {
   for (std::size_t node = 0; node < this->numNodes; node++)
-    for (std::size_t i = 0; i < numDims; i++)
-      for (std::size_t j = 0; j < numDims; j++) {
+    for (int i = 0; i < numDims; i++)
+      for (int j = 0; j < numDims; j++) {
         const LO id = nodeID(cell,node,this->offset + i*numDims + j);
         Kokkos::atomic_fetch_add(&f_kokkos(id), this->valTensor(cell,node,i,j)); 
       }
@@ -209,7 +209,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (this->tensorRank == 0) {
     // Get MDField views from std::vector
-    for (int i = 0; i < numFields; i++)
+    for (size_t i = 0; i < numFields; i++)
       val_kokkos[i] = this->val[i].get_view();
 
     Kokkos::parallel_for(PHAL_ScatterResRank0_Policy(0,workset.numCells),*this);
@@ -274,14 +274,14 @@ operator() (const PHAL_ScatterJacRank0_Adjoint_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] =  nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       auto valptr = val_kokkos[eq](cell,node);
       for (int lunk=0; lunk<nunk; lunk++) {
@@ -308,14 +308,14 @@ operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       auto valptr = val_kokkos[eq](cell,node);
       for (int i = 0; i < nunk; ++i) vals[i] = valptr.fastAccessDx(i);
@@ -352,14 +352,14 @@ operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++){
@@ -387,14 +387,14 @@ operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
@@ -410,8 +410,8 @@ void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const
 {
   for (std::size_t node = 0; node < this->numNodes; node++)
-    for (std::size_t i = 0; i < numDims; i++)
-      for (std::size_t j = 0; j < numDims; j++) {
+    for (int i = 0; i < numDims; i++)
+      for (int j = 0; j < numDims; j++) {
         const LO id = nodeID(cell,node,this->offset + i*numDims + j);
         Kokkos::atomic_fetch_add(&f_kokkos(id), (this->valTensor(cell,node,i,j)).val()); 
       }
@@ -432,14 +432,14 @@ operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++) {
@@ -467,14 +467,14 @@ operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor)(cell,node, eq/numDims, eq%numDims).fastAccessDx(i);
@@ -525,7 +525,7 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
 
   if (this->tensorRank == 0) {
     // Get MDField views from std::vector
-    for (int i = 0; i < numFields; i++)
+    for (size_t i = 0; i < numFields; i++)
       val_kokkos[i] = this->val[i].get_view();
 
     if (loadResid) {
@@ -604,7 +604,7 @@ evaluateFieldsHost(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     // Local Unks: Loop over nodes in element, Loop over equations per node
     for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-      for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+      for (int eq_col=0; eq_col<neq; eq_col++) {
         col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
       }
     }
@@ -622,7 +622,7 @@ evaluateFieldsHost(typename Traits::EvalData workset)
         if (valptr.hasFastAccess()) {
           if (workset.is_adjoint) {
             // Sum Jacobian transposed
-            for (unsigned int lunk = 0; lunk < nunk; lunk++)
+            for (int lunk = 0; lunk < nunk; lunk++)
               Albany::addToLocalRowValues(Jac,
                 col[lunk], Teuchos::arrayView(&row, 1),
                 Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
@@ -1003,7 +1003,6 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   if (!f_px_is_active && !f_pp_is_active)
     return;
 
-  const int neq = nodeID.extent(2);
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST> > hess_vec_prod_f_px_data, hess_vec_prod_f_pp_data;
 
   auto f_multiplier_data = Albany::getNonconstLocalData(f_multiplier);

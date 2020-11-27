@@ -47,7 +47,7 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
-  int numSides = dims[1];
+  unsigned int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
 
@@ -68,12 +68,12 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
   sideNodes.resize(numSides);
   sideDim = cellType->getDimension()-1;
-  for (int side=0; side<numSides; ++side)
+  for (unsigned int side=0; side<numSides; ++side)
   {
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
+    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     sideNodes[side].resize(thisSideNodes);
-    for (int node=0; node<thisSideNodes; ++node)
+    for (unsigned int node=0; node<thisSideNodes; ++node)
     {
       sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
     }
@@ -125,10 +125,10 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Tr
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (int node=0; node<numSideNodes; ++node) {
+    for (unsigned int node=0; node<numSideNodes; ++node) {
       std::vector<ScalarT> res(2,0.0);
-      for (int dim=0; dim<vecDimFO; ++dim) {
-        for (int qp=0; qp<numSideQPs; ++qp) {
+      for (unsigned int dim=0; dim<vecDimFO; ++dim) {
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
           res[dim] += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
           residual(cell,sideNodes[side][node],dim) += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
         }

@@ -60,7 +60,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
     this->func.computeBCs(coord, BCVals, time);
 
-    for(unsigned int j = 0; j < number_of_components; j++) {
+    for(int j = 0; j < number_of_components; j++) {
       int offset = nsNodes[inode][j];
       f_nonconstView[offset] = (x_constView[offset] - BCVals[j]);
     }
@@ -115,7 +115,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
     this->func.computeBCs(coord, BCVals, time);
 
-    for(unsigned int j = 0; j < number_of_components; j++) {
+    for(int j = 0; j < number_of_components; j++) {
 
       int offset = nsNodes[inode][j];
       index[0] = offset;
@@ -187,7 +187,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
     this->func.computeBCs(coord, BCVals, time);
 
-    for(unsigned int j = 0; j < number_of_components; j++) {
+    for(int j = 0; j < number_of_components; j++) {
 
       int offset = nsNodes[inode][j];
 
@@ -234,7 +234,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   //
 
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords = dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   // RealType time = dirichletWorkset.current_time;
   int number_of_components = this->func.getNumComponents();
@@ -250,7 +249,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
       // coord = nsNodeCoords[inode];
       // this->func.computeBCs(coord, BCVals, time);
 
-      for(unsigned int j = 0; j < number_of_components; j++) {
+      for(int j = 0; j < number_of_components; j++) {
         int offset = nsNodes[inode][j];
         for (int col=0; col<num_cols; ++col) {
           //(*Vp)[col][offset] = 0.0;
@@ -265,7 +264,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
       // coord = nsNodeCoords[inode];
       // this->func.computeBCs(coord, BCVals, time);
 
-      for(unsigned int j = 0; j < number_of_components; j++) {
+      for(int j = 0; j < number_of_components; j++) {
         int offset = nsNodes[inode][j];
         for (int col=0; col<num_cols; ++col) {
           //(*fpV)[col][offset] = 0.0;

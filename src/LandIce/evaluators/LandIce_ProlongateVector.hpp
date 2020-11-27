@@ -53,8 +53,8 @@ private:
   bool pad_back;
   ScalarT pad_value;
 
-  std::vector<int> dims_in;
-  std::vector<int> dims_out;
+  std::vector<unsigned int> dims_in;
+  std::vector<unsigned int> dims_out;
 };
 
 // Some shortcut names

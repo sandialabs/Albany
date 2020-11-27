@@ -42,7 +42,7 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  int  numVertices, numDims, numNodes, numQPs, numCells;
+  unsigned int numVertices, numDims, numNodes, numQPs, numCells;
   MDFieldMemoizer<Traits> memoizer;
 
   // Input:

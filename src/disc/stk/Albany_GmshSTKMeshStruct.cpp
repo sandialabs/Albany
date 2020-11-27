@@ -299,7 +299,6 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
   if (commT->getRank()==0) {
     stk::mesh::PartVector singlePartVec(1);
     unsigned int ebNo = 0; //element block #???
-    int sideID = 0;
 
     AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
     AbstractSTKFieldContainer::VectorFieldType* coordinates_field =  fieldContainer->getCoordinatesField();
@@ -1627,7 +1626,7 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
 
     // Get the list of physical names
     std::vector< std::string> names;
-    for( size_t i = 0; i < num_physical_names; i++)
+    for( int i = 0; i < num_physical_names; i++)
     {
       std::string name;
       get_name_for_physical_names( name, ifile);
@@ -1664,7 +1663,7 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
     TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != names.size(), std::runtime_error, error_msg.str());
 
     // Add each physical name pair to the map
-    for( int i = 0; i < names.size(); i++)
+    for( size_t i = 0; i < names.size(); i++)
     {
       std::string name = names[i];
       // Index by i+1 since gmsh starts counting at 1 and not 0

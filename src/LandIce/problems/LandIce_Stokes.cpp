@@ -51,13 +51,13 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  params(params_), 
+  numDim(numDim_),
   haveFlow(false),
   haveFlowEq(false),
   haveSource(false),
   havePSPG(false),
-  numDim(numDim_),
-  use_sdbcs_(false)
+  use_sdbcs_(false),
+  params(params_)
 {
 
   getVariableType(params->sublist("Flow"), "DOF", flowType,
@@ -79,7 +79,7 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   {
     // Need to allocate a fields in mesh database
     Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-    for (int i(0); i<req.size(); ++i)
+    for (unsigned int i(0); i<req.size(); ++i)
       this->requirements.push_back(req[i]);
   }
 

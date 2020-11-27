@@ -146,23 +146,23 @@ evaluateFields(typename Traits::EvalData workset)
             break;
           case 1:
             // Precompute differentce and access fields only n times (not n^2)
-            for (int i=0; i<dims[3]; ++i)
+            for (size_t i=0; i<dims[3]; ++i)
               diff_1[i] = sourceField(cell,side,qp,i) - (target_value ? target_value_val : targetField(cell,side,qp,i));
 
-            for (int i=0; i<dims[3]; ++i)
-              for (int j=0; j<dims[3]; ++j)
+            for (size_t i=0; i<dims[3]; ++i)
+              for (size_t j=0; j<dims[3]; ++j)
                 sq += diff_1[i]*metric(cell,side,qp,i,j)*diff_1[j];
             break;
           case 2:
             // Precompute differentce and access fields only n^2 times (not n^4)
-            for (int i=0; i<dims[3]; ++i)
-              for (int j=0; j<dims[3]; ++j)
+            for (size_t i=0; i<dims[3]; ++i)
+              for (size_t j=0; j<dims[3]; ++j)
                 diff_2[i][j] = sourceField(cell,side,qp,i,j) - (target_value ? target_value_val : targetField(cell,side,qp,i,j));
 
-            for (int i=0; i<dims[3]; ++i)
-              for (int j=0; j<dims[3]; ++j)
-                for (int k=0; k<dims[3]; ++k)
-                  for (int l=0; l<dims[3]; ++l)
+            for (size_t i=0; i<dims[3]; ++i)
+              for (size_t j=0; j<dims[3]; ++j)
+                for (size_t k=0; k<dims[3]; ++k)
+                  for (size_t l=0; l<dims[3]; ++l)
                     sq += metric(cell,side,qp,k,i)*diff_2[i][j] * metric(cell,side,qp,j,l)*diff_2[l][k];
             break;
         }

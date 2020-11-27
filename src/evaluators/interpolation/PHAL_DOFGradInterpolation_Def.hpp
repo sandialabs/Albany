@@ -98,10 +98,10 @@ operator()( const team_member & thread) const{
   void DOFGradInterpolationBase<EvalT, Traits, ScalarT>::
   operator() (const DOFGradInterpolationBase_Residual_Tag& tag, const int& cell) const {
 
-   for (int qp=0; qp < numQPs; ++qp) {
-          for (int dim=0; dim<numDims; dim++) {
+   for (size_t qp=0; qp < numQPs; ++qp) {
+          for (size_t dim=0; dim<numDims; dim++) {
             grad_val_qp(cell,qp,dim) = val_node(cell, 0) * GradBF(cell, 0, qp, dim);
-            for (int node= 1 ; node < numNodes; ++node) {
+            for (size_t node= 1 ; node < numNodes; ++node) {
               grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
           }
         }
@@ -174,11 +174,11 @@ evaluateFields(typename Traits::EvalData workset)
   void FastSolutionGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
   operator() (const FastSolutionGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
 
-    for (int qp=0; qp < this->numQPs; ++qp) {
-          for (int dim=0; dim<this->numDims; dim++) {
+    for (size_t qp=0; qp < this->numQPs; ++qp) {
+          for (size_t dim=0; dim<this->numDims; dim++) {
             this->grad_val_qp(cell,qp,dim) = ScalarT(num_dof, this->val_node(cell, 0).val() * this->GradBF(cell, 0, qp, dim));
             (this->grad_val_qp(cell,qp,dim)).fastAccessDx(offset) = this->val_node(cell, 0).fastAccessDx(offset) * this->GradBF(cell, 0, qp, dim);
-            for (int node= 1 ; node < this->numNodes; ++node) {
+            for (size_t node= 1 ; node < this->numNodes; ++node) {
               (this->grad_val_qp(cell,qp,dim)).val() += this->val_node(cell, node).val() * this->GradBF(cell, node, qp, dim);
               (this->grad_val_qp(cell,qp,dim)).fastAccessDx(neq*node+offset) += this->val_node(cell, node).fastAccessDx(neq*node+offset) * this->GradBF(cell, node, qp, dim);
           }

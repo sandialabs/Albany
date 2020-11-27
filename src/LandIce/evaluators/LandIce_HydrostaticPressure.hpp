@@ -54,7 +54,7 @@ private:
   // Output:
   PHX::MDField<OutputST,Cell,Node> pressure; // [Pa], [kg m^{-1} s^{-2}]
 
-  int numNodes;
+  unsigned int numNodes;
 
   double rho_i;  // [kg m^{-3}]
   double g;      // [m s^{-2}]

@@ -187,8 +187,8 @@ protected:
   Teuchos::ArrayRCP<std::string> resid_names;
   Teuchos::ArrayRCP<std::string> scatter_names;
 
-  int numDim;
-  int vecDimFO;
+  unsigned int numDim;
+  unsigned int vecDimFO;
 
   /// Boolean marking whether SDBCs are used
   bool use_sdbcs_;
@@ -296,11 +296,11 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
 
   // Volume mesh requirements
   Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
-  int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+  unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
   std::string fieldType, fieldUsage, meshPart;
-  bool nodal_state, scalar_state;
-  for (int ifield=0; ifield<num_fields; ++ifield) {
+  bool nodal_state;
+  for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
     Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
 
     // Get current state specs
@@ -323,7 +323,6 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
       entity = Albany::StateStruct::ElemData;
       p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, meshSpecs.ebName, true, &entity, meshPart);
       nodal_state = false;
-      scalar_state = true;
     } else if(fieldType == "Node Scalar") {
       entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
       if(is_dist[stateName] && save_sensitivities[stateName]) {
@@ -331,17 +330,14 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
       }
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, meshPart);
       nodal_state = true;
-      scalar_state = true;
     } else if(fieldType == "Elem Vector") {
       entity = Albany::StateStruct::ElemData;
       p = stateMgr.registerStateVariable(stateName, dl->cell_vector, meshSpecs.ebName, true, &entity, meshPart);
       nodal_state = false;
-      scalar_state = false;
     } else if(fieldType == "Node Vector") {
       entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
       p = stateMgr.registerStateVariable(stateName, dl->node_vector, meshSpecs.ebName, true, &entity, meshPart);
       nodal_state = true;
-      scalar_state = false;
     }
 
     // Do we need to load/gather the state/parameter?
@@ -398,7 +394,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
   if (discParams->sublist("Side Set Discretizations").isParameter("Side Sets")) {
     ss_names = discParams->sublist("Side Set Discretizations").get<Teuchos::Array<std::string>>("Side Sets");
   } 
-  for (int i=0; i<ss_names.size(); ++i) {
+  for (unsigned int i=0; i<ss_names.size(); ++i) {
     const std::string& ss_name = ss_names[i];
     Teuchos::ParameterList& info = discParams->sublist("Side Set Discretizations").sublist(ss_name).sublist("Required Fields Info");
     num_fields = info.get<int>("Number Of Fields",0);
@@ -408,7 +404,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
 
     const std::string& sideEBName = meshSpecs.sideSetMeshSpecs.at(ss_name)[0]->ebName;
     Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(ss_name);
-    for (int ifield=0; ifield<num_fields; ++ifield) {
+    for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
       Teuchos::ParameterList& thisFieldList =  info.sublist(Albany::strint("Field", ifield));
 
       // Get current state specs
@@ -431,22 +427,18 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         entity = Albany::StateStruct::ElemData;
         p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->cell_scalar2, sideEBName, true, &entity, meshPart);
         nodal_state = false;
-        scalar_state = true;
       } else if(fieldType == "Node Scalar") {
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
         p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_scalar, sideEBName, true, &entity, meshPart);
         nodal_state = true;
-        scalar_state = true;
       } else if(fieldType == "Elem Vector") {
         entity = Albany::StateStruct::ElemData;
         p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->cell_vector, sideEBName, true, &entity, meshPart);
         nodal_state = false;
-        scalar_state = false;
       } else if(fieldType == "Node Vector") {
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
         p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_vector, sideEBName, true, &entity, meshPart);
         nodal_state = true;
-        scalar_state = false;
       } else if(fieldType == "Elem Layered Scalar") {
         entity = Albany::StateStruct::ElemData;
         sns = ss_dl->cell_scalar2;
@@ -454,14 +446,12 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,LayerDim>(sns->extent(0),sns->extent(1),numLayers));
         stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart);
         nodal_state = false;
-        scalar_state = false;
       } else if(fieldType == "Node Layered Scalar") {
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
         sns = ss_dl->node_scalar;
         numLayers = thisFieldList.get<int>("Number Of Layers");
         dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),numLayers));
         stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart);
-        scalar_state = false;
         nodal_state = true;
       } else if(fieldType == "Elem Layered Vector") {
         entity = Albany::StateStruct::ElemData;
@@ -469,7 +459,6 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         numLayers = thisFieldList.get<int>("Number Of Layers");
         dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Dim,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),numLayers));
         stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart);
-        scalar_state = false;
         nodal_state = false;
       } else if(fieldType == "Node Layered Vector") {
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
@@ -478,7 +467,6 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,Dim,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),
                                                                                sns->extent(3),numLayers));
         stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart);
-        scalar_state = false;
         nodal_state = true;
       }
 

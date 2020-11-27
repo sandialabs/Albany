@@ -29,8 +29,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
   dl             (p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
   offset         (p.get<Teuchos::Array<int> >("Equation Offset")),
-  sideSetID      (p.get<std::string>("Side Set ID")),
-  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector)
+  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
+  sideSetID      (p.get<std::string>("Side Set ID"))
 {
   // the input.xml string "NBC on SS sidelist_12 for DOF T set dudn" (or something like it)
   name = p.get< std::string >("Neumann Input String");
@@ -98,7 +98,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // else parse the input to determine what type of BC to calculate
 
     // is there a "(" in the string?
-  else if((position = inputConditions.find_first_of("(")) != std::string::npos){
+  else if((position = inputConditions.find_first_of("(")) != static_cast<int>(std::string::npos)){
 
       if(inputConditions.find("t_x", position + 1)){
         // User has specified conditions in base coords
@@ -110,10 +110,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
       }
 
       dudx.resize(meshSpecs->numDim);
-      for(int i = 0; i < dudx.size(); i++)
+      for(size_t i = 0; i < dudx.size(); i++)
         dudx[i] = inputValues[i];
 
-      for(int i = 0; i < dudx.size(); i++) {
+      for(size_t i = 0; i < dudx.size(); i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
         this->registerSacadoParameter(ss.str(), paramLib);
       }
@@ -353,7 +353,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     numCellsOnSidesOnBlocks[ordinalEbIndex[ebIndex]][elem_side]++;
   }
   cellsOnSidesOnBlocks.resize(ordinalEbIndex.size());
-  for (int ib=0; ib<ordinalEbIndex.size(); ib++) {
+  for (size_t ib=0; ib<ordinalEbIndex.size(); ib++) {
     cellsOnSidesOnBlocks[ib].resize(numSidesOnElem);
     for (int is=0; is<numSidesOnElem; is++) {
       cellsOnSidesOnBlocks[ib][is] = Kokkos::DynRankView<int, PHX::Device>("cellOnSide_i", numCellsOnSidesOnBlocks[ib][is]);
@@ -370,7 +370,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   }
 
   // Loop over the sides that form the boundary condition
-  for (int iblock = 0; iblock < ordinalEbIndex.size(); ++iblock)
+  for (size_t iblock = 0; iblock < ordinalEbIndex.size(); ++iblock)
   for (int side = 0; side < numSidesOnElem; ++side)
   {
     int numCells_ =  numCellsOnSidesOnBlocks[iblock][side];
@@ -401,9 +401,9 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     cubatureSide[side]->getCubature(cubPointsSide, cubWeightsSide);
 
     // Copy the coordinate data over to a temp container
-    for (std::size_t iCell=0; iCell < numCells_; ++iCell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t dim=0; dim < cellDims; ++dim) {
+    for (int iCell=0; iCell < numCells_; ++iCell) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int dim=0; dim < cellDims; ++dim) {
           physPointsCell(iCell, node, dim) = coordVec(cellVec(iCell),node,dim);
     }}}
 
@@ -440,9 +440,9 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       dofSide = Kokkos::createViewWithType<DynRankViewScalarT>(dofSide_buffer, dofSide_buffer.data(), numCells_, numQPsSide, numDOFsSet);
 
       Kokkos::deep_copy(dofCell, 0.0);
-      for (std::size_t iCell=0; iCell < numCells_; ++iCell) {
-        for (std::size_t node=0; node < numNodes; ++node) {
-          for (std::size_t icomp=0; icomp < numDOFsSet; ++icomp) {
+      for (int iCell=0; iCell < numCells_; ++iCell) {
+        for (int node=0; node < numNodes; ++node) {
+          for (int icomp=0; icomp < numDOFsSet; ++icomp) {
             if (vectorDOF) {
               dofCell(iCell, node, icomp) = dof(cellVec(iCell), node, this->offset[icomp]);
             } else {
@@ -453,7 +453,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       // This is needed, since evaluate currently sums into
       Kokkos::deep_copy(dofSide, 0.0);
 
-      for (std::size_t icomp=0; icomp < numDOFsSet; ++icomp) {
+      for (int icomp=0; icomp < numDOFsSet; ++icomp) {
         IFST::evaluate(Kokkos::subview(dofSide,Kokkos::ALL(),Kokkos::ALL(),icomp),
                        Kokkos::subview(dofCell,Kokkos::ALL(),Kokkos::ALL(),icomp),
                        trans_basis_refPointsSide);
@@ -506,12 +506,12 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 
     // Put this side's contribution into the vector
-    for (std::size_t iCell=0; iCell < numCells_; ++iCell)
+    for (int iCell=0; iCell < numCells_; ++iCell)
     {
       int cell = cellVec(iCell);
-      for (std::size_t node=0; node < numNodes; ++node)
-        for (std::size_t qp=0; qp < numQPsSide; ++qp)
-          for (std::size_t dim=0; dim < numDOFsSet; ++dim)
+      for (int node=0; node < numNodes; ++node)
+        for (int qp=0; qp < numQPsSide; ++qp)
+          for (int dim=0; dim < numDOFsSet; ++dim)
             neumann(cell, node, dim) +=
                   data(iCell, qp, dim) * weighted_trans_basis_refPointsSide(iCell, node, qp);
     }
@@ -536,7 +536,7 @@ getValue(const std::string &n) {
     }
   }
   else {
-    for(int i = 0; i < dudx.size(); i++) {
+    for(size_t i = 0; i < dudx.size(); i++) {
       std::stringstream ss; ss << name << "[" << i << "]";
       if (n == ss.str())  return dudx[i];
     }
@@ -755,8 +755,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Place it at the appropriate offset into F
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    for (std::size_t node = 0; node < this->numNodes; ++node)
-      for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+    for (int node = 0; node < this->numNodes; ++node)
+      for (int dim = 0; dim < this->numDOFsSet; ++dim){
         f_nonconstView[nodeID(cell,node,this->offset[dim])] += this->neumann(cell, node, dim);
     }
   }
@@ -855,8 +855,8 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::Array<ST> value(1);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    for (std::size_t node = 0; node < this->numNodes; ++node)
-      for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+    for (int node = 0; node < this->numNodes; ++node)
+      for (int dim = 0; dim < this->numDOFsSet; ++dim){
 
       row[0] = nodeID(cell,node,this->offset[dim]);
 
@@ -870,10 +870,10 @@ evaluateFields(typename Traits::EvalData workset)
       if (this->neumann(cell, node, dim).hasFastAccess()) {
 
         // Loop over nodes in element
-        for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+        for (int node_col=0; node_col<this->numNodes; node_col++){
 
           // Loop over equations per node
-          for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+          for (int eq_col=0; eq_col<neq; eq_col++) {
             lcol = neq * node_col + eq_col;
 
             // Global column
@@ -934,8 +934,8 @@ evaluateFields(typename Traits::EvalData workset)
   this->evaluateNeumannContribution(workset);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+    for (int node = 0; node < this->numNodes; ++node) {
+      for (int dim = 0; dim < this->numDOFsSet; ++dim){
 
         int row = nodeID(cell,node,this->offset[dim]);
 
@@ -997,8 +997,8 @@ evaluateFields(typename Traits::EvalData workset)
         if(row<0) { continue; }
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
-          for (std::size_t node = 0; node < this->numNodes; ++node) {
-            for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+          for (int node = 0; node < this->numNodes; ++node) {
+            for (int dim = 0; dim < this->numDOFsSet; ++dim){
               int eq = this->offset[dim];
               val += this->neumann(cell, node, dim).dx(i)*local_Vp[node*neq+eq][col];
             }
@@ -1012,8 +1012,8 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp = workset.local_Vp[cell];
       const int num_deriv = local_Vp.size();
 
-      for (std::size_t node = 0; node < this->numNodes; ++node) {
-        for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+      for (int node = 0; node < this->numNodes; ++node) {
+        for (int dim = 0; dim < this->numDOFsSet; ++dim){
           const int row = nodeID(cell,node,this->offset[dim]);
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;

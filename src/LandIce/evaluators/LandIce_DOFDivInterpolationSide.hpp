@@ -50,9 +50,9 @@ private:
   //! Values at quadrature points
   PHX::MDField<OutputScalarT,Cell,Side,QuadPoint> val_qp;
 
-  int numSideNodes;
-  int numSideQPs;
-  int numDims;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int numDims;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 };

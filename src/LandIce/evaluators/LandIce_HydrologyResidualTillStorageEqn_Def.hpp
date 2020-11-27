@@ -16,8 +16,8 @@ HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl) :
   BF         (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
   w_measure  (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
-  h_till_dot (p.get<std::string> ("Till Water Storage Dot Variable Name"), dl->qp_scalar),
   omega      (p.get<std::string> ("Surface Water Input Variable Name"), dl->qp_scalar),
+  h_till_dot (p.get<std::string> ("Till Water Storage Dot Variable Name"), dl->qp_scalar),
   residual   (p.get<std::string> ("Till Water Storage Eqn Residual Name"),dl->node_scalar)
 {
   /*
@@ -156,7 +156,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
 
-  ScalarT res_qp, res_node, zero(0);
+  ScalarT res_qp, res_node;
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet)
   {
@@ -164,10 +164,10 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (int node=0; node < numNodes; ++node)
+    for (unsigned int node=0; node < numNodes; ++node)
     {
       res_node = 0;
-      for (int qp=0; qp < numQPs; ++qp)
+      for (unsigned int qp=0; qp < numQPs; ++qp)
       {
         res_qp = scaling_omega*omega(cell,side,qp) - C_drain - scaling_h_dot*h_till_dot(cell,side,qp);
 
@@ -193,13 +193,13 @@ template<typename EvalT, typename Traits, bool IsStokesCoupling>
 void HydrologyResidualTillStorageEqn<EvalT, Traits, IsStokesCoupling>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
-  ScalarT res_qp, res_node, zero(0);
-  for (int cell=0; cell < workset.numCells; ++cell)
+  ScalarT res_qp, res_node;
+  for (unsigned int cell=0; cell < workset.numCells; ++cell)
   {
-    for (int node=0; node < numNodes; ++node)
+    for (unsigned int node=0; node < numNodes; ++node)
     {
       res_node = 0;
-      for (int qp=0; qp < numQPs; ++qp)
+      for (unsigned int qp=0; qp < numQPs; ++qp)
       {
         res_qp = scaling_omega*omega(cell,qp) - C_drain - scaling_h_dot*h_till_dot(cell,qp);
 

@@ -32,7 +32,7 @@ LaplacianSampling( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   {
     // Need to allocate a fields in mesh database
     Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-    for (int i(0); i<req.size(); ++i)
+    for (unsigned int i(0); i<req.size(); ++i)
       this->requirements.push_back(req[i]);
   }
   neq =1;

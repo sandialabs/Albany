@@ -17,7 +17,7 @@ GatherCoordinateVector<EvalT, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec  (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector ),
-  numVertices(0), numDim(0), worksetSize(0)
+  worksetSize(0), numVertices(0), numDim(0)
 {  
   if (p.isType<bool>("Periodic BC")) periodic = p.get<bool>("Periodic BC");
   else periodic = false;
@@ -36,7 +36,7 @@ GatherCoordinateVector<EvalT, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p) :
   coordVec         (p.get<std::string>                   ("Coordinate Vector Name"),
                     p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  numVertices(0), numDim(0), worksetSize(0)
+  worksetSize(0), numVertices(0), numDim(0)
 {  
   if (p.isType<bool>("Periodic BC")) periodic = p.get<bool>("Periodic BC");
   else periodic = false;

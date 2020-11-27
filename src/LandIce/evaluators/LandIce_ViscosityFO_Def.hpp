@@ -23,11 +23,6 @@ template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 ViscosityFO<EvalT, Traits, VelT, TemprT>::
 ViscosityFO(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
-  Ugrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
-  mu    (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
-  A(1.0),
-  n(3.0),
-  flowRate_type(UNIFORM),
   pi (3.1415926535897932385),
   actenh (1.39e5),        // [J mol-1]
   actenl (6.0e4),         // [J mol-1]
@@ -38,7 +33,12 @@ ViscosityFO(const Teuchos::ParameterList& p,
   k4scyr (3.1536e19),     // [s y-1]
   arrmh (k4scyr*arrmlh),  // [Pa-3 yr-1]
   arrml (k4scyr*arrmll),  // [Pa-3 yr-1]
-  homotopyParam("Glen's Law Homotopy Parameter", dl->shared_param)
+  A(1.0),
+  n(3.0),
+  Ugrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
+  homotopyParam("Glen's Law Homotopy Parameter", dl->shared_param),
+  mu    (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
+  flowRate_type(UNIFORM)
 {
   Teuchos::ParameterList* visc_list =
    p.get<Teuchos::ParameterList*>("Parameter List");
@@ -215,7 +215,7 @@ TemperatureT ViscosityFO<EvalT,Traits,VelT,TemprT>::flowRate (const TemperatureT
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_CONSTANT_Tag&, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp)
+  for (unsigned int qp=0; qp < numQPs; ++qp)
           mu(cell,qp) = 1.0;
 }
 
@@ -224,7 +224,7 @@ KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_EXPTRIG_Tag&, const int& cell) const
 {
   double a = 1.0;
-  for (int qp=0; qp < numQPs; ++qp)
+  for (unsigned int qp=0; qp < numQPs; ++qp)
   {
     MeshScalarT x = coordVec(cell,qp,0);
     MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
@@ -244,7 +244,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
   if (0)//homotopyParam(0) == 0.0)
   {
     //set constant viscosity
-    for (int qp=0; qp < numQPs; ++qp)
+    for (unsigned int qp=0; qp < numQPs; ++qp)
     {
       mu(cell,qp) = flowFactorVec;
     }
@@ -258,7 +258,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
       if (extractStrainRateSq)
       {
         //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-      for (int qp=0; qp < numQPs; ++qp)
+      for (unsigned int qp=0; qp < numQPs; ++qp)
       {
         MeshScalarT x = coordVec(cell,qp,0)-x_0;
         MeshScalarT y = coordVec(cell,qp,1)-y_0;
@@ -280,7 +280,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
       }
       else
       {
-        for (int qp=0; qp < numQPs; ++qp)
+        for (unsigned int qp=0; qp < numQPs; ++qp)
         {
           MeshScalarT x = coordVec(cell,qp,0)-x_0;
           MeshScalarT y = coordVec(cell,qp,1)-y_0;
@@ -304,7 +304,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
     {
       if (extractStrainRateSq)
       {
-        for (int qp=0; qp < numQPs; ++qp)
+        for (unsigned int qp=0; qp < numQPs; ++qp)
         {
         //evaluate non-linear viscosity, given by Glen's law, at quadrature points
         typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
@@ -312,7 +312,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
         epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
         epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
 
-        for (int dim = 2; dim < numDims; ++dim) //3D case
+        for (unsigned int dim = 2; dim < numDims; ++dim) //3D case
           epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,dim)*Ugrad(cell,qp,0,dim) + Ugrad(cell,qp,1,dim)*Ugrad(cell,qp,1,dim) ); // + 0.25*epsilon_xz^2 + 0.25*epsilon_yz^2
 
         epsilonSq(cell,qp) = epsilonEqpSq;
@@ -322,7 +322,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
       }
       else
       {
-        for (int qp=0; qp < numQPs; ++qp)
+        for (unsigned int qp=0; qp < numQPs; ++qp)
         {
         //evaluate non-linear viscosity, given by Glen's law, at quadrature points
         typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
@@ -330,7 +330,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
         epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
         epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
 
-        for (int dim = 2; dim < numDims; ++dim) //3D case
+        for (unsigned int dim = 2; dim < numDims; ++dim) //3D case
           epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,dim)*Ugrad(cell,qp,0,dim) + Ugrad(cell,qp,1,dim)*Ugrad(cell,qp,1,dim) ); // + 0.25*epsilon_xz^2 + 0.25*epsilon_yz^2
 
         epsilonEqpSq += ff; //add regularization "fudge factor"
@@ -339,7 +339,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
       }
     }
     if(useStiffeningFactor)
-      for (int qp=0; qp < numQPs; ++qp)
+      for (unsigned int qp=0; qp < numQPs; ++qp)
         mu(cell,qp) *= std::exp(stiffeningFactor(cell,qp));
   }
 }
@@ -381,7 +381,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw_xz (const TemprT &flowFa
   if (0)//homotopyParam(0) == 0.0)
   {
     //set constant viscosity
-    for (int qp=0; qp < numQPs; ++qp)
+    for (unsigned int qp=0; qp < numQPs; ++qp)
     {
       mu(cell,qp) = flowFactorVec;
     }
@@ -392,7 +392,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw_xz (const TemprT &flowFa
     ScalarT epsilonEqpSq = 0.0;
     if (extractStrainRateSq)
     {
-      for (int qp=0; qp < numQPs; ++qp)
+      for (unsigned int qp=0; qp < numQPs; ++qp)
       {
         typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
         epsilonEqpSq = u00*u00; //epsilon_xx^2
@@ -405,7 +405,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw_xz (const TemprT &flowFa
     }
     else
     {
-      for (int qp=0; qp < numQPs; ++qp)
+      for (unsigned int qp=0; qp < numQPs; ++qp)
       {
         typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
         epsilonEqpSq = u00*u00; //epsilon_xx^2

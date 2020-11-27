@@ -202,7 +202,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  this->global_response_eval(0) += s;
 	}
 	else if (field_rank == 3) {
-	  for (std::size_t dim=0; dim < field_components.size(); ++dim) {
+	  for (int dim=0; dim < field_components.size(); ++dim) {
 	    s = field(cell,qp,field_components[dim]) * weights(cell,qp) * scaling;
 	    this->local_response_eval(cell,dim) += s;
 	    this->global_response_eval(dim) += s;

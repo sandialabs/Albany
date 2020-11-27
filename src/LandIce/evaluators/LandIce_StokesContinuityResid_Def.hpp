@@ -75,17 +75,17 @@ void contractDataFieldScalar(ArrayOutFields &       outputFields,
                              const ArrayInFields &  inputFields,
                              const bool             sumInto) {
 
-  int numCells       = inputFields.extent(0);
-  int numFields      = inputFields.extent(1);
-  int numPoints      = inputFields.extent(2);
-  int numDataPoints  = inputData.extent(1);
+  unsigned int numCells       = inputFields.extent(0);
+  unsigned int numFields      = inputFields.extent(1);
+  unsigned int numPoints      = inputFields.extent(2);
+  unsigned int numDataPoints  = inputData.extent(1);
 
   if (sumInto) {
         if (numDataPoints != 1) { // nonconstant data
-          for (int cl = 0; cl < numCells; cl++) {
-            for (int lbf = 0; lbf < numFields; lbf++) {
+          for (unsigned int cl = 0; cl < numCells; cl++) {
+            for (unsigned int lbf = 0; lbf < numFields; lbf++) {
               Scalar tmpVal(0);
-              for (int qp = 0; qp < numPoints; qp++) {
+              for (unsigned int qp = 0; qp < numPoints; qp++) {
                 tmpVal += inputFields(cl, lbf, qp)*inputData(cl, qp);
               } // P-loop
               outputFields(cl, lbf) += tmpVal;
@@ -93,10 +93,10 @@ void contractDataFieldScalar(ArrayOutFields &       outputFields,
           } // C-loop
         }
         else { // constant data
-          for (int cl = 0; cl < numCells; cl++) {
-            for (int lbf = 0; lbf < numFields; lbf++) {
+          for (unsigned int cl = 0; cl < numCells; cl++) {
+            for (unsigned int lbf = 0; lbf < numFields; lbf++) {
               Scalar tmpVal(0);
-              for (int qp = 0; qp < numPoints; qp++) {
+              for (unsigned int qp = 0; qp < numPoints; qp++) {
                 tmpVal += inputFields(cl, lbf, qp)*inputData(cl, 0);
               } // P-loop
               outputFields(cl, lbf) += tmpVal;
@@ -106,10 +106,10 @@ void contractDataFieldScalar(ArrayOutFields &       outputFields,
       }
       else {
         if (numDataPoints != 1) { // nonconstant data
-          for (int cl = 0; cl < numCells; cl++) {
-            for (int lbf = 0; lbf < numFields; lbf++) {
+          for (unsigned int cl = 0; cl < numCells; cl++) {
+            for (unsigned int lbf = 0; lbf < numFields; lbf++) {
               Scalar tmpVal(0);
-              for (int qp = 0; qp < numPoints; qp++) {
+              for (unsigned int qp = 0; qp < numPoints; qp++) {
                 tmpVal += inputFields(cl, lbf, qp)*inputData(cl, qp);
               } // P-loop
               outputFields(cl, lbf) = tmpVal;
@@ -117,10 +117,10 @@ void contractDataFieldScalar(ArrayOutFields &       outputFields,
           } // C-loop
         }
         else { // constant data
-          for (int cl = 0; cl < numCells; cl++) {
-            for (int lbf = 0; lbf < numFields; lbf++) {
+          for (unsigned int cl = 0; cl < numCells; cl++) {
+            for (unsigned int lbf = 0; lbf < numFields; lbf++) {
               Scalar tmpVal(0);
-              for (int qp = 0; qp < numPoints; qp++) {
+              for (unsigned int qp = 0; qp < numPoints; qp++) {
                 tmpVal += inputFields(cl, lbf, qp)*inputData(cl, 0);
               } // P-loop
               outputFields(cl, lbf) = tmpVal;

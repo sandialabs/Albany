@@ -68,10 +68,10 @@ private:
 
   Kokkos::DynRankView<ScalarT, PHX::Device>           qp_temp_buffer;
 
-  int numSideNodes;
-  int numSideQPs;
-  int sideDim;
-  int vecDimFO;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int sideDim;
+  unsigned int vecDimFO;
 
   // Parameters used by the bc's (not necessarily by all of them).
   double alpha;

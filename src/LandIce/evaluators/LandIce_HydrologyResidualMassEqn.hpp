@@ -79,9 +79,9 @@ private:
   // Output:
   PHX::MDField<ScalarT>       residual;
 
-  int numNodes;
-  int numQPs;
-  int numDims;
+  unsigned int numNodes;
+  unsigned int numQPs;
+  unsigned int numDims;
 
   double rho_w;
   double scaling_omega;

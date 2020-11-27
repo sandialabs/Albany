@@ -27,8 +27,8 @@ StokesFOBodyForce<EvalT, Traits>::
 StokesFOBodyForce(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
   force(p.get<std::string>("Body Force Variable Name"), dl->qp_vector),
-  A(1.0),
   n(3.0),
+  A(1.0),
   alpha(0.0)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -203,7 +203,7 @@ void StokesFOBodyForce<EvalT, Traits>::
 operator() (const FO_INTERP_SURF_GRAD_Tag& tag, const int& cell) const{
 
  if(useStereographicMap) {
-       for (int qp=0; qp < numQPs; ++qp) {
+       for (unsigned int qp=0; qp < numQPs; ++qp) {
          MeshScalarT x = coordVec(cell,qp,0)-x_0;
          MeshScalarT y = coordVec(cell,qp,1)-y_0;
          MeshScalarT z = coordVec(cell,qp,2);
@@ -216,7 +216,7 @@ operator() (const FO_INTERP_SURF_GRAD_Tag& tag, const int& cell) const{
        }
    }
    else {
-       for (int qp=0; qp < numQPs; ++qp) {
+       for (unsigned int qp=0; qp < numQPs; ++qp) {
          force(cell,qp,0) = rho_g_kernel*surfaceGrad(cell,qp,0);
          force(cell,qp,1) = rho_g_kernel*surfaceGrad(cell,qp,1);
        }
@@ -238,7 +238,7 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOBodyForce<EvalT, Traits>::
 operator() (const POISSON_Tag& tag, const int& cell) const{
 
-   for (int qp=0; qp < numQPs; ++qp) {
+   for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x = coordVec(cell,qp,0);
        force(cell,qp,0) = exp(x);
      }
@@ -252,7 +252,7 @@ operator() (const FO_SINCOS2D_Tag& tag, const int& cell) const{
 
   double xphase=0.0, yphase=0.0;
   double r = 3*pi;
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT muargt = 2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) + r;
@@ -276,7 +276,7 @@ void StokesFOBodyForce<EvalT, Traits>::
 operator() (const FO_COSEXP2D_Tag& tag, const int& cell) const{
 
   const double a = 1.0;
-     for (int qp=0; qp < numQPs; ++qp) {
+     for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
@@ -293,7 +293,7 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOBodyForce<EvalT, Traits>::
 operator() (const FO_COSEXP2DFLIP_Tag& tag, const int& cell) const{
     const double a = 1.0;
-     for (int qp=0; qp < numQPs; ++qp) {
+     for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
@@ -310,8 +310,7 @@ void StokesFOBodyForce<EvalT, Traits>::
 operator() (const FO_COSEXP2DALL_Tag& tag, const int& cell) const{
 
   const double a = 1.0;
-     for (int qp=0; qp < numQPs; ++qp) {
-       MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
+     for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi);
@@ -356,7 +355,7 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOBodyForce<EvalT, Traits>::
 operator() (const FO_SINEXP2D_Tag& tag, const int& cell) const{
 
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT muqp = 1.0 ; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
@@ -370,7 +369,7 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOBodyForce<EvalT, Traits>::
 operator() (const FO_DOME_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y = coordVec(cell,qp,1);
        force(cell,qp,0) = -rho_g_kernel*x*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);
@@ -390,7 +389,7 @@ operator() (const FO_XZMMS_Tag& tag, const int& cell) const{
    //IK, 2/4/15, WARNING: I think the source term has been derived assuming n = 3, even
    //though in theory n is a free parameter...
    //TO DO: check sign!
-     for (int qp=0; qp < numQPs; ++qp) {
+     for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x = coordVec(cell,qp,0); //x
        MeshScalarT z = coordVec(cell,qp,1); //z
        MeshScalarT s = s0 - alpha0*x*x;  //s = s0-alpha*x^2

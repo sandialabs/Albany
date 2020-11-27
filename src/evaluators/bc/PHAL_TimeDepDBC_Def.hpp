@@ -11,7 +11,7 @@ namespace PHAL {
 
 template <typename EvalT, typename Traits>
 TimeDepDBC_Base<EvalT, Traits>::TimeDepDBC_Base(Teuchos::ParameterList& p)
-    : offset(p.get<int>("Equation Offset")), PHAL::Dirichlet<EvalT, Traits>(p)
+    : PHAL::Dirichlet<EvalT, Traits>(p), offset(p.get<int>("Equation Offset"))
 {
   timeValues = p.get<Teuchos::Array<RealType>>("Time Values").toVector();
   BCValues   = p.get<Teuchos::Array<RealType>>("BC Values").toVector();

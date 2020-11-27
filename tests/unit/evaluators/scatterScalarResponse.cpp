@@ -144,7 +144,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
   auto hess_vec_prod_g_px_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_px_out);
   auto hess_vec_prod_g_pp_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_pp_out);
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
     {
       size_t id = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0));
@@ -177,7 +177,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
   for (std::size_t i = 0; i < numBucks; i++)
     wsElNodeEqID_ID_raw[i].resize(buck_size * nodes_per_element * neq);
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
       wsElNodeEqID_ID_raw[0][cell * nodes_per_element * neq + node * neq] = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0) / neq);
 
@@ -237,7 +237,6 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
       overlapped_x_space));
 
   parameter->set_workset_elem_dofs(Teuchos::rcpFromRef(wsElNodeEqID_ID));
-  const Albany::IDArray &wsElDofs = parameter->workset_elem_dofs()[0];
   Teuchos::RCP<Thyra_Vector> dist_param = parameter->vector();
   dist_param->assign(6.0);
   parameter->scatter();
@@ -253,9 +252,9 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
   MDField<Scalar, Cell, Dim> local_response = allocateUnmanagedMDField<Scalar, Cell, Dim>(local_response_name, local_response_layout, derivative_dimensions);
   local_response.deep_copy(0.0);
 
-  for (std::size_t cell = 0; cell < static_cast<int>(local_response.extent(0)); ++cell)
+  for (unsigned int cell = 0; cell < local_response.extent(0); ++cell)
   {
-    for (std::size_t dim = 0; dim < static_cast<int>(local_response.extent(1)); ++dim)
+    for (unsigned int dim = 0; dim < local_response.extent(1); ++dim)
     {
       for (int node = 0; node < nodes_per_element; ++node)
       {
@@ -529,7 +528,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
   auto hess_vec_prod_g_px_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_px_out);
   auto hess_vec_prod_g_pp_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_pp_out);
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
     {
       for (int eq = 0; eq < neq; ++eq)
@@ -568,7 +567,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
   for (std::size_t i = 0; i < numBucks; i++)
     wsElNodeEqID_ID_raw[i].resize(buck_size * nodes_per_element * neq);
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
       wsElNodeEqID_ID_raw[0][cell * nodes_per_element * neq + node * neq] = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0) / neq);
 
@@ -628,7 +627,6 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
       overlapped_x_space));
 
   parameter->set_workset_elem_dofs(Teuchos::rcpFromRef(wsElNodeEqID_ID));
-  const Albany::IDArray &wsElDofs = parameter->workset_elem_dofs()[0];
   Teuchos::RCP<Thyra_Vector> dist_param = parameter->vector();
   dist_param->assign(6.0);
   parameter->scatter();
@@ -644,9 +642,9 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
   MDField<Scalar, Cell, Dim> local_response = allocateUnmanagedMDField<Scalar, Cell, Dim>(local_response_name, local_response_layout, derivative_dimensions);
   local_response.deep_copy(0.0);
 
-  for (std::size_t cell = 0; cell < static_cast<int>(local_response.extent(0)); ++cell)
+  for (unsigned int cell = 0; cell < local_response.extent(0); ++cell)
   {
-    for (std::size_t dim = 0; dim < static_cast<int>(local_response.extent(1)); ++dim)
+    for (unsigned int dim = 0; dim < local_response.extent(1); ++dim)
     {
       for (int i = 0; i < nodes_per_element * neq; ++i)
       {

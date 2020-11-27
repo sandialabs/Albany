@@ -174,7 +174,7 @@ saveElemState(typename Traits::EvalData workset)
     const int side     = it_side.side_local_id;
 
     // Not sure if this is even possible, but just for debug pourposes
-    TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ it_side.elem_GID ].ws != workset.wsIndex, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ it_side.elem_GID ].ws != (int) workset.wsIndex, std::logic_error,
                                 "Error! This workset has a side that belongs to an element not in the workset.\n");
 
     // We know the side ID, so we can fetch two things:
@@ -212,15 +212,15 @@ saveElemState(typename Traits::EvalData workset)
         if (tag2=="Node")
         {
           // side set node scalar
-          for (int node=0; node<dims[2]; ++node)
+          for (unsigned int node=0; node<dims[2]; ++node)
           {
             state(ss_cell,nodeMap[node]) = field(cell,side,node);
           }
         } else {
           // side set cell vector/gradient
-          for (int idim=0; idim<dims[2]; ++idim)
+          for (unsigned int idim=0; idim<dims[2]; ++idim)
           {
-            state(ss_cell,idim) = field(cell,side,idim);
+            state(ss_cell,(int) idim) = field(cell,side,idim);
           }
         }
         break;
@@ -229,19 +229,19 @@ saveElemState(typename Traits::EvalData workset)
         if (tag2=="Node")
         {
           // side set node vector/gradient
-          for (int node=0; node<dims[2]; ++node)
+          for (unsigned int node=0; node<dims[2]; ++node)
           {
-            for (int dim=0; dim<dims[3]; ++dim)
-              state(ss_cell,nodeMap[node],dim) = field(cell,side,node,dim);
+            for (unsigned int dim=0; dim<dims[3]; ++dim)
+              state(ss_cell,nodeMap[node],(int) dim) = field(cell,side,node,(int) dim);
           }
         }
         else
         {
           // side set cell tensor
-          for (int idim=0; idim<dims[2]; ++idim)
+          for (unsigned int idim=0; idim<dims[2]; ++idim)
           {
-            for (int jdim=0; jdim<dims[3]; ++jdim)
-              state(ss_cell,idim,jdim) = field(cell,side,idim,jdim);
+            for (unsigned int jdim=0; jdim<dims[3]; ++jdim)
+              state(ss_cell,(int) idim,(int) jdim) = field(cell,side,idim,(int) jdim);
           }
         }
         break;
@@ -365,7 +365,7 @@ saveNodeState(typename Traits::EvalData workset)
             nodeId3d = ElNodeID[cell][sideNodes[side][node]];
             e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId3d+1);
             values = stk::mesh::field_data(*vector_field, e);
-            for (int i=0; i<dims[3]; ++i)
+            for (unsigned int i=0; i<dims[3]; ++i)
               values[i] = field(cell,side,node,i);
           }
           break;

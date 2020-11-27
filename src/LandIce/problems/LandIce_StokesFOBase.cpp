@@ -11,25 +11,25 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                         const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                         const Teuchos::RCP<ParamLib>& paramLib_,
                         const int numDim_)
- : Albany::AbstractProblem(params_, paramLib_, numDim_)
- , params(params_) 
+ : Albany::AbstractProblem(params_, paramLib_, numDim_) 
  , discParams (discParams_)
  , numDim(numDim_)
  , use_sdbcs_(false)
+ , params(params_)
 {
   // Need to allocate a fields in mesh database
   if (params->isParameter("Required Fields"))
   {
     // Need to allocate a fields in mesh database
     Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-    for (int i(0); i<req.size(); ++i)
+    for (unsigned int i(0); i<req.size(); ++i)
       this->requirements.push_back(req[i]);
   }
 
   // Parsing the LandIce boundary conditions sublist
   auto landice_bcs_params = Teuchos::sublist(params,"LandIce BCs");
-  int num_bcs = landice_bcs_params->get<int>("Number",0);
-  for (int i=0; i<num_bcs; ++i) {
+  unsigned int num_bcs = landice_bcs_params->get<int>("Number",0);
+  for (unsigned int i=0; i<num_bcs; ++i) {
     auto this_bc = Teuchos::sublist(landice_bcs_params,Albany::strint("BC",i));
     std::string type_str = util::upper_case(this_bc->get<std::string>("Type"));
 
@@ -139,7 +139,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
   dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,vecDimFO));
 
-  int sideDim = numDim-1;
+  unsigned int sideDim = numDim-1;
   for (auto it : landice_bcs) {
     for (auto pl: it.second) {
       std::string ssName = pl->get<std::string>("Side Set Name");
@@ -161,9 +161,9 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
                                                                        "       Either add a side discretization, or specify 'Cubature Degree' in sublist '" + pl->name() + "'.\n");
       sideCubature[ssName] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[ssName], sideCubDegree);
 
-      int numSideVertices = sideType[ssName]->getNodeCount();
-      int numSideNodes    = sideBasis[ssName]->getCardinality();
-      int numSideQPs      = sideCubature[ssName]->getNumPoints();
+      unsigned int numSideVertices = sideType[ssName]->getNodeCount();
+      unsigned int numSideNodes    = sideBasis[ssName]->getCardinality();
+      unsigned int numSideQPs      = sideCubature[ssName]->getNumPoints();
 
       dl->side_layouts[ssName] = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
                                                          numSideQPs,sideDim,numDim,numCellSides,vecDimFO));
@@ -310,7 +310,7 @@ void StokesFOBase::parseInputFields ()
     int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
     Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
-    for (int p_index=0; p_index< num_dist_param_vecs; ++p_index) {
+    for (unsigned int p_index=0; p_index< (unsigned int) num_dist_param_vecs; ++p_index) {
       std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
       Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
       param_name = param_list.get<std::string>("Name");
@@ -346,11 +346,11 @@ void StokesFOBase::parseInputFields ()
 
   // Volume mesh requirements
   Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
-  int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+  unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
   std::string fieldType, fieldUsage, meshPart;
   bool nodal_state, scalar_state;
-  for (int ifield=0; ifield<num_fields; ++ifield) {
+  for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
     Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
 
     // Get current state specs
@@ -403,13 +403,13 @@ void StokesFOBase::parseInputFields ()
   if (discParams->sublist("Side Set Discretizations").isParameter("Side Sets")) {
     ss_names = discParams->sublist("Side Set Discretizations").get<Teuchos::Array<std::string>>("Side Sets");
   } 
-  for (int i=0; i<ss_names.size(); ++i) {
+  for (unsigned int i=0; i<ss_names.size(); ++i) {
     const std::string& ss_name = ss_names[i];
     Teuchos::ParameterList& info = discParams->sublist("Side Set Discretizations").sublist(ss_name).sublist("Required Fields Info");
     num_fields = info.get<int>("Number Of Fields",0);
 
     Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(ss_name);
-    for (int ifield=0; ifield<num_fields; ++ifield) {
+    for (unsigned int ifield=0; ifield< (unsigned int) num_fields; ++ifield) {
       Teuchos::ParameterList& thisFieldList =  info.sublist(Albany::strint("Field", ifield));
 
       // Get current state specs
@@ -560,13 +560,13 @@ void StokesFOBase::setupEvaluatorRequests ()
     bool has_GLF_resp = false;
     if(this->params->isSublist("Response Functions")) {
       const Teuchos::ParameterList& resp = this->params->sublist("Response Functions",true);
-      int num_resps = resp.get<int>("Number Of Responses");
-      for(int i=0; i<num_resps; i++) {
+      unsigned int num_resps = resp.get<int>("Number Of Responses");
+      for(unsigned int i=0; i<num_resps; i++) {
         const std::string responseType = resp.sublist(Albany::strint("Response", i)).isParameter("Type") ?
          resp.sublist(Albany::strint("Response", i)).get<std::string>("Type") : std::string("Scalar Response");
         if(responseType == "Sum Of Responses") {
-          int num_sub_resps = resp.sublist(Albany::strint("Response", i)).get<int>("Number Of Responses");
-          for(int j=0; j<num_sub_resps; j++) {
+          unsigned int num_sub_resps = resp.sublist(Albany::strint("Response", i)).get<int>("Number Of Responses");
+          for(unsigned int j=0; j<num_sub_resps; j++) {
             if(resp.sublist(Albany::strint("Response", i)).sublist(Albany::strint("Response", j)).get<std::string>("Name") == "Grounding Line Flux") {
               has_GLF_resp = true;
               break;

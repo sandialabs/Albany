@@ -58,7 +58,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
-  const int numNodes, numQPs, numDims;
+  const unsigned int numNodes, numQPs, numDims;
   const bool useStereographicMap;
   const RealType R2, x_0, y_0;
 

@@ -39,14 +39,14 @@ namespace LandIce {
     Teuchos::RCP<shards::CellTopology> cellType;
     Teuchos::RCP<shards::CellTopology> sideType;
     
-    int numCells;
-    int numNodes;
-    int numQPs;
-    int cellDim;
+    unsigned int numCells;
+    unsigned int numNodes;
+    unsigned int numQPs;
+    unsigned int cellDim;
 
-    int numSideNodes;
-    int numSideQPs;
-    int sideDim;
+    unsigned int numSideNodes;
+    unsigned int numSideQPs;
+    unsigned int sideDim;
 
     PHX::MDField<const ScalarT>  field;
     PHX::MDField<const ScalarT>       gradField;

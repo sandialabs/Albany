@@ -50,9 +50,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void AnalyticIceGeometry<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
-  for (int cell=0; cell < workset.numCells; ++cell)
+  for (unsigned int cell=0; cell < workset.numCells; ++cell)
   {
-    for (int qp=0; qp < numQp; ++qp)
+    for (unsigned int qp=0; qp < numQp; ++qp)
     {
       MeshScalarT x = coordVec(cell,qp,0);
       H (cell,qp) = z_s(cell,qp) = (L -3*dx - x) * 0.0111 /(rho*g);

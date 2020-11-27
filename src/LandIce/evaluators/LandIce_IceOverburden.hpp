@@ -51,7 +51,7 @@ private:
 
   std::string basalSideName;  // Only if IsStokes  is true
 
-  int numPts;
+  unsigned int numPts;
 
   double rho_i;
   double g;

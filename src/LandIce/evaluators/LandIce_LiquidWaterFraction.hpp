@@ -53,7 +53,7 @@ private:
   // Output:
   PHX::MDField<OutputScalarT,Cell,Node>   phi;         //[adim]
 
-  int numNodes;
+  unsigned int numNodes;
 
   double L;      //[J kg^{-1}] = [ m^2 s^{-2}]
   double rho_w;  //[kg m^{-3}]

@@ -87,8 +87,8 @@ evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ParamScalarT zero (0.0);
   if (input_type==InputType::SMB_APPROX) {
-    for (int cell=0; cell<workset.numCells; ++cell) {
-      for (int node=0; node<numNodes; ++node) {
+    for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+      for (unsigned int node=0; node<numNodes; ++node) {
         omega(cell,node) = -std::min(smb(cell,node),zero);
       }
     }
@@ -115,7 +115,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     const int side = it_side.side_local_id;
 
     ParamScalarT zero (0.0);
-    for (int node=0; node<numNodes; ++node) {
+    for (unsigned int node=0; node<numNodes; ++node) {
       omega(cell,side,node) = -std::min(smb(cell,side,node),zero);
     }
   }

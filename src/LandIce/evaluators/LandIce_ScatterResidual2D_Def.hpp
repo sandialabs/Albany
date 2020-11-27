@@ -52,8 +52,8 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = workset.wsElNodeEqID;
   const bool loadResid = Teuchos::nonnull(workset.f);
   Teuchos::Array<LO> lcols;
-  const int neq = nodeID.extent(2);
-  int numDim = 0;
+  const unsigned int neq = nodeID.extent(2);
+  unsigned int numDim = 0;
   if (this->tensorRank==2) {
     numDim = this->valTensor.extent(2);
   }
@@ -78,7 +78,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     auto solIndexer = workset.disc->getOverlapGlobalLocalIndexer();
     const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-    int numLayers = layeredMeshNumbering.numLayers;
+    unsigned int numLayers = layeredMeshNumbering.numLayers;
     lcols.reserve(neq*this->numNodes*(numLayers+1));
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
@@ -89,16 +89,16 @@ evaluateFields(typename Traits::EvalData workset)
       const int elem_LID = sideSet[iSide].elem_LID;
       const int elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      int numSideNodes = side.topology->node_count;
+      unsigned int numSideNodes = side.topology->node_count;
 
       lcols.resize(neq*numSideNodes*(numLayers+1));
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       GO base_id;
-      for (int i = 0; i < numSideNodes; ++i) {
+      for (unsigned int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
         base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-        for (int il_col=0; il_col<numLayers+1; il_col++) {
+        for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
           GO gnode = layeredMeshNumbering.getId(base_id, il_col);
           for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
             GO gcol  = solDOFManager.getGlobalDOF(gnode, eq_col);
@@ -112,7 +112,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
 
-      for (int i = 0; i < numSideNodes; ++i) {
+      for (unsigned int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
         base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
         for (std::size_t eq = 0; eq < numFields; eq++) {
@@ -213,11 +213,11 @@ evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
   const bool loadResid = Teuchos::nonnull(workset.f);
-  const int neq = nodeID.extent(2);
+  const unsigned int neq = nodeID.extent(2);
   unsigned int nunk = this->numNodes*(neq-1);
   Teuchos::Array<LO> lcols, index;
   lcols.resize(nunk), index.resize(nunk);
-  int numDim = 0;
+  unsigned int numDim = 0;
   if (this->tensorRank==2) {
     numDim = this->valTensor.extent(2);
   }

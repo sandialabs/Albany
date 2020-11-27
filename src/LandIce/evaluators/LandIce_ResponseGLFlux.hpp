@@ -42,8 +42,8 @@ namespace LandIce {
 
     std::string basalSideName;
 
-    int numSideNodes;
-    int numSideDims;
+    unsigned int numSideNodes;
+    unsigned int numSideDims;
 
     PHX::MDField<const ScalarT,Cell,Side,Node,Dim>          avg_vel;     //[m yr^{-1}]
     PHX::MDField<const MeshScalarT,Cell,Side,Node>          thickness;   //[km]

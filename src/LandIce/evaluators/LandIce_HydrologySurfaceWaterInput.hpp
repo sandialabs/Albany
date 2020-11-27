@@ -52,7 +52,7 @@ private:
 
   InputType input_type;
 
-  int numNodes;
+  unsigned int numNodes;
 
   double omega_val;
 

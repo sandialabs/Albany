@@ -142,7 +142,7 @@ protected:
   //! Problem PL 
   const Teuchos::RCP<Teuchos::ParameterList> params;
 
-  int numDim;
+  unsigned int numDim;
   std::string elementBlockName;
 
   //! Discretization parameter list
@@ -228,7 +228,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
     Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
-    for (int p_index=0; p_index< num_dist_param_vecs; ++p_index)
+    for (unsigned int p_index=0; p_index< (unsigned int) num_dist_param_vecs; ++p_index)
     {
       std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
       Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
@@ -280,13 +280,13 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // +---------------------------------------------------------+
 
   Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
-  int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+  unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
   std::string fieldType, fieldUsage, meshPart;
   bool nodal_state, scalar_state;
   std::map<std::string, bool> is_input_state_scalar;
   // Loop over the number of required fields
-  for (int ifield=0; ifield<num_fields; ++ifield)
+  for (unsigned int ifield=0; ifield<num_fields; ++ifield)
   {
     // Get info on this field
     Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));

@@ -120,13 +120,9 @@ KOKKOS_INLINE_FUNCTION
 void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
 operator() (const Basal_Melt_Rate_Collapsed_Tag& tag, const int& sideSet_idx) const {
 
-  const int numPts = nodal ? numSideNodes : numSideQPs;
+  const unsigned int numPts = nodal ? numSideNodes : numSideQPs;
 
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
-  for (int node = 0; node < numPts; ++node) {
+  for (unsigned int node = 0; node < numPts; ++node) {
     //always in presence of water on shelves (assuming that beta==0 <==> on shelves)
     bool isThereWaterHere = isThereWater || (beta(sideSet_idx,node) == 0.0);
     ScalarT diffEnthalpy = Enthalpy(sideSet_idx,node) - EnthalpyHs(sideSet_idx,node);
@@ -136,7 +132,7 @@ operator() (const Basal_Melt_Rate_Collapsed_Tag& tag, const int& sideSet_idx) co
 
     //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
     ScalarT mstar = geoFluxHeat(sideSet_idx,node);
-    for (int dim = 0; dim < vecDimFO; dim++)
+    for (unsigned int dim = 0; dim < vecDimFO; dim++)
       mstar += beta_scaling * beta(sideSet_idx,node) * velocity(sideSet_idx,node,dim) * velocity(sideSet_idx,node,dim);
 
     double dTdz_melting = beta_p * rho_i * g;
@@ -156,13 +152,13 @@ KOKKOS_INLINE_FUNCTION
 void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
 operator() (const Basal_Melt_Rate_Tag& tag, const int& sideSet_idx) const {
 
-  const int numPts = nodal ? numSideNodes : numSideQPs;
+  const unsigned int numPts = nodal ? numSideNodes : numSideQPs;
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int node = 0; node < numPts; ++node) {
+  for (unsigned int node = 0; node < numPts; ++node) {
     //always in presence of water on shelves (assuming that beta==0 <==> on shelves)
     bool isThereWaterHere = isThereWater || (beta(cell,side,node) == 0.0);
     ScalarT diffEnthalpy = Enthalpy(cell,side,node) - EnthalpyHs(cell,side,node);
@@ -172,7 +168,7 @@ operator() (const Basal_Melt_Rate_Tag& tag, const int& sideSet_idx) const {
 
     //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
     ScalarT mstar = geoFluxHeat(cell,side,node);
-    for (int dim = 0; dim < vecDimFO; dim++)
+    for (unsigned int dim = 0; dim < vecDimFO; dim++)
       mstar += beta_scaling * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);
 
     double dTdz_melting = beta_p * rho_i * g;
@@ -209,16 +205,16 @@ evaluateFields(typename Traits::EvalData workset)
       Kokkos::parallel_for(Basal_Melt_Rate_Policy(0, sideSet.size), *this);
     }
   #else
-    const int numPts = nodal ? numSideNodes : numSideQPs;
+    const unsigned int numPts = nodal ? numSideNodes : numSideQPs;
 
     if (useCollapsedSidesets) {
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      for (unsigned int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
       {
         // Get the local data of side and cell
         const int cell = sideSet.elem_LID(sideSet_idx);
         const int side = sideSet.side_local_id(sideSet_idx);
 
-        for (int node = 0; node < numPts; ++node)
+        for (unsigned int node = 0; node < numPts; ++node)
         {
           //always in presence of water on shelves (assuming that beta==0 <==> on shelves)
           bool isThereWaterHere = isThereWater || (beta(sideSet_idx,node) == 0.0);
@@ -229,7 +225,7 @@ evaluateFields(typename Traits::EvalData workset)
 
           //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
           ScalarT mstar = geoFluxHeat(sideSet_idx,node);
-          for (int dim = 0; dim < vecDimFO; dim++)
+          for (unsigned int dim = 0; dim < vecDimFO; dim++)
             mstar += beta_scaling * beta(sideSet_idx,node) * velocity(sideSet_idx,node,dim) * velocity(sideSet_idx,node,dim);
 
           double dTdz_melting = beta_p * rho_i * g;
@@ -243,13 +239,13 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     } else {
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      for (unsigned int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
       {
         // Get the local data of side and cell
         const int cell = sideSet.elem_LID(sideSet_idx);
         const int side = sideSet.side_local_id(sideSet_idx);
 
-        for (int node = 0; node < numPts; ++node)
+        for (unsigned int node = 0; node < numPts; ++node)
         {
           //always in presence of water on shelves (assuming that beta==0 <==> on shelves)
           bool isThereWaterHere = isThereWater || (beta(cell,side,node) == 0.0);
@@ -260,7 +256,7 @@ evaluateFields(typename Traits::EvalData workset)
 
           //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
           ScalarT mstar = geoFluxHeat(cell,side,node);
-          for (int dim = 0; dim < vecDimFO; dim++)
+          for (unsigned int dim = 0; dim < vecDimFO; dim++)
             mstar += beta_scaling * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);
 
           double dTdz_melting = beta_p * rho_i * g;

@@ -112,7 +112,7 @@ void StokesFOThermoCoupled::constructDirichletEvaluators(const Albany::MeshSpecs
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames(vecDimFO+2);
-  for (int i=0; i<vecDimFO; i++) {
+  for (unsigned int i=0; i<vecDimFO; i++) {
     std::stringstream s; s << "U" << i;
     dirichletNames[i] = s.str();
   }

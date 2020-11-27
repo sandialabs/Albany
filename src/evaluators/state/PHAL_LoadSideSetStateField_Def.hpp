@@ -116,7 +116,7 @@ evaluateFields(typename Traits::EvalData workset)
     const int side = sideSet.side_local_id(sideSet_idx);
 
     // Not sure if this is even possible, but just for debug pourposes
-    TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ elem_GID ].ws != workset.wsIndex, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ elem_GID ].ws != (int) workset.wsIndex, std::logic_error,
                                 "Error! This workset has a side that belongs to an element not in the workset.\n");
 
     // We know the side ID, so we can fetch two things:
@@ -128,7 +128,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     int ss_cell_GID = ss_map.at(side_GID);
     int wsIndex2D = elemGIDws2D[ss_cell_GID].ws;
-    int ss_cell = elemGIDws2D[ss_cell_GID].LID;
+    unsigned int ss_cell = elemGIDws2D[ss_cell_GID].LID;
 
     // Then, after a safety check, we extract the StateArray of the desired state in the right 2D-ws
     TEUCHOS_TEST_FOR_EXCEPTION (esa[wsIndex2D].find(stateName) == esa[wsIndex2D].end(), std::logic_error,
@@ -152,15 +152,15 @@ evaluateFields(typename Traits::EvalData workset)
           if (leading_field_tag_sideset=="Node")
           {
             // side set node scalar
-            for (int node=0; node<dims[1]; ++node)
+            for (unsigned int node=0; node<dims[1]; ++node)
             {
-              field(sideSet_idx,node) = state(ss_cell,nodeMap[node]);
+              field(sideSet_idx,node) = state((int) ss_cell,nodeMap[node]);
             }
           }
           else
           {
             // side set cell vector/gradient
-            for (int idim=0; idim<dims[1]; ++idim)
+            for (unsigned int idim=0; idim<dims[1]; ++idim)
             {
               field(sideSet_idx,idim) = state(ss_cell,idim);
             }
@@ -171,18 +171,18 @@ evaluateFields(typename Traits::EvalData workset)
           if (leading_field_tag_sideset=="Node")
           {
             // side set node vector/gradient
-            for (int node=0; node<dims[1]; ++node)
+            for (unsigned int node=0; node<dims[1]; ++node)
             {
-              for (int dim=0; dim<dims[2]; ++dim)
-                field(sideSet_idx,node,dim) = state(ss_cell,nodeMap[node],dim);
+              for (unsigned int dim=0; dim<dims[2]; ++dim)
+                field(sideSet_idx,node,dim) = state((int) ss_cell, nodeMap[node], (int) dim);
             }
           }
           else
           {
             // side set cell tensor
-            for (int idim=0; idim<dims[1]; ++idim)
+            for (unsigned int idim=0; idim<dims[1]; ++idim)
             {
-              for (int jdim=0; jdim<dims[2]; ++jdim)
+              for (unsigned int jdim=0; jdim<dims[2]; ++jdim)
                 field(sideSet_idx,idim,jdim) = state(ss_cell,idim,jdim);
             }
           }
@@ -204,15 +204,15 @@ evaluateFields(typename Traits::EvalData workset)
           if (leading_field_tag=="Node")
           {
             // side set node scalar
-            for (int node=0; node<dims[2]; ++node)
+            for (unsigned int node=0; node<dims[2]; ++node)
             {
-              field(cell,side,node) = state(ss_cell,nodeMap[node]);
+              field(cell,side,node) = state((int) ss_cell,nodeMap[node]);
             }
           }
           else
           {
             // side set cell vector/gradient
-            for (int idim=0; idim<dims[2]; ++idim)
+            for (unsigned int idim=0; idim<dims[2]; ++idim)
             {
               field(cell,side,idim) = state(ss_cell,idim);
             }
@@ -223,18 +223,18 @@ evaluateFields(typename Traits::EvalData workset)
           if (leading_field_tag=="Node")
           {
             // side set node vector/gradient
-            for (int node=0; node<dims[2]; ++node)
+            for (unsigned int node=0; node<dims[2]; ++node)
             {
-              for (int dim=0; dim<dims[3]; ++dim)
-                field(cell,side,node,dim) = state(ss_cell,nodeMap[node],dim);
+              for (unsigned int dim=0; dim<dims[3]; ++dim)
+                field(cell,side,node,dim) = state((int) ss_cell,nodeMap[node], (int) dim);
             }
           }
           else
           {
             // side set cell tensor
-            for (int idim=0; idim<dims[2]; ++idim)
+            for (unsigned int idim=0; idim<dims[2]; ++idim)
             {
-              for (int jdim=0; jdim<dims[3]; ++jdim)
+              for (unsigned int jdim=0; jdim<dims[3]; ++jdim)
                 field(cell,side,idim,jdim) = state(ss_cell,idim,jdim);
             }
           }

@@ -130,9 +130,9 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
 
   if (needsGradPhiNorm) {
     double grad_norm_exponent = beta - 2.0;
-    for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int qp=0; qp < numQPs; ++qp) {
-        for (int dim(0); dim<numDim; ++dim) {
+    for (unsigned int cell=0; cell < workset.numCells; ++cell) {
+      for (unsigned int qp=0; qp < numQPs; ++qp) {
+        for (unsigned int dim(0); dim<numDim; ++dim) {
           q(cell,qp,dim) = -k_0 * (std::pow(h(cell,qp),alpha)+regularization)
                                 * std::pow(gradPhiNorm(cell,qp),grad_norm_exponent)
                                 * gradPhi(cell,qp,dim);
@@ -140,9 +140,9 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
       }
     }
   } else {
-    for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int qp=0; qp < numQPs; ++qp) {
-        for (int dim(0); dim<numDim; ++dim) {
+    for (unsigned int cell=0; cell < workset.numCells; ++cell) {
+      for (unsigned int qp=0; qp < numQPs; ++qp) {
+        for (unsigned int dim(0); dim<numDim; ++dim) {
           q(cell,qp,dim) = -(k_0+1e-3*regularization) * (std::pow(h(cell,qp),alpha)+regularization) * gradPhi(cell,qp,dim);
         }
       }
@@ -183,16 +183,16 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 
     if (needsGradPhiNorm) {
       double grad_norm_exponent = beta - 2.0;
-      for (int qp=0; qp < numQPs; ++qp) {
-        for (int dim(0); dim<numDim; ++dim) {
+      for (unsigned int qp=0; qp < numQPs; ++qp) {
+        for (unsigned int dim(0); dim<numDim; ++dim) {
           q(cell,side,qp,dim) = -k_0 * (std::pow(h(cell,side,qp),alpha)+regularization)
                                      * std::pow(gradPhiNorm(cell,side,qp),grad_norm_exponent)
                                      * gradPhi(cell,side,qp,dim);
         }
       }
     } else {
-      for (int qp=0; qp < numQPs; ++qp) {
-        for (int dim(0); dim<numDim; ++dim) {
+      for (unsigned int qp=0; qp < numQPs; ++qp) {
+        for (unsigned int dim(0); dim<numDim; ++dim) {
           q(cell,side,qp,dim) = -k_0 * (std::pow(h(cell,side,qp),alpha)+regularization) * gradPhi(cell,side,qp,dim);
         }
       }

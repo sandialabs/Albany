@@ -40,13 +40,13 @@ getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
    using std::endl;
    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
    const int & numNodes = ctd.node_count;
-   const int & numDim   = ctd.dimension;
    std::string name     = ctd.name;
    size_t      len      = name.find("_");
    if (len != std::string::npos) name = name.substr(0,len);
 
 // #define ALBANY_VERBOSE
 #ifdef ALBANY_VERBOSE
+   const int & numDim   = ctd.dimension;
    cout << "CellTopology is " << name << " with nodes " << numNodes << "  dim " << numDim << endl;
    cout << "FullCellTopology name is " << ctd.name << endl;
 #endif

@@ -117,12 +117,12 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
 
 
       MeshScalarT trapezoid_weight = 0;
-      for (int qp=0; qp<numSideQPs; ++qp)
+      for (unsigned int qp=0; qp<numSideQPs; ++qp)
         trapezoid_weight += w_side_measure(cell,side, qp);
       trapezoid_weight /= numSideNodes;
 
       ScalarT t = 0;
-      for (int inode=0; inode<numSideNodes; ++inode) {
+      for (unsigned int inode=0; inode<numSideNodes; ++inode) {
         //using trapezoidal rule to get diagonal mass matrix
         t += std::pow(solution(cell,side,inode),2)* trapezoid_weight;
       }

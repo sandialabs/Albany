@@ -1896,7 +1896,7 @@ STKDiscretization::computeSideSets()
   std::map<std::string, int> max_sideset_length;
   std::map<std::string, int> max_sides;
   std::map<std::string, int> current_local_index;
-  for (int i = 0; i < sideSets.size(); ++i) {
+  for (size_t i = 0; i < sideSets.size(); ++i) {
     SideSetList& ssList = sideSets[i];
     std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
 
@@ -1946,7 +1946,7 @@ STKDiscretization::computeSideSets()
   }
 
   // 3) Populate global views
-  for (int i = 0; i < sideSets.size(); ++i) {
+  for (size_t i = 0; i < sideSets.size(); ++i) {
     SideSetList& ssList = sideSets[i];
     std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
 
@@ -1965,17 +1965,17 @@ STKDiscretization::computeSideSets()
         int side = ss_val[j].side_local_id;
         cellsOnSide[side].push_back(cell);
       }
-      for (size_t side = 0; side < numSides; ++side) {
+      for (int side = 0; side < numSides; ++side) {
         numCellsOnSide[side] = cellsOnSide[side].size();
         max_cells_on_side = std::max(max_cells_on_side, numCellsOnSide[side]);
       }
 
-      for (size_t side = 0; side < numSides; ++side) {
+      for (int side = 0; side < numSides; ++side) {
         globalSideSetViews[ss_key].numCellsOnSide(current_index, side) = numCellsOnSide[side];
-        for (size_t j = 0; j < numCellsOnSide[side]; ++j) {
+        for (int j = 0; j < numCellsOnSide[side]; ++j) {
           globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = cellsOnSide[side][j];
         }
-        for (size_t j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
+        for (int j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
           globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = -1;
         }
       }
@@ -2003,7 +2003,7 @@ STKDiscretization::computeSideSets()
   }
 
   // 5) Populate map of LocalSideSetInfos
-  for (int i = 0; i < sideSets.size(); ++i) {
+  for (size_t i = 0; i < sideSets.size(); ++i) {
     SideSetList& ssList = sideSets[i];
     LocalSideSetInfoList& lssList = sideSetViews[i];
     std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();

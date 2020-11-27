@@ -202,10 +202,10 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Tr
   {
     case 2:
       // <Cell,Vector/Gradient>
-      for (int cell(0); cell<workset.numCells; ++cell)
+      for (unsigned int cell(0); cell<workset.numCells; ++cell)
       {
         norm = 0;
-        for (int dim(0); dim<dims[1]; ++dim)
+        for (unsigned int dim(0); dim<dims[1]; ++dim)
         {
           norm += std::pow(field(cell,dim),2);
         }
@@ -214,12 +214,12 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Tr
       break;
     case 3:
       // <Cell,Node/QuadPoint,Vector/Gradient> or <Cell,Side,Vector/Gradient>
-      for (int cell(0); cell<workset.numCells; ++cell)
+      for (unsigned int cell(0); cell<workset.numCells; ++cell)
       {
-        for (int i(0); i<dims[1]; ++i)
+        for (unsigned int i(0); i<dims[1]; ++i)
         {
           norm = 0;
-          for (int dim(0); dim<dims[2]; ++dim)
+          for (unsigned int dim(0); dim<dims[2]; ++dim)
           {
             norm += std::pow(field(cell,i,dim),2);
           }
@@ -244,10 +244,10 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Tr
           const int cell = iter_s->elem_LID;
           const int side = iter_s->side_local_id;
 
-          for (int i(0); i<dims[2]; ++i)
+          for (unsigned int i(0); i<dims[2]; ++i)
           {
             norm = 0;
-            for (int dim(0); dim<dims[3]; ++dim)
+            for (unsigned int dim(0); dim<dims[3]; ++dim)
             {
               norm += std::pow(field(cell,side,i,dim),2);
             }

@@ -105,7 +105,7 @@ protected:
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > cellBasis;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > sideBasis;
 
-  int numDim;
+  unsigned int numDim;
   Teuchos::RCP<Albany::Layouts> dl, dl_side;
 
   //! Discretization parameters

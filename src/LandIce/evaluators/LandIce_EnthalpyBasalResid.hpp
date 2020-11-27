@@ -66,11 +66,11 @@ private:
   Kokkos::View<int**, PHX::Device> sideNodes;
   std::string                     basalSideName;
 
-  int numCellNodes;
-  int numSideNodes;
-  int numSideQPs;
-  int sideDim;
-  int vecDimFO;
+  unsigned int numCellNodes;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int sideDim;
+  unsigned int vecDimFO;
 
   bool useCollapsedSidesets;
 

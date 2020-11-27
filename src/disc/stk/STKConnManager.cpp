@@ -37,8 +37,8 @@ private:
 };
 
 STKConnManager::STKConnManager(const Teuchos::RCP<AbstractSTKMeshStruct>& absSTKMeshStruct)
-   : stkMeshStruct_(absSTKMeshStruct), bulkData_(absSTKMeshStruct->bulkData),
-     metaData_(absSTKMeshStruct->metaData), ownedElementCount_(0), useFieldCoordinates_(false)
+   : ownedElementCount_(0), metaData_(absSTKMeshStruct->metaData),
+     bulkData_(absSTKMeshStruct->bulkData), stkMeshStruct_(absSTKMeshStruct), useFieldCoordinates_(false)
 {
 
      buildEntityCounts();

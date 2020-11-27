@@ -106,7 +106,7 @@ protected:
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>                    cellCubature;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>   cellBasis;
 
-  int numDim;
+  unsigned int numDim;
   Teuchos::RCP<Albany::Layouts> dl;
 
   std::string elementBlockName;
@@ -153,11 +153,11 @@ LandIce::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
     save_state[stateName]           = false;
     is_vector_state[stateName]      = false;
   }
-  for (int i=0; i<vector_states.size(); ++i)
+  for (unsigned int i=0; i<vector_states.size(); ++i)
   {
     is_vector_state[vector_states[i]] = true;
   }
-  for (int i=0; i<states_to_save.size(); ++i)
+  for (unsigned int i=0; i<states_to_save.size(); ++i)
   {
     save_state[states_to_save[i]] = true;
   }
@@ -167,7 +167,7 @@ LandIce::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
     int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
     Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
-    for (int p_index=0; p_index< num_dist_param_vecs; ++p_index)
+    for (unsigned int p_index=0; p_index< (unsigned int) num_dist_param_vecs; ++p_index)
     {
       std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
       TEUCHOS_TEST_FOR_EXCEPTION (!parameterParams.isSublist(parameter_sublist_name), std::logic_error,
@@ -182,7 +182,7 @@ LandIce::SchoofFit::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
     }
   }
 
-  for (int i=0; i<this->requirements.size(); ++i)
+  for (unsigned int i=0; i<this->requirements.size(); ++i)
   {
     const std::string& stateName = this->requirements[i];
     const std::string& fieldName = stateName;

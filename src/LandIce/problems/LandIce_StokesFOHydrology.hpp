@@ -123,7 +123,7 @@ protected:
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> basalSideBasis;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> surfaceSideBasis;
 
-  int numDim;
+  unsigned int numDim;
   int stokes_neq;
   int hydro_neq;
 
@@ -204,7 +204,7 @@ LandIce::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
     int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
     Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
-    for (int p_index=0; p_index< num_dist_param_vecs; ++p_index)
+    for (unsigned int p_index=0; p_index< num_dist_param_vecs; ++p_index)
     {
       std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
       param_list = parameterParams.sublist(parameter_sublist_name);
@@ -225,7 +225,7 @@ LandIce::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
     std::string fieldType, fieldUsage, meshPart;
     bool nodal_state, outputToExodus;
-    for (int ifield=0; ifield<num_fields; ++ifield)
+    for (unsigned int ifield=0; ifield<num_fields; ++ifield)
     {
       Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
 
@@ -295,7 +295,7 @@ LandIce::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   // Registering 2D states and building their load/save/gather evaluators
   // Note: we MUST have 'Side Set Discretizations', since this is the StokesFOHydrology coupling and we MUST have a basal mesh...
   Teuchos::Array<std::string> ss_names = discParams->sublist("Side Set Discretizations").get<Teuchos::Array<std::string>>("Side Sets");
-  for (int i=0; i<ss_names.size(); ++i)
+  for (unsigned int i=0; i<ss_names.size(); ++i)
   {
     const std::string& ss_name = ss_names[i];
     Teuchos::ParameterList& req_fields_info = discParams->sublist("Side Set Discretizations").sublist(ss_name).sublist("Required Fields Info");
@@ -308,7 +308,7 @@ LandIce::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
     const std::string& sideEBName = meshSpecs.sideSetMeshSpecs.at(ss_name)[0]->ebName;
     Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(ss_name);
-    for (int ifield=0; ifield<num_fields; ++ifield)
+    for (unsigned int ifield=0; ifield<num_fields; ++ifield)
     {
       Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
 

@@ -18,8 +18,8 @@ namespace LandIce
 template<typename EvalT, typename Traits, typename SurfHeightST>
 HydrostaticPressure<EvalT,Traits,SurfHeightST>::
 HydrostaticPressure(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-  s        (p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar),
   z        (p.get<std::string> ("Coordinate Vector Variable Name"),dl->vertices_vector),
+  s        (p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar),
   pressure (p.get<std::string> ("Hydrostatic Pressure Variable Name"), dl->node_scalar)
 {
   std::vector<PHX::Device::size_type> dims;
@@ -46,7 +46,7 @@ KOKKOS_INLINE_FUNCTION
 void HydrostaticPressure<EvalT, Traits, SurfHeightST>::
 operator() (const int& cell) const{
 
-  for (int node = 0; node < numNodes; ++node) {
+  for (unsigned int node = 0; node < numNodes; ++node) {
     pressure(cell,node) = pressure_scaling * ( s(cell,node) - z(cell,node,2) ); 
   }
     
