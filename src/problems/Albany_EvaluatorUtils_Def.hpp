@@ -624,8 +624,6 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsEvalu
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<std::string>("Weights Name",              weights_name);
     p->set<std::string>("Jacobian Det Name",         jacobian_det_name);
-    p->set<std::string>("Jacobian Name",             jacobian_det_name);
-    p->set<std::string>("Jacobian Inv Name",         jacobian_inv_name);
     p->set<std::string>("BF Name",                   bf_name);
     p->set<std::string>("Weighted BF Name",          weighted_bf_name);
     p->set<std::string>("Gradient BF Name",          grad_bf_name);

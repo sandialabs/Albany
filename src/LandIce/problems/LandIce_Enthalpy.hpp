@@ -9,6 +9,7 @@
 #define LANDICE_ENTHALPY_PROBLEM_HPP
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Phalanx_MDField.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -18,6 +19,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 #include "LandIce_ResponseUtilities.hpp"
 
 #include "PHAL_Workset.hpp"
@@ -68,12 +70,38 @@ namespace LandIce
     virtual void buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
                               Albany::StateManager& stateMgr);
 
-    // Build evaluators
+    //! Build evaluators
     virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                                                 const Albany::MeshSpecsStruct& meshSpecs,
                                                                                 Albany::StateManager& stateMgr,
                                                                                 Albany::FieldManagerChoice fmchoice,
                                                                                 const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+    //! Allocate and set unmanaged fields
+    struct ConstructFieldsOp
+    {
+    public:
+      //! Allocate unmanaged fields
+      ConstructFieldsOp(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                        Teuchos::RCP<Albany::Layouts> dl);
+
+      //! Pass unmanaged fields to all eval types
+      template <typename EvalT>
+      void operator() (EvalT /* e */) const;
+
+    private:
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm0;
+      Teuchos::RCP<Albany::Layouts> dl;
+
+      mutable PHX::MDField<RealType,Cell,QuadPoint> weighted_measure;
+      mutable PHX::MDField<RealType,Cell,QuadPoint> jacobian_det;
+      mutable PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+      mutable PHX::MDField<RealType,Cell,Node,QuadPoint> wBF;
+      mutable PHX::MDField<RealType,Cell,Node,QuadPoint,Dim> GradBF;
+      mutable PHX::MDField<RealType,Cell,Node,QuadPoint,Dim> wGradBF;
+    };
+
+    //! Build unmanaged fields
+    void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
     //! Each problem must generate its list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
