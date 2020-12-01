@@ -15,6 +15,13 @@ set (CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
 set (CMAKE_REQUIRED_LIBRARIES ${Trilinos_LIBRARY_DIRS})
 set (CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
 
+# If Albany is built against a Trilinos installation which includes pytrilinos,
+# Albany should not be linked to pytrilinos. The pytrilinos dynamic library can
+# undefined python related symbols.
+if (";${Trilinos_LIBRARIES};" MATCHES ";pytrilinos;")
+  list(REMOVE_ITEM Trilinos_LIBRARIES pytrilinos)
+endif()
+
 # Add Albany external libraries
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 

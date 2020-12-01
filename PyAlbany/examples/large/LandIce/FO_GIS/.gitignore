@@ -1,0 +1,9 @@
+beta_regularization
+gis_beta_*
+phalanx*
+*.txt
+smb_mismatch
+thickness_mismatch
+thickness_regularization
+timers.txt
+velocity_mismatch

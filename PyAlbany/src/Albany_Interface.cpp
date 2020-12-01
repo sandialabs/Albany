@@ -1,0 +1,282 @@
+//*****************************************************************//
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
+#include "Albany_Interface.hpp"
+
+#include <iostream>
+#include <string>
+
+#include "Albany_Memory.hpp"
+#include "Albany_SolverFactory.hpp"
+#include "Albany_RegressionTests.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_CommUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
+
+#include "Albany_FactoriesHelpers.hpp"
+
+#include "Piro_PerformSolve.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+#include "Teuchos_FancyOStream.hpp"
+#include "Teuchos_GlobalMPISession.hpp"
+#include "Teuchos_StackedTimer.hpp"
+#include "Teuchos_StandardCatchMacros.hpp"
+#include "Teuchos_TimeMonitor.hpp"
+#include "Teuchos_VerboseObject.hpp"
+
+#include "Thyra_DefaultProductVector.hpp"
+#include "Thyra_DefaultProductVectorSpace.hpp"
+#include "Thyra_VectorStdOps.hpp"
+#include "Thyra_MultiVectorStdOps.hpp"
+
+#include "Albany_TpetraThyraUtils.hpp"
+
+#if defined(ALBANY_CHECK_FPE) || defined(ALBANY_STRONG_FPE_CHECK) || defined(ALBANY_FLUSH_DENORMALS)
+#include <xmmintrin.h>
+#endif
+
+#if defined(ALBANY_CHECK_FPE) || defined(ALBANY_STRONG_FPE_CHECK)
+#include <cmath>
+#endif
+
+#if defined(ALBANY_FLUSH_DENORMALS)
+#include <pmmintrin.h>
+#endif
+
+#include "Albany_DataTypes.hpp"
+
+#include "Phalanx_config.hpp"
+
+using namespace PyAlbany;
+
+using Teuchos::RCP;
+using Teuchos::rcp;
+
+PyParallelEnv::PyParallelEnv(Teuchos::RCP<Teuchos::Comm<int>> _comm, int _num_threads, int _num_numa, int _device_id) : comm(_comm), num_threads(_num_threads), num_numa(_num_numa), device_id(_device_id)
+{
+    Kokkos::InitArguments args;
+    args.num_threads = this->num_threads;
+    args.num_numa = this->num_numa;
+    args.device_id = this->device_id;
+
+    Kokkos::initialize(args);
+}
+
+PyProblem::PyProblem(std::string _filename, Teuchos::RCP<PyParallelEnv> _pyParallelEnv) : filename(_filename), pyParallelEnv(_pyParallelEnv)
+{
+
+    RCP<Teuchos::FancyOStream> out(
+        Teuchos::VerboseObjectBase::getDefaultOStream());
+
+    PrintPyHeader(*out);
+
+    stackedTimer = Teuchos::rcp(
+        new Teuchos::StackedTimer("Albany Total Time"));
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+
+    stackedTimer->start("Albany: Setup Time");
+
+    comm = this->pyParallelEnv->comm;
+
+    slvrfctry = rcp(new Albany::SolverFactory(this->filename, comm));
+
+    auto const &bt = slvrfctry->getParameters()->get<std::string>("Build Type", "NONE");
+
+    if (bt == "Tpetra")
+    {
+        // Set the static variable that denotes this as a Tpetra run
+        static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+    }
+    else
+    {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                                   "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
+                                                                    "       The only valid choice for PyAlbany is 'Tpetra'.\n");
+    }
+
+    // Make sure all the pb factories are registered *before* the Application
+    // is created (since in the App ctor the pb factories are queried)
+    Albany::register_pb_factories();
+
+    // Create app (null initial guess)
+    albanyApp = slvrfctry->createApplication(comm);
+    albanyModel = slvrfctry->createModel(albanyApp);
+    solver = slvrfctry->createSolver(albanyModel, comm);
+
+    thyraDirections.resize(solver->Np());
+
+    hasBeenSolved = false;
+
+    stackedTimer->stop("Albany: Setup Time");
+}
+
+Teuchos::RCP<const PyTrilinosMap> PyProblem::getResponseMap(const int g_index)
+{
+    if (hasBeenSolved == false)
+    {
+        std::cout << "Warning: getResponseMap() must be called after performSolve()" << std::endl;
+        return Teuchos::null;
+    }
+    Teuchos::RCP<const Thyra_Vector> g = thyraResponses[g_index];
+    if (Teuchos::nonnull(g))
+    {
+        auto g_space = g->space();
+        return getPyTrilinosMap(Albany::getTpetraMap(g_space), false);
+    }
+    return Teuchos::null;
+}
+
+Teuchos::RCP<const PyTrilinosMap> PyProblem::getParameterMap(const int p_index)
+{
+    auto p_space = solver->getNominalValues().get_p(p_index)->space();
+    return getPyTrilinosMap(Albany::getTpetraMap(p_space), true);
+}
+
+void PyProblem::setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVector> direction)
+{
+    hasBeenSolved = false;
+
+    const unsigned int n_directions = direction->getNumVectors();
+
+    for (size_t l = 0; l < solver->Np(); l++)
+    {
+        if (p_index == l)
+        {
+#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
+            thyraDirections[l] = Albany::createThyraMultiVector(direction);
+            continue;
+#endif
+        }
+
+        bool is_null = Teuchos::is_null(thyraDirections[l]);
+        if (is_null)
+        {
+            auto p_space = solver->getNominalValues().get_p(l)->space();
+            thyraDirections[l] = Thyra::createMembers(p_space, n_directions);
+        }
+        if (p_index == l)
+        {
+            Teuchos::RCP<Tpetra_MultiVector> thyraDirectionsT = Albany::getTpetraMultiVector(thyraDirections[l]);
+
+            auto directions_in_view = direction->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
+            auto directions_out_view = thyraDirectionsT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            Kokkos::deep_copy(directions_out_view, directions_in_view);
+        }
+        else if (is_null)
+            for (size_t i_direction = 0; i_direction < n_directions; i_direction++)
+                thyraDirections[l]->col(i_direction)->assign(0.0);
+    }
+}
+
+Teuchos::RCP<PyTrilinosVector> PyProblem::getResponse(const int g_index)
+{
+    if (hasBeenSolved == false)
+    {
+        std::cout << "Warning: getResponse() must be called after performSolve()" << std::endl;
+    }
+    else
+    {
+#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
+        Teuchos::RCP<Thyra_Vector> g = thyraResponses[g_index];
+        Teuchos::RCP<PyTrilinosVector> g_out = Albany::getTpetraVector(g);
+        return g_out;
+#else
+        Teuchos::RCP<const Thyra_Vector> g = thyraResponses[g_index];
+        Teuchos::RCP<PyTrilinosVector> g_out = rcp(new PyTrilinosVector(this->getResponseMap(g_index)));
+        if (Teuchos::nonnull(g))
+        {
+            Teuchos::RCP<const Tpetra_Vector> gT = Albany::getConstTpetraVector(g);
+
+            auto g_out_view = g_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
+            auto g_in_view = gT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            Kokkos::deep_copy(g_out_view, g_in_view);
+            return g_out;
+        }
+#endif
+    }
+    return Teuchos::null;
+}
+
+Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getSensitivity(const int g_index, const int p_index)
+{
+    if (hasBeenSolved == false)
+    {
+        std::cout << "Warning: getSensitivity() must be called after performSolve()" << std::endl;
+    }
+    else
+    {
+#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
+        Teuchos::RCP<PyTrilinosMultiVector> dg_out = Albany::getTpetraMultiVector(thyraSensitivities[g_index][p_index]);
+        return dg_out;
+#else
+        Teuchos::RCP<const Thyra_MultiVector> dg = thyraSensitivities[g_index][p_index];
+        if (Teuchos::nonnull(dg))
+        {
+            Teuchos::RCP<const Tpetra_MultiVector> dgT = Albany::getConstTpetraMultiVector(dg);
+            Teuchos::RCP<PyTrilinosMultiVector> dg_out = rcp(new PyTrilinosMultiVector(this->getParameterMap(p_index),
+                                                                                       dgT->getNumVectors()));
+            auto dg_out_view = dg_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
+            auto dg_in_view = dgT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            Kokkos::deep_copy(dg_out_view, dg_in_view);
+            return dg_out;
+        }
+#endif
+    }
+    return Teuchos::null;
+}
+
+Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getReducedHessian(const int g_index, const int p_index)
+{
+    if (hasBeenSolved == false)
+    {
+        std::cout << "Warning: getReducedHessian() must be called after performSolve()" << std::endl;
+    }
+    else
+    {
+#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
+        Teuchos::RCP<PyTrilinosMultiVector> hv_out = Albany::getTpetraMultiVector(thyraReducedHessian[g_index][p_index]);
+        return hv_out;
+#else
+        Teuchos::RCP<const Thyra_MultiVector> hv = thyraReducedHessian[g_index][p_index];
+        Teuchos::RCP<PyTrilinosMultiVector> hv_out if (Teuchos::nonnull(hv))
+        {
+            Teuchos::RCP<const Tpetra_MultiVector> hvT = Albany::getConstTpetraMultiVector(hv);
+            Teuchos::RCP<PyTrilinosMultiVector> hv_out = rcp(new PyTrilinosMultiVector(this->getParameterMap(p_index),
+                                                                                       hvT->getNumVectors()));
+            auto hv_out_view = hv_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
+            auto hv_in_view = hvT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            Kokkos::deep_copy(hv_out_view, hv_in_view);
+            return hv_out;
+        }
+#endif
+    }
+    return Teuchos::null;
+}
+
+void PyProblem::performSolve()
+{
+    stackedTimer->start("Albany: performSolve");
+
+    Teuchos::ParameterList &solveParams =
+        slvrfctry->getAnalysisParameters().sublist(
+            "Solve", /*mustAlreadyExist =*/false);
+
+    Piro::PerformSolve(
+        *solver, solveParams, thyraResponses, thyraSensitivities, thyraDirections, thyraReducedHessian);
+
+    hasBeenSolved = true;
+
+    stackedTimer->stop("Albany: performSolve");
+}
+
+void PyProblem::reportTimers()
+{
+    Teuchos::StackedTimer::OutputOptions options;
+    options.output_fraction = true;
+    options.output_minmax = true;
+    stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
+}
