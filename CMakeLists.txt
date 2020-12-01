@@ -239,6 +239,8 @@ MESSAGE("Checking Trilinos build for required and optional packages")
 
 OPTION(ENABLE_ALBANY_EPETRA "Flag to turn on building of code depending on Epetra" ON)
 
+OPTION(ENABLE_ALBANY_PYTHON "Flag to turn on building of code depending on Python" OFF)
+
 ###############################
 ### Check REQUIRED packages ###
 ###############################
@@ -515,6 +517,20 @@ IF (ENABLE_ALBANY_EPETRA)
 ELSE()
   MESSAGE("-- ALBANY_EPETRA                     NOT Enabled.")
   SET(ALBANY_EPETRA FALSE)
+ENDIF()
+
+IF (ENABLE_ALBANY_PYTHON)
+  MESSAGE("-- ALBANY_PYTHON                           Enabled.")
+  IF(NOT DEFINED TRILINOS_SOURCE_DIR)
+    MESSAGE(FATAL_ERROR "Error: If Python is enable, TRILINOS_SOURCE_DIR has to be set to the source directory of Trilinos.")
+  ENDIF()
+  IF(NOT DEFINED TRILINOS_BUILD_DIR)
+    MESSAGE(FATAL_ERROR "Error: If Python is enable, TRILINOS_BUILD_DIR has to be set to the build directory of Trilinos.")
+  ENDIF()
+  SET(ALBANY_PYTHON TRUE)
+ELSE()
+  MESSAGE("-- ALBANY_PYTHON                     NOT Enabled.")
+  SET(ALBANY_PYTHON FALSE)
 ENDIF()
 
 # set optional dependency of mesh on parameters, defaults to Disabled
@@ -1004,8 +1020,18 @@ IF (ALBANY_LIBRARIES_ONLY OR DISABLE_ALBANY_TESTS)
   IF (DISABLE_ALBANY_TESTS) 
     MESSAGE("\nDISABLE_ALBANY_TESTS has been set: turning off all tests.")
   ENDIF()
+  IF (ALBANY_PYTHON)
+    SET(ALBANY_PYTHON_TESTS FALSE)
+  ENDIF()
 ELSE()
   add_subdirectory(tests)
+  IF (ALBANY_PYTHON)
+    SET(ALBANY_PYTHON_TESTS TRUE)
+  ENDIF()
+ENDIF()
+
+IF (ALBANY_PYTHON)
+  add_subdirectory( PyAlbany )
 ENDIF()
 
 MESSAGE("\nAnd CMake says...:")
