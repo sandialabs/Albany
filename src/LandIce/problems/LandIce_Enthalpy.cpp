@@ -7,7 +7,9 @@
 #include "LandIce_Enthalpy.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Phalanx_MDField_UnmanagedAllocator.hpp"
 #include "Shards_CellTopology.hpp"
+
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
@@ -160,6 +162,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 	  fm.resize(1);
 	  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
 	  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
+	  buildFields(*fm[0]);
 	  constructDirichletEvaluators(*meshSpecs[0]);
 }
 
@@ -175,6 +178,42 @@ LandIce::Enthalpy::buildEvaluators( PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   Albany::ConstructEvaluatorsOp<Enthalpy> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
+}
+
+LandIce::Enthalpy::ConstructFieldsOp::ConstructFieldsOp(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                                        Teuchos::RCP<Albany::Layouts> dl) :
+                                                        fm0(fm0), dl(dl)
+{
+#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
+  // If mesh does not depend on the solution, allocate MeshScalarT=RealType fields once to save memory
+  weighted_measure = PHX::allocateUnmanagedMDField<RealType,Cell,QuadPoint>(Albany::weights_name, dl->qp_scalar);
+  jacobian_det = PHX::allocateUnmanagedMDField<RealType,Cell,QuadPoint>(Albany::jacobian_det_name, dl->qp_scalar);
+  BF = PHX::allocateUnmanagedMDField<RealType,Cell,Node,QuadPoint>(Albany::bf_name, dl->node_qp_scalar);
+  wBF = PHX::allocateUnmanagedMDField<RealType,Cell,Node,QuadPoint>(Albany::weighted_bf_name, dl->node_qp_scalar);
+  GradBF = PHX::allocateUnmanagedMDField<RealType,Cell,Node,QuadPoint,Dim>(Albany::grad_bf_name, dl->node_qp_gradient);
+  wGradBF = PHX::allocateUnmanagedMDField<RealType,Cell,Node,QuadPoint,Dim>(Albany::weighted_grad_bf_name, dl->node_qp_gradient);
+#endif
+}
+
+template <typename EvalT>
+void
+LandIce::Enthalpy::ConstructFieldsOp::operator()(EvalT /* e */) const
+{
+#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
+  fm0.setUnmanagedField<EvalT>(weighted_measure);
+  fm0.setUnmanagedField<EvalT>(jacobian_det);
+  fm0.setUnmanagedField<EvalT>(BF);
+  fm0.setUnmanagedField<EvalT>(wBF);
+  fm0.setUnmanagedField<EvalT>(GradBF);
+  fm0.setUnmanagedField<EvalT>(wGradBF);
+#endif
+}
+
+void
+LandIce::Enthalpy::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
+{
+  ConstructFieldsOp op(fm0, dl);
+  Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 }
 
 void LandIce::Enthalpy::
