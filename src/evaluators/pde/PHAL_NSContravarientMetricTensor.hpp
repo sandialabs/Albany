@@ -39,7 +39,7 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  int  numDims, numQPs, numCells;
+  unsigned int  numDims, numQPs, numCells;
 
   // Input:
   //! Coordinate vector at vertices

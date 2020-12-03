@@ -96,7 +96,7 @@ LinComprNSResid(const Teuchos::ParameterList& p) :
 std::cout << " vecDim = " << vecDim << std::endl;
 std::cout << " numDims = " << numDims << std::endl;
 
-if (baseFlowData.size()!=numDims+2) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+if (baseFlowData.size()!=static_cast<int>(numDims+2)) {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in PHAL::LinComprNS constructor:  " <<
                                   "baseFlow data should have length numDims + 2 =  " << numDims+2 << "." << std::endl);} 
 

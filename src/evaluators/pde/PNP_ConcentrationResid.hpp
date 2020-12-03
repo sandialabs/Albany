@@ -51,7 +51,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> ConcentrationResidual;
 
-  int numNodes, numQPs, numDims, numSpecies;
+  unsigned int numNodes, numQPs, numDims, numSpecies;
   std::vector<double> D,beta; // Placeholder for charges
 
   bool enableTransient;
