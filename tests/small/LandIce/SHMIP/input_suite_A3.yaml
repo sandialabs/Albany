@@ -10,8 +10,9 @@ ANONYMOUS:
     Solution Method: Continuation
     Name: LandIce Hydrology 2D
     Response Functions: 
-      Number of Response Vectors: 1
-      Response Vector 0: 
+      Number Of Responses: 0
+      Response 0:
+        Type: Scalar Response
         Name: Squared L2 Difference Source ST Target PST
         Field Rank: Scalar
         Source Field Name: water_thickness
@@ -23,11 +24,11 @@ ANONYMOUS:
       DBC on NS NodeSet0 for DOF water_pressure: 0.0
     Neumann BCs: { }
     Parameters: 
-      Number of Parameter Vectors: 1
-      Parameter Vector 0: 
-        Number: 1
-        Parameter 0: Homotopy Parameter
-        Nominal Values: [0.02]
+      Number Of Parameters: 1
+      Parameter 0: 
+        Type: Scalar
+        Name: Homotopy Parameter
+        Nominal Value: 0.01
     LandIce Physical Parameters: 
       Water Density:        1000.0        # [ kg m^-3 ]
       Ice Density:          910.0         # [ kg m^-3 ]

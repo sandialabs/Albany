@@ -10,8 +10,9 @@ ANONYMOUS:
     Solution Method: Transient
     Name: LandIce Hydrology 2D
     Response Functions: 
-      Number of Response Vectors: 1
-      Response Vector 0: 
+      Number Of Responses: 0
+      Response 0: 
+        Type: Scalar Response
         Name: Squared L2 Difference Source ST Target PST
         Field Rank: Scalar
         Source Field Name: water_thickness
@@ -23,11 +24,7 @@ ANONYMOUS:
       DBC on NS BoundaryNodeSet1 for DOF water_pressure: 0.0
     Neumann BCs: { }
     Parameters: 
-      Number of Parameter Vectors: 0
-      Parameter Vector 0: 
-        Number: 1
-        Parameter 0: Homotopy Parameter
-        Nominal Values: [0.2]
+      Number Of Parameters: 0
     LandIce Physical Parameters: 
       Water Density:        1000.0        # [ kg m^-3 ]
       Ice Density:          910.0         # [ kg m^-3 ]
@@ -127,7 +124,6 @@ ANONYMOUS:
           Initial Time Step: 3.60000000000000000e+03
           # Maximum Time Step: 7.20000000000000000e+03
           Maximum Time Step: 86.40000000000000000e+06
-          Initial Order: 0
           Final Time: 8.64000000000000000e+10
           Maximum Absolute Error: 1.00000000000000002e-03
           Maximum Relative Error: 1.00000000000000002e-03
