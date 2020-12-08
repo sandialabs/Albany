@@ -146,11 +146,11 @@ evaluateFields(typename Traits::EvalData workset)
 
       const CellTopologyData_Subcell& side =  cellType->getCellTopologyData()->side[elem_side];
       sideType = Teuchos::rcp(new shards::CellTopology(side.topology));
-      int numSideNodes = sideType->getNodeCount();
+      unsigned int numSideNodes = sideType->getNodeCount();
       Intrepid2::DefaultCubatureFactory cubFactory;
       cubatureSide = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, cubatureDegree);
-      int sideDims = sideType->getDimension();
-      int numQPsSide = cubatureSide->getNumPoints();
+      unsigned int sideDims = sideType->getDimension();
+      unsigned int numQPsSide = cubatureSide->getNumPoints();
 
       // Allocate Temporary Views
       cubPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, sideDims);
@@ -184,7 +184,7 @@ evaluateFields(typename Traits::EvalData workset)
          physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
        physPointsCell(0, node, cellDims-1) = -1.0; //set z=-1 on internal cell nodes and z=0 side (see next lines).
      }
-     for (int i = 0; i < numSideNodes; ++i)
+     for (unsigned int i = 0; i < numSideNodes; ++i)
        physPointsCell(0, side.node[i], cellDims-1) = 0.0;  //set z=0 on side
 
       // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
@@ -226,7 +226,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       std::map<LO, std::size_t>::const_iterator it;
 
-      for (int i = 0; i < numSideNodes; ++i){
+      for (unsigned int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
         dH_Cell(node) = dH(elem_LID, node);
         H0_Cell(node) = H0(elem_LID, node);
@@ -236,7 +236,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       // This is needed, since evaluate currently sums into
-      for (int qp = 0; qp < numQPsSide; qp++) {
+      for (unsigned int qp = 0; qp < numQPsSide; qp++) {
         dH_Side(qp) = 0.0;
         H0_Side(qp) = 0.0;
         SMB_Side(qp) = 0.0;
@@ -248,7 +248,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-      for (int i = 0; i < numSideNodes; ++i){
+      for (unsigned int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
           const MeshScalarT& tmp = trans_basis_refPointsSide(0, node, qp);
@@ -261,7 +261,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-        for (int i = 0; i < numSideNodes; ++i){
+        for (unsigned int i = 0; i < numSideNodes; ++i){
           std::size_t node = side.node[i];
           for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
             const MeshScalarT& tmp = trans_gradBasis_refPointsSide(0, node, qp, dim);
@@ -271,7 +271,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
 
-      for (int i = 0; i < numSideNodes; ++i){
+      for (unsigned int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
         ScalarT res = 0;
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {

@@ -116,11 +116,11 @@ evaluateFields(typename Traits::EvalData workset)
       auto val = this->local_response(cell, res);
 
       // Loop over nodes in cell
-      for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+      for (int node_dof=0; node_dof<numNodes; node_dof++) {
         int neq = nodeID.extent(2);
 
         // Loop over equations per node
-        for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+        for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 
           // local derivative component
           int deriv = neq * node_dof + eq_dof;
@@ -188,7 +188,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
           for (GO il_col=0; il_col<numLayers+1; il_col++) {
             const GO ginode = layeredMeshNumbering.getId(base_id, il_col);
             const LO  inode = ov_node_indexer->getLocalElement(ginode);
-            for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+            for (int eq_col=0; eq_col<neq; eq_col++) {
               const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
               int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
               dg_data[res][dof] += val.dx(deriv);
@@ -434,11 +434,11 @@ evaluateFields(typename Traits::EvalData workset)
         auto val = this->local_response(cell, res);
 
         // Loop over nodes in cell
-        for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+        for (int node_dof=0; node_dof<numNodes; node_dof++) {
           int neq = nodeID.extent(2);
 
           // Loop over equations per node
-          for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+          for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 
             // local derivative component
             int deriv = neq * node_dof + eq_dof;
@@ -465,11 +465,11 @@ evaluateFields(typename Traits::EvalData workset)
         auto val = this->local_response(cell, res);
 
         // Loop over nodes in cell
-        for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+        for (int node_dof=0; node_dof<numNodes; node_dof++) {
           int neq = nodeID.extent(2);
 
           // Loop over equations per node
-          for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+          for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 
             // local derivative component
             int deriv = neq * node_dof + eq_dof;
@@ -715,12 +715,11 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
           GO base_id;
           for (int i = 0; i < numSideNodes; ++i) {
             std::size_t node = side.node[i];
-            const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
             base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-            for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
+            for (int il_col=0; il_col<numLayers+1; il_col++) {
               const GO ginode = layeredMeshNumbering.getId(base_id, il_col);
               const LO  inode = ov_node_indexer->getLocalElement(ginode);
-              for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+              for (int eq_col=0; eq_col<neq; eq_col++) {
                 const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
                 int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
                 hess_vec_prod_g_xx_data[res][dof] += val.dx(deriv).dx(0);
@@ -754,12 +753,11 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
           GO base_id;
           for (int i = 0; i < numSideNodes; ++i) {
             std::size_t node = side.node[i];
-            const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
             base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-            for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
+            for (int il_col=0; il_col<numLayers+1; il_col++) {
               const GO ginode = layeredMeshNumbering.getId(base_id, il_col);
               const LO  inode = ov_node_indexer->getLocalElement(ginode);
-              for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+              for (int eq_col=0; eq_col<neq; eq_col++) {
                 const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
                 int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
                 hess_vec_prod_g_xp_data[res][dof] += val.dx(deriv).dx(0);

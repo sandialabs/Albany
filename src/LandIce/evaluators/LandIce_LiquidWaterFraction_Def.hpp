@@ -46,7 +46,7 @@ KOKKOS_INLINE_FUNCTION
 void LiquidWaterFraction<EvalT,Traits,Type>::
 operator() (const int& cell) const{
 
-  for (int node = 0; node < numNodes; ++node) {
+  for (unsigned int node = 0; node < numNodes; ++node) {
     phi(cell,node) =  ( enthalpy(cell,node) < enthalpyHs(cell,node) ) ? ScalarT(0) : phi_scaling * (enthalpy(cell,node) - enthalpyHs(cell,node));
   }
 

@@ -37,11 +37,11 @@ private:
   std::vector<std::vector<int> >  sideNodes;
   Teuchos::RCP<shards::CellTopology> cellType;
 
-  int numNodes;
+  unsigned int numNodes;
 
-  int numSideNodes;
-  int numBasalQPs;
-  int sideDim;
+  unsigned int numSideNodes;
+  unsigned int numBasalQPs;
+  unsigned int sideDim;
 
   PHX::MDField<const ScalarT,Cell,Node>                         solution;
   PHX::MDField<const FieldScalarT,Cell,Side,Node>               field;

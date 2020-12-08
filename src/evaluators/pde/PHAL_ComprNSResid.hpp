@@ -47,8 +47,8 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> force;
   
   PHX::MDField<const ScalarT,Cell,QuadPoint> mu;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> kappa;
   PHX::MDField<const ScalarT,Cell,QuadPoint> lambda;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> kappa;
   PHX::MDField<const ScalarT,Cell,QuadPoint> tau11;
   PHX::MDField<const ScalarT,Cell,QuadPoint> tau12;
   PHX::MDField<const ScalarT,Cell,QuadPoint> tau13;

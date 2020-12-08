@@ -47,16 +47,16 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
   numSideNodes  = dl_side->node_scalar->extent(2);
 
-  int numSides = dl_side->node_scalar->extent(1);
-  int sideDim  = cellType->getDimension()-1;
+  unsigned int numSides = dl_side->node_scalar->extent(1);
+  unsigned int sideDim  = cellType->getDimension()-1;
 
   sideNodes.resize(numSides);
-  for (int side=0; side<numSides; ++side)
+  for (unsigned int side=0; side<numSides; ++side)
   {
     //Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
+    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     sideNodes[side].resize(thisSideNodes);
-    for (int node=0; node<thisSideNodes; ++node)
+    for (unsigned int node=0; node<thisSideNodes; ++node)
       sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
   }
 
@@ -85,7 +85,7 @@ KOKKOS_INLINE_FUNCTION
 void Temperature<EvalT,Traits,TemperatureST>::
 operator() (const int &cell) const{
 
-  for (int node = 0; node < numNodes; ++node) {
+  for (unsigned int node = 0; node < numNodes; ++node) {
     if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
       temperature(cell,node) = temperature_scaling * enthalpy(cell,node) + T0;
     else

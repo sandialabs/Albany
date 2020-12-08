@@ -142,7 +142,7 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::evaluateF
 
 
       ScalarT t = 0;
-      for (int qp=0; qp<numBasalQPs; ++qp) {
+      for (unsigned int qp=0; qp<numBasalQPs; ++qp) {
         ScalarT val = (flux_div(cell,side,qp)-SMB(cell,side,qp))/SMBRMS(cell,side,qp);
         t += val*val*w_measure_2d(cell,side,qp);
       }
@@ -163,15 +163,15 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::evaluateF
         const int cell = it_side.elem_LID;
         const int side = it_side.side_local_id;
         ScalarT tr = 0, tH =0;
-        for (int qp=0; qp<numBasalQPs; ++qp)
+        for (unsigned int qp=0; qp<numBasalQPs; ++qp)
         {
           ScalarT sum=0;
           ScalarT grad_thickness_tmp[2] = {0.0, 0.0};
-          for (int idim=0; idim<2; ++idim)
-            for (int itan=0; itan<2; ++itan)
+          for (unsigned int idim=0; idim<2; ++idim)
+            for (unsigned int itan=0; itan<2; ++itan)
               grad_thickness_tmp[idim] += tangents(cell,side,qp,idim,itan) * grad_thickness(cell,side,qp,itan);
 
-          for (int idim=0; idim<2; ++idim)
+          for (unsigned int idim=0; idim<2; ++idim)
             sum += grad_thickness_tmp[idim] * grad_thickness_tmp[idim];
           tr += sum * w_measure_2d(cell,side,qp);
           ScalarT val = (obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp); 

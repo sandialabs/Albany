@@ -53,8 +53,8 @@ private:
 
   bool              nodal;
 
-  int               numQPs;
-  int               numNodes;
+  unsigned int               numQPs;
+  unsigned int               numNodes;
   double            L;
   double            scaling_G;
 

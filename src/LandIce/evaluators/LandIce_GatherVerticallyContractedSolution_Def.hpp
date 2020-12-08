@@ -112,7 +112,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
-    const int numLayers = layeredMeshNumbering.numLayers;
+    const unsigned int numLayers = layeredMeshNumbering.numLayers;
 
     Teuchos::ArrayRCP<double> quadWeights(numLayers+1); //doing trapezoidal rule
     if(this->op == this->VerticalSum){
@@ -120,33 +120,33 @@ evaluateFields(typename Traits::EvalData workset)
     } else  { //Average
       const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
       quadWeights[0] = 0.5*layers_ratio[0]; quadWeights[numLayers] = 0.5*layers_ratio[numLayers-1];
-      for(int i=1; i<numLayers; ++i)
+      for (unsigned int i=1; i<numLayers; ++i)
         quadWeights[i] = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
     }
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_local_id;
+      const unsigned int  elem_LID = sideSet[iSide].elem_LID;
+      const unsigned int  elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      const int numSideNodes = side.topology->node_count;
+      const unsigned int numSideNodes = side.topology->node_count;
 
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       //we only consider elements on the top.
       GO baseId;
-      for (int i = 0; i < numSideNodes; ++i) {
+      for (unsigned int i = 0; i < numSideNodes; ++i) {
         const std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for(int il=0; il<numLayers+1; ++il) {
+        for (unsigned int il=0; il<numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
-          for(int comp=0; comp<this->vecDim; ++comp)
+          for (unsigned int comp=0; comp<this->vecDim; ++comp)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
         }
         if(this->isVector)
-          for(int comp=0; comp<this->vecDim; ++comp)
+          for (unsigned int comp=0; comp<this->vecDim; ++comp)
             this->contractedSol(elem_LID,elem_side,i,comp) = contrSol[comp];
         else
           this->contractedSol(elem_LID,elem_side,i) = contrSol[0];
@@ -179,14 +179,14 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
 
   if (it != ssList.end()) {
-    const int neq = workset.wsElNodeEqID.extent(2);
+    const unsigned int  neq = workset.wsElNodeEqID.extent(2);
 
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
     const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-    const int numLayers = layeredMeshNumbering.numLayers;
+    const unsigned int numLayers = layeredMeshNumbering.numLayers;
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
@@ -196,41 +196,41 @@ evaluateFields(typename Traits::EvalData workset)
     } else  { //Average, doing trapezoidal rule
       const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
       quadWeights[0] = 0.5*layers_ratio[0]; quadWeights[numLayers] = 0.5*layers_ratio[numLayers-1];
-      for(int i=1; i<numLayers; ++i)
+      for (unsigned int i=1; i<numLayers; ++i)
         quadWeights[i] = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
     }
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_local_id;
+      const unsigned int  elem_LID = sideSet[iSide].elem_LID;
+      const unsigned int  elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      int numSideNodes = side.topology->node_count;
+      unsigned int numSideNodes = side.topology->node_count;
 
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
       std::vector<double> velx(this->numNodes,0), vely(this->numNodes,0);
 
       GO baseId;
-      for (int i = 0; i < numSideNodes; ++i) {
+      for (unsigned int i = 0; i < numSideNodes; ++i) {
         const std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for(int il=0; il<numLayers+1; ++il) {
+        for (unsigned int il=0; il<numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
-          for(int comp=0; comp<this->vecDim; ++comp)
+          for (unsigned int comp=0; comp<this->vecDim; ++comp)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
         }
 
         if(this->isVector) {
-          for(int comp=0; comp<this->vecDim; ++comp) {
+          for (unsigned int comp=0; comp<this->vecDim; ++comp) {
             this->contractedSol(elem_LID,elem_side,i,comp) = FadType(this->contractedSol(elem_LID,elem_side,i,comp).size(), contrSol[comp]);
-            for(int il=0; il<numLayers+1; ++il)
+            for (unsigned int il=0; il<numLayers+1; ++il)
               this->contractedSol(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset) = quadWeights[il]*workset.j_coeff;
           }
         } else {
           this->contractedSol(elem_LID,elem_side,i) = FadType(this->contractedSol(elem_LID,elem_side,i).size(), contrSol[0]);
-          for(int il=0; il<numLayers+1; ++il)
+          for (unsigned int il=0; il<numLayers+1; ++il)
             this->contractedSol(elem_LID,elem_side,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset) = quadWeights[il]*workset.j_coeff;
         }
       }
@@ -270,7 +270,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
-    const int numLayers = layeredMeshNumbering.numLayers;
+    const unsigned int  numLayers = layeredMeshNumbering.numLayers;
 
     Teuchos::ArrayRCP<double> quadWeights(numLayers+1);
     if(this->op == this->VerticalSum){
@@ -278,33 +278,33 @@ evaluateFields(typename Traits::EvalData workset)
     } else  { //Average, doing trapezoidal rule
       const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
       quadWeights[0] = 0.5*layers_ratio[0]; quadWeights[numLayers] = 0.5*layers_ratio[numLayers-1];
-      for(int i=1; i<numLayers; ++i)
+      for (unsigned int i=1; i<numLayers; ++i)
         quadWeights[i] = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
     }
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_local_id;
+      const unsigned int  elem_LID = sideSet[iSide].elem_LID;
+      const unsigned int  elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      int numSideNodes = side.topology->node_count;
+      unsigned int numSideNodes = side.topology->node_count;
 
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       //we only consider elements on the top.
       GO baseId;
-      for (int i = 0; i < numSideNodes; ++i) {
+      for (unsigned int i = 0; i < numSideNodes; ++i) {
         const std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for(int il=0; il<numLayers+1; ++il) {
+        for (unsigned int il=0; il<numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
-          for(int comp=0; comp<this->vecDim; ++comp)
+          for (unsigned int comp=0; comp<this->vecDim; ++comp)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
         }
         if(this->isVector) {
-          for(int comp=0; comp<this->vecDim; ++comp)
+          for (unsigned int comp=0; comp<this->vecDim; ++comp)
             this->contractedSol(elem_LID,elem_side,i,comp) = contrSol[comp];
         } else {
           this->contractedSol(elem_LID,elem_side,i) = contrSol[0];
@@ -349,7 +349,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
-    const int numLayers = layeredMeshNumbering.numLayers;
+    const unsigned int  numLayers = layeredMeshNumbering.numLayers;
     Teuchos::ArrayRCP<double> quadWeights(numLayers+1); //doing trapezoidal rule
 
     if(this->op == this->VerticalSum){
@@ -357,34 +357,34 @@ evaluateFields(typename Traits::EvalData workset)
     } else  { //Average, doing trapezoidal rule
       const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
       quadWeights[0] = 0.5*layers_ratio[0]; quadWeights[numLayers] = 0.5*layers_ratio[numLayers-1];
-      for(int i=1; i<numLayers; ++i)
+      for (unsigned int i=1; i<numLayers; ++i)
         quadWeights[i] = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
     }
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_local_id;
+      const unsigned int  elem_LID = sideSet[iSide].elem_LID;
+      const unsigned int  elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      int numSideNodes = side.topology->node_count;
+      unsigned int numSideNodes = side.topology->node_count;
 
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       //we only consider elements on the top.
       GO baseId;
-      for (int i = 0; i < numSideNodes; ++i) {
+      for (unsigned int i = 0; i < numSideNodes; ++i) {
         const std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for(int il=0; il<numLayers+1; ++il) {
+        for (unsigned int il=0; il<numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
-          for(int comp=0; comp<this->vecDim; ++comp)
+          for (unsigned int comp=0; comp<this->vecDim; ++comp)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
         }
 
         if(this->isVector) {
-          for(int comp=0; comp<this->vecDim; ++comp)
+          for (unsigned int comp=0; comp<this->vecDim; ++comp)
             this->contractedSol(elem_LID,elem_side,i,comp) = contrSol[comp];
         } else {
           this->contractedSol(elem_LID,elem_side,i) = contrSol[0];
@@ -446,7 +446,7 @@ evaluateFields(typename Traits::EvalData workset)
                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  int numLayers = layeredMeshNumbering.numLayers;
+  unsigned int numLayers = layeredMeshNumbering.numLayers;
 
   Kokkos::deep_copy(this->contractedSol.get_view(), ScalarT(0.0));
 
@@ -468,48 +468,48 @@ evaluateFields(typename Traits::EvalData workset)
     } else  { //Average, doing trapezoidal rule
       const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
       quadWeights[0] = 0.5*layers_ratio[0]; quadWeights[numLayers] = 0.5*layers_ratio[numLayers-1];
-      for(int i=1; i<numLayers; ++i)
+      for (unsigned int i=1; i<numLayers; ++i)
         quadWeights[i] = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
     }
 
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_local_id;
+      const unsigned int  elem_LID = sideSet[iSide].elem_LID;
+      const unsigned int  elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      int numSideNodes = side.topology->node_count;
+      unsigned int numSideNodes = side.topology->node_count;
 
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
       //we only consider elements on the top.
       GO baseId;
-      for (int i = 0; i < numSideNodes; ++i) {
+      for (unsigned int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for(int il=0; il<numLayers+1; ++il) {
+        for (unsigned int il=0; il<numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
-          for(int comp=0; comp<this->vecDim; ++comp)
+          for (unsigned int comp=0; comp<this->vecDim; ++comp)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
         }
         std::vector<double> contrDirection(this->vecDim,0);
 
         if (is_x_direction_active)
-          for(int il=0; il<numLayers+1; ++il) {
+          for (unsigned int il=0; il<numLayers+1; ++il) {
             const GO gnode = layeredMeshNumbering.getId(baseId, il);
             const LO inode = ov_node_indexer.getLocalElement(gnode);
-            for(int comp=0; comp<this->vecDim; ++comp)
+            for (unsigned int comp=0; comp<this->vecDim; ++comp)
               contrDirection[comp] += direction_x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*quadWeights[il];
           }
 
         if(this->isVector) {
-          for(int comp=0; comp<this->vecDim; ++comp) {
+          for (unsigned int comp=0; comp<this->vecDim; ++comp) {
             this->contractedSol(elem_LID,elem_side,i,comp) = HessianVecFad(this->contractedSol(elem_LID,elem_side,i,comp).size(), contrSol[comp]);
             // If we differentiate w.r.t. the solution, we have to set the first
             // derivative to 1
             if (is_x_active)
-              for(int il=0; il<numLayers+1; ++il)
+              for (unsigned int il=0; il<numLayers+1; ++il)
                 this->contractedSol(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset).val() = quadWeights[il] * workset.j_coeff;
             // If we differentiate w.r.t. the solution direction, we have to set
             // the second derivative to the related direction value
@@ -521,7 +521,7 @@ evaluateFields(typename Traits::EvalData workset)
           // If we differentiate w.r.t. the solution, we have to set the first
           // derivative to 1
           if (is_x_active)
-            for(int il=0; il<numLayers+1; ++il)
+            for (unsigned int il=0; il<numLayers+1; ++il)
               this->contractedSol(elem_LID,elem_side,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset).val() = quadWeights[il] * workset.j_coeff;
           // If we differentiate w.r.t. the solution direction, we have to set
           // the second derivative to the related direction value

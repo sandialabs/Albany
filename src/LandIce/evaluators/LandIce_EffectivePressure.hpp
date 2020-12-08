@@ -51,7 +51,7 @@ private:
   // Output:
   PHX::MDField<HydroScalarT>  N;
 
-  int numPts;
+  unsigned int numPts;
 
   std::string basalSideName; // Needed if OnSide=true
 

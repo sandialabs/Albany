@@ -456,7 +456,6 @@ void StokesFOThermoCoupled::constructFluxDivEvaluators (PHX::FieldManager<PHAL::
   Teuchos::RCP<Teuchos::ParameterList> p;
 
   auto& flux_div_params = params->sublist("LandIce Flux Divergence");
-  auto& ssName = flux_div_params.get<std::string>("Side Set Name",basalSideName);
 
   // ------------------- Interpolations and utilities ------------------ //
 

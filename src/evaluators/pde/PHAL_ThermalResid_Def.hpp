@@ -27,14 +27,14 @@ ThermalResid(const Teuchos::ParameterList& p,
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
   TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  TResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+  C(p.get<double>("Heat Capacity")),
+  rho(p.get<double>("Density")),
+  disable_transient(p.get<bool>("Disable Transient")),
+  kappa_x(p.get<std::string>("Thermal Conductivity: kappa_x"), dl->shared_param),
   Source   (p.get<std::string>                   ("Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  rho(p.get<double>("Density")),
-  C(p.get<double>("Heat Capacity")),
-  disable_transient(p.get<bool>("Disable Transient")), 
-  kappa_x(p.get<std::string>("Thermal Conductivity: kappa_x"), dl->shared_param)
+  TResidual   (p.get<std::string>                   ("Residual Name"),
+	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
   this->addDependentField(wBF);
   if (!disable_transient) this->addDependentField(Tdot);

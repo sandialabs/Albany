@@ -100,7 +100,7 @@ namespace LandIce
     Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > cellBasis;
     Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > basalSideBasis;
 
-    int numDim;
+    unsigned int numDim;
     Teuchos::RCP<Albany::Layouts> dl, dl_basal;
     std::string elementBlockName;
 
@@ -146,8 +146,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
 
-  bool compute_w = false;
-
   // Here is how to register the field for dirichlet condition.
   {
     entity = Albany::StateStruct::NodalDataToElemNode;
@@ -173,12 +171,12 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
         discParams->sublist("Side Set Discretizations").isSublist("basalside") &&
         discParams->sublist("Side Set Discretizations").sublist("basalside").isSublist("Required Fields Info")){
       Teuchos::ParameterList& req_fields_info = discParams->sublist("Side Set Discretizations").sublist("basalside").sublist("Required Fields Info");
-      int num_fields = req_fields_info.get<int>("Number Of Fields",0);
-      for (int ifield=0; ifield<num_fields; ++ifield)
+      unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+      for (unsigned int ifield=0; ifield<num_fields; ++ifield)
       {
         const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
         if(thisFieldList.get<std::string>("Field Name") ==  stateName){
-          int numLayers = thisFieldList.get<int>("Number Of Layers");
+          unsigned int numLayers = thisFieldList.get<int>("Number Of Layers");
           auto sns = dl_basal->node_vector;
           auto dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,VecDim, LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),2, numLayers));
           stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_temp, basalEBName, true, &entity);
@@ -199,12 +197,12 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
         discParams->sublist("Side Set Discretizations").isSublist("basalside") &&
         discParams->sublist("Side Set Discretizations").sublist("basalside").isSublist("Required Fields Info")){
       Teuchos::ParameterList& req_fields_info = discParams->sublist("Side Set Discretizations").sublist("basalside").sublist("Required Fields Info");
-      int num_fields = req_fields_info.get<int>("Number Of Fields",0);
-      for (int ifield=0; ifield<num_fields; ++ifield)
+      unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+      for (unsigned int ifield=0; ifield<num_fields; ++ifield)
       {
         const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
         if(thisFieldList.get<std::string>("Field Name") ==  stateName){
-          int numLayers = thisFieldList.get<int>("Number Of Layers");
+          unsigned int numLayers = thisFieldList.get<int>("Number Of Layers");
           auto sns = dl_basal->node_vector;
           auto dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2), numLayers));
           stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_temp, basalEBName, true, &entity);

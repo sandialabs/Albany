@@ -18,9 +18,9 @@ PotentialResid(const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Albany::Layouts>& dl) :
   wBF         (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF     (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
-  Permittivity (p.get<std::string>  ("Permittivity Name"), dl->qp_scalar),
-  Concentration     ("Concentration", dl->qp_vector),
   PotentialGrad     ("Potential Gradient", dl->qp_gradient),
+  Concentration     ("Concentration", dl->qp_vector),
+  Permittivity (p.get<std::string>  ("Permittivity Name"), dl->qp_scalar),
   PotentialResidual ("Potential Residual",  dl->node_scalar )
 {
   this->addDependentField(wBF.fieldTag());

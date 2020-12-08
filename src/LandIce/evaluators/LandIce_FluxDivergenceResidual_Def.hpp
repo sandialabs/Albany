@@ -70,7 +70,6 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   auto layersRatio = layeredMeshNumbering.layers_ratio;
-  const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
   const int numLayers = layeredMeshNumbering.numLayers;
 
   GO gnodesBase[3], // global ids of the nodes at the base of the prism
@@ -80,7 +79,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
       nodesP1[3];    //local (to the prism) ids of the nodes at the top of the prism
   std::vector<std::map<int,LO>> triaLNodesIds(numLayers+1);
   std::vector<std::vector<LO> > triaBaseIds(numLayers+1);
-  for (int cell=0; cell<workset.numCells; ++cell) {
+  for (unsigned int cell=0; cell<workset.numCells; ++cell) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
 
     int iLayer = numLayers, iLayerPlus1 = 0;
@@ -89,7 +88,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     //Here we split the prisms nodes into nodes at the base of the prisms (nodes) and
     //corresponding nodes at the top of the prism (nodesP1) .
     //we also detect in what layer the prism is, so that we can compute the layer thickness
-    for (int inode=0; inode<numNodes; ++inode) {
+    for (unsigned int inode=0; inode<numNodes; ++inode) {
       residual(cell,inode) = 0;
       GO ilevel, baseId;
       layeredMeshNumbering.getIndices(elNodeID[inode], baseId, ilevel);

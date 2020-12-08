@@ -57,7 +57,7 @@ private:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint>              flux_div;
 
   std::string sideSetName;
-  int numSideQPs, numSideDims;
+  unsigned int numSideQPs, numSideDims;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 };

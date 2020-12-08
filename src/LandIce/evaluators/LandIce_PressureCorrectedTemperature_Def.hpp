@@ -18,8 +18,8 @@ PressureCorrectedTemperature<EvalT,Traits, TempST, SurfHeightST>::
 PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   sHeight (p.get<std::string> ("Surface Height Variable Name"), dl->cell_scalar2),
   temp (p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2),
-  correctedTemp (p.get<std::string> ("Corrected Temperature Variable Name"), dl->cell_scalar2),
-  coord (p.get<std::string> ("Coordinate Vector Variable Name"), dl->cell_gradient)
+  coord (p.get<std::string> ("Coordinate Vector Variable Name"), dl->cell_gradient),
+  correctedTemp (p.get<std::string> ("Corrected Temperature Variable Name"), dl->cell_scalar2)
 {
 	this->addDependentField(sHeight);
 	this->addDependentField(coord);

@@ -21,11 +21,11 @@ MapThickness (const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Albany::Layouts>& dl) :
 
   H_in(p.get<std::string> ("Input Thickness Name"), dl->node_scalar),
+  H_min(p.get<std::string> ("Thickness Lower Bound Name"), dl->node_scalar),
+  H_max(p.get<std::string> ("Thickness Upper Bound Name"), dl->node_scalar),
   H_obs(p.get<std::string> ("Observed Thickness Name"), dl->node_scalar),
   bed(p.get<std::string> ("Observed Bed Topography Name"), dl->node_scalar),
-  H_out(p.get<std::string> ("Output Thickness Name"), dl->node_scalar),
-  H_min(p.get<std::string> ("Thickness Lower Bound Name"), dl->node_scalar),
-  H_max(p.get<std::string> ("Thickness Upper Bound Name"), dl->node_scalar)
+  H_out(p.get<std::string> ("Output Thickness Name"), dl->node_scalar)
 {
   this->addDependentField(H_in);
   this->addDependentField(bed);

@@ -61,7 +61,7 @@ private:
   double rho_i;
   double c_creep;
 
-  int numPts;
+  unsigned int numPts;
   std::string   sideSetName;
 
   bool use_melting;

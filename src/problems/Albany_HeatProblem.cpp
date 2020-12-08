@@ -19,10 +19,10 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const int numDim_,
              const Teuchos::RCP<const Teuchos::Comm<int> >& commT_) :
   Albany::AbstractProblem(params_, paramLib_/*, distParamLib_*/),
-  params(params_), 
   haveSource(false),
   haveAbsorption(false),
   numDim(numDim_),
+  params(params_), 
   commT(commT_),
   use_sdbcs_(false)
 {

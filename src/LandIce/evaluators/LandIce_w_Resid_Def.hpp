@@ -31,10 +31,10 @@ namespace LandIce
   template<typename EvalT, typename Traits, typename VelocityType>
   w_Resid<EvalT,Traits,VelocityType>::
   w_Resid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-  GradVelocity   (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
-  velocity (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
   wBF          (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
   wGradBF      (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
+  GradVelocity   (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
+  velocity (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
   w_z        (p.get<std::string> ("w Gradient QP Variable Name"), dl->qp_gradient),
   coordVec     (p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
   Residual     (p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
@@ -62,16 +62,16 @@ namespace LandIce
     numSideQPs   = dl_side->qp_scalar->extent(2);
     numSideNodes  = dl_side->node_scalar->extent(2);
 
-    int numSides = dl_side->node_scalar->extent(1);
-    int sideDim  = cellType->getDimension()-1;
+    unsigned int numSides = dl_side->node_scalar->extent(1);
+    unsigned int sideDim  = cellType->getDimension()-1;
 
     sideNodes.resize(numSides);
-    for (int side=0; side<numSides; ++side)
+    for (unsigned int side=0; side<numSides; ++side)
     {
       //Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-      int thisSideNodes = cellType->getNodeCount(sideDim,side);
+      unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
       sideNodes[side].resize(thisSideNodes);
-      for (int node=0; node<thisSideNodes; ++node)
+      for (unsigned int node=0; node<thisSideNodes; ++node)
         sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
     }
 
@@ -130,7 +130,7 @@ namespace LandIce
         // Get the local data of side and cell
         const int cell = it_side.elem_LID;
         const int side = it_side.side_local_id;
-        for (int snode=0; snode<numSideNodes; ++snode){
+        for (unsigned int snode=0; snode<numSideNodes; ++snode){
           int cnode = sideNodes[side][snode];
           Residual(cell,cnode) =0;
          }
@@ -140,7 +140,7 @@ namespace LandIce
         // Get the local data of side and cell
         const int cell = it_side.elem_LID;
         const int side = it_side.side_local_id;
-        for (int snode=0; snode<numSideNodes; ++snode) {
+        for (unsigned int snode=0; snode<numSideNodes; ++snode) {
           int cnode = sideNodes[side][snode];
           for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
           Residual(cell,cnode) += (side_w_qp(cell,side,qp)*normals(cell,side,qp,2) + velocity(cell,qp,0)* normals(cell,side,qp,0) + velocity(cell,qp,1)* normals(cell,side,qp,1)

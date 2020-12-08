@@ -277,8 +277,6 @@ Dirichlet<PHAL::AlbanyTraits::HessianVec, Traits>::preEvaluate(
     typename Traits::EvalData dirichlet_workset)
 {
   const bool f_multiplier_is_active = !dirichlet_workset.hessianWorkset.f_multiplier.is_null();
-  const bool is_x_direction_active = !dirichlet_workset.hessianWorkset.direction_x.is_null();
-  const bool is_p_direction_active = !dirichlet_workset.hessianWorkset.direction_p.is_null();
 
   const std::vector<std::vector<int> >& nsNodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 

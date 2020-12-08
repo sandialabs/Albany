@@ -182,31 +182,31 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
     switch (beta_type)
     {
       case GIVEN_CONSTANT:
-        for (int qp=0; qp<numSideQPs; ++qp)
+        for (unsigned int qp=0; qp<numSideQPs; ++qp)
         {
-          for (int dim=0; dim<sideDim; ++dim)
+          for (unsigned int dim=0; dim<sideDim; ++dim)
             grad_beta(cell,side,qp,dim) = 0.;
         }
         break;
       case GIVEN_FIELD:
         if (is_given_field_param) {
-          for (int qp=0; qp<numSideQPs; ++qp) {
-            for (int dim=0; dim<sideDim; ++dim) {
+          for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+            for (unsigned int dim=0; dim<sideDim; ++dim) {
               grad_beta(cell,side,qp,dim) = 0.;
-              for (int node=0; node<numSideNodes; ++node) {
+              for (unsigned int node=0; node<numSideNodes; ++node) {
                 grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*given_field_param(cell,side,node);
           }}}
         } else {
-          for (int qp=0; qp<numSideQPs; ++qp) {
-            for (int dim=0; dim<sideDim; ++dim) {
+          for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+            for (unsigned int dim=0; dim<sideDim; ++dim) {
               grad_beta(cell,side,qp,dim) = 0.;
-              for (int node=0; node<numSideNodes; ++node) {
+              for (unsigned int node=0; node<numSideNodes; ++node) {
                 grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*given_field(cell,side,node);
           }}}
         }
         break;
       case REGULARIZED_COULOMB:
-        for (int qp=0; qp<numSideQPs; ++qp)
+        for (unsigned int qp=0; qp<numSideQPs; ++qp)
         {
           ScalarT u_val      = u_norm(cell,side,qp);
           ParamScalarT N_val = N(cell,side,qp);
@@ -216,10 +216,10 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
                       - power*mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1);
           ScalarT f_N = mu*std::pow(u_val,power-1)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
                       - mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1)*lambda*std::pow(A*N_val,1./power-1)*A;
-          for (int dim=0; dim<sideDim; ++dim)
+          for (unsigned int dim=0; dim<sideDim; ++dim)
           {
             grad_beta(cell,side,qp,dim) = f_N*gradN(cell,side,qp,dim);
-            for (int comp=0; comp<vecDim; ++comp)
+            for (unsigned int comp=0; comp<vecDim; ++comp)
               grad_beta(cell,side,qp,dim) += f_u * (U(cell,side,qp,comp)/u_val)*gradU(cell,side,qp,vecDim,dim);
           }
         }
@@ -231,12 +231,12 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
     // Correct the value if we are using a stereographic map
     if (use_stereographic_map)
     {
-      for (int qp=0; qp<numSideQPs; ++qp)
+      for (unsigned int qp=0; qp<numSideQPs; ++qp)
       {
         MeshScalarT x = coordVec(cell,side,qp,0) - x_0;
         MeshScalarT y = coordVec(cell,side,qp,1) - y_0;
         MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-        for (int dim=0; dim<sideDim; ++dim)
+        for (unsigned int dim=0; dim<sideDim; ++dim)
           grad_beta(cell,side,qp,dim) *= h*h;
       }
     }

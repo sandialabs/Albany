@@ -93,8 +93,8 @@ evaluateFields(typename Traits::EvalData workset)
       const int elem_LID = sideSet[iSide].elem_LID;
       const int elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      int numSideNodes = side.topology->node_count;
-      for (int i = 0; i < numSideNodes; ++i){
+      unsigned int numSideNodes = side.topology->node_count;
+      for (unsigned int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
         this->field2D(elem_LID,node) = x_constView[nodeID(elem_LID,node,this->offset)];
       }
@@ -138,9 +138,9 @@ evaluateFields(typename Traits::EvalData workset)
       const int elem_LID = sideSet[iSide].elem_LID;
       const int elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      int numSideNodes = side.topology->node_count;
+      unsigned int numSideNodes = side.topology->node_count;
 
-      for (int i = 0; i < numSideNodes; ++i){
+      for (unsigned int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
         typename PHAL::Ref<ScalarT>::type val = (this->field2D)(elem_LID,node);
         val = FadType(val.size(), x_constView[nodeID(elem_LID,node,this->offset)]);
@@ -234,9 +234,9 @@ evaluateFields(typename Traits::EvalData workset)
       const int elem_LID = sideSet[iSide].elem_LID;
       const int elem_side = sideSet[iSide].side_local_id;
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      int numSideNodes = side.topology->node_count;
+      unsigned int numSideNodes = side.topology->node_count;
 
-      for (int i = 0; i < numSideNodes; ++i){
+      for (unsigned int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
         typename PHAL::Ref<ScalarT>::type val = (this->field2D)(elem_LID,node);
         val = FadType(val.size(), x_constView[nodeID(elem_LID,node,this->offset)]);

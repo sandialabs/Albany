@@ -92,8 +92,6 @@ tests are a beginning, "work in progress."
    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
    auto gms = Teuchos::rcp_dynamic_cast<GenericSTKMeshStruct>(meshStruct);
 
-   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (comm.get());
-
    const AbstractFieldContainer::FieldContainerRequirements req;
    const Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct());
    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > side_set_sis;

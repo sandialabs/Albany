@@ -204,14 +204,14 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, sacadoTeuchosTestingHelpers)
   using namespace PHX;
   using namespace Intrepid2;
 
-  using EvalType = PHAL::AlbanyTraits::HessianVec;
-  using Scalar = EvalType::ScalarT;
+  typedef Sacado::Fad::SFad<double, 1> ValueType;
+  typedef Sacado::Fad::SFad<ValueType, 2> Scalar;
 
   typedef typename Sacado::ScalarType<Scalar>::type scalarType;
   const scalarType tol = 1000.0 * std::numeric_limits<scalarType>::epsilon();
 
-  Scalar a(2, 0.);
-  Scalar b(2, 0.);
+  Scalar a(0.);
+  Scalar b(0.);
 
   a.val().val() = 2.;
   b.val().val() = 2.;

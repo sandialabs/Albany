@@ -133,7 +133,7 @@ void myReduceAll (
   const int sz = v[0].size();
   // Pack into a vector of values.
   std::vector<ValueT> pack;
-  for (int i = 0; i < v.size(); ++i) {
+  for (size_t i = 0; i < v.size(); ++i) {
     pack.push_back(v[i].val());
     for (int j = 0; j < sz; ++j)
       pack.push_back(v[i].fastAccessDx(j));
@@ -149,7 +149,7 @@ void myReduceAll (
   }
   // Unpack.
   int slot = 0;
-  for (int i = 0; i < v.size(); ++i) {
+  for (size_t i = 0; i < v.size(); ++i) {
     v[i].val() = pack[slot++];
     for (int j = 0; j < sz; ++j)
       v[i].fastAccessDx(j) = pack[slot++];

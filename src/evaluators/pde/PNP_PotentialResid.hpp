@@ -50,7 +50,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> PotentialResidual;
 
-  int numNodes, numQPs, numSpecies;
+  unsigned int numNodes, numQPs, numSpecies;
   std::vector<double> q; // Placeholder for charges
 };
 }

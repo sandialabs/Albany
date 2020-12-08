@@ -57,7 +57,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node> Residual;
 
 
-  int  cellDims, numNodes, cubatureDegree;
+  unsigned int  cellDims, numNodes, cubatureDegree;
   Teuchos::RCP<double> dt;
   bool have_SMB;
   std::string sideSetName;

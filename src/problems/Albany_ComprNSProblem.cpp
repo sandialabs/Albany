@@ -20,9 +20,9 @@ ComprNSProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  params(params_), 
   numDim(numDim_),
-  use_sdbcs_(false)
+  use_sdbcs_(false),
+  params(params_)
 {
   // Get number of species equations from Problem specifications
   neq = params_->get("Number of PDE Equations", numDim);
@@ -84,7 +84,7 @@ Albany::ComprNSProblem::constructDirichletEvaluators(
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
-   for (int i=0; i<neq; i++) {
+   for (unsigned int i=0; i<neq; i++) {
      std::stringstream s; s << "qFluct" << i;
      dirichletNames[i] = s.str();
    }

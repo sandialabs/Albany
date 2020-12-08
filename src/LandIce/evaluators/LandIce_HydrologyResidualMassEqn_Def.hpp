@@ -187,7 +187,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
 
-  ScalarT res_qp, res_node, zero(0);
+  ScalarT res_qp, res_node;
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet)
   {
@@ -195,10 +195,10 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (int node=0; node < numNodes; ++node)
+    for (unsigned int node=0; node < numNodes; ++node)
     {
       res_node = 0;
-      for (int qp=0; qp < numQPs; ++qp)
+      for (unsigned int qp=0; qp < numQPs; ++qp)
       {
         res_qp = scaling_omega*omega(cell,side,qp);
         if (unsteady) {
@@ -214,9 +214,9 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 
         res_qp *= BF(cell,side,node,qp);
 
-        for (int idim=0; idim<numDims; ++idim)
+        for (unsigned int idim=0; idim<numDims; ++idim)
         {
-          for (int jdim=0; jdim<numDims; ++jdim)
+          for (unsigned int jdim=0; jdim<numDims; ++jdim)
           {
             res_qp += scaling_q*q(cell,side,qp,idim) * metric(cell,side,qp,idim,jdim) * GradBF(cell,side,node,qp,jdim);
           }
@@ -238,13 +238,13 @@ template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoup
 void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
-  ScalarT res_qp, res_node, zero(0);
-  for (int cell=0; cell < workset.numCells; ++cell)
+  ScalarT res_qp, res_node;
+  for (unsigned int cell=0; cell < workset.numCells; ++cell)
   {
-    for (int node=0; node < numNodes; ++node)
+    for (unsigned int node=0; node < numNodes; ++node)
     {
       res_node = 0;
-      for (int qp=0; qp < numQPs; ++qp)
+      for (unsigned int qp=0; qp < numQPs; ++qp)
       {
         res_qp = scaling_omega*omega(cell,qp);
         if (unsteady) {
@@ -260,7 +260,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
 
         res_qp *= BF(cell,node,qp);
 
-        for (int dim=0; dim<numDims; ++dim)
+        for (unsigned int dim=0; dim<numDims; ++dim)
         {
           res_qp += scaling_q*q(cell,qp,dim) * GradBF(cell,node,qp,dim);
         }

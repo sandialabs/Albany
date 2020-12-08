@@ -131,8 +131,8 @@ struct TpetraNullSpaceTraits {
 struct EpetraNullSpaceTraits {
 
   typedef std::vector<ST> array_type;
-  const array_type::size_type stride_;
   array_type& array;
+  const array_type::size_type stride_;
 
   EpetraNullSpaceTraits(array_type& array_, const array_type::size_type stride)
    : array(array_), stride_(stride) {}
@@ -320,7 +320,6 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
   setCoordinates(coordMV_in);
   interleavedOrdering = interleavedOrdering_;
 
-  int numSpaceDim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
   const int numNodes = getSpmdVectorSpace(coordMV->range())->localSubDim();
 
   if (nullSpaceDim > 0) {

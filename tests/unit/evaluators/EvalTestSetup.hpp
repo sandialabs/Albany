@@ -98,30 +98,30 @@ void createTestMapsAndWorksetConns(
     Teuchos::RCP<Tpetra_Map> &overlapped_dof_map,
     Albany::WorksetConn wsGlobalElNodeEqID,
     Albany::WorksetConn wsLocalElNodeEqID,
-    int numCells_per_direction,
-    int nodes_per_element,
-    int neq,
+    unsigned int numCells_per_direction,
+    unsigned int nodes_per_element,
+    unsigned int neq,
     Teuchos::RCP<const Teuchos::Comm<int>> comm)
 {
-  const int numCells_per_layer = numCells_per_direction * numCells_per_direction;
-  const int numCells = numCells_per_layer * numCells_per_direction;
-  const int numNodes_per_layer = (numCells_per_direction + 1) * (numCells_per_direction + 1);
-  const int numNodes = numNodes_per_layer * (numCells_per_direction + 1);
+  const unsigned int numCells_per_layer = numCells_per_direction * numCells_per_direction;
+  const unsigned int numCells = numCells_per_layer * numCells_per_direction;
+  const unsigned int numNodes_per_layer = (numCells_per_direction + 1) * (numCells_per_direction + 1);
+  const unsigned int numNodes = numNodes_per_layer * (numCells_per_direction + 1);
 
-  std::vector<int> node_offset = {0, 1, numCells_per_direction + 2, numCells_per_direction + 1, numNodes_per_layer, numNodes_per_layer + 1, numNodes_per_layer + numCells_per_direction + 2, numNodes_per_layer + numCells_per_direction + 1};
+  std::vector<unsigned int> node_offset = {0, 1, numCells_per_direction + 2, numCells_per_direction + 1, numNodes_per_layer, numNodes_per_layer + 1, numNodes_per_layer + numCells_per_direction + 2, numNodes_per_layer + numCells_per_direction + 1};
 
   // This numbering follows Hex_QP_Numbering.pdf
-  for (std::size_t i_z = 0; i_z < numCells_per_direction; ++i_z)
+  for (unsigned int i_z = 0; i_z < numCells_per_direction; ++i_z)
   {
-    for (std::size_t i_y = 0; i_y < numCells_per_direction; ++i_y)
+    for (unsigned int i_y = 0; i_y < numCells_per_direction; ++i_y)
     {
-      for (std::size_t i_x = 0; i_x < numCells_per_direction; ++i_x)
+      for (unsigned int i_x = 0; i_x < numCells_per_direction; ++i_x)
       {
-        const int cell_id = i_z * numCells_per_layer + i_y * numCells_per_direction + i_x;
-        const int first_node_id = i_z * numNodes_per_layer + i_y * (numCells_per_direction + 1) + i_x;
-        for (std::size_t node = 0; node < nodes_per_element; ++node)
+        const unsigned int cell_id = i_z * numCells_per_layer + i_y * numCells_per_direction + i_x;
+        const unsigned int first_node_id = i_z * numNodes_per_layer + i_y * (numCells_per_direction + 1) + i_x;
+        for (unsigned int node = 0; node < nodes_per_element; ++node)
         {
-          for (std::size_t eq = 0; eq < neq; ++eq)
+          for (unsigned int eq = 0; eq < neq; ++eq)
           {
             wsGlobalElNodeEqID(cell_id, node, eq) = (first_node_id + node_offset[node]) * neq + eq;
           }
@@ -135,8 +135,8 @@ void createTestMapsAndWorksetConns(
   std::vector<Tpetra_GO> overlapped_nodes = {};
   std::vector<Tpetra_GO> overlapped_dofs = {};
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
-    for (int node = 0; node < nodes_per_element; ++node)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+    for (unsigned int node = 0; node < nodes_per_element; ++node)
     {
       const Tpetra_GO nodeID = wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0) / neq;
       if (std::find(overlapped_nodes.begin(),
@@ -144,7 +144,7 @@ void createTestMapsAndWorksetConns(
                     nodeID) == overlapped_nodes.end())
       {
         overlapped_nodes.push_back(nodeID);
-        for (std::size_t eq = 0; eq < neq; ++eq)
+        for (unsigned int eq = 0; eq < neq; ++eq)
           overlapped_dofs.push_back(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, eq));
       }
     }
@@ -152,9 +152,9 @@ void createTestMapsAndWorksetConns(
   overlapped_node_map = Teuchos::rcp(new Tpetra_Map(numNodes, overlapped_nodes, 0, comm));
   overlapped_dof_map = Teuchos::rcp(new Tpetra_Map(numNodes * neq, overlapped_dofs, 0, comm));
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
-    for (int node = 0; node < nodes_per_element; ++node)
-      for (std::size_t eq = 0; eq < neq; ++eq)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+    for (unsigned int node = 0; node < nodes_per_element; ++node)
+      for (unsigned int eq = 0; eq < neq; ++eq)
         wsLocalElNodeEqID(cell, node, eq) = overlapped_dof_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, eq));
 }
 

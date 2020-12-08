@@ -123,33 +123,33 @@ saveElemState(typename Traits::EvalData workset)
 
   switch (size) {
   case 1:
-    for (int cell = 0; cell < workset.numCells; ++cell)
+    for (unsigned int cell = 0; cell < workset.numCells; ++cell)
     sta(cell) = field(cell);
     break;
   case 2:
-    for (int cell = 0; cell < workset.numCells; ++cell)
-      for (int qp = 0; qp < dims[1]; ++qp)
+    for (unsigned int cell = 0; cell < workset.numCells; ++cell)
+      for (unsigned int qp = 0; qp < dims[1]; ++qp)
         sta(cell, qp) = field(cell,qp);;
     break;
   case 3:
-    for (int cell = 0; cell < workset.numCells; ++cell)
-      for (int qp = 0; qp < dims[1]; ++qp)
-        for (int i = 0; i < dims[2]; ++i)
+    for (unsigned int cell = 0; cell < workset.numCells; ++cell)
+      for (unsigned int qp = 0; qp < dims[1]; ++qp)
+        for (unsigned int i = 0; i < dims[2]; ++i)
           sta(cell, qp, i) = field(cell,qp,i);
     break;
   case 4:
-    for (int cell = 0; cell < workset.numCells; ++cell)
-      for (int qp = 0; qp < dims[1]; ++qp)
-        for (int i = 0; i < dims[2]; ++i)
-          for (int j = 0; j < dims[3]; ++j)
+    for (unsigned int cell = 0; cell < workset.numCells; ++cell)
+      for (unsigned int qp = 0; qp < dims[1]; ++qp)
+        for (unsigned int i = 0; i < dims[2]; ++i)
+          for (unsigned int j = 0; j < dims[3]; ++j)
             sta(cell, qp, i, j) = field(cell,qp,i,j);
     break;
   case 5:
-    for (int cell = 0; cell < workset.numCells; ++cell)
-      for (int qp = 0; qp < dims[1]; ++qp)
-        for (int i = 0; i < dims[2]; ++i)
-          for (int j = 0; j < dims[3]; ++j)
-            for (int k = 0; k < dims[4]; ++k)
+    for (unsigned int cell = 0; cell < workset.numCells; ++cell)
+      for (unsigned int qp = 0; qp < dims[1]; ++qp)
+        for (unsigned int i = 0; i < dims[2]; ++i)
+          for (unsigned int j = 0; j < dims[3]; ++j)
+            for (unsigned int k = 0; k < dims[4]; ++k)
             sta(cell, qp, i, j, k) = field(cell,qp,i,j,k);
     break;
   default:
@@ -177,12 +177,12 @@ saveWorksetState(typename Traits::EvalData workset)
 
   switch (size) {
   case 1:
-    for (int cell = 0; cell < dims[0]; ++cell)
+    for (unsigned int cell = 0; cell < dims[0]; ++cell)
     sta(cell) = field(cell);
     break;
   case 2:
-    for (int cell = 0; cell < dims[0]; ++cell)
-      for (int qp = 0; qp < dims[1]; ++qp)
+    for (unsigned int cell = 0; cell < dims[0]; ++cell)
+      for (unsigned int qp = 0; qp < dims[1]; ++qp)
         sta(cell, qp) = field(cell,qp);;
     break;
   default:
@@ -230,8 +230,8 @@ saveNodeState(typename Traits::EvalData workset)
     case 2:   // node_scalar
       scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
       TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
-      for (int cell=0; cell<workset.numCells; ++cell)
-        for (int node=0; node<dims[1]; ++node)
+      for (unsigned int cell=0; cell<workset.numCells; ++cell)
+        for (unsigned int node=0; node<dims[1]; ++node)
         {
           nodeId = wsElNodeID[workset.wsIndex][cell][node];
           e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId+1);
@@ -242,13 +242,13 @@ saveNodeState(typename Traits::EvalData workset)
     case 3:   // node_vector
       vector_field = metaData.get_field<VFT> (stk::topology::NODE_RANK, stateName);
       TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
-      for (int cell=0; cell<workset.numCells; ++cell)
-        for (int node=0; node<dims[1]; ++node)
+      for (unsigned int cell=0; cell<workset.numCells; ++cell)
+        for (unsigned int node=0; node<dims[1]; ++node)
         {
           nodeId = wsElNodeID[workset.wsIndex][cell][node];
           e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId+1);
           values = stk::mesh::field_data(*vector_field, e);
-          for (int i=0; i<dims[2]; ++i)
+          for (unsigned int i=0; i<dims[2]; ++i)
             values[i] = field(cell,node,i);
         }
       break;

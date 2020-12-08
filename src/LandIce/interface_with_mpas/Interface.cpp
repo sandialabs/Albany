@@ -288,8 +288,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
 
     // Printing responses
-    const int num_g = solver->Ng();
-    for (int i=0; i<num_g-1; i++) {
+    const unsigned int num_g = solver->Ng();
+    for (unsigned int i=0; i<num_g-1; i++) {
       if (albanyApp->getResponse(i)->isScalarResponse()) {
         Thyra::ConstDetachedVectorView<double> g(thyraResponses[i]);
         std::cout << std::setprecision(15) << "\nResponse " << i << ": " << g[0] << std::endl;
@@ -305,7 +305,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
 
-  error = albanyApp->getSolutionStatus() != Albany::Application::SolutionStatus::Converged;
+  error = !success || (albanyApp->getSolutionStatus() != Albany::Application::SolutionStatus::Converged);
 
   auto overlapVS = albanyApp->getDiscretization()->getOverlapVectorSpace();
 

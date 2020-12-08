@@ -142,7 +142,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   TEUCHOS_TEST_FOR_EXCEPTION (dims.size() > 5, Teuchos::Exceptions::InvalidParameter, "Error! val_side has more dimensions than expected.\n");
 
-  for (int i = 0; i < dims.size(); ++i)
+  for (size_t i = 0; i < dims.size(); ++i)
     dimsArray[i] = dims[i];
 
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());

@@ -34,13 +34,13 @@ StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Need to allocate fields in mesh database
   Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-  for (int i(0); i<req.size(); ++i)
+  for (unsigned int i(0); i<req.size(); ++i)
     this->requirements.push_back(req[i]);
 
   // Need to allocate a fields in basal mesh database
   Teuchos::Array<std::string> breq = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
   this->ss_requirements[basalSideName].reserve(breq.size()); // Note: this is not for performance, but to guarantee
-  for (int i(0); i<breq.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
+  for (unsigned int i(0); i<breq.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
     this->ss_requirements[basalSideName].push_back(breq[i]); //       throw, even if it's empty...
 
   if (params->isParameter("Required Surface Fields"))
@@ -49,7 +49,7 @@ StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
     Teuchos::Array<std::string> sreq = params->get<Teuchos::Array<std::string> > ("Required Surface Fields");
     this->ss_requirements[surfaceSideName].reserve(sreq.size()); // Note: same motivation as for the basal side
-    for (int i(0); i<sreq.size(); ++i)
+    for (unsigned int i(0); i<sreq.size(); ++i)
       this->ss_requirements[surfaceSideName].push_back(sreq[i]);
   }
 
@@ -104,7 +104,7 @@ StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   this->rigidBodyModes->setNumPDEs(neq);
 
   // Set the hydrology equations as side set equations on the basal side
-  for (int eq=stokes_neq; eq<hydro_neq; ++eq)
+  for (unsigned int eq=stokes_neq; eq<hydro_neq; ++eq)
     this->sideSetEquations[eq].push_back(basalSideName);
 }
 
@@ -249,11 +249,11 @@ LandIce::StokesFOHydrology::constructDirichletEvaluators(
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dir_names(neq);
-  for (int i=0; i<stokes_neq; i++) {
+  for (unsigned int i=0; i<stokes_neq; i++) {
     std::stringstream s; s << "U" << i;
     dir_names[i] = s.str();
   }
-  for (int i=0; i<hydro_neq; ++i)
+  for (unsigned int i=0; i<hydro_neq; ++i)
     dir_names[stokes_neq+i] = hydro_dof_names[i];
 /*
   std::map<std::string,std::vector<std::string>> hydro_dir_names;

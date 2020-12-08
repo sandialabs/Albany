@@ -28,9 +28,9 @@ UpdateZCoordinateMovingTop<EvalT, Traits>::
 UpdateZCoordinateMovingTop (const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVecIn (p.get<std::string> ("Old Coords Name"), dl->vertices_vector),
-  coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
+  bedTopo(p.get<std::string> ("Bed Topography Name"), dl->node_scalar),
   topSurface(p.get<std::string>("Top Surface Name"), dl->node_scalar),
-  bedTopo(p.get<std::string> ("Bed Topography Name"), dl->node_scalar)
+  coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector)
 {
   this->addDependentField(coordVecIn);
   this->addDependentField(bedTopo);
@@ -83,7 +83,6 @@ evaluateFields(typename Traits::EvalData workset)
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
   }
 
-  const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
 
@@ -117,12 +116,12 @@ UpdateZCoordinateMovingBed<EvalT, Traits>::
 UpdateZCoordinateMovingBed (const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVecIn (p.get<std::string> ("Old Coords Name"), dl->vertices_vector),
-  coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
-  H(p.get<std::string> ("Thickness Name"), dl->node_scalar),
   bedTopo(p.get<std::string> ("Bed Topography Name"), dl->node_scalar),
-  bedTopoOut(p.get<std::string> ("Updated Bed Topography Name"), dl->node_scalar),
   topSurface(p.get<std::string> ("Top Surface Name"), dl->node_scalar),
-  topSurfaceOut(p.get<std::string> ("Updated Top Surface Name"), dl->node_scalar)
+  H(p.get<std::string> ("Thickness Name"), dl->node_scalar),
+  coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
+  topSurfaceOut(p.get<std::string> ("Updated Top Surface Name"), dl->node_scalar),
+  bedTopoOut(p.get<std::string> ("Updated Bed Topography Name"), dl->node_scalar)
 {
   this->addEvaluatedField(coordVecOut);
 
@@ -170,7 +169,6 @@ evaluateFields(typename Traits::EvalData workset)
   for(int i=1; i<numLayers; ++i)
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
 
-  const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     // const int neq = nodeID.extent(2); 

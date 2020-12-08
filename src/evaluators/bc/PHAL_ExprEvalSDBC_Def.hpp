@@ -43,14 +43,13 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   expr_eval.parse();
   expr_eval.bindVariable("t", dbc_workset.current_time);
   auto rcp_disc = dbc_workset.disc;
-  auto stk_disc = dynamic_cast<Albany::STKDiscretization*>(rcp_disc.get());
   auto x        = dbc_workset.x;
   auto x_view   = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
   auto const  ns_id     = this->nodeSetID;
   auto const& ns_nodes  = dbc_workset.nodeSets->find(ns_id)->second;
   auto const& ns_coords = dbc_workset.nodeSetCoords->find(ns_id)->second;
 
-  for (auto ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
+  for (unsigned int ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     auto const dof = ns_nodes[ns_node][this->offset];
     if (dim > 0) expr_eval.bindVariable("x", ns_coords[ns_node][0]);
     if (dim > 1) expr_eval.bindVariable("y", ns_coords[ns_node][1]);
@@ -68,12 +67,11 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData dbc_workset)
 {
   auto rcp_disc = dbc_workset.disc;
-  auto stk_disc = dynamic_cast<Albany::STKDiscretization*>(rcp_disc.get());
   auto f        = dbc_workset.f;
   auto f_view   = Albany::getNonconstLocalData(f);
   auto const  ns_id    = this->nodeSetID;
   auto const& ns_nodes = dbc_workset.nodeSets->find(ns_id)->second;
-  for (auto ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
+  for (unsigned int ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
     auto const dof = ns_nodes[ns_node][this->offset];
     f_view[dof]    = 0.0;
   }
@@ -98,7 +96,6 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
     typename Traits::EvalData dbc_workset)
 {
   auto rcp_disc = dbc_workset.disc;
-  auto stk_disc = dynamic_cast<Albany::STKDiscretization*>(rcp_disc.get());
   auto J        = dbc_workset.Jac;
   auto range_vs = J->range();
   auto col_vs   = Albany::getColumnSpace(J);
@@ -112,7 +109,7 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
   col_is_dbc_->assign(0.0);
   auto        row_is_dbc_data = Albany::getNonconstLocalData(row_is_dbc_);
 
-  for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+  for (unsigned int ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
     auto dof             = ns_nodes[ns_node][this->offset];
     row_is_dbc_data[dof] = 1;
   }

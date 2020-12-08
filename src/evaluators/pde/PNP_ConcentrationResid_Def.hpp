@@ -17,10 +17,10 @@ ConcentrationResid(const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Albany::Layouts>& dl) :
   wBF         (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF     (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  PotentialGrad     ("Potential Gradient", dl->qp_gradient),
   Concentration     ("Concentration", dl->qp_vector),
   Concentration_dot ("Concentration_dot", dl->qp_vector),
   ConcentrationGrad ("Concentration Gradient", dl->qp_vecgradient),
-  PotentialGrad     ("Potential Gradient", dl->qp_gradient),
   ConcentrationResidual ("Concentration Residual",  dl->node_vector )
 {
   if (p.isType<bool>("Disable Transient"))

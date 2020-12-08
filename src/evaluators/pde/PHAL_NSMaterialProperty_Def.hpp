@@ -58,7 +58,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 	vector_constant_value[i] = tmp[i];
 
       // Add property as a Sacado-ized parameter
-      for (PHX::DataLayout::size_type i=0; i<numDims; i++)
+      for (PHX::index_size_type i=0; i<numDims; i++)
         this->registerSacadoParameter(Albany::strint(name_mp,i), paramLib);
     }
     else if (rank == 4) {
@@ -82,8 +82,8 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 	  tensor_constant_value(i,j) = tmp(i,j);
 
       // Add property as a Sacado-ized parameter
-      for (PHX::DataLayout::size_type i=0; i<numRows; i++)
-	for (PHX::DataLayout::size_type j=0; j<numCols; j++)
+      for (PHX::index_size_type i=0; i<numRows; i++)
+	for (PHX::index_size_type j=0; j<numCols; j++)
           this->registerSacadoParameter(Albany::strint(Albany::strint(name_mp,i),j), paramLib);
     }
     else
@@ -314,13 +314,13 @@ NSMaterialProperty<EvalT,Traits>::getValue(const std::string &n)
     return scalar_constant_value;
   }
   else if (matPropType == VECTOR_CONSTANT) {
-    for (std::size_t dim=0; dim<vector_constant_value.size(); ++dim)
+    for (int dim=0; dim<vector_constant_value.size(); ++dim)
       if (n == Albany::strint(name_mp,dim))
 	return vector_constant_value[dim];
   }
   else if (matPropType == TENSOR_CONSTANT) {
-    for (std::size_t dim1=0; dim1<tensor_constant_value.getNumRows(); ++dim1)
-      for (std::size_t dim2=0; dim2<tensor_constant_value.getNumCols(); ++dim2)
+    for (int dim1=0; dim1<tensor_constant_value.getNumRows(); ++dim1)
+      for (int dim2=0; dim2<tensor_constant_value.getNumCols(); ++dim2)
 	if (n == Albany::strint(Albany::strint(name_mp,dim1),dim2))
 	  return tensor_constant_value(dim1,dim2);
   }

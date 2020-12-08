@@ -59,7 +59,7 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
 
   numSideNodes  = dl_side->node_scalar->extent(2);
   numBasalQPs = dl_side->qp_scalar->extent(2);
-  int numSides = dl_side->node_scalar->extent(1);
+  unsigned int numSides = dl_side->node_scalar->extent(1);
   sideDim  = cellType->getDimension()-1;
 
   this->addDependentField(solution);
@@ -78,12 +78,12 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
 
 
   sideNodes.resize(numSides);
-  for (int side=0; side<numSides; ++side)
+  for (unsigned int side=0; side<numSides; ++side)
   {
     //Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
+    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     sideNodes[side].resize(thisSideNodes);
-    for (int node=0; node<thisSideNodes; ++node)
+    for (unsigned int node=0; node<thisSideNodes; ++node)
       sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
   }
 }
@@ -114,8 +114,8 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
 
-  for (int cell=0; cell<workset.numCells; ++cell)
-    for (int inode=0; inode<numNodes; ++inode)
+  for (unsigned int cell=0; cell<workset.numCells; ++cell)
+    for (unsigned int inode=0; inode<numNodes; ++inode)
       bdLaplacian_L2Projection_res(cell,inode) = solution(cell,inode);
 
   if (workset.sideSets->find(sideName) != workset.sideSets->end())
@@ -128,16 +128,16 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
       const int side = it_side.side_local_id;
 
       MeshScalarT trapezoid_weights= 0;
-      for (int qp=0; qp<numBasalQPs; ++qp)
+      for (unsigned int qp=0; qp<numBasalQPs; ++qp)
         trapezoid_weights += w_side_measure(cell,side, qp);
       trapezoid_weights /= numSideNodes;
 
-      for (int inode=0; inode<numSideNodes; ++inode) {
+      for (unsigned int inode=0; inode<numSideNodes; ++inode) {
         ScalarT t = 0;
-        for (int qp=0; qp<numBasalQPs; ++qp) {
-          for (int icoor=0; icoor<sideDim; ++icoor) {
+        for (unsigned int qp=0; qp<numBasalQPs; ++qp) {
+          for (unsigned int icoor=0; icoor<sideDim; ++icoor) {
             ScalarT gradField_i(0.0), gradBF_i(0.0);
-            for (int itan=0; itan<sideDim; ++itan) {
+            for (unsigned int itan=0; itan<sideDim; ++itan) {
               gradField_i += side_tangents(cell,side,qp,icoor,itan)*gradField(cell,side,qp,itan);
               gradBF_i    += side_tangents(cell,side,qp,icoor,itan)*gradBF(cell,side,inode,qp,itan);
             }

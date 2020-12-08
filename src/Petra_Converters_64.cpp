@@ -29,7 +29,7 @@ Teuchos::RCP<const Epetra_Map> Petra::TpetraMap_To_EpetraMap(const Teuchos::RCP<
   if (tpetraMap_->isDistributed() || tpetraMap_->getComm()->getSize() == Teuchos::OrdinalTraits<int>::one()) {
     auto indices = tpetraMap_->getNodeElementList();
     Teuchos::Array<int> i_indices(numElements);
-    for(std::size_t k = 0; k < numElements; k++)
+    for(int k = 0; k < numElements; k++)
 		i_indices[k] = Teuchos::as<int>(indices[k]);
     const int computeGlobalElements = -Teuchos::OrdinalTraits<int>::one();
     return Teuchos::rcp(new Epetra_Map(computeGlobalElements, numElements, i_indices.getRawPtr(), indexBase, *comm_));
@@ -48,7 +48,7 @@ Teuchos::RCP<const Tpetra_Map> Petra::EpetraMap_To_TpetraMap(const Teuchos::RCP<
   if (epetraMap_->DistributedGlobal() || epetraMap_->Comm().NumProc() == Teuchos::OrdinalTraits<int>::one()) {
     Teuchos::Array<Tpetra_GO> indices(numElements);
     int *epetra_indices = epetraMap_->MyGlobalElements();
-    for(LO i=0; i < numElements; i++)
+    for(std::size_t i=0; i < numElements; i++)
        indices[i] = epetra_indices[i];
     const Tpetra::global_size_t computeGlobalElements = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
     return Teuchos::rcp(new Tpetra_Map(computeGlobalElements, indices, indexBase, commT_));
@@ -67,7 +67,7 @@ Teuchos::RCP<const Tpetra_Map> Petra::EpetraMap_To_TpetraMap(const Epetra_Map& e
   if (epetraMap_.DistributedGlobal() || epetraMap_.Comm().NumProc() == Teuchos::OrdinalTraits<int>::one()) {
     Teuchos::Array<Tpetra_GO> indices(numElements);
     int *epetra_indices = epetraMap_.MyGlobalElements();
-    for(LO i=0; i < numElements; i++)
+    for(std::size_t i=0; i < numElements; i++)
        indices[i] = epetra_indices[i];
     const Tpetra::global_size_t computeGlobalElements = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
     return Teuchos::rcp(new Tpetra_Map(computeGlobalElements, indices, indexBase, commT_));
@@ -86,7 +86,7 @@ Teuchos::RCP<const Tpetra_Map> Petra::EpetraMap_To_TpetraMap(const Epetra_BlockM
   if (epetraMap_.DistributedGlobal() || epetraMap_.Comm().NumProc() == Teuchos::OrdinalTraits<int>::one()) {
     Teuchos::Array<Tpetra_GO> indices(numElements);
     int *epetra_indices = epetraMap_.MyGlobalElements();
-    for(LO i=0; i < numElements; i++)
+    for(std::size_t i=0; i < numElements; i++)
        indices[i] = epetra_indices[i];
     const Tpetra::global_size_t computeGlobalElements = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
     return Teuchos::rcp(new Tpetra_Map(computeGlobalElements, indices, indexBase, commT_));
@@ -112,7 +112,7 @@ Teuchos::RCP<Epetra_CrsGraph> Petra::TpetraCrsGraph_To_EpetraCrsGraph(const Teuc
   Teuchos::RCP<Epetra_CrsGraph> epetraCrsGraph_= Teuchos::rcp(new Epetra_CrsGraph(Copy, *epetraRowMap_, *epetraColMap_, maxEntries));
 
   Teuchos::Array<LO> Indices;
-  for (LO i=0; i<tpetraCrsGraph_->getNodeNumRows(); i++) {
+  for (std::size_t i=0; i<tpetraCrsGraph_->getNodeNumRows(); i++) {
      auto NumEntries = tpetraCrsGraph_->getNumEntriesInLocalRow(i);
      Indices.resize(NumEntries);
      tpetraCrsGraph_->getLocalRowCopy(i, Indices(), NumEntries);
@@ -132,7 +132,7 @@ Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<const Tpetra_CrsMat
   Teuchos::RCP<Epetra_CrsMatrix> epetraCrsMatrix = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*epetraCrsGraph));
   epetraCrsMatrix->PutScalar(0.0);
 
-  for (LO i = 0; i<tpetraCrsMatrix->getNodeNumRows(); i++) {
+  for (std::size_t i = 0; i<tpetraCrsMatrix->getNodeNumRows(); i++) {
      LO NumEntries; const LO *Indices; const ST *Values;
      tpetraCrsMatrix->getLocalRowView(i, NumEntries, Values, Indices);
      epetraCrsMatrix->ReplaceMyValues(i, NumEntries, Values, Indices);
@@ -174,7 +174,7 @@ void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<const Tpetra_C
 
   epetraCrsMatrix_.PutScalar(0.0);
 
-  for (LO i = 0; i<tpetraCrsMatrix_->getNodeNumRows(); i++) {
+  for (std::size_t i = 0; i<tpetraCrsMatrix_->getNodeNumRows(); i++) {
      LO NumEntries; const LO *Indices; const ST *Values;
      tpetraCrsMatrix_->getLocalRowView(i, NumEntries, Values, Indices);
      epetraCrsMatrix_.ReplaceMyValues(i, NumEntries, Values, Indices);

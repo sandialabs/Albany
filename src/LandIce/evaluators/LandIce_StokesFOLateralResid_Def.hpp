@@ -82,7 +82,7 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
   // Get dimensions
   std::vector<PHX::DataLayout::size_type> dims;
   dl_lateral->node_qp_gradient->dimensions(dims);
-  int numSides = dims[1];
+  unsigned int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
   dl->node_vector->dimensions(dims);
@@ -92,12 +92,12 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
   sideNodes.resize(numSides);
-  int sideDim = cellType->getDimension()-1;
-  for (int side=0; side<numSides; ++side) {
+  unsigned int sideDim = cellType->getDimension()-1;
+  for (unsigned int side=0; side<numSides; ++side) {
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
+    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     sideNodes[side].resize(thisSideNodes);
-    for (int node=0; node<thisSideNodes; ++node) {
+    for (unsigned int node=0; node<thisSideNodes; ++node) {
       sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
     }
   }
@@ -155,7 +155,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_comput
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (int qp=0; qp<numSideQPs; ++qp) {
+    for (unsigned int qp=0; qp<numSideQPs; ++qp) {
       const ThicknessScalarT H = thickness(cell,side,qp); //[km]
       const MeshScalarT      s = elevation(cell,side,qp); //[km]
       const OutputScalarT immersed_ratio = H>threshold ? std::max(zero,std::min(one,1-s/H)) : zero;
@@ -171,14 +171,14 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_comput
         const MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
         w_normal_stress *= h;
       }
-      for (int node=0; node<numSideNodes; ++node) {
+      for (unsigned int node=0; node<numSideNodes; ++node) {
         int sideNode = sideNodes[side][node];
         // The immersed ratio should be between 0 and 1. If s>=H, it is 0, since the ice bottom is at s-H, which is >=0.
         // If s<=0, it is 1, since the top is already under water. If 0<s<H it is somewhere in (0,1), since the top is above the sea level,
         // but the bottom is s-H<0, which is below the sea level.
         // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
         const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(cell,side,node,qp);
-        for (int dim=0; dim<vecDimFO; ++dim) {
+        for (unsigned int dim=0; dim<vecDimFO; ++dim) {
           residual(cell,sideNode,dim) += w_normal_stress_bf * normals(cell,side,qp,dim);
         }
       }
@@ -197,7 +197,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_given_
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (int qp=0; qp<numSideQPs; ++qp) {
+    for (unsigned int qp=0; qp<numSideQPs; ++qp) {
       const ThicknessScalarT H = thickness(cell,side,qp); //[km]
       OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*given_immersed_ratio*given_immersed_ratio); //[kPa]
       if(add_melange_force)
@@ -211,11 +211,11 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_given_
         const MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
         w_normal_stress *= h;
       }
-      for (int node=0; node<numSideNodes; ++node) {
+      for (unsigned int node=0; node<numSideNodes; ++node) {
         int sideNode = sideNodes[side][node];
         // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
         const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(cell,side,node,qp);
-        for (int dim=0; dim<vecDimFO; ++dim) {
+        for (unsigned int dim=0; dim<vecDimFO; ++dim) {
           residual(cell,sideNode,dim) += w_normal_stress_bf * normals(cell,side,qp,dim);
         }
       }

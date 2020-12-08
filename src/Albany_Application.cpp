@@ -2381,7 +2381,6 @@ Application::evaluateResidual_HessVecProd_xx(
 {
   TEUCHOS_FUNC_TIME_MONITOR(
       "Albany Fill: Residual Distributed Parameter Hessian Vector Product");
-  double const this_time = fixTime(current_time);
 
   using EvalT = PHAL::AlbanyTraits::HessianVec;
   postRegSetup<EvalT>();
@@ -2450,7 +2449,6 @@ Application::evaluateResidual_HessVecProd_xp(
 {
   TEUCHOS_FUNC_TIME_MONITOR(
       "Albany Fill: Response Distributed Parameter Hessian Vector Product");
-  double const this_time = fixTime(current_time);
 
   using EvalT = PHAL::AlbanyTraits::HessianVec;
   postRegSetup<EvalT>();
@@ -2521,7 +2519,6 @@ Application::evaluateResidual_HessVecProd_px(
 {
   TEUCHOS_FUNC_TIME_MONITOR(
       "Albany Fill: Response Distributed Parameter Hessian Vector Product");
-  double const this_time = fixTime(current_time);
 
   using EvalT = PHAL::AlbanyTraits::HessianVec;
   postRegSetup<EvalT>();
@@ -2593,7 +2590,6 @@ Application::evaluateResidual_HessVecProd_pp(
 {
   TEUCHOS_FUNC_TIME_MONITOR(
       "Albany Fill: Response Distributed Parameter Hessian Vector Product");
-  double const this_time = fixTime(current_time);
 
   using EvalT = PHAL::AlbanyTraits::HessianVec;
   postRegSetup<EvalT>();

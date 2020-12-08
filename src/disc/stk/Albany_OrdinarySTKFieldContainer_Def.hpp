@@ -39,14 +39,6 @@ static const char* sol_dtk_id_name[3] = {"solution dtk",
                                          "solution_dotdot dtk"};
 #endif
 
-static const char* res_tag_name[1] = {
-    "Exodus Residual Name",
-};
-
-static const char* res_id_name[1] = {
-    "residual",
-};
-
 template <DiscType Interleaved>
 OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     const Teuchos::RCP<Teuchos::ParameterList>&               params_,

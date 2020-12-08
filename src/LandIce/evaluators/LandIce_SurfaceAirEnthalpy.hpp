@@ -48,7 +48,7 @@ private:
   // Output:
   PHX::MDField<SurfTempST,Cell,Node>   surfaceEnthalpy;  //[MW s m^{-3}]
 
-  int numNodes;
+  unsigned int numNodes;
   std::string fieldName;
 
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice

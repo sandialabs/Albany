@@ -149,7 +149,7 @@ void SideLaplacianResidual<EvalT, Traits>::evaluateFieldsSide (typename Traits::
 template<typename EvalT, typename Traits>
 void SideLaplacianResidual<EvalT,Traits>::evaluateFieldsCell (typename Traits::EvalData workset)
 {
-  for (int cell(0); cell<workset.numCells; ++cell)
+  for (size_t cell(0); cell<workset.numCells; ++cell)
   {
     // Assembling the residual of -\Delta u + u = f
     for (int node(0); node<numNodes; ++node)

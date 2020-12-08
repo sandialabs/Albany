@@ -66,8 +66,8 @@ private:
   // Output:
   PHX::MDField<ScalarT>   q;
 
-  int numQPs;
-  int numDim;
+  unsigned int numQPs;
+  unsigned int numDim;
   std::string   sideSetName;
 
   double k_0;

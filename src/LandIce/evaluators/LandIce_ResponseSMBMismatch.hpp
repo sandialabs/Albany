@@ -42,9 +42,9 @@ namespace LandIce {
     std::string surfaceSideName;
     std::string basalSideName;
 
-    int numSideNodes;
-    int numBasalQPs;
-    int numSideDims;
+    unsigned int numSideNodes;
+    unsigned int numBasalQPs;
+    unsigned int numSideDims;
 
     PHX::MDField<const ScalarT,Cell,Side,QuadPoint>                   flux_div;
     PHX::MDField<const RealType,Cell,Side,QuadPoint>                  SMB;

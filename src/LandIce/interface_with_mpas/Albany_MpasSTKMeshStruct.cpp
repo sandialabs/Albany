@@ -273,7 +273,7 @@ void MpasSTKMeshStruct::constructMesh(
 
   int tetrasLocalIdsOnPrism[3][4];
   auto elem_vs_indexer = Albany::createGlobalLocalIndexer(elem_vs);
-  for (int i=0; i<elem_vs->localSubDim()/numElemsInPrism; i++) {
+  for (unsigned int i=0; i<elem_vs->localSubDim()/numElemsInPrism; i++) {
     int ib = (Ordering == LAYER)*(i%(lElemColumnShift/numElemsInPrism)) + (Ordering == COLUMN)*(i/(elemLayerShift/numElemsInPrism));
     int il = (Ordering == LAYER)*(i/(lElemColumnShift/numElemsInPrism)) + (Ordering == COLUMN)*(i%(elemLayerShift/numElemsInPrism));
 
@@ -282,7 +282,7 @@ void MpasSTKMeshStruct::constructMesh(
     singlePartVec[0] = partVec[ebNo];
     //TODO: this could be done only in the first layer and then copied into the other layers
     int prismGlobalIds[6];
-    for (int j = 0; j < 3; ++j) {
+    for (unsigned int j = 0; j < 3; ++j) {
       int lowerId = shift+vertexLayerShift * indexToVertexID[verticesOnTria[3*ib+j]];
       prismGlobalIds[j] = lowerId;
       prismGlobalIds[j + 3] = lowerId+vertexColumnShift;
@@ -295,7 +295,7 @@ void MpasSTKMeshStruct::constructMesh(
     {
       tetrasFromPrismStructured(prismGlobalIds, tetrasLocalIdsOnPrism);
 
-      for (int iTetra = 0; iTetra < 3; iTetra++) {
+      for (unsigned int iTetra = 0; iTetra < 3; iTetra++) {
         stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_vs_indexer->getGlobalElement(3*i+iTetra)+1, singlePartVec);
         for(int j=0; j<4; ++j) {
           stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, tetrasLocalIdsOnPrism[iTetra][j]+1);
@@ -312,7 +312,7 @@ void MpasSTKMeshStruct::constructMesh(
     case Wedge:
     {
       stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_vs_indexer->getGlobalElement(i) + 1, singlePartVec);
-      for (int j = 0; j < 6; j++) {
+      for (unsigned int j = 0; j < 6; j++) {
         stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, prismGlobalIds[j] + 1);
         bulkData->declare_relation(elem, node, j);
       }
@@ -336,7 +336,7 @@ void MpasSTKMeshStruct::constructMesh(
   int upperSideLID = (ElemShape == Tetrahedron) ? 1 : 4;
 
   singlePartVec[0] = ssPartVec["basalside"];
-  for (int i=0; i<static_cast<int>(indexToTriangleID.size()); ++i) {
+  for (unsigned int i=0; i<indexToTriangleID.size(); ++i) {
     stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]+1, singlePartVec);
     stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  indexToTriangleID[i]*elemLayerShift+1);
     bulkData->declare_relation(elem, side,  basalSideLID);
@@ -350,7 +350,7 @@ void MpasSTKMeshStruct::constructMesh(
   int upperBasalOffset = maxGlobalTriangleId+1;
 
   singlePartVec[0] = ssPartVec["upperside"];
-  for (int i=0; i<static_cast<int>(indexToTriangleID.size()); ++i) {
+  for (unsigned int i=0; i<indexToTriangleID.size(); ++i) {
     stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]+upperBasalOffset+1, singlePartVec);
     stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  indexToTriangleID[i]*elemLayerShift+(numLayers-1)*elemColumnShift+1+(numElemsInPrism-1));
     bulkData->declare_relation(elem, side,  upperSideLID);
@@ -369,7 +369,7 @@ void MpasSTKMeshStruct::constructMesh(
   std::vector<int> tetraPos(2), facePos(2);
   std::vector<std::vector<std::vector<int> > > prismStruct(3, std::vector<std::vector<int> >(4, std::vector<int>(3)));
   std::vector<int> bdPrismFaceIds(4);
-  for (int i=0; i<static_cast<int>(indexToEdgeID.size())*numLayers; ++i) {
+  for (unsigned int i=0; i<indexToEdgeID.size()*numLayers; ++i) {
     int ib = (Ordering == LAYER)*(i%lEdgeColumnShift) + (Ordering == COLUMN)*(i/edgeLayerShift);
     if(isBoundaryEdge[ib]) {
       int il = (Ordering == LAYER)*(i/lEdgeColumnShift) + (Ordering == COLUMN)*(i%edgeLayerShift);
@@ -379,7 +379,7 @@ void MpasSTKMeshStruct::constructMesh(
       //TODO: this could be done only in the first layer and then copied into the other layers
       int prismGlobalIds[6];
       int shift = il*vertexColumnShift;
-      for (int j = 0; j < 3; ++j) {
+      for (unsigned int j = 0; j < 3; ++j) {
         int lowerId = shift+vertexLayerShift * indexToVertexID[verticesOnTria[3*lBasalElemId+j]];
         prismGlobalIds[j] = lowerId;
         prismGlobalIds[j + 3] = lowerId+vertexColumnShift;
@@ -443,7 +443,7 @@ void MpasSTKMeshStruct::constructMesh(
         bulkData->declare_relation(elem, side, prismFaceLID);
 
         stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
-        for (int j = 0; j < 4; j++) {
+        for (unsigned int j = 0; j < 4; j++) {
           stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[prismFaceLID].node[j]];
           bulkData->declare_relation(side, node, j);
         }
@@ -521,13 +521,13 @@ MpasSTKMeshStruct::tetrasFromPrismStructured (int const* prismVertexGIds, int te
 
   GO reorderedPrismLIds[6];
 
-  for (int ii = 0; ii < 6; ii++)
+  for (unsigned int ii = 0; ii < 6; ii++)
   {
     reorderedPrismLIds[ii] = prismVertexGIds[PrismVerticesMap[minIndex][ii]];
   }
 
-  for (int iTetra = 0; iTetra < 3; iTetra++)
-    for (int iVertex = 0; iVertex < 4; iVertex++)
+  for (unsigned int iTetra = 0; iTetra < 3; iTetra++)
+    for (unsigned int iVertex = 0; iVertex < 4; iVertex++)
     {
       tetrasIdsOnPrism[iTetra][iVertex] = reorderedPrismLIds[tetraOfPrism[prismType][iTetra][iVertex]];
     }
@@ -536,18 +536,18 @@ MpasSTKMeshStruct::tetrasFromPrismStructured (int const* prismVertexGIds, int te
 void
 MpasSTKMeshStruct::setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos)
 {
-  int numTriaFaces = prismFaceIds.size() - 2;
+  unsigned int numTriaFaces = prismFaceIds.size() - 2;
   tetraPos.assign(numTriaFaces,-1);
   facePos.assign(numTriaFaces,-1);
 
 
-  for (int iTetra (0), k (0); (iTetra < 3 && k < numTriaFaces); iTetra++)
+  for (unsigned int iTetra (0), k (0); (iTetra < 3 && k < numTriaFaces); iTetra++)
   {
     bool found;
-    for (int jFaceLocalId = 0; jFaceLocalId < 4; jFaceLocalId++ )
+    for (unsigned int jFaceLocalId = 0; jFaceLocalId < 4; jFaceLocalId++ )
     {
       found = true;
-      for (int ip (0); ip < 3 && found; ip++)
+      for (unsigned int ip (0); ip < 3 && found; ip++)
       {
         int localId = prismStruct[iTetra][jFaceLocalId][ip];
         decltype(prismFaceIds.size()) j = 0;
