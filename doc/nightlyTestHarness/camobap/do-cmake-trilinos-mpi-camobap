@@ -41,14 +41,14 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D MPI_BASE_DIR:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1 \
-      -D CMAKE_C_COMPILER=/nightlyCDash/albany-tpls-gcc-10.2.1/bin/mpicc \
-      -D CMAKE_CXX_COMPILER=/nightlyCDash/albany-tpls-gcc-10.2.1/bin/mpicxx \
-      -D CMAKE_Fortran_COMPILER=/nightlyCDash/albany-tpls-gcc-10.2.1/bin/mpif90 \
+      -D MPI_BASE_DIR:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5 \
+      -D CMAKE_C_COMPILER=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/bin/mpicc \
+      -D CMAKE_CXX_COMPILER=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/bin/mpicxx \
+      -D CMAKE_Fortran_COMPILER=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/bin/mpif90 \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/lib \
 \
       -D TPL_ENABLE_HDF5:BOOL=OFF \
 \
