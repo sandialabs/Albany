@@ -54,10 +54,10 @@ private:
 
   std::string sideName;
   std::vector<std::vector<int> >  sideNodes;
-  int numNodes;
-  int numSideNodes;
-  int numQPs;
-  int numSideQPs;
+  unsigned int numNodes;
+  unsigned int numSideNodes;
+  unsigned int numQPs;
+  unsigned int numSideQPs;
 
 };
 

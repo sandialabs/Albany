@@ -49,7 +49,7 @@ ProlongateVectorBase(const Teuchos::ParameterList& p,
 
   dims_in.resize(v_in.fieldTag().dataLayout().rank());
   dims_out.resize(v_out.fieldTag().dataLayout().rank());
-  for (int i=0; i<dims_in.size()-1; ++i)
+  for (unsigned int i=0; i<dims_in.size()-1; ++i)
   {
     dims_in[i] = v_in.fieldTag().dataLayout().extent(i);
     dims_out[i] = v_out.fieldTag().dataLayout().extent(i);
@@ -85,24 +85,24 @@ evaluateFields(typename Traits::EvalData workset)
     case 2:
       if (pad_back)
       {
-        for (int cell=0; cell<workset.numCells; ++cell)
+        for (unsigned int cell=0; cell<workset.numCells; ++cell)
         {
-          for (int dim=0; dim<dims_in[1]; ++dim)
+          for (unsigned int dim=0; dim<dims_in[1]; ++dim)
             v_out (cell,dim) = v_in(cell,dim);
 
-          for (int dim=dims_in[1]; dim<dims_out[1]; ++dim)
+          for (unsigned int dim=dims_in[1]; dim<dims_out[1]; ++dim)
             v_out (cell,dim) = pad_value;
         }
       }
       else
       {
-        int offset = dims_out[1]-dims_in[1];
-        for (int cell=0; cell<workset.numCells; ++cell)
+        unsigned int offset = dims_out[1]-dims_in[1];
+        for (unsigned int cell=0; cell<workset.numCells; ++cell)
         {
-          for (int dim=0; dim<offset; ++dim)
+          for (unsigned int dim=0; dim<offset; ++dim)
             v_out (cell,dim) = pad_value;
 
-          for (int dim=0; dim<dims_in[1]; ++dim)
+          for (unsigned int dim=0; dim<dims_in[1]; ++dim)
             v_out (cell,dim+offset) = v_in(cell,dim);
         }
       }
@@ -110,29 +110,29 @@ evaluateFields(typename Traits::EvalData workset)
     case 3:
       if (pad_back)
       {
-        for (int cell=0; cell<workset.numCells; ++cell)
+        for (unsigned int cell=0; cell<workset.numCells; ++cell)
         {
-          for (int pt=0; pt<dims_in[1]; ++pt)
+          for (unsigned int pt=0; pt<dims_in[1]; ++pt)
           {
-            for (int dim=0; dim<dims_in[2]; ++dim)
+            for (unsigned int dim=0; dim<dims_in[2]; ++dim)
               v_out (cell,pt,dim) = v_in(cell,pt,dim);
 
-            for (int dim=dims_in[2]; dim<dims_out[2]; ++dim)
+            for (unsigned int dim=dims_in[2]; dim<dims_out[2]; ++dim)
               v_out (cell,pt,dim) = pad_value;
           }
         }
       }
       else
       {
-        int offset = dims_out[1]-dims_in[1];
-        for (int cell=0; cell<workset.numCells; ++cell)
+        unsigned int offset = dims_out[1]-dims_in[1];
+        for (unsigned int cell=0; cell<workset.numCells; ++cell)
         {
-          for (int pt=0; pt<dims_in[1]; ++pt)
+          for (unsigned int pt=0; pt<dims_in[1]; ++pt)
           {
-            for (int dim=0; dim<offset; ++dim)
+            for (unsigned int dim=0; dim<offset; ++dim)
               v_out (cell,pt,dim) = pad_value;
 
-            for (int dim=0; dim<dims_in[2]; ++dim)
+            for (unsigned int dim=0; dim<dims_in[2]; ++dim)
               v_out (cell,pt,dim+offset) = v_in(cell,pt,dim);
           }
         }

@@ -59,8 +59,6 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
     const Teuchos::Array<std::string>& ss_names = ss_disc_pl.get<Teuchos::Array<std::string>>("Side Sets");
     for (auto ss_name : ss_names)
     {
-      Teuchos::ParameterList& this_ss_pl = ss_disc_pl.sublist(ss_name);
-
       const MeshSpecsStruct& ssMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
 
       // Building also side structures

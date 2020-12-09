@@ -34,11 +34,11 @@ SchoofFit (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Need to allocate a fields in mesh database
   Teuchos::Array<std::string> s_req = params->get<Teuchos::Array<std::string> > ("Required Scalar Fields");
-  for (int i(0); i<s_req.size(); ++i)
+  for (unsigned int i(0); i<s_req.size(); ++i)
     this->requirements.push_back(s_req[i]);
 
   Teuchos::Array<std::string> v_req = params->get<Teuchos::Array<std::string> > ("Required Vector Fields");
-  for (int i(0); i<v_req.size(); ++i)
+  for (unsigned int i(0); i<v_req.size(); ++i)
     this->requirements.push_back(v_req[i]);
 }
 
@@ -65,7 +65,6 @@ void LandIce::SchoofFit::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::Me
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
   const int vecDim          = 2;
-  const int numCellSides    = cellType->getFaceCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();

@@ -712,7 +712,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
   }
 
   // Create elements and node IDs
-  for (int i=0; i<elem_map->getNodeNumElements(); i++) {
+  for (size_t i=0; i<elem_map->getNodeNumElements(); i++) {
     const GO elem_GID = elem_map->getGlobalElement(i);
     const GO left_node  = elem_GID;
     GO right_node = left_node+1;
@@ -773,7 +773,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
        bulkData->change_entity_parts(lnode, singlePartVec);
 
     }
-    if (right_node==elem_map->getGlobalNumElements() + StartIndex) {
+    if (right_node==(GO) elem_map->getGlobalNumElements() + StartIndex) {
       singlePartVec[0] = nsPartVec["NodeSet1"];
       bulkData->change_entity_parts(rnode, singlePartVec);
     }
@@ -818,7 +818,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
       this->PBCStruct.scale[1] = scale[1];
   }
 
-  for (int i=0; i<elem_map->getNodeNumElements(); i++) {
+  for (size_t i=0; i<elem_map->getNodeNumElements(); i++) {
 
     const GO elem_GID = elem_map->getGlobalElement(i);
     const GO x_GID = elem_GID % nelem[0]; // mesh column number
@@ -1066,7 +1066,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
   }
 
   // Create elements and node IDs
-  for (int i=0; i<elem_map->getNodeNumElements(); i++) {
+  for (size_t i=0; i<elem_map->getNodeNumElements(); i++) {
     const GO elem_GID = elem_map->getGlobalElement(i);
     const GO z_GID    = elem_GID / (nelem[0]*nelem[1]); // mesh column number
     const GO xy_plane = elem_GID % (nelem[0]*nelem[1]);

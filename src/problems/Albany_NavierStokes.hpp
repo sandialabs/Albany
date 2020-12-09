@@ -169,8 +169,6 @@ Albany::NavierStokes::constructEvaluators(
   using std::map;
   using PHAL::AlbanyTraits;
  
-  const CellTopologyData * const elem_top = &meshSpecs.ctd;
- 
   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
@@ -199,7 +197,6 @@ Albany::NavierStokes::constructEvaluators(
                               "Data Layout Usage in NavierStokes problem assumes vecDim = numDim");
 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   bool supportsTransient=true;
    int offset=0;
 
    // Problem is transient
@@ -759,7 +756,8 @@ Albany::NavierStokes::constructEvaluators(
 
     RCP<ParameterList> p = rcp(new ParameterList);
     // cell side
-      
+
+    const CellTopologyData * const elem_top = &meshSpecs.ctd;
     const CellTopologyData * const side_top = elem_top->side[0].topology;
 
     p->set<string>("Side Set ID", meshSpecs.ssNames[0]);

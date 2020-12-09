@@ -59,12 +59,12 @@ private:
   // Output:
   PHX::MDField<ScalarT> field_out;
 
-  int              num_fields_in;
-  int              rank_out;
-  std::vector<int> dims_out;
-  std::vector<int> dims_in;
-  std::vector<int> offsets;
-  std::vector<int> ranks_in;
+  unsigned int     num_fields_in;
+  unsigned int     rank_out;
+  std::vector<unsigned int> dims_out;
+  std::vector<unsigned int> dims_in;
+  std::vector<unsigned int> offsets;
+  std::vector<unsigned int> ranks_in;
 };
 
 // Some shortcut names

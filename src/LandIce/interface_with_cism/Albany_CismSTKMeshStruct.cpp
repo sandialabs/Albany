@@ -141,37 +141,37 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   if (dirichlet_node_mask_Ptr != NULL) have_dirichlet = true; 
   else have_dirichlet = false; 
 
-  for (int i=0; i<NumNodes; i++){
+  for (unsigned int i=0; i<NumNodes; i++){
     globalNodesID[i] = global_node_id_owned_map_Ptr[i]-1;
-    for (int j=0; j<3; j++)
+    for (unsigned int j=0; j<3; j++)
       xyz[i][j] = xyz_at_nodes_Ptr[i + NumNodes*j];
     //*out << "i: " << i << ", x: " << xyz[i][0] 
          //<< ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl;
   }
   if (have_sh) {
-    for (int i=0; i<NumNodes; i++)
+    for (unsigned int i=0; i<NumNodes; i++)
       sh[i] = surf_height_at_nodes_Ptr[i];
   }
   if (have_thck) {
-    for (int i=0; i<NumNodes; i++)
+    for (unsigned int i=0; i<NumNodes; i++)
       thck[i] = thick_at_nodes_Ptr[i];
   }
   if (have_shGrad) {
-    for (int i=0; i<NumNodes; i++){
+    for (unsigned int i=0; i<NumNodes; i++){
       shGrad[i][0] = dsurf_height_at_nodes_dx_Ptr[i];
       shGrad[i][1] = dsurf_height_at_nodes_dy_Ptr[i];
     }
   }
   if (have_beta) {
-    for (int i=0; i<NumNodes; i++) {
+    for (unsigned int i=0; i<NumNodes; i++) {
       beta[i] = beta_at_nodes_Ptr[i];
       //*out << "beta[i] " << beta[i] << std::endl;
     }
   }
 
-  for (int i=0; i<NumEles; i++) {
+  for (unsigned int i=0; i<NumEles; i++) {
     globalElesID[i] = global_element_id_active_owned_map_Ptr[i]-1;
-    for (int j = 0; j<8; j++)
+    for (unsigned int j = 0; j<8; j++)
       eles[i][j] = global_element_conn_active_Ptr[i + nElementsActive*j];
     //*out << "elt # " << globalElesID[i] << ": " << eles[i][0] 
     //     << " " << eles[i][1] << " " << eles[i][2] << " " 
@@ -179,7 +179,7 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
     //     << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl;
   }
   if (have_dirichlet) {
-    for (int i=0; i<NumNodes; i++) {
+    for (unsigned int i=0; i<NumNodes; i++) {
       dirichletNodeMask[i] = dirichlet_node_mask_Ptr[i];
       uvel[i] = uvel_at_nodes_Ptr[i]; 
       vvel[i] = vvel_at_nodes_Ptr[i]; 
@@ -193,42 +193,42 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   }
 
   if (have_flwa) {
-    for (int i=0; i<NumEles; i++)
+    for (unsigned int i=0; i<NumEles; i++)
       flwa[i] = flwa_at_active_elements_Ptr[i];
   }
   if (have_bf) {
-    for (int i=0; i<NumBasalFaces; i++) {
+    for (unsigned int i=0; i<NumBasalFaces; i++) {
       basalFacesID[i] = global_basal_face_active_owned_map_Ptr[i]-1;
-      for (int j=0; j<5; j++)
+      for (unsigned int j=0; j<5; j++)
         bf[i][j] = global_basal_face_conn_active_Ptr[i + nCellsActive*j];
         //*out << "bf # " << basalFacesID[i] << ": " << bf[i][0] << " " << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl;
     }
   }
   if (have_tf) {
-    for (int i=0; i<NumBasalFaces; i++) {
+    for (unsigned int i=0; i<NumBasalFaces; i++) {
       topFacesID[i] = global_top_face_active_owned_map_Ptr[i]-1;
-      for (int j=0; j<5; j++)
+      for (unsigned int j=0; j<5; j++)
         tf[i][j] = global_top_face_conn_active_Ptr[i + nCellsActive*j];
     }
   }
   if (have_wf) {
-    for (int i=0; i<NumWestFaces; i++) {
+    for (unsigned int i=0; i<NumWestFaces; i++) {
        westFacesID[i] = global_west_face_active_owned_map_Ptr[i]-1;    
-       for (int j=0; j<5; j++) 
+       for (unsigned int j=0; j<5; j++) 
          wf[i][j] = global_west_face_conn_active_Ptr[i + NumWestFaces*j]; 
     }
   }
   if (have_ef) {
-    for (int i=0; i<NumEastFaces; i++) {
+    for (unsigned int i=0; i<NumEastFaces; i++) {
        eastFacesID[i] = global_east_face_active_owned_map_Ptr[i]-1;    
-       for (int j=0; j<5; j++) 
+       for (unsigned int j=0; j<5; j++) 
          ef[i][j] = global_east_face_conn_active_Ptr[i + NumEastFaces*j]; 
     }
   }
   if (have_sf) {
-    for (int i=0; i<NumSouthFaces; i++) {
+    for (unsigned int i=0; i<NumSouthFaces; i++) {
        southFacesID[i] = global_south_face_active_owned_map_Ptr[i]-1;    
-       for (int j=0; j<5; j++)  
+       for (unsigned int j=0; j<5; j++)  
          sf[i][j] = global_south_face_conn_active_Ptr[i + NumSouthFaces*j];
         /*if (comm->getRank() == 0) { 
           *out << "proc 0, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; }
@@ -241,9 +241,9 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
     }
   }
   if (have_nf) {
-    for (int i=0; i<NumNorthFaces; i++) {
+    for (unsigned int i=0; i<NumNorthFaces; i++) {
        northFacesID[i] = global_north_face_active_owned_map_Ptr[i]-1;    
-       for (int j=0; j<5; j++) 
+       for (unsigned int j=0; j<5; j++) 
          nf[i][j] = global_north_face_conn_active_Ptr[i + NumNorthFaces*j]; 
     }
   }
@@ -385,7 +385,7 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
      singlePartVec[0] = partVec[ebNo];
      //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh 
      stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
-     for (int j=0; j<8; j++) { //loop over 8 nodes of each element
+     for (unsigned int j=0; j<8; j++) { //loop over 8 nodes of each element
      //Set element connectivity and coordinates
        stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][j], nodePartVec);
        bulkData->declare_relation(elem, node, j);
@@ -431,7 +431,7 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
      
      //Set Dirichlet nodesets 
      singlePartVec[0] = nsPartVec["NodeSetDirichlet"];
-     for (int j=0; j<8; j++) { //loop over 8 nodes of each element
+     for (unsigned int j=0; j<8; j++) { //loop over 8 nodes of each element
        node_GID = eles[i][j]-1;
        node_LID = node_vs_indexer->getLocalElement(node_GID); 
        if (dirichletNodeMask[node_LID] == 1) {
@@ -488,7 +488,7 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
     if (debug_output_verbosity != 0) *out << "Setting top surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Top"];
     auto top_face_vs_indexer = Albany::createGlobalLocalIndexer(top_face_vs);
-    for (int i=0; i<top_face_vs_indexer->getNumLocalElements(); i++) {
+    for (unsigned int i=0; i<top_face_vs_indexer->getNumLocalElements(); i++) {
        sideID = top_face_vs_indexer->getGlobalElement(i);
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
@@ -516,7 +516,7 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
   if (have_wf == true) {
     if (debug_output_verbosity != 0) *out << "Setting west lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    for (int i=0; i<west_face_vs_indexer->getNumLocalElements(); i++) {
+    for (unsigned int i=0; i<west_face_vs_indexer->getNumLocalElements(); i++) {
        sideID = west_face_vs_indexer->getGlobalElement(i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
@@ -543,7 +543,7 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
   if (have_ef == true) {
     if (debug_output_verbosity != 0) *out << "Setting east lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    for (int i=0; i<east_face_vs_indexer->getNumLocalElements(); i++) {
+    for (unsigned int i=0; i<east_face_vs_indexer->getNumLocalElements(); i++) {
        sideID = east_face_vs_indexer->getGlobalElement(i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
@@ -569,7 +569,7 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
   if (have_sf == true) {
     if (debug_output_verbosity != 0) *out << "Setting south lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    for (int i=0; i<south_face_vs_indexer->getNumLocalElements(); i++) {
+    for (unsigned int i=0; i<south_face_vs_indexer->getNumLocalElements(); i++) {
        sideID = south_face_vs_indexer->getGlobalElement(i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
@@ -595,7 +595,7 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
   if (have_nf == true) {
     if (debug_output_verbosity != 0) *out << "Setting north lateral surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Lateral"];
-    for (int i=0; i<north_face_vs_indexer->getNumLocalElements(); i++) {
+    for (unsigned int i=0; i<north_face_vs_indexer->getNumLocalElements(); i++) {
        sideID = north_face_vs_indexer->getGlobalElement(i); 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);

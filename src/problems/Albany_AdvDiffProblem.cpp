@@ -77,7 +77,7 @@ Albany::AdvDiffProblem::constructDirichletEvaluators(
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
-   for (int i=0; i<neq; i++) {
+   for (unsigned int i=0; i<neq; i++) {
      std::stringstream s; s << "U" << i;
      dirichletNames[i] = s.str();
    }

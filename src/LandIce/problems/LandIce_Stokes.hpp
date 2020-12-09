@@ -97,7 +97,7 @@ namespace LandIce {
 
   protected:
 
-    int numDim;        //! number of spatial dimensions
+    unsigned int numDim;        //! number of spatial dimensions
 
     NS_VAR_TYPE flowType; //! type of flow variables
 
@@ -183,7 +183,6 @@ LandIce::Stokes::constructEvaluators(
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Stokes problem assumes vecDim = numDim");
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   bool supportsTransient=true;
    int offset=0;
 
    // Temporary variable used numerous times below

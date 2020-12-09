@@ -179,7 +179,7 @@ doPostEvaluate(typename Traits::EvalData workset)
     Teuchos::ArrayRCP<ST> f_nonconstView = Albany::getNonconstLocalData(f);
     const auto& nodeID = workset.wsElNodeEqID;
     auto& ws_ss_nodes = this->ss_nodes[workset.wsIndex];
-    for (int icell=0; icell<workset.numCells; ++icell) {
+    for (size_t icell=0; icell<workset.numCells; ++icell) {
       const auto& skip_nodes = ws_ss_nodes[icell];
       for (int inode=0; inode<this->numCellNodes; ++inode) {
         if (skip_nodes.count(inode)==0) {
@@ -315,7 +315,7 @@ doPostEvaluate(typename Traits::EvalData workset)
   Teuchos::Array<ST> one(1,1.0);
   const auto& nodeID = workset.wsElNodeEqID;
   auto& ws_ss_nodes = this->ss_nodes[workset.wsIndex];
-  for (int icell=0; icell<workset.numCells; ++icell) {
+  for (size_t icell=0; icell<workset.numCells; ++icell) {
     const auto& skip_nodes = ws_ss_nodes[icell];
     for (int inode=0; inode<this->numCellNodes; ++inode) {
       if (skip_nodes.count(inode)==0) {

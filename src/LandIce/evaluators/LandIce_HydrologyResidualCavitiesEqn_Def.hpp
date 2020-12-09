@@ -194,9 +194,9 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
     const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+    const unsigned int side = it_side.side_local_id;
 
-    for (int node=0; node < numNodes; ++node) {
+    for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;
       if (nodal_equation) {
         res_node = (use_melting ? m(cell,side,node)/rho_i : zero)
@@ -205,7 +205,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,node) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,side,node) : zero);
       } else {
-        for (int qp=0; qp < numQPs; ++qp) {
+        for (unsigned int qp=0; qp < numQPs; ++qp) {
           res_qp = (use_melting ? m(cell,side,qp)/rho_i : zero)
                  + (h_r - h(cell,side,qp))*u_b(cell,side,qp)/l_r
                  - c_creep*h(cell,side,qp)*ice_softness(cell,side)*std::pow(N(cell,side,qp),3)
@@ -228,8 +228,8 @@ evaluateFieldsCell (typename Traits::EvalData workset)
   // h' = W_O - W_C = (m/rho_i + u_b*(h_b-h)/l_b) - AhN^n
   ScalarT res_node, res_qp, zero(0.0);
 
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int node=0; node < numNodes; ++node) {
+  for (unsigned int cell=0; cell < workset.numCells; ++cell) {
+    for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;
       if (nodal_equation) {
         res_node = (use_melting ? m(cell,node)/rho_i : zero)
@@ -238,7 +238,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
                  - (unsteady ? scaling_h_t*h_dot(cell,node) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,node) : zero);
       } else {
-        for (int qp=0; qp < numQPs; ++qp) {
+        for (unsigned int qp=0; qp < numQPs; ++qp) {
           res_qp = (use_melting ? m(cell,qp)/rho_i : zero)
                  + (h_r - h(cell,qp))*u_b(cell,qp)/l_r
                  - c_creep*h(cell,qp)*ice_softness(cell)*std::pow(N(cell,qp),3)

@@ -68,7 +68,7 @@ MDFieldIterator<T>::ref () {
   }
 }
 
-#define dloop(i, dim) for (int i = 0; i < a.extent(dim); ++i)
+#define dloop(i, dim) for (size_t i = 0; i < a.extent(dim); ++i)
 // Runtime MDField.
 template<class Functor, typename ScalarT>
 void loop (Functor& f, PHX::MDField<ScalarT>& a) {

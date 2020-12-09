@@ -242,7 +242,7 @@ public:
 
     // Check workset index
     bool saved = false;
-    if (workset.wsIndex == _prevWorksetIndex) {
+    if ((int) workset.wsIndex == _prevWorksetIndex) {
       // Check if MDField is saved
       for (const auto & evalField: evalFields) {
         if (workset.savedMDFields->count(evalField->identifier()) > 0) {

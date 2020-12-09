@@ -60,11 +60,11 @@ private:
   std::vector<std::vector<int> >  sideNodes;
   std::string                     basalSideName;
 
-  int numSideNodes;
-  int numSideQPs;
-  int sideDim;
-  int vecDim;
-  int vecDimFO;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int sideDim;
+  unsigned int vecDim;
+  unsigned int vecDimFO;
 
   bool regularized;
 };

@@ -86,8 +86,7 @@ void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::evaluateFields(typename 
       const int cell = it_side.elem_LID;
       const int side = it_side.side_local_id;
 
-      ScalarT t = 0;
-      for (int qp=0; qp<numSideQPs; ++qp)
+      for (unsigned int qp=0; qp<numSideQPs; ++qp)
       {
         ScalarT grad_thickness_tmp[2] = {0.0, 0.0};
         for (std::size_t dim = 0; dim < numSideDims; ++dim)

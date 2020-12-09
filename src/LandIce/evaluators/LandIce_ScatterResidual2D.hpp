@@ -56,7 +56,7 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   const std::size_t numFields;
-  int fieldLevel;
+  unsigned int fieldLevel;
   std::string meshPart;
   Teuchos::RCP<const CellTopologyData> cell_topo;
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
@@ -121,8 +121,8 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   const std::size_t numFields;
-  int offset2DField;
-  int fieldLevel;
+  unsigned int offset2DField;
+  unsigned int fieldLevel;
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
 };
 

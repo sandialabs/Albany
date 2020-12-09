@@ -87,7 +87,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     const int cell = it.elem_LID;
     const int side = it.side_local_id;
 
-    for (int pt=0; pt<numPts; ++pt) {
+    for (unsigned int pt=0; pt<numPts; ++pt) {
       P_o (cell,side,pt) = rho_i*g*H(cell,side,pt);
     }
   }
@@ -98,8 +98,8 @@ template<typename EvalT, typename Traits, bool IsStokes>
 void IceOverburden<EvalT, Traits, IsStokes>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
-  for (int cell=0; cell<workset.numCells; ++cell) {
-    for (int pt=0; pt<numPts; ++pt) {
+  for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+    for (unsigned int pt=0; pt<numPts; ++pt) {
       P_o (cell,pt) = rho_i*g*H(cell,pt);
     }
   }

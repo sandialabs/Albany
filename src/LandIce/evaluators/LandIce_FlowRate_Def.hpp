@@ -89,12 +89,12 @@ void FlowRate<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
   switch (flowRate_type)
   {
     case UNIFORM:
-      for (int cell=0; cell<workset.numCells; ++cell)
+      for (unsigned int cell=0; cell<workset.numCells; ++cell)
         flowRate(cell) = A;
       break;
 
     case GIVEN_FIELD:
-      for (int cell=0; cell<workset.numCells; ++cell)
+      for (unsigned int cell=0; cell<workset.numCells; ++cell)
         flowRate(cell) = given_flow_rate(cell);
       break;
 
@@ -109,7 +109,7 @@ void FlowRate<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
       constexpr double arrmh (k4scyr*arrmlh); // [Pa-3 yr-1]
       constexpr double arrml (k4scyr*arrmll); // [Pa-3 yr-1]
 
-      for (int cell=0; cell<workset.numCells; ++cell)
+      for (unsigned int cell=0; cell<workset.numCells; ++cell)
         flowRate(cell) = (temperature(cell) < switchingT) ? arrml / std::exp (actenl / gascon / temperature(cell))
                                                    : arrmh / std::exp (actenh / gascon / temperature(cell));
       break;

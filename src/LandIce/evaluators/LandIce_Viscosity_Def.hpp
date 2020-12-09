@@ -21,11 +21,11 @@ template<typename EvalT, typename Traits>
 Viscosity<EvalT, Traits>::
 Viscosity(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl) :
-  VGrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
-  mu    (p.get<std::string> ("LandIce Viscosity QP Variable Name"), dl->qp_scalar),
-  homotopyParam("Glen's Law Homotopy Parameter", dl->shared_param),
   A(1.0),
-  n(3.0)
+  n(3.0),
+  VGrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
+  homotopyParam("Glen's Law Homotopy Parameter", dl->shared_param),
+  mu    (p.get<std::string> ("LandIce Viscosity QP Variable Name"), dl->qp_scalar)
 {
   Teuchos::ParameterList* visc_list =
    p.get<Teuchos::ParameterList*>("Parameter List");

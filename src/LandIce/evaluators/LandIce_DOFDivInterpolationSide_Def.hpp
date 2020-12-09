@@ -66,15 +66,15 @@ evaluateFields(typename Traits::EvalData workset)
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (int qp=0; qp<numSideQPs; ++qp)
+    for (unsigned int qp=0; qp<numSideQPs; ++qp)
     {
       val_qp(cell,side,qp) = 0.;
-      for (int dim=0; dim<numDims; ++dim)
+      for (unsigned int dim=0; dim<numDims; ++dim)
       {
-        for (int node=0; node<numSideNodes; ++node)
+        for (unsigned int node=0; node<numSideNodes; ++node)
         {
           MeshScalarT gradBF_non_intrinsic = 0.0;
-          for (int itan=0; itan<numDims; ++itan)
+          for (unsigned int itan=0; itan<numDims; ++itan)
           {
             gradBF_non_intrinsic += tangents(cell,side,qp,dim,itan)*gradBF(cell,side,node,qp,itan);
           }

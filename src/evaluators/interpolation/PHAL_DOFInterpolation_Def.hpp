@@ -53,9 +53,9 @@ template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFInterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const DOFInterpolationBase_Tag& tag, const int& cell) const {
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (size_t qp=0; qp < numQPs; ++qp) {
     val_qp(cell,qp) = val_node(cell, 0) * BF(cell, 0, qp);
-    for (int node=1; node < numNodes; ++node) {
+    for (size_t node=1; node < numNodes; ++node) {
       val_qp(cell,qp) += val_node(cell, node) * BF(cell, node, qp);
     }
   }

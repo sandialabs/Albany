@@ -67,9 +67,6 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
   *out << "Total number of parameters  = " << total_num_param_vecs << std::endl;
   *out << "Number of non-distributed parameters  = " << num_param_vecs << std::endl;
 
-  const Teuchos::ParameterList& responseParams =
-      problemParams.sublist("Response Functions");
-
   int  num_response_vecs = app->getNumResponses();
 
   param_names.resize(num_param_vecs);
@@ -682,7 +679,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     if(opt_paramList.isParameter("Optimization Variables Changed") && opt_paramList.get<bool>("Optimization Variables Changed")) {
       if(opt_paramList.isParameter("Parameter Names")) {
         const auto& param_names = *opt_paramList.get<Teuchos::RCP<std::vector<std::string>>>("Parameter Names");
-        for (int k=0; k < param_names.size(); ++k)
+        for (size_t k=0; k < param_names.size(); ++k)
           observer.parameterChanged(param_names[k]);
       }
       opt_paramList.set("Optimization Variables Changed", false);

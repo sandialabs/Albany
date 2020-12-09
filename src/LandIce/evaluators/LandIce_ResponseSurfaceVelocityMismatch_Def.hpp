@@ -189,7 +189,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
       ScalarT t = 0;
       ScalarT data = 0;
       if(scalarRMS)
-        for (int qp=0; qp<numSurfaceQPs; ++qp)
+        for (unsigned int qp=0; qp<numSurfaceQPs; ++qp)
         {
           ScalarT diff2 = std::pow(velocity(cell, side, qp, 0)  - observedVelocity (cell, side, qp, 0),2) 
                                + std::pow(velocity(cell, side, qp, 1)  - observedVelocity (cell, side, qp, 1),2);
@@ -202,7 +202,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
           t += weightedDiff2 * w_measure_surface(cell,side,qp);
         }
       else
-        for (int qp=0; qp<numSurfaceQPs; ++qp)
+        for (unsigned int qp=0; qp<numSurfaceQPs; ++qp)
         {
           ParamScalarT refVel0 = asinh(observedVelocity (cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
           ParamScalarT refVel1 = asinh(observedVelocity (cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
@@ -244,11 +244,11 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
           const int cell = it_side.elem_LID;
           const int side = it_side.side_local_id;
           ScalarT t = 0;
-          for (int qp=0; qp<numBasalQPs; ++qp)
+          for (unsigned int qp=0; qp<numBasalQPs; ++qp)
           {
             ScalarT sum=0;
-            for (int idim=0; idim<numSideDims; ++idim)
-              for (int jdim=0; jdim<numSideDims; ++jdim)
+            for (unsigned int idim=0; idim<numSideDims; ++idim)
+              for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
                 sum += grad_beta(cell,side,qp,idim)*metric(cell,side,qp,idim,jdim)*grad_beta(cell,side,qp,jdim);
 
             t += sum * w_measure(cell,side,qp);
@@ -270,11 +270,11 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
       const int cell = it_side.elem_LID;
       const int side = it_side.side_local_id;
       ScalarT t = 0;
-      for (int qp=0; qp<numBasalQPs; ++qp)
+      for (unsigned int qp=0; qp<numBasalQPs; ++qp)
       {
         ScalarT sum = stiffening(cell,side,qp)*stiffening(cell,side,qp);
-        for (int idim=0; idim<numSideDims; ++idim)
-          for (int jdim=0; jdim<numSideDims; ++jdim)
+        for (unsigned int idim=0; idim<numSideDims; ++idim)
+          for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
             sum += grad_stiffening(cell,side,qp,idim)*metric_basal(cell,side,qp,idim,jdim)*grad_stiffening(cell,side,qp,jdim);
 
         t += sum * w_measure_basal(cell,side,qp);

@@ -54,7 +54,7 @@ void QuadPointsToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (
   MeshScalarT meas;
   int numQPs = qp_dims[1];
 
-  for (int cell=0; cell<workset.numCells; ++cell)
+  for (size_t cell=0; cell<workset.numCells; ++cell)
   {
     meas = 0.0;
     for (int qp(0); qp<numQPs; ++qp)
@@ -71,7 +71,7 @@ void QuadPointsToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (
     }
     else if(qp_dims.size()==3)  //vector
     {
-      for (int dim(0); dim<qp_dims[2]; ++dim)
+      for (size_t dim(0); dim<qp_dims[2]; ++dim)
       {
         field_cell(cell,dim) = 0;
         for (int qp(0); qp<numQPs; ++qp)
@@ -81,8 +81,8 @@ void QuadPointsToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (
     }
     else if(qp_dims.size()==4)  //tensor
     {
-      for (int dim0(0); dim0<qp_dims[2]; ++dim0)
-        for (int dim1(0); dim1<qp_dims[3]; ++dim1)
+      for (size_t dim0(0); dim0<qp_dims[2]; ++dim0)
+        for (size_t dim1(0); dim1<qp_dims[3]; ++dim1)
       {
         field_cell(cell,dim0, dim1) = 0;
         for (int qp(0); qp<numQPs; ++qp)

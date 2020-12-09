@@ -332,7 +332,7 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
   if (workset.sideSets->find(basalSideName)==workset.sideSets->end())
     return;
 
-  const int dim = nodal ? numNodes : numQPs;
+  const unsigned int dim = nodal ? numNodes : numQPs;
 
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
   for (auto const& it_side : sideSet) {
@@ -346,11 +346,11 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
 
       case GIVEN_FIELD:
         if (is_given_field_param) {
-          for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int ipt=0; ipt<dim; ++ipt) {
             beta(cell,side,ipt) = given_field_param(cell,side,ipt);
           }
         } else {
-          for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int ipt=0; ipt<dim; ++ipt) {
             beta(cell,side,ipt) = given_field(cell,side,ipt);
           }
         }
@@ -358,12 +358,12 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
 
       case POWER_LAW:
         if (distributedMu) {
-          for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int ipt=0; ipt<dim; ++ipt) {
             ScalarT Nval = std::max(N(cell,side,ipt),0.0);
             beta(cell,side,ipt) = muPowerLawField(cell,side,ipt) * Nval * std::pow (u_norm(cell,side,ipt), power-1);
           }
         } else {
-          for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int ipt=0; ipt<dim; ++ipt) {
             ScalarT Nval = std::max(N(cell,side,ipt),0.0);
             beta(cell,side,ipt) = mu * Nval * std::pow (u_norm(cell,side,ipt), power-1);
           }
@@ -374,13 +374,13 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       case REGULARIZED_COULOMB:
         if (distributedLambda) {
           if (distributedMu) {
-            for (int ipt=0; ipt<dim; ++ipt) {
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               ScalarT Nval = std::max(N(cell,side,ipt),0.0);
               ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambdaField(cell,side,ipt)*ice_softness(cell,side)*std::pow(Nval,n) );
               beta(cell,side,ipt) = muCoulombField(cell,side,ipt) * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
             }
           } else {
-            for (int ipt=0; ipt<dim; ++ipt) {
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               ScalarT Nval = std::max(N(cell,side,ipt),0.0);
               ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambdaField(cell,side,ipt)*ice_softness(cell,side)*std::pow(Nval,n) );
               beta(cell,side,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
@@ -388,13 +388,13 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
           }
         } else {
           if (distributedMu) {
-            for (int ipt=0; ipt<dim; ++ipt) {
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               ScalarT Nval = std::max(N(cell,side,ipt),0.0);
               ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*ice_softness(cell,side)*std::pow(Nval,n) );
               beta(cell,side,ipt) = muCoulombField(cell,side,ipt) * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
             }
           } else {
-            for (int ipt=0; ipt<dim; ++ipt) {
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               ScalarT Nval = std::max(N(cell,side,ipt),0.0);
               ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*ice_softness(cell,side)*std::pow(Nval,n) );
               beta(cell,side,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
@@ -406,25 +406,25 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       case EXP_GIVEN_FIELD:
         if(nodal || interpolate_then_exponentiate) {
           if (is_given_field_param) {
-            for (int ipt=0; ipt<dim; ++ipt) {
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               beta(cell,side,ipt) = std::exp(given_field_param(cell,side,ipt));
             }
           } else {
-            for (int ipt=0; ipt<dim; ++ipt) {
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt));
             }
           }
         } else {
           if (is_given_field_param) {
-            for (int qp=0; qp<numQPs; ++qp) {
+            for (unsigned int qp=0; qp<numQPs; ++qp) {
               beta(cell,side,qp) = 0;
-              for (int node=0; node<numNodes; ++node)
+              for (unsigned int node=0; node<numNodes; ++node)
                 beta(cell,side,qp) += std::exp(given_field_param(cell,side,node))*BF(cell,side,node,qp);
             }
           } else {
-            for (int qp=0; qp<numQPs; ++qp) {
+            for (unsigned int qp=0; qp<numQPs; ++qp) {
               beta(cell,side,qp) = 0;
-              for (int node=0; node<numNodes; ++node)
+              for (unsigned int node=0; node<numNodes; ++node)
                 beta(cell,side,qp) += std::exp(given_field(cell,side,node))*BF(cell,side,node,qp);
             }
           }
@@ -434,12 +434,12 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
 
     if(zero_on_floating) {
       if (is_thickness_param) {
-        for (int ipt=0; ipt<dim; ++ipt) {
+        for (unsigned int ipt=0; ipt<dim; ++ipt) {
           ParamScalarT isGrounded = rho_i*thickness_param_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
           beta(cell,side,ipt) *=  isGrounded;
         }
       } else {
-        for (int ipt=0; ipt<dim; ++ipt) {
+        for (unsigned int ipt=0; ipt<dim; ++ipt) {
           ParamScalarT isGrounded = rho_i*thickness_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
           beta(cell,side,ipt) *=  isGrounded;
         }
@@ -448,7 +448,7 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
 
     // Correct the value if we are using a stereographic map
     if (use_stereographic_map) {
-      for (int ipt=0; ipt<dim; ++ipt) {
+      for (unsigned int ipt=0; ipt<dim; ++ipt) {
         MeshScalarT x = coordVec(cell,side,ipt,0) - x_0;
         MeshScalarT y = coordVec(cell,side,ipt,1) - y_0;
         MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
@@ -462,7 +462,7 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambda, ScalarT power)
 {
-  const int dim = nodal ? numNodes : numQPs;
+  const unsigned int dim = nodal ? numNodes : numQPs;
   switch (beta_type)
   {
     case GIVEN_CONSTANT:
@@ -470,24 +470,24 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
 
     case GIVEN_FIELD:
       if (is_given_field_param) {
-        for (int cell=0; cell<workset.numCells; ++cell)
-          for (int ipt=0; ipt<dim; ++ipt)
+        for (unsigned int cell=0; cell<workset.numCells; ++cell)
+          for (unsigned int ipt=0; ipt<dim; ++ipt)
             beta(cell,ipt) = given_field_param(cell,ipt);
       } else {
-        for (int cell=0; cell<workset.numCells; ++cell)
-          for (int ipt=0; ipt<dim; ++ipt)
+        for (unsigned int cell=0; cell<workset.numCells; ++cell)
+          for (unsigned int ipt=0; ipt<dim; ++ipt)
             beta(cell,ipt) = given_field(cell,ipt);
       }
       break;
 
     case POWER_LAW:
       if (distributedMu) {
-        for (int cell=0; cell<workset.numCells; ++cell)
-          for (int ipt=0; ipt<dim; ++ipt)
+        for (unsigned int cell=0; cell<workset.numCells; ++cell)
+          for (unsigned int ipt=0; ipt<dim; ++ipt)
             beta(cell,ipt) = muPowerLawField(cell,ipt) * N(cell,ipt) * std::pow (u_norm(cell,ipt), power-1);
       } else {
-        for (int cell=0; cell<workset.numCells; ++cell)
-          for (int ipt=0; ipt<dim; ++ipt)
+        for (unsigned int cell=0; cell<workset.numCells; ++cell)
+          for (unsigned int ipt=0; ipt<dim; ++ipt)
             beta(cell,ipt) = mu * N(cell,ipt) * std::pow (u_norm(cell,ipt), power-1);
       }
       break;
@@ -495,28 +495,28 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
     case REGULARIZED_COULOMB:
       if (distributedLambda) {
         if (distributedMu) {
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(N(cell,ipt),n) );
               beta(cell,ipt) = muCoulombField(cell,ipt) * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
             }
         } else {
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(N(cell,ipt),n) );
               beta(cell,ipt) = mu * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
             }
         }
       } else {
         if (distributedMu) {
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(N(cell,ipt),n) );
               beta(cell,ipt) = muCoulombField(cell,ipt) * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
             }
         } else {
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(N(cell,ipt),n) );
               beta(cell,ipt) = mu * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
             }
@@ -527,29 +527,29 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
     case EXP_GIVEN_FIELD:
       if(nodal || interpolate_then_exponentiate) {
         if (is_given_field_param) {
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               beta(cell,ipt) = std::exp(given_field_param(cell,ipt));
             }
         } else {
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               beta(cell,ipt) = std::exp(given_field(cell,ipt));
             }
         } 
       } else {
         if (is_given_field_param) {
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               beta(cell,ipt) = 0;
-              for (int node=0; node<numNodes; ++node)
+              for (unsigned int node=0; node<numNodes; ++node)
                 beta(cell,ipt) += std::exp(given_field_param(cell,node))*BF(cell,node,ipt);
             }
         } else {
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int ipt=0; ipt<dim; ++ipt) {
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
               beta(cell,ipt) = 0;
-              for (int node=0; node<numNodes; ++node)
+              for (unsigned int node=0; node<numNodes; ++node)
                 beta(cell,ipt) += std::exp(given_field(cell,node))*BF(cell,node,ipt);
             }
         }
@@ -560,9 +560,9 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
   // Correct the value if we are using a stereographic map
   if (use_stereographic_map)
   {
-    for (int cell=0; cell<workset.numCells; ++cell)
+    for (unsigned int cell=0; cell<workset.numCells; ++cell)
     {
-      for (int ipt=0; ipt<dim; ++ipt)
+      for (unsigned int ipt=0; ipt<dim; ++ipt)
       {
         MeshScalarT x = coordVec(cell,ipt,0) - x_0;
         MeshScalarT y = coordVec(cell,ipt,1) - y_0;

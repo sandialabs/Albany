@@ -41,12 +41,12 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   velGrad      (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   verticalVel	 (p.get<std::string> ("Vertical Velocity QP Variable Name"),  dl->qp_scalar),
   coordVec 		 (p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
-  meltTempGrad (p.get<std::string> ("Melting Temperature Gradient QP Variable Name"), dl->qp_gradient),
   phi			     (p.get<std::string> ("Water Content QP Variable Name"), dl->qp_scalar ),
   phiGrad		   (p.get<std::string> ("Water Content Gradient QP Variable Name"), dl->qp_gradient ),
+  meltTempGrad (p.get<std::string> ("Melting Temperature Gradient QP Variable Name"), dl->qp_gradient),
   basalResid   (p.get<std::string> ("Enthalpy Basal Residual Variable Name"), dl->node_scalar),
-  Residual 		 (p.get<std::string> ("Residual Variable Name"), dl->node_scalar),
-  homotopy		 (p.get<std::string> ("Continuation Parameter Name"), dl->shared_param)
+  homotopy		 (p.get<std::string> ("Continuation Parameter Name"), dl->shared_param),
+  Residual 		 (p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
 {
   std::vector<PHX::Device::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
@@ -310,8 +310,6 @@ template<typename EvalT, typename Traits, typename VelocityST, typename MeltTemp
 void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
 evaluateFields(typename Traits::EvalData d)
 {
-  ScalarT K;
-  double pi = atan(1.) * 4.;
   ScalarT hom = homotopy(0);
 
   flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom); // [adim]

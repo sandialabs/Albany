@@ -723,7 +723,7 @@ Albany::StateManager::registerSideSetStateVariable(
 
     stateRef.dim.resize(dl->rank() - 1);
     stateRef.dim[0] = dl->extent(0);
-    for (int i(1); i < stateRef.dim.size(); ++i)
+    for (size_t i(1); i < stateRef.dim.size(); ++i)
       stateRef.dim[i] = dl->extent(i + 1);
 
     // Register the state with the nodalDataVector also.
@@ -749,7 +749,7 @@ Albany::StateManager::registerSideSetStateVariable(
 
     stateRef.dim.resize(dl->rank() - 1);
     stateRef.dim[0] = dl->extent(0);
-    for (int i(1); i < stateRef.dim.size(); ++i)
+    for (size_t i(1); i < stateRef.dim.size(); ++i)
       stateRef.dim[i] = dl->extent(i + 1);
   }
   stateRef.output              = outputToExodus;
@@ -885,28 +885,28 @@ Albany::StateManager::importStateData(Albany::StateArrays& states_from)
 
           switch (size) {
             case 1:
-              for (int cell = 0; cell < dims[0]; ++cell)
+              for (size_t cell = 0; cell < dims[0]; ++cell)
                 esa[ws][stateName](cell) =
                     elemStatesToCopyFrom[ws][stateName](cell);
               break;
             case 2:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                for (int qp = 0; qp < dims[1]; ++qp)
+              for (size_t cell = 0; cell < dims[0]; ++cell)
+                for (size_t qp = 0; qp < dims[1]; ++qp)
                   esa[ws][stateName](cell, qp) =
                       elemStatesToCopyFrom[ws][stateName](cell, qp);
               break;
             case 3:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                for (int qp = 0; qp < dims[1]; ++qp)
-                  for (int i = 0; i < dims[2]; ++i)
+              for (size_t cell = 0; cell < dims[0]; ++cell)
+                for (size_t qp = 0; qp < dims[1]; ++qp)
+                  for (size_t i = 0; i < dims[2]; ++i)
                     esa[ws][stateName](cell, qp, i) =
                         elemStatesToCopyFrom[ws][stateName](cell, qp, i);
               break;
             case 4:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                for (int qp = 0; qp < dims[1]; ++qp)
-                  for (int i = 0; i < dims[2]; ++i)
-                    for (int j = 0; j < dims[3]; ++j)
+              for (size_t cell = 0; cell < dims[0]; ++cell)
+                for (size_t qp = 0; qp < dims[1]; ++qp)
+                  for (size_t i = 0; i < dims[2]; ++i)
+                    for (size_t j = 0; j < dims[3]; ++j)
                       esa[ws][stateName](cell, qp, i, j) =
                           elemStatesToCopyFrom[ws][stateName](cell, qp, i, j);
               break;
@@ -935,24 +935,24 @@ Albany::StateManager::importStateData(Albany::StateArrays& states_from)
         for (int ws = 0; ws < numNodeWorksets; ws++) {
           Albany::StateStruct::FieldDims dims;
           nsa[ws][stateName].dimensions(dims);
-          int size = dims.size();
+          size_t size = dims.size();
 
           switch (size) {
             case 1:  // node scalar
-              for (int node = 0; node < dims[0]; ++node)
+              for (size_t node = 0; node < dims[0]; ++node)
                 nsa[ws][stateName](node) =
                     nodeStatesToCopyFrom[ws][stateName](node);
               break;
             case 2:  // node vector
-              for (int node = 0; node < dims[0]; ++node)
-                for (int dim = 0; dim < dims[1]; ++dim)
+              for (size_t node = 0; node < dims[0]; ++node)
+                for (size_t dim = 0; dim < dims[1]; ++dim)
                   nsa[ws][stateName](node, dim) =
                       nodeStatesToCopyFrom[ws][stateName](node, dim);
               break;
             case 3:  // node tensor
-              for (int node = 0; node < dims[0]; ++node)
-                for (int dim = 0; dim < dims[1]; ++dim)
-                  for (int i = 0; i < dims[2]; ++i)
+              for (size_t node = 0; node < dims[0]; ++node)
+                for (size_t dim = 0; dim < dims[1]; ++dim)
+                  for (size_t i = 0; i < dims[2]; ++i)
                     nsa[ws][stateName](node, dim, i) =
                         nodeStatesToCopyFrom[ws][stateName](node, dim, i);
               break;
@@ -1239,37 +1239,37 @@ Albany::StateManager::doSetStateArrays(
           if (init_type == "scalar") {
             switch (size) {
               case 1:
-                for (int cell = 0; cell < dims[0]; ++cell)
+                for (size_t cell = 0; cell < dims[0]; ++cell)
                   esa[ws][stateName](cell) = init_val;
                 break;
 
               case 2:
-                for (int cell = 0; cell < dims[0]; ++cell)
-                  for (int qp = 0; qp < dims[1]; ++qp)
+                for (size_t cell = 0; cell < dims[0]; ++cell)
+                  for (size_t qp = 0; qp < dims[1]; ++qp)
                     esa[ws][stateName](cell, qp) = init_val;
                 break;
 
               case 3:
-                for (int cell = 0; cell < dims[0]; ++cell)
-                  for (int qp = 0; qp < dims[1]; ++qp)
-                    for (int i = 0; i < dims[2]; ++i)
+                for (size_t cell = 0; cell < dims[0]; ++cell)
+                  for (size_t qp = 0; qp < dims[1]; ++qp)
+                    for (size_t i = 0; i < dims[2]; ++i)
                       esa[ws][stateName](cell, qp, i) = init_val;
                 break;
 
               case 4:
-                for (int cell = 0; cell < dims[0]; ++cell)
-                  for (int qp = 0; qp < dims[1]; ++qp)
-                    for (int i = 0; i < dims[2]; ++i)
-                      for (int j = 0; j < dims[3]; ++j)
+                for (size_t cell = 0; cell < dims[0]; ++cell)
+                  for (size_t qp = 0; qp < dims[1]; ++qp)
+                    for (size_t i = 0; i < dims[2]; ++i)
+                      for (size_t j = 0; j < dims[3]; ++j)
                         esa[ws][stateName](cell, qp, i, j) = init_val;
                 break;
 
               case 5:
-                for (int cell = 0; cell < dims[0]; ++cell)
-                  for (int qp = 0; qp < dims[1]; ++qp)
-                    for (int i = 0; i < dims[2]; ++i)
-                      for (int j = 0; j < dims[3]; ++j)
-                        for (int k = 0; k < dims[4]; ++k)
+                for (size_t cell = 0; cell < dims[0]; ++cell)
+                  for (size_t qp = 0; qp < dims[1]; ++qp)
+                    for (size_t i = 0; i < dims[2]; ++i)
+                      for (size_t j = 0; j < dims[3]; ++j)
+                        for (size_t k = 0; k < dims[4]; ++k)
                           esa[ws][stateName](cell, qp, i, j, k) = init_val;
                 break;
 
@@ -1292,10 +1292,10 @@ Albany::StateManager::doSetStateArrays(
                     << size);
             TEUCHOS_TEST_FOR_EXCEPT(!(dims[2] == dims[3]));
 
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                for (int i = 0; i < dims[2]; ++i)
-                  for (int j = 0; j < dims[3]; ++j)
+            for (size_t cell = 0; cell < dims[0]; ++cell)
+              for (size_t qp = 0; qp < dims[1]; ++qp)
+                for (size_t i = 0; i < dims[2]; ++i)
+                  for (size_t j = 0; j < dims[3]; ++j)
                     if (i == j)
                       esa[ws][stateName](cell, qp, i, i) = 1.0;
                     else
@@ -1334,20 +1334,20 @@ Albany::StateManager::doSetStateArrays(
 
           if (init_type == "scalar") switch (size) {
               case 1:  // node scalar
-                for (int node = 0; node < dims[0]; ++node)
+                for (size_t node = 0; node < dims[0]; ++node)
                   nsa[ws][stateName](node) = init_val;
                 break;
 
               case 2:  // node vector
-                for (int node = 0; node < dims[0]; ++node)
-                  for (int dim = 0; dim < dims[1]; ++dim)
+                for (size_t node = 0; node < dims[0]; ++node)
+                  for (size_t dim = 0; dim < dims[1]; ++dim)
                     nsa[ws][stateName](node, dim) = init_val;
                 break;
 
               case 3:  // node tensor
-                for (int node = 0; node < dims[0]; ++node)
-                  for (int dim = 0; dim < dims[1]; ++dim)
-                    for (int i = 0; i < dims[2]; ++i)
+                for (size_t node = 0; node < dims[0]; ++node)
+                  for (size_t dim = 0; dim < dims[1]; ++dim)
+                    for (size_t i = 0; i < dims[2]; ++i)
                       nsa[ws][stateName](node, dim, i) = init_val;
                 break;
 
@@ -1368,9 +1368,9 @@ Albany::StateManager::doSetStateArrays(
                 "initialization: "
                     << size);
             TEUCHOS_TEST_FOR_EXCEPT(!(dims[1] == dims[2]));
-            for (int node = 0; node < dims[0]; ++node)
-              for (int i = 0; i < dims[1]; ++i)
-                for (int j = 0; j < dims[2]; ++j)
+            for (size_t node = 0; node < dims[0]; ++node)
+              for (size_t i = 0; i < dims[1]; ++i)
+                for (size_t j = 0; j < dims[2]; ++j)
                   if (i == j)
                     nsa[ws][stateName](node, i, i) = 1.0;
                   else

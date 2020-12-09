@@ -56,7 +56,7 @@ KOKKOS_INLINE_FUNCTION
 void PressureMeltingEnthalpy<EvalT,Traits,PressST>::
 operator() (const int& cell) const {
 
-  for (int node = 0; node < numNodes; ++node) {
+  for (unsigned int node = 0; node < numNodes; ++node) {
     meltingTemp(cell,node) = - beta * pressure(cell,node) + Tm;
     enthalpyHs(cell,node) = enthalpyHs_scaling * ( meltingTemp(cell,node) - T0 );
   }

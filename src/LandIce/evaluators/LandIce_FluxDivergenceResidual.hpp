@@ -48,8 +48,8 @@ namespace LandIce {
 
   private:
 
-    int numCells;
-    int numNodes;
+    unsigned int numCells;
+    unsigned int numNodes;
     bool upwindStabilization;
 
     PHX::MDField<const MeshScalarT, Cell, Node, Dim> coords;

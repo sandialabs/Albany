@@ -22,8 +22,8 @@ template<typename EvalT, typename Traits>
 StokesFOStress<EvalT, Traits>::
 StokesFOStress(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
-  Ugrad    (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   surfaceHeight    (p.get<std::string> ("Surface Height QP Name"), dl->qp_scalar),
+  Ugrad    (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   muLandIce  (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
   coordVec (p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient),
   Stress (p.get<std::string> ("Stress Variable Name"), dl->qp_tensor)
@@ -133,7 +133,7 @@ evaluateFields(typename Traits::EvalData workset)
         MeshScalarT x = coordVec(cell,qp,0)-x_0;
         MeshScalarT y = coordVec(cell,qp,1)-y_0;
         MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-        MeshScalarT h2 = h*h;
+        //MeshScalarT h2 = h*h;
         MeshScalarT invh_x = x/2.0/R2;
         MeshScalarT invh_y = y/2.0/R2;
 

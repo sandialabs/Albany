@@ -39,9 +39,9 @@ namespace LandIce {
 
     std::string sideName;
 
-    int numSideNodes;
-    int numSideQPs;
-    int numSideDims;
+    unsigned int numSideNodes;
+    unsigned int numSideQPs;
+    unsigned int numSideDims;
 
 
     PHX::MDField<const ScalarT,Cell,Side,Node>          solution;

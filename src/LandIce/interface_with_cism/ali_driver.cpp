@@ -126,7 +126,7 @@ void createReducedMPI(int nLocalEntities, MPI_Comm& reduced_comm_id) {
   int nonEmpty = int(nLocalEntities > 0);
   MPI_Allgather(&nonEmpty, 1, MPI_INT, &haveElements[0], 1, MPI_INT, comm);
   std::vector<int> ranks;
-  for (int i = 0; i < numProcs; i++) {
+  for (unsigned int i = 0; i < numProcs; i++) {
     if (haveElements[i])
       ranks.push_back(i);
   }
@@ -181,10 +181,10 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
       std::cout << "In ali_driver: dew, dns = " << dew << "  " << dns << std::endl;
     dimInfoGeom = new int[dimInfo[0]+1];
-    for (int i=0;i<=dimInfo[0];i++) dimInfoGeom[i] = dimInfo[i];
+    for (unsigned int i=0;i<=dimInfo[0];i++) dimInfoGeom[i] = dimInfo[i];
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) {
       std::cout << "DimInfoGeom  in ali_driver: " << std::endl;
-      for (int i=0;i<=dimInfoGeom[0];i++) std::cout << dimInfoGeom[i] << " ";
+      for (unsigned int i=0;i<=dimInfoGeom[0];i++) std::cout << dimInfoGeom[i] << " ";
       std::cout << std::endl;
     }
     global_ewn = dimInfoGeom[2];
@@ -532,7 +532,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     //global_node_id_owned_map_Ptr is 1-based, so nodeVS is 1-based
     //Distribute the elements according to the global element IDs
     Teuchos::Array<GO> global_node_id_owned_map(nNodes);
-    for (int i=0; i<nNodes; i++) {
+    for (unsigned int i=0; i<nNodes; i++) {
       global_node_id_owned_map[i] = global_node_id_owned_map_Ptr[i];
     }
     nodeVS = Albany::createVectorSpace(reducedMpiCommT, global_node_id_owned_map(), INVALID);
@@ -589,9 +589,9 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
      nNodes2D = (global_ewn + 1)*(global_nsn+1); //number global nodes in the domain in 2D
      nNodesProc2D = (nsn-2*nhalo+1)*(ewn-2*nhalo+1); //number of nodes on each processor in 2D
      cismToAlbanyNodeNumberMap.resize(upn*nNodesProc2D);
-     for (int j=0; j<nsn-2*nhalo+1;j++) {
-       for (int i=0; i<ewn-2*nhalo+1; i++) {
-         for (int k=0; k<upn; k++) {
+     for (unsigned int j=0; j<nsn-2*nhalo+1;j++) {
+       for (unsigned int i=0; i<ewn-2*nhalo+1; i++) {
+         for (unsigned int k=0; k<upn; k++) {
            int index = k+upn*i + j*(ewn-2*nhalo+1)*upn;
            cismToAlbanyNodeNumberMap[index] = k*nNodes2D + global_node_id_owned_map_Ptr[i+j*(ewn-2*nhalo+1)];
            //if (mpiComm->MyPID() == 0)
@@ -608,9 +608,9 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
      int counter1 = 0;
      int counter2 = 0;
      int local_nodeID;
-     for (int j=0; j<nsn-1; j++) {
-       for (int i=0; i<ewn-1; i++) {
-         for (int k=0; k<upn; k++) {
+     for (unsigned int j=0; j<nsn-1; j++) {
+       for (unsigned int i=0; i<ewn-1; i++) {
+         for (unsigned int k=0; k<upn; k++) {
            if (j >= nhalo-1 & j < nsn-nhalo) {
              if (i >= nhalo-1 & i < ewn-nhalo) {
                local_nodeID = indexer->getLocalElement(cismToAlbanyNodeNumberMap[counter1]);
@@ -627,8 +627,8 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
      //use as initial condition.
      //NOTE: there is some inefficiency here by looping over all the elements.  TO DO? pass only active nodes from Albany-CISM to improve this?
      double velScale = seconds_per_year*vel_scaling_param;
-     for (int i=0; i<nElementsActive; i++) {
-       for (int j=0; j<8; j++) {
+     for (unsigned int i=0; i<nElementsActive; i++) {
+       for (unsigned int j=0; j<8; j++) {
         int node_GID =  global_element_conn_active_Ptr[i + nElementsActive*j]; //node_GID is 1-based
         auto node_LID = indexer->getLocalElement(node_GID);
         stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, node_GID);
@@ -722,13 +722,13 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
    const Thyra::ModelEvaluatorBase::InArgs<double> nominal = solver->getNominalValues();
 
    if (debug_output_verbosity != 0) {
-    for (int i=0; i<num_p; i++) {
+    for (unsigned int i=0; i<num_p; i++) {
       Albany::printThyraVector(*out << "\nParameter vector " << i << ":\n", nominal.get_p(i));
     }
    }
 
     Albany::RegressionTests regression(slvrfctry->getParameters());
-    for (int i=0; i<num_g-1; i++) {
+    for (unsigned int i=0; i<num_g-1; i++) {
       const Teuchos::RCP<const Thyra_Vector> g = thyraResponses[i];
 
       bool is_scalar = true;
@@ -745,7 +745,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
           // Just calculate regression data -- only if in final time step
           status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
         } else {
-          for (int j=0; j<num_p; j++) {
+          for (unsigned int j=0; j<num_p; j++) {
             Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
 
             if (debug_output_verbosity != 0) {
@@ -807,12 +807,12 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     int overlap_vs_num_my_elts;
     int global_dof;
     double sol_value;
-    int numDofs;
+    unsigned int numDofs;
     auto ov_vs_indexer = Albany::createGlobalLocalIndexer(overlapVS);
     overlap_vs_num_my_elts = ov_vs_indexer->getNumLocalElements();
 
     if (interleavedOrdering == Albany::DiscType::Interleaved) {
-      for (int i=0; i<overlap_vs_num_my_elts; i++) {
+      for (unsigned int i=0; i<overlap_vs_num_my_elts; i++) {
         global_dof = ov_vs_indexer->getGlobalElement(i);
         sol_value = solutionOverlap_constView[i];
         int modulo = (global_dof % 2); //check if dof is for u or for v
@@ -829,7 +829,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     }
     else { //note: the case with non-interleaved ordering has not been tested...
       numDofs = ov_vs_indexer->getNumLocalElements();
-      for (int i=0; i<overlap_vs_num_my_elts; i++) {
+      for (unsigned int i=0; i<overlap_vs_num_my_elts; i++) {
         global_dof = ov_vs_indexer->getGlobalElement(i);
         sol_value = solutionOverlap_constView[i];
         int vel_global_dof;
@@ -847,9 +847,9 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
      //Copy uvel and vvel into uVel_ptr and vVel_ptr respectively (the arrays passed back to CISM) according to the numbering consistent w/ CISM.
      counter1 = 0;
      counter2 = 0;
-     for (int j=0; j<nsn-1; j++) {
-       for (int i=0; i<ewn-1; i++) {
-         for (int k=0; k<upn; k++) {
+     for (unsigned int j=0; j<nsn-1; j++) {
+       for (unsigned int i=0; i<ewn-1; i++) {
+         for (unsigned int k=0; k<upn; k++) {
            if (j >= nhalo-1 & j < nsn-nhalo) {
              if (i >= nhalo-1 & i < ewn-nhalo) {
                auto global_nodeID = cismToAlbanyNodeNumberMap[counter1];

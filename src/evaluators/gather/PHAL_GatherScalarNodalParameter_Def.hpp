@@ -176,7 +176,7 @@ evaluateFields(typename Traits::EvalData workset)
     const int num_nodes_res = this->numNodes;
     bool trans = workset.transpose_dist_param_deriv;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      for (std::size_t node = 0; node < num_deriv; ++node) {
+      for (int node = 0; node < num_deriv; ++node) {
 
         // Initialize Fad type for parameter value
         const LO id = wsElDofs((int)cell,(int)node,0);
@@ -192,7 +192,7 @@ evaluateFields(typename Traits::EvalData workset)
 
         if (trans) {
           local_Vp.resize(num_nodes_res*workset.numEqs);
-          for (std::size_t node = 0; node < num_nodes_res; ++node) {
+          for (int node = 0; node < num_nodes_res; ++node) {
             // Store Vp entries
             for (std::size_t eq = 0; eq < workset.numEqs; eq++) {
               local_Vp[node*workset.numEqs+eq].resize(num_cols);
@@ -262,7 +262,7 @@ evaluateFields(typename Traits::EvalData workset)
     bool trans = workset.transpose_dist_param_deriv;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-      for (std::size_t node = 0; node < num_deriv; ++node) {
+      for (int node = 0; node < num_deriv; ++node) {
         const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
         const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
         const LO p_lid= p_indexer->getLocalElement(ginode);
@@ -283,7 +283,7 @@ evaluateFields(typename Traits::EvalData workset)
 
         if (trans) {
           local_Vp.resize(num_nodes_res*workset.numEqs);
-          for (std::size_t node = 0; node < num_nodes_res; ++node) {
+          for (int node = 0; node < num_nodes_res; ++node) {
             // Store Vp entries
             for (std::size_t eq = 0; eq < workset.numEqs; eq++) {
               local_Vp[node*workset.numEqs+eq].resize(num_cols);
@@ -294,7 +294,7 @@ evaluateFields(typename Traits::EvalData workset)
           }
         } else {
           local_Vp.resize(num_deriv);
-          for (std::size_t node = 0; node < num_deriv; ++node) {
+          for (int node = 0; node < num_deriv; ++node) {
             const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
             const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
             const LO id = p_indexer->getLocalElement(ginode);
@@ -393,7 +393,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   const int num_deriv = (this->val)(0,0).size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    for (std::size_t node = 0; node < num_nodes; ++node) {
+    for (int node = 0; node < num_nodes; ++node) {
 
       // Initialize Fad type for parameter value
       const LO id = wsElDofs((int)cell,(int)node,0);
@@ -481,10 +481,9 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   const int num_deriv = this->numNodes;
-  const int num_nodes_res = this->numNodes;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    for (std::size_t node = 0; node < num_deriv; ++node) {
+    for (int node = 0; node < num_deriv; ++node) {
       const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
       const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
       const LO p_lid= p_indexer->getLocalElement(ginode);

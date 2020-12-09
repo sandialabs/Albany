@@ -49,7 +49,7 @@ private:
   PHX::MDField<PressST,Cell,Node>      meltingTemp; //[K]
   PHX::MDField<PressST,Cell,Node>      enthalpyHs;       //[MW s m^{-3}]
 
-  int numNodes;
+  unsigned int numNodes;
 
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
   double rho_i; //[kg m^{-3}]

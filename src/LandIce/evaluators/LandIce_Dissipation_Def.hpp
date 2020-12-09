@@ -40,7 +40,7 @@ namespace LandIce
   void Dissipation<EvalT,Traits>::
   operator() (const int &cell) const{
 
-    for (int qp = 0; qp < numQPs; ++qp) {
+    for (unsigned int qp = 0; qp < numQPs; ++qp) {
       diss(cell,qp) = 1.0/scyr * 4.0 * mu(cell,qp) * epsilonSq(cell,qp);
     }
     

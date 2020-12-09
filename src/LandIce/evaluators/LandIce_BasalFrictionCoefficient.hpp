@@ -91,8 +91,8 @@ private:
 
   double rho_i, rho_w;    // [kg m^{-3}]
 
-  int numNodes;
-  int numQPs;
+  unsigned int numNodes;
+  unsigned int numQPs;
 
   bool logParameters;
   bool distributedLambda;

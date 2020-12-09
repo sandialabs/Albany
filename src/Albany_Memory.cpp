@@ -115,7 +115,7 @@ class MemoryAnalyzer {
     }
     for (int j = 0; j < ndata_; ++j) {
       std::vector<Int> v(nproc);
-      for (int i = 0; i < v.size(); ++i) v[i] = d[ndata_*i + j];
+      for (size_t i = 0; i < v.size(); ++i) v[i] = d[ndata_*i + j];
       std::nth_element(v.begin(), v.begin() + v.size()/2, v.end());
       stats_.med[j] = v[v.size()/2];
     }    

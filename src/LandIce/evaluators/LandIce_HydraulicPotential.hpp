@@ -53,7 +53,7 @@ private:
 
   std::string basalSideName;  // Only if IsStokes  is true
 
-  int numPts;
+  unsigned int numPts;
 
   bool use_h;
 

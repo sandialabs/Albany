@@ -92,17 +92,17 @@ evaluateFields (typename Traits::EvalData workset)
   switch (ice_softness_type)
   {
     case UNIFORM:
-      for (int cell=0; cell<workset.numCells; ++cell)
+      for (unsigned int cell=0; cell<workset.numCells; ++cell)
         ice_softness(cell) = A;
       break;
 
     case GIVEN_FIELD:
-      for (int cell=0; cell<workset.numCells; ++cell)
+      for (unsigned int cell=0; cell<workset.numCells; ++cell)
         ice_softness(cell) = given_ice_softness(cell);
       break;
 
     case TEMPERATURE_BASED:
-      for (int cell=0; cell<workset.numCells; ++cell)
+      for (unsigned int cell=0; cell<workset.numCells; ++cell)
         ice_softness(cell) = (temperature(cell) < 263) ? 1.3e7 / std::exp (6.0e4 / 8.314 / temperature(cell))
                                                    : 6.26e22 / std::exp (1.39e5 / 8.314 / temperature(cell));
       break;

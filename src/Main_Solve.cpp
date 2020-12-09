@@ -229,7 +229,6 @@ int main(int argc, char *argv[])
 
       const std::string& type = pList.isParameter("Type") ?
           pList.get<std::string>("Type") : std::string("Scalar Response");
-      bool number_exists = pList.getEntryPtr("Number Of Responses");
 
       if (type=="Sum Of Responses") {
         const int num_sub_responses = pList.get<int>("Number Of Responses");

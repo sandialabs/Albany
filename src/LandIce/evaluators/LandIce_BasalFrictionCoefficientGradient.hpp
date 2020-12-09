@@ -72,10 +72,10 @@ private:
 
   std::string basalSideName;
 
-  int numSideNodes;
-  int numSideQPs;
-  int sideDim;
-  int vecDim;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int sideDim;
+  unsigned int vecDim;
 
   double A;
   double x_0;

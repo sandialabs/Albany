@@ -77,9 +77,9 @@ private:
   bool add_melange_force;
   bool use_stereographic_map;
 
-  int numSideNodes;
-  int numSideQPs;
-  int vecDimFO;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int vecDimFO;
 };
 
 } // Namespace LandIce

@@ -58,7 +58,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   numSideQPs = dl_side->qp_scalar->extent(2);
 
 
-  int numSides = dl_side->node_scalar->extent(1);
+  unsigned int numSides = dl_side->node_scalar->extent(1);
   sideDim  = cellType->getDimension()-1;
 
   this->addDependentField(forcing);
@@ -75,12 +75,12 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   using PHX::MDALayout;
 
   sideNodes.resize(numSides);
-  for (int side=0; side<numSides; ++side)
+  for (unsigned int side=0; side<numSides; ++side)
   {
     //Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
+    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     sideNodes[side].resize(thisSideNodes);
-    for (int node=0; node<thisSideNodes; ++node)
+    for (unsigned int node=0; node<thisSideNodes; ++node)
       sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
   }
 }
@@ -106,15 +106,15 @@ template<typename EvalT, typename Traits>
 void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
 
-  for (int cell=0; cell<numCells; ++cell) {
+  for (unsigned int cell=0; cell<numCells; ++cell) {
     MeshScalarT trapezoid_weights = 0;
-    for (int qp=0; qp<numQPs; ++qp)
+    for (unsigned int qp=0; qp<numQPs; ++qp)
       trapezoid_weights += w_measure(cell, qp);
     trapezoid_weights /= numNodes;
-    for (int inode=0; inode<numNodes; ++inode) {
+    for (unsigned int inode=0; inode<numNodes; ++inode) {
         ScalarT t = 0;
-        for (int qp=0; qp<numQPs; ++qp)
-          for (int idim=0; idim<cellDim; ++idim)
+        for (unsigned int qp=0; qp<numQPs; ++qp)
+          for (unsigned int idim=0; idim<cellDim; ++idim)
             t += laplacian_coeff*gradField(cell,qp,idim)*gradBF(cell,inode, qp,idim)*w_measure(cell, qp);
 
         //using trapezoidal rule to get diagonal mass matrix
@@ -135,11 +135,11 @@ void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::evaluateFields(typ
       const int side = it_side.side_local_id;
 
       MeshScalarT side_trapezoid_weights= 0;
-      for (int qp=0; qp<numSideQPs; ++qp)
+      for (unsigned int qp=0; qp<numSideQPs; ++qp)
         side_trapezoid_weights += w_side_measure(cell,side, qp);
       side_trapezoid_weights /= numSideNodes;
 
-      for (int inode=0; inode<numSideNodes; ++inode) {
+      for (unsigned int inode=0; inode<numSideNodes; ++inode) {
         auto cell_node = sideNodes[side][inode];
         residual(cell,cell_node) += robin_coeff*field(cell,cell_node)* side_trapezoid_weights;
       }

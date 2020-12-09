@@ -112,7 +112,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
       const int cell = iter_s->elem_LID;
       const int side = iter_s->side_local_id;
 
-      for (int pt=0; pt<numPts; ++pt) {
+      for (unsigned int pt=0; pt<numPts; ++pt) {
         // N = P_o-P_w
         N (cell,side,pt) = (1-alpha)*P_o(cell,side,pt);
       }
@@ -123,7 +123,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
       const int cell = it.elem_LID;
       const int side = it.side_local_id;
 
-      for (int node=0; node<numPts; ++node) {
+      for (unsigned int node=0; node<numPts; ++node) {
         // N = P_o - P_w
         N (cell,side,node) = P_o(cell,side,node) - P_w(cell,side,node);
       }
@@ -147,16 +147,16 @@ evaluateFieldsCell (typename Traits::EvalData workset)
     }
 #endif
 
-    for (int cell=0; cell<workset.numCells; ++cell) {
-      for (int node=0; node<numPts; ++node)
+    for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+      for (unsigned int node=0; node<numPts; ++node)
       {
         // N = P_o - P_w
         N (cell,node) = (1-alpha)*P_o(cell,node);
       }
     }
   } else {
-    for (int cell=0; cell<workset.numCells; ++cell) {
-      for (int node=0; node<numPts; ++node) {
+    for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+      for (unsigned int node=0; node<numPts; ++node) {
         // N = P_o - P_w
         N(cell,node) = P_o(cell,node) - P_w(cell,node);
       }

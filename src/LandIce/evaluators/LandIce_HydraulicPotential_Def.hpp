@@ -103,7 +103,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     const int cell = it.elem_LID;
     const int side = it.side_local_id;
 
-    for (int pt=0; pt<numPts; ++pt) {
+    for (unsigned int pt=0; pt<numPts; ++pt) {
       // Recall that phi is in kPa, but h is in m. Need to convert to km.
       phi(cell,side,pt) = P_w(cell,side,pt) + phi_0(cell,side,pt) + (use_h ? rho_w*g*h(cell,side,pt)/1000 : zero);
     }
@@ -116,8 +116,8 @@ void HydraulicPotential<EvalT, Traits, IsStokes>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ScalarT zero(0.0);
-  for (int cell=0; cell<workset.numCells; ++cell) {
-    for (int pt=0; pt<numPts; ++pt) {
+  for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+    for (unsigned int pt=0; pt<numPts; ++pt) {
       // Recall that phi is in kPa, but h is in m. Need to convert to km.
       phi(cell,pt) = P_w(cell,pt) + phi_0(cell,pt) + (use_h ? rho_w*g*h(cell,pt)/1000 : zero);
     }

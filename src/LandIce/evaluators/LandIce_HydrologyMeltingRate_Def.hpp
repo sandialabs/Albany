@@ -114,7 +114,7 @@ void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Tra
       const int cell = it_side.elem_LID;
       const int side = it_side.side_local_id;
 
-      for (int qp=0; qp < numQPs; ++qp)
+      for (unsigned int qp=0; qp < numQPs; ++qp)
       {
         m(cell,side,qp) = ( scaling_G*G(cell,side,qp) + beta(cell,side,qp) * std::pow(u_b(cell,side,qp),2) ) / L;
       }
@@ -122,10 +122,10 @@ void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Tra
   }
   else
   {
-    int dim = nodal ? numNodes : numQPs;
-    for (int cell=0; cell < workset.numCells; ++cell)
+    unsigned int dim = nodal ? numNodes : numQPs;
+    for (unsigned int cell=0; cell < workset.numCells; ++cell)
     {
-      for (int i=0; i<dim; ++i)
+      for (unsigned int i=0; i<dim; ++i)
       {
         m(cell,i) = ( scaling_G*G(cell,i) + beta(cell,i) * std::pow(u_b(cell,i),2) ) / L;
       }

@@ -52,7 +52,7 @@ private:
 
   std::string basalSideName;
 
-  int numNodes;
+  unsigned int numNodes;
 
   double rho_w;
   double g;

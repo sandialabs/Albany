@@ -212,8 +212,6 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 
         rigidBodyModes->setPiroPL(piroParams);
 
-    std::string& method = discParams->get("Method", "STK1D");
-
 
   switch (meshStruct->meshSpecsType()) {
     case AbstractMeshStruct::STK_MS:

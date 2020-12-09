@@ -25,7 +25,7 @@ CumulativeScalarResponseFunction(
 
     // Check that all responses have the same vector space 
     auto vs = responses[0]->responseVectorSpace(); 
-    for (int iresp=1; iresp<num_responses; ++iresp) {
+    for (size_t iresp=1; iresp<num_responses; ++iresp) {
       TEUCHOS_TEST_FOR_EXCEPTION(!responses[iresp]->responseVectorSpace()->isCompatible(*vs), std::runtime_error,
                                  "Error! All responses in CumulativeScalarResponseFunction must have compatible vector spaces.\n");
     }

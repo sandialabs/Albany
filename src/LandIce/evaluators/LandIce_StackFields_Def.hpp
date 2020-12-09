@@ -31,7 +31,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (last_tag!="Vector" && last_tag!="Gradient", std::logic_error,
                               "Error! Output stacked field must be xxx_vector or xxx_gradient.\n");
   dims_out.resize(rank_out);
-  for (int i=0; i<rank_out; ++i)
+  for (unsigned int i=0; i<rank_out; ++i)
     dims_out[i] = layout_out->extent(i);
 
   field_out = PHX::MDField<ScalarT>(p.get<std::string>("Stacked Field Name"),layout_out);
@@ -93,7 +93,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (last_tag!="Vector" && last_tag!="Gradient", std::logic_error,
                               "Error! Output stacked field must be xxx_vector or xxx_gradient.\n");
   dims_out.resize(rank_out);
-  for (int i=0; i<rank_out; ++i)
+  for (unsigned int i=0; i<rank_out; ++i)
     dims_out[i] = layout_out->extent(i);
 
   field_out = PHX::MDField<ScalarT>(p.get<std::string>("Stacked Field Name"),layout_out);
@@ -114,7 +114,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
                               "Error! Input layouts array has the wrong size.\n");
 
   offsets[0] = 0;
-  for (int i=0; i<num_fields_in; ++i)
+  for (unsigned int i=0; i<num_fields_in; ++i)
   {
     Teuchos::RCP<PHX::DataLayout> layout_i = getLayout(str_layouts[i],dls_in[i]);
     TEUCHOS_TEST_FOR_EXCEPTION (!isCompatible(layout_i,layout_out), std::logic_error,
@@ -140,7 +140,7 @@ void StackFieldsBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  for (int i=0; i<num_fields_in; ++i)
+  for (unsigned int i=0; i<num_fields_in; ++i)
     this->utils.setFieldData(fields_in[i],fm);
 
   this->utils.setFieldData(field_out,fm);
@@ -154,39 +154,39 @@ evaluateFields(typename Traits::EvalData workset)
   switch (rank_out)
   {
     case 2:
-      for (int i=0; i<num_fields_in; ++i)
+      for (unsigned int i=0; i<num_fields_in; ++i)
         if (ranks_in[i]==rank_out)
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int dim=0; dim<dims_in[i]; ++dim)
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int dim=0; dim<dims_in[i]; ++dim)
               field_out(cell,dim+offsets[i]) = fields_in[i](cell,dim);
         else
-          for (int cell=0; cell<workset.numCells; ++cell)
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
             field_out(cell,offsets[i]) = fields_in[i](cell);
       break;
     case 3:
-      for (int i=0; i<num_fields_in; ++i)
+      for (unsigned int i=0; i<num_fields_in; ++i)
         if (ranks_in[i]==rank_out)
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int j=0; j<dims_out[1]; ++j)
-              for (int dim=0; dim<dims_in[i]; ++dim)
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int j=0; j<dims_out[1]; ++j)
+              for (unsigned int dim=0; dim<dims_in[i]; ++dim)
                 field_out(cell,j,dim+offsets[i]) = fields_in[i](cell,j,dim);
         else
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int j=0; j<dims_out[1]; ++j)
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int j=0; j<dims_out[1]; ++j)
               field_out(cell,j,offsets[i]) = fields_in[i](cell,j);
       break;
     case 4:
-      for (int i=0; i<num_fields_in; ++i)
+      for (unsigned int i=0; i<num_fields_in; ++i)
         if (ranks_in[i]==rank_out)
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int j=0; j<dims_out[1]; ++j)
-              for (int k=0; k<dims_out[2]; ++k)
-                for (int dim=0; dim<dims_in[i]; ++dim)
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int j=0; j<dims_out[1]; ++j)
+              for (unsigned int k=0; k<dims_out[2]; ++k)
+                for (unsigned int dim=0; dim<dims_in[i]; ++dim)
                   field_out(cell,j,k,dim+offsets[i]) = fields_in[i](cell,j,k,dim);
         else
-          for (int cell=0; cell<workset.numCells; ++cell)
-            for (int j=0; j<dims_out[1]; ++j)
-              for (int k=0; k<dims_out[2]; ++k)
+          for (unsigned int cell=0; cell<workset.numCells; ++cell)
+            for (unsigned int j=0; j<dims_out[1]; ++j)
+              for (unsigned int k=0; k<dims_out[2]; ++k)
                 field_out(cell,j,k,offsets[i]) = fields_in[i](cell,j,k);
       break;
     default:
@@ -232,24 +232,24 @@ bool StackFieldsBase<EvalT, Traits, ScalarT>::
 isCompatible (const Teuchos::RCP<PHX::DataLayout>& layout_1,
               const Teuchos::RCP<PHX::DataLayout>& layout_2) const
 {
-  int rank_1 = layout_1->rank();
-  int rank_2 = layout_2->rank();
+  unsigned int rank_1 = layout_1->rank();
+  unsigned int rank_2 = layout_2->rank();
 
   if (rank_1==rank_2)
   {
-    for (int i=0; i<rank_1-1; ++i)
+    for (unsigned int i=0; i<rank_1-1; ++i)
       if (layout_1->name(i)!=layout_2->name(i))
         return false;
   }
   else if (rank_1==rank_2-1)
   {
-    for (int i=0; i<rank_1; ++i)
+    for (unsigned int i=0; i<rank_1; ++i)
       if (layout_1->name(i)!=layout_2->name(i))
         return false;
   }
   else if (rank_2==rank_1-1)
   {
-    for (int i=0; i<rank_2; ++i)
+    for (unsigned int i=0; i<rank_2; ++i)
       if (layout_1->name(i)!=layout_2->name(i))
         return false;
   }

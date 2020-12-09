@@ -117,12 +117,12 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
       const int cell = it_side.elem_LID;
       const int side = it_side.side_local_id;
 
-      for (int inode=0; inode<numSideNodes; ++inode)
+      for (unsigned int inode=0; inode<numSideNodes; ++inode)
         gl_func(inode) = rho_i*thickness(cell,side,inode)+rho_w*bed(cell,side,inode);
 
       bool isGLCell = false;
 
-      for (int inode=1; inode<numSideNodes; ++inode)
+      for (unsigned int inode=1; inode<numSideNodes; ++inode)
         isGLCell = isGLCell || (gl_func(0)*gl_func(inode) <=0);
 
       if(!isGLCell)
@@ -133,7 +133,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
       MeshScalarT gl_sum=0, gl_max=0, gl_min=0;
 
       int counter=0;
-      for (int inode=0; (inode<numSideNodes); ++inode) {
+      for (unsigned int inode=0; (inode<numSideNodes); ++inode) {
         int inode1 = (inode+1)%numSideNodes;
         MeshScalarT gl0 = gl_func(inode), gl1 = gl_func(inode1);
         if(gl0 >= gl_max) {

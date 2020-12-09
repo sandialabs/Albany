@@ -130,9 +130,9 @@ template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
 void HydrologyWaterThickness<EvalT, Traits, IsStokes, ThermoCoupled>::evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ScalarT zero (0.0);
-  for (int cell=0; cell < workset.numCells; ++cell)
+  for (unsigned int cell=0; cell < workset.numCells; ++cell)
   {
-    for (int ipt=0; ipt < numPts; ++ipt)
+    for (unsigned int ipt=0; ipt < numPts; ++ipt)
     {
       h(cell,ipt)  = (use_melting ? m(cell,ipt)/rho_i : zero) + u_b(cell,ipt)*h_r/l_r;
       h(cell,ipt) /= c_creep*A(cell)*std::pow(N(cell,ipt),3) + u_b(cell,ipt)/l_r;
@@ -155,7 +155,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (int ipt=0; ipt < numPts; ++ipt)
+    for (unsigned int ipt=0; ipt < numPts; ++ipt)
     {
       h(cell,ipt)  = (use_melting ? m(cell,side,ipt)/rho_i : zero) + u_b(cell,side,ipt)*h_r/l_r;
       h(cell,ipt) /= c_creep*A(cell)*std::pow(N(cell,side,ipt),3) + u_b(cell,side,ipt)/l_r;

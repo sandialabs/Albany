@@ -38,10 +38,10 @@ namespace LandIce {
 
     std::string surfaceSideName;
 
-    int numSideNodes;
-    int numBasalQPs;
-    int numSurfaceQPs;
-    int numSideDims;
+    unsigned int numSideNodes;
+    unsigned int numBasalQPs;
+    unsigned int numSurfaceQPs;
+    unsigned int numSideDims;
 
     PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>      velocity;
     PHX::MDField<const RealType,Cell,Side,QuadPoint,VecDim>     observedVelocity;

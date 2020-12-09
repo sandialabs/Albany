@@ -53,7 +53,7 @@ private:
   std::vector<std::vector<int> >  sideNodes;
   std::string                     basalSideName;
 
-  int numCellNodes, numSideNodes, numSideQPs, sideDim;
+  unsigned int numCellNodes, numSideNodes, numSideQPs, sideDim;
 
   double rho_w; 	// [kg m^{-3}] density of water
   double rho_i; 	// [kg m^{-3}] density of ice
@@ -77,7 +77,7 @@ private:
   bool isThereWater;
   bool nodal;
 
-  const int vecDimFO = 2;
+  const unsigned int vecDimFO = 2;
   ScalarT hom;
   ScalarT basal_reg_coeff;
   ScalarT flux_reg_coeff;
