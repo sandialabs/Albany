@@ -1,8 +1,10 @@
 group, site, buildname 
 Nightly, blake.sandia.gov, blake-serial-Trilinos
 Nightly, blake.sandia.gov, blake-openmp-Trilinos
+Nightly, blake.sandia.gov, blake-serial-Trilinos-gcc-no-warn
 Nightly, blake.sandia.gov, blake-serial-Albany
 Nightly, blake.sandia.gov, blake-openmp-Albany
+Nightly, blake.sandia.gov, blake-serial-Albany-gcc-no-warn
 Nightly, blake.sandia.gov, blake-serial-sfad4-Albany
 Nightly, blake.sandia.gov, blake-serial-sfad6-Albany
 Nightly, blake.sandia.gov, blake-serial-sfad8-Albany
