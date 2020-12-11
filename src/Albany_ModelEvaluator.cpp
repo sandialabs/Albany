@@ -15,6 +15,9 @@
 
 #include "Albany_Application.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_Hessian.hpp"
+
 // uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
 
@@ -435,6 +438,42 @@ ModelEvaluator::create_W_prec() const
 }
 
 Teuchos::RCP<Thyra_LinearOp>
+ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      l1 != l2,
+      Teuchos::Exceptions::InvalidParameter,
+      std::endl
+          << "Error! Albany::ModelEvaluator::create_hess_g_pp():  "
+          << "Parameter index l1 is not equal to l2"
+          << "l1 = " << l1
+          << "l2 = " << l2
+          << std::endl);
+
+  // Currently, only support distributed parameters.
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      l1 >= num_param_vecs + num_dist_param_vecs || l1 < num_param_vecs,
+      Teuchos::Exceptions::InvalidParameter,
+      std::endl
+          << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
+          << "Invalid parameter index l1 = "
+          << l1
+          << std::endl);
+
+  Teuchos::RCP<const Tpetra_Map> p_overlapped_map = Albany::getTpetraMap(
+    distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace());
+  Teuchos::RCP<const Tpetra_Map> p_owned_map = Albany::getTpetraMap(
+    distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace());
+  const Albany::IDArray&  wsElDofs =
+    distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs()[0];
+
+  Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Albany::createHessianCrsGraph(p_owned_map, p_overlapped_map, wsElDofs);
+  Teuchos::RCP<Tpetra_CrsMatrix> Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
+
+  return Albany::createThyraLinearOp(Ht);
+}
+
+Teuchos::RCP<Thyra_LinearOp>
 ModelEvaluator::create_DfDp_op_impl(int j) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -582,6 +621,9 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
     const bool aDHessVec = parameterParams.isParameter("Hessian-vector products use AD") ?
         parameterParams.get<bool>("Hessian-vector products use AD") : true;
 
+    const bool reconstructHpp = parameterParams.isParameter("Reconstruct H_pp") ?
+        parameterParams.get<bool>("Reconstruct H_pp") : false;
+
     bool hess_vec_prod_g_xx_support = aDHessVec;
     bool hess_vec_prod_g_xp_support = aDHessVec;
     bool hess_vec_prod_g_px_support = aDHessVec;
@@ -618,6 +660,12 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
         Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_px,
         j1 + num_param_vecs,
         hess_vec_prod_f_px_support);
+      result.setSupports(
+        Thyra_ModelEvaluator::OUT_ARG_hess_g_pp,
+        i,
+        j1 + num_param_vecs,
+        j1 + num_param_vecs,
+        reconstructHpp);
       for (int j2 = 0; j2 < num_dist_param_vecs; j2++) {
         result.setSupports(
           Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_pp,
@@ -1109,6 +1157,17 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
             sacado_param_vec,
             dist_param_names[l1],
             g_hess_px_v);
+      }
+
+      const Teuchos::RCP<Thyra_LinearOp> g_hess_pp =
+        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_g_pp, j, l1 + num_param_vecs, l1 + num_param_vecs) ?
+        outArgs.get_hess_g_pp(j, l1 + num_param_vecs, l1 + num_param_vecs) : Teuchos::null;
+
+      if (Teuchos::nonnull(g_hess_pp)) {
+        app->evaluateResponseDistParamHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
+                  sacado_param_vec,
+                  dist_param_names[l1],
+                  g_hess_pp);
       }
 
       for (int l2 = 0; l2 < num_dist_param_vecs; l2++) {

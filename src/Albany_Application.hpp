@@ -645,6 +645,21 @@ public:
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_pp);
 
   /**
+   * \brief evaluateResponseDistParamHessian_pp function
+   */
+  void
+  evaluateResponseDistParamHessian_pp(
+      int                                     response_index,
+      int                                     parameter_index,
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const std::string&                      dist_param_name,
+      const Teuchos::RCP<Thyra_LinearOp>&     H);
+
+  /**
    * \brief evaluateResidual_HessVecProd_xx function
    * 
    * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\f$ of the inner product of the residual vector \f$\boldsymbol{f}\f$
