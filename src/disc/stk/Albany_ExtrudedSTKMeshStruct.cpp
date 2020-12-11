@@ -285,7 +285,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   std::vector<stk::mesh::Entity> sides2D;
   stk::mesh::get_selected_entities(select_owned_in_part, bulkData2D.buckets(metaData2D.side_rank()), sides2D);
 
-  //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << maxGlobalSides2D << std::endl;
+  //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << globalVerticesStride<< " " << maxGlobalSides2D << std::endl;
 
   Teuchos::Array<Tpetra_GO> indices(nodes2D.size());
   for (size_t i = 0; i < nodes2D.size(); ++i)
@@ -308,19 +308,19 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   }
   Teuchos::RCP<const Tpetra_Map> sides_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
 
-  GO maxGlobalElements2dId = cells_map->getMaxAllGlobalIndex() + 1;
-  GO maxGlobalVertices2dId = nodes_map->getMaxAllGlobalIndex() + 1;
-  GO maxGlobalSides2dId    = sides_map->getMaxAllGlobalIndex() + 1;
+  GO globalElemStride = cells_map->getMaxAllGlobalIndex() - cells_map->getMinAllGlobalIndex() + 1;
+  GO globalVerticesStride = nodes_map->getMaxAllGlobalIndex() - nodes_map->getMinAllGlobalIndex() + 1;
+  GO globalSidesStride    = sides_map->getMaxAllGlobalIndex() - sides_map->getMinAllGlobalIndex() + 1;
 
-  GO elemColumnShift     = (Ordering == COLUMN) ? 1 : maxGlobalElements2dId;
+  GO elemColumnShift     = (Ordering == COLUMN) ? 1 : globalElemStride;
   int lElemColumnShift   = (Ordering == COLUMN) ? 1 : cells2D.size();
   int elemLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
 
-  GO vertexColumnShift   = (Ordering == COLUMN) ? 1 : maxGlobalVertices2dId;
+  GO vertexColumnShift   = (Ordering == COLUMN) ? 1 : globalVerticesStride;
   int lVertexColumnShift = (Ordering == COLUMN) ? 1 : nodes2D.size();
   int vertexLayerShift   = (Ordering == LAYER)  ? 1 : numLayers + 1;
 
-  GO sideColumnShift     = (Ordering == COLUMN) ? 1 : maxGlobalSides2dId;
+  GO sideColumnShift     = (Ordering == COLUMN) ? 1 : globalSidesStride;
   int lsideColumnShift   = (Ordering == COLUMN) ? 1 : sides2D.size();
   int sideLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
 
@@ -521,7 +521,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   singlePartVec[0] = ssPartVec["upperside"];
 
-  GO upperBasalOffset = maxGlobalElements2dId;
+  GO upperBasalOffset = globalElemStride;
 
   *out << "[ExtrudedSTKMesh] Adding upperside sides... ";
   out->getOStream()->flush();
@@ -556,7 +556,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
                                                       { { { 1, 2 }, { 0, 2 }, { 0, 1 } }, { { 0, 2 }, { 1, 2 }, { 0, 1 } } },
                                                       { { { 0, 1 }, { 1, 2 }, { 0, 2 } }, { { 0, 1 }, { 0, 2 }, { 1, 2 } } } };
 
-  upperBasalOffset += maxGlobalElements2dId;
+  upperBasalOffset += globalElemStride;
 
   *out << "[ExtrudedSTKMesh] Adding lateral sides... ";
   out->getOStream()->flush();
@@ -692,8 +692,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   out->getOStream()->flush();
 
   // Extrude fields
-  extrudeBasalFields (nodes2D,cells2D,maxGlobalElements2dId,maxGlobalVertices2dId);
-  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalElements2dId,maxGlobalVertices2dId);
+  extrudeBasalFields (nodes2D,cells2D,globalElemStride,globalVerticesStride);
+  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,globalElemStride,globalVerticesStride);
 
   // Loading required input fields from file
   this->loadRequiredInputFields (req,comm);

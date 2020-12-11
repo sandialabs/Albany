@@ -188,8 +188,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
             + (ordering == 1) * (j / vertexLayerShift);
     int il = (ordering == 0) * (j / lVertexColumnShift)
             + (ordering == 1) * (j % vertexLayerShift);
-    int gId = il * vertexColumnShift + vertexLayerShift * indexToVertexID[ib];
-    stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, gId + 1);
+    int gId = il * vertexColumnShift + vertexLayerShift * (indexToVertexID[ib]-1) + 1;
+    stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, gId);
     double* coord = stk::mesh::field_data(*meshStruct->getCoordinatesField(), node);
     coord[2] = elevationData[ib] + (levelsNormalizedThickness[il]-1.0) * thicknessData[ib];
 
@@ -239,10 +239,10 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
             + (ordering == 1) * (j / (elemLayerShift));
     int il = (ordering == 0) * (j / (lElemColumnShift))
             + (ordering == 1) * (j % (elemLayerShift));
-    int gId = numElemsInPrism * (il * elemColumnShift + elemLayerShift * indexToTriangleID[ib]);
+    int gId = numElemsInPrism * (il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1)) + 1;
     int lId = il * lElemColumnShift + elemLayerShift * ib;
     for (int iElem = 0; iElem < numElemsInPrism; iElem++) {
-      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, ++gId);
+      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, gId++);
       double* temperature = stk::mesh::field_data(*temperature_field, elem);
       temperature[0] = temperatureDataOnPrisms[lId];
     }
@@ -315,22 +315,22 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
             + (ordering == 1) * (j / vertexLayerShift);
     int il = (ordering == 0) * (j / lVertexColumnShift)
             + (ordering == 1) * (j % vertexLayerShift);
-    int gId = il * vertexColumnShift + vertexLayerShift * indexToVertexID[ib];
+    int gId = il * vertexColumnShift + vertexLayerShift * (indexToVertexID[ib]-1) + 1;
 
     int lId0, lId1;
 
     if (interleavedOrdering == Albany::DiscType::Interleaved) {
-      lId0 = indexer->getLocalElement(neq * gId);
+      lId0 = indexer->getLocalElement(neq * (gId-1));
       lId1 = lId0 + 1;
     } else {
-      lId0 = indexer->getLocalElement(gId);
+      lId0 = indexer->getLocalElement(gId-1);
       lId1 = lId0 + numVertices3D;
     }
     velocityOnVertices[j] = solution_constView[lId0];
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
 
    if (Teuchos::nonnull(ss_ms) && !betaData.empty() && (betaField!=nullptr) && (il == 0)) {
-      stk::mesh::Entity node = ss_ms->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib] + 1);
+      stk::mesh::Entity node = ss_ms->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib]);
       const double* betaVal = stk::mesh::field_data(*betaField,node);
       betaData[ib] = betaVal[0];
     }
@@ -345,12 +345,12 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
             + (ordering == 1) * (j / (elemLayerShift));
     int il = (ordering == 0) * (j / (lElemColumnShift))
             + (ordering == 1) * (j % (elemLayerShift));
-    int gId = numElemsInPrism * (il * elemColumnShift + elemLayerShift * indexToTriangleID[ib]);
+    int gId = numElemsInPrism * (il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1)) + 1;
     int lId = il * lElemColumnShift + elemLayerShift * ib;
 
     double bf = 0;
     for (int iElem = 0; iElem < numElemsInPrism; iElem++) {
-      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, ++gId);
+      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, gId++);
       if(!dissipationHeatOnPrisms.empty() && dissipationHeatField != nullptr) {
         const double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
         dissipationHeatOnPrisms[lId] += dissipationHeat[0]/numElemsInPrism;
