@@ -45,8 +45,8 @@ public:
   HydrologyMeltingRate (const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -61,11 +61,17 @@ private:
   PHX::MDField<ScalarT>             m;      // [ kg m^-3 m yr^-1 ], that is, [ kg m^-2 yr ^-1 ] (density*speed)
 
   bool              nodal;
+  bool              friction;
+  bool              G_field;
+  bool              m_given;
+  bool              G_given;
 
   unsigned int               numQPs;
   unsigned int               numNodes;
   double            L;            // Ice Latent Heat [J kg^-1]
   double            scaling_G;    // Used internally
+  double            m_value;      // Used if this->m_given is true
+  double            G_value;      // Used if this->G_given is true
 
   std::string       sideSetName;  // Only needed if IsStokes=true
 };

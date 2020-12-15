@@ -73,29 +73,46 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
   } else {
     layout = dl->qp_scalar;
   }
-  u_b  = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-  G    = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Geothermal Heat Source Variable Name"), layout);
-  beta = PHX::MDField<const ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
-  m    = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate Variable Name"),layout);
 
-  this->addDependentField(beta);
-  this->addDependentField(u_b);
-  this->addDependentField(G);
+  m = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate Variable Name"),layout);
   this->addEvaluatedField(m);
 
-  this->setName("HydrologyMeltingRate"+PHX::print<EvalT>());
+  Teuchos::ParameterList& hy_pl = *p.get<Teuchos::ParameterList*>("LandIce Hydrology");
+  Teuchos::ParameterList& melt_pl = hy_pl.sublist("Melting Rate");
+
+  if (melt_pl.isParameter("Use Given Value")) {
+    m_value = melt_pl.get("Use Given Value",0.0);
+    m_given = true;
+  } else {
+    if (melt_pl.get("Use Friction Melt",true)) {
+      u_b  = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+      beta = PHX::MDField<const ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
+      this->addDependentField(beta);
+      this->addDependentField(u_b);
+
+      friction = true;
+    }
+    if (melt_pl.get("Use Geothermal Melt", true)) {
+      G = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Geothermal Heat Source Variable Name"), layout);
+      this->addDependentField(G);
+
+      G_field = true;
+    } else if (melt_pl.isParameter("Given Geothermal Flux")) {
+      G_given = true;
+      G_value = melt_pl.get<double>("Given Geoethermal Flux");
+    }
+  }
+
+  this->setName("HydrologyMeltingRate" + (nodal ? std::string("Nodal") : std::string("QPs")) +PHX::print<EvalT>());
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes>
 void HydrologyMeltingRate<EvalT, Traits, IsStokes>::
 postRegistrationSetup(typename Traits::SetupData /* d */,
-                      PHX::FieldManager<Traits>& fm)
+                      PHX::FieldManager<Traits>& )
 {
-  this->utils.setFieldData(u_b,fm);
-  this->utils.setFieldData(G,fm);
-  this->utils.setFieldData(beta,fm);
-  this->utils.setFieldData(m,fm);
+  m.deep_copy(m_value);
 }
 
 //**********************************************************************
@@ -103,6 +120,10 @@ template<typename EvalT, typename Traits, bool IsStokes>
 void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Traits::EvalData workset)
 {
   // m = ( G - \beta |u_b|^2 ) / L
+
+  if (m_given) {
+    return;
+  }
 
   if (IsStokes)
   {
@@ -121,15 +142,20 @@ void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Tra
         m(cell,side,qp) = ( scaling_G*G(cell,side,qp) + beta(cell,side,qp) * std::pow(u_b(cell,side,qp),2) ) / L;
       }
     }
-  }
-  else
-  {
+  } else {
     unsigned int dim = nodal ? numNodes : numQPs;
-    for (unsigned int cell=0; cell < workset.numCells; ++cell)
-    {
-      for (unsigned int i=0; i<dim; ++i)
-      {
-        m(cell,i) = ( scaling_G*G(cell,i) + beta(cell,i) * std::pow(u_b(cell,i),2) ) / L;
+    for (unsigned int cell=0; cell < workset.numCells; ++cell) {
+      for (unsigned int i=0; i<dim; ++i) {
+        ScalarT val(0.0);
+        if (G_field) {
+          val += scaling_G*G(cell,i);
+        } else if (G_given) {
+          val += G_value;
+        }
+        if (friction) {
+          val += beta(cell,i) * std::pow(u_b(cell,i),2);
+        }
+        m(cell,i) = val / L;
       }
     }
   }
