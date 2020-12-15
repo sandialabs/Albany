@@ -82,7 +82,7 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (use_melting) {
-    mass_lumping = mass_eqn_params.isParameter("Lump Mass") ? hydrology_params.get<bool>("Lump Mass") : false;
+    mass_lumping = mass_eqn_params.isParameter("Lump Mass") ? mass_eqn_params.get<bool>("Lump Mass") : false;
   } else {
     mass_lumping = false;
   }
@@ -274,7 +274,6 @@ evaluateFieldsCell (typename Traits::EvalData workset)
       if (use_melting && mass_lumping) {
         res_node += m(cell,node)/rho_w;
       }
-
       residual (cell,node) = res_node;
     }
   }

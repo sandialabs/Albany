@@ -81,12 +81,17 @@ private:
   unsigned int numQPs;
 
   double rho_i;
+  double eta_i;
   double phi0;
   double h_r;
   double l_r;
   double c_creep;
   double scaling_h_t;
   double penalization_coeff;
+
+  enum ClosureTypeN { Cubic , Linear};
+
+  ClosureTypeN closure;
 
   bool unsteady;
   bool has_p_dot;
