@@ -717,28 +717,30 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = Teuchos::rcp(new LandIce::EffectivePressure<EvalT,PHAL::AlbanyTraits, false, false>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
-  //--- LandIce basal friction coefficient ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Basal Friction Coefficient"));
+  if (params->sublist("LandIce Basal Friction Coefficient").isParameter("Type")) {
+    //--- LandIce basal friction coefficient ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Basal Friction Coefficient"));
 
-  //Input
-  p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_name);
-  p->set<std::string>("BF Variable Name", Albany::bf_name);
-  p->set<std::string>("Effective Pressure Variable Name", effective_pressure_name);
-  p->set<std::string>("Ice Softness Variable Name", ice_softness_name);
-  p->set<Teuchos::ParameterList*>("Viscosity Parameter List", &params->sublist("LandIce Viscosity"));
-  p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Basal Friction Coefficient"));
-  p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
+    //Input
+    p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_name);
+    p->set<std::string>("BF Variable Name", Albany::bf_name);
+    p->set<std::string>("Effective Pressure Variable Name", effective_pressure_name);
+    p->set<std::string>("Ice Softness Variable Name", ice_softness_name);
+    p->set<Teuchos::ParameterList*>("Viscosity Parameter List", &params->sublist("LandIce Viscosity"));
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Basal Friction Coefficient"));
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
 
-  //Output
-  p->set<std::string>("Basal Friction Coefficient Variable Name", beta_name);
+    //Output
+    p->set<std::string>("Basal Friction Coefficient Variable Name", beta_name);
 
-  ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl, FieldScalarType::Scalar, FieldScalarType::ParamScalar,FieldScalarType::ParamScalar);
-  fm0.template registerEvaluator<EvalT>(ev);
+    ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl, FieldScalarType::Scalar, FieldScalarType::ParamScalar,FieldScalarType::ParamScalar);
+    fm0.template registerEvaluator<EvalT>(ev);
 
-  //--- LandIce basal friction coefficient nodal (for output in the mesh, if needed) ---//
-  p->set<bool>("Nodal",true);
-  ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl, FieldScalarType::Scalar, FieldScalarType::ParamScalar,FieldScalarType::ParamScalar);
-  fm0.template registerEvaluator<EvalT>(ev);
+    //--- LandIce basal friction coefficient nodal (for output in the mesh, if needed) ---//
+    p->set<bool>("Nodal",true);
+    ev = createEvaluatorWithThreeScalarTypes<LandIce::BasalFrictionCoefficient, EvalT>(p,dl, FieldScalarType::Scalar, FieldScalarType::ParamScalar,FieldScalarType::ParamScalar);
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   // ------- Hydrology Residual Mass Eqn-------- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Hydrology Residual Mass Eqn"));
