@@ -7,14 +7,15 @@ if (ALBANY_PANZER_EXPR_EVAL)
   # Ed Bueler's quasi-analytic test case
   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/input_bueler_steady.yaml
                   ${CMAKE_CURRENT_BINARY_DIR}/input_bueler_steady.yaml COPYONLY)
-  configure_file (${CMAKE_CURRENT_SOURCE_DIR}/input_bueler_unsteady.yaml
-                  ${CMAKE_CURRENT_BINARY_DIR}/input_bueler_unsteady.yaml COPYONLY)
   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/circle.msh
                   ${CMAKE_CURRENT_BINARY_DIR}/circle.msh COPYONLY)
   add_test (${testName}_bueler_steady   ${Albany.exe} input_bueler_steady.yaml)
   set_tests_properties(${testName}_bueler_steady PROPERTIES LABELS "LandIce;Tpetra;Forward")
-  add_test (${testName}_bueler_unsteady   ${Albany.exe} input_bueler_unsteady.yaml)
-  set_tests_properties(${testName}_bueler_unsteady PROPERTIES LABELS "LandIce;Tpetra;Forward")
+
+  # configure_file (${CMAKE_CURRENT_SOURCE_DIR}/input_bueler_unsteady.yaml
+  #                 ${CMAKE_CURRENT_BINARY_DIR}/input_bueler_unsteady.yaml COPYONLY)
+  # add_test (${testName}_bueler_unsteady   ${Albany.exe} input_bueler_unsteady.yaml)
+  # set_tests_properties(${testName}_bueler_unsteady PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
   # SHMIP suite A
   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/input_suite_A1.yaml
@@ -42,10 +43,10 @@ if (ALBANY_PANZER_EXPR_EVAL)
   add_test (${testName}_suite_A5   ${Albany.exe} input_suite_A5.yaml)
   set_tests_properties(${testName}_suite_A5 PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
-  configure_file (${CMAKE_CURRENT_SOURCE_DIR}/input_suite_A6.yaml
-                  ${CMAKE_CURRENT_BINARY_DIR}/input_suite_A6.yaml COPYONLY)
-  add_test (${testName}_suite_A6   ${Albany.exe} input_suite_A6.yaml)
-  set_tests_properties(${testName}_suite_A6 PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  # configure_file (${CMAKE_CURRENT_SOURCE_DIR}/input_suite_A6.yaml
+  #                 ${CMAKE_CURRENT_BINARY_DIR}/input_suite_A6.yaml COPYONLY)
+  # add_test (${testName}_suite_A6   ${Albany.exe} input_suite_A6.yaml)
+  # set_tests_properties(${testName}_suite_A6 PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
   # Ian Hewitt's rectancular ramp
   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/input_hewitt.yaml
