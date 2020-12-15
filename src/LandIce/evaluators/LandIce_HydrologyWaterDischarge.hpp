@@ -74,7 +74,6 @@ private:
   double k_0;
   double alpha;
   double beta;
-  int alpha_N, alpha_D;
 
   bool regularize;
   bool needsGradPhiNorm;

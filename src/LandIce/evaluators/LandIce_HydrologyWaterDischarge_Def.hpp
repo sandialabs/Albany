@@ -59,17 +59,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& darcy_law_params = hydrology_params.sublist("Darcy Law");
 
   k_0   = darcy_law_params.get<double>("Transmissivity");
-  if (darcy_law_params.isParameter("Water Thickness Exponent")) {
-    alpha = darcy_law_params.get<double>("Water Thickness Exponent");
-    alpha_N = alpha_D = 0;
-  } else {
-    alpha_N = darcy_law_params.get<int>("Water Thickness Exponent Num");
-    alpha_D = darcy_law_params.get<int>("Water Thickness Exponent Den");
-    TEUCHOS_TEST_FOR_EXCEPTION (
-        alpha_D!=3 && alpha_D!=9,
-        Teuchos::Exceptions::InvalidParameter,
-        "Error! 'Darcy Law: Water Thickness Exponent Den' must be 3 or 9.\n");
-  }
+  alpha = darcy_law_params.get<double>("Water Thickness Exponent");
   beta  = darcy_law_params.get<double>("Potential Gradient Norm Exponent");
 
   TEUCHOS_TEST_FOR_EXCEPTION (
@@ -148,15 +138,7 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
     ScalarT hpow(0.0);
     for (unsigned int cell=0; cell < workset.numCells; ++cell) {
       for (unsigned int qp=0; qp < numQPs; ++qp) {
-        if (alpha_D==3 || alpha_D==9) {
-          hpow = std::pow(h(cell,qp),alpha_N);
-          hpow = std::cbrt(hpow);
-          if (alpha_D==9) {
-            hpow = std::cbrt(hpow);
-          }
-        } else {
-          hpow = std::pow(h(cell,qp),alpha);
-        }
+        hpow = h(cell,qp)*std::pow(std::abs(h(cell,qp)),alpha-1);
         for (unsigned int dim(0); dim<numDim; ++dim) {
           q(cell,qp,dim) = -k_0 * (hpow+regularization)
                                 * std::pow(gradPhiNorm(cell,qp),grad_norm_exponent)
@@ -165,10 +147,12 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
       }
     }
   } else {
+    ScalarT hpow(0.0);
     for (unsigned int cell=0; cell < workset.numCells; ++cell) {
       for (unsigned int qp=0; qp < numQPs; ++qp) {
         for (unsigned int dim(0); dim<numDim; ++dim) {
-          q(cell,qp,dim) = - k_0 * (std::pow(h(cell,qp),alpha)+regularization) * gradPhi(cell,qp,dim);
+          hpow = h(cell,qp)*std::pow(std::abs(h(cell,qp)),alpha-1);
+          q(cell,qp,dim) = - k_0 * (hpow+regularization) * gradPhi(cell,qp,dim);
         }
       }
     }
