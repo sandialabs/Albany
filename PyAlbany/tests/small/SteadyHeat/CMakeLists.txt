@@ -4,13 +4,17 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-add_test(PyAlbany_SteadyHeat "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/steadyHeat.py")
+file(GLOB TESTFILES *.npy *.txt *.py *.yaml )
+
+file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
+
+add_test(PyAlbany_SteadyHeat "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat.py")
 
 set_tests_properties(PyAlbany_SteadyHeat
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 
 IF(ALBANY_MPI)
-  add_test(PyAlbany_SteadyHeat_MPI "mpirun" "-np" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/steadyHeat.py")
+  add_test(PyAlbany_SteadyHeat_MPI "mpirun" "-np" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat.py")
 
   set_tests_properties(PyAlbany_SteadyHeat_MPI
       PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
