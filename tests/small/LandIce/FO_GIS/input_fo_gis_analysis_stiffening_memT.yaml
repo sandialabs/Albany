@@ -179,7 +179,6 @@ ANONYMOUS:
         Bound Constrained: true
         bound_eps: 1.00000000000000005e-01
 
-        Use Old Reduced Space Interface: true
         Full Space: false
         Use NOX Solver: false
 
@@ -246,10 +245,21 @@ ANONYMOUS:
                   Tolerance Scaling: 1.00000000000000005e-01
                   Relative Tolerance: 2.00000000000000000e+00
           Status Test:
-            Gradient Tolerance: 1.00000000000000003e-10
-            Constraint Tolerance: 1.00000000000000003e-10
+            Gradient Tolerance: 1.0e-4
+            Constraint Tolerance: 1.0e-5
             Step Tolerance: 9.99999999999999998e-15
             Iteration Limit: 1
+          SimOpt:
+            Solve:
+              Absolute Residual Tolerance: 1.0e-5
+              Relative Residual Tolerance: 1.0
+              Iteration Limit: 20
+              Sufficient Decrease Tolerance: 1.e-4
+              Step Tolerance: 1.e-8
+              Backtracking Factor: 0.5
+              Output Iteration History: true
+              Zero Initial Guess: true
+              Solver Type: 0
     LOCA:
       Bifurcation: {}
       Constraints: {}
@@ -291,6 +301,7 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1.0e-7
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
