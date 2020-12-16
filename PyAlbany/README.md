@@ -6,7 +6,7 @@ PyAlbany is a Python wrapper for Albany.
 
 PyAlbany requires additional required dependencies:
 * A python executable (either Python 2 or 3),
-* Two python packages: numpy and mpi4py,
+* Two python packages: numpy and mpi4py (Important: mpi4py should be installed such that mpi4py is linked with the MPI library used during the compilation of Trilinos),
 * Swig 3.0.11 or higher (PyAlbany has been tested with swig 3.0.11 and 3.0.12).
 
 ### Configuration
@@ -28,7 +28,7 @@ To do so, Trilinos must be configured with the following options:
 ```
 The first option enable PyTrilinos and the second one disables PyTrilinos docstrings. This last option is required if you are using Doxygen 1.8.13.
 
-While testing, it has been observed that setting the `MPI_BASE_DIR` can help while using PyTrilinos.
+Moreover, setting the `MPI_BASE_DIR` is required to compile PyTrilinos for PyAlbany:
 ```
 -D MPI_BASE_DIR:PATH=${MY_MPI_PATH} \
 ```
@@ -38,6 +38,10 @@ To select the python version, the easiest way is to specify the desired python e
 -D PYTHON_EXECUTABLE="/usr/bin/python3" \
 ```
 
+Moreover, if swig cannot be found by cmake, the swig executable must be specified both for the configuration of Trilinos and Albany as illustrated as follows:
+```
+-D SWIG_EXECUTABLE="/usr/bin/swig" \
+```
 ##### Albany configuration
 The current version of PyAlbany relies on PyTrilinos source files and files generated during the building process of Trilinos which are not currently installed with the make command:
 ```
@@ -57,6 +61,12 @@ Albany should be configured with the following extra options:
 CMake should be enabled to find the Python include path by itself. However, it has been observed that the found path does not necessarily include the required Python header file. To overcome this issue, it is possible to specify manually the Python include path as follows:
 ```
 -D PYTHON_INCLUDE_PATH=${MY_PYTHON_DIR} \
+```
+
+As said in the previous section on the configuration of Trilinos, the following options should be used to specify the python executable and the swig executable:
+```
+-D PYTHON_EXECUTABLE="/usr/bin/python3" \
+-D SWIG_EXECUTABLE="/usr/bin/swig" \
 ```
 
 ### Testing
