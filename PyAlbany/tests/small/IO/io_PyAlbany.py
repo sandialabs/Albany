@@ -3,7 +3,10 @@ from PyTrilinos import Teuchos
 
 import unittest
 import numpy as np
-from PyAlbany import Utils
+try:
+    from PyAlbany import Utils
+except:
+    import Utils
 import os
 
 class TestIO(unittest.TestCase):
