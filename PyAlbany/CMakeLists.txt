@@ -36,11 +36,6 @@ MESSAGE("  -- PYTHON_VERSION = ${PYTHON_VERSION}")
 add_subdirectory( src )
 add_subdirectory( swig )
 
-IF (ALBANY_PYTHON_TESTS)
-  SET(PYALBANY_PYTHONPATH "PYTHONPATH=${Trilinos_LIB_DIRS}/python${PYTHON_VERSION}/site-packages:${CMAKE_CURRENT_BINARY_DIR}/swig:${CMAKE_CURRENT_SOURCE_DIR}:$ENV{PYTHONPATH}")
-  add_subdirectory( tests )
-ENDIF()
-
 # The CMAKE install logic of PyAlbany is based on the one of PyTrilinos.
 
 # Determine the PyAlbany default installation directory prefix.  If
@@ -67,7 +62,7 @@ SET(PyAlbany_INSTALL_DIR
 MESSAGE("-- PyAlbany installation path: ${PyAlbany_INSTALL_DIR}")
 
 # Python files to install
-FILE(GLOB PyAlbanyPyFiles ${CMAKE_CURRENT_SOURCE_DIR}/PyAlbany/*.py)
+FILE(GLOB PyAlbanyPyFiles ${CMAKE_CURRENT_SOURCE_DIR}/python/*.py)
 
 INSTALL(FILES
   ${PyAlbanyPyFiles}
@@ -76,3 +71,8 @@ INSTALL(FILES
   DESTINATION ${PyAlbany_INSTALL_DIR})
 
 MESSAGE("End of the configuration of PyAlbany")
+
+IF (ALBANY_PYTHON_TESTS)
+  SET(PYALBANY_PYTHONPATH "PYTHONPATH=${Trilinos_LIB_DIRS}/python${PYTHON_VERSION}/site-packages:${CMAKE_CURRENT_BINARY_DIR}/swig:$ENV{PYTHONPATH}")
+  add_subdirectory( tests )
+ENDIF()
