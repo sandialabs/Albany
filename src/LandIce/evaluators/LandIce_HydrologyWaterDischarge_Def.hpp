@@ -150,8 +150,8 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
     ScalarT hpow(0.0);
     for (unsigned int cell=0; cell < workset.numCells; ++cell) {
       for (unsigned int qp=0; qp < numQPs; ++qp) {
+        hpow = h(cell,qp)*std::pow(std::abs(h(cell,qp)),alpha-1);
         for (unsigned int dim(0); dim<numDim; ++dim) {
-          hpow = h(cell,qp)*std::pow(std::abs(h(cell,qp)),alpha-1);
           q(cell,qp,dim) = - k_0 * (hpow+regularization) * gradPhi(cell,qp,dim);
         }
       }

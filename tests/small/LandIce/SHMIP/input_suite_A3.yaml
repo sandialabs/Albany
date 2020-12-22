@@ -125,7 +125,7 @@ ANONYMOUS:
         Initial Value: 0.02
         Continuation Parameter: Homotopy Parameter
         Continuation Method: Natural
-        Max Steps: 50
+        Max Steps: 100
         Max Value: 1.0
         Min Value: 0.0
       Step Size: 
@@ -141,12 +141,12 @@ ANONYMOUS:
         Number of Tests: 2
         Test 0: 
           Test Type: MaxIters
-          Maximum Iterations: 30
+          Maximum Iterations: 10
         Test 1: 
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Unscaled
-          Tolerance: 1.0e-00
+          Tolerance: 1.0e-02
         Test 2: 
           Test Type: NormWRMS
           Absolute Tolerance: 1.0e-04
@@ -159,6 +159,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
           Linear Solver: 
             Write Linear System: false
+            Tolerance: 1.0e-6
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
