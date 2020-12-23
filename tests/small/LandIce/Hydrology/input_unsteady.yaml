@@ -29,7 +29,7 @@ ANONYMOUS:
       Water Density: 1.00000000000000000e+03
       Ice Density: 9.10000000000000000e+02
       Ice Softness: 3.16889999999999988e-15
-      Ice Latent Heat: 3.35000000000000000e+05
+      Ice Ice Latent Heat Of Fusion: 3.35000000000000000e+05
       Gravity Acceleration: 9.80000000000000071e+00
     LandIce Field Norm:
       sliding_velocity:

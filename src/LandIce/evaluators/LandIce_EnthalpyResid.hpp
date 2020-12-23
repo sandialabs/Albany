@@ -82,7 +82,7 @@ private:
   double rho_i; // [kg m^{-3}], density of ice
   double rho_w; // [kg m^{-3}] density of water
   double g;     //[m s^{-2}], Gravity Acceleration
-  double L;     //[J kg^{-1} ] Latent heat of fusion", 3e5);
+  double L;     //[J kg^{-1} ] Ice Latent Heat Of Fusion", 3e5);
   double a;     // [adim], Diffusivity homotopy exponent
   double drainage_coeff; //[kg s^{-3}]
   double alpha_om; //[adim], Omega exponent alpha

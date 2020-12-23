@@ -57,7 +57,7 @@ private:
 
   double rho_w; 	// [kg m^{-3}] density of water
   double rho_i; 	// [kg m^{-3}] density of ice
-  double L;       //[J kg^{-1} ] Latent heat of fusion", 3e5);
+  double L;       //[J kg^{-1} ] Ice Latent Heat Of Fusion", 3e5);
   double g;       //[m s^{-2}], Gravity Acceleration
   double a;       // [adim], Diffusivity homotopy exponent
 

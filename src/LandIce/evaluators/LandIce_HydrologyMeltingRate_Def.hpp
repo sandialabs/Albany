@@ -19,16 +19,13 @@ HydrologyMeltingRate<EvalT, Traits, IsStokes>::
 HydrologyMeltingRate (const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  if (IsStokes)
-  {
+  if (IsStokes) {
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
     numQPs   = dl->qp_scalar->extent(2);
     numNodes = dl->node_scalar->extent(2);
     sideSetName = p.get<std::string>("Side Set Name");
-  }
-  else
-  {
+  } else {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure appears to be that of a side set.\n");
     numQPs   = dl->qp_scalar->extent(1);
@@ -37,7 +34,7 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
 
   // Setting parameters
   Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
-  L = physical_params.get<double>("Ice Latent Heat");
+  latent_heat = physical_params.get<double>("Ice Latent Heat Of Fusion");
 
   /*
    * Scalings, needed to account for different units: ice velocity
@@ -56,15 +53,15 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
    *  scaling_G = yr_to_s/1000
    *
    * where yr_to_s=365.25*24*3600 (the number of seconds in a year).
-   * Furthermore, we scale L to be in kJ/kg = kPa*m^3/kg, so that kPa cancels out.
+   * Note: we will need to scale the result by 1000, since the stuff inside the parentheses
+   * is in kPa m/yr while L is in Pa m^3/kg.
    *
    * With this choice, considering G~10^-1 W/m^2, |u|~1000 m/yr, beta~10 kPa*yr/m, L~10^5 J/kg
-   * we get m ~ 100 kg/(m^2 yr). When multiplied by 1/rho_i in the residual, this gives a term of
+   * we get m ~ 100 kg/(m^2 yr). When multiplied by 1/rho_[i|w] in the residual, this gives a term of
    * order 10^-1
    *
    */
   scaling_G = 365.25*24*3600/1000;
-  L *= 1e-3;
 
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
@@ -119,11 +116,14 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
 template<typename EvalT, typename Traits, bool IsStokes>
 void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Traits::EvalData workset)
 {
-  // m = ( G - \beta |u_b|^2 ) / L
+  // m = ( G + \beta |u_b|^2 ) / L, in kg m^-2 yr^-1
 
   if (m_given) {
     return;
   }
+
+  // Scale L so that kPa cancel out: [L/1000] = kJ/kg = kPa m^3 / kg, and [G] = kPa m/yr
+  double L = latent_heat*1e-3;
 
   if (IsStokes)
   {

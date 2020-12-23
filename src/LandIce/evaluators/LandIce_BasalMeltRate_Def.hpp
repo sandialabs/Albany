@@ -79,7 +79,7 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   Teuchos::ParameterList* physics_list = p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
   rho_w = physics_list->get<double>("Water Density");//, 1000.0);
   rho_i = physics_list->get<double>("Ice Density");//, 910.0);
-  L = physics_list->get<double>("Latent heat of fusion");//, 3e5);
+  L = physics_list->get<double>("Ice Latent Heat Of Fusion");//, 3e5);
 
   k_0 = physics_list->get<double>("Permeability factor");//, 0.0);
   k_i = physics_list->get<double>("Conductivity of ice");//, 1.0); //[W m^{-1} K^{-1}]

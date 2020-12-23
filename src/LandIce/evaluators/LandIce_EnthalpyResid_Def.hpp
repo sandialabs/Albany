@@ -108,7 +108,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   k_0 = physics_list->get<double>("Permeability factor"); //[m^2]
   eta_w = physics_list->get<double>("Viscosity of water"); //[Pa s]
   g = physics_list->get<double>("Gravity Acceleration"); //[m s^{-2}]
-  L = physics_list->get<double>("Latent heat of fusion"); //[J kg^{-1} ]
+  L = physics_list->get<double>("Ice Latent Heat Of Fusion"); //[J kg^{-1} ]
   alpha_om = physics_list->get<double>("Omega exponent alpha");
 
   a = physics_list->get<double>("Diffusivity homotopy exponent");

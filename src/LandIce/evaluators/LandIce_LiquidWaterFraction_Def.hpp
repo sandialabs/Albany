@@ -34,7 +34,7 @@ LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
   // Setting parameters
   Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
   rho_w = physics.get<double>("Water Density");//, 1000.0);
-  L = physics.get<double>("Latent heat of fusion");//, 334000.0);
+  L = physics.get<double>("Ice Latent Heat Of Fusion");//, 334000.0);
   phi_scaling = 1e6 / (rho_w * L);
 
   printedAlpha = -1.0;

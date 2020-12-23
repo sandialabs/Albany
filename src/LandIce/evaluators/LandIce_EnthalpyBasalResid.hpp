@@ -80,7 +80,7 @@ private:
   // double rho_i;  // [kg m^{-3}]
   // double rho_w;  // [kg m^{-3}]
   // double g;  //[m s^{-2}]
-  // double L;       //[J kg^{-1} ] Latent heat of fusion", 3e5)
+  // double L;       //[J kg^{-1} ] Ice Latent Heat Of Fusion", 3e5)
   // double k_0;     //[m^2], Permeability factor
   // double eta_w;   //[Pa s], Viscosity of water
   // double alpha_om; //[]
