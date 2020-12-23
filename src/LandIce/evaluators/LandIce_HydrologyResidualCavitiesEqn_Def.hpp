@@ -60,7 +60,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   h_r = cav_eqn_params.get<double>("Bed Bumps Height");
   l_r = cav_eqn_params.get<double>("Bed Bumps Length");
   c_creep = cav_eqn_params.get<double>("Creep Closure Coefficient",1.0);
-  phi0 = cav_eqn_params.get<double>("Englacial Porosity",0.0);
+  englacial_phi = cav_eqn_params.get<double>("Englacial Porosity",0.0);
   auto closure_type_N = cav_eqn_params.get("Closure Type N","Cubic");
   if (closure_type_N=="Linear") {
     closure = Linear;
@@ -72,11 +72,10 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
         "Error! Unkonwn cavity closure type '" + closure_type_N + "'.\n"
         "       Valid options are: Linear, Cubic.\n");
   }
-  if (phi0>0 && unsteady) {
+  if (englacial_phi>0 && unsteady) {
     has_p_dot = true;
-    double rho_w = physical_params.get<double>("Water Density");
-    double g = physical_params.get<double>("Gravity Acceleration");
-    phi0 /= (rho_w*g);
+    rho_w = physical_params.get<double>("Water Density");
+    g = physical_params.get<double>("Gravity Acceleration");
   } else {
     has_p_dot = false;
   }
@@ -108,12 +107,6 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
    *
    * where yr_to_s=365.25*24*3600 (the number of seconds in a year)
    */
-
-  double yr_to_s = 365.25*24*3600;
-
-  scaling_h_t = yr_to_s;
-  c_creep *= yr_to_s;
-  phi0 *= 1e3;
 
   // We can solve this equation as a nodal equation
   nodal_equation = cav_eqn_params.isParameter("Nodal") ? cav_eqn_params.get<bool>("Nodal") : false;
@@ -208,6 +201,13 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     return;
   }
 
+  double yr_to_s = 365.25*24*3600;
+  double scaling_h_t = yr_to_s;
+  double C = c_creep * yr_to_s;
+  double phi0 = englacial_phi / (1000*rho_w*g);
+  // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
+  //       cancel out with N, and the residual is in m/yr
+
   const auto& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
@@ -220,7 +220,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
         res_node = (use_melting ? m(cell,side,node)/rho_i : zero)
                  + (use_eff_cavity ? (h_r - h(cell,side,node))*u_b(cell,side,node)/l_r
                                    : ScalarT(h_r*u_b(cell,side,node)))
-                 - c_creep*h(cell,side,node)*ice_softness(cell)*std::pow(N(cell,side,node),3)
+                 - C*h(cell,side,node)*(ice_softness(cell)*1e9)*std::pow(N(cell,side,node),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,node) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,side,node) : zero);
       } else {
@@ -228,7 +228,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
           res_qp = (use_melting ? m(cell,side,qp)/rho_i : zero)
                  + (use_eff_cavity ? (h_r - h(cell,side,qp))*u_b(cell,side,qp)/l_r
                                    : ScalarT(h_r*u_b(cell,side,qp)))
-                 - c_creep*h(cell,side,qp)*ice_softness(cell,side)*std::pow(N(cell,side,qp),3)
+                 - C*h(cell,side,qp)*(ice_softness(cell,side)*1e9)*std::pow(N(cell,side,qp),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,qp) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,side,qp) : zero);
 
@@ -248,6 +248,12 @@ evaluateFieldsCell (typename Traits::EvalData workset)
   // h' = W_O - W_C = (m/rho_i + u_b*(h_b-h)/l_b) - AhN^n
   ScalarT res_node, res_qp, zero(0.0);
 
+  double yr_to_s = 365.25*24*3600;
+  double scaling_h_t = yr_to_s;
+  double C = c_creep * yr_to_s;
+  double phi0 = englacial_phi / (1000*rho_w*g);
+  double etai = eta_i/1000; // Convert to kPa s
+
   for (unsigned int cell=0; cell < workset.numCells; ++cell) {
     for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;
@@ -259,10 +265,10 @@ evaluateFieldsCell (typename Traits::EvalData workset)
                  + (has_p_dot ? -phi0*P_dot(cell,node) : zero);
         switch (closure) {
           case Cubic:
-            res_node -= c_creep*h(cell,node)*ice_softness(cell)*std::pow(N(cell,node),3);
+            res_node -= C*h(cell,node)*(ice_softness(cell)*1e9)*std::pow(N(cell,node),3);
             break;
           case Linear:
-            res_node -= c_creep*h(cell,node)*N(cell,node)/eta_i;
+            res_node -= C*h(cell,node)*N(cell,node)/etai;
             break;
         }
       } else {
@@ -274,10 +280,10 @@ evaluateFieldsCell (typename Traits::EvalData workset)
                  + (has_p_dot ? -phi0*P_dot(cell,qp) : zero);
           switch (closure) {
             case Cubic:
-              res_qp -= c_creep*h(cell,qp)*ice_softness(cell)*std::pow(N(cell,qp),3);
+              res_qp -= C*h(cell,qp)*(ice_softness(cell)*1e9)*std::pow(N(cell,qp),3);
               break;
             case Linear:
-              res_qp -= c_creep*h(cell,qp)*N(cell,qp)/eta_i;
+              res_qp -= C*h(cell,qp)*N(cell,qp)/eta_i;
               break;
           }
 

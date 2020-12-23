@@ -63,31 +63,31 @@ private:
   void evaluateFieldsSide(typename Traits::EvalData d);
 
   // Input:
-  PHX::MDField<const RealType>      BF;
-  PHX::MDField<const MeshScalarT>   w_measure;
-  PHX::MDField<const ScalarT>       h;
-  PHX::MDField<const ScalarT>       h_node;
-  PHX::MDField<const ScalarT>       h_dot;
-  PHX::MDField<const ScalarT>       P_dot;
-  PHX::MDField<const ScalarT>       N;
-  PHX::MDField<const ScalarT>       m;
-  PHX::MDField<const IceScalarT>    u_b;
-  PHX::MDField<const TempScalarT>   ice_softness;
+  PHX::MDField<const RealType>      BF;           // Basis functions
+  PHX::MDField<const MeshScalarT>   w_measure;    // Weigthed measure (for quadrature)
+  PHX::MDField<const ScalarT>       h;            // Water thickness [m]
+  PHX::MDField<const ScalarT>       h_node;       // Water thickness nodal [m]
+  PHX::MDField<const ScalarT>       h_dot;        // Water thickness time derivative [m/s]
+  PHX::MDField<const ScalarT>       P_dot;        // Water pressure time derivative [kPa/s]
+  PHX::MDField<const ScalarT>       N;            // Effective pressure [kPa]
+  PHX::MDField<const ScalarT>       m;            // Ice Melting Rate [kg /(m^2 yr)]
+  PHX::MDField<const IceScalarT>    u_b;          // Ice sliding velocity [m/yr]
+  PHX::MDField<const TempScalarT>   ice_softness; // Flow factor [Pa^-3 s^-1]
 
   // Output:
-  PHX::MDField<ScalarT>             residual;
+  PHX::MDField<ScalarT>             residual;     // Cavity evolution residual [m/yr]
 
   unsigned int numNodes;
   unsigned int numQPs;
 
-  double rho_i;
-  double eta_i;
-  double phi0;
-  double h_r;
-  double l_r;
-  double c_creep;
-  double scaling_h_t;
-  double penalization_coeff;
+  double rho_i;               // Ice density [kg/m^3]
+  double rho_w;               // Water density [kg/m^3]
+  double g;                   // Gravity acceleration [m/2^2]
+  double eta_i;               // Ice viscosity [Pa s]
+  double englacial_phi;       // Englacial porosity [non dimensional]
+  double h_r;                 // Bed bumps typical height [m]
+  double l_r;                 // Bed bumps typical length [m]
+  double c_creep;             // Creep closure coefficient [non dimensional]
 
   enum ClosureTypeN { Cubic , Linear};
 
@@ -97,7 +97,6 @@ private:
   bool has_p_dot;
   bool use_melting;
   bool nodal_equation;
-  bool penalization;
   bool use_eff_cavity;
 
   // Variables necessary for stokes coupling
