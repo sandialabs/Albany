@@ -2426,6 +2426,7 @@ Application::evaluateResponseDistParamHessian_pp(
 
   // Reconstruct the Hessian matrix based on the Hessian-vector products
   colorer.reconstructMatrix(*HV, *Ht);
+  Ht->fillComplete();
 
 #ifdef WRITE_TO_MATRIX_MARKET
   writeMatrixMarket(Ht.getConst(), "H", parameter_index);
