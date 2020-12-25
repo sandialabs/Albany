@@ -193,7 +193,7 @@ if (BUILD_ALBANY_FPE)
     "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
     "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
     "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
-    "-DENABLE_ALBANY_PYTHON:BOOL=OFF"
+    "-DENABLE_ALBANY_PYTHON:BOOL=ON"
     "-DTRILINOS_SOURCE_DIR=$TRILINOSSRCDIR"
     "-DTRILINOS_BUILD_DIR=$TRILINOSBLDDIR"
     "-DPYTHON_EXECUTABLE='/usr/bin/python'"
@@ -206,13 +206,13 @@ if (BUILD_ALBANY_FPE)
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg)
   endif ()
 
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND
-    )
+  #CTEST_CONFIGURE(
+  #  BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg"
+  #  SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+  #  OPTIONS "${CONFIGURE_OPTIONS}"
+  #  RETURN_VALUE HAD_ERROR
+  #  APPEND
+  #  )
 
   if (CTEST_DO_SUBMIT)
     ctest_submit (PARTS Configure
