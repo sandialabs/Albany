@@ -14,7 +14,7 @@ set_tests_properties(PyAlbany_SteadyHeat
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 
 IF(ALBANY_MPI)
-  add_test(PyAlbany_SteadyHeat_MPI "mpirun" "-np" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat.py")
+  add_test(PyAlbany_SteadyHeat_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat.py")
 
   set_tests_properties(PyAlbany_SteadyHeat_MPI
       PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
