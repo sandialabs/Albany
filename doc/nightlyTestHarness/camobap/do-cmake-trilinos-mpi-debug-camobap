@@ -161,6 +161,14 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
       -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
       -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
+\
+      -D Trilinos_ENABLE_PyTrilinos:BOOL=ON \
+      -D PyTrilinos_DOCSTRINGS:BOOL=OFF \
+      -D PYTHON_EXECUTABLE="/usr/bin/python" \
+      -D PYTHON_LIBRARIES="/usr/lib64/libpython3.9.so.1.0" \
+      -D PYTHON_LIBRARY="/usr/lib64/libpython3.9.so.1.0" \
+      -D PYTHON_INCLUDE_DIR="/usr/include/python3.9" \
+      -D SWIG_EXECUTABLE="/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/swig/bin/swig" \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \

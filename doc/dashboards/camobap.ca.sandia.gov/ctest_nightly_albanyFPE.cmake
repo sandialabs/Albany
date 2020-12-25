@@ -174,6 +174,8 @@ if (BUILD_ALBANY_FPE)
   #
 
   set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
+  set (TRILINOSBLDDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug")
+  set (TRILINOSSRCDIR "/nightlyAlbanyTests/Results/Trilinos")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -191,6 +193,12 @@ if (BUILD_ALBANY_FPE)
     "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
     "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
     "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
+    "-DENABLE_ALBANY_PYTHON:BOOL=OFF"
+    "-DTRILINOS_SOURCE_DIR=$TRILINOSSRCDIR"
+    "-DTRILINOS_BUILD_DIR=$TRILINOSBLDDIR"
+    "-DPYTHON_EXECUTABLE='/usr/bin/python'"
+    "-DPYTHON_INCLUDE_PATH='/usr/include/python3.9'"
+    "-DSWIG_EXECUTABLE='/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/swig/bin/swig'"
     "-DINSTALL_ALBANY:BOOL=OFF"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   
