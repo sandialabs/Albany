@@ -15,5 +15,8 @@ cd build/IKTAlbanyFPECheckDbg
 ./do-cmake-fpe-check
 cd /nightlyCDash
 bash nightly_cron_script_albany_fpe.sh; bash process_results_fpe.sh #Albany FPE check on 
+#IKT, 12/26/2020 - the following is a hack that does configure after the code is built
+#to avoid missing configure in nightlies
+bash nightly_cron_script_albany_fpe_config.sh
 ~                                                                                                                                                 
 ~                                              
