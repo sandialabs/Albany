@@ -86,7 +86,8 @@ protected:
   StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                 const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                 const Teuchos::RCP<ParamLib>& paramLib_,
-                const int numDim_);
+                const int numDim_,
+                const bool useCollapsedSidesets_ = false);
 
   template <typename EvalT>
   void constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -189,6 +190,9 @@ protected:
 
   unsigned int numDim;
   unsigned int vecDimFO;
+
+  /// Temporary boolean so that sideset refactor doesn't break coupled problems
+  bool useCollapsedSidesets;
 
   /// Boolean marking whether SDBCs are used
   bool use_sdbcs_;
@@ -425,11 +429,15 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
       // Registering the state
       if(fieldType == "Elem Scalar") {
         entity = Albany::StateStruct::ElemData;
-        p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->cell_scalar2_sideset, sideEBName, true, &entity, meshPart, true);
+        p = (useCollapsedSidesets) ? 
+          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->cell_scalar2_sideset, sideEBName, true, &entity, meshPart, true) :
+          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->cell_scalar2, sideEBName, true, &entity, meshPart, false);
         nodal_state = false;
       } else if(fieldType == "Node Scalar") {
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-        p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_scalar_sideset, sideEBName, true, &entity, meshPart, true);
+        p = (useCollapsedSidesets) ? 
+          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_scalar_sideset, sideEBName, true, &entity, meshPart, true) :
+          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_scalar, sideEBName, true, &entity, meshPart, false);
         nodal_state = true;
       } else if(fieldType == "Elem Vector") {
         entity = Albany::StateStruct::ElemData;
@@ -437,21 +445,31 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         nodal_state = false;
       } else if(fieldType == "Node Vector") {
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-        p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_vector_sideset, sideEBName, true, &entity, meshPart, true);
+        p = (useCollapsedSidesets) ? 
+          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_vector_sideset, sideEBName, true, &entity, meshPart, true) :
+          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_vector, sideEBName, true, &entity, meshPart, false);
         nodal_state = true;
       } else if(fieldType == "Elem Layered Scalar") {
         entity = Albany::StateStruct::ElemData;
-        sns = ss_dl->cell_scalar2_sideset;
+        sns = (useCollapsedSidesets) ? ss_dl->cell_scalar2_sideset : ss_dl->cell_scalar2;
         numLayers = thisFieldList.get<int>("Number Of Layers");
-        dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,LayerDim>(sns->extent(0),numLayers));
-        stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart, true);
+        if (useCollapsedSidesets) {
+          dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,LayerDim>(sns->extent(0),numLayers));
+        } else {
+          dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,LayerDim>(sns->extent(0),sns->extent(1),numLayers));
+        }
+        stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart, useCollapsedSidesets);
         nodal_state = false;
       } else if(fieldType == "Node Layered Scalar") {
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-        sns = ss_dl->node_scalar_sideset;
+        sns = (useCollapsedSidesets) ? ss_dl->node_scalar_sideset : ss_dl->node_scalar;
         numLayers = thisFieldList.get<int>("Number Of Layers");
-        dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,Node,LayerDim>(sns->extent(0),sns->extent(1),numLayers));
-        stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart, true);
+        if (useCollapsedSidesets) {
+          dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,Node,LayerDim>(sns->extent(0),sns->extent(1),numLayers));
+        } else {
+          dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),numLayers));
+        }
+        stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart, useCollapsedSidesets);
         nodal_state = true;
       } else if(fieldType == "Elem Layered Vector") {
         entity = Albany::StateStruct::ElemData;
@@ -462,10 +480,14 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
         nodal_state = false;
       } else if(fieldType == "Node Layered Vector") {
         entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-        sns = ss_dl->node_vector_sideset;
+        sns = (useCollapsedSidesets) ? ss_dl->node_vector_sideset : ss_dl->node_vector;
         numLayers = thisFieldList.get<int>("Number Of Layers");
-        dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,Node,Dim,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),numLayers));
-        stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart, true);
+        if (useCollapsedSidesets) {
+          dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,Node,Dim,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),numLayers));
+        } else {
+          dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,Dim,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),sns->extent(3),numLayers));
+        }
+        stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart, useCollapsedSidesets);
         nodal_state = true;
       }
 
@@ -729,7 +751,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
           !is_ss_computed_field[ss_name][fname]) {
           // (is_input_field[fname] || is_computed_field[fname] || is_dist_param[fname])) {
         // Project from cell to side
-        if (layout == "Node Scalar" || layout == "Node Vector" || layout == "Vertex Vector" || layout == "Cell Scalar")
+        if ((layout == "Node Scalar" || layout == "Node Vector" || layout == "Vertex Vector" || layout == "Cell Scalar") && useCollapsedSidesets)
           ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout + " Sideset", cellType, fname_side);
         else
           ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
@@ -775,7 +797,11 @@ constructSideUtilityFields (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
     // If any of the above was true, we need coordinates of vertices on the side
     if (it.second[UtilityRequest::BFS] || it.second[UtilityRequest::QP_COORDS] || it.second[UtilityRequest::NORMALS]) {
-      ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,ss_name,"Vertex Vector Sideset",cellType,Albany::coord_vec_name +" " + ss_name);
+      if (useCollapsedSidesets) {
+        ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,ss_name,"Vertex Vector Sideset",cellType,Albany::coord_vec_name +" " + ss_name);
+      } else {
+        ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,ss_name,"Vertex Vector",cellType,Albany::coord_vec_name +" " + ss_name);
+      }
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }

@@ -10,10 +10,12 @@ StokesFOBase::
 StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                         const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                         const Teuchos::RCP<ParamLib>& paramLib_,
-                        const int numDim_)
+                        const int numDim_,
+                        const bool useCollapsedSidesets_)
  : Albany::AbstractProblem(params_, paramLib_, numDim_) 
  , discParams (discParams_)
  , numDim(numDim_)
+ , useCollapsedSidesets(useCollapsedSidesets_)
  , use_sdbcs_(false)
  , params(params_)
 {
