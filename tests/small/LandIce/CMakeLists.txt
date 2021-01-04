@@ -13,5 +13,6 @@ add_subdirectory(Stokes_ISMIP)
 add_subdirectory(Stokes_Test)
 
 add_subdirectory(Hydrology)
+add_subdirectory(SHMIP)
 
 add_subdirectory(Enthalpy)

@@ -7,6 +7,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
+#include "LandIce_HydrologyResidualCavitiesEqn.hpp"
+
 namespace LandIce {
 
 template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
@@ -18,9 +20,10 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   /*
    *  The (water) thickness equation has the following (strong) form
    *
-   *     dh/dt - phi0/(rhow*g) dP/dt = m/rho_i + (h_r-h)*|u_b|/l_r - c_creep*A*h*N^3
+   *     dh/dt - phi0/(rhow*g) dP/dt = m/rho_i + (h_r-h)*|u_b|/l_r - c_creep*W_c
    *
-   *  where h is the water thickness, P is the water pressure,
+   *  where W_c = A*h*N^3 (CUBIC) or W_c = h*N/eta_i (LINEAR),
+   *  h is the water thickness, P is the water pressure,
    *  phi0 is the englacial porositi, m the melting rate of the ice,
    *  h_r/l_r typical height/length of bed bumps, u_b the sliding
    *  velocity of the ice, A is the ice softness, N is the
@@ -48,15 +51,27 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
 
   // Setting parameters
   Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("LandIce Hydrology Parameters");
+  Teuchos::ParameterList& cav_eqn_params   = hydrology_params.sublist("Cavities Equation");
   Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
 
   unsteady = p.get<bool>("Unsteady");
 
   rho_i = physical_params.get<double>("Ice Density");
-  h_r = hydrology_params.get<double>("Bed Bumps Height");
-  l_r = hydrology_params.get<double>("Bed Bumps Length");
-  c_creep = hydrology_params.get<double>("Creep Closure Coefficient",1.0);
-  phi0 = hydrology_params.get<double>("Englacial Porosity",0.0);
+  h_r = cav_eqn_params.get<double>("Bed Bumps Height");
+  l_r = cav_eqn_params.get<double>("Bed Bumps Length");
+  c_creep = cav_eqn_params.get<double>("Creep Closure Coefficient",1.0);
+  phi0 = cav_eqn_params.get<double>("Englacial Porosity",0.0);
+  auto closure_type_N = cav_eqn_params.get("Closure Type N","Cubic");
+  if (closure_type_N=="Linear") {
+    closure = Linear;
+    eta_i = physical_params.get<double>("Ice Viscosity");
+  } else if (closure_type_N=="Cubic") {
+    closure = Cubic;
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (false, Teuchos::Exceptions::InvalidParameterValue,
+        "Error! Unkonwn cavity closure type '" + closure_type_N + "'.\n"
+        "       Valid options are: Linear, Cubic.\n");
+  }
   if (phi0>0 && unsteady) {
     has_p_dot = true;
     double rho_w = physical_params.get<double>("Water Density");
@@ -65,8 +80,9 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   } else {
     has_p_dot = false;
   }
+  use_eff_cavity = cav_eqn_params.get<bool>("Use Effective Cavity",true);
 
-  use_melting = hydrology_params.get<bool>("Use Melting In Cavities Equation", false);
+  use_melting = cav_eqn_params.get<bool>("Use Melting", false);
 
   /*
    * Scalings, needed to account for different units: ice velocity
@@ -77,7 +93,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
    *  1) h_t              [m s^-1 ]
    *  2) phi0/(rhow*g)P_t [km s^-1]
    *  3) m/rho_i          [m yr^-1]
-   *  4) c_creep*A*h*N^3  [m s^-1 ]
+   *  4) c_creep*W_c      [m s^-1 ]
    *  5) (h_r-h)*|u|/l_r  [m yr^-1]
    *
    * We decide to uniform all terms to have units [m yr^-1].
@@ -87,7 +103,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
    *  1) scaling_h_t*h_t                scaling_h_t = yr_to_s
    *  2) scaling_P_t*phi0/(rhow*g)P_t   scaling_P_t = 10^3
    *  3) m/rho_i                        (no scaling)
-   *  4) c_creep*scaling_A*A*h*N^3      scaling_A = yr_to_s
+   *  4) scalinc_c*c_creep*W_c          scaling_c = yr_to_s
    *  5) (h_r-h)*|u|/l_r                (no scaling)
    *
    * where yr_to_s=365.25*24*3600 (the number of seconds in a year)
@@ -100,7 +116,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   phi0 *= 1e3;
 
   // We can solve this equation as a nodal equation
-  nodal_equation = hydrology_params.isParameter("Cavities Equation Nodal") ? hydrology_params.get<bool>("Cavities Equation Nodal") : false;
+  nodal_equation = cav_eqn_params.isParameter("Nodal") ? cav_eqn_params.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
   if (nodal_equation) {
     layout = dl->node_scalar;
@@ -141,7 +157,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
 void HydrologyResidualCavitiesEqn<EvalT, Traits, IsStokes, ThermoCoupled>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(u_b,fm);
@@ -170,6 +186,8 @@ void HydrologyResidualCavitiesEqn<EvalT, Traits, IsStokes, ThermoCoupled>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (IsStokes) {
+    TEUCHOS_TEST_FOR_EXCEPTION (closure==Cubic, std::runtime_error,
+      "Error! I haven't implemented Ian Hewitt's 2011 linear creep closure for the Stokes coupled case.\n");
     evaluateFieldsSide(workset);
   } else {
     evaluateFieldsCell(workset);
@@ -180,7 +198,7 @@ template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
 void HydrologyResidualCavitiesEqn<EvalT, Traits, IsStokes, ThermoCoupled>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
-  // h' = W_O - W_C = (m/rho_i + u_b*(h_b-h)/l_b) - AhN^n
+  // h' = W_O - W_C = (m/rho_i + u_b*(h_b-h)/l_b) - c_creep*AhN^n
   ScalarT res_node, res_qp, zero(0.0);
 
   // Zero out, to avoid leaving stuff from previous workset!
@@ -190,7 +208,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     return;
   }
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
+  const auto& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
     const int cell = it_side.elem_LID;
@@ -200,14 +218,16 @@ evaluateFieldsSide (typename Traits::EvalData workset)
       res_node = 0;
       if (nodal_equation) {
         res_node = (use_melting ? m(cell,side,node)/rho_i : zero)
-                 + (h_r - h(cell,side,node))*u_b(cell,side,node)/l_r
+                 + (use_eff_cavity ? (h_r - h(cell,side,node))*u_b(cell,side,node)/l_r
+                                   : ScalarT(h_r*u_b(cell,side,node)))
                  - c_creep*h(cell,side,node)*ice_softness(cell)*std::pow(N(cell,side,node),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,node) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,side,node) : zero);
       } else {
         for (unsigned int qp=0; qp < numQPs; ++qp) {
           res_qp = (use_melting ? m(cell,side,qp)/rho_i : zero)
-                 + (h_r - h(cell,side,qp))*u_b(cell,side,qp)/l_r
+                 + (use_eff_cavity ? (h_r - h(cell,side,qp))*u_b(cell,side,qp)/l_r
+                                   : ScalarT(h_r*u_b(cell,side,qp)))
                  - c_creep*h(cell,side,qp)*ice_softness(cell,side)*std::pow(N(cell,side,qp),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,qp) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,side,qp) : zero);
@@ -233,17 +253,33 @@ evaluateFieldsCell (typename Traits::EvalData workset)
       res_node = 0;
       if (nodal_equation) {
         res_node = (use_melting ? m(cell,node)/rho_i : zero)
-                 + (h_r - h(cell,node))*u_b(cell,node)/l_r
-                 - c_creep*h(cell,node)*ice_softness(cell)*std::pow(N(cell,node),3)
+                 + (use_eff_cavity ? (h_r - h(cell,node))*u_b(cell,node)/l_r
+                                   : ScalarT(h_r*u_b(cell,node)))
                  - (unsteady ? scaling_h_t*h_dot(cell,node) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,node) : zero);
+        switch (closure) {
+          case Cubic:
+            res_node -= c_creep*h(cell,node)*ice_softness(cell)*std::pow(N(cell,node),3);
+            break;
+          case Linear:
+            res_node -= c_creep*h(cell,node)*N(cell,node)/eta_i;
+            break;
+        }
       } else {
         for (unsigned int qp=0; qp < numQPs; ++qp) {
           res_qp = (use_melting ? m(cell,qp)/rho_i : zero)
-                 + (h_r - h(cell,qp))*u_b(cell,qp)/l_r
-                 - c_creep*h(cell,qp)*ice_softness(cell)*std::pow(N(cell,qp),3)
+                 + (use_eff_cavity ? (h_r - h(cell,qp))*u_b(cell,qp)/l_r
+                                   : ScalarT(h_r*u_b(cell,qp)))
                  - (unsteady ? scaling_h_t*h_dot(cell,qp) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,qp) : zero);
+          switch (closure) {
+            case Cubic:
+              res_qp -= c_creep*h(cell,qp)*ice_softness(cell)*std::pow(N(cell,qp),3);
+              break;
+            case Linear:
+              res_qp -= c_creep*h(cell,qp)*N(cell,qp)/eta_i;
+              break;
+          }
 
           res_node += res_qp * BF(cell,node,qp) * w_measure(cell,qp);
         }

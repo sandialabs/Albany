@@ -17,9 +17,18 @@
 namespace LandIce
 {
 
-/** \brief Hydrology Residual Evaluator
+/** \brief Hydrology Melting Rate evaluator
 
-    This evaluator evaluates the residual of the Hydrology model
+    This evaluator evaluates the following:
+
+      m = (G + \beta |ub|^2) /L
+
+    where
+      - G: geothermal flux
+      - \beta: basal friction parameter in ice b.c. : sigma*n + \beta u = 0
+      - ub: sliding velocity
+      - L: ice latent heat
+    See below for units
 */
 
 template<typename EvalT, typename Traits, bool IsStokes>
@@ -36,29 +45,35 @@ public:
   HydrologyMeltingRate (const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&);
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
 
   // Input:
-  PHX::MDField<const IceScalarT>    u_b;
-  PHX::MDField<const ScalarT>       beta;
-  PHX::MDField<const ParamScalarT>  G;
+  PHX::MDField<const IceScalarT>    u_b;    // [ m yr^-1 ]
+  PHX::MDField<const ScalarT>       beta;   // [ kPa yr m^-1 ]
+  PHX::MDField<const ParamScalarT>  G;      // [ W m^-2 ]
 
   // Output:
-  PHX::MDField<ScalarT>             m;
+  PHX::MDField<ScalarT>             m;      // [ kg m^-3 m yr^-1 ], that is, [ kg m^-2 yr ^-1 ] (density*speed)
 
   bool              nodal;
+  bool              friction;
+  bool              G_field;
+  bool              m_given;
+  bool              G_given;
 
   unsigned int               numQPs;
   unsigned int               numNodes;
-  double            L;
-  double            scaling_G;
+  double            L;            // Ice Latent Heat [J kg^-1]
+  double            scaling_G;    // Used internally
+  double            m_value;      // Used if this->m_given is true
+  double            G_value;      // Used if this->G_given is true
 
-  std::string       sideSetName; // Only needed if IsStokes=true
+  std::string       sideSetName;  // Only needed if IsStokes=true
 };
 
 } // Namespace LandIce

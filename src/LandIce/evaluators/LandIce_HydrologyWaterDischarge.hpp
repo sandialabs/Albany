@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
 
 namespace LandIce
 {

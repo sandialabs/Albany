@@ -8,6 +8,8 @@
 #include "Phalanx_Print.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
+#include "LandIce_HydrologyWaterDischarge.hpp"
+
 namespace LandIce
 {
 
@@ -29,7 +31,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
    *  alpha>1, beta>1. The units of q follow from those of the mesh, h, k and Phi.
    *  We assume h is in [m], Phi in [kPa], the mesh is in [km], and k has units
    *     [k] =  m^(2*beta-alpha) s^(2*beta-3) kg^(1-beta).
-   *  In the common case of beta=2, alpha=1, we have [k] = m^3 s^-1 kg^-1
+   *  In the common case of beta=2, alpha=1, we have [k] = m^3 s kg^-1
    *  Putting everything togeter, we get
    *     [q] = m^2/s
    */
@@ -53,13 +55,16 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   this->addEvaluatedField(q);
 
   // Setting parameters
-  Teuchos::ParameterList& hydrology = *p.get<Teuchos::ParameterList*>("LandIce Hydrology");
+  Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("LandIce Hydrology");
+  Teuchos::ParameterList& darcy_law_params = hydrology_params.sublist("Darcy Law");
 
-  k_0   = hydrology.get<double>("Darcy Law Transmissivity");
-  alpha = hydrology.get<double>("Darcy Law Water Thickness Exponent");
-  beta  = hydrology.get<double>("Darcy Law Potential Gradient Norm Exponent");
+  k_0   = darcy_law_params.get<double>("Transmissivity");
+  alpha = darcy_law_params.get<double>("Water Thickness Exponent");
+  beta  = darcy_law_params.get<double>("Potential Gradient Norm Exponent");
 
-  TEUCHOS_TEST_FOR_EXCEPTION (beta<=1, Teuchos::Exceptions::InvalidParameter, "Error! 'Darcy Law: Potential Gradient Norm Exponent' must be larger than 1.0.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      beta<=1, Teuchos::Exceptions::InvalidParameter,
+      "Error! 'Darcy Law: Potential Gradient Norm Exponent' must be larger than 1.0.\n");
 
   if (beta==2.0) {
     needsGradPhiNorm = false;
@@ -72,7 +77,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
     this->addDependentField(gradPhiNorm);
   }
 
-  regularize = hydrology.get<bool>("Regularize With Continuation", false);
+  regularize = darcy_law_params.get<bool>("Regularize With Continuation", false);
   if (regularize)
   {
     regularizationParam = PHX::MDField<ScalarT,Dim>(p.get<std::string>("Regularization Parameter Name"),dl->shared_param);
@@ -85,7 +90,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes>
 void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(gradPhi,fm);
@@ -130,20 +135,24 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
 
   if (needsGradPhiNorm) {
     double grad_norm_exponent = beta - 2.0;
+    ScalarT hpow(0.0);
     for (unsigned int cell=0; cell < workset.numCells; ++cell) {
       for (unsigned int qp=0; qp < numQPs; ++qp) {
+        hpow = h(cell,qp)*std::pow(std::abs(h(cell,qp)),alpha-1);
         for (unsigned int dim(0); dim<numDim; ++dim) {
-          q(cell,qp,dim) = -k_0 * (std::pow(h(cell,qp),alpha)+regularization)
+          q(cell,qp,dim) = -k_0 * (hpow+regularization)
                                 * std::pow(gradPhiNorm(cell,qp),grad_norm_exponent)
                                 * gradPhi(cell,qp,dim);
         }
       }
     }
   } else {
+    ScalarT hpow(0.0);
     for (unsigned int cell=0; cell < workset.numCells; ++cell) {
       for (unsigned int qp=0; qp < numQPs; ++qp) {
+        hpow = h(cell,qp)*std::pow(std::abs(h(cell,qp)),alpha-1);
         for (unsigned int dim(0); dim<numDim; ++dim) {
-          q(cell,qp,dim) = -(k_0+1e-3*regularization) * (std::pow(h(cell,qp),alpha)+regularization) * gradPhi(cell,qp,dim);
+          q(cell,qp,dim) = - k_0 * (hpow+regularization) * gradPhi(cell,qp,dim);
         }
       }
     }
@@ -174,7 +183,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     printedReg = regularization;
   }
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
+  const auto& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet)
   {
     // Get the local data of side and cell

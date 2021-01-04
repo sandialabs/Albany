@@ -8,7 +8,13 @@
 #include "Phalanx_Print.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
+#include "LandIce_EffectivePressure.hpp"
 #include "LandIce_ParamEnum.hpp"
+
+#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_SacadoTypes.hpp"
+
+#include "PHAL_Dimension.hpp"
 //uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
 
@@ -58,7 +64,7 @@ EffectivePressure (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
 void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(P_o,fm);

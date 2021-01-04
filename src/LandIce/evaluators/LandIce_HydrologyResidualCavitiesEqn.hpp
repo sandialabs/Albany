@@ -7,11 +7,14 @@
 #ifndef LANDICE_HYDROLOGY_RESIDUAL_CAVITIES_EQN_HPP
 #define LANDICE_HYDROLOGY_RESIDUAL_CAVITIES_EQN_HPP 1
 
+#include "Albany_Layouts.hpp"
+
+#include "Albany_ScalarOrdinalTypes.hpp"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Albany_Layouts.hpp"
 
 namespace LandIce
 {
@@ -78,6 +81,7 @@ private:
   unsigned int numQPs;
 
   double rho_i;
+  double eta_i;
   double phi0;
   double h_r;
   double l_r;
@@ -85,11 +89,16 @@ private:
   double scaling_h_t;
   double penalization_coeff;
 
+  enum ClosureTypeN { Cubic , Linear};
+
+  ClosureTypeN closure;
+
   bool unsteady;
   bool has_p_dot;
   bool use_melting;
   bool nodal_equation;
   bool penalization;
+  bool use_eff_cavity;
 
   // Variables necessary for stokes coupling
   bool                            stokes_coupling;

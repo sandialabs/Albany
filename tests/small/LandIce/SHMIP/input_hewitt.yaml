@@ -1,0 +1,234 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Debug Output: 
+    Write Jacobian to MatrixMarket: 0
+    Write Solution to MatrixMarket: 0
+  Problem: 
+    Phalanx Graph Visualization Detail: 0
+    Solution Method: Continuation
+    Name: LandIce Hydrology 2D
+    Response Functions: 
+      Number Of Responses: 0
+      Response 0: 
+        Type: Scalar Response
+        Name: Squared L2 Difference Source ST Target PST
+        Field Rank: Scalar
+        Source Field Name: water_thickness
+        Target Value: 0.0
+    Initial Condition: 
+      Function: Constant
+      Function Data: [100.0, 0.1] # [ p_w (in kPa), h (in m) ]
+    Dirichlet BCs: 
+      DBC on NS NodeSet1 for DOF water_pressure: 0.0 # Hewitt sets N=0, which means p_w=p_i, and H=0.001km there
+    Neumann BCs: { }
+    Parameters: 
+      Number Of Parameters: 1
+      Parameter 0: 
+        Type: Scalar
+        Name: Homotopy Parameter
+        Nominal Value: 0.0
+    LandIce Physical Parameters: 
+      Water Density:        1000.0        # [ kg m^-3 ]
+      Ice Density:          900.0         # [ kg m^-3 ]
+      Ice Softness:         5.0e-15       # [ kPa^-3 s^-1 ]
+      Ice Latent Heat:      3.0e+05       # [ J kg^-1 ]
+      Ice Viscosity:        1.0e10        # [ kPa s ]
+      Gravity Acceleration: 10.0          # [ m s^-2]
+    LandIce Field Norm: 
+      sliding_velocity:
+        Regularization Type: Given Value
+        Regularization Value: 1.0e-10
+      hydraulic_potential Gradient Norm: 
+        Regularization Type: Given Value
+        Regularization Value: 1.0e-10
+    LandIce Viscosity: 
+      Glen's Law n: 3.0
+    LandIce Hydrology: 
+      Use Water Thickness In Effective Pressure Formula: false
+      Cavities Equation:
+        Use Melting: true
+        Use Effective Cavity: false
+        Nodal: true
+        Bed Bumps Height: 0.0
+        Bed Bumps Length: 2.0
+        Closure Type N: Linear
+      Mass Equation:
+        Use Melting: true
+        Lump Mass: false
+      Darcy Law:
+        Water Thickness Exponent: 3.0
+        Potential Gradient Norm Exponent: 2.0
+        Transmissivity: 1.0e-02 # Hewitt: k0/eta_w h^a grad(p_w), while ALI has k*h^a grad(p_w).
+                                # Hewitt's paper has eta_w=1e-3, k0=1e-5, so ALI k=1e-2
+        Regularize With Continuation: true
+      Melting Rate:
+        Use Friction Melt: false
+        Use Geothermal Melt: false
+        Use Given Value: 6.3072 # m/yr * (kg/m^3)
+      Surface Water Input: 
+        Type: Given Field
+  Discretization: 
+    Number Of Time Derivatives: 0
+    Method: STK2D
+    1D Elements: 200
+    2D Elements: 20
+    1D Scale: 1000.0
+    2D Scale: 10.0
+    Periodic_y BC: true
+    Cubature Degree: 5
+    Workset Size: 100
+    Exodus Output File Name: ./shmip_hewitt_steady.exo
+    Required Fields Info: 
+      Number Of Fields: 9
+      Field 0: 
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: File
+        Field Expression: ['1.001-x/1000']  # 1km+1m at x=0km, 1m at x=1000km
+      Field 1: 
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: File
+        Field Expression: ['1.001-x/1000']  # 1km+1m at x=0km, 1m at x=1000km
+      Field 2: 
+        Field Name: surface_water_input
+        Field Type: Node Scalar
+        Field Origin: File
+        Field Value: [0.017280]   # mm / day (Hewitt used 2e-10 m/s)
+      Field 3: 
+        Field Name: sliding_velocity
+        Field Type: Node Scalar
+        Field Origin: File
+        Field Expression: ['spy=365*86400', '0*x + spy/10^7'] # 1e-7 m/s
+      Field 4: 
+        Field Name: effective_pressure
+        Field Type: Node Scalar
+        Field Usage: Output
+      Field 5: 
+        Field Name: water_thickness
+        Field Type: Node Scalar
+        Field Usage: Output
+      Field 6: 
+        Field Name: water_discharge
+        Field Type: Elem Vector
+        Vector Dim: 2
+        Field Usage: Output
+      Field 7: 
+        Field Name: ice_overburden
+        Field Type: Node Scalar
+        Field Usage: Output
+      Field 8: 
+        Field Name: water_pressure
+        Field Type: Node Scalar
+        Field Usage: Output
+      # Field 4: 
+      #   Field Name: geothermal_flux
+      #   Field Type: Node Scalar
+      #   Field Origin: File
+      #   Field Value: [0.06]   # W / m^2
+  Piro: 
+    LOCA: 
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.0
+        Continuation Parameter: Homotopy Parameter
+        Continuation Method: Natural
+        Max Steps: 50
+        Max Value: 1.0
+        Min Value: 0.0
+      Step Size: 
+        Initial Step Size: 5.0e-02
+    NOX: 
+      Thyra Group Options: 
+        Function Scaling: Row Sum
+      Solver Options: 
+        Status Test Check Type: Minimal
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: MaxIters
+          Maximum Iterations: 6
+        Test 1: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Unscaled
+          Tolerance: 1.0e-02
+        Test 2: 
+          Test Type: NormWRMS
+          Absolute Tolerance: 1.0e-04
+          Relative Tolerance: 1.0e-03
+      Nonlinear Solver: Line Search Based
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver: 
+            Write Linear System: false
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Preconditioner Type: Ifpack2
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: { }
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.0e-06
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 0
+                  Prec Type: Amesos2
+                  Ifpack2 Settings: 
+                    'fact: ilut level-of-fill': 1.0
+                    'fact: absolute threshold': 1.0e-06
+                    Amesos2: {}
+                MueLu: 
+                  verbosity: none
+                  max levels: 5
+                  'coarse: max size': 512
+                  multigrid algorithm: sa
+                  'aggregation: type': uncoupled
+                  'smoother: type': RELAXATION
+                  'smoother: params': 
+                    'relaxation: type': Jacobi
+                    'relaxation: sweeps': 1
+                    'relaxation: damping factor': 2.5e-01
+      Line Search: 
+        Method: Backtrack
+        Full Step: 
+          Full Step: 1.0
+        Backtrack: 
+          Max Iters: 10
+          Default Step: 1.0
+          Minimum Step: 1.0e-06
+          Reduction Factor: 0.5
+          Recovery Step: 1.0e-03
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+...

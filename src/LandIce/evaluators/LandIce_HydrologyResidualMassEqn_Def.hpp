@@ -7,6 +7,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
+#include "LandIce_HydrologyResidualMassEqn.hpp"
+
 namespace LandIce {
 
 //**********************************************************************
@@ -59,10 +61,11 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 
   // Setting parameters
   Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("LandIce Hydrology Parameters");
+  Teuchos::ParameterList& mass_eqn_params  = hydrology_params.sublist("Mass Equation");
   Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
 
   rho_w       = physical_params.get<double>("Water Density", 1028.0);
-  use_melting = hydrology_params.get<bool>("Use Melting In Conservation Of Mass", false);
+  use_melting = mass_eqn_params.get<bool>("Use Melting", false);
 
   unsteady = p.get<bool>("Unsteady");
   has_h_till = p.get<bool>("Has Till Storage");
@@ -79,7 +82,7 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (use_melting) {
-    mass_lumping = hydrology_params.isParameter("Lump Mass In Mass Equation") ? hydrology_params.get<bool>("Lump Mass In Mass Equation") : false;
+    mass_lumping = mass_eqn_params.isParameter("Lump Mass") ? mass_eqn_params.get<bool>("Lump Mass") : false;
   } else {
     mass_lumping = false;
   }
@@ -139,7 +142,7 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
 void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(BF,fm);
@@ -188,7 +191,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     return;
 
   ScalarT res_qp, res_node;
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
+  const auto& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet)
   {
     // Get the local data of side and cell
@@ -271,7 +274,6 @@ evaluateFieldsCell (typename Traits::EvalData workset)
       if (use_melting && mass_lumping) {
         res_node += m(cell,node)/rho_w;
       }
-
       residual (cell,node) = res_node;
     }
   }
