@@ -90,6 +90,10 @@ class AbstractDiscretization
   virtual const LocalSideSetInfoList&
   getSideSetViews(const int ws) const = 0;
 
+  //! Get local DOF view list for GatherVertcallyContractedSolution
+  virtual const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
+  getLocalDOFViews(const int ws) const = 0;
+
   //! Get map from (Ws, El, Local Node, Eq) -> unkLID
   virtual const Conn&
   getWsElNodeEqID() const = 0;

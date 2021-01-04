@@ -2036,6 +2036,62 @@ STKDiscretization::computeSideSets()
       ss_it++;
     }
   }
+
+  // 6) Populate localDOFViews for GatherVerticallyContractedSolution
+  const int maxSideNodes = 6;
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *(stkMeshStruct->layered_mesh_numbering);
+  // Not all mesh structs that come through here are extruded mesh structs. This is to check if
+  //   the mesh struct is an extruded one. If it isn't extruded, it won't need to do any of the following work.
+  if (&layeredMeshNumbering != nullptr) {
+    for (int i = 0; i < sideSets.size(); ++i) {
+      printf("Processing sideset %d of %d...\n", i, sideSets.size());
+      // Loop over the sides that form the boundary condition
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
+      const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
+
+      const auto& ov_node_indexer = *(getOverlapGlobalLocalIndexer(nodes_dof_name()));
+      const int numLayers = layeredMeshNumbering.numLayers;
+      const int numComps = solDOFManager.numComponents();
+
+      SideSetList& ssList = sideSets[i];
+      std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
+
+      while (ss_it != ssList.end()) {
+        std::string             ss_key = ss_it->first;
+        std::vector<SideStruct> ss_val = ss_it->second;
+        
+        // localDOFView extent: [sideSet.size, maxNodes, layeredMeshNumbering.numLayers+1, solDOFManager.numComponents]
+        Kokkos::View<LO****, PHX::Device>& localDOFView = localDOFViews[i][ss_key];
+        Kokkos::resize(localDOFView, ss_val.size(), maxSideNodes, numLayers+1, numComps);
+        for (int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
+          // Get the data that corresponds to the side
+          const int elem_LID = ss_val[sideSet_idx].elem_LID;
+          const int elem_side = ss_val[sideSet_idx].side_local_id;
+          const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
+          const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
+          const int numSideNodes = side.topology->node_count;
+
+          const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID_i[elem_LID];
+
+          //we only consider elements on the top.
+          GO baseId;
+          for (int j = 0; j < numSideNodes; ++j) {
+            const std::size_t node = side.node[j];
+            baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
+            for (int il = 0; il < numLayers+1; ++il) {
+              const GO gnode = layeredMeshNumbering.getId(baseId, il);
+              const LO inode = ov_node_indexer.getLocalElement(gnode);
+              for (int comp = 0; comp < numComps; ++comp) {
+                localDOFView(sideSet_idx, node, il, comp) = solDOFManager.getLocalDOF(inode, comp);
+              }
+            }
+          }
+        }
+
+        ss_it++;
+      }
+    }
+  }
   
 }
 

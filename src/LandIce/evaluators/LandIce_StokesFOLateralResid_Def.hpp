@@ -10,6 +10,7 @@
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "LandIce_StokesFOLateralResid.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 namespace LandIce {
 
@@ -184,13 +185,13 @@ operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const 
   for (int qp=0; qp<numSideQPs; ++qp) {
     const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
     const MeshScalarT      s = elevation(sideSet_idx,qp); //[km]
-    const OutputScalarT immersed_ratio = H>threshold ? std::max(zero,std::min(one,1-s/H)) : zero;
+    const OutputScalarT immersed_ratio = H>threshold ? KU::max(zero,KU::min(one,1-s/H)) : zero;
     OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio); //[kPa]
     if(add_melange_force)
       w_normal_stress += scale * melange_force_value * std::min(immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
     
     w_normal_stress *= w_measure(sideSet_idx,qp);
-
+    
     if (use_stereographic_map) {
       const MeshScalarT x = coords_qp(sideSet_idx,qp,0) - X_0;
       const MeshScalarT y = coords_qp(sideSet_idx,qp,1) - Y_0;
