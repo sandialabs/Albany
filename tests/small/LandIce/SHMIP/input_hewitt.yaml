@@ -30,12 +30,12 @@ ANONYMOUS:
         Name: Homotopy Parameter
         Nominal Value: 0.0
     LandIce Physical Parameters: 
-      Water Density:        1000.0        # [ kg m^-3 ]
-      Ice Density:          900.0         # [ kg m^-3 ]
-      Ice Softness:         5.0e-15       # [ kPa^-3 s^-1 ]
-      Ice Ice Latent Heat Of Fusion:      3.0e+05       # [ J kg^-1 ]
-      Ice Viscosity:        1.0e13        # [ Pa s ]
-      Gravity Acceleration: 10.0          # [ m s^-2]
+      Water Density:             1000.0        # [ kg m^-3 ]
+      Ice Density:               900.0         # [ kg m^-3 ]
+      Ice Softness:              5.0e-24       # [ Pa^-3 s^-1 ]
+      Ice Latent Heat Of Fusion: 3.0e+05       # [ J kg^-1 ]
+      Ice Viscosity:             1.0e13        # [ Pa s ]
+      Gravity Acceleration:      10.0          # [ m s^-2]
     LandIce Field Norm: 
       sliding_velocity:
         Regularization Type: Given Value
@@ -157,7 +157,7 @@ ANONYMOUS:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Unscaled
-          Tolerance: 1.0e-02
+          Tolerance: 1.0e-03
         Test 2: 
           Test Type: NormWRMS
           Absolute Tolerance: 1.0e-04
@@ -174,7 +174,7 @@ ANONYMOUS:
             NOX Stratimikos Options: { }
             Stratimikos: 
               Linear Solver Type: Belos
-              Preconditioner Type: Ifpack2
+              Preconditioner Type: MueLu
               Linear Solver Types: 
                 Belos: 
                   VerboseObject: { }
@@ -199,7 +199,7 @@ ANONYMOUS:
                     Amesos2: {}
                 MueLu: 
                   verbosity: none
-                  max levels: 5
+                  max levels: 1
                   'coarse: max size': 512
                   multigrid algorithm: sa
                   'aggregation: type': uncoupled
