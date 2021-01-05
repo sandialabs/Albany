@@ -76,19 +76,9 @@ void GatherVerticallyContractedSolutionBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-
-  // Compute quadWeights just once
-  Kokkos::resize(this->quadWeights, this->numLayers+1);
-  if(this->op == this->VerticalSum){
-    for (int i=0; i<this->numLayers+1; ++i)
-      this->quadWeights(i) = 1.0;
-  } else  { //Average
-    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
-    this->quadWeights(0) = 0.5*layers_ratio[0]; 
-    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
-    for(int i=1; i<this->numLayers; ++i)
-      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
-  }
+  // Check cell topology for numSideNodes
+  const CellTopologyData_Subcell& side0 =  this->cell_topo->side[0];
+  this->numSideNodes = side0.topology->node_count;
 
   this->utils.setFieldData(contractedSol,fm);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
@@ -154,13 +144,22 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSetViews.is_null(), std::logic_error,
                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
-  // Get layeredMeshNumbering and number of layers
+  // Get total number of layers
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   this->numLayers = layeredMeshNumbering.numLayers;
 
-  // Check cell topology for numSideNodes
-  const CellTopologyData_Subcell& side0 =  this->cell_topo->side[0];
-  this->numSideNodes = side0.topology->node_count;
+  // Compute quadWeights
+  Kokkos::resize(this->quadWeights, this->numLayers+1);
+  if(this->op == this->VerticalSum){
+    for (int i=0; i<this->numLayers+1; ++i)
+      this->quadWeights(i) = 1.0;
+  } else  { //Average
+    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+    this->quadWeights(0) = 0.5*layers_ratio[0]; 
+    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
+    for(int i=1; i<this->numLayers; ++i)
+      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
+  }
 
   // Get sideSetViews and iterator
   const Albany::LocalSideSetInfoList& ssList = *(workset.sideSetViews);
@@ -243,6 +242,23 @@ evaluateFields(typename Traits::EvalData workset)
 
   Kokkos::deep_copy(this->contractedSol.get_view(), ScalarT(0.0));
 
+  // Get total number of layers
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  this->numLayers = layeredMeshNumbering.numLayers;
+
+  // Compute quadWeights
+  Kokkos::resize(this->quadWeights, this->numLayers+1);
+  if(this->op == this->VerticalSum){
+    for (int i=0; i<this->numLayers+1; ++i)
+      this->quadWeights(i) = 1.0;
+  } else  { //Average
+    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+    this->quadWeights(0) = 0.5*layers_ratio[0]; 
+    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
+    for(int i=1; i<this->numLayers; ++i)
+      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
+  }
+
   const Albany::LocalSideSetInfoList& ssList = *(workset.sideSetViews);
   Albany::LocalSideSetInfoList::const_iterator it = ssList.find(this->meshPart);
 
@@ -253,8 +269,6 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-    const unsigned int numLayers = layeredMeshNumbering.numLayers;
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
@@ -273,7 +287,7 @@ evaluateFields(typename Traits::EvalData workset)
         const std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for (unsigned int il=0; il<numLayers+1; ++il) {
+        for(unsigned int il=0; il<this->numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -284,24 +298,24 @@ evaluateFields(typename Traits::EvalData workset)
           if(this->isVector) {
             for(unsigned int comp=0; comp<this->vecDim; ++comp) {
               this->contractedSol(sideSet_idx,i,comp) = FadType(this->contractedSol(sideSet_idx,i,comp).size(), contrSol[comp]);
-              for(unsigned int il=0; il<numLayers+1; ++il)
+              for(unsigned int il=0; il<this->numLayers+1; ++il)
                 this->contractedSol(sideSet_idx,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset) = this->quadWeights(il)*workset.j_coeff;
             }
           } else {
             this->contractedSol(sideSet_idx,i) = FadType(this->contractedSol(sideSet_idx,i).size(), contrSol[0]);
-            for(unsigned int il=0; il<numLayers+1; ++il)
+            for(unsigned int il=0; il<this->numLayers+1; ++il)
               this->contractedSol(sideSet_idx,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset) = this->quadWeights(il)*workset.j_coeff;
           } 
         } else {
           if(this->isVector) {
             for(unsigned int comp=0; comp<this->vecDim; ++comp) {
               this->contractedSol(elem_LID,elem_side,i,comp) = FadType(this->contractedSol(elem_LID,elem_side,i,comp).size(), contrSol[comp]);
-              for(unsigned int il=0; il<numLayers+1; ++il)
+              for(unsigned int il=0; il<this->numLayers+1; ++il)
                 this->contractedSol(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset) = this->quadWeights(il)*workset.j_coeff;
             }
           } else {
             this->contractedSol(elem_LID,elem_side,i) = FadType(this->contractedSol(elem_LID,elem_side,i).size(), contrSol[0]);
-            for(unsigned int il=0; il<numLayers+1; ++il)
+            for(unsigned int il=0; il<this->numLayers+1; ++il)
               this->contractedSol(elem_LID,elem_side,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset) = this->quadWeights(il)*workset.j_coeff;
           } 
         }
@@ -330,6 +344,23 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSetViews.is_null(), std::logic_error,
                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
+  // Get total number of layers
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  this->numLayers = layeredMeshNumbering.numLayers;
+
+  // Compute quadWeights
+  Kokkos::resize(this->quadWeights, this->numLayers+1);
+  if(this->op == this->VerticalSum){
+    for (int i=0; i<this->numLayers+1; ++i)
+      this->quadWeights(i) = 1.0;
+  } else  { //Average
+    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+    this->quadWeights(0) = 0.5*layers_ratio[0]; 
+    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
+    for(int i=1; i<this->numLayers; ++i)
+      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
+  }
+
   const Albany::LocalSideSetInfoList& ssList = *(workset.sideSetViews);
   Albany::LocalSideSetInfoList::const_iterator it = ssList.find(this->meshPart);
 
@@ -338,11 +369,8 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
-
-    const unsigned int  numLayers = layeredMeshNumbering.numLayers;
 
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
@@ -359,7 +387,7 @@ evaluateFields(typename Traits::EvalData workset)
         const std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for (unsigned int il=0; il<numLayers+1; ++il) {
+        for(unsigned int il=0; il<this->numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -408,6 +436,23 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSetViews.is_null(), std::logic_error,
                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
+  // Get total number of layers
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  this->numLayers = layeredMeshNumbering.numLayers;
+
+  // Compute quadWeights
+  Kokkos::resize(this->quadWeights, this->numLayers+1);
+  if(this->op == this->VerticalSum){
+    for (int i=0; i<this->numLayers+1; ++i)
+      this->quadWeights(i) = 1.0;
+  } else  { //Average
+    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+    this->quadWeights(0) = 0.5*layers_ratio[0]; 
+    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
+    for(int i=1; i<this->numLayers; ++i)
+      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
+  }
+
   const Albany::LocalSideSetInfoList& ssList = *(workset.sideSetViews);
   Albany::LocalSideSetInfoList::const_iterator it = ssList.find(this->meshPart);
 
@@ -416,11 +461,8 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over the sides that form the boundary condition
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
-
-    const unsigned int numLayers = layeredMeshNumbering.numLayers;
 
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
@@ -437,7 +479,7 @@ evaluateFields(typename Traits::EvalData workset)
         const std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for (unsigned int il=0; il<numLayers+1; ++il) {
+        for (unsigned int il=0; il<this->numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -515,8 +557,22 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSetViews.is_null(), std::logic_error,
                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
+  // Get total number of layers
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  unsigned int numLayers = layeredMeshNumbering.numLayers;
+  this->numLayers = layeredMeshNumbering.numLayers;
+
+  // Compute quadWeights
+  Kokkos::resize(this->quadWeights, this->numLayers+1);
+  if(this->op == this->VerticalSum){
+    for (int i=0; i<this->numLayers+1; ++i)
+      this->quadWeights(i) = 1.0;
+  } else  { //Average
+    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+    this->quadWeights(0) = 0.5*layers_ratio[0]; 
+    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
+    for(int i=1; i<this->numLayers; ++i)
+      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
+  }
 
   Kokkos::deep_copy(this->contractedSol.get_view(), ScalarT(0.0));
 
@@ -546,7 +602,7 @@ evaluateFields(typename Traits::EvalData workset)
         std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for (unsigned int il=0; il<numLayers+1; ++il) {
+        for (unsigned int il=0; il<this->numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -554,8 +610,8 @@ evaluateFields(typename Traits::EvalData workset)
         }
         std::vector<double> contrDirection(this->vecDim,0);
 
-        if (is_x_direction_active)
-          for (unsigned int il=0; il<numLayers+1; ++il) {
+        if (g_xx_is_active||g_px_is_active)
+          for (unsigned int il=0; il<this->numLayers+1; ++il) {
             const GO gnode = layeredMeshNumbering.getId(baseId, il);
             const LO inode = ov_node_indexer.getLocalElement(gnode);
             for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -569,7 +625,7 @@ evaluateFields(typename Traits::EvalData workset)
               if (g_xx_is_active||g_px_is_active)
                 this->contractedSol(sideSet_idx,i,comp).val().fastAccessDx(0) = contrDirection[comp];
               if (g_xx_is_active||g_xp_is_active)
-                for(unsigned int il=0; il<numLayers+1; ++il)
+                for(unsigned int il=0; il<this->numLayers+1; ++il)
                   this->contractedSol(sideSet_idx,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
             }
           } else {
@@ -577,7 +633,7 @@ evaluateFields(typename Traits::EvalData workset)
             if (g_xx_is_active||g_px_is_active)
               this->contractedSol(sideSet_idx,i).val().fastAccessDx(0) = contrDirection[0];
             if (g_xx_is_active||g_xp_is_active)
-              for(unsigned int il=0; il<numLayers+1; ++il)
+              for(unsigned int il=0; il<this->numLayers+1; ++il)
                 this->contractedSol(sideSet_idx,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
           }
         } else {
@@ -587,7 +643,7 @@ evaluateFields(typename Traits::EvalData workset)
               if (g_xx_is_active||g_px_is_active)
                 this->contractedSol(elem_LID,elem_side,i,comp).val().fastAccessDx(0) = contrDirection[comp];
               if (g_xx_is_active||g_xp_is_active)
-                for(unsigned int il=0; il<numLayers+1; ++il)
+                for(unsigned int il=0; il<this->numLayers+1; ++il)
                   this->contractedSol(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
             }
           } else {
@@ -595,7 +651,7 @@ evaluateFields(typename Traits::EvalData workset)
             if (g_xx_is_active||g_px_is_active)
               this->contractedSol(elem_LID,elem_side,i).val().fastAccessDx(0) = contrDirection[0];
             if (g_xx_is_active||g_xp_is_active)
-              for(unsigned int il=0; il<numLayers+1; ++il)
+              for(unsigned int il=0; il<this->numLayers+1; ++il)
                 this->contractedSol(elem_LID,elem_side,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
           }
         }
