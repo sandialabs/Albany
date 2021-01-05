@@ -42,7 +42,7 @@ public:
 
   Albany::LocalSideSetInfo sideSet;
 
-  Kokkos::View<double*, PHX::Device> quadWeightsView;
+  Kokkos::View<double*, PHX::Device> quadWeights;
 
   Teuchos::ArrayRCP<const ST> x_constView;
 
