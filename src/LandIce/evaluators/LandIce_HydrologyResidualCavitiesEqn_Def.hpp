@@ -204,7 +204,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   double yr_to_s = 365.25*24*3600;
   double scaling_h_t = yr_to_s;
   double C = c_creep * yr_to_s;
-  double phi0 = englacial_phi / (1000*rho_w*g);
+  double phi0 = has_p_dot ? englacial_phi / (1000*rho_w*g) : 0.0;
   // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
   //       cancel out with N, and the residual is in m/yr
 
@@ -251,7 +251,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
   double yr_to_s = 365.25*24*3600;
   double scaling_h_t = yr_to_s;
   double C = c_creep * yr_to_s;
-  double phi0 = englacial_phi / (1000*rho_w*g);
+  double phi0 = has_p_dot ? englacial_phi / (1000*rho_w*g) : 0.0;
   double etai = eta_i/1000; // Convert to kPa s
 
   for (unsigned int cell=0; cell < workset.numCells; ++cell) {
