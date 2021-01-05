@@ -2044,7 +2044,6 @@ STKDiscretization::computeSideSets()
   //   the mesh struct is an extruded one. If it isn't extruded, it won't need to do any of the following work.
   if (&layeredMeshNumbering != nullptr) {
     for (int i = 0; i < sideSets.size(); ++i) {
-      printf("Processing sideset %d of %d...\n", i, sideSets.size());
       // Loop over the sides that form the boundary condition
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
       const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
