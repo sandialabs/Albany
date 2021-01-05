@@ -30,7 +30,7 @@ def createDefaultParallelEnv(comm = Teuchos.DefaultComm.getComm(), n_threads=-1,
     """
     return wpa.PyParallelEnv(comm,n_threads,n_numa,device_id)
 
-def createAlbanyProblem(filename, parallelEnv = createDefaultParallelEnv()):
+def createAlbanyProblem(filename, parallelEnv):
     """@brief Creates an Albany problem given a yaml file and a parallel environment."""
     return wpa.PyProblem(filename, parallelEnv)
 
@@ -133,13 +133,17 @@ def createTimers(names):
         timers_list.append(Teuchos.Time(name))
     return timers_list
 
-def printTimers(timers_list, filename=None):
+def printTimers(timers_list, filename=None, verbose=True):
     """@brief Print Teuchos timers."""
     original_stdout = sys.stdout
     if filename is not None:
         f = open(filename, 'w')
         sys.stdout = f
-    print("Timers:")
+    if verbose:
+        print("Timers:")
     for timer in timers_list:
-        print(timer.name() +": "+str(timer.totalElapsedTime())+" seconds")
+        if verbose:
+            print(timer.name() +": "+str(timer.totalElapsedTime())+" seconds")
+        else:
+            print(timer.totalElapsedTime())
     sys.stdout = original_stdout

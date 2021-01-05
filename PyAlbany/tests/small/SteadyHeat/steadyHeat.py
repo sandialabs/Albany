@@ -10,15 +10,20 @@ except:
 import os
 
 class TestSteadyHeat(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.comm = Teuchos.DefaultComm.getComm()
+        cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
+
     def test_all(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
+        cls = self.__class__
+        rank = cls.comm.getRank()
 
         file_dir = os.path.dirname(__file__)
 
         # Create an Albany problem:
         filename = 'input_conductivity_dist_paramT.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_directions = 4
         parameter_map = problem.getParameterMap(0)
@@ -42,7 +47,7 @@ class TestSteadyHeat(unittest.TestCase):
         h_target = np.array([4.2121719763904516e-05, -4.21216874727712e-05, 0.00012636506241831498, -0.00012636506241831496])
 
         g_data = response.getData()
-        norm = Utils.norm(sensitivity.getData(0), comm)
+        norm = Utils.norm(sensitivity.getData(0), cls.comm)
 
         print("g_target = " + str(g_target))
         print("g_data[0] = " + str(g_data[0]))
@@ -55,6 +60,11 @@ class TestSteadyHeat(unittest.TestCase):
             self.assertTrue(np.abs(norm-norm_target) < tol)
             for i in range(0,n_directions):
                 self.assertTrue(np.abs(hessian[i,0]-h_target[i]) < tol)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.parallelEnv = None
+        cls.comm = None
 
 if __name__ == '__main__':
     unittest.main()
