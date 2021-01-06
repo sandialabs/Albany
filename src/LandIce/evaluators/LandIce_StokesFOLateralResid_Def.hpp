@@ -85,7 +85,7 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
   // Get dimensions
   std::vector<PHX::DataLayout::size_type> dims;
   dl_lateral->node_qp_gradient->dimensions(dims);
-  unsigned int numSides = cellType->getSideCount();
+  unsigned int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
   dl->node_vector->dimensions(dims);
@@ -139,6 +139,8 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::
 operator() (const GivenImmersedRatio_Tag& tag, const int& sideSet_idx) const {
   
+  const double scale = 1e-6; //[k^2]
+
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
@@ -147,7 +149,7 @@ operator() (const GivenImmersedRatio_Tag& tag, const int& sideSet_idx) const {
     const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
     OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*given_immersed_ratio*given_immersed_ratio); //[kPa]
     if(add_melange_force)
-      w_normal_stress += scale * melange_force_value * std::min(given_immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
+      w_normal_stress += scale * melange_force_value * KU::min(given_immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
 
     w_normal_stress *= w_measure(sideSet_idx,qp);
 
@@ -174,6 +176,8 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::
 operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const {
   
+  const double scale = 1e-6; //[k^2]
+
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
@@ -188,7 +192,7 @@ operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const 
     const OutputScalarT immersed_ratio = H>threshold ? KU::max(zero,KU::min(one,1-s/H)) : zero;
     OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio); //[kPa]
     if(add_melange_force)
-      w_normal_stress += scale * melange_force_value * std::min(immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
+      w_normal_stress += scale * melange_force_value * KU::min(immersed_ratio*H/melange_thickness_threshold, 1.0) / H;
     
     w_normal_stress *= w_measure(sideSet_idx,qp);
     
@@ -232,10 +236,11 @@ template<typename EvalT, typename Traits, typename ThicknessScalarT>
 void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_computed_immersed_ratio (typename Traits::EvalData workset)
 {
 
-  double scale = 1e-6; //[k^2]
   if (useCollapsedSidesets) {
     Kokkos::parallel_for(ComputedImmersedRatio_Policy(0, sideSet.size), *this);
   } else {
+    double scale = 1e-6; //[k^2]
+
     const OutputScalarT zero (0.0);
     const ThicknessScalarT threshold (1e-8);
     const OutputScalarT one (1.0);
@@ -282,10 +287,11 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_comput
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_given_immersed_ratio (typename Traits::EvalData workset)
 {
-  double scale = 1e-6; //[k^2]
   if (useCollapsedSidesets) {
     Kokkos::parallel_for(GivenImmersedRatio_Policy(0, sideSet.size), *this);
   } else {
+    double scale = 1e-6; //[k^2]
+
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell

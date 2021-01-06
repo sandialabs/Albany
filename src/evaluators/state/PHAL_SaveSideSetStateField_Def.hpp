@@ -228,7 +228,7 @@ saveElemState(typename Traits::EvalData workset)
             // side set cell vector/gradient
             for (unsigned int idim=0; idim<dims[1]; ++idim)
             {
-              state(ss_cell,idim) = field(sideSet_idx,idim);
+              state(ss_cell,(int) idim) = field(sideSet_idx,idim);
             }
           }
           break;
@@ -240,7 +240,7 @@ saveElemState(typename Traits::EvalData workset)
             for (unsigned int node=0; node<dims[1]; ++node)
             {
               for (unsigned int dim=0; dim<dims[2]; ++dim)
-                state(ss_cell,nodeMap[node],dim) = field(sideSet_idx,node,dim);
+                state(ss_cell,nodeMap[node],(int) dim) = field(sideSet_idx,node,dim);
             }
           }
           else
@@ -249,7 +249,7 @@ saveElemState(typename Traits::EvalData workset)
             for (unsigned int idim=0; idim<dims[1]; ++idim)
             {
               for (unsigned int jdim=0; jdim<dims[2]; ++jdim)
-                state(ss_cell,idim,jdim) = field(sideSet_idx,idim,jdim);
+                state(ss_cell,(int) idim,(int) jdim) = field(sideSet_idx,idim,jdim);
             }
           }
           break;
@@ -278,7 +278,7 @@ saveElemState(typename Traits::EvalData workset)
             // side set cell vector/gradient
             for (unsigned int idim=0; idim<dims[2]; ++idim)
             {
-              state(ss_cell,idim) = field(cell,side,idim);
+              state(ss_cell,(int) idim) = field(cell,side,idim);
             }
           }
           break;
@@ -290,7 +290,7 @@ saveElemState(typename Traits::EvalData workset)
             for (unsigned int node=0; node<dims[2]; ++node)
             {
               for (unsigned int dim=0; dim<dims[3]; ++dim)
-                state(ss_cell,nodeMap[node],dim) = field(cell,side,node,dim);
+                state(ss_cell,nodeMap[node],(int) dim) = field(cell,side,node,dim);
             }
           }
           else
@@ -299,7 +299,7 @@ saveElemState(typename Traits::EvalData workset)
             for (unsigned int idim=0; idim<dims[2]; ++idim)
             {
               for (unsigned int jdim=0; jdim<dims[3]; ++jdim)
-                state(ss_cell,idim,jdim) = field(cell,side,idim,jdim);
+                state(ss_cell,(int) idim,(int) jdim) = field(cell,side,idim,jdim);
             }
           }
           break;
