@@ -1137,12 +1137,12 @@ Albany::StateManager::getResidResponseIDsToRequire(
     if (id.length() > 0 && ebName == elementBlockName) {
       idsToRequire.push_back(id);
 #ifdef ALBANY_VERBOSE
-      cout << "RRR1  " << name << " requiring " << id << " (" << i << ")"
-           << endl;
+      std::cout << "RRR1  " << name << " requiring " << id << " (" << i << ")"
+		<< std::endl;
 #endif
     } else {
 #ifdef ALBANY_VERBOSE
-      cout << "RRR1  " << name << " empty (" << i << ")" << endl;
+      std::cout << "RRR1  " << name << " empty (" << i << ")" << std::endl;
 #endif
     }
     i++;
