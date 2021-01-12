@@ -621,8 +621,14 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
     const bool aDHessVec = parameterParams.isParameter("Hessian-vector products use AD") ?
         parameterParams.get<bool>("Hessian-vector products use AD") : true;
 
-    const bool reconstructHpp = parameterParams.isParameter("Reconstruct H_pp") ?
+    bool reconstructHpp = parameterParams.isParameter("Reconstruct H_pp") ?
         parameterParams.get<bool>("Reconstruct H_pp") : false;
+    
+    if (reconstructHpp == false) {
+      auto& analysisParams = appParams->sublist("Piro").sublist("Analysis");
+      if(analysisParams.isSublist("ROL"))
+        reconstructHpp = analysisParams.sublist("ROL").get("Hessian Dot Product", false);
+    }
 
     bool hess_vec_prod_g_xx_support = aDHessVec;
     bool hess_vec_prod_g_xp_support = aDHessVec;

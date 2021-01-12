@@ -196,6 +196,7 @@ ANONYMOUS:
 
         Use Old Reduced Space Interface: false
         Full Space: false
+        Hessian Dot Product: true
         Use NOX Solver: true
 
         ROL Options:

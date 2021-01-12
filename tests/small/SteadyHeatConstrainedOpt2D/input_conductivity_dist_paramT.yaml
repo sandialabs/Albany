@@ -68,6 +68,7 @@ ANONYMOUS:
        
 
         Full Space: false
+        Hessian Dot Product: true
         Use NOX Solver: true
  
 
