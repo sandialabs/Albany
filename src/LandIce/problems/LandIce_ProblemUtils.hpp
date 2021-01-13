@@ -144,7 +144,7 @@ createEvaluatorWithOneScalarType (Teuchos::RCP<Teuchos::ParameterList> p,
   using PT = typename EvalT::ParamScalarT;
   using Traits = PHAL::AlbanyTraits;
 
-  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st)!=INVALID_STR, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st)==INVALID_STR, std::runtime_error,
       "Error! Unrecognized scalar type.\n");
 
   Teuchos::RCP<PHX::Evaluator<Traits> > ev;
@@ -175,9 +175,9 @@ createEvaluatorWithTwoScalarTypes (Teuchos::RCP<Teuchos::ParameterList> p,
   using PT = typename EvalT::ParamScalarT;
   using Traits = PHAL::AlbanyTraits;
 
-  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st1)!=INVALID_STR, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st1)==INVALID_STR, std::runtime_error,
       "Error! Unrecognized first scalar type.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st2)!=INVALID_STR, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st2)==INVALID_STR, std::runtime_error,
       "Error! Unrecognized second scalar type.\n");
 
   Teuchos::RCP<PHX::Evaluator<Traits> > ev;
@@ -241,11 +241,11 @@ createEvaluatorWithThreeScalarTypes (Teuchos::RCP<Teuchos::ParameterList> p,
   using PT = typename EvalT::ParamScalarT;
   using Traits = PHAL::AlbanyTraits;
 
-  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st1)!=INVALID_STR, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st1)==INVALID_STR, std::runtime_error,
       "Error! Unrecognized first scalar type.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st2)!=INVALID_STR, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st2)==INVALID_STR, std::runtime_error,
       "Error! Unrecognized second scalar type.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st3)!=INVALID_STR, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION  (e2str(st3)==INVALID_STR, std::runtime_error,
       "Error! Unrecognized third scalar type.\n");
 
   Teuchos::RCP<PHX::Evaluator<Traits> > ev;
@@ -421,6 +421,12 @@ createEvaluatorWithThreeScalarTypes (Teuchos::RCP<Teuchos::ParameterList> p,
 
   return ev;
 }
+
+Teuchos::RCP<PHX::DataLayout>
+extrudeSideLayout (const Teuchos::RCP<PHX::DataLayout>& in, const int numLayers);
+
+Teuchos::RCP<PHX::DataLayout>
+extrudeCollapsedSideLayout (const Teuchos::RCP<PHX::DataLayout>& in, const int numLayers);
 
 } // namespace LandIce
 

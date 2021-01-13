@@ -73,6 +73,7 @@ set(SOURCES
   problems/LandIce_Hydrology.cpp
   problems/LandIce_LaplacianSampling.cpp
   problems/LandIce_ProblemFactory.cpp
+  problems/LandIce_ProblemUtils.cpp
   problems/LandIce_SchoofFit.cpp
   problems/LandIce_Stokes.cpp
   problems/LandIce_StokesFO.cpp

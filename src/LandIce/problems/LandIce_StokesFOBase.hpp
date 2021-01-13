@@ -106,7 +106,8 @@ protected:
   template <typename EvalT>
   void constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                   const Albany::MeshSpecsStruct& meshSpecs,
-                                  Albany::StateManager& stateMgr);
+                                  Albany::StateManager& stateMgr,
+                                  Albany::FieldManagerChoice fieldManagerChoice);
 
   template <typename EvalT>
   void constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -266,7 +267,7 @@ constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                  Albany::FieldManagerChoice fieldManagerChoice)
 {
   // --- States/parameters --- //
-  constructStatesEvaluators<EvalT> (fm0, meshSpecs, stateMgr);
+  constructStatesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // --- Interpolation utilities for fields ---//
   constructInterpolationEvaluators<EvalT> (fm0);
@@ -288,9 +289,11 @@ constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 }
 
 template <typename EvalT>
-void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                              const Albany::MeshSpecsStruct& meshSpecs,
-                                              Albany::StateManager& stateMgr)
+void StokesFOBase::
+constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                           const Albany::MeshSpecsStruct& meshSpecs,
+                           Albany::StateManager& stateMgr,
+                           Albany::FieldManagerChoice fieldManagerChoice)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
@@ -308,7 +311,7 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
   unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
   std::string fieldType, fieldUsage, meshPart;
-  bool nodal_state;
+  Teuchos::RCP<PHX::DataLayout> state_dl;
   for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
     Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
 
@@ -328,26 +331,41 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
 
     meshPart = is_dist[stateName] ? dist_params_name_to_mesh_part[stateName] : "";
 
-    if(fieldType == "Elem Scalar") {
-      entity = Albany::StateStruct::ElemData;
-      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, meshSpecs.ebName, true, &entity, meshPart);
-      nodal_state = false;
-    } else if(fieldType == "Node Scalar") {
-      entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-      if(is_dist[stateName] && save_sensitivities[stateName]) {
-        p = stateMgr.registerStateVariable(stateName + "_sensitivity", dl->node_scalar, meshSpecs.ebName, true, &entity, meshPart);
-      }
-      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, meshPart);
-      nodal_state = true;
-    } else if(fieldType == "Elem Vector") {
-      entity = Albany::StateStruct::ElemData;
-      p = stateMgr.registerStateVariable(stateName, dl->cell_vector, meshSpecs.ebName, true, &entity, meshPart);
-      nodal_state = false;
-    } else if(fieldType == "Node Vector") {
-      entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-      p = stateMgr.registerStateVariable(stateName, dl->node_vector, meshSpecs.ebName, true, &entity, meshPart);
-      nodal_state = true;
+    // Get data layout
+    if (field_rank[stateName] == FRT::Scalar) {
+      state_dl = field_location[stateName] == FL::Node
+               ? dl->node_scalar : dl->cell_scalar2;
+    } else if (field_rank[stateName] == FRT::Vector) {
+      state_dl = field_location[stateName] == FL::Node
+               ? dl->node_vector : dl->cell_vector;
+    } else if (field_rank[stateName] == FRT::Gradient) {
+      state_dl = field_location[stateName] == FL::Node
+               ? dl->node_gradient : dl->cell_gradient;
+    } else if (field_rank[stateName] == FRT::Gradient) {
+      state_dl = field_location[stateName] == FL::Node
+               ? dl->node_tensor : dl->cell_tensor;
     }
+
+    // Set entity for state struct
+    bool nodal_state = false;
+    if(fieldType.find("Elem")!=std::string::npos) {
+      entity = Albany::StateStruct::ElemData;
+    } else if (fieldType.find("Node")!=std::string::npos) {
+      nodal_state = true;
+      if (is_dist[stateName]) {
+        entity = Albany::StateStruct::NodalDistParameter;
+      } else {
+        entity = Albany::StateStruct::NodalDataToElemNode;
+      }
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error! Invalid location for state field '" + fieldName + "' (deduced from from field type '" + fieldType + "').\n");
+    }
+
+    if(is_dist[stateName] && save_sensitivities[stateName]) {
+      p = stateMgr.registerStateVariable(stateName + "_sensitivity", state_dl, meshSpecs.ebName, true, &entity, meshPart);
+    }
+    p = stateMgr.registerStateVariable(stateName, state_dl, meshSpecs.ebName, true, &entity, meshPart);
 
     // Do we need to load/gather the state/parameter?
     if (is_dist[stateName]) {
@@ -372,14 +390,17 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
     } else {
       // Do we need to save the state?
       if (fieldUsage == "Output" || fieldUsage == "Input-Output") {
-        // An output: save it.
-        p->set<bool>("Nodal State", nodal_state);
-        ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
+        // Only save fields in the residual FM (and not in state/response FM)
+        if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
+          // An output: save it.
+          p->set<bool>("Nodal State", nodal_state);
+          ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
 
-        // Only PHAL::AlbanyTraits::Residual evaluates something, others will have empty list of evaluated fields
-        if (ev->evaluatedFields().size()>0) {
-          fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+          // Only PHAL::AlbanyTraits::Residual evaluates something, others will have empty list of evaluated fields
+          if (ev->evaluatedFields().size()>0) {
+            fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+          }
         }
       }
 
@@ -431,70 +452,51 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
 
       fieldType  = thisFieldList.get<std::string>("Field Type");
 
-      // Registering the state
-      if(fieldType == "Elem Scalar") {
-        entity = Albany::StateStruct::ElemData;
-        p = (useCollapsedSidesets) ? 
-          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->cell_scalar2_sideset, sideEBName, true, &entity, meshPart, true) :
-          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->cell_scalar2, sideEBName, true, &entity, meshPart, false);
-        nodal_state = false;
-      } else if(fieldType == "Node Scalar") {
-        entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-        p = (useCollapsedSidesets) ? 
-          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_scalar_sideset, sideEBName, true, &entity, meshPart, true) :
-          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_scalar, sideEBName, true, &entity, meshPart, false);
-        nodal_state = true;
-      } else if(fieldType == "Elem Vector") {
-        entity = Albany::StateStruct::ElemData;
-        p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->cell_vector, sideEBName, true, &entity, meshPart);
-        nodal_state = false;
-      } else if(fieldType == "Node Vector") {
-        entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-        p = (useCollapsedSidesets) ? 
-          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_vector_sideset, sideEBName, true, &entity, meshPart, true) :
-          stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_vector, sideEBName, true, &entity, meshPart, false);
-        nodal_state = true;
-      } else if(fieldType == "Elem Layered Scalar") {
-        entity = Albany::StateStruct::ElemData;
-        sns = (useCollapsedSidesets) ? ss_dl->cell_scalar2_sideset : ss_dl->cell_scalar2;
+      // Get data layout
+      if (field_rank[stateName] == FRT::Scalar) { 
+        state_dl = field_location[stateName] == FL::Node
+                 ? (useCollapsedSidesets ? ss_dl->node_scalar_sideset : ss_dl->node_scalar)
+                 : (useCollapsedSidesets ? ss_dl->cell_scalar2_sideset : ss_dl->cell_scalar2);
+      } else if (field_rank[stateName] == FRT::Vector) { 
+        state_dl = field_location[stateName] == FL::Node
+                 ? (useCollapsedSidesets ? ss_dl->node_vector_sideset : ss_dl->node_vector)
+                 : (useCollapsedSidesets ? ss_dl->cell_vector_sideset : ss_dl->cell_vector);
+      } else if (field_rank[stateName] == FRT::Gradient) { 
+        state_dl = field_location[stateName] == FL::Node
+                 ? (useCollapsedSidesets ? ss_dl->node_gradient_sideset : ss_dl->node_gradient)
+                 : (useCollapsedSidesets ? ss_dl->cell_gradient_sideset : ss_dl->cell_gradient);
+      } else if (field_rank[stateName] == FRT::Tensor) { 
+        state_dl = field_location[stateName] == FL::Node
+                 ? (useCollapsedSidesets ? ss_dl->node_tensor_sideset : ss_dl->node_tensor)
+                 : (useCollapsedSidesets ? ss_dl->cell_tensor_sideset : ss_dl->cell_tensor);
+      } 
+
+      // If layered, extend the layout
+      if(fieldType.find("Layered")!=std::string::npos) { 
         numLayers = thisFieldList.get<int>("Number Of Layers");
-        if (useCollapsedSidesets) {
-          dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,LayerDim>(sns->extent(0),numLayers));
+        state_dl = useCollapsedSidesets
+                 ? extrudeCollapsedSideLayout(state_dl,numLayers)
+                 : extrudeSideLayout(state_dl,numLayers);
+      } 
+
+      // Set entity for state struct
+      bool nodal_state = false;
+      if(fieldType.find("Elem")!=std::string::npos) {
+        entity = Albany::StateStruct::ElemData;
+      } else if (fieldType.find("Node")!=std::string::npos) {
+        nodal_state = true;
+        if (is_dist[stateName]) {
+          entity = Albany::StateStruct::NodalDistParameter;
         } else {
-          dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,LayerDim>(sns->extent(0),sns->extent(1),numLayers));
+          entity = Albany::StateStruct::NodalDataToElemNode;
         }
-        stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart, useCollapsedSidesets);
-        nodal_state = false;
-      } else if(fieldType == "Node Layered Scalar") {
-        entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-        sns = (useCollapsedSidesets) ? ss_dl->node_scalar_sideset : ss_dl->node_scalar;
-        numLayers = thisFieldList.get<int>("Number Of Layers");
-        if (useCollapsedSidesets) {
-          dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,Node,LayerDim>(sns->extent(0),sns->extent(1),numLayers));
-        } else {
-          dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),numLayers));
-        }
-        stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart, useCollapsedSidesets);
-        nodal_state = true;
-      } else if(fieldType == "Elem Layered Vector") {
-        entity = Albany::StateStruct::ElemData;
-        sns = ss_dl->cell_vector;
-        numLayers = thisFieldList.get<int>("Number Of Layers");
-        dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Dim,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),numLayers));
-        stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart);
-        nodal_state = false;
-      } else if(fieldType == "Node Layered Vector") {
-        entity = is_dist[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
-        sns = (useCollapsedSidesets) ? ss_dl->node_vector_sideset : ss_dl->node_vector;
-        numLayers = thisFieldList.get<int>("Number Of Layers");
-        if (useCollapsedSidesets) {
-          dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,Node,Dim,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),numLayers));
-        } else {
-          dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,Dim,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),sns->extent(3),numLayers));
-        }
-        stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, dl_temp, sideEBName, true, &entity, meshPart, useCollapsedSidesets);
-        nodal_state = true;
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Error! Invalid location for state field '" + fieldName + "' (deduced from from field type '" + fieldType + "').\n");
       }
+
+      // Register the state
+      p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, state_dl, sideEBName, true, &entity, meshPart);
 
       // Creating load/save evaluator(s)
       // Note:
@@ -637,6 +639,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
           TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
                 "Error! Cannot interpolate to the quad points the gradient of a '" + e2str(rank) + "' field.\n");
       }
+      fm0.template registerEvaluator<EvalT> (ev);
     }
 
     if (needs[InterpolationRequest::CELL_VAL]) {
@@ -675,15 +678,13 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       TEUCHOS_TEST_FOR_EXCEPTION (field_location.find(fname)==field_location.end(), std::runtime_error,
           "Error! Location of field '" + fname + "' not found (ss name: " + ss_name + ").\n" +
           "       Current map keys:" + print_map_keys(field_location) + "\n");
+
       const auto entity = field_location.at(fname);
       TEUCHOS_TEST_FOR_EXCEPTION (field_rank.find(fname)==field_rank.end(), std::runtime_error,
           "Error! Rank of field '" + fname + "' not found (ss name: " + ss_name + ").\n" +
           "       Current map keys:" + print_map_keys(field_rank) + "\n");
+
       const auto rank = field_rank.at(fname);
-
-      TEUCHOS_TEST_FOR_EXCEPTION (rank!=FRT::Scalar && rank!=FRT::Vector, std::logic_error,
-          "Error! Interpolation on side only available for scalar and vector fields.\n");
-
       const std::string layout = e2str(entity) + " " + e2str(rank);
       TEUCHOS_TEST_FOR_EXCEPTION (field_scalar_type.find(fname)==field_scalar_type.end(), std::runtime_error,
           "Error! Scalar type for field '" + fname + "' not found (ss name: " + ss_name + ").\n" +
@@ -719,6 +720,8 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
       if (needs[InterpolationRequest::QP_VAL]) {
         TEUCHOS_TEST_FOR_EXCEPTION (entity!=FL::Node, std::logic_error, "Error! DOF interpolation is only for fields defined at nodes.\n");
+        TEUCHOS_TEST_FOR_EXCEPTION (rank!=FRT::Scalar && rank!=FRT::Vector, std::logic_error,
+            "Error! Interpolation on side only available for scalar and vector fields.\n");
         if (rank==FRT::Scalar) {
           ev = utils.constructDOFInterpolationSideEvaluator (fname_side, ss_name);
         } else {
@@ -728,6 +731,8 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       }
 
       if (needs[InterpolationRequest::GRAD_QP_VAL]) {
+        TEUCHOS_TEST_FOR_EXCEPTION (rank!=FRT::Scalar && rank!=FRT::Vector, std::logic_error,
+            "Error! Gradient interpolation on side only available for scalar and vector fields.\n");
         TEUCHOS_TEST_FOR_EXCEPTION (entity!=FL::Node, std::logic_error, "Error! DOF Grad interpolation is only for fields defined at nodes.\n");
         if (rank==FRT::Scalar) {
           ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name);
@@ -978,8 +983,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
     if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
       // Only PHAL::AlbanyTraits::Residual evaluates something
-      if (ev->evaluatedFields().size()>0)
-      {
+      if (ev->evaluatedFields().size()>0) {
         // Require save friction heat
         fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
       }
@@ -1003,11 +1007,9 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    if (fieldManagerChoice == Albany::BUILD_RESID_FM)
-    {
+    if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
       // Only PHAL::AlbanyTraits::Residual evaluates something
-      if (ev->evaluatedFields().size()>0)
-      {
+      if (ev->evaluatedFields().size()>0) {
         // Require save friction heat
         fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
       }
