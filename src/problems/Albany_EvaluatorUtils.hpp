@@ -119,6 +119,66 @@ namespace Albany {
       return constructGatherSolutionEvaluator_noTransient(tensorRank,Teuchos::ArrayRCP<std::string>(1,dof_name),offsetToFirstDOF);
     }
 
+    // Gather a solution field only on a given side set (useful for side equations)
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       const std::string& dof_name,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0) const {
+      return constructGatherSolutionSideEvaluator(arcp_str(dof_name),sideSetName,cellType,offsetToFirstDOF);
+    }
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       const std::string& dof_name,
+       const std::string& dof_name_dot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0) const {
+      return constructGatherSolutionSideEvaluator(arcp_str(dof_name),arcp_str(dof_name_dot),sideSetName,cellType,offsetToFirstDOF,offsetToFirstDOFDot);
+    }
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       const std::string& dof_name,
+       const std::string& dof_name_dot,
+       const std::string& dof_name_dotdot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0,
+       int offsetToFirstDOFDotDot=0) const {
+      return constructGatherSolutionSideEvaluator(arcp_str(dof_name),arcp_str(dof_name_dot),arcp_str(dof_name_dotdot),sideSetName,cellType,offsetToFirstDOF,offsetToFirstDOFDot,offsetToFirstDOFDotDot);
+    }
+
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0) const = 0;
+
+    // At least one between dof_names, dof_names_dot, and dof_names_dotdot must be non-null
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0) const = 0;
+
+    // At least one between dof_names, dof_names_dot, and dof_names_dotdot must be non-null
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       Teuchos::ArrayRCP<std::string> dof_names_dotdot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0,
+       int offsetToFirstDOFDotDot=0) const = 0;
     //! Function to create parameter list for construction of ScatterResidual
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -503,6 +563,35 @@ namespace Albany {
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
        int offsetToFirstDOF=0) const;
+
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0) const;
+
+    // At least one between dof_names and dof_names_dot must be non-null
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0) const;
+
+    // At least one between dof_names, dof_names_dot, and dof_names_dotdot must be non-null
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       Teuchos::ArrayRCP<std::string> dof_names_dotdot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0,
+       int offsetToFirstDOFDotDot=0) const;
 
     //! Function to create parameter list for construction of GatherSolution
     //! evaluator with acceleration terms

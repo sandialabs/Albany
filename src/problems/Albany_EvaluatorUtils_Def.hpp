@@ -23,6 +23,7 @@
 #include "PHAL_DOFVecInterpolation.hpp"
 #include "PHAL_DOFVecInterpolationSide.hpp"
 #include "PHAL_GatherSolution.hpp"
+#include "PHAL_GatherSolutionSide.hpp"
 #include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_MapToPhysicalFrame.hpp"
@@ -237,6 +238,73 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherScalarNodalParameter
 
     return rcp(new PHAL::GatherScalarNodalParameter<EvalT,Traits>(*p,dl));
 }
+
+template<typename EvalT, typename Traits, typename ScalarType>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF) const
+{
+  Teuchos::RCP<Teuchos::ParameterList> p( new Teuchos::ParameterList("Gather Solution Side") );
+
+  p->set("Solution Names",dof_names);
+  p->set("Side Set Name",sideSetName);
+  p->set("Cell Type", cellType);
+  p->set("Offset of First DOF",offsetToFirstDOF);
+
+  return Teuchos::rcp(new PHAL::GatherSolutionSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
+}
+
+template<typename EvalT, typename Traits, typename ScalarType>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF,
+       int offsetToFirstDOFDot) const
+{
+  Teuchos::RCP<Teuchos::ParameterList> p( new Teuchos::ParameterList("Gather Solution Side") );
+
+  p->set("Solution Names",dof_names);
+  p->set("Solution Names Dot",dof_names_dot);
+  p->set("Side Set Name",sideSetName);
+  p->set("Cell Type", cellType);
+  p->set("Offset of First DOF",offsetToFirstDOF);
+  p->set("Offset of First DOF Dot",offsetToFirstDOFDot);
+
+  return Teuchos::rcp(new PHAL::GatherSolutionSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
+}
+
+template<typename EvalT, typename Traits, typename ScalarType>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       Teuchos::ArrayRCP<std::string> dof_names_dotdot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF,
+       int offsetToFirstDOFDot,
+       int offsetToFirstDOFDotDot) const
+{
+  Teuchos::RCP<Teuchos::ParameterList> p( new Teuchos::ParameterList("Gather Solution Side") );
+
+  p->set("Solution Names",dof_names);
+  p->set("Solution Names Dot",dof_names_dot);
+  p->set("Solution Names Dot Dot",dof_names_dotdot);
+  p->set("Side Set Name",sideSetName);
+  p->set("Cell Type", cellType);
+  p->set("Offset of First DOF",offsetToFirstDOF);
+  p->set("Offset of First DOF Dot",offsetToFirstDOFDot);
+  p->set("Offset of First DOF Dot Dot",offsetToFirstDOFDotDot);
+
+  return Teuchos::rcp(new PHAL::GatherSolutionSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
+}
+
 
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
