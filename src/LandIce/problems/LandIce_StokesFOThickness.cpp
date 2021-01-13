@@ -179,7 +179,7 @@ void StokesFOThickness::setFieldsProperties () {
   StokesFOBase::setFieldsProperties();
 
   // Fix the scalar type of ice_thickness_name, since in StokesFOThickness it depends on the solution.
-  field_scalar_type[ice_thickness_name] = FieldScalarType::Scalar;
+  field_scalar_type[ice_thickness_name] = FST::Scalar;
 
   // Mark the thickness increment and initial_thickness+increment as computed
   is_computed_field[ice_thickness_name] = true;
@@ -188,8 +188,8 @@ void StokesFOThickness::setFieldsProperties () {
     is_computed_field[surface_height_name] = true;
   }
 
-  field_rank[ice_thickness_name]     = 0;
-  field_rank[surface_height_name]    = 0;
+  field_rank[ice_thickness_name]  = FRT::Scalar;
+  field_rank[surface_height_name] = FRT::Scalar;
 }
 
 } // namespace LandIce

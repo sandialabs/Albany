@@ -189,15 +189,15 @@ void StokesFO::setFieldsProperties () {
   if (!has_eff_press) {
     for (auto it : is_ss_input_field) {
       if (!it.second[effective_pressure_name]) {
-        setSingleFieldProperties(effective_pressure_name, 0, field_scalar_type[ice_thickness_name] | field_scalar_type[surface_height_name], FieldLocation::Node);
+        setSingleFieldProperties(effective_pressure_name, FRT::Scalar, field_scalar_type[ice_thickness_name] | field_scalar_type[surface_height_name], FL::Node);
         is_ss_computed_field[it.first][effective_pressure_name] = true;
       }
     }
   }
 
   // UpdateZCoordinate expects the (observed) bed topography and (observed) surface height to have scalar type MeshScalarT.
-  setSingleFieldProperties("observed_bed_topography", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
-  setSingleFieldProperties("observed_surface_height", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
+  setSingleFieldProperties("observed_bed_topography", FRT::Scalar, FST::MeshScalar, FL::Node);
+  setSingleFieldProperties("observed_surface_height", FRT::Scalar, FST::MeshScalar, FL::Node);
 }
 
 void StokesFO::setupEvaluatorRequests () {

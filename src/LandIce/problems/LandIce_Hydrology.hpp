@@ -203,6 +203,9 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                 Albany::FieldManagerChoice fieldManagerChoice,
                                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
+  using FL  = Albany::FieldLocation;
+  using FRT = Albany::FieldRankType;
+
   // Using the utility for the common evaluators
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
@@ -506,7 +509,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate Water Discharge from QPs to cell (in case we want to save it)
-  ev = evalUtils.constructQuadPointsToCellInterpolationEvaluator(water_discharge_name,dl->qp_vector,dl->cell_vector);
+  ev = evalUtils.constructCellAverageEvaluator(water_discharge_name,FL::QuadPoint,FRT::Vector);
   fm0.template registerEvaluator<EvalT>(ev);
 
   // Interpolate Water Thickness

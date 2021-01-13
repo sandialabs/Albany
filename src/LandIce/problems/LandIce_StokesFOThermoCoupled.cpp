@@ -289,25 +289,25 @@ void StokesFOThermoCoupled::setFieldsProperties () {
 
 
   // UpdateZCoordinate expects the (observed) bed topography and (observed) surface height to have scalar type MeshScalarT.
-  setSingleFieldProperties("observed_bed_topography", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
-  setSingleFieldProperties("observed_surface_height", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
+  setSingleFieldProperties("observed_bed_topography", FRT::Scalar, FST::MeshScalar, FL::Node);
+  setSingleFieldProperties("observed_surface_height", FRT::Scalar, FST::MeshScalar, FL::Node);
 
   // All dofs have scalar type Scalar (i.e., they depend on the solution)
-  setSingleFieldProperties(dof_names[1], 0, FieldScalarType::Scalar, FieldLocation::Node);  // Vertical velocity
-  setSingleFieldProperties(dof_names[2], 0, FieldScalarType::Scalar, FieldLocation::Node);  // Enthalpy
-  setSingleFieldProperties(dof_names[3], 0, FieldScalarType::Scalar, FieldLocation::Node);  // FluxDiv
+  setSingleFieldProperties(dof_names[1], FRT::Scalar, FST::Scalar, FL::Node);  // Vertical velocity
+  setSingleFieldProperties(dof_names[2], FRT::Scalar, FST::Scalar, FL::Node);  // Enthalpy
+  setSingleFieldProperties(dof_names[3], FRT::Scalar, FST::Scalar, FL::Node);  // FluxDiv
 
-  setSingleFieldProperties(surface_enthalpy_name     , 0, FieldScalarType::ParamScalar, FieldLocation::Node);
-  setSingleFieldProperties(flow_factor_name          , 0, FieldScalarType::Scalar     , FieldLocation::Cell); // Already processed in StokesFOBase, but need to adjust scalar type
-  setSingleFieldProperties("basal_melt_rate"         , 0, FieldScalarType::Scalar     , FieldLocation::Node);
-  setSingleFieldProperties(geothermal_flux_name      , 0, FieldScalarType::ParamScalar, FieldLocation::Node);
-  setSingleFieldProperties(water_content_name        , 0, FieldScalarType::Scalar     , FieldLocation::Node);
-  setSingleFieldProperties(temperature_name          , 0, FieldScalarType::Scalar     , FieldLocation::Node);
-  setSingleFieldProperties(corrected_temperature_name, 0, FieldScalarType::Scalar     , FieldLocation::Node); // Already processed in StokesFOBase, but need to adjust scalar type
-  setSingleFieldProperties(melting_temperature_name  , 0, FieldScalarType::MeshScalar , FieldLocation::Node);
-  setSingleFieldProperties(melting_enthalpy_name     , 0, field_scalar_type[melting_temperature_name] , FieldLocation::Node);
-  setSingleFieldProperties(hydrostatic_pressure_name , 0, FieldScalarType::ParamScalar, FieldLocation::Node);
-  setSingleFieldProperties("basal_vert_velocity"     , 0, FieldScalarType::Scalar     , FieldLocation::Node);
+  setSingleFieldProperties(surface_enthalpy_name     , FRT::Scalar, FST::ParamScalar, FL::Node);
+  setSingleFieldProperties(flow_factor_name          , FRT::Scalar, FST::Scalar     , FL::Cell); // Already processed in StokesFOBase, but need to adjust scalar type
+  setSingleFieldProperties("basal_melt_rate"         , FRT::Scalar, FST::Scalar     , FL::Node);
+  setSingleFieldProperties(geothermal_flux_name      , FRT::Scalar, FST::ParamScalar, FL::Node);
+  setSingleFieldProperties(water_content_name        , FRT::Scalar, FST::Scalar     , FL::Node);
+  setSingleFieldProperties(temperature_name          , FRT::Scalar, FST::Scalar     , FL::Node);
+  setSingleFieldProperties(corrected_temperature_name, FRT::Scalar, FST::Scalar     , FL::Node); // Already processed in StokesFOBase, but need to adjust scalar type
+  setSingleFieldProperties(melting_temperature_name  , FRT::Scalar, FST::MeshScalar , FL::Node);
+  setSingleFieldProperties(melting_enthalpy_name     , FRT::Scalar, field_scalar_type[melting_temperature_name] , FL::Node);
+  setSingleFieldProperties(hydrostatic_pressure_name , FRT::Scalar, FST::ParamScalar, FL::Node);
+  setSingleFieldProperties("basal_vert_velocity"     , FRT::Scalar, FST::Scalar     , FL::Node);
 
   // Declare computed fields
   // NOTE: not *always* necessary, but it is sometimes (see StokesFOBase, towards the end of constructInterpolationEvaluators)

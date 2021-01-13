@@ -390,9 +390,7 @@ list (APPEND SOURCES
   evaluators/interpolation/PHAL_DOFVecGradInterpolationSide.cpp
   evaluators/interpolation/PHAL_DOFVecInterpolation.cpp
   evaluators/interpolation/PHAL_DOFVecInterpolationSide.cpp
-  evaluators/interpolation/PHAL_NodesToCellInterpolation.cpp
-  evaluators/interpolation/PHAL_QuadPointsToCellInterpolation.cpp
-  evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation.cpp
+  evaluators/interpolation/PHAL_P0Interpolation.cpp
   evaluators/pde/PHAL_HeatEqResid.cpp
   evaluators/pde/PHAL_NSMaterialProperty.cpp
   evaluators/pde/PHAL_SideLaplacianResidual.cpp
@@ -492,12 +490,8 @@ list (APPEND HEADERS
   evaluators/interpolation/PHAL_DOFVecInterpolationSide.hpp
   evaluators/interpolation/PHAL_DOFVecInterpolationSide_Def.hpp
   evaluators/interpolation/PHAL_DOFVecInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_NodesToCellInterpolation.hpp
-  evaluators/interpolation/PHAL_NodesToCellInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_QuadPointsToCellInterpolation.hpp
-  evaluators/interpolation/PHAL_QuadPointsToCellInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation.hpp
-  evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation_Def.hpp
+  evaluators/interpolation/PHAL_P0Interpolation.hpp
+  evaluators/interpolation/PHAL_P0Interpolation_Def.hpp
   evaluators/pde/PHAL_HeatEqResid.hpp
   evaluators/pde/PHAL_HeatEqResid_Def.hpp
   evaluators/pde/PHAL_NSMaterialProperty.hpp

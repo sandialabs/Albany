@@ -72,6 +72,14 @@ namespace LandIce
 class StokesFOBase : public Albany::AbstractProblem {
 public:
 
+  // Some short names for types
+  using IntrepidBasis    = Intrepid2::Basis<PHX::Device, RealType, RealType>;
+  using IntrepidCubature = Intrepid2::Cubature<PHX::Device>;
+  using FL  = Albany::FieldLocation;
+  using FRT = Albany::FieldRankType;
+  using FST = FieldScalarType;
+  using IReq = InterpolationRequest;
+
   //! Return number of spatial dimensions
   int spatialDimension() const { return numDim; }
 
@@ -139,9 +147,9 @@ protected:
   getStokesFOBaseProblemParameters () const;
 
   void setSingleFieldProperties (const std::string& fname,
-                                 const int rank,
+                                 const FRT rank,
                                  const FieldScalarType st,
-                                 const FieldLocation location);
+                                 const Albany::FieldLocation location);
 
   void parseInputFields ();
 
@@ -153,9 +161,6 @@ protected:
   virtual void setupEvaluatorRequests ();
 
   // ------------------- Members ----------------- //
-
-  using IntrepidBasis    = Intrepid2::Basis<PHX::Device, RealType, RealType>;
-  using IntrepidCubature = Intrepid2::Cubature<PHX::Device>;
 
   // Topology, basis and cubature of cells
   Teuchos::RCP<shards::CellTopology>  cellType;
@@ -211,8 +216,8 @@ protected:
   // Variables used to track properties of fields and parameters
   std::map<std::string, bool>               is_input_field;
   std::map<std::string, bool>               is_computed_field;
-  std::map<std::string, FieldLocation>      field_location;
-  std::map<std::string, int>                field_rank;
+  std::map<std::string, FL>                 field_location;
+  std::map<std::string, FRT>                field_rank;
   std::map<std::string, FieldScalarType>    field_scalar_type;
 
   std::map<std::string,bool> is_dist;
@@ -511,9 +516,9 @@ void StokesFOBase::constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTrai
       if (!is_dist[stateName] && (fieldUsage == "Input" || fieldUsage == "Input-Output")) {
         // Not a parameter but required as input: load it.
         p->set<std::string>("Field Name", fieldName);
-        if (field_scalar_type[stateName]==FieldScalarType::ParamScalar) {
+        if (field_scalar_type[stateName]==FST::ParamScalar) {
           ev = Teuchos::rcp(new PHAL::LoadSideSetStateFieldPST<EvalT,PHAL::AlbanyTraits>(*p));
-        } else if (field_scalar_type[stateName]==FieldScalarType::MeshScalar) {
+        } else if (field_scalar_type[stateName]==FST::MeshScalar) {
           ev = Teuchos::rcp(new PHAL::LoadSideSetStateFieldMST<EvalT,PHAL::AlbanyTraits>(*p));
         } else {
           ev = Teuchos::rcp(new PHAL::LoadSideSetStateFieldRT<EvalT,PHAL::AlbanyTraits>(*p));
@@ -530,11 +535,11 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
-  std::map<FieldScalarType,Teuchos::RCP<const Albany::EvaluatorUtilsBase<PHAL::AlbanyTraits>>> utils_map;
-  utils_map[FieldScalarType::Scalar]      = Teuchos::rcpFromRef(evalUtils.getSTUtils());
-  utils_map[FieldScalarType::ParamScalar] = Teuchos::rcpFromRef(evalUtils.getPSTUtils());
-  utils_map[FieldScalarType::MeshScalar]  = Teuchos::rcpFromRef(evalUtils.getMSTUtils());
-  utils_map[FieldScalarType::Real]        = Teuchos::rcpFromRef(evalUtils.getRTUtils());
+  std::map<FST,Teuchos::RCP<const Albany::EvaluatorUtilsBase<PHAL::AlbanyTraits>>> utils_map;
+  utils_map[FST::Scalar]      = Teuchos::rcpFromRef(evalUtils.getSTUtils());
+  utils_map[FST::ParamScalar] = Teuchos::rcpFromRef(evalUtils.getPSTUtils());
+  utils_map[FST::MeshScalar]  = Teuchos::rcpFromRef(evalUtils.getMSTUtils());
+  utils_map[FST::Real]        = Teuchos::rcpFromRef(evalUtils.getRTUtils());
 
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
 
@@ -553,7 +558,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     TEUCHOS_TEST_FOR_EXCEPTION (field_scalar_type.find(fname)==field_scalar_type.end(), std::runtime_error,
                                 "Error! Scalar type for field '" + fname + "' not found.\n" +
                                 "       Current map keys:" + print_map_keys(field_scalar_type) + "\n");
-    const FieldScalarType st = field_scalar_type.at(fname);
+    const auto st = field_scalar_type.at(fname);
 
     TEUCHOS_TEST_FOR_EXCEPTION (utils_map.find(st)==utils_map.end(), std::runtime_error,
                                 "Error! Evaluators utils for scalar type '" + e2str(st) + "' not found.\n");
@@ -586,7 +591,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     TEUCHOS_TEST_FOR_EXCEPTION (field_rank.find(fname)==field_rank.end(), std::runtime_error,
                                 "Error! Rank of field '" + fname + "' not found.\n" +
                                 "       Current map keys:" + print_map_keys(field_rank) + "\n");
-    int rank = field_rank.at(fname);
+    const auto rank = field_rank.at(fname);
 
     // For dofs, we can get a faster interpolation, knowing the offset
     auto dof_it = std::find(dof_names.begin(),dof_names.end(),fname);
@@ -595,55 +600,53 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     TEUCHOS_TEST_FOR_EXCEPTION (field_location.find(fname)==field_location.end(), std::runtime_error,
                                 "Error! Location of field '" + fname + "' not found.\n" +
                                 "       Current map keys:" + print_map_keys(field_location) + "\n");
-    const FieldLocation entity = field_location.at(fname);
+    const auto entity = field_location.at(fname);
     if (needs[InterpolationRequest::QP_VAL]) {
-      TEUCHOS_TEST_FOR_EXCEPTION(entity==FieldLocation::Cell, std::logic_error, "Error! Cannot interpolate a field not defined on nodes.\n");
-      if (rank==0) {
-        ev = utils.constructDOFInterpolationEvaluator(fname, offset);
-      } else if (rank==1) {
-        ev = utils.constructDOFVecInterpolationEvaluator(fname, offset);
-      } else if (rank==2) {
-        ev = utils.constructDOFTensorInterpolationEvaluator(fname, offset);
-      } else {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot interpolate to the quad points a field of rank " + std::to_string(rank) << ".\n");
+      TEUCHOS_TEST_FOR_EXCEPTION(entity==FL::Cell, std::logic_error, "Error! Cannot interpolate a field not defined on nodes.\n");
+      switch (rank) {
+        case FRT::Scalar:
+          ev = utils.constructDOFInterpolationEvaluator(fname, offset);
+          break;
+        case FRT::Vector:
+          ev = utils.constructDOFVecInterpolationEvaluator(fname, offset);
+          break;
+        case FRT::Tensor:
+          ev = utils.constructDOFTensorInterpolationEvaluator(fname, offset);
+          break;
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+              "Error! Cannot interpolate to the quad points a '" + e2str(rank) + "' field.\n");
       }
       fm0.template registerEvaluator<EvalT> (ev);
     }
 
     if (needs[InterpolationRequest::GRAD_QP_VAL]) {
-      TEUCHOS_TEST_FOR_EXCEPTION(entity==FieldLocation::Cell, std::logic_error, "Error! Cannot interpolate a field not defined on nodes.\n");
-      if (rank==0) {
-        ev = utils.constructDOFGradInterpolationEvaluator(fname, offset);
-      } else if (rank==1) {
-        ev = utils.constructDOFVecGradInterpolationEvaluator(fname, offset);
-      } else if (rank==2) {
-        ev = utils.constructDOFTensorGradInterpolationEvaluator(fname, offset);
-      } else {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot interpolate to the quad points the gradient of a field of rank " + std::to_string(rank) << ".\n");
+      TEUCHOS_TEST_FOR_EXCEPTION(entity==FL::Cell, std::logic_error,
+          "Error! Cannot interpolate a field not defined on nodes.\n");
+      switch (rank) {
+        case FRT::Scalar:
+          ev = utils.constructDOFGradInterpolationEvaluator(fname, offset);
+          break;
+        case FRT::Vector:
+          ev = utils.constructDOFVecGradInterpolationEvaluator(fname, offset);
+          break;
+        case FRT::Tensor:
+          ev = utils.constructDOFTensorGradInterpolationEvaluator(fname, offset);
+          break;
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+                "Error! Cannot interpolate to the quad points the gradient of a '" + e2str(rank) + "' field.\n");
       }
-      fm0.template registerEvaluator<EvalT> (ev);
     }
 
-    std::string interpolationType = "Value At Cell Barycenter";
-    if (needs[InterpolationRequest::CELL_VAL] && entity==FieldLocation::Node) {
-      if (rank==0) {
-        ev = utils.constructNodesToCellInterpolationEvaluator (fname, interpolationType, /*isVectorField = */ false, cellBasis);
-      } else if (rank==1) {
-        ev = utils.constructNodesToCellInterpolationEvaluator (fname, interpolationType, /*isVectorField = */ true, cellBasis);
+    if (needs[InterpolationRequest::CELL_VAL]) {
+      std::string interpolationType;
+      if (entity==FL::Node) {
+        interpolationType = "Value At Cell Barycenter";
       } else {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot interpolate to the cell a field of rank " + std::to_string(rank) << ".\n");
+        interpolationType = "Cell Average";
       }
-      fm0.template registerEvaluator<EvalT> (ev);
-    }
-
-    if (needs[InterpolationRequest::CELL_VAL] && entity==FieldLocation::QuadPoint) {
-      if (rank==0) {
-        ev = utils.constructQuadPointsToCellInterpolationEvaluator (fname, dl->qp_scalar, dl->cell_scalar2);
-      } else if (rank==1) {
-        ev = utils.constructQuadPointsToCellInterpolationEvaluator (fname, dl->qp_vector, dl->cell_vector);
-      } else {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Cannot interpolate to the cell a field of rank " + std::to_string(rank) << ".\n");
-      }
+      ev = utils.constructP0InterpolationEvaluator (fname, interpolationType, entity, rank, cellBasis);
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }
@@ -670,22 +673,22 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       }
 
       TEUCHOS_TEST_FOR_EXCEPTION (field_location.find(fname)==field_location.end(), std::runtime_error,
-                                  "Error! Location of field '" + fname + "' not found (ss name: " + ss_name + ").\n" +
-                                  "       Current map keys:" + print_map_keys(field_location) + "\n");
-      const FieldLocation entity = field_location.at(fname);
+          "Error! Location of field '" + fname + "' not found (ss name: " + ss_name + ").\n" +
+          "       Current map keys:" + print_map_keys(field_location) + "\n");
+      const auto entity = field_location.at(fname);
       TEUCHOS_TEST_FOR_EXCEPTION (field_rank.find(fname)==field_rank.end(), std::runtime_error,
-                                  "Error! Rank of field '" + fname + "' not found (ss name: " + ss_name + ").\n" +
-                                  "       Current map keys:" + print_map_keys(field_rank) + "\n");
-      const int rank = field_rank.at(fname);
+          "Error! Rank of field '" + fname + "' not found (ss name: " + ss_name + ").\n" +
+          "       Current map keys:" + print_map_keys(field_rank) + "\n");
+      const auto rank = field_rank.at(fname);
 
-      TEUCHOS_TEST_FOR_EXCEPTION (rank<0 || rank>1, std::logic_error, "Error! Interpolation on side only available for scalar and vector fields.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (rank!=FRT::Scalar && rank!=FRT::Vector, std::logic_error,
+          "Error! Interpolation on side only available for scalar and vector fields.\n");
 
-      
-      const std::string layout = e2str(entity) + " " + rank2str(rank);
+      const std::string layout = e2str(entity) + " " + e2str(rank);
       TEUCHOS_TEST_FOR_EXCEPTION (field_scalar_type.find(fname)==field_scalar_type.end(), std::runtime_error,
-                                  "Error! Scalar type for field '" + fname + "' not found (ss name: " + ss_name + ").\n" +
-                                  "       Current map keys:" + print_map_keys(field_scalar_type) + "\n");
-      const FieldScalarType st = field_scalar_type.at(fname);
+          "Error! Scalar type for field '" + fname + "' not found (ss name: " + ss_name + ").\n" +
+          "       Current map keys:" + print_map_keys(field_scalar_type) + "\n");
+      const auto st = field_scalar_type.at(fname);
 
       // Check whether we can use memoization for this field. Criteria:
       //  - need to have memoization enabled
@@ -715,8 +718,8 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       const auto& utils = *utils_map.at(st);
 
       if (needs[InterpolationRequest::QP_VAL]) {
-        TEUCHOS_TEST_FOR_EXCEPTION (entity!=FieldLocation::Node, std::logic_error, "Error! DOF interpolation is only for fields defined at nodes.\n");
-        if (rank==0) {
+        TEUCHOS_TEST_FOR_EXCEPTION (entity!=FL::Node, std::logic_error, "Error! DOF interpolation is only for fields defined at nodes.\n");
+        if (rank==FRT::Scalar) {
           ev = utils.constructDOFInterpolationSideEvaluator (fname_side, ss_name);
         } else {
           ev = utils.constructDOFVecInterpolationSideEvaluator (fname_side, ss_name);
@@ -725,8 +728,8 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       }
 
       if (needs[InterpolationRequest::GRAD_QP_VAL]) {
-        TEUCHOS_TEST_FOR_EXCEPTION (entity!=FieldLocation::Node, std::logic_error, "Error! DOF Grad interpolation is only for fields defined at nodes.\n");
-        if (rank==0) {
+        TEUCHOS_TEST_FOR_EXCEPTION (entity!=FL::Node, std::logic_error, "Error! DOF Grad interpolation is only for fields defined at nodes.\n");
+        if (rank==FRT::Scalar) {
           ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name);
         } else {
           ev = utils.constructDOFVecGradInterpolationSideEvaluator (fname_side, ss_name);
@@ -736,7 +739,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
       if (needs[InterpolationRequest::CELL_VAL]) {
         // Intepolate field at Side from Quad points values
-        ev = utils.constructSideQuadPointsToSideInterpolationEvaluator (fname_side, ss_name, rank==1);
+        ev = utils.constructCellAverageSideEvaluator (ss_name, fname_side, entity, rank);
         fm0.template registerEvaluator<EvalT> (ev);
       }
 
@@ -791,7 +794,7 @@ constructSideUtilityFields (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       fm0.template registerEvaluator<EvalT> (ev);
 
       // Baricenter coordinate
-      ev = evalUtils.getMSTUtils().constructSideQuadPointsToSideInterpolationEvaluator(Albany::coord_vec_name + "_" + ss_name, ss_name, 1);
+      ev = evalUtils.getMSTUtils().constructBarycenterSideEvaluator(ss_name,Albany::coord_vec_name + "_" + ss_name, sideBasis[ss_name], FRT::Gradient);
       fm0.template registerEvaluator<EvalT> (ev);
     }
 
@@ -831,7 +834,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Get coordinate of cell baricenter
-  ev = evalUtils.getMSTUtils().constructQuadPointsToCellInterpolationEvaluator(Albany::coord_vec_name, dl->qp_gradient, dl->cell_gradient);
+  ev = evalUtils.getMSTUtils().constructCellAverageEvaluator(Albany::coord_vec_name, FL::QuadPoint, FRT::Gradient);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // -------------------------------- LandIce evaluators ------------------------- //
@@ -887,13 +890,11 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
   //--- LandIce Flow Rate ---//
-  if(params->sublist("LandIce Viscosity").isParameter("Flow Rate Type")) {
-    if((params->sublist("LandIce Viscosity").get<std::string>("Flow Rate Type") == "From File") ||
-       (params->sublist("LandIce Viscosity").get<std::string>("Flow Rate Type") == "From CISM")) {
+  auto& visc_pl = params->sublist("LandIce Viscosity");
+  if(visc_pl.isParameter("Flow Rate Type")) {
+    if((visc_pl.get<std::string>("Flow Rate Type") == "From File") ||
+       (visc_pl.get<std::string>("Flow Rate Type") == "From CISM")) {
       // The field *should* already be specified as an 'Elem Scalar' required field in the mesh.
-      // Interpolate ice softness (aka, flow_factor) from nodes to cell
-      // ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("flow_factor",false);
-      // fm0.template registerEvaluator<EvalT> (ev);
     } else {
       p = Teuchos::rcp(new Teuchos::ParameterList("LandIce FlowRate"));
 
@@ -904,7 +905,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         // Avoid pointless calculation, and use original temperature in viscosity calculation
         p->set<std::string>("Temperature Variable Name", temperature_name);
       }
-      p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Viscosity"));
+      p->set<Teuchos::ParameterList*>("Parameter List", &visc_pl);
 
       //Output
       p->set<std::string>("Flow Rate Variable Name", flow_factor_name);
@@ -939,13 +940,14 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("EpsilonSq QP Variable Name", "LandIce EpsilonSq");
 
   // The st of T for viscosity is complicated: you need to get the st of the T used (temp or corrected temp),
-  // and consider that you do NodesToCell interp, which introduces MeshScalar type in the result.
-  FieldScalarType viscosity_temp_st = FieldScalarType::MeshScalar | field_scalar_type[(viscosity_use_corrected_temperature ? corrected_temperature_name : temperature_name)];
-  ev = createEvaluatorWithTwoScalarTypes<LandIce::ViscosityFO,EvalT>(p,dl,FieldScalarType::Scalar,viscosity_temp_st);
+  // and consider that you do Nodes->Cell interp, which introduces MeshScalar type in the result.
+  FST viscosity_temp_st = FST::MeshScalar | field_scalar_type[(viscosity_use_corrected_temperature ? corrected_temperature_name : temperature_name)];
+  ev = createEvaluatorWithTwoScalarTypes<ViscosityFO,EvalT>(p,dl,FST::Scalar,viscosity_temp_st);
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- Print LandIce Dissipation ---
   if(compute_dissipation) {
+
     // LandIce Dissipation
     p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Dissipation"));
 
@@ -960,8 +962,8 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = Teuchos::rcp(new LandIce::Dissipation<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    ev = evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("LandIce Dissipation");
-    fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("LandIce Dissipation"));
+    ev = evalUtils.getPSTUtils().constructCellAverageEvaluator("LandIce Dissipation",FL::QuadPoint, FRT::Scalar);
+    fm0.template registerEvaluator<EvalT> (ev);
 
     // Saving the dissipation heat in the output mesh
     std::string stateName = "dissipation_heat";
@@ -988,7 +990,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if(params->get<bool>("Print Stress Tensor", false))
   {
     // Interpolate stress tensor, from qps to a single cell scalar
-    ev = evalUtils.constructQuadPointsToCellInterpolationEvaluator("Stress Tensor", dl->qp_tensor, dl->cell_tensor);
+    ev = evalUtils.constructCellAverageEvaluator("Stress Tensor", FL::QuadPoint, FRT::Tensor);
     fm0.template registerEvaluator<EvalT> (ev);
 
     // Save stress tensor (if needed)
@@ -1539,11 +1541,12 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
 
 template<typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                                        const Albany::MeshSpecsStruct& meshSpecs,
-                                                        Albany::StateManager& stateMgr,
-                                                        Albany::FieldManagerChoice fieldManagerChoice,
-                                                        const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+StokesFOBase::
+constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                          const Albany::MeshSpecsStruct& meshSpecs,
+                                          Albany::StateManager& stateMgr,
+                                          Albany::FieldManagerChoice fieldManagerChoice,
+                                          const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
 
@@ -1555,7 +1558,7 @@ StokesFOBase::constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::
     // Figure out if observed surface velocity RMS is scalar (if present at all)
     if (!isInvalid(surfaceSideName)) {
       if (is_ss_input_field[surfaceSideName]["observed_surface_velocity_RMS"]) {
-        if (field_rank.at("observed_surface_velocity_RMS")==0) {
+        if (field_rank.at("observed_surface_velocity_RMS")==FRT::Scalar) {
           paramList->set<bool>("Scalar RMS",true);
         }
       }

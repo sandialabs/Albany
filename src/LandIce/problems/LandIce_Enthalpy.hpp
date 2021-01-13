@@ -123,7 +123,7 @@ namespace LandIce
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                      const Albany::MeshSpecsStruct& meshSpecs,
+                                      const Albany::MeshSpecsStruct& /* meshSpecs */,
                                       Albany::StateManager& stateMgr,
                                       Albany::FieldManagerChoice fieldManagerChoice,
                                       const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -137,6 +137,8 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
+
+  using FRT = Albany::FieldRankType;
 
   Albany::StateStruct::MeshFieldEntity entity;
 
@@ -313,8 +315,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("melting_temperature"));
 
   // Interpolate temperature from nodes to cell
-  std::string interpolationType = "Value At Cell Barycenter";
-  fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("temperature", interpolationType, false, cellBasis));
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructBarycenterEvaluator("temperature", cellBasis, FRT::Scalar));
 
   // Interpolate pressure melting temperature gradient from nodes to QPs
   fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("melting temp",basalSideName));
