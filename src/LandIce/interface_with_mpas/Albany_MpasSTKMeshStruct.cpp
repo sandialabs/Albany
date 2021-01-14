@@ -541,7 +541,7 @@ MpasSTKMeshStruct::setBdFacesOnPrism (const std::vector<std::vector<std::vector<
   facePos.assign(numTriaFaces,-1);
 
 
-  for (int iTetra (0), k (0); (iTetra < 3 && k < numTriaFaces); iTetra++)
+  for (unsigned int iTetra (0), k (0); (iTetra < 3 && k < numTriaFaces); iTetra++)
   {
     bool found;
     for (int jFaceLocalId = 0; jFaceLocalId < 4; jFaceLocalId++ )
