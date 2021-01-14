@@ -180,7 +180,7 @@ ANONYMOUS:
         bound_eps: 1.00000000000000005e-01
 
         Full Space: false
-        Hessian Dot Product: true
+        Hessian Dot Product: false
         Use NOX Solver: false
 
         ROL Options:

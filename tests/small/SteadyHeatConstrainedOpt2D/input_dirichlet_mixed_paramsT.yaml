@@ -65,7 +65,7 @@ ANONYMOUS:
 
         Use Old Reduced Space Interface: false
         Full Space: false
-        Hessian Dot Product: true
+        Hessian Dot Product: false
         Use NOX Solver: true
         
         Step Method: "Line Search"
