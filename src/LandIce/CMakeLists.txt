@@ -12,7 +12,6 @@ set(SOURCES
   evaluators/LandIce_BasalMeltRate.cpp
   evaluators/LandIce_Dissipation.cpp
   evaluators/LandIce_DOFDivInterpolationSide.cpp
-  evaluators/LandIce_EffectivePressure.cpp
   evaluators/LandIce_EnthalpyResid.cpp
   evaluators/LandIce_EnthalpyBasalResid.cpp
   evaluators/LandIce_FlowRate.cpp
@@ -20,15 +19,6 @@ set(SOURCES
   evaluators/LandIce_FluxDivergenceResidual.cpp
   evaluators/LandIce_Gather2DField.cpp
   evaluators/LandIce_GatherVerticallyContractedSolution.cpp
-  evaluators/LandIce_HydraulicPotential.cpp
-  evaluators/LandIce_HydrologyBasalGravitationalWaterPotential.cpp
-  evaluators/LandIce_HydrologyMeltingRate.cpp
-  evaluators/LandIce_HydrologyResidualCavitiesEqn.cpp
-  evaluators/LandIce_HydrologyResidualMassEqn.cpp
-  evaluators/LandIce_HydrologyResidualTillStorageEqn.cpp
-  evaluators/LandIce_HydrologySurfaceWaterInput.cpp
-  evaluators/LandIce_HydrologyWaterDischarge.cpp
-  evaluators/LandIce_HydrologyWaterThickness.cpp
   evaluators/LandIce_HydrostaticPressure.cpp
   evaluators/LandIce_IceOverburden.cpp
   evaluators/LandIce_IceSoftness.cpp
@@ -79,6 +69,16 @@ set(SOURCES
   problems/LandIce_StokesFOBase.cpp
   problems/LandIce_StokesFOThermoCoupled.cpp
   problems/LandIce_StokesFOThickness.cpp
+  evaluators/hydrology/LandIce_HydrologyBasalGravitationalWaterPotential.cpp
+  evaluators/hydrology/LandIce_EffectivePressure.cpp
+  evaluators/hydrology/LandIce_HydraulicPotential.cpp
+  evaluators/hydrology/LandIce_HydrologyMeltingRate.cpp
+  evaluators/hydrology/LandIce_HydrologyResidualCavitiesEqn.cpp
+  evaluators/hydrology/LandIce_HydrologyResidualMassEqn.cpp
+  evaluators/hydrology/LandIce_HydrologyResidualTillStorageEqn.cpp
+  evaluators/hydrology/LandIce_HydrologySurfaceWaterInput.cpp
+  evaluators/hydrology/LandIce_HydrologyWaterDischarge.cpp
+  evaluators/hydrology/LandIce_HydrologyWaterThickness.cpp
 )
 
 set(HEADERS
@@ -92,8 +92,6 @@ set(HEADERS
   evaluators/LandIce_Dissipation_Def.hpp
   evaluators/LandIce_DOFDivInterpolationSide.hpp
   evaluators/LandIce_DOFDivInterpolationSide_Def.hpp
-  evaluators/LandIce_EffectivePressure.hpp
-  evaluators/LandIce_EffectivePressure_Def.hpp
   evaluators/LandIce_EnthalpyResid.hpp
   evaluators/LandIce_EnthalpyResid_Def.hpp
   evaluators/LandIce_EnthalpyBasalResid.hpp
@@ -108,26 +106,6 @@ set(HEADERS
   evaluators/LandIce_Gather2DField_Def.hpp
   evaluators/LandIce_GatherVerticallyContractedSolution.hpp
   evaluators/LandIce_GatherVerticallyContractedSolution_Def.hpp
-  evaluators/LandIce_HydraulicPotential.hpp
-  evaluators/LandIce_HydraulicPotential_Def.hpp
-  evaluators/LandIce_HydrologyBasalGravitationalWaterPotential.hpp
-  evaluators/LandIce_HydrologyBasalGravitationalWaterPotential_Def.hpp
-  evaluators/LandIce_HydrologyMeltingRate.hpp
-  evaluators/LandIce_HydrologyMeltingRate_Def.hpp
-  evaluators/LandIce_HydrologyResidualCavitiesEqn.hpp
-  evaluators/LandIce_HydrologyResidualCavitiesEqn_Def.hpp
-  evaluators/LandIce_HydrologyResidualMassEqn.hpp
-  evaluators/LandIce_HydrologyResidualMassEqn_Def.hpp
-  evaluators/LandIce_HydrologyResidualTillStorageEqn.hpp
-  evaluators/LandIce_HydrologyResidualTillStorageEqn_Def.hpp
-  evaluators/LandIce_HydrologySurfaceWaterInput.hpp
-  evaluators/LandIce_HydrologySurfaceWaterInput_Def.hpp
-  evaluators/LandIce_HydrologyWaterDischarge.hpp
-  evaluators/LandIce_HydrologyWaterDischarge_Def.hpp
-  evaluators/LandIce_HydrologyWaterThickness.hpp
-  evaluators/LandIce_HydrologyWaterThickness_Def.hpp
-  evaluators/LandIce_HydrostaticPressure.hpp
-  evaluators/LandIce_HydrostaticPressure_Def.hpp
   evaluators/LandIce_IceOverburden.hpp
   evaluators/LandIce_IceOverburden_Def.hpp
   evaluators/LandIce_IceSoftness.hpp
@@ -205,6 +183,28 @@ set(HEADERS
   evaluators/LandIce_w_Resid_Def.hpp
   evaluators/LandIce_Time.hpp
   evaluators/LandIce_Time_Def.hpp
+  evaluators/hydrology/LandIce_HydrologyBasalGravitationalWaterPotential.hpp
+  evaluators/hydrology/LandIce_HydrologyBasalGravitationalWaterPotential_Def.hpp
+  evaluators/hydrology/LandIce_EffectivePressure.hpp
+  evaluators/hydrology/LandIce_EffectivePressure_Def.hpp
+  evaluators/hydrology/LandIce_HydraulicPotential.hpp
+  evaluators/hydrology/LandIce_HydraulicPotential_Def.hpp
+  evaluators/hydrology/LandIce_HydrologyMeltingRate.hpp
+  evaluators/hydrology/LandIce_HydrologyMeltingRate_Def.hpp
+  evaluators/hydrology/LandIce_HydrologyResidualCavitiesEqn.hpp
+  evaluators/hydrology/LandIce_HydrologyResidualCavitiesEqn_Def.hpp
+  evaluators/hydrology/LandIce_HydrologyResidualMassEqn.hpp
+  evaluators/hydrology/LandIce_HydrologyResidualMassEqn_Def.hpp
+  evaluators/hydrology/LandIce_HydrologyResidualTillStorageEqn.hpp
+  evaluators/hydrology/LandIce_HydrologyResidualTillStorageEqn_Def.hpp
+  evaluators/hydrology/LandIce_HydrologySurfaceWaterInput.hpp
+  evaluators/hydrology/LandIce_HydrologySurfaceWaterInput_Def.hpp
+  evaluators/hydrology/LandIce_HydrologyWaterDischarge.hpp
+  evaluators/hydrology/LandIce_HydrologyWaterDischarge_Def.hpp
+  evaluators/hydrology/LandIce_HydrologyWaterThickness.hpp
+  evaluators/hydrology/LandIce_HydrologyWaterThickness_Def.hpp
+  evaluators/hydrology/LandIce_HydrostaticPressure.hpp
+  evaluators/hydrology/LandIce_HydrostaticPressure_Def.hpp
   problems/LandIce_Enthalpy.hpp
   problems/LandIce_Hydrology.hpp
   problems/LandIce_LaplacianSampling.hpp
@@ -241,6 +241,7 @@ endif()
 set (LANDICE_INCLUDE_DIRS
      ${ALBANY_INCLUDE_DIRS}
      ${CMAKE_CURRENT_SOURCE_DIR}/evaluators
+     ${CMAKE_CURRENT_SOURCE_DIR}/evaluators/hydrology
      ${CMAKE_CURRENT_SOURCE_DIR}/problems
 )
 
