@@ -47,7 +47,7 @@ Teuchos::RCP<Tpetra_CrsGraph> Albany::createHessianCrsGraph(
     Kokkos::parallel_for(
         num_elem,
         KOKKOS_LAMBDA(const Tpetra_LO ielem) {
-            for (auto i = 0; i < NN; ++i)
+            for (std::size_t i = 0; i < NN; ++i)
             {
                 const Tpetra_LO lcl_overlapped_node1 = wsElDofs((int)ielem, (int)i, 0);
                 if (lcl_overlapped_node1 < 0)
@@ -55,7 +55,7 @@ Teuchos::RCP<Tpetra_CrsGraph> Albany::createHessianCrsGraph(
 
                 const Tpetra_GO global_overlapped_node1 = p_overlapped_map->getGlobalElement(lcl_overlapped_node1);
 
-                for (auto j = i; j < NN; ++j)
+                for (std::size_t j = i; j < NN; ++j)
                 {
                     const Tpetra_LO lcl_overlapped_node2 = wsElDofs((int)ielem, (int)j, 0);
                     if (lcl_overlapped_node2 < 0)
