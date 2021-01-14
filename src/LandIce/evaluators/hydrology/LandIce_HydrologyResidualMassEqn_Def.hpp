@@ -12,8 +12,8 @@
 namespace LandIce {
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
-HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
+template<typename EvalT, typename Traits>
+HydrologyResidualMassEqn<EvalT, Traits>::
 HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl) :
   BF        (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
@@ -23,54 +23,38 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   omega     (p.get<std::string> ("Surface Water Input Variable Name"), dl->qp_scalar),
   residual  (p.get<std::string> ("Mass Eqn Residual Name"),dl->node_scalar)
 {
-  /*
-   *  The mass conservation equation has the following (strong) form
-   *
-   *     dh/dt + div(q) = m/rho_w + omega
-   *
-   *  where q is the water discharge, h the water thickness, rho_w is the water density,
-   *  m the melting rate of the ice (due to geothermal flow and sliding), and omega
-   *  is  the water source (water reaching the bed from the surface, through crevasses)
-   */
-
-  if (IsStokesCoupling)
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
-                                "Error! The layout structure does not appear to be that of a side set.\n");
-
-    numNodes = dl->node_scalar->extent(2);
-    numQPs   = dl->qp_scalar->extent(2);
-    numDims  = dl->qp_gradient->extent(3);
-
+  // Check if it is a sideset evaluation
+  eval_on_side = false;
+  if (p.isParameter("Side Set Name")) {
     sideSetName = p.get<std::string>("Side Set Name");
+    eval_on_side = true;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (eval_on_side!=dl->isSideLayouts, std::logic_error,
+      "Error! Input Layouts structure not compatible with requested field layout.\n");
 
+  numQPs   = eval_on_side ? dl->qp_scalar->dimension(2) : dl->qp_scalar->dimension(1);
+  numNodes = eval_on_side ? dl->node_scalar->dimension(2) : dl->node_scalar->dimension(1);
+  numDims  = eval_on_side ? dl->qp_gradient->dimension(3) : dl->qp_gradient->dimension(2);
+
+  if (eval_on_side) {
     metric = PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string>("Metric Name"),dl->qp_tensor);
     this->addDependentField(metric);
-  }
-  else
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
-                                "Error! The layout structure appears to be that of a side set.\n");
-
-    numNodes = dl->node_scalar->extent(1);
-    numQPs   = dl->qp_scalar->extent(1);
-    numDims  = dl->qp_gradient->extent(2);
   }
 
   this->addEvaluatedField(residual);
 
   // Setting parameters
-  Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("LandIce Hydrology Parameters");
-  Teuchos::ParameterList& mass_eqn_params  = hydrology_params.sublist("Mass Equation");
-  Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
+  auto& hydro_params    = *p.get<Teuchos::ParameterList*>("LandIce Hydrology Parameters");
+  auto& mass_eqn_params = hydro_params.sublist("Mass Equation");
+  auto& physical_params = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
 
   rho_w       = physical_params.get<double>("Water Density", 1028.0);
   use_melting = mass_eqn_params.get<bool>("Use Melting", false);
 
   unsteady = p.get<bool>("Unsteady");
   has_h_till = p.get<bool>("Has Till Storage");
-  if (unsteady)
-  {
+
+  if (unsteady) {
     h_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), dl->qp_scalar);
     this->addDependentField(h_dot);
 
@@ -80,13 +64,13 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
     }
   }
 
-  Teuchos::RCP<PHX::DataLayout> layout;
   if (use_melting) {
     mass_lumping = mass_eqn_params.isParameter("Lump Mass") ? mass_eqn_params.get<bool>("Lump Mass") : false;
   } else {
     mass_lumping = false;
   }
 
+  Teuchos::RCP<PHX::DataLayout> layout;
   if (mass_lumping) {
     layout = dl->node_scalar;
   } else {
@@ -140,69 +124,38 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
-void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(BF,fm);
-  this->utils.setFieldData(GradBF,fm);
-  this->utils.setFieldData(w_measure,fm);
-  this->utils.setFieldData(q,fm);
-  this->utils.setFieldData(omega,fm);
-
-  if (IsStokesCoupling)
-    this->utils.setFieldData(metric,fm);
-
-  if (unsteady) {
-    this->utils.setFieldData(h_dot,fm);
-    if (has_h_till) {
-      this->utils.setFieldData(h_till_dot,fm);
-    }
-  }
-
-  if (use_melting) {
-    this->utils.setFieldData(m,fm);
-  }
-
-  this->utils.setFieldData(residual,fm);
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
-void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
+template<typename EvalT, typename Traits>
+void HydrologyResidualMassEqn<EvalT, Traits>::
 evaluateFields (typename Traits::EvalData workset)
 {
-  if (IsStokesCoupling) {
+  if (eval_on_side) {
     evaluateFieldsSide(workset);
   } else {
     evaluateFieldsCell(workset);
   }
 }
 
-template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
-void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
+template<typename EvalT, typename Traits>
+void HydrologyResidualMassEqn<EvalT, Traits>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
   // Zero out, to avoid leaving stuff from previous workset!
   residual.deep_copy(ScalarT(0.));
 
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
     return;
+  }
 
   ScalarT res_qp, res_node;
   const auto& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
-  {
+  for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (unsigned int node=0; node < numNodes; ++node)
-    {
+    for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;
-      for (unsigned int qp=0; qp < numQPs; ++qp)
-      {
+      for (unsigned int qp=0; qp < numQPs; ++qp) {
         res_qp = scaling_omega*omega(cell,side,qp);
         if (unsteady) {
           res_qp -= scaling_h_dot*h_dot(cell,side,qp);
@@ -217,10 +170,8 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 
         res_qp *= BF(cell,side,node,qp);
 
-        for (unsigned int idim=0; idim<numDims; ++idim)
-        {
-          for (unsigned int jdim=0; jdim<numDims; ++jdim)
-          {
+        for (unsigned int idim=0; idim<numDims; ++idim) {
+          for (unsigned int jdim=0; jdim<numDims; ++jdim) {
             res_qp += scaling_q*q(cell,side,qp,idim) * metric(cell,side,qp,idim,jdim) * GradBF(cell,side,node,qp,jdim);
           }
         }
@@ -237,18 +188,15 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   }
 }
 
-template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
-void HydrologyResidualMassEqn<EvalT, Traits, IsStokesCoupling, ThermoCoupled>::
+template<typename EvalT, typename Traits>
+void HydrologyResidualMassEqn<EvalT, Traits>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ScalarT res_qp, res_node;
-  for (unsigned int cell=0; cell < workset.numCells; ++cell)
-  {
-    for (unsigned int node=0; node < numNodes; ++node)
-    {
+  for (unsigned int cell=0; cell < workset.numCells; ++cell) {
+    for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;
-      for (unsigned int qp=0; qp < numQPs; ++qp)
-      {
+      for (unsigned int qp=0; qp < numQPs; ++qp) {
         res_qp = scaling_omega*omega(cell,qp);
         if (unsteady) {
           res_qp -= scaling_h_dot*h_dot(cell,qp);
@@ -263,8 +211,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
 
         res_qp *= BF(cell,node,qp);
 
-        for (unsigned int dim=0; dim<numDims; ++dim)
-        {
+        for (unsigned int dim=0; dim<numDims; ++dim) {
           res_qp += scaling_q*q(cell,qp,dim) * GradBF(cell,node,qp,dim);
         }
 

@@ -9,5 +9,4 @@
 #include "LandIce_HydraulicPotential.hpp"
 #include "LandIce_HydraulicPotential_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::HydraulicPotential,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::HydraulicPotential,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::HydraulicPotential)

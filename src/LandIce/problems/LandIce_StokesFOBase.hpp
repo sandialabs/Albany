@@ -1173,12 +1173,12 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
       // Output
       p->set<std::string>("Effective Pressure Variable Name", effective_pressure_side_name);
 
-      ev = Teuchos::rcp(new LandIce::EffectivePressure<EvalT,PHAL::AlbanyTraits,true,true>(*p,dl_side));
+      ev = Teuchos::rcp(new LandIce::EffectivePressure<EvalT,PHAL::AlbanyTraits,true>(*p,dl_side));
       fm0.template registerEvaluator<EvalT>(ev);
 
       //--- Effective pressure surrogate (Nodes) ---//
       p->set<bool>("Nodal",true);
-      ev = Teuchos::rcp(new LandIce::EffectivePressure<EvalT,PHAL::AlbanyTraits,true,true>(*p,dl_side));
+      ev = Teuchos::rcp(new LandIce::EffectivePressure<EvalT,PHAL::AlbanyTraits,true>(*p,dl_side));
       fm0.template registerEvaluator<EvalT>(ev);
 
       //--- Shared Parameter for basal friction coefficient: alpha ---//

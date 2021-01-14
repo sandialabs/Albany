@@ -9,5 +9,4 @@
 #include "LandIce_HydrologyWaterDischarge.hpp"
 #include "LandIce_HydrologyWaterDischarge_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::HydrologyWaterDischarge,false)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::HydrologyWaterDischarge,true)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::HydrologyWaterDischarge)

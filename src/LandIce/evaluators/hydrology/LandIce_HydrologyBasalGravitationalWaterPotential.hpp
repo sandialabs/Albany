@@ -7,11 +7,10 @@
 #ifndef LANDICE_HYDROLOGY_BASAL_GRAVITATIONAL_WATER_POTENTIAL_HPP
 #define LANDICE_HYDROLOGY_BASAL_GRAVITATIONAL_WATER_POTENTIAL_HPP 1
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
 
 namespace LandIce
 {
@@ -21,9 +20,8 @@ namespace LandIce
     This evaluator evaluates the basal potential phi = \rho_w * g * z_b at the basal side
 */
 
-template<typename EvalT, typename Traits, bool IsStokes>
-class BasalGravitationalWaterPotential : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                         public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits>
+class BasalGravitationalWaterPotential : public PHX::EvaluatorWithBaseImpl<Traits>
 {
 public:
 
@@ -31,10 +29,10 @@ public:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
+                                    const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&) {}
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -50,12 +48,14 @@ private:
   // Output:
   PHX::MDField<ParamScalarT>  phi_0;
 
-  std::string basalSideName;
+  bool eval_on_side;
 
-  unsigned int numNodes;
+  int numPts;
 
   double rho_w;
   double g;
+
+  std::string sideSetName; // Only needed if eval_on_side=true
 };
 
 } // Namespace LandIce

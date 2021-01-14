@@ -150,32 +150,6 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
 void HydrologyResidualCavitiesEqn<EvalT, Traits, IsStokes, ThermoCoupled>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(u_b,fm);
-  this->utils.setFieldData(h,fm);
-  this->utils.setFieldData(N,fm);
-  if (use_melting) {
-    this->utils.setFieldData(m,fm);
-  }
-  this->utils.setFieldData(u_b,fm);
-  this->utils.setFieldData(ice_softness,fm);
-  if (unsteady) {
-    this->utils.setFieldData(h_dot,fm);
-    if (has_p_dot) {
-      this->utils.setFieldData(P_dot,fm);
-    }
-  }
-  if (!nodal_equation) {
-    this->utils.setFieldData(BF,fm);
-    this->utils.setFieldData(w_measure,fm);
-  }
-  this->utils.setFieldData(residual,fm);
-}
-
-template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
-void HydrologyResidualCavitiesEqn<EvalT, Traits, IsStokes, ThermoCoupled>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (IsStokes) {

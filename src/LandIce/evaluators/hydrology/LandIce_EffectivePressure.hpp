@@ -7,23 +7,27 @@
 #ifndef LANDICE_EFFECTIVE_PRESSURE_HPP
 #define LANDICE_EFFECTIVE_PRESSURE_HPP 1
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
+#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
 
 namespace LandIce
 {
 
 /** \brief Effective Pressure Evaluator
 
-    This evaluator evaluates the effective pressure at the basal side
+    This evaluator computes the effective pressure N
+    Note: if Surrogate=true, then we compute N as
+             N = alpha*P_o, with 0<alpha<1.
+          that is, a fraction of the overburden.
 */
 
-template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
-class EffectivePressure : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, bool Surrogate>
+class EffectivePressure : public PHX::EvaluatorWithBaseImpl<Traits>
 {
 public:
 
@@ -35,8 +39,8 @@ public:
   EffectivePressure (const Teuchos::ParameterList& p,
                      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&) {}
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -45,15 +49,16 @@ private:
   void evaluateFieldsCell (typename Traits::EvalData workset);
 
   // Input:
-  PHX::MDField<const ParamScalarT>  P_o;
+  PHX::MDField<const RealType>      P_o;
   PHX::MDField<const HydroScalarT>  P_w;
 
   // Output:
   PHX::MDField<HydroScalarT>  N;
 
-  unsigned int numPts;
+  int numPts;
 
-  std::string basalSideName; // Needed if OnSide=true
+  bool eval_on_side;
+  std::string sideSetName; // Needed if OnSide=true
 
   PHX::MDField<const ScalarT,Dim> alphaParam;
   ScalarT printedAlpha;
@@ -72,9 +77,9 @@ public:
   typedef Kokkos::RangePolicy<ExecutionSpace, NonSurrogate_Tag> NonSurrogate_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Surrogate_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const Surrogate_Tag& tag, const int& side_or_cell_idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const NonSurrogate_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const NonSurrogate_Tag& tag, const int& side_or_cell_idx) const;
   
 };
 

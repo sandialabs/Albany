@@ -4,40 +4,43 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "LandIce_HydrologyBasalGravitationalWaterPotential.hpp"
+
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
-//uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
-
 namespace LandIce {
 
-template<typename EvalT, typename Traits, bool IsStokes>
-BasalGravitationalWaterPotential<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+BasalGravitationalWaterPotential<EvalT, Traits>::
 BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
                                   const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  bool nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : true;
-  Teuchos::RCP<PHX::DataLayout> layout = nodal ? dl->node_scalar : dl->qp_scalar;
+  // Check if it is a sideset evaluation
+  eval_on_side = false;
+  if (p.isParameter("Side Set Name")) {
+    sideSetName = p.get<std::string>("Side Set Name");
+    eval_on_side = true;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (eval_on_side!=dl->isSideLayouts, std::logic_error,
+      "Error! Input Layouts structure not compatible with requested field layout.\n");
 
-  if (IsStokes) {
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
-                                "Error! The layout structure does not appear to be that of a side set.\n");
-
-    basalSideName = p.get<std::string>("Side Set Name");
-    numNodes = layout->extent(2);
+  Teuchos::RCP<PHX::DataLayout> layout;
+  if (p.isParameter("Nodal") && p.get<bool>("Nodal")) {
+    layout = dl->node_scalar;
   } else {
-    numNodes = layout->extent(1);
+    layout = dl->qp_scalar;
   }
 
-  z_s   = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), layout);
-  H     = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
-  phi_0 = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Gravitational Water Potential Variable Name"), layout);
+  numPts = eval_on_side ? layout->extent(2) : layout->extent(1);
+
+  z_s   = decltype(z_s)(p.get<std::string> ("Surface Height Variable Name"), layout);
+  H     = decltype(H)(p.get<std::string> ("Ice Thickness Variable Name"), layout);
+  phi_0 = decltype(phi_0)(p.get<std::string> ("Basal Gravitational Water Potential Variable Name"), layout);
 
   this->addDependentField (z_s);
   this->addDependentField (H);
-
   this->addEvaluatedField (phi_0);
 
   // Setting parameters
@@ -50,61 +53,44 @@ BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes>
-void BasalGravitationalWaterPotential<EvalT, Traits, IsStokes>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(z_s,fm);
-  this->utils.setFieldData(H,fm);
-  this->utils.setFieldData(phi_0,fm);
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes>
-void BasalGravitationalWaterPotential<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+void BasalGravitationalWaterPotential<EvalT, Traits>::
 evaluateFields (typename Traits::EvalData workset)
 {
-  if (IsStokes) {
+  if (eval_on_side) {
     evaluateFieldsSide(workset);
   } else {
     evaluateFieldsCell(workset);
   }
 }
 
-template<typename EvalT, typename Traits, bool IsStokes>
-void BasalGravitationalWaterPotential<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+void BasalGravitationalWaterPotential<EvalT, Traits>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it_ss = ssList.find(basalSideName);
-
-  if (it_ss==ssList.end()) {
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
     return;
   }
 
-  const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-  std::vector<Albany::SideStruct>::const_iterator iter_s;
+  const auto& sideSet = workset.sideSets->at(sideSetName);
   for (const auto& it : sideSet) {
     // Get the local data of side and cell
     const int cell = it.elem_LID;
     const int side = it.side_local_id;
 
-    for (unsigned int node=0; node<numNodes; ++node) {
-      phi_0 (cell,side,node) = rho_w*g*(z_s(cell,side,node) - H(cell,side,node));
+    for (int ipt=0; ipt<numPts; ++ipt) {
+      phi_0 (cell,side,ipt) = rho_w*g*(z_s(cell,side,ipt) - H(cell,side,ipt));
     }
   }
 }
 
-template<typename EvalT, typename Traits, bool IsStokes>
-void BasalGravitationalWaterPotential<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+void BasalGravitationalWaterPotential<EvalT, Traits>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
-  for (unsigned int cell=0; cell<workset.numCells; ++cell)
-  {
-    for (unsigned int node=0; node<numNodes; ++node)
-    {
-      phi_0 (cell,node) = rho_w*g*(z_s(cell,node) - H(cell,node));
+  for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+    for (int ipt=0; ipt<numPts; ++ipt) {
+      phi_0 (cell,ipt) = rho_w*g*(z_s(cell,ipt) - H(cell,ipt));
     }
   }
 }

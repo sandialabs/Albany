@@ -9,5 +9,4 @@
 #include "LandIce_HydrologyBasalGravitationalWaterPotential.hpp"
 #include "LandIce_HydrologyBasalGravitationalWaterPotential_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::BasalGravitationalWaterPotential,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::BasalGravitationalWaterPotential,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::BasalGravitationalWaterPotential)

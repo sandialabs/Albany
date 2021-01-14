@@ -7,6 +7,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
+#include "LandIce_HydrologyWaterThickness.hpp"
+
 namespace LandIce
 {
 
@@ -59,15 +61,16 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
   this->addEvaluatedField(h);
 
   // Setting parameters
-  Teuchos::ParameterList& hydrology = *p.get<Teuchos::ParameterList*>("LandIce Hydrology Parameters");
-  Teuchos::ParameterList& physics   = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
+  Teuchos::ParameterList& hydro_params   = *p.get<Teuchos::ParameterList*>("LandIce Hydrology Parameters");
+  Teuchos::ParameterList& cav_eqn_params = hydro_params.sublist("Cavities Equation");
+  Teuchos::ParameterList& phys_params    = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
 
-  rho_i = physics.get<double>("Ice Density");
-  h_r = hydrology.get<double>("Bed Bumps Height");
-  l_r = hydrology.get<double>("Bed Bumps Length");
-  c_creep = hydrology.get<double>("Creep Closure Coefficient",1.0);
+  rho_i = phys_params.get<double>("Ice Density");
+  h_r = cav_eqn_params.get<double>("Bed Bumps Height");
+  l_r = cav_eqn_params.get<double>("Bed Bumps Length");
+  c_creep = cav_eqn_params.get<double>("Creep Closure Coefficient",1.0);
 
-  use_melting = hydrology.get<bool>("Use Melting In Cavities Equation", false);
+  use_melting = cav_eqn_params.get<bool>("Use Melting", false);
   if (use_melting) {
     m = PHX::MDField<const ScalarT>(p.get<std::string> ("Melting Rate Variable Name"), layout);
     this->addDependentField(m);
@@ -98,21 +101,6 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
   c_creep *= yr_to_s;
 
   this->setName("HydrologyWaterThickness"+PHX::print<EvalT>());
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
-void HydrologyWaterThickness<EvalT, Traits, IsStokes, ThermoCoupled>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(u_b,fm);
-  this->utils.setFieldData(N,fm);
-  if (use_melting) {
-    this->utils.setFieldData(m,fm);
-  }
-
-  this->utils.setFieldData(h,fm);
 }
 
 //**********************************************************************

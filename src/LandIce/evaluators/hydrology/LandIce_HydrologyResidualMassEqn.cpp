@@ -9,7 +9,4 @@
 #include "LandIce_HydrologyResidualMassEqn.hpp"
 #include "LandIce_HydrologyResidualMassEqn_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::HydrologyResidualMassEqn,true,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::HydrologyResidualMassEqn,true,false)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::HydrologyResidualMassEqn,false,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::HydrologyResidualMassEqn,false,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::HydrologyResidualMassEqn)

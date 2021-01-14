@@ -9,7 +9,5 @@
 #include "LandIce_EffectivePressure.hpp"
 #include "LandIce_EffectivePressure_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::EffectivePressure,false,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::EffectivePressure,false,false)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::EffectivePressure,true,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::EffectivePressure,true,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::EffectivePressure,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::EffectivePressure,true)

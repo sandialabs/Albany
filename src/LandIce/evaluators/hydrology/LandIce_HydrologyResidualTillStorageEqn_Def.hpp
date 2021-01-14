@@ -4,14 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "LandIce_HydrologyResidualTillStorageEqn.hpp"
+
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
 namespace LandIce {
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokesCoupling>
-HydrologyResidualTillStorageEqn<EvalT, Traits, IsStokesCoupling>::
+template<typename EvalT, typename Traits>
+HydrologyResidualTillStorageEqn<EvalT, Traits>::
 HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl) :
   BF         (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
@@ -20,55 +22,37 @@ HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
   h_till_dot (p.get<std::string> ("Till Water Storage Dot Variable Name"), dl->qp_scalar),
   residual   (p.get<std::string> ("Till Water Storage Eqn Residual Name"),dl->node_scalar)
 {
-  /*
-   *  The till water strorage equation has the following (strong) form
-   *
-   *     dh_till/dt = m/rho_w + omega - C_drain
-   *
-   *  where h_till the till water storage thickness, rho_w is the water density,
-   *  m the melting rate of the ice (due to geothermal flow and sliding), omega
-   *  is  the water source (water reaching the bed from the surface, through crevasses)
-   *  and C_drain is a fixed rate, that makes the till drain in absence of water input
-   */
-
-  if (IsStokesCoupling)
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
-                                "Error! The layout structure does not appear to be that of a side set.\n");
-
-    numNodes = dl->node_scalar->extent(2);
-    numQPs   = dl->qp_scalar->extent(2);
-
+  // Check if it is a sideset evaluation
+  eval_on_side = false;
+  if (p.isParameter("Side Set Name")) {
     sideSetName = p.get<std::string>("Side Set Name");
+    eval_on_side = true;
   }
-  else
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
-                                "Error! The layout structure appears to be that of a side set.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (eval_on_side!=dl->isSideLayouts, std::logic_error,
+      "Error! Input Layouts structure not compatible with requested field layout.\n");
 
-    numNodes = dl->node_scalar->extent(1);
-    numQPs   = dl->qp_scalar->extent(1);
-  }
+  numNodes = eval_on_side ? dl->node_scalar->extent(2) : dl->node_scalar->extent(1);
+  numQPs   = eval_on_side ? dl->qp_scalar->extent(2)   : dl->qp_scalar->extent(1);
 
   this->addEvaluatedField(residual);
 
   // Setting parameters
-  Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("LandIce Hydrology Parameters");
-  Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
+  auto& hydro_params = *p.get<Teuchos::ParameterList*>("LandIce Hydrology Parameters");
+  auto& phys_params  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
 
-  rho_w       = physical_params.get<double>("Water Density", 1028.0);
-  use_melting = hydrology_params.get<bool>("Use Melting In Conservation Of Mass", false);
-  C_drain     = hydrology_params.get<double>("Till Water Storage Drain Rate", -1.0);
+  rho_w       = phys_params.get<double>("Water Density", 1028.0);
+  use_melting = hydro_params.get<bool>("Use Melting In Conservation Of Mass", false);
+  C_drain     = hydro_params.get<double>("Till Water Storage Drain Rate", -1.0);
   TEUCHOS_TEST_FOR_EXCEPTION (C_drain<=0, Teuchos::Exceptions::InvalidParameter,
                               "Error! The till water storage drain rate must be positive.\n");
 
-  Teuchos::RCP<PHX::DataLayout> layout;
   if (use_melting) {
-    mass_lumping = hydrology_params.isParameter("Lump Mass In Mass Equation") ? hydrology_params.get<bool>("Lump Mass In Mass Equation") : false;
+    mass_lumping = hydro_params.isParameter("Lump Mass In Mass Equation") ? hydro_params.get<bool>("Lump Mass In Mass Equation") : false;
   } else {
     mass_lumping = false;
   }
 
+  Teuchos::RCP<PHX::DataLayout> layout;
   if (mass_lumping) {
     layout = dl->node_scalar;
   } else {
@@ -117,37 +101,19 @@ HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokesCoupling>
-void HydrologyResidualTillStorageEqn<EvalT, Traits, IsStokesCoupling>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(BF,fm);
-  this->utils.setFieldData(w_measure,fm);
-  this->utils.setFieldData(omega,fm);
-  this->utils.setFieldData(h_till_dot,fm);
-
-  if (use_melting) {
-    this->utils.setFieldData(m,fm);
-  }
-
-  this->utils.setFieldData(residual,fm);
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokesCoupling>
-void HydrologyResidualTillStorageEqn<EvalT, Traits, IsStokesCoupling>::
+template<typename EvalT, typename Traits>
+void HydrologyResidualTillStorageEqn<EvalT, Traits>::
 evaluateFields (typename Traits::EvalData workset)
 {
-  if (IsStokesCoupling) {
+  if (eval_on_side) {
     evaluateFieldsSide(workset);
   } else {
     evaluateFieldsCell(workset);
   }
 }
 
-template<typename EvalT, typename Traits, bool IsStokesCoupling>
-void HydrologyResidualTillStorageEqn<EvalT, Traits, IsStokesCoupling>::
+template<typename EvalT, typename Traits>
+void HydrologyResidualTillStorageEqn<EvalT, Traits>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
   // Zero out, to avoid leaving stuff from previous workset!
@@ -157,18 +123,15 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     return;
 
   ScalarT res_qp, res_node;
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
-  {
+  const auto& sideSet = workset.sideSets->at(sideSetName);
+  for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    for (unsigned int node=0; node < numNodes; ++node)
-    {
+    for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;
-      for (unsigned int qp=0; qp < numQPs; ++qp)
-      {
+      for (unsigned int qp=0; qp < numQPs; ++qp) {
         res_qp = scaling_omega*omega(cell,side,qp) - C_drain - scaling_h_dot*h_till_dot(cell,side,qp);
 
         if (use_melting && !mass_lumping) {
@@ -189,18 +152,15 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   }
 }
 
-template<typename EvalT, typename Traits, bool IsStokesCoupling>
-void HydrologyResidualTillStorageEqn<EvalT, Traits, IsStokesCoupling>::
+template<typename EvalT, typename Traits>
+void HydrologyResidualTillStorageEqn<EvalT, Traits>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ScalarT res_qp, res_node;
-  for (unsigned int cell=0; cell < workset.numCells; ++cell)
-  {
-    for (unsigned int node=0; node < numNodes; ++node)
-    {
+  for (unsigned int cell=0; cell < workset.numCells; ++cell) {
+    for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;
-      for (unsigned int qp=0; qp < numQPs; ++qp)
-      {
+      for (unsigned int qp=0; qp < numQPs; ++qp) {
         res_qp = scaling_omega*omega(cell,qp) - C_drain - scaling_h_dot*h_till_dot(cell,qp);
 
         if (use_melting && !mass_lumping) {

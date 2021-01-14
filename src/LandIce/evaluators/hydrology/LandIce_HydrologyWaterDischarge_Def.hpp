@@ -13,8 +13,8 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, bool IsStokes>
-HydrologyWaterDischarge<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+HydrologyWaterDischarge<EvalT, Traits>::
 HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl) :
   gradPhi (p.get<std::string> ("Hydraulic Potential Gradient Variable Name"), dl->qp_gradient),
@@ -36,18 +36,17 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
    *     [q] = m^2/s
    */
 
-  if (IsStokes) {
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, std::logic_error,
-                                "Error! For coupling with StokesFO, the Layouts structure must be that of the basal side.\n");
-
+  // Check if it is a sideset evaluation
+  eval_on_side = false;
+  if (p.isParameter("Side Set Name")) {
     sideSetName = p.get<std::string>("Side Set Name");
-
-    numQPs  = dl->qp_gradient->extent(2);
-    numDim  = dl->qp_gradient->extent(3);
-  } else {
-    numQPs  = dl->qp_gradient->extent(1);
-    numDim  = dl->qp_gradient->extent(2);
+    eval_on_side = true;
   }
+  TEUCHOS_TEST_FOR_EXCEPTION (eval_on_side!=dl->isSideLayouts, std::logic_error,
+      "Error! Input Layouts structure not compatible with requested field layout.\n");
+
+  numQPs  = eval_on_side ? dl->qp_gradient->extent(2) : dl->qp_gradient->extent(1);
+  numDim  = eval_on_side ? dl->qp_gradient->extent(3) : dl->qp_gradient->extent(2);
 
   this->addDependentField(gradPhi);
   this->addDependentField(h);
@@ -88,34 +87,18 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes>
-void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
-                      PHX::FieldManager<Traits>& fm)
+template<typename EvalT, typename Traits>
+void HydrologyWaterDischarge<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
-  this->utils.setFieldData(gradPhi,fm);
-  this->utils.setFieldData(h,fm);
-  if (regularize)
-  {
-    this->utils.setFieldData(regularizationParam,fm);
-  }
-
-  this->utils.setFieldData(q,fm);
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes>
-void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFields (typename Traits::EvalData workset)
-{
-  if (IsStokes) {
+  if (eval_on_side) {
     evaluateFieldsSide(workset);
   } else {
     evaluateFieldsCell(workset);
   }
 }
 
-template<typename EvalT, typename Traits, bool IsStokes>
-void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits>
+void HydrologyWaterDischarge<EvalT, Traits>::evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ScalarT regularization(0.0);
   if (regularize) {
@@ -159,8 +142,8 @@ void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::evaluateFieldsCell (typen
   }
 }
 
-template<typename EvalT, typename Traits, bool IsStokes>
-void HydrologyWaterDischarge<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+void HydrologyWaterDischarge<EvalT, Traits>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {

@@ -7,13 +7,11 @@
 #ifndef LANDICE_HYDROLOGY_WATER_DISCHARGE_HPP
 #define LANDICE_HYDROLOGY_WATER_DISCHARGE_HPP 1
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
-
 #include "Albany_Layouts.hpp"
 #include "PHAL_Dimension.hpp"
+
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
 
 namespace LandIce
 {
@@ -36,9 +34,8 @@ namespace LandIce
  *
  */
 
-template<typename EvalT, typename Traits, bool IsStokes>
-class HydrologyWaterDischarge : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits>
+class HydrologyWaterDischarge : public PHX::EvaluatorWithBaseImpl<Traits>
 {
 public:
 
@@ -48,8 +45,8 @@ public:
   HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&) {}
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -69,7 +66,9 @@ private:
 
   unsigned int numQPs;
   unsigned int numDim;
-  std::string   sideSetName;
+
+  bool eval_on_side;
+  std::string   sideSetName;  // Only used if eval_on_side=true
 
   double k_0;
   double alpha;

@@ -7,14 +7,12 @@
 #ifndef LANDICE_HYDROLOGY_RESIDUAL_MASS_EQN_HPP
 #define LANDICE_HYDROLOGY_RESIDUAL_MASS_EQN_HPP 1
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
-
 #include "Albany_Layouts.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 #include "PHAL_Dimension.hpp"
+
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
 
 namespace LandIce
 {
@@ -35,9 +33,8 @@ namespace LandIce
  */
 
 
-template<typename EvalT, typename Traits, bool IsStokesCoupling, bool ThermoCoupled>
-class HydrologyResidualMassEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                 public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits>
+class HydrologyResidualMassEqn : public PHX::EvaluatorWithBaseImpl<Traits>
 {
 public:
 
@@ -45,14 +42,11 @@ public:
   typedef typename EvalT::ParamScalarT  ParamScalarT;
   typedef typename EvalT::ScalarT       ScalarT;
 
-  typedef typename std::conditional<IsStokesCoupling,ScalarT,ParamScalarT>::type  uScalarT;
-  typedef typename std::conditional<ThermoCoupled,ScalarT,ParamScalarT>::type     tScalarT;
-
   HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&) {}
 
   void evaluateFields (typename Traits::EvalData d);
 
@@ -94,10 +88,9 @@ private:
   bool use_melting;
   bool unsteady;
   bool has_h_till;
+  bool eval_on_side;
 
-  // Variables necessary for stokes coupling
-  std::string                     sideSetName;
-  std::vector<std::vector<int> >  sideNodes;
+  std::string    sideSetName; // Only needed if eval_on_side=true
 };
 
 } // Namespace LandIce

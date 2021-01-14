@@ -11,9 +11,7 @@
 
 #include "Albany_ScalarOrdinalTypes.hpp"
 
-#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
 namespace LandIce
@@ -37,8 +35,7 @@ namespace LandIce
  */
 
 template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
-class HydrologyResidualCavitiesEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                     public PHX::EvaluatorDerived<EvalT, Traits>
+class HydrologyResidualCavitiesEqn : public PHX::EvaluatorWithBaseImpl<Traits>
 {
 public:
 
@@ -52,8 +49,8 @@ public:
   HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&) {}
 
   void evaluateFields(typename Traits::EvalData d);
 

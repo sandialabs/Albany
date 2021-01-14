@@ -9,5 +9,4 @@
 #include "LandIce_HydrologyResidualTillStorageEqn.hpp"
 #include "LandIce_HydrologyResidualTillStorageEqn_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::HydrologyResidualTillStorageEqn,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::HydrologyResidualTillStorageEqn,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::HydrologyResidualTillStorageEqn)

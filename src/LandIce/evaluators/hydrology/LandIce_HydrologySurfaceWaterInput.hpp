@@ -1,11 +1,10 @@
 #ifndef LANDICE_HYDROLOGY_SURFACE_WATER_INPUT_HPP
 #define LANDICE_HYDROLOGY_SURFACE_WATER_INPUT_HPP
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
 
 namespace LandIce
 {
@@ -16,9 +15,8 @@ namespace LandIce
     from measurements of the Surface Mass Balance
 */
 
-template<typename EvalT, typename Traits, bool OnSide>
-class HydrologySurfaceWaterInput: public PHX::EvaluatorWithBaseImpl<Traits>,
-                                  public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits>
+class HydrologySurfaceWaterInput: public PHX::EvaluatorWithBaseImpl<Traits>
 {
 public:
 
@@ -27,16 +25,14 @@ public:
   HydrologySurfaceWaterInput (const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&) {}
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
 
   enum class InputType {
-    GIVEN_VALUE,
-    GIVEN_FIELD,
     SMB_APPROX
   };
 
@@ -56,7 +52,9 @@ private:
 
   double omega_val;
 
-  std::string sideSetName;  // Needed only if OnSide=true
+  bool eval_on_side;
+
+  std::string sideSetName;  // Needed only if eval_on_side=true
 };
 
 } // Namespace LandIce

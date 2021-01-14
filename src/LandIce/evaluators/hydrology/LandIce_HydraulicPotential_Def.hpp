@@ -13,8 +13,8 @@
 
 namespace LandIce {
 
-template<typename EvalT, typename Traits, bool IsStokes>
-HydraulicPotential<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+HydraulicPotential<EvalT, Traits>::
 HydraulicPotential (const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl)
 {
@@ -25,15 +25,16 @@ HydraulicPotential (const Teuchos::ParameterList& p,
     layout = dl->qp_scalar;
   }
 
-  if (IsStokes) {
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
-                                "Error! The layout structure does not appear to be that of a side set.\n");
-
-    basalSideName = p.get<std::string>("Side Set Name");
-    numPts = layout->extent(2);
-  } else {
-    numPts = layout->extent(1);
+  // Check if it is a sideset evaluation
+  eval_on_side = false;
+  if (p.isParameter("Side Set Name")) {
+    sideSetName = p.get<std::string>("Side Set Name");
+    eval_on_side = true;
   }
+  TEUCHOS_TEST_FOR_EXCEPTION (eval_on_side!=dl->isSideLayouts, std::logic_error,
+      "Error! Input Layouts structure not compatible with requested field layout.\n");
+
+  numPts = eval_on_side ? layout->extent(2) : layout->extent(1);
 
   P_w   = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Pressure Variable Name"), layout);
   phi_0 = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Basal Gravitational Water Potential Variable Name"), layout);
@@ -63,44 +64,27 @@ HydraulicPotential (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes>
-void HydraulicPotential<EvalT, Traits, IsStokes>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(P_w,fm);
-  this->utils.setFieldData(phi_0,fm);
-  if (use_h) {
-    this->utils.setFieldData(h,fm);
-  }
-  this->utils.setFieldData(phi,fm);
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes>
-void HydraulicPotential<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+void HydraulicPotential<EvalT, Traits>::
 evaluateFields (typename Traits::EvalData workset)
 {
-  if (IsStokes) {
+  if (eval_on_side) {
     evaluateFieldsSide(workset);
   } else {
     evaluateFieldsCell(workset);
   }
 }
 
-template<typename EvalT, typename Traits, bool IsStokes>
-void HydraulicPotential<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+void HydraulicPotential<EvalT, Traits>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it_ss = ssList.find(basalSideName);
-
-  if (it_ss==ssList.end()) {
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
     return;
   }
 
   ScalarT zero(0.0);
-  const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
+  const auto& sideSet = workset.sideSets->at(sideSetName);
   for (const auto& it : sideSet) {
     // Get the local data of side and cell
     const int cell = it.elem_LID;
@@ -114,8 +98,8 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes>
-void HydraulicPotential<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+void HydraulicPotential<EvalT, Traits>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
   ScalarT zero(0.0);

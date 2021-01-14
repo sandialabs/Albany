@@ -7,9 +7,7 @@
 #ifndef LANDICE_HYDROLOGY_MELTING_RATE_HPP
 #define LANDICE_HYDROLOGY_MELTING_RATE_HPP 1
 
-#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
@@ -32,8 +30,7 @@ namespace LandIce
 */
 
 template<typename EvalT, typename Traits, bool IsStokes>
-class HydrologyMeltingRate : public PHX::EvaluatorWithBaseImpl<Traits>,
-                             public PHX::EvaluatorDerived<EvalT, Traits>
+class HydrologyMeltingRate : public PHX::EvaluatorWithBaseImpl<Traits>
 {
 public:
 
