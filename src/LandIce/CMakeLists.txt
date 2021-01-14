@@ -74,7 +74,6 @@ set(SOURCES
   problems/LandIce_LaplacianSampling.cpp
   problems/LandIce_ProblemFactory.cpp
   problems/LandIce_ProblemUtils.cpp
-  problems/LandIce_SchoofFit.cpp
   problems/LandIce_Stokes.cpp
   problems/LandIce_StokesFO.cpp
   problems/LandIce_StokesFOBase.cpp
@@ -211,7 +210,6 @@ set(HEADERS
   problems/LandIce_LaplacianSampling.hpp
   problems/LandIce_ParamEnum.hpp
   problems/LandIce_ProblemFactory.hpp
-  problems/LandIce_SchoofFit.hpp
   problems/LandIce_Stokes.hpp
   problems/LandIce_StokesFOBase.hpp
   problems/LandIce_StokesFO.hpp
