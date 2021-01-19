@@ -67,6 +67,27 @@ GatherVerticallyContractedSolutionBase(const Teuchos::ParameterList& p,
   this->addEvaluatedField(contractedSol);
 
   this->setName("GatherVerticallyContractedSolution"+PHX::print<EvalT>());
+
+  Teuchos::RCP<shards::CellTopology> cell_type;
+  cell_type = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
+
+  int sideDim = cell_type->getDimension()-1;
+  int numSides = cell_type->getSideCount();
+  int nodeMax = 0;
+  for (int side=0; side<numSides; ++side) {
+    int thisSideNodes = cell_type->getNodeCount(sideDim,side);
+    nodeMax = std::max(nodeMax, thisSideNodes);
+  }
+  this->numSideNodes = Kokkos::View<int*, PHX::Device>("numSideNodes", numSides);
+  this->sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+  for (int side=0; side<numSides; ++side) {
+    // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
+    int thisSideNodes = cell_type->getNodeCount(sideDim,side);
+    this->numSideNodes(side) = thisSideNodes;
+    for (int node=0; node<thisSideNodes; ++node) {
+      this->sideNodes(side,node) = cell_type->getNodeMap(sideDim,side,node);
+    }
+  }
 }
 
 //**********************************************************************
@@ -76,9 +97,6 @@ void GatherVerticallyContractedSolutionBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  // Check cell topology for numSideNodes
-  const CellTopologyData_Subcell& side0 =  this->cell_topo->side[0];
-  this->numSideNodes = side0.topology->node_count;
 
   this->utils.setFieldData(contractedSol,fm);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
@@ -101,14 +119,17 @@ KOKKOS_INLINE_FUNCTION
 void GatherVerticallyContractedSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const ResidualScalar_Tag& tag, const int& sideSet_idx) const {
 
+  const int side = this->sideSet.side_local_id(sideSet_idx);
+  const int numSideNodes = this->numSideNodes(side);
+
   //we only consider elements on the top.
-  for (int i = 0; i < this->numSideNodes; ++i) {
+  for (int node = 0; node < numSideNodes; ++node) {
     double contrSol[3] = {0.0, 0.0, 0.0};
     for(int il=0; il<this->numLayers+1; ++il) {
       for(int comp=0; comp<this->vecDim; ++comp)
-        contrSol[comp] += this->x_constView_device(this->localDOFView(sideSet_idx, i, il, comp+this->offset))*this->quadWeights(il);
+        contrSol[comp] += this->x_constView_device(this->localDOFView(sideSet_idx, node, il, comp+this->offset))*this->quadWeights(il);
     }
-    this->contractedSol(sideSet_idx,i) = contrSol[0];
+    this->contractedSol(sideSet_idx,this->sideNodes(side,node)) = contrSol[0];
   }
 
 }
@@ -118,15 +139,18 @@ KOKKOS_INLINE_FUNCTION
 void GatherVerticallyContractedSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const ResidualVector_Tag& tag, const int& sideSet_idx) const {
 
+  const int side = this->sideSet.side_local_id(sideSet_idx);
+  const int numSideNodes = this->numSideNodes(side);
+
   //we only consider elements on the top.
-  for (int i = 0; i < this->numSideNodes; ++i) {
+  for (int node = 0; node < numSideNodes; ++node) {
     double contrSol[3] = {0.0, 0.0, 0.0};
     for(int il=0; il<this->numLayers+1; ++il) {
       for(int comp=0; comp<this->vecDim; ++comp)
-        contrSol[comp] += this->x_constView_device(this->localDOFView(sideSet_idx, i, il, comp+this->offset))*this->quadWeights(il);
+        contrSol[comp] += this->x_constView_device(this->localDOFView(sideSet_idx, node, il, comp+this->offset))*this->quadWeights(il);
     }
     for(int comp=0; comp<this->vecDim; ++comp) {
-      this->contractedSol(sideSet_idx,i,comp) = contrSol[comp];
+      this->contractedSol(sideSet_idx,this->sideNodes(side,node),comp) = contrSol[comp];
     }
   }
 
@@ -149,7 +173,7 @@ evaluateFields(typename Traits::EvalData workset)
   this->numLayers = layeredMeshNumbering.numLayers;
 
   // Compute quadWeights
-  Kokkos::resize(this->quadWeights, this->numLayers+1);
+  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
   if(this->op == this->VerticalSum){
     for (int i=0; i<this->numLayers+1; ++i)
       this->quadWeights(i) = 1.0;
@@ -168,16 +192,16 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (it != ssList.end()) {
 
-    const Albany::LocalSideSetInfo& sideSet = it->second;
+    this->sideSet = it->second;
 
     // Each sideset has a localDOFView that can be accessed on device in a coalesced fashion
     this->localDOFView = localDOFList.at(it->first);
 
     if (this->useCollapsedSidesets) {
       if (this->isVector) {
-        Kokkos::parallel_for(ResidualVector_Policy(0, sideSet.size), *this);
+        Kokkos::parallel_for(ResidualVector_Policy(0, this->sideSet.size), *this);
       } else {
-        Kokkos::parallel_for(ResidualScalar_Policy(0, sideSet.size), *this);
+        Kokkos::parallel_for(ResidualScalar_Policy(0, this->sideSet.size), *this);
       }
     } else {
 
@@ -187,18 +211,19 @@ evaluateFields(typename Traits::EvalData workset)
 
       const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
+      for (int sideSet_idx = 0; sideSet_idx < this->sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
         // Get the data that corresponds to the side
-        const int elem_LID = sideSet.elem_LID(sideSet_idx);
-        const int elem_side = sideSet.side_local_id(sideSet_idx);
+        const int elem_LID = this->sideSet.elem_LID(sideSet_idx);
+        const int elem_side = this->sideSet.side_local_id(sideSet_idx);
 
         const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
+        const int numSideNodes = this->numSideNodes(elem_side);
 
         const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
         //we only consider elements on the top.
         GO baseId;
-        for (unsigned int i = 0; i < this->numSideNodes; ++i) {
+        for (unsigned int i = 0; i < numSideNodes; ++i) {
           const std::size_t node = side.node[i];
           baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
           std::vector<double> contrSol(this->vecDim,0);
@@ -247,7 +272,7 @@ evaluateFields(typename Traits::EvalData workset)
   this->numLayers = layeredMeshNumbering.numLayers;
 
   // Compute quadWeights
-  Kokkos::resize(this->quadWeights, this->numLayers+1);
+  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
   if(this->op == this->VerticalSum){
     for (int i=0; i<this->numLayers+1; ++i)
       this->quadWeights(i) = 1.0;
@@ -349,7 +374,7 @@ evaluateFields(typename Traits::EvalData workset)
   this->numLayers = layeredMeshNumbering.numLayers;
 
   // Compute quadWeights
-  Kokkos::resize(this->quadWeights, this->numLayers+1);
+  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
   if(this->op == this->VerticalSum){
     for (int i=0; i<this->numLayers+1; ++i)
       this->quadWeights(i) = 1.0;
@@ -441,7 +466,7 @@ evaluateFields(typename Traits::EvalData workset)
   this->numLayers = layeredMeshNumbering.numLayers;
 
   // Compute quadWeights
-  Kokkos::resize(this->quadWeights, this->numLayers+1);
+  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
   if(this->op == this->VerticalSum){
     for (int i=0; i<this->numLayers+1; ++i)
       this->quadWeights(i) = 1.0;
@@ -562,7 +587,7 @@ evaluateFields(typename Traits::EvalData workset)
   this->numLayers = layeredMeshNumbering.numLayers;
 
   // Compute quadWeights
-  Kokkos::resize(this->quadWeights, this->numLayers+1);
+  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
   if(this->op == this->VerticalSum){
     for (int i=0; i<this->numLayers+1; ++i)
       this->quadWeights(i) = 1.0;

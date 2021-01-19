@@ -62,11 +62,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     numNodes  = dl->node_scalar->extent(1);
   }
 
-  useCollapsedSidesets = dl->useCollapsedSidesets;
+  useCollapsedSidesets = dl->isSideLayouts && dl->useCollapsedSidesets;
 
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
-  if (dl->isSideLayouts && useCollapsedSidesets) {
+  if (useCollapsedSidesets) {
     layout = nodal ? dl->node_scalar_sideset : dl->qp_scalar_sideset;
   } else {
     layout = nodal ? dl->node_scalar : dl->qp_scalar;

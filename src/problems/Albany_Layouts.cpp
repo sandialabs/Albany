@@ -201,7 +201,8 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   useCollapsedSidesets = collapsed_sidesets;
 
   // Collapsed sideset layouts to ensure contiguous memory access for efficient GPU evaluation
-  sidesetWorksetSize = (sidesetWorksetSize > 0) ? sidesetWorksetSize : worksetSize*numSides;
+  // sidesetWorksetSize = (sidesetWorksetSize > 0) ? sidesetWorksetSize : worksetSize*numSides;
+  sidesetWorksetSize = worksetSize*numSides;
   qp_scalar_sideset       = rcp(new MDALayout<Side,QuadPoint>(sidesetWorksetSize,numQPts));
   node_scalar_sideset     = rcp(new MDALayout<Side,Node>(sidesetWorksetSize,numNodes));
   node_vector_sideset     = rcp(new MDALayout<Side,Node,Dim>(sidesetWorksetSize,numNodes,vecDim));

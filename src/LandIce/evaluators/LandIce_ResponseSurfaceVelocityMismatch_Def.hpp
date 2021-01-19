@@ -43,13 +43,15 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   Teuchos::RCP<Albany::Layouts> dl_surface = dl->side_layouts.at(surfaceSideName);
 
-  velocity            = decltype(velocity)(velocity_name, dl_surface->qp_vector);
-  observedVelocity    = decltype(observedVelocity)(obs_velocity_name, dl_surface->qp_vector);
-  w_measure_surface   = decltype(w_measure_surface)(w_measure_surface_name, dl_surface->qp_scalar);
+  useCollapsedSidesets = dl_surface->useCollapsedSidesets;
+
+  velocity            = decltype(velocity)(velocity_name, useCollapsedSidesets ? dl_surface->qp_vector_sideset : dl_surface->qp_vector);
+  observedVelocity    = decltype(observedVelocity)(obs_velocity_name, useCollapsedSidesets ? dl_surface->qp_vector_sideset : dl_surface->qp_vector);
+  w_measure_surface   = decltype(w_measure_surface)(w_measure_surface_name, useCollapsedSidesets ? dl_surface->qp_scalar_sideset : dl_surface->qp_scalar);
   if(scalarRMS)
-    observedVelocityMagnitudeRMS = decltype(observedVelocityMagnitudeRMS)(obs_velocityRMS_name, dl_surface->qp_scalar);
+    observedVelocityMagnitudeRMS = decltype(observedVelocityMagnitudeRMS)(obs_velocityRMS_name, useCollapsedSidesets ? dl_surface->qp_scalar_sideset : dl_surface->qp_scalar);
   else
-    observedVelocityRMS = decltype(observedVelocityRMS)(obs_velocityRMS_name, dl_surface->qp_vector);
+    observedVelocityRMS = decltype(observedVelocityRMS)(obs_velocityRMS_name, useCollapsedSidesets ? dl_surface->qp_vector_sideset : dl_surface->qp_vector);
 
   //metric_surface      = decltype(metric_surface)(metric_surface_name, dl_surface->qp_tensor);
 
@@ -81,13 +83,16 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
                                   "Error! Basal side data layout not found.\n");
       Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(ssName);
 
+      TEUCHOS_TEST_FOR_EXCEPTION (dl_basal->useCollapsedSidesets != useCollapsedSidesets, std::runtime_error, 
+                                  "Error! Basal and surface sidesets are using different layouts.\n");
+
       const std::string& grad_beta_name       = paramList->get<std::string>("Basal Friction Coefficient Name") + "_" + ssName + " Gradient";
       const std::string& w_measure_basal_name = Albany::weighted_measure_name + " " + ssName;
       const std::string& metric_basal_name    = Albany::metric_name + " " + ssName;
 
-      grad_beta_vec.emplace_back(grad_beta_name, dl_basal->qp_gradient);
-      w_measure_beta_vec.emplace_back(w_measure_basal_name, dl_basal->qp_scalar);
-      metric_beta_vec.emplace_back(metric_basal_name, dl_basal->qp_tensor);
+      grad_beta_vec.emplace_back(grad_beta_name, useCollapsedSidesets ? dl_basal->qp_gradient_sideset : dl_basal->qp_gradient);
+      w_measure_beta_vec.emplace_back(w_measure_basal_name, useCollapsedSidesets ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
+      metric_beta_vec.emplace_back(metric_basal_name, useCollapsedSidesets ? dl_basal->qp_tensor_sideset : dl_basal->qp_tensor);
 
       numBasalQPs = dl_basal->qp_scalar->extent(2);
 
@@ -106,15 +111,18 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
                                 "Error! Basal side data layout not found.\n");
     Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
+    TEUCHOS_TEST_FOR_EXCEPTION (dl_basal->useCollapsedSidesets != useCollapsedSidesets, std::runtime_error, 
+                                  "Error! Basal and surface sidesets are using different layouts.\n");
+
     const std::string& stiffening_name      = paramList->get<std::string>("Stiffening Factor Name");
     const std::string& grad_stiffening_name = paramList->get<std::string>("Stiffening Factor Gradient Name");
     const std::string& w_measure_basal_name = paramList->get<std::string>("Weighted Measure Basal Name");
     const std::string& metric_basal_name    = paramList->get<std::string>("Metric Basal Name");
 
-    stiffening      = decltype(stiffening)(stiffening_name, dl_basal->qp_scalar);
-    grad_stiffening = decltype(grad_stiffening)(grad_stiffening_name, dl_basal->qp_gradient);
-    w_measure_basal = decltype(w_measure_basal)(w_measure_basal_name, dl_basal->qp_scalar);
-    metric_basal    = decltype(metric_basal)(metric_basal_name, dl_basal->qp_tensor);
+    stiffening      = decltype(stiffening)(stiffening_name, useCollapsedSidesets ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
+    grad_stiffening = decltype(grad_stiffening)(grad_stiffening_name, useCollapsedSidesets ? dl_basal->qp_gradient_sideset : dl_basal->qp_gradient);
+    w_measure_basal = decltype(w_measure_basal)(w_measure_basal_name, useCollapsedSidesets ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
+    metric_basal    = decltype(metric_basal)(metric_basal_name, useCollapsedSidesets ? dl_basal->qp_tensor_sideset : dl_basal->qp_tensor);
 
     numBasalQPs = dl_basal->qp_scalar->extent(2);
 
@@ -176,48 +184,76 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
 
   // ----------------- Surface side ---------------- //
 
-  if (workset.sideSets->find(surfaceSideName) != workset.sideSets->end())
+  if (workset.sideSetViews->find(surfaceSideName) != workset.sideSetViews->end())
   {
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(surfaceSideName);
-    for (auto const& it_side : sideSet)
+    sideSet = workset.sideSetViews->at(surfaceSideName);
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
-
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
 
       ScalarT t = 0;
       ScalarT data = 0;
       if(scalarRMS)
         for (unsigned int qp=0; qp<numSurfaceQPs; ++qp)
         {
-          ScalarT diff2 = std::pow(velocity(cell, side, qp, 0)  - observedVelocity (cell, side, qp, 0),2) 
-                               + std::pow(velocity(cell, side, qp, 1)  - observedVelocity (cell, side, qp, 1),2);
+          if (useCollapsedSidesets) {
+            ScalarT diff2 = std::pow(velocity(sideSet_idx, qp, 0)  - observedVelocity (sideSet_idx, qp, 0),2) 
+                                + std::pow(velocity(sideSet_idx, qp, 1)  - observedVelocity (sideSet_idx, qp, 1),2);
 
-          // We have to add a small number to diff2, otherwise the derivative computations can generate NaNs.
-          diff2 += Teuchos::ScalarTraits<ScalarT>::eps();
+            // We have to add a small number to diff2, otherwise the derivative computations can generate NaNs.
+            diff2 += Teuchos::ScalarTraits<ScalarT>::eps();
 
-          ScalarT weightedDiff = std::sqrt(diff2)/observedVelocityMagnitudeRMS(cell, side, qp);
-          ScalarT weightedDiff2 = std::pow(asinh(weightedDiff/ asinh_scaling)*asinh_scaling,2);
-          t += weightedDiff2 * w_measure_surface(cell,side,qp);
+            ScalarT weightedDiff = std::sqrt(diff2)/observedVelocityMagnitudeRMS(sideSet_idx, qp);
+            ScalarT weightedDiff2 = std::pow(asinh(weightedDiff/ asinh_scaling)*asinh_scaling,2);
+            t += weightedDiff2 * w_measure_surface(sideSet_idx,qp);
+          } else {
+            ScalarT diff2 = std::pow(velocity(sideSet_idx, qp, 0)  - observedVelocity (sideSet_idx, qp, 0),2) 
+                                + std::pow(velocity(sideSet_idx, qp, 1)  - observedVelocity (sideSet_idx, qp, 1),2);
+
+            // We have to add a small number to diff2, otherwise the derivative computations can generate NaNs.
+            diff2 += Teuchos::ScalarTraits<ScalarT>::eps();
+
+            ScalarT weightedDiff = std::sqrt(diff2)/observedVelocityMagnitudeRMS(sideSet_idx, qp);
+            ScalarT weightedDiff2 = std::pow(asinh(weightedDiff/ asinh_scaling)*asinh_scaling,2);
+            t += weightedDiff2 * w_measure_surface(sideSet_idx,qp);
+          }
         }
       else
         for (unsigned int qp=0; qp<numSurfaceQPs; ++qp)
         {
-          ParamScalarT refVel0 = asinh(observedVelocity (cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
-          ParamScalarT refVel1 = asinh(observedVelocity (cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
-          ScalarT vel0 = asinh(velocity(cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
-          ScalarT vel1 = asinh(velocity(cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
-          ScalarT diff0 = refVel0 - vel0;
-          ScalarT diff1 = refVel1 - vel1;
-          data = diff0 * diff0
-               + diff1 * diff1;
-          //data = diff0 * metric_surface(cell,side,qp,0,0) * diff0
-          //     + diff0 * metric_surface(cell,side,qp,0,1) * diff1
-          //     + diff1 * metric_surface(cell,side,qp,1,0) * diff0;
-          //     + diff1 * metric_surface(cell,side,qp,1,1) * diff1;
-          data *= asinh_scaling * asinh_scaling;
-          t += data * w_measure_surface(cell,side,qp);
+          if (useCollapsedSidesets) {
+            ParamScalarT refVel0 = asinh(observedVelocity (sideSet_idx, qp, 0) / observedVelocityRMS(sideSet_idx, qp, 0) / asinh_scaling);
+            ParamScalarT refVel1 = asinh(observedVelocity (sideSet_idx, qp, 1) / observedVelocityRMS(sideSet_idx, qp, 1) / asinh_scaling);
+            ScalarT vel0 = asinh(velocity(sideSet_idx, qp, 0) / observedVelocityRMS(sideSet_idx, qp, 0) / asinh_scaling);
+            ScalarT vel1 = asinh(velocity(sideSet_idx, qp, 1) / observedVelocityRMS(sideSet_idx, qp, 1) / asinh_scaling);
+            ScalarT diff0 = refVel0 - vel0;
+            ScalarT diff1 = refVel1 - vel1;
+            data = diff0 * diff0
+                + diff1 * diff1;
+            //data = diff0 * metric_surface(sideSet_idx,qp,0,0) * diff0
+            //     + diff0 * metric_surface(sideSet_idx,qp,0,1) * diff1
+            //     + diff1 * metric_surface(sideSet_idx,qp,1,0) * diff0;
+            //     + diff1 * metric_surface(sideSet_idx,qp,1,1) * diff1;
+            data *= asinh_scaling * asinh_scaling;
+            t += data * w_measure_surface(sideSet_idx,qp);
+          } else {
+            ParamScalarT refVel0 = asinh(observedVelocity (cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
+            ParamScalarT refVel1 = asinh(observedVelocity (cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
+            ScalarT vel0 = asinh(velocity(cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
+            ScalarT vel1 = asinh(velocity(cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
+            ScalarT diff0 = refVel0 - vel0;
+            ScalarT diff1 = refVel1 - vel1;
+            data = diff0 * diff0
+                + diff1 * diff1;
+            //data = diff0 * metric_surface(cell,side,qp,0,0) * diff0
+            //     + diff0 * metric_surface(cell,side,qp,0,1) * diff1
+            //     + diff1 * metric_surface(cell,side,qp,1,0) * diff0;
+            //     + diff1 * metric_surface(cell,side,qp,1,1) * diff1;
+            data *= asinh_scaling * asinh_scaling;
+            t += data * w_measure_surface(cell,side,qp);
+          }
         }
 
       this->local_response_eval(cell, 0) += t*scaling;
@@ -236,22 +272,32 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
       auto grad_beta = grad_beta_vec[i];
       auto metric = metric_beta_vec[i];
       auto w_measure = w_measure_beta_vec[i];
-      if (workset.sideSets->find(ssName) != workset.sideSets->end()) {
-        const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(ssName);
-        for (auto const& it_side : sideSet)
+      if (workset.sideSetViews->find(ssName) != workset.sideSetViews->end()) {
+        sideSet = workset.sideSetViews->at(ssName);
+        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of side and cell
-          const int cell = it_side.elem_LID;
-          const int side = it_side.side_local_id;
+          const int cell = sideSet.elem_LID(sideSet_idx);
+          const int side = sideSet.side_local_id(sideSet_idx);
+
           ScalarT t = 0;
           for (unsigned int qp=0; qp<numBasalQPs; ++qp)
           {
-            ScalarT sum=0;
-            for (unsigned int idim=0; idim<numSideDims; ++idim)
-              for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
-                sum += grad_beta(cell,side,qp,idim)*metric(cell,side,qp,idim,jdim)*grad_beta(cell,side,qp,jdim);
+            if (useCollapsedSidesets) {
+              ScalarT sum=0;
+              for (unsigned int idim=0; idim<numSideDims; ++idim)
+                for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
+                  sum += grad_beta(sideSet_idx,qp,idim)*metric(sideSet_idx,qp,idim,jdim)*grad_beta(sideSet_idx,qp,jdim);
 
-            t += sum * w_measure(cell,side,qp);
+              t += sum * w_measure(sideSet_idx,qp);
+            } else {
+              ScalarT sum=0;
+              for (unsigned int idim=0; idim<numSideDims; ++idim)
+                for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
+                  sum += grad_beta(cell,side,qp,idim)*metric(cell,side,qp,idim,jdim)*grad_beta(cell,side,qp,jdim);
+
+              t += sum * w_measure(cell,side,qp);
+            }
           }
           this->local_response_eval(cell, 0) += t*scaling*alpha;//*50.0;
           this->global_response_eval(0) += t*scaling*alpha;//*50.0;
@@ -261,23 +307,33 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
     }
   }
 
-  if (workset.sideSets->find(basalSideName) != workset.sideSets->end() && alpha_stiffening!=0)
+  if (workset.sideSetViews->find(basalSideName) != workset.sideSetViews->end() && alpha_stiffening!=0)
   {
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
-    for (auto const& it_side : sideSet)
+    sideSet = workset.sideSetViews->at(basalSideName);
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
+
       ScalarT t = 0;
       for (unsigned int qp=0; qp<numBasalQPs; ++qp)
       {
-        ScalarT sum = stiffening(cell,side,qp)*stiffening(cell,side,qp);
-        for (unsigned int idim=0; idim<numSideDims; ++idim)
-          for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
-            sum += grad_stiffening(cell,side,qp,idim)*metric_basal(cell,side,qp,idim,jdim)*grad_stiffening(cell,side,qp,jdim);
+        if (useCollapsedSidesets) {
+          ScalarT sum = stiffening(sideSet_idx,qp)*stiffening(sideSet_idx,qp);
+          for (unsigned int idim=0; idim<numSideDims; ++idim)
+            for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
+              sum += grad_stiffening(sideSet_idx,qp,idim)*metric_basal(sideSet_idx,qp,idim,jdim)*grad_stiffening(sideSet_idx,qp,jdim);
 
-        t += sum * w_measure_basal(cell,side,qp);
+          t += sum * w_measure_basal(sideSet_idx,qp);
+        } else {
+          ScalarT sum = stiffening(cell,side,qp)*stiffening(cell,side,qp);
+          for (unsigned int idim=0; idim<numSideDims; ++idim)
+            for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
+              sum += grad_stiffening(cell,side,qp,idim)*metric_basal(cell,side,qp,idim,jdim)*grad_stiffening(cell,side,qp,jdim);
+
+          t += sum * w_measure_basal(cell,side,qp); 
+        }
       }
       this->local_response_eval(cell, 0) += t*scaling*alpha_stiffening;//*50.0;
       this->global_response_eval(0) += t*scaling*alpha_stiffening;//*50.0;

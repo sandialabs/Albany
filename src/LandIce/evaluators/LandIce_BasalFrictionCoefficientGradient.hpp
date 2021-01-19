@@ -53,24 +53,26 @@ private:
   typedef typename EvalT::ParamScalarT  ParamScalarT;
 
   // Input:
-  PHX::MDField<const RealType,Cell,Side,Node>                   given_field;
-  PHX::MDField<const ParamScalarT,Cell,Side,Node>               given_field_param;
-  PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
-  PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>          N;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>           U;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>           gradN;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim,Dim>       gradU;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>               u_norm;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>       coordVec;
+  PHX::MDField<const RealType>                   given_field;
+  PHX::MDField<const ParamScalarT>               given_field_param;
+  PHX::MDField<const MeshScalarT>  GradBF;
+  PHX::MDField<const ParamScalarT>          N;
+  PHX::MDField<const ScalarT>           U;
+  PHX::MDField<const ScalarT>           gradN;
+  PHX::MDField<const ScalarT>       gradU;
+  PHX::MDField<const ScalarT>               u_norm;
+  PHX::MDField<const MeshScalarT>       coordVec;
 
   PHX::MDField<const ScalarT,Dim>                               lambdaParam;
   PHX::MDField<const ScalarT,Dim>                               muParam;
   PHX::MDField<const ScalarT,Dim>                               powerParam;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           grad_beta;
+  PHX::MDField<ScalarT>           grad_beta;
 
   std::string basalSideName;
+  bool useCollapsedSidesets;
+  Albany::LocalSideSetInfo sideSet;
 
   unsigned int numSideNodes;
   unsigned int numSideQPs;

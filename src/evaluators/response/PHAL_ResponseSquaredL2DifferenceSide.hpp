@@ -38,7 +38,9 @@ private:
   int getLayout (const Teuchos::RCP<Albany::Layouts>& dl, const std::string& rank, Teuchos::RCP<PHX::DataLayout>& layout);
 
   std::string sideSetName;
-
+  bool useCollapsedSidesets;
+  Albany::LocalSideSetInfo sideSet;
+  
   int sideDim;
   int numQPs;
   int fieldDim;
@@ -51,8 +53,9 @@ private:
   PHX::MDField<const SourceScalarT>                         sourceField;
   PHX::MDField<const TargetScalarT>                         targetField;
 
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure;
+  PHX::MDField<const MeshScalarT>  metric;
+  PHX::MDField<const MeshScalarT>          w_measure;
+
 };
 
 //-- SourceScalarT = ScalarT

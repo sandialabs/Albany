@@ -26,7 +26,7 @@ template<typename EvalT, typename Traits>
 BasalFrictionCoefficientGradient<EvalT, Traits>::
 BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
                                   const Teuchos::RCP<Albany::Layouts>& dl) :
-  grad_beta (p.get<std::string> ("Basal Friction Coefficient Gradient Name"), dl->qp_gradient)
+  grad_beta (p.get<std::string> ("Basal Friction Coefficient Gradient Name"), (dl->useCollapsedSidesets && dl->isSideLayouts) ? dl->qp_gradient_sideset : dl->qp_gradient)
 {
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -38,6 +38,8 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 
   numSideQPs = dl->qp_gradient->extent(2);
   sideDim    = dl->qp_gradient->extent(3);
+
+  useCollapsedSidesets = dl->isSideLayouts && dl->useCollapsedSidesets;
 
   basalSideName = p.get<std::string>("Side Set Name");
   if (betaType == "GIVEN CONSTANT")
@@ -61,13 +63,13 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     given_field_name += "_" + basalSideName;;
 
     if (is_given_field_param) {
-      given_field_param = PHX::MDField<const ParamScalarT,Cell,Side,Node>(given_field_name, dl->node_scalar);
+      given_field_param = PHX::MDField<const ParamScalarT>(given_field_name, useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar);
       this->addDependentField (given_field_param);
     } else {
-      given_field = PHX::MDField<const RealType,Cell,Side,Node>(given_field_name, dl->node_scalar);
+      given_field = PHX::MDField<const RealType>(given_field_name, useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar);
       this->addDependentField (given_field);
     }
-    GradBF     = PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient);
+    GradBF     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Gradient BF Side Variable Name"), useCollapsedSidesets ? dl->node_qp_gradient_sideset : dl->node_qp_gradient);
     this->addDependentField (GradBF);
 
     numSideNodes = dl->node_qp_gradient->extent(2);
@@ -85,11 +87,11 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = REGULARIZED_COULOMB;
 
-    N      = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Name"), dl->qp_scalar);
-    U      = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Basal Velocity QP Name"), dl->qp_vector);
-    gradN  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Effective Pressure Gradient QP Name"), dl->qp_gradient);
-    gradU  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Basal Velocity Gradient QP Name"), dl->qp_vecgradient);
-    u_norm = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Sliding Velocity QP Name"), dl->qp_scalar);
+    N      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Effective Pressure QP Name"), useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar);
+    U      = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Velocity QP Name"), useCollapsedSidesets ? dl->qp_vector_sideset : dl->qp_vector);
+    gradN  = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Gradient QP Name"), useCollapsedSidesets ? dl->qp_gradient_sideset : dl->qp_gradient);
+    gradU  = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Velocity Gradient QP Name"), useCollapsedSidesets ? dl->qp_vecgradient_sideset : dl->qp_vecgradient);
+    u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Name"), useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar);
 
     muParam        = PHX::MDField<ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
     lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
@@ -125,7 +127,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map)
   {
-    coordVec = PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_coords);
+    coordVec = PHX::MDField<const MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), useCollapsedSidesets ? dl->qp_coords_sideset : dl->qp_coords);
 
     double R = stereographicMapList->get<double>("Earth Radius", 6371);
     x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
@@ -155,11 +157,7 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
   TEUCHOS_TEST_FOR_EXCEPTION (beta_type==INVALID, Teuchos::Exceptions::InvalidParameter,
       std::endl << "Error in LandIce::BasalFrictionCoefficientGradient: cannot compute the gradient of this type of beta.");
 
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it_ss = ssList.find(basalSideName);
-
-  if (it_ss==ssList.end())
-    return;
+  if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
 
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
@@ -171,73 +169,137 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
     power  = powerParam(0);
   }
 
-  const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-  std::vector<Albany::SideStruct>::const_iterator iter_s;
-  for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
+  sideSet = workset.sideSetViews->at(basalSideName);
+
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
     // Get the local data of side and cell
-    const int cell = iter_s->elem_LID;
-    const int side = iter_s->side_local_id;
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
-    switch (beta_type)
-    {
-      case GIVEN_CONSTANT:
-        for (unsigned int qp=0; qp<numSideQPs; ++qp)
-        {
-          for (unsigned int dim=0; dim<sideDim; ++dim)
-            grad_beta(cell,side,qp,dim) = 0.;
-        }
-        break;
-      case GIVEN_FIELD:
-        if (is_given_field_param) {
-          for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-            for (unsigned int dim=0; dim<sideDim; ++dim) {
-              grad_beta(cell,side,qp,dim) = 0.;
-              for (unsigned int node=0; node<numSideNodes; ++node) {
-                grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*given_field_param(cell,side,node);
-          }}}
-        } else {
-          for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-            for (unsigned int dim=0; dim<sideDim; ++dim) {
-              grad_beta(cell,side,qp,dim) = 0.;
-              for (unsigned int node=0; node<numSideNodes; ++node) {
-                grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*given_field(cell,side,node);
-          }}}
-        }
-        break;
-      case REGULARIZED_COULOMB:
-        for (unsigned int qp=0; qp<numSideQPs; ++qp)
-        {
-          ScalarT u_val      = u_norm(cell,side,qp);
-          ParamScalarT N_val = N(cell,side,qp);
-          ScalarT den        = u_val+lambda*std::pow(A*N_val,1./power);
-
-          ScalarT f_u = (power-1)*mu*N_val*std::pow(u_val,power-2)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
-                      - power*mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1);
-          ScalarT f_N = mu*std::pow(u_val,power-1)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
-                      - mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1)*lambda*std::pow(A*N_val,1./power-1)*A;
-          for (unsigned int dim=0; dim<sideDim; ++dim)
-          {
-            grad_beta(cell,side,qp,dim) = f_N*gradN(cell,side,qp,dim);
-            for (unsigned int comp=0; comp<vecDim; ++comp)
-              grad_beta(cell,side,qp,dim) += f_u * (U(cell,side,qp,comp)/u_val)*gradU(cell,side,qp,vecDim,dim);
-          }
-        }
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "Error in LandIce::BasalFrictionCoefficientGradient: cannot compute the gradient of this type of beta.");
-    }
-
-    // Correct the value if we are using a stereographic map
-    if (use_stereographic_map)
-    {
-      for (unsigned int qp=0; qp<numSideQPs; ++qp)
+    if (useCollapsedSidesets) {
+      switch (beta_type)
       {
-        MeshScalarT x = coordVec(cell,side,qp,0) - x_0;
-        MeshScalarT y = coordVec(cell,side,qp,1) - y_0;
-        MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-        for (unsigned int dim=0; dim<sideDim; ++dim)
-          grad_beta(cell,side,qp,dim) *= h*h;
+        case GIVEN_CONSTANT:
+          for (unsigned int qp=0; qp<numSideQPs; ++qp)
+          {
+            for (unsigned int dim=0; dim<sideDim; ++dim)
+              grad_beta(sideSet_idx,qp,dim) = 0.;
+          }
+          break;
+        case GIVEN_FIELD:
+          if (is_given_field_param) {
+            for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+              for (unsigned int dim=0; dim<sideDim; ++dim) {
+                grad_beta(sideSet_idx,qp,dim) = 0.;
+                for (unsigned int node=0; node<numSideNodes; ++node) {
+                  grad_beta(sideSet_idx,qp,dim) += GradBF(sideSet_idx,node,qp,dim)*given_field_param(sideSet_idx,node);
+            }}}
+          } else {
+            for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+              for (unsigned int dim=0; dim<sideDim; ++dim) {
+                grad_beta(sideSet_idx,qp,dim) = 0.;
+                for (unsigned int node=0; node<numSideNodes; ++node) {
+                  grad_beta(sideSet_idx,qp,dim) += GradBF(sideSet_idx,node,qp,dim)*given_field(sideSet_idx,node);
+            }}}
+          }
+          break;
+        case REGULARIZED_COULOMB:
+          for (unsigned int qp=0; qp<numSideQPs; ++qp)
+          {
+            ScalarT u_val      = u_norm(sideSet_idx,qp);
+            ParamScalarT N_val = N(sideSet_idx,qp);
+            ScalarT den        = u_val+lambda*std::pow(A*N_val,1./power);
+
+            ScalarT f_u = (power-1)*mu*N_val*std::pow(u_val,power-2)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
+                        - power*mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1);
+            ScalarT f_N = mu*std::pow(u_val,power-1)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
+                        - mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1)*lambda*std::pow(A*N_val,1./power-1)*A;
+            for (unsigned int dim=0; dim<sideDim; ++dim)
+            {
+              grad_beta(sideSet_idx,qp,dim) = f_N*gradN(sideSet_idx,qp,dim);
+              for (unsigned int comp=0; comp<vecDim; ++comp)
+                grad_beta(sideSet_idx,qp,dim) += f_u * (U(sideSet_idx,qp,comp)/u_val)*gradU(sideSet_idx,qp,vecDim,dim);
+            }
+          }
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+              std::endl << "Error in LandIce::BasalFrictionCoefficientGradient: cannot compute the gradient of this type of beta.");
+      }
+
+      // Correct the value if we are using a stereographic map
+      if (use_stereographic_map)
+      {
+        for (unsigned int qp=0; qp<numSideQPs; ++qp)
+        {
+          MeshScalarT x = coordVec(sideSet_idx,qp,0) - x_0;
+          MeshScalarT y = coordVec(sideSet_idx,qp,1) - y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          for (unsigned int dim=0; dim<sideDim; ++dim)
+            grad_beta(sideSet_idx,qp,dim) *= h*h;
+        }
+      }
+    } else {
+      switch (beta_type)
+      {
+        case GIVEN_CONSTANT:
+          for (unsigned int qp=0; qp<numSideQPs; ++qp)
+          {
+            for (unsigned int dim=0; dim<sideDim; ++dim)
+              grad_beta(cell,side,qp,dim) = 0.;
+          }
+          break;
+        case GIVEN_FIELD:
+          if (is_given_field_param) {
+            for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+              for (unsigned int dim=0; dim<sideDim; ++dim) {
+                grad_beta(cell,side,qp,dim) = 0.;
+                for (unsigned int node=0; node<numSideNodes; ++node) {
+                  grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*given_field_param(cell,side,node);
+            }}}
+          } else {
+            for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+              for (unsigned int dim=0; dim<sideDim; ++dim) {
+                grad_beta(cell,side,qp,dim) = 0.;
+                for (unsigned int node=0; node<numSideNodes; ++node) {
+                  grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*given_field(cell,side,node);
+            }}}
+          }
+          break;
+        case REGULARIZED_COULOMB:
+          for (unsigned int qp=0; qp<numSideQPs; ++qp)
+          {
+            ScalarT u_val      = u_norm(cell,side,qp);
+            ParamScalarT N_val = N(cell,side,qp);
+            ScalarT den        = u_val+lambda*std::pow(A*N_val,1./power);
+
+            ScalarT f_u = (power-1)*mu*N_val*std::pow(u_val,power-2)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
+                        - power*mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1);
+            ScalarT f_N = mu*std::pow(u_val,power-1)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
+                        - mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1)*lambda*std::pow(A*N_val,1./power-1)*A;
+            for (unsigned int dim=0; dim<sideDim; ++dim)
+            {
+              grad_beta(cell,side,qp,dim) = f_N*gradN(cell,side,qp,dim);
+              for (unsigned int comp=0; comp<vecDim; ++comp)
+                grad_beta(cell,side,qp,dim) += f_u * (U(cell,side,qp,comp)/u_val)*gradU(cell,side,qp,vecDim,dim);
+            }
+          }
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+              std::endl << "Error in LandIce::BasalFrictionCoefficientGradient: cannot compute the gradient of this type of beta.");
+      }
+
+      // Correct the value if we are using a stereographic map
+      if (use_stereographic_map)
+      {
+        for (unsigned int qp=0; qp<numSideQPs; ++qp)
+        {
+          MeshScalarT x = coordVec(cell,side,qp,0) - x_0;
+          MeshScalarT y = coordVec(cell,side,qp,1) - y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          for (unsigned int dim=0; dim<sideDim; ++dim)
+            grad_beta(cell,side,qp,dim) *= h*h;
+        }
       }
     }
   }

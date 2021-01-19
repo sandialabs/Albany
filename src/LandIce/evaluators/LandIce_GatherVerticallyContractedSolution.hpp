@@ -40,14 +40,7 @@ public:
 
   enum ContractionOperator {VerticalAverage, VerticalSum};
 
-  Albany::LocalSideSetInfo sideSet;
-
-  Kokkos::View<double*, PHX::Device> quadWeights;
-
   Teuchos::ArrayRCP<const ST> x_constView;
-
-  int numLayers;
-  int numSideNodes;
 
 protected:
 
@@ -70,6 +63,14 @@ protected:
   Teuchos::RCP<const CellTopologyData> cell_topo;
 
   ContractionOperator op;
+
+  Albany::LocalSideSetInfo sideSet;
+
+  Kokkos::View<double*, PHX::Device> quadWeights;
+  Kokkos::View<int*, PHX::Device> numSideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
+
+  int numLayers;
 
 };
 
