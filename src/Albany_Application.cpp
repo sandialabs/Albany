@@ -2385,7 +2385,8 @@ Application::evaluateResponseDistParamHessian_pp(
 {
   Teuchos::ParameterList coloring_params;
   std::string matrixType = "Hessian";
-  coloring_params.set("MatrixType", matrixType);
+  coloring_params.set("matrixType", matrixType);
+  coloring_params.set("symmetric", true);
 
   // Get the crs Hessian:
   RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
