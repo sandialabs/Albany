@@ -464,10 +464,10 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
     distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace());
   Teuchos::RCP<const Tpetra_Map> p_owned_map = Albany::getTpetraMap(
     distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace());
-  const Albany::IDArray&  wsElDofs =
-    distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs()[0];
+  std::vector<IDArray> vElDofs =
+    distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
 
-  Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Albany::createHessianCrsGraph(p_owned_map, p_overlapped_map, wsElDofs);
+  Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Albany::createHessianCrsGraph(p_owned_map, p_overlapped_map, vElDofs);
   Teuchos::RCP<Tpetra_CrsMatrix> Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
 
   return Albany::createThyraLinearOp(Ht);

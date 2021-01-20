@@ -6,7 +6,7 @@ namespace Albany
     Teuchos::RCP<Tpetra_CrsGraph> createHessianCrsGraph(
         Teuchos::RCP<const Tpetra_Map> p_owned_map,
         Teuchos::RCP<const Tpetra_Map> p_overlapped_map,
-        const Albany::IDArray &wsElDofs);
+        const std::vector<IDArray> wsElDofs);
 
 } // namespace Albany
 
