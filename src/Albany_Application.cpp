@@ -2386,7 +2386,10 @@ Application::evaluateResponseDistParamHessian_pp(
   Teuchos::ParameterList coloring_params;
   std::string matrixType = "Hessian";
   coloring_params.set("matrixType", matrixType);
-  coloring_params.set("symmetric", true);
+
+  // Even if the Hessian is symmetric, the distributed crs matrix
+  // is not symmetrical as the row and column map are not identical.
+  coloring_params.set("symmetric", false);
 
   // Get the crs Hessian:
   RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
