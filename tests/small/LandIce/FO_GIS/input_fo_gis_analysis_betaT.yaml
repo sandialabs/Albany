@@ -13,21 +13,14 @@ ANONYMOUS:
     Surface Side Name: upperside
     Equation Set:
       Type: LandIce
-      Num Equations: 3
+      Num Equations: 2
     Response Functions:
       Number Of Responses: 1
       Response 0:
-        Type: Sum Of Responses
-        Number Of Responses: 2
-        Response 1:
-          Scaling Coefficient: 5.88239999999999978e-07
-          Asinh Scaling: 1.00000000000000000e+01
-          Name: Surface Velocity Mismatch
-          Regularization Coefficient: 0.00000000000000000e+00
-        Response 0:
-          Scaling Coefficient: 5.88239999999999978e-05
-          Name: Boundary Squared L2 Norm
-          Field Name: L2 Projected Boundary Laplacian
+        Scaling Coefficient: 5.88239999999999978e-07
+        Asinh Scaling: 1.00000000000000000e+01
+        Name: Surface Velocity Mismatch
+        Regularization Coefficient: 1.00000000000000000e+01
     Dirichlet BCs: {}
     LandIce BCs:
       Number: 2
@@ -166,9 +159,30 @@ ANONYMOUS:
 
         Use Old Reduced Space Interface: false
         Full Space: false
-        Hessian Dot Product: false
         Use NOX Solver: false
 
+        Hessian Dot Product: true
+        Remove Mean Of The Right-hand Side: true
+        Hessian Diagonal Inverse:
+          Block solver type 0: Belos
+          Block 0:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Pseudo Block GMRES
+                Solver Types:
+                  Pseudo Block GMRES:
+                    Maximum Iterations: 1000
+                    Convergence Tolerance: 1e-4
+                    Num Blocks: 1000
+                    Output Frequency: 200
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Prec Type: ILUT
         ROL Options:
           General:
             Variable Objective Function: false
