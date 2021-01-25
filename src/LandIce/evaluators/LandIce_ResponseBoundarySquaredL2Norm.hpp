@@ -43,9 +43,11 @@ namespace LandIce {
     unsigned int numSideQPs;
     unsigned int numSideDims;
 
+    Albany::LocalSideSetInfo sideSet;
+    bool useCollapsedSidesets;
 
-    PHX::MDField<const ScalarT,Cell,Side,Node>          solution;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     w_side_measure;
+    PHX::MDField<const ScalarT>          solution;
+    PHX::MDField<const MeshScalarT>     w_side_measure;
 
     ScalarT p_reg, reg;
     double scaling;

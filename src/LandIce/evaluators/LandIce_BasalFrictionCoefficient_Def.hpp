@@ -103,8 +103,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       given_field_name += "_" + basalSideName;
     }
     if( (beta_type == EXP_GIVEN_FIELD) && !interpolate_then_exponentiate ) {
-      BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
-      layout_given_field = dl->node_scalar;
+      BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), useCollapsedSidesets ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+      layout_given_field = useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar;
       this->addDependentField (BF);
     }
     if (is_given_field_param) {
@@ -152,7 +152,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     N            = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
     u_norm       = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
     powerParam   = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
-    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
+    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), useCollapsedSidesets ? dl->cell_scalar2_sideset : dl->cell_scalar2);
 
     this->addDependentField (powerParam);
     this->addDependentField (N);
@@ -200,7 +200,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map) {
-    layout = nodal ? dl->node_vector : dl->qp_coords;
+    if (useCollapsedSidesets) {
+      layout = nodal ? dl->node_vector_sideset : dl->qp_coords_sideset;
+    } else {
+      layout = nodal ? dl->node_vector : dl->qp_coords;
+    }
     coordVec = PHX::MDField<MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), layout);
 
     double R = stereographicMapList->get<double>("Earth Radius", 6371);
@@ -370,13 +374,23 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       case POWER_LAW:
         if (distributedMu) {
           for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-            beta(cell,side,ipt) = muPowerLawField(cell,side,ipt) * Nval * std::pow (u_norm(cell,side,ipt), power-1);
+            if (useCollapsedSidesets) {
+              ScalarT Nval = std::max(N(sideSet_idx,ipt),0.0);
+              beta(sideSet_idx,ipt) = muPowerLawField(sideSet_idx,ipt) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
+            } else {
+              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+              beta(cell,side,ipt) = muPowerLawField(cell,side,ipt) * Nval * std::pow (u_norm(cell,side,ipt), power-1);
+            }
           }
         } else {
           for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-            beta(cell,side,ipt) = mu * Nval * std::pow (u_norm(cell,side,ipt), power-1);
+            if (useCollapsedSidesets) {
+              ScalarT Nval = std::max(N(sideSet_idx,ipt),0.0);
+              beta(sideSet_idx,ipt) = mu * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
+            } else {
+              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+              beta(cell,side,ipt) = mu * Nval * std::pow (u_norm(cell,side,ipt), power-1);
+            }
           }
         }
 
@@ -386,29 +400,53 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
         if (distributedLambda) {
           if (distributedMu) {
             for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-              ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambdaField(cell,side,ipt)*ice_softness(cell,side)*std::pow(Nval,n) );
-              beta(cell,side,ipt) = muCoulombField(cell,side,ipt) * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              if (useCollapsedSidesets) {
+                ScalarT Nval = std::max(N(sideSet_idx,ipt),0.0);
+                ScalarT q = u_norm(sideSet_idx,ipt) / ( u_norm(sideSet_idx,ipt) + lambdaField(sideSet_idx,ipt)*ice_softness(sideSet_idx)*std::pow(Nval,n) );
+                beta(sideSet_idx,ipt) = muCoulombField(sideSet_idx,ipt) * Nval * std::pow( q, power) / u_norm(sideSet_idx,ipt);
+              } else {
+                ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+                ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambdaField(cell,side,ipt)*ice_softness(cell,side)*std::pow(Nval,n) );
+                beta(cell,side,ipt) = muCoulombField(cell,side,ipt) * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              }
             }
           } else {
             for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-              ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambdaField(cell,side,ipt)*ice_softness(cell,side)*std::pow(Nval,n) );
-              beta(cell,side,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              if (useCollapsedSidesets) {
+                ScalarT Nval = std::max(N(sideSet_idx,ipt),0.0);
+                ScalarT q = u_norm(sideSet_idx,ipt) / ( u_norm(sideSet_idx,ipt) + lambdaField(sideSet_idx,ipt)*ice_softness(sideSet_idx)*std::pow(Nval,n) );
+                beta(sideSet_idx,ipt) = mu * Nval * std::pow( q, power) / u_norm(sideSet_idx,ipt);
+              } else {
+                ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+                ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambdaField(cell,side,ipt)*ice_softness(cell,side)*std::pow(Nval,n) );
+                beta(cell,side,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              }
             }
           }
         } else {
           if (distributedMu) {
             for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-              ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*ice_softness(cell,side)*std::pow(Nval,n) );
-              beta(cell,side,ipt) = muCoulombField(cell,side,ipt) * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              if (useCollapsedSidesets) {
+                ScalarT Nval = std::max(N(sideSet_idx,ipt),0.0);
+                ScalarT q = u_norm(sideSet_idx,ipt) / ( u_norm(sideSet_idx,ipt) + lambda*ice_softness(sideSet_idx)*std::pow(Nval,n) );
+                beta(sideSet_idx,ipt) = muCoulombField(sideSet_idx,ipt) * Nval * std::pow( q, power) / u_norm(sideSet_idx,ipt);
+              } else {
+                ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+                ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*ice_softness(cell,side)*std::pow(Nval,n) );
+                beta(cell,side,ipt) = muCoulombField(cell,side,ipt) * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              }
             }
           } else {
             for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-              ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*ice_softness(cell,side)*std::pow(Nval,n) );
-              beta(cell,side,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              if (useCollapsedSidesets) {
+                ScalarT Nval = std::max(N(sideSet_idx,ipt),0.0);
+                ScalarT q = u_norm(sideSet_idx,ipt) / ( u_norm(sideSet_idx,ipt) + lambda*ice_softness(sideSet_idx)*std::pow(Nval,n) );
+                beta(sideSet_idx,ipt) = mu * Nval * std::pow( q, power) / u_norm(sideSet_idx,ipt);
+              } else {
+                ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+                ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*ice_softness(cell,side)*std::pow(Nval,n) );
+                beta(cell,side,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              }
             }
           }
         }
@@ -436,15 +474,27 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
         } else {
           if (is_given_field_param) {
             for (unsigned int qp=0; qp<numQPs; ++qp) {
-              beta(cell,side,qp) = 0;
-              for (unsigned int node=0; node<numNodes; ++node)
-                beta(cell,side,qp) += std::exp(given_field_param(cell,side,node))*BF(cell,side,node,qp);
+              if (useCollapsedSidesets) {
+                beta(sideSet_idx,qp) = 0;
+                for (unsigned int node=0; node<numNodes; ++node)
+                  beta(sideSet_idx,qp) += std::exp(given_field_param(sideSet_idx,node))*BF(sideSet_idx,node,qp);  
+              } else {
+                beta(cell,side,qp) = 0;
+                for (unsigned int node=0; node<numNodes; ++node)
+                  beta(cell,side,qp) += std::exp(given_field_param(cell,side,node))*BF(cell,side,node,qp);
+              }
             }
           } else {
             for (unsigned int qp=0; qp<numQPs; ++qp) {
-              beta(cell,side,qp) = 0;
-              for (unsigned int node=0; node<numNodes; ++node)
-                beta(cell,side,qp) += std::exp(given_field(cell,side,node))*BF(cell,side,node,qp);
+              if (useCollapsedSidesets) {
+                beta(sideSet_idx,qp) = 0;
+                for (unsigned int node=0; node<numNodes; ++node)
+                  beta(sideSet_idx,qp) += std::exp(given_field(sideSet_idx,node))*BF(sideSet_idx,node,qp);
+              } else {
+                beta(cell,side,qp) = 0;
+                for (unsigned int node=0; node<numNodes; ++node)
+                  beta(cell,side,qp) += std::exp(given_field(cell,side,node))*BF(cell,side,node,qp);
+              }
             }
           }
         }
@@ -485,10 +535,17 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
     // Correct the value if we are using a stereographic map
     if (use_stereographic_map) {
       for (unsigned int ipt=0; ipt<dim; ++ipt) {
-        MeshScalarT x = coordVec(cell,side,ipt,0) - x_0;
-        MeshScalarT y = coordVec(cell,side,ipt,1) - y_0;
-        MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-        beta(cell,side,ipt) *= h*h;
+        if (useCollapsedSidesets) {
+          MeshScalarT x = coordVec(sideSet_idx,ipt,0) - x_0;
+          MeshScalarT y = coordVec(sideSet_idx,ipt,1) - y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          beta(sideSet_idx,ipt) *= h*h;
+        } else {
+          MeshScalarT x = coordVec(cell,side,ipt,0) - x_0;
+          MeshScalarT y = coordVec(cell,side,ipt,1) - y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          beta(cell,side,ipt) *= h*h;
+        }
       }
     }
   }

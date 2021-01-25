@@ -34,7 +34,7 @@ public:
 private:
 
   std::string sideName, bdEdgesName;
-  std::vector<std::vector<int> >  sideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   unsigned int numNodes;
@@ -43,12 +43,15 @@ private:
   unsigned int numBasalQPs;
   unsigned int sideDim;
 
+  Albany::LocalSideSetInfo sideSet;
+  bool useCollapsedSidesets;
+
   PHX::MDField<const ScalarT,Cell,Node>                         solution;
-  PHX::MDField<const FieldScalarT,Cell,Side,Node>               field;
-  PHX::MDField<const FieldScalarT,Cell,Side,QuadPoint,Dim>      gradField;
-  PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  gradBF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>           w_side_measure;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   side_tangents;
+  PHX::MDField<const FieldScalarT>               field;
+  PHX::MDField<const FieldScalarT>      gradField;
+  PHX::MDField<const MeshScalarT>  gradBF;
+  PHX::MDField<const MeshScalarT>           w_side_measure;
+  PHX::MDField<const MeshScalarT>   side_tangents;
   PHX::MDField<const MeshScalarT>                               coordVec;
 
   PHX::MDField<ScalarT,Cell,Node> bdLaplacian_L2Projection_res;

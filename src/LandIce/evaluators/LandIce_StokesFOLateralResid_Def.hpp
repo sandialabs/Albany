@@ -72,7 +72,7 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
     Y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
     R2 = std::pow(R,2);
 
-    coords_qp = decltype(coords_qp)(p.get<std::string>("Coordinate Vector Variable Name"),dl_lateral->qp_coords);
+    coords_qp = decltype(coords_qp)(p.get<std::string>("Coordinate Vector Variable Name"), useCollapsedSidesets ? dl_lateral->qp_coords_sideset : dl_lateral->qp_coords);
     this->addDependentField(coords_qp);
   }
 

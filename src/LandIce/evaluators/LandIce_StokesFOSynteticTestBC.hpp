@@ -54,17 +54,20 @@ private:
   };
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>    u;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   qp_coords;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   side_normals;
-  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>     BF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       w_measure;
+  PHX::MDField<const ScalarT>    u;
+  PHX::MDField<const MeshScalarT>   qp_coords;
+  PHX::MDField<const MeshScalarT>   side_normals;
+  PHX::MDField<const RealType>     BF;
+  PHX::MDField<const MeshScalarT>       w_measure;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim>                    residual;
 
   std::vector<std::vector<int> >  sideNodes;
   std::string                     ssName;
+
+  Albany::LocalSideSetInfo sideSet;
+  bool useCollapsedSidesets;
 
   Kokkos::DynRankView<ScalarT, PHX::Device>           qp_temp_buffer;
 

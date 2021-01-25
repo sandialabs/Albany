@@ -42,19 +42,22 @@ namespace LandIce {
     std::string surfaceSideName;
     std::string basalSideName;
 
+    Albany::LocalSideSetInfo sideSet;
+    bool useCollapsedSidesets;
+
     unsigned int numSideNodes;
     unsigned int numBasalQPs;
     unsigned int numSideDims;
 
-    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>                   flux_div;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  SMB;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  SMBRMS;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  obs_thickness;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint>                  thicknessRMS;
-    PHX::MDField<const ThicknessScalarType,Cell,Side,QuadPoint>       thickness;
-    PHX::MDField<const ThicknessScalarType,Cell,Side,QuadPoint,Dim>   grad_thickness;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>               w_measure_2d;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>       tangents;
+    PHX::MDField<const ScalarT>                   flux_div;
+    PHX::MDField<const RealType>                  SMB;
+    PHX::MDField<const RealType>                  SMBRMS;
+    PHX::MDField<const RealType>                  obs_thickness;
+    PHX::MDField<const RealType>                  thicknessRMS;
+    PHX::MDField<const ThicknessScalarType>       thickness;
+    PHX::MDField<const ThicknessScalarType>   grad_thickness;
+    PHX::MDField<const MeshScalarT>               w_measure_2d;
+    PHX::MDField<const MeshScalarT>       tangents;
 
     ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
     double scaling, alpha, alphaH, alphaSMB;

@@ -171,7 +171,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
       dl->side_layouts[ssName] = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
                                                          numSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                         true,sideMeshSpecs.worksetSize));
+                                                         useCollapsedSidesets,sideMeshSpecs.worksetSize));
     }
   }
 
@@ -198,7 +198,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
     dl->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
                                                                 numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                                true,surfaceMeshSpecs.worksetSize));
+                                                                useCollapsedSidesets,surfaceMeshSpecs.worksetSize));
   }
 
   // If we have thickness or surface velocity diagnostics, we may need basal side stuff
@@ -224,7 +224,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
     dl->side_layouts[basalSideName] = rcp(new Albany::Layouts(worksetSize,numbasalSideVertices,numbasalSideNodes,
                                                               numbasalSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                              true,basalMeshSpecs.worksetSize));
+                                                              useCollapsedSidesets,basalMeshSpecs.worksetSize));
   }
 
 #ifdef OUTPUT_TO_SCREEN

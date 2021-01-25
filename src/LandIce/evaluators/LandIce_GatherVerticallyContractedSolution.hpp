@@ -68,7 +68,6 @@ protected:
 
   Kokkos::View<double*, PHX::Device> quadWeights;
   Kokkos::View<int*, PHX::Device> numSideNodes;
-  Kokkos::View<int**, PHX::Device> sideNodes;
 
   int numLayers;
 

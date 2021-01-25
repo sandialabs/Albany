@@ -68,26 +68,12 @@ GatherVerticallyContractedSolutionBase(const Teuchos::ParameterList& p,
 
   this->setName("GatherVerticallyContractedSolution"+PHX::print<EvalT>());
 
-  Teuchos::RCP<shards::CellTopology> cell_type;
-  cell_type = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-
-  int sideDim = cell_type->getDimension()-1;
-  int numSides = cell_type->getSideCount();
-  int nodeMax = 0;
-  for (int side=0; side<numSides; ++side) {
-    int thisSideNodes = cell_type->getNodeCount(sideDim,side);
-    nodeMax = std::max(nodeMax, thisSideNodes);
-  }
+  int numSides = cell_topo->side_count;  
   this->numSideNodes = Kokkos::View<int*, PHX::Device>("numSideNodes", numSides);
-  this->sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
   for (int side=0; side<numSides; ++side) {
-    // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cell_type->getNodeCount(sideDim,side);
-    this->numSideNodes(side) = thisSideNodes;
-    for (int node=0; node<thisSideNodes; ++node) {
-      this->sideNodes(side,node) = cell_type->getNodeMap(sideDim,side,node);
-    }
+    this->numSideNodes(side) = cell_topo->side[side].topology->node_count;
   }
+
 }
 
 //**********************************************************************
@@ -129,7 +115,7 @@ operator() (const ResidualScalar_Tag& tag, const int& sideSet_idx) const {
       for(int comp=0; comp<this->vecDim; ++comp)
         contrSol[comp] += this->x_constView_device(this->localDOFView(sideSet_idx, node, il, comp+this->offset))*this->quadWeights(il);
     }
-    this->contractedSol(sideSet_idx,this->sideNodes(side,node)) = contrSol[0];
+    this->contractedSol(sideSet_idx,node) = contrSol[0];
   }
 
 }
@@ -150,7 +136,7 @@ operator() (const ResidualVector_Tag& tag, const int& sideSet_idx) const {
         contrSol[comp] += this->x_constView_device(this->localDOFView(sideSet_idx, node, il, comp+this->offset))*this->quadWeights(il);
     }
     for(int comp=0; comp<this->vecDim; ++comp) {
-      this->contractedSol(sideSet_idx,this->sideNodes(side,node),comp) = contrSol[comp];
+      this->contractedSol(sideSet_idx,node,comp) = contrSol[comp];
     }
   }
 

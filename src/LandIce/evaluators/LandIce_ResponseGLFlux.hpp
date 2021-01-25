@@ -45,10 +45,12 @@ namespace LandIce {
     unsigned int numSideNodes;
     unsigned int numSideDims;
 
-    PHX::MDField<const ScalarT,Cell,Side,Node,Dim>          avg_vel;     //[m yr^{-1}]
-    PHX::MDField<const MeshScalarT,Cell,Side,Node>          thickness;   //[km]
-    PHX::MDField<const MeshScalarT,Cell,Side,Node>          bed;         //[km]
-    PHX::MDField<const MeshScalarT,Cell,Side,Node,Dim>      coords;      //[km]
+    bool useCollapsedSidesets;
+
+    PHX::MDField<const ScalarT>          avg_vel;     //[m yr^{-1}]
+    PHX::MDField<const MeshScalarT>          thickness;   //[km]
+    PHX::MDField<const MeshScalarT>          bed;         //[km]
+    PHX::MDField<const MeshScalarT>      coords;      //[km]
     Kokkos::DynRankView<MeshScalarT, PHX::Device>           gl_func,H,x,y;
     Kokkos::DynRankView<ScalarT, PHX::Device>               velx,vely;
 
@@ -56,6 +58,8 @@ namespace LandIce {
     double scaling;       //[adim]
 
     Teuchos::RCP<const CellTopologyData> cell_topo;
+
+    Albany::LocalSideSetInfo sideSet;
   };
 
 }
