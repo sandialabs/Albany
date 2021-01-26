@@ -10,10 +10,15 @@ except:
 import os
 
 class TestIO(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.comm = Teuchos.DefaultComm.getComm()
+        cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
+
     def test_write_distributed_npy(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
-        nproc = comm.getSize()
+        cls = self.__class__
+        rank = cls.comm.getRank()
+        nproc = cls.comm.getSize()
         if nproc > 1:
             mvector_filename = 'out_mvector_write_test_' + str(nproc)
         else:
@@ -22,7 +27,7 @@ class TestIO(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_cols = 4
         parameter_map = problem.getParameterMap(0)
@@ -36,9 +41,9 @@ class TestIO(unittest.TestCase):
         Utils.writeMVector(file_dir+'/'+mvector_filename, mvector, distributedFile = True, useBinary = True)
 
     def test_write_distributed_txt(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
-        nproc = comm.getSize()
+        cls = self.__class__
+        rank = cls.comm.getRank()
+        nproc = cls.comm.getSize()
         if nproc > 1:
             mvector_filename = 'out_mvector_write_test_' + str(nproc)
         else:
@@ -47,7 +52,7 @@ class TestIO(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_cols = 4
         parameter_map = problem.getParameterMap(0)
@@ -61,9 +66,9 @@ class TestIO(unittest.TestCase):
         Utils.writeMVector(file_dir+'/'+mvector_filename, mvector, distributedFile = True, useBinary = False)
 
     def test_write_non_distributed_npy(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
-        nproc = comm.getSize()
+        cls = self.__class__
+        rank = cls.comm.getRank()
+        nproc = cls.comm.getSize()
         if nproc > 1:
             mvector_filename = 'out_mvector_write_test_' + str(nproc)
         else:
@@ -72,7 +77,7 @@ class TestIO(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_cols = 4
         parameter_map = problem.getParameterMap(0)
@@ -86,9 +91,9 @@ class TestIO(unittest.TestCase):
         Utils.writeMVector(file_dir+'/'+mvector_filename, mvector, distributedFile = False, useBinary = True)
 
     def test_write_non_distributed_txt(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
-        nproc = comm.getSize()
+        cls = self.__class__
+        rank = cls.comm.getRank()
+        nproc = cls.comm.getSize()
         if nproc > 1:
             mvector_filename = 'out_mvector_write_test_' + str(nproc)
         else:
@@ -97,7 +102,7 @@ class TestIO(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_cols = 4
         parameter_map = problem.getParameterMap(0)
@@ -111,9 +116,9 @@ class TestIO(unittest.TestCase):
         Utils.writeMVector(file_dir+'/'+mvector_filename, mvector, distributedFile = False, useBinary = False)
 
     def test_read_distributed_npy(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
-        nproc = comm.getSize()
+        cls = self.__class__
+        rank = cls.comm.getRank()
+        nproc = cls.comm.getSize()
         if nproc > 1:
             mvector_filename = 'in_mvector_read_test_' + str(nproc)
         else:
@@ -122,7 +127,7 @@ class TestIO(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_cols = 4
         parameter_map = problem.getParameterMap(0)
@@ -135,9 +140,9 @@ class TestIO(unittest.TestCase):
             self.assertTrue(np.abs(mvector[i,0]-mvector_target[i]) < tol)
 
     def test_read_distributed_txt(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
-        nproc = comm.getSize()
+        cls = self.__class__
+        rank = cls.comm.getRank()
+        nproc = cls.comm.getSize()
         if nproc > 1:
             mvector_filename = 'in_mvector_read_test_' + str(nproc)
         else:
@@ -146,7 +151,7 @@ class TestIO(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_cols = 4
         parameter_map = problem.getParameterMap(0)
@@ -159,9 +164,9 @@ class TestIO(unittest.TestCase):
             self.assertTrue(np.abs(mvector[i,0]-mvector_target[i]) < tol)
 
     def test_read_non_distributed_npy(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
-        nproc = comm.getSize()
+        cls = self.__class__
+        rank = cls.comm.getRank()
+        nproc = cls.comm.getSize()
         if nproc > 1:
             mvector_filename = 'in_mvector_read_test_' + str(nproc)
         else:
@@ -170,7 +175,7 @@ class TestIO(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_cols = 4
         parameter_map = problem.getParameterMap(0)
@@ -183,9 +188,9 @@ class TestIO(unittest.TestCase):
             self.assertTrue(np.abs(mvector[i,0]-mvector_target[i]) < tol)
 
     def test_read_non_distributed_txt(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
-        nproc = comm.getSize()
+        cls = self.__class__
+        rank = cls.comm.getRank()
+        nproc = cls.comm.getSize()
         if nproc > 1:
             mvector_filename = 'in_mvector_read_test_' + str(nproc)
         else:
@@ -194,7 +199,7 @@ class TestIO(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_cols = 4
         parameter_map = problem.getParameterMap(0)
@@ -207,9 +212,9 @@ class TestIO(unittest.TestCase):
             self.assertTrue(np.abs(mvector[i,0]-mvector_target[i]) < tol)
 
     def test_read_non_distributed_non_scattered_npy(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
-        nproc = comm.getSize()
+        cls = self.__class__
+        rank = cls.comm.getRank()
+        nproc = cls.comm.getSize()
         if nproc > 1:
             mvector_filename = 'in_mvector_read_test_' + str(nproc)
         else:
@@ -218,7 +223,7 @@ class TestIO(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_cols = 4
         parameter_map = problem.getParameterMap(0)
@@ -231,9 +236,9 @@ class TestIO(unittest.TestCase):
             self.assertTrue(np.abs(mvector[i,0]-mvector_target[i]) < tol)
 
     def test_read_non_distributed_non_scattered_txt(self):
-        comm = Teuchos.DefaultComm.getComm()
-        rank = comm.getRank()
-        nproc = comm.getSize()
+        cls = self.__class__
+        rank = cls.comm.getRank()
+        nproc = cls.comm.getSize()
         if nproc > 1:
             mvector_filename = 'in_mvector_read_test_' + str(nproc)
         else:
@@ -242,7 +247,7 @@ class TestIO(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename)
+        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         n_cols = 4
         parameter_map = problem.getParameterMap(0)
@@ -254,6 +259,10 @@ class TestIO(unittest.TestCase):
         for i in range(0, n_cols):
             self.assertTrue(np.abs(mvector[i,0]-mvector_target[i]) < tol)
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.parallelEnv = None
+        cls.comm = None
 
 if __name__ == '__main__':
     unittest.main()
