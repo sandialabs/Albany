@@ -46,7 +46,6 @@ ANONYMOUS:
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
-          Integrator Step Type: Constant
           Output Time List: ''
           Output Index List: ''
           Output Time Interval: 1.00000000000000000e+01
