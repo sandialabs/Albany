@@ -46,13 +46,14 @@ private:
   Albany::LocalSideSetInfo sideSet;
   bool useCollapsedSidesets;
 
-  PHX::MDField<const ScalarT,Cell,Node>                         solution;
-  PHX::MDField<const FieldScalarT>               field;
-  PHX::MDField<const FieldScalarT>      gradField;
-  PHX::MDField<const MeshScalarT>  gradBF;
-  PHX::MDField<const MeshScalarT>           w_side_measure;
-  PHX::MDField<const MeshScalarT>   side_tangents;
-  PHX::MDField<const MeshScalarT>                               coordVec;
+  // TODO: restore layout template arguments when removing old sideset layout
+  PHX::MDField<const ScalarT,Cell,Node> solution;
+  PHX::MDField<const FieldScalarT>      field;           // Side, Node
+  PHX::MDField<const FieldScalarT>      gradField;       // Side, QuadPoint, Dim
+  PHX::MDField<const MeshScalarT>       gradBF;          // Side, Node, QuadPoint, Dim
+  PHX::MDField<const MeshScalarT>       w_side_measure;  // Side, QuadPoint
+  PHX::MDField<const MeshScalarT>       side_tangents;   // Side, QuadPoint, Dim, Dim
+  PHX::MDField<const MeshScalarT>       coordVec;
 
   PHX::MDField<ScalarT,Cell,Node> bdLaplacian_L2Projection_res;
 

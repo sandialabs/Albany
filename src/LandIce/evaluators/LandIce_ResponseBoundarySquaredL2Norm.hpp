@@ -46,8 +46,9 @@ namespace LandIce {
     Albany::LocalSideSetInfo sideSet;
     bool useCollapsedSidesets;
 
-    PHX::MDField<const ScalarT>          solution;
-    PHX::MDField<const MeshScalarT>     w_side_measure;
+    // TODO: restore layout template arguments when removing old sideset layout
+    PHX::MDField<const ScalarT>          solution;        // Side, Node
+    PHX::MDField<const MeshScalarT>      w_side_measure;  // Side, QuadPoint
 
     ScalarT p_reg, reg;
     double scaling;

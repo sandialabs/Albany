@@ -46,15 +46,16 @@ public:
 private:
 
   // Input:
-  PHX::MDField<const ScalarT> field;
-  PHX::MDField<const ScalarT>       averaged_velocity;
-  PHX::MDField<const ScalarT>              div_averaged_velocity;
-  PHX::MDField<const ThicknessScalarT>     thickness;
-  PHX::MDField<const ThicknessScalarT> grad_thickness;
-  PHX::MDField<const MeshScalarT>  side_tangents;
+  // TODO: restore layout template arguments when removing old sideset layout
+  PHX::MDField<const ScalarT>          field;
+  PHX::MDField<const ScalarT>          averaged_velocity;     // Side, QuadPoint, VecDim
+  PHX::MDField<const ScalarT>          div_averaged_velocity; // Side, QuadPoint
+  PHX::MDField<const ThicknessScalarT> thickness;             // Side, QuadPoint
+  PHX::MDField<const ThicknessScalarT> grad_thickness;        // Side, QuadPoint, Dim
+  PHX::MDField<const MeshScalarT>      side_tangents;         // Side, QuadPoint, Dim, Dim
 
   // Output:
-  PHX::MDField<ScalarT>              flux_div;
+  PHX::MDField<ScalarT>                flux_div;              // Side, QuadPoint
 
   std::string sideSetName;
   unsigned int numSideQPs, numSideDims;

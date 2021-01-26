@@ -50,11 +50,12 @@ private:
   TargetScalarT target_value_val;
   RealType scaling;
 
-  PHX::MDField<const SourceScalarT>                         sourceField;
-  PHX::MDField<const TargetScalarT>                         targetField;
+  PHX::MDField<const SourceScalarT> sourceField;
+  PHX::MDField<const TargetScalarT> targetField;
 
-  PHX::MDField<const MeshScalarT>  metric;
-  PHX::MDField<const MeshScalarT>          w_measure;
+  // TODO: restore layout template arguments when removing old sideset layout
+  PHX::MDField<const MeshScalarT>   metric;      // Side, QuadPoint, Dim, Dim
+  PHX::MDField<const MeshScalarT>   w_measure;   // Side, QuadPoint
 
 };
 

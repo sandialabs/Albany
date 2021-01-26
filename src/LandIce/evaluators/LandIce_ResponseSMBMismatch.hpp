@@ -49,15 +49,16 @@ namespace LandIce {
     unsigned int numBasalQPs;
     unsigned int numSideDims;
 
-    PHX::MDField<const ScalarT>                   flux_div;
-    PHX::MDField<const RealType>                  SMB;
-    PHX::MDField<const RealType>                  SMBRMS;
-    PHX::MDField<const RealType>                  obs_thickness;
-    PHX::MDField<const RealType>                  thicknessRMS;
-    PHX::MDField<const ThicknessScalarType>       thickness;
-    PHX::MDField<const ThicknessScalarType>   grad_thickness;
-    PHX::MDField<const MeshScalarT>               w_measure_2d;
-    PHX::MDField<const MeshScalarT>       tangents;
+    // TODO: restore layout template arguments when removing old sideset layout
+    PHX::MDField<const ScalarT>                   flux_div;        // Side, QuadPoint
+    PHX::MDField<const RealType>                  SMB;             // Side, QuadPoint
+    PHX::MDField<const RealType>                  SMBRMS;          // Side, QuadPoint
+    PHX::MDField<const RealType>                  obs_thickness;   // Side, QuadPoint
+    PHX::MDField<const RealType>                  thicknessRMS;    // Side, QuadPoint
+    PHX::MDField<const ThicknessScalarType>       thickness;       // Side, QuadPoint
+    PHX::MDField<const ThicknessScalarType>       grad_thickness;  // Side, QuadPoint, Dim
+    PHX::MDField<const MeshScalarT>               w_measure_2d;    // Side, QuadPoint
+    PHX::MDField<const MeshScalarT>               tangents;        // Side, QuadPoint, Dim, Dim
 
     ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
     double scaling, alpha, alphaH, alphaSMB;

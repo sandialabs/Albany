@@ -47,9 +47,10 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<const ScalarT> val_node;
+  // TODO: restore layout template arguments when removing old sideset layout
+  PHX::MDField<const ScalarT> val_node;   // Side, Node
   //! Basis Functions
-  PHX::MDField<const MeshScalarT> gradBF;
+  PHX::MDField<const MeshScalarT> gradBF; // Side, Node, QuadPoint, Dim
 
   // Output:
   //! Values at quadrature points

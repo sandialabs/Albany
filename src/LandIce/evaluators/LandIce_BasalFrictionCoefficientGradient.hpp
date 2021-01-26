@@ -53,22 +53,23 @@ private:
   typedef typename EvalT::ParamScalarT  ParamScalarT;
 
   // Input:
-  PHX::MDField<const RealType>                   given_field;
-  PHX::MDField<const ParamScalarT>               given_field_param;
-  PHX::MDField<const MeshScalarT>  GradBF;
-  PHX::MDField<const ParamScalarT>          N;
-  PHX::MDField<const ScalarT>           U;
-  PHX::MDField<const ScalarT>           gradN;
-  PHX::MDField<const ScalarT>       gradU;
-  PHX::MDField<const ScalarT>               u_norm;
-  PHX::MDField<const MeshScalarT>       coordVec;
+  // TODO: restore layout template arguments when removing old sideset layout
+  PHX::MDField<const RealType>      given_field;       // Side, Node
+  PHX::MDField<const ParamScalarT>  given_field_param; // Side, Node
+  PHX::MDField<const MeshScalarT>   GradBF;            // Side, Node, QuadPoint, Dim
+  PHX::MDField<const ParamScalarT>  N;                 // Side, QuadPoint
+  PHX::MDField<const ScalarT>       U;                 // Side, QuadPoint, Dim
+  PHX::MDField<const ScalarT>       gradN;             // Side, QuadPoint, Dim
+  PHX::MDField<const ScalarT>       gradU;             // Side, QuadPoint, Dim, Dim
+  PHX::MDField<const ScalarT>       u_norm;            // Side, QuadPoint
+  PHX::MDField<const MeshScalarT>   coordVec;          // Side, QuadPoint, Dim
 
   PHX::MDField<const ScalarT,Dim>                               lambdaParam;
   PHX::MDField<const ScalarT,Dim>                               muParam;
   PHX::MDField<const ScalarT,Dim>                               powerParam;
 
   // Output:
-  PHX::MDField<ScalarT>           grad_beta;
+  PHX::MDField<ScalarT>           grad_beta;           // Side, QuadPoint, Dim
 
   std::string basalSideName;
   bool useCollapsedSidesets;

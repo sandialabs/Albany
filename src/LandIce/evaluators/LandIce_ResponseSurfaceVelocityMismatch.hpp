@@ -45,27 +45,28 @@ namespace LandIce {
     unsigned int numSurfaceQPs;
     unsigned int numSideDims;
 
-    PHX::MDField<const ScalarT>      velocity;
-    PHX::MDField<const RealType>     observedVelocity;
-    PHX::MDField<const RealType>     observedVelocityRMS;
-    PHX::MDField<const RealType>            observedVelocityMagnitudeRMS;
-    PHX::MDField<const MeshScalarT>         w_measure_surface;
+    // TODO: restore layout template arguments when removing old sideset layout
+    PHX::MDField<const ScalarT>      velocity;                     // Side, QuadPoint, VecDim
+    PHX::MDField<const RealType>     observedVelocity;             // Side, QuadPoint, VecDim
+    PHX::MDField<const RealType>     observedVelocityRMS;          // Side, QuadPoint, VecDim
+    PHX::MDField<const RealType>     observedVelocityMagnitudeRMS; // Side, QuadPoint
+    PHX::MDField<const MeshScalarT>  w_measure_surface;            // Side, QuadPoint
 
     //PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric_surface;
 
     // Stuff for stifferning regularization
     std::string basalSideName;
-    PHX::MDField<const ParamScalarT>     grad_stiffening;
-    PHX::MDField<const ParamScalarT>         stiffening;
-    PHX::MDField<const MeshScalarT>          w_measure_basal;
-    PHX::MDField<const MeshScalarT>  metric_basal;
+    PHX::MDField<const ParamScalarT> grad_stiffening;  // Side, QuadPoint, Dim
+    PHX::MDField<const ParamScalarT> stiffening;       // Side, QuadPoint
+    PHX::MDField<const MeshScalarT>  w_measure_basal;  // Side, QuadPoint
+    PHX::MDField<const MeshScalarT>  metric_basal;     // Side, QuadPoint, Dim, Dim
 
     // Stuff for beta regularization
-    std::vector<Teuchos::RCP<Teuchos::ParameterList>>                         beta_reg_params;
-    std::vector<PHX::MDField<const ScalarT>>          grad_beta_vec;
-    std::vector<PHX::MDField<const MeshScalarT>>          w_measure_beta_vec;
-    std::vector<PHX::MDField<const MeshScalarT>>  metric_beta_vec;
-    Teuchos::RCP<const CellTopologyData>                                      cell_topo;
+    std::vector<Teuchos::RCP<Teuchos::ParameterList>> beta_reg_params;
+    std::vector<PHX::MDField<const ScalarT>>          grad_beta_vec;      // Side, QuadPoint, Dim
+    std::vector<PHX::MDField<const MeshScalarT>>      w_measure_beta_vec; // Side, QuadPoint
+    std::vector<PHX::MDField<const MeshScalarT>>      metric_beta_vec;    // Side, QuadPoint, Dim, Dim
+    Teuchos::RCP<const CellTopologyData>              cell_topo;
 
     ScalarT p_resp, p_reg, resp, reg, p_reg_stiffening,reg_stiffening;
     double scaling, alpha, asinh_scaling, alpha_stiffening;

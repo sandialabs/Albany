@@ -91,10 +91,10 @@ private:
 
   double rho_i, rho_w;    // [kg m^{-3}]
 
-  bool useCollapsedSidesets;
+  unsigned int numNodes;
+  unsigned int numQPs;
 
-  int numNodes;
-  int numQPs;
+  bool useCollapsedSidesets;
 
   bool logParameters;
   bool distributedLambda;

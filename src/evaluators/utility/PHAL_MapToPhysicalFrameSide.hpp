@@ -61,12 +61,13 @@ private:
   bool useCollapsedSidesets;
 
   // Input:
+  // TODO: restore layout template arguments when removing old sideset layout
   //! Values at vertices
-  PHX::MDField<const MeshScalarT>      coords_side_vertices;
+  PHX::MDField<const MeshScalarT> coords_side_vertices;  // Side, Vertex, Dim
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<MeshScalarT>   coords_side_qp;
+  PHX::MDField<MeshScalarT> coords_side_qp;
 
 public:
 

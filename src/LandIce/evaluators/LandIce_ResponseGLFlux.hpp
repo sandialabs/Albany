@@ -47,10 +47,11 @@ namespace LandIce {
 
     bool useCollapsedSidesets;
 
-    PHX::MDField<const ScalarT>          avg_vel;     //[m yr^{-1}]
-    PHX::MDField<const MeshScalarT>          thickness;   //[km]
-    PHX::MDField<const MeshScalarT>          bed;         //[km]
-    PHX::MDField<const MeshScalarT>      coords;      //[km]
+    // TODO: restore layout template arguments when removing old sideset layout
+    PHX::MDField<const ScalarT>              avg_vel;     //[m yr^{-1}]; Side, Node, Dim
+    PHX::MDField<const MeshScalarT>          thickness;   //[km]; Side, Node
+    PHX::MDField<const MeshScalarT>          bed;         //[km]; Side, Node
+    PHX::MDField<const MeshScalarT>          coords;      //[km]; Side, Node, Dim
     Kokkos::DynRankView<MeshScalarT, PHX::Device>           gl_func,H,x,y;
     Kokkos::DynRankView<ScalarT, PHX::Device>               velx,vely;
 

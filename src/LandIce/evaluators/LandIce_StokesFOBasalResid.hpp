@@ -46,27 +46,28 @@ private:
   ScalarT printedFF;
 
   // Input:
-  PHX::MDField<const BetaScalarT>     beta;
-  PHX::MDField<const ScalarT>  u;
-  PHX::MDField<const RealType>   BF;
-  PHX::MDField<const MeshScalarT>     w_measure;
-  PHX::MDField<const ScalarT,Dim>                         homotopyParam;
+  // TODO: restore layout template arguments when removing old sideset layout
+  PHX::MDField<const BetaScalarT> beta;       // Side, QuadPoint
+  PHX::MDField<const ScalarT>     u;          // Side, QuadPoint, VecDim
+  PHX::MDField<const RealType>    BF;         // Side, Node, QuadPoint
+  PHX::MDField<const MeshScalarT> w_measure;  // Side, QuadPoint
+  PHX::MDField<const ScalarT,Dim> homotopyParam;
 
   PHX::MDField<const ScalarT,Dim> homotopy;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim>            residual;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> residual;
 
   Kokkos::View<int**, PHX::Device> sideNodes;
   std::string                     basalSideName;
 
-  bool useCollapsedSidesets;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int sideDim;
+  unsigned int vecDim;
+  unsigned int vecDimFO;
 
-  int numSideNodes;
-  int numSideQPs;
-  int sideDim;
-  int vecDim;
-  int vecDimFO;
+  bool useCollapsedSidesets;
 
   bool regularized;
 

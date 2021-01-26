@@ -57,8 +57,9 @@ private:
   Albany::LocalSideSetInfo sideSet;
 
   // Input:
+  // TODO: restore layout template arguments when removing old sideset layout
   PHX::MDField<const ScalarT>     field_qp;
-  PHX::MDField<const MeshScalarT> w_measure;
+  PHX::MDField<const MeshScalarT> w_measure; // Side, QuadPoint
 
   // Output:
   PHX::MDField<OutputScalarT>     field_side;

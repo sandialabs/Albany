@@ -54,14 +54,15 @@ private:
   };
 
   // Input:
-  PHX::MDField<const ScalarT>    u;
-  PHX::MDField<const MeshScalarT>   qp_coords;
-  PHX::MDField<const MeshScalarT>   side_normals;
-  PHX::MDField<const RealType>     BF;
-  PHX::MDField<const MeshScalarT>       w_measure;
+  // TODO: restore layout template arguments when removing old sideset layout
+  PHX::MDField<const ScalarT>     u;            // Side, QuadPoint, VecDim
+  PHX::MDField<const MeshScalarT> qp_coords;    // Side, QuadPoint, Dim
+  PHX::MDField<const MeshScalarT> side_normals; // Side, QuadPoint, Dim
+  PHX::MDField<const RealType>    BF;           // Side, Node, QuadPoint
+  PHX::MDField<const MeshScalarT> w_measure;    // Side, QuadPoint
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim>                    residual;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> residual;
 
   std::vector<std::vector<int> >  sideNodes;
   std::string                     ssName;
@@ -69,7 +70,7 @@ private:
   Albany::LocalSideSetInfo sideSet;
   bool useCollapsedSidesets;
 
-  Kokkos::DynRankView<ScalarT, PHX::Device>           qp_temp_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> qp_temp_buffer;
 
   unsigned int numSideNodes;
   unsigned int numSideQPs;
