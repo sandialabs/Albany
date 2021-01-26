@@ -50,7 +50,7 @@ SaveStateField(const Teuchos::ParameterList& p)
   Teuchos::RCP<PHX::DataLayout> layout = p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout");
   field = decltype(field)(fieldName, layout );
 
-  if (layout->name(0) != "Cell" && layout->name(0) != "Node")
+  if (layout->name(0) != PHX::print<Cell>() && layout->name(0) != PHX::print<Node>())
   {
     worksetState = true;
     nodalState = false;
@@ -83,7 +83,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   {
     TEUCHOS_TEST_FOR_EXCEPTION (field.fieldTag().dataLayout().size()<2, Teuchos::Exceptions::InvalidParameter,
                                 "Error! To save a nodal state, pass the cell-based version of it (<Cell,Node,...>).\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (field.fieldTag().dataLayout().name(1)!="Node", Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (field.fieldTag().dataLayout().name(1)!=PHX::print<Node>(), Teuchos::Exceptions::InvalidParameter,
                                 "Error! To save a nodal state, the second tag of the layout MUST be 'Node'.\n");
   }
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
