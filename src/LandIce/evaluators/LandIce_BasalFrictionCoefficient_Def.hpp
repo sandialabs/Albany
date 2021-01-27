@@ -225,7 +225,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 postRegistrationSetup (typename Traits::SetupData d,
-                       PHX::FieldManager<Traits>& fm)
+                       PHX::FieldManager<Traits>&)
 {
   if (beta_type == GIVEN_CONSTANT)
     beta.deep_copy(ScalarT(given_val));
