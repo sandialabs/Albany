@@ -395,15 +395,6 @@ namespace Albany {
        const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
        const std::string& side_dof_name = "") const = 0;
 
-    //! Function to create evaluator for prolongation to cell
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    virtual constructDOFSideToCellEvaluator(
-       const std::string& side_dof_name,
-       const std::string& sideSetName,
-       const std::string& layout,
-       const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
-       const std::string& cell_dof_name = "") const = 0;
-
     //! Function to create P0 interpolation evaluator
     //! Note: interpolationType can be 'Cell Average' or 'Value At Cell Barycenter',
     //!       with the latter only available for nodal fields.
@@ -798,15 +789,6 @@ namespace Albany {
        const std::string& layout,
        const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
        const std::string& side_dof_name = "") const;
-
-    //! Function to create evaluator for prolongation to cell
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructDOFSideToCellEvaluator(
-       const std::string& side_dof_name,
-       const std::string& sideSetName,
-       const std::string& layout,
-       const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
-       const std::string& cell_dof_name = "") const;
 
     //! Function to create P0 interpolation evaluator
     Teuchos::RCP< PHX::Evaluator<Traits> >

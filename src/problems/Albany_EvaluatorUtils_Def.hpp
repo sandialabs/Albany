@@ -15,7 +15,6 @@
 #include "PHAL_DOFGradInterpolationSide.hpp"
 #include "PHAL_DOFInterpolation.hpp"
 #include "PHAL_DOFInterpolationSide.hpp"
-#include "PHAL_DOFSideToCell.hpp"
 #include "PHAL_DOFTensorGradInterpolation.hpp"
 #include "PHAL_DOFTensorInterpolation.hpp"
 #include "PHAL_DOFVecGradInterpolation.hpp"
@@ -732,36 +731,6 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFCellToSideQPEvaluator(
       p->set<std::string>("Side Variable Name", cell_dof_name);
 
     return rcp(new PHAL::DOFCellToSideQPBase<EvalT,Traits,ScalarType>(*p,dl));
-}
-
-template<typename EvalT, typename Traits, typename ScalarType>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFSideToCellEvaluator(
-       const std::string& side_dof_name,
-       const std::string& sideSetName,
-       const std::string& layout,
-       const Teuchos::RCP<shards::CellTopology>& cellType,
-       const std::string& cell_dof_name) const
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Side To Cell"));
-
-    // Input
-    p->set<std::string>("Side Variable Name", side_dof_name);
-    p->set<std::string>("Data Layout", layout);
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set<std::string>("Side Set Name", sideSetName);
-
-    // Output
-    if (cell_dof_name!="")
-      p->set<std::string>("Cell Variable Name", cell_dof_name);
-    else
-      p->set<std::string>("Cell Variable Name", side_dof_name);
-
-    return rcp(new PHAL::DOFSideToCellBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarType>

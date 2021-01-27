@@ -765,12 +765,6 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
           ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
         fm0.template registerEvaluator<EvalT> (ev);
       }
-
-      if (needs[InterpolationRequest::SIDE_TO_CELL]) {
-        // Project from cell to side
-        ev = utils.constructDOFSideToCellEvaluator(fname_side, ss_name, layout, cellType, fname);
-        fm0.template registerEvaluator<EvalT> (ev);
-      }
     }
   }
 }

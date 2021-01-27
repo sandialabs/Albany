@@ -209,7 +209,7 @@ template <typename EvalT>
 void StokesFOThermoCoupled::
 constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                      Albany::FieldManagerChoice fieldManagerChoice,
-                                     const Albany::MeshSpecsStruct& meshSpecs)
+                                     const Albany::MeshSpecsStruct&)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;

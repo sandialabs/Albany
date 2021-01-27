@@ -250,7 +250,6 @@ void StokesFOThermoCoupled::setupEvaluatorRequests ()
     ss_build_interp_ev[basalSideName][melting_enthalpy_name   ][InterpolationRequest::QP_VAL      ] = true;
     ss_build_interp_ev[basalSideName][water_content_name      ][InterpolationRequest::CELL_TO_SIDE] = true;
     ss_build_interp_ev[basalSideName][water_content_name      ][InterpolationRequest::QP_VAL      ] = true;
-    ss_build_interp_ev[basalSideName]["basal_vert_velocity"   ][InterpolationRequest::SIDE_TO_CELL] = true;
 
     if(needsBasFric)
     {

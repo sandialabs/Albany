@@ -106,8 +106,7 @@ enum class InterpolationRequest {
   QP_VAL,
   GRAD_QP_VAL,
   CELL_VAL,
-  CELL_TO_SIDE,
-  SIDE_TO_CELL
+  CELL_TO_SIDE
 };
 
 inline std::string e2str (const InterpolationRequest e) {
@@ -116,7 +115,6 @@ inline std::string e2str (const InterpolationRequest e) {
     case InterpolationRequest::GRAD_QP_VAL:   return "GRAD_QP_VAL";
     case InterpolationRequest::CELL_VAL:      return "CELL_VAL";
     case InterpolationRequest::CELL_TO_SIDE:  return "CELL_TO_SIDE";
-    case InterpolationRequest::SIDE_TO_CELL:  return "SIDE_TO_CELL";
     default:                    return INVALID_STR;
   }
 
