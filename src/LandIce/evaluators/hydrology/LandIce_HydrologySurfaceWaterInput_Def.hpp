@@ -83,10 +83,6 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     return;
   }
 
-  if (input_type==InputType::GIVEN_FIELD) {
-    return;
-  }
-
   const auto& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
