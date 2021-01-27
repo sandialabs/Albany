@@ -27,7 +27,7 @@
 #include "LandIce_HydrologyBasalGravitationalWaterPotential.hpp"
 #include "LandIce_HydraulicPotential.hpp"
 #include "LandIce_EffectivePressure.hpp"
-#include "LandIce_IceSoftness.hpp"
+#include "LandIce_FlowRate.hpp"
 #include "LandIce_IceOverburden.hpp"
 #include "LandIce_HydrologyMeltingRate.hpp"
 #include "LandIce_HydrologyResidualCavitiesEqn.hpp"
@@ -653,17 +653,17 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --------- Ice Softness --------- //
-  p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Ice Softness"));
+  p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Flow Rate"));
 
   // Input
-  p->set<std::string>("Ice Softness Type",hy_pl.get<std::string>("Ice Softness Type","Uniform"));
   p->set<std::string>("Temperature Variable Name",ice_temperature_name);
   p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&params->sublist("LandIce Physical Parameters"));
+  p->set<Teuchos::ParameterList*> ("Parameter List",&params->sublist("LandIce Viscosity"));
 
   // Output
-  p->set<std::string>("Ice Softness Variable Name",ice_softness_name);
+  p->set<std::string>("Flow Rate Variable Name",ice_softness_name);
 
-  ev = Teuchos::rcp(new IceSoftness<EvalT,PHAL::AlbanyTraits, false>(*p,dl));
+  ev = Teuchos::rcp(new FlowRate<EvalT,PHAL::AlbanyTraits, RealType>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ------- Sliding Velocity -------- //

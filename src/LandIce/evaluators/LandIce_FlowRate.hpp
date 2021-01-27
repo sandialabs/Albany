@@ -7,12 +7,12 @@
 #ifndef LANDICE_FLOW_RATE_HPP
 #define LANDICE_FLOW_RATE_HPP 1
 
-#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 #include "PHAL_Dimension.hpp"
 
 namespace LandIce
@@ -23,32 +23,30 @@ namespace LandIce
     This evaluator evaluates the residual of the Hydrology model
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename TempST>
 class FlowRate : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>
+                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
 
   FlowRate (const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&) {}
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
 
-  typedef typename EvalT::ParamScalarT ParamScalarT;
-
   // Input:
-  PHX::MDField<const ParamScalarT,Cell> given_flow_rate;
-  PHX::MDField<const ParamScalarT,Cell> temperature;
+  PHX::MDField<const RealType,Cell> given_flow_rate;
+  PHX::MDField<const TempST,Cell> temperature;
 
   // Output:
-  PHX::MDField<ParamScalarT,Cell> flowRate;
+  PHX::MDField<TempST,Cell> flowRate;
 
   double A;
   enum FlowRateType {UNIFORM, GIVEN_FIELD, TEMPERATURE_BASED};

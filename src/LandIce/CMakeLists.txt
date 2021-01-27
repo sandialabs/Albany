@@ -21,7 +21,6 @@ set(SOURCES
   evaluators/LandIce_GatherVerticallyContractedSolution.cpp
   evaluators/LandIce_HydrostaticPressure.cpp
   evaluators/LandIce_IceOverburden.cpp
-  evaluators/LandIce_IceSoftness.cpp
   evaluators/LandIce_LaplacianRegularizationResidual.cpp
   evaluators/LandIce_L2ProjectedBoundaryLaplacianResidual.cpp
   evaluators/LandIce_LiquidWaterFraction.cpp
@@ -108,8 +107,6 @@ set(HEADERS
   evaluators/LandIce_GatherVerticallyContractedSolution_Def.hpp
   evaluators/LandIce_IceOverburden.hpp
   evaluators/LandIce_IceOverburden_Def.hpp
-  evaluators/LandIce_IceSoftness.hpp
-  evaluators/LandIce_IceSoftness_Def.hpp
   evaluators/LandIce_LaplacianRegularizationResidual.hpp
   evaluators/LandIce_LaplacianRegularizationResidual_Def.hpp
   evaluators/LandIce_L2ProjectedBoundaryLaplacianResidual.hpp

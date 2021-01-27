@@ -898,18 +898,17 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p = Teuchos::rcp(new Teuchos::ParameterList("LandIce FlowRate"));
 
       //Input
-      if (viscosity_use_corrected_temperature) {
-        p->set<std::string>("Temperature Variable Name", corrected_temperature_name);
-      } else {
-        // Avoid pointless calculation, and use original temperature in viscosity calculation
-        p->set<std::string>("Temperature Variable Name", temperature_name);
-      }
+      const auto& temp_name = viscosity_use_corrected_temperature
+                            ? corrected_temperature_name
+                            : temperature_name;
+
+      p->set<std::string>("Temperature Variable Name", temp_name);
       p->set<Teuchos::ParameterList*>("Parameter List", &visc_pl);
 
       //Output
       p->set<std::string>("Flow Rate Variable Name", flow_factor_name);
 
-      ev = Teuchos::rcp(new LandIce::FlowRate<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      ev = createEvaluatorWithOneScalarType<FlowRate,EvalT>(p,dl,field_scalar_type[temp_name]);
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
