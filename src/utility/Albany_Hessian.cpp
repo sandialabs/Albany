@@ -3,20 +3,11 @@
 #include "Albany_TpetraTypes.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_Hessian.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 #include <Kokkos_UnorderedMap.hpp>
 #include <Kokkos_Sort.hpp>
 #include <math.h>
-
-int min(int a, int b)
-{
-    return (a <= b) ? a : b;
-}
-
-int max(int a, int b)
-{
-    return (a >= b) ? a : b;
-}
 
 Teuchos::RCP<Tpetra_CrsGraph> Albany::createHessianCrsGraph(
     Teuchos::RCP<const Tpetra_Map> p_owned_map,
@@ -40,14 +31,15 @@ Teuchos::RCP<Tpetra_CrsGraph> Albany::createHessianCrsGraph(
 
     bool same_num_elem_per_ws = true;
 
-    for(std::size_t wsIndex=0; wsIndex<nws; ++wsIndex) {
-        if(num_elem_per_ws != vElDofs[wsIndex].dimension(0) && wsIndex<nws-1)
+    for (std::size_t wsIndex = 0; wsIndex < nws; ++wsIndex)
+    {
+        if (num_elem_per_ws != vElDofs[wsIndex].dimension(0) && wsIndex < nws - 1)
             same_num_elem_per_ws = false;
         num_elem += vElDofs[wsIndex].dimension(0);
     }
-        
+
     TEUCHOS_TEST_FOR_EXCEPTION(
-        same_num_elem_per_ws==false,
+        same_num_elem_per_ws == false,
         std::logic_error,
         std::endl
             << "Error!  Albany::createHessianCrsGraph():  "
@@ -67,8 +59,8 @@ Teuchos::RCP<Tpetra_CrsGraph> Albany::createHessianCrsGraph(
     Kokkos::parallel_for(
         num_elem,
         KOKKOS_LAMBDA(const Tpetra_LO ielem) {
-            IDArray wsElDofs = vElDofs[floor(ielem/num_elem_per_ws)];
-            const Tpetra_LO ielem_ws = ielem%num_elem_per_ws;
+            IDArray wsElDofs = vElDofs[floor(ielem / num_elem_per_ws)];
+            const Tpetra_LO ielem_ws = ielem % num_elem_per_ws;
             for (std::size_t i = 0; i < NN; ++i)
             {
                 const Tpetra_LO lcl_overlapped_node1 = wsElDofs((int)ielem_ws, (int)i, 0);
@@ -85,10 +77,10 @@ Teuchos::RCP<Tpetra_CrsGraph> Albany::createHessianCrsGraph(
 
                     const Tpetra_GO global_overlapped_node2 = p_overlapped_map->getGlobalElement(lcl_overlapped_node2);
 
-                    const Tpetra_GO globalNode1 = min(global_overlapped_node1, global_overlapped_node2);
-                    const Tpetra_GO globalNode2 = max(global_overlapped_node1, global_overlapped_node2);
+                    const Tpetra_GO globalNode1 = KU::min(global_overlapped_node1, global_overlapped_node2);
+                    const Tpetra_GO globalNode2 = KU::max(global_overlapped_node1, global_overlapped_node2);
 
-                    if (globalNode1<0)
+                    if (globalNode1 < 0)
                         continue;
 
                     const pair<Tpetra_GO, Tpetra_GO> key(globalNode1, globalNode2);
@@ -170,13 +162,8 @@ Teuchos::RCP<Tpetra_CrsGraph> Albany::createHessianCrsGraph(
         });
 
     // Sort eacch row of column index array
-    Kokkos::parallel_for(
-        num_rows,
-        KOKKOS_LAMBDA(int lclRow) {
-            auto currentColIndices = subview(colIndices, Kokkos::make_pair(rowOffsets(lclRow), rowOffsets(lclRow + 1)));
-            Tpetra_LO *const lclColIndsRaw = currentColIndices.data();
-            std::sort(lclColIndsRaw, lclColIndsRaw + rowOffsets(lclRow + 1) - rowOffsets(lclRow));
-        });
+    for (int lclRow = 0; lclRow < num_rows; ++lclRow)
+        Kokkos::sort(subview(colIndices, Kokkos::make_pair(rowOffsets(lclRow), rowOffsets(lclRow + 1))));
 
     RCP<Tpetra_CrsGraph> Hgraph = rcp(new Tpetra_CrsGraph(p_owned_map, p_overlapped_map, rowOffsets, colIndices));
     Hgraph->fillComplete(p_owned_map, p_owned_map);
