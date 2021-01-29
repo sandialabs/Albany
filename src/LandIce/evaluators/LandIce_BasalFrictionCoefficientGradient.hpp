@@ -85,6 +85,10 @@ private:
   double y_0;
   double R2;
 
+  ScalarT lambda;
+  ScalarT mu;
+  ScalarT power;
+
   bool use_stereographic_map;
   bool is_given_field_param;
 
@@ -92,6 +96,30 @@ private:
   BETA_TYPE beta_type;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+  public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct GivenFieldParam_Tag{};
+  struct GivenField_Tag{};
+  struct RegularizedCoulomb_Tag{};
+  struct StereographicMapCorrection_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,GivenFieldParam_Tag> GivenFieldParam_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,GivenField_Tag> GivenField_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,RegularizedCoulomb_Tag> RegularizedCoulomb_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,StereographicMapCorrection_Tag> StereographicMapCorrection_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const GivenFieldParam_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const GivenField_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const RegularizedCoulomb_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const StereographicMapCorrection_Tag& tag, const int& i) const;
+
 };
 
 } // Namespace LandIce

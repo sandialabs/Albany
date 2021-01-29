@@ -150,6 +150,79 @@ postRegistrationSetup (typename Traits::SetupData d,
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficientGradient<EvalT, Traits>::
+operator() (const GivenFieldParam_Tag& tag, const int& sideSet_idx) const {
+
+  for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+    for (unsigned int dim=0; dim<sideDim; ++dim) {
+      grad_beta(sideSet_idx,qp,dim) = 0.;
+      for (unsigned int node=0; node<numSideNodes; ++node) {
+        grad_beta(sideSet_idx,qp,dim) += GradBF(sideSet_idx,node,qp,dim)*given_field_param(sideSet_idx,node);
+      }
+    }
+  }
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficientGradient<EvalT, Traits>::
+operator() (const GivenField_Tag& tag, const int& sideSet_idx) const {
+
+  for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+    for (unsigned int dim=0; dim<sideDim; ++dim) {
+      grad_beta(sideSet_idx,qp,dim) = 0.;
+      for (unsigned int node=0; node<numSideNodes; ++node) {
+        grad_beta(sideSet_idx,qp,dim) += GradBF(sideSet_idx,node,qp,dim)*given_field(sideSet_idx,node);
+      }
+    }
+  }
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficientGradient<EvalT, Traits>::
+operator() (const RegularizedCoulomb_Tag& tag, const int& sideSet_idx) const {
+
+  for (unsigned int qp=0; qp<numSideQPs; ++qp)
+  {
+    ScalarT u_val      = u_norm(sideSet_idx,qp);
+    ParamScalarT N_val = N(sideSet_idx,qp);
+    ScalarT den        = u_val+lambda*std::pow(A*N_val,1./power);
+
+    ScalarT f_u = (power-1)*mu*N_val*std::pow(u_val,power-2)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
+                - power*mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1);
+    ScalarT f_N = mu*std::pow(u_val,power-1)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
+                - mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1)*lambda*std::pow(A*N_val,1./power-1)*A;
+    for (unsigned int dim=0; dim<sideDim; ++dim)
+    {
+      grad_beta(sideSet_idx,qp,dim) = f_N*gradN(sideSet_idx,qp,dim);
+      for (unsigned int comp=0; comp<vecDim; ++comp)
+        grad_beta(sideSet_idx,qp,dim) += f_u * (U(sideSet_idx,qp,comp)/u_val)*gradU(sideSet_idx,qp,vecDim,dim);
+    }
+  }
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficientGradient<EvalT, Traits>::
+operator() (const StereographicMapCorrection_Tag& tag, const int& sideSet_idx) const {
+
+  for (unsigned int qp=0; qp<numSideQPs; ++qp)
+  {
+    MeshScalarT x = coordVec(sideSet_idx,qp,0) - x_0;
+    MeshScalarT y = coordVec(sideSet_idx,qp,1) - y_0;
+    MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+    for (unsigned int dim=0; dim<sideDim; ++dim)
+      grad_beta(sideSet_idx,qp,dim) *= h*h;
+  }
+
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
@@ -161,7 +234,6 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
 
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  ScalarT lambda, mu, power;
   if (beta_type==REGULARIZED_COULOMB)
   {
     lambda = lambdaParam(0);
@@ -171,75 +243,37 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
 
   sideSet = workset.sideSetViews->at(basalSideName);
 
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
-    // Get the local data of side and cell
-    const int cell = sideSet.elem_LID(sideSet_idx);
-    const int side = sideSet.side_local_id(sideSet_idx);
-
-    if (useCollapsedSidesets) {
-      switch (beta_type)
-      {
-        case GIVEN_CONSTANT:
-          for (unsigned int qp=0; qp<numSideQPs; ++qp)
-          {
-            for (unsigned int dim=0; dim<sideDim; ++dim)
-              grad_beta(sideSet_idx,qp,dim) = 0.;
-          }
-          break;
-        case GIVEN_FIELD:
-          if (is_given_field_param) {
-            for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-              for (unsigned int dim=0; dim<sideDim; ++dim) {
-                grad_beta(sideSet_idx,qp,dim) = 0.;
-                for (unsigned int node=0; node<numSideNodes; ++node) {
-                  grad_beta(sideSet_idx,qp,dim) += GradBF(sideSet_idx,node,qp,dim)*given_field_param(sideSet_idx,node);
-            }}}
-          } else {
-            for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-              for (unsigned int dim=0; dim<sideDim; ++dim) {
-                grad_beta(sideSet_idx,qp,dim) = 0.;
-                for (unsigned int node=0; node<numSideNodes; ++node) {
-                  grad_beta(sideSet_idx,qp,dim) += GradBF(sideSet_idx,node,qp,dim)*given_field(sideSet_idx,node);
-            }}}
-          }
-          break;
-        case REGULARIZED_COULOMB:
-          for (unsigned int qp=0; qp<numSideQPs; ++qp)
-          {
-            ScalarT u_val      = u_norm(sideSet_idx,qp);
-            ParamScalarT N_val = N(sideSet_idx,qp);
-            ScalarT den        = u_val+lambda*std::pow(A*N_val,1./power);
-
-            ScalarT f_u = (power-1)*mu*N_val*std::pow(u_val,power-2)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
-                        - power*mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1);
-            ScalarT f_N = mu*std::pow(u_val,power-1)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
-                        - mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1)*lambda*std::pow(A*N_val,1./power-1)*A;
-            for (unsigned int dim=0; dim<sideDim; ++dim)
-            {
-              grad_beta(sideSet_idx,qp,dim) = f_N*gradN(sideSet_idx,qp,dim);
-              for (unsigned int comp=0; comp<vecDim; ++comp)
-                grad_beta(sideSet_idx,qp,dim) += f_u * (U(sideSet_idx,qp,comp)/u_val)*gradU(sideSet_idx,qp,vecDim,dim);
-            }
-          }
-        default:
-          TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
-              std::endl << "Error in LandIce::BasalFrictionCoefficientGradient: cannot compute the gradient of this type of beta.");
-      }
-
-      // Correct the value if we are using a stereographic map
-      if (use_stereographic_map)
-      {
-        for (unsigned int qp=0; qp<numSideQPs; ++qp)
-        {
-          MeshScalarT x = coordVec(sideSet_idx,qp,0) - x_0;
-          MeshScalarT y = coordVec(sideSet_idx,qp,1) - y_0;
-          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-          for (unsigned int dim=0; dim<sideDim; ++dim)
-            grad_beta(sideSet_idx,qp,dim) *= h*h;
+  if (useCollapsedSidesets) {
+    switch (beta_type)
+    {
+      case GIVEN_CONSTANT:
+        grad_beta.deep_copy(0);
+        break;
+      case GIVEN_FIELD:
+        if (is_given_field_param) {
+          Kokkos::parallel_for(GivenFieldParam_Policy(0, sideSet.size), *this);
+        } else {
+          Kokkos::parallel_for(GivenField_Policy(0, sideSet.size), *this);
         }
-      }
-    } else {
+        break;
+      case REGULARIZED_COULOMB:
+        Kokkos::parallel_for(RegularizedCoulomb_Policy(0, sideSet.size), *this);
+        break;
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+              std::endl << "Error in LandIce::BasalFrictionCoefficientGradient: cannot compute the gradient of this type of beta.");
+    }
+    if (use_stereographic_map) {
+      Kokkos::parallel_for(StereographicMapCorrection_Policy(0, sideSet.size), *this);
+    }
+  }
+  else {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    {
+      // Get the local data of side and cell
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
+
       switch (beta_type)
       {
         case GIVEN_CONSTANT:
