@@ -57,11 +57,7 @@ template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
 operator() (const DivInterpolation_Tag& tag, const int& sideSet_idx) const {
-
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
+  
   for (int qp=0; qp<numSideQPs; ++qp)
   {
     val_qp(sideSet_idx,qp) = 0.;

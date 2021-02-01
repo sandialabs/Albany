@@ -122,7 +122,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   size_t diffDims = useCollapsedSidesets ? dims[2] : dims[3];
   Kokkos::View<ScalarT*,  PHX::Device> diff_1("diff_1", diffDims);
-  Kokkos::View<ScalarT**, PHX::Device> diff_2("diff_@", diffDims, diffDims);
+  Kokkos::View<ScalarT**, PHX::Device> diff_2("diff_2", diffDims, diffDims);
 
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
   {

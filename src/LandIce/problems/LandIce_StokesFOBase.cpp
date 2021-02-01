@@ -167,8 +167,6 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
       unsigned int numSideNodes    = sideBasis[ssName]->getCardinality();
       unsigned int numSideQPs      = sideCubature[ssName]->getNumPoints();
 
-      if(Teuchos::GlobalMPISession::getRank() == 0) printf("Layout %s: worksetSize = %d, sideMeshSpecs.worksetSize = %d\n", ssName.c_str(), worksetSize, sideMeshSpecs.worksetSize);
-
       dl->side_layouts[ssName] = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
                                                          numSideQPs,sideDim,numDim,numCellSides,vecDimFO,
                                                          useCollapsedSidesets,sideMeshSpecs.worksetSize));

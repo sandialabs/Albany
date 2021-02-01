@@ -66,10 +66,6 @@ KOKKOS_INLINE_FUNCTION
 void IceOverburden<EvalT, Traits, IsStokes>::
 operator() (const IceOverburden_Tag& tag, const int& sideSet_idx) const {
 
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
   for (int pt=0; pt<numPts; ++pt) {
     P_o (sideSet_idx,pt) = rho_i*g*H(sideSet_idx,pt);
   }

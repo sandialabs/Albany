@@ -77,10 +77,6 @@ template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Dim0_Tag& tag, const int& sideSet_idx) const {
-  
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
 
   MeshScalarT meas = 0.0;
       
@@ -99,10 +95,6 @@ template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Dim1_Tag& tag, const int& sideSet_idx) const {
-  
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
 
   MeshScalarT meas = 0.0;
       
@@ -123,10 +115,6 @@ template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Dim2_Tag& tag, const int& sideSet_idx) const {
-  
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
 
   MeshScalarT meas = 0.0;
       
@@ -154,12 +142,25 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
 
   sideSet = workset.sideSetViews->at(sideSetName);
 
-  switch (fieldDim)
-  {
-    case 0:
-      if (useCollapsedSidesets) {
+  if (useCollapsedSidesets) {
+    switch (fieldDim)
+    {
+      case 0:
         Kokkos::parallel_for(Dim0_Policy(0, sideSet.size), *this);
-      } else {
+        break;
+      case 1:
+        Kokkos::parallel_for(Dim1_Policy(0, sideSet.size), *this);
+        break;
+      case 2:
+        Kokkos::parallel_for(Dim2_Policy(0, sideSet.size), *this);
+        break;
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Field dimension not supported (this error should have already appeared).\n");
+    }
+  } else {
+    switch (fieldDim)
+    {
+      case 0:
         for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of side and cell
@@ -177,12 +178,8 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
           }
           field_side(cell,side) /= meas;
         }
-      }
-      break;
-    case 1:
-      if (useCollapsedSidesets) {
-        Kokkos::parallel_for(Dim1_Policy(0, sideSet.size), *this);
-      } else {
+        break;
+      case 1:
         for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of side and cell
@@ -202,12 +199,8 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
             field_side(cell,side,i) /= meas;
           }
         }
-      }
-      break;
-    case 2:
-      if (useCollapsedSidesets) {
-        Kokkos::parallel_for(Dim2_Policy(0, sideSet.size), *this);
-      } else {
+        break;
+      case 2:
         for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of side and cell
@@ -230,11 +223,10 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
             }
           }
         }
-      }
-      break;
-
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Field dimension not supported (this error should have already appeared).\n");
+        break;
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Field dimension not supported (this error should have already appeared).\n");
+    }
   }
 
 }

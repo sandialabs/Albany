@@ -60,11 +60,7 @@ template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFGradInterpolationSideBase<EvalT, Traits, ScalarT>::
 operator() (const GradInterpolationSide_Tag& tag, const int& sideSet_idx) const {
-
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
+  
   for (int qp=0; qp<numSideQPs; ++qp) {
     for (int dim=0; dim<numDims; ++dim) {
       grad_qp(sideSet_idx,qp,dim) = 0.;

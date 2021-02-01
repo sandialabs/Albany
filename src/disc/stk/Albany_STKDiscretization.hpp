@@ -202,7 +202,14 @@ class STKDiscretization : public AbstractDiscretization
   const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
   getLocalDOFViews(const int workset) const
   {
-    return localDOFViews.at(workset);
+    const auto iter = localDOFViews.find(workset);
+    if (iter != localDOFViews.end()) {
+      return iter->second;
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+        "Local DOF view was requested but it has not been created." << std::endl);
+    }
   }
 
   //! Get connectivity map from elementGID to workset

@@ -86,8 +86,7 @@ KOKKOS_INLINE_FUNCTION
 void MapToPhysicalFrameSide<EvalT, Traits>::
 operator() (const MapToPhysicalFrameSide_Tag& tag, const int& sideSet_idx) const {
   
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
+  // Get the local data of side
   const int side = sideSet.side_local_id(sideSet_idx);
 
   for (int qp=0; qp<numSideQPs; ++qp) {

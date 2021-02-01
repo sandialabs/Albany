@@ -86,10 +86,6 @@ KOKKOS_INLINE_FUNCTION
 void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
 operator() (const Surrogate_Tag& tag, const int& sideSet_idx) const {
 
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
   const ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
 
   for (int pt=0; pt<numPts; ++pt) {
@@ -103,10 +99,6 @@ template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
 KOKKOS_INLINE_FUNCTION
 void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
 operator() (const NonSurrogate_Tag& tag, const int& sideSet_idx) const {
-
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
 
   for (int node=0; node<numPts; ++node) {
     // N = P_o - P_w

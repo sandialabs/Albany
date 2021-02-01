@@ -165,7 +165,6 @@ operator() (const CellScalarSideset_Tag& tag, const int& sideSet_idx) const {
   
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
 
   val_side(sideSet_idx) = val_cell(cell);
 
