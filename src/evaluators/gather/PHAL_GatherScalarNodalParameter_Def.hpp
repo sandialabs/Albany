@@ -400,7 +400,7 @@ evaluateFields(typename Traits::EvalData workset)
       RealType pvec_val = (id >= 0) ? pvec_constView[id] : 0;
 
       auto val = (this->val)(cell,node);
-      val = FadType(num_deriv, pvec_val);
+      val = HessianVecFad(num_deriv, pvec_val);
       // If we differentiate w.r.t. this parameter, we have to set the first
       // derivative to 1
       if (is_p_active)
@@ -490,7 +490,7 @@ evaluateFields(typename Traits::EvalData workset)
       RealType pvec_val = (p_lid >= 0) ? pvec_constView[p_lid] : 0;
 
       auto val = (this->val)(cell,node);
-      val = FadType(val.size(), pvec_val);
+      val = HessianVecFad(val.size(), pvec_val);
       // If we differentiate w.r.t. this parameter, we have to set the first
       // derivative to 1
       if (is_p_active)

@@ -86,7 +86,7 @@ namespace Albany {
       const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
     virtual void
-    evaluateDistParamHessVecProd_xx(
+    evaluate_HessVecProd_xx(
       const double current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
       const Teuchos::RCP<const Thyra_Vector>& x,
@@ -96,7 +96,7 @@ namespace Albany {
       const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
 
     virtual void
-    evaluateDistParamHessVecProd_xp(
+    evaluate_HessVecProd_xp(
       const double current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
       const Teuchos::RCP<const Thyra_Vector>& x,
@@ -107,7 +107,7 @@ namespace Albany {
       const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
 
     virtual void
-    evaluateDistParamHessVecProd_px(
+    evaluate_HessVecProd_px(
       const double current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
       const Teuchos::RCP<const Thyra_Vector>& x,
@@ -118,7 +118,7 @@ namespace Albany {
       const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
 
     virtual void
-    evaluateDistParamHessVecProd_pp(
+    evaluate_HessVecProd_pp(
       const double current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
       const Teuchos::RCP<const Thyra_Vector>& x,

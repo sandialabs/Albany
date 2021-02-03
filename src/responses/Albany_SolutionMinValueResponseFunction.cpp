@@ -142,7 +142,7 @@ evaluateDistParamDeriv(
 }
 
 void SolutionMinValueResponseFunction::
-evaluateDistParamHessVecProd_xx(
+evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -157,7 +157,7 @@ evaluateDistParamHessVecProd_xx(
 }
 
 void SolutionMinValueResponseFunction::
-evaluateDistParamHessVecProd_xp(
+evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -173,7 +173,7 @@ evaluateDistParamHessVecProd_xp(
 }
 
 void SolutionMinValueResponseFunction::
-evaluateDistParamHessVecProd_px(
+evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -189,7 +189,7 @@ evaluateDistParamHessVecProd_px(
 }
 
 void SolutionMinValueResponseFunction::
-evaluateDistParamHessVecProd_pp(
+evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,

@@ -79,7 +79,7 @@ public:
     const std::string& dist_param_name,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
-  void evaluateDistParamHessVecProd_xx(
+  void evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -88,7 +88,7 @@ public:
     const Teuchos::Array<ParamVec>& param_array,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
 
-  void evaluateDistParamHessVecProd_xp(
+  void evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -98,7 +98,7 @@ public:
     const std::string& dist_param_direction_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
 
-  void evaluateDistParamHessVecProd_px(
+  void evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -108,7 +108,7 @@ public:
     const std::string& dist_param_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
 
-  void evaluateDistParamHessVecProd_pp(
+  void evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,

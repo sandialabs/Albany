@@ -101,7 +101,7 @@ namespace Albany {
       const Teuchos::RCP<Thyra_MultiVector>& dg_dp) = 0;
 
     //! Evaluate distributed parameter derivative dg/dp
-    virtual void evaluateDistParamHessVecProd_xx(
+    virtual void evaluate_HessVecProd_xx(
       const double current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
       const Teuchos::RCP<const Thyra_Vector>& x,
@@ -110,7 +110,7 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& param_array,
       const Teuchos::RCP<Thyra_MultiVector>& Hv_dp) = 0;
 
-    virtual void evaluateDistParamHessVecProd_xp(
+    virtual void evaluate_HessVecProd_xp(
       const double current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
       const Teuchos::RCP<const Thyra_Vector>& x,
@@ -120,7 +120,7 @@ namespace Albany {
       const std::string& dist_param_direction_name,
       const Teuchos::RCP<Thyra_MultiVector>& Hv_dp) = 0;
 
-    virtual void evaluateDistParamHessVecProd_px(
+    virtual void evaluate_HessVecProd_px(
       const double current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
       const Teuchos::RCP<const Thyra_Vector>& x,
@@ -130,7 +130,7 @@ namespace Albany {
       const std::string& dist_param_name,
       const Teuchos::RCP<Thyra_MultiVector>& Hv_dp) = 0;
 
-    virtual void evaluateDistParamHessVecProd_pp(
+    virtual void evaluate_HessVecProd_pp(
       const double current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
       const Teuchos::RCP<const Thyra_Vector>& x,

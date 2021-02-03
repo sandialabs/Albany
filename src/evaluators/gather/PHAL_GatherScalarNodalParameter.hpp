@@ -163,16 +163,16 @@ private:
  *       \f]
  * </ul>
  *
- *  where \f$\boldsymbol{x}\f$ is the solution, \f$\boldsymbol{p}_1\f$ is a first distributed parameter,  \f$\boldsymbol{p}_2 \f$ is a potentially different second distributed parameter,
+ *  where \f$\boldsymbol{x}\f$ is the solution, \f$\boldsymbol{p}_1\f$ is a first parameter,  \f$\boldsymbol{p}_2 \f$ is a potentially different second parameter,
  *  \f$g\f$ is the response function, \f$\boldsymbol{f}\f$ is the residual, \f$\boldsymbol{z}\f$ is the Lagrange multiplier vector,  \f$\boldsymbol{v}_{\boldsymbol{x}}\f$ is a direction vector
  *  with the same dimension as the vector  \f$\boldsymbol{x}\f$, and \f$\boldsymbol{v}_{\boldsymbol{p}_1}\f$ is a direction vector with the same dimension as the vector \f$\boldsymbol{p}_1\f$.
  * 
  * This gather is used when calling: 
  * <ul>
- *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_xx,
- *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_xp,
- *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_px, 
- *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_pp,
+ *   <li> Albany::Application::evaluateResponse_HessVecProd_xx,
+ *   <li> Albany::Application::evaluateResponse_HessVecProd_xp,
+ *   <li> Albany::Application::evaluateResponse_HessVecProd_px, 
+ *   <li> Albany::Application::evaluateResponse_HessVecProd_pp,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_xx,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_xp,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_px, 
@@ -380,16 +380,16 @@ private:
  *       \f]
  * </ul>
  *
- *  where  \f$\boldsymbol{x}\f$ is the solution, \f$\boldsymbol{p}_1\f$ is a first distributed parameter which can be extruded, \f$\boldsymbol{p}_2\f$ is a potentially different second distributed parameter which can be extruded too,
+ *  where  \f$\boldsymbol{x}\f$ is the solution, \f$\boldsymbol{p}_1\f$ is a first parameter which can be extruded, \f$\boldsymbol{p}_2\f$ is a potentially different second parameter which can be extruded too,
  *  \f$g\f$ is the response function, \f$\boldsymbol{f}\f$ is the residual, \f$\boldsymbol{z}\f$ is the Lagrange multiplier vector, \f$\boldsymbol{v}_{\boldsymbol{x}}\f$ is a direction vector
  *  with the same dimension as the vector \f$\boldsymbol{x}\f$, and \f$\boldsymbol{v}_{\boldsymbol{p}_1}\f$ is a direction vector with the same dimension as the vector \f$\boldsymbol{p}_1\f$.
  * 
  * This gather is used when calling: 
  * <ul>
- *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_xx,
- *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_xp,
- *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_px, 
- *   <li> Albany::Application::evaluateResponseDistParamHessVecProd_pp,
+ *   <li> Albany::Application::evaluateResponse_HessVecProd_xx,
+ *   <li> Albany::Application::evaluateResponse_HessVecProd_xp,
+ *   <li> Albany::Application::evaluateResponse_HessVecProd_px, 
+ *   <li> Albany::Application::evaluateResponse_HessVecProd_pp,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_xx,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_xp,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_px, 
