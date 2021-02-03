@@ -270,7 +270,7 @@ evaluateDistParamDeriv(
 
 void
 Albany::CumulativeScalarResponseFunction::
-evaluateDistParamHessVecProd_xx(
+evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -292,7 +292,7 @@ evaluateDistParamHessVecProd_xx(
     RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
 
     // Evaluate response function
-    responses[i]->evaluateDistParamHessVecProd_xx(
+    responses[i]->evaluate_HessVecProd_xx(
            current_time, v, x, xdot, xdotdot,
            param_array,
            Hv_dp_i);
@@ -304,7 +304,7 @@ evaluateDistParamHessVecProd_xx(
 
 void
 Albany::CumulativeScalarResponseFunction::
-evaluateDistParamHessVecProd_xp(
+evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -327,7 +327,7 @@ evaluateDistParamHessVecProd_xp(
     RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
 
     // Evaluate response function
-    responses[i]->evaluateDistParamHessVecProd_xp(
+    responses[i]->evaluate_HessVecProd_xp(
            current_time, v, x, xdot, xdotdot,
            param_array, dist_param_direction_name,
            Hv_dp_i);
@@ -339,7 +339,7 @@ evaluateDistParamHessVecProd_xp(
 
 void
 Albany::CumulativeScalarResponseFunction::
-evaluateDistParamHessVecProd_px(
+evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -362,7 +362,7 @@ evaluateDistParamHessVecProd_px(
     RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
 
     // Evaluate response function
-    responses[i]->evaluateDistParamHessVecProd_px(
+    responses[i]->evaluate_HessVecProd_px(
            current_time, v, x, xdot, xdotdot,
            param_array, dist_param_name,
            Hv_dp_i);
@@ -374,7 +374,7 @@ evaluateDistParamHessVecProd_px(
 
 void
 Albany::CumulativeScalarResponseFunction::
-evaluateDistParamHessVecProd_pp(
+evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -398,7 +398,7 @@ evaluateDistParamHessVecProd_pp(
     RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
 
     // Evaluate response function
-    responses[i]->evaluateDistParamHessVecProd_pp(
+    responses[i]->evaluate_HessVecProd_pp(
            current_time, v, x, xdot, xdotdot,
            param_array, dist_param_name,
            dist_param_direction_name,

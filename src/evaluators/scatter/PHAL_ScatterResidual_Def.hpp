@@ -19,6 +19,8 @@
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
+#include "Albany_Hessian.hpp"
+
 // **********************************************************************
 // Base Class Generic Implemtation
 // **********************************************************************
@@ -886,6 +888,13 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  // First, the function checks whether the parameter associated to workset.dist_param_deriv_name
+  // is a distributed parameter (l1_is_distributed==true) or a parameter vector
+  // (l1_is_distributed==false).
+  int l1;
+  bool l1_is_distributed;
+  Albany::getParameterVectorID(l1, l1_is_distributed, workset.dist_param_deriv_name);
+
   // Here we scatter the *local* response derivative
   auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xx = workset.hessianWorkset.overlapped_hess_vec_prod_f_xx;
@@ -920,7 +929,10 @@ evaluateFields(typename Traits::EvalData workset)
     hess_vec_prod_f_pp_data = Albany::getNonconstLocalData(hess_vec_prod_f_pp);
 
   Albany::IDArray  wsElDofs;
-  if(f_px_is_active||f_pp_is_active)
+  // If the parameter associated to workset.dist_param_deriv_name is a distributed parameter,
+  // the function needs to access the associated workset_elem_dofs to deduce the IDs of the entries
+  // of the resulting vector.
+  if(l1_is_distributed && (f_px_is_active || f_pp_is_active))
     wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell ) {
@@ -947,7 +959,7 @@ evaluateFields(typename Traits::EvalData workset)
             hess_vec_prod_f_xp_data[0][row] += value.dx(deriv).dx(0);
         }
       }
-      if(f_px_is_active || f_pp_is_active) {
+      if(l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
         const int row = wsElDofs((int)cell,(int)node,0);
         if(row >=0){
           if(f_px_is_active)
@@ -957,6 +969,18 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     } // node
+
+    // If the parameter associated to workset.dist_param_deriv_name
+    // is a parameter vector, the function does not need to loop over
+    // the nodes: 
+    if(!l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
+      if(f_px_is_active)
+        for (unsigned int l1_i=0; l1_i<hess_vec_prod_f_px_data[0].size(); ++l1_i)
+          hess_vec_prod_f_px_data[0][l1_i] += value.dx(l1_i).dx(0);
+      if(f_pp_is_active)
+        for (unsigned int l1_i=0; l1_i<hess_vec_prod_f_pp_data[0].size(); ++l1_i)
+          hess_vec_prod_f_pp_data[0][l1_i] += value.dx(l1_i).dx(0);
+    }
   } // cell
 }
 

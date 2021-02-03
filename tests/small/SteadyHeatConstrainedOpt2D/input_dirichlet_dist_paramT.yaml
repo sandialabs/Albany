@@ -17,7 +17,6 @@ ANONYMOUS:
         Upper Bound: 2.00000000000000000e+00
         Initial Uniform Value: -5.00000000000000000e-01
         Mesh Part: NodeSet0
-      Hessian-vector products use AD: true
     Response Functions: 
       Number Of Responses: 1
       Response 0:
@@ -26,6 +25,8 @@ ANONYMOUS:
         Field Rank: Scalar
         Source Field Name: Temperature
         Target Value: 0.0
+    Hessian:
+      Use AD for Hessian-vector products (default): true
   Discretization: 
     1D Elements: 40
     2D Elements: 40

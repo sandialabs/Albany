@@ -424,6 +424,7 @@ list (APPEND SOURCES
   evaluators/utility/PHAL_MapToPhysicalFrame.cpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide.cpp
   evaluators/utility/PHAL_Source.cpp
+  evaluators/utility/PHAL_Spatial.cpp
   )
 
 if(ALBANY_STK_EXPR_EVAL)
@@ -558,6 +559,8 @@ list (APPEND HEADERS
   evaluators/utility/PHAL_MapToPhysicalFrame_Def.hpp
   evaluators/utility/PHAL_Source.hpp
   evaluators/utility/PHAL_Source_Def.hpp
+  evaluators/utility/PHAL_Spatial.hpp
+  evaluators/utility/PHAL_Spatial_Def.hpp
   )
 
 if(ALBANY_STK_EXPR_EVAL)

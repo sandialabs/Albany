@@ -17,6 +17,9 @@
 #include "Teuchos_Array.hpp"
 #include "Teuchos_TestForException.hpp"
 
+#include "PHAL_SharedParameter.hpp"
+#include "PHAL_Spatial.hpp"
+
 namespace PHAL {
 
 namespace Source_Functions {
@@ -750,96 +753,6 @@ MVExponential<EvalT,Traits>::getValue(const std::string &n)
 }
 
 
-// This needs to be templated to get mesh derivatives
-template<typename EvalT>
-class Spatial_Base {
-public :
-  virtual ~Spatial_Base(){}
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ScalarT ScalarT;
-  virtual ScalarT evaluateFields  (const std::vector<MeshScalarT> &coords)=0;
-};
-
-template<typename EvalT>
-class Gaussian : public Spatial_Base<EvalT>,
-public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-public :
-  static bool check_for_existance(Teuchos::ParameterList &source_list);
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ScalarT ScalarT;
-  Gaussian(Teuchos::ParameterList &source_list, std::size_t num);
-  virtual ~Gaussian(){}
-  virtual ScalarT evaluateFields(const std::vector<MeshScalarT> &coords);
-private :
-  ScalarT     m_amplitude        ;
-  ScalarT     m_radius           ;
-  int         m_num              ;
-  Teuchos::Array<double> m_centroid ;
-  virtual ScalarT & getValue(const std::string &n);
-};
-
-template<typename EvalT>
-inline bool Gaussian<EvalT>::check_for_existance(Teuchos::ParameterList &source_list)
-{
-  std::string g("Gaussian");
-  bool exists = source_list.getEntryPtr("Type");
-  if (exists) exists = g==source_list.get("Type",g);
-  return exists;
-}
-
-template<typename EvalT>
-typename Gaussian<EvalT>::ScalarT&
-Gaussian<EvalT>::getValue(const std::string &n)
-{
-  if (n == Albany::strint("Amplitude",m_num))
-    return m_amplitude;
-  else if (n == Albany::strint("Radius",m_num))
-    return m_radius;
-  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-         std::endl <<
-         "Error! Logic error in getting parameter " << n
-         << " in Gaussian::getValue()" << std::endl);
-}
-
-template<typename EvalT>
-inline Gaussian<EvalT>::Gaussian(Teuchos::ParameterList &source_list, std::size_t num)
-{
-  Teuchos::ParameterList& paramList = source_list.sublist("Spatial",true);
-  m_amplitude = paramList.get("Amplitude",      1.0);
-  m_radius    = paramList.get("Radius",         1.0);
-  // sigma = 1.0/(sqrt(2.0)*m_radius);
-  m_centroid  = source_list.get(Albany::strint("Center",num),m_centroid);
-  m_num = num;
-
-  Teuchos::RCP<ParamLib> paramLib =
-      source_list.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
-  this->registerSacadoParameter(Albany::strint("Amplitude",num), paramLib);
-  this->registerSacadoParameter(Albany::strint("Radius",num), paramLib);
-}
-
-template<typename EvalT>
-typename EvalT::ScalarT Gaussian<EvalT>::
-evaluateFields(const std::vector<typename EvalT::MeshScalarT> &coords)
-{
-  ScalarT exponent=0;
-  const double pi = 3.1415926535897932385;
-  ScalarT  sigma_pi = 1.0/(m_radius*std::sqrt(2*pi));
-  const std::size_t nsd = coords.size();
-  for (std::size_t i=0; i<nsd; ++i) {
-    exponent += std::pow(m_centroid[i]-coords[i],2);
-  }
-  exponent /= (2.0*std::pow(m_radius, 2));
-  ScalarT x(0.0);
-  if (nsd==1)
-    x = m_amplitude *          sigma_pi    * std::exp(-exponent);
-  else if (nsd==2)
-    x = m_amplitude * std::pow(sigma_pi,2) * std::exp(-exponent);
-  else if (nsd==3)
-    x = m_amplitude * std::pow(sigma_pi,3) * std::exp(-exponent);
-  return x;
-}
-
-
 class Wavelet_Base {
 public :
   virtual ~Wavelet_Base(){}
@@ -877,17 +790,18 @@ public :
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   static bool check_for_existance(Teuchos::ParameterList* source_list);
-  PointSource(Teuchos::ParameterList& p);
+  PointSource(Teuchos::ParameterList& p, PHX::FieldManager<PHAL::AlbanyTraits>& fm, const Teuchos::RCP<Albany::Layouts>& dl);
   virtual ~PointSource();
   virtual void EvaluatedFields (Source<EvalT,Traits> &source, Teuchos::ParameterList& p);
   virtual void DependentFields (Source<EvalT,Traits> &source, Teuchos::ParameterList& p);
   virtual void FieldData       (PHX::EvaluatorUtilities<EvalT,Traits> &utils, PHX::FieldManager<Traits>& fm);
   virtual void evaluateFields  (typename Traits::EvalData workset);
+  std::size_t getNumDim () {return m_num_dim;};
 private :
   std::size_t                 m_num_qp;
   std::size_t                 m_num_dim;
   Wavelet_Base               *m_wavelet;
-  std::vector<Spatial_Base<EvalT> * >  m_spatials;
+  std::vector<Spatial_Base<EvalT,Traits> * >  m_spatials;
 
   Teuchos::ParameterList* m_source_list;
               PHX::MDField<ScalarT,Cell,Point>   m_source;
@@ -901,7 +815,7 @@ bool PointSource<EvalT,Traits>::check_for_existance(Teuchos::ParameterList* sour
 }
 
 template<typename EvalT, typename Traits>
-PointSource<EvalT,Traits>::PointSource(Teuchos::ParameterList& p) :
+PointSource<EvalT,Traits>::PointSource(Teuchos::ParameterList& p, PHX::FieldManager<PHAL::AlbanyTraits>& fm, const Teuchos::RCP<Albany::Layouts>& dl) :
   m_num_qp(0), m_wavelet(NULL), m_spatials()
 {
   m_source_list = p.get<Teuchos::ParameterList*>("Parameter List", NULL);
@@ -911,10 +825,17 @@ PointSource<EvalT,Traits>::PointSource(Teuchos::ParameterList& p) :
 
   m_num_dim  = paramList.get("Number", 0);
   Teuchos::ParameterList& spatial_param = paramList.sublist("Spatial",true);
-  if (Gaussian<EvalT>::check_for_existance(spatial_param)) {
+  if (Gaussian<EvalT,Traits>::check_for_existance(spatial_param)) {
+    Teuchos::RCP<Gaussian<EvalT,Traits>> ev;
     for (std::size_t i=0; i<m_num_dim; ++i) {
-      Gaussian<EvalT> *s = new Gaussian<EvalT>(paramList,i);
-      m_spatials.push_back(s);
+      paramList.set<std::string>(Albany::strint("Gaussian: Amplitude", i), Albany::strint("Amplitude", i));
+      paramList.set<std::string>(Albany::strint("Gaussian: Radius", i), Albany::strint("Radius", i));
+      paramList.set<std::string>(Albany::strint("Gaussian: Field", i), Albany::strint(p.get<std::string>("Source Name") + ": Gaussian Field", i));
+
+      ev = Teuchos::rcp(new Gaussian<EvalT,Traits>(paramList,i,fm,dl));
+      fm.template registerEvaluator<EvalT>(ev);
+
+      m_spatials.push_back(ev.getRawPtr());
     }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(m_spatials.empty(), std::logic_error,
@@ -933,10 +854,6 @@ template<typename EvalT, typename Traits>
 PointSource<EvalT,Traits>::~PointSource()
 {
   delete m_wavelet;
-  for (std::size_t i=0; i<m_spatials.size(); ++i) {
-    Spatial_Base<EvalT> *s = m_spatials[i];
-    delete s;
-  }
   m_spatials.clear();
 }
 
@@ -997,7 +914,7 @@ void PointSource<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset
 using namespace Source_Functions;
 
 template<typename EvalT, typename Traits>
-Source<EvalT, Traits>::Source(Teuchos::ParameterList& p)
+Source<EvalT, Traits>::Source(Teuchos::ParameterList& p, PHX::FieldManager<PHAL::AlbanyTraits>& fm, const Teuchos::RCP<Albany::Layouts>& dl)
 {
 
   Teuchos::ParameterList* source_list = p.get<Teuchos::ParameterList*>("Parameter List", NULL);
@@ -1044,10 +961,15 @@ Source<EvalT, Traits>::Source(Teuchos::ParameterList& p)
     this->setName("MVExponentialSource" );
   }
   if (PointSource<EvalT,Traits>::check_for_existance(source_list)) {
-    PointSource<EvalT,Traits>       *s = new PointSource<EvalT,Traits>(p);
+    PointSource<EvalT,Traits> *s = new PointSource<EvalT,Traits>(p, fm, dl);
     Source_Base<EvalT,Traits> *sb = s;
     m_sources.push_back(sb);
     this->setName("PointSource" );
+
+    for (std::size_t i=0; i<s->getNumDim(); ++i) {
+      const PHX::Tag<ScalarT> fieldTag(Albany::strint(p.get<std::string>("Source Name") + ": Gaussian Field", i), dl->dummy);
+      this->addDependentField(fieldTag);
+    }
   }
   for (std::size_t i=0; i<m_sources.size(); ++i) {
     Source_Base<EvalT,Traits>* sb =  m_sources[i];

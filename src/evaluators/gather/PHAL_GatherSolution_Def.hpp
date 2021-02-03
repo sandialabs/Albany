@@ -1072,7 +1072,7 @@ evaluateFields(typename Traits::EvalData workset)
                     this->valTensor(cell,node, eq/numDim, eq%numDim));
         RealType xvec_val = x_constView[nodeID(cell,node,this->offset + eq)];
 
-        valref = FadType(valref.size(), xvec_val);
+        valref = HessianVecFad(valref.size(), xvec_val);
         // If we differentiate w.r.t. the solution, we have to set the first
         // derivative to 1
         if (is_x_active)

@@ -18,6 +18,8 @@
 #include "PHAL_Dimension.hpp"
 #include "Sacado_Traits.hpp"
 
+#include "Albany_Layouts.hpp"
+
 namespace PHAL {
 
 //! Common area for standard source terms.
@@ -34,7 +36,7 @@ class Source :
 public:
 
   // Phalanx evaluator methods
-  Source(Teuchos::ParameterList& p);
+  Source(Teuchos::ParameterList& p, PHX::FieldManager<PHAL::AlbanyTraits>& fm, const Teuchos::RCP<Albany::Layouts>& dl);
   ~Source();
 
   void postRegistrationSetup(typename Traits::SetupData d,

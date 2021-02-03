@@ -22,7 +22,17 @@ ANONYMOUS:
         Lower Bound: -1.00000000000000000e+00
         Upper Bound: 2.00000000000000000e+00
         Initial Uniform Value: -5.00000000000000000e-01
-      Hessian-vector products use AD: true
+    Hessian:
+      Use AD for Hessian-vector products (default): false
+      Residual:
+        Use AD for Hessian-vector products (default): false
+        Enable AD for Hessian-vector product contributions of: (x,x) (p0,p0) (p0,p1) (p1,p0) (p1,p1)
+        Disable AD for Hessian-vector product contributions of: (x,p0) (x,p1) (p0,x) (p1,x)
+      Response 0:
+        Use AD for Hessian-vector products (default): false
+        Enable AD for Hessian-vector product contributions of: (x,x) (p0,p0) (p0,p1) (p1,p0) (p1,p1)
+        Disable AD for Hessian-vector product contributions of: (x,p0) (x,p1) (p0,x) (p1,x)
+        Reconstruct H_pp: false
     Response Functions: 
       Number Of Responses: 1
       Response 0:

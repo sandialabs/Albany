@@ -4,6 +4,7 @@
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_Hessian.hpp"
 #include "Albany_KokkosUtils.hpp"
+#include "Albany_Utils.hpp"
 
 #include <Kokkos_UnorderedMap.hpp>
 #include <Kokkos_Sort.hpp>
@@ -169,4 +170,60 @@ Teuchos::RCP<Tpetra_CrsGraph> Albany::createHessianCrsGraph(
     RCP<Tpetra_CrsGraph> Hgraph = rcp(new Tpetra_CrsGraph(p_owned_map, p_overlapped_map, rowOffsets, colIndices));
     Hgraph->fillComplete(p_owned_map, p_owned_map);
     return Hgraph;
+}
+
+void Albany::getHessianBlockIDs(
+    int &i1,
+    int &i2,
+    std::string blockName)
+{
+    std::string tmp = blockName;
+    tmp.erase(std::remove(tmp.begin(), tmp.end(), '('), tmp.end());
+    tmp.erase(std::remove(tmp.begin(), tmp.end(), ')'), tmp.end());
+
+    std::vector<std::string> block_ids;
+
+    Albany::splitStringOnDelim(tmp, ',', block_ids);
+    int ids[2];
+
+    for (int i = 0; i < 2; ++i)
+    {
+        if (block_ids[i][0] == 'x')
+            ids[i] = 0;
+        else if (block_ids[i][0] == 'p')
+            ids[i] = stoi(block_ids[i].substr(1)) + 1;
+        else
+            TEUCHOS_TEST_FOR_EXCEPTION(
+                true,
+                Teuchos::Exceptions::InvalidParameter,
+                std::endl
+                    << "Error!  Albany::getHessianBlockIDs():  "
+                    << "The name " << blockName
+                    << " is incorrect; it is impossible to deduce if "
+                    << block_ids[i]
+                    << " refers to a parameter or the solution."
+                    << std::endl);
+    }
+
+    i1 = ids[0];
+    i2 = ids[1];
+}
+
+void Albany::getParameterVectorID(
+    int &i,
+    bool &is_distributed,
+    std::string parameterName)
+{
+    std::vector<std::string> elems;
+    Albany::splitStringOnDelim(parameterName, ' ', elems);
+    if (elems.size() == 2 && elems[0].compare("parameter_vector") == 0)
+    {
+        is_distributed = false;
+        i = stoi(elems[1]);
+    }
+    else
+    {
+        is_distributed = true;
+        i = -1;
+    }
 }
