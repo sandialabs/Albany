@@ -4,6 +4,8 @@ export TEST_DIR=`pwd`
 rm -rf *log 
 rm -rf Albany
 rm -rf Trilinos
+module load cde/compiler/gcc/7.2.0
+module load cde/cmake/3.17.1
 git clone git@github.com:trilinos/Trilinos.git >& trilinos-clone.log
 cd Trilinos
 git checkout develop
