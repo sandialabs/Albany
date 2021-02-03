@@ -4,13 +4,17 @@ cd spack
 export http_proxy=http://wwwproxy.sandia.gov:80
 export https_proxy=http://wwwproxy.sandia.gov:80
 . share/spack/setup-env.sh
-spack --insecure install --dirty --keep-stage libtool >& spack_libtool.out
+module load cde/compiler/gcc/7.2.0
+spack compiler find
+spack --insecure install --dirty --keep-stage libtool%gcc@7.2.0 >& spack_libtool.out
 sleep 5m
-spack --insecure install --dirty --keep-stage diffutils >& spack_diffutils.out
+spack --insecure install --dirty --keep-stage diffutils%gcc@7.2.0 >& spack_diffutils.out
 sleep 5m
-spack --insecure install --dirty --keep-stage trilinos >& spack_trilinos.out
+spack --insecure install --dirty --keep-stage xz%gcc@7.2.0 >& spack_xz.out
 sleep 5m
-spack --insecure install --dirty --keep-stage albany >& spack_albany.out
+spack --insecure install --dirty --keep-stage trilinos%gcc@7.2.0 >& spack_trilinos.out
+sleep 5m
+spack --insecure install --dirty --keep-stage albany%gcc@7.2.0 >& spack_albany.out
 spack cd albany >& /projects/albany/nightlySpackBuild/spack_cd_albany.out
 cd ../spack-build
 ctest -V >& spack_ctest.out
