@@ -91,7 +91,7 @@ setNominalValue (const Teuchos::ParameterList& p, double default_value)
         break; // Pointless to check the remaining parameters as they are all distributed
 
       if (parameterType == "Scalar") {
-        if (!pvi.isParameter("Nominal Values"))
+        if (!pvi.isParameter("Nominal Value"))
           continue; // Pointless to check the parameter names, since we don't have nominal values
         if (pvi.get<std::string>("Name")==param_name)
         {
@@ -106,7 +106,7 @@ setNominalValue (const Teuchos::ParameterList& p, double default_value)
         for (int j=0; j<m; ++j)
         {
           const Teuchos::ParameterList& pj = pvi.sublist(Albany::strint("Scalar",j));
-          if (!pj.isParameter("Nominal Values"))
+          if (!pj.isParameter("Nominal Value"))
             continue; // Pointless to check the parameter names, since we don't have nominal values
           if (pj.get<std::string>("Name")==param_name)
           {
