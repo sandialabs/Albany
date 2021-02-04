@@ -14,7 +14,9 @@ module unload openmpi-intel/1.8
 module load sntools/master
 module load sierra-python/2.7.4
 module load sierra-git/2.6.1
-module load cmake/3.4.3
+module load cde/compiler/gcc/7.2.0
+module load cde/cmake/3.17.1
+
 
 conflict lcm-fedora lcm-sems lcm-ubuntu lcm-scientific-linux
 
