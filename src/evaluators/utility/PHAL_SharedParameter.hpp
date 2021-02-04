@@ -105,9 +105,12 @@ setNominalValue (const Teuchos::ParameterList& p, double default_value)
         int m = pvi.get<int>("Dimension");
         for (int j=0; j<m; ++j)
         {
-          if (pvi.sublist(Albany::strint("Scalar",j)).get<std::string>("Name")==param_name)
+          const Teuchos::ParameterList& pj = pvi.sublist(Albany::strint("Scalar",j));
+          if (!pj.isParameter("Nominal Values"))
+            continue; // Pointless to check the parameter names, since we don't have nominal values
+          if (pj.get<std::string>("Name")==param_name)
           {
-            double nom_val = pvi.get<double>("Nominal Value");
+            double nom_val = pj.get<double>("Nominal Value");
             value = nom_val;
             found = true;
             break;
