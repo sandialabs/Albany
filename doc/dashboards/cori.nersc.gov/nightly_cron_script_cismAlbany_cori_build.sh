@@ -5,7 +5,7 @@ EXE_DIR=/project/projectdirs/piscees/nightlyCoriCDashExe
 cd $BASE_DIR
 
 source cori_modules.sh >& modules.out 
-export CRAYPE_LINK_TYPE=STATIC
+#export CRAYPE_LINK_TYPE=STATIC
 
 LOG_FILE=$BASE_DIR/nightly_log_coriCismAlbanyBuild.txt
 
