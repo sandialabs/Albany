@@ -60,6 +60,7 @@ private:
 
   ScalarT p_reg, reg;
   double laplacian_coeff, mass_coeff, robin_coeff;
+
 };
 
 // Some shortcut names

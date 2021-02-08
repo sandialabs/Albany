@@ -161,6 +161,11 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
 
   numDims = dims.size();
 
+  TEUCHOS_TEST_FOR_EXCEPTION (numDims > 4, Teuchos::Exceptions::InvalidParameter, "Error! Layout has more dimensions than expectes");
+
+  for (int i = 0; i < numDims; ++i)
+    dimsArray[i] = dims[i];
+
   this->setName("FieldFrobeniusNormBase(" + fieldNormName + ")" + PHX::print<EvalT>());
 }
 
@@ -176,6 +181,40 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (regularization_type==GIVEN_PARAMETER || regularization_type==PARAMETER_EXPONENTIAL)
     this->utils.setFieldData(regularizationParam,fm);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+}
+
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::
+operator() (const Dim2_Tag& tag, const int& sideSet_idx) const {
+
+  ScalarT norm = 0;
+  for (unsigned int dim(0); dim<dimsArray[1]; ++dim)
+  {
+    norm += std::pow(field(sideSet_idx,dim),2);
+  }
+  field_norm(sideSet_idx) = std::sqrt(norm + regularization);
+
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::
+operator() (const Dim3_Tag& tag, const int& sideSet_idx) const {
+
+  ScalarT norm;
+  for (unsigned int i(0); i<dimsArray[1]; ++i)
+  {
+    norm = 0;
+    for (unsigned int dim(0); dim<dimsArray[2]; ++dim)
+    {
+      norm += std::pow(field(sideSet_idx,i,dim),2);
+    }
+    field_norm(sideSet_idx,i) = std::sqrt(norm + regularization);
+  }
+
 }
 
 //**********************************************************************
@@ -199,8 +238,6 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Tr
   }
 #endif
 
-  ScalarT norm;
-
   if (useCollapsedSidesets) {
     switch (numDims)
     {
@@ -211,20 +248,7 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Tr
 
           sideSet = workset.sideSetViews->at(sideSetName);
 
-          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-          {
-            // Get the local data of side and cell
-            const int cell = sideSet.elem_LID(sideSet_idx);
-            const int side = sideSet.side_local_id(sideSet_idx);
-
-            norm = 0;
-            for (unsigned int dim(0); dim<dims[1]; ++dim)
-            {
-              norm += std::pow(field(sideSet_idx,dim),2);
-            }
-            field_norm(sideSet_idx) = std::sqrt(norm + regularization);
-
-          }
+          Kokkos::parallel_for(Dim2_Policy(0,sideSet.size),*this);
         }
         break;
       case 3:
@@ -234,28 +258,14 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Tr
 
           sideSet = workset.sideSetViews->at(sideSetName);
 
-          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-          {
-            // Get the local data of side and cell
-            const int cell = sideSet.elem_LID(sideSet_idx);
-            const int side = sideSet.side_local_id(sideSet_idx);
-
-            for (unsigned int i(0); i<dims[1]; ++i)
-            {
-              norm = 0;
-              for (unsigned int dim(0); dim<dims[2]; ++dim)
-              {
-                norm += std::pow(field(sideSet_idx,i,dim),2);
-              }
-              field_norm(sideSet_idx,i) = std::sqrt(norm + regularization);
-            }
-          }
+          Kokkos::parallel_for(Dim3_Policy(0,sideSet.size),*this);
         }
         break;
       default:
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Invalid field layout.\n");
     }
   } else {
+    ScalarT norm;
     switch (numDims)
     {
       case 2:

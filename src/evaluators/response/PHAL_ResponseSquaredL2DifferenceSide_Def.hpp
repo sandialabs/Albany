@@ -36,6 +36,7 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   fname        = plist->get<std::string>("Source Field Name");
 
   fieldDim = getLayout(dl_side,rank,layout);
+
   layout->dimensions(dims);
 
   if (fieldDim>0)
@@ -120,93 +121,171 @@ evaluateFields(typename Traits::EvalData workset)
   // Zero out local response
   PHAL::set(this->local_response_eval, 0.0);
 
-  size_t diffDims = useCollapsedSidesets ? dims[2] : dims[3];
-  Kokkos::View<ScalarT*,  PHX::Device> diff_1("diff_1", diffDims);
-  Kokkos::View<ScalarT**, PHX::Device> diff_2("diff_2", diffDims, diffDims);
+  diffDims = useCollapsedSidesets ? dims[2] : dims[3];
+  diff_1 = Kokkos::View<ScalarT*,  PHX::Device>("diff_1", diffDims);
+  diff_2 = Kokkos::View<ScalarT**, PHX::Device>("diff_2", diffDims, diffDims);
 
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
   {
     sideSet = workset.sideSetViews->at(sideSetName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
 
-      ScalarT sum = 0;
-      if (useCollapsedSidesets) {
-        for (int qp=0; qp<numQPs; ++qp)
-        {
-          ScalarT sq = 0;
-          // Computing squared difference at qp
-          switch (fieldDim)
+    if (useCollapsedSidesets) {
+      switch (fieldDim)
+      {
+        case 0:
+          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
           {
-            case 0:
+            // Get the local data of cell
+            const int cell = sideSet.elem_LID(sideSet_idx);
+
+            ScalarT sum = 0;
+            for (int qp=0; qp<numQPs; ++qp)
+            {
+              ScalarT sq = 0;
+              // Computing squared difference at qp
               sq += std::pow(sourceField(sideSet_idx,qp)-(target_value ? target_value_val : targetField(sideSet_idx,qp)),2);
-              break;
-            case 1:
+              sum += sq * w_measure(sideSet_idx,qp);
+            }
+
+            this->local_response_eval(cell, 0) = sum*scaling;
+            this->global_response_eval(0) += sum*scaling;
+          }
+          break;
+        case 1:
+          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+          {
+            // Get the local data of cell
+            const int cell = sideSet.elem_LID(sideSet_idx);
+
+            ScalarT sum = 0;
+            for (int qp=0; qp<numQPs; ++qp)
+            {
+              ScalarT sq = 0;
+              // Computing squared difference at qp
               // Precompute differentce and access fields only n times (not n^2)
-              for (size_t i=0; i<dims[3]; ++i)
+              for (size_t i=0; i<diffDims; ++i)
                 diff_1(i) = sourceField(sideSet_idx,qp,i) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i));
 
-              for (size_t i=0; i<dims[3]; ++i)
-                for (size_t j=0; j<dims[3]; ++j)
+              for (size_t i=0; i<diffDims; ++i)
+                for (size_t j=0; j<diffDims; ++j)
                   sq += diff_1(i)*metric(sideSet_idx,qp,i,j)*diff_1(j);
-              break;
-            case 2:
+              sum += sq * w_measure(sideSet_idx,qp);
+            }
+
+            this->local_response_eval(cell, 0) = sum*scaling;
+            this->global_response_eval(0) += sum*scaling;
+          }
+          break;
+        case 2:
+          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+          {
+            // Get the local data of cell
+            const int cell = sideSet.elem_LID(sideSet_idx);
+
+            ScalarT sum = 0;
+            for (int qp=0; qp<numQPs; ++qp)
+            {
+              ScalarT sq = 0;
+              // Computing squared difference at qp
               // Precompute differentce and access fields only n^2 times (not n^4)
-              for (size_t i=0; i<dims[3]; ++i)
-                for (size_t j=0; j<dims[3]; ++j)
+              for (size_t i=0; i<diffDims; ++i)
+                for (size_t j=0; j<diffDims; ++j)
                   diff_2(i,j) = sourceField(sideSet_idx,qp,i,j) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i,j));
 
-              for (size_t i=0; i<dims[3]; ++i)
-                for (size_t j=0; j<dims[3]; ++j)
-                  for (size_t k=0; k<dims[3]; ++k)
-                    for (size_t l=0; l<dims[3]; ++l)
+              for (size_t i=0; i<diffDims; ++i)
+                for (size_t j=0; j<diffDims; ++j)
+                  for (size_t k=0; k<diffDims; ++k)
+                    for (size_t l=0; l<diffDims; ++l)
                       sq += metric(sideSet_idx,qp,k,i)*diff_2(i,j) * metric(sideSet_idx,qp,j,l)*diff_2(l,k);
-              break;
+              sum += sq * w_measure(sideSet_idx,qp);
+            }
+
+            this->local_response_eval(cell, 0) = sum*scaling;
+            this->global_response_eval(0) += sum*scaling;
           }
-          sum += sq * w_measure(sideSet_idx,qp);
-        }
-      } else {
-        for (int qp=0; qp<numQPs; ++qp)
-        {
-          ScalarT sq = 0;
-          // Computing squared difference at qp
-          switch (fieldDim)
+          break;
+      }
+    } else {
+      switch (fieldDim)
+      {
+        case 0:
+          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
           {
-            case 0:
+            // Get the local data of side and cell
+            const int cell = sideSet.elem_LID(sideSet_idx);
+            const int side = sideSet.side_local_id(sideSet_idx);
+
+            ScalarT sum = 0;
+            for (int qp=0; qp<numQPs; ++qp)
+            {
+              ScalarT sq = 0;
+              // Computing squared difference at qp
               sq += std::pow(sourceField(cell,side,qp)-(target_value ? target_value_val : targetField(cell,side,qp)),2);
-              break;
-            case 1:
+              sum += sq * w_measure(cell,side,qp);
+            }
+
+            this->local_response_eval(cell, 0) = sum*scaling;
+            this->global_response_eval(0) += sum*scaling;
+          }
+          break;
+        case 1:
+          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+          {
+            // Get the local data of side and cell
+            const int cell = sideSet.elem_LID(sideSet_idx);
+            const int side = sideSet.side_local_id(sideSet_idx);
+
+            ScalarT sum = 0;
+            for (int qp=0; qp<numQPs; ++qp)
+            {
+              ScalarT sq = 0;
+              // Computing squared difference at qp
               // Precompute differentce and access fields only n times (not n^2)
-              for (size_t i=0; i<dims[3]; ++i)
+              for (size_t i=0; i<diffDims; ++i)
                 diff_1(i) = sourceField(cell,side,qp,i) - (target_value ? target_value_val : targetField(cell,side,qp,i));
 
-              for (size_t i=0; i<dims[3]; ++i)
-                for (size_t j=0; j<dims[3]; ++j)
+              for (size_t i=0; i<diffDims; ++i)
+                for (size_t j=0; j<diffDims; ++j)
                   sq += diff_1(i)*metric(cell,side,qp,i,j)*diff_1(j);
-              break;
-            case 2:
+              sum += sq * w_measure(cell,side,qp);
+            }
+
+            this->local_response_eval(cell, 0) = sum*scaling;
+            this->global_response_eval(0) += sum*scaling;
+          }
+          break;
+        case 2:
+          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+          {
+            // Get the local data of side and cell
+            const int cell = sideSet.elem_LID(sideSet_idx);
+            const int side = sideSet.side_local_id(sideSet_idx);
+
+            ScalarT sum = 0;
+            for (int qp=0; qp<numQPs; ++qp)
+            {
+              ScalarT sq = 0;
+              // Computing squared difference at qp
               // Precompute differentce and access fields only n^2 times (not n^4)
-              for (size_t i=0; i<dims[3]; ++i)
-                for (size_t j=0; j<dims[3]; ++j)
+              for (size_t i=0; i<diffDims; ++i)
+                for (size_t j=0; j<diffDims; ++j)
                   diff_2(i,j) = sourceField(cell,side,qp,i,j) - (target_value ? target_value_val : targetField(cell,side,qp,i,j));
 
-              for (size_t i=0; i<dims[3]; ++i)
-                for (size_t j=0; j<dims[3]; ++j)
-                  for (size_t k=0; k<dims[3]; ++k)
-                    for (size_t l=0; l<dims[3]; ++l)
+              for (size_t i=0; i<diffDims; ++i)
+                for (size_t j=0; j<diffDims; ++j)
+                  for (size_t k=0; k<diffDims; ++k)
+                    for (size_t l=0; l<diffDims; ++l)
                       sq += metric(cell,side,qp,k,i)*diff_2(i,j) * metric(cell,side,qp,j,l)*diff_2(l,k);
-              break;
-          }
-          sum += sq * w_measure(cell,side,qp);
-        }
-      }
+              sum += sq * w_measure(cell,side,qp);
+            }
 
-      this->local_response_eval(cell, 0) = sum*scaling;
-      this->global_response_eval(0) += sum*scaling;
+            this->local_response_eval(cell, 0) = sum*scaling;
+            this->global_response_eval(0) += sum*scaling;
+          }
+          break;
+      }
     }
+
   }
 
   // Do any local-scattering necessary

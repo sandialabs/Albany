@@ -10,10 +10,6 @@
 #include "Phalanx_Print.hpp"
 #include "Sacado.hpp"
 
-#include "Albany_ThyraUtils.hpp"
-#include "Albany_GlobalLocalIndexer.hpp"
-#include "Albany_AbstractDiscretization.hpp"
-
 #include "LandIce_GatherVerticallyContractedSolution.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -83,6 +79,9 @@ void GatherVerticallyContractedSolutionBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+
+  this->numLayers = d.get_num_layers();
+  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
 
   this->utils.setFieldData(contractedSol,fm);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
@@ -154,12 +153,10 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSetViews.is_null(), std::logic_error,
                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
-  // Get total number of layers
+  // Get layered mesh numbering object
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  this->numLayers = layeredMeshNumbering.numLayers;
 
   // Compute quadWeights
-  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
   if(this->op == this->VerticalSum){
     for (int i=0; i<this->numLayers+1; ++i)
       this->quadWeights(i) = 1.0;
@@ -253,12 +250,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   Kokkos::deep_copy(this->contractedSol.get_view(), ScalarT(0.0));
 
-  // Get total number of layers
+  // Get layered mesh numbering object
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  this->numLayers = layeredMeshNumbering.numLayers;
 
   // Compute quadWeights
-  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
   if(this->op == this->VerticalSum){
     for (int i=0; i<this->numLayers+1; ++i)
       this->quadWeights(i) = 1.0;
@@ -355,12 +350,10 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSetViews.is_null(), std::logic_error,
                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
-  // Get total number of layers
+  // Get layered mesh numbering object
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  this->numLayers = layeredMeshNumbering.numLayers;
 
   // Compute quadWeights
-  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
   if(this->op == this->VerticalSum){
     for (int i=0; i<this->numLayers+1; ++i)
       this->quadWeights(i) = 1.0;
@@ -447,12 +440,10 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSetViews.is_null(), std::logic_error,
                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
-  // Get total number of layers
+  // Get layered mesh numbering object
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  this->numLayers = layeredMeshNumbering.numLayers;
 
   // Compute quadWeights
-  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
   if(this->op == this->VerticalSum){
     for (int i=0; i<this->numLayers+1; ++i)
       this->quadWeights(i) = 1.0;
@@ -568,12 +559,10 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSetViews.is_null(), std::logic_error,
                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
-  // Get total number of layers
+  // Get layered mesh numbering object
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  this->numLayers = layeredMeshNumbering.numLayers;
 
   // Compute quadWeights
-  this->quadWeights = Kokkos::View<double*, PHX::Device>("quadWeights", this->numLayers+1);
   if(this->op == this->VerticalSum){
     for (int i=0; i<this->numLayers+1; ++i)
       this->quadWeights(i) = 1.0;

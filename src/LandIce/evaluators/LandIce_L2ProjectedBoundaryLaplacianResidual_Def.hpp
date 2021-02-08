@@ -110,7 +110,6 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
-
 // **********************************************************************
 template<typename EvalT, typename Traits, typename FieldScalarT>
 void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScalarT>::evaluateFields(typename Traits::EvalData workset)
@@ -126,45 +125,15 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
   if (workset.sideSets->find(sideName) != workset.sideSets->end())
   {
     sideSet = workset.sideSetViews->at(sideName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
+    
+    if (useCollapsedSidesets) {
+      
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of side and cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
 
-      if (useCollapsedSidesets) {
-        MeshScalarT trapezoid_weights= 0;
-        for (unsigned int qp=0; qp<numBasalQPs; ++qp)
-          trapezoid_weights += w_side_measure(sideSet_idx, qp);
-        trapezoid_weights /= numSideNodes;
-
-        for (unsigned int inode=0; inode<numSideNodes; ++inode) {
-          ScalarT t = 0;
-          for (unsigned int qp=0; qp<numBasalQPs; ++qp) {
-            for (unsigned int icoor=0; icoor<sideDim; ++icoor) {
-              ScalarT gradField_i(0.0), gradBF_i(0.0);
-              for (unsigned int itan=0; itan<sideDim; ++itan) {
-                gradField_i += side_tangents(sideSet_idx,qp,icoor,itan)*gradField(sideSet_idx,qp,itan);
-                gradBF_i    += side_tangents(sideSet_idx,qp,icoor,itan)*gradBF(sideSet_idx,inode,qp,itan);
-              }
-
-              t -= laplacian_coeff * gradField_i*gradBF_i * w_side_measure(sideSet_idx,qp);
-            }
-          }
-          //for (int qp=0; qp<numBasalQPs; ++qp)
-          //  for (int idim=0; idim<sideDim; ++idim)
-          //    for (int jdim=0; jdim<sideDim; ++jdim)
-          //      for (int icoor=0; icoor<sideDim; ++icoor) // Note: if icoor<cellDim, then tangents(...)*tangents(...)=metric
-          //        t -= laplacian_coeff*side_tangents(sideSet_idx,qp,icoor,idim)*gradField(sideSet_idx,qp,idim)
-          //                            *side_tangents(sideSet_idx,qp,icoor,jdim)*gradBF(sideSet_idx,inode, qp,jdim)
-          //                            *w_side_measure(sideSet_idx, qp);
-
-          //using trapezoidal rule to get diagonal mass matrix
-          t += (solution(cell,sideNodes(side,inode))-mass_coeff*field(sideSet_idx,inode))* trapezoid_weights;
-
-          bdLaplacian_L2Projection_res(cell,sideNodes(side,inode)) = t;
-        }
-      } else {
         MeshScalarT trapezoid_weights= 0;
         for (unsigned int qp=0; qp<numBasalQPs; ++qp)
           trapezoid_weights += w_side_measure(cell,side, qp);
@@ -197,39 +166,107 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
           bdLaplacian_L2Projection_res(cell,sideNodes(side,inode)) = t;
         }
       }
-    }
 
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-      shards::CellTopology sideType(cellType->getCellTopologyData(sideDim,side));
-      auto side_disc = workset.disc->getSideSetDiscretizations().at(sideName);
-      auto side_gid = sideSet.side_GID(sideSet_idx);
-      side_gid = workset.disc->getSideToSideSetCellMap().at(sideName).at(side_gid);
-      auto side_workset = side_disc->getElemGIDws()[side_gid].ws;
-      auto side_side_set = side_disc->getSideSets(side_workset);
-      if(side_side_set.find(bdEdgesName) != side_side_set.end()) {
-        auto bdEdges_set = side_side_set[bdEdgesName];
-        for (auto const& it_bdEdge : bdEdges_set){
-          if(it_bdEdge.elem_GID == side_gid) {
-            unsigned int side_nodes[2] = {sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,0),sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,1)};
-            int cell_nodes[2] = {sideNodes(side,side_nodes[0]),sideNodes(side,side_nodes[1])};
-            MeshScalarT bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
-            MeshScalarT bdEdge_measure = 0.0; 
-            if (bdEdge_measure_sqr > 0.0) 
-              bdEdge_measure = std::sqrt(bdEdge_measure_sqr); 
-            for(int i=0; i<2; ++i) {
-              if (useCollapsedSidesets) {
-                bdLaplacian_L2Projection_res(cell,cell_nodes[i]) -= robin_coeff*field(sideSet_idx,side_nodes[i])*bdEdge_measure/2.0;
-              } else {
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of side and cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
+        shards::CellTopology sideType(cellType->getCellTopologyData(sideDim,side));
+        auto side_disc = workset.disc->getSideSetDiscretizations().at(sideName);
+        auto side_gid = sideSet.side_GID(sideSet_idx);
+        side_gid = workset.disc->getSideToSideSetCellMap().at(sideName).at(side_gid);
+        auto side_workset = side_disc->getElemGIDws()[side_gid].ws;
+        auto side_side_set = side_disc->getSideSets(side_workset);
+        if(side_side_set.find(bdEdgesName) != side_side_set.end()) {
+          auto bdEdges_set = side_side_set[bdEdgesName];
+          for (auto const& it_bdEdge : bdEdges_set){
+            if(it_bdEdge.elem_GID == side_gid) {
+              unsigned int side_nodes[2] = {sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,0),sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,1)};
+              int cell_nodes[2] = {sideNodes(side,side_nodes[0]),sideNodes(side,side_nodes[1])};
+              MeshScalarT bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
+              MeshScalarT bdEdge_measure = 0.0; 
+              if (bdEdge_measure_sqr > 0.0) 
+                bdEdge_measure = std::sqrt(bdEdge_measure_sqr); 
+              for(int i=0; i<2; ++i) {
                 bdLaplacian_L2Projection_res(cell,cell_nodes[i]) -= robin_coeff*field(cell,side,side_nodes[i])*bdEdge_measure/2.0;
               }
             }
           }
         }
       }
+
+    } else {
+
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of side and cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
+
+        MeshScalarT trapezoid_weights= 0;
+        for (unsigned int qp=0; qp<numBasalQPs; ++qp)
+          trapezoid_weights += w_side_measure(sideSet_idx, qp);
+        trapezoid_weights /= numSideNodes;
+
+        for (unsigned int inode=0; inode<numSideNodes; ++inode) {
+          ScalarT t = 0;
+          for (unsigned int qp=0; qp<numBasalQPs; ++qp) {
+            for (unsigned int icoor=0; icoor<sideDim; ++icoor) {
+              ScalarT gradField_i(0.0), gradBF_i(0.0);
+              for (unsigned int itan=0; itan<sideDim; ++itan) {
+                gradField_i += side_tangents(sideSet_idx,qp,icoor,itan)*gradField(sideSet_idx,qp,itan);
+                gradBF_i    += side_tangents(sideSet_idx,qp,icoor,itan)*gradBF(sideSet_idx,inode,qp,itan);
+              }
+
+              t -= laplacian_coeff * gradField_i*gradBF_i * w_side_measure(sideSet_idx,qp);
+            }
+          }
+          //for (int qp=0; qp<numBasalQPs; ++qp)
+          //  for (int idim=0; idim<sideDim; ++idim)
+          //    for (int jdim=0; jdim<sideDim; ++jdim)
+          //      for (int icoor=0; icoor<sideDim; ++icoor) // Note: if icoor<cellDim, then tangents(...)*tangents(...)=metric
+          //        t -= laplacian_coeff*side_tangents(sideSet_idx,qp,icoor,idim)*gradField(sideSet_idx,qp,idim)
+          //                            *side_tangents(sideSet_idx,qp,icoor,jdim)*gradBF(sideSet_idx,inode, qp,jdim)
+          //                            *w_side_measure(sideSet_idx, qp);
+
+          //using trapezoidal rule to get diagonal mass matrix
+          t += (solution(cell,sideNodes(side,inode))-mass_coeff*field(sideSet_idx,inode))* trapezoid_weights;
+
+          bdLaplacian_L2Projection_res(cell,sideNodes(side,inode)) = t;
+        }
+      }
+
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of side and cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
+        shards::CellTopology sideType(cellType->getCellTopologyData(sideDim,side));
+        auto side_disc = workset.disc->getSideSetDiscretizations().at(sideName);
+        auto side_gid = sideSet.side_GID(sideSet_idx);
+        side_gid = workset.disc->getSideToSideSetCellMap().at(sideName).at(side_gid);
+        auto side_workset = side_disc->getElemGIDws()[side_gid].ws;
+        auto side_side_set = side_disc->getSideSets(side_workset);
+        if(side_side_set.find(bdEdgesName) != side_side_set.end()) {
+          auto bdEdges_set = side_side_set[bdEdgesName];
+          for (auto const& it_bdEdge : bdEdges_set){
+            if(it_bdEdge.elem_GID == side_gid) {
+              unsigned int side_nodes[2] = {sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,0),sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,1)};
+              int cell_nodes[2] = {sideNodes(side,side_nodes[0]),sideNodes(side,side_nodes[1])};
+              MeshScalarT bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
+              MeshScalarT bdEdge_measure = 0.0; 
+              if (bdEdge_measure_sqr > 0.0) 
+                bdEdge_measure = std::sqrt(bdEdge_measure_sqr); 
+              for(int i=0; i<2; ++i) {
+                bdLaplacian_L2Projection_res(cell,cell_nodes[i]) -= robin_coeff*field(sideSet_idx,side_nodes[i])*bdEdge_measure/2.0;
+              }
+            }
+          }
+        }
+      }
+      
     }
+
   }
 }

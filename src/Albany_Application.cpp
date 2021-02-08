@@ -157,13 +157,15 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   } catch (...) {
     tangent_deriv_dim = 1;
   }
-  // Initialize Phalanx postRegistration setup
-  phxSetup = Teuchos::rcp(new PHAL::Setup());
-  phxSetup->init_problem_params(problemParams);
 
   // Pull the number of solution vectors out of the problem and send them to the
   // discretization list, if the user specifies this in the problem
   Teuchos::ParameterList& discParams = params->sublist("Discretization");
+
+  // Initialize Phalanx postRegistration setup
+  phxSetup = Teuchos::rcp(new PHAL::Setup());
+  phxSetup->init_problem_params(problemParams);
+  phxSetup->init_disc_params(discParams);
 
   // Set in Albany_AbstractProblem constructor or in siblings
   num_time_deriv = problemParams->get<int>("Number Of Time Derivatives");

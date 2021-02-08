@@ -48,6 +48,7 @@ private:
   PHX::MDField<const TargetScalarT>             targetField;
 
   PHX::MDField<const MeshScalarT,Cell,QuadPoint>   w_measure;
+
 };
 
 // Some shortcut names

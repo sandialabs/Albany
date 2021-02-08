@@ -34,6 +34,10 @@ void Setup::init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> probl
   if (_enableMemoizationForParams) _enableMemoization = true;
 }
 
+void Setup::init_disc_params(const Teuchos::ParameterList discParams) {
+  _numLayers = discParams.get<int>("NumLayers");
+}
+
 void Setup::init_unsaved_param(const std::string& param) {
   if (_enableMemoizationForParams) {
     auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -235,6 +239,10 @@ void Setup::print_fields(std::ostream& os, Teuchos::RCP<StringSet> savedFields,
       os << "  " << unsavedField << std::endl;
     os << std::endl;
   }
+}
+
+int Setup::get_num_layers() const {
+  return _numLayers;
 }
 
 } // namespace PHAL

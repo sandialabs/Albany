@@ -111,13 +111,13 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
   if (workset.sideSets->find(sideName) != workset.sideSets->end())
   {
     sideSet = workset.sideSetViews->at(sideName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
+    if (useCollapsedSidesets) {
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of side and cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
 
-      if (useCollapsedSidesets) {
         MeshScalarT trapezoid_weight = 0;
         for (unsigned int qp=0; qp<numSideQPs; ++qp)
           trapezoid_weight += w_side_measure(sideSet_idx, qp);
@@ -131,7 +131,14 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
         this->local_response_eval(cell, 0) += t*scaling;
         this->global_response_eval(0) += t*scaling;
         p_reg += t*scaling;
-      } else {
+      }
+    } else {
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of side and cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
+
         MeshScalarT trapezoid_weight = 0;
         for (unsigned int qp=0; qp<numSideQPs; ++qp)
           trapezoid_weight += w_side_measure(cell,side, qp);
@@ -146,7 +153,6 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
         this->global_response_eval(0) += t*scaling;
         p_reg += t*scaling;
       }
-
     }
   }
 

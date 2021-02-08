@@ -64,6 +64,7 @@ namespace LandIce {
     double scaling, alpha, alphaH, alphaSMB;
 
     Teuchos::RCP<const CellTopologyData> cell_topo;
+    
   };
 
 } // namespace LandIce

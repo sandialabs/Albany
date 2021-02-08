@@ -57,6 +57,10 @@ private:
   PHX::MDField<const MeshScalarT>   metric;      // Side, QuadPoint, Dim, Dim
   PHX::MDField<const MeshScalarT>   w_measure;   // Side, QuadPoint
 
+  size_t diffDims;
+  Kokkos::View<ScalarT*,  PHX::Device> diff_1;
+  Kokkos::View<ScalarT**, PHX::Device> diff_2;
+
 };
 
 //-- SourceScalarT = ScalarT

@@ -182,23 +182,21 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
   // Zero out local response
   PHAL::set(this->local_response_eval, 0.0);
 
-  // ----------------- Surface side ---------------- //
-
-  if (workset.sideSetViews->find(surfaceSideName) != workset.sideSetViews->end())
-  {
-    sideSet = workset.sideSetViews->at(surfaceSideName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  if (useCollapsedSidesets) {
+    // ----------------- Surface side ---------------- //
+    if (workset.sideSetViews->find(surfaceSideName) != workset.sideSetViews->end())
     {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
+      sideSet = workset.sideSetViews->at(surfaceSideName);
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
 
-      ScalarT t = 0;
-      ScalarT data = 0;
-      if(scalarRMS)
-        for (unsigned int qp=0; qp<numSurfaceQPs; ++qp)
-        {
-          if (useCollapsedSidesets) {
+        ScalarT t = 0;
+        ScalarT data = 0;
+        if(scalarRMS)
+          for (unsigned int qp=0; qp<numSurfaceQPs; ++qp)
+          {
             ScalarT diff2 = std::pow(velocity(sideSet_idx, qp, 0)  - observedVelocity (sideSet_idx, qp, 0),2) 
                                 + std::pow(velocity(sideSet_idx, qp, 1)  - observedVelocity (sideSet_idx, qp, 1),2);
 
@@ -207,23 +205,11 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
 
             ScalarT weightedDiff = std::sqrt(diff2)/observedVelocityMagnitudeRMS(sideSet_idx, qp);
             ScalarT weightedDiff2 = std::pow(asinh(weightedDiff/ asinh_scaling)*asinh_scaling,2);
-            t += weightedDiff2 * w_measure_surface(sideSet_idx,qp);
-          } else {
-            ScalarT diff2 = std::pow(velocity(sideSet_idx, qp, 0)  - observedVelocity (sideSet_idx, qp, 0),2) 
-                                + std::pow(velocity(sideSet_idx, qp, 1)  - observedVelocity (sideSet_idx, qp, 1),2);
-
-            // We have to add a small number to diff2, otherwise the derivative computations can generate NaNs.
-            diff2 += Teuchos::ScalarTraits<ScalarT>::eps();
-
-            ScalarT weightedDiff = std::sqrt(diff2)/observedVelocityMagnitudeRMS(sideSet_idx, qp);
-            ScalarT weightedDiff2 = std::pow(asinh(weightedDiff/ asinh_scaling)*asinh_scaling,2);
-            t += weightedDiff2 * w_measure_surface(sideSet_idx,qp);
+            t += weightedDiff2 * w_measure_surface(sideSet_idx, qp);
           }
-        }
-      else
-        for (unsigned int qp=0; qp<numSurfaceQPs; ++qp)
-        {
-          if (useCollapsedSidesets) {
+        else
+          for (unsigned int qp=0; qp<numSurfaceQPs; ++qp)
+          {
             ParamScalarT refVel0 = asinh(observedVelocity (sideSet_idx, qp, 0) / observedVelocityRMS(sideSet_idx, qp, 0) / asinh_scaling);
             ParamScalarT refVel1 = asinh(observedVelocity (sideSet_idx, qp, 1) / observedVelocityRMS(sideSet_idx, qp, 1) / asinh_scaling);
             ScalarT vel0 = asinh(velocity(sideSet_idx, qp, 0) / observedVelocityRMS(sideSet_idx, qp, 0) / asinh_scaling);
@@ -238,7 +224,100 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
             //     + diff1 * metric_surface(sideSet_idx,qp,1,1) * diff1;
             data *= asinh_scaling * asinh_scaling;
             t += data * w_measure_surface(sideSet_idx,qp);
-          } else {
+          }
+
+        this->local_response_eval(cell, 0) += t*scaling;
+        this->global_response_eval(0) += t*scaling;
+        p_resp += t*scaling;
+      }
+    }
+
+    // --------------- Regularization term on the basal side ----------------- //
+    if (alpha!=0) {
+      for (size_t i=0; i<beta_reg_params.size(); ++i) {
+        Teuchos::RCP<Teuchos::ParameterList> pl = beta_reg_params[i];
+        std::string ssName = pl->get<std::string>("Side Set Name","");
+
+        grad_beta = grad_beta_vec[i];
+        metric = metric_beta_vec[i];
+        w_measure = w_measure_beta_vec[i];
+        if (workset.sideSetViews->find(ssName) != workset.sideSetViews->end()) {
+          sideSet = workset.sideSetViews->at(ssName);
+          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+          {
+            // Get the local data of cell
+            const int cell = sideSet.elem_LID(sideSet_idx);\
+
+            ScalarT t = 0;
+            for (unsigned int qp=0; qp<numBasalQPs; ++qp)
+            {
+              ScalarT sum=0;
+              for (unsigned int idim=0; idim<numSideDims; ++idim)
+                for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
+                  sum += grad_beta(sideSet_idx,qp,idim)*metric(sideSet_idx,qp,idim,jdim)*grad_beta(sideSet_idx,qp,jdim);
+
+              t += sum * w_measure(sideSet_idx,qp);
+            }
+            this->local_response_eval(cell, 0) += t*scaling*alpha;//*50.0;
+            this->global_response_eval(0) += t*scaling*alpha;//*50.0;
+            p_reg += t*scaling*alpha;
+          }
+        }
+      }
+    }
+
+    if (workset.sideSetViews->find(basalSideName) != workset.sideSetViews->end() && alpha_stiffening!=0)
+    {
+      sideSet = workset.sideSetViews->at(basalSideName);
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of \cell
+        const int cell = sideSet.elem_LID(sideSet_idx);\
+
+        ScalarT t = 0;
+        for (unsigned int qp=0; qp<numBasalQPs; ++qp)
+        {
+          ScalarT sum = stiffening(sideSet_idx,qp)*stiffening(sideSet_idx,qp);
+            for (unsigned int idim=0; idim<numSideDims; ++idim)
+              for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
+                sum += grad_stiffening(sideSet_idx,qp,idim)*metric_basal(sideSet_idx,qp,idim,jdim)*grad_stiffening(sideSet_idx,qp,jdim);
+
+            t += sum * w_measure_basal(sideSet_idx,qp);
+        }
+        this->local_response_eval(cell, 0) += t*scaling*alpha_stiffening;//*50.0;
+        this->global_response_eval(0) += t*scaling*alpha_stiffening;//*50.0;
+        p_reg_stiffening += t*scaling*alpha_stiffening;
+      }
+    }
+  } else {
+    // ----------------- Surface side ---------------- //
+    if (workset.sideSetViews->find(surfaceSideName) != workset.sideSetViews->end())
+    {
+      sideSet = workset.sideSetViews->at(surfaceSideName);
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of side and cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
+
+        ScalarT t = 0;
+        ScalarT data = 0;
+        if(scalarRMS)
+          for (unsigned int qp=0; qp<numSurfaceQPs; ++qp)
+          {
+            ScalarT diff2 = std::pow(velocity(cell, side, qp, 0)  - observedVelocity (cell, side, qp, 0),2) 
+                                + std::pow(velocity(cell, side, qp, 1)  - observedVelocity (cell, side, qp, 1),2);
+
+            // We have to add a small number to diff2, otherwise the derivative computations can generate NaNs.
+            diff2 += Teuchos::ScalarTraits<ScalarT>::eps();
+
+            ScalarT weightedDiff = std::sqrt(diff2)/observedVelocityMagnitudeRMS(cell, side, qp);
+            ScalarT weightedDiff2 = std::pow(asinh(weightedDiff/ asinh_scaling)*asinh_scaling,2);
+            t += weightedDiff2 * w_measure_surface(cell, side, qp);
+          }
+        else
+          for (unsigned int qp=0; qp<numSurfaceQPs; ++qp)
+          {
             ParamScalarT refVel0 = asinh(observedVelocity (cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
             ParamScalarT refVel1 = asinh(observedVelocity (cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
             ScalarT vel0 = asinh(velocity(cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
@@ -254,43 +333,33 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
             data *= asinh_scaling * asinh_scaling;
             t += data * w_measure_surface(cell,side,qp);
           }
-        }
 
-      this->local_response_eval(cell, 0) += t*scaling;
-      this->global_response_eval(0) += t*scaling;
-      p_resp += t*scaling;
+        this->local_response_eval(cell, 0) += t*scaling;
+        this->global_response_eval(0) += t*scaling;
+        p_resp += t*scaling;
+      }
     }
-  }
 
-  // --------------- Regularization term on the basal side ----------------- //
+    // --------------- Regularization term on the basal side ----------------- //
+    if (alpha!=0) {
+      for (size_t i=0; i<beta_reg_params.size(); ++i) {
+        Teuchos::RCP<Teuchos::ParameterList> pl = beta_reg_params[i];
+        std::string ssName = pl->get<std::string>("Side Set Name","");
 
-  if (alpha!=0) {
-    for (size_t i=0; i<beta_reg_params.size(); ++i) {
-      Teuchos::RCP<Teuchos::ParameterList> pl = beta_reg_params[i];
-      std::string ssName = pl->get<std::string>("Side Set Name","");
-
-      auto grad_beta = grad_beta_vec[i];
-      auto metric = metric_beta_vec[i];
-      auto w_measure = w_measure_beta_vec[i];
-      if (workset.sideSetViews->find(ssName) != workset.sideSetViews->end()) {
-        sideSet = workset.sideSetViews->at(ssName);
-        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-        {
-          // Get the local data of side and cell
-          const int cell = sideSet.elem_LID(sideSet_idx);
-          const int side = sideSet.side_local_id(sideSet_idx);
-
-          ScalarT t = 0;
-          for (unsigned int qp=0; qp<numBasalQPs; ++qp)
+        grad_beta = grad_beta_vec[i];
+        metric = metric_beta_vec[i];
+        w_measure = w_measure_beta_vec[i];
+        if (workset.sideSetViews->find(ssName) != workset.sideSetViews->end()) {
+          sideSet = workset.sideSetViews->at(ssName);
+          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
           {
-            if (useCollapsedSidesets) {
-              ScalarT sum=0;
-              for (unsigned int idim=0; idim<numSideDims; ++idim)
-                for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
-                  sum += grad_beta(sideSet_idx,qp,idim)*metric(sideSet_idx,qp,idim,jdim)*grad_beta(sideSet_idx,qp,jdim);
+            // Get the local data of side and cell
+            const int cell = sideSet.elem_LID(sideSet_idx);
+            const int side = sideSet.side_local_id(sideSet_idx);
 
-              t += sum * w_measure(sideSet_idx,qp);
-            } else {
+            ScalarT t = 0;
+            for (unsigned int qp=0; qp<numBasalQPs; ++qp)
+            {
               ScalarT sum=0;
               for (unsigned int idim=0; idim<numSideDims; ++idim)
                 for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
@@ -298,46 +367,37 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
 
               t += sum * w_measure(cell,side,qp);
             }
+            this->local_response_eval(cell, 0) += t*scaling*alpha;//*50.0;
+            this->global_response_eval(0) += t*scaling*alpha;//*50.0;
+            p_reg += t*scaling*alpha;
           }
-          this->local_response_eval(cell, 0) += t*scaling*alpha;//*50.0;
-          this->global_response_eval(0) += t*scaling*alpha;//*50.0;
-          p_reg += t*scaling*alpha;
         }
       }
     }
-  }
 
-  if (workset.sideSetViews->find(basalSideName) != workset.sideSetViews->end() && alpha_stiffening!=0)
-  {
-    sideSet = workset.sideSetViews->at(basalSideName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    if (workset.sideSetViews->find(basalSideName) != workset.sideSetViews->end() && alpha_stiffening!=0)
     {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      ScalarT t = 0;
-      for (unsigned int qp=0; qp<numBasalQPs; ++qp)
+      sideSet = workset.sideSetViews->at(basalSideName);
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
       {
-        if (useCollapsedSidesets) {
-          ScalarT sum = stiffening(sideSet_idx,qp)*stiffening(sideSet_idx,qp);
-          for (unsigned int idim=0; idim<numSideDims; ++idim)
-            for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
-              sum += grad_stiffening(sideSet_idx,qp,idim)*metric_basal(sideSet_idx,qp,idim,jdim)*grad_stiffening(sideSet_idx,qp,jdim);
+        // Get the local data of side and cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
 
-          t += sum * w_measure_basal(sideSet_idx,qp);
-        } else {
+        ScalarT t = 0;
+        for (unsigned int qp=0; qp<numBasalQPs; ++qp)
+        {
           ScalarT sum = stiffening(cell,side,qp)*stiffening(cell,side,qp);
-          for (unsigned int idim=0; idim<numSideDims; ++idim)
-            for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
-              sum += grad_stiffening(cell,side,qp,idim)*metric_basal(cell,side,qp,idim,jdim)*grad_stiffening(cell,side,qp,jdim);
+            for (unsigned int idim=0; idim<numSideDims; ++idim)
+              for (unsigned int jdim=0; jdim<numSideDims; ++jdim)
+                sum += grad_stiffening(cell,side,qp,idim)*metric_basal(cell,side,qp,idim,jdim)*grad_stiffening(cell,side,qp,jdim);
 
-          t += sum * w_measure_basal(cell,side,qp); 
+            t += sum * w_measure_basal(cell,side,qp);
         }
+        this->local_response_eval(cell, 0) += t*scaling*alpha_stiffening;//*50.0;
+        this->global_response_eval(0) += t*scaling*alpha_stiffening;//*50.0;
+        p_reg_stiffening += t*scaling*alpha_stiffening;
       }
-      this->local_response_eval(cell, 0) += t*scaling*alpha_stiffening;//*50.0;
-      this->global_response_eval(0) += t*scaling*alpha_stiffening;//*50.0;
-      p_reg_stiffening += t*scaling*alpha_stiffening;
     }
   }
 

@@ -13,6 +13,10 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+
 #include "PHAL_AlbanyTraits.hpp"
 
 namespace LandIce {

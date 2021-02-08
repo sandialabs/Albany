@@ -53,6 +53,7 @@ namespace LandIce {
     ScalarT p_reg, reg;
     double scaling;
     int offset;
+
   };
 
 } // Namespace LandIce

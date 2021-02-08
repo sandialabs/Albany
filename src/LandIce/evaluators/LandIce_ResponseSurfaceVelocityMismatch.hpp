@@ -68,9 +68,14 @@ namespace LandIce {
     std::vector<PHX::MDField<const MeshScalarT>>      metric_beta_vec;    // Side, QuadPoint, Dim, Dim
     Teuchos::RCP<const CellTopologyData>              cell_topo;
 
+    PHX::MDField<const ScalarT> grad_beta;
+    PHX::MDField<const MeshScalarT> metric;
+    PHX::MDField<const MeshScalarT> w_measure;
+
     ScalarT p_resp, p_reg, resp, reg, p_reg_stiffening,reg_stiffening;
     double scaling, alpha, asinh_scaling, alpha_stiffening;
     bool scalarRMS;
+
   };
 
 } // Namespace LandIce
