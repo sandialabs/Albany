@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-set (CTEST_DO_SUBMIT ON)
+set (CTEST_DO_SUBMIT OFF)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
