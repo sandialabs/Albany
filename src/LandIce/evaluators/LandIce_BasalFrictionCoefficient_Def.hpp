@@ -39,6 +39,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   n = -1; //dummy value
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
+  resYieldStrength = beta_list.get("Residual Yield Strength", 0.0);
 
   //whether to first interpolate the given field and then exponetiate it (on quad points) or the other way around.
   interpolate_then_exponentiate = beta_list.get<bool> ("Interpolate Then Exponentiate Given Field", true); 
@@ -81,6 +82,10 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   if (betaType == "GIVEN CONSTANT") {
     beta_type = GIVEN_CONSTANT;
     given_val = beta_list.get<double>("Constant Given Beta Value");
+    if(resYieldStrength != 0.0) {
+      u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+      this->addDependentField (u_norm);
+    }
 #ifdef OUTPUT_TO_SCREEN
     *output << "Given constant and uniform beta, value = " << given_val << " (loaded from xml input file).\n";
 #endif
@@ -92,6 +97,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       beta_type = GIVEN_FIELD;
     } else {
       beta_type = EXP_GIVEN_FIELD;
+    }
+
+    if(resYieldStrength != 0.0) {
+      u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+      this->addDependentField (u_norm);
     }
 
     auto layout_given_field = layout;
@@ -431,6 +441,10 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
         }
         break;
      }
+
+    if(resYieldStrength != 0.0)
+      for (unsigned int ipt=0; ipt<dim; ++ipt)
+        beta(cell,side,ipt) += resYieldStrength/1000.0/u_norm(cell,side,ipt);
 
     if(zero_on_floating) {
       if (is_thickness_param) {

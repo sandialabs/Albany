@@ -90,6 +90,7 @@ private:
   double R2;              // [km]
 
   double rho_i, rho_w;    // [kg m^{-3}]
+  double resYieldStrength;// [Pa]
 
   unsigned int numNodes;
   unsigned int numQPs;
