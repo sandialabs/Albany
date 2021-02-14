@@ -14,9 +14,6 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_KL_ExponentialRandomField.hpp"
-#endif
 #include "Teuchos_Array.hpp"
 #include "Teuchos_TestForException.hpp"
 
@@ -491,139 +488,6 @@ evaluateFields(typename Traits::EvalData workset){
     }
   }
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-#ifdef ALBANY_STOKHOS
-template<typename EvalT, typename Traits>
-class TruncatedKL : 
-    public Source_Base<EvalT,Traits>, 
-    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-public :
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-  static bool check_for_existance(Teuchos::ParameterList* source_list);
-  TruncatedKL(Teuchos::ParameterList& p);
-  virtual ~TruncatedKL(){}
-  virtual void EvaluatedFields(Source<EvalT,Traits> &source, 
-			       Teuchos::ParameterList& p);
-  virtual void DependentFields(Source<EvalT,Traits> &source, 
-			       Teuchos::ParameterList& p);
-  virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
-			 PHX::FieldManager<Traits>& fm);
-  virtual void evaluateFields (typename Traits::EvalData workset);
-  virtual ScalarT & getValue(const std::string &n);
-private :
-  std::size_t m_num_qp;
-  std::size_t m_num_dims;
-  Teuchos::ParameterList* m_source_list;
-  PHX::MDField<ScalarT,Cell,Point>   m_source;
-  PHX::MDField<const MeshScalarT,Cell,Point,Dim> m_coordVec;
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > m_exp_rf_kl;
-  Teuchos::Array<ScalarT> m_rv;
-  Teuchos::Array<MeshScalarT> m_point;
-  std::string param_name_base;
-};
-
-template<typename EvalT,typename Traits>
-bool 
-TruncatedKL<EvalT,Traits>::
-check_for_existance(Teuchos::ParameterList* source_list)
-{
-  const bool exists = source_list->getEntryPtr("Truncated KL Expansion");
-  return exists;
-}
-
-template<typename EvalT,typename Traits>
-TruncatedKL<EvalT,Traits>::
-TruncatedKL(Teuchos::ParameterList& p) {
-  m_source_list = p.get<Teuchos::ParameterList*>("Parameter List", NULL);
-  Teuchos::ParameterList& paramList = 
-    m_source_list->sublist("Truncated KL Expansion");
-  
-  m_exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(paramList));
-  int num_KL = m_exp_rf_kl->stochasticDimension();
-
-  param_name_base = p.get<std::string>("Source Name") + " KL Random Variable";
-
-  // Add KL random variables as Sacado-ized parameters
-  m_rv.resize(num_KL);
-  Teuchos::RCP<ParamLib> paramLib = 
-    p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-  for (int i=0; i<num_KL; i++) {
-    std::string ss = Albany::strint(param_name_base,i);
-    this->registerSacadoParameter(ss, paramLib);
-    m_rv[i] = paramList.get(ss, 0.0);
-  }
-}
-
-template<typename EvalT,typename Traits>
-void 
-TruncatedKL<EvalT,Traits>::
-EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
-  Teuchos::RCP<PHX::DataLayout> dl = 
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-  PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Source Name"), dl);
-  m_source = f ;
-  source.addEvaluatedField(m_source);
-}
-
-template<typename EvalT,typename Traits>
-void 
-TruncatedKL<EvalT,Traits>::
-DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
-  Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-  m_coordVec = decltype(m_coordVec)(
-      p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
-  source.addDependentField(m_coordVec);
-}
-
-template<typename EvalT,typename Traits>
-void 
-TruncatedKL<EvalT,Traits>::
-FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
-	  PHX::FieldManager<Traits>& fm){
-  utils.setFieldData(m_source,   fm);
-  utils.setFieldData(m_coordVec,fm);
-  typename std::vector< typename PHX::template MDField<ScalarT,Cell,Node>::size_type > dims;
-  m_coordVec.dimensions(dims);
-  m_num_qp = dims[1];
-  m_num_dims = dims[2];
-  m_point.resize(m_num_dims);
-}
-
-template<typename EvalT,typename Traits>
-void 
-TruncatedKL<EvalT,Traits>::
-evaluateFields(typename Traits::EvalData workset){
-
-  // Loop over cells, quad points: compute TruncatedKL Source Term
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp<m_num_qp; qp++) {
-      for (std::size_t i=0; i<m_num_dims; i++)
-	m_point[i] = 
-	  Sacado::ScalarValue<MeshScalarT>::eval(m_coordVec(cell,qp,i));
-        m_source(cell, qp) = m_exp_rf_kl->evaluate(m_point, m_rv);
-    }
-  }
-}
-
-template<typename EvalT,typename Traits>
-typename TruncatedKL<EvalT,Traits>::ScalarT& 
-TruncatedKL<EvalT,Traits>::
-getValue(const std::string &n) {
-  for (int i=0; i<m_rv.size(); i++) {
-    if (n == Albany::strint(param_name_base,i))
-      return m_rv[i];
-  }
-  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-		     std::endl <<
-		     "Error! Logic error in getting parameter " << n
-		     << " in TruncatedKL::getValue()" << std::endl);
-}
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1155,14 +1019,6 @@ Source<EvalT, Traits>::Source(Teuchos::ParameterList& p)
     m_sources.push_back(sb);
     this->setName("TrigonometricSource" );
   }
-#ifdef ALBANY_STOKHOS
-  if (TruncatedKL<EvalT,Traits>::check_for_existance(source_list)) {
-    TruncatedKL<EvalT,Traits>    *q = new TruncatedKL<EvalT,Traits>(p);
-    Source_Base<EvalT,Traits> *sb = q;
-    m_sources.push_back(sb);
-    this->setName("TruncatedKLSource" );
-  }
-#endif
   if (Quadratic<EvalT,Traits>::check_for_existance(source_list)) {
     Quadratic<EvalT,Traits>    *q = new Quadratic<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
