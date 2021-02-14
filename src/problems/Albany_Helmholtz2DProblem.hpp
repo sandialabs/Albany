@@ -196,7 +196,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<string>("Pressure Source Name", "U GaussMonotone");
+    p->set<string>("Source Name", "U GaussMonotone");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
 
@@ -214,7 +214,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<string>("Pressure Source Name", "V GaussMonotone");
+    p->set<string>("Source Name", "V GaussMonotone");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
 
@@ -245,8 +245,8 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<bool>("Have Source", haveSource);
-    p->set<string>("U Pressure Source Name", "U GaussMonotone");
-    p->set<string>("V Pressure Source Name", "V GaussMonotone");
+    p->set<string>("U Source Name", "U GaussMonotone");
+    p->set<string>("V Source Name", "V GaussMonotone");
 
     p->set<double>("Ksqr", ksqr);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
