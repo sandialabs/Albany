@@ -111,7 +111,7 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
   this->addDependentField(val_cell);
   this->addEvaluatedField(val_side);
 
-  this->setName("DOFCellToSide(" + cell_field_name + " -> " + side_field_name + ")" + PHX::print<EvalT>());
+  this->setName("DOFCellToSide(" + cell_field_name + " -> " + side_field_name + ")[" + layout_str + "]" + PHX::print<EvalT>());
 
   if (layout==NODE_SCALAR || layout==NODE_SCALAR_SIDESET || layout==NODE_VECTOR || layout==NODE_VECTOR_SIDESET || layout==NODE_TENSOR || layout==VERTEX_VECTOR || layout==VERTEX_VECTOR_SIDESET)
   {
@@ -161,7 +161,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const CellScalarSideset_Tag& tag, const int& sideSet_idx) const {
+operator() (const CellScalarSideset_Tag&, const int& sideSet_idx) const {
   
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
@@ -173,7 +173,7 @@ operator() (const CellScalarSideset_Tag& tag, const int& sideSet_idx) const {
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const NodeScalarSideset_Tag& tag, const int& sideSet_idx) const {
+operator() (const NodeScalarSideset_Tag&, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
@@ -188,7 +188,7 @@ operator() (const NodeScalarSideset_Tag& tag, const int& sideSet_idx) const {
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const NodeVectorSideset_Tag& tag, const int& sideSet_idx) const {
+operator() (const NodeVectorSideset_Tag&, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
@@ -205,7 +205,7 @@ operator() (const NodeVectorSideset_Tag& tag, const int& sideSet_idx) const {
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-operator() (const VertexVectorSideset_Tag& tag, const int& sideSet_idx) const {
+operator() (const VertexVectorSideset_Tag&, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);

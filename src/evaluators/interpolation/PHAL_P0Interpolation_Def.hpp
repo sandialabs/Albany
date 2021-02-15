@@ -202,7 +202,7 @@ void P0InterpolationBase<EvalT, Traits, ScalarT>::evaluate_on_side (typename Tra
         }}
     }
 
-    for (int qp=0; qp<dims[2]; ++qp) {
+    for (int qp=0; qp<numQPs; ++qp) {
       const auto w_meas = w_measure(cell,side,qp);
       if (itype==CellAverage) {
         // Do the integral (and do interpolation for Node fields)

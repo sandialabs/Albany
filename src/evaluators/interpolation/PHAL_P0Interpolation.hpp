@@ -65,8 +65,6 @@ private:
   Albany::FieldRankType rank;
   InterpolationType  itype;
 
-  std::vector<PHX::DataLayout::size_type> dims;
-
   std::string sideSetName; // Only if eval_on_side=true
 
   // These are only needed for barycenter interpolation
