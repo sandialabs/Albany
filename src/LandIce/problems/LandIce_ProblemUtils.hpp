@@ -8,6 +8,7 @@
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_Evaluator.hpp"
+#include "Phalanx_FieldManager.hpp"
 
 #include "Albany_Layouts.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -83,10 +84,10 @@ inline FieldScalarType& operator|= (FieldScalarType& st1,
 
 inline std::string e2str (const FieldScalarType e) {
   switch (e) {
-    case FieldScalarType::Scalar:       return "Scalar";      break;
+    case FieldScalarType::Real:         return "Real";        break;
     case FieldScalarType::MeshScalar:   return "MeshScalar";  break;
     case FieldScalarType::ParamScalar:  return "ParamScalar"; break;
-    case FieldScalarType::Real:         return "Real";        break;
+    case FieldScalarType::Scalar:       return "Scalar";      break;
     default:                            return INVALID_STR;
   }
 
@@ -128,6 +129,28 @@ enum class UtilityRequest {
   NORMALS,
   QP_COORDS
 };
+
+template<typename EvalT>
+Teuchos::RCP<PHX::FieldTag>
+createTag(const std::string& name, const FieldScalarType st,
+          const Teuchos::RCP<PHX::DataLayout>& dl)
+{
+  using FST = FieldScalarType;
+  using RT = RealType;
+  using ST = typename EvalT::ScalarT;
+  using MT = typename EvalT::MeshScalarT;
+  using PT = typename EvalT::ParamScalarT;
+
+  if (st==FST::Scalar) {
+    return Teuchos::rcp(new PHX::Tag<ST>(name,dl));
+  } else if (st==FST::ParamScalar) {
+    return Teuchos::rcp(new PHX::Tag<PT>(name,dl));
+  } else if (st==FST::MeshScalar) {
+    return Teuchos::rcp(new PHX::Tag<MT>(name,dl));
+  } else {
+    return Teuchos::rcp(new PHX::Tag<RT>(name,dl));
+  }
+}
 
 template<template <typename,typename,typename...> class Evaluator, typename EvalT>
 Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >

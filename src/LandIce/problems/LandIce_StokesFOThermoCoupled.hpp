@@ -285,7 +285,6 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Basal Melt Rate"));
 
   //Input
-  p->set<bool>("Nodal", false);
   p->set<std::string>("Water Content Side Variable Name", water_content_name + "_" + basalSideName);
   p->set<std::string>("Geothermal Flux Side Variable Name", geothermal_flux_name + "_" + basalSideName);
   p->set<std::string>("Velocity Side Variable Name", dof_names[0] + "_" + basalSideName);
@@ -304,8 +303,8 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Basal Vertical Velocity Variable Name", "basal_vert_velocity_" + basalSideName);
   p->set<std::string>("Basal Melt Rate Variable Name", "basal_melt_rate_" + basalSideName);
   ev = createEvaluatorWithTwoScalarTypes<LandIce::BasalMeltRate,EvalT>(p,dl->side_layouts[basalSideName],
-                                                                         FieldScalarType::Scalar,
-                                                                         field_scalar_type[melting_enthalpy_name]);
+                                                                         FST::Scalar,
+                                                                         get_scalar_type(melting_enthalpy_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce Liquid Water Fraction
@@ -323,7 +322,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Water Content Variable Name", water_content_name);
 
-  ev = createEvaluatorWithOneScalarType<LandIce::LiquidWaterFraction,EvalT>(p,dl,field_scalar_type[melting_enthalpy_name]);
+  ev = createEvaluatorWithOneScalarType<LandIce::LiquidWaterFraction,EvalT>(p,dl,get_scalar_type(melting_enthalpy_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce pressure-melting enthalpy
@@ -337,7 +336,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Melting Temperature Variable Name", melting_temperature_name);
   p->set<std::string>("Enthalpy Hs Variable Name", melting_enthalpy_name);
 
-  ev = createEvaluatorWithOneScalarType<LandIce::PressureMeltingEnthalpy,EvalT>(p,dl,field_scalar_type[melting_temperature_name]);
+  ev = createEvaluatorWithOneScalarType<LandIce::PressureMeltingEnthalpy,EvalT>(p,dl,get_scalar_type(melting_temperature_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce Surface Air Enthalpy
@@ -350,7 +349,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Output
     p->set<std::string>("Surface Air Enthalpy Name", "surface_enthalpy");
-    ev = createEvaluatorWithOneScalarType<LandIce::SurfaceAirEnthalpy,EvalT>(p,dl,field_scalar_type["surface_air_temperature"]);
+    ev = createEvaluatorWithOneScalarType<LandIce::SurfaceAirEnthalpy,EvalT>(p,dl,get_scalar_type("surface_air_temperature"));
 
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -366,7 +365,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Hydrostatic Pressure Variable Name", hydrostatic_pressure_name);
 
-  ev = createEvaluatorWithOneScalarType<LandIce::HydrostaticPressure,EvalT>(p,dl,field_scalar_type[surface_height_name]);
+  ev = createEvaluatorWithOneScalarType<LandIce::HydrostaticPressure,EvalT>(p,dl,get_scalar_type(surface_height_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce Temperature: diff enthalpy is h - hs.
@@ -387,7 +386,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // p->set<std::string>("Basal dTdz Variable Name", "basal_dTdz");
   p->set<std::string>("Diff Enthalpy Variable Name", "Diff Enth");
 
-  ev = createEvaluatorWithOneScalarType<LandIce::Temperature,EvalT>(p,dl,field_scalar_type[melting_temperature_name]);
+  ev = createEvaluatorWithOneScalarType<LandIce::Temperature,EvalT>(p,dl,get_scalar_type(melting_temperature_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- Enthalpy Residual ---
@@ -426,7 +425,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Residual Variable Name", resid_names[2]);
 
-  ev = createEvaluatorWithTwoScalarTypes<LandIce::EnthalpyResid,EvalT>(p,dl,FieldScalarType::Scalar,field_scalar_type[melting_temperature_name]);
+  ev = createEvaluatorWithTwoScalarTypes<LandIce::EnthalpyResid,EvalT>(p,dl,FST::Scalar,get_scalar_type(melting_temperature_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- Enthalpy Basal Residual ---
@@ -499,7 +498,7 @@ void StokesFOThermoCoupled::constructFluxDivEvaluators (PHX::FieldManager<PHAL::
   p->set<bool>("Use Upwind Stabilization",  flux_div_params.get("Use Upwind Stabilization", true));
   p->set<std::string>("Layered Flux Divergence Residual Name", resid_names[3]);
 
-  ev = createEvaluatorWithOneScalarType<LandIce::LayeredFluxDivergenceResidual,EvalT>(p,dl,field_scalar_type[ice_thickness_name]);
+  ev = createEvaluatorWithOneScalarType<LandIce::LayeredFluxDivergenceResidual,EvalT>(p,dl,get_scalar_type(ice_thickness_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
 

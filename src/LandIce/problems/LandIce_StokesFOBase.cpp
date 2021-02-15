@@ -79,7 +79,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   resid_names.resize(1);
   scatter_names.resize(1);
 
-  dof_names[0] = "Velocity";
+  velocity_name = dof_names[0] = "Velocity";
   resid_names[0] = dof_names[0] + " Residual";
   scatter_names[0] = "Scatter " + resid_names[0];
 
@@ -100,13 +100,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   effective_pressure_name     = params->sublist("Variables Names").get<std::string>("Effective Pressure Name","effective_pressure");
   vertically_averaged_velocity_name = params->sublist("Variables Names").get<std::string>("Vertically Averaged Velocity Name","vertically_averaged_velocity");
   flux_divergence_name        = params->sublist("Variables Names").get<std::string>("Flux Divergence Name" ,"flux_divergence");
-
-  // Mark the velocity as computed
-  is_computed_field[dof_names[0]] = true;
-
-  // By default, we are not coupled to any other physics
-  temperature_coupled = false;
-  hydrology_coupled = false;
+  sliding_velocity_name       = params->sublist("Variables Names").get<std::string>("Sliding Velocity Name" ,"flux_divergence");
 
   // Determine what Rigid Body Modes to compute and pass to the preconditioner
   std::string rmb_list_name = "LandIce Rigid Body Modes For Preconditioner";
@@ -337,7 +331,7 @@ void StokesFOBase::parseInputFields ()
       dist_params_name_to_mesh_part[param_name+"_lowerbound"] = dist_params_name_to_mesh_part[param_name];
 
       // set hte scalar type already to ParamScalar
-      field_scalar_type[param_name] = FieldScalarType::ParamScalar;
+      field_scalar_type[param_name] = FST::ParamScalar;
     }
   }
 
@@ -355,12 +349,13 @@ void StokesFOBase::parseInputFields ()
 
   // Volume mesh requirements
   Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
-  unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+  int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
   std::string fieldType, fieldUsage, meshPart;
   FRT rank;
   FL loc;
-  for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
+
+  for (int ifield=0; ifield<num_fields; ++ifield) {
     Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
 
     // Get current state specs
@@ -405,6 +400,7 @@ void StokesFOBase::parseInputFields ()
     if (is_dist_param[stateName] || fieldUsage == "Input" || fieldUsage == "Input-Output") {
       // A parameter to gather or a field to load
       is_input_field[stateName] = true;
+      input_field_loc[stateName] = loc;
     }
 
     // Set rank, location and scalar type.
@@ -412,8 +408,14 @@ void StokesFOBase::parseInputFields ()
     //       but it's not, since the Save(SideSet)StateField evaluators are only created
     //       for the Residual.
     field_rank[stateName] = rank;
-    field_location[stateName] = loc;
-    field_scalar_type[stateName] |= FieldScalarType::Real;
+    field_scalar_type[stateName] |= FST::Real;
+
+    // Request QP interpolation for all input nodal fields
+    if (loc==FL::Node) {
+      build_interp_ev[stateName][IReq::QP_VAL] = true;
+      build_interp_ev[stateName][IReq::GRAD_QP_VAL] = rank != FRT::Gradient;
+      build_interp_ev[stateName][IReq::CELL_VAL] = true;
+    }
   }
 
   // Side set requirements
@@ -469,42 +471,38 @@ void StokesFOBase::parseInputFields ()
       if (!is_dist_param[stateName] && (fieldUsage == "Input" || fieldUsage == "Input-Output")) {
         // A parameter to gather or a field to load
         is_ss_input_field[ss_name][stateName] = true;
+        ss_input_field_loc[ss_name][stateName] = loc;
       }
 
       field_rank[stateName] = rank;
-      field_location[stateName] = loc;
-      field_scalar_type[stateName] |= FieldScalarType::Real;
+      field_scalar_type[stateName] |= FST::Real;
+
+      // Request QP interpolation for all input nodal fields
+      if (loc==FL::Node) {
+        ss_build_interp_ev[ss_name][stateName][IReq::QP_VAL] = true;
+        ss_build_interp_ev[ss_name][stateName][IReq::GRAD_QP_VAL] = rank != FRT::Gradient;
+        ss_build_interp_ev[ss_name][stateName][IReq::CELL_VAL] = true;
+      }
     }
   }
 }
 
 void StokesFOBase::setFieldsProperties ()
 {
-  // All dofs are computed
-  for (auto it : dof_names) {
-    is_computed_field[it] = true;
-  }
 
   // All dofs have scalar type Scalar. Note: we can't set field props for all dofs, since we don't know the rank
-  setSingleFieldProperties(dof_names[0], FRT::Vector, FST::Scalar, FL::Node);
+  setSingleFieldProperties(velocity_name, FRT::Vector, FST::Scalar);
 
-  // Set properties of known fields. If things are different in derived classes, then adjust.
-  setSingleFieldProperties(ice_thickness_name,  FRT::Scalar, FST::MeshScalar, FL::Node);
-  setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::MeshScalar, FL::Node);
-  setSingleFieldProperties(vertically_averaged_velocity_name, FRT::Vector, FST::Scalar, FL::Node);
-  // Note: corr temp is built from temp and surf height. Combine their scalar types.
-  //       If derived class changes the type of temp or surf height, need to adjust this too.
-  setSingleFieldProperties(corrected_temperature_name, FRT::Scalar, field_scalar_type[temperature_name] | field_scalar_type[surface_height_name], FL::Cell);
-  setSingleFieldProperties(bed_topography_name, FRT::Scalar, FST::MeshScalar, FL::Node);
-  setSingleFieldProperties(body_force_name, FRT::Vector, field_scalar_type[surface_height_name], FL::QuadPoint);
-
-  // If the flow rate is given from file, we could just use RealType, but then we would need
-  // to template ViscosityFO on 3 scalar types. For simplicity, we set it to be the same
-  // of the temperature in ViscosityFO.
-  auto visc_temp_st = viscosity_use_corrected_temperature ?
-                      field_scalar_type[corrected_temperature_name] :
-                      field_scalar_type[temperature_name];
-  setSingleFieldProperties(flow_factor_name, FRT::Scalar, FST::MeshScalar | visc_temp_st, FL::Cell);
+  // Set rank of known fields. The scalar type will default to RealType.
+  // If that's not the case for derived problems, they will update the st.
+  setSingleFieldProperties(ice_thickness_name,                FRT::Scalar);
+  setSingleFieldProperties(surface_height_name,               FRT::Scalar);
+  setSingleFieldProperties(vertically_averaged_velocity_name, FRT::Vector);
+  setSingleFieldProperties(corrected_temperature_name,        FRT::Scalar);
+  setSingleFieldProperties(bed_topography_name,               FRT::Scalar);
+  setSingleFieldProperties(body_force_name,                   FRT::Vector);
+  setSingleFieldProperties(flow_factor_name,                  FRT::Scalar);
+  setSingleFieldProperties(flux_divergence_name,              FRT::Scalar);
 }
 
 void StokesFOBase::setupEvaluatorRequests ()
@@ -528,6 +526,8 @@ void StokesFOBase::setupEvaluatorRequests ()
 
   build_interp_ev[body_force_name][IReq::CELL_VAL] = true;
 
+  bool has_GLF_resp = false;
+  bool has_SMB_resp = false;
   // Basal Friction BC requests
   for (auto it : landice_bcs[LandIceBC::BasalFriction]) {
     std::string ssName = it->get<std::string>("Side Set Name");
@@ -541,36 +541,37 @@ void StokesFOBase::setupEvaluatorRequests ()
     ss_build_interp_ev[ssName][dof_names[0]][IReq::CELL_TO_SIDE] = true;
     ss_build_interp_ev[ssName][dof_names[0]][IReq::QP_VAL      ] = true;
     ss_build_interp_ev[ssName][dof_names[0]][IReq::GRAD_QP_VAL ] = true;
-    if (is_input_field["effective_pressure"] || is_ss_input_field[ssName]["effective_pressure"])
+    if (is_input_field["effective_pressure"]) {
+      ss_build_interp_ev[ssName][effective_pressure_name][IReq::CELL_TO_SIDE] = true;
       ss_build_interp_ev[ssName][effective_pressure_name][IReq::QP_VAL ] = true;
-    ss_build_interp_ev[ssName][effective_pressure_name][IReq::GRAD_QP_VAL ] = true;
-    ss_build_interp_ev[ssName][effective_pressure_name][IReq::CELL_TO_SIDE] = true;
+      ss_build_interp_ev[ssName][effective_pressure_name][IReq::GRAD_QP_VAL ] = true;
+    } else if (is_ss_input_field[ssName]["effective_pressure"]) {
+      ss_build_interp_ev[ssName][effective_pressure_name][IReq::QP_VAL ] = true;
+      ss_build_interp_ev[ssName][effective_pressure_name][IReq::GRAD_QP_VAL ] = true;
+    }
     ss_build_interp_ev[ssName][flow_factor_name][IReq::CELL_TO_SIDE] = true;
+    setSingleFieldProperties(effective_pressure_name, FRT::Scalar);
+    setSingleFieldProperties(sliding_velocity_name, FRT::Scalar);
 
-    // These two are needed for coulomb friction
-    ss_build_interp_ev[ssName]["mu_coulomb"][IReq::QP_VAL] = true;
-    ss_build_interp_ev[ssName]["mu_power_law"][IReq::QP_VAL] = true;
-    ss_build_interp_ev[ssName]["bed_roughness"][IReq::QP_VAL] = true;
-
-    if (is_dist_param["mu_coulomb"]) {
-      ss_build_interp_ev[ssName]["mu_coulomb"][IReq::CELL_TO_SIDE] = true;
-    }
-    if (is_dist_param["mu_power_law"]) {
-      ss_build_interp_ev[ssName]["mu_power_law"][IReq::CELL_TO_SIDE] = true;
-    }
-    if (is_dist_param["bed_roughness"]) {
-      ss_build_interp_ev[ssName]["bed_roughness"][IReq::CELL_TO_SIDE] = true;
-    }
-
-    // For "Given Field" and "Exponent of Given Field" we also need to interpolate the given field at the quadrature points
     auto& bfc = it->sublist("Basal Friction Coefficient");
     const auto type = util::upper_case(bfc.get<std::string>("Type"));
     if (type=="GIVEN FIELD" || type=="EXPONENT OF GIVEN FIELD") {
+      // For "Given Field" and "Exponent of Given Field" we also need
+      // to interpolate the given field at the quadrature points
       ss_build_interp_ev[ssName][bfc.get<std::string>("Given Field Variable Name")][IReq::QP_VAL      ] = true;
       ss_build_interp_ev[ssName][bfc.get<std::string>("Given Field Variable Name")][IReq::CELL_TO_SIDE] = true;
+    } else if (type=="REGULARIZED COULOMB") {
+      // For Coulomg and PowerLaw, we *may* have some distributed parameter fields.
+      // We interpolate (and possibly project on ss) only if they are inputs
+      for (auto fname : {"mu_coulomb" , "bed_roughness", "mu_power_law"}) {
+        if (is_input_field[fname] || is_ss_input_field[ssName][fname]) {
+          ss_build_interp_ev[ssName][fname][IReq::CELL_TO_SIDE] = true;
+          ss_build_interp_ev[ssName][fname][IReq::QP_VAL] = true;
+        }
+        setSingleFieldProperties(fname, FRT::Scalar);
+      }
     }
 
-    bool has_GLF_resp = false;
     if(this->params->isSublist("Response Functions")) {
       const Teuchos::ParameterList& resp = this->params->sublist("Response Functions",true);
       unsigned int num_resps = resp.get<int>("Number Of Responses");
@@ -582,18 +583,27 @@ void StokesFOBase::setupEvaluatorRequests ()
           for(unsigned int j=0; j<num_sub_resps; j++) {
             if(resp.sublist(Albany::strint("Response", i)).sublist(Albany::strint("Response", j)).get<std::string>("Name") == "Grounding Line Flux") {
               has_GLF_resp = true;
-              break;
+              continue;
+            }
+            if(resp.sublist(Albany::strint("Response", i)).sublist(Albany::strint("Response", j)).get<std::string>("Name") == "Surface Mass Balance Mismatch") {
+              has_SMB_resp = true;
+              continue;
             }
           }
-          if (has_GLF_resp)
+          if (has_GLF_resp && has_SMB_resp)
             break;
-        }
-        else {
+        } else {
           if(resp.sublist(Albany::strint("Response", i)).get<std::string>("Name") == "Grounding Line Flux") {
             has_GLF_resp = true;
-            break;
+            continue;
+          }
+          if(resp.sublist(Albany::strint("Response", i)).get<std::string>("Name") == "Surface Mass Balance Mismatch") {
+            has_SMB_resp = true;
+            continue;
           }
         }
+        if (has_GLF_resp && has_SMB_resp)
+          break;
       }
     }
 
@@ -655,7 +665,7 @@ void StokesFOBase::setupEvaluatorRequests ()
   }
 
   // SMB-related diagnostics
-  if (!isInvalid(basalSideName)) {
+  if (!isInvalid(basalSideName) && has_SMB_resp) {
     // Needs BFs
     ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
 
@@ -684,19 +694,50 @@ void StokesFOBase::setupEvaluatorRequests ()
 
 void StokesFOBase::setSingleFieldProperties (const std::string& fname,
                                              const FRT rank,
-                                             const FST st,
-                                             const FL location)
+                                             const FST st)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (field_rank.find(fname)!=field_rank.end() &&
                               field_rank[fname]!=rank, std::logic_error,
-      "Error! Attempt to mark field '" + fname + " with rank " + e2str(rank) +
-      ", when it was previously marked as of rank " + e2str(field_rank[fname]) + ".\n");
+      "Error! Attempt to mark field '" + fname + " with rank " + e2str(rank) + "\n"
+      "       but it was previously marked with rank " + e2str(field_rank[fname]) + ".\n");
 
   field_rank[fname] = rank;
-  field_location[fname] = location;
   // Use logic or, so that if the props of a field are set multiple times
-  // (in this and derived classes), we keep the "strongest" scalar type.
+  // (e.g., in base and derived classes), we keep the "strongest" scalar type.
   field_scalar_type[fname] |= st;
+}
+
+FieldScalarType StokesFOBase::get_scalar_type (const std::string& fname) {
+  // Note: if not set, it defaults to simple real type, the "weakest" scalar type
+  FST st = field_scalar_type[fname];
+  const auto& deps = field_deps[fname];
+  for (const auto& dep : deps) {
+    st |= field_scalar_type[dep];
+  }
+
+  return st;
+}
+
+Albany::FieldRankType StokesFOBase::get_field_rank (const std::string& fname) {
+  // Note: if not set, it defaults to Scalar, but printing a warning
+  auto it = field_rank.find(fname);
+
+  if (it==field_rank.end()) {
+#ifndef NDEBUG
+    Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+    int commRank = Teuchos::GlobalMPISession::getRank();
+    int commSize = Teuchos::GlobalMPISession::getNProc();
+    out->setProcRankAndSize(commRank, commSize);
+    out->setOutputToRootOnly(0);
+    *out << " ** Rank of field '" << fname << "' not set. Defaulting to 'Scalar'.\n";
+#endif
+    return FRT::Scalar;
+  }
+  return it->second;
+}
+
+void StokesFOBase::add_dep (const std::string& fname, const std::string& dep_name) {
+  field_deps[fname].insert(dep_name);
 }
 
 } // namespace LandIce

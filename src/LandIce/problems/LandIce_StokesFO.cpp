@@ -83,7 +83,6 @@ void StokesFO::constructDirichletEvaluators(
 // Neumann BCs
 void StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
-
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0
 
@@ -175,29 +174,11 @@ void StokesFO::setFieldsProperties () {
     TEUCHOS_TEST_FOR_EXCEPTION(adjustBedTopo == adjustSurfaceHeight, std::logic_error, "Error! When the ice thickness is a parameter,\n "
         "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
         " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
-
-    if (adjustSurfaceHeight) {
-      is_computed_field[surface_height_name] = true;
-    } else if (adjustBedTopo) {
-      is_computed_field[surface_height_name] = true;
-      is_computed_field[bed_topography_name] = true;
-    }
-  }
-
-  // If we don't have effective pressure as input, we *may* be computing a surrogate on a side, so set the resulting scalar type
-  bool has_eff_press = is_input_field[effective_pressure_name];
-  if (!has_eff_press) {
-    for (auto it : is_ss_input_field) {
-      if (!it.second[effective_pressure_name]) {
-        setSingleFieldProperties(effective_pressure_name, FRT::Scalar, field_scalar_type[ice_thickness_name] | field_scalar_type[surface_height_name], FL::Node);
-        is_ss_computed_field[it.first][effective_pressure_name] = true;
-      }
-    }
   }
 
   // UpdateZCoordinate expects the (observed) bed topography and (observed) surface height to have scalar type MeshScalarT.
-  setSingleFieldProperties("observed_bed_topography", FRT::Scalar, FST::MeshScalar, FL::Node);
-  setSingleFieldProperties("observed_surface_height", FRT::Scalar, FST::MeshScalar, FL::Node);
+  setSingleFieldProperties("observed_bed_topography", FRT::Scalar);
+  setSingleFieldProperties("observed_surface_height", FRT::Scalar);
 }
 
 void StokesFO::setupEvaluatorRequests () {

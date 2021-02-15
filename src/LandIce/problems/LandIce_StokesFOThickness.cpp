@@ -181,13 +181,6 @@ void StokesFOThickness::setFieldsProperties () {
   // Fix the scalar type of ice_thickness_name, since in StokesFOThickness it depends on the solution.
   field_scalar_type[ice_thickness_name] = FST::Scalar;
 
-  // Mark the thickness increment and initial_thickness+increment as computed
-  is_computed_field[ice_thickness_name] = true;
-  if (Albany::mesh_depends_on_solution()) {
-    // With a moving mesh, the surface height is an output variable
-    is_computed_field[surface_height_name] = true;
-  }
-
   field_rank[ice_thickness_name]  = FRT::Scalar;
   field_rank[surface_height_name] = FRT::Scalar;
 }
