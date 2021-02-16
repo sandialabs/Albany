@@ -14,7 +14,7 @@ unset http_proxy
 unset https_proxy
 
 export INTEL_LICENSE_FILE=/home/projects/x86-64/intel/licenses/USE_SERVER-ohpc.lic
-source blake_intel_modules.sh >& modules.out  
+source blake_intel_modules_submit.sh >& modules.out  
 
 export OMP_NUM_THREADS=1
 

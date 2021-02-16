@@ -1,6 +1,6 @@
 
 #cmake_minimum_required (VERSION 2.8)
-set (CTEST_DO_SUBMIT ON)
+set (CTEST_DO_SUBMIT OFF)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
@@ -108,6 +108,39 @@ if (DOWNLOAD_TRILINOS)
     message(FATAL_ERROR "Cannot pull Trilinos!")
   endif ()
 
+  #
+  # Get Albany
+  #
+
+  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
+    execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
+      clone ${Albany_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Albany
+      OUTPUT_VARIABLE _out
+      ERROR_VARIABLE _err
+      RESULT_VARIABLE HAD_ERROR)
+    
+    message(STATUS "out: ${_out}")
+    message(STATUS "err: ${_err}")
+    message(STATUS "res: ${HAD_ERROR}")
+    if (HAD_ERROR)
+      message(FATAL_ERROR "Cannot clone Albany repository!")
+    endif ()
+  endif ()
+
+  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+  
+  # Pull the repo
+  execute_process (COMMAND "${CTEST_GIT_COMMAND}" pull
+      WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Albany
+      OUTPUT_VARIABLE _out
+      ERROR_VARIABLE _err
+      RESULT_VARIABLE HAD_ERROR)
+  message(STATUS "Output of Albany pull: ${_out}")
+  message(STATUS "Text sent to standard error stream: ${_err}")
+  message(STATUS "command result status: ${HAD_ERROR}")
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot pull Albany!")
+  endif ()
 endif()
 
 ctest_start(${CTEST_TEST_TYPE})
