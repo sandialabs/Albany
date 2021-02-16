@@ -33,7 +33,8 @@ Teuchos::RCP<Tpetra_CrsGraph> Albany::createHessianCrsGraph(
 
     for (std::size_t wsIndex = 0; wsIndex < nws; ++wsIndex)
     {
-        if (num_elem_per_ws != vElDofs[wsIndex].dimension(0) && wsIndex < nws - 1)
+        const std::size_t num_elem_per_ws_i = vElDofs[wsIndex].dimension(0);
+        if (num_elem_per_ws != num_elem_per_ws_i && wsIndex + 1 < nws)
             same_num_elem_per_ws = false;
         num_elem += vElDofs[wsIndex].dimension(0);
     }
