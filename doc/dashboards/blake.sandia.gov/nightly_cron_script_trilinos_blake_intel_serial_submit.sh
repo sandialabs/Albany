@@ -9,7 +9,7 @@ source blake_intel_modules_submit.sh >& intel_modules_submit.out
 
 now="$(date +'%Y%m%d')"
 path1="$BASE_DIR/build/Testing/$now-0100" 
-path2="$BASE_DIR/build/Testing/$now-0100-Intel-GCC"
+path2="$BASE_DIR/build/Testing/$now-0100-Intel-Serial"
 mv $path1 $path2
 
 sed -i "s/XXX/$now/g" ctest_nightly_trilinos_blake_intel_serial_submit.cmake 

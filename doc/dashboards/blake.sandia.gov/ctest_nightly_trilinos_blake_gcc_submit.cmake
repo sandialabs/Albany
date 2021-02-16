@@ -13,7 +13,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "blake-openmp-Trilinos")
+set (CTEST_BUILD_NAME "blake-serial-Trilinos-gcc-no-warn")
 set (CTEST_BINARY_NAME build)
 
 
@@ -47,17 +47,17 @@ set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
 ctest_start(${CTEST_TEST_TYPE})
 
-ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-Intel-OpenMP/Configure.xml" RETURN_VALUE  S_HAD_ERROR)
+ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-GCC/Configure.xml" RETURN_VALUE  S_HAD_ERROR)
 if (S_HAD_ERROR)
   message ("Cannot submit Trilinos configure results!")
 endif ()
 
-ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-Intel-OpenMP/Build.xml" RETURN_VALUE  S_HAD_ERROR)
+ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-GCC/Build.xml" RETURN_VALUE  S_HAD_ERROR)
 if (S_HAD_ERROR)
   message ("Cannot submit Trilinos build results!")
 endif ()
 
-ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-Intel-OpenMP/Test.xml" RETURN_VALUE  S_HAD_ERROR)
+ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-GCC/Test.xml" RETURN_VALUE  S_HAD_ERROR)
 if (S_HAD_ERROR)
   message ("Cannot submit Trilinos test results!")
 endif ()

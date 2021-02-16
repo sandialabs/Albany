@@ -3,7 +3,7 @@ set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
 # Begin User inputs:
-set (CTEST_SITE "cori.nersc.gov" ) # generally the output of hostname
+set (CTEST_SITE "blake.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
@@ -47,17 +47,17 @@ set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
 ctest_start(${CTEST_TEST_TYPE})
 
-ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-Intel-GCC/Configure.xml" RETURN_VALUE  S_HAD_ERROR)
+ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-Intel-Serial/Configure.xml" RETURN_VALUE  S_HAD_ERROR)
 if (S_HAD_ERROR)
   message ("Cannot submit Trilinos configure results!")
 endif ()
 
-ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-Intel-GCC/Build.xml" RETURN_VALUE  S_HAD_ERROR)
+ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-Intel-Serial/Build.xml" RETURN_VALUE  S_HAD_ERROR)
 if (S_HAD_ERROR)
   message ("Cannot submit Trilinos build results!")
 endif ()
 
-ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-Intel-GCC/Test.xml" RETURN_VALUE  S_HAD_ERROR)
+ctest_submit (FILES "/home/projects/albany/nightlyCDashTrilinosBlake/build/Testing/XXX-0100-Intel-Serial/Test.xml" RETURN_VALUE  S_HAD_ERROR)
 if (S_HAD_ERROR)
   message ("Cannot submit Trilinos test results!")
 endif ()

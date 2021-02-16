@@ -1,6 +1,6 @@
 
 #cmake_minimum_required (VERSION 2.8)
-set (CTEST_DO_SUBMIT ON)
+set (CTEST_DO_SUBMIT OFF)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
@@ -19,6 +19,7 @@ set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (CTEST_CONFIGURATION  Release) # What type of build do you want ?
+set (CMAKE_USE_SYSTEM_CURL ON) 
 
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
