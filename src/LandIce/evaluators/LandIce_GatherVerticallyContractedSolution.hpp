@@ -48,6 +48,8 @@ public:
 
 protected:
 
+  void computeQuadWeights(const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering);
+
   typedef typename EvalT::ScalarT ScalarT;
 
   // Output:

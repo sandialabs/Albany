@@ -34,7 +34,7 @@ public:
   void init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> problemParams);
 
   //! Pass discretization parameters into Setup to access during postRegistrationSetup
-  void init_disc_params(const Teuchos::ParameterList discParams);
+  void init_disc_params(const Teuchos::ParameterList& discParams);
 
   //! Pass unsaved parameter into Setup to change unsaved/saved fields
   void init_unsaved_param(const std::string& param);

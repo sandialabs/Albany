@@ -72,6 +72,22 @@ GatherVerticallyContractedSolutionBase(const Teuchos::ParameterList& p,
 
 }
 
+template<typename EvalT, typename Traits>
+void GatherVerticallyContractedSolutionBase<EvalT, Traits>::
+computeQuadWeights(const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering)
+{
+  if(this->op == this->VerticalSum){
+    for (int i=0; i<this->numLayers+1; ++i)
+      this->quadWeights(i) = 1.0;
+  } else  { //Average
+    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+    this->quadWeights(0) = 0.5*layers_ratio[0]; 
+    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
+    for(int i=1; i<this->numLayers; ++i)
+      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
+  }
+}
+
 //**********************************************************************
 
 template<typename EvalT, typename Traits>
@@ -157,16 +173,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   // Compute quadWeights
-  if(this->op == this->VerticalSum){
-    for (int i=0; i<this->numLayers+1; ++i)
-      this->quadWeights(i) = 1.0;
-  } else  { //Average
-    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
-    this->quadWeights(0) = 0.5*layers_ratio[0]; 
-    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
-    for(int i=1; i<this->numLayers; ++i)
-      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
-  }
+  this->computeQuadWeights(layeredMeshNumbering);
 
   // Get sideSetViews and iterator
   const Albany::LocalSideSetInfoList& ssList = *(workset.sideSetViews);
@@ -254,16 +261,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   // Compute quadWeights
-  if(this->op == this->VerticalSum){
-    for (int i=0; i<this->numLayers+1; ++i)
-      this->quadWeights(i) = 1.0;
-  } else  { //Average
-    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
-    this->quadWeights(0) = 0.5*layers_ratio[0]; 
-    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
-    for(int i=1; i<this->numLayers; ++i)
-      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
-  }
+  this->computeQuadWeights(layeredMeshNumbering);
 
   const Albany::LocalSideSetInfoList& ssList = *(workset.sideSetViews);
   Albany::LocalSideSetInfoList::const_iterator it = ssList.find(this->meshPart);
@@ -354,16 +352,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   // Compute quadWeights
-  if(this->op == this->VerticalSum){
-    for (int i=0; i<this->numLayers+1; ++i)
-      this->quadWeights(i) = 1.0;
-  } else  { //Average
-    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
-    this->quadWeights(0) = 0.5*layers_ratio[0]; 
-    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
-    for(int i=1; i<this->numLayers; ++i)
-      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
-  }
+  this->computeQuadWeights(layeredMeshNumbering);
 
   const Albany::LocalSideSetInfoList& ssList = *(workset.sideSetViews);
   Albany::LocalSideSetInfoList::const_iterator it = ssList.find(this->meshPart);
@@ -444,16 +433,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   // Compute quadWeights
-  if(this->op == this->VerticalSum){
-    for (int i=0; i<this->numLayers+1; ++i)
-      this->quadWeights(i) = 1.0;
-  } else  { //Average
-    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
-    this->quadWeights(0) = 0.5*layers_ratio[0]; 
-    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
-    for(int i=1; i<this->numLayers; ++i)
-      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
-  }
+  this->computeQuadWeights(layeredMeshNumbering);
 
   const Albany::LocalSideSetInfoList& ssList = *(workset.sideSetViews);
   Albany::LocalSideSetInfoList::const_iterator it = ssList.find(this->meshPart);
@@ -563,16 +543,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   // Compute quadWeights
-  if(this->op == this->VerticalSum){
-    for (int i=0; i<this->numLayers+1; ++i)
-      this->quadWeights(i) = 1.0;
-  } else  { //Average
-    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
-    this->quadWeights(0) = 0.5*layers_ratio[0]; 
-    this->quadWeights(this->numLayers) = 0.5*layers_ratio[this->numLayers-1];
-    for(int i=1; i<this->numLayers; ++i)
-      this->quadWeights(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
-  }
+  this->computeQuadWeights(layeredMeshNumbering);
 
   Kokkos::deep_copy(this->contractedSol.get_view(), ScalarT(0.0));
 
