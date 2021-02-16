@@ -34,8 +34,8 @@ void Setup::init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> probl
   if (_enableMemoizationForParams) _enableMemoization = true;
 }
 
-void Setup::init_disc_params(const Teuchos::ParameterList& discParams) {
-  _numLayers = discParams.get<int>("NumLayers");
+void Setup::init_disc_params(const Teuchos::RCP<Teuchos::ParameterList> discParams) {
+  _numLayers = discParams->get<int>("NumLayers", -1);
 }
 
 void Setup::init_unsaved_param(const std::string& param) {

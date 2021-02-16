@@ -2040,13 +2040,13 @@ STKDiscretization::computeSideSets()
   // 6) Populate localDOFViews for GatherVerticallyContractedSolution
   const int maxSideNodes = 6;
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *(stkMeshStruct->layered_mesh_numbering);
-  // Not all mesh structs that come through here are extruded mesh structs. This is to check if
-  //   the mesh struct is an extruded one. If it isn't extruded, it won't need to do any of the following work.
-  if (&layeredMeshNumbering != nullptr) {
-    for (int i = 0; i < sideSets.size(); ++i) {
-      // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
-      std::map<std::string, Kokkos::View<LO****, PHX::Device>>& ldofViews = localDOFViews[i];
+  for (int i = 0; i < sideSets.size(); ++i) {
+    // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
+    std::map<std::string, Kokkos::View<LO****, PHX::Device>>& ldofViews = localDOFViews[i];
 
+    // Not all mesh structs that come through here are extruded mesh structs. This is to check if
+    //   the mesh struct is an extruded one. If it isn't extruded, it won't need to do any of the following work.
+    if (&layeredMeshNumbering != nullptr) {
       // Loop over the sides that form the boundary condition
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
       const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;

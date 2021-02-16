@@ -160,7 +160,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
 
   // Pull the number of solution vectors out of the problem and send them to the
   // discretization list, if the user specifies this in the problem
-  Teuchos::ParameterList& discParams = params->sublist("Discretization");
+  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(params, "Discretization", true);
 
   // Initialize Phalanx postRegistration setup
   phxSetup = Teuchos::rcp(new PHAL::Setup());
@@ -173,10 +173,10 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   // Possibly set in the Discretization list in the input file - this overrides
   // the above if set
   int num_time_deriv_from_input =
-      discParams.get<int>("Number Of Time Derivatives", -1);
+      discParams->get<int>("Number Of Time Derivatives", -1);
   if (num_time_deriv_from_input <
       0)  // Use the value from the problem by default
-    discParams.set<int>("Number Of Time Derivatives", num_time_deriv);
+    discParams->set<int>("Number Of Time Derivatives", num_time_deriv);
   else
     num_time_deriv = num_time_deriv_from_input;
 
