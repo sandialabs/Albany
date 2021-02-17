@@ -116,7 +116,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
       sideSet = workset.sideSetViews->at(basalSideName);
       for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
       {
-        // Get the local data of side and cell
+        // Get the local data of cell
         const int cell = sideSet.elem_LID(sideSet_idx);
 
         for (unsigned int inode=0; inode<numSideNodes; ++inode) {

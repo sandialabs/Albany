@@ -114,9 +114,8 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
     if (useCollapsedSidesets) {
       for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
       {
-        // Get the local data of side and cell
+        // Get the local data of cell
         const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
 
         MeshScalarT trapezoid_weight = 0;
         for (unsigned int qp=0; qp<numSideQPs; ++qp)
