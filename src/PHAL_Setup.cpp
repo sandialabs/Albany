@@ -25,17 +25,14 @@ Setup::Setup() :
     _unsavedParams(Teuchos::rcp(new StringSet())),
     _unsavedParamsEvals(Teuchos::rcp(new StringSet())),
     _savedFieldsWOParams(Teuchos::rcp(new StringSet())),
-    _unsavedFieldsWParams(Teuchos::rcp(new StringSet())) {
+    _unsavedFieldsWParams(Teuchos::rcp(new StringSet())),
+    _numLayers(-1) {
 }
 
 void Setup::init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> problemParams) {
   _enableMemoization = problemParams->get<bool>("Use MDField Memoization", false);
   _enableMemoizationForParams = problemParams->get<bool>("Use MDField Memoization For Parameters", false);
   if (_enableMemoizationForParams) _enableMemoization = true;
-}
-
-void Setup::init_disc_params(const Teuchos::RCP<Teuchos::ParameterList> discParams) {
-  _numLayers = discParams->get<int>("NumLayers", -1);
 }
 
 void Setup::init_unsaved_param(const std::string& param) {
@@ -241,7 +238,13 @@ void Setup::print_fields(std::ostream& os, Teuchos::RCP<StringSet> savedFields,
   }
 }
 
+void Setup::set_num_layers(const int numLayers) {
+  _numLayers = numLayers;
+}
+
 int Setup::get_num_layers() const {
+  TEUCHOS_TEST_FOR_EXCEPTION(_numLayers < 0,
+    std::logic_error, "Number of layers is not valid, are you sure this is an extruded mesh?\n");
   return _numLayers;
 }
 

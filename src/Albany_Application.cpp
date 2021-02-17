@@ -165,7 +165,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   // Initialize Phalanx postRegistration setup
   phxSetup = Teuchos::rcp(new PHAL::Setup());
   phxSetup->init_problem_params(problemParams);
-  phxSetup->init_disc_params(discParams);
 
   // Set in Albany_AbstractProblem constructor or in siblings
   num_time_deriv = problemParams->get<int>("Number Of Time Derivatives");
@@ -544,6 +543,12 @@ Application::createDiscretization()
       problem->getNullSpace());
   // The following is for Aeras problems.
   explicit_scheme = disc->isExplicitScheme();
+  // For extruded meshes, we need the number of layers in postRegistrationSetup
+  Teuchos::RCP<LayeredMeshNumbering<GO>> layeredMeshNumbering = disc->getLayeredMeshNumbering();
+  if (!layeredMeshNumbering.is_null()) {
+    int numLayers = layeredMeshNumbering->numLayers;
+    phxSetup->set_num_layers(numLayers);
+  }
 }
 
 void

@@ -33,9 +33,6 @@ public:
   //! Pass problem parameters into Setup to access during postRegistrationSetup
   void init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> problemParams);
 
-  //! Pass discretization parameters into Setup to access during postRegistrationSetup
-  void init_disc_params(const Teuchos::RCP<Teuchos::ParameterList> discParams);
-
   //! Pass unsaved parameter into Setup to change unsaved/saved fields
   void init_unsaved_param(const std::string& param);
 
@@ -77,6 +74,9 @@ public:
 
   //! Get list of saved MDFields
   Teuchos::RCP<const StringSet> get_saved_fields(const std::string& eval) const;
+
+  //! Set the number of layers if using an extruded mesh
+  void set_num_layers(const int numLayers);
 
   //! Get number of layers in extruded mesh
   int get_num_layers() const;
