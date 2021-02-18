@@ -1455,6 +1455,7 @@ void StokesFOBase::constructSurfaceVelocityEvaluators (PHX::FieldManager<PHAL::A
       std::string beta_gradient_side_name = "beta_" + ssName + " Gradient";
       std::string effective_pressure_side_name = "effective_pressure_" + ssName;
       std::string effective_pressure_gradient_side_name = "effective_pressure_" + ssName + " Gradient";
+      std::string mu_power_law_name = "mu_power_law";
 
       //--- LandIce basal friction coefficient gradient ---//
       p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Basal Friction Coefficient Gradient"));
@@ -1464,6 +1465,7 @@ void StokesFOBase::constructSurfaceVelocityEvaluators (PHX::FieldManager<PHAL::A
       p->set<std::string>("Side Set Name", ssName);
       p->set<std::string>("Effective Pressure QP Name", effective_pressure_side_name);
       p->set<std::string>("Effective Pressure Gradient QP Name", effective_pressure_gradient_side_name);
+      p->set<std::string>("Power Law Coefficient Variable Name", mu_power_law_name);
       p->set<std::string>("Basal Velocity QP Name", velocity_side_name);
       p->set<std::string>("Basal Velocity Gradient QP Name", velocity_gradient_side_name);
       p->set<std::string>("Sliding Velocity QP Name", sliding_velocity_side_name);
