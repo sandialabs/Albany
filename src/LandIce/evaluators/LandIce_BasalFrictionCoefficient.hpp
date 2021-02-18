@@ -83,13 +83,14 @@ private:
 
   std::string                 basalSideName;  // Only if is_side_equation=true
 
-  bool use_stereographic_map, zero_on_floating, interpolate_then_exponentiate;
+  bool use_stereographic_map, zero_on_floating, hydrostatic_pressure, exponentiate_muField, interpolate_then_exponentiate;
 
   double x_0;             // [km]
   double y_0;             // [km]
   double R2;              // [km]
 
   double rho_i, rho_w;    // [kg m^{-3}]
+  double g;               // [m s^{-2}]
 
   ParamScalarT mu;
   ParamScalarT lambda;
@@ -137,6 +138,12 @@ public:
   struct Side_GivenFieldParam_Tag{};
   struct Side_GivenField_Tag{};
   struct Side_PowerLaw_DistributedMu_Tag{};
+  struct Side_PowerLaw_DistributedMu_HydrostaticN_Tag{};
+  struct Side_PowerLaw_DistributedMu_HydrostaticN_ParamH_Tag{};
+  struct Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_Tag{};
+  struct Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_ParamH_Tag{};
+  struct Side_PowerLaw_ExpDistributedMu_HydrostaticN_Tag{};
+  struct Side_PowerLaw_ExpDistributedMu_HydrostaticN_ParamH_Tag{};
   struct Side_PowerLaw_Tag{};
   struct Side_RegularizedCoulomb_DistributedLambda_DistributedMu_Tag{};
   struct Side_RegularizedCoulomb_DistributedLambda_Tag{};
@@ -167,6 +174,12 @@ public:
   typedef Kokkos::RangePolicy<ExecutionSpace,Side_GivenFieldParam_Tag> Side_GivenFieldParam_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,Side_GivenField_Tag> Side_GivenField_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,Side_PowerLaw_DistributedMu_Tag> Side_PowerLaw_DistributedMu_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,Side_PowerLaw_DistributedMu_HydrostaticN_Tag> Side_PowerLaw_DistributedMu_HydrostaticN_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,Side_PowerLaw_DistributedMu_HydrostaticN_ParamH_Tag> Side_PowerLaw_DistributedMu_HydrostaticN_ParamH_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_Tag> Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_ParamH_Tag> Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_ParamH_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,Side_PowerLaw_ExpDistributedMu_HydrostaticN_Tag> Side_PowerLaw_ExpDistributedMu_HydrostaticN_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,Side_PowerLaw_ExpDistributedMu_HydrostaticN_ParamH_Tag> Side_PowerLaw_ExpDistributedMu_HydrostaticN_ParamH_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,Side_PowerLaw_Tag> Side_PowerLaw_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,Side_RegularizedCoulomb_DistributedLambda_DistributedMu_Tag> Side_RegularizedCoulomb_DistributedLambda_DistributedMu_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,Side_RegularizedCoulomb_DistributedLambda_Tag> Side_RegularizedCoulomb_DistributedLambda_Policy;
@@ -213,6 +226,18 @@ public:
   void operator() (const Side_GivenField_Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
   void operator() (const Side_PowerLaw_DistributedMu_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Side_PowerLaw_DistributedMu_HydrostaticN_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Side_PowerLaw_DistributedMu_HydrostaticN_ParamH_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_ParamH_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Side_PowerLaw_ExpDistributedMu_HydrostaticN_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Side_PowerLaw_ExpDistributedMu_HydrostaticN_ParamH_Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
   void operator() (const Side_PowerLaw_Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION

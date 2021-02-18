@@ -38,8 +38,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 #endif
 
   n = -1; //dummy value
+  dim = -1; //dummy value
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
+  hydrostatic_pressure = beta_list.get<bool> ("Use Hydrostatic Pressure", false);
+  exponentiate_muField = beta_list.get<bool> ("Exponentiate Mu Field", false);
 
   //whether to first interpolate the given field and then exponetiate it (on quad points) or the other way around.
   interpolate_then_exponentiate = beta_list.get<bool> ("Interpolate Then Exponentiate Given Field", true); 
@@ -124,17 +127,27 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    N              = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+    if(!hydrostatic_pressure) {
+      N = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+      this->addDependentField (N);
+    }
+
+    auto layout_input_field = layout;
+    if(exponentiate_muField) {
+      BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), useCollapsedSidesets ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+      layout_input_field = useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar;
+      this->addDependentField (BF);
+    }
+
     u_norm         = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
     powerParam     = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
 
     this->addDependentField (powerParam);
     this->addDependentField (u_norm);
-    this->addDependentField (N);
 
     distributedMu = beta_list.get<bool>("Distributed Mu",false);
     if (distributedMu) {
-      muPowerLawField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Power Law Coefficient Variable Name"), layout);
+      muPowerLawField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Power Law Coefficient Variable Name"), layout_input_field);
       this->addDependentField (muPowerLawField);
     } else {
       muPowerLaw     = PHX::MDField<const ScalarT,Dim>("Power Law Coefficient", dl->shared_param);
@@ -149,14 +162,16 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
+    if(!hydrostatic_pressure) {
+      N            = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+      this->addDependentField (N);
+    }
     n            = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
-    N            = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
     u_norm       = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
     powerParam   = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
     ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), useCollapsedSidesets ? dl->cell_scalar2_sideset : dl->cell_scalar2);
 
     this->addDependentField (powerParam);
-    this->addDependentField (N);
     this->addDependentField (u_norm);
     this->addDependentField (ice_softness);
 
@@ -182,7 +197,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << betaType << "\" is not a valid parameter for Beta Type\n");
   }
 
-  if(zero_on_floating) {
+  if(zero_on_floating || hydrostatic_pressure) {
     bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), layout);
     is_thickness_param = is_dist_param.is_null() ? false : (*is_dist_param)[p.get<std::string>("Ice Thickness Variable Name")];
     if (is_thickness_param) {
@@ -195,6 +210,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
     rho_i = phys_param_list.get<double> ("Ice Density");
     rho_w = phys_param_list.get<double> ("Water Density");
+    g = phys_param_list.get<double> ("Gravity Acceleration");
     this->addDependentField (bed_topo_field);
   }
 
@@ -374,6 +390,74 @@ operator() (const Side_PowerLaw_DistributedMu_Tag& tag, const int& sideSet_idx) 
     beta(sideSet_idx,ipt) = muPowerLawField(sideSet_idx,ipt) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
   }
 }
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_PowerLaw_DistributedMu_HydrostaticN_Tag& tag, const int& sideSet_idx) const {
+  double gScaled = g/1000.0; // [km s^{-2}]
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT Nval = gScaled*KU::max(rho_i*thickness_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
+    beta(sideSet_idx,ipt) = muPowerLawField(sideSet_idx,ipt) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_PowerLaw_DistributedMu_HydrostaticN_ParamH_Tag& tag, const int& sideSet_idx) const {
+  double gScaled = g/1000.0; // [km s^{-2}]
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT Nval = gScaled*KU::max(rho_i*thickness_param_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
+    beta(sideSet_idx,ipt) = muPowerLawField(sideSet_idx,ipt) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_Tag& tag, const int& sideSet_idx) const {
+  double gScaled = g/1000.0; // [km s^{-2}]
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT Nval = gScaled*KU::max(rho_i*thickness_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
+    beta(sideSet_idx,ipt) = std::exp(muPowerLawField(sideSet_idx,ipt)) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_ParamH_Tag& tag, const int& sideSet_idx) const {
+  double gScaled = g/1000.0; // [km s^{-2}]
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT Nval = gScaled*KU::max(rho_i*thickness_param_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
+    beta(sideSet_idx,ipt) = std::exp(muPowerLawField(sideSet_idx,ipt)) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_PowerLaw_ExpDistributedMu_HydrostaticN_ParamH_Tag& tag, const int& sideSet_idx) const {
+  double gScaled = g/1000.0; // [km s^{-2}]
+  for (unsigned int qp=0; qp<numQPs; ++qp) {
+    beta(sideSet_idx,qp) = 0;
+    ScalarT Nval = gScaled*KU::max(rho_i*thickness_param_field(sideSet_idx,qp)+KU::min(rho_w*bed_topo_field(sideSet_idx,qp),0.0),0.0);
+    Nval *= std::pow (u_norm(sideSet_idx,qp), power-1);
+    for (unsigned int node=0; node<numNodes; ++node)
+      beta(sideSet_idx,qp) += std::exp(muPowerLawField(sideSet_idx,node))*BF(sideSet_idx,node,qp)*Nval;
+  }
+}
+
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_PowerLaw_ExpDistributedMu_HydrostaticN_Tag& tag, const int& sideSet_idx) const {
+  double gScaled = g/1000.0; // [km s^{-2}]
+  for (unsigned int qp=0; qp<numQPs; ++qp) {
+    beta(sideSet_idx,qp) = 0;
+    ScalarT Nval = gScaled*KU::max(rho_i*thickness_field(sideSet_idx,qp)+KU::min(rho_w*bed_topo_field(sideSet_idx,qp),0.0),0.0);
+    Nval *= std::pow (u_norm(sideSet_idx,qp), power-1);
+    for (unsigned int node=0; node<numNodes; ++node)
+      beta(sideSet_idx,qp) += std::exp(muPowerLawField(sideSet_idx,node))*BF(sideSet_idx,node,qp)*Nval;
+  }
+}
+
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
@@ -606,15 +690,44 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
         break;
 
       case POWER_LAW:
-        if (distributedMu) {
-          Kokkos::parallel_for(Side_PowerLaw_DistributedMu_Policy(0, sideSet.size), *this);
+        if(hydrostatic_pressure) {
+          if (distributedMu) {
+            if (is_thickness_param) {
+              if(exponentiate_muField) {
+                if(nodal)
+                  Kokkos::parallel_for(Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_ParamH_Policy(0, sideSet.size), *this);
+                else
+                  Kokkos::parallel_for(Side_PowerLaw_ExpDistributedMu_HydrostaticN_ParamH_Policy(0, sideSet.size), *this);
+              } else {
+                Kokkos::parallel_for(Side_PowerLaw_DistributedMu_HydrostaticN_ParamH_Policy(0, sideSet.size), *this);
+              }
+            } else {
+              if(exponentiate_muField) {
+                if(nodal)
+                  Kokkos::parallel_for(Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_Policy(0, sideSet.size), *this);
+                else
+                  Kokkos::parallel_for(Side_PowerLaw_ExpDistributedMu_HydrostaticN_Policy(0, sideSet.size), *this);
+              } else {
+                Kokkos::parallel_for(Side_PowerLaw_DistributedMu_HydrostaticN_Policy(0, sideSet.size), *this);
+              }
+            }
+          } else {
+            TEUCHOS_TEST_FOR_EXCEPTION (hydrostatic_pressure && !distributedMu, Teuchos::Exceptions::InvalidParameter,
+                                        "Error! The Power Law with hydrostatic pressure has been implemented only for distributed mu.\n");
+         }
         } else {
-          Kokkos::parallel_for(Side_PowerLaw_Policy(0, sideSet.size), *this);
+          if (distributedMu) {
+            Kokkos::parallel_for(Side_PowerLaw_DistributedMu_Policy(0, sideSet.size), *this);
+          } else {
+            Kokkos::parallel_for(Side_PowerLaw_Policy(0, sideSet.size), *this);
+          }
         }
 
         break;
 
       case REGULARIZED_COULOMB:
+        TEUCHOS_TEST_FOR_EXCEPTION (hydrostatic_pressure, Teuchos::Exceptions::InvalidParameter,
+                                    "Error! The Regularized Culomb Law has not been implemented yet in the case of hydrostatic pressure.\n");
         if (distributedLambda) {
           if (distributedMu) {
             Kokkos::parallel_for(Side_RegularizedCoulomb_DistributedLambda_DistributedMu_Policy(0, sideSet.size), *this);
@@ -808,6 +921,8 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       break;
 
     case POWER_LAW:
+      TEUCHOS_TEST_FOR_EXCEPTION (hydrostatic_pressure, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! The Power Law with hydrostatic pressure has only been implemented for side equations.\n");
       if (distributedMu) {
         Kokkos::parallel_for(PowerLaw_DistributedMu_Policy(0, workset.numCells), *this);
       } else {
@@ -816,6 +931,9 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       break;
 
     case REGULARIZED_COULOMB:
+      TEUCHOS_TEST_FOR_EXCEPTION (hydrostatic_pressure, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! The Regularized Culomb Law has not been implemented yet in the case of hydrostatic pressure.\n");
+
       if (distributedLambda) {
         if (distributedMu) {
           Kokkos::parallel_for(RegularizedCoulomb_DistributedLambda_DistributedMu_Policy(0, workset.numCells), *this);

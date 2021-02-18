@@ -49,7 +49,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = GIVEN_CONSTANT;
   }
-  else if ((betaType == "GIVEN FIELD") || (betaType == "EXPONENT OF GIVEN FIELD") || (betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD"))
+  else if ((betaType == "GIVEN FIELD") || (betaType == "EXPONENT OF GIVEN FIELD"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Constant beta, loaded from file.\n";
@@ -74,11 +74,30 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 
     numSideNodes = dl->node_qp_gradient->extent(2);
   }
-  else if ((betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD"))
+  else if (betaType == "POWER LAW")
   {
-    // This is not supported. However, this evaluator may be created 'just in case we need' it,
-    // and then be thrown away during the PHX DAG reorganization. We will throw in postRegistrationSetup
-    beta_type = INVALID;
+    beta_type = POWER_LAW;
+    bool distributedMu = beta_list.get<bool>("Distributed Mu",false);
+    TEUCHOS_TEST_FOR_EXCEPTION (!distributedMu, Teuchos::Exceptions::InvalidParameter, "Error! BasalFrictionCoefficientGradient for Power Law only implemented for Distributed Mu.\n");
+
+    auto is_dist_param = p.isParameter("Dist Param Query Map") ? p.get<Teuchos::RCP<std::map<std::string,bool>>>("Dist Param Query Map") : Teuchos::null;
+    std::string given_field_name = p.get<std::string> ("Power Law Coefficient Variable Name");
+
+    is_given_field_param = is_dist_param.is_null() ? false : (*is_dist_param)[given_field_name];
+
+    given_field_name += "_" + basalSideName;
+
+    if (is_given_field_param) {
+      given_field_param = PHX::MDField<const ParamScalarT>(given_field_name, useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar);
+      this->addDependentField (given_field_param);
+    } else {
+      given_field = PHX::MDField<const RealType>(given_field_name, useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar);
+      this->addDependentField (given_field);
+    }
+    GradBF     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Gradient BF Side Variable Name"), useCollapsedSidesets ? dl->node_qp_gradient_sideset : dl->node_qp_gradient);
+    this->addDependentField (GradBF);
+
+    numSideNodes = dl->node_qp_gradient->extent(2);
   }
   else if (betaType == "REGULARIZED COULOMB")
   {
@@ -250,6 +269,7 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
         grad_beta.deep_copy(0);
         break;
       case GIVEN_FIELD:
+      case POWER_LAW:
         if (is_given_field_param) {
           Kokkos::parallel_for(GivenFieldParam_Policy(0, sideSet.size), *this);
         } else {
@@ -284,6 +304,7 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
           }
           break;
         case GIVEN_FIELD:
+        case POWER_LAW:
           if (is_given_field_param) {
             for (unsigned int qp=0; qp<numSideQPs; ++qp) {
               for (unsigned int dim=0; dim<sideDim; ++dim) {

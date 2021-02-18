@@ -594,7 +594,7 @@ void StokesFOBase::setupEvaluatorRequests ()
     }
 
     // If zero on floating, we also need bed topography and thickness
-    if (bfc.get<bool>("Zero Beta On Floating Ice", false) || has_GLF_resp) {
+    if (bfc.get<bool>("Zero Beta On Floating Ice", false) || has_GLF_resp || bfc.get<bool>("Use Hydrostatic Pressure", false)) {
       ss_build_interp_ev[ssName][bed_topography_name][InterpolationRequest::QP_VAL      ] = true;
       ss_build_interp_ev[ssName][bed_topography_name][InterpolationRequest::CELL_TO_SIDE] = true;
 
