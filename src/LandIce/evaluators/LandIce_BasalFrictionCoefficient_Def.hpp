@@ -40,6 +40,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   n = -1; //dummy value
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
+  hydrostatic_pressure = beta_list.get<bool> ("Use Hydrostatic Pressure", false);
+  exponentiate_muField = beta_list.get<bool> ("Exponentiate Mu Field", false);
 
   //whether to first interpolate the given field and then exponetiate it (on quad points) or the other way around.
   interpolate_then_exponentiate = beta_list.get<bool> ("Interpolate Then Exponentiate Given Field", true); 
@@ -122,7 +124,19 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    N              = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+    if(!hydrostatic_pressure) {
+      N = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+      this->addDependentField (N);
+    }
+
+    auto layout_input_field = layout;
+    if(exponentiate_muField) {
+      BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar_sideset);
+
+      layout_input_field = dl->node_scalar_sideset;
+      this->addDependentField (BF);
+    }
+
     u_norm         = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
     powerParam     = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
 
@@ -132,7 +146,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
     distributedMu = beta_list.get<bool>("Distributed Mu",false);
     if (distributedMu) {
-      muPowerLawField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Power Law Coefficient Variable Name"), layout);
+      muPowerLawField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Power Law Coefficient Variable Name"), layout_input_field);
       this->addDependentField (muPowerLawField);
     } else {
       muPowerLaw     = PHX::MDField<const ScalarT,Dim>("Power Law Coefficient", dl->shared_param);
@@ -147,14 +161,16 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
+    if(!hydrostatic_pressure) {
+      N            = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+      this->addDependentField (N);
+    }
     n            = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
-    N            = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
     u_norm       = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
     powerParam   = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
     ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), is_side_equation ? dl->cell_scalar2_sideset : dl->cell_scalar2);
 
     this->addDependentField (powerParam);
-    this->addDependentField (N);
     this->addDependentField (u_norm);
     this->addDependentField (ice_softness);
 
@@ -180,22 +196,21 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << betaType << "\" is not a valid parameter for Beta Type\n");
   }
 
-  if(zero_on_floating) {
+  if(zero_on_floating || hydrostatic_pressure) {
+    bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), layout);
+    this->addDependentField (bed_topo_field);    
     is_thickness_param = is_dist_param.is_null() ? false : (*is_dist_param)[p.get<std::string>("Ice Thickness Variable Name")];
     if (is_thickness_param) {
-      bed_topo_field_mst = decltype(bed_topo_field_mst)(p.get<std::string> ("Bed Topography Variable Name"), layout);
-      this->addDependentField (bed_topo_field_mst);
-      thickness_param_field = decltype(thickness_param_field)(p.get<std::string> ("Ice Thickness Variable Name"), layout);
+      thickness_param_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
       this->addDependentField (thickness_param_field);
     } else {
-      bed_topo_field = decltype(bed_topo_field)(p.get<std::string> ("Bed Topography Variable Name"), layout);
-      this->addDependentField (bed_topo_field);
-      thickness_field = decltype(thickness_field)(p.get<std::string> ("Ice Thickness Variable Name"), layout);
+      thickness_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
       this->addDependentField (thickness_field);
     }
     Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
     rho_i = phys_param_list.get<double> ("Ice Density");
     rho_w = phys_param_list.get<double> ("Water Density");
+    g = phys_param_list.get<double> ("Gravity Acceleration");
   }
 
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
@@ -260,6 +275,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
       if (distributedMu) {
         for (unsigned int ipt=0; ipt<dim; ++ipt) {
           ScalarT Nval = N(cell,ipt);
+          //ScalarT Nval = g*KU::max(rho_i*thickness_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
           if (is_side_equation) Nval = KU::max(Nval, 0.0);
           beta(cell,ipt) = muPowerLawField(cell,ipt) * Nval * std::pow (u_norm(cell,ipt), power-1);
         }
@@ -343,7 +359,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
   if (is_side_equation && zero_on_floating) {
     if (is_thickness_param) {
       for (unsigned int ipt=0; ipt<dim; ++ipt) {
-        ParamScalarT isGrounded = rho_i*thickness_param_field(cell,ipt) > -rho_w*bed_topo_field_mst(cell,ipt);
+        ParamScalarT isGrounded = rho_i*thickness_param_field(cell,ipt) > -rho_w*bed_topo_field(cell,ipt);
         beta(cell,ipt) *=  isGrounded;
       }
     } else {

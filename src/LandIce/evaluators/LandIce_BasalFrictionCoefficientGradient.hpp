@@ -91,7 +91,7 @@ private:
   bool use_stereographic_map;
   bool is_given_field_param;
 
-  enum BETA_TYPE {INVALID, GIVEN_CONSTANT, GIVEN_FIELD, REGULARIZED_COULOMB};
+  enum BETA_TYPE {INVALID, GIVEN_CONSTANT, GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;

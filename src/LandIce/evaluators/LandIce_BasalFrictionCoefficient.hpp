@@ -71,9 +71,8 @@ private:
 
   PHX::MDField<const TemperatureST>     ice_softness;    // [(kPa)^{-n} (kyr)^{-1}]
 
-  PHX::MDField<const RealType>          bed_topo_field;  // [km]
-  PHX::MDField<const MeshScalarT>       bed_topo_field_mst;  // [km]
-  PHX::MDField<const RealType>          thickness_field; // [km]
+  PHX::MDField<const MeshScalarT>       bed_topo_field;  // [km]
+  PHX::MDField<const MeshScalarT>       thickness_field; // [km]
   PHX::MDField<const ParamScalarT>      thickness_param_field; // [km]
 
   // Output:
@@ -81,13 +80,14 @@ private:
 
   std::string                 basalSideName;  // Only if is_side_equation=true
 
-  bool use_stereographic_map, zero_on_floating, interpolate_then_exponentiate;
+  bool use_stereographic_map, zero_on_floating, hydrostatic_pressure, exponentiate_muField, interpolate_then_exponentiate;
 
   double x_0;             // [km]
   double y_0;             // [km]
   double R2;              // [km]
 
   double rho_i, rho_w;    // [kg m^{-3}]
+  double g;               // [m s^{-2}]
 
   ParamScalarT mu;
   ParamScalarT lambda;
