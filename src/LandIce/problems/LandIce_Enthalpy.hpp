@@ -32,7 +32,6 @@
 
 #include "LandIce_EnthalpyResid.hpp"
 #include "LandIce_EnthalpyBasalResid.hpp"
-#include "LandIce_w_Resid.hpp"
 #include "LandIce_ViscosityFO.hpp"
 #include "LandIce_Dissipation.hpp"
 #include "LandIce_HydrostaticPressure.hpp"

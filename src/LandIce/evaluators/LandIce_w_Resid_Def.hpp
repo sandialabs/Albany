@@ -48,19 +48,19 @@ namespace LandIce
                                 "Error! Basal side data layout not found.\n");
     Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideName);
 
-    sideBF = decltype(sideBF)(p.get<std::string> ("BF Side Name"), dl_side->node_qp_scalar);
-    side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_side->qp_scalar);
-    side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), dl_side->qp_scalar);
-    basalVerticalVelocitySideQP = decltype(basalVerticalVelocitySideQP)(p.get<std::string>("Basal Vertical Velocity Side QP Variable Name"), dl_side->qp_scalar);
-    normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
+    sideBF = decltype(sideBF)(p.get<std::string> ("BF Side Name"), dl_side->node_qp_scalar_sideset);
+    side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_side->qp_scalar_sideset);
+    side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), dl_side->qp_scalar_sideset);
+    basalVerticalVelocitySideQP = decltype(basalVerticalVelocitySideQP)(p.get<std::string>("Basal Vertical Velocity Side QP Variable Name"), dl_side->qp_scalar_sideset);
+    normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim_sideset);
 
 
     std::vector<PHX::Device::size_type> dims;
     dl->node_qp_vector->dimensions(dims);
     numNodes = dims[1];
     numQPs   = dims[2];
-    numSideQPs   = dl_side->qp_scalar->extent(2);
-    numSideNodes  = dl_side->node_scalar->extent(2);
+    numSideQPs   = dl_side->qp_scalar_sideset->extent(1);
+    numSideNodes  = dl_side->node_scalar_sideset->extent(1);
 
     unsigned int numSides = dl_side->node_scalar->extent(1);
     unsigned int sideDim  = cellType->getDimension()-1;
@@ -135,6 +135,7 @@ namespace LandIce
           Residual(cell,cnode) =0;
          }
       }
+      int sideSet_idx=0;
       for (auto const& it_side : sideSet)
       {
         // Get the local data of side and cell
@@ -143,10 +144,11 @@ namespace LandIce
         for (unsigned int snode=0; snode<numSideNodes; ++snode) {
           int cnode = sideNodes[side][snode];
           for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
-          Residual(cell,cnode) += (side_w_qp(cell,side,qp)*normals(cell,side,qp,2) + velocity(cell,qp,0)* normals(cell,side,qp,0) + velocity(cell,qp,1)* normals(cell,side,qp,1)
-                                   + basalVerticalVelocitySideQP(cell, side, qp)) * sideBF(cell,side,snode,qp) * side_w_measure(cell,side,qp);
+          Residual(cell,cnode) += (side_w_qp(sideSet_idx,qp)*normals(sideSet_idx,qp,2) + velocity(cell,qp,0)* normals(sideSet_idx,qp,0) + velocity(cell,qp,1)* normals(sideSet_idx,qp,1)
+                                   + basalVerticalVelocitySideQP(sideSet_idx, qp)) * sideBF(sideSet_idx,snode,qp) * side_w_measure(sideSet_idx,qp);
           }
-      }
+        }
+        sideSet_idx++;
       }
     }
   }
