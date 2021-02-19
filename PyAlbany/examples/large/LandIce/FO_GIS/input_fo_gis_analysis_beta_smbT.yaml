@@ -195,9 +195,6 @@ ANONYMOUS:
         Step Method: "Trust Region"
         #Step Method: "Line Search"
 
-        Expensive Hessian Computations: true
-        Number of columns computed of the Hessian: 100
-
         Use Old Reduced Space Interface: false
         Full Space: false
         Use NOX Solver: true
