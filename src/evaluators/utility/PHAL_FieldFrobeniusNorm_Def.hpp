@@ -93,7 +93,7 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
     field      = decltype(field)(fieldName, useCollapsedSidesets ? dl->node_vector_sideset : dl->node_vector);
     field_norm = decltype(field_norm)(fieldNormName, useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar);
 
-    dl->node_vector->dimensions(dims);
+    dl->node_vector_sideset->dimensions(dims);
   }
   else if (layout=="Cell Side QuadPoint Vector")
   {
@@ -105,7 +105,7 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
     field      = decltype(field)(fieldName, useCollapsedSidesets ? dl->qp_vector_sideset : dl->qp_vector);
     field_norm = decltype(field_norm)(fieldNormName, useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar);
 
-    dl->qp_vector->dimensions(dims);
+    dl->qp_vector_sideset->dimensions(dims);
   }
   else if (layout=="Cell Side QuadPoint Gradient")
   {
@@ -117,7 +117,7 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
     field      = decltype(field)(fieldName, useCollapsedSidesets ? dl->qp_gradient_sideset : dl->qp_gradient);
     field_norm = decltype(field_norm)(fieldNormName, useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar);
 
-    dl->qp_gradient->dimensions(dims);
+    dl->qp_gradient_sideset->dimensions(dims);
   }
   else
   {
@@ -161,7 +161,7 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
 
   numDims = dims.size();
 
-  TEUCHOS_TEST_FOR_EXCEPTION (numDims > 4, Teuchos::Exceptions::InvalidParameter, "Error! Layout has more dimensions than expectes");
+  TEUCHOS_TEST_FOR_EXCEPTION (numDims > 4, Teuchos::Exceptions::InvalidParameter, "Error! Layout has more dimensions than expected");
 
   for (int i = 0; i < numDims; ++i)
     dimsArray[i] = dims[i];

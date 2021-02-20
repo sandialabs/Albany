@@ -66,10 +66,17 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
 
   if (nodalState)
   {
-    TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().size()<3, Teuchos::Exceptions::InvalidParameter,
-                                "Error! To save a side-set nodal state, pass the cell-side-based version of it (<Cell,Side,Node,...>).\n");
-    TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().name(2)!="Node", Teuchos::Exceptions::InvalidParameter,
-                                "Error! To save a side-set nodal state, the third tag of the layout MUST be 'Node'.\n");
+    if (useCollapsedSidesets) {
+      TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().size()<2, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! To save a side-set nodal state, pass the cell-side-based version of it (<Cell,Side,Node,...>).\n");
+      TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().name(1)!="Node", Teuchos::Exceptions::InvalidParameter,
+                                  "Error! To save a side-set nodal state, the third tag of the layout MUST be 'Node'.\n");
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().size()<3, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! To save a side-set nodal state, pass the cell-side-based version of it (<Cell,Side,Node,...>).\n");
+      TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().name(2)!="Node", Teuchos::Exceptions::InvalidParameter,
+                                  "Error! To save a side-set nodal state, the third tag of the layout MUST be 'Node'.\n");
+    }
 
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
@@ -392,44 +399,87 @@ saveNodeState(typename Traits::EvalData workset)
 
     // Loop on the sides of this sideSet that are in this workset
     sideSet = workset.sideSetViews->at(sideSetName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the data that corresponds to the side
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      // Notice: in the following, we retrieve the id of the stk node using the 3d mesh.
-      //         This is because the id of entities is the same (please don't change that)
-      //         and it is easier to retrieve the id from the 3d discretization.
-      //         Then, we use the id to extract the node from the 2d mesh.
-      switch (dims.size())
+    if (useCollapsedSidesets) {
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
       {
-        case 3:   // node_scalar
-          scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
-          TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
-          for (size_t node=0; node<dims[2]; ++node)
-          {
-            nodeId3d = ElNodeID[cell][sideNodes(side,node)];
-            stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId3d+1);
-            e = bulkData.get_entity(key);
-            values = stk::mesh::field_data(*scalar_field, e);
-            values[0] = useCollapsedSidesets ? field(sideSet_idx,node) : field(cell,side,node);
-          }
-          break;
-        case 4:   // node_vector
-          vector_field = metaData.get_field<VFT> (stk::topology::NODE_RANK, stateName);
-          TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
-          for (size_t node=0; node<dims[2]; ++node)
-          {
-            nodeId3d = ElNodeID[cell][sideNodes(side,node)];
-            e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId3d+1);
-            values = stk::mesh::field_data(*vector_field, e);
-            for (unsigned int i=0; i<dims[3]; ++i)
-              values[i] = useCollapsedSidesets ? field(sideSet_idx,node,i) : field(cell,side,node,i);
-          }
-          break;
-        default:  // error!
-          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");
+        // Get the data that corresponds to the side
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
+
+        // Notice: in the following, we retrieve the id of the stk node using the 3d mesh.
+        //         This is because the id of entities is the same (please don't change that)
+        //         and it is easier to retrieve the id from the 3d discretization.
+        //         Then, we use the id to extract the node from the 2d mesh.
+        switch (dims.size())
+        {
+          case 2:   // node_scalar
+            scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
+            TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
+            for (size_t node=0; node<dims[1]; ++node)
+            {
+              nodeId3d = ElNodeID[cell][sideNodes(side,node)];
+              stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId3d+1);
+              e = bulkData.get_entity(key);
+              values = stk::mesh::field_data(*scalar_field, e);
+              values[0] = field(sideSet_idx,node);
+            }
+            break;
+          case 3:   // node_vector
+            vector_field = metaData.get_field<VFT> (stk::topology::NODE_RANK, stateName);
+            TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
+            for (size_t node=0; node<dims[1]; ++node)
+            {
+              nodeId3d = ElNodeID[cell][sideNodes(side,node)];
+              e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId3d+1);
+              values = stk::mesh::field_data(*vector_field, e);
+              for (unsigned int i=0; i<dims[2]; ++i)
+                values[i] = field(sideSet_idx,node,i);
+            }
+            break;
+          default:  // error!
+            TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");
+        }
+      }
+    } else {
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the data that corresponds to the side
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
+
+        // Notice: in the following, we retrieve the id of the stk node using the 3d mesh.
+        //         This is because the id of entities is the same (please don't change that)
+        //         and it is easier to retrieve the id from the 3d discretization.
+        //         Then, we use the id to extract the node from the 2d mesh.
+        switch (dims.size())
+        {
+          case 3:   // node_scalar
+            scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
+            TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
+            for (size_t node=0; node<dims[2]; ++node)
+            {
+              nodeId3d = ElNodeID[cell][sideNodes(side,node)];
+              stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId3d+1);
+              e = bulkData.get_entity(key);
+              values = stk::mesh::field_data(*scalar_field, e);
+              values[0] = field(cell,side,node);
+            }
+            break;
+          case 4:   // node_vector
+            vector_field = metaData.get_field<VFT> (stk::topology::NODE_RANK, stateName);
+            TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
+            for (size_t node=0; node<dims[2]; ++node)
+            {
+              nodeId3d = ElNodeID[cell][sideNodes(side,node)];
+              e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId3d+1);
+              values = stk::mesh::field_data(*vector_field, e);
+              for (unsigned int i=0; i<dims[3]; ++i)
+                values[i] = field(cell,side,node,i);
+            }
+            break;
+          default:  // error!
+            TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");
+        }
       }
     }
   }
@@ -442,43 +492,85 @@ saveNodeState(typename Traits::EvalData workset)
 
     // Loop on the sides of this sideSet that are in this workset
     sideSet = workset.sideSetViews->at(sideSetName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the data that corresponds to the side
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      switch (dims.size())
+    if (useCollapsedSidesets) { 
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
       {
-        case 3:   // node_scalar
-          scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
-          TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
-          for (size_t node=0; node<dims[2]; ++node)
-          {
-            nodeId3d = ElNodeID[cell][sideNodes(side,node)];
-            nodeId2d = layeredMeshNumbering->getColumnId(nodeId3d);
-            stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId2d+1);
-            e = bulkData.get_entity(key);
-            values = stk::mesh::field_data(*scalar_field, e);
-            values[0] = useCollapsedSidesets ? field(sideSet_idx,node) : field(cell,side,node);
-          }
-          break;
-        case 4:   // node_vector
-          vector_field = metaData.get_field<VFT> (stk::topology::NODE_RANK, stateName);
-          TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
-          for (size_t node=0; node<dims[2]; ++node)
-          {
-            nodeId3d = ElNodeID[cell][sideNodes(side,node)];
-            nodeId2d = layeredMeshNumbering->getColumnId(nodeId3d);
-            stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId2d+1);
-            e = bulkData.get_entity(key);
-            values = stk::mesh::field_data(*vector_field, e);
-            for (size_t i=0; i<dims[3]; ++i)
-              values[i] = useCollapsedSidesets ? field(sideSet_idx,node,i) : field(cell,side,node,i);
-          }
-          break;
-        default:  // error!
-          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");
+        // Get the data that corresponds to the side
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
+
+        switch (dims.size())
+        {
+          case 2:   // node_scalar
+            scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
+            TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
+            for (size_t node=0; node<dims[1]; ++node)
+            {
+              nodeId3d = ElNodeID[cell][sideNodes(side,node)];
+              nodeId2d = layeredMeshNumbering->getColumnId(nodeId3d);
+              stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId2d+1);
+              e = bulkData.get_entity(key);
+              values = stk::mesh::field_data(*scalar_field, e);
+              values[0] = field(sideSet_idx,node);
+            }
+            break;
+          case 3:   // node_vector
+            vector_field = metaData.get_field<VFT> (stk::topology::NODE_RANK, stateName);
+            TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
+            for (size_t node=0; node<dims[1]; ++node)
+            {
+              nodeId3d = ElNodeID[cell][sideNodes(side,node)];
+              nodeId2d = layeredMeshNumbering->getColumnId(nodeId3d);
+              stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId2d+1);
+              e = bulkData.get_entity(key);
+              values = stk::mesh::field_data(*vector_field, e);
+              for (size_t i=0; i<dims[2]; ++i)
+                values[i] = field(sideSet_idx,node,i);
+            }
+            break;
+          default:  // error!
+            TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");
+        }
+      }
+    } else {
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the data that corresponds to the side
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
+
+        switch (dims.size())
+        {
+          case 3:   // node_scalar
+            scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
+            TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
+            for (size_t node=0; node<dims[2]; ++node)
+            {
+              nodeId3d = ElNodeID[cell][sideNodes(side,node)];
+              nodeId2d = layeredMeshNumbering->getColumnId(nodeId3d);
+              stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId2d+1);
+              e = bulkData.get_entity(key);
+              values = stk::mesh::field_data(*scalar_field, e);
+              values[0] = field(cell,side,node);
+            }
+            break;
+          case 4:   // node_vector
+            vector_field = metaData.get_field<VFT> (stk::topology::NODE_RANK, stateName);
+            TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
+            for (size_t node=0; node<dims[2]; ++node)
+            {
+              nodeId3d = ElNodeID[cell][sideNodes(side,node)];
+              nodeId2d = layeredMeshNumbering->getColumnId(nodeId3d);
+              stk::mesh::EntityKey key(stk::topology::NODE_RANK, nodeId2d+1);
+              e = bulkData.get_entity(key);
+              values = stk::mesh::field_data(*vector_field, e);
+              for (size_t i=0; i<dims[3]; ++i)
+                values[i] = field(cell,side,node,i);
+            }
+            break;
+          default:  // error!
+            TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");
+        }
       }
     }
 

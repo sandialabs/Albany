@@ -312,7 +312,7 @@ operator() (const ExpGivenFieldParam_Nodal_Tag& tag, const int& cell) const {
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
-operator() (const ExpGivenFieldParam_Tag& tag, const int& cell) const {
+operator() (const ExpGivenField_Nodal_Tag& tag, const int& cell) const {
   for (unsigned int ipt=0; ipt<dim; ++ipt) {
     beta(cell,ipt) = std::exp(given_field(cell,ipt));
   }
@@ -320,7 +320,7 @@ operator() (const ExpGivenFieldParam_Tag& tag, const int& cell) const {
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
-operator() (const ExpGivenField_Nodal_Tag& tag, const int& cell) const {
+operator() (const ExpGivenFieldParam_Tag& tag, const int& cell) const {
   for (unsigned int ipt=0; ipt<dim; ++ipt) {
     beta(cell,ipt) = 0;
     for (unsigned int node=0; node<numNodes; ++node)

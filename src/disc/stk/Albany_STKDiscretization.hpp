@@ -202,7 +202,7 @@ class STKDiscretization : public AbstractDiscretization
   const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
   getLocalDOFViews(const int workset) const
   {
-    return localDOFViews.at(workset);
+    return wsLocalDOFViews.at(workset);
   }
 
   //! Get connectivity map from elementGID to workset
@@ -621,7 +621,8 @@ class STKDiscretization : public AbstractDiscretization
   std::map<int, LocalSideSetInfoList> sideSetViews;
 
   //! GatherVerticallyContractedSolution connectivity
-  std::map<int, std::map<std::string, Kokkos::View<LO****, PHX::Device>>> localDOFViews;
+  std::map<std::string, Kokkos::View<LO****, PHX::Device>> allLocalDOFViews;
+  std::map<int, std::map<std::string, Kokkos::View<LO****, PHX::Device>>> wsLocalDOFViews;
 
   //! Connectivity array [workset, element, local-node, Eq] => LID
   Conn wsElNodeEqID;

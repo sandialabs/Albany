@@ -1951,6 +1951,9 @@ STKDiscretization::computeSideSets()
     SideSetList& ssList = sideSets[i];
     std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
 
+    // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
+    std::map<std::string, Kokkos::View<LO****, PHX::Device>>& ldofViews = wsLocalDOFViews[i];
+
     while (ss_it != ssList.end()) {
       std::string             ss_key = ss_it->first;
       std::vector<SideStruct> ss_val = ss_it->second;
@@ -1992,6 +1995,8 @@ STKDiscretization::computeSideSets()
         globalSideSetViews[ss_key].elem_ebIndex(current_index, j)  = ss_val[j].elem_ebIndex;
         globalSideSetViews[ss_key].side_local_id(current_index, j) = ss_val[j].side_local_id;
       }
+
+      // Given workset i, sideset key ss_key, and current_index, populate localDOFViews
 
       current_local_index[ss_key]++;
 
@@ -2037,35 +2042,84 @@ STKDiscretization::computeSideSets()
     }
   }
 
-  // 6) Populate localDOFViews for GatherVerticallyContractedSolution
-  const int maxSideNodes = 6;
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *(stkMeshStruct->layered_mesh_numbering);
+
+  std::map<std::string, int> total_sideset_idx;
+  std::map<std::string, int> sideset_idx_offset;
+  unsigned int maxSideNodes = 0;
+  if (&layeredMeshNumbering != nullptr) {
+
+    const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
+    const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
+    const unsigned int numLayers = layeredMeshNumbering.numLayers;
+    const unsigned int numComps = solDOFManager.numComponents();
+
+    // Determine maximum number of side nodes
+    for (unsigned int elem_side = 0; elem_side < cell_topo->side_count; ++elem_side) {
+      const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
+      const unsigned int numSideNodes = side.topology->node_count;
+      maxSideNodes = std::max(maxSideNodes, numSideNodes);
+    }
+
+    // Determine total number of sideset indices per each sideset name
+    for (int ws = 0; ws < sideSets.size(); ++ws) {
+      SideSetList& ssList = sideSets[ws];
+      std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
+      while (ss_it != ssList.end()) {
+        std::string             ss_key = ss_it->first;
+        std::vector<SideStruct> ss_val = ss_it->second;
+
+        if (sideset_idx_offset.find(ss_key) == sideset_idx_offset.end())
+          sideset_idx_offset[ss_key] = 0;
+        if (total_sideset_idx.find(ss_key) == total_sideset_idx.end())
+          total_sideset_idx[ss_key] = 0;
+
+        total_sideset_idx[ss_key] += ss_val.size();
+
+        ss_it++;
+      }
+    }
+
+    // Allocate total localDOFView for each sideset name
+    ss_it = num_local_worksets.begin();
+    while (ss_it != num_local_worksets.end()) {
+      std::string ss_key = ss_it->first;
+      allLocalDOFViews[ss_key] = Kokkos::View<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
+
+      ss_it++;
+    }
+
+  }
+
+  // 6) Populate localDOFViews for GatherVerticallyContractedSolution
   for (int i = 0; i < sideSets.size(); ++i) {
+
     // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
-    std::map<std::string, Kokkos::View<LO****, PHX::Device>>& ldofViews = localDOFViews[i];
+    std::map<std::string, Kokkos::View<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[i];
 
     // Not all mesh structs that come through here are extruded mesh structs. This is to check if
     //   the mesh struct is an extruded one. If it isn't extruded, it won't need to do any of the following work.
     if (&layeredMeshNumbering != nullptr) {
-      // Loop over the sides that form the boundary condition
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
-      const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
 
+      const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
+      const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
       const auto& ov_node_indexer = *(getOverlapGlobalLocalIndexer(nodes_dof_name()));
       const unsigned int numLayers = layeredMeshNumbering.numLayers;
       const unsigned int numComps = solDOFManager.numComponents();
 
+      // Loop over the sides that form the boundary condition
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
+
       SideSetList& ssList = sideSets[i];
       std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
-      const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
-      
+
       while (ss_it != ssList.end()) {
         std::string             ss_key = ss_it->first;
         std::vector<SideStruct> ss_val = ss_it->second;
         
-        // localDOFView extent: [sideSet.size, maxNodes, layeredMeshNumbering.numLayers+1, solDOFManager.numComponents]
-        Kokkos::View<LO****, PHX::Device>& localDOFView = ldofViews[ss_key];
-        Kokkos::resize(localDOFView, ss_val.size(), maxSideNodes, numLayers+1, numComps);
+        Kokkos::View<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
+
+        //Kokkos::resize(localDOFView, ss_val.size(), maxSideNodes, numLayers+1, numComps);
         for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
           // Get the data that corresponds to the side
           const unsigned int elem_LID = ss_val[sideSet_idx].elem_LID;
@@ -2084,11 +2138,17 @@ STKDiscretization::computeSideSets()
               const GO gnode = layeredMeshNumbering.getId(baseId, il);
               const LO inode = ov_node_indexer.getLocalElement(gnode);
               for (unsigned int comp = 0; comp < numComps; ++comp) {
-                localDOFView(sideSet_idx, j, il, comp) = solDOFManager.getLocalDOF(inode, comp);
+                globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il, comp) = solDOFManager.getLocalDOF(inode, comp);
               }
             }
           }
         }
+
+        // Set workset-local sub-view
+        std::pair<int,int> range(sideset_idx_offset[ss_key], sideset_idx_offset[ss_key]+ss_val.size());
+        wsldofViews[ss_key] = Kokkos::subview(globalDOFView, range, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+
+        sideset_idx_offset[ss_key] += ss_val.size();
 
         ss_it++;
       }
