@@ -168,6 +168,7 @@ ANONYMOUS:
         Full Space: false
         Use NOX Solver: false
 
+        Hessian Dot Product: false
         ROL Options:
           General:
             Variable Objective Function: false

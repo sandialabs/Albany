@@ -5,6 +5,7 @@
 //*****************************************************************//
 #include "Albany_StateManager.hpp"
 #include "Albany_Utils.hpp"
+#include "PHAL_Dimension.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
@@ -204,16 +205,16 @@ Albany::StateManager::registerStateVariable(
   else if (dl->rank() == 1 && dl->size() == 1)
     mfe_type = StateStruct::WorksetValue;  // One value for the whole workset
                                            // (i.e., time)
-  else if (dl->rank() == 1 && dl->name(0) == "Cell")
+  else if (dl->rank() == 1 && dl->name(0) == PHX::print<Cell>())
     mfe_type = StateStruct::ElemData;
-  else if (dl->rank() >= 1 && dl->name(0) == "Node")  // Nodal data
+  else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Node>())  // Nodal data
     mfe_type = StateStruct::NodalData;
-  else if (dl->rank() >= 1 && dl->name(0) == "Cell") {  // Element QP or node
+  else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Cell>()) {  // Element QP or node
                                                         // data
-    if (dl->rank() > 1 && dl->name(1) == "Node")        // Element node data
+    if (dl->rank() > 1 && dl->name(1) == PHX::print<Node>())        // Element node data
       mfe_type = StateStruct::ElemNode;  // One value for the whole workset
                                          // (i.e., time)
-    else if (dl->rank() > 1 && dl->name(1) == "QuadPoint")  // Element node data
+    else if (dl->rank() > 1 && dl->name(1) == PHX::print<QuadPoint>())  // Element node data
       mfe_type = StateStruct::QuadPoint;  // One value for the whole workset
                                           // (i.e., time)
     else
@@ -316,14 +317,14 @@ Albany::StateManager::registerNodalVectorStateVariable(
   if (dl->rank() == 1 && dl->size() == 1)
     mfe_type = StateStruct::WorksetValue;  // One value for the whole workset
                                            // (i.e., time)
-  else if (dl->rank() >= 1 && dl->name(0) == "Node")  // Nodal data
+  else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Node>())  // Nodal data
     mfe_type = StateStruct::NodalData;
-  else if (dl->rank() >= 1 && dl->name(0) == "Cell") {  // Element QP or node
+  else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Cell>()) {  // Element QP or node
                                                         // data
-    if (dl->rank() > 1 && dl->name(1) == "Node")        // Element node data
+    if (dl->rank() > 1 && dl->name(1) == PHX::print<Node>())        // Element node data
       mfe_type = StateStruct::ElemNode;  // One value for the whole workset
                                          // (i.e., time)
-    else if (dl->rank() > 1 && dl->name(1) == "QuadPoint")  // Element node data
+    else if (dl->rank() > 1 && dl->name(1) == PHX::print<QuadPoint>())  // Element node data
       mfe_type = StateStruct::QuadPoint;  // One value for the whole workset
                                           // (i.e., time)
     else
@@ -512,18 +513,18 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
   StateStruct::MeshFieldEntity mfe_type;
   if (fieldEntity) {
     mfe_type = *fieldEntity;
-  } else if (dl->rank() >= 1 && dl->name(0) == "Node")  // Nodal data
+  } else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Node>())  // Nodal data
   {
     mfe_type = StateStruct::NodalData;                  // One value per node
-  } else if (dl->rank() == 1 && dl->name(1) == "Side")  // Element data
+  } else if (dl->rank() == 1 && dl->name(1) == PHX::print<Side>())  // Element data
   {
     mfe_type = StateStruct::ElemData;  // One value per element
   } else if (dl->rank() > 1) {
     if (dl->name(1) == "Dim")
       mfe_type = StateStruct::ElemData;   // One vector/tensor per element
-    else if (dl->name(1) == "Node")       // Element node data
+    else if (dl->name(1) == PHX::print<Node>())       // Element node data
       mfe_type = StateStruct::ElemNode;   // One value per side node
-    else if (dl->name(1) == "QuadPoint")  // Quad point data
+    else if (dl->name(1) == PHX::print<QuadPoint>())  // Quad point data
       mfe_type = StateStruct::QuadPoint;  // One value per side quad point
     else
       TEUCHOS_TEST_FOR_EXCEPTION(
@@ -541,7 +542,7 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
 
   if (stateRef.entity == StateStruct::NodalData) {
     TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->name(0) == "Node",
+        dl->name(0) == PHX::print<Node>(),
         std::logic_error,
         "Error! NodalData states should have dl <Node,...>.\n");
 
@@ -660,18 +661,18 @@ Albany::StateManager::registerSideSetStateVariable(
   StateStruct::MeshFieldEntity mfe_type;
   if (fieldEntity) {
     mfe_type = *fieldEntity;
-  } else if (dl->rank() >= 1 && dl->name(0) == "Node")  // Nodal data
+  } else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Node>())  // Nodal data
   {
     mfe_type = StateStruct::NodalData;                  // One value per node
-  } else if (dl->rank() == 2 && dl->name(1) == "Side")  // Element data
+  } else if (dl->rank() == 2 && dl->name(1) == PHX::print<Side>())  // Element data
   {
     mfe_type = StateStruct::ElemData;  // One value per element
   } else if (dl->rank() > 2) {
     if (dl->name(2) == "Dim")
       mfe_type = StateStruct::ElemData;   // One vector/tensor per element
-    else if (dl->name(2) == "Node")       // Element node data
+    else if (dl->name(2) == PHX::print<Node>())       // Element node data
       mfe_type = StateStruct::ElemNode;   // One value per side node
-    else if (dl->name(2) == "QuadPoint")  // Quad point data
+    else if (dl->name(2) == PHX::print<QuadPoint>())  // Quad point data
       mfe_type = StateStruct::QuadPoint;  // One value per side quad point
     else
       TEUCHOS_TEST_FOR_EXCEPTION(
@@ -689,7 +690,7 @@ Albany::StateManager::registerSideSetStateVariable(
 
   if (stateRef.entity == StateStruct::NodalData) {
     TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->name(0) == "Node",
+        dl->name(0) == PHX::print<Node>(),
         std::logic_error,
         "Error! NodalData states should have dl <Node,...>.\n");
 

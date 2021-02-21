@@ -92,39 +92,6 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 			 ".  Acceptable values are 2 (scalar), " <<
 			 "3 (vector), or 4 (tensor)");
   }
-#ifdef ALBANY_STOKHOS
-  else if (type == "Truncated KL Expansion" ||
-	   type == "Log Normal RF" ||
-	   type == "Exponential Truncated KL Expansion") {
-    if (type == "Truncated KL Expansion")
-      matPropType = KL_RAND_FIELD;
-    else if (type == "Log Normal RF" ||
-	     type == "Exponential Truncated KL Expansion")
-      matPropType = EXP_KL_RAND_FIELD;
-
-    Teuchos::RCP<PHX::DataLayout> coord_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Vector Data Layout");
-    coordVec = decltype(coordVec)(
-      p.get<std::string>("Coordinate Vector Name"),
-      coord_dl);
-    this->addDependentField(coordVec.fieldTag());
-    std::vector<PHX::DataLayout::size_type> coord_dims;
-    coord_dl->dimensions(coord_dims);
-    point.resize(coord_dims[2]);
-
-    exp_rf_kl =
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*mp_list));
-    int num_KL = exp_rf_kl->stochasticDimension();
-
-    // Add KL random variables as Sacado-ized parameters
-    rv.resize(num_KL);
-    for (int i=0; i<num_KL; i++) {
-      std::string ss = Albany::strint(name_mp + " KL Random Variable",i);
-      this->registerSacadoParameter(ss, paramLib);
-      rv[i] = mp_list->get(ss, 0.0);
-    }
-  }
-#endif
   else if (type == "SQRT Temperature Dependent") {
     matPropType = SQRT_TEMP;
     scalar_constant_value = mp_list->get("Reference Value", default_value);
@@ -192,10 +159,6 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(matprop,fm);
-#ifdef ALBANY_STOKHOS
-  if (matPropType == KL_RAND_FIELD || matPropType == EXP_KL_RAND_FIELD)
-    this->utils.setFieldData(coordVec,fm);
-#endif
   if (matPropType == SQRT_TEMP || matPropType == INV_SQRT_TEMP)
     this->utils.setFieldData(T,fm);
   if (matPropType == NEUTRON_DIFFUSION) {
@@ -286,20 +249,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-#ifdef ALBANY_STOKHOS
-  else {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < dims[1]; ++qp) {
-	for (std::size_t i=0; i<point.size(); i++)
-	  point[i] =
-	    Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
-    matprop(cell,qp) = exp_rf_kl->evaluate(point, rv);
-    if (matPropType == EXP_KL_RAND_FIELD)
-       matprop(cell,qp) = std::exp(matprop(cell,qp));
-    }
-  }
- }
-#endif
 }
 
 // **********************************************************************
@@ -324,13 +273,6 @@ NSMaterialProperty<EvalT,Traits>::getValue(const std::string &n)
 	if (n == Albany::strint(Albany::strint(name_mp,dim1),dim2))
 	  return tensor_constant_value(dim1,dim2);
   }
-#ifdef ALBANY_STOKHOS
-  else if (matPropType == KL_RAND_FIELD || matPropType == EXP_KL_RAND_FIELD) {
-    for (int i=0; i<rv.size(); i++)
-      if (n == Albany::strint(name_mp + " KL Random Variable",i))
-	return rv[i];
-  }
-#endif
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n

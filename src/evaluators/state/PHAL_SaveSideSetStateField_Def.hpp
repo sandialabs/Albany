@@ -69,12 +69,12 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
     if (useCollapsedSidesets) {
       TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().size()<2, Teuchos::Exceptions::InvalidParameter,
                                   "Error! To save a side-set nodal state, pass the cell-side-based version of it (<Cell,Side,Node,...>).\n");
-      TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().name(1)!="Node", Teuchos::Exceptions::InvalidParameter,
+      TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().name(1)!=PHX::print<Node>(), Teuchos::Exceptions::InvalidParameter,
                                   "Error! To save a side-set nodal state, the third tag of the layout MUST be 'Node'.\n");
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().size()<3, Teuchos::Exceptions::InvalidParameter,
                                   "Error! To save a side-set nodal state, pass the cell-side-based version of it (<Cell,Side,Node,...>).\n");
-      TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().name(2)!="Node", Teuchos::Exceptions::InvalidParameter,
+      TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().name(2)!=PHX::print<Node>(), Teuchos::Exceptions::InvalidParameter,
                                   "Error! To save a side-set nodal state, the third tag of the layout MUST be 'Node'.\n");
     }
 
@@ -172,9 +172,9 @@ saveElemState(typename Traits::EvalData workset)
   field.dimensions(dims);
   const std::string& tag1 = dims.size()>1 ? field.fieldTag().dataLayout().name(1) : "";
   const std::string& tag2 = dims.size()>2 ? field.fieldTag().dataLayout().name(2) : "";
-  TEUCHOS_TEST_FOR_EXCEPTION (useCollapsedSidesets && dims.size()>1 && tag1!="Node" && tag1!="Dim" && tag1!="VecDim", std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (useCollapsedSidesets && dims.size()>1 && tag1!=PHX::print<Node>() && tag1!=PHX::print<Dim>() && tag1!=PHX::print<VecDim>(), std::logic_error,
                               "Error! Invalid field layout in SaveSideSetStateField.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (!useCollapsedSidesets && dims.size()>2 && tag2!="Node" && tag2!="Dim" && tag2!="VecDim", std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (!useCollapsedSidesets && dims.size()>2 && tag2!=PHX::print<Node>() && tag2!=PHX::print<Dim>() && tag2!=PHX::print<VecDim>(), std::logic_error,
                               "Error! Invalid field layout in SaveSideSetStateField.\n");
 
   // Loop on the sides of this sideSet that are in this workset
@@ -224,7 +224,7 @@ saveElemState(typename Traits::EvalData workset)
           break;
 
         case 2:
-          if (tag1=="Node")
+          if (tag1==PHX::print<Node>())
           {
             // side set node scalar
             for (unsigned int node=0; node<dims[1]; ++node)
@@ -241,7 +241,7 @@ saveElemState(typename Traits::EvalData workset)
           break;
 
         case 3:
-          if (tag1=="Node")
+          if (tag1==PHX::print<Node>())
           {
             // side set node vector/gradient
             for (unsigned int node=0; node<dims[1]; ++node)
@@ -274,7 +274,7 @@ saveElemState(typename Traits::EvalData workset)
           break;
 
         case 3:
-          if (tag2=="Node")
+          if (tag2==PHX::print<Node>())
           {
             // side set node scalar
             for (unsigned int node=0; node<dims[2]; ++node)
@@ -291,7 +291,7 @@ saveElemState(typename Traits::EvalData workset)
           break;
 
         case 4:
-          if (tag2=="Node")
+          if (tag2==PHX::print<Node>())
           {
             // side set node vector/gradient
             for (unsigned int node=0; node<dims[2]; ++node)

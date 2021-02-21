@@ -31,6 +31,9 @@
 #include "PHAL_Utilities.hpp"
 #include "Albany_KokkosUtils.hpp"
 
+#include "Albany_TpetraThyraUtils.hpp"
+#include "Zoltan2_TpetraCrsColorer.hpp"
+
 //#define WRITE_TO_MATRIX_MARKET
 //#define DEBUG_OUTPUT
 
@@ -2373,6 +2376,72 @@ Application::evaluateResponseDistParamHessVecProd_pp(
     std::stringstream hessianvectorproduct_name;
     hessianvectorproduct_name << dist_param_name << "_" << dist_param_direction_name << "_Hv_g_pp";
   }
+}
+
+void
+Application::evaluateResponseDistParamHessian_pp(
+    int                                     response_index,
+    int                                     parameter_index,
+    const double                            current_time,
+    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& xdot,
+    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+    const Teuchos::Array<ParamVec>&         param_array,
+    const std::string&                      dist_param_name,
+    const Teuchos::RCP<Thyra_LinearOp>&     H)
+{
+  Teuchos::ParameterList coloring_params;
+  std::string matrixType = "Hessian";
+  coloring_params.set("matrixType", matrixType);
+
+  // Even if the Hessian is symmetric, the distributed crs matrix
+  // is not symmetrical as the row and column map are not identical.
+  coloring_params.set("symmetric", false);
+
+  // Get the crs Hessian:
+  RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
+
+  // Create a colorer
+  Zoltan2::TpetraCrsColorer<Tpetra_CrsMatrix> colorer(Ht);
+
+  colorer.computeColoring(coloring_params);
+
+  // Compute seed matrix V -- this matrix is a dense
+  // matrix of 0/1 indicating the compression via coloring
+
+  const int numColors = colorer.getNumColors();
+
+  // Compute the seed matrix
+  RCP<Tpetra_MultiVector> V = rcp(new Tpetra_MultiVector(Ht->getDomainMap(), numColors));
+  colorer.computeSeedMatrix(*V);
+
+  // Apply the Hessian to all the directions
+  RCP<Tpetra_MultiVector> HV = rcp(new Tpetra_MultiVector(Ht->getDomainMap(), numColors));
+
+  for (int i = 0; i < numColors; ++i)
+  {
+    RCP<const Thyra_MultiVector> v_i = Albany::createConstThyraMultiVector(V->getVector(i));
+    RCP<Thyra_MultiVector> Hv_i = Albany::createThyraMultiVector(HV->getVectorNonConst(i));
+    evaluateResponseDistParamHessVecProd_pp(
+      response_index,
+      current_time,
+      v_i,
+      x,
+      xdot,
+      xdotdot,
+      param_array,
+      dist_param_name,
+      dist_param_name,
+      Hv_i);
+  }
+
+  // Reconstruct the Hessian matrix based on the Hessian-vector products
+  colorer.reconstructMatrix(*HV, *Ht);
+  Ht->fillComplete();
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  writeMatrixMarket(Ht.getConst(), "H", parameter_index);
+#endif
 }
 
 void

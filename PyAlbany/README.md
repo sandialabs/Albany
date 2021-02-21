@@ -24,9 +24,9 @@ To enable PyAlbany, it is required to first build Trilinos with PyTrilinos enabl
 To do so, Trilinos must be configured with the following options:
 ```
 -D Trilinos_ENABLE_PyTrilinos:BOOL=ON \
--D PyTrilinos_DOCSTRINGS:BOOL=OFF \
+-D PyTrilinos_DOCSTRINGS:BOOL=ON \
 ```
-The first option enable PyTrilinos and the second one disables PyTrilinos docstrings. This last option is required if you are using Doxygen 1.8.13.
+The first option enables PyTrilinos and the second one enables PyTrilinos docstrings.
 
 Moreover, setting the `MPI_BASE_DIR` is required to compile PyTrilinos for PyAlbany:
 ```

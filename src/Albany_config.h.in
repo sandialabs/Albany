@@ -18,7 +18,6 @@
 #cmakedefine ALBANY_RBGEN
 #cmakedefine ALBANY_ROL
 #cmakedefine ALBANY_SEACAS
-#cmakedefine ALBANY_STOKHOS
 #cmakedefine ALBANY_STK_REBALANCE
 #cmakedefine ALBANY_TEKO
 #cmakedefine ALBANY_TEMPUS

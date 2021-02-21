@@ -39,30 +39,6 @@ Absorption(Teuchos::ParameterList& p) :
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
       this->registerSacadoParameter("Absorption", paramLib);
   }
-#ifdef ALBANY_STOKHOS
-  else if (type == "Truncated KL Expansion") {
-    is_constant = false;
-    Teuchos::RCP<PHX::DataLayout> scalar_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-    coordVec = decltype(coordVec)(
-        p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
-    this->addDependentField(coordVec);
-
-    exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*cond_list));
-    int num_KL = exp_rf_kl->stochasticDimension();
-
-    // Add KL random variables as Sacado-ized parameters
-    rv.resize(num_KL);
-    Teuchos::RCP<ParamLib> paramLib = 
-      p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-    for (int i=0; i<num_KL; i++) {
-      std::string ss = Albany::strint("Absorption KL Random Variable",i);
-      this->registerSacadoParameter(ss, paramLib);
-      rv[i] = cond_list->get(ss, 0.0);
-    }
-  }
-#endif
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid absorption type " << type);

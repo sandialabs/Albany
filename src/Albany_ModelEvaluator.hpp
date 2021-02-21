@@ -65,6 +65,9 @@ public:
 
   Teuchos::RCP<const Thyra_LOWS_Factory>  get_W_factory() const;
 
+  //! Create Hessian operator
+  Teuchos::RCP<Thyra_LinearOp>  create_hess_g_pp( int j, int l1, int l2 ) const;
+
   //! Create InArgs
   Thyra_InArgs createInArgs() const;
 

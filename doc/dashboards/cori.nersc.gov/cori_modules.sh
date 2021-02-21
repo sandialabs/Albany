@@ -11,6 +11,6 @@ module load cray-mpich/7.7.6
 module unload gcc/7.3.0 
 module load gcc/8.3.0 
 module load boost 
-module load cmake cray-netcdf-hdf5parallel
+module load cmake/3.18.2 cray-netcdf-hdf5parallel
 module load cray-python/2.7.15.6
 module list

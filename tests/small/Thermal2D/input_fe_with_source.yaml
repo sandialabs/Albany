@@ -27,10 +27,12 @@ ALBANY:
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
-        Parameter 1: 'kappa_y Parameter'
-        Type: Scalar
-        Name: 'kappa_x Parameter'
-        Number: 2
+        Type: Vector
+        Dimension: 2
+        Scalar 0:
+          Name: 'kappa_x Parameter'
+        Scalar 1:
+          Name: 'kappa_y Parameter'
   Discretization:
     1D Elements: 10
     2D Elements: 10
@@ -61,15 +63,6 @@ ALBANY:
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
-          Integrator Step Type: Constant
-          Time Step Control Strategy:
-            Time Step Control Strategy List: basic_vs
-            basic_vs:
-              Name: Basic VS
-              Reduction Factor: 5.00000000000000000e-01
-              Amplification Factor: 2.00000000000000000e+00
-              Minimum Value Monitoring Function: 4.00000000000000008e-02
-              Maximum Value Monitoring Function: 5.00000000000000027e-02
           Output Time List: ''
           Output Index List: ''
           Output Time Interval: 1.00000000000000000e+01

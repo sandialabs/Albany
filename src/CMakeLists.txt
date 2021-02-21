@@ -141,6 +141,7 @@ list (APPEND SOURCES
   utility/Albany_CommUtils.cpp
   utility/Albany_Gather.cpp
   utility/Albany_GlobalLocalIndexer.cpp
+  utility/Albany_Hessian.cpp
   utility/Albany_ThyraCrsMatrixFactory.cpp
   utility/Albany_ThyraBlockedCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
@@ -163,6 +164,7 @@ list (APPEND HEADERS
   utility/Albany_Gather.hpp
   utility/Albany_GlobalLocalIndexer.hpp
   utility/Albany_GlobalLocalIndexerTpetra.hpp
+  utility/Albany_Hessian.hpp
   utility/Albany_ThyraCrsMatrixFactory.hpp
   utility/Albany_ThyraBlockedCrsMatrixFactory.hpp
   utility/Albany_ThyraUtils.hpp

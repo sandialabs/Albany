@@ -98,7 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
   int size = dims.size();
   // Check the tag of the first extent after (cell,side,) to determine if field is nodal
   const std::string& leading_field_tag = size>2 ? field.fieldTag().dataLayout().name(2) : "";
-  TEUCHOS_TEST_FOR_EXCEPTION (size>2 && leading_field_tag!="Node" && leading_field_tag!="Dim" && leading_field_tag!="VecDim", std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (size>2 && leading_field_tag!=PHX::print<Node>() && leading_field_tag!=PHX::print<Dim>() && leading_field_tag!=PHX::print<VecDim>(), std::logic_error,
                               "Error! Invalid field layout in LoadSideSetStateField.\n");
 
   // For collapsed layouts, the tag to check is of the first extent after (side,) to determine if field is nodal
@@ -148,7 +148,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
 
         case 2:
-          if (leading_field_tag_sideset=="Node")
+          if (leading_field_tag_sideset==PHX::print<Node>())
           {
             // side set node scalar
             for (unsigned int node=0; node<dims[1]; ++node)
@@ -167,7 +167,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
 
         case 3:
-          if (leading_field_tag_sideset=="Node")
+          if (leading_field_tag_sideset==PHX::print<Node>())
           {
             // side set node vector/gradient
             for (unsigned int node=0; node<dims[1]; ++node)
@@ -200,7 +200,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
 
         case 3:
-          if (leading_field_tag=="Node")
+          if (leading_field_tag==PHX::print<Node>())
           {
             // side set node scalar
             for (unsigned int node=0; node<dims[2]; ++node)
@@ -219,7 +219,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
 
         case 4:
-          if (leading_field_tag=="Node")
+          if (leading_field_tag==PHX::print<Node>())
           {
             // side set node vector/gradient
             for (unsigned int node=0; node<dims[2]; ++node)

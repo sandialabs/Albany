@@ -43,7 +43,6 @@ ANONYMOUS:
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
-          Integrator Step Type: Variable
           Time Step Control Strategy:
             Time Step Control Strategy List: basic_vs
             basic_vs:

@@ -645,6 +645,42 @@ public:
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_pp);
 
   /**
+   * \brief evaluateResponseDistParamHessian_pp function
+   *
+   * This function is used to compute the Hessian \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_i}(g)\f$ of the <tt>response[response_index]</tt> 
+   * (i.e. the response_index-th response) where \f$g\f$ is the response and \f$\boldsymbol{p}_i\f$ is a distributed parameter.
+   *
+   * \param response_index [in] Response index of the response which the Hessian is computed.
+   *
+   * \param parameter_index [in] Parameter index of the distributed parameter.
+   *
+   * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
+   *
+   * \param x [in] Solution vector for the current time step: \f$\boldsymbol{x}\f$.
+   *
+   * \param xdot [in] Velocity vector for the current time step.
+   *
+   * \param xdotdot [in] Acceleration vector for the current time step.
+   *
+   * \param param_array [in] Array of the parameters vectors.
+   *
+   * \param dist_param_name [in] Name of the distributed parameter.
+   *
+   * \param H [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_i}(g)\f$.
+   */
+  void
+  evaluateResponseDistParamHessian_pp(
+      int                                     response_index,
+      int                                     parameter_index,
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const std::string&                      dist_param_name,
+      const Teuchos::RCP<Thyra_LinearOp>&     H);
+
+  /**
    * \brief evaluateResidual_HessVecProd_xx function
    * 
    * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\f$ of the inner product of the residual vector \f$\boldsymbol{f}\f$
