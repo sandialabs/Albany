@@ -902,7 +902,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_px = workset.hessianWorkset.overlapped_hess_vec_prod_f_px;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_pp = workset.hessianWorkset.overlapped_hess_vec_prod_f_pp;
 
-  Teuchos::RCP<Thyra_Vector> f_multiplier = workset.hessianWorkset.f_multiplier;
+  Teuchos::RCP<Thyra_Vector> f_multiplier = workset.hessianWorkset.overlapped_f_multiplier;
 
   const bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
   const bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();

@@ -253,7 +253,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
   phxWorkset.wsElNodeEqID = wsLocalElNodeEqID;
   phxWorkset.dist_param_deriv_name = param_name;
   phxWorkset.hessianWorkset.dist_param_deriv_direction_name = param_name;
-  phxWorkset.hessianWorkset.f_multiplier = f_multiplier;
+  phxWorkset.hessianWorkset.overlapped_f_multiplier = f_multiplier;
 
   MDField<Scalar, Cell, Node> residual = allocateUnmanagedMDField<Scalar, Cell, Node>(residual_name, residual_layout, derivative_dimensions);
   residual.deep_copy(0.0);
@@ -647,7 +647,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
   phxWorkset.wsElNodeEqID = wsLocalElNodeEqID;
   phxWorkset.dist_param_deriv_name = param_name;
   phxWorkset.hessianWorkset.dist_param_deriv_direction_name = param_name;
-  phxWorkset.hessianWorkset.f_multiplier = f_multiplier;
+  phxWorkset.hessianWorkset.overlapped_f_multiplier = f_multiplier;
 
   MDField<Scalar, Cell, Node, Dim> residual = allocateUnmanagedMDField<Scalar, Cell, Node, Dim>(residual_name, residual_layout, derivative_dimensions);
   residual.deep_copy(0.0);
