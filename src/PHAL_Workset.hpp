@@ -46,6 +46,7 @@ struct HessianWorkset
   Teuchos::RCP<Thyra_MultiVector> direction_p;
 
   Teuchos::RCP<Thyra_Vector> f_multiplier;
+  Teuchos::RCP<Thyra_Vector> overlapped_f_multiplier;
 
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xx;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xp;

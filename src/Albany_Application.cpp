@@ -2466,8 +2466,7 @@ Application::evaluateResidual_HessVecProd_xx(
   }
 
   if(!z.is_null()) {
-    workset.hessianWorkset.f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
-    workset.x_cas_manager->scatter(z->clone_v(), workset.hessianWorkset.f_multiplier, Albany::CombineMode::INSERT);
+    workset.hessianWorkset.f_multiplier = z->clone_v();
   }
 
   if(!Hv_f_xx.is_null()) {
@@ -2483,6 +2482,11 @@ Application::evaluateResidual_HessVecProd_xx(
       loadWorksetNodesetInfo(workset);
 
       dfm->preEvaluate<EvalT>(workset);
+    }
+
+    if(!z.is_null()) {
+      workset.hessianWorkset.overlapped_f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
+      workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
 
     int const numWorksets = wsElNodeEqID.size();
@@ -2563,8 +2567,7 @@ Application::evaluateResidual_HessVecProd_xp(
   }
 
   if(!z.is_null()) {
-    workset.hessianWorkset.f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
-    workset.x_cas_manager->scatter(z->clone_v(), workset.hessianWorkset.f_multiplier, Albany::CombineMode::INSERT);
+    workset.hessianWorkset.f_multiplier = z->clone_v();
   }
 
   if(!Hv_f_xp.is_null()) {
@@ -2581,6 +2584,11 @@ Application::evaluateResidual_HessVecProd_xp(
       loadWorksetNodesetInfo(workset);
 
       dfm->preEvaluate<EvalT>(workset);
+    }
+
+    if(!z.is_null()) {
+      workset.hessianWorkset.overlapped_f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
+      workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
 
     int const numWorksets = wsElNodeEqID.size();
@@ -2653,8 +2661,7 @@ Application::evaluateResidual_HessVecProd_px(
   }
 
   if(!z.is_null()) {
-    workset.hessianWorkset.f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
-    workset.x_cas_manager->scatter(z->clone_v(), workset.hessianWorkset.f_multiplier, Albany::CombineMode::INSERT);
+    workset.hessianWorkset.f_multiplier = z->clone_v();
   }
 
   if(!Hv_f_px.is_null()) {
@@ -2692,6 +2699,11 @@ Application::evaluateResidual_HessVecProd_px(
       loadWorksetNodesetInfo(workset);
 
       dfm->preEvaluate<EvalT>(workset);
+    }
+
+    if(!z.is_null()) {
+      workset.hessianWorkset.overlapped_f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
+      workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
 
     int const numWorksets = wsElNodeEqID.size();
@@ -2800,8 +2812,7 @@ Application::evaluateResidual_HessVecProd_pp(
   }
 
   if(!z.is_null()) {
-    workset.hessianWorkset.f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
-    workset.x_cas_manager->scatter(z->clone_v(), workset.hessianWorkset.f_multiplier, Albany::CombineMode::INSERT);
+    workset.hessianWorkset.f_multiplier = z->clone_v();
   }
 
   if(!Hv_f_pp.is_null()) {
@@ -2840,6 +2851,11 @@ Application::evaluateResidual_HessVecProd_pp(
       loadWorksetNodesetInfo(workset);
 
       dfm->preEvaluate<EvalT>(workset);
+    }
+
+    if(!z.is_null()) {
+      workset.hessianWorkset.overlapped_f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
+      workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
 
     int const numWorksets = wsElNodeEqID.size();
