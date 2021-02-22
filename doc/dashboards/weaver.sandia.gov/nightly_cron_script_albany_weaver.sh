@@ -3,6 +3,9 @@
 BASE_DIR=/home/projects/albany/nightlyCDashWeaver
 cd $BASE_DIR
 
+
+#source clean-up-no-trilinos.sh 
+
 unset http_proxy
 unset https_proxy
 
