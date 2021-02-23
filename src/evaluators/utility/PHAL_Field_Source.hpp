@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_SPATIAL_HPP
-#define PHAL_SPATIAL_HPP
+#ifndef PHAL_FIELD_SOURCE_HPP
+#define PHAL_FIELD_SOURCE_HPP
 
 #include <string>
 #include <vector>

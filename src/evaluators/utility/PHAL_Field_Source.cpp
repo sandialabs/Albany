@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_Spatial.hpp"
-#include "PHAL_Spatial_Def.hpp"
+#include "PHAL_Field_Source.hpp"
+#include "PHAL_Field_Source_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Source_Functions::Spatial_Base)
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::Source_Functions::Gaussian)
