@@ -18,7 +18,7 @@
 #include "Teuchos_TestForException.hpp"
 
 #include "PHAL_SharedParameter.hpp"
-#include "PHAL_Spatial.hpp"
+#include "PHAL_Field_Source.hpp"
 
 namespace PHAL {
 
