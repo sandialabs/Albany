@@ -626,13 +626,15 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
             Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM);
       }
     } else {
-      for (int j1 = 0; j1 < num_dist_param_vecs; j1++) {
-        result.setSupports(
-            Thyra_ModelEvaluator::OUT_ARG_DgDp,
-            i,
-            j1 + num_param_vecs,
-            Thyra_ModelEvaluator::DERIV_LINEAR_OP);
-      }
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          std::endl
+              << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+              << "The response associated to the index i = "
+              << i
+              << " is not a scalar response. Only scalar responses are currently supported."
+              << std::endl);
     }
   }
 
