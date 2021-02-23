@@ -126,7 +126,7 @@ operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const {
       for (int qp=0; qp<numSideQPs; ++qp) {
         local_res[dim] += (ff + beta(sideSet_idx,qp)*u(sideSet_idx,qp,dim))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
       }
-      residual(cell,sideNodes(side,node),dim) += local_res[dim];
+      Kokkos::atomic_add(&residual(cell,sideNodes(side,node),dim), local_res[dim]);
     }
   }
 

@@ -241,6 +241,8 @@ KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctionsSide<EvalT, Traits>::
 operator() (const GatherNormals_Tag& tag, const int& iCell) const {
 
+  // The sideset indices corresponding to each side are disjoint sets and are 
+  //   therefore should not cause a race condition here on device
   for (unsigned int icoor=0; icoor<numCellDims; ++icoor)
     for (unsigned int qp=0; qp<numSideQPs; ++qp)
       normals(sideSet.sideSetIdxOnSide(currentSide,iCell),qp, icoor) = normals_view(iCell,qp,icoor);

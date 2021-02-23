@@ -56,6 +56,7 @@ private:
   //! Values on side
   PHX::MDField<ScalarT> val_side;
 
+  // TODO: Need to update collapsed layouts and add kernels for remaining layout types when removing non-collapsed layouts
   enum LayoutType
   {
     CELL_SCALAR = 1,
