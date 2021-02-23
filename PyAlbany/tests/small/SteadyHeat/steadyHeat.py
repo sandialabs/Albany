@@ -44,7 +44,7 @@ class TestSteadyHeat(unittest.TestCase):
 
         g_target = 3.23754626955999991e-01
         norm_target = 8.94463776843999921e-03
-        h_target = np.array([4.2121719763904516e-05, -4.21216874727712e-05, 0.00012636506241831498, -0.00012636506241831496])
+        h_target = np.array([0.009195356672103817, 0.009195356672103817, 0.027586070971800013, 0.027586070971800013])
 
         g_data = response.getData()
         norm = Utils.norm(sensitivity.getData(0), cls.comm)
@@ -54,12 +54,16 @@ class TestSteadyHeat(unittest.TestCase):
         print("norm = " + str(norm))
         print("norm_target = " + str(norm_target))
 
+        hessian_norms = np.zeros((n_directions,))
+        for i in range(0,n_directions):
+            hessian_norms[i] = Utils.norm(hessian.getData(i), cls.comm)
+
         tol = 1e-8
         if rank == 0:
             self.assertTrue(np.abs(g_data[0]-g_target) < tol)
             self.assertTrue(np.abs(norm-norm_target) < tol)
             for i in range(0,n_directions):
-                self.assertTrue(np.abs(hessian[i,0]-h_target[i]) < tol)
+                self.assertTrue(np.abs(hessian_norms[i]-h_target[i]) < tol)
 
     @classmethod
     def tearDownClass(cls):
