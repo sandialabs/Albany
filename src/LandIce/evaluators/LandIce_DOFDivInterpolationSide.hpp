@@ -40,21 +40,37 @@ private:
   std::string sideSetName;
 
   // Input:
+  // TODO: restore layout template arguments when removing old sideset layout
   //! Values at nodes
-  PHX::MDField<const ScalarT,Cell,Side,Node, Dim> val_node;
+  PHX::MDField<const ScalarT> val_node;      // Side, Node, Dim
   //! Basis Functions and side tangents
-  PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim> gradBF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  tangents;
+  PHX::MDField<const MeshScalarT> gradBF;    // Side, Node, QuadPoint, Dim
+  PHX::MDField<const MeshScalarT>  tangents; // Side, QuadPoint, Dim, Dim
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<OutputScalarT,Cell,Side,QuadPoint> val_qp;
+  PHX::MDField<OutputScalarT> val_qp;        // Side, QuadPoint
 
   unsigned int numSideNodes;
   unsigned int numSideQPs;
   unsigned int numDims;
 
+  bool useCollapsedSidesets;
+
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+  Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DivInterpolation_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DivInterpolation_Tag> DivInterpolation_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DivInterpolation_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 // Some shortcut names

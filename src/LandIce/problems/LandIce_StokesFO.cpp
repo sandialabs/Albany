@@ -26,7 +26,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
           const Teuchos::RCP<ParamLib>& paramLib_,
           const int numDim_) :
-  StokesFOBase(params_, discParams_, paramLib_, numDim_)
+  StokesFOBase(params_, discParams_, paramLib_, numDim_, true)
 {
   //Set # of PDEs per node based on the Equation Set.
   //Equation Set is LandIce by default (2 dofs / node -- usual LandIce Stokes FO).

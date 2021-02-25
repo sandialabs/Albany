@@ -162,13 +162,14 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   } catch (...) {
     tangent_deriv_dim = 1;
   }
-  // Initialize Phalanx postRegistration setup
-  phxSetup = Teuchos::rcp(new PHAL::Setup());
-  phxSetup->init_problem_params(problemParams);
 
   // Pull the number of solution vectors out of the problem and send them to the
   // discretization list, if the user specifies this in the problem
-  Teuchos::ParameterList& discParams = params->sublist("Discretization");
+  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(params, "Discretization", true);
+
+  // Initialize Phalanx postRegistration setup
+  phxSetup = Teuchos::rcp(new PHAL::Setup());
+  phxSetup->init_problem_params(problemParams);
 
   // Set in Albany_AbstractProblem constructor or in siblings
   num_time_deriv = problemParams->get<int>("Number Of Time Derivatives");
@@ -176,10 +177,10 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   // Possibly set in the Discretization list in the input file - this overrides
   // the above if set
   int num_time_deriv_from_input =
-      discParams.get<int>("Number Of Time Derivatives", -1);
+      discParams->get<int>("Number Of Time Derivatives", -1);
   if (num_time_deriv_from_input <
       0)  // Use the value from the problem by default
-    discParams.set<int>("Number Of Time Derivatives", num_time_deriv);
+    discParams->set<int>("Number Of Time Derivatives", num_time_deriv);
   else
     num_time_deriv = num_time_deriv_from_input;
 
@@ -547,6 +548,12 @@ Application::createDiscretization()
       problem->getNullSpace());
   // The following is for Aeras problems.
   explicit_scheme = disc->isExplicitScheme();
+  // For extruded meshes, we need the number of layers in postRegistrationSetup
+  Teuchos::RCP<LayeredMeshNumbering<GO>> layeredMeshNumbering = disc->getLayeredMeshNumbering();
+  if (!layeredMeshNumbering.is_null()) {
+    int numLayers = layeredMeshNumbering->numLayers;
+    phxSetup->set_num_layers(numLayers);
+  }
 }
 
 void
@@ -3261,6 +3268,7 @@ Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws)
 {
   workset.sideSets = Teuchos::rcpFromRef(disc->getSideSets(ws));
   workset.sideSetViews = Teuchos::rcpFromRef(disc->getSideSetViews(ws));
+  workset.localDOFViews = Teuchos::rcpFromRef(disc->getLocalDOFViews(ws));
 }
 
 void

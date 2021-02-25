@@ -35,9 +35,6 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
 private:
 
   // The parameter is always defined in terms of the
@@ -59,9 +56,28 @@ private:
   // Output:
   PHX::MDField<ScalarT> field_norm;
 
+  Albany::LocalSideSetInfo sideSet;
+  bool useCollapsedSidesets;
+
   std::string sideSetName;
   std::vector<PHX::DataLayout::size_type> dims;
   int numDims;
+  PHX::DataLayout::size_type dimsArray[4];
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct Dim2_Tag{};
+  struct Dim3_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, Dim2_Tag> Dim2_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Dim3_Tag> Dim3_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Dim2_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Dim3_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 // Some shortcut names

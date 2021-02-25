@@ -198,6 +198,13 @@ class STKDiscretization : public AbstractDiscretization
     return sideSetViews.at(workset);
   }
 
+  //! Get local DOF views for GatherVerticallyContractedSolution
+  const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
+  getLocalDOFViews(const int workset) const
+  {
+    return wsLocalDOFViews.at(workset);
+  }
+
   //! Get connectivity map from elementGID to workset
   WsLIDList&
   getElemGIDws()
@@ -612,6 +619,10 @@ class STKDiscretization : public AbstractDiscretization
   std::vector<SideSetList> sideSets;
   GlobalSideSetList globalSideSetViews;
   std::map<int, LocalSideSetInfoList> sideSetViews;
+
+  //! GatherVerticallyContractedSolution connectivity
+  std::map<std::string, Kokkos::View<LO****, PHX::Device>> allLocalDOFViews;
+  std::map<int, std::map<std::string, Kokkos::View<LO****, PHX::Device>>> wsLocalDOFViews;
 
   //! Connectivity array [workset, element, local-node, Eq] => LID
   Conn wsElNodeEqID;

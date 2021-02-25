@@ -58,11 +58,14 @@ private:
   Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;
   Kokkos::DynRankView<RealType, PHX::Device> cub_weights;
   Kokkos::DynRankView<RealType, PHX::Device> cub_points;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> normals_view;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell;
 
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
   // Output:
+  // TODO: restore layout template arguments when removing old sideset layout
   //! Basis Functions and other quantities at quadrature points
   PHX::MDField<MeshScalarT>                               metric_det;
   PHX::MDField<MeshScalarT>                               tangents;
@@ -71,7 +74,9 @@ private:
   PHX::MDField<MeshScalarT>                               inv_metric;
   PHX::MDField<RealType>                                  BF;
   PHX::MDField<MeshScalarT>                               GradBF;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       normals;
+  PHX::MDField<MeshScalarT>                               normals;    // Side, QuadPoint, Dim
+
+  int currentSide;
 
   Teuchos::RCP<shards::CellTopology> cellType;
   bool compute_normals;
@@ -83,16 +88,20 @@ private:
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct ComputeBasisFunctionsSide_Collapsed_Tag{};
   struct ComputeBasisFunctionsSide_Tag{};
+  struct ScatterCoordVec_Tag{};
+  struct GatherNormals_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctionsSide_Collapsed_Tag> ComputeBasisFunctionsSide_Collapsed_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctionsSide_Tag> ComputeBasisFunctionsSide_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterCoordVec_Tag> ScatterCoordVec_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, GatherNormals_Tag> GatherNormals_Policy;
 
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const ComputeBasisFunctionsSide_Collapsed_Tag& tag, const int& sideSet_idx) const;
   KOKKOS_INLINE_FUNCTION
   void operator() (const ComputeBasisFunctionsSide_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ScatterCoordVec_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const GatherNormals_Tag& tag, const int& sideSet_idx) const;
 
 };
 

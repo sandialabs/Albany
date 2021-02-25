@@ -25,11 +25,13 @@ EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
 EffectivePressure (const Teuchos::ParameterList& p,
                    const Teuchos::RCP<Albany::Layouts>& dl)
 {
+  useCollapsedSidesets = (dl->isSideLayouts && dl->useCollapsedSidesets);
+
   Teuchos::RCP<PHX::DataLayout> layout;
   if (p.isParameter("Nodal") && p.get<bool>("Nodal")) {
-    layout = dl->node_scalar;
+    layout = useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar;
   } else {
-    layout = dl->qp_scalar;
+    layout = useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar;
   }
 
   if (IsStokes) {
@@ -37,9 +39,9 @@ EffectivePressure (const Teuchos::ParameterList& p,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
     basalSideName = p.get<std::string>("Side Set Name");
-    numPts = layout->extent(2);
+    numPts = useCollapsedSidesets ? layout->extent(1) : layout->extent(2);
   } else {
-    numPts = layout->extent(1);
+    numPts = useCollapsedSidesets ? layout->extent(0) : layout->extent(1);
   }
 
   if (Surrogate) {
@@ -77,6 +79,34 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   }
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
+KOKKOS_INLINE_FUNCTION
+void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
+operator() (const Surrogate_Tag& tag, const int& sideSet_idx) const {
+
+  const ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
+
+  for (int pt=0; pt<numPts; ++pt) {
+    // N = P_o-P_w
+    N (sideSet_idx,pt) = (1-alpha)*P_o(sideSet_idx,pt);
+  }
+
+}
+
+template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
+KOKKOS_INLINE_FUNCTION
+void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
+operator() (const NonSurrogate_Tag& tag, const int& sideSet_idx) const {
+
+  for (int node=0; node<numPts; ++node) {
+    // N = P_o - P_w
+    N (sideSet_idx,node) = P_o(sideSet_idx,node) - P_w(sideSet_idx,node);
+  }
+
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
 void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
@@ -93,47 +123,47 @@ template<typename EvalT, typename Traits, bool IsStokes, bool Surrogate>
 void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it_ss = ssList.find(basalSideName);
+  if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
 
-  if (it_ss==ssList.end()) {
-    return;
-  }
+  sideSet = workset.sideSetViews->at(basalSideName);
 
-  const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-  std::vector<Albany::SideStruct>::const_iterator iter_s;
   if (Surrogate) {
-    ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
 
-#ifdef OUTPUT_TO_SCREEN
-    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-    if (std::fabs(printedAlpha-alpha)>1e-10) {
-      *output << "[Effective Pressure<" << PHX::print<EvalT>() << ">]] alpha = " << alpha << "\n";
-      printedAlpha = alpha;
-    }
-#endif
+    if (useCollapsedSidesets) {
+      Kokkos::parallel_for(Surrogate_Policy(0, sideSet.size), *this);
+    } else {
+      ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
 
-    for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s) {
-      // Get the local data of side and cell
-      const int cell = iter_s->elem_LID;
-      const int side = iter_s->side_local_id;
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of side and cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
 
-      for (unsigned int pt=0; pt<numPts; ++pt) {
-        // N = P_o-P_w
-        N (cell,side,pt) = (1-alpha)*P_o(cell,side,pt);
+        for (int pt=0; pt<numPts; ++pt) {
+          // N = P_o-P_w
+          N (cell,side,pt) = (1-alpha)*P_o(cell,side,pt);
+        }
       }
     }
+
   } else {
-    for (const auto& it : sideSet) {
-      // Get the local data of side and cell
-      const int cell = it.elem_LID;
-      const int side = it.side_local_id;
+    if (useCollapsedSidesets) {
+      Kokkos::parallel_for(NonSurrogate_Policy(0, sideSet.size), *this);
+    } else {
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+      {
+        // Get the local data of side and cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
+        const int side = sideSet.side_local_id(sideSet_idx);
 
-      for (unsigned int node=0; node<numPts; ++node) {
-        // N = P_o - P_w
-        N (cell,side,node) = P_o(cell,side,node) - P_w(cell,side,node);
+        for (int node=0; node<numPts; ++node) {
+          // N = P_o - P_w
+          N (cell,side,node) = P_o(cell,side,node) - P_w(cell,side,node);
+        }
       }
     }
+      
   }
 }
 

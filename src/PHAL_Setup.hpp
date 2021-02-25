@@ -75,6 +75,12 @@ public:
   //! Get list of saved MDFields
   Teuchos::RCP<const StringSet> get_saved_fields(const std::string& eval) const;
 
+  //! Set the number of layers if using an extruded mesh
+  void set_num_layers(const int numLayers);
+
+  //! Get number of layers in extruded mesh
+  int get_num_layers() const;
+
 private:
   //! Update list of saved/unsaved MDFields based on unsaved MDFields and field dependencies
   void update_fields(Teuchos::RCP<StringSet> savedFields, Teuchos::RCP<StringSet> unsavedFields);
@@ -103,6 +109,9 @@ private:
   const Teuchos::RCP<StringSet> _unsavedParams;
   Teuchos::RCP<StringSet> _unsavedParamsEvals;
   Teuchos::RCP<StringSet> _savedFieldsWOParams, _unsavedFieldsWParams;
+
+  //! Number of layers in extruded mesh
+  int _numLayers;
 };
 
 } // namespace PHAL

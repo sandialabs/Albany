@@ -16,6 +16,8 @@ LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::
 FluxDiv (const Teuchos::ParameterList& p,
          const Teuchos::RCP<Albany::Layouts>& dl_basal)
 {
+  useCollapsedSidesets = dl_basal->useCollapsedSidesets;
+
   // get and validate Response parameter list
   std::string fieldName = p.get<std::string> ("Field Name");
 
@@ -25,13 +27,13 @@ FluxDiv (const Teuchos::ParameterList& p,
   const std::string& grad_thickness_name        = p.get<std::string>("Thickness Gradient Name");
   const std::string& side_tangents_name         = p.get<std::string>("Side Tangents Name");
 
-  averaged_velocity     = decltype(averaged_velocity)(averaged_velocity_name, dl_basal->qp_vector);
-  div_averaged_velocity = decltype(div_averaged_velocity)(div_averaged_velocity_name, dl_basal->qp_scalar);
-  thickness             = decltype(thickness)(thickness_name, dl_basal->qp_scalar);
-  grad_thickness        = decltype(grad_thickness)(grad_thickness_name, dl_basal->qp_gradient);
-  side_tangents         = decltype(side_tangents)(side_tangents_name, dl_basal->qp_tensor_cd_sd);
+  averaged_velocity     = decltype(averaged_velocity)(averaged_velocity_name, useCollapsedSidesets ? dl_basal->qp_vector_sideset : dl_basal->qp_vector);
+  div_averaged_velocity = decltype(div_averaged_velocity)(div_averaged_velocity_name, useCollapsedSidesets ? dl_basal->qp_scalar_sideset : dl_basal->qp_vector);
+  thickness             = decltype(thickness)(thickness_name, useCollapsedSidesets ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
+  grad_thickness        = decltype(grad_thickness)(grad_thickness_name, useCollapsedSidesets ? dl_basal->qp_gradient_sideset : dl_basal->qp_gradient);
+  side_tangents         = decltype(side_tangents)(side_tangents_name, useCollapsedSidesets ? dl_basal->qp_tensor_cd_sd_sideset : dl_basal->qp_tensor_cd_sd);
 
-  flux_div              = decltype(flux_div)(fieldName, dl_basal->qp_scalar);
+  flux_div              = decltype(flux_div)(fieldName, useCollapsedSidesets ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
 
   // Get Dimensions
   std::vector<PHX::DataLayout::size_type> dims;
@@ -68,6 +70,32 @@ void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::postRegistrationSetup(ty
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ThicknessScalarT>
+KOKKOS_INLINE_FUNCTION
+void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::
+operator() (const FluxDiv_Tag& tag, const int& sideSet_idx) const {
+
+  ScalarT t = 0;
+  for (int qp=0; qp<numSideQPs; ++qp)
+  {
+    ScalarT grad_thickness_tmp[2] = {0.0, 0.0};
+    for (std::size_t dim = 0; dim < numSideDims; ++dim)
+    {
+      grad_thickness_tmp[0] += side_tangents(sideSet_idx,qp,0,dim)*grad_thickness(sideSet_idx,qp,dim);
+      grad_thickness_tmp[1] += side_tangents(sideSet_idx,qp,1,dim)*grad_thickness(sideSet_idx,qp,dim);
+    }
+
+    ScalarT divHV = div_averaged_velocity(sideSet_idx,qp)* thickness(sideSet_idx,qp);
+    for (std::size_t dim = 0; dim < numSideDims; ++dim) {
+      divHV += grad_thickness_tmp[dim]*averaged_velocity(sideSet_idx,qp,dim);
+    }
+    flux_div(sideSet_idx,qp) = divHV;
+  }
+
+}
+
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::evaluateFields(typename Traits::EvalData workset)
@@ -75,16 +103,18 @@ void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::evaluateFields(typename 
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::runtime_error,
                               "Side sets defined in input file but not properly specified on the mesh.\n");
 
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
-  {
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-    for (auto const& it_side : sideSet)
+  sideSet = workset.sideSetViews->at(sideSetName);
+  if (useCollapsedSidesets) {
+    Kokkos::parallel_for(FluxDiv_Policy(0, sideSet.size), *this);
+  } else {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
 
       for (unsigned int qp=0; qp<numSideQPs; ++qp)
       {
@@ -95,11 +125,12 @@ void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::evaluateFields(typename 
           grad_thickness_tmp[1] += side_tangents(cell,side,qp,1,dim)*grad_thickness(cell,side,qp,dim);
         }
 
-        ScalarT divHV = div_averaged_velocity(cell, side, qp)* thickness(cell, side, qp);
+        ScalarT divHV = div_averaged_velocity(cell,side,qp)* thickness(cell,side,qp);
         for (std::size_t dim = 0; dim < numSideDims; ++dim)
-          divHV += grad_thickness_tmp[dim]*averaged_velocity(cell, side, qp, dim);
-        flux_div(cell, side, qp) = divHV;
+          divHV += grad_thickness_tmp[dim]*averaged_velocity(cell,side,qp,dim);
+        flux_div(cell,side,qp) = divHV;
       }
     }
   }
+  
 }

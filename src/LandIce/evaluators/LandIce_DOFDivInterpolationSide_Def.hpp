@@ -17,11 +17,13 @@ DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
 DOFDivInterpolationSideBase(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
-  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_vector),
-  gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient),
-  tangents    (p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd),
-  val_qp      (p.get<std::string> ("Divergence Variable Name"), dl_side->qp_scalar )
+  val_node    (p.get<std::string> ("Variable Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_vector_sideset : dl_side->node_vector),
+  gradBF      (p.get<std::string> ("Gradient BF Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_qp_gradient_sideset : dl_side->node_qp_gradient),
+  tangents    (p.get<std::string> ("Tangents Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_tensor_cd_sd_sideset : dl_side->qp_tensor_cd_sd),
+  val_qp      (p.get<std::string> ("Divergence Variable Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_scalar_sideset : dl_side->qp_scalar )
 {
+  useCollapsedSidesets = dl_side->useCollapsedSidesets;
+
   this->addDependentField(val_node);
   this->addDependentField(gradBF);
   this->addDependentField(tangents);
@@ -49,40 +51,71 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
+operator() (const DivInterpolation_Tag& tag, const int& sideSet_idx) const {
+  
+  for (int qp=0; qp<numSideQPs; ++qp)
+  {
+    val_qp(sideSet_idx,qp) = 0.;
+    for (int dim=0; dim<numDims; ++dim)
+    {
+      for (int node=0; node<numSideNodes; ++node)
+      {
+        MeshScalarT gradBF_non_intrinsic = 0.0;
+        for (int itan=0; itan<numDims; ++itan)
+        {
+          gradBF_non_intrinsic += tangents(sideSet_idx,qp,dim,itan)*gradBF(sideSet_idx,node,qp,itan);
+        }
+        val_qp(sideSet_idx,qp) += val_node(sideSet_idx,node,dim) * gradBF_non_intrinsic;
+      }
+    }
+  }
+
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end())
     return;
 
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
-  {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
-
-    for (unsigned int qp=0; qp<numSideQPs; ++qp)
+  sideSet = workset.sideSetViews->at(sideSetName);
+  if (useCollapsedSidesets) {
+    Kokkos::parallel_for(DivInterpolation_Policy(0, sideSet.size), *this);
+  } else {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
-      val_qp(cell,side,qp) = 0.;
-      for (unsigned int dim=0; dim<numDims; ++dim)
+      // Get the local data of side and cell
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
+
+      for (int qp=0; qp<numSideQPs; ++qp)
       {
-        for (unsigned int node=0; node<numSideNodes; ++node)
+        val_qp(cell,side,qp) = 0.;
+        for (int dim=0; dim<numDims; ++dim)
         {
-          MeshScalarT gradBF_non_intrinsic = 0.0;
-          for (unsigned int itan=0; itan<numDims; ++itan)
+          for (int node=0; node<numSideNodes; ++node)
           {
-            gradBF_non_intrinsic += tangents(cell,side,qp,dim,itan)*gradBF(cell,side,node,qp,itan);
+            MeshScalarT gradBF_non_intrinsic = 0.0;
+            for (int itan=0; itan<numDims; ++itan)
+            {
+              gradBF_non_intrinsic += tangents(cell,side,qp,dim,itan)*gradBF(cell,side,node,qp,itan);
+            }
+            val_qp(cell,side,qp) += val_node(cell,side,node,dim) * gradBF_non_intrinsic;
           }
-          val_qp(cell,side,qp) += val_node(cell,side,node,dim) * gradBF_non_intrinsic;
         }
       }
     }
   }
+  
 }
 
 } // Namespace LandIce

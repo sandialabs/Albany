@@ -43,13 +43,17 @@ namespace LandIce {
     unsigned int numSideQPs;
     unsigned int numSideDims;
 
+    Albany::LocalSideSetInfo sideSet;
+    bool useCollapsedSidesets;
 
-    PHX::MDField<const ScalarT,Cell,Side,Node>          solution;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     w_side_measure;
+    // TODO: restore layout template arguments when removing old sideset layout
+    PHX::MDField<const ScalarT>          solution;        // Side, Node
+    PHX::MDField<const MeshScalarT>      w_side_measure;  // Side, QuadPoint
 
     ScalarT p_reg, reg;
     double scaling;
     int offset;
+
   };
 
 } // Namespace LandIce

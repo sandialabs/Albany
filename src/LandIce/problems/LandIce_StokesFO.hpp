@@ -281,7 +281,7 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     fm0.template registerEvaluator<EvalT> (ev);
 
     // Project to side
-    ev = evalUtils.constructDOFCellToSideEvaluator(dof_name_auxiliary[0],ssName,"Node Scalar",cellType, dof_name_auxiliary[0]);
+    ev = evalUtils.constructDOFCellToSideEvaluator(dof_name_auxiliary[0],ssName,"Node Scalar Sideset",cellType, dof_name_auxiliary[0]);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate velocity gradient on QP on side

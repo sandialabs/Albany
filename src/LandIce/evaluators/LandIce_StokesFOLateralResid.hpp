@@ -50,19 +50,22 @@ private:
   void evaluate_with_computed_immersed_ratio(typename Traits::EvalData d);
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Side,Node,Dim>        coords_qp;
-  PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint>  thickness;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       elevation;
-  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>     BF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   normals;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       w_measure;
+  // TODO: restore layout template arguments when removing old sideset layout
+  PHX::MDField<const MeshScalarT>        coords_qp; // Side, Node, Dim
+  PHX::MDField<const ThicknessScalarT>   thickness; // Side, QuadPoint
+  PHX::MDField<const MeshScalarT>        elevation; // Side, QuadPoint
+  PHX::MDField<const RealType>           BF;        // Side, Node, QuadPoint
+  PHX::MDField<const MeshScalarT>        normals;   // Side, QuadPoint, Dim
+  PHX::MDField<const MeshScalarT>        w_measure; // Side, QuadPoint
 
   // Output:
-  PHX::MDField<OutputScalarT,Cell,Node,VecDim>              residual;
+  PHX::MDField<OutputScalarT,Cell,Node,VecDim> residual;
 
-  std::vector<std::vector<int> >  sideNodes;
-  std::string                     lateralSideName;
+  Kokkos::View<int**, PHX::Device> sideNodes;
+  std::string                      lateralSideName;
 
+  bool useCollapsedSidesets;
+  
   double rho_w;  // [Kg m^{-3}]
   double rho_i;  // [Kg m^{-3}]
   double g;      // [m s^{-2}]
@@ -80,6 +83,23 @@ private:
   unsigned int numSideNodes;
   unsigned int numSideQPs;
   unsigned int vecDimFO;
+
+  Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct GivenImmersedRatio_Tag{};
+  struct ComputedImmersedRatio_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, GivenImmersedRatio_Tag> GivenImmersedRatio_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ComputedImmersedRatio_Tag> ComputedImmersedRatio_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const GivenImmersedRatio_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const;
+  
 };
 
 } // Namespace LandIce

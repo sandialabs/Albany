@@ -196,6 +196,13 @@ public:
     return m_blocks[0]->getSideSetViews(workset);
   }
 
+  //! Get local DOF views for GatherVerticallyContractedSolution
+  const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
+  getLocalDOFViews(const int workset) const
+  {
+    return m_blocks[0]->getLocalDOFViews(workset);
+  }
+
   //! Get connectivity map from elementGID to workset
   WsLIDList&
   getElemGIDws()

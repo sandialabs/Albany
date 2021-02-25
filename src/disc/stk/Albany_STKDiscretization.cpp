@@ -1933,14 +1933,15 @@ STKDiscretization::computeSideSets()
 
     globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
     globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
-    globalSideSetViews[ss_key].side_GID       = Kokkos::View<GO**,       Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_GID       = Kokkos::View<GO**,       Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_LID       = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_ebIndex   = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].side_local_id  = Kokkos::View<unsigned**, Kokkos::LayoutRight>("side_local_id", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].max_sides      = max_sides[ss_key];
-    globalSideSetViews[ss_key].numCellsOnSide = Kokkos::View<int**,      Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
-    globalSideSetViews[ss_key].cellsOnSide    = Kokkos::View<int***,     Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_GID         = Kokkos::View<GO**,       Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_GID         = Kokkos::View<GO**,       Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_LID         = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_local_id    = Kokkos::View<unsigned**, Kokkos::LayoutRight>("side_local_id", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].max_sides        = max_sides[ss_key];
+    globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::View<int**,      Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
+    globalSideSetViews[ss_key].cellsOnSide      = Kokkos::View<int***,     Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::View<int***,     Kokkos::LayoutRight>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
 
     ss_it++;
   }
@@ -1960,10 +1961,12 @@ STKDiscretization::computeSideSets()
       int max_cells_on_side = 0;
       std::vector<int> numCellsOnSide(numSides);
       std::vector<std::vector<int>> cellsOnSide(numSides);
+      std::vector<std::vector<int>> sideSetIdxOnSide(numSides);
       for (size_t j = 0; j < ss_val.size(); ++j) {
         int cell = ss_val[j].elem_LID;
         int side = ss_val[j].side_local_id;
         cellsOnSide[side].push_back(cell);
+        sideSetIdxOnSide[side].push_back(j);
       }
       for (int side = 0; side < numSides; ++side) {
         numCellsOnSide[side] = cellsOnSide[side].size();
@@ -1974,9 +1977,11 @@ STKDiscretization::computeSideSets()
         globalSideSetViews[ss_key].numCellsOnSide(current_index, side) = numCellsOnSide[side];
         for (int j = 0; j < numCellsOnSide[side]; ++j) {
           globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = cellsOnSide[side][j];
+          globalSideSetViews[ss_key].sideSetIdxOnSide(current_index, side, j) = sideSetIdxOnSide[side][j];
         }
         for (int j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
           globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = -1;
+          globalSideSetViews[ss_key].sideSetIdxOnSide(current_index, side, j) = -1;
         }
       }
 
@@ -2024,10 +2029,124 @@ STKDiscretization::computeSideSets()
       lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
       lssList[ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
       lssList[ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
+      lssList[ss_key].sideSetIdxOnSide    = Kokkos::subview(globalSideSetViews[ss_key].sideSetIdxOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
 
       current_local_index[ss_key]++;
 
       ss_it++;
+    }
+  }
+
+  // 6) Determine size of global DOFView structure and allocate
+  std::map<std::string, int> total_sideset_idx;
+  std::map<std::string, int> sideset_idx_offset;
+  unsigned int maxSideNodes = 0;
+  if (!stkMeshStruct->layered_mesh_numbering.is_null()) {
+
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *(stkMeshStruct->layered_mesh_numbering);
+    const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
+    const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
+    const unsigned int numLayers = layeredMeshNumbering.numLayers;
+    const unsigned int numComps = solDOFManager.numComponents();
+
+    // Determine maximum number of side nodes
+    for (unsigned int elem_side = 0; elem_side < cell_topo->side_count; ++elem_side) {
+      const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
+      const unsigned int numSideNodes = side.topology->node_count;
+      maxSideNodes = std::max(maxSideNodes, numSideNodes);
+    }
+
+    // Determine total number of sideset indices per each sideset name
+    for (int ws = 0; ws < sideSets.size(); ++ws) {
+      SideSetList& ssList = sideSets[ws];
+      std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
+      while (ss_it != ssList.end()) {
+        std::string             ss_key = ss_it->first;
+        std::vector<SideStruct> ss_val = ss_it->second;
+
+        if (sideset_idx_offset.find(ss_key) == sideset_idx_offset.end())
+          sideset_idx_offset[ss_key] = 0;
+        if (total_sideset_idx.find(ss_key) == total_sideset_idx.end())
+          total_sideset_idx[ss_key] = 0;
+
+        total_sideset_idx[ss_key] += ss_val.size();
+
+        ss_it++;
+      }
+    }
+
+    // Allocate total localDOFView for each sideset name
+    ss_it = num_local_worksets.begin();
+    while (ss_it != num_local_worksets.end()) {
+      std::string ss_key = ss_it->first;
+      allLocalDOFViews[ss_key] = Kokkos::View<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
+
+      ss_it++;
+    }
+
+  }
+
+  // 7) Populate localDOFViews for GatherVerticallyContractedSolution
+  for (int i = 0; i < sideSets.size(); ++i) {
+
+    // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
+    std::map<std::string, Kokkos::View<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[i];
+
+    // Not all mesh structs that come through here are extruded mesh structs. This is to check if
+    //   the mesh struct is an extruded one. If it isn't extruded, it won't need to do any of the following work.
+    if (!stkMeshStruct->layered_mesh_numbering.is_null()) {
+
+      const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *(stkMeshStruct->layered_mesh_numbering);
+      const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
+      const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
+      const auto& ov_node_indexer = *(getOverlapGlobalLocalIndexer(nodes_dof_name()));
+      const unsigned int numLayers = layeredMeshNumbering.numLayers;
+      const unsigned int numComps = solDOFManager.numComponents();
+
+      // Loop over the sides that form the boundary condition
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
+
+      SideSetList& ssList = sideSets[i];
+      std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
+
+      while (ss_it != ssList.end()) {
+        std::string             ss_key = ss_it->first;
+        std::vector<SideStruct> ss_val = ss_it->second;
+        
+        Kokkos::View<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
+
+        for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
+          // Get the data that corresponds to the side
+          const unsigned int elem_LID = ss_val[sideSet_idx].elem_LID;
+          const unsigned int elem_side = ss_val[sideSet_idx].side_local_id;
+          const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
+          const unsigned int numSideNodes = side.topology->node_count;
+
+          const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID_i[elem_LID];
+
+          //we only consider elements on the top.
+          GO baseId;
+          for (unsigned int j = 0; j < numSideNodes; ++j) {
+            const std::size_t node = side.node[j];
+            baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
+            for (unsigned int il = 0; il < numLayers+1; ++il) {
+              const GO gnode = layeredMeshNumbering.getId(baseId, il);
+              const LO inode = ov_node_indexer.getLocalElement(gnode);
+              for (unsigned int comp = 0; comp < numComps; ++comp) {
+                globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il, comp) = solDOFManager.getLocalDOF(inode, comp);
+              }
+            }
+          }
+        }
+
+        // Set workset-local sub-view
+        std::pair<int,int> range(sideset_idx_offset[ss_key], sideset_idx_offset[ss_key]+ss_val.size());
+        wsldofViews[ss_key] = Kokkos::subview(globalDOFView, range, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+
+        sideset_idx_offset[ss_key] += ss_val.size();
+
+        ss_it++;
+      }
     }
   }
   

@@ -25,7 +25,8 @@ Setup::Setup() :
     _unsavedParams(Teuchos::rcp(new StringSet())),
     _unsavedParamsEvals(Teuchos::rcp(new StringSet())),
     _savedFieldsWOParams(Teuchos::rcp(new StringSet())),
-    _unsavedFieldsWParams(Teuchos::rcp(new StringSet())) {
+    _unsavedFieldsWParams(Teuchos::rcp(new StringSet())),
+    _numLayers(-1) {
 }
 
 void Setup::init_problem_params(const Teuchos::RCP<Teuchos::ParameterList> problemParams) {
@@ -235,6 +236,16 @@ void Setup::print_fields(std::ostream& os, Teuchos::RCP<StringSet> savedFields,
       os << "  " << unsavedField << std::endl;
     os << std::endl;
   }
+}
+
+void Setup::set_num_layers(const int numLayers) {
+  _numLayers = numLayers;
+}
+
+int Setup::get_num_layers() const {
+  TEUCHOS_TEST_FOR_EXCEPTION(_numLayers < 0,
+    std::logic_error, "Number of layers is not valid, are you sure this is an extruded mesh?\n");
+  return _numLayers;
 }
 
 } // namespace PHAL

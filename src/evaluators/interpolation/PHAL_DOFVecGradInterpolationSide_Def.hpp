@@ -16,9 +16,9 @@ DOFVecGradInterpolationSideBase<EvalT, Traits, ScalarT>::
 DOFVecGradInterpolationSideBase(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
-  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_vector),
-  gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient),
-  grad_qp     (p.get<std::string> ("Gradient Variable Name"), dl_side->qp_vecgradient)
+  val_node    (p.get<std::string> ("Variable Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_vector_sideset : dl_side->node_vector),
+  gradBF      (p.get<std::string> ("Gradient BF Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_qp_gradient_sideset : dl_side->node_qp_gradient),
+  grad_qp     (p.get<std::string> ("Gradient Variable Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_vecgradient_sideset : dl_side->qp_vecgradient)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
@@ -28,6 +28,8 @@ DOFVecGradInterpolationSideBase(const Teuchos::ParameterList& p,
   this->addEvaluatedField(grad_qp);
 
   this->setName("DOFVecGradInterpolationSideBase" );
+
+  useCollapsedSidesets = dl_side->useCollapsedSidesets;
 
   numSideNodes = dl_side->node_qp_gradient->extent(2);
   numSideQPs   = dl_side->node_qp_gradient->extent(3);
@@ -46,31 +48,50 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(grad_qp,fm);
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void DOFVecGradInterpolationSideBase<EvalT, Traits, ScalarT>::
+operator() (const VecGradInterpolationSide_Tag& tag, const int& sideSet_idx) const {
+
+  for (int qp=0; qp<numSideQPs; ++qp) {
+    for (int comp=0; comp<vecDim; ++comp) {
+      for (int dim=0; dim<numDims; ++dim) {
+        grad_qp(sideSet_idx,qp,comp,dim) = 0.;
+        for (int node=0; node<numSideNodes; ++node) {
+          grad_qp(sideSet_idx,qp,comp,dim) += val_node(sideSet_idx,node,comp) * gradBF(sideSet_idx,node,qp,dim);
+        }
+      }
+    }
+  }
+
+}
+
 // *********************************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFVecGradInterpolationSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
-    return;
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
-  {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
-
-    for (int qp=0; qp<numSideQPs; ++qp)
+  sideSet = workset.sideSetViews->at(sideSetName);
+  if (useCollapsedSidesets) {
+    Kokkos::parallel_for(VecGradInterpolationSide_Policy(0, sideSet.size), *this);
+  } else {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
-      for (int comp=0; comp<vecDim; ++comp)
-      {
-        for (int dim=0; dim<numDims; ++dim)
-        {
-          grad_qp(cell,side,qp,comp,dim) = 0.;
-          for (int node=0; node<numSideNodes; ++node)
-          {
-            grad_qp(cell,side,qp,comp,dim) += val_node(cell,side,node,comp) * gradBF(cell,side,node,qp,dim);
+      // Get the data that corresponds to the side
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
+
+      for (int qp=0; qp<numSideQPs; ++qp) {
+        for (int comp=0; comp<vecDim; ++comp) {
+          for (int dim=0; dim<numDims; ++dim) {
+            grad_qp(cell,side,qp,comp,dim) = 0.;
+            for (int node=0; node<numSideNodes; ++node) {
+              grad_qp(cell,side,qp,comp,dim) += val_node(cell,side,node,comp) * gradBF(cell,side,node,qp,dim);
+            }
           }
         }
       }

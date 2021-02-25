@@ -11,6 +11,7 @@
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_Layouts.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 #include "LandIce_BasalFrictionCoefficient.hpp"
 
@@ -62,12 +63,14 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     numNodes  = dl->node_scalar->extent(1);
   }
 
+  useCollapsedSidesets = dl->isSideLayouts && dl->useCollapsedSidesets;
+
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
-  if (nodal) {
-    layout = dl->node_scalar;
+  if (useCollapsedSidesets) {
+    layout = nodal ? dl->node_scalar_sideset : dl->qp_scalar_sideset;
   } else {
-    layout = dl->qp_scalar;
+    layout = nodal ? dl->node_scalar : dl->qp_scalar;
   }
 
   beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
@@ -101,8 +104,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       given_field_name += "_" + basalSideName;
     }
     if( (beta_type == EXP_GIVEN_FIELD) && !interpolate_then_exponentiate ) {
-      BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
-      layout_given_field = dl->node_scalar;
+      BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), useCollapsedSidesets ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+      layout_given_field = useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar;
       this->addDependentField (BF);
     }
     if (is_given_field_param) {
@@ -150,7 +153,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     N            = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
     u_norm       = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
     powerParam   = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
-    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
+    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), useCollapsedSidesets ? dl->cell_scalar2_sideset : dl->cell_scalar2);
 
     this->addDependentField (powerParam);
     this->addDependentField (N);
@@ -198,7 +201,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map) {
-    layout = nodal ? dl->node_vector : dl->qp_coords;
+    if (useCollapsedSidesets) {
+      layout = nodal ? dl->node_vector_sideset : dl->qp_coords_sideset;
+    } else {
+      layout = nodal ? dl->node_vector : dl->qp_coords;
+    }
     coordVec = PHX::MDField<MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), layout);
 
     double R = stereographicMapList->get<double>("Earth Radius", 6371);
@@ -228,6 +235,258 @@ postRegistrationSetup (typename Traits::SetupData d,
     memoizer.enable_memoizer();
 }
 
+// *********************************************************************
+// Kokkos functor (Cell)
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const GivenFieldParam_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt)
+    beta(cell,ipt) = given_field_param(cell,ipt);
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const GivenField_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt)
+    beta(cell,ipt) = given_field(cell,ipt);
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const PowerLaw_DistributedMu_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt)
+    beta(cell,ipt) = muPowerLawField(cell,ipt) * N(cell,ipt) * std::pow (u_norm(cell,ipt), power-1);
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const PowerLaw_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt)
+    beta(cell,ipt) = mu * N(cell,ipt) * std::pow (u_norm(cell,ipt), power-1);
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const RegularizedCoulomb_DistributedLambda_DistributedMu_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(N(cell,ipt),n) );
+    beta(cell,ipt) = muCoulombField(cell,ipt) * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const RegularizedCoulomb_DistributedLambda_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(N(cell,ipt),n) );
+    beta(cell,ipt) = mu * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const RegularizedCoulomb_DistributedMu_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(N(cell,ipt),n) );
+    beta(cell,ipt) = muCoulombField(cell,ipt) * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const RegularizedCoulomb_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(N(cell,ipt),n) );
+    beta(cell,ipt) = mu * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const ExpGivenFieldParam_Nodal_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    beta(cell,ipt) = std::exp(given_field_param(cell,ipt));
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const ExpGivenField_Nodal_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    beta(cell,ipt) = std::exp(given_field(cell,ipt));
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const ExpGivenFieldParam_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    beta(cell,ipt) = 0;
+    for (unsigned int node=0; node<numNodes; ++node)
+      beta(cell,ipt) += std::exp(given_field_param(cell,node))*BF(cell,node,ipt);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const ExpGivenField_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    beta(cell,ipt) = 0;
+    for (unsigned int node=0; node<numNodes; ++node)
+      beta(cell,ipt) += std::exp(given_field(cell,node))*BF(cell,node,ipt);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const StereographicMapCorrection_Tag& tag, const int& cell) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    MeshScalarT x = coordVec(cell,ipt,0) - x_0;
+    MeshScalarT y = coordVec(cell,ipt,1) - y_0;
+    MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+    beta(cell,ipt) *= h*h;
+  }
+}
+
+// *********************************************************************
+// Kokkos functor (Side)
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_GivenFieldParam_Tag& tag, const int& sideSet_idx) const {
+  for (int ipt=0; ipt<dim; ++ipt)
+    beta(sideSet_idx,ipt) = given_field_param(sideSet_idx,ipt);
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_GivenField_Tag& tag, const int& sideSet_idx) const {
+  for (int ipt=0; ipt<dim; ++ipt)
+    beta(sideSet_idx,ipt) = given_field(sideSet_idx,ipt);
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_PowerLaw_DistributedMu_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT Nval = KU::max(N(sideSet_idx,ipt),0.0);
+    beta(sideSet_idx,ipt) = muPowerLawField(sideSet_idx,ipt) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_PowerLaw_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT Nval = KU::max(N(sideSet_idx,ipt),0.0);
+    beta(sideSet_idx,ipt) = mu * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_RegularizedCoulomb_DistributedLambda_DistributedMu_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT Nval = KU::max(N(sideSet_idx,ipt),0.0);
+    ScalarT q = u_norm(sideSet_idx,ipt) / ( u_norm(sideSet_idx,ipt) + lambdaField(sideSet_idx,ipt)*ice_softness(sideSet_idx)*std::pow(Nval,n) );
+    beta(sideSet_idx,ipt) = muCoulombField(sideSet_idx,ipt) * Nval * std::pow( q, power) / u_norm(sideSet_idx,ipt);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_RegularizedCoulomb_DistributedLambda_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT Nval = KU::max(N(sideSet_idx,ipt),0.0);
+    ScalarT q = u_norm(sideSet_idx,ipt) / ( u_norm(sideSet_idx,ipt) + lambdaField(sideSet_idx,ipt)*ice_softness(sideSet_idx)*std::pow(Nval,n) );
+    beta(sideSet_idx,ipt) = mu * Nval * std::pow( q, power) / u_norm(sideSet_idx,ipt);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_RegularizedCoulomb_DistributedMu_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT Nval = KU::max(N(sideSet_idx,ipt),0.0);
+    ScalarT q = u_norm(sideSet_idx,ipt) / ( u_norm(sideSet_idx,ipt) + lambda*ice_softness(sideSet_idx)*std::pow(Nval,n) );
+    beta(sideSet_idx,ipt) = muCoulombField(sideSet_idx,ipt) * Nval * std::pow( q, power) / u_norm(sideSet_idx,ipt);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_RegularizedCoulomb_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ScalarT Nval = KU::max(N(sideSet_idx,ipt),0.0);
+    ScalarT q = u_norm(sideSet_idx,ipt) / ( u_norm(sideSet_idx,ipt) + lambda*ice_softness(sideSet_idx)*std::pow(Nval,n) );
+    beta(sideSet_idx,ipt) = mu * Nval * std::pow( q, power) / u_norm(sideSet_idx,ipt);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_ExpGivenFieldParam_Nodal_Tag& tag, const int& sideSet_idx) const {
+  for (int ipt=0; ipt<dim; ++ipt)
+    beta(sideSet_idx,ipt) = std::exp(given_field_param(sideSet_idx,ipt));
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_ExpGivenFieldParam_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int qp=0; qp<numQPs; ++qp) {
+    beta(sideSet_idx,qp) = 0;
+    for (unsigned int node=0; node<numNodes; ++node)
+      beta(sideSet_idx,qp) += std::exp(given_field_param(sideSet_idx,node))*BF(sideSet_idx,node,qp);  
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_ExpGivenField_Nodal_Tag& tag, const int& sideSet_idx) const {
+  for (int ipt=0; ipt<dim; ++ipt)
+    beta(sideSet_idx,ipt) = std::exp(given_field(sideSet_idx,ipt));
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_ExpGivenField_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int qp=0; qp<numQPs; ++qp) {
+    beta(sideSet_idx,qp) = 0;
+    for (unsigned int node=0; node<numNodes; ++node)
+      beta(sideSet_idx,qp) += std::exp(given_field(sideSet_idx,node))*BF(sideSet_idx,node,qp);
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_ZeroOnFloatingParam_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ParamScalarT isGrounded = rho_i*thickness_param_field(sideSet_idx,ipt) > -rho_w*bed_topo_field(sideSet_idx,ipt);
+    beta(sideSet_idx,ipt) *=  isGrounded;
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_ZeroOnFloating_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    ParamScalarT isGrounded = rho_i*thickness_field(sideSet_idx,ipt) > -rho_w*bed_topo_field(sideSet_idx,ipt);
+    beta(sideSet_idx,ipt) *=  isGrounded;
+  }
+}
+template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
+KOKKOS_INLINE_FUNCTION
+void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
+operator() (const Side_StereographicMapCorrection_Tag& tag, const int& sideSet_idx) const {
+  for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    MeshScalarT x = coordVec(sideSet_idx,ipt,0) - x_0;
+    MeshScalarT y = coordVec(sideSet_idx,ipt,1) - y_0;
+    MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+    beta(sideSet_idx,ipt) *= h*h;
+  }
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
@@ -235,8 +494,6 @@ evaluateFields (typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields()))
     return;
-
-  ParamScalarT mu, lambda, power;
 
   if (beta_type == POWER_LAW) {
     if (logParameters) {
@@ -329,44 +586,30 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambda, ScalarT power)
 {
-  if (workset.sideSets->find(basalSideName)==workset.sideSets->end())
-    return;
+  if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
 
-  const unsigned int dim = nodal ? numNodes : numQPs;
+  sideSet = workset.sideSetViews->at(basalSideName);
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
-  for (auto const& it_side : sideSet) {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+  dim = nodal ? numNodes : numQPs;
 
+  if (useCollapsedSidesets) {
     switch (beta_type) {
       case GIVEN_CONSTANT:
         return;   // We can save ourself some useless iterations
 
       case GIVEN_FIELD:
         if (is_given_field_param) {
-          for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            beta(cell,side,ipt) = given_field_param(cell,side,ipt);
-          }
+          Kokkos::parallel_for(Side_GivenFieldParam_Policy(0, sideSet.size), *this);
         } else {
-          for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            beta(cell,side,ipt) = given_field(cell,side,ipt);
-          }
+          Kokkos::parallel_for(Side_GivenField_Policy(0, sideSet.size), *this);
         }
         break;
 
       case POWER_LAW:
         if (distributedMu) {
-          for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-            beta(cell,side,ipt) = muPowerLawField(cell,side,ipt) * Nval * std::pow (u_norm(cell,side,ipt), power-1);
-          }
+          Kokkos::parallel_for(Side_PowerLaw_DistributedMu_Policy(0, sideSet.size), *this);
         } else {
-          for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-            beta(cell,side,ipt) = mu * Nval * std::pow (u_norm(cell,side,ipt), power-1);
-          }
+          Kokkos::parallel_for(Side_PowerLaw_Policy(0, sideSet.size), *this);
         }
 
         break;
@@ -374,31 +617,15 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       case REGULARIZED_COULOMB:
         if (distributedLambda) {
           if (distributedMu) {
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-              ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambdaField(cell,side,ipt)*ice_softness(cell,side)*std::pow(Nval,n) );
-              beta(cell,side,ipt) = muCoulombField(cell,side,ipt) * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
-            }
+            Kokkos::parallel_for(Side_RegularizedCoulomb_DistributedLambda_DistributedMu_Policy(0, sideSet.size), *this);
           } else {
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-              ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambdaField(cell,side,ipt)*ice_softness(cell,side)*std::pow(Nval,n) );
-              beta(cell,side,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
-            }
+            Kokkos::parallel_for(Side_RegularizedCoulomb_DistributedLambda_Policy(0, sideSet.size), *this);
           }
         } else {
           if (distributedMu) {
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-              ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*ice_softness(cell,side)*std::pow(Nval,n) );
-              beta(cell,side,ipt) = muCoulombField(cell,side,ipt) * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
-            }
+            Kokkos::parallel_for(Side_RegularizedCoulomb_DistributedMu_Policy(0, sideSet.size), *this);
           } else {
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
-              ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*ice_softness(cell,side)*std::pow(Nval,n) );
-              beta(cell,side,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
-            }
+            Kokkos::parallel_for(Side_RegularizedCoulomb_Policy(0, sideSet.size), *this);
           }
         }
         break;
@@ -406,63 +633,167 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       case EXP_GIVEN_FIELD:
         if(nodal || interpolate_then_exponentiate) {
           if (is_given_field_param) {
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              beta(cell,side,ipt) = std::exp(given_field_param(cell,side,ipt));
-            }
+            Kokkos::parallel_for(Side_ExpGivenFieldParam_Nodal_Policy(0, sideSet.size), *this);
           } else {
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt));
-            }
+            Kokkos::parallel_for(Side_ExpGivenField_Nodal_Policy(0, sideSet.size), *this);
           }
         } else {
           if (is_given_field_param) {
-            for (unsigned int qp=0; qp<numQPs; ++qp) {
-              beta(cell,side,qp) = 0;
-              for (unsigned int node=0; node<numNodes; ++node)
-                beta(cell,side,qp) += std::exp(given_field_param(cell,side,node))*BF(cell,side,node,qp);
-            }
+            Kokkos::parallel_for(Side_ExpGivenFieldParam_Policy(0, sideSet.size), *this);
           } else {
-            for (unsigned int qp=0; qp<numQPs; ++qp) {
-              beta(cell,side,qp) = 0;
-              for (unsigned int node=0; node<numNodes; ++node)
-                beta(cell,side,qp) += std::exp(given_field(cell,side,node))*BF(cell,side,node,qp);
-            }
+            Kokkos::parallel_for(Side_ExpGivenField_Policy(0, sideSet.size), *this);
           }
         }
         break;
+
+      default:
+        break;
      }
 
-    if(zero_on_floating) {
+     if(zero_on_floating) {
       if (is_thickness_param) {
-        for (unsigned int ipt=0; ipt<dim; ++ipt) {
-          ParamScalarT isGrounded = rho_i*thickness_param_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
-          beta(cell,side,ipt) *=  isGrounded;
-        }
+        Kokkos::parallel_for(Side_ZeroOnFloatingParam_Policy(0, sideSet.size), *this);
       } else {
-        for (unsigned int ipt=0; ipt<dim; ++ipt) {
-          ParamScalarT isGrounded = rho_i*thickness_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
-          beta(cell,side,ipt) *=  isGrounded;
-        }
+        Kokkos::parallel_for(Side_ZeroOnFloating_Policy(0, sideSet.size), *this);
       }
     }
 
     // Correct the value if we are using a stereographic map
     if (use_stereographic_map) {
-      for (unsigned int ipt=0; ipt<dim; ++ipt) {
-        MeshScalarT x = coordVec(cell,side,ipt,0) - x_0;
-        MeshScalarT y = coordVec(cell,side,ipt,1) - y_0;
-        MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-        beta(cell,side,ipt) *= h*h;
+      Kokkos::parallel_for(Side_StereographicMapCorrection_Policy(0, sideSet.size), *this);
+    }
+  }
+  else {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    {
+      // Get the local data of side and cell
+      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int side = sideSet.side_local_id(sideSet_idx);
+
+      switch (beta_type) {
+        case GIVEN_CONSTANT:
+          return;   // We can save ourself some useless iterations
+
+        case GIVEN_FIELD:
+          if (is_given_field_param) {
+            for (int ipt=0; ipt<dim; ++ipt)
+              beta(cell,side,ipt) = given_field_param(cell,side,ipt);
+          } else {
+            for (int ipt=0; ipt<dim; ++ipt)
+              beta(cell,side,ipt) = given_field(cell,side,ipt);
+          }
+          break;
+
+        case POWER_LAW:
+          if (distributedMu) {
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
+              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+              beta(cell,side,ipt) = muPowerLawField(cell,side,ipt) * Nval * std::pow (u_norm(cell,side,ipt), power-1);
+            }
+          } else {
+            for (unsigned int ipt=0; ipt<dim; ++ipt) {
+              ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+              beta(cell,side,ipt) = mu * Nval * std::pow (u_norm(cell,side,ipt), power-1);
+            }
+          }
+
+          break;
+
+        case REGULARIZED_COULOMB:
+          if (distributedLambda) {
+            if (distributedMu) {
+              for (unsigned int ipt=0; ipt<dim; ++ipt) {
+                ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+                ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambdaField(cell,side,ipt)*ice_softness(cell,side)*std::pow(Nval,n) );
+                beta(cell,side,ipt) = muCoulombField(cell,side,ipt) * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              }
+            } else {
+              for (unsigned int ipt=0; ipt<dim; ++ipt) {
+                ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+                ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambdaField(cell,side,ipt)*ice_softness(cell,side)*std::pow(Nval,n) );
+                beta(cell,side,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              }
+            }
+          } else {
+            if (distributedMu) {
+              for (unsigned int ipt=0; ipt<dim; ++ipt) {
+                ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+                ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*ice_softness(cell,side)*std::pow(Nval,n) );
+                beta(cell,side,ipt) = muCoulombField(cell,side,ipt) * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              }
+            } else {
+              for (unsigned int ipt=0; ipt<dim; ++ipt) {
+                ScalarT Nval = std::max(N(cell,side,ipt),0.0);
+                ScalarT q = u_norm(cell,side,ipt) / ( u_norm(cell,side,ipt) + lambda*ice_softness(cell,side)*std::pow(Nval,n) );
+                beta(cell,side,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,side,ipt);
+              }
+            }
+          }
+          break;
+
+        case EXP_GIVEN_FIELD:
+          if(nodal || interpolate_then_exponentiate) {
+            if (is_given_field_param) {
+              for (int ipt=0; ipt<dim; ++ipt)
+                beta(cell,side,ipt) = std::exp(given_field_param(cell,side,ipt));
+            } else {
+              for (int ipt=0; ipt<dim; ++ipt)
+                beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt));
+            }
+          } else {
+            if (is_given_field_param) {
+              for (unsigned int qp=0; qp<numQPs; ++qp) {
+                beta(cell,side,qp) = 0;
+                for (unsigned int node=0; node<numNodes; ++node)
+                  beta(cell,side,qp) += std::exp(given_field_param(cell,side,node))*BF(cell,side,node,qp);
+              }
+            } else {
+              for (unsigned int qp=0; qp<numQPs; ++qp) {
+                beta(cell,side,qp) = 0;
+                  for (unsigned int node=0; node<numNodes; ++node)
+                    beta(cell,side,qp) += std::exp(given_field(cell,side,node))*BF(cell,side,node,qp);
+              }
+            }
+          }
+          break;
+
+        default:
+          break;
+      }
+
+      if(zero_on_floating) {
+        if (is_thickness_param) {
+          for (unsigned int ipt=0; ipt<dim; ++ipt) {
+            ParamScalarT isGrounded = rho_i*thickness_param_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
+            beta(cell,side,ipt) *=  isGrounded;
+          }
+        } else {
+          for (unsigned int ipt=0; ipt<dim; ++ipt) {
+            ParamScalarT isGrounded = rho_i*thickness_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
+            beta(cell,side,ipt) *=  isGrounded;
+          }
+        }
+      }
+
+      // Correct the value if we are using a stereographic map
+      if (use_stereographic_map) {
+        for (unsigned int ipt=0; ipt<dim; ++ipt) {
+          MeshScalarT x = coordVec(cell,side,ipt,0) - x_0;
+          MeshScalarT y = coordVec(cell,side,ipt,1) - y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          beta(cell,side,ipt) *= h*h;
+        }
       }
     }
   }
+  
 }
 
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambda, ScalarT power)
 {
-  const unsigned int dim = nodal ? numNodes : numQPs;
+  dim = nodal ? numNodes : numQPs;
   switch (beta_type)
   {
     case GIVEN_CONSTANT:
@@ -470,56 +801,32 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
 
     case GIVEN_FIELD:
       if (is_given_field_param) {
-        for (unsigned int cell=0; cell<workset.numCells; ++cell)
-          for (unsigned int ipt=0; ipt<dim; ++ipt)
-            beta(cell,ipt) = given_field_param(cell,ipt);
+        Kokkos::parallel_for(GivenFieldParam_Policy(0, workset.numCells), *this);
       } else {
-        for (unsigned int cell=0; cell<workset.numCells; ++cell)
-          for (unsigned int ipt=0; ipt<dim; ++ipt)
-            beta(cell,ipt) = given_field(cell,ipt);
+        Kokkos::parallel_for(GivenField_Policy(0, workset.numCells), *this);
       }
       break;
 
     case POWER_LAW:
       if (distributedMu) {
-        for (unsigned int cell=0; cell<workset.numCells; ++cell)
-          for (unsigned int ipt=0; ipt<dim; ++ipt)
-            beta(cell,ipt) = muPowerLawField(cell,ipt) * N(cell,ipt) * std::pow (u_norm(cell,ipt), power-1);
+        Kokkos::parallel_for(PowerLaw_DistributedMu_Policy(0, workset.numCells), *this);
       } else {
-        for (unsigned int cell=0; cell<workset.numCells; ++cell)
-          for (unsigned int ipt=0; ipt<dim; ++ipt)
-            beta(cell,ipt) = mu * N(cell,ipt) * std::pow (u_norm(cell,ipt), power-1);
+        Kokkos::parallel_for(PowerLaw_Policy(0, workset.numCells), *this);
       }
       break;
 
     case REGULARIZED_COULOMB:
       if (distributedLambda) {
         if (distributedMu) {
-          for (unsigned int cell=0; cell<workset.numCells; ++cell)
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(N(cell,ipt),n) );
-              beta(cell,ipt) = muCoulombField(cell,ipt) * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
-            }
+          Kokkos::parallel_for(RegularizedCoulomb_DistributedLambda_DistributedMu_Policy(0, workset.numCells), *this);
         } else {
-          for (unsigned int cell=0; cell<workset.numCells; ++cell)
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(N(cell,ipt),n) );
-              beta(cell,ipt) = mu * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
-            }
+          Kokkos::parallel_for(RegularizedCoulomb_DistributedLambda_Policy(0, workset.numCells), *this);
         }
       } else {
         if (distributedMu) {
-          for (unsigned int cell=0; cell<workset.numCells; ++cell)
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(N(cell,ipt),n) );
-              beta(cell,ipt) = muCoulombField(cell,ipt) * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
-            }
+          Kokkos::parallel_for(RegularizedCoulomb_DistributedMu_Policy(0, workset.numCells), *this);
         } else {
-          for (unsigned int cell=0; cell<workset.numCells; ++cell)
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(N(cell,ipt),n) );
-              beta(cell,ipt) = mu * N(cell,ipt) * std::pow( q, power) / u_norm(cell,ipt);
-            }
+          Kokkos::parallel_for(RegularizedCoulomb_Policy(0, workset.numCells), *this);
         }
       }
       break;
@@ -527,31 +834,15 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
     case EXP_GIVEN_FIELD:
       if(nodal || interpolate_then_exponentiate) {
         if (is_given_field_param) {
-          for (unsigned int cell=0; cell<workset.numCells; ++cell)
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              beta(cell,ipt) = std::exp(given_field_param(cell,ipt));
-            }
+          Kokkos::parallel_for(ExpGivenFieldParam_Nodal_Policy(0, workset.numCells), *this);
         } else {
-          for (unsigned int cell=0; cell<workset.numCells; ++cell)
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              beta(cell,ipt) = std::exp(given_field(cell,ipt));
-            }
+          Kokkos::parallel_for(ExpGivenField_Nodal_Policy(0, workset.numCells), *this);
         } 
       } else {
         if (is_given_field_param) {
-          for (unsigned int cell=0; cell<workset.numCells; ++cell)
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              beta(cell,ipt) = 0;
-              for (unsigned int node=0; node<numNodes; ++node)
-                beta(cell,ipt) += std::exp(given_field_param(cell,node))*BF(cell,node,ipt);
-            }
+          Kokkos::parallel_for(ExpGivenFieldParam_Policy(0, workset.numCells), *this);
         } else {
-          for (unsigned int cell=0; cell<workset.numCells; ++cell)
-            for (unsigned int ipt=0; ipt<dim; ++ipt) {
-              beta(cell,ipt) = 0;
-              for (unsigned int node=0; node<numNodes; ++node)
-                beta(cell,ipt) += std::exp(given_field(cell,node))*BF(cell,node,ipt);
-            }
+          Kokkos::parallel_for(ExpGivenField_Policy(0, workset.numCells), *this);
         }
       }
       break;
@@ -560,16 +851,7 @@ evaluateFieldsCell (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
   // Correct the value if we are using a stereographic map
   if (use_stereographic_map)
   {
-    for (unsigned int cell=0; cell<workset.numCells; ++cell)
-    {
-      for (unsigned int ipt=0; ipt<dim; ++ipt)
-      {
-        MeshScalarT x = coordVec(cell,ipt,0) - x_0;
-        MeshScalarT y = coordVec(cell,ipt,1) - y_0;
-        MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-        beta(cell,ipt) *= h*h;
-      }
-    }
+    Kokkos::parallel_for(StereographicMapCorrection_Policy(0, workset.numCells), *this);
   }
 }
 

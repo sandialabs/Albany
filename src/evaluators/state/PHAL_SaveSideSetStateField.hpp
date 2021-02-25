@@ -70,7 +70,11 @@ private:
   std::string stateName;
 
   bool nodalState;
-  std::vector<std::vector<int> >  sideNodes;
+  bool useCollapsedSidesets;
+
+  Kokkos::View<int**, PHX::Device> sideNodes;
+
+  Albany::LocalSideSetInfo sideSet;
 
   MDFieldMemoizer<Traits> memoizer;
 };

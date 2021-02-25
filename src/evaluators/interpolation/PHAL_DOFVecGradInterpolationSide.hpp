@@ -44,19 +44,35 @@ private:
   std::string sideSetName;
 
   // Input:
+  // TODO: restore layout template arguments when removing old sideset layout
   //! Values at nodes
-  PHX::MDField<const ScalarT,Side,Cell,Node,VecDim> val_node;
+  PHX::MDField<const ScalarT> val_node;    // Side, Node, VecDim
   //! Basis Functions
-  PHX::MDField<const MeshScalarT,Side,Cell,Node,QuadPoint,Dim> gradBF;
+  PHX::MDField<const MeshScalarT> gradBF;  // Side, Node, QuadPoint, Dim
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<OutputScalarT,Cell,Side,QuadPoint,VecDim,Dim> grad_qp;
+  PHX::MDField<OutputScalarT> grad_qp;
+
+  bool useCollapsedSidesets;
+
+  Albany::LocalSideSetInfo sideSet;
 
   int numSideNodes;
   int numSideQPs;
   int numDims;
   int vecDim;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct VecGradInterpolationSide_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, VecGradInterpolationSide_Tag> VecGradInterpolationSide_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const VecGradInterpolationSide_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 // Some shortcut names

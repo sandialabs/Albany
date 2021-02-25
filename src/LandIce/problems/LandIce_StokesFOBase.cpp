@@ -10,10 +10,12 @@ StokesFOBase::
 StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                         const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                         const Teuchos::RCP<ParamLib>& paramLib_,
-                        const int numDim_)
+                        const int numDim_,
+                        const bool useCollapsedSidesets_)
  : Albany::AbstractProblem(params_, paramLib_, numDim_) 
  , discParams (discParams_)
  , numDim(numDim_)
+ , useCollapsedSidesets(useCollapsedSidesets_)
  , use_sdbcs_(false)
  , params(params_)
 {
@@ -166,7 +168,8 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
       unsigned int numSideQPs      = sideCubature[ssName]->getNumPoints();
 
       dl->side_layouts[ssName] = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
-                                                         numSideQPs,sideDim,numDim,numCellSides,vecDimFO));
+                                                         numSideQPs,sideDim,numDim,numCellSides,vecDimFO,
+                                                         useCollapsedSidesets,sideMeshSpecs.worksetSize));
     }
   }
 
@@ -189,8 +192,11 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int numSurfaceSideNodes    = sideBasis[surfaceSideName]->getCardinality();
     int numSurfaceSideQPs      = sideCubature[surfaceSideName]->getNumPoints();
 
+    if(Teuchos::GlobalMPISession::getRank() == 0) printf("Layout %s: worksetSize = %d, sideMeshSpecs.worksetSize = %d\n", surfaceSideName.c_str(), worksetSize, surfaceMeshSpecs.worksetSize);
+
     dl->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
-                                                                numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO));
+                                                                numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO,
+                                                                useCollapsedSidesets,surfaceMeshSpecs.worksetSize));
   }
 
   // If we have thickness or surface velocity diagnostics, we may need basal side stuff
@@ -212,8 +218,11 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int numbasalSideNodes    = sideBasis[basalSideName]->getCardinality();
     int numbasalSideQPs      = sideCubature[basalSideName]->getNumPoints();
 
+    if(Teuchos::GlobalMPISession::getRank() == 0) printf("Layout %s: worksetSize = %d, sideMeshSpecs.worksetSize = %d\n", basalSideName.c_str(), worksetSize, basalMeshSpecs.worksetSize);
+
     dl->side_layouts[basalSideName] = rcp(new Albany::Layouts(worksetSize,numbasalSideVertices,numbasalSideNodes,
-                                                              numbasalSideQPs,sideDim,numDim,numCellSides,vecDimFO));
+                                                              numbasalSideQPs,sideDim,numDim,numCellSides,vecDimFO,
+                                                              useCollapsedSidesets,basalMeshSpecs.worksetSize));
   }
 
 #ifdef OUTPUT_TO_SCREEN

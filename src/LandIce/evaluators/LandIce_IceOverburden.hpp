@@ -55,6 +55,21 @@ private:
 
   double rho_i;
   double g;
+
+  bool useCollapsedSidesets;
+  
+  Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct IceOverburden_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, IceOverburden_Tag> IceOverburden_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const IceOverburden_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 } // Namespace LandIce

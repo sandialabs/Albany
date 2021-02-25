@@ -61,8 +61,9 @@ public:
   Kokkos::View<unsigned**, Kokkos::LayoutRight> side_local_id; // (num_local_worksets, max_sideset_length)
 
   int max_sides;
-  Kokkos::View<int**, Kokkos::LayoutRight>      numCellsOnSide; // (num_local_worksets, max_sides)
-  Kokkos::View<int***, Kokkos::LayoutRight>     cellsOnSide;    // (num_local_worksets, max_sides, max_sideset_length)
+  Kokkos::View<int**, Kokkos::LayoutRight>      numCellsOnSide;   // (num_local_worksets, max_sides)
+  Kokkos::View<int***, Kokkos::LayoutRight>     cellsOnSide;      // (num_local_worksets, max_sides, max_sideset_length)
+  Kokkos::View<int***, Kokkos::LayoutRight>     sideSetIdxOnSide; // (num_local_worksets, max_sides, max_sideset_length)
 };
 using GlobalSideSetList = std::map<std::string, GlobalSideSetInfo>;
 
@@ -77,8 +78,9 @@ public:
   Kokkos::View<unsigned*, Kokkos::LayoutRight> side_local_id; // (size)
 
   int numSides;
-  Kokkos::View<int*, Kokkos::LayoutRight>      numCellsOnSide; // (sides)
-  Kokkos::View<int**, Kokkos::LayoutRight>     cellsOnSide;    // (numSides, sides)
+  Kokkos::View<int*, Kokkos::LayoutRight>      numCellsOnSide;   // (sides)
+  Kokkos::View<int**, Kokkos::LayoutRight>     cellsOnSide;      // (numSides, sides)
+  Kokkos::View<int**, Kokkos::LayoutRight>     sideSetIdxOnSide; // (numSides, sides)
 };
 using LocalSideSetInfoList = std::map<std::string, LocalSideSetInfo>;
 

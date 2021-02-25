@@ -46,18 +46,19 @@ private:
   ScalarT printedFF;
 
   // Input:
-  PHX::MDField<const BetaScalarT,Cell,Side,QuadPoint>     beta;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>  u;
-  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>   BF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     w_measure;
-  PHX::MDField<const ScalarT,Dim>                         homotopyParam;
+  // TODO: restore layout template arguments when removing old sideset layout
+  PHX::MDField<const BetaScalarT> beta;       // Side, QuadPoint
+  PHX::MDField<const ScalarT>     u;          // Side, QuadPoint, VecDim
+  PHX::MDField<const RealType>    BF;         // Side, Node, QuadPoint
+  PHX::MDField<const MeshScalarT> w_measure;  // Side, QuadPoint
+  PHX::MDField<const ScalarT,Dim> homotopyParam;
 
   PHX::MDField<const ScalarT,Dim> homotopy;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim>            residual;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> residual;
 
-  std::vector<std::vector<int> >  sideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
   std::string                     basalSideName;
 
   unsigned int numSideNodes;
@@ -66,7 +67,22 @@ private:
   unsigned int vecDim;
   unsigned int vecDimFO;
 
+  bool useCollapsedSidesets;
+
   bool regularized;
+
+  Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct StokesFOBasalResid_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, StokesFOBasalResid_Tag> StokesFOBasalResid_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 } // Namespace LandIce

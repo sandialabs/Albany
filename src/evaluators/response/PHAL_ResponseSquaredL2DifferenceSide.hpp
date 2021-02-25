@@ -38,7 +38,9 @@ private:
   int getLayout (const Teuchos::RCP<Albany::Layouts>& dl, const std::string& rank, Teuchos::RCP<PHX::DataLayout>& layout);
 
   std::string sideSetName;
-
+  bool useCollapsedSidesets;
+  Albany::LocalSideSetInfo sideSet;
+  
   int sideDim;
   int numQPs;
   int fieldDim;
@@ -48,11 +50,17 @@ private:
   TargetScalarT target_value_val;
   RealType scaling;
 
-  PHX::MDField<const SourceScalarT>                         sourceField;
-  PHX::MDField<const TargetScalarT>                         targetField;
+  PHX::MDField<const SourceScalarT> sourceField;
+  PHX::MDField<const TargetScalarT> targetField;
 
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure;
+  // TODO: restore layout template arguments when removing old sideset layout
+  PHX::MDField<const MeshScalarT>   metric;      // Side, QuadPoint, Dim, Dim
+  PHX::MDField<const MeshScalarT>   w_measure;   // Side, QuadPoint
+
+  size_t diffDims;
+  Kokkos::View<ScalarT*,  PHX::Device> diff_1;
+  Kokkos::View<ScalarT**, PHX::Device> diff_2;
+
 };
 
 //-- SourceScalarT = ScalarT
