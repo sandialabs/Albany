@@ -1022,7 +1022,7 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_px = workset.hessianWorkset.overlapped_hess_vec_prod_f_px;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_pp = workset.hessianWorkset.overlapped_hess_vec_prod_f_pp;
 
-  Teuchos::RCP<Thyra_Vector> f_multiplier = workset.hessianWorkset.f_multiplier;
+  Teuchos::RCP<Thyra_Vector> f_multiplier = workset.hessianWorkset.overlapped_f_multiplier;
 
   if (!f_px_is_active && !f_pp_is_active)
     return;
