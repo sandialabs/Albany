@@ -2057,7 +2057,7 @@ STKDiscretization::computeSideSets()
     }
 
     // Determine total number of sideset indices per each sideset name
-    for (int ws = 0; ws < sideSets.size(); ++ws) {
+    for (unsigned int ws = 0; ws < sideSets.size(); ++ws) {
       SideSetList& ssList = sideSets[ws];
       std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
       while (ss_it != ssList.end()) {
@@ -2087,7 +2087,7 @@ STKDiscretization::computeSideSets()
   }
 
   // 7) Populate localDOFViews for GatherVerticallyContractedSolution
-  for (int i = 0; i < sideSets.size(); ++i) {
+  for (unsigned int i = 0; i < sideSets.size(); ++i) {
 
     // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
     std::map<std::string, Kokkos::View<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[i];

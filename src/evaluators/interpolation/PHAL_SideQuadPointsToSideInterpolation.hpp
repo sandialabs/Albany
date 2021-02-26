@@ -46,7 +46,7 @@ private:
 
   int fieldDim;
   std::vector<int> dims;
-  int dimsArray[5];
+  size_t dimsArray[5];
 
   bool useCollapsedSidesets;
 

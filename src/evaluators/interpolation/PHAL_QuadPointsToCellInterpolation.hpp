@@ -47,7 +47,7 @@ private:
   typedef typename Albany::StrongestScalarType<ScalarT,MeshScalarT>::type OutputScalarT;
 
   std::vector<PHX::DataLayout::size_type> qp_dims;
-  int dimsArray[5];
+  size_t dimsArray[5];
 
   MDFieldMemoizer<Traits> memoizer;
 

@@ -43,7 +43,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   TEUCHOS_TEST_FOR_EXCEPTION (qp_dims.size() > 5, Teuchos::Exceptions::InvalidParameter, "Error! val_side has more dimensions than expected.\n");
 
-  for (int i = 0; i < qp_dims.size(); ++i)
+  for (unsigned int i = 0; i < qp_dims.size(); ++i)
     dimsArray[i] = qp_dims[i];
 
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
@@ -83,7 +83,7 @@ operator() (const Dim1_Tag& tag, const int& cell) const {
   for (size_t i(0); i<dimsArray[2]; ++i)
   {
     field_cell(cell,i) = 0;
-    for (int qp(0); qp<dimsArray[1]; ++qp)
+    for (size_t qp(0); qp<dimsArray[1]; ++qp)
       field_cell(cell,i) += field_qp(cell,qp,i)*w_measure(cell,qp);
     field_cell(cell,i) /= meas;
   }
