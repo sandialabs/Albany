@@ -80,11 +80,11 @@ operator() (const Dim0_Tag& tag, const int& sideSet_idx) const {
 
   MeshScalarT meas = 0.0;
       
-  for (int qp(0); qp<dimsArray[1]; ++qp)
+  for (unsigned int qp(0); qp<dimsArray[1]; ++qp)
     meas += w_measure(sideSet_idx,qp);
 
   field_side(sideSet_idx) = 0.0;
-  for (int qp(0); qp<dimsArray[1]; ++qp) {
+  for (unsigned int qp(0); qp<dimsArray[1]; ++qp) {
     field_side(sideSet_idx) += field_qp(sideSet_idx,qp)*w_measure(sideSet_idx,qp);
   }
   field_side(sideSet_idx) /= meas;
@@ -98,13 +98,13 @@ operator() (const Dim1_Tag& tag, const int& sideSet_idx) const {
 
   MeshScalarT meas = 0.0;
       
-  for (int qp(0); qp<dimsArray[1]; ++qp)
+  for (unsigned int qp(0); qp<dimsArray[1]; ++qp)
     meas += w_measure(sideSet_idx,qp);
 
-  for (int i(0); i<dimsArray[2]; ++i)
+  for (unsigned int i(0); i<dimsArray[2]; ++i)
   {
     field_side(sideSet_idx,i) = 0;
-    for (int qp(0); qp<dimsArray[1]; ++qp)
+    for (unsigned int qp(0); qp<dimsArray[1]; ++qp)
       field_side(sideSet_idx,i) += field_qp(sideSet_idx,qp,i)*w_measure(sideSet_idx,qp);
     field_side(sideSet_idx,i) /= meas;
   }
@@ -118,15 +118,15 @@ operator() (const Dim2_Tag& tag, const int& sideSet_idx) const {
 
   MeshScalarT meas = 0.0;
       
-  for (int qp(0); qp<dimsArray[1]; ++qp)
+  for (unsigned int qp(0); qp<dimsArray[1]; ++qp)
     meas += w_measure(sideSet_idx,qp);
 
-  for (int i(0); i<dimsArray[2]; ++i)
+  for (unsigned int i(0); i<dimsArray[2]; ++i)
   {
-    for (int j(0); j<dimsArray[3]; ++j)
+    for (unsigned int j(0); j<dimsArray[3]; ++j)
     {
       field_side(sideSet_idx,i,j) = 0;
-      for (int qp(0); qp<dimsArray[1]; ++qp)
+      for (unsigned int qp(0); qp<dimsArray[1]; ++qp)
         field_side(sideSet_idx,i,j) += field_qp(sideSet_idx,qp,i,j)*w_measure(sideSet_idx,qp);
       field_side(sideSet_idx,i,j) /= meas;
     }

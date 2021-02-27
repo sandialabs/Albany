@@ -77,8 +77,7 @@ KOKKOS_INLINE_FUNCTION
 void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::
 operator() (const FluxDiv_Tag& tag, const int& sideSet_idx) const {
 
-  ScalarT t = 0;
-  for (int qp=0; qp<numSideQPs; ++qp)
+  for (unsigned int qp=0; qp<numSideQPs; ++qp)
   {
     ScalarT grad_thickness_tmp[2] = {0.0, 0.0};
     for (std::size_t dim = 0; dim < numSideDims; ++dim)

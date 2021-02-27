@@ -88,7 +88,7 @@ operator() (const Surrogate_Tag& tag, const int& sideSet_idx) const {
 
   const ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
 
-  for (int pt=0; pt<numPts; ++pt) {
+  for (unsigned int pt=0; pt<numPts; ++pt) {
     // N = P_o-P_w
     N (sideSet_idx,pt) = (1-alpha)*P_o(sideSet_idx,pt);
   }
@@ -100,7 +100,7 @@ KOKKOS_INLINE_FUNCTION
 void EffectivePressure<EvalT, Traits, IsStokes, Surrogate>::
 operator() (const NonSurrogate_Tag& tag, const int& sideSet_idx) const {
 
-  for (int node=0; node<numPts; ++node) {
+  for (unsigned int node=0; node<numPts; ++node) {
     // N = P_o - P_w
     N (sideSet_idx,node) = P_o(sideSet_idx,node) - P_w(sideSet_idx,node);
   }
@@ -140,7 +140,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
         const int cell = sideSet.elem_LID(sideSet_idx);
         const int side = sideSet.side_local_id(sideSet_idx);
 
-        for (int pt=0; pt<numPts; ++pt) {
+        for (unsigned int pt=0; pt<numPts; ++pt) {
           // N = P_o-P_w
           N (cell,side,pt) = (1-alpha)*P_o(cell,side,pt);
         }
@@ -157,7 +157,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
         const int cell = sideSet.elem_LID(sideSet_idx);
         const int side = sideSet.side_local_id(sideSet_idx);
 
-        for (int node=0; node<numPts; ++node) {
+        for (unsigned int node=0; node<numPts; ++node) {
           // N = P_o - P_w
           N (cell,side,node) = P_o(cell,side,node) - P_w(cell,side,node);
         }

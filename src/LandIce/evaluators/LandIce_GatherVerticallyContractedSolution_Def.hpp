@@ -127,7 +127,7 @@ operator() (const ResidualScalar_Tag& tag, const int& sideSet_idx) const {
   for (int node = 0; node < numSideNodes; ++node) {
     double contrSol[3] = {0.0, 0.0, 0.0};
     for(int il=0; il<this->numLayers+1; ++il) {
-      for(int comp=0; comp<this->vecDim; ++comp)
+      for(unsigned int comp=0; comp<this->vecDim; ++comp)
         contrSol[comp] += this->x_constView_device(this->localDOFView(sideSet_idx, node, il, comp+this->offset))*this->quadWeights(il);
     }
     this->contractedSol(sideSet_idx,node) = contrSol[0];
@@ -147,10 +147,10 @@ operator() (const ResidualVector_Tag& tag, const int& sideSet_idx) const {
   for (int node = 0; node < numSideNodes; ++node) {
     double contrSol[3] = {0.0, 0.0, 0.0};
     for(int il=0; il<this->numLayers+1; ++il) {
-      for(int comp=0; comp<this->vecDim; ++comp)
+      for(unsigned int comp=0; comp<this->vecDim; ++comp)
         contrSol[comp] += this->x_constView_device(this->localDOFView(sideSet_idx, node, il, comp+this->offset))*this->quadWeights(il);
     }
-    for(int comp=0; comp<this->vecDim; ++comp) {
+    for(unsigned int comp=0; comp<this->vecDim; ++comp) {
       this->contractedSol(sideSet_idx,node,comp) = contrSol[comp];
     }
   }
@@ -213,11 +213,11 @@ evaluateFields(typename Traits::EvalData workset)
 
         //we only consider elements on the top.
         GO baseId;
-        for (unsigned int i = 0; i < numSideNodes; ++i) {
+        for (int i = 0; i < numSideNodes; ++i) {
           const std::size_t node = side.node[i];
           baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
           std::vector<double> contrSol(this->vecDim,0);
-          for(unsigned int il=0; il<this->numLayers+1; ++il) {
+          for(int il=0; il<this->numLayers+1; ++il) {
             const GO gnode = layeredMeshNumbering.getId(baseId, il);
             const LO inode = ov_node_indexer.getLocalElement(gnode);
             for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -291,7 +291,7 @@ evaluateFields(typename Traits::EvalData workset)
         const std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for(unsigned int il=0; il<this->numLayers+1; ++il) {
+        for(int il=0; il<this->numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -302,24 +302,24 @@ evaluateFields(typename Traits::EvalData workset)
           if(this->isVector) {
             for(unsigned int comp=0; comp<this->vecDim; ++comp) {
               this->contractedSol(sideSet_idx,i,comp) = FadType(this->contractedSol(sideSet_idx,i,comp).size(), contrSol[comp]);
-              for(unsigned int il=0; il<this->numLayers+1; ++il)
+              for(int il=0; il<this->numLayers+1; ++il)
                 this->contractedSol(sideSet_idx,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset) = this->quadWeights(il)*workset.j_coeff;
             }
           } else {
             this->contractedSol(sideSet_idx,i) = FadType(this->contractedSol(sideSet_idx,i).size(), contrSol[0]);
-            for(unsigned int il=0; il<this->numLayers+1; ++il)
+            for(int il=0; il<this->numLayers+1; ++il)
               this->contractedSol(sideSet_idx,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset) = this->quadWeights(il)*workset.j_coeff;
           } 
         } else {
           if(this->isVector) {
             for(unsigned int comp=0; comp<this->vecDim; ++comp) {
               this->contractedSol(elem_LID,elem_side,i,comp) = FadType(this->contractedSol(elem_LID,elem_side,i,comp).size(), contrSol[comp]);
-              for(unsigned int il=0; il<this->numLayers+1; ++il)
+              for(int il=0; il<this->numLayers+1; ++il)
                 this->contractedSol(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset) = this->quadWeights(il)*workset.j_coeff;
             }
           } else {
             this->contractedSol(elem_LID,elem_side,i) = FadType(this->contractedSol(elem_LID,elem_side,i).size(), contrSol[0]);
-            for(unsigned int il=0; il<this->numLayers+1; ++il)
+            for(int il=0; il<this->numLayers+1; ++il)
               this->contractedSol(elem_LID,elem_side,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset) = this->quadWeights(il)*workset.j_coeff;
           } 
         }
@@ -380,7 +380,7 @@ evaluateFields(typename Traits::EvalData workset)
         const std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for(unsigned int il=0; il<this->numLayers+1; ++il) {
+        for(int il=0; il<this->numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -461,7 +461,7 @@ evaluateFields(typename Traits::EvalData workset)
         const std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for (unsigned int il=0; il<this->numLayers+1; ++il) {
+        for (int il=0; il<this->numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -511,14 +511,14 @@ evaluateFields(typename Traits::EvalData workset)
   bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
   bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
   bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
-  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
+  //bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
   bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
 
   // is_x_active is true if we compute the Hessian-vector product contributions of either:
   // Hv_g_xx, Hv_g_xp, Hv_f_xx, or Hv_f_xp, i.e. if the first derivative is w.r.t. the solution.
   // If one of those is active, we have to initialize the first level of AD derivatives:
   // .fastAccessDx().val().
-  const bool is_x_active = g_xx_is_active || g_xp_is_active || f_xx_is_active || f_xp_is_active;
+  //const bool is_x_active = g_xx_is_active || g_xp_is_active || f_xx_is_active || f_xp_is_active;
 
   // is_x_direction_active is true if we compute the Hessian-vector product contributions of either:
   // Hv_g_xx, Hv_g_px, Hv_f_xx, or Hv_f_px, i.e. if the second derivative is w.r.t. the solution direction.
@@ -573,7 +573,7 @@ evaluateFields(typename Traits::EvalData workset)
         std::size_t node = side.node[i];
         baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
         std::vector<double> contrSol(this->vecDim,0);
-        for (unsigned int il=0; il<this->numLayers+1; ++il) {
+        for (int il=0; il<this->numLayers+1; ++il) {
           const GO gnode = layeredMeshNumbering.getId(baseId, il);
           const LO inode = ov_node_indexer.getLocalElement(gnode);
           for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -582,7 +582,7 @@ evaluateFields(typename Traits::EvalData workset)
         std::vector<double> contrDirection(this->vecDim,0);
 
         if (g_xx_is_active||g_px_is_active)
-          for (unsigned int il=0; il<this->numLayers+1; ++il) {
+          for (int il=0; il<this->numLayers+1; ++il) {
             const GO gnode = layeredMeshNumbering.getId(baseId, il);
             const LO inode = ov_node_indexer.getLocalElement(gnode);
             for(unsigned int comp=0; comp<this->vecDim; ++comp)
@@ -596,7 +596,7 @@ evaluateFields(typename Traits::EvalData workset)
               if (g_xx_is_active||g_px_is_active)
                 this->contractedSol(sideSet_idx,i,comp).val().fastAccessDx(0) = contrDirection[comp];
               if (g_xx_is_active||g_xp_is_active)
-                for(unsigned int il=0; il<this->numLayers+1; ++il)
+                for(int il=0; il<this->numLayers+1; ++il)
                   this->contractedSol(sideSet_idx,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
             }
           } else {
@@ -604,7 +604,7 @@ evaluateFields(typename Traits::EvalData workset)
             if (g_xx_is_active||g_px_is_active)
               this->contractedSol(sideSet_idx,i).val().fastAccessDx(0) = contrDirection[0];
             if (g_xx_is_active||g_xp_is_active)
-              for(unsigned int il=0; il<this->numLayers+1; ++il)
+              for(int il=0; il<this->numLayers+1; ++il)
                 this->contractedSol(sideSet_idx,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
           }
         } else {
@@ -614,7 +614,7 @@ evaluateFields(typename Traits::EvalData workset)
               if (g_xx_is_active||g_px_is_active)
                 this->contractedSol(elem_LID,elem_side,i,comp).val().fastAccessDx(0) = contrDirection[comp];
               if (g_xx_is_active||g_xp_is_active)
-                for(unsigned int il=0; il<this->numLayers+1; ++il)
+                for(int il=0; il<this->numLayers+1; ++il)
                   this->contractedSol(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
             }
           } else {
@@ -622,7 +622,7 @@ evaluateFields(typename Traits::EvalData workset)
             if (g_xx_is_active||g_px_is_active)
               this->contractedSol(elem_LID,elem_side,i).val().fastAccessDx(0) = contrDirection[0];
             if (g_xx_is_active||g_xp_is_active)
-              for(unsigned int il=0; il<this->numLayers+1; ++il)
+              for(int il=0; il<this->numLayers+1; ++il)
                 this->contractedSol(elem_LID,elem_side,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
           }
         }

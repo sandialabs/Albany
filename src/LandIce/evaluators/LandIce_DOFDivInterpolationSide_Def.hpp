@@ -58,15 +58,15 @@ KOKKOS_INLINE_FUNCTION
 void DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
 operator() (const DivInterpolation_Tag& tag, const int& sideSet_idx) const {
   
-  for (int qp=0; qp<numSideQPs; ++qp)
+  for (unsigned int qp=0; qp<numSideQPs; ++qp)
   {
     val_qp(sideSet_idx,qp) = 0.;
-    for (int dim=0; dim<numDims; ++dim)
+    for (unsigned int dim=0; dim<numDims; ++dim)
     {
-      for (int node=0; node<numSideNodes; ++node)
+      for (unsigned int node=0; node<numSideNodes; ++node)
       {
         MeshScalarT gradBF_non_intrinsic = 0.0;
-        for (int itan=0; itan<numDims; ++itan)
+        for (unsigned int itan=0; itan<numDims; ++itan)
         {
           gradBF_non_intrinsic += tangents(sideSet_idx,qp,dim,itan)*gradBF(sideSet_idx,node,qp,itan);
         }
@@ -97,15 +97,15 @@ evaluateFields(typename Traits::EvalData workset)
       const int cell = sideSet.elem_LID(sideSet_idx);
       const int side = sideSet.side_local_id(sideSet_idx);
 
-      for (int qp=0; qp<numSideQPs; ++qp)
+      for (unsigned int qp=0; qp<numSideQPs; ++qp)
       {
         val_qp(cell,side,qp) = 0.;
-        for (int dim=0; dim<numDims; ++dim)
+        for (unsigned int dim=0; dim<numDims; ++dim)
         {
-          for (int node=0; node<numSideNodes; ++node)
+          for (unsigned int node=0; node<numSideNodes; ++node)
           {
             MeshScalarT gradBF_non_intrinsic = 0.0;
-            for (int itan=0; itan<numDims; ++itan)
+            for (unsigned int itan=0; itan<numDims; ++itan)
             {
               gradBF_non_intrinsic += tangents(cell,side,qp,dim,itan)*gradBF(cell,side,node,qp,itan);
             }

@@ -355,14 +355,14 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_GivenFieldParam_Tag& tag, const int& sideSet_idx) const {
-  for (int ipt=0; ipt<dim; ++ipt)
+  for (unsigned int ipt=0; ipt<dim; ++ipt)
     beta(sideSet_idx,ipt) = given_field_param(sideSet_idx,ipt);
 }
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_GivenField_Tag& tag, const int& sideSet_idx) const {
-  for (int ipt=0; ipt<dim; ++ipt)
+  for (unsigned int ipt=0; ipt<dim; ++ipt)
     beta(sideSet_idx,ipt) = given_field(sideSet_idx,ipt);
 }
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
@@ -427,7 +427,7 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_ExpGivenFieldParam_Nodal_Tag& tag, const int& sideSet_idx) const {
-  for (int ipt=0; ipt<dim; ++ipt)
+  for (unsigned int ipt=0; ipt<dim; ++ipt)
     beta(sideSet_idx,ipt) = std::exp(given_field_param(sideSet_idx,ipt));
 }
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
@@ -444,7 +444,7 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_ExpGivenField_Nodal_Tag& tag, const int& sideSet_idx) const {
-  for (int ipt=0; ipt<dim; ++ipt)
+  for (unsigned int ipt=0; ipt<dim; ++ipt)
     beta(sideSet_idx,ipt) = std::exp(given_field(sideSet_idx,ipt));
 }
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
@@ -676,10 +676,10 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
 
         case GIVEN_FIELD:
           if (is_given_field_param) {
-            for (int ipt=0; ipt<dim; ++ipt)
+            for (unsigned int ipt=0; ipt<dim; ++ipt)
               beta(cell,side,ipt) = given_field_param(cell,side,ipt);
           } else {
-            for (int ipt=0; ipt<dim; ++ipt)
+            for (unsigned int ipt=0; ipt<dim; ++ipt)
               beta(cell,side,ipt) = given_field(cell,side,ipt);
           }
           break;
@@ -734,10 +734,10 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
         case EXP_GIVEN_FIELD:
           if(nodal || interpolate_then_exponentiate) {
             if (is_given_field_param) {
-              for (int ipt=0; ipt<dim; ++ipt)
+              for (unsigned int ipt=0; ipt<dim; ++ipt)
                 beta(cell,side,ipt) = std::exp(given_field_param(cell,side,ipt));
             } else {
-              for (int ipt=0; ipt<dim; ++ipt)
+              for (unsigned int ipt=0; ipt<dim; ++ipt)
                 beta(cell,side,ipt) = std::exp(given_field(cell,side,ipt));
             }
           } else {

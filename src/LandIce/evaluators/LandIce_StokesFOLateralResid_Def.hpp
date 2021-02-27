@@ -96,12 +96,12 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
   int sideDim = cellType->getDimension()-1;
   int nodeMax = 0;
-  for (int side=0; side<numSides; ++side) {
+  for (unsigned int side=0; side<numSides; ++side) {
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
     nodeMax = std::max(nodeMax, thisSideNodes);
   }
   sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
-  for (int side=0; side<numSides; ++side) {
+  for (unsigned int side=0; side<numSides; ++side) {
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (int node=0; node<thisSideNodes; ++node) {
@@ -145,7 +145,7 @@ operator() (const GivenImmersedRatio_Tag& tag, const int& sideSet_idx) const {
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  for (int qp=0; qp<numSideQPs; ++qp) {
+  for (unsigned int qp=0; qp<numSideQPs; ++qp) {
     const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
     OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*given_immersed_ratio*given_immersed_ratio); //[kPa]
     if(add_melange_force)
@@ -186,7 +186,7 @@ operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const 
   const ThicknessScalarT threshold (1e-8);
   const OutputScalarT one (1.0);
 
-  for (int qp=0; qp<numSideQPs; ++qp) {
+  for (unsigned int qp=0; qp<numSideQPs; ++qp) {
     const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
     const MeshScalarT      s = elevation(sideSet_idx,qp); //[km]
     const OutputScalarT immersed_ratio = H>threshold ? KU::max(zero,KU::min(one,1-s/H)) : zero;

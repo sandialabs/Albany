@@ -79,12 +79,12 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
   using PHX::MDALayout;
 
   int nodeMax = 0;
-  for (int side=0; side<numSides; ++side) {
+  for (unsigned int side=0; side<numSides; ++side) {
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
     nodeMax = std::max(nodeMax, thisSideNodes);
   }
   sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
-  for (int side=0; side<numSides; ++side) {
+  for (unsigned int side=0; side<numSides; ++side) {
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (int node=0; node<thisSideNodes; ++node) {

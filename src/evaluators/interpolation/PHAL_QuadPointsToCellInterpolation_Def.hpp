@@ -59,11 +59,11 @@ operator() (const Dim0_Tag& tag, const int& cell) const {
   
   MeshScalarT meas = 0.0;
       
-  for (int qp(0); qp<dimsArray[1]; ++qp)
+  for (unsigned int qp(0); qp<dimsArray[1]; ++qp)
     meas += w_measure(cell,qp);
 
   field_cell(cell) = 0.0;
-  for (int qp(0); qp<dimsArray[1]; ++qp) {
+  for (unsigned int qp(0); qp<dimsArray[1]; ++qp) {
     field_cell(cell) += field_qp(cell,qp)*w_measure(cell,qp);
   }
   field_cell(cell) /= meas;

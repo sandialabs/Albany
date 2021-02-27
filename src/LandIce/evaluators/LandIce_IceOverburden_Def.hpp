@@ -66,7 +66,7 @@ KOKKOS_INLINE_FUNCTION
 void IceOverburden<EvalT, Traits, IsStokes>::
 operator() (const IceOverburden_Tag& tag, const int& sideSet_idx) const {
 
-  for (int pt=0; pt<numPts; ++pt) {
+  for (unsigned int pt=0; pt<numPts; ++pt) {
     P_o (sideSet_idx,pt) = rho_i*g*H(sideSet_idx,pt);
   }
 
@@ -100,7 +100,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
       const int cell = sideSet.elem_LID(sideSet_idx);
       const int side = sideSet.side_local_id(sideSet_idx);
 
-      for (int pt=0; pt<numPts; ++pt) {
+      for (unsigned int pt=0; pt<numPts; ++pt) {
         P_o (cell,side,pt) = rho_i*g*H(cell,side,pt);
       }
     }

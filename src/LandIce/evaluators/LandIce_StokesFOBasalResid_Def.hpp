@@ -119,11 +119,11 @@ operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const {
 
   ScalarT local_res[2];
 
-  for (int node=0; node<numSideNodes; ++node) {
+  for (unsigned int node=0; node<numSideNodes; ++node) {
     local_res[0] = 0.0;
     local_res[1] = 0.0;
-    for (int dim=0; dim<vecDimFO; ++dim) {
-      for (int qp=0; qp<numSideQPs; ++qp) {
+    for (unsigned int dim=0; dim<vecDimFO; ++dim) {
+      for (unsigned int qp=0; qp<numSideQPs; ++qp) {
         local_res[dim] += (ff + beta(sideSet_idx,qp)*u(sideSet_idx,qp,dim))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
       }
       Kokkos::atomic_add(&residual(cell,sideNodes(side,node),dim), local_res[dim]);
@@ -152,11 +152,11 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Tr
       const int cell = sideSet.elem_LID(sideSet_idx);
       const int side = sideSet.side_local_id(sideSet_idx);
 
-      for (int node=0; node<numSideNodes; ++node) {
+      for (unsigned int node=0; node<numSideNodes; ++node) {
         local_res[0] = 0.0;
         local_res[1] = 0.0;
-        for (int dim=0; dim<vecDimFO; ++dim) {
-          for (int qp=0; qp<numSideQPs; ++qp) {
+        for (unsigned int dim=0; dim<vecDimFO; ++dim) {
+          for (unsigned int qp=0; qp<numSideQPs; ++qp) {
             local_res[dim] += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
           }
           residual(cell,sideNodes(side,node),dim) += local_res[dim];
