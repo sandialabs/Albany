@@ -155,7 +155,17 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   std::vector<PHX::DataLayout::size_type> dims;
   u.fieldTag().dataLayout().dimensions(dims);
 
-  qp_temp_buffer = Kokkos::createDynRankView(u.get_view(),"temporary_buffer", dims[0]*dims[1]*dims[2]*dims[3]);
+  if (useCollapsedSidesets) {
+    TEUCHOS_TEST_FOR_EXCEPTION (dims.size() < 3, Teuchos::Exceptions::InvalidParameter, 
+      "Error! Field layout has fewer dimensions than expected. (StokesFOSynteticTestBC)\n");
+
+    qp_temp_buffer = Kokkos::createDynRankView(u.get_view(),"temporary_buffer", dims[0]*dims[1]*dims[2]);
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (dims.size() < 4, Teuchos::Exceptions::InvalidParameter, 
+      "Error! Field layout has fewer dimensions than expected. (StokesFOSynteticTestBC)\n");
+
+    qp_temp_buffer = Kokkos::createDynRankView(u.get_view(),"temporary_buffer", dims[0]*dims[1]*dims[2]*dims[3]);
+  }
 }
 
 //**********************************************************************
