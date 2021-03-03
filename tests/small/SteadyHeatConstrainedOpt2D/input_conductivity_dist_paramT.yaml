@@ -61,7 +61,6 @@ ANONYMOUS:
         Min And Max Of Random Parameter Guess: [-1.0e+00, 2.0e+00]
         Bound Constrained: true
 
-        Use Old Reduced Space Interface: false
         Step Method: "Line Search"
         bound_eps: 1.0e-01
         Max Iterations: 10

@@ -999,7 +999,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
 
     // When using the Old Reduced Space ROL Interface, the solution printing is 
     // handled in Piro using observers. Otherwise we take care of printing here.
-    if(analysisParams.isSublist("ROL") && !analysisParams.sublist("ROL").get("Use Old Reduced Space Interface", false)) {
+    if(analysisParams.isSublist("ROL")) {
       int iter = opt_paramList.get("Optimizer Iteration Number", -1);
       static int iteration = -1;
       int write_interval = analysisParams.get("Write Interval",1);

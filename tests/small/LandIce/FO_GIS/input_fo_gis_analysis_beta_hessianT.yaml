@@ -157,7 +157,6 @@ ANONYMOUS:
         Bound Constrained: true
         bound_eps: 1.00000000000000005e-01
 
-        Use Old Reduced Space Interface: false
         Full Space: false
         Use NOX Solver: false
 

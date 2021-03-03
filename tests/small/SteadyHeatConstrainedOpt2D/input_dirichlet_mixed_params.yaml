@@ -70,7 +70,6 @@ ANONYMOUS:
         Min And Max Of Random Parameter Guess: [-1.0e+00, 2.0e+00]
         Bound Constrained: true
 
-        Use Old Reduced Space Interface: true
         Full Space: false
         Hessian Dot Product: false
         Use NOX Solver: false

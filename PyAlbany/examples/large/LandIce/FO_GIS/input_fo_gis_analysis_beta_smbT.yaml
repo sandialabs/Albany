@@ -195,7 +195,6 @@ ANONYMOUS:
         Step Method: "Trust Region"
         #Step Method: "Line Search"
 
-        Use Old Reduced Space Interface: false
         Full Space: false
         Use NOX Solver: true
 
