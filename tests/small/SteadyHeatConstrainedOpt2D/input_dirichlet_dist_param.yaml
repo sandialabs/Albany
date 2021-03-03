@@ -53,8 +53,6 @@ ANONYMOUS:
         Bound Constrained: true
         bound_eps: 1.00000000000000006e-01
         
-        Use Old Reduced Space Interface: true    
-        
         ROL Options: 
           General: 
             Variable Objective Function: false

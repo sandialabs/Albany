@@ -253,7 +253,6 @@ ANONYMOUS:
 
         Step Method: "Trust Region"
 
-        Use Old Reduced Space Interface: false
         Full Space: false
         Hessian Dot Product: true
         Use NOX Solver: true
