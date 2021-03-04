@@ -142,4 +142,10 @@ evaluateDerivative(const double current_time,
                                g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
 }
 
+void
+KLResponseFunction::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out){
+  response->printResponse(out);
+}
+
 } // namespace Albany

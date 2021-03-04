@@ -128,6 +128,8 @@ public:
     const std::string& dist_param_direction_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
 
+  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
+
 private:
 
   int MatrixMarketFile (const char *filename, const Teuchos::RCP<Thyra_MultiVector>& mv);
@@ -139,6 +141,8 @@ private:
   Teuchos::RCP<Thyra_Vector> diff;
 
   bool solutionLoaded;
+
+  Teuchos::RCP<Thyra_Vector> g_;
 };
 
 struct NormTwo {

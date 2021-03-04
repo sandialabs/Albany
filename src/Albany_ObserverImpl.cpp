@@ -70,4 +70,15 @@ parameterChanged(const std::string& param)
   app_->getPhxSetup()->init_unsaved_param(param);
 }
 
+void ObserverImpl::
+observeResponse(int iter)
+{
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  for (int j = 0; j < app_->getNumResponses(); ++j) {
+    *out << "Iteration " << iter << " response " << j << ":";
+    app_->getResponse(j)->printResponse(out);
+    *out << std::endl;
+  }
+}
+
 } // namespace Albany
