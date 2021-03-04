@@ -126,6 +126,9 @@ public:
     const std::string& dist_param_direction_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
 
+    virtual void
+    printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
+
 private:
 
   Teuchos::RCP<const Application> app_;
@@ -139,6 +142,8 @@ private:
   Teuchos::RCP<SolutionPrinter> sol_printer_;
 
   void updateCASManager();
+
+  Teuchos::RCP<Thyra_Vector> g_;
 };
 
 } // namespace Albany

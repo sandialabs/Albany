@@ -142,6 +142,9 @@ namespace Albany {
       const Teuchos::RCP<Thyra_MultiVector>& Hv_dp) = 0;
     //@}
 
+    virtual void printResponse(
+      Teuchos::RCP<Teuchos::FancyOStream> out
+    ) = 0;
   private:
 
     //! Private to prohibit copying

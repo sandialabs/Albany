@@ -72,6 +72,8 @@ namespace Albany {
       const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
       const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
 
+  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
+
   private:
 
     //! Evaluate distributed parameter derivative = dg/dp
@@ -136,6 +138,7 @@ namespace Albany {
     
     SolutionTwoNormResponseFunction& operator=(const SolutionTwoNormResponseFunction&);
 
+    Teuchos::RCP<Thyra_Vector> g_;
   };
 
 } // namespace Albany

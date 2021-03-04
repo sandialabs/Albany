@@ -34,6 +34,8 @@ public:
 
   void parameterChanged(
       const std::string& param);
+  
+  void observeResponse(int iter);
 };
 
 } // namespace Albany

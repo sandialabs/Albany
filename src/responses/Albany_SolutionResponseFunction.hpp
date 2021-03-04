@@ -136,6 +136,8 @@ public:
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp) override;
   //@}
 
+  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
+
 protected:
   
   void cullSolution(const Teuchos::RCP<const Thyra_MultiVector>& x, 
@@ -154,6 +156,8 @@ protected:
 
   //! Factory for the culling operator
   Teuchos::RCP<ThyraCrsMatrixFactory> cull_op_factory;
+
+  Teuchos::RCP<Thyra_Vector> g_;
 };
 
 } // namespace Albany

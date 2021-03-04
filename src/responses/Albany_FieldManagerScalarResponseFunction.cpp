@@ -15,6 +15,7 @@
 
 #include "Albany_Hessian.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Thyra_VectorStdOps.hpp"
 
 namespace Albany
 {
@@ -254,6 +255,11 @@ evaluateResponse(const double current_time,
 
   // Perform fill via field manager
   evaluate<PHAL::AlbanyTraits::Residual>(workset);
+
+  if (g_.is_null())
+    g_ = Thyra::createMember(g->space());
+
+  g_->assign(*g);
 }
 
 void FieldManagerScalarResponseFunction::
@@ -658,5 +664,19 @@ evaluate_HessVecProd_pp(
     workset.hessianWorkset.hess_vec_prod_g_pp = Hv_dp;
     evaluate<PHAL::AlbanyTraits::HessianVec>(workset);
   }
+}
+
+void
+FieldManagerScalarResponseFunction::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
+{
+  if (g_.is_null()) {
+    *out << " the response has not been evaluated yet!";
+    return;
+  }
+
+  std::size_t precision = 8;
+  std::size_t value_width = precision + 4;
+  *out << std::setw(value_width) << Thyra::get_ele(*g_,0);
 }
 } // namespace Albany

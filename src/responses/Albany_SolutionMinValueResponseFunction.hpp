@@ -119,6 +119,8 @@ public:
     const std::string& dist_param_direction_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
 
+  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
+
 protected:
 
   //! Compute min value
@@ -134,6 +136,8 @@ protected:
 
   //! Flag for interleaved verus blocked unknown ordering
   DiscType interleavedOrdering;
+
+  Teuchos::RCP<Thyra_Vector> g_;
 };
 
 } // namespace Albany

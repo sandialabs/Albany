@@ -117,6 +117,8 @@ public:
     const std::string& dist_param_direction_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp);
 
+  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
+
 private:
 
   void evaluateResponseImpl (const Thyra_Vector& x,
@@ -125,6 +127,7 @@ private:
   Teuchos::RCP<Thyra_Vector>      one;
   Teuchos::RCP<Thyra_MultiVector> ones;
 
+  Teuchos::RCP<Thyra_Vector> g_;
 };
 
 } // namespace Albany

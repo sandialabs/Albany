@@ -37,6 +37,11 @@ evaluateResponse(const double /*current_time*/,
 {
   Teuchos::ScalarTraits<ST>::magnitudeType twonorm = x->norm_2();
   g->assign(twonorm);
+
+  if (g_.is_null())
+    g_ = Thyra::createMember(g->space());
+
+  g_->assign(*g);
 }
 
 void
@@ -221,5 +226,25 @@ evaluate_HessVecProd_pp(
 {
   if (!Hv_dp.is_null()) {
     Hv_dp->assign(0.0);
+  }
+}
+
+void
+Albany::SolutionTwoNormResponseFunction::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
+{
+  if (g_.is_null()) {
+    *out << " the response has not been evaluated yet!";
+    return;
+  }
+
+  std::size_t precision = 8;
+  std::size_t value_width = precision + 4;
+  int gsize = g_->space()->dim();
+
+  for (int j = 0; j < gsize; j++) {
+    *out << std::setw(value_width) << Thyra::get_ele(*g_,j);
+    if (j < gsize-1)
+      *out << ", ";
   }
 }
