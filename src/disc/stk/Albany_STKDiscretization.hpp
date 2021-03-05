@@ -63,8 +63,12 @@ struct NodalDOFsStructContainer
   const DOFsStruct&
   getDOFsStruct(const std::string& field_name) const
   {
-    return fieldToMap.find(field_name)->second->second;
-  };  // TODO handole errors
+    const auto iter = fieldToMap.find(field_name);
+    if (iter == fieldToMap.end())
+      TEUCHOS_TEST_FOR_EXCEPTION(true,
+          std::logic_error, field_name + " does not exist in fieldToMap");
+    return iter->second->second;
+  };
 
   // IKT: added the following function, which may be useful for debugging.
   void
