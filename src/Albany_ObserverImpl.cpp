@@ -71,6 +71,45 @@ parameterChanged(const std::string& param)
 }
 
 void ObserverImpl::
+parametersChanged()
+{
+  std::vector<std::string> p_names;
+
+  const Teuchos::RCP<const Teuchos::ParameterList> pl = app_->getProblemPL();
+
+  if (Teuchos::nonnull(pl)) {
+    auto params_pl = pl->sublist("Parameters");
+    if (params_pl.isParameter("Number Of Parameters"))
+    {
+      int num_parameters = params_pl.get<int>("Number Of Parameters");
+      for (int i=0; i<num_parameters; ++i)
+      {
+        const Teuchos::ParameterList& pvi = params_pl.sublist(Albany::strint("Parameter",i));
+
+        std::string parameterType = "Scalar";
+
+        if(pvi.isParameter("Type"))
+          parameterType = pvi.get<std::string>("Type");
+        
+        if (parameterType == "Scalar" || parameterType == "Distributed")
+          p_names.push_back(pvi.get<std::string>("Name"));
+        else {
+          int m = pvi.get<int>("Dimension");
+          for (int j=0; j<m; ++j)
+          {
+            const Teuchos::ParameterList& pj = pvi.sublist(Albany::strint("Scalar",j));
+            p_names.push_back(pj.get<std::string>("Name"));
+          }
+        }
+      }
+
+      for (auto p_name : p_names)
+        this->parameterChanged(p_name);
+    }
+  }
+}
+
+void ObserverImpl::
 observeResponse(int iter)
 {
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
