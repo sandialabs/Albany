@@ -75,7 +75,7 @@ observeResponse(int iter)
 {
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
   for (int j = 0; j < app_->getNumResponses(); ++j) {
-    *out << "Iteration " << iter << " response " << j << ":";
+    *out << "Optimization Iteration " << iter << ", response " << j << ":";
     app_->getResponse(j)->printResponse(out);
     *out << std::endl;
   }

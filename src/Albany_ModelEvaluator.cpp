@@ -996,20 +996,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       }
       opt_paramList.set("Optimization Variables Changed", false);
     }
-
-    if(analysisParams.isSublist("ROL")) {
-      int iter = opt_paramList.get("Optimizer Iteration Number", -1);
-      static int iteration = -1;
-      int write_interval = analysisParams.get("Write Interval",1);
-      if((iter >= 0) && (iter != iteration) && (iteration%write_interval == 0))
-      {
-        Teuchos::TimeMonitor timer(*Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"));
-        const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
-        observer.observeSolution(iter, *x, Teuchos::null, Teuchos::null, Teuchos::null);
-        observer.observeResponse(iter);
-        iteration = iter;
-      }
-    }
     transposeJacobian = opt_paramList.get("Compute Transposed Jacobian", false);
   }
 
@@ -1306,6 +1292,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     }
   }
   // Response functions
+  bool response_available = false;
   for (int j = 0; j < outArgs.Ng(); ++j) {
     Teuchos::RCP<Thyra_Vector> g_out = outArgs.get_g(j);
 
@@ -1336,6 +1323,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
           dummy_deriv);
       // Set g_out to null to indicate that g_out was evaluated.
       g_out = Teuchos::null;
+      response_available = true;
     }
 
     // dg/dp
@@ -1352,6 +1340,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
             g_out, Teuchos::null, dgdp_out);
         // Set g_out to null to indicate that g_out was evaluated.
         g_out = Teuchos::null;
+        response_available = true;
       }
     }
 
@@ -1472,6 +1461,30 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
 
     if (Teuchos::nonnull(g_out)) {
       app->evaluateResponse(j, curr_time, x, x_dot, x_dotdot, sacado_param_vec, g_out);
+      response_available = true;
+    }
+  }
+
+  if(analysisParams.isSublist("Optimization Status")) {
+    auto& opt_paramList = analysisParams.sublist("Optimization Status");
+    static int iteration = -1;
+    static bool print = false;
+    if(analysisParams.isSublist("ROL")) {
+      int iter = opt_paramList.get("Optimizer Iteration Number", -1);
+      int write_interval = analysisParams.get("Write Interval",1);
+      if((iter >= 0) && (iter != iteration) && (iteration%write_interval == 0))
+      {
+        Teuchos::TimeMonitor timer(*Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"));
+        const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
+        print = true;
+        iteration = iter;
+      }
+    }
+
+    if (print && response_available) {
+       observer.observeSolution(iteration, *x, Teuchos::null, Teuchos::null, Teuchos::null);
+       observer.observeResponse(iteration);
+       print = false;
     }
   }
 
