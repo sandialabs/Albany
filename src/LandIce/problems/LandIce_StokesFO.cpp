@@ -196,8 +196,20 @@ void StokesFO::setupEvaluatorRequests () {
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;
     ss_utils_needed[ssName][UtilityRequest::NORMALS  ] = true;
   }
-  if (viscosity_use_corrected_temperature)
+  if (viscosity_use_corrected_temperature) {
     build_interp_ev[surface_height_name][InterpolationRequest::CELL_VAL] = true;
+  }
+
+  if(neq > static_cast<unsigned>(vecDimFO)) {
+
+    auto& proj_lapl_params = params->sublist("LandIce L2 Projected Boundary Laplacian");
+    auto& ssName = proj_lapl_params.get<std::string>("Side Set Name",basalSideName);
+    std::string field_name = proj_lapl_params.get<std::string>("Field Name","basal_friction");
+    auto dof_name_auxiliary = "L2 Projected Boundary Laplacian";
+
+    ss_build_interp_ev[ssName][dof_name_auxiliary][IReq::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[ssName][field_name][IReq::GRAD_QP_VAL] = true;
+  }
 }
 
 } // namespace LandIce

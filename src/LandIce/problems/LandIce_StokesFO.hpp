@@ -270,23 +270,26 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     resid_name_auxiliary[0] = "L2 Projected Boundary Laplacian Residual";
     std::string aux_resid_scatter_tag = "Scatter Auxiliary Residual";
 
-    // ------------------- Interpolations and utilities ------------------ //
+    field_rank[dof_name_auxiliary[0]] = FRT::Scalar;
+    field_scalar_type[dof_name_auxiliary[0]] = FST::Scalar;
+
+    // ------------------- Gather/scatter evaluators ------------------ //
 
     // Gather solution field
     ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_name_auxiliary, 2);
     fm0.template registerEvaluator<EvalT> (ev);
 
+    // ev = evalUtils.constructGatherSolutionSideEvaluator(dof_name_auxiliary, ssName, cellType, 2, false);
+    // fm0.template registerEvaluator<EvalT> (ev);
+
+    // Project dof to side (keep same name)
+    ev = evalUtils.constructDOFCellToSideEvaluator(
+        dof_name_auxiliary[0], ssName, e2str(FL::Node) + " " + e2str(FRT::Scalar),
+        cellType, dof_name_auxiliary[0]);
+
     // Scatter residual
     ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(false, resid_name_auxiliary, Teuchos::rcpFromRef(extruded_params_levels), vecDimFO, aux_resid_scatter_tag);
     fm0.template registerEvaluator<EvalT> (ev);
-
-    // Project to side
-    ev = evalUtils.constructDOFCellToSideEvaluator(dof_name_auxiliary[0],ssName,"Node Scalar Sideset",cellType, dof_name_auxiliary[0]);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    //---- Interpolate velocity gradient on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator(field_name_side, ssName);
-    fm0.template registerEvaluator<EvalT>(ev);
 
     // -------------------------------- LandIce evaluators ------------------------- //
 
@@ -311,7 +314,7 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     //Output
     p->set<std::string>("L2 Projected Boundary Laplacian Residual Name", "L2 Projected Boundary Laplacian Residual");
 
-    ev = Teuchos::rcp(new LandIce::L2ProjectedBoundaryLaplacianResidualParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev = Teuchos::rcp(new L2ProjectedBoundaryLaplacianResidualParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     if (fieldManagerChoice == Albany::BUILD_RESID_FM) {

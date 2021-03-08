@@ -274,6 +274,8 @@ void StokesFOHydrology::setupEvaluatorRequests () {
   ss_build_interp_ev[basalSideName][surface_water_input_name][IReq::QP_VAL] = true; 
   ss_build_interp_ev[basalSideName][flow_factor_name][IReq::CELL_TO_SIDE] = true; 
   ss_build_interp_ev[basalSideName][ice_thickness_name][IReq::QP_VAL] = true; 
+
+  ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
 }
 
 } // namespace LandIce

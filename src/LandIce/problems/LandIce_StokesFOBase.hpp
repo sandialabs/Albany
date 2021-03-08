@@ -312,6 +312,15 @@ constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //       previous methods to detect if/how to build an interpolation
   //       evaluator
   constructInterpolationEvaluators<EvalT> (fm0);
+
+  if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
+    // Require scattering of residuals
+    for (const auto& s : scatter_names) {
+      PHX::Tag<typename EvalT::ScalarT> res_tag(s, dl->dummy);
+      fm0.requireField<EvalT>(res_tag);
+    }
+  }
+
 }
 
 template <typename EvalT>
@@ -757,10 +766,6 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
           ev = utils.constructDOFVecInterpolationSideEvaluator (fname_side, ss_name);
         }
         fm0.template registerEvaluator<EvalT> (ev);
-      } else if (needs[IReq::QP_VAL]) {
-        std::cout << "field " << fname_side << " needs qp interpolation, but:\n"
-                  << "  avail_2d[Node]: " << (is_available_2d(FL::Node) ? "yes" : "no") << "\n"
-                  << "  avail_2d[QP]: " << (is_available_2d(FL::QuadPoint) ? "yes" : "no") << "\n";
       }
 
       if (needs[IReq::GRAD_QP_VAL] && is_available_2d(FL::Node)) {
@@ -1078,13 +1083,6 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   ev = Teuchos::rcp(new StokesFOBodyForce<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
-
-  if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
-
-    // Require scattering of residual
-    PHX::Tag<typename EvalT::ScalarT> res_tag(scatter_names[0], dl->dummy);
-    fm0.requireField<EvalT>(res_tag);
-  }
 
   // ---------- Add time as a Sacado-ized parameter (only if specified) ------- //
   bool isTimeAParameter = false;

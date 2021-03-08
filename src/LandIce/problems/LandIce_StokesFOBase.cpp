@@ -100,7 +100,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   effective_pressure_name     = params->sublist("Variables Names").get<std::string>("Effective Pressure Name","effective_pressure");
   vertically_averaged_velocity_name = params->sublist("Variables Names").get<std::string>("Vertically Averaged Velocity Name","vertically_averaged_velocity");
   flux_divergence_name        = params->sublist("Variables Names").get<std::string>("Flux Divergence Name" ,"flux_divergence");
-  sliding_velocity_name       = params->sublist("Variables Names").get<std::string>("Sliding Velocity Name" ,"flux_divergence");
+  sliding_velocity_name       = params->sublist("Variables Names").get<std::string>("Sliding Velocity Name" ,"sliding_velocity");
 
   // Determine what Rigid Body Modes to compute and pass to the preconditioner
   std::string rmb_list_name = "LandIce Rigid Body Modes For Preconditioner";
@@ -413,7 +413,6 @@ void StokesFOBase::parseInputFields ()
     // Request QP interpolation for all input nodal fields
     if (loc==FL::Node) {
       build_interp_ev[stateName][IReq::QP_VAL] = true;
-      build_interp_ev[stateName][IReq::GRAD_QP_VAL] = rank != FRT::Gradient;
       build_interp_ev[stateName][IReq::CELL_VAL] = true;
     }
   }
@@ -497,7 +496,7 @@ void StokesFOBase::setFieldsProperties ()
   // If that's not the case for derived problems, they will update the st.
   setSingleFieldProperties(ice_thickness_name,                FRT::Scalar);
   setSingleFieldProperties(surface_height_name,               FRT::Scalar);
-  setSingleFieldProperties(vertically_averaged_velocity_name, FRT::Vector);
+  setSingleFieldProperties(vertically_averaged_velocity_name, FRT::Vector, FST::Scalar);
   setSingleFieldProperties(corrected_temperature_name,        FRT::Scalar);
   setSingleFieldProperties(bed_topography_name,               FRT::Scalar);
   setSingleFieldProperties(body_force_name,                   FRT::Vector);
@@ -551,7 +550,7 @@ void StokesFOBase::setupEvaluatorRequests ()
     }
     ss_build_interp_ev[ssName][flow_factor_name][IReq::CELL_TO_SIDE] = true;
     setSingleFieldProperties(effective_pressure_name, FRT::Scalar);
-    setSingleFieldProperties(sliding_velocity_name, FRT::Scalar);
+    setSingleFieldProperties(sliding_velocity_name,   FRT::Scalar, FST::Scalar);
 
     auto& bfc = it->sublist("Basal Friction Coefficient");
     const auto type = util::upper_case(bfc.get<std::string>("Type"));
