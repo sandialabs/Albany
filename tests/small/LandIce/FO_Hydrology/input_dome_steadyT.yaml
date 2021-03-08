@@ -43,7 +43,6 @@ ANONYMOUS:
           Bed Roughness: 4.0e-3
           Coulomb Friction Coefficient: 0.6
           Use log scalar parameters: false
-          Ice Softness Units: kPa^-3 s^-1
       BC 1:
         Type: Lateral
         Cubature Degree: 3
@@ -53,12 +52,11 @@ ANONYMOUS:
       Ice Density:                    910.0
       Ice Latent Heat:                  3.35e+05
       Gravity Acceleration:             9.8
-      Ice Softness:                     3.1558e-14
       Clausius-Clapeyron Coefficient:   0.0
     LandIce Viscosity:
       Type: 'Glen''s Law'
       Homotopy Parameter: 1.00000000000000006e-01
-      'Glen''s Law A': 1.00000000000000005e-04
+      Glen's Law A: 3.1689e-24    # [ Pa^-3 s^-1 ]
       'Glen''s Law n': 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
     Body Force:
@@ -88,7 +86,7 @@ ANONYMOUS:
         Water Thickness Exponent: 1.0
         Potential Gradient Norm Exponent: 2.0
         Use Log Scalar Parameters: false
-        Transmissivity: 1e-3
+        Transmissivity: 1.0e-3
         Regularization:
           Regularization Type: Given Parameter
           Regularization Parameter Name: Regularization
@@ -126,40 +124,28 @@ ANONYMOUS:
       Side Sets: [basalside]
       basalside:
         Number Of Time Derivatives: 0
-        Method: STK2D
-        Cell Topology: Triangle
-        1D Elements: 30
-        2D Elements: 3
-        1D Scale: 1000.0
-        2D Scale: 10.0
-        Periodic_y BC: true
-        Cubature Degree: 5
-        # Method: Gmsh
-        # Cubature Degree: 3
+        Cubature Degree: 3
         Workset Size: 100
-        # Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle.msh
-        # Exodus Output File Name: results/dome_basal.exo
-        Exodus Output File Name: results/slab_basal.exo
+        Method: Gmsh
+        Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle.msh
+        Exodus Output File Name: results/dome_basal.exo
         Required Fields Info:
           Number Of Fields: 10
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
             Field Origin: File
-            Field Expression: ['1.001-x/1000']  # 1km+1m at x=0km, 1m at x=1000km
-            # Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
+            Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
           Field 1:
             Field Name: surface_height
             Field Type: Node Scalar
             Field Origin: File
-            Field Expression: ['1.001-x/1000']  # 1km+1m at x=0km, 1m at x=1000km
-            # Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
+            Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
           Field 2:
             Field Name: surface_water_input
             Field Type: Node Scalar
             Field Origin: File
-            Field Value: [0.017280]   # mm / day (Hewitt used 2e-10 m/s)
-            # Field Value: [20.0]
+            Field Value: [20.0]
           Field 3:
             Field Name: effective_pressure
             Field Type: Node Scalar
