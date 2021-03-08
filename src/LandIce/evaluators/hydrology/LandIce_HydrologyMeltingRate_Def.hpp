@@ -77,26 +77,27 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& hy_pl = *p.get<Teuchos::ParameterList*>("LandIce Hydrology");
   Teuchos::ParameterList& melt_pl = hy_pl.sublist("Melting Rate");
 
-  if (melt_pl.isParameter("Use Given Value")) {
+  if (melt_pl.get("Use Given Value",false)) {
     m_value = melt_pl.get("Use Given Value",0.0);
     m_given = true;
   } else {
-    if (melt_pl.get("Use Friction Melt",true)) {
-      u_b  = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-      beta = PHX::MDField<const ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
+    if (melt_pl.get("Use Friction Melt",false)) {
+      u_b  = decltype(u_b) (p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+      beta = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
       this->addDependentField(beta);
       this->addDependentField(u_b);
 
       friction = true;
     }
-    if (melt_pl.get("Use Geothermal Melt", true)) {
-      G = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Geothermal Heat Source Variable Name"), layout);
-      this->addDependentField(G);
-
-      G_field = true;
-    } else if (melt_pl.isParameter("Given Geothermal Flux")) {
-      G_given = true;
-      G_value = melt_pl.get<double>("Given Geoethermal Flux");
+    if (melt_pl.get("Use Geothermal Melt",false)) {
+      if (melt_pl.isParameter("Given Geothermal Flux")) {
+        G_given = true;
+        G_value = melt_pl.get<double>("Given Geothermal Flux");
+      } else {
+        G = decltype(G)(p.get<std::string> ("Geothermal Heat Source Variable Name"), layout);
+        this->addDependentField(G);
+        G_field = true;
+      }
     }
   }
 
@@ -118,6 +119,9 @@ void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Tra
 {
   // m = ( G + \beta |u_b|^2 ) / L, in kg m^-2 yr^-1
 
+  TEUCHOS_TEST_FOR_EXCEPTION (!m_given && !friction && !G_field && !G_given, std::runtime_error,
+      "Error! You did not specify how to compute the Melt Rate.\n");
+
   if (m_given) {
     return;
   }
@@ -125,21 +129,29 @@ void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Tra
   // Scale L so that kPa cancel out: [L/1000] = kJ/kg = kPa m^3 / kg, and [G] = kPa m/yr
   double L = latent_heat*1e-3;
 
-  if (IsStokes)
-  {
-    if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
+  if (IsStokes) {
+    if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
       return;
+    }
 
+    unsigned int dim = nodal ? numNodes : numQPs;
     const auto& sideSet = workset.sideSets->at(sideSetName);
-    for (auto const& it_side : sideSet)
-    {
+    for (auto const& it_side : sideSet) {
       // Get the local data of side and cell
       const int cell = it_side.elem_LID;
       const int side = it_side.side_local_id;
 
-      for (unsigned int qp=0; qp < numQPs; ++qp)
-      {
-        m(cell,side,qp) = ( scaling_G*G(cell,side,qp) + beta(cell,side,qp) * std::pow(u_b(cell,side,qp),2) ) / L;
+      for (unsigned int i=0; i<dim; ++i) {
+        ScalarT val(0.0);
+        if (G_field) {
+          val += scaling_G*G(cell,side,i);
+        } else if (G_given) {
+          val += G_value;
+        }
+        if (friction) {
+          val += beta(cell,side,i) * std::pow(u_b(cell,side,i),2);
+        }
+        m(cell,side,i) = val / L;
       }
     }
   } else {

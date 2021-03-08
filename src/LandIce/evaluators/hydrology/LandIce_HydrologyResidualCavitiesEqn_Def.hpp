@@ -92,7 +92,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
    *  1) h_t              [m s^-1 ]
    *  2) phi0/(rhow*g)P_t [km s^-1]
    *  3) m/rho_i          [m yr^-1]
-   *  4) c_creep*W_c      [m s^-1 ]
+   *  4) c_creep*W_c      [m k^3 s^-1 ]
    *  5) (h_r-h)*|u|/l_r  [m yr^-1]
    *
    * We decide to uniform all terms to have units [m yr^-1].
@@ -102,10 +102,11 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
    *  1) scaling_h_t*h_t                scaling_h_t = yr_to_s
    *  2) scaling_P_t*phi0/(rhow*g)P_t   scaling_P_t = 10^3
    *  3) m/rho_i                        (no scaling)
-   *  4) scalinc_c*c_creep*W_c          scaling_c = yr_to_s
+   *  4) scalinc_c*c_creep*W_c          scaling_c = yr_to_s * k ^3
    *  5) (h_r-h)*|u|/l_r                (no scaling)
    *
    * where yr_to_s=365.25*24*3600 (the number of seconds in a year)
+   * Note: the k^3 comes from N being in kPa and A in Pa^-3 s^-1.
    */
 
   // We can solve this equation as a nodal equation
@@ -177,7 +178,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 
   double yr_to_s = 365.25*24*3600;
   double scaling_h_t = yr_to_s;
-  double C = c_creep * yr_to_s;
+  double C = c_creep * yr_to_s * 1e9;
   double phi0 = has_p_dot ? englacial_phi / (1000*rho_w*g) : 0.0;
   // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
   //       cancel out with N, and the residual is in m/yr
@@ -194,7 +195,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
         res_node = (use_melting ? m(cell,side,node)/rho_i : zero)
                  + (use_eff_cavity ? (h_r - h(cell,side,node))*u_b(cell,side,node)/l_r
                                    : ScalarT(h_r*u_b(cell,side,node)))
-                 - C*h(cell,side,node)*(ice_softness(cell)*1e9)*std::pow(N(cell,side,node),3)
+                 - C*h(cell,side,node)*ice_softness(cell)*std::pow(N(cell,side,node),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,node) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,side,node) : zero);
       } else {
@@ -202,7 +203,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
           res_qp = (use_melting ? m(cell,side,qp)/rho_i : zero)
                  + (use_eff_cavity ? (h_r - h(cell,side,qp))*u_b(cell,side,qp)/l_r
                                    : ScalarT(h_r*u_b(cell,side,qp)))
-                 - C*h(cell,side,qp)*(ice_softness(cell,side)*1e9)*std::pow(N(cell,side,qp),3)
+                 - C*h(cell,side,qp)*ice_softness(cell,side)*std::pow(N(cell,side,qp),3)
                  - (unsteady ? scaling_h_t*h_dot(cell,side,qp) : zero)
                  + (has_p_dot ? -phi0*P_dot(cell,side,qp) : zero);
 
@@ -224,9 +225,11 @@ evaluateFieldsCell (typename Traits::EvalData workset)
 
   double yr_to_s = 365.25*24*3600;
   double scaling_h_t = yr_to_s;
-  double C = c_creep * yr_to_s;
+  double C = c_creep * yr_to_s * 1e9;
   double phi0 = has_p_dot ? englacial_phi / (1000*rho_w*g) : 0.0;
   double etai = eta_i/1000; // Convert to kPa s
+  // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
+  //       cancel out with N, and the residual is in m/yr
 
   for (unsigned int cell=0; cell < workset.numCells; ++cell) {
     for (unsigned int node=0; node < numNodes; ++node) {
@@ -239,7 +242,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
                  + (has_p_dot ? -phi0*P_dot(cell,node) : zero);
         switch (closure) {
           case Cubic:
-            res_node -= C*h(cell,node)*(ice_softness(cell)*1e9)*std::pow(N(cell,node),3);
+            res_node -= C*h(cell,node)*ice_softness(cell)*std::pow(N(cell,node),3);
             break;
           case Linear:
             res_node -= C*h(cell,node)*N(cell,node)/etai;
@@ -254,7 +257,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
                  + (has_p_dot ? -phi0*P_dot(cell,qp) : zero);
           switch (closure) {
             case Cubic:
-              res_qp -= C*h(cell,qp)*(ice_softness(cell)*1e9)*std::pow(N(cell,qp),3);
+              res_qp -= C*h(cell,qp)*ice_softness(cell)*std::pow(N(cell,qp),3);
               break;
             case Linear:
               res_qp -= C*h(cell,qp)*N(cell,qp)/eta_i;

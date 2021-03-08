@@ -33,6 +33,8 @@ HydrologySurfaceWaterInput (const Teuchos::ParameterList& p,
     this->addEvaluatedField(omega);
 
     input_type = InputType::SMB_APPROX;
+  } else if (type=="GIVEN FIELD") {
+    // Do nothing, we will simply use the input field
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
                                 "Error! Invalid choice '" << type << "' for "
