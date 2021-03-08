@@ -51,21 +51,33 @@ public:
 
 protected:
   typedef typename EvalT::ScalarT ScalarT;
+
+  // For f,fdot,fdotdot, can either gather a bunch of scalar fields or one vector field
   std::vector< PHX::MDField<ScalarT,Cell,Side,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Side,Node> > val_dot;
   std::vector< PHX::MDField<ScalarT,Cell,Side,Node> > val_dotdot;
+  PHX::MDField<ScalarT,Cell,Side,Node,VecDim> valvec;
+  PHX::MDField<ScalarT,Cell,Side,Node,VecDim> valvec_dot;
+  PHX::MDField<ScalarT,Cell,Side,Node,VecDim> valvec_dotdot;
 
   std::string sideSetName;
   std::vector<std::vector<int>> sideNodes;
 
   int num_side_nodes;
-  int numFields;        // Number of fields gathered by this evaluator
-  int numFieldsDot;     // Number of fields gathered by this evaluator
-  int numFieldsDotDot;  // Number of fields gathered by this evaluator
+
+  int numFields;        // Number of fields in std::vector val
+  int numFieldsDot;     // Number of fields in std::vector val_dot
+  int numFieldsDotDot;  // Number of fields in std::vector val_dotdot
 
   int offset;           // Offset of first field being gathered when numFields<neq
   int offsetDot;        // Offset of first dot field being gathered when numFields<neq
   int offsetDotDot;     // Offset of first dotdot field being gathered when numFields<neq
+
+  int vecDim;
+
+  bool is_dof_vec;
+  bool is_dof_dot_vec;
+  bool is_dof_dotdot_vec;
 
   bool enableSolution;
   bool enableSolutionDot;

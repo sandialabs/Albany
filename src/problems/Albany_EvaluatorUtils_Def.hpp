@@ -244,7 +244,8 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluato
        Teuchos::ArrayRCP<std::string> dof_names,
        const std::string& sideSetName,
        const Teuchos::RCP<shards::CellTopology>& cellType,
-       int offsetToFirstDOF) const
+       int offsetToFirstDOF,
+       bool is_dof_vec) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p( new Teuchos::ParameterList("Gather Solution Side") );
 
@@ -252,6 +253,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluato
   p->set("Side Set Name",sideSetName);
   p->set("Cell Type", cellType);
   p->set("Offset of First DOF",offsetToFirstDOF);
+  p->set("Is Dof Vector",is_dof_vec);
 
   return Teuchos::rcp(new PHAL::GatherSolutionSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
 }
@@ -264,7 +266,9 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluato
        const std::string& sideSetName,
        const Teuchos::RCP<shards::CellTopology>& cellType,
        int offsetToFirstDOF,
-       int offsetToFirstDOFDot) const
+       int offsetToFirstDOFDot,
+       bool is_dof_vec,
+       bool is_dof_dot_vec) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p( new Teuchos::ParameterList("Gather Solution Side") );
 
@@ -274,6 +278,8 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluato
   p->set("Cell Type", cellType);
   p->set("Offset of First DOF",offsetToFirstDOF);
   p->set("Offset of First DOF Dot",offsetToFirstDOFDot);
+  p->set("Is Dof Vector",is_dof_vec);
+  p->set("Is Dof Dot Vector ",is_dof_dot_vec);
 
   return Teuchos::rcp(new PHAL::GatherSolutionSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
 }
@@ -288,7 +294,10 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluato
        const Teuchos::RCP<shards::CellTopology>& cellType,
        int offsetToFirstDOF,
        int offsetToFirstDOFDot,
-       int offsetToFirstDOFDotDot) const
+       int offsetToFirstDOFDotDot,
+       bool is_dof_vec,
+       bool is_dof_dot_vec,
+       bool is_dof_dot_dot_vec) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p( new Teuchos::ParameterList("Gather Solution Side") );
 
@@ -300,6 +309,9 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluato
   p->set("Offset of First DOF",offsetToFirstDOF);
   p->set("Offset of First DOF Dot",offsetToFirstDOFDot);
   p->set("Offset of First DOF Dot Dot",offsetToFirstDOFDotDot);
+  p->set("Is Dof Vector",is_dof_vec);
+  p->set("Is Dof Dot Vector ",is_dof_dot_vec);
+  p->set("Is Dof DotDot Vector",is_dof_dot_dot_vec);
 
   return Teuchos::rcp(new PHAL::GatherSolutionSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
 }
