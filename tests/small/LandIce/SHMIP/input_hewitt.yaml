@@ -32,7 +32,6 @@ ANONYMOUS:
     LandIce Physical Parameters: 
       Water Density:             1000.0        # [ kg m^-3 ]
       Ice Density:               900.0         # [ kg m^-3 ]
-      Ice Softness:              5.0e-24       # [ Pa^-3 s^-1 ]
       Ice Latent Heat Of Fusion: 3.0e+05       # [ J kg^-1 ]
       Ice Viscosity:             1.0e13        # [ Pa s ]
       Gravity Acceleration:      10.0          # [ m s^-2]
@@ -44,6 +43,7 @@ ANONYMOUS:
         Regularization Type: Given Value
         Regularization Value: 1.0e-10
     LandIce Viscosity: 
+      Glen's Law A: 5.0e-24    # [ Pa^-3 s^-1 ]
       Glen's Law n: 3.0
     LandIce Hydrology: 
       Use Water Thickness In Effective Pressure Formula: false
