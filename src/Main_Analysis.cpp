@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
-    status = Piro::PerformAnalysis(*fwd_solver, slvrfctry.getAnalysisParameters(), p, observer);
+    status = Piro::PerformAnalysis(*fwd_solver, slvrfctry.getParameters()->sublist("Piro"), p, observer);
 
     Albany::RegressionTests regression(slvrfctry.getParameters());
     status = regression.checkAnalysisTestResults(0, p);
