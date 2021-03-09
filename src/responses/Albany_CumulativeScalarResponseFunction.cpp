@@ -426,7 +426,7 @@ printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
   std::size_t precision = 8;
   std::size_t value_width = precision + 4;
   
-  *out << std::setw(value_width) << Thyra::get_ele(*g_,0) << " sum of [";
+  *out << std::setw(value_width) << Thyra::get_ele(*g_,0) << "sum of [";
   for (unsigned int i=0; i<responses.size(); i++) {
     responses[i]->printResponse(out);
     if (i<(responses.size()-1))
