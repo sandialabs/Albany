@@ -29,7 +29,8 @@
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_FROSCH
-#include <Stratimikos_FROSchXpetra.hpp>
+#include "Stratimikos_FROSch_decl.hpp"
+#include "Stratimikos_FROSch_def.hpp"
 #endif /* ALBANY_FROSCH */
 
 #ifdef ALBANY_TEKO
