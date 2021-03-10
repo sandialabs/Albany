@@ -394,9 +394,8 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_PowerLaw_DistributedMu_HydrostaticN_Tag& tag, const int& sideSet_idx) const {
-  double gScaled = g/1000.0; // [km s^{-2}]
   for (unsigned int ipt=0; ipt<dim; ++ipt) {
-    ScalarT Nval = gScaled*KU::max(rho_i*thickness_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
+    ScalarT Nval = g*KU::max(rho_i*thickness_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
     beta(sideSet_idx,ipt) = muPowerLawField(sideSet_idx,ipt) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
   }
 }
@@ -404,9 +403,8 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_PowerLaw_DistributedMu_HydrostaticN_ParamH_Tag& tag, const int& sideSet_idx) const {
-  double gScaled = g/1000.0; // [km s^{-2}]
   for (unsigned int ipt=0; ipt<dim; ++ipt) {
-    ScalarT Nval = gScaled*KU::max(rho_i*thickness_param_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
+    ScalarT Nval = g*KU::max(rho_i*thickness_param_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
     beta(sideSet_idx,ipt) = muPowerLawField(sideSet_idx,ipt) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
   }
 }
@@ -414,9 +412,8 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_Tag& tag, const int& sideSet_idx) const {
-  double gScaled = g/1000.0; // [km s^{-2}]
   for (unsigned int ipt=0; ipt<dim; ++ipt) {
-    ScalarT Nval = gScaled*KU::max(rho_i*thickness_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
+    ScalarT Nval = g*KU::max(rho_i*thickness_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
     beta(sideSet_idx,ipt) = std::exp(muPowerLawField(sideSet_idx,ipt)) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
   }
 }
@@ -424,9 +421,8 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_PowerLaw_ExpNodalDistributedMu_HydrostaticN_ParamH_Tag& tag, const int& sideSet_idx) const {
-  double gScaled = g/1000.0; // [km s^{-2}]
   for (unsigned int ipt=0; ipt<dim; ++ipt) {
-    ScalarT Nval = gScaled*KU::max(rho_i*thickness_param_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
+    ScalarT Nval = g*KU::max(rho_i*thickness_param_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
     beta(sideSet_idx,ipt) = std::exp(muPowerLawField(sideSet_idx,ipt)) * Nval * std::pow (u_norm(sideSet_idx,ipt), power-1);
   }
 }
@@ -434,10 +430,9 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_PowerLaw_ExpDistributedMu_HydrostaticN_ParamH_Tag& tag, const int& sideSet_idx) const {
-  double gScaled = g/1000.0; // [km s^{-2}]
   for (unsigned int qp=0; qp<numQPs; ++qp) {
     beta(sideSet_idx,qp) = 0;
-    ScalarT Nval = gScaled*KU::max(rho_i*thickness_param_field(sideSet_idx,qp)+KU::min(rho_w*bed_topo_field(sideSet_idx,qp),0.0),0.0);
+    ScalarT Nval = g*KU::max(rho_i*thickness_param_field(sideSet_idx,qp)+KU::min(rho_w*bed_topo_field(sideSet_idx,qp),0.0),0.0);
     Nval *= std::pow (u_norm(sideSet_idx,qp), power-1);
     for (unsigned int node=0; node<numNodes; ++node)
       beta(sideSet_idx,qp) += std::exp(muPowerLawField(sideSet_idx,node))*BF(sideSet_idx,node,qp)*Nval;
@@ -448,10 +443,9 @@ template<typename EvalT, typename Traits, typename EffPressureST, typename Veloc
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_PowerLaw_ExpDistributedMu_HydrostaticN_Tag& tag, const int& sideSet_idx) const {
-  double gScaled = g/1000.0; // [km s^{-2}]
   for (unsigned int qp=0; qp<numQPs; ++qp) {
     beta(sideSet_idx,qp) = 0;
-    ScalarT Nval = gScaled*KU::max(rho_i*thickness_field(sideSet_idx,qp)+KU::min(rho_w*bed_topo_field(sideSet_idx,qp),0.0),0.0);
+    ScalarT Nval = g*KU::max(rho_i*thickness_field(sideSet_idx,qp)+KU::min(rho_w*bed_topo_field(sideSet_idx,qp),0.0),0.0);
     Nval *= std::pow (u_norm(sideSet_idx,qp), power-1);
     for (unsigned int node=0; node<numNodes; ++node)
       beta(sideSet_idx,qp) += std::exp(muPowerLawField(sideSet_idx,node))*BF(sideSet_idx,node,qp)*Nval;
