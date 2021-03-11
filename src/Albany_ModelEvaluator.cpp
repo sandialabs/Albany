@@ -322,6 +322,20 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
   timer = Teuchos::TimeMonitor::getNewTimer("Albany: Total Fill Time");
 }
 
+void ModelEvaluator::setNominalValue(int j, Teuchos::RCP<Thyra_Vector> p)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      j >= num_param_vecs + num_dist_param_vecs || j < 0,
+      Teuchos::Exceptions::InvalidParameter,
+      std::endl
+          << "Error!  Albany::ModelEvaluator::setNominalValue():  "
+          << "Invalid parameter index j = "
+          << j
+          << std::endl);
+
+  nominalValues.set_p(j, p);
+}
+
 void ModelEvaluator::allocateVectors()
 {
   const Teuchos::RCP<const Thyra_MultiVector>   xMV  = app->getAdaptSolMgr()->getCurrentSolution();

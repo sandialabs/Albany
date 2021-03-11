@@ -19,6 +19,10 @@
 #include "Albany_PyAlbanyTypes.hpp"
 #include "Albany_PyUtils.hpp"
 
+#include "Albany_Utils.hpp"
+#include "Teuchos_XMLParameterListHelpers.hpp"
+#include "Teuchos_YamlParameterListHelpers.hpp"
+
 namespace PyAlbany
 {
     /**
@@ -71,6 +75,13 @@ namespace PyAlbany
     };
 
     /**
+   * \brief getParameterList function
+   * 
+   * The function returns an RCP to the parameter list.
+   */
+    Teuchos::RCP<Teuchos::ParameterList> getParameterList(std::string filename, Teuchos::RCP<PyAlbany::PyParallelEnv> pyParallelEnv);
+
+    /**
    * \brief PyProblem class
    * 
    * This class is used to drives Albany from Python.
@@ -82,8 +93,8 @@ namespace PyAlbany
     {
     private:
 #ifndef SWIG
-        std::string filename;
-        bool hasBeenSolved;
+        bool forwardHasBeenSolved;
+        bool inverseHasBeenSolved;
         Teuchos::RCP<PyParallelEnv> pyParallelEnv;
 
         Teuchos::RCP<Teuchos::StackedTimer> stackedTimer;
@@ -97,9 +108,14 @@ namespace PyAlbany
         Teuchos::Array<Teuchos::Array<Teuchos::RCP<Thyra_MultiVector>>> thyraSensitivities;
         Teuchos::Array<Teuchos::Array<Teuchos::RCP<Thyra_MultiVector>>> thyraReducedHessian;
         Teuchos::Array<Teuchos::RCP<Thyra_MultiVector>> thyraDirections;
+
+        Teuchos::Array<Teuchos::RCP<Thyra_Vector>> thyraParameter;
 #endif
     public:
-        PyProblem(std::string _filename, Teuchos::RCP<PyParallelEnv> _pyParallelEnv);
+        PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParallelEnv);
+
+        PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<PyParallelEnv> _pyParallelEnv);
+
         ~PyProblem()
         {
             std::cout << "~PyProblem()\n";
@@ -112,6 +128,13 @@ namespace PyAlbany
          * defined problem.
          */
         void performSolve();
+
+        /**
+         * \brief performAnalysis member function
+         * 
+         * This function is used to call the function Piro::PerformAnalysis.
+         */
+        void performAnalysis();
 
         /**
          * \brief getResponseMap member function
@@ -140,13 +163,33 @@ namespace PyAlbany
         /**
          * \brief setDirections member function
          * 
-         * This function is used to communicate the parameters directions from Python to Albany.
+         * This function is used to communicate the parameter directions from Python to Albany.
          * 
          * \param p_index [in] Index of the parameter for which the direction has to be set.
          * 
          * \param direction [in] A distributed multivector which stores the directions of the parameters.
          */
         void setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVector> direction);
+
+        /**
+         * \brief setParameter member function
+         * 
+         * This function is used to communicate the parameter values from Python to Albany.
+         * 
+         * \param p_index [in] Index of the parameter for which the value has to be set.
+         * 
+         * \param p [in] A distributed vector which stores the values of the parameters.
+         */
+        void setParameter(const int p_index, Teuchos::RCP<PyTrilinosVector> p);
+
+        /**
+         * \brief getParameter member function
+         * 
+         * This function is used to communicate the parameter values from Albany to Python.
+         * 
+         * \param p_index [in] Index of the parameter for which the value has to be gotten.
+         */
+        Teuchos::RCP<PyTrilinosVector> getParameter(const int p_index);
 
         /**
          * \brief getResponse member function
@@ -227,4 +270,24 @@ Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> PyAlbany::gatherMVector(Teuchos::R
     Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> outVector = rcp(new PyAlbany::PyTrilinosMultiVector(rankZeroMap, inVector->getNumVectors()));
     outVector->doExport(*inVector, *exportZero, Tpetra::ADD);
     return outVector;
+}
+
+Teuchos::RCP<Teuchos::ParameterList> PyAlbany::getParameterList(std::string inputFile, Teuchos::RCP<PyAlbany::PyParallelEnv> pyParallelEnv)
+{
+    Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::createParameterList("Albany Parameters");
+
+    std::string const input_extension = Albany::getFileExtension(inputFile);
+
+    if (input_extension == "yaml" || input_extension == "yml")
+    {
+        Teuchos::updateParametersFromYamlFileAndBroadcast(
+            inputFile, params.ptr(), *(pyParallelEnv->comm));
+    }
+    else
+    {
+        Teuchos::updateParametersFromXmlFileAndBroadcast(
+            inputFile, params.ptr(), *(pyParallelEnv->comm));
+    }
+
+    return params;
 }

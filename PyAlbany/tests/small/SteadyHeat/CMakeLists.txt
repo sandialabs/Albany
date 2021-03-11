@@ -14,8 +14,32 @@ set_tests_properties(PyAlbany_SteadyHeat
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 
 IF(ALBANY_MPI)
-  add_test(PyAlbany_SteadyHeat_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat.py")
+    add_test(PyAlbany_SteadyHeat_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat.py")
 
-  set_tests_properties(PyAlbany_SteadyHeat_MPI
-      PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+    set_tests_properties(PyAlbany_SteadyHeat_MPI
+        PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+ENDIF()
+
+add_test(PyAlbany_Inv_SteadyHeat "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/inv_steadyHeat.py")
+
+set_tests_properties(PyAlbany_Inv_SteadyHeat
+    PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+
+IF(ALBANY_MPI)
+    add_test(PyAlbany_Inv_SteadyHeat_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/inv_steadyHeat.py")
+
+    set_tests_properties(PyAlbany_Inv_SteadyHeat_MPI
+        PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+ENDIF()
+
+add_test(PyAlbany_multiple_SteadyHeat "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/inv_steadyHeat.py")
+
+set_tests_properties(PyAlbany_multiple_SteadyHeat
+    PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+
+IF(ALBANY_MPI)
+    add_test(PyAlbany_multiple_SteadyHeat_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/inv_steadyHeat.py")
+
+    set_tests_properties(PyAlbany_multiple_SteadyHeat_MPI
+        PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 ENDIF()

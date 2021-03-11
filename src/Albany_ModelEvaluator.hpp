@@ -68,6 +68,9 @@ public:
   //! Create Hessian operator
   Teuchos::RCP<Thyra_LinearOp>  create_hess_g_pp( int j, int l1, int l2 ) const;
 
+  //! Set nominal value
+  void setNominalValue(int j, Teuchos::RCP<Thyra_Vector> p);
+
   //! Create InArgs
   Thyra_InArgs createInArgs() const;
 
