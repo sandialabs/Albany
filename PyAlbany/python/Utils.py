@@ -34,6 +34,10 @@ def createAlbanyProblem(filename, parallelEnv):
     """@brief Creates an Albany problem given a yaml file and a parallel environment."""
     return wpa.PyProblem(filename, parallelEnv)
 
+def createParameterList(filename, parallelEnv):
+    """@brief Creates a parameter list from a file."""
+    return wpa.getParameterList(filename, parallelEnv)
+
 def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True, readOnRankZero = True, dtype="d"):
     """@brief Loads distributed a multivector stored using numpy format.
     

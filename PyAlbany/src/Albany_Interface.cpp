@@ -19,6 +19,7 @@
 #include "Albany_FactoriesHelpers.hpp"
 
 #include "Piro_PerformSolve.hpp"
+#include "Piro_PerformAnalysis.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 #include "Teuchos_FancyOStream.hpp"
@@ -34,6 +35,8 @@
 #include "Thyra_MultiVectorStdOps.hpp"
 
 #include "Albany_TpetraThyraUtils.hpp"
+
+#include "Albany_ObserverImpl.hpp"
 
 #if defined(ALBANY_CHECK_FPE) || defined(ALBANY_STRONG_FPE_CHECK) || defined(ALBANY_FLUSH_DENORMALS)
 #include <xmmintrin.h>
@@ -66,7 +69,7 @@ PyParallelEnv::PyParallelEnv(Teuchos::RCP<Teuchos::Comm<int>> _comm, int _num_th
     Kokkos::initialize(args);
 }
 
-PyProblem::PyProblem(std::string _filename, Teuchos::RCP<PyParallelEnv> _pyParallelEnv) : filename(_filename), pyParallelEnv(_pyParallelEnv)
+PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParallelEnv) : pyParallelEnv(_pyParallelEnv)
 {
 
     RCP<Teuchos::FancyOStream> out(
@@ -82,7 +85,7 @@ PyProblem::PyProblem(std::string _filename, Teuchos::RCP<PyParallelEnv> _pyParal
 
     comm = this->pyParallelEnv->comm;
 
-    slvrfctry = rcp(new Albany::SolverFactory(this->filename, comm));
+    slvrfctry = rcp(new Albany::SolverFactory(filename, comm));
 
     auto const &bt = slvrfctry->getParameters()->get<std::string>("Build Type", "NONE");
 
@@ -108,15 +111,67 @@ PyProblem::PyProblem(std::string _filename, Teuchos::RCP<PyParallelEnv> _pyParal
     solver = slvrfctry->createSolver(albanyModel, comm);
 
     thyraDirections.resize(solver->Np());
+    thyraParameter.resize(solver->Np());
 
-    hasBeenSolved = false;
+    forwardHasBeenSolved = false;
+    inverseHasBeenSolved = false;
+
+    stackedTimer->stop("Albany: Setup Time");
+}
+
+PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<PyParallelEnv> _pyParallelEnv) : pyParallelEnv(_pyParallelEnv)
+{
+
+    RCP<Teuchos::FancyOStream> out(
+        Teuchos::VerboseObjectBase::getDefaultOStream());
+
+    PrintPyHeader(*out);
+
+    stackedTimer = Teuchos::rcp(
+        new Teuchos::StackedTimer("Albany Total Time"));
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+
+    stackedTimer->start("Albany: Setup Time");
+
+    comm = this->pyParallelEnv->comm;
+
+    slvrfctry = rcp(new Albany::SolverFactory(params, comm));
+
+    auto const &bt = slvrfctry->getParameters()->get<std::string>("Build Type", "NONE");
+
+    if (bt == "Tpetra")
+    {
+        // Set the static variable that denotes this as a Tpetra run
+        static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
+    }
+    else
+    {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
+                                   "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
+                                                                    "       The only valid choice for PyAlbany is 'Tpetra'.\n");
+    }
+
+    // Make sure all the pb factories are registered *before* the Application
+    // is created (since in the App ctor the pb factories are queried)
+    Albany::register_pb_factories();
+
+    // Create app (null initial guess)
+    albanyApp = slvrfctry->createApplication(comm);
+    albanyModel = slvrfctry->createModel(albanyApp);
+    solver = slvrfctry->createSolver(albanyModel, comm);
+
+    thyraDirections.resize(solver->Np());
+    thyraParameter.resize(solver->Np());
+
+    forwardHasBeenSolved = false;
+    inverseHasBeenSolved = false;
 
     stackedTimer->stop("Albany: Setup Time");
 }
 
 Teuchos::RCP<const PyTrilinosMap> PyProblem::getResponseMap(const int g_index)
 {
-    if (hasBeenSolved == false)
+    if (forwardHasBeenSolved == false)
     {
         std::cout << "Warning: getResponseMap() must be called after performSolve()" << std::endl;
         return Teuchos::null;
@@ -138,7 +193,7 @@ Teuchos::RCP<const PyTrilinosMap> PyProblem::getParameterMap(const int p_index)
 
 void PyProblem::setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVector> direction)
 {
-    hasBeenSolved = false;
+    forwardHasBeenSolved = false;
 
     const unsigned int n_directions = direction->getNumVectors();
 
@@ -172,9 +227,71 @@ void PyProblem::setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVec
     }
 }
 
+void PyProblem::setParameter(const int p_index, Teuchos::RCP<PyTrilinosVector> p)
+{
+    TEUCHOS_TEST_FOR_EXCEPTION(inverseHasBeenSolved, std::runtime_error,
+                               "Error! parameter values cannot be changed "
+                               "once the inverse problem has been solved.\n");
+
+    forwardHasBeenSolved = false;
+
+    for (size_t l = 0; l < solver->Np(); l++)
+    {
+        if (p_index == l)
+        {
+#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
+            thyraParameter[l] = Albany::createThyraVector(p);
+            albanyModel->setNominalValue(l, thyraParameter[l]);
+            continue;
+#endif
+        }
+
+        bool is_null = Teuchos::is_null(thyraParameter[l]);
+        if (is_null)
+        {
+            auto p_space = solver->getNominalValues().get_p(l)->space();
+            thyraParameter[l] = Thyra::createMember(p_space);
+        }
+        if (p_index == l)
+        {
+            Teuchos::RCP<Tpetra_MultiVector> thyraParameterT = Albany::getTpetraVector(thyraParameter[l]);
+
+            auto p_in_view = p->getLocalView<PyTrilinosVector::node_type::device_type>();
+            auto p_out_view = thyraParameterT->getLocalView<Tpetra_Vector::node_type::device_type>();
+            Kokkos::deep_copy(p_out_view, p_in_view);
+        }
+        else if (is_null)
+            thyraParameter[l]->assign(0.0);
+
+        if (p_index == l)
+            albanyModel->setNominalValue(l, thyraParameter[l]);
+    }
+}
+
+Teuchos::RCP<PyTrilinosVector> PyProblem::getParameter(const int p_index)
+{
+#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
+    Teuchos::RCP<Thyra_Vector> p = thyraParameter[p_index];
+    Teuchos::RCP<PyTrilinosVector> p_out = Albany::getTpetraVector(p);
+    return p_out;
+#else
+    Teuchos::RCP<const Thyra_Vector> p = thyraParameter[p_index];
+    Teuchos::RCP<PyTrilinosVector> p_out = rcp(new PyTrilinosVector(this->getParameterMap(p_index)));
+    if (Teuchos::nonnull(p))
+    {
+        Teuchos::RCP<const Tpetra_Vector> pT = Albany::getConstTpetraVector(p);
+
+        auto p_out_view = p_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
+        auto p_in_view = pT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+        Kokkos::deep_copy(p_out_view, p_in_view);
+        return p_out;
+    }
+#endif
+}
+
 Teuchos::RCP<PyTrilinosVector> PyProblem::getResponse(const int g_index)
 {
-    if (hasBeenSolved == false)
+    if (forwardHasBeenSolved == false)
     {
         std::cout << "Warning: getResponse() must be called after performSolve()" << std::endl;
     }
@@ -203,7 +320,7 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getResponse(const int g_index)
 
 Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getSensitivity(const int g_index, const int p_index)
 {
-    if (hasBeenSolved == false)
+    if (forwardHasBeenSolved == false)
     {
         std::cout << "Warning: getSensitivity() must be called after performSolve()" << std::endl;
     }
@@ -231,7 +348,7 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getSensitivity(const int g_index,
 
 Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getReducedHessian(const int g_index, const int p_index)
 {
-    if (hasBeenSolved == false)
+    if (forwardHasBeenSolved == false)
     {
         std::cout << "Warning: getReducedHessian() must be called after performSolve()" << std::endl;
     }
@@ -268,9 +385,35 @@ void PyProblem::performSolve()
     Piro::PerformSolve(
         *solver, solveParams, thyraResponses, thyraSensitivities, thyraDirections, thyraReducedHessian);
 
-    hasBeenSolved = true;
+    forwardHasBeenSolved = true;
 
     stackedTimer->stop("Albany: performSolve");
+}
+
+void PyProblem::performAnalysis()
+{
+    stackedTimer->start("Albany: performAnalysis");
+
+    Teuchos::RCP<Albany::ObserverImpl> observer = Teuchos::rcp(new Albany::ObserverImpl(albanyApp));
+
+    Teuchos::RCP<Thyra::VectorBase<double>> p;
+
+    Teuchos::ParameterList &piroParams =
+        slvrfctry->getParameters()->sublist("Piro");
+
+    Piro::PerformAnalysis(*solver, piroParams, p, observer);
+
+    auto p_dpv = Teuchos::rcp_dynamic_cast<Thyra::DefaultProductVector<double>>(p);
+
+    for (size_t l = 0; l < solver->Np(); l++)
+    {
+        thyraParameter[l] = p_dpv->getNonconstVectorBlock(l);
+        albanyModel->setNominalValue(l, thyraParameter[l]);
+    }
+
+    inverseHasBeenSolved = true;
+
+    stackedTimer->stop("Albany: performAnalysis");
 }
 
 void PyProblem::reportTimers()
