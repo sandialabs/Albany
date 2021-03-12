@@ -27,7 +27,6 @@ set(SOURCES
   evaluators/LandIce_MapThickness.cpp
   evaluators/LandIce_PressureCorrectedTemperature.cpp
   evaluators/LandIce_PressureMeltingEnthalpy.cpp
-  evaluators/LandIce_ProlongateVector.cpp
   evaluators/LandIce_ResponseUtilities.cpp
   evaluators/LandIce_ResponseSurfaceVelocityMismatch.cpp
   evaluators/LandIce_ResponseSMBMismatch.cpp
@@ -120,8 +119,6 @@ set(HEADERS
   evaluators/LandIce_PressureCorrectedTemperature_Def.hpp
   evaluators/LandIce_PressureMeltingEnthalpy.hpp
   evaluators/LandIce_PressureMeltingEnthalpy_Def.hpp
-  evaluators/LandIce_ProlongateVector.hpp
-  evaluators/LandIce_ProlongateVector_Def.hpp
   evaluators/LandIce_ResponseUtilities.hpp
   evaluators/LandIce_ResponseUtilities_Def.hpp
   evaluators/LandIce_ResponseSurfaceVelocityMismatch.hpp
