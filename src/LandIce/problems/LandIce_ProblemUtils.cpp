@@ -82,7 +82,11 @@ extrudeCollapsedSideLayout (const Teuchos::RCP<PHX::DataLayout>& in, const int n
       }
       break;
     case 3:
-      if (names[1]=="Dim" && names[2]=="Dim") {
+      if (names[1]=="Node" && names[2]=="Dim") {
+        out = Teuchos::rcp(new PHX::MDALayout<Side,Node,Dim,LayerDim>(dims[0],dims[1],dims[2],numLayers));
+      } else if (names[1]=="Node" && names[2]=="VecDim") {
+        out = Teuchos::rcp(new PHX::MDALayout<Side,Node,VecDim,LayerDim>(dims[0],dims[1],dims[2],numLayers));
+      } else if (names[1]=="Dim" && names[2]=="Dim") {
         out = Teuchos::rcp(new PHX::MDALayout<Side,Dim,Dim,LayerDim>(dims[0],dims[1],dims[2],numLayers));
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
