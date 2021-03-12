@@ -30,6 +30,8 @@ set (testName ${testNameRoot}_Steady)
 # endif()
 
 if (ALBANY_IFPACK2)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_slab_steadyT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_slab_steadyT.yaml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dome_steadyT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_dome_steadyT.yaml)
   add_test(${testName}_Dome_Tpetra ${Albany.exe}  input_dome_steadyT.yaml)
