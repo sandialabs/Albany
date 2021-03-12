@@ -54,7 +54,9 @@ ThicknessResid(const Teuchos::ParameterList& p,
                               "Error! Layout for side set " << sideSetName << " not found.\n");
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
-  V = decltype(V)(p.get<std::string>("Averaged Velocity Variable Name"), dl_side->node_vector);
+  useCollapsedSidesets = dl_side->useCollapsedSidesets;
+  auto av_v_layout = useCollapsedSidesets ? dl_side->node_vector_sideset : dl_side->node_vector;
+  V = decltype(V)(p.get<std::string>("Averaged Velocity Variable Name"), av_v_layout);
   this->addDependentField(V);
 
   this->setName("ThicknessResid"+PHX::print<EvalT>());
@@ -107,6 +109,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (it_ss != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
+
+    const auto& sideSetView = workset.sideSetViews->at(sideSetName);
 
     Kokkos::DynRankView<RealType, PHX::Device> cubPointsSide;
     Kokkos::DynRankView<RealType, PHX::Device> refPointsSide;
@@ -231,8 +235,13 @@ evaluateFields(typename Traits::EvalData workset)
         dH_Cell(node) = dH(elem_LID, node);
         H0_Cell(node) = H0(elem_LID, node);
         SMB_Cell(node) = have_SMB ? SMB(elem_LID, node) : ScalarT(0.0);
-        for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-          V_Cell(node, dim) = V(elem_LID, elem_side, i, dim);
+        for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
+          if (useCollapsedSidesets) {
+            V_Cell(node, dim) = V(sideSetView.elem_LID(iSide), i, dim);
+          } else {
+            V_Cell(node, dim) = V(elem_LID, elem_side, i, dim);
+          }
+        }
       }
 
       // This is needed, since evaluate currently sums into
