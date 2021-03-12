@@ -77,8 +77,8 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& hy_pl = *p.get<Teuchos::ParameterList*>("LandIce Hydrology");
   Teuchos::ParameterList& melt_pl = hy_pl.sublist("Melting Rate");
 
-  if (melt_pl.get("Use Given Value",false)) {
-    m_value = melt_pl.get("Use Given Value",0.0);
+  if (melt_pl.isParameter("Given Value")) {
+    m_value = melt_pl.get<double>("Given Value");
     m_given = true;
   } else {
     if (melt_pl.get("Use Friction Melt",false)) {
