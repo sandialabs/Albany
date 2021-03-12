@@ -88,6 +88,7 @@ protected:
 
   bool adjustBedTopo;
   bool adjustSurfaceHeight;
+  bool fluxDivIsPartOfSolution;
 
   std::string hydrostatic_pressure_name;
   std::string melting_enthalpy_name;
@@ -193,8 +194,7 @@ constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   constructEnthalpyEvaluators<EvalT> (fm0, fieldManagerChoice);
 
   // --- FluxDiv-related evaluators (if needed) --- //
-  if(params->isSublist("LandIce Flux Divergence") &&
-     params->sublist("LandIce Flux Divergence").get<bool>("Flux Divergence Is Part Of Solution")) {
+  if(fluxDivIsPartOfSolution) {
     constructFluxDivEvaluators<EvalT> (fm0, fieldManagerChoice, meshSpecs);
   }
 

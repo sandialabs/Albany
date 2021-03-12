@@ -22,7 +22,7 @@ StokesFOThickness::StokesFOThickness(
             const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
             const Teuchos::RCP<ParamLib>& paramLib_,
             const int numDim_) :
-  StokesFOBase(params_, discParams_, paramLib_, numDim_)
+  StokesFOBase(params_, discParams_, paramLib_, numDim_, true)
 {
   //Set # of PDEs per node.
   std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "LandIce");

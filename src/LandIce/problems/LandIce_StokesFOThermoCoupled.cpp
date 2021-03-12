@@ -24,9 +24,9 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                        const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                        const Teuchos::RCP<ParamLib>& paramLib_,
                        const int numDim_) :
-  StokesFOBase(params_, discParams_, paramLib_, numDim_)
+  StokesFOBase(params_, discParams_, paramLib_, numDim_, true)
 {
-  bool fluxDivIsPartOfSolution = params->isSublist("LandIce Flux Divergence") &&
+  fluxDivIsPartOfSolution = params->isSublist("LandIce Flux Divergence") &&
       params->sublist("LandIce Flux Divergence").get<bool>("Flux Divergence Is Part Of Solution");
 
   // 2 eqns for Stokes FO + 1 eqn. for enthalpy + 1 eqn. for w. Optionally 1 eqn. for fluxDiv
@@ -53,25 +53,27 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   compute_dissipation &= needsDiss;
 
-  dof_names.resize(4);
+  dof_names.resize(fluxDivIsPartOfSolution ? 4 : 3);
   dof_names[1] = "W";
   dof_names[2] = "Enthalpy";
-  dof_names[3] = "flux_divergence";
 
-  resid_names.resize(4);
+  resid_names.resize(fluxDivIsPartOfSolution ? 4 : 3);
   resid_names[1] = dof_names[1] + " Residual";
   resid_names[2] = dof_names[2] + " Residual";
-  resid_names[3] = dof_names[3] + " Residual";
 
-  scatter_names.resize(4);
+  scatter_names.resize(fluxDivIsPartOfSolution ? 4 : 3);
   scatter_names[1] = "Scatter " + resid_names[1];
   scatter_names[2] = "Scatter " + resid_names[2];
-  scatter_names[3] = "Scatter " + resid_names[3];
 
-  dof_offsets.resize(4);
+  dof_offsets.resize(fluxDivIsPartOfSolution ? 4 : 3);
   dof_offsets[1] = vecDimFO;
   dof_offsets[2] = dof_offsets[1]+1;
-  dof_offsets[3] = dof_offsets[2]+1;
+  if(fluxDivIsPartOfSolution) {
+    dof_names[3] = "flux_divergence";
+    resid_names[3] = dof_names[3] + " Residual";
+    scatter_names[3] = "Scatter " + resid_names[3];
+    dof_offsets[3] = dof_offsets[2]+1;
+  }
 
   // We *always* use corrected temperature in this problem
   viscosity_use_corrected_temperature = true;
@@ -284,7 +286,9 @@ void StokesFOThermoCoupled::setFieldsProperties () {
   // All dofs have scalar type Scalar (i.e., they depend on the solution)
   setSingleFieldProperties(dof_names[1], FRT::Scalar, FST::Scalar);  // Vertical velocity
   setSingleFieldProperties(dof_names[2], FRT::Scalar, FST::Scalar);  // Enthalpy
-  setSingleFieldProperties(dof_names[3], FRT::Scalar, FST::Scalar);  // FluxDiv
+  if (fluxDivIsPartOfSolution) {
+    setSingleFieldProperties(dof_names[3], FRT::Scalar, FST::Scalar);  // FluxDiv
+  }
 
   setSingleFieldProperties(surface_enthalpy_name     , FRT::Scalar);
   setSingleFieldProperties(flow_factor_name          , FRT::Scalar); // Already processed in StokesFOBase, but need to adjust scalar type

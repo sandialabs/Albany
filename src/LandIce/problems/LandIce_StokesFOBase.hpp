@@ -532,7 +532,7 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       }
 
       // Register the state
-      p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, state_dl, sideEBName, true, &entity, meshPart);
+      p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, state_dl, sideEBName, true, &entity, meshPart, useCollapsedSidesets);
 
       // Create load/save evaluator(s)
       // Note:
@@ -750,7 +750,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
         for (auto loc : {FL::Node, FL::Cell} ) {
           if (!is_available_2d(loc) && is_available_3d(loc)) {
             // Project from cell to side
-            const std::string layout = e2str(loc) + " " + e2str(rank);
+            const std::string layout = e2str(loc) + " " + e2str(rank) + " Sideset";
             ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
             fm0.template registerEvaluator<EvalT> (ev);
           }
@@ -1650,21 +1650,39 @@ is_available (const PHX::FieldManager<PHAL::AlbanyTraits>& fm,
   // Helper map
   std::map<FRT,std::map<FL,lt_ptr>> map;
 
-  map[FRT::Scalar][FL::Node]      = layouts->node_scalar;
-  map[FRT::Scalar][FL::Cell]      = layouts->cell_scalar2;
-  map[FRT::Scalar][FL::QuadPoint] = layouts->qp_scalar;
+  if (layouts->isSideLayouts && layouts->useCollapsedSidesets) {
+    map[FRT::Scalar][FL::Node]      = layouts->node_scalar_sideset;
+    map[FRT::Scalar][FL::Cell]      = layouts->cell_scalar2_sideset;
+    map[FRT::Scalar][FL::QuadPoint] = layouts->qp_scalar_sideset;
 
-  map[FRT::Vector][FL::Node]      = layouts->node_vector;
-  map[FRT::Vector][FL::Cell]      = layouts->cell_vector;
-  map[FRT::Vector][FL::QuadPoint] = layouts->qp_vector;
+    map[FRT::Vector][FL::Node]      = layouts->node_vector_sideset;
+    map[FRT::Vector][FL::Cell]      = layouts->cell_vector_sideset;
+    map[FRT::Vector][FL::QuadPoint] = layouts->qp_vector_sideset;
 
-  map[FRT::Gradient][FL::Node]      = layouts->node_gradient;
-  map[FRT::Gradient][FL::Cell]      = layouts->cell_gradient;
-  map[FRT::Gradient][FL::QuadPoint] = layouts->qp_gradient;
+    map[FRT::Gradient][FL::Node]      = layouts->node_gradient_sideset;
+    map[FRT::Gradient][FL::Cell]      = layouts->cell_gradient_sideset;
+    map[FRT::Gradient][FL::QuadPoint] = layouts->qp_gradient_sideset;
 
-  map[FRT::Tensor][FL::Node]      = layouts->node_tensor;
-  map[FRT::Tensor][FL::Cell]      = layouts->cell_tensor;
-  map[FRT::Tensor][FL::QuadPoint] = layouts->qp_tensor;
+    map[FRT::Tensor][FL::Node]      = layouts->node_tensor_sideset;
+    map[FRT::Tensor][FL::Cell]      = layouts->cell_tensor_sideset;
+    map[FRT::Tensor][FL::QuadPoint] = layouts->qp_tensor_sideset;
+  } else {
+    map[FRT::Scalar][FL::Node]      = layouts->node_scalar;
+    map[FRT::Scalar][FL::Cell]      = layouts->cell_scalar2;
+    map[FRT::Scalar][FL::QuadPoint] = layouts->qp_scalar;
+
+    map[FRT::Vector][FL::Node]      = layouts->node_vector;
+    map[FRT::Vector][FL::Cell]      = layouts->cell_vector;
+    map[FRT::Vector][FL::QuadPoint] = layouts->qp_vector;
+
+    map[FRT::Gradient][FL::Node]      = layouts->node_gradient;
+    map[FRT::Gradient][FL::Cell]      = layouts->cell_gradient;
+    map[FRT::Gradient][FL::QuadPoint] = layouts->qp_gradient;
+
+    map[FRT::Tensor][FL::Node]      = layouts->node_tensor;
+    map[FRT::Tensor][FL::Cell]      = layouts->cell_tensor;
+    map[FRT::Tensor][FL::QuadPoint] = layouts->qp_tensor;
+  }
 
   auto lt = map.at(rank).at(loc);
 
