@@ -897,7 +897,12 @@ IF( NOT DISABLE_DOXYGEN )
   endif(DOXYGEN_FOUND)
 ENDIF()
 
-## End of CMake options to Albany
+# Enables experimental features/tests. This may cause compilation errors and/or
+# tests failures, as it includes code that is currently developed.
+
+OPTION (ENABLE_EXPERIMENTAL "Enables experimental features/tests." OFF)
+
+########################## End of CMake options to Albany #########################################
 
 add_subdirectory(src)
 

@@ -8,8 +8,6 @@ add_subdirectory(FO_Test)
 add_subdirectory(FO_GIS)
 add_subdirectory(FO_AIS)
 add_subdirectory(FO_Thermo)
-# TODO: uncomment when it works
-# add_subdirectory(FO_Hydrology)
 add_subdirectory(Stokes_MMS)
 add_subdirectory(Stokes_ISMIP)
 add_subdirectory(Stokes_Test)
@@ -17,3 +15,7 @@ add_subdirectory(Stokes_Test)
 add_subdirectory(SHMIP)
 
 add_subdirectory(Enthalpy)
+
+if (ENABLE_EXPERIMENTAL)
+  add_subdirectory(FO_Hydrology)
+endif()
