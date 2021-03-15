@@ -110,8 +110,6 @@ evaluateFields(typename Traits::EvalData workset)
   if (it_ss != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
 
-    const auto& sideSetView = workset.sideSetViews->at(sideSetName);
-
     Kokkos::DynRankView<RealType, PHX::Device> cubPointsSide;
     Kokkos::DynRankView<RealType, PHX::Device> refPointsSide;
     Kokkos::DynRankView<RealType, PHX::Device> cubWeightsSide;
@@ -237,7 +235,7 @@ evaluateFields(typename Traits::EvalData workset)
         SMB_Cell(node) = have_SMB ? SMB(elem_LID, node) : ScalarT(0.0);
         for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
           if (useCollapsedSidesets) {
-            V_Cell(node, dim) = V(sideSetView.elem_LID(iSide), i, dim);
+            V_Cell(node, dim) = V(iSide, i, dim);
           } else {
             V_Cell(node, dim) = V(elem_LID, elem_side, i, dim);
           }
