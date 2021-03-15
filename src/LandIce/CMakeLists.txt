@@ -105,6 +105,8 @@ set(HEADERS
   evaluators/LandIce_Gather2DField_Def.hpp
   evaluators/LandIce_GatherVerticallyContractedSolution.hpp
   evaluators/LandIce_GatherVerticallyContractedSolution_Def.hpp
+  evaluators/LandIce_HydrostaticPressure.hpp
+  evaluators/LandIce_HydrostaticPressure_Def.hpp
   evaluators/LandIce_IceOverburden.hpp
   evaluators/LandIce_IceOverburden_Def.hpp
   evaluators/LandIce_LaplacianRegularizationResidual.hpp
@@ -198,8 +200,6 @@ set(HEADERS
   evaluators/hydrology/LandIce_HydrologyWaterDischarge_Def.hpp
   evaluators/hydrology/LandIce_HydrologyWaterThickness.hpp
   evaluators/hydrology/LandIce_HydrologyWaterThickness_Def.hpp
-  evaluators/hydrology/LandIce_HydrostaticPressure.hpp
-  evaluators/hydrology/LandIce_HydrostaticPressure_Def.hpp
   problems/LandIce_Enthalpy.hpp
   problems/LandIce_Hydrology.hpp
   problems/LandIce_LaplacianSampling.hpp
