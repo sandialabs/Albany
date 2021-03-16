@@ -13,6 +13,8 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "Albany_SacadoTypes.hpp"
+
 #include "PHAL_Utilities.hpp"
 
 namespace LandIce
@@ -45,14 +47,16 @@ public:
 
 private:
 
+  using GradThicknessScalarT = typename Albany::StrongestScalarType<ThicknessScalarT,MeshScalarT>::type;
+
   // Input:
   // TODO: restore layout template arguments when removing old sideset layout
-  PHX::MDField<const ScalarT>          field;
-  PHX::MDField<const ScalarT>          averaged_velocity;     // Side, QuadPoint, VecDim
-  PHX::MDField<const ScalarT>          div_averaged_velocity; // Side, QuadPoint
-  PHX::MDField<const ThicknessScalarT> thickness;             // Side, QuadPoint
-  PHX::MDField<const ThicknessScalarT> grad_thickness;        // Side, QuadPoint, Dim
-  PHX::MDField<const MeshScalarT>      side_tangents;         // Side, QuadPoint, Dim, Dim
+  PHX::MDField<const ScalarT>               field;
+  PHX::MDField<const ScalarT>               averaged_velocity;     // Side, QuadPoint, VecDim
+  PHX::MDField<const ScalarT>               div_averaged_velocity; // Side, QuadPoint
+  PHX::MDField<const ThicknessScalarT>      thickness;             // Side, QuadPoint
+  PHX::MDField<const GradThicknessScalarT>  grad_thickness;        // Side, QuadPoint, Dim
+  PHX::MDField<const MeshScalarT>           side_tangents;         // Side, QuadPoint, Dim, Dim
 
   // Output:
   PHX::MDField<ScalarT>                flux_div;              // Side, QuadPoint

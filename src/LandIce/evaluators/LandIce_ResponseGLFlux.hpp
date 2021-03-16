@@ -49,10 +49,11 @@ namespace LandIce {
 
     // TODO: restore layout template arguments when removing old sideset layout
     PHX::MDField<const ScalarT>              avg_vel;     //[m yr^{-1}]; Side, Node, Dim
-    PHX::MDField<const MeshScalarT>          thickness;   //[km]; Side, Node
-    PHX::MDField<const MeshScalarT>          bed;         //[km]; Side, Node
+    PHX::MDField<const RealType>             thickness;   //[km]; Side, Node
+    PHX::MDField<const RealType>             bed;         //[km]; Side, Node
     PHX::MDField<const MeshScalarT>          coords;      //[km]; Side, Node, Dim
-    Kokkos::DynRankView<MeshScalarT, PHX::Device>           gl_func,H,x,y;
+    Kokkos::DynRankView<RealType, PHX::Device>              gl_func,H;
+    Kokkos::DynRankView<MeshScalarT, PHX::Device>           x,y;
     Kokkos::DynRankView<ScalarT, PHX::Device>               velx,vely;
 
     double rho_i, rho_w;  //[kg m^{-3}]

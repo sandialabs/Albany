@@ -10,6 +10,8 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "PHAL_Utilities.hpp"
 
+#include "LandIce_ResponseGLFlux.hpp"
+
 template<typename EvalT, typename Traits>
 LandIce::ResponseGLFlux<EvalT, Traits>::
 ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
@@ -82,8 +84,8 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::postRegistrationSetup(typename Trai
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
   gl_func = Kokkos::createDynRankView(bed.get_view(), "gl_func", numSideNodes);
   H = Kokkos::createDynRankView(bed.get_view(), "H", 2);
-  x = Kokkos::createDynRankView(bed.get_view(), "x", 2);
-  y = Kokkos::createDynRankView(bed.get_view(), "y", 2);
+  x = Kokkos::createDynRankView(coords.get_view(), "x", 2);
+  y = Kokkos::createDynRankView(coords.get_view(), "y", 2);
   velx = Kokkos::createDynRankView(avg_vel.get_view(), "velx", 2);
   vely = Kokkos::createDynRankView(avg_vel.get_view(), "vely", 2);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
@@ -138,7 +140,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
         int counter=0;
         for (unsigned int inode=0; (inode<numSideNodes); ++inode) {
           int inode1 = (inode+1)%numSideNodes;
-          MeshScalarT gl0 = gl_func(inode), gl1 = gl_func(inode1);
+          RealType gl0 = gl_func(inode), gl1 = gl_func(inode1);
           if(gl0 >= gl_max) {
             node_plus = inode;
             gl_max = gl0;
@@ -153,7 +155,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
             //we want to avoid selecting two edges sharing the same vertex on the GL
             if(skip_edge) {skip_edge = false; continue;}
             skip_edge = (gl1 == 0);
-            MeshScalarT theta = gl0/(gl0-gl1);
+            RealType theta = gl0/(gl0-gl1);
             H(counter) = thickness(sideSet_idx,inode1)*theta + thickness(sideSet_idx,inode)*(1-theta);
             x(counter) = coords(sideSet_idx,inode1,0)*theta + coords(sideSet_idx,inode,0)*(1-theta);
             y(counter) = coords(sideSet_idx,inode1,1)*theta + coords(sideSet_idx,inode,1)*(1-theta);
@@ -205,7 +207,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
         int counter=0;
         for (unsigned int inode=0; (inode<numSideNodes); ++inode) {
           int inode1 = (inode+1)%numSideNodes;
-          MeshScalarT gl0 = gl_func(inode), gl1 = gl_func(inode1);
+          RealType gl0 = gl_func(inode), gl1 = gl_func(inode1);
           if(gl0 >= gl_max) {
             node_plus = inode;
             gl_max = gl0;
@@ -220,7 +222,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
             //we want to avoid selecting two edges sharing the same vertex on the GL
             if(skip_edge) {skip_edge = false; continue;}
             skip_edge = (gl1 == 0);
-            MeshScalarT theta = gl0/(gl0-gl1);
+            RealType theta = gl0/(gl0-gl1);
             H(counter) = thickness(cell,side,inode1)*theta + thickness(cell,side,inode)*(1-theta);
             x(counter) = coords(cell,side,inode1,0)*theta + coords(cell,side,inode,0)*(1-theta);
             y(counter) = coords(cell,side,inode1,1)*theta + coords(cell,side,inode,1)*(1-theta);
