@@ -22,15 +22,17 @@
 #include "BlockedDiscretization.hpp"
 #include "STKConnManager.hpp"
 
-namespace Albany {
+namespace Albany
+{
 
-//Assume we only have one block right now
-BlockedDiscretization::BlockedDiscretization(
-    const Teuchos::RCP<Teuchos::ParameterList>&    discParams_,
-    Teuchos::RCP<AbstractSTKMeshStruct>&   stkMeshStruct_,
-    const Teuchos::RCP<const Teuchos_Comm>&        comm_,
-    const Teuchos::RCP<RigidBodyModes>&    rigidBodyModes_,
-    const std::map<int, std::vector<std::string>>& sideSetEquations_){
+  //Assume we only have one block right now
+  BlockedDiscretization::BlockedDiscretization(
+      const Teuchos::RCP<Teuchos::ParameterList> &discParams_,
+      Teuchos::RCP<AbstractSTKMeshStruct> &stkMeshStruct_,
+      const Teuchos::RCP<const Teuchos_Comm> &comm_,
+      const Teuchos::RCP<RigidBodyModes> &rigidBodyModes_,
+      const std::map<int, std::vector<std::string>> &sideSetEquations_)
+  {
 
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -39,24 +41,24 @@ BlockedDiscretization::BlockedDiscretization(
 
     m_blocks.resize(1);
 
-	m_blocks[0] = Teuchos::rcp(new disc_type(discParams_, stkMeshStruct_, comm_,
-		rigidBodyModes_, sideSetEquations_));
+    m_blocks[0] = Teuchos::rcp(new disc_type(discParams_, stkMeshStruct_, comm_,
+                                             rigidBodyModes_, sideSetEquations_));
 
     // build the connection manager
     const Teuchos::RCP<panzer::ConnManager>
-      connMngr = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_));
+        connMngr = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_));
 
-   // build the DOF manager for the problem
-   if (const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (comm.get())) {
-     MPI_Comm rawComm = (*mpiComm->getRawMpiComm().get())();
+    // build the DOF manager for the problem
+    if (const Teuchos::MpiComm<int> *mpiComm = dynamic_cast<const Teuchos::MpiComm<int> *>(comm.get()))
+    {
+      MPI_Comm rawComm = (*mpiComm->getRawMpiComm().get())();
 
-   Teuchos::RCP<panzer::BlockedDOFManager> dofManager
-         = Teuchos::rcp(new panzer::BlockedDOFManager(connMngr, rawComm));
-//   dofManager->enableTieBreak(useTieBreak_);
-//   dofManager->setUseDOFManagerFEI(useDOFManagerFEI_);
+      Teuchos::RCP<panzer::BlockedDOFManager> dofManager = Teuchos::rcp(new panzer::BlockedDOFManager(connMngr, rawComm));
+      //   dofManager->enableTieBreak(useTieBreak_);
+      //   dofManager->setUseDOFManagerFEI(useDOFManagerFEI_);
 
-   // by default assume orientations are not required
-   bool orientationsRequired = false;
+      // by default assume orientations are not required
+      bool orientationsRequired = false;
 
 #if 0 // disc-fe?
    std::vector<Teuchos::RCP<panzer::PhysicsBlock> >::const_iterator physIter;
@@ -83,17 +85,17 @@ BlockedDiscretization::BlockedDiscretization(
    }
 #endif
 
-  // set orientations required flag
-   dofManager->setOrientationsRequired(orientationsRequired);
+      // set orientations required flag
+      dofManager->setOrientationsRequired(orientationsRequired);
 
-   // blocked degree of freedom manager
-   std::string fieldOrder = discParams_->get<std::string>("Field Order");
-   std::vector<std::vector<std::string> > blocks;
-   buildBlocking(fieldOrder,blocks);
-   dofManager->setFieldOrder(blocks);
+      // blocked degree of freedom manager
+      std::string fieldOrder = discParams_->get<std::string>("Field Order");
+      std::vector<std::vector<std::string>> blocks;
+      buildBlocking(fieldOrder, blocks);
+      dofManager->setFieldOrder(blocks);
 
-   dofManager->buildGlobalUnknowns();
-   dofManager->printFieldInformation(*out);
+      dofManager->buildGlobalUnknowns();
+      dofManager->printFieldInformation(*out);
 
 #if 0
     // blocked degree of freedom manager
@@ -107,60 +109,59 @@ BlockedDiscretization::BlockedDiscretization(
          = globalIndexerFactory.buildGlobalIndexer(Teuchos::opaqueWrapper(MPI_COMM_WORLD),
            auxPhysicsBlocks,conn_manager,auxFieldOrder);
 #endif
+    }
   }
 
-}
+  void
+  BlockedDiscretization::printConnectivity() const
+  {
+    m_blocks[0]->printConnectivity();
+  }
 
-void
-BlockedDiscretization::printConnectivity() const
-{
-	m_blocks[0]->printConnectivity();
-}
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getVectorSpace(const std::string &field_name) const
+  {
+    return m_blocks[0]->getVectorSpace(field_name);
+  }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-BlockedDiscretization::getVectorSpace(const std::string& field_name) const
-{
-  return m_blocks[0]->getVectorSpace(field_name);
-}
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getNodeVectorSpace(const std::string &field_name) const
+  {
+    return m_blocks[0]->getNodeVectorSpace(field_name);
+  }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-BlockedDiscretization::getNodeVectorSpace(const std::string& field_name) const
-{
-  return m_blocks[0]->getNodeVectorSpace(field_name);
-}
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getOverlapVectorSpace(const std::string &field_name) const
+  {
+    return m_blocks[0]->getOverlapVectorSpace(field_name);
+  }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-BlockedDiscretization::getOverlapVectorSpace(const std::string& field_name) const
-{
-  return m_blocks[0]->getOverlapVectorSpace(field_name);
-}
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getOverlapNodeVectorSpace(
+      const std::string &field_name) const
+  {
+    return m_blocks[0]->getOverlapNodeVectorSpace(field_name);
+  }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-BlockedDiscretization::getOverlapNodeVectorSpace(
-    const std::string& field_name) const
-{
-  return m_blocks[0]->getOverlapNodeVectorSpace(field_name);
-}
+  void
+  BlockedDiscretization::printCoords() const
+  {
+    m_blocks[0]->printCoords();
+  }
 
-void
-BlockedDiscretization::printCoords() const
-{
-	m_blocks[0]->printCoords();
-}
+  // The function transformMesh() maps a unit cube domain by applying a
+  // transformation to the mesh.
+  void
+  BlockedDiscretization::transformMesh()
+  {
+    m_blocks[0]->transformMesh();
+  }
 
-// The function transformMesh() maps a unit cube domain by applying a
-// transformation to the mesh.
-void
-BlockedDiscretization::transformMesh()
-{
-	m_blocks[0]->transformMesh();
-}
-
-void
-BlockedDiscretization::updateMesh()
-{
-	m_blocks[0]->updateMesh();
-}
+  void
+  BlockedDiscretization::updateMesh()
+  {
+    m_blocks[0]->updateMesh();
+  }
 
 #if 0
 void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& physicsBlocks,
@@ -214,154 +215,163 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
 }
 #endif
 
-void addFieldsToMesh(STKDiscretization& mesh,
-                               const Teuchos::ParameterList& output_list)
-{
-  // register cell averaged scalar fields
-  const Teuchos::ParameterList & cellAvgQuants = output_list.sublist("Cell Average Quantities");
-  for(Teuchos::ParameterList::ConstIterator itr=cellAvgQuants.begin();
-      itr!=cellAvgQuants.end();++itr) {
-    const std::string & blockId = itr->first;
-    const std::string & fields = Teuchos::any_cast<std::string>(itr->second.getAny());
-    std::vector<std::string> tokens;
+  void addFieldsToMesh(STKDiscretization &mesh,
+                       const Teuchos::ParameterList &output_list)
+  {
+    // register cell averaged scalar fields
+    const Teuchos::ParameterList &cellAvgQuants = output_list.sublist("Cell Average Quantities");
+    for (Teuchos::ParameterList::ConstIterator itr = cellAvgQuants.begin();
+         itr != cellAvgQuants.end(); ++itr)
+    {
+      const std::string &blockId = itr->first;
+      const std::string &fields = Teuchos::any_cast<std::string>(itr->second.getAny());
+      std::vector<std::string> tokens;
 
-    // break up comma seperated fields
-    panzer::StringTokenizer(tokens,fields,",",true);
+      // break up comma seperated fields
+      panzer::StringTokenizer(tokens, fields, ",", true);
 
-    for(std::size_t i=0;i<tokens.size();i++)
-      mesh.addCellField(tokens[i],blockId);
-  }
+      for (std::size_t i = 0; i < tokens.size(); i++)
+        mesh.addCellField(tokens[i], blockId);
+    }
 
-  // register cell averaged components of vector fields
-  // just allocate space for the fields here. The actual calculation and writing
-  // are done by panzer_stk::ScatterCellAvgVector.
-  const Teuchos::ParameterList & cellAvgVectors = output_list.sublist("Cell Average Vectors");
-  for(Teuchos::ParameterList::ConstIterator itr = cellAvgVectors.begin();
-      itr != cellAvgVectors.end(); ++itr) {
-    const std::string & blockId = itr->first;
-    const std::string & fields = Teuchos::any_cast<std::string>(itr->second.getAny());
-    std::vector<std::string> tokens;
+    // register cell averaged components of vector fields
+    // just allocate space for the fields here. The actual calculation and writing
+    // are done by panzer_stk::ScatterCellAvgVector.
+    const Teuchos::ParameterList &cellAvgVectors = output_list.sublist("Cell Average Vectors");
+    for (Teuchos::ParameterList::ConstIterator itr = cellAvgVectors.begin();
+         itr != cellAvgVectors.end(); ++itr)
+    {
+      const std::string &blockId = itr->first;
+      const std::string &fields = Teuchos::any_cast<std::string>(itr->second.getAny());
+      std::vector<std::string> tokens;
 
-    // break up comma seperated fields
-    panzer::StringTokenizer(tokens,fields,",",true);
+      // break up comma seperated fields
+      panzer::StringTokenizer(tokens, fields, ",", true);
 
-    for(std::size_t i = 0; i < tokens.size(); i++) {
-      std::string d_mod[3] = {"X","Y","Z"};
-      for(std::size_t d = 0; d < mesh.getDimension(); d++)
-        mesh.addCellField(tokens[i]+d_mod[d],blockId);
+      for (std::size_t i = 0; i < tokens.size(); i++)
+      {
+        std::string d_mod[3] = {"X", "Y", "Z"};
+        for (std::size_t d = 0; d < mesh.getDimension(); d++)
+          mesh.addCellField(tokens[i] + d_mod[d], blockId);
+      }
+    }
+
+    // register cell quantities
+    const Teuchos::ParameterList &cellQuants = output_list.sublist("Cell Quantities");
+    for (Teuchos::ParameterList::ConstIterator itr = cellQuants.begin();
+         itr != cellQuants.end(); ++itr)
+    {
+      const std::string &blockId = itr->first;
+      const std::string &fields = Teuchos::any_cast<std::string>(itr->second.getAny());
+      std::vector<std::string> tokens;
+
+      // break up comma seperated fields
+      panzer::StringTokenizer(tokens, fields, ",", true);
+
+      for (std::size_t i = 0; i < tokens.size(); i++)
+        mesh.addCellField(tokens[i], blockId);
+    }
+
+    // register ndoal quantities
+    const Teuchos::ParameterList &nodalQuants = output_list.sublist("Nodal Quantities");
+    for (Teuchos::ParameterList::ConstIterator itr = nodalQuants.begin();
+         itr != nodalQuants.end(); ++itr)
+    {
+      const std::string &blockId = itr->first;
+      const std::string &fields = Teuchos::any_cast<std::string>(itr->second.getAny());
+      std::vector<std::string> tokens;
+
+      // break up comma seperated fields
+      panzer::StringTokenizer(tokens, fields, ",", true);
+
+      for (std::size_t i = 0; i < tokens.size(); i++)
+        mesh.addSolutionField(tokens[i], blockId);
+    }
+
+    const Teuchos::ParameterList &allocNodalQuants = output_list.sublist("Allocate Nodal Quantities");
+    for (Teuchos::ParameterList::ConstIterator itr = allocNodalQuants.begin();
+         itr != allocNodalQuants.end(); ++itr)
+    {
+      const std::string &blockId = itr->first;
+      const std::string &fields = Teuchos::any_cast<std::string>(itr->second.getAny());
+      std::vector<std::string> tokens;
+
+      // break up comma seperated fields
+      panzer::StringTokenizer(tokens, fields, ",", true);
+
+      for (std::size_t i = 0; i < tokens.size(); i++)
+        mesh.addSolutionField(tokens[i], blockId);
     }
   }
 
-  // register cell quantities
-  const Teuchos::ParameterList & cellQuants = output_list.sublist("Cell Quantities");
-  for(Teuchos::ParameterList::ConstIterator itr=cellQuants.begin();
-      itr!=cellQuants.end();++itr) {
-    const std::string & blockId = itr->first;
-    const std::string & fields = Teuchos::any_cast<std::string>(itr->second.getAny());
+  bool BlockedDiscretization::
+      requiresBlocking(const std::string &fieldOrder)
+  {
     std::vector<std::string> tokens;
 
-    // break up comma seperated fields
-    panzer::StringTokenizer(tokens,fields,",",true);
+    // break it up on spaces
+    panzer::StringTokenizer(tokens, fieldOrder, " ", true);
 
-    for(std::size_t i=0;i<tokens.size();i++)
-      mesh.addCellField(tokens[i],blockId);
-  }
-
-  // register ndoal quantities
-  const Teuchos::ParameterList & nodalQuants = output_list.sublist("Nodal Quantities");
-  for(Teuchos::ParameterList::ConstIterator itr=nodalQuants.begin();
-      itr!=nodalQuants.end();++itr) {
-    const std::string & blockId = itr->first;
-    const std::string & fields = Teuchos::any_cast<std::string>(itr->second.getAny());
-    std::vector<std::string> tokens;
-
-    // break up comma seperated fields
-    panzer::StringTokenizer(tokens,fields,",",true);
-
-    for(std::size_t i=0;i<tokens.size();i++)
-      mesh.addSolutionField(tokens[i],blockId);
-  }
-
-  const Teuchos::ParameterList & allocNodalQuants = output_list.sublist("Allocate Nodal Quantities");
-  for(Teuchos::ParameterList::ConstIterator itr=allocNodalQuants.begin();
-      itr!=allocNodalQuants.end();++itr) {
-    const std::string & blockId = itr->first;
-    const std::string & fields = Teuchos::any_cast<std::string>(itr->second.getAny());
-    std::vector<std::string> tokens;
-
-    // break up comma seperated fields
-    panzer::StringTokenizer(tokens,fields,",",true);
-
-    for(std::size_t i=0;i<tokens.size();i++)
-      mesh.addSolutionField(tokens[i],blockId);
-  }
-
-}
-
-bool BlockedDiscretization::
-requiresBlocking(const std::string & fieldOrder)
-{
-   std::vector<std::string> tokens;
-
-   // break it up on spaces
-   panzer::StringTokenizer(tokens,fieldOrder," ",true);
-
-   if(tokens.size()<2) // there has to be at least 2 tokens to block
+    if (tokens.size() < 2) // there has to be at least 2 tokens to block
       return false;
 
-   // check the prefix - must signal "blocked"
-   if(tokens[0]!="blocked:")
+    // check the prefix - must signal "blocked"
+    if (tokens[0] != "blocked:")
       return false;
 
-   // loop over tokens
-   bool acceptsHyphen = false;
-   for(std::size_t i=1;i<tokens.size();i++) {
+    // loop over tokens
+    bool acceptsHyphen = false;
+    for (std::size_t i = 1; i < tokens.size(); i++)
+    {
 
       // acceptsHyphen can't be false, and then a hyphen accepted
-      TEUCHOS_TEST_FOR_EXCEPTION(tokens[i]=="-" && !acceptsHyphen,std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(tokens[i] == "-" && !acceptsHyphen, std::logic_error,
 
                                  "Blocked assembly: Error \"Field Order\" hyphen error at "
-                                 "token " << i);
+                                 "token "
+                                     << i);
 
-      if(acceptsHyphen && tokens[i]=="-")
-         acceptsHyphen = false;
-      else { // token must be a field
-         acceptsHyphen = true;
+      if (acceptsHyphen && tokens[i] == "-")
+        acceptsHyphen = false;
+      else
+      { // token must be a field
+        acceptsHyphen = true;
       }
-   }
+    }
 
-   return true;
-}
+    return true;
+  }
 
-void BlockedDiscretization::
-buildBlocking(const std::string & fieldOrder, std::vector<std::vector<std::string> > & blocks)
-{
-   // now we don't have to check
-   TEUCHOS_ASSERT(requiresBlocking(fieldOrder));
+  void BlockedDiscretization::
+      buildBlocking(const std::string &fieldOrder, std::vector<std::vector<std::string>> &blocks)
+  {
+    // now we don't have to check
+    TEUCHOS_ASSERT(requiresBlocking(fieldOrder));
 
-   std::vector<std::string> tokens;
+    std::vector<std::string> tokens;
 
-   // break it up on spaces
-   panzer::StringTokenizer(tokens,fieldOrder," ",true);
+    // break it up on spaces
+    panzer::StringTokenizer(tokens, fieldOrder, " ", true);
 
-   Teuchos::RCP<std::vector<std::string> > current;
-   for(std::size_t i=1;i<tokens.size();i++) {
+    Teuchos::RCP<std::vector<std::string>> current;
+    for (std::size_t i = 1; i < tokens.size(); i++)
+    {
 
-      if(tokens[i]!="-" && tokens[i-1]!="-") {
-         // if there is something to add, add it to the blocks
-         if(current!=Teuchos::null)
-            blocks.push_back(*current);
+      if (tokens[i] != "-" && tokens[i - 1] != "-")
+      {
+        // if there is something to add, add it to the blocks
+        if (current != Teuchos::null)
+          blocks.push_back(*current);
 
-         current = Teuchos::rcp(new std::vector<std::string>);
+        current = Teuchos::rcp(new std::vector<std::string>);
       }
 
-      if(tokens[i]!="-")
-         current->push_back(tokens[i]);
-   }
+      if (tokens[i] != "-")
+        current->push_back(tokens[i]);
+    }
 
-   if(current!=Teuchos::null)
+    if (current != Teuchos::null)
       blocks.push_back(*current);
-}
-
+  }
 
 } // namespace Albany
