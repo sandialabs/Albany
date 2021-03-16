@@ -229,11 +229,20 @@ void PyProblem::setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVec
 
 void PyProblem::setParameter(const int p_index, Teuchos::RCP<PyTrilinosVector> p)
 {
-    TEUCHOS_TEST_FOR_EXCEPTION(inverseHasBeenSolved, std::runtime_error,
-                               "Error! parameter values cannot be changed "
-                               "once the inverse problem has been solved.\n");
+    RCP<Teuchos::ParameterList> appParams = slvrfctry->getParameters();
+    if (appParams->isSublist("Piro"))
+    {
+        RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+        if (piroParams->isSublist("Optimization Status"))
+        {
+            RCP<Teuchos::ParameterList> optimizationParams =
+                Teuchos::sublist(piroParams, "Optimization Status");
+            optimizationParams->set<bool>("Compute State", true);
+        }
+    }
 
     forwardHasBeenSolved = false;
+    inverseHasBeenSolved = false;
 
     for (size_t l = 0; l < solver->Np(); l++)
     {

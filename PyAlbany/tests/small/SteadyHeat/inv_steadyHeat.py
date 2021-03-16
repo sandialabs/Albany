@@ -36,6 +36,7 @@ class TestSteadyHeat(unittest.TestCase):
 
         g_target_before = 0.35681844
         g_target_after = 0.17388298
+        g_target_2 = 0.19570272
         p_0_target = 0.39886689
         p_1_norm_target = 5.37319376038225
         tol = 1e-8
@@ -68,6 +69,18 @@ class TestSteadyHeat(unittest.TestCase):
         if rank == 0:
             self.assertTrue(np.abs(response_before_analysis[0] - g_target_before) < tol)
             self.assertTrue(np.abs(response_after_analysis[0] - g_target_after) < tol)
+
+        parameter_map_0 = problem.getParameterMap(0)
+        para_0_new = Tpetra.Vector(parameter_map_0, dtype="d")
+        para_0_new[:] = 0.0
+        problem.setParameter(0, para_0_new)
+
+        problem.performSolve()
+
+        response = problem.getResponse(0)
+        print("Response after setParameter " + str(response.getData()))
+        if rank == 0:
+            self.assertTrue(np.abs(response[0] - g_target_2) < tol)
 
     @classmethod
     def tearDownClass(cls):
