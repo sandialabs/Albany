@@ -295,30 +295,61 @@ This is just a start, to serve as an example. This has not been thought through 
 
       // Need to test various meshes, with various element types and block structures.
 
-      Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct;
-      meshStruct = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
-      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-      auto gms = Teuchos::rcp_dynamic_cast<GenericSTKMeshStruct>(meshStruct);
+      Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>> discParams_array;
+      Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> ms_array;
+
+      discParams_array.resize(3);
+      discParams_array[0] = discParams;
+      discParams_array[1] = discParams;
+      discParams_array[2] = discParams;
+
+      ms_array.resize(3);
+
+      Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct0, meshStruct1, meshStruct2;
+      meshStruct0 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
+      meshStruct1 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
+      meshStruct2 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
+
+      ms_array[0] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct0);
+      ms_array[1] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct1);
+      ms_array[2] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct2);
 
       const AbstractFieldContainer::FieldContainerRequirements req;
       const Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct());
       const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
       const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-      ms->setFieldAndBulkData(comm, discParams, 3, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
-                              side_set_sis, side_set_req);
+      ms_array[0]->setFieldAndBulkData(comm, discParams, 1, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
+                                       side_set_sis, side_set_req);
+
+      ms_array[1]->setFieldAndBulkData(comm, discParams, 3, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
+                                       side_set_sis, side_set_req);
+
+      ms_array[2]->setFieldAndBulkData(comm, discParams, 5, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
+                                       side_set_sis, side_set_req);
 
       // Null for this test
       const Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
       const std::map<int, std::vector<std::string>> sideSetEquations;
 
       // Use the Albany STK interface as it is used elsewhere in the code
-      auto stkDisc = Teuchos::rcp(new BlockedDiscretization(discParams, ms, comm, rigidBodyModes, sideSetEquations));
+      auto stkDisc = Teuchos::rcp(new BlockedDiscretization(discParams_array, ms_array, comm));
       stkDisc->updateMesh();
       stkDisc->computeProductVectorSpace();
 
       auto nvs = stkDisc->getOverlapProductVectorSpace();
       TEST_EQUALITY(Teuchos::nonnull(nvs), true);
+
+      auto nv0 = stkDisc->getOverlapVectorSpace(0);
+      auto nv1 = stkDisc->getOverlapVectorSpace(1);
+      auto nv2 = stkDisc->getOverlapVectorSpace(2);
+
+      std::cout << " Dimension of the first block: " << nv0->dim() << std::endl;
+      std::cout << " Dimension of the second block: " << nv1->dim() << std::endl;
+      std::cout << " Dimension of the third block: " << nv2->dim() << std::endl;
+      std::cout << " Dimension of the product vector space: " << nvs->dim() << std::endl;
+
+      TEST_EQUALITY(nvs->dim(), nv0->dim() + nv1->dim() + nv2->dim());
    }
 
    /*
