@@ -979,7 +979,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // The st of T for viscosity is complicated: you need to get the st of the T used (temp or corrected temp),
   // and consider that you do Nodes->Cell interp, which introduces MeshScalar type in the result.
   FST temp_st = get_scalar_type(viscosity_use_corrected_temperature ? corrected_temperature_name : temperature_name);
-  ev = createEvaluatorWithTwoScalarTypes<ViscosityFO,EvalT>(p,dl,FST::Scalar,temp_st | FST::MeshScalar);
+  ev = createEvaluatorWithTwoScalarTypes<ViscosityFO,EvalT>(p,dl,FST::Scalar,temp_st);
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- Print LandIce Dissipation ---

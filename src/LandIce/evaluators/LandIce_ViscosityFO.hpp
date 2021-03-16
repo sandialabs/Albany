@@ -69,7 +69,7 @@ private:
   //To distinguish it from the scalar flowFactor defined
   //in the body of the function, it is called flowFactorA.
   //Probably this should be changed at some point...
-  PHX::MDField<const TemprT,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
+  PHX::MDField<const RealType,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
   PHX::MDField<const ParamScalarT,Cell,QuadPoint> stiffeningFactor;
   PHX::MDField<const ScalarT> homotopyParam;
   bool performContinuousHomotopy;
