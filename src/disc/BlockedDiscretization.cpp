@@ -22,6 +22,8 @@
 #include "BlockedDiscretization.hpp"
 #include "STKConnManager.hpp"
 
+#include "Thyra_DefaultProductVectorSpace.hpp"
+
 namespace Albany
 {
 
@@ -39,10 +41,13 @@ namespace Albany
     using Teuchos::rcp_dynamic_cast;
     typedef double Scalar;
 
-    m_blocks.resize(1);
+    n_m_blocks = 1;
 
-    m_blocks[0] = Teuchos::rcp(new disc_type(discParams_, stkMeshStruct_, comm_,
-                                             rigidBodyModes_, sideSetEquations_));
+    m_blocks.resize(n_m_blocks);
+
+    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
+      m_blocks[i_block] = Teuchos::rcp(new disc_type(discParams_, stkMeshStruct_, comm_,
+                                                     rigidBodyModes_, sideSetEquations_));
 
     // build the connection manager
     const Teuchos::RCP<panzer::ConnManager>
@@ -112,41 +117,191 @@ namespace Albany
     }
   }
 
+  BlockedDiscretization::BlockedDiscretization(
+      const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>> &discParams_,
+      Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> &stkMeshStruct_,
+      const Teuchos::RCP<const Teuchos_Comm> &comm_,
+      const Teuchos::RCP<RigidBodyModes> &rigidBodyModes_,
+      const std::map<int, std::vector<std::string>> &sideSetEquations_)
+  {
+
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::rcp_dynamic_cast;
+    typedef double Scalar;
+
+    n_m_blocks = discParams_.length();
+
+    m_blocks.resize(n_m_blocks);
+
+    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
+      m_blocks[i_block] = Teuchos::rcp(new disc_type(discParams_[i_block], stkMeshStruct_[i_block], comm_,
+                                                     rigidBodyModes_, sideSetEquations_));
+
+    // build the connection manager
+    const Teuchos::RCP<panzer::ConnManager>
+        connMngr = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_[0]));
+
+    // build the DOF manager for the problem
+    if (const Teuchos::MpiComm<int> *mpiComm = dynamic_cast<const Teuchos::MpiComm<int> *>(comm.get()))
+    {
+      MPI_Comm rawComm = (*mpiComm->getRawMpiComm().get())();
+
+      Teuchos::RCP<panzer::BlockedDOFManager> dofManager = Teuchos::rcp(new panzer::BlockedDOFManager(connMngr, rawComm));
+      //   dofManager->enableTieBreak(useTieBreak_);
+      //   dofManager->setUseDOFManagerFEI(useDOFManagerFEI_);
+
+      // by default assume orientations are not required
+      bool orientationsRequired = false;
+
+      // set orientations required flag
+      dofManager->setOrientationsRequired(orientationsRequired);
+
+      // blocked degree of freedom manager
+      std::string fieldOrder = discParams_[0]->get<std::string>("Field Order");
+      std::vector<std::vector<std::string>> blocks;
+      buildBlocking(fieldOrder, blocks);
+      dofManager->setFieldOrder(blocks);
+
+      dofManager->buildGlobalUnknowns();
+      dofManager->printFieldInformation(*out);
+    }
+  }
+
+  void
+  BlockedDiscretization::computeProductVectorSpace()
+  {
+    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_vs(n_m_blocks);
+    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_node_vs(n_m_blocks);
+    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_overlap_vs(n_m_blocks);
+    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_overlap_node_vs(n_m_blocks);
+
+    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
+    {
+      m_vs[i_block] = this->getVectorSpace(i_block);
+      m_node_vs[i_block] = this->getNodeVectorSpace(i_block);
+      m_overlap_vs[i_block] = this->getOverlapVectorSpace(i_block);
+      m_overlap_node_vs[i_block] = this->getOverlapNodeVectorSpace(i_block);
+    }
+
+    m_pvs = Thyra::productVectorSpace<ST>(m_vs);
+    m_node_pvs = Thyra::productVectorSpace<ST>(m_node_vs);
+    m_overlap_pvs = Thyra::productVectorSpace<ST>(m_overlap_vs);
+    m_overlap_node_pvs = Thyra::productVectorSpace<ST>(m_overlap_node_vs);
+  }
+
   void
   BlockedDiscretization::printConnectivity() const
   {
-    m_blocks[0]->printConnectivity();
+    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
+      this->printConnectivity(i_block);
+  }
+  void
+  BlockedDiscretization::printConnectivity(const size_t i_block) const
+  {
+    m_blocks[i_block]->printConnectivity();
+  }
+
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getNodeVectorSpace() const
+  {
+    return this->getNodeVectorSpace(0);
+  }
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getNodeVectorSpace(const size_t i_block) const
+  {
+    return m_blocks[i_block]->getNodeVectorSpace();
+  }
+
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getOverlapNodeVectorSpace() const
+  {
+    return this->getOverlapNodeVectorSpace(0);
+  }
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getOverlapNodeVectorSpace(const size_t i_block) const
+  {
+    return m_blocks[i_block]->getOverlapNodeVectorSpace();
+  }
+
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getVectorSpace() const
+  {
+    return this->getVectorSpace(0);
+  }
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getVectorSpace(const size_t i_block) const
+  {
+    return m_blocks[i_block]->getVectorSpace();
+  }
+
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getOverlapVectorSpace() const
+  {
+    return this->getOverlapVectorSpace();
+  }
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getOverlapVectorSpace(const size_t i_block) const
+  {
+    return m_blocks[i_block]->getOverlapVectorSpace();
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
   BlockedDiscretization::getVectorSpace(const std::string &field_name) const
   {
-    return m_blocks[0]->getVectorSpace(field_name);
+    return this->getVectorSpace(0, field_name);
+  }
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getVectorSpace(const size_t i_block, const std::string &field_name) const
+  {
+    return m_blocks[i_block]->getVectorSpace(field_name);
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
   BlockedDiscretization::getNodeVectorSpace(const std::string &field_name) const
   {
-    return m_blocks[0]->getNodeVectorSpace(field_name);
+    return this->getNodeVectorSpace(0, field_name);
+  }
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getNodeVectorSpace(const size_t i_block, const std::string &field_name) const
+  {
+    return m_blocks[i_block]->getNodeVectorSpace(field_name);
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
   BlockedDiscretization::getOverlapVectorSpace(const std::string &field_name) const
   {
-    return m_blocks[0]->getOverlapVectorSpace(field_name);
+    return this->getOverlapVectorSpace(0, field_name);
+  }
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getOverlapVectorSpace(const size_t i_block, const std::string &field_name) const
+  {
+    return m_blocks[i_block]->getOverlapVectorSpace(field_name);
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
   BlockedDiscretization::getOverlapNodeVectorSpace(
       const std::string &field_name) const
   {
-    return m_blocks[0]->getOverlapNodeVectorSpace(field_name);
+    return this->getOverlapNodeVectorSpace(0, field_name);
+  }
+  Teuchos::RCP<const Thyra_VectorSpace>
+  BlockedDiscretization::getOverlapNodeVectorSpace(const size_t i_block,
+                                                   const std::string &field_name) const
+  {
+    return m_blocks[i_block]->getOverlapNodeVectorSpace(field_name);
   }
 
   void
   BlockedDiscretization::printCoords() const
   {
-    m_blocks[0]->printCoords();
+    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
+      this->printCoords(i_block);
+  }
+  void
+  BlockedDiscretization::printCoords(const size_t i_block) const
+  {
+    m_blocks[i_block]->printCoords();
   }
 
   // The function transformMesh() maps a unit cube domain by applying a
@@ -154,13 +309,25 @@ namespace Albany
   void
   BlockedDiscretization::transformMesh()
   {
-    m_blocks[0]->transformMesh();
+    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
+      this->transformMesh(i_block);
+  }
+  void
+  BlockedDiscretization::transformMesh(const size_t i_block)
+  {
+    m_blocks[i_block]->transformMesh();
   }
 
   void
   BlockedDiscretization::updateMesh()
   {
-    m_blocks[0]->updateMesh();
+    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
+      this->updateMesh(i_block);
+  }
+  void
+  BlockedDiscretization::updateMesh(const size_t i_block)
+  {
+    m_blocks[i_block]->updateMesh();
   }
 
 #if 0

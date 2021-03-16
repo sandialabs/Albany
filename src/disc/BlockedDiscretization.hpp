@@ -40,6 +40,14 @@ namespace Albany
         const std::map<int, std::vector<std::string>> &sideSetEquations =
             std::map<int, std::vector<std::string>>());
 
+    BlockedDiscretization(
+        const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>> &discParams,
+        Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> &stkMeshStruct,
+        const Teuchos::RCP<const Teuchos_Comm> &comm,
+        const Teuchos::RCP<RigidBodyModes> &rigidBodyModes = Teuchos::null,
+        const std::map<int, std::vector<std::string>> &sideSetEquations =
+            std::map<int, std::vector<std::string>>());
+
     //! Destructor
     virtual ~BlockedDiscretization() = default;
 
@@ -58,45 +66,32 @@ namespace Albany
 
     static void buildBlocking(const std::string &fieldorder, std::vector<std::vector<std::string>> &blocks);
 
-    void
-    printConnectivity() const;
+    void printConnectivity() const;
+    void printConnectivity(const size_t i_block) const;
 
     //! Get node vector space (owned and overlapped)
-    Teuchos::RCP<const Thyra_VectorSpace>
-    getNodeVectorSpace() const
-    {
-      return m_blocks[0]->getNodeVectorSpace();
-    }
-    Teuchos::RCP<const Thyra_VectorSpace>
-    getOverlapNodeVectorSpace() const
-    {
-      return m_blocks[0]->getOverlapNodeVectorSpace();
-    }
+    Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const;
+    Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace(const size_t i_block) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace() const;
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace(const size_t i_block) const;
 
     //! Get solution DOF vector space (owned and overlapped).
-    Teuchos::RCP<const Thyra_VectorSpace>
-    getVectorSpace() const
-    {
-      return m_blocks[0]->getVectorSpace();
-    }
-
-    Teuchos::RCP<const Thyra_VectorSpace>
-    getOverlapVectorSpace() const
-    {
-      return m_blocks[0]->getOverlapVectorSpace();
-    }
+    Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace() const;
+    Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace(const size_t i_block) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace() const;
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace(const size_t i_block) const;
 
     //! Get Field node vector space (owned and overlapped)
-    Teuchos::RCP<const Thyra_VectorSpace>
-    getNodeVectorSpace(const std::string &field_name) const;
-    Teuchos::RCP<const Thyra_VectorSpace>
-    getOverlapNodeVectorSpace(const std::string &field_name) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace(const std::string &field_name) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace(const size_t i_block, const std::string &field_name) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace(const std::string &field_name) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace(const size_t i_block, const std::string &field_name) const;
 
     //! Get Field vector space (owned and overlapped)
-    Teuchos::RCP<const Thyra_VectorSpace>
-    getVectorSpace(const std::string &field_name) const;
-    Teuchos::RCP<const Thyra_VectorSpace>
-    getOverlapVectorSpace(const std::string &field_name) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace(const std::string &field_name) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace(const size_t i_block, const std::string &field_name) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace(const std::string &field_name) const;
+    Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace(const size_t i_block, const std::string &field_name) const;
 
     //! Create a Jacobian operator (owned and overlapped)
     Teuchos::RCP<Thyra_LinearOp>
@@ -134,6 +129,8 @@ namespace Albany
     {
       return m_overlap_pvs;
     }
+
+    void computeProductVectorSpace();
 
     //! Get Field node vector space (owned and overlapped)
     Teuchos::RCP<const Thyra_ProductVectorSpace>
@@ -187,21 +184,36 @@ namespace Albany
     const SideSetList &
     getSideSets(const int workset) const
     {
-      return m_blocks[0]->getSideSets(workset);
+      return this->getSideSets(0, workset);
+    }
+    const SideSetList &
+    getSideSets(const size_t i_block, const int workset) const
+    {
+      return m_blocks[i_block]->getSideSets(workset);
     }
 
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
     const LocalSideSetInfoList &
     getSideSetViews(const int workset) const
     {
-      return m_blocks[0]->getSideSetViews(workset);
+      return this->getSideSetViews(0, workset);
+    }
+    const LocalSideSetInfoList &
+    getSideSetViews(const size_t i_block, const int workset) const
+    {
+      return m_blocks[i_block]->getSideSetViews(workset);
     }
 
     //! Get local DOF views for GatherVerticallyContractedSolution
     const std::map<std::string, Kokkos::View<LO ****, PHX::Device>> &
     getLocalDOFViews(const int workset) const
     {
-      return m_blocks[0]->getLocalDOFViews(workset);
+      return this->getLocalDOFViews(0, workset);
+    }
+    const std::map<std::string, Kokkos::View<LO ****, PHX::Device>> &
+    getLocalDOFViews(const size_t i_block, const int workset) const
+    {
+      return m_blocks[i_block]->getLocalDOFViews(workset);
     }
 
     //! Get connectivity map from elementGID to workset
@@ -234,19 +246,34 @@ namespace Albany
     const std::vector<IDArray> &
     getElNodeEqID(const std::string &field_name) const
     {
-      return m_blocks[0]->getElNodeEqID(field_name);
+      return this->getElNodeEqID(0, field_name);
+    }
+    const std::vector<IDArray> &
+    getElNodeEqID(const size_t i_block, const std::string &field_name) const
+    {
+      return m_blocks[i_block]->getElNodeEqID(field_name);
     }
 
     const NodalDOFManager &
     getDOFManager(const std::string &field_name) const
     {
-      return m_blocks[0]->getDOFManager(field_name);
+      return this->getDOFManager(0, field_name);
+    }
+    const NodalDOFManager &
+    getDOFManager(const size_t i_block, const std::string &field_name) const
+    {
+      return m_blocks[i_block]->getDOFManager(field_name);
     }
 
     const NodalDOFManager &
     getOverlapDOFManager(const std::string &field_name) const
     {
-      return m_blocks[0]->getOverlapDOFManager(field_name);
+      return this->getOverlapDOFManager(0, field_name);
+    }
+    const NodalDOFManager &
+    getOverlapDOFManager(const size_t i_block, const std::string &field_name) const
+    {
+      return m_blocks[i_block]->getOverlapDOFManager(field_name);
     }
 
     const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double *>>>::type &
@@ -256,8 +283,8 @@ namespace Albany
     }
 
     //! Print the coordinates for debugging
-    void
-    printCoords() const;
+    void printCoords() const;
+    void printCoords(const size_t i_block) const;
 
     //! Set stateArrays
     void
@@ -339,12 +366,12 @@ namespace Albany
 
     //! After mesh modification, need to update the element connectivity and nodal
     //! coordinates
-    void
-    updateMesh();
+    void updateMesh();
+    void updateMesh(const size_t i_block);
 
     //! Function that transforms an STK mesh of a unit cube (for LandIce problems)
-    void
-    transformMesh();
+    void transformMesh();
+    void transformMesh(const size_t i_block);
 
     //! Get number of spatial dimensions
     int
@@ -357,7 +384,12 @@ namespace Albany
     int
     getNumEq() const
     {
-      return m_blocks[0]->getNumEq();
+      return this->getNumEq(0);
+    }
+    int
+    getNumEq(const size_t i_block) const
+    {
+      return m_blocks[i_block]->getNumEq();
     }
 
     Teuchos::RCP<LayeredMeshNumbering<GO>>
@@ -369,12 +401,22 @@ namespace Albany
     const stk::mesh::MetaData &
     getSTKMetaData() const
     {
-      return m_blocks[0]->getSTKMetaData();
+      return this->getSTKMetaData(0);
+    }
+    const stk::mesh::MetaData &
+    getSTKMetaData(const size_t i_block) const
+    {
+      return m_blocks[i_block]->getSTKMetaData();
     }
     const stk::mesh::BulkData &
     getSTKBulkData() const
     {
-      return m_blocks[0]->getSTKBulkData();
+      return this->getSTKBulkData(0);
+    }
+    const stk::mesh::BulkData &
+    getSTKBulkData(const size_t i_block) const
+    {
+      return m_blocks[i_block]->getSTKBulkData();
     }
 
     // --- Get/set solution/residual/field vectors to/from mesh --- //
@@ -391,31 +433,56 @@ namespace Albany
     const Teuchos::ArrayRCP<double> &
     getCoordinates() const
     {
-      return m_blocks[0]->getCoordinates();
+      return this->getCoordinates(0);
+    }
+    const Teuchos::ArrayRCP<double> &
+    getCoordinates(const size_t i_block) const
+    {
+      return m_blocks[i_block]->getCoordinates();
     }
 
     Teuchos::RCP<Thyra_Vector>
     getSolutionField(bool overlapped) const
     {
-      return m_blocks[0]->getSolutionField(overlapped);
+      return this->getSolutionField(0, overlapped);
+    }
+    Teuchos::RCP<Thyra_Vector>
+    getSolutionField(const size_t i_block, bool overlapped) const
+    {
+      return m_blocks[i_block]->getSolutionField(overlapped);
     }
 
     Teuchos::RCP<Thyra_MultiVector>
     getSolutionMV(bool overlapped) const
     {
-      return m_blocks[0]->getSolutionMV(overlapped);
+      return this->getSolutionMV(0, overlapped);
+    }
+    Teuchos::RCP<Thyra_MultiVector>
+    getSolutionMV(const size_t i_block, bool overlapped) const
+    {
+      return m_blocks[i_block]->getSolutionMV(overlapped);
     }
 
     void
     getField(Thyra_Vector &result, const std::string &name) const
     {
-      m_blocks[0]->getField(result, name);
+      this->getField(0, result, name);
+    }
+    void
+    getField(const size_t i_block, Thyra_Vector &result, const std::string &name) const
+    {
+      m_blocks[i_block]->getField(result, name);
     }
 
     void
     getSolutionField(Thyra_Vector &result, const bool overlapped) const
     {
-      m_blocks[0]->getSolutionField(result, overlapped);
+      this->getSolutionField(0, result, overlapped);
+    }
+    void
+    getSolutionField(const size_t i_block, Thyra_Vector &result, const bool overlapped) const
+    {
+      m_blocks[i_block]->getSolutionField(result, overlapped);
     }
 
     void
@@ -424,7 +491,16 @@ namespace Albany
         const std::string &name,
         bool overlapped)
     {
-      m_blocks[0]->setField(result, name, overlapped);
+      this->setField(0, result, name, overlapped);
+    }
+    void
+    setField(
+        const size_t i_block,
+        const Thyra_Vector &result,
+        const std::string &name,
+        bool overlapped)
+    {
+      m_blocks[i_block]->setField(result, name, overlapped);
     }
 
     void
@@ -434,7 +510,17 @@ namespace Albany
         const double time,
         const bool overlapped)
     {
-      m_blocks[0]->writeSolution(soln, soln_dxdp, time, overlapped);
+      this->writeSolution(0, soln, soln_dxdp, time, overlapped);
+    }
+    void
+    writeSolution(
+        const size_t i_block,
+        const Thyra_Vector &soln,
+        const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
+        const double time,
+        const bool overlapped)
+    {
+      m_blocks[i_block]->writeSolution(soln, soln_dxdp, time, overlapped);
     }
 
     void
@@ -445,7 +531,18 @@ namespace Albany
         const double time,
         const bool overlapped)
     {
-      m_blocks[0]->writeSolution(soln, soln_dxdp, soln_dot, time, overlapped);
+      this->writeSolution(0, soln, soln_dxdp, soln_dot, time, overlapped);
+    }
+    void
+    writeSolution(
+        const size_t i_block,
+        const Thyra_Vector &soln,
+        const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
+        const Thyra_Vector &soln_dot,
+        const double time,
+        const bool overlapped)
+    {
+      m_blocks[i_block]->writeSolution(soln, soln_dxdp, soln_dot, time, overlapped);
     }
 
     void
@@ -457,7 +554,19 @@ namespace Albany
         const double time,
         const bool overlapped)
     {
-      m_blocks[0]->writeSolution(soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped);
+      this->writeSolution(0, soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped);
+    }
+    void
+    writeSolution(
+        const size_t i_block,
+        const Thyra_Vector &soln,
+        const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
+        const Thyra_Vector &soln_dot,
+        const Thyra_Vector &soln_dotdot,
+        const double time,
+        const bool overlapped)
+    {
+      m_blocks[i_block]->writeSolution(soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped);
     }
 
     void
@@ -467,7 +576,17 @@ namespace Albany
         const double time,
         const bool overlapped)
     {
-      m_blocks[0]->writeSolutionMV(soln, soln_dxdp, time, overlapped);
+      this->writeSolutionMV(0, soln, soln_dxdp, time, overlapped);
+    }
+    void
+    writeSolutionMV(
+        const size_t i_block,
+        const Thyra_MultiVector &soln,
+        const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
+        const double time,
+        const bool overlapped)
+    {
+      m_blocks[i_block]->writeSolutionMV(soln, soln_dxdp, time, overlapped);
     }
 
     void
@@ -477,7 +596,17 @@ namespace Albany
         const double /* time */,
         const bool overlapped)
     {
-      m_blocks[0]->writeSolutionToMeshDatabase(soln, soln_dxdp, 0.0, overlapped);
+      this->writeSolutionToMeshDatabase(0, soln, soln_dxdp, 0.0, overlapped);
+    }
+    void
+    writeSolutionToMeshDatabase(
+        const size_t i_block,
+        const Thyra_Vector &soln,
+        const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
+        const double /* time */,
+        const bool overlapped)
+    {
+      m_blocks[i_block]->writeSolutionToMeshDatabase(soln, soln_dxdp, 0.0, overlapped);
     }
 
     void
@@ -488,7 +617,18 @@ namespace Albany
         const double /* time */,
         const bool overlapped)
     {
-      m_blocks[0]->writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, 0.0, overlapped);
+      this->writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, 0.0, overlapped);
+    }
+    void
+    writeSolutionToMeshDatabase(
+        const size_t i_block,
+        const Thyra_Vector &soln,
+        const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
+        const Thyra_Vector &soln_dot,
+        const double /* time */,
+        const bool overlapped)
+    {
+      m_blocks[i_block]->writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, 0.0, overlapped);
     }
 
     void
@@ -500,7 +640,19 @@ namespace Albany
         const double /* time */,
         const bool overlapped)
     {
-      m_blocks[0]->writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, soln_dotdot, 0.0, overlapped);
+      this->writeSolutionToMeshDatabase(0, soln, soln_dxdp, soln_dot, soln_dotdot, 0.0, overlapped);
+    }
+    void
+    writeSolutionToMeshDatabase(
+        const size_t i_block,
+        const Thyra_Vector &soln,
+        const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
+        const Thyra_Vector &soln_dot,
+        const Thyra_Vector &soln_dotdot,
+        const double /* time */,
+        const bool overlapped)
+    {
+      m_blocks[i_block]->writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, soln_dotdot, 0.0, overlapped);
     }
 
     void
@@ -510,7 +662,17 @@ namespace Albany
         const double /* time */,
         const bool overlapped)
     {
-      m_blocks[0]->writeSolutionMVToMeshDatabase(soln, soln_dxdp, 0.0, overlapped);
+      this->writeSolutionMVToMeshDatabase(soln, soln_dxdp, 0.0, overlapped);
+    }
+    void
+    writeSolutionMVToMeshDatabase(
+        const size_t i_block,
+        const Thyra_MultiVector &soln,
+        const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
+        const double /* time */,
+        const bool overlapped)
+    {
+      m_blocks[i_block]->writeSolutionMVToMeshDatabase(soln, soln_dxdp, 0.0, overlapped);
     }
 
     void
@@ -519,7 +681,16 @@ namespace Albany
         const double time,
         const bool overlapped)
     {
-      m_blocks[0]->writeSolutionToFile(soln, time, overlapped);
+      this->writeSolutionToFile(0, soln, time, overlapped);
+    }
+    void
+    writeSolutionToFile(
+        const size_t i_block,
+        const Thyra_Vector &soln,
+        const double time,
+        const bool overlapped)
+    {
+      m_blocks[i_block]->writeSolutionToFile(soln, time, overlapped);
     }
 
     void
@@ -528,19 +699,38 @@ namespace Albany
         const double time,
         const bool overlapped)
     {
-      m_blocks[0]->writeSolutionMVToFile(soln, time, overlapped);
+      this->writeSolutionMVToFile(0, soln, time, overlapped);
+    }
+    void
+    writeSolutionMVToFile(
+        const size_t i_block,
+        const Thyra_MultiVector &soln,
+        const double time,
+        const bool overlapped)
+    {
+      m_blocks[i_block]->writeSolutionMVToFile(soln, time, overlapped);
     }
 
     Teuchos::RCP<const GlobalLocalIndexer>
     getGlobalLocalIndexer(const std::string &field_name) const
     {
-      return m_blocks[0]->getGlobalLocalIndexer(field_name);
+      return this->getGlobalLocalIndexer(0, field_name);
+    }
+    Teuchos::RCP<const GlobalLocalIndexer>
+    getGlobalLocalIndexer(const size_t i_block, const std::string &field_name) const
+    {
+      return m_blocks[i_block]->getGlobalLocalIndexer(field_name);
     }
 
     Teuchos::RCP<const GlobalLocalIndexer>
     getOverlapGlobalLocalIndexer(const std::string &field_name) const
     {
-      return m_blocks[0]->getOverlapGlobalLocalIndexer(field_name);
+      return this->getOverlapGlobalLocalIndexer(0, field_name);
+    }
+    Teuchos::RCP<const GlobalLocalIndexer>
+    getOverlapGlobalLocalIndexer(const size_t i_block, const std::string &field_name) const
+    {
+      return m_blocks[i_block]->getOverlapGlobalLocalIndexer(field_name);
     }
 
     // GAH - End serious look
@@ -625,6 +815,7 @@ namespace Albany
 
   private:
     Teuchos::Array<Teuchos::RCP<disc_type>> m_blocks;
+    size_t n_m_blocks;
 
     Teuchos::RCP<ThyraBlockedCrsMatrixFactory> nodalMatrixFactory;
   };
