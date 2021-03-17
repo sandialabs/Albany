@@ -49,15 +49,14 @@ namespace LandIce
     Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideName);
     useCollapsedSidesets = dl_side->useCollapsedSidesets;
 
-    auto qp_scalar = useCollapsedSidesets ? dl_side->qp_scalar_sideset : dl_side->qp_scalar;
-    auto node_qp_scalar = useCollapsedSidesets ? dl_side->node_qp_scalar_sideset : dl_side->node_qp_scalar;
-    auto qp_vector_spacedim = useCollapsedSidesets ? dl_side->qp_vector_spacedim_sideset : dl_side->qp_vector_spacedim;
-    sideBF = decltype(sideBF)(p.get<std::string> ("BF Side Name"), node_qp_scalar);
-    side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), qp_scalar);
-    side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), qp_scalar);
-    basalVerticalVelocitySideQP = decltype(basalVerticalVelocitySideQP)(p.get<std::string>("Basal Vertical Velocity Side QP Variable Name"), qp_scalar);
-    normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), qp_vector_spacedim);
+    TEUCHOS_TEST_FOR_EXCEPTION (not dl_side->useCollapsedSidesets, std::runtime_error,
+                                "Error! LandIce::w_Resid only implemented for collapsed sidesets.\n");
 
+    sideBF = decltype(sideBF)(p.get<std::string> ("BF Side Name"), dl_side->node_qp_scalar_sideset);
+    side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_side->qp_scalar_sideset);
+    side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), dl_side->qp_scalar_sideset);
+    basalVerticalVelocitySideQP = decltype(basalVerticalVelocitySideQP)(p.get<std::string>("Basal Vertical Velocity Side QP Variable Name"), dl_side->qp_scalar_sideset);
+    normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim_sideset);
 
     std::vector<PHX::Device::size_type> dims;
     dl->node_qp_vector->dimensions(dims);
