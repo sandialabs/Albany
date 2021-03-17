@@ -169,7 +169,7 @@ namespace Albany
   }
 
   void
-  BlockedDiscretization::computeProductVectorSpace()
+  BlockedDiscretization::computeProductVectorSpaces()
   {
     Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_vs(n_m_blocks);
     Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_node_vs(n_m_blocks);
@@ -188,6 +188,20 @@ namespace Albany
     m_node_pvs = Thyra::productVectorSpace<ST>(m_node_vs);
     m_overlap_pvs = Thyra::productVectorSpace<ST>(m_overlap_vs);
     m_overlap_node_pvs = Thyra::productVectorSpace<ST>(m_overlap_node_vs);
+  }
+
+  void
+  BlockedDiscretization::computeGraphs()
+  {
+    m_jac_factory =
+        Teuchos::rcp(new ThyraBlockedCrsMatrixFactory(m_pvs,
+                                                      m_pvs));
+    m_overlap_jac_factory =
+        Teuchos::rcp(new ThyraBlockedCrsMatrixFactory(m_overlap_pvs,
+                                                      m_overlap_pvs));
+
+    m_jac_factory->fillComplete();
+    m_overlap_jac_factory->fillComplete();
   }
 
   void

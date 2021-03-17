@@ -335,7 +335,7 @@ This is just a start, to serve as an example. This has not been thought through 
       // Use the Albany STK interface as it is used elsewhere in the code
       auto stkDisc = Teuchos::rcp(new BlockedDiscretization(discParams_array, ms_array, comm));
       stkDisc->updateMesh();
-      stkDisc->computeProductVectorSpace();
+      stkDisc->computeProductVectorSpaces();
 
       auto nvs = stkDisc->getOverlapProductVectorSpace();
       TEST_EQUALITY(Teuchos::nonnull(nvs), true);
@@ -350,6 +350,11 @@ This is just a start, to serve as an example. This has not been thought through 
       std::cout << " Dimension of the product vector space: " << nvs->dim() << std::endl;
 
       TEST_EQUALITY(nvs->dim(), nv0->dim() + nv1->dim() + nv2->dim());
+
+      stkDisc->computeGraphs();
+      Teuchos::RCP<Thyra_BlockedLinearOp> bJacobianOp = stkDisc->createBlockedJacobianOp();
+
+      TEST_EQUALITY(Teuchos::nonnull(bJacobianOp), true);
    }
 
    /*

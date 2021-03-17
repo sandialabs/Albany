@@ -7,11 +7,14 @@
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_EpetraThyraUtils.hpp"
 
+#include "Albany_ThyraCrsMatrixFactory.hpp"
+
 #include <set>
 
-namespace Albany {
+namespace Albany
+{
 
-/*
+  /*
  * A class to setup a crs graph and then build an empty operator
  * 
  * Thyra does not have the concept of 'Graph', since it is designed to abstract
@@ -27,55 +30,47 @@ namespace Albany {
  * to determine in which format the graph has to be stored.
  */
 
-struct ThyraBlockedCrsMatrixFactory {
+  struct ThyraBlockedCrsMatrixFactory
+  {
 
-  // Create an empty graph, that needs to be filled later
-  ThyraBlockedCrsMatrixFactory (const Teuchos::RCP<const Thyra_ProductVectorSpace> domain_vs,
-                         const Teuchos::RCP<const Thyra_ProductVectorSpace> range_vs,
-                         const int nonzeros_per_row=-1); //currently not used
+    // Create an empty graph, that needs to be filled later
+    ThyraBlockedCrsMatrixFactory(const Teuchos::RCP<const Thyra_ProductVectorSpace> domain_vs,
+                                 const Teuchos::RCP<const Thyra_ProductVectorSpace> range_vs,
+                                 const int nonzeros_per_row = -1); //currently not used
 
-  // Create a graph from an overlapped one
-  ThyraBlockedCrsMatrixFactory (const Teuchos::RCP<const Thyra_ProductVectorSpace> domain_vs,
-                         const Teuchos::RCP<const Thyra_ProductVectorSpace> range_vs,
-                         const Teuchos::RCP<const ThyraBlockedCrsMatrixFactory> overlap_src);
+    ThyraBlockedCrsMatrixFactory(const Teuchos::RCP<const Thyra_ProductVectorSpace> domain_vs,
+                                 const Teuchos::RCP<const Thyra_ProductVectorSpace> range_vs,
+                                 const Teuchos::RCP<const Thyra_ProductVectorSpace> ov_domain_vs,
+                                 const Teuchos::RCP<const Thyra_ProductVectorSpace> ov_range_vs,
+                                 const int nonzeros_per_row = -1); //currently not used
 
-  // Inserts global indices in a temporary local graph. 
-  // Indices that are not owned by callig processor are ignored
-  // The actual graph is created when FillComplete is called
-  void insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& indices);
+    // Inserts global indices in a temporary local graph.
+    // Indices that are not owned by callig processor are ignored
+    // The actual graph is created when FillComplete is called
+    void insertGlobalIndices(const GO row, const Teuchos::ArrayView<const GO> &indices,
+                             const size_t i_block = 0, const size_t j_block = 0);
 
-  // Creates the CrsGraph,
-  // inserting indices from the temporary local graph,
-  // and calls fillComplete.
-  void fillComplete ();
+    // Creates the CrsGraph,
+    // inserting indices from the temporary local graph,
+    // and calls fillComplete.
+    void fillComplete();
 
-  Teuchos::RCP<const Thyra_ProductVectorSpace> getDomainVectorSpace () const { return m_domain_vs; }
-  Teuchos::RCP<const Thyra_ProductVectorSpace> getRangeVectorSpace  () const { return m_range_vs; }
+    Teuchos::RCP<const Thyra_ProductVectorSpace> getDomainVectorSpace() const { return m_domain_vs; }
+    Teuchos::RCP<const Thyra_ProductVectorSpace> getRangeVectorSpace() const { return m_range_vs; }
 
-  bool is_filled () const { return m_filled; }
+    bool is_filled() const { return m_filled; }
 
-  Teuchos::RCP<Thyra_BlockedLinearOp>  createOp () const;
+    Teuchos::RCP<Thyra_BlockedLinearOp> createOp() const;
 
-private:
+  private:
+    Teuchos::RCP<const Thyra_ProductVectorSpace> m_domain_vs;
+    Teuchos::RCP<const Thyra_ProductVectorSpace> m_range_vs;
 
-  // Struct hiding the concrete implementation. This is an implementation
-  // detail of this class, so it's private and its implementation is not in the header.
-  struct Impl;
-  Teuchos::RCP<Impl> m_graph;
+    bool m_filled;
 
-  Teuchos::RCP<const Thyra_ProductVectorSpace> m_domain_vs;
-  Teuchos::RCP<const Thyra_ProductVectorSpace> m_range_vs;
-
-#ifdef ALBANY_EPETRA
-  std::vector<std::set<Epetra_GO>> e_local_graph;
-  Teuchos::RCP<const Epetra_BlockMap> e_range;
-#endif
-
-  std::vector<std::set<Tpetra_GO>> t_local_graph;
-  Teuchos::RCP<const Tpetra_Map> t_range;
-
-  bool m_filled;
-};
+    Teuchos::Array<Teuchos::Array<Teuchos::RCP<Albany::ThyraCrsMatrixFactory>>> block_factories;
+    const size_t n_m_blocks;
+  };
 
 } // namespace Albany
 

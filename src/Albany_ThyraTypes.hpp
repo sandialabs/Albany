@@ -24,6 +24,7 @@
 #include "Thyra_LinearOpWithSolveBase.hpp"
 #include "Thyra_LinearOpWithSolveFactoryBase.hpp"
 #include "Thyra_BlockedLinearOpBase.hpp"
+#include "Thyra_PhysicallyBlockedLinearOpBase.hpp"
 #include "Thyra_BlockedLinearOpWithSolveBase.hpp"
 //#include "Thyra_BlockedLinearOpWithSolveFactoryBase.hpp"
 
@@ -43,6 +44,7 @@ typedef Thyra::MultiVectorBase<ST>                Thyra_MultiVector;
 typedef Thyra::VectorBase<ST>                     Thyra_Vector;
 typedef Thyra::LinearOpBase<ST>                   Thyra_LinearOp;
 typedef Thyra::BlockedLinearOpBase<ST>            Thyra_BlockedLinearOp;
+typedef Thyra::PhysicallyBlockedLinearOpBase<ST>  Thyra_PhysicallyBlockedLinearOp;
 typedef Thyra::PreconditionerBase<ST>             Thyra_Preconditioner;
 typedef Thyra::LinearOpWithSolveBase<ST>          Thyra_LOWS;
 typedef Thyra::LinearOpWithSolveFactoryBase<ST>   Thyra_LOWS_Factory;

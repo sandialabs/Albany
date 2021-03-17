@@ -130,7 +130,8 @@ namespace Albany
       return m_overlap_pvs;
     }
 
-    void computeProductVectorSpace();
+    void computeProductVectorSpaces();
+    void computeGraphs();
 
     //! Get Field node vector space (owned and overlapped)
     Teuchos::RCP<const Thyra_ProductVectorSpace>
