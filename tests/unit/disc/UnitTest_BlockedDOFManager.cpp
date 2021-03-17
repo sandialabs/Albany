@@ -292,6 +292,7 @@ This is just a start, to serve as an example. This has not been thought through 
       discParams->set<bool>("Use Composite Tet 10", 0);
       discParams->set<int>("Number Of Time Derivatives", 0);
       discParams->set<bool>("Use Serial Mesh", 1);
+      discParams->set<std::string>("Field Order", "blocked: a");
 
       // Need to test various meshes, with various element types and block structures.
 

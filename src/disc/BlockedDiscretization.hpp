@@ -132,6 +132,7 @@ namespace Albany
 
     void computeProductVectorSpaces();
     void computeGraphs();
+    void computeGraphs(const size_t i_block, const size_t j_block);
 
     //! Get Field node vector space (owned and overlapped)
     Teuchos::RCP<const Thyra_ProductVectorSpace>
@@ -429,6 +430,13 @@ namespace Albany
     getBlockedSolutionMV(const bool overlapped = false) const;
 
     // GAH - These all need a serious look, they are just stubbed in to get things compiling
+
+    // Used very often, so make it a function
+    GO stk_gid(const size_t i_block, const stk::mesh::Entity e) const
+    {
+      // STK numbering is 1-based, while we want 0-based.
+      return this->getSTKBulkData(i_block).identifier(e) - 1;
+    }
 
     //! Retrieve coordinate vector (num_used_nodes * 3)
     const Teuchos::ArrayRCP<double> &
