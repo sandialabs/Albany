@@ -118,15 +118,6 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // after gathering the coordinates, we modify the z coordinate of the mesh.
   if (Albany::mesh_depends_on_parameters() && is_dist_param[ice_thickness_name]) {
     if(adjustBedTopo && !adjustSurfaceHeight) {
-      //----- Gather Coordinate Vector (ad hoc parameters)
-      p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
-
-      // Output:: Coordindate Vector at vertices
-      p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
-
-      ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-
       //------ Update Z Coordinate
       p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
 
@@ -144,15 +135,6 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
       fm0.template registerEvaluator<EvalT>(ev);
     } else if(adjustSurfaceHeight && !adjustBedTopo) {
-      //----- Gather Coordinate Vector (ad hoc parameters)
-      p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
-
-      // Output:: Coordindate Vector at vertices
-      p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
-
-      ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-
       //------ Update Z Coordinate
       p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
 
@@ -170,6 +152,15 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
               "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
               " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
     }
+
+    //----- Gather Coordinate Vector (ad hoc parameters)
+    p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
+
+    // Output:: Coordindate Vector at vertices
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
+
+    ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
   } else {
     //----- Gather Coordinate Vector (general parameters)
     ev = evalUtils.constructGatherCoordinateVectorEvaluator();
