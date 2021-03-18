@@ -57,6 +57,8 @@ namespace Albany
 
     Teuchos::RCP<const Thyra_ProductVectorSpace> getDomainVectorSpace() const { return m_domain_vs; }
     Teuchos::RCP<const Thyra_ProductVectorSpace> getRangeVectorSpace() const { return m_range_vs; }
+    Teuchos::RCP<Albany::ThyraCrsMatrixFactory> getBlockFactory(const size_t i_block, const size_t j_block) { return block_factories[i_block][j_block]; }
+    void setBlockFactory(const size_t i_block, const size_t j_block, Teuchos::RCP<Albany::ThyraCrsMatrixFactory> factory) { block_factories[i_block][j_block] = factory; }
 
     bool is_filled() const { return m_filled; }
 

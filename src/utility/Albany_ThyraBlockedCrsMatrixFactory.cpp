@@ -22,11 +22,11 @@ namespace Albany
   {
     block_factories.resize(n_m_blocks);
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
-      block_factories[i_block].resize(n_m_blocks);
+      block_factories[i_block].resize(i_block + 1);
 
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
     {
-      for (size_t j_block = 0; j_block < n_m_blocks; ++j_block)
+      for (size_t j_block = 0; j_block < i_block + 1; ++j_block)
       {
         block_factories[i_block][j_block] =
             Teuchos::rcp(new ThyraCrsMatrixFactory(m_domain_vs->getBlock(j_block),
@@ -43,13 +43,14 @@ namespace Albany
                                    const int /*nonzeros_per_row*/)
       : m_domain_vs(domain_vs), m_range_vs(range_vs), m_filled(false), n_m_blocks(domain_vs->numBlocks())
   {
+    // block_factories is lower triangular
     block_factories.resize(n_m_blocks);
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
-      block_factories[i_block].resize(n_m_blocks);
+      block_factories[i_block].resize(i_block + 1);
 
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
     {
-      for (size_t j_block = 0; j_block < n_m_blocks; ++j_block)
+      for (size_t j_block = 0; j_block < i_block + 1; ++j_block)
       {
         block_factories[i_block][j_block] =
             Teuchos::rcp(new ThyraCrsMatrixFactory(m_domain_vs->getBlock(j_block),
@@ -71,9 +72,10 @@ namespace Albany
 
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
     {
-      for (size_t j_block = 0; j_block < n_m_blocks; ++j_block)
+      for (size_t j_block = 0; j_block < i_block + 1; ++j_block)
       {
-        block_factories[i_block][j_block]->fillComplete();
+        if (!block_factories[i_block][j_block]->is_filled())
+          block_factories[i_block][j_block]->fillComplete();
       }
     }
 
@@ -90,7 +92,7 @@ namespace Albany
 
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
     {
-      for (size_t j_block = 0; j_block < n_m_blocks; ++j_block)
+      for (size_t j_block = 0; j_block < i_block + 1; ++j_block)
       {
         op->setBlock(i_block, j_block, block_factories[i_block][j_block]->createOp());
       }

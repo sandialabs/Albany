@@ -203,8 +203,14 @@ namespace Albany
                                                       m_overlap_pvs));
 
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
-      for (size_t j_block = 0; j_block < n_m_blocks; ++j_block)
+    {
+      // For the diagonal block we reuse the graph previously computed:
+      m_jac_factory->setBlockFactory(i_block, i_block, m_blocks[i_block]->m_jac_factory);
+
+      // Then, we loop over the off diagonal blocks:
+      for (size_t j_block = 0; j_block < i_block; ++j_block)
         this->computeGraphs(i_block, j_block);
+    }
 
     m_jac_factory->fillComplete();
     m_overlap_jac_factory->fillComplete();
@@ -213,10 +219,6 @@ namespace Albany
   void
   BlockedSTKDiscretization::computeGraphs(const size_t i_block, const size_t j_block)
   {
-    if (i_block == j_block)
-    {
-      m_blocks[i_block]->computeGraphs();
-    }
   }
 
   void
@@ -316,7 +318,7 @@ namespace Albany
   }
   Teuchos::RCP<const Thyra_VectorSpace>
   BlockedSTKDiscretization::getOverlapNodeVectorSpace(const size_t i_block,
-                                                   const std::string &field_name) const
+                                                      const std::string &field_name) const
   {
     return m_blocks[i_block]->getOverlapNodeVectorSpace(field_name);
   }
@@ -352,7 +354,12 @@ namespace Albany
   {
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
       this->updateMesh(i_block);
+
+    computeProductVectorSpaces();
+
+    computeGraphs();
   }
+
   void
   BlockedSTKDiscretization::updateMesh(const size_t i_block)
   {

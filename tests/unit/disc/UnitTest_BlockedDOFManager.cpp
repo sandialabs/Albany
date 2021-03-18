@@ -30,6 +30,8 @@
 
 #include "Kokkos_DynRankView.hpp"
 
+#include "Albany_ThyraUtils.hpp"
+
 using Teuchos::rcp;
 using Teuchos::RCP;
 using Teuchos::rcp_dynamic_cast;
@@ -336,7 +338,6 @@ This is just a start, to serve as an example. This has not been thought through 
       // Use the Albany STK interface as it is used elsewhere in the code
       auto stkDisc = Teuchos::rcp(new BlockedSTKDiscretization(discParams_array, ms_array, comm));
       stkDisc->updateMesh();
-      stkDisc->computeProductVectorSpaces();
 
       auto nvs = stkDisc->getOverlapProductVectorSpace();
       TEST_EQUALITY(Teuchos::nonnull(nvs), true);
@@ -352,8 +353,23 @@ This is just a start, to serve as an example. This has not been thought through 
 
       TEST_EQUALITY(nvs->dim(), nv0->dim() + nv1->dim() + nv2->dim());
 
-      stkDisc->computeGraphs();
       Teuchos::RCP<Thyra_BlockedLinearOp> bJacobianOp = stkDisc->createBlockedJacobianOp();
+
+      Teuchos::RCP<const Thyra_LinearOp> jacobian00 = bJacobianOp->getBlock(0, 0);
+      Teuchos::RCP<const Thyra_LinearOp> jacobian11 = bJacobianOp->getBlock(1, 1);
+      Teuchos::RCP<const Thyra_LinearOp> jacobian22 = bJacobianOp->getBlock(2, 2);
+
+      Teuchos::RCP<Teuchos::FancyOStream> out1 = Teuchos::VerboseObjectBase::getDefaultOStream();
+
+      *out1 << "Before describe jacobian00" << std::endl;
+      Albany::describe(jacobian00.getConst(), *out1, Teuchos::VERB_EXTREME);
+      *out1 << "After describe jacobian00" << std::endl;
+      *out1 << "Before describe jacobian11" << std::endl;
+      Albany::describe(jacobian11.getConst(), *out1, Teuchos::VERB_EXTREME);
+      *out1 << "After describe jacobian11" << std::endl;
+      *out1 << "Before describe jacobian22" << std::endl;
+      Albany::describe(jacobian22.getConst(), *out1, Teuchos::VERB_EXTREME);
+      *out1 << "After describe jacobian22" << std::endl;
 
       TEST_EQUALITY(Teuchos::nonnull(bJacobianOp), true);
 
