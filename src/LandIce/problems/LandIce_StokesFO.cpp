@@ -174,6 +174,12 @@ void StokesFO::setFieldsProperties () {
     TEUCHOS_TEST_FOR_EXCEPTION(adjustBedTopo == adjustSurfaceHeight, std::logic_error, "Error! When the ice thickness is a parameter,\n "
         "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
         " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
+
+    // Udpate the scalar type of bed_topography (and possibly surface height) to include MeshScalar
+    setSingleFieldProperties(bed_topography_name, FRT::Scalar, FST::MeshScalar);
+    if (adjustSurfaceHeight) {
+      setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::MeshScalar);
+    }
   }
 
   // UpdateZCoordinate expects the (observed) bed topography and (observed) surface height to have scalar type MeshScalarT.
