@@ -232,37 +232,73 @@ get_field_layout (const FieldRankType rank,
   using FL  = FieldLocation;
 
   Teuchos::RCP<PHX::DataLayout> fl;
-  if (rank==FRT::Scalar) {
-    if (loc==FL::Cell) {
-      fl = layouts->cell_scalar2;
-    } else if (loc==FL::Node) {
-      fl = layouts->node_scalar;
-    } else {
-      fl = layouts->qp_scalar;
+  if (layouts->isSideLayouts && layouts->useCollapsedSidesets) {
+    if (rank==FRT::Scalar) {
+      if (loc==FL::Cell) {
+        fl = layouts->cell_scalar2_sideset;
+      } else if (loc==FL::Node) {
+        fl = layouts->node_scalar_sideset;
+      } else {
+        fl = layouts->qp_scalar_sideset;
+      }
+    } else if (rank==FRT::Vector) {
+      if (loc==FL::Cell) {
+        fl = layouts->cell_vector_sideset;
+      } else if (loc==FL::Node) {
+        fl = layouts->node_vector_sideset;
+      } else {
+        fl = layouts->qp_vector_sideset;
+      }
+    } else if (rank==FRT::Gradient) {
+      if (loc==FL::Cell) {
+        fl = layouts->cell_gradient_sideset;
+      } else if (loc==FL::Node) {
+        fl = layouts->node_gradient_sideset;
+      } else {
+        fl = layouts->qp_gradient_sideset;
+      }
+    } else if (rank==FRT::Tensor) {
+      if (loc==FL::Cell) {
+        fl = layouts->cell_tensor_sideset;
+      } else if (loc==FL::Node) {
+        fl = layouts->node_tensor_sideset;
+      } else {
+        fl = layouts->qp_tensor_sideset;
+      }
     }
-  } else if (rank==FRT::Vector) {
-    if (loc==FL::Cell) {
-      fl = layouts->cell_vector;
-    } else if (loc==FL::Node) {
-      fl = layouts->node_vector;
-    } else {
-      fl = layouts->qp_vector;
-    }
-  } else if (rank==FRT::Gradient) {
-    if (loc==FL::Cell) {
-      fl = layouts->cell_gradient;
-    } else if (loc==FL::Node) {
-      fl = layouts->node_gradient;
-    } else {
-      fl = layouts->qp_gradient;
-    }
-  } else if (rank==FRT::Tensor) {
-    if (loc==FL::Cell) {
-      fl = layouts->cell_tensor;
-    } else if (loc==FL::Node) {
-      fl = layouts->node_tensor;
-    } else {
-      fl = layouts->qp_tensor;
+  } else {
+    if (rank==FRT::Scalar) {
+      if (loc==FL::Cell) {
+        fl = layouts->cell_scalar2;
+      } else if (loc==FL::Node) {
+        fl = layouts->node_scalar;
+      } else {
+        fl = layouts->qp_scalar;
+      }
+    } else if (rank==FRT::Vector) {
+      if (loc==FL::Cell) {
+        fl = layouts->cell_vector;
+      } else if (loc==FL::Node) {
+        fl = layouts->node_vector;
+      } else {
+        fl = layouts->qp_vector;
+      }
+    } else if (rank==FRT::Gradient) {
+      if (loc==FL::Cell) {
+        fl = layouts->cell_gradient;
+      } else if (loc==FL::Node) {
+        fl = layouts->node_gradient;
+      } else {
+        fl = layouts->qp_gradient;
+      }
+    } else if (rank==FRT::Tensor) {
+      if (loc==FL::Cell) {
+        fl = layouts->cell_tensor;
+      } else if (loc==FL::Node) {
+        fl = layouts->node_tensor;
+      } else {
+        fl = layouts->qp_tensor;
+      }
     }
   }
 
