@@ -705,7 +705,11 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       // If it WAS indeed needed, Phalanx DAG will miss a node, and an exception will be thrown.
       // Note: we don't know if the st of fname is set or the st of fname_side is set,
       //       so use op| to get the strongest (if one is not set, get_scalar_type returns Real).
-      const auto st = get_scalar_type(fname) | get_scalar_type(fname_side);
+      const auto st     = get_scalar_type(fname) | get_scalar_type(fname_side);
+
+      // The st of the field if it did undergo certain interpolation (e.g., gradient or cell average)
+      // that pollute its scalar type with that of the mesh.
+      const auto st_mst = st | FST::MeshScalar;
 
       const auto rank = get_field_rank(fname);
 
@@ -715,6 +719,13 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       };
       auto is_available_3d = [&](const FL loc) -> bool {
         return is_available<EvalT>(fm0,fname,rank,st,loc,dl);
+      };
+      // Same as the above, but with st_mst instead of st
+      auto is_available_2d_mst = [&](const FL loc) -> bool {
+        return is_available<EvalT>(fm0,fname_side,rank,st_mst,loc,dl->side_layouts.at(ss_name));
+      };
+      auto is_available_3d_mst = [&](const FL loc) -> bool {
+        return is_available<EvalT>(fm0,fname,rank,st_mst,loc,dl);
       };
 
       // Check whether we can use memoization for this field. Criteria:
@@ -741,19 +752,36 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
       // Get the right evaluator utils for this field.
       TEUCHOS_TEST_FOR_EXCEPTION (utils_map.find(st)==utils_map.end(), std::runtime_error,
-                                  "Error! Evaluators utils for scalar type '" + e2str(st) + "' not found (ss name: " + ss_name + ").\n");
-      const auto& utils = *utils_map.at(st);
+            "Error! Evaluators utils for scalar type " + e2str(st) + " not found on ss: " + ss_name + ".\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (utils_map.find(st_mst)==utils_map.end(), std::runtime_error,
+            "Error! Evaluators utils for scalar type " + e2str(st_mst) + " not found on ss: " + ss_name + ".\n");
+
+      // Utils with this field's st, and with st or-ed with MeshScalar,
+      // which is needed if the field underwent transformations that polluted
+      // its st with the mesh st (e.g., gradient or cell average)
+      const auto& utils     = *utils_map.at(st);
+      const auto& utils_mst = *utils_map.at(st | FST::MeshScalar);
 
       // Project to the side only if it is requested and it is NOT already available on the side.
       // Note: do this first so that is_available_2d can be used for other interpolation checks below.
       if ( needs[IReq::CELL_TO_SIDE] ) {
-        for (auto loc : {FL::Node, FL::Cell} ) {
-          if (!is_available_2d(loc) && is_available_3d(loc)) {
-            // Project from cell to side
-            const std::string layout = e2str(loc) + " " + e2str(rank) + " Sideset";
-            ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
-            fm0.template registerEvaluator<EvalT> (ev);
-          }
+        if (!is_available_2d(FL::Node) && is_available_3d(FL::Node)) {
+          // Project from cell to side
+          const std::string layout = e2str(FL::Node) + " " + e2str(rank) + " Sideset";
+          ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
+          fm0.template registerEvaluator<EvalT> (ev);
+        }
+        // For loc==Cell, if the cell field was computed via CellAverage, the st should be st_mst
+        if (!is_available_2d(FL::Cell) && is_available_3d(FL::Cell)) {
+          // Project from cell to side
+          const std::string layout = e2str(FL::Cell) + " " + e2str(rank) + " Sideset";
+          ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
+          fm0.template registerEvaluator<EvalT> (ev);
+        } else if (!is_available_2d_mst(FL::Cell) && is_available_3d_mst(FL::Cell)) {
+          // Project from cell to side
+          const std::string layout = e2str(FL::Cell) + " " + e2str(rank) + " Sideset";
+          ev = utils_mst.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
+          fm0.template registerEvaluator<EvalT> (ev);
         }
       }
 
@@ -780,15 +808,25 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
         fm0.template registerEvaluator<EvalT> (ev);
       }
 
-      // Skip if somehow the Cell field is already computed (perhaps by an ad-hoc physics evaluator)
-      if (needs[IReq::CELL_VAL] && !is_available_2d(FL::Cell)) {
-        // Intepolate field at Side from Quad points values
-        if (is_available_2d(FL::QuadPoint)) {
-          ev = utils.constructCellAverageSideEvaluator (ss_name, fname_side, FL::QuadPoint, rank);
-          fm0.template registerEvaluator<EvalT> (ev);
-        } else if (is_available_2d(FL::Node)) {
-          ev = utils.constructCellAverageSideEvaluator (ss_name, fname_side, FL::Node, rank);
-          fm0.template registerEvaluator<EvalT> (ev);
+      if (needs[IReq::CELL_VAL]) {
+        // Interpolate field at Side from Node/QuadPoints values
+        // CAREFULE: If the rank is Gradient, then the input's scalar typee is st_mst
+        //           For Scalar/Vector/Tensor quantities, the field st is correct.
+        //           Also, skip if somehow the Cell field is already computed,
+        //           perhaps by an ad-hoc physics evaluator.
+        if (rank==FRT::Gradient) {
+          if (is_available_2d_mst(FL::QuadPoint) && !is_available_2d_mst(FL::Cell)) {
+            ev = utils_mst.constructCellAverageSideEvaluator (ss_name, fname_side, FL::QuadPoint, rank);
+            fm0.template registerEvaluator<EvalT> (ev);
+          }
+        } else if (!is_available_2d(FL::Cell)) {
+          if (is_available_2d(FL::QuadPoint)) {
+            ev = utils.constructCellAverageSideEvaluator (ss_name, fname_side, FL::QuadPoint, rank);
+            fm0.template registerEvaluator<EvalT> (ev);
+          } else if (is_available_2d(FL::Node)) {
+            ev = utils.constructCellAverageSideEvaluator (ss_name, fname_side, FL::Node, rank);
+            fm0.template registerEvaluator<EvalT> (ev);
+          }
         }
       }
     }
