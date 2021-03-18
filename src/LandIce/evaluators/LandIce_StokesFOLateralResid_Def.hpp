@@ -188,7 +188,7 @@ operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const 
 
   for (unsigned int qp=0; qp<numSideQPs; ++qp) {
     const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
-    const MeshScalarT      s = elevation(sideSet_idx,qp); //[km]
+    const RealType         s = elevation(sideSet_idx,qp); //[km]
     const OutputScalarT immersed_ratio = H>threshold ? KU::max(zero,KU::min(one,1-s/H)) : zero;
     OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio); //[kPa]
     if(add_melange_force)

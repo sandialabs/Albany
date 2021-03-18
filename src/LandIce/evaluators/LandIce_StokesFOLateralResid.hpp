@@ -53,7 +53,7 @@ private:
   // TODO: restore layout template arguments when removing old sideset layout
   PHX::MDField<const MeshScalarT>        coords_qp; // Side, Node, Dim
   PHX::MDField<const ThicknessScalarT>   thickness; // Side, QuadPoint
-  PHX::MDField<const MeshScalarT>        elevation; // Side, QuadPoint
+  PHX::MDField<const RealType>           elevation; // Side, QuadPoint
   PHX::MDField<const RealType>           BF;        // Side, Node, QuadPoint
   PHX::MDField<const MeshScalarT>        normals;   // Side, QuadPoint, Dim
   PHX::MDField<const MeshScalarT>        w_measure; // Side, QuadPoint
