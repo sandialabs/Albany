@@ -47,7 +47,7 @@ private:
   void evaluate_on_cell (typename Traits::EvalData d);
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename Albany::StrongestScalarType<ScalarT,MeshScalarT>::type OutputScalarT;
+  typedef typename Albany::StrongestScalarType<ScalarT,MeshScalarT>::type CellAvgScalarT;
 
   enum InterpolationType {
     ValueAtCellBarycenter,
@@ -79,7 +79,8 @@ private:
   PHX::MDField<const MeshScalarT>   w_measure;
 
   // Output:
-  PHX::MDField<OutputScalarT>       field_p0;
+  PHX::MDField<CellAvgScalarT>      field_avg;
+  PHX::MDField<ScalarT>             field_baryc;
 
 public:
 
