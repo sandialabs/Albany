@@ -183,19 +183,21 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   }
 
   if(zero_on_floating) {
-    bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), layout);
     is_thickness_param = is_dist_param.is_null() ? false : (*is_dist_param)[p.get<std::string>("Ice Thickness Variable Name")];
     if (is_thickness_param) {
-      thickness_param_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
+      bed_topo_field_mst = decltype(bed_topo_field_mst)(p.get<std::string> ("Bed Topography Variable Name"), layout);
+      this->addDependentField (bed_topo_field_mst);
+      thickness_param_field = decltype(thickness_param_field)(p.get<std::string> ("Ice Thickness Variable Name"), layout);
       this->addDependentField (thickness_param_field);
     } else {
-      thickness_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
+      bed_topo_field = decltype(bed_topo_field)(p.get<std::string> ("Bed Topography Variable Name"), layout);
+      this->addDependentField (bed_topo_field);
+      thickness_field = decltype(thickness_field)(p.get<std::string> ("Ice Thickness Variable Name"), layout);
       this->addDependentField (thickness_field);
     }
     Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
     rho_i = phys_param_list.get<double> ("Ice Density");
     rho_w = phys_param_list.get<double> ("Water Density");
-    this->addDependentField (bed_topo_field);
   }
 
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
@@ -462,7 +464,7 @@ KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const Side_ZeroOnFloatingParam_Tag& tag, const int& sideSet_idx) const {
   for (unsigned int ipt=0; ipt<dim; ++ipt) {
-    ParamScalarT isGrounded = rho_i*thickness_param_field(sideSet_idx,ipt) > -rho_w*bed_topo_field(sideSet_idx,ipt);
+    ParamScalarT isGrounded = rho_i*thickness_param_field(sideSet_idx,ipt) > -rho_w*bed_topo_field_mst(sideSet_idx,ipt);
     beta(sideSet_idx,ipt) *=  isGrounded;
   }
 }
@@ -764,7 +766,7 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
       if(zero_on_floating) {
         if (is_thickness_param) {
           for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ParamScalarT isGrounded = rho_i*thickness_param_field(cell,side,ipt) > -rho_w*bed_topo_field(cell,side,ipt);
+            ParamScalarT isGrounded = rho_i*thickness_param_field(cell,side,ipt) > -rho_w*bed_topo_field_mst(cell,side,ipt);
             beta(cell,side,ipt) *=  isGrounded;
           }
         } else {
