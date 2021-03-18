@@ -21,10 +21,10 @@
 namespace Albany
 {
 
-  // This BlockedDiscretization class implements multiple discretization blocks and serves them up as Thyra_ProductVectors.
+  // This BlockedSTKDiscretization class implements multiple discretization blocks and serves them up as Thyra_ProductVectors.
   // In this implementation, each block has to be the same, and the discretization for each block is defined here
 
-  class BlockedDiscretization : public AbstractDiscretization
+  class BlockedSTKDiscretization : public AbstractDiscretization
   {
   public:
     // The type of discretization stored internally. For now, only STK.
@@ -32,7 +32,7 @@ namespace Albany
     using disc_type = STKDiscretization;
 
     //! Constructor
-    BlockedDiscretization(
+    BlockedSTKDiscretization(
         const Teuchos::RCP<Teuchos::ParameterList> &discParams,
         Teuchos::RCP<AbstractSTKMeshStruct> &stkMeshStruct,
         const Teuchos::RCP<const Teuchos_Comm> &comm,
@@ -40,7 +40,7 @@ namespace Albany
         const std::map<int, std::vector<std::string>> &sideSetEquations =
             std::map<int, std::vector<std::string>>());
 
-    BlockedDiscretization(
+    BlockedSTKDiscretization(
         const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>> &discParams,
         Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> &stkMeshStruct,
         const Teuchos::RCP<const Teuchos_Comm> &comm,
@@ -49,7 +49,7 @@ namespace Albany
             std::map<int, std::vector<std::string>>());
 
     //! Destructor
-    virtual ~BlockedDiscretization() = default;
+    virtual ~BlockedSTKDiscretization() = default;
 
     /** Does a fieldOrder string require blocking? 
     * A field order is basically stetup like this
@@ -68,6 +68,20 @@ namespace Albany
 
     void printConnectivity() const;
     void printConnectivity(const size_t i_block) const;
+
+    int getBlockFADLength(const size_t i_block)
+    {
+      return m_blocks[i_block]->getFADLength();
+    }
+
+    int getBlockFADOffset(const size_t i_block)
+    {
+      int offset = 0;
+      for (size_t ii_block = 0; ii_block < i_block; ++ii_block)
+        offset += getBlockFADLength(ii_block);
+
+      return offset;
+    }
 
     //! Get node vector space (owned and overlapped)
     Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const;

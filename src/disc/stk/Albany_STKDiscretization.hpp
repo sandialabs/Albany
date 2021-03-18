@@ -383,6 +383,12 @@ class STKDiscretization : public AbstractDiscretization
     return neq;
   }
 
+  int
+  getFADLength() const
+  {
+    return neq * wsElNodeID[0][0].size();
+  }
+
   Teuchos::RCP<LayeredMeshNumbering<GO>>
   getLayeredMeshNumbering() const
   {
@@ -516,7 +522,7 @@ class STKDiscretization : public AbstractDiscretization
 
  protected:
 
-  friend class BlockedDiscretization;
+  friend class BlockedSTKDiscretization;
   friend class STKConnManager;
 
   void

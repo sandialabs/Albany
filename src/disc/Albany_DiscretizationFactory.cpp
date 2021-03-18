@@ -9,7 +9,7 @@
 #include "Albany_DiscretizationFactory.hpp"
 
 #include "Albany_STKDiscretization.hpp"
-#include "BlockedDiscretization.hpp"
+#include "Albany_BlockedSTKDiscretization.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_STK3DPointStruct.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
@@ -218,7 +218,7 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
     {
       auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
       if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
-        auto disc = Teuchos::rcp(new BlockedDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
+        auto disc = Teuchos::rcp(new BlockedSTKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
         disc->updateMesh();
         return disc;
       } else

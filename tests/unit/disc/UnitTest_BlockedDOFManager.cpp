@@ -22,7 +22,7 @@
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "STKConnManager.hpp"
-#include "BlockedDiscretization.hpp"
+#include "Albany_BlockedSTKDiscretization.hpp"
 
 // include some intrepid basis functions
 // 2D basis
@@ -111,7 +111,7 @@ tests are a beginning, "work in progress."
       stkDisc->updateMesh();
 
       // Connection manager is the interface between Albany's historical STK interface and the Panzer DOF manager (and the
-      // BlockedDiscretization interface
+      // BlockedSTKDiscretization interface
 
       RCP<Albany::STKConnManager> connManager = rcp(new Albany::STKConnManager(ms));
       panzer::BlockedDOFManager dofManager;
@@ -266,7 +266,7 @@ This is just a start, to serve as an example. This has not been thought through 
       }
    }
 
-   TEUCHOS_UNIT_TEST(AlbanyBlockedDOFManager_BlockedDiscretizationTests, assortedTests)
+   TEUCHOS_UNIT_TEST(AlbanyBlockedDOFManager_BlockedSTKDiscretizationTests, assortedTests)
    {
 
       // Set the static variable that denotes this as a Tpetra run
@@ -334,7 +334,7 @@ This is just a start, to serve as an example. This has not been thought through 
       const std::map<int, std::vector<std::string>> sideSetEquations;
 
       // Use the Albany STK interface as it is used elsewhere in the code
-      auto stkDisc = Teuchos::rcp(new BlockedDiscretization(discParams_array, ms_array, comm));
+      auto stkDisc = Teuchos::rcp(new BlockedSTKDiscretization(discParams_array, ms_array, comm));
       stkDisc->updateMesh();
       stkDisc->computeProductVectorSpaces();
 
@@ -356,6 +356,30 @@ This is just a start, to serve as an example. This has not been thought through 
       Teuchos::RCP<Thyra_BlockedLinearOp> bJacobianOp = stkDisc->createBlockedJacobianOp();
 
       TEST_EQUALITY(Teuchos::nonnull(bJacobianOp), true);
+
+      int fadl0 = stkDisc->getBlockFADLength(0);
+      int fadl1 = stkDisc->getBlockFADLength(1);
+      int fadl2 = stkDisc->getBlockFADLength(2);
+
+      std::cout << " FAD length of the first block: " << fadl0 << std::endl;
+      std::cout << " FAD length of the second block: " << fadl1 << std::endl;
+      std::cout << " FAD length of the third block: " << fadl2 << std::endl;
+
+      TEST_EQUALITY(fadl0, 4);
+      TEST_EQUALITY(fadl1, 12);
+      TEST_EQUALITY(fadl2, 20);
+
+      int fado0 = stkDisc->getBlockFADOffset(0);
+      int fado1 = stkDisc->getBlockFADOffset(1);
+      int fado2 = stkDisc->getBlockFADOffset(2);
+
+      std::cout << " FAD offset of the first block: " << fado0 << std::endl;
+      std::cout << " FAD offset of the second block: " << fado1 << std::endl;
+      std::cout << " FAD offset of the third block: " << fado2 << std::endl;
+
+      TEST_EQUALITY(fado0, 0);
+      TEST_EQUALITY(fado1, fadl0);
+      TEST_EQUALITY(fado2, fadl0 + fadl1);
    }
 
    /*

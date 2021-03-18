@@ -19,7 +19,7 @@
 #include "Panzer_BlockedDOFManager.hpp"
 #include "Panzer_String_Utilities.hpp"
 
-#include "BlockedDiscretization.hpp"
+#include "Albany_BlockedSTKDiscretization.hpp"
 #include "STKConnManager.hpp"
 
 #include "Thyra_DefaultProductVectorSpace.hpp"
@@ -28,7 +28,7 @@ namespace Albany
 {
 
   //Assume we only have one block right now
-  BlockedDiscretization::BlockedDiscretization(
+  BlockedSTKDiscretization::BlockedSTKDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList> &discParams_,
       Teuchos::RCP<AbstractSTKMeshStruct> &stkMeshStruct_,
       const Teuchos::RCP<const Teuchos_Comm> &comm_,
@@ -118,7 +118,7 @@ namespace Albany
     }
   }
 
-  BlockedDiscretization::BlockedDiscretization(
+  BlockedSTKDiscretization::BlockedSTKDiscretization(
       const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>> &discParams_,
       Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> &stkMeshStruct_,
       const Teuchos::RCP<const Teuchos_Comm> &comm_,
@@ -171,7 +171,7 @@ namespace Albany
   }
 
   void
-  BlockedDiscretization::computeProductVectorSpaces()
+  BlockedSTKDiscretization::computeProductVectorSpaces()
   {
     Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_vs(n_m_blocks);
     Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_node_vs(n_m_blocks);
@@ -193,7 +193,7 @@ namespace Albany
   }
 
   void
-  BlockedDiscretization::computeGraphs()
+  BlockedSTKDiscretization::computeGraphs()
   {
     m_jac_factory =
         Teuchos::rcp(new ThyraBlockedCrsMatrixFactory(m_pvs,
@@ -211,333 +211,124 @@ namespace Albany
   }
 
   void
-  BlockedDiscretization::computeGraphs(const size_t i_block, const size_t j_block)
+  BlockedSTKDiscretization::computeGraphs(const size_t i_block, const size_t j_block)
   {
     if (i_block == j_block)
     {
-      //m_blocks[i_block]->computeGraphs();
-
-      stk::mesh::Selector select_owned_in_part =
-          stk::mesh::Selector(this->getSTKMetaData(i_block).universal_part()) &
-          stk::mesh::Selector(this->getSTKMetaData(i_block).locally_owned_part());
-
-      std::vector<stk::mesh::Entity> cells;
-      stk::mesh::get_selected_entities(
-          select_owned_in_part,
-          this->getSTKBulkData(i_block).buckets(stk::topology::ELEMENT_RANK),
-          cells);
-
-      if (comm->getRank() == 0)
-        *out << "BlockedDiscretization: " << cells.size() << " elements on Proc 0 " << std::endl;
-
-      GO row, col;
-      Teuchos::ArrayView<GO> colAV;
-
-      const unsigned int neq = m_blocks[i_block]->getNumEq();
-
-      // determining the equations that are defined on the whole domain
-      std::vector<int> globalEqns;
-      for (unsigned int k(0); k < neq; ++k)
-      {
-        if (sideSetEquations.find(k) == sideSetEquations.end())
-        {
-          globalEqns.push_back(k);
-        }
-      }
-
-      // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
-      const auto dofMgr = m_blocks[i_block]->getOverlapDOFManager(solution_dof_name());
-      for (const auto &e : cells)
-      {
-        stk::mesh::Entity const *node_rels = this->getSTKBulkData(i_block).begin_nodes(e);
-        const size_t num_nodes = this->getSTKBulkData(i_block).num_nodes(e);
-
-        // loop over local nodes
-        for (std::size_t j = 0; j < num_nodes; j++)
-        {
-          stk::mesh::Entity rowNode = node_rels[j];
-
-          // loop over global eqs
-          for (std::size_t k = 0; k < globalEqns.size(); ++k)
-          {
-            row = dofMgr.getGlobalDOF(stk_gid(i_block, rowNode), globalEqns[k]);
-            for (std::size_t l = 0; l < num_nodes; l++)
-            {
-              stk::mesh::Entity colNode = node_rels[l];
-              for (std::size_t m = 0; m < globalEqns.size(); ++m)
-              {
-                col = dofMgr.getGlobalDOF(stk_gid(i_block, colNode), globalEqns[m]);
-                colAV = Teuchos::arrayView(&col, 1);
-                m_jac_factory->insertGlobalIndices(row, colAV, i_block, j_block);
-              }
-            }
-          }
-          // For sideset equations, we set a diagonal jacobian outside the side set.
-          // Namely, we will set res=solution outside the side set (not res=0, otherwise
-          // jac is singular).
-          // Note: if this node happens to be on the side set, we will add the entry
-          //       again in the next loop. But that's fine, cause ThyraCrsMatrixFactory
-          //       is storing GIDs of each row in a std::set (until fill complete time).
-          for (const auto &it : sideSetEquations)
-          {
-            int eq = it.first;
-            row = dofMgr.getGlobalDOF(stk_gid(i_block, rowNode), eq);
-            colAV = Teuchos::arrayView(&row, 1);
-            m_jac_factory->insertGlobalIndices(row, colAV, i_block, j_block);
-          }
-        }
-      }
-
-      /*
-      if (sideSetEquations.size() > 0)
-      {
-        const auto lmn = getLayeredMeshNumbering();
-        const auto &nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct(nodes_dof_name());
-        const auto &ov_node_indexer = nodeDofStruct.overlap_node_vs_indexer;
-        const int numOverlapNodes = ov_node_indexer->getNumLocalElements();
-
-        // iterator over all sideSet-defined equations
-        for (const auto &it : sideSetEquations)
-        {
-          // Get the eq number
-          int eq = it.first;
-
-          // In case we only have equations on side sets (no "volume" eqns),
-          // there would be problem with linear solvers. To avoid this, we
-          // put one diagonal entry for every side set equation.
-          // NOTE: some nodes will be processed twice, but this is safe:
-          //       the redundant indices will be discarded
-          for (int inode = 0; inode < numOverlapNodes; ++inode)
-          {
-            const GO node_gid = ov_node_indexer->getGlobalElement(inode);
-            row = dofMgr.getGlobalDOF(node_gid, eq);
-            colAV = Teuchos::arrayView(&row, 1);
-            m_jac_factory->insertGlobalIndices(row, colAV, i_block, j_block);
-          }
-
-          // Do a first loop on all sideset, to establish whether column couplling is allowed.
-          // We store the sides while we're at it, to avoid redoing it later
-          // Note: column coupling means that 1) the mesh is layered, and 2) the ss eqn is
-          //       defined ONLY on side sets at the top or bottom.
-          bool allowColumnCoupling = !lmn.is_null();
-          std::map<std::string, std::vector<stk::mesh::Entity>> all_sides;
-          GO baseId, iLayer;
-          for (const auto &ss_name : it.second)
-          {
-            stk::mesh::Part &part =
-                *stkMeshStruct->ssPartVec.find(ss_name)->second;
-
-            // Get all owned sides in this side set
-            stk::mesh::Selector select_owned_in_sspart =
-                stk::mesh::Selector(part) &
-                stk::mesh::Selector(this->getSTKMetaData(i_block).locally_owned_part());
-
-            auto &sides = all_sides[ss_name];
-            stk::mesh::get_selected_entities(
-                select_owned_in_sspart,
-                this->getSTKBulkData(i_block).buckets(this->getSTKMetaData(i_block).side_rank()),
-                sides); // store the result in "sides"
-
-            if (allowColumnCoupling && sides.size() > 0)
-            {
-              const auto &side = sides[0];
-              const auto &node = this->getSTKBulkData(i_block).begin_nodes(side)[0];
-              lmn->getIndices(stk_gid(i_block, node), baseId, iLayer);
-              allowColumnCoupling = (iLayer == 0 || iLayer == lmn->numLayers);
-            }
-          }
-
-          for (const auto &ss_name : it.second)
-          {
-            const auto &sides = all_sides[ss_name];
-
-            // Loop on all the sides of this sideset
-            for (const auto &sidee : sides)
-            {
-              stk::mesh::Entity const *node_rels = this->getSTKBulkData(i_block).begin_nodes(sidee);
-              const size_t num_nodes = this->getSTKBulkData(i_block).num_nodes(sidee);
-
-              // loop over local nodes of the side (row)
-              for (std::size_t i = 0; i < num_nodes; i++)
-              {
-                stk::mesh::Entity rowNode = node_rels[i];
-                row = dofMgr.getGlobalDOF(stk_gid(i_block, rowNode), eq);
-
-                // loop over local nodes of the side (col)
-                for (std::size_t j = 0; j < num_nodes; j++)
-                {
-                  stk::mesh::Entity colNode = node_rels[j];
-
-                  // TODO: this is to accommodate the scenario where the side equation is coupled with
-                  //       the volume equations over a whole column of a layered mesh. However, this
-                  //       introduces pointless nonzeros if such coupling is not needed.
-                  //       The only way to fix this would be to access more information from the problem.
-                  //       Until then, couple with *all* equations, over the whole column.
-                  if (allowColumnCoupling)
-                  {
-                    // It's a layered mesh. Assume the worst, and add coupling of the whole column
-                    // with all the equations.
-                    lmn->getIndices(stk_gid(i_block, colNode), baseId, iLayer);
-                    for (int il = 0; il <= lmn->numLayers; ++il)
-                    {
-                      const GO node3d = lmn->getId(baseId, il);
-                      for (unsigned int m = 0; m < neq; ++m)
-                      {
-                        col = dofMgr.getGlobalDOF(node3d, m);
-                        m_jac_factory->insertGlobalIndices(
-                            row, Teuchos::arrayView(&col, 1), i_block, j_block);
-                        m_jac_factory->insertGlobalIndices(
-                            col, Teuchos::arrayView(&row, 1), i_block, j_block);
-                      }
-                    }
-                  }
-                  else
-                  {
-                    // Not a layered mesh, or the eqn is not defined on top/bottom.
-                    // Couple locally with volume eqn and the other ss eqn on this sideSet
-                    for (auto m : globalEqns)
-                    {
-                      col = dofMgr.getGlobalDOF(stk_gid(i_block, colNode), m);
-                      m_jac_factory->insertGlobalIndices(
-                          row, Teuchos::arrayView(&col, 1), i_block, j_block);
-                      m_jac_factory->insertGlobalIndices(
-                          col, Teuchos::arrayView(&row, 1), i_block, j_block);
-                    }
-                    for (auto ssEqIt : sideSetEquations)
-                    {
-                      for (const auto &ssEq_ss_name : ssEqIt.second)
-                      {
-                        if (ssEq_ss_name == ss_name)
-                        {
-                          col = dofMgr.getGlobalDOF(stk_gid(i_block, colNode), ssEqIt.first);
-                          m_jac_factory->insertGlobalIndices(
-                              row, Teuchos::arrayView(&col, 1), i_block, j_block);
-                          m_jac_factory->insertGlobalIndices(
-                              col, Teuchos::arrayView(&row, 1), i_block, j_block);
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      */
+      m_blocks[i_block]->computeGraphs();
     }
   }
 
   void
-  BlockedDiscretization::printConnectivity() const
+  BlockedSTKDiscretization::printConnectivity() const
   {
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
       this->printConnectivity(i_block);
   }
   void
-  BlockedDiscretization::printConnectivity(const size_t i_block) const
+  BlockedSTKDiscretization::printConnectivity(const size_t i_block) const
   {
     m_blocks[i_block]->printConnectivity();
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getNodeVectorSpace() const
+  BlockedSTKDiscretization::getNodeVectorSpace() const
   {
     return this->getNodeVectorSpace(0);
   }
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getNodeVectorSpace(const size_t i_block) const
+  BlockedSTKDiscretization::getNodeVectorSpace(const size_t i_block) const
   {
     return m_blocks[i_block]->getNodeVectorSpace();
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getOverlapNodeVectorSpace() const
+  BlockedSTKDiscretization::getOverlapNodeVectorSpace() const
   {
     return this->getOverlapNodeVectorSpace(0);
   }
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getOverlapNodeVectorSpace(const size_t i_block) const
+  BlockedSTKDiscretization::getOverlapNodeVectorSpace(const size_t i_block) const
   {
     return m_blocks[i_block]->getOverlapNodeVectorSpace();
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getVectorSpace() const
+  BlockedSTKDiscretization::getVectorSpace() const
   {
     return this->getVectorSpace(0);
   }
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getVectorSpace(const size_t i_block) const
+  BlockedSTKDiscretization::getVectorSpace(const size_t i_block) const
   {
     return m_blocks[i_block]->getVectorSpace();
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getOverlapVectorSpace() const
+  BlockedSTKDiscretization::getOverlapVectorSpace() const
   {
     return this->getOverlapVectorSpace();
   }
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getOverlapVectorSpace(const size_t i_block) const
+  BlockedSTKDiscretization::getOverlapVectorSpace(const size_t i_block) const
   {
     return m_blocks[i_block]->getOverlapVectorSpace();
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getVectorSpace(const std::string &field_name) const
+  BlockedSTKDiscretization::getVectorSpace(const std::string &field_name) const
   {
     return this->getVectorSpace(0, field_name);
   }
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getVectorSpace(const size_t i_block, const std::string &field_name) const
+  BlockedSTKDiscretization::getVectorSpace(const size_t i_block, const std::string &field_name) const
   {
     return m_blocks[i_block]->getVectorSpace(field_name);
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getNodeVectorSpace(const std::string &field_name) const
+  BlockedSTKDiscretization::getNodeVectorSpace(const std::string &field_name) const
   {
     return this->getNodeVectorSpace(0, field_name);
   }
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getNodeVectorSpace(const size_t i_block, const std::string &field_name) const
+  BlockedSTKDiscretization::getNodeVectorSpace(const size_t i_block, const std::string &field_name) const
   {
     return m_blocks[i_block]->getNodeVectorSpace(field_name);
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getOverlapVectorSpace(const std::string &field_name) const
+  BlockedSTKDiscretization::getOverlapVectorSpace(const std::string &field_name) const
   {
     return this->getOverlapVectorSpace(0, field_name);
   }
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getOverlapVectorSpace(const size_t i_block, const std::string &field_name) const
+  BlockedSTKDiscretization::getOverlapVectorSpace(const size_t i_block, const std::string &field_name) const
   {
     return m_blocks[i_block]->getOverlapVectorSpace(field_name);
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getOverlapNodeVectorSpace(
+  BlockedSTKDiscretization::getOverlapNodeVectorSpace(
       const std::string &field_name) const
   {
     return this->getOverlapNodeVectorSpace(0, field_name);
   }
   Teuchos::RCP<const Thyra_VectorSpace>
-  BlockedDiscretization::getOverlapNodeVectorSpace(const size_t i_block,
+  BlockedSTKDiscretization::getOverlapNodeVectorSpace(const size_t i_block,
                                                    const std::string &field_name) const
   {
     return m_blocks[i_block]->getOverlapNodeVectorSpace(field_name);
   }
 
   void
-  BlockedDiscretization::printCoords() const
+  BlockedSTKDiscretization::printCoords() const
   {
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
       this->printCoords(i_block);
   }
   void
-  BlockedDiscretization::printCoords(const size_t i_block) const
+  BlockedSTKDiscretization::printCoords(const size_t i_block) const
   {
     m_blocks[i_block]->printCoords();
   }
@@ -545,25 +336,25 @@ namespace Albany
   // The function transformMesh() maps a unit cube domain by applying a
   // transformation to the mesh.
   void
-  BlockedDiscretization::transformMesh()
+  BlockedSTKDiscretization::transformMesh()
   {
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
       this->transformMesh(i_block);
   }
   void
-  BlockedDiscretization::transformMesh(const size_t i_block)
+  BlockedSTKDiscretization::transformMesh(const size_t i_block)
   {
     m_blocks[i_block]->transformMesh();
   }
 
   void
-  BlockedDiscretization::updateMesh()
+  BlockedSTKDiscretization::updateMesh()
   {
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
       this->updateMesh(i_block);
   }
   void
-  BlockedDiscretization::updateMesh(const size_t i_block)
+  BlockedSTKDiscretization::updateMesh(const size_t i_block)
   {
     m_blocks[i_block]->updateMesh();
   }
@@ -709,7 +500,7 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
     }
   }
 
-  bool BlockedDiscretization::
+  bool BlockedSTKDiscretization::
       requiresBlocking(const std::string &fieldOrder)
   {
     std::vector<std::string> tokens;
@@ -747,7 +538,7 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
     return true;
   }
 
-  void BlockedDiscretization::
+  void BlockedSTKDiscretization::
       buildBlocking(const std::string &fieldOrder, std::vector<std::vector<std::string>> &blocks)
   {
     // now we don't have to check
