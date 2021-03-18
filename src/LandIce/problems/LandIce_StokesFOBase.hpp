@@ -289,6 +289,9 @@ constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                  Albany::StateManager& stateMgr,
                                  Albany::FieldManagerChoice fieldManagerChoice)
 {
+  // --- States/parameters --- //
+  constructStatesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
+
   // --- Velocity evaluators --- //
   constructVelocityEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
@@ -300,9 +303,6 @@ constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // --- SMB-related evaluators (if needed) --- //
   constructSMBEvaluators<EvalT> (fm0, meshSpecs);
-
-  // --- States/parameters --- //
-  constructStatesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // --- Sides utility fields ---//
   constructSideUtilityFields<EvalT> (fm0);
@@ -959,12 +959,10 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
   p->set<std::string>("Velocity QP Variable Name", velocity_name);
   p->set<std::string>("Velocity Gradient QP Variable Name", velocity_name + " Gradient");
-  if (viscosity_use_corrected_temperature) {
-    p->set<std::string>("Temperature Variable Name", corrected_temperature_name);
-  } else {
-    // Avoid pointless calculation, and use original temperature in viscosity calculation
-    p->set<std::string>("Temperature Variable Name", temperature_name);
-  }
+  std::string visc_temp_name = viscosity_use_corrected_temperature
+                             ? corrected_temperature_name
+                             : temperature_name;
+  p->set<std::string>("Temperature Variable Name", visc_temp_name);
   p->set<std::string>("Ice Softness Variable Name", flow_factor_name);
   p->set<std::string>("Stiffening Factor QP Name", stiffening_factor_name);
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
@@ -978,7 +976,13 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // The st of T for viscosity is complicated: you need to get the st of the T used (temp or corrected temp),
   // and consider that you do Nodes->Cell interp, which introduces MeshScalar type in the result.
-  FST temp_st = get_scalar_type(viscosity_use_corrected_temperature ? corrected_temperature_name : temperature_name);
+  FST temp_st = get_scalar_type(visc_temp_name);
+  if (!is_available<EvalT>(fm0,visc_temp_name,FL::Node,dl)) {
+    // Temperature is not available at nodes (for some reason). We'll have to
+    // do P0 interpolation as a CellAverage, which divides by w_measure, hence
+    // polluting the output ST with MeshScalarT.
+    temp_st |= FST::MeshScalar;
+  }
   ev = createEvaluatorWithTwoScalarTypes<ViscosityFO,EvalT>(p,dl,FST::Scalar,temp_st);
   fm0.template registerEvaluator<EvalT>(ev);
 
