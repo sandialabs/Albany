@@ -94,6 +94,12 @@ inline std::string e2str (const FieldScalarType e) {
   TEUCHOS_UNREACHABLE_RETURN("");
 }
 
+inline std::ostream& operator<< (std::ostream& out, const FieldScalarType& st)
+{
+  out << e2str(st);
+  return out;
+}
+
 inline FieldScalarType operator| (const FieldScalarType& st1,
                                   const FieldScalarType& st2)
 {
