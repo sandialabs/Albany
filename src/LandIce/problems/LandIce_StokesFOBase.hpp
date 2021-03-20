@@ -1661,7 +1661,7 @@ constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
     paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
     paramList->set<std::vector<Teuchos::RCP<Teuchos::ParameterList>>*>("Basal Regularization Params",&landice_bcs[LandIceBC::BasalFriction]);
-    paramList->set<std::string>("Ice Thickness Scalar Type",e2str(get_scalar_type(ice_thickness_name)));
+    paramList->set<FST>("Ice Thickness Scalar Type",get_scalar_type(ice_thickness_name));
 
     ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
@@ -1746,8 +1746,6 @@ bool StokesFOBase::
 is_available (const PHX::FieldManager<PHAL::AlbanyTraits>& fm,
               const std::string& name, const FL loc,
               const Teuchos::RCP<Albany::Layouts>& layouts) {
-  using lt_ptr = Teuchos::RCP<PHX::DataLayout>;
-
   auto st = get_scalar_type(name);
   auto rank = get_field_rank(name);
 
