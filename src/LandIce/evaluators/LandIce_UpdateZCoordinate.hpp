@@ -13,6 +13,8 @@
 #include "Phalanx_MDField.hpp"
 #include "Sacado_ParameterAccessor.hpp" 
 
+#include "Albany_SacadoTypes.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 #include "Albany_Layouts.hpp"
 #include "PHAL_Dimension.hpp"
 
@@ -20,22 +22,21 @@ namespace LandIce {
 
 template<typename EvalT, typename Traits>
 class UpdateZCoordinateMovingTop : public PHX::EvaluatorWithBaseImpl<Traits>,
-		                               public PHX::EvaluatorDerived<EvalT, Traits> {
-
+		                               public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-
   UpdateZCoordinateMovingTop(const Teuchos::ParameterList& p,
-            const Teuchos::RCP<Albany::Layouts>& dl);
+                             const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData /* d */,
-                      PHX::FieldManager<Traits>& /* vm */) {}
+                             PHX::FieldManager<Traits>& /* vm */) {}
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
+
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   // Input:
   PHX::MDField<const MeshScalarT, Cell, Node,Dim>   coordVecIn;
@@ -55,34 +56,35 @@ private:
 
 template<typename EvalT, typename Traits>
 class UpdateZCoordinateMovingBed : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                   public PHX::EvaluatorDerived<EvalT, Traits> {
-
+                                   public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-
   UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
-            const Teuchos::RCP<Albany::Layouts>& dl);
+                             const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData /* d */,
-                      PHX::FieldManager<Traits>& /* vm */) {}
+                             PHX::FieldManager<Traits>& /* vm */) {}
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
 
+  using ParamScalarT = typename EvalT::ParamScalarT;
+  using MeshScalarT  = typename EvalT::MeshScalarT;
+
+  using ScalarOutT = typename Albany::StrongestScalarType<MeshScalarT,ParamScalarT>::type;
+
   // Input:
-  PHX::MDField<const MeshScalarT, Cell, Node,Dim>   coordVecIn;
-  PHX::MDField<const MeshScalarT, Cell, Node>       dH;
-  PHX::MDField<const MeshScalarT, Cell, Node>       bedTopo;
-  PHX::MDField<const MeshScalarT, Cell, Node>       topSurface;
-  PHX::MDField<const MeshScalarT, Cell, Node>       H;
+  PHX::MDField<const MeshScalarT,  Cell, Node,Dim>   coordVecIn;
+  PHX::MDField<const RealType,     Cell, Node>       bedTopo;
+  PHX::MDField<const RealType,     Cell, Node>       topSurface;
+  PHX::MDField<const ParamScalarT, Cell, Node>       H;
 
   // Output:
-  PHX::MDField<MeshScalarT, Cell, Node, Dim>  coordVecOut;
-  PHX::MDField<MeshScalarT, Cell, Node>       topSurfaceOut;
-  PHX::MDField<MeshScalarT, Cell, Node>       bedTopoOut;
+  PHX::MDField<ScalarOutT, Cell, Node, Dim>  coordVecOut;
+  PHX::MDField<ScalarOutT, Cell, Node>       topSurfaceOut;
+  PHX::MDField<ScalarOutT, Cell, Node>       bedTopoOut;
 
   double minH, rho_i, rho_w;
   unsigned int numDims, numNodes;
