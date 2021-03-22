@@ -308,7 +308,35 @@ This is just a start, to serve as an example. This has not been thought through 
       meshStruct1 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
       meshStruct2 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
 
-      discParams->set<std::string>("Field Order", "blocked: a");
+      Teuchos::RCP<Teuchos::ParameterList> blockedDiscParams = rcp(new Teuchos::ParameterList);
+      Teuchos::RCP<Teuchos::ParameterList> mParams = Teuchos::sublist(blockedDiscParams, "Mesh", false);
+      mParams->set<std::string>("Name", "ice_mesh");
+      mParams->set<std::string>("Type", "Extruded");
+      Teuchos::RCP<Teuchos::ParameterList> smParams = Teuchos::sublist(mParams, "Side Meshes", false);
+      smParams->set<std::string>("Sidesets", "[basal,upper]");
+
+      Teuchos::RCP<Teuchos::ParameterList> dParams = Teuchos::sublist(blockedDiscParams, "Discretization", false);
+      dParams->set<int>("Num Blocks", 3);
+
+      Teuchos::RCP<Teuchos::ParameterList> db0Params = Teuchos::sublist(dParams, "Block 0", false);
+      Teuchos::RCP<Teuchos::ParameterList> db1Params = Teuchos::sublist(dParams, "Block 1", false);
+      Teuchos::RCP<Teuchos::ParameterList> db2Params = Teuchos::sublist(dParams, "Block 2", false);
+
+      db0Params->set<std::string>("Name", "vol_P1");
+      db0Params->set<std::string>("Mesh", "ice_mesh");
+      db0Params->set<std::string>("FE Type", "P1");
+
+      db1Params->set<std::string>("Name", "basal_P1");
+      db1Params->set<std::string>("Mesh", "hydro_mesh");
+      db1Params->set<std::string>("FE Type", "P1");
+
+      db2Params->set<std::string>("Name", "basal_P0");
+      db2Params->set<std::string>("Mesh", "hydro_mesh");
+      db2Params->set<std::string>("FE Type", "P0");
+
+      Teuchos::RCP<Teuchos::ParameterList> sParams = Teuchos::sublist(blockedDiscParams, "Solution", false);
+      sParams->set<std::string>("blocks names", "[ velocity , [N,h]]");
+      sParams->set<std::string>("blocks discretizations", "[ vol_P1, [basal_P1, basal_P0] ]");
 
       ms_array[0] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct0);
       ms_array[1] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct1);
@@ -324,7 +352,7 @@ This is just a start, to serve as an example. This has not been thought through 
       ms_array[2]->setFieldAndBulkData(comm, discParams, 5, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
 
       // Use the Albany STK interface as it is used elsewhere in the code
-      auto stkDisc = Teuchos::rcp(new BlockedSTKDiscretization(discParams, ms_array, comm));
+      auto stkDisc = Teuchos::rcp(new BlockedSTKDiscretization(blockedDiscParams, ms_array, comm));
       stkDisc->updateMesh();
 
       auto nvs = stkDisc->getOverlapProductVectorSpace();

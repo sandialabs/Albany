@@ -132,7 +132,9 @@ namespace Albany
     using Teuchos::rcp_dynamic_cast;
     typedef double Scalar;
 
-    n_m_blocks = stkMeshStruct_.length();
+    Teuchos::RCP<Teuchos::ParameterList> bDiscParams = Teuchos::sublist(discParams, "Discretization", true);
+
+    n_m_blocks = bDiscParams->get<int>("Num Blocks");
 
     m_blocks.resize(n_m_blocks);
 
@@ -149,24 +151,23 @@ namespace Albany
     {
       MPI_Comm rawComm = (*mpiComm->getRawMpiComm().get())();
 
-      Teuchos::RCP<panzer::BlockedDOFManager> dofManager = Teuchos::rcp(new panzer::BlockedDOFManager(connMngr, rawComm));
-      //   dofManager->enableTieBreak(useTieBreak_);
-      //   dofManager->setUseDOFManagerFEI(useDOFManagerFEI_);
+      blockedDOFManager = Teuchos::rcp(new panzer::BlockedDOFManager(connMngr, rawComm));
 
       // by default assume orientations are not required
       bool orientationsRequired = false;
 
       // set orientations required flag
-      dofManager->setOrientationsRequired(orientationsRequired);
+      blockedDOFManager->setOrientationsRequired(orientationsRequired);
 
       // blocked degree of freedom manager
-      std::string fieldOrder = discParams->get<std::string>("Field Order");
+      std::string fieldOrder = discParams->sublist("Solution").get<std::string>("blocks names");
       std::vector<std::vector<std::string>> blocks;
-      buildBlocking(fieldOrder, blocks);
-      dofManager->setFieldOrder(blocks);
+      buildNewBlocking(fieldOrder, blocks);
 
-      //dofManager->buildGlobalUnknowns();
-      //dofManager->printFieldInformation(*out);
+      blockedDOFManager->setFieldOrder(blocks);
+
+      //blockedDOFManager->buildGlobalUnknowns();
+      //blockedDOFManager->printFieldInformation(*out);
     }
   }
 
@@ -354,8 +355,8 @@ namespace Albany
   {
     if (Teuchos::nonnull(blockedDOFManager))
     {
-      blockedDOFManager->buildGlobalUnknowns();
-      blockedDOFManager->printFieldInformation(*out);
+      ; //blockedDOFManager->buildGlobalUnknowns();
+      ; //blockedDOFManager->printFieldInformation(*out);
     }
 
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
@@ -583,4 +584,75 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
       blocks.push_back(*current);
   }
 
+  std::string formatFieldName(const std::string &fieldName)
+  {
+    std::string str = fieldName;
+
+    std::string::iterator new_end =
+        std::unique(str.begin(), str.end(),
+                    [=](char lhs, char rhs) { return (lhs == rhs) && (lhs == ' '); });
+    str.erase(new_end, str.end());
+
+    if (str.back() == ' ')
+      str.pop_back();
+
+    return str;
+  }
+
+  void BlockedSTKDiscretization::
+      buildNewBlocking(const std::string &fieldOrder, std::vector<std::vector<std::string>> &blocks)
+  {
+    Teuchos::RCP<std::vector<std::string>> current;
+
+    std::string::size_type nextOpenBracket, lastCloseBracket, nextCloseBracket, nextComa, pos, lastPos;
+
+    lastPos = fieldOrder.find_first_not_of("[ ");
+    lastCloseBracket = fieldOrder.find_last_of("]");
+
+    do
+    {
+      current = Teuchos::rcp(new std::vector<std::string>);
+
+      // Check if the current block has sublock
+      nextOpenBracket = fieldOrder.find_first_of("[", lastPos);
+      nextCloseBracket = fieldOrder.find_first_of("]", lastPos);
+      nextComa = fieldOrder.find_first_of(",", lastPos);
+
+      bool has_sublock = nextOpenBracket < nextComa ? true : false;
+
+      if (has_sublock)
+      {
+        lastPos = fieldOrder.find_first_not_of("[, ", nextOpenBracket);
+        bool last_subblock = false;
+
+        while (true)
+        {
+
+          pos = fieldOrder.find_first_of(",", lastPos);
+
+          if (pos > nextCloseBracket)
+          {
+            last_subblock = true;
+            pos = nextCloseBracket;
+          }
+
+          current->push_back(formatFieldName(fieldOrder.substr(lastPos, pos - lastPos)));
+
+          lastPos = fieldOrder.find_first_not_of("], ", pos);
+
+          if (last_subblock)
+            break;
+        }
+      }
+      else
+      {
+        pos = fieldOrder.find_first_of(",", lastPos);
+
+        current->push_back(formatFieldName(fieldOrder.substr(lastPos, pos - lastPos)));
+        lastPos = fieldOrder.find_first_not_of(", ", pos);
+      }
+      blocks.push_back(*current);
+      nextCloseBracket = fieldOrder.find_first_of("]", lastPos);
+    } while (nextCloseBracket < lastCloseBracket);
+  }
 } // namespace Albany

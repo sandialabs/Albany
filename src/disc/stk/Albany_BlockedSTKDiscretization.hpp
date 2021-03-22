@@ -67,6 +67,8 @@ namespace Albany
 
     static void buildBlocking(const std::string &fieldorder, std::vector<std::vector<std::string>> &blocks);
 
+    static void buildNewBlocking(const std::string &fieldorder, std::vector<std::vector<std::string>> &blocks);
+
     void printConnectivity() const;
     void printConnectivity(const size_t i_block) const;
 
