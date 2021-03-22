@@ -7,6 +7,7 @@
 #ifndef LANDICE_STOKES_FO_THERMO_COUPLED_PROBLEM_HPP
 #define LANDICE_STOKES_FO_THERMO_COUPLED_PROBLEM_HPP
 
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "LandIce_StokesFOBase.hpp"
 #include "LandIce_BasalMeltRate.hpp"
 #include "LandIce_EnthalpyBasalResid.hpp"
@@ -333,10 +334,12 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
   //Output
+  field_deps[melting_temperature_name].insert(hydrostatic_pressure_name);
+  field_deps[melting_enthalpy_name].insert(hydrostatic_pressure_name);
   p->set<std::string>("Melting Temperature Variable Name", melting_temperature_name);
   p->set<std::string>("Enthalpy Hs Variable Name", melting_enthalpy_name);
 
-  ev = createEvaluatorWithOneScalarType<PressureMeltingEnthalpy,EvalT>(p,dl,get_scalar_type(melting_temperature_name));
+  ev = createEvaluatorWithOneScalarType<PressureMeltingEnthalpy,EvalT>(p,dl,get_scalar_type(hydrostatic_pressure_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce Surface Air Enthalpy
@@ -363,6 +366,8 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
   //Output
+  field_deps[hydrostatic_pressure_name].insert(surface_height_name);
+  field_deps[hydrostatic_pressure_name].insert(Albany::coord_vec_name);
   p->set<std::string>("Hydrostatic Pressure Variable Name", hydrostatic_pressure_name);
 
   ev = createEvaluatorWithOneScalarType<HydrostaticPressure,EvalT>(p,dl,get_scalar_type(surface_height_name));

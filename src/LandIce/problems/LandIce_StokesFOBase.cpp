@@ -1,4 +1,5 @@
 #include "LandIce_StokesFOBase.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
 
 #include <string.hpp>               // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
@@ -502,6 +503,8 @@ void StokesFOBase::setFieldsProperties ()
   setSingleFieldProperties(body_force_name,                   FRT::Vector);
   setSingleFieldProperties(flow_factor_name,                  FRT::Scalar);
   setSingleFieldProperties(flux_divergence_name,              FRT::Scalar);
+
+  setSingleFieldProperties(Albany::coord_vec_name,            FRT::Vector, FST::MeshScalar);
 }
 
 void StokesFOBase::setupEvaluatorRequests ()
@@ -711,7 +714,7 @@ FieldScalarType StokesFOBase::get_scalar_type (const std::string& fname) {
   FST st = field_scalar_type[fname];
   const auto& deps = field_deps[fname];
   for (const auto& dep : deps) {
-    st |= field_scalar_type[dep];
+    st |= get_scalar_type(dep);
   }
 
   return st;
