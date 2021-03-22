@@ -15,13 +15,13 @@ git checkout albany
 echo "...done."
 #change where build happens from tempdir 
 #sed -i 's,$tempdir/$user,/extradrive,g' etc/spack/defaults/config.yaml
-export http_proxy=http://wwwproxy.sandia.gov:80
-export https_proxy=http://wwwproxy.sandia.gov:80
+export http_proxy=http://proxy.sandia.gov:80
+export https_proxy=http://proxy.sandia.gov:80
 . share/spack/setup-env.sh 
 echo "Starting spack build..."
 spack --insecure install --dirty --keep-stage libiconv >& spack_libiconv.out
 spack --insecure install --dirty --keep-stage albany >& spack_albany.out 
-cd /home/ikalash/nightlyAlbanyTests
+cd /nightlyAlbanyTests
 mv spack/spack_albany.out .
 mv spack/spack_libiconv.out .
 echo "...done."
@@ -32,8 +32,8 @@ echo "Starting running of tests..."
 PWD=`pwd`
 echo "  spack build dir = " $PWD
 ctest -V >& spack_ctest.out 
-mv spack_ctest.out /home/ikalash/nightlyAlbanyTests/spack_ctest.out 
+mv spack_ctest.out /nightlyAlbanyTests/spack_ctest.out 
 echo "...done."
-cd /home/ikalash/nightlyAlbanyTests 
+cd /nightlyAlbanyTests 
 bash process_results_spack.sh 
 bash send_email_spack.sh 
