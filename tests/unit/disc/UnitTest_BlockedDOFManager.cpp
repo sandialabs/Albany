@@ -288,10 +288,21 @@ This is just a start, to serve as an example. This has not been thought through 
 
       // Build an STK Discretization object that holds the test mesh "2D_Blk_Test.e"
 
+      bool useExodus = false;
       // 2D, quad, 3 block mesh built in Cubit.
       Teuchos::RCP<Teuchos::ParameterList> discParams = rcp(new Teuchos::ParameterList);
-      discParams->set<std::string>("Exodus Input File Name", "2D_Blk_Test.e");
-      discParams->set<std::string>("Method", "Exodus");
+
+      if (useExodus)
+      {
+         discParams->set<std::string>("Exodus Input File Name", "2D_Blk_Test.e");
+         discParams->set<std::string>("Method", "Exodus");
+      }
+      else
+      {
+         discParams->set<std::string>("Gmsh Input Mesh File Name", "cube.msh");
+         discParams->set<std::string>("Method", "Gmsh");
+      }
+
       discParams->set<int>("Interleaved Ordering", 2);
       discParams->set<bool>("Use Composite Tet 10", 0);
       discParams->set<int>("Number Of Time Derivatives", 0);
@@ -310,10 +321,10 @@ This is just a start, to serve as an example. This has not been thought through 
 
       Teuchos::RCP<Teuchos::ParameterList> blockedDiscParams = rcp(new Teuchos::ParameterList);
       Teuchos::RCP<Teuchos::ParameterList> mParams = Teuchos::sublist(blockedDiscParams, "Mesh", false);
-      mParams->set<std::string>("Name", "ice_mesh");
+      mParams->set<std::string>("Name", "Body 1");
       mParams->set<std::string>("Type", "Extruded");
       Teuchos::RCP<Teuchos::ParameterList> smParams = Teuchos::sublist(mParams, "Side Meshes", false);
-      smParams->set<std::string>("Sidesets", "[basal,upper]");
+      smParams->set<std::string>("Sidesets", "[Bottom,Top]");
 
       Teuchos::RCP<Teuchos::ParameterList> dParams = Teuchos::sublist(blockedDiscParams, "Discretization", false);
       dParams->set<int>("Num Blocks", 3);
@@ -322,17 +333,34 @@ This is just a start, to serve as an example. This has not been thought through 
       Teuchos::RCP<Teuchos::ParameterList> db1Params = Teuchos::sublist(dParams, "Block 1", false);
       Teuchos::RCP<Teuchos::ParameterList> db2Params = Teuchos::sublist(dParams, "Block 2", false);
 
-      db0Params->set<std::string>("Name", "vol_P1");
-      db0Params->set<std::string>("Mesh", "ice_mesh");
-      db0Params->set<std::string>("FE Type", "P1");
+      if (useExodus)
+      {
+         db0Params->set<std::string>("Name", "vol_P1");
+         db0Params->set<std::string>("Mesh", "left_lower_qtr");
+         db0Params->set<std::string>("FE Type", "P1");
 
-      db1Params->set<std::string>("Name", "basal_P1");
-      db1Params->set<std::string>("Mesh", "hydro_mesh");
-      db1Params->set<std::string>("FE Type", "P1");
+         db1Params->set<std::string>("Name", "basal_P1");
+         db1Params->set<std::string>("Mesh", "left_upper_qtr");
+         db1Params->set<std::string>("FE Type", "P1");
 
-      db2Params->set<std::string>("Name", "basal_P0");
-      db2Params->set<std::string>("Mesh", "hydro_mesh");
-      db2Params->set<std::string>("FE Type", "P0");
+         db2Params->set<std::string>("Name", "basal_P0");
+         db2Params->set<std::string>("Mesh", "right_half");
+         db2Params->set<std::string>("FE Type", "P0");
+      }
+      else
+      {
+         db0Params->set<std::string>("Name", "vol_P1");
+         db0Params->set<std::string>("Mesh", "EB_Body_1");
+         db0Params->set<std::string>("FE Type", "P1");
+
+         db1Params->set<std::string>("Name", "basal_P1");
+         db1Params->set<std::string>("Mesh", "EB_Bottom");
+         db1Params->set<std::string>("FE Type", "P1");
+
+         db2Params->set<std::string>("Name", "basal_P0");
+         db2Params->set<std::string>("Mesh", "EB_Bottom");
+         db2Params->set<std::string>("FE Type", "P0");
+      }
 
       Teuchos::RCP<Teuchos::ParameterList> sParams = Teuchos::sublist(blockedDiscParams, "Solution", false);
       sParams->set<std::string>("blocks names", "[ velocity , [N,h]]");
@@ -383,7 +411,7 @@ This is just a start, to serve as an example. This has not been thought through 
             Teuchos::RCP<const Thyra_LinearOp> jacobian = bJacobianOp->getBlock(i, j);
 
             *out1 << "Before describe jacobian " << i << " " << j << std::endl;
-            Albany::describe(jacobian.getConst(), *out1, Teuchos::VERB_EXTREME);
+            //Albany::describe(jacobian.getConst(), *out1, Teuchos::VERB_EXTREME);
             *out1 << "After describe jacobian " << i << " " << j << std::endl;
          }
 
@@ -397,9 +425,18 @@ This is just a start, to serve as an example. This has not been thought through 
       std::cout << " FAD length of the second block: " << fadl1 << std::endl;
       std::cout << " FAD length of the third block: " << fadl2 << std::endl;
 
-      TEST_EQUALITY(fadl0, 4);
-      TEST_EQUALITY(fadl1, 12);
-      TEST_EQUALITY(fadl2, 20);
+      if (useExodus)
+      {
+         TEST_EQUALITY(fadl0, 4);
+         TEST_EQUALITY(fadl1, 12);
+         TEST_EQUALITY(fadl2, 20);
+      }
+      else
+      {
+         TEST_EQUALITY(fadl0, 8);
+         TEST_EQUALITY(fadl1, 24);
+         TEST_EQUALITY(fadl2, 40);
+      }
 
       int fado0 = stkDisc->getBlockFADOffset(0);
       int fado1 = stkDisc->getBlockFADOffset(1);

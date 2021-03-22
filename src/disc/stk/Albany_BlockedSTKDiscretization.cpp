@@ -27,6 +27,15 @@
 namespace Albany
 {
 
+  template <typename Intrepid2Type>
+  Teuchos::RCP<const panzer::FieldPattern> buildFieldPattern()
+  {
+    // build a geometric pattern from a single basis
+    Teuchos::RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis = Teuchos::rcp(new Intrepid2Type);
+    Teuchos::RCP<const panzer::FieldPattern> pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
+    return pattern;
+  }
+
   //Assume we only have one block right now
   BlockedSTKDiscretization::BlockedSTKDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList> &discParams_,
@@ -143,8 +152,10 @@ namespace Albany
                                                      rigidBodyModes_, sideSetEquations_));
 
     // build the connection manager
+    const Teuchos::RCP<Albany::STKConnManager>
+        stkConnMngr = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_[0]));
     const Teuchos::RCP<panzer::ConnManager>
-        connMngr = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_[0]));
+        connMngr = stkConnMngr;
 
     // build the DOF manager for the problem
     if (const Teuchos::MpiComm<int> *mpiComm = dynamic_cast<const Teuchos::MpiComm<int> *>(comm.get()))
@@ -161,13 +172,80 @@ namespace Albany
 
       // blocked degree of freedom manager
       std::string fieldOrder = discParams->sublist("Solution").get<std::string>("blocks names");
+      std::string fieldDiscretization = discParams->sublist("Solution").get<std::string>("blocks discretizations");
+
       std::vector<std::vector<std::string>> blocks;
+      std::vector<std::vector<std::string>> blocksDiscretizationName;
+
       buildNewBlocking(fieldOrder, blocks);
+      buildNewBlocking(fieldDiscretization, blocksDiscretizationName);
+
+      std::vector<shards::CellTopology> elementBlockTopologies;
+      std::vector<std::string> elementBlockNames;
+
+      stkConnMngr->getElementBlockTopologies(elementBlockTopologies);
+      stkConnMngr->getElementBlockNames(elementBlockNames);
+
+      for (size_t i = 0; i < blocks.size(); ++i)
+      {
+        for (size_t j = 0; j < blocks[i].size(); ++j)
+        {
+          std::string type, mesh;
+          shards::CellTopology eb_topology;
+          for (size_t i_blocks = 0; i_blocks < n_m_blocks; ++i_blocks)
+          {
+            if (blocksDiscretizationName[i][j] == bDiscParams->sublist(Albany::strint("Block", i_blocks)).get<std::string>("Name"))
+            {
+              type = bDiscParams->sublist(Albany::strint("Block", i_blocks)).get<std::string>("FE Type");
+              mesh = bDiscParams->sublist(Albany::strint("Block", i_blocks)).get<std::string>("Mesh");
+              break;
+            }
+          }
+          for (size_t i_ebn = 0; i_ebn < elementBlockNames.size(); ++i_ebn)
+          {
+            if (elementBlockNames[i_ebn] == mesh)
+            {
+              eb_topology = elementBlockTopologies[i_ebn];
+              break;
+            }
+          }
+
+          RCP<const panzer::FieldPattern> pattern;
+          std::string topo_name = eb_topology.getName();
+          if (type == "P0")
+          {
+            if (topo_name == "Quadrilateral_4")
+              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::exec_space, double, double>>();
+            else if (topo_name == "Triangle_3")
+              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+            else if (topo_name == "Tetrahedron_4")
+              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::exec_space, double, double>>();
+            else if (topo_name == "Hexahedron_8")
+              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::exec_space, double, double>>();
+            else
+              TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unsupported topology \"" << topo_name << "\".\n");
+          }
+          else if (type == "P1")
+          {
+            if (topo_name == "Quadrilateral_4")
+              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::exec_space, double, double>>();
+            else if (topo_name == "Triangle_3")
+              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C2_FEM<PHX::exec_space, double, double>>();
+            else if (topo_name == "Tetrahedron_4")
+              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TET_C2_FEM<PHX::exec_space, double, double>>();
+            else if (topo_name == "Hexahedron_8")
+              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_HEX_C2_FEM<PHX::exec_space, double, double>>();
+            else
+              TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unsupported topology \"" << topo_name << "\".\n");
+          }
+          blockedDOFManager->addField(mesh, blocks[i][j], pattern);
+        }
+      }
 
       blockedDOFManager->setFieldOrder(blocks);
 
-      //blockedDOFManager->buildGlobalUnknowns();
-      //blockedDOFManager->printFieldInformation(*out);
+      blockedDOFManager->buildGlobalUnknowns();
+      blockedDOFManager->printFieldInformation(*out);
     }
   }
 
@@ -599,9 +677,43 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
     return str;
   }
 
+  void verifyFieldOrderFormat(const std::string &fieldOrder)
+  {
+    std::string str = fieldOrder;
+    str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+
+    int bracket_level = 0;
+    for (size_t i = 0; i < str.size(); ++i)
+    {
+      if (str[i] == '[')
+        ++bracket_level;
+      if (str[i] == ']')
+        --bracket_level;
+      TEUCHOS_TEST_FOR_EXCEPTION(bracket_level < 0, std::logic_error,
+                                 "Error! A closing bracket is located befor an opening one.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION(bracket_level > 2, std::logic_error,
+                                 "Error! Cannot have more than two level of nested blocks.\n");
+
+      if (i > 0 && str[i - 1] == ',')
+      {
+        TEUCHOS_TEST_FOR_EXCEPTION(str[i] == ',', std::logic_error,
+                                   "Error! Two consecutive coma.\n");
+      }
+      if (i > 0 && str[i - 1] == '[')
+      {
+        TEUCHOS_TEST_FOR_EXCEPTION(str[i] == ']', std::logic_error,
+                                   "Error! Empty block.\n");
+      }
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(bracket_level != 0, std::logic_error,
+                               "Error! Not all blocks are closed.\n");
+  }
+
   void BlockedSTKDiscretization::
       buildNewBlocking(const std::string &fieldOrder, std::vector<std::vector<std::string>> &blocks)
   {
+    verifyFieldOrderFormat(fieldOrder);
+
     Teuchos::RCP<std::vector<std::string>> current;
 
     std::string::size_type nextOpenBracket, lastCloseBracket, nextCloseBracket, nextComa, pos, lastPos;

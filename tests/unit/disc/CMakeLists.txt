@@ -8,6 +8,9 @@
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2D_Blk_Test.e
                  ${CMAKE_CURRENT_BINARY_DIR}/2D_Blk_Test.e COPYONLY)
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.msh
+                 ${CMAKE_CURRENT_BINARY_DIR}/cube.msh COPYONLY)
+
 INCLUDE_DIRECTORIES(
   ${Trilinos_INCLUDE_DIRS}  
   ${Trilinos_TPL_INCLUDE_DIRS} 
