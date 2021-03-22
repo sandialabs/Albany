@@ -1,8 +1,8 @@
 
 
 cd spack
-export http_proxy=http://wwwproxy.sandia.gov:80
-export https_proxy=http://wwwproxy.sandia.gov:80
+export http_proxy=http://proxy.sandia.gov:80
+export https_proxy=http://proxy.sandia.gov:80
 . share/spack/setup-env.sh
 module load cde/compiler/gcc/7.2.0
 spack compiler find
