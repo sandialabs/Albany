@@ -8,25 +8,24 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
+
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
-
-
 namespace LandIce {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-StokesFOStress<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename SurfHeightST>
+StokesFOStress<EvalT, Traits, SurfHeightST>::
 StokesFOStress(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl) :
-  surfaceHeight    (p.get<std::string> ("Surface Height QP Name"), dl->qp_scalar),
-  Ugrad    (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
-  muLandIce  (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
-  coordVec (p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient),
-  Stress (p.get<std::string> ("Stress Variable Name"), dl->qp_tensor)
+               const Teuchos::RCP<Albany::Layouts>& dl) :
+  surfaceHeight (p.get<std::string> ("Surface Height QP Name"), dl->qp_scalar),
+  Ugrad         (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
+  muLandIce     (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
+  coordVec      (p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient),
+  Stress        (p.get<std::string> ("Stress Variable Name"), dl->qp_tensor)
 {
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -71,29 +70,14 @@ StokesFOStress(const Teuchos::ParameterList& p,
   *out << " numNodes = " << numNodes << std::endl;
 #endif
 
-  Teuchos::ParameterList* p_list =
-    p.get<Teuchos::ParameterList*>("Physical Parameter List");
-  rho_g = p_list->get<double>("Ice Density", 910.0)*p_list->get<double>("Gravity Acceleration", 9.8);
+  Teuchos::ParameterList* p_list = p.get<Teuchos::ParameterList*>("Physical Parameter List");
+  rho_g = p_list->get<double>("Ice Density", 910.0) * p_list->get<double>("Gravity Acceleration", 9.8);
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void StokesFOStress<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(surfaceHeight,fm);
-  this->utils.setFieldData(Ugrad,fm);
-  this->utils.setFieldData(muLandIce,fm);
-  this->utils.setFieldData(coordVec, fm);
-  this->utils.setFieldData(Stress,fm);
-  if(useStereographicMap)
-    this->utils.setFieldData(U,fm);
-}
-//**********************************************************************
 
-template<typename EvalT, typename Traits>
-void StokesFOStress<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename SurfHeightST>
+void StokesFOStress<EvalT, Traits, SurfHeightST>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifdef OUTPUT_TO_SCREEN
@@ -106,18 +90,12 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
   TEUCHOS_TEST_FOR_EXCEPTION (vecDimFO != 2, Teuchos::Exceptions::InvalidParameter,
-                              std::endl << "Error in LandIce::StokesFOStress constructor:  " <<
-                              "Invalid Parameter vecDim.  Problem implemented for 2 dofs per node (u and v). " << std::endl);
+      "\nError in LandIce::StokesFOStress constructor: Invalid Parameter vecDim.\n"
+      "  Problem implemented for 2 dofs per node (u and v).\n");
 
   TEUCHOS_TEST_FOR_EXCEPTION (numDims != 3, Teuchos::Exceptions::InvalidParameter,
-                              std::endl << "Error in LandIce::StokesFOStress constructor:  " <<
-                              "Invalid Parameter numDims.  LandIce::StokesFOStress is for 3D " << std::endl);
-
-  // Initialize residual to 0.0
-
-//  Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
-
-
+      "\nError in LandIce::StokesFOStress constructor: Invalid Parameter vecDim.\n"
+      "  LandIce::StokesFOStress is for 3D.\n");
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
@@ -175,15 +153,7 @@ evaluateFields(typename Traits::EvalData workset)
         Stress(cell, qp, 2, 2) = -p;
       }
     }
-
   }
-
-
-
-
-
 }
 
-//**********************************************************************
-}
-
+} // namespace LandIce

@@ -917,7 +917,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Stress Variable Name", "Stress Tensor");
 
-  ev = Teuchos::rcp(new StokesFOStress<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = createEvaluatorWithOneScalarType<StokesFOStress,EvalT>(p,dl,get_scalar_type(surface_height_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- FO Stokes Resid --- //
@@ -1123,7 +1123,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Body Force Variable Name", body_force_name);
 
-  ev = Teuchos::rcp(new StokesFOBodyForce<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = createEvaluatorWithOneScalarType<StokesFOBodyForce,EvalT>(p,dl,get_scalar_type(surface_height_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ---------- Add time as a Sacado-ized parameter (only if specified) ------- //
