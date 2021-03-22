@@ -32,6 +32,8 @@
 
 #include "Albany_ThyraUtils.hpp"
 
+#include "Albany_IossSTKMeshStruct.hpp"
+
 using Teuchos::rcp;
 using Teuchos::RCP;
 using Teuchos::rcp_dynamic_cast;
@@ -294,17 +296,10 @@ This is just a start, to serve as an example. This has not been thought through 
       discParams->set<bool>("Use Composite Tet 10", 0);
       discParams->set<int>("Number Of Time Derivatives", 0);
       discParams->set<bool>("Use Serial Mesh", 1);
-      discParams->set<std::string>("Field Order", "blocked: a");
 
       // Need to test various meshes, with various element types and block structures.
 
-      Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>> discParams_array;
       Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> ms_array;
-
-      discParams_array.resize(3);
-      discParams_array[0] = discParams;
-      discParams_array[1] = discParams;
-      discParams_array[2] = discParams;
 
       ms_array.resize(3);
 
@@ -312,6 +307,8 @@ This is just a start, to serve as an example. This has not been thought through 
       meshStruct0 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
       meshStruct1 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
       meshStruct2 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
+
+      discParams->set<std::string>("Field Order", "blocked: a");
 
       ms_array[0] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct0);
       ms_array[1] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct1);
@@ -322,21 +319,12 @@ This is just a start, to serve as an example. This has not been thought through 
       const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
       const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-      ms_array[0]->setFieldAndBulkData(comm, discParams, 1, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
-                                       side_set_sis, side_set_req);
-
-      ms_array[1]->setFieldAndBulkData(comm, discParams, 3, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
-                                       side_set_sis, side_set_req);
-
-      ms_array[2]->setFieldAndBulkData(comm, discParams, 5, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
-                                       side_set_sis, side_set_req);
-
-      // Null for this test
-      const Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
-      const std::map<int, std::vector<std::string>> sideSetEquations;
+      ms_array[0]->setFieldAndBulkData(comm, discParams, 1, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
+      ms_array[1]->setFieldAndBulkData(comm, discParams, 3, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
+      ms_array[2]->setFieldAndBulkData(comm, discParams, 5, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
 
       // Use the Albany STK interface as it is used elsewhere in the code
-      auto stkDisc = Teuchos::rcp(new BlockedSTKDiscretization(discParams_array, ms_array, comm));
+      auto stkDisc = Teuchos::rcp(new BlockedSTKDiscretization(discParams, ms_array, comm));
       stkDisc->updateMesh();
 
       auto nvs = stkDisc->getOverlapProductVectorSpace();
@@ -361,15 +349,15 @@ This is just a start, to serve as an example. This has not been thought through 
 
       Teuchos::RCP<Teuchos::FancyOStream> out1 = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-      *out1 << "Before describe jacobian00" << std::endl;
-      Albany::describe(jacobian00.getConst(), *out1, Teuchos::VERB_EXTREME);
-      *out1 << "After describe jacobian00" << std::endl;
-      *out1 << "Before describe jacobian11" << std::endl;
-      Albany::describe(jacobian11.getConst(), *out1, Teuchos::VERB_EXTREME);
-      *out1 << "After describe jacobian11" << std::endl;
-      *out1 << "Before describe jacobian22" << std::endl;
-      Albany::describe(jacobian22.getConst(), *out1, Teuchos::VERB_EXTREME);
-      *out1 << "After describe jacobian22" << std::endl;
+      for (size_t i = 0; i < 3; ++i)
+         for (size_t j = 0; j < i + 1; ++j)
+         {
+            Teuchos::RCP<const Thyra_LinearOp> jacobian = bJacobianOp->getBlock(i, j);
+
+            *out1 << "Before describe jacobian " << i << " " << j << std::endl;
+            Albany::describe(jacobian.getConst(), *out1, Teuchos::VERB_EXTREME);
+            *out1 << "After describe jacobian " << i << " " << j << std::endl;
+         }
 
       TEST_EQUALITY(Teuchos::nonnull(bJacobianOp), true);
 

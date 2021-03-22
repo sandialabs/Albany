@@ -119,12 +119,12 @@ namespace Albany
   }
 
   BlockedSTKDiscretization::BlockedSTKDiscretization(
-      const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>> &discParams_,
+      const Teuchos::RCP<Teuchos::ParameterList> &discParams_,
       Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> &stkMeshStruct_,
       const Teuchos::RCP<const Teuchos_Comm> &comm_,
       const Teuchos::RCP<RigidBodyModes> &rigidBodyModes_,
       const std::map<int, std::vector<std::string>> &sideSetEquations_)
-      : out(Teuchos::VerboseObjectBase::getDefaultOStream()), comm(comm_)
+      : discParams(discParams_), out(Teuchos::VerboseObjectBase::getDefaultOStream()), comm(comm_)
   {
 
     using Teuchos::RCP;
@@ -132,12 +132,12 @@ namespace Albany
     using Teuchos::rcp_dynamic_cast;
     typedef double Scalar;
 
-    n_m_blocks = discParams_.length();
+    n_m_blocks = stkMeshStruct_.length();
 
     m_blocks.resize(n_m_blocks);
 
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
-      m_blocks[i_block] = Teuchos::rcp(new disc_type(discParams_[i_block], stkMeshStruct_[i_block], comm_,
+      m_blocks[i_block] = Teuchos::rcp(new disc_type(discParams, stkMeshStruct_[i_block], comm_,
                                                      rigidBodyModes_, sideSetEquations_));
 
     // build the connection manager
@@ -160,7 +160,7 @@ namespace Albany
       dofManager->setOrientationsRequired(orientationsRequired);
 
       // blocked degree of freedom manager
-      std::string fieldOrder = discParams_[0]->get<std::string>("Field Order");
+      std::string fieldOrder = discParams->get<std::string>("Field Order");
       std::vector<std::vector<std::string>> blocks;
       buildBlocking(fieldOrder, blocks);
       dofManager->setFieldOrder(blocks);
@@ -352,6 +352,12 @@ namespace Albany
   void
   BlockedSTKDiscretization::updateMesh()
   {
+    if (Teuchos::nonnull(blockedDOFManager))
+    {
+      blockedDOFManager->buildGlobalUnknowns();
+      blockedDOFManager->printFieldInformation(*out);
+    }
+
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
       this->updateMesh(i_block);
 

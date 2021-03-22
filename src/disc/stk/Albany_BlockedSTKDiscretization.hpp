@@ -16,6 +16,7 @@
 #include "utility/Albany_ThyraBlockedCrsMatrixFactory.hpp"
 #include "utility/Albany_ThyraUtils.hpp"
 
+#include "Panzer_BlockedDOFManager.hpp"
 //#include "Albany_NullSpaceUtils.hpp"
 
 namespace Albany
@@ -41,7 +42,7 @@ namespace Albany
             std::map<int, std::vector<std::string>>());
 
     BlockedSTKDiscretization(
-        const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>> &discParams,
+        const Teuchos::RCP<Teuchos::ParameterList> &discParams,
         Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> &stkMeshStruct,
         const Teuchos::RCP<const Teuchos_Comm> &comm,
         const Teuchos::RCP<RigidBodyModes> &rigidBodyModes = Teuchos::null,
@@ -268,6 +269,17 @@ namespace Albany
     getElNodeEqID(const size_t i_block, const std::string &field_name) const
     {
       return m_blocks[i_block]->getElNodeEqID(field_name);
+    }
+
+    void
+    setBlockedDOFManager(Teuchos::RCP<panzer::BlockedDOFManager> blockedDOFManager_)
+    {
+      blockedDOFManager = blockedDOFManager_;
+    }
+    Teuchos::RCP<panzer::BlockedDOFManager>
+    getBlockedDOFManager()
+    {
+      return blockedDOFManager;
     }
 
     const NodalDOFManager &
@@ -841,6 +853,8 @@ namespace Albany
     size_t n_m_blocks;
 
     Teuchos::RCP<ThyraBlockedCrsMatrixFactory> nodalMatrixFactory;
+
+    Teuchos::RCP<panzer::BlockedDOFManager> blockedDOFManager;
   };
 
 } // namespace Albany
