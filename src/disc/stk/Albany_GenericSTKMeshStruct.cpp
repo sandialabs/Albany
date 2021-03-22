@@ -514,6 +514,11 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
       if (!params_ss->isParameter("Number Of Time Derivatives"))
         params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
 
+      if (!params_ss->isParameter("Workset Size")) {
+        int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
+        params_ss->set("Workset Size", worksetSizeMax);
+      }
+
       std::string method = params_ss->get<std::string>("Method");
       if (method=="SideSetSTK") {
         // The user said this mesh is extracted from a higher dimensional one
