@@ -8,6 +8,7 @@
 #define LANDICE_HYDRAULIC_POTENTIAL_HPP 1
 
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
@@ -42,9 +43,9 @@ private:
   void evaluateFieldsSide(typename Traits::EvalData d);
 
   // Input:
-  PHX::MDField<const ScalarT>       P_w;
-  PHX::MDField<const ParamScalarT>  phi_0;
-  PHX::MDField<const ScalarT>       h;
+  PHX::MDField<const ScalarT>   P_w;
+  PHX::MDField<const RealType>  phi_0;
+  PHX::MDField<const ScalarT>   h;
 
   // Output:
   PHX::MDField<ScalarT>         phi;

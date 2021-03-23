@@ -43,8 +43,8 @@ public:
   typedef typename EvalT::MeshScalarT     MeshScalarT;
   typedef typename EvalT::ParamScalarT    ParamScalarT;
 
-  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type       IceScalarT;
-  typedef typename std::conditional<ThermoCoupled,ScalarT,ParamScalarT>::type  TempScalarT;
+  typedef typename std::conditional<IsStokes,ScalarT,RealType>::type       IceScalarT;
+  typedef typename std::conditional<ThermoCoupled,ScalarT,RealType>::type  TempScalarT;
 
   HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl);
@@ -86,6 +86,7 @@ private:
   double l_r;                 // Bed bumps typical length [m]
   double c_creep;             // Creep closure coefficient [non dimensional]
 
+  // The type of the cavities closure term. Cubic: c_creep*h*A*N^3. Linear: c_creep*h*N/eta_i
   enum ClosureTypeN { Cubic , Linear};
 
   ClosureTypeN closure;

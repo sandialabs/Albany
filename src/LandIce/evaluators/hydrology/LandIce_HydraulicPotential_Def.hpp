@@ -36,9 +36,9 @@ HydraulicPotential (const Teuchos::ParameterList& p,
 
   numPts = eval_on_side ? layout->extent(2) : layout->extent(1);
 
-  P_w   = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Pressure Variable Name"), layout);
-  phi_0 = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Basal Gravitational Water Potential Variable Name"), layout);
-  phi   = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), layout);
+  P_w   = decltype(P_w)(p.get<std::string> ("Water Pressure Variable Name"), layout);
+  phi_0 = decltype(phi_0)(p.get<std::string> ("Basal Gravitational Water Potential Variable Name"), layout);
+  phi   = decltype(phi)(p.get<std::string> ("Hydraulic Potential Variable Name"), layout);
 
   this->addDependentField (P_w);
   this->addDependentField (phi_0);
@@ -50,7 +50,7 @@ HydraulicPotential (const Teuchos::ParameterList& p,
   if (hydro_params.get<bool>("Use Water Thickness In Effective Pressure Formula",false)) {
     use_h = true;
 
-    h = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Variable Name"), layout);
+    h = decltype(h)(p.get<std::string> ("Water Thickness Variable Name"), layout);
     this->addDependentField(h);
 
     // Setting parameters

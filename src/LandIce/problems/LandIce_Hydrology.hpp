@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #ifndef LANDICE_HYDROLOGY_PROBLEM_HPP
-#define LANDICE_HYDROLOGY_PROBLEM_HPP 1
+#define LANDICE_HYDROLOGY_PROBLEM_HPP
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
@@ -205,6 +205,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 {
   using FL  = Albany::FieldLocation;
   using FRT = Albany::FieldRankType;
+  using ScalarT = typename EvalT::ScalarT;
 
   // Using the utility for the common evaluators
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -394,7 +395,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       } else {
         // A 'regular' field input: load it.
         p->set<std::string>("Field Name", fieldName);
-        ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+        ev = Teuchos::rcp(new PHAL::LoadStateFieldRT<EvalT,PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
       is_input_state_scalar[stateName] = scalar_state;
@@ -497,9 +498,9 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Interpolating all input fields
   for (auto it : is_input_state_scalar) {
     if (it.second) {
-      ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(it.first);
+      ev = evalUtils.getRTUtils().constructDOFInterpolationEvaluator(it.first);
     } else {
-      ev = evalUtils.getPSTUtils().constructDOFVecInterpolationEvaluator(it.first);
+      ev = evalUtils.getRTUtils().constructDOFVecInterpolationEvaluator(it.first);
     }
     fm0.template registerEvaluator<EvalT> (ev);
   }
@@ -678,12 +679,12 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // Output
     p->set<std::string>("Field Norm Name",sliding_velocity_name);
 
-    ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormBase<EvalT,PHAL::AlbanyTraits,RealType>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     // ------- Sliding Velocity at nodes (for output in the mesh, if needed) -------- //
     p->set<std::string>("Field Layout","Cell Node Vector");
-    ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev = Teuchos::rcp(new PHAL::FieldFrobeniusNormBase<EvalT,PHAL::AlbanyTraits,RealType>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -736,12 +737,12 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", beta_name);
 
-    ev = createEvaluatorWithThreeScalarTypes<BasalFrictionCoefficient, EvalT>(p,dl, FieldScalarType::Scalar, FieldScalarType::ParamScalar,FieldScalarType::ParamScalar);
+    ev = Teuchos::rcp(new BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,ScalarT,RealType,RealType>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     //--- LandIce basal friction coefficient nodal (for output in the mesh, if needed) ---//
     p->set<bool>("Nodal",true);
-    ev = createEvaluatorWithThreeScalarTypes<BasalFrictionCoefficient, EvalT>(p,dl, FieldScalarType::Scalar, FieldScalarType::ParamScalar,FieldScalarType::ParamScalar);
+    ev = Teuchos::rcp(new BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,ScalarT,RealType,RealType>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

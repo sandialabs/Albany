@@ -61,11 +61,9 @@ private:
   PHX::MDField<const MeshScalarT>   w_measure;
   PHX::MDField<const ScalarT>       q;
   PHX::MDField<const ScalarT>       m;
-  PHX::MDField<const ParamScalarT>  omega;
+  PHX::MDField<const RealType>      omega;
   PHX::MDField<const ScalarT>       h_dot;
   PHX::MDField<const ScalarT>       h_till_dot;
-  PHX::MDField<const ScalarT>       P_w;  // Water pressure (for penalization)
-  PHX::MDField<const ParamScalarT>  P_o;  // Overburden (for penalization)
 
   // Input only needed if equation is on a sideset
   PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   metric;
