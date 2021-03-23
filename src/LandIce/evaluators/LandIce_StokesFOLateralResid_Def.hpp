@@ -137,7 +137,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 KOKKOS_INLINE_FUNCTION
 void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::
-operator() (const GivenImmersedRatio_Tag& tag, const int& sideSet_idx) const {
+operator() (const GivenImmersedRatio_Tag&, const int& sideSet_idx) const {
   
   const double scale = 1e-6; //[k^2]
 
@@ -174,7 +174,7 @@ operator() (const GivenImmersedRatio_Tag& tag, const int& sideSet_idx) const {
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 KOKKOS_INLINE_FUNCTION
 void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::
-operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const {
+operator() (const ComputedImmersedRatio_Tag&, const int& sideSet_idx) const {
   
   const double scale = 1e-6; //[k^2]
 
@@ -188,7 +188,7 @@ operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const 
 
   for (unsigned int qp=0; qp<numSideQPs; ++qp) {
     const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
-    const MeshScalarT      s = elevation(sideSet_idx,qp); //[km]
+    const ThicknessScalarT s = elevation(sideSet_idx,qp); //[km]
     const OutputScalarT immersed_ratio = H>threshold ? KU::max(zero,KU::min(one,1-s/H)) : zero;
     OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio); //[kPa]
     if(add_melange_force)
@@ -233,9 +233,9 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluateFields (type
 }
 
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
-void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_computed_immersed_ratio (typename Traits::EvalData workset)
+void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::
+evaluate_with_computed_immersed_ratio (typename Traits::EvalData /* workset */)
 {
-
   if (useCollapsedSidesets) {
     Kokkos::parallel_for(ComputedImmersedRatio_Policy(0, sideSet.size), *this);
   } else {
@@ -253,7 +253,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_comput
 
       for (unsigned int qp=0; qp<numSideQPs; ++qp) {
         const ThicknessScalarT H = thickness(cell,side,qp); //[km]
-        const MeshScalarT      s = elevation(cell,side,qp); //[km]
+        const ThicknessScalarT s = elevation(cell,side,qp); //[km]
         const OutputScalarT immersed_ratio = H>threshold ? std::max(zero,std::min(one,1-s/H)) : zero;
         OutputScalarT w_normal_stress = -0.5 * g * H * (rho_i - rho_w*immersed_ratio*immersed_ratio); //[kPa]
         if(add_melange_force)
@@ -285,7 +285,8 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_comput
 }
 
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
-void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluate_with_given_immersed_ratio (typename Traits::EvalData workset)
+void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::
+evaluate_with_given_immersed_ratio (typename Traits::EvalData /* workset */)
 {
   if (useCollapsedSidesets) {
     Kokkos::parallel_for(GivenImmersedRatio_Policy(0, sideSet.size), *this);

@@ -7,6 +7,7 @@
 #ifndef LANDICE_RESPONSE_SMB_MISMATCH_HPP
 #define LANDICE_RESPONSE_SMB_MISMATCH_HPP
 
+#include "Albany_SacadoTypes.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
@@ -39,6 +40,8 @@ namespace LandIce {
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
+    using GradThicknessScalarType = typename Albany::StrongestScalarType<MeshScalarT,ThicknessScalarType>::type;
+
     std::string surfaceSideName;
     std::string basalSideName;
 
@@ -56,7 +59,7 @@ namespace LandIce {
     PHX::MDField<const RealType>                  obs_thickness;   // Side, QuadPoint
     PHX::MDField<const RealType>                  thicknessRMS;    // Side, QuadPoint
     PHX::MDField<const ThicknessScalarType>       thickness;       // Side, QuadPoint
-    PHX::MDField<const ThicknessScalarType>       grad_thickness;  // Side, QuadPoint, Dim
+    PHX::MDField<const GradThicknessScalarType>   grad_thickness;  // Side, QuadPoint, Dim
     PHX::MDField<const MeshScalarT>               w_measure_2d;    // Side, QuadPoint
     PHX::MDField<const MeshScalarT>               tangents;        // Side, QuadPoint, Dim, Dim
 

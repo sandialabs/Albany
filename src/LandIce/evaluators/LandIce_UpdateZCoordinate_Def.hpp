@@ -176,26 +176,26 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       const GO ilevel = layeredMeshNumbering.getLayerId(elNodeID[node]);
-      MeshScalarT h = H(cell,node);
-      MeshScalarT top = topSurface(cell,node);
-      typename PHAL::Ref<MeshScalarT>::type vals = topSurfaceOut(cell,node);
-      typename PHAL::Ref<MeshScalarT>::type valb = bedTopoOut(cell,node);
-      MeshScalarT bed = bedTopo(cell,node);
+      ScalarOutT h = H(cell,node);
+      ScalarOutT top = topSurface(cell,node);
+      typename PHAL::Ref<ScalarOutT>::type vals = topSurfaceOut(cell,node);
+      typename PHAL::Ref<ScalarOutT>::type valb = bedTopoOut(cell,node);
+      ScalarOutT bed = bedTopo(cell,node);
 
       //floating when the floating condition is met with the old bed
       // or with the new (top-h) bed.
-      auto floating = (rho_i*h + rho_w*std::min(bed, MeshScalarT(top-h))) < 0.0;
+      auto floating = (rho_i*h + rho_w*std::min(bed, ScalarOutT(top-h))) < 0.0;
 
       top = floating ? h*(1.0 - rho_i/rho_w) : top; //adjust surface when floating
       vals = top;
-      bed = floating ? std::min(bed, MeshScalarT(-rho_i/rho_w*h)) : top - h;
+      bed = floating ? std::min(bed, ScalarOutT(-rho_i/rho_w*h)) : top - h;
       valb = bed;
 
       for(std::size_t icomp=0; icomp< numDims; icomp++) {
-        typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
+        typename PHAL::Ref<ScalarOutT>::type val = coordVecOut(cell,node,icomp);
         val = (icomp==2) ?
-            MeshScalarT(top - (1.0- sigmaLevel[ ilevel])*h)
-           : coordVecIn(cell,node,icomp);
+            ScalarOutT(top - (1.0- sigmaLevel[ ilevel])*h)
+           : ScalarOutT(coordVecIn(cell,node,icomp));
       }
     }
   }

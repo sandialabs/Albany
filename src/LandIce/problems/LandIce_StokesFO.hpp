@@ -106,9 +106,6 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
-  // --- States/parameters --- //
-  constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
-
   // Gather solution field
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names[0], dof_offsets[0]);
   fm0.template registerEvaluator<EvalT> (ev);
@@ -121,15 +118,6 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // after gathering the coordinates, we modify the z coordinate of the mesh.
   if (Albany::mesh_depends_on_parameters() && is_dist_param[ice_thickness_name]) {
     if(adjustBedTopo && !adjustSurfaceHeight) {
-      //----- Gather Coordinate Vector (ad hoc parameters)
-      p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
-
-      // Output:: Coordindate Vector at vertices
-      p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
-
-      ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-
       //------ Update Z Coordinate
       p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
 
@@ -147,15 +135,6 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
       fm0.template registerEvaluator<EvalT>(ev);
     } else if(adjustSurfaceHeight && !adjustBedTopo) {
-      //----- Gather Coordinate Vector (ad hoc parameters)
-      p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
-
-      // Output:: Coordindate Vector at vertices
-      p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
-
-      ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-
       //------ Update Z Coordinate
       p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
 
@@ -173,6 +152,15 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
               "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
               " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
     }
+
+    //----- Gather Coordinate Vector (ad hoc parameters)
+    p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
+
+    // Output:: Coordindate Vector at vertices
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
+
+    ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
   } else {
     //----- Gather Coordinate Vector (general parameters)
     ev = evalUtils.constructGatherCoordinateVectorEvaluator();
@@ -203,6 +191,9 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // --- ProjectedLaplacian-related evaluators (if needed) --- //
   constructProjLaplEvaluators<EvalT> (fm0, fieldManagerChoice);
+
+  // --- States/parameters --- //
+  constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // Finally, construct responses, and return the tags
   return constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, responseList);
@@ -270,23 +261,26 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     resid_name_auxiliary[0] = "L2 Projected Boundary Laplacian Residual";
     std::string aux_resid_scatter_tag = "Scatter Auxiliary Residual";
 
-    // ------------------- Interpolations and utilities ------------------ //
+    field_rank[dof_name_auxiliary[0]] = FRT::Scalar;
+    field_scalar_type[dof_name_auxiliary[0]] = FST::Scalar;
+
+    // ------------------- Gather/scatter evaluators ------------------ //
 
     // Gather solution field
     ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_name_auxiliary, 2);
     fm0.template registerEvaluator<EvalT> (ev);
 
+    // ev = evalUtils.constructGatherSolutionSideEvaluator(dof_name_auxiliary, ssName, cellType, 2, false);
+    // fm0.template registerEvaluator<EvalT> (ev);
+
+    // Project dof to side (keep same name)
+    ev = evalUtils.constructDOFCellToSideEvaluator(
+        dof_name_auxiliary[0], ssName, e2str(FL::Node) + " " + e2str(FRT::Scalar),
+        cellType, dof_name_auxiliary[0]);
+
     // Scatter residual
     ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(false, resid_name_auxiliary, Teuchos::rcpFromRef(extruded_params_levels), vecDimFO, aux_resid_scatter_tag);
     fm0.template registerEvaluator<EvalT> (ev);
-
-    // Project to side
-    ev = evalUtils.constructDOFCellToSideEvaluator(dof_name_auxiliary[0],ssName,"Node Scalar Sideset",cellType, dof_name_auxiliary[0]);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    //---- Interpolate velocity gradient on QP on side
-    ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator(field_name_side, ssName);
-    fm0.template registerEvaluator<EvalT>(ev);
 
     // -------------------------------- LandIce evaluators ------------------------- //
 
@@ -311,7 +305,7 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     //Output
     p->set<std::string>("L2 Projected Boundary Laplacian Residual Name", "L2 Projected Boundary Laplacian Residual");
 
-    ev = Teuchos::rcp(new LandIce::L2ProjectedBoundaryLaplacianResidualParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev = Teuchos::rcp(new L2ProjectedBoundaryLaplacianResidualParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     if (fieldManagerChoice == Albany::BUILD_RESID_FM) {

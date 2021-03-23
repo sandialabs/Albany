@@ -79,14 +79,6 @@ using LoadStateFieldMST = LoadStateFieldBase<EvalT,Traits,typename EvalT::MeshSc
 template<typename EvalT, typename Traits>
 using LoadStateFieldRT = LoadStateFieldBase<EvalT,Traits,RealType>;
 
-//Because LoadStateField is used with Sacado::mpl (in PHAL_FactoryTraits), when we enable the follow lines, we get the error: no type named ‘ParamScalarT’ in ‘struct Sacado::mpl::arg<-1>.
-//For this reason we left the original implementation of LoadStateField
-// LB: The LoadStateField version still requires EvalT to have a ParamScalarT type defined inside, so how can LoadStateField be ok? I guess inside Sacado::mpl, LoadStateField is not
-//     really instantiated for EvalT = Sacado::mpl::arg<-1>...
-
-// template<typename EvalT, typename Traits>
-// using LoadStateField = LoadStateFieldBase<EvalT,Traits,typename EvalT::ParamScalarT>;
-
 } // namespace PHAL
 
 #endif // PHAL_LOAD_STATE_FIELD_HPP

@@ -74,8 +74,9 @@ private:
 
   PHX::MDField<const TemperatureST>     ice_softness;    // [(kPa)^{-n} (kyr)^{-1}]
 
-  PHX::MDField<const MeshScalarT>       bed_topo_field;  // [km]
-  PHX::MDField<const MeshScalarT>       thickness_field; // [km]
+  PHX::MDField<const RealType>          bed_topo_field;  // [km]
+  PHX::MDField<const MeshScalarT>       bed_topo_field_mst;  // [km]
+  PHX::MDField<const RealType>          thickness_field; // [km]
   PHX::MDField<const ParamScalarT>      thickness_param_field; // [km]
 
   // Output:

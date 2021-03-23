@@ -7,14 +7,25 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
+#include "LandIce_IceOverburden.hpp"
+
 namespace LandIce {
 
-template<typename EvalT, typename Traits, bool IsStokes>
-IceOverburden<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+IceOverburden<EvalT, Traits>::
 IceOverburden (const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl)
 {
   useCollapsedSidesets = (dl->isSideLayouts && dl->useCollapsedSidesets);
+
+  // Check if it is a sideset evaluation
+  eval_on_side = false;
+  if (p.isParameter("Side Set Name")) {
+    sideSetName = p.get<std::string>("Side Set Name");
+    eval_on_side = true;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (eval_on_side!=dl->isSideLayouts, std::logic_error,
+      "Error! Input Layouts structure not compatible with requested field layout.\n");
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (p.isParameter("Nodal") && p.get<bool>("Nodal")) {
@@ -23,21 +34,12 @@ IceOverburden (const Teuchos::ParameterList& p,
     layout = useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar;
   }
 
-  if (IsStokes) {
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
-                                "Error! The layout structure does not appear to be that of a side set.\n");
+  numPts = (eval_on_side && !useCollapsedSidesets) ? layout->extent(2) : layout->extent(1);
 
-    basalSideName = p.get<std::string>("Side Set Name");
-    numPts = useCollapsedSidesets ? layout->extent(1) : layout->extent(2);
-  } else {
-    numPts = useCollapsedSidesets ? layout->extent(0) : layout->extent(1);
-  }
-
-  H   = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
-  P_o = PHX::MDField<ParamScalarT>(p.get<std::string> ("Ice Overburden Variable Name"), layout);
+  H   = PHX::MDField<const RealType>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
+  P_o = PHX::MDField<RealType>(p.get<std::string> ("Ice Overburden Variable Name"), layout);
 
   this->addDependentField (H);
-
   this->addEvaluatedField (P_o);
 
   // Setting parameters
@@ -49,53 +51,44 @@ IceOverburden (const Teuchos::ParameterList& p,
   this->setName("IceOverburden"+PHX::print<EvalT>());
 }
 
-//**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes>
-void IceOverburden<EvalT, Traits, IsStokes>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(H,fm);
-  this->utils.setFieldData(P_o,fm);
-}
-
 // *********************************************************************
 // Kokkos functor
-template<typename EvalT, typename Traits, bool IsStokes>
+template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
-void IceOverburden<EvalT, Traits, IsStokes>::
-operator() (const IceOverburden_Tag& tag, const int& sideSet_idx) const {
-
+void IceOverburden<EvalT, Traits>::
+operator() (const IceOverburden_Tag&, const int& side_or_cell_idx) const
+{
   for (unsigned int pt=0; pt<numPts; ++pt) {
-    P_o (sideSet_idx,pt) = rho_i*g*H(sideSet_idx,pt);
+    P_o (side_or_cell_idx,pt) = rho_i*g*H(side_or_cell_idx,pt);
   }
-
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes>
-void IceOverburden<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+void IceOverburden<EvalT, Traits>::
 evaluateFields (typename Traits::EvalData workset)
 {
-  if (IsStokes) {
+  if (eval_on_side) {
     evaluateFieldsSide(workset);
   } else {
-    evaluateFieldsCell(workset);
+    Kokkos::parallel_for(IceOverburden_Policy(0, workset.numCells), *this);
   }
 }
 
-template<typename EvalT, typename Traits, bool IsStokes>
-void IceOverburden<EvalT, Traits, IsStokes>::
+template<typename EvalT, typename Traits>
+void IceOverburden<EvalT, Traits>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
-  if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
-  
-  sideSet = workset.sideSetViews->at(basalSideName);
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) {
+    return;
+  }
+
+  sideSet = workset.sideSetViews->at(sideSetName);
   if (useCollapsedSidesets) {
     Kokkos::parallel_for(IceOverburden_Policy(0, sideSet.size), *this);
   } else {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
+
       // Get the local data of side and cell
       const int cell = sideSet.elem_LID(sideSet_idx);
       const int side = sideSet.side_local_id(sideSet_idx);
@@ -103,19 +96,6 @@ evaluateFieldsSide (typename Traits::EvalData workset)
       for (unsigned int pt=0; pt<numPts; ++pt) {
         P_o (cell,side,pt) = rho_i*g*H(cell,side,pt);
       }
-    }
-  }
-
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits, bool IsStokes>
-void IceOverburden<EvalT, Traits, IsStokes>::
-evaluateFieldsCell (typename Traits::EvalData workset)
-{
-  for (unsigned int cell=0; cell<workset.numCells; ++cell) {
-    for (unsigned int pt=0; pt<numPts; ++pt) {
-      P_o (cell,pt) = rho_i*g*H(cell,pt);
     }
   }
 }

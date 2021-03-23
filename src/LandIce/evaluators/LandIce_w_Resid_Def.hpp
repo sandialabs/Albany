@@ -47,13 +47,16 @@ namespace LandIce
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideName)==dl->side_layouts.end(), std::runtime_error,
                                 "Error! Basal side data layout not found.\n");
     Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideName);
+    useCollapsedSidesets = dl_side->useCollapsedSidesets;
 
-    sideBF = decltype(sideBF)(p.get<std::string> ("BF Side Name"), dl_side->node_qp_scalar);
-    side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_side->qp_scalar);
-    side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), dl_side->qp_scalar);
-    basalVerticalVelocitySideQP = decltype(basalVerticalVelocitySideQP)(p.get<std::string>("Basal Vertical Velocity Side QP Variable Name"), dl_side->qp_scalar);
-    normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
+    TEUCHOS_TEST_FOR_EXCEPTION (not dl_side->useCollapsedSidesets, std::runtime_error,
+                                "Error! LandIce::w_Resid only implemented for collapsed sidesets.\n");
 
+    sideBF = decltype(sideBF)(p.get<std::string> ("BF Side Name"), dl_side->node_qp_scalar_sideset);
+    side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_side->qp_scalar_sideset);
+    side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), dl_side->qp_scalar_sideset);
+    basalVerticalVelocitySideQP = decltype(basalVerticalVelocitySideQP)(p.get<std::string>("Basal Vertical Velocity Side QP Variable Name"), dl_side->qp_scalar_sideset);
+    normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim_sideset);
 
     std::vector<PHX::Device::size_type> dims;
     dl->node_qp_vector->dimensions(dims);
@@ -93,7 +96,7 @@ namespace LandIce
 
   template<typename EvalT, typename Traits, typename VelocityType>
   void w_Resid<EvalT,Traits,VelocityType>::
-  postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+  postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>&)
   {  
     d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   }
@@ -122,31 +125,28 @@ namespace LandIce
     }
 
 
-    if (d.sideSets->find(sideName) != d.sideSets->end())
+    if (d.sideSetViews->find(sideName)==d.sideSetViews->end()) return;
+
+    auto sideSet = d.sideSetViews->at(sideName);
+    for (int side_idx = 0; side_idx < sideSet.size; ++side_idx)
     {
-      const std::vector<Albany::SideStruct>& sideSet = d.sideSets->at(sideName);
-      for (auto const& it_side : sideSet)
-      {
-        // Get the local data of side and cell
-        const int cell = it_side.elem_LID;
-        const int side = it_side.side_local_id;
-        for (unsigned int snode=0; snode<numSideNodes; ++snode){
-          int cnode = sideNodes[side][snode];
-          Residual(cell,cnode) =0;
-         }
-      }
-      for (auto const& it_side : sideSet)
-      {
-        // Get the local data of side and cell
-        const int cell = it_side.elem_LID;
-        const int side = it_side.side_local_id;
-        for (unsigned int snode=0; snode<numSideNodes; ++snode) {
-          int cnode = sideNodes[side][snode];
-          for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
-          Residual(cell,cnode) += (side_w_qp(cell,side,qp)*normals(cell,side,qp,2) + velocity(cell,qp,0)* normals(cell,side,qp,0) + velocity(cell,qp,1)* normals(cell,side,qp,1)
-                                   + basalVerticalVelocitySideQP(cell, side, qp)) * sideBF(cell,side,snode,qp) * side_w_measure(cell,side,qp);
-          }
-      }
+      // Get the local data of side and cell
+      const int cell = sideSet.elem_LID(side_idx);
+      const int side = sideSet.side_local_id(side_idx);
+      for (unsigned int snode=0; snode<numSideNodes; ++snode){
+        int cnode = sideNodes[side][snode];
+        Residual(cell,cnode) =0;
+       }
+
+      for (unsigned int snode=0; snode<numSideNodes; ++snode) {
+        int cnode = sideNodes[side][snode];
+        for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
+        Residual(cell,cnode) += (side_w_qp(side_idx,qp) * normals(side_idx,qp,2) +
+                                   velocity(cell,qp,0)  * normals(side_idx,qp,0) +
+                                   velocity(cell,qp,1)  * normals(side_idx,qp,1) +
+                                   basalVerticalVelocitySideQP(side_idx, qp)) *
+                                sideBF(side_idx,snode,qp) * side_w_measure(side_idx,qp);
+        }
       }
     }
   }

@@ -29,8 +29,8 @@ ScatterSideEqnResidualBase (const Teuchos::ParameterList& p,
  , tensorRank ( p.get<int>("Tensor Rank") )
 {
   // Sanity check
-  TEUCHOS_TEST_FOR_EXCEPTION ( residualsAreVolumeFields==dl->isSideLayouts, std::logic_error,
-    "Error! If residuals are volume fields, the Layouts structure must *not* be that of a side set, and viceversa.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION ( dl->isSideLayouts, std::logic_error,
+    "Error! The Layouts structure must *not* be that of a side set.\n");
 
   // Name of the PHX computed tag. This is not really a field, just a tag
   // whose evaluation must be requested in order to trigger the whole evaluation tree
@@ -49,8 +49,9 @@ ScatterSideEqnResidualBase (const Teuchos::ParameterList& p,
   } else if (p.isType<std::string>("Residual Name")) {
     names = Teuchos::ArrayRCP<std::string>(1,p.get<std::string>("Residual Name"));
   } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! You must specify either the std::string 'Residual Name', "
-                                                          "or the Teuchos::ArrayRCP<std::string> 'Residual Names'.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+        "Error! You must specify either the std::string 'Residual Name',\n"
+        "       or the Teuchos::ArrayRCP<std::string> 'Residual Names'.\n");
   }
 
   // Store information of all sides, since we don't know which local side id this sideset will be

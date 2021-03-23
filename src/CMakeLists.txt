@@ -377,22 +377,20 @@ list (APPEND SOURCES
   evaluators/gather/PHAL_GatherCoordinateVector.cpp
   evaluators/gather/PHAL_GatherScalarNodalParameter.cpp
   evaluators/gather/PHAL_GatherSolution.cpp
+  evaluators/gather/PHAL_GatherSolutionSide.cpp
   evaluators/interpolation/PHAL_DOFCellToSide.cpp
   evaluators/interpolation/PHAL_DOFCellToSideQP.cpp
   evaluators/interpolation/PHAL_DOFGradInterpolation.cpp
   evaluators/interpolation/PHAL_DOFGradInterpolationSide.cpp
   evaluators/interpolation/PHAL_DOFInterpolation.cpp
   evaluators/interpolation/PHAL_DOFInterpolationSide.cpp
-  evaluators/interpolation/PHAL_DOFSideToCell.cpp
   evaluators/interpolation/PHAL_DOFTensorGradInterpolation.cpp
   evaluators/interpolation/PHAL_DOFTensorInterpolation.cpp
   evaluators/interpolation/PHAL_DOFVecGradInterpolation.cpp
   evaluators/interpolation/PHAL_DOFVecGradInterpolationSide.cpp
   evaluators/interpolation/PHAL_DOFVecInterpolation.cpp
   evaluators/interpolation/PHAL_DOFVecInterpolationSide.cpp
-  evaluators/interpolation/PHAL_NodesToCellInterpolation.cpp
-  evaluators/interpolation/PHAL_QuadPointsToCellInterpolation.cpp
-  evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation.cpp
+  evaluators/interpolation/PHAL_P0Interpolation.cpp
   evaluators/pde/PHAL_HeatEqResid.cpp
   evaluators/pde/PHAL_NSMaterialProperty.cpp
   evaluators/pde/PHAL_SideLaplacianResidual.cpp
@@ -466,6 +464,8 @@ list (APPEND HEADERS
   evaluators/gather/PHAL_GatherScalarNodalParameter_Def.hpp
   evaluators/gather/PHAL_GatherSolution.hpp
   evaluators/gather/PHAL_GatherSolution_Def.hpp
+  evaluators/gather/PHAL_GatherSolutionSide.hpp
+  evaluators/gather/PHAL_GatherSolutionSide_Def.hpp
   evaluators/interpolation/PHAL_DOFCellToSide.hpp
   evaluators/interpolation/PHAL_DOFCellToSideQP.hpp
   evaluators/interpolation/PHAL_DOFCellToSideQP_Def.hpp
@@ -478,8 +478,6 @@ list (APPEND HEADERS
   evaluators/interpolation/PHAL_DOFInterpolationSide.hpp
   evaluators/interpolation/PHAL_DOFInterpolationSide_Def.hpp
   evaluators/interpolation/PHAL_DOFInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_DOFSideToCell.hpp
-  evaluators/interpolation/PHAL_DOFSideToCell_Def.hpp
   evaluators/interpolation/PHAL_DOFTensorGradInterpolation.hpp
   evaluators/interpolation/PHAL_DOFTensorGradInterpolation_Def.hpp
   evaluators/interpolation/PHAL_DOFTensorInterpolation.hpp
@@ -492,12 +490,8 @@ list (APPEND HEADERS
   evaluators/interpolation/PHAL_DOFVecInterpolationSide.hpp
   evaluators/interpolation/PHAL_DOFVecInterpolationSide_Def.hpp
   evaluators/interpolation/PHAL_DOFVecInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_NodesToCellInterpolation.hpp
-  evaluators/interpolation/PHAL_NodesToCellInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_QuadPointsToCellInterpolation.hpp
-  evaluators/interpolation/PHAL_QuadPointsToCellInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation.hpp
-  evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation_Def.hpp
+  evaluators/interpolation/PHAL_P0Interpolation.hpp
+  evaluators/interpolation/PHAL_P0Interpolation_Def.hpp
   evaluators/pde/PHAL_HeatEqResid.hpp
   evaluators/pde/PHAL_HeatEqResid_Def.hpp
   evaluators/pde/PHAL_NSMaterialProperty.hpp

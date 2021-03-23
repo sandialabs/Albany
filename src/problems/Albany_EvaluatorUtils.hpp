@@ -24,12 +24,17 @@
 #include "Albany_Layouts.hpp"
 
 namespace Albany {
+
   /*!
    * \brief Generic Functions to construct evaluators more succinctly
    */
   template<typename Traits>
   class EvaluatorUtilsBase {
     public:
+
+    using IntrepidBasis    = Intrepid2::Basis<PHX::Device, RealType, RealType>;
+    using IntrepidCubature = Intrepid2::Cubature<PHX::Device>;
+
     virtual ~EvaluatorUtilsBase() = default;
 
     //! Function to create parameter list for construction of GatherSolution
@@ -113,6 +118,86 @@ namespace Albany {
        int offsetToFirstDOF=0) const {
       return constructGatherSolutionEvaluator_noTransient(tensorRank,Teuchos::ArrayRCP<std::string>(1,dof_name),offsetToFirstDOF);
     }
+
+    // Gather a solution field only on a given side set (useful for side equations)
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       const std::string& dof_name,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       bool is_dof_vec = false) const {
+      return constructGatherSolutionSideEvaluator(
+                arcp_str(dof_name),sideSetName,cellType,offsetToFirstDOF,is_dof_vec);
+    }
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       const std::string& dof_name,
+       const std::string& dof_name_dot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0,
+       bool is_dof_vec = false,
+       bool is_dof_dot_vec = false) const {
+      return constructGatherSolutionSideEvaluator(
+                arcp_str(dof_name),arcp_str(dof_name_dot),
+                sideSetName,cellType,offsetToFirstDOF,offsetToFirstDOFDot,
+                is_dof_vec, is_dof_dot_vec);
+    }
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       const std::string& dof_name,
+       const std::string& dof_name_dot,
+       const std::string& dof_name_dotdot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0,
+       int offsetToFirstDOFDotDot=0,
+       bool is_dof_vec = false,
+       bool is_dof_dot_vec = false,
+       bool is_dof_dotdot_vec = false) const {
+      return constructGatherSolutionSideEvaluator(
+          arcp_str(dof_name),arcp_str(dof_name_dot),arcp_str(dof_name_dotdot),
+          sideSetName,cellType,offsetToFirstDOF,offsetToFirstDOFDot,offsetToFirstDOFDotDot,
+          is_dof_vec, is_dof_dot_vec, is_dof_dotdot_vec);
+    }
+
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       bool is_dof_vec = false) const = 0;
+
+    // At least one between dof_names, dof_names_dot, and dof_names_dotdot must be non-null
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0,
+       bool is_dof_vec = false,
+       bool is_dof_dot_vec = false) const = 0;
+
+    // At least one between dof_names, dof_names_dot, and dof_names_dotdot must be non-null
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    virtual constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       Teuchos::ArrayRCP<std::string> dof_names_dotdot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0,
+       int offsetToFirstDOFDotDot=0,
+       bool is_dof_vec = false,
+       bool is_dof_dot_vec = false,
+       bool is_dof_dotdot_vec = false) const = 0;
 
     //! Function to create parameter list for construction of ScatterResidual
     //! evaluator with standard Field names
@@ -301,15 +386,15 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructMapToPhysicalFrameEvaluator(
         const Teuchos::RCP<shards::CellTopology>& cellType,
-        const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
-        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis = Teuchos::null) const = 0;
+        const Teuchos::RCP<IntrepidCubature> cubature,
+        const Teuchos::RCP<IntrepidBasis> intrepidBasis = Teuchos::null) const = 0;
 
     //! Function to create parameter list for construction of MapToPhysicalFrameSide
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructMapToPhysicalFrameSideEvaluator(
       const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
+      const Teuchos::RCP<IntrepidCubature> cubature,
       const std::string& sideSetName) const = 0;
 
     //! Function to create evaluator for restriction to side set
@@ -330,57 +415,83 @@ namespace Albany {
        const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
        const std::string& side_dof_name = "") const = 0;
 
-    //! Function to create evaluator for prolongation to cell
+    //! Function to create P0 interpolation evaluator
+    //! Note: interpolationType can be 'Cell Average' or 'Value At Cell Barycenter',
+    //!       with the latter only available for nodal fields.
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    virtual constructDOFSideToCellEvaluator(
-       const std::string& side_dof_name,
-       const std::string& sideSetName,
-       const std::string& layout,
-       const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
-       const std::string& cell_dof_name = "") const = 0;
-
-    //! Function to create evaluator NodesToCellInterpolation (=DOFInterpolation+QuadPointsToCellInterpolation)
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    virtual constructNodesToCellInterpolationEvaluator(
+    virtual constructP0InterpolationEvaluator(
         const std::string& dof_name,
-        const std::string& interpolationType,
-        bool isVectorField = false,
-        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis = Teuchos::null) const = 0;
+        const std::string& interpolationType = "Cell Average",
+        const FieldLocation loc = FieldLocation::Node,
+        const FieldRankType rank = FieldRankType::Scalar,
+        const Teuchos::RCP<IntrepidBasis>& basis = Teuchos::null) const = 0;
 
-    //! Function to create evaluator QuadPointsToCellInterpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    virtual constructQuadPointsToCellInterpolationEvaluator(
+    virtual constructP0InterpolationSideEvaluator(
+        const std::string& sideSetName,
         const std::string& dof_name,
-        const Teuchos::RCP<PHX::DataLayout> qp_layout = Teuchos::null,
-        const Teuchos::RCP<PHX::DataLayout> cell_layout = Teuchos::null) const = 0;
+        const std::string& interpolationType = "Cell Average",
+        const FieldLocation loc = FieldLocation::Node,
+        const FieldRankType rank = FieldRankType::Scalar,
+        const Teuchos::RCP<IntrepidBasis>& basis = Teuchos::null) const = 0;
 
-    //! Function to create evaluator QuadPointsToCellInterpolation
+    // Convenience shortcuts for special cases of P0 interpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    virtual constructSideQuadPointsToSideInterpolationEvaluator(
-      const std::string& dof_name,
-      const std::string& sideSetName,
-      const int fieldDim = 0) const = 0;
+    constructBarycenterEvaluator(
+        const std::string& dof_name,
+        const Teuchos::RCP<IntrepidBasis>& basis,
+        const FieldRankType rank = FieldRankType::Scalar) const {
+      return constructP0InterpolationEvaluator(
+          dof_name,"Value At Cell Barycenter", FieldLocation::Node, rank, basis);
+    }
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructBarycenterSideEvaluator(
+        const std::string& ss_name,
+        const std::string& dof_name,
+        const Teuchos::RCP<IntrepidBasis>& basis,
+        const FieldRankType rank = FieldRankType::Scalar) const {
+      return constructP0InterpolationSideEvaluator(
+          ss_name, dof_name,"Value At Cell Barycenter", FieldLocation::Node, rank, basis);
+    }
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructCellAverageEvaluator(
+        const std::string& dof_name,
+        const FieldLocation loc = FieldLocation::Node,
+        const FieldRankType rank = FieldRankType::Scalar) const {
+      return constructP0InterpolationEvaluator(
+          dof_name,"Cell Average", loc, rank);
+    }
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructCellAverageSideEvaluator(
+        const std::string& ss_name,
+        const std::string& dof_name,
+        const FieldLocation loc = FieldLocation::Node,
+        const FieldRankType rank = FieldRankType::Scalar) const {
+      return constructP0InterpolationSideEvaluator(
+          ss_name, dof_name,"Cell Average", loc, rank);
+    }
 
     //! Function to create parameter list for construction of ComputeBasisFunctions
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructComputeBasisFunctionsEvaluator(
         const Teuchos::RCP<shards::CellTopology>& cellType,
-        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis,
-        const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature) const = 0;
+        const Teuchos::RCP<IntrepidBasis> intrepidBasis,
+        const Teuchos::RCP<IntrepidCubature> cubature) const = 0;
 
     //! Function to create parameter list for construction of ComputeBasisFunctionsSide
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructComputeBasisFunctionsSideEvaluator(
         const Teuchos::RCP<shards::CellTopology>& cellType,
-        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
-        const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
+        const Teuchos::RCP<IntrepidBasis> intrepidBasisSide,
+        const Teuchos::RCP<IntrepidCubature> cubatureSide,
         const std::string& sideSetName,
         const bool buildNormals = false,
         const bool palanar = false) const = 0;
 
     protected:
+
     Teuchos::ArrayRCP<std::string> arcp_str(const std::string& s) const {
       return Teuchos::ArrayRCP<std::string>(1,s);
     }
@@ -390,7 +501,10 @@ namespace Albany {
   template<typename EvalT, typename Traits, typename ScalarType>
   class EvaluatorUtilsImpl : public EvaluatorUtilsBase<Traits> {
 
-   public:
+  public:
+
+    using IntrepidBasis    = typename EvaluatorUtilsBase<Traits>::IntrepidBasis;
+    using IntrepidCubature = typename EvaluatorUtilsBase<Traits>::IntrepidCubature;
 
     typedef typename EvalT::ScalarT       ScalarT;
     typedef typename EvalT::MeshScalarT   MeshScalarT;
@@ -462,6 +576,40 @@ namespace Albany {
        Teuchos::ArrayRCP<std::string> dof_names_dot,
        int offsetToFirstDOF=0) const;
 
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       bool is_dof_vec = false) const;
+
+    // At least one between dof_names and dof_names_dot must be non-null
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0,
+       bool is_dof_vec = false,
+       bool is_dof_dot_vec = false) const;
+
+    // At least one between dof_names, dof_names_dot, and dof_names_dotdot must be non-null
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       Teuchos::ArrayRCP<std::string> dof_names_dotdot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF=0,
+       int offsetToFirstDOFDot=0,
+       int offsetToFirstDOFDotDot=0,
+       bool is_dof_vec = false,
+       bool is_dof_dot_vec = false,
+       bool is_dof_dotdot_vec = false) const;
 
     //! Function to create parameter list for construction of GatherSolution
     //! evaluator with acceleration terms
@@ -640,15 +788,15 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructMapToPhysicalFrameEvaluator(
         const Teuchos::RCP<shards::CellTopology>& cellType,
-        const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
-        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis = Teuchos::null) const;
+        const Teuchos::RCP<IntrepidCubature> cubature,
+        const Teuchos::RCP<IntrepidBasis> intrepidBasis = Teuchos::null) const;
 
     //! Function to create parameter list for construction of MapToPhysicalFrameSide
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructMapToPhysicalFrameSideEvaluator(
       const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
+      const Teuchos::RCP<IntrepidCubature> cubature,
       const std::string& sideSetName) const;
 
     //! Function to create evaluator for restriction to side set
@@ -669,52 +817,39 @@ namespace Albany {
        const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
        const std::string& side_dof_name = "") const;
 
-    //! Function to create evaluator for prolongation to cell
+    //! Function to create P0 interpolation evaluator
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructDOFSideToCellEvaluator(
-       const std::string& side_dof_name,
-       const std::string& sideSetName,
-       const std::string& layout,
-       const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
-       const std::string& cell_dof_name = "") const;
-
-    //! Function to create evaluator NodesToCellInterpolation (=DOFInterpolation+QuadPointsToCellInterpolation)
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructNodesToCellInterpolationEvaluator(
+    constructP0InterpolationEvaluator(
         const std::string& dof_name,
-        const std::string& interpolationType,
-        bool isVectorField = false,
-        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis = Teuchos::null) const;
+        const std::string& interpolationType = "Cell Average",
+        const FieldLocation loc = FieldLocation::Node,
+        const FieldRankType rank = FieldRankType::Scalar,
+        const Teuchos::RCP<IntrepidBasis>& basis = Teuchos::null) const;
 
-    //! Function to create evaluator QuadPointsToCellInterpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructQuadPointsToCellInterpolationEvaluator(
+    constructP0InterpolationSideEvaluator(
+        const std::string& sideSetName,
         const std::string& dof_name,
-        const Teuchos::RCP<PHX::DataLayout> qp_layout = Teuchos::null,
-        const Teuchos::RCP<PHX::DataLayout> cell_layout = Teuchos::null) const;
-
-    //! Function to create evaluator QuadPointsToCellInterpolation
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructSideQuadPointsToSideInterpolationEvaluator(
-      const std::string& dof_name,
-      const std::string& sideSetName,
-      const int fieldDim = 0) const;
+        const std::string& interpolationType = "Cell Average",
+        const FieldLocation loc = FieldLocation::Node,
+        const FieldRankType rank = FieldRankType::Scalar,
+        const Teuchos::RCP<IntrepidBasis>& basis = Teuchos::null) const;
 
     //! Function to create parameter list for construction of ComputeBasisFunctions
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructComputeBasisFunctionsEvaluator(
         const Teuchos::RCP<shards::CellTopology>& cellType,
-        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis,
-        const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature) const;
+        const Teuchos::RCP<IntrepidBasis> intrepidBasis,
+        const Teuchos::RCP<IntrepidCubature> cubature) const;
 
     //! Function to create parameter list for construction of ComputeBasisFunctionsSide
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructComputeBasisFunctionsSideEvaluator(
         const Teuchos::RCP<shards::CellTopology>& cellType,
-        const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
-        const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
+        const Teuchos::RCP<IntrepidBasis> intrepidBasisSide,
+        const Teuchos::RCP<IntrepidCubature> cubatureSide,
         const std::string& sideSetName,
         const bool buildNormals = false,
         const bool planar = false) const;

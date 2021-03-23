@@ -4,14 +4,19 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Phalanx_MDField.hpp>
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "PHAL_Utilities.hpp"
 
-template<typename EvalT, typename Traits>
-LandIce::ResponseGLFlux<EvalT, Traits>::
+#include "LandIce_ResponseGLFlux.hpp"
+
+namespace LandIce {
+
+template<typename EvalT, typename Traits, typename ThicknessST>
+ResponseGLFlux<EvalT, Traits, ThicknessST>::
 ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
   // get and validate Response parameter list
@@ -76,22 +81,29 @@ ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::ResponseGLFlux<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+template<typename EvalT, typename Traits, typename ThicknessST>
+void ResponseGLFlux<EvalT, Traits,ThicknessST>::
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
   gl_func = Kokkos::createDynRankView(bed.get_view(), "gl_func", numSideNodes);
   H = Kokkos::createDynRankView(bed.get_view(), "H", 2);
-  x = Kokkos::createDynRankView(bed.get_view(), "x", 2);
-  y = Kokkos::createDynRankView(bed.get_view(), "y", 2);
+
+  // This is just used to fwd the needed template args to createDynRankView,
+  // so don't be puzzled by the fact that is missing all the data.
+  PHX::MDField<xyST> tmp("",Teuchos::null);
+  x = Kokkos::createDynRankView(tmp.get_view(), "x", 2);
+  y = Kokkos::createDynRankView(tmp.get_view(), "y", 2);
+
   velx = Kokkos::createDynRankView(avg_vel.get_view(), "velx", 2);
   vely = Kokkos::createDynRankView(avg_vel.get_view(), "vely", 2);
+
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::ResponseGLFlux<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset) {
+template<typename EvalT, typename Traits, typename ThicknessST>
+void ResponseGLFlux<EvalT, Traits, ThicknessST>::preEvaluate(typename Traits::PreEvalData workset) {
   PHAL::set(this->global_response_eval, 0.0);
 
 
@@ -100,8 +112,8 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::preEvaluate(typename Traits::PreEva
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename ThicknessST>
+void ResponseGLFlux<EvalT, Traits, ThicknessST>::evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets == Teuchos::null)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
@@ -133,12 +145,12 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
 
         int node_plus, node_minus;
         bool skip_edge = false, edge_on_GL=false;
-        MeshScalarT gl_sum=0, gl_max=0, gl_min=0;
+        ThicknessST gl_sum=0, gl_max=0, gl_min=0;
 
         int counter=0;
         for (unsigned int inode=0; (inode<numSideNodes); ++inode) {
           int inode1 = (inode+1)%numSideNodes;
-          MeshScalarT gl0 = gl_func(inode), gl1 = gl_func(inode1);
+          ThicknessST gl0 = gl_func(inode), gl1 = gl_func(inode1);
           if(gl0 >= gl_max) {
             node_plus = inode;
             gl_max = gl0;
@@ -153,7 +165,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
             //we want to avoid selecting two edges sharing the same vertex on the GL
             if(skip_edge) {skip_edge = false; continue;}
             skip_edge = (gl1 == 0);
-            MeshScalarT theta = gl0/(gl0-gl1);
+            ThicknessST theta = gl0/(gl0-gl1);
             H(counter) = thickness(sideSet_idx,inode1)*theta + thickness(sideSet_idx,inode)*(1-theta);
             x(counter) = coords(sideSet_idx,inode1,0)*theta + coords(sideSet_idx,inode,0)*(1-theta);
             y(counter) = coords(sideSet_idx,inode1,1)*theta + coords(sideSet_idx,inode,1)*(1-theta);
@@ -200,12 +212,12 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
 
         int node_plus, node_minus;
         bool skip_edge = false, edge_on_GL=false;
-        MeshScalarT gl_sum=0, gl_max=0, gl_min=0;
+        ThicknessST gl_sum=0, gl_max=0, gl_min=0;
 
         int counter=0;
         for (unsigned int inode=0; (inode<numSideNodes); ++inode) {
           int inode1 = (inode+1)%numSideNodes;
-          MeshScalarT gl0 = gl_func(inode), gl1 = gl_func(inode1);
+          ThicknessST gl0 = gl_func(inode), gl1 = gl_func(inode1);
           if(gl0 >= gl_max) {
             node_plus = inode;
             gl_max = gl0;
@@ -220,7 +232,7 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
             //we want to avoid selecting two edges sharing the same vertex on the GL
             if(skip_edge) {skip_edge = false; continue;}
             skip_edge = (gl1 == 0);
-            MeshScalarT theta = gl0/(gl0-gl1);
+            ThicknessST theta = gl0/(gl0-gl1);
             H(counter) = thickness(cell,side,inode1)*theta + thickness(cell,side,inode)*(1-theta);
             x(counter) = coords(cell,side,inode1,0)*theta + coords(cell,side,inode,0)*(1-theta);
             y(counter) = coords(cell,side,inode1,1)*theta + coords(cell,side,inode,1)*(1-theta);
@@ -253,8 +265,8 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::evaluateFields(typename Traits::Eva
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void LandIce::ResponseGLFlux<EvalT, Traits>::postEvaluate(typename Traits::PostEvalData workset) {
+template<typename EvalT, typename Traits, typename ThicknessST>
+void ResponseGLFlux<EvalT, Traits, ThicknessST>::postEvaluate(typename Traits::PostEvalData workset) {
   //amb Deal with op[], pointers, and reduceAll.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
                            this->global_response_eval);
@@ -264,8 +276,9 @@ void LandIce::ResponseGLFlux<EvalT, Traits>::postEvaluate(typename Traits::PostE
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits>
-Teuchos::RCP<const Teuchos::ParameterList> LandIce::ResponseGLFlux<EvalT, Traits>::getValidResponseParameters() const {
+template<typename EvalT, typename Traits, typename ThicknessST>
+Teuchos::RCP<const Teuchos::ParameterList>
+ResponseGLFlux<EvalT, Traits, ThicknessST>::getValidResponseParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("Valid ResponseGLFlux Params"));
   Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
@@ -283,3 +296,4 @@ Teuchos::RCP<const Teuchos::ParameterList> LandIce::ResponseGLFlux<EvalT, Traits
 }
 // **********************************************************************
 
+} // namespace LandIce

@@ -49,7 +49,7 @@ private:
 
   PHX::MDField<const ScalarT,Cell,Node>   dH;
   PHX::MDField<const RealType,Cell,Node>  H0;
-  PHX::MDField<const ScalarT,Side,Cell,Node,Dim> V;
+  PHX::MDField<const ScalarT> V;
   PHX::MDField<const ParamScalarT,Cell,Node> SMB;
   PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
   
@@ -63,6 +63,8 @@ private:
   std::string sideSetName;
 
   std::size_t numVecFODims;
+
+  bool useCollapsedSidesets;
 
 
   Teuchos::RCP<shards::CellTopology> cellType;

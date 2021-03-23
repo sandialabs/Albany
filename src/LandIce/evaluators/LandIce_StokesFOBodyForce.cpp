@@ -9,5 +9,4 @@
 #include "LandIce_StokesFOBodyForce.hpp"
 #include "LandIce_StokesFOBodyForce_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::StokesFOBodyForce)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(LandIce::StokesFOBodyForce)

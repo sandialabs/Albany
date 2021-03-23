@@ -667,7 +667,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       }
     }
   }
-  auto lateralNodesSelector = stk::mesh::Selector(*singlePartVecLateral[0]);
+
   auto nodepartvec = metaData2D.get_mesh_parts();
   std::vector<stk::mesh::Entity> boundaryNodes2D;
   std::vector<stk::mesh::Entity> nodes;

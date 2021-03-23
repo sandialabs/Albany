@@ -7,8 +7,12 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 
+#include "PHAL_FieldFrobeniusNorm.hpp"
+#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_SacadoTypes.hpp"
+
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
 
 namespace PHAL {
 

@@ -15,7 +15,6 @@
 #include "PHAL_DOFGradInterpolationSide.hpp"
 #include "PHAL_DOFInterpolation.hpp"
 #include "PHAL_DOFInterpolationSide.hpp"
-#include "PHAL_DOFSideToCell.hpp"
 #include "PHAL_DOFTensorGradInterpolation.hpp"
 #include "PHAL_DOFTensorInterpolation.hpp"
 #include "PHAL_DOFVecGradInterpolation.hpp"
@@ -23,16 +22,15 @@
 #include "PHAL_DOFVecInterpolation.hpp"
 #include "PHAL_DOFVecInterpolationSide.hpp"
 #include "PHAL_GatherSolution.hpp"
+#include "PHAL_GatherSolutionSide.hpp"
 #include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_MapToPhysicalFrame.hpp"
 #include "PHAL_MapToPhysicalFrameSide.hpp"
-#include "PHAL_NodesToCellInterpolation.hpp"
-#include "PHAL_QuadPointsToCellInterpolation.hpp"
+#include "PHAL_P0Interpolation.hpp"
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_ScatterSideEqnResidual.hpp"
 #include "PHAL_ScatterScalarNodalParameter.hpp"
-#include "PHAL_SideQuadPointsToSideInterpolation.hpp"
 
 namespace Albany {
 
@@ -242,6 +240,85 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherScalarNodalParameter
 
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
+EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF,
+       bool is_dof_vec) const
+{
+  Teuchos::RCP<Teuchos::ParameterList> p( new Teuchos::ParameterList("Gather Solution Side") );
+
+  p->set("Solution Names",dof_names);
+  p->set("Side Set Name",sideSetName);
+  p->set("Cell Type", cellType);
+  p->set("Offset of First DOF",offsetToFirstDOF);
+  p->set("Is Dof Vector",is_dof_vec);
+
+  return Teuchos::rcp(new PHAL::GatherSolutionSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
+}
+
+template<typename EvalT, typename Traits, typename ScalarType>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF,
+       int offsetToFirstDOFDot,
+       bool is_dof_vec,
+       bool is_dof_dot_vec) const
+{
+  Teuchos::RCP<Teuchos::ParameterList> p( new Teuchos::ParameterList("Gather Solution Side") );
+
+  p->set("Solution Names",dof_names);
+  p->set("Solution Names Dot",dof_names_dot);
+  p->set("Side Set Name",sideSetName);
+  p->set("Cell Type", cellType);
+  p->set("Offset of First DOF",offsetToFirstDOF);
+  p->set("Offset of First DOF Dot",offsetToFirstDOFDot);
+  p->set("Is Dof Vector",is_dof_vec);
+  p->set("Is Dof Dot Vector ",is_dof_dot_vec);
+
+  return Teuchos::rcp(new PHAL::GatherSolutionSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
+}
+
+template<typename EvalT, typename Traits, typename ScalarType>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherSolutionSideEvaluator(
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       Teuchos::ArrayRCP<std::string> dof_names_dotdot,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       int offsetToFirstDOF,
+       int offsetToFirstDOFDot,
+       int offsetToFirstDOFDotDot,
+       bool is_dof_vec,
+       bool is_dof_dot_vec,
+       bool is_dof_dot_dot_vec) const
+{
+  Teuchos::RCP<Teuchos::ParameterList> p( new Teuchos::ParameterList("Gather Solution Side") );
+
+  p->set("Solution Names",dof_names);
+  p->set("Solution Names Dot",dof_names_dot);
+  p->set("Solution Names Dot Dot",dof_names_dotdot);
+  p->set("Side Set Name",sideSetName);
+  p->set("Cell Type", cellType);
+  p->set("Offset of First DOF",offsetToFirstDOF);
+  p->set("Offset of First DOF Dot",offsetToFirstDOFDot);
+  p->set("Offset of First DOF Dot Dot",offsetToFirstDOFDotDot);
+  p->set("Is Dof Vector",is_dof_vec);
+  p->set("Is Dof Dot Vector ",is_dof_dot_vec);
+  p->set("Is Dof DotDot Vector",is_dof_dot_dot_vec);
+
+  return Teuchos::rcp(new PHAL::GatherSolutionSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
+}
+
+
+template<typename EvalT, typename Traits, typename ScalarType>
+Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterScalarNodalParameter(
        const std::string& param_name,
        const std::string& field_name) const
@@ -280,7 +357,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherScalarExtruded2DNoda
     else
       p->set<std::string>("Field Name", param_name);
 
-      p->set<int>("Field Level", 0);
+    p->set<int>("Field Level", 0);
     return rcp(new PHAL::GatherScalarExtruded2DNodalParameter<EvalT,Traits>(*p,dl));
 }
 
@@ -473,8 +550,8 @@ template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructMapToPhysicalFrameEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
-    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis) const
+    const Teuchos::RCP<IntrepidCubature> cubature,
+    const Teuchos::RCP<IntrepidBasis> intrepidBasis) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -485,9 +562,9 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructMapToPhysicalFrameEvaluato
 
     // Input: X, Y at vertices
     p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set<RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
+    p->set<RCP <IntrepidCubature> >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
+    p->set< RCP<IntrepidBasis> >
         ("Intrepid2 Basis", intrepidBasis);
 
     // Output: X, Y at Quad Points (same name as input)
@@ -499,7 +576,7 @@ template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructMapToPhysicalFrameSideEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
+    const Teuchos::RCP<IntrepidCubature> cubature,
     const std::string& sideSetName) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
@@ -514,7 +591,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructMapToPhysicalFrameSideEval
     // Input: X, Y at vertices
     p->set<std::string>("Coordinate Vector Vertex Name", "Coord Vec " + sideSetName);
     p->set<std::string>("Coordinate Vector QP Name", "Coord Vec " + sideSetName);
-    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
+    p->set< RCP<IntrepidCubature> >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name", sideSetName);
 
@@ -526,8 +603,8 @@ template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis,
-    const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature) const
+    const Teuchos::RCP<IntrepidBasis> intrepidBasis,
+    const Teuchos::RCP<IntrepidCubature> cubature) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -538,9 +615,9 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsEvalu
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name",coord_vec_name);
-    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
+    p->set< RCP<IntrepidCubature> >("Cubature", cubature);
 
-    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
+    p->set< RCP<IntrepidBasis> >
         ("Intrepid2 Basis", intrepidBasis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
@@ -561,8 +638,8 @@ template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsSideEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
-    const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
+    const Teuchos::RCP<IntrepidBasis> intrepidBasisSide,
+    const Teuchos::RCP<IntrepidCubature> cubatureSide,
     const std::string& sideSetName,
     const bool buildNormals,
     const bool planar) const
@@ -584,8 +661,8 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsSideE
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<std::string>("Side Coordinate Vector Name",coord_vec_name + " " + sideSetName);
-    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature Side", cubatureSide);
-    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >("Intrepid Basis Side", intrepidBasisSide);
+    p->set< RCP<IntrepidCubature> >("Cubature Side", cubatureSide);
+    p->set< RCP<IntrepidBasis> >("Intrepid Basis Side", intrepidBasisSide);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name",sideSetName);
 
@@ -666,36 +743,6 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFCellToSideQPEvaluator(
       p->set<std::string>("Side Variable Name", cell_dof_name);
 
     return rcp(new PHAL::DOFCellToSideQPBase<EvalT,Traits,ScalarType>(*p,dl));
-}
-
-template<typename EvalT, typename Traits, typename ScalarType>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFSideToCellEvaluator(
-       const std::string& side_dof_name,
-       const std::string& sideSetName,
-       const std::string& layout,
-       const Teuchos::RCP<shards::CellTopology>& cellType,
-       const std::string& cell_dof_name) const
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Side To Cell"));
-
-    // Input
-    p->set<std::string>("Side Variable Name", side_dof_name);
-    p->set<std::string>("Data Layout", layout);
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set<std::string>("Side Set Name", sideSetName);
-
-    // Output
-    if (cell_dof_name!="")
-      p->set<std::string>("Cell Variable Name", cell_dof_name);
-    else
-      p->set<std::string>("Cell Variable Name", side_dof_name);
-
-    return rcp(new PHAL::DOFSideToCellBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarType>
@@ -949,75 +996,61 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecInterpolationSideEva
 
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructNodesToCellInterpolationEvaluator(
+EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructP0InterpolationEvaluator(
     const std::string& dof_name,
     const std::string& interpolationType,
-    bool isVectorField,
-    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis
-    ) const
+    const FieldLocation loc,
+    const FieldRankType rank,
+    const Teuchos::RCP<IntrepidBasis>& basis) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p;
   p = Teuchos::rcp(new Teuchos::ParameterList("DOF Nodes to Cell Interpolation "+dof_name));
 
   // Input
+  p->set<std::string>("BF Name", "BF");
+  p->set<std::string>("Field Name", dof_name);
+  p->set<std::string>("Weighted Measure Name", "Weights");
+  p->set<FieldLocation>("Field Location", loc);
+  p->set<FieldRankType>("Field Rank Type", rank);
   p->set<std::string>("Interpolation Type", interpolationType);
-  p->set<std::string>("BF Variable Name", "BF");
-  p->set<std::string>("Field Node Name", dof_name);
-  p->set<std::string>("Weighted Measure Name", "Weights");
-  p->set<bool>("Is Vector Field", isVectorField);
-  p->set<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >("Intrepid2 Basis", intrepidBasis);
+  p->set<Teuchos::RCP<IntrepidBasis>>("Intrepid2 Basis", basis);
 
   // Output
-  p->set<std::string>("Field Cell Name", dof_name);
+  p->set<std::string>("Field P0 Name", dof_name);
 
-  return Teuchos::rcp(new PHAL::NodesToCellInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
+  return Teuchos::rcp(new PHAL::P0InterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructQuadPointsToCellInterpolationEvaluator(
-    const std::string& dof_name, const Teuchos::RCP<PHX::DataLayout> qp_layout,
-    const Teuchos::RCP<PHX::DataLayout> cell_layout) const
-{
-  Teuchos::RCP<Teuchos::ParameterList> p;
-  p = Teuchos::rcp(new Teuchos::ParameterList("DOF QuadPoint to Cell Interpolation "+dof_name));
-
-  // Input
-  p->set<std::string>("Field QP Name", dof_name);
-  p->set<std::string>("Weighted Measure Name", "Weights");
-
-  // Output
-  p->set<std::string>("Field Cell Name", dof_name);
-
-  if((qp_layout == Teuchos::null)&&(cell_layout == Teuchos::null))
-    return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarType>(*p,dl, dl->qp_scalar, dl->cell_scalar2));
-  else
-    return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarType>(*p,dl, qp_layout, cell_layout));
-}
-
-template<typename EvalT, typename Traits, typename ScalarType>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructSideQuadPointsToSideInterpolationEvaluator(
-  const std::string& dof_name,
-  const std::string& sideSetName,
-  const int fieldDim) const
+EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructP0InterpolationSideEvaluator(
+    const std::string& sideSetName,
+    const std::string& dof_name,
+    const std::string& interpolationType,
+    const FieldLocation loc,
+    const FieldRankType rank,
+    const Teuchos::RCP<IntrepidBasis>& basis) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                               "Error! The layout structure for side set " << sideSetName << " was not found.\n");
 
   Teuchos::RCP<Teuchos::ParameterList> p;
-  p = Teuchos::rcp(new Teuchos::ParameterList("DOF Side QuadPoint to Side Interpolation "+dof_name));
+  p = Teuchos::rcp(new Teuchos::ParameterList("DOF Side Nodes to Side Interpolation "+dof_name));
 
   // Input
-  p->set<std::string>("Field QP Name", dof_name);
+  p->set<std::string>("BF Name", "BF "+sideSetName);
+  p->set<std::string>("Field Name", dof_name);
   p->set<std::string>("Weighted Measure Name", "Weighted Measure "+sideSetName);
+  p->set<FieldLocation>("Field Location", loc);
+  p->set<FieldRankType>("Field Rank Type", rank);
   p->set<std::string>("Side Set Name", sideSetName);
-  p->set<int>("Field Dimension", fieldDim);
+  p->set<std::string>("Interpolation Type", interpolationType);
+  p->set<Teuchos::RCP<IntrepidBasis>>("Intrepid2 Basis", basis);
 
   // Output
-  p->set<std::string>("Field Side Name", dof_name);
+  p->set<std::string>("Field P0 Name", dof_name);
 
-  return Teuchos::rcp(new PHAL::SideQuadPointsToSideInterpolationBase<EvalT,Traits,ScalarType>(*p,dl->side_layouts.at(sideSetName)));
+  return Teuchos::rcp(new PHAL::P0InterpolationBase<EvalT,Traits,ScalarType>(*p,dl->side_layouts.at(sideSetName)));
 }
 
 } // namespace Albany

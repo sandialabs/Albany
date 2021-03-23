@@ -4,226 +4,141 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <string>
-
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
 #include "Teuchos_FancyOStream.hpp"
 
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
-#include "Albany_ProblemUtils.hpp"
 #include "LandIce_StokesFOHydrology.hpp"
 
-LandIce::StokesFOHydrology::
+namespace LandIce {
+
+StokesFOHydrology::
 StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                    const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                    const Teuchos::RCP<ParamLib>& paramLib_,
                    const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_),
-  params(params_), 
-  numDim(numDim_),
-  discParams(discParams_),
-  use_sdbcs_(false)
+  StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
-  basalSideName   = params->get<std::string>("Basal Side Name");
-  surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "INVALID";
-  basalEBName = "INVALID";
-  surfaceEBName = "INVALID";
+  // Figure out what kind of hydro problem we solve
+  eliminate_h = params->sublist("LandIce Hydrology").get<bool>("Eliminate Water Thickness", false);
+  has_h_till  = params->sublist("LandIce Hydrology").get<double>("Maximum Till Water Storage",0.0) > 0.0;
+  has_p_dot   = params->sublist("LandIce Hydrology").get<double>("Englacial Porosity",0.0) > 0.0;
 
-  // Need to allocate fields in mesh database
-  Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-  for (unsigned int i(0); i<req.size(); ++i)
-    this->requirements.push_back(req[i]);
-
-  // Need to allocate a fields in basal mesh database
-  Teuchos::Array<std::string> breq = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
-  this->ss_requirements[basalSideName].reserve(breq.size()); // Note: this is not for performance, but to guarantee
-  for (unsigned int i(0); i<breq.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
-    this->ss_requirements[basalSideName].push_back(breq[i]); //       throw, even if it's empty...
-
-  if (params->isParameter("Required Surface Fields"))
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (surfaceSideName=="INVALID", std::logic_error, "Error! In order to specify surface requirements, you must also specify a valid 'Surface Side Name'.\n");
-
-    Teuchos::Array<std::string> sreq = params->get<Teuchos::Array<std::string> > ("Required Surface Fields");
-    this->ss_requirements[surfaceSideName].reserve(sreq.size()); // Note: same motivation as for the basal side
-    for (unsigned int i(0); i<sreq.size(); ++i)
-      this->ss_requirements[surfaceSideName].push_back(sreq[i]);
-  }
-
-  stokes_dof_names.resize(1);
-  stokes_resid_names.resize(1);
-  stokes_dof_names[0] = ice_velocity_name;
-  stokes_resid_names[0] = "Residual Stokes";
-  stokes_neq = 2;
-
-  has_h_equation = params->sublist("LandIce Hydrology").get<bool>("Use Water Thickness Equation",false);
   std::string sol_method = params->get<std::string>("Solution Method");
-  if (sol_method=="Unsteady")
+  if (sol_method=="Transient") {
     unsteady = true;
-  else
+  } else {
     unsteady = false;
-
-  TEUCHOS_TEST_FOR_EXCEPTION (unsteady && !has_h_equation, std::logic_error,
-                              "Error! Unsteady case require to use the water thickness equation.\n");
-
-  if (has_h_equation)
-  {
-    hydro_neq = 2;
-
-    hydro_dof_names.resize(hydro_neq);
-    hydro_dof_names[0] = hydraulic_potential_name;
-    hydro_dof_names[1] = water_thickness_name;
-
-    if (unsteady)
-    {
-      hydro_dof_names_dot.resize(1);
-      hydro_dof_names_dot[0] = water_thickness_dot_name;
-    }
-
-    hydro_resid_names.resize(hydro_neq);
-    hydro_resid_names[0] = "Residual Hydrology Potential Eqn";
-    hydro_resid_names[1] = "Residual Hydrology Thickness Eqp";
+    hydro_ndofs_dot = 0;
   }
-  else
-  {
+
+  TEUCHOS_TEST_FOR_EXCEPTION (eliminate_h && unsteady, std::logic_error,
+                              "Error! Water Thickness can be eliminated only in the steady case.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (has_h_till && !unsteady, std::logic_error,
+                              "Error! Till Water Storage equation only makes sense in the unsteady case.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (has_p_dot && !unsteady, std::logic_error,
+                              "Error! Englacial porosity model only makes sense in the unsteady case.\n");
+
+  // Fill the variables names
+  auto& vnames = params->sublist("Variables Names");
+
+  water_pressure_name         = vnames.get<std::string>("Water Pressure Name", "water_pressure");
+  water_thickness_name        = vnames.get<std::string>("Water Thickness Name", "water_thickness");
+  till_water_storage_name     = vnames.get<std::string>("Till Water Storage Name", "till_water_storage");
+  water_pressure_dot_name     = vnames.get<std::string>("Water Pressure Dot Name", "water_pressure_dot");
+  water_thickness_dot_name    = vnames.get<std::string>("Water Thickness Dot Name", "water_thickness_dot");
+  till_water_storage_dot_name = vnames.get<std::string>("Till Water Storage Dot Name", "till_water_storage_dot");
+
+  hydropotential_name       = vnames.get<std::string>("Hydraulic Potential Name", "hydropotential");
+  ice_overburden_name       = vnames.get<std::string>("Ice Overburden Name", "ice_overburden");
+  beta_name                 = vnames.get<std::string>("Beta Name", "beta");
+  melting_rate_name         = vnames.get<std::string>("Melting Rate Name", "melting_rate");
+  surface_water_input_name  = vnames.get<std::string>("Surface Water Input Name", "surface_water_input");
+  surface_mass_balance_name = vnames.get<std::string>("Surface Mass Balance Name", "surface_mass_balance");
+  geothermal_flux_name      = vnames.get<std::string>("Geothermal Flux Name", "geothermal_flux");
+  water_discharge_name      = vnames.get<std::string>("Water Discharge Name", "water_discharge");
+  sliding_velocity_name     = vnames.get<std::string>("Sliding Velocity Name", "sliding_velocity");
+  grav_hydropotential_name  = vnames.get<std::string>("Basal Gravitational Water Potential Name", "basal_gravitational_water_potential");
+
+  // Set the num PDEs depending on the problem specs
+  if (eliminate_h) {
     hydro_neq = 1;
+  } else if (has_h_till) {
+    hydro_neq = 3;
+  } else {
+    hydro_neq = 2;
+  }
+  stokes_neq = vecDimFO;
+  stokes_ndofs = 1;
+  hydro_ndofs = hydro_neq;
+  stokes_dof_offset = 0;
+  hydro_dof_offset = stokes_neq;
 
-    hydro_dof_names.resize(hydro_neq);
-    hydro_dof_names[0] = hydraulic_potential_name;
+  this->setNumEquations(hydro_neq + stokes_neq);
+  rigidBodyModes->setParameters(neq, computeConstantModes, vecDimFO, computeRotationModes);
 
-    hydro_resid_names.resize(hydro_neq);
-    hydro_resid_names[0] = "Residual Hydrology Potential Eqn";
+  // Copy all dof_blah arrays into stokes_blah ones.
+  // (so far, dof_blah contains only data relative to stokes)
+  stokes_dofs_names.resize(stokes_ndofs);
+  stokes_resids_names.resize(stokes_neq);
+  stokes_dofs_names.deepCopy(dof_names());
+  stokes_resids_names.deepCopy(resid_names());
+
+  // Now resize global dof/resid/scatter/offsets arrays
+  dof_names.resize(stokes_ndofs+hydro_ndofs);
+  resid_names.resize(stokes_neq+hydro_neq);
+  dof_offsets.resize(stokes_ndofs+hydro_ndofs);
+
+  // Hydro-specific arrays
+  hydro_dofs_names.resize(hydro_ndofs);
+  hydro_resids_names.resize(hydro_neq);
+
+  // We always solve for the water pressure
+  hydro_dofs_names[0]   = dof_names[stokes_ndofs] = bname(water_pressure_name);
+  hydro_resids_names[0] = resid_names[stokes_ndofs] = "Residual Mass Eqn";
+
+  if (!eliminate_h) {
+    hydro_dofs_names[1]   = dof_names[stokes_ndofs+1] = bname(water_thickness_name);
+    hydro_resids_names[1] = resid_names[stokes_ndofs+1] = "Residual Cavities Eqn";
   }
 
- // Set the number of eq of the problem
-  this->neq = stokes_neq + hydro_neq;
-  this->setNumEquations(neq);
-  this->rigidBodyModes->setNumPDEs(neq);
+  if (has_h_till) {
+    hydro_dofs_names[2]   = dof_names[stokes_ndofs+2] = bname(till_water_storage_name);
+    hydro_resids_names[2] = resid_names[stokes_ndofs+2] = "Residual Till Storage Eqn";
+  }
+
+  // A single scatter op for hydrology (may have multiple resid fields though).
+  scatter_names.resize(2);
+  scatter_names[1] = "Scatter Hydrology";
+
+  // Figure out which dofs appear under time derivative
+  if (unsteady) {
+    auto& hy = params->sublist("LandIce Hydrology");
+    auto& cav = hy.sublist("Cavities Equation");
+    if (cav.get<double>("Englacial Porosity")>0.0) {
+      hydro_dofs_dot_names.resize(2);
+      hydro_dofs_dot_names[0] = bname(water_pressure_name) + "_dot";
+      hydro_dofs_dot_names[1] = bname(water_thickness_name) + "_dot";
+      hydro_dof_dot_offset = hydro_dof_offset;
+      hydro_ndofs_dot = 2;
+    } else {
+      hydro_dofs_dot_names.resize(1);
+      hydro_dofs_dot_names[0] = bname(water_thickness_name) + "_dot";
+      hydro_dof_dot_offset = hydro_dof_offset + 1;
+      hydro_ndofs_dot = 1;
+    }
+    if (has_h_till) {
+      hydro_dofs_dot_names.resize(hydro_ndofs_dot+1);
+      hydro_dofs_dot_names[hydro_ndofs_dot] = bname(till_water_storage_name) + "_dot";
+      ++hydro_ndofs_dot;
+    }
+  }
 
   // Set the hydrology equations as side set equations on the basal side
-  for (unsigned int eq=stokes_neq; eq<hydro_neq; ++eq)
+  for (unsigned int eq=stokes_neq; eq<neq; ++eq) {
     this->sideSetEquations[eq].push_back(basalSideName);
-}
-
-LandIce::StokesFOHydrology::
-~StokesFOHydrology()
-{
-  // Nothing to be done here
-}
-
-void LandIce::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-                                             Albany::StateManager& stateMgr)
-{
-  using Teuchos::rcp;
-
-  // Building cell basis and cubature
-  const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
-  cellBasis = Albany::getIntrepid2Basis(*cell_top);
-  cellType = rcp(new shards::CellTopology (cell_top));
-
-  Intrepid2::DefaultCubatureFactory   cubFactory;
-  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
-
-  elementBlockName = meshSpecs[0]->ebName;
-
-  TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                              "Error! Either 'Basal Side Name' (" << basalSideName << ") is wrong or something went wrong while building the side mesh specs.\n");
-  const Albany::MeshSpecsStruct& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
-
-  const int worksetSize     = meshSpecs[0]->worksetSize;
-  const int numCellSides    = cellType->getFaceCount();
-  const int numCellVertices = cellType->getNodeCount();
-  const int numCellNodes    = cellBasis->getCardinality();
-  const int numCellQPs      = cellCubature->getNumPoints();
-
-  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,stokes_neq));
-
-  // Building also basal side structures
-  const CellTopologyData * const basal_side_top = &basalMeshSpecs.ctd;
-  basalSideBasis = Albany::getIntrepid2Basis(*basal_side_top);
-  basalSideType = rcp(new shards::CellTopology (basal_side_top));
-
-  basalEBName   = basalMeshSpecs.ebName;
-  basalCubature = cubFactory.create<PHX::Device, RealType, RealType>(*basalSideType, basalMeshSpecs.cubatureDegree);
-
-  int numBasalSideVertices = basalSideType->getNodeCount();
-  int numBasalSideNodes    = basalSideBasis->getCardinality();
-  int numBasalSideQPs      = basalCubature->getNumPoints();
-
-  dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
-                                     numBasalSideQPs,numDim-1,numDim,numCellSides,stokes_neq));
-  dl->side_layouts[basalSideName] = dl_basal;
-
-  int numSurfaceSideVertices = -1;
-  int numSurfaceSideNodes    = -1;
-  int numSurfaceSideQPs      = -1;
-
-  if (surfaceSideName!="INVALID")
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(surfaceSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                                "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-
-    const Albany::MeshSpecsStruct& surfaceMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(surfaceSideName)[0];
-
-    // Building also surface side structures
-    const CellTopologyData * const surface_side_top = &surfaceMeshSpecs.ctd;
-    surfaceSideBasis = Albany::getIntrepid2Basis(*surface_side_top);
-    surfaceSideType = rcp(new shards::CellTopology (surface_side_top));
-
-    surfaceEBName   = surfaceMeshSpecs.ebName;
-    surfaceCubature = cubFactory.create<PHX::Device, RealType, RealType>(*surfaceSideType, surfaceMeshSpecs.cubatureDegree);
-
-    numSurfaceSideVertices = surfaceSideType->getNodeCount();
-    numSurfaceSideNodes    = surfaceSideBasis->getCardinality();
-    numSurfaceSideQPs      = surfaceCubature->getNumPoints();
-
-    dl_surface = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
-                                         numSurfaceSideQPs,numDim-1,numDim,numCellSides,stokes_neq));
-    dl->side_layouts[surfaceSideName] = dl_surface;
   }
-
-#ifdef OUTPUT_TO_SCREEN
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-  int commRank = Teuchos::GlobalMPISession::getRank();
-  int commSize = Teuchos::GlobalMPISession::getNProc();
-  out->setProcRankAndSize(commRank, commSize);
-  out->setOutputToRootOnly(0);
-
-  *out << "Field Dimensions: \n"
-       << "  Workset             = " << worksetSize << "\n"
-       << "  Vertices            = " << numCellVertices << "\n"
-       << "  CellNodes           = " << numCellNodes << "\n"
-       << "  CellQuadPts         = " << numCellQPs << "\n"
-       << "  Dim                 = " << numDim << "\n"
-       << "  BasalSideVertices   = " << numBasalSideVertices << "\n"
-       << "  BasalSideNodes      = " << numBasalSideNodes << "\n"
-       << "  BasalSideQuadPts    = " << numBasalQPs << "\n"
-       << "  SurfaceSideVertices = " << numSurfaceSideVertices << "\n"
-       << "  SurfaceSideNodes    = " << numSurfaceSideNodes << "\n"
-       << "  SurfaceSideQuadPts  = " << numSurfaceQPs << std::endl;
-#endif
-
-  /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1);
-  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
-
-  if(meshSpecs[0]->nsNames.size() > 0) // Build a dirichlet field manager if nodesets are present
-    constructDirichletEvaluators(*meshSpecs[0]);
-
-  // Check if have Neumann sublist; throw error if attempting to specify
-  // Neumann BCs, but there are no sidesets in the input mesh 
-  bool isNeumannPL = params->isSublist("Neumann BCs");
-  if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
-    ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
-  }
-
-  if(meshSpecs[0]->ssNames.size() > 0) // Build a neumann field manager if sidesets are present
-     constructNeumannEvaluators(meshSpecs[0]);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -243,45 +158,36 @@ buildEvaluators(
   return *op.tags;
 }
 
-void
-LandIce::StokesFOHydrology::constructDirichletEvaluators(
-        const Albany::MeshSpecsStruct& meshSpecs)
+void StokesFOHydrology::
+constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<std::string> dir_names(neq);
-  for (unsigned int i=0; i<stokes_neq; i++) {
+  std::vector<std::string> dir_names(stokes_neq+hydro_neq);
+  for (int i=0; i<stokes_neq; i++) {
     std::stringstream s; s << "U" << i;
     dir_names[i] = s.str();
   }
-  for (unsigned int i=0; i<hydro_neq; ++i)
-    dir_names[stokes_neq+i] = hydro_dof_names[i];
-/*
-  std::map<std::string,std::vector<std::string>> hydro_dir_names;
-  hydro_dir_names[basalSideName].push_back("Hydrostatic Potential");
-  if (hydro_neq>1)
-    hydro_dir_names[basalSideName].push_back("Water Thickness");
+  for (int i=0; i<hydro_neq; ++i) {
+    dir_names[stokes_neq+i] = hydro_dofs_names[i];
+  }
 
-  std::map<std::string,std::vector<std::string>> ss_nsNames;
-  ss_nsNames[basalSideName] = meshSpecs.sideSetMeshSpecs.at(basalSideName)[0]->nsNames;
-
-  std::map<std::string,std::vector<int>> ss_bcOffsets;
-  ss_bcOffsets[basalSideName].push_back(stokes_neq);
-  if (hydro_neq>1)
-    ss_bcOffsets[basalSideName].push_back(stokes_neq+1);
-*/
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dir_names, this->params, this->paramLib, neq);
   use_sdbcs_ = dirUtils.useSDBCs(); 
+  offsets_ = dirUtils.getOffsets();
+  nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
 // Neumann BCs
-void LandIce::StokesFOHydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+void StokesFOHydrology::
+constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
   Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
 
   // Check to make sure that Neumann BCs are given in the input file
-  if(!nbcUtils.haveBCSpecified(this->params))
+  if(!nbcUtils.haveBCSpecified(this->params)) {
      return;
+  }
 
   // Construct BC evaluators for all side sets and names
   // Note that the string index sets up the equation offset, so ordering is important
@@ -314,37 +220,62 @@ void LandIce::StokesFOHydrology::constructNeumannEvaluators (const Teuchos::RCP<
 
   nfm.resize(1); // LandIce problem only has one element block
 
-  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, stokes_neumann_names, stokes_dof_names, true, 0,
+  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, stokes_neumann_names, stokes_dofs_names, true, 0,
                                           stokes_cond_names, stokes_offsets, dl,
                                           this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-LandIce::StokesFOHydrology::getValidProblemParameters () const
+StokesFOHydrology::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidStokesFOHydrologyProblemParams");
+  Teuchos::RCP<Teuchos::ParameterList> validPL = StokesFOBase::getStokesFOBaseProblemParameters();
 
-  validPL->set<int> ("Layered Data Length", 0, "Number of layers in input layered data files.");
-  validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
-  validPL->set<Teuchos::Array<std::string> > ("Required Basal Fields", Teuchos::Array<std::string>(), "");
-  validPL->set<Teuchos::Array<std::string> > ("Required Surface Fields", Teuchos::Array<std::string>(), "");
-  validPL->set<std::string> ("Basal Side Name", "", "Name of the basal side set");
-  validPL->set<std::string> ("Surface Side Name", "", "Name of the surface side set");
-  validPL->sublist("Stereographic Map", false, "");
   validPL->sublist("LandIce Hydrology", false, "");
-  validPL->sublist("LandIce Viscosity", false, "");
-  validPL->sublist("LandIce Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
-  validPL->sublist("LandIce Surface Gradient", false, "");
   validPL->sublist("LandIce Field Norm", false, "");
-  validPL->sublist("Body Force", false, "");
+  validPL->sublist("LandIce Viscosity", false, "");
   validPL->sublist("LandIce Physical Parameters", false, "");
-  validPL->sublist("LandIce Noise", false, "");
+  validPL->sublist("LandIce Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
 
   return validPL;
 }
 
-constexpr char LandIce::StokesFOHydrology::ice_velocity_name[]        ; //= "ice_velocity";
-constexpr char LandIce::StokesFOHydrology::hydraulic_potential_name[] ; //= "hydraulic_potential";
-constexpr char LandIce::StokesFOHydrology::water_thickness_name[]     ; //= "water_thickness";
-constexpr char LandIce::StokesFOHydrology::water_thickness_dot_name[] ; //= "water_thickness_dot";
+void StokesFOHydrology::setFieldsProperties () {
+  StokesFOBase::setFieldsProperties();
+
+  // Set scalar type of hydro dofs (and dot dofs) to ScalarT
+  for (const auto& dof : hydro_dofs_names) {
+    setSingleFieldProperties(dof, FRT::Scalar, FST::Scalar);
+  }
+  for (const auto& dof : hydro_dofs_dot_names) {
+    setSingleFieldProperties(dof, FRT::Scalar, FST::Scalar);
+  }
+
+  // Set dof's properties
+  setSingleFieldProperties(water_pressure_name,      FRT::Scalar,   FST::Scalar);
+  setSingleFieldProperties(water_thickness_name,     FRT::Scalar,   FST::Scalar);
+  setSingleFieldProperties(till_water_storage_name,  FRT::Scalar,   FST::Scalar);
+
+  setSingleFieldProperties(effective_pressure_name,  FRT::Scalar,   FST::Scalar);
+  setSingleFieldProperties(water_discharge_name,     FRT::Gradient, FST::Scalar);
+  setSingleFieldProperties(hydropotential_name,      FRT::Scalar,   FST::Scalar);
+  setSingleFieldProperties(surface_water_input_name, FRT::Scalar);
+}
+
+void StokesFOHydrology::setupEvaluatorRequests () {
+  StokesFOBase::setupEvaluatorRequests();
+
+  ss_build_interp_ev[basalSideName][water_pressure_name][IReq::QP_VAL] = true; 
+  if (!eliminate_h) {
+    // If we eliminate h, then we compute water thickness, rather than interpolate the dof
+    ss_build_interp_ev[basalSideName][water_thickness_name][IReq::QP_VAL] = true; 
+  }
+  ss_build_interp_ev[basalSideName][hydropotential_name][IReq::GRAD_QP_VAL] = true; 
+  ss_build_interp_ev[basalSideName][water_discharge_name][IReq::CELL_VAL] = true; 
+  ss_build_interp_ev[basalSideName][surface_water_input_name][IReq::QP_VAL] = true; 
+  ss_build_interp_ev[basalSideName][flow_factor_name][IReq::CELL_TO_SIDE] = true; 
+  ss_build_interp_ev[basalSideName][ice_thickness_name][IReq::QP_VAL] = true; 
+
+  ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
+}
+
+} // namespace LandIce

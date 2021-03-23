@@ -46,8 +46,6 @@ private:
 
   Albany::LocalSideSetInfo sideSet;
 
-  Teuchos::RCP<shards::CellTopology> cellType;
-
   // Input:
   //! Values at nodes
   PHX::MDField<const ScalarT> val_cell;

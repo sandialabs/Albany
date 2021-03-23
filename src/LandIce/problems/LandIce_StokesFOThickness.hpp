@@ -104,9 +104,6 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
-  // --- StokesFOBase evaluators --- //
-  constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
-
   // Gather velocity field
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names[0], dof_offsets[0]);
   fm0.template registerEvaluator<EvalT> (ev);
@@ -148,6 +145,8 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   // --- Thickness equation evaluators --- //
   constructThicknessEvaluators<EvalT> (fm0, meshSpecs, fieldManagerChoice);
 
+  // --- StokesFOBase evaluators --- //
+  constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // Finally, construct responses, and return the tags
   return constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, responseList);

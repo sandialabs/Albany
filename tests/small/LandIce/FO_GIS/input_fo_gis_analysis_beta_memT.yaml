@@ -28,7 +28,7 @@ ANONYMOUS:
         Response 0:
           Scaling Coefficient: 5.88239999999999978e-05
           Name: Boundary Squared L2 Norm
-          Field Name: L2 Projected Boundary Laplacian
+          Field Name: L2 Projected Boundary Laplacian_basalside
     Dirichlet BCs: {}
     LandIce BCs:
       Number: 2

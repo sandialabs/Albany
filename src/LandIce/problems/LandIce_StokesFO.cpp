@@ -83,7 +83,6 @@ void StokesFO::constructDirichletEvaluators(
 // Neumann BCs
 void StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
-
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0
 
@@ -176,28 +175,16 @@ void StokesFO::setFieldsProperties () {
         "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
         " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
 
-    if (adjustSurfaceHeight) {
-      is_computed_field[surface_height_name] = true;
-    } else if (adjustBedTopo) {
-      is_computed_field[surface_height_name] = true;
-      is_computed_field[bed_topography_name] = true;
-    }
-  }
-
-  // If we don't have effective pressure as input, we *may* be computing a surrogate on a side, so set the resulting scalar type
-  bool has_eff_press = is_input_field[effective_pressure_name];
-  if (!has_eff_press) {
-    for (auto it : is_ss_input_field) {
-      if (!it.second[effective_pressure_name]) {
-        setSingleFieldProperties(effective_pressure_name, 0, field_scalar_type[ice_thickness_name] | field_scalar_type[surface_height_name], FieldLocation::Node);
-        is_ss_computed_field[it.first][effective_pressure_name] = true;
-      }
-    }
+    // Udpate the scalar type of bed_topography and surface height to include MeshScalar
+    // Note: if adjustBedTopo==false, bed_topo could stay RealType, but it makes
+    //       ST deduction logic in some evaluator much harder.
+    setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::MeshScalar);
+    setSingleFieldProperties(bed_topography_name, FRT::Scalar, FST::MeshScalar);
   }
 
   // UpdateZCoordinate expects the (observed) bed topography and (observed) surface height to have scalar type MeshScalarT.
-  setSingleFieldProperties("observed_bed_topography", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
-  setSingleFieldProperties("observed_surface_height", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
+  setSingleFieldProperties("observed_bed_topography", FRT::Scalar);
+  setSingleFieldProperties("observed_surface_height", FRT::Scalar);
 }
 
 void StokesFO::setupEvaluatorRequests () {
@@ -215,8 +202,20 @@ void StokesFO::setupEvaluatorRequests () {
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;
     ss_utils_needed[ssName][UtilityRequest::NORMALS  ] = true;
   }
-  if (viscosity_use_corrected_temperature)
+  if (viscosity_use_corrected_temperature) {
     build_interp_ev[surface_height_name][InterpolationRequest::CELL_VAL] = true;
+  }
+
+  if(neq > static_cast<unsigned>(vecDimFO)) {
+
+    auto& proj_lapl_params = params->sublist("LandIce L2 Projected Boundary Laplacian");
+    auto& ssName = proj_lapl_params.get<std::string>("Side Set Name",basalSideName);
+    std::string field_name = proj_lapl_params.get<std::string>("Field Name","basal_friction");
+    auto dof_name_auxiliary = "L2 Projected Boundary Laplacian";
+
+    ss_build_interp_ev[ssName][dof_name_auxiliary][IReq::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[ssName][field_name][IReq::GRAD_QP_VAL] = true;
+  }
 }
 
 } // namespace LandIce

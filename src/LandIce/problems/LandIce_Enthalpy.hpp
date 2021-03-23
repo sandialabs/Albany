@@ -123,7 +123,7 @@ namespace LandIce
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                      const Albany::MeshSpecsStruct& meshSpecs,
+                                      const Albany::MeshSpecsStruct& /* meshSpecs */,
                                       Albany::StateManager& stateMgr,
                                       Albany::FieldManagerChoice fieldManagerChoice,
                                       const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -137,6 +137,8 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
+
+  using FRT = Albany::FieldRankType;
 
   Albany::StateStruct::MeshFieldEntity entity;
 
@@ -313,8 +315,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("melting_temperature"));
 
   // Interpolate temperature from nodes to cell
-  std::string interpolationType = "Value At Cell Barycenter";
-  fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("temperature", interpolationType, false, cellBasis));
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructBarycenterEvaluator("temperature", cellBasis, FRT::Scalar));
 
   // Interpolate pressure melting temperature gradient from nodes to QPs
   fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("melting temp",basalSideName));
@@ -342,9 +343,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   // --- Restrict basal velocity from cell-based to cell-side-based
   fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("velocity",basalSideName,"Node Vector Sideset",cellType));
 
-  // --- Restrict vertical velocity from cell-based to cell-side-based
-  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFCellToSideEvaluator("vertical_velocity",basalSideName,"Node Scalar",cellType));
-
   fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationSideEvaluator("basal_dTdz", basalSideName));
 
   // --- Restrict enthalpy Hs from cell-based to cell-side-based
@@ -370,8 +368,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
   // --- Interpolate geothermal_flux on QP on side
   fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("heat_flux", basalSideName));
-
-  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFSideToCellEvaluator("basal_vert_velocity",basalSideName,"Node Scalar",cellType,"basal_vert_velocity"));
 
   // -------------------------------- LandIce evaluators ------------------------- //
 

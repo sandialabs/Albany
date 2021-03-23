@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_Layouts.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 #include "Albany_SacadoTypes.hpp"
@@ -51,9 +52,11 @@ private:
 
   // Input:
   // TODO: restore layout template arguments when removing old sideset layout
+  // NOTE: if thickness is ParamST or ScalarT, we are moving the surface,
+  //       so use ThicknessScalarT for elevation
   PHX::MDField<const MeshScalarT>        coords_qp; // Side, Node, Dim
   PHX::MDField<const ThicknessScalarT>   thickness; // Side, QuadPoint
-  PHX::MDField<const MeshScalarT>        elevation; // Side, QuadPoint
+  PHX::MDField<const ThicknessScalarT>   elevation; // Side, QuadPoint
   PHX::MDField<const RealType>           BF;        // Side, Node, QuadPoint
   PHX::MDField<const MeshScalarT>        normals;   // Side, QuadPoint, Dim
   PHX::MDField<const MeshScalarT>        w_measure; // Side, QuadPoint

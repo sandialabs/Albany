@@ -15,3 +15,7 @@ add_subdirectory(Stokes_Test)
 add_subdirectory(SHMIP)
 
 add_subdirectory(Enthalpy)
+
+if (ENABLE_EXPERIMENTAL)
+  add_subdirectory(FO_Hydrology)
+endif()
