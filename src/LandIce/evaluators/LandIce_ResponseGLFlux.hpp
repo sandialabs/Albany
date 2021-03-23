@@ -7,6 +7,7 @@
 #ifndef LANDICE_RESPONSE_GL_FLUX_HPP
 #define LANDICE_RESPONSE_GL_FLUX_HPP
 
+#include "Albany_SacadoTypes.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
@@ -47,14 +48,17 @@ private:
 
   bool useCollapsedSidesets;
 
+  using xyST = typename Albany::StrongestScalarType<MeshScalarT,ThicknessST>::type;
+
   // TODO: restore layout template arguments when removing old sideset layout
   PHX::MDField<const ScalarT>              avg_vel;     //[m yr^{-1}]; Side, Node, Dim
   PHX::MDField<const ThicknessST>          thickness;   //[km]; Side, Node
   PHX::MDField<const ThicknessST>          bed;         //[km]; Side, Node
   PHX::MDField<const MeshScalarT>          coords;      //[km]; Side, Node, Dim
-  Kokkos::DynRankView<ThicknessST, PHX::Device>           gl_func,H;
-  Kokkos::DynRankView<MeshScalarT, PHX::Device>           x,y;
-  Kokkos::DynRankView<ScalarT, PHX::Device>               velx,vely;
+
+  Kokkos::DynRankView<ThicknessST, PHX::Device>     gl_func,H;
+  Kokkos::DynRankView<xyST, PHX::Device>            x,y;
+  Kokkos::DynRankView<ScalarT, PHX::Device>         velx,vely;
 
   double rho_i, rho_w;  //[kg m^{-3}]
   double scaling;       //[adim]

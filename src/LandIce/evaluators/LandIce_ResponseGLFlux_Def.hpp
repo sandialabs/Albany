@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Phalanx_MDField.hpp>
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -87,10 +88,16 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
   gl_func = Kokkos::createDynRankView(bed.get_view(), "gl_func", numSideNodes);
   H = Kokkos::createDynRankView(bed.get_view(), "H", 2);
-  x = Kokkos::createDynRankView(coords.get_view(), "x", 2);
-  y = Kokkos::createDynRankView(coords.get_view(), "y", 2);
+
+  // This is just used to fwd the needed template args to createDynRankView,
+  // so don't be puzzled by the fact that is missing all the data.
+  PHX::MDField<xyST> tmp("",Teuchos::null);
+  x = Kokkos::createDynRankView(tmp.get_view(), "x", 2);
+  y = Kokkos::createDynRankView(tmp.get_view(), "y", 2);
+
   velx = Kokkos::createDynRankView(avg_vel.get_view(), "velx", 2);
   vely = Kokkos::createDynRankView(avg_vel.get_view(), "vely", 2);
+
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
