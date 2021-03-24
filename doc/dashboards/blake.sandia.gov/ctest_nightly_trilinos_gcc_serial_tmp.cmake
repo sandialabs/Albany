@@ -45,8 +45,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_FLAGS "-j8")
-SET (CTEST_BUILD_FLAGS "-j8")
+set (CTEST_BUILD_FLAGS "-j48")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
@@ -121,7 +120,6 @@ endif()
 
 ctest_start(${CTEST_TEST_TYPE})
 
-# 
 # Set the common Trilinos config options & build Trilinos
 # 
 if (BUILD_TRILINOS_SERIAL) 
@@ -193,7 +191,7 @@ if (BUILD_TRILINOS_SERIAL)
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
     message ("Encountered build errors in Trilinos build. Exiting!")
   endif ()
-  
+
   #
   # Run Trilinos tests
   #
@@ -213,5 +211,4 @@ if (BUILD_TRILINOS_SERIAL)
       message(FATAL_ERROR "Cannot submit Trilinos test results!")
     endif ()
   endif ()
-
 endif()

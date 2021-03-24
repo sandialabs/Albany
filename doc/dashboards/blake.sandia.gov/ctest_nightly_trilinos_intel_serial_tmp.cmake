@@ -44,8 +44,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_FLAGS "-j8")
-SET (CTEST_BUILD_FLAGS "-j8")
+SET (CTEST_BUILD_FLAGS "-j48")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
@@ -53,6 +52,7 @@ set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (MPI_PATH $ENV{MPI_ROOT})  
 set (MKL_PATH $ENV{MKL_ROOT})  
+set (SUPERLU_PATH $ENV{SUPERLU_ROOT})  
 set (BOOST_PATH $ENV{BOOST_ROOT}) 
 set (NETCDF_PATH $ENV{NETCDF_ROOT}) 
 set (HDF5_PATH $ENV{HDF5_ROOT})

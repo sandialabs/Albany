@@ -44,8 +44,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_FLAGS "-j8")
-SET (CTEST_BUILD_FLAGS "-j8")
+set (CTEST_BUILD_FLAGS "-j48")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
@@ -53,11 +52,11 @@ set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (MPI_PATH $ENV{MPI_ROOT})  
 set (MKL_PATH $ENV{MKL_ROOT})  
+set (SUPERLU_PATH $ENV{SUPERLU_ROOT})  
 set (BOOST_PATH $ENV{BOOST_ROOT}) 
 set (NETCDF_PATH $ENV{NETCDF_ROOT}) 
 set (HDF5_PATH $ENV{HDF5_ROOT})
 set (ZLIB_PATH $ENV{ZLIB_ROOT})  
-set (YAMLCPP_PATH $ENV{YAMLCPP_ROOT})
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -126,7 +125,6 @@ if (BUILD_ALBANY_SERIAL)
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
     "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_64BIT_INT:BOOL=OFF"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DALBANY_CTEST_TIMEOUT=500"
