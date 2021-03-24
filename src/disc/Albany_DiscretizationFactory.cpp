@@ -87,7 +87,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct);
         AbstractFieldContainer::FieldContainerRequirements req;
         int neq = 2;
-        meshStruct2D->setFieldAndBulkData(comm, disc_params, neq, req,
+        meshStruct2D->setFieldAndBulkData(comm, disc_params, req,
                 sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
         Ioss::Init::Initializer io;
         Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
@@ -161,10 +161,10 @@ DiscretizationFactory::createDiscretization(
             std::logic_error,
             "meshStruct accessed, but it has not been constructed" << std::endl);
 
-    setupInternalMeshStruct(neq, sis, side_set_sis, req, 
+    setupInternalMeshStruct(sis, side_set_sis, req, 
                             side_set_req);
     Teuchos::RCP<AbstractDiscretization> result =
-            createDiscretizationFromInternalMeshStruct(sideSetEquations, rigidBodyModes);
+            createDiscretizationFromInternalMeshStruct(neq, sideSetEquations, rigidBodyModes);
 
     return result;
 }
@@ -177,34 +177,34 @@ DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
 
 void
 DiscretizationFactory::setupInternalMeshStruct(
-        unsigned int neq,
         const Teuchos::RCP<StateInfoStruct>& sis,
         const AbstractFieldContainer::FieldContainerRequirements& req) {
-    setupInternalMeshStruct(neq, sis, empty_side_set_sis, req, 
+    setupInternalMeshStruct(sis, empty_side_set_sis, req, 
                             empty_side_set_req);
 }
 
 void
 DiscretizationFactory::setupInternalMeshStruct(
-        unsigned int neq,
         const Teuchos::RCP<StateInfoStruct>& sis,
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis,
         const AbstractFieldContainer::FieldContainerRequirements& req,
         const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) 
 {
-    meshStruct->setFieldAndBulkData(commT, discParams, neq, req, sis,
+    meshStruct->setFieldAndBulkData(commT, discParams, req, sis,
             meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, 
             side_set_req);
 }
 
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
+        const int neq,
         const Teuchos::RCP<RigidBodyModes>& rigidBodyModes) {
-    return createDiscretizationFromInternalMeshStruct(empty_side_set_equations, rigidBodyModes);
+    return createDiscretizationFromInternalMeshStruct(neq, empty_side_set_equations, rigidBodyModes);
 }
 
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
+        const int neq,
         const std::map<int, std::vector<std::string> >& sideSetEquations,
         const Teuchos::RCP<RigidBodyModes>& rigidBodyModes) {
 
@@ -223,7 +223,7 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
         return disc;
       } else
       {
-        auto disc = Teuchos::rcp(new STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
+        auto disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
         disc->updateMesh();
         return disc;
       }

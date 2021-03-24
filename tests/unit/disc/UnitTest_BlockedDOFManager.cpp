@@ -103,7 +103,7 @@ tests are a beginning, "work in progress."
       const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
       const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-      ms->setFieldAndBulkData(comm, discParams, 3, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
+      ms->setFieldAndBulkData(comm, discParams, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
                               side_set_sis, side_set_req);
 
       // Null for this test
@@ -111,7 +111,7 @@ tests are a beginning, "work in progress."
       const std::map<int, std::vector<std::string>> sideSetEquations;
 
       // Use the Albany STK interface as it is used elsewhere in the code
-      auto stkDisc = Teuchos::rcp(new STKDiscretization(discParams, ms, comm, rigidBodyModes, sideSetEquations));
+      auto stkDisc = Teuchos::rcp(new STKDiscretization(discParams, 3, ms, comm, rigidBodyModes, sideSetEquations));
       stkDisc->updateMesh();
 
       // Connection manager is the interface between Albany's historical STK interface and the Panzer DOF manager (and the
@@ -310,14 +310,7 @@ This is just a start, to serve as an example. This has not been thought through 
 
       // Need to test various meshes, with various element types and block structures.
 
-      Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> ms_array;
-
-      ms_array.resize(3);
-
-      Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct0, meshStruct1, meshStruct2;
-      meshStruct0 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
-      meshStruct1 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
-      meshStruct2 = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
+      Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
 
       Teuchos::RCP<Teuchos::ParameterList> blockedDiscParams = rcp(new Teuchos::ParameterList);
       Teuchos::RCP<Teuchos::ParameterList> mParams = Teuchos::sublist(blockedDiscParams, "Mesh", false);
@@ -338,49 +331,51 @@ This is just a start, to serve as an example. This has not been thought through 
          db0Params->set<std::string>("Name", "vol_P1");
          db0Params->set<std::string>("Mesh", "left_lower_qtr");
          db0Params->set<std::string>("FE Type", "P1");
+         db0Params->set<int>("Number of equations", 3);
 
          db1Params->set<std::string>("Name", "basal_P1");
          db1Params->set<std::string>("Mesh", "left_upper_qtr");
          db1Params->set<std::string>("FE Type", "P1");
+         db1Params->set<int>("Number of equations", 1);
 
          db2Params->set<std::string>("Name", "basal_P0");
          db2Params->set<std::string>("Mesh", "right_half");
          db2Params->set<std::string>("FE Type", "P0");
+         db2Params->set<int>("Number of equations", 1);
       }
       else
       {
          db0Params->set<std::string>("Name", "vol_P1");
          db0Params->set<std::string>("Mesh", "EB_Body_1");
          db0Params->set<std::string>("FE Type", "P1");
+         db0Params->set<int>("Number of equations", 3);
 
          db1Params->set<std::string>("Name", "basal_P1");
          db1Params->set<std::string>("Mesh", "EB_Bottom");
          db1Params->set<std::string>("FE Type", "P1");
+         db1Params->set<int>("Number of equations", 1);
 
          db2Params->set<std::string>("Name", "basal_P0");
          db2Params->set<std::string>("Mesh", "EB_Bottom");
          db2Params->set<std::string>("FE Type", "P0");
+         db2Params->set<int>("Number of equations", 1);
       }
 
       Teuchos::RCP<Teuchos::ParameterList> sParams = Teuchos::sublist(blockedDiscParams, "Solution", false);
       sParams->set<std::string>("blocks names", "[ velocity , [N,h]]");
       sParams->set<std::string>("blocks discretizations", "[ vol_P1, [basal_P1, basal_P0] ]");
 
-      ms_array[0] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct0);
-      ms_array[1] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct1);
-      ms_array[2] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct2);
+      Teuchos::RCP<AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
 
       const AbstractFieldContainer::FieldContainerRequirements req;
       const Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct());
       const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
       const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-      ms_array[0]->setFieldAndBulkData(comm, discParams, 1, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
-      ms_array[1]->setFieldAndBulkData(comm, discParams, 3, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
-      ms_array[2]->setFieldAndBulkData(comm, discParams, 5, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
+      ms->setFieldAndBulkData(comm, discParams, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
 
       // Use the Albany STK interface as it is used elsewhere in the code
-      auto stkDisc = Teuchos::rcp(new BlockedSTKDiscretization(blockedDiscParams, ms_array, comm));
+      auto stkDisc = Teuchos::rcp(new BlockedSTKDiscretization(blockedDiscParams, ms, comm));
       stkDisc->updateMesh();
 
       auto nvs = stkDisc->getOverlapProductVectorSpace();
@@ -427,15 +422,15 @@ This is just a start, to serve as an example. This has not been thought through 
 
       if (useExodus)
       {
-         TEST_EQUALITY(fadl0, 4);
-         TEST_EQUALITY(fadl1, 12);
-         TEST_EQUALITY(fadl2, 20);
+         TEST_EQUALITY(fadl0, 12);
+         TEST_EQUALITY(fadl1, 4);
+         TEST_EQUALITY(fadl2, 4);
       }
       else
       {
-         TEST_EQUALITY(fadl0, 8);
-         TEST_EQUALITY(fadl1, 24);
-         TEST_EQUALITY(fadl2, 40);
+         TEST_EQUALITY(fadl0, 24);
+         TEST_EQUALITY(fadl1, 8);
+         TEST_EQUALITY(fadl2, 8);
       }
 
       int fado0 = stkDisc->getBlockFADOffset(0);

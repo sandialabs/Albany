@@ -30,7 +30,6 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   void setFieldAndBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
                             const Teuchos::RCP<Teuchos::ParameterList>& params,
-                            const unsigned int neq_,
                             const AbstractFieldContainer::FieldContainerRequirements& req,
                             const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                             const unsigned int worksetSize,

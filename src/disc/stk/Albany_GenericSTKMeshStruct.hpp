@@ -46,7 +46,6 @@ protected:
 
   void SetupFieldData(
                 const Teuchos::RCP<const Teuchos_Comm>& commT,
-                const int neq_,
                 const AbstractFieldContainer::FieldContainerRequirements& req,
                 const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                 const int worksetSize_);  

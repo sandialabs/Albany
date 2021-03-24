@@ -28,7 +28,6 @@ public:
   void setFieldAndBulkData(
                 const Teuchos::RCP<const Teuchos_Comm>& comm,
                 const Teuchos::RCP<Teuchos::ParameterList>& params,
-                const unsigned int neq_,
                 const AbstractFieldContainer::FieldContainerRequirements& req,
                 const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                 const unsigned int worksetSize,

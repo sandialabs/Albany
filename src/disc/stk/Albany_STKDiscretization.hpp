@@ -110,6 +110,7 @@ class STKDiscretization : public AbstractDiscretization
   //! Constructor
   STKDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+      const int neq,
       Teuchos::RCP<AbstractSTKMeshStruct>&        stkMeshStruct,
       const Teuchos::RCP<const Teuchos_Comm>&     comm,
       const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null,
@@ -510,6 +511,9 @@ class STKDiscretization : public AbstractDiscretization
    unsigned getDimension() const
    { return getNumDim(); }
 
+   //! get the number of equations
+   unsigned getNumberEquations() const
+   { return neq; }
 
   //! used when NetCDF output on a latitude-longitude grid is requested.
   // Each struct contains a latitude/longitude index and it's parametric

@@ -78,7 +78,6 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
 
 void GenericSTKMeshStruct::SetupFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<StateInfoStruct>& sis,
     const int worksetSize)
@@ -86,8 +85,6 @@ void GenericSTKMeshStruct::SetupFieldData(
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(),
        std::logic_error,
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
-
-  neq = neq_;
 
   this->nodal_data_base = sis->getNodalDataBase();
 
@@ -134,6 +131,7 @@ void GenericSTKMeshStruct::SetupFieldData(
   Teuchos::Array<std::string> residual_vector =
     params->get<Teuchos::Array<std::string> >("Residual Vector Components", default_residual_vector);
 
+  int neq = 0; // KL: to do
   // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
   if(user_specified_solution_components && (residual_vector.length() > 0)){
 
@@ -601,7 +599,7 @@ void GenericSTKMeshStruct::finalizeSideSetMeshStructs (
         auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
-        it.second->setFieldAndBulkData(comm,params_ss,neq,req,sis,worksetSize);  // Cell equations are also defined on the side, but not viceversa
+        it.second->setFieldAndBulkData(comm,params_ss,req,sis,worksetSize);  // Cell equations are also defined on the side, but not viceversa
       }
     }
   }

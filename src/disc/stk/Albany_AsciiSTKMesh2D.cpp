@@ -296,14 +296,13 @@ Albany::AsciiSTKMesh2D::~AsciiSTKMesh2D() {}
 void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& commT,
     const Teuchos::RCP<Teuchos::ParameterList>& /*params_*/,
-    const unsigned int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
-  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
+  this->SetupFieldData(commT, req, sis, worksetSize);
 
   metaData->commit();
 

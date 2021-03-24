@@ -41,14 +41,6 @@ namespace Albany
         const std::map<int, std::vector<std::string>> &sideSetEquations =
             std::map<int, std::vector<std::string>>());
 
-    BlockedSTKDiscretization(
-        const Teuchos::RCP<Teuchos::ParameterList> &discParams,
-        Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> &stkMeshStruct,
-        const Teuchos::RCP<const Teuchos_Comm> &comm,
-        const Teuchos::RCP<RigidBodyModes> &rigidBodyModes = Teuchos::null,
-        const std::map<int, std::vector<std::string>> &sideSetEquations =
-            std::map<int, std::vector<std::string>>());
-
     //! Destructor
     virtual ~BlockedSTKDiscretization() = default;
 

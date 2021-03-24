@@ -106,7 +106,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   }
 
   int  numDim;
-  int  neq;
   DiscType interleavedOrdering;
 
   bool        exoOutput;

@@ -66,22 +66,22 @@ class DiscretizationFactory {
 
     void
     setupInternalMeshStruct(
-      unsigned int neq,
       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
       const AbstractFieldContainer::FieldContainerRequirements& req); 
 
    void
     setupInternalMeshStruct(
-      unsigned int neq,
       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
       const AbstractFieldContainer::FieldContainerRequirements& req,
       const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req);
 
     Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
+      const int neq,
       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes);
 
     Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
+      const int neq,
       const std::map<int,std::vector<std::string> >& sideSetEquations,
       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes);
     

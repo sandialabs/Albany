@@ -56,6 +56,7 @@ namespace Albany {
 
 STKDiscretization::STKDiscretization(
     const Teuchos::RCP<Teuchos::ParameterList>&    discParams_,
+    const int neq_,
     Teuchos::RCP<Albany::AbstractSTKMeshStruct>&   stkMeshStruct_,
     const Teuchos::RCP<const Teuchos_Comm>&        comm_,
     const Teuchos::RCP<Albany::RigidBodyModes>&    rigidBodyModes_,
@@ -65,7 +66,7 @@ STKDiscretization::STKDiscretization(
       metaData(*stkMeshStruct_->metaData),
       bulkData(*stkMeshStruct_->bulkData),
       comm(comm_),
-      neq(stkMeshStruct_->neq),
+      neq(neq_),
       sideSetEquations(sideSetEquations_),
       rigidBodyModes(rigidBodyModes_),
       stkMeshStruct(stkMeshStruct_),
@@ -2523,7 +2524,7 @@ STKDiscretization::updateMesh()
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
     for (auto it : stkMeshStruct->sideSetMeshStructs) {
       Teuchos::RCP<STKDiscretization> side_disc =
-          Teuchos::rcp(new STKDiscretization(discParams, it.second, comm));
+          Teuchos::rcp(new STKDiscretization(discParams, neq, it.second, comm));
       side_disc->updateMesh();
       sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));

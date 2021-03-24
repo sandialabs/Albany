@@ -52,7 +52,6 @@ void
 Albany::STK3DPointStruct::setFieldAndBulkData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
@@ -60,7 +59,7 @@ Albany::STK3DPointStruct::setFieldAndBulkData(
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
   std::cout << "---3DPoint::setFieldAndBulkData---" << std::endl;
-  SetupFieldData(commT, neq_, req, sis, worksetSize);
+  SetupFieldData(commT, req, sis, worksetSize);
   metaData->commit();
   bulkData->modification_begin(); // Begin modifying the mesh
   //TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh(commT);

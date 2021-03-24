@@ -128,7 +128,9 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   int lElemColumnShift = (ordering == 1) ? 1 : indexToTriangleID.size();
   int elemLayerShift = (ordering == 0) ? 1 : nLayers;
 
-  int neq = meshStruct->neq;
+  auto abs_disc = albanyApp->getDiscretization();
+  auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
+  int neq = stk_disc->getNumberEquations();
 
   const Albany::DiscType interleavedOrdering = meshStruct->getInterleavedOrdering();
 
@@ -745,7 +747,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   albanyApp->buildProblem();
 
-  meshStruct->constructMesh(mpiComm, discretizationList, neq, req,
+  meshStruct->constructMesh(mpiComm, discretizationList, req,
       albanyApp->getStateMgr(), indexToVertexID,
       vertexProcIDs, verticesCoords, globalVerticesStride,
       verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,

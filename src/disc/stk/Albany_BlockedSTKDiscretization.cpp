@@ -36,100 +36,9 @@ namespace Albany
     return pattern;
   }
 
-  //Assume we only have one block right now
   BlockedSTKDiscretization::BlockedSTKDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList> &discParams_,
       Teuchos::RCP<AbstractSTKMeshStruct> &stkMeshStruct_,
-      const Teuchos::RCP<const Teuchos_Comm> &comm_,
-      const Teuchos::RCP<RigidBodyModes> &rigidBodyModes_,
-      const std::map<int, std::vector<std::string>> &sideSetEquations_)
-      : out(Teuchos::VerboseObjectBase::getDefaultOStream()), comm(comm_)
-  {
-
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::rcp_dynamic_cast;
-    typedef double Scalar;
-
-    n_m_blocks = 1;
-
-    m_blocks.resize(n_m_blocks);
-
-    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
-      m_blocks[i_block] = Teuchos::rcp(new disc_type(discParams_, stkMeshStruct_, comm_,
-                                                     rigidBodyModes_, sideSetEquations_));
-
-    // build the connection manager
-    const Teuchos::RCP<panzer::ConnManager>
-        connMngr = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_));
-
-    // build the DOF manager for the problem
-    if (const Teuchos::MpiComm<int> *mpiComm = dynamic_cast<const Teuchos::MpiComm<int> *>(comm.get()))
-    {
-      MPI_Comm rawComm = (*mpiComm->getRawMpiComm().get())();
-
-      Teuchos::RCP<panzer::BlockedDOFManager> dofManager = Teuchos::rcp(new panzer::BlockedDOFManager(connMngr, rawComm));
-      //   dofManager->enableTieBreak(useTieBreak_);
-      //   dofManager->setUseDOFManagerFEI(useDOFManagerFEI_);
-
-      // by default assume orientations are not required
-      bool orientationsRequired = false;
-
-#if 0 // disc-fe?
-   std::vector<Teuchos::RCP<panzer::PhysicsBlock> >::const_iterator physIter;
-   for(physIter=physicsBlocks.begin();physIter!=physicsBlocks.end();++physIter) {
-      Teuchos::RCP<const panzer::PhysicsBlock> pb = *physIter;
-
-     const std::vector<StrPureBasisPair> & blockFields = pb->getProvidedDOFs();
-
-      // insert all fields into a set
-      std::set<StrPureBasisPair,StrPureBasisComp> fieldNames;
-      fieldNames.insert(blockFields.begin(),blockFields.end());
-
-      // add basis to DOF manager: block specific
-      std::set<StrPureBasisPair,StrPureBasisComp>::const_iterator fieldItr;
-      for (fieldItr=fieldNames.begin();fieldItr!=fieldNames.end();++fieldItr) {
-         // determine if orientations are required
-         orientationsRequired |= fieldItr->second->requiresOrientations();
-
-         Teuchos::RCP< Intrepid2::Basis<PHX::Device::execution_space,double,double> > intrepidBasis
-               = fieldItr->second->getIntrepid2Basis();
-         Teuchos::RCP<Intrepid2FieldPattern> fp = Teuchos::rcp(new Intrepid2FieldPattern(intrepidBasis));
-         dofManager->addField(pb->elementBlockID(),fieldItr->first,fp);
-      }
-   }
-#endif
-
-      // set orientations required flag
-      dofManager->setOrientationsRequired(orientationsRequired);
-
-      // blocked degree of freedom manager
-      std::string fieldOrder = discParams_->get<std::string>("Field Order");
-      std::vector<std::vector<std::string>> blocks;
-      buildBlocking(fieldOrder, blocks);
-      dofManager->setFieldOrder(blocks);
-
-      dofManager->buildGlobalUnknowns();
-      dofManager->printFieldInformation(*out);
-
-#if 0
-    // blocked degree of freedom manager
-    std::string fieldOrder = discParams_->get<std::string>("Field Order");
-    RCP<panzer::GlobalIndexer > dofManager 
-         = globalIndexerFactory.buildGlobalIndexer(Teuchos::opaqueWrapper(MPI_COMM_WORLD),physicsBlocks,conn_manager,fieldOrder);
-
-    // auxiliary dof manager
-    std::string auxFieldOrder = discParams_->get<std::string>("Auxiliary Field Order");
-    RCP<panzer::GlobalIndexer > auxDofManager 
-         = globalIndexerFactory.buildGlobalIndexer(Teuchos::opaqueWrapper(MPI_COMM_WORLD),
-           auxPhysicsBlocks,conn_manager,auxFieldOrder);
-#endif
-    }
-  }
-
-  BlockedSTKDiscretization::BlockedSTKDiscretization(
-      const Teuchos::RCP<Teuchos::ParameterList> &discParams_,
-      Teuchos::Array<Teuchos::RCP<AbstractSTKMeshStruct>> &stkMeshStruct_,
       const Teuchos::RCP<const Teuchos_Comm> &comm_,
       const Teuchos::RCP<RigidBodyModes> &rigidBodyModes_,
       const std::map<int, std::vector<std::string>> &sideSetEquations_)
@@ -148,12 +57,17 @@ namespace Albany
     m_blocks.resize(n_m_blocks);
 
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
-      m_blocks[i_block] = Teuchos::rcp(new disc_type(discParams, stkMeshStruct_[i_block], comm_,
+    {
+      int neq = bDiscParams->sublist(Albany::strint("Block", i_block)).get<int>("Number of equations");
+      std::string partName = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Mesh");
+
+      m_blocks[i_block] = Teuchos::rcp(new disc_type(discParams, neq, stkMeshStruct_, comm_,
                                                      rigidBodyModes_, sideSetEquations_));
+    }
 
     // build the connection manager
     const Teuchos::RCP<Albany::STKConnManager>
-        stkConnMngr = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_[0]));
+        stkConnMngr = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_));
     const Teuchos::RCP<panzer::ConnManager>
         connMngr = stkConnMngr;
 
@@ -192,12 +106,12 @@ namespace Albany
         {
           std::string type, mesh;
           shards::CellTopology eb_topology;
-          for (size_t i_blocks = 0; i_blocks < n_m_blocks; ++i_blocks)
+          for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
           {
-            if (blocksDiscretizationName[i][j] == bDiscParams->sublist(Albany::strint("Block", i_blocks)).get<std::string>("Name"))
+            if (blocksDiscretizationName[i][j] == bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Name"))
             {
-              type = bDiscParams->sublist(Albany::strint("Block", i_blocks)).get<std::string>("FE Type");
-              mesh = bDiscParams->sublist(Albany::strint("Block", i_blocks)).get<std::string>("Mesh");
+              type = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("FE Type");
+              mesh = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Mesh");
               break;
             }
           }

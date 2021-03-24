@@ -180,7 +180,6 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 void MpasSTKMeshStruct::constructMesh(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
     const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
-    const unsigned int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const StateManager& stateMgr,
     const std::vector<int>& indexToVertexID,
@@ -202,7 +201,7 @@ void MpasSTKMeshStruct::constructMesh(
     int numLayers, int ordering)
 {
   auto sis = stateMgr.getStateInfoStruct();
-  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+  this->SetupFieldData(comm, req, sis, worksetSize);
 
   int numElemsInPrism = (ElemShape==Tetrahedron) ? 3 : 1;
   int numLatSidesInQuad = (ElemShape==Tetrahedron) ? 2 : 1;

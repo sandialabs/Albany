@@ -207,7 +207,6 @@ Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()
 void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
     const Teuchos::RCP<Teuchos::ParameterList>& params,
-    const unsigned int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
@@ -236,10 +235,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-  this->sideSetMeshStructs.at("basalside")->setFieldAndBulkData (comm, params2D, neq_, basal_req, basal_sis, worksetSize);
+  this->sideSetMeshStructs.at("basalside")->setFieldAndBulkData (comm, params2D, basal_req, basal_sis, worksetSize);
 
   // Setting up the field container
-  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+  this->SetupFieldData(comm, req, sis, worksetSize);
 
   LayeredMeshOrdering LAYER  = LayeredMeshOrdering::LAYER;
   LayeredMeshOrdering COLUMN = LayeredMeshOrdering::COLUMN;
