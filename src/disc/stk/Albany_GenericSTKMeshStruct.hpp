@@ -77,11 +77,27 @@ protected:
   void initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   //! Completes the creation of the side set mesh structs (if of type SideSetSTKMeshStruct)
-  void finalizeSideSetMeshStructs(
+  void setSideSetFieldData(
         const Teuchos::RCP<const Teuchos_Comm>& commT,
         const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
         const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
         int worksetSize);
+
+  void setSideSetBulkData(
+        const Teuchos::RCP<const Teuchos_Comm>& commT,
+        const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
+        const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+        int worksetSize);
+
+  void setSideSetFieldAndBulkData(
+        const Teuchos::RCP<const Teuchos_Comm>& commT,
+        const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
+        const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+        int worksetSize)
+        {
+          setSideSetFieldData(commT, side_set_req, side_set_sis, worksetSize);
+          setSideSetBulkData(commT, side_set_req, side_set_sis, worksetSize);
+        }
 
   //! Loads from file input required fields not found in the mesh
   void loadRequiredInputFields (const AbstractFieldContainer::FieldContainerRequirements& req,

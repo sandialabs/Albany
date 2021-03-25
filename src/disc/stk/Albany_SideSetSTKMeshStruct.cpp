@@ -119,7 +119,7 @@ void SideSetSTKMeshStruct::setParentMeshInfo (const AbstractSTKMeshStruct& paren
   parentMeshSideSetName = sideSetName;
 }
 
-void SideSetSTKMeshStruct::setFieldAndBulkData (
+void SideSetSTKMeshStruct::setFieldData (
       const Teuchos::RCP<const Teuchos_Comm>& commT,
       const Teuchos::RCP<Teuchos::ParameterList>& /*params*/,
       const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -129,7 +129,17 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
       const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
   this->SetupFieldData(commT, req, sis, worksetSize);
+}
 
+void SideSetSTKMeshStruct::setBulkData (
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const Teuchos::RCP<Teuchos::ParameterList>& /*params*/,
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<StateInfoStruct>& sis,
+      const unsigned int worksetSize,
+      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/,
+      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
+{
   TEUCHOS_TEST_FOR_EXCEPTION (parentMeshStruct->ssPartVec.find(parentMeshSideSetName)==parentMeshStruct->ssPartVec.end(), std::logic_error,
                               "Error! The side set " << parentMeshSideSetName << " is not present in the input mesh.\n");
 

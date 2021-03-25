@@ -30,6 +30,8 @@
 #include <stk_io/StkMeshIoBroker.hpp>
 #endif
 
+#include "Albany_AbstractSTKFieldContainer.hpp"
+
 namespace Albany {
 
 typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
@@ -399,12 +401,12 @@ class STKDiscretization : public AbstractDiscretization
   const stk::mesh::MetaData&
   getSTKMetaData() const
   {
-    return metaData;
+    return *metaData;
   }
   const stk::mesh::BulkData&
   getSTKBulkData() const
   {
-    return bulkData;
+    return *bulkData;
   }
 
   // Used very often, so make it a function
@@ -524,6 +526,10 @@ class STKDiscretization : public AbstractDiscretization
     std::pair<unsigned, unsigned> latitude_longitude;
   };
 
+  void setFieldData(
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<StateInfoStruct>& sis);
+
  protected:
 
   friend class BlockedSTKDiscretization;
@@ -595,8 +601,8 @@ class STKDiscretization : public AbstractDiscretization
   Teuchos::RCP<Teuchos::FancyOStream> out;
 
   //! Stk Mesh Objects
-  stk::mesh::MetaData& metaData;
-  stk::mesh::BulkData& bulkData;
+  Teuchos::RCP<stk::mesh::MetaData> metaData;
+  Teuchos::RCP<stk::mesh::BulkData> bulkData;
 
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
@@ -710,6 +716,8 @@ class STKDiscretization : public AbstractDiscretization
     }
     return false;
   }
+
+  Teuchos::RCP<AbstractSTKFieldContainer> solutionFieldContainer;
 };
 
 }  // namespace Albany

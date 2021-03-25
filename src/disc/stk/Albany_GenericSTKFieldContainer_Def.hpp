@@ -25,13 +25,31 @@ GenericSTKFieldContainer<Interleaved>::GenericSTKFieldContainer(
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
   const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
   const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
+  const int numDim_,
+  const int num_params_)
+  : metaData(metaData_),
+    bulkData(bulkData_),
+    params(params_),
+    numDim(numDim_),
+    num_params(num_params_),
+    AbstractSTKFieldContainer(false) {
+}
+
+template<DiscType Interleaved>
+GenericSTKFieldContainer<Interleaved>::GenericSTKFieldContainer(
+  const Teuchos::RCP<Teuchos::ParameterList>& params_,
+  const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
+  const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
   const int neq_,
-  const int numDim_)
+  const int numDim_,
+  const int num_params_)
   : metaData(metaData_),
     bulkData(bulkData_),
     params(params_),
     neq(neq_),
-    numDim(numDim_) {
+    numDim(numDim_),
+    num_params(num_params_),
+    AbstractSTKFieldContainer(true) {
 }
 
 #ifdef ALBANY_SEACAS

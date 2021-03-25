@@ -161,10 +161,15 @@ DiscretizationFactory::createDiscretization(
             std::logic_error,
             "meshStruct accessed, but it has not been constructed" << std::endl);
 
-    setupInternalMeshStruct(sis, side_set_sis, req, 
-                            side_set_req);
     Teuchos::RCP<AbstractDiscretization> result =
             createDiscretizationFromInternalMeshStruct(neq, sideSetEquations, rigidBodyModes);
+
+    setMeshStructFieldData(sis, side_set_sis, req, 
+                            side_set_req);
+    setFieldData(result, sis, req);
+    setMeshStructBulkData(sis, side_set_sis, req, 
+                            side_set_req);
+    completeDiscSetup(result);
 
     return result;
 }
@@ -176,21 +181,41 @@ DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
 }
 
 void
-DiscretizationFactory::setupInternalMeshStruct(
+DiscretizationFactory::setMeshStructFieldData(
         const Teuchos::RCP<StateInfoStruct>& sis,
         const AbstractFieldContainer::FieldContainerRequirements& req) {
-    setupInternalMeshStruct(sis, empty_side_set_sis, req, 
+    setMeshStructFieldData(sis, empty_side_set_sis, req, 
                             empty_side_set_req);
 }
 
 void
-DiscretizationFactory::setupInternalMeshStruct(
+DiscretizationFactory::setMeshStructFieldData(
         const Teuchos::RCP<StateInfoStruct>& sis,
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis,
         const AbstractFieldContainer::FieldContainerRequirements& req,
         const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) 
 {
-    meshStruct->setFieldAndBulkData(commT, discParams, req, sis,
+    meshStruct->setFieldData(commT, discParams, req, sis,
+            meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, 
+            side_set_req);
+}
+
+void
+DiscretizationFactory::setMeshStructBulkData(
+        const Teuchos::RCP<StateInfoStruct>& sis,
+        const AbstractFieldContainer::FieldContainerRequirements& req) {
+    setMeshStructBulkData(sis, empty_side_set_sis, req, 
+                            empty_side_set_req);
+}
+
+void
+DiscretizationFactory::setMeshStructBulkData(
+        const Teuchos::RCP<StateInfoStruct>& sis,
+        const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis,
+        const AbstractFieldContainer::FieldContainerRequirements& req,
+        const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) 
+{
+    meshStruct->setBulkData(commT, discParams, req, sis,
             meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, 
             side_set_req);
 }
@@ -219,18 +244,58 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
       if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
         auto disc = Teuchos::rcp(new BlockedSTKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
-        disc->updateMesh();
         return disc;
       } else
       {
         auto disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
-        disc->updateMesh();
         return disc;
       }
       break;
     }
   }
   return Teuchos::null;
+}
+
+void
+DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
+                                    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                                    const AbstractFieldContainer::FieldContainerRequirements& req) {
+
+  switch (meshStruct->meshSpecsType()) {
+    case AbstractMeshStruct::STK_MS:
+    {
+      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+      if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
+        auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
+        stk_disc->setFieldData(req, sis);
+      } else
+      {
+        auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
+        stk_disc->setFieldData(req, sis);
+      }
+      break;
+    }
+  }
+}
+
+void
+DiscretizationFactory::completeDiscSetup(Teuchos::RCP<AbstractDiscretization> disc) {
+
+  switch (meshStruct->meshSpecsType()) {
+    case AbstractMeshStruct::STK_MS:
+    {
+      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+      if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
+        auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
+        stk_disc->updateMesh();
+      } else
+      {
+        auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
+        stk_disc->updateMesh();
+      }
+      break;
+    }
+  }
 }
 
 /* This function overwrite previous discretization parameter list */

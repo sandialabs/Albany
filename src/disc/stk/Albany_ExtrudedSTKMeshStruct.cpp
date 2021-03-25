@@ -204,7 +204,7 @@ Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()
   // Nothing to be done here
 }
 
-void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
+void Albany::ExtrudedSTKMeshStruct::setFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
     const Teuchos::RCP<Teuchos::ParameterList>& params,
     const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -235,10 +235,43 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-  this->sideSetMeshStructs.at("basalside")->setFieldAndBulkData (comm, params2D, basal_req, basal_sis, worksetSize);
+  this->sideSetMeshStructs.at("basalside")->setFieldData (comm, params2D, basal_req, basal_sis, worksetSize);
 
   // Setting up the field container
   this->SetupFieldData(comm, req, sis, worksetSize);
+
+  this->setSideSetFieldData(comm, side_set_req, side_set_sis, worksetSize);
+}
+
+void Albany::ExtrudedSTKMeshStruct::setBulkData(
+    const Teuchos::RCP<const Teuchos_Comm>& comm,
+    const Teuchos::RCP<Teuchos::ParameterList>& params,
+    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const unsigned int worksetSize,
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+{
+  // Finish to set up the basal mesh
+  Teuchos::RCP<Teuchos::ParameterList> params2D;
+  if (params->isSublist("Side Set Discretizations"))
+  {
+    params2D = Teuchos::rcp(new Teuchos::ParameterList(params->sublist("Side Set Discretizations").sublist("basalside")));
+  } else {
+    // Old style: the 2D parameter are mixed with the 3D
+    params2D = Teuchos::rcp(new Teuchos::ParameterList());
+    params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
+    params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
+  }
+  Teuchos::RCP<Albany::StateInfoStruct> dummy_sis = Teuchos::rcp(new Albany::StateInfoStruct());
+  dummy_sis->createNodalDataBase();
+  AbstractFieldContainer::FieldContainerRequirements dummy_req;
+  auto it_req = side_set_req.find("basalside");
+  auto it_sis = side_set_sis.find("basalside");
+  auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
+  auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
+
+  this->sideSetMeshStructs.at("basalside")->setBulkData (comm, params2D, basal_req, basal_sis, worksetSize);
 
   LayeredMeshOrdering LAYER  = LayeredMeshOrdering::LAYER;
   LayeredMeshOrdering COLUMN = LayeredMeshOrdering::COLUMN;
@@ -705,7 +738,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   this->checkNodeSetsFromSideSetsIntegrity ();
 
   // We can finally extract the side set meshes and set the fields and bulk data in all of them
-  this->finalizeSideSetMeshStructs(comm, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetBulkData(comm, side_set_req, side_set_sis, worksetSize);
 
   if (params->get("Export 2D Data",false))
   {

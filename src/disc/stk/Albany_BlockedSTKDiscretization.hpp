@@ -533,6 +533,22 @@ namespace Albany
     }
 
     void
+    setFieldData(
+        const AbstractFieldContainer::FieldContainerRequirements &req,
+        const Teuchos::RCP<StateInfoStruct> &sis)
+    {
+      this->setFieldData(0, req, sis);
+    }
+    void
+    setFieldData(
+        const size_t i_block,
+        const AbstractFieldContainer::FieldContainerRequirements &req,
+        const Teuchos::RCP<StateInfoStruct> &sis)
+    {
+      m_blocks[i_block]->setFieldData(req, sis);
+    }
+
+    void
     writeSolution(
         const Thyra_Vector &soln,
         const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,

@@ -25,7 +25,19 @@ public:
 
   ~MpasSTKMeshStruct( ) = default;
 
-  void setFieldAndBulkData(
+  void setFieldData(
+      const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+      const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
+      const Albany::AbstractFieldContainer::FieldContainerRequirements& /* req */,
+      const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
+      const unsigned int /* worksetSize */,
+      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /* side_set_sis */ = {},
+      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /* side_set_req */ = {})
+  {
+    // Do nothing
+  }
+
+  void setBulkData(
       const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
       const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
       const Albany::AbstractFieldContainer::FieldContainerRequirements& /* req */,

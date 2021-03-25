@@ -87,7 +87,7 @@ struct AbstractMeshStruct {
       STK_MS
     };
 
-    virtual void setFieldAndBulkData(
+    virtual void setFieldData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -95,6 +95,28 @@ struct AbstractMeshStruct {
                   const unsigned int worksetSize,
                   const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}) = 0;
+
+    virtual void setBulkData(
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                  const unsigned int worksetSize,
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}) = 0;
+
+    void setFieldAndBulkData(
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                  const unsigned int worksetSize,
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {})
+                  {
+                    setFieldData(commT, params, req, sis, worksetSize, side_set_sis, side_set_req);
+                    setBulkData(commT, params, req, sis, worksetSize, side_set_sis, side_set_req);
+                  }
 
     virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;
     virtual const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const = 0;

@@ -482,7 +482,7 @@ void MpasSTKMeshStruct::constructMesh(
 
   this->loadRequiredInputFields (req,comm);
 
-  this->finalizeSideSetMeshStructs(comm, {}, stateMgr.getSideSetStateInfoStruct(), worksetSize);
+  this->setSideSetFieldAndBulkData(comm, {}, stateMgr.getSideSetStateInfoStruct(), worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
