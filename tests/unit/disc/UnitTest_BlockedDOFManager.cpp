@@ -328,42 +328,42 @@ This is just a start, to serve as an example. This has not been thought through 
 
       if (useExodus)
       {
-         db0Params->set<std::string>("Name", "vol_P1");
+         db0Params->set<std::string>("Name", "vol_C1");
          db0Params->set<std::string>("Mesh", "left_lower_qtr");
-         db0Params->set<std::string>("FE Type", "P1");
+         db0Params->set<std::string>("FE Type", "HGRAD_C1");
          db0Params->set<int>("Number of equations", 3);
 
-         db1Params->set<std::string>("Name", "basal_P1");
+         db1Params->set<std::string>("Name", "basal_C1");
          db1Params->set<std::string>("Mesh", "left_upper_qtr");
-         db1Params->set<std::string>("FE Type", "P1");
+         db1Params->set<std::string>("FE Type", "HGRAD_C1");
          db1Params->set<int>("Number of equations", 1);
 
-         db2Params->set<std::string>("Name", "basal_P0");
+         db2Params->set<std::string>("Name", "basal_C0");
          db2Params->set<std::string>("Mesh", "right_half");
-         db2Params->set<std::string>("FE Type", "P0");
+         db2Params->set<std::string>("FE Type", "HVOL_C0");
          db2Params->set<int>("Number of equations", 1);
       }
       else
       {
-         db0Params->set<std::string>("Name", "vol_P1");
+         db0Params->set<std::string>("Name", "vol_C1");
          db0Params->set<std::string>("Mesh", "EB_Body_1");
-         db0Params->set<std::string>("FE Type", "P1");
+         db0Params->set<std::string>("FE Type", "HGRAD_C1");
          db0Params->set<int>("Number of equations", 3);
 
-         db1Params->set<std::string>("Name", "basal_P1");
+         db1Params->set<std::string>("Name", "basal_C1");
          db1Params->set<std::string>("Mesh", "EB_Bottom");
-         db1Params->set<std::string>("FE Type", "P1");
+         db1Params->set<std::string>("FE Type", "HGRAD_C1");
          db1Params->set<int>("Number of equations", 1);
 
-         db2Params->set<std::string>("Name", "basal_P0");
+         db2Params->set<std::string>("Name", "basal_C0");
          db2Params->set<std::string>("Mesh", "EB_Bottom");
-         db2Params->set<std::string>("FE Type", "P0");
+         db2Params->set<std::string>("FE Type", "HVOL_C0");
          db2Params->set<int>("Number of equations", 1);
       }
 
       Teuchos::RCP<Teuchos::ParameterList> sParams = Teuchos::sublist(blockedDiscParams, "Solution", false);
       sParams->set<std::string>("blocks names", "[ velocity , [N,h]]");
-      sParams->set<std::string>("blocks discretizations", "[ vol_P1, [basal_P1, basal_P0] ]");
+      sParams->set<std::string>("blocks discretizations", "[ vol_C1, [basal_C1, basal_C0] ]");
 
       Teuchos::RCP<AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
 

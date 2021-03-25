@@ -23,6 +23,7 @@
 #include "STKConnManager.hpp"
 
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "Intrepid2_HVOL_C0_FEM.hpp"
 
 namespace Albany
 {
@@ -126,7 +127,13 @@ namespace Albany
 
           RCP<const panzer::FieldPattern> pattern;
           std::string topo_name = eb_topology.getName();
-          if (type == "P0")
+          if (type == "HVOL_C0")
+          {
+            Teuchos::RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis =
+                Teuchos::rcp(new Intrepid2::Basis_HVOL_C0_FEM<PHX::exec_space, double, double>(eb_topology));
+            pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
+          }
+          if (type == "HGRAD_C1")
           {
             if (topo_name == "Quadrilateral_4")
               pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::exec_space, double, double>>();
@@ -139,7 +146,7 @@ namespace Albany
             else
               TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unsupported topology \"" << topo_name << "\".\n");
           }
-          else if (type == "P1")
+          else if (type == "HGRAD_C2")
           {
             if (topo_name == "Quadrilateral_4")
               pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::exec_space, double, double>>();
