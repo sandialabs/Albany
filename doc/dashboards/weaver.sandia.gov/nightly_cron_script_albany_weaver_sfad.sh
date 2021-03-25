@@ -6,7 +6,7 @@ cd $BASE_DIR
 BUILD_OPT="$1"
 
 if [ -z "$BUILD_OPT" ]; then
-   echo "Please supply an argument: sfad4, sfad6, sfad8 or sfad12"
+   echo "Please supply an argument: sfad4, sfad6, sfad8, sfad12 or sfad24"
    exit 1;
 fi
 
@@ -27,6 +27,9 @@ if [ "$BUILD_OPT" = "sfad8" ] ; then
 fi
 if [ "$BUILD_OPT" = "sfad12" ] ; then
   LOG_FILE=$BASE_DIR/nightly_log_weaverAlbanySFad12.txt
+fi
+if [ "$BUILD_OPT" = "sfad24" ] ; then
+  LOG_FILE=$BASE_DIR/nightly_log_weaverAlbanySFad24.txt
 fi
 
 eval "env BUILD_OPTION=$BUILD_OPT TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albanySFAD.cmake" > $LOG_FILE 2>&1

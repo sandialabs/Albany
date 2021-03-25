@@ -2,8 +2,8 @@
 rm -rf CMake* 
 PWD=`pwd`
 
-TRILINOS_INSTALL=$PWD/install 
-NVCC_WRAPPER=nvcc_wrapper_volta
+TRILINOS_INSTALL=${PWD}/install 
+NVCC_WRAPPER=${PWD}/nvcc_wrapper_volta
 BLAS_DIR=${BLAS_ROOT} 
 BOOST_DIR=${BOOST_ROOT}
 NETCDF_DIR=${NETCDF_ROOT}
