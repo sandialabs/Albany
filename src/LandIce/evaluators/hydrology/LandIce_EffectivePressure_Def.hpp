@@ -154,10 +154,10 @@ void EffectivePressure<EvalT, Traits, Surrogate>::
 evaluateFieldsCell (typename Traits::EvalData workset)
 {
   if (Surrogate) {
-    ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
 
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+    ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
     if (std::fabs(printedAlpha-alpha)>1e-10) {
       *output << "[Effective Pressure " << PHX::print<EvalT>() << "] alpha = " << alpha << "\n";
       printedAlpha = alpha;
