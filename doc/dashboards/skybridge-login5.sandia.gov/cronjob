@@ -1,5 +1,5 @@
 #cronjob runs on skybridge-login5
-01 00 * * 1-7 cd /ascldap/users/ikalash/nightlyAlbanyCDash; rm -rf results *log; bash -l -c "bash build-codes-nightly.sh"
+00 19 * * 1-7 cd /ascldap/users/ikalash/nightlyAlbanyCDash; rm -rf results *log; bash -l -c "bash build-codes-nightly.sh"
 00 09 * * 1-7 cd /ascldap/users/ikalash/nightlyAlbanyCDash/NightlyTestingEmail; source /ascldap/users/ikalash/nightlyAlbanyCDash/NightlyTestingEmail/process_nightlies.sh >& /ascldap/users/ikalash/nightlyAlbanyCDash/NightlyTestingEmail/process_nightlies.out
 30 09 * * 1-5 cd /ascldap/users/ikalash/nightlyAlbanyCDash/LCMNightlyTestingEmail; bash -l -c "bash process_nightlies_lcm.sh >& process_nightlies_lcm.out"
 05 07 * * 1-7 chgrp wg-albany -R /ascldap/users/ikalash/nightlyAlbanyCDash/*
