@@ -9,6 +9,7 @@ Nightly, blake.sandia.gov, blake-serial-sfad4-Albany
 Nightly, blake.sandia.gov, blake-serial-sfad6-Albany
 Nightly, blake.sandia.gov, blake-serial-sfad8-Albany
 Nightly, blake.sandia.gov, blake-serial-sfad12-Albany
+Nightly, blake.sandia.gov, blake-serial-sfad24-Albany
 Nightly, blake.sandia.gov, blake-serial-sfad-Albany-PerfTests
 Nightly, camobap.ca.sandia.gov, fedora33-gcc10.2.1-Release-Albany
 Nightly, camobap.ca.sandia.gov, fedora33-gcc10.2.1-Release-Cism-Albany
@@ -40,4 +41,5 @@ Nightly, weaver.sandia.gov, weaver-CUDA-Albany-SFAD4
 Nightly, weaver.sandia.gov, weaver-CUDA-Albany-SFAD6
 Nightly, weaver.sandia.gov, weaver-CUDA-Albany-SFAD8
 Nightly, weaver.sandia.gov, weaver-CUDA-Albany-SFAD12
+Nightly, weaver.sandia.gov, weaver-CUDA-Albany-SFAD24
 Nightly, weaver.sandia.gov, weaver-CUDA-Albany-Perf-Tests
