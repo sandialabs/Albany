@@ -121,9 +121,13 @@ evaluateFields(typename Traits::EvalData workset)
   // Zero out local response
   PHAL::set(this->local_response_eval, 0.0);
 
-  diffDims = useCollapsedSidesets ? dims[2] : dims[3];
-  diff_1 = Kokkos::View<ScalarT*,  PHX::Device>("diff_1", diffDims);
-  diff_2 = Kokkos::View<ScalarT**, PHX::Device>("diff_2", diffDims, diffDims);
+  if (fieldDim == 1) {
+    diffDims = useCollapsedSidesets ? dims[2] : dims[3];
+    diff_1 = Kokkos::View<ScalarT*,  PHX::Device>("diff_1", diffDims);
+  } else if (fieldDim == 2) {
+    diffDims = useCollapsedSidesets ? dims[2] : dims[3];
+    diff_2 = Kokkos::View<ScalarT**, PHX::Device>("diff_2", diffDims, diffDims);
+  }
 
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
   {
