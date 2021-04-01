@@ -35,8 +35,8 @@ ALBOUTDIR=$NIGHTLYDIR/Albany_out
 # Must be set
 TRILINOS_BRANCH=develop
 
-export https_proxy="https://wwwproxy.ca.sandia.gov:80"
-export http_proxy="http://wwwproxy.ca.sandia.gov:80"
+export https_proxy="https://proxy.ca.sandia.gov:80"
+export http_proxy="http://proxy.ca.sandia.gov:80"
 
 
 #IKT, 1/4/17: the following are for mockba original compiler (source ~/paths) 
