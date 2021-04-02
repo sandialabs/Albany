@@ -67,10 +67,10 @@ namespace Albany
     }
 
     // build the connection manager
-    const Teuchos::RCP<Albany::STKConnManager>
+    Teuchos::RCP<Albany::STKConnManager>
         stkConnMngr = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_));
-    const Teuchos::RCP<panzer::ConnManager>
-        connMngr = stkConnMngr;
+
+    connMngr = stkConnMngr;
 
     // build the DOF manager for the problem
     if (const Teuchos::MpiComm<int> *mpiComm = dynamic_cast<const Teuchos::MpiComm<int> *>(comm.get()))
@@ -125,6 +125,8 @@ namespace Albany
             }
           }
 
+          fieldToElementBlockID[blocks[i][j]] = mesh;
+
           RCP<const panzer::FieldPattern> pattern;
           std::string topo_name = eb_topology.getName();
           if (type == "HVOL_C0")
@@ -164,6 +166,7 @@ namespace Albany
       }
 
       blockedDOFManager->setFieldOrder(blocks);
+      n_f_blocks = blockedDOFManager->getNumFieldBlocks();
 
       blockedDOFManager->buildGlobalUnknowns();
       blockedDOFManager->printFieldInformation(*out);
@@ -173,16 +176,31 @@ namespace Albany
   void
   BlockedSTKDiscretization::computeProductVectorSpaces()
   {
-    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_vs(n_m_blocks);
-    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_node_vs(n_m_blocks);
-    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_overlap_vs(n_m_blocks);
-    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_overlap_node_vs(n_m_blocks);
+    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_vs(n_f_blocks);
+    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_node_vs(n_f_blocks);
+    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_overlap_vs(n_f_blocks);
+    Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_overlap_node_vs(n_f_blocks);
 
-    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
+    for (size_t i_block = 0; i_block < n_f_blocks; ++i_block)
     {
-      m_vs[i_block] = this->getVectorSpace(i_block);
+      std::vector<panzer::GlobalOrdinal> indices, ov_indices;
+      std::vector<GO> t_indices, t_ov_indices;
+
+      const std::vector<Teuchos::RCP<panzer::GlobalIndexer>> &subManagers =
+          blockedDOFManager->getFieldDOFManagers();
+
+      subManagers[i_block]->getOwnedIndices(indices);
+      subManagers[i_block]->getOwnedAndGhostedIndices(ov_indices);
+
+      for (auto i : indices)
+        t_indices.push_back(i);
+      for (auto i : ov_indices)
+        t_ov_indices.push_back(i);
+
+      m_vs[i_block] = Albany::createVectorSpace(comm, t_indices);
+      m_overlap_vs[i_block] = Albany::createVectorSpace(comm, t_ov_indices);
+
       m_node_vs[i_block] = this->getNodeVectorSpace(i_block);
-      m_overlap_vs[i_block] = this->getOverlapVectorSpace(i_block);
       m_overlap_node_vs[i_block] = this->getOverlapNodeVectorSpace(i_block);
     }
 
@@ -202,13 +220,9 @@ namespace Albany
         Teuchos::rcp(new ThyraBlockedCrsMatrixFactory(m_overlap_pvs,
                                                       m_overlap_pvs));
 
-    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
+    for (size_t i_block = 0; i_block < n_f_blocks; ++i_block)
     {
-      // For the diagonal block we reuse the graph previously computed:
-      m_jac_factory->setBlockFactory(i_block, i_block, m_blocks[i_block]->m_jac_factory);
-
-      // Then, we loop over the off diagonal blocks:
-      for (size_t j_block = 0; j_block < i_block; ++j_block)
+      for (size_t j_block = 0; j_block < n_f_blocks; ++j_block)
         this->computeGraphs(i_block, j_block);
     }
 
@@ -216,9 +230,88 @@ namespace Albany
     m_overlap_jac_factory->fillComplete();
   }
 
+  std::vector<std::string> intersection(std::vector<std::string> &v1,
+                                        std::vector<std::string> &v2)
+  {
+    std::vector<std::string> v3;
+
+    std::sort(v1.begin(), v1.end());
+    std::sort(v2.begin(), v2.end());
+
+    std::set_intersection(v1.begin(), v1.end(),
+                          v2.begin(), v2.end(),
+                          back_inserter(v3));
+    return v3;
+  }
+
   void
   BlockedSTKDiscretization::computeGraphs(const size_t i_block, const size_t j_block)
   {
+    const std::vector<Teuchos::RCP<panzer::GlobalIndexer>> &subManagers =
+        blockedDOFManager->getFieldDOFManagers();
+
+    Teuchos::RCP<panzer::GlobalIndexer> manager_i_block = subManagers[i_block];
+    Teuchos::RCP<panzer::GlobalIndexer> manager_j_block = subManagers[j_block];
+
+    std::vector<std::string> elementBlockID_i_block;
+    std::vector<std::string> elementBlockID_j_block;
+
+    for (size_t i_field = 0; i_field < manager_i_block->getNumFields(); ++i_field)
+      if (std::find(elementBlockID_i_block.begin(), elementBlockID_i_block.end(),
+                    fieldToElementBlockID[manager_i_block->getFieldString(i_field)]) == elementBlockID_i_block.end())
+        elementBlockID_i_block.push_back(fieldToElementBlockID[manager_i_block->getFieldString(i_field)]);
+
+    for (size_t i_field = 0; i_field < manager_j_block->getNumFields(); ++i_field)
+      if (std::find(elementBlockID_j_block.begin(), elementBlockID_j_block.end(),
+                    fieldToElementBlockID[manager_j_block->getFieldString(i_field)]) == elementBlockID_j_block.end())
+        elementBlockID_j_block.push_back(fieldToElementBlockID[manager_j_block->getFieldString(i_field)]);
+
+    auto commonBlockID = intersection(elementBlockID_i_block, elementBlockID_j_block);
+
+    Teuchos::RCP<const Thyra_VectorSpace> domain_vs = this->getVectorSpace(j_block);
+    Teuchos::RCP<const Thyra_VectorSpace> range_vs = this->getVectorSpace(i_block);
+    Teuchos::RCP<const Thyra_VectorSpace> ov_domain_vs = this->getOverlapVectorSpace(j_block);
+    Teuchos::RCP<const Thyra_VectorSpace> ov_range_vs = this->getOverlapVectorSpace(i_block);
+
+    Teuchos::RCP<ThyraCrsMatrixFactory> m_current_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(
+        domain_vs, range_vs, ov_domain_vs, ov_range_vs));
+
+    m_jac_factory->setBlockFactory(i_block, j_block, m_current_jac_factory);
+
+    if (commonBlockID.size() > 0)
+    {
+      // Loop over the element blocks:
+      for (std::string blockID : commonBlockID)
+      {
+        const std::vector<int> &elementBlock = connMngr->getElementBlock(blockID);
+
+        // Loop over the elements:
+        for (int elem_local_id : elementBlock)
+        {
+          std::vector<panzer::GlobalOrdinal> gids_i;
+          std::vector<panzer::GlobalOrdinal> gids_j;
+
+          std::vector<bool> gids_owned_i;
+
+          manager_i_block->getElementGIDs(elem_local_id, gids_i);
+          manager_j_block->getElementGIDs(elem_local_id, gids_j);
+
+          manager_i_block->ownedIndices(gids_i, gids_owned_i);
+
+          for (size_t gids_i_index = 0; gids_i_index < gids_i.size(); ++gids_i_index)
+          {
+            if (gids_owned_i[gids_i_index])
+            {
+              std::vector<GO> cols;
+              for (auto gids_j_j : gids_j)
+                cols.push_back(gids_j_j);
+
+              m_current_jac_factory->insertGlobalIndices(gids_i[gids_i_index], Teuchos::arrayViewFromVector(cols));
+            }
+          }
+        }
+      }
+    }
   }
 
   void
@@ -263,18 +356,18 @@ namespace Albany
   Teuchos::RCP<const Thyra_VectorSpace>
   BlockedSTKDiscretization::getVectorSpace(const size_t i_block) const
   {
-    return m_blocks[i_block]->getVectorSpace();
+    return m_pvs->getBlock(i_block);
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
   BlockedSTKDiscretization::getOverlapVectorSpace() const
   {
-    return this->getOverlapVectorSpace();
+    return this->getOverlapVectorSpace(0);
   }
   Teuchos::RCP<const Thyra_VectorSpace>
   BlockedSTKDiscretization::getOverlapVectorSpace(const size_t i_block) const
   {
-    return m_blocks[i_block]->getOverlapVectorSpace();
+    return m_overlap_pvs->getBlock(i_block);
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
@@ -352,12 +445,6 @@ namespace Albany
   void
   BlockedSTKDiscretization::updateMesh()
   {
-    if (Teuchos::nonnull(blockedDOFManager))
-    {
-      ; //blockedDOFManager->buildGlobalUnknowns();
-      ; //blockedDOFManager->printFieldInformation(*out);
-    }
-
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
       this->updateMesh(i_block);
 
@@ -639,8 +726,9 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
 
     std::string::size_type nextOpenBracket, lastCloseBracket, nextCloseBracket, nextComa, pos, lastPos;
 
-    lastPos = fieldOrder.find_first_not_of("[ ");
+    lastPos = fieldOrder.find_first_of("[");
     lastCloseBracket = fieldOrder.find_last_of("]");
+    ++lastPos;
 
     do
     {
@@ -679,13 +767,13 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
       }
       else
       {
-        pos = fieldOrder.find_first_of(",", lastPos);
+        pos = fieldOrder.find_first_of("],", lastPos);
 
         current->push_back(formatFieldName(fieldOrder.substr(lastPos, pos - lastPos)));
         lastPos = fieldOrder.find_first_not_of(", ", pos);
       }
       blocks.push_back(*current);
       nextCloseBracket = fieldOrder.find_first_of("]", lastPos);
-    } while (nextCloseBracket < lastCloseBracket);
+    } while (lastPos < lastCloseBracket);
   }
 } // namespace Albany

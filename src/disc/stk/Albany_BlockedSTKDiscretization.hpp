@@ -778,6 +778,17 @@ namespace Albany
       return m_blocks[i_block]->getOverlapGlobalLocalIndexer(field_name);
     }
 
+    int
+    getNumDiscretizationBlocks() const
+    {
+      return n_m_blocks;
+    }
+
+    int
+    getNumFieldBlocks() const
+    {
+      return n_f_blocks;
+    }
     // GAH - End serious look
 
     // ==================== Members =================== //
@@ -798,9 +809,6 @@ namespace Albany
     //! Jacobian matrix graph proxy (owned and overlap)
     Teuchos::RCP<ThyraBlockedCrsMatrixFactory> m_jac_factory;
     Teuchos::RCP<ThyraBlockedCrsMatrixFactory> m_overlap_jac_factory;
-
-    //! Equations that are defined only on some side sets of the mesh
-    std::map<int, std::vector<std::string>> sideSetEquations;
 
     //! Number of elements on this processor
     unsigned int numMyElements;
@@ -861,10 +869,13 @@ namespace Albany
   private:
     Teuchos::Array<Teuchos::RCP<disc_type>> m_blocks;
     size_t n_m_blocks;
+    size_t n_f_blocks;
 
     Teuchos::RCP<ThyraBlockedCrsMatrixFactory> nodalMatrixFactory;
 
     Teuchos::RCP<panzer::BlockedDOFManager> blockedDOFManager;
+    Teuchos::RCP<panzer::ConnManager> connMngr;
+    std::map<std::string, std::string> fieldToElementBlockID;
   };
 
 } // namespace Albany

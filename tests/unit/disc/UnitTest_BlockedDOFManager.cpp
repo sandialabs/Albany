@@ -288,7 +288,7 @@ This is just a start, to serve as an example. This has not been thought through 
 
       // Build an STK Discretization object that holds the test mesh "2D_Blk_Test.e"
 
-      bool useExodus = false;
+      bool useExodus = true;
       // 2D, quad, 3 block mesh built in Cubit.
       Teuchos::RCP<Teuchos::ParameterList> discParams = rcp(new Teuchos::ParameterList);
 
@@ -331,7 +331,7 @@ This is just a start, to serve as an example. This has not been thought through 
          db0Params->set<std::string>("Name", "vol_C1");
          db0Params->set<std::string>("Mesh", "left_lower_qtr");
          db0Params->set<std::string>("FE Type", "HGRAD_C1");
-         db0Params->set<int>("Number of equations", 3);
+         db0Params->set<int>("Number of equations", 1);
 
          db1Params->set<std::string>("Name", "basal_C1");
          db1Params->set<std::string>("Mesh", "left_upper_qtr");
@@ -339,7 +339,7 @@ This is just a start, to serve as an example. This has not been thought through 
          db1Params->set<int>("Number of equations", 1);
 
          db2Params->set<std::string>("Name", "basal_C0");
-         db2Params->set<std::string>("Mesh", "right_half");
+         db2Params->set<std::string>("Mesh", "left_lower_qtr");
          db2Params->set<std::string>("FE Type", "HVOL_C0");
          db2Params->set<int>("Number of equations", 1);
       }
@@ -347,23 +347,23 @@ This is just a start, to serve as an example. This has not been thought through 
       {
          db0Params->set<std::string>("Name", "vol_C1");
          db0Params->set<std::string>("Mesh", "EB_Body_1");
-         db0Params->set<std::string>("FE Type", "HGRAD_C1");
-         db0Params->set<int>("Number of equations", 3);
+         db0Params->set<std::string>("FE Type", "HVOL_C0");
+         db0Params->set<int>("Number of equations", 1);
 
          db1Params->set<std::string>("Name", "basal_C1");
-         db1Params->set<std::string>("Mesh", "EB_Bottom");
+         db1Params->set<std::string>("Mesh", "EB_Body_1");
          db1Params->set<std::string>("FE Type", "HGRAD_C1");
          db1Params->set<int>("Number of equations", 1);
 
          db2Params->set<std::string>("Name", "basal_C0");
-         db2Params->set<std::string>("Mesh", "EB_Bottom");
-         db2Params->set<std::string>("FE Type", "HVOL_C0");
+         db2Params->set<std::string>("Mesh", "EB_Body_1");
+         db2Params->set<std::string>("FE Type", "HGRAD_C1");
          db2Params->set<int>("Number of equations", 1);
       }
 
       Teuchos::RCP<Teuchos::ParameterList> sParams = Teuchos::sublist(blockedDiscParams, "Solution", false);
-      sParams->set<std::string>("blocks names", "[ velocity , [N,h]]");
-      sParams->set<std::string>("blocks discretizations", "[ vol_C1, [basal_C1, basal_C0] ]");
+      sParams->set<std::string>("blocks names", "[ [Ux, Uy, Uz], N, h]");
+      sParams->set<std::string>("blocks discretizations", "[ [vol_C1, vol_C1, vol_C1], basal_C1, basal_C0 ]");
 
       Teuchos::RCP<AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
 
@@ -381,32 +381,24 @@ This is just a start, to serve as an example. This has not been thought through 
       auto nvs = stkDisc->getOverlapProductVectorSpace();
       TEST_EQUALITY(Teuchos::nonnull(nvs), true);
 
-      auto nv0 = stkDisc->getOverlapVectorSpace(0);
-      auto nv1 = stkDisc->getOverlapVectorSpace(1);
-      auto nv2 = stkDisc->getOverlapVectorSpace(2);
+      int total_size = 0;
 
-      std::cout << " Dimension of the first block: " << nv0->dim() << std::endl;
-      std::cout << " Dimension of the second block: " << nv1->dim() << std::endl;
-      std::cout << " Dimension of the third block: " << nv2->dim() << std::endl;
-      std::cout << " Dimension of the product vector space: " << nvs->dim() << std::endl;
+      for (size_t i = 0; i < stkDisc->getNumFieldBlocks(); ++i)
+         total_size += stkDisc->getOverlapVectorSpace(i)->dim();
 
-      TEST_EQUALITY(nvs->dim(), nv0->dim() + nv1->dim() + nv2->dim());
+      TEST_EQUALITY(nvs->dim(), total_size);
 
       Teuchos::RCP<Thyra_BlockedLinearOp> bJacobianOp = stkDisc->createBlockedJacobianOp();
 
-      Teuchos::RCP<const Thyra_LinearOp> jacobian00 = bJacobianOp->getBlock(0, 0);
-      Teuchos::RCP<const Thyra_LinearOp> jacobian11 = bJacobianOp->getBlock(1, 1);
-      Teuchos::RCP<const Thyra_LinearOp> jacobian22 = bJacobianOp->getBlock(2, 2);
-
       Teuchos::RCP<Teuchos::FancyOStream> out1 = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-      for (size_t i = 0; i < 3; ++i)
-         for (size_t j = 0; j < i + 1; ++j)
+      for (size_t i = 0; i < stkDisc->getNumFieldBlocks(); ++i)
+         for (size_t j = 0; j < stkDisc->getNumFieldBlocks(); ++j)
          {
             Teuchos::RCP<const Thyra_LinearOp> jacobian = bJacobianOp->getBlock(i, j);
 
             *out1 << "Before describe jacobian " << i << " " << j << std::endl;
-            //Albany::describe(jacobian.getConst(), *out1, Teuchos::VERB_EXTREME);
+            Albany::describe(jacobian.getConst(), *out1, Teuchos::VERB_EXTREME);
             *out1 << "After describe jacobian " << i << " " << j << std::endl;
          }
 
@@ -422,13 +414,13 @@ This is just a start, to serve as an example. This has not been thought through 
 
       if (useExodus)
       {
-         TEST_EQUALITY(fadl0, 12);
+         TEST_EQUALITY(fadl0, 4);
          TEST_EQUALITY(fadl1, 4);
          TEST_EQUALITY(fadl2, 4);
       }
       else
       {
-         TEST_EQUALITY(fadl0, 24);
+         TEST_EQUALITY(fadl0, 8);
          TEST_EQUALITY(fadl1, 8);
          TEST_EQUALITY(fadl2, 8);
       }
