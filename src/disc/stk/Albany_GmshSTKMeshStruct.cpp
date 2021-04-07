@@ -312,7 +312,8 @@ void Albany::GmshSTKMeshStruct::setBulkData(
     }
 
     for (int i = 0; i < NumElems; i++) {
-      ebNo = ebNameToIndex[gmshPhysicalTagToEBName[elems[NumElemNodes][i]]];
+      if (gmshPhysicalTagToEBName.size()>0)
+        ebNo = ebNameToIndex[gmshPhysicalTagToEBName[elems[NumElemNodes][i]]];
 
       singlePartVec[0] = partVec[ebNo];
       stk::mesh::Entity elem = bulkData->declare_element(i + 1, singlePartVec);
@@ -1431,7 +1432,6 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
 
       add_nodeset( name, tag, nsNames);
       add_sideset( name, tag, ssNames);
-      add_element_block( name, tag);
     }
     for( it = physical_volume_names.begin(); it != physical_volume_names.end(); it++)
     {
@@ -1448,7 +1448,7 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
 void Albany::GmshSTKMeshStruct::add_element_block( std::string eb_name, int tag)
 {
   std::stringstream volume_i;
-  volume_i << "EB" << eb_name;
+  volume_i << "ElementBlock" << eb_name;
 
   stk::topology etopology = this->get_topology();
 
@@ -1814,11 +1814,9 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
       for( size_t i = 0; i < names2D.size(); i++)
       {
         std::string name = names2D[i];
-        std::string ebname = "EB" + name;
 
         int surface_tag  = physical_surface_tags[id2D[i]];
-    
-        gmshPhysicalTagToEBName.insert( std::make_pair( id2D[i], ebname));
+
         physical_names.insert( std::make_pair( name, surface_tag));
       }
     }
@@ -1836,7 +1834,7 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
       for( size_t i = 0; i < names3D.size(); i++)
       {
         std::string name = names3D[i];
-        std::string ebname = "EB" + name;
+        std::string ebname = "ElementBlock" + name;
 
         int volume_tag  = physical_volume_tags[id3D[i]];
 

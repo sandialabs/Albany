@@ -19,6 +19,8 @@
 #include "Panzer_BlockedDOFManager.hpp"
 //#include "Albany_NullSpaceUtils.hpp"
 
+#include "STKConnManager.hpp"
+
 namespace Albany
 {
 
@@ -64,10 +66,7 @@ namespace Albany
     void printConnectivity() const;
     void printConnectivity(const size_t i_block) const;
 
-    int getBlockFADLength(const size_t i_block)
-    {
-      return m_blocks[i_block]->getFADLength();
-    }
+    int getBlockFADLength(const size_t i_block);
 
     int getBlockFADOffset(const size_t i_block)
     {
@@ -266,14 +265,14 @@ namespace Albany
     }
 
     void
-    setBlockedDOFManager(Teuchos::RCP<panzer::BlockedDOFManager> blockedDOFManager_)
+    setBlockedDOFManager(Teuchos::RCP<panzer::BlockedDOFManager> blockedDOFManagerVolume_)
     {
-      blockedDOFManager = blockedDOFManager_;
+      blockedDOFManagerVolume = blockedDOFManagerVolume_;
     }
     Teuchos::RCP<panzer::BlockedDOFManager>
     getBlockedDOFManager()
     {
-      return blockedDOFManager;
+      return blockedDOFManagerVolume;
     }
 
     const NodalDOFManager &
@@ -873,9 +872,21 @@ namespace Albany
 
     Teuchos::RCP<ThyraBlockedCrsMatrixFactory> nodalMatrixFactory;
 
-    Teuchos::RCP<panzer::BlockedDOFManager> blockedDOFManager;
-    Teuchos::RCP<panzer::ConnManager> connMngr;
+    Teuchos::RCP<panzer::BlockedDOFManager> blockedDOFManagerVolume;
+    Teuchos::RCP<panzer::BlockedDOFManager> blockedDOFManagerSide;
+
+    std::vector<bool> isBlockVolume;
+    std::vector<int> localSSElementIDtoVolElementID;
+    std::vector<int> fadLengths;
+
+    Teuchos::RCP<Albany::STKConnManager> stkConnMngrVolume;
+    Teuchos::RCP<Albany::STKConnManager> stkConnMngrSide;
+
     std::map<std::string, std::string> fieldToElementBlockID;
+
+    std::string sideName;
+
+    bool hasSide;
   };
 
 } // namespace Albany

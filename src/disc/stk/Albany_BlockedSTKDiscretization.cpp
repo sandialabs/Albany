@@ -53,37 +53,63 @@ namespace Albany
 
     Teuchos::RCP<Teuchos::ParameterList> bDiscParams = Teuchos::sublist(discParams, "Discretization", true);
 
-    n_m_blocks = bDiscParams->get<int>("Num Blocks");
+    sideName = bDiscParams->get<std::string>("Side Name", "None");
+    if (sideName != "None")
+    {
+      hasSide = true;
+      n_m_blocks = 2;
+    }
+    else
+    {
+      hasSide = false;
+      n_m_blocks = 1;
+    }
+
+    int n_DiscParamsBlocks = bDiscParams->get<int>("Num Blocks");
 
     m_blocks.resize(n_m_blocks);
 
-    for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
-    {
-      int neq = bDiscParams->sublist(Albany::strint("Block", i_block)).get<int>("Number of equations");
-      std::string partName = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Mesh");
+    Teuchos::RCP<AbstractSTKMeshStruct> ssSTKMeshStruct_ = Teuchos::null;
 
-      m_blocks[i_block] = Teuchos::rcp(new disc_type(discParams, neq, stkMeshStruct_, comm_,
-                                                     rigidBodyModes_, sideSetEquations_));
+    m_blocks[0] = Teuchos::rcp(new disc_type(discParams, 1, stkMeshStruct_, comm_,
+                                             rigidBodyModes_, sideSetEquations_));
+
+    if (hasSide)
+    {
+      ssSTKMeshStruct_ = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(stkMeshStruct_)->sideSetMeshStructs[sideName];
+
+      m_blocks[1] = Teuchos::rcp(new disc_type(discParams, 1, ssSTKMeshStruct_, comm_,
+                                               rigidBodyModes_, sideSetEquations_));
     }
 
     // build the connection manager
-    Teuchos::RCP<Albany::STKConnManager>
-        stkConnMngr = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_));
+    stkConnMngrVolume = Teuchos::rcp(new Albany::STKConnManager(stkMeshStruct_));
 
-    connMngr = stkConnMngr;
+    if (hasSide)
+      stkConnMngrSide = Teuchos::rcp(new Albany::STKConnManager(ssSTKMeshStruct_));
+
+    Teuchos::RCP<panzer::ConnManager> connMngrVolume, connMngrSide;
+
+    connMngrVolume = stkConnMngrVolume;
+    if (hasSide)
+      connMngrSide = stkConnMngrSide;
 
     // build the DOF manager for the problem
     if (const Teuchos::MpiComm<int> *mpiComm = dynamic_cast<const Teuchos::MpiComm<int> *>(comm.get()))
     {
       MPI_Comm rawComm = (*mpiComm->getRawMpiComm().get())();
 
-      blockedDOFManager = Teuchos::rcp(new panzer::BlockedDOFManager(connMngr, rawComm));
+      blockedDOFManagerVolume = Teuchos::rcp(new panzer::BlockedDOFManager(connMngrVolume, rawComm));
+      if (hasSide)
+        blockedDOFManagerSide = Teuchos::rcp(new panzer::BlockedDOFManager(connMngrSide, rawComm));
 
       // by default assume orientations are not required
       bool orientationsRequired = false;
 
       // set orientations required flag
-      blockedDOFManager->setOrientationsRequired(orientationsRequired);
+      blockedDOFManagerVolume->setOrientationsRequired(orientationsRequired);
+      if (hasSide)
+        blockedDOFManagerSide->setOrientationsRequired(orientationsRequired);
 
       // blocked degree of freedom manager
       std::string fieldOrder = discParams->sublist("Solution").get<std::string>("blocks names");
@@ -92,84 +118,244 @@ namespace Albany
       std::vector<std::vector<std::string>> blocks;
       std::vector<std::vector<std::string>> blocksDiscretizationName;
 
+      std::vector<std::vector<std::string>> blocksVolume;
+      std::vector<std::vector<std::string>> blocksSide;
+
       buildNewBlocking(fieldOrder, blocks);
       buildNewBlocking(fieldDiscretization, blocksDiscretizationName);
 
-      std::vector<shards::CellTopology> elementBlockTopologies;
-      std::vector<std::string> elementBlockNames;
+      std::vector<shards::CellTopology> elementBlockTopologiesVolume;
+      std::vector<std::string> elementBlockNamesVolume;
 
-      stkConnMngr->getElementBlockTopologies(elementBlockTopologies);
-      stkConnMngr->getElementBlockNames(elementBlockNames);
+      std::vector<shards::CellTopology> elementBlockTopologiesSide;
+      std::vector<std::string> elementBlockNamesSide;
+
+      stkConnMngrVolume->getElementBlockTopologies(elementBlockTopologiesVolume);
+      stkConnMngrVolume->getElementBlockNames(elementBlockNamesVolume);
+
+      if (hasSide)
+      {
+        stkConnMngrSide->getElementBlockTopologies(elementBlockTopologiesSide);
+        stkConnMngrSide->getElementBlockNames(elementBlockNamesSide);
+      }
+
+      std::vector<int> idBlocksVolume;
+      std::vector<int> idBlocksSide;
 
       for (size_t i = 0; i < blocks.size(); ++i)
       {
+        std::vector<std::string> currentBlocksVolume;
+        std::vector<std::string> currentBlocksSide;
+
+        bool previousFieldsVolume = false;
+        bool previousFieldsSide = false;
+
+        std::string currentType = "None";
+        std::string currentMesh = "None";
+
+        int n_dofs_per_field_per_element;
+
         for (size_t j = 0; j < blocks[i].size(); ++j)
         {
-          std::string type, mesh;
+          std::string type, mesh, domain;
           shards::CellTopology eb_topology;
-          for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
+          for (size_t i_block = 0; i_block < n_DiscParamsBlocks; ++i_block)
           {
             if (blocksDiscretizationName[i][j] == bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Name"))
             {
               type = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("FE Type");
-              mesh = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Mesh");
+              mesh = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Mesh", "Element Block 0");
+              domain = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Domain", "Volume");
               break;
             }
           }
-          for (size_t i_ebn = 0; i_ebn < elementBlockNames.size(); ++i_ebn)
+          if (domain == "Volume")
           {
-            if (elementBlockNames[i_ebn] == mesh)
+            TEUCHOS_TEST_FOR_EXCEPTION(previousFieldsSide, std::logic_error,
+                                       "Error! Cannot have fields defined in the volume and on the side for the same block.\n");
+
+            for (size_t i_ebn = 0; i_ebn < elementBlockNamesVolume.size(); ++i_ebn)
             {
-              eb_topology = elementBlockTopologies[i_ebn];
-              break;
+              if (elementBlockNamesVolume[i_ebn] == mesh)
+              {
+                eb_topology = elementBlockTopologiesVolume[i_ebn];
+                break;
+              }
             }
+
+            RCP<const panzer::FieldPattern> pattern;
+            std::string topo_name = eb_topology.getName();
+            if (type == "HVOL_C0")
+            {
+              Teuchos::RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis =
+                  Teuchos::rcp(new Intrepid2::Basis_HVOL_C0_FEM<PHX::exec_space, double, double>(eb_topology));
+              pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
+              n_dofs_per_field_per_element = 1;
+            }
+            if (type == "HGRAD_C1")
+            {
+              if (topo_name == "Quadrilateral_4")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 4;
+              }
+              else if (topo_name == "Triangle_3")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 3;
+              }
+              else if (topo_name == "Tetrahedron_4")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 4;
+              }
+              else if (topo_name == "Hexahedron_8")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 8;
+              }
+              else
+                TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unsupported topology \"" << topo_name << "\".\n");
+            }
+            else if (type == "HGRAD_C2")
+            {
+              if (topo_name == "Quadrilateral_4")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 9;
+              }
+              else if (topo_name == "Triangle_3")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C2_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 6;
+              }
+              else if (topo_name == "Tetrahedron_4")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TET_C2_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 10;
+              }
+              else if (topo_name == "Hexahedron_8")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_HEX_C2_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 27;
+              }
+              else
+                TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unsupported topology \"" << topo_name << "\".\n");
+            }
+            blockedDOFManagerVolume->addField(mesh, blocks[i][j], pattern);
+
+            currentBlocksVolume.push_back(blocks[i][j]);
+
+            stkConnMngrVolume->buildConnectivity(*pattern);
+
+            previousFieldsVolume = true;
+          }
+          if (domain == "Side")
+          {
+            TEUCHOS_TEST_FOR_EXCEPTION(!hasSide, std::logic_error,
+                                       "Error! Cannot have fields defined on the side as no side name has been provided.\n");
+
+            TEUCHOS_TEST_FOR_EXCEPTION(previousFieldsVolume, std::logic_error,
+                                       "Error! Cannot have fields defined in the volume and on the side for the same block.\n");
+
+            for (size_t i_ebn = 0; i_ebn < elementBlockNamesSide.size(); ++i_ebn)
+            {
+              if (elementBlockNamesSide[i_ebn] == mesh)
+              {
+                eb_topology = elementBlockTopologiesSide[i_ebn];
+                break;
+              }
+            }
+
+            RCP<const panzer::FieldPattern> pattern;
+            std::string topo_name = eb_topology.getName();
+            if (type == "HVOL_C0")
+            {
+              Teuchos::RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis =
+                  Teuchos::rcp(new Intrepid2::Basis_HVOL_C0_FEM<PHX::exec_space, double, double>(eb_topology));
+              pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
+              n_dofs_per_field_per_element = 1;
+            }
+            if (type == "HGRAD_C1")
+            {
+              if (topo_name == "Quadrilateral_4")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 4;
+              }
+              else if (topo_name == "Triangle_3")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 3;
+              }
+              else
+                TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unsupported topology \"" << topo_name << "\".\n");
+            }
+            else if (type == "HGRAD_C2")
+            {
+              if (topo_name == "Quadrilateral_4")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 9;
+              }
+              else if (topo_name == "Triangle_3")
+              {
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C2_FEM<PHX::exec_space, double, double>>();
+                n_dofs_per_field_per_element = 6;
+              }
+              else
+                TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unsupported topology \"" << topo_name << "\".\n");
+            }
+            blockedDOFManagerSide->addField(mesh, blocks[i][j], pattern);
+
+            currentBlocksSide.push_back(blocks[i][j]);
+
+            stkConnMngrSide->buildConnectivity(*pattern);
+
+            previousFieldsSide = true;
           }
 
           fieldToElementBlockID[blocks[i][j]] = mesh;
 
-          RCP<const panzer::FieldPattern> pattern;
-          std::string topo_name = eb_topology.getName();
-          if (type == "HVOL_C0")
-          {
-            Teuchos::RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis =
-                Teuchos::rcp(new Intrepid2::Basis_HVOL_C0_FEM<PHX::exec_space, double, double>(eb_topology));
-            pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
-          }
-          if (type == "HGRAD_C1")
-          {
-            if (topo_name == "Quadrilateral_4")
-              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::exec_space, double, double>>();
-            else if (topo_name == "Triangle_3")
-              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
-            else if (topo_name == "Tetrahedron_4")
-              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::exec_space, double, double>>();
-            else if (topo_name == "Hexahedron_8")
-              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::exec_space, double, double>>();
-            else
-              TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unsupported topology \"" << topo_name << "\".\n");
-          }
-          else if (type == "HGRAD_C2")
-          {
-            if (topo_name == "Quadrilateral_4")
-              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::exec_space, double, double>>();
-            else if (topo_name == "Triangle_3")
-              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C2_FEM<PHX::exec_space, double, double>>();
-            else if (topo_name == "Tetrahedron_4")
-              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TET_C2_FEM<PHX::exec_space, double, double>>();
-            else if (topo_name == "Hexahedron_8")
-              pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_HEX_C2_FEM<PHX::exec_space, double, double>>();
-            else
-              TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Unsupported topology \"" << topo_name << "\".\n");
-          }
-          blockedDOFManager->addField(mesh, blocks[i][j], pattern);
+          if (currentType == "None")
+            currentType = type;
+          else
+            TEUCHOS_TEST_FOR_EXCEPTION(currentType != type, std::logic_error,
+                                       "Error! Cannot have more than one type for the same block.\n");
+
+          if (currentMesh == "None")
+            currentMesh = mesh;
+          else
+            TEUCHOS_TEST_FOR_EXCEPTION(currentMesh != mesh, std::logic_error,
+                                       "Error! Cannot have more than one mesh for the same block.\n");
         }
+
+        if (previousFieldsVolume)
+          isBlockVolume.push_back(true);
+        else
+          isBlockVolume.push_back(false);
+
+        blocksVolume.push_back(currentBlocksVolume);
+        if (hasSide)
+          blocksSide.push_back(currentBlocksSide);
+
+        fadLengths.push_back(blocks[i].size() * n_dofs_per_field_per_element);
       }
 
-      blockedDOFManager->setFieldOrder(blocks);
-      n_f_blocks = blockedDOFManager->getNumFieldBlocks();
+      blockedDOFManagerVolume->setFieldOrder(blocksVolume);
+      if (hasSide)
+        blockedDOFManagerSide->setFieldOrder(blocksSide);
 
-      blockedDOFManager->buildGlobalUnknowns();
-      blockedDOFManager->printFieldInformation(*out);
+      n_f_blocks = blockedDOFManagerVolume->getNumFieldBlocks();
+
+      blockedDOFManagerVolume->buildGlobalUnknowns();
+      blockedDOFManagerVolume->printFieldInformation(*out);
+
+      if (hasSide)
+      {
+        blockedDOFManagerSide->buildGlobalUnknowns();
+        blockedDOFManagerSide->printFieldInformation(*out);
+      }
     }
   }
 
@@ -181,16 +367,34 @@ namespace Albany
     Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_overlap_vs(n_f_blocks);
     Teuchos::Array<Teuchos::RCP<const Thyra_VectorSpace>> m_overlap_node_vs(n_f_blocks);
 
+    const std::vector<Teuchos::RCP<panzer::GlobalIndexer>> &subManagersVolume =
+        blockedDOFManagerVolume->getFieldDOFManagers();
+
+    std::vector<Teuchos::RCP<panzer::GlobalIndexer>> subManagersSide;
+    if (hasSide)
+      subManagersSide = blockedDOFManagerSide->getFieldDOFManagers();
+
     for (size_t i_block = 0; i_block < n_f_blocks; ++i_block)
     {
-      std::vector<panzer::GlobalOrdinal> indices, ov_indices;
+      std::vector<Tpetra_GO> indices, ov_indices, ghost_indices;
       std::vector<GO> t_indices, t_ov_indices;
 
-      const std::vector<Teuchos::RCP<panzer::GlobalIndexer>> &subManagers =
-          blockedDOFManager->getFieldDOFManagers();
+      if (isBlockVolume[i_block])
+      {
+        subManagersVolume[i_block]->getOwnedIndices(indices);
+        subManagersVolume[i_block]->getGhostedIndices(ghost_indices);
+      }
+      else if (hasSide)
+      {
+        subManagersSide[i_block]->getOwnedIndices(indices);
+        subManagersSide[i_block]->getGhostedIndices(ghost_indices);
+      }
 
-      subManagers[i_block]->getOwnedIndices(indices);
-      subManagers[i_block]->getOwnedAndGhostedIndices(ov_indices);
+      ov_indices.resize(indices.size() + ghost_indices.size());
+      for (size_t i = 0; i < indices.size(); ++i)
+        ov_indices[i] = indices[i];
+      for (size_t i = 0; i < ghost_indices.size(); ++i)
+        ov_indices[indices.size() + i] = ghost_indices[i];
 
       for (auto i : indices)
         t_indices.push_back(i);
@@ -199,15 +403,10 @@ namespace Albany
 
       m_vs[i_block] = Albany::createVectorSpace(comm, t_indices);
       m_overlap_vs[i_block] = Albany::createVectorSpace(comm, t_ov_indices);
-
-      m_node_vs[i_block] = this->getNodeVectorSpace(i_block);
-      m_overlap_node_vs[i_block] = this->getOverlapNodeVectorSpace(i_block);
     }
 
     m_pvs = Thyra::productVectorSpace<ST>(m_vs);
-    m_node_pvs = Thyra::productVectorSpace<ST>(m_node_vs);
     m_overlap_pvs = Thyra::productVectorSpace<ST>(m_overlap_vs);
-    m_overlap_node_pvs = Thyra::productVectorSpace<ST>(m_overlap_node_vs);
   }
 
   void
@@ -223,50 +422,43 @@ namespace Albany
     for (size_t i_block = 0; i_block < n_f_blocks; ++i_block)
     {
       for (size_t j_block = 0; j_block < n_f_blocks; ++j_block)
+      {
         this->computeGraphs(i_block, j_block);
+      }
     }
 
     m_jac_factory->fillComplete();
     m_overlap_jac_factory->fillComplete();
   }
 
-  std::vector<std::string> intersection(std::vector<std::string> &v1,
-                                        std::vector<std::string> &v2)
+  int BlockedSTKDiscretization::getBlockFADLength(const size_t i_block)
   {
-    std::vector<std::string> v3;
-
-    std::sort(v1.begin(), v1.end());
-    std::sort(v2.begin(), v2.end());
-
-    std::set_intersection(v1.begin(), v1.end(),
-                          v2.begin(), v2.end(),
-                          back_inserter(v3));
-    return v3;
+    return fadLengths[i_block];
   }
 
   void
   BlockedSTKDiscretization::computeGraphs(const size_t i_block, const size_t j_block)
   {
-    const std::vector<Teuchos::RCP<panzer::GlobalIndexer>> &subManagers =
-        blockedDOFManager->getFieldDOFManagers();
+    const std::vector<Teuchos::RCP<panzer::GlobalIndexer>> &subManagersVolume =
+        blockedDOFManagerVolume->getFieldDOFManagers();
 
-    Teuchos::RCP<panzer::GlobalIndexer> manager_i_block = subManagers[i_block];
-    Teuchos::RCP<panzer::GlobalIndexer> manager_j_block = subManagers[j_block];
+    std::vector<Teuchos::RCP<panzer::GlobalIndexer>> subManagersSide;
+    if (hasSide)
+      subManagersSide = blockedDOFManagerSide->getFieldDOFManagers();
 
-    std::vector<std::string> elementBlockID_i_block;
-    std::vector<std::string> elementBlockID_j_block;
+    Teuchos::RCP<panzer::GlobalIndexer> manager_i_block, manager_j_block;
 
-    for (size_t i_field = 0; i_field < manager_i_block->getNumFields(); ++i_field)
-      if (std::find(elementBlockID_i_block.begin(), elementBlockID_i_block.end(),
-                    fieldToElementBlockID[manager_i_block->getFieldString(i_field)]) == elementBlockID_i_block.end())
-        elementBlockID_i_block.push_back(fieldToElementBlockID[manager_i_block->getFieldString(i_field)]);
+    if (isBlockVolume[i_block])
+      manager_i_block = subManagersVolume[i_block];
+    else
+      manager_i_block = subManagersSide[i_block];
+    if (isBlockVolume[j_block])
+      manager_j_block = subManagersVolume[j_block];
+    else
+      manager_j_block = subManagersSide[j_block];
 
-    for (size_t i_field = 0; i_field < manager_j_block->getNumFields(); ++i_field)
-      if (std::find(elementBlockID_j_block.begin(), elementBlockID_j_block.end(),
-                    fieldToElementBlockID[manager_j_block->getFieldString(i_field)]) == elementBlockID_j_block.end())
-        elementBlockID_j_block.push_back(fieldToElementBlockID[manager_j_block->getFieldString(i_field)]);
-
-    auto commonBlockID = intersection(elementBlockID_i_block, elementBlockID_j_block);
+    bool bothVolume = isBlockVolume[i_block] && isBlockVolume[j_block];
+    bool bothSide = !isBlockVolume[i_block] && !isBlockVolume[j_block];
 
     Teuchos::RCP<const Thyra_VectorSpace> domain_vs = this->getVectorSpace(j_block);
     Teuchos::RCP<const Thyra_VectorSpace> range_vs = this->getVectorSpace(i_block);
@@ -278,38 +470,74 @@ namespace Albany
 
     m_jac_factory->setBlockFactory(i_block, j_block, m_current_jac_factory);
 
-    if (commonBlockID.size() > 0)
+    if (bothVolume || bothSide)
     {
-      // Loop over the element blocks:
-      for (std::string blockID : commonBlockID)
+      std::vector<std::string> elementBlockID_i_block;
+      std::vector<std::string> elementBlockID_j_block;
+
+      std::string blockID = fieldToElementBlockID[manager_i_block->getFieldString(0)];
+      std::string blockID_j = fieldToElementBlockID[manager_j_block->getFieldString(0)];
+
+      if (blockID == blockID_j)
       {
-        const std::vector<int> &elementBlock = connMngr->getElementBlock(blockID);
+        std::vector<int> elementBlock;
+        if (bothVolume)
+          elementBlock = stkConnMngrVolume->getElementBlock(blockID);
+        if (bothSide)
+          elementBlock = stkConnMngrSide->getElementBlock(blockID);
 
         // Loop over the elements:
         for (int elem_local_id : elementBlock)
         {
-          std::vector<panzer::GlobalOrdinal> gids_i;
-          std::vector<panzer::GlobalOrdinal> gids_j;
-
-          std::vector<bool> gids_owned_i;
+          std::vector<Tpetra_GO> gids_i, gids_j;
 
           manager_i_block->getElementGIDs(elem_local_id, gids_i);
           manager_j_block->getElementGIDs(elem_local_id, gids_j);
 
-          manager_i_block->ownedIndices(gids_i, gids_owned_i);
+          std::vector<GO> cols;
+          for (auto gids_j_j : gids_j)
+            cols.push_back(gids_j_j);
 
           for (size_t gids_i_index = 0; gids_i_index < gids_i.size(); ++gids_i_index)
-          {
-            if (gids_owned_i[gids_i_index])
-            {
-              std::vector<GO> cols;
-              for (auto gids_j_j : gids_j)
-                cols.push_back(gids_j_j);
-
-              m_current_jac_factory->insertGlobalIndices(gids_i[gids_i_index], Teuchos::arrayViewFromVector(cols));
-            }
-          }
+            m_current_jac_factory->insertGlobalIndices(gids_i[gids_i_index], Teuchos::arrayViewFromVector(cols));
         }
+      }
+    }
+    else
+    {
+      // One block is defined in the volume and one block is defined on the side
+
+      const size_t i_volume = isBlockVolume[i_block] ? i_block : j_block;
+      const size_t j_side = isBlockVolume[i_block] ? j_block : i_block;
+
+      Teuchos::RCP<panzer::GlobalIndexer> manager_i_volume, manager_j_side;
+
+      manager_i_volume = isBlockVolume[i_block] ? manager_i_block : manager_j_block;
+      manager_j_side = isBlockVolume[i_block] ? manager_j_block : manager_i_block;
+
+      std::string blockID = fieldToElementBlockID[manager_j_side->getFieldString(0)];
+
+      std::vector<int> elementBlock = stkConnMngrSide->getElementBlock(blockID);
+
+      // Loop over the elements:
+      for (int elem_local_id_side : elementBlock)
+      {
+        int elem_local_id_volume = localSSElementIDtoVolElementID[elem_local_id_side];
+
+        std::vector<Tpetra_GO> gids_i, gids_j;
+
+        int elem_local_id_i = isBlockVolume[i_block] ? elem_local_id_volume : elem_local_id_side;
+        int elem_local_id_j = isBlockVolume[i_block] ? elem_local_id_side : elem_local_id_volume;
+
+        manager_i_block->getElementGIDs(elem_local_id_i, gids_i);
+        manager_j_block->getElementGIDs(elem_local_id_j, gids_j);
+
+        std::vector<GO> cols;
+        for (auto gids_j_j : gids_j)
+          cols.push_back(gids_j_j);
+
+        for (size_t gids_i_index = 0; gids_i_index < gids_i.size(); ++gids_i_index)
+          m_current_jac_factory->insertGlobalIndices(gids_i[gids_i_index], Teuchos::arrayViewFromVector(cols));
       }
     }
   }
@@ -447,6 +675,29 @@ namespace Albany
   {
     for (size_t i_block = 0; i_block < n_m_blocks; ++i_block)
       this->updateMesh(i_block);
+
+    if (hasSide)
+    {
+      // Compute the maping from local side set element ID to
+      // volume element ID:
+
+      std::vector<stk::mesh::Entity> sides;
+      stkConnMngrVolume->getAllSides(sideName, sides);
+
+      localSSElementIDtoVolElementID.resize(sides.size());
+
+      for (auto side : sides)
+      {
+        //Get EntityId of sides
+        stk::mesh::EntityId eId = stkConnMngrVolume->elementEntityId(side);
+
+        const std::size_t local_volume_id = stkConnMngrVolume->get_parent_cell_id(side);
+
+        int local_side_id = stkConnMngrSide->elementLocalId(eId);
+
+        localSSElementIDtoVolElementID[local_side_id] = local_volume_id;
+      }
+    }
 
     computeProductVectorSpaces();
 

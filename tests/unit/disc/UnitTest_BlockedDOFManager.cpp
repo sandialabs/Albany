@@ -286,21 +286,30 @@ This is just a start, to serve as an example. This has not been thought through 
       using Teuchos::rcp;
       using Teuchos::rcp_dynamic_cast;
 
-      // Build an STK Discretization object that holds the test mesh "2D_Blk_Test.e"
+      bool useExodus = false;
+      bool verbose = false;
 
-      bool useExodus = true;
-      // 2D, quad, 3 block mesh built in Cubit.
       Teuchos::RCP<Teuchos::ParameterList> discParams = rcp(new Teuchos::ParameterList);
+
+      std::string sideName;
 
       if (useExodus)
       {
+         // This example has no side mesh and all fields are defined in the volume.
+
+         // Build an STK Discretization object that holds the test mesh "2D_Blk_Test.e"
+         // 2D, quad, 3 block mesh built in Cubit.
          discParams->set<std::string>("Exodus Input File Name", "2D_Blk_Test.e");
          discParams->set<std::string>("Method", "Exodus");
       }
       else
       {
+         // This example has a side mesh and some fields are defined on the side.
+
          discParams->set<std::string>("Gmsh Input Mesh File Name", "cube.msh");
          discParams->set<std::string>("Method", "Gmsh");
+
+         sideName = "BoundarySideSet_Bottom";
       }
 
       discParams->set<int>("Interleaved Ordering", 2);
@@ -308,7 +317,15 @@ This is just a start, to serve as an example. This has not been thought through 
       discParams->set<int>("Number Of Time Derivatives", 0);
       discParams->set<bool>("Use Serial Mesh", 1);
 
-      // Need to test various meshes, with various element types and block structures.
+      if (!useExodus)
+      {
+         Teuchos::RCP<Teuchos::ParameterList> ssDiscParams = Teuchos::sublist(discParams, "Side Set Discretizations", false);
+         Teuchos::Array<std::string> sideset(1);
+         sideset[0] = sideName;
+         ssDiscParams->set<Teuchos::Array<std::string>>("Side Sets", sideset);
+         Teuchos::RCP<Teuchos::ParameterList> params_ss = Teuchos::sublist(ssDiscParams, sideset[0], false);
+         params_ss->set<std::string>("Method", "SideSetSTK");
+      }
 
       Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
 
@@ -331,34 +348,31 @@ This is just a start, to serve as an example. This has not been thought through 
          db0Params->set<std::string>("Name", "vol_C1");
          db0Params->set<std::string>("Mesh", "left_lower_qtr");
          db0Params->set<std::string>("FE Type", "HGRAD_C1");
-         db0Params->set<int>("Number of equations", 1);
 
          db1Params->set<std::string>("Name", "basal_C1");
          db1Params->set<std::string>("Mesh", "left_upper_qtr");
          db1Params->set<std::string>("FE Type", "HGRAD_C1");
-         db1Params->set<int>("Number of equations", 1);
 
          db2Params->set<std::string>("Name", "basal_C0");
          db2Params->set<std::string>("Mesh", "left_lower_qtr");
          db2Params->set<std::string>("FE Type", "HVOL_C0");
-         db2Params->set<int>("Number of equations", 1);
       }
       else
       {
          db0Params->set<std::string>("Name", "vol_C1");
-         db0Params->set<std::string>("Mesh", "EB_Body_1");
-         db0Params->set<std::string>("FE Type", "HVOL_C0");
-         db0Params->set<int>("Number of equations", 1);
+         db0Params->set<std::string>("Mesh", "ElementBlock_Body_1");
+         db0Params->set<std::string>("FE Type", "HGRAD_C1");
+         db0Params->set<std::string>("Domain", "Volume");
 
          db1Params->set<std::string>("Name", "basal_C1");
-         db1Params->set<std::string>("Mesh", "EB_Body_1");
          db1Params->set<std::string>("FE Type", "HGRAD_C1");
-         db1Params->set<int>("Number of equations", 1);
+         db1Params->set<std::string>("Domain", "Side");
 
          db2Params->set<std::string>("Name", "basal_C0");
-         db2Params->set<std::string>("Mesh", "EB_Body_1");
-         db2Params->set<std::string>("FE Type", "HGRAD_C1");
-         db2Params->set<int>("Number of equations", 1);
+         db2Params->set<std::string>("FE Type", "HVOL_C0");
+         db2Params->set<std::string>("Domain", "Side");
+
+         dParams->set<std::string>("Side Name", sideName);
       }
 
       Teuchos::RCP<Teuchos::ParameterList> sParams = Teuchos::sublist(blockedDiscParams, "Solution", false);
@@ -397,9 +411,17 @@ This is just a start, to serve as an example. This has not been thought through 
          {
             Teuchos::RCP<const Thyra_LinearOp> jacobian = bJacobianOp->getBlock(i, j);
 
-            *out1 << "Before describe jacobian " << i << " " << j << std::endl;
-            Albany::describe(jacobian.getConst(), *out1, Teuchos::VERB_EXTREME);
-            *out1 << "After describe jacobian " << i << " " << j << std::endl;
+            auto top = Albany::getConstTpetraOperator(jacobian, false);
+
+            *out1 << "Number of entries in the block (" << i << "," << j << ") = "
+                  << Teuchos::rcp_dynamic_cast<const Tpetra_CrsMatrix>(top)->getGlobalNumEntries()
+                  << std::endl;
+            if (verbose)
+            {
+               *out1 << "Before describe jacobian " << i << " " << j << std::endl;
+               Albany::describe(jacobian.getConst(), *out1, Teuchos::VERB_EXTREME);
+               *out1 << "After describe jacobian " << i << " " << j << std::endl;
+            }
          }
 
       TEST_EQUALITY(Teuchos::nonnull(bJacobianOp), true);
@@ -414,15 +436,15 @@ This is just a start, to serve as an example. This has not been thought through 
 
       if (useExodus)
       {
-         TEST_EQUALITY(fadl0, 4);
+         TEST_EQUALITY(fadl0, 12);
          TEST_EQUALITY(fadl1, 4);
-         TEST_EQUALITY(fadl2, 4);
+         TEST_EQUALITY(fadl2, 1);
       }
       else
       {
-         TEST_EQUALITY(fadl0, 8);
-         TEST_EQUALITY(fadl1, 8);
-         TEST_EQUALITY(fadl2, 8);
+         TEST_EQUALITY(fadl0, 24);
+         TEST_EQUALITY(fadl1, 4);
+         TEST_EQUALITY(fadl2, 1);
       }
 
       int fado0 = stkDisc->getBlockFADOffset(0);
