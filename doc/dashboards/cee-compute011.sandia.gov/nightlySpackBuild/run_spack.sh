@@ -15,8 +15,6 @@ sleep 5m
 #spack --insecure install --dirty --keep-stage trilinos%gcc@7.2.0 >& spack_trilinos.out
 #sleep 5m
 spack --insecure install --dirty --keep-stage albany%gcc@7.2.0 >& spack_albany.out
-sleep 5m
-spack --insecure install --dirty --keep-stage albany%gcc@7.2.0 >& spack_albany2.out
 spack cd albany >& /projects/albany/nightlySpackBuild/spack_cd_albany.out
 cd ../spack-build
 ctest -V >& spack_ctest.out
