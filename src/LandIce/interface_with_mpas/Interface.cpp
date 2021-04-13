@@ -733,8 +733,6 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   albanyApp = Teuchos::rcp(new Albany::Application(mpiComm));
   albanyApp->initialSetUp(paramList);
 
-  int neq = (paramList->sublist("Problem").get<std::string>("Name") == "LandIce Coupled FO H 3D") ? 3 : 2;
-
   //temporary fix, TODO: use GO for indexToTriangleID (need to synchronize with MPAS).
   std::vector<GO> indexToTriangleGOID;
   indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());

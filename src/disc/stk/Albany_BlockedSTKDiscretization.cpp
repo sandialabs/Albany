@@ -159,7 +159,7 @@ namespace Albany
         {
           std::string type, mesh, domain;
           shards::CellTopology eb_topology;
-          for (size_t i_block = 0; i_block < n_DiscParamsBlocks; ++i_block)
+          for (int i_block = 0; i_block < n_DiscParamsBlocks; ++i_block)
           {
             if (blocksDiscretizationName[i][j] == bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Name"))
             {
@@ -396,10 +396,14 @@ namespace Albany
       for (size_t i = 0; i < ghost_indices.size(); ++i)
         ov_indices[indices.size() + i] = ghost_indices[i];
 
+      // To be removed when once Tpetra_GO == GO
+      // Start
       for (auto i : indices)
         t_indices.push_back(i);
       for (auto i : ov_indices)
         t_ov_indices.push_back(i);
+      // To be removed when once Tpetra_GO == GO
+      // End
 
       m_vs[i_block] = Albany::createVectorSpace(comm, t_indices);
       m_overlap_vs[i_block] = Albany::createVectorSpace(comm, t_ov_indices);
@@ -448,6 +452,8 @@ namespace Albany
 
     Teuchos::RCP<panzer::GlobalIndexer> manager_i_block, manager_j_block;
 
+    // First, we check the block i and j are defined in the volume or
+    // on the side and we get their corresponding manager:
     if (isBlockVolume[i_block])
       manager_i_block = subManagersVolume[i_block];
     else
@@ -457,47 +463,66 @@ namespace Albany
     else
       manager_j_block = subManagersSide[j_block];
 
+    // Moreover, we check if they are both defined in the volume (or on the side):
     bool bothVolume = isBlockVolume[i_block] && isBlockVolume[j_block];
     bool bothSide = !isBlockVolume[i_block] && !isBlockVolume[j_block];
 
+    // We get the corresponding domain and range vector spaces:
     Teuchos::RCP<const Thyra_VectorSpace> domain_vs = this->getVectorSpace(j_block);
     Teuchos::RCP<const Thyra_VectorSpace> range_vs = this->getVectorSpace(i_block);
     Teuchos::RCP<const Thyra_VectorSpace> ov_domain_vs = this->getOverlapVectorSpace(j_block);
     Teuchos::RCP<const Thyra_VectorSpace> ov_range_vs = this->getOverlapVectorSpace(i_block);
 
+    // A new Thyra Crs Matrix Factory is created for the current block:
     Teuchos::RCP<ThyraCrsMatrixFactory> m_current_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(
         domain_vs, range_vs, ov_domain_vs, ov_range_vs));
 
+    // And the newly created factory is set in the block factory:
     m_jac_factory->setBlockFactory(i_block, j_block, m_current_jac_factory);
 
+    // If i and j are defined in the volume (or on the side), there is no need to
+    // use the mapping between local element ID on the side with local element ID in the volume:
     if (bothVolume || bothSide)
     {
       std::vector<std::string> elementBlockID_i_block;
       std::vector<std::string> elementBlockID_j_block;
 
+      // As we restricted ourselves to case where all the fields defined on a same block share
+      // a same element block, we can access its name using the fieldToElementBlockID map and
+      // the name of the first field of the block:
       std::string blockID = fieldToElementBlockID[manager_i_block->getFieldString(0)];
       std::string blockID_j = fieldToElementBlockID[manager_j_block->getFieldString(0)];
 
+      // If the block IDs associated to i and j are not the same, there will be no entries for the current block:
       if (blockID == blockID_j)
       {
+        // First, we get the local element IDs of the element block:
         std::vector<int> elementBlock;
         if (bothVolume)
           elementBlock = stkConnMngrVolume->getElementBlock(blockID);
         if (bothSide)
           elementBlock = stkConnMngrSide->getElementBlock(blockID);
 
-        // Loop over the elements:
+        // Then, we loop over the element local IDs of the element block:
         for (int elem_local_id : elementBlock)
         {
           std::vector<Tpetra_GO> gids_i, gids_j;
 
+          // For a given element local ID, we use the DOF manager to access
+          // the global IDs of the DOFs related to the current element:
           manager_i_block->getElementGIDs(elem_local_id, gids_i);
           manager_j_block->getElementGIDs(elem_local_id, gids_j);
 
+          // To be removed when once Tpetra_GO == GO
+          // Start
           std::vector<GO> cols;
           for (auto gids_j_j : gids_j)
             cols.push_back(gids_j_j);
+          // To be removed when once Tpetra_GO == GO
+          // End
 
+          // Then, regardless of if the DOFs are owned or not, we loop over the gids_i and
+          // we add entries to the graph:
           for (size_t gids_i_index = 0; gids_i_index < gids_i.size(); ++gids_i_index)
             m_current_jac_factory->insertGlobalIndices(gids_i[gids_i_index], Teuchos::arrayViewFromVector(cols));
         }
@@ -505,11 +530,10 @@ namespace Albany
     }
     else
     {
-      // One block is defined in the volume and one block is defined on the side
+      // In this branch, one block is defined in the volume and one block is defined on the side.
 
-      const size_t i_volume = isBlockVolume[i_block] ? i_block : j_block;
-      const size_t j_side = isBlockVolume[i_block] ? j_block : i_block;
-
+      // For the sake of shortness, we use i_volume as the index related to the volume and j_side for
+      // the index related to the side:
       Teuchos::RCP<panzer::GlobalIndexer> manager_i_volume, manager_j_side;
 
       manager_i_volume = isBlockVolume[i_block] ? manager_i_block : manager_j_block;
@@ -519,9 +543,12 @@ namespace Albany
 
       std::vector<int> elementBlock = stkConnMngrSide->getElementBlock(blockID);
 
-      // Loop over the elements:
+      // This time, we loop over the elements on the side (as all the elements of the side have one related
+      // element in the volume):
       for (int elem_local_id_side : elementBlock)
       {
+        // We get the element local ID of the element in the volume associated to the current element
+        // of the side:
         int elem_local_id_volume = localSSElementIDtoVolElementID[elem_local_id_side];
 
         std::vector<Tpetra_GO> gids_i, gids_j;
@@ -529,13 +556,21 @@ namespace Albany
         int elem_local_id_i = isBlockVolume[i_block] ? elem_local_id_volume : elem_local_id_side;
         int elem_local_id_j = isBlockVolume[i_block] ? elem_local_id_side : elem_local_id_volume;
 
+        // For a given element local ID, we use the DOF manager to access
+        // the global IDs of the DOFs related to the current element:
         manager_i_block->getElementGIDs(elem_local_id_i, gids_i);
         manager_j_block->getElementGIDs(elem_local_id_j, gids_j);
 
+        // To be removed when once Tpetra_GO == GO
+        // Start
         std::vector<GO> cols;
         for (auto gids_j_j : gids_j)
           cols.push_back(gids_j_j);
+        // To be removed when once Tpetra_GO == GO
+        // End
 
+        // Then, regardless of if the DOFs are owned or not, we loop over the gids_i and
+        // we add entries to the graph:
         for (size_t gids_i_index = 0; gids_i_index < gids_i.size(); ++gids_i_index)
           m_current_jac_factory->insertGlobalIndices(gids_i[gids_i_index], Teuchos::arrayViewFromVector(cols));
       }
@@ -678,8 +713,13 @@ namespace Albany
 
     if (hasSide)
     {
-      // Compute the maping from local side set element ID to
-      // volume element ID:
+      // Compute the mapping from local element ID defined on the side to
+      // local element ID in the volume.
+
+      // This mapping is computed using the STK connection manager and assumes
+      // that the distribution of the side and volume elements are consistent;
+      // if an MPI process owns a side element, it must own the corresponding
+      // volume element.
 
       std::vector<stk::mesh::Entity> sides;
       stkConnMngrVolume->getAllSides(sideName, sides);

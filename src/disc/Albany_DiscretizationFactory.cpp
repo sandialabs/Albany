@@ -86,7 +86,6 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         meshStruct2D = Teuchos::rcp(new AsciiSTKMesh2D(disc_params, comm, numParams));
         Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct);
         AbstractFieldContainer::FieldContainerRequirements req;
-        int neq = 2;
         meshStruct2D->setFieldAndBulkData(comm, disc_params, req,
                 sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
         Ioss::Init::Initializer io;

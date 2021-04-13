@@ -131,7 +131,6 @@ void GenericSTKMeshStruct::SetupFieldData(
   Teuchos::Array<std::string> residual_vector =
     params->get<Teuchos::Array<std::string> >("Residual Vector Components", default_residual_vector);
 
-  int neq = 1; // KL: to do
   // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
   if(user_specified_solution_components && (residual_vector.length() > 0)){
 

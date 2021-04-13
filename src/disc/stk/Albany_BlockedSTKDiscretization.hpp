@@ -791,6 +791,7 @@ namespace Albany
     // GAH - End serious look
 
     // ==================== Members =================== //
+    Teuchos::RCP<Teuchos::ParameterList> discParams;
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -854,8 +855,6 @@ namespace Albany
     Teuchos::RCP<RigidBodyModes> rigidBodyModes;
 
     Teuchos::RCP<AbstractSTKMeshStruct> stkMeshStruct;
-
-    Teuchos::RCP<Teuchos::ParameterList> discParams;
 
     // Sideset discretizations
     std::map<std::string, Teuchos::RCP<AbstractDiscretization>>

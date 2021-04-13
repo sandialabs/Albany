@@ -27,12 +27,12 @@ GenericSTKFieldContainer<Interleaved>::GenericSTKFieldContainer(
   const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
   const int numDim_,
   const int num_params_)
-  : metaData(metaData_),
+  : AbstractSTKFieldContainer(false),
+    metaData(metaData_),
     bulkData(bulkData_),
     params(params_),
     numDim(numDim_),
-    num_params(num_params_),
-    AbstractSTKFieldContainer(false) {
+    num_params(num_params_) {
 }
 
 template<DiscType Interleaved>
@@ -43,13 +43,13 @@ GenericSTKFieldContainer<Interleaved>::GenericSTKFieldContainer(
   const int neq_,
   const int numDim_,
   const int num_params_)
-  : metaData(metaData_),
+  : AbstractSTKFieldContainer(true),
+    metaData(metaData_),
     bulkData(bulkData_),
     params(params_),
     neq(neq_),
     numDim(numDim_),
-    num_params(num_params_),
-    AbstractSTKFieldContainer(true) {
+    num_params(num_params_) {
 }
 
 #ifdef ALBANY_SEACAS

@@ -58,7 +58,6 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
 
-  int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
 #ifdef ALBANY_DTK
   bool output_dtk_field =
       params_->get<bool>("Output DTK Field to Exodus", false);

@@ -277,8 +277,6 @@ This is just a start, to serve as an example. This has not been thought through 
       static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
 
       Teuchos::RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
-      int numProcs = comm->getSize();
-      int myRank = comm->getRank();
 
       // panzer::pauseToAttach();
 
@@ -397,7 +395,7 @@ This is just a start, to serve as an example. This has not been thought through 
 
       int total_size = 0;
 
-      for (size_t i = 0; i < stkDisc->getNumFieldBlocks(); ++i)
+      for (int i = 0; i < stkDisc->getNumFieldBlocks(); ++i)
          total_size += stkDisc->getOverlapVectorSpace(i)->dim();
 
       TEST_EQUALITY(nvs->dim(), total_size);
@@ -406,8 +404,8 @@ This is just a start, to serve as an example. This has not been thought through 
 
       Teuchos::RCP<Teuchos::FancyOStream> out1 = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-      for (size_t i = 0; i < stkDisc->getNumFieldBlocks(); ++i)
-         for (size_t j = 0; j < stkDisc->getNumFieldBlocks(); ++j)
+      for (int i = 0; i < stkDisc->getNumFieldBlocks(); ++i)
+         for (int j = 0; j < stkDisc->getNumFieldBlocks(); ++j)
          {
             Teuchos::RCP<const Thyra_LinearOp> jacobian = bJacobianOp->getBlock(i, j);
 

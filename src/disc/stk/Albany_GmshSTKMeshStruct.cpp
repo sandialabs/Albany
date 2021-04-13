@@ -1452,7 +1452,7 @@ void Albany::GmshSTKMeshStruct::add_element_block( std::string eb_name, int tag)
 
   stk::topology etopology = this->get_topology();
 
-  stk::mesh::Part* part = &metaData->declare_part_with_topology(volume_i.str(), etopology);
+  metaData->declare_part_with_topology(volume_i.str(), etopology);
 
   return;
 }

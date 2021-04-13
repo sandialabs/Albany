@@ -2557,25 +2557,18 @@ STKDiscretization::setFieldData(
   Teuchos::Array<std::string> default_solution_vector; // Empty
   Teuchos::Array<Teuchos::Array<std::string> > solution_vector;
   solution_vector.resize(num_time_deriv + 1);
-  bool user_specified_solution_components = false;
   solution_vector[0] =
     params->get<Teuchos::Array<std::string> >("Solution Vector Components", default_solution_vector);
 
-  if(solution_vector[0].length() > 0)
-     user_specified_solution_components = true;
 
   if(num_time_deriv >= 1){
     solution_vector[1] =
       params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", default_solution_vector);
-    if(solution_vector[1].length() > 0)
-       user_specified_solution_components = true;
   }
 
   if(num_time_deriv >= 2){
     solution_vector[2] =
       params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
-    if(solution_vector[2].length() > 0)
-       user_specified_solution_components = true;
   }
 
 

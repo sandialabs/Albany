@@ -281,6 +281,11 @@ public:
      return (itr != stkMeshStruct_->ssPartVec.end()) ? itr->second : nullptr;
    }
 
+  /** Get the local element ID associated to the parent cell of a side element.
+   * 
+   * Functionality added to compute the graph associated to a block which has fields
+   * defined in the volume and on the side.
+   */
    const std::size_t get_parent_cell_id(stk::mesh::Entity side) const;
 
    /** Get vertices associated with a number of elements of the same geometry.
@@ -385,10 +390,15 @@ public:
      */
    void buildLocalElementIDs();
 
-stk::mesh::EntityId elementEntityId(stk::mesh::Entity elmt) const
-{
-  return bulkData_->identifier(elmt);
-}
+  /** Get the EntityId associated to an element.
+   * 
+   * Functionality added to compute the graph associated to a block which has fields
+   * defined in the volume and on the side.
+   */
+   stk::mesh::EntityId elementEntityId(stk::mesh::Entity elmt) const
+   {
+     return bulkData_->identifier(elmt);
+   }
 
 protected:
    /** Apply periodic boundary conditions associated with the mesh object.
