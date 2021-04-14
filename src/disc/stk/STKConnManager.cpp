@@ -396,7 +396,7 @@ void STKConnManager::applyInterfaceConditions()
   }
 }
 
-const std::size_t STKConnManager::
+std::size_t STKConnManager::
 get_parent_cell_id(stk::mesh::Entity side) const
 {
    stk::mesh::Entity const* elements = bulkData_->begin_elements(side);

@@ -286,7 +286,7 @@ public:
    * Functionality added to compute the graph associated to a block which has fields
    * defined in the volume and on the side.
    */
-   const std::size_t get_parent_cell_id(stk::mesh::Entity side) const;
+   std::size_t get_parent_cell_id(stk::mesh::Entity side) const;
 
    /** Get vertices associated with a number of elements of the same geometry.
      *
