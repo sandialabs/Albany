@@ -28,9 +28,16 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   ~GmshSTKMeshStruct();
 
-  void setFieldAndBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
                             const Teuchos::RCP<Teuchos::ParameterList>& params,
-                            const unsigned int neq_,
+                            const AbstractFieldContainer::FieldContainerRequirements& req,
+                            const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                            const unsigned int worksetSize,
+                            const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                            const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
+
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
+                            const Teuchos::RCP<Teuchos::ParameterList>& params,
                             const AbstractFieldContainer::FieldContainerRequirements& req,
                             const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                             const unsigned int worksetSize,
@@ -72,7 +79,8 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   // Gets the physical name-tag pairs for version 4.1 meshes
   void get_physical_names( std::map<std::string, int>&             physical_names,
-                           const Teuchos::RCP<const Teuchos_Comm>& commT);
+                           const Teuchos::RCP<const Teuchos_Comm>& commT,
+                           int dim);
 
   // Share physical_names map with all other proccesses
   void broadcast_physical_names( std::map<std::string, int>&             physical_names,
@@ -80,7 +88,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   // Read the physical names for Gmsh V 4.1 
   // to populate the physical_names map
-  void read_physical_names_from_file( std::map<std::string, int>& physical_names);
+  void read_physical_names_from_file( std::map<std::string, int>& physical_names, int dim);
 
   // Opens the gmsh msh file. Variable `fname` must be set.
   // Don't forget to close when done!
@@ -147,7 +155,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   // Reads a single physical name from ifile.
   // Prepends with an undescore and remove quotation marks.
-  void get_name_for_physical_names( std::string& name, std::ifstream& ifile);
+  void get_name_for_physical_names( std::string& name, int& id, std::ifstream& ifile, int& dim);
 
   // Reads ifile to map surface tags to physical tags.
   // Reports error if any surface is associted with more than one tag.
@@ -155,12 +163,23 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                                             std::map<int, int>& physical_surface_tags,
                                             int                 num_surfaces);
 
+  // Reads ifile to map volume tags to physical tags.
+  // Reports error if any volume is associted with more than one tag.
+  void get_physical_tag_to_volume_tag_map( std::ifstream&      ifile, 
+                                           std::map<int, int>& physical_volume_tags,
+                                           int                 num_volumes);
   
+  // Adds an element block with name eb_name and volume tag number tag.
+  void add_element_block( std::string eb_name, int tag);
+
   // Adds a sideset with name sideset_name and side tag number tag.
   void add_sideset( std::string sideset_name, int tag, std::vector<std::string>& ssNames);
 
   // Adds a nodeset with name nodeset_name and node tag number tag.
   void add_nodeset( std::string nodeset_name, int tag, std::vector<std::string>& nsNames);
+
+  // Get topology of the mesh:
+  stk::topology get_topology();
 
   // The version of the gmsh msh file
   GmshVersion version;
@@ -173,9 +192,6 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   // The set of versions we know how to read
   std::set<float> allowable_gmsh_versions;
-
-  // Map from element block names to their index
-  std::map<std::string,int> ebNameToIndex;
 
   void loadLegacyMesh ();
   void loadAsciiMesh ();
@@ -200,6 +216,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   std::map<int,std::string> bdTagToNodeSetName;
   std::map<int,std::string> bdTagToSideSetName;
+  std::map<int,std::string> gmshPhysicalTagToEBName;
   double (*pts)[3];
 
   // Only some will be used, but it's easier to have different pointers

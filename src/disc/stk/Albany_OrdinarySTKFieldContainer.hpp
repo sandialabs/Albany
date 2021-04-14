@@ -19,6 +19,15 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
       const Teuchos::RCP<Teuchos::ParameterList>&               params_,
       const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
       const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const int                                                 numDim_,
+      const Teuchos::RCP<Albany::StateInfoStruct>&              sis,
+      const int                                                 num_params);
+
+  OrdinarySTKFieldContainer(
+      const Teuchos::RCP<Teuchos::ParameterList>&               params_,
+      const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
+      const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
       const int                                                 neq_,
       const AbstractFieldContainer::FieldContainerRequirements& req,
       const int                                                 numDim_,
@@ -119,6 +128,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
   void
   transferSolutionToCoords();
 
+
  private:
   void
   fillVectorImpl(
@@ -145,8 +155,6 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved>
   Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>
                                               solution_field_dxdp;
   AbstractSTKFieldContainer::VectorFieldType* residual_field;
-
-  int num_params{0};
 };
 
 }  // namespace Albany

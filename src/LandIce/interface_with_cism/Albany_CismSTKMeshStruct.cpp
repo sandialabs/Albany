@@ -327,12 +327,11 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 void CismSTKMeshStruct::
 constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
-              const unsigned int neq_,
               const AbstractFieldContainer::FieldContainerRequirements& req,
               const Teuchos::RCP<Albany::StateInfoStruct>& sis,
               const unsigned int worksetSize)
 {
-  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+  this->SetupFieldData(comm, req, sis, worksetSize);
 
   metaData->commit();
 

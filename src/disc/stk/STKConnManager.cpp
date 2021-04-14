@@ -396,6 +396,14 @@ void STKConnManager::applyInterfaceConditions()
   }
 }
 
+const std::size_t STKConnManager::
+get_parent_cell_id(stk::mesh::Entity side) const
+{
+   stk::mesh::Entity const* elements = bulkData_->begin_elements(side);
+   const std::size_t ea_id = getElementIdx(*elements_, elements[0]);
+   return ea_id;
+}
+
 std::vector<std::string> STKConnManager::
 checkAssociateElementsInSidesets(const Teuchos::Comm<int>& comm) const
 {

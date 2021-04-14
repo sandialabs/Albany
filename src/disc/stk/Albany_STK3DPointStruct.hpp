@@ -28,10 +28,18 @@ namespace Albany {
     ~STK3DPointStruct();
 
     //! Sets mesh generation parameters
-    void setFieldAndBulkData(
+    void setFieldData(
                              const Teuchos::RCP<const Teuchos_Comm>& commT,
                              const Teuchos::RCP<Teuchos::ParameterList>& params,
-                             const unsigned int neq_,
+                             const AbstractFieldContainer::FieldContainerRequirements& req,
+                             const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                             const unsigned int worksetSize,
+                             const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                             const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
+
+    void setBulkData(
+                             const Teuchos::RCP<const Teuchos_Comm>& commT,
+                             const Teuchos::RCP<Teuchos::ParameterList>& params,
                              const AbstractFieldContainer::FieldContainerRequirements& req,
                              const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                              const unsigned int worksetSize,

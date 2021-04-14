@@ -293,18 +293,27 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
 
 Albany::AsciiSTKMesh2D::~AsciiSTKMesh2D() {}
 
-void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
+void Albany::AsciiSTKMesh2D::setFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& commT,
     const Teuchos::RCP<Teuchos::ParameterList>& /*params_*/,
-    const unsigned int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
-  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
+  this->SetupFieldData(commT, req, sis, worksetSize);
+}
 
+void Albany::AsciiSTKMesh2D::setBulkData(
+    const Teuchos::RCP<const Teuchos_Comm>& commT,
+    const Teuchos::RCP<Teuchos::ParameterList>& /*params_*/,
+    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const unsigned int worksetSize,
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+{
   metaData->commit();
 
   bulkData->modification_begin(); // Begin modifying the mesh
@@ -433,7 +442,7 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
   this->loadRequiredInputFields (req,commT);
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetFieldAndBulkData(commT, side_set_req, side_set_sis, worksetSize);
 
   fieldAndBulkDataSet = true;
 }

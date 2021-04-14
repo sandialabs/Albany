@@ -128,7 +128,9 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   int lElemColumnShift = (ordering == 1) ? 1 : indexToTriangleID.size();
   int elemLayerShift = (ordering == 0) ? 1 : nLayers;
 
-  int neq = meshStruct->neq;
+  auto abs_disc = albanyApp->getDiscretization();
+  auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
+  int neq = stk_disc->getNumberEquations();
 
   const Albany::DiscType interleavedOrdering = meshStruct->getInterleavedOrdering();
 
@@ -731,8 +733,6 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   albanyApp = Teuchos::rcp(new Albany::Application(mpiComm));
   albanyApp->initialSetUp(paramList);
 
-  int neq = (paramList->sublist("Problem").get<std::string>("Name") == "LandIce Coupled FO H 3D") ? 3 : 2;
-
   //temporary fix, TODO: use GO for indexToTriangleID (need to synchronize with MPAS).
   std::vector<GO> indexToTriangleGOID;
   indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());
@@ -745,7 +745,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   albanyApp->buildProblem();
 
-  meshStruct->constructMesh(mpiComm, discretizationList, neq, req,
+  meshStruct->constructMesh(mpiComm, discretizationList, req,
       albanyApp->getStateMgr(), indexToVertexID,
       vertexProcIDs, verticesCoords, globalVerticesStride,
       verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,

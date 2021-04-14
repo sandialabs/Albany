@@ -278,7 +278,6 @@ list (APPEND SOURCES
   disc/Adapt_NodalDataVector.cpp
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
-  disc/BlockedDiscretization.cpp
   )
 list (APPEND HEADERS
   disc/Adapt_NodalDataBase.hpp
@@ -292,13 +291,13 @@ list (APPEND HEADERS
   disc/Albany_DiscretizationFactory.hpp
   disc/Albany_MeshSpecs.hpp
   disc/Albany_NodalDOFManager.hpp
-  disc/BlockedDiscretization.hpp
   )
 
 #stk
 list(APPEND SOURCES
   disc/stk/Albany_AsciiSTKMesh2D.cpp
   disc/stk/Albany_AsciiSTKMeshStruct.cpp
+  disc/stk/Albany_BlockedSTKDiscretization.cpp
   disc/stk/Albany_ExtrudedSTKMeshStruct.cpp
   disc/stk/Albany_GenericSTKFieldContainer.cpp
   disc/stk/Albany_GenericSTKMeshStruct.cpp
@@ -320,6 +319,7 @@ list (APPEND HEADERS
   disc/stk/Albany_AbstractSTKMeshStruct.hpp
   disc/stk/Albany_AsciiSTKMeshStruct.hpp
   disc/stk/Albany_AsciiSTKMesh2D.hpp
+  disc/stk/Albany_BlockedSTKDiscretization.hpp
   disc/stk/Albany_ExtrudedSTKMeshStruct.hpp
   disc/stk/Albany_GenericSTKMeshStruct.hpp
   disc/stk/Albany_GmshSTKMeshStruct.hpp

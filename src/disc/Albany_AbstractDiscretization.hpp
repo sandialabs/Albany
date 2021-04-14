@@ -229,6 +229,11 @@ class AbstractDiscretization
       const std::string&  field_name,
       bool                overlapped) = 0;
 
+  virtual void
+  setFieldData(
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<StateInfoStruct>& sis) = 0;
+
   // --- Methods to write solution in the output file --- //
 
   //! Write the solution to the output file. Calls next two together.

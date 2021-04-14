@@ -84,62 +84,47 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   std::vector < std::string > ssNames;
   set_boundaries( commT, ssNames, nsNames);
 
-  stk::topology etopology;
+  stk::topology etopology = this->get_topology();
 
-  switch (this->numDim) {
-    case 2:
-      if (NumElemNodes==3) {
-        etopology = stk::topology::TRI_3_2D;
-        for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::LINE_2); 
-        }
+  int numEB = 0;
+
+  const stk::mesh::PartVector & all_parts = metaData->get_parts();
+  for (stk::mesh::PartVector::const_iterator i = all_parts.begin();
+       i != all_parts.end(); ++i) {
+
+    stk::mesh::Part * const part = *i ;
+
+    if (!stk::mesh::is_auto_declared_part(*part)) {
+      if ( part->primary_entity_rank() == stk::topology::ELEMENT_RANK) {
+
+        partVec.push_back(part);
+        numEB++;
       }
-      else if( NumElemNodes == 6)
-      {
-        etopology = stk::topology::TRI_6_2D;
-        for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::LINE_3); 
-        }
-      } else {
-        etopology = stk::topology::QUAD_4_2D;
-        for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::LINE_2); 
-        }
-      }
-      break;
-    case 3:
-      if (NumElemNodes==4) {
-        etopology = stk::topology::TET_4;
-        for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::TRI_3); 
-        }
-      }
-      else if( NumElemNodes == 10)
-      {
-        etopology = stk::topology::TET_10;
-        for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::TRI_6); 
-        }
-      } else {
-        etopology = stk::topology::HEX_8;
-        for (auto ss : ssPartVec) {
-          stk::mesh::set_topology(*ss.second, stk::topology::QUAD_4); 
-        }
-      }
-      break;
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid number of element nodes (you should have got an error before though).\n");
+    }
   }
 
-  std::string ebn = "Element Block 0";
-  partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
-  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(etopology);
-  this->addElementBlockInfo(0, ebn, partVec[0], shards_ctd);
-
+  for (int eb=0; eb<numEB; eb++) {
+    stk::topology stk_topo_data = metaData->get_topology( *partVec[eb] );
+    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data); 
+    // Fill in all the various element block lists in Albany_AbstractSTKMeshStruct base class
+    this->addElementBlockInfo(eb, partVec[eb]->name(), partVec[eb], shards_ctd);
 #ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*partVec[0]);
+    stk::io::put_io_part_attribute(*partVec[eb]);
 #endif
+  }
 
+  if (numEB==0)
+  {
+    std::string ebn = "Element Block 0";
+    partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
+    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(etopology);
+    this->addElementBlockInfo(0, ebn, partVec[0], shards_ctd);
+#ifdef ALBANY_SEACAS
+    stk::io::put_io_part_attribute(*partVec[0]);
+#endif
+  }
+
+  shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(etopology);
   int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
@@ -279,18 +264,28 @@ void Albany::GmshSTKMeshStruct::broadcast_topology( const Teuchos::RCP<const Teu
   return;
 }
 
-void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
+void Albany::GmshSTKMeshStruct::setFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& commT,
     const Teuchos::RCP<Teuchos::ParameterList>& params,
-    const unsigned int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
-  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
+  this->SetupFieldData(commT, req, sis, worksetSize);
+  this->setSideSetFieldData(commT, side_set_req, side_set_sis, worksetSize);
+}
 
+void Albany::GmshSTKMeshStruct::setBulkData(
+    const Teuchos::RCP<const Teuchos_Comm>& commT,
+    const Teuchos::RCP<Teuchos::ParameterList>& params,
+    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const unsigned int worksetSize,
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+{
   metaData->commit();
 
   bulkData->modification_begin(); // Begin modifying the mesh
@@ -317,6 +312,9 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
     }
 
     for (int i = 0; i < NumElems; i++) {
+      if (gmshPhysicalTagToEBName.size()>0)
+        ebNo = ebNameToIndex[gmshPhysicalTagToEBName[elems[NumElemNodes][i]]];
+
       singlePartVec[0] = partVec[ebNo];
       stk::mesh::Entity elem = bulkData->declare_element(i + 1, singlePartVec);
 
@@ -393,7 +391,7 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
   this->loadRequiredInputFields (req,commT);
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetBulkData(commT, side_set_req, side_set_sis, worksetSize);
 
   fieldAndBulkDataSet = true;
 }
@@ -754,6 +752,12 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
 
   bool is_first_order  = (nb_lines != 0);
   bool is_second_order = (nb_line3 != 0);
+
+  if (!is_first_order && !is_second_order)
+  {
+    is_first_order = (nb_trias != 0 || nb_quads != 0);
+    is_second_order = (nb_tri6 != 0);
+  }
 
   if( is_first_order)
   {
@@ -1415,20 +1419,40 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
   if( version == GmshVersion::V4_1)
   {
     // Map has format: "name",  physical_tag
-    std::map<std::string, int> physical_names; 
-    get_physical_names( physical_names, commT);
+    std::map<std::string, int> physical_surface_names;
+    std::map<std::string, int> physical_volume_names;
+    get_physical_names( physical_surface_names, commT, 2);
+    get_physical_names( physical_volume_names, commT, 3);
 
     std::map< std::string, int>::iterator it;
-    for( it = physical_names.begin(); it != physical_names.end(); it++)
+    for( it = physical_surface_names.begin(); it != physical_surface_names.end(); it++)
     {
       std::string name = it->first;
       int         tag  = it->second;
 
       add_nodeset( name, tag, nsNames);
       add_sideset( name, tag, ssNames);
+    }
+    for( it = physical_volume_names.begin(); it != physical_volume_names.end(); it++)
+    {
+      std::string name = it->first;
+      int         tag  = it->second;
 
+      add_element_block( name, tag);
     }
   }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::add_element_block( std::string eb_name, int tag)
+{
+  std::stringstream volume_i;
+  volume_i << "ElementBlock" << eb_name;
+
+  stk::topology etopology = this->get_topology();
+
+  metaData->declare_part_with_topology(volume_i.str(), etopology);
 
   return;
 }
@@ -1464,6 +1488,56 @@ void Albany::GmshSTKMeshStruct::add_nodeset( std::string nodeset_name, int tag, 
 #endif
 
   return;
+}
+
+stk::topology Albany::GmshSTKMeshStruct::get_topology()
+{
+  stk::topology etopology;
+  switch (this->numDim) {
+    case 2:
+      if (NumElemNodes==3) {
+        etopology = stk::topology::TRI_3_2D;
+        for (auto ss : ssPartVec) {
+          stk::mesh::set_topology(*ss.second, stk::topology::LINE_2); 
+        }
+      }
+      else if( NumElemNodes == 6)
+      {
+        etopology = stk::topology::TRI_6_2D;
+        for (auto ss : ssPartVec) {
+          stk::mesh::set_topology(*ss.second, stk::topology::LINE_3); 
+        }
+      } else {
+        etopology = stk::topology::QUAD_4_2D;
+        for (auto ss : ssPartVec) {
+          stk::mesh::set_topology(*ss.second, stk::topology::LINE_2); 
+        }
+      }
+      break;
+    case 3:
+      if (NumElemNodes==4) {
+        etopology = stk::topology::TET_4;
+        for (auto ss : ssPartVec) {
+          stk::mesh::set_topology(*ss.second, stk::topology::TRI_3); 
+        }
+      }
+      else if( NumElemNodes == 10)
+      {
+        etopology = stk::topology::TET_10;
+        for (auto ss : ssPartVec) {
+          stk::mesh::set_topology(*ss.second, stk::topology::TRI_6); 
+        }
+      } else {
+        etopology = stk::topology::HEX_8;
+        for (auto ss : ssPartVec) {
+          stk::mesh::set_topology(*ss.second, stk::topology::QUAD_4); 
+        }
+      }
+      break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid number of element nodes (you should have got an error before though).\n");
+  }
+  return etopology;
 }
 
 void Albany::GmshSTKMeshStruct::set_allowable_gmsh_versions()
@@ -1529,11 +1603,9 @@ void Albany::GmshSTKMeshStruct::open_fname( std::ifstream& ifile)
   return;
 }
 
-void Albany::GmshSTKMeshStruct::get_name_for_physical_names( std::string& name, std::ifstream& ifile)
+void Albany::GmshSTKMeshStruct::get_name_for_physical_names( std::string& name, int& id, std::ifstream& ifile, int& dim)
 {
   std::string line;
-  int         id;
-  int         dim;
   
   std::getline( ifile, line);
   std::stringstream ss (line);
@@ -1606,9 +1678,57 @@ void Albany::GmshSTKMeshStruct::get_physical_tag_to_surface_tag_map(
 
   return;
 }
-                                                             
 
-void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::string, int>& physical_names)
+void Albany::GmshSTKMeshStruct::get_physical_tag_to_volume_tag_map( 
+      std::ifstream&      ifile, 
+      std::map<int, int>& physical_volume_tags,
+      int                 num_volumes)
+{
+  int    volume_tag          = 0;
+  double min_x               = 0.0;
+  double min_y               = 0.0;
+  double min_z               = 0.0;
+  double max_x               = 0.0;
+  double max_y               = 0.0;
+  double max_z               = 0.0;
+  int    num_physical_tags   = 0;
+  int    physical_tag        = 0;
+  int    num_bounding_surfaces = 0;
+  int    surface_tag           = 0;
+
+  std::string line;
+  for( int i = 0; i < num_volumes; i++)
+  {
+    std::getline( ifile, line);
+    std::stringstream ss (line);
+    ss >> volume_tag
+       >> min_x
+       >> min_y
+       >> min_z
+       >> max_x
+       >> max_y
+       >> max_z
+       >> num_physical_tags  
+       >> physical_tag       
+       >> num_bounding_surfaces
+       >> surface_tag;
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( num_physical_tags > 1, std::runtime_error, 
+                                "Cannot support more than one physical tag per volume.\n");
+
+    TEUCHOS_TEST_FOR_EXCEPTION ( num_physical_tags < 0, std::runtime_error, 
+                                "Cannot have a negative number of physical tags per volume.\n");
+
+    if( num_physical_tags == 1)
+    {
+      physical_volume_tags.insert( std::make_pair( physical_tag, volume_tag));
+    }
+  }
+
+  return;
+}
+
+void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::string, int>& physical_names, int dim_)
 {
   std::ifstream ifile;
   open_fname( ifile);
@@ -1625,12 +1745,35 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
     ss >> num_physical_names;
 
     // Get the list of physical names
-    std::vector< std::string> names;
+    std::vector< std::string> names1D;
+    std::vector< std::string> names2D;
+    std::vector< std::string> names3D;
+
+    std::vector< int> id1D;
+    std::vector< int> id2D;
+    std::vector< int> id3D;
+
     for( int i = 0; i < num_physical_names; i++)
     {
       std::string name;
-      get_name_for_physical_names( name, ifile);
-      names.push_back( name);
+      int dim;
+      int id;
+      get_name_for_physical_names( name, id, ifile, dim);
+      if (dim == 1)
+      {
+        names1D.push_back( name);
+        id1D.push_back( id);
+      }
+      if (dim == 2)
+      {
+        names2D.push_back( name);
+        id2D.push_back( id);
+      }
+      if (dim == 3)
+      {
+        names3D.push_back( name);
+        id3D.push_back( id);
+      }
     }
 
     // Advance to Surface Entities section
@@ -1655,23 +1798,50 @@ void Albany::GmshSTKMeshStruct::read_physical_names_from_file( std::map<std::str
     std::map< int, int> physical_surface_tags;
     get_physical_tag_to_surface_tag_map( ifile, physical_surface_tags, num_surfaces);
 
-    std::stringstream error_msg;
-    error_msg << "Cannot support more than one physical tag per surface \n"
-              << "(but you should have gotten an error before this!)    \n"
-              << "physical_surface_tags.size() = " << physical_surface_tags.size() << ". \n"
-              << "names.size() = " << names.size() << ". \n";
-    TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != names.size(), std::runtime_error, error_msg.str());
+    std::map< int, int> physical_volume_tags;
+    get_physical_tag_to_volume_tag_map( ifile, physical_volume_tags, num_volumes);
 
-    // Add each physical name pair to the map
-    for( size_t i = 0; i < names.size(); i++)
+    if (dim_ == 2)
     {
-      std::string name = names[i];
-      // Index by i+1 since gmsh starts counting at 1 and not 0
-      int surface_tag  = physical_surface_tags[i+1];
+      std::stringstream error_msg;
+      error_msg << "Cannot support more than one physical tag per surface \n"
+                << "(but you should have gotten an error before this!)    \n"
+                << "physical_surface_tags.size() = " << physical_surface_tags.size() << ". \n"
+                << "names2D.size() = " << names2D.size() << ". \n";
+      TEUCHOS_TEST_FOR_EXCEPTION ( physical_surface_tags.size() != names2D.size(), std::runtime_error, error_msg.str());
 
-      physical_names.insert( std::make_pair( name, surface_tag));
+      // Add each physical name pair to the map
+      for( size_t i = 0; i < names2D.size(); i++)
+      {
+        std::string name = names2D[i];
+
+        int surface_tag  = physical_surface_tags[id2D[i]];
+
+        physical_names.insert( std::make_pair( name, surface_tag));
+      }
     }
+    if (dim_ == 3)
+    {
+      std::stringstream error_msg;
+      error_msg << "Cannot support more than one physical tag per volume \n"
+                << "(but you should have gotten an error before this!)    \n"
+                << "physical_volume_tags.size() = " << physical_volume_tags.size() << ". \n"
+                << "names3D.size() = " << names3D.size() << ". \n";
 
+      TEUCHOS_TEST_FOR_EXCEPTION ( physical_volume_tags.size() != names3D.size(), std::runtime_error, error_msg.str());
+
+      // Add each physical name pair to the map
+      for( size_t i = 0; i < names3D.size(); i++)
+      {
+        std::string name = names3D[i];
+        std::string ebname = "ElementBlock" + name;
+
+        int volume_tag  = physical_volume_tags[id3D[i]];
+
+        gmshPhysicalTagToEBName.insert( std::make_pair( id3D[i], ebname));
+        physical_names.insert( std::make_pair( name, volume_tag));
+      }
+    }
   }
   ifile.close();
 
@@ -1749,11 +1919,12 @@ void Albany::GmshSTKMeshStruct::broadcast_physical_names( std::map<std::string, 
 }
 
 void Albany::GmshSTKMeshStruct::get_physical_names( std::map<std::string, int>&             physical_names,
-                                                    const Teuchos::RCP<const Teuchos_Comm>& commT)
+                                                    const Teuchos::RCP<const Teuchos_Comm>& commT,
+                                                    int dim)
 {
   if( commT->getRank() == 0 )
   {
-    read_physical_names_from_file( physical_names);
+    read_physical_names_from_file( physical_names, dim);
   }
   broadcast_physical_names( physical_names, commT);
 

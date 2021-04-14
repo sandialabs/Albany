@@ -74,7 +74,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   typedef std::map<std::string, std::vector<int>> MeshVectorIntegerState;
 
 
-  AbstractSTKFieldContainer() : proc_rank_field(nullptr){};
+  AbstractSTKFieldContainer(bool solutionFieldContainer_) : proc_rank_field(nullptr), solutionFieldContainer(solutionFieldContainer_) {};
 
 
   //! Destructor
@@ -275,6 +275,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   StateInfoStruct nodal_parameter_sis;
 
   std::map<std::string, double> time;
+
+  const bool solutionFieldContainer;
 };
 
 }  // namespace Albany

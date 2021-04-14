@@ -30,6 +30,8 @@
 #include <stk_io/StkMeshIoBroker.hpp>
 #endif
 
+#include "Albany_AbstractSTKFieldContainer.hpp"
+
 namespace Albany {
 
 typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
@@ -110,6 +112,7 @@ class STKDiscretization : public AbstractDiscretization
   //! Constructor
   STKDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+      const int neq,
       Teuchos::RCP<AbstractSTKMeshStruct>&        stkMeshStruct,
       const Teuchos::RCP<const Teuchos_Comm>&     comm,
       const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null,
@@ -383,6 +386,12 @@ class STKDiscretization : public AbstractDiscretization
     return neq;
   }
 
+  int
+  getFADLength() const
+  {
+    return neq * wsElNodeID[0][0].size();
+  }
+
   Teuchos::RCP<LayeredMeshNumbering<GO>>
   getLayeredMeshNumbering() const
   {
@@ -392,12 +401,12 @@ class STKDiscretization : public AbstractDiscretization
   const stk::mesh::MetaData&
   getSTKMetaData() const
   {
-    return metaData;
+    return *metaData;
   }
   const stk::mesh::BulkData&
   getSTKBulkData() const
   {
-    return bulkData;
+    return *bulkData;
   }
 
   // Used very often, so make it a function
@@ -504,6 +513,9 @@ class STKDiscretization : public AbstractDiscretization
    unsigned getDimension() const
    { return getNumDim(); }
 
+   //! get the number of equations
+   unsigned getNumberEquations() const
+   { return neq; }
 
   //! used when NetCDF output on a latitude-longitude grid is requested.
   // Each struct contains a latitude/longitude index and it's parametric
@@ -514,9 +526,13 @@ class STKDiscretization : public AbstractDiscretization
     std::pair<unsigned, unsigned> latitude_longitude;
   };
 
+  void setFieldData(
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<StateInfoStruct>& sis);
+
  protected:
 
-  friend class BlockedDiscretization;
+  friend class BlockedSTKDiscretization;
   friend class STKConnManager;
 
   void
@@ -585,8 +601,8 @@ class STKDiscretization : public AbstractDiscretization
   Teuchos::RCP<Teuchos::FancyOStream> out;
 
   //! Stk Mesh Objects
-  stk::mesh::MetaData& metaData;
-  stk::mesh::BulkData& bulkData;
+  Teuchos::RCP<stk::mesh::MetaData> metaData;
+  Teuchos::RCP<stk::mesh::BulkData> bulkData;
 
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
@@ -700,6 +716,8 @@ class STKDiscretization : public AbstractDiscretization
     }
     return false;
   }
+
+  Teuchos::RCP<AbstractSTKFieldContainer> solutionFieldContainer;
 };
 
 }  // namespace Albany

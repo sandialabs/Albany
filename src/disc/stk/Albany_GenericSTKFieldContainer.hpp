@@ -29,13 +29,28 @@ public:
   GenericSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                            const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
                            const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
+                           const int numDim_,
+                           const int num_params_);
+
+  GenericSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                           const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
+                           const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
                            const int neq_,
-                           const int numDim_);
+                           const int numDim_,
+                           const int num_params_);
 
   virtual ~GenericSTKFieldContainer() = default;
 
   // Add StateStructs to the list of stored ones
   void addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis);
+
+  Teuchos::RCP<Teuchos::ParameterList> getParams() const {return params; }
+
+  Teuchos::RCP<stk::mesh::MetaData> getMetaData() {return metaData;}
+  Teuchos::RCP<stk::mesh::BulkData> getBulkData() {return bulkData;}
+
+  int getNumDim() const {return numDim; }
+  int getNumParams() const {return num_params; }
 
 protected:
 
@@ -45,6 +60,7 @@ protected:
 
   int neq;
   int numDim;
+  int num_params{0};
 };
 
 } // namespace Albany

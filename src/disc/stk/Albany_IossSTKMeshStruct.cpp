@@ -288,24 +288,245 @@ Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
 }
 
 void
-Albany::IossSTKMeshStruct::setFieldAndBulkData (
+Albany::IossSTKMeshStruct::setFieldData (
           const Teuchos::RCP<const Teuchos_Comm>& commT,
           const Teuchos::RCP<Teuchos::ParameterList>& params,
-          const unsigned int neq_,
           const AbstractFieldContainer::FieldContainerRequirements& req,
           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
           const unsigned int worksetSize,
           const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
           const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
-  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
+  this->SetupFieldData(commT, req, sis, worksetSize);
 
-  mesh_data->set_bulk_data(*bulkData);
+  if(mesh_data->is_bulk_data_null())
+    mesh_data->set_bulk_data(*bulkData);
 
   *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << std::endl;
   *out << "IOSS-STK: number of side sets = " << ssPartVec.size() << std::endl;
 
-  mesh_data->add_all_mesh_fields_as_input_fields();
+  std::vector<stk::io::MeshField> missing;
+  // Restart index to read solution from exodus file.
+  int index = params->get("Restart Index",-1); // Default to no restart
+  double res_time = params->get<double>("Restart Time",-1.0); // Default to no restart
+  Ioss::Region& region = *(mesh_data->get_input_io_region());
+  /*
+   * The following code block reads a single mesh on PE 0, then distributes the mesh across
+   * the other processors. stk_rebalance is used, which requires Zoltan
+   *
+   * This code is only compiled if ALBANY_MPI and ALBANY_ZOLTAN are true
+   */
+
+#ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
+
+  if(useSerialMesh){
+
+    // trick to avoid hanging
+
+    if(commT->getRank() == 0){ // read in the mesh on PE 0
+      mesh_data->populate_bulk_data();
+
+      if (this->numDim!=3)
+      {
+        // Try to load 3d coordinates (if present in the input file)
+        loadOrSetCoordinates3d(index);
+      }
+
+      // Read solution from exodus file.
+      if (index >= 0) { // User has specified a time step to restart at
+        m_restartDataTime = region.get_state_time(index);
+        m_hasRestartSolution = true;
+      }
+      else if (res_time >= 0) { // User has specified a time to restart at
+        m_restartDataTime = res_time;
+        m_hasRestartSolution = true;
+      }
+      else {
+        *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< std::endl;
+      }
+    }
+    else {
+    }
+
+
+  } // End UseSerialMesh - reading mesh on PE 0
+
+  else
+#endif
+
+    /*
+     * The following code block reads a single mesh when Albany is compiled serially, or a
+     * Nemspread fileset if ALBANY_MPI is true.
+     *
+     */
+
+  { // running in Serial or Parallel read from Nemspread files
+    if (this->numDim!=3)
+    {
+      // Try to load 3d coordinates (if present in the input file)
+      loadOrSetCoordinates3d(index);
+    }
+
+    if (!usePamgen)
+    {
+      // Read solution from exodus file.
+      if (index >= 0)
+      { // User has specified a time step to restart at
+        m_restartDataTime = region.get_state_time(index);
+        m_hasRestartSolution = true;
+      }
+      else if (res_time >= 0)
+      { // User has specified a time to restart at
+        m_restartDataTime = res_time;
+        m_hasRestartSolution = true;
+      }
+      else
+      {
+        *out << "Restart Index not set. Not reading solution from exodus (" << index << ")"<< std::endl;
+      }
+    }
+
+  } // End Parallel Read - or running in serial
+
+  if(m_hasRestartSolution){
+
+    Teuchos::Array<std::string> default_field = {{"solution", "solution_dot", "solution_dotdot"}};
+    auto& restart_fields = params->get<Teuchos::Array<std::string> >("Restart Fields", default_field);
+
+    // Get the fields to be used for restart
+
+    // See what state data was initialized from the stk::io request
+    // This should be propagated into stk::io
+    const Ioss::NodeBlockContainer&    node_blocks = region.get_node_blocks();
+
+    // Uncomment to print what fields are in the exodus file
+    // const Ioss::ElementBlockContainer& elem_blocks = region.get_element_blocks();
+    // for (const auto& block : elem_blocks) {
+    //   Ioss::NameList exo_eb_fld_names;
+    //   block->field_describe(&exo_eb_fld_names);
+    //   for (const auto& name : exo_eb_fld_names) {
+    //     *out << "Found field \"" << name << "\" in elem blocks of exodus file\n";
+    //   }
+    // }
+    // for (const auto& block : node_blocks) {
+    //   Ioss::NameList exo_nb_fld_names;
+    //   block->field_describe(&exo_nb_fld_names);
+    //   for (const auto& name : exo_nb_fld_names) {
+    //     *out << "Found field \"" << name << "\" in node blocks of exodus file\n";
+    //   }
+    // }
+
+    for (const auto& st_ptr : *sis) {
+      auto& st = *st_ptr;
+      for (const auto& block : node_blocks) {
+        if (block->field_exists(st.name)) {
+          for (const auto& restart_field : restart_fields) {
+            if (st.name==restart_field) {
+              *out << "Restarting from field \"" << st.name << "\" found in exodus file.\n";
+              st.restartDataAvailable = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Read global mesh variables. Should we emit warnings at all?
+    for (auto& it : fieldContainer->getMeshVectorStates()) {
+      bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
+      if (!found)
+        *out << "  *** WARNING *** Mesh vector state '" << it.first << "' was not found in the mesh database.\n";
+    }
+
+    for (auto& it : fieldContainer->getMeshScalarIntegerStates()) {
+      bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
+      if (!found)
+        *out << "  *** WARNING *** Mesh scalar integer state '" << it.first << "' was not found in the mesh database.\n";
+    }
+
+    //Read info for layered mehes.
+    bool hasLayeredStructure=true;
+    std::vector<double> ltr;
+    int ordering;
+    GO stride;
+    boost::any temp_any;
+
+    std::string state_name = "layer_thickness_ratio";
+    hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
+    if(hasLayeredStructure) fieldContainer->getMeshVectorStates()[state_name] = ltr;
+    state_name = "ordering";
+    hasLayeredStructure &= mesh_data->get_global (state_name, ordering, false);
+    if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
+    state_name = "stride";
+    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, stk::util::ParameterType::INT64, false);
+    if(hasLayeredStructure) {
+      stride = boost::any_cast<int64_t>(temp_any);
+      fieldContainer->getMeshScalarInteger64States()[state_name] = stride;
+    }
+
+    if(hasLayeredStructure) {
+      Teuchos::ArrayRCP<double> layerThicknessRatio(ltr.size());
+      for(decltype(ltr.size()) i=0; i< ltr.size(); ++i) {
+        layerThicknessRatio[i] = ltr[i];
+      }
+      this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<GO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
+    }
+  }
+  else
+  {
+    // We put all the fields as 'missing'
+    const stk::mesh::FieldVector& fields = metaData->get_fields();
+    for (decltype(fields.size()) i=0; i<fields.size(); ++i) {
+//      TODO, when compiler allows, replace following with this for performance: missing.emplace_back(fields[i],fields[i]->name());
+        missing.push_back(stk::io::MeshField(fields[i],fields[i]->name()));
+    }
+  }
+
+  // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
+  side_maps_present = true;
+  bool coherence = true;
+  for (const auto& it : missing)
+  {
+    if (it.field()->name()=="side_to_cell_map" || it.field()->name()=="side_nodes_ids")
+    {
+      side_maps_present = false;
+      coherence = !coherence; // Both fields should be present or absent so coherence should change exactly twice
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (!coherence, std::runtime_error, "Error! The maps 'side_to_cell_map' and 'side_nodes_ids' should either both be present or both missing, but only one of them was found in the mesh file.\n");
+
+  if (useSerialMesh)
+  {
+    // Only proc 0 actually read the mesh, and can confirm whether or not the side maps were present
+    // Unfortunately, Teuchos does not have a specialization for type bool when it comes to communicators, so we need ints
+    int bool_to_int = side_maps_present ? 1 : 0;
+    Teuchos::broadcast(*commT,0,1,&bool_to_int);
+    side_maps_present = bool_to_int == 1 ? true : false;
+  }
+
+  // Loading required input fields from file
+  //this->loadRequiredInputFields (req,commT);
+
+  // Rebalance the mesh before starting the simulation if indicated
+  rebalanceInitialMeshT(commT);
+
+  // Check that the nodeset created from sidesets contain the right number of nodes
+  this->checkNodeSetsFromSideSetsIntegrity ();
+
+  this->setSideSetFieldData(commT, side_set_req, side_set_sis, worksetSize);
+}
+
+void
+Albany::IossSTKMeshStruct::setBulkData (
+          const Teuchos::RCP<const Teuchos_Comm>& commT,
+          const Teuchos::RCP<Teuchos::ParameterList>& params,
+          const AbstractFieldContainer::FieldContainerRequirements& req,
+          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+          const unsigned int worksetSize,
+          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+{
+  mesh_data->add_all_mesh_fields_as_input_fields(); // KL: this adds "solution field"
   std::vector<stk::io::MeshField> missing;
 
   metaData->commit();
@@ -539,7 +760,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
   this->checkNodeSetsFromSideSetsIntegrity ();
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetBulkData(commT, side_set_req, side_set_sis, worksetSize);
 
   fieldAndBulkDataSet = true;
 }

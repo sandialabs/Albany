@@ -78,7 +78,6 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
 
 void GenericSTKMeshStruct::SetupFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<StateInfoStruct>& sis,
     const int worksetSize)
@@ -86,8 +85,6 @@ void GenericSTKMeshStruct::SetupFieldData(
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(),
        std::logic_error,
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
-
-  neq = neq_;
 
   this->nodal_data_base = sis->getNodalDataBase();
 
@@ -139,10 +136,10 @@ void GenericSTKMeshStruct::SetupFieldData(
 
       if(interleavedOrdering == DiscType::Interleaved)
         this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::Interleaved>(params,
-            metaData, bulkData, neq, numDim, sis, solution_vector, num_params));
+            metaData, bulkData, numDim, sis, num_params));
       else
         this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::BlockedMono>(params,
-            metaData, bulkData, neq, numDim, sis, solution_vector, num_params));
+            metaData, bulkData, numDim, sis, num_params));
 
   }
 
@@ -150,10 +147,10 @@ void GenericSTKMeshStruct::SetupFieldData(
 
       if(interleavedOrdering == DiscType::Interleaved)
         this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::Interleaved>(params,
-            metaData, bulkData, neq, req, numDim, sis, num_params));
+            metaData, bulkData, req, numDim, sis, num_params));
       else
         this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::BlockedMono>(params,
-            metaData, bulkData, neq, req, numDim, sis, num_params));
+            metaData, bulkData, req, numDim, sis, num_params));
 
   }
 
@@ -569,7 +566,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
   }
 }
 
-void GenericSTKMeshStruct::finalizeSideSetMeshStructs (
+void GenericSTKMeshStruct::setSideSetFieldData (
           const Teuchos::RCP<const Teuchos_Comm>& comm,
           const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
           const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
@@ -601,7 +598,45 @@ void GenericSTKMeshStruct::finalizeSideSetMeshStructs (
         auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
-        it.second->setFieldAndBulkData(comm,params_ss,neq,req,sis,worksetSize);  // Cell equations are also defined on the side, but not viceversa
+        it.second->setFieldData(comm,params_ss,req,sis,worksetSize);  // Cell equations are also defined on the side, but not viceversa
+      }
+    }
+  }
+}
+
+void GenericSTKMeshStruct::setSideSetBulkData (
+          const Teuchos::RCP<const Teuchos_Comm>& comm,
+          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
+          const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
+          int worksetSize)
+{
+  if (this->sideSetMeshStructs.size()>0) {
+    // Dummy sis/req if not present in the maps for a given side set.
+    // This could happen if the side discretization has no requirements/states
+    Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
+    dummy_sis->createNodalDataBase();
+    AbstractFieldContainer::FieldContainerRequirements dummy_req;
+
+    Teuchos::RCP<Teuchos::ParameterList> params_ss;
+    const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
+    for (auto it : sideSetMeshStructs) {
+      Teuchos::RCP<SideSetSTKMeshStruct> sideMesh;
+      sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
+      if (sideMesh!=Teuchos::null) {
+        // SideSetSTK mesh need to build the mesh
+        sideMesh->setParentMeshInfo(*this, it.first);
+      }
+
+      // We check since the basal mesh for extruded stk mesh should already have it set
+      if (!it.second->fieldAndBulkDataSet) {
+        auto it_req = side_set_req.find(it.first);
+        auto it_sis = side_set_sis.find(it.first);
+
+        auto& req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
+        auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
+
+        params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
+        it.second->setBulkData(comm,params_ss,req,sis,worksetSize);  // Cell equations are also defined on the side, but not viceversa
       }
     }
   }
