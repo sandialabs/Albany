@@ -36,6 +36,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <Kokkos_Core.hpp>
 #include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_STKDiscretization.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -574,15 +575,6 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     if (keep_proc) {
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
       std::cout << "In ali_driver_run: setting initial condition from CISM..." << std::endl;
-    //Check what kind of ordering you have in the solution & create solutionField object.
-    interleavedOrdering = meshStruct->getInterleavedOrdering();
-    Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
-    if(interleavedOrdering == Albany::DiscType::Interleaved)
-      solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<Albany::DiscType::Interleaved> >
-            (meshStruct->getFieldContainer())->getSolutionField();
-    else
-      solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<Albany::DiscType::BlockedMono> >
-            (meshStruct->getFieldContainer())->getSolutionField();
 
      //Create vector used to renumber nodes on each processor from the Albany convention (horizontal levels first) to the CISM convention (vertical layers first)
      nNodes2D = (global_ewn + 1)*(global_nsn+1); //number global nodes in the domain in 2D
@@ -622,6 +614,28 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
          }
         }
      }
+
+     // warning, this is inefficient.
+     // to fix this implement setFieldData and setBulkData for
+     // CismSTKMeshStruct.
+     meshStruct->metaData()->enable_late_fields();
+
+     //create Albany discretization
+     albanyApp->createDiscretization();
+     auto abs_disc = albanyApp->getDiscretization();
+     auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
+
+     //Check what kind of ordering you have in the solution & create solutionField object.
+     interleavedOrdering = meshStruct->getInterleavedOrdering();
+     Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
+     if(interleavedOrdering == Albany::DiscType::Interleaved)
+       solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<Albany::DiscType::Interleaved> >
+         (stk_disc->getSolutionFieldContainer())->getSolutionField();
+     else
+       solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<Albany::DiscType::BlockedMono> >
+         (stk_disc->getSolutionFieldContainer())->getSolutionField();
+
+
      //Loop over all the elements to find which nodes are active.  For the active nodes, copy uvel and vvel from CISM into Albany solution array to
      //use as initial condition.
      //NOTE: there is some inefficiency here by looping over all the elements.  TO DO? pass only active nodes from Albany-CISM to improve this?
@@ -659,7 +673,6 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
        }
     }
 
-    albanyApp->createDiscretization();
     albanyApp->finalSetUp(parameterList);
 
     //IK, 10/30/14: Check that # of elements from previous time step hasn't changed.

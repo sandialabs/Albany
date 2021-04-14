@@ -35,14 +35,44 @@ namespace Albany
 MpasSTKMeshStruct::
 MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const std::vector<GO>& indexToTriangleID,
-    int globalTrianglesStride, int numLayers, const int numParams, int ordering) :
+    const std::vector<int>& indexToVertexID_,
+    const std::vector<int>& vertexProcIDs_,
+    const std::vector<double>& verticesCoords_,
+    int globalVerticesStride_,
+    const std::vector<int>& verticesOnTria_,
+    const std::vector<std::vector<int>>&  procsSharingVertices_,
+    const std::vector<bool>& isBoundaryEdge_,
+    const std::vector<int>& trianglesOnEdge_,
+    const std::vector<int>& verticesOnEdge_,
+    const std::vector<int>& indexToEdgeID_,
+    int globalEdgesStride_,
+    const std::vector<GO>& indexToTriangleID_,
+    int globalTrianglesStride_,
+    const std::vector<int>& dirichletNodesIds_,
+    const std::vector<int>& iceMarginEdgesIds_,
+    int numLayers_, const int numParams, int ordering) :
     GenericSTKMeshStruct(params, 3, numParams),
     out(Teuchos::VerboseObjectBase::getDefaultOStream()),
     periodic(false),
-    NumEles(indexToTriangleID.size()),
+    NumEles(indexToTriangleID_.size()),
     hasRestartSol(false),
-    restartTime(0.)
+    restartTime(0.),
+    indexToVertexID(indexToVertexID_),
+    vertexProcIDs(vertexProcIDs_),
+    globalVerticesStride(globalVerticesStride_),
+    verticesCoords(verticesCoords_),
+    verticesOnTria(verticesOnTria_),
+    procsSharingVertices(procsSharingVertices_),
+    isBoundaryEdge(isBoundaryEdge_),
+    trianglesOnEdge(trianglesOnEdge_),
+    verticesOnEdge(verticesOnEdge_),
+    indexToEdgeID(indexToEdgeID_),
+    globalEdgesStride(globalEdgesStride_),
+    indexToTriangleID(indexToTriangleID_),
+    globalTrianglesStride(globalTrianglesStride_),
+    dirichletNodesIds(dirichletNodesIds_),
+    iceMarginEdgesIds(iceMarginEdgesIds_),
+    numLayers(numLayers_)
 {
   auto LAYER  = LayeredMeshOrdering::LAYER;
   auto COLUMN = LayeredMeshOrdering::COLUMN;
@@ -177,39 +207,34 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   this->initializeSideSetMeshStructs(comm);
 }
 
-void MpasSTKMeshStruct::constructMesh(
+void MpasSTKMeshStruct::setFieldData(
+              const Teuchos::RCP<const Teuchos_Comm>& comm,
+              const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
+              const AbstractFieldContainer::FieldContainerRequirements& /*req*/,
+              const Teuchos::RCP<StateInfoStruct>& sis,
+              const unsigned int worksetSize,
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
+              const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
+{
+  Albany::AbstractFieldContainer::FieldContainerRequirements req;
+  this->SetupFieldData(comm, req, sis, worksetSize);
+  this->setSideSetFieldData(comm, {}, side_set_sis, worksetSize);
+}
+
+void MpasSTKMeshStruct::setBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
     const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
-    const AbstractFieldContainer::FieldContainerRequirements& req,
-    const StateManager& stateMgr,
-    const std::vector<int>& indexToVertexID,
-    const std::vector<int>& vertexProcIDs,
-    const std::vector<double>& verticesCoords,
-    int globalVerticesStride,
-    const std::vector<int>& verticesOnTria,
-    const std::vector<std::vector<int>>  procsSharingVertices,
-    const std::vector<bool>& isBoundaryEdge,
-    const std::vector<int>& trianglesOnEdge,
-    const std::vector<int>& verticesOnEdge,
-    const std::vector<int>& indexToEdgeID,
-    int globalEdgesStride,
-    const std::vector<GO>& indexToTriangleID,
-    int globalTrianglesStride,
-    const std::vector<int>& dirichletNodesIds,
-    const std::vector<int>& iceMarginEdgesIds,
+    const Albany::AbstractFieldContainer::FieldContainerRequirements& /*req*/,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
-    int numLayers, int ordering)
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
-  auto sis = stateMgr.getStateInfoStruct();
-  this->SetupFieldData(comm, req, sis, worksetSize);
-
   int numElemsInPrism = (ElemShape==Tetrahedron) ? 3 : 1;
   int numLatSidesInQuad = (ElemShape==Tetrahedron) ? 2 : 1;
 
   auto LAYER  = LayeredMeshOrdering::LAYER;
   auto COLUMN = LayeredMeshOrdering::COLUMN;
-
-  Ordering = (ordering==0) ? LAYER : COLUMN;
 
   int elemColumnShift = (Ordering == COLUMN) ? numElemsInPrism : numElemsInPrism*globalTrianglesStride;
   int lElemColumnShift = (Ordering == COLUMN) ? numElemsInPrism : numElemsInPrism*indexToTriangleID.size();
@@ -480,9 +505,10 @@ void MpasSTKMeshStruct::constructMesh(
 
   bulkData->change_entity_owner(node_to_proc);
 
+  Albany::AbstractFieldContainer::FieldContainerRequirements req;
   this->loadRequiredInputFields (req,comm);
 
-  this->setSideSetFieldAndBulkData(comm, {}, stateMgr.getSideSetStateInfoStruct(), worksetSize);
+  this->setSideSetBulkData(comm, {}, side_set_sis, worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

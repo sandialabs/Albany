@@ -149,11 +149,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   if (interleavedOrdering == Albany::DiscType::Interleaved) {
     solutionField = Teuchos::rcp_dynamic_cast<
         Albany::OrdinarySTKFieldContainer<Albany::DiscType::Interleaved> >(
-            meshStruct->getFieldContainer())->getSolutionField();
+            stk_disc->getSolutionFieldContainer())->getSolutionField();
   } else {
     solutionField = Teuchos::rcp_dynamic_cast<
         Albany::OrdinarySTKFieldContainer<Albany::DiscType::BlockedMono> >(
-            meshStruct->getFieldContainer())->getSolutionField();
+            stk_disc->getSolutionFieldContainer())->getSolutionField();
   }
 
   ScalarFieldType* surfaceHeightField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_height");
@@ -264,13 +264,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   }
 
-  if(!keptMesh) {
-    albanyApp->createDiscretization();
-  } else {
-    auto abs_disc = albanyApp->getDiscretization();
-    auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
-    stk_disc->updateMesh();
-  }
+  stk_disc->updateMesh();
   albanyApp->finalSetUp(paramList);
 
   if (keptMesh) albanyApp->getPhxSetup()->reboot_memoizer();
@@ -739,17 +733,16 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   //Get number of params in problem - needed for MeshStruct constructor
   int num_params = Albany::CalculateNumberParams(Teuchos::sublist(paramList, "Problem", true));
   meshStruct = Teuchos::rcp(
-      new Albany::MpasSTKMeshStruct(discretizationList, mpiComm, indexToTriangleGOID,
-          globalTrianglesStride, nLayers, num_params, Ordering));
+      new Albany::MpasSTKMeshStruct(discretizationList, mpiComm, indexToVertexID,
+          vertexProcIDs, verticesCoords, globalVerticesStride,
+          verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,
+          verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,
+          dirichletNodesIds, iceMarginEdgesIds,
+          nLayers, num_params, Ordering));
+
   albanyApp->createMeshSpecs(meshStruct);
 
   albanyApp->buildProblem();
 
-  meshStruct->constructMesh(mpiComm, discretizationList, req,
-      albanyApp->getStateMgr(), indexToVertexID,
-      vertexProcIDs, verticesCoords, globalVerticesStride,
-      verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,
-      verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,
-      dirichletNodesIds, iceMarginEdgesIds,
-      meshStruct->getMeshSpecs()[0]->worksetSize, nLayers, Ordering);
+  albanyApp->createDiscretization();
 }

@@ -530,6 +530,10 @@ class STKDiscretization : public AbstractDiscretization
       const AbstractFieldContainer::FieldContainerRequirements& req,
       const Teuchos::RCP<StateInfoStruct>& sis);
 
+  Teuchos::RCP<AbstractSTKFieldContainer> getSolutionFieldContainer() {
+    return solutionFieldContainer;
+  }
+
  protected:
 
   friend class BlockedSTKDiscretization;
