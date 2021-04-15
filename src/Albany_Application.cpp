@@ -215,7 +215,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     solMethod = Eigensolve;
   } else if (
       solutionMethod == "Transient") {
-#ifdef ALBANY_TEMPUS
     solMethod = Transient;
 
     // Add NOX pre-post-operator for debugging.
@@ -311,14 +310,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     if (is_explicit_scheme == true) {
       requires_sdbcs_ = true;
     }
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "Solution Method = "
-            << solutionMethod << " is not valid because "
-            << "Trilinos was not built with Tempus turned ON.\n");
-#endif
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,

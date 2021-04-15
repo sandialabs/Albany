@@ -20,7 +20,6 @@
 #cmakedefine ALBANY_SEACAS
 #cmakedefine ALBANY_STK_REBALANCE
 #cmakedefine ALBANY_TEKO
-#cmakedefine ALBANY_TEMPUS
 #cmakedefine ALBANY_ZOLTAN
 
 // ========================== General Albany build and capabilities options ============================== //

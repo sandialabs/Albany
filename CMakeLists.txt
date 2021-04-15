@@ -482,11 +482,11 @@ ENDIF()
 # Check if Trilinos has Tempus
 LIST(FIND Trilinos_PACKAGE_LIST Tempus Tempus_List_ID)
 IF (Tempus_List_ID GREATER -1)
-  MESSAGE("-- Looking for Tempus in Trilinos:     Found")
+  MESSAGE("-- Looking for Tempus (required) in Trilinos:     Found")
   SET(ALBANY_TEMPUS TRUE)
 ELSE()
-  MESSAGE("-- Looking for Tempus in Trilinos: NOT found.")
-  SET(ALBANY_TEMPUS FALSE)
+  MESSAGE("-- Looking for Tempus (required) in Trilinos ...                NOT Found!")
+  MESSAGE(FATAL_ERROR "Albany REQUIRES Tempus. Please, configure Trilinos with guidance from trilinos-cmake script in doc directory.")
 ENDIF()
 
 ##########################################

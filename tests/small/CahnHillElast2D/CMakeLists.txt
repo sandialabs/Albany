@@ -16,7 +16,7 @@ if (ALBANY_IOPX)
   endif()
 
   set (testName ${testNameRoot}_Tempus)
-  if (ALBANY_IFPACK2 AND ALBANY_TEMPUS)
+  if (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_tempus.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/inputT_tempus.yaml COPYONLY)
     add_test(${testName} ${Albany.exe} inputT_tempus.yaml)
