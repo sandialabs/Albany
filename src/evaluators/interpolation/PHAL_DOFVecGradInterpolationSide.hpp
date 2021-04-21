@@ -54,8 +54,6 @@ private:
   //! Values at quadrature points
   PHX::MDField<OutputScalarT> grad_qp;
 
-  bool useCollapsedSidesets;
-
   Albany::LocalSideSetInfo sideSet;
 
   int numSideNodes;

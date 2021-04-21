@@ -53,14 +53,29 @@ private:
   // Output
   PHX::MDField<ScalarT,Cell,Node> Residual;
 
+  Albany::LocalSideSetInfo sideSet;
+
   std::string sideName;
-  std::vector<std::vector<int> >  sideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
   unsigned int numNodes;
   unsigned int numSideNodes;
   unsigned int numQPs;
   unsigned int numSideQPs;
 
-  bool useCollapsedSidesets;
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct wResid_Cell_Tag{};
+  struct wResid_Side_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,wResid_Cell_Tag> wResid_Cell_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,wResid_Side_Tag> wResid_Side_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const wResid_Cell_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const wResid_Side_Tag& tag, const int& i) const;
 };
 
 }	// Namespace LandIce

@@ -64,8 +64,6 @@ private:
   std::string sideSetName;
   unsigned int numSideQPs, numSideDims;
 
-  bool useCollapsedSidesets;
-
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
   Albany::LocalSideSetInfo sideSet;

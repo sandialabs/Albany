@@ -53,12 +53,10 @@ GatherVerticallyContractedSolutionBase(const Teuchos::ParameterList& p,
                               "Error! Layout for side set " << sideSetName << " not found.\n");
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
-  this->useCollapsedSidesets = dl_side->useCollapsedSidesets;
-
   if(isVector)
-    contractedSol = decltype(contractedSol)(p.get<std::string>("Contracted Solution Name"), this->useCollapsedSidesets ? dl_side->node_vector_sideset : dl_side->node_vector);
+    contractedSol = decltype(contractedSol)(p.get<std::string>("Contracted Solution Name"), dl_side->node_vector_sideset);
   else
-    contractedSol = decltype(contractedSol)(p.get<std::string>("Contracted Solution Name"), this->useCollapsedSidesets ? dl_side->node_scalar_sideset : dl_side->node_scalar);
+    contractedSol = decltype(contractedSol)(p.get<std::string>("Contracted Solution Name"), dl_side->node_scalar_sideset);
 
   this->addEvaluatedField(contractedSol);
 
@@ -187,52 +185,10 @@ evaluateFields(typename Traits::EvalData workset)
     // Each sideset has a localDOFView that can be accessed on device in a coalesced fashion
     this->localDOFView = localDOFList.at(it->first);
 
-    if (this->useCollapsedSidesets) {
-      if (this->isVector) {
-        Kokkos::parallel_for(ResidualVector_Policy(0, this->sideSet.size), *this);
-      } else {
-        Kokkos::parallel_for(ResidualScalar_Policy(0, this->sideSet.size), *this);
-      }
+    if (this->isVector) {
+      Kokkos::parallel_for(ResidualVector_Policy(0, this->sideSet.size), *this);
     } else {
-
-      // Loop over the sides that form the boundary condition
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-      const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-
-      const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
-
-      for (int sideSet_idx = 0; sideSet_idx < this->sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
-        // Get the data that corresponds to the side
-        const int elem_LID = this->sideSet.elem_LID(sideSet_idx);
-        const int elem_side = this->sideSet.side_local_id(sideSet_idx);
-
-        const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-        const int numSideNodes = this->numSideNodes(elem_side);
-
-        const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
-
-        //we only consider elements on the top.
-        GO baseId;
-        for (int i = 0; i < numSideNodes; ++i) {
-          const std::size_t node = side.node[i];
-          baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
-          std::vector<double> contrSol(this->vecDim,0);
-          for(int il=0; il<this->numLayers+1; ++il) {
-            const GO gnode = layeredMeshNumbering.getId(baseId, il);
-            const LO inode = ov_node_indexer.getLocalElement(gnode);
-            for(unsigned int comp=0; comp<this->vecDim; ++comp)
-              contrSol[comp] += this->x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*this->quadWeights(il);
-          }
-          if(this->isVector) {
-            for(unsigned int comp=0; comp<this->vecDim; ++comp) {
-              this->contractedSol(elem_LID,elem_side,i,comp) = contrSol[comp];
-            }
-          }
-          else {
-            this->contractedSol(elem_LID,elem_side,i) = contrSol[0];
-          }
-        }
-      }
+      Kokkos::parallel_for(ResidualScalar_Policy(0, this->sideSet.size), *this);
     }
   }
 }
@@ -298,30 +254,16 @@ evaluateFields(typename Traits::EvalData workset)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*this->quadWeights(il);
         }
 
-        if (this->useCollapsedSidesets) {
-          if(this->isVector) {
-            for(unsigned int comp=0; comp<this->vecDim; ++comp) {
-              this->contractedSol(sideSet_idx,i,comp) = FadType(this->contractedSol(sideSet_idx,i,comp).size(), contrSol[comp]);
-              for(int il=0; il<this->numLayers+1; ++il)
-                this->contractedSol(sideSet_idx,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset) = this->quadWeights(il)*workset.j_coeff;
-            }
-          } else {
-            this->contractedSol(sideSet_idx,i) = FadType(this->contractedSol(sideSet_idx,i).size(), contrSol[0]);
+        if(this->isVector) {
+          for(unsigned int comp=0; comp<this->vecDim; ++comp) {
+            this->contractedSol(sideSet_idx,i,comp) = FadType(this->contractedSol(sideSet_idx,i,comp).size(), contrSol[comp]);
             for(int il=0; il<this->numLayers+1; ++il)
-              this->contractedSol(sideSet_idx,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset) = this->quadWeights(il)*workset.j_coeff;
-          } 
+              this->contractedSol(sideSet_idx,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset) = this->quadWeights(il)*workset.j_coeff;
+          }
         } else {
-          if(this->isVector) {
-            for(unsigned int comp=0; comp<this->vecDim; ++comp) {
-              this->contractedSol(elem_LID,elem_side,i,comp) = FadType(this->contractedSol(elem_LID,elem_side,i,comp).size(), contrSol[comp]);
-              for(int il=0; il<this->numLayers+1; ++il)
-                this->contractedSol(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset) = this->quadWeights(il)*workset.j_coeff;
-            }
-          } else {
-            this->contractedSol(elem_LID,elem_side,i) = FadType(this->contractedSol(elem_LID,elem_side,i).size(), contrSol[0]);
-            for(int il=0; il<this->numLayers+1; ++il)
-              this->contractedSol(elem_LID,elem_side,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset) = this->quadWeights(il)*workset.j_coeff;
-          } 
+          this->contractedSol(sideSet_idx,i) = FadType(this->contractedSol(sideSet_idx,i).size(), contrSol[0]);
+          for(int il=0; il<this->numLayers+1; ++il)
+            this->contractedSol(sideSet_idx,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset) = this->quadWeights(il)*workset.j_coeff;
         }
       }
     }
@@ -386,20 +328,11 @@ evaluateFields(typename Traits::EvalData workset)
           for(unsigned int comp=0; comp<this->vecDim; ++comp)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*this->quadWeights(il);
         }
-        if (this->useCollapsedSidesets) {
-          if(this->isVector) {
-            for(unsigned int comp=0; comp<this->vecDim; ++comp)
-              this->contractedSol(sideSet_idx,i,comp) = contrSol[comp];
-          } else {
-            this->contractedSol(sideSet_idx,i) = contrSol[0];
-          }
+        if(this->isVector) {
+          for(unsigned int comp=0; comp<this->vecDim; ++comp)
+            this->contractedSol(sideSet_idx,i,comp) = contrSol[comp];
         } else {
-          if(this->isVector) {
-            for(unsigned int comp=0; comp<this->vecDim; ++comp)
-              this->contractedSol(elem_LID,elem_side,i,comp) = contrSol[comp];
-          } else {
-            this->contractedSol(elem_LID,elem_side,i) = contrSol[0];
-          }
+          this->contractedSol(sideSet_idx,i) = contrSol[0];
         }
         if (workset.Vx != Teuchos::null && workset.j_coeff != 0.0) {
           TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not Implemented yet" << std::endl);
@@ -468,20 +401,11 @@ evaluateFields(typename Traits::EvalData workset)
             contrSol[comp] += x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*this->quadWeights(il);
         }
 
-        if (this->useCollapsedSidesets) {
-          if(this->isVector) {
-            for(unsigned int comp=0; comp<this->vecDim; ++comp)
-              this->contractedSol(sideSet_idx,i,comp) = contrSol[comp];
-          } else {
-            this->contractedSol(sideSet_idx,i) = contrSol[0];
-          }
+        if(this->isVector) {
+          for(unsigned int comp=0; comp<this->vecDim; ++comp)
+            this->contractedSol(sideSet_idx,i,comp) = contrSol[comp];
         } else {
-          if(this->isVector) {
-            for(unsigned int comp=0; comp<this->vecDim; ++comp)
-              this->contractedSol(elem_LID,elem_side,i,comp) = contrSol[comp];
-          } else {
-            this->contractedSol(elem_LID,elem_side,i) = contrSol[0];
-          }
+          this->contractedSol(sideSet_idx,i) = contrSol[0];
         }
       }
     }
@@ -589,42 +513,22 @@ evaluateFields(typename Traits::EvalData workset)
               contrDirection[comp] += direction_x_constView[solDOFManager.getLocalDOF(inode, comp+this->offset)]*this->quadWeights(il);
           }
 
-        if (this->useCollapsedSidesets) {
-          if(this->isVector) {
-            for(unsigned int comp=0; comp<this->vecDim; ++comp) {
-              this->contractedSol(sideSet_idx,i,comp) = HessianVecFad(this->contractedSol(sideSet_idx,i,comp).size(), contrSol[comp]);
-              if (g_xx_is_active||g_px_is_active)
-                this->contractedSol(sideSet_idx,i,comp).val().fastAccessDx(0) = contrDirection[comp];
-              if (g_xx_is_active||g_xp_is_active)
-                for(int il=0; il<this->numLayers+1; ++il)
-                  this->contractedSol(sideSet_idx,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
-            }
-          } else {
-            this->contractedSol(sideSet_idx,i) = HessianVecFad(this->contractedSol(sideSet_idx,i).size(), contrSol[0]);
+        if(this->isVector) {
+          for(unsigned int comp=0; comp<this->vecDim; ++comp) {
+            this->contractedSol(sideSet_idx,i,comp) = HessianVecFad(this->contractedSol(sideSet_idx,i,comp).size(), contrSol[comp]);
             if (g_xx_is_active||g_px_is_active)
-              this->contractedSol(sideSet_idx,i).val().fastAccessDx(0) = contrDirection[0];
+              this->contractedSol(sideSet_idx,i,comp).val().fastAccessDx(0) = contrDirection[comp];
             if (g_xx_is_active||g_xp_is_active)
               for(int il=0; il<this->numLayers+1; ++il)
-                this->contractedSol(sideSet_idx,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
+                this->contractedSol(sideSet_idx,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
           }
         } else {
-          if(this->isVector) {
-            for(unsigned int comp=0; comp<this->vecDim; ++comp) {
-              this->contractedSol(elem_LID,elem_side,i,comp) = HessianVecFad(this->contractedSol(elem_LID,elem_side,i,comp).size(), contrSol[comp]);
-              if (g_xx_is_active||g_px_is_active)
-                this->contractedSol(elem_LID,elem_side,i,comp).val().fastAccessDx(0) = contrDirection[comp];
-              if (g_xx_is_active||g_xp_is_active)
-                for(int il=0; il<this->numLayers+1; ++il)
-                  this->contractedSol(elem_LID,elem_side,i,comp).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+comp+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
-            }
-          } else {
-            this->contractedSol(elem_LID,elem_side,i) = HessianVecFad(this->contractedSol(elem_LID,elem_side,i).size(), contrSol[0]);
-            if (g_xx_is_active||g_px_is_active)
-              this->contractedSol(elem_LID,elem_side,i).val().fastAccessDx(0) = contrDirection[0];
-            if (g_xx_is_active||g_xp_is_active)
-              for(int il=0; il<this->numLayers+1; ++il)
-                this->contractedSol(elem_LID,elem_side,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
-          }
+          this->contractedSol(sideSet_idx,i) = HessianVecFad(this->contractedSol(sideSet_idx,i).size(), contrSol[0]);
+          if (g_xx_is_active||g_px_is_active)
+            this->contractedSol(sideSet_idx,i).val().fastAccessDx(0) = contrDirection[0];
+          if (g_xx_is_active||g_xp_is_active)
+            for(int il=0; il<this->numLayers+1; ++il)
+              this->contractedSol(sideSet_idx,i).fastAccessDx(neq*(this->numNodes+numSideNodes*il+i)+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
         }
       }
     }

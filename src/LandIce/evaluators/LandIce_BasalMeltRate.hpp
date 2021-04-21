@@ -86,22 +86,16 @@ private:
 
   Albany::LocalSideSetInfo sideSet;
 
-  bool useCollapsedSidesets;
-
   public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
   struct Basal_Melt_Rate_Tag{};
-  struct Basal_Melt_Rate_Collapsed_Tag{};
 
   typedef Kokkos::RangePolicy<ExecutionSpace,Basal_Melt_Rate_Tag> Basal_Melt_Rate_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,Basal_Melt_Rate_Collapsed_Tag> Basal_Melt_Rate_Collapsed_Policy;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const Basal_Melt_Rate_Tag& tag, const int& i) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const Basal_Melt_Rate_Collapsed_Tag& tag, const int& i) const;
 
 };
 

@@ -42,7 +42,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   gradBF         = decltype(gradBF)(gradBFname,dl->node_qp_gradient),
   w_measure      = decltype(w_measure)(w_measure_name, dl->qp_scalar);
   residual       = decltype(residual)(residual_name, dl->node_scalar);
-  w_side_measure = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar);
+  w_side_measure = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar_sideset);
 
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
@@ -74,14 +74,17 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   using PHX::MDALayout;
 
-  sideNodes.resize(numSides);
-  for (unsigned int side=0; side<numSides; ++side)
-  {
-    //Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
+  unsigned int nodeMax = 0;
+  for (unsigned int side=0; side<numSides; ++side) {
     unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    sideNodes[side].resize(thisSideNodes);
-    for (unsigned int node=0; node<thisSideNodes; ++node)
-      sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+    nodeMax = std::max(nodeMax, thisSideNodes);
+  }
+  sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+  for (unsigned int side=0; side<numSides; ++side) {
+    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
+    for (unsigned int node=0; node<thisSideNodes; ++node) {
+      sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
+    }
   }
 }
 
@@ -100,50 +103,64 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(residual, fm);
 }
 
+//**********************************************************************
+//Kokkos functor
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::
+operator() (const LaplacianRegularization_Cell_Tag& tag, const int& cell) const {
+  
+  MeshScalarT trapezoid_weights = 0;
+  for (unsigned int qp=0; qp<numQPs; ++qp)
+    trapezoid_weights += w_measure(cell, qp);
+  trapezoid_weights /= numNodes;
+  for (unsigned int inode=0; inode<numNodes; ++inode) {
+      ScalarT t = 0;
+      for (unsigned int qp=0; qp<numQPs; ++qp)
+        for (unsigned int idim=0; idim<cellDim; ++idim)
+          t += laplacian_coeff*gradField(cell,qp,idim)*gradBF(cell,inode, qp,idim)*w_measure(cell, qp);
+
+      //using trapezoidal rule to get diagonal mass matrix
+      t += (mass_coeff*field(cell,inode)-forcing(cell,inode))* trapezoid_weights;
+
+      residual(cell,inode) = t;
+  }
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::
+operator() (const LaplacianRegularization_Side_Tag& tag, const int& sideSet_idx) const {
+
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
+  MeshScalarT side_trapezoid_weights= 0;
+  for (unsigned int qp=0; qp<numSideQPs; ++qp)
+    side_trapezoid_weights += w_side_measure(sideSet_idx, qp);
+  side_trapezoid_weights /= numSideNodes;
+
+  for (unsigned int inode=0; inode<numSideNodes; ++inode) {
+    auto cell_node = sideNodes(side,inode);
+    residual(cell,cell_node) += robin_coeff*field(cell,cell_node)* side_trapezoid_weights;
+  }
+
+}
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
 
-  for (unsigned int cell=0; cell<numCells; ++cell) {
-    MeshScalarT trapezoid_weights = 0;
-    for (unsigned int qp=0; qp<numQPs; ++qp)
-      trapezoid_weights += w_measure(cell, qp);
-    trapezoid_weights /= numNodes;
-    for (unsigned int inode=0; inode<numNodes; ++inode) {
-        ScalarT t = 0;
-        for (unsigned int qp=0; qp<numQPs; ++qp)
-          for (unsigned int idim=0; idim<cellDim; ++idim)
-            t += laplacian_coeff*gradField(cell,qp,idim)*gradBF(cell,inode, qp,idim)*w_measure(cell, qp);
-
-        //using trapezoidal rule to get diagonal mass matrix
-        t += (mass_coeff*field(cell,inode)-forcing(cell,inode))* trapezoid_weights;
-
-        residual(cell,inode) = t;
-    }
-  }
+  Kokkos::parallel_for(LaplacianRegularization_Cell_Policy(0, numCells), *this);
 
   //compute robin term using lumped boundary mass matrix
   if (workset.sideSets->find(sideName) != workset.sideSets->end())
   {
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideName);
-    for (auto const& it_side : sideSet)
-    {
-      // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
-
-      MeshScalarT side_trapezoid_weights= 0;
-      for (unsigned int qp=0; qp<numSideQPs; ++qp)
-        side_trapezoid_weights += w_side_measure(cell,side, qp);
-      side_trapezoid_weights /= numSideNodes;
-
-      for (unsigned int inode=0; inode<numSideNodes; ++inode) {
-        auto cell_node = sideNodes[side][inode];
-        residual(cell,cell_node) += robin_coeff*field(cell,cell_node)* side_trapezoid_weights;
-      }
-    }
+    sideSet = workset.sideSetViews->at(sideName);
+    Kokkos::parallel_for(LaplacianRegularization_Side_Policy(0, sideSet.size), *this);
   }
 
 }

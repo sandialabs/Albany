@@ -44,7 +44,6 @@ private:
   unsigned int sideDim;
 
   Albany::LocalSideSetInfo sideSet;
-  bool useCollapsedSidesets;
 
   // TODO: restore layout template arguments when removing old sideset layout
   PHX::MDField<const ScalarT,Cell,Node> solution;

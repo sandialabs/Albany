@@ -83,8 +83,6 @@ private:
 
   Albany::LocalSideSetInfo sideSet;
 
-  bool useCollapsedSidesets;
-
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;

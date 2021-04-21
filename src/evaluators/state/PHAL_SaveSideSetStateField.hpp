@@ -70,7 +70,6 @@ private:
   std::string stateName;
 
   bool nodalState;
-  bool useCollapsedSidesets;
 
   Kokkos::View<int**, PHX::Device> sideNodes;
 

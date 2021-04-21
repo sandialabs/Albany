@@ -26,12 +26,10 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
 
-  useCollapsedSidesets = dl_side->useCollapsedSidesets;
-
   coords_side_vertices = decltype(coords_side_vertices)(
-      p.get<std::string>("Coordinate Vector Vertex Name"), useCollapsedSidesets ? dl_side->vertices_vector_sideset : dl_side->vertices_vector);
+      p.get<std::string>("Coordinate Vector Vertex Name"), dl_side->vertices_vector_sideset);
   coords_side_qp = decltype(coords_side_qp)(
-      p.get<std::string>("Coordinate Vector QP Name"), useCollapsedSidesets ? dl_side->qp_coords_sideset : dl_side->qp_coords);
+      p.get<std::string>("Coordinate Vector QP Name"), dl_side->qp_coords_sideset);
 
   this->addDependentField(coords_side_vertices.fieldTag());
   this->addEvaluatedField(coords_side_qp);
@@ -106,27 +104,8 @@ void MapToPhysicalFrameSide<EvalT, Traits>::evaluateFields(typename Traits::Eval
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   sideSet = workset.sideSetViews->at(sideSetName);
-  if (useCollapsedSidesets) {
-    Kokkos::parallel_for(MapToPhysicalFrameSide_Policy(0, sideSet.size), *this);
-  } else {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
 
-      for (int qp=0; qp<numSideQPs; ++qp)
-      {
-        for (int dim=0; dim<numDim; ++dim)
-        {
-          coords_side_qp(cell,side,qp,dim) = 0;
-          for (int v=0; v<numSideVertices[side]; ++v)
-            coords_side_qp(cell,side,qp,dim) += coords_side_vertices(cell,side,v,dim)*phi_at_cub_points[side](v,qp);
-        }
-      }
-    }
-  }
-    
+  Kokkos::parallel_for(MapToPhysicalFrameSide_Policy(0, sideSet.size), *this);    
 }
 
 } // Namespace PHAL

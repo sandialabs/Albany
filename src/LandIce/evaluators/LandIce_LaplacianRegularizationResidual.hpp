@@ -34,8 +34,10 @@ namespace LandIce {
 
   private:
 
+    Albany::LocalSideSetInfo sideSet;
+
     std::string sideName;
-    std::vector<std::vector<int> >  sideNodes;
+    Kokkos::View<int**, PHX::Device> sideNodes;
     Teuchos::RCP<shards::CellTopology> cellType;
     Teuchos::RCP<shards::CellTopology> sideType;
     
@@ -59,6 +61,21 @@ namespace LandIce {
 
     ScalarT p_reg, reg;
     double laplacian_coeff, mass_coeff, robin_coeff;
+
+  public:
+
+    typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+    struct LaplacianRegularization_Cell_Tag{};
+    struct LaplacianRegularization_Side_Tag{};
+
+    typedef Kokkos::RangePolicy<ExecutionSpace,LaplacianRegularization_Cell_Tag> LaplacianRegularization_Cell_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace,LaplacianRegularization_Side_Tag> LaplacianRegularization_Side_Policy;
+
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const LaplacianRegularization_Cell_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const LaplacianRegularization_Side_Tag& tag, const int& i) const;
   };
 
 } // Namespace LandIce

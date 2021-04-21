@@ -190,7 +190,7 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
   if(sideName != "INVALID") {
     //---- Restrict vertex coordinates from cell-based to cell-side-based
-    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",sideName,"Vertex Vector",cellType,"Coord Vec " + sideName);
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",sideName,"Vertex Vector Sideset",cellType,"Coord Vec " + sideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis, sideCubature, sideName);
