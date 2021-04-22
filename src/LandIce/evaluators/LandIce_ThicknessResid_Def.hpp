@@ -54,8 +54,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
                               "Error! Layout for side set " << sideSetName << " not found.\n");
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
-  useCollapsedSidesets = dl_side->useCollapsedSidesets;
-  auto av_v_layout = useCollapsedSidesets ? dl_side->node_vector_sideset : dl_side->node_vector;
+  auto av_v_layout = dl_side->node_vector_sideset;
   V = decltype(V)(p.get<std::string>("Averaged Velocity Variable Name"), av_v_layout);
   this->addDependentField(V);
 
@@ -234,11 +233,7 @@ evaluateFields(typename Traits::EvalData workset)
         H0_Cell(node) = H0(elem_LID, node);
         SMB_Cell(node) = have_SMB ? SMB(elem_LID, node) : ScalarT(0.0);
         for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
-          if (useCollapsedSidesets) {
-            V_Cell(node, dim) = V(iSide, i, dim);
-          } else {
-            V_Cell(node, dim) = V(elem_LID, elem_side, i, dim);
-          }
+          V_Cell(node, dim) = V(iSide, i, dim);
         }
       }
 

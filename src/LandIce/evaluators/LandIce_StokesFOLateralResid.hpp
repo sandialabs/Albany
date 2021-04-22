@@ -66,8 +66,6 @@ private:
 
   Kokkos::View<int**, PHX::Device> sideNodes;
   std::string                      lateralSideName;
-
-  bool useCollapsedSidesets;
   
   double rho_w;  // [Kg m^{-3}]
   double rho_i;  // [Kg m^{-3}]

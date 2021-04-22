@@ -68,8 +68,7 @@ private:
   std::string                     ssName;
 
   Albany::LocalSideSetInfo sideSet;
-  bool useCollapsedSidesets;
-
+  
   Kokkos::DynRankView<ScalarT, PHX::Device> qp_temp_buffer;
 
   unsigned int numSideNodes;
