@@ -33,12 +33,10 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
 
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-  useCollapsedSidesets = dl_basal->useCollapsedSidesets;
-
-  u         = decltype(u)(p.get<std::string> ("Velocity Side QP Variable Name"), useCollapsedSidesets ? dl_basal->qp_vector_sideset : dl_basal->qp_vector);
-  beta      = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),useCollapsedSidesets ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
-  BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), useCollapsedSidesets ? dl_basal->node_qp_scalar_sideset : dl_basal->node_qp_scalar);
-  w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), useCollapsedSidesets ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
+  u         = decltype(u)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector_sideset);
+  beta      = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar_sideset);
+  BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar_sideset);
+  w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar_sideset);
 
   this->addDependentField(u);
   this->addDependentField(beta);
@@ -141,29 +139,7 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Tr
 
   sideSet = workset.sideSetViews->at(basalSideName);
 
-  if (useCollapsedSidesets) {
-    Kokkos::parallel_for(StokesFOBasalResid_Policy(0, sideSet.size), *this);
-  } else {
-    ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam(0)) : ScalarT(0);
-    ScalarT local_res[2];
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      for (unsigned int node=0; node<numSideNodes; ++node) {
-        local_res[0] = 0.0;
-        local_res[1] = 0.0;
-        for (unsigned int dim=0; dim<vecDimFO; ++dim) {
-          for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-            local_res[dim] += (ff + beta(cell,side,qp)*u(cell,side,qp,dim))*BF(cell,side,node,qp)*w_measure(cell,side,qp);
-          }
-          residual(cell,sideNodes(side,node),dim) += local_res[dim];
-        }
-      }
-    }
-  }
+  Kokkos::parallel_for(StokesFOBasalResid_Policy(0, sideSet.size), *this);
 }
 
 } // Namespace LandIce

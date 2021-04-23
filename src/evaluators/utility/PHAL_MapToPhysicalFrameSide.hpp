@@ -58,8 +58,6 @@ private:
 
   Albany::LocalSideSetInfo sideSet;
 
-  bool useCollapsedSidesets;
-
   // Input:
   // TODO: restore layout template arguments when removing old sideset layout
   //! Values at vertices

@@ -72,7 +72,6 @@ private:
   PHX::MDField<ScalarT>           grad_beta;           // Side, QuadPoint, Dim
 
   std::string basalSideName;
-  bool useCollapsedSidesets;
   Albany::LocalSideSetInfo sideSet;
 
   unsigned int numSideNodes;

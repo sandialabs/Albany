@@ -17,13 +17,11 @@ DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
 DOFDivInterpolationSideBase(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
-  val_node    (p.get<std::string> ("Variable Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_vector_sideset : dl_side->node_vector),
-  gradBF      (p.get<std::string> ("Gradient BF Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_qp_gradient_sideset : dl_side->node_qp_gradient),
-  tangents    (p.get<std::string> ("Tangents Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_tensor_cd_sd_sideset : dl_side->qp_tensor_cd_sd),
-  val_qp      (p.get<std::string> ("Divergence Variable Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_scalar_sideset : dl_side->qp_scalar )
+  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_vector_sideset),
+  gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient_sideset),
+  tangents    (p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd_sideset),
+  val_qp      (p.get<std::string> ("Divergence Variable Name"), dl_side->qp_scalar_sideset)
 {
-  useCollapsedSidesets = dl_side->useCollapsedSidesets;
-
   this->addDependentField(val_node);
   this->addDependentField(gradBF);
   this->addDependentField(tangents);
@@ -82,40 +80,12 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end())
-    return;
-
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   sideSet = workset.sideSetViews->at(sideSetName);
-  if (useCollapsedSidesets) {
-    Kokkos::parallel_for(DivInterpolation_Policy(0, sideSet.size), *this);
-  } else {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
 
-      for (unsigned int qp=0; qp<numSideQPs; ++qp)
-      {
-        val_qp(cell,side,qp) = 0.;
-        for (unsigned int dim=0; dim<numDims; ++dim)
-        {
-          for (unsigned int node=0; node<numSideNodes; ++node)
-          {
-            MeshScalarT gradBF_non_intrinsic = 0.0;
-            for (unsigned int itan=0; itan<numDims; ++itan)
-            {
-              gradBF_non_intrinsic += tangents(cell,side,qp,dim,itan)*gradBF(cell,side,node,qp,itan);
-            }
-            val_qp(cell,side,qp) += val_node(cell,side,node,dim) * gradBF_non_intrinsic;
-          }
-        }
-      }
-    }
-  }
-  
+  Kokkos::parallel_for(DivInterpolation_Policy(0, sideSet.size), *this);  
 }
 
 } // Namespace LandIce

@@ -47,7 +47,6 @@ namespace LandIce
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideName)==dl->side_layouts.end(), std::runtime_error,
                                 "Error! Basal side data layout not found.\n");
     Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideName);
-    useCollapsedSidesets = dl_side->useCollapsedSidesets;
 
     TEUCHOS_TEST_FOR_EXCEPTION (not dl_side->useCollapsedSidesets, std::runtime_error,
                                 "Error! LandIce::w_Resid only implemented for collapsed sidesets.\n");
@@ -68,14 +67,17 @@ namespace LandIce
     unsigned int numSides = dl_side->node_scalar->extent(1);
     unsigned int sideDim  = cellType->getDimension()-1;
 
-    sideNodes.resize(numSides);
-    for (unsigned int side=0; side<numSides; ++side)
-    {
-      //Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
+    unsigned int nodeMax = 0;
+    for (unsigned int side=0; side<numSides; ++side) {
       unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
-      sideNodes[side].resize(thisSideNodes);
-      for (unsigned int node=0; node<thisSideNodes; ++node)
-        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+      nodeMax = std::max(nodeMax, thisSideNodes);
+    }
+    sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+    for (unsigned int side=0; side<numSides; ++side) {
+      unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
+      for (unsigned int node=0; node<thisSideNodes; ++node) {
+        sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
+      }
     }
 
     this->addDependentField(GradVelocity);
@@ -94,6 +96,55 @@ namespace LandIce
     this->setName("W Residual");
   }
 
+  //**********************************************************************
+  //Kokkos functor
+  template<typename EvalT, typename Traits, typename VelocityType>
+  KOKKOS_INLINE_FUNCTION
+  void w_Resid<EvalT,Traits,VelocityType>::
+  operator() (const wResid_Cell_Tag& tag, const int& cell) const {
+
+    MeshScalarT diam_z(0);//, diam_xy(0), diam_z(0);
+    for (std::size_t i = 0; i < numNodes; ++i) {
+      //  diam = std::max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+      //                                              coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,j,2)));
+      //  diam_xy = std::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
+      diam_z = std::max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
+    }
+    for (std::size_t node = 0; node < numNodes; ++node)
+      for (std::size_t qp = 0; qp < numQPs; ++qp)
+        Residual(cell,node) += ( w_z(cell,qp,2) + GradVelocity(cell,qp,0,0) +  GradVelocity(cell,qp,1,1) ) * wBF(cell,node,qp)
+                            + 0.0*  diam_z * w_z(cell,qp,2) * wGradBF(cell,node,qp,2);// + diam_xy * GradVelocity(cell,qp,0,0) * wGradBF(cell,node,qp,0);// +  diam_xy * GradVelocity(cell,qp,1,1) * wGradBF(cell,node,qp,1);
+
+  }
+
+  template<typename EvalT, typename Traits, typename VelocityType>
+  KOKKOS_INLINE_FUNCTION
+  void w_Resid<EvalT,Traits,VelocityType>::
+  operator() (const wResid_Side_Tag& tag, const int& side_idx) const {
+
+    // Get the local data of side and cell
+    const int cell = sideSet.elem_LID(side_idx);
+    const int side = sideSet.side_local_id(side_idx);
+
+    for (unsigned int snode=0; snode<numSideNodes; ++snode){
+      int cnode = sideNodes(side,snode);
+      Residual(cell,cnode) =0;
+      }
+
+    for (unsigned int snode=0; snode<numSideNodes; ++snode) {
+      int cnode = sideNodes(side,snode);
+      for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
+      Residual(cell,cnode) += (side_w_qp(side_idx,qp) * normals(side_idx,qp,2) +
+                                  velocity(cell,qp,0)  * normals(side_idx,qp,0) +
+                                  velocity(cell,qp,1)  * normals(side_idx,qp,1) +
+                                  basalVerticalVelocitySideQP(side_idx, qp)) *
+                              sideBF(side_idx,snode,qp) * side_w_measure(side_idx,qp);
+      }
+    }
+
+  }
+
+  //**********************************************************************
   template<typename EvalT, typename Traits, typename VelocityType>
   void w_Resid<EvalT,Traits,VelocityType>::
   postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>&)
@@ -105,49 +156,13 @@ namespace LandIce
   void w_Resid<EvalT,Traits,VelocityType>::
   evaluateFields(typename Traits::EvalData d)
   {
-    for (std::size_t cell = 0; cell < d.numCells; ++cell)
-      for (std::size_t node = 0; node < numNodes; ++node)
-        Residual(cell,node) = 0.0;
+    Residual.deep_copy(0.0);
 
-    for (std::size_t cell = 0; cell < d.numCells; ++cell) {
-      MeshScalarT diam_z(0);//, diam_xy(0), diam_z(0);
-      for (std::size_t i = 0; i < numNodes; ++i) {
-        //  diam = std::max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
-        //                                              coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,j,2)));
-        //  diam_xy = std::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
-        diam_z = std::max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
-      }
-      for (std::size_t node = 0; node < numNodes; ++node)
-        for (std::size_t qp = 0; qp < numQPs; ++qp)
-          Residual(cell,node) += ( w_z(cell,qp,2) + GradVelocity(cell,qp,0,0) +  GradVelocity(cell,qp,1,1) ) * wBF(cell,node,qp)
-                              + 0.0*  diam_z * w_z(cell,qp,2) * wGradBF(cell,node,qp,2);// + diam_xy * GradVelocity(cell,qp,0,0) * wGradBF(cell,node,qp,0);// +  diam_xy * GradVelocity(cell,qp,1,1) * wGradBF(cell,node,qp,1);
-
-    }
-
+    Kokkos::parallel_for(wResid_Cell_Policy(0, d.numCells), *this);
 
     if (d.sideSetViews->find(sideName)==d.sideSetViews->end()) return;
 
-    auto sideSet = d.sideSetViews->at(sideName);
-    for (int side_idx = 0; side_idx < sideSet.size; ++side_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(side_idx);
-      const int side = sideSet.side_local_id(side_idx);
-      for (unsigned int snode=0; snode<numSideNodes; ++snode){
-        int cnode = sideNodes[side][snode];
-        Residual(cell,cnode) =0;
-       }
-
-      for (unsigned int snode=0; snode<numSideNodes; ++snode) {
-        int cnode = sideNodes[side][snode];
-        for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
-        Residual(cell,cnode) += (side_w_qp(side_idx,qp) * normals(side_idx,qp,2) +
-                                   velocity(cell,qp,0)  * normals(side_idx,qp,0) +
-                                   velocity(cell,qp,1)  * normals(side_idx,qp,1) +
-                                   basalVerticalVelocitySideQP(side_idx, qp)) *
-                                sideBF(side_idx,snode,qp) * side_w_measure(side_idx,qp);
-        }
-      }
-    }
+    sideSet = d.sideSetViews->at(sideName);
+    Kokkos::parallel_for(wResid_Side_Policy(0, sideSet.size), *this);
   }
 }

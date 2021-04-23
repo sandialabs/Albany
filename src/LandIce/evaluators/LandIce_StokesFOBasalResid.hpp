@@ -67,8 +67,6 @@ private:
   unsigned int vecDim;
   unsigned int vecDimFO;
 
-  bool useCollapsedSidesets;
-
   bool regularized;
 
   Albany::LocalSideSetInfo sideSet;

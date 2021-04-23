@@ -64,9 +64,6 @@ private:
 
   std::size_t numVecFODims;
 
-  bool useCollapsedSidesets;
-
-
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide;

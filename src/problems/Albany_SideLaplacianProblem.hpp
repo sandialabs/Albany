@@ -272,11 +272,11 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   fm0.template registerEvaluator<EvalT> (ev);
 
   // -------- Restriction of Solution to Side Field -------- /
-  ev = evalUtils.constructDOFCellToSideEvaluator(dof_names[0],sideSetName,"Node Scalar",cellType);
+  ev = evalUtils.constructDOFCellToSideEvaluator(dof_names[0],sideSetName,"Node Scalar Sideset",cellType);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Restrict vertex coordinates from cell-based to cell-side-based
-  ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",sideSetName,"Vertex Vector",cellType,"Coord Vec " + sideSetName);
+  ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",sideSetName,"Vertex Vector Sideset",cellType,"Coord Vec " + sideSetName);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // ------- Side Laplacian Residual -------- //
