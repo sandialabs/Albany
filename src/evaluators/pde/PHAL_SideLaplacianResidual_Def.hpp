@@ -39,7 +39,7 @@ SideLaplacianResidual<EvalT, Traits>::SideLaplacianResidual (const Teuchos::Para
     metric     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Metric Name"), dl_side->qp_tensor_sideset);
     this->addDependentField(metric.fieldTag());
 
-    int numSides = dl_side->cell_gradient->extent(1);
+    unsigned int numSides = dl_side->cell_gradient->extent(1);
     numNodes     = dl_side->node_scalar->extent(2);
     numQPs       = dl_side->qp_scalar->extent(2);
     int sideDim  = dl_side->cell_gradient->extent(2);

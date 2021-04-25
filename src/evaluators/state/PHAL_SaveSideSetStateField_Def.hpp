@@ -172,8 +172,6 @@ saveElemState(typename Traits::EvalData workset)
     // Get the data that corresponds to the side
     const int elem_GID = sideSet.elem_GID(sideSet_idx);
     const int side_GID = sideSet.side_GID(sideSet_idx);
-    const int cell = sideSet.elem_LID(sideSet_idx);
-    const int side = sideSet.side_local_id(sideSet_idx);
 
     // Not sure if this is even possible, but just for debug pourposes
     TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ elem_GID ].ws != (int) workset.wsIndex, std::logic_error,
