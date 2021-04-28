@@ -134,6 +134,8 @@ function(ali_do_trilinos)
       "-DXpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF"
       "-DTrilinos_ENABLE_PanzerDofMgr:BOOL=ON"
       "-DKOKKOS_ENABLE_LIBDL:BOOL=ON"
+      "-DTpetra_ENABLE_DEPRECATED_CODE=ON"
+      "-DXpetra_ENABLE_DEPRECATED_CODE=ON"
       )
   if (DEFINED ENV{LCM_SLFAD_SIZE})
     set(CONFIG_OPTS ${CONFIG_OPTS} $ENV{LCM_SLFAD_SIZE})
