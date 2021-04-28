@@ -169,6 +169,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D PYTHON_LIBRARY="/usr/lib64/libpython3.9.so.1.0" \
       -D PYTHON_INCLUDE_DIR="/usr/include/python3.9" \
       -D SWIG_EXECUTABLE="/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/swig/bin/swig" \
+      -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
+      -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \

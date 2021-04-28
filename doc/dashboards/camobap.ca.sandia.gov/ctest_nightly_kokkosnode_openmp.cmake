@@ -246,18 +246,21 @@ if (BUILD_ALBFUNCTOR_OPENMP)
     endif ()
   endif ()
 
-  if (BUILD_ALBFUNCTOR_OPENMP)
-    set (CTEST_TEST_TIMEOUT 2400)
-    CTEST_TEST (
-      BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP"
-      RETURN_VALUE HAD_ERROR)
+  set (CTEST_TEST_TIMEOUT 2400)
 
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
+  #  Over-write default limit for output posted to CDash site
+  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
+  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
-      if (S_HAD_ERROR)
-        message ("Cannot submit Albany test results!")
-      endif ()
+  CTEST_TEST (
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP"
+    RETURN_VALUE HAD_ERROR)
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
+
+    if (S_HAD_ERROR)
+      message ("Cannot submit Albany test results!")
     endif ()
   endif ()
 endif ()
