@@ -365,6 +365,10 @@ endif ()
 #
 # Run Albany tests
 #
+#  Over-write default limit for output posted to CDash site
+set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
+set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
+
 set (CTEST_TEST_TIMEOUT 600)
 
 IF (BUILD_ALBANY_SERIAL_SFAD4) 

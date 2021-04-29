@@ -186,6 +186,10 @@ set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}")
 set (CTEST_BINARY_NAME build)
 set (CTEST_INSTALL_NAME test)
 
+#  Over-write default limit for output posted to CDash site
+set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
+set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
+
 if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
 # Runs tests longer if in debug mode
    set (CTEST_TEST_TIMEOUT 4200)
