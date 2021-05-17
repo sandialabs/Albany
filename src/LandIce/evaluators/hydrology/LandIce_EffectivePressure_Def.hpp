@@ -34,9 +34,9 @@ EffectivePressure (const Teuchos::ParameterList& p,
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (p.isParameter("Nodal") && p.get<bool>("Nodal")) {
-    layout = dl->node_scalar_sideset;
+    layout = eval_on_side ? dl->node_scalar_sideset : dl->node_scalar;
   } else {
-    layout = dl->qp_scalar_sideset;
+    layout = eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar;
   }
 
   numPts = layout->extent(1);

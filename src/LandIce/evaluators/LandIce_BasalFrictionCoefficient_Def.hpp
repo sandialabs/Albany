@@ -65,7 +65,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
-  layout = nodal ? dl->node_scalar_sideset : dl->qp_scalar_sideset;
+  if (is_side_equation) {
+    layout = nodal ? dl->node_scalar_sideset : dl->qp_scalar_sideset;
+  } else {
+    layout = nodal ? dl->node_scalar : dl->qp_scalar;
+  }
 
   beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
   this->addEvaluatedField(beta);
@@ -98,8 +102,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       given_field_name += "_" + basalSideName;
     }
     if( (beta_type == EXP_GIVEN_FIELD) && !interpolate_then_exponentiate ) {
-      BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar_sideset);
-      layout_given_field = dl->node_scalar_sideset;
+      BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), is_side_equation ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+      layout_given_field = is_side_equation ? dl->node_scalar_sideset : dl->node_scalar;
       this->addDependentField (BF);
     }
     if (is_given_field_param) {
@@ -147,7 +151,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     N            = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
     u_norm       = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
     powerParam   = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
-    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2_sideset);
+    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), is_side_equation ? dl->cell_scalar2_sideset : dl->cell_scalar2);
 
     this->addDependentField (powerParam);
     this->addDependentField (N);
@@ -197,7 +201,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map) {
-    layout = nodal ? dl->node_vector_sideset : dl->qp_coords_sideset;
+    if (is_side_equation) { 
+      layout = nodal ? dl->node_vector_sideset : dl->qp_coords_sideset;
+    } else {
+      layout = nodal ? dl->node_vector: dl->qp_coords;
+    }
     coordVec = PHX::MDField<MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), layout);
 
     double R = stereographicMapList->get<double>("Earth Radius", 6371);
