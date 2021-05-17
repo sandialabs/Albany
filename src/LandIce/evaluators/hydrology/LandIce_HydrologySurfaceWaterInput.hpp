@@ -55,6 +55,7 @@ private:
   bool eval_on_side;
 
   std::string sideSetName;  // Needed only if eval_on_side=true
+  Albany::LocalSideSetInfo sideSet; // Needed only if eval_on_side=true
 };
 
 } // Namespace LandIce

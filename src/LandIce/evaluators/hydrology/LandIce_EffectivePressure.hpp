@@ -62,8 +62,6 @@ private:
 
   PHX::MDField<const ScalarT,Dim> alphaParam;
   ScalarT printedAlpha;
-
-  bool useCollapsedSidesets;
   
   Albany::LocalSideSetInfo sideSet;
 

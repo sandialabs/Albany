@@ -23,8 +23,6 @@ EffectivePressure<EvalT, Traits, Surrogate>::
 EffectivePressure (const Teuchos::ParameterList& p,
                    const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  useCollapsedSidesets = (dl->isSideLayouts && dl->useCollapsedSidesets);
-
   // Check if it is a sideset evaluation
   eval_on_side = false;
   if (p.isParameter("Side Set Name")) {
@@ -36,12 +34,12 @@ EffectivePressure (const Teuchos::ParameterList& p,
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (p.isParameter("Nodal") && p.get<bool>("Nodal")) {
-    layout = useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar;
+    layout = dl->node_scalar_sideset;
   } else {
-    layout = useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar;
+    layout = dl->qp_scalar_sideset;
   }
 
-  numPts = (eval_on_side && !useCollapsedSidesets) ? layout->extent(2) : layout->extent(1);
+  numPts = layout->extent(1);
 
   if (Surrogate) {
     // P_w is set to a percentage of the overburden
@@ -111,41 +109,9 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   sideSet = workset.sideSetViews->at(sideSetName);
 
   if (Surrogate) {
-
-    if (useCollapsedSidesets) {
-      Kokkos::parallel_for(Surrogate_Policy(0, sideSet.size), *this);
-    } else {
-      ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
-
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-
-        for (int pt=0; pt<numPts; ++pt) {
-          // N = P_o-P_w
-          N (cell,side,pt) = (1-alpha)*P_o(cell,side,pt);
-        }
-      }
-    }
-
+    Kokkos::parallel_for(Surrogate_Policy(0, sideSet.size), *this);
   } else {
-    if (useCollapsedSidesets) {
-      Kokkos::parallel_for(NonSurrogate_Policy(0, sideSet.size), *this);
-    } else {
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
-        // Get the local data of side and cell
-        const int cell = sideSet.elem_LID(sideSet_idx);
-        const int side = sideSet.side_local_id(sideSet_idx);
-
-        for (int node=0; node<numPts; ++node) {
-          // N = P_o - P_w
-          N (cell,side,node) = P_o(cell,side,node) - P_w(cell,side,node);
-        }
-      }
-    }
+    Kokkos::parallel_for(NonSurrogate_Policy(0, sideSet.size), *this);
   }
 }
 

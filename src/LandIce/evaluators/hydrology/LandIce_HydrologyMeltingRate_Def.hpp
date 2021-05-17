@@ -22,8 +22,8 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
   if (IsStokes) {
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
-    numQPs   = dl->qp_scalar->extent(2);
-    numNodes = dl->node_scalar->extent(2);
+    numQPs   = dl->qp_scalar_sideset->extent(1);
+    numNodes = dl->node_scalar_sideset->extent(1);
     sideSetName = p.get<std::string>("Side Set Name");
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
@@ -66,9 +66,9 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
   if (nodal) {
-    layout = dl->node_scalar;
+    layout = IsStokes ? dl->node_scalar_sideset : dl->node_scalar;
   } else {
-    layout = dl->qp_scalar;
+    layout = IsStokes ? dl->qp_scalar_sideset : dl->qp_scalar;
   }
 
   m = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate Variable Name"),layout);
@@ -130,28 +130,23 @@ void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Tra
   double L = latent_heat*1e-3;
 
   if (IsStokes) {
-    if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
-      return;
-    }
+    if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
     unsigned int dim = nodal ? numNodes : numQPs;
-    const auto& sideSet = workset.sideSets->at(sideSetName);
-    for (auto const& it_side : sideSet) {
-      // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
-
+    sideSet = workset.sideSetViews->at(sideSetName);
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    {
       for (unsigned int i=0; i<dim; ++i) {
         ScalarT val(0.0);
         if (G_field) {
-          val += scaling_G*G(cell,side,i);
+          val += scaling_G*G(sideSet_idx,i);
         } else if (G_given) {
           val += G_value;
         }
         if (friction) {
-          val += beta(cell,side,i) * std::pow(u_b(cell,side,i),2);
+          val += beta(sideSet_idx,i) * std::pow(u_b(sideSet_idx,i),2);
         }
-        m(cell,side,i) = val / L;
+        m(sideSet_idx,i) = val / L;
       }
     }
   } else {

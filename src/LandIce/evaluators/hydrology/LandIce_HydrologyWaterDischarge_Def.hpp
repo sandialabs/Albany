@@ -17,9 +17,9 @@ template<typename EvalT, typename Traits>
 HydrologyWaterDischarge<EvalT, Traits>::
 HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl) :
-  gradPhi (p.get<std::string> ("Hydraulic Potential Gradient Variable Name"), dl->qp_gradient),
-  h       (p.get<std::string> ("Water Thickness Variable Name"), dl->qp_scalar),
-  q       (p.get<std::string> ("Water Discharge Variable Name"), dl->qp_gradient)
+  gradPhi (p.get<std::string> ("Hydraulic Potential Gradient Variable Name"), p.isParameter("Side Set Name") ? dl->qp_gradient_sideset : dl->qp_gradient),
+  h       (p.get<std::string> ("Water Thickness Variable Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
+  q       (p.get<std::string> ("Water Discharge Variable Name"), p.isParameter("Side Set Name") ? dl->qp_gradient_sideset : dl->qp_gradient)
 {
   /*
    *  The water discharge follows the following Darcy-like form
@@ -72,14 +72,14 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   }
 
   if (needsGradPhiNorm) {
-    gradPhiNorm = decltype(gradPhiNorm)(p.get<std::string>("Hydraulic Potential Gradient Norm Variable Name"), dl->qp_scalar);
+    gradPhiNorm = decltype(gradPhiNorm)(p.get<std::string>("Hydraulic Potential Gradient Norm Variable Name"), eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar);
     this->addDependentField(gradPhiNorm);
   }
 
   regularize = darcy_law_params.get<bool>("Regularize With Continuation", false);
   if (regularize)
   {
-    regularizationParam = PHX::MDField<ScalarT,Dim>(p.get<std::string>("Regularization Parameter Name"),dl->shared_param);
+    regularizationParam = PHX::MDField<ScalarT,Dim>(p.get<std::string>("Regularization Parameter Name"), eval_on_side ? dl->qp_scalar_sideset : dl->shared_param);
     this->addDependentField(regularizationParam);
   }
 
@@ -146,9 +146,7 @@ template<typename EvalT, typename Traits>
 void HydrologyWaterDischarge<EvalT, Traits>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
-    return;
-  }
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
   ScalarT regularization(0.0);
   if (regularize) {
@@ -166,26 +164,22 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     printedReg = regularization;
   }
 
-  const auto& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
-
     if (needsGradPhiNorm) {
       double grad_norm_exponent = beta - 2.0;
       for (unsigned int qp=0; qp < numQPs; ++qp) {
         for (unsigned int dim(0); dim<numDim; ++dim) {
-          q(cell,side,qp,dim) = -k_0 * (std::pow(h(cell,side,qp),alpha)+regularization)
-                                     * std::pow(gradPhiNorm(cell,side,qp),grad_norm_exponent)
-                                     * gradPhi(cell,side,qp,dim);
+          q(sideSet_idx,qp,dim) = -k_0 * (std::pow(h(sideSet_idx,qp),alpha)+regularization)
+                                     * std::pow(gradPhiNorm(sideSet_idx,qp),grad_norm_exponent)
+                                     * gradPhi(sideSet_idx,qp,dim);
         }
       }
     } else {
       for (unsigned int qp=0; qp < numQPs; ++qp) {
         for (unsigned int dim(0); dim<numDim; ++dim) {
-          q(cell,side,qp,dim) = -k_0 * (std::pow(h(cell,side,qp),alpha)+regularization) * gradPhi(cell,side,qp,dim);
+          q(sideSet_idx,qp,dim) = -k_0 * (std::pow(h(sideSet_idx,qp),alpha)+regularization) * gradPhi(sideSet_idx,qp,dim);
         }
       }
     }

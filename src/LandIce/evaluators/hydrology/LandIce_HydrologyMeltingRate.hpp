@@ -71,6 +71,8 @@ private:
   double            G_value;      // Used if this->G_given is true
 
   std::string       sideSetName;  // Only needed if IsStokes=true
+
+  Albany::LocalSideSetInfo sideSet; // Only needed if IsStokes=true
 };
 
 } // Namespace LandIce

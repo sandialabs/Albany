@@ -53,10 +53,10 @@ protected:
   void buildSideSetNodeMap (typename Traits::EvalData workset);
 
   void doEvaluateFieldsCellResidual(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSideResidual(typename Traits::EvalData d, int cell, int side);
+  void doEvaluateFieldsSideResidual(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
 
   virtual void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side) = 0;
-  virtual void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side) = 0;
+  virtual void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx) = 0;
   virtual void doPostEvaluate(typename Traits::EvalData d);
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -66,6 +66,7 @@ protected:
   PHX::MDField<const ScalarT>  valTensor;
 
   std::string             sideSetName;        // The side set where the equation(s) are defined
+  Albany::LocalSideSetInfo sideSet;
 
   Teuchos::Array<int>     numSideNodes;   // Number of nodes on each side of a cell
   Teuchos::Array<Teuchos::Array<int> >  sideNodes;
@@ -107,7 +108,7 @@ public:
 
 protected:
   void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side);
+  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
 };
 
 // **************************************************************
@@ -125,7 +126,7 @@ public:
 
 protected:
   void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side);
+  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
   void doPostEvaluate(typename Traits::EvalData d);
 };
 
@@ -144,7 +145,7 @@ public:
 
 protected:
   void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side);
+  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
 };
 
 // **************************************************************
@@ -162,7 +163,7 @@ public:
 
 protected:
   void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side);
+  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
 };
 
 // **************************************************************
@@ -180,7 +181,7 @@ public:
 
 protected:
   void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side);
+  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
 };
 
 } // namespace PHAL

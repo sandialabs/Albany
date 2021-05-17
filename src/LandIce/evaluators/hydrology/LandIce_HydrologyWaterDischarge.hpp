@@ -69,6 +69,7 @@ private:
 
   bool eval_on_side;
   std::string   sideSetName;  // Only used if eval_on_side=true
+  Albany::LocalSideSetInfo sideSet; // Needed only if eval_on_side=true
 
   double k_0;
   double alpha;

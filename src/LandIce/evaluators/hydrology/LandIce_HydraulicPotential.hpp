@@ -53,6 +53,8 @@ private:
   bool eval_on_side;
   std::string sideSetName;  // Only used if eval_on_side=true
 
+  Albany::LocalSideSetInfo sideSet;
+
   unsigned int numPts;
 
   bool use_h;

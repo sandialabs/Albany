@@ -28,12 +28,12 @@ BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (p.isParameter("Nodal") && p.get<bool>("Nodal")) {
-    layout = dl->node_scalar;
+    layout = eval_on_side ? dl->node_scalar_sideset : dl->node_scalar;
   } else {
-    layout = dl->qp_scalar;
+    layout = eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar;
   }
 
-  numPts = eval_on_side ? layout->extent(2) : layout->extent(1);
+  numPts = layout->extent(1);
 
   z_s   = decltype(z_s)(p.get<std::string> ("Surface Height Variable Name"), layout);
   H     = decltype(H)(p.get<std::string> ("Ice Thickness Variable Name"), layout);
@@ -68,18 +68,13 @@ template<typename EvalT, typename Traits>
 void BasalGravitationalWaterPotential<EvalT, Traits>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
-    return;
-  }
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
-  const auto& sideSet = workset.sideSets->at(sideSetName);
-  for (const auto& it : sideSet) {
-    // Get the local data of side and cell
-    const int cell = it.elem_LID;
-    const int side = it.side_local_id;
-
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
     for (int ipt=0; ipt<numPts; ++ipt) {
-      phi_0 (cell,side,ipt) = rho_w*g*(z_s(cell,side,ipt) - H(cell,side,ipt));
+      phi_0 (sideSet_idx,ipt) = rho_w*g*(z_s(sideSet_idx,ipt) - H(sideSet_idx,ipt));
     }
   }
 }

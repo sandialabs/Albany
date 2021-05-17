@@ -100,8 +100,6 @@ private:
   unsigned int numQPs;
   unsigned int dim;
 
-  bool useCollapsedSidesets;
-
   bool logParameters;
   bool distributedLambda;
   bool distributedMu;

@@ -51,6 +51,8 @@ private:
 
   bool eval_on_side;
 
+  Albany::LocalSideSetInfo sideSet;
+
   int numPts;
 
   double rho_w;

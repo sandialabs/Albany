@@ -59,8 +59,6 @@ private:
 
   double rho_i;
   double g;
-
-  bool useCollapsedSidesets;
   
   Albany::LocalSideSetInfo sideSet;
 
