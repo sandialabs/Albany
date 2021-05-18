@@ -45,8 +45,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-  void evaluateFieldsSide (typename Traits::EvalData workset);
-  void evaluateFieldsCell (typename Traits::EvalData workset);
 
   // Input:
   PHX::MDField<const RealType>      P_o;
@@ -56,6 +54,7 @@ private:
   PHX::MDField<HydroScalarT>  N;
 
   int numPts;
+  int worksetSize;
 
   bool eval_on_side;
   std::string sideSetName; // Needed if OnSide=true

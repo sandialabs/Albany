@@ -43,9 +43,6 @@ public:
 
 private:
 
-  void evaluateFieldsCell(typename Traits::EvalData d);
-  void evaluateFieldsSide(typename Traits::EvalData d);
-
   // Input:
   PHX::MDField<const RealType>  H;
 

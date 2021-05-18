@@ -67,21 +67,12 @@ void IceOverburden<EvalT, Traits>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (eval_on_side) {
-    evaluateFieldsSide(workset);
+    if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
+    sideSet = workset.sideSetViews->at(sideSetName);
+    Kokkos::parallel_for(IceOverburden_Policy(0, sideSet.size), *this);
   } else {
     Kokkos::parallel_for(IceOverburden_Policy(0, workset.numCells), *this);
   }
-}
-
-template<typename EvalT, typename Traits>
-void IceOverburden<EvalT, Traits>::
-evaluateFieldsSide (typename Traits::EvalData workset)
-{
-  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
-
-  sideSet = workset.sideSetViews->at(sideSetName);
-  
-  Kokkos::parallel_for(IceOverburden_Policy(0, sideSet.size), *this);
 }
 
 } // Namespace LandIce

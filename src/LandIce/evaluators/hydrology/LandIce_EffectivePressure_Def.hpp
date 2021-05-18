@@ -92,33 +92,13 @@ void EffectivePressure<EvalT, Traits, Surrogate>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (eval_on_side) {
-    evaluateFieldsSide(workset);
+    if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
+    sideSet = workset.sideSetViews->at(sideSetName);
+    worksetSize = sideSet.size;
   } else {
-    evaluateFieldsCell(workset);
-  }
-}
-
-template<typename EvalT, typename Traits, bool Surrogate>
-void EffectivePressure<EvalT, Traits, Surrogate>::
-evaluateFieldsSide (typename Traits::EvalData workset)
-{
-  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) {
-    return;
+    worksetSize = workset.numCells;
   }
 
-  sideSet = workset.sideSetViews->at(sideSetName);
-
-  if (Surrogate) {
-    Kokkos::parallel_for(Surrogate_Policy(0, sideSet.size), *this);
-  } else {
-    Kokkos::parallel_for(NonSurrogate_Policy(0, sideSet.size), *this);
-  }
-}
-
-template<typename EvalT, typename Traits, bool Surrogate>
-void EffectivePressure<EvalT, Traits, Surrogate>::
-evaluateFieldsCell (typename Traits::EvalData workset)
-{
   if (Surrogate) {
 
 #ifdef OUTPUT_TO_SCREEN
@@ -130,9 +110,9 @@ evaluateFieldsCell (typename Traits::EvalData workset)
     }
 #endif
 
-    Kokkos::parallel_for(Surrogate_Policy(0, workset.numCells), *this);
+    Kokkos::parallel_for(Surrogate_Policy(0, worksetSize), *this);
   } else {
-    Kokkos::parallel_for(NonSurrogate_Policy(0, workset.numCells), *this);
+    Kokkos::parallel_for(NonSurrogate_Policy(0, worksetSize), *this);
   }
 }
 
