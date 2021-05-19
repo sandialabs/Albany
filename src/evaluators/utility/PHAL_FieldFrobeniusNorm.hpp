@@ -39,6 +39,9 @@ public:
 
 private:
 
+  void evaluateFieldsCell (typename Traits::EvalData d);
+  void evaluateFieldsSide (typename Traits::EvalData d);
+
   // The parameter is always defined in terms of the
   // evaluation type native scalar type (otherwise
   // the evaluation manager does not update it).
@@ -58,8 +61,8 @@ private:
   // Output:
   PHX::MDField<ScalarT> field_norm;
 
+  bool eval_on_side;
   Albany::LocalSideSetInfo sideSet;
-  bool useCollapsedSidesets;
 
   std::string sideSetName;
   std::vector<PHX::DataLayout::size_type> dims;

@@ -33,10 +33,10 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
-  sideName = p.get<std::string> ("Side Set Name");
-  TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideName)==dl->side_layouts.end(), std::runtime_error,
-                              "Error! Basal side data layout not found.\n");
-  Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideName);
+  // sideName = p.get<std::string> ("Side Set Name");
+  // TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideName)==dl->side_layouts.end(), std::runtime_error,
+  //                             "Error! Basal side data layout not found.\n");
+  // Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideName);
 
   // dTdz = decltype(dTdz)(p.get<std::string> ("Basal dTdz Variable Name"), dl_side->node_scalar);
 
@@ -45,20 +45,20 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
   numNodes = dims[1];
 
-  numSideNodes  = dl_side->node_scalar->extent(2);
+  // numSideNodes  = dl_side->node_scalar->extent(2);
 
-  unsigned int numSides = dl_side->node_scalar->extent(1);
-  unsigned int sideDim  = cellType->getDimension()-1;
+  // unsigned int numSides = dl_side->node_scalar->extent(1);
+  // unsigned int sideDim  = cellType->getDimension()-1;
 
-  sideNodes.resize(numSides);
-  for (unsigned int side=0; side<numSides; ++side)
-  {
-    //Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    sideNodes[side].resize(thisSideNodes);
-    for (unsigned int node=0; node<thisSideNodes; ++node)
-      sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
-  }
+  // sideNodes.resize(numSides);
+  // for (unsigned int side=0; side<numSides; ++side)
+  // {
+  //   //Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
+  //   unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
+  //   sideNodes[side].resize(thisSideNodes);
+  //   for (unsigned int node=0; node<thisSideNodes; ++node)
+  //     sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+  // }
 
   this->addDependentField(meltingTemp);
   this->addDependentField(enthalpyHs);

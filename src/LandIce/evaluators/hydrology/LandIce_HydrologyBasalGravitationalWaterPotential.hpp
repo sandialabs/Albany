@@ -39,8 +39,7 @@ public:
 
 private:
 
-  void evaluateFieldsCell(typename Traits::EvalData d);
-  void evaluateFieldsSide(typename Traits::EvalData d);
+  void evaluatePotential(unsigned int cell);
 
   // Input:
   PHX::MDField<const RealType>  H;
@@ -51,7 +50,10 @@ private:
 
   bool eval_on_side;
 
+  Albany::LocalSideSetInfo sideSet;
+
   int numPts;
+  unsigned int worksetSize;
 
   double rho_w;
   double g;

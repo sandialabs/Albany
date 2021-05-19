@@ -16,8 +16,6 @@ IceOverburden<EvalT, Traits>::
 IceOverburden (const Teuchos::ParameterList& p,
                const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  useCollapsedSidesets = (dl->isSideLayouts && dl->useCollapsedSidesets);
-
   // Check if it is a sideset evaluation
   eval_on_side = false;
   if (p.isParameter("Side Set Name")) {
@@ -29,12 +27,12 @@ IceOverburden (const Teuchos::ParameterList& p,
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (p.isParameter("Nodal") && p.get<bool>("Nodal")) {
-    layout = useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar;
+    layout = eval_on_side ? dl->node_scalar_sideset : dl->node_scalar;
   } else {
-    layout = useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar;
+    layout = eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar;
   }
 
-  numPts = (eval_on_side && !useCollapsedSidesets) ? layout->extent(2) : layout->extent(1);
+  numPts = layout->extent(1);
 
   H   = PHX::MDField<const RealType>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
   P_o = PHX::MDField<RealType>(p.get<std::string> ("Ice Overburden Variable Name"), layout);
@@ -69,34 +67,11 @@ void IceOverburden<EvalT, Traits>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (eval_on_side) {
-    evaluateFieldsSide(workset);
-  } else {
-    Kokkos::parallel_for(IceOverburden_Policy(0, workset.numCells), *this);
-  }
-}
-
-template<typename EvalT, typename Traits>
-void IceOverburden<EvalT, Traits>::
-evaluateFieldsSide (typename Traits::EvalData workset)
-{
-  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) {
-    return;
-  }
-
-  sideSet = workset.sideSetViews->at(sideSetName);
-  if (useCollapsedSidesets) {
+    if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
+    sideSet = workset.sideSetViews->at(sideSetName);
     Kokkos::parallel_for(IceOverburden_Policy(0, sideSet.size), *this);
   } else {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
-
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      for (unsigned int pt=0; pt<numPts; ++pt) {
-        P_o (cell,side,pt) = rho_i*g*H(cell,side,pt);
-      }
-    }
+    Kokkos::parallel_for(IceOverburden_Policy(0, workset.numCells), *this);
   }
 }
 

@@ -62,9 +62,9 @@ private:
 
   unsigned int numNodes;
 
-  std::string sideName;
-  std::vector<std::vector<int> >  sideNodes;
-  unsigned int numSideNodes;
+  // std::string sideName;
+  // std::vector<std::vector<int> >  sideNodes;
+  // unsigned int numSideNodes;
 
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
   double rho_i; //[kg m^{-3}]

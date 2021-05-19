@@ -45,8 +45,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-  void evaluateFieldsSide (typename Traits::EvalData workset);
-  void evaluateFieldsCell (typename Traits::EvalData workset);
 
   // Input:
   PHX::MDField<const RealType>      P_o;
@@ -56,30 +54,25 @@ private:
   PHX::MDField<HydroScalarT>  N;
 
   int numPts;
+  unsigned int worksetSize;
 
   bool eval_on_side;
   std::string sideSetName; // Needed if OnSide=true
 
   PHX::MDField<const ScalarT,Dim> alphaParam;
   ScalarT printedAlpha;
-
-  bool useCollapsedSidesets;
   
   Albany::LocalSideSetInfo sideSet;
 
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct Surrogate_Tag{};
-  struct NonSurrogate_Tag{};
+  struct EffectivePressure_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, Surrogate_Tag> Surrogate_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, NonSurrogate_Tag> NonSurrogate_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, EffectivePressure_Tag> EffectivePressure_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Surrogate_Tag& tag, const int& side_or_cell_idx) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const NonSurrogate_Tag& tag, const int& side_or_cell_idx) const;
+  void operator() (const EffectivePressure_Tag& tag, const int& cell) const;
   
 };
 

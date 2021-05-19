@@ -66,7 +66,7 @@ private:
   PHX::MDField<const ScalarT>       h_till_dot;
 
   // Input only needed if equation is on a sideset
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   metric;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>   metric;
 
   // Output:
   PHX::MDField<ScalarT>       residual;
@@ -89,6 +89,7 @@ private:
   bool eval_on_side;
 
   std::string    sideSetName; // Only needed if eval_on_side=true
+  Albany::LocalSideSetInfo sideSet;
 };
 
 } // Namespace LandIce

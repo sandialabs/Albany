@@ -35,8 +35,8 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
-    numNodes = dl->node_scalar->extent(2);
-    numQPs   = dl->qp_scalar->extent(2);
+    numNodes = dl->node_scalar_sideset->extent(1);
+    numQPs   = dl->qp_scalar_sideset->extent(1);
 
     sideSetName = p.get<std::string>("Side Set Name");
   } else {
@@ -113,12 +113,12 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   nodal_equation = cav_eqn_params.isParameter("Nodal") ? cav_eqn_params.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
   if (nodal_equation) {
-    layout = dl->node_scalar;
+    layout = IsStokes ? dl->node_scalar_sideset : dl->node_scalar;
   } else {
-    layout = dl->qp_scalar;
+    layout = IsStokes ? dl->qp_scalar_sideset : dl->qp_scalar;
 
-    BF        = PHX::MDField<const RealType>(p.get<std::string> ("BF Name"), dl->node_qp_scalar);
-    w_measure = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar);
+    BF        = PHX::MDField<const RealType>(p.get<std::string> ("BF Name"), IsStokes ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+    w_measure = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), IsStokes ? dl->qp_scalar_sideset : dl->qp_scalar);
 
     this->addDependentField(BF);
     this->addDependentField(w_measure);
@@ -127,7 +127,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   h            = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Variable Name"),     layout);
   N            = PHX::MDField<const ScalarT>(p.get<std::string> ("Effective Pressure Variable Name"),  layout);
   u_b          = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-  ice_softness = PHX::MDField<const TempScalarT>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
+  ice_softness = PHX::MDField<const TempScalarT>(p.get<std::string>("Ice Softness Variable Name"), IsStokes ? dl->cell_scalar2_sideset : dl->cell_scalar2);
   this->addDependentField(h);
   this->addDependentField(N);
   if (use_melting) {
@@ -172,9 +172,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   // Zero out, to avoid leaving stuff from previous workset!
   residual.deep_copy(ScalarT(0.0));
 
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
-    return;
-  }
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
   double yr_to_s = 365.25*24*3600;
   double scaling_h_t = yr_to_s;
@@ -183,35 +181,35 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
   //       cancel out with N, and the residual is in m/yr
 
-  const auto& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet) {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const unsigned int side = it_side.side_local_id;
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
+    // Get the local data of cell
+    const int cell = sideSet.elem_LID(sideSet_idx);
 
     for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;
       if (nodal_equation) {
-        res_node = (use_melting ? m(cell,side,node)/rho_i : zero)
-                 + (use_eff_cavity ? (h_r - h(cell,side,node))*u_b(cell,side,node)/l_r
-                                   : ScalarT(h_r*u_b(cell,side,node)))
-                 - C*h(cell,side,node)*ice_softness(cell)*std::pow(N(cell,side,node),3)
-                 - (unsteady ? scaling_h_t*h_dot(cell,side,node) : zero)
-                 + (has_p_dot ? -phi0*P_dot(cell,side,node) : zero);
+        res_node = (use_melting ? m(sideSet_idx,node)/rho_i : zero)
+                 + (use_eff_cavity ? (h_r - h(sideSet_idx,node))*u_b(sideSet_idx,node)/l_r
+                                   : ScalarT(h_r*u_b(sideSet_idx,node)))
+                 - C*h(sideSet_idx,node)*ice_softness(cell)*std::pow(N(sideSet_idx,node),3)
+                 - (unsteady ? scaling_h_t*h_dot(sideSet_idx,node) : zero)
+                 + (has_p_dot ? -phi0*P_dot(sideSet_idx,node) : zero);
       } else {
         for (unsigned int qp=0; qp < numQPs; ++qp) {
-          res_qp = (use_melting ? m(cell,side,qp)/rho_i : zero)
-                 + (use_eff_cavity ? (h_r - h(cell,side,qp))*u_b(cell,side,qp)/l_r
-                                   : ScalarT(h_r*u_b(cell,side,qp)))
-                 - C*h(cell,side,qp)*ice_softness(cell,side)*std::pow(N(cell,side,qp),3)
-                 - (unsteady ? scaling_h_t*h_dot(cell,side,qp) : zero)
-                 + (has_p_dot ? -phi0*P_dot(cell,side,qp) : zero);
+          res_qp = (use_melting ? m(sideSet_idx,qp)/rho_i : zero)
+                 + (use_eff_cavity ? (h_r - h(sideSet_idx,qp))*u_b(sideSet_idx,qp)/l_r
+                                   : ScalarT(h_r*u_b(sideSet_idx,qp)))
+                 - C*h(sideSet_idx,qp)*ice_softness(sideSet_idx)*std::pow(N(sideSet_idx,qp),3)
+                 - (unsteady ? scaling_h_t*h_dot(sideSet_idx,qp) : zero)
+                 + (has_p_dot ? -phi0*P_dot(sideSet_idx,qp) : zero);
 
-          res_node += res_qp * BF(cell,side,node,qp) * w_measure(cell,side,qp);
+          res_node += res_qp * BF(sideSet_idx,node,qp) * w_measure(sideSet_idx,qp);
         }
       }
 
-      residual (cell,side,node) = res_node;
+      residual (sideSet_idx,node) = res_node;
     }
   }
 }

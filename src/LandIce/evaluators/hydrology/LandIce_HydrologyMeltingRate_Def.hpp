@@ -22,8 +22,8 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
   if (IsStokes) {
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
-    numQPs   = dl->qp_scalar->extent(2);
-    numNodes = dl->node_scalar->extent(2);
+    numQPs   = dl->qp_scalar_sideset->extent(1);
+    numNodes = dl->node_scalar_sideset->extent(1);
     sideSetName = p.get<std::string>("Side Set Name");
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
@@ -66,9 +66,9 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
   if (nodal) {
-    layout = dl->node_scalar;
+    layout = IsStokes ? dl->node_scalar_sideset : dl->node_scalar;
   } else {
-    layout = dl->qp_scalar;
+    layout = IsStokes ? dl->qp_scalar_sideset : dl->qp_scalar;
   }
 
   m = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate Variable Name"),layout);
@@ -122,54 +122,41 @@ void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Tra
   TEUCHOS_TEST_FOR_EXCEPTION (!m_given && !friction && !G_field && !G_given, std::runtime_error,
       "Error! You did not specify how to compute the Melt Rate.\n");
 
-  if (m_given) {
-    return;
-  }
+  if (m_given) return;
 
   // Scale L so that kPa cancel out: [L/1000] = kJ/kg = kPa m^3 / kg, and [G] = kPa m/yr
-  double L = latent_heat*1e-3;
+  L = latent_heat*1e-3;
+
+  dim = nodal ? numNodes : numQPs;
 
   if (IsStokes) {
-    if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
-      return;
-    }
-
-    unsigned int dim = nodal ? numNodes : numQPs;
-    const auto& sideSet = workset.sideSets->at(sideSetName);
-    for (auto const& it_side : sideSet) {
-      // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
-
-      for (unsigned int i=0; i<dim; ++i) {
-        ScalarT val(0.0);
-        if (G_field) {
-          val += scaling_G*G(cell,side,i);
-        } else if (G_given) {
-          val += G_value;
-        }
-        if (friction) {
-          val += beta(cell,side,i) * std::pow(u_b(cell,side,i),2);
-        }
-        m(cell,side,i) = val / L;
-      }
-    }
+    if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
+    sideSet = workset.sideSetViews->at(sideSetName);
+    worksetSize = sideSet.size;
   } else {
-    unsigned int dim = nodal ? numNodes : numQPs;
-    for (unsigned int cell=0; cell < workset.numCells; ++cell) {
-      for (unsigned int i=0; i<dim; ++i) {
-        ScalarT val(0.0);
-        if (G_field) {
-          val += scaling_G*G(cell,i);
-        } else if (G_given) {
-          val += G_value;
-        }
-        if (friction) {
-          val += beta(cell,i) * std::pow(u_b(cell,i),2);
-        }
-        m(cell,i) = val / L;
-      }
+    worksetSize = workset.numCells;
+  }
+
+  for (unsigned int cell=0; cell < worksetSize; ++cell) {
+    evaluateMeltingRate(cell);
+  }
+
+}
+
+template<typename EvalT, typename Traits, bool IsStokes>
+void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateMeltingRate (unsigned int cell)
+{
+  for (unsigned int i=0; i<dim; ++i) {
+    ScalarT val(0.0);
+    if (G_field) {
+      val += scaling_G*G(cell,i);
+    } else if (G_given) {
+      val += G_value;
     }
+    if (friction) {
+      val += beta(cell,i) * std::pow(u_b(cell,i),2);
+    }
+    m(cell,i) = val / L;
   }
 }
 

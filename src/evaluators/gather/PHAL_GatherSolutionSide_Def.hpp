@@ -36,13 +36,13 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
 
     if (!names.is_null()) {
       if (is_dof_vec) {
-          valvec = PHX::MDField<ScalarT,Cell,Side,Node,VecDim> (names[0],dl->node_scalar);
+          valvec = PHX::MDField<ScalarT,Side,Node,VecDim> (names[0],dl->node_scalar_sideset);
           this->addEvaluatedField(valvec);
       } else {
         numFields = names.size();
         val.resize(numFields);
         for (int eq=0; eq<numFields; ++eq) {
-          val[eq] = PHX::MDField<ScalarT,Cell,Side,Node> (names[eq],dl->node_scalar);
+          val[eq] = PHX::MDField<ScalarT,Side,Node> (names[eq],dl->node_scalar_sideset);
           this->addEvaluatedField(val[eq]);
         }
       }
@@ -63,13 +63,13 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
 
     if (!names_dot.is_null()) {
       if (is_dof_dot_vec) {
-          valvec_dot = PHX::MDField<ScalarT,Cell,Side,Node,VecDim> (names_dot[0],dl->node_scalar);
+          valvec_dot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dot[0],dl->node_scalar_sideset);
           this->addEvaluatedField(valvec_dot);
       } else {
         numFields = names_dot.size();
         val_dot.resize(numFields);
         for (int eq=0; eq<numFields; ++eq) {
-          val_dot[eq] = PHX::MDField<ScalarT,Cell,Side,Node> (names_dot[eq],dl->node_scalar);
+          val_dot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dot[eq],dl->node_scalar_sideset);
           this->addEvaluatedField(val_dot[eq]);
         }
       }
@@ -90,13 +90,13 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
 
     if (!names_dotdot.is_null()) {
       if (is_dof_dotdot_vec) {
-          valvec_dotdot = PHX::MDField<ScalarT,Cell,Side,Node,VecDim> (names_dotdot[0],dl->node_scalar);
+          valvec_dotdot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dotdot[0],dl->node_scalar_sideset);
           this->addEvaluatedField(valvec_dotdot);
       } else {
         numFields = names_dotdot.size();
         val_dot.resize(numFields);
         for (int eq=0; eq<numFields; ++eq) {
-          val_dot[eq] = PHX::MDField<ScalarT,Cell,Side,Node> (names_dotdot[eq],dl->node_scalar);
+          val_dot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dotdot[eq],dl->node_scalar_sideset);
           this->addEvaluatedField(val_dot[eq]);
         }
       }
@@ -117,12 +117,17 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
   int sideDim = cellType->getDimension()-1;
   int numSides = cellType->getSideCount();
 
-  sideNodes.resize(numSides);
+  int nodeMax = 0;
   for (int side=0; side<numSides; ++side) {
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    sideNodes[side].resize(thisSideNodes);
+    nodeMax = std::max(nodeMax, thisSideNodes);
+  }
+  sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+  for (int side=0; side<numSides; ++side) {
+    // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
+    int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (int node=0; node<thisSideNodes; ++node) {
-      sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+      sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
   
@@ -136,11 +141,11 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& /* fm */)
 {
   if (enableSolution) {
-    num_side_nodes = val[0].extent(2);
+    num_side_nodes = val[0].extent(1);
   } else if (enableSolutionDot) {
-    num_side_nodes = val_dot[0].extent(2);
+    num_side_nodes = val_dot[0].extent(1);
   } else {
-    num_side_nodes = val_dotdot[0].extent(2);
+    num_side_nodes = val_dotdot[0].extent(1);
   }
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
 }
@@ -149,9 +154,7 @@ template<typename EvalT, typename Traits>
 void GatherSolutionSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
-    return;
-  }
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
   const bool gather_x       = enableSolution       && !workset.x.is_null();
   const bool gather_xdot    = enableSolutionDot    && !workset.xdot.is_null();
@@ -169,24 +172,25 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = Kokkos::create_mirror_view(workset.wsElNodeEqID);
   Kokkos::deep_copy(nodeID,workset.wsElNodeEqID);
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet) {
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
     // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
     for (int node=0; node<num_side_nodes; ++node) {
-      const int cell_node = sideNodes[side][node];
+      const int cell_node = sideNodes(side,node);
       if (gather_x) {
         if (is_dof_vec) {
           for (int idim=0; idim<vecDim; ++idim) {
             const int node_id = nodeID(cell,cell_node,offset+idim);
-            valvec(cell,side,node,idim) = x_data[node_id];
+            valvec(sideSet_idx,node,idim) = x_data[node_id];
           }
         } else {
           for (int isol=0; isol<numFields; ++isol) {
             const int node_id = nodeID(cell,cell_node,offset+isol);
-            val[isol](cell,side,node) = x_data[node_id];
+            val[isol](sideSet_idx,node) = x_data[node_id];
           }
         }
       }
@@ -194,12 +198,12 @@ evaluateFields(typename Traits::EvalData workset)
         if (is_dof_dot_vec) {
           for (int idim=0; idim<vecDim; ++idim) {
             const int node_id = nodeID(cell,cell_node,offset+idim);
-            valvec_dot(cell,side,node,idim) = xdot_data[node_id];
+            valvec_dot(sideSet_idx,node,idim) = xdot_data[node_id];
           }
         } else {
           for (int isol=0; isol<numFields; ++isol) {
             const int node_id = nodeID(cell,cell_node,offset+isol);
-            val_dot[isol](cell,side,node) = xdot_data[node_id];
+            val_dot[isol](sideSet_idx,node) = xdot_data[node_id];
           }
         }
       }
@@ -207,12 +211,12 @@ evaluateFields(typename Traits::EvalData workset)
         if (is_dof_dotdot_vec) {
           for (int idim=0; idim<vecDim; ++idim) {
             const int node_id = nodeID(cell,cell_node,offset+idim);
-            valvec_dotdot(cell,side,node,idim) = xdotdot_data[node_id];
+            valvec_dotdot(sideSet_idx,node,idim) = xdotdot_data[node_id];
           }
         } else {
           for (int isol=0; isol<numFields; ++isol) {
             const int node_id = nodeID(cell,cell_node,offset+isol);
-            val_dotdot[isol](cell,side,node) = xdotdot_data[node_id];
+            val_dotdot[isol](sideSet_idx,node) = xdotdot_data[node_id];
           }
         }
       }
@@ -250,29 +254,30 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
   const int neq = nodeID.extent(2);
 
   using RefType = typename PHAL::Ref<ScalarT>::type;
-  const int fad_size = val[0](0,0,0).size();
+  const int fad_size = val[0](0,0).size();
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet) {
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
     // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
     for (int node=0; node<num_side_nodes; ++node) {
-      const int cell_node = sideNodes[side][node];
+      const int cell_node = sideNodes(side,node);
       const int start = neq * node + offset;
       if (gather_x) {
         if (is_dof_vec) {
           for (int idim=0; idim<vecDim; ++idim) {
             const int node_id = nodeID(cell,cell_node,offset+idim);
-            RefType val_ref = valvec(cell,side,node,idim);
+            RefType val_ref = valvec(sideSet_idx,node,idim);
             val_ref = FadType(fad_size,x_data[node_id]);
             val_ref.fastAccessDx(start + idim) = workset.j_coeff;
           }
         } else {
           for (int isol=0; isol<numFields; ++isol) {
             const int node_id = nodeID(cell,cell_node,offset+isol);
-            RefType val_ref = val[isol](cell,side,node);
+            RefType val_ref = val[isol](sideSet_idx,node);
             val_ref = FadType(fad_size,x_data[node_id]);
             val_ref.fastAccessDx(start + isol) = workset.j_coeff;
           }
@@ -282,14 +287,14 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
         if (is_dof_dot_vec) {
           for (int idim=0; idim<vecDim; ++idim) {
             const int node_id = nodeID(cell,cell_node,offset+idim);
-            RefType valdot_ref = valvec_dot(cell,side,node,idim);
+            RefType valdot_ref = valvec_dot(sideSet_idx,node,idim);
             valdot_ref = FadType(fad_size,xdot_data[node_id]);
             valdot_ref.fastAccessDx(start + idim) = workset.j_coeff;
           }
         } else {
           for (int isol=0; isol<numFields; ++isol) {
             const int node_id = nodeID(cell,cell_node,offsetDot+isol);
-            RefType val_dot_ref = val_dot[isol](cell,side,node);
+            RefType val_dot_ref = val_dot[isol](sideSet_idx,node);
             val_dot_ref = FadType(fad_size,xdot_data[node_id]);
             val_dot_ref.fastAccessDx(start + isol) = workset.m_coeff;
           }
@@ -299,14 +304,14 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
         if (is_dof_dotdot_vec) {
           for (int idim=0; idim<vecDim; ++idim) {
             const int node_id = nodeID(cell,cell_node,offset+idim);
-            RefType valdotdot_ref = valvec_dotdot(cell,side,node,idim);
+            RefType valdotdot_ref = valvec_dotdot(sideSet_idx,node,idim);
             valdotdot_ref = FadType(fad_size,xdotdot_data[node_id]);
             valdotdot_ref.fastAccessDx(start + idim) = workset.j_coeff;
           }
         } else {
           for (int isol=0; isol<numFields; ++isol) {
             const int node_id = nodeID(cell,cell_node,offsetDotDot+isol);
-            RefType val_dotdot_ref = val_dotdot[isol](cell,side,node);
+            RefType val_dotdot_ref = val_dotdot[isol](sideSet_idx,node);
             val_dotdot_ref = FadType(fad_size,xdotdot_data[node_id]);
             val_dotdot_ref.fastAccessDx(start + isol) = workset.n_coeff;
           }
@@ -351,22 +356,23 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
   const int neq = nodeID.extent(2);
 
   using RefType = typename PHAL::Ref<ScalarT>::type;
-  const int fad_size = val[0](0,0,0).size();
+  const int fad_size = val[0](0,0).size();
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet) {
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
     // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
     for (int node=0; node<num_side_nodes; ++node) {
-      const int cell_node = sideNodes[side][node];
+      const int cell_node = sideNodes(side,node);
       const int start = neq * node + offset;
       if (gather_Vx) {
         if (is_dof_vec) {
           for (int idim=0; idim<vecDim; ++idim) {
             const int node_id = nodeID(cell,cell_node,offset+idim);
-            RefType val_ref = valvec(cell,side,node,idim);
+            RefType val_ref = valvec(sideSet_idx,node,idim);
             val_ref = TanFadType(fad_size,x_data[node_id]);
             val_ref.fastAccessDx(start + idim) = workset.j_coeff;
             if (workset.j_coeff!=0.0) {
@@ -378,7 +384,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
         } else {
           for (int isol=0; isol<numFields; ++isol) {
             const int node_id = nodeID(cell,cell_node,offset+isol);
-            RefType val_ref = val[isol](cell,side,node);
+            RefType val_ref = val[isol](sideSet_idx,node);
             val_ref = TanFadType(fad_size,x_data[node_id]);
             val_ref.fastAccessDx(start + isol) = workset.j_coeff;
             if (workset.j_coeff!=0.0) {
@@ -393,7 +399,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
         if (is_dof_dot_vec) {
           for (int idim=0; idim<vecDim; ++idim) {
             const int node_id = nodeID(cell,cell_node,offsetDot+idim);
-            RefType val_dot_ref = valvec_dot(cell,side,node,idim);
+            RefType val_dot_ref = valvec_dot(sideSet_idx,node,idim);
             val_dot_ref = TanFadType(fad_size,xdot_data[node_id]);
             if (workset.m_coeff != 0.0) {
               for (int k=0; k<workset.num_cols_x; k++) {
@@ -404,7 +410,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
         } else {
           for (int isol=0; isol<numFieldsDot; ++isol) {
             const int node_id = nodeID(cell,cell_node,offsetDot+isol);
-            RefType val_dot_ref = val_dot[isol](cell,side,node);
+            RefType val_dot_ref = val_dot[isol](sideSet_idx,node);
             val_dot_ref = TanFadType(fad_size,xdot_data[node_id]);
             if (workset.m_coeff != 0.0) {
               for (int k=0; k<workset.num_cols_x; k++) {
@@ -418,7 +424,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
         if (is_dof_dotdot_vec) {
           for (int idim=0; idim<vecDim; ++idim) {
             const int node_id = nodeID(cell,cell_node,offsetDotDot+idim);
-            RefType val_dotdot_ref = valvec_dotdot(cell,side,node,idim);
+            RefType val_dotdot_ref = valvec_dotdot(sideSet_idx,node,idim);
             val_dotdot_ref = TanFadType(fad_size,xdotdot_data[node_id]);
             if (workset.n_coeff != 0.0) {
               for (int k=0; k<workset.num_cols_x; k++) {
@@ -429,7 +435,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
         } else {
           for (int isol=0; isol<numFieldsDotDot; ++isol) {
             const int node_id = nodeID(cell,cell_node,offsetDotDot+isol);
-            RefType val_dotdot_ref = val_dotdot[isol](cell,side,node);
+            RefType val_dotdot_ref = val_dotdot[isol](sideSet_idx,node);
             val_dotdot_ref = TanFadType(fad_size,xdotdot_data[node_id]);
             if (workset.n_coeff != 0.0) {
               for (int k=0; k<workset.num_cols_x; k++) {

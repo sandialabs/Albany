@@ -77,7 +77,7 @@ ScatterSideEqnResidualBase (const Teuchos::ParameterList& p,
     numFields = names.size();
     val.resize(numFields);
     for (int eq = 0; eq < numFields; ++eq) {
-      val[eq] = res_type(names[eq], res_dl->node_scalar);
+      val[eq] = res_type(names[eq], residualsAreVolumeFields ? res_dl->node_scalar : res_dl->node_scalar_sideset);
       this->addDependentField(val[eq]);
     }
   } else if (tensorRank == 1 ) {
@@ -87,7 +87,7 @@ ScatterSideEqnResidualBase (const Teuchos::ParameterList& p,
     numFields = residualsAreVolumeFields ? res_dl->node_vector->extent(2) : res_dl->node_vector->extent(3);
   } else if (tensorRank == 2 ) {
     // tensor
-    valTensor = res_type (names[0], res_dl->node_tensor);
+    valTensor = res_type (names[0], residualsAreVolumeFields ? res_dl->node_tensor : res_dl->node_tensor_sideset);
     this->addDependentField(valTensor);
     numDims = residualsAreVolumeFields ?
                   res_dl->node_tensor->extent(2) : res_dl->node_tensor->extent(3);
@@ -152,16 +152,17 @@ evaluateFields(typename Traits::EvalData workset)
   buildSideSetNodeMap(workset);
 
   if (workset.sideSets->find(this->sideSetName)!=workset.sideSets->end()) {
-    const auto& sideSet = workset.sideSets->at(this->sideSetName);
-    for (auto const& side : sideSet) {
+    sideSet = workset.sideSetViews->at(this->sideSetName);
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    {
       // Get the local data of side and cell
-      const int icell = side.elem_LID;
-      const int iside = side.side_local_id;
+      const int icell = sideSet.elem_LID(sideSet_idx);
+      const int iside = sideSet.side_local_id(sideSet_idx);
 
       if (residualsAreVolumeFields) {
         doEvaluateFieldsCell(workset,icell,iside);
       } else {
-        doEvaluateFieldsSide(workset,icell,iside);
+        doEvaluateFieldsSide(workset,icell,iside,sideSet_idx);
       }
     }
   }
@@ -231,7 +232,7 @@ doEvaluateFieldsCellResidual(typename Traits::EvalData workset, int cell, int si
 
 template<typename EvalT, typename Traits>
 void ScatterSideEqnResidualBase<EvalT, Traits>::
-doEvaluateFieldsSideResidual(typename Traits::EvalData workset, int cell, int side)
+doEvaluateFieldsSideResidual(typename Traits::EvalData workset, int cell, int side, int sideSet_idx)
 {
   Teuchos::RCP<Thyra_Vector> f = workset.f;
 
@@ -246,20 +247,20 @@ doEvaluateFieldsSideResidual(typename Traits::EvalData workset, int cell, int si
     for (int inode = 0; inode<numNodes; ++inode) {
       int node = side_nodes[inode];
       for (int eq = 0; eq < this->numFields; ++eq)
-        f_nonconstView[nodeID(cell,node,this->offset + eq)] += Albany::ADValue((this->val[eq])(cell,side,inode));
+        f_nonconstView[nodeID(cell,node,this->offset + eq)] += Albany::ADValue((this->val[eq])(sideSet_idx,inode));
     }
   } else if (this->tensorRank == 1) {
     for (int inode = 0; inode<numNodes; ++inode) {
       int node = side_nodes[inode];
       for (int eq = 0; eq < this->numFields; eq++)
-        f_nonconstView[nodeID(cell,node,this->offset + eq)] += Albany::ADValue((this->valVec)(cell,side,inode,eq));
+        f_nonconstView[nodeID(cell,node,this->offset + eq)] += Albany::ADValue((this->valVec)(sideSet_idx,inode,eq));
     }
   } else if (this->tensorRank == 2) {
     for (int inode = 0; inode<numNodes; ++inode) {
       int node = side_nodes[inode];
       for (int i = 0; i < numDims; i++)
         for (int j = 0; j < numDims; j++)
-          f_nonconstView[nodeID(cell,node,this->offset + i*numDims + j)] += Albany::ADValue((this->valTensor)(cell,side,inode,i,j));
+          f_nonconstView[nodeID(cell,node,this->offset + i*numDims + j)] += Albany::ADValue((this->valTensor)(sideSet_idx,inode,i,j));
     }
   }
 }
@@ -286,9 +287,9 @@ doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
 
 template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::Residual, Traits>::
-doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
+doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int sideSet_idx)
 {
-  this->doEvaluateFieldsSideResidual(workset,cell,side);
+  this->doEvaluateFieldsSideResidual(workset,cell,side,sideSet_idx);
 }
 
 // **********************************************************************
@@ -387,10 +388,10 @@ doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
 
 template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::Jacobian, Traits>::
-doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
+doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int sideSet_idx)
 {
   if (!workset.f.is_null()) {
-    this->doEvaluateFieldsSideResidual(workset,cell,side);
+    this->doEvaluateFieldsSideResidual(workset,cell,side,sideSet_idx);
   }
   Teuchos::RCP<Thyra_LinearOp> Jac = workset.Jac;
 
@@ -413,9 +414,9 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
     const int node = side_nodes[inode];
     for (int eq = 0; eq < this->numFields; eq++) {
       typename Ref<ScalarT const>::type
-        valptr = (this->tensorRank == 0 ? this->val[eq](cell,side,inode) :
-                  this->tensorRank == 1 ? this->valVec(cell,side,inode,eq) :
-                  this->valTensor(cell,side,inode, eq/this->numDims, eq%this->numDims));
+        valptr = (this->tensorRank == 0 ? this->val[eq](sideSet_idx,inode) :
+                  this->tensorRank == 1 ? this->valVec(sideSet_idx,inode,eq) :
+                  this->valTensor(sideSet_idx,inode, eq/this->numDims, eq%this->numDims));
       const LO row = nodeID(cell,node,this->offset + eq);
 
       // Check derivative array is nonzero
@@ -510,10 +511,10 @@ doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
 
 template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::Tangent, Traits>::
-doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
+doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int sideSet_idx)
 {
   if (!workset.f.is_null()) {
-    this->doEvaluateFieldsSideResidual(workset,cell,side);
+    this->doEvaluateFieldsSideResidual(workset,cell,side,sideSet_idx);
   }
 
   Teuchos::RCP<Thyra_MultiVector> JV = workset.JV;
@@ -548,9 +549,9 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
     const int node = side_nodes[inode];
     for (int eq = 0; eq < this->numFields; eq++) {
       typename Ref<ScalarT const>::type valref = (
-          this->tensorRank == 0 ? this->val[eq] (cell, side, inode) :
-          this->tensorRank == 1 ? this->valVec (cell, side, inode, eq) :
-          this->valTensor (cell, side, inode, eq / this->numDims, eq % this->numDims));
+          this->tensorRank == 0 ? this->val[eq] (sideSet_idx, inode) :
+          this->tensorRank == 1 ? this->valVec (sideSet_idx, inode, eq) :
+          this->valTensor (sideSet_idx, inode, eq / this->numDims, eq % this->numDims));
 
       const LO row = nodeID(cell,node,this->offset + eq);
 
@@ -654,10 +655,10 @@ doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
 
 template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::DistParamDeriv, Traits>::
-doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
+doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int sideSet_idx)
 {
   if (!workset.f.is_null()) {
-    this->doEvaluateFieldsSideResidual(workset,cell,side);
+    this->doEvaluateFieldsSideResidual(workset,cell,side,sideSet_idx);
   }
 
   Teuchos::RCP<Thyra_MultiVector> fpV = workset.fpV;
@@ -688,9 +689,9 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
           const int node = side_nodes[inode];
           for (int eq = 0; eq < this->numFields; eq++) {
             typename Ref<ScalarT const>::type
-                      valref = (this->tensorRank == 0 ? this->val[eq](cell,side,inode) :
-                                this->tensorRank == 1 ? this->valVec(cell,side,inode,eq) :
-                                this->valTensor(cell,side,inode, eq/this->numDims, eq%this->numDims));
+                      valref = (this->tensorRank == 0 ? this->val[eq](sideSet_idx,inode) :
+                                this->tensorRank == 1 ? this->valVec(sideSet_idx,inode,eq) :
+                                this->valTensor(sideSet_idx,inode, eq/this->numDims, eq%this->numDims));
             val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
           }
         }
@@ -707,9 +708,9 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
       const int node = side_nodes[inode];
       for (int eq = 0; eq < this->numFields; eq++) {
         typename Ref<ScalarT const>::type
-                  valref = (this->tensorRank == 0 ? this->val[eq](cell,side,inode) :
-                            this->tensorRank == 1 ? this->valVec(cell,side,inode,eq) :
-                            this->valTensor(cell,side,inode, eq/this->numDims, eq%this->numDims));
+                  valref = (this->tensorRank == 0 ? this->val[eq](sideSet_idx,inode) :
+                            this->tensorRank == 1 ? this->valVec(sideSet_idx,inode,eq) :
+                            this->valTensor(sideSet_idx,inode, eq/this->numDims, eq%this->numDims));
         const int row = nodeID(cell,node,this->offset + eq);
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
@@ -746,7 +747,7 @@ doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
 
 template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::HessianVec, Traits>::
-doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side)
+doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int sideSet_idx)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of ScatterSideEqnResidual::doEvaluateFieldsSide is not implemented yet"<< std::endl);
 }

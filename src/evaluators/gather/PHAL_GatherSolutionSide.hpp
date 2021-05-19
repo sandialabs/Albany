@@ -53,15 +53,16 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
 
   // For f,fdot,fdotdot, can either gather a bunch of scalar fields or one vector field
-  std::vector< PHX::MDField<ScalarT,Cell,Side,Node> > val;
-  std::vector< PHX::MDField<ScalarT,Cell,Side,Node> > val_dot;
-  std::vector< PHX::MDField<ScalarT,Cell,Side,Node> > val_dotdot;
-  PHX::MDField<ScalarT,Cell,Side,Node,VecDim> valvec;
-  PHX::MDField<ScalarT,Cell,Side,Node,VecDim> valvec_dot;
-  PHX::MDField<ScalarT,Cell,Side,Node,VecDim> valvec_dotdot;
+  std::vector< PHX::MDField<ScalarT,Side,Node> > val;
+  std::vector< PHX::MDField<ScalarT,Side,Node> > val_dot;
+  std::vector< PHX::MDField<ScalarT,Side,Node> > val_dotdot;
+  PHX::MDField<ScalarT,Side,Node,VecDim> valvec;
+  PHX::MDField<ScalarT,Side,Node,VecDim> valvec_dot;
+  PHX::MDField<ScalarT,Side,Node,VecDim> valvec_dotdot;
 
   std::string sideSetName;
-  std::vector<std::vector<int>> sideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
+  Albany::LocalSideSetInfo sideSet;
 
   int num_side_nodes;
 

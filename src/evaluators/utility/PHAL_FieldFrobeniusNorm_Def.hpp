@@ -25,7 +25,7 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
   std::string fieldName = p.get<std::string> ("Field Name");
   std::string fieldNormName = p.get<std::string> ("Field Norm Name");
 
-  useCollapsedSidesets = (dl->isSideLayouts && dl->useCollapsedSidesets);
+  eval_on_side = dl->isSideLayouts;
 
   std::string layout = p.get<std::string>("Field Layout");
   if (layout=="Cell Vector")
@@ -67,35 +67,35 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
   {
     sideSetName = p.get<std::string>("Side Set Name");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (!eval_on_side, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = decltype(field)(fieldName, dl->cell_vector);
-    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
+    field      = decltype(field)(fieldName, dl->cell_vector_sideset);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2_sideset);
 
-    dl->cell_vector->dimensions(dims);
+    dl->cell_vector_sideset->dimensions(dims);
   }
   else if (layout=="Cell Side Gradient")
   {
     sideSetName = p.get<std::string>("Side Set Name");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (!eval_on_side, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = decltype(field)(fieldName, dl->cell_gradient);
-    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
+    field      = decltype(field)(fieldName, dl->cell_gradient_sideset);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2_sideset);
 
-    dl->cell_gradient->dimensions(dims);
+    dl->cell_gradient_sideset->dimensions(dims);
   }
   else if (layout=="Cell Side Node Vector")
   {
     sideSetName = p.get<std::string>("Side Set Name");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (!eval_on_side, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = decltype(field)(fieldName, useCollapsedSidesets ? dl->node_vector_sideset : dl->node_vector);
-    field_norm = decltype(field_norm)(fieldNormName, useCollapsedSidesets ? dl->node_scalar_sideset : dl->node_scalar);
+    field      = decltype(field)(fieldName, dl->node_vector_sideset);
+    field_norm = decltype(field_norm)(fieldNormName, dl->node_scalar_sideset);
 
     dl->node_vector_sideset->dimensions(dims);
   }
@@ -103,11 +103,11 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
   {
     sideSetName = p.get<std::string>("Side Set Name");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (!eval_on_side, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = decltype(field)(fieldName, useCollapsedSidesets ? dl->qp_vector_sideset : dl->qp_vector);
-    field_norm = decltype(field_norm)(fieldNormName, useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar);
+    field      = decltype(field)(fieldName, dl->qp_vector_sideset);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar_sideset);
 
     dl->qp_vector_sideset->dimensions(dims);
   }
@@ -115,11 +115,11 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
   {
     sideSetName = p.get<std::string>("Side Set Name");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (!eval_on_side, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = decltype(field)(fieldName, useCollapsedSidesets ? dl->qp_gradient_sideset : dl->qp_gradient);
-    field_norm = decltype(field_norm)(fieldNormName, useCollapsedSidesets ? dl->qp_scalar_sideset : dl->qp_scalar);
+    field      = decltype(field)(fieldName, dl->qp_gradient_sideset);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar_sideset);
 
     dl->qp_gradient_sideset->dimensions(dims);
   }
@@ -242,91 +242,70 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Tr
   }
 #endif
 
-  if (useCollapsedSidesets) {
-    switch (numDims)
-    {
-      case 2:
-        // <sideSet_idx,Vector/Gradient>
-        {
-          if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
-
-          sideSet = workset.sideSetViews->at(sideSetName);
-
-          Kokkos::parallel_for(Dim2_Policy(0,sideSet.size),*this);
-        }
-        break;
-      case 3:
-        // <sideSet_idx,Node/QuadPoint,Vector/Gradient>
-        {
-          if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
-
-          sideSet = workset.sideSetViews->at(sideSetName);
-
-          Kokkos::parallel_for(Dim3_Policy(0,sideSet.size),*this);
-        }
-        break;
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Invalid field layout.\n");
-    }
+  if (eval_on_side) {
+    evaluateFieldsSide(workset);
   } else {
-    ScalarT norm;
-    switch (numDims)
-    {
-      case 2:
-        // <Cell,Vector/Gradient>
-        for (unsigned int cell(0); cell<workset.numCells; ++cell)
+    evaluateFieldsCell(workset);
+  }
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFieldsSide (typename Traits::EvalData workset)
+{
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
+
+  sideSet = workset.sideSetViews->at(sideSetName);
+
+  switch (numDims)
+  {
+    case 2:
+      // <sideSet_idx,Vector/Gradient>
+      Kokkos::parallel_for(Dim2_Policy(0,sideSet.size),*this);
+      break;
+    case 3:
+      // <sideSet_idx,Node/QuadPoint,Vector/Gradient>
+      Kokkos::parallel_for(Dim3_Policy(0,sideSet.size),*this);
+      break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Invalid field layout.\n");
+  }
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFieldsCell (typename Traits::EvalData workset)
+{
+  ScalarT norm;
+  switch (numDims)
+  {
+    case 2:
+      // <Cell,Vector/Gradient>
+      for (unsigned int cell(0); cell<workset.numCells; ++cell)
+      {
+        norm = 0;
+        for (unsigned int dim(0); dim<dims[1]; ++dim)
+        {
+          norm += std::pow(field(cell,dim),2);
+        }
+        field_norm(cell) = std::sqrt(norm + regularization);
+      }
+      break;
+    case 3:
+      // <Cell,Node/QuadPoint,Vector/Gradient>
+      for (unsigned int cell(0); cell<workset.numCells; ++cell)
+      {
+        for (unsigned int i(0); i<dims[1]; ++i)
         {
           norm = 0;
-          for (unsigned int dim(0); dim<dims[1]; ++dim)
+          for (unsigned int dim(0); dim<dims[2]; ++dim)
           {
-            norm += std::pow(field(cell,dim),2);
+            norm += std::pow(field(cell,i,dim),2);
           }
-          field_norm(cell) = std::sqrt(norm + regularization);
+          field_norm(cell,i) = std::sqrt(norm + regularization);
         }
-        break;
-      case 3:
-        // <Cell,Node/QuadPoint,Vector/Gradient> or <Cell,Side,Vector/Gradient>
-        for (unsigned int cell(0); cell<workset.numCells; ++cell)
-        {
-          for (unsigned int i(0); i<dims[1]; ++i)
-          {
-            norm = 0;
-            for (unsigned int dim(0); dim<dims[2]; ++dim)
-            {
-              norm += std::pow(field(cell,i,dim),2);
-            }
-            field_norm(cell,i) = std::sqrt(norm + regularization);
-          }
-        }
-        break;
-      case 4:
-        // <Cell,Side,Node/QuadPoint,Vector/Gradient>
-        {
-          if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
-
-          sideSet = workset.sideSetViews->at(sideSetName);
-
-          for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-          {
-            // Get the local data of side and cell
-            const int cell = sideSet.elem_LID(sideSet_idx);
-            const int side = sideSet.side_local_id(sideSet_idx);
-
-            for (unsigned int i(0); i<dims[2]; ++i)
-            {
-              norm = 0;
-              for (unsigned int dim(0); dim<dims[3]; ++dim)
-              {
-                norm += std::pow(field(cell,side,i,dim),2);
-              }
-              field_norm(cell,side,i) = std::sqrt(norm + regularization);
-            }
-          }
-        }
-        break;
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Invalid field layout.\n");
-    }
+      }
+      break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Invalid field layout.\n");
   }
 }
 

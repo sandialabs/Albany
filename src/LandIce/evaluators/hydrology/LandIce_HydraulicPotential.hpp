@@ -39,8 +39,7 @@ public:
 
 private:
 
-  void evaluateFieldsCell(typename Traits::EvalData d);
-  void evaluateFieldsSide(typename Traits::EvalData d);
+  void evaluatePotential(unsigned int cell);
 
   // Input:
   PHX::MDField<const ScalarT>   P_w;
@@ -53,7 +52,10 @@ private:
   bool eval_on_side;
   std::string sideSetName;  // Only used if eval_on_side=true
 
+  Albany::LocalSideSetInfo sideSet;
+
   unsigned int numPts;
+  unsigned int worksetSize;
 
   bool use_h;
 
