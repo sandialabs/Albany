@@ -70,16 +70,15 @@ void Albany::SolutionResponseFunction::setup()
 
   // Create the culling operator
   cull_op = cull_op_factory->createOp();
+  beginModify(cull_op);
   assign(cull_op,1.0);
-  fillComplete(cull_op);
+  endModify(cull_op);
 }
 
 Teuchos::RCP<Thyra_LinearOp>
 SolutionResponseFunction::createGradientOp() const
 {
-  auto gradOp = cull_op_factory->createOp();
-  fillComplete(gradOp);
-  return gradOp;
+  return cull_op_factory->createOp();
 }
 
 void SolutionResponseFunction::

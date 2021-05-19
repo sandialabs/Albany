@@ -1561,7 +1561,7 @@ Application::computeGlobalJacobianImpl(
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (Teuchos::nonnull(dfm)) {
     // Re-open the jacobian
-    resumeFill(jac);
+    beginModify(jac);
 
     PHAL::Workset workset;
 
@@ -1600,7 +1600,7 @@ Application::computeGlobalJacobianImpl(
     dfm->evaluateFields<EvalT>(workset);
 
     // Close the jacobian
-    fillComplete(jac);
+    endModify(jac);
   }
 
   // Apply scaling to residual and Jacobian

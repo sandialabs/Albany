@@ -77,10 +77,13 @@ Teuchos::RCP<const Thyra_VectorSpace>
 getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
 // Fill related helpers
-void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop);
-void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop);
+// Note: the FEAssembly helpers perform global communication, to ship local contributions
+//       to the process owning the corresponding row(s). The Modify helpers only allow
+//       *local* modifications (e.g., prescribing Dirichlet BCs).
 void beginFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop);
 void endFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop);
+void beginModify (const Teuchos::RCP<Thyra_LinearOp>& lop);
+void endModify (const Teuchos::RCP<Thyra_LinearOp>& lop);
 
 // Entries manipulation helpers
 void assign (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST value);

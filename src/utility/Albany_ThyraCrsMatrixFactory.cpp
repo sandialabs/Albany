@@ -305,8 +305,9 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp (const bool ignoreN
       // We want linear ops to be in assembly mode *only when explicitly requested*.
       // If the Thyra LinearOp is created with the matrix in assembly mode,
       // its range/domain vs's would be the overlapped ones.
+      fe_matrix->beginModify();
       fe_matrix->setAllToScalar(zero);
-      fe_matrix->endFill();
+      fe_matrix->endModify();
       matrix = fe_matrix;
     }
     op = createThyraLinearOp(Teuchos::rcp_implicit_cast<Tpetra_Operator>(matrix));
