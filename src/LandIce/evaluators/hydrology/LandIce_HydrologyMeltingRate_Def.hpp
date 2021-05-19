@@ -122,49 +122,41 @@ void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateFields (typename Tra
   TEUCHOS_TEST_FOR_EXCEPTION (!m_given && !friction && !G_field && !G_given, std::runtime_error,
       "Error! You did not specify how to compute the Melt Rate.\n");
 
-  if (m_given) {
-    return;
-  }
+  if (m_given) return;
 
   // Scale L so that kPa cancel out: [L/1000] = kJ/kg = kPa m^3 / kg, and [G] = kPa m/yr
-  double L = latent_heat*1e-3;
+  L = latent_heat*1e-3;
+
+  dim = nodal ? numNodes : numQPs;
 
   if (IsStokes) {
     if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
-
-    unsigned int dim = nodal ? numNodes : numQPs;
     sideSet = workset.sideSetViews->at(sideSetName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      for (unsigned int i=0; i<dim; ++i) {
-        ScalarT val(0.0);
-        if (G_field) {
-          val += scaling_G*G(sideSet_idx,i);
-        } else if (G_given) {
-          val += G_value;
-        }
-        if (friction) {
-          val += beta(sideSet_idx,i) * std::pow(u_b(sideSet_idx,i),2);
-        }
-        m(sideSet_idx,i) = val / L;
-      }
-    }
+    worksetSize = sideSet.size;
   } else {
-    unsigned int dim = nodal ? numNodes : numQPs;
-    for (unsigned int cell=0; cell < workset.numCells; ++cell) {
-      for (unsigned int i=0; i<dim; ++i) {
-        ScalarT val(0.0);
-        if (G_field) {
-          val += scaling_G*G(cell,i);
-        } else if (G_given) {
-          val += G_value;
-        }
-        if (friction) {
-          val += beta(cell,i) * std::pow(u_b(cell,i),2);
-        }
-        m(cell,i) = val / L;
-      }
+    worksetSize = workset.numCells;
+  }
+
+  for (unsigned int cell=0; cell < worksetSize; ++cell) {
+    evaluateMeltingRate(cell);
+  }
+
+}
+
+template<typename EvalT, typename Traits, bool IsStokes>
+void HydrologyMeltingRate<EvalT, Traits, IsStokes>::evaluateMeltingRate (unsigned int cell)
+{
+  for (unsigned int i=0; i<dim; ++i) {
+    ScalarT val(0.0);
+    if (G_field) {
+      val += scaling_G*G(cell,i);
+    } else if (G_given) {
+      val += G_value;
     }
+    if (friction) {
+      val += beta(cell,i) * std::pow(u_b(cell,i),2);
+    }
+    m(cell,i) = val / L;
   }
 }
 

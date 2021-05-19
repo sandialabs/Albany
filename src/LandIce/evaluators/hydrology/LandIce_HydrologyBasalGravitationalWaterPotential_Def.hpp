@@ -58,35 +58,24 @@ void BasalGravitationalWaterPotential<EvalT, Traits>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (eval_on_side) {
-    evaluateFieldsSide(workset);
+    if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
+    sideSet = workset.sideSetViews->at(sideSetName);
+    worksetSize = sideSet.size;
   } else {
-    evaluateFieldsCell(workset);
+    worksetSize = workset.numCells;
+  }
+
+  for (unsigned int cell=0; cell<worksetSize; ++cell) {
+    evaluatePotential(cell);
   }
 }
 
 template<typename EvalT, typename Traits>
 void BasalGravitationalWaterPotential<EvalT, Traits>::
-evaluateFieldsSide (typename Traits::EvalData workset)
+evaluatePotential (unsigned int cell)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
-
-  sideSet = workset.sideSetViews->at(sideSetName);
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
-    for (int ipt=0; ipt<numPts; ++ipt) {
-      phi_0 (sideSet_idx,ipt) = rho_w*g*(z_s(sideSet_idx,ipt) - H(sideSet_idx,ipt));
-    }
-  }
-}
-
-template<typename EvalT, typename Traits>
-void BasalGravitationalWaterPotential<EvalT, Traits>::
-evaluateFieldsCell (typename Traits::EvalData workset)
-{
-  for (unsigned int cell=0; cell<workset.numCells; ++cell) {
-    for (int ipt=0; ipt<numPts; ++ipt) {
-      phi_0 (cell,ipt) = rho_w*g*(z_s(cell,ipt) - H(cell,ipt));
-    }
+  for (int ipt=0; ipt<numPts; ++ipt) {
+    phi_0 (cell,ipt) = rho_w*g*(z_s(cell,ipt) - H(cell,ipt));
   }
 }
 

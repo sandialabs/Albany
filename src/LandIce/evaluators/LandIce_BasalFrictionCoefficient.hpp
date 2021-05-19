@@ -96,6 +96,7 @@ private:
   unsigned int numNodes;
   unsigned int numQPs;
   unsigned int dim;
+  unsigned int worksetSize;
 
   bool logParameters;
   bool distributedLambda;

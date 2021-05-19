@@ -65,25 +65,21 @@ EffectivePressure (const Teuchos::ParameterList& p,
 template<typename EvalT, typename Traits, bool Surrogate>
 KOKKOS_INLINE_FUNCTION
 void EffectivePressure<EvalT, Traits, Surrogate>::
-operator() (const Surrogate_Tag&, const int& side_or_cell_idx) const
+operator() (const EffectivePressure_Tag&, const int& cell) const
 {
-  const ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
-
-  for (int pt=0; pt<numPts; ++pt) {
-    // N = P_o-P_w
-    N (side_or_cell_idx,pt) = (1-alpha)*P_o(side_or_cell_idx,pt);
+  if (Surrogate) {
+    const ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
+    for (int pt=0; pt<numPts; ++pt) {
+      // N = P_o-P_w
+      N (cell,pt) = (1-alpha)*P_o(cell,pt);
+    }
+  } else {
+    for (int node=0; node<numPts; ++node) {
+      // N = P_o - P_w
+      N (cell,node) = P_o(cell,node) - P_w(cell,node);
+    }
   }
-}
-
-template<typename EvalT, typename Traits, bool Surrogate>
-KOKKOS_INLINE_FUNCTION
-void EffectivePressure<EvalT, Traits, Surrogate>::
-operator() (const NonSurrogate_Tag&, const int& side_or_cell_idx) const
-{
-  for (int node=0; node<numPts; ++node) {
-    // N = P_o - P_w
-    N (side_or_cell_idx,node) = P_o(side_or_cell_idx,node) - P_w(side_or_cell_idx,node);
-  }
+  
 }
 
 //**********************************************************************
@@ -91,6 +87,18 @@ template<typename EvalT, typename Traits, bool Surrogate>
 void EffectivePressure<EvalT, Traits, Surrogate>::
 evaluateFields (typename Traits::EvalData workset)
 {
+
+#ifdef OUTPUT_TO_SCREEN
+    if (Surrogate) {
+      Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+      ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
+      if (std::fabs(printedAlpha-alpha)>1e-10) {
+        *output << "[Effective Pressure " << PHX::print<EvalT>() << "] alpha = " << alpha << "\n";
+        printedAlpha = alpha;
+      }
+    }
+#endif
+
   if (eval_on_side) {
     if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
     sideSet = workset.sideSetViews->at(sideSetName);
@@ -99,21 +107,8 @@ evaluateFields (typename Traits::EvalData workset)
     worksetSize = workset.numCells;
   }
 
-  if (Surrogate) {
+  Kokkos::parallel_for(EffectivePressure_Policy(0, worksetSize), *this);
 
-#ifdef OUTPUT_TO_SCREEN
-    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-    ParamScalarT alpha = Albany::convertScalar<const ParamScalarT>(alphaParam(0));
-    if (std::fabs(printedAlpha-alpha)>1e-10) {
-      *output << "[Effective Pressure " << PHX::print<EvalT>() << "] alpha = " << alpha << "\n";
-      printedAlpha = alpha;
-    }
-#endif
-
-    Kokkos::parallel_for(Surrogate_Policy(0, worksetSize), *this);
-  } else {
-    Kokkos::parallel_for(NonSurrogate_Policy(0, worksetSize), *this);
-  }
 }
 
 } // Namespace LandIce

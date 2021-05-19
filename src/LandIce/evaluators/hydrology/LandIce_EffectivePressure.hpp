@@ -54,7 +54,7 @@ private:
   PHX::MDField<HydroScalarT>  N;
 
   int numPts;
-  int worksetSize;
+  unsigned int worksetSize;
 
   bool eval_on_side;
   std::string sideSetName; // Needed if OnSide=true
@@ -67,16 +67,12 @@ private:
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct Surrogate_Tag{};
-  struct NonSurrogate_Tag{};
+  struct EffectivePressure_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, Surrogate_Tag> Surrogate_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, NonSurrogate_Tag> NonSurrogate_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, EffectivePressure_Tag> EffectivePressure_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Surrogate_Tag& tag, const int& side_or_cell_idx) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const NonSurrogate_Tag& tag, const int& side_or_cell_idx) const;
+  void operator() (const EffectivePressure_Tag& tag, const int& cell) const;
   
 };
 

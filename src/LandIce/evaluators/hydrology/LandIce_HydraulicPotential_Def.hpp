@@ -69,40 +69,25 @@ void HydraulicPotential<EvalT, Traits>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (eval_on_side) {
-    evaluateFieldsSide(workset);
+    if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
+    sideSet = workset.sideSetViews->at(sideSetName);
+    worksetSize = sideSet.size;
   } else {
-    evaluateFieldsCell(workset);
+    worksetSize = workset.numCells;
+  }
+
+  for (int cell = 0; cell < worksetSize; ++cell) {
+    evaluatePotential(cell);
   }
 }
 
 template<typename EvalT, typename Traits>
 void HydraulicPotential<EvalT, Traits>::
-evaluateFieldsSide (typename Traits::EvalData workset)
+evaluatePotential (unsigned int cell)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
-
-  ScalarT zero(0.0);
-  sideSet = workset.sideSetViews->at(sideSetName);
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
-    for (unsigned int pt=0; pt<numPts; ++pt) {
-      // Recall that phi is in kPa, but h is in m. Need to convert to km.
-      phi(sideSet_idx,pt) = P_w(sideSet_idx,pt) + phi_0(sideSet_idx,pt) + (use_h ? rho_w*g*h(sideSet_idx,pt)/1000 : zero);
-    }
-  }
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-void HydraulicPotential<EvalT, Traits>::
-evaluateFieldsCell (typename Traits::EvalData workset)
-{
-  ScalarT zero(0.0);
-  for (unsigned int cell=0; cell<workset.numCells; ++cell) {
-    for (unsigned int pt=0; pt<numPts; ++pt) {
-      // Recall that phi is in kPa, but h is in m. Need to convert to km.
-      phi(cell,pt) = P_w(cell,pt) + phi_0(cell,pt) + (use_h ? rho_w*g*h(cell,pt)/1000 : zero);
-    }
+  for (unsigned int pt=0; pt<numPts; ++pt) {
+    // Recall that phi is in kPa, but h is in m. Need to convert to km.
+    phi(cell,pt) = P_w(cell,pt) + phi_0(cell,pt) + (use_h ? rho_w*g*h(cell,pt)/1000 : ScalarT(0.0));
   }
 }
 

@@ -240,7 +240,7 @@ postRegistrationSetup (typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
-operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell_or_side_idx) const {
+operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
 
   switch(beta_type) {
     case GIVEN_CONSTANT:
@@ -249,25 +249,25 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell_or_side_idx
     case GIVEN_FIELD:
       if (is_given_field_param) {
         for (unsigned int ipt=0; ipt<dim; ++ipt)
-          beta(cell_or_side_idx,ipt) = given_field_param(cell_or_side_idx,ipt);
+          beta(cell,ipt) = given_field_param(cell,ipt);
       } else {
         for (unsigned int ipt=0; ipt<dim; ++ipt)
-          beta(cell_or_side_idx,ipt) = given_field(cell_or_side_idx,ipt);
+          beta(cell,ipt) = given_field(cell,ipt);
       }
     break;
     
     case POWER_LAW:
       if (distributedMu) {
         for (unsigned int ipt=0; ipt<dim; ++ipt) {
-          ScalarT Nval = N(cell_or_side_idx,ipt);
+          ScalarT Nval = N(cell,ipt);
           if (is_side_equation) Nval = KU::max(Nval, 0.0);
-          beta(cell_or_side_idx,ipt) = muPowerLawField(cell_or_side_idx,ipt) * Nval * std::pow (u_norm(cell_or_side_idx,ipt), power-1);
+          beta(cell,ipt) = muPowerLawField(cell,ipt) * Nval * std::pow (u_norm(cell,ipt), power-1);
         }
       } else {
         for (unsigned int ipt=0; ipt<dim; ++ipt) {
-          ScalarT Nval = N(cell_or_side_idx,ipt);
+          ScalarT Nval = N(cell,ipt);
           if (is_side_equation) Nval = KU::max(Nval, 0.0);
-          beta(cell_or_side_idx,ipt) = mu * Nval * std::pow (u_norm(cell_or_side_idx,ipt), power-1);
+          beta(cell,ipt) = mu * Nval * std::pow (u_norm(cell,ipt), power-1);
         }
       }
     break;
@@ -276,33 +276,33 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell_or_side_idx
       if (distributedLambda) {
         if (distributedMu) {
           for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = N(cell_or_side_idx,ipt);
+            ScalarT Nval = N(cell,ipt);
             if (is_side_equation) Nval = KU::max(Nval, 0.0);
-            ScalarT q = u_norm(cell_or_side_idx,ipt) / ( u_norm(cell_or_side_idx,ipt) + lambdaField(cell_or_side_idx,ipt)*ice_softness(cell_or_side_idx)*std::pow(Nval,n) );
-            beta(cell_or_side_idx,ipt) = muCoulombField(cell_or_side_idx,ipt) * Nval * std::pow( q, power) / u_norm(cell_or_side_idx,ipt);
+            ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(Nval,n) );
+            beta(cell,ipt) = muCoulombField(cell,ipt) * Nval * std::pow( q, power) / u_norm(cell,ipt);
           }
         } else {
           for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = N(cell_or_side_idx,ipt);
+            ScalarT Nval = N(cell,ipt);
             if (is_side_equation) Nval = KU::max(Nval, 0.0);
-            ScalarT q = u_norm(cell_or_side_idx,ipt) / ( u_norm(cell_or_side_idx,ipt) + lambdaField(cell_or_side_idx,ipt)*ice_softness(cell_or_side_idx)*std::pow(Nval,n) );
-            beta(cell_or_side_idx,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell_or_side_idx,ipt);
+            ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(Nval,n) );
+            beta(cell,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,ipt);
           }
         }
       } else {
         if (distributedMu) {
           for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = N(cell_or_side_idx,ipt);
+            ScalarT Nval = N(cell,ipt);
             if (is_side_equation) Nval = KU::max(Nval, 0.0);
-            ScalarT q = u_norm(cell_or_side_idx,ipt) / ( u_norm(cell_or_side_idx,ipt) + lambda*ice_softness(cell_or_side_idx)*std::pow(Nval,n) );
-            beta(cell_or_side_idx,ipt) = muCoulombField(cell_or_side_idx,ipt) * Nval * std::pow( q, power) / u_norm(cell_or_side_idx,ipt);
+            ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(Nval,n) );
+            beta(cell,ipt) = muCoulombField(cell,ipt) * Nval * std::pow( q, power) / u_norm(cell,ipt);
           }
         } else {
           for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = N(cell_or_side_idx,ipt);
+            ScalarT Nval = N(cell,ipt);
             if (is_side_equation) Nval = KU::max(Nval, 0.0);
-            ScalarT q = u_norm(cell_or_side_idx,ipt) / ( u_norm(cell_or_side_idx,ipt) + lambda*ice_softness(cell_or_side_idx)*std::pow(Nval,n) );
-            beta(cell_or_side_idx,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell_or_side_idx,ipt);
+            ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(Nval,n) );
+            beta(cell,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,ipt);
           }
         }
       }
@@ -312,25 +312,25 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell_or_side_idx
       if(nodal || interpolate_then_exponentiate) {
         if (is_given_field_param) {
           for (unsigned int ipt=0; ipt<dim; ++ipt)
-            beta(cell_or_side_idx,ipt) = std::exp(given_field_param(cell_or_side_idx,ipt));
+            beta(cell,ipt) = std::exp(given_field_param(cell,ipt));
         } else {
           for (unsigned int ipt=0; ipt<dim; ++ipt)
-            beta(cell_or_side_idx,ipt) = std::exp(given_field(cell_or_side_idx,ipt));
+            beta(cell,ipt) = std::exp(given_field(cell,ipt));
         }
       } else {
         if (is_given_field_param) {
           unsigned int exp_dim = is_side_equation ? numQPs : dim;
           for (unsigned int ipt=0; ipt<exp_dim; ++ipt) {
-            beta(cell_or_side_idx,ipt) = 0;
+            beta(cell,ipt) = 0;
             for (unsigned int node=0; node<numNodes; ++node)
-              beta(cell_or_side_idx,ipt) += std::exp(given_field_param(cell_or_side_idx,node))*BF(cell_or_side_idx,node,ipt);  
+              beta(cell,ipt) += std::exp(given_field_param(cell,node))*BF(cell,node,ipt);  
           }
         } else {
           unsigned int exp_dim = is_side_equation ? numQPs : dim;
           for (unsigned int ipt=0; ipt<exp_dim; ++ipt) {
-            beta(cell_or_side_idx,ipt) = 0;
+            beta(cell,ipt) = 0;
             for (unsigned int node=0; node<numNodes; ++node)
-              beta(cell_or_side_idx,ipt) += std::exp(given_field(cell_or_side_idx,node))*BF(cell_or_side_idx,node,ipt);
+              beta(cell,ipt) += std::exp(given_field(cell,node))*BF(cell,node,ipt);
           }
         }
       }
@@ -343,23 +343,23 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell_or_side_idx
   if (is_side_equation && zero_on_floating) {
     if (is_thickness_param) {
       for (unsigned int ipt=0; ipt<dim; ++ipt) {
-        ParamScalarT isGrounded = rho_i*thickness_param_field(cell_or_side_idx,ipt) > -rho_w*bed_topo_field_mst(cell_or_side_idx,ipt);
-        beta(cell_or_side_idx,ipt) *=  isGrounded;
+        ParamScalarT isGrounded = rho_i*thickness_param_field(cell,ipt) > -rho_w*bed_topo_field_mst(cell,ipt);
+        beta(cell,ipt) *=  isGrounded;
       }
     } else {
       for (unsigned int ipt=0; ipt<dim; ++ipt) {
-        ParamScalarT isGrounded = rho_i*thickness_field(cell_or_side_idx,ipt) > -rho_w*bed_topo_field(cell_or_side_idx,ipt);
-        beta(cell_or_side_idx,ipt) *=  isGrounded;
+        ParamScalarT isGrounded = rho_i*thickness_field(cell,ipt) > -rho_w*bed_topo_field(cell,ipt);
+        beta(cell,ipt) *=  isGrounded;
       }
     }
   }
 
   if (use_stereographic_map) {
     for (unsigned int ipt=0; ipt<dim; ++ipt) {
-      MeshScalarT x = coordVec(cell_or_side_idx,ipt,0) - x_0;
-      MeshScalarT y = coordVec(cell_or_side_idx,ipt,1) - y_0;
+      MeshScalarT x = coordVec(cell,ipt,0) - x_0;
+      MeshScalarT y = coordVec(cell,ipt,1) - y_0;
       MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-      beta(cell_or_side_idx,ipt) *= h*h;
+      beta(cell,ipt) *= h*h;
     }
   }
 
@@ -459,10 +459,12 @@ evaluateFields (typename Traits::EvalData workset)
   if (is_side_equation) {
     if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
     sideSet = workset.sideSetViews->at(basalSideName);
-    Kokkos::parallel_for(BasalFrictionCoefficient_Policy(0, sideSet.size), *this);
+    worksetSize = sideSet.size;
   } else {
-    Kokkos::parallel_for(BasalFrictionCoefficient_Policy(0, workset.numCells), *this);
+    worksetSize = workset.numCells;
   }
+
+  Kokkos::parallel_for(BasalFrictionCoefficient_Policy(0, worksetSize), *this);
 }
 
 } // Namespace LandIce
