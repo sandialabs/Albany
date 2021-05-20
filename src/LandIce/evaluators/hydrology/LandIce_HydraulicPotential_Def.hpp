@@ -76,7 +76,7 @@ evaluateFields (typename Traits::EvalData workset)
     worksetSize = workset.numCells;
   }
 
-  for (int cell = 0; cell < worksetSize; ++cell) {
+  for (unsigned int cell = 0; cell < worksetSize; ++cell) {
     evaluatePotential(cell);
   }
 }
