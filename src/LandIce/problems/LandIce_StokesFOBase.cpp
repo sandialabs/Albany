@@ -187,8 +187,6 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int numSurfaceSideNodes    = sideBasis[surfaceSideName]->getCardinality();
     int numSurfaceSideQPs      = sideCubature[surfaceSideName]->getNumPoints();
 
-    if(Teuchos::GlobalMPISession::getRank() == 0) printf("Layout %s: worksetSize = %d, sideMeshSpecs.worksetSize = %d\n", surfaceSideName.c_str(), worksetSize, surfaceMeshSpecs.worksetSize);
-
     dl->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
                                                                 numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO,
                                                                 useCollapsedSidesets,surfaceMeshSpecs.worksetSize));
@@ -212,8 +210,6 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int numbasalSideVertices = sideType[basalSideName]->getNodeCount();
     int numbasalSideNodes    = sideBasis[basalSideName]->getCardinality();
     int numbasalSideQPs      = sideCubature[basalSideName]->getNumPoints();
-
-    if(Teuchos::GlobalMPISession::getRank() == 0) printf("Layout %s: worksetSize = %d, sideMeshSpecs.worksetSize = %d\n", basalSideName.c_str(), worksetSize, basalMeshSpecs.worksetSize);
 
     dl->side_layouts[basalSideName] = rcp(new Albany::Layouts(worksetSize,numbasalSideVertices,numbasalSideNodes,
                                                               numbasalSideQPs,sideDim,numDim,numCellSides,vecDimFO,

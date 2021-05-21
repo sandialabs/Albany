@@ -135,6 +135,10 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
                                    worksetSize, partVec[0]->name(),
                                    ebNameToIndex, this->interleavedOrdering));
 
+  // Create a mesh specs object for EACH side set
+  this->initializeSideSetMeshSpecs(commT);
+
+  // Initialize the requested sideset mesh struct in the mesh
   this->initializeSideSetMeshStructs(commT);
 }
 

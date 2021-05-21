@@ -508,27 +508,39 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
       Teuchos::RCP<AbstractMeshStruct> ss_mesh;
       const std::string& ss_name = sideSets[i];
       params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
-      if (!params_ss->isParameter("Number Of Time Derivatives"))
-        params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
 
-      if (!params_ss->isParameter("Workset Size")) {
-        int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
-        params_ss->set("Workset Size", worksetSizeMax);
-      }
+      // We must check whether a side mesh was already created elsewhere.
+      // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
+      // This happens, for instance, for the basal mesh for extruded meshes.
+      if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end()) {
+        if (!params_ss->isParameter("Number Of Time Derivatives"))
+          params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
 
-      std::string method = params_ss->get<std::string>("Method");
-      if (method=="SideSetSTK") {
-        // The user said this mesh is extracted from a higher dimensional one
-        TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
-                                    "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
+        // If workset size is -1, set sideset discretization workset size based on sideset mesh spec
+        // Note: this should be set to either the maximum size or -1
+        if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1) {
+          const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+          auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
+          TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+              "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
+          params_ss->set<int>("Workset Size", sideSetMeshSpecIter->second[0]->worksetSize);
+        }
 
-        this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, comm, num_params));
-      } else {
-        // We must check whether a side mesh was already created elsewhere.
-        // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
-        // This happens, for instance, for the basal mesh for extruded meshes.
-        if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end())
-        {
+        std::string method = params_ss->get<std::string>("Method");
+        if (method=="SideSetSTK") {
+          // The user said this mesh is extracted from a higher dimensional one
+          TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
+                                      "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
+
+          const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+          auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
+          TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+              "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
+          this->sideSetMeshStructs[ss_name] =
+              Teuchos::rcp(new SideSetSTKMeshStruct(
+                  *this->meshSpecs[0], *sideSetMeshSpecIter->second[0],
+                  params_ss, comm, num_params));
+        } else {
           ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,comm, num_params);
           this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
           TEUCHOS_TEST_FOR_EXCEPTION (this->sideSetMeshStructs[ss_name]==Teuchos::null, std::runtime_error,
