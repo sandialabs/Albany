@@ -64,6 +64,7 @@ struct MeshSpecsStruct
   // Side Sets Names
   std::vector<std::string> ssNames;
   int                      worksetSize;
+  bool                     singleWorksetSizeAllocation = false;
   // Element block name for the EB that this struct corresponds to
   std::string ebName;
 
