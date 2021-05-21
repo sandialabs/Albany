@@ -105,7 +105,9 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         int extruded_ws_size = disc_params->get("Workset Size", 50);
         int basal_ws_size = -1;
         if(extruded_ws_size != -1) {
-          basal_ws_size =  extruded_ws_size/ (disc_params->get<int>("NumLayers") * ((disc_params->get<std::string>("Element Shape") == "Tetrahedron") ? 3 : 1));
+          const int num_cells_per_layer = disc_params->get<std::string>("Element Shape") == "Tetrahedron" ? 3 : 1;
+          const int num_cells_per_column = num_cells_per_layer * disc_params->get<int>("NumLayers");
+          basal_ws_size = extruded_ws_size / num_cells_per_column;
           basal_ws_size = std::max(basal_ws_size,1); //makes sure is at least 1.
         }
         if (disc_params->isSublist("Side Set Discretizations") && disc_params->sublist("Side Set Discretizations").isSublist("basalside")) {

@@ -231,6 +231,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
         ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(),
         ebNameToIndex, this->interleavedOrdering, false, cub_rule));
+    this->meshSpecs[0]->ebSizeMax = ebSizeMax;
 
   } else {
 
@@ -263,6 +264,26 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(commT);
+
+  // Get upper bound on sideset workset sizes by using Ioss element counts on side blocks
+  // TODO: Figure out what to do when multiple element blocks are used
+  if (!params->get("Separate Evaluators by Element Block",false)) {
+    for (auto ss : sss) {
+      auto& ssb = ss->get_side_blocks();
+      if (ssb.size()==0) { continue; }
+      const std::string ssName = ss->name();
+      const auto sidesetSizeMax = ssb[0]->entity_count();
+      *out << "Sideset name: " << ssName << ", Sideset size max: " << sidesetSizeMax << std::endl;
+
+      const auto& sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+      const auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
+      TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+          "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
+      sideSetMeshSpecIter->second[0]->ebSizeMax = sidesetSizeMax;
+      sideSetMeshSpecIter->second[0]->worksetSize = this->computeWorksetSize(worksetSizeMax, sidesetSizeMax);
+      *out << "Sideset name: " << ssName << ", Sideset workset size: " << sideSetMeshSpecIter->second[0]->worksetSize << std::endl;
+    }
+  }
 
   // Initialize the requested sideset mesh struct in the mesh
   this->initializeSideSetMeshStructs(commT);

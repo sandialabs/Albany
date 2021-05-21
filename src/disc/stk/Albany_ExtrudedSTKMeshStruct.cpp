@@ -172,10 +172,14 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   Ordering = params->get("Columnwise Ordering", false) ? LayeredMeshOrdering::COLUMN : LayeredMeshOrdering::LAYER;
 
   int cub = params->get("Cubature Degree", 3);
-  int basalWorksetSize = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
+  // int basalWorksetSizeMax = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
+  int basalSizeMax = basalMeshStruct->getMeshSpecs()[0]->ebSizeMax;
+  TEUCHOS_TEST_FOR_EXCEPTION(basalSizeMax < 1, std::runtime_error,
+      "basalSizeMax is not set! basalMeshStruct is not using Ioss.\n");
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int numElemsInColumn = numLayers*((ElemShape==Tetrahedron) ? 3 : 1);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSize*numElemsInColumn);
+  // int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSizeMax*numElemsInColumn);
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, basalSizeMax*numElemsInColumn);
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
@@ -194,6 +198,40 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
+
+  // Get upper bound on lateral workset sizes by using Ioss element counts on side blocks
+  for (auto bms: basalMeshStruct->getMeshSpecs() ) {
+    for (auto bssName : bms->ssNames) {
+      const auto& basalSideSetMeshSpecs = bms->sideSetMeshSpecs;
+      const auto basalSideSetMeshSpecIter = basalSideSetMeshSpecs.find(bssName);
+      TEUCHOS_TEST_FOR_EXCEPTION(basalSideSetMeshSpecIter == basalSideSetMeshSpecs.end(), std::runtime_error,
+          "Cannot find " << bssName << " in basalside sideSetMeshSpecs!\n");
+      const auto basalSideSetWorksetSize = basalSideSetMeshSpecIter->second[0]->worksetSize;
+      const auto basalSideSetSizeMax = basalSideSetMeshSpecIter->second[0]->ebSizeMax;
+      TEUCHOS_TEST_FOR_EXCEPTION(basalSideSetSizeMax < 1, std::runtime_error,
+          "basalSideSetSizeMax is not set! basalMeshStruct is not using Ioss.\n");
+      *out << "Basal sideset name: " << bssName << ", Basal sideset workset size: " << basalSideSetWorksetSize << std::endl;
+
+      if (basalSideSetWorksetSize == -1) continue;
+
+      // TODO: Need lateralSidesetSizeMax
+      // TODO: Need special case for "lateral"
+      const std::string ssName = "extruded_" + bssName;
+      const int num_cells_per_side = ElemShape == Tetrahedron ? 2 : 1;
+      int lateralSidesetWorksetSizeMax = num_cells_per_side * basalSideSetWorksetSize * numLayers;
+      int lateralSidesetSizeMax = num_cells_per_side * basalSideSetSizeMax * numLayers;
+      *out << "Lateral sideset name: " << ssName << ", Lateral sideset workset size max: " << lateralSidesetWorksetSizeMax << std::endl;
+      *out << "Lateral sideset name: " << ssName << ", Lateral sideset size max: " << lateralSidesetSizeMax << std::endl;
+
+      const auto& sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+      const auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
+      TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+          "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
+      // sideSetMeshSpecIter->second[0]->worksetSize = lateralSidesetWorksetSizeMax;
+      sideSetMeshSpecIter->second[0]->worksetSize = this->computeWorksetSize(lateralSidesetWorksetSizeMax, lateralSidesetSizeMax);
+      *out << "Lateral sideset name: " << ssName << ", Lateral sideset workset size: " << sideSetMeshSpecIter->second[0]->worksetSize << std::endl;
+    }
+  }
 
   // Initialize the requested sideset mesh struct in the mesh
   this->initializeSideSetMeshStructs(comm);

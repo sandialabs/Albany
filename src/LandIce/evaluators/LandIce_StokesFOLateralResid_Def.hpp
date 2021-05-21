@@ -222,6 +222,7 @@ void StokesFOLateralResid<EvalT, Traits, ThicknessScalarT>::evaluateFields (type
   if (workset.sideSetViews->find(lateralSideName)==workset.sideSetViews->end()) return;
 
   sideSet = workset.sideSetViews->at(lateralSideName);
+  if(Teuchos::GlobalMPISession::getRank() == 0) std::cout << "LateralResid - Side set name: " << lateralSideName << ", sideSetSize = " << sideSet.size << std::endl;
 
   if (immerse_ratio_provided) {
     evaluate_with_given_immersed_ratio(workset);
