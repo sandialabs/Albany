@@ -26,10 +26,10 @@ HydrologySurfaceWaterInput (const Teuchos::ParameterList& p,
   type = util::upper_case(type);
   if (type=="APPROXIMATE FROM SMB") {
     // Set omega=min(-smb,0);
-    smb = decltype(smb)(p.get<std::string> ("Surface Mass Balance Variable Name"), dl->node_scalar);
+    smb = decltype(smb)(p.get<std::string> ("Surface Mass Balance Variable Name"), eval_on_side ? dl->node_scalar_sideset : dl->node_scalar);
     this->addDependentField(smb);
 
-    omega = decltype(omega)(p.get<std::string> ("Surface Water Input Variable Name"), dl->node_scalar);
+    omega = decltype(omega)(p.get<std::string> ("Surface Water Input Variable Name"), eval_on_side ? dl->node_scalar_sideset: dl->node_scalar);
     this->addEvaluatedField(omega);
 
     input_type = InputType::SMB_APPROX;
@@ -81,19 +81,14 @@ template<typename EvalT, typename Traits>
 void HydrologySurfaceWaterInput<EvalT,Traits>::
 evaluateFieldsSide (typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
-    return;
-  }
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
-  const auto& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet) {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
-
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
     ParamScalarT zero (0.0);
     for (unsigned int node=0; node<numNodes; ++node) {
-      omega(cell,side,node) = -std::min(smb(cell,side,node),zero);
+      omega(sideSet_idx,node) = -std::min(smb(sideSet_idx,node),zero);
     }
   }
 }

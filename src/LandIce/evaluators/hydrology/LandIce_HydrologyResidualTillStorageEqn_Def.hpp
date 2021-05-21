@@ -16,11 +16,11 @@ template<typename EvalT, typename Traits>
 HydrologyResidualTillStorageEqn<EvalT, Traits>::
 HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  BF         (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
-  w_measure  (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
-  omega      (p.get<std::string> ("Surface Water Input Variable Name"), dl->qp_scalar),
-  h_till_dot (p.get<std::string> ("Till Water Storage Dot Variable Name"), dl->qp_scalar),
-  residual   (p.get<std::string> ("Till Water Storage Eqn Residual Name"),dl->node_scalar)
+  BF         (p.get<std::string> ("BF Name"), p.isParameter("Side Set Name") ? dl->node_qp_scalar_sideset : dl->node_qp_scalar),
+  w_measure  (p.get<std::string> ("Weighted Measure Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
+  omega      (p.get<std::string> ("Surface Water Input Variable Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
+  h_till_dot (p.get<std::string> ("Till Water Storage Dot Variable Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
+  residual   (p.get<std::string> ("Till Water Storage Eqn Residual Name"), p.isParameter("Side Set Name") ? dl->node_scalar_sideset : dl->node_scalar)
 {
   // Check if it is a sideset evaluation
   eval_on_side = false;
@@ -54,9 +54,9 @@ HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (mass_lumping) {
-    layout = dl->node_scalar;
+    layout = eval_on_side ? dl->node_scalar_sideset : dl->node_scalar;
   } else {
-    layout = dl->qp_scalar;
+    layout = eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar;
   }
 
   if (use_melting) {
@@ -119,35 +119,31 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   // Zero out, to avoid leaving stuff from previous workset!
   residual.deep_copy(ScalarT(0.));
 
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
-    return;
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
   ScalarT res_qp, res_node;
-  const auto& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet) {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
-
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
     for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;
       for (unsigned int qp=0; qp < numQPs; ++qp) {
-        res_qp = scaling_omega*omega(cell,side,qp) - C_drain - scaling_h_dot*h_till_dot(cell,side,qp);
+        res_qp = scaling_omega*omega(sideSet_idx,qp) - C_drain - scaling_h_dot*h_till_dot(sideSet_idx,qp);
 
         if (use_melting && !mass_lumping) {
-          res_qp += m(cell,side,qp)/rho_w;
+          res_qp += m(sideSet_idx,qp)/rho_w;
         }
 
-        res_qp *= BF(cell,side,node,qp);
+        res_qp *= BF(sideSet_idx,node,qp);
 
-        res_node += res_qp * w_measure(cell,side,qp);
+        res_node += res_qp * w_measure(sideSet_idx,qp);
       }
 
       if (use_melting && mass_lumping) {
-        res_node += m(cell,side,node)/rho_w;
+        res_node += m(sideSet_idx,node)/rho_w;
       }
 
-      residual (cell,side,node) = res_node;
+      residual (sideSet_idx,node) = res_node;
     }
   }
 }

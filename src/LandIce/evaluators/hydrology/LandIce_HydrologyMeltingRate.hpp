@@ -49,6 +49,8 @@ public:
 
 private:
 
+  void evaluateMeltingRate(unsigned int cell);
+
   // Input:
   PHX::MDField<const IceScalarT>    u_b;    // [ m yr^-1 ]
   PHX::MDField<const ScalarT>       beta;   // [ kPa yr m^-1 ]
@@ -63,14 +65,20 @@ private:
   bool              m_given;
   bool              G_given;
 
-  unsigned int               numQPs;
-  unsigned int               numNodes;
+  unsigned int      numQPs;
+  unsigned int      numNodes;
+  unsigned int      dim;
+  unsigned int      worksetSize;
+  
   double            latent_heat;  // Ice Latent Heat [J kg^-1]
+  double            L;            // Scaled Ice Latent Heat [L/1000] = kJ/kg = kPa m^3 / kg, and [G] = kPa m/yr
   double            scaling_G;    // Used internally
   double            m_value;      // Used if this->m_given is true
   double            G_value;      // Used if this->G_given is true
 
   std::string       sideSetName;  // Only needed if IsStokes=true
+
+  Albany::LocalSideSetInfo sideSet; // Only needed if IsStokes=true
 };
 
 } // Namespace LandIce

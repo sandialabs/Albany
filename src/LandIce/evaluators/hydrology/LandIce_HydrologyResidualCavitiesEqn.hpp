@@ -101,6 +101,7 @@ private:
   bool                            stokes_coupling;
   std::string                     sideSetName;
   std::vector<std::vector<int> >  sideNodes;
+  Albany::LocalSideSetInfo sideSet;
 };
 
 } // Namespace LandIce

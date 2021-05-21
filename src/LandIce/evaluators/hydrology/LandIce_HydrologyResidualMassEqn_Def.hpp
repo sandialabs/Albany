@@ -16,12 +16,12 @@ template<typename EvalT, typename Traits>
 HydrologyResidualMassEqn<EvalT, Traits>::
 HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  BF        (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
-  GradBF    (p.get<std::string> ("Gradient BF Name"), dl->node_qp_gradient),
-  w_measure (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
-  q         (p.get<std::string> ("Water Discharge Variable Name"), dl->qp_gradient),
-  omega     (p.get<std::string> ("Surface Water Input Variable Name"), dl->qp_scalar),
-  residual  (p.get<std::string> ("Mass Eqn Residual Name"),dl->node_scalar)
+  BF        (p.get<std::string> ("BF Name"), p.isParameter("Side Set Name") ? dl->node_qp_scalar_sideset : dl->node_qp_scalar),
+  GradBF    (p.get<std::string> ("Gradient BF Name"), p.isParameter("Side Set Name") ? dl->node_qp_gradient_sideset : dl->node_qp_gradient),
+  w_measure (p.get<std::string> ("Weighted Measure Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
+  q         (p.get<std::string> ("Water Discharge Variable Name"), p.isParameter("Side Set Name") ? dl->qp_gradient_sideset : dl->qp_gradient),
+  omega     (p.get<std::string> ("Surface Water Input Variable Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
+  residual  (p.get<std::string> ("Mass Eqn Residual Name"), p.isParameter("Side Set Name") ? dl->node_scalar_sideset : dl->node_scalar)
 {
   // Check if it is a sideset evaluation
   eval_on_side = false;
@@ -37,7 +37,7 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   numDims  = eval_on_side ? dl->qp_gradient->dimension(3) : dl->qp_gradient->dimension(2);
 
   if (eval_on_side) {
-    metric = PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string>("Metric Name"),dl->qp_tensor);
+    metric = PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>(p.get<std::string>("Metric Name"),dl->qp_tensor_sideset);
     this->addDependentField(metric);
   }
 
@@ -55,11 +55,11 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   has_h_till = p.get<bool>("Has Till Storage");
 
   if (unsteady) {
-    h_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), dl->qp_scalar);
+    h_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar);
     this->addDependentField(h_dot);
 
     if (has_h_till) {
-      h_till_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Till Water Storage Dot Variable Name"), dl->qp_scalar);
+      h_till_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Till Water Storage Dot Variable Name"), eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar);
       this->addDependentField(h_till_dot);
     }
   }
@@ -72,9 +72,9 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (mass_lumping) {
-    layout = dl->node_scalar;
+    layout = eval_on_side ? dl->node_scalar_sideset : dl->node_scalar;
   } else {
-    layout = dl->qp_scalar;
+    layout = eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar;
   }
 
   if (use_melting) {
@@ -142,48 +142,43 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   // Zero out, to avoid leaving stuff from previous workset!
   residual.deep_copy(ScalarT(0.));
 
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
-    return;
-  }
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
   ScalarT res_qp, res_node;
-  const auto& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet) {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
-
+  sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
     for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;
       for (unsigned int qp=0; qp < numQPs; ++qp) {
-        res_qp = scaling_omega*omega(cell,side,qp);
+        res_qp = scaling_omega*omega(sideSet_idx,qp);
         if (unsteady) {
-          res_qp -= scaling_h_dot*h_dot(cell,side,qp);
+          res_qp -= scaling_h_dot*h_dot(sideSet_idx,qp);
           if (has_h_till) {
-            res_qp -= scaling_h_dot*h_till_dot(cell,side,qp);
+            res_qp -= scaling_h_dot*h_till_dot(sideSet_idx,qp);
           }
         }
 
         if (use_melting && !mass_lumping) {
-          res_qp += m(cell,side,qp)/rho_w;
+          res_qp += m(sideSet_idx,qp)/rho_w;
         }
 
-        res_qp *= BF(cell,side,node,qp);
+        res_qp *= BF(sideSet_idx,node,qp);
 
         for (unsigned int idim=0; idim<numDims; ++idim) {
           for (unsigned int jdim=0; jdim<numDims; ++jdim) {
-            res_qp += scaling_q*q(cell,side,qp,idim) * metric(cell,side,qp,idim,jdim) * GradBF(cell,side,node,qp,jdim);
+            res_qp += scaling_q*q(sideSet_idx,qp,idim) * metric(sideSet_idx,qp,idim,jdim) * GradBF(sideSet_idx,node,qp,jdim);
           }
         }
 
-        res_node += res_qp * w_measure(cell,side,qp);
+        res_node += res_qp * w_measure(sideSet_idx,qp);
       }
 
       if (use_melting && mass_lumping) {
-        res_node += m(cell,side,node)/rho_w;
+        res_node += m(sideSet_idx,node)/rho_w;
       }
 
-      residual (cell,side,node) = res_node;
+      residual (sideSet_idx,node) = res_node;
     }
   }
 }
