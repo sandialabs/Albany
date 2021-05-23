@@ -37,11 +37,13 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   beta      = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar_sideset);
   BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar_sideset);
   w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar_sideset);
+  normals   = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_basal->qp_vector_spacedim_sideset);
 
   this->addDependentField(u);
   this->addDependentField(beta);
   this->addDependentField(BF);
   this->addDependentField(w_measure);
+  this->addDependentField(normals);
 
   this->addContributedField(residual);
 
@@ -120,12 +122,19 @@ operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const {
   for (unsigned int node=0; node<numSideNodes; ++node) {
     local_res[0] = 0.0;
     local_res[1] = 0.0;
-    for (unsigned int dim=0; dim<vecDimFO; ++dim) {
-      for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-        local_res[dim] += (ff + beta(sideSet_idx,qp)*u(sideSet_idx,qp,dim))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
-      }
-      Kokkos::atomic_add(&residual(cell,sideNodes(side,node),dim), local_res[dim]);
+
+    for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+      MeshScalarT bx = -normals(sideSet_idx,qp,0)/normals(sideSet_idx,qp,2);
+      MeshScalarT by = -normals(sideSet_idx,qp,1)/normals(sideSet_idx,qp,2);
+      // removed the following line after checking performance
+      bx=0.0; by=0.0;
+      ScalarT u0 = u(sideSet_idx,qp,0);
+      ScalarT u1 = u(sideSet_idx,qp,1);
+      local_res[0] += (ff + beta(sideSet_idx,qp)*(u0*(1.0+bx*bx) + u1*bx*by))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
+      local_res[1] += (ff + beta(sideSet_idx,qp)*(u0*bx*by + u1*(1.0+by*by)))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
     }
+    for (unsigned int dim=0; dim<vecDimFO; ++dim)
+      Kokkos::atomic_add(&residual(cell,sideNodes(side,node),dim), local_res[dim]);
   }
 
 }
