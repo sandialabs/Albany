@@ -537,6 +537,7 @@ void StokesFOBase::setupEvaluatorRequests ()
     // (which, if effevtive_pressure is a dist param, needs to be projected to the side)
 
     ss_utils_needed[ssName][UtilityRequest::BFS] = true;
+    ss_utils_needed[ssName][UtilityRequest::NORMALS  ] = true;
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;  // Only really needed if stereographic map is used.
 
     ss_build_interp_ev[ssName][dof_names[0]][IReq::CELL_TO_SIDE] = true;

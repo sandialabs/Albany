@@ -51,6 +51,7 @@ private:
   PHX::MDField<const ScalarT>     u;          // Side, QuadPoint, VecDim
   PHX::MDField<const RealType>    BF;         // Side, Node, QuadPoint
   PHX::MDField<const MeshScalarT> w_measure;  // Side, QuadPoint
+  PHX::MDField<const MeshScalarT> normals;   // Side, QuadPoint, Dim
   PHX::MDField<const ScalarT,Dim> homotopyParam;
 
   PHX::MDField<const ScalarT,Dim> homotopy;

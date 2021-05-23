@@ -1190,6 +1190,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", beta_side_name);
     p->set<std::string>("Velocity Side QP Variable Name", velocity_side_name);
     p->set<std::string>("Side Set Name", ssName);
+    p->set<std::string>("Side Normal Name", Albany::normal_name + " " + ssName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<Teuchos::ParameterList*>("Parameter List", &pl->sublist("Basal Friction Coefficient"));
 
