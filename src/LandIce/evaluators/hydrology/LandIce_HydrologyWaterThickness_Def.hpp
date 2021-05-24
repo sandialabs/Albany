@@ -36,18 +36,15 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
    */
 
   bool nodal = p.get<bool>("Nodal");
-  Teuchos::RCP<PHX::DataLayout> layout = nodal ? dl->node_scalar : dl->qp_scalar;
-
   if (IsStokes) {
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, std::logic_error,
                                 "Error! For coupling with StokesFO, the Layouts structure must be that of the basal side.\n");
 
     sideSetName = p.get<std::string>("Side Set Name");
-
-    numPts = layout->extent(2);
-  } else {
-    numPts = layout->extent(1);
   }
+
+  auto layout = nodal ? dl->node_scalar : dl->qp_scalar;
+  numPts = layout->extent(1);
 
   u_b = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
   N   = PHX::MDField<const ScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
@@ -136,17 +133,16 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     return;
 
   ScalarT zero (0.0);
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
-  {
+  const auto& sideSet = workset.sideSets->at(sideSetName);
+  for (unsigned int side=0; side<sideSet.size(); ++side) {
+
     // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+    const int cell = sideSet[side].elem_LID;
 
     for (unsigned int ipt=0; ipt < numPts; ++ipt)
     {
-      h(cell,ipt)  = (use_melting ? m(cell,side,ipt)/rho_i : zero) + u_b(cell,side,ipt)*h_r/l_r;
-      h(cell,ipt) /= c_creep*A(cell)*std::pow(N(cell,side,ipt),3) + u_b(cell,side,ipt)/l_r;
+      h(cell,ipt)  = (use_melting ? m(side,ipt)/rho_i : zero) + u_b(side,ipt)*h_r/l_r;
+      h(cell,ipt) /= c_creep*A(side)*std::pow(N(side,ipt),3) + u_b(side,ipt)/l_r;
     }
   }
 }
