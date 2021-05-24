@@ -37,10 +37,9 @@ ANONYMOUS:
         Type: Basal Friction
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Regularized Coulomb
+          Type: Power Law
           Power Exponent: 0.3333
-          Bed Roughness: 4.0e-3
-          Coulomb Friction Coefficient: 0.6
+          Power Law Coefficient: 0.6
           Use log scalar parameters: false
       BC 1:
         Type: Lateral
