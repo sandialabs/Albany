@@ -68,6 +68,7 @@ ANONYMOUS:
       Eliminate Water Thickness: true
       Melting Rate:
         Distributed Geothermal Flux: false
+        Use Geothermal Melt: true
         Given Geothermal Flux: 0.06
         Use Log Scalar Parameters: false
       Cavities Equation:
