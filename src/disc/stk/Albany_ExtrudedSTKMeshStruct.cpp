@@ -172,19 +172,16 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   Ordering = params->get("Columnwise Ordering", false) ? LayeredMeshOrdering::COLUMN : LayeredMeshOrdering::LAYER;
 
   int cub = params->get("Cubature Degree", 3);
-  // int basalWorksetSizeMax = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
-  int basalSizeMax = basalMeshStruct->getMeshSpecs()[0]->ebSizeMax;
-  TEUCHOS_TEST_FOR_EXCEPTION(basalSizeMax < 1, std::runtime_error,
-      "basalSizeMax is not set! basalMeshStruct is not using Ioss.\n");
+  int basalWorksetSize = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int numElemsInColumn = numLayers*((ElemShape==Tetrahedron) ? 3 : 1);
-  // int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSizeMax*numElemsInColumn);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, basalSizeMax*numElemsInColumn);
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSize*numElemsInColumn);
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, 
      ebn, ebNameToIndex, this->interleavedOrdering));
+  if (worksetSizeMax == -1) this->meshSpecs[0]->singleWorksetSizeAllocation = true;
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false))
@@ -199,38 +196,59 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
 
-  // Get upper bound on lateral workset sizes by using Ioss element counts on side blocks
-  for (auto bms: basalMeshStruct->getMeshSpecs() ) {
-    for (auto bssName : bms->ssNames) {
-      const auto& basalSideSetMeshSpecs = bms->sideSetMeshSpecs;
-      const auto basalSideSetMeshSpecIter = basalSideSetMeshSpecs.find(bssName);
-      TEUCHOS_TEST_FOR_EXCEPTION(basalSideSetMeshSpecIter == basalSideSetMeshSpecs.end(), std::runtime_error,
-          "Cannot find " << bssName << " in basalside sideSetMeshSpecs!\n");
-      const auto basalSideSetWorksetSize = basalSideSetMeshSpecIter->second[0]->worksetSize;
-      const auto basalSideSetSizeMax = basalSideSetMeshSpecIter->second[0]->ebSizeMax;
-      TEUCHOS_TEST_FOR_EXCEPTION(basalSideSetSizeMax < 1, std::runtime_error,
-          "basalSideSetSizeMax is not set! basalMeshStruct is not using Ioss.\n");
-      *out << "Basal sideset name: " << bssName << ", Basal sideset workset size: " << basalSideSetWorksetSize << std::endl;
+  // Get upper bound on lateral/upper workset sizes by using Ioss element counts on side blocks
+  if (worksetSizeMax == -1) {
+    for (auto bms: basalMeshStruct->getMeshSpecs()) {
+      if (bms->singleWorksetSizeAllocation) {
+        for (auto bssName : bms->ssNames) {
+          // Get maximum workset size of basalside sideset for lateral sideset
+          const auto& basalSideSetMeshSpecs = bms->sideSetMeshSpecs;
+          const auto basalSideSetMeshSpecIter = basalSideSetMeshSpecs.find(bssName);
+          TEUCHOS_TEST_FOR_EXCEPTION(basalSideSetMeshSpecIter == basalSideSetMeshSpecs.end(), std::runtime_error,
+              "Cannot find " << bssName << " in basalside sideSetMeshSpecs!\n");
+          // if (!basalSideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation) continue;
+          TEUCHOS_TEST_FOR_EXCEPTION(
+            !basalSideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation, std::runtime_error,
+              "basalside sideSetMeshSpec: " << bssName << " was not allocated as a single workset!\n");
+          const auto basalSideSetWorksetSize = basalSideSetMeshSpecIter->second[0]->worksetSize;
+          *out << "Basal sideset name: " << bssName << ", Basal sideset workset size: " << basalSideSetWorksetSize << std::endl;
 
-      if (basalSideSetWorksetSize == -1) continue;
+          // Compute maximum workset size for lateral sideset
+          const int num_cells_per_side = ElemShape == Tetrahedron ? 2 : 1;
+          int lateralSidesetWorksetSizeMax = num_cells_per_side * basalSideSetWorksetSize * numLayers;
 
-      // TODO: Need lateralSidesetSizeMax
-      // TODO: Need special case for "lateral"
-      const std::string ssName = "extruded_" + bssName;
-      const int num_cells_per_side = ElemShape == Tetrahedron ? 2 : 1;
-      int lateralSidesetWorksetSizeMax = num_cells_per_side * basalSideSetWorksetSize * numLayers;
-      int lateralSidesetSizeMax = num_cells_per_side * basalSideSetSizeMax * numLayers;
-      *out << "Lateral sideset name: " << ssName << ", Lateral sideset workset size max: " << lateralSidesetWorksetSizeMax << std::endl;
-      *out << "Lateral sideset name: " << ssName << ", Lateral sideset size max: " << lateralSidesetSizeMax << std::endl;
+          // Set workset size for lateral sideset to maximum workset size
+          const std::string ssName = "extruded_" + bssName;
+          const auto& sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+          auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
+          TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+              "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
+          sideSetMeshSpecIter->second[0]->worksetSize = lateralSidesetWorksetSizeMax;
+          sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
+          *out << "Lateral sideset name: " << ssName << ", Lateral sideset workset size max: " << lateralSidesetWorksetSizeMax << std::endl;
 
-      const auto& sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
-      const auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
-      TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
-          "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
-      // sideSetMeshSpecIter->second[0]->worksetSize = lateralSidesetWorksetSizeMax;
-      sideSetMeshSpecIter->second[0]->worksetSize = this->computeWorksetSize(lateralSidesetWorksetSizeMax, lateralSidesetSizeMax);
-      *out << "Lateral sideset name: " << ssName << ", Lateral sideset workset size: " << sideSetMeshSpecIter->second[0]->worksetSize << std::endl;
+          // Set lateral workset size to extruded_lateral workset size (special case)
+          if (ssName == "extruded_lateral") {
+            sideSetMeshSpecIter = sideSetMeshSpecs.find("lateral");
+            TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+                "Cannot find lateral in sideSetMeshSpecs!\n");
+            sideSetMeshSpecIter->second[0]->worksetSize = lateralSidesetWorksetSizeMax;
+            sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
+            *out << "Lateral sideset name: lateral, Lateral sideset workset size max: " << lateralSidesetWorksetSizeMax << std::endl;
+          }
+        }
+      }
     }
+
+    // Set upperside workset size to basalside workset size (special case)
+    const std::string ssName = "upperside";
+    const auto& sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+    auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
+    TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+        "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
+    sideSetMeshSpecIter->second[0]->worksetSize = basalWorksetSize;
+    sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
+    *out << "Upper sideset workset size max: " << sideSetMeshSpecIter->second[0]->worksetSize << std::endl;
   }
 
   // Initialize the requested sideset mesh struct in the mesh

@@ -226,15 +226,12 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
-
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
         ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(),
         ebNameToIndex, this->interleavedOrdering, false, cub_rule));
-    this->meshSpecs[0]->ebSizeMax = ebSizeMax;
-
+    if (worksetSizeMax == -1) this->meshSpecs[0]->singleWorksetSizeAllocation = true;
   } else {
-
     *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << std::endl;
     this->allElementBlocksHaveSamePhysics=false;
     this->meshSpecs.resize(numEB);
@@ -243,8 +240,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
           ebNameToIndex, this->interleavedOrdering, true, cub_rule));
+      if (worksetSizeMax == -1) this->meshSpecs[eb]->singleWorksetSizeAllocation = true;
     }
-
   }
 
   {
@@ -267,20 +264,25 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   // Get upper bound on sideset workset sizes by using Ioss element counts on side blocks
   // TODO: Figure out what to do when multiple element blocks are used
-  if (!params->get("Separate Evaluators by Element Block",false)) {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      params->get("Separate Evaluators by Element Block", false) && !ssNames.empty(), std::runtime_error,
+      "I don't think this case works or is tested. If it does, loop over element blocks below.\n");
+  if (worksetSizeMax == -1) {
     for (auto ss : sss) {
+      // Get maximum sideset size from Ioss
       auto& ssb = ss->get_side_blocks();
       if (ssb.size()==0) { continue; }
       const std::string ssName = ss->name();
       const auto sidesetSizeMax = ssb[0]->entity_count();
       *out << "Sideset name: " << ssName << ", Sideset size max: " << sidesetSizeMax << std::endl;
 
+      // Set sideset workset size to maximum
       const auto& sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
       const auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
       TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
           "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
-      sideSetMeshSpecIter->second[0]->ebSizeMax = sidesetSizeMax;
-      sideSetMeshSpecIter->second[0]->worksetSize = this->computeWorksetSize(worksetSizeMax, sidesetSizeMax);
+      sideSetMeshSpecIter->second[0]->worksetSize = sidesetSizeMax;
+      sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
       *out << "Sideset name: " << ssName << ", Sideset workset size: " << sideSetMeshSpecIter->second[0]->worksetSize << std::endl;
     }
   }

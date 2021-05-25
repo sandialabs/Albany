@@ -11,7 +11,6 @@ MeshSpecsStruct::MeshSpecsStruct()
   ctd.name       = "NULL";
   numDim         = -1;
   worksetSize    = -1;
-  ebSizeMax      = -1;
   cubatureDegree = -1;
   ebName         = "";
 }
@@ -34,7 +33,6 @@ MeshSpecsStruct::MeshSpecsStruct(
       nsNames(nsNames_),
       ssNames(ssNames_),
       worksetSize(worksetSize_),
-      ebSizeMax(-1),
       ebName(ebName_),
       ebNameToIndex(ebNameToIndex_),
       interleavedOrdering(interleavedOrdering_),
