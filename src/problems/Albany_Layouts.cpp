@@ -105,7 +105,7 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   // have separate node_vector and node_gradient layouts.
 }
 
-Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim, bool collapsed_sidesets, int sidesetWorksetSize)
+Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim, bool collapsed_sidesets, bool singleWorksetSizeAllocation, int sidesetWorksetSize)
 // numSideDim is the number of spatial dimensions
 // vecDim is the length of a vector quantity
 // -- For many problems, numSideDim is used for both since there are
@@ -202,7 +202,7 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
 
   // Collapsed sideset layouts to ensure contiguous memory access for efficient GPU evaluation
   // TODO: using meshspecs struct to set sideset workset size doesn't work yet for extruded boundaries
-  sidesetWorksetSize = (sidesetWorksetSize > 0) ? sidesetWorksetSize : worksetSize*numSides;
+  sidesetWorksetSize = singleWorksetSizeAllocation ? sidesetWorksetSize : worksetSize*numSides;
   qp_scalar_sideset       = rcp(new MDALayout<Side,QuadPoint>(sidesetWorksetSize,numQPts));
   node_scalar_sideset     = rcp(new MDALayout<Side,Node>(sidesetWorksetSize,numNodes));
   node_vector_sideset     = rcp(new MDALayout<Side,Node,Dim>(sidesetWorksetSize,numNodes,vecDim));
