@@ -512,39 +512,47 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
       Teuchos::RCP<AbstractMeshStruct> ss_mesh;
       const std::string& ss_name = sideSets[i];
       params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
-      if (!params_ss->isParameter("Number Of Time Derivatives"))
-        params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
 
-      // If workset size is -1, set sideset discretization workset size based on sideset meshspec
-      // Note: this should be set to either the maximum size or -1
-      if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1) {
-        const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
-        auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
-        TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
-            "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
-        params_ss->set<int>("Workset Size", sideSetMeshSpecIter->second[0]->worksetSize);
-      }
+      // We must check whether a side mesh was already created elsewhere.
+      // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
+      // This happens, for instance, for the basal mesh for extruded meshes.
+      if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end()) {
+        if (!params_ss->isParameter("Number Of Time Derivatives"))
+          params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
 
-      std::string method = params_ss->get<std::string>("Method");
-      if (method=="SideSetSTK") {
-        // The user said this mesh is extracted from a higher dimensional one
-        TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
-                                    "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
+        // If workset size is -1, set sideset discretization workset size based on sideset mesh spec
+        // Note: this should be set to either the maximum size or -1
+        if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1) {
+          const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+          auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
+          TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+              "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
+          params_ss->set<int>("Workset Size", sideSetMeshSpecIter->second[0]->worksetSize);
 
-        if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1) params_ss->set<int>("Workset Size", -1);
-        this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, comm, num_params));
-      } else {
-        // We must check whether a side mesh was already created elsewhere.
-        // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
-        // This happens, for instance, for the basal mesh for extruded meshes.
-        if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end())
-        {
-          if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1) params_ss->set<int>("Workset Size", -1);
+          Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+          out->setProcRankAndSize(comm->getRank(), comm->getSize());
+          out->setOutputToRootOnly(0);
+          *out << "Set " << ss_name << " sideset workset param to " << sideSetMeshSpecIter->second[0]->worksetSize << std::endl;
+        }
+
+        std::string method = params_ss->get<std::string>("Method");
+        if (method=="SideSetSTK") {
+          // The user said this mesh is extracted from a higher dimensional one
+          TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
+                                      "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
+
+          this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, comm, num_params));
+        } else {
           ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,comm, num_params);
           this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
           TEUCHOS_TEST_FOR_EXCEPTION (this->sideSetMeshStructs[ss_name]==Teuchos::null, std::runtime_error,
                                       "Error! Could not cast side mesh to AbstractSTKMeshStruct.\n");
         }
+
+        // At this point, the single workset size allocation should be correct
+        // we will check this later during discretization construction
+        if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1)
+          this->sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->singleWorksetSizeAllocation = true;
       }
 
       // Checking that the side meshes have the correct dimension (in case they were loaded from file,
@@ -555,11 +563,6 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
       // Update the side set mesh specs pointer in the mesh specs of this mesh
       this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->getMeshSpecs();
       this->meshSpecs[0]->sideSetMeshNames.push_back(ss_name);
-
-      // At this point, the single workset size allocation should be correct
-      // we will check this later in during the discretization construction
-      if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1)
-        this->meshSpecs[0]->sideSetMeshSpecs[ss_name][0]->singleWorksetSizeAllocation = true;
 
       // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
       typedef AbstractSTKFieldContainer::IntScalarFieldType ISFT;
