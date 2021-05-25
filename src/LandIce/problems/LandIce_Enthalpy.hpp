@@ -35,7 +35,6 @@
 #include "LandIce_w_Resid.hpp"
 #include "LandIce_ViscosityFO.hpp"
 #include "LandIce_Dissipation.hpp"
-#include "LandIce_HydrostaticPressure.hpp"
 #include "LandIce_LiquidWaterFraction.hpp"
 #include "LandIce_PressureMeltingEnthalpy.hpp"
 #include "LandIce_Temperature.hpp"
@@ -515,30 +514,13 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     }
   }
 
-  // --- LandIce hydrostatic pressure
-  {
-    p = rcp(new ParameterList("LandIce Hydrostatic Pressure"));
-
-    //Input
-    p->set<std::string>("Surface Height Variable Name", "surface_height");
-    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
-
-    p->set<ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-
-    //Output
-    p->set<std::string>("Hydrostatic Pressure Variable Name", "Hydrostatic Pressure");
-
-    ev = Teuchos::rcp(new LandIce::HydrostaticPressure<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-
   // --- LandIce pressure-melting enthalpy
   {
     p = rcp(new ParameterList("LandIce Pressure Melting Enthalpy"));
 
     //Input
-    p->set<std::string>("Hydrostatic Pressure Variable Name", "Hydrostatic Pressure");
+    p->set<std::string>("Surface Height Variable Name", "surface_height");
+    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
 
     p->set<ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
