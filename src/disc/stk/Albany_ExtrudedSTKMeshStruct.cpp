@@ -228,8 +228,8 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
           *out << "Lateral sideset name: " << ssName << ", Lateral sideset workset size max: " << lateralSidesetWorksetSizeMax << std::endl;
 
           // Set lateral workset size to extruded_lateral workset size (special case)
-          if (ssName == "extruded_lateral") {
-            sideSetMeshSpecIter = sideSetMeshSpecs.find("lateral");
+          if (ssName == "extruded_lateralside") {
+            sideSetMeshSpecIter = sideSetMeshSpecs.find("lateralside");
             TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
                 "Cannot find lateral in sideSetMeshSpecs!\n");
             sideSetMeshSpecIter->second[0]->worksetSize = lateralSidesetWorksetSizeMax;
