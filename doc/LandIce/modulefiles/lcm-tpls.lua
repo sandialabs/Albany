@@ -2,15 +2,15 @@ whatis("LCM TPLs for Trilinos/Albany")
 
 if (isloaded("lcm-intel")) then
   load("openmpi-intel/2.0")
-  netcdf_root = "/ascldap/users/daibane/LCM/TPL_toss3/install/netcdf"
+  netcdf_root = "/ascldap/users/ikalash/nightlyAlbanyCDash/TPLs"
 end
 if (isloaded("lcm-gcc")) then
   load("seacas")
   load("openmpi-gnu/2.0")
   netcdf_root = "/projects/seacas/cts1/current/"
 end
-local boost_inc = "/ascldap/users/daibane/LCM/TPL_toss3/install/boost/include"
-local boost_lib = "/ascldap/users/daibane/LCM/TPL_toss3/install/boost/lib"
+local boost_inc = "/ascldap/users/ikalash/nightlyAlbanyCDash/TPLs/include/boost"
+local boost_lib = "/ascldap/users/ikalash/nightlyAlbanyCDash/TPLs/lib"
 local mpi_root = os.getenv("MPI_ROOT")
 local netcdf_inc = netcdf_root .. "/include"
 local netcdf_lib = netcdf_root .. "/lib"

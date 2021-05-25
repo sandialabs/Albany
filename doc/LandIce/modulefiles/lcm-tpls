@@ -93,10 +93,10 @@ if { [is-loaded lcm-sems] } {
 
 if { [is-loaded lcm-cluster] } {
   module load sierra-mpi/openmpi/1.10
-  set                     boost_inc       /ascldap/users/daibane/LCM/TPL/install/boost/include
-  set                     boost_lib       /ascldap/users/daibane/LCM/TPL/install/boost/lib
+  set                     boost_inc       /ascldap/users/ikalash/nightlyAlbanyCDash/TPLs/include/boost
+  set                     boost_lib       /ascldap/users/ikalash/nightlyAlbanyCDash/TPLs/lib
   set                     mpi_root        $env(MPI_ROOT)
-  set                     netcdf_root     /ascldap/users/daibane/LCM/TPL/install/netcdf
+  set                     netcdf_root     /ascldap/users/ikalash/nightlyAlbanyCDash/TPLs
   set                     netcdf_inc      $netcdf_root/include
   set                     netcdf_lib      $netcdf_root/lib
   setenv                  BOOST_INC       $boost_inc
