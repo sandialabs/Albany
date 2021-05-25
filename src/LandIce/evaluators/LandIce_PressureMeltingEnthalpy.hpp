@@ -25,7 +25,7 @@ namespace LandIce
   This evaluator computes enthalpy of the ice at pressure-melting temperature Tm(p).
  */
 
-template<typename EvalT, typename Traits, typename PressST>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 class PressureMeltingEnthalpy: public PHX::EvaluatorWithBaseImpl<Traits>,
                                public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -40,10 +40,15 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-  typedef typename EvalT::ParamScalarT ParamScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
+  using ParamScalarT = typename EvalT::ParamScalarT;
+
+  // This is just to allow ETI machinery to work. In a real setting, ScalarT should always be constructible from TemperatureST.
+  using PressST = typename Albany::StrongestScalarType<MeshScalarT,SurfHeightST>::type;
 
   // Input:
-  PHX::MDField<const PressST,Cell,Node>     pressure;    //[Pa], [kg m^{-1} s^{-2}]
+  PHX::MDField<const MeshScalarT,Cell,Node,Dim> coords; //coords  [km]
+  PHX::MDField<const SurfHeightST,Cell,Node>    s; //surface height [km]
 
   // Output:
   PHX::MDField<PressST,Cell,Node>      meltingTemp; //[K]
@@ -53,10 +58,12 @@ private:
 
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
   double rho_i; //[kg m^{-3}]
+  double g;      // [m s^{-2}]
   double T0;    //[K]
   double beta;  //[K Pa^{-1}]
   double Tm; //[K], 273.15
-  double enthalpyHs_scaling;
+  double enthalpyHs_scaling, pressure_scaling;
+
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
