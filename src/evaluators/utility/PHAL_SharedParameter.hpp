@@ -32,8 +32,61 @@ public:
 
     // Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib>>("Parameter Library");
-    this->registerSacadoParameter(param_name, paramLib);
     this->setName("Shared Parameter " + param_name + PHX::print<EvalT>());
+
+    const Teuchos::ParameterList* paramsList = p.get<const Teuchos::ParameterList*>("Parameters List");
+
+    // Find the parameter in the Paramter list,
+    // register as a Sacado Parameter and set the Nominal value
+    bool nominalValueSet = false;
+    if((paramsList != NULL) && paramsList->isParameter("Number Of Parameters"))
+    {
+      int n = paramsList->get<int>("Number Of Parameters");
+      for (int i=0; (nominalValueSet==false) && i<n; ++i)
+      {
+        const Teuchos::ParameterList& pvi = paramsList->sublist(Albany::strint("Parameter",i));
+        std::string parameterType = "Scalar";
+        if(pvi.isParameter("Type"))
+          parameterType = pvi.get<std::string>("Type");
+        if (parameterType == "Distributed")
+          break; // Pointless to check the remaining parameters as they are all distributed
+
+        if (parameterType == "Scalar") {
+          if (pvi.get<std::string>("Name")==param_name)
+          {
+            this->registerSacadoParameter(param_name, paramLib);
+            if (pvi.isParameter("Nominal Value")) {
+            double nom_val = pvi.get<double>("Nominal Value");
+            value = nom_val;
+            nominalValueSet = true;
+          }
+          break;
+          }
+        }
+        else { //"Vector"
+          int m = pvi.get<int>("Dimension");
+          for (int j=0; j<m; ++j)
+          {
+            const Teuchos::ParameterList& pj = pvi.sublist(Albany::strint("Scalar",j));
+            if (pj.get<std::string>("Name")==param_name)
+            {
+              this->registerSacadoParameter(param_name, paramLib);
+              if (pj.isParameter("Nominal Value")) {
+                double nom_val = pj.get<double>("Nominal Value");
+                value = nom_val;
+                nominalValueSet = true;
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if(!nominalValueSet) 
+      value = p.get<double>("Default Nominal Value");
+
+    dummy = 0;
   }
 
   void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
@@ -41,8 +94,6 @@ public:
     this->utils.setFieldData(param_as_field,fm);
     d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
   }
-
-  static void setNominalValue (const Teuchos::ParameterList& p, double default_value);
 
   static ScalarT getValue ()
   {
@@ -67,80 +118,11 @@ protected:
   static ScalarT              value;
   static ScalarT              dummy;
   static std::string          param_name;
+  static double               nominal_value;
+  static bool                 is_parameter;
 
   PHX::MDField<ScalarT,Dim>   param_as_field;
 };
-
-template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
-void SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::
-setNominalValue (const Teuchos::ParameterList& p, double default_value)
-{
-  // First we scan the Parameter list to see if this parameter is listed in it,
-  // in which case we use the nominal value.
-  bool found = false;
-  if (p.isParameter("Number Of Parameters"))
-  {
-    int n = p.get<int>("Number Of Parameters");
-    for (int i=0; (found==false) && i<n; ++i)
-    {
-      const Teuchos::ParameterList& pvi = p.sublist(Albany::strint("Parameter",i));
-      std::string parameterType = "Scalar";
-      if(pvi.isParameter("Type"))
-        parameterType = pvi.get<std::string>("Type");
-      if (parameterType == "Distributed")
-        break; // Pointless to check the remaining parameters as they are all distributed
-
-      if (parameterType == "Scalar") {
-        if (!pvi.isParameter("Nominal Value"))
-          continue; // Pointless to check the parameter names, since we don't have nominal values
-        if (pvi.get<std::string>("Name")==param_name)
-        {
-          double nom_val = pvi.get<double>("Nominal Value");
-          value = nom_val;
-          found = true;
-          break;
-        }
-      }
-      else {
-        int m = pvi.get<int>("Dimension");
-        for (int j=0; j<m; ++j)
-        {
-          const Teuchos::ParameterList& pj = pvi.sublist(Albany::strint("Scalar",j));
-          if (!pj.isParameter("Nominal Value"))
-            continue; // Pointless to check the parameter names, since we don't have nominal values
-          if (pj.get<std::string>("Name")==param_name)
-          {
-            double nom_val = pj.get<double>("Nominal Value");
-            value = nom_val;
-            found = true;
-            break;
-          }
-        }
-      }
-    }
-  }
-  else if (p.isParameter("Number") && !p.isParameter("Nominal Values"))
-  {
-    int m = p.get<int>("Number");
-    for (int j=0; j<m; ++j)
-    {
-      if (p.get<std::string>(Albany::strint("Parameter",j))==param_name)
-      {
-        Teuchos::Array<double> nom_vals = p.get<Teuchos::Array<double>>("Nominal Values");
-        value = nom_vals[j];
-        found = true;
-        break;
-      }
-    }
-  }
-
-  if (!found)
-  {
-    value = default_value;
-  }
-
-  dummy = 0;
-}
 
 template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
 typename EvalT::ScalarT SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::value;

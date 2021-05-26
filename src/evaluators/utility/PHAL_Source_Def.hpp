@@ -826,13 +826,15 @@ PointSource<EvalT,Traits>::PointSource(Teuchos::ParameterList& p, PHX::FieldMana
   m_num_dim  = paramList.get("Number", 0);
   Teuchos::ParameterList& spatial_param = paramList.sublist("Spatial",true);
   if (Gaussian<EvalT,Traits>::check_for_existance(spatial_param)) {
+    Teuchos::ParameterList* scalarParamList =
+        p.get<Teuchos::ParameterList*>("Scalar Parameters List");
     Teuchos::RCP<Gaussian<EvalT,Traits>> ev;
     for (std::size_t i=0; i<m_num_dim; ++i) {
       paramList.set<std::string>(Albany::strint("Gaussian: Amplitude", i), Albany::strint("Amplitude", i));
       paramList.set<std::string>(Albany::strint("Gaussian: Radius", i), Albany::strint("Radius", i));
       paramList.set<std::string>(Albany::strint("Gaussian: Field", i), Albany::strint(p.get<std::string>("Source Name") + ": Gaussian Field", i));
 
-      ev = Teuchos::rcp(new Gaussian<EvalT,Traits>(paramList,i,fm,dl));
+      ev = Teuchos::rcp(new Gaussian<EvalT,Traits>(paramList,*scalarParamList,i,fm,dl));
       fm.template registerEvaluator<EvalT>(ev);
 
       m_spatials.push_back(ev.getRawPtr());

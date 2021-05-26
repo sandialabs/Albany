@@ -59,6 +59,7 @@ namespace PHAL
 
         template <typename EvalT, typename Traits>
         inline Gaussian<EvalT, Traits>::Gaussian(Teuchos::ParameterList &source_list,
+                                                 Teuchos::ParameterList &scalarParam_list,
                                                  std::size_t num,
                                                  PHX::FieldManager<Traits> &fm,
                                                  const Teuchos::RCP<Albany::Layouts> &dl) : mdf_amplitude(source_list.get<std::string>(Albany::strint("Gaussian: Amplitude", num)), dl->shared_param),
@@ -94,9 +95,11 @@ namespace PHAL
                     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList(Albany::strint("Gaussian: Amplitude", num)));
                     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
                     p->set<std::string>("Parameter Name", param_name);
+                    p->set<const Teuchos::ParameterList*>("Parameters List", &scalarParam_list);
+                    p->set<double>("Default Nominal Value", paramList.get("Amplitude", 1.0));
+
                     Teuchos::RCP<PHAL::SharedParameter<EvalT, Traits, ParamEnum, ParamEnum::Amplitude>> ptr_amplitude;
                     ptr_amplitude = Teuchos::rcp(new PHAL::SharedParameter<EvalT, Traits, ParamEnum, ParamEnum::Amplitude>(*p, dl));
-                    ptr_amplitude->setNominalValue(*p, paramList.get("Amplitude", 1.0));
                     fm.template registerEvaluator<EvalT>(ptr_amplitude);
                 }
             }
@@ -120,9 +123,11 @@ namespace PHAL
                     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList(Albany::strint("Gaussian: Radius", num)));
                     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
                     p->set<std::string>("Parameter Name", param_name);
+                    p->set<const Teuchos::ParameterList*>("Parameters List", &scalarParam_list);
+                    p->set<double>("Default Nominal Value", paramList.get("Radius", 1.0));
+
                     Teuchos::RCP<PHAL::SharedParameter<EvalT, Traits, ParamEnum, ParamEnum::Radius>> ptr_radius;
                     ptr_radius = Teuchos::rcp(new PHAL::SharedParameter<EvalT, Traits, ParamEnum, ParamEnum::Radius>(*p, dl));
-                    ptr_radius->setNominalValue(*p, paramList.get("Radius", 1.0));
                     fm.template registerEvaluator<EvalT>(ptr_radius);
                 }
             }

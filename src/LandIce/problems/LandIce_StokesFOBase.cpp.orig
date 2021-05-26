@@ -164,8 +164,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
       dl->side_layouts[ssName] = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
                                                          numSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                         useCollapsedSidesets,sideMeshSpecs.singleWorksetSizeAllocation,
-                                                         sideMeshSpecs.worksetSize));
+                                                         useCollapsedSidesets,sideMeshSpecs.worksetSize));
     }
   }
 
@@ -188,10 +187,11 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int numSurfaceSideNodes    = sideBasis[surfaceSideName]->getCardinality();
     int numSurfaceSideQPs      = sideCubature[surfaceSideName]->getNumPoints();
 
+    if(Teuchos::GlobalMPISession::getRank() == 0) printf("Layout %s: worksetSize = %d, sideMeshSpecs.worksetSize = %d\n", surfaceSideName.c_str(), worksetSize, surfaceMeshSpecs.worksetSize);
+
     dl->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
                                                                 numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                                useCollapsedSidesets,surfaceMeshSpecs.singleWorksetSizeAllocation,
-                                                                surfaceMeshSpecs.worksetSize));
+                                                                useCollapsedSidesets,surfaceMeshSpecs.worksetSize));
   }
 
   // If we have thickness or surface velocity diagnostics, we may need basal side stuff
@@ -213,10 +213,11 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int numbasalSideNodes    = sideBasis[basalSideName]->getCardinality();
     int numbasalSideQPs      = sideCubature[basalSideName]->getNumPoints();
 
+    if(Teuchos::GlobalMPISession::getRank() == 0) printf("Layout %s: worksetSize = %d, sideMeshSpecs.worksetSize = %d\n", basalSideName.c_str(), worksetSize, basalMeshSpecs.worksetSize);
+
     dl->side_layouts[basalSideName] = rcp(new Albany::Layouts(worksetSize,numbasalSideVertices,numbasalSideNodes,
                                                               numbasalSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                              useCollapsedSidesets,basalMeshSpecs.singleWorksetSizeAllocation,
-                                                              basalMeshSpecs.worksetSize));
+                                                              useCollapsedSidesets,basalMeshSpecs.worksetSize));
   }
 
 #ifdef OUTPUT_TO_SCREEN
@@ -557,7 +558,7 @@ void StokesFOBase::setupEvaluatorRequests ()
 
     auto& bfc = it->sublist("Basal Friction Coefficient");
     const auto type = util::upper_case(bfc.get<std::string>("Type"));
-    if (type!="GIVEN CONSTANT") {
+    if (type=="GIVEN FIELD" || type=="EXPONENT OF GIVEN FIELD") {
       // For "Given Field" and "Exponent of Given Field" we also need
       // to interpolate the given field at the quadrature points
       ss_build_interp_ev[ssName][bfc.get<std::string>("Given Field Variable Name")][IReq::QP_VAL      ] = true;
@@ -610,9 +611,15 @@ void StokesFOBase::setupEvaluatorRequests ()
     }
 
     // If zero on floating, we also need bed topography and thickness
+<<<<<<< HEAD
     if (bfc.get<bool>("Zero Beta On Floating Ice", false) || has_GLF_resp) {
       ss_build_interp_ev[ssName][bed_topography_name][IReq::QP_VAL      ] = true;
       ss_build_interp_ev[ssName][bed_topography_name][IReq::CELL_TO_SIDE] = true;
+=======
+    if (bfc.get<bool>("Zero Beta On Floating Ice", false) || has_GLF_resp || bfc.get<bool>("Use Hydrostatic Pressure", false)) {
+      ss_build_interp_ev[ssName][bed_topography_name][InterpolationRequest::QP_VAL      ] = true;
+      ss_build_interp_ev[ssName][bed_topography_name][InterpolationRequest::CELL_TO_SIDE] = true;
+>>>>>>> 2b2a89f... LandIce: adding modified Power Law friction condition
 
       ss_build_interp_ev[ssName][ice_thickness_name][IReq::QP_VAL      ] = true;
       ss_build_interp_ev[ssName][ice_thickness_name][IReq::CELL_TO_SIDE] = true;

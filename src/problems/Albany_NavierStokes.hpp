@@ -708,6 +708,9 @@ Albany::NavierStokes::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Source Functions");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
+    Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+    p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
+
     ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -717,13 +720,16 @@ Albany::NavierStokes::constructEvaluators(
 
     p->set<string>("Source Name", "Neutron Source");
     p->set<string>("Variable Name", "Neutron Flux");
-   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Neutron Source");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+    p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
     ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
     fm0.template registerEvaluator<EvalT>(ev);
