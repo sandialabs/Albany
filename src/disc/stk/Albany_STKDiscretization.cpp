@@ -1807,9 +1807,6 @@ STKDiscretization::computeSideSets()
       int ssWorksetSize = stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first][0]->worksetSize;
       bool ssSingleWorksetSizeAllocation = stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first][0]->singleWorksetSizeAllocation;
 
-      *out << "  (sideSetMeshStructs[" << ss->first << "] = " << ssWorksetSize 
-          << ", ssSingleWorksetSizeAllocation = " << ssSingleWorksetSizeAllocation << ")" << std::endl;
-
       // Slim sideset alloction is automatically activated when using a single workset and Ioss,
       //  therefore we need to make sure that the meshspecs for each sideset have a large enough
       //  workset size to avoid writing or reading out of bounds.
@@ -1817,7 +1814,8 @@ STKDiscretization::computeSideSets()
         ssSingleWorksetSizeAllocation && ssWorksetSize != (int) sides.size(),
         std::logic_error,
         "STKDisc: MeshSpec workset size should be the same as sideset size for slim sideset allocation on sideset "
-          << ss->first << std::endl);
+          << ss->first << ", (sideSetMeshStructs[" << ss->first << "] = " << ssWorksetSize 
+          << ", ssSingleWorksetSizeAllocation = " << ssSingleWorksetSizeAllocation << ")" << std::endl);
     }
 
     // loop over the sides to see what they are, then fill in the data holder
