@@ -551,7 +551,8 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
 
         // At this point, the single workset size allocation should be correct
         // we will check this later during discretization construction
-        if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1)
+        if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1 &&
+            this->sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->worksetSize > 0)
           this->sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->singleWorksetSizeAllocation = true;
       }
 
