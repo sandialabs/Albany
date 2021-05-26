@@ -1796,21 +1796,29 @@ STKDiscretization::computeSideSets()
         bulkData->buckets(metaData->side_rank()),
         sides);
 
-    int ssWorksetSize = stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first][0]->worksetSize;
-    bool ssSingleWorksetSizeAllocation = stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first][0]->singleWorksetSizeAllocation;
-
     *out << "STKDisc: sideset " << ss->first << " has size " << sides.size()
-         << "  on Proc 0. (sideSetMeshStructs[" << ss->first << "] = " << ssWorksetSize 
-         << ", ssSingleWorksetSizeAllocation = " << ssSingleWorksetSizeAllocation << ")" << std::endl;
+         << "  on Proc 0." << std::endl;
 
-    // Slim sideset alloction is automatically activated when using a single workset and Ioss,
-    //  therefore we need to make sure that the meshspecs for each sideset have a large enough
-    //  workset size to avoid writing or reading out of bounds.
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      ssSingleWorksetSizeAllocation && ssWorksetSize < (int) sides.size(),
-      std::logic_error,
-      "STKDisc: MeshSpec workset size is set too low for slim sideset allocation for sideset "
-        << ss->first << std::endl);
+    // If the sideSet has mesh specs, then we need to check if slim allocation is valid. There
+    //   are some cases where mesh specs for a sideset haven't been created (see Albany_GenericSTKMeshStruct.cpp:482)
+    //   but we don't need to check slim allocation for these because if they are used in an evaluator,
+    //   other exceptions will be thrown.
+    if (stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first].size() > 0) {
+      int ssWorksetSize = stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first][0]->worksetSize;
+      bool ssSingleWorksetSizeAllocation = stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first][0]->singleWorksetSizeAllocation;
+
+      *out << "  (sideSetMeshStructs[" << ss->first << "] = " << ssWorksetSize 
+          << ", ssSingleWorksetSizeAllocation = " << ssSingleWorksetSizeAllocation << ")" << std::endl;
+
+      // Slim sideset alloction is automatically activated when using a single workset and Ioss,
+      //  therefore we need to make sure that the meshspecs for each sideset have a large enough
+      //  workset size to avoid writing or reading out of bounds.
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        ssSingleWorksetSizeAllocation && ssWorksetSize < (int) sides.size(),
+        std::logic_error,
+        "STKDisc: MeshSpec workset size is set too low for slim sideset allocation for sideset "
+          << ss->first << std::endl);
+    }
 
     // loop over the sides to see what they are, then fill in the data holder
     // for side set options, look at
