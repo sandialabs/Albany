@@ -1814,9 +1814,9 @@ STKDiscretization::computeSideSets()
       //  therefore we need to make sure that the meshspecs for each sideset have a large enough
       //  workset size to avoid writing or reading out of bounds.
       TEUCHOS_TEST_FOR_EXCEPTION(
-        ssSingleWorksetSizeAllocation && ssWorksetSize < (int) sides.size(),
+        ssSingleWorksetSizeAllocation && ssWorksetSize != (int) sides.size(),
         std::logic_error,
-        "STKDisc: MeshSpec workset size is set too low for slim sideset allocation for sideset "
+        "STKDisc: MeshSpec workset size should be the same as sideset size for slim sideset allocation on sideset "
           << ss->first << std::endl);
     }
 
