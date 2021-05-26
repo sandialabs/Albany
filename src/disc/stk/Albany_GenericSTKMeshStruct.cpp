@@ -466,10 +466,6 @@ void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const 
       const auto* ctd = shards_ctd.getCellTopologyData();
 
       auto& ss_ms = ms->sideSetMeshSpecs[ssName];
-      Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-      out->setProcRankAndSize(comm->getRank(), comm->getSize());
-      out->setOutputToRootOnly(0);
-      *out << "Initializing sideset: " << ssName << std::endl;
 
       // At this point, we cannot assume there will be a discretization on this side set, so we use cubature degree=-1,
       // and the workset size of this mesh. If the user *does* add a discretization (in the Side Set Discretizations sublist),
@@ -528,11 +524,6 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
           TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
               "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
           params_ss->set<int>("Workset Size", sideSetMeshSpecIter->second[0]->worksetSize);
-
-          Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-          out->setProcRankAndSize(comm->getRank(), comm->getSize());
-          out->setOutputToRootOnly(0);
-          *out << "Set " << ss_name << " sideset workset param to " << sideSetMeshSpecIter->second[0]->worksetSize << std::endl;
         }
 
         std::string method = params_ss->get<std::string>("Method");

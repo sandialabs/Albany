@@ -211,7 +211,6 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
             !basalSideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation, std::runtime_error,
               "basalside sideSetMeshSpec: " << bssName << " was not allocated as a single workset!\n");
           const auto basalSideSetWorksetSize = basalSideSetMeshSpecIter->second[0]->worksetSize;
-          *out << "Basal sideset name: " << bssName << ", Basal sideset workset size: " << basalSideSetWorksetSize << std::endl;
 
           // Compute maximum workset size for lateral sideset
           const int num_cells_per_side = ElemShape == Tetrahedron ? 2 : 1;
@@ -225,7 +224,6 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
               "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
           sideSetMeshSpecIter->second[0]->worksetSize = lateralSidesetWorksetSizeMax;
           sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
-          *out << "Lateral sideset name: " << ssName << ", Lateral sideset workset size max: " << lateralSidesetWorksetSizeMax << std::endl;
 
           // Set lateral workset size to extruded_lateral workset size (special case)
           if (ssName == "extruded_lateralside") {
@@ -234,7 +232,6 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
                 "Cannot find lateral in sideSetMeshSpecs!\n");
             sideSetMeshSpecIter->second[0]->worksetSize = lateralSidesetWorksetSizeMax;
             sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
-            *out << "Lateral sideset name: lateral, Lateral sideset workset size max: " << lateralSidesetWorksetSizeMax << std::endl;
           }
         }
       }
@@ -248,7 +245,6 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
         "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
     sideSetMeshSpecIter->second[0]->worksetSize = basalWorksetSize;
     sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
-    *out << "Upper sideset workset size max: " << sideSetMeshSpecIter->second[0]->worksetSize << std::endl;
   }
 
   // Initialize the requested sideset mesh struct in the mesh

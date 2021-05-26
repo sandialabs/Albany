@@ -271,7 +271,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
         if (ssb.size()==0) { continue; }
         const std::string ssName = ss->name();
         const auto sidesetSizeMax = ssb[0]->entity_count();
-        *out << "Sideset name: " << ssName << ", Sideset size max: " << sidesetSizeMax << std::endl;
 
         // Set sideset workset size to maximum
         const auto& sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
@@ -280,7 +279,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
             "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
         sideSetMeshSpecIter->second[0]->worksetSize = sidesetSizeMax;
         sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
-        *out << "Sideset name: " << ssName << ", Sideset workset size: " << sideSetMeshSpecIter->second[0]->worksetSize << std::endl;
       }
     } else { // FIXME: All element blocks have the same sidesets?
       for (int eb = 0; eb < numEB; ++eb) {
@@ -290,7 +288,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
           if (ssb.size()==0) { continue; }
           const std::string ssName = ss->name();
           const auto sidesetSizeMax = ssb[0]->entity_count();
-          *out << "Sideset name: " << ssName << ", Sideset size max: " << sidesetSizeMax << std::endl;
 
           // Set sideset workset size to maximum
           const auto& sideSetMeshSpecs = this->meshSpecs[eb]->sideSetMeshSpecs;
@@ -299,7 +296,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
               "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
           sideSetMeshSpecIter->second[0]->worksetSize = sidesetSizeMax;
           sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
-          *out << "Sideset name: " << ssName << ", Sideset workset size: " << sideSetMeshSpecIter->second[0]->worksetSize << std::endl;
         }
       }
     }
