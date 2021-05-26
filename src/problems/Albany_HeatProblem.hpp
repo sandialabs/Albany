@@ -313,6 +313,8 @@ Albany::HeatProblem::constructEvaluators(
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       Teuchos::ParameterList& paramList = params->sublist("Source Functions");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+      Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+      p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
       ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -335,6 +337,8 @@ Albany::HeatProblem::constructEvaluators(
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
         Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(meshSpecs.ebName, "Source Functions");
         p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+        Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+        p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
         ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
         fm0.template registerEvaluator<EvalT>(ev);

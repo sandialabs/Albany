@@ -946,10 +946,11 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   param_name = ParamEnumName::GLHomotopyParam;
   p->set<std::string>("Parameter Name", param_name);
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+  p->set<double>("Default Nominal Value", params->sublist("LandIce Viscosity").get<double>(param_name,-1.0));
 
   Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::GLHomotopy>> ptr_gl_homotopy;
   ptr_gl_homotopy = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::GLHomotopy>(*p,dl));
-  ptr_gl_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("LandIce Viscosity").get<double>(param_name,-1.0));
   fm0.template registerEvaluator<EvalT>(ptr_gl_homotopy);
 
   //--- Shared Parameter for Continuation: generic name ---//
@@ -958,10 +959,11 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   param_name = ParamEnumName::HomotopyParam;
   p->set<std::string>("Parameter Name", param_name);
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+  p->set<double>("Default Nominal Value", -1.0);
 
   Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>> ptr_homotopy;
   ptr_homotopy = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>(*p,dl));
-  ptr_homotopy->setNominalValue(params->sublist("Parameters"),-1.0);
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
   //--- LandIce Flow Rate ---//
@@ -1279,10 +1281,11 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
       param_name = "Hydraulic-Over-Hydrostatic Potential Ratio";
       p->set<std::string>("Parameter Name", param_name);
       p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
 
       Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Alpha>> ptr_alpha;
       ptr_alpha = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Alpha>(*p,dl));
-      ptr_alpha->setNominalValue(params->sublist("Parameters"),pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
       fm0.template registerEvaluator<EvalT>(ptr_alpha);
     }
 
@@ -1292,10 +1295,11 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     param_name = "Bed Roughness";
     p->set<std::string>("Parameter Name", param_name);
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
 
     Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Lambda>> ptr_lambda;
     ptr_lambda = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Lambda>(*p,dl));
-    ptr_lambda->setNominalValue(params->sublist("Parameters"),pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_lambda);
 
     //--- Shared Parameter for basal friction coefficient: muCoulomb ---//
@@ -1304,10 +1308,11 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     param_name = "Coulomb Friction Coefficient";
     p->set<std::string>("Parameter Name", param_name);
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
 
     Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::MuCoulomb>> ptr_muC;
     ptr_muC = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::MuCoulomb>(*p,dl));
-    ptr_muC->setNominalValue(params->sublist("Parameters"),pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_muC);
 
     //--- Shared Parameter for basal friction coefficient: muPowerLaw ---//
@@ -1316,10 +1321,11 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     param_name = "Power Law Coefficient";
     p->set<std::string>("Parameter Name", param_name);
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
 
     Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::MuPowerLaw>> ptr_muP;
     ptr_muP = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::MuPowerLaw>(*p,dl));
-    ptr_muP->setNominalValue(params->sublist("Parameters"),pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_muP);
 
     //--- Shared Parameter for basal friction coefficient: power ---//
@@ -1328,10 +1334,11 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     param_name = "Power Exponent";
     p->set<std::string>("Parameter Name", param_name);
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
 
     Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Power>> ptr_power;
     ptr_power = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Power>(*p,dl));
-    ptr_power->setNominalValue(params->sublist("Parameters"),pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_power);
 
     //--- LandIce basal friction coefficient ---//
@@ -1455,7 +1462,6 @@ void StokesFOBase::constructSurfaceVelocityEvaluators (PHX::FieldManager<PHAL::A
       std::string beta_gradient_side_name = "beta_" + ssName + " Gradient";
       std::string effective_pressure_side_name = "effective_pressure_" + ssName;
       std::string effective_pressure_gradient_side_name = "effective_pressure_" + ssName + " Gradient";
-      std::string mu_power_law_name = "mu_power_law";
 
       //--- LandIce basal friction coefficient gradient ---//
       p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Basal Friction Coefficient Gradient"));
@@ -1465,7 +1471,6 @@ void StokesFOBase::constructSurfaceVelocityEvaluators (PHX::FieldManager<PHAL::A
       p->set<std::string>("Side Set Name", ssName);
       p->set<std::string>("Effective Pressure QP Name", effective_pressure_side_name);
       p->set<std::string>("Effective Pressure Gradient QP Name", effective_pressure_gradient_side_name);
-      p->set<std::string>("Power Law Coefficient Variable Name", mu_power_law_name);
       p->set<std::string>("Basal Velocity QP Name", velocity_side_name);
       p->set<std::string>("Basal Velocity Gradient QP Name", velocity_gradient_side_name);
       p->set<std::string>("Sliding Velocity QP Name", sliding_velocity_side_name);

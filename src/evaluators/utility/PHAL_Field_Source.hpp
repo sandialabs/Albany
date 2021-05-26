@@ -48,7 +48,7 @@ namespace PHAL
             static bool check_for_existance(Teuchos::ParameterList &source_list);
             typedef typename EvalT::MeshScalarT MeshScalarT;
             typedef typename EvalT::ScalarT ScalarT;
-            Gaussian(Teuchos::ParameterList &source_list, std::size_t num, PHX::FieldManager<Traits> &fm, const Teuchos::RCP<Albany::Layouts> &dl);
+            Gaussian(Teuchos::ParameterList &source_list, Teuchos::ParameterList &scalarParam_list, std::size_t num, PHX::FieldManager<Traits> &fm, const Teuchos::RCP<Albany::Layouts> &dl);
             virtual ~Gaussian() {}
             virtual ScalarT evaluateFields(const std::vector<MeshScalarT> &coords);
 
