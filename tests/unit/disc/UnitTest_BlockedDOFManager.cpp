@@ -103,7 +103,7 @@ tests are a beginning, "work in progress."
       const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
       const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-      ms->setFieldAndBulkData(comm, discParams, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
+      ms->setFieldAndBulkData(comm, discParams, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize,
                               side_set_sis, side_set_req);
 
       // Null for this test
@@ -384,7 +384,7 @@ This is just a start, to serve as an example. This has not been thought through 
       const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
       const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-      ms->setFieldAndBulkData(comm, discParams, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
+      ms->setFieldAndBulkData(comm, discParams, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
 
       // Use the Albany STK interface as it is used elsewhere in the code
       auto stkDisc = Teuchos::rcp(new BlockedSTKDiscretization(blockedDiscParams, ms, comm));
