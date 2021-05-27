@@ -176,13 +176,14 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   int basalWorksetSize = basalMeshSpec->worksetSize;
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int numElemsInColumn = numLayers*((ElemShape==Tetrahedron) ? 3 : 1);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSize*numElemsInColumn);
+  int ebSizeMaxEstimate = basalWorksetSize * numElemsInColumn; // This is ebSizeMax when basalWorksetSize is max
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMaxEstimate);
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, 
      ebn, ebNameToIndex, this->interleavedOrdering));
-  if (worksetSizeMax == -1 && basalMeshSpec->singleWorksetSizeAllocation)
+  if (basalMeshSpec->singleWorksetSizeAllocation && worksetSize == ebSizeMaxEstimate)
     this->meshSpecs[0]->singleWorksetSizeAllocation = true;
 
   // Upon request, add a nodeset for each sideset
@@ -199,7 +200,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   this->initializeSideSetMeshSpecs(comm);
 
   // Get upper bound on lateral/upper workset sizes by using Ioss element counts on side blocks
-  if (worksetSizeMax == -1 && basalMeshSpec->singleWorksetSizeAllocation) {
+  if (basalMeshSpec->singleWorksetSizeAllocation) {
     // Set lateral workset sizes based on basal sidesets
     for (auto bssName : basalMeshSpec->ssNames) {
       // Get maximum workset size of basalside sideset
