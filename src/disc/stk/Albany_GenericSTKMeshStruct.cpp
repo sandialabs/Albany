@@ -532,19 +532,20 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
           TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
                                       "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
 
-          this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, comm, num_params));
+          const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+          auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
+          TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+              "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
+          this->sideSetMeshStructs[ss_name] =
+              Teuchos::rcp(new SideSetSTKMeshStruct(
+                  *this->meshSpecs[0], *sideSetMeshSpecIter->second[0],
+                  params_ss, comm, num_params));
         } else {
           ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,comm, num_params);
           this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
           TEUCHOS_TEST_FOR_EXCEPTION (this->sideSetMeshStructs[ss_name]==Teuchos::null, std::runtime_error,
                                       "Error! Could not cast side mesh to AbstractSTKMeshStruct.\n");
         }
-
-        // At this point, the single workset size allocation should be correct
-        // we will check this later during discretization construction
-        if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1 &&
-            this->sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->worksetSize > 0)
-          this->sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->singleWorksetSizeAllocation = true;
       }
 
       // Checking that the side meshes have the correct dimension (in case they were loaded from file,
