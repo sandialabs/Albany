@@ -99,6 +99,12 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 #ifdef ALBANY_SEACAS
       stk::io::put_io_part_attribute(*nsPartVec[partName]);
 #endif
+      partName = "basal_"+part->name();
+      nsNames.push_back(partName);
+      nsPartVec[partName] = &metaData->declare_part(partName, stk::topology::NODE_RANK);
+#ifdef ALBANY_SEACAS
+      stk::io::put_io_part_attribute(*nsPartVec[partName]);
+#endif
     }
   }
 
@@ -758,6 +764,7 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
     }
     stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(stk::topology::NODE_RANK), boundaryNodes2D);
     singlePartVecLateral[0] = nsPartVec["extruded_"+part->name()];
+    singlePartVecBottom[0] = nsPartVec["basal_"+part->name()];
 
     for (const auto& node2D : boundaryNodes2D) {
       const stk::mesh::EntityId node2dId = bulkData2D.identifier(node2D) - 1;
@@ -766,6 +773,9 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
         stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
         bulkData->change_entity_parts(node, singlePartVecLateral);
       }
+      const GO nodeId = vertexLayerShift * node2dId + 1;
+      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
+      bulkData->change_entity_parts(node, singlePartVecBottom);
     }
   }
 
