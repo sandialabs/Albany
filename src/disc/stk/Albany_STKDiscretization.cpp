@@ -1806,6 +1806,8 @@ STKDiscretization::computeSideSets()
     if (stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first].size() > 0) {
       int ssWorksetSize = stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first][0]->worksetSize;
       bool ssSingleWorksetSizeAllocation = stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first][0]->singleWorksetSizeAllocation;
+      if (ssSingleWorksetSizeAllocation)
+        *out << "STKDisc: sideset " << ss->first << " set to single workset size allocation." << std::endl;
 
       // Slim sideset alloction is automatically activated when using a single workset and Ioss,
       //  therefore we need to make sure that the meshspecs for each sideset have a large enough
