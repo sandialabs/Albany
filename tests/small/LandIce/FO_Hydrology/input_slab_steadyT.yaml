@@ -3,8 +3,10 @@
 ANONYMOUS:
   Build Type: Tpetra
   Debug Output:
-    Write Jacobian to MatrixMarket: -1
+    Write Jacobian to MatrixMarket: 0
     Write Solution to MatrixMarket: 0
+    Write Residual to MatrixMarket: 0
+    Report Timers: false
   Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Continuation
@@ -27,19 +29,19 @@ ANONYMOUS:
         Target Value: 0.0
     Initial Condition:
       Function: Constant
-      Function Data: [10.0, 10.0, 100.0]
+      Function Data: [1.0, 0.0, 100.0, 1.0]
     Dirichlet BCs:
-      DBC on NS extruded_NodeSet1 for DOF water_pressure_basalside: 0.00000000000000000e+00
+      DBC on NS basal_NodeSet1 for DOF water_pressure_basalside: 0.00000000000000000e+00
     Neumann BCs: { }
     LandIce BCs:
-      Number : 2
+      Number : 1
       BC 0:
         Type: Basal Friction
         Side Set Name: basalside
         Basal Friction Coefficient:
           Type: Power Law
-          Power Exponent: 0.3333
-          Power Law Coefficient: 0.6
+          Power Exponent: 0.75
+          Power Law Coefficient: 1.0
           Use log scalar parameters: false
       BC 1:
         Type: Lateral
@@ -65,7 +67,7 @@ ANONYMOUS:
         Regularization Value: 1e-10
     LandIce Hydrology:
       Use Water Thickness In Effective Pressure Formula: false
-      Eliminate Water Thickness: true
+      Eliminate Water Thickness: false
       Melting Rate:
         Distributed Geothermal Flux: false
         Use Geothermal Melt: true
@@ -74,7 +76,7 @@ ANONYMOUS:
       Cavities Equation:
         Nodal: true
         Use Melting: false
-        Creep Closure Coefficient: 0.04
+        Creep Closure Coefficient: 0.4
         Use Log Scalar Parameters: false
         Bed Bumps Height: 1.0
         Bed Bumps Length: 2.0
@@ -98,7 +100,7 @@ ANONYMOUS:
     Exodus Output File Name: results/dome.exo
     Element Shape: Tetrahedron
     Columnwise Ordering: true
-    NumLayers: 1
+    NumLayers: 2
     Thickness Field Name: ice_thickness
     Use Glimmer Spacing: true
     Extrude Basal Node Fields: [ice_thickness, surface_height]
@@ -127,32 +129,29 @@ ANONYMOUS:
         Workset Size: 100
         Method: STK2D
         Cell Topology: Triangle
-        1D Elements: 2 
-        2D Elements: 2
+        1D Elements: 60 
+        2D Elements: 5
         1D Scale: 1000.0
         2D Scale: 10.0
-        Periodic_y BC: true
+        # Periodic_y BC: true
         Exodus Output File Name: results/slab_basal.exo
         Required Fields Info:
-          Number Of Fields: 10
+          Number Of Fields: 11
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
             Field Origin: File
-            # Field Expression: ['1.001-x/1000']  # 1km+1m at x=0km, 1m at x=1000km
-            Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
+            Field Expression: ['1.001-x/1000']  # 1km+1m at x=0km, 1m at x=1000km
           Field 1:
             Field Name: surface_height
             Field Type: Node Scalar
             Field Origin: File
-            # Field Expression: ['1.001-x/1000']  # 1km+1m at x=0km, 1m at x=1000km
-            Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
+            Field Expression: ['1.001-x/1000']  # 1km+1m at x=0km, 1m at x=1000km
           Field 2:
             Field Name: surface_water_input
             Field Type: Node Scalar
             Field Origin: File
-            # Field Value: [0.017280]   # mm / day (Hewitt used 2e-10 m/s)
-            Field Value: [20.0]
+            Field Value: [100.0]   # mm / day (Hewitt used 2e-10 m/s)
           Field 3:
             Field Name: effective_pressure
             Field Type: Node Scalar
@@ -181,6 +180,10 @@ ANONYMOUS:
             Field Name: sliding_velocity
             Field Type: Node Scalar
             Field Usage: Output
+          Field 10:
+            Field Name: water_pressure
+            Field Type: Node Scalar
+            Field Usage: Output
   Piro:
     LOCA:
       Predictor:
@@ -206,12 +209,12 @@ ANONYMOUS:
         Number of Tests: 2
         Test 0:
           Test Type: MaxIters
-          Maximum Iterations: 70
+          Maximum Iterations: 50
         Test 1:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Unscaled
-          Tolerance: 1.00000000000000002e-02
+          Tolerance: 1.00000000000000002e-06
         Test 2:
           Test Type: NormWRMS
           Absolute Tolerance: 1.00000000000000005e-04
@@ -251,10 +254,12 @@ ANONYMOUS:
                   Ifpack2 Settings:
                     'fact: ilut level-of-fill': 1.00000000000000000e+00
                     'fact: absolute threshold': 9.99999999999999955e-07
+                    Amesos2: {}
                 MueLu:
                   verbosity: none
                   max levels: 1
-                  'coarse: max size': 512
+                  'coarse: max size': 128
+                  'coarse: type': KLU
                   multigrid algorithm: sa
                   'aggregation: type': uncoupled
                   'smoother: type': RELAXATION
