@@ -125,7 +125,6 @@ void SideSetSTKMeshStruct::setParentMeshInfo (const AbstractSTKMeshStruct& paren
 
 void SideSetSTKMeshStruct::setFieldData (
       const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const Teuchos::RCP<Teuchos::ParameterList>& /*params*/,
       const AbstractFieldContainer::FieldContainerRequirements& req,
       const Teuchos::RCP<StateInfoStruct>& sis,
       const unsigned int worksetSize,
@@ -137,7 +136,6 @@ void SideSetSTKMeshStruct::setFieldData (
 
 void SideSetSTKMeshStruct::setBulkData (
       const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const Teuchos::RCP<Teuchos::ParameterList>& /*params*/,
       const AbstractFieldContainer::FieldContainerRequirements& req,
       const Teuchos::RCP<StateInfoStruct>& sis,
       const unsigned int worksetSize,

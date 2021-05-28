@@ -209,7 +209,6 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
 void MpasSTKMeshStruct::setFieldData(
               const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
               const AbstractFieldContainer::FieldContainerRequirements& /*req*/,
               const Teuchos::RCP<StateInfoStruct>& sis,
               const unsigned int worksetSize,
@@ -223,9 +222,8 @@ void MpasSTKMeshStruct::setFieldData(
 
 void MpasSTKMeshStruct::setBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
     const Albany::AbstractFieldContainer::FieldContainerRequirements& /*req*/,
-    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
     const unsigned int worksetSize,
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)

@@ -29,20 +29,18 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   ~GmshSTKMeshStruct();
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                            const Teuchos::RCP<Teuchos::ParameterList>& params,
-                            const AbstractFieldContainer::FieldContainerRequirements& req,
-                            const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                            const unsigned int worksetSize,
-                            const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
-                            const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
+                     const AbstractFieldContainer::FieldContainerRequirements& req,
+                     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                     const unsigned int worksetSize,
+                     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
 
   void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                            const Teuchos::RCP<Teuchos::ParameterList>& params,
-                            const AbstractFieldContainer::FieldContainerRequirements& req,
-                            const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                            const unsigned int worksetSize,
-                            const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
-                            const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
+                    const AbstractFieldContainer::FieldContainerRequirements& req,
+                    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                    const unsigned int worksetSize,
+                    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
 
   //! Flag if solution has a restart values -- used in Init Cond
   bool hasRestartSolution() const {return false; }
@@ -59,7 +57,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                        std::vector<std::string>&               nsNames);
 
   // Check the version of the input msh file
-  void check_version( std::ifstream& ifile);
+  void check_version ();
 
   // Sets the set of allowable gmsh versions; i.e., 
   // versions we know how to read
@@ -170,7 +168,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                                            int                 num_volumes);
   
   // Adds an element block with name eb_name and volume tag number tag.
-  void add_element_block( std::string eb_name, int tag);
+  void add_element_block( std::string eb_name);
 
   // Adds a sideset with name sideset_name and side tag number tag.
   void add_sideset( std::string sideset_name, int tag, std::vector<std::string>& ssNames);
@@ -197,13 +195,11 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void loadAsciiMesh ();
   void loadBinaryMesh ();
 
-
   // Init the int counters below to zero.
   void init_counters_to_zero();
 
   // Init the int pointers below to null.
   void init_pointers_to_null();
-
 
   // The number of entities, both elements and cells
   int num_entities;
