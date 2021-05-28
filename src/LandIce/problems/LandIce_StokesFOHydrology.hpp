@@ -266,13 +266,13 @@ constructHydrologyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     //Input
     p->set<std::string> ("BF Name", Albany::bf_name);
     p->set<std::string> ("Weighted Measure Name", Albany::weights_name);
-    p->set<std::string> ("Water Thickness Variable Name",water_thickness_name);
-    p->set<std::string> ("Water Thickness Dot Variable Name",water_thickness_name);
-    p->set<std::string> ("Water Pressure Dot Variable Name",water_pressure_dot_name);
-    p->set<std::string> ("Effective Pressure Variable Name",effective_pressure_name);
-    p->set<std::string> ("Melting Rate Variable Name",melting_rate_name);
-    p->set<std::string> ("Sliding Velocity Variable Name",sliding_velocity_name);
-    p->set<std::string> ("Ice Softness Variable Name",flow_factor_name);
+    p->set<std::string> ("Water Thickness Variable Name",bname(water_thickness_name));
+    p->set<std::string> ("Water Thickness Dot Variable Name",bname(water_thickness_dot_name));
+    p->set<std::string> ("Water Pressure Dot Variable Name",bname(water_pressure_dot_name));
+    p->set<std::string> ("Effective Pressure Variable Name",bname(effective_pressure_name));
+    p->set<std::string> ("Melting Rate Variable Name",bname(melting_rate_name));
+    p->set<std::string> ("Sliding Velocity Variable Name",bname(sliding_velocity_name));
+    p->set<std::string> ("Ice Softness Variable Name",bname(flow_factor_name));
     p->set<bool> ("Unsteady", unsteady);
     p->set<Teuchos::ParameterList*> ("LandIce Hydrology Parameters",&hy_pl);
     p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&phys_pl);
@@ -281,7 +281,7 @@ constructHydrologyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     //Output
     p->set<std::string> ("Cavities Eqn Residual Name", hydro_resids_names[1]);
 
-    ev = Teuchos::rcp(new LandIce::HydrologyResidualCavitiesEqn<EvalT,PHAL::AlbanyTraits,true,false>(*p,dl));
+    ev = Teuchos::rcp(new LandIce::HydrologyResidualCavitiesEqn<EvalT,PHAL::AlbanyTraits,true,false>(*p,dl_side));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

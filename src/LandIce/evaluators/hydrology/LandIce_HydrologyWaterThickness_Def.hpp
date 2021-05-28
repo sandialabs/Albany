@@ -4,10 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "LandIce_HydrologyWaterThickness.hpp"
+
+#include "PHAL_AlbanyTraits.hpp"
+
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
-
-#include "LandIce_HydrologyWaterThickness.hpp"
 
 namespace LandIce
 {
@@ -67,7 +69,9 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
   l_r = cav_eqn_params.get<double>("Bed Bumps Length");
   c_creep = cav_eqn_params.get<double>("Creep Closure Coefficient",1.0);
 
+  use_eff_cavity = cav_eqn_params.get<bool>("Use Effective Cavity",true);
   use_melting = cav_eqn_params.get<bool>("Use Melting", false);
+
   if (use_melting) {
     m = PHX::MDField<const ScalarT>(p.get<std::string> ("Melting Rate Variable Name"), layout);
     this->addDependentField(m);
@@ -94,9 +98,6 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
    * where yr_to_s=365.25*24*3600 (the number of seconds in a year)
    */
 
-  double yr_to_s = 365.25*24*3600;
-  c_creep *= yr_to_s;
-
   this->setName("HydrologyWaterThickness"+PHX::print<EvalT>());
 }
 
@@ -114,13 +115,20 @@ void HydrologyWaterThickness<EvalT, Traits, IsStokes, ThermoCoupled>::evaluateFi
 template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
 void HydrologyWaterThickness<EvalT, Traits, IsStokes, ThermoCoupled>::evaluateFieldsCell (typename Traits::EvalData workset)
 {
-  ScalarT zero (0.0);
-  for (unsigned int cell=0; cell < workset.numCells; ++cell)
-  {
-    for (unsigned int ipt=0; ipt < numPts; ++ipt)
-    {
-      h(cell,ipt)  = (use_melting ? m(cell,ipt)/rho_i : zero) + u_b(cell,ipt)*h_r/l_r;
-      h(cell,ipt) /= c_creep*A(cell)*std::pow(N(cell,ipt),3) + u_b(cell,ipt)/l_r;
+  // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
+  //       cancel out with N, and the residual is in m/yr
+  double yr_to_s = 365.25*24*3600;
+  double C = c_creep * yr_to_s * 1e9;
+
+  static ScalarT    hydro_zero (0.0);
+  static IceScalarT ice_zero (0.0);
+  for (unsigned int cell=0; cell < workset.numCells; ++cell) {
+    for (unsigned int ipt=0; ipt < numPts; ++ipt) {
+      typename PHAL::Ref<ScalarT>::type val = h(cell,ipt);
+
+      val  = (use_melting ? m(cell,ipt)/rho_i : hydro_zero) + u_b(cell,ipt)*h_r/l_r;
+      val /= C*A(cell)*std::pow(N(cell,ipt),3)
+           + (use_eff_cavity ? u_b(cell,ipt)/l_r : ice_zero);
     }
   }
 }
@@ -132,17 +140,22 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
 
-  ScalarT zero (0.0);
+  // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
+  //       cancel out with N, and the residual is in m/yr
+  double yr_to_s = 365.25*24*3600;
+  double C = c_creep * yr_to_s * 1e9;
+
+  static ScalarT    hydro_zero (0.0);
+  static IceScalarT ice_zero (0.0);
   const auto& sideSet = workset.sideSets->at(sideSetName);
   for (unsigned int side=0; side<sideSet.size(); ++side) {
 
-    // Get the local data of side and cell
-    const int cell = sideSet[side].elem_LID;
+    for (unsigned int ipt=0; ipt < numPts; ++ipt) {
+      typename PHAL::Ref<ScalarT>::type val = h(side,ipt);
 
-    for (unsigned int ipt=0; ipt < numPts; ++ipt)
-    {
-      h(cell,ipt)  = (use_melting ? m(side,ipt)/rho_i : zero) + u_b(side,ipt)*h_r/l_r;
-      h(cell,ipt) /= c_creep*A(side)*std::pow(N(side,ipt),3) + u_b(side,ipt)/l_r;
+      val  = (use_melting ? m(side,ipt)/rho_i : hydro_zero) + u_b(side,ipt)*h_r/l_r;
+      val /= C*A(side)*std::pow(N(side,ipt),3)
+           + (use_eff_cavity ? u_b(side,ipt)/l_r : ice_zero);
     }
   }
 }

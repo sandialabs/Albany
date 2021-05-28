@@ -24,7 +24,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
    *
    *  where W_c = A*h*N^3 (CUBIC) or W_c = h*N/eta_i (LINEAR),
    *  h is the water thickness, P is the water pressure,
-   *  phi0 is the englacial porositi, m the melting rate of the ice,
+   *  phi0 is the englacial porosity, m the melting rate of the ice,
    *  h_r/l_r typical height/length of bed bumps, u_b the sliding
    *  velocity of the ice, A is the ice softness, N is the
    *  effective pressure, and c_creep is a tuning coefficient.
@@ -35,17 +35,13 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
-    numNodes = dl->node_scalar->extent(1);
-    numQPs   = dl->qp_scalar->extent(1);
-
     sideSetName = p.get<std::string>("Side Set Name");
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure appears to be that of a side set.\n");
-
-    numNodes = dl->node_scalar->extent(1);
-    numQPs   = dl->qp_scalar->extent(1);
   }
+  numNodes = dl->node_scalar->extent(1);
+  numQPs   = dl->qp_scalar->extent(1);
 
   this->addEvaluatedField(residual);
 
@@ -154,7 +150,7 @@ void HydrologyResidualCavitiesEqn<EvalT, Traits, IsStokes, ThermoCoupled>::
 evaluateFields (typename Traits::EvalData workset)
 {
   if (IsStokes) {
-    TEUCHOS_TEST_FOR_EXCEPTION (closure==Cubic, std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (closure==Linear, std::runtime_error,
       "Error! I haven't implemented Ian Hewitt's 2011 linear creep closure for the Stokes coupled case.\n");
     evaluateFieldsSide(workset);
   } else {
@@ -174,16 +170,15 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
+  // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
+  //       cancel out with N, and the residual is in m/yr
   double yr_to_s = 365.25*24*3600;
   double scaling_h_t = yr_to_s;
   double C = c_creep * yr_to_s * 1e9;
   double phi0 = has_p_dot ? englacial_phi / (1000*rho_w*g) : 0.0;
-  // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
-  //       cancel out with N, and the residual is in m/yr
 
   sideSet = workset.sideSetViews->at(sideSetName);
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the local data of cell
     const int cell = sideSet.elem_LID(sideSet_idx);
 
@@ -221,13 +216,13 @@ evaluateFieldsCell (typename Traits::EvalData workset)
   // h' = W_O - W_C = (m/rho_i + u_b*(h_b-h)/l_b) - AhN^n
   ScalarT res_node, res_qp, zero(0.0);
 
+  // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
+  //       cancel out with N, and the residual is in m/yr
   double yr_to_s = 365.25*24*3600;
   double scaling_h_t = yr_to_s;
   double C = c_creep * yr_to_s * 1e9;
   double phi0 = has_p_dot ? englacial_phi / (1000*rho_w*g) : 0.0;
   double etai = eta_i/1000; // Convert to kPa s
-  // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
-  //       cancel out with N, and the residual is in m/yr
 
   for (unsigned int cell=0; cell < workset.numCells; ++cell) {
     for (unsigned int node=0; node < numNodes; ++node) {

@@ -9,6 +9,7 @@
 
 #include "Albany_Layouts.hpp"
 
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

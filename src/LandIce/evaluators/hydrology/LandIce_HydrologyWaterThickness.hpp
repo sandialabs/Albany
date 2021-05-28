@@ -63,6 +63,7 @@ private:
   std::string   sideSetName;
 
   bool use_melting;
+  bool use_eff_cavity;
 };
 
 } // Namespace LandIce
