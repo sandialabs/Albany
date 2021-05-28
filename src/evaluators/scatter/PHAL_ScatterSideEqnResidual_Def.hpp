@@ -115,27 +115,82 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 template<typename EvalT, typename Traits>
 void ScatterSideEqnResidualBase<EvalT, Traits>::
+gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc) {
+  // Note: you cannot call this function on a per-workset basis, since
+  //       it is technically possible for this ws to not have any side
+  //       on the Eqn sideSet, and yet have a node on it. Consider
+  //       the following element pathc:
+  //
+  //               1-------2-------3
+  //                \  A  / \  C  /
+  //                 \   /   \   /
+  //                  \ /  B  \ /
+  //                   4-------5
+  //
+  //       If the sideset is at the top, and the ws contains B but not
+  //       A nor C, then this ws cannot deduce that node 2 is on the
+  //       sideset, since it has no side on the sideset (more generally,
+  //       none of its side on the sideset contains the node 2).
+  //       Therefore, we need to loop over the whole mesh.
+  // Note: the scenario above could still happen at the MPI decomp level;
+  //       that is, rank 0 might own element B but not A or C, so it would
+  //       not be able to deduce that 2 is on the sideset without a global
+  //       all-to-all communication.
+  //       However, this scenario cannot happen for the basal sideset of an extruded
+  //       mesh (since each column is on a single rank), which is the main
+  //       case we are interested in right now. If you are solving a different
+  //       problem, or using a different mesh, double check that you are
+  //       still ensuring the following: if an MPI rank has a node on the
+  //       sideset (in the owned+shared map), then it also has a side containing
+  //       that node on that sideset.
+
+  const auto& wsElNodeID = disc.getWsElNodeID();
+  const int num_ws = wsElNodeID.size();
+  for (int ws=0; ws<num_ws; ++ws) {
+    const auto& ssMap = disc.getSideSets(ws);
+    if (ssMap.find(this->sideSetName)==ssMap.end()) {
+      continue;
+    }
+    const auto& ss = ssMap.at(this->sideSetName);
+    for (const auto& side : ss) {
+      const int icell = side.elem_LID;
+      const int iside = side.side_local_id;
+
+      const auto& side_nodes = this->sideNodes[iside];
+
+      for (int inode=0; inode<this->numSideNodes[iside]; ++inode) {
+        ss_nodes_gids.insert(wsElNodeID[ws][icell][side_nodes[inode]]);
+      }
+    }
+  }
+
+  // Avoid doing this again
+  ss_node_gids_gathered = true;
+}
+
+template<typename EvalT, typename Traits>
+void ScatterSideEqnResidualBase<EvalT, Traits>::
 buildSideSetNodeMap (typename Traits::EvalData workset)
 {
-  // Do it outside the if statement, so if the sideSet is not present in this workset,
-  // we create an empty set.
-  auto& ws_ss_nodes = ss_nodes[workset.wsIndex];
-  if (workset.sideSets->find(this->sideSetName)!=workset.sideSets->end()) {
-    const auto& sideSet = workset.sideSets->at(this->sideSetName);
-    // Do this step only the first time we hit this workset
-    if (sideSet.size()>0 && ws_ss_nodes.size()==0) {
-      // Get list of nodes that were on the side set
-      for (auto const& side : sideSet) {
+  const int ws = workset.wsIndex;
 
-        // Get the local data of side and cell
-        const int icell = side.elem_LID;
-        const int iside = side.side_local_id;
+  // Do this only once per workset
+  if (ss_ws_cell_nodes_lids.find(ws)==ss_ws_cell_nodes_lids.end()) {
+    // Gather sideSet node gids only once
+    if (not ss_node_gids_gathered) {
+      gatherSideSetNodeGIDs(*workset.disc);
+    }
 
-        const int numNodes = this->numSideNodes[iside];
-        const auto side_nodes = this->sideNodes[iside];
-        for (int inode=0; inode<numNodes; ++inode) {
-          const int node = side_nodes[inode];
-          ws_ss_nodes[icell].insert(node);
+    auto& ws_ss_nodes = ss_ws_cell_nodes_lids[ws];
+
+    const auto& wsElNodeID = workset.disc->getWsElNodeID();
+    for (int icell=0; icell<workset.numCells; ++icell) {
+
+      const auto& cell_node_gids = wsElNodeID[workset.wsIndex][icell];
+      for (int inode=0; inode<numCellNodes; ++inode) {
+        const GO gid = cell_node_gids[inode];
+        if (ss_nodes_gids.count(gid)>0) {
+          ws_ss_nodes[icell].insert(inode);
         }
       }
     }
@@ -177,7 +232,7 @@ doPostEvaluate(typename Traits::EvalData workset)
     // We evaluated the residual. Let's set it to 0 outside the side set
     Teuchos::ArrayRCP<ST> f_nonconstView = Albany::getNonconstLocalData(f);
     const auto& nodeID = workset.wsElNodeEqID;
-    auto& ws_ss_nodes = this->ss_nodes[workset.wsIndex];
+    auto& ws_ss_nodes = this->ss_ws_cell_nodes_lids[workset.wsIndex];
     for (size_t icell=0; icell<workset.numCells; ++icell) {
       const auto& skip_nodes = ws_ss_nodes[icell];
       for (int inode=0; inode<this->numCellNodes; ++inode) {
@@ -313,7 +368,7 @@ doPostEvaluate(typename Traits::EvalData workset)
   Teuchos::Array<LO> lrow(1);
   Teuchos::Array<ST> one(1,1.0);
   const auto& nodeID = workset.wsElNodeEqID;
-  auto& ws_ss_nodes = this->ss_nodes[workset.wsIndex];
+  auto& ws_ss_nodes = this->ss_ws_cell_nodes_lids[workset.wsIndex];
   for (size_t icell=0; icell<workset.numCells; ++icell) {
     const auto& skip_nodes = ws_ss_nodes[icell];
     for (int inode=0; inode<this->numCellNodes; ++inode) {
@@ -407,6 +462,8 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int 
       cols[neq * inode + eq_col] = nodeID(cell,node,eq_col);
     }
   }
+
+  const auto& elNodeID = workset.wsElNodeID[cell];
   for (int inode = 0; inode < numNodes; ++inode) {
     const int node = side_nodes[inode];
     for (int eq = 0; eq < this->numFields; eq++) {
@@ -737,14 +794,14 @@ ScatterSideEqnResidual (const Teuchos::ParameterList& p,
 
 template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::HessianVec, Traits>::
-doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
+doEvaluateFieldsCell(typename Traits::EvalData /* workset */, int /* cell */, int /* side */)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of ScatterSideEqnResidual::doEvaluateFieldsCell is not implemented yet"<< std::endl);
 }
 
 template<typename Traits>
 void ScatterSideEqnResidual<AlbanyTraits::HessianVec, Traits>::
-doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int sideSet_idx)
+doEvaluateFieldsSide(typename Traits::EvalData /* workset */, int /* cell */, int /* side */, int /* sideSet_idx */)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of ScatterSideEqnResidual::doEvaluateFieldsSide is not implemented yet"<< std::endl);
 }
