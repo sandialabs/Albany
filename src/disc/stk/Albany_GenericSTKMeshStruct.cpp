@@ -516,15 +516,13 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
         if (!params_ss->isParameter("Number Of Time Derivatives"))
           params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
 
-        // If workset size is -1, set sideset discretization workset size based on sideset mesh spec
-        // Note: this should be set to either the maximum size or -1
-        if (params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE) == -1) {
-          const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
-          auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
-          TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
-              "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
+        // Set sideset discretization workset size based on sideset mesh spec if a single workset is used
+        const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+        auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
+        TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+            "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
+        if (sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation)
           params_ss->set<int>("Workset Size", sideSetMeshSpecIter->second[0]->worksetSize);
-        }
 
         std::string method = params_ss->get<std::string>("Method");
         if (method=="SideSetSTK") {
@@ -532,10 +530,6 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
           TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
                                       "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
 
-          const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
-          auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
-          TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
-              "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
           this->sideSetMeshStructs[ss_name] =
               Teuchos::rcp(new SideSetSTKMeshStruct(
                   *this->meshSpecs[0], *sideSetMeshSpecIter->second[0],

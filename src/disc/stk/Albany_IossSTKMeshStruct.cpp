@@ -230,7 +230,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
         ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(),
         ebNameToIndex, this->interleavedOrdering, false, cub_rule));
-    if (worksetSizeMax == -1) this->meshSpecs[0]->singleWorksetSizeAllocation = true;
+    if (worksetSize == ebSizeMax) this->meshSpecs[0]->singleWorksetSizeAllocation = true;
   } else {
     *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << std::endl;
     this->allElementBlocksHaveSamePhysics=false;
@@ -240,7 +240,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
           ebNameToIndex, this->interleavedOrdering, true, cub_rule));
-      if (worksetSizeMax == -1) this->meshSpecs[eb]->singleWorksetSizeAllocation = true;
+      if (worksetSize == ebSizeMax) this->meshSpecs[eb]->singleWorksetSizeAllocation = true;
     }
   }
 
@@ -263,7 +263,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   this->initializeSideSetMeshSpecs(commT);
 
   // Get upper bound on sideset workset sizes by using Ioss element counts on side blocks
-  if (worksetSizeMax == -1) {
+  if (worksetSize == ebSizeMax) {
     if (!params->get("Separate Evaluators by Element Block",false)) {
       for (auto ss : sss) {
         // Get maximum sideset size from Ioss
