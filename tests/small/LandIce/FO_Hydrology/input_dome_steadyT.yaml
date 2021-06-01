@@ -54,10 +54,10 @@ ANONYMOUS:
       Gravity Acceleration:             9.8
       Clausius-Clapeyron Coefficient:   0.0
     LandIce Viscosity:
-      Type: 'Glen''s Law'
+      Type: Glen's Law
       Homotopy Parameter: 1.00000000000000006e-01
       Glen's Law A: 3.1689e-24    # [ Pa^-3 s^-1 ]
-      'Glen''s Law n': 3.00000000000000000e+00
+      Glen's Law n: 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
     Body Force:
       Type: FO INTERP SURF GRAD

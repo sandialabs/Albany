@@ -16,12 +16,12 @@ ANONYMOUS:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
     LandIce Viscosity:
       Extract Strain Rate Sq: true
-      Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 1.0e+00
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 1.0e+00
       Continuous Homotopy With Constant Initial Viscosity: true
       Coefficient For Continuous Homotopy: 8.00000000000000000e+00
-      'Glen''s Law A': 1.6725e-04
-      'Glen''s Law n': 3.00000000000000000e+00
+      Glen's Law A: 5.30346271e-24            # [Pa^-n s^-1]
+      Glen's Law n: 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
     LandIce Physical Parameters:
       Conductivity of ice: 2.1e+00
@@ -53,7 +53,7 @@ ANONYMOUS:
       Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
-        Name: 'Glen''s Law Homotopy Parameter'
+        Name: Glen's Law Homotopy Parameter
     Response Functions:
       Number Of Responses: 1
       Response 0:
@@ -137,7 +137,7 @@ ANONYMOUS:
         Method: Constant
       Stepper:
         Initial Value: 0.00000000000000000e+00
-        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 100
         Max Value: 4.00000000000000022e-01
