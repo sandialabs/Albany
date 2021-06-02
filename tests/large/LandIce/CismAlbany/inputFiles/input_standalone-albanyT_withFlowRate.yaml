@@ -35,8 +35,9 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Given Field
-          Given Field Variable Name: basal_friction
+          Type: Power Law
+          Mu Field Name: basal_friction
+          Power Exponent: 1.0
     Body Force:
       Type: FO INTERP SURF GRAD
   Discretization:

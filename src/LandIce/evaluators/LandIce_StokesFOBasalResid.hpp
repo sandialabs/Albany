@@ -43,8 +43,6 @@ public:
 
 private:
 
-  ScalarT printedFF;
-
   // Input:
   // TODO: restore layout template arguments when removing old sideset layout
   PHX::MDField<const BetaScalarT> beta;       // Side, QuadPoint
@@ -64,11 +62,8 @@ private:
 
   unsigned int numSideNodes;
   unsigned int numSideQPs;
-  unsigned int sideDim;
   unsigned int vecDim;
   unsigned int vecDimFO;
-
-  bool regularized;
 
   Albany::LocalSideSetInfo sideSet;
 

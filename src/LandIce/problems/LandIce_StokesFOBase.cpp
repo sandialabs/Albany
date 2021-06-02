@@ -494,11 +494,11 @@ void StokesFOBase::setFieldsProperties ()
 
   // Set rank of known fields. The scalar type will default to RealType.
   // If that's not the case for derived problems, they will update the st.
-  setSingleFieldProperties(ice_thickness_name,                FRT::Scalar);
-  setSingleFieldProperties(surface_height_name,               FRT::Scalar);
+  setSingleFieldProperties(ice_thickness_name,                FRT::Scalar, FST::MeshScalar);
+  setSingleFieldProperties(surface_height_name,               FRT::Scalar, FST::MeshScalar);
   setSingleFieldProperties(vertically_averaged_velocity_name, FRT::Vector, FST::Scalar);
   setSingleFieldProperties(corrected_temperature_name,        FRT::Scalar);
-  setSingleFieldProperties(bed_topography_name,               FRT::Scalar);
+  setSingleFieldProperties(bed_topography_name,               FRT::Scalar, FST::MeshScalar);
   setSingleFieldProperties(body_force_name,                   FRT::Vector);
   setSingleFieldProperties(flow_factor_name,                  FRT::Scalar);
   setSingleFieldProperties(flux_divergence_name,              FRT::Scalar);
@@ -557,11 +557,17 @@ void StokesFOBase::setupEvaluatorRequests ()
 
     auto& bfc = it->sublist("Basal Friction Coefficient");
     const auto type = util::upper_case(bfc.get<std::string>("Type"));
-    if (type!="GIVEN CONSTANT") {
+    if (type!="CONSTANT") {
       // For "Given Field" and "Exponent of Given Field" we also need
       // to interpolate the given field at the quadrature points
-      ss_build_interp_ev[ssName][bfc.get<std::string>("Given Field Variable Name")][IReq::QP_VAL      ] = true;
-      ss_build_interp_ev[ssName][bfc.get<std::string>("Given Field Variable Name")][IReq::CELL_TO_SIDE] = true;
+      if (type == "FIELD")
+        mu_friction_name = bfc.get<std::string>("Beta Field Name");
+      else
+        mu_friction_name = bfc.get<std::string>("Mu Field Name");
+      setSingleFieldProperties(mu_friction_name, FRT::Scalar, FST::ParamScalar);
+      ss_build_interp_ev[ssName][mu_friction_name][IReq::QP_VAL      ] = true;
+      ss_build_interp_ev[ssName][mu_friction_name][IReq::CELL_TO_SIDE] = true;
+      ss_build_interp_ev[ssName][mu_friction_name][IReq::GRAD_QP_VAL ] = true;
     } else if (type=="REGULARIZED COULOMB") {
       // For Coulomg and PowerLaw, we *may* have some distributed parameter fields.
       // We interpolate (and possibly project on ss) only if they are inputs
@@ -665,6 +671,13 @@ void StokesFOBase::setupEvaluatorRequests ()
       ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
     }
   }
+  
+  // // Needed for computing flux divergence when has_SMB_resp == flase
+  // if (!isInvalid(basalSideName)) {
+  //   ss_build_interp_ev[basalSideName][flux_divergence_name][IReq::CELL_VAL] = true;
+  //   ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
+  //   ss_build_interp_ev[basalSideName][vertically_averaged_velocity_name][IReq::QP_VAL] = true;
+  // }
 
   // SMB-related diagnostics
   if (!isInvalid(basalSideName) && has_SMB_resp) {

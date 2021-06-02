@@ -16,8 +16,7 @@ enum class ParamEnum
 {
   Alpha,
   Lambda,
-  MuCoulomb,
-  MuPowerLaw,
+  Mu,
   Power,
   Homotopy,
   GLHomotopy
@@ -27,8 +26,7 @@ namespace ParamEnumName
 {
   static const std::string Alpha           = "Hydraulic-Over-Hydrostatic Potential Ratio";
   static const std::string Lambda          = "Bed Roughness";
-  static const std::string MuCoulomb       = "Coulomb Friction Coefficient";
-  static const std::string MuPowerLaw      = "Power Law Coefficient";
+  static const std::string Mu              = "Mu Coefficient";
   static const std::string Power           = "Power Exponent";
   static const std::string HomotopyParam   = "Homotopy Parameter";
   static const std::string GLHomotopyParam = "Glen's Law Homotopy Parameter";

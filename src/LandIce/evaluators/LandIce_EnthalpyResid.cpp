@@ -10,4 +10,4 @@
 #include "LandIce_EnthalpyResid.hpp"
 #include "LandIce_EnthalpyResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES(LandIce::EnthalpyResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(LandIce::EnthalpyResid)

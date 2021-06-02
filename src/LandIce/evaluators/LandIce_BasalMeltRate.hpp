@@ -20,7 +20,7 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
+template<typename EvalT, typename Traits, typename VelocityST>
 class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
                       public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -43,7 +43,7 @@ private:
   PHX::MDField<const VelocityST>           velocity;   // [m/yr]
   PHX::MDField<const ParamScalarT>         geoFluxHeat;// [W m^{-2}] = [Pa m s^{-1}]
   PHX::MDField<const ScalarT>              Enthalpy;   //[MW s m^{-3}]
-  PHX::MDField<const MeltEnthST>           EnthalpyHs; //[MW s m^{-3}]
+  PHX::MDField<const MeshScalarT>           EnthalpyHs; //[MW s m^{-3}]
   PHX::MDField<const ScalarT,Dim>          homotopy;
 
   // Output:

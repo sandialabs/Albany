@@ -175,11 +175,6 @@ void StokesFO::setFieldsProperties () {
         "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
         " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
 
-    // Udpate the scalar type of bed_topography and surface height to include MeshScalar
-    // Note: if adjustBedTopo==false, bed_topo could stay RealType, but it makes
-    //       ST deduction logic in some evaluator much harder.
-    setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::MeshScalar);
-    setSingleFieldProperties(bed_topography_name, FRT::Scalar, FST::MeshScalar);
   }
 
   // UpdateZCoordinate expects the (observed) bed topography and (observed) surface height to have scalar type MeshScalarT.

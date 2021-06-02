@@ -15,8 +15,8 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, typename SurfHeightST>
-PressureMeltingEnthalpy<EvalT,Traits,SurfHeightST>::
+template<typename EvalT, typename Traits>
+PressureMeltingEnthalpy<EvalT,Traits>::
 PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
   coords       (p.get<std::string> ("Coordinate Vector Variable Name"),dl->vertices_vector),
   s            (p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar),
@@ -47,17 +47,17 @@ PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   enthalpyHs_scaling = 1e-6 * rho_i * c_i;
 }
 
-template<typename EvalT, typename Traits, typename SurfHeightST>
-void PressureMeltingEnthalpy<EvalT,Traits,SurfHeightST>::
+template<typename EvalT, typename Traits>
+void PressureMeltingEnthalpy<EvalT,Traits>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
-template<typename EvalT, typename Traits, typename SurfHeightST>
+template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
-void PressureMeltingEnthalpy<EvalT,Traits,SurfHeightST>::
+void PressureMeltingEnthalpy<EvalT,Traits>::
 operator() (const int& cell) const {
 
   for (unsigned int node = 0; node < numNodes; ++node) {
@@ -66,8 +66,8 @@ operator() (const int& cell) const {
   }
 }
 
-template<typename EvalT, typename Traits, typename SurfHeightST>
-void PressureMeltingEnthalpy<EvalT,Traits,SurfHeightST>::
+template<typename EvalT, typename Traits>
+void PressureMeltingEnthalpy<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;

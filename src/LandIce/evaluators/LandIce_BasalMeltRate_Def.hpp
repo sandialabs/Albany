@@ -17,8 +17,8 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
-BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
+template<typename EvalT, typename Traits, typename VelocityST>
+BasalMeltRate<EvalT,Traits,VelocityST>::
 BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl_basal)
  : phi               (p.get<std::string> ("Water Content Side Variable Name"),dl_basal->node_scalar_sideset)
  , beta              (p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar_sideset)
@@ -101,17 +101,17 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   this->setName("Basal Melt Rate" + PHX::print<EvalT>());
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
-void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
+template<typename EvalT, typename Traits, typename VelocityST>
+void BasalMeltRate<EvalT,Traits,VelocityST>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
+template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
-void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
+void BasalMeltRate<EvalT,Traits,VelocityST>::
 operator() (const Basal_Melt_Rate_Tag& tag, const int& sideSet_idx) const {
 
   const unsigned int numPts = nodal ? numSideNodes : numSideQPs;
@@ -141,8 +141,8 @@ operator() (const Basal_Melt_Rate_Tag& tag, const int& sideSet_idx) const {
 
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
-void BasalMeltRate<EvalT,Traits,VelocityST,MeltEnthST>::
+template<typename EvalT, typename Traits, typename VelocityST>
+void BasalMeltRate<EvalT,Traits,VelocityST>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSetViews==Teuchos::null, std::runtime_error,

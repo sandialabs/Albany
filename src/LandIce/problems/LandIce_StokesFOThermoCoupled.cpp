@@ -301,8 +301,8 @@ void StokesFOThermoCoupled::setFieldsProperties () {
   setSingleFieldProperties(temperature_name          , FRT::Scalar, FST::Scalar);
   setSingleFieldProperties(stiffening_factor_name    , FRT::Scalar);
   setSingleFieldProperties(corrected_temperature_name, FRT::Scalar, FST::Scalar); // Already processed in StokesFOBase, but need to adjust scalar type
-  setSingleFieldProperties(melting_temperature_name  , FRT::Scalar);
-  setSingleFieldProperties(melting_enthalpy_name     , FRT::Scalar);
+  setSingleFieldProperties(melting_temperature_name  , FRT::Scalar, FST::MeshScalar); //depends on z coord
+  setSingleFieldProperties(melting_enthalpy_name     , FRT::Scalar, FST::MeshScalar); //depends on z coord
   setSingleFieldProperties(hydrostatic_pressure_name , FRT::Scalar);
   setSingleFieldProperties("basal_vert_velocity"     , FRT::Scalar);
 }

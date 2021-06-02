@@ -65,6 +65,9 @@ ANONYMOUS:
         Type: Given Field
     LandIce Basal Friction Coefficient: 
       Type: Regularized Coulomb
+      Mu Type: Constant
+      Bed Roughness Type: Constant
+      Effective Pressure Type: Field
   Discretization: 
     Number Of Time Derivatives: 0
     Method: STK2D

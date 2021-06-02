@@ -63,12 +63,12 @@ namespace LandIce {
 
     // Stuff for beta regularization
     std::vector<Teuchos::RCP<Teuchos::ParameterList>> beta_reg_params;
-    std::vector<PHX::MDField<const ScalarT>>          grad_beta_vec;      // Side, QuadPoint, Dim
+    std::vector<PHX::MDField<const ParamScalarT>>     grad_beta_vec;      // Side, QuadPoint, Dim
     std::vector<PHX::MDField<const MeshScalarT>>      w_measure_beta_vec; // Side, QuadPoint
     std::vector<PHX::MDField<const MeshScalarT>>      metric_beta_vec;    // Side, QuadPoint, Dim, Dim
     Teuchos::RCP<const CellTopologyData>              cell_topo;
 
-    PHX::MDField<const ScalarT> grad_beta;
+    PHX::MDField<const ParamScalarT> grad_beta;
     PHX::MDField<const MeshScalarT> metric;
     PHX::MDField<const MeshScalarT> w_measure;
 

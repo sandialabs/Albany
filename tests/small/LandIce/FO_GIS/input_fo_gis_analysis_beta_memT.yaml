@@ -36,8 +36,12 @@ ANONYMOUS:
         Type: Basal Friction
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Exponent Of Given Field
-          Given Field Variable Name: basal_friction
+          Type: Power Law
+          Mu Type: Exponent of Field
+          Mu Field Name: basal_friction
+          Power Exponent: 1.0
+          Effective Pressure Type: Constant
+          Effective Pressure: 1.0
       BC 1:
         Type: Lateral
         Cubature Degree: 3

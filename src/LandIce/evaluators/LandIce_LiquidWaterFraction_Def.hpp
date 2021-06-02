@@ -36,9 +36,6 @@ LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
   rho_w = physics.get<double>("Water Density");//, 1000.0);
   L = physics.get<double>("Ice Latent Heat Of Fusion");//, 334000.0);
   phi_scaling = 1e6 / (rho_w * L);
-
-  printedAlpha = -1.0;
-
 }
 
 template<typename EvalT, typename Traits, typename Type>
@@ -47,7 +44,10 @@ void LiquidWaterFraction<EvalT,Traits,Type>::
 operator() (const int& cell) const{
 
   for (unsigned int node = 0; node < numNodes; ++node) {
-    phi(cell,node) =  ( enthalpy(cell,node) < enthalpyHs(cell,node) ) ? ScalarT(0) : phi_scaling * (enthalpy(cell,node) - enthalpyHs(cell,node));
+    if( enthalpy(cell,node) < enthalpyHs(cell,node) )
+      phi(cell,node) =  0.0;
+    else
+      phi(cell,node) = phi_scaling * (enthalpy(cell,node) - enthalpyHs(cell,node));
   }
 
 }

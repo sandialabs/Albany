@@ -38,15 +38,37 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 #endif
 
   n = -1; //dummy value
-  Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
+  dim = -1;
+  worksetSize = -1;
+  Teuchos::ParameterList beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
+
+  //Validate Parameters
+  Teuchos::ParameterList validPL;
+  validPL.set<std::string>("Type", "", "Type Of Beta: Constant, Power Law, Regularized Coulomb");
+  validPL.set<std::string>("Mu Type", "Field", "Mu Type: Field, Exponent Of Field, Exponent Of Field At Nodes");
+  validPL.set<std::string>("Bed Roughness Type", "Field", "Lambda Type: Field, Exponent Of Field, Exponent Of Field At Nodes");
+  validPL.set<std::string>("Beta Field Name", "", "Name of the Field Mu");
+  validPL.set<std::string>("Mu Field Name", "", "Name of the Field Mu");
+  validPL.set<std::string>("Effective Pressure Type", "Field", "Type of N: One, Field, Hydrostatic, Hydrostatic Computed At Nodes");
+  validPL.set<double>("Effective Pressure", 1.0, "Effective Pressure [kPa]");
+  validPL.set<double>("Power Exponent", 1.0, "Name of the Field Mu");
+  validPL.set<double>("Beta", 1.0, "Constant value for beta");
+  validPL.set<double>("Mu Coefficient", 1.0, "Constant value for Mu");
+  validPL.set<double>("Bed Roughness", 1.0, "Constant value for LAmbda");
+
+  validPL.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", false, "Whether to zero the effective pressure on floating ice at nodes");
+  validPL.set<bool>("Zero Beta On Floating Ice", false, "Whether to zero beta on floating ice");
+  validPL.set<bool>("Exponentiate Scalar Parameters", false, "Whether the scalar parameters needs to be exponentiate");
+  beta_list.validateParameters(validPL,0);
+
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
-  hydrostatic_pressure = beta_list.get<bool> ("Use Hydrostatic Pressure", false);
-  exponentiate_muField = beta_list.get<bool> ("Exponentiate Mu Field", false);
+  zero_N_on_floating_at_nodes = beta_list.get<bool> ("Zero Effective Pressure On Floating Ice At Nodes", false);
 
   //whether to first interpolate the given field and then exponetiate it (on quad points) or the other way around.
-  interpolate_then_exponentiate = beta_list.get<bool> ("Interpolate Then Exponentiate Given Field", true); 
+  logParameters = beta_list.get<bool>("Exponentiate Scalar Parameters",false);
 
-  std::string betaType = util::upper_case((beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field"));
+  std::string betaType = util::upper_case(beta_list.get<std::string>("Type"));
+
 
   is_side_equation = p.isParameter("Side Set Name");
 
@@ -66,11 +88,13 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   }
 
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
-  Teuchos::RCP<PHX::DataLayout> layout;
+  Teuchos::RCP<PHX::DataLayout> layout, nodal_layout;
   if (is_side_equation) {
     layout = nodal ? dl->node_scalar_sideset : dl->qp_scalar_sideset;
+    nodal_layout = dl->node_scalar_sideset;
   } else {
     layout = nodal ? dl->node_scalar : dl->qp_scalar;
+    nodal_layout = dl->node_scalar;
   }
 
   beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
@@ -80,137 +104,182 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   printedLambda  = -9999.999;
   printedQ       = -9999.999;
 
-  auto is_dist_param = p.isParameter("Dist Param Query Map") ? p.get<Teuchos::RCP<std::map<std::string,bool>>>("Dist Param Query Map") : Teuchos::null;
-  if (betaType == "GIVEN CONSTANT") {
-    beta_type = GIVEN_CONSTANT;
-    given_val = beta_list.get<double>("Constant Given Beta Value");
+  if (betaType == "CONSTANT") {
+    beta_type = BETA_TYPE::CONSTANT;
+    beta_val = beta_list.get<double>("Beta");
 #ifdef OUTPUT_TO_SCREEN
-    *output << "Given constant and uniform beta, value = " << given_val << " (loaded from xml input file).\n";
+    *output << "Constant beta value = " << beta_val << " (loaded from xml input file).\n";
 #endif
-  } else if ((betaType == "GIVEN FIELD")|| (betaType == "EXPONENT OF GIVEN FIELD")) {
+  } else if (betaType == "FIELD") {
 #ifdef OUTPUT_TO_SCREEN
-    *output << "Given constant beta field, loaded from mesh or file.\n";
+    *output << "Prescribed beta field.\n";
 #endif
-    if (betaType == "GIVEN FIELD") {
-      beta_type = GIVEN_FIELD;
-    } else {
-      beta_type = EXP_GIVEN_FIELD;
-    }
 
-    auto layout_given_field = layout;
-    std::string given_field_name = beta_list.get<std::string> ("Given Field Variable Name");
-    is_given_field_param = is_dist_param.is_null() ? false : (*is_dist_param)[given_field_name];
-    if (is_side_equation) {
-      given_field_name += "_" + basalSideName;
-    }
-    if( (beta_type == EXP_GIVEN_FIELD) && !interpolate_then_exponentiate ) {
-      BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), is_side_equation ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
-      layout_given_field = is_side_equation ? dl->node_scalar_sideset : dl->node_scalar;
-      this->addDependentField (BF);
-    }
-    if (is_given_field_param) {
-      given_field_param = PHX::MDField<const ParamScalarT>(given_field_name, layout_given_field);
-      this->addDependentField (given_field_param);
-    } else {
-      given_field = PHX::MDField<const RealType>(given_field_name, layout_given_field);
-      this->addDependentField (given_field);
-    }
+      //turning this into a Power Law BC
+      beta_type = BETA_TYPE::POWER_LAW;
+      bool forbidden_parameter = beta_list.isParameter("Power Exponent") || beta_list.isParameter("Mu Type") ||
+          beta_list.isParameter("Mu Field Name") || beta_list.isParameter("Effective Pressure Type") || beta_list.isParameter("Effective Pressure");
+      TEUCHOS_TEST_FOR_EXCEPTION(forbidden_parameter, Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error in LandIce::BasalFrictionCoefficient: invalid parameter for Beta Type == Field. Use Power Law Type if you need to set that.\n");
+      beta_list.set<std::string>("Mu Field Name", beta_list.get<std::string>("Beta Field Name"));
+      beta_list.set<double>("Power Exponent", 1.0);
+      beta_list.set<std::string>("Effective Pressure Type", "Constant");
+      beta_list.set<double>("Effective Pressure", 1.0);
+      beta_list.set<std::string>("Mu Type", "Field");
+      N_val = 1;
   } else if (betaType == "POWER LAW") {
-    beta_type = POWER_LAW;
-
+    beta_type = BETA_TYPE::POWER_LAW;
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (power law):\n\n"
             << "      beta = mu * N * |u|^{q-1} \n\n"
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
-
-    if(!hydrostatic_pressure) {
-      N = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
-      this->addDependentField (N);
-    }
-
-    auto layout_input_field = layout;
-    if(exponentiate_muField) {
-      BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar_sideset);
-
-      layout_input_field = dl->node_scalar_sideset;
-      this->addDependentField (BF);
-    }
-
-    u_norm         = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-    powerParam     = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
-
-    this->addDependentField (powerParam);
-    this->addDependentField (u_norm);
-    this->addDependentField (N);
-
-    distributedMu = beta_list.get<bool>("Distributed Mu",false);
-    if (distributedMu) {
-      muPowerLawField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Power Law Coefficient Variable Name"), layout_input_field);
-      this->addDependentField (muPowerLawField);
-    } else {
-      muPowerLaw     = PHX::MDField<const ScalarT,Dim>("Power Law Coefficient", dl->shared_param);
-      this->addDependentField (muPowerLaw);
-    }
   } else if (betaType == "REGULARIZED COULOMB") {
-    beta_type = REGULARIZED_COULOMB;
-
+    beta_type = BETA_TYPE::REGULARIZED_COULOMB;
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (regularized coulomb law):\n\n"
             << "      beta = mu * N * |u|^{q-1} / [|u| + lambda*A*N^n]^q\n\n"
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    if(!hydrostatic_pressure) {
-      N            = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
-      this->addDependentField (N);
-    }
     n            = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
-    u_norm       = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-    powerParam   = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
     ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), is_side_equation ? dl->cell_scalar2_sideset : dl->cell_scalar2);
-
-    this->addDependentField (powerParam);
-    this->addDependentField (u_norm);
     this->addDependentField (ice_softness);
 
-    distributedLambda = beta_list.get<bool>("Distributed Lambda",false);
-    if (distributedLambda) {
-      lambdaField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Roughness Variable Name"), layout);
-      this->addDependentField (lambdaField);
-    } else {
-      lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
-      this->addDependentField (lambdaParam);
-    }
-
-    distributedMu = beta_list.get<bool>("Distributed Mu",false);
-    if (distributedMu) {
-      muCoulombField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Coulomb Friction Coefficient Variable Name"), layout);
-      this->addDependentField (muCoulombField);
-    } else {
-      muCoulomb = PHX::MDField<const ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
-      this->addDependentField (muCoulomb);
-    }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << betaType << "\" is not a valid parameter for Beta Type\n");
   }
 
-  if(zero_on_floating || hydrostatic_pressure) {
-    bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), layout);
-    this->addDependentField (bed_topo_field);    
-    is_thickness_param = is_dist_param.is_null() ? false : (*is_dist_param)[p.get<std::string>("Ice Thickness Variable Name")];
-    if (is_thickness_param) {
-      thickness_param_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
-      this->addDependentField (thickness_param_field);
+
+  if (beta_type != BETA_TYPE::CONSTANT) {
+
+    std::string effectivePressureType = util::upper_case(beta_list.get<std::string>("Effective Pressure Type"));
+    if (effectivePressureType == "CONSTANT") {
+      effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::CONSTANT;
+      N_val = beta_list.get<double>("Effective Pressure");
+    } else if (effectivePressureType == "FIELD") {
+      effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::FIELD;
+      if(zero_N_on_floating_at_nodes)
+        N = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), nodal_layout);
+      else
+        N = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
+      this->addDependentField (N);
+    } else if (effectivePressureType == "HYDROSTATIC") {
+      effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC;
+    } else if (effectivePressureType == "HYDROSTATIC COMPUTED AT NODES") {
+      effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES;
     } else {
-      thickness_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
-      this->addDependentField (thickness_field);
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << effectivePressureType << "\" is not a valid parameter for Effective Pressure Type\n");
     }
-    Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
-    rho_i = phys_param_list.get<double> ("Ice Density");
-    rho_w = phys_param_list.get<double> ("Water Density");
-    g = phys_param_list.get<double> ("Gravity Acceleration");
+
+    if(zero_on_floating || zero_N_on_floating_at_nodes || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES) || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC) ) {
+      bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), nodal_layout);
+      this->addDependentField (bed_topo_field);
+      thickness_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), nodal_layout);
+      this->addDependentField (thickness_field);
+      if(!nodal) {
+        BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), is_side_equation ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+        this->addDependentField (BF);
+      }
+      Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
+      rho_i = phys_param_list.get<double> ("Ice Density");
+      rho_w = phys_param_list.get<double> ("Water Density");
+      g = phys_param_list.get<double> ("Gravity Acceleration");
+    }
+
+    if(!nodal && zero_N_on_floating_at_nodes && (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC)) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error in LandIce::BasalFrictionCoefficient: Cannot set the effective pressure to zero at nodes when effective pressure type is Hydrostatic\n");
+    }
+
+    std::string muType = util::upper_case((beta_list.isParameter("Mu Type") ? beta_list.get<std::string>("Mu Type") : "Field"));
+
+    if(muType == "CONSTANT") {
+      mu_type = FIELD_TYPE::CONSTANT;
+    } else if (muType == "FIELD") {
+      mu_type = FIELD_TYPE::FIELD;
+    } else if (muType == "EXPONENT OF FIELD AT NODES") {
+      mu_type = FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES;
+    } else if (muType == "EXPONENT OF FIELD") {
+      mu_type = FIELD_TYPE::EXPONENT_OF_FIELD;
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << muType << "\" is not a valid parameter for Mu Type\n");
+    }
+
+    if(mu_type == FIELD_TYPE::CONSTANT) {
+      muParam     = PHX::MDField<const ScalarT,Dim>("Mu Coefficient", dl->shared_param);
+      this->addDependentField (muParam);
+    } else {
+      std::string mu_field_name;
+      mu_field_name = beta_list.get<std::string> ("Mu Field Name");
+      if (is_side_equation) {
+        mu_field_name += "_" + basalSideName;
+      }
+
+      auto layout_mu_field = layout;
+      if(!nodal && (mu_type == FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES)) {
+        BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), is_side_equation ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+        layout_mu_field = nodal_layout;
+        this->addDependentField (BF);
+      }
+
+      muField = PHX::MDField<const ParamScalarT>(mu_field_name, layout_mu_field);
+      this->addDependentField (muField);
+    }
+
+    powerParam     = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
+    this->addDependentField (powerParam);
+
+    if (beta_type == BETA_TYPE::REGULARIZED_COULOMB) {
+
+      std::string lambdaType = util::upper_case((beta_list.isParameter("Bed Roughness Type") ? beta_list.get<std::string>("Bed Roughness Type") : "Field"));
+
+      auto layout_lambda_field = layout;
+      if(lambdaType == "CONSTANT") {
+        lambda_type = FIELD_TYPE::CONSTANT;
+      } else if (lambdaType == "FIELD") {
+        lambda_type = FIELD_TYPE::FIELD;
+      } else if (lambdaType == "EXPONENT OF FIELD AT NODES") {
+        lambda_type = FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES;
+        if(!nodal) {
+          BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), is_side_equation ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+          layout_lambda_field = nodal_layout;
+          this->addDependentField (BF);
+        }
+      } else if (lambdaType == "EXPONENT OF FIELD") {
+        lambda_type = FIELD_TYPE::EXPONENT_OF_FIELD;
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << lambdaType << "\" is not a valid parameter for Lambda Type\n");
+      }
+
+      if(lambda_type == FIELD_TYPE::CONSTANT) {
+        lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
+        this->addDependentField (lambdaParam);
+      } else {
+        lambdaField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Roughness Variable Name"), layout_lambda_field);
+        this->addDependentField (lambdaField);
+      }
+      u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+      this->addDependentField (u_norm);
+
+    } else if (beta_type == BETA_TYPE::POWER_LAW) {
+      auto paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
+      if (paramLib->isParameter("Power Exponent")) {
+        u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+        this->addDependentField (u_norm);
+      } else {
+        double q = beta_list.get<double>("Power Exponent");
+        bool linearLaw = (!logParameters && q==1.0)||(logParameters && q==0.0);
+        if(!linearLaw) {
+          u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+          this->addDependentField (u_norm);
+        }
+      }
+    }
   }
 
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
@@ -231,8 +300,6 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     this->addDependentField(coordVec);
   }
 
-  logParameters = beta_list.get<bool>("Use log scalar parameters",false);
-
   this->setName("BasalFrictionCoefficient"+PHX::print<EvalT>());
 }
 
@@ -242,8 +309,8 @@ void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, Temperat
 postRegistrationSetup (typename Traits::SetupData d,
                        PHX::FieldManager<Traits>&)
 {
-  if (beta_type == GIVEN_CONSTANT)
-    beta.deep_copy(ScalarT(given_val));
+  if (beta_type == BETA_TYPE::CONSTANT)
+    beta.deep_copy(ScalarT(beta_val));
 
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active())
@@ -257,116 +324,131 @@ KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
 
-  switch(beta_type) {
-    case GIVEN_CONSTANT:
-    break;
+  ParamScalarT muValue = 1.0;
+  typename Albany::StrongestScalarType<EffPressureST,MeshScalarT>::type NVal = N_val;
 
-    case GIVEN_FIELD:
-      if (is_given_field_param) {
-        for (unsigned int ipt=0; ipt<dim; ++ipt)
-          beta(cell,ipt) = given_field_param(cell,ipt);
-      } else {
-        for (unsigned int ipt=0; ipt<dim; ++ipt)
-          beta(cell,ipt) = given_field(cell,ipt);
-      }
-    break;
-    
-    case POWER_LAW:
-      if (distributedMu) {
-        for (unsigned int ipt=0; ipt<dim; ++ipt) {
-          ScalarT Nval = N(cell,ipt);
-          //ScalarT Nval = g*KU::max(rho_i*thickness_field(sideSet_idx,ipt)+KU::min(rho_w*bed_topo_field(sideSet_idx,ipt),0.0),0.0);
-          if (is_side_equation) Nval = KU::max(Nval, 0.0);
-          beta(cell,ipt) = muPowerLawField(cell,ipt) * Nval * std::pow (u_norm(cell,ipt), power-1);
-        }
-      } else {
-        for (unsigned int ipt=0; ipt<dim; ++ipt) {
-          ScalarT Nval = N(cell,ipt);
-          if (is_side_equation) Nval = KU::max(Nval, 0.0);
-          beta(cell,ipt) = mu * Nval * std::pow (u_norm(cell,ipt), power-1);
-        }
-      }
-    break;
+  if(beta_type != BETA_TYPE::CONSTANT) {
+    for (unsigned int ipt=0; ipt<dim; ++ipt) {
 
-    case REGULARIZED_COULOMB:
-      if (distributedLambda) {
-        if (distributedMu) {
-          for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = N(cell,ipt);
-            if (is_side_equation) Nval = KU::max(Nval, 0.0);
-            ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(Nval,n) );
-            beta(cell,ipt) = muCoulombField(cell,ipt) * Nval * std::pow( q, power) / u_norm(cell,ipt);
-          }
-        } else {
-          for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = N(cell,ipt);
-            if (is_side_equation) Nval = KU::max(Nval, 0.0);
-            ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambdaField(cell,ipt)*ice_softness(cell)*std::pow(Nval,n) );
-            beta(cell,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,ipt);
-          }
-        }
-      } else {
-        if (distributedMu) {
-          for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = N(cell,ipt);
-            if (is_side_equation) Nval = KU::max(Nval, 0.0);
-            ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(Nval,n) );
-            beta(cell,ipt) = muCoulombField(cell,ipt) * Nval * std::pow( q, power) / u_norm(cell,ipt);
-          }
-        } else {
-          for (unsigned int ipt=0; ipt<dim; ++ipt) {
-            ScalarT Nval = N(cell,ipt);
-            if (is_side_equation) Nval = KU::max(Nval, 0.0);
-            ScalarT q = u_norm(cell,ipt) / ( u_norm(cell,ipt) + lambda*ice_softness(cell)*std::pow(Nval,n) );
-            beta(cell,ipt) = mu * Nval * std::pow( q, power) / u_norm(cell,ipt);
-          }
-        }
-      }
-    break;
-
-    case EXP_GIVEN_FIELD:
-      if(nodal || interpolate_then_exponentiate) {
-        if (is_given_field_param) {
-          for (unsigned int ipt=0; ipt<dim; ++ipt)
-            beta(cell,ipt) = std::exp(given_field_param(cell,ipt));
-        } else {
-          for (unsigned int ipt=0; ipt<dim; ++ipt)
-            beta(cell,ipt) = std::exp(given_field(cell,ipt));
-        }
-      } else {
-        if (is_given_field_param) {
-          unsigned int exp_dim = is_side_equation ? numQPs : dim;
-          for (unsigned int ipt=0; ipt<exp_dim; ++ipt) {
-            beta(cell,ipt) = 0;
+      switch (effectivePressure_type) {
+      case EFFECTIVE_PRESSURE_TYPE::FIELD:
+        if(zero_N_on_floating_at_nodes) {
+          NVal = 0.0;
+          if(nodal) {
+            if (rho_i*thickness_field(cell,ipt)+rho_w*bed_topo_field(cell,ipt) > 0)
+              NVal = N(cell,ipt);
+          } else {
             for (unsigned int node=0; node<numNodes; ++node)
-              beta(cell,ipt) += std::exp(given_field_param(cell,node))*BF(cell,node,ipt);  
+              if (rho_i*thickness_field(cell,node)+rho_w*bed_topo_field(cell,node) > 0)
+                NVal += N(cell,node)*BF(cell,node,ipt);
           }
-        } else {
-          unsigned int exp_dim = is_side_equation ? numQPs : dim;
-          for (unsigned int ipt=0; ipt<exp_dim; ++ipt) {
-            beta(cell,ipt) = 0;
+        } else
+          NVal = N(cell,ipt);
+        break;
+      case EFFECTIVE_PRESSURE_TYPE::CONSTANT:
+        if(zero_N_on_floating_at_nodes) {
+          NVal = 0;
+          if(nodal) {
+            if(rho_i*thickness_field(cell,ipt)+rho_w*bed_topo_field(cell,ipt) > 0)
+              NVal =  1.0;
+          } else {
             for (unsigned int node=0; node<numNodes; ++node)
-              beta(cell,ipt) += std::exp(given_field(cell,node))*BF(cell,node,ipt);
+              if (rho_i*thickness_field(cell,node)+rho_w*bed_topo_field(cell,node) > 0)
+                NVal += BF(cell,node,ipt);
           }
         }
+        break;
+      case EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC:
+        if(nodal)
+          NVal = g*KU::max(rho_i*thickness_field(cell,ipt)+KU::min(rho_w*bed_topo_field(cell,ipt),0.0),0.0);
+        else {
+          MeshScalarT thickness(0), bed_topo(0);
+          for (unsigned int node=0; node<numNodes; ++node) {
+            thickness += thickness_field(cell,node)*BF(cell,node,ipt);
+            bed_topo += bed_topo_field(cell,node)*BF(cell,node,ipt);
+          }
+          NVal = g*KU::max(rho_i*thickness+KU::min(rho_w*bed_topo,0.0),0.0);
+        }
+        break;
+      case EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES:
+        if(nodal)
+          NVal = g* KU::max(rho_i*thickness_field(cell,ipt)+KU::min(rho_w*bed_topo_field(cell,ipt),0.0),0.0);
+        else {
+          NVal = 0;
+          for (unsigned int node=0; node<numNodes; ++node)
+            NVal += g*KU::max(rho_i*thickness_field(cell,node)+KU::min(rho_w*bed_topo_field(cell,node),0.0),0.0)*BF(cell,node,ipt);
+        }
+        break;
       }
-    break;
 
-    default:
-    break;
+      switch (mu_type) {
+      case FIELD_TYPE::FIELD:
+        muValue = muField(cell,ipt);
+        break;
+      case FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES:
+        if(nodal)
+          muValue = std::exp(muField(cell,ipt));
+        else {
+          muValue = 0;
+          for (unsigned int node=0; node<numNodes; ++node)
+            muValue += std::exp(muField(cell,node))*BF(cell,node,ipt);
+        }
+        break;
+      case FIELD_TYPE::EXPONENT_OF_FIELD:
+        muValue = std::exp(muField(cell,ipt));
+        break;
+      case FIELD_TYPE::CONSTANT:
+        muValue = mu;
+        break;
+      }
+
+      if (power == 1.0)
+        beta(cell,ipt) = muValue * NVal;
+      else
+        beta(cell,ipt) = muValue * NVal * std::pow (u_norm(cell,ipt), power-1.0);
+
+      if (beta_type == BETA_TYPE::REGULARIZED_COULOMB) {
+        ParamScalarT lambdaValue;
+        switch (lambda_type) {
+        case FIELD_TYPE::FIELD:
+          lambdaValue = lambdaField(cell,ipt);
+          break;
+        case FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES:
+          if(nodal)
+            lambdaValue = std::exp(lambdaField(cell,ipt));
+          else {
+            lambdaValue = 0;
+            for (unsigned int node=0; node<numNodes; ++node)
+              lambdaValue += std::exp(lambdaField(cell,node))*BF(cell,node,ipt);
+          }
+          break;
+        case FIELD_TYPE::EXPONENT_OF_FIELD:
+          lambdaValue = std::exp(lambdaField(cell,ipt));
+          break;
+        case FIELD_TYPE::CONSTANT:
+          lambdaValue = lambda;
+          break;
+        }
+        beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + lambdaValue*ice_softness(cell)*std::pow(NVal,n),  power);
+      }
+    }
   }
 
   if (is_side_equation && zero_on_floating) {
-    if (is_thickness_param) {
-      for (unsigned int ipt=0; ipt<dim; ++ipt) {
-        ParamScalarT isGrounded = rho_i*thickness_param_field(cell,ipt) > -rho_w*bed_topo_field(cell,ipt);
-        beta(cell,ipt) *=  isGrounded;
+    for (unsigned int ipt=0; ipt<dim; ++ipt) {
+      bool isGrounded;
+      if(nodal)
+        isGrounded = rho_i*thickness_field(cell,ipt) > -rho_w*bed_topo_field(cell,ipt);
+      else {
+        MeshScalarT thickness(0), bed_topo(0);
+        for (unsigned int node=0; node<numNodes; ++node) {
+          thickness += thickness_field(cell,node)*BF(cell,node,ipt);
+          bed_topo += bed_topo_field(cell,node)*BF(cell,node,ipt);
+        }
+        isGrounded = rho_i*thickness > -rho_w*bed_topo;
       }
-    } else {
-      for (unsigned int ipt=0; ipt<dim; ++ipt) {
-        ParamScalarT isGrounded = rho_i*thickness_field(cell,ipt) > -rho_w*bed_topo_field(cell,ipt);
-        beta(cell,ipt) *=  isGrounded;
-      }
+      if(!isGrounded)
+        beta(cell,ipt) =  0;
     }
   }
 
@@ -389,15 +471,15 @@ evaluateFields (typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields()))
     return;
 
-  if (beta_type == POWER_LAW) {
+  if ((beta_type == BETA_TYPE::POWER_LAW)||(beta_type==BETA_TYPE::REGULARIZED_COULOMB) ) {
     if (logParameters) {
       power = std::exp(Albany::convertScalar<const ParamScalarT>(powerParam(0)));
-      if (!distributedMu)
-        mu = std::exp(Albany::convertScalar<const ParamScalarT>(muPowerLaw(0)));
+      if (mu_type == FIELD_TYPE::CONSTANT)
+        mu = std::exp(Albany::convertScalar<const ParamScalarT>(muParam(0)));
     } else {
       power = Albany::convertScalar<const ParamScalarT>(powerParam(0));
-      if (!distributedMu)
-        mu = Albany::convertScalar<const ParamScalarT>(muPowerLaw(0));
+      if (mu_type == FIELD_TYPE::CONSTANT)
+        mu = Albany::convertScalar<const ParamScalarT>(muParam(0));
     }
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -419,25 +501,17 @@ evaluateFields (typename Traits::EvalData workset)
 
     TEUCHOS_TEST_FOR_EXCEPTION (power<0, Teuchos::Exceptions::InvalidParameter,
                                 "\nError in LandIce::BasalFrictionCoefficient: 'Power Exponent' must be >= 0.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (!distributedMu && mu<0, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION ((mu_type == FIELD_TYPE::CONSTANT) && mu<0, Teuchos::Exceptions::InvalidParameter,
                                 "\nError in LandIce::BasalFrictionCoefficient: 'Coulomb Friction Coefficient' must be >= 0.\n");
   }
 
-  if (beta_type==REGULARIZED_COULOMB) {
+  if (beta_type== BETA_TYPE::REGULARIZED_COULOMB) {
     if (logParameters) {
-      power = std::exp(Albany::convertScalar<const ParamScalarT>(powerParam(0)));
-
-      if (!distributedLambda)
+      if (lambda_type == FIELD_TYPE::CONSTANT)
         lambda = std::exp(Albany::convertScalar<const ParamScalarT>(lambdaParam(0)));
-      if (!distributedMu) 
-        mu     = std::exp(Albany::convertScalar<const ParamScalarT>(muCoulomb(0)));
     } else {
-      power = Albany::convertScalar<const ParamScalarT>(powerParam(0));
-
-      if (!distributedLambda)
+      if (lambda_type == FIELD_TYPE::CONSTANT)
         lambda = Albany::convertScalar<const ParamScalarT>(lambdaParam(0));
-      if (!distributedMu) 
-        mu     = Albany::convertScalar<const ParamScalarT>(muCoulomb(0));
     }
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -450,23 +524,9 @@ evaluateFields (typename Traits::EvalData workset)
       *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] lambda = " << lambda << "\n";
       printedLambda = lambda;
     }
-
-    if (!distributedMu && printedMu!=mu) {
-      *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] mu = " << mu << "\n";
-      printedMu = mu;
-    }
-
-    if (printedQ!=power) {
-      *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] power = " << power << "\n";
-      printedQ = power;
-    }
 #endif
 
-    TEUCHOS_TEST_FOR_EXCEPTION (power<0, Teuchos::Exceptions::InvalidParameter,
-                                "\nError in LandIce::BasalFrictionCoefficient: 'Power Exponent' must be >= 0.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (!distributedMu && mu<0, Teuchos::Exceptions::InvalidParameter,
-                                "\nError in LandIce::BasalFrictionCoefficient: 'Coulomb Friction Coefficient' must be >= 0.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (!distributedLambda && lambda<0, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION ((lambda_type == FIELD_TYPE::CONSTANT) && lambda<0, Teuchos::Exceptions::InvalidParameter,
                                 "\nError in LandIce::BasalFrictionCoefficient: \"Bed Roughness\" must be >= 0.\n");
   }
 

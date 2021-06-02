@@ -25,7 +25,7 @@ namespace LandIce
   This evaluator computes enthalpy of the ice at pressure-melting temperature Tm(p).
  */
 
-template<typename EvalT, typename Traits, typename SurfHeightST>
+template<typename EvalT, typename Traits>
 class PressureMeltingEnthalpy: public PHX::EvaluatorWithBaseImpl<Traits>,
                                public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -41,18 +41,14 @@ public:
 
 private:
   using MeshScalarT = typename EvalT::MeshScalarT;
-  using ParamScalarT = typename EvalT::ParamScalarT;
-
-  // This is just to allow ETI machinery to work. In a real setting, ScalarT should always be constructible from TemperatureST.
-  using PressST = typename Albany::StrongestScalarType<MeshScalarT,SurfHeightST>::type;
 
   // Input:
   PHX::MDField<const MeshScalarT,Cell,Node,Dim> coords; //coords  [km]
-  PHX::MDField<const SurfHeightST,Cell,Node>    s; //surface height [km]
+  PHX::MDField<const MeshScalarT,Cell,Node>    s; //surface height [km]
 
   // Output:
-  PHX::MDField<PressST,Cell,Node>      meltingTemp; //[K]
-  PHX::MDField<PressST,Cell,Node>      enthalpyHs;       //[MW s m^{-3}]
+  PHX::MDField<MeshScalarT,Cell,Node>      meltingTemp; //[K]
+  PHX::MDField<MeshScalarT,Cell,Node>      enthalpyHs;       //[MW s m^{-3}]
 
   unsigned int numNodes;
 

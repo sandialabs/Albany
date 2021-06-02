@@ -21,7 +21,6 @@ ANONYMOUS:
     LandIce Field Norm:
       sliding_velocity_basalside:
         Regularization Type: Given Value
-        Type: Exponent Of Given Field
         Regularization Value: 1.0e-05
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
@@ -34,8 +33,13 @@ ANONYMOUS:
         Type: Basal Friction
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Exponent Of Given Field
-          Given Field Variable Name: basal_friction_log
+          #Type: Exponent Of Given Field
+          Type: Power Law
+          Mu Type: Exponent of Field
+          Mu Field Name: basal_friction_log
+          Power Exponent: 1.0
+          Effective Pressure Type: Constant
+          Effective Pressure: 1.0
           Zero Beta On Floating Ice: true
       BC 1:
         Type: Lateral
@@ -183,7 +187,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Restart Index: 1
-        Use Serial Mesh: ${USE_SERIAL_MESH}
+        Use Serial Mesh: false
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
         Exodus Output File Name: ./humboldt_basal.exo
         Cubature Degree: 4

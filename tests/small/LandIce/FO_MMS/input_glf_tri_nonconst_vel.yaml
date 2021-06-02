@@ -35,8 +35,8 @@ ANONYMOUS:
         Type: Basal Friction
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Given Constant
-          Constant Given Beta Value: 1.0
+          Type: Constant
+          Beta: 1.0
     LandIce Physical Parameters: 
       Water Density: 1.028e+03
       Ice Density: 9.10e+02
