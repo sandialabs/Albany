@@ -59,10 +59,10 @@ ANONYMOUS:
       Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
     LandIce Viscosity:
       Use Stiffening Factor: true
-      Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 1.00000000000000005e-01
-      'Glen''s Law A': 1.00000000000000004e-04
-      'Glen''s Law n': 3.00000000000000000e+00
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 1.00000000000000005e-01
+      Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
+      Glen's Law n: 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
     Body Force:
       Type: FO INTERP SURF GRAD
@@ -268,7 +268,7 @@ ANONYMOUS:
         Method: Constant
       Stepper:
         Initial Value: 1.00000000000000005e-01
-        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
         Max Value: 1.00000000000000000e+00

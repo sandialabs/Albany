@@ -19,12 +19,12 @@ ANONYMOUS:
       Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
-        Name: 'Glen''s Law Homotopy Parameter'
+        Name: Glen's Law Homotopy Parameter
     LandIce Viscosity:
-      Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 2.99999999999999988e-01
-      'Glen''s Law A': 1.00000000000000004e-04
-      'Glen''s Law n': 3.00000000000000000e+00
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 2.99999999999999988e-01
+      Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
+      Glen's Law n: 3.00000000000000000e+00
     Body Force:
       Type: FO INTERP SURF GRAD
     Response Functions:
@@ -59,7 +59,7 @@ ANONYMOUS:
         Method: Constant
       Stepper:
         Initial Value: 0.00000000000000000e+00
-        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 15
         Max Value: 1.00000000000000000e+00

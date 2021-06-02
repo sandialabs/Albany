@@ -297,6 +297,12 @@ StokesBodyForce(const Teuchos::ParameterList& p,
   std::string type = bf_list->get("Type", "None");
   A = bf_list->get("Glen's Law A", 1.0);
   n = bf_list->get("Glen's Law n", 3.0);
+  // Turn A's units from [Pa^-n s^-1] to [k^-1 kPa^-n yr^-1]
+  // This makes the final units of viscosity kPa k yr, which makes [mu*Ugrad] = kPa
+  const auto scyr = 3.1536e7;      // [s y-1]
+  const auto knp1 = pow(1000,n+1);
+  A *= knp1*scyr;
+
   if (type == "None") {
     bf_type = NONE;
   }
