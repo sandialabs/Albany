@@ -41,6 +41,11 @@ Viscosity(const Teuchos::ParameterList& p,
   }
   else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW;
+    const auto knp1 = pow(1000,n+1);
+    const auto scyr = 3.1536e7;
+    // Turn A's units from [Pa^-n s^-1] to [k^-1 kPa^-n yr^-1]
+    // This makes the final units of viscosity kPa k yr, which makes [mu*Ugrad] = kPa
+    A *= knp1*scyr;
     *out << "Glen's law viscosity!" << std::endl;
     *out << "A: " << A << std::endl;
     *out << "n: " << n << std::endl;

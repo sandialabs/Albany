@@ -79,13 +79,10 @@ void FlowRate<EvalT, Traits, TempST>::evaluateFields (typename Traits::EvalData 
       constexpr double switchingT (263.15);   // [K]
       constexpr double arrmlh (1.733e3);      // [Pa-3 s-1]
       constexpr double arrmll (3.613e-13);    // [Pa-3 s-1]
-      constexpr double k4scyr (3.1536e19);    // [s y-1]
-      constexpr double arrmh (k4scyr*arrmlh); // [Pa-3 yr-1]
-      constexpr double arrml (k4scyr*arrmll); // [Pa-3 yr-1]
 
       for (unsigned int cell=0; cell<workset.numCells; ++cell)
-        flowRate(cell) = (temperature(cell) < switchingT) ? arrml / std::exp (actenl / gascon / temperature(cell))
-                                                   : arrmh / std::exp (actenh / gascon / temperature(cell));
+        flowRate(cell) = (temperature(cell) < switchingT) ? arrmll / std::exp (actenl / gascon / temperature(cell))
+                                                   : arrmlh / std::exp (actenh / gascon / temperature(cell));
       break;
     }
 
