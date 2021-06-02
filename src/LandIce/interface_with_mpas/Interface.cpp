@@ -586,8 +586,12 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   viscosityList.set("Type", viscosityList.get("Type", "Glen's Law"));
   double homotopy_param = (paramList->sublist("Problem").get("Solution Method", "Steady") == "Steady") ? 0.3 : 1.0;
   viscosityList.set("Glen's Law Homotopy Parameter", viscosityList.get("Glen's Law Homotopy Parameter", homotopy_param));
-  viscosityList.set("Glen's Law A", viscosityList.get("Glen's Law A", MPAS_flowParamA));
+  // Convert MPAS value for A from [k^-1 kPa^-n yr^-1] to [Pa^-n s^-1]
   viscosityList.set("Glen's Law n", viscosityList.get("Glen's Law n",  MPAS_flowLawExponent));
+  const auto spy = 3600*24*365;
+  const auto knp1 = std::pow(1000,MPAS_flowLawExponent+1);
+  const auto A = MPAS_flowParamA / knp1 / spy;
+  viscosityList.set("Glen's Law A", viscosityList.get("Glen's Law A", A));
   viscosityList.set("Flow Rate Type", viscosityList.get("Flow Rate Type", "Temperature Based"));
   viscosityList.set("Use Stiffening Factor", viscosityList.get("Use Stiffening Factor", true));
   viscosityList.set("Extract Strain Rate Sq", viscosityList.get("Extract Strain Rate Sq", true)); //set true if not defined
