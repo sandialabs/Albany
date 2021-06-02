@@ -302,9 +302,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Basal Vertical Velocity Variable Name", "basal_vert_velocity_" + basalSideName);
   p->set<std::string>("Basal Melt Rate Variable Name", "basal_melt_rate_" + basalSideName);
-  ev = createEvaluatorWithTwoScalarTypes<BasalMeltRate,EvalT>(p,dl->side_layouts[basalSideName],
-                                                                         FST::Scalar,
-                                                                         get_scalar_type(melting_enthalpy_name));
+  ev = Teuchos::rcp(new BasalMeltRate<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl->side_layouts[basalSideName]));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce Liquid Water Fraction
@@ -322,7 +320,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Water Content Variable Name", water_content_name);
 
-  ev = createEvaluatorWithOneScalarType<LiquidWaterFraction,EvalT>(p,dl,get_scalar_type(melting_enthalpy_name));
+  ev = Teuchos::rcp(new LiquidWaterFraction<EvalT, PHAL::AlbanyTraits, typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce pressure-melting enthalpy
@@ -339,7 +337,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Melting Temperature Variable Name", melting_temperature_name);
   p->set<std::string>("Enthalpy Hs Variable Name", melting_enthalpy_name);
 
-  ev = createEvaluatorWithOneScalarType<PressureMeltingEnthalpy,EvalT>(p,dl,get_scalar_type(hydrostatic_pressure_name));
+  ev = Teuchos::rcp(new PressureMeltingEnthalpy<EvalT, PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce Surface Air Enthalpy
@@ -375,7 +373,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // p->set<std::string>("Basal dTdz Variable Name", "basal_dTdz");
   p->set<std::string>("Diff Enthalpy Variable Name", "Diff Enth");
 
-  ev = createEvaluatorWithOneScalarType<Temperature,EvalT>(p,dl,get_scalar_type(melting_temperature_name));
+  ev = Teuchos::rcp(new LandIce::Temperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- Enthalpy Residual ---
@@ -414,7 +412,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Residual Variable Name", resid_names[2]);
 
-  ev = createEvaluatorWithTwoScalarTypes<EnthalpyResid,EvalT>(p,dl,FST::Scalar,get_scalar_type(melting_temperature_name));
+  ev = Teuchos::rcp(new  EnthalpyResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- Enthalpy Basal Residual ---

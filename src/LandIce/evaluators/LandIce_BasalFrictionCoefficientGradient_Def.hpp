@@ -47,7 +47,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = GIVEN_CONSTANT;
   }
-  else if ((betaType == "GIVEN FIELD") || (betaType == "EXPONENT OF GIVEN FIELD") || (betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD"))
+  else if ((betaType == "GIVEN FIELD") || (betaType == "EXPONENT OF GIVEN FIELD") || (betaType == "GALERKIN PROJECTION OF EXPONENT OF GIVEN FIELD") || (betaType == "POWER LAW"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Constant beta, loaded from file.\n";
@@ -64,7 +64,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
       given_field_param = PHX::MDField<const ParamScalarT>(given_field_name, dl->node_scalar_sideset);
       this->addDependentField (given_field_param);
     } else {
-      given_field = PHX::MDField<const RealType>(given_field_name, dl->node_scalar_sideset);
+      given_field = PHX::MDField<const ParamScalarT>(given_field_name, dl->node_scalar_sideset);
       this->addDependentField (given_field);
     }
     GradBF     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient_sideset);
@@ -115,7 +115,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
   }
   else
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Unrecognized basal friction condition coefficient type.\n");
+    //TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Unrecognized basal friction condition coefficient type.\n");
     beta_type = INVALID;
   }
 

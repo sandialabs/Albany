@@ -28,8 +28,8 @@ Type distance (const Type& x0, const Type& x1, const Type& x2,
     return 0;
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
-EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
+template<typename EvalT, typename Traits, typename VelocityST>
+EnthalpyResid<EvalT,Traits,VelocityST>::
 EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
   wBF      		 (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
   wGradBF  		 (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
@@ -129,9 +129,9 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   flux_reg_beta = flux_reg_list.get<double>("beta");
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
-void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
+void EnthalpyResid<EvalT,Traits,VelocityST>::
 stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, ScalarT& vmax_z, 
   MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z, ScalarT& wSU) const {
   for (std::size_t qp = 0; qp < numQPs; ++qp) {
@@ -160,9 +160,9 @@ stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, Scalar
     }
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
-void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
+void EnthalpyResid<EvalT,Traits,VelocityST>::
 evaluateResidNode(int cell, int node, ScalarT *residual) const {
 
   constexpr double powm3 = 1e-3; //[k], k=1000
@@ -197,9 +197,9 @@ evaluateResidNode(int cell, int node, ScalarT *residual) const {
   *residual = retval;
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
-void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
+void EnthalpyResid<EvalT,Traits,VelocityST>::
 operator() (const Upwind_Stabilization_Tag& tag, const int& cell) const{
 
   constexpr double pow3 = 1e3;  //[k^{-1}], k=1000
@@ -229,9 +229,9 @@ operator() (const Upwind_Stabilization_Tag& tag, const int& cell) const{
 
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
-void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
+void EnthalpyResid<EvalT,Traits,VelocityST>::
 operator() (const SU_Stabilization_Tag& tag, const int& cell) const{
   
   constexpr double pow3 = 1e3;  //[k^{-1}], k=1000
@@ -262,9 +262,9 @@ operator() (const SU_Stabilization_Tag& tag, const int& cell) const{
 
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
-void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
+void EnthalpyResid<EvalT,Traits,VelocityST>::
 operator() (const Other_Stabilization_Tag& tag, const int& cell) const{
 
   ScalarT val[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
@@ -279,8 +279,8 @@ operator() (const Other_Stabilization_Tag& tag, const int& cell) const{
   
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
-void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
+template<typename EvalT, typename Traits, typename VelocityST>
+void EnthalpyResid<EvalT,Traits,VelocityST>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(Enthalpy,fm);
@@ -306,8 +306,8 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
-void EnthalpyResid<EvalT,Traits,VelocityST,MeltTempST>::
+template<typename EvalT, typename Traits, typename VelocityST>
+void EnthalpyResid<EvalT,Traits,VelocityST>::
 evaluateFields(typename Traits::EvalData d)
 {
   ScalarT hom = homotopy(0);

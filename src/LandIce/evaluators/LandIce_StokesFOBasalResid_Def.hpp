@@ -56,14 +56,6 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   vecDimFO     = std::min((int)dims[2],2);
   vecDim       = dims[2];
 
-  regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
-  if (regularized)
-  {
-    homotopyParam = decltype(homotopyParam)(
-        "Glen's Law Homotopy Parameter", dl->shared_param);
-    this->addDependentField(homotopyParam);
-  }
-
   // Index of the nodes on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
@@ -83,7 +75,6 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
     }
   }
 
-  printedFF = -1.0;
   this->setName("StokesFOBasalResid"+PHX::print<EvalT>());
 }
 
@@ -97,9 +88,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(beta,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(w_measure,fm);
-  if (regularized)
-    this->utils.setFieldData(homotopyParam,fm);
-
   this->utils.setFieldData(residual,fm);
   d.fill_field_dependencies(this->dependentFields(),this->contributedFields());
 }
@@ -115,8 +103,6 @@ operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const {
   const int cell = sideSet.elem_LID(sideSet_idx);
   const int side = sideSet.side_local_id(sideSet_idx);
 
-  const ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam(0)) : ScalarT(0);
-
   ScalarT local_res[2];
 
   for (unsigned int node=0; node<numSideNodes; ++node) {
@@ -130,8 +116,8 @@ operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const {
       bx=0.0; by=0.0;
       ScalarT u0 = u(sideSet_idx,qp,0);
       ScalarT u1 = u(sideSet_idx,qp,1);
-      local_res[0] += (ff + beta(sideSet_idx,qp)*(u0*(1.0+bx*bx) + u1*bx*by))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
-      local_res[1] += (ff + beta(sideSet_idx,qp)*(u0*bx*by + u1*(1.0+by*by)))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
+      local_res[0] += (beta(sideSet_idx,qp)*(u0*(1.0+bx*bx) + u1*bx*by))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
+      local_res[1] += (beta(sideSet_idx,qp)*(u0*bx*by + u1*(1.0+by*by)))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
     }
     for (unsigned int dim=0; dim<vecDimFO; ++dim)
       Kokkos::atomic_add(&residual(cell,sideNodes(side,node),dim), local_res[dim]);

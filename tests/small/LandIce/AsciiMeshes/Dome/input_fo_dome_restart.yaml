@@ -30,8 +30,8 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: basal
         Basal Friction Coefficient: 
-          Type: Given Constant
-          Constant Given Beta Value: 1.00000000000000000e+07
+          Type: Constant
+          Beta: 1.00000000000000000e+07
     Body Force: 
       Type: FO INTERP SURF GRAD
     Response Functions: 

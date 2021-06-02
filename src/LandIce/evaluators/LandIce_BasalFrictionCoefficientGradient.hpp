@@ -54,7 +54,7 @@ private:
 
   // Input:
   // TODO: restore layout template arguments when removing old sideset layout
-  PHX::MDField<const RealType>      given_field;       // Side, Node
+  PHX::MDField<const ParamScalarT>      given_field;       // Side, Node
   PHX::MDField<const ParamScalarT>  given_field_param; // Side, Node
   PHX::MDField<const MeshScalarT>   GradBF;            // Side, Node, QuadPoint, Dim
   PHX::MDField<const ParamScalarT>  N;                 // Side, QuadPoint
@@ -91,7 +91,7 @@ private:
   bool use_stereographic_map;
   bool is_given_field_param;
 
-  enum BETA_TYPE {INVALID, GIVEN_CONSTANT, GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
+  enum BETA_TYPE {INVALID, GIVEN_CONSTANT, GIVEN_FIELD, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;

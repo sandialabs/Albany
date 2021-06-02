@@ -461,7 +461,7 @@ Teuchos::RCP<const Teuchos::ParameterList> LandIce::ResponseSurfaceVelocityMisma
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
 
-  validPL->set<std::string> ("Basal Side Name", "", "Name of the side set correspongint to the ice-bedrock interface");
+  validPL->set<std::string> ("Basal Side Name", "", "Name of the side set corresponding to the ice-bedrock interface");
   validPL->set<std::string> ("Surface Side Name", "", "Name of the side set corresponding to the ice surface");
 
   return validPL;

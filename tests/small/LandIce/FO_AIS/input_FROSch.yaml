@@ -27,8 +27,8 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Given Field
-          Given Field Variable Name: basal_friction
+          Type: Field
+          Beta Field Name: basal_friction
       BC 1:
         Type: Lateral
         Cubature Degree: 3

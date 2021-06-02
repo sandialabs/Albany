@@ -19,7 +19,7 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+template<typename EvalT, typename Traits, typename VelocityST>
 class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                       public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -46,7 +46,7 @@ private:
 
   PHX::MDField<const ScalarT,Cell,QuadPoint>                    Enthalpy;  //[MW s m^{-3}]
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim>                EnthalpyGrad; //[kW s m^{-4}]
-  PHX::MDField<const MeltTempST,Cell,QuadPoint>                 EnthalpyHs;  //[MW s m^{-3}]
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint>                EnthalpyHs;  //[MW s m^{-3}]
   PHX::MDField<const ScalarT,Cell,Node>                         diffEnth;  //[MW s m^{-3}]
 
   PHX::MDField<const VelocityST,Cell,QuadPoint,VecDim>          Velocity; //[m yr^{-1}]
@@ -60,7 +60,7 @@ private:
   PHX::MDField<const ScalarT,Cell,Node>                         geoFluxHeatSUPG; // [MW s^{-1}]
   PHX::MDField<const ScalarT,Cell,QuadPoint>                    phi;                //[]
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim>                phiGrad;        //[km^{-1}
-  PHX::MDField<const MeltTempST,Cell,QuadPoint,Dim>             meltTempGrad; // [K km^{-1}]
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim>            meltTempGrad; // [K km^{-1}]
   PHX::MDField<const ScalarT,Cell,Node>                         basalResid; // [k^{2} W], k =1000
   PHX::MDField<const ScalarT,Cell,Node>                         basalResidSUPG; // [k^{2} W], k =1000
 

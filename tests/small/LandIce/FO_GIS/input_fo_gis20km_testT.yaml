@@ -13,8 +13,8 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: basal
         Basal Friction Coefficient:
-          Type: Given Constant
-          Constant Given Beta Value: 1e7
+          Type: Constant
+          Beta: 1e7
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
