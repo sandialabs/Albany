@@ -38,6 +38,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/apparent_mass_balance_uncertainty.asc
                ${CMAKE_CURRENT_BINARY_DIR}/apparent_mass_balance_uncertainty.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bed_topography.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/bed_topography.ascii COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/effective_pressure.ascii
+               ${CMAKE_CURRENT_BINARY_DIR}/effective_pressure.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_air_temperature.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/surface_air_temperature.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basal_heat_flux.ascii
