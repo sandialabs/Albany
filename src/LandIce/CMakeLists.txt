@@ -8,7 +8,6 @@
 
 set(SOURCES
   evaluators/LandIce_BasalFrictionCoefficient.cpp
-  evaluators/LandIce_BasalFrictionCoefficientGradient.cpp
   evaluators/LandIce_BasalMeltRate.cpp
   evaluators/LandIce_Dissipation.cpp
   evaluators/LandIce_DOFDivInterpolationSide.cpp
@@ -82,8 +81,6 @@ set(SOURCES
 set(HEADERS
   evaluators/LandIce_BasalFrictionCoefficient.hpp
   evaluators/LandIce_BasalFrictionCoefficient_Def.hpp
-  evaluators/LandIce_BasalFrictionCoefficientGradient.hpp
-  evaluators/LandIce_BasalFrictionCoefficientGradient_Def.hpp
   evaluators/LandIce_BasalMeltRate.hpp
   evaluators/LandIce_BasalMeltRate_Def.hpp
   evaluators/LandIce_Dissipation.hpp
