@@ -17,6 +17,7 @@
 #include "LandIce_HydrologyResidualCavitiesEqn.hpp"
 #include "LandIce_HydrologyResidualTillStorageEqn.hpp"
 #include "LandIce_HydrologyBasalGravitationalWaterPotential.hpp"
+#include "LandIce_SimpleOperationEvaluator.hpp"
 
 namespace LandIce
 {
@@ -464,6 +465,20 @@ constructHydrologyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
   // ... and Nodes
   p->set<bool>("Nodal",true);
   ev = Teuchos::rcp(new LandIce::IceOverburden<EvalT,PHAL::AlbanyTraits>(*p,dl_side));
+  fm0.template registerEvaluator<EvalT>(ev);
+
+  // -------- Regularization from Homotopy Parameter h: reg = 10^(-10*h)
+  p = Teuchos::rcp(new Teuchos::ParameterList("Simple Op"));
+
+  //Input
+  p->set<std::string> ("Input Field Name",ParamEnumName::GLHomotopyParam);
+  p->set<Teuchos::RCP<PHX::DataLayout>> ("Field Layout",dl->shared_param);
+  p->set<double>("Tau",-10.0*log(10.0));
+
+  //Output
+  p->set<std::string> ("Output Field Name","Regularization");
+
+  ev = Teuchos::rcp(new UnaryExpOp<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 }
 

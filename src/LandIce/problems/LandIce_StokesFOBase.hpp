@@ -943,19 +943,6 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ptr_gl_homotopy = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::GLHomotopy>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_gl_homotopy);
 
-  //--- Shared Parameter for Continuation: generic name ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("Homotopy Parameter"));
-
-  param_name = ParamEnumName::HomotopyParam;
-  p->set<std::string>("Parameter Name", param_name);
-  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-  p->set<double>("Default Nominal Value", -1.0);
-
-  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>> ptr_homotopy;
-  ptr_homotopy = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ptr_homotopy);
-
   //--- LandIce Flow Rate ---//
   auto& visc_pl = params->sublist("LandIce Viscosity");
   if (visc_pl.isParameter("Flow Rate Type") &&
@@ -998,7 +985,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Viscosity"));
-  p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
+  p->set<std::string>("Continuation Parameter Name",ParamEnumName::GLHomotopyParam);
 
   //Output
   p->set<std::string>("Viscosity QP Variable Name", "LandIce Viscosity");

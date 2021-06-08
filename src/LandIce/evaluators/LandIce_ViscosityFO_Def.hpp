@@ -37,7 +37,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
   A(1.0),
   n(3.0),
   Ugrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
-  homotopyParam("Glen's Law Homotopy Parameter", dl->shared_param),
+  homotopyParam(p.get<std::string>("Continuation Parameter Name"), dl->shared_param),
   mu    (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
   flowRate_type(UNIFORM)
 {
