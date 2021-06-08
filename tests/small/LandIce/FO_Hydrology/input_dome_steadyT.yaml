@@ -16,7 +16,7 @@ ANONYMOUS:
       Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
-        Name: Homotopy Parameter
+        Name: Glen's Law Homotopy Parameter
         Nominal Value: 0.1
     Response Functions:
       Number Of Responses: 1
@@ -40,7 +40,7 @@ ANONYMOUS:
         Side Set Name: basalside
         Basal Friction Coefficient:
           Type: Power Law
-          Power Exponent: 1.0
+          Power Exponent: 0.33
           Power Law Coefficient: 1.0
           Use log scalar parameters: false
       BC 1:
@@ -95,18 +95,18 @@ ANONYMOUS:
   Discretization:
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 1
+    Cubature Degree: 4
     Exodus Output File Name: results/dome.exo
-    Element Shape: Tetrahedron
-    Columnwise Ordering: false
-    NumLayers: 1
+    Element Shape: Wedge
+    Columnwise Ordering: true
+    NumLayers: 5
     Thickness Field Name: ice_thickness
     Use Glimmer Spacing: true
     Extrude Basal Node Fields: [ice_thickness, surface_height]
     Basal Node Fields Ranks: [1, 1]
     Workset Size: -1
     Required Fields Info:
-      Number Of Fields: 3
+      Number Of Fields: 2
       Field 0:
         Field Name: surface_height
         Field Type: Node Scalar
@@ -115,11 +115,6 @@ ANONYMOUS:
         Field Name: ice_thickness
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 2:
-        Field Name: temperature
-        Field Type: Node Scalar
-        Field Origin: File
-        Field Value: [273.0]
     Side Set Discretizations:
       Side Sets: [basalside]
       basalside:
@@ -130,7 +125,7 @@ ANONYMOUS:
         Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle_fine.msh
         Exodus Output File Name: results/dome_basal.exo
         Required Fields Info:
-          Number Of Fields: 10
+          Number Of Fields: 11
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
@@ -145,7 +140,7 @@ ANONYMOUS:
             Field Name: surface_water_input
             Field Type: Node Scalar
             Field Origin: File
-            Field Value: [20.0]
+            Field Value: [5.47999999999999972e+03]
           Field 3:
             Field Name: effective_pressure
             Field Type: Node Scalar
@@ -174,13 +169,17 @@ ANONYMOUS:
             Field Name: sliding_velocity
             Field Type: Node Scalar
             Field Usage: Output
+          Field 10:
+            Field Name: water_pressure
+            Field Type: Node Scalar
+            Field Usage: Output
   Piro:
     LOCA:
       Predictor:
         Method: Constant
       Stepper:
         Initial Value: 5.00000000000000028e-02
-        Continuation Parameter: Homotopy Parameter
+        Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 50
         Max Value: 1.00000000000000000e+00
