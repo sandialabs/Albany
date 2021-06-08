@@ -44,7 +44,6 @@ namespace LandIce {
     unsigned int numSideDims;
 
     Albany::LocalSideSetInfo sideSet;
-    bool useCollapsedSidesets;
 
     // TODO: restore layout template arguments when removing old sideset layout
     PHX::MDField<const ScalarT>          solution;        // Side, Node

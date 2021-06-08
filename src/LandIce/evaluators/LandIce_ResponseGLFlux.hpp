@@ -46,8 +46,6 @@ private:
   unsigned int numSideNodes;
   unsigned int numSideDims;
 
-  bool useCollapsedSidesets;
-
   using xyST = typename Albany::StrongestScalarType<MeshScalarT,ThicknessST>::type;
 
   // TODO: restore layout template arguments when removing old sideset layout

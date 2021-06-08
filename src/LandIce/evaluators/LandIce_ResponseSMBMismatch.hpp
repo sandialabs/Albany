@@ -46,7 +46,6 @@ namespace LandIce {
     std::string basalSideName;
 
     Albany::LocalSideSetInfo sideSet;
-    bool useCollapsedSidesets;
 
     unsigned int numSideNodes;
     unsigned int numBasalQPs;

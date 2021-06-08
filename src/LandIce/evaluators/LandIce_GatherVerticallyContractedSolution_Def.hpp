@@ -54,9 +54,9 @@ GatherVerticallyContractedSolutionBase(const Teuchos::ParameterList& p,
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
   if(isVector)
-    contractedSol = decltype(contractedSol)(p.get<std::string>("Contracted Solution Name"), dl_side->node_vector_sideset);
+    contractedSol = decltype(contractedSol)(p.get<std::string>("Contracted Solution Name"), dl_side->node_vector);
   else
-    contractedSol = decltype(contractedSol)(p.get<std::string>("Contracted Solution Name"), dl_side->node_scalar_sideset);
+    contractedSol = decltype(contractedSol)(p.get<std::string>("Contracted Solution Name"), dl_side->node_scalar);
 
   this->addEvaluatedField(contractedSol);
 

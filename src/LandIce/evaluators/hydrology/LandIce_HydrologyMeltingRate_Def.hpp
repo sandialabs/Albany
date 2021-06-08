@@ -22,8 +22,8 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
   if (IsStokes) {
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
-    numQPs   = dl->qp_scalar_sideset->extent(1);
-    numNodes = dl->node_scalar_sideset->extent(1);
+    numQPs   = dl->qp_scalar->extent(1);
+    numNodes = dl->node_scalar->extent(1);
     sideSetName = p.get<std::string>("Side Set Name");
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
@@ -66,9 +66,9 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
   if (nodal) {
-    layout = IsStokes ? dl->node_scalar_sideset : dl->node_scalar;
+    layout = dl->node_scalar;
   } else {
-    layout = IsStokes ? dl->qp_scalar_sideset : dl->qp_scalar;
+    layout = dl->qp_scalar;
   }
 
   m = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate Variable Name"),layout);

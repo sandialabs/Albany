@@ -42,7 +42,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   gradBF         = decltype(gradBF)(gradBFname,dl->node_qp_gradient),
   w_measure      = decltype(w_measure)(w_measure_name, dl->qp_scalar);
   residual       = decltype(residual)(residual_name, dl->node_scalar);
-  w_side_measure = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar_sideset);
+  w_side_measure = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar);
 
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
@@ -54,11 +54,11 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   numQPs = dl->qp_scalar->extent(1);
   cellDim  = cellType->getDimension();
 
-  numSideNodes  = dl_side->node_scalar->extent(2);
-  numSideQPs = dl_side->qp_scalar->extent(2);
+  numSideNodes  = dl_side->node_scalar->extent(1);
+  numSideQPs = dl_side->qp_scalar->extent(1);
 
 
-  unsigned int numSides = dl_side->node_scalar->extent(1);
+  unsigned int numSides = cellType->getSideCount();
   sideDim  = cellType->getDimension()-1;
 
   this->addDependentField(forcing);

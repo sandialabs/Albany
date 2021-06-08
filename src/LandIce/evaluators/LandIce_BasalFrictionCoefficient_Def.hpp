@@ -77,8 +77,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
     basalSideName = p.get<std::string>("Side Set Name");
-    numQPs        = dl->qp_scalar->extent(2);
-    numNodes      = dl->node_scalar->extent(2);
+    numQPs        = dl->qp_scalar->extent(1);
+    numNodes      = dl->node_scalar->extent(1);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure appears to be that of a side set.\n");
@@ -89,13 +89,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout, nodal_layout;
-  if (is_side_equation) {
-    layout = nodal ? dl->node_scalar_sideset : dl->qp_scalar_sideset;
-    nodal_layout = dl->node_scalar_sideset;
-  } else {
-    layout = nodal ? dl->node_scalar : dl->qp_scalar;
-    nodal_layout = dl->node_scalar;
-  }
+  layout = nodal ? dl->node_scalar : dl->qp_scalar;
+  nodal_layout = dl->node_scalar;
 
   beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
   this->addEvaluatedField(beta);
@@ -143,7 +138,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 #endif
 
     n            = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
-    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), is_side_equation ? dl->cell_scalar2_sideset : dl->cell_scalar2);
+    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
     this->addDependentField (ice_softness);
 
   } else {
@@ -180,7 +175,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       thickness_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), nodal_layout);
       this->addDependentField (thickness_field);
       if(!nodal) {
-        BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), is_side_equation ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+        BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
         this->addDependentField (BF);
       }
       Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
@@ -221,7 +216,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
       auto layout_mu_field = layout;
       if(!nodal && (mu_type == FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES)) {
-        BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), is_side_equation ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+        BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
         layout_mu_field = nodal_layout;
         this->addDependentField (BF);
       }
@@ -245,7 +240,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       } else if (lambdaType == "EXPONENT OF FIELD AT NODES") {
         lambda_type = FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES;
         if(!nodal) {
-          BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), is_side_equation ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+          BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
           layout_lambda_field = nodal_layout;
           this->addDependentField (BF);
         }
@@ -285,11 +280,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map) {
-    if (is_side_equation) { 
-      layout = nodal ? dl->node_vector_sideset : dl->qp_coords_sideset;
-    } else {
-      layout = nodal ? dl->node_vector: dl->qp_coords;
-    }
+    layout = nodal ? dl->node_vector: dl->qp_coords;
     coordVec = PHX::MDField<MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), layout);
 
     double R = stereographicMapList->get<double>("Earth Radius", 6371);

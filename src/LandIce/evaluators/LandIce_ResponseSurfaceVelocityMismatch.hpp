@@ -36,8 +36,7 @@ namespace LandIce {
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    std::string surfaceSideName;
-    bool useCollapsedSidesets;    
+    std::string surfaceSideName;    
     Albany::LocalSideSetInfo sideSet;
 
     unsigned int numSideNodes;

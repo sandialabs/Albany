@@ -42,7 +42,7 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  unsigned int numCells, numSides, numSideNodes, numSideQPs, numCellDims, numSideDims, numNodes, effectiveCoordDim;
+  unsigned int numSides, numSideNodes, numSideQPs, numCellDims, numSideDims, numNodes, effectiveCoordDim;
   MDFieldMemoizer<Traits> memoizer;
 
   //! The side set where to compute the Basis Functions

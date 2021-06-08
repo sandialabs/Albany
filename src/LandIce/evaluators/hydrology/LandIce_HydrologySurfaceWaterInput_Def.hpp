@@ -26,10 +26,10 @@ HydrologySurfaceWaterInput (const Teuchos::ParameterList& p,
   type = util::upper_case(type);
   if (type=="APPROXIMATE FROM SMB") {
     // Set omega=min(-smb,0);
-    smb = decltype(smb)(p.get<std::string> ("Surface Mass Balance Variable Name"), eval_on_side ? dl->node_scalar_sideset : dl->node_scalar);
+    smb = decltype(smb)(p.get<std::string> ("Surface Mass Balance Variable Name"), dl->node_scalar);
     this->addDependentField(smb);
 
-    omega = decltype(omega)(p.get<std::string> ("Surface Water Input Variable Name"), eval_on_side ? dl->node_scalar_sideset: dl->node_scalar);
+    omega = decltype(omega)(p.get<std::string> ("Surface Water Input Variable Name"), dl->node_scalar);
     this->addEvaluatedField(omega);
 
     input_type = InputType::SMB_APPROX;
@@ -44,7 +44,7 @@ HydrologySurfaceWaterInput (const Teuchos::ParameterList& p,
   // Get Dimensions
   if (eval_on_side) {
     sideSetName = p.get<std::string>("Side Set Name");
-    numNodes = dl->node_scalar->extent(2);
+    numNodes = dl->node_scalar->extent(1);
   } else {
     numNodes = dl->node_scalar->extent(1);
   }

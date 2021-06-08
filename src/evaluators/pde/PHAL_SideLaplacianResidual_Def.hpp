@@ -31,22 +31,22 @@ SideLaplacianResidual<EvalT, Traits>::SideLaplacianResidual (const Teuchos::Para
 
     auto dl_side = dl->side_layouts.at(sideSetName);
 
-    u          = PHX::MDField<ScalarT>(p.get<std::string> ("Solution QP Variable Name"), dl_side->qp_scalar_sideset);
-    grad_u     = PHX::MDField<ScalarT>(p.get<std::string> ("Solution Gradient QP Variable Name"), dl_side->qp_gradient_sideset);
-    BF         = PHX::MDField<RealType>(p.get<std::string> ("BF Variable Name"), dl_side->node_qp_scalar_sideset);
-    GradBF     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Gradient BF Variable Name"), dl_side->node_qp_gradient_sideset);
-    w_measure  = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Variable Name"), dl_side->qp_scalar_sideset);
-    metric     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Metric Name"), dl_side->qp_tensor_sideset);
+    u          = PHX::MDField<ScalarT>(p.get<std::string> ("Solution QP Variable Name"), dl_side->qp_scalar);
+    grad_u     = PHX::MDField<ScalarT>(p.get<std::string> ("Solution Gradient QP Variable Name"), dl_side->qp_gradient);
+    BF         = PHX::MDField<RealType>(p.get<std::string> ("BF Variable Name"), dl_side->node_qp_scalar);
+    GradBF     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Gradient BF Variable Name"), dl_side->node_qp_gradient);
+    w_measure  = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Variable Name"), dl_side->qp_scalar);
+    metric     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Metric Name"), dl_side->qp_tensor);
     this->addDependentField(metric.fieldTag());
 
-    unsigned int numSides = dl_side->cell_gradient->extent(1);
-    numNodes     = dl_side->node_scalar->extent(2);
-    numQPs       = dl_side->qp_scalar->extent(2);
-    int sideDim  = dl_side->cell_gradient->extent(2);
+    numNodes     = dl_side->node_scalar->extent(1);
+    numQPs       = dl_side->qp_scalar->extent(1);
 
     // Index of the nodes on the sides in the numeration of the cell
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
+    unsigned int sideDim = cellType->getDimension()-1;
+    unsigned int numSides = cellType->getSideCount();
     unsigned int nodeMax = 0;
     for (unsigned int side=0; side<numSides; ++side) {
       unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);

@@ -17,9 +17,9 @@ template<typename EvalT, typename Traits>
 HydrologyWaterDischarge<EvalT, Traits>::
 HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl) :
-  gradPhi (p.get<std::string> ("Hydraulic Potential Gradient Variable Name"), p.isParameter("Side Set Name") ? dl->qp_gradient_sideset : dl->qp_gradient),
-  h       (p.get<std::string> ("Water Thickness Variable Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
-  q       (p.get<std::string> ("Water Discharge Variable Name"), p.isParameter("Side Set Name") ? dl->qp_gradient_sideset : dl->qp_gradient)
+  gradPhi (p.get<std::string> ("Hydraulic Potential Gradient Variable Name"), dl->qp_gradient),
+  h       (p.get<std::string> ("Water Thickness Variable Name"), dl->qp_scalar),
+  q       (p.get<std::string> ("Water Discharge Variable Name"), dl->qp_gradient)
 {
   /*
    *  The water discharge follows the following Darcy-like form
@@ -45,8 +45,8 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (eval_on_side!=dl->isSideLayouts, std::logic_error,
       "Error! Input Layouts structure not compatible with requested field layout.\n");
 
-  numQPs  = eval_on_side ? dl->qp_gradient->extent(2) : dl->qp_gradient->extent(1);
-  numDim  = eval_on_side ? dl->qp_gradient->extent(3) : dl->qp_gradient->extent(2);
+  numQPs  = dl->qp_gradient->extent(1);
+  numDim  = dl->qp_gradient->extent(2);
 
   this->addDependentField(gradPhi);
   this->addDependentField(h);
@@ -72,14 +72,14 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   }
 
   if (needsGradPhiNorm) {
-    gradPhiNorm = decltype(gradPhiNorm)(p.get<std::string>("Hydraulic Potential Gradient Norm Variable Name"), eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar);
+    gradPhiNorm = decltype(gradPhiNorm)(p.get<std::string>("Hydraulic Potential Gradient Norm Variable Name"), dl->qp_scalar);
     this->addDependentField(gradPhiNorm);
   }
 
   regularize = darcy_law_params.get<bool>("Regularize With Continuation", false);
   if (regularize)
   {
-    regularizationParam = PHX::MDField<ScalarT,Dim>(p.get<std::string>("Regularization Parameter Name"), eval_on_side ? dl->qp_scalar_sideset : dl->shared_param);
+    regularizationParam = PHX::MDField<ScalarT,Dim>(p.get<std::string>("Regularization Parameter Name"), dl->shared_param);
     this->addDependentField(regularizationParam);
   }
 

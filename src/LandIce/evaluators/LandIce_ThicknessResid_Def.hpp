@@ -54,7 +54,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
                               "Error! Layout for side set " << sideSetName << " not found.\n");
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
-  auto av_v_layout = dl_side->node_vector_sideset;
+  auto av_v_layout = dl_side->node_vector;
   V = decltype(V)(p.get<std::string>("Averaged Velocity Variable Name"), av_v_layout);
   this->addDependentField(V);
 

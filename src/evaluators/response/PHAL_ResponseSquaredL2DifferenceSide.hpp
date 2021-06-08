@@ -38,7 +38,6 @@ private:
   int getLayout (const Teuchos::RCP<Albany::Layouts>& dl, const std::string& rank, Teuchos::RCP<PHX::DataLayout>& layout);
 
   std::string sideSetName;
-  bool useCollapsedSidesets;
   Albany::LocalSideSetInfo sideSet;
   
   int sideDim;
