@@ -76,7 +76,9 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
       const int numSideVecDim   = -1;
 
       dl->side_layouts[ss_name] = Teuchos::rcp(new Layouts(worksetSize,numSideVertices,numSideNodes,numSideQPs,
-                                                           numSideDim,numCellDim,numCellSides,numSideVecDim));
+                                                           numSideDim,numCellDim,numCellSides,numSideVecDim,
+                                                           ssMeshSpecs.singleWorksetSizeAllocation,
+                                                           ssMeshSpecs.worksetSize));
     }
   }
 
@@ -171,8 +173,8 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
         if (is_vector)
         {
           int vec_dim = thisFieldList.get<int>("Vector Dim");
-          layout = is_nodal ? PHAL::ExtendLayout<Dim,Cell,Side,Node>::apply(layout,vec_dim)
-                            : PHAL::ExtendLayout<Dim,Cell,Side>::apply(layout,vec_dim);
+          layout = is_nodal ? PHAL::ExtendLayout<Dim,Side,Node>::apply(layout,vec_dim)
+                            : PHAL::ExtendLayout<Dim,Side>::apply(layout,vec_dim);
         }
 
         // Layered fields
@@ -180,10 +182,10 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
         {
           int num_layers = thisFieldList.get<int>("Number Of Layers");
           layout = is_vector
-                      ? (is_nodal ? PHAL::ExtendLayout<LayerDim,Cell,Side,Node,Dim>::apply(layout,num_layers)
-                                  : PHAL::ExtendLayout<LayerDim,Cell,Side,Dim>::apply(layout,num_layers))
-                      : (is_nodal ? PHAL::ExtendLayout<LayerDim,Cell,Side,Node>::apply(layout,num_layers)
-                                  : PHAL::ExtendLayout<LayerDim,Cell,Side>::apply(layout,num_layers));
+                      ? (is_nodal ? PHAL::ExtendLayout<LayerDim,Side,Node,Dim>::apply(layout,num_layers)
+                                  : PHAL::ExtendLayout<LayerDim,Side,Dim>::apply(layout,num_layers))
+                      : (is_nodal ? PHAL::ExtendLayout<LayerDim,Side,Node>::apply(layout,num_layers)
+                                  : PHAL::ExtendLayout<LayerDim,Side>::apply(layout,num_layers));
         }
 
         // Finally, register the state

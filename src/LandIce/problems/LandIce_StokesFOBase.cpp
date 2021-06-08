@@ -11,12 +11,10 @@ StokesFOBase::
 StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                         const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                         const Teuchos::RCP<ParamLib>& paramLib_,
-                        const int numDim_,
-                        const bool useCollapsedSidesets_)
+                        const int numDim_)
  : Albany::AbstractProblem(params_, paramLib_, numDim_) 
  , discParams (discParams_)
  , numDim(numDim_)
- , useCollapsedSidesets(useCollapsedSidesets_)
  , use_sdbcs_(false)
  , params(params_)
 {
@@ -164,7 +162,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
       dl->side_layouts[ssName] = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
                                                          numSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                         useCollapsedSidesets,sideMeshSpecs.singleWorksetSizeAllocation,
+                                                         sideMeshSpecs.singleWorksetSizeAllocation,
                                                          sideMeshSpecs.worksetSize));
     }
   }
@@ -190,7 +188,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
     dl->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
                                                                 numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                                useCollapsedSidesets,surfaceMeshSpecs.singleWorksetSizeAllocation,
+                                                                surfaceMeshSpecs.singleWorksetSizeAllocation,
                                                                 surfaceMeshSpecs.worksetSize));
   }
 
@@ -215,7 +213,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
     dl->side_layouts[basalSideName] = rcp(new Albany::Layouts(worksetSize,numbasalSideVertices,numbasalSideNodes,
                                                               numbasalSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                              useCollapsedSidesets,basalMeshSpecs.singleWorksetSizeAllocation,
+                                                              basalMeshSpecs.singleWorksetSizeAllocation,
                                                               basalMeshSpecs.worksetSize));
   }
 
