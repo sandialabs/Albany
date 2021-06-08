@@ -364,7 +364,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     Teuchos::Array<std::string> arrayBasalFields(1, beta_name);
     Teuchos::Array<std::string> arraySideSets(1, "Basal");
     parameterList->sublist("Problem").set("Required Basal Fields", arrayBasalFields);
-    parameterList->sublist("Problem").sublist("LandIce Basal Friction Coefficient").set<std::string>("Type", "Given Field");
+    parameterList->sublist("Problem").sublist("LandIce Basal Friction Coefficient").set<std::string>("Type", "Field");
     parameterList->sublist("Problem").set<std::string>("Basal Side Name",arraySideSets[0]);
     Teuchos::ParameterList& sideSetParamList = discParams->sublist("Side Set Discretizations");
     sideSetParamList.set("Side Sets", arraySideSets);
@@ -396,8 +396,8 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<std::string>("Type","Basal Friction");
     parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<std::string>("Side Set Name","Basal");
     parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<int>("Cubature Degree",3);
-    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").sublist("Basal Friction Coefficient").set<std::string>("Type","Given Field");
-    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").sublist("Basal Friction Coefficient").set<std::string>("Given Field Variable Name", "basal_friction");
+    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").sublist("Basal Friction Coefficient").set<std::string>("Type","Field");
+    parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").sublist("Basal Friction Coefficient").set<std::string>("Beta Field Name", "basal_friction");
 
     //Lateral floating ice BCs.
     if ((global_west_face_conn_active_Ptr != NULL || global_east_face_conn_active_Ptr != NULL || global_north_face_conn_active_Ptr != NULL || global_south_face_conn_active_Ptr != NULL) && (nWestFacesActive > 0 || nEastFacesActive > 0 || nSouthFacesActive > 0 || nNorthFacesActive > 0)) {
