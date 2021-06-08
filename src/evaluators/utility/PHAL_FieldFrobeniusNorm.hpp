@@ -7,13 +7,14 @@
 #ifndef PHAL_FIELD_NORM_HPP
 #define PHAL_FIELD_NORM_HPP 1
 
+#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_Layouts.hpp"
+#include "PHAL_Dimension.hpp"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-#include "Albany_Layouts.hpp"
-#include "PHAL_Dimension.hpp"
 
 namespace PHAL
 {

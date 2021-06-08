@@ -7,6 +7,7 @@
 #ifndef LANDICE_HYDROLOGY_WATER_DISCHARGE_HPP
 #define LANDICE_HYDROLOGY_WATER_DISCHARGE_HPP 1
 
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_Layouts.hpp"
 #include "PHAL_Dimension.hpp"
 

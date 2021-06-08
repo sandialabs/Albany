@@ -374,7 +374,7 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       state_dl = loc == FL::Node ? dl->node_vector : dl->cell_vector;
     } else if (rank == FRT::Gradient) {
       state_dl = loc == FL::Node ? dl->node_gradient : dl->cell_gradient;
-    } else if (rank == FRT::Gradient) {
+    } else if (rank == FRT::Tensor) {
       state_dl = loc == FL::Node ? dl->node_tensor : dl->cell_tensor;
     }
 

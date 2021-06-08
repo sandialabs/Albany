@@ -157,8 +157,8 @@ copySTKField(const FieldType& source,
   constexpr bool is_SFT = std::is_same<FieldType,SFT>::value;
   constexpr int nodes_dim = is_SFT ? 0 : 1;
 
-  for(stk::mesh::BucketVector::const_iterator it = bv.begin() ; it != bv.end() ; ++it) {
-    const stk::mesh::Bucket& bucket = **it;
+  for (auto it : bv) {
+    const stk::mesh::Bucket& bucket = *it;
 
     BucketArray<FieldType> source_array(source, bucket);
     BucketArray<FieldType> target_array(target, bucket);
