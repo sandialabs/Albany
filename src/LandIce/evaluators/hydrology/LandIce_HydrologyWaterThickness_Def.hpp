@@ -116,7 +116,7 @@ template<typename EvalT, typename Traits, bool IsStokes, bool ThermoCoupled>
 void HydrologyWaterThickness<EvalT, Traits, IsStokes, ThermoCoupled>::evaluateFieldsCell (typename Traits::EvalData workset)
 {
   // Note: the '1e9' is to convert the ice softness in kPa^-3 s^-1, so that the kPa
-  //       cancel out with N, and the residual is in m/yr
+  //       cancel out with N. Also, convert time from s to yr (to combine/cancel with ub).
   double yr_to_s = 365.25*24*3600;
   double C = c_creep * yr_to_s * 1e9;
 

@@ -129,7 +129,6 @@ operator() (const StokesFOBasalResid_Tag&, const int& sideSet_idx) const {
 template<typename EvalT, typename Traits, typename BetaScalarT>
 void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
-
   if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
 
   sideSet = workset.sideSetViews->at(basalSideName);

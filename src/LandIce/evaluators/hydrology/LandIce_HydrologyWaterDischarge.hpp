@@ -76,7 +76,12 @@ private:
   double alpha;
   double beta;
 
-  bool regularize;
+  enum RegularizationType { NONE=1, GIVEN_VALUE, GIVEN_PARAMETER};
+
+  RegularizationType reg_type;
+  ScalarT regularization;
+  ScalarT printedReg;
+
   bool needsGradPhiNorm;
 };
 

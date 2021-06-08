@@ -346,6 +346,14 @@ template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef OUTPUT_TO_SCREEN
+  static ScalarT printedH = -9999;
+  if (workset.wsIndex==0 && printedH != homotopyParam(0)) {
+    std::cout << "[ViscosityFO] homotopyParam: " << homotopyParam(0) << "\n";
+    printedH = homotopyParam(0);
+  }
+#endif
+
   if (memoizer.have_saved_data(workset,this->evaluatedFields()))
     return;
 
