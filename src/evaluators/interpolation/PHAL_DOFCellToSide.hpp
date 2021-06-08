@@ -54,20 +54,15 @@ private:
   //! Values on side
   PHX::MDField<ScalarT> val_side;
 
-  // TODO: Need to update collapsed layouts and add kernels for remaining layout types when removing non-collapsed layouts
   enum LayoutType
   {
     CELL_SCALAR = 1,
-    CELL_SCALAR_SIDESET,
     CELL_VECTOR,
     CELL_TENSOR,
     NODE_SCALAR,
-    NODE_SCALAR_SIDESET,
     NODE_VECTOR,
-    NODE_VECTOR_SIDESET,
     NODE_TENSOR,
-    VERTEX_VECTOR,
-    VERTEX_VECTOR_SIDESET
+    VERTEX_VECTOR
   };
 
   LayoutType layout;
@@ -79,24 +74,12 @@ private:
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct CellScalarSideset_Tag{};
-  struct NodeScalarSideset_Tag{};
-  struct NodeVectorSideset_Tag{};
-  struct VertexVectorSideset_Tag{};
+  struct CellToSide_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, CellScalarSideset_Tag> CellScalarSideset_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, NodeScalarSideset_Tag> NodeScalarSideset_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, NodeVectorSideset_Tag> NodeVectorSideset_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, VertexVectorSideset_Tag> VertexVectorSideset_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, CellToSide_Tag> CellToSide_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const CellScalarSideset_Tag& tag, const int& sideSet_idx) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const NodeScalarSideset_Tag& tag, const int& sideSet_idx) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const NodeVectorSideset_Tag& tag, const int& sideSet_idx) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const VertexVectorSideset_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const CellToSide_Tag& tag, const int& sideSet_idx) const;
 
 };
 

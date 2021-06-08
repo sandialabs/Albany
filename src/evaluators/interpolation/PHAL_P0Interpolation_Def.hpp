@@ -25,11 +25,9 @@ P0InterpolationBase (const Teuchos::ParameterList& p,
 
   // Check if it is a sideset evaluation
   eval_on_side = false;
-  collapsed = false;
   if (p.isParameter("Side Set Name")) {
     sideSetName = p.get<std::string>("Side Set Name");
     eval_on_side = true;
-    collapsed = dl->useCollapsedSidesets;
   }
   TEUCHOS_TEST_FOR_EXCEPTION (eval_on_side!=dl->isSideLayouts, std::logic_error,
       "Error! Input Layouts structure not compatible with requested field layout.\n");
@@ -48,8 +46,7 @@ P0InterpolationBase (const Teuchos::ParameterList& p,
         "intrepidBasis needs to be nonnull when Interpolation Type is \"Value At Cell Barycenter\"");
   } else {
     // For CellAverage, we need to divide by cell measure
-    w_measure = decltype(w_measure)(p.get<std::string>("Weighted Measure Name"),
-                                    collapsed ? dl->qp_scalar_sideset : dl->qp_scalar);
+    w_measure = decltype(w_measure)(p.get<std::string>("Weighted Measure Name"), dl->qp_scalar);
     this->addDependentField(w_measure);
   }
 
@@ -66,13 +63,13 @@ P0InterpolationBase (const Teuchos::ParameterList& p,
   p0_layout = get_field_layout(rank,FL::Cell,dl);
 
   if (rank!=FRT::Scalar) {
-    dim0 = eval_on_side && !collapsed ? p0_layout->dimension(2) : p0_layout->dimension(1);
+    dim0 = p0_layout->dimension(1);
     if (rank==FRT::Tensor) {
-      dim1 = eval_on_side && !collapsed ? p0_layout->dimension(3) : p0_layout->dimension(2);
+      dim1 = p0_layout->dimension(2);
     }
   }
-  numQPs   = eval_on_side && !collapsed ? dl->qp_scalar->dimension(2) : dl->qp_scalar->dimension(1);
-  numNodes = eval_on_side && !collapsed ? dl->node_scalar->dimension(2) : dl->node_scalar->dimension(1);
+  numQPs   = dl->qp_scalar->dimension(1);
+  numNodes = dl->node_scalar->dimension(1);
 
   // Create input/output fields
   field    = decltype(field)(p.get<std::string> ("Field Name"), point_layout);
@@ -91,8 +88,7 @@ P0InterpolationBase (const Teuchos::ParameterList& p,
   if (loc==FL::Node) {
     // If itype is CellAverage, we need basis and measure too
     if (itype == CellAverage) {
-      BF = decltype(BF) (p.get<std::string>("BF Name"),
-                         collapsed ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
+      BF = decltype(BF) (p.get<std::string>("BF Name"), dl->node_qp_scalar);
       this->addDependentField(BF);
     }
   } else {
@@ -182,144 +178,7 @@ void P0InterpolationBase<EvalT, Traits, ScalarT>::evaluate_on_side (typename Tra
 
   const auto& sideSet = workset.sideSets->at(sideSetName);
 
-  if (collapsed) {
-    evaluate_on_cell (sideSet.size());
-  } else {
-    for (auto const& it_side : sideSet) {
-      // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
-
-      // Pre-compute measure
-      MeshScalarT meas = 0.0;
-      for (int qp=0; qp<numQPs; ++qp) {
-        meas += w_measure(cell,side,qp);
-      }
-
-      // Zero out the p0 field in this cell
-      if (itype==CellAverage) {
-        switch (rank) {
-          case FRT::Scalar:
-            field_avg(cell,side) = 0.0;
-            break;
-          case FRT::Vector:
-          case FRT::Gradient:
-            for (int idim=0; idim<dim0; ++idim) {
-              field_avg(cell,side,idim) = 0.0;
-            }
-            break;
-          case FRT::Tensor:
-            for (int idim=0; idim<dim0; ++idim) {
-              for (int jdim=0; jdim<dim1; ++jdim) {
-                field_avg(cell,side,idim,jdim) = 0.0;
-            }}
-        }
-      } else {
-        switch (rank) {
-          case FRT::Scalar:
-            field_baryc(cell,side) = 0.0;
-            break;
-          case FRT::Vector:
-          case FRT::Gradient:
-            for (int idim=0; idim<dim0; ++idim) {
-              field_baryc(cell,side,idim) = 0.0;
-            }
-            break;
-          case FRT::Tensor:
-            for (int idim=0; idim<dim0; ++idim) {
-              for (int jdim=0; jdim<dim1; ++jdim) {
-                field_baryc(cell,side,idim,jdim) = 0.0;
-            }}
-        }
-      }
-
-      for (int qp=0; qp<numQPs; ++qp) {
-        const auto w_meas = w_measure(cell,side,qp);
-        if (itype==CellAverage) {
-          // Do the integral (and do interpolation for Node fields)
-          ScalarT qp_val;
-          switch (rank) {
-            case FRT::Scalar:
-              if (loc==FL::QuadPoint) {
-                qp_val = field(cell,side,qp);
-              } else {
-                qp_val = 0.0;
-                for (int node=0; node<numNodes; ++node) {
-                  qp_val += field(cell,side,node)*BF(cell,side,node,qp);
-                }
-              }
-              field_avg(cell,side) += qp_val*w_meas;
-              break;
-            case FRT::Vector:
-            case FRT::Gradient:
-              for (int idim=0; idim<dim0; ++idim) {
-                if (loc==FL::QuadPoint) {
-                  qp_val = field(cell,side,qp,idim);
-                } else {
-                  qp_val = 0.0;
-                  for (int node=0; node<numNodes; ++node) {
-                    qp_val += field(cell,side,node,idim)*BF(cell,side,node,qp);
-                  }
-                }
-                field_avg(cell,side,idim) += qp_val*w_meas;
-              }
-              break;
-            case FRT::Tensor:
-              for (int idim=0; idim<dim0; ++idim) {
-                for (int jdim=0; jdim<dim1; ++jdim) {
-                  if (loc==FL::QuadPoint) {
-                    qp_val = field(cell,side,qp,idim,jdim);
-                  } else {
-                    qp_val = 0.0;
-                    for (int node=0; node<numNodes; ++node) {
-                      qp_val += field(cell,side,node,idim,jdim)*BF(cell,side,node,qp);
-                    }
-                  }
-                  field_avg(cell,side,idim,jdim) += qp_val*w_meas;
-              }}
-          }
-        } else {
-          for (int node=0; node<numNodes; ++node) {
-            auto bab = basis_at_barycenter(node,0);
-            switch (rank) {
-              case FRT::Scalar:
-                field_baryc(cell,side) += field(cell,side,node)*bab;
-                break;
-              case FRT::Vector:
-              case FRT::Gradient:
-                for (int idim=0; idim<dim0; ++idim)
-                  field_baryc(cell,side,idim) += field(cell,side,node,idim)*bab;
-                break;
-              case FRT::Tensor:
-                for (int idim=0; idim<dim0; ++idim)
-                  for (int jdim=0; jdim<dim1; ++jdim)
-                    field_baryc(cell,side,idim,jdim) += field(cell,side,node,idim,jdim)*bab;
-            }
-          }
-        }
-      }
-      
-      // Divide by measure (if needed)
-      if (itype==CellAverage) {
-        switch (rank) {
-          case FRT::Scalar:
-            field_avg(cell,side) /= meas;
-            break;
-          case FRT::Vector:
-          case FRT::Gradient:
-            for (int idim=0; idim<dim0; ++idim) {
-              field_avg(cell,side,idim) /= meas;
-            }
-            break;
-          case FRT::Tensor:
-            for (int idim=0; idim<dim0; ++idim) {
-              for (int jdim=0; jdim<dim1; ++jdim) {
-                field_avg(cell,side,idim,jdim) /= meas;
-            }}
-        }
-      }
-    }
-  }
+  evaluate_on_cell(sideSet.size());
 }
 
 //**********************************************************************
