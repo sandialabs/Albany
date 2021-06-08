@@ -20,7 +20,7 @@ namespace Albany {
   struct Layouts {
 
     Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numCellDim, int vecDim=-1, int numFace=0);
-    Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim, bool collapsed_sidesets=false, bool singleWorksetSizeAllocation=false, int sidesetWorksetSize=1);
+    Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim, bool singleWorksetSizeAllocation=false, int sidesetWorksetSize=1);
 
     //! Data Layout for scalar quantity that lives at nodes
     Teuchos::RCP<PHX::DataLayout> node_scalar;
@@ -86,7 +86,7 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> cell_tensor4;
     //! Data Layout for fourth order tensor quantity that lives on a face
     Teuchos::RCP<PHX::DataLayout> face_tensor4;
-    //! Data Layout for vector quantity that lives at vertices (coordinates) //FIXME: dont oords live at nodes, not vertices?
+    //! Data Layout for vector quantity that lives at vertices (coordinates) //FIXME: dont coords live at nodes, not vertices?
     Teuchos::RCP<PHX::DataLayout> vertices_vector;
     Teuchos::RCP<PHX::DataLayout> qp_coords;
     //! Data Layout for length 3 quantity  that lives at nodes (shell coordinates)
@@ -128,44 +128,6 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> shared_param_vec; // same length as other vectors
     Teuchos::RCP<PHX::DataLayout> dummy;
 
-    //! Data Layout for scalar quantity that lives at nodes that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> node_scalar_sideset;
-    //! Data Layout for scalar quantity that lives at QPs that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> qp_scalar_sideset;
-    //! Data Layout for vector quantity that lives at nodes that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> node_vector_sideset;
-    //! Data Layout for vector quantity that lives at QPs that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> qp_vector_sideset;
-    //! Data Layout for vector quantity that lives at vertices (coordinates) that belong to a sideset //FIXME: dont oords live at nodes, not vertices?
-    Teuchos::RCP<PHX::DataLayout> vertices_vector_sideset;
-    Teuchos::RCP<PHX::DataLayout> qp_coords_sideset;
-    //! Data Layout for scalar basis functions that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> node_qp_scalar_sideset;
-    //! Data Layout for gradient basis functions that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> node_qp_gradient_sideset;
-    //! Data Layout for tensor quantity that lives at nodes that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> node_tensor_sideset;
-    //! Data Layout for tensor quantity that lives at quad points that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> qp_tensor_sideset;
-    //! Data Layout for tensor quantity (cellDim x sideDim) that lives at quad points that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> qp_tensor_cd_sd_sideset;
-    //! Data Layout for vector quantity that lives at quad points, with dimension of the ambient space
-    Teuchos::RCP<PHX::DataLayout> qp_vector_spacedim_sideset;
-    //! Data Layout for scalar quantity that lives on a cell that belongs to a sideset
-    Teuchos::RCP<PHX::DataLayout> cell_scalar2_sideset;
-    //! Data Layout for vector quantity that lives on a cell that belongs to a sideset
-    Teuchos::RCP<PHX::DataLayout> cell_vector_sideset;
-    //! Data Layout for tensor quantity that lives on a cell that belongs to a sideset
-    Teuchos::RCP<PHX::DataLayout> cell_tensor_sideset;
-    //! Data Layout for vector gradient quantity that lives at quad points that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> qp_vecgradient_sideset;
-    //! Data Layout for gradient quantity that lives at nodes that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> node_gradient_sideset;
-    //! Data Layout for gradient quantity that lives at quad points that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> qp_gradient_sideset;
-    //! Data Layout for gradient quantity that lives on a cell that belong to a sideset
-    Teuchos::RCP<PHX::DataLayout> cell_gradient_sideset;
-
     // For backward compatibility, and simplicitiy, we want to check if
     // the vector length is the same as the spatial dimension. This
     // assumption is hardwired in mechanics problems and we want to
@@ -174,9 +136,6 @@ namespace Albany {
 
     // A flag to check whether this layouts structure belongs to a sideset
     bool isSideLayouts;
-    
-    // A flag to check whether this layouts structure is using collapsed sideset layouts
-    bool useCollapsedSidesets;
 
     std::map<std::string,Teuchos::RCP<Layouts>> side_layouts;
   };
@@ -232,73 +191,37 @@ get_field_layout (const FieldRankType rank,
   using FL  = FieldLocation;
 
   Teuchos::RCP<PHX::DataLayout> fl;
-  if (layouts->isSideLayouts && layouts->useCollapsedSidesets) {
-    if (rank==FRT::Scalar) {
-      if (loc==FL::Cell) {
-        fl = layouts->cell_scalar2_sideset;
-      } else if (loc==FL::Node) {
-        fl = layouts->node_scalar_sideset;
-      } else {
-        fl = layouts->qp_scalar_sideset;
-      }
-    } else if (rank==FRT::Vector) {
-      if (loc==FL::Cell) {
-        fl = layouts->cell_vector_sideset;
-      } else if (loc==FL::Node) {
-        fl = layouts->node_vector_sideset;
-      } else {
-        fl = layouts->qp_vector_sideset;
-      }
-    } else if (rank==FRT::Gradient) {
-      if (loc==FL::Cell) {
-        fl = layouts->cell_gradient_sideset;
-      } else if (loc==FL::Node) {
-        fl = layouts->node_gradient_sideset;
-      } else {
-        fl = layouts->qp_gradient_sideset;
-      }
-    } else if (rank==FRT::Tensor) {
-      if (loc==FL::Cell) {
-        fl = layouts->cell_tensor_sideset;
-      } else if (loc==FL::Node) {
-        fl = layouts->node_tensor_sideset;
-      } else {
-        fl = layouts->qp_tensor_sideset;
-      }
+  if (rank==FRT::Scalar) {
+    if (loc==FL::Cell) {
+      fl = layouts->cell_scalar2;
+    } else if (loc==FL::Node) {
+      fl = layouts->node_scalar;
+    } else {
+      fl = layouts->qp_scalar;
     }
-  } else {
-    if (rank==FRT::Scalar) {
-      if (loc==FL::Cell) {
-        fl = layouts->cell_scalar2;
-      } else if (loc==FL::Node) {
-        fl = layouts->node_scalar;
-      } else {
-        fl = layouts->qp_scalar;
-      }
-    } else if (rank==FRT::Vector) {
-      if (loc==FL::Cell) {
-        fl = layouts->cell_vector;
-      } else if (loc==FL::Node) {
-        fl = layouts->node_vector;
-      } else {
-        fl = layouts->qp_vector;
-      }
-    } else if (rank==FRT::Gradient) {
-      if (loc==FL::Cell) {
-        fl = layouts->cell_gradient;
-      } else if (loc==FL::Node) {
-        fl = layouts->node_gradient;
-      } else {
-        fl = layouts->qp_gradient;
-      }
-    } else if (rank==FRT::Tensor) {
-      if (loc==FL::Cell) {
-        fl = layouts->cell_tensor;
-      } else if (loc==FL::Node) {
-        fl = layouts->node_tensor;
-      } else {
-        fl = layouts->qp_tensor;
-      }
+  } else if (rank==FRT::Vector) {
+    if (loc==FL::Cell) {
+      fl = layouts->cell_vector;
+    } else if (loc==FL::Node) {
+      fl = layouts->node_vector;
+    } else {
+      fl = layouts->qp_vector;
+    }
+  } else if (rank==FRT::Gradient) {
+    if (loc==FL::Cell) {
+      fl = layouts->cell_gradient;
+    } else if (loc==FL::Node) {
+      fl = layouts->node_gradient;
+    } else {
+      fl = layouts->qp_gradient;
+    }
+  } else if (rank==FRT::Tensor) {
+    if (loc==FL::Cell) {
+      fl = layouts->cell_tensor;
+    } else if (loc==FL::Node) {
+      fl = layouts->node_tensor;
+    } else {
+      fl = layouts->qp_tensor;
     }
   }
 
