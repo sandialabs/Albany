@@ -411,6 +411,8 @@ void StokesFOBase::parseInputFields ()
     // Request QP interpolation for all input nodal fields
     if (loc==FL::Node) {
       build_interp_ev[stateName][IReq::QP_VAL] = true;
+    }
+    if (loc==FL::Cell && !is_input_field[stateName]) {
       build_interp_ev[stateName][IReq::CELL_VAL] = true;
     }
   }
@@ -478,6 +480,7 @@ void StokesFOBase::parseInputFields ()
       if (loc==FL::Node) {
         ss_build_interp_ev[ss_name][stateName][IReq::QP_VAL] = true;
         ss_build_interp_ev[ss_name][stateName][IReq::GRAD_QP_VAL] = rank != FRT::Gradient;
+      } else if (!is_ss_input_field[ss_name][stateName]) {
         ss_build_interp_ev[ss_name][stateName][IReq::CELL_VAL] = true;
       }
     }
