@@ -36,11 +36,8 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Power Law
-          Mu Field Name: basal_friction
-          Power Exponent: 1.0
-          Effective Pressure Type: Constant
-          Effective Pressure: 1.0
+          Type: Field
+          Beta Field Name: basal_friction
     Body Force:
       Type: FO INTERP SURF GRAD
   Discretization:
