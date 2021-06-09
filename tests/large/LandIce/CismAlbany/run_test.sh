@@ -32,7 +32,7 @@ cd mFiles
 
 # modify (if needed) maltab script "build_cism_msh_from_nc" to fix input/output paths and filenames.
 # run matlab script "build_cism_msh_from_nc"
-matlab -nojvm < build_cism_msh_from_nc.m
+matlab -batch "build_cism_msh_from_nc; exit"
 
 #move back to top directory
 cd ..
@@ -57,14 +57,14 @@ epu --auto greenland_standalone-albanyT.exo.8.0
 cd mFiles
 
 #run the script compare_exos.m
-matlab -nojvm < compare_exos.m
+matlab -batch "compare_exos; exit"
 
 # you'll see the max difference (in absolut value) between fields. Note that the raher significant difference in beta comes from the fact that beta is changed in cism according to the floating condition.
 
 #STORE STANDALONE ALBANY FIELDS INTO nc.
 #create a copy of greenland.nc
 cp ../ncGridSamples/greenland.nc ../greenland_standalone-albanyT.nc
-matlab -nojvm < print_exo_fields_into_nc.m
+matlab -batch "print_exo_fields_into_nc; exit"
 
 
 #Note: When the thickness and the bedrock topography are interpolated back to the grid, some accuracy is lost (try comparing the original "greenland.nc" with the newly created "geenland_standalone-albanyT.nc"). In fact, if you now re-run cism-alabny #using the new nc grid you'll see a significant difference with the standalone albany solution:
@@ -79,9 +79,7 @@ epu --auto greenland_cism-albanyT.exo.8.0
 cd ..
 
 cd mFiles
-matlab -nojvm < compare_exos.m
+matlab -batch "compare_exos; exit"
 
 #quite a difference.. this is an interpolation error.. so it should diminish as the grid is refined.
 
-#IKT, WARNING: the following is specific to Irina Tezaur's machine, camobap!
-export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib:/usr/lib
