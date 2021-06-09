@@ -30,14 +30,13 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   alpha_stiffening = plist->get<double>("Regularization Coefficient Stiffening", 0.0);
 
   scalarRMS = paramList->get<bool>("Scalar RMS", false);
+  surfaceSideName = paramList->get<std::string> ("Surface Side Name");
 
   const std::string& velocity_name           = paramList->get<std::string>("Surface Velocity Side QP Variable Name");
   const std::string& obs_velocity_name       = paramList->get<std::string>("Observed Surface Velocity Side QP Variable Name");
   const std::string& obs_velocityRMS_name    = paramList->get<std::string>("Observed Surface Velocity RMS Side QP Variable Name");
-  const std::string& w_measure_surface_name  = paramList->get<std::string>("Weighted Measure Surface Name");
-  //const std::string& metric_surface_name     = paramList->get<std::string>("Metric Surface Name");
+  const std::string& w_measure_surface_name  = Albany::weighted_measure_name + "_" + surfaceSideName;
 
-  surfaceSideName = paramList->get<std::string> ("Surface Side Name");
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(surfaceSideName)==dl->side_layouts.end(), std::runtime_error,
                               "Error! Surface side data layout not found.\n");
 
@@ -46,12 +45,11 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   velocity            = decltype(velocity)(velocity_name, dl_surface->qp_vector);
   observedVelocity    = decltype(observedVelocity)(obs_velocity_name, dl_surface->qp_vector);
   w_measure_surface   = decltype(w_measure_surface)(w_measure_surface_name, dl_surface->qp_scalar);
-  if(scalarRMS)
+  if(scalarRMS) {
     observedVelocityMagnitudeRMS = decltype(observedVelocityMagnitudeRMS)(obs_velocityRMS_name, dl_surface->qp_scalar);
-  else
+  } else {
     observedVelocityRMS = decltype(observedVelocityRMS)(obs_velocityRMS_name, dl_surface->qp_vector);
-
-  //metric_surface      = decltype(metric_surface)(metric_surface_name, dl_surface->qp_tensor);
+  }
 
   // Get Dimensions
   numSideNodes  = dl_surface->node_scalar->extent(1);
@@ -67,10 +65,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   else
     this->addDependentField(observedVelocityRMS);
 
-  //this->addDependentField(metric_surface);
-
-  if (alpha!=0)
-  {
+  if (alpha!=0) {
     beta_reg_params = *paramList->get<std::vector<Teuchos::RCP<Teuchos::ParameterList>>*>("Basal Regularization Params");
 
     for (auto pl : beta_reg_params) {
@@ -82,8 +77,8 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
       Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(ssName);
 
       const std::string& grad_beta_name       = paramList->get<std::string>("Basal Friction Coefficient Name") + "_gradient_" + ssName;
-      const std::string& w_measure_basal_name = Albany::weighted_measure_name + " " + ssName;
-      const std::string& metric_basal_name    = Albany::metric_name + " " + ssName;
+      const std::string& w_measure_basal_name = Albany::weighted_measure_name + "_" + ssName;
+      const std::string& metric_basal_name    = Albany::metric_name + "_" + ssName;
 
       grad_beta_vec.emplace_back(grad_beta_name, dl_basal->qp_gradient);
       w_measure_beta_vec.emplace_back(w_measure_basal_name, dl_basal->qp_scalar);
@@ -97,8 +92,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
     }
   }
 
-  if (alpha_stiffening!=0)
-  {
+  if (alpha_stiffening!=0) {
     // Setting up the fields required by the regularizations
     basalSideName = paramList->get<std::string> ("Basal Side Name");
 
@@ -108,8 +102,8 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
     const std::string& stiffening_name      = paramList->get<std::string>("Stiffening Factor Name");
     const std::string& grad_stiffening_name = paramList->get<std::string>("Stiffening Factor Gradient Name");
-    const std::string& w_measure_basal_name = paramList->get<std::string>("Weighted Measure Basal Name");
-    const std::string& metric_basal_name    = paramList->get<std::string>("Metric Basal Name");
+    const std::string& w_measure_basal_name = Albany::weighted_measure_name + "_" + basalSideName;
+    const std::string& metric_basal_name    = Albany::metric_name + "_" + basalSideName;
 
     stiffening      = decltype(stiffening)(stiffening_name, dl_basal->qp_scalar);
     grad_stiffening = decltype(grad_stiffening)(grad_stiffening_name, dl_basal->qp_gradient);
@@ -209,10 +203,6 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
           ScalarT diff1 = refVel1 - vel1;
           data = diff0 * diff0
               + diff1 * diff1;
-          //data = diff0 * metric_surface(sideSet_idx,qp,0,0) * diff0
-          //     + diff0 * metric_surface(sideSet_idx,qp,0,1) * diff1
-          //     + diff1 * metric_surface(sideSet_idx,qp,1,0) * diff0;
-          //     + diff1 * metric_surface(sideSet_idx,qp,1,1) * diff1;
           data *= asinh_scaling * asinh_scaling;
           t += data * w_measure_surface(sideSet_idx,qp);
         }

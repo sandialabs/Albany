@@ -589,8 +589,8 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructMapToPhysicalFrameSideEval
     RCP<ParameterList> p = rcp(new ParameterList("Map To Physical Frame Side"));
 
     // Input: X, Y at vertices
-    p->set<std::string>("Coordinate Vector Vertex Name", "Coord Vec " + sideSetName);
-    p->set<std::string>("Coordinate Vector QP Name", "Coord Vec " + sideSetName);
+    p->set<std::string>("Coordinate Vector Vertex Name", "Coord Vec_" + sideSetName);
+    p->set<std::string>("Coordinate Vector QP Name", "Coord Vec_" + sideSetName);
     p->set< RCP<IntrepidCubature> >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name", sideSetName);
@@ -660,22 +660,22 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsSideE
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions Side"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<std::string>("Side Coordinate Vector Name",coord_vec_name + " " + sideSetName);
+    p->set<std::string>("Side Coordinate Vector Name",coord_vec_name + "_" + sideSetName);
     p->set< RCP<IntrepidCubature> >("Cubature Side", cubatureSide);
     p->set< RCP<IntrepidBasis> >("Intrepid Basis Side", intrepidBasisSide);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name",sideSetName);
 
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
-    p->set<std::string>("Weighted Measure Name",     weighted_measure_name + " "+sideSetName_);
-    p->set<std::string>("Tangents Name",             tangents_name + " "+sideSetName_);
-    p->set<std::string>("Metric Name",               metric_name + " "+sideSetName_);
-    p->set<std::string>("Metric Determinant Name",   metric_det_name + " "+sideSetName_);
-    p->set<std::string>("BF Name",                   bf_name + " "+sideSetName_);
-    p->set<std::string>("Gradient BF Name",          grad_bf_name + " "+sideSetName_);
-    p->set<std::string>("Inverse Metric Name",       metric_inv_name + " "+sideSetName_);
+    p->set<std::string>("Weighted Measure Name",     weighted_measure_name + "_"+sideSetName_);
+    p->set<std::string>("Tangents Name",             tangents_name + "_"+sideSetName_);
+    p->set<std::string>("Metric Name",               metric_name + "_"+sideSetName_);
+    p->set<std::string>("Metric Determinant Name",   metric_det_name + "_"+sideSetName_);
+    p->set<std::string>("BF Name",                   bf_name + "_"+sideSetName_);
+    p->set<std::string>("Gradient BF Name",          grad_bf_name + "_"+sideSetName_);
+    p->set<std::string>("Inverse Metric Name",       metric_inv_name + "_"+sideSetName_);
     if (buildNormals) {
-      p->set<std::string>("Side Normal Name",normal_name + " " + sideSetName_);
+      p->set<std::string>("Side Normal Name",normal_name + "_" + sideSetName_);
       p->set<std::string>("Coordinate Vector Name",coord_vec_name);
     }
 
@@ -733,7 +733,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFCellToSideQPEvaluator(
     p->set<std::string>("Cell Variable Name", cell_dof_name);
     p->set<std::string>("Data Layout", layout);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set<std::string>("BF Name", "BF "+sideSetName);
+    p->set<std::string>("BF Name", "BF_"+sideSetName);
     p->set<std::string>("Side Set Name", sideSetName);
 
     // Output
@@ -792,7 +792,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFGradInterpolationSideEv
 
     // Input
     p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName_);
+    p->set<std::string>("Gradient BF Name", "Grad BF_"+sideSetName_);
     p->set<std::string> ("Side Set Name",sideSetName);
 
     // Output (assumes same Name as input)
@@ -819,7 +819,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFGradInterpolationSideEv
 
     // Input
     p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
+    p->set<std::string>("Gradient BF Name", "Grad BF_"+sideSetName);
     p->set<std::string> ("Side Set Name",sideSetName);
 
     // Output (assumes same Name as input)
@@ -865,7 +865,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationSideEvalua
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation Side "+dof_name));
     // Input
     p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("BF Name", "BF "+sideSetName);
+    p->set<std::string>("BF Name", "BF_"+sideSetName);
     p->set<std::string>("Side Set Name",sideSetName);
 
     // Output (assumes same Name as input)
@@ -964,7 +964,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecGradInterpolationSid
 
     // Input
     p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
+    p->set<std::string>("Gradient BF Name", "Grad BF_"+sideSetName);
     p->set<std::string> ("Side Set Name",sideSetName);
 
     // Output (assumes same Name as input)
@@ -1013,7 +1013,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecInterpolationSideEva
 
     // Input
     p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("BF Name", "BF "+sideSetName);
+    p->set<std::string>("BF Name", "BF_"+sideSetName);
     p->set<std::string>("Side Set Name",sideSetName);
 
     // Output (assumes same Name as input)
@@ -1065,9 +1065,9 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructP0InterpolationSideEvaluat
   p = Teuchos::rcp(new Teuchos::ParameterList("DOF Side Nodes to Side Interpolation "+dof_name));
 
   // Input
-  p->set<std::string>("BF Name", "BF "+sideSetName);
+  p->set<std::string>("BF Name", "BF_"+sideSetName);
   p->set<std::string>("Field Name", dof_name);
-  p->set<std::string>("Weighted Measure Name", "Weighted Measure "+sideSetName);
+  p->set<std::string>("Weighted Measure Name", "Weighted Measure_"+sideSetName);
   p->set<FieldLocation>("Field Location", loc);
   p->set<FieldRankType>("Field Rank Type", rank);
   p->set<std::string>("Side Set Name", sideSetName);

@@ -213,10 +213,10 @@ constructHydrologyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
   p = Teuchos::rcp(new Teuchos::ParameterList("Hydrology Residual Mass Eqn"));
 
   //Input
-  p->set<std::string> ("BF Name", Albany::bf_name + " " + basalSideName);
-  p->set<std::string> ("Gradient BF Name", Albany::grad_bf_name + " " + basalSideName);
-  p->set<std::string> ("Weighted Measure Name", Albany::weighted_measure_name + " " + basalSideName);
-  p->set<std::string> ("Metric Name", Albany::metric_name + " " + basalSideName);
+  p->set<std::string> ("BF Name", bname(Albany::bf_name));
+  p->set<std::string> ("Gradient BF Name", bname(Albany::grad_bf_name));
+  p->set<std::string> ("Weighted Measure Name", bname(Albany::weighted_measure_name));
+  p->set<std::string> ("Metric Name", bname(Albany::metric_name));
   p->set<std::string> ("Water Discharge Variable Name", bname(water_discharge_name));
   p->set<std::string> ("Till Water Storage Dot Variable Name", bname(till_water_storage_dot_name));
   p->set<std::string> ("Water Thickness Dot Variable Name", bname(water_thickness_dot_name));
