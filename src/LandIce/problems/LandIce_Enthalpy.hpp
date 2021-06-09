@@ -179,7 +179,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
         if(thisFieldList.get<std::string>("Field Name") ==  stateName){
           unsigned int numLayers = thisFieldList.get<int>("Number Of Layers");
           auto sns = dl_basal->node_vector;
-          auto dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,VecDim, LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2),2, numLayers));
+          auto dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,Node,VecDim, LayerDim>(sns->extent(0),sns->extent(1),2, numLayers));
           stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_temp, basalEBName, true, &entity);
         }
       }
@@ -205,7 +205,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
         if(thisFieldList.get<std::string>("Field Name") ==  stateName){
           unsigned int numLayers = thisFieldList.get<int>("Number Of Layers");
           auto sns = dl_basal->node_vector;
-          auto dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->extent(0),sns->extent(1),sns->extent(2), numLayers));
+          auto dl_temp = Teuchos::rcp(new PHX::MDALayout<Side,Node,LayerDim>(sns->extent(0),sns->extent(1), numLayers));
           stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_temp, basalEBName, true, &entity);
         }
       }
