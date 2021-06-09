@@ -267,7 +267,7 @@ protected:
   std::string flow_factor_name;
   std::string stiffening_factor_name;
   std::string effective_pressure_name;
-  std::string mu_friction_name;
+  std::string basal_friction_name;
   std::string sliding_velocity_name;
   std::string vertically_averaged_velocity_name;
 
@@ -1573,7 +1573,7 @@ constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
     paramList->set<Teuchos::ParameterList>("LandIce Physical Parameters List", params->sublist("LandIce Physical Parameters"));
     paramList->set<Teuchos::RCP<std::map<std::string, int>>> ("Extruded Params Levels", Teuchos::rcpFromRef(extruded_params_levels));
     paramList->set<std::string>("Coordinate Vector Side Variable Name", Albany::coord_vec_name + " " + basalSideName);
-    paramList->set<std::string>("Basal Friction Coefficient Name", mu_friction_name);
+    paramList->set<std::string>("Basal Friction Coefficient Name", basal_friction_name);
     paramList->set<std::string>("Stiffening Factor Gradient Name",stiffening_factor_name + "_" + basalSideName + " Gradient");
     paramList->set<std::string>("Stiffening Factor Name", stiffening_factor_name + "_" + basalSideName);
     paramList->set<std::string>("Thickness Side Variable Name",ice_thickness_name + "_" + basalSideName);
