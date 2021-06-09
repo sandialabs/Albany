@@ -498,7 +498,7 @@ Albany::StateManager::registerSideSetStateVariable(
   } else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Node>())  // Nodal data
   {
     mfe_type = StateStruct::NodalData;                  // One value per node
-  } else if (dl->rank() == 1 && dl->name(1) == PHX::print<Side>())  // Element data
+  } else if (dl->rank() == 1 && dl->name(0) == PHX::print<Side>())  // Element data
   {
     mfe_type = StateStruct::ElemData;  // One value per element
   } else if (dl->rank() > 1) {

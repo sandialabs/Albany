@@ -135,38 +135,30 @@ KOKKOS_INLINE_FUNCTION
 void DOFCellToSideBase<EvalT, Traits, ScalarT>::
 operator() (const CellToSide_Tag&, const int& sideSet_idx) const {
 
+  // Get the local data of side and cell
+  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int side = sideSet.side_local_id(sideSet_idx);
+
   switch (layout)
   {
     case CELL_SCALAR:
-      // Get the local data of cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
       val_side(sideSet_idx) = val_cell(cell);
       break;
-    case CELL_VECTOR:
-      // Get the local data of cell
-      const int cell = sideSet.elem_LID(sideSet_idx);      
+    case CELL_VECTOR:    
       for (int i=0; i<dimsArray[1]; ++i)
         val_side(sideSet_idx,i) = val_cell(cell,i);
       break;
     case CELL_TENSOR:
-      // Get the local data of cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
       for (int i=0; i<dimsArray[1]; ++i)
         for (int j=0; j<dimsArray[2]; ++j)
           val_side(sideSet_idx,i,j) = val_cell(cell,i,j);
       break;
     case NODE_SCALAR:
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
       for (int node=0; node<dimsArray[1]; ++node) {
         val_side(sideSet_idx,node) = val_cell(cell,sideNodes(side,node));
       }
       break;
     case NODE_VECTOR:
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
       for (int node=0; node<dimsArray[1]; ++node) {
         for (int i=0; i<dimsArray[2]; ++i) {
           val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes(side,node),i);
@@ -174,18 +166,12 @@ operator() (const CellToSide_Tag&, const int& sideSet_idx) const {
       }
       break;
     case NODE_TENSOR:
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
       for (int node=0; node<dimsArray[1]; ++node)
         for (int i=0; i<dimsArray[2]; ++i)
           for (int j=0; j<dimsArray[3]; ++j)
             val_side(sideSet_idx,node,i,j) = val_cell(cell,sideNodes(side,node),i,j);
       break;
     case VERTEX_VECTOR:
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
       for (int node=0; node<dimsArray[1]; ++node) {
         for (int i=0; i<dimsArray[2]; ++i) {
           val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes(side,node),i);

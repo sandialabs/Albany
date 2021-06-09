@@ -52,9 +52,8 @@ private:
   PHX::MDField<const SourceScalarT> sourceField;
   PHX::MDField<const TargetScalarT> targetField;
 
-  // TODO: restore layout template arguments when removing old sideset layout
-  PHX::MDField<const MeshScalarT>   metric;      // Side, QuadPoint, Dim, Dim
-  PHX::MDField<const MeshScalarT>   w_measure;   // Side, QuadPoint
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>   metric;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint>   w_measure;
 
   size_t diffDims;
   Kokkos::View<ScalarT*,  PHX::Device> diff_1;

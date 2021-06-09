@@ -48,11 +48,10 @@ private:
 
   using xyST = typename Albany::StrongestScalarType<MeshScalarT,ThicknessST>::type;
 
-  // TODO: restore layout template arguments when removing old sideset layout
-  PHX::MDField<const ScalarT>              avg_vel;     //[m yr^{-1}]; Side, Node, Dim
-  PHX::MDField<const ThicknessST>          thickness;   //[km]; Side, Node
-  PHX::MDField<const ThicknessST>          bed;         //[km]; Side, Node
-  PHX::MDField<const MeshScalarT>          coords;      //[km]; Side, Node, Dim
+  PHX::MDField<const ScalarT,Side,Node,Dim>         avg_vel;     //[m yr^{-1}]
+  PHX::MDField<const ThicknessST,Side,Node>         thickness;   //[km]
+  PHX::MDField<const ThicknessST,Side,Node>         bed;         //[km]
+  PHX::MDField<const MeshScalarT,Side,Node,Dim>     coords;      //[km]
 
   Kokkos::DynRankView<ThicknessST, PHX::Device>     gl_func,H;
   Kokkos::DynRankView<xyST, PHX::Device>            x,y;

@@ -81,7 +81,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = "Local Response SMB Mismatch";
   std::string global_response_name = "Global SMB Mismatch";
-  int worksetSize = dl_basal->qp_scalar->extent(0);
+  int worksetSize = dl->qp_scalar->extent(0);
   int responseSize = 1;
   auto local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
   auto global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));

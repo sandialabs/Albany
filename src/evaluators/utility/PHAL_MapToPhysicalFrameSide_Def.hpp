@@ -54,7 +54,6 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
   cubature->getCubature(ref_cub_points, ref_weights);
 
   // Index of the vertices on the sides in the numeration of the cell
-  Teuchos::RCP<shards::CellTopology> cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
   for (int side=0; side<numSides; ++side)
   {
     // Since sides may be different (and we don't know on which local side this side set is), we build one basis per side.

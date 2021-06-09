@@ -65,7 +65,6 @@ private:
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
   // Output:
-  // TODO: restore layout template arguments when removing old sideset layout
   //! Basis Functions and other quantities at quadrature points
   PHX::MDField<MeshScalarT>                               metric_det;
   PHX::MDField<MeshScalarT>                               tangents;
@@ -74,7 +73,7 @@ private:
   PHX::MDField<MeshScalarT>                               inv_metric;
   PHX::MDField<RealType>                                  BF;
   PHX::MDField<MeshScalarT>                               GradBF;
-  PHX::MDField<MeshScalarT>                               normals;    // Side, QuadPoint, Dim
+  PHX::MDField<MeshScalarT,Side,QuadPoint,Dim>            normals;
 
   int currentSide;
 

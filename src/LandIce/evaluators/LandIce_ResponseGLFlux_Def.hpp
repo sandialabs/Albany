@@ -67,7 +67,7 @@ ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = "Local Response GL Flux";
   std::string global_response_name = "Global Response GL Flux";
-  int worksetSize = dl_basal->node_scalar->extent(0);
+  int worksetSize = dl->node_scalar->extent(0);
   int responseSize = 1;
   auto local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
   auto global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));

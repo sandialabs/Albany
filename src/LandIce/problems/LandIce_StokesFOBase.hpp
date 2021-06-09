@@ -492,20 +492,20 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // Get data layout
       if (rank == FRT::Scalar) {
         state_dl = loc == FL::Node
-                 ? ss_dl->node_scalar)
-                 : ss_dl->cell_scalar2);
+                 ? ss_dl->node_scalar
+                 : ss_dl->cell_scalar2;
       } else if (rank == FRT::Vector) {
         state_dl = loc == FL::Node
-                 ? ss_dl->node_vector)
-                 : ss_dl->cell_vector);
+                 ? ss_dl->node_vector
+                 : ss_dl->cell_vector;
       } else if (rank == FRT::Gradient) {
         state_dl = loc == FL::Node
-                 ? ss_dl->node_gradient)
-                 : ss_dl->cell_gradient);
+                 ? ss_dl->node_gradient
+                 : ss_dl->cell_gradient;
       } else if (rank == FRT::Tensor) {
         state_dl = loc == FL::Node
-                 ? ss_dl->node_tensor)
-                 : ss_dl->cell_tensor);
+                 ? ss_dl->node_tensor
+                 : ss_dl->cell_tensor;
       }
 
       // If layered, extend the layout

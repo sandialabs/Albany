@@ -40,12 +40,11 @@ private:
   std::string sideSetName;
 
   // Input:
-  // TODO: restore layout template arguments when removing old sideset layout
   //! Values at nodes
-  PHX::MDField<const ScalarT> val_node;      // Side, Node, Dim
+  PHX::MDField<const ScalarT,Side,Node,Dim> val_node;
   //! Basis Functions and side tangents
-  PHX::MDField<const MeshScalarT> gradBF;    // Side, Node, QuadPoint, Dim
-  PHX::MDField<const MeshScalarT>  tangents; // Side, QuadPoint, Dim, Dim
+  PHX::MDField<const MeshScalarT,Side,Node,QuadPoint,Dim> gradBF;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>  tangents;
 
   // Output:
   //! Values at quadrature points

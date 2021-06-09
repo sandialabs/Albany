@@ -131,10 +131,10 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   sidesetWorksetSize = singleWorksetSizeAllocation ? sidesetWorksetSize : worksetSize*numSides;
 
   // Solution Fields
-  node_scalar  = rcp(new MDALayout<Side,Node>(worksetSize,numNodes));
-  qp_scalar    = rcp(new MDALayout<Side,QuadPoint>(worksetSize,numQPts));
-  cell_scalar  = rcp(new MDALayout<Side,QuadPoint>(worksetSize,1));
-  cell_scalar2 = rcp(new MDALayout<Side>(worksetSize));
+  node_scalar  = rcp(new MDALayout<Side,Node>(sidesetWorksetSize,numNodes));
+  qp_scalar    = rcp(new MDALayout<Side,QuadPoint>(sidesetWorksetSize,numQPts));
+  cell_scalar  = rcp(new MDALayout<Side,QuadPoint>(sidesetWorksetSize,1));
+  cell_scalar2 = rcp(new MDALayout<Side>(sidesetWorksetSize));
 
   node_vector = rcp(new MDALayout<Side,Node,Dim>(sidesetWorksetSize,numNodes,vecDim));
   qp_vector   = rcp(new MDALayout<Side,QuadPoint,Dim>(sidesetWorksetSize,numQPts,vecDim));
@@ -165,9 +165,9 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   qp_tensor4    = rcp(new MDALayout<Side,QuadPoint,Dim,Dim,Dim,Dim>(sidesetWorksetSize,numQPts,numSideDim,numSideDim,numSideDim,numSideDim));
   cell_tensor4  = rcp(new MDALayout<Side,Dim,Dim,Dim,Dim>(sidesetWorksetSize,numSideDim,numSideDim,numSideDim,numSideDim));
 
-  node_node_scalar = rcp(new MDALayout<Node,Side,Dim>(sidesetWorksetSize,1));
-  node_node_vector = rcp(new MDALayout<Node,Side,Dim>(sidesetWorksetSize,vecDim));
-  node_node_tensor = rcp(new MDALayout<Node,Side,Dim,Dim>(sidesetWorksetSize,numSideDim,numSideDim));
+  node_node_scalar = rcp(new MDALayout<Node,Side,Dim>(worksetSize,numSides,1));
+  node_node_vector = rcp(new MDALayout<Node,Side,Dim>(worksetSize,numSides,vecDim));
+  node_node_tensor = rcp(new MDALayout<Node,Side,Dim,Dim>(worksetSize,numSides,numSideDim,numSideDim));
 
   // Coordinates: 3vector is for shells 2D topology 3 coordinates
   // Note: vertices coordinates always have the dimension of the ambient space. In fact, you need full n-dim coordinates

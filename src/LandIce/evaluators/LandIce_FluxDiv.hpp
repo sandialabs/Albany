@@ -50,16 +50,15 @@ private:
   using GradThicknessScalarT = typename Albany::StrongestScalarType<ThicknessScalarT,MeshScalarT>::type;
 
   // Input:
-  // TODO: restore layout template arguments when removing old sideset layout
-  PHX::MDField<const ScalarT>               field;
-  PHX::MDField<const ScalarT>               averaged_velocity;     // Side, QuadPoint, VecDim
-  PHX::MDField<const ScalarT>               div_averaged_velocity; // Side, QuadPoint
-  PHX::MDField<const ThicknessScalarT>      thickness;             // Side, QuadPoint
-  PHX::MDField<const GradThicknessScalarT>  grad_thickness;        // Side, QuadPoint, Dim
-  PHX::MDField<const MeshScalarT>           side_tangents;         // Side, QuadPoint, Dim, Dim
+  PHX::MDField<const ScalarT>                                 field;
+  PHX::MDField<const ScalarT,Side,QuadPoint,VecDim>           averaged_velocity;
+  PHX::MDField<const ScalarT,Side,QuadPoint>                  div_averaged_velocity;
+  PHX::MDField<const ThicknessScalarT,Side,QuadPoint>         thickness;
+  PHX::MDField<const GradThicknessScalarT,Side,QuadPoint,Dim> grad_thickness;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>      side_tangents;
 
   // Output:
-  PHX::MDField<ScalarT>                flux_div;              // Side, QuadPoint
+  PHX::MDField<ScalarT,Side,QuadPoint>                        flux_div;
 
   std::string sideSetName;
   unsigned int numSideQPs, numSideDims;

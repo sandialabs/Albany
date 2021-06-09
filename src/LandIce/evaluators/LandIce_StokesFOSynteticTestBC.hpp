@@ -54,12 +54,11 @@ private:
   };
 
   // Input:
-  // TODO: restore layout template arguments when removing old sideset layout
-  PHX::MDField<const ScalarT>     u;            // Side, QuadPoint, VecDim
-  PHX::MDField<const MeshScalarT> qp_coords;    // Side, QuadPoint, Dim
-  PHX::MDField<const MeshScalarT> side_normals; // Side, QuadPoint, Dim
-  PHX::MDField<const RealType>    BF;           // Side, Node, QuadPoint
-  PHX::MDField<const MeshScalarT> w_measure;    // Side, QuadPoint
+  PHX::MDField<const ScalarT,Side,QuadPoint,VecDim>  u;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim> qp_coords;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim> side_normals;
+  PHX::MDField<const RealType,Side,Node,QuadPoint>   BF;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint>     w_measure;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> residual;
