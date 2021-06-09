@@ -803,6 +803,33 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFGradInterpolationSideEv
 
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
+EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFGradInterpolationSideEvaluator(
+       const std::string& dof_name,
+       const std::string& sideSetName,
+       const std::string& dof_grad_name) const
+{
+    TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
+        "Error! The layout structure for side set " << sideSetName << " was not found.\n");
+
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation Side "+dof_name));
+
+    // Input
+    p->set<std::string>("Variable Name", dof_name);
+    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
+    p->set<std::string> ("Side Set Name",sideSetName);
+
+    // Output (assumes same Name as input)
+    p->set<std::string>("Gradient Variable Name", dof_grad_name);
+
+    return rcp(new PHAL::DOFGradInterpolationSideBase<EvalT,Traits,ScalarType>(*p,dl->side_layouts.at(sideSetName)));
+}
+
+template<typename EvalT, typename Traits, typename ScalarType>
+Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFInterpolationEvaluator(
     const std::string& dof_name, int offsetToFirstDOF) const
 {
