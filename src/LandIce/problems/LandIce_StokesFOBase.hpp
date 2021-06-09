@@ -794,8 +794,12 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       }
 
       if (needs[IReq::GRAD_QP_VAL] && is_available_2d(FL::Node)) {
+        // Put "_gradient" before the ss name, so you can save the field via input file,
+        // since side states field names are BLAH+ss_name, where BLAH is the name
+        // specified in the input file.
+        const std::string& grad_name_side = fname + "_gradient_" + ss_name;
         if (rank==FRT::Scalar) {
-          ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name);
+          ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name, grad_name_side);
         } else if (rank==FRT::Vector) {
           ev = utils.constructDOFVecGradInterpolationSideEvaluator (fname_side, ss_name);
         } else {
@@ -1577,7 +1581,7 @@ constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
     paramList->set<Teuchos::RCP<std::map<std::string, int>>> ("Extruded Params Levels", Teuchos::rcpFromRef(extruded_params_levels));
     paramList->set<std::string>("Coordinate Vector Side Variable Name", Albany::coord_vec_name + " " + basalSideName);
     paramList->set<std::string>("Basal Friction Coefficient Name", basal_friction_name);
-    paramList->set<std::string>("Stiffening Factor Gradient Name",stiffening_factor_name + "_" + basalSideName + " Gradient");
+    paramList->set<std::string>("Stiffening Factor Gradient Name",stiffening_factor_name + "_gradient_" + basalSideName);
     paramList->set<std::string>("Stiffening Factor Name", stiffening_factor_name + "_" + basalSideName);
     paramList->set<std::string>("Thickness Side Variable Name",ice_thickness_name + "_" + basalSideName);
     paramList->set<std::string>("Bed Topography Side Variable Name",bed_topography_name + "_" + basalSideName);

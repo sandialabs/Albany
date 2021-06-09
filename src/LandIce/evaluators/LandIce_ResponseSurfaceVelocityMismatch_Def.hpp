@@ -81,7 +81,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
                                   "Error! Basal side data layout not found.\n");
       Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(ssName);
 
-      const std::string& grad_beta_name       = paramList->get<std::string>("Basal Friction Coefficient Name") + "_" + ssName + " Gradient";
+      const std::string& grad_beta_name       = paramList->get<std::string>("Basal Friction Coefficient Name") + "_gradient_" + ssName;
       const std::string& w_measure_basal_name = Albany::weighted_measure_name + " " + ssName;
       const std::string& metric_basal_name    = Albany::metric_name + " " + ssName;
 

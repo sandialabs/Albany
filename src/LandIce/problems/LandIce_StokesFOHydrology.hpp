@@ -116,7 +116,7 @@ protected:
   }
 
   std::string grad(const std::string& name) const {
-    return name + " Gradient";
+    return name + "_gradient";
   }
 
   std::string water_pressure_name;
@@ -335,11 +335,12 @@ constructHydrologyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
   //--- Water Discharge ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Hydrology: Water Discharge"));
   add_dep(bname(water_discharge_name),bname(water_thickness_name));
-  add_dep(bname(water_discharge_name),bname(bname(hydropotential_name)));
+  add_dep(bname(water_discharge_name),bname(hydropotential_name));
 
   // Input
   p->set<std::string> ("Water Thickness Variable Name",bname(water_thickness_name));
-  p->set<std::string> ("Hydraulic Potential Gradient Variable Name", grad(bname(hydropotential_name)));
+  p->set<std::string> ("Hydraulic Potential Gradient Variable Name", bname(grad(hydropotential_name)));
+  p->set<std::string> ("Hydraulic Potential Gradient Norm Variable Name", bname(grad(hydropotential_name)+"_norm"));
   p->set<std::string> ("Side Set Name", basalSideName);
   p->set<Teuchos::ParameterList*> ("LandIce Hydrology",&hy_pl);
   p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&phys_pl);
@@ -423,6 +424,21 @@ constructHydrologyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
   fm0.template registerEvaluator<EvalT>(ev);
 
   // =============== Intermediate variables =============== //
+
+  //--- Norm of hydropotential gradient --- //
+  p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Hydropotential Norm"));
+  add_dep(bname(sliding_velocity_name),bname(velocity_name));
+
+  // Input
+  p->set<std::string>("Field Name",bname(grad(hydropotential_name)));
+  p->set<std::string>("Side Set Name", basalSideName);
+  p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Field Norm"));
+
+  // Output
+  p->set<std::string>("Field Norm Name",bname(grad(hydropotential_name)+"_norm"));
+  p->set<std::string>("Field Layout","Cell Side Node Vector");
+  ev = Teuchos::rcp(new PHAL::FieldFrobeniusNorm<EvalT,PHAL::AlbanyTraits>(*p,dl_side));
+  fm0.template registerEvaluator<EvalT>(ev);
 
   //--- Sliding velocity ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Velocity Norm"));
