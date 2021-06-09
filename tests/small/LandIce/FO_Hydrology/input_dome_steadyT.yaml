@@ -3,7 +3,7 @@
 ANONYMOUS:
   Build Type: Tpetra
   Debug Output:
-    Write Jacobian to MatrixMarket: -1
+    Write Jacobian to MatrixMarket: 0
     Write Solution to MatrixMarket: 0
     Write Residual to MatrixMarket: 0
     Report Timers: false
@@ -40,9 +40,10 @@ ANONYMOUS:
         Side Set Name: basalside
         Basal Friction Coefficient:
           Type: Power Law
+          Mu Type: Constant
+          Effective Pressure Type: Field
           Power Exponent: 0.33
-          Power Law Coefficient: 1.0
-          Use log scalar parameters: false
+          Mu Coefficient: 1.0
       BC 1:
         Type: Lateral
         Cubature Degree: 3
