@@ -539,8 +539,11 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         // Only save fields in the residual FM (and not in state/response FM)
         if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
           // An output: save it.
-          p->set<bool>("Nodal State", loc==FL::Node);
-          p->set<Teuchos::RCP<shards::CellTopology>>("Cell Type", cellType);
+          // SaveSideSetStateField takes the layout from dl, using FRT and FL to determine it.
+          // It does so, in order to do J*v if v is a Gradient (covariant), where J is the 2x3
+          // matrix of the tangent vectors
+          p->set("Field Rank",rank);
+          p->set("Field Location",loc);
           ev = Teuchos::rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,ss_dl));
           fm0.template registerEvaluator<EvalT>(ev);
 

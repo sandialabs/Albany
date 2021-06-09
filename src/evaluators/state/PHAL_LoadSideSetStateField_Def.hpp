@@ -4,14 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "PHAL_LoadSideSetStateField.hpp"
+
+#include "Albany_STKDiscretization.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Shards_CellTopology.hpp"
-
-#include "PHAL_LoadSideSetStateField.hpp"
-
-#include "Albany_AbstractDiscretization.hpp"
 
 namespace PHAL
 {
@@ -28,6 +28,24 @@ LoadSideSetStateFieldBase (const Teuchos::ParameterList& p)
   field  = PHX::MDField<ScalarType>(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
 
   this->addEvaluatedField (field);
+
+  const auto& phx_dl = field.fieldTag().dataLayout();
+  TEUCHOS_TEST_FOR_EXCEPTION(phx_dl.name(0)!=PHX::print<Side>(), std::runtime_error,
+      "Error! To load a side-set state, the first tag of the layout MUST be 'Side'.\n");
+
+  const auto rank = phx_dl.rank();
+  nodalState = rank>1 ? phx_dl.name(1)==PHX::print<Node>() : false;
+  if (nodalState) {
+    TEUCHOS_TEST_FOR_EXCEPTION (rank!=2 && rank!=3, std::runtime_error,
+        "Error! Only Scalar and Vector field supported for nodal states.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(rank>2 && phx_dl.name(2)!=PHX::print<Dim>(), std::runtime_error,
+        "Error! To load a side-set nodal state, the third tag (if present) MUST be 'Dim'.\n")
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (rank!=1 && rank!=2, std::runtime_error,
+        "Error! Only Scalar and Vector field supported for elem states.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(rank>1 && phx_dl.name(1)!=PHX::print<Dim>(), std::runtime_error,
+        "Error! To save a side-set elem state, the second tag (if present) MUST be 'Dim'.\n");
+  }
 
   this->setName ("Load Side Set Field " + fieldName + " from Side Set State " + stateName 
     + PHX::print<EvalT>());
@@ -51,137 +69,177 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
-                              "Error! The mesh does not store any side set.\n");
+  if (this->nodalState)
+    loadNodeState(workset);
+  else
+    loadElemState(workset);
+}
 
-  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return; // Side set not present in this workset
+template<typename EvalT, typename Traits, typename ScalarType>
+void LoadSideSetStateFieldBase<EvalT, Traits, ScalarType>::
+loadNodeState(typename Traits::EvalData workset)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
+    "Error! The mesh does not store any side set.\n");
+
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end())
+    return; // Side set not present in this workset
 
   TEUCHOS_TEST_FOR_EXCEPTION (workset.disc==Teuchos::null, std::logic_error,
-                              "Error! The workset must store a valid discretization pointer.\n");
+    "Error! The workset must store a valid discretization pointer.\n");
 
-  const Albany::AbstractDiscretization::SideSetDiscretizationsType& ssDiscs = workset.disc->getSideSetDiscretizations();
+  const auto& ssDiscs = workset.disc->getSideSetDiscretizations();
 
   TEUCHOS_TEST_FOR_EXCEPTION (ssDiscs.size()==0, std::logic_error,
-                              "Error! The discretization must store side set discretizations.\n");
+      "Error! The discretization must store side set discretizations.\n");
 
   TEUCHOS_TEST_FOR_EXCEPTION (ssDiscs.find(sideSetName)==ssDiscs.end(), std::logic_error,
-                              "Error! No discretization found for side set " << sideSetName << ".\n");
+      "Error! No discretization found for side set " << sideSetName << ".\n");
 
-  Teuchos::RCP<Albany::AbstractDiscretization> ss_disc = ssDiscs.at(sideSetName);
+  const auto& ss_disc = ssDiscs.at(sideSetName);
 
   TEUCHOS_TEST_FOR_EXCEPTION (ss_disc==Teuchos::null, std::logic_error,
-                              "Error! Side discretization is invalid for side set " << sideSetName << ".\n");
+      "Error! Side discretization is invalid for side set " << sideSetName << ".\n");
 
-  const std::map<std::string,std::map<GO,GO> >& ss_maps = workset.disc->getSideToSideSetCellMap();
+  // Get side disc STK bulk/meta data
+  const auto& metaData = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(ss_disc)->getSTKMetaData();
+  const auto& bulkData = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(ss_disc)->getSTKBulkData();
 
-  TEUCHOS_TEST_FOR_EXCEPTION (ss_maps.find(sideSetName)==ss_maps.end(), std::logic_error,
-                              "Error! Something is off: the mesh has side discretization but no sideId-to-sideSetElemId map.\n");
-
-  const std::map<GO,GO>& ss_map = ss_maps.at(sideSetName);
-
-  // Get states from STK mesh
-  Albany::StateArrays& state_arrays = ss_disc->getStateArrays();
-  Albany::StateArrayVec& esa = state_arrays.elemStateArrays;
-  Albany::WsLIDList& elemGIDws3D = workset.disc->getElemGIDws();
-  Albany::WsLIDList& elemGIDws2D = ss_disc->getElemGIDws();
-
-  // Get side_node->side_set_cell_node map from discretization
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getSideNodeNumerationMap().find(sideSetName)==workset.disc->getSideNodeNumerationMap().end(),
-                              std::logic_error, "Error! Sideset " << sideSetName << " has no sideNodeNumeration map.\n");
-  const std::map<GO,std::vector<int>>& sideNodeNumerationMap = workset.disc->getSideNodeNumerationMap().at(sideSetName);
+  // Get local node numeration map from the disc
+  const auto& ssNodeNumerationMaps = workset.disc->getSideNodeNumerationMap();
+  TEUCHOS_TEST_FOR_EXCEPTION (ssNodeNumerationMaps.find(sideSetName)==ssNodeNumerationMaps.end(),
+      std::logic_error, "Error! Sideset " << sideSetName << " has no sideNodeNumeration map.\n");
 
   // Establishing the kind of field layout
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
-  int size = dims.size();
-  // Check the tag of the first extent after (side,) to determine if field is nodal
-  const std::string& leading_field_tag = size>1 ? field.fieldTag().dataLayout().name(1) : "";
-  TEUCHOS_TEST_FOR_EXCEPTION (size>1 && leading_field_tag!=PHX::print<Node>() && leading_field_tag!=PHX::print<Dim>() && leading_field_tag!=PHX::print<VecDim>(), std::logic_error,
-                              "Error! Invalid field layout in LoadSideSetStateField.\n");
+
+  // Get the stk field
+  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
+  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
+  SFT* scalar_field;
+  VFT* vector_field;
+  
+  int numNodes = dims[1];
+  if (dims.size()==2) {
+    scalar_field = metaData.template get_field<SFT>(stk::topology::NODE_RANK,stateName);
+    TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==nullptr, std::runtime_error,
+        "Error! Field dimensions suggest a scalar field, but the stk scalar field ptr is null.\n");
+  } else {
+    vector_field = metaData.template get_field<VFT>(stk::topology::NODE_RANK,stateName);
+    TEUCHOS_TEST_FOR_EXCEPTION (vector_field==nullptr, std::runtime_error,
+        "Error! Field dimensions suggest a vector field, but the stk vector field ptr is null.\n");
+  }
 
   // Loop on the sides of this sideSet that are in this workset
-  sideSet = workset.sideSetViews->at(sideSetName);
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
-    // Get the data that corresponds to the side
-    const int elem_GID = sideSet.elem_GID(sideSet_idx);
+  auto sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
+    // Get the side GID
     const int side_GID = sideSet.side_GID(sideSet_idx);
 
-    // Not sure if this is even possible, but just for debug pourposes
-    TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ elem_GID ].ws != (int) workset.wsIndex, std::logic_error,
-                                "Error! This workset has a side that belongs to an element not in the workset.\n");
+    // Get the lid ordering map
+    // Recall: map[i] = j means that the i-th node in the 3d side is the j-th node in the 2d cell
+    const auto& node_map = ssNodeNumerationMaps.at(sideSetName).at(side_GID);
 
-    // We know the side ID, so we can fetch two things:
-    //    1) the 2D-wsIndex where the 2D element lies
-    //    2) the LID of the 2D element
+    // Get the cell in the 2d mesh
+    const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, side_GID+1);
+    const auto nodes2d = bulkData.begin_nodes(cell2d);
 
-    TEUCHOS_TEST_FOR_EXCEPTION (ss_map.find(side_GID)==ss_map.end(), std::logic_error,
-                                "Error! The sideId-to-sideSetElemId map does not store this side GID. Weird, should never happen.\n");
+    for (int inode=0; inode<numNodes; ++inode) {
+      const double* data;
+      switch (dims.size()) {
+        case 2:
+          data = stk::mesh::field_data(*scalar_field,nodes2d[node_map[inode]]);
+          field(sideSet_idx,inode) = *data;
+          break;
+        case 3:
+          data = stk::mesh::field_data(*vector_field,nodes2d[node_map[inode]]);
+          for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
+            field(sideSet_idx,inode,idim) = data[idim];
+          }
+          break;
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+              "Error! Unsupported field dimension. However, you should have gotten an error before!\n");
+      }
+    }
+  }
+}
 
-    int ss_cell_GID = ss_map.at(side_GID);
-    int wsIndex2D = elemGIDws2D[ss_cell_GID].ws;
-    unsigned int ss_cell = elemGIDws2D[ss_cell_GID].LID;
+template<typename EvalT, typename Traits, typename ScalarType>
+void LoadSideSetStateFieldBase<EvalT, Traits, ScalarType>::
+loadElemState(typename Traits::EvalData workset)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
+    "Error! The mesh does not store any side set.\n");
 
-    // Then, after a safety check, we extract the StateArray of the desired state in the right 2D-ws
-    TEUCHOS_TEST_FOR_EXCEPTION (esa[wsIndex2D].find(stateName) == esa[wsIndex2D].end(), std::logic_error,
-                                "Error! Cannot locate " << stateName << " in PHAL_LoadSideSetStateField_Def.\n");
-    Albany::MDArray state = esa[wsIndex2D].at(stateName);
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end())
+    return; // Side set not present in this workset
 
-    const std::vector<int>& nodeMap = sideNodeNumerationMap.at(side_GID);
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc==Teuchos::null, std::logic_error,
+    "Error! The workset must store a valid discretization pointer.\n");
 
-    // Now we have the two arrays: 3D and 2D. We need to take the 2D one
-    // and put it at the right place in the 3D one
+  const auto& ssDiscs = workset.disc->getSideSetDiscretizations();
 
-    switch (size)
-    {
+  TEUCHOS_TEST_FOR_EXCEPTION (ssDiscs.size()==0, std::logic_error,
+      "Error! The discretization must store side set discretizations.\n");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (ssDiscs.find(sideSetName)==ssDiscs.end(), std::logic_error,
+      "Error! No discretization found for side set " << sideSetName << ".\n");
+
+  const auto& ss_disc = ssDiscs.at(sideSetName);
+
+  TEUCHOS_TEST_FOR_EXCEPTION (ss_disc==Teuchos::null, std::logic_error,
+      "Error! Side discretization is invalid for side set " << sideSetName << ".\n");
+
+  // Get side disc STK bulk/meta data
+  const auto& metaData = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(ss_disc)->getSTKMetaData();
+  const auto& bulkData = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(ss_disc)->getSTKBulkData();
+
+  // Establishing the kind of field layout
+  std::vector<PHX::DataLayout::size_type> dims;
+  field.dimensions(dims);
+
+  // Get the stk field
+  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
+  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
+  SFT* scalar_field;
+  VFT* vector_field;
+  
+  if (dims.size()==1) {
+    scalar_field = metaData.template get_field<SFT>(stk::topology::ELEM_RANK,stateName);
+    TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==nullptr, std::runtime_error,
+        "Error! Field dimensions suggest a scalar field, but the stk scalar field ptr is null.\n");
+  } else {
+    vector_field = metaData.template get_field<VFT>(stk::topology::ELEM_RANK,stateName);
+    TEUCHOS_TEST_FOR_EXCEPTION (vector_field==nullptr, std::runtime_error,
+        "Error! Field dimensions suggest a vector field, but the stk vector field ptr is null.\n");
+  }
+
+  // Loop on the sides of this sideSet that are in this workset
+  auto sideSet = workset.sideSetViews->at(sideSetName);
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
+    // Get the side GID
+    const int side_GID = sideSet.side_GID(sideSet_idx);
+
+    // Get the cell in the 2d mesh
+    const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, side_GID+1);
+
+    const double* data;
+    switch (dims.size()) {
       case 1:
-        // side set cell scalar
-        field(sideSet_idx) = state(ss_cell);
+        data = stk::mesh::field_data(*scalar_field,cell2d);
+        field(sideSet_idx) = *data;
         break;
-
       case 2:
-        if (leading_field_tag==PHX::print<Node>())
-        {
-          // side set node scalar
-          for (unsigned int node=0; node<dims[1]; ++node)
-          {
-            field(sideSet_idx,node) = state((int) ss_cell,nodeMap[node]);
-          }
-        }
-        else
-        {
-          // side set cell vector/gradient
-          for (unsigned int idim=0; idim<dims[1]; ++idim)
-          {
-            field(sideSet_idx,idim) = state(ss_cell,idim);
-          }
+        data = stk::mesh::field_data(*vector_field,cell2d);
+        for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
+          field(sideSet_idx,idim) = data[idim];
         }
         break;
-
-      case 3:
-        if (leading_field_tag==PHX::print<Node>())
-        {
-          // side set node vector/gradient
-          for (unsigned int node=0; node<dims[1]; ++node)
-          {
-            for (unsigned int dim=0; dim<dims[2]; ++dim)
-              field(sideSet_idx,node,dim) = state((int) ss_cell, nodeMap[node], (int) dim);
-          }
-        }
-        else
-        {
-          // side set cell tensor
-          for (unsigned int idim=0; idim<dims[1]; ++idim)
-          {
-            for (unsigned int jdim=0; jdim<dims[2]; ++jdim)
-              field(sideSet_idx,idim,jdim) = state(ss_cell,idim,jdim);
-          }
-        }
-        break;
-
       default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                                    "Error! Unexpected array dimensions in LoadSideSetStateField: " << size << ".\n");
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+            "Error! Unsupported field dimension. However, you should have gotten an error before!\n");
     }
   }
 }

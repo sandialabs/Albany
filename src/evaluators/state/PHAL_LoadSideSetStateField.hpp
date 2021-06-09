@@ -36,13 +36,16 @@ public:
 
 private:
 
+  void loadElemState (typename Traits::EvalData d);
+  void loadNodeState (typename Traits::EvalData d);
+
   PHX::MDField<ScalarType>              field;
 
   std::string sideSetName;
   std::string fieldName;
   std::string stateName;
 
-  Albany::LocalSideSetInfo sideSet;
+  bool nodalState;
 
   MDFieldMemoizer<Traits> memoizer;
 };
