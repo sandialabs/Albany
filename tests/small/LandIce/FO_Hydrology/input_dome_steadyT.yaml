@@ -17,7 +17,7 @@ ANONYMOUS:
       Parameter 0:
         Type: Scalar
         Name: Glen's Law Homotopy Parameter
-        Nominal Value: 0.1
+        Nominal Value: 0.2
     Response Functions:
       Number Of Responses: 1
       Response 0:
@@ -31,7 +31,7 @@ ANONYMOUS:
       Function: Constant
       Function Data: [1.0, 1.0, 100.0]
     Dirichlet BCs:
-      DBC on NS basal_BoundaryNodeSet1 for DOF water_pressure_basalside: 0.00000000000000000e+00
+      DBC on NS basal_BoundaryNodeSet1 for DOF water_pressure_basalside: 0.0
     Neumann BCs: { }
     LandIce BCs:
       Number : 1
@@ -43,7 +43,7 @@ ANONYMOUS:
           Mu Type: Constant
           Effective Pressure Type: Field
           Power Exponent: 0.33
-          Mu Coefficient: 1.0
+          Mu Coefficient: 0.01
       BC 1:
         Type: Lateral
         Cubature Degree: 3
@@ -120,7 +120,7 @@ ANONYMOUS:
       Side Sets: [basalside]
       basalside:
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
+        Cubature Degree: 4
         Workset Size: 100
         Method: Gmsh
         Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle_fine.msh
@@ -204,7 +204,7 @@ ANONYMOUS:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Unscaled
-          Tolerance: 1.00000000000000002e-02
+          Tolerance: 1.0e-02
         Test 2:
           Test Type: NormWRMS
           Absolute Tolerance: 1.00000000000000005e-04
@@ -225,7 +225,7 @@ ANONYMOUS:
               Linear Solver Types:
                 Belos:
                   VerboseObject:
-                    Verbosity Level: none
+                    Verbosity Level: low
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:

@@ -38,12 +38,16 @@ LoadSideSetStateFieldBase (const Teuchos::ParameterList& p)
   if (nodalState) {
     TEUCHOS_TEST_FOR_EXCEPTION (rank!=2 && rank!=3, std::runtime_error,
         "Error! Only Scalar and Vector field supported for nodal states.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION(rank>2 && phx_dl.name(2)!=PHX::print<Dim>(), std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        rank>2 && phx_dl.name(2)!=PHX::print<Dim>() && phx_dl.name(2)!=PHX::print<LayerDim>(),
+        std::runtime_error,
         "Error! To load a side-set nodal state, the third tag (if present) MUST be 'Dim'.\n")
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (rank!=1 && rank!=2, std::runtime_error,
         "Error! Only Scalar and Vector field supported for elem states.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION(rank>1 && phx_dl.name(1)!=PHX::print<Dim>(), std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        rank>2 && phx_dl.name(2)!=PHX::print<Dim>() && phx_dl.name(2)!=PHX::print<LayerDim>(),
+         std::runtime_error,
         "Error! To save a side-set elem state, the second tag (if present) MUST be 'Dim'.\n");
   }
 
