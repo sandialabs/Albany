@@ -139,14 +139,34 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
   // ---------------------------- Registering state variables ------------------------- //
 
-  std::string stateName, fieldName, param_name;
+  std::string stateName, param_name;
 
+  const Teuchos::ParameterList& parameterParams = this->params->sublist("Parameters");
+  int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
+  Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
   stateName = "weighted_normal_sample";
-  entity = Albany::StateStruct::NodalDataToElemNode;
-  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-  p->set<std::string>("Field Name", stateName);
-  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+  bool isParameter = false;
+  for (unsigned int p_index=0; p_index< (unsigned int) num_dist_param_vecs; ++p_index) {
+    std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
+    Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
+    param_name = param_list.get<std::string>("Name");
+    if(param_name == stateName) {
+      isParameter = true;
+      break;
+    }
+  }
+
+  if(isParameter) {
+    entity = Albany::StateStruct::NodalDistParameter;
+    stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+    ev = evalUtils.constructGatherScalarNodalParameter(stateName,stateName);
+  } else {
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+    p->set<std::string>("Field Name", stateName);
+    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+  }
   fm0.template registerEvaluator<EvalT>(ev);
 
 
