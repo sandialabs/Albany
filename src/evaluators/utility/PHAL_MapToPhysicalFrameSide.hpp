@@ -59,9 +59,8 @@ private:
   Albany::LocalSideSetInfo sideSet;
 
   // Input:
-  // TODO: restore layout template arguments when removing old sideset layout
   //! Values at vertices
-  PHX::MDField<const MeshScalarT> coords_side_vertices;  // Side, Vertex, Dim
+  PHX::MDField<const MeshScalarT,Side,Vertex,Dim> coords_side_vertices;
 
   // Output:
   //! Values at quadrature points

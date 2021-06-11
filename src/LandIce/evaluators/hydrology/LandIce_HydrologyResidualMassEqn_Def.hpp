@@ -16,12 +16,12 @@ template<typename EvalT, typename Traits>
 HydrologyResidualMassEqn<EvalT, Traits>::
 HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  BF        (p.get<std::string> ("BF Name"), p.isParameter("Side Set Name") ? dl->node_qp_scalar_sideset : dl->node_qp_scalar),
-  GradBF    (p.get<std::string> ("Gradient BF Name"), p.isParameter("Side Set Name") ? dl->node_qp_gradient_sideset : dl->node_qp_gradient),
-  w_measure (p.get<std::string> ("Weighted Measure Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
-  q         (p.get<std::string> ("Water Discharge Variable Name"), p.isParameter("Side Set Name") ? dl->qp_gradient_sideset : dl->qp_gradient),
-  omega     (p.get<std::string> ("Surface Water Input Variable Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
-  residual  (p.get<std::string> ("Mass Eqn Residual Name"), p.isParameter("Side Set Name") ? dl->node_scalar_sideset : dl->node_scalar)
+  BF        (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
+  GradBF    (p.get<std::string> ("Gradient BF Name"), dl->node_qp_gradient),
+  w_measure (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
+  q         (p.get<std::string> ("Water Discharge Variable Name"), dl->qp_gradient),
+  omega     (p.get<std::string> ("Surface Water Input Variable Name"), dl->qp_scalar),
+  residual  (p.get<std::string> ("Mass Eqn Residual Name"), dl->node_scalar)
 {
   // Check if it is a sideset evaluation
   eval_on_side = false;
@@ -32,12 +32,12 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (eval_on_side!=dl->isSideLayouts, std::logic_error,
       "Error! Input Layouts structure not compatible with requested field layout.\n");
 
-  numQPs   = eval_on_side ? dl->qp_scalar->dimension(2) : dl->qp_scalar->dimension(1);
-  numNodes = eval_on_side ? dl->node_scalar->dimension(2) : dl->node_scalar->dimension(1);
-  numDims  = eval_on_side ? dl->qp_gradient->dimension(3) : dl->qp_gradient->dimension(2);
+  numQPs   = dl->qp_scalar->dimension(1);
+  numNodes = dl->node_scalar->dimension(1);
+  numDims  = dl->qp_gradient->dimension(2);
 
   if (eval_on_side) {
-    metric = PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>(p.get<std::string>("Metric Name"),dl->qp_tensor_sideset);
+    metric = PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>(p.get<std::string>("Metric Name"),dl->qp_tensor);
     this->addDependentField(metric);
   }
 
@@ -55,11 +55,11 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   has_h_till = p.get<bool>("Has Till Storage");
 
   if (unsteady) {
-    h_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar);
+    h_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), dl->qp_scalar);
     this->addDependentField(h_dot);
 
     if (has_h_till) {
-      h_till_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Till Water Storage Dot Variable Name"), eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar);
+      h_till_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Till Water Storage Dot Variable Name"), dl->qp_scalar);
       this->addDependentField(h_till_dot);
     }
   }
@@ -72,9 +72,9 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (mass_lumping) {
-    layout = eval_on_side ? dl->node_scalar_sideset : dl->node_scalar;
+    layout = dl->node_scalar;
   } else {
-    layout = eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar;
+    layout = dl->qp_scalar;
   }
 
   if (use_melting) {

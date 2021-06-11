@@ -30,9 +30,9 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-  BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar_sideset);
-  w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_basal->qp_scalar_sideset);
-  basalMeltRateQP = decltype(basalMeltRateQP)(p.get<std::string> ("Basal Melt Rate Side QP Variable Name"), dl_basal->qp_scalar_sideset);
+  BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
+  w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_basal->qp_scalar);
+  basalMeltRateQP = decltype(basalMeltRateQP)(p.get<std::string> ("Basal Melt Rate Side QP Variable Name"), dl_basal->qp_scalar);
 
   this->addDependentField(BF);
   this->addDependentField(w_measure);
@@ -42,9 +42,8 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
-  unsigned int numSides = dims[1];
-  numSideNodes = dims[2];
-  numSideQPs   = dims[3];
+  numSideNodes = dims[1];
+  numSideQPs   = dims[2];
   numCellNodes = enthalpyBasalResid.fieldTag().dataLayout().extent(1);
 
   dl->node_vector->dimensions(dims);
@@ -52,6 +51,7 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
+  unsigned int numSides = cellType->getSideCount();
   sideDim      = cellType->getDimension()-1;
   unsigned int nodeMax = 0;
   for (unsigned int side=0; side<numSides; ++side) {

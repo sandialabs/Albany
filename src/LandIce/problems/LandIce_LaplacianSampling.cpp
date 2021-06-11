@@ -84,7 +84,7 @@ void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Al
     auto numSideQPs      = sideCubature->getNumPoints();
 
 
-    dl_side = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes, numSideQPs,numDim-1,numDim,numCellSides,1,true,sideMeshSpecs.singleWorksetSizeAllocation,sideMeshSpecs.worksetSize));
+    dl_side = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes, numSideQPs,numDim-1,numDim,numCellSides,1,sideMeshSpecs.singleWorksetSizeAllocation,sideMeshSpecs.worksetSize));
     dl->side_layouts[sideName] = dl_side;
   }
 

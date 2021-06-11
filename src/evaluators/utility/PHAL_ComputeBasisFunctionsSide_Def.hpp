@@ -26,14 +26,14 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
   // Build output fields
-  sideCoordVec = decltype(sideCoordVec)(p.get<std::string> ("Side Coordinate Vector Name"), dl_side->vertices_vector_sideset);
-  tangents     = decltype(tangents    )(p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd_sideset);
-  metric       = decltype(metric      )(p.get<std::string> ("Metric Name"), dl_side->qp_tensor_sideset);
-  w_measure    = decltype(w_measure   )(p.get<std::string> ("Weighted Measure Name"), dl_side->qp_scalar_sideset);
-  inv_metric   = decltype(inv_metric  )(p.get<std::string> ("Inverse Metric Name"), dl_side->qp_tensor_sideset);
-  metric_det   = decltype(metric_det  )(p.get<std::string> ("Metric Determinant Name"), dl_side->qp_scalar_sideset);
-  BF           = decltype(BF          )(p.get<std::string> ("BF Name"), dl_side->node_qp_scalar_sideset);
-  GradBF       = decltype(GradBF      )(p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient_sideset);
+  sideCoordVec = decltype(sideCoordVec)(p.get<std::string> ("Side Coordinate Vector Name"), dl_side->vertices_vector);
+  tangents     = decltype(tangents    )(p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd);
+  metric       = decltype(metric      )(p.get<std::string> ("Metric Name"), dl_side->qp_tensor);
+  w_measure    = decltype(w_measure   )(p.get<std::string> ("Weighted Measure Name"), dl_side->qp_scalar);
+  inv_metric   = decltype(inv_metric  )(p.get<std::string> ("Inverse Metric Name"), dl_side->qp_tensor);
+  metric_det   = decltype(metric_det  )(p.get<std::string> ("Metric Determinant Name"), dl_side->qp_scalar);
+  BF           = decltype(BF          )(p.get<std::string> ("BF Name"), dl_side->node_qp_scalar);
+  GradBF       = decltype(GradBF      )(p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient);
 
   this->addDependentField(sideCoordVec);
   this->addEvaluatedField(tangents);
@@ -47,7 +47,7 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   compute_normals = p.isParameter("Side Normal Name");
 
   if(compute_normals) {
-    normals  = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim_sideset);
+    normals  = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
     coordVec = decltype(coordVec)(p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector);
     numNodes = dl->node_gradient->extent(1);
     this->addEvaluatedField(normals);
@@ -57,11 +57,10 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
   // Get Dimensions
-  numCells     = dl_side->node_qp_gradient->extent(0);
-  numSides     = dl_side->node_qp_gradient->extent(1);
-  numSideNodes = dl_side->node_qp_gradient->extent(2);
-  numSideQPs   = dl_side->node_qp_gradient->extent(3);
-  numCellDims  = dl_side->vertices_vector->extent(3);    // Vertices vector always has the ambient space dimension
+  numSides     = cellType->getSideCount();
+  numSideNodes = dl_side->node_qp_gradient->extent(1);
+  numSideQPs   = dl_side->node_qp_gradient->extent(2);
+  numCellDims  = dl_side->vertices_vector->extent(2);    // Vertices vector always has the ambient space dimension
   numSideDims  = numCellDims-1;
 
   effectiveCoordDim = p.get<bool>("Side Set Is Planar") ? 2 : numCellDims;
@@ -72,7 +71,6 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
   *output << "Compute Basis Functions Side has: "
-          << numCells << " cells, "
           << numSides << " sides, "
           << numSideNodes << " side nodes, "
           << numSideQPs << " side QPs, "

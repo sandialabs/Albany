@@ -33,11 +33,11 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
 
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-  u         = decltype(u)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector_sideset);
-  beta      = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar_sideset);
-  BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar_sideset);
-  w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar_sideset);
-  normals   = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_basal->qp_vector_spacedim_sideset);
+  u         = decltype(u)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
+  beta      = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
+  BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
+  w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
+  normals   = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_basal->qp_vector_spacedim);
 
   this->addDependentField(u);
   this->addDependentField(beta);
@@ -49,8 +49,8 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
-  numSideNodes = dims[2];
-  numSideQPs   = dims[3];
+  numSideNodes = dims[1];
+  numSideQPs   = dims[2];
 
   dl->node_vector->dimensions(dims);
   vecDimFO     = std::min((int)dims[2],2);

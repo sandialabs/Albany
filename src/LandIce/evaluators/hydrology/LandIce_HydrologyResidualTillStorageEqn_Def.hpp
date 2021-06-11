@@ -16,11 +16,11 @@ template<typename EvalT, typename Traits>
 HydrologyResidualTillStorageEqn<EvalT, Traits>::
 HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  BF         (p.get<std::string> ("BF Name"), p.isParameter("Side Set Name") ? dl->node_qp_scalar_sideset : dl->node_qp_scalar),
-  w_measure  (p.get<std::string> ("Weighted Measure Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
-  omega      (p.get<std::string> ("Surface Water Input Variable Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
-  h_till_dot (p.get<std::string> ("Till Water Storage Dot Variable Name"), p.isParameter("Side Set Name") ? dl->qp_scalar_sideset : dl->qp_scalar),
-  residual   (p.get<std::string> ("Till Water Storage Eqn Residual Name"), p.isParameter("Side Set Name") ? dl->node_scalar_sideset : dl->node_scalar)
+  BF         (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
+  w_measure  (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
+  omega      (p.get<std::string> ("Surface Water Input Variable Name"), dl->qp_scalar),
+  h_till_dot (p.get<std::string> ("Till Water Storage Dot Variable Name"), dl->qp_scalar),
+  residual   (p.get<std::string> ("Till Water Storage Eqn Residual Name"), dl->node_scalar)
 {
   // Check if it is a sideset evaluation
   eval_on_side = false;
@@ -31,8 +31,8 @@ HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (eval_on_side!=dl->isSideLayouts, std::logic_error,
       "Error! Input Layouts structure not compatible with requested field layout.\n");
 
-  numNodes = eval_on_side ? dl->node_scalar->extent(2) : dl->node_scalar->extent(1);
-  numQPs   = eval_on_side ? dl->qp_scalar->extent(2)   : dl->qp_scalar->extent(1);
+  numNodes = dl->node_scalar->extent(1);
+  numQPs   = dl->qp_scalar->extent(1);
 
   this->addEvaluatedField(residual);
 
@@ -54,9 +54,9 @@ HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
 
   Teuchos::RCP<PHX::DataLayout> layout;
   if (mass_lumping) {
-    layout = eval_on_side ? dl->node_scalar_sideset : dl->node_scalar;
+    layout = dl->node_scalar;
   } else {
-    layout = eval_on_side ? dl->qp_scalar_sideset : dl->qp_scalar;
+    layout = dl->qp_scalar;
   }
 
   if (use_melting) {

@@ -27,10 +27,10 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
   Teuchos::RCP<Albany::Layouts> dl_lateral = dl->side_layouts.at(lateralSideName);
 
   // Create dependent fields
-  thickness  = decltype(thickness)(p.get<std::string> ("Ice Thickness Variable Name"), dl_lateral->qp_scalar_sideset);
-  BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_lateral->node_qp_scalar_sideset);
-  normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_lateral->qp_vector_spacedim_sideset);
-  w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_lateral->qp_scalar_sideset);
+  thickness  = decltype(thickness)(p.get<std::string> ("Ice Thickness Variable Name"), dl_lateral->qp_scalar);
+  BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_lateral->node_qp_scalar);
+  normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_lateral->qp_vector_spacedim);
+  w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_lateral->qp_scalar);
 
   this->addDependentField(thickness);
   this->addDependentField(BF);
@@ -42,7 +42,7 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
   if (immerse_ratio_provided) {
     given_immersed_ratio = bc_pl.get<double>("Immersed Ratio");
   } else {
-    elevation = decltype(elevation)(p.get<std::string> ("Ice Surface Elevation Variable Name"), dl_lateral->qp_scalar_sideset);
+    elevation = decltype(elevation)(p.get<std::string> ("Ice Surface Elevation Variable Name"), dl_lateral->qp_scalar);
     this->addDependentField(elevation);
   }
 
@@ -70,7 +70,7 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
     Y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
     R2 = std::pow(R,2);
 
-    coords_qp = decltype(coords_qp)(p.get<std::string>("Coordinate Vector Variable Name"), dl_lateral->qp_coords_sideset);
+    coords_qp = decltype(coords_qp)(p.get<std::string>("Coordinate Vector Variable Name"), dl_lateral->qp_coords);
     this->addDependentField(coords_qp);
   }
 
@@ -83,15 +83,15 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
   // Get dimensions
   std::vector<PHX::DataLayout::size_type> dims;
   dl_lateral->node_qp_gradient->dimensions(dims);
-  unsigned int numSides = dims[1];
-  numSideNodes = dims[2];
-  numSideQPs   = dims[3];
+  numSideNodes = dims[1];
+  numSideQPs   = dims[2];
   dl->node_vector->dimensions(dims);
   vecDimFO     = std::min((int)dims[2],2);
 
   // Index of the nodes on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
+  unsigned int numSides = cellType->getSideCount();
   int sideDim = cellType->getDimension()-1;
   int nodeMax = 0;
   for (unsigned int side=0; side<numSides; ++side) {

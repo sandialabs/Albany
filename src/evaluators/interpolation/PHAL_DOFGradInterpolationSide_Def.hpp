@@ -20,9 +20,9 @@ DOFGradInterpolationSideBase<EvalT, Traits, ScalarT>::
 DOFGradInterpolationSideBase(const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
-  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_scalar_sideset),
-  gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient_sideset),
-  grad_qp      (p.get<std::string> ("Gradient Variable Name"), dl_side->qp_gradient_sideset)
+  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_scalar),
+  gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient),
+  grad_qp      (p.get<std::string> ("Gradient Variable Name"), dl_side->qp_gradient)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
@@ -33,9 +33,9 @@ DOFGradInterpolationSideBase(const Teuchos::ParameterList& p,
 
   this->setName("DOFGradInterpolationSide("+p.get<std::string>("Variable Name") + ")"+PHX::print<EvalT>());
 
-  numSideNodes = dl_side->node_qp_gradient->extent(2);
-  numSideQPs   = dl_side->node_qp_gradient->extent(3);
-  numDims      = dl_side->node_qp_gradient->extent(4);
+  numSideNodes = dl_side->node_qp_gradient->extent(1);
+  numSideQPs   = dl_side->node_qp_gradient->extent(2);
+  numDims      = dl_side->node_qp_gradient->extent(3);
 }
 
 //**********************************************************************

@@ -44,11 +44,11 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
   const std::string& coords_name         = p.get<std::string>("Coordinate Vector Variable Name");
 
   solution           = decltype(solution)(solution_name, dl->node_scalar);
-  field              = decltype(field)(field_name, dl_side->node_scalar_sideset);
-  gradField          = decltype(gradField)(gradField_name, dl_side->qp_gradient_sideset);
-  gradBF             = decltype(gradBF)(gradBFname, dl_side->node_qp_gradient_sideset),
-  w_side_measure     = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar_sideset);
-  side_tangents      = decltype(side_tangents)(side_tangents_name, dl_side->qp_tensor_cd_sd_sideset);
+  field              = decltype(field)(field_name, dl_side->node_scalar);
+  gradField          = decltype(gradField)(gradField_name, dl_side->qp_gradient);
+  gradBF             = decltype(gradBF)(gradBFname, dl_side->node_qp_gradient),
+  w_side_measure     = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar);
+  side_tangents      = decltype(side_tangents)(side_tangents_name, dl_side->qp_tensor_cd_sd);
   bdLaplacian_L2Projection_res = decltype(bdLaplacian_L2Projection_res)(residual_name, dl->node_scalar);
   coordVec = decltype(coordVec)(coords_name, dl->vertices_vector);
 
@@ -57,9 +57,9 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
   // Get Dimensions
   numNodes  = dl->node_scalar->extent(1);
 
-  numSideNodes  = dl_side->node_scalar->extent(2);
-  numBasalQPs = dl_side->qp_scalar->extent(2);
-  unsigned int numSides = dl_side->node_scalar->extent(1);
+  numSideNodes  = dl_side->node_scalar->extent(1);
+  numBasalQPs = dl_side->qp_scalar->extent(1);
+  unsigned int numSides = cellType->getSideCount();
   sideDim  = cellType->getDimension()-1;
 
   this->addDependentField(solution);

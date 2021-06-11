@@ -20,24 +20,24 @@ namespace LandIce
 template<typename EvalT, typename Traits, typename VelocityST>
 BasalMeltRate<EvalT,Traits,VelocityST>::
 BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl_basal)
- : phi               (p.get<std::string> ("Water Content Side Variable Name"),dl_basal->node_scalar_sideset)
- , beta              (p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar_sideset)
- , velocity          (p.get<std::string> ("Velocity Side Variable Name"),dl_basal->node_vector_sideset)
- , geoFluxHeat       (p.get<std::string> ("Geothermal Flux Side Variable Name"),dl_basal->node_scalar_sideset)
- , Enthalpy          (p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar_sideset)
- , EnthalpyHs        (p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar_sideset)
+ : phi               (p.get<std::string> ("Water Content Side Variable Name"),dl_basal->node_scalar)
+ , beta              (p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar)
+ , velocity          (p.get<std::string> ("Velocity Side Variable Name"),dl_basal->node_vector)
+ , geoFluxHeat       (p.get<std::string> ("Geothermal Flux Side Variable Name"),dl_basal->node_scalar)
+ , Enthalpy          (p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar)
+ , EnthalpyHs        (p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar)
  , homotopy          (p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
- , enthalpyBasalFlux     (p.get<std::string> ("Basal Melt Rate Variable Name"), dl_basal->node_scalar_sideset)
- , basalVertVelocity (p.get<std::string> ("Basal Vertical Velocity Variable Name"),dl_basal->node_scalar_sideset)
+ , enthalpyBasalFlux     (p.get<std::string> ("Basal Melt Rate Variable Name"), dl_basal->node_scalar)
+ , basalVertVelocity (p.get<std::string> ("Basal Vertical Velocity Variable Name"),dl_basal->node_scalar)
 {
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> scalar_layout, vector_layout;
   if (nodal) {
-    scalar_layout = dl_basal->node_scalar_sideset;
-    vector_layout = dl_basal->node_vector_sideset;
+    scalar_layout = dl_basal->node_scalar;
+    vector_layout = dl_basal->node_vector;
   } else {
-    scalar_layout = dl_basal->qp_scalar_sideset;
-    vector_layout = dl_basal->qp_vector_sideset;
+    scalar_layout = dl_basal->qp_scalar;
+    vector_layout = dl_basal->qp_vector;
   }
 
   phi = decltype(phi)(p.get<std::string> ("Water Content Side Variable Name"),scalar_layout);
@@ -63,9 +63,9 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
-  numSideNodes = dims[2];
-  numSideQPs   = dims[3];
-  sideDim      = dims[4];
+  numSideNodes = dims[1];
+  numSideQPs   = dims[2];
+  sideDim      = dims[3];
   numCellNodes = basalVertVelocity.fieldTag().dataLayout().extent(1);
 
   basalSideName = p.get<std::string> ("Side Set Name");

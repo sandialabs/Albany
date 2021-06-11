@@ -429,12 +429,10 @@ Albany::StateManager::registerSideSetStateVariable(
     const std::string&                   ebName,
     const bool                           outputToExodus,
     StateStruct::MeshFieldEntity const*  fieldEntity,
-    const std::string&                   meshPartName,
-    const bool                           useCollapsedLayout)
+    const std::string&                   meshPartName)
 
 {
-  if (useCollapsedLayout) {
-    return registerSideSetStateVariable_collapsed(
+  return registerSideSetStateVariable(
         sideSetName,
         stateName,
         fieldName,
@@ -447,25 +445,10 @@ Albany::StateManager::registerSideSetStateVariable(
         "",
         fieldEntity,
         meshPartName);
-  } else {
-    return registerSideSetStateVariable(
-        sideSetName,
-        stateName,
-        fieldName,
-        dl,
-        ebName,
-        "",
-        0.0,
-        false,
-        outputToExodus,
-        "",
-        fieldEntity,
-        meshPartName);
-  }
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
-Albany::StateManager::registerSideSetStateVariable_collapsed(
+Albany::StateManager::registerSideSetStateVariable(
     const std::string&                   sideSetName,
     const std::string&                   stateName,
     const std::string&                   fieldName,
@@ -491,7 +474,6 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
   p->set<const std::string>("Field Name", fieldName);
   p->set<const std::string>("Side Set Name", sideSetName);
   p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl);
-  p->set<const bool>("Use Collapsed Layout", true);
 
   if (sideSetStatesToStore[sideSetName][ebName].find(stateName) !=
       sideSetStatesToStore[sideSetName][ebName].end()) {
@@ -516,7 +498,7 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
   } else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Node>())  // Nodal data
   {
     mfe_type = StateStruct::NodalData;                  // One value per node
-  } else if (dl->rank() == 1 && dl->name(1) == PHX::print<Side>())  // Element data
+  } else if (dl->rank() == 1 && dl->name(0) == PHX::print<Side>())  // Element data
   {
     mfe_type = StateStruct::ElemData;  // One value per element
   } else if (dl->rank() > 1) {
@@ -579,174 +561,6 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
   }
   else {
     dl->dimensions(stateRef.dim);
-  }
-  stateRef.output              = outputToExodus;
-  stateRef.responseIDtoRequire = responseIDtoRequire;
-  stateRef.layered             = (dl->name(dl->rank() - 1) == "LayerDim");
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      stateRef.layered && (dl->extent(dl->rank() - 1) <= 0),
-      std::logic_error,
-      "Error! Invalid number of layers for layered state " << stateName
-                                                           << ".\n");
-
-  // If space is needed for old state
-  if (registerOldState) {
-    stateRef.saveOldState = true;
-
-    std::string stateName_old = stateName + "_old";
-    sis_ptr->push_back(
-        Teuchos::rcp(new Albany::StateStruct(stateName_old, mfe_type)));
-    Albany::StateStruct& pstateRef = *sis_ptr->back();
-    pstateRef.initType             = init_type;
-    pstateRef.initValue            = init_val;
-    pstateRef.pParentStateStruct   = &stateRef;
-
-    pstateRef.output = false;
-    dl->dimensions(pstateRef.dim);
-  }
-
-  // insert
-  stateRef.nameMap[stateName] = ebName;
-
-  return p;
-}
-
-Teuchos::RCP<Teuchos::ParameterList>
-Albany::StateManager::registerSideSetStateVariable(
-    const std::string&                   sideSetName,
-    const std::string&                   stateName,
-    const std::string&                   fieldName,
-    const Teuchos::RCP<PHX::DataLayout>& dl,
-    const std::string&                   ebName,
-    const std::string&                   init_type,
-    const double                         init_val,
-    const bool                           registerOldState,
-    const bool                           outputToExodus,
-    const std::string&                   responseIDtoRequire,
-    StateStruct::MeshFieldEntity const*  fieldEntity,
-    const std::string&                   meshPartName)
-{
-  TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
-  using Albany::StateStruct;
-
-  // Create param list for SaveSideSetStateField evaluator
-  Teuchos::RCP<Teuchos::ParameterList> p =
-      Teuchos::rcp(new Teuchos::ParameterList(
-          "Save Side Set State " + stateName + " to/from Side Set Field " +
-          fieldName));
-  p->set<const std::string>("State Name", stateName);
-  p->set<const std::string>("Field Name", fieldName);
-  p->set<const std::string>("Side Set Name", sideSetName);
-  p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl);
-  p->set<bool>("Use Collapsed Layout", false);
-
-  if (sideSetStatesToStore[sideSetName][ebName].find(stateName) !=
-      sideSetStatesToStore[sideSetName][ebName].end()) {
-    return p;  // Don't re-register the same state name
-  }
-
-  sideSetStatesToStore[sideSetName][ebName][stateName] = dl;
-
-  if (sideSetStateInfo.find(sideSetName) == sideSetStateInfo.end()) {
-    // It's the first time we register states on this side set, so we initiate
-    // the pointer
-    // TODO, when compiler allows, replace following with this for performance:
-    sideSetStateInfo.emplace(sideSetName,Teuchos::rcp(new StateInfoStruct()));
-  }
-
-  const Teuchos::RCP<StateInfoStruct>& sis_ptr =
-      sideSetStateInfo.at(sideSetName);
-
-  // Load into StateInfo
-  StateStruct::MeshFieldEntity mfe_type;
-  if (fieldEntity) {
-    mfe_type = *fieldEntity;
-  } else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Node>())  // Nodal data
-  {
-    mfe_type = StateStruct::NodalData;                  // One value per node
-  } else if (dl->rank() == 2 && dl->name(1) == PHX::print<Side>())  // Element data
-  {
-    mfe_type = StateStruct::ElemData;  // One value per element
-  } else if (dl->rank() > 2) {
-    if (dl->name(2) == "Dim")
-      mfe_type = StateStruct::ElemData;   // One vector/tensor per element
-    else if (dl->name(2) == PHX::print<Node>())       // Element node data
-      mfe_type = StateStruct::ElemNode;   // One value per side node
-    else if (dl->name(2) == PHX::print<QuadPoint>())  // Quad point data
-      mfe_type = StateStruct::QuadPoint;  // One value per side quad point
-    else
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true, std::logic_error, "StateManager: Unknown Entity type.\n");
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error, "StateManager: Unknown Entity type.\n");
-  }
-
-  sis_ptr->push_back(Teuchos::rcp(new StateStruct(stateName, mfe_type)));
-  StateStruct& stateRef = *sis_ptr->back();
-  stateRef.setInitType(init_type);
-  stateRef.setInitValue(init_val);
-  stateRef.setMeshPart(meshPartName);
-
-  if (stateRef.entity == StateStruct::NodalData) {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->name(0) == PHX::print<Node>(),
-        std::logic_error,
-        "Error! NodalData states should have dl <Node,...>.\n");
-
-    dl->dimensions(stateRef.dim);
-
-    // Register the state with the nodalDataVector also.
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase =
-        getSideSetNodalDataBase(sideSetName);
-
-    if (dl->rank() == 1)  // node scalar
-      nodalDataBase->registerVectorState(stateName, 1);
-    else if (dl->rank() == 2)  // node vector
-      nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
-    else if (dl->rank() == 3)  // node tensor
-      nodalDataBase->registerVectorState(
-          stateName, stateRef.dim[1] * stateRef.dim[2]);
-  } else if (
-      stateRef.entity == StateStruct::NodalDataToElemNode ||
-      stateRef.entity == Albany::StateStruct::NodalDistParameter) {
-    // Strip one dimension out cause it's Side
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->rank() < 2,
-        std::logic_error,
-        "Error! The given layout does not appear to be that of a side set "
-        "field.\n");
-
-    stateRef.dim.resize(dl->rank() - 1);
-    stateRef.dim[0] = dl->extent(0);
-    for (size_t i(1); i < stateRef.dim.size(); ++i)
-      stateRef.dim[i] = dl->extent(i + 1);
-
-    // Register the state with the nodalDataVector also.
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase =
-        getSideSetNodalDataBase(sideSetName);
-
-    // These entities store data as <Cell,Side,Node,...>, so the dl has one more
-    // rank
-    if (dl->rank() == 3)  // node scalar
-      nodalDataBase->registerVectorState(stateName, 1);
-    else if (dl->rank() == 4)  // node vector
-      nodalDataBase->registerVectorState(stateName, stateRef.dim[2]);
-    else if (dl->rank() == 5)  // node tensor
-      nodalDataBase->registerVectorState(
-          stateName, stateRef.dim[2] * stateRef.dim[3]);
-  } else {
-    // Strip one dimension out cause it's Side
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->rank() < 2,
-        std::logic_error,
-        "Error! The given layout does not appear to be that of a side set "
-        "field.\n");
-
-    stateRef.dim.resize(dl->rank() - 1);
-    stateRef.dim[0] = dl->extent(0);
-    for (size_t i(1); i < stateRef.dim.size(); ++i)
-      stateRef.dim[i] = dl->extent(i + 1);
   }
   stateRef.output              = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;

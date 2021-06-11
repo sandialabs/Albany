@@ -55,7 +55,6 @@ private:
   };
 
   bool eval_on_side;  // Whether the interpolation is on a volume or side field.
-  bool collapsed;     // if eval_on_side==true, whether we use collapsed sidesets layouts
 
   int numQPs; 
   int numNodes;

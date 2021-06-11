@@ -36,13 +36,13 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
 
     if (!names.is_null()) {
       if (is_dof_vec) {
-          valvec = PHX::MDField<ScalarT,Side,Node,VecDim> (names[0],dl->node_scalar_sideset);
+          valvec = PHX::MDField<ScalarT,Side,Node,VecDim> (names[0],dl->node_scalar);
           this->addEvaluatedField(valvec);
       } else {
         numFields = names.size();
         val.resize(numFields);
         for (int eq=0; eq<numFields; ++eq) {
-          val[eq] = PHX::MDField<ScalarT,Side,Node> (names[eq],dl->node_scalar_sideset);
+          val[eq] = PHX::MDField<ScalarT,Side,Node> (names[eq],dl->node_scalar);
           this->addEvaluatedField(val[eq]);
         }
       }
@@ -63,13 +63,13 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
 
     if (!names_dot.is_null()) {
       if (is_dof_dot_vec) {
-          valvec_dot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dot[0],dl->node_scalar_sideset);
+          valvec_dot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dot[0],dl->node_scalar);
           this->addEvaluatedField(valvec_dot);
       } else {
         numFields = names_dot.size();
         val_dot.resize(numFields);
         for (int eq=0; eq<numFields; ++eq) {
-          val_dot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dot[eq],dl->node_scalar_sideset);
+          val_dot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dot[eq],dl->node_scalar);
           this->addEvaluatedField(val_dot[eq]);
         }
       }
@@ -90,13 +90,13 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
 
     if (!names_dotdot.is_null()) {
       if (is_dof_dotdot_vec) {
-          valvec_dotdot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dotdot[0],dl->node_scalar_sideset);
+          valvec_dotdot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dotdot[0],dl->node_scalar);
           this->addEvaluatedField(valvec_dotdot);
       } else {
         numFields = names_dotdot.size();
         val_dot.resize(numFields);
         for (int eq=0; eq<numFields; ++eq) {
-          val_dot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dotdot[eq],dl->node_scalar_sideset);
+          val_dot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dotdot[eq],dl->node_scalar);
           this->addEvaluatedField(val_dot[eq]);
         }
       }

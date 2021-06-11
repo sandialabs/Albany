@@ -17,10 +17,10 @@ DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
 DOFDivInterpolationSideBase(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
-  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_vector_sideset),
-  gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient_sideset),
-  tangents    (p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd_sideset),
-  val_qp      (p.get<std::string> ("Divergence Variable Name"), dl_side->qp_scalar_sideset)
+  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_vector),
+  gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient),
+  tangents    (p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd),
+  val_qp      (p.get<std::string> ("Divergence Variable Name"), dl_side->qp_scalar)
 {
   this->addDependentField(val_node);
   this->addDependentField(gradBF);
@@ -29,9 +29,9 @@ DOFDivInterpolationSideBase(const Teuchos::ParameterList& p,
 
   this->setName("DOFDivInterpolationSideBase" );
 
-  numSideNodes = dl_side->node_qp_gradient->extent(2);
-  numSideQPs   = dl_side->node_qp_gradient->extent(3);
-  numDims      = dl_side->node_qp_vector->extent(4);
+  numSideNodes = dl_side->node_qp_gradient->extent(1);
+  numSideQPs   = dl_side->node_qp_gradient->extent(2);
+  numDims      = dl_side->node_qp_vector->extent(3);
 }
 
 //**********************************************************************

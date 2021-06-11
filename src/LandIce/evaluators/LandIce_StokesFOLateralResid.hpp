@@ -51,15 +51,14 @@ private:
   void evaluate_with_computed_immersed_ratio(typename Traits::EvalData d);
 
   // Input:
-  // TODO: restore layout template arguments when removing old sideset layout
   // NOTE: if thickness is ParamST or ScalarT, we are moving the surface,
   //       so use ThicknessScalarT for elevation
-  PHX::MDField<const MeshScalarT>        coords_qp; // Side, Node, Dim
-  PHX::MDField<const ThicknessScalarT>   thickness; // Side, QuadPoint
-  PHX::MDField<const ThicknessScalarT>   elevation; // Side, QuadPoint
-  PHX::MDField<const RealType>           BF;        // Side, Node, QuadPoint
-  PHX::MDField<const MeshScalarT>        normals;   // Side, QuadPoint, Dim
-  PHX::MDField<const MeshScalarT>        w_measure; // Side, QuadPoint
+  PHX::MDField<const MeshScalarT,Side,Node,Dim>       coords_qp;
+  PHX::MDField<const ThicknessScalarT,Side,QuadPoint> thickness;
+  PHX::MDField<const ThicknessScalarT,Side,QuadPoint> elevation;
+  PHX::MDField<const RealType,Side,Node,QuadPoint>    BF;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim>  normals;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint>      w_measure;
 
   // Output:
   PHX::MDField<OutputScalarT,Cell,Node,VecDim> residual;

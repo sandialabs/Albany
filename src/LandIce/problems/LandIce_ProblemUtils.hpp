@@ -452,9 +452,6 @@ createEvaluatorWithThreeScalarTypes (Teuchos::RCP<Teuchos::ParameterList> p,
 Teuchos::RCP<PHX::DataLayout>
 extrudeSideLayout (const Teuchos::RCP<PHX::DataLayout>& in, const int numLayers);
 
-Teuchos::RCP<PHX::DataLayout>
-extrudeCollapsedSideLayout (const Teuchos::RCP<PHX::DataLayout>& in, const int numLayers);
-
 } // namespace LandIce
 
 #endif // LANDICE_PROBLEM_UTILS_HPP

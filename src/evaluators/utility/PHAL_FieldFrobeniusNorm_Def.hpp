@@ -70,10 +70,10 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!eval_on_side, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = decltype(field)(fieldName, dl->cell_vector_sideset);
-    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2_sideset);
+    field      = decltype(field)(fieldName, dl->cell_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
 
-    dl->cell_vector_sideset->dimensions(dims);
+    dl->cell_vector->dimensions(dims);
   }
   else if (layout=="Cell Side Gradient")
   {
@@ -82,10 +82,10 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!eval_on_side, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = decltype(field)(fieldName, dl->cell_gradient_sideset);
-    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2_sideset);
+    field      = decltype(field)(fieldName, dl->cell_gradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
 
-    dl->cell_gradient_sideset->dimensions(dims);
+    dl->cell_gradient->dimensions(dims);
   }
   else if (layout=="Cell Side Node Vector")
   {
@@ -94,10 +94,10 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!eval_on_side, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = decltype(field)(fieldName, dl->node_vector_sideset);
-    field_norm = decltype(field_norm)(fieldNormName, dl->node_scalar_sideset);
+    field      = decltype(field)(fieldName, dl->node_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->node_scalar);
 
-    dl->node_vector_sideset->dimensions(dims);
+    dl->node_vector->dimensions(dims);
   }
   else if (layout=="Cell Side QuadPoint Vector")
   {
@@ -106,10 +106,10 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!eval_on_side, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = decltype(field)(fieldName, dl->qp_vector_sideset);
-    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar_sideset);
+    field      = decltype(field)(fieldName, dl->qp_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
 
-    dl->qp_vector_sideset->dimensions(dims);
+    dl->qp_vector->dimensions(dims);
   }
   else if (layout=="Cell Side QuadPoint Gradient")
   {
@@ -118,10 +118,10 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!eval_on_side, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = decltype(field)(fieldName, dl->qp_gradient_sideset);
-    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar_sideset);
+    field      = decltype(field)(fieldName, dl->qp_gradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
 
-    dl->qp_gradient_sideset->dimensions(dims);
+    dl->qp_gradient->dimensions(dims);
   }
   else
   {

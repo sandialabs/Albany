@@ -24,7 +24,7 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                        const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                        const Teuchos::RCP<ParamLib>& paramLib_,
                        const int numDim_) :
-  StokesFOBase(params_, discParams_, paramLib_, numDim_, true)
+  StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
   fluxDivIsPartOfSolution = params->isSublist("LandIce Flux Divergence") &&
       params->sublist("LandIce Flux Divergence").get<bool>("Flux Divergence Is Part Of Solution");

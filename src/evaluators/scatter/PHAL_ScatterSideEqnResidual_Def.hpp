@@ -77,23 +77,20 @@ ScatterSideEqnResidualBase (const Teuchos::ParameterList& p,
     numFields = names.size();
     val.resize(numFields);
     for (int eq = 0; eq < numFields; ++eq) {
-      val[eq] = res_type(names[eq], residualsAreVolumeFields ? res_dl->node_scalar : res_dl->node_scalar_sideset);
+      val[eq] = res_type(names[eq], res_dl->node_scalar);
       this->addDependentField(val[eq]);
     }
   } else if (tensorRank == 1 ) {
     // vector
     valVec = res_type(names[0], res_dl->node_vector);
     this->addDependentField(valVec);
-    numFields = residualsAreVolumeFields ? res_dl->node_vector->extent(2) : res_dl->node_vector->extent(3);
+    numFields = res_dl->node_vector->extent(2);
   } else if (tensorRank == 2 ) {
     // tensor
-    valTensor = res_type (names[0], residualsAreVolumeFields ? res_dl->node_tensor : res_dl->node_tensor_sideset);
+    valTensor = res_type (names[0], res_dl->node_tensor);
     this->addDependentField(valTensor);
-    numDims = residualsAreVolumeFields ?
-                  res_dl->node_tensor->extent(2) : res_dl->node_tensor->extent(3);
-    numFields = residualsAreVolumeFields ?
-                  (res_dl->node_tensor->extent(2))*(res_dl->node_tensor->extent(3)) :
-                  (res_dl->node_tensor->extent(3))*(res_dl->node_tensor->extent(4));
+    numDims = res_dl->node_tensor->extent(2);
+    numFields = (res_dl->node_tensor->extent(2))*(res_dl->node_tensor->extent(3));
   }
 
   if (p.isType<int>("Offset of First DOF")) {

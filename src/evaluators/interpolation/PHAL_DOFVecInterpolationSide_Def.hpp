@@ -17,9 +17,9 @@ DOFVecInterpolationSideBase<EvalT, Traits, Type>::
 DOFVecInterpolationSideBase(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
-  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_vector_sideset),
-  BF          (p.get<std::string> ("BF Name"), dl_side->node_qp_scalar_sideset),
-  val_qp      (p.get<std::string> ("Variable Name"), dl_side->qp_vector_sideset)
+  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_vector),
+  BF          (p.get<std::string> ("BF Name"), dl_side->node_qp_scalar),
+  val_qp      (p.get<std::string> ("Variable Name"), dl_side->qp_vector)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
@@ -30,9 +30,9 @@ DOFVecInterpolationSideBase(const Teuchos::ParameterList& p,
 
   this->setName("DOFVecInterpolationSide"+PHX::print<EvalT>());
 
-  numSideNodes = dl_side->node_qp_scalar->extent(2);
-  numSideQPs   = dl_side->node_qp_scalar->extent(3);
-  vecDim       = dl_side->qp_vector->extent(3);
+  numSideNodes = dl_side->node_qp_scalar->extent(1);
+  numSideQPs   = dl_side->node_qp_scalar->extent(2);
+  vecDim       = dl_side->qp_vector->extent(2);
 }
 
 //**********************************************************************

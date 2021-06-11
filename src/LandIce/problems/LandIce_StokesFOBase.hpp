@@ -94,8 +94,7 @@ protected:
   StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                 const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                 const Teuchos::RCP<ParamLib>& paramLib_,
-                const int numDim_,
-                const bool useCollapsedSidesets_ = false);
+                const int numDim_);
 
   template <typename EvalT>
   void constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -215,9 +214,6 @@ protected:
 
   unsigned int numDim;
   unsigned int vecDimFO;
-
-  /// Temporary boolean so that sideset refactor doesn't break coupled problems
-  bool useCollapsedSidesets;
 
   /// Boolean marking whether SDBCs are used
   bool use_sdbcs_;
@@ -496,28 +492,26 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // Get data layout
       if (rank == FRT::Scalar) {
         state_dl = loc == FL::Node
-                 ? (useCollapsedSidesets ? ss_dl->node_scalar_sideset : ss_dl->node_scalar)
-                 : (useCollapsedSidesets ? ss_dl->cell_scalar2_sideset : ss_dl->cell_scalar2);
+                 ? ss_dl->node_scalar
+                 : ss_dl->cell_scalar2;
       } else if (rank == FRT::Vector) {
         state_dl = loc == FL::Node
-                 ? (useCollapsedSidesets ? ss_dl->node_vector_sideset : ss_dl->node_vector)
-                 : (useCollapsedSidesets ? ss_dl->cell_vector_sideset : ss_dl->cell_vector);
+                 ? ss_dl->node_vector
+                 : ss_dl->cell_vector;
       } else if (rank == FRT::Gradient) {
         state_dl = loc == FL::Node
-                 ? (useCollapsedSidesets ? ss_dl->node_gradient_sideset : ss_dl->node_gradient)
-                 : (useCollapsedSidesets ? ss_dl->cell_gradient_sideset : ss_dl->cell_gradient);
+                 ? ss_dl->node_gradient
+                 : ss_dl->cell_gradient;
       } else if (rank == FRT::Tensor) {
         state_dl = loc == FL::Node
-                 ? (useCollapsedSidesets ? ss_dl->node_tensor_sideset : ss_dl->node_tensor)
-                 : (useCollapsedSidesets ? ss_dl->cell_tensor_sideset : ss_dl->cell_tensor);
+                 ? ss_dl->node_tensor
+                 : ss_dl->cell_tensor;
       }
 
       // If layered, extend the layout
       if(fieldType.find("Layered")!=std::string::npos) {
         numLayers = thisFieldList.get<int>("Number Of Layers");
-        state_dl = useCollapsedSidesets
-                 ? extrudeCollapsedSideLayout(state_dl,numLayers)
-                 : extrudeSideLayout(state_dl,numLayers);
+        state_dl = extrudeSideLayout(state_dl,numLayers);
       }
 
       // Set entity for state struct
@@ -532,7 +526,7 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       }
 
       // Register the state
-      p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, state_dl, sideEBName, true, &entity, meshPart, useCollapsedSidesets);
+      p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, state_dl, sideEBName, true, &entity, meshPart);
 
       // Create load/save evaluator(s)
       // Note:
@@ -767,19 +761,19 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
       if ( needs[IReq::CELL_TO_SIDE] ) {
         if (!is_available_2d(FL::Node) && is_available_3d(FL::Node)) {
           // Project from cell to side
-          const std::string layout = e2str(FL::Node) + " " + e2str(rank) + " Sideset";
+          const std::string layout = e2str(FL::Node) + " " + e2str(rank);
           ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
           fm0.template registerEvaluator<EvalT> (ev);
         }
         // For loc==Cell, if the cell field was computed via CellAverage, the st should be st_mst
         if (!is_available_2d(FL::Cell) && is_available_3d(FL::Cell)) {
           // Project from cell to side
-          const std::string layout = e2str(FL::Cell) + " " + e2str(rank) + " Sideset";
+          const std::string layout = e2str(FL::Cell) + " " + e2str(rank);
           ev = utils.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
           fm0.template registerEvaluator<EvalT> (ev);
         } else if (!is_available_2d_mst(FL::Cell) && is_available_3d_mst(FL::Cell)) {
           // Project from cell to side
-          const std::string layout = e2str(FL::Cell) + " " + e2str(rank) + " Sideset";
+          const std::string layout = e2str(FL::Cell) + " " + e2str(rank);
           ev = utils_mst.constructDOFCellToSideEvaluator(fname, ss_name, layout, cellType, fname_side);
           fm0.template registerEvaluator<EvalT> (ev);
         }
@@ -863,11 +857,7 @@ constructSideUtilityFields (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
     // If any of the above was true, we need coordinates of vertices on the side
     if (it.second[UtilityRequest::BFS] || it.second[UtilityRequest::QP_COORDS] || it.second[UtilityRequest::NORMALS]) {
-      if (useCollapsedSidesets) {
-        ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,ss_name,"Vertex Vector Sideset",cellType,Albany::coord_vec_name +" " + ss_name);
-      } else {
-        ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,ss_name,"Vertex Vector",cellType,Albany::coord_vec_name +" " + ss_name);
-      }
+      ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,ss_name,"Vertex Vector",cellType,Albany::coord_vec_name +" " + ss_name);
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }
@@ -1655,39 +1645,21 @@ is_available (const PHX::FieldManager<PHAL::AlbanyTraits>& fm,
   // Helper map
   std::map<FRT,std::map<FL,lt_ptr>> map;
 
-  if (layouts->isSideLayouts && layouts->useCollapsedSidesets) {
-    map[FRT::Scalar][FL::Node]      = layouts->node_scalar_sideset;
-    map[FRT::Scalar][FL::Cell]      = layouts->cell_scalar2_sideset;
-    map[FRT::Scalar][FL::QuadPoint] = layouts->qp_scalar_sideset;
+  map[FRT::Scalar][FL::Node]      = layouts->node_scalar;
+  map[FRT::Scalar][FL::Cell]      = layouts->cell_scalar2;
+  map[FRT::Scalar][FL::QuadPoint] = layouts->qp_scalar;
 
-    map[FRT::Vector][FL::Node]      = layouts->node_vector_sideset;
-    map[FRT::Vector][FL::Cell]      = layouts->cell_vector_sideset;
-    map[FRT::Vector][FL::QuadPoint] = layouts->qp_vector_sideset;
+  map[FRT::Vector][FL::Node]      = layouts->node_vector;
+  map[FRT::Vector][FL::Cell]      = layouts->cell_vector;
+  map[FRT::Vector][FL::QuadPoint] = layouts->qp_vector;
 
-    map[FRT::Gradient][FL::Node]      = layouts->node_gradient_sideset;
-    map[FRT::Gradient][FL::Cell]      = layouts->cell_gradient_sideset;
-    map[FRT::Gradient][FL::QuadPoint] = layouts->qp_gradient_sideset;
+  map[FRT::Gradient][FL::Node]      = layouts->node_gradient;
+  map[FRT::Gradient][FL::Cell]      = layouts->cell_gradient;
+  map[FRT::Gradient][FL::QuadPoint] = layouts->qp_gradient;
 
-    map[FRT::Tensor][FL::Node]      = layouts->node_tensor_sideset;
-    map[FRT::Tensor][FL::Cell]      = layouts->cell_tensor_sideset;
-    map[FRT::Tensor][FL::QuadPoint] = layouts->qp_tensor_sideset;
-  } else {
-    map[FRT::Scalar][FL::Node]      = layouts->node_scalar;
-    map[FRT::Scalar][FL::Cell]      = layouts->cell_scalar2;
-    map[FRT::Scalar][FL::QuadPoint] = layouts->qp_scalar;
-
-    map[FRT::Vector][FL::Node]      = layouts->node_vector;
-    map[FRT::Vector][FL::Cell]      = layouts->cell_vector;
-    map[FRT::Vector][FL::QuadPoint] = layouts->qp_vector;
-
-    map[FRT::Gradient][FL::Node]      = layouts->node_gradient;
-    map[FRT::Gradient][FL::Cell]      = layouts->cell_gradient;
-    map[FRT::Gradient][FL::QuadPoint] = layouts->qp_gradient;
-
-    map[FRT::Tensor][FL::Node]      = layouts->node_tensor;
-    map[FRT::Tensor][FL::Cell]      = layouts->cell_tensor;
-    map[FRT::Tensor][FL::QuadPoint] = layouts->qp_tensor;
-  }
+  map[FRT::Tensor][FL::Node]      = layouts->node_tensor;
+  map[FRT::Tensor][FL::Cell]      = layouts->cell_tensor;
+  map[FRT::Tensor][FL::QuadPoint] = layouts->qp_tensor;
 
   auto lt = map.at(rank).at(loc);
 

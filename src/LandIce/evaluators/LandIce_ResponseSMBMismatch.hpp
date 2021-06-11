@@ -46,22 +46,20 @@ namespace LandIce {
     std::string basalSideName;
 
     Albany::LocalSideSetInfo sideSet;
-    bool useCollapsedSidesets;
 
     unsigned int numSideNodes;
     unsigned int numBasalQPs;
     unsigned int numSideDims;
 
-    // TODO: restore layout template arguments when removing old sideset layout
-    PHX::MDField<const ScalarT>                   flux_div;        // Side, QuadPoint
-    PHX::MDField<const RealType>                  SMB;             // Side, QuadPoint
-    PHX::MDField<const RealType>                  SMBRMS;          // Side, QuadPoint
-    PHX::MDField<const RealType>                  obs_thickness;   // Side, QuadPoint
-    PHX::MDField<const RealType>                  thicknessRMS;    // Side, QuadPoint
-    PHX::MDField<const ThicknessScalarType>       thickness;       // Side, QuadPoint
-    PHX::MDField<const GradThicknessScalarType>   grad_thickness;  // Side, QuadPoint, Dim
-    PHX::MDField<const MeshScalarT>               w_measure_2d;    // Side, QuadPoint
-    PHX::MDField<const MeshScalarT>               tangents;        // Side, QuadPoint, Dim, Dim
+    PHX::MDField<const ScalarT,Side,QuadPoint>                     flux_div;
+    PHX::MDField<const RealType,Side,QuadPoint>                    SMB;
+    PHX::MDField<const RealType,Side,QuadPoint>                    SMBRMS;
+    PHX::MDField<const RealType,Side,QuadPoint>                    obs_thickness;
+    PHX::MDField<const RealType,Side,QuadPoint>                    thicknessRMS;
+    PHX::MDField<const ThicknessScalarType,Side,QuadPoint>         thickness;
+    PHX::MDField<const GradThicknessScalarType,Side,QuadPoint,Dim> grad_thickness;
+    PHX::MDField<const MeshScalarT,Side,QuadPoint>                 w_measure_2d;
+    PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>         tangents;
 
     ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
     double scaling, alpha, alphaH, alphaSMB;

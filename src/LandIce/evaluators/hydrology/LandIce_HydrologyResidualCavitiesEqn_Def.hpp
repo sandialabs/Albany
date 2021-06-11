@@ -35,8 +35,8 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
-    numNodes = dl->node_scalar_sideset->extent(1);
-    numQPs   = dl->qp_scalar_sideset->extent(1);
+    numNodes = dl->node_scalar->extent(1);
+    numQPs   = dl->qp_scalar->extent(1);
 
     sideSetName = p.get<std::string>("Side Set Name");
   } else {
@@ -113,12 +113,12 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   nodal_equation = cav_eqn_params.isParameter("Nodal") ? cav_eqn_params.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> layout;
   if (nodal_equation) {
-    layout = IsStokes ? dl->node_scalar_sideset : dl->node_scalar;
+    layout = dl->node_scalar;
   } else {
-    layout = IsStokes ? dl->qp_scalar_sideset : dl->qp_scalar;
+    layout = dl->qp_scalar;
 
-    BF        = PHX::MDField<const RealType>(p.get<std::string> ("BF Name"), IsStokes ? dl->node_qp_scalar_sideset : dl->node_qp_scalar);
-    w_measure = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), IsStokes ? dl->qp_scalar_sideset : dl->qp_scalar);
+    BF        = PHX::MDField<const RealType>(p.get<std::string> ("BF Name"), dl->node_qp_scalar);
+    w_measure = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar);
 
     this->addDependentField(BF);
     this->addDependentField(w_measure);
@@ -127,7 +127,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   h            = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Variable Name"),     layout);
   N            = PHX::MDField<const ScalarT>(p.get<std::string> ("Effective Pressure Variable Name"),  layout);
   u_b          = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-  ice_softness = PHX::MDField<const TempScalarT>(p.get<std::string>("Ice Softness Variable Name"), IsStokes ? dl->cell_scalar2_sideset : dl->cell_scalar2);
+  ice_softness = PHX::MDField<const TempScalarT>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
   this->addDependentField(h);
   this->addDependentField(N);
   if (use_melting) {
