@@ -33,23 +33,25 @@ rm -rf CMakeFiles
 
 PARMETISDIR=/home/ikalash/Install/parmetis/build/install
 
-BUILD_DIR=`pwd`
+PWD=`pwd`
+TRILINOS_INSTALL=$PWD/install 
 
-cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
+cmake \
+      -D CMAKE_INSTALL_PREFIX:PATH=${TRILINOS_INSTALL} \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
       -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D MPI_BASE_DIR:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5 \
-      -D CMAKE_C_COMPILER=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/bin/mpicc \
-      -D CMAKE_CXX_COMPILER=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/bin/mpicxx \
-      -D CMAKE_Fortran_COMPILER=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/bin/mpif90 \
+      -D MPI_BASE_DIR:PATH=/usr/lib64/openmpi/bin \
+      -D CMAKE_C_COMPILER=/usr/lib64/openmpi/bin/mpicc \
+      -D CMAKE_CXX_COMPILER=/usr/lib64/openmpi/bin/mpicxx \
+      -D CMAKE_Fortran_COMPILER=/usr/lib64/openmpi/bin/mpif90 \
       -D CMAKE_CXX_FLAGS:STRING="-std=gnu++11 -fext-numeric-literals" \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/lib \
 \
       -D TPL_ENABLE_HDF5:BOOL=OFF \
 \
@@ -64,10 +66,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=OFF \
-      -D Teuchos_ENABLE_TESTS:BOOL=ON \
-      -D Teuchos_ENABLE_EXAMPLES:BOOL=ON \
-      -D Kokkos_ENABLE_TESTS:BOOL=OFF \
-      -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Rythmos_ENABLE_TESTS:BOOL=OFF \
       -D ROL_ENABLE_TESTS:BOOL=OFF \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
@@ -81,16 +79,12 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Anasazi:BOOL=ON \
       -D Trilinos_ENABLE_AztecOO:BOOL=ON \
       -D Trilinos_ENABLE_Belos:BOOL=ON \
-      -D Belos_ENABLE_TESTS:BOOL=OFF \
-      -D Belos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_ENABLE_COMPLEX_DOUBLE:BOOL=ON \
       -D Trilinos_ENABLE_Epetra:BOOL=ON \
       -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
       -D Trilinos_ENABLE_FEI:BOOL=OFF\
       -D Trilinos_ENABLE_Ifpack:BOOL=ON \
       -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
-      -D Ifpack2_ENABLE_TESTS:BOOL=OFF \
-      -D Ifpack2_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_ENABLE_Intrepid:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
@@ -100,15 +94,13 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
       -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
-      -D Trilinos_ENABLE_MueLu:BOOL=OFF \
+      -D Trilinos_ENABLE_MueLu:BOOL=ON \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
       -D Trilinos_ENABLE_Pamgen:BOOL=ON \
       -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
       -D Trilinos_ENABLE_Phalanx:BOOL=ON \
       -D Trilinos_ENABLE_Piro:BOOL=ON \
-      -D Piro_ENABLE_TESTS:BOOL=OFF \
-      -D Piro_ENABLE_EXAMPLES:BOOL=OFF \
-      -D Anasazi_ENABLE_RBGen:BOOL=OFF \
+      -D Anasazi_ENABLE_RBGen:BOOL=ON \
       -D Trilinos_ENABLE_ROL:BOOL=ON \
       -D Trilinos_ENABLE_Rythmos:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
@@ -135,8 +127,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
       -D Trilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON \
       -D Trilinos_ENABLE_Tpetra:BOOL=ON \
-      -D Tpetra_ENABLE_TESTS:BOOL=OFF \
-      -D Tpetra_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON\
@@ -154,6 +144,16 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D Trilinos_ENABLE_SCOREC:BOOL=OFF \
 \
+      -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
+      -D Tpetra_INST_INT_INT:BOOL=OFF \
+      -D Tpetra_INST_INT_LONG:BOOL=OFF \
+      -D Trilinos_ENABLE_LONG_DOUBLE:BOOL=ON \
+      -D Tpetra_INST_FLOAT128:BOOL=OFF \
+      -D TPL_ENABLE_quadmath:BOOL=ON \
+      -D TPL_quadmath_LIBRARIES=/usr/lib64/libquadmath.so.0 \
+      -D quadmath_INCLUDE_DIRS:FILEPATH=/usr/lib/gcc/x86_64-redhat-linux/11/include \
+      -D Tpetra_ENABLE_quadmath:BOOL=ON \
+\
       -D Trilinos_ENABLE_Tempus:BOOL=ON \
       -D Tempus_ENABLE_TESTS:BOOL=OFF \
       -D Tempus_ENABLE_EXAMPLES:BOOL=OFF \
@@ -169,37 +169,11 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
-      -D MPI_EXEC=mpirun \
+      -D MPI_EXEC=/usr/lib64/openmpi/bin/mpirun \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
       -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
+      -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
       -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
-      -D Trilinos_ENABLE_LONG_DOUBLE:BOOL=ON \
-      -D TPL_ENABLE_quadmath:BOOL=ON \
-      -D TPL_quadmath_LIBRARIES=/usr/lib64/libquadmath.so.0 \
-      -D quadmath_INCLUDE_DIRS:FILEPATH=/usr/lib/gcc/x86_64-redhat-linux/10/include \
-      -D Tpetra_ENABLE_quadmath:BOOL=ON \
-      -D Tpetra_INST_FLOAT128:BOOL=OFF \
        ..
-
-#      -D Trios_ENABLE_XDMF:BOOL=OFF \
-#
-# Optional build capabilities:
-# (1) TriKota is a Trilinos package that builds the
-#     Dakota libraries, for optimization and UQ. See
-#     TriKota web page for how to unpack Dakota.
-#
-#        -D Trilinos_ENABLE_TriKota:BOOL=ON \
-#
-# (2) These 6 lines regarding  SEACAS/netcdf  are needed
-#     for reading exodus meshes, but require an
-#     installed netcdf. Also used for Pamgen meshes.
-#        -D Trilinos_ENABLE_SEACAS:BOOL=ON \
-#        -D Trilinos_ENABLE_Pamgen:BOOL=ON \
-#        -D TPL_ENABLE_Netcdf:BOOL=ON \
-#        -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include \
-#        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \
-
-#      -D Trilinos_EXTRA_REPOSITORIES="preCopyrightTrilinos" \
-#      -D Trilinos_ENABLE_MueLu:BOOL=ON \
