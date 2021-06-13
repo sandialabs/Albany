@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora33-gcc10.2.1-${CTEST_BUILD_CONFIGURATION}-FPE-Albany")
+set (CTEST_BUILD_NAME "fedora34-gcc11.1.1-${CTEST_BUILD_CONFIGURATION}-FPE-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -198,7 +198,7 @@ if (BUILD_ALBANY_FPE)
     "-DTRILINOS_BUILD_DIR=${TRILINOSBLDDIR}"
     "-DPYTHON_EXECUTABLE='/usr/bin/python'"
     "-DPYTHON_INCLUDE_PATH='/usr/include/python3.9'"
-    "-DSWIG_EXECUTABLE='/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/swig/bin/swig'"
+    "-DSWIG_EXECUTABLE='/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.0.5/swig/bin/swig'"
     "-DINSTALL_ALBANY:BOOL=OFF"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   

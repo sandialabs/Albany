@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora34-gcc11.1.1-${CTEST_BUILD_CONFIGURATION}-Albany")
+set (CTEST_BUILD_NAME "fedora34-gcc11.1.1-${CTEST_BUILD_CONFIGURATION}-alegra-xfem")
 set (CTEST_BINARY_NAME build)
 
 
@@ -62,8 +62,7 @@ endif ()
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
-set (cism-piscees_REPOSITORY_LOCATION  git@github.com:E3SM-Project/cism-piscees.git)
+set (alegra-xfem_REPOSITORY_LOCATION git@cee-gitlab.sandia.gov:ikalash/alegra-xfem.git)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -72,7 +71,7 @@ if (CLEAN_BUILD)
   CMAKE_BUILD_TYPE:STRING=Release
   CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
   BUILD_TESTING:BOOL=OFF
-  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
+  PRODUCT_REPO:STRING=${alegra-xfem_REPOSITORY_LOCATION}
   " )
 
   ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
@@ -84,12 +83,12 @@ if (DOWNLOAD)
   set (CTEST_CHECKOUT_COMMAND)
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
   #
-  # Get Albany
+  # Get alegra-xfem
   #
 
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
+  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/alegra-xfem")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany
+      clone ${alegra-xfem_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/alegra-xfem
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -98,25 +97,7 @@ if (DOWNLOAD)
     message(STATUS "err: ${_err}")
     message(STATUS "res: ${HAD_ERROR}")
     if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot clone Albany repository!")
-    endif ()
-  endif ()
-
-  #
-  # Get cism-piscees
-  #
-  #
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/cism-piscees")
-    execute_process (COMMAND "${CTEST_GIT_COMMAND}"
-      clone ${cism-piscees_REPOSITORY_LOCATION} -b ali_interface ${CTEST_SOURCE_DIRECTORY}/cism-piscees
-      OUTPUT_VARIABLE _out
-      ERROR_VARIABLE _err
-      RESULT_VARIABLE HAD_ERROR)
-    message(STATUS "out: ${_out}")
-    message(STATUS "err: ${_err}")
-    message(STATUS "res: ${HAD_ERROR}")
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot clone cism-piscees repository!")
+      message(FATAL_ERROR "Cannot clone alegra-xfem repository!")
     endif ()
   endif ()
 
@@ -144,11 +125,11 @@ endif ()
 if (DOWNLOAD)
 
   #
-  # Update Albany 
+  # Update alegra-xfem
   #
 
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
+  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/alegra-xfem" RETURN_VALUE count)
   message("Found ${count} changed files")
 
   if (CTEST_DO_SUBMIT)
@@ -157,12 +138,12 @@ if (DOWNLOAD)
       )
 
     if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot update Albany repository!")
+      message(FATAL_ERROR "Cannot update alegra-xfem repository!")
     endif ()
   endif ()
 
   if (count LESS 0)
-    message(FATAL_ERROR "Cannot update Albany!")
+    message(FATAL_ERROR "Cannot update alegra-xfem!")
   endif ()
 
 endif ()
@@ -174,34 +155,25 @@ if (BUILD_ALBANY)
   # Builds everything!
   #
 
-  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos-extended-sts/build/install")
 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA:BOOL=ON"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
-    "-DENABLE_MPAS_INTERFACE:BOOL=ON"
-    "-DENABLE_CISM_INTERFACE:BOOL=ON"
-    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
-    "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
-    "-DSEACAS_EPU=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu"
-    "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
-    "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
-    "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
-    "-DINSTALL_ALBANY:BOOL=ON"
-    "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbanyInstall"
-    "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
+    "-DTRILINOS_PATH:FILEPATH=${TRILINSTALLDIR}"
+    "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -fext-numeric-literals'"
+    "-DENABLE_DEBUG_OUTPUT:BOOL=FALSE"
+    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
+    "-DBUILD_SHARED_LIBS:BOOL=ON"
+    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+    "-DENABLE_ST_LONG_DOUBLE=ON"
+    "-DENABLE_ST_FLOAT128=ON") 
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbany)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/alegra-xfem-build")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/alegra-xfem-build)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    BUILD "${CTEST_BINARY_DIRECTORY}/alegra-xfem-build"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/alegra-xfem/code/TrilinosTSQR"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     APPEND
@@ -213,25 +185,25 @@ if (BUILD_ALBANY)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany configure results!")
+      message(FATAL_ERROR "Cannot submit alegra-xfem configure results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany build!")
+    message(FATAL_ERROR "Cannot configure alegra-xfem build!")
   endif ()
 
   #
-  # Build Albany
+  # Build alegra-xfem
   #
 
-  #set (CTEST_BUILD_TARGET all)
-  set (CTEST_BUILD_TARGET install)
+  set (CTEST_BUILD_TARGET all)
+  #set (CTEST_BUILD_TARGET install)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany"
+    BUILD "${CTEST_BINARY_DIRECTORY}/alegra-xfem-build"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -243,20 +215,20 @@ if (BUILD_ALBANY)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany build results!")
+      message(FATAL_ERROR "Cannot submit alegra-xfem build results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany!")
+    message(FATAL_ERROR "Cannot build alegra-xfem!")
   endif ()
 
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+    message(FATAL_ERROR "Encountered build errors in alegra-xfem build. Exiting!")
   endif ()
 
   #
-  # Run Albany tests
+  # Run alegra-xfem tests
   #
   
   set (CTEST_TEST_TIMEOUT 600)
@@ -266,7 +238,7 @@ if (BUILD_ALBANY)
   set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany"
+    BUILD "${CTEST_BINARY_DIRECTORY}/alegra-xfem-build"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
     #NUMBER_FAILED  TEST_NUM_FAILED
@@ -279,12 +251,12 @@ if (BUILD_ALBANY)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
+      message(FATAL_ERROR "Cannot submit alegra-xfem test results!")
     endif ()
   endif ()
 
   #if (HAD_ERROR)
-  #	message(FATAL_ERROR "Some Albany tests failed.")
+  #	message(FATAL_ERROR "Some alegra-xfem tests failed.")
   #endif ()
 
 endif ()

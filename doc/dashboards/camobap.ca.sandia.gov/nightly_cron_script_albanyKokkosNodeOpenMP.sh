@@ -6,8 +6,8 @@ export OMP_NUM_THREADS=2
 export OMP_PLACES=threads
 export OMP_PROC_BIND=spread
 
-export https_proxy="https://wwwproxy.ca.sandia.gov:80"
-export http_proxy="http://wwwproxy.ca.sandia.gov:80"
+export https_proxy="http://proxy.ca.sandia.gov:80"
+export http_proxy="http://proxy.ca.sandia.gov:80"
 
 LOG_FILE=/nightlyCDash/nightly_log_kokkosnode_openmp.txt
 
