@@ -178,8 +178,6 @@ operator() (const CellToSide_Tag&, const int& sideSet_idx) const {
         }
       }
       break;
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid layout (this error should have happened earlier though).\n");
   }
 
 }
