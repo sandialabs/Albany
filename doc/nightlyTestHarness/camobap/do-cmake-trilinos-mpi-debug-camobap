@@ -41,7 +41,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D MPI_BASE_DIR:PATH=/usr/lib64/openmpi/bin \
+      -D MPI_BASE_DIR:PATH=/usr/lib64/openmpi \
       -D CMAKE_C_COMPILER=/usr/lib64/openmpi/bin/mpicc \
       -D CMAKE_CXX_COMPILER=/usr/lib64/openmpi/bin/mpicxx \
       -D CMAKE_Fortran_COMPILER=/usr/lib64/openmpi/bin/mpif90 \
