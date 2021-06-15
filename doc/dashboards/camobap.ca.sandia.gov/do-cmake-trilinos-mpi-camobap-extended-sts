@@ -31,8 +31,6 @@
 rm -f CMakeCache.txt
 rm -rf CMakeFiles
 
-PARMETISDIR=/home/ikalash/Install/parmetis/build/install
-
 PWD=`pwd`
 TRILINOS_INSTALL=$PWD/install 
 
