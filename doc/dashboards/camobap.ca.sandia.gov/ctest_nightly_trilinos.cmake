@@ -30,7 +30,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora34-gcc11.1.1-Trilinos-extended-sts")
+set (CTEST_BUILD_NAME "fedora34-gcc11.0.1-Trilinos-extended-sts")
 set (CTEST_BINARY_NAME build)
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -146,8 +146,8 @@ if (BUILD_TRILINOS)
      "-DCMAKE_Fortran_COMPILER=/usr/lib64/openmpi/bin/mpif90"
      "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -fext-numeric-literals'"
      "-DTPL_ENABLE_Netcdf:BOOL=ON"
-     "-DTPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/include"
-     "-DNetcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/lib"
+     "-DTPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.0.1-openmpi-4.1.0/include"
+     "-DNetcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.0.1-openmpi-4.1.0/lib"
      "-DTPL_ENABLE_HDF5:BOOL=OFF"
      "-DAmesos2_ENABLE_KLU2:BOOL=ON"
      "-DTPL_ENABLE_Boost:BOOL=ON"
@@ -260,25 +260,6 @@ if (BUILD_TRILINOS)
      "-DTrilinos_ENABLE_PanzerDofMgr:BOOL=ON"
      "-DTpetra_ENABLE_DEPRECATED_CODE=ON"
      "-DXpetra_ENABLE_DEPRECATED_CODE=ON"
-      "
-#     "-DTrios_ENABLE_XDMF:BOOL=OFF"
-#"
-# Optional build capabilities:"
-# (1) TriKota is a Trilinos package that builds the"
-#     Dakota libraries, for optimization and UQ. See"
-#     TriKota web page for how to unpack Dakota."
-#"
-#       "-DTrilinos_ENABLE_TriKota:BOOL=ON"
-#"
-# (2) These 6 lines regarding  SEACAS/netcdf  are needed"
-#     for reading exodus meshes, but require an"
-#     installed netcdf. Also used for Pamgen meshes."
-#       "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
-#       "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
-#       "-DTPL_ENABLE_Netcdf:BOOL=ON"
-#       "-DTPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include"
-#       "-DNetcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib"
-#     "-DTrilinos_EXTRA_REPOSITORIES='preCopyrightTrilinos'"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
