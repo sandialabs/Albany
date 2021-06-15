@@ -45,7 +45,7 @@ ANONYMOUS:
     1D Elements: 40
     2D Elements: 40
     Method: STK2D
-    Exodus Output File Name: steady2d.exo
+    Exodus Output File Name: steady2d_dirichlet_mixed_paramsT.exo
     Cubature Degree: 9
   Regression For Response 0:
     Test Value: 3.53554196849000024e-01
