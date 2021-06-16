@@ -367,17 +367,9 @@ doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
 
       // Check derivative array is nonzero
       if (valptr.hasFastAccess()) {
-        if (workset.is_adjoint) {
-          // Sum Jacobian transposed
-          for (int lunk = 0; lunk < nunk; lunk++)
-            Albany::addToLocalRowValues(Jac,
-              cols[lunk], Teuchos::arrayView(&row, 1),
-              Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
-        } else {
-          // Sum Jacobian entries all at once
-          Albany::addToLocalRowValues(Jac,
-            row, cols, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
-        }
+        // Sum Jacobian entries all at once
+        Albany::addToLocalRowValues(Jac,
+          row, cols, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
       } // has fast access
     }
   }
@@ -418,17 +410,9 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int 
 
       // Check derivative array is nonzero
       if (valptr.hasFastAccess()) {
-        if (workset.is_adjoint) {
-          // Sum Jacobian transposed
-          for (int lunk = 0; lunk < nunk; lunk++)
-            Albany::addToLocalRowValues(Jac,
-              cols[lunk], Teuchos::arrayView(&row, 1),
-              Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
-        } else {
-          // Sum Jacobian entries all at once
-          Albany::addToLocalRowValues(Jac,
-            row, cols, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
-        }
+        // Sum Jacobian entries all at once
+        Albany::addToLocalRowValues(Jac,
+          row, cols, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
       } // has fast access
     }
   }

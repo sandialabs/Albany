@@ -250,21 +250,11 @@ evaluateFields(typename Traits::EvalData workset)
           }
           // Check derivative array is nonzero
           if (valptr.hasFastAccess()) {
-            if (workset.is_adjoint) {
-              // Sum Jacobian transposed
-              for (unsigned int lunk = 0; lunk < nunk; lunk++) {
-                Albany::addToLocalRowValues(Jac,lcols[lunk],
-                                                Teuchos::arrayView(&lrow,1),
-                                                Teuchos::arrayView(&(valptr.fastAccessDx(index[lunk])), 1));
-              }
-
-            } else {
-              // Sum Jacobian entries all at once
-              for (unsigned int lunk = 0; lunk < nunk; lunk++) {
-                Albany::addToLocalRowValues(Jac,lrow,
-                                                Teuchos::arrayView(&lcols[lunk],1),
-                                                Teuchos::arrayView(&(valptr.fastAccessDx(index[lunk])), 1));
-              }
+            // Sum Jacobian entries all at once
+            for (unsigned int lunk = 0; lunk < nunk; lunk++) {
+              Albany::addToLocalRowValues(Jac,lrow,
+                                          Teuchos::arrayView(&lcols[lunk],1),
+                                          Teuchos::arrayView(&(valptr.fastAccessDx(index[lunk])), 1));
             }
           } // has fast access
         }

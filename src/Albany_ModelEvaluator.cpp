@@ -1174,23 +1174,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   }
 
   // f
-  if (app->is_adjoint) {
-    const Thyra_Derivative f_deriv(outArgs.get_f(), Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM);
-
-    const Thyra_Derivative dummy_deriv;
-
-    const int response_index = 0;  // need to add capability for sending this in
-    app->evaluateResponseDerivative(
-        response_index, curr_time,
-        x, x_dot, x_dotdot,
-        sacado_param_vec,
-        NULL,
-        Teuchos::null,
-        f_deriv,
-        dummy_deriv,
-        dummy_deriv,
-        dummy_deriv);
-  } else if (Teuchos::nonnull(f_out) && !f_already_computed) {
+  if (Teuchos::nonnull(f_out) && !f_already_computed) {
     app->computeGlobalResidual(
         curr_time,
         x, x_dot, x_dotdot,

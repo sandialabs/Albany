@@ -808,14 +808,8 @@ Neumann(Teuchos::ParameterList& p)
 //             // Global column
 //             colT[0] =  Index(cell, node_col, eq_col);
 //             value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
-//             if (is_adjoint) {
-//               // Sum Jacobian transposed
-//               jacobian.sumIntoValues(colT[0], &rowT,1, &value[0], false, true);
-//             }
-//             else {
-//               // Sum Jacobian
+               // Sum Jacobian
 //               jacobian.sumIntoValues(rowT, colT, nunk,value, false, true);
-//             }
 //           } // column equations
 //         } // column nodes
 //       } // has fast access
@@ -879,13 +873,8 @@ evaluateFields(typename Traits::EvalData workset)
             // Global column
             col[0] =  nodeID(cell,node_col,eq_col);
             value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
-            if (workset.is_adjoint) {
-              // Sum Jacobian transposed
-              Albany::addToLocalRowValues(jac,col[0],row(),value());
-            } else {
-              // Sum Jacobian
-              Albany::addToLocalRowValues(jac,row[0],col(),value());
-            }
+            // Sum Jacobian
+            Albany::addToLocalRowValues(jac,row[0],col(),value());
           } // column equations
         } // column nodes
       } // has fast access

@@ -212,7 +212,6 @@ private:
 //  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
 //  LocalMatrixType jacobian;
 //  Kokkos::View<int***, PHX::Device> Index;
-//  bool is_adjoint;
 
 //  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 

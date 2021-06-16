@@ -714,8 +714,6 @@ Application::finalSetUp(
 
   perturbBetaForDirichlets = problemParams->get("Perturb Dirichlet", 0.0);
 
-  is_adjoint = problemParams->get("Solve Adjoint", false);
-
   // For backward compatibility, use any value at the old location of the
   // "Compute Sensitivity" flag as a default value for the new flag location
   // when the latter has been left undefined
@@ -3111,7 +3109,6 @@ Application::loadWorksetJacobianInfo(
   workset.n_coeff         = omega;
   workset.j_coeff         = beta;
   workset.ignore_residual = ignore_residual_in_jacobian;
-  workset.is_adjoint      = is_adjoint;
 }
 
 void
