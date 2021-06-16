@@ -535,26 +535,16 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
       cudaCheckError();
     }
 
-    if (workset.is_adjoint) {
-      Kokkos::parallel_for(PHAL_ScatterJacRank0_Adjoint_Policy(0,workset.numCells),*this);  
-      cudaCheckError();
-    } else {
-      Kokkos::parallel_for(PHAL_ScatterJacRank0_Policy(0,workset.numCells),*this);
-      cudaCheckError();
-    }
+    Kokkos::parallel_for(PHAL_ScatterJacRank0_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   } else  if (this->tensorRank == 1) {
     if (loadResid) {
       Kokkos::parallel_for(PHAL_ScatterResRank1_Policy(0,workset.numCells),*this);
       cudaCheckError();
     }
 
-    if (workset.is_adjoint) {
-      Kokkos::parallel_for(PHAL_ScatterJacRank1_Adjoint_Policy(0,workset.numCells),*this);
-      cudaCheckError();
-    } else {
-      Kokkos::parallel_for(PHAL_ScatterJacRank1_Policy(0,workset.numCells),*this);
-      cudaCheckError();
-    }
+    Kokkos::parallel_for(PHAL_ScatterJacRank1_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   } else if (this->tensorRank == 2) {
     numDims = this->valTensor.extent(2);
 
@@ -563,13 +553,8 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
       cudaCheckError();
     }
 
-    if (workset.is_adjoint) {
-      Kokkos::parallel_for(PHAL_ScatterJacRank2_Adjoint_Policy(0,workset.numCells),*this);
-    }
-    else {
-      Kokkos::parallel_for(PHAL_ScatterJacRank2_Policy(0,workset.numCells),*this);
-      cudaCheckError();
-    }
+    Kokkos::parallel_for(PHAL_ScatterJacRank2_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   }
 
 #ifdef ALBANY_TIMER
@@ -622,17 +607,9 @@ evaluateFieldsHost(typename Traits::EvalData workset)
         }
         // Check derivative array is nonzero
         if (valptr.hasFastAccess()) {
-          if (workset.is_adjoint) {
-            // Sum Jacobian transposed
-            for (int lunk = 0; lunk < nunk; lunk++)
-              Albany::addToLocalRowValues(Jac,
-                col[lunk], Teuchos::arrayView(&row, 1),
-                Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
-          } else {
-            // Sum Jacobian entries all at once
-            Albany::addToLocalRowValues(Jac,
-              row, col, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
-          }
+          // Sum Jacobian entries all at once
+          Albany::addToLocalRowValues(Jac,
+            row, col, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
         } // has fast access
       }
     }

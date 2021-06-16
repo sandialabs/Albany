@@ -1021,8 +1021,6 @@ void
     return params_;
   }
 
-  bool is_adjoint;
-
  private:
   //! Utility function to set up ShapeParameters through Sacado
   void
