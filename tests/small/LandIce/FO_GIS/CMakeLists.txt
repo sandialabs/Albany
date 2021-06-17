@@ -82,7 +82,8 @@ if (ALBANY_EPETRA)
   set_tests_properties(${testName}_Epetra
                        PROPERTIES
                        LABELS            "LandIce;Epetra;Forward"
-                       FIXTURES_REQUIRED PopulateMeshes)
+                       FIXTURES_REQUIRED PopulateMeshes
+                       FIXTURES_SETUP    UnstructRestart)
 
   # Restart
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.yaml
@@ -92,7 +93,7 @@ if (ALBANY_EPETRA)
                        PROPERTIES
                        LABELS "LandIce;Epetra;Forward"
                        RUN_SERIAL TRUE
-                       FIXTURES_REQUIRED PopulateMeshes)
+                       FIXTURES_REQUIRED UnstructRestart)
 endif()
 
 if (ALBANY_IFPACK2)
