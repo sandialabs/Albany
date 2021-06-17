@@ -999,9 +999,8 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   bool transposeJacobian = false;
   ObserverImpl observer(app);
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  auto& analysisParams = appParams->sublist("Piro").sublist("Analysis");
-  if(analysisParams.isSublist("Optimization Status")) {
-    auto& opt_paramList = analysisParams.sublist("Optimization Status");
+  if(appParams->sublist("Piro").isSublist("Optimization Status")) {
+    auto& opt_paramList = appParams->sublist("Piro").sublist("Optimization Status");
     transposeJacobian = opt_paramList.get("Compute Transposed Jacobian", false);
   }
 
