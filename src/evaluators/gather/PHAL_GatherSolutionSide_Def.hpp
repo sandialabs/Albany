@@ -27,7 +27,7 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
 
   numFields = numFieldsDot = numFieldsDotDot = 0;
   offset = offsetDot = offsetDotDot = 0;
-  vecDim = dl->isSideLayouts ? dl->node_vector->dimension(3) : dl->node_vector->dimension(2);
+  vecDim = dl->node_vector->dimension(2);
   if (p.isType<Teuchos::ArrayRCP<std::string>>("Solution Names")) {
     const auto& names = p.get< Teuchos::ArrayRCP<std::string> >("Solution Names");
     is_dof_vec = p.get<bool>("Is Dof Vector");
