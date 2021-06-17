@@ -135,7 +135,13 @@ loadNodeState(typename Traits::EvalData workset)
         "Error! Field dimensions suggest a vector field, but the stk vector field ptr is null.\n");
   }
 
-  // Loop on the sides of this sideSet that are in this workset
+  // When the 3d mesh is built online, the gid of the 3d-mesh side *should*
+  // match that of the 2d-mesh cell. HOWEVER, when the mesh is saved, then
+  // loaded in a future run, stk might reassign side gids. In that case,
+  // the life line is given by the map in the STK discretization, whic
+  // associates to each 3d-side GID the corresponding 2d-cell GID
+  const auto& side3d_to_cell2d = workset.disc->getSideToSideSetCellMap().at(sideSetName);
+
   auto sideSet = workset.sideSetViews->at(sideSetName);
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the side GID
@@ -146,7 +152,8 @@ loadNodeState(typename Traits::EvalData workset)
     const auto& node_map = ssNodeNumerationMaps.at(sideSetName).at(side_GID);
 
     // Get the cell in the 2d mesh
-    const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, side_GID+1);
+    const auto cell2d_GID = side3d_to_cell2d.at(side_GID);
+    const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, cell2d_GID+1);
     const auto nodes2d = bulkData.begin_nodes(cell2d);
 
     for (int inode=0; inode<numNodes; ++inode) {
