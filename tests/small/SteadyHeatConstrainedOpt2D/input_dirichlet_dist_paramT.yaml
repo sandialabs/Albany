@@ -45,6 +45,8 @@ ANONYMOUS:
       
   Piro: 
     Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
+    
     Analysis: 
       Analysis Package: ROL
       ROL: 

@@ -68,6 +68,7 @@ ANONYMOUS:
       Test Value: 8.044261077318e-03
   Piro: 
     Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
     Analysis: 
       Analysis Package: ROL
       ROL: 
