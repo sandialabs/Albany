@@ -10,7 +10,7 @@ ANONYMOUS:
     Solution Method: Continuation
     Name: LandIce Hydrology 2D
     Response Functions: 
-      Number Of Responses: 0
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Squared L2 Difference Source ST Target PST
@@ -122,6 +122,10 @@ ANONYMOUS:
         Field Name: water_pressure
         Field Type: Node Scalar
         Field Usage: Output
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-04
+    Test Value: 6.105257028162e-01
+    Relative Tolerance: 1.0e-04
   Piro: 
     LOCA: 
       Predictor: 
