@@ -57,7 +57,9 @@ ANONYMOUS:
         Lump Mass: false
         Use Melting: false
       Darcy Law:
-        Regularize With Continuation: true
+        Regularization:
+          Regularization Type: Given Parameter
+          Regularization Parameter Name: Regularization
         Water Thickness Exponent: 1.25
         Potential Gradient Norm Exponent: 1.5
         Transmissivity: 5.0e-03

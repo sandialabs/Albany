@@ -59,7 +59,9 @@ ANONYMOUS:
         Water Thickness Exponent: 1.0
         Potential Gradient Norm Exponent: 2.0
         Transmissivity: 1.0e-02
-        Regularize With Continuation: true
+        Regularization:
+          Regularization Type: Given Parameter
+          Regularization Parameter Name: Regularization
       Surface Water Input: 
         Type: Given Field
     LandIce Basal Friction Coefficient: 
