@@ -98,11 +98,13 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
    *  1) scaling_h_t*h_t                scaling_h_t = yr_to_s
    *  2) scaling_P_t*phi0/(rhow*g)P_t   scaling_P_t = 10^3
    *  3) m/rho_i                        (no scaling)
-   *  4) scalinc_c*c_creep*W_c          scaling_c = yr_to_s * k ^3
+   *  4) scalinc_c*c_creep*W_c          scaling_c = yr_to_s * k^n
    *  5) (h_r-h)*|u|/l_r                (no scaling)
    *
    * where yr_to_s=365.25*24*3600 (the number of seconds in a year)
-   * Note: the k^3 comes from N being in kPa and A in Pa^-3 s^-1.
+   * Note: the k^n (n=3 for Cubic, n=1 for Linear) comes from N being in kPa and
+   *         - Cubic: A in Pa^-3 s^-1.
+   *         - Cubic: eta in Pa^- s^-1.
    */
 
   // We can solve this equation as a nodal equation
@@ -220,7 +222,7 @@ evaluateFieldsCell (typename Traits::EvalData workset)
   //       cancel out with N, and the residual is in m/yr
   double yr_to_s = 365.25*24*3600;
   double scaling_h_t = yr_to_s;
-  double C = c_creep * yr_to_s * 1e9;
+  double C = c_creep * yr_to_s * (closure==Cubic ? 1e9 : 1);
   double phi0 = has_p_dot ? englacial_phi / (1000*rho_w*g) : 0.0;
   double etai = eta_i/1000; // Convert to kPa s
 
