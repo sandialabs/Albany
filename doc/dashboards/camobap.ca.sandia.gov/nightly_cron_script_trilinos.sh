@@ -20,9 +20,10 @@ LOG_FILE=$BASE_DIR/nightly_log_trilinos_download.txt
 BUILD_OPTION="download"
 eval "env BUILD_OPTION=$BUILD_OPTION TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_trilinos.cmake" > $LOG_FILE 2>&1
 
-rm -rf repos/Trilinos/packages/kokkos
+rm -rf $BASE_DIR/repos/Trilinos/packages/kokkos
+cd $BASE_DIR/repos/Trilinos/packages
 git clone git@github.com:ikalash/kokkos.git
-cd repos/Trilinos/packages/kokkos
+cd $BASE_DIR/repos/Trilinos/packages/kokkos
 git checkout for-alegra
 cd $BASE_DIR
 
