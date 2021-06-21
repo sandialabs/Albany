@@ -471,15 +471,6 @@ ELSE()
   SET(ALBANY_DTK FALSE)
 ENDIF()
 
-# CHeck if Trilinos has Thyra-Epetra adapters
-LIST(FIND Trilinos_PACKAGE_LIST ThyraEpetraAdapters ThyraEpetraAdapters_ID)
-IF (ThyraEpetraAdapters_ID GREATER -1)
-  MESSAGE("-- Looking for ThyraEpetraAdapters:              Found.")
-ELSE()
-  MESSAGE("-- Looking for ThyraEpetraAdapters:          NOT Found.")
-  MESSAGE (FATAL_ERROR "ENABLE_ALBANY_EPETRA=ON requires ThyraEpetraAdapters in Trilinos.\n")
-ENDIF()
-
 # Set optional dependency on SEACAS, for I/O via stk_io
 LIST(FIND Trilinos_PACKAGE_LIST SEACASIoss SEACASIoss_List_ID)
 IF (SEACASIoss_List_ID GREATER -1)
@@ -517,8 +508,12 @@ IF (ENABLE_ALBANY_EPETRA)
   MESSAGE("-- ALBANY_EPETRA                           Enabled.")
   SET(ALBANY_EPETRA TRUE)
 
-  # If Epetra build is requested, the ThyraEpetraAdapter in Trilinos is no longer optional
-  IF (NOT ThyraEpetraAdapters_ID GREATER -1)
+  # If Epetra build is requested, the ThyraEpetraAdapter package  in Trilinos is required
+  LIST(FIND Trilinos_PACKAGE_LIST ThyraEpetraAdapters ThyraEpetraAdapters_ID)
+  IF (ThyraEpetraAdapters_ID GREATER -1)
+    MESSAGE("  -- Looking for ThyraEpetraAdapters       Found.")
+  ELSE()
+    MESSAGE("  -- Looking for ThyraEpetraAdapters   NOT Found.")
     MESSAGE (FATAL_ERROR "ENABLE_ALBANY_EPETRA=ON requires ThyraEpetraAdapters in Trilinos.\n")
   ENDIF()
 ELSE()
