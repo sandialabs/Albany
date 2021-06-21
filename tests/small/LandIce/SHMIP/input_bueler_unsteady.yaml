@@ -10,7 +10,7 @@ ANONYMOUS:
     Solution Method: Transient
     Name: LandIce Hydrology 2D
     Response Functions: 
-      Number Of Responses: 0
+      Number Of Responses: 1
       Response 0: 
         Type: Scalar Response
         Name: Squared L2 Difference Source ST Target PST
@@ -24,13 +24,20 @@ ANONYMOUS:
       DBC on NS BoundaryNodeSet1 for DOF water_pressure: 0.0
     Neumann BCs: { }
     Parameters: 
-      Number Of Parameters: 0
+      Number Of Parameters: 1
+      Parameter 0: 
+        Type: Scalar
+        Name: Homotopy Parameter
+        Nominal Value: 1.0
     LandIce Physical Parameters: 
       Water Density:        1000.0        # [ kg m^-3 ]
       Ice Density:          910.0         # [ kg m^-3 ]
       Ice Latent Heat Of Fusion:      3.35e+05      # [ J kg^-1 ]
       Gravity Acceleration: 9.8           # [ m s^-2]
     LandIce Field Norm: 
+      sliding_velocity:
+        Regularization Type: Given Value
+        Regularization Value: 1.0e-10
       hydraulic_potential Gradient Norm: 
         Regularization Type: Given Value
         Regularization Value: 1.0e-10
@@ -51,9 +58,10 @@ ANONYMOUS:
       Darcy Law:
         Water Thickness Exponent: 1.0
         Potential Gradient Norm Exponent: 2.0
-        Transmissivity: 1.0e-06
+        Transmissivity: 1.0e-02
         Regularization:
-          Regularization Type: None
+          Regularization Type: Given Parameter
+          Regularization Parameter Name: Regularization
       Surface Water Input: 
         Type: Given Field
     LandIce Basal Friction Coefficient: 
@@ -84,7 +92,7 @@ ANONYMOUS:
         Field Name: surface_water_input
         Field Type: Node Scalar
         Field Origin: File
-        Field Value: [5.47999999999999972e-01]
+        Field Value: [5.47999999999999972e+03]
       Field 3: 
         Field Name: basal_velocity
         Field Type: Node Vector
@@ -111,6 +119,10 @@ ANONYMOUS:
         Field Name: water_pressure
         Field Type: Node Scalar
         Field Usage: Output
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-04
+    Test Value: 3.326458469846e+02
+    Relative Tolerance: 1.0e-04
   Piro: 
     Tempus: 
       Integrator Name: Tempus Integrator
@@ -126,24 +138,19 @@ ANONYMOUS:
           Initial Time: 0.00000000000000000e+00
           Initial Time Index: 0
           Initial Time Step: 3.60000000000000000e+03
-          # Maximum Time Step: 7.20000000000000000e+03
-          Maximum Time Step: 86.40000000000000000e+06
-          Final Time: 8.64000000000000000e+10
+          Final Time: 8.64000000000000000e+09
           Maximum Absolute Error: 1.00000000000000002e-03
           Maximum Relative Error: 1.00000000000000002e-03
-          Time Step Control Strategy: 
-            Time Step Control Strategy List: basic_vs
-            basic_vs: 
-              Name: Basic VS
-              Reduction Factor: 5.00000000000000000e-01
-              Amplification Factor: 2.00000000000000000e+00
-              Minimum Value Monitoring Function: 4.00000000000000008e-02
-              Maximum Value Monitoring Function: 5.00000000000000028e-02
           Output Time List: ''
           Output Index List: ''
-          # Output Time Interval: 8.64000000000000000e+05
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
+          Time Step Control Strategy: 
+            Strategy Type: Basic VS
+            Reduction Factor: 5.00000000000000000e-01
+            Amplification Factor: 2.00000000000000000e+00
+            Minimum Value Monitoring Function: 4.00000000000000008e-02
+            Maximum Value Monitoring Function: 5.00000000000000028e-02
       Tempus Stepper: 
         Stepper Type: Backward Euler
         Solver Name: Hydrology Solver
