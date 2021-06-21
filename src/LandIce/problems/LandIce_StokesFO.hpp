@@ -217,11 +217,11 @@ void StokesFO::constructSynteticTestBCEvaluators (PHX::FieldManager<PHAL::Albany
     p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Syntetic BC"));
 
     //Input
-    p->set<std::string>("BF Side Name", sname(Albany::bf_name,ssName));
-    p->set<std::string>("Weighted Measure Name", sname(Albany::weighted_measure_name,ssName));
-    p->set<std::string>("Coordinate Vector Name", sname(Albany::coord_vec_name,ssName));
-    p->set<std::string>("Side Normal Name", sname(Albany::normal_name,ssName));
-    p->set<std::string>("Velocity Side QP Variable Name", sname(dof_names[0],ssName));
+    p->set<std::string>("BF Side Name", side_fname(Albany::bf_name,ssName));
+    p->set<std::string>("Weighted Measure Name", side_fname(Albany::weighted_measure_name,ssName));
+    p->set<std::string>("Coordinate Vector Name", side_fname(Albany::coord_vec_name,ssName));
+    p->set<std::string>("Side Normal Name", side_fname(Albany::normal_name,ssName));
+    p->set<std::string>("Velocity Side QP Variable Name", side_fname(dof_names[0],ssName));
     p->set<std::string>("Side Set Name", ssName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<Teuchos::ParameterList*>("BC Params", &pl->sublist("BC Params"));
@@ -284,11 +284,11 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     //Input
     p->set<std::string>("Solution Variable Name", dof_name_auxiliary[0]);
     p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
-    p->set<std::string>("Field Name", sname(field_name,ssName));
-    p->set<std::string>("Field Gradient Name", sname(field_name + "_gradient",ssName));
-    p->set<std::string>("Gradient BF Side Name", sname(Albany::grad_bf_name,ssName));
-    p->set<std::string>("Weighted Measure Side Name", sname(Albany::weighted_measure_name,ssName));
-    p->set<std::string>("Tangents Side Name", sname(Albany::tangents_name,ssName));
+    p->set<std::string>("Field Name", side_fname(field_name,ssName));
+    p->set<std::string>("Field Gradient Name", side_fname(field_name + "_gradient",ssName));
+    p->set<std::string>("Gradient BF Side Name", side_fname(Albany::grad_bf_name,ssName));
+    p->set<std::string>("Weighted Measure Side Name", side_fname(Albany::weighted_measure_name,ssName));
+    p->set<std::string>("Tangents Side Name", side_fname(Albany::tangents_name,ssName));
     p->set<std::string>("Side Set Name", ssName);
     p->set<std::string>("Boundary Edges Set Name", proj_lapl_params.get<std::string>("Boundary Edges Set Name", "lateralside"));
     p->set<double>("Mass Coefficient",  proj_lapl_params.get<double>("Mass Coefficient",1.0));
