@@ -533,7 +533,9 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // |           Creating LandIce specific evaluators            |
   // +---------------------------------------------------------+
 
-  auto hy_pl = params->sublist("LandIce Hydrology");
+  auto& hy_pl   = params->sublist("LandIce Hydrology");
+  auto& phys_pl = params->sublist("LandIce Physical Parameters");
+  auto& visc_pl = params->sublist("LandIce Viscosity");
 
   // ---- Compute Water Input ----- //
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Hydrology Water Input"));
@@ -557,7 +559,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string> ("Ice Thickness Variable Name",ice_thickness_name);
   p->set<bool> ("Nodal", false);
 
-  p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&params->sublist("LandIce Physical Parameters"));
+  p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&phys_pl);
 
   //Output
   p->set<std::string> ("Basal Gravitational Water Potential Variable Name",basal_grav_water_potential_name);
@@ -577,7 +579,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Ice Thickness Variable Name", ice_thickness_name);
   p->set<bool>("Nodal", false);
 
-  p->set<Teuchos::ParameterList*>("LandIce Physical Parameters",&params->sublist("LandIce Physical Parameters"));
+  p->set<Teuchos::ParameterList*>("LandIce Physical Parameters",&phys_pl);
 
   //Output
   p->set<std::string>("Ice Overburden Variable Name",ice_overburden_name);
@@ -601,7 +603,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Water Thickness Variable Name", water_thickness_name);
   p->set<bool>("Nodal", false);
 
-  p->set<Teuchos::ParameterList*>("LandIce Physical Parameters",&params->sublist("LandIce Physical Parameters"));
+  p->set<Teuchos::ParameterList*>("LandIce Physical Parameters",&phys_pl);
   p->set<Teuchos::ParameterList*>("LandIce Hydrology", &hy_pl);
 
   //Output
@@ -640,7 +642,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Sliding Velocity Variable Name",sliding_velocity_name);
   p->set<std::string>("Basal Friction Coefficient Variable Name",beta_name);
   p->set<Teuchos::ParameterList*>("LandIce Hydrology",&hy_pl);
-  p->set<Teuchos::ParameterList*>("LandIce Physical Parameters",&params->sublist("LandIce Physical Parameters"));
+  p->set<Teuchos::ParameterList*>("LandIce Physical Parameters",&phys_pl);
 
   //Output
   p->set<std::string> ("Melting Rate Variable Name",melting_rate_name);
@@ -658,8 +660,8 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Input
   p->set<std::string>("Temperature Variable Name",ice_temperature_name);
-  p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&params->sublist("LandIce Physical Parameters"));
-  p->set<Teuchos::ParameterList*> ("Parameter List",&params->sublist("LandIce Viscosity"));
+  p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&phys_pl);
+  p->set<Teuchos::ParameterList*> ("Parameter List",&visc_pl);
 
   // Output
   p->set<std::string>("Flow Rate Variable Name",ice_softness_name);
@@ -730,7 +732,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("BF Variable Name", Albany::bf_name);
     p->set<std::string>("Effective Pressure Variable Name", effective_pressure_name);
     p->set<std::string>("Ice Softness Variable Name", ice_softness_name);
-    p->set<Teuchos::ParameterList*>("Viscosity Parameter List", &params->sublist("LandIce Viscosity"));
+    p->set<Teuchos::ParameterList*>("Viscosity Parameter List", &visc_pl);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Basal Friction Coefficient"));
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
 
@@ -761,7 +763,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<bool>("Unsteady",unsteady);
   p->set<bool>("Has Till Storage",has_h_till);
 
-  p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&params->sublist("LandIce Physical Parameters"));
+  p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&phys_pl);
   p->set<Teuchos::ParameterList*> ("LandIce Hydrology Parameters",&hy_pl);
 
   //Output
@@ -782,7 +784,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string> ("Ice Softness Variable Name",ice_softness_name);
     p->set<bool> ("Nodal", false);
     p->set<Teuchos::ParameterList*> ("LandIce Hydrology Parameters",&hy_pl);
-    p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&params->sublist("LandIce Physical Parameters"));
+    p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&phys_pl);
 
     //Output
     p->set<std::string> ("Water Thickness Variable Name", water_thickness_name);
@@ -811,7 +813,8 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string> ("Ice Softness Variable Name",ice_softness_name);
     p->set<bool> ("Unsteady", unsteady);
     p->set<Teuchos::ParameterList*> ("LandIce Hydrology Parameters",&hy_pl);
-    p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&params->sublist("LandIce Physical Parameters"));
+    p->set<Teuchos::ParameterList*> ("LandIce Viscosity Parameters",&visc_pl);
+    p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&phys_pl);
 
     //Output
     p->set<std::string> ("Cavities Eqn Residual Name", resid_names[1]);
@@ -831,7 +834,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string> ("Melting Rate Variable Name",melting_rate_name);
     p->set<std::string> ("Surface Water Input Variable Name",surface_water_input_name);
     p->set<Teuchos::ParameterList*> ("LandIce Hydrology Parameters",&hy_pl);
-    p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&params->sublist("LandIce Physical Parameters"));
+    p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&phys_pl);
 
     //Output
     p->set<std::string> ("Till Water Storage Eqn Residual Name", resid_names[2]);

@@ -206,6 +206,7 @@ constructHydrologyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
   auto dl_side = dl->side_layouts.at(basalSideName);
   auto& hy_pl = params->sublist("LandIce Hydrology");
   auto& phys_pl = params->sublist("LandIce Physical Parameters");
+  auto& visc_pl = params->sublist("LandIce Viscosity");
 
   // ================== Residual(s) ===================== //
 
@@ -276,6 +277,7 @@ constructHydrologyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     p->set<std::string> ("Ice Softness Variable Name",bname(flow_factor_name));
     p->set<bool> ("Unsteady", unsteady);
     p->set<Teuchos::ParameterList*> ("LandIce Hydrology Parameters",&hy_pl);
+    p->set<Teuchos::ParameterList*> ("LandIce Viscosity Parameters",&visc_pl);
     p->set<Teuchos::ParameterList*> ("LandIce Physical Parameters",&phys_pl);
     p->set<std::string> ("Side Set Name",basalSideName);
 
