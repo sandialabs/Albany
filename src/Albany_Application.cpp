@@ -726,6 +726,13 @@ Application::finalSetUp(
     solveParams.get(sensitivityToken, *oldSensitivityFlag);
   }
 
+  // ======= Dynamic Sizing Experiment =======
+  setSideSetExtents<PHAL::AlbanyTraits::Residual>();
+  setSideSetExtents<PHAL::AlbanyTraits::Jacobian>();
+  setSideSetExtents<PHAL::AlbanyTraits::Tangent>();
+  setSideSetExtents<PHAL::AlbanyTraits::DistParamDeriv>();
+  setSideSetExtents<PHAL::AlbanyTraits::HessianVec>();
+
   // MPerego: Preforming post registration setup here to make sure that the
   // discretization is already created, so that  derivative dimensions are
   // known. Cannot do post registration right before the evaluate , as done for
@@ -733,6 +740,87 @@ Application::finalSetUp(
   // TODO, determine when it's best to perform post setup registration and fix
   // memoizer hack if needed.
   for (int i = 0; i < responses.size(); ++i) { responses[i]->postRegSetup(); }
+}
+
+template<typename Traits>
+void
+Application::setSideSetExtents() const
+{
+  // get number of worksets
+  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  unsigned int const numWorksets = wsElNodeEqID.size();
+
+  // compute largest workset size over all worksets for each sideset name
+  // for each workset:
+  //   get sideSetViews object
+  //   for each sideset name in sideSetViews object:
+  //     compute maximum workset size
+  std::map<std::string, unsigned int> maxSideSetSizes;
+  for (unsigned int i = 0; i < numWorksets; ++i) { 
+    const LocalSideSetInfoList& sideSetView = disc->getSideSetViews(i);
+    for (auto it = sideSetView.begin(); it != sideSetView.end(); ++it) {
+      if (maxSideSetSizes.find(it->first) == maxSideSetSizes.end()) {
+        maxSideSetSizes[it->first] = 0;
+      }
+      unsigned int sideSetSize = it->second.size;
+      maxSideSetSizes[it->first] = std::max(maxSideSetSizes[it->first], sideSetSize);
+    }
+  }
+
+  // Iterate over tags and set extents for sideset fields
+  const auto& tags = fm[0]->getFieldTagsForSizing<Traits>();
+  fm[0]->buildDagForType<Traits>();
+  *out << "(Dynamic Sizing Experiment) FM length: " << fm.size() << std::endl; 
+  *out << "(Dynamic Sizing Experiment) Number of worksets: " << numWorksets << std::endl;
+  *out << "(Dynamic Sizing Experiment) Number of tags: " << tags.size() << std::endl;
+  for (auto& t : tags) {
+    auto& t_dl = t->nonConstDataLayout();
+    std::vector<PHX::Device::size_type> t_dims;
+    t_dl.dimensions(t_dims);
+
+    // Check if dimension[0] is Side
+    std::string first_dim_name = t_dl.name(0);
+    
+    std::string t_identifier = t_dl.identifier();
+    std::string sideSetName = t_identifier.substr(0, t_identifier.find("<"));
+
+    if (first_dim_name == "Side") {
+
+      t_dims[0] = maxSideSetSizes[sideSetName];
+
+      switch (t_dims.size()) {
+        case 1:
+          t_dl.setExtents(t_dims[0]);
+          break;
+        case 2:
+          t_dl.setExtents(t_dims[0], t_dims[1]);
+          break;
+        case 3:
+          t_dl.setExtents(t_dims[0], t_dims[1], t_dims[2]);
+          break;
+        case 4:
+          t_dl.setExtents(t_dims[0], t_dims[1], t_dims[2], t_dims[3]);
+          break;
+        case 5:
+          t_dl.setExtents(t_dims[0], t_dims[1], t_dims[2], t_dims[3], t_dims[4]);
+          break;
+        case 6:
+          t_dl.setExtents(t_dims[0], t_dims[1], t_dims[2], t_dims[3], t_dims[4], t_dims[5]);
+          break;
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+            "Error! Sideset dynamic sizing as encountered a layout with more field tags than expected.\n");
+      }
+    }
+    
+    *out << "  Tag " << t_identifier << std::endl;
+    *out << "    Side set name = " << sideSetName << std::endl;
+    *out << "    Rank = " << t_dl.rank() << ": ";
+    for (unsigned int i = 0; i < t_dl.rank(); ++i) {
+      *out << t_dl.extent(i) << " (" << t_dims[i] << ") ";
+    }
+    *out << std::endl;
+  }
 }
 
 RCP<AbstractDiscretization>
