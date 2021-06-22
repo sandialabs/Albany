@@ -19,12 +19,12 @@ Nightly, camobap.ca.sandia.gov, fedora34-gcc11.0.1-Trilinos-extended-sts
 Nightly, camobap.ca.sandia.gov, fedora34-gcc11.0.1-Release-alegra-xfem
 Nightly, cee-compute020, Linux-3.10.0-1062.9.1.el7.x86_64-intel-trilinos
 Nightly, cee-compute020, Linux-3.10.0-1062.9.1.el7.x86_64-intel-albany
+Nightly, cee-compute021, Linux-3.10.0-1062.9.1.el7.x86_64-base-trilinos
+Nightly, cee-compute021, Linux-3.10.0-1062.9.1.el7.x86_64-base-albany
 Nightly, cee-compute022, Linux-3.10.0-1062.9.1.el7.x86_64-clangdbg-trilinos
 Nightly, cee-compute022, Linux-3.10.0-1062.9.1.el7.x86_64-clangdbg-albany
 Nightly, cee-compute024, Linux-3.10.0-1062.9.1.el7.x86_64-clang-trilinos
 Nightly, cee-compute024, Linux-3.10.0-1062.9.1.el7.x86_64-clang-albany
-Nightly, cee-compute025, Linux-3.10.0-1062.9.1.el7.x86_64-base-trilinos
-Nightly, cee-compute025, Linux-3.10.0-1062.9.1.el7.x86_64-base-albany
 Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-trilinos
 Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-albany
 Nightly, cori.nersc.gov, cori-Trilinos
