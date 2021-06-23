@@ -6,8 +6,37 @@
 
 # Configure the file containing Albany configuration macros,
 # and add its folder to the include directories
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in
-                ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h)
+# Note: write to a temp file, and only copy into Albany_config.h if
+#       the temp file is different
+macro (CreateAlbanyConfig_h)
+  set (SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in)
+  set (CFG_FILE ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h)
+  set (TMP_FILE ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h.tmp)
+
+  configure_file (${SRC_FILE} ${TMP_FILE})
+
+  set (OUT_OF_DATE TRUE)
+
+  if (EXISTS ${CFG_FILE})
+    # we rely on FILE macro rather than running diff, since it is
+    # more portable (guaranteed to work regardless of underlying system)
+    file (READ ${CFG_FILE} CFG_FILE_STR)
+    file (READ ${TMP_FILE} TMP_FILE_STR)
+
+    if (${CFG_FILE_STR} STREQUAL ${TMP_FILE_STR})
+      # config file was present and appears unchanged
+      set (OUT_OF_DATE FALSE)
+    endif()
+  endif ()
+
+  if (OUT_OF_DATE)
+    file (RENAME ${TMP_FILE} ${CFG_FILE})
+  else()
+    file (REMOVE ${TMP_FILE})
+  endif()
+endmacro()
+
+CreateAlbanyConfig_h()
 
 include(CheckCXXSourceCompiles)
 

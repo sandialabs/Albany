@@ -327,7 +327,6 @@ Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
 void
 Albany::IossSTKMeshStruct::setFieldData (
           const Teuchos::RCP<const Teuchos_Comm>& commT,
-          const Teuchos::RCP<Teuchos::ParameterList>& params,
           const AbstractFieldContainer::FieldContainerRequirements& req,
           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
           const unsigned int worksetSize,
@@ -556,7 +555,6 @@ Albany::IossSTKMeshStruct::setFieldData (
 void
 Albany::IossSTKMeshStruct::setBulkData (
           const Teuchos::RCP<const Teuchos_Comm>& commT,
-          const Teuchos::RCP<Teuchos::ParameterList>& params,
           const AbstractFieldContainer::FieldContainerRequirements& req,
           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
           const unsigned int worksetSize,

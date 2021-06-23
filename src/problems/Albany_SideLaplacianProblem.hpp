@@ -14,6 +14,7 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
@@ -125,11 +126,11 @@ SideLaplacian::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                     Albany::FieldManagerChoice fieldManagerChoice,
                                     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  if (numDim==2)
-  {
+  if (numDim==2) {
     return constructEvaluators2D<EvalT> (fm0,meshSpecs,stateMgr,fieldManagerChoice,responseList);
+  } else {
+    return constructEvaluators3D<EvalT> (fm0,meshSpecs,stateMgr,fieldManagerChoice,responseList);
   }
-  return constructEvaluators3D<EvalT> (fm0,meshSpecs,stateMgr,fieldManagerChoice,responseList);
 }
 
 template <typename EvalT>
@@ -180,10 +181,10 @@ SideLaplacian::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   p = Teuchos::rcp(new Teuchos::ParameterList("Side Laplacian Residual"));
 
   //Input
-  p->set<std::string> ("Coordinate Vector Variable Name", "Coord Vec");
-  p->set<std::string> ("BF Variable Name", "BF");
-  p->set<std::string> ("Weighted Measure Variable Name", "Weights");
-  p->set<std::string> ("Gradient BF Variable Name", "Grad BF");
+  p->set<std::string> ("Coordinate Vector Variable Name", Albany::coord_vec_name);
+  p->set<std::string> ("BF Variable Name", Albany::bf_name);
+  p->set<std::string> ("Weighted Measure Variable Name", Albany::weights_name);
+  p->set<std::string> ("Gradient BF Variable Name", Albany::grad_bf_name);
   p->set<std::string> ("Solution QP Variable Name", dof_names[0]);
   p->set<std::string> ("Solution Gradient QP Variable Name", dof_names[0] + " Gradient");
   p->set<bool> ("Side Equation", false);
@@ -276,18 +277,18 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Restrict vertex coordinates from cell-based to cell-side-based
-  ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",sideSetName,"Vertex Vector",cellType,"Coord Vec " + sideSetName);
+  ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,sideSetName,"Vertex Vector",cellType,Albany::coord_vec_name + "_" + sideSetName);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // ------- Side Laplacian Residual -------- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Side Laplacian Residual"));
 
   //Input
-  p->set<std::string> ("Coordinate Vector Variable Name", "Coord Vec " + sideSetName);
-  p->set<std::string> ("BF Variable Name", "BF "+sideSetName);
-  p->set<std::string> ("Weighted Measure Variable Name", "Weighted Measure " + sideSetName);
-  p->set<std::string> ("Metric Name", "Metric " + sideSetName);
-  p->set<std::string> ("Gradient BF Variable Name", "Grad BF " + sideSetName);
+  p->set<std::string> ("Coordinate Vector Variable Name", Albany::coord_vec_name + "_" + sideSetName);
+  p->set<std::string> ("BF Variable Name", Albany::bf_name + "_" + sideSetName);
+  p->set<std::string> ("Weighted Measure Variable Name", Albany::weighted_measure_name + "_" + sideSetName);
+  p->set<std::string> ("Metric Name", Albany::metric_name + "_" + sideSetName);
+  p->set<std::string> ("Gradient BF Variable Name", Albany::grad_bf_name + "_" + sideSetName);
   p->set<std::string> ("Solution Variable Name", dof_names[0]);
   p->set<std::string> ("Solution QP Variable Name", dof_names[0]);
   p->set<std::string> ("Solution Gradient QP Variable Name", dof_names[0] + " Gradient");

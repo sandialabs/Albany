@@ -10,7 +10,7 @@ ANONYMOUS:
     Solution Method: Continuation
     Name: LandIce Hydrology 2D
     Response Functions: 
-      Number Of Responses: 0
+      Number Of Responses: 1
       Response 0: 
         Type: Scalar Response
         Name: Squared L2 Difference Source ST Target PST
@@ -59,7 +59,9 @@ ANONYMOUS:
         Water Thickness Exponent: 1.0
         Potential Gradient Norm Exponent: 2.0
         Transmissivity: 1.0e-02
-        Regularize With Continuation: true
+        Regularization:
+          Regularization Type: Given Parameter
+          Regularization Parameter Name: Regularization
       Surface Water Input: 
         Type: Given Field
     LandIce Basal Friction Coefficient: 
@@ -117,6 +119,10 @@ ANONYMOUS:
         Field Name: water_pressure
         Field Type: Node Scalar
         Field Usage: Output
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-04
+    Test Value: 3.334903926175e+02
+    Relative Tolerance: 1.0e-04
   Piro: 
     LOCA: 
       Predictor: 

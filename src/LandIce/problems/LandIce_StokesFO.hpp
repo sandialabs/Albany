@@ -211,22 +211,17 @@ void StokesFO::constructSynteticTestBCEvaluators (PHX::FieldManager<PHAL::Albany
   for (auto pl : landice_bcs[LandIceBC::SynteticTest]) {
     const std::string& ssName = pl->get<std::string>("Side Set Name");
 
-    // We may have more than 1 basal side set. The layout of all the side fields is the
-    // same, so we need to differentiate them by name (just like we do for the basis functions already).
-
-    std::string velocity_side_name = dof_names[0] + "_" + ssName;
-
     // -------------------------------- LandIce evaluators ------------------------- //
 
     // --- Syntetic BC Residual --- //
     p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Syntetic BC"));
 
     //Input
-    p->set<std::string>("BF Side Name", Albany::bf_name + " "+ssName);
-    p->set<std::string>("Weighted Measure Name", Albany::weighted_measure_name + " "+ssName);
-    p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name + " "+ssName);
-    p->set<std::string>("Side Normal Name", Albany::normal_name + " "+ssName);
-    p->set<std::string>("Velocity Side QP Variable Name", velocity_side_name);
+    p->set<std::string>("BF Side Name", side_fname(Albany::bf_name,ssName));
+    p->set<std::string>("Weighted Measure Name", side_fname(Albany::weighted_measure_name,ssName));
+    p->set<std::string>("Coordinate Vector Name", side_fname(Albany::coord_vec_name,ssName));
+    p->set<std::string>("Side Normal Name", side_fname(Albany::normal_name,ssName));
+    p->set<std::string>("Velocity Side QP Variable Name", side_fname(dof_names[0],ssName));
     p->set<std::string>("Side Set Name", ssName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<Teuchos::ParameterList*>("BC Params", &pl->sublist("BC Params"));
@@ -252,7 +247,6 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     auto& proj_lapl_params = params->sublist("LandIce L2 Projected Boundary Laplacian");
     auto& ssName = proj_lapl_params.get<std::string>("Side Set Name",basalSideName);
     std::string field_name = proj_lapl_params.get<std::string>("Field Name","basal_friction");
-    std::string field_name_side = field_name + "_" + ssName;
 
     // ----------  Define Field Names ----------- //
     Teuchos::ArrayRCP<std::string> dof_name_auxiliary(1);
@@ -290,11 +284,11 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
     //Input
     p->set<std::string>("Solution Variable Name", dof_name_auxiliary[0]);
     p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
-    p->set<std::string>("Field Name", field_name_side);
-    p->set<std::string>("Field Gradient Name", field_name_side + " Gradient");
-    p->set<std::string>("Gradient BF Side Name", Albany::grad_bf_name + " " + ssName);
-    p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + " "+ssName);
-    p->set<std::string>("Tangents Side Name", Albany::tangents_name + " "+ssName);
+    p->set<std::string>("Field Name", side_fname(field_name,ssName));
+    p->set<std::string>("Field Gradient Name", side_fname(field_name + "_gradient",ssName));
+    p->set<std::string>("Gradient BF Side Name", side_fname(Albany::grad_bf_name,ssName));
+    p->set<std::string>("Weighted Measure Side Name", side_fname(Albany::weighted_measure_name,ssName));
+    p->set<std::string>("Tangents Side Name", side_fname(Albany::tangents_name,ssName));
     p->set<std::string>("Side Set Name", ssName);
     p->set<std::string>("Boundary Edges Set Name", proj_lapl_params.get<std::string>("Boundary Edges Set Name", "lateralside"));
     p->set<double>("Mass Coefficient",  proj_lapl_params.get<double>("Mass Coefficient",1.0));

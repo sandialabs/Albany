@@ -57,7 +57,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFGradInterpolationSideBase<EvalT, Traits, ScalarT>::
-operator() (const GradInterpolationSide_Tag& tag, const int& sideSet_idx) const {
+operator() (const GradInterpolationSide_Tag&, const int& sideSet_idx) const {
   
   for (int qp=0; qp<numSideQPs; ++qp) {
     for (int dim=0; dim<numDims; ++dim) {

@@ -330,8 +330,8 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   // --- Special evaluators for side handling --- //
 
   // --- Restrict vertex coordinates from cell-based to cell-side-based
-  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,
-                                                                                                 "Coord Vec " + basalSideName));
+  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,basalSideName,"Vertex Vector",cellType,
+                                                                                                 Albany::coord_vec_name + "_" + basalSideName));
 
   // --- Compute side basis functions
   fm0.template registerEvaluator<EvalT> (evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName));
@@ -392,7 +392,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
     p->set<std::string>("Diff Enthalpy Variable Name", "Diff Enth");
 
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
 
     // Velocity field for the convective term (read from the mesh)
     p->set<string>("Velocity QP Variable Name", "velocity");
@@ -440,8 +440,8 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
     //Input
 
-    p->set<std::string>("BF Side Name", Albany::bf_name +" "+basalSideName);
-    p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name+" "+basalSideName);
+    p->set<std::string>("BF Side Name", Albany::bf_name + "_" + basalSideName);
+    p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + "_" + basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Basal Melt Rate Side QP Variable Name", "basal_neumann_term");
@@ -494,7 +494,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       p = rcp(new ParameterList("LandIce Viscosity"));
 
       //Input
-      p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+      p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
       p->set<std::string>("Velocity QP Variable Name", "velocity");
       p->set<std::string>("Velocity Gradient QP Variable Name", "velocity Gradient");
       p->set<std::string>("Temperature Variable Name", "temperature");
@@ -520,7 +520,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
     //Input
     p->set<std::string>("Surface Height Variable Name", "surface_height");
-    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
 
     p->set<ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
@@ -610,7 +610,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     }
 
     {
-      std::string stateName = "surface_enthalpy";
+      stateName = "surface_enthalpy";
       entity = Albany::StateStruct::NodalDistParameter;
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
       p->set<std::string>("Parameter Name", stateName);

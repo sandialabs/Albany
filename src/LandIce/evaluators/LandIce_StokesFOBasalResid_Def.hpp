@@ -97,7 +97,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename BetaScalarT>
 KOKKOS_INLINE_FUNCTION
 void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::
-operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const {
+operator() (const StokesFOBasalResid_Tag&, const int& sideSet_idx) const {
   
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
@@ -129,7 +129,6 @@ operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const {
 template<typename EvalT, typename Traits, typename BetaScalarT>
 void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
-
   if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
 
   sideSet = workset.sideSetViews->at(basalSideName);

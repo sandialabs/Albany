@@ -10,7 +10,7 @@ ANONYMOUS:
     Solution Method: Continuation
     Name: LandIce Hydrology 2D
     Response Functions: 
-      Number Of Responses: 0
+      Number Of Responses: 1
       Response 0: 
         Type: Scalar Response
         Name: Squared L2 Difference Source ST Target PST
@@ -62,7 +62,9 @@ ANONYMOUS:
         Potential Gradient Norm Exponent: 2.0
         Transmissivity: 1.0e-02 # Hewitt: k0/eta_w h^a grad(p_w), while ALI has k*h^a grad(p_w).
                                 # Hewitt's paper has eta_w=1e-3, k0=1e-5, so ALI k=1e-2
-        Regularize With Continuation: true
+        Regularization:
+          Regularization Type: Given Parameter
+          Regularization Parameter Name: Regularization
       Melting Rate:
         Use Friction Melt: false
         Use Geothermal Melt: false
@@ -123,11 +125,10 @@ ANONYMOUS:
         Field Name: water_pressure
         Field Type: Node Scalar
         Field Usage: Output
-      # Field 4: 
-      #   Field Name: geothermal_flux
-      #   Field Type: Node Scalar
-      #   Field Origin: File
-      #   Field Value: [0.06]   # W / m^2
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-04
+    Test Value: 1.624674816941e+02
+    Relative Tolerance: 1.0e-04
   Piro: 
     LOCA: 
       Predictor: 

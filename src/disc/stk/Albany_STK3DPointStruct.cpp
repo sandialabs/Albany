@@ -3,13 +3,17 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include "Albany_STK3DPointStruct.hpp"
+
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #endif
 
+namespace Albany {
+
 //Constructor for meshes read from ASCII file
-Albany::STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
+STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                            const Teuchos::RCP<const Teuchos_Comm>& commT,
 					   const int numParams) :
   GenericSTKMeshStruct(params, 3, numParams)
@@ -34,7 +38,7 @@ Albany::STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::Parameter
 
   std::cout << "--- creating a new MeshSpecsStruct ---" << std::endl;
   this->meshSpecs[0] =
-    Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cubDegree,
+    Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cubDegree,
                                              nsNames, ssNames, worksetSize, "Block0",
                                              ebNameToIndex, this->interleavedOrdering));
   std::cout << "---3DPoint constructor done---" << std::endl;
@@ -46,16 +50,15 @@ Albany::STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::Parameter
   this->initializeSideSetMeshStructs(commT);
 }
 
-Albany::STK3DPointStruct::~STK3DPointStruct() {};
+STK3DPointStruct::~STK3DPointStruct() {};
 
 void
-Albany::STK3DPointStruct::setFieldData(
+STK3DPointStruct::setFieldData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                  const Teuchos::RCP<StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
   std::cout << "---3DPoint::setFieldData---" << std::endl;
@@ -64,13 +67,12 @@ Albany::STK3DPointStruct::setFieldData(
 }
 
 void
-Albany::STK3DPointStruct::setBulkData(
+STK3DPointStruct::setBulkData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                  const AbstractFieldContainer::FieldContainerRequirements& /* req */,
+                  const Teuchos::RCP<StateInfoStruct>& /* sis */,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
   std::cout << "---3DPoint::setBulkData---" << std::endl;
@@ -95,13 +97,13 @@ Albany::STK3DPointStruct::setBulkData(
 }
 
 void
-Albany::STK3DPointStruct::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
+STK3DPointStruct::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT */)
 {
   std::cout << "---3DPoint::buildMesh---" << std::endl;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::STK3DPointStruct::getValidDiscretizationParameters() const
+STK3DPointStruct::getValidDiscretizationParameters() const
 {
   std::cout << "---3DPoint::getValidDiscretizationParameters---" << std::endl;
   Teuchos::RCP<Teuchos::ParameterList> validPL =
@@ -109,3 +111,5 @@ Albany::STK3DPointStruct::getValidDiscretizationParameters() const
 
   return validPL;
 }
+
+} // namespace Albany

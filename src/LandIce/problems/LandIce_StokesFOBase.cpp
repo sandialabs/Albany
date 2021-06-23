@@ -411,6 +411,8 @@ void StokesFOBase::parseInputFields ()
     // Request QP interpolation for all input nodal fields
     if (loc==FL::Node) {
       build_interp_ev[stateName][IReq::QP_VAL] = true;
+    }
+    if (loc==FL::Cell && !is_input_field[stateName]) {
       build_interp_ev[stateName][IReq::CELL_VAL] = true;
     }
   }
@@ -478,6 +480,7 @@ void StokesFOBase::parseInputFields ()
       if (loc==FL::Node) {
         ss_build_interp_ev[ss_name][stateName][IReq::QP_VAL] = true;
         ss_build_interp_ev[ss_name][stateName][IReq::GRAD_QP_VAL] = rank != FRT::Gradient;
+      } else if (!is_ss_input_field[ss_name][stateName]) {
         ss_build_interp_ev[ss_name][stateName][IReq::CELL_VAL] = true;
       }
     }
@@ -556,25 +559,37 @@ void StokesFOBase::setupEvaluatorRequests ()
     auto& bfc = it->sublist("Basal Friction Coefficient");
     const auto type = util::upper_case(bfc.get<std::string>("Type"));
     if (type!="CONSTANT") {
-      // For "Given Field" and "Exponent of Given Field" we also need
-      // to interpolate the given field at the quadrature points
-      if (type == "FIELD")
-        mu_friction_name = bfc.get<std::string>("Beta Field Name");
-      else
-        mu_friction_name = bfc.get<std::string>("Mu Field Name");
-      setSingleFieldProperties(mu_friction_name, FRT::Scalar, FST::ParamScalar);
-      ss_build_interp_ev[ssName][mu_friction_name][IReq::QP_VAL      ] = true;
-      ss_build_interp_ev[ssName][mu_friction_name][IReq::CELL_TO_SIDE] = true;
-      ss_build_interp_ev[ssName][mu_friction_name][IReq::GRAD_QP_VAL ] = true;
-    } else if (type=="REGULARIZED COULOMB") {
-      // For Coulomg and PowerLaw, we *may* have some distributed parameter fields.
-      // We interpolate (and possibly project on ss) only if they are inputs
-      for (auto fname : {"mu_coulomb" , "bed_roughness", "mu_power_law"}) {
-        if (is_input_field[fname] || is_ss_input_field[ssName][fname]) {
-          ss_build_interp_ev[ssName][fname][IReq::CELL_TO_SIDE] = true;
-          ss_build_interp_ev[ssName][fname][IReq::QP_VAL] = true;
+      // For beta type not constant, we might have some auxiliary input fields to interpolate
+      if (type == "FIELD") {
+        // beta is a given field.
+        auto fname = bfc.get<std::string>("Beta Field Name");
+        basal_friction_name = fname;
+        setSingleFieldProperties(fname, FRT::Scalar, FST::ParamScalar);
+        ss_build_interp_ev[ssName][fname][IReq::QP_VAL      ] = true;
+        ss_build_interp_ev[ssName][fname][IReq::CELL_TO_SIDE] = true;
+        ss_build_interp_ev[ssName][fname][IReq::GRAD_QP_VAL ] = true;
+      } else {
+        // We have a sliding law, which requires a mu (possibly a field),
+        // and possibly a bed roughness
+        const auto mu_type = util::upper_case(bfc.get<std::string>("Mu Type"));
+        if (mu_type!="CONSTANT") {
+          auto mu_field_name = bfc.get<std::string>("Mu Field Name");
+          setSingleFieldProperties(mu_field_name, FRT::Scalar, FST::ParamScalar);
+          ss_build_interp_ev[ssName][mu_field_name][IReq::QP_VAL      ] = true;
+          ss_build_interp_ev[ssName][mu_field_name][IReq::CELL_TO_SIDE] = true;
+          ss_build_interp_ev[ssName][mu_field_name][IReq::GRAD_QP_VAL ] = true;
+          basal_friction_name = mu_field_name;
         }
-        setSingleFieldProperties(fname, FRT::Scalar);
+        if (type=="REGULARIZED COULOMB") {
+          // For Coulomb we *may* have another distributed parameter field.
+          // We interpolate (and possibly project on ss) only if it is an inputs
+          auto fname = "bed_roughness";
+          if (is_input_field[fname] || is_ss_input_field[ssName][fname]) {
+            ss_build_interp_ev[ssName][fname][IReq::CELL_TO_SIDE] = true;
+            ss_build_interp_ev[ssName][fname][IReq::QP_VAL] = true;
+          }
+          setSingleFieldProperties(fname, FRT::Scalar);
+        }
       }
     }
 

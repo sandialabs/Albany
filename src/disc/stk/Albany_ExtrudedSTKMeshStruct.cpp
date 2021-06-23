@@ -99,6 +99,12 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 #ifdef ALBANY_SEACAS
       stk::io::put_io_part_attribute(*nsPartVec[partName]);
 #endif
+      partName = "basal_"+part->name();
+      nsNames.push_back(partName);
+      nsPartVec[partName] = &metaData->declare_part(partName, stk::topology::NODE_RANK);
+#ifdef ALBANY_SEACAS
+      stk::io::put_io_part_attribute(*nsPartVec[partName]);
+#endif
     }
   }
 
@@ -255,7 +261,6 @@ Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()
 
 void Albany::ExtrudedSTKMeshStruct::setFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<Teuchos::ParameterList>& params,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
@@ -266,16 +271,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldData(
   out->setOutputToRootOnly(0);
 
   // Finish to set up the basal mesh
-  Teuchos::RCP<Teuchos::ParameterList> params2D;
-  if (params->isSublist("Side Set Discretizations"))
-  {
-    params2D = Teuchos::rcp(new Teuchos::ParameterList(params->sublist("Side Set Discretizations").sublist("basalside")));
-  } else {
-    // Old style: the 2D parameter are mixed with the 3D
-    params2D = Teuchos::rcp(new Teuchos::ParameterList());
-    params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
-    params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
-  }
   Teuchos::RCP<Albany::StateInfoStruct> dummy_sis = Teuchos::rcp(new Albany::StateInfoStruct());
   dummy_sis->createNodalDataBase();
   AbstractFieldContainer::FieldContainerRequirements dummy_req;
@@ -284,7 +279,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldData(
   auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-  this->sideSetMeshStructs.at("basalside")->setFieldData (comm, params2D, basal_req, basal_sis, worksetSize);
+  this->sideSetMeshStructs.at("basalside")->setFieldData (comm, basal_req, basal_sis, worksetSize);
 
   // Setting up the field container
   this->SetupFieldData(comm, req, sis, worksetSize);
@@ -294,24 +289,13 @@ void Albany::ExtrudedSTKMeshStruct::setFieldData(
 
 void Albany::ExtrudedSTKMeshStruct::setBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<Teuchos::ParameterList>& params,
     const AbstractFieldContainer::FieldContainerRequirements& req,
-    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
     const unsigned int worksetSize,
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
   // Finish to set up the basal mesh
-  Teuchos::RCP<Teuchos::ParameterList> params2D;
-  if (params->isSublist("Side Set Discretizations"))
-  {
-    params2D = Teuchos::rcp(new Teuchos::ParameterList(params->sublist("Side Set Discretizations").sublist("basalside")));
-  } else {
-    // Old style: the 2D parameter are mixed with the 3D
-    params2D = Teuchos::rcp(new Teuchos::ParameterList());
-    params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
-    params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
-  }
   Teuchos::RCP<Albany::StateInfoStruct> dummy_sis = Teuchos::rcp(new Albany::StateInfoStruct());
   dummy_sis->createNodalDataBase();
   AbstractFieldContainer::FieldContainerRequirements dummy_req;
@@ -320,7 +304,7 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
   auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-  this->sideSetMeshStructs.at("basalside")->setBulkData (comm, params2D, basal_req, basal_sis, worksetSize);
+  this->sideSetMeshStructs.at("basalside")->setBulkData (comm, basal_req, basal_sis, worksetSize);
 
   LayeredMeshOrdering LAYER  = LayeredMeshOrdering::LAYER;
   LayeredMeshOrdering COLUMN = LayeredMeshOrdering::COLUMN;
@@ -758,6 +742,7 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
     }
     stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(stk::topology::NODE_RANK), boundaryNodes2D);
     singlePartVecLateral[0] = nsPartVec["extruded_"+part->name()];
+    singlePartVecBottom[0] = nsPartVec["basal_"+part->name()];
 
     for (const auto& node2D : boundaryNodes2D) {
       const stk::mesh::EntityId node2dId = bulkData2D.identifier(node2D) - 1;
@@ -766,6 +751,9 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
         stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
         bulkData->change_entity_parts(node, singlePartVecLateral);
       }
+      const GO nodeId = vertexLayerShift * node2dId + 1;
+      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
+      bulkData->change_entity_parts(node, singlePartVecBottom);
     }
   }
 

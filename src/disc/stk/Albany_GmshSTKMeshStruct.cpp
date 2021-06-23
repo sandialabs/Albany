@@ -219,7 +219,7 @@ void Albany::GmshSTKMeshStruct::determine_file_type( bool& legacy, bool& binary,
 
     ascii = !binary;
 
-    check_version( ifile);
+    check_version ();
   }
 
   ifile.close();
@@ -270,7 +270,6 @@ void Albany::GmshSTKMeshStruct::broadcast_topology( const Teuchos::RCP<const Teu
 
 void Albany::GmshSTKMeshStruct::setFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& commT,
-    const Teuchos::RCP<Teuchos::ParameterList>& params,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
@@ -283,9 +282,8 @@ void Albany::GmshSTKMeshStruct::setFieldData(
 
 void Albany::GmshSTKMeshStruct::setBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& commT,
-    const Teuchos::RCP<Teuchos::ParameterList>& params,
     const AbstractFieldContainer::FieldContainerRequirements& req,
-    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
     const unsigned int worksetSize,
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
@@ -440,15 +438,15 @@ void Albany::GmshSTKMeshStruct::loadLegacyMesh ()
 
   // Read the number of entities
   std::getline (ifile, line);
-  int num_entities = std::atoi (line.c_str() );
-  TEUCHOS_TEST_FOR_EXCEPTION (num_entities<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of mesh elements.\n");
+  int nb_entities = std::atoi (line.c_str() );
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_entities<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of mesh elements.\n");
 
   // Gmsh lists elements and sides (and some points) all toghether, and does not specify beforehand what kind of elements
   // the mesh has. Hence, we need to scan the entity list once to establish what kind of elements we have. We support
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
 
   int e_type(0);
-  for (int i(0); i<num_entities; ++i) {
+  for (int i(0); i<nb_entities; ++i) {
     std::getline(ifile,line);
     std::stringstream ss(line);
     ss >> id >> e_type;
@@ -530,7 +528,7 @@ void Albany::GmshSTKMeshStruct::loadLegacyMesh ()
   // Read the elements
   int reg_phys, reg_elem, n_nodes;
   int iline(0), itria(0), iquad(0), itetra(0), ihexa(0);
-  for (int i(0); i<num_entities; ++i) {
+  for (int i(0); i<nb_entities; ++i) {
     std::getline(ifile,line);
     std::stringstream ss(line);
     ss >> id >> e_type >> reg_phys >> reg_elem >> n_nodes;
@@ -1059,7 +1057,7 @@ void Albany::GmshSTKMeshStruct::load_element_data( std::ifstream& ifile)
         int elem_id = 0;
         ss >> elem_id;
 
-        int e_type = entity_type;
+        e_type = entity_type;
         store_element_info( e_type, iline, iline3, itria, itri6, iquad, itetra, itet10, ihexa, tags, ss);
         accounted_elems++;
       }
@@ -1139,15 +1137,15 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
 
   // Read the number of entities
   std::getline (ifile, line);
-  int num_entities = std::atoi (line.c_str() );
-  TEUCHOS_TEST_FOR_EXCEPTION (num_entities<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of mesh elements.\n");
+  int nb_entities = std::atoi (line.c_str() );
+  TEUCHOS_TEST_FOR_EXCEPTION (nb_entities<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of mesh elements.\n");
 
   // Gmsh lists elements and sides (and some points) all toghether, and does not specify beforehand what kind of elements
   // the mesh has. Hence, we need to scan the entity list once to establish what kind of elements we have. We support
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
   std::vector<int> tmp;
   int n_tags(0), e_type(0), entities_found(0);
-  while (entities_found<num_entities) {
+  while (entities_found<nb_entities) {
     int header[3];
     ifile.read(reinterpret_cast<char*> (header), 3*sizeof(int));
 
@@ -1268,7 +1266,7 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
 
   entities_found = 0;
   int iline(0), itria(0), iquad(0), itetra(0), ihexa(0);
-  while (entities_found<num_entities) {
+  while (entities_found<nb_entities) {
     int header[3];
     ifile.read(reinterpret_cast<char*> (header), 3*sizeof(int));
 
@@ -1428,28 +1426,27 @@ void Albany::GmshSTKMeshStruct::set_boundaries( const Teuchos::RCP<const Teuchos
     get_physical_names( physical_surface_names, commT, 2);
     get_physical_names( physical_volume_names, commT, 3);
 
-    std::map< std::string, int>::iterator it;
-    for( it = physical_surface_names.begin(); it != physical_surface_names.end(); it++)
+    std::map< std::string, int>::iterator name_it;
+    for( name_it = physical_surface_names.begin(); name_it != physical_surface_names.end(); name_it++)
     {
-      std::string name = it->first;
-      int         tag  = it->second;
+      std::string name = name_it->first;
+      int         tag  = name_it->second;
 
       add_nodeset( name, tag, nsNames);
       add_sideset( name, tag, ssNames);
     }
-    for( it = physical_volume_names.begin(); it != physical_volume_names.end(); it++)
+    for( name_it = physical_volume_names.begin(); name_it != physical_volume_names.end(); name_it++)
     {
-      std::string name = it->first;
-      int         tag  = it->second;
+      std::string name = name_it->first;
 
-      add_element_block( name, tag);
+      add_element_block (name);
     }
   }
 
   return;
 }
 
-void Albany::GmshSTKMeshStruct::add_element_block( std::string eb_name, int tag)
+void Albany::GmshSTKMeshStruct::add_element_block( std::string eb_name)
 {
   std::stringstream volume_i;
   volume_i << "ElementBlock" << eb_name;
@@ -1571,7 +1568,7 @@ bool Albany::GmshSTKMeshStruct::set_version_enum_from_float()
   return can_read;
 }
 
-void Albany::GmshSTKMeshStruct::check_version( std::ifstream& ifile)
+void Albany::GmshSTKMeshStruct::check_version ()
 {
   // Tell user what gmsh version we're reading
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
@@ -1617,14 +1614,11 @@ void Albany::GmshSTKMeshStruct::get_name_for_physical_names( std::string& name, 
 
   // If this entity has a name, then assign it.
   // Use the id otherwise.
-  if( name.empty() )
-  {
-    std::stringstream ss;
-    ss << id;
+  if ( name.empty() ) {
+    std::stringstream ss2;
+    ss2 << id;
     name = ss.str();
-  }
-  else
-  {
+  } else {
     // Need to remove quote marks from name 
     // and prepend with underscore
     name.erase( std::remove(name.begin(), name.end(), '"'), name.end());
