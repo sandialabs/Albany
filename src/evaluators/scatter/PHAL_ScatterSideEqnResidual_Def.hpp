@@ -184,7 +184,7 @@ buildSideSetNodeMap (typename Traits::EvalData workset)
     auto& ws_ss_nodes = ss_ws_cell_nodes_lids[ws];
 
     const auto& wsElNodeID = workset.disc->getWsElNodeID();
-    for (int icell=0; icell<workset.numCells; ++icell) {
+    for (unsigned int icell=0; icell<workset.numCells; ++icell) {
 
       const auto& cell_node_gids = wsElNodeID[workset.wsIndex][icell];
       for (int inode=0; inode<numCellNodes; ++inode) {
@@ -455,7 +455,6 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int 
     }
   }
 
-  const auto& elNodeID = workset.wsElNodeID[cell];
   for (int inode = 0; inode < numNodes; ++inode) {
     const int node = side_nodes[inode];
     for (int eq = 0; eq < this->numFields; eq++) {
