@@ -59,7 +59,6 @@ namespace Albany {
 
     void setFieldData(
                   const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-                  const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
                   const AbstractFieldContainer::FieldContainerRequirements& /* req */,
                   const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
                   const unsigned int /* worksetSize */,
@@ -71,7 +70,6 @@ namespace Albany {
 
     void setBulkData(
                   const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-                  const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
                   const AbstractFieldContainer::FieldContainerRequirements& /* req */,
                   const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
                   const unsigned int /* worksetSize */,
