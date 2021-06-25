@@ -17,7 +17,9 @@ Nightly, camobap.ca.sandia.gov, fedora34-gcc11.0.1-Release-No-Epetra-Albany
 Nightly, camobap.ca.sandia.gov, fedora34-gcc11.0.1-Release-Openmp-Albany
 Nightly, camobap.ca.sandia.gov, fedora34-gcc11.0.1-Debug-FPE-Albany
 Nightly, camobap.ca.sandia.gov, fedora34-gcc11.0.1-Trilinos-extended-sts
+Nightly, camobap.ca.sandia.gov, fedora34-gcc11.0.1-Trilinos-eti-longdouble
 Nightly, camobap.ca.sandia.gov, fedora34-gcc11.0.1-Release-alegra-xfem
+Nightly, camobap.ca.sandia.gov, fedora34-gcc11.0.1-Release-alegra-xfem-eti
 Nightly, cee-compute020, Linux-3.10.0-1062.9.1.el7.x86_64-intel-trilinos
 Nightly, cee-compute020, Linux-3.10.0-1062.9.1.el7.x86_64-intel-albany
 Nightly, cee-compute021, Linux-3.10.0-1062.9.1.el7.x86_64-base-trilinos
