@@ -13,6 +13,7 @@
 
 #include "Albany_SacadoTypes.hpp"
 #include "Albany_DiscretizationUtils.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 #include "LandIce_w_Resid.hpp"
 
@@ -105,7 +106,7 @@ namespace LandIce
       //  diam = std::max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
       //                                              coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,j,2)));
       //  diam_xy = std::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
-      diam_z = std::max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
+      diam_z = KU::max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
     }
     for (std::size_t node = 0; node < numNodes; ++node)
       for (std::size_t qp = 0; qp < numQPs; ++qp)
