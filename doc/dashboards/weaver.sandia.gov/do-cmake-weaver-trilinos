@@ -127,4 +127,5 @@ cmake \
     -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
     -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
     -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
+    -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
 ../
