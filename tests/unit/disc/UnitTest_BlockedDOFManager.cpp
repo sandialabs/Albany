@@ -103,7 +103,7 @@ tests are a beginning, "work in progress."
          const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
          const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-         ms->setFieldAndBulkData(comm, discParams, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize,
+         ms->setFieldAndBulkData(comm, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize,
                                  side_set_sis, side_set_req);
 
          // Null for this test
@@ -417,9 +417,11 @@ tests are a beginning, "work in progress."
                   << std::endl;
             if (verbose)
             {
-               *out1 << "Before describe jacobian " << i << " " << j << std::endl;
-               Albany::describe(jacobian.getConst(), *out1, Teuchos::VERB_EXTREME);
-               *out1 << "After describe jacobian " << i << " " << j << std::endl;
+               std::ofstream myfile;
+               RCP<Teuchos::FancyOStream> fancy = Teuchos::fancyOStream(Teuchos::rcpFromRef(myfile));
+               myfile.open("b_jac_" + std::to_string(i) + "_" + std::to_string(j) + ".txt");
+               Albany::describe(jacobian.getConst(), *fancy, Teuchos::VERB_EXTREME);
+               myfile.close();
             }
          }
 
