@@ -61,11 +61,10 @@ IF (ALBANY_MPI)
 #  Throw test that evaluated to true: !isOneToOne(m_domain_vs)
 #  
 #  [ThyraCrsMatrixFactory] Error! When providing an overlapped domain vs, the domain vs must be one-to-one.
-#  
-
-#  ADD_TEST(
-#    Discretization_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester
-##  )
+#
+  ADD_TEST(
+    Discretization_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester
+  )
 ELSE(ALBANY_MPI)
   ADD_TEST(
     Discretization_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester

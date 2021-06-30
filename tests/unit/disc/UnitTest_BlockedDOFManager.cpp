@@ -73,199 +73,201 @@ tests are a beginning, "work in progress."
       int numProcs = comm->getSize();
       int myRank = comm->getRank();
 
-      // panzer::pauseToAttach();
+      if(numProcs==1) {
+         // panzer::pauseToAttach();
 
-      using Teuchos::RCP;
-      using Teuchos::rcp;
-      using Teuchos::rcp_dynamic_cast;
+         using Teuchos::RCP;
+         using Teuchos::rcp;
+         using Teuchos::rcp_dynamic_cast;
 
-      // Build an STK Discretization object that holds the test mesh "2D_Blk_Test.e"
+         // Build an STK Discretization object that holds the test mesh "2D_Blk_Test.e"
 
-      // 2D, quad, 3 block mesh built in Cubit.
-      Teuchos::RCP<Teuchos::ParameterList> discParams = rcp(new Teuchos::ParameterList);
-      discParams->set<std::string>("Exodus Input File Name", "2D_Blk_Test.e");
-      discParams->set<std::string>("Method", "Exodus");
-      discParams->set<int>("Interleaved Ordering", 2);
-      discParams->set<bool>("Use Composite Tet 10", 0);
-      discParams->set<int>("Number Of Time Derivatives", 0);
-      discParams->set<bool>("Use Serial Mesh", 1);
+         // 2D, quad, 3 block mesh built in Cubit.
+         Teuchos::RCP<Teuchos::ParameterList> discParams = rcp(new Teuchos::ParameterList);
+         discParams->set<std::string>("Exodus Input File Name", "2D_Blk_Test.e");
+         discParams->set<std::string>("Method", "Exodus");
+         discParams->set<int>("Interleaved Ordering", 2);
+         discParams->set<bool>("Use Composite Tet 10", 0);
+         discParams->set<int>("Number Of Time Derivatives", 0);
+         discParams->set<bool>("Use Serial Mesh", 1);
 
-      // Need to test various meshes, with various element types and block structures.
+         // Need to test various meshes, with various element types and block structures.
 
-      Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct;
-      meshStruct = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
-      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-      auto gms = Teuchos::rcp_dynamic_cast<GenericSTKMeshStruct>(meshStruct);
+         Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct;
+         meshStruct = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
+         auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+         auto gms = Teuchos::rcp_dynamic_cast<GenericSTKMeshStruct>(meshStruct);
 
-      const AbstractFieldContainer::FieldContainerRequirements req;
-      const Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct());
-      const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
-      const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
+         const AbstractFieldContainer::FieldContainerRequirements req;
+         const Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct());
+         const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
+         const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-      ms->setFieldAndBulkData(comm, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize,
-                              side_set_sis, side_set_req);
+         ms->setFieldAndBulkData(comm, discParams, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize,
+                                 side_set_sis, side_set_req);
 
-      // Null for this test
-      const Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
-      const std::map<int, std::vector<std::string>> sideSetEquations;
+         // Null for this test
+         const Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
+         const std::map<int, std::vector<std::string>> sideSetEquations;
 
-      // Use the Albany STK interface as it is used elsewhere in the code
-      auto stkDisc = Teuchos::rcp(new STKDiscretization(discParams, 3, ms, comm, rigidBodyModes, sideSetEquations));
-      stkDisc->updateMesh();
+         // Use the Albany STK interface as it is used elsewhere in the code
+         auto stkDisc = Teuchos::rcp(new STKDiscretization(discParams, 3, ms, comm, rigidBodyModes, sideSetEquations));
+         stkDisc->updateMesh();
 
-      // Connection manager is the interface between Albany's historical STK interface and the Panzer DOF manager (and the
-      // BlockedSTKDiscretization interface
+         // Connection manager is the interface between Albany's historical STK interface and the Panzer DOF manager (and the
+         // BlockedSTKDiscretization interface
 
-      RCP<Albany::STKConnManager> connManager = rcp(new Albany::STKConnManager(ms));
-      panzer::BlockedDOFManager dofManager;
-      dofManager.setUseDOFManagerFEI(false);
-      // Fix to use Teuchos communicator interface
-      dofManager.setConnManager(connManager, MPI_COMM_WORLD);
+         RCP<Albany::STKConnManager> connManager = rcp(new Albany::STKConnManager(ms));
+         panzer::BlockedDOFManager dofManager;
+         dofManager.setUseDOFManagerFEI(false);
+         // Fix to use Teuchos communicator interface
+         dofManager.setConnManager(connManager, MPI_COMM_WORLD);
 
-      TEST_ASSERT(dofManager.getComm() != Teuchos::null);
-      TEST_EQUALITY(dofManager.getConnManager(), connManager);
-      TEST_EQUALITY(dofManager.getMaxSubFieldNumber(), -1);
+         TEST_ASSERT(dofManager.getComm() != Teuchos::null);
+         TEST_EQUALITY(dofManager.getConnManager(), connManager);
+         TEST_EQUALITY(dofManager.getMaxSubFieldNumber(), -1);
 
-      RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::exec_space, double, double>>();
+         RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::exec_space, double, double>>();
 
-      dofManager.addField("T", patternC1); // add it to all three blocks
+         dofManager.addField("T", patternC1); // add it to all three blocks
 
-      // These are the element block names set in the exodus file by Cubit (look at the jou file)
-      dofManager.addField("left_lower_qtr", "Ux", patternC1);
-      dofManager.addField("left_lower_qtr", "Uy", patternC1);
-      dofManager.addField("left_lower_qtr", "P", patternC1);
+         // These are the element block names set in the exodus file by Cubit (look at the jou file)
+         dofManager.addField("left_lower_qtr", "Ux", patternC1);
+         dofManager.addField("left_lower_qtr", "Uy", patternC1);
+         dofManager.addField("left_lower_qtr", "P", patternC1);
 
-      dofManager.addField("right_half", "rho", patternC1);
+         dofManager.addField("right_half", "rho", patternC1);
 
-      // Build the connectivity
+         // Build the connectivity
 
-      std::cout << "1. Building the connectivity" << std::endl;
-      connManager->buildConnectivity(*patternC1);
+         std::cout << "1. Building the connectivity" << std::endl;
+         connManager->buildConnectivity(*patternC1);
 
-      std::vector<std::string> eBlocks;
-      dofManager.getElementBlockIds(eBlocks);
-      std::sort(eBlocks.begin(), eBlocks.end());
-      TEST_EQUALITY(eBlocks.size(), 3);
-      TEST_EQUALITY(eBlocks[0], "left_lower_qtr");
-      TEST_EQUALITY(eBlocks[1], "left_upper_qtr");
-      TEST_EQUALITY(eBlocks[2], "right_half");
-      TEST_EQUALITY(dofManager.getNumFieldBlocks(), 1); // if no field order is set this defaults to 1!
+         std::vector<std::string> eBlocks;
+         dofManager.getElementBlockIds(eBlocks);
+         std::sort(eBlocks.begin(), eBlocks.end());
+         TEST_EQUALITY(eBlocks.size(), 3);
+         TEST_EQUALITY(eBlocks[0], "left_lower_qtr");
+         TEST_EQUALITY(eBlocks[1], "left_upper_qtr");
+         TEST_EQUALITY(eBlocks[2], "right_half");
+         TEST_EQUALITY(dofManager.getNumFieldBlocks(), 1); // if no field order is set this defaults to 1!
 
-      std::vector<std::vector<std::string>> fieldOrder(3), fo_ut;
-      fieldOrder[0].push_back("Ux");
-      fieldOrder[0].push_back("Uy");
-      fieldOrder[1].push_back("P");
-      fieldOrder[2].push_back("rho");
-      fieldOrder[2].push_back("T");
-      dofManager.setFieldOrder(fieldOrder);
-      dofManager.getFieldOrder(fo_ut);
-      TEST_ASSERT(fieldOrder == fo_ut);
-      TEST_EQUALITY(dofManager.getNumFieldBlocks(), 3); //
+         std::vector<std::vector<std::string>> fieldOrder(3), fo_ut;
+         fieldOrder[0].push_back("Ux");
+         fieldOrder[0].push_back("Uy");
+         fieldOrder[1].push_back("P");
+         fieldOrder[2].push_back("rho");
+         fieldOrder[2].push_back("T");
+         dofManager.setFieldOrder(fieldOrder);
+         dofManager.getFieldOrder(fo_ut);
+         TEST_ASSERT(fieldOrder == fo_ut);
+         TEST_EQUALITY(dofManager.getNumFieldBlocks(), 3); //
 
-      TEST_ASSERT(dofManager.getElementBlock("left_lower_qtr") == connManager->getElementBlock("left_lower_qtr"));
-      TEST_ASSERT(dofManager.getElementBlock("left_upper_qtr") == connManager->getElementBlock("left_upper_qtr"));
-      TEST_ASSERT(dofManager.getElementBlock("right_half") == connManager->getElementBlock("right_half"));
+         TEST_ASSERT(dofManager.getElementBlock("left_lower_qtr") == connManager->getElementBlock("left_lower_qtr"));
+         TEST_ASSERT(dofManager.getElementBlock("left_upper_qtr") == connManager->getElementBlock("left_upper_qtr"));
+         TEST_ASSERT(dofManager.getElementBlock("right_half") == connManager->getElementBlock("right_half"));
 
-      // check that each element is correct size
-      std::vector<std::string> elementBlockIds;
-      connManager->getElementBlockIds(elementBlockIds);
-      for (std::size_t blk = 0; blk < connManager->numElementBlocks(); ++blk)
-      {
-         std::string blockId = elementBlockIds[blk];
-         const std::vector<int> &elementBlock = connManager->getElementBlock(blockId);
-         for (std::size_t elmt = 0; elmt < elementBlock.size(); ++elmt)
-         {
-            TEST_EQUALITY(connManager->getConnectivitySize(elementBlock[elmt]), 4);
-         }
-      }
-
-      if (numProcs == 1)
-      {
-         TEST_EQUALITY(connManager->getNeighborElementBlock("left_lower_qtr").size(), 0);
-         TEST_EQUALITY(connManager->getNeighborElementBlock("left_upper_qtr").size(), 0);
-         TEST_EQUALITY(connManager->getNeighborElementBlock("right_half").size(), 0);
-      }
-      else
-      {
-         TEST_EQUALITY(connManager->getNeighborElementBlock("left_lower_qtr").size(), 1);
-         TEST_EQUALITY(connManager->getNeighborElementBlock("left_upper_qtr").size(), 1);
-         TEST_EQUALITY(connManager->getNeighborElementBlock("right_half").size(), 1);
-
+         // check that each element is correct size
+         std::vector<std::string> elementBlockIds;
+         connManager->getElementBlockIds(elementBlockIds);
          for (std::size_t blk = 0; blk < connManager->numElementBlocks(); ++blk)
          {
-            const std::vector<int> &elementBlock = connManager->getNeighborElementBlock(elementBlockIds[blk]);
+            std::string blockId = elementBlockIds[blk];
+            const std::vector<int> &elementBlock = connManager->getElementBlock(blockId);
             for (std::size_t elmt = 0; elmt < elementBlock.size(); ++elmt)
             {
-               TEST_EQUALITY(connManager->getConnectivitySize(elementBlock[elmt]), 0);
+               TEST_EQUALITY(connManager->getConnectivitySize(elementBlock[elmt]), 4);
             }
          }
-      }
 
-      STKConnManager::GlobalOrdinal maxEdgeId = connManager->getMaxEntityId(connManager->getEdgeRank());
-      STKConnManager::GlobalOrdinal nodeCount = connManager->getEntityCounts(connManager->getNodeRank());
+         if (numProcs == 1)
+         {
+            TEST_EQUALITY(connManager->getNeighborElementBlock("left_lower_qtr").size(), 0);
+            TEST_EQUALITY(connManager->getNeighborElementBlock("left_upper_qtr").size(), 0);
+            TEST_EQUALITY(connManager->getNeighborElementBlock("right_half").size(), 0);
+         }
+         else
+         {
+            TEST_EQUALITY(connManager->getNeighborElementBlock("left_lower_qtr").size(), 1);
+            TEST_EQUALITY(connManager->getNeighborElementBlock("left_upper_qtr").size(), 1);
+            TEST_EQUALITY(connManager->getNeighborElementBlock("right_half").size(), 1);
 
-      if (numProcs == 1)
-      {
-         const auto *conn1 = connManager->getConnectivity(1);
-         const auto *conn2 = connManager->getConnectivity(2);
+            for (std::size_t blk = 0; blk < connManager->numElementBlocks(); ++blk)
+            {
+               const std::vector<int> &elementBlock = connManager->getNeighborElementBlock(elementBlockIds[blk]);
+               for (std::size_t elmt = 0; elmt < elementBlock.size(); ++elmt)
+               {
+                  TEST_EQUALITY(connManager->getConnectivitySize(elementBlock[elmt]), 0);
+               }
+            }
+         }
 
-         /* GAH Note - Here is an example of testing the connectivity of the mesh in the exodus file.
+         STKConnManager::GlobalOrdinal maxEdgeId = connManager->getMaxEntityId(connManager->getEdgeRank());
+         STKConnManager::GlobalOrdinal nodeCount = connManager->getEntityCounts(connManager->getNodeRank());
 
-This is just a start, to serve as an example. This has not been thought through carefully.
+         if (numProcs == 1)
+         {
+            const auto *conn1 = connManager->getConnectivity(1);
+            const auto *conn2 = connManager->getConnectivity(2);
 
-*/
-         TEST_EQUALITY(conn1[0], 4);
-         TEST_EQUALITY(conn1[1], 1);
-         TEST_EQUALITY(conn1[2], 6);
-         TEST_EQUALITY(conn1[3], 18);
+            /* GAH Note - Here is an example of testing the connectivity of the mesh in the exodus file.
 
-         TEST_EQUALITY(conn2[0], 17);
-         TEST_EQUALITY(conn2[1], 18);
-         TEST_EQUALITY(conn2[2], 21);
-         TEST_EQUALITY(conn2[3], 20);
+   This is just a start, to serve as an example. This has not been thought through carefully.
 
-         TEST_EQUALITY(conn1[3], conn2[1]);
+   */
+            TEST_EQUALITY(conn1[0], 4);
+            TEST_EQUALITY(conn1[1], 1);
+            TEST_EQUALITY(conn1[2], 6);
+            TEST_EQUALITY(conn1[3], 18);
 
-         // Need to look at the exodus file and do a few of these sort of comparions
-         //      TEST_EQUALITY(conn1[8],nodeCount+(maxEdgeId+1)+2);
-         //      TEST_EQUALITY(conn2[8],nodeCount+(maxEdgeId+1)+3);
-      }
-      else
-      {
+            TEST_EQUALITY(conn2[0], 17);
+            TEST_EQUALITY(conn2[1], 18);
+            TEST_EQUALITY(conn2[2], 21);
+            TEST_EQUALITY(conn2[3], 20);
 
-         const auto *conn0 = connManager->getConnectivity(0);
-         const auto *conn1 = connManager->getConnectivity(1);
+            TEST_EQUALITY(conn1[3], conn2[1]);
 
-         TEST_EQUALITY(conn0[0], 0 + myRank);
-         TEST_EQUALITY(conn0[1], 1 + myRank);
-         TEST_EQUALITY(conn0[2], 6 + myRank);
-         TEST_EQUALITY(conn0[3], 5 + myRank);
+            // Need to look at the exodus file and do a few of these sort of comparions
+            //      TEST_EQUALITY(conn1[8],nodeCount+(maxEdgeId+1)+2);
+            //      TEST_EQUALITY(conn2[8],nodeCount+(maxEdgeId+1)+3);
+         }
+         else
+         {
 
-         TEST_EQUALITY(conn1[0], 2 + myRank);
-         TEST_EQUALITY(conn1[1], 3 + myRank);
-         TEST_EQUALITY(conn1[2], 8 + myRank);
-         TEST_EQUALITY(conn1[3], 7 + myRank);
+            const auto *conn0 = connManager->getConnectivity(0);
+            const auto *conn1 = connManager->getConnectivity(1);
 
-         TEST_EQUALITY(conn0[8], nodeCount + (maxEdgeId + 1) + 1 + myRank);
-         TEST_EQUALITY(conn1[8], nodeCount + (maxEdgeId + 1) + 3 + myRank);
+            TEST_EQUALITY(conn0[0], 0 + myRank);
+            TEST_EQUALITY(conn0[1], 1 + myRank);
+            TEST_EQUALITY(conn0[2], 6 + myRank);
+            TEST_EQUALITY(conn0[3], 5 + myRank);
 
-         const auto *conn2 = connManager->getConnectivity(2); // this is the "neighbor element"
-         const auto *conn3 = connManager->getConnectivity(3); // this is the "neighbor element"
+            TEST_EQUALITY(conn1[0], 2 + myRank);
+            TEST_EQUALITY(conn1[1], 3 + myRank);
+            TEST_EQUALITY(conn1[2], 8 + myRank);
+            TEST_EQUALITY(conn1[3], 7 + myRank);
 
-         int otherRank = myRank == 0 ? 1 : 0;
+            TEST_EQUALITY(conn0[8], nodeCount + (maxEdgeId + 1) + 1 + myRank);
+            TEST_EQUALITY(conn1[8], nodeCount + (maxEdgeId + 1) + 3 + myRank);
 
-         TEST_EQUALITY(conn2[0], 0 + otherRank);
-         TEST_EQUALITY(conn2[1], 1 + otherRank);
-         TEST_EQUALITY(conn2[2], 6 + otherRank);
-         TEST_EQUALITY(conn2[3], 5 + otherRank);
+            const auto *conn2 = connManager->getConnectivity(2); // this is the "neighbor element"
+            const auto *conn3 = connManager->getConnectivity(3); // this is the "neighbor element"
 
-         TEST_EQUALITY(conn3[0], 2 + otherRank);
-         TEST_EQUALITY(conn3[1], 3 + otherRank);
-         TEST_EQUALITY(conn3[2], 8 + otherRank);
-         TEST_EQUALITY(conn3[3], 7 + otherRank);
+            int otherRank = myRank == 0 ? 1 : 0;
 
-         TEST_EQUALITY(conn2[8], nodeCount + (maxEdgeId + 1) + 1 + otherRank);
-         TEST_EQUALITY(conn3[8], nodeCount + (maxEdgeId + 1) + 3 + otherRank);
+            TEST_EQUALITY(conn2[0], 0 + otherRank);
+            TEST_EQUALITY(conn2[1], 1 + otherRank);
+            TEST_EQUALITY(conn2[2], 6 + otherRank);
+            TEST_EQUALITY(conn2[3], 5 + otherRank);
+
+            TEST_EQUALITY(conn3[0], 2 + otherRank);
+            TEST_EQUALITY(conn3[1], 3 + otherRank);
+            TEST_EQUALITY(conn3[2], 8 + otherRank);
+            TEST_EQUALITY(conn3[3], 7 + otherRank);
+
+            TEST_EQUALITY(conn2[8], nodeCount + (maxEdgeId + 1) + 1 + otherRank);
+            TEST_EQUALITY(conn3[8], nodeCount + (maxEdgeId + 1) + 3 + otherRank);
+         }
       }
    }
 
