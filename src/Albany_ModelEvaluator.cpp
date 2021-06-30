@@ -606,9 +606,24 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
 
   for (int i = 0; i < n_g; ++i) {
     Thyra_ModelEvaluator::DerivativeSupport dgdx_support;
+    //Check that responses are scalar; throw an error if they are not, 
+    //as distributed responses are not supported yet.
+    if (!app->getResponse(i)->isScalarResponse()) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          std::endl
+              << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+              << "The response associated to the index i = "
+              << i
+              << " is not a scalar response. Only scalar responses are currently supported."
+              << std::endl);
+    }
     if (app->getResponse(i)->isScalarResponse()) {
       dgdx_support = Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM;
     } else {
+      //IKT 6/30/2021: note that this case will not get hit ever because
+      //distributed responses are not supported in Albany yet
       dgdx_support = Thyra_ModelEvaluator::DERIV_LINEAR_OP;
     }
 
@@ -639,17 +654,7 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
             j1 + num_param_vecs,
             Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM);
       }
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true,
-          std::logic_error,
-          std::endl
-              << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
-              << "The response associated to the index i = "
-              << i
-              << " is not a scalar response. Only scalar responses are currently supported."
-              << std::endl);
-    }
+    } 
   }
 
   // Set Hessian-related supports:
