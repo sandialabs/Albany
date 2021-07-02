@@ -6,8 +6,11 @@ import subprocess
 import os.path
 
 
-def remove_all_non_num(line):
-    return re.sub('[^0-9.]', ' ', line)
+def remove_all_non_num(line, is_int=False):
+    if is_int:
+        return re.sub('[^0-9.+-]', ' ', line)
+    else:
+        return re.sub('[^eE0-9.+-]', ' ', line)
 
 
 def read_matrix(name):
@@ -46,7 +49,7 @@ def read_matrix(name):
                 read_data = True
 
             if 'Global dimensions' in l and not nrows_read:
-                data = np.fromstring(remove_all_non_num(l), dtype=int, sep=' ')
+                data = np.fromstring(remove_all_non_num(l, True), dtype=int, sep=' ')
                 nrows = data[0]
                 ncols = data[1]
                 row_ptr = np.resize(row_ptr, (nrows+1,))
@@ -54,7 +57,7 @@ def read_matrix(name):
                 nrows_read = True
 
             if 'Global number of entries' in l and not nnz_read:
-                data = np.fromstring(remove_all_non_num(l), dtype=int, sep=' ')
+                data = np.fromstring(remove_all_non_num(l, True), dtype=int, sep=' ')
                 nnz = data[0]
                 row_indices = np.resize(col_indices, (nnz,))
                 col_indices = np.resize(col_indices, (nnz,))
@@ -62,7 +65,7 @@ def read_matrix(name):
                 nnz_read = True
 
             if 'Max number of entries per row' in l and not max_nnz_read:
-                data = np.fromstring(remove_all_non_num(l), dtype=int, sep=' ')
+                data = np.fromstring(remove_all_non_num(l, True), dtype=int, sep=' ')
                 max_nnz = data[0]
                 max_nnz_read = True
 
