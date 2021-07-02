@@ -45,11 +45,11 @@ namespace Albany
 {
 
    template <typename Intrepid2Type>
-   Teuchos::RCP<const panzer::FieldPattern> buildFieldPattern()
+   RCP<const panzer::FieldPattern> buildFieldPattern()
    {
       // build a geometric pattern from a single basis
-      Teuchos::RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis = rcp(new Intrepid2Type);
-      Teuchos::RCP<const panzer::FieldPattern> pattern = rcp(new panzer::Intrepid2FieldPattern(basis));
+      RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis = rcp(new Intrepid2Type);
+      RCP<const panzer::FieldPattern> pattern = rcp(new panzer::Intrepid2FieldPattern(basis));
       return pattern;
    }
 
@@ -59,15 +59,11 @@ namespace Albany
       // Set the static variable that denotes this as a Tpetra run
       static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
 
-      Teuchos::RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
+      RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
 
       // panzer::pauseToAttach();
 
-      using Teuchos::RCP;
-      using Teuchos::rcp;
-      using Teuchos::rcp_dynamic_cast;
-
-      Teuchos::RCP<Teuchos::ParameterList> discParams = rcp(new Teuchos::ParameterList);
+      RCP<Teuchos::ParameterList> discParams = rcp(new Teuchos::ParameterList);
 
       std::string sideName;
 
@@ -81,62 +77,62 @@ namespace Albany
       discParams->set<int>("Number Of Time Derivatives", 0);
       discParams->set<bool>("Use Serial Mesh", 1);
 
-      Teuchos::RCP<Teuchos::ParameterList> ssDiscParams = Teuchos::sublist(discParams, "Side Set Discretizations", false);
+      RCP<Teuchos::ParameterList> ssDiscParams = Teuchos::sublist(discParams, "Side Set Discretizations", false);
       Teuchos::Array<std::string> sideset(1);
       sideset[0] = sideName;
       ssDiscParams->set<Teuchos::Array<std::string>>("Side Sets", sideset);
-      Teuchos::RCP<Teuchos::ParameterList> params_ss = Teuchos::sublist(ssDiscParams, sideset[0], false);
+      RCP<Teuchos::ParameterList> params_ss = Teuchos::sublist(ssDiscParams, sideset[0], false);
       params_ss->set<std::string>("Method", "SideSetSTK");
 
-      Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
+      RCP<Albany::AbstractMeshStruct> meshStruct = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
 
       // Blocked discretization:
       {
-         Teuchos::RCP<Teuchos::ParameterList> blockedDiscParams = rcp(new Teuchos::ParameterList);
-         Teuchos::RCP<Teuchos::ParameterList> mParams = Teuchos::sublist(blockedDiscParams, "Mesh", false);
+         RCP<Teuchos::ParameterList> blockedDiscParams = rcp(new Teuchos::ParameterList);
+         RCP<Teuchos::ParameterList> mParams = Teuchos::sublist(blockedDiscParams, "Mesh", false);
          mParams->set<std::string>("Name", "Body 1");
          mParams->set<std::string>("Type", "Extruded");
-         Teuchos::RCP<Teuchos::ParameterList> smParams = Teuchos::sublist(mParams, "Side Meshes", false);
+         RCP<Teuchos::ParameterList> smParams = Teuchos::sublist(mParams, "Side Meshes", false);
          smParams->set<std::string>("Sidesets", "[Bottom,Top]");
 
-         Teuchos::RCP<Teuchos::ParameterList> dParams = Teuchos::sublist(blockedDiscParams, "Discretization", false);
+         RCP<Teuchos::ParameterList> dParams = Teuchos::sublist(blockedDiscParams, "Discretization", false);
          dParams->set<int>("Num Blocks", 3);
 
-         Teuchos::RCP<Teuchos::ParameterList> db0Params = Teuchos::sublist(dParams, "Block 0", false);
-         Teuchos::RCP<Teuchos::ParameterList> db1Params = Teuchos::sublist(dParams, "Block 1", false);
-         Teuchos::RCP<Teuchos::ParameterList> db2Params = Teuchos::sublist(dParams, "Block 2", false);
+         RCP<Teuchos::ParameterList> db0Params = Teuchos::sublist(dParams, "Block 0", false);
+         RCP<Teuchos::ParameterList> db1Params = Teuchos::sublist(dParams, "Block 1", false);
+         RCP<Teuchos::ParameterList> db2Params = Teuchos::sublist(dParams, "Block 2", false);
 
          db0Params->set<std::string>("Name", "vol_C1");
          db0Params->set<std::string>("Mesh", "ElementBlock_Body_1");
          db0Params->set<std::string>("FE Type", "HGRAD_C1");
          db0Params->set<std::string>("Domain", "Volume");
 
-         Teuchos::RCP<Teuchos::ParameterList> sParams = Teuchos::sublist(blockedDiscParams, "Solution", false);
+         RCP<Teuchos::ParameterList> sParams = Teuchos::sublist(blockedDiscParams, "Solution", false);
          sParams->set<std::string>("blocks names", "[ [Ux], [Uy], [Uz], [N], [h] ]");
          sParams->set<std::string>("blocks discretizations", "[ [vol_C1], [vol_C1], [vol_C1], [vol_C1], [vol_C1] ]");
 
-         Teuchos::RCP<AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+         RCP<AbstractSTKMeshStruct> ms = rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
 
          const AbstractFieldContainer::FieldContainerRequirements req;
-         const Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct());
-         const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
+         const RCP<StateInfoStruct> sis = rcp(new StateInfoStruct());
+         const std::map<std::string, RCP<Albany::StateInfoStruct>> side_set_sis;
          const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
          ms->setFieldAndBulkData(comm, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
 
          // Use the Albany STK interface as it is used elsewhere in the code
-         auto stkDisc = Teuchos::rcp(new BlockedSTKDiscretization(blockedDiscParams, ms, comm));
+         auto stkDisc = rcp(new BlockedSTKDiscretization(blockedDiscParams, ms, comm));
          stkDisc->updateMesh();
 
-         Teuchos::RCP<Thyra_BlockedLinearOp> bJacobianOp = stkDisc->createBlockedJacobianOp();
+         RCP<Thyra_BlockedLinearOp> bJacobianOp = stkDisc->createBlockedJacobianOp();
 
          for (int i = 0; i < stkDisc->getNumFieldBlocks(); ++i)
             for (int j = 0; j < stkDisc->getNumFieldBlocks(); ++j)
             {
-               Teuchos::RCP<const Thyra_LinearOp> jacobian = bJacobianOp->getBlock(i, j);
+               RCP<const Thyra_LinearOp> jacobian = bJacobianOp->getBlock(i, j);
 
                std::ofstream myfile;
-               RCP<Teuchos::FancyOStream> fancy = Teuchos::fancyOStream(Teuchos::rcpFromRef(myfile));
+               RCP<Teuchos::FancyOStream> fancy = Teuchos::fancyOStream(rcpFromRef(myfile));
                myfile.open("b_jac_" + std::to_string(i) + "_" + std::to_string(j) + ".txt");
                Albany::describe(jacobian.getConst(), *fancy, Teuchos::VERB_EXTREME);
                myfile.close();
@@ -145,31 +141,31 @@ namespace Albany
 
       //Non-block discretization:
       {
-         Teuchos::RCP<Teuchos::ParameterList> dDiscParams = rcp(new Teuchos::ParameterList);
-         Teuchos::RCP<Teuchos::ParameterList> mParams = Teuchos::sublist(dDiscParams, "Mesh", false);
+         RCP<Teuchos::ParameterList> dDiscParams = rcp(new Teuchos::ParameterList);
+         RCP<Teuchos::ParameterList> mParams = Teuchos::sublist(dDiscParams, "Mesh", false);
          mParams->set<std::string>("Name", "Body 1");
          mParams->set<std::string>("Type", "Extruded");
 
          int neq = 5;
 
-         Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
-         Teuchos::RCP<AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+         RCP<Albany::AbstractMeshStruct> meshStruct = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
+         RCP<AbstractSTKMeshStruct> ms = rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
 
          const AbstractFieldContainer::FieldContainerRequirements req;
-         const Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct());
-         const std::map<std::string, Teuchos::RCP<Albany::StateInfoStruct>> side_set_sis;
+         const RCP<StateInfoStruct> sis = rcp(new StateInfoStruct());
+         const std::map<std::string, RCP<Albany::StateInfoStruct>> side_set_sis;
          const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
          ms->setFieldAndBulkData(comm, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
 
          // Use the Albany STK interface as it is used elsewhere in the code
-         auto stkDisc = Teuchos::rcp(new STKDiscretization(dDiscParams, neq, ms, comm));
+         auto stkDisc = rcp(new STKDiscretization(dDiscParams, neq, ms, comm));
          stkDisc->updateMesh();
 
-         Teuchos::RCP<Thyra_LinearOp> jacobian = stkDisc->createJacobianOp();
+         RCP<Thyra_LinearOp> jacobian = stkDisc->createJacobianOp();
 
          std::ofstream myfile;
-         RCP<Teuchos::FancyOStream> fancy = Teuchos::fancyOStream(Teuchos::rcpFromRef(myfile));
+         RCP<Teuchos::FancyOStream> fancy = Teuchos::fancyOStream(rcpFromRef(myfile));
          myfile.open("jac.txt");
          Albany::describe(jacobian.getConst(), *fancy, Teuchos::VERB_EXTREME);
          myfile.close();

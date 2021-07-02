@@ -56,7 +56,7 @@ set_target_properties(blockJacobian_unit_tester PROPERTIES
 
 TARGET_LINK_LIBRARIES(blockJacobian_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 
-file(GLOB TESTFILES *.py)
+set(TESTFILES matrices_comparison.py)
 
 file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
 
