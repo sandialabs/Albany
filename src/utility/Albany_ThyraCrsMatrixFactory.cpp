@@ -64,8 +64,10 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
   TEUCHOS_TEST_FOR_EXCEPTION (bt==BuildType::None, std::logic_error, "Error! No build type set for albany.\n");
 
   if (sameAs(m_range_vs,m_ov_range_vs)) {
-    TEUCHOS_TEST_FOR_EXCEPTION (!sameAs(m_domain_vs,m_ov_domain_vs), std::runtime_error,
-                                "Error! Rnage and overlapped range vs coincide, but domain and overlapped domain vs do not.\n");
+    // Restrict this test for square matrices:
+    if(sameAs(m_range_vs,m_domain_vs))
+      TEUCHOS_TEST_FOR_EXCEPTION (!sameAs(m_domain_vs,m_ov_domain_vs), std::runtime_error,
+                                  "Error! Range and overlapped range vs coincide, but domain and overlapped domain vs do not.\n");
     m_fe_crs = false;
   } else {
     // When building a FECrs matrix, we REQUIRE the overlapped domain vs.

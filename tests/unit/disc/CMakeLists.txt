@@ -41,6 +41,34 @@ set_target_properties(disc_unit_tester PROPERTIES
 
 TARGET_LINK_LIBRARIES(disc_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 
+SET(SOURCES
+          ./UnitTest_BlockedJacobian.cpp
+          ../Albany_UnitTestMain.cpp
+)
+
+ADD_EXECUTABLE(
+  blockJacobian_unit_tester
+  ${HEADERS} ${SOURCES}
+)
+
+set_target_properties(blockJacobian_unit_tester PROPERTIES
+  PUBLIC_HEADER "${HEADERS}")
+
+TARGET_LINK_LIBRARIES(blockJacobian_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+
+set(TESTFILES matrices_comparison.py)
+
+file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
+
+IF(NOT DEFINED PYTHON_EXECUTABLE)
+  find_program(PYTHON_EXECUTABLE
+      NAMES python3 python
+      )
+  MESSAGE("  -- CMake has set: PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
+ENDIF()
+
+ADD_TEST(BlockDiscretization_Jacobian_Unit_Test "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/matrices_comparison.py")
+
 # We should always run the unit tests in both serial and parallel if possible (they should run quickly)
 IF (ALBANY_MPI)
   ADD_TEST(
@@ -61,11 +89,10 @@ IF (ALBANY_MPI)
 #  Throw test that evaluated to true: !isOneToOne(m_domain_vs)
 #  
 #  [ThyraCrsMatrixFactory] Error! When providing an overlapped domain vs, the domain vs must be one-to-one.
-#  
-
-#  ADD_TEST(
-#    Discretization_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester
-##  )
+#
+  ADD_TEST(
+    Discretization_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester
+  )
 ELSE(ALBANY_MPI)
   ADD_TEST(
     Discretization_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester
