@@ -29,8 +29,8 @@ ThermalResid(const Teuchos::ParameterList& p,
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   C(p.get<double>("Heat Capacity")),
   rho(p.get<double>("Density")),
+  conductivityIsDistParam(p.get<bool>("Distributed Thermal Conductivity")),
   disable_transient(p.get<bool>("Disable Transient")),
-  kappa_x(p.get<std::string>("Thermal Conductivity: kappa_x"), dl->shared_param),
   Source   (p.get<std::string>                   ("Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   TResidual   (p.get<std::string>                   ("Residual Name"),
@@ -40,7 +40,6 @@ ThermalResid(const Teuchos::ParameterList& p,
   if (!disable_transient) this->addDependentField(Tdot);
   this->addDependentField(TGrad);
   this->addDependentField(wGradBF);
-  this->addDependentField(kappa_x);
   this->addEvaluatedField(Source);
   this->addEvaluatedField(TResidual);
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -57,13 +56,29 @@ ThermalResid(const Teuchos::ParameterList& p,
   numQPs      = dims[2];
   numDims     = dims[3];
 
-  if (numDims > 1) {
-    kappa_y = decltype(kappa_y)(p.get<std::string>("Thermal Conductivity: kappa_y"), dl->shared_param);
-    this->addDependentField(kappa_y);
+  if (!conductivityIsDistParam) {  
+    kappa_x = decltype(kappa_x)(p.get<std::string>("Thermal Conductivity: kappa_x"), dl->shared_param);
+    this->addDependentField(kappa_x);
+    if (numDims > 1) {
+      kappa_y = decltype(kappa_y)(p.get<std::string>("Thermal Conductivity: kappa_y"), dl->shared_param);
+      this->addDependentField(kappa_y);
+    }
+    if (numDims > 2) {
+      kappa_z = decltype(kappa_z)(p.get<std::string>("Thermal Conductivity: kappa_z"), dl->shared_param);
+      this->addDependentField(kappa_z);
+    }
   }
-  if (numDims > 2) {
-    kappa_z = decltype(kappa_z)(p.get<std::string>("Thermal Conductivity: kappa_y"), dl->shared_param);
-    this->addDependentField(kappa_z);
+  else {  
+    ThermalCond = decltype(ThermalCond)(p.get<std::string>("ThermalConductivity Name"),
+  	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
+    this->addDependentField(ThermalCond);
+    if (numDims > 1) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "Distributed ThermalConductivity only implemented in 1D so far!  " 
+	  << "You are attempting to run an " << numDims << "D problem."); 
+    }
   }
   std::string thermal_source = p.get<std::string>("Thermal Source"); 
   if (thermal_source == "None") {
@@ -117,9 +132,14 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Source, fm);
   this->utils.setFieldData(coordVec, fm);
   this->utils.setFieldData(TResidual, fm);
-  this->utils.setFieldData(kappa_x, fm);
-  if (numDims > 1) this->utils.setFieldData(kappa_y, fm);
-  if (numDims > 2) this->utils.setFieldData(kappa_z, fm);
+  if (!conductivityIsDistParam) {
+    this->utils.setFieldData(kappa_x, fm);
+    if (numDims > 1) this->utils.setFieldData(kappa_y, fm);
+    if (numDims > 2) this->utils.setFieldData(kappa_z, fm);
+  }
+  else {
+    this->utils.setFieldData(ThermalCond, fm);
+  }
 }
 
 //**********************************************************************
@@ -140,8 +160,13 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {      
         const ScalarT x = coordVec(cell, qp, 0); 
         const RealType a = 16.0; 
-        const RealType t = workset.current_time; 
-        Source(cell, qp) = -2.0*a*kappa_x(0)*(M_PI*x*(1-x)*sin(2.0*M_PI*kappa_x(0)*t/rho/C) - cos(2.0*M_PI*kappa_x(0)*t/rho/C)); 
+        const RealType t = workset.current_time;
+        if (!conductivityIsDistParam) {
+          Source(cell, qp) = -2.0*a*kappa_x(0)*(M_PI*x*(1-x)*sin(2.0*M_PI*kappa_x(0)*t/rho/C) - cos(2.0*M_PI*kappa_x(0)*t/rho/C));
+	}
+        else { 
+          Source(cell, qp) = -2.0*a*ThermalCond(cell, qp)*(M_PI*x*(1-x)*sin(2.0*M_PI*ThermalCond(cell, qp)*t/rho/C) - cos(2.0*M_PI*ThermalCond(cell, qp)*t/rho/C));
+	}	
       }
     }
   }
@@ -182,13 +207,18 @@ evaluateFields(typename Traits::EvalData workset)
         // Source contribution to residual
         TResidual(cell, node) -= Source(cell,qp) * wBF(cell, node, qp); 
         // Diffusion part of residual
-        TResidual(cell, node) += kappa_x(0) * TGrad(cell, qp, 0) * wGradBF(cell, node, qp, 0); 
-        if (numDims > 1) {
-          TResidual(cell, node) += kappa_y(0) * TGrad(cell, qp, 1) * wGradBF(cell, node, qp, 1); 
-        }
-        if (numDims > 2) {
-          TResidual(cell, node) += kappa_z(0) * TGrad(cell, qp, 2) * wGradBF(cell, node, qp, 2); 
-        }
+        if (!conductivityIsDistParam) {
+	  TResidual(cell, node) += kappa_x(0) * TGrad(cell, qp, 0) * wGradBF(cell, node, qp, 0); 
+          if (numDims > 1) {
+            TResidual(cell, node) += kappa_y(0) * TGrad(cell, qp, 1) * wGradBF(cell, node, qp, 1); 
+          }
+          if (numDims > 2) {
+            TResidual(cell, node) += kappa_z(0) * TGrad(cell, qp, 2) * wGradBF(cell, node, qp, 2); 
+          }
+	}
+	else { //IKT 7/6/2021: 1D only
+	  TResidual(cell, node) += ThermalCond(cell, qp) * TGrad(cell, qp, 0) * wGradBF(cell, node, qp, 0); 
+	}
       }
     }
   }

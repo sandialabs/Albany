@@ -25,14 +25,23 @@ ALBANY:
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
-        Type: Scalar
-        Name: 'kappa_x Parameter'
+        Type: Distributed
+        Name: thermal_conductivity
+        Lower Bound: 4.00000000000000022e-01
+        Upper Bound: 5.00000000000000000e+00
+        Initial Uniform Value: 1.60000000000000000e+00
+        Mesh Part: ''
+      #Parameters:
+        #Number Of Parameters: 1
+        #Parameter 0:
+        #Type: Scalar
+        #Name: 'kappa_x Parameter'
   Discretization:
     1D Elements: 20
     1D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: thermal1D_with_source_out.exo
+    Exodus Output File Name: thermal1D_with_source_adjoint_out.exo
   Piro:
     Sensitivity Method: Adjoint
     Tempus:
