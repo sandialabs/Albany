@@ -207,12 +207,13 @@ void ThyraCrsMatrixFactory::fillComplete () {
     //       FE multivector does all the work for us, so just use that.
     Teuchos::RCP<Tpetra_Import> importer(new Tpetra_Import (t_range,t_ov_range));
     Tpetra::FEMultiVector<ST,LO,Tpetra_GO,KokkosNode> nnz(t_range,importer,1);
+    nnz.beginAssembly();
     for (const auto& it : m_graph->temp_graph) {
       LO lrow = t_ov_range->getLocalElement(static_cast<Tpetra_GO>(it.first));
       nnz.sumIntoLocalValue(lrow,0,it.second.size());
     }
     // Add up nnz from different ranks.
-    nnz.endFill();
+    nnz.endAssembly();
 
     // Switch back to the overlapped vector
     nnz.switchActiveMultiVector();
@@ -251,6 +252,7 @@ void ThyraCrsMatrixFactory::fillComplete () {
     m_graph->t_graph->setParameterList(pl);
 
     // Loop over the temp auxiliary structure, and fill the actual Tpetra graph
+    m_graph->t_graph->beginAssembly();
     for (const auto& it : m_graph->temp_graph) {
       const auto& row_indices = it.second;
       if(row_indices.size()>0) {
@@ -265,7 +267,7 @@ void ThyraCrsMatrixFactory::fillComplete () {
     }
 
     // Global assemble the graph
-    m_graph->t_graph->endFill();
+    m_graph->t_graph->endAssembly();
 
     // Cleanup temporaries
     m_graph->temp_graph.clear();
@@ -307,8 +309,9 @@ Teuchos::RCP<Thyra_LinearOp> ThyraCrsMatrixFactory::createOp (const bool ignoreN
       // We want linear ops to be in assembly mode *only when explicitly requested*.
       // If the Thyra LinearOp is created with the matrix in assembly mode,
       // its range/domain vs's would be the overlapped ones.
+      fe_matrix->beginModify();
       fe_matrix->setAllToScalar(zero);
-      fe_matrix->endFill();
+      fe_matrix->endModify();
       matrix = fe_matrix;
     }
     op = createThyraLinearOp(Teuchos::rcp_implicit_cast<Tpetra_Operator>(matrix));

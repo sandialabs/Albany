@@ -83,7 +83,7 @@ createThyraLinearOp (const Teuchos::RCP<Tpetra_Operator>& op)
 }
 
 Teuchos::RCP<Thyra_BlockedLinearOp>
-createThyraBlockedLinearOp (const Teuchos::RCP<Tpetra_Operator>& op)
+createThyraBlockedLinearOp (const Teuchos::RCP<Tpetra_Operator>& /* op */)
 {
   Teuchos::RCP<Thyra_BlockedLinearOp> lop;
 // GAH fill in functionality here
@@ -234,6 +234,19 @@ getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp>& lop,
   if (!lop.is_null()) {
     auto op = getConstTpetraOperator(lop,throw_if_not_tpetra);
     mat = Teuchos::rcp_dynamic_cast<const Tpetra_CrsMatrix>(op,throw_if_not_tpetra);
+  }
+
+  return mat;
+}
+
+Teuchos::RCP<Tpetra_FECrsMatrix>
+getTpetraFECrsMatrix (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                      const bool throw_if_not_tpetra)
+{
+  Teuchos::RCP<Tpetra_FECrsMatrix> mat;
+  if (!lop.is_null()) {
+    auto op = getTpetraOperator(lop,throw_if_not_tpetra);
+    mat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(op,throw_if_not_tpetra);
   }
 
   return mat;
