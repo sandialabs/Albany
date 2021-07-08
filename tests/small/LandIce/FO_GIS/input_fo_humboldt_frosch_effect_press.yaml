@@ -446,7 +446,7 @@ ANONYMOUS:
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
                 AztecOO:
                   Forward Solve:
@@ -456,12 +456,10 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 500
-                    Tolerance: 9.99999999999999954e-08
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.00000000000000004e-04
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -469,6 +467,8 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
               Preconditioner Type: FROSch
               Preconditioner Types:
                 Ifpack2:
