@@ -205,7 +205,7 @@ void ThyraCrsMatrixFactory::fillComplete () {
     //       FE multivector does all the work for us, so just use that.
     Teuchos::RCP<Tpetra_Import> importer(new Tpetra_Import (t_range,t_ov_range));
     Tpetra::FEMultiVector<ST,LO,Tpetra_GO,KokkosNode> nnz(t_range,importer,1);
-    nnz.beginAssembly()
+    nnz.beginAssembly();
     for (const auto& it : m_graph->temp_graph) {
       LO lrow = t_ov_range->getLocalElement(static_cast<Tpetra_GO>(it.first));
       nnz.sumIntoLocalValue(lrow,0,it.second.size());
