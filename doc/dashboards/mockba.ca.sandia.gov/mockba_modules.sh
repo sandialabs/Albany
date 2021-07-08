@@ -6,4 +6,5 @@ module load sems-openmpi/1.10.1
 module load sems-cmake
 module load sems-boost/1.55.0/base
 module load sems-netcdf/4.4.1/exo_parallel
+module swap sems-python/2.7.9 sems-python/3.5.2
 module list  
