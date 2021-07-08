@@ -39,10 +39,13 @@ ALBANY:
     1D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: thermal1D_with_source_adjoint_out.exo
+    Exodus Output File Name: thermal1D_with_source_adjoint_explicit_out.exo
+    Exodus Write Interval: 10
   Piro:
     Sensitivity Method: Adjoint
     Tempus:
+      Lump Mass Matrix: true
+      Constant Mass Matrix: true
       Integrator Name: Tempus Integrator
       #Sensitivities:
         #Mass Matrix Is Identity: false
@@ -56,11 +59,11 @@ ALBANY:
           Storage Limit: 20
           Interpolator:
             Interpolator Type: Lagrange
-            Order: 0
+            Order: 3  #All RK methods are at most 4th order
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 1.0e-2
+          Initial Time Step: 1.0e-3
           Final Time: 1.0
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
@@ -72,50 +75,11 @@ ALBANY:
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
       Tempus Stepper:
-        Stepper Type: Backward Euler
-        Solver Name: Demo Solver
-        Predictor Name: None
+        Stepper Type: RK Forward Euler
+        #Stepper Type: General ERK
         Use FSAL: false
         Initial Condition Consistency Check: false
-        Demo Solver:
-          NOX:
-            Direction:
-              Method: Newton
-              Newton:
-                Forcing Term Method: Constant
-                Rescue Bad Newton Solve: true
-                Linear Solver:
-                  Tolerance: 9.99999999999999954e-07
-            Line Search:
-              Full Step:
-                Full Step: 1.00000000000000000e+00
-              Method: Full Step
-            Nonlinear Solver: Line Search Based
-            Printing:
-              Output Precision: 3
-              Output Processor: 0
-              Output Information:
-                Error: true
-                Warning: true
-                Outer Iteration: false
-                Parameters: true
-                Details: false
-                Linear Solver Details: true
-                Stepper Iteration: true
-                Stepper Details: true
-                Stepper Parameters: true
-            Solver Options:
-              Status Test Check Type: Minimal
-            Status Tests:
-              Test Type: Combo
-              Combo Type: OR
-              Number of Tests: 2
-              Test 0:
-                Test Type: NormF
-                Tolerance: 1.00000000000000002e-08
-              Test 1:
-                Test Type: MaxIters
-                Maximum Iterations: 10
+        Initial Condition Consistency: None #This is necessary for Forward Euler!
       Stratimikos:
         Linear Solver Type: Belos
         Linear Solver Types:
