@@ -19,4 +19,8 @@ unset HTTP_PROXY
 
 #env | grep -i proxy 
 
+#Hack for Albany block disc unit tests + CISM 
+alias python=/projects/sems/install/rhel7-x86_64/sems/compiler/python/2.7.9/bin/python
+alias python3=/projects/sems/install/rhel7-x86_64/sems/compiler/python/2.7.9/bin/python
+
 eval "env TEST_DIRECTORY=/home/ikalash/nightlyAlbanyCDash SCRIPT_DIRECTORY=/home/ikalash/nightlyAlbanyCDash ctest -VV -S /home/ikalash/nightlyAlbanyCDash/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1
