@@ -26,6 +26,12 @@
 %include "std_string.i"
 using std::string;
 
+///////////////////////////
+// Teuchos::Time support //
+///////////////////////////
+%teuchos_rcp(Teuchos::StackedTimer)
+%include "Teuchos_StackedTimer.hpp"
+
 // ---------- Shared_ptr ----------
 %teuchos_rcp(PyAlbany::PyParallelEnv)
 %teuchos_rcp(PyAlbany::PyProblem)
