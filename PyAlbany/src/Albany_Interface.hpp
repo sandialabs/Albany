@@ -129,6 +129,8 @@ namespace PyAlbany
          */
         void performSolve();
 
+        Teuchos::RCP<Teuchos::StackedTimer> getStackedTimer() { return stackedTimer; }
+
         /**
          * \brief performAnalysis member function
          * 
