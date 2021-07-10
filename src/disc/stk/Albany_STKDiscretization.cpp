@@ -137,9 +137,23 @@ STKDiscretization::printCoords() const
 {
   std::cout << "Processor " << bulkData->parallel_rank() << " has "
             << coords.size() << " worksets.\n";
+
+  const int numDim = stkMeshStruct->numDim;
+  double xmin = std::numeric_limits<double>::max(), xmax = std::numeric_limits<double>::lowest(),
+      ymin = xmin, ymax = xmax, zmin = xmin, zmax = xmax;
   for (int ws = 0; ws < coords.size(); ws++) {
     for (int e = 0; e < coords[ws].size(); e++) {
       for (int j = 0; j < coords[ws][e].size(); j++) {
+        xmin = std::min(xmin, coords[ws][e][j][0]);
+        xmax = std::max(xmax, coords[ws][e][j][0]);
+        if (numDim > 1) {
+          ymin = std::min(ymin, coords[ws][e][j][1]);
+          ymax = std::max(ymax, coords[ws][e][j][1]);
+        }
+        if (numDim > 2) {
+          zmin = std::min(zmin, coords[ws][e][j][2]);
+          zmax = std::max(zmax, coords[ws][e][j][2]);
+        }
         std::cout << "Coord for workset: " << ws << " element: " << e
                   << " node: " << j << " x, y, z: " << coords[ws][e][j][0]
                   << ", " << coords[ws][e][j][1] << ", " << coords[ws][e][j][2]
@@ -147,6 +161,15 @@ STKDiscretization::printCoords() const
       }
     }
   }
+
+  std::cout << "Processor " << bulkData->parallel_rank() << " has the following x-range: ["
+      << xmin << ", " << xmax << "]" << std::endl;
+  if (numDim > 1)
+    std::cout << "Processor " << bulkData->parallel_rank() << " has the following y-range: ["
+        << ymin << ", " << ymax << "]" << std::endl;
+  if (numDim > 2)
+    std::cout << "Processor " << bulkData->parallel_rank() << " has the following z-range: ["
+        << zmin << ", " << zmax << "]" << std::endl;
 }
 
 const Teuchos::ArrayRCP<double>&
@@ -538,6 +561,7 @@ STKDiscretization::setupMLCoords()
     }
   }
   rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV, interleavedOrdering, m_vs, m_overlap_vs);
+  writeCoordsToMatrixMarket();
 }
 
 void
