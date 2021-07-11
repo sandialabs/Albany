@@ -266,7 +266,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
       distParam->upper_bounds_vector()->assign(
           param_list.get<ST>("Upper Bound"));
     }
-    if (param_list.isParameter("Initial Uniform Value")) {
+    if (param_list.isParameter("Parameter Analytic Expression")) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           distParam->vector() == Teuchos::null,
           Teuchos::Exceptions::InvalidParameter,
@@ -274,6 +274,54 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
               << "Error!  In Albany::ModelEvaluator constructor:  "
               << "distParam->vector() == Teuchos::null"
               << std::endl);
+      const std::string param_expr = param_list.get<std::string>("Parameter Analytic Expression");
+      Teuchos::RCP<Albany::AbstractDiscretization> disc = app_->getDisc();
+      const Teuchos::ArrayRCP<double>& ov_coords = disc->getCoordinates();
+      Teuchos::RCP<const Thyra_VectorSpace> vec_space = disc->getVectorSpace();
+      const int num_dims = app_->getSpatialDimension();
+      const int num_dofs = ov_coords.size(); 
+      const int num_nodes = vec_space->dim(); 
+      
+      Teuchos::ArrayRCP<ST> distParamVec_ArrayRCP = 
+	      getNonconstLocalData(distParam->vector()); 
+
+      if (param_expr == "Quadratic") 
+      {
+        if (num_dims == 1) {
+	  std::cout << "IKT 1D quadratic case!\n"; 
+          for (int i=0; i < num_nodes; i++) {
+            const double x = ov_coords[i]; 
+	    distParamVec_ArrayRCP[i] = x*(1-x); 
+	  }
+	}
+	else if (num_dims == 2) {
+	  std::cout << "IKT 2D quadratic case!\n"; 
+          for (int i=0; i < num_nodes; i++) {
+            const double x = ov_coords[i]; 
+	    const double y = ov_coords[num_nodes+i]; 
+	    distParamVec_ArrayRCP[i] = x*(1-x)*y*(1-y); 
+	  }
+	}
+        else {
+          TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              "\nError!  In Albany::ModelEvaluator constructor:  "
+              << "Quadratic Parameter Analytic Expression not valid for >2D.\n"); 
+	}
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              "\nError!  In Albany::ModelEvaluator constructor:  "
+              << "Invalid value for 'Parameter Analytic Expression' = "
+              << param_expr << ".  Valid expressions are: 'Quadratic'.\n");
+      }
+    } 
+    
+    if (param_list.isParameter("Initial Uniform Value")) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          distParam->vector() == Teuchos::null,
+          Teuchos::Exceptions::InvalidParameter,
+              "\nError!  In Albany::ModelEvaluator constructor:  "
+              << "distParam->vector() == Teuchos::null.\n"); 
       distParam->vector()->assign(
           param_list.get<ST>("Initial Uniform Value"));
     }

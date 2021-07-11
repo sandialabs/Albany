@@ -27,11 +27,11 @@ ALBANY:
       Parameter 0:
         Type: Distributed
         Name: thermal_conductivity
-        Initial Uniform Value: 1.60000000000000000e+00
+        Parameter Analytic Expression: Quadratic
         Mesh Part: ''
-      #Parameters:
-        #Number Of Parameters: 1
-        #Parameter 0:
+    #Parameters:
+      #Number Of Parameters: 1
+      #Parameter 0:
         #Type: Scalar
         #Name: 'kappa_x Parameter'
   Discretization:
@@ -43,6 +43,8 @@ ALBANY:
   Piro:
     Sensitivity Method: Adjoint
     Tempus:
+      Lump Mass Matrix: true
+      Constant Mass Matrix: true
       Integrator Name: Tempus Integrator
       #Sensitivities:
         #Mass Matrix Is Identity: false
