@@ -270,10 +270,14 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
       TEUCHOS_TEST_FOR_EXCEPTION(
           distParam->vector() == Teuchos::null,
           Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  In Albany::ModelEvaluator constructor:  "
-              << "distParam->vector() == Teuchos::null"
-              << std::endl);
+              "\nError!  In Albany::ModelEvaluator constructor:  "
+              << "distParam->vector() == Teuchos::null.\n"); 
+      if (commT->getSize() > 1) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              "\nError!  In Albany::ModelEvaluator constructor:  "
+              << "'Parameter Analytic Expression' option for initializing distributed"
+	      << " parameters only works in serial.\n"); 
+      }
       const std::string param_expr = param_list.get<std::string>("Parameter Analytic Expression");
       Teuchos::RCP<Albany::AbstractDiscretization> disc = app_->getDisc();
       const Teuchos::ArrayRCP<double>& ov_coords = disc->getCoordinates();
