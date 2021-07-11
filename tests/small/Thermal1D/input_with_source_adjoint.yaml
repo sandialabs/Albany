@@ -13,7 +13,7 @@ ALBANY:
     Initial Condition:
       Function: Expression Parser All DOFs
       Function Expressions: ['16*x*(1-x)']
-    Thermal Conductivity: [1.6]
+    #Thermal Conductivity: [1.6]
     Heat Capacity: 1.0
     Density: 1.0
     Thermal Source: 1D Cost
