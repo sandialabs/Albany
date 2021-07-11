@@ -285,24 +285,26 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
       const int num_dims = app_->getSpatialDimension();
       const int num_dofs = ov_coords.size(); 
       const int num_nodes = vec_space->dim(); 
-      
+      /*std::cout << "IKT num_dims, num_dofs, num_nodes = " << num_dims << ", " << num_dofs 
+	        << ", " << num_nodes << "\n"; 
+      for (int i=0; i<num_dofs; i++) {
+        std::cout << "IKT i, ov_coords = " << i << ", " << ov_coords[i] << "\n"; 
+      }*/
       Teuchos::ArrayRCP<ST> distParamVec_ArrayRCP = 
 	      getNonconstLocalData(distParam->vector()); 
 
       if (param_expr == "Quadratic") 
       {
         if (num_dims == 1) {
-	  std::cout << "IKT 1D quadratic case!\n"; 
           for (int i=0; i < num_nodes; i++) {
             const double x = ov_coords[i]; 
 	    distParamVec_ArrayRCP[i] = x*(1-x); 
 	  }
 	}
 	else if (num_dims == 2) {
-	  std::cout << "IKT 2D quadratic case!\n"; 
           for (int i=0; i < num_nodes; i++) {
-            const double x = ov_coords[i]; 
-	    const double y = ov_coords[num_nodes+i]; 
+            const double x = ov_coords[2*i]; 
+	    const double y = ov_coords[2*i+1]; 
 	    distParamVec_ArrayRCP[i] = x*(1-x)*y*(1-y); 
 	  }
 	}
