@@ -138,7 +138,7 @@ createThyraLinearOp (const Teuchos::RCP<Epetra_Operator>& op)
 }
 
 Teuchos::RCP<Thyra_BlockedLinearOp>
-createThyraBlockedLinearOp (const Teuchos::RCP<Epetra_Operator>& op)
+createThyraBlockedLinearOp (const Teuchos::RCP<Epetra_Operator>& /* op */)
 {
   Teuchos::RCP<Thyra_BlockedLinearOp> lop;
 // GAH fill in functionality here

@@ -61,8 +61,8 @@ cmake \
     -D Xpetra_ENABLE_Epetra=OFF \
     -D MueLu_ENABLE_Epetra=OFF \
     -D Belos_ENABLE_Epetra=OFF \
-    -D Tpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF \
-    -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF \
+    -D Tpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
+    -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
     -D TPL_ENABLE_Matio:BOOL=OFF \
     -D TPL_ENABLE_Netcdf:BOOL=ON \
     -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include \
@@ -123,9 +123,7 @@ cmake \
     -D Trilinos_ENABLE_Zoltan:BOOL=ON \
     -D Trilinos_ENABLE_Tempus:BOOL=ON \
     -D Tempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
-    -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
+    -D Kokkos_ENABLE_LIBDL:BOOL=ON \
     -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
-    -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
-    -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
     -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
 ../

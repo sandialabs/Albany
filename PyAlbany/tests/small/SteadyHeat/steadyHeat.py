@@ -42,6 +42,10 @@ class TestSteadyHeat(unittest.TestCase):
         sensitivity = problem.getSensitivity(0, 0)
         hessian = problem.getReducedHessian(0, 0)
 
+        stackedTimer = problem.getStackedTimer()
+        setup_time = stackedTimer.accumulatedTime("Albany: Setup Time")
+        print("setup_time = " + str(setup_time))
+
         g_target = 3.23754626955999991e-01
         norm_target = 8.94463776843999921e-03
         h_target = np.array([0.009195356672103817, 0.009195356672103817, 0.027586070971800013, 0.027586070971800013])
@@ -62,6 +66,7 @@ class TestSteadyHeat(unittest.TestCase):
         if rank == 0:
             self.assertTrue(np.abs(g_data[0]-g_target) < tol)
             self.assertTrue(np.abs(norm-norm_target) < tol)
+            self.assertTrue(setup_time > 0.)
             for i in range(0,n_directions):
                 self.assertTrue(np.abs(hessian_norms[i]-h_target[i]) < tol)
 

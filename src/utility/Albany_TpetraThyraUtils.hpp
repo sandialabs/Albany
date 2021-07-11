@@ -74,6 +74,12 @@ Teuchos::RCP<const Tpetra_CrsMatrix>
 getConstTpetraMatrix (const Teuchos::RCP<const Thyra_LinearOp>& lop,
                       const bool throw_if_not_tpetra = true);
 
+// Tpetra_FECrsMatrix has changed the way we modify its entries.
+// See https://github.com/trilinos/trilinos/pull/9000
+Teuchos::RCP<Tpetra_FECrsMatrix>
+getTpetraFECrsMatrix (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                      const bool throw_if_not_tpetra);
+
 // --- Conversion from references rather than RCPs --- //
 
 Teuchos::RCP<Tpetra_Vector>
