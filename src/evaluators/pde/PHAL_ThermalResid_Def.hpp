@@ -72,13 +72,6 @@ ThermalResid(const Teuchos::ParameterList& p,
     ThermalCond = decltype(ThermalCond)(p.get<std::string>("ThermalConductivity Name"),
   	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     this->addDependentField(ThermalCond);
-    if (numDims > 1) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true,
-          std::logic_error,
-          "Distributed ThermalConductivity only implemented in 1D so far!  " 
-	  << "You are attempting to run an " << numDims << "D problem."); 
-    }
   }
   std::string thermal_source = p.get<std::string>("Thermal Source"); 
   if (thermal_source == "None") {
@@ -164,7 +157,8 @@ evaluateFields(typename Traits::EvalData workset)
         if (!conductivityIsDistParam) {
           Source(cell, qp) = -2.0*a*kappa_x(0)*(M_PI*x*(1-x)*sin(2.0*M_PI*kappa_x(0)*t/rho/C) - cos(2.0*M_PI*kappa_x(0)*t/rho/C));
 	}
-        else { 
+        else {
+	  //IKT, FIXME: need to update this to be valid for generic (nonscalar) ThermalCond	
           Source(cell, qp) = -2.0*a*ThermalCond(cell, qp)*(M_PI*x*(1-x)*sin(2.0*M_PI*ThermalCond(cell, qp)*t/rho/C) - cos(2.0*M_PI*ThermalCond(cell, qp)*t/rho/C));
 	}	
       }
@@ -177,10 +171,18 @@ evaluateFields(typename Traits::EvalData workset)
         const ScalarT x = coordVec(cell, qp, 0); 
         const ScalarT y = coordVec(cell, qp, 1); 
         const RealType a = 16.0; 
-        const RealType t = workset.current_time; 
-        Source(cell, qp) = 2.0*M_PI*a*x*(1.0-x)*y*(1.0-y)*exp(2.0*M_PI*kappa_y(0)*t/rho/C)*(kappa_y(0)*cos(2*M_PI*kappa_x(0)*t/rho/C)
-                          -kappa_x(0)*sin(2.0*M_PI*kappa_x(0)*t/rho/C)) + 2.0*a*cos(2.0*M_PI*kappa_x(0)*t/rho/C)
-                          *exp(2.0*M_PI*kappa_y(0)*t/rho/C)*(kappa_x(0)*y*(1-y) + kappa_y(0)*x*(1-x)); 
+        const RealType t = workset.current_time;
+        if (!conductivityIsDistParam) {	
+          Source(cell, qp) = 2.0*M_PI*a*x*(1.0-x)*y*(1.0-y)*exp(2.0*M_PI*kappa_y(0)*t/rho/C)*(kappa_y(0)*cos(2*M_PI*kappa_x(0)*t/rho/C)
+                            -kappa_x(0)*sin(2.0*M_PI*kappa_x(0)*t/rho/C)) + 2.0*a*cos(2.0*M_PI*kappa_x(0)*t/rho/C)
+                            *exp(2.0*M_PI*kappa_y(0)*t/rho/C)*(kappa_x(0)*y*(1-y) + kappa_y(0)*x*(1-x)); 
+	}
+	else {
+          TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            std::logic_error,
+            "'Thermal Source' = '2D Cost Expt' for distributed ThermalConductivity is not implemented!\n");  
+	}
       }
     }
   }
@@ -216,7 +218,8 @@ evaluateFields(typename Traits::EvalData workset)
             TResidual(cell, node) += kappa_z(0) * TGrad(cell, qp, 2) * wGradBF(cell, node, qp, 2); 
           }
 	}
-	else { //IKT 7/6/2021: 1D only
+	else { //IKT 7/11/2021: note that for distributed params, ThermalCond is a scalar, not a vector, 
+	       //that is, it is the same for all coordinate dimentions
 	  TResidual(cell, node) += ThermalCond(cell, qp) * TGrad(cell, qp, 0) * wGradBF(cell, node, qp, 0); 
 	}
       }
