@@ -148,7 +148,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  else if (force_type == ONEDCOST) { //Source term such that T = a*x*(1-x)*cos(2*pi*kappa_x*t/rho/C) with a = 16.0
+  else if (force_type == ONEDCOST) { //Source term such that T = a*x*(1-x)*cos(2*pi*kappa_x*t/rho/C) 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {      
         const ScalarT x = coordVec(cell, qp, 0); 
@@ -165,7 +165,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   else if (force_type == TWODCOSTEXPT) { //Source term such that T = a*x*(1-x)*y*(1-y)*
-                                         //cos(2*pi*kappa_x*t/rho/C)*exp(2*pi*kappa_y*t/rho/C) with a = 16.0
+                                         //cos(2*pi*kappa_x*t/rho/C)*exp(2*pi*kappa_y*t/rho/C) 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {      
         const ScalarT x = coordVec(cell, qp, 0); 
@@ -188,8 +188,11 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   // Evaluate residual:
-  // We are solving the following PDE
-  // rho*CdT/dt - kappa_x*dT/dx - kappa_y*dT/dy - kappa_z*dT/dz = f in 3D
+  // For scalar parameters kappa_x, kappa_y, kappa_z, we are solving the following PDE:
+  // rho*C*dT/dt - kappa_x*dT/dx - kappa_y*dT/dy - kappa_z*dT/dz = f in 3D
+  // For distributed parameter kappa, we are solving the following PDE:
+  // rho*C*dT/dt - \nabla \cdot (kappa*\nabla T) = f 
+  // (in this case, kappa is isotropic)
 
   if (!disable_transient) { //Inertia terms
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
