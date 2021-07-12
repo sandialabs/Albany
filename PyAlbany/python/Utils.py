@@ -71,12 +71,7 @@ def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True,
             mvector[i,:] = mVectorNP[i,:]
     else:
         if readOnRankZero:
-            numGlobalElements = map.getGlobalNumElements()
-            if rank == 0:
-                numLocalElements = numGlobalElements
-            else:
-                numLocalElements = 0
-            map0 = Tpetra.Map(numGlobalElements, numLocalElements, map.getIndexBase(), map.getComm())
+            map0 = wpa.getRankZeroMap(map)
             mvector0 = Tpetra.MultiVector(map0, n_cols, dtype=dtype)
             if rank == 0:
                 if useBinary:
