@@ -60,8 +60,12 @@ def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True,
             mVectorNP = np.load(filename+'.npy')
         else:
             mVectorNP = np.loadtxt(filename+'.txt')
-        for i in range(0, n_cols):
-            mvector[i,:] = mVectorNP[i,:]        
+
+        if(mVectorNP.ndim == 1 and n_cols == 1):
+            mvector[0,:] = mVectorNP
+        else: 
+            for i in range(0, n_cols):
+                mvector[i,:] = mVectorNP[i,:]        
     elif distributedFile:
         if useBinary:
             mVectorNP = np.load(filename+'_'+str(rank)+'.npy')
@@ -78,8 +82,12 @@ def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True,
                     mVectorNP = np.load(filename+'.npy')
                 else:
                     mVectorNP = np.loadtxt(filename+'.txt')
-                for i in range(0, n_cols):
-                    mvector0[i,:] = mVectorNP[i,:]
+                
+                if(mVectorNP.ndim == 1 and n_cols == 1):
+                    mvector0[0,:] = mVectorNP
+                else: 
+                    for i in range(0, n_cols):
+                        mvector0[i,:] = mVectorNP[i,:]
             mvector = wpa.scatterMVector(mvector0, map)
         else:
             if useBinary:
