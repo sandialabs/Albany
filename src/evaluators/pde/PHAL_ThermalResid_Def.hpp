@@ -159,7 +159,7 @@ evaluateFields(typename Traits::EvalData workset)
 	}
         else {
 	  //IKT, NOTE: this is for kappa = x*(1-x), or 'Parameter Analytic Expression: Quadratic' distr. param. option
-	  const auto argt = -2.0*M_PI*ThermalCond(cell,qp)*t/rho/C; 	
+	  const ScalarT argt = -2.0*M_PI*ThermalCond(cell,qp)*t/rho/C; 	
           Source(cell, qp) = a*(6.0*rho*rho*C*C*x*cos(argt)
 			   - 6.0*rho*rho*C*C*x*x*cos(argt)
 			   - 48.0*x*x*x*x*x*cos(argt)*M_PI*M_PI*t*t
@@ -193,7 +193,8 @@ evaluateFields(typename Traits::EvalData workset)
                             *exp(2.0*M_PI*kappa_y(0)*t/rho/C)*(kappa_x(0)*y*(1-y) + kappa_y(0)*x*(1-x)); 
 	}
 	else {
-	  const auto argt = 2.0*M_PI*ThermalCond(cell,qp)*t/rho/C; 	
+	  //IKT, NOTE: this is for kappa = x*(1-x)*y*(1-y), or 'Parameter Analytic Expression: Quadratic' distr. param. option
+	  const ScalarT argt = 2.0*M_PI*ThermalCond(cell,qp)*t/rho/C; 	
 	  Source(cell,qp) = a*exp(argt)*(-32.0*x*x*y*y*y*y*y*sin(argt)*M_PI*M_PI*t*t
 			  + 192.0*x*x*x*y*y*y*y*y*sin(argt)*M_PI*M_PI*t*t
 			  - 512.0*x*x*x*x*y*y*y*y*y*sin(argt)*M_PI*M_PI*t*t
