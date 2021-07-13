@@ -65,7 +65,7 @@ ALBANY:
           Initial Time Index: 0
           Initial Time Step: 1.0e-3
           Final Time: 1.0
-          Final Time Index: 10000
+          Final Time Index: 1000000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
           Output Time List: ''
