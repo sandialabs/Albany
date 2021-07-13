@@ -158,8 +158,23 @@ evaluateFields(typename Traits::EvalData workset)
           Source(cell, qp) = -2.0*a*kappa_x(0)*(M_PI*x*(1-x)*sin(2.0*M_PI*kappa_x(0)*t/rho/C) - cos(2.0*M_PI*kappa_x(0)*t/rho/C));
 	}
         else {
-	  //IKT, FIXME: need to update this to be valid for generic (nonscalar) ThermalCond	
-          Source(cell, qp) = -2.0*a*ThermalCond(cell, qp)*(M_PI*x*(1-x)*sin(2.0*M_PI*ThermalCond(cell, qp)*t/rho/C) - cos(2.0*M_PI*ThermalCond(cell, qp)*t/rho/C));
+	  //IKT, NOTE: this is for kappa = x*(1-x), or 'Parameter Analytic Expression: Quadratic' distr. param. option
+	  const auto argt = -2.0*M_PI*ThermalCond(cell,qp)*t/rho/C; 	
+          Source(cell, qp) = a*(6.0*rho*rho*C*C*x*cos(argt)
+			   - 6.0*rho*rho*C*C*x*x*cos(argt)
+			   - 48.0*x*x*x*x*x*cos(argt)*M_PI*M_PI*t*t
+			   + 16.0*x*x*x*x*x*x*cos(argt)*M_PI*M_PI*t*t
+			   + 2.0*x*x*x*x*sin(argt)*M_PI*rho*rho*C*C
+			   - 56.0*rho*C*x*x*x*sin(argt)*M_PI*t
+			   + 28.0*rho*C*x*x*x*x*sin(argt)*M_PI*t
+			   - cos(argt)*rho*rho*C*C
+			   + 4.0*x*x*cos(argt)*M_PI*M_PI*t*t
+			   - 24.0*x*x*x*cos(argt)*M_PI*M_PI*t*t
+			   + 52.0*x*x*x*x*cos(argt)*M_PI*M_PI*t*t
+			   + 2.0*x*x*sin(argt)*M_PI*rho*rho*C*C
+			   - 6.0*sin(argt)*M_PI*t*rho*C*x
+			   + 34.0*sin(argt)*M_PI*t*rho*C*x*x
+			   - 4.0*x*x*x*sin(argt)*M_PI*rho*rho*C*C)/rho/rho/C/C;
 	}	
       }
     }
@@ -223,7 +238,9 @@ evaluateFields(typename Traits::EvalData workset)
 	}
 	else { //IKT 7/11/2021: note that for distributed params, ThermalCond is a scalar, not a vector, 
 	       //that is, it is the same for all coordinate dimentions
-	  TResidual(cell, node) += ThermalCond(cell, qp) * TGrad(cell, qp, 0) * wGradBF(cell, node, qp, 0); 
+          for (auto dim = 0; dim < numDims; ++dim) {
+	    TResidual(cell, node) += ThermalCond(cell, qp) * TGrad(cell, qp, dim) * wGradBF(cell, node, qp, dim); 
+	  }
 	}
       }
     }

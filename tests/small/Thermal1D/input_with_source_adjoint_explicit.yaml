@@ -27,7 +27,7 @@ ALBANY:
       Parameter 0:
         Type: Distributed
         Name: thermal_conductivity
-        Initial Uniform Value: 1.60000000000000000e+00
+        Parameter Analytic Expression: Quadratic
         Mesh Part: ''
       #Parameters:
         #Number Of Parameters: 1
@@ -42,7 +42,7 @@ ALBANY:
     Exodus Output File Name: thermal1D_with_source_adjoint_explicit_out.exo
     Exodus Write Interval: 10
   Piro:
-    Sensitivity Method: Adjoint
+    #Sensitivity Method: Adjoint
     Tempus:
       Lump Mass Matrix: true
       Constant Mass Matrix: true
@@ -106,8 +106,8 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Sensitivity For Parameter 0:
-      Test Value: 9.395066921520e+00
-    Test Value: -1.983408347195e+00
+    #Sensitivity For Parameter 0:
+      #Test Value: 9.395066921520e+00
+    Test Value: 7.166990507737e-01
     Relative Tolerance: 1.00000000000000002e-03
 ...
