@@ -185,6 +185,24 @@ Teuchos::RCP<const PyTrilinosMap> PyProblem::getResponseMap(const int g_index)
     return Teuchos::null;
 }
 
+
+Teuchos::RCP<const PyTrilinosMap> PyProblem::getStateMap()
+{
+    if (forwardHasBeenSolved == false)
+    {
+        std::cout << "Warning: getStateMap() must be called after performSolve()" << std::endl;
+        return Teuchos::null;
+    }
+    Teuchos::RCP<const Thyra_Vector> s = thyraResponses.back();
+    if (Teuchos::nonnull(s))
+    {
+        auto s_space = s->space();
+        return getPyTrilinosMap(Albany::getTpetraMap(s_space), false);
+    }
+    return Teuchos::null;
+}
+
+
 Teuchos::RCP<const PyTrilinosMap> PyProblem::getParameterMap(const int p_index)
 {
     auto p_space = solver->getNominalValues().get_p(p_index)->space();
@@ -326,6 +344,38 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getResponse(const int g_index)
     }
     return Teuchos::null;
 }
+
+
+Teuchos::RCP<PyTrilinosVector> PyProblem::getState()
+{
+    if (forwardHasBeenSolved == false)
+    {
+        std::cout << "Warning: getState() must be called after performSolve()" << std::endl;
+    }
+    else
+    {
+#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
+        Teuchos::RCP<Thyra_Vector> s = thyraResponses.back();
+        Teuchos::RCP<PyTrilinosVector> s_out = Albany::getTpetraVector(s);
+        return s_out;
+#else
+        std::cout << "PyAlbany Does not use deep copy" << std::endl;
+	      Teuchos::RCP<const Thyra_Vector> s = thyraResponses.back();
+        Teuchos::RCP<PyTrilinosVector> s_out = rcp(new PyTrilinosVector(this->getStateMap()));
+        if (Teuchos::nonnull(s))
+        {
+            Teuchos::RCP<const Tpetra_Vector> sT = Albany::getConstTpetraVector(s);
+            auto s_out_view = s_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
+            auto s_in_view  = sT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            Kokkos::deep_copy(s_out_view, s_in_view);
+            return s_out;
+        }
+#endif
+    }
+    return Teuchos::null;
+}
+
+
 
 Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getSensitivity(const int g_index, const int p_index)
 {
