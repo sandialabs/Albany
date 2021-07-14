@@ -43,3 +43,15 @@ IF(ALBANY_MPI)
     set_tests_properties(PyAlbany_multiple_SteadyHeat_MPI
         PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 ENDIF()
+
+add_test(PyAlbany_SteadyHeat_StateMap "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat_stateMap.py")
+
+set_tests_properties(PyAlbany_SteadyHeat_StateMap
+    PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+
+IF(ALBANY_MPI)
+    add_test(PyAlbany_SteadyHeat_StateMap_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat_stateMap.py")
+
+    set_tests_properties(PyAlbany_SteadyHeat_StateMap_MPI
+        PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+ENDIF()
