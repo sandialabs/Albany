@@ -359,7 +359,7 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getState()
         Teuchos::RCP<PyTrilinosVector> s_out = Albany::getTpetraVector(s);
         return s_out;
 #else
-	    Teuchos::RCP<const Thyra_Vector> s = thyraResponses.back();
+        Teuchos::RCP<const Thyra_Vector> s = thyraResponses.back();
         Teuchos::RCP<PyTrilinosVector> s_out = rcp(new PyTrilinosVector(this->getStateMap()));
         if (Teuchos::nonnull(s))
         {
