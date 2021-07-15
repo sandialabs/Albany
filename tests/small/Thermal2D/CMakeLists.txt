@@ -11,6 +11,8 @@ if(NOT ALBANY_PARALLEL_ONLY)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_be_with_source_adjoint.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fe_with_source.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fe_with_source.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fe_with_source_adjoint.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fe_with_source_adjoint.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/compute_errs_source_no_movie2avi.m
                  ${CMAKE_CURRENT_BINARY_DIR}/compute_errs_source_no_movie2avi.m COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_backward_euler.yaml
@@ -32,6 +34,9 @@ if(NOT ALBANY_PARALLEL_ONLY)
 
   add_test(${testName}_ForwardEuler_with_Source ${Albany.exe} input_fe_with_source.yaml)
   set_tests_properties(${testName}_ForwardEuler_with_Source PROPERTIES LABELS "Demo;Tpetra;Forward")
+
+  add_test(${testName}_ForwardEuler_with_Source_Adjoint ${SerialAlbany.exe} input_fe_with_source_adjoint.yaml)
+  set_tests_properties(${testName}_ForwardEuler_with_Source_Adjoint PROPERTIES LABELS "Demo;Tpetra;Adjoint")
 
   add_test(${testName}_ForwardEuler ${Albany.exe} input_forward_euler.yaml)
   set_tests_properties(${testName}_ForwardEuler PROPERTIES LABELS "Demo;Tpetra;Forward")
