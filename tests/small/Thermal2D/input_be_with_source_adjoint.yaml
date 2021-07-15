@@ -49,7 +49,7 @@ ALBANY:
     Exodus Output File Name: thermal2D_with_source_adjoint_out.exo
     Exodus Write Interval: 1
   Piro:
-    Sensitivity Method: Adjoint
+    #Sensitivity Method: Adjoint
     Tempus:
       Integrator Name: Tempus Integrator
       Tempus Integrator:
@@ -143,8 +143,8 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Sensitivity For Parameter 0:
-      Test Value: 2.103917477841e+02
-    Test Value: -4.391538524980e+01
+    #Sensitivity For Parameter 0:
+    #  Test Value: 2.103917477841e+02
+    Test Value:  4.524352198553e-01
     Relative Tolerance: 1.00000000000000002e-03
 ...
