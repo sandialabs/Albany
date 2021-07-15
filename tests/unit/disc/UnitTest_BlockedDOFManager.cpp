@@ -277,6 +277,10 @@ tests are a beginning, "work in progress."
       // panzer::pauseToAttach();
 
       bool useExodus = false;
+
+      if (comm->getSize() > 1)
+         useExodus = true;
+
       bool verbose = false;
 
       RCP<Teuchos::ParameterList> discParams = rcp(new Teuchos::ParameterList);
