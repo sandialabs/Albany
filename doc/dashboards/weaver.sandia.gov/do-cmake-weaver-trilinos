@@ -101,6 +101,7 @@ cmake \
     -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
     -D Trilinos_ENABLE_Phalanx:BOOL=ON \
     -D Trilinos_ENABLE_Piro:BOOL=ON \
+    -D Trilinos_ENABLE_ROL:BOOL=ON \
     -D Trilinos_ENABLE_Rythmos:BOOL=ON \
     -D Trilinos_ENABLE_SEACAS:BOOL=ON \
     -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=OFF \
