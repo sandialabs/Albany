@@ -4,20 +4,20 @@
 namespace Albany
 {
     /**
-     * \brief createHessianCrsGraph function
+     * \brief createHessianLinearOp function
      *
-     * This function computes the Tpetra::CrsGraph associated to
+     * This function computes the Thyra::LinearOp associated to
      * the Hessian w.r.t a distributed parameter.
      *
-     * \param p_owned_map [in] Tpetra::Map which specifies the owned entries of the current distributed parameter.
+     * \param p_owned_vs [in] Thyra::VectorSpace which specifies the owned entries of the current distributed parameter.
      *
-     * \param p_overlapped_map [in] Tpetra::Map which specifies the overlapped entries of the current distributed parameter.
+     * \param p_overlapped_vs [in] Thyra::VectorSpace which specifies the overlapped entries of the current distributed parameter.
      *
      * \param wsElDofs [in] Vector of IDArray associated to the mesh used.
      */
-    Teuchos::RCP<Tpetra_CrsGraph> createHessianCrsGraph(
-        Teuchos::RCP<const Tpetra_Map> p_owned_map,
-        Teuchos::RCP<const Tpetra_Map> p_overlapped_map,
+    Teuchos::RCP<Thyra_LinearOp> createHessianLinearOp(
+        Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
+        Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
         const std::vector<IDArray> wsElDofs);
 
     /**

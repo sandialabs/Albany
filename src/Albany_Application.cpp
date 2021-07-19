@@ -2387,10 +2387,11 @@ Application::evaluateResponseDistParamHessian_pp(
 
   // Even if the Hessian is symmetric, the distributed crs matrix
   // is not symmetrical as the row and column map are not identical.
-  coloring_params.set("symmetric", false);
+  coloring_params.set("symmetric", true);
 
   // Get the crs Hessian:
   RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
+  Ht->resumeFill();
 
   // Create a colorer
   Zoltan2::TpetraCrsColorer<Tpetra_CrsMatrix> colorer(Ht);

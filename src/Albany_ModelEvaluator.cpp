@@ -536,17 +536,12 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
           << l1
           << std::endl);
 
-  Teuchos::RCP<const Tpetra_Map> p_overlapped_map = Albany::getTpetraMap(
-    distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace());
-  Teuchos::RCP<const Tpetra_Map> p_owned_map = Albany::getTpetraMap(
-    distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace());
+  Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
+  Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
   std::vector<IDArray> vElDofs =
     distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
 
-  Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Albany::createHessianCrsGraph(p_owned_map, p_overlapped_map, vElDofs);
-  Teuchos::RCP<Tpetra_CrsMatrix> Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
-
-  return Albany::createThyraLinearOp(Ht);
+  return Albany::createHessianLinearOp(p_owned_vs, p_overlapped_vs, vElDofs);
 }
 
 Teuchos::RCP<Thyra_LinearOp>
@@ -1479,12 +1474,15 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         outArgs.get_hess_g_pp(j, l1, l1) : Teuchos::null;
 
       if (Teuchos::nonnull(g_hess_pp)) {
+        bool write_hessian = appParams->sublist("Problem").sublist("Hessian").get<bool>("Write Hessian MatrixMarket", false);
         if (l1 >= num_param_vecs) {
           app->evaluateResponseDistParamHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
                     sacado_param_vec,
                     all_param_names[l1],
                     g_hess_pp);
         }
+        if(appParams->sublist("Problem").sublist("Hessian").get<bool>("Write Hessian MatrixMarket", false))
+          Albany::writeMatrixMarket(Albany::getTpetraMatrix(g_hess_pp).getConst(), "H", l1);
       }
 
       for (int l2 = 0; l2 < num_params; l2++) {
