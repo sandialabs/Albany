@@ -6,8 +6,6 @@
 
 #include "Albany_ModelEvaluator.hpp"
 
-#include "Albany_DistributedParameterLibrary.hpp"
-#include "Albany_DistributedParameterDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Albany_ObserverImpl.hpp"
@@ -151,6 +149,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
     int numParameters = param_vss[l]->dim();
 
     // Loading lower and upper bounds (if any)
+    // IKT: I believe these parameters are only relevant for optimization
     const std::string& parameterType = pList.isParameter("Type") ?
         pList.get<std::string>("Type") : std::string("Scalar");
 
@@ -200,6 +199,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
 
       for (int k = 0; k < numParameters; ++k) {
         std::string sublistName = strint("Scalar",k);
+	//IKT: I believe the following parameters are only for optimization
         if (pList.sublist(sublistName).isParameter("Lower Bound")) {
           ST lb = pList.sublist(sublistName).get<ST>("Lower Bound");
           param_lower_bd_nonConstView[k] = lb;
@@ -242,95 +242,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
             << std::endl);
 
     dist_param_names[i-num_param_vecs] = p_name;
-    // set parameters bonuds
-    Teuchos::RCP<const DistributedParameter> distParam = distParamLib->get(p_name);
-    if (param_list.isParameter("Lower Bound")) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          distParam->lower_bounds_vector() == Teuchos::null,
-          Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  In Albany::ModelEvaluator constructor:  "
-              << "distParam->lower_bounds_vector() == Teuchos::null"
-              << std::endl);
-      distParam->lower_bounds_vector()->assign(
-          param_list.get<ST>("Lower Bound"));
-    }
-    if (param_list.isParameter("Upper Bound")) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          distParam->upper_bounds_vector() == Teuchos::null,
-          Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  In Albany::ModelEvaluator constructor:  "
-              << "distParam->upper_bounds_vector() == Teuchos::null"
-              << std::endl);
-      distParam->upper_bounds_vector()->assign(
-          param_list.get<ST>("Upper Bound"));
-    }
-    if (param_list.isParameter("Parameter Analytic Expression")) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          distParam->vector() == Teuchos::null,
-          Teuchos::Exceptions::InvalidParameter,
-              "\nError!  In Albany::ModelEvaluator constructor:  "
-              << "distParam->vector() == Teuchos::null.\n"); 
-      if (commT->getSize() > 1) {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-              "\nError!  In Albany::ModelEvaluator constructor:  "
-              << "'Parameter Analytic Expression' option for initializing distributed"
-	      << " parameters only works in serial.\n"); 
-      }
-      const std::string param_expr = param_list.get<std::string>("Parameter Analytic Expression");
-      Teuchos::RCP<Albany::AbstractDiscretization> disc = app_->getDisc();
-      const Teuchos::ArrayRCP<double>& ov_coords = disc->getCoordinates();
-      Teuchos::RCP<const Thyra_VectorSpace> vec_space = disc->getVectorSpace();
-      const int num_dims = app_->getSpatialDimension();
-      const int num_dofs = ov_coords.size(); 
-      const int num_nodes = vec_space->dim(); 
-      /*std::cout << "IKT num_dims, num_dofs, num_nodes = " << num_dims << ", " << num_dofs 
-	        << ", " << num_nodes << "\n"; 
-      for (int i=0; i<num_dofs; i++) {
-        std::cout << "IKT i, ov_coords = " << i << ", " << ov_coords[i] << "\n"; 
-      }*/
-      Teuchos::ArrayRCP<ST> distParamVec_ArrayRCP = 
-	      getNonconstLocalData(distParam->vector()); 
-
-      if (param_expr == "Quadratic") 
-      {
-        if (num_dims == 1) {
-          for (int i=0; i < num_nodes; i++) {
-            const double x = ov_coords[i]; 
-	    distParamVec_ArrayRCP[i] = x*(1-x); 
-	  }
-	}
-	else if (num_dims == 2) {
-          for (int i=0; i < num_nodes; i++) {
-            const double x = ov_coords[2*i]; 
-	    const double y = ov_coords[2*i+1]; 
-	    distParamVec_ArrayRCP[i] = x*(1-x)*y*(1-y); 
-	  }
-	}
-        else {
-          TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-              "\nError!  In Albany::ModelEvaluator constructor:  "
-              << "Quadratic Parameter Analytic Expression not valid for >2D.\n"); 
-	}
-      }
-      else {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-              "\nError!  In Albany::ModelEvaluator constructor:  "
-              << "Invalid value for 'Parameter Analytic Expression' = "
-              << param_expr << ".  Valid expressions are: 'Quadratic'.\n");
-      }
-    } 
-    
-    if (param_list.isParameter("Initial Uniform Value")) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          distParam->vector() == Teuchos::null,
-          Teuchos::Exceptions::InvalidParameter,
-              "\nError!  In Albany::ModelEvaluator constructor:  "
-              << "distParam->vector() == Teuchos::null.\n"); 
-      distParam->vector()->assign(
-          param_list.get<ST>("Initial Uniform Value"));
-    }
+    Teuchos::RCP<const DistributedParameter> distParam = setDistParamVec(p_name, param_list);
   }
 
   for (int l = 0; l < app->getNumResponses(); ++l) {
@@ -388,6 +300,102 @@ void ModelEvaluator::setNominalValue(int j, Teuchos::RCP<Thyra_Vector> p)
           << std::endl);
 
   nominalValues.set_p(j, p);
+}
+
+Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const std::string p_name, 
+		                                                         const Teuchos::ParameterList param_list)
+{
+  Teuchos::RCP<const DistributedParameter> distParam = distParamLib->get(p_name);
+  // set parameters bounds - IKT: I think this is only relevant for the optimization
+  if (param_list.isParameter("Lower Bound")) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        distParam->lower_bounds_vector() == Teuchos::null,
+        Teuchos::Exceptions::InvalidParameter,
+               "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "distParam->lower_bounds_vector() == Teuchos::null\n"); 
+    distParam->lower_bounds_vector()->assign(
+        param_list.get<ST>("Lower Bound"));
+  }
+  if (param_list.isParameter("Upper Bound")) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        distParam->upper_bounds_vector() == Teuchos::null,
+        Teuchos::Exceptions::InvalidParameter,
+             "\nError!  In Albany::ModelEvaluator constructor:  "
+             "distParam->upper_bounds_vector() == Teuchos::null\n"); 
+    distParam->upper_bounds_vector()->assign(
+        param_list.get<ST>("Upper Bound"));
+  }
+  if (param_list.isParameter("Parameter Analytic Expression")) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        distParam->vector() == Teuchos::null,
+        Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "distParam->vector() == Teuchos::null.\n"); 
+    if (app->getComm()->getSize() > 1) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "'Parameter Analytic Expression' option for initializing distributed"
+            << " parameters only works in serial.\n"); 
+    }
+    //IKT, 7/2021: the following has been added to enable verification of 
+    //sensitivities for distributed parameters using MMS problems.  Other 
+    //analytical expressions for distributed parameters may be added besides
+    //the currently-available 'Quadratic' one, if desired.
+    const std::string param_expr = param_list.get<std::string>("Parameter Analytic Expression");
+    Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDisc();
+    const Teuchos::ArrayRCP<double>& ov_coords = disc->getCoordinates();
+    Teuchos::RCP<const Thyra_VectorSpace> vec_space = disc->getVectorSpace();
+    const int num_dims = app->getSpatialDimension();
+    const int num_dofs = ov_coords.size(); 
+    const int num_nodes = vec_space->dim(); 
+    /*std::cout << "IKT num_dims, num_dofs, num_nodes = " << num_dims << ", " << num_dofs 
+                << ", " << num_nodes << "\n"; 
+    for (int i=0; i<num_dofs; i++) {
+      std::cout << "IKT i, ov_coords = " << i << ", " << ov_coords[i] << "\n"; 
+    }*/
+    Teuchos::ArrayRCP<ST> distParamVec_ArrayRCP = 
+       getNonconstLocalData(distParam->vector()); 
+
+    if (param_expr == "Quadratic") 
+    {
+      if (num_dims == 1) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[i]; 
+          distParamVec_ArrayRCP[i] = x*(1-x); 
+        }
+      }
+      else if (num_dims == 2) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[2*i]; 
+          const double y = ov_coords[2*i+1]; 
+          distParamVec_ArrayRCP[i] = x*(1-x)*y*(1-y); 
+        }
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "Quadratic Parameter Analytic Expression not valid for >2D.\n"); 
+      }
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "Invalid value for 'Parameter Analytic Expression' = "
+            << param_expr << ".  Valid expressions are: 'Quadratic'.\n");
+    }
+  } 
+    
+  if (param_list.isParameter("Initial Uniform Value")) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        distParam->vector() == Teuchos::null,
+        Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "distParam->vector() == Teuchos::null.\n"); 
+    distParam->vector()->assign(
+        param_list.get<ST>("Initial Uniform Value"));
+  }
+  
+  return distParam; 
 }
 
 void ModelEvaluator::allocateVectors()
