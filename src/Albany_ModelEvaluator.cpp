@@ -1474,7 +1474,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         outArgs.get_hess_g_pp(j, l1, l1) : Teuchos::null;
 
       if (Teuchos::nonnull(g_hess_pp)) {
-        bool write_hessian = appParams->sublist("Problem").sublist("Hessian").get<bool>("Write Hessian MatrixMarket", false);
         if (l1 >= num_param_vecs) {
           app->evaluateResponseDistParamHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
                     sacado_param_vec,

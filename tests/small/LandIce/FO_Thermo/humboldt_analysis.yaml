@@ -277,8 +277,8 @@ ANONYMOUS:
                 Solver Type: Pseudo Block GMRES
                 Solver Types:
                   Pseudo Block GMRES:
-                    Maximum Iterations: 1000
-                    Convergence Tolerance: 1e-4
+                    Maximum Iterations: 1
+                    Convergence Tolerance: 1e+8
                     Num Blocks: 1000
                     Output Frequency: 200
                     Verbosity: 33
@@ -306,10 +306,8 @@ ANONYMOUS:
               Solver Type:                   0    
           
           Status Test: 
-            Gradient Tolerance: 1.0e-4
-            Constraint Tolerance: 1.0e-5
-            Step Tolerance: 1.0e-10
-            Iteration Limit: 1000
+            Gradient Tolerance: 1.0e+100
+            Iteration Limit: 0
 
           General: 
             Variable Objective Function: false
@@ -454,19 +452,15 @@ ANONYMOUS:
         Test 0: 
           Test Type: Combo
           Combo Type: AND
-          Number of Tests: 2
+          Number of Tests: 1
           Test 0: 
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.0e-06
-          Test 1:
-            Test Type: RelativeNormF
-            Norm Type: Two Norm
-            Tolerance: 0.9999
+            Tolerance: 1.0e+08
         Test 1: 
           Test Type: MaxIters
-          Maximum Iterations: 70
+          Maximum Iterations: 1
       Direction: 
         Method: Newton
         Newton: 
@@ -492,11 +486,11 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 1.0e-04
+                      Convergence Tolerance: 1.0e+08
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
-                      Maximum Iterations: 200
+                      Maximum Iterations: 1
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
