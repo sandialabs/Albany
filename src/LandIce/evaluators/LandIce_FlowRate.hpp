@@ -35,7 +35,7 @@ public:
             const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData,
-                              PHX::FieldManager<Traits>&) {}
+                              PHX::FieldManager<Traits>&);
 
   void evaluateFields(typename Traits::EvalData d);
 

@@ -20,6 +20,7 @@
 #include "Albany_PyUtils.hpp"
 
 #include "Albany_Utils.hpp"
+#include "Albany_Gather.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_YamlParameterListHelpers.hpp"
 
@@ -80,6 +81,13 @@ namespace PyAlbany
    * The function returns an RCP to the parameter list.
    */
     Teuchos::RCP<Teuchos::ParameterList> getParameterList(std::string filename, Teuchos::RCP<PyAlbany::PyParallelEnv> pyParallelEnv);
+
+    /**
+   * \brief getRankZeroMap function
+   * 
+   * The function returns an RCP to a map where all IDs are stored on Rank 0.
+   */
+    Teuchos::RCP<PyAlbany::PyTrilinosMap> getRankZeroMap(Teuchos::RCP<PyAlbany::PyTrilinosMap> distributedMap);
 
     /**
    * \brief PyProblem class
@@ -151,6 +159,17 @@ namespace PyAlbany
          */
         Teuchos::RCP<const PyTrilinosMap> getResponseMap(const int g_index);
 
+	/**
+         * \brief getStateMap member function
+         * 
+         * This function is used to communicate the map of the state to Python.
+         * 
+         * The function returns an RCP to a map supported by PyTrilinos.
+         * 
+         * This function should ne be called before calling performSolve().
+         */
+	Teuchos::RCP<const PyTrilinosMap> getStateMap();
+        
         /**
          * \brief getParameterMap member function
          * 
@@ -206,6 +225,17 @@ namespace PyAlbany
          */
         Teuchos::RCP<PyTrilinosVector> getResponse(const int g_index);
 
+	/**
+         * \brief getState member function
+         * 
+         * This function is used to communicate the state from Albany to Python.
+         * 
+         * \param response [out] A distributed vector which stores the state.
+         *
+         * This function should ne be called before calling performSolve().
+         */	
+	Teuchos::RCP<PyTrilinosVector> getState();
+
         /**
          * \brief getSensitivity member function
          * 
@@ -248,13 +278,33 @@ namespace PyAlbany
 
 } // namespace PyAlbany
 
+Teuchos::RCP<PyAlbany::PyTrilinosMap> PyAlbany::getRankZeroMap(Teuchos::RCP<PyAlbany::PyTrilinosMap> distributedMap)
+{
+    int numGlobalElements = distributedMap->getGlobalNumElements();
+    int numLocalElements = distributedMap->getNodeNumElements();
+
+    // GO and PyAlbany::PyTrilinosMap::global_ordinal_type can be different
+    auto nodes_gids_view = distributedMap->getMyGlobalIndices();
+    Teuchos::Array<GO> nodes_gids(numLocalElements);
+    for (int i=0; i<numLocalElements; ++i)
+        nodes_gids[i] = nodes_gids_view(i);
+    Teuchos::Array<GO> all_nodes_gids;
+    Albany::gatherV(distributedMap->getComm(),nodes_gids(),all_nodes_gids,0);
+    std::sort(all_nodes_gids.begin(),all_nodes_gids.end());
+    auto it = std::unique(all_nodes_gids.begin(),all_nodes_gids.end());
+    all_nodes_gids.erase(it,all_nodes_gids.end());
+
+    Teuchos::Array<PyAlbany::PyTrilinosMap::global_ordinal_type> all_nodes_py_gids(all_nodes_gids.size());
+    for (int i=0; i<all_nodes_gids.size(); ++i)
+        all_nodes_py_gids[i] = all_nodes_gids[i];
+
+    return rcp(new PyAlbany::PyTrilinosMap(numGlobalElements, all_nodes_py_gids, distributedMap->getIndexBase(), distributedMap->getComm()));
+}
+
 Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> PyAlbany::scatterMVector(Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> inVector, Teuchos::RCP<PyAlbany::PyTrilinosMap> distributedMap)
 {
     int myRank = distributedMap->getComm()->getRank();
-    int numGlobalElements = distributedMap->getGlobalNumElements();
-    int numLocalElements = (myRank == 0) ? numGlobalElements : 0;
-
-    Teuchos::RCP<PyAlbany::PyTrilinosMap> rankZeroMap = rcp(new PyAlbany::PyTrilinosMap(numGlobalElements, numLocalElements, distributedMap->getIndexBase(), distributedMap->getComm()));
+    auto rankZeroMap = getRankZeroMap(distributedMap);
     Teuchos::RCP<PyAlbany::PyTrilinosExport> exportZero = rcp(new PyAlbany::PyTrilinosExport(distributedMap, rankZeroMap));
     Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> outVector = rcp(new PyAlbany::PyTrilinosMultiVector(distributedMap, inVector->getNumVectors()));
     outVector->doImport(*inVector, *exportZero, Tpetra::INSERT);
@@ -264,10 +314,7 @@ Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> PyAlbany::scatterMVector(Teuchos::
 Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> PyAlbany::gatherMVector(Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> inVector, Teuchos::RCP<PyAlbany::PyTrilinosMap> distributedMap)
 {
     int myRank = distributedMap->getComm()->getRank();
-    int numGlobalElements = distributedMap->getGlobalNumElements();
-    int numLocalElements = (myRank == 0) ? numGlobalElements : 0;
-
-    Teuchos::RCP<PyAlbany::PyTrilinosMap> rankZeroMap = rcp(new PyAlbany::PyTrilinosMap(numGlobalElements, numLocalElements, distributedMap->getIndexBase(), distributedMap->getComm()));
+    auto rankZeroMap = getRankZeroMap(distributedMap);
     Teuchos::RCP<PyAlbany::PyTrilinosExport> exportZero = rcp(new PyAlbany::PyTrilinosExport(distributedMap, rankZeroMap));
     Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> outVector = rcp(new PyAlbany::PyTrilinosMultiVector(rankZeroMap, inVector->getNumVectors()));
     outVector->doExport(*inVector, *exportZero, Tpetra::ADD);
