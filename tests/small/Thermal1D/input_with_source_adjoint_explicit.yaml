@@ -47,8 +47,6 @@ ALBANY:
       Lump Mass Matrix: true
       Constant Mass Matrix: true
       Integrator Name: Tempus Integrator
-      #Sensitivities:
-        #Mass Matrix Is Identity: false
       Tempus Integrator:
         Integrator Type: Integrator Basic
         Screen Output Index List: '1'

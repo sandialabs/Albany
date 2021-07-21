@@ -45,8 +45,6 @@ ALBANY:
     #Sensitivity Method: Adjoint
     Tempus:
       Integrator Name: Tempus Integrator
-      #Sensitivities:
-        #Mass Matrix Is Identity: false
       Tempus Integrator:
         Integrator Type: Integrator Basic
         Screen Output Index List: '1'
