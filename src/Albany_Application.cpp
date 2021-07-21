@@ -2384,9 +2384,6 @@ Application::evaluateResponseDistParamHessian_pp(
   Teuchos::ParameterList coloring_params;
   std::string matrixType = "Hessian";
   coloring_params.set("matrixType", matrixType);
-
-  // Even if the Hessian is symmetric, the distributed crs matrix
-  // is not symmetrical as the row and column map are not identical.
   coloring_params.set("symmetric", true);
 
   // Get the crs Hessian:
