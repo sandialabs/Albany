@@ -347,6 +347,7 @@ int main(int argc, char *argv[])
 
       if (writeToMatrixMarketDistrSolnMap == true) {
         Albany::writeMatrixMarket(xfinal->space(),"xfinal_distributed_map");
+        Albany::writeMatrixMarket(xfinal,"xfinal_distributed");
       }
     }
   }
