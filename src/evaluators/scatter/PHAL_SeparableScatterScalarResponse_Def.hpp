@@ -16,6 +16,8 @@
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
+#include "Albany_Hessian.hpp"
+
 // **********************************************************************
 // Base Class Generic Implemtation
 // **********************************************************************
@@ -116,11 +118,11 @@ evaluateFields(typename Traits::EvalData workset)
       auto val = this->local_response(cell, res);
 
       // Loop over nodes in cell
-      for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+      for (int node_dof=0; node_dof<numNodes; node_dof++) {
         int neq = nodeID.extent(2);
 
         // Loop over equations per node
-        for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+        for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 
           // local derivative component
           int deriv = neq * node_dof + eq_dof;
@@ -188,7 +190,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
           for (GO il_col=0; il_col<numLayers+1; il_col++) {
             const GO ginode = layeredMeshNumbering.getId(base_id, il_col);
             const LO  inode = ov_node_indexer->getLocalElement(ginode);
-            for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+            for (int eq_col=0; eq_col<neq; eq_col++) {
               const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
               int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
               dg_data[res][dof] += val.dx(deriv);
@@ -411,6 +413,13 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::HessianVec, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  // First, the function checks whether the parameter associated to workset.dist_param_deriv_name
+  // is a distributed parameter (l1_is_distributed==true) or a parameter vector
+  // (l1_is_distributed==false).
+  int l1;
+  bool l1_is_distributed;
+  Albany::getParameterVectorID(l1, l1_is_distributed, workset.dist_param_deriv_name);
+
   // Here we scatter the *local* response derivative
   auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_g_xx = workset.hessianWorkset.overlapped_hess_vec_prod_g_xx;
@@ -434,11 +443,11 @@ evaluateFields(typename Traits::EvalData workset)
         auto val = this->local_response(cell, res);
 
         // Loop over nodes in cell
-        for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+        for (int node_dof=0; node_dof<numNodes; node_dof++) {
           int neq = nodeID.extent(2);
 
           // Loop over equations per node
-          for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+          for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 
             // local derivative component
             int deriv = neq * node_dof + eq_dof;
@@ -465,11 +474,11 @@ evaluateFields(typename Traits::EvalData workset)
         auto val = this->local_response(cell, res);
 
         // Loop over nodes in cell
-        for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+        for (int node_dof=0; node_dof<numNodes; node_dof++) {
           int neq = nodeID.extent(2);
 
           // Loop over equations per node
-          for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+          for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 
             // local derivative component
             int deriv = neq * node_dof + eq_dof;
@@ -490,26 +499,42 @@ evaluateFields(typename Traits::EvalData workset)
 
     int num_deriv = numNodes;
 
-    // Loop over cells in workset
+    if (l1_is_distributed) {
+      const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
 
-    const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      // Loop over cells in workset
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
-      // Loop over responses
-      for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      // ScalarT& val = this->local_response(cell, res);
+        // Loop over responses
+        for (std::size_t res = 0; res < this->global_response.size(); res++) {
+        // ScalarT& val = this->local_response(cell, res);
 
-        // Loop over nodes in cell
-        for (int deriv=0; deriv<num_deriv; ++deriv) {
-          const int row = wsElDofs((int)cell,deriv,0);
+          // Loop over nodes in cell
+          for (int deriv=0; deriv<num_deriv; ++deriv) {
+            const int row = wsElDofs((int)cell,deriv,0);
 
-          // Set hess_vec_prod_g_px
-          if(row >=0){
-            hess_vec_prod_g_px_data[res][row] += this->local_response(cell, res).dx(deriv).dx(0);
-          }
-        } // deriv
-      } // response
-    } // cell
+            // Set hess_vec_prod_g_px
+            if(row >=0){
+              hess_vec_prod_g_px_data[res][row] += this->local_response(cell, res).dx(deriv).dx(0);
+            }
+          } // deriv
+        } // response
+      } // cell
+    }
+    else {
+      // Loop over cells in workset
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
+        // Loop over responses
+        for (std::size_t res = 0; res < this->global_response.size(); res++) {
+
+          // Loop over nodes in cell
+          for (int deriv=0; deriv<hess_vec_prod_g_px_data[res].size(); ++deriv) {
+            hess_vec_prod_g_px_data[res][deriv] += this->local_response(cell, res).dx(deriv).dx(0);
+          } // deriv
+        } // response
+      } // cell
+    }
   }
   if (!hess_vec_prod_g_pp.is_null())
   {
@@ -517,26 +542,42 @@ evaluateFields(typename Traits::EvalData workset)
 
     int num_deriv = numNodes;
 
-    // Loop over cells in workset
+    if (l1_is_distributed) {
+      const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
 
-    const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      // Loop over cells in workset
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
-      // Loop over responses
-      for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      // ScalarT& val = this->local_response(cell, res);
+        // Loop over responses
+        for (std::size_t res = 0; res < this->global_response.size(); res++) {
+        // ScalarT& val = this->local_response(cell, res);
 
-        // Loop over nodes in cell
-        for (int deriv=0; deriv<num_deriv; ++deriv) {
-          const int row = wsElDofs((int)cell,deriv,0);
+          // Loop over nodes in cell
+          for (int deriv=0; deriv<num_deriv; ++deriv) {
+            const int row = wsElDofs((int)cell,deriv,0);
 
-          // Set hess_vec_prod_g_pp
-          if(row >=0){
-            hess_vec_prod_g_pp_data[res][row] += this->local_response(cell, res).dx(deriv).dx(0);
-          }
-        } // deriv
-      } // response
-    } // cell
+            // Set hess_vec_prod_g_pp
+            if(row >=0){
+              hess_vec_prod_g_pp_data[res][row] += this->local_response(cell, res).dx(deriv).dx(0);
+            }
+          } // deriv
+        } // response
+      } // cell
+    }
+    else {
+      // Loop over cells in workset
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+
+        // Loop over responses
+        for (std::size_t res = 0; res < this->global_response.size(); res++) {
+
+          // Loop over nodes in cell
+          for (int deriv=0; deriv<hess_vec_prod_g_pp_data[res].size(); ++deriv) {
+            hess_vec_prod_g_pp_data[res][deriv] += this->local_response(cell, res).dx(deriv).dx(0);
+          } // deriv
+        } // response
+      } // cell
+    }
   }
 }
 
@@ -544,6 +585,13 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::HessianVec, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
+  // First, the function checks whether the parameter associated to workset.dist_param_deriv_name
+  // is a distributed parameter (l1_is_distributed==true) or a parameter vector
+  // (l1_is_distributed==false).
+  int l1;
+  bool l1_is_distributed;
+  Albany::getParameterVectorID(l1, l1_is_distributed, workset.dist_param_deriv_name);
+
   Teuchos::RCP<Thyra_Vector> g = workset.g;
   if (g != Teuchos::null) {
     Teuchos::ArrayRCP<double> g_nonconstView = Albany::getNonconstLocalData(g);
@@ -568,11 +616,25 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (!hess_vec_prod_g_xp.is_null() && !overlapped_hess_vec_prod_g_xp.is_null()) {
     workset.x_cas_manager->combine(overlapped_hess_vec_prod_g_xp, hess_vec_prod_g_xp, Albany::CombineMode::ADD);
   }
-  if (!hess_vec_prod_g_px.is_null() && !overlapped_hess_vec_prod_g_px.is_null()) {
-    workset.p_cas_manager->combine(overlapped_hess_vec_prod_g_px, hess_vec_prod_g_px, Albany::CombineMode::ADD);
+  if (l1_is_distributed) {
+    if (!hess_vec_prod_g_px.is_null() && !overlapped_hess_vec_prod_g_px.is_null()) {
+      workset.p_cas_manager->combine(overlapped_hess_vec_prod_g_px, hess_vec_prod_g_px, Albany::CombineMode::ADD);
+    }
+    if (!hess_vec_prod_g_pp.is_null() && !overlapped_hess_vec_prod_g_pp.is_null()) {
+      workset.p_cas_manager->combine(overlapped_hess_vec_prod_g_pp, hess_vec_prod_g_pp, Albany::CombineMode::ADD);
+    }
   }
-  if (!hess_vec_prod_g_pp.is_null() && !overlapped_hess_vec_prod_g_pp.is_null()) {
-    workset.p_cas_manager->combine(overlapped_hess_vec_prod_g_pp, hess_vec_prod_g_pp, Albany::CombineMode::ADD);
+  else {
+    if (!hess_vec_prod_g_px.is_null() && !overlapped_hess_vec_prod_g_px.is_null()) {
+      auto tmp = Thyra::createMembers(workset.p_cas_manager->getOwnedVectorSpace(),overlapped_hess_vec_prod_g_px->domain()->dim());
+      workset.p_cas_manager->combine(overlapped_hess_vec_prod_g_px, tmp, Albany::CombineMode::ADD);
+      workset.p_cas_manager->scatter(tmp, hess_vec_prod_g_px, Albany::CombineMode::INSERT);
+    }
+    if (!hess_vec_prod_g_pp.is_null() && !overlapped_hess_vec_prod_g_pp.is_null()) {
+      auto tmp = Thyra::createMembers(workset.p_cas_manager->getOwnedVectorSpace(),overlapped_hess_vec_prod_g_pp->domain()->dim());
+      workset.p_cas_manager->combine(overlapped_hess_vec_prod_g_pp, tmp, Albany::CombineMode::ADD);
+      workset.p_cas_manager->scatter(tmp, hess_vec_prod_g_pp, Albany::CombineMode::INSERT);
+    }
   }
 }
 
@@ -715,12 +777,11 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
           GO base_id;
           for (int i = 0; i < numSideNodes; ++i) {
             std::size_t node = side.node[i];
-            const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
             base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-            for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
+            for (int il_col=0; il_col<numLayers+1; il_col++) {
               const GO ginode = layeredMeshNumbering.getId(base_id, il_col);
               const LO  inode = ov_node_indexer->getLocalElement(ginode);
-              for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+              for (int eq_col=0; eq_col<neq; eq_col++) {
                 const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
                 int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
                 hess_vec_prod_g_xx_data[res][dof] += val.dx(deriv).dx(0);
@@ -754,12 +815,11 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
           GO base_id;
           for (int i = 0; i < numSideNodes; ++i) {
             std::size_t node = side.node[i];
-            const LO lnodeId = ov_node_indexer->getLocalElement(elNodeID[node]);
             base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-            for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
+            for (int il_col=0; il_col<numLayers+1; il_col++) {
               const GO ginode = layeredMeshNumbering.getId(base_id, il_col);
               const LO  inode = ov_node_indexer->getLocalElement(ginode);
-              for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+              for (int eq_col=0; eq_col<neq; eq_col++) {
                 const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
                 int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
                 hess_vec_prod_g_xp_data[res][dof] += val.dx(deriv).dx(0);

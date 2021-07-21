@@ -23,19 +23,21 @@ namespace PHAL
 
 */
 
+// Default impl is a do-nothing one; states are only saved with the Residual
+// evaluation type, which is impl-ed as a specialization of this class
 template<typename EvalT, typename Traits>
 class SaveSideSetStateField : public PHX::EvaluatorWithBaseImpl<Traits>,
                               public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  SaveSideSetStateField (const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl);
+  SaveSideSetStateField (const Teuchos::ParameterList&,
+                         const Teuchos::RCP<Albany::Layouts>&) {}
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+  void postRegistrationSetup (typename Traits::SetupData,
+                              PHX::FieldManager<Traits>&) {}
 
-  void evaluateFields(typename Traits::EvalData workset);
+  void evaluateFields(typename Traits::EvalData) {}
 };
 
 // =========================== SPECIALIZATION ========================= //
@@ -60,17 +62,30 @@ private:
   void saveElemState (typename Traits::EvalData d);
   void saveNodeState (typename Traits::EvalData d);
 
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using MeshScalarT = typename PHAL::AlbanyTraits::Residual::MeshScalarT;
+  using FRT = Albany::FieldRankType;
+  using FL  = Albany::FieldLocation;
 
   Teuchos::RCP<PHX::FieldTag> savestate_operation;
   PHX::MDField<const ScalarT>       field;
+  // For a covariant field V (i.e., a Gradient), save tangents*V.
+  // WARNING: we actually save the first sideDim components of tangents*V.
+  //          This is ok for xy side sets, but not for general sidesets.
+  // TODO: fix this by registering the stk field as a numDims vector field,
+  //       rather than a numSideDims one.
+  PHX::MDField<const MeshScalarT>   tangents;
+  PHX::MDField<const MeshScalarT>   w_measure;
 
   std::string sideSetName;
   std::string fieldName;
   std::string stateName;
 
-  bool nodalState;
-  std::vector<std::vector<int> >  sideNodes;
+  FRT rank;
+  FL  loc;
+
+  int numQPs;
+  int numNodes;
 
   MDFieldMemoizer<Traits> memoizer;
 };

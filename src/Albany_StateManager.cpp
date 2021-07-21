@@ -5,6 +5,7 @@
 //*****************************************************************//
 #include "Albany_StateManager.hpp"
 #include "Albany_Utils.hpp"
+#include "PHAL_Dimension.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
@@ -204,16 +205,16 @@ Albany::StateManager::registerStateVariable(
   else if (dl->rank() == 1 && dl->size() == 1)
     mfe_type = StateStruct::WorksetValue;  // One value for the whole workset
                                            // (i.e., time)
-  else if (dl->rank() == 1 && dl->name(0) == "Cell")
+  else if (dl->rank() == 1 && dl->name(0) == PHX::print<Cell>())
     mfe_type = StateStruct::ElemData;
-  else if (dl->rank() >= 1 && dl->name(0) == "Node")  // Nodal data
+  else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Node>())  // Nodal data
     mfe_type = StateStruct::NodalData;
-  else if (dl->rank() >= 1 && dl->name(0) == "Cell") {  // Element QP or node
+  else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Cell>()) {  // Element QP or node
                                                         // data
-    if (dl->rank() > 1 && dl->name(1) == "Node")        // Element node data
+    if (dl->rank() > 1 && dl->name(1) == PHX::print<Node>())        // Element node data
       mfe_type = StateStruct::ElemNode;  // One value for the whole workset
                                          // (i.e., time)
-    else if (dl->rank() > 1 && dl->name(1) == "QuadPoint")  // Element node data
+    else if (dl->rank() > 1 && dl->name(1) == PHX::print<QuadPoint>())  // Element node data
       mfe_type = StateStruct::QuadPoint;  // One value for the whole workset
                                           // (i.e., time)
     else
@@ -316,14 +317,14 @@ Albany::StateManager::registerNodalVectorStateVariable(
   if (dl->rank() == 1 && dl->size() == 1)
     mfe_type = StateStruct::WorksetValue;  // One value for the whole workset
                                            // (i.e., time)
-  else if (dl->rank() >= 1 && dl->name(0) == "Node")  // Nodal data
+  else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Node>())  // Nodal data
     mfe_type = StateStruct::NodalData;
-  else if (dl->rank() >= 1 && dl->name(0) == "Cell") {  // Element QP or node
+  else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Cell>()) {  // Element QP or node
                                                         // data
-    if (dl->rank() > 1 && dl->name(1) == "Node")        // Element node data
+    if (dl->rank() > 1 && dl->name(1) == PHX::print<Node>())        // Element node data
       mfe_type = StateStruct::ElemNode;  // One value for the whole workset
                                          // (i.e., time)
-    else if (dl->rank() > 1 && dl->name(1) == "QuadPoint")  // Element node data
+    else if (dl->rank() > 1 && dl->name(1) == PHX::print<QuadPoint>())  // Element node data
       mfe_type = StateStruct::QuadPoint;  // One value for the whole workset
                                           // (i.e., time)
     else
@@ -428,12 +429,10 @@ Albany::StateManager::registerSideSetStateVariable(
     const std::string&                   ebName,
     const bool                           outputToExodus,
     StateStruct::MeshFieldEntity const*  fieldEntity,
-    const std::string&                   meshPartName,
-    const bool                           useCollapsedLayout)
+    const std::string&                   meshPartName)
 
 {
-  if (useCollapsedLayout) {
-    return registerSideSetStateVariable_collapsed(
+  return registerSideSetStateVariable(
         sideSetName,
         stateName,
         fieldName,
@@ -446,25 +445,10 @@ Albany::StateManager::registerSideSetStateVariable(
         "",
         fieldEntity,
         meshPartName);
-  } else {
-    return registerSideSetStateVariable(
-        sideSetName,
-        stateName,
-        fieldName,
-        dl,
-        ebName,
-        "",
-        0.0,
-        false,
-        outputToExodus,
-        "",
-        fieldEntity,
-        meshPartName);
-  }
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
-Albany::StateManager::registerSideSetStateVariable_collapsed(
+Albany::StateManager::registerSideSetStateVariable(
     const std::string&                   sideSetName,
     const std::string&                   stateName,
     const std::string&                   fieldName,
@@ -490,7 +474,6 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
   p->set<const std::string>("Field Name", fieldName);
   p->set<const std::string>("Side Set Name", sideSetName);
   p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl);
-  p->set<const bool>("Use Collapsed Layout", true);
 
   if (sideSetStatesToStore[sideSetName][ebName].find(stateName) !=
       sideSetStatesToStore[sideSetName][ebName].end()) {
@@ -512,18 +495,18 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
   StateStruct::MeshFieldEntity mfe_type;
   if (fieldEntity) {
     mfe_type = *fieldEntity;
-  } else if (dl->rank() >= 1 && dl->name(0) == "Node")  // Nodal data
+  } else if (dl->rank() >= 1 && dl->name(0) == PHX::print<Node>())  // Nodal data
   {
     mfe_type = StateStruct::NodalData;                  // One value per node
-  } else if (dl->rank() == 1 && dl->name(1) == "Side")  // Element data
+  } else if (dl->rank() == 1 && dl->name(0) == PHX::print<Side>())  // Element data
   {
     mfe_type = StateStruct::ElemData;  // One value per element
   } else if (dl->rank() > 1) {
     if (dl->name(1) == "Dim")
       mfe_type = StateStruct::ElemData;   // One vector/tensor per element
-    else if (dl->name(1) == "Node")       // Element node data
+    else if (dl->name(1) == PHX::print<Node>())       // Element node data
       mfe_type = StateStruct::ElemNode;   // One value per side node
-    else if (dl->name(1) == "QuadPoint")  // Quad point data
+    else if (dl->name(1) == PHX::print<QuadPoint>())  // Quad point data
       mfe_type = StateStruct::QuadPoint;  // One value per side quad point
     else
       TEUCHOS_TEST_FOR_EXCEPTION(
@@ -541,7 +524,7 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
 
   if (stateRef.entity == StateStruct::NodalData) {
     TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->name(0) == "Node",
+        dl->name(0) == PHX::print<Node>(),
         std::logic_error,
         "Error! NodalData states should have dl <Node,...>.\n");
 
@@ -575,182 +558,9 @@ Albany::StateManager::registerSideSetStateVariable_collapsed(
     else if (dl->rank() == 4)  // node tensor
       nodalDataBase->registerVectorState(
           stateName, stateRef.dim[1] * stateRef.dim[2]);
-  } else {
-
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "Error! The given layout does not appear to be that of a collapsed side set "
-        "field.\n");
-
   }
-  stateRef.output              = outputToExodus;
-  stateRef.responseIDtoRequire = responseIDtoRequire;
-  stateRef.layered             = (dl->name(dl->rank() - 1) == "LayerDim");
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      stateRef.layered && (dl->extent(dl->rank() - 1) <= 0),
-      std::logic_error,
-      "Error! Invalid number of layers for layered state " << stateName
-                                                           << ".\n");
-
-  // If space is needed for old state
-  if (registerOldState) {
-    stateRef.saveOldState = true;
-
-    std::string stateName_old = stateName + "_old";
-    sis_ptr->push_back(
-        Teuchos::rcp(new Albany::StateStruct(stateName_old, mfe_type)));
-    Albany::StateStruct& pstateRef = *sis_ptr->back();
-    pstateRef.initType             = init_type;
-    pstateRef.initValue            = init_val;
-    pstateRef.pParentStateStruct   = &stateRef;
-
-    pstateRef.output = false;
-    dl->dimensions(pstateRef.dim);
-  }
-
-  // insert
-  stateRef.nameMap[stateName] = ebName;
-
-  return p;
-}
-
-Teuchos::RCP<Teuchos::ParameterList>
-Albany::StateManager::registerSideSetStateVariable(
-    const std::string&                   sideSetName,
-    const std::string&                   stateName,
-    const std::string&                   fieldName,
-    const Teuchos::RCP<PHX::DataLayout>& dl,
-    const std::string&                   ebName,
-    const std::string&                   init_type,
-    const double                         init_val,
-    const bool                           registerOldState,
-    const bool                           outputToExodus,
-    const std::string&                   responseIDtoRequire,
-    StateStruct::MeshFieldEntity const*  fieldEntity,
-    const std::string&                   meshPartName)
-{
-  TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
-  using Albany::StateStruct;
-
-  // Create param list for SaveSideSetStateField evaluator
-  Teuchos::RCP<Teuchos::ParameterList> p =
-      Teuchos::rcp(new Teuchos::ParameterList(
-          "Save Side Set State " + stateName + " to/from Side Set Field " +
-          fieldName));
-  p->set<const std::string>("State Name", stateName);
-  p->set<const std::string>("Field Name", fieldName);
-  p->set<const std::string>("Side Set Name", sideSetName);
-  p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl);
-  p->set<bool>("Use Collapsed Layout", false);
-
-  if (sideSetStatesToStore[sideSetName][ebName].find(stateName) !=
-      sideSetStatesToStore[sideSetName][ebName].end()) {
-    return p;  // Don't re-register the same state name
-  }
-
-  sideSetStatesToStore[sideSetName][ebName][stateName] = dl;
-
-  if (sideSetStateInfo.find(sideSetName) == sideSetStateInfo.end()) {
-    // It's the first time we register states on this side set, so we initiate
-    // the pointer
-    // TODO, when compiler allows, replace following with this for performance:
-    sideSetStateInfo.emplace(sideSetName,Teuchos::rcp(new StateInfoStruct()));
-  }
-
-  const Teuchos::RCP<StateInfoStruct>& sis_ptr =
-      sideSetStateInfo.at(sideSetName);
-
-  // Load into StateInfo
-  StateStruct::MeshFieldEntity mfe_type;
-  if (fieldEntity) {
-    mfe_type = *fieldEntity;
-  } else if (dl->rank() >= 1 && dl->name(0) == "Node")  // Nodal data
-  {
-    mfe_type = StateStruct::NodalData;                  // One value per node
-  } else if (dl->rank() == 2 && dl->name(1) == "Side")  // Element data
-  {
-    mfe_type = StateStruct::ElemData;  // One value per element
-  } else if (dl->rank() > 2) {
-    if (dl->name(2) == "Dim")
-      mfe_type = StateStruct::ElemData;   // One vector/tensor per element
-    else if (dl->name(2) == "Node")       // Element node data
-      mfe_type = StateStruct::ElemNode;   // One value per side node
-    else if (dl->name(2) == "QuadPoint")  // Quad point data
-      mfe_type = StateStruct::QuadPoint;  // One value per side quad point
-    else
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true, std::logic_error, "StateManager: Unknown Entity type.\n");
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error, "StateManager: Unknown Entity type.\n");
-  }
-
-  sis_ptr->push_back(Teuchos::rcp(new StateStruct(stateName, mfe_type)));
-  StateStruct& stateRef = *sis_ptr->back();
-  stateRef.setInitType(init_type);
-  stateRef.setInitValue(init_val);
-  stateRef.setMeshPart(meshPartName);
-
-  if (stateRef.entity == StateStruct::NodalData) {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->name(0) == "Node",
-        std::logic_error,
-        "Error! NodalData states should have dl <Node,...>.\n");
-
+  else {
     dl->dimensions(stateRef.dim);
-
-    // Register the state with the nodalDataVector also.
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase =
-        getSideSetNodalDataBase(sideSetName);
-
-    if (dl->rank() == 1)  // node scalar
-      nodalDataBase->registerVectorState(stateName, 1);
-    else if (dl->rank() == 2)  // node vector
-      nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
-    else if (dl->rank() == 3)  // node tensor
-      nodalDataBase->registerVectorState(
-          stateName, stateRef.dim[1] * stateRef.dim[2]);
-  } else if (
-      stateRef.entity == StateStruct::NodalDataToElemNode ||
-      stateRef.entity == Albany::StateStruct::NodalDistParameter) {
-    // Strip one dimension out cause it's Side
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->rank() < 2,
-        std::logic_error,
-        "Error! The given layout does not appear to be that of a side set "
-        "field.\n");
-
-    stateRef.dim.resize(dl->rank() - 1);
-    stateRef.dim[0] = dl->extent(0);
-    for (int i(1); i < stateRef.dim.size(); ++i)
-      stateRef.dim[i] = dl->extent(i + 1);
-
-    // Register the state with the nodalDataVector also.
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase =
-        getSideSetNodalDataBase(sideSetName);
-
-    // These entities store data as <Cell,Side,Node,...>, so the dl has one more
-    // rank
-    if (dl->rank() == 3)  // node scalar
-      nodalDataBase->registerVectorState(stateName, 1);
-    else if (dl->rank() == 4)  // node vector
-      nodalDataBase->registerVectorState(stateName, stateRef.dim[2]);
-    else if (dl->rank() == 5)  // node tensor
-      nodalDataBase->registerVectorState(
-          stateName, stateRef.dim[2] * stateRef.dim[3]);
-  } else {
-    // Strip one dimension out cause it's Side
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->rank() < 2,
-        std::logic_error,
-        "Error! The given layout does not appear to be that of a side set "
-        "field.\n");
-
-    stateRef.dim.resize(dl->rank() - 1);
-    stateRef.dim[0] = dl->extent(0);
-    for (int i(1); i < stateRef.dim.size(); ++i)
-      stateRef.dim[i] = dl->extent(i + 1);
   }
   stateRef.output              = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
@@ -885,28 +695,28 @@ Albany::StateManager::importStateData(Albany::StateArrays& states_from)
 
           switch (size) {
             case 1:
-              for (int cell = 0; cell < dims[0]; ++cell)
+              for (size_t cell = 0; cell < dims[0]; ++cell)
                 esa[ws][stateName](cell) =
                     elemStatesToCopyFrom[ws][stateName](cell);
               break;
             case 2:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                for (int qp = 0; qp < dims[1]; ++qp)
+              for (size_t cell = 0; cell < dims[0]; ++cell)
+                for (size_t qp = 0; qp < dims[1]; ++qp)
                   esa[ws][stateName](cell, qp) =
                       elemStatesToCopyFrom[ws][stateName](cell, qp);
               break;
             case 3:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                for (int qp = 0; qp < dims[1]; ++qp)
-                  for (int i = 0; i < dims[2]; ++i)
+              for (size_t cell = 0; cell < dims[0]; ++cell)
+                for (size_t qp = 0; qp < dims[1]; ++qp)
+                  for (size_t i = 0; i < dims[2]; ++i)
                     esa[ws][stateName](cell, qp, i) =
                         elemStatesToCopyFrom[ws][stateName](cell, qp, i);
               break;
             case 4:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                for (int qp = 0; qp < dims[1]; ++qp)
-                  for (int i = 0; i < dims[2]; ++i)
-                    for (int j = 0; j < dims[3]; ++j)
+              for (size_t cell = 0; cell < dims[0]; ++cell)
+                for (size_t qp = 0; qp < dims[1]; ++qp)
+                  for (size_t i = 0; i < dims[2]; ++i)
+                    for (size_t j = 0; j < dims[3]; ++j)
                       esa[ws][stateName](cell, qp, i, j) =
                           elemStatesToCopyFrom[ws][stateName](cell, qp, i, j);
               break;
@@ -935,24 +745,24 @@ Albany::StateManager::importStateData(Albany::StateArrays& states_from)
         for (int ws = 0; ws < numNodeWorksets; ws++) {
           Albany::StateStruct::FieldDims dims;
           nsa[ws][stateName].dimensions(dims);
-          int size = dims.size();
+          size_t size = dims.size();
 
           switch (size) {
             case 1:  // node scalar
-              for (int node = 0; node < dims[0]; ++node)
+              for (size_t node = 0; node < dims[0]; ++node)
                 nsa[ws][stateName](node) =
                     nodeStatesToCopyFrom[ws][stateName](node);
               break;
             case 2:  // node vector
-              for (int node = 0; node < dims[0]; ++node)
-                for (int dim = 0; dim < dims[1]; ++dim)
+              for (size_t node = 0; node < dims[0]; ++node)
+                for (size_t dim = 0; dim < dims[1]; ++dim)
                   nsa[ws][stateName](node, dim) =
                       nodeStatesToCopyFrom[ws][stateName](node, dim);
               break;
             case 3:  // node tensor
-              for (int node = 0; node < dims[0]; ++node)
-                for (int dim = 0; dim < dims[1]; ++dim)
-                  for (int i = 0; i < dims[2]; ++i)
+              for (size_t node = 0; node < dims[0]; ++node)
+                for (size_t dim = 0; dim < dims[1]; ++dim)
+                  for (size_t i = 0; i < dims[2]; ++i)
                     nsa[ws][stateName](node, dim, i) =
                         nodeStatesToCopyFrom[ws][stateName](node, dim, i);
               break;
@@ -1137,12 +947,12 @@ Albany::StateManager::getResidResponseIDsToRequire(
     if (id.length() > 0 && ebName == elementBlockName) {
       idsToRequire.push_back(id);
 #ifdef ALBANY_VERBOSE
-      cout << "RRR1  " << name << " requiring " << id << " (" << i << ")"
-           << endl;
+      std::cout << "RRR1  " << name << " requiring " << id << " (" << i << ")"
+		<< std::endl;
 #endif
     } else {
 #ifdef ALBANY_VERBOSE
-      cout << "RRR1  " << name << " empty (" << i << ")" << endl;
+      std::cout << "RRR1  " << name << " empty (" << i << ")" << std::endl;
 #endif
     }
     i++;
@@ -1239,37 +1049,37 @@ Albany::StateManager::doSetStateArrays(
           if (init_type == "scalar") {
             switch (size) {
               case 1:
-                for (int cell = 0; cell < dims[0]; ++cell)
+                for (size_t cell = 0; cell < dims[0]; ++cell)
                   esa[ws][stateName](cell) = init_val;
                 break;
 
               case 2:
-                for (int cell = 0; cell < dims[0]; ++cell)
-                  for (int qp = 0; qp < dims[1]; ++qp)
+                for (size_t cell = 0; cell < dims[0]; ++cell)
+                  for (size_t qp = 0; qp < dims[1]; ++qp)
                     esa[ws][stateName](cell, qp) = init_val;
                 break;
 
               case 3:
-                for (int cell = 0; cell < dims[0]; ++cell)
-                  for (int qp = 0; qp < dims[1]; ++qp)
-                    for (int i = 0; i < dims[2]; ++i)
+                for (size_t cell = 0; cell < dims[0]; ++cell)
+                  for (size_t qp = 0; qp < dims[1]; ++qp)
+                    for (size_t i = 0; i < dims[2]; ++i)
                       esa[ws][stateName](cell, qp, i) = init_val;
                 break;
 
               case 4:
-                for (int cell = 0; cell < dims[0]; ++cell)
-                  for (int qp = 0; qp < dims[1]; ++qp)
-                    for (int i = 0; i < dims[2]; ++i)
-                      for (int j = 0; j < dims[3]; ++j)
+                for (size_t cell = 0; cell < dims[0]; ++cell)
+                  for (size_t qp = 0; qp < dims[1]; ++qp)
+                    for (size_t i = 0; i < dims[2]; ++i)
+                      for (size_t j = 0; j < dims[3]; ++j)
                         esa[ws][stateName](cell, qp, i, j) = init_val;
                 break;
 
               case 5:
-                for (int cell = 0; cell < dims[0]; ++cell)
-                  for (int qp = 0; qp < dims[1]; ++qp)
-                    for (int i = 0; i < dims[2]; ++i)
-                      for (int j = 0; j < dims[3]; ++j)
-                        for (int k = 0; k < dims[4]; ++k)
+                for (size_t cell = 0; cell < dims[0]; ++cell)
+                  for (size_t qp = 0; qp < dims[1]; ++qp)
+                    for (size_t i = 0; i < dims[2]; ++i)
+                      for (size_t j = 0; j < dims[3]; ++j)
+                        for (size_t k = 0; k < dims[4]; ++k)
                           esa[ws][stateName](cell, qp, i, j, k) = init_val;
                 break;
 
@@ -1292,10 +1102,10 @@ Albany::StateManager::doSetStateArrays(
                     << size);
             TEUCHOS_TEST_FOR_EXCEPT(!(dims[2] == dims[3]));
 
-            for (int cell = 0; cell < dims[0]; ++cell)
-              for (int qp = 0; qp < dims[1]; ++qp)
-                for (int i = 0; i < dims[2]; ++i)
-                  for (int j = 0; j < dims[3]; ++j)
+            for (size_t cell = 0; cell < dims[0]; ++cell)
+              for (size_t qp = 0; qp < dims[1]; ++qp)
+                for (size_t i = 0; i < dims[2]; ++i)
+                  for (size_t j = 0; j < dims[3]; ++j)
                     if (i == j)
                       esa[ws][stateName](cell, qp, i, i) = 1.0;
                     else
@@ -1334,20 +1144,20 @@ Albany::StateManager::doSetStateArrays(
 
           if (init_type == "scalar") switch (size) {
               case 1:  // node scalar
-                for (int node = 0; node < dims[0]; ++node)
+                for (size_t node = 0; node < dims[0]; ++node)
                   nsa[ws][stateName](node) = init_val;
                 break;
 
               case 2:  // node vector
-                for (int node = 0; node < dims[0]; ++node)
-                  for (int dim = 0; dim < dims[1]; ++dim)
+                for (size_t node = 0; node < dims[0]; ++node)
+                  for (size_t dim = 0; dim < dims[1]; ++dim)
                     nsa[ws][stateName](node, dim) = init_val;
                 break;
 
               case 3:  // node tensor
-                for (int node = 0; node < dims[0]; ++node)
-                  for (int dim = 0; dim < dims[1]; ++dim)
-                    for (int i = 0; i < dims[2]; ++i)
+                for (size_t node = 0; node < dims[0]; ++node)
+                  for (size_t dim = 0; dim < dims[1]; ++dim)
+                    for (size_t i = 0; i < dims[2]; ++i)
                       nsa[ws][stateName](node, dim, i) = init_val;
                 break;
 
@@ -1368,9 +1178,9 @@ Albany::StateManager::doSetStateArrays(
                 "initialization: "
                     << size);
             TEUCHOS_TEST_FOR_EXCEPT(!(dims[1] == dims[2]));
-            for (int node = 0; node < dims[0]; ++node)
-              for (int i = 0; i < dims[1]; ++i)
-                for (int j = 0; j < dims[2]; ++j)
+            for (size_t node = 0; node < dims[0]; ++node)
+              for (size_t i = 0; i < dims[1]; ++i)
+                for (size_t j = 0; j < dims[2]; ++j)
                   if (i == j)
                     nsa[ws][stateName](node, i, i) = 1.0;
                   else

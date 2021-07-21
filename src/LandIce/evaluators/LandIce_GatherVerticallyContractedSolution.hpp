@@ -13,6 +13,10 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+
 #include "PHAL_AlbanyTraits.hpp"
 
 namespace LandIce {
@@ -40,8 +44,11 @@ public:
 
   enum ContractionOperator {VerticalAverage, VerticalSum};
 
+  Teuchos::ArrayRCP<const ST> x_constView;
+
 protected:
 
+  void computeQuadWeights(const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering);
 
   typedef typename EvalT::ScalarT ScalarT;
 
@@ -60,6 +67,14 @@ protected:
   Teuchos::RCP<const CellTopologyData> cell_topo;
 
   ContractionOperator op;
+
+  Albany::LocalSideSetInfo sideSet;
+
+  Kokkos::View<double*, PHX::Device> quadWeights;
+  Kokkos::View<int*, PHX::Device> numSideNodes;
+
+  int numLayers;
+
 };
 
 
@@ -78,8 +93,22 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct ResidualScalar_Tag{};
+  struct ResidualVector_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,ResidualScalar_Tag> ResidualScalar_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,ResidualVector_Tag> ResidualVector_Policy;
+
   KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
+  void operator () (const ResidualScalar_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const ResidualVector_Tag& tag, const int& i) const;
+
+  Kokkos::View<LO****, PHX::Device> localDOFView;
+
+  Albany::DeviceView1d<const ST> x_constView_device;
 
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;

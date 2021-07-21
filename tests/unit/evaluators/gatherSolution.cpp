@@ -93,7 +93,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
   phxWorkset.wsElNodeEqID = wsLocalElNodeEqID;
 
   auto x_array = Albany::getNonconstLocalData(overlapped_x);
-  for (size_t i = 0; i < x_array.size(); ++i)
+  for (int i = 0; i < x_array.size(); ++i)
     x_array[i] = 6.;
 
   phxWorkset.numCells = cell_map->getNodeNumElements();
@@ -205,15 +205,15 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
   phxWorkset.wsElNodeEqID = wsLocalElNodeEqID;
 
   auto x_array = Albany::getNonconstLocalData(overlapped_x);
-  for (size_t i = 0; i < x_array.size(); ++i)
+  for (int i = 0; i < x_array.size(); ++i)
     x_array[i] = 6.;
 
   auto direction_x_array = Albany::getNonconstLocalData(direction_x);
-  for (size_t i = 0; i < direction_x_array.size(); ++i)
+  for (int i = 0; i < direction_x_array.size(); ++i)
     direction_x_array[i] = 0.4;
 
   auto direction_p_array = Albany::getNonconstLocalData(direction_p);
-  for (size_t i = 0; i < direction_p_array.size(); ++i)
+  for (int i = 0; i < direction_p_array.size(); ++i)
     direction_p_array[i] = 0.4;
 
   phxWorkset.numCells = cell_map->getNodeNumElements();
@@ -279,9 +279,9 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
     auto solution_out_field = Kokkos::create_mirror_view(solution_out.get_view());
 
-    for (std::size_t cell = 0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell)
+    for (unsigned int cell = 0; cell < solution_out_field.extent(0); ++cell)
     {
-      for (std::size_t node = 0; node < static_cast<int>(solution_out_field.extent(1)); ++node)
+      for (unsigned int node = 0; node < solution_out_field.extent(1); ++node)
       {
         solution_out_field(cell, node).fastAccessDx(node).val() = 1;
         solution_out_field(cell, node).val().fastAccessDx(0) = direction_x_array[wsLocalElNodeEqID(cell, node, 0)];
@@ -311,9 +311,9 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
     auto solution_out_field = Kokkos::create_mirror_view(solution_out.get_view());
 
-    for (std::size_t cell = 0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell)
+    for (unsigned int cell = 0; cell < solution_out_field.extent(0); ++cell)
     {
-      for (std::size_t node = 0; node < static_cast<int>(solution_out_field.extent(1)); ++node)
+      for (unsigned int node = 0; node < solution_out_field.extent(1); ++node)
       {
         solution_out_field(cell, node).fastAccessDx(node).val() = 1;
       }
@@ -342,9 +342,9 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
     auto solution_out_field = Kokkos::create_mirror_view(solution_out.get_view());
 
-    for (std::size_t cell = 0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell)
+    for (unsigned int cell = 0; cell < solution_out_field.extent(0); ++cell)
     {
-      for (std::size_t node = 0; node < static_cast<int>(solution_out_field.extent(1)); ++node)
+      for (unsigned int node = 0; node < solution_out_field.extent(1); ++node)
       {
         solution_out_field(cell, node).val().fastAccessDx(0) = direction_x_array[wsLocalElNodeEqID(cell, node, 0)];
       }

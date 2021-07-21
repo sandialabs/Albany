@@ -39,17 +39,19 @@ namespace LandIce {
 
     std::string sideName;
 
-    int numSideNodes;
-    int numSideQPs;
-    int numSideDims;
+    unsigned int numSideNodes;
+    unsigned int numSideQPs;
+    unsigned int numSideDims;
 
+    Albany::LocalSideSetInfo sideSet;
 
-    PHX::MDField<const ScalarT,Cell,Side,Node>          solution;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     w_side_measure;
+    PHX::MDField<const ScalarT,Side,Node>          solution;
+    PHX::MDField<const MeshScalarT,Side,QuadPoint> w_side_measure;
 
     ScalarT p_reg, reg;
     double scaling;
     int offset;
+
   };
 
 } // Namespace LandIce

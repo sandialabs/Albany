@@ -29,10 +29,10 @@ DOFVecGradInterpolationSideBase(const Teuchos::ParameterList& p,
 
   this->setName("DOFVecGradInterpolationSideBase" );
 
-  numSideNodes = dl_side->node_qp_gradient->extent(2);
-  numSideQPs   = dl_side->node_qp_gradient->extent(3);
-  numDims      = dl_side->node_qp_gradient->extent(4);
-  vecDim       = dl_side->node_vector->extent(3);
+  numSideNodes = dl_side->node_qp_gradient->extent(1);
+  numSideQPs   = dl_side->node_qp_gradient->extent(2);
+  numDims      = dl_side->node_qp_gradient->extent(3);
+  vecDim       = dl_side->node_vector->extent(2);
 }
 
 //**********************************************************************
@@ -46,36 +46,36 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(grad_qp,fm);
 }
 
+// *********************************************************************
+// Kokkos functor
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void DOFVecGradInterpolationSideBase<EvalT, Traits, ScalarT>::
+operator() (const VecGradInterpolationSide_Tag& tag, const int& sideSet_idx) const {
+
+  for (int qp=0; qp<numSideQPs; ++qp) {
+    for (int comp=0; comp<vecDim; ++comp) {
+      for (int dim=0; dim<numDims; ++dim) {
+        grad_qp(sideSet_idx,qp,comp,dim) = 0.;
+        for (int node=0; node<numSideNodes; ++node) {
+          grad_qp(sideSet_idx,qp,comp,dim) += val_node(sideSet_idx,node,comp) * gradBF(sideSet_idx,node,qp,dim);
+        }
+      }
+    }
+  }
+
+}
+
 // *********************************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFVecGradInterpolationSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
-    return;
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
-  {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
-
-    for (int qp=0; qp<numSideQPs; ++qp)
-    {
-      for (int comp=0; comp<vecDim; ++comp)
-      {
-        for (int dim=0; dim<numDims; ++dim)
-        {
-          grad_qp(cell,side,qp,comp,dim) = 0.;
-          for (int node=0; node<numSideNodes; ++node)
-          {
-            grad_qp(cell,side,qp,comp,dim) += val_node(cell,side,node,comp) * gradBF(cell,side,node,qp,dim);
-          }
-        }
-      }
-    }
-  }
+  sideSet = workset.sideSetViews->at(sideSetName);
+  
+  Kokkos::parallel_for(VecGradInterpolationSide_Policy(0, sideSet.size), *this);
 }
 
 } // Namespace PHAL

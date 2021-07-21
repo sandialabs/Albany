@@ -9,6 +9,7 @@
 
 #include "Teuchos_CommHelpers.hpp"
 #include "Thyra_SpmdVectorBase.hpp"
+#include "Thyra_VectorStdOps.hpp"
 
 namespace Albany
 {
@@ -35,6 +36,11 @@ evaluateResponse(const double /*current_time*/,
 {
   Teuchos::ArrayRCP<ST> g_nonconstView = getNonconstLocalData(g);
   computeMinValue(x, g_nonconstView[0]);
+
+  if (g_.is_null())
+    g_ = Thyra::createMember(g->space());
+
+  g_->assign(*g);
 }
 
 
@@ -142,7 +148,7 @@ evaluateDistParamDeriv(
 }
 
 void SolutionMinValueResponseFunction::
-evaluateDistParamHessVecProd_xx(
+evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -157,7 +163,7 @@ evaluateDistParamHessVecProd_xx(
 }
 
 void SolutionMinValueResponseFunction::
-evaluateDistParamHessVecProd_xp(
+evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -173,7 +179,7 @@ evaluateDistParamHessVecProd_xp(
 }
 
 void SolutionMinValueResponseFunction::
-evaluateDistParamHessVecProd_px(
+evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -189,7 +195,7 @@ evaluateDistParamHessVecProd_px(
 }
 
 void SolutionMinValueResponseFunction::
-evaluateDistParamHessVecProd_pp(
+evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -243,6 +249,26 @@ computeMinValue(const Teuchos::RCP<const Thyra_Vector>& x, ST& global_min)
 
   // Get max value across all proc's
   Teuchos::reduceAll(*comm_, Teuchos::REDUCE_MIN, 1, &my_min, &global_min);
+}
+
+void
+SolutionMinValueResponseFunction::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
+{
+  if (g_.is_null()) {
+    *out << " the response has not been evaluated yet!";
+    return;
+  }
+
+  std::size_t precision = 8;
+  std::size_t value_width = precision + 4;
+  int gsize = g_->space()->dim();
+
+  for (int j = 0; j < gsize; j++) {
+    *out << std::setw(value_width) << Thyra::get_ele(*g_,j);
+    if (j < gsize-1)
+      *out << ", ";
+  }
 }
 
 } // namespace Albany

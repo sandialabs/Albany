@@ -186,6 +186,10 @@ set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}")
 set (CTEST_BINARY_NAME build)
 set (CTEST_INSTALL_NAME test)
 
+#  Over-write default limit for output posted to CDash site
+set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
+set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
+
 if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
 # Runs tests longer if in debug mode
    set (CTEST_TEST_TIMEOUT 4200)
@@ -302,33 +306,32 @@ if (CTEST_DO_SUBMIT)
   endif (HAD_ERROR)
 endif (CTEST_DO_SUBMIT)
 
-# Commenting out the following as part of patch
-#if (DOWNLOAD_TRILINOS)
+if (DOWNLOAD_TRILINOS)
 
-#  #
-#  # Update Trilinos
-#  #
+  #
+  # Update Trilinos
+  #
 
-#  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos" RETURN_VALUE count)
-#  # assumes that we are already on the desired tracking branch, i.e.,
-#  # git checkout -b branch --track origin/branch
-#  message("Found ${count} changed files")
+  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos" RETURN_VALUE count)
+  # assumes that we are already on the desired tracking branch, i.e.,
+  # git checkout -b branch --track origin/branch
+  message("Found ${count} changed files")
 
-#  if (CTEST_DO_SUBMIT)
-#    ctest_submit (PARTS Update
-#      RETURN_VALUE  HAD_ERROR
-#      )
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Update
+      RETURN_VALUE  HAD_ERROR
+      )
 
-#    if (HAD_ERROR)
-#      message("Cannot update Trilinos!")
-#    endif ()
-#  endif ()
+    if (HAD_ERROR)
+      message("Cannot update Trilinos!")
+    endif ()
+  endif ()
 
-#  if (count LESS 0)
-#    message(FATAL_ERROR "Cannot update Trilinos!")
-#  endif ()
+  if (count LESS 0)
+    message(FATAL_ERROR "Cannot update Trilinos!")
+  endif ()
 
-#ENDIF()
+ENDIF()
 
 IF(DOWNLOAD_ALBANY) 
   #
@@ -433,26 +436,36 @@ if (BUILD_ALB64)
   set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosInstall) 
   set(BUILDTYPE "RELEASE")
   set(FPE_CHECK "OFF")
+  set(MESH_DEP_ON_SOLN "ON")
+  set(MESH_DEP_ON_PARAMS "OFF")
 endif(BUILD_ALB64) 
 if (BUILD_INTEL_ALBANY)
   set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall)
   set(BUILDTYPE "RELEASE")
   set(FPE_CHECK "OFF")
+  set(MESH_DEP_ON_SOLN "OFF")
+  set(MESH_DEP_ON_PARAMS "ON")
 endif (BUILD_INTEL_ALBANY)
 if (BUILD_ALB64CLANG)
   set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11)
   set(BUILDTYPE "RELEASE")
   set(FPE_CHECK "OFF")
+  set(MESH_DEP_ON_SOLN "OFF")
+  set(MESH_DEP_ON_PARAMS "OFF")
 endif (BUILD_ALB64CLANG)
 if (BUILD_ALB64CLANGDBG)
   set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11Dbg) 
   set(BUILDTYPE "DEBUG")
   set(FPE_CHECK "ON")
+  set(MESH_DEP_ON_SOLN "OFF")
+  set(MESH_DEP_ON_PARAMS "OFF")
 endif (BUILD_ALB64CLANGDBG)
 if (BUILD_ALB64DBG)
   set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosDbg)
   set(BUILDTYPE "DEBUG")
   set(FPE_CHECK "ON")
+  set(MESH_DEP_ON_SOLN "OFF")
+  set(MESH_DEP_ON_PARAMS "OFF")
 endif (BUILD_ALB64DBG)
 
   set (CONF_OPTIONS
@@ -461,7 +474,8 @@ endif (BUILD_ALB64DBG)
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_UNIT_TESTS:BOOL=ON"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
-    "-DENABLE_MESH_DEPENDS_ON_SOLUTION:BOOL=ON"
+    "-DENABLE_MESH_DEPENDS_ON_SOLUTION:BOOL=${MESH_DEP_ON_SOLN}"
+    "-DENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=${MESH_DEP_ON_PARAMS}"
     "-DCMAKE_BUILD_TYPE:STRING=${BUILDTYPE}"
     "-DENABLE_STRONG_FPE_CHECK:BOOL=${FPE_CHECK}"
     )

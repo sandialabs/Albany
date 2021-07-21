@@ -13,4 +13,5 @@ echo "Cloning spack repo..."
 git clone git@github.com:SNLComputation/spack.git
 cd spack
 git checkout albany
+cd ..
 echo "...done."

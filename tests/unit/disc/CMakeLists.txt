@@ -7,6 +7,17 @@
 # Copy Exodus test file from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2D_Blk_Test.e
                  ${CMAKE_CURRENT_BINARY_DIR}/2D_Blk_Test.e COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2D_Blk_Test.e.4.0
+                 ${CMAKE_CURRENT_BINARY_DIR}/2D_Blk_Test.e.4.0 COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2D_Blk_Test.e.4.1
+                 ${CMAKE_CURRENT_BINARY_DIR}/2D_Blk_Test.e.4.1 COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2D_Blk_Test.e.4.2
+                 ${CMAKE_CURRENT_BINARY_DIR}/2D_Blk_Test.e.4.2 COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2D_Blk_Test.e.4.3
+                 ${CMAKE_CURRENT_BINARY_DIR}/2D_Blk_Test.e.4.3 COPYONLY)
+
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.msh
+                 ${CMAKE_CURRENT_BINARY_DIR}/cube.msh COPYONLY)
 
 INCLUDE_DIRECTORIES(
   ${Trilinos_INCLUDE_DIRS}  
@@ -38,6 +49,74 @@ set_target_properties(disc_unit_tester PROPERTIES
 
 TARGET_LINK_LIBRARIES(disc_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 
+set(PYTHON_TEST TRUE)
+
+# If not python executable is set, find the one in the path (if any):
+IF(NOT DEFINED PYTHON_EXECUTABLE)
+  find_program(PYTHON_EXECUTABLE
+      NAMES python3 python
+      )
+  MESSAGE("  -- CMake has set: PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
+ENDIF()
+
+# Get the python version
+EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c
+                        "import sys; print(sys.version[:3])"
+  OUTPUT_VARIABLE PYTHON_VERSION
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+IF(${PYTHON_VERSION} VERSION_LESS 2.7)
+  set(PYTHON_TEST FALSE)
+  MESSAGE("The PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE} is older than 2.7.0, the test BlockDiscretization_Jacobian_Unit_Test will NOT be run.")
+ELSE()
+  # Verify that numpy and scipy are available:
+  EXECUTE_PROCESS(COMMAND
+    ${PYTHON_EXECUTABLE} -c "import numpy; print(numpy.__version__)"
+    OUTPUT_VARIABLE NUMPY_VERSION
+    ERROR_VARIABLE  NUMPY_VERSION_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  EXECUTE_PROCESS(COMMAND
+    ${PYTHON_EXECUTABLE} -c "import scipy; print(scipy.__version__)"
+    OUTPUT_VARIABLE SCIPY_VERSION
+    ERROR_VARIABLE  SCIPY_VERSION_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  IF(NUMPY_VERSION_ERROR OR SCIPY_VERSION_ERROR)
+    set(PYTHON_TEST FALSE)
+    MESSAGE("The PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE} does not support numpy or scipy, the test BlockDiscretization_Jacobian_Unit_Test will NOT be run.")
+  ELSE()
+    IF(${SCIPY_VERSION} VERSION_LESS 1.2.1 OR ${NUMPY_VERSION} VERSION_LESS 1.15.1)
+      set(PYTHON_TEST FALSE)
+      MESSAGE("The PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE} supports numpy and scipy but one of them is too old, the test BlockDiscretization_Jacobian_Unit_Test will NOT be run.")
+    ELSE()
+      MESSAGE("The PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE} supports numpy and scipy, the test BlockDiscretization_Jacobian_Unit_Test will be run.")
+    ENDIF()
+  ENDIF()
+ENDIF()
+
+IF(${PYTHON_TEST})
+  SET(SOURCES
+            ./UnitTest_BlockedJacobian.cpp
+            ../Albany_UnitTestMain.cpp
+  )
+
+  ADD_EXECUTABLE(
+    blockJacobian_unit_tester
+    ${HEADERS} ${SOURCES}
+  )
+
+  set_target_properties(blockJacobian_unit_tester PROPERTIES
+    PUBLIC_HEADER "${HEADERS}")
+
+  TARGET_LINK_LIBRARIES(blockJacobian_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+
+  set(TESTFILES matrices_comparison.py)
+
+  file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
+  ADD_TEST(BlockDiscretization_Jacobian_Unit_Test "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/matrices_comparison.py")
+ENDIF()
+
 # We should always run the unit tests in both serial and parallel if possible (they should run quickly)
 IF (ALBANY_MPI)
   ADD_TEST(
@@ -58,11 +137,10 @@ IF (ALBANY_MPI)
 #  Throw test that evaluated to true: !isOneToOne(m_domain_vs)
 #  
 #  [ThyraCrsMatrixFactory] Error! When providing an overlapped domain vs, the domain vs must be one-to-one.
-#  
-
-#  ADD_TEST(
-#    Discretization_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester
-##  )
+#
+  ADD_TEST(
+    Discretization_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester
+  )
 ELSE(ALBANY_MPI)
   ADD_TEST(
     Discretization_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester

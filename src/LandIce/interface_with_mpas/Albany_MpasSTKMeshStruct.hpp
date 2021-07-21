@@ -19,24 +19,41 @@ public:
 
   MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
       const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const std::vector<GO>& indexToTriangleID,
-      int globalTrianglesStride, int numLayers, const int numParams, int Ordering = 0);
+          const std::vector<int>& indexToVertexID,
+          const std::vector<int>& vertexProcIDs,
+          const std::vector<double>& verticesCoords,
+          int globalVerticesStride,
+          const std::vector<int>& verticesOnTria,
+          const std::vector<std::vector<int>>&  procsSharingVertices,
+          const std::vector<bool>& isBoundaryEdge,
+          const std::vector<int>& trianglesOnEdge,
+          const std::vector<int>& verticesOnEdge,
+          const std::vector<int>& indexToEdgeID,
+          int globalEdgesStride,
+          const std::vector<GO>& indexToTriangleID,
+          int globalTrianglesStride,
+          const std::vector<int>& dirichletNodesIds,
+          const std::vector<int>& iceMarginEdgesIds,
+          int numLayers, const int numParams, int Ordering = 0);
 
 
   ~MpasSTKMeshStruct( ) = default;
 
-  void setFieldAndBulkData(
+  void setFieldData(
       const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-      const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
-      const unsigned int /* neq_ */,
       const Albany::AbstractFieldContainer::FieldContainerRequirements& /* req */,
       const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
       const unsigned int /* worksetSize */,
       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /* side_set_sis */ = {},
-      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /* side_set_req */ = {})
-  {
-    // Do nothing
-  }
+      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /* side_set_req */ = {});
+
+  void setBulkData(
+      const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+      const Albany::AbstractFieldContainer::FieldContainerRequirements& /* req */,
+      const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
+      const unsigned int /* worksetSize */,
+      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /* side_set_sis */ = {},
+      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /* side_set_req */ = {});
 
   //! Flag if solution has a restart values -- used in Init Cond
   bool hasRestartSolution() const {return hasRestartSol; }
@@ -47,31 +64,6 @@ public:
 
   //! If restarting, convenience function to return restart data time
   double restartDataTime() const {return restartTime;}
-
-  void constructMesh(
-      const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const Teuchos::RCP<Teuchos::ParameterList>& params,
-      const unsigned int neq_,
-      const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
-      const Albany::StateManager& stateMgr,
-      const std::vector<int>& indexToVertexID,
-      const std::vector<int>& vertexProcIDs,
-      const std::vector<double>& verticesCoords,
-      int nGlobalVertices,
-      const std::vector<int>& verticesOnTria,
-      const std::vector<std::vector<int>>  procsSharingVertices,
-      const std::vector<bool>& isBoundaryEdge,
-      const std::vector<int>& trianglesOnEdge,
-      const std::vector<int>& verticesOnEdge,
-      const std::vector<int>& indexToEdgeID,
-      int globalEdgesStride,
-      const std::vector<GO>& indexToTriangleID,
-      int globalTrianglesStride,
-      const std::vector<int>& dirichletNodesIds,
-      const std::vector<int>& iceMarginEdgesIds,
-      const unsigned int worksetSize,
-      int numLayers, int Ordering = 0);
-
 
   DiscType getInterleavedOrdering() const {return this->interleavedOrdering;}
 
@@ -88,6 +80,22 @@ private:
   bool hasRestartSol;
   double restartTime;
   Teuchos::RCP<const Thyra_SpmdVectorSpace> elem_vs; //element vector space
+  const std::vector<int>& indexToVertexID;
+  const std::vector<int>& vertexProcIDs;
+  const std::vector<double>& verticesCoords;
+  int globalVerticesStride;
+  const std::vector<int>& verticesOnTria;
+  const std::vector<std::vector<int>>&  procsSharingVertices;
+  const std::vector<bool>& isBoundaryEdge;
+  const std::vector<int>& trianglesOnEdge;
+  const std::vector<int>& verticesOnEdge;
+  const std::vector<int>& indexToEdgeID;
+  int globalEdgesStride;
+  const std::vector<GO>& indexToTriangleID;
+  int globalTrianglesStride;
+  const std::vector<int>& dirichletNodesIds;
+  const std::vector<int>& iceMarginEdgesIds;
+  int numLayers;
   LayeredMeshOrdering Ordering;
 
   int prismType(int const* prismVertexIds, int& minIndex);

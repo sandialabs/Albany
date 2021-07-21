@@ -4,7 +4,7 @@ BASE_DIR=/project/projectdirs/piscees/nightlyCoriCDash
 
 cd $BASE_DIR
 
-export CRAYPE_LINK_TYPE=STATIC
+#export CRAYPE_LINK_TYPE=STATIC
 source cori_modules.sh >& modules.out 
 
 rm -rf $BASE_DIR/repos

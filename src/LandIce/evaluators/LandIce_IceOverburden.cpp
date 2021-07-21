@@ -9,5 +9,4 @@
 #include "LandIce_IceOverburden.hpp"
 #include "LandIce_IceOverburden_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::IceOverburden,true)
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(LandIce::IceOverburden,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::IceOverburden)

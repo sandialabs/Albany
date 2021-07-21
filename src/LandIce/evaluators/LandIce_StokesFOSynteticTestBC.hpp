@@ -54,24 +54,26 @@ private:
   };
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>    u;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   qp_coords;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   side_normals;
-  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>     BF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       w_measure;
+  PHX::MDField<const ScalarT,Side,QuadPoint,VecDim>  u;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim> qp_coords;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim> side_normals;
+  PHX::MDField<const RealType,Side,Node,QuadPoint>   BF;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint>     w_measure;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim>                    residual;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> residual;
 
   std::vector<std::vector<int> >  sideNodes;
   std::string                     ssName;
 
-  Kokkos::DynRankView<ScalarT, PHX::Device>           qp_temp_buffer;
+  Albany::LocalSideSetInfo sideSet;
+  
+  Kokkos::DynRankView<ScalarT, PHX::Device> qp_temp_buffer;
 
-  int numSideNodes;
-  int numSideQPs;
-  int sideDim;
-  int vecDimFO;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int sideDim;
+  unsigned int vecDimFO;
 
   // Parameters used by the bc's (not necessarily by all of them).
   double alpha;

@@ -43,30 +43,39 @@ public:
 
 private:
 
-  ScalarT printedFF;
-
   // Input:
-  PHX::MDField<const BetaScalarT,Cell,Side,QuadPoint>     beta;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>  u;
-  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>   BF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     w_measure;
-  PHX::MDField<const ScalarT,Dim>                         homotopyParam;
-
+  PHX::MDField<const BetaScalarT,Side,QuadPoint>     beta;
+  PHX::MDField<const ScalarT,Side,QuadPoint,VecDim>  u;
+  PHX::MDField<const RealType,Side,Node,QuadPoint>   BF;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint>     w_measure;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim> normals;
+  
+  PHX::MDField<const ScalarT,Dim> homotopyParam;
   PHX::MDField<const ScalarT,Dim> homotopy;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim>            residual;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> residual;
 
-  std::vector<std::vector<int> >  sideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
   std::string                     basalSideName;
 
-  int numSideNodes;
-  int numSideQPs;
-  int sideDim;
-  int vecDim;
-  int vecDimFO;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int vecDim;
+  unsigned int vecDimFO;
 
-  bool regularized;
+  Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct StokesFOBasalResid_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, StokesFOBasalResid_Tag> StokesFOBasalResid_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const StokesFOBasalResid_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 } // Namespace LandIce

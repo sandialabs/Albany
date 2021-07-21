@@ -19,8 +19,8 @@ ANONYMOUS:
         Cubature Degree: 3
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Given Field
-          Given Field Variable Name: basal_friction
+          Type: Field
+          Beta Field Name: basal_friction
       BC 1:
         Type: Lateral
         Cubature Degree: 3
@@ -29,17 +29,17 @@ ANONYMOUS:
       Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
-        Name: 'Glen''s Law Homotopy Parameter'
+        Name: Glen's Law Homotopy Parameter
     LandIce Physical Parameters:
       Water Density: 1.02800000000000000e+03
       Ice Density: 9.10000000000000000e+02
       Gravity Acceleration: 9.80000000000000071e+00
       Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
     LandIce Viscosity:
-      Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 0.00000000000000000e+00
-      'Glen''s Law A': 5.00000000000000023e-05
-      'Glen''s Law n': 3.00000000000000000e+00
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 0.00000000000000000e+00
+      Glen's Law A: 1.5854896e-24            # [Pa^-n s^-1]
+      Glen's Law n: 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
     Body Force:
       Type: FO INTERP SURF GRAD
@@ -106,7 +106,7 @@ ANONYMOUS:
         Method: Constant
       Stepper:
         Initial Value: 0.00000000000000000e+00
-        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 15
         Max Value: 1.00000000000000000e+00

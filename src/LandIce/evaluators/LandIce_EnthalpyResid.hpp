@@ -19,7 +19,7 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltTempST>
+template<typename EvalT, typename Traits, typename VelocityST>
 class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                       public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -46,7 +46,7 @@ private:
 
   PHX::MDField<const ScalarT,Cell,QuadPoint>                    Enthalpy;  //[MW s m^{-3}]
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim>                EnthalpyGrad; //[kW s m^{-4}]
-  PHX::MDField<const MeltTempST,Cell,QuadPoint>                 EnthalpyHs;  //[MW s m^{-3}]
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint>                EnthalpyHs;  //[MW s m^{-3}]
   PHX::MDField<const ScalarT,Cell,Node>                         diffEnth;  //[MW s m^{-3}]
 
   PHX::MDField<const VelocityST,Cell,QuadPoint,VecDim>          Velocity; //[m yr^{-1}]
@@ -60,7 +60,7 @@ private:
   PHX::MDField<const ScalarT,Cell,Node>                         geoFluxHeatSUPG; // [MW s^{-1}]
   PHX::MDField<const ScalarT,Cell,QuadPoint>                    phi;                //[]
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim>                phiGrad;        //[km^{-1}
-  PHX::MDField<const MeltTempST,Cell,QuadPoint,Dim>             meltTempGrad; // [K km^{-1}]
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim>            meltTempGrad; // [K km^{-1}]
   PHX::MDField<const ScalarT,Cell,Node>                         basalResid; // [k^{2} W], k =1000
   PHX::MDField<const ScalarT,Cell,Node>                         basalResidSUPG; // [k^{2} W], k =1000
 
@@ -82,7 +82,7 @@ private:
   double rho_i; // [kg m^{-3}], density of ice
   double rho_w; // [kg m^{-3}] density of water
   double g;     //[m s^{-2}], Gravity Acceleration
-  double L;     //[J kg^{-1} ] Latent heat of fusion", 3e5);
+  double L;     //[J kg^{-1} ] Ice Latent Heat Of Fusion", 3e5);
   double a;     // [adim], Diffusivity homotopy exponent
   double drainage_coeff; //[kg s^{-3}]
   double alpha_om; //[adim], Omega exponent alpha

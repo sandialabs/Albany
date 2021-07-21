@@ -18,9 +18,9 @@ PNPProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  params(params_), 
   numDim(numDim_),
-  use_sdbcs_(false)
+  use_sdbcs_(false),
+  params(params_)
 {
 
   // Compute number of equations

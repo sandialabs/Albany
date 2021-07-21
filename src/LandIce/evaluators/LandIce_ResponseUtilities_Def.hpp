@@ -6,6 +6,7 @@
 #include "LandIce_ResponseUtilities.hpp"
 #include "Albany_Utils.hpp"
 
+#include "LandIce_ProblemUtils.hpp"
 #include "LandIce_ResponseSurfaceVelocityMismatch.hpp"
 #include "LandIce_ResponseSMBMismatch.hpp"
 #include "LandIce_ResponseGLFlux.hpp"
@@ -37,6 +38,7 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   using Teuchos::rcp;
   using Teuchos::ParameterList;
   using PHX::DataLayout;
+  using FST = FieldScalarType;
 
   std::string responseName = responseParams.get<std::string>("Name");
   RCP<ParameterList> p = rcp(new ParameterList);
@@ -47,28 +49,17 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   if (responseName == "Surface Velocity Mismatch") {
     res_ev = rcp(new ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,this->dl));
   } else if (responseName == "Surface Mass Balance Mismatch") {
-    auto thickness_st = paramsFromProblem->get<std::string>("Ice Thickness Scalar Type","Real");
-    if (thickness_st=="Scalar") {
-      res_ev = rcp(new ResponseSMBMismatch<EvalT,Traits,typename EvalT::ScalarT>(*p,this->dl));
-    } else if (thickness_st=="MeshScalar") {
-      res_ev = rcp(new ResponseSMBMismatch<EvalT,Traits,typename EvalT::MeshScalarT>(*p,this->dl));
-    } else if (thickness_st=="ParamScalar") {
-      res_ev = rcp(new ResponseSMBMismatch<EvalT,Traits,typename EvalT::ParamScalarT>(*p,this->dl));
-    } else if (thickness_st=="Real") {
-      res_ev = rcp(new ResponseSMBMismatch<EvalT,Traits,RealType>(*p,this->dl));
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Invalid scalar type for Ice Thickness.\n");
-    }
+    auto thickness_st = paramsFromProblem->get<FST>("Ice Thickness Scalar Type",FST::Real);
+    res_ev = createEvaluatorWithOneScalarType<ResponseSMBMismatch,EvalT>(p,this->dl,thickness_st);
   } else if (responseName == "Grounding Line Flux") {
-    res_ev = rcp(new ResponseGLFlux<EvalT,Traits>(*p,this->dl));
+    auto thickness_st = paramsFromProblem->get<FST>("Ice Thickness Scalar Type",FST::Real);
+    res_ev = createEvaluatorWithOneScalarType<ResponseGLFlux,EvalT>(p,this->dl,thickness_st);
   } else if (responseName == "Boundary Squared L2 Norm") {
     res_ev = rcp(new ResponseBoundarySquaredL2Norm<EvalT,Traits>(*p,this->dl));
   } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, Teuchos::Exceptions::InvalidParameter,
-      std::endl << "Error!  Unknown response function " << responseName <<
-      "!" << std::endl << "Supplied parameter list is " <<
-      std::endl << responseParams);
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+        "Error!  Unknown response function " + responseName + "!\n"
+        "         Supplied parameter list is:\n" << responseParams);
   }
 
   // Register the evaluator

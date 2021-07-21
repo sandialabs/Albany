@@ -13,6 +13,10 @@
 
 #include "PHAL_Utilities.hpp"
 
+#include "Albany_Hessian.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Thyra_VectorStdOps.hpp"
+
 namespace Albany
 {
 
@@ -251,6 +255,11 @@ evaluateResponse(const double current_time,
 
   // Perform fill via field manager
   evaluate<PHAL::AlbanyTraits::Residual>(workset);
+
+  if (g_.is_null())
+    g_ = Thyra::createMember(g->space());
+
+  g_->assign(*g);
 }
 
 void FieldManagerScalarResponseFunction::
@@ -379,7 +388,7 @@ evaluateDistParamDeriv(
 }
 
 void FieldManagerScalarResponseFunction::
-evaluateDistParamHessVecProd_xx(
+evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -412,16 +421,23 @@ evaluateDistParamHessVecProd_xx(
 }
 
 void FieldManagerScalarResponseFunction::
-evaluateDistParamHessVecProd_xp(
+evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& param_array,
-    const std::string& dist_param_direction_name,
+    const std::string& param_direction_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
+  // First, the function checks whether the parameter associated to param_direction_name
+  // is a distributed parameter (l2_is_distributed==true) or a parameter vector
+  // (l2_is_distributed==false).
+  int l2;
+  bool l2_is_distributed;
+  Albany::getParameterVectorID(l2, l2_is_distributed, param_direction_name);
+
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
       std::endl << "Post registration setup not performed in field manager " <<
@@ -432,12 +448,35 @@ evaluateDistParamHessVecProd_xp(
 
   application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
 
+  // If the parameter associated to param_direction_name is a parameter vector, 
+  // the initialization of the second derivatives must be performed now:
+  if (!l2_is_distributed) {
+    ParamVec params_l2 = param_array[l2];
+    unsigned int num_cols_p_l2 = params_l2.size();
+
+    Teuchos::ArrayRCP<const ST> v_constView;
+    if(!v.is_null()) {
+      v_constView = Albany::getLocalData(v->col(0));
+    }
+
+    HessianVecFad p_val;
+    for (unsigned int i = 0; i < num_cols_p_l2; i++) {
+      p_val = params_l2[i].family->getValue<PHAL::AlbanyTraits::HessianVec>();
+      p_val.val().fastAccessDx(0) = v_constView[i];
+      params_l2[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
+    }
+  }
+
   if(!v.is_null() && !Hv_dp.is_null()) {
     workset.j_coeff = 1.0;
-    workset.hessianWorkset.dist_param_deriv_direction_name = dist_param_direction_name;
-    workset.hessianWorkset.p_direction_cas_manager = workset.distParamLib->get(dist_param_direction_name)->get_cas_manager();
-    workset.hessianWorkset.direction_p = Thyra::createMembers(workset.hessianWorkset.p_direction_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
-    workset.hessianWorkset.p_direction_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_p, Albany::CombineMode::INSERT);
+    workset.hessianWorkset.dist_param_deriv_direction_name = param_direction_name;
+    // If the parameter associated to param_direction_name is a distributed parameter,
+    // the direction vectors should be scattered to have overlapped directions:
+    if (l2_is_distributed) {
+      workset.hessianWorkset.p_direction_cas_manager = workset.distParamLib->get(param_direction_name)->get_cas_manager();
+      workset.hessianWorkset.direction_p = Thyra::createMembers(workset.hessianWorkset.p_direction_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
+      workset.hessianWorkset.p_direction_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_p, Albany::CombineMode::INSERT);
+    }
     workset.hessianWorkset.hess_vec_prod_g_xp = Hv_dp;
     workset.hessianWorkset.overlapped_hess_vec_prod_g_xp = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_dp->domain()->dim());
     evaluate<PHAL::AlbanyTraits::HessianVec>(workset);
@@ -445,16 +484,23 @@ evaluateDistParamHessVecProd_xp(
 }
 
 void FieldManagerScalarResponseFunction::
-evaluateDistParamHessVecProd_px(
+evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& param_array,
-    const std::string& dist_param_name,
+    const std::string& param_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
+  // First, the function checks whether the parameter associated to param_name
+  // is a distributed parameter (l1_is_distributed==true) or a parameter vector
+  // (l1_is_distributed==false).
+  int l1;
+  bool l1_is_distributed;
+  Albany::getParameterVectorID(l1, l1_is_distributed, param_name);
+
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
       std::endl << "Post registration setup not performed in field manager " <<
@@ -464,6 +510,20 @@ evaluateDistParamHessVecProd_px(
   PHAL::Workset workset;
 
   application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
+
+  // If the parameter associated to param_name is a parameter vector, 
+  // the initialization of the first derivatives must be performed now:
+  if (!l1_is_distributed) {
+    ParamVec params_l1 = param_array[l1];
+    unsigned int num_cols_p_l1 = params_l1.size();
+
+    HessianVecFad p_val;
+    for (unsigned int i = 0; i < num_cols_p_l1; i++) {
+      p_val = HessianVecFad(num_cols_p_l1, params_l1[i].baseValue);
+      p_val.fastAccessDx(i).val() = 1.0;
+      params_l1[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
+    }
+  }
 
   if(!v.is_null()) {
     workset.hessianWorkset.direction_x = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
@@ -472,26 +532,60 @@ evaluateDistParamHessVecProd_px(
 
   if(!Hv_dp.is_null()) {
     workset.j_coeff = 1.0;
-    workset.dist_param_deriv_name = dist_param_name;
-    workset.p_cas_manager = workset.distParamLib->get(dist_param_name)->get_cas_manager();
+    workset.dist_param_deriv_name = param_name;
+    if (l1_is_distributed) {
+      workset.p_cas_manager = workset.distParamLib->get(param_name)->get_cas_manager();
+      workset.hessianWorkset.overlapped_hess_vec_prod_g_px = Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(),Hv_dp->domain()->dim());
+    }
+    else {
+      auto overlapped = Hv_dp->col(0)->space();
+
+      int n_local_params = 0;
+      int n_total_params = overlapped->dim();
+
+      if (workset.comm->getRank()==0)
+        n_local_params = n_total_params;
+      std::vector<GO> my_gids;
+      for (int i=0; i<n_local_params; ++i)
+        my_gids.push_back(i);
+      Teuchos::ArrayView<GO> gids(my_gids);
+
+      auto owned = Albany::createVectorSpace(workset.comm, gids, n_total_params);
+      workset.p_cas_manager = createCombineAndScatterManager(owned, overlapped);
+      workset.hessianWorkset.overlapped_hess_vec_prod_g_px =
+        Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(), Hv_dp->domain()->dim());
+    }
     workset.hessianWorkset.hess_vec_prod_g_px = Hv_dp;
-    workset.hessianWorkset.overlapped_hess_vec_prod_g_px = Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(),Hv_dp->domain()->dim());
     evaluate<PHAL::AlbanyTraits::HessianVec>(workset);
   }
 }
 
 void FieldManagerScalarResponseFunction::
-evaluateDistParamHessVecProd_pp(
+evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& param_array,
-    const std::string& dist_param_name,
-    const std::string& dist_param_direction_name,
+    const std::string& param_name,
+    const std::string& param_direction_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
+  // First, the function checks whether the parameter associated to param_name
+  // is a distributed parameter (l1_is_distributed==true) or a parameter vector
+  // (l1_is_distributed==false).
+  int l1;
+  bool l1_is_distributed;
+  Albany::getParameterVectorID(l1, l1_is_distributed, param_name);
+
+  // Then the function checks whether the parameter associated to param_direction_name
+  // is a distributed parameter (l2_is_distributed==true) or a parameter vector
+  // (l2_is_distributed==false).
+  int l2;
+  bool l2_is_distributed;
+  Albany::getParameterVectorID(l2, l2_is_distributed, param_direction_name);
+
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
       std::endl << "Post registration setup not performed in field manager " <<
@@ -502,16 +596,87 @@ evaluateDistParamHessVecProd_pp(
 
   application->setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, param_array);
 
+  // If the parameter associated to param_name is a parameter vector, 
+  // the initialization of the first derivatives must be performed now:
+  if (!l1_is_distributed) {
+    ParamVec params_l1 = param_array[l1];
+    unsigned int num_cols_p_l1 = params_l1.size();
+
+    HessianVecFad p_val;
+    for (unsigned int i = 0; i < num_cols_p_l1; i++) {
+      p_val = HessianVecFad(num_cols_p_l1, params_l1[i].baseValue);
+      p_val.fastAccessDx(i).val() = 1.0;
+      params_l1[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
+    }
+  }
+
+  // If the parameter associated to param_direction_name is a parameter vector, 
+  // the initialization of the second derivatives must be performed now:
+  if (!l2_is_distributed) {
+    ParamVec params_l2 = param_array[l2];
+    unsigned int num_cols_p_l2 = params_l2.size();
+
+    Teuchos::ArrayRCP<const ST> v_constView;
+    if(!v.is_null()) {
+      v_constView = Albany::getLocalData(v->col(0));
+    }
+
+    HessianVecFad p_val;
+    for (unsigned int i = 0; i < num_cols_p_l2; i++) {
+      p_val = params_l2[i].family->getValue<PHAL::AlbanyTraits::HessianVec>();
+      p_val.val().fastAccessDx(0) = v_constView[i];
+      params_l2[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
+    }
+  }
+
   if(!v.is_null() && !Hv_dp.is_null()) {
-    workset.dist_param_deriv_name = dist_param_name;
-    workset.hessianWorkset.dist_param_deriv_direction_name = dist_param_direction_name;
-    workset.hessianWorkset.p_direction_cas_manager = workset.distParamLib->get(dist_param_direction_name)->get_cas_manager();
-    workset.p_cas_manager = workset.distParamLib->get(dist_param_name)->get_cas_manager();
-    workset.hessianWorkset.direction_p = Thyra::createMembers(workset.hessianWorkset.p_direction_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
-    workset.hessianWorkset.p_direction_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_p, Albany::CombineMode::INSERT);
+    workset.dist_param_deriv_name = param_name;
+    workset.hessianWorkset.dist_param_deriv_direction_name = param_direction_name;
+    if (l1_is_distributed) {
+      workset.p_cas_manager = workset.distParamLib->get(param_name)->get_cas_manager();
+      workset.hessianWorkset.overlapped_hess_vec_prod_g_pp = Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(),Hv_dp->domain()->dim());
+    }
+    else {
+      auto overlapped = Hv_dp->col(0)->space();
+
+      int n_local_params = 0;
+      int n_total_params = overlapped->dim();
+
+      if (workset.comm->getRank()==0)
+        n_local_params = n_total_params;
+      std::vector<GO> my_gids;
+      for (int i=0; i<n_local_params; ++i)
+        my_gids.push_back(i);
+      Teuchos::ArrayView<GO> gids(my_gids);
+
+      auto owned = Albany::createVectorSpace(workset.comm, gids, n_total_params);
+      workset.p_cas_manager = createCombineAndScatterManager(owned, overlapped);
+      workset.hessianWorkset.overlapped_hess_vec_prod_g_pp =
+        Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(), Hv_dp->domain()->dim());
+    }
+    // If the parameter associated to param_direction_name is a distributed parameter,
+    // the direction vectors should be scattered to have overlapped directions:
+    if (l2_is_distributed) {
+      workset.hessianWorkset.p_direction_cas_manager = workset.distParamLib->get(param_direction_name)->get_cas_manager();
+      workset.hessianWorkset.direction_p = Thyra::createMembers(workset.hessianWorkset.p_direction_cas_manager->getOverlappedVectorSpace(),v->domain()->dim());
+      workset.hessianWorkset.p_direction_cas_manager->scatter(v->clone_mv(), workset.hessianWorkset.direction_p, Albany::CombineMode::INSERT);
+    }
     workset.hessianWorkset.hess_vec_prod_g_pp = Hv_dp;
-    workset.hessianWorkset.overlapped_hess_vec_prod_g_pp = Thyra::createMembers(workset.p_cas_manager->getOverlappedVectorSpace(),Hv_dp->domain()->dim());
     evaluate<PHAL::AlbanyTraits::HessianVec>(workset);
   }
+}
+
+void
+FieldManagerScalarResponseFunction::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
+{
+  if (g_.is_null()) {
+    *out << " the response has not been evaluated yet!";
+    return;
+  }
+
+  std::size_t precision = 8;
+  std::size_t value_width = precision + 4;
+  *out << std::setw(value_width) << Thyra::get_ele(*g_,0);
 }
 } // namespace Albany

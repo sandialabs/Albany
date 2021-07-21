@@ -78,24 +78,24 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
 operator() (const StokesFOImplicitThicknessUpdateResid_Tag&, const int& cell) const
 {
-  for (int node=0; node < numNodes; ++node){
+  for (unsigned int node=0; node < numNodes; ++node){
     Res(cell,node,0)=0.0;
     Res(cell,node,1)=0.0;
   }
 
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int qp=0; qp < numQPs; ++qp) {
     ScalarT dHdiffdx = 0;
     ScalarT dHdiffdy = 0;
-    for (int node=0; node < numNodes; ++node) {
+    for (unsigned int node=0; node < numNodes; ++node) {
       dHdiffdx += dH(cell,node) * gradBF(cell,node, qp,0);
       dHdiffdy += dH(cell,node) * gradBF(cell,node, qp,1);
     }
-    for (int node=0; node < numNodes; ++node) {
+    for (unsigned int node=0; node < numNodes; ++node) {
       Res(cell,node,0) += rho_g*dHdiffdx*wBF(cell,node,qp);
       Res(cell,node,1) += rho_g*dHdiffdy*wBF(cell,node,qp);
     }
   }
-  for (int node=0; node < numNodes; ++node) {
+  for (unsigned int node=0; node < numNodes; ++node) {
     Residual(cell,node,0) += Res(cell,node,0);
     Residual(cell,node,1) += Res(cell,node,1);
   }

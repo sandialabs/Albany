@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora33-gcc10.2.1-${CTEST_BUILD_CONFIGURATION}-No-Epetra-Albany")
+set (CTEST_BUILD_NAME "fedora34-gcc11.0.1-${CTEST_BUILD_CONFIGURATION}-No-Epetra-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -257,6 +257,10 @@ if (BUILD_ALBANY_NOEPETRA)
   #
   # Run Albany tests
   #
+  
+  #  Over-write default limit for output posted to CDash site
+  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
+  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra"

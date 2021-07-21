@@ -192,6 +192,7 @@ if (BUILD_ALBANY)
     "-DINSTALL_ALBANY:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockbaInstall"
     "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
+    "-DPYTHON_EXECUTABLE=/projects/sems/install/rhel7-x86_64/sems/compiler/python/2.7.9/bin/python"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockba")
@@ -257,6 +258,9 @@ if (BUILD_ALBANY)
   #
   # Run Albany tests
   #
+  #  Over-write default limit for output posted to CDash site
+  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
+  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
   
   set (CTEST_TEST_TIMEOUT 600)
 

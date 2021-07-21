@@ -58,9 +58,9 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   plist->validateParameters(*reflist, 0);
 
   // Get Dimensions
-  numSideNodes = dl_basal->node_scalar->extent(2);
-  numSideDims  = dl_basal->qp_gradient->extent(3);
-  numBasalQPs  = dl_basal->qp_scalar->extent(2);
+  numSideNodes = dl_basal->node_scalar->extent(1);
+  numSideDims  = dl_basal->qp_gradient->extent(2);
+  numBasalQPs  = dl_basal->qp_scalar->extent(1);
 
   // add dependent fields
   this->addDependentField(flux_div);
@@ -81,7 +81,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = "Local Response SMB Mismatch";
   std::string global_response_name = "Global SMB Mismatch";
-  int worksetSize = dl_basal->qp_scalar->extent(0);
+  int worksetSize = dl->qp_scalar->extent(0);
   int responseSize = 1;
   auto local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
   auto global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));
@@ -133,49 +133,44 @@ void LandIce::ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::evaluateF
 
   if (workset.sideSets->find(basalSideName) != workset.sideSets->end())
   {
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
-    for (auto const& it_side : sideSet)
+    sideSet = workset.sideSetViews->at(basalSideName);
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
-      // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
-
+      // Get the local data of cell
+      const int cell = sideSet.elem_LID(sideSet_idx);
 
       ScalarT t = 0;
-      for (int qp=0; qp<numBasalQPs; ++qp) {
-        ScalarT val = (flux_div(cell,side,qp)-SMB(cell,side,qp))/SMBRMS(cell,side,qp);
-        t += val*val*w_measure_2d(cell,side,qp);
+      for (unsigned int qp=0; qp<numBasalQPs; ++qp) {
+        ScalarT val = (flux_div(sideSet_idx,qp)-SMB(sideSet_idx,qp))/SMBRMS(sideSet_idx,qp);
+        t += val*val*w_measure_2d(sideSet_idx,qp);
       }
 
       this->local_response_eval(cell, 0) += t*scaling*alphaSMB;
-      //std::cout << this->local_response(cell, 0) << std::endl;
       this->global_response_eval(0) += t*scaling*alphaSMB;
       p_resp += t*scaling*alphaSMB;
     }
 
     // --------------- Regularization term  ----------------- //
-
     if (alpha!=0 || alphaH !=0)
     {
-      for (auto const& it_side : sideSet)
+      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
       {
-        // Get the local data of side and cell
-        const int cell = it_side.elem_LID;
-        const int side = it_side.side_local_id;
+        // Get the local data of cell
+        const int cell = sideSet.elem_LID(sideSet_idx);
         ScalarT tr = 0, tH =0;
-        for (int qp=0; qp<numBasalQPs; ++qp)
+        for (unsigned int qp=0; qp<numBasalQPs; ++qp)
         {
           ScalarT sum=0;
           ScalarT grad_thickness_tmp[2] = {0.0, 0.0};
-          for (int idim=0; idim<2; ++idim)
-            for (int itan=0; itan<2; ++itan)
-              grad_thickness_tmp[idim] += tangents(cell,side,qp,idim,itan) * grad_thickness(cell,side,qp,itan);
+          for (unsigned int idim=0; idim<2; ++idim)
+            for (unsigned int itan=0; itan<2; ++itan)
+              grad_thickness_tmp[idim] += tangents(sideSet_idx,qp,idim,itan) * grad_thickness(sideSet_idx,qp,itan);
 
-          for (int idim=0; idim<2; ++idim)
+          for (unsigned int idim=0; idim<2; ++idim)
             sum += grad_thickness_tmp[idim] * grad_thickness_tmp[idim];
-          tr += sum * w_measure_2d(cell,side,qp);
-          ScalarT val = (obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp); 
-          tH += val*val*w_measure_2d(cell,side,qp);
+          tr += sum * w_measure_2d(sideSet_idx,qp);
+          ScalarT val = (obs_thickness(sideSet_idx,qp)-thickness(sideSet_idx,qp))/thicknessRMS(sideSet_idx,qp); 
+          tH += val*val*w_measure_2d(sideSet_idx,qp);
         }
 
         this->local_response_eval(cell, 0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;

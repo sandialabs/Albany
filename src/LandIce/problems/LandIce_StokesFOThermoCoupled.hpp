@@ -7,11 +7,11 @@
 #ifndef LANDICE_STOKES_FO_THERMO_COUPLED_PROBLEM_HPP
 #define LANDICE_STOKES_FO_THERMO_COUPLED_PROBLEM_HPP
 
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "LandIce_StokesFOBase.hpp"
 #include "LandIce_BasalMeltRate.hpp"
 #include "LandIce_EnthalpyBasalResid.hpp"
 #include "LandIce_EnthalpyResid.hpp"
-#include "LandIce_HydrostaticPressure.hpp"
 #include "LandIce_LiquidWaterFraction.hpp"
 #include "LandIce_PressureMeltingEnthalpy.hpp"
 #include "LandIce_Temperature.hpp"
@@ -88,6 +88,7 @@ protected:
 
   bool adjustBedTopo;
   bool adjustSurfaceHeight;
+  bool fluxDivIsPartOfSolution;
 
   std::string hydrostatic_pressure_name;
   std::string melting_enthalpy_name;
@@ -111,9 +112,6 @@ constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
-
-  // --- StokesFOBase evaluators --- //
-  constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // Gather velocity field
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names[0], dof_offsets[0]);
@@ -155,7 +153,7 @@ constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Updated Bed Topography Name", bed_topography_name);
       p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
 
-      ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
+      ev = Teuchos::rcp(new UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
       fm0.template registerEvaluator<EvalT>(ev);
     } else if(adjustSurfaceHeight && !adjustBedTopo) {
       //----- Gather Coordinate Vector (ad hoc parameters)
@@ -176,7 +174,7 @@ constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Bed Topography Name", bed_topography_name);
       p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
 
-      ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
+      ev = Teuchos::rcp(new UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
       fm0.template registerEvaluator<EvalT>(ev);
     } else {
           TEUCHOS_TEST_FOR_EXCEPTION(adjustBedTopo == adjustSurfaceHeight, std::logic_error, "Error! When the ice thickness is a parameter,\n "
@@ -196,10 +194,12 @@ constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   constructEnthalpyEvaluators<EvalT> (fm0, fieldManagerChoice);
 
   // --- FluxDiv-related evaluators (if needed) --- //
-  if(params->isSublist("LandIce Flux Divergence") &&
-     params->sublist("LandIce Flux Divergence").get<bool>("Flux Divergence Is Part Of Solution")) {
+  if(fluxDivIsPartOfSolution) {
     constructFluxDivEvaluators<EvalT> (fm0, fieldManagerChoice, meshSpecs);
   }
+
+  // --- StokesFOBase evaluators --- //
+  constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // Finally, construct responses, and return the tags
   return constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, responseList);
@@ -209,7 +209,7 @@ template <typename EvalT>
 void StokesFOThermoCoupled::
 constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                      Albany::FieldManagerChoice fieldManagerChoice,
-                                     const Albany::MeshSpecsStruct& meshSpecs)
+                                     const Albany::MeshSpecsStruct&)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
@@ -238,10 +238,10 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Input
   p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
   p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
-  p->set<std::string>("BF Side Name", Albany::bf_name + " "+basalSideName);
+  p->set<std::string>("BF Side Name", Albany::bf_name + "_" + basalSideName);
   p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
-  p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + " "+basalSideName);
-  p->set<std::string>("Side Normal Name", Albany::normal_name + " " + basalSideName);
+  p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + "_" + basalSideName);
+  p->set<std::string>("Side Normal Name", Albany::normal_name + "_" + basalSideName);
   p->set<std::string>("w Side QP Variable Name", dof_names[1] + "_" + basalSideName);
   p->set<std::string>("w Gradient QP Variable Name", dof_names[1] + " Gradient");
   p->set<std::string>("Basal Vertical Velocity Side QP Variable Name", "basal_vert_velocity_" + basalSideName);
@@ -253,7 +253,7 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Residual Variable Name", resid_names[1]);
 
-  ev = Teuchos::rcp(new LandIce::w_Resid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+  ev = Teuchos::rcp(new w_Resid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
 }
@@ -285,7 +285,6 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Basal Melt Rate"));
 
   //Input
-  p->set<bool>("Nodal", false);
   p->set<std::string>("Water Content Side Variable Name", water_content_name + "_" + basalSideName);
   p->set<std::string>("Geothermal Flux Side Variable Name", geothermal_flux_name + "_" + basalSideName);
   p->set<std::string>("Velocity Side Variable Name", dof_names[0] + "_" + basalSideName);
@@ -303,9 +302,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Basal Vertical Velocity Variable Name", "basal_vert_velocity_" + basalSideName);
   p->set<std::string>("Basal Melt Rate Variable Name", "basal_melt_rate_" + basalSideName);
-  ev = createEvaluatorWithTwoScalarTypes<LandIce::BasalMeltRate,EvalT>(p,dl->side_layouts[basalSideName],
-                                                                         FieldScalarType::Scalar,
-                                                                         field_scalar_type[melting_enthalpy_name]);
+  ev = Teuchos::rcp(new BasalMeltRate<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl->side_layouts[basalSideName]));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce Liquid Water Fraction
@@ -323,21 +320,24 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Water Content Variable Name", water_content_name);
 
-  ev = createEvaluatorWithOneScalarType<LandIce::LiquidWaterFraction,EvalT>(p,dl,field_scalar_type[melting_enthalpy_name]);
+  ev = Teuchos::rcp(new LiquidWaterFraction<EvalT, PHAL::AlbanyTraits, typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce pressure-melting enthalpy
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Pressure Melting Enthalpy"));
 
   //Input
-  p->set<std::string>("Hydrostatic Pressure Variable Name", hydrostatic_pressure_name);
+  p->set<std::string>("Surface Height Variable Name", "surface_height");
+  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
   //Output
+  field_deps[melting_temperature_name].insert(hydrostatic_pressure_name);
+  field_deps[melting_enthalpy_name].insert(hydrostatic_pressure_name);
   p->set<std::string>("Melting Temperature Variable Name", melting_temperature_name);
   p->set<std::string>("Enthalpy Hs Variable Name", melting_enthalpy_name);
 
-  ev = createEvaluatorWithOneScalarType<LandIce::PressureMeltingEnthalpy,EvalT>(p,dl,field_scalar_type[melting_temperature_name]);
+  ev = Teuchos::rcp(new PressureMeltingEnthalpy<EvalT, PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce Surface Air Enthalpy
@@ -350,24 +350,10 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Output
     p->set<std::string>("Surface Air Enthalpy Name", "surface_enthalpy");
-    ev = createEvaluatorWithOneScalarType<LandIce::SurfaceAirEnthalpy,EvalT>(p,dl,field_scalar_type["surface_air_temperature"]);
+    ev = createEvaluatorWithOneScalarType<SurfaceAirEnthalpy,EvalT>(p,dl,get_scalar_type("surface_air_temperature"));
 
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
-  // --- LandIce hydrostatic pressure
-  p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Hydrostatic Pressure"));
-
-  //Input
-  p->set<std::string>("Surface Height Variable Name", surface_height_name);
-  p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
-  p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-
-  //Output
-  p->set<std::string>("Hydrostatic Pressure Variable Name", hydrostatic_pressure_name);
-
-  ev = createEvaluatorWithOneScalarType<LandIce::HydrostaticPressure,EvalT>(p,dl,field_scalar_type[surface_height_name]);
-  fm0.template registerEvaluator<EvalT>(ev);
 
   // --- LandIce Temperature: diff enthalpy is h - hs.
   p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Temperature"));
@@ -387,7 +373,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // p->set<std::string>("Basal dTdz Variable Name", "basal_dTdz");
   p->set<std::string>("Diff Enthalpy Variable Name", "Diff Enth");
 
-  ev = createEvaluatorWithOneScalarType<LandIce::Temperature,EvalT>(p,dl,field_scalar_type[melting_temperature_name]);
+  ev = Teuchos::rcp(new LandIce::Temperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- Enthalpy Residual ---
@@ -426,15 +412,15 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Residual Variable Name", resid_names[2]);
 
-  ev = createEvaluatorWithTwoScalarTypes<LandIce::EnthalpyResid,EvalT>(p,dl,FieldScalarType::Scalar,field_scalar_type[melting_temperature_name]);
+  ev = Teuchos::rcp(new  EnthalpyResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- Enthalpy Basal Residual ---
   p = Teuchos::rcp(new Teuchos::ParameterList("Enthalpy Basal Resid"));
 
   //Input
-  p->set<std::string>("BF Side Name", Albany::bf_name + " "+basalSideName);
-  p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + " "+basalSideName);
+  p->set<std::string>("BF Side Name", Albany::bf_name + "_"+basalSideName);
+  p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + "_"+basalSideName);
   p->set<std::string>("Side Set Name", basalSideName);
   p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
   p->set<std::string>("Basal Melt Rate Side QP Variable Name", "basal_melt_rate_" + basalSideName);
@@ -442,7 +428,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Enthalpy Basal Residual Variable Name", "Enthalpy Basal Residual");
 
-  ev = Teuchos::rcp(new LandIce::EnthalpyBasalResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+  ev = Teuchos::rcp(new EnthalpyBasalResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 }
 
@@ -456,7 +442,6 @@ void StokesFOThermoCoupled::constructFluxDivEvaluators (PHX::FieldManager<PHAL::
   Teuchos::RCP<Teuchos::ParameterList> p;
 
   auto& flux_div_params = params->sublist("LandIce Flux Divergence");
-  auto& ssName = flux_div_params.get<std::string>("Side Set Name",basalSideName);
 
   // ------------------- Interpolations and utilities ------------------ //
 
@@ -500,7 +485,7 @@ void StokesFOThermoCoupled::constructFluxDivEvaluators (PHX::FieldManager<PHAL::
   p->set<bool>("Use Upwind Stabilization",  flux_div_params.get("Use Upwind Stabilization", true));
   p->set<std::string>("Layered Flux Divergence Residual Name", resid_names[3]);
 
-  ev = createEvaluatorWithOneScalarType<LandIce::LayeredFluxDivergenceResidual,EvalT>(p,dl,field_scalar_type[ice_thickness_name]);
+  ev = createEvaluatorWithOneScalarType<LayeredFluxDivergenceResidual,EvalT>(p,dl,get_scalar_type(ice_thickness_name));
   fm0.template registerEvaluator<EvalT>(ev);
 
 
@@ -518,7 +503,7 @@ void StokesFOThermoCoupled::constructFluxDivEvaluators (PHX::FieldManager<PHAL::
   p->set<bool>("Use Upwind Stabilization",  flux_div_params.get("Use Upwind Stabilization", true));
   p->set<std::string>("Flux Divergence Residual Name", resid_names[3]);
 
-  ev = Teuchos::rcp(new LandIce::FluxDivergenceResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new FluxDivergenceResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   ev = evalUtils.constructDOFCellToSideEvaluator("flux_divergence", basalSideName, "Node Scalar", cellType, "flux_divergence_" + basalSideName);

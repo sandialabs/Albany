@@ -1,4 +1,4 @@
-	//*****************************************************************//
+//*****************************************************************//
 //    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
@@ -32,30 +32,70 @@ static const char* sol_id_name[3] = {"solution",
                                      "solution_dot",
                                      "solution_dotdot"};
 
-static const char* res_tag_name = {
-    "Exodus Residual Name",
-};
-
-static const char* res_id_name = {
-    "residual",
-};
-
 template <DiscType Interleaved>
 MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const Teuchos::RCP<stk::mesh::MetaData>&    metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&    bulkData_,
-    const int                                   neq_,
+    const int                                   numDim_,
+    const Teuchos::RCP<StateInfoStruct>&               sis,
+    const int                                   num_params_)
+    : GenericSTKFieldContainer<Interleaved>(
+          params_,
+          metaData_,
+          bulkData_,
+          numDim_,
+          num_params_)
+{
+  typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
+  typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
+
+  // Do the coordinates
+  this->coordinates_field =
+      &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, "coordinates");
+  stk::mesh::put_field_on_mesh(
+      *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
+#ifdef ALBANY_SEACAS
+  stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
+#endif
+
+  if (numDim_ == 3) {
+    this->coordinates_field3d = this->coordinates_field;
+  } else {
+    this->coordinates_field3d = &metaData_->declare_field<VFT>(
+        stk::topology::NODE_RANK, "coordinates3d");
+    stk::mesh::put_field_on_mesh(
+        *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
+#ifdef ALBANY_SEACAS
+    if (params_->get<bool>("Export 3d coordinates field", false)) {
+      stk::io::set_field_role(
+          *this->coordinates_field3d, Ioss::Field::TRANSIENT);
+    }
+#endif
+  }
+
+  this->addStateStructs(sis);
+
+  initializeProcRankField();
+}
+
+template <DiscType Interleaved>
+MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
+    const Teuchos::RCP<Teuchos::ParameterList>&        params_,
+    const Teuchos::RCP<stk::mesh::MetaData>&           metaData_,
+    const Teuchos::RCP<stk::mesh::BulkData>&           bulkData_,
+    const int                                          neq_,
     const int                                          numDim_,
     const Teuchos::RCP<StateInfoStruct>&               sis,
     const Teuchos::Array<Teuchos::Array<std::string>>& solution_vector,
-    const int                                          num_params)
+    const int                                          num_params_)
     : GenericSTKFieldContainer<Interleaved>(
           params_,
           metaData_,
           bulkData_,
           neq_,
-          numDim_)
+          numDim_,
+          num_params_)
 {
   typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
@@ -189,7 +229,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 
   this->addStateStructs(sis);
 
-  initializeProcRankField();
+  //initializeProcRankField();
 
 }
 
@@ -197,6 +237,13 @@ template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::initializeProcRankField()
 {
+  /*
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    (this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::initializeProcRankField called from a solution field container."
+    << std::endl);
+*/
   using ISFT = AbstractSTKFieldContainer::IntScalarFieldType;
   using SFT  = AbstractSTKFieldContainer::ScalarFieldType;
 
@@ -210,7 +257,7 @@ MultiSTKFieldContainer<Interleaved>::initializeProcRankField()
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
 #endif
- }
+}
 
 template <DiscType Interleaved>
 void
@@ -221,6 +268,12 @@ MultiSTKFieldContainer<Interleaved>::fillVector(
     const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
     const NodalDOFManager&                       nodalDofManager)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::fillVector not called from a solution field container."
+    << std::endl);
+
   fillVectorImpl(
       field_vector,
       field_name,
@@ -237,6 +290,12 @@ MultiSTKFieldContainer<Interleaved>::fillSolnVector(
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::fillSolnVector not called from a solution field container."
+    << std::endl);
+
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
   nodalDofManager.setup(this->neq, numLocalNodes, -1, Interleaved);
@@ -256,6 +315,12 @@ MultiSTKFieldContainer<Interleaved>::fillSolnMultiVector(
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::fillSolnMultiVector not called from a solution field container."
+    << std::endl);
+
   using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
   using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
 
@@ -291,6 +356,12 @@ MultiSTKFieldContainer<Interleaved>::saveVector(
     const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
     const NodalDOFManager&                       nodalDofManager)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::saveVector not called from a solution field container."
+    << std::endl);
+
   saveVectorImpl(
       field_vector,
       field_name,
@@ -308,6 +379,12 @@ MultiSTKFieldContainer<Interleaved>::saveSolnVector(
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::saveSolnVector not called from a solution field container."
+    << std::endl);
+
   // Setup a dof manger on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
@@ -334,6 +411,12 @@ MultiSTKFieldContainer<Interleaved>::saveSolnVector(
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::saveSolnVector not called from a solution field container."
+    << std::endl);
+
   // TODO: why can't we save also solution_dot?
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -356,6 +439,12 @@ MultiSTKFieldContainer<Interleaved>::saveSolnVector(
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::saveSolnVector not called from a solution field container."
+    << std::endl);
+
   // TODO: why can't we save also solution_dot?
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -377,6 +466,12 @@ MultiSTKFieldContainer<Interleaved>::saveSolnMultiVector(
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::saveSolnMultiVector not called from a solution field container."
+    << std::endl);
+
   // Setup a dof manger on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
@@ -407,6 +502,12 @@ MultiSTKFieldContainer<Interleaved>::saveResVector(
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::saveResVector not called from a solution field container."
+    << std::endl);
+
   // Setup a dof manger on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
@@ -427,6 +528,12 @@ template <DiscType Interleaved>
 void
 MultiSTKFieldContainer<Interleaved>::transferSolutionToCoords()
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::transferSolutionToCoords not called from a solution field container."
+    << std::endl);
+
   const bool MultiSTKFieldContainer_transferSolutionToCoords_not_implemented =
       true;
   TEUCHOS_TEST_FOR_EXCEPT(
@@ -443,6 +550,12 @@ MultiSTKFieldContainer<Interleaved>::fillVectorImpl(
     const NodalDOFManager&                       nodalDofManager,
     const int                                    offset)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::fillVectorImpl not called from a solution field container."
+    << std::endl);
+
   using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
   using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
 
@@ -495,6 +608,12 @@ MultiSTKFieldContainer<Interleaved>::saveVectorImpl(
     const NodalDOFManager&                       nodalDofManager,
     const int                                    offset)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !(this->solutionFieldContainer),
+    std::logic_error,
+    "Error MultiSTKFieldContainer<Interleaved>::saveVectorImpl not called from a solution field container."
+    << std::endl);
+
   using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
   using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
 

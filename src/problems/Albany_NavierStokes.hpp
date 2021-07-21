@@ -169,8 +169,6 @@ Albany::NavierStokes::constructEvaluators(
   using std::map;
   using PHAL::AlbanyTraits;
  
-  const CellTopologyData * const elem_top = &meshSpecs.ctd;
- 
   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
@@ -199,7 +197,6 @@ Albany::NavierStokes::constructEvaluators(
                               "Data Layout Usage in NavierStokes problem assumes vecDim = numDim");
 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   bool supportsTransient=true;
    int offset=0;
 
    // Problem is transient
@@ -711,7 +708,10 @@ Albany::NavierStokes::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Source Functions");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+    Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+    p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
+
+    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -720,7 +720,7 @@ Albany::NavierStokes::constructEvaluators(
 
     p->set<string>("Source Name", "Neutron Source");
     p->set<string>("Variable Name", "Neutron Flux");
-   p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
@@ -728,7 +728,10 @@ Albany::NavierStokes::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Neutron Source");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+    Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+    p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
+
+    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -759,7 +762,8 @@ Albany::NavierStokes::constructEvaluators(
 
     RCP<ParameterList> p = rcp(new ParameterList);
     // cell side
-      
+
+    const CellTopologyData * const elem_top = &meshSpecs.ctd;
     const CellTopologyData * const side_top = elem_top->side[0].topology;
 
     p->set<string>("Side Set ID", meshSpecs.ssNames[0]);

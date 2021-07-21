@@ -30,6 +30,8 @@
 #include <stk_io/StkMeshIoBroker.hpp>
 #endif
 
+#include "Albany_AbstractSTKFieldContainer.hpp"
+
 namespace Albany {
 
 typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
@@ -63,8 +65,12 @@ struct NodalDOFsStructContainer
   const DOFsStruct&
   getDOFsStruct(const std::string& field_name) const
   {
-    return fieldToMap.find(field_name)->second->second;
-  };  // TODO handole errors
+    const auto iter = fieldToMap.find(field_name);
+    if (iter == fieldToMap.end())
+      TEUCHOS_TEST_FOR_EXCEPTION(true,
+          std::logic_error, field_name + " does not exist in fieldToMap");
+    return iter->second->second;
+  };
 
   // IKT: added the following function, which may be useful for debugging.
   void
@@ -106,6 +112,7 @@ class STKDiscretization : public AbstractDiscretization
   //! Constructor
   STKDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+      const int neq,
       Teuchos::RCP<AbstractSTKMeshStruct>&        stkMeshStruct,
       const Teuchos::RCP<const Teuchos_Comm>&     comm,
       const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null,
@@ -196,6 +203,13 @@ class STKDiscretization : public AbstractDiscretization
   getSideSetViews(const int workset) const
   {
     return sideSetViews.at(workset);
+  }
+
+  //! Get local DOF views for GatherVerticallyContractedSolution
+  const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
+  getLocalDOFViews(const int workset) const
+  {
+    return wsLocalDOFViews.at(workset);
   }
 
   //! Get connectivity map from elementGID to workset
@@ -372,6 +386,12 @@ class STKDiscretization : public AbstractDiscretization
     return neq;
   }
 
+  int
+  getFADLength() const
+  {
+    return neq * wsElNodeID[0][0].size();
+  }
+
   Teuchos::RCP<LayeredMeshNumbering<GO>>
   getLayeredMeshNumbering() const
   {
@@ -381,12 +401,12 @@ class STKDiscretization : public AbstractDiscretization
   const stk::mesh::MetaData&
   getSTKMetaData() const
   {
-    return metaData;
+    return *metaData;
   }
   const stk::mesh::BulkData&
   getSTKBulkData() const
   {
-    return bulkData;
+    return *bulkData;
   }
 
   // Used very often, so make it a function
@@ -493,6 +513,9 @@ class STKDiscretization : public AbstractDiscretization
    unsigned getDimension() const
    { return getNumDim(); }
 
+   //! get the number of equations
+   unsigned getNumberEquations() const
+   { return neq; }
 
   //! used when NetCDF output on a latitude-longitude grid is requested.
   // Each struct contains a latitude/longitude index and it's parametric
@@ -503,9 +526,17 @@ class STKDiscretization : public AbstractDiscretization
     std::pair<unsigned, unsigned> latitude_longitude;
   };
 
+  void setFieldData(
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<StateInfoStruct>& sis);
+
+  Teuchos::RCP<AbstractSTKFieldContainer> getSolutionFieldContainer() {
+    return solutionFieldContainer;
+  }
+
  protected:
 
-  friend class BlockedDiscretization;
+  friend class BlockedSTKDiscretization;
   friend class STKConnManager;
 
   void
@@ -574,8 +605,8 @@ class STKDiscretization : public AbstractDiscretization
   Teuchos::RCP<Teuchos::FancyOStream> out;
 
   //! Stk Mesh Objects
-  stk::mesh::MetaData& metaData;
-  stk::mesh::BulkData& bulkData;
+  Teuchos::RCP<stk::mesh::MetaData> metaData;
+  Teuchos::RCP<stk::mesh::BulkData> bulkData;
 
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
@@ -612,6 +643,10 @@ class STKDiscretization : public AbstractDiscretization
   std::vector<SideSetList> sideSets;
   GlobalSideSetList globalSideSetViews;
   std::map<int, LocalSideSetInfoList> sideSetViews;
+
+  //! GatherVerticallyContractedSolution connectivity
+  std::map<std::string, Kokkos::View<LO****, PHX::Device>> allLocalDOFViews;
+  std::map<int, std::map<std::string, Kokkos::View<LO****, PHX::Device>>> wsLocalDOFViews;
 
   //! Connectivity array [workset, element, local-node, Eq] => LID
   Conn wsElNodeEqID;
@@ -685,6 +720,8 @@ class STKDiscretization : public AbstractDiscretization
     }
     return false;
   }
+
+  Teuchos::RCP<AbstractSTKFieldContainer> solutionFieldContainer;
 };
 
 }  // namespace Albany

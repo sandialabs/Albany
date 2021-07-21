@@ -229,7 +229,6 @@ int main(int argc, char *argv[])
 
       const std::string& type = pList.isParameter("Type") ?
           pList.get<std::string>("Type") : std::string("Scalar Response");
-      bool number_exists = pList.getEntryPtr("Number Of Responses");
 
       if (type=="Sum Of Responses") {
         const int num_sub_responses = pList.get<int>("Number Of Responses");
@@ -241,7 +240,7 @@ int main(int argc, char *argv[])
                 << std::endl);
         response_names[l] = "Sum Of Responses: ";
         for (int k = 0; k < num_sub_responses; ++k) {
-          response_names[l] += pList.sublist(Albany::strint("Response", 0)).get<std::string>("Name");
+          response_names[l] += pList.sublist(Albany::strint("Response", k)).get<std::string>("Name");
           if( k != num_sub_responses-1)
             response_names[l] += " + ";
         }
@@ -348,6 +347,7 @@ int main(int argc, char *argv[])
 
       if (writeToMatrixMarketDistrSolnMap == true) {
         Albany::writeMatrixMarket(xfinal->space(),"xfinal_distributed_map");
+        Albany::writeMatrixMarket(xfinal,"xfinal_distributed");
       }
     }
   }

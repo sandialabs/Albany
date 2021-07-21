@@ -54,7 +54,6 @@ private:
 
   int numSideNodes;
   int numSideQPs;
-  bool useCollapsedSidesets;
 
   MDFieldMemoizer<Traits> memoizer;
 
@@ -63,18 +62,12 @@ private:
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct DOFInterpolationSideBase_Tag{};
-  struct DOFInterpolationSideBase_Collapsed_Tag{};
+  struct InterpolationSide_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFInterpolationSideBase_Tag> DOFInterpolationSideBase_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFInterpolationSideBase_Collapsed_Tag> DOFInterpolationSideBase_Collapsed_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, InterpolationSide_Tag> InterpolationSide_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFInterpolationSideBase_Tag& tag, const int& sideSet_idx) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFInterpolationSideBase_Collapsed_Tag& tag, const int& sideSet_idx) const;
-
+  void operator() (const InterpolationSide_Tag& tag, const int& sideSet_idx) const;
 };
 
 // Some shortcut names

@@ -350,28 +350,6 @@ getColumnSpace (const Teuchos::RCP<const Thyra_LinearOp>& lop)
   return Teuchos::null;
 }
 
-void resumeFill (const Teuchos::RCP<Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    tmat->resumeFill();
-    return;
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getConstEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    // Nothing to do in Epetra. As long as you only need to change the values (not the graph),
-    // Epetra already let's you do it on a filled matrix
-    return;
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in resumeFill! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-}
-
 void beginFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
@@ -379,7 +357,7 @@ void beginFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
   if (!tmat.is_null()) {
     // We're asking for FE assembly, so this *should* be a FE matrix
     auto femat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(tmat,true);
-    femat->beginFill();
+    femat->beginAssembly();
 
     // Note: we 're-initialize' the linear op, cause it's the only way
     //       to get the range/domain vector spaces to be consitent with
@@ -406,29 +384,6 @@ void beginFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in resumeFill! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 
-void fillComplete (const Teuchos::RCP<Thyra_LinearOp>& lop)
-{
-  // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    tmat->fillComplete();
-    return;
-  }
-
-#if defined(ALBANY_EPETRA)
-  auto emat = getEpetraMatrix(lop,false);
-  if (!emat.is_null()) {
-    // Epetra considers 'FillComplete' only in terms of the graph/storage.
-    // Since we use static graph, the matrix is already 'filled', so no
-    // action is needed here.
-    return;
-  }
-#endif
-
-  // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in fillComplete! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
-}
-
 void endFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
@@ -436,7 +391,7 @@ void endFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
   if (!tmat.is_null()) {
     // We're asking for FE assembly, so this *should* be a FE matrix
     auto femat = Teuchos::rcp_dynamic_cast<Tpetra_FECrsMatrix>(tmat,true);
-    femat->endFill();
+    femat->endAssembly();
 
     // Note: we 're-initialize' the linear op, cause it's the only way
     //       to get the range/domain vector spaces to be consitent with
@@ -456,6 +411,63 @@ void endFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
     // We're asking for FE assembly, so this *should* be a FE matrix
     auto femat = Teuchos::rcp_dynamic_cast<EpetraFECrsMatrix>(emat, true);
     femat->GlobalAssemble();
+    return;
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in fillComplete! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+void beginModify (const Teuchos::RCP<Thyra_LinearOp>& lop)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tfemat = getTpetraFECrsMatrix(lop,false);
+  if (!tfemat.is_null()) {
+    tfemat->beginModify();
+    return;
+  }
+
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    tmat->resumeFill();
+    return;
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emat = getConstEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    // Nothing to do in Epetra. As long as you only need to change the values (not the graph),
+    // Epetra already let's you do it on a filled matrix
+    return;
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in resumeFill! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+}
+
+void endModify (const Teuchos::RCP<Thyra_LinearOp>& lop)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tfemat = getTpetraFECrsMatrix(lop,false);
+  if (!tfemat.is_null()) {
+    tfemat->endModify();
+    return;
+  }
+
+  auto tmat = getTpetraMatrix(lop,false);
+  if (!tmat.is_null()) {
+    tmat->fillComplete();
+    return;
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emat = getEpetraMatrix(lop,false);
+  if (!emat.is_null()) {
+    // Epetra considers 'FillComplete' only in terms of the graph/storage.
+    // Since we use static graph, the matrix is already 'filled', so no
+    // action is needed here.
     return;
   }
 #endif

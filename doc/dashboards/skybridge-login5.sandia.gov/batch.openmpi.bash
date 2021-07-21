@@ -2,7 +2,7 @@
 ## Do not put any commands or blank lines before the #SBATCH lines
 #SBATCH --nodes=1                    # Number of nodes - all cores per node are allocated to the job
 #SBATCH --time=00:45:00               # Wall clock time (HH:MM:SS) - once the job exceeds this time, the job will be terminated (default is 5 minutes)
-#SBATCH --account=FY180068              # WC ID
+#SBATCH --account=FY140174              # WC ID
 #SBATCH --job-name=AlbNightly               # Name of job
 #SBATCH --partition=short             # partition/queue name: short or batch
                                       #            short: 4hrs wallclock limit

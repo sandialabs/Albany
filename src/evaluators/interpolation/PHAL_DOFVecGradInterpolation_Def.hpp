@@ -61,17 +61,17 @@ namespace PHAL {
   void DOFVecGradInterpolationBase<EvalT, Traits, ScalarT>::
   operator() (const DOFVecGradInterpolationBase_Residual_Tag& tag, const int& cell) const
   {
-    for (int qp=0; qp < numQPs; ++qp)
-      for (int i=0; i<vecDim; i++)
-        for (int dim=0; dim<numDims; dim++)
+    for (size_t qp=0; qp < numQPs; ++qp)
+      for (size_t i=0; i<vecDim; i++)
+        for (size_t dim=0; dim<numDims; dim++)
              grad_val_qp(cell,qp,i,dim)=0.0;
 
-    for (int qp=0; qp < numQPs; ++qp) {
-      for (int i=0; i<vecDim; i++) {
-        for (int dim=0; dim<numDims; dim++) {
+    for (size_t qp=0; qp < numQPs; ++qp) {
+      for (size_t i=0; i<vecDim; i++) {
+        for (size_t dim=0; dim<numDims; dim++) {
           // For node==0, overwrite. Then += for 1 to numNodes.
           grad_val_qp(cell,qp,i,dim) = val_node(cell, 0, i) * GradBF(cell, 0, qp, dim);
-          for (int node= 1 ; node < numNodes; ++node) {
+          for (size_t node= 1 ; node < numNodes; ++node) {
             grad_val_qp(cell,qp,i,dim) += val_node(cell, node, i) * GradBF(cell, node, qp, dim);
           }
         }
@@ -131,13 +131,13 @@ namespace PHAL {
   KOKKOS_INLINE_FUNCTION
   void FastSolutionVecGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
   operator() (const FastSolutionVecGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
-    for (int qp=0; qp < this->numQPs; ++qp) {
-          for (int i=0; i<this->vecDim; i++) {
-            for (int dim=0; dim<this->numDims; dim++) {
+    for (size_t qp=0; qp < this->numQPs; ++qp) {
+          for (size_t i=0; i<this->vecDim; i++) {
+            for (size_t dim=0; dim<this->numDims; dim++) {
               // For node==0, overwrite. Then += for 1 to numNodes.
               this->grad_val_qp(cell,qp,i,dim) = ScalarT(num_dof, this->val_node(cell, 0, i).val() * this->GradBF(cell, 0, qp, dim));
               (this->grad_val_qp(cell,qp,i,dim)).fastAccessDx(offset+i) = this->val_node(cell, 0, i).fastAccessDx(offset+i) * this->GradBF(cell, 0, qp, dim);
-              for (int node= 1 ; node < this->numNodes; ++node) {
+              for (size_t node= 1 ; node < this->numNodes; ++node) {
                 (this->grad_val_qp(cell,qp,i,dim)).val() += this->val_node(cell, node, i).val() * this->GradBF(cell, node, qp, dim);
                 (this->grad_val_qp(cell,qp,i,dim)).fastAccessDx(neq*node+offset+i) += this->val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * this->GradBF(cell, node, qp, dim);
            }

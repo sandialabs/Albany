@@ -20,7 +20,7 @@
 namespace LandIce
 {
 
-template<typename EvalT, typename Traits, typename VelocityST, typename MeltEnthST>
+template<typename EvalT, typename Traits, typename VelocityST>
 class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
                       public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -43,7 +43,7 @@ private:
   PHX::MDField<const VelocityST>           velocity;   // [m/yr]
   PHX::MDField<const ParamScalarT>         geoFluxHeat;// [W m^{-2}] = [Pa m s^{-1}]
   PHX::MDField<const ScalarT>              Enthalpy;   //[MW s m^{-3}]
-  PHX::MDField<const MeltEnthST>           EnthalpyHs; //[MW s m^{-3}]
+  PHX::MDField<const MeshScalarT>           EnthalpyHs; //[MW s m^{-3}]
   PHX::MDField<const ScalarT,Dim>          homotopy;
 
   // Output:
@@ -53,11 +53,11 @@ private:
   std::vector<std::vector<int> >  sideNodes;
   std::string                     basalSideName;
 
-  int numCellNodes, numSideNodes, numSideQPs, sideDim;
+  unsigned int numCellNodes, numSideNodes, numSideQPs, sideDim;
 
   double rho_w; 	// [kg m^{-3}] density of water
   double rho_i; 	// [kg m^{-3}] density of ice
-  double L;       //[J kg^{-1} ] Latent heat of fusion", 3e5);
+  double L;       //[J kg^{-1} ] Ice Latent Heat Of Fusion", 3e5);
   double g;       //[m s^{-2}], Gravity Acceleration
   double a;       // [adim], Diffusivity homotopy exponent
 
@@ -77,7 +77,7 @@ private:
   bool isThereWater;
   bool nodal;
 
-  const int vecDimFO = 2;
+  const unsigned int vecDimFO = 2;
   ScalarT hom;
   ScalarT basal_reg_coeff;
   ScalarT flux_reg_coeff;
@@ -86,22 +86,16 @@ private:
 
   Albany::LocalSideSetInfo sideSet;
 
-  bool useCollapsedSidesets;
-
   public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
   struct Basal_Melt_Rate_Tag{};
-  struct Basal_Melt_Rate_Collapsed_Tag{};
 
   typedef Kokkos::RangePolicy<ExecutionSpace,Basal_Melt_Rate_Tag> Basal_Melt_Rate_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,Basal_Melt_Rate_Collapsed_Tag> Basal_Melt_Rate_Collapsed_Policy;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const Basal_Melt_Rate_Tag& tag, const int& i) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const Basal_Melt_Rate_Collapsed_Tag& tag, const int& i) const;
 
 };
 

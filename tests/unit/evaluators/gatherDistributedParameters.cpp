@@ -119,7 +119,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
   for (std::size_t i = 0; i < numBucks; i++)
     wsElNodeEqID_ID_raw[i].resize(buck_size * nodes_per_element * neq);
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
       wsElNodeEqID_ID_raw[0][cell * nodes_per_element + node] = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0));
 
@@ -135,15 +135,15 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
   phxWorkset.x = overlapped_x;
 
   auto x_array = Albany::getNonconstLocalData(overlapped_x);
-  for (size_t i = 0; i < x_array.size(); ++i)
+  for (int i = 0; i < x_array.size(); ++i)
     x_array[i] = 6.;
 
   auto direction_x_array = Albany::getNonconstLocalData(direction_x);
-  for (size_t i = 0; i < direction_x_array.size(); ++i)
+  for (int i = 0; i < direction_x_array.size(); ++i)
     direction_x_array[i] = 0.4;
 
   auto direction_p_array = Albany::getNonconstLocalData(direction_p);
-  for (size_t i = 0; i < direction_p_array.size(); ++i)
+  for (int i = 0; i < direction_p_array.size(); ++i)
     direction_p_array[i] = 0.4;
 
   phxWorkset.numCells = cell_map->getNodeNumElements();
@@ -246,9 +246,9 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
 
     solution_out.deep_copy(6.0);
 
-    for (std::size_t cell = 0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell)
+    for (unsigned int cell = 0; cell < solution_out_field.extent(0); ++cell)
     {
-      for (std::size_t node = 0; node < static_cast<int>(solution_out_field.extent(1)); ++node)
+      for (unsigned int node = 0; node < solution_out_field.extent(1); ++node)
       {
         solution_out_field(cell, node).val().fastAccessDx(0) = direction_p_array[wsElDofs((int)cell, (int)node, 0)];
       }
@@ -275,9 +275,9 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
 
     solution_out.deep_copy(6.0);
 
-    for (std::size_t cell = 0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell)
+    for (unsigned int cell = 0; cell < solution_out_field.extent(0); ++cell)
     {
-      for (std::size_t node = 0; node < static_cast<int>(solution_out_field.extent(1)); ++node)
+      for (unsigned int node = 0; node < solution_out_field.extent(1); ++node)
       {
         solution_out_field(cell, node).fastAccessDx(node).val() = 1;
       }
@@ -304,9 +304,9 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
 
     solution_out.deep_copy(6.0);
 
-    for (std::size_t cell = 0; cell < static_cast<int>(solution_out_field.extent(0)); ++cell)
+    for (unsigned int cell = 0; cell < solution_out_field.extent(0); ++cell)
     {
-      for (std::size_t node = 0; node < static_cast<int>(solution_out_field.extent(1)); ++node)
+      for (unsigned int node = 0; node < solution_out_field.extent(1); ++node)
       {
         solution_out_field(cell, node).fastAccessDx(node).val() = 1;
         solution_out_field(cell, node).val().fastAccessDx(0) = direction_p_array[wsElDofs((int)cell, (int)node, 0)];

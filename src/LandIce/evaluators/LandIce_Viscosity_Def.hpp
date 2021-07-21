@@ -21,11 +21,11 @@ template<typename EvalT, typename Traits>
 Viscosity<EvalT, Traits>::
 Viscosity(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl) :
-  VGrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
-  mu    (p.get<std::string> ("LandIce Viscosity QP Variable Name"), dl->qp_scalar),
-  homotopyParam("Glen's Law Homotopy Parameter", dl->shared_param),
   A(1.0),
-  n(3.0)
+  n(3.0),
+  VGrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_tensor),
+  homotopyParam("Glen's Law Homotopy Parameter", dl->shared_param),
+  mu    (p.get<std::string> ("LandIce Viscosity QP Variable Name"), dl->qp_scalar)
 {
   Teuchos::ParameterList* visc_list =
    p.get<Teuchos::ParameterList*>("Parameter List");
@@ -41,6 +41,11 @@ Viscosity(const Teuchos::ParameterList& p,
   }
   else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW;
+    const auto knp1 = pow(1000,n+1);
+    const auto scyr = 3.1536e7;
+    // Turn A's units from [Pa^-n s^-1] to [k^-1 kPa^-n yr^-1]
+    // This makes the final units of viscosity kPa k yr, which makes [mu*Ugrad] = kPa
+    A *= knp1*scyr;
     *out << "Glen's law viscosity!" << std::endl;
     *out << "A: " << A << std::endl;
     *out << "n: " << n << std::endl;

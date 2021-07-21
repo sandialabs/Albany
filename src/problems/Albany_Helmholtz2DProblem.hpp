@@ -155,11 +155,11 @@ Albany::Helmholtz2DProblem::constructEvaluators(
 
    Teuchos::ArrayRCP<string> dof_names_dot(neq);
    if (supportsTransient) {
-     for (int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
+     for (unsigned int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
    }
 
    Teuchos::ArrayRCP<string> resid_names(neq);
-     for (int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
+     for (unsigned int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
 
    if (supportsTransient) fm0.template registerEvaluator<EvalT>
        (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
@@ -178,7 +178,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-   for (int i=0; i<neq; i++) {
+   for (unsigned int i=0; i<neq; i++) {
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFInterpolationEvaluator(dof_names[i], i));
 
@@ -196,7 +196,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<string>("Pressure Source Name", "U GaussMonotone");
+    p->set<string>("Source Name", "U GaussMonotone");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
 
@@ -204,7 +204,10 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Source Functions");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+    Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+    p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
+
+    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -214,7 +217,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<string>("Pressure Source Name", "V GaussMonotone");
+    p->set<string>("Source Name", "V GaussMonotone");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
 
@@ -222,7 +225,10 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Source Functions");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+    Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+    p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
+
+    ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -245,8 +251,8 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<bool>("Have Source", haveSource);
-    p->set<string>("U Pressure Source Name", "U GaussMonotone");
-    p->set<string>("V Pressure Source Name", "V GaussMonotone");
+    p->set<string>("U Source Name", "U GaussMonotone");
+    p->set<string>("V Source Name", "V GaussMonotone");
 
     p->set<double>("Ksqr", ksqr);
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);

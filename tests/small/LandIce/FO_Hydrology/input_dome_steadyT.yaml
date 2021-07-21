@@ -1,0 +1,286 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Debug Output:
+    Write Jacobian to MatrixMarket: 0
+    Write Solution to MatrixMarket: 0
+    Write Residual to MatrixMarket: 0
+    Report Timers: false
+  Problem:
+    Phalanx Graph Visualization Detail: 0
+    Solution Method: Steady
+    Name: LandIce Stokes FO Hydrology
+    Basal Side Name: basalside
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: Glen's Law Homotopy Parameter
+        Nominal Value: 0.2
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Squared L2 Difference Side Source ST Target PST
+        Side Set Name: basalside
+        Field Rank: Scalar
+        Source Field Name: water_thickness_basalside
+        Target Value: 0.0
+    Initial Condition:
+      Function: Constant
+      Function Data: [1.0, 1.0, 100.0]
+    Dirichlet BCs:
+      DBC on NS basal_BoundaryNodeSet1 for DOF water_pressure_basalside: 0.0
+    Neumann BCs: { }
+    LandIce BCs:
+      Number : 1
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Power Law
+          Mu Type: Constant
+          Effective Pressure Type: Field
+          Power Exponent: 0.33
+          Mu Coefficient: 0.01
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: lateralside
+    LandIce Physical Parameters:
+      Water Density:                 1028.0
+      Ice Density:                    910.0
+      Ice Latent Heat Of Fusion:        3.35e+05
+      Gravity Acceleration:             9.8
+      Clausius-Clapeyron Coefficient:   0.0
+    LandIce Viscosity:
+      Type: 'Glen''s Law'
+      Glen's Law A: 3.1689e-24    # [ Pa^-3 s^-1 ]
+      Glen's Law n: 3.0
+      Flow Rate Type: Uniform
+    Body Force:
+      Type: FO INTERP SURF GRAD
+    LandIce Field Norm:
+      sliding_velocity_basalside:
+        Regularization Type: Given Value
+        Regularization Value: 1e-10
+    LandIce Hydrology:
+      Use Water Thickness In Effective Pressure Formula: false
+      Eliminate Water Thickness: true
+      Melting Rate:
+        Distributed Geothermal Flux: false
+        Use Geothermal Melt: true
+        Given Geothermal Flux: 0.06
+        Use Log Scalar Parameters: false
+      Cavities Equation:
+        Nodal: true
+        Use Melting: false
+        Creep Closure Coefficient: 4.0e-02
+        Use Log Scalar Parameters: false
+        Bed Bumps Height: 1.0
+        Bed Bumps Length: 2.0
+      Mass Equation:
+        Lump Mass: false
+        Use Melting: false
+      Darcy Law:
+        Water Thickness Exponent: 1.0
+        Potential Gradient Norm Exponent: 2.0
+        Use Log Scalar Parameters: false
+        Transmissivity: 1.0e-2
+        Regularization:
+          Regularization Type: Given Parameter
+          Regularization Parameter Name: Regularization
+      Surface Water Input:
+        Type: Given Field
+  Discretization:
+    Number Of Time Derivatives: 0
+    Method: Extruded
+    Cubature Degree: 4
+    Exodus Output File Name: results/dome.exo
+    Element Shape: Wedge
+    Columnwise Ordering: true
+    NumLayers: 5
+    Thickness Field Name: ice_thickness
+    Use Glimmer Spacing: true
+    Extrude Basal Node Fields: [ice_thickness, surface_height]
+    Basal Node Fields Ranks: [1, 1]
+    Workset Size: -1
+    Required Fields Info:
+      Number Of Fields: 2
+      Field 0:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+    Side Set Discretizations:
+      Side Sets: [basalside]
+      basalside:
+        Number Of Time Derivatives: 0
+        Cubature Degree: 4
+        Workset Size: 100
+        Method: Gmsh
+        Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle_fine.msh
+        Exodus Output File Name: results/dome_basal.exo
+        Required Fields Info:
+          Number Of Fields: 11
+          Field 0:
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
+          Field 1:
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
+          Field 2:
+            Field Name: surface_water_input
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: [5.47999999999999972e+03]
+          Field 3:
+            Field Name: effective_pressure
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 4:
+            Field Name: beta
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 5:
+            Field Name: water_thickness
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 6:
+            Field Name: hydropotential
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 7:
+            Field Name: ice_overburden
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 8:
+            Field Name: water_discharge
+            Field Type: Elem Gradient
+            Field Usage: Output
+          Field 9:
+            Field Name: sliding_velocity
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 10:
+            Field Name: water_pressure
+            Field Type: Node Scalar
+            Field Usage: Output
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-04
+    Test Value: 3.818041320727e+02
+    Relative Tolerance: 1.0e-04
+  Piro:
+    LOCA:
+      Predictor:
+        Method: Constant
+      Stepper:
+        Initial Value: 5.00000000000000028e-02
+        Continuation Parameter: Glen's Law Homotopy Parameter
+        Continuation Method: Natural
+        Max Steps: 50
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size:
+        Initial Step Size: 5.00000000000000028e-02
+    NOX:
+      Thyra Group Options:
+        Function Scaling: Row Sum
+        Update Row Sum Scaling: Before Each Nonlinear Solve
+      Solver Options:
+        Status Test Check Type: Minimal
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0:
+          Test Type: MaxIters
+          Maximum Iterations: 70
+        Test 1:
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Unscaled
+          Tolerance: 1.0e-02
+        Test 2:
+          Test Type: NormWRMS
+          Absolute Tolerance: 1.00000000000000005e-04
+          Relative Tolerance: 1.00000000000000002e-03
+      Nonlinear Solver: Line Search Based
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver:
+            Write Linear System: false
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: { }
+            Stratimikos:
+              Linear Solver Type: Belos
+              Preconditioner Type: MueLu
+              Linear Solver Types:
+                Belos:
+                  VerboseObject:
+                    Verbosity Level: low
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 9.99999999999999955e-07
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Types:
+                Ifpack2:
+                  Overlap: 0
+                  Prec Type: Amesos2
+                  Ifpack2 Settings:
+                    Amesos2: {}
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: absolute threshold': 9.99999999999999955e-07
+                MueLu:
+                  verbosity: none
+                  max levels: 1
+                  'coarse: max size': 512
+                  multigrid algorithm: sa
+                  'aggregation: type': uncoupled
+                  'smoother: type': RELAXATION
+                  'smoother: params':
+                    'relaxation: type': Jacobi
+                    'relaxation: sweeps': 1
+                    'relaxation: damping factor': 2.50000000000000000e-01
+      Line Search:
+        Method: Backtrack
+        Full Step:
+          Full Step: 1.00000000000000000e+00
+        Backtrack:
+          Max Iters: 10
+          Default Step: 1.00000000000000000e+00
+          Minimum Step: 9.99999999999999955e-07
+          Reduction Factor: 5.00000000000000000e-01
+          Recovery Step: 1.00000000000000002e-03
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+...

@@ -30,11 +30,9 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-  useCollapsedSidesets = dl_basal->useCollapsedSidesets;
-
-  BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), (useCollapsedSidesets) ? dl_basal->node_qp_scalar_sideset : dl_basal->node_qp_scalar);
-  w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Side Name"), (useCollapsedSidesets) ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
-  basalMeltRateQP = decltype(basalMeltRateQP)(p.get<std::string> ("Basal Melt Rate Side QP Variable Name"), (useCollapsedSidesets) ? dl_basal->qp_scalar_sideset : dl_basal->qp_scalar);
+  BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
+  w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_basal->qp_scalar);
+  basalMeltRateQP = decltype(basalMeltRateQP)(p.get<std::string> ("Basal Melt Rate Side QP Variable Name"), dl_basal->qp_scalar);
 
   this->addDependentField(BF);
   this->addDependentField(w_measure);
@@ -44,9 +42,8 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_basal->node_qp_gradient->dimensions(dims);
-  int numSides = dims[1];
-  numSideNodes = dims[2];
-  numSideQPs   = dims[3];
+  numSideNodes = dims[1];
+  numSideQPs   = dims[2];
   numCellNodes = enthalpyBasalResid.fieldTag().dataLayout().extent(1);
 
   dl->node_vector->dimensions(dims);
@@ -54,16 +51,17 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
+  unsigned int numSides = cellType->getSideCount();
   sideDim      = cellType->getDimension()-1;
-  int nodeMax = 0;
-  for (int side=0; side<numSides; ++side) {
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
+  unsigned int nodeMax = 0;
+  for (unsigned int side=0; side<numSides; ++side) {
+    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     nodeMax = std::max(nodeMax, thisSideNodes);
   }
   sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
-  for (int side=0; side<numSides; ++side) {
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    for (int node=0; node<thisSideNodes; ++node) {
+  for (unsigned int side=0; side<numSides; ++side) {
+    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
+    for (unsigned int node=0; node<thisSideNodes; ++node) {
       sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
@@ -74,7 +72,7 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 template<typename EvalT, typename Traits, typename Type>
 KOKKOS_INLINE_FUNCTION
 void EnthalpyBasalResid<EvalT,Traits,Type>::
-operator() (const Enthalpy_Basal_Residual_Collapsed_Tag& tag, const int& sideSet_idx) const{
+operator() (const Enthalpy_Basal_Residual_Tag& tag, const int& sideSet_idx) const{
 
   constexpr int maxNumNodesPerSide = 4;
 
@@ -82,42 +80,16 @@ operator() (const Enthalpy_Basal_Residual_Collapsed_Tag& tag, const int& sideSet
   const int side = sideSet.side_local_id(sideSet_idx);
 
   ScalarT val[maxNumNodesPerSide];
-  for (int node = 0; node < numSideNodes; ++node) {
+  for (unsigned int node = 0; node < numSideNodes; ++node) {
       val[node] = 0;
-      for (int qp = 0; qp < numSideQPs; ++qp) {
+      for (unsigned int qp = 0; qp < numSideQPs; ++qp) {
       val[node] += basalMeltRateQP(sideSet_idx,qp) 
                  * BF(sideSet_idx,node,qp) 
                  * w_measure(sideSet_idx,qp);
     }
   }
   
-  for (int node = 0; node < numSideNodes; ++node) {
-    enthalpyBasalResid(cell, sideNodes(side,node)) += val[node];
-  }
-
-}
-
-template<typename EvalT, typename Traits, typename Type>
-KOKKOS_INLINE_FUNCTION
-void EnthalpyBasalResid<EvalT,Traits,Type>::
-operator() (const Enthalpy_Basal_Residual_Tag& tag, const int& sideSet_idx) const{
-  
-  constexpr int maxNumNodesPerSide = 4;
-
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-
-  ScalarT val[maxNumNodesPerSide];
-  for (int node = 0; node < numSideNodes; ++node) {
-      val[node] = 0;
-      for (int qp = 0; qp < numSideQPs; ++qp) {
-      val[node] += basalMeltRateQP(cell,side,qp) 
-                 * BF(cell,side,node,qp) 
-                 * w_measure(cell,side,qp);
-    }
-  }
-  
-  for (int node = 0; node < numSideNodes; ++node) {
+  for (unsigned int node = 0; node < numSideNodes; ++node) {
     enthalpyBasalResid(cell, sideNodes(side,node)) += val[node];
   }
 
@@ -145,36 +117,7 @@ evaluateFields(typename Traits::EvalData d)
 
   sideSet = d.sideSetViews->at(basalSideName);
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (useCollapsedSidesets) {
-    Kokkos::parallel_for(Enthalpy_Basal_Residual_Collapsed_Policy(0, sideSet.size), *this);
-  } else {
-    Kokkos::parallel_for(Enthalpy_Basal_Residual_Policy(0, sideSet.size), *this);
-  }
-#else
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
-    // Get the local data of side and cell
-    const int cell = sideSet.elem_LID(sideSet_idx);
-    const int side = sideSet.side_local_id(sideSet_idx);
-
-    for (int node = 0; node < numSideNodes; ++node)
-    {
-      int cnode = sideNodes(side,node);
-      enthalpyBasalResid(cell,cnode) = 0.;
-
-      for (int qp = 0; qp < numSideQPs; ++qp)
-      {
-        if (useCollapsedSidesets) {
-          enthalpyBasalResid(cell,cnode) += basalMeltRateQP(sideSet_idx,qp) *  BF(sideSet_idx,node,qp) * w_measure(sideSet_idx,qp);
-        } else {
-          enthalpyBasalResid(cell,cnode) += basalMeltRateQP(cell,side,qp) *  BF(cell,side,node,qp) * w_measure(cell,side,qp);
-        }
-      }
-    }
-  }
-#endif
-
+  Kokkos::parallel_for(Enthalpy_Basal_Residual_Policy(0, sideSet.size), *this);
 }
 
 } // namespace LandIce

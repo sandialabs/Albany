@@ -91,6 +91,7 @@ namespace Albany {
    double                 C;      // heat capacity
    double                 rho;    // density
    std::string            thermal_source; //thermal source name 
+   bool                   conductivityIsDistParam;
 
    //! Problem PL 
    const Teuchos::RCP<Teuchos::ParameterList> params; 
@@ -217,35 +218,64 @@ Albany::ThermalProblem::constructEvaluators(
         evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
-  {  //Shared parameter for sensitivity analysis: kappa_x
+  if (!conductivityIsDistParam) {  
+    //Shared parameter for sensitivity analysis: kappa_x
     RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_x"));
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     const std::string param_name = "kappa_x Parameter";
     p->set<std::string>("Parameter Name", param_name);
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<double>("Default Nominal Value", kappa[0]);
     RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>> ptr_kappa_x;
     ptr_kappa_x = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>(*p,dl));
-    ptr_kappa_x->setNominalValue(params->sublist("Parameters"), kappa[0]);
     fm0.template registerEvaluator<EvalT>(ptr_kappa_x);
+
+    if (numDim > 1) {  //Shared parameter for sensitivity analysis: kappa_y
+      RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_y"));
+      p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+      const std::string param_name = "kappa_y Parameter";
+      p->set<std::string>("Parameter Name", param_name);
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      p->set<double>("Default Nominal Value", kappa[1]);
+      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>> ptr_kappa_y;
+      ptr_kappa_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_kappa_y);
+    }
+    if (numDim > 2) {  //Shared parameter for sensitivity analysis: kappa_z
+      RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_z"));
+      p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+      const std::string param_name = "kappa_z Parameter";
+      p->set<std::string>("Parameter Name", param_name);
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      p->set<double>("Default Nominal Value", kappa[2]);
+      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>> ptr_kappa_z;
+      ptr_kappa_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_kappa_z);
+    }
   }
-  if (numDim > 1) {  //Shared parameter for sensitivity analysis: kappa_y
-    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_y"));
-    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
-    const std::string param_name = "kappa_y Parameter";
-    p->set<std::string>("Parameter Name", param_name);
-    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>> ptr_kappa_y;
-    ptr_kappa_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>(*p,dl));
-    ptr_kappa_y->setNominalValue(params->sublist("Parameters"), kappa[1]); 
-    fm0.template registerEvaluator<EvalT>(ptr_kappa_y);
-  }
-  if (numDim > 2) {  //Shared parameter for sensitivity analysis: kappa_z
-    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_z"));
-    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
-    const std::string param_name = "kappa_z Parameter";
-    p->set<std::string>("Parameter Name", param_name);
-    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>> ptr_kappa_z;
-    ptr_kappa_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>(*p,dl));
-    ptr_kappa_z->setNominalValue(params->sublist("Parameters"), kappa[2]); 
-    fm0.template registerEvaluator<EvalT>(ptr_kappa_z);
+  else //conductivityIsDistParam
+  {
+    RCP<ParameterList> p = rcp(new ParameterList);
+    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+    std::string stateName = "thermal_conductivity";
+    std::string fieldName = "ThermalConductivity";
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
+
+    //Gather parameter (similarly to what done with the solution)
+    ev = evalUtils.constructGatherScalarNodalParameter(stateName,fieldName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Scalar Nodal parameter is stored as a ParamScalarT, while the residual evaluator expect a ScalarT.
+    // Hence, if ScalarT!=ParamScalarT, we need to convert the field into a ScalarT 
+    if(!std::is_same<typename EvalT::ScalarT,typename EvalT::ParamScalarT>::value) {
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Data Layout", dl->node_scalar);
+      p->set<std::string>("Field Name", fieldName);
+      ev = Teuchos::rcp(new PHAL::ConvertFieldTypePSTtoST<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(fieldName));
+    stateName = "thermal_conductivity_sensitivity";
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
   }
 
   {  // Temperature Resid
@@ -264,9 +294,15 @@ Albany::ThermalProblem::constructEvaluators(
     p->set<RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
     p->set<RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
     p->set<RCP<DataLayout>>("Node Scalar Data Layout", dl->node_scalar);
-    p->set<std::string>("Thermal Conductivity: kappa_x","kappa_x Parameter");
-    if (numDim > 1) p->set<std::string>("Thermal Conductivity: kappa_y","kappa_y Parameter");
-    if (numDim > 2) p->set<std::string>("Thermal Conductivity: kappa_z","kappa_z Parameter");
+    if (!conductivityIsDistParam) {  
+      p->set<std::string>("Thermal Conductivity: kappa_x","kappa_x Parameter");
+      if (numDim > 1) p->set<std::string>("Thermal Conductivity: kappa_y","kappa_y Parameter");
+      if (numDim > 2) p->set<std::string>("Thermal Conductivity: kappa_z","kappa_z Parameter");
+    }
+    else {
+      p->set<string>("ThermalConductivity Name", "ThermalConductivity");
+      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    }
     if (SolutionType != SolutionMethodType::Transient) {
       p->set<bool>("Disable Transient", true);
     }
@@ -275,6 +311,7 @@ Albany::ThermalProblem::constructEvaluators(
     }
     p->set<double>("Heat Capacity", C);
     p->set<double>("Density", rho);
+    p->set<bool>("Distributed Thermal Conductivity", conductivityIsDistParam);
     p->set<std::string>("Thermal Source", thermal_source); 
 
     // Output

@@ -46,6 +46,7 @@ struct HessianWorkset
   Teuchos::RCP<Thyra_MultiVector> direction_p;
 
   Teuchos::RCP<Thyra_Vector> f_multiplier;
+  Teuchos::RCP<Thyra_Vector> overlapped_f_multiplier;
 
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xx;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xp;
@@ -114,6 +115,8 @@ struct Workset
   Teuchos::RCP<const Albany::SideSetList> sideSets;
   Teuchos::RCP<const Albany::LocalSideSetInfoList> sideSetViews;
 
+  Teuchos::RCP<const std::map<std::string, Kokkos::View<LO****, PHX::Device>>> localDOFViews;
+
   // jacobian and mass matrix coefficients for matrix fill
   double j_coeff;
   double m_coeff;  // d(x_dot)/dx_{new}
@@ -171,11 +174,6 @@ struct Workset
   // residual (such as linear problems), but if it does work it can
   // significantly reduce Jacobian calculation cost.
   bool ignore_residual;
-
-  // Flag indicated whether we are solving the adjoint operator or the
-  // forward operator.  This is used in the Albany application when
-  // either the Jacobian or the transpose of the Jacobian is scattered.
-  bool is_adjoint;
 
   // New field manager response stuff
   Teuchos::RCP<const Teuchos::Comm<int>> comm;

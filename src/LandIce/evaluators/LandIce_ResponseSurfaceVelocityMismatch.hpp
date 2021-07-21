@@ -36,38 +36,44 @@ namespace LandIce {
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    std::string surfaceSideName;
+    std::string surfaceSideName;    
+    Albany::LocalSideSetInfo sideSet;
 
-    int numSideNodes;
-    int numBasalQPs;
-    int numSurfaceQPs;
-    int numSideDims;
+    unsigned int numSideNodes;
+    unsigned int numBasalQPs;
+    unsigned int numSurfaceQPs;
+    unsigned int numSideDims;
 
-    PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>      velocity;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint,VecDim>     observedVelocity;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint,VecDim>     observedVelocityRMS;
-    PHX::MDField<const RealType,Cell,Side,QuadPoint>            observedVelocityMagnitudeRMS;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>         w_measure_surface;
+    PHX::MDField<const ScalarT,Side,QuadPoint,VecDim>  velocity;
+    PHX::MDField<const RealType,Side,QuadPoint,VecDim> observedVelocity;
+    PHX::MDField<const RealType,Side,QuadPoint,VecDim> observedVelocityRMS;
+    PHX::MDField<const RealType,Side,QuadPoint>        observedVelocityMagnitudeRMS;
+    PHX::MDField<const MeshScalarT,Side,QuadPoint>     w_measure_surface;
 
     //PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric_surface;
 
     // Stuff for stifferning regularization
     std::string basalSideName;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_stiffening;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         stiffening;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure_basal;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric_basal;
+    PHX::MDField<const ParamScalarT,Side,QuadPoint,Dim>    grad_stiffening;
+    PHX::MDField<const ParamScalarT,Side,QuadPoint>        stiffening;
+    PHX::MDField<const MeshScalarT,Side,QuadPoint>         w_measure_basal;
+    PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim> metric_basal;
 
     // Stuff for beta regularization
-    std::vector<Teuchos::RCP<Teuchos::ParameterList>>                         beta_reg_params;
-    std::vector<PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>>          grad_beta_vec;
-    std::vector<PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>>          w_measure_beta_vec;
-    std::vector<PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>>  metric_beta_vec;
-    Teuchos::RCP<const CellTopologyData>                                      cell_topo;
+    std::vector<Teuchos::RCP<Teuchos::ParameterList>> beta_reg_params;
+    std::vector<PHX::MDField<const ParamScalarT,Side,QuadPoint,Dim>>    grad_beta_vec;
+    std::vector<PHX::MDField<const MeshScalarT,Side,QuadPoint>>         w_measure_beta_vec;
+    std::vector<PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>> metric_beta_vec;
+    Teuchos::RCP<const CellTopologyData> cell_topo;
+
+    PHX::MDField<const ParamScalarT> grad_beta;
+    PHX::MDField<const MeshScalarT>  metric;
+    PHX::MDField<const MeshScalarT>  w_measure;
 
     ScalarT p_resp, p_reg, resp, reg, p_reg_stiffening,reg_stiffening;
     double scaling, alpha, asinh_scaling, alpha_stiffening;
     bool scalarRMS;
+
   };
 
 } // Namespace LandIce

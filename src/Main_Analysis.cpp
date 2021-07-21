@@ -10,6 +10,7 @@
 #include "Albany_CommUtils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_RegressionTests.hpp"
+#include "Albany_ObserverImpl.hpp"
 
 #include "Albany_FactoriesHelpers.hpp"
 
@@ -83,9 +84,11 @@ int main(int argc, char *argv[]) {
 
     Teuchos::RCP< Thyra::VectorBase<double> > p;
 
+    Teuchos::RCP<Albany::ObserverImpl> observer = Teuchos::rcp( new Albany::ObserverImpl(albanyApp));
+
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
-    status = Piro::PerformAnalysis(*fwd_solver, slvrfctry.getAnalysisParameters(), p);
+    status = Piro::PerformAnalysis(*fwd_solver, slvrfctry.getParameters()->sublist("Piro"), p, observer);
 
     Albany::RegressionTests regression(slvrfctry.getParameters());
     status = regression.checkAnalysisTestResults(0, p);

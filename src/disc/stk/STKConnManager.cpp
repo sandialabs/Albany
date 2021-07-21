@@ -37,8 +37,8 @@ private:
 };
 
 STKConnManager::STKConnManager(const Teuchos::RCP<AbstractSTKMeshStruct>& absSTKMeshStruct)
-   : stkMeshStruct_(absSTKMeshStruct), bulkData_(absSTKMeshStruct->bulkData),
-     metaData_(absSTKMeshStruct->metaData), ownedElementCount_(0), useFieldCoordinates_(false)
+   : ownedElementCount_(0), metaData_(absSTKMeshStruct->metaData),
+     bulkData_(absSTKMeshStruct->bulkData), stkMeshStruct_(absSTKMeshStruct), useFieldCoordinates_(false)
 {
 
      buildEntityCounts();
@@ -394,6 +394,14 @@ void STKConnManager::applyInterfaceConditions()
       elmtToAssociatedElmts_[eb_id].push_back(ea_id);
     }
   }
+}
+
+std::size_t STKConnManager::
+get_parent_cell_id(stk::mesh::Entity side) const
+{
+   stk::mesh::Entity const* elements = bulkData_->begin_elements(side);
+   const std::size_t ea_id = getElementIdx(*elements_, elements[0]);
+   return ea_id;
 }
 
 std::vector<std::string> STKConnManager::

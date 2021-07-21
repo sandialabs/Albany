@@ -49,7 +49,7 @@ private:
 
   PHX::MDField<const ScalarT,Cell,Node>   dH;
   PHX::MDField<const RealType,Cell,Node>  H0;
-  PHX::MDField<const ScalarT,Side,Cell,Node,Dim> V;
+  PHX::MDField<const ScalarT> V;
   PHX::MDField<const ParamScalarT,Cell,Node> SMB;
   PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
   
@@ -57,13 +57,12 @@ private:
   PHX::MDField<ScalarT,Cell,Node> Residual;
 
 
-  int  cellDims, numNodes, cubatureDegree;
+  unsigned int  cellDims, numNodes, cubatureDegree;
   Teuchos::RCP<double> dt;
   bool have_SMB;
   std::string sideSetName;
 
   std::size_t numVecFODims;
-
 
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;

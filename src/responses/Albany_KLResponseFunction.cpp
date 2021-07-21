@@ -70,7 +70,7 @@ evaluateDistParamDeriv(
 }
 
 void KLResponseFunction::
-evaluateDistParamHessVecProd_xx(
+evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -79,11 +79,11 @@ evaluateDistParamHessVecProd_xx(
     const Teuchos::Array<ParamVec>& param_array,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
-  response->evaluateDistParamHessVecProd_xx(current_time, v, x, xdot, xdotdot, param_array, Hv_dp);
+  response->evaluate_HessVecProd_xx(current_time, v, x, xdot, xdotdot, param_array, Hv_dp);
 }
 
 void KLResponseFunction::
-evaluateDistParamHessVecProd_xp(
+evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -93,11 +93,11 @@ evaluateDistParamHessVecProd_xp(
     const std::string& dist_param_direction_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
-  response->evaluateDistParamHessVecProd_xp(current_time, v, x, xdot, xdotdot, param_array, dist_param_direction_name, Hv_dp);
+  response->evaluate_HessVecProd_xp(current_time, v, x, xdot, xdotdot, param_array, dist_param_direction_name, Hv_dp);
 }
 
 void KLResponseFunction::
-evaluateDistParamHessVecProd_px(
+evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -107,11 +107,11 @@ evaluateDistParamHessVecProd_px(
     const std::string& dist_param_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
-  response->evaluateDistParamHessVecProd_px(current_time, v, x, xdot, xdotdot, param_array, dist_param_name, Hv_dp);
+  response->evaluate_HessVecProd_px(current_time, v, x, xdot, xdotdot, param_array, dist_param_name, Hv_dp);
 }
 
 void KLResponseFunction::
-evaluateDistParamHessVecProd_pp(
+evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -122,7 +122,7 @@ evaluateDistParamHessVecProd_pp(
     const std::string& dist_param_direction_name,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
-  response->evaluateDistParamHessVecProd_pp(current_time, v, x, xdot, xdotdot, param_array, dist_param_name, dist_param_direction_name, Hv_dp);
+  response->evaluate_HessVecProd_pp(current_time, v, x, xdot, xdotdot, param_array, dist_param_name, dist_param_direction_name, Hv_dp);
 }
 
 void KLResponseFunction::
@@ -140,6 +140,12 @@ evaluateDerivative(const double current_time,
 {
   response->evaluateDerivative(current_time, x, xdot, xdotdot, p, deriv_p,
                                g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
+}
+
+void
+KLResponseFunction::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out){
+  response->printResponse(out);
 }
 
 } // namespace Albany

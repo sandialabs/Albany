@@ -6,14 +6,50 @@
 
 # Configure the file containing Albany configuration macros,
 # and add its folder to the include directories
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in
-                ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h)
+# Note: write to a temp file, and only copy into Albany_config.h if
+#       the temp file is different
+macro (CreateAlbanyConfig_h)
+  set (SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in)
+  set (CFG_FILE ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h)
+  set (TMP_FILE ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h.tmp)
+
+  configure_file (${SRC_FILE} ${TMP_FILE})
+
+  set (OUT_OF_DATE TRUE)
+
+  if (EXISTS ${CFG_FILE})
+    # we rely on FILE macro rather than running diff, since it is
+    # more portable (guaranteed to work regardless of underlying system)
+    file (READ ${CFG_FILE} CFG_FILE_STR)
+    file (READ ${TMP_FILE} TMP_FILE_STR)
+
+    if (${CFG_FILE_STR} STREQUAL ${TMP_FILE_STR})
+      # config file was present and appears unchanged
+      set (OUT_OF_DATE FALSE)
+    endif()
+  endif ()
+
+  if (OUT_OF_DATE)
+    file (RENAME ${TMP_FILE} ${CFG_FILE})
+  else()
+    file (REMOVE ${TMP_FILE})
+  endif()
+endmacro()
+
+CreateAlbanyConfig_h()
 
 include(CheckCXXSourceCompiles)
 
 set (CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
 set (CMAKE_REQUIRED_LIBRARIES ${Trilinos_LIBRARY_DIRS})
 set (CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
+
+# If Albany is built against a Trilinos installation which includes pytrilinos,
+# Albany should not be linked to pytrilinos. The pytrilinos dynamic library can
+# undefined python related symbols.
+if (";${Trilinos_LIBRARIES};" MATCHES ";pytrilinos;")
+  list(REMOVE_ITEM Trilinos_LIBRARIES pytrilinos)
+endif()
 
 # Add Albany external libraries
 set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
@@ -134,6 +170,7 @@ list (APPEND SOURCES
   utility/Albany_CommUtils.cpp
   utility/Albany_Gather.cpp
   utility/Albany_GlobalLocalIndexer.cpp
+  utility/Albany_Hessian.cpp
   utility/Albany_ThyraCrsMatrixFactory.cpp
   utility/Albany_ThyraBlockedCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
@@ -156,6 +193,7 @@ list (APPEND HEADERS
   utility/Albany_Gather.hpp
   utility/Albany_GlobalLocalIndexer.hpp
   utility/Albany_GlobalLocalIndexerTpetra.hpp
+  utility/Albany_Hessian.hpp
   utility/Albany_ThyraCrsMatrixFactory.hpp
   utility/Albany_ThyraBlockedCrsMatrixFactory.hpp
   utility/Albany_ThyraUtils.hpp
@@ -269,7 +307,6 @@ list (APPEND SOURCES
   disc/Adapt_NodalDataVector.cpp
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
-  disc/BlockedDiscretization.cpp
   )
 list (APPEND HEADERS
   disc/Adapt_NodalDataBase.hpp
@@ -283,13 +320,13 @@ list (APPEND HEADERS
   disc/Albany_DiscretizationFactory.hpp
   disc/Albany_MeshSpecs.hpp
   disc/Albany_NodalDOFManager.hpp
-  disc/BlockedDiscretization.hpp
   )
 
 #stk
 list(APPEND SOURCES
   disc/stk/Albany_AsciiSTKMesh2D.cpp
   disc/stk/Albany_AsciiSTKMeshStruct.cpp
+  disc/stk/Albany_BlockedSTKDiscretization.cpp
   disc/stk/Albany_ExtrudedSTKMeshStruct.cpp
   disc/stk/Albany_GenericSTKFieldContainer.cpp
   disc/stk/Albany_GenericSTKMeshStruct.cpp
@@ -311,6 +348,7 @@ list (APPEND HEADERS
   disc/stk/Albany_AbstractSTKMeshStruct.hpp
   disc/stk/Albany_AsciiSTKMeshStruct.hpp
   disc/stk/Albany_AsciiSTKMesh2D.hpp
+  disc/stk/Albany_BlockedSTKDiscretization.hpp
   disc/stk/Albany_ExtrudedSTKMeshStruct.hpp
   disc/stk/Albany_GenericSTKMeshStruct.hpp
   disc/stk/Albany_GmshSTKMeshStruct.hpp
@@ -368,22 +406,20 @@ list (APPEND SOURCES
   evaluators/gather/PHAL_GatherCoordinateVector.cpp
   evaluators/gather/PHAL_GatherScalarNodalParameter.cpp
   evaluators/gather/PHAL_GatherSolution.cpp
+  evaluators/gather/PHAL_GatherSolutionSide.cpp
   evaluators/interpolation/PHAL_DOFCellToSide.cpp
   evaluators/interpolation/PHAL_DOFCellToSideQP.cpp
   evaluators/interpolation/PHAL_DOFGradInterpolation.cpp
   evaluators/interpolation/PHAL_DOFGradInterpolationSide.cpp
   evaluators/interpolation/PHAL_DOFInterpolation.cpp
   evaluators/interpolation/PHAL_DOFInterpolationSide.cpp
-  evaluators/interpolation/PHAL_DOFSideToCell.cpp
   evaluators/interpolation/PHAL_DOFTensorGradInterpolation.cpp
   evaluators/interpolation/PHAL_DOFTensorInterpolation.cpp
   evaluators/interpolation/PHAL_DOFVecGradInterpolation.cpp
   evaluators/interpolation/PHAL_DOFVecGradInterpolationSide.cpp
   evaluators/interpolation/PHAL_DOFVecInterpolation.cpp
   evaluators/interpolation/PHAL_DOFVecInterpolationSide.cpp
-  evaluators/interpolation/PHAL_NodesToCellInterpolation.cpp
-  evaluators/interpolation/PHAL_QuadPointsToCellInterpolation.cpp
-  evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation.cpp
+  evaluators/interpolation/PHAL_P0Interpolation.cpp
   evaluators/pde/PHAL_HeatEqResid.cpp
   evaluators/pde/PHAL_NSMaterialProperty.cpp
   evaluators/pde/PHAL_SideLaplacianResidual.cpp
@@ -415,6 +451,7 @@ list (APPEND SOURCES
   evaluators/utility/PHAL_MapToPhysicalFrame.cpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide.cpp
   evaluators/utility/PHAL_Source.cpp
+  evaluators/utility/PHAL_Field_Source.cpp
   )
 
 if(ALBANY_STK_EXPR_EVAL)
@@ -456,6 +493,8 @@ list (APPEND HEADERS
   evaluators/gather/PHAL_GatherScalarNodalParameter_Def.hpp
   evaluators/gather/PHAL_GatherSolution.hpp
   evaluators/gather/PHAL_GatherSolution_Def.hpp
+  evaluators/gather/PHAL_GatherSolutionSide.hpp
+  evaluators/gather/PHAL_GatherSolutionSide_Def.hpp
   evaluators/interpolation/PHAL_DOFCellToSide.hpp
   evaluators/interpolation/PHAL_DOFCellToSideQP.hpp
   evaluators/interpolation/PHAL_DOFCellToSideQP_Def.hpp
@@ -468,8 +507,6 @@ list (APPEND HEADERS
   evaluators/interpolation/PHAL_DOFInterpolationSide.hpp
   evaluators/interpolation/PHAL_DOFInterpolationSide_Def.hpp
   evaluators/interpolation/PHAL_DOFInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_DOFSideToCell.hpp
-  evaluators/interpolation/PHAL_DOFSideToCell_Def.hpp
   evaluators/interpolation/PHAL_DOFTensorGradInterpolation.hpp
   evaluators/interpolation/PHAL_DOFTensorGradInterpolation_Def.hpp
   evaluators/interpolation/PHAL_DOFTensorInterpolation.hpp
@@ -482,12 +519,8 @@ list (APPEND HEADERS
   evaluators/interpolation/PHAL_DOFVecInterpolationSide.hpp
   evaluators/interpolation/PHAL_DOFVecInterpolationSide_Def.hpp
   evaluators/interpolation/PHAL_DOFVecInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_NodesToCellInterpolation.hpp
-  evaluators/interpolation/PHAL_NodesToCellInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_QuadPointsToCellInterpolation.hpp
-  evaluators/interpolation/PHAL_QuadPointsToCellInterpolation_Def.hpp
-  evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation.hpp
-  evaluators/interpolation/PHAL_SideQuadPointsToSideInterpolation_Def.hpp
+  evaluators/interpolation/PHAL_P0Interpolation.hpp
+  evaluators/interpolation/PHAL_P0Interpolation_Def.hpp
   evaluators/pde/PHAL_HeatEqResid.hpp
   evaluators/pde/PHAL_HeatEqResid_Def.hpp
   evaluators/pde/PHAL_NSMaterialProperty.hpp
@@ -549,6 +582,8 @@ list (APPEND HEADERS
   evaluators/utility/PHAL_MapToPhysicalFrame_Def.hpp
   evaluators/utility/PHAL_Source.hpp
   evaluators/utility/PHAL_Source_Def.hpp
+  evaluators/utility/PHAL_Field_Source.hpp
+  evaluators/utility/PHAL_Field_Source_Def.hpp
   )
 
 if(ALBANY_STK_EXPR_EVAL)

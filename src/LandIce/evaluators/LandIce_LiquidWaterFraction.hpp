@@ -26,13 +26,13 @@ namespace LandIce
   This evaluator computes the liquid water fraction in temperate ice
  */
 
-template<typename EvalT, typename Traits, typename Type>
+template<typename EvalT, typename Traits, typename EntalpyType>
 class LiquidWaterFraction: public PHX::EvaluatorWithBaseImpl<Traits>,
                            public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   LiquidWaterFraction (const Teuchos::ParameterList& p,
                        const Teuchos::RCP<Albany::Layouts>& dl);
@@ -44,22 +44,20 @@ public:
 
 private:
   // This is just to allow ETI machinery to work. In a real setting, ScalarT should always be constructible from Type
-  typedef typename Albany::StrongestScalarType<Type,ScalarT>::type OutputScalarT;
+  typedef typename Albany::StrongestScalarType<EntalpyType,MeshScalarT>::type OutputScalarT;
 
   // Input:
-  PHX::MDField<const Type,Cell,Node> 		  enthalpyHs;  //[MW s m^{-3}]
-  PHX::MDField<const ScalarT,Cell,Node> 	enthalpy;  //[MW s m^{-3}]
+  PHX::MDField<const MeshScalarT,Cell,Node> enthalpyHs;  //[MW s m^{-3}]
+  PHX::MDField<const EntalpyType,Cell,Node> 	      enthalpy;  //[MW s m^{-3}]
 
   // Output:
   PHX::MDField<OutputScalarT,Cell,Node>   phi;         //[adim]
 
-  int numNodes;
+  unsigned int numNodes;
 
   double L;      //[J kg^{-1}] = [ m^2 s^{-2}]
   double rho_w;  //[kg m^{-3}]
   double phi_scaling; //[MW^{-1} s^{-1} m^{3}]
-
-  ScalarT printedAlpha;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 

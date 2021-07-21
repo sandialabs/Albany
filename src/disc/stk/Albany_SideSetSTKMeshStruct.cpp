@@ -25,9 +25,10 @@ namespace Albany
 {
 
 SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
+                                            const MeshSpecsStruct& inputSideMeshSpecs,
                                             const Teuchos::RCP<Teuchos::ParameterList>& params,
                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
-					    const int numParams) :
+                                            const int numParams) :
   GenericSTKMeshStruct(params, -1, numParams)
 {
 
@@ -84,8 +85,10 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
 
   std::vector<std::string> ssNames; // Empty
   int cub = params->get("Cubature Degree", 3);
+
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax,inputMeshSpecs.worksetSize);
+  int worksetSize = this->computeWorksetSize(worksetSizeMax,
+      inputSideMeshSpecs.singleWorksetSizeAllocation ? inputSideMeshSpecs.worksetSize : inputMeshSpecs.worksetSize);
 
   std::string ebn = "Element Block 0";
   partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
@@ -100,6 +103,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, this->numDim, cub, nsNames, ssNames, worksetSize,
                                                                 ebn, ebNameToIndex, this->interleavedOrdering));
+  if (inputSideMeshSpecs.singleWorksetSizeAllocation) this->meshSpecs[0]->singleWorksetSizeAllocation = true;
 
   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
   bulkData = Teuchos::rcp(new stk::mesh::BulkData(*metaData, *mpiComm->getRawMpiComm(),
@@ -119,18 +123,25 @@ void SideSetSTKMeshStruct::setParentMeshInfo (const AbstractSTKMeshStruct& paren
   parentMeshSideSetName = sideSetName;
 }
 
-void SideSetSTKMeshStruct::setFieldAndBulkData (
+void SideSetSTKMeshStruct::setFieldData (
       const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const Teuchos::RCP<Teuchos::ParameterList>& /*params*/,
-      const unsigned int neq_,
       const AbstractFieldContainer::FieldContainerRequirements& req,
       const Teuchos::RCP<StateInfoStruct>& sis,
       const unsigned int worksetSize,
       const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/,
       const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
-  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
+  this->SetupFieldData(commT, req, sis, worksetSize);
+}
 
+void SideSetSTKMeshStruct::setBulkData (
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<StateInfoStruct>& sis,
+      const unsigned int worksetSize,
+      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/,
+      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
+{
   TEUCHOS_TEST_FOR_EXCEPTION (parentMeshStruct->ssPartVec.find(parentMeshSideSetName)==parentMeshStruct->ssPartVec.end(), std::logic_error,
                               "Error! The side set " << parentMeshSideSetName << " is not present in the input mesh.\n");
 

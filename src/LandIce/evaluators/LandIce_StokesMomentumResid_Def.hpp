@@ -63,15 +63,15 @@ template<typename EvalT, typename Traits>
 void StokesMomentumResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int node=0; node < numNodes; ++node) {
-      for (int i=0; i<numDims; i++) {
+  for (unsigned int cell=0; cell < workset.numCells; ++cell) {
+    for (unsigned int node=0; node < numNodes; ++node) {
+      for (unsigned int i=0; i<numDims; i++) {
   MResidual(cell,node,i) = 0.0;
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int qp=0; qp < numQPs; ++qp) {
     MResidual(cell,node,i) +=
       force(cell,qp,i)*wBF(cell,node,qp) -
        P(cell,qp)*wGradBF(cell,node,qp,i);
-    for (int j=0; j < numDims; ++j) {
+    for (unsigned int j=0; j < numDims; ++j) {
       MResidual(cell,node,i) +=
         muLandIce(cell,qp)*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
 //        muLandIce(cell,qp)*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);

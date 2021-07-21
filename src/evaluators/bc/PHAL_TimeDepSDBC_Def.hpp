@@ -19,7 +19,7 @@ namespace PHAL {
 //
 template <typename EvalT, typename Traits>
 TimeDepSDBC_Base<EvalT, Traits>::TimeDepSDBC_Base(Teuchos::ParameterList& p)
-    : offset_(p.get<int>("Equation Offset")), PHAL::SDirichlet<EvalT, Traits>(p)
+    : PHAL::SDirichlet<EvalT, Traits>(p), offset_(p.get<int>("Equation Offset"))
 {
   times_  = p.get<Teuchos::Array<RealType>>("Time Values").toVector();
   values_ = p.get<Teuchos::Array<RealType>>("BC Values").toVector();

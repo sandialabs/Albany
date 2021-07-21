@@ -47,4 +47,10 @@ void ScalarResponseFunction::evaluateDerivative(
     dg_dxdotdot.getMultiVector(), dg_dp.getMultiVector());
 }
 
+void
+ScalarResponseFunction::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
+{
+}
+
 } // namespace Albany

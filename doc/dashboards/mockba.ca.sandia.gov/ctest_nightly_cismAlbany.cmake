@@ -251,6 +251,10 @@ if (BUILD_CISM_PISCEES)
   #
   # Run CISM-Albany tests
   #
+  #  Over-write default limit for output posted to CDash site
+  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
+  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
+  
   set (CTEST_TEST_TIMEOUT 1500)
 
   CTEST_TEST(

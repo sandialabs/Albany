@@ -9,4 +9,4 @@
 #include "LandIce_FlowRate.hpp"
 #include "LandIce_FlowRate_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::FlowRate)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(LandIce::FlowRate);

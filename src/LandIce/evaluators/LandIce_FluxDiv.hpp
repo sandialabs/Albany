@@ -13,6 +13,8 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "Albany_SacadoTypes.hpp"
+
 #include "PHAL_Utilities.hpp"
 
 namespace LandIce
@@ -45,21 +47,36 @@ public:
 
 private:
 
+  using GradThicknessScalarT = typename Albany::StrongestScalarType<ThicknessScalarT,MeshScalarT>::type;
+
   // Input:
-  PHX::MDField<const ScalarT> field;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>       averaged_velocity;
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>              div_averaged_velocity;
-  PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint>     thickness;
-  PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint,Dim> grad_thickness;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  side_tangents;
+  PHX::MDField<const ScalarT>                                 field;
+  PHX::MDField<const ScalarT,Side,QuadPoint,VecDim>           averaged_velocity;
+  PHX::MDField<const ScalarT,Side,QuadPoint>                  div_averaged_velocity;
+  PHX::MDField<const ThicknessScalarT,Side,QuadPoint>         thickness;
+  PHX::MDField<const GradThicknessScalarT,Side,QuadPoint,Dim> grad_thickness;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>      side_tangents;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>              flux_div;
+  PHX::MDField<ScalarT,Side,QuadPoint>                        flux_div;
 
   std::string sideSetName;
-  int numSideQPs, numSideDims;
+  unsigned int numSideQPs, numSideDims;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+  Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct FluxDiv_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, FluxDiv_Tag> FluxDiv_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FluxDiv_Tag& tag, const int& sideSet_idx) const;
+
 };
 
 } // Namespace LandIce

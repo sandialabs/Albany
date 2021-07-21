@@ -37,6 +37,11 @@ evaluateResponse(const double /*current_time*/,
 {
   Teuchos::ScalarTraits<ST>::magnitudeType twonorm = x->norm_2();
   g->assign(twonorm);
+
+  if (g_.is_null())
+    g_ = Thyra::createMember(g->space());
+
+  g_->assign(*g);
 }
 
 void
@@ -149,7 +154,7 @@ evaluateDistParamDeriv(
 
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateDistParamHessVecProd_xx(
+evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -174,7 +179,7 @@ evaluateDistParamHessVecProd_xx(
 
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateDistParamHessVecProd_xp(
+evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -191,7 +196,7 @@ evaluateDistParamHessVecProd_xp(
 
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateDistParamHessVecProd_px(
+evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -208,7 +213,7 @@ evaluateDistParamHessVecProd_px(
 
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateDistParamHessVecProd_pp(
+evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -221,5 +226,25 @@ evaluateDistParamHessVecProd_pp(
 {
   if (!Hv_dp.is_null()) {
     Hv_dp->assign(0.0);
+  }
+}
+
+void
+Albany::SolutionTwoNormResponseFunction::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
+{
+  if (g_.is_null()) {
+    *out << " the response has not been evaluated yet!";
+    return;
+  }
+
+  std::size_t precision = 8;
+  std::size_t value_width = precision + 4;
+  int gsize = g_->space()->dim();
+
+  for (int j = 0; j < gsize; j++) {
+    *out << std::setw(value_width) << Thyra::get_ele(*g_,j);
+    if (j < gsize-1)
+      *out << ", ";
   }
 }

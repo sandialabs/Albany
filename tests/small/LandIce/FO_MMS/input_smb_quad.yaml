@@ -47,18 +47,18 @@ ANONYMOUS:
         Type: Basal Friction
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Given Constant
-          Constant Given Beta Value: 1.0
+          Type: Constant
+          Beta: 1.0
     LandIce Physical Parameters: 
       Water Density: 1.028e+03
       Ice Density: 9.10e+02
       Gravity Acceleration: 9.8e+00
       Clausius-Clapeyron Coefficient: 0.0e+00
     LandIce Viscosity: 
-      Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 1.0e-01
-      'Glen''s Law A': 1.0e-04
-      'Glen''s Law n': 3.0e+00
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 1.0e-01
+      Glen's Law A: 3.17098e-24    # [ Pa^-3 s^-1 ]
+      Glen's Law n: 3.0e+00
       Flow Rate Type: Uniform
     Body Force: 
       Type: FO INTERP SURF GRAD
@@ -142,7 +142,7 @@ ANONYMOUS:
         Method: Constant
       Stepper: 
         Initial Value: 1.00000000000000006e-01
-        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
         Max Value: 1.00000000000000000e+00

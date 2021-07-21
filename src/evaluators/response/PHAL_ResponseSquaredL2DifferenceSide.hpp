@@ -38,7 +38,8 @@ private:
   int getLayout (const Teuchos::RCP<Albany::Layouts>& dl, const std::string& rank, Teuchos::RCP<PHX::DataLayout>& layout);
 
   std::string sideSetName;
-
+  Albany::LocalSideSetInfo sideSet;
+  
   int sideDim;
   int numQPs;
   int fieldDim;
@@ -48,11 +49,16 @@ private:
   TargetScalarT target_value_val;
   RealType scaling;
 
-  PHX::MDField<const SourceScalarT>                         sourceField;
-  PHX::MDField<const TargetScalarT>                         targetField;
+  PHX::MDField<const SourceScalarT> sourceField;
+  PHX::MDField<const TargetScalarT> targetField;
 
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>  metric;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>   metric;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint>   w_measure;
+
+  size_t diffDims;
+  Kokkos::View<ScalarT*,  PHX::Device> diff_1;
+  Kokkos::View<ScalarT**, PHX::Device> diff_2;
+
 };
 
 //-- SourceScalarT = ScalarT

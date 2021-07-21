@@ -39,7 +39,7 @@ ANONYMOUS:
     1D Elements: 40
     2D Elements: 40
     Method: STK2D
-    Exodus Output File Name: steady2d.exo
+    Exodus Output File Name: steady2d_dist_paramT.exo
     Cubature Degree: 9
   Regression For Response 0:
     Test Value: 3.23754626955999991e-01
@@ -61,13 +61,13 @@ ANONYMOUS:
         Min And Max Of Random Parameter Guess: [-1.0e+00, 2.0e+00]
         Bound Constrained: true
 
-        Use Old Reduced Space Interface: false
         Step Method: "Line Search"
         bound_eps: 1.0e-01
         Max Iterations: 10
        
 
         Full Space: false
+        Hessian Dot Product: true
         Use NOX Solver: true
  
 

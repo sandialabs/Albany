@@ -29,7 +29,8 @@
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_FROSCH
-#include <Stratimikos_FROSchXpetra.hpp>
+#include "Stratimikos_FROSch_decl.hpp"
+#include "Stratimikos_FROSch_def.hpp"
 #endif /* ALBANY_FROSCH */
 
 #ifdef ALBANY_TEKO
@@ -195,10 +196,8 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
     std::string piroSolverToken;
     if (solutionMethod == "Steady") {
       piroSolverToken = "NOX";
-#ifdef ALBANY_TEMPUS
     } else if (solutionMethod == "Transient") {
       piroSolverToken = "Tempus";
-#endif
     } else {
       // Piro cannot handle the corresponding problem
       piroSolverToken = "Unsupported";
@@ -219,6 +218,18 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
     // GAH: this is an error - should be fatal
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Error: cannot locate Stratimikos solver parameters in the input file.\n")
+  }
+
+  // TODO: remove this error when Belos + Ifpack2/Amesos2 is fixed
+  if (stratList->isParameter("Linear Solver Type") && stratList->isParameter("Preconditioner Type") &&
+      stratList->isParameter("Preconditioner Types")) {
+    if (stratList->get<std::string>("Linear Solver Type") == "Belos" &&
+        stratList->get<std::string>("Preconditioner Type") == "Ifpack2") {
+      const auto ifpack2List = Teuchos::sublist(Teuchos::sublist(stratList, "Preconditioner Types"), "Ifpack2");
+      if (ifpack2List->isParameter("Prec Type"))
+        TEUCHOS_TEST_FOR_EXCEPTION(ifpack2List->get<std::string>("Prec Type") == "Amesos2", std::logic_error,
+            "Belos + Ifpack2/Amesos2 is currently not working in Trilinos.\n");
+    }
   }
 
   Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;

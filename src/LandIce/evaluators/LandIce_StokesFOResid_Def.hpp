@@ -21,20 +21,20 @@ template<typename EvalT, typename Traits>
 StokesFOResid<EvalT, Traits>::
 StokesFOResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
+  wBF       (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
+  wGradBF   (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
+  force     (p.get<std::string> ("Body Force Variable Name"), dl->qp_vector),
+  U         (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
+  Ugrad     (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
+  muLandIce (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
+  Residual  (p.get<std::string> ("Residual Variable Name"), dl->node_vector),
   numNodes  (dl->node_qp_gradient->extent(1)),
   numQPs    (dl->node_qp_gradient->extent(2)),
   numDims   (dl->node_qp_gradient->extent(3)),
   useStereographicMap (p.get<Teuchos::ParameterList*>("Stereographic Map")->get("Use Stereographic Map", false)),
   R2 (std::pow(p.get<Teuchos::ParameterList*>("Stereographic Map")->get<RealType>("Earth Radius", 6371),2)),
   x_0 (p.get<Teuchos::ParameterList*>("Stereographic Map")->get<RealType>("X_0", 0)),//-136)),
-  y_0 (p.get<Teuchos::ParameterList*>("Stereographic Map")->get<RealType>("Y_0", 0)),//-2040)),
-  wBF       (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
-  wGradBF   (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
-  U         (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
-  Ugrad     (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
-  force     (p.get<std::string> ("Body Force Variable Name"), dl->qp_vector),
-  muLandIce (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
-  Residual  (p.get<std::string> ("Residual Variable Name"), dl->node_vector)
+  y_0 (p.get<Teuchos::ParameterList*>("Stereographic Map")->get<RealType>("Y_0", 0))//-2040)),
 {
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -86,7 +86,7 @@ StokesFOResid(const Teuchos::ParameterList& p,
 
   this->setName("StokesFOResid"+PHX::print<EvalT>());
 
-  int vecDimFO = (numDims < 2) ? numDims : 2;
+  unsigned int vecDimFO = (numDims < 2) ? numDims : 2;
 
 #ifdef OUTPUT_TO_SCREEN
   *output << " in LandIce Stokes FO residual! " << std::endl;
@@ -140,13 +140,13 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const LandIce_3D_Tag& tag, const int& cell) const{
 
-  for (int node=0; node<numNodes; ++node){
+  for (unsigned int node=0; node<numNodes; ++node){
     Residual(cell,node,0)=0.;
     Residual(cell,node,1)=0.;
   }
 
   if(useStereographicMap) {
-    for (int qp=0; qp < numQPs; ++qp) {
+    for (unsigned int qp=0; qp < numQPs; ++qp) {
       //evaluate non-linear viscosity, given by Glen's law, at quadrature points
       ScalarT mu = muLandIce(cell,qp);
       MeshScalarT x = coordVec(cell,qp,0)-x_0;
@@ -162,7 +162,7 @@ operator() (const LandIce_3D_Tag& tag, const int& cell) const{
       ScalarT strs11 = 2*mu*(Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0)); //epsilon_yy
       ScalarT strs12 = mu*Ugrad(cell,qp,1,2); //epsilon_yz
 
-      for (int node=0; node < numNodes; ++node) {
+      for (unsigned int node=0; node < numNodes; ++node) {
         ScalarT epsb00 = wGradBF(cell,node,qp,0)/h; //epsilon_xx
         ScalarT epsb01 = (wGradBF(cell,node,qp,1)/h+invh_x*wBF(cell,node,qp))/2.0; //epsilon_xy
         ScalarT epsb02 = wGradBF(cell,node,qp,2)/2.0; //epsilon_xz
@@ -190,14 +190,14 @@ operator() (const LandIce_3D_Tag& tag, const int& cell) const{
       }
     }
   } else {
-    for (int qp=0; qp < numQPs; ++qp) {
+    for (unsigned int qp=0; qp < numQPs; ++qp) {
       ScalarT mu = muLandIce(cell,qp);
       ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
       ScalarT strs11 = 2.0*mu*(2.0*Ugrad(cell,qp,1,1) + Ugrad(cell,qp,0,0));
       ScalarT strs01 = mu*(Ugrad(cell,qp,1,0)+ Ugrad(cell,qp,0,1));
       ScalarT strs02 = mu*Ugrad(cell,qp,0,2);
       ScalarT strs12 = mu*Ugrad(cell,qp,1,2);
-      for (int node=0; node < numNodes; ++node) {
+      for (unsigned int node=0; node < numNodes; ++node) {
         Residual(cell,node,0) += strs00*wGradBF(cell,node,qp,0) +
                                  strs01*wGradBF(cell,node,qp,1) +
                                  strs02*wGradBF(cell,node,qp,2);
@@ -208,10 +208,10 @@ operator() (const LandIce_3D_Tag& tag, const int& cell) const{
     }
   }
 
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int qp=0; qp < numQPs; ++qp) {
     ScalarT frc0 = force(cell,qp,0);
     ScalarT frc1 = force(cell,qp,1);
-    for (int node=0; node < numNodes; ++node) {
+    for (unsigned int node=0; node < numNodes; ++node) {
          Residual(cell,node,0) += frc0*wBF(cell,node,qp);
          Residual(cell,node,1) += frc1*wBF(cell,node,qp);
     }
@@ -223,13 +223,13 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const POISSON_3D_Tag& tag, const int& cell) const{
 
-  for (int node=0; node<numNodes; ++node){
+  for (unsigned int node=0; node<numNodes; ++node){
     Residual(cell,node,0)=0.;
     Residual(cell,node,1)=0.;
   }
 
-  for (int node=0; node < numNodes; ++node) {
-    for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int node=0; node < numNodes; ++node) {
+    for (unsigned int qp=0; qp < numQPs; ++qp) {
        Residual(cell,node,0) += Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) +
                                 Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1) +
                                 Ugrad(cell,qp,0,2)*wGradBF(cell,node,qp,2) +
@@ -243,13 +243,13 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const LandIce_2D_Tag& tag, const int& cell) const{
 
-  for (int node=0; node<numNodes; ++node){
+  for (unsigned int node=0; node<numNodes; ++node){
     Residual(cell,node,0)=0.;
     Residual(cell,node,1)=0.;
   }
 
-  for (int node=0; node < numNodes; ++node) {
-    for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int node=0; node < numNodes; ++node) {
+    for (unsigned int qp=0; qp < numQPs; ++qp) {
        Residual(cell,node,0) += 2.0*muLandIce(cell,qp)*((2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) +
                                 0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,1)) +
                                 force(cell,qp,0)*wBF(cell,node,qp);
@@ -264,13 +264,13 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const LandIce_XZ_2D_Tag& tag, const int& cell) const{
 
-  for (int node=0; node<numNodes; ++node){
+  for (unsigned int node=0; node<numNodes; ++node){
     Residual(cell,node,0)=0.;
     Residual(cell,node,1)=0.;
   }
 
-  for (int node=0; node < numNodes; ++node) {
-    for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int node=0; node < numNodes; ++node) {
+    for (unsigned int qp=0; qp < numQPs; ++qp) {
        //z dimension is treated as 2nd dimension
        //PDEs is: -d/dx(4*mu*du/dx) - d/dz(mu*du/dz) - f1 0
        Residual(cell,node,0) += 4.0*muLandIce(cell,qp)*Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0)
@@ -285,13 +285,13 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const POISSON_2D_Tag& tag, const int& cell) const{
 
-  for (int node=0; node<numNodes; ++node){
+  for (unsigned int node=0; node<numNodes; ++node){
     Residual(cell,node,0)=0.;
     Residual(cell,node,1)=0.;
   }
 
-  for (int node=0; node < numNodes; ++node) {
-    for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int node=0; node < numNodes; ++node) {
+    for (unsigned int qp=0; qp < numQPs; ++qp) {
       Residual(cell,node,0) += Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) +
                                Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1) +
                                force(cell,qp,0)*wBF(cell,node,qp);

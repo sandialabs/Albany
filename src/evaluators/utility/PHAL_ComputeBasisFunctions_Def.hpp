@@ -16,12 +16,12 @@ ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector ),
+  cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
-  cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
-  jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
   BF            (p.get<std::string>  ("BF Name"), dl->node_qp_scalar),
+  jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
   wBF           (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)

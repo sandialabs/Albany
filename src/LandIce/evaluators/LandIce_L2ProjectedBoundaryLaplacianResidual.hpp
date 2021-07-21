@@ -34,28 +34,31 @@ public:
 private:
 
   std::string sideName, bdEdgesName;
-  std::vector<std::vector<int> >  sideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
   Teuchos::RCP<shards::CellTopology> cellType;
 
-  int numNodes;
+  unsigned int numNodes;
 
-  int numSideNodes;
-  int numBasalQPs;
-  int sideDim;
+  unsigned int numSideNodes;
+  unsigned int numBasalQPs;
+  unsigned int sideDim;
 
-  PHX::MDField<const ScalarT,Cell,Node>                         solution;
-  PHX::MDField<const FieldScalarT,Cell,Side,Node>               field;
-  PHX::MDField<const FieldScalarT,Cell,Side,QuadPoint,Dim>      gradField;
-  PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  gradBF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>           w_side_measure;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   side_tangents;
-  PHX::MDField<const MeshScalarT>                               coordVec;
+  Albany::LocalSideSetInfo sideSet;
+
+  PHX::MDField<const ScalarT,Cell,Node>                   solution;
+  PHX::MDField<const FieldScalarT,Side,Node>              field;
+  PHX::MDField<const FieldScalarT,Side,QuadPoint,Dim>     gradField;
+  PHX::MDField<const MeshScalarT,Side,Node,QuadPoint,Dim> gradBF;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint>          w_side_measure;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>  side_tangents;
+  PHX::MDField<const MeshScalarT>                         coordVec;
 
   PHX::MDField<ScalarT,Cell,Node> bdLaplacian_L2Projection_res;
 
 
   ScalarT p_reg, reg;
   double laplacian_coeff, mass_coeff, robin_coeff;
+
 };
 
 // Some shortcut names

@@ -105,7 +105,7 @@ protected:
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > cellBasis;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > sideBasis;
 
-  int numDim;
+  unsigned int numDim;
   Teuchos::RCP<Albany::Layouts> dl, dl_side;
 
   //! Discretization parameters
@@ -139,14 +139,34 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
   // ---------------------------- Registering state variables ------------------------- //
 
-  std::string stateName, fieldName, param_name;
+  std::string stateName, param_name;
 
+  const Teuchos::ParameterList& parameterParams = this->params->sublist("Parameters");
+  int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
+  Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
   stateName = "weighted_normal_sample";
-  entity = Albany::StateStruct::NodalDataToElemNode;
-  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-  p->set<std::string>("Field Name", stateName);
-  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+  bool isParameter = false;
+  for (unsigned int p_index=0; p_index< (unsigned int) num_dist_param_vecs; ++p_index) {
+    std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
+    Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
+    param_name = param_list.get<std::string>("Name");
+    if(param_name == stateName) {
+      isParameter = true;
+      break;
+    }
+  }
+
+  if(isParameter) {
+    entity = Albany::StateStruct::NodalDistParameter;
+    stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+    ev = evalUtils.constructGatherScalarNodalParameter(stateName,stateName);
+  } else {
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+    p->set<std::string>("Field Name", stateName);
+    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+  }
   fm0.template registerEvaluator<EvalT>(ev);
 
 
@@ -190,7 +210,7 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
   if(sideName != "INVALID") {
     //---- Restrict vertex coordinates from cell-based to cell-side-based
-    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",sideName,"Vertex Vector",cellType,"Coord Vec " + sideName);
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,sideName,"Vertex Vector",cellType,Albany::coord_vec_name + "_" + sideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis, sideCubature, sideName);
@@ -208,11 +228,11 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
     p->set<std::string>("Field Variable Name", "prior_sample");
     p->set<std::string>("Field Gradient Variable Name", "prior_sample Gradient");
     p->set<std::string>("Forcing Field Name", "weighted_normal_sample");
-    p->set<std::string>("Weighted Measure Name", "Weights");
+    p->set<std::string>("Weighted Measure Name", Albany::weights_name);
     p->set<double>("Mass Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Mass Coefficient",1.0));
     p->set<double>("Laplacian Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Laplacian Coefficient",1.0));
     p->set<double>("Robin Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Robin Coefficient",0.0));
-    p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name+" "+sideName);
+    p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + "_" + sideName);
     p->set<std::string>("Side Set Name", sideName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
 

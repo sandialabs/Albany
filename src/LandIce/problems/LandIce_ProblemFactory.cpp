@@ -6,7 +6,6 @@
 
 #include "LandIce_ProblemFactory.hpp"
 
-#include "LandIce_SchoofFit.hpp"
 #include "LandIce_Stokes.hpp"
 #include "LandIce_StokesFO.hpp"
 #include "LandIce_Hydrology.hpp"
@@ -14,6 +13,7 @@
 #include "LandIce_StokesFOThermoCoupled.hpp"
 #include "LandIce_LaplacianSampling.hpp"
 #include "LandIce_StokesFOThickness.hpp"
+#include "LandIce_StokesFOHydrology.hpp"
 
 namespace LandIce
 {
@@ -33,7 +33,7 @@ bool LandIceProblemFactory::provides (const std::string& key) const
          key == "LandIce Hydrology 2D" ||
          key == "LandIce Enthalpy 3D" ||
          key == "LandIce Stokes FO Thermo Coupled 3D" ||
-         key == "LandIce Schoof Fit" ||
+         key == "LandIce Stokes FO Hydrology" ||
          key == "LandIce Laplacian Sampling";
 }
 
@@ -67,13 +67,14 @@ create (const std::string& key,
     problem = Teuchos::rcp(new LandIce::Enthalpy(problemParams, discParams, paramLib, 3));
   } else if (key == "LandIce Stokes FO Thermo Coupled 3D") {
     problem = Teuchos::rcp(new LandIce::StokesFOThermoCoupled(problemParams, discParams, paramLib, 3));
-  } else if (key == "LandIce Schoof Fit") {
-    problem = Teuchos::rcp(new LandIce::SchoofFit(problemParams, paramLib, 2));
+  } else if (key == "LandIce Stokes FO Hydrology") {
+    problem = Teuchos::rcp(new LandIce::StokesFOHydrology(problemParams, discParams, paramLib, 3));
   } else if (key == "LandIce Laplacian Sampling") {
     problem = Teuchos::rcp(new LandIce::LaplacianSampling(problemParams, discParams, paramLib, 2));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-      "Error! Unrecognized key in LandIceProblemFactory. Did you forget to check with 'provides(key)' first?\n");
+      "Error! Unrecognized key '" + key + "' in LandIceProblemFactory.\n"
+      "       Did you forget to check with 'provides(key)' first?\n");
   }
 
   return problem;

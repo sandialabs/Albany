@@ -32,7 +32,7 @@ public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  typedef typename EvalT::ParamScalarT ParamScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename EvalT::ScalarT ScalarT;
 
   Temperature (const Teuchos::ParameterList& p,
@@ -46,25 +46,19 @@ public:
 private:
 
   // This is just to allow ETI machinery to work. In a real setting, ScalarT should always be constructible from TemperatureST.
-  typedef typename Albany::StrongestScalarType<TemperatureST,ScalarT>::type OutputScalarT;
+  typedef typename Albany::StrongestScalarType<TemperatureST,MeshScalarT>::type OutputScalarT;
 
   // Input:
-  PHX::MDField<const TemperatureST,Cell,Node> 		meltingTemp; //[K]
-  PHX::MDField<const TemperatureST,Cell,Node> 		enthalpyHs;  //[MW s m^{-3}]
-  PHX::MDField<const ScalarT,Cell,Node> 	        enthalpy;  //[MW s m^{-3}]
-  // PHX::MDField<const ThicknessST,Cell,Node>   thickness;  //[km]
+  PHX::MDField<const MeshScalarT,Cell,Node> 		meltingTemp; //[K]
+  PHX::MDField<const MeshScalarT,Cell,Node> 		enthalpyHs;  //[MW s m^{-3}]
+  PHX::MDField<const TemperatureST,Cell,Node> 	enthalpy;  //[MW s m^{-3}]
 
   // Output:
   PHX::MDField<OutputScalarT,Cell,Node> 	temperature; //[K]
   PHX::MDField<OutputScalarT,Cell,Node> 	correctedTemp; //[K]
   PHX::MDField<OutputScalarT,Cell,Node> 	diffEnth;    //[MW s m^{-3}]
-  // PHX::MDField<ScalarT,Cell, Side, Node> dTdz;   //[K km^{-1}]
 
-  int numNodes;
-
-  std::string sideName;
-  std::vector<std::vector<int> >  sideNodes;
-  int numSideNodes;
+  unsigned int numNodes;
 
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
   double rho_i; //[kg m^{-3}]

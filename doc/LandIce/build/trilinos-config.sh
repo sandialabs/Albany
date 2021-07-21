@@ -130,4 +130,6 @@ cmake \
  -D Trilinos_ENABLE_Zoltan:BOOL=ON \
  -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
  -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
+ -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
+  -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
  lcm_package_dir

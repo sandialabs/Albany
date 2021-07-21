@@ -66,7 +66,7 @@ endif()
 endif()
 
 ####################################
-### Dirichlet Mixed Params tests ###
+### Distributed Params tests ###
 ####################################
 
 set(testName ${testNameRoot}_Conductivity_Dist_Param)
@@ -112,3 +112,17 @@ if (ALBANY_EPETRA)
     set_tests_properties(${testName}_Restart_Epetra PROPERTIES DEPENDS  ${testName}_Epetra)
   endif()
 endif()
+
+
+####################################
+### Mixed Scalar Distributed Params tests ###
+####################################
+
+set(testName ${testNameRoot}_Scalar_And_Dist_Param)
+
+# Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_scalar_and_dist_paramT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_scalar_and_dist_paramT.yaml COPYONLY)
+# Create the test with this name and standard executable
+add_test(${testName}_Tpetra ${Albany.exe} input_scalar_and_dist_paramT.yaml)
+set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")

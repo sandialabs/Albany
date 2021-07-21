@@ -8,7 +8,8 @@ module load lcm-common
 
 module load sems-env
 module load sems-python/2.7.9
-module load sems-cmake/3.12.2
 module load sems-git/2.10.1
+module load cde/dev/compiler/gcc/7.2.0
+module load cde/dev/cmake/3.19.2
 
 conflict lcm-fedora lcm-cluster lcm-ubuntu lcm-scientific-linux

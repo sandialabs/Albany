@@ -15,6 +15,7 @@
 
 #include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 
 namespace LandIce
 {
@@ -38,27 +39,43 @@ private:
   // Input:
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;  // [km^3]
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim>  wGradBF; // [km^2]
-  PHX::MDField<const RealType, Cell,Side,Node,QuadPoint> sideBF;  // []
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint> side_w_measure;  // [km^2]
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   normals;
+  PHX::MDField<const RealType> sideBF;  // []
+  PHX::MDField<const MeshScalarT> side_w_measure;  // [km^2]
+  PHX::MDField<const MeshScalarT>   normals;
 
-  PHX::MDField<const ScalarT,Cell,Side, QuadPoint> basalVerticalVelocitySideQP; // [m yr^{-1}]
+  PHX::MDField<const ScalarT> basalVerticalVelocitySideQP; // [m yr^{-1}]
   PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim,Dim>  GradVelocity; // [k^{-1} yr^{-1}]
   PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim>  velocity; // [m yr^{-1}]
   PHX::MDField<const ScalarT,Cell,QuadPoint, Dim> w_z;  // [k^{-1} yr^{-1}]
-  PHX::MDField<const ScalarT,Cell,Side,QuadPoint> side_w_qp; // [m yr^{-1}]
+  PHX::MDField<const ScalarT> side_w_qp; // [m yr^{-1}]
   PHX::MDField<const MeshScalarT,Cell,Node,Dim>  coordVec; // [km]
 
   // Output
   PHX::MDField<ScalarT,Cell,Node> Residual;
 
-  std::string sideName;
-  std::vector<std::vector<int> >  sideNodes;
-  int numNodes;
-  int numSideNodes;
-  int numQPs;
-  int numSideQPs;
+  Albany::LocalSideSetInfo sideSet;
 
+  std::string sideName;
+  Kokkos::View<int**, PHX::Device> sideNodes;
+  unsigned int numNodes;
+  unsigned int numSideNodes;
+  unsigned int numQPs;
+  unsigned int numSideQPs;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct wResid_Cell_Tag{};
+  struct wResid_Side_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,wResid_Cell_Tag> wResid_Cell_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,wResid_Side_Tag> wResid_Side_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const wResid_Cell_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const wResid_Side_Tag& tag, const int& i) const;
 };
 
 }	// Namespace LandIce

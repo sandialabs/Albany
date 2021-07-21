@@ -307,11 +307,16 @@ Albany::HeatProblem::constructEvaluators(
       p->set<string>("Variable Name", "Temperature");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
+      p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       Teuchos::ParameterList& paramList = params->sublist("Source Functions");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+      Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+      p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
-      ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
       fm0.template registerEvaluator<EvalT>(ev);
 
   }
@@ -332,8 +337,10 @@ Albany::HeatProblem::constructEvaluators(
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
         Teuchos::ParameterList& paramList = materialDB->getElementBlockSublist(meshSpecs.ebName, "Source Functions");
         p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+        Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+        p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
-        ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p));
+        ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
         fm0.template registerEvaluator<EvalT>(ev);
     }
   }

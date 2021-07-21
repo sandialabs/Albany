@@ -45,13 +45,9 @@ public:
 
 private:
 
-  void evaluateFieldsSide (typename Traits::EvalData d, ScalarT mu, ScalarT lambda, ScalarT power);
-  void evaluateFieldsCell (typename Traits::EvalData d, ScalarT mu, ScalarT lambda, ScalarT power);
-
   // Coefficients for computing beta (if not given)
   double n;                                             // [adim] exponent of Glen's law
-  PHX::MDField<const ScalarT,Dim> muPowerLaw;           // [yr^q m^{-q}], friction coefficient of the power Law with exponent q
-  PHX::MDField<const ScalarT,Dim> muCoulomb;            // [adim], Coulomb friction coefficient
+  PHX::MDField<const ScalarT,Dim> muParam;           // [yr^q m^{-q}], friction coefficient of the power Law with exponent q
   PHX::MDField<const ScalarT,Dim> lambdaParam;          // [km],  Bed bumps avg length divided by bed bumps avg slope (for REGULARIZED_COULOMB only)
   PHX::MDField<const ScalarT,Dim> powerParam;           // [adim], Exponent (for POWER_LAW and REGULARIZED COULOMB only)
 
@@ -59,16 +55,14 @@ private:
   ScalarT printedLambda;
   ScalarT printedQ;
 
-  double given_val;  // Constant value (for CONSTANT only)
+  double beta_val;   // beta value [kPa yr/m] (for CONSTANT only)
+  double N_val; // effective pressure value [kPa]
 
   // Input:
-  PHX::MDField<const RealType>          given_field;        // [KPa yr m^{-1}]
-  PHX::MDField<const ParamScalarT>      given_field_param;  // [KPa yr m^{-1}]
   PHX::MDField<const RealType>          BF;
   PHX::MDField<const VelocityST>        u_norm;          // [m yr^{-1}]
-  PHX::MDField<const ParamScalarT>      lambdaField;     // [km],  q is the power in the Regularized Coulomb Friction and n is the Glen's law exponent
-  PHX::MDField<const ParamScalarT>      muPowerLawField; // [yr^q m^{-q}], friction coefficient of the power Law with exponent q
-  PHX::MDField<const ParamScalarT>      muCoulombField;  // [adim], Coulomb friction coefficient
+  PHX::MDField<const ParamScalarT>      lambdaField;     // [km], characteristic length
+  PHX::MDField<const ParamScalarT>      muField;         // [yr^q m^{-q}] or [adim], Power Law with exponent q, Coulomb Friction
   PHX::MDField<const EffPressureST>     N;               // [kPa]
   PHX::MDField<const MeshScalarT>       coordVec;        // [km]
 
@@ -76,36 +70,56 @@ private:
 
   PHX::MDField<const MeshScalarT>       bed_topo_field;  // [km]
   PHX::MDField<const MeshScalarT>       thickness_field; // [km]
-  PHX::MDField<const ParamScalarT>      thickness_param_field; // [km]
 
   // Output:
   PHX::MDField<ScalarT>       beta;     // [kPa yr m^{-1}]
 
   std::string                 basalSideName;  // Only if is_side_equation=true
 
-  bool use_stereographic_map, zero_on_floating, interpolate_then_exponentiate;
+  bool use_stereographic_map, zero_on_floating, zero_N_on_floating_at_nodes;
 
   double x_0;             // [km]
   double y_0;             // [km]
   double R2;              // [km]
 
   double rho_i, rho_w;    // [kg m^{-3}]
+  double g;               // [m s^{-2}]
 
-  int numNodes;
-  int numQPs;
+  ParamScalarT mu;
+  ParamScalarT lambda;
+  ParamScalarT power;
+
+  unsigned int numNodes;
+  unsigned int numQPs;
+  unsigned int dim;
+  unsigned int worksetSize;
 
   bool logParameters;
-  bool distributedLambda;
-  bool distributedMu;
   bool nodal;
   bool is_side_equation;
-  bool is_thickness_param;
-  bool is_given_field_param;
 
-  enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
+  enum class BETA_TYPE {CONSTANT, FIELD, POWER_LAW, REGULARIZED_COULOMB};
+  enum class FIELD_TYPE {CONSTANT, FIELD, EXPONENT_OF_FIELD, EXPONENT_OF_FIELD_AT_NODES};
+  enum class EFFECTIVE_PRESSURE_TYPE {CONSTANT, FIELD, HYDROSTATIC, HYDROSTATIC_AT_NODES};
   BETA_TYPE beta_type;
+  EFFECTIVE_PRESSURE_TYPE effectivePressure_type;
+  FIELD_TYPE mu_type, lambda_type;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+  Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct BasalFrictionCoefficient_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,BasalFrictionCoefficient_Tag> BasalFrictionCoefficient_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const BasalFrictionCoefficient_Tag& tag, const int& i) const;
+
 };
 
 } // Namespace LandIce

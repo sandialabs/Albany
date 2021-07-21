@@ -56,7 +56,6 @@ private:
   int numSideNodes;
   int numSideQPs;
   int vecDim;
-  bool useCollapsedSidesets;
 
   MDFieldMemoizer<Traits> memoizer;
 
@@ -65,17 +64,12 @@ private:
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct DOFVecInterpolationSideBase_Tag{};
-  struct DOFVecInterpolationSideBase_Collapsed_Tag{};
+  struct VecInterpolationSide_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecInterpolationSideBase_Tag> DOFVecInterpolationSideBase_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecInterpolationSideBase_Collapsed_Tag> DOFVecInterpolationSideBase_Collapsed_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, VecInterpolationSide_Tag> VecInterpolationSide_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFVecInterpolationSideBase_Tag& tag, const int& sideSet_idx) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFVecInterpolationSideBase_Collapsed_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const VecInterpolationSide_Tag& tag, const int& sideSet_idx) const;
 
 };
 

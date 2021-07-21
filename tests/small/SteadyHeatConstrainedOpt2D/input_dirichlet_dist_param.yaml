@@ -16,7 +16,6 @@ ANONYMOUS:
         Lower Bound: -1.00000000000000000e+00
         Upper Bound: 2.00000000000000000e+00
         Initial Uniform Value: -5.00000000000000000e-01
-      Hessian-vector products use AD: true
     Response Functions: 
       Number Of Responses: 1
       Response 0:
@@ -25,11 +24,13 @@ ANONYMOUS:
         Field Rank: Scalar
         Source Field Name: Temperature
         Target Value: 0.0
+    Hessian:
+      Use AD for Hessian-vector products (default): true
   Discretization: 
     1D Elements: 40
     2D Elements: 40
     Method: STK2D
-    Exodus Output File Name: steady2d.exo
+    Exodus Output File Name: steady2d_dirichlet_dist_param.exo
     Cubature Degree: 9
   Regression For Response 0:
     Test Value: 5.8333333333e-01
@@ -51,8 +52,6 @@ ANONYMOUS:
         Min And Max Of Random Parameter Guess: [-1.00000000000000000e+00, 2.00000000000000000e+00]
         Bound Constrained: true
         bound_eps: 1.00000000000000006e-01
-        
-        Use Old Reduced Space Interface: true    
         
         ROL Options: 
           General: 

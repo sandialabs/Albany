@@ -34,11 +34,8 @@ LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
   // Setting parameters
   Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
   rho_w = physics.get<double>("Water Density");//, 1000.0);
-  L = physics.get<double>("Latent heat of fusion");//, 334000.0);
+  L = physics.get<double>("Ice Latent Heat Of Fusion");//, 334000.0);
   phi_scaling = 1e6 / (rho_w * L);
-
-  printedAlpha = -1.0;
-
 }
 
 template<typename EvalT, typename Traits, typename Type>
@@ -46,8 +43,11 @@ KOKKOS_INLINE_FUNCTION
 void LiquidWaterFraction<EvalT,Traits,Type>::
 operator() (const int& cell) const{
 
-  for (int node = 0; node < numNodes; ++node) {
-    phi(cell,node) =  ( enthalpy(cell,node) < enthalpyHs(cell,node) ) ? ScalarT(0) : phi_scaling * (enthalpy(cell,node) - enthalpyHs(cell,node));
+  for (unsigned int node = 0; node < numNodes; ++node) {
+    if( enthalpy(cell,node) < enthalpyHs(cell,node) )
+      phi(cell,node) =  0.0;
+    else
+      phi(cell,node) = phi_scaling * (enthalpy(cell,node) - enthalpyHs(cell,node));
   }
 
 }

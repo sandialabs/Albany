@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_SIDE_SET_STK_MESH_STRUCT_HPP
-#define ALBANY_SIDE_SET_STK_MESH_STRUCT_HPP
+#ifndef SRC_DISC_STK_ALBANY_SIDESETSTKMESHSTRUCT_HPP_
+#define SRC_DISC_STK_ALBANY_SIDESETSTKMESHSTRUCT_HPP_
 
 #include "Albany_GenericSTKMeshStruct.hpp"
 
@@ -17,20 +17,26 @@ class SideSetSTKMeshStruct : public GenericSTKMeshStruct
 public:
 
   SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
+                        const MeshSpecsStruct& inputSideMeshSpecs,
                         const Teuchos::RCP<Teuchos::ParameterList>& params,
                         const Teuchos::RCP<const Teuchos_Comm>& commT,
-			const int numParams);
+                        const int numParams);
 
   virtual ~SideSetSTKMeshStruct();
 
-  void setFieldAndBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                            const Teuchos::RCP<Teuchos::ParameterList>& params,
-                            const unsigned int neq_,
-                            const AbstractFieldContainer::FieldContainerRequirements& req,
-                            const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                            const unsigned int worksetSize,
-                            const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
-                            const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const AbstractFieldContainer::FieldContainerRequirements& req,
+                     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                     const unsigned int worksetSize,
+                     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
+
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                    const AbstractFieldContainer::FieldContainerRequirements& req,
+                    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                    const unsigned int worksetSize,
+                    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
 
   void setParentMeshInfo (const AbstractSTKMeshStruct& parentMeshStruct_,
                           const std::string& sideSetName);
@@ -48,4 +54,4 @@ private:
 
 } // Namespace Albany
 
-#endif // ALBANY_SIDE_SET_STK_MESH_STRUCT_HPP
+#endif /* SRC_DISC_STK_ALBANY_SIDESETSTKMESHSTRUCT_HPP_ */

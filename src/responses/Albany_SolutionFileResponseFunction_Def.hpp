@@ -9,6 +9,7 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 
 #include "Teuchos_CommHelpers.hpp"
+#include "Thyra_VectorStdOps.hpp"
 
 namespace Albany
 {
@@ -64,6 +65,11 @@ evaluateResponse(const double /*current_time*/,
 
   // Get the norm
   g->assign(Norm::Norm(*diff));
+
+  if (g_.is_null())
+    g_ = Thyra::createMember(g->space());
+
+  g_->assign(*g);
 }
 
 template<class Norm>
@@ -177,7 +183,7 @@ evaluateDistParamDeriv(
 
 template<class Norm>
 void SolutionFileResponseFunction<Norm>::
-evaluateDistParamHessVecProd_xx(
+evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -193,7 +199,7 @@ evaluateDistParamHessVecProd_xx(
 
 template<class Norm>
 void SolutionFileResponseFunction<Norm>::
-evaluateDistParamHessVecProd_xp(
+evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -210,7 +216,7 @@ evaluateDistParamHessVecProd_xp(
 
 template<class Norm>
 void SolutionFileResponseFunction<Norm>::
-evaluateDistParamHessVecProd_px(
+evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -227,7 +233,7 @@ evaluateDistParamHessVecProd_px(
 
 template<class Norm>
 void SolutionFileResponseFunction<Norm>::
-evaluateDistParamHessVecProd_pp(
+evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -355,6 +361,26 @@ MatrixMarketFile (const char *filename, const Teuchos::RCP<Thyra_MultiVector>& m
   }
 
   return 0;
+}
+
+template<class Norm>
+void SolutionFileResponseFunction<Norm>::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
+{
+  if (g_.is_null()) {
+    *out << " the response has not been evaluated yet!";
+    return;
+  }
+
+  std::size_t precision = 8;
+  std::size_t value_width = precision + 4;
+  int gsize = g_->space()->dim();
+
+  for (int j = 0; j < gsize; j++) {
+    *out << std::setw(value_width) << Thyra::get_ele(*g_,j);
+    if (j < gsize-1)
+      *out << ", ";
+  }
 }
 
 } // namespace Albany

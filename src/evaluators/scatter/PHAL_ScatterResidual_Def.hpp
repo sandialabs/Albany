@@ -19,6 +19,8 @@
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
+#include "Albany_Hessian.hpp"
+
 // **********************************************************************
 // Base Class Generic Implemtation
 // **********************************************************************
@@ -153,8 +155,8 @@ void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const
 {
   for (std::size_t node = 0; node < this->numNodes; node++)
-    for (std::size_t i = 0; i < numDims; i++)
-      for (std::size_t j = 0; j < numDims; j++) {
+    for (int i = 0; i < numDims; i++)
+      for (int j = 0; j < numDims; j++) {
         const LO id = nodeID(cell,node,this->offset + i*numDims + j);
         Kokkos::atomic_fetch_add(&f_kokkos(id), this->valTensor(cell,node,i,j)); 
       }
@@ -209,7 +211,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (this->tensorRank == 0) {
     // Get MDField views from std::vector
-    for (int i = 0; i < numFields; i++)
+    for (size_t i = 0; i < numFields; i++)
       val_kokkos[i] = this->val[i].get_view();
 
     Kokkos::parallel_for(PHAL_ScatterResRank0_Policy(0,workset.numCells),*this);
@@ -274,14 +276,14 @@ operator() (const PHAL_ScatterJacRank0_Adjoint_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] =  nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       auto valptr = val_kokkos[eq](cell,node);
       for (int lunk=0; lunk<nunk; lunk++) {
@@ -308,14 +310,14 @@ operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       auto valptr = val_kokkos[eq](cell,node);
       for (int i = 0; i < nunk; ++i) vals[i] = valptr.fastAccessDx(i);
@@ -352,14 +354,14 @@ operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++){
@@ -387,14 +389,14 @@ operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
@@ -410,8 +412,8 @@ void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const
 {
   for (std::size_t node = 0; node < this->numNodes; node++)
-    for (std::size_t i = 0; i < numDims; i++)
-      for (std::size_t j = 0; j < numDims; j++) {
+    for (int i = 0; i < numDims; i++)
+      for (int j = 0; j < numDims; j++) {
         const LO id = nodeID(cell,node,this->offset + i*numDims + j);
         Kokkos::atomic_fetch_add(&f_kokkos(id), (this->valTensor(cell,node,i,j)).val()); 
       }
@@ -432,14 +434,14 @@ operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++) {
@@ -467,14 +469,14 @@ operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
 
-  for (int node_col=0; node_col<this->numNodes; node_col++) {
+  for (size_t node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
       col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
     }
   }
 
-  for (int node = 0; node < this->numNodes; ++node) {
-    for (int eq = 0; eq < numFields; eq++) {
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    for (size_t eq = 0; eq < numFields; eq++) {
       row = nodeID(cell,node,this->offset + eq);
       if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor)(cell,node, eq/numDims, eq%numDims).fastAccessDx(i);
@@ -525,7 +527,7 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
 
   if (this->tensorRank == 0) {
     // Get MDField views from std::vector
-    for (int i = 0; i < numFields; i++)
+    for (size_t i = 0; i < numFields; i++)
       val_kokkos[i] = this->val[i].get_view();
 
     if (loadResid) {
@@ -533,26 +535,16 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
       cudaCheckError();
     }
 
-    if (workset.is_adjoint) {
-      Kokkos::parallel_for(PHAL_ScatterJacRank0_Adjoint_Policy(0,workset.numCells),*this);  
-      cudaCheckError();
-    } else {
-      Kokkos::parallel_for(PHAL_ScatterJacRank0_Policy(0,workset.numCells),*this);
-      cudaCheckError();
-    }
+    Kokkos::parallel_for(PHAL_ScatterJacRank0_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   } else  if (this->tensorRank == 1) {
     if (loadResid) {
       Kokkos::parallel_for(PHAL_ScatterResRank1_Policy(0,workset.numCells),*this);
       cudaCheckError();
     }
 
-    if (workset.is_adjoint) {
-      Kokkos::parallel_for(PHAL_ScatterJacRank1_Adjoint_Policy(0,workset.numCells),*this);
-      cudaCheckError();
-    } else {
-      Kokkos::parallel_for(PHAL_ScatterJacRank1_Policy(0,workset.numCells),*this);
-      cudaCheckError();
-    }
+    Kokkos::parallel_for(PHAL_ScatterJacRank1_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   } else if (this->tensorRank == 2) {
     numDims = this->valTensor.extent(2);
 
@@ -561,13 +553,8 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
       cudaCheckError();
     }
 
-    if (workset.is_adjoint) {
-      Kokkos::parallel_for(PHAL_ScatterJacRank2_Adjoint_Policy(0,workset.numCells),*this);
-    }
-    else {
-      Kokkos::parallel_for(PHAL_ScatterJacRank2_Policy(0,workset.numCells),*this);
-      cudaCheckError();
-    }
+    Kokkos::parallel_for(PHAL_ScatterJacRank2_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   }
 
 #ifdef ALBANY_TIMER
@@ -604,7 +591,7 @@ evaluateFieldsHost(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     // Local Unks: Loop over nodes in element, Loop over equations per node
     for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-      for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+      for (int eq_col=0; eq_col<neq; eq_col++) {
         col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
       }
     }
@@ -620,17 +607,9 @@ evaluateFieldsHost(typename Traits::EvalData workset)
         }
         // Check derivative array is nonzero
         if (valptr.hasFastAccess()) {
-          if (workset.is_adjoint) {
-            // Sum Jacobian transposed
-            for (unsigned int lunk = 0; lunk < nunk; lunk++)
-              Albany::addToLocalRowValues(Jac,
-                col[lunk], Teuchos::arrayView(&row, 1),
-                Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
-          } else {
-            // Sum Jacobian entries all at once
-            Albany::addToLocalRowValues(Jac,
-              row, col, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
-          }
+          // Sum Jacobian entries all at once
+          Albany::addToLocalRowValues(Jac,
+            row, col, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
         } // has fast access
       }
     }
@@ -886,6 +865,13 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  // First, the function checks whether the parameter associated to workset.dist_param_deriv_name
+  // is a distributed parameter (l1_is_distributed==true) or a parameter vector
+  // (l1_is_distributed==false).
+  int l1;
+  bool l1_is_distributed;
+  Albany::getParameterVectorID(l1, l1_is_distributed, workset.dist_param_deriv_name);
+
   // Here we scatter the *local* response derivative
   auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xx = workset.hessianWorkset.overlapped_hess_vec_prod_f_xx;
@@ -893,7 +879,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_px = workset.hessianWorkset.overlapped_hess_vec_prod_f_px;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_pp = workset.hessianWorkset.overlapped_hess_vec_prod_f_pp;
 
-  Teuchos::RCP<Thyra_Vector> f_multiplier = workset.hessianWorkset.f_multiplier;
+  Teuchos::RCP<Thyra_Vector> f_multiplier = workset.hessianWorkset.overlapped_f_multiplier;
 
   const bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
   const bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
@@ -920,7 +906,10 @@ evaluateFields(typename Traits::EvalData workset)
     hess_vec_prod_f_pp_data = Albany::getNonconstLocalData(hess_vec_prod_f_pp);
 
   Albany::IDArray  wsElDofs;
-  if(f_px_is_active||f_pp_is_active)
+  // If the parameter associated to workset.dist_param_deriv_name is a distributed parameter,
+  // the function needs to access the associated workset_elem_dofs to deduce the IDs of the entries
+  // of the resulting vector.
+  if(l1_is_distributed && (f_px_is_active || f_pp_is_active))
     wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell ) {
@@ -947,7 +936,7 @@ evaluateFields(typename Traits::EvalData workset)
             hess_vec_prod_f_xp_data[0][row] += value.dx(deriv).dx(0);
         }
       }
-      if(f_px_is_active || f_pp_is_active) {
+      if(l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
         const int row = wsElDofs((int)cell,(int)node,0);
         if(row >=0){
           if(f_px_is_active)
@@ -957,6 +946,18 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     } // node
+
+    // If the parameter associated to workset.dist_param_deriv_name
+    // is a parameter vector, the function does not need to loop over
+    // the nodes: 
+    if(!l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
+      if(f_px_is_active)
+        for (unsigned int l1_i=0; l1_i<hess_vec_prod_f_px_data[0].size(); ++l1_i)
+          hess_vec_prod_f_px_data[0][l1_i] += value.dx(l1_i).dx(0);
+      if(f_pp_is_active)
+        for (unsigned int l1_i=0; l1_i<hess_vec_prod_f_pp_data[0].size(); ++l1_i)
+          hess_vec_prod_f_pp_data[0][l1_i] += value.dx(l1_i).dx(0);
+    }
   } // cell
 }
 
@@ -998,12 +999,11 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_px = workset.hessianWorkset.overlapped_hess_vec_prod_f_px;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_pp = workset.hessianWorkset.overlapped_hess_vec_prod_f_pp;
 
-  Teuchos::RCP<Thyra_Vector> f_multiplier = workset.hessianWorkset.f_multiplier;
+  Teuchos::RCP<Thyra_Vector> f_multiplier = workset.hessianWorkset.overlapped_f_multiplier;
 
   if (!f_px_is_active && !f_pp_is_active)
     return;
 
-  const int neq = nodeID.extent(2);
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST> > hess_vec_prod_f_px_data, hess_vec_prod_f_pp_data;
 
   auto f_multiplier_data = Albany::getNonconstLocalData(f_multiplier);

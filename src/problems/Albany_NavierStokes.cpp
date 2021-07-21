@@ -53,7 +53,7 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
-  params(params_),
+  numDim(numDim_),
   haveFlow(false),
   haveHeat(false),
   haveNeut(false),
@@ -65,7 +65,7 @@ NavierStokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   havePSPG(false),
   haveSUPG(false),
   porousMedia(false),
-  numDim(numDim_),
+  params(params_),
   use_sdbcs_(false)
 {
   if (numDim==1) periodic = params->get("Periodic BC", false);

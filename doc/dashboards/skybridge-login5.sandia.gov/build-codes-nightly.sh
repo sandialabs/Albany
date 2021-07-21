@@ -4,13 +4,14 @@ export TEST_DIR=`pwd`
 rm -rf *log 
 rm -rf Albany
 rm -rf Trilinos
+rm -rf modules.out
 git clone git@github.com:trilinos/Trilinos.git >& trilinos-clone.log
 cd Trilinos
 git checkout develop
 cd ..
 git clone git@github.com:SNLComputation/Albany.git >& albany-clone.log 
 module use --append $TEST_DIR/Albany/doc/LandIce/modulefiles
-module load serial-intel-release
+module load serial-intel-release >& modules.out 
 rm -rf trilinos-build-serial-intel-release
 rm -rf trilinos-install-serial-intel-release
 rm -rf albany-build-serial-intel-release

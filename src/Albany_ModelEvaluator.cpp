@@ -6,14 +6,15 @@
 
 #include "Albany_ModelEvaluator.hpp"
 
-#include "Albany_DistributedParameterLibrary.hpp"
-#include "Albany_DistributedParameterDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Albany_ObserverImpl.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 #include "Albany_Application.hpp"
+
+#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_Hessian.hpp"
 
 // uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
@@ -66,9 +67,6 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
 
   *out << "Total number of parameters  = " << total_num_param_vecs << std::endl;
   *out << "Number of non-distributed parameters  = " << num_param_vecs << std::endl;
-
-  const Teuchos::ParameterList& responseParams =
-      problemParams.sublist("Response Functions");
 
   int  num_response_vecs = app->getNumResponses();
 
@@ -151,6 +149,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
     int numParameters = param_vss[l]->dim();
 
     // Loading lower and upper bounds (if any)
+    // IKT: I believe these parameters are only relevant for optimization
     const std::string& parameterType = pList.isParameter("Type") ?
         pList.get<std::string>("Type") : std::string("Scalar");
 
@@ -200,16 +199,17 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
 
       for (int k = 0; k < numParameters; ++k) {
         std::string sublistName = strint("Scalar",k);
+	//IKT: I believe the following parameters are only for optimization
         if (pList.sublist(sublistName).isParameter("Lower Bound")) {
-          ST lb = pList.get<ST>("Lower Bound");
+          ST lb = pList.sublist(sublistName).get<ST>("Lower Bound");
           param_lower_bd_nonConstView[k] = lb;
         }
         if (pList.sublist(sublistName).isParameter("Upper Bound")) {
-          ST ub = pList.get<ST>("Upper Bound");
+          ST ub = pList.sublist(sublistName).get<ST>("Upper Bound");
           param_upper_bd_nonConstView[k] = ub;
         }
-        if (pList.sublist(sublistName).isParameter("Upper Bound")) {
-          ST nvals = pList.get<ST>("Nominal Value");
+        if (pList.sublist(sublistName).isParameter("Nominal Value")) {
+          ST nvals = pList.sublist(sublistName).get<ST>("Nominal Value");
           sacado_param_vec[l][k].baseValue = param_vec_nonConstView[k] = nvals;
         } else {
           param_vec_nonConstView[k] = sacado_param_vec[l][k].baseValue;
@@ -242,41 +242,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
             << std::endl);
 
     dist_param_names[i-num_param_vecs] = p_name;
-    // set parameters bonuds
-    Teuchos::RCP<const DistributedParameter> distParam = distParamLib->get(p_name);
-    if (param_list.isParameter("Lower Bound")) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          distParam->lower_bounds_vector() == Teuchos::null,
-          Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  In Albany::ModelEvaluator constructor:  "
-              << "distParam->lower_bounds_vector() == Teuchos::null"
-              << std::endl);
-      distParam->lower_bounds_vector()->assign(
-          param_list.get<ST>("Lower Bound"));
-    }
-    if (param_list.isParameter("Upper Bound")) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          distParam->upper_bounds_vector() == Teuchos::null,
-          Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  In Albany::ModelEvaluator constructor:  "
-              << "distParam->upper_bounds_vector() == Teuchos::null"
-              << std::endl);
-      distParam->upper_bounds_vector()->assign(
-          param_list.get<ST>("Upper Bound"));
-    }
-    if (param_list.isParameter("Initial Uniform Value")) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          distParam->vector() == Teuchos::null,
-          Teuchos::Exceptions::InvalidParameter,
-          std::endl
-              << "Error!  In Albany::ModelEvaluator constructor:  "
-              << "distParam->vector() == Teuchos::null"
-              << std::endl);
-      distParam->vector()->assign(
-          param_list.get<ST>("Initial Uniform Value"));
-    }
+    Teuchos::RCP<const DistributedParameter> distParam = setDistParamVec(p_name, param_list);
   }
 
   for (int l = 0; l < app->getNumResponses(); ++l) {
@@ -320,6 +286,116 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
   overwriteNominalValuesWithFinalPoint = appParams->get("Overwrite Nominal Values With Final Point",false);
 
   timer = Teuchos::TimeMonitor::getNewTimer("Albany: Total Fill Time");
+}
+
+void ModelEvaluator::setNominalValue(int j, Teuchos::RCP<Thyra_Vector> p)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      j >= num_param_vecs + num_dist_param_vecs || j < 0,
+      Teuchos::Exceptions::InvalidParameter,
+      std::endl
+          << "Error!  Albany::ModelEvaluator::setNominalValue():  "
+          << "Invalid parameter index j = "
+          << j
+          << std::endl);
+
+  nominalValues.set_p(j, p);
+}
+
+Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const std::string p_name, 
+		                                                         const Teuchos::ParameterList param_list)
+{
+  Teuchos::RCP<const DistributedParameter> distParam = distParamLib->get(p_name);
+  // set parameters bounds - IKT: I think this is only relevant for the optimization
+  if (param_list.isParameter("Lower Bound")) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        distParam->lower_bounds_vector() == Teuchos::null,
+        Teuchos::Exceptions::InvalidParameter,
+               "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "distParam->lower_bounds_vector() == Teuchos::null\n"); 
+    distParam->lower_bounds_vector()->assign(
+        param_list.get<ST>("Lower Bound"));
+  }
+  if (param_list.isParameter("Upper Bound")) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        distParam->upper_bounds_vector() == Teuchos::null,
+        Teuchos::Exceptions::InvalidParameter,
+             "\nError!  In Albany::ModelEvaluator constructor:  "
+             "distParam->upper_bounds_vector() == Teuchos::null\n"); 
+    distParam->upper_bounds_vector()->assign(
+        param_list.get<ST>("Upper Bound"));
+  }
+  if (param_list.isParameter("Parameter Analytic Expression")) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        distParam->vector() == Teuchos::null,
+        Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "distParam->vector() == Teuchos::null.\n"); 
+    if (app->getComm()->getSize() > 1) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "'Parameter Analytic Expression' option for initializing distributed"
+            << " parameters only works in serial.\n"); 
+    }
+    //IKT, 7/2021: the following has been added to enable verification of 
+    //sensitivities for distributed parameters using MMS problems.  Other 
+    //analytical expressions for distributed parameters may be added besides
+    //the currently-available 'Quadratic' one, if desired.
+    const std::string param_expr = param_list.get<std::string>("Parameter Analytic Expression");
+    Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDisc();
+    const Teuchos::ArrayRCP<double>& ov_coords = disc->getCoordinates();
+    Teuchos::RCP<const Thyra_VectorSpace> vec_space = disc->getVectorSpace();
+    const int num_dims = app->getSpatialDimension();
+    const int num_dofs = ov_coords.size(); 
+    const int num_nodes = vec_space->dim(); 
+    /*std::cout << "IKT num_dims, num_dofs, num_nodes = " << num_dims << ", " << num_dofs 
+                << ", " << num_nodes << "\n"; 
+    for (int i=0; i<num_dofs; i++) {
+      std::cout << "IKT i, ov_coords = " << i << ", " << ov_coords[i] << "\n"; 
+    }*/
+    Teuchos::ArrayRCP<ST> distParamVec_ArrayRCP = 
+       getNonconstLocalData(distParam->vector()); 
+
+    if (param_expr == "Quadratic") 
+    {
+      if (num_dims == 1) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[i]; 
+          distParamVec_ArrayRCP[i] = x*(1-x); 
+        }
+      }
+      else if (num_dims == 2) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[2*i]; 
+          const double y = ov_coords[2*i+1]; 
+          distParamVec_ArrayRCP[i] = x*(1-x)*y*(1-y); 
+        }
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "Quadratic Parameter Analytic Expression not valid for >2D.\n"); 
+      }
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "Invalid value for 'Parameter Analytic Expression' = "
+            << param_expr << ".  Valid expressions are: 'Quadratic'.\n");
+    }
+  } 
+    
+  if (param_list.isParameter("Initial Uniform Value")) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        distParam->vector() == Teuchos::null,
+        Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "distParam->vector() == Teuchos::null.\n"); 
+    distParam->vector()->assign(
+        param_list.get<ST>("Initial Uniform Value"));
+  }
+  
+  return distParam; 
 }
 
 void ModelEvaluator::allocateVectors()
@@ -435,6 +511,42 @@ ModelEvaluator::create_W_prec() const
 
   W_prec->initializeRight(precOp);
   return W_prec;
+}
+
+Teuchos::RCP<Thyra_LinearOp>
+ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      l1 != l2,
+      Teuchos::Exceptions::InvalidParameter,
+      std::endl
+          << "Error! Albany::ModelEvaluator::create_hess_g_pp():  "
+          << "Parameter index l1 is not equal to l2"
+          << "l1 = " << l1
+          << "l2 = " << l2
+          << std::endl);
+
+  // Currently, only support distributed parameters.
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      l1 >= num_param_vecs + num_dist_param_vecs || l1 < num_param_vecs,
+      Teuchos::Exceptions::InvalidParameter,
+      std::endl
+          << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
+          << "Invalid parameter index l1 = "
+          << l1
+          << std::endl);
+
+  Teuchos::RCP<const Tpetra_Map> p_overlapped_map = Albany::getTpetraMap(
+    distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace());
+  Teuchos::RCP<const Tpetra_Map> p_owned_map = Albany::getTpetraMap(
+    distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace());
+  std::vector<IDArray> vElDofs =
+    distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
+
+  Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Albany::createHessianCrsGraph(p_owned_map, p_overlapped_map, vElDofs);
+  Teuchos::RCP<Tpetra_CrsMatrix> Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
+
+  return Albany::createThyraLinearOp(Ht);
 }
 
 Teuchos::RCP<Thyra_LinearOp>
@@ -556,9 +668,24 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
 
   for (int i = 0; i < n_g; ++i) {
     Thyra_ModelEvaluator::DerivativeSupport dgdx_support;
+    //Check that responses are scalar; throw an error if they are not, 
+    //as distributed responses are not supported yet.
+    if (!app->getResponse(i)->isScalarResponse()) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          std::endl
+              << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+              << "The response associated to the index i = "
+              << i
+              << " is not a scalar response. Only scalar responses are currently supported."
+              << std::endl);
+    }
     if (app->getResponse(i)->isScalarResponse()) {
       dgdx_support = Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM;
     } else {
+      //IKT 6/30/2021: note that this case will not get hit ever because
+      //distributed responses are not supported in Albany yet
       dgdx_support = Thyra_ModelEvaluator::DERIV_LINEAR_OP;
     }
 
@@ -581,61 +708,6 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
           Thyra_ModelEvaluator::DERIV_MV_JACOBIAN_FORM);
     }
 
-    const Teuchos::ParameterList& parameterParams = appParams->sublist("Problem").sublist("Parameters");
-    const bool aDHessVec = parameterParams.isParameter("Hessian-vector products use AD") ?
-        parameterParams.get<bool>("Hessian-vector products use AD") : true;
-
-    bool hess_vec_prod_g_xx_support = aDHessVec;
-    bool hess_vec_prod_g_xp_support = aDHessVec;
-    bool hess_vec_prod_g_px_support = aDHessVec;
-    bool hess_vec_prod_g_pp_support = aDHessVec;
-
-    bool hess_vec_prod_f_xx_support = aDHessVec;
-    bool hess_vec_prod_f_xp_support = aDHessVec;
-    bool hess_vec_prod_f_px_support = aDHessVec;
-    bool hess_vec_prod_f_pp_support = aDHessVec;
-
-    result.setSupports(
-      Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xx,
-      i,
-      hess_vec_prod_g_xx_support);
-    result.setSupports(
-      Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xx,
-      hess_vec_prod_f_xx_support);
-    for (int j1 = 0; j1 < num_dist_param_vecs; j1++) {
-      result.setSupports(
-        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xp,
-        i,
-        j1 + num_param_vecs,
-        hess_vec_prod_g_xp_support);
-      result.setSupports(
-        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xp,
-        j1 + num_param_vecs,
-        hess_vec_prod_f_xp_support);
-      result.setSupports(
-        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_px,
-        i,
-        j1 + num_param_vecs,
-        hess_vec_prod_g_px_support);
-      result.setSupports(
-        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_px,
-        j1 + num_param_vecs,
-        hess_vec_prod_f_px_support);
-      for (int j2 = 0; j2 < num_dist_param_vecs; j2++) {
-        result.setSupports(
-          Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_pp,
-          i,
-          j1 + num_param_vecs,
-          j2 + num_param_vecs,
-          hess_vec_prod_g_pp_support);
-        result.setSupports(
-          Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_pp,
-          j1 + num_param_vecs,
-          j2 + num_param_vecs,
-          hess_vec_prod_f_pp_support);
-      }
-    }
-
     if (app->getResponse(i)->isScalarResponse()) {
       for (int j1 = 0; j1 < num_dist_param_vecs; j1++) {
         result.setSupports(
@@ -644,13 +716,331 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
             j1 + num_param_vecs,
             Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM);
       }
-    } else {
-      for (int j1 = 0; j1 < num_dist_param_vecs; j1++) {
+    } 
+  }
+
+  // Set Hessian-related supports:
+
+  const Teuchos::ParameterList& hessParams = appParams->sublist("Problem").sublist("Hessian");
+
+  // Default value:
+  const bool dADHessVec = hessParams.isParameter("Use AD for Hessian-vector products (default)") ?
+      hessParams.get<bool>("Use AD for Hessian-vector products (default)") : true;
+
+  // Default value for residual:
+  bool dADHessVec_f; 
+  
+  if(hessParams.isSublist("Residual")) {
+    dADHessVec_f = hessParams.sublist("Residual").isParameter("Use AD for Hessian-vector products (default)") ?
+      hessParams.sublist("Residual").get<bool>("Use AD for Hessian-vector products (default)") : dADHessVec;
+  }
+  else {
+    dADHessVec_f = dADHessVec;
+  }
+
+  const int num_params = num_param_vecs + num_dist_param_vecs;
+
+  bool aDHessVec_f[num_params + 1][num_params + 1];
+  bool aDHessVec_g[num_params + 1][num_params + 1];
+
+  aDHessVec_f[0][0] = dADHessVec_f;
+
+  for (int j1 = 0; j1 < num_params; j1++) {
+    aDHessVec_f[0][j1+1] = dADHessVec_f;
+    aDHessVec_f[j1+1][0] = dADHessVec_f;
+    for (int j2 = 0; j2 < num_params; j2++) {
+      aDHessVec_f[j1+1][j2+1] = dADHessVec_f;
+    }
+  }
+
+  if(hessParams.isSublist("Residual")) {
+    std::string toDisable = hessParams.sublist("Residual").isParameter("Disable AD for Hessian-vector product contributions of") ?
+      hessParams.sublist("Residual").get<std::string>("Disable AD for Hessian-vector product contributions of") : "";
+    std::string toEnable = hessParams.sublist("Residual").isParameter("Enable AD for Hessian-vector product contributions of") ?
+      hessParams.sublist("Residual").get<std::string>("Enable AD for Hessian-vector product contributions of") : "";
+
+    std::vector<std::string> toDisableVec, toEnableVec;
+
+    Albany::splitStringOnDelim(toDisable,' ',toDisableVec);
+    Albany::splitStringOnDelim(toEnable,' ',toEnableVec);
+
+    for (auto toDisableEntry : toDisableVec)
+      for (auto toEnableEntry : toEnableVec)
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            toDisableEntry.compare(toEnableEntry)==0,
+            Teuchos::Exceptions::InvalidParameter,
+            std::endl
+                << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+                << "Hessian contribution of the residual = "
+                << toDisableEntry
+                << " is set both in the AD enabled and disabled list."
+                << std::endl);
+    int i1, i2;
+    for (auto toDisableEntry : toDisableVec) {
+      Albany::getHessianBlockIDs(i1, i2, toDisableEntry);
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        i1 > num_params || i2 > num_params || i1 < 0 || i2 < 0,
+        Teuchos::Exceptions::InvalidParameter,
+        std::endl
+            << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+            << "Hessian contribution of the residual = "
+            << toDisableEntry
+            << " has an ID out of the range: [0, "
+            << num_params
+            << "]"
+            << std::endl);
+      aDHessVec_f[i1][i2] = false;
+    }
+    for (auto toEnableEntry : toEnableVec) {
+      Albany::getHessianBlockIDs(i1, i2, toEnableEntry);
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        i1 > num_params || i2 > num_params || i1 < 0 || i2 < 0,
+        Teuchos::Exceptions::InvalidParameter,
+        std::endl
+            << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+            << "Hessian contribution of the residual = "
+            << toEnableEntry
+            << " has an ID out of the range: [0, "
+            << num_params
+            << "]"
+            << std::endl);
+      aDHessVec_f[i1][i2] = true;
+    }
+
+    if (num_params > 1) {
+      bool tmp = aDHessVec_f[0][1];
+      for (int j1 = 2; j1 < num_params + 1; j1++) {
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          aDHessVec_f[0][j1] != tmp,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+              << "AD support for xp Hessian contributions of the residual are not consistent; "
+              << "AD is enable for some blocks but not for others."
+              << std::endl);
+      }
+      tmp = aDHessVec_f[1][0];
+      for (int j1 = 2; j1 < num_params + 1; j1++) {
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          aDHessVec_f[j1][0] != tmp,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+              << "AD support for px Hessian contributions of the residual are not consistent; "
+              << "AD is enable for some blocks but not for others."
+              << std::endl);
+      }
+      tmp = aDHessVec_f[1][1];
+      for (int j1 = 2; j1 < num_params + 1; j1++) {
+        for (int j2 = 2; j2 < num_params + 1; j2++) {
+          TEUCHOS_TEST_FOR_EXCEPTION(
+            aDHessVec_f[j1][j2] != tmp,
+            Teuchos::Exceptions::InvalidParameter,
+            std::endl
+                << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+                << "AD support for pp Hessian contributions of the residual are not consistent; "
+                << "AD is enable for some blocks but not for others."
+                << std::endl);
+        }
+      }
+    }
+  }
+
+  result.setSupports(
+    Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xx,
+    aDHessVec_f[0][0]);
+
+  for (int j1 = 0; j1 < num_params; j1++) {
+    result.setSupports(
+      Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xp,
+      j1,
+      aDHessVec_f[0][j1+1]);
+    result.setSupports(
+      Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_px,
+      j1,
+      aDHessVec_f[j1+1][0]);
+    for (int j2 = 0; j2 < num_params; j2++) {
+      result.setSupports(
+        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_pp,
+        j1,
+        j2,
+        aDHessVec_f[j1+1][j2+1]);
+    }
+  }
+
+  for (int i = 0; i < n_g; ++i) {
+    // Default value for response:
+    bool dADHessVec_g, reconstructHpp;
+
+    if(hessParams.isSublist(Albany::strint("Response", i))) {
+      dADHessVec_g = hessParams.sublist(Albany::strint("Response", i)).isParameter("Use AD for Hessian-vector products (default)") ?
+        hessParams.sublist(Albany::strint("Response", i)).get<bool>("Use AD for Hessian-vector products (default)") : dADHessVec;
+      reconstructHpp = hessParams.sublist(Albany::strint("Response", i)).isParameter("Reconstruct H_pp") ?
+        hessParams.sublist(Albany::strint("Response", i)).get<bool>("Reconstruct H_pp") : false;
+    }
+    else {
+      dADHessVec_g = dADHessVec;
+      reconstructHpp = false;
+    }
+    
+    auto& analysisParams = appParams->sublist("Piro").sublist("Analysis");
+    if(analysisParams.isSublist("ROL")) {
+      bool reconstructHppROL = reconstructHpp = analysisParams.sublist("ROL").get("Hessian Dot Product", false);
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          reconstructHpp!=reconstructHppROL,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+              << "The Hessian reconstruction options are not consistent: " << reconstructHpp << " != "
+              << reconstructHppROL
+              << ". Please set the Option in the Hessian and ROL sublists consistently."
+              << std::endl);
+    }
+
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        reconstructHpp && (num_param_vecs>0),
+        Teuchos::Exceptions::InvalidParameter,
+        std::endl
+            << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+            << "The Hessian reconstruction option is enabled but at least one "
+            << "parameter is not distributed. The Hessian reconstruction option "
+            << "currently requires all parameters to be distributed. "
+            << "If at least one parameter is a scalar parameter or a parameter vector, "
+            << "the Hessian reconstruction option must be disabled."
+            << std::endl);
+
+    aDHessVec_g[0][0] = dADHessVec_g;
+
+    for (int j1 = 0; j1 < num_params; j1++) {
+      aDHessVec_g[0][j1+1] = dADHessVec_g;
+      aDHessVec_g[j1+1][0] = dADHessVec_g;
+      for (int j2 = 0; j2 < num_params; j2++) {
+        aDHessVec_g[j1+1][j2+1] = dADHessVec_g;
+      }
+    }
+    
+    if(hessParams.isSublist(Albany::strint("Response", i))) {
+      std::string toDisable = hessParams.sublist(Albany::strint("Response", i)).isParameter("Disable AD for Hessian-vector product contributions of") ?
+        hessParams.sublist(Albany::strint("Response", i)).get<std::string>("Disable AD for Hessian-vector product contributions of") : "";
+      std::string toEnable = hessParams.sublist(Albany::strint("Response", i)).isParameter("Enable AD for Hessian-vector product contributions of") ?
+        hessParams.sublist(Albany::strint("Response", i)).get<std::string>("Enable AD for Hessian-vector product contributions of") : "";
+
+      std::vector<std::string> toDisableVec, toEnableVec;
+
+      Albany::splitStringOnDelim(toDisable,' ',toDisableVec);
+      Albany::splitStringOnDelim(toEnable,' ',toEnableVec);
+
+      for (auto toDisableEntry : toDisableVec)
+        for (auto toEnableEntry : toEnableVec)
+          TEUCHOS_TEST_FOR_EXCEPTION(
+              toDisableEntry.compare(toEnableEntry)==0,
+              Teuchos::Exceptions::InvalidParameter,
+              std::endl
+                  << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+                  << "Hessian contribution of the response " << i << " = "
+                  << toDisableEntry
+                  << " is set both in the AD enabled and disabled list."
+                  << std::endl);
+      int i1, i2;
+      for (auto toDisableEntry : toDisableVec) {
+        Albany::getHessianBlockIDs(i1, i2, toDisableEntry);
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          i1 > num_params || i2 > num_params || i1 < 0 || i2 < 0,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+              << "Hessian contribution of the response " << i << " = "
+              << toDisableEntry
+              << " has an ID out of the range: [0, "
+              << num_params
+              << "]"
+              << std::endl);
+        aDHessVec_g[i1][i2] = false;
+      }
+      for (auto toEnableEntry : toEnableVec) {
+        Albany::getHessianBlockIDs(i1, i2, toEnableEntry);
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          i1 > num_params || i2 > num_params || i1 < 0 || i2 < 0,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl
+              << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+              << "Hessian contribution of the response " << i << " = "
+              << toEnableEntry
+              << " has an ID out of the range: [0, "
+              << num_params
+              << "]"
+              << std::endl);
+        aDHessVec_g[i1][i2] = true;
+      }
+
+      if (num_params > 1) {
+        bool tmp = aDHessVec_g[0][1];
+        for (int j1 = 2; j1 < num_params + 1; j1++) {
+          TEUCHOS_TEST_FOR_EXCEPTION(
+            aDHessVec_g[0][j1] != tmp,
+            Teuchos::Exceptions::InvalidParameter,
+            std::endl
+                << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+                << "AD support for xp Hessian contributions of the response " << i << " are not consistent; "
+                << "AD is enable for some blocks but not for others."
+                << std::endl);
+        }
+        tmp = aDHessVec_g[1][0];
+        for (int j1 = 2; j1 < num_params + 1; j1++) {
+          TEUCHOS_TEST_FOR_EXCEPTION(
+            aDHessVec_g[j1][0] != tmp,
+            Teuchos::Exceptions::InvalidParameter,
+            std::endl
+                << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+                << "AD support for px Hessian contributions of the response " << i << " are not consistent; "
+                << "AD is enable for some blocks but not for others."
+                << std::endl);
+        }
+        tmp = aDHessVec_g[1][1];
+        for (int j1 = 2; j1 < num_params + 1; j1++) {
+          for (int j2 = 2; j2 < num_params + 1; j2++) {
+            TEUCHOS_TEST_FOR_EXCEPTION(
+              aDHessVec_g[j1][j2] != tmp,
+              Teuchos::Exceptions::InvalidParameter,
+              std::endl
+                  << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
+                  << "AD support for pp Hessian contributions of the response " << i << " are not consistent; "
+                  << "AD is enable for some blocks but not for others."
+                  << std::endl);
+          }
+        }
+      }
+    }
+
+    result.setSupports(
+      Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xx,
+      i,
+      aDHessVec_g[0][0]);
+
+    for (int j1 = 0; j1 < num_params; j1++) {
+      result.setSupports(
+        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xp,
+        i,
+        j1,
+        aDHessVec_g[0][j1+1]);
+      result.setSupports(
+        Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_px,
+        i,
+        j1,
+        aDHessVec_g[j1+1][0]);
+      result.setSupports(
+        Thyra_ModelEvaluator::OUT_ARG_hess_g_pp,
+        i,
+        j1,
+        j1,
+        reconstructHpp);
+      for (int j2 = 0; j2 < num_params; j2++) {
         result.setSupports(
-            Thyra_ModelEvaluator::OUT_ARG_DgDp,
-            i,
-            j1 + num_param_vecs,
-            Thyra_ModelEvaluator::DERIV_LINEAR_OP);
+          Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_pp,
+          i,
+          j1,
+          j2,
+          aDHessVec_g[j1+1][j2+1]);
       }
     }
   }
@@ -676,32 +1066,8 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   bool transposeJacobian = false;
   ObserverImpl observer(app);
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  auto& analysisParams = appParams->sublist("Piro").sublist("Analysis");
-  if(analysisParams.isSublist("Optimization Status")) {
-    auto& opt_paramList = analysisParams.sublist("Optimization Status");
-    if(opt_paramList.isParameter("Optimization Variables Changed") && opt_paramList.get<bool>("Optimization Variables Changed")) {
-      if(opt_paramList.isParameter("Parameter Names")) {
-        const auto& param_names = *opt_paramList.get<Teuchos::RCP<std::vector<std::string>>>("Parameter Names");
-        for (int k=0; k < param_names.size(); ++k)
-          observer.parameterChanged(param_names[k]);
-      }
-      opt_paramList.set("Optimization Variables Changed", false);
-    }
-
-    // When using the Old Reduced Space ROL Interface, the solution printing is 
-    // handled in Piro using observers. Otherwise we take care of printing here.
-    if(analysisParams.isSublist("ROL") && !analysisParams.sublist("ROL").get("Use Old Reduced Space Interface", false)) {
-      int iter = opt_paramList.get("Optimizer Iteration Number", -1);
-      static int iteration = -1;
-      int write_interval = analysisParams.get("Write Interval",1);
-      if((iter >= 0) && (iter != iteration) && (iteration%write_interval == 0))
-      {
-        Teuchos::TimeMonitor timer(*Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"));
-        const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
-        observer.observeSolution(iter, *x, Teuchos::null, Teuchos::null, Teuchos::null);
-        iteration = iter;
-      }
-    }
+  if(appParams->sublist("Piro").isSublist("Optimization Status")) {
+    auto& opt_paramList = appParams->sublist("Piro").sublist("Optimization Status");
     transposeJacobian = opt_paramList.get("Compute Transposed Jacobian", false);
   }
 
@@ -874,23 +1240,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   }
 
   // f
-  if (app->is_adjoint) {
-    const Thyra_Derivative f_deriv(outArgs.get_f(), Thyra_ModelEvaluator::DERIV_MV_GRADIENT_FORM);
-
-    const Thyra_Derivative dummy_deriv;
-
-    const int response_index = 0;  // need to add capability for sending this in
-    app->evaluateResponseDerivative(
-        response_index, curr_time,
-        x, x_dot, x_dotdot,
-        sacado_param_vec,
-        NULL,
-        Teuchos::null,
-        f_deriv,
-        dummy_deriv,
-        dummy_deriv,
-        dummy_deriv);
-  } else if (Teuchos::nonnull(f_out) && !f_already_computed) {
+  if (Teuchos::nonnull(f_out) && !f_already_computed) {
     app->computeGlobalResidual(
         curr_time,
         x, x_dot, x_dotdot,
@@ -922,28 +1272,38 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         f_hess_xx_v);
   }
 
+  const int num_params = num_param_vecs + num_dist_param_vecs;
+  std::vector<std::string> all_param_names(num_params);
+
+  for (int l1 = 0; l1 < num_param_vecs; l1++) {
+    all_param_names[l1] = Albany::strint("parameter_vector", l1);
+  }
   for (int l1 = 0; l1 < num_dist_param_vecs; l1++) {
-    const Teuchos::RCP<const Thyra_MultiVector> delta_p_l1 = inArgs.get_p_direction(l1 + num_param_vecs);
+    all_param_names[l1 + num_param_vecs] = dist_param_names[l1];
+  }
+
+  for (int l1 = 0; l1 < num_params; l1++) {
+    const Teuchos::RCP<const Thyra_MultiVector> delta_p_l1 = inArgs.get_p_direction(l1);
     const Teuchos::RCP<Thyra_MultiVector> f_hess_xp_v =
-      outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xp, l1 + num_param_vecs) ?
-      outArgs.get_hess_vec_prod_f_xp(l1 + num_param_vecs) : Teuchos::null;
+      outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xp, l1) ?
+      outArgs.get_hess_vec_prod_f_xp(l1) : Teuchos::null;
     const Teuchos::RCP<Thyra_MultiVector> f_hess_px_v =
-      outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_px, l1 + num_param_vecs) ?
-      outArgs.get_hess_vec_prod_f_px(l1 + num_param_vecs) : Teuchos::null;
+      outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_px, l1) ?
+      outArgs.get_hess_vec_prod_f_px(l1) : Teuchos::null;
 
     if (Teuchos::nonnull(f_hess_xp_v)) {
       if (delta_p_l1.is_null()) {
         TEUCHOS_TEST_FOR_EXCEPTION(
             true,
             Teuchos::Exceptions::InvalidParameter,
-            "hess_vec_prod_f_xp(" << l1 + num_param_vecs <<") is set in outArgs but "
-            << "p_direction(" << l1 + num_param_vecs << ") is not set in inArgs.\n");
+            "hess_vec_prod_f_xp(" << l1 <<") is set in outArgs but "
+            << "p_direction(" << l1  << ") is not set in inArgs.\n");
       }
       f_hess_xp_v->assign(0.);
       app->evaluateResidual_HessVecProd_xp(
           curr_time, delta_p_l1, z, x, x_dot, x_dotdot,
           sacado_param_vec,
-          dist_param_names[l1],
+          all_param_names[l1],
           f_hess_xp_v);
     }
 
@@ -952,37 +1312,37 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         TEUCHOS_TEST_FOR_EXCEPTION(
             true,
             Teuchos::Exceptions::InvalidParameter,
-            "hess_vec_prod_f_px(" << l1 + num_param_vecs <<") is set in outArgs but "
+            "hess_vec_prod_f_px(" << l1 <<") is set in outArgs but "
             << "x_direction is not set in inArgs.\n");
       }
       f_hess_px_v->assign(0.);
       app->evaluateResidual_HessVecProd_px(
           curr_time, delta_x, z, x, x_dot, x_dotdot,
           sacado_param_vec,
-          dist_param_names[l1],
+          all_param_names[l1],
           f_hess_px_v);
     }
 
-    for (int l2 = 0; l2 < num_dist_param_vecs; l2++) {
-      const Teuchos::RCP<const Thyra_MultiVector> delta_p_l2 = inArgs.get_p_direction(l2 + num_param_vecs);
+    for (int l2 = 0; l2 < num_params; l2++) {
+      const Teuchos::RCP<const Thyra_MultiVector> delta_p_l2 = inArgs.get_p_direction(l2);
       const Teuchos::RCP<Thyra_MultiVector> f_hess_pp_v =
-        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_pp, l1 + num_param_vecs, l2 + num_param_vecs) ?
-        outArgs.get_hess_vec_prod_f_pp(l1 + num_param_vecs, l2 + num_param_vecs) : Teuchos::null;
+        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_pp, l1, l2) ?
+        outArgs.get_hess_vec_prod_f_pp(l1, l2) : Teuchos::null;
 
       if (Teuchos::nonnull(f_hess_pp_v)) {
         if (delta_p_l2.is_null()) {
           TEUCHOS_TEST_FOR_EXCEPTION(
               true,
               Teuchos::Exceptions::InvalidParameter,
-              "hess_vec_prod_f_pp(" << l1 + num_param_vecs <<","<< l2 + num_param_vecs
-              << ") is set in outArgs but p_direction(" << l2 + num_param_vecs << ") is not set in inArgs.\n");
+              "hess_vec_prod_f_pp(" << l1 <<","<< l2
+              << ") is set in outArgs but p_direction(" << l2 << ") is not set in inArgs.\n");
         }
         f_hess_pp_v->assign(0.);
         app->evaluateResidual_HessVecProd_pp(
             curr_time, delta_p_l2, z, x, x_dot, x_dotdot,
             sacado_param_vec,
-            dist_param_names[l1],
-            dist_param_names[l2],
+            all_param_names[l1],
+            all_param_names[l2],
             f_hess_pp_v);
       }
     }
@@ -1067,34 +1427,34 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
             << "is not set in inArgs.\n");
       }
       g_hess_xx_v->assign(0.);
-      app->evaluateResponseDistParamHessVecProd_xx(
+      app->evaluateResponse_HessVecProd_xx(
           j, curr_time, delta_x, x, x_dot, x_dotdot,
           sacado_param_vec,
           g_hess_xx_v);
     }
 
-    for (int l1 = 0; l1 < num_dist_param_vecs; l1++) {
-      const Teuchos::RCP<const Thyra_MultiVector> delta_p_l1 = inArgs.get_p_direction(l1 + num_param_vecs);
+    for (int l1 = 0; l1 < num_params; l1++) {
+      const Teuchos::RCP<const Thyra_MultiVector> delta_p_l1 = inArgs.get_p_direction(l1);
       const Teuchos::RCP<Thyra_MultiVector> g_hess_xp_v =
-        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xp, j, l1 + num_param_vecs) ?
-        outArgs.get_hess_vec_prod_g_xp(j, l1 + num_param_vecs) : Teuchos::null;
+        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xp, j, l1) ?
+        outArgs.get_hess_vec_prod_g_xp(j, l1) : Teuchos::null;
       const Teuchos::RCP<Thyra_MultiVector> g_hess_px_v =
-        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_px, j, l1 + num_param_vecs) ?
-        outArgs.get_hess_vec_prod_g_px(j, l1 + num_param_vecs) : Teuchos::null;
+        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_px, j, l1) ?
+        outArgs.get_hess_vec_prod_g_px(j, l1) : Teuchos::null;
 
       if (Teuchos::nonnull(g_hess_xp_v)) {
         if (delta_p_l1.is_null()) {
           TEUCHOS_TEST_FOR_EXCEPTION(
               true,
               Teuchos::Exceptions::InvalidParameter,
-              "hess_vec_prod_g_xp(" << j <<","<< l1 + num_param_vecs <<") is set in outArgs but "
-              << "p_direction(" << l1 + num_param_vecs << ") is not set in inArgs.\n");
+              "hess_vec_prod_g_xp(" << j <<","<< l1 <<") is set in outArgs but "
+              << "p_direction(" << l1 << ") is not set in inArgs.\n");
         }
         g_hess_xp_v->assign(0.);
-        app->evaluateResponseDistParamHessVecProd_xp(
+        app->evaluateResponse_HessVecProd_xp(
             j, curr_time, delta_p_l1, x, x_dot, x_dotdot,
             sacado_param_vec,
-            dist_param_names[l1],
+            all_param_names[l1],
             g_hess_xp_v);
       }
 
@@ -1103,37 +1463,50 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
           TEUCHOS_TEST_FOR_EXCEPTION(
               true,
               Teuchos::Exceptions::InvalidParameter,
-              "hess_vec_prod_g_px(" << j <<","<< l1 + num_param_vecs <<") is set in outArgs but "
+              "hess_vec_prod_g_px(" << j <<","<< l1 <<") is set in outArgs but "
               << "x_direction is not set in inArgs.\n");
         }
         g_hess_px_v->assign(0.);
-        app->evaluateResponseDistParamHessVecProd_px(
+        app->evaluateResponse_HessVecProd_px(
             j, curr_time, delta_x, x, x_dot, x_dotdot,
             sacado_param_vec,
-            dist_param_names[l1],
+            all_param_names[l1],
             g_hess_px_v);
       }
 
-      for (int l2 = 0; l2 < num_dist_param_vecs; l2++) {
-        const Teuchos::RCP<const Thyra_MultiVector> delta_p_l2 = inArgs.get_p_direction(l2 + num_param_vecs);
+      const Teuchos::RCP<Thyra_LinearOp> g_hess_pp =
+        outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_g_pp, j, l1, l1) ?
+        outArgs.get_hess_g_pp(j, l1, l1) : Teuchos::null;
+
+      if (Teuchos::nonnull(g_hess_pp)) {
+        if (l1 >= num_param_vecs) {
+          app->evaluateResponseDistParamHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
+                    sacado_param_vec,
+                    all_param_names[l1],
+                    g_hess_pp);
+        }
+      }
+
+      for (int l2 = 0; l2 < num_params; l2++) {
+        const Teuchos::RCP<const Thyra_MultiVector> delta_p_l2 = inArgs.get_p_direction(l2);
         const Teuchos::RCP<Thyra_MultiVector> g_hess_pp_v =
-          outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_pp, j, l1 + num_param_vecs, l2 + num_param_vecs) ?
-          outArgs.get_hess_vec_prod_g_pp(j, l1 + num_param_vecs, l2 + num_param_vecs) : Teuchos::null;
+          outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_pp, j, l1, l2) ?
+          outArgs.get_hess_vec_prod_g_pp(j, l1, l2) : Teuchos::null;
 
         if (Teuchos::nonnull(g_hess_pp_v)) {
           if (delta_p_l2.is_null()) {
             TEUCHOS_TEST_FOR_EXCEPTION(
                 true,
                 Teuchos::Exceptions::InvalidParameter,
-                "hess_vec_prod_g_pp(" << j <<","<< l1 + num_param_vecs <<","<< l2 + num_param_vecs
-                << ") is set in outArgs but p_direction(" << l2 + num_param_vecs << ") is not set in inArgs.\n");
+                "hess_vec_prod_g_pp(" << j <<","<< l1  <<","<< l2
+                << ") is set in outArgs but p_direction(" << l2  << ") is not set in inArgs.\n");
           }
           g_hess_pp_v->assign(0.);
-          app->evaluateResponseDistParamHessVecProd_pp(
+          app->evaluateResponse_HessVecProd_pp(
               j, curr_time, delta_p_l2, x, x_dot, x_dotdot,
               sacado_param_vec,
-              dist_param_names[l1],
-              dist_param_names[l2],
+              all_param_names[l1],
+              all_param_names[l2],
               g_hess_pp_v);
         }
       }

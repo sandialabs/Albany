@@ -479,6 +479,31 @@ writeMatrixMarket<const Tpetra_CrsMatrix>(
   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(filename, A);
 }
 
+//
+//
+//
+template <>
+void
+writeMatrixMarket<const Tpetra_CrsGraph>(
+    const Teuchos::RCP<const Tpetra_CrsGraph>& A,
+    const std::string&                          prefix,
+    int const                                   counter)
+{
+  if (A.is_null()) { return; }
+
+  std::ostringstream oss;
+
+  oss << prefix;
+  if (counter >= 0) {
+    oss << '-' << std::setfill('0') << std::setw(3) << counter;
+  }
+  oss << ".mm";
+
+  const std::string& filename = oss.str();
+
+  Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseGraphFile(filename, A);
+}
+
 CmdLineArgs::CmdLineArgs(
     const std::string& default_yaml_filename,
     const std::string& default_yaml_filename2,

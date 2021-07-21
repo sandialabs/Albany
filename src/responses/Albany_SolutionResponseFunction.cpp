@@ -8,6 +8,7 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
+#include "Thyra_VectorStdOps.hpp"
 
 namespace Albany {
 
@@ -69,16 +70,15 @@ void Albany::SolutionResponseFunction::setup()
 
   // Create the culling operator
   cull_op = cull_op_factory->createOp();
+  beginModify(cull_op);
   assign(cull_op,1.0);
-  fillComplete(cull_op);
+  endModify(cull_op);
 }
 
 Teuchos::RCP<Thyra_LinearOp>
 SolutionResponseFunction::createGradientOp() const
 {
-  auto gradOp = cull_op_factory->createOp();
-  fillComplete(gradOp);
-  return gradOp;
+  return cull_op_factory->createOp();
 }
 
 void SolutionResponseFunction::
@@ -91,6 +91,11 @@ evaluateResponse(
     const Teuchos::RCP<Thyra_Vector>& g)
 {
   cullSolution(x, g);
+
+  if (g_.is_null())
+    g_ = Thyra::createMember(g->space());
+
+  g_->assign(*g);
 }
 
 void SolutionResponseFunction::
@@ -179,7 +184,7 @@ evaluateDistParamDeriv(
 }
 
 void SolutionResponseFunction::
-evaluateDistParamHessVecProd_xx(
+evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -194,7 +199,7 @@ evaluateDistParamHessVecProd_xx(
 }
 
 void SolutionResponseFunction::
-evaluateDistParamHessVecProd_xp(
+evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -210,7 +215,7 @@ evaluateDistParamHessVecProd_xp(
 }
 
 void SolutionResponseFunction::
-evaluateDistParamHessVecProd_px(
+evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -226,7 +231,7 @@ evaluateDistParamHessVecProd_px(
 }
 
 void SolutionResponseFunction::
-evaluateDistParamHessVecProd_pp(
+evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -247,6 +252,26 @@ cullSolution(const Teuchos::RCP<const Thyra_MultiVector>& x,
              const Teuchos::RCP<      Thyra_MultiVector>& x_culled) const
 {
   cull_op->apply(Thyra::EOpTransp::NOTRANS,*x,x_culled.ptr(),1.0,0.0);
+}
+
+void
+SolutionResponseFunction::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
+{
+  if (g_.is_null()) {
+    *out << " the response has not been evaluated yet!";
+    return;
+  }
+
+  std::size_t precision = 8;
+  std::size_t value_width = precision + 4;
+  int gsize = g_->space()->dim();
+
+  for (int j = 0; j < gsize; j++) {
+    *out << std::setw(value_width) << Thyra::get_ele(*g_,j);
+    if (j < gsize-1)
+      *out << ", ";
+  }
 }
 
 } // namespace Albany

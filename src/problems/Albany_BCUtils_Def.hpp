@@ -125,7 +125,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 
   use_sdbcs_ = false;
   nodeSetIDs_.resize(nodeSetIDs.size());
-  for (int i = 0; i < nodeSetIDs.size(); i++) nodeSetIDs_[i] = nodeSetIDs[i];
+  for (size_t i = 0; i < nodeSetIDs.size(); i++) nodeSetIDs_[i] = nodeSetIDs[i];
 
   if (!haveBCSpecified(
           params)) {  // If the BC sublist is not in the input file,

@@ -26,7 +26,7 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
                        const int numDim_) :
   StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
-  bool fluxDivIsPartOfSolution = params->isSublist("LandIce Flux Divergence") &&
+  fluxDivIsPartOfSolution = params->isSublist("LandIce Flux Divergence") &&
       params->sublist("LandIce Flux Divergence").get<bool>("Flux Divergence Is Part Of Solution");
 
   // 2 eqns for Stokes FO + 1 eqn. for enthalpy + 1 eqn. for w. Optionally 1 eqn. for fluxDiv
@@ -38,8 +38,8 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   needsDiss = params->get<bool> ("Needs Dissipation",true);
   needsBasFric = params->get<bool> ("Needs Basal Friction",true);
 
-  TEUCHOS_TEST_FOR_EXCEPTION (needsBasFric && basalSideName=="INVALID", std::logic_error,
-                              "Error! If 'Needs Basal Friction' is true, you need a valid 'Basal Side Name'.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error,
+                              "Error! StokesFOThermoCoupled requires a valid basalSideName.\n");
   if (needsBasFric) {
     // We must have a BasalFriction landice bc on ss basalSideName
     bool found = false;
@@ -53,25 +53,27 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   compute_dissipation &= needsDiss;
 
-  dof_names.resize(4);
+  dof_names.resize(fluxDivIsPartOfSolution ? 4 : 3);
   dof_names[1] = "W";
   dof_names[2] = "Enthalpy";
-  dof_names[3] = "flux_divergence";
 
-  resid_names.resize(4);
+  resid_names.resize(fluxDivIsPartOfSolution ? 4 : 3);
   resid_names[1] = dof_names[1] + " Residual";
   resid_names[2] = dof_names[2] + " Residual";
-  resid_names[3] = dof_names[3] + " Residual";
 
-  scatter_names.resize(4);
+  scatter_names.resize(fluxDivIsPartOfSolution ? 4 : 3);
   scatter_names[1] = "Scatter " + resid_names[1];
   scatter_names[2] = "Scatter " + resid_names[2];
-  scatter_names[3] = "Scatter " + resid_names[3];
 
-  dof_offsets.resize(4);
+  dof_offsets.resize(fluxDivIsPartOfSolution ? 4 : 3);
   dof_offsets[1] = vecDimFO;
   dof_offsets[2] = dof_offsets[1]+1;
-  dof_offsets[3] = dof_offsets[2]+1;
+  if(fluxDivIsPartOfSolution) {
+    dof_names[3] = "flux_divergence";
+    resid_names[3] = dof_names[3] + " Residual";
+    scatter_names[3] = "Scatter " + resid_names[3];
+    dof_offsets[3] = dof_offsets[2]+1;
+  }
 
   // We *always* use corrected temperature in this problem
   viscosity_use_corrected_temperature = true;
@@ -112,7 +114,7 @@ void StokesFOThermoCoupled::constructDirichletEvaluators(const Albany::MeshSpecs
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames(vecDimFO+2);
-  for (int i=0; i<vecDimFO; i++) {
+  for (unsigned int i=0; i<vecDimFO; i++) {
     std::stringstream s; s << "U" << i;
     dirichletNames[i] = s.str();
   }
@@ -221,52 +223,48 @@ void StokesFOThermoCoupled::setupEvaluatorRequests ()
   StokesFOBase::setupEvaluatorRequests();
 
   // Volume required interpolations
-  build_interp_ev[dof_names[1]][InterpolationRequest::QP_VAL     ] = true;
-  build_interp_ev[dof_names[2]][InterpolationRequest::QP_VAL     ] = true;
-  build_interp_ev[dof_names[2]][InterpolationRequest::GRAD_QP_VAL] = true;
+  build_interp_ev[dof_names[1]][IReq::QP_VAL     ] = true;
+  build_interp_ev[dof_names[2]][IReq::QP_VAL     ] = true;
+  build_interp_ev[dof_names[2]][IReq::GRAD_QP_VAL] = true;
 
-  build_interp_ev[temperature_name          ][InterpolationRequest::CELL_VAL   ] = true;
-  build_interp_ev[corrected_temperature_name][InterpolationRequest::CELL_VAL   ] = true;
-  build_interp_ev[stiffening_factor_name    ][InterpolationRequest::QP_VAL     ] = true;
-  build_interp_ev[surface_height_name       ][InterpolationRequest::QP_VAL     ] = true;
-  build_interp_ev[surface_height_name       ][InterpolationRequest::GRAD_QP_VAL] = true;
-  build_interp_ev[water_content_name        ][InterpolationRequest::QP_VAL     ] = true;
-  build_interp_ev[water_content_name        ][InterpolationRequest::GRAD_QP_VAL] = true;
-  build_interp_ev[melting_temperature_name  ][InterpolationRequest::QP_VAL     ] = true;
-  build_interp_ev[melting_temperature_name  ][InterpolationRequest::GRAD_QP_VAL] = true;
-  build_interp_ev[melting_enthalpy_name     ][InterpolationRequest::QP_VAL     ] = true;
-  build_interp_ev[melting_enthalpy_name     ][InterpolationRequest::GRAD_QP_VAL] = true;
+  build_interp_ev[temperature_name          ][IReq::CELL_VAL   ] = true;
+  build_interp_ev[corrected_temperature_name][IReq::CELL_VAL   ] = true;
+  build_interp_ev[stiffening_factor_name    ][IReq::QP_VAL     ] = true;
+  build_interp_ev[surface_height_name       ][IReq::QP_VAL     ] = true;
+  build_interp_ev[surface_height_name       ][IReq::GRAD_QP_VAL] = true;
+  build_interp_ev[water_content_name        ][IReq::QP_VAL     ] = true;
+  build_interp_ev[water_content_name        ][IReq::GRAD_QP_VAL] = true;
+  build_interp_ev[melting_temperature_name  ][IReq::QP_VAL     ] = true;
+  build_interp_ev[melting_temperature_name  ][IReq::GRAD_QP_VAL] = true;
+  build_interp_ev[melting_enthalpy_name     ][IReq::QP_VAL     ] = true;
+  build_interp_ev[melting_enthalpy_name     ][IReq::GRAD_QP_VAL] = true;
 
   // Side set required interpolations
-  if (basalSideName!=INVALID_STR) {
-    ss_build_interp_ev[basalSideName][dof_names[2]            ][InterpolationRequest::QP_VAL      ] = true;
-    ss_build_interp_ev[basalSideName][dof_names[2]            ][InterpolationRequest::CELL_TO_SIDE] = true;
-    ss_build_interp_ev[basalSideName][dof_names[1]            ][InterpolationRequest::CELL_TO_SIDE] = true;
-    ss_build_interp_ev[basalSideName][dof_names[1]            ][InterpolationRequest::QP_VAL      ] = true;
-    ss_build_interp_ev[basalSideName]["basal_dTdz"            ][InterpolationRequest::QP_VAL      ] = true;
-    ss_build_interp_ev[basalSideName][melting_temperature_name][InterpolationRequest::GRAD_QP_VAL ] = true;
-    ss_build_interp_ev[basalSideName][melting_temperature_name][InterpolationRequest::CELL_TO_SIDE] = true;
-    ss_build_interp_ev[basalSideName][melting_enthalpy_name   ][InterpolationRequest::CELL_TO_SIDE] = true;
-    ss_build_interp_ev[basalSideName][melting_enthalpy_name   ][InterpolationRequest::QP_VAL      ] = true;
-    ss_build_interp_ev[basalSideName][water_content_name      ][InterpolationRequest::CELL_TO_SIDE] = true;
-    ss_build_interp_ev[basalSideName][water_content_name      ][InterpolationRequest::QP_VAL      ] = true;
-    ss_build_interp_ev[basalSideName]["basal_vert_velocity"   ][InterpolationRequest::SIDE_TO_CELL] = true;
+  ss_build_interp_ev[basalSideName][dof_names[2]            ][IReq::QP_VAL      ] = true;
+  ss_build_interp_ev[basalSideName][dof_names[2]            ][IReq::CELL_TO_SIDE] = true;
+  ss_build_interp_ev[basalSideName][dof_names[1]            ][IReq::CELL_TO_SIDE] = true;
+  ss_build_interp_ev[basalSideName][dof_names[1]            ][IReq::QP_VAL      ] = true;
+  ss_build_interp_ev[basalSideName][dof_names[0]            ][IReq::CELL_TO_SIDE] = true;
+  ss_build_interp_ev[basalSideName][dof_names[0]            ][IReq::QP_VAL      ] = true;
+  ss_build_interp_ev[basalSideName]["basal_dTdz"            ][IReq::QP_VAL      ] = true;
+  ss_build_interp_ev[basalSideName][melting_temperature_name][IReq::GRAD_QP_VAL ] = true;
+  ss_build_interp_ev[basalSideName][melting_temperature_name][IReq::CELL_TO_SIDE] = true;
+  ss_build_interp_ev[basalSideName][melting_enthalpy_name   ][IReq::CELL_TO_SIDE] = true;
+  ss_build_interp_ev[basalSideName][melting_enthalpy_name   ][IReq::QP_VAL      ] = true;
+  ss_build_interp_ev[basalSideName][water_content_name      ][IReq::CELL_TO_SIDE] = true;
+  ss_build_interp_ev[basalSideName][water_content_name      ][IReq::QP_VAL      ] = true;
 
-    if(needsBasFric)
-    {
-      ss_build_interp_ev[basalSideName]["Basal Heat"     ][InterpolationRequest::QP_VAL] = true;
-      ss_build_interp_ev[basalSideName]["Basal Heat SUPG"][InterpolationRequest::QP_VAL] = true;
-    }
-
-    {
-      ss_build_interp_ev[basalSideName][geothermal_flux_name][InterpolationRequest::CELL_TO_SIDE] = true;
-      ss_build_interp_ev[basalSideName][geothermal_flux_name][InterpolationRequest::QP_VAL      ] = true;
-    }
-
-    ss_utils_needed[basalSideName][UtilityRequest::BFS      ] = true;
-    ss_utils_needed[basalSideName][UtilityRequest::QP_COORDS] = true;
-    ss_utils_needed[basalSideName][UtilityRequest::NORMALS] = true;
+  if(needsBasFric) {
+    ss_build_interp_ev[basalSideName]["Basal Heat"     ][IReq::QP_VAL] = true;
+    ss_build_interp_ev[basalSideName]["Basal Heat SUPG"][IReq::QP_VAL] = true;
   }
+
+  ss_build_interp_ev[basalSideName][geothermal_flux_name][IReq::CELL_TO_SIDE] = true;
+  ss_build_interp_ev[basalSideName][geothermal_flux_name][IReq::QP_VAL      ] = true;
+
+  ss_utils_needed[basalSideName][UtilityRequest::BFS      ] = true;
+  ss_utils_needed[basalSideName][UtilityRequest::QP_COORDS] = true;
+  ss_utils_needed[basalSideName][UtilityRequest::NORMALS] = true;
 }
 
 void StokesFOThermoCoupled::setFieldsProperties () {
@@ -278,44 +276,35 @@ void StokesFOThermoCoupled::setFieldsProperties () {
     TEUCHOS_TEST_FOR_EXCEPTION(adjustBedTopo == adjustSurfaceHeight, std::logic_error, "Error! When the ice thickness is a parameter,\n "
         "either 'Adjust Bed Topography to Account for Thickness Changes' or\n"
         " 'Adjust Surface Height to Account for Thickness Changes' needs to be true.\n");
-
-    if (adjustSurfaceHeight) {
-      is_computed_field[surface_height_name] = true;
-    } else if (adjustBedTopo) {
-      is_computed_field[surface_height_name] = true;
-      is_computed_field[bed_topography_name] = true;
-    }
   }
 
 
   // UpdateZCoordinate expects the (observed) bed topography and (observed) surface height to have scalar type MeshScalarT.
-  setSingleFieldProperties("observed_bed_topography", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
-  setSingleFieldProperties("observed_surface_height", 0, FieldScalarType::MeshScalar, FieldLocation::Node);
+  setSingleFieldProperties("observed_bed_topography", FRT::Scalar);
+  setSingleFieldProperties("observed_surface_height", FRT::Scalar);
 
   // All dofs have scalar type Scalar (i.e., they depend on the solution)
-  setSingleFieldProperties(dof_names[1], 0, FieldScalarType::Scalar, FieldLocation::Node);  // Vertical velocity
-  setSingleFieldProperties(dof_names[2], 0, FieldScalarType::Scalar, FieldLocation::Node);  // Enthalpy
-  setSingleFieldProperties(dof_names[3], 0, FieldScalarType::Scalar, FieldLocation::Node);  // FluxDiv
+  setSingleFieldProperties(dof_names[1], FRT::Scalar, FST::Scalar);  // Vertical velocity
+  setSingleFieldProperties(dof_names[2], FRT::Scalar, FST::Scalar);  // Enthalpy
+  if (fluxDivIsPartOfSolution) {
+    setSingleFieldProperties(dof_names[3], FRT::Scalar, FST::Scalar);  // FluxDiv
+  }
 
-  setSingleFieldProperties(surface_enthalpy_name     , 0, FieldScalarType::ParamScalar, FieldLocation::Node);
-  setSingleFieldProperties(flow_factor_name          , 0, FieldScalarType::Scalar     , FieldLocation::Cell); // Already processed in StokesFOBase, but need to adjust scalar type
-  setSingleFieldProperties("basal_melt_rate"         , 0, FieldScalarType::Scalar     , FieldLocation::Node);
-  setSingleFieldProperties(geothermal_flux_name      , 0, FieldScalarType::ParamScalar, FieldLocation::Node);
-  setSingleFieldProperties(water_content_name        , 0, FieldScalarType::Scalar     , FieldLocation::Node);
-  setSingleFieldProperties(temperature_name          , 0, FieldScalarType::Scalar     , FieldLocation::Node);
-  setSingleFieldProperties(corrected_temperature_name, 0, FieldScalarType::Scalar     , FieldLocation::Node); // Already processed in StokesFOBase, but need to adjust scalar type
-  setSingleFieldProperties(melting_temperature_name  , 0, FieldScalarType::MeshScalar , FieldLocation::Node);
-  setSingleFieldProperties(melting_enthalpy_name     , 0, field_scalar_type[melting_temperature_name] , FieldLocation::Node);
-  setSingleFieldProperties(hydrostatic_pressure_name , 0, FieldScalarType::ParamScalar, FieldLocation::Node);
-  setSingleFieldProperties("basal_vert_velocity"     , 0, FieldScalarType::Scalar     , FieldLocation::Node);
-
-  // Declare computed fields
-  // NOTE: not *always* necessary, but it is sometimes (see StokesFOBase, towards the end of constructInterpolationEvaluators)
-  is_computed_field[surface_enthalpy_name] = true; // Surface Enthalpy is the prescribed field for dirichlet bc, and it's computed
-  is_computed_field[melting_enthalpy_name] = true;
-  is_computed_field[temperature_name] = true;
-  is_computed_field[water_content_name] = true;
-  is_computed_field["basal_melt_rate"] = true;
+  setSingleFieldProperties(surface_enthalpy_name     , FRT::Scalar);
+  setSingleFieldProperties(flow_factor_name          , FRT::Scalar); // Already processed in StokesFOBase, but need to adjust scalar type
+  setSingleFieldProperties("basal_melt_rate"         , FRT::Scalar);
+  setSingleFieldProperties("basal_dTdz"              , FRT::Scalar);
+  setSingleFieldProperties("Basal Heat"              , FRT::Scalar);
+  setSingleFieldProperties("Basal Heat SUPG"         , FRT::Scalar);
+  setSingleFieldProperties(geothermal_flux_name      , FRT::Scalar, FST::ParamScalar);
+  setSingleFieldProperties(water_content_name        , FRT::Scalar, FST::Scalar);
+  setSingleFieldProperties(temperature_name          , FRT::Scalar, FST::Scalar);
+  setSingleFieldProperties(stiffening_factor_name    , FRT::Scalar);
+  setSingleFieldProperties(corrected_temperature_name, FRT::Scalar, FST::Scalar); // Already processed in StokesFOBase, but need to adjust scalar type
+  setSingleFieldProperties(melting_temperature_name  , FRT::Scalar, FST::MeshScalar); //depends on z coord
+  setSingleFieldProperties(melting_enthalpy_name     , FRT::Scalar, FST::MeshScalar); //depends on z coord
+  setSingleFieldProperties(hydrostatic_pressure_name , FRT::Scalar);
+  setSingleFieldProperties("basal_vert_velocity"     , FRT::Scalar);
 }
 
 } // namespace LandIce

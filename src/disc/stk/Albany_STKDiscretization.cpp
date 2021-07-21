@@ -49,6 +49,9 @@ extern "C" {
 #include <math.h>
 #include <PHAL_Dimension.hpp>
 
+#include "Albany_MultiSTKFieldContainer.hpp"
+#include "Albany_OrdinarySTKFieldContainer.hpp"
+
 // Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
 
@@ -56,16 +59,17 @@ namespace Albany {
 
 STKDiscretization::STKDiscretization(
     const Teuchos::RCP<Teuchos::ParameterList>&    discParams_,
+    const int neq_,
     Teuchos::RCP<Albany::AbstractSTKMeshStruct>&   stkMeshStruct_,
     const Teuchos::RCP<const Teuchos_Comm>&        comm_,
     const Teuchos::RCP<Albany::RigidBodyModes>&    rigidBodyModes_,
     const std::map<int, std::vector<std::string>>& sideSetEquations_)
     : previous_time_label(-1.0e32),
       out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-      metaData(*stkMeshStruct_->metaData),
-      bulkData(*stkMeshStruct_->bulkData),
+      metaData(stkMeshStruct_->metaData),
+      bulkData(stkMeshStruct_->bulkData),
       comm(comm_),
-      neq(stkMeshStruct_->neq),
+      neq(neq_),
       sideSetEquations(sideSetEquations_),
       rigidBodyModes(rigidBodyModes_),
       stkMeshStruct(stkMeshStruct_),
@@ -131,11 +135,25 @@ STKDiscretization::getOverlapNodeVectorSpace(
 void
 STKDiscretization::printCoords() const
 {
-  std::cout << "Processor " << bulkData.parallel_rank() << " has "
+  std::cout << "Processor " << bulkData->parallel_rank() << " has "
             << coords.size() << " worksets.\n";
+
+  const int numDim = stkMeshStruct->numDim;
+  double xmin = std::numeric_limits<double>::max(), xmax = std::numeric_limits<double>::lowest(),
+      ymin = xmin, ymax = xmax, zmin = xmin, zmax = xmax;
   for (int ws = 0; ws < coords.size(); ws++) {
     for (int e = 0; e < coords[ws].size(); e++) {
       for (int j = 0; j < coords[ws][e].size(); j++) {
+        xmin = std::min(xmin, coords[ws][e][j][0]);
+        xmax = std::max(xmax, coords[ws][e][j][0]);
+        if (numDim > 1) {
+          ymin = std::min(ymin, coords[ws][e][j][1]);
+          ymax = std::max(ymax, coords[ws][e][j][1]);
+        }
+        if (numDim > 2) {
+          zmin = std::min(zmin, coords[ws][e][j][2]);
+          zmax = std::max(zmax, coords[ws][e][j][2]);
+        }
         std::cout << "Coord for workset: " << ws << " element: " << e
                   << " node: " << j << " x, y, z: " << coords[ws][e][j][0]
                   << ", " << coords[ws][e][j][1] << ", " << coords[ws][e][j][2]
@@ -143,6 +161,15 @@ STKDiscretization::printCoords() const
       }
     }
   }
+
+  std::cout << "Processor " << bulkData->parallel_rank() << " has the following x-range: ["
+      << xmin << ", " << xmax << "]" << std::endl;
+  if (numDim > 1)
+    std::cout << "Processor " << bulkData->parallel_rank() << " has the following y-range: ["
+        << ymin << ", " << ymax << "]" << std::endl;
+  if (numDim > 2)
+    std::cout << "Processor " << bulkData->parallel_rank() << " has the following z-range: ["
+        << zmin << ", " << zmax << "]" << std::endl;
 }
 
 const Teuchos::ArrayRCP<double>&
@@ -160,7 +187,7 @@ STKDiscretization::getCoordinates() const
   for (int node_lid = 0; node_lid < numOverlapNodes; ++node_lid) {
     GO node_gid = ov_node_indexer->getGlobalElement(node_lid);
 
-    const auto ov_node = bulkData.get_entity(stk::topology::NODE_RANK, node_gid + 1);
+    const auto ov_node = bulkData->get_entity(stk::topology::NODE_RANK, node_gid + 1);
     double* x = stk::mesh::field_data(coordinates_field, ov_node);
     for (int dim = 0; dim < meshDim; ++dim) {
       coordinates[meshDim * node_lid + dim] = x[dim];
@@ -182,9 +209,9 @@ STKDiscretization::transformMesh()
   std::string transformType = stkMeshStruct->transformType;
 
   std::vector<stk::mesh::Entity> overlapnodes;
-  stk::mesh::Selector selector(metaData.locally_owned_part());
-  selector |= metaData.globally_shared_part();
-  const auto& buckets = bulkData.buckets(stk::topology::NODE_RANK);
+  stk::mesh::Selector selector(metaData->locally_owned_part());
+  selector |= metaData->globally_shared_part();
+  const auto& buckets = bulkData->buckets(stk::topology::NODE_RANK);
   stk::mesh::get_selected_entities(selector, buckets, overlapnodes);
 
   if (transformType == "None") {
@@ -324,7 +351,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData.get_field<stk::mesh::Field<double>>(
+        metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
@@ -355,7 +382,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData.get_field<stk::mesh::Field<double>>(
+        metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
@@ -387,7 +414,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData.get_field<stk::mesh::Field<double>>(
+        metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
@@ -407,7 +434,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData.get_field<stk::mesh::Field<double>>(
+        metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
@@ -427,7 +454,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData.get_field<stk::mesh::Field<double>>(
+        metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
@@ -452,7 +479,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData.get_field<stk::mesh::Field<double>>(
+        metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
@@ -483,7 +510,7 @@ STKDiscretization::transformMesh()
 #endif
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData.get_field<stk::mesh::Field<double>>(
+        metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
@@ -521,8 +548,8 @@ STKDiscretization::setupMLCoords()
   auto node_indexer = createGlobalLocalIndexer(m_node_vs);
 
   std::vector<stk::mesh::Entity> ownedNodes;
-  const auto& part    = metaData.locally_owned_part();
-  const auto& buckets = bulkData.buckets(stk::topology::NODE_RANK);
+  const auto& part    = metaData->locally_owned_part();
+  const auto& buckets = bulkData->buckets(stk::topology::NODE_RANK);
   stk::mesh::get_selected_entities(part, buckets, ownedNodes);
 
   for (const auto node : ownedNodes) {
@@ -534,6 +561,7 @@ STKDiscretization::setupMLCoords()
     }
   }
   rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV, interleavedOrdering, m_vs, m_overlap_vs);
+  writeCoordsToMatrixMarket();
 }
 
 void
@@ -663,10 +691,7 @@ STKDiscretization::writeSolutionToFile(
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
-    Teuchos::RCP<AbstractSTKFieldContainer> container =
-        stkMeshStruct->getFieldContainer();
-
-    container->transferSolutionToCoords();
+    solutionFieldContainer->transferSolutionToCoords();
 
     if (!mesh_data.is_null()) {
       // Mesh coordinates have changed. Rewrite output file by deleting the mesh
@@ -731,10 +756,7 @@ STKDiscretization::writeSolutionMVToFile(
 #ifdef ALBANY_SEACAS
 
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
-    Teuchos::RCP<AbstractSTKFieldContainer> container =
-        stkMeshStruct->getFieldContainer();
-
-    container->transferSolutionToCoords();
+    solutionFieldContainer->transferSolutionToCoords();
 
     if (!mesh_data.is_null()) {
       // Mesh coordinates have changed. Rewrite output file by deleting the mesh
@@ -886,14 +908,11 @@ STKDiscretization::getSolutionMV(bool overlapped) const
 void
 STKDiscretization::getField(Thyra_Vector& result, const std::string& name) const
 {
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
   // Iterate over the on-processor nodes by getting node buckets and iterating
   // over each bucket.
   const std::string& part =
       nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
-  stk::mesh::Selector selector = metaData.locally_owned_part();
+  stk::mesh::Selector selector = metaData->locally_owned_part();
   if (part.size()) {
     std::map<std::string, stk::mesh::Part*>::const_iterator it =
         stkMeshStruct->nsPartVec.find(part);
@@ -903,7 +922,7 @@ STKDiscretization::getField(Thyra_Vector& result, const std::string& name) const
 
   const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
 
-  container->fillVector(
+  solutionFieldContainer->fillVector(
       result, name, selector, dofsStruct.node_vs, dofsStruct.dofManager);
 }
 
@@ -913,14 +932,11 @@ STKDiscretization::getSolutionField(Thyra_Vector& result, const bool overlapped)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
   // Iterate over the on-processor nodes by getting node buckets and iterating
   // over each bucket.
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
+  stk::mesh::Selector locally_owned = metaData->locally_owned_part();
 
-  container->fillSolnVector(result, locally_owned, m_node_vs);
+  solutionFieldContainer->fillSolnVector(result, locally_owned, m_node_vs);
 }
 
 void
@@ -930,14 +946,11 @@ STKDiscretization::getSolutionMV(
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
   // Iterate over the on-processor nodes by getting node buckets and iterating
   // over each bucket.
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
+  stk::mesh::Selector locally_owned = metaData->locally_owned_part();
 
-  container->fillSolnMultiVector(result, locally_owned, m_node_vs);
+  solutionFieldContainer->fillSolnMultiVector(result, locally_owned, m_node_vs);
 }
 
 /*****************************************************************/
@@ -950,16 +963,13 @@ STKDiscretization::setField(
     const std::string&  name,
     bool                overlapped)
 {
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
   const std::string& part =
       nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
 
   stk::mesh::Selector selector =
       overlapped ?
-          metaData.locally_owned_part() | metaData.globally_shared_part() :
-          metaData.locally_owned_part();
+          metaData->locally_owned_part() | metaData->globally_shared_part() :
+          metaData->locally_owned_part();
 
   // Iterate over the on-processor nodes by getting node buckets and iterating
   // over each bucket.
@@ -974,14 +984,14 @@ STKDiscretization::setField(
   const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
 
   if (overlapped) {
-    container->saveVector(
+    solutionFieldContainer->saveVector(
         result,
         name,
         selector,
         dofsStruct.overlap_node_vs,
         dofsStruct.overlap_dofManager);
   } else {
-    container->saveVector(
+    solutionFieldContainer->saveVector(
         result, name, selector, dofsStruct.node_vs, dofsStruct.dofManager);
   }
 }
@@ -992,15 +1002,12 @@ STKDiscretization::setSolutionField(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool          overlapped)
 {
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
   // Select the proper mesh part and node vector space
-  stk::mesh::Selector part = metaData.locally_owned_part();
-  if (overlapped) { part |= metaData.globally_shared_part(); }
+  stk::mesh::Selector part = metaData->locally_owned_part();
+  if (overlapped) { part |= metaData->globally_shared_part(); }
   auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
 
-  container->saveSolnVector(soln, soln_dxdp, part, node_vs);
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, part, node_vs);
 }
 
 void
@@ -1010,15 +1017,12 @@ STKDiscretization::setSolutionField(
     const Thyra_Vector& soln_dot,
     const bool          overlapped)
 {
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
   // Select the proper mesh part and node vector space
-  stk::mesh::Selector part = metaData.locally_owned_part();
-  if (overlapped) { part |= metaData.globally_shared_part(); }
+  stk::mesh::Selector part = metaData->locally_owned_part();
+  if (overlapped) { part |= metaData->globally_shared_part(); }
   auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
 
-  container->saveSolnVector(soln, soln_dxdp, soln_dot, part, node_vs);
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, part, node_vs);
 }
 
 void
@@ -1029,15 +1033,12 @@ STKDiscretization::setSolutionField(
     const Thyra_Vector& soln_dotdot,
     const bool          overlapped)
 {
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
   // Select the proper mesh part and node vector space
-  stk::mesh::Selector part = metaData.locally_owned_part();
-  if (overlapped) { part |= metaData.globally_shared_part(); }
+  stk::mesh::Selector part = metaData->locally_owned_part();
+  if (overlapped) { part |= metaData->globally_shared_part(); }
   auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
 
-  container->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, part, node_vs);
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, part, node_vs);
 }
 
 void
@@ -1046,15 +1047,12 @@ STKDiscretization::setSolutionFieldMV(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool               overlapped)
 {
-  Teuchos::RCP<AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-
   // Select the proper mesh part and node vector space
-  stk::mesh::Selector part = metaData.locally_owned_part();
-  if (overlapped) { part |= metaData.globally_shared_part(); }
+  stk::mesh::Selector part = metaData->locally_owned_part();
+  if (overlapped) { part |= metaData->globally_shared_part(); }
   auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
 
-  container->saveSolnMultiVector(soln, soln_dxdp, part, node_vs);
+  solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, part, node_vs);
 }
 
 void STKDiscretization::computeVectorSpaces()
@@ -1063,12 +1061,12 @@ void STKDiscretization::computeVectorSpaces()
   // map
   // maps for owned nodes and unknowns
 
-  const auto& owned_part = metaData.locally_owned_part();
-  const auto& ov_part    = metaData.globally_shared_part();
+  const auto& owned_part = metaData->locally_owned_part();
+  const auto& ov_part    = metaData->globally_shared_part();
 
   std::vector<stk::mesh::Entity> nodes, ghosted_nodes;
 
-  const auto& buckets = bulkData.buckets(stk::topology::NODE_RANK);
+  const auto& buckets = bulkData->buckets(stk::topology::NODE_RANK);
   stk::mesh::get_selected_entities(owned_part, buckets, nodes);
 
   // Compute NumGlobalNodes (the same for both unique and overlapped maps)
@@ -1195,13 +1193,13 @@ STKDiscretization::computeGraphs()
       m_vs, m_vs, m_overlap_vs, m_overlap_vs));
 
   stk::mesh::Selector select_owned_in_part =
-      stk::mesh::Selector(metaData.universal_part()) &
-      stk::mesh::Selector(metaData.locally_owned_part());
+      stk::mesh::Selector(metaData->universal_part()) &
+      stk::mesh::Selector(metaData->locally_owned_part());
 
   std::vector<stk::mesh::Entity> cells;
   stk::mesh::get_selected_entities(
       select_owned_in_part,
-      bulkData.buckets(stk::topology::ELEMENT_RANK),
+      bulkData->buckets(stk::topology::ELEMENT_RANK),
       cells);
 
   if (comm->getRank() == 0)
@@ -1221,8 +1219,8 @@ STKDiscretization::computeGraphs()
   // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
   const auto dofMgr = getOverlapDOFManager(solution_dof_name());
   for (const auto& e : cells) {
-    stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
-    const size_t             num_nodes = bulkData.num_nodes(e);
+    stk::mesh::Entity const* node_rels = bulkData->begin_nodes(e);
+    const size_t             num_nodes = bulkData->num_nodes(e);
 
     // loop over local nodes
     for (std::size_t j = 0; j < num_nodes; j++) {
@@ -1292,17 +1290,17 @@ STKDiscretization::computeGraphs()
         // Get all owned sides in this side set
         stk::mesh::Selector select_owned_in_sspart =
             stk::mesh::Selector(part) &
-            stk::mesh::Selector(metaData.locally_owned_part());
+            stk::mesh::Selector(metaData->locally_owned_part());
 
         auto& sides = all_sides[ss_name];
         stk::mesh::get_selected_entities(
             select_owned_in_sspart,
-            bulkData.buckets(metaData.side_rank()),
+            bulkData->buckets(metaData->side_rank()),
             sides);  // store the result in "sides"
 
         if (allowColumnCoupling && sides.size()>0) {
           const auto& side = sides[0];
-          const auto& node = bulkData.begin_nodes(side)[0];
+          const auto& node = bulkData->begin_nodes(side)[0];
           lmn->getIndices(stk_gid(node),baseId,iLayer);
           allowColumnCoupling = (iLayer==0 || iLayer==lmn->numLayers);
         }
@@ -1313,8 +1311,8 @@ STKDiscretization::computeGraphs()
 
         // Loop on all the sides of this sideset
         for (const auto& sidee : sides) {
-          stk::mesh::Entity const* node_rels = bulkData.begin_nodes(sidee);
-          const size_t             num_nodes = bulkData.num_nodes(sidee);
+          stk::mesh::Entity const* node_rels = bulkData->begin_nodes(sidee);
+          const size_t             num_nodes = bulkData->num_nodes(sidee);
 
           // loop over local nodes of the side (row)
           for (std::size_t i = 0; i < num_nodes; i++) {
@@ -1380,11 +1378,11 @@ void
 STKDiscretization::computeWorksetInfo()
 {
   stk::mesh::Selector select_owned_in_part =
-      stk::mesh::Selector(metaData.universal_part()) &
-      stk::mesh::Selector(metaData.locally_owned_part());
+      stk::mesh::Selector(metaData->universal_part()) &
+      stk::mesh::Selector(metaData->locally_owned_part());
 
   const stk::mesh::BucketVector& buckets =
-      bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned_in_part);
+      bulkData->get_buckets(stk::topology::ELEMENT_RANK, select_owned_in_part);
 
   const int numBuckets = buckets.size();
 
@@ -1459,7 +1457,7 @@ STKDiscretization::computeWorksetInfo()
     {
       const int         buckSize          = buck.size();
       stk::mesh::Entity element           = buck[0];
-      const int         nodes_per_element = bulkData.num_nodes(element);
+      const int         nodes_per_element = bulkData->num_nodes(element);
       wsElNodeEqID[b] =
           WorksetConn("wsElNodeEqID", buckSize, nodes_per_element, neq);
     }
@@ -1477,13 +1475,13 @@ STKDiscretization::computeWorksetInfo()
         switch (dim.size()) {
           case 2:  // scalar
           {
-            const ScalarFieldType& field = *metaData.get_field<ScalarFieldType>(
+            const ScalarFieldType& field = *metaData->get_field<ScalarFieldType>(
                 stk::topology::NODE_RANK, name);
             stateVec.resize(dim0 * dim[1]);
             array.assign<ElemTag, NodeTag>(stateVec.data(), dim0, dim[1]);
             for (int i = 0; i < dim0; i++) {
               stk::mesh::Entity        element = buck[i];
-              stk::mesh::Entity const* rel     = bulkData.begin_nodes(element);
+              stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
               for (int j = 0; j < static_cast<int>(dim[1]); j++) {
                 stk::mesh::Entity rowNode = rel[j];
                 array(i, j) = *stk::mesh::field_data(field, rowNode);
@@ -1493,14 +1491,14 @@ STKDiscretization::computeWorksetInfo()
           }
           case 3:  // vector
           {
-            const VectorFieldType& field = *metaData.get_field<VectorFieldType>(
+            const VectorFieldType& field = *metaData->get_field<VectorFieldType>(
                 stk::topology::NODE_RANK, name);
             stateVec.resize(dim0 * dim[1] * dim[2]);
             array.assign<ElemTag, NodeTag, CompTag>(
                 stateVec.data(), dim0, dim[1], dim[2]);
             for (int i = 0; i < dim0; i++) {
               stk::mesh::Entity        element = buck[i];
-              stk::mesh::Entity const* rel     = bulkData.begin_nodes(element);
+              stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
               for (int j = 0; j < static_cast<int>(dim[1]); j++) {
                 stk::mesh::Entity rowNode = rel[j];
                 double*           entry = stk::mesh::field_data(field, rowNode);
@@ -1513,14 +1511,14 @@ STKDiscretization::computeWorksetInfo()
           }
           case 4:  // tensor
           {
-            const TensorFieldType& field = *metaData.get_field<TensorFieldType>(
+            const TensorFieldType& field = *metaData->get_field<TensorFieldType>(
                 stk::topology::NODE_RANK, name);
             stateVec.resize(dim0 * dim[1] * dim[2] * dim[3]);
             array.assign<ElemTag, NodeTag, CompTag, CompTag>(
                 stateVec.data(), dim0, dim[1], dim[2], dim[3]);
             for (int i = 0; i < dim0; i++) {
               stk::mesh::Entity        element = buck[i];
-              stk::mesh::Entity const* rel     = bulkData.begin_nodes(element);
+              stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
               for (int j = 0; j < static_cast<int>(dim[1]); j++) {
                 stk::mesh::Entity rowNode = rel[j];
                 double*           entry = stk::mesh::field_data(field, rowNode);
@@ -1540,7 +1538,7 @@ STKDiscretization::computeWorksetInfo()
     }
 
     stk::mesh::Entity element           = buck[0];
-    int               nodes_per_element = bulkData.num_nodes(element);
+    int               nodes_per_element = bulkData->num_nodes(element);
     for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
          ++it) {
       int nComp = it->first.second;
@@ -1569,8 +1567,8 @@ STKDiscretization::computeWorksetInfo()
       // Now, save a map from element GID to local id on this workset on this PE
       elemGIDws[stk_gid(element)].LID = i;
 
-      stk::mesh::Entity const* node_rels = bulkData.begin_nodes(element);
-      nodes_per_element                  = bulkData.num_nodes(element);
+      stk::mesh::Entity const* node_rels = bulkData->begin_nodes(element);
+      nodes_per_element                  = bulkData->num_nodes(element);
 
       wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
@@ -1775,7 +1773,7 @@ STKDiscretization::computeWorksetInfo()
         stkMeshStruct->nodal_data_base->getNodeContainer();
 
     stk::mesh::BucketVector const& node_buckets =
-        bulkData.get_buckets(stk::topology::NODE_RANK, select_owned_in_part);
+        bulkData->get_buckets(stk::topology::NODE_RANK, select_owned_in_part);
 
     const size_t numNodeBuckets = node_buckets.size();
 
@@ -1814,16 +1812,37 @@ STKDiscretization::computeSideSets()
     // Get all owned sides in this side set
     stk::mesh::Selector select_owned_in_sspart =
         stk::mesh::Selector(*(ss->second)) &
-        stk::mesh::Selector(metaData.locally_owned_part());
+        stk::mesh::Selector(metaData->locally_owned_part());
 
     std::vector<stk::mesh::Entity> sides;
     stk::mesh::get_selected_entities(
         select_owned_in_sspart,  // sides local to this processor
-        bulkData.buckets(metaData.side_rank()),
+        bulkData->buckets(metaData->side_rank()),
         sides);
 
     *out << "STKDisc: sideset " << ss->first << " has size " << sides.size()
          << "  on Proc 0." << std::endl;
+
+    // If the sideSet has mesh specs, then we need to check if slim allocation is valid. There
+    //   are some cases where mesh specs for a sideset haven't been created (see Albany_GenericSTKMeshStruct.cpp:482)
+    //   but we don't need to check slim allocation for these because if they are used in an evaluator,
+    //   other exceptions will be thrown.
+    if (stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first].size() > 0) {
+      int ssWorksetSize = stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first][0]->worksetSize;
+      bool ssSingleWorksetSizeAllocation = stkMeshStruct->getMeshSpecs()[0]->sideSetMeshSpecs[ss->first][0]->singleWorksetSizeAllocation;
+      if (ssSingleWorksetSizeAllocation)
+        *out << "STKDisc: sideset " << ss->first << " set to single workset size allocation." << std::endl;
+
+      // Slim sideset alloction is automatically activated when using a single workset and Ioss,
+      //  therefore we need to make sure that the meshspecs for each sideset have a large enough
+      //  workset size to avoid writing or reading out of bounds.
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        ssSingleWorksetSizeAllocation && ssWorksetSize != (int) sides.size(),
+        std::logic_error,
+        "STKDisc: MeshSpec workset size should be the same as sideset size for slim sideset allocation on sideset "
+          << ss->first << ", (sideSetMeshStructs[" << ss->first << "] = " << ssWorksetSize 
+          << ", ssSingleWorksetSizeAllocation = " << ssSingleWorksetSizeAllocation << ")" << std::endl);
+    }
 
     // loop over the sides to see what they are, then fill in the data holder
     // for side set options, look at
@@ -1834,12 +1853,12 @@ STKDiscretization::computeSideSets()
       stk::mesh::Entity sidee = sides[localSideID];
 
       TEUCHOS_TEST_FOR_EXCEPTION(
-          bulkData.num_elements(sidee) != 1,
+          bulkData->num_elements(sidee) != 1,
           std::logic_error,
           "STKDisc: cannot figure out side set topology for side set "
               << ss->first << std::endl);
 
-      stk::mesh::Entity elem = bulkData.begin_elements(sidee)[0];
+      stk::mesh::Entity elem = bulkData->begin_elements(sidee)[0];
 
       // containing the side. Note that if the side is internal, it will show up
       // twice in the
@@ -1848,10 +1867,10 @@ STKDiscretization::computeSideSets()
       SideStruct sStruct;
 
       // Save side (global id)
-      sStruct.side_GID = bulkData.identifier(sidee) - 1;
+      sStruct.side_GID = bulkData->identifier(sidee) - 1;
 
       // Save elem id. This is the global element id
-      sStruct.elem_GID = bulkData.identifier(elem) - 1;
+      sStruct.elem_GID = bulkData->identifier(elem) - 1;
 
       int workset = elemGIDws[sStruct.elem_GID]
                         .ws;  // Get the ws that this element lives in
@@ -1896,7 +1915,7 @@ STKDiscretization::computeSideSets()
   std::map<std::string, int> max_sideset_length;
   std::map<std::string, int> max_sides;
   std::map<std::string, int> current_local_index;
-  for (int i = 0; i < sideSets.size(); ++i) {
+  for (size_t i = 0; i < sideSets.size(); ++i) {
     SideSetList& ssList = sideSets[i];
     std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
 
@@ -1933,20 +1952,21 @@ STKDiscretization::computeSideSets()
 
     globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
     globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
-    globalSideSetViews[ss_key].side_GID       = Kokkos::View<GO**,       Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_GID       = Kokkos::View<GO**,       Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_LID       = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_ebIndex   = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].side_local_id  = Kokkos::View<unsigned**, Kokkos::LayoutRight>("side_local_id", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].max_sides      = max_sides[ss_key];
-    globalSideSetViews[ss_key].numCellsOnSide = Kokkos::View<int**,      Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
-    globalSideSetViews[ss_key].cellsOnSide    = Kokkos::View<int***,     Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_GID         = Kokkos::View<GO**,       Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_GID         = Kokkos::View<GO**,       Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_LID         = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_local_id    = Kokkos::View<unsigned**, Kokkos::LayoutRight>("side_local_id", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].max_sides        = max_sides[ss_key];
+    globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::View<int**,      Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
+    globalSideSetViews[ss_key].cellsOnSide      = Kokkos::View<int***,     Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::View<int***,     Kokkos::LayoutRight>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
 
     ss_it++;
   }
 
   // 3) Populate global views
-  for (int i = 0; i < sideSets.size(); ++i) {
+  for (size_t i = 0; i < sideSets.size(); ++i) {
     SideSetList& ssList = sideSets[i];
     std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
 
@@ -1960,23 +1980,27 @@ STKDiscretization::computeSideSets()
       int max_cells_on_side = 0;
       std::vector<int> numCellsOnSide(numSides);
       std::vector<std::vector<int>> cellsOnSide(numSides);
+      std::vector<std::vector<int>> sideSetIdxOnSide(numSides);
       for (size_t j = 0; j < ss_val.size(); ++j) {
         int cell = ss_val[j].elem_LID;
         int side = ss_val[j].side_local_id;
         cellsOnSide[side].push_back(cell);
+        sideSetIdxOnSide[side].push_back(j);
       }
-      for (size_t side = 0; side < numSides; ++side) {
+      for (int side = 0; side < numSides; ++side) {
         numCellsOnSide[side] = cellsOnSide[side].size();
         max_cells_on_side = std::max(max_cells_on_side, numCellsOnSide[side]);
       }
 
-      for (size_t side = 0; side < numSides; ++side) {
+      for (int side = 0; side < numSides; ++side) {
         globalSideSetViews[ss_key].numCellsOnSide(current_index, side) = numCellsOnSide[side];
-        for (size_t j = 0; j < numCellsOnSide[side]; ++j) {
+        for (int j = 0; j < numCellsOnSide[side]; ++j) {
           globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = cellsOnSide[side][j];
+          globalSideSetViews[ss_key].sideSetIdxOnSide(current_index, side, j) = sideSetIdxOnSide[side][j];
         }
-        for (size_t j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
+        for (int j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
           globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = -1;
+          globalSideSetViews[ss_key].sideSetIdxOnSide(current_index, side, j) = -1;
         }
       }
 
@@ -2003,7 +2027,7 @@ STKDiscretization::computeSideSets()
   }
 
   // 5) Populate map of LocalSideSetInfos
-  for (int i = 0; i < sideSets.size(); ++i) {
+  for (size_t i = 0; i < sideSets.size(); ++i) {
     SideSetList& ssList = sideSets[i];
     LocalSideSetInfoList& lssList = sideSetViews[i];
     std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
@@ -2024,10 +2048,124 @@ STKDiscretization::computeSideSets()
       lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
       lssList[ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
       lssList[ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
+      lssList[ss_key].sideSetIdxOnSide    = Kokkos::subview(globalSideSetViews[ss_key].sideSetIdxOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
 
       current_local_index[ss_key]++;
 
       ss_it++;
+    }
+  }
+
+  // 6) Determine size of global DOFView structure and allocate
+  std::map<std::string, int> total_sideset_idx;
+  std::map<std::string, int> sideset_idx_offset;
+  unsigned int maxSideNodes = 0;
+  if (!stkMeshStruct->layered_mesh_numbering.is_null()) {
+
+    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *(stkMeshStruct->layered_mesh_numbering);
+    const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
+    const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
+    const unsigned int numLayers = layeredMeshNumbering.numLayers;
+    const unsigned int numComps = solDOFManager.numComponents();
+
+    // Determine maximum number of side nodes
+    for (unsigned int elem_side = 0; elem_side < cell_topo->side_count; ++elem_side) {
+      const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
+      const unsigned int numSideNodes = side.topology->node_count;
+      maxSideNodes = std::max(maxSideNodes, numSideNodes);
+    }
+
+    // Determine total number of sideset indices per each sideset name
+    for (unsigned int ws = 0; ws < sideSets.size(); ++ws) {
+      SideSetList& ssList = sideSets[ws];
+      std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
+      while (ss_it != ssList.end()) {
+        std::string             ss_key = ss_it->first;
+        std::vector<SideStruct> ss_val = ss_it->second;
+
+        if (sideset_idx_offset.find(ss_key) == sideset_idx_offset.end())
+          sideset_idx_offset[ss_key] = 0;
+        if (total_sideset_idx.find(ss_key) == total_sideset_idx.end())
+          total_sideset_idx[ss_key] = 0;
+
+        total_sideset_idx[ss_key] += ss_val.size();
+
+        ss_it++;
+      }
+    }
+
+    // Allocate total localDOFView for each sideset name
+    ss_it = num_local_worksets.begin();
+    while (ss_it != num_local_worksets.end()) {
+      std::string ss_key = ss_it->first;
+      allLocalDOFViews[ss_key] = Kokkos::View<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
+
+      ss_it++;
+    }
+
+  }
+
+  // 7) Populate localDOFViews for GatherVerticallyContractedSolution
+  for (unsigned int i = 0; i < sideSets.size(); ++i) {
+
+    // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
+    std::map<std::string, Kokkos::View<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[i];
+
+    // Not all mesh structs that come through here are extruded mesh structs. This is to check if
+    //   the mesh struct is an extruded one. If it isn't extruded, it won't need to do any of the following work.
+    if (!stkMeshStruct->layered_mesh_numbering.is_null()) {
+
+      const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *(stkMeshStruct->layered_mesh_numbering);
+      const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
+      const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
+      const auto& ov_node_indexer = *(getOverlapGlobalLocalIndexer(nodes_dof_name()));
+      const unsigned int numLayers = layeredMeshNumbering.numLayers;
+      const unsigned int numComps = solDOFManager.numComponents();
+
+      // Loop over the sides that form the boundary condition
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
+
+      SideSetList& ssList = sideSets[i];
+      std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
+
+      while (ss_it != ssList.end()) {
+        std::string             ss_key = ss_it->first;
+        std::vector<SideStruct> ss_val = ss_it->second;
+        
+        Kokkos::View<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
+
+        for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
+          // Get the data that corresponds to the side
+          const unsigned int elem_LID = ss_val[sideSet_idx].elem_LID;
+          const unsigned int elem_side = ss_val[sideSet_idx].side_local_id;
+          const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
+          const unsigned int numSideNodes = side.topology->node_count;
+
+          const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID_i[elem_LID];
+
+          //we only consider elements on the top.
+          GO baseId;
+          for (unsigned int j = 0; j < numSideNodes; ++j) {
+            const std::size_t node = side.node[j];
+            baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
+            for (unsigned int il = 0; il < numLayers+1; ++il) {
+              const GO gnode = layeredMeshNumbering.getId(baseId, il);
+              const LO inode = ov_node_indexer.getLocalElement(gnode);
+              for (unsigned int comp = 0; comp < numComps; ++comp) {
+                globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il, comp) = solDOFManager.getLocalDOF(inode, comp);
+              }
+            }
+          }
+        }
+
+        // Set workset-local sub-view
+        std::pair<int,int> range(sideset_idx_offset[ss_key], sideset_idx_offset[ss_key]+ss_val.size());
+        wsldofViews[ss_key] = Kokkos::subview(globalDOFView, range, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+
+        sideset_idx_offset[ss_key] += ss_val.size();
+
+        ss_it++;
+      }
     }
   }
   
@@ -2040,28 +2178,28 @@ STKDiscretization::determine_local_side_id(
 {
   using namespace stk;
 
-  stk::topology elem_top = bulkData.bucket(elem).topology();
+  stk::topology elem_top = bulkData->bucket(elem).topology();
 
-  const unsigned num_elem_nodes = bulkData.num_nodes(elem);
-  const unsigned num_side_nodes = bulkData.num_nodes(side);
+  const unsigned num_elem_nodes = bulkData->num_nodes(elem);
+  const unsigned num_side_nodes = bulkData->num_nodes(side);
 
-  stk::mesh::Entity const* elem_nodes = bulkData.begin_nodes(elem);
-  stk::mesh::Entity const* side_nodes = bulkData.begin_nodes(side);
+  stk::mesh::Entity const* elem_nodes = bulkData->begin_nodes(elem);
+  stk::mesh::Entity const* side_nodes = bulkData->begin_nodes(side);
 
-  const stk::topology::rank_t side_rank = metaData.side_rank();
+  const stk::topology::rank_t side_rank = metaData->side_rank();
 
   int side_id = -1;
 
   if (num_elem_nodes == 0 || num_side_nodes == 0) {
     // Node relations are not present, look at elem->face
 
-    const unsigned num_sides = bulkData.num_connectivity(elem, side_rank);
-    stk::mesh::Entity const* elem_sides = bulkData.begin(elem, side_rank);
+    const unsigned num_sides = bulkData->num_connectivity(elem, side_rank);
+    stk::mesh::Entity const* elem_sides = bulkData->begin(elem, side_rank);
 
     for (unsigned i = 0; i < num_sides; ++i) {
       const stk::mesh::Entity elem_side = elem_sides[i];
 
-      if (bulkData.identifier(elem_side) == bulkData.identifier(side)) {
+      if (bulkData->identifier(elem_side) == bulkData->identifier(side)) {
         // Found the local side in the element
         side_id = static_cast<int>(i);
         return side_id;
@@ -2073,13 +2211,13 @@ STKDiscretization::determine_local_side_id(
       msg << "determine_local_side_id( ";
       msg << elem_top.name();
       msg << " , Element[ ";
-      msg << bulkData.identifier(elem);
+      msg << bulkData->identifier(elem);
       msg << " ]{";
       for (unsigned i = 0; i < num_sides; ++i) {
-        msg << " " << bulkData.identifier(elem_sides[i]);
+        msg << " " << bulkData->identifier(elem_sides[i]);
       }
       msg << " } , Side[ ";
-      msg << bulkData.identifier(side);
+      msg << bulkData->identifier(side);
       msg << " ] ) FAILED";
       throw std::runtime_error(msg.str());
     }
@@ -2115,16 +2253,16 @@ STKDiscretization::determine_local_side_id(
       msg << "determine_local_side_id( ";
       msg << elem_top.name();
       msg << " , Element[ ";
-      msg << bulkData.identifier(elem);
+      msg << bulkData->identifier(elem);
       msg << " ]{";
       for (unsigned i = 0; i < num_elem_nodes; ++i) {
-        msg << " " << bulkData.identifier(elem_nodes[i]);
+        msg << " " << bulkData->identifier(elem_nodes[i]);
       }
       msg << " } , Side[ ";
-      msg << bulkData.identifier(side);
+      msg << bulkData->identifier(side);
       msg << " ]{";
       for (unsigned i = 0; i < num_side_nodes; ++i) {
-        msg << " " << bulkData.identifier(side_nodes[i]);
+        msg << " " << bulkData->identifier(side_nodes[i]);
       }
       msg << " } ) FAILED";
       throw std::runtime_error(msg.str());
@@ -2149,12 +2287,12 @@ STKDiscretization::computeNodeSets()
     // Get all owned nodes in this node set
     stk::mesh::Selector select_owned_in_nspart =
         stk::mesh::Selector(*(ns->second)) &
-        stk::mesh::Selector(metaData.locally_owned_part());
+        stk::mesh::Selector(metaData->locally_owned_part());
 
     std::vector<stk::mesh::Entity> nodes;
     stk::mesh::get_selected_entities(
         select_owned_in_nspart,
-        bulkData.buckets(stk::topology::NODE_RANK),
+        bulkData->buckets(stk::topology::NODE_RANK),
         nodes);
 
     nodeSets[ns->first].resize(nodes.size());
@@ -2164,7 +2302,7 @@ STKDiscretization::computeNodeSets()
     *out << "STKDisc: nodeset " << ns->first << " has size " << nodes.size()
          << "  on Proc 0." << std::endl;
     for (std::size_t i = 0; i < nodes.size(); i++) {
-      GO  node_gid              = bulkData.identifier(nodes[i]) - 1;
+      GO  node_gid              = bulkData->identifier(nodes[i]) - 1;
       int node_lid              = node_indexer->getLocalElement(node_gid);
       nodeSetGIDs[ns->first][i] = node_gid;
       nodeSets[ns->first][i].resize(neq);
@@ -2352,6 +2490,8 @@ STKDiscretization::buildSideSetProjectors()
 void
 STKDiscretization::updateMesh()
 {
+  bulkData = stkMeshStruct->bulkData;
+
   const StateInfoStruct& nodal_param_states =
       stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct(solution_dof_name(), "", neq);
@@ -2404,7 +2544,7 @@ STKDiscretization::updateMesh()
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
     for (auto it : stkMeshStruct->sideSetMeshStructs) {
       Teuchos::RCP<STKDiscretization> side_disc =
-          Teuchos::rcp(new STKDiscretization(discParams, it.second, comm));
+          Teuchos::rcp(new STKDiscretization(discParams, neq, it.second, comm));
       side_disc->updateMesh();
       sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
@@ -2416,6 +2556,86 @@ STKDiscretization::updateMesh()
     }
 
     buildSideSetProjectors();
+  }
+}
+
+void
+STKDiscretization::setFieldData(
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<StateInfoStruct>& sis)
+{
+  Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
+
+  Teuchos::RCP<MultiSTKFieldContainer<DiscType::Interleaved>> mISTKFieldContainer =
+    Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer<DiscType::Interleaved>>(fieldContainer,false);
+  Teuchos::RCP<MultiSTKFieldContainer<DiscType::BlockedMono>> mBSTKFieldContainer =
+    Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer<DiscType::BlockedMono>>(fieldContainer,false);
+
+  Teuchos::RCP<OrdinarySTKFieldContainer<DiscType::Interleaved>> oISTKFieldContainer =
+    Teuchos::rcp_dynamic_cast<OrdinarySTKFieldContainer<DiscType::Interleaved>>(fieldContainer,false);
+  Teuchos::RCP<OrdinarySTKFieldContainer<DiscType::BlockedMono>> oBSTKFieldContainer =
+    Teuchos::rcp_dynamic_cast<OrdinarySTKFieldContainer<DiscType::BlockedMono>>(fieldContainer,false);
+
+  Teuchos::RCP<GenericSTKFieldContainer<DiscType::Interleaved>> gISTKFieldContainer =
+    Teuchos::rcp_dynamic_cast<GenericSTKFieldContainer<DiscType::Interleaved>>(fieldContainer,false);
+  Teuchos::RCP<GenericSTKFieldContainer<DiscType::BlockedMono>> gBSTKFieldContainer =
+    Teuchos::rcp_dynamic_cast<GenericSTKFieldContainer<DiscType::BlockedMono>>(fieldContainer,false);
+
+  int num_time_deriv, numDim, num_params;
+  Teuchos::RCP<Teuchos::ParameterList> params;
+  
+  if(Teuchos::nonnull(gISTKFieldContainer))
+  {
+    params = gISTKFieldContainer->getParams();
+    numDim = gISTKFieldContainer->getNumDim();
+    num_params = gISTKFieldContainer->getNumParams();
+  }
+  if(Teuchos::nonnull(gBSTKFieldContainer))
+  {
+    params = gBSTKFieldContainer->getParams();
+    numDim = gBSTKFieldContainer->getNumDim();
+    num_params = gBSTKFieldContainer->getNumParams();
+  }
+
+  num_time_deriv = params->get<int>("Number Of Time Derivatives");
+
+  Teuchos::Array<std::string> default_solution_vector; // Empty
+  Teuchos::Array<Teuchos::Array<std::string> > solution_vector;
+  solution_vector.resize(num_time_deriv + 1);
+  solution_vector[0] =
+    params->get<Teuchos::Array<std::string> >("Solution Vector Components", default_solution_vector);
+
+
+  if(num_time_deriv >= 1){
+    solution_vector[1] =
+      params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", default_solution_vector);
+  }
+
+  if(num_time_deriv >= 2){
+    solution_vector[2] =
+      params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
+  }
+
+
+  if(Teuchos::nonnull(mISTKFieldContainer))
+  {
+    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::Interleaved>(
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, sis, solution_vector, num_params));
+  }
+  if(Teuchos::nonnull(mBSTKFieldContainer))
+  {
+    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::BlockedMono>(
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, sis, solution_vector, num_params));
+  }
+  if(Teuchos::nonnull(oISTKFieldContainer))
+  {
+    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::Interleaved>(
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, req, numDim, sis, num_params));
+  }
+  if(Teuchos::nonnull(oBSTKFieldContainer))
+  {
+    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::BlockedMono>(
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, req, numDim, sis, num_params));
   }
 }
 

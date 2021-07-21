@@ -150,7 +150,6 @@ Albany::PNPProblem::constructEvaluators(
 
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, numSpecies));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   bool supportsTransient=true;
    int offset=0;
 
    // Problem is transient

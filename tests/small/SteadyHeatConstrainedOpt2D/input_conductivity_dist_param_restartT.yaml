@@ -38,7 +38,7 @@ ANONYMOUS:
     Method: Exodus
     Number Of Time Derivatives: 0
     Use Serial Mesh: true
-    Exodus Output File Name: steady2d_conduct_restart.exo
+    Exodus Output File Name: steady2d_conduct_restartT.exo
     Exodus Input File Name: steady2d_conduct_opt.exo
     Cubature Degree: 3
     Restart Index: 1
@@ -63,9 +63,9 @@ ANONYMOUS:
         Min And Max Of Random Parameter Guess: [-1.00000000000000000e+00, 2.00000000000000000e+00]
         Bound Constrained: true
         bound_eps: 1.00000000000000006e-01
-        
-        Use Old Reduced Space Interface: false
+
         Full Space: false
+        Hessian Dot Product: true
         Use NOX Solver: true
         
         ROL Options: 

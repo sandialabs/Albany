@@ -7,6 +7,7 @@
 #ifndef LANDICE_STOKESFOBODYFORCE_HPP
 #define LANDICE_STOKESFOBODYFORCE_HPP
 
+#include "Albany_SacadoTypes.hpp"
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -22,7 +23,7 @@ namespace LandIce {
 
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 class StokesFOBodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
 		                      public PHX::EvaluatorDerived<EvalT, Traits> {
 
@@ -43,12 +44,12 @@ private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
+  using SurfHeightGradST = typename Albany::StrongestScalarType<SurfHeightST,MeshScalarT>::type;
+
   // Input:  
-  PHX::MDField<const ScalarT,Cell,QuadPoint> muLandIce;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> surfaceGrad;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint> surface;
-  Teuchos::Array<double> gravity;
+  PHX::MDField<const MeshScalarT,     Cell,QuadPoint, Dim>  coordVec;
+  PHX::MDField<const SurfHeightGradST,Cell,QuadPoint, Dim>  surfaceGrad;
+  PHX::MDField<const SurfHeightST,    Cell,QuadPoint>       surface;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
@@ -77,7 +78,7 @@ private:
   Teuchos::ParameterList* stereographicMapList;
   bool useStereographicMap;
 
-  public:
+public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
@@ -132,6 +133,7 @@ private:
 
   double rho_g_kernel;
 
+  const double pi = 3.1415926535897932385;
 };
 
 } // namespace LandIce

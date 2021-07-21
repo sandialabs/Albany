@@ -33,7 +33,7 @@ void ComputeNullSpace(
   auto data = getLocalData(coordMV.getConst());
 
   // At least component x should be there
-  const int numNodes = data[0].size(); // length of each vector in the multivector
+  const int numNodes = data[0].size(); // local length of each vector
 
   Teuchos::ArrayRCP<const ST> x, y, z;
   x = data[0];
@@ -84,7 +84,7 @@ void ComputeNullSpace(
 void subtractCentroid(const Teuchos::RCP<Thyra_MultiVector> &coordMV)
 {
   auto spmd_vs = getSpmdVectorSpace(coordMV->range());
-  const int nnodes = spmd_vs->localSubDim(); // local length of each vector
+  const int numNodes = spmd_vs->localSubDim(); // local length of each vector
   const int ndim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
 
   auto data = getNonconstLocalData(coordMV);
@@ -94,17 +94,17 @@ void subtractCentroid(const Teuchos::RCP<Thyra_MultiVector> &coordMV)
     for (int i = 0; i < ndim; ++i) {
       Teuchos::ArrayRCP<const ST> x = data[i];
       sum[i] = 0;
-      for (int j = 0; j < nnodes; ++j) sum[i] += x[j];
+      for (int j = 0; j < numNodes; ++j) sum[i] += x[j];
     }
     Teuchos::reduceAll(*createTeuchosCommFromThyraComm(spmd_vs->getComm()), Teuchos::REDUCE_SUM, ndim,
                                 sum, centroid);
-    const int numNodes = spmd_vs->localSubDim(); // length of each vector in the multivector
-    for (int i = 0; i < ndim; ++i) centroid[i] /= numNodes;
+    const int numGlobalNodes = spmd_vs->dim(); // global length of each vector in the multivector
+    for (int i = 0; i < ndim; ++i) centroid[i] /= numGlobalNodes;
   }
 
   for (int i = 0; i < ndim; ++i) {
     Teuchos::ArrayRCP<ST> x = data[i];
-    for (Teuchos::ArrayRCP<ST>::size_type j = 0; j < nnodes; ++j)
+    for (Teuchos::ArrayRCP<ST>::size_type j = 0; j < numNodes; ++j)
       x[j] -= centroid[i];
   }
 }
@@ -131,8 +131,8 @@ struct TpetraNullSpaceTraits {
 struct EpetraNullSpaceTraits {
 
   typedef std::vector<ST> array_type;
-  const array_type::size_type stride_;
   array_type& array;
+  const array_type::size_type stride_;
 
   EpetraNullSpaceTraits(array_type& array_, const array_type::size_type stride)
    : array(array_), stride_(stride) {}
@@ -320,7 +320,6 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
   setCoordinates(coordMV_in);
   interleavedOrdering = interleavedOrdering_;
 
-  int numSpaceDim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
   const int numNodes = getSpmdVectorSpace(coordMV->range())->localSubDim();
 
   if (nullSpaceDim > 0) {
@@ -343,6 +342,9 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
       plist->set("null space: add default vectors", false);
 
     } else {  // MueLu and FROSch
+      TEUCHOS_TEST_FOR_EXCEPTION(soln_vs.is_null(), std::logic_error,
+          "nullSpaceDim > 0 and (isMueLuUsed() or isFROSchUsed()): solution vector space must be provided.");
+
       using NullSpaceTraits = TpetraNullSpaceTraits;
       auto& tpetraTraitsArray =
           Teuchos::rcp_dynamic_cast<TraitsImpl<NullSpaceTraits>>(nullSpaceTraits)->array;
@@ -352,14 +354,11 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
 
       ComputeNullSpace(nullSpace, coordMV, interleavedOrdering, numPDEs, computeConstantModes, physVectorDim, computeRotationModes);
 
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        soln_vs.is_null(), std::logic_error,
-        "numElasticityDim > 0 and (isMueLuUsed() or isFROSchUsed()): soln_map must be provided.");
-        if (isMueLuUsed()) {
-          plist->set("Nullspace", tpetraTraitsArray);
-        } else { // This means that FROSch is used
-          plist->set("Null Space", tpetraTraitsArray);
-        }
+      if (isMueLuUsed()) {
+        plist->set("Nullspace", tpetraTraitsArray);
+      } else { // This means that FROSch is used
+        plist->set("Null Space", tpetraTraitsArray);
+      }
     }
   }
   if(isFROSchUsed()) {

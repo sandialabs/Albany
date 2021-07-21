@@ -42,72 +42,6 @@
 #include <percept/stk_rebalance/RebalanceUtils.hpp>
 #endif
 
-namespace {
-
-void only_keep_connectivity_to_specified_ranks(stk::mesh::BulkData& mesh,
-                                               stk::mesh::Entity entity,
-                                               stk::mesh::EntityRank keeper1,
-                                               stk::mesh::EntityRank keeper2)
-{
-  size_t num_ranks = mesh.mesh_meta_data().entity_rank_count();
-
-  static std::vector<stk::mesh::Entity> del_relations;
-  static std::vector<stk::mesh::ConnectivityOrdinal> del_ids;
-
-  for (stk::mesh::EntityRank r = stk::topology::NODE_RANK; r < num_ranks; ++r) {
-
-    if (r != keeper1 && r != keeper2) {
-
-      stk::mesh::Entity const* rels = mesh.begin(entity, r);
-      stk::mesh::ConnectivityOrdinal const* ords = mesh.begin_ordinals(entity, r);
-      const int num_rels = mesh.num_connectivity(entity, r);
-      for (int c = 0; c < num_rels; ++c) {
-        del_relations.push_back(rels[c]);
-        del_ids.push_back(ords[c]);
-      }
-    }
-  }
-
-  for (unsigned int j = 0; j < del_relations.size(); ++j) {
-    stk::mesh::Entity ent = del_relations[j];
-    mesh.destroy_relation(ent,ent,del_ids[j]);
-  }
-
-  del_relations.clear();
-  del_ids.clear();
-}
-
-static void
-printCTD(const CellTopologyData & t )
-{
-  std::cout << t.name ;
-  std::cout << " { D = " << t.dimension ;
-  std::cout << " , NV = " << t.vertex_count ;
-  std::cout << " , K = 0x" << std::hex << t.key << std::dec ;
-  std::cout << std::endl ;
-
-  for ( unsigned d = 0 ; d < 4 ; ++d ) {
-    for ( unsigned i = 0 ; i < t.subcell_count[d] ; ++i ) {
-
-      const CellTopologyData_Subcell & sub = t.subcell[d][i] ;
-
-      std::cout << "  subcell[" << d << "][" << i << "] = { " ;
-
-      std::cout << sub.topology->name ;
-      std::cout << " ," ;
-      for ( unsigned j = 0 ; j < sub.topology->node_count ; ++j ) {
-        std::cout << " " << sub.node[j] ;
-      }
-      std::cout << " }" << std::endl ;
-    }
-  }
-
-  std::cout << "}" << std::endl << std::endl ;
-
-}
-
-}
-
 namespace Albany
 {
 
@@ -144,7 +78,6 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
 
 void GenericSTKMeshStruct::SetupFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<StateInfoStruct>& sis,
     const int worksetSize)
@@ -152,8 +85,6 @@ void GenericSTKMeshStruct::SetupFieldData(
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(),
        std::logic_error,
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
-
-  neq = neq_;
 
   this->nodal_data_base = sis->getNodalDataBase();
 
@@ -205,10 +136,10 @@ void GenericSTKMeshStruct::SetupFieldData(
 
       if(interleavedOrdering == DiscType::Interleaved)
         this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::Interleaved>(params,
-            metaData, bulkData, neq, numDim, sis, solution_vector, num_params));
+            metaData, bulkData, numDim, sis, num_params));
       else
         this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::BlockedMono>(params,
-            metaData, bulkData, neq, numDim, sis, solution_vector, num_params));
+            metaData, bulkData, numDim, sis, num_params));
 
   }
 
@@ -216,10 +147,10 @@ void GenericSTKMeshStruct::SetupFieldData(
 
       if(interleavedOrdering == DiscType::Interleaved)
         this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::Interleaved>(params,
-            metaData, bulkData, neq, req, numDim, sis, num_params));
+            metaData, bulkData, req, numDim, sis, num_params));
       else
         this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::BlockedMono>(params,
-            metaData, bulkData, neq, req, numDim, sis, num_params));
+            metaData, bulkData, req, numDim, sis, num_params));
 
   }
 
@@ -577,22 +508,33 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
       Teuchos::RCP<AbstractMeshStruct> ss_mesh;
       const std::string& ss_name = sideSets[i];
       params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
-      if (!params_ss->isParameter("Number Of Time Derivatives"))
-        params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
 
-      std::string method = params_ss->get<std::string>("Method");
-      if (method=="SideSetSTK") {
-        // The user said this mesh is extracted from a higher dimensional one
-        TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
-                                    "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
+      // We must check whether a side mesh was already created elsewhere.
+      // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
+      // This happens, for instance, for the basal mesh for extruded meshes.
+      if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end()) {
+        if (!params_ss->isParameter("Number Of Time Derivatives"))
+          params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
 
-        this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, comm, num_params));
-      } else {
-        // We must check whether a side mesh was already created elsewhere.
-        // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
-        // This happens, for instance, for the basal mesh for extruded meshes.
-        if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end())
-        {
+        // Set sideset discretization workset size based on sideset mesh spec if a single workset is used
+        const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+        auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
+        TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+            "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
+        if (sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation)
+          params_ss->set<int>("Workset Size", sideSetMeshSpecIter->second[0]->worksetSize);
+
+        std::string method = params_ss->get<std::string>("Method");
+        if (method=="SideSetSTK") {
+          // The user said this mesh is extracted from a higher dimensional one
+          TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
+                                      "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
+
+          this->sideSetMeshStructs[ss_name] =
+              Teuchos::rcp(new SideSetSTKMeshStruct(
+                  *this->meshSpecs[0], *sideSetMeshSpecIter->second[0],
+                  params_ss, comm, num_params));
+        } else {
           ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,comm, num_params);
           this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
           TEUCHOS_TEST_FOR_EXCEPTION (this->sideSetMeshStructs[ss_name]==Teuchos::null, std::runtime_error,
@@ -635,7 +577,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
   }
 }
 
-void GenericSTKMeshStruct::finalizeSideSetMeshStructs (
+void GenericSTKMeshStruct::setSideSetFieldData (
           const Teuchos::RCP<const Teuchos_Comm>& comm,
           const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
           const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
@@ -667,7 +609,45 @@ void GenericSTKMeshStruct::finalizeSideSetMeshStructs (
         auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
-        it.second->setFieldAndBulkData(comm,params_ss,neq,req,sis,worksetSize);  // Cell equations are also defined on the side, but not viceversa
+        it.second->setFieldData(comm,req,sis,worksetSize);  // Cell equations are also defined on the side, but not viceversa
+      }
+    }
+  }
+}
+
+void GenericSTKMeshStruct::setSideSetBulkData (
+          const Teuchos::RCP<const Teuchos_Comm>& comm,
+          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
+          const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
+          int worksetSize)
+{
+  if (this->sideSetMeshStructs.size()>0) {
+    // Dummy sis/req if not present in the maps for a given side set.
+    // This could happen if the side discretization has no requirements/states
+    Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
+    dummy_sis->createNodalDataBase();
+    AbstractFieldContainer::FieldContainerRequirements dummy_req;
+
+    Teuchos::RCP<Teuchos::ParameterList> params_ss;
+    const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
+    for (auto it : sideSetMeshStructs) {
+      Teuchos::RCP<SideSetSTKMeshStruct> sideMesh;
+      sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
+      if (sideMesh!=Teuchos::null) {
+        // SideSetSTK mesh need to build the mesh
+        sideMesh->setParentMeshInfo(*this, it.first);
+      }
+
+      // We check since the basal mesh for extruded stk mesh should already have it set
+      if (!it.second->fieldAndBulkDataSet) {
+        auto it_req = side_set_req.find(it.first);
+        auto it_sis = side_set_sis.find(it.first);
+
+        auto& req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
+        auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
+
+        params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
+        it.second->setBulkData(comm,req,sis,worksetSize);  // Cell equations are also defined on the side, but not viceversa
       }
     }
   }

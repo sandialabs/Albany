@@ -16,9 +16,9 @@ DOFInterpolationSideBase<EvalT, Traits, ScalarT>::
 DOFInterpolationSideBase (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
-  val_node    (p.get<std::string> ("Variable Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_scalar_sideset : dl_side->node_scalar),
-  BF          (p.get<std::string> ("BF Name"), (dl_side->useCollapsedSidesets) ? dl_side->node_qp_scalar_sideset : dl_side->node_qp_scalar),
-  val_qp      (p.get<std::string> ("Variable Name"), (dl_side->useCollapsedSidesets) ? dl_side->qp_scalar_sideset : dl_side->qp_scalar)
+  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_scalar),
+  BF          (p.get<std::string> ("BF Name"), dl_side->node_qp_scalar),
+  val_qp      (p.get<std::string> ("Variable Name"), dl_side->qp_scalar)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
@@ -29,10 +29,8 @@ DOFInterpolationSideBase (const Teuchos::ParameterList& p,
 
   this->setName("DOFInterpolationSide"+PHX::print<EvalT>());
 
-  numSideNodes = dl_side->node_qp_scalar->extent(2);
-  numSideQPs   = dl_side->node_qp_scalar->extent(3);
-
-  useCollapsedSidesets = dl_side->useCollapsedSidesets;
+  numSideNodes = dl_side->node_qp_scalar->extent(1);
+  numSideQPs   = dl_side->node_qp_scalar->extent(2);
 }
 
 //**********************************************************************
@@ -54,25 +52,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFInterpolationSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFInterpolationSideBase_Tag& tag, const int& sideSet_idx) const {
-  
-  // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
-  
-  for (int qp=0; qp<numSideQPs; ++qp) {
-    val_qp(cell,side,qp) = 0;
-    for (int node=0; node<numSideNodes; ++node) {
-      val_qp(cell,side,qp) += val_node(cell,side,node) * BF(cell,side,node,qp);
-    }
-  }
-
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-KOKKOS_INLINE_FUNCTION
-void DOFInterpolationSideBase<EvalT, Traits, ScalarT>::
-operator() (const DOFInterpolationSideBase_Collapsed_Tag& tag, const int& sideSet_idx) const {
+operator() (const InterpolationSide_Tag& tag, const int& sideSet_idx) const {
 
   for (int qp=0; qp<numSideQPs; ++qp) {
     val_qp(sideSet_idx,qp) = 0;
@@ -88,54 +68,12 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void DOFInterpolationSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end())
-    return;
+  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end()) return;
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   sideSet = workset.sideSetViews->at(sideSetName);
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (useCollapsedSidesets) {
-    Kokkos::parallel_for(DOFInterpolationSideBase_Collapsed_Policy(0, sideSet.size), *this);
-  } else {
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
-      // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
-      const int side = sideSet.side_local_id(sideSet_idx);
-
-      for (int qp=0; qp<numSideQPs; ++qp) {
-        val_qp(cell,side,qp) = 0;
-        for (int node=0; node<numSideNodes; ++node) {
-          val_qp(cell,side,qp) += val_node(cell,side,node) * BF(cell,side,node,qp);
-        }
-      }
-    }
-  }
-#else
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
-    // Get the local data of side and cell
-    const int cell = sideSet.elem_LID(sideSet_idx);
-    const int side = sideSet.side_local_id(sideSet_idx);
-
-    if (useCollapsedSidesets) {
-      for (int qp=0; qp<numSideQPs; ++qp) {
-        val_qp(sideSet_idx,qp) = 0;
-        for (int node=0; node<numSideNodes; ++node) {
-          val_qp(sideSet_idx,qp) += val_node(sideSet_idx,node) * BF(sideSet_idx,node,qp);
-        }
-      }
-    } else {
-      for (int qp=0; qp<numSideQPs; ++qp) {
-        val_qp(cell,side,qp) = 0;
-        for (int node=0; node<numSideNodes; ++node) {
-          val_qp(cell,side,qp) += val_node(cell,side,node) * BF(cell,side,node,qp);
-        }
-      }
-    }
-  }
-#endif
-
+  
+  Kokkos::parallel_for(InterpolationSide_Policy(0, sideSet.size), *this);
 }
 
 } // Namespace PHAL

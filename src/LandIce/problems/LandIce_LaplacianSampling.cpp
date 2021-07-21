@@ -32,7 +32,7 @@ LaplacianSampling( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   {
     // Need to allocate a fields in mesh database
     Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-    for (int i(0); i<req.size(); ++i)
+    for (unsigned int i(0); i<req.size(); ++i)
       this->requirements.push_back(req[i]);
   }
   neq =1;
@@ -84,7 +84,7 @@ void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Al
     auto numSideQPs      = sideCubature->getNumPoints();
 
 
-    dl_side = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes, numSideQPs,numDim-1,numDim,numCellSides,1));
+    dl_side = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes, numSideQPs,numDim-1,numDim,numCellSides,1,sideMeshSpecs.singleWorksetSizeAllocation,sideMeshSpecs.worksetSize));
     dl->side_layouts[sideName] = dl_side;
   }
 

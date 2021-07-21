@@ -26,15 +26,19 @@ namespace Albany {
 
     ~ExtrudedSTKMeshStruct();
 
-    void setFieldAndBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}, // empty map as default
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}); // empty map as default
+    void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                       const AbstractFieldContainer::FieldContainerRequirements& req,
+                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                       const unsigned int worksetSize,
+                       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}, // empty map as default
+                       const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}); // empty map as default
+
+    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                      const AbstractFieldContainer::FieldContainerRequirements& req,
+                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                      const unsigned int worksetSize,
+                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}, // empty map as default
+                      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}); // empty map as default
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
@@ -95,13 +99,6 @@ namespace Albany {
         int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
 
         int tetraOfPrism[2][3][4] = {{{0, 1, 2, 5}, {0, 1, 5, 4}, {0, 4, 5, 3}}, {{0, 1, 2, 4}, {0, 4, 2, 5}, {0, 4, 5, 3}}};
-
-        int tetraAdjacentToPrismLateralFace[2][3][2] = {{{1, 2}, {0, 1}, {0, 2}}, {{0, 2}, {0, 1}, {1, 2}}};
-        int tetraFaceIdOnPrismLateralFace[2][3][2] = {{{0, 0}, {1, 1}, {2, 2}}, {{0, 0}, {1, 1}, {2, 2}}};
-        int tetraAdjacentToBottomFace = 0; //does not depend on type;
-        int tetraAdjacentToUpperFace = 2; //does not depend on type;
-        int tetraFaceIdOnBottomFace = 3; //does not depend on type;
-        int tetraFaceIdOnUpperFace = 0; //does not depend on type;
 
         int minIndex;
         int prismType = this->prismType(prismVertexMpasIds, minIndex);

@@ -133,7 +133,7 @@ ANONYMOUS:
         Method: Constant
       Stepper:
         Initial Value: 1.00000000000000005e-01
-        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
         Max Value: 1.00000000000000000e+00

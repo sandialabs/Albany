@@ -4,11 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Phalanx_DataLayout.hpp"
-#include "Teuchos_CommHelpers.hpp"
+#include "PHAL_ResponseSquaredL2DifferenceSide.hpp"
 #include "PHAL_Utilities.hpp"
 
 #include "Albany_Utils.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
+
+#include "Phalanx_DataLayout.hpp"
+#include "Teuchos_CommHelpers.hpp"
 
 template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
 PHAL::ResponseSquaredL2DifferenceSideBase<EvalT, Traits, SourceScalarT, TargetScalarT>::
@@ -24,8 +27,8 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
   // Gathering dimensions
-  sideDim = dl_side->cell_gradient->extent(2);
-  numQPs  = dl_side->qp_scalar->extent(2);
+  sideDim = dl_side->cell_gradient->extent(1);
+  numQPs  = dl_side->qp_scalar->extent(1);
 
   Teuchos::RCP<PHX::DataLayout> layout;
   std::string rank,fname;
@@ -34,16 +37,17 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   fname        = plist->get<std::string>("Source Field Name");
 
   fieldDim = getLayout(dl_side,rank,layout);
+
   layout->dimensions(dims);
 
   if (fieldDim>0)
   {
-    metric = decltype(metric)("Metric " + sideSetName, dl_side->qp_tensor);
+    metric = decltype(metric)(Albany::metric_name + "_" + sideSetName, dl_side->qp_tensor);
     this->addDependentField(metric);
   }
 
   sourceField = decltype(sourceField)(fname,layout);
-  w_measure   = decltype(w_measure)("Weighted Measure " + sideSetName, dl_side->qp_scalar);
+  w_measure   = decltype(w_measure)(Albany::weighted_measure_name + "_" + sideSetName, dl_side->qp_scalar);
   scaling     = plist->get("Scaling",1.0);
 
   this->addDependentField(sourceField);
@@ -118,60 +122,94 @@ evaluateFields(typename Traits::EvalData workset)
   // Zero out local response
   PHAL::set(this->local_response_eval, 0.0);
 
-  std::vector<ScalarT> diff_1;
-  std::vector<std::vector<ScalarT>> diff_2;
-  if (fieldDim==1)
-    diff_1.resize(dims[3]);
-  else if (fieldDim==2)
-    diff_2.resize(dims[3],std::vector<ScalarT>(dims[3]));
+  if (fieldDim == 1) {
+    diffDims = dims[2];
+    diff_1 = Kokkos::View<ScalarT*,  PHX::Device>("diff_1", diffDims);
+  } else if (fieldDim == 2) {
+    diffDims = dims[2];
+    diff_2 = Kokkos::View<ScalarT**, PHX::Device>("diff_2", diffDims, diffDims);
+  }
 
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
   {
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-    for (auto const& it_side : sideSet)
+    sideSet = workset.sideSetViews->at(sideSetName);
+
+    switch (fieldDim)
     {
-      // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
-
-      ScalarT sum = 0;
-      for (int qp=0; qp<numQPs; ++qp)
-      {
-        ScalarT sq = 0;
-        // Computing squared difference at qp
-        switch (fieldDim)
+      case 0:
+        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
-          case 0:
-            sq += std::pow(sourceField(cell,side,qp)-(target_value ? target_value_val : targetField(cell,side,qp)),2);
-            break;
-          case 1:
-            // Precompute differentce and access fields only n times (not n^2)
-            for (int i=0; i<dims[3]; ++i)
-              diff_1[i] = sourceField(cell,side,qp,i) - (target_value ? target_value_val : targetField(cell,side,qp,i));
+          // Get the local data of cell
+          const int cell = sideSet.elem_LID(sideSet_idx);
 
-            for (int i=0; i<dims[3]; ++i)
-              for (int j=0; j<dims[3]; ++j)
-                sq += diff_1[i]*metric(cell,side,qp,i,j)*diff_1[j];
-            break;
-          case 2:
-            // Precompute differentce and access fields only n^2 times (not n^4)
-            for (int i=0; i<dims[3]; ++i)
-              for (int j=0; j<dims[3]; ++j)
-                diff_2[i][j] = sourceField(cell,side,qp,i,j) - (target_value ? target_value_val : targetField(cell,side,qp,i,j));
+          ScalarT sum = 0;
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            ScalarT sq = 0;
+            // Computing squared difference at qp
+            sq += std::pow(sourceField(sideSet_idx,qp)-(target_value ? target_value_val : targetField(sideSet_idx,qp)),2);
+            sum += sq * w_measure(sideSet_idx,qp);
+          }
 
-            for (int i=0; i<dims[3]; ++i)
-              for (int j=0; j<dims[3]; ++j)
-                for (int k=0; k<dims[3]; ++k)
-                  for (int l=0; l<dims[3]; ++l)
-                    sq += metric(cell,side,qp,k,i)*diff_2[i][j] * metric(cell,side,qp,j,l)*diff_2[l][k];
-            break;
+          this->local_response_eval(cell, 0) = sum*scaling;
+          this->global_response_eval(0) += sum*scaling;
         }
-        sum += sq * w_measure(cell,side,qp);
-      }
+        break;
+      case 1:
+        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+        {
+          // Get the local data of cell
+          const int cell = sideSet.elem_LID(sideSet_idx);
 
-      this->local_response_eval(cell, 0) = sum*scaling;
-      this->global_response_eval(0) += sum*scaling;
+          ScalarT sum = 0;
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            ScalarT sq = 0;
+            // Computing squared difference at qp
+            // Precompute differentce and access fields only n times (not n^2)
+            for (size_t i=0; i<diffDims; ++i)
+              diff_1(i) = sourceField(sideSet_idx,qp,i) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i));
+
+            for (size_t i=0; i<diffDims; ++i)
+              for (size_t j=0; j<diffDims; ++j)
+                sq += diff_1(i)*metric(sideSet_idx,qp,i,j)*diff_1(j);
+            sum += sq * w_measure(sideSet_idx,qp);
+          }
+
+          this->local_response_eval(cell, 0) = sum*scaling;
+          this->global_response_eval(0) += sum*scaling;
+        }
+        break;
+      case 2:
+        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+        {
+          // Get the local data of cell
+          const int cell = sideSet.elem_LID(sideSet_idx);
+
+          ScalarT sum = 0;
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            ScalarT sq = 0;
+            // Computing squared difference at qp
+            // Precompute differentce and access fields only n^2 times (not n^4)
+            for (size_t i=0; i<diffDims; ++i)
+              for (size_t j=0; j<diffDims; ++j)
+                diff_2(i,j) = sourceField(sideSet_idx,qp,i,j) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i,j));
+
+            for (size_t i=0; i<diffDims; ++i)
+              for (size_t j=0; j<diffDims; ++j)
+                for (size_t k=0; k<diffDims; ++k)
+                  for (size_t l=0; l<diffDims; ++l)
+                    sq += metric(sideSet_idx,qp,k,i)*diff_2(i,j) * metric(sideSet_idx,qp,j,l)*diff_2(l,k);
+            sum += sq * w_measure(sideSet_idx,qp);
+          }
+
+          this->local_response_eval(cell, 0) = sum*scaling;
+          this->global_response_eval(0) += sum*scaling;
+        }
+        break;
     }
+
   }
 
   // Do any local-scattering necessary

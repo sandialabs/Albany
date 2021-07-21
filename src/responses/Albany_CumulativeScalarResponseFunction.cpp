@@ -8,6 +8,7 @@
 #include "Albany_CumulativeScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Thyra_VectorStdOps.hpp"
 
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -25,7 +26,7 @@ CumulativeScalarResponseFunction(
 
     // Check that all responses have the same vector space 
     auto vs = responses[0]->responseVectorSpace(); 
-    for (int iresp=1; iresp<num_responses; ++iresp) {
+    for (size_t iresp=1; iresp<num_responses; ++iresp) {
       TEUCHOS_TEST_FOR_EXCEPTION(!responses[iresp]->responseVectorSpace()->isCompatible(*vs), std::runtime_error,
                                  "Error! All responses in CumulativeScalarResponseFunction must have compatible vector spaces.\n");
     }
@@ -75,6 +76,9 @@ evaluateResponse(const double current_time,
 {
   g->assign(0);
 
+  if (g_.is_null())
+    g_ = Thyra::createMember(responses[0]->responseVectorSpace());
+
   for (unsigned int i=0; i<responses.size(); i++) {
     // Create Thyra_Vector for response function
     Teuchos::RCP<Thyra_Vector> g_i = Thyra::createMember(responses[i]->responseVectorSpace());
@@ -85,6 +89,7 @@ evaluateResponse(const double current_time,
     // Add result into cumulative result
     g->update(1.0,*g_i);
   }
+  g_->assign(*g);
 }
 
 void
@@ -270,7 +275,7 @@ evaluateDistParamDeriv(
 
 void
 Albany::CumulativeScalarResponseFunction::
-evaluateDistParamHessVecProd_xx(
+evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -292,7 +297,7 @@ evaluateDistParamHessVecProd_xx(
     RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
 
     // Evaluate response function
-    responses[i]->evaluateDistParamHessVecProd_xx(
+    responses[i]->evaluate_HessVecProd_xx(
            current_time, v, x, xdot, xdotdot,
            param_array,
            Hv_dp_i);
@@ -304,7 +309,7 @@ evaluateDistParamHessVecProd_xx(
 
 void
 Albany::CumulativeScalarResponseFunction::
-evaluateDistParamHessVecProd_xp(
+evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -327,7 +332,7 @@ evaluateDistParamHessVecProd_xp(
     RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
 
     // Evaluate response function
-    responses[i]->evaluateDistParamHessVecProd_xp(
+    responses[i]->evaluate_HessVecProd_xp(
            current_time, v, x, xdot, xdotdot,
            param_array, dist_param_direction_name,
            Hv_dp_i);
@@ -339,7 +344,7 @@ evaluateDistParamHessVecProd_xp(
 
 void
 Albany::CumulativeScalarResponseFunction::
-evaluateDistParamHessVecProd_px(
+evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -362,7 +367,7 @@ evaluateDistParamHessVecProd_px(
     RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
 
     // Evaluate response function
-    responses[i]->evaluateDistParamHessVecProd_px(
+    responses[i]->evaluate_HessVecProd_px(
            current_time, v, x, xdot, xdotdot,
            param_array, dist_param_name,
            Hv_dp_i);
@@ -374,7 +379,7 @@ evaluateDistParamHessVecProd_px(
 
 void
 Albany::CumulativeScalarResponseFunction::
-evaluateDistParamHessVecProd_pp(
+evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -398,7 +403,7 @@ evaluateDistParamHessVecProd_pp(
     RCP<Thyra_MultiVector> Hv_dp_i = Thyra::createMembers(Hv_dp->range(), vs_i->dim());
 
     // Evaluate response function
-    responses[i]->evaluateDistParamHessVecProd_pp(
+    responses[i]->evaluate_HessVecProd_pp(
            current_time, v, x, xdot, xdotdot,
            param_array, dist_param_name,
            dist_param_direction_name,
@@ -406,5 +411,27 @@ evaluateDistParamHessVecProd_pp(
 
     // Copy results into combined result
     Hv_dp->update(1.0, *Hv_dp_i);
+  }
+}
+
+void
+Albany::CumulativeScalarResponseFunction::
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
+{
+  if (g_.is_null()) {
+    *out << " the response has not been evaluated yet!";
+    return;
+  }
+
+  std::size_t precision = 8;
+  std::size_t value_width = precision + 4;
+  
+  *out << std::setw(value_width) << Thyra::get_ele(*g_,0) << "sum of [";
+  for (unsigned int i=0; i<responses.size(); i++) {
+    responses[i]->printResponse(out);
+    if (i<(responses.size()-1))
+      *out << ", ";
+    else
+      *out << "]";
   }
 }

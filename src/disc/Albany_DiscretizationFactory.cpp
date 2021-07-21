@@ -9,7 +9,7 @@
 #include "Albany_DiscretizationFactory.hpp"
 
 #include "Albany_STKDiscretization.hpp"
-#include "BlockedDiscretization.hpp"
+#include "Albany_BlockedSTKDiscretization.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_STK3DPointStruct.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
@@ -86,8 +86,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         meshStruct2D = Teuchos::rcp(new AsciiSTKMesh2D(disc_params, comm, numParams));
         Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct);
         AbstractFieldContainer::FieldContainerRequirements req;
-        int neq = 2;
-        meshStruct2D->setFieldAndBulkData(comm, disc_params, neq, req,
+        meshStruct2D->setFieldAndBulkData(comm, req,
                 sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
         Ioss::Init::Initializer io;
         Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
@@ -101,25 +100,32 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
     }
     else if (method == "Extruded") {
         Teuchos::RCP<AbstractMeshStruct> basalMesh;
+
+        // Get basal_params
         Teuchos::RCP<Teuchos::ParameterList> basal_params;
-        //compute basal Workset size starting from Discretization
-        int extruded_ws_size = disc_params->get("Workset Size", 50);
-        int basal_ws_size = -1;
-        if(extruded_ws_size != -1) {
-          basal_ws_size =  extruded_ws_size/ (disc_params->get<int>("NumLayers") * ((disc_params->get<std::string>("Element Shape") == "Tetrahedron") ? 3 : 1));
-          basal_ws_size = std::max(basal_ws_size,1); //makes sure is at least 1.
-        }
         if (disc_params->isSublist("Side Set Discretizations") && disc_params->sublist("Side Set Discretizations").isSublist("basalside")) {
             basal_params = Teuchos::rcp(new Teuchos::ParameterList(disc_params->sublist("Side Set Discretizations").sublist("basalside")));
-            if(!disc_params->sublist("Side Set Discretizations").isParameter("Workset Size"))
-              basal_params->set("Workset Size", basal_ws_size);
         } else {
             // Backward compatibility: Ioss, with parameters mixed with the extruded mesh ones
             basal_params->set("Method", "Ioss");
             basal_params->set("Use Serial Mesh", disc_params->get("Use Serial Mesh", false));
             basal_params->set("Exodus Input File Name", disc_params->get("Exodus Input File Name", "basalmesh.exo"));
-            basal_params->set("Workset Size", basal_ws_size);
         }
+
+        // Set basal workset size
+        int extruded_ws_size = disc_params->get("Workset Size", 50);
+        if (extruded_ws_size == -1) {
+          basal_params->set("Workset Size", -1);
+        } else if (!basal_params->isParameter("Workset Size")) {
+          // Compute basal workset size based on extruded workset size
+          const int num_cells_per_column_per_layer = disc_params->get<std::string>("Element Shape") ==
+              "Tetrahedron" ? 3 : 1; // number of 3D cells in one extruded 2D cell
+          const int num_cells_per_column = num_cells_per_column_per_layer * disc_params->get<int>("NumLayers");
+          int basal_ws_size = extruded_ws_size / num_cells_per_column;
+          basal_ws_size = std::max(basal_ws_size,1); //makes sure is at least 1.
+          basal_params->set("Workset Size", basal_ws_size);
+        }
+
         basalMesh = createMeshStruct(basal_params, comm, numParams);
         return Teuchos::rcp(new ExtrudedSTKMeshStruct(disc_params, comm, basalMesh, numParams));
     }
@@ -161,10 +167,15 @@ DiscretizationFactory::createDiscretization(
             std::logic_error,
             "meshStruct accessed, but it has not been constructed" << std::endl);
 
-    setupInternalMeshStruct(neq, sis, side_set_sis, req, 
-                            side_set_req);
     Teuchos::RCP<AbstractDiscretization> result =
-            createDiscretizationFromInternalMeshStruct(sideSetEquations, rigidBodyModes);
+            createDiscretizationFromInternalMeshStruct(neq, sideSetEquations, rigidBodyModes);
+
+    setMeshStructFieldData(sis, side_set_sis, req, 
+                            side_set_req);
+    setFieldData(result, sis, req);
+    setMeshStructBulkData(sis, side_set_sis, req, 
+                            side_set_req);
+    completeDiscSetup(result);
 
     return result;
 }
@@ -176,35 +187,55 @@ DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
 }
 
 void
-DiscretizationFactory::setupInternalMeshStruct(
-        unsigned int neq,
+DiscretizationFactory::setMeshStructFieldData(
         const Teuchos::RCP<StateInfoStruct>& sis,
         const AbstractFieldContainer::FieldContainerRequirements& req) {
-    setupInternalMeshStruct(neq, sis, empty_side_set_sis, req, 
+    setMeshStructFieldData(sis, empty_side_set_sis, req, 
                             empty_side_set_req);
 }
 
 void
-DiscretizationFactory::setupInternalMeshStruct(
-        unsigned int neq,
+DiscretizationFactory::setMeshStructFieldData(
         const Teuchos::RCP<StateInfoStruct>& sis,
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis,
         const AbstractFieldContainer::FieldContainerRequirements& req,
         const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) 
 {
-    meshStruct->setFieldAndBulkData(commT, discParams, neq, req, sis,
+    meshStruct->setFieldData(commT, req, sis,
+            meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, 
+            side_set_req);
+}
+
+void
+DiscretizationFactory::setMeshStructBulkData(
+        const Teuchos::RCP<StateInfoStruct>& sis,
+        const AbstractFieldContainer::FieldContainerRequirements& req) {
+    setMeshStructBulkData(sis, empty_side_set_sis, req, 
+                            empty_side_set_req);
+}
+
+void
+DiscretizationFactory::setMeshStructBulkData(
+        const Teuchos::RCP<StateInfoStruct>& sis,
+        const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis,
+        const AbstractFieldContainer::FieldContainerRequirements& req,
+        const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) 
+{
+    meshStruct->setBulkData(commT, req, sis,
             meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, 
             side_set_req);
 }
 
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
+        const int neq,
         const Teuchos::RCP<RigidBodyModes>& rigidBodyModes) {
-    return createDiscretizationFromInternalMeshStruct(empty_side_set_equations, rigidBodyModes);
+    return createDiscretizationFromInternalMeshStruct(neq, empty_side_set_equations, rigidBodyModes);
 }
 
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
+        const int neq,
         const std::map<int, std::vector<std::string> >& sideSetEquations,
         const Teuchos::RCP<RigidBodyModes>& rigidBodyModes) {
 
@@ -212,27 +243,65 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 
         rigidBodyModes->setPiroPL(piroParams);
 
-    std::string& method = discParams->get("Method", "STK1D");
-
 
   switch (meshStruct->meshSpecsType()) {
     case AbstractMeshStruct::STK_MS:
     {
       auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
       if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
-        auto disc = Teuchos::rcp(new BlockedDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
-        disc->updateMesh();
+        auto disc = Teuchos::rcp(new BlockedSTKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
         return disc;
       } else
       {
-        auto disc = Teuchos::rcp(new STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
-        disc->updateMesh();
+        auto disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
         return disc;
       }
       break;
     }
   }
   return Teuchos::null;
+}
+
+void
+DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
+                                    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                                    const AbstractFieldContainer::FieldContainerRequirements& req) {
+
+  switch (meshStruct->meshSpecsType()) {
+    case AbstractMeshStruct::STK_MS:
+    {
+      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+      if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
+        auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
+        stk_disc->setFieldData(req, sis);
+      } else
+      {
+        auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
+        stk_disc->setFieldData(req, sis);
+      }
+      break;
+    }
+  }
+}
+
+void
+DiscretizationFactory::completeDiscSetup(Teuchos::RCP<AbstractDiscretization> disc) {
+
+  switch (meshStruct->meshSpecsType()) {
+    case AbstractMeshStruct::STK_MS:
+    {
+      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+      if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
+        auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
+        stk_disc->updateMesh();
+      } else
+      {
+        auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
+        stk_disc->updateMesh();
+      }
+      break;
+    }
+  }
 }
 
 /* This function overwrite previous discretization parameter list */

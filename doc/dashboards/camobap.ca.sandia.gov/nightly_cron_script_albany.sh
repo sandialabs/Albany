@@ -5,8 +5,8 @@ cd /nightlyCDash
 #unset http_proxy
 #unset https_proxy
 
-export https_proxy="https://wwwproxy.ca.sandia.gov:80"
-export http_proxy="http://wwwproxy.ca.sandia.gov:80"
+export https_proxy="http://proxy.ca.sandia.gov:80"
+export http_proxy="http://proxy.ca.sandia.gov:80"
 
 LOG_FILE=/nightlyCDash/nightly_log.txt
 

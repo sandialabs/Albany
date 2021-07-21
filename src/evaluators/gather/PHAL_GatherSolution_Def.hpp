@@ -53,7 +53,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
   // scalar
   if ( tensorRank == 0 ) {
     val.resize(solution_names.size());
-    for (std::size_t eq = 0; eq < solution_names.size(); ++eq) {
+    for (int eq = 0; eq < solution_names.size(); ++eq) {
       PHX::MDField<ScalarT,Cell,Node> f(solution_names[eq],dl->node_scalar);
       val[eq] = f;
       this->addEvaluatedField(val[eq]);
@@ -64,7 +64,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
         p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Solution Names");
 
       val_dot.resize(names_dot.size());
-      for (std::size_t eq = 0; eq < names_dot.size(); ++eq) {
+      for (int eq = 0; eq < names_dot.size(); ++eq) {
         PHX::MDField<ScalarT,Cell,Node> f(names_dot[eq],dl->node_scalar);
         val_dot[eq] = f;
         this->addEvaluatedField(val_dot[eq]);
@@ -76,7 +76,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
         p.get< Teuchos::ArrayRCP<std::string> >("Solution Acceleration Names");
 
       val_dotdot.resize(names_dotdot.size());
-      for (std::size_t eq = 0; eq < names_dotdot.size(); ++eq) {
+      for (int eq = 0; eq < names_dotdot.size(); ++eq) {
         PHX::MDField<ScalarT,Cell,Node> f(names_dotdot[eq],dl->node_scalar);
         val_dotdot[eq] = f;
         this->addEvaluatedField(val_dotdot[eq]);
@@ -216,7 +216,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank1_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       (this->valVec)(cell,node,eq)= x_constView(nodeID(cell, node,this->offset+eq));
 }
@@ -225,7 +225,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank1_Transient_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       (this->valVec_dot)(cell,node,eq)= xdot_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -234,7 +234,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank1_Acceleration_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       (this->valVec_dotdot)(cell,node,eq)= xdotdot_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -243,7 +243,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank2_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       (this->valTensor)(cell,node,eq/numDim,eq%numDim)= x_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -252,7 +252,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank2_Transient_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim)= xdot_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -261,7 +261,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank2_Acceleration_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       (this->valTensor_dotdot)(cell,node,eq/numDim,eq%numDim)= xdotdot_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -270,7 +270,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank0_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       d_val[eq](cell,node)= x_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -279,7 +279,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank0_Transient_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       d_val_dot[eq](cell,node)= xdot_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -288,7 +288,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank0_Acceleration_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       d_val_dotdot[eq](cell,node)= xdotdot_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -485,7 +485,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank2_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
+  for (size_t node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valTensor)(cell,node,eq/numDim,eq%numDim);
@@ -499,7 +499,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank2_Transient_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
+  for (size_t node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim);
@@ -513,7 +513,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank2_Acceleration_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
+  for (size_t node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valTensor_dotdot)(cell,node,eq/numDim,eq%numDim);
@@ -527,7 +527,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank1_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; node++){
+  for (size_t node = 0; node < this->numNodes; node++){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valVec)(cell,node,eq);
@@ -541,7 +541,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank1_Transient_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
+  for (size_t node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valVec_dot)(cell,node,eq);
@@ -555,7 +555,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank1_Acceleration_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
+  for (size_t node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valVec_dotdot)(cell,node,eq);
@@ -569,7 +569,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank0_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
+  for (size_t node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = d_val[eq](cell,node);
@@ -583,7 +583,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank0_Transient_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
+  for (size_t node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = d_val_dot[eq](cell,node);
@@ -597,7 +597,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank0_Acceleration_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
+  for (size_t node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = d_val_dotdot[eq](cell,node);
@@ -634,7 +634,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const int neq = nodeID.extent(2);
-    const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstunk = neq * node + this->offset;
@@ -1063,7 +1062,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const int neq = nodeID.extent(2);
-    const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       int firstunk = neq * node + this->offset;
@@ -1074,7 +1072,7 @@ evaluateFields(typename Traits::EvalData workset)
                     this->valTensor(cell,node, eq/numDim, eq%numDim));
         RealType xvec_val = x_constView[nodeID(cell,node,this->offset + eq)];
 
-        valref = FadType(valref.size(), xvec_val);
+        valref = HessianVecFad(valref.size(), xvec_val);
         // If we differentiate w.r.t. the solution, we have to set the first
         // derivative to 1
         if (is_x_active)
@@ -1088,9 +1086,6 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const int neq = nodeID.extent(2);
-    const std::size_t num_dof = neq * this->numNodes;
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {

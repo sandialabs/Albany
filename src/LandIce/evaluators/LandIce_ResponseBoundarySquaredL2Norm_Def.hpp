@@ -40,9 +40,9 @@ ResponseBoundarySquaredL2Norm(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
 
 
   // Get Dimensions
-  numSideNodes  = dl_side->node_scalar->extent(2);
-  numSideDims   = dl_side->node_gradient->extent(3);
-  numSideQPs = dl_side->qp_scalar->extent(2);
+  numSideNodes  = dl_side->node_scalar->extent(1);
+  numSideDims   = dl_side->node_gradient->extent(2);
+  numSideQPs = dl_side->qp_scalar->extent(1);
 
   this->addDependentField(w_side_measure);
   this->addDependentField(solution);
@@ -108,23 +108,21 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
 
   if (workset.sideSets->find(sideName) != workset.sideSets->end())
   {
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideName);
-    for (auto const& it_side : sideSet)
+    sideSet = workset.sideSetViews->at(sideName);
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
-      // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
-
+      // Get the local data of cell
+      const int cell = sideSet.elem_LID(sideSet_idx);
 
       MeshScalarT trapezoid_weight = 0;
-      for (int qp=0; qp<numSideQPs; ++qp)
-        trapezoid_weight += w_side_measure(cell,side, qp);
+      for (unsigned int qp=0; qp<numSideQPs; ++qp)
+        trapezoid_weight += w_side_measure(sideSet_idx, qp);
       trapezoid_weight /= numSideNodes;
 
       ScalarT t = 0;
-      for (int inode=0; inode<numSideNodes; ++inode) {
+      for (unsigned int inode=0; inode<numSideNodes; ++inode) {
         //using trapezoidal rule to get diagonal mass matrix
-        t += std::pow(solution(cell,side,inode),2)* trapezoid_weight;
+        t += std::pow(solution(sideSet_idx,inode),2)* trapezoid_weight;
       }
       this->local_response_eval(cell, 0) += t*scaling;
       this->global_response_eval(0) += t*scaling;

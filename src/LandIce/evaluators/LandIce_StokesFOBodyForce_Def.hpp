@@ -17,18 +17,15 @@
 
 namespace LandIce {
 
-const double pi = 3.1415926535897932385;
-double rho_g; //rho*g
-
 //**********************************************************************
 
-template<typename EvalT, typename Traits>
-StokesFOBodyForce<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename SurfHeightST>
+StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
 StokesFOBodyForce(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
   force(p.get<std::string>("Body Force Variable Name"), dl->qp_vector),
-  A(1.0),
   n(3.0),
+  A(1.0),
   alpha(0.0)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -40,11 +37,16 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   std::string type = bf_list->get("Type", "None");
   A = bf_list->get("Glen's Law A", 1.0);
   n = bf_list->get("Glen's Law n", 3.0);
+  // Turn A's units from [Pa^-n s^-1] to [k^-1 kPa^-n yr^-1]
+  // This makes the final units of viscosity kPa k yr, which makes [mu*Ugrad] = kPa
+  const auto scyr = 3.1536e7;      // [s y-1]
+  const auto knp1 = pow(1000,n+1);
+  A *= knp1*scyr;
+
   alpha = bf_list->get("LandIce alpha", 0.0);
 
   g = p_list->get("Gravity Acceleration", 9.8);
   rho = p_list->get("Ice Density", 910.0);
-  rho_g = rho*g;
 
   stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
@@ -53,6 +55,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   *out << "rho, g: " << rho << ", " << g << std::endl;
   *out << "alpha: " << alpha << std::endl;
 #endif
+
   alpha *= pi/180.0; //convert alpha to radians
   if (type == "None") {
     bf_type = NONE;
@@ -88,75 +91,51 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #endif
   else if (type == "FOSinCos2D") {
     bf_type = FO_SINCOS2D;
-    muLandIce = decltype(muLandIce)(
-            p.get<std::string>("LandIce Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
     this->addDependentField(coordVec);
   }
   else if (type == "FOSinExp2D") {
     bf_type = FO_SINEXP2D;
-    muLandIce = decltype(muLandIce)(
-            p.get<std::string>("LandIce Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
     this->addDependentField(coordVec);
   }
   else if (type == "FOCosExp2D") {
     bf_type = FO_COSEXP2D;
-    muLandIce = decltype(muLandIce)(
-            p.get<std::string>("LandIce Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
     this->addDependentField(coordVec);
   }
   else if (type == "FOCosExp2DFlip") {
     bf_type = FO_COSEXP2DFLIP;
-    muLandIce = decltype(muLandIce)(
-            p.get<std::string>("LandIce Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
     this->addDependentField(coordVec);
   }
   else if (type == "FOCosExp2DAll") {
     bf_type = FO_COSEXP2DALL;
-    muLandIce = decltype(muLandIce)(
-            p.get<std::string>("LandIce Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
     this->addDependentField(coordVec);
   }
   else if (type == "FOSinCosZ") {
     bf_type = FO_SINCOSZ;
-    muLandIce = decltype(muLandIce)(
-            p.get<std::string>("LandIce Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
     this->addDependentField(coordVec);
   }
   else if (type == "Poisson") {
     bf_type = POISSON;
-    muLandIce = decltype(muLandIce)(
-            p.get<std::string>("LandIce Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
     this->addDependentField(coordVec);
   }
   //Source for xz MMS problem derived by Mauro.
   else if (type == "FO_XZ_MMS") {
     bf_type = FO_XZMMS;
-    muLandIce = decltype(muLandIce)(
-            p.get<std::string>("LandIce Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
     this->addDependentField(coordVec);
   }
   //kept for backward compatibility. Use type = "FO INTERP GRAD SURF" instead.
@@ -197,62 +176,59 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   this->setName("StokesFOBodyForce"+PHX::print<EvalT>());
 }
 //**********************************************************************
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const FO_INTERP_SURF_GRAD_Tag& tag, const int& cell) const{
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const FO_INTERP_SURF_GRAD_Tag& /* tag */, const int& cell) const{
 
- if(useStereographicMap) {
-       for (int qp=0; qp < numQPs; ++qp) {
-         MeshScalarT x = coordVec(cell,qp,0)-x_0;
-         MeshScalarT y = coordVec(cell,qp,1)-y_0;
-         MeshScalarT z = coordVec(cell,qp,2);
-         MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-         MeshScalarT h2 = h*h;
-         MeshScalarT h_x = -x/2.0/R2*h2;
-         MeshScalarT h_y = -y/2.0/R2*h2;
-         force(cell,qp,0) = rho_g_kernel*(h*surfaceGrad(cell,qp,0) + (surface(cell,qp) - z) *(h_x-h_y)); //it already includes the integral weight h^2
-         force(cell,qp,1) = rho_g_kernel*(h*surfaceGrad(cell,qp,1) + (surface(cell,qp) - z) *(h_y-h_x));
-       }
-   }
-   else {
-       for (int qp=0; qp < numQPs; ++qp) {
-         force(cell,qp,0) = rho_g_kernel*surfaceGrad(cell,qp,0);
-         force(cell,qp,1) = rho_g_kernel*surfaceGrad(cell,qp,1);
-       }
-   }
+  if (useStereographicMap) {
+    for (unsigned int qp=0; qp < numQPs; ++qp) {
+      MeshScalarT x = coordVec(cell,qp,0)-x_0;
+      MeshScalarT y = coordVec(cell,qp,1)-y_0;
+      MeshScalarT z = coordVec(cell,qp,2);
+      MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+      MeshScalarT h2 = h*h;
+      MeshScalarT h_x = -x/2.0/R2*h2;
+      MeshScalarT h_y = -y/2.0/R2*h2;
+      force(cell,qp,0) = rho_g_kernel*(h*surfaceGrad(cell,qp,0) + (surface(cell,qp) - z) *(h_x-h_y)); //it already includes the integral weight h^2
+      force(cell,qp,1) = rho_g_kernel*(h*surfaceGrad(cell,qp,1) + (surface(cell,qp) - z) *(h_y-h_x));
+    }
+  } else {
+    for (unsigned int qp=0; qp < numQPs; ++qp) {
+      force(cell,qp,0) = rho_g_kernel*surfaceGrad(cell,qp,0);
+      force(cell,qp,1) = rho_g_kernel*surfaceGrad(cell,qp,1);
+    }
+  }
+}
+
+template<typename EvalT, typename Traits, typename SurfHeightST>
+KOKKOS_INLINE_FUNCTION
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const FO_SURF_GRAD_PROVIDED_Tag& /* tag */, const int& /* cell */) const{
 
 
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const FO_SURF_GRAD_PROVIDED_Tag& tag, const int& cell) const{
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const POISSON_Tag& /* tag */, const int& cell) const{
 
-
-}
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const POISSON_Tag& tag, const int& cell) const{
-
-   for (int qp=0; qp < numQPs; ++qp) {
+   for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x = coordVec(cell,qp,0);
        force(cell,qp,0) = exp(x);
      }
 
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const FO_SINCOS2D_Tag& tag, const int& cell) const{
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const FO_SINCOS2D_Tag& /* tag */, const int& cell) const{
 
   double xphase=0.0, yphase=0.0;
   double r = 3*pi;
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT muargt = 2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) + r;
@@ -270,13 +246,13 @@ operator() (const FO_SINCOS2D_Tag& tag, const int& cell) const{
 
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const FO_COSEXP2D_Tag& tag, const int& cell) const{
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const FO_COSEXP2D_Tag& /* tag */, const int& cell) const{
 
   const double a = 1.0;
-     for (int qp=0; qp < numQPs; ++qp) {
+     for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
@@ -288,12 +264,12 @@ operator() (const FO_COSEXP2D_Tag& tag, const int& cell) const{
 
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const FO_COSEXP2DFLIP_Tag& tag, const int& cell) const{
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const FO_COSEXP2DFLIP_Tag& /* tag */, const int& cell) const{
     const double a = 1.0;
-     for (int qp=0; qp < numQPs; ++qp) {
+     for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
@@ -304,14 +280,13 @@ operator() (const FO_COSEXP2DFLIP_Tag& tag, const int& cell) const{
 
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const FO_COSEXP2DALL_Tag& tag, const int& cell) const{
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const FO_COSEXP2DALL_Tag& /* tag */, const int& cell) const{
 
   const double a = 1.0;
-     for (int qp=0; qp < numQPs; ++qp) {
-       MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
+     for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi);
@@ -331,10 +306,10 @@ operator() (const FO_COSEXP2DALL_Tag& tag, const int& cell) const{
 
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const FO_SINCOSZ_Tag& tag, const int& cell) const{
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const FO_SINCOSZ_Tag& /* tag */, const int& cell) const{
 
   for (std::size_t qp=0; qp < numQPs; ++qp) {
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
@@ -351,12 +326,12 @@ operator() (const FO_SINCOSZ_Tag& tag, const int& cell) const{
 
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const FO_SINEXP2D_Tag& tag, const int& cell) const{
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const FO_SINEXP2D_Tag& /* tag */, const int& cell) const{
 
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT muqp = 1.0 ; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
@@ -366,11 +341,11 @@ operator() (const FO_SINEXP2D_Tag& tag, const int& cell) const{
 
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const FO_DOME_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const FO_DOME_Tag& /* tag */, const int& cell) const{
+  for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y = coordVec(cell,qp,1);
        force(cell,qp,0) = -rho_g_kernel*x*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);
@@ -378,10 +353,10 @@ operator() (const FO_DOME_Tag& tag, const int& cell) const{
      }
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename SurfHeightST>
 KOKKOS_INLINE_FUNCTION
-void StokesFOBodyForce<EvalT, Traits>::
-operator() (const FO_XZMMS_Tag& tag, const int& cell) const{
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
+operator() (const FO_XZMMS_Tag& /* tag */, const int& cell) const{
 
    double alpha0 = 4e-5; //renamed alpha alpha0 to prevent conflict with other alpha
    double s0 = 2.0;
@@ -390,7 +365,7 @@ operator() (const FO_XZMMS_Tag& tag, const int& cell) const{
    //IK, 2/4/15, WARNING: I think the source term has been derived assuming n = 3, even
    //though in theory n is a free parameter...
    //TO DO: check sign!
-     for (int qp=0; qp < numQPs; ++qp) {
+     for (unsigned int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x = coordVec(cell,qp,0); //x
        MeshScalarT z = coordVec(cell,qp,1); //z
        MeshScalarT s = s0 - alpha0*x*x;  //s = s0-alpha*x^2
@@ -418,14 +393,13 @@ operator() (const FO_XZMMS_Tag& tag, const int& cell) const{
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void StokesFOBodyForce<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename SurfHeightST>
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   if (bf_type == FO_SINCOS2D || bf_type == FO_SINEXP2D || bf_type == FO_COSEXP2D || bf_type == FO_COSEXP2DFLIP ||
       bf_type == FO_COSEXP2DALL || bf_type == FO_SINCOSZ || bf_type == POISSON || bf_type == FO_XZMMS) {
-    this->utils.setFieldData(muLandIce,fm);
     this->utils.setFieldData(coordVec,fm);
   }
   else if (bf_type == FO_DOME) {
@@ -446,13 +420,13 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void StokesFOBodyForce<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename SurfHeightST>
+void StokesFOBodyForce<EvalT, Traits, SurfHeightST>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  rho_g_kernel=rho_g;
+  rho_g_kernel = rho*g;
 
   if (bf_type == NONE) {
     force.deep_copy(0.0);

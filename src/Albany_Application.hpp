@@ -366,7 +366,7 @@ public:
       const Teuchos::RCP<Thyra_MultiVector>&  dg_dp);
 
   /**
-   * \brief evaluateResponseDistParamHessVecProd_xx function
+   * \brief evaluateResponse_HessVecProd_xx function
    * 
    * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(g)\f$ of the <tt>response[response_index]</tt> 
    * (i.e. the response_index-th response) to a direction vector \f$\boldsymbol{v}\f$.
@@ -387,8 +387,8 @@ public:
    *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(g) 
    *   \end{bmatrix},
    * \f]
-   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
-   * (distributed) parameter, this function computes the contribution:
+   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first  parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   *  parameter, this function computes the contribution:
    * \f[
    *   \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}.
    * \f]
@@ -421,7 +421,7 @@ public:
    * </ul>
    */
   void
-  evaluateResponseDistParamHessVecProd_xx(
+  evaluateResponse_HessVecProd_xx(
       int                                     response_index,
       const double                            current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
@@ -432,7 +432,7 @@ public:
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_xx);
 
   /**
-   * \brief evaluateResponseDistParamHessVecProd_xp function
+   * \brief evaluateResponse_HessVecProd_xp function
    * 
    * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(g)\f$ of the <tt>response[response_index]</tt> 
    * (i.e. the response_index-th response) to a direction vector \f$\boldsymbol{v}\f$.
@@ -453,8 +453,8 @@ public:
    *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(g) 
    *   \end{bmatrix},
    * \f]
-   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
-   * (distributed) parameter, this function computes the contribution:
+   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first  parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   *  parameter, this function computes the contribution:
    * \f[
    *   \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j},
    * \f]
@@ -477,7 +477,7 @@ public:
    * 
    * \param param_array [in] Array of the parameters vectors.
    * 
-   * \param dist_param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
+   * \param param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
    * 
    * \param Hv_g_xp [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
    * 
@@ -490,7 +490,7 @@ public:
    * </ul>
    */
   void
-  evaluateResponseDistParamHessVecProd_xp(
+  evaluateResponse_HessVecProd_xp(
       int                                     response_index,
       const double                            current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
@@ -498,11 +498,11 @@ public:
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>&         param_array,
-      const std::string&                      dist_param_name,
+      const std::string&                      param_direction_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_xp);
 
   /**
-   * \brief evaluateResponseDistParamHessVecProd_px function
+   * \brief evaluateResponse_HessVecProd_px function
    * 
    * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(g)\f$ of the <tt>response[response_index]</tt> 
    * (i.e. the response_index-th response) to a direction vector \f$\boldsymbol{v}\f$.
@@ -523,8 +523,8 @@ public:
    *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(g) 
    *   \end{bmatrix},
    * \f]
-   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
-   * (distributed) parameter, this function computes the contribution:
+   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   * parameter, this function computes the contribution:
    * \f[
    *   \boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}},
    * \f]
@@ -547,7 +547,7 @@ public:
    * 
    * \param param_array [in] Array of the parameters vectors.
    * 
-   * \param dist_param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
+   * \param param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
    * 
    * \param Hv_g_px [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(g)\boldsymbol{v}_{\boldsymbol{x}}\f$.
    * 
@@ -560,7 +560,7 @@ public:
    * </ul>
    */
   void
-  evaluateResponseDistParamHessVecProd_px(
+  evaluateResponse_HessVecProd_px(
       int                                     response_index,
       const double                            current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
@@ -568,11 +568,11 @@ public:
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>&         param_array,
-      const std::string&                      dist_param_name,
+      const std::string&                      param_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_px);
 
   /**
-   * \brief evaluateResponseDistParamHessVecProd_pp function
+   * \brief evaluateResponse_HessVecProd_pp function
    * 
    * This function is used to compute contributions of the application of the Hessian \f$\boldsymbol{H}(g)\f$ of the <tt>response[response_index]</tt> 
    * (i.e. the response_index-th response) to a direction vector \f$\boldsymbol{v}\f$.
@@ -593,8 +593,8 @@ public:
    *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(g) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(g) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(g) 
    *   \end{bmatrix},
    * \f]
-   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
-   * (distributed) parameter, this function computes the contribution:
+   * where \f$g\f$ is the response, \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first  parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   *  parameter, this function computes the contribution:
    * \f[
    *   \boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j},
    * \f]
@@ -617,9 +617,9 @@ public:
    * 
    * \param param_array [in] Array of the parameters vectors.
    * 
-   * \param dist_param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
+   * \param param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
    * 
-   * \param dist_param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
+   * \param param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
    * 
    * \param Hv_g_pp [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(g)\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
    * 
@@ -632,7 +632,7 @@ public:
    * </ul>
    */
   void
-  evaluateResponseDistParamHessVecProd_pp(
+  evaluateResponse_HessVecProd_pp(
       int                                     response_index,
       const double                            current_time,
       const Teuchos::RCP<const Thyra_MultiVector>& v,
@@ -640,9 +640,45 @@ public:
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>&         param_array,
-      const std::string&                      dist_param_name,
-      const std::string&                      dist_param_direction_name,
+      const std::string&                      param_name,
+      const std::string&                      param_direction_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_pp);
+
+  /**
+   * \brief evaluateResponseDistParamHessian_pp function
+   *
+   * This function is used to compute the Hessian \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_i}(g)\f$ of the <tt>response[response_index]</tt> 
+   * (i.e. the response_index-th response) where \f$g\f$ is the response and \f$\boldsymbol{p}_i\f$ is a distributed parameter.
+   *
+   * \param response_index [in] Response index of the response which the Hessian is computed.
+   *
+   * \param parameter_index [in] Parameter index of the distributed parameter.
+   *
+   * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
+   *
+   * \param x [in] Solution vector for the current time step: \f$\boldsymbol{x}\f$.
+   *
+   * \param xdot [in] Velocity vector for the current time step.
+   *
+   * \param xdotdot [in] Acceleration vector for the current time step.
+   *
+   * \param param_array [in] Array of the parameters vectors.
+   *
+   * \param dist_param_name [in] Name of the distributed parameter.
+   *
+   * \param H [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_i}(g)\f$.
+   */
+  void
+  evaluateResponseDistParamHessian_pp(
+      int                                     response_index,
+      int                                     parameter_index,
+      const double                            current_time,
+      const Teuchos::RCP<const Thyra_Vector>& x,
+      const Teuchos::RCP<const Thyra_Vector>& xdot,
+      const Teuchos::RCP<const Thyra_Vector>& xdotdot,
+      const Teuchos::Array<ParamVec>&         param_array,
+      const std::string&                      dist_param_name,
+      const Teuchos::RCP<Thyra_LinearOp>&     H);
 
   /**
    * \brief evaluateResidual_HessVecProd_xx function
@@ -666,8 +702,8 @@ public:
    *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) 
    *   \end{bmatrix},
    * \f]
-   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
-   * (distributed) parameter, this function computes the contribution:
+   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first  parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   *  parameter, this function computes the contribution:
    * \f[
    *   \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}.
    * \f]
@@ -730,8 +766,8 @@ void
    *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) 
    *   \end{bmatrix},
    * \f]
-   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
-   * (distributed) parameter, this function computes the contribution:
+   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first  parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   *  parameter, this function computes the contribution:
    * \f[
    *   \boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j},
    * \f]
@@ -754,7 +790,7 @@ void
    * 
    * \param param_array [in] Array of the parameters vectors.
    * 
-   * \param dist_param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
+   * \param param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
    * 
    * \param Hv_f_xp [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{x}\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
    * 
@@ -776,7 +812,7 @@ void
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>&         param_array,
-      const std::string&                      dist_param_direction_name,
+      const std::string&                      param_direction_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_xp);
 
   /**
@@ -801,8 +837,8 @@ void
    *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) 
    *   \end{bmatrix},
    * \f]
-   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
-   * (distributed) parameter, this function computes the contribution:
+   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first  parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   *  parameter, this function computes the contribution:
    * \f[
    *   \boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}},
    * \f]
@@ -825,7 +861,7 @@ void
    * 
    * \param param_array [in] Array of the parameters vectors.
    * 
-   * \param dist_param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
+   * \param param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
    * 
    * \param Hv_f_px [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{x}}\f$.
    * 
@@ -847,7 +883,7 @@ void
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>&         param_array,
-      const std::string&                      dist_param_name,
+      const std::string&                      param_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_px);
 
   /**
@@ -872,8 +908,8 @@ void
    *     \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{x}}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_1}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) & \cdots & \boldsymbol{H}_{\boldsymbol{p}_n\boldsymbol{p}_n}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle) 
    *   \end{bmatrix},
    * \f]
-   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first (distributed) parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
-   * (distributed) parameter, this function computes the contribution:
+   * where \f$\boldsymbol{x}\f$ is the solution vector, \f$\boldsymbol{p}_1\f$ is a first  parameter, \f$\ldots\f$, and \f$\boldsymbol{p}_n\f$ is the \f$n\f$-th 
+   *  parameter, this function computes the contribution:
    * \f[
    *   \boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j},
    * \f]
@@ -896,9 +932,9 @@ void
    * 
    * \param param_array [in] Array of the parameters vectors.
    * 
-   * \param dist_param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
+   * \param param_name [in] Name of the parameter used for the first differentiation: \f$\boldsymbol{p}_i\f$.
    * 
-   * \param dist_param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
+   * \param param_direction_name [in] Name of the parameter used for the second differentiation: \f$\boldsymbol{p}_j\f$.
    * 
    * \param Hv_f_pp [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_j}(\left\langle \boldsymbol{f},\boldsymbol{z}\right\rangle)\boldsymbol{v}_{\boldsymbol{p}_j}\f$.
    * 
@@ -920,8 +956,8 @@ void
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>&         param_array,
-      const std::string&                      dist_param_name,
-      const std::string&                      dist_param_direction_name,
+      const std::string&                      param_name,
+      const std::string&                      param_direction_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_pp);
 
   //! Provide access to shapeParameters -- no AD
@@ -984,8 +1020,6 @@ void
   {
     return params_;
   }
-
-  bool is_adjoint;
 
  private:
   //! Utility function to set up ShapeParameters through Sacado

@@ -17,9 +17,9 @@ template<typename EvalT, typename Traits>
 MapToPhysicalFrame<EvalT, Traits>::
 MapToPhysicalFrame(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
+  intrepidBasis    (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   coords_vertices  (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
   cubature         (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature")),
-  intrepidBasis    (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   cellType         (p.get<Teuchos::RCP<shards::CellTopology> > ("Cell Type")),
   coords_qp        (p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient)
 {

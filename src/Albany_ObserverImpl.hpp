@@ -9,10 +9,11 @@
 #include <string>
 
 #include "Albany_StatelessObserverImpl.hpp"
+#include "Piro_ROL_ObserverBase.hpp"
 
 namespace Albany {
 
-class ObserverImpl : public StatelessObserverImpl {
+class ObserverImpl : public StatelessObserverImpl, public Piro::ROL_ObserverBase<ST> {
 public:
   explicit ObserverImpl(const Teuchos::RCP<Application>& app);
 
@@ -34,6 +35,10 @@ public:
 
   void parameterChanged(
       const std::string& param);
+
+  void parametersChanged();
+  
+  void observeResponse(int iter);
 };
 
 } // namespace Albany

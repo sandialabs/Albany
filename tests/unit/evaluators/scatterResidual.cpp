@@ -151,7 +151,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
   auto hess_vec_prod_f_px_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_f_px_out);
   auto hess_vec_prod_f_pp_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_f_pp_out);
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
     {
       size_t id = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0));
@@ -186,7 +186,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
   for (std::size_t i = 0; i < numBucks; i++)
     wsElNodeEqID_ID_raw[i].resize(buck_size * nodes_per_element * neq);
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
       wsElNodeEqID_ID_raw[0][cell * nodes_per_element * neq + node * neq] = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0) / neq);
 
@@ -243,7 +243,6 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
       overlapped_x_space));
 
   parameter->set_workset_elem_dofs(Teuchos::rcpFromRef(wsElNodeEqID_ID));
-  const Albany::IDArray &wsElDofs = parameter->workset_elem_dofs()[0];
   Teuchos::RCP<Thyra_Vector> dist_param = parameter->vector();
   dist_param->assign(6.0);
   parameter->scatter();
@@ -254,16 +253,16 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
   phxWorkset.wsElNodeEqID = wsLocalElNodeEqID;
   phxWorkset.dist_param_deriv_name = param_name;
   phxWorkset.hessianWorkset.dist_param_deriv_direction_name = param_name;
-  phxWorkset.hessianWorkset.f_multiplier = f_multiplier;
+  phxWorkset.hessianWorkset.overlapped_f_multiplier = f_multiplier;
 
   MDField<Scalar, Cell, Node> residual = allocateUnmanagedMDField<Scalar, Cell, Node>(residual_name, residual_layout, derivative_dimensions);
   residual.deep_copy(0.0);
 
-  for (std::size_t cell = 0; cell < static_cast<int>(residual.extent(0)); ++cell)
+  for (unsigned int cell = 0; cell < residual.extent(0); ++cell)
   {
-    for (std::size_t node1 = 0; node1 < static_cast<int>(residual.extent(1)); ++node1)
+    for (unsigned int node1 = 0; node1 < residual.extent(1); ++node1)
     {
-      for (std::size_t node2 = 0; node2 < static_cast<int>(residual.extent(1)); ++node2)
+      for (unsigned int node2 = 0; node2 < residual.extent(1); ++node2)
       {
         residual(cell, node1).fastAccessDx(node2).fastAccessDx(0) = 0.5;
       }
@@ -544,7 +543,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
   auto hess_vec_prod_f_px_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_f_px_out);
   auto hess_vec_prod_f_pp_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_f_pp_out);
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
     {
       for (int eq = 0; eq < neq; ++eq)
@@ -583,7 +582,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
   for (std::size_t i = 0; i < numBucks; i++)
     wsElNodeEqID_ID_raw[i].resize(buck_size * nodes_per_element * neq);
 
-  for (int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
       wsElNodeEqID_ID_raw[0][cell * nodes_per_element * neq + node * neq] = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0) / neq);
 
@@ -638,7 +637,6 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
       overlapped_x_space));
 
   parameter->set_workset_elem_dofs(Teuchos::rcpFromRef(wsElNodeEqID_ID));
-  const Albany::IDArray &wsElDofs = parameter->workset_elem_dofs()[0];
   Teuchos::RCP<Thyra_Vector> dist_param = parameter->vector();
   dist_param->assign(6.0);
   parameter->scatter();
@@ -649,18 +647,18 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
   phxWorkset.wsElNodeEqID = wsLocalElNodeEqID;
   phxWorkset.dist_param_deriv_name = param_name;
   phxWorkset.hessianWorkset.dist_param_deriv_direction_name = param_name;
-  phxWorkset.hessianWorkset.f_multiplier = f_multiplier;
+  phxWorkset.hessianWorkset.overlapped_f_multiplier = f_multiplier;
 
   MDField<Scalar, Cell, Node, Dim> residual = allocateUnmanagedMDField<Scalar, Cell, Node, Dim>(residual_name, residual_layout, derivative_dimensions);
   residual.deep_copy(0.0);
 
-  for (std::size_t cell = 0; cell < static_cast<int>(residual.extent(0)); ++cell)
+  for (unsigned int cell = 0; cell < residual.extent(0); ++cell)
   {
-    for (std::size_t node1 = 0; node1 < static_cast<int>(residual.extent(1)); ++node1)
+    for (unsigned int node1 = 0; node1 < residual.extent(1); ++node1)
     {
-      for (std::size_t dim = 0; dim < static_cast<int>(residual.extent(2)); ++dim)
+      for (unsigned int dim = 0; dim < residual.extent(2); ++dim)
       {
-        for (std::size_t i = 0; i < static_cast<int>(residual.extent(1)) * static_cast<int>(residual.extent(2)); ++i)
+        for (unsigned int i = 0; i < residual.extent(1) * residual.extent(2); ++i)
         {
           residual(cell, node1, dim).fastAccessDx(i).fastAccessDx(0) = 0.5;
         }

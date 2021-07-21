@@ -41,8 +41,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_FLAGS "-j32")
-SET (CTEST_BUILD_FLAGS "-j32")
+set (CTEST_BUILD_FLAGS "-j40")
 
 set (CTEST_DROP_METHOD "https")
 
@@ -212,6 +211,10 @@ if (BUILD_ALBANY)
   #
   # Run Albany tests
   #
+
+  #  Over-write default limit for output posted to CDash site
+  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
+  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
   set (CTEST_TEST_TIMEOUT 1500)
   CTEST_TEST (

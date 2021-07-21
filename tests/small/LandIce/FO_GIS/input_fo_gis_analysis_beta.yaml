@@ -17,9 +17,12 @@ ANONYMOUS:
         Type: Basal Friction
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Exponent Of Given Field
-          Given Field Variable Name: basal_friction
-          Interpolate Then Exponentiate Given Field: false
+          Type: Power Law
+          Mu Type: Exponent of Field At Nodes
+          Mu Field Name: basal_friction
+          Power Exponent: 1.0
+          Effective Pressure Type: Constant
+          Effective Pressure: 1.0
       BC 1:
         Type: Lateral
         Cubature Degree: 3
@@ -40,7 +43,7 @@ ANONYMOUS:
         Response 0:
           Scaling Coefficient: 5.88239999999999978e-05
           Name: Boundary Squared L2 Norm
-          Field Name: L2 Projected Boundary Laplacian
+          Field Name: L2 Projected Boundary Laplacian_basalside
     Dirichlet BCs: {}
     Neumann BCs: {}
     Parameters:
@@ -57,10 +60,10 @@ ANONYMOUS:
       Gravity Acceleration: 9.80000000000000071e+00
       Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
     LandIce Viscosity:
-      Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 1.00000000000000005e-01
-      'Glen''s Law A': 1.00000000000000004e-04
-      'Glen''s Law n': 3.00000000000000000e+00
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 1.00000000000000005e-01
+      Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
+      Glen's Law n: 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
     LandIce L2 Projected Boundary Laplacian:
       Mass Coefficient: 1.00000000000000005e-01
@@ -239,7 +242,7 @@ ANONYMOUS:
         Method: Constant
       Stepper:
         Initial Value: 1.00000000000000005e-01
-        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
+        Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
         Max Value: 1.00000000000000000e+00

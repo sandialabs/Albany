@@ -131,7 +131,7 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readElemState(
   using GIDT                 = decltype(elem_gid_wslid.begin()->first);
   std::map<LIDT, GIDT> elem_lid_2_gid;
   for (auto&& gid_wslid : elem_gid_wslid) {
-    if (gid_wslid.second.ws == workset.wsIndex) {
+    if (gid_wslid.second.ws == (int) workset.wsIndex) {
       elem_lid_2_gid.emplace(gid_wslid.second.LID, gid_wslid.first);
     }
   }
@@ -145,7 +145,7 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readElemState(
       auto scalar_field =
           metaData.get_field<SFT>(stk::topology::ELEM_RANK, state_name);
       ALBANY_ASSERT(scalar_field != nullptr);
-      for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
         auto gid    = elem_lid_2_gid[cell];
         auto e      = bulkData.get_entity(stk::topology::ELEM_RANK, gid + 1);
         auto values = stk::mesh::field_data(*scalar_field, e);
@@ -157,11 +157,11 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readElemState(
       auto vector_field =
           metaData.get_field<VFT>(stk::topology::NODE_RANK, state_name);
       ALBANY_ASSERT(vector_field != nullptr);
-      for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
         auto gid    = elem_lid_2_gid[cell];
         auto e      = bulkData.get_entity(stk::topology::ELEM_RANK, gid + 1);
         auto values = stk::mesh::field_data(*vector_field, e);
-        for (int i = 0; i < dims[2]; ++i) field(cell, 0, i) = values[i];
+        for (unsigned int i = 0; i < dims[2]; ++i) field(cell, 0, i) = values[i];
       }
     } break;
     default:
@@ -202,8 +202,8 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readNodalState(
       auto scalar_field =
           metaData.get_field<SFT>(stk::topology::NODE_RANK, state_name);
       ALBANY_ASSERT(scalar_field != nullptr);
-      for (int cell = 0; cell < workset.numCells; ++cell)
-        for (int node = 0; node < dims[1]; ++node) {
+      for (unsigned int cell = 0; cell < workset.numCells; ++cell)
+        for (unsigned int node = 0; node < dims[1]; ++node) {
           auto gid    = wsElgid[workset.wsIndex][cell][node];
           auto e      = bulkData.get_entity(stk::topology::NODE_RANK, gid + 1);
           auto values = stk::mesh::field_data(*scalar_field, e);
@@ -215,12 +215,12 @@ ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::readNodalState(
       auto vector_field =
           metaData.get_field<VFT>(stk::topology::NODE_RANK, state_name);
       ALBANY_ASSERT(vector_field != nullptr);
-      for (int cell = 0; cell < workset.numCells; ++cell)
-        for (int node = 0; node < dims[1]; ++node) {
+      for (unsigned int cell = 0; cell < workset.numCells; ++cell)
+        for (unsigned int node = 0; node < dims[1]; ++node) {
           auto gid    = wsElgid[workset.wsIndex][cell][node];
           auto e      = bulkData.get_entity(stk::topology::NODE_RANK, gid + 1);
           auto values = stk::mesh::field_data(*vector_field, e);
-          for (int i = 0; i < dims[2]; ++i) field(cell, node, i) = values[i];
+          for (unsigned int i = 0; i < dims[2]; ++i) field(cell, node, i) = values[i];
         }
     } break;
     default:

@@ -59,9 +59,8 @@ StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::StokesFOSynteticTestBC (cons
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl_side->node_qp_gradient->dimensions(dims);
-  int numSides = dims[1];
-  numSideNodes = dims[2];
-  numSideQPs   = dims[3];
+  numSideNodes = dims[1];
+  numSideQPs   = dims[2];
 
   dl->node_vector->dimensions(dims);
   vecDimFO     = std::min((int)dims[2],2);
@@ -87,7 +86,7 @@ StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::StokesFOSynteticTestBC (cons
   } else if (type_str=="CIRCULAR SHELF") {
     bc_type = BCType::CIRCULAR_SHELF;
     Teuchos::Array<int> all_comps(vecDimFO);
-    for (int i=0; i<vecDimFO; ++i) {
+    for (unsigned int i=0; i<vecDimFO; ++i) {
       all_comps[i] = i;
     }
     components = pl.get<Teuchos::Array<int>>("Components",all_comps);
@@ -106,10 +105,10 @@ StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::StokesFOSynteticTestBC (cons
   beta  = pl.get<double>("beta");
 
   if (bc_type!=BCType::CONSTANT) {
-    qp_coords    = decltype(qp_coords)(p.get<std::string>("Coordinate Vector Name"),dl_side->qp_coords);
+    qp_coords    = decltype(qp_coords)(p.get<std::string>("Coordinate Vector Name"), dl_side->qp_coords);
     this->addDependentField(qp_coords);
     if (bc_type!=BCType::CONFINED_SHELF) {
-      side_normals = decltype(qp_coords)(p.get<std::string>("Side Normal Name"),dl_side->qp_coords);
+      side_normals = decltype(qp_coords)(p.get<std::string>("Side Normal Name"), dl_side->qp_coords);
       this->addDependentField(side_normals);
     }
   }
@@ -117,14 +116,15 @@ StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::StokesFOSynteticTestBC (cons
   // Index of the nodes on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
+  unsigned int numSides = cellType->getSideCount();
   sideNodes.resize(numSides);
   sideDim = cellType->getDimension()-1;
-  for (int side=0; side<numSides; ++side)
+  for (unsigned int side=0; side<numSides; ++side)
   {
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
+    unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     sideNodes[side].resize(thisSideNodes);
-    for (int node=0; node<thisSideNodes; ++node)
+    for (unsigned int node=0; node<thisSideNodes; ++node)
     {
       sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
     }
@@ -153,7 +153,10 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   std::vector<PHX::DataLayout::size_type> dims;
   u.fieldTag().dataLayout().dimensions(dims);
 
-  qp_temp_buffer = Kokkos::createDynRankView(u.get_view(),"temporary_buffer", dims[0]*dims[1]*dims[2]*dims[3]);
+  TEUCHOS_TEST_FOR_EXCEPTION (dims.size() < 3, Teuchos::Exceptions::InvalidParameter, 
+    "Error! Field layout has fewer dimensions than expected. (StokesFOSynteticTestBC)\n");
+
+  qp_temp_buffer = Kokkos::createDynRankView(u.get_view(),"temporary_buffer", dims[0]*dims[1]*dims[2]);
 }
 
 //**********************************************************************
@@ -167,54 +170,56 @@ void StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::evaluateFields (typenam
   using DynRankViewScalarT = Kokkos::DynRankView<ScalarT, PHX::Device>;
   auto qp_temp = Kokkos::createViewWithType<DynRankViewScalarT>(qp_temp_buffer, qp_temp_buffer.data(), numSideQPs, vecDimFO);
 
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(ssName);
+  sideSet = workset.sideSetViews->at(ssName);
 
   // Constants used in some test cases
   constexpr double pi = 3.1415926535897932385;
 
-  for (auto const& it_side : sideSet) {
+  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+  {
     // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+    const int cell = sideSet.elem_LID(sideSet_idx);
+    const int side = sideSet.side_local_id(sideSet_idx);
 
     Kokkos::deep_copy(qp_temp,0.0);
+    
     switch (bc_type) {
       case BCType::CONSTANT:
-        for (int qp=0; qp<numSideQPs; ++qp) {
-          for (int dim=0; dim<components.size(); ++dim) {
-            qp_temp(qp,components[dim]) = beta*u(cell,side,qp,components[dim])-alpha;
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+          for (unsigned int dim=0; dim<components.size(); ++dim) {
+            qp_temp(qp,components[dim]) = beta*u(sideSet_idx,qp,components[dim])-alpha;
         }}
         break;
       case BCType::EXPTRIG:
       {
         constexpr double a  = 1.0;
         constexpr double A  = 1.0;
-        for (int qp=0; qp<numSideQPs; ++qp) {
-          const MeshScalarT x = qp_coords(cell,side,qp,0);
-          const MeshScalarT y2pi = 2.0*pi*qp_coords(cell,side,qp,1);
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+          const MeshScalarT x = qp_coords(sideSet_idx,qp,0);
+          const MeshScalarT y2pi = 2.0*pi*qp_coords(sideSet_idx,qp,1);
           MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi);
           muargt = sqrt(muargt)*exp(a*x);
           const MeshScalarT betaXY = 1.0/2.0*pow(A,-1.0/n)*pow(muargt, 1.0/n -1.0);
-          for (int dim=0; dim<components.size(); ++dim) {
-            qp_temp(qp,components[dim]) = betaXY*beta*u(cell,side,qp,components[dim])-alpha*side_normals(cell,side,qp,dim);
+          for (unsigned int dim=0; dim<components.size(); ++dim) {
+            qp_temp(qp,components[dim]) = betaXY*beta*u(sideSet_idx,qp,components[dim])-alpha*side_normals(sideSet_idx,qp,dim);
         }}
         break;
       }
       case BCType::ISMIP_HOM_TEST_C:
-        for (int qp=0; qp<numSideQPs; ++qp) {
-          const MeshScalarT x = qp_coords(cell,side,qp,0);
-          const MeshScalarT y = qp_coords(cell,side,qp,1);
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+          const MeshScalarT x = qp_coords(sideSet_idx,qp,0);
+          const MeshScalarT y = qp_coords(sideSet_idx,qp,1);
           const MeshScalarT betaXY = 1.0 + sin(2.0*pi/L*x)*sin(2.0*pi/L*y);
-          for (int dim=0; dim<components.size(); ++dim) {
-            qp_temp(qp,components[dim]) = betaXY*beta*u(cell,side,qp,components[dim])-alpha*side_normals(cell,side,qp,dim);
+          for (unsigned int dim=0; dim<components.size(); ++dim) {
+            qp_temp(qp,components[dim]) = betaXY*beta*u(sideSet_idx,qp,components[dim])-alpha*side_normals(sideSet_idx,qp,dim);
         }}
         break;
       case BCType::ISMIP_HOM_TEST_D:
-        for (int qp=0; qp<numSideQPs; ++qp) {
-          const MeshScalarT x = qp_coords(cell,side,qp,0);
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+          const MeshScalarT x = qp_coords(sideSet_idx,qp,0);
           const MeshScalarT betaXY = 1.0 + sin(2.0*pi/L*x);
-          for (int dim=0; dim<components.size(); ++dim) {
-            qp_temp(qp,components[dim]) = betaXY*beta*u(cell,side,qp,components[dim])-alpha*side_normals(cell,side,qp,dim);
+          for (unsigned int dim=0; dim<components.size(); ++dim) {
+            qp_temp(qp,components[dim]) = betaXY*beta*u(sideSet_idx,qp,components[dim])-alpha*side_normals(sideSet_idx,qp,dim);
         }}
         break;
       case BCType::CIRCULAR_SHELF:
@@ -222,12 +227,12 @@ void StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::evaluateFields (typenam
         constexpr double s = 0.11479;
         const MeshScalarT zero(0.0);
         const MeshScalarT minus_one(-1.0);
-        for (int qp=0; qp<numSideQPs; ++qp) {
-          const MeshScalarT z = qp_coords(cell,side,qp,2);
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+          const MeshScalarT z = qp_coords(sideSet_idx,qp,2);
           const MeshScalarT betaXY = z*(z>0 ? zero : minus_one);
           const MeshScalarT coeff = -(beta*(s-z) + alpha*betaXY);
-          for (int dim=0; dim<components.size(); ++dim) {
-            qp_temp(qp,components[dim]) = coeff*side_normals(cell,side,qp,components[dim]);
+          for (unsigned int dim=0; dim<components.size(); ++dim) {
+            qp_temp(qp,components[dim]) = coeff*side_normals(sideSet_idx,qp,components[dim]);
           }
         }
         break;
@@ -237,11 +242,11 @@ void StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::evaluateFields (typenam
         constexpr double s = 0.06;
         const MeshScalarT zero(0.0);
         const MeshScalarT minus_one(-1.0);
-        for (int qp=0; qp<numSideQPs; ++qp) {
-          const MeshScalarT z = qp_coords(cell,side,qp,2);
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+          const MeshScalarT z = qp_coords(sideSet_idx,qp,2);
           const MeshScalarT betaXY = z*(z>0 ? zero : minus_one);
           const MeshScalarT coeff = -(beta*(s-z) + alpha*betaXY);
-          for (int dim=0; dim<components.size(); ++dim) {
+          for (unsigned int dim=0; dim<components.size(); ++dim) {
             qp_temp(qp,components[dim]) = coeff;
         }}
         break;
@@ -253,21 +258,20 @@ void StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::evaluateFields (typenam
         constexpr double beta0 = 1.0;
         constexpr double rho_g = 910.0*9.8;
         constexpr double s0 = 2.0;
-        for (int qp=0; qp<numSideQPs; ++qp) {
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
           constexpr double A = 1e-4;
-          const MeshScalarT x = qp_coords(cell,side,qp,0);
-          const MeshScalarT z = qp_coords(cell,side,qp,1);
+          const MeshScalarT x = qp_coords(sideSet_idx,qp,0);
+          const MeshScalarT z = qp_coords(sideSet_idx,qp,1);
           const MeshScalarT s = s0 - alpha0*x*x;
           const MeshScalarT phi1 = z - s;
           const MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;
           const MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2;
           const MeshScalarT phi4 = 8.0*alpha0*pow(x,3)*pow(phi1,3)*phi2 - 2.0*H*alpha0*rho_g/beta0 + 3.0*x*phi2*(pow(phi1,4) - pow(H,4));
-          const MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2 + 6.0*phi2*(pow(phi1,4) - pow(H,4));
           const MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0);
-          for (int dim=0; dim<vecDimFO; ++dim) {
-            qp_temp(qp,dim) = beta*u(cell,side,qp,dim)
-                            + 4.0*phi4*mu*alpha*side_normals(cell,side,qp,0)
-                            + 4.0*phi2*x*x*pow(phi1,3)*mu*beta1*side_normals(cell,side,qp,1)
+          for (unsigned int dim=0; dim<vecDimFO; ++dim) {
+            qp_temp(qp,dim) = beta*u(sideSet_idx,qp,dim)
+                            + 4.0*phi4*mu*alpha*side_normals(sideSet_idx,qp,0)
+                            + 4.0*phi2*x*x*pow(phi1,3)*mu*beta1*side_normals(sideSet_idx,qp,1)
                             - (2.0*H*alpha0*rho_g*x - beta0*x*x*phi2*(pow(phi1,4) - pow(H,4)))*beta2;
         }}
         break;
@@ -276,11 +280,11 @@ void StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::evaluateFields (typenam
         TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Reached an unreachable switch case. Please, contact developers.\n");
     }
 
-    for (int node=0; node<numSideNodes; ++node) {
-      for (int dim=0; dim<components.size(); ++dim) {
+    for (unsigned int node=0; node<numSideNodes; ++node) {
+      for (unsigned int dim=0; dim<components.size(); ++dim) {
         ScalarT res = 0.0;
-        for (int qp=0; qp<numSideQPs; ++qp) {
-          res += qp_temp(qp,components[dim]) * BF(cell,side,node,qp)*w_measure(cell,side,qp);
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+          res += qp_temp(qp,components[dim]) * BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
         }
         residual(cell,sideNodes[side][node],components[dim]) += res;
       }

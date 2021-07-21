@@ -63,9 +63,9 @@ ANONYMOUS:
         Min And Max Of Random Parameter Guess: [-1.00000000000000000e+00, 2.00000000000000000e+00]
         Bound Constrained: true
         bound_eps: 1.00000000000000006e-01
-        
-        Use Old Reduced Space Interface: true
+
         Full Space: false
+        Hessian Dot Product: true
         Use NOX Solver: false
         
         ROL Options: 

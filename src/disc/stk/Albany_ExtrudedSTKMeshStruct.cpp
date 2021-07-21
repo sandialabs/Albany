@@ -99,6 +99,12 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 #ifdef ALBANY_SEACAS
       stk::io::put_io_part_attribute(*nsPartVec[partName]);
 #endif
+      partName = "basal_"+part->name();
+      nsNames.push_back(partName);
+      nsPartVec[partName] = &metaData->declare_part(partName, stk::topology::NODE_RANK);
+#ifdef ALBANY_SEACAS
+      stk::io::put_io_part_attribute(*nsPartVec[partName]);
+#endif
     }
   }
 
@@ -125,7 +131,8 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameterValue,
               std::endl << "Error in ExtrudedSTKMeshStruct: Element Shape " << shape << " not recognized. Possible values: Tetrahedron, Wedge, Hexahedron");
 
-  std::string elem2d_name(basalMeshStruct->getMeshSpecs()[0]->ctd.base->name);
+  const auto& basalMeshSpec = basalMeshStruct->getMeshSpecs()[0];
+  std::string elem2d_name(basalMeshSpec->ctd.base->name);
   TEUCHOS_TEST_FOR_EXCEPTION(basalside_elem_name != elem2d_name, Teuchos::Exceptions::InvalidParameterValue,
                 std::endl << "Error in ExtrudedSTKMeshStruct: Expecting topology name of elements of 2d mesh to be " <<  basalside_elem_name << " but it is " << elem2d_name);
 
@@ -172,15 +179,18 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   Ordering = params->get("Columnwise Ordering", false) ? LayeredMeshOrdering::COLUMN : LayeredMeshOrdering::LAYER;
 
   int cub = params->get("Cubature Degree", 3);
-  int basalWorksetSize = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
+  int basalWorksetSize = basalMeshSpec->worksetSize;
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int numElemsInColumn = numLayers*((ElemShape==Tetrahedron) ? 3 : 1);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSize*numElemsInColumn);
+  int ebSizeMaxEstimate = basalWorksetSize * numElemsInColumn; // This is ebSizeMax when basalWorksetSize is max
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMaxEstimate);
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, 
      ebn, ebNameToIndex, this->interleavedOrdering));
+  if (basalMeshSpec->singleWorksetSizeAllocation && worksetSize == ebSizeMaxEstimate)
+    this->meshSpecs[0]->singleWorksetSizeAllocation = true;
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false))
@@ -195,6 +205,51 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
 
+  // Get upper bound on lateral/upper workset sizes by using Ioss element counts on side blocks
+  if (basalMeshSpec->singleWorksetSizeAllocation) {
+    // Set lateral workset sizes based on basal sidesets
+    for (auto bssName : basalMeshSpec->ssNames) {
+      // Get maximum workset size of basalside sideset
+      const auto& basalSideSetMeshSpecs = basalMeshSpec->sideSetMeshSpecs;
+      const auto basalSideSetMeshSpecIter = basalSideSetMeshSpecs.find(bssName);
+      TEUCHOS_TEST_FOR_EXCEPTION(basalSideSetMeshSpecIter == basalSideSetMeshSpecs.end(), std::runtime_error,
+          "Cannot find " << bssName << " in basalside sideSetMeshSpecs!\n");
+      if (!basalSideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation) continue;
+      const auto basalSideSetWorksetSize = basalSideSetMeshSpecIter->second[0]->worksetSize;
+
+      // Compute maximum workset size for lateral sideset
+      const int num_cells_per_side = ElemShape == Tetrahedron ? 2 : 1;
+      int lateralSidesetWorksetSizeMax = num_cells_per_side * basalSideSetWorksetSize * numLayers;
+
+      // Set workset size for lateral sideset to maximum workset size
+      const std::string ssName = "extruded_" + bssName;
+      const auto& sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+      auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
+      TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+          "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
+      sideSetMeshSpecIter->second[0]->worksetSize = lateralSidesetWorksetSizeMax;
+      sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
+
+      // Set lateral workset size to extruded_lateral workset size (special case)
+      if (ssName == "extruded_lateralside") {
+        sideSetMeshSpecIter = sideSetMeshSpecs.find("lateralside");
+        TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+            "Cannot find lateral in sideSetMeshSpecs!\n");
+        sideSetMeshSpecIter->second[0]->worksetSize = lateralSidesetWorksetSizeMax;
+        sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
+      }
+    }
+
+    // Set upperside workset size to basalside workset size (special case)
+    const std::string ssName = "upperside";
+    const auto& sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+    auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
+    TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+        "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
+    sideSetMeshSpecIter->second[0]->worksetSize = basalWorksetSize;
+    sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
+  }
+
   // Initialize the requested sideset mesh struct in the mesh
   this->initializeSideSetMeshStructs(comm);
 }
@@ -204,10 +259,8 @@ Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()
   // Nothing to be done here
 }
 
-void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
+void Albany::ExtrudedSTKMeshStruct::setFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<Teuchos::ParameterList>& params,
-    const unsigned int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
@@ -218,16 +271,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   out->setOutputToRootOnly(0);
 
   // Finish to set up the basal mesh
-  Teuchos::RCP<Teuchos::ParameterList> params2D;
-  if (params->isSublist("Side Set Discretizations"))
-  {
-    params2D = Teuchos::rcp(new Teuchos::ParameterList(params->sublist("Side Set Discretizations").sublist("basalside")));
-  } else {
-    // Old style: the 2D parameter are mixed with the 3D
-    params2D = Teuchos::rcp(new Teuchos::ParameterList());
-    params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
-    params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
-  }
   Teuchos::RCP<Albany::StateInfoStruct> dummy_sis = Teuchos::rcp(new Albany::StateInfoStruct());
   dummy_sis->createNodalDataBase();
   AbstractFieldContainer::FieldContainerRequirements dummy_req;
@@ -236,10 +279,32 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-  this->sideSetMeshStructs.at("basalside")->setFieldAndBulkData (comm, params2D, neq_, basal_req, basal_sis, worksetSize);
+  this->sideSetMeshStructs.at("basalside")->setFieldData (comm, basal_req, basal_sis, worksetSize);
 
   // Setting up the field container
-  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+  this->SetupFieldData(comm, req, sis, worksetSize);
+
+  this->setSideSetFieldData(comm, side_set_req, side_set_sis, worksetSize);
+}
+
+void Albany::ExtrudedSTKMeshStruct::setBulkData(
+    const Teuchos::RCP<const Teuchos_Comm>& comm,
+    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
+    const unsigned int worksetSize,
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+{
+  // Finish to set up the basal mesh
+  Teuchos::RCP<Albany::StateInfoStruct> dummy_sis = Teuchos::rcp(new Albany::StateInfoStruct());
+  dummy_sis->createNodalDataBase();
+  AbstractFieldContainer::FieldContainerRequirements dummy_req;
+  auto it_req = side_set_req.find("basalside");
+  auto it_sis = side_set_sis.find("basalside");
+  auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
+  auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
+
+  this->sideSetMeshStructs.at("basalside")->setBulkData (comm, basal_req, basal_sis, worksetSize);
 
   LayeredMeshOrdering LAYER  = LayeredMeshOrdering::LAYER;
   LayeredMeshOrdering COLUMN = LayeredMeshOrdering::COLUMN;
@@ -285,7 +350,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   std::vector<stk::mesh::Entity> sides2D;
   stk::mesh::get_selected_entities(select_owned_in_part, bulkData2D.buckets(metaData2D.side_rank()), sides2D);
 
-  //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << maxGlobalSides2D << std::endl;
+  //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << globalVerticesStride<< " " << maxGlobalSides2D << std::endl;
 
   Teuchos::Array<Tpetra_GO> indices(nodes2D.size());
   for (size_t i = 0; i < nodes2D.size(); ++i)
@@ -308,19 +373,19 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   }
   Teuchos::RCP<const Tpetra_Map> sides_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
 
-  GO maxGlobalElements2dId = cells_map->getMaxAllGlobalIndex() + 1;
-  GO maxGlobalVertices2dId = nodes_map->getMaxAllGlobalIndex() + 1;
-  GO maxGlobalSides2dId    = sides_map->getMaxAllGlobalIndex() + 1;
+  GO globalElemStride = cells_map->getMaxAllGlobalIndex() - cells_map->getMinAllGlobalIndex() + 1;
+  GO globalVerticesStride = nodes_map->getMaxAllGlobalIndex() - nodes_map->getMinAllGlobalIndex() + 1;
+  GO globalSidesStride    = sides_map->getMaxAllGlobalIndex() - sides_map->getMinAllGlobalIndex() + 1;
 
-  GO elemColumnShift     = (Ordering == COLUMN) ? 1 : maxGlobalElements2dId;
+  GO elemColumnShift     = (Ordering == COLUMN) ? 1 : globalElemStride;
   int lElemColumnShift   = (Ordering == COLUMN) ? 1 : cells2D.size();
   int elemLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
 
-  GO vertexColumnShift   = (Ordering == COLUMN) ? 1 : maxGlobalVertices2dId;
+  GO vertexColumnShift   = (Ordering == COLUMN) ? 1 : globalVerticesStride;
   int lVertexColumnShift = (Ordering == COLUMN) ? 1 : nodes2D.size();
   int vertexLayerShift   = (Ordering == LAYER)  ? 1 : numLayers + 1;
 
-  GO sideColumnShift     = (Ordering == COLUMN) ? 1 : maxGlobalSides2dId;
+  GO sideColumnShift     = (Ordering == COLUMN) ? 1 : globalSidesStride;
   int lsideColumnShift   = (Ordering == COLUMN) ? 1 : sides2D.size();
   int sideLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
 
@@ -521,7 +586,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   singlePartVec[0] = ssPartVec["upperside"];
 
-  GO upperBasalOffset = maxGlobalElements2dId;
+  GO upperBasalOffset = globalElemStride;
 
   *out << "[ExtrudedSTKMesh] Adding upperside sides... ";
   out->getOStream()->flush();
@@ -556,7 +621,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
                                                       { { { 1, 2 }, { 0, 2 }, { 0, 1 } }, { { 0, 2 }, { 1, 2 }, { 0, 1 } } },
                                                       { { { 0, 1 }, { 1, 2 }, { 0, 2 } }, { { 0, 1 }, { 0, 2 }, { 1, 2 } } } };
 
-  upperBasalOffset += maxGlobalElements2dId;
+  upperBasalOffset += globalElemStride;
 
   *out << "[ExtrudedSTKMesh] Adding lateral sides... ";
   out->getOStream()->flush();
@@ -667,7 +732,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       }
     }
   }
-  auto lateralNodesSelector = stk::mesh::Selector(*singlePartVecLateral[0]);
+
   auto nodepartvec = metaData2D.get_mesh_parts();
   std::vector<stk::mesh::Entity> boundaryNodes2D;
   std::vector<stk::mesh::Entity> nodes;
@@ -677,6 +742,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     }
     stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(stk::topology::NODE_RANK), boundaryNodes2D);
     singlePartVecLateral[0] = nsPartVec["extruded_"+part->name()];
+    singlePartVecBottom[0] = nsPartVec["basal_"+part->name()];
 
     for (const auto& node2D : boundaryNodes2D) {
       const stk::mesh::EntityId node2dId = bulkData2D.identifier(node2D) - 1;
@@ -685,6 +751,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
         stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
         bulkData->change_entity_parts(node, singlePartVecLateral);
       }
+      const GO nodeId = vertexLayerShift * node2dId + 1;
+      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
+      bulkData->change_entity_parts(node, singlePartVecBottom);
     }
   }
 
@@ -692,8 +761,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   out->getOStream()->flush();
 
   // Extrude fields
-  extrudeBasalFields (nodes2D,cells2D,maxGlobalElements2dId,maxGlobalVertices2dId);
-  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalElements2dId,maxGlobalVertices2dId);
+  extrudeBasalFields (nodes2D,cells2D,globalElemStride,globalVerticesStride);
+  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,globalElemStride,globalVerticesStride);
 
   // Loading required input fields from file
   this->loadRequiredInputFields (req,comm);
@@ -706,7 +775,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   this->checkNodeSetsFromSideSetsIntegrity ();
 
   // We can finally extract the side set meshes and set the fields and bulk data in all of them
-  this->finalizeSideSetMeshStructs(comm, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetBulkData(comm, side_set_req, side_set_sis, worksetSize);
 
   if (params->get("Export 2D Data",false))
   {

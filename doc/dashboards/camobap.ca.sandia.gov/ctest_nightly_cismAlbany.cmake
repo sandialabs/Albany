@@ -23,7 +23,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora33-gcc10.2.1-${CTEST_BUILD_CONFIGURATION}-Cism-Albany")
+set (CTEST_BUILD_NAME "fedora34-gcc11.0.1-${CTEST_BUILD_CONFIGURATION}-Cism-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -180,8 +180,8 @@ if (BUILD_CISM_PISCEES)
     "-DALBANY_LANDICE_DYCORE:BOOL=ON"
     "-DALBANY_LANDICE_CTEST:BOOL=ON"
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbanyInstall"
-    "-DCISM_MPI_BASE_DIR=/usr/lib64/openmpi"
-    "-DCISM_NETCDF_DIR=/nightlyCDash/albany-tpls-gcc-10.2.1"
+    "-DCISM_MPI_BASE_DIR=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0"
+    "-DCISM_NETCDF_DIR=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0"
     "-DCISM_NETCDF_LIBS='netcdff'"
     "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCMAKE_Fortran_FLAGS='-g -ffree-line-length-none -fPIC -fno-range-check -std=legacy'"
@@ -251,6 +251,10 @@ if (BUILD_CISM_PISCEES)
   # Run CISM-Albany tests
   #
   set (CTEST_TEST_TIMEOUT 1500)
+  
+  #  Over-write default limit for output posted to CDash site
+  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
+  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"

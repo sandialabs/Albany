@@ -27,11 +27,13 @@
 #define ST_LLU "%" PRId64
 
 // Test 64 bit Tpetra address space
-const GO StartIndex = 0;
+static const GO StartIndex = 0;
 //const GO StartIndex = 2147483647L; // 2^31 - 1
 
+namespace Albany {
+
 template<unsigned Dim, class traits>
-Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
+TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
 		  const int numParams) :
@@ -374,7 +376,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
 
-    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
                                nsNames, ssNames, worksetSize, EBSpecs[0].name,
                                ebNameToIndex, this->interleavedOrdering, false, cub_rule));
   } else {
@@ -389,7 +391,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
       const CellTopologyData& ctd = *elementBlockTopologies_[eb].getCellTopologyData();
 
-      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+      this->meshSpecs[eb] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
                                 nsNames, ssNames, worksetSize, EBSpecs[eb].name,
                                 ebNameToIndex, this->interleavedOrdering, true, cub_rule));
     }
@@ -410,14 +412,12 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
 template<unsigned Dim, class traits>
 void
-Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
+TmplSTKMeshStruct<Dim, traits>::setFieldData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                  const Teuchos::RCP<StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
 
@@ -453,8 +453,20 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 
   }
 
-  SetupFieldData(commT, neq_, req, sis, worksetSize);
+  SetupFieldData(commT, req, sis, worksetSize);
+  this->setSideSetFieldData(commT, side_set_req, side_set_sis, worksetSize);
+}
 
+template<unsigned Dim, class traits>
+void
+TmplSTKMeshStruct<Dim, traits>::setBulkData(
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
+                  const Teuchos::RCP<StateInfoStruct>& /* sis */,
+                  const unsigned int worksetSize,
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+{
   metaData->commit();
 
   // STK
@@ -463,7 +475,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   buildMesh(commT);
 
   // STK
-  Albany::fix_node_sharing(*bulkData);
+  fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
   this->setDefaultCoordinates3d();
@@ -475,12 +487,12 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   fieldAndBulkDataSet = true;
 
   // Finally, setup the side set meshes (if any)
-  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetBulkData(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 template <unsigned Dim, class traits>
 void
-Albany::TmplSTKMeshStruct<Dim, traits>::DeclareParts(
+TmplSTKMeshStruct<Dim, traits>::DeclareParts(
               std::vector<EBSpecsStruct<Dim, traits> > ebStructArray,
               std::vector<std::string> ssNames,
               std::vector<std::string> nsNames)
@@ -516,7 +528,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::DeclareParts(
 
 template <unsigned Dim, class traits>
 void
-Albany::EBSpecsStruct<Dim, traits>::Initialize(GO nnelems[], double blLen[]){
+EBSpecsStruct<Dim, traits>::Initialize(GO nnelems[], double blLen[]){
 
     name = "Block0";
 
@@ -536,19 +548,19 @@ Albany::EBSpecsStruct<Dim, traits>::Initialize(GO nnelems[], double blLen[]){
 
 template<>
 GO
-Albany::EBSpecsStruct<0>::numElems(int i){
+EBSpecsStruct<0>::numElems(int /* i */){
     return 1L;
 }
 
 template<>
 void
-Albany::EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]){
+EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]){
      h[0][0] = 1.0;
 }
 
 template<>
 void
-Albany::EBSpecsStruct<0>::Initialize(GO nelems[], double blLen[]){
+EBSpecsStruct<0>::Initialize(GO /* nelems */[], double blLen[]){
     // Never more than one element block in a 0D problem
     name = "Block0";
     blLength[0] = blLen[0];
@@ -556,7 +568,7 @@ Albany::EBSpecsStruct<0>::Initialize(GO nelems[], double blLen[]){
 
 template<>
 void
-Albany::EBSpecsStruct<0>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params){
+EBSpecsStruct<0>::Initialize(int /* i */, const Teuchos::RCP<Teuchos::ParameterList>& /* params */){
     // Never more than one element block in a 0D problem
     name = "Block0";
     blLength[0] = 1.0;
@@ -564,7 +576,7 @@ Albany::EBSpecsStruct<0>::Initialize(int i, const Teuchos::RCP<Teuchos::Paramete
 
 template<>
 void
-Albany::EBSpecsStruct<1>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params){
+EBSpecsStruct<1>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params){
 
   // Read element block specs from input file. Note that this is called only for the multiple element
   // block case, once per element block.
@@ -590,7 +602,7 @@ Albany::EBSpecsStruct<1>::Initialize(int i, const Teuchos::RCP<Teuchos::Paramete
 
 template<>
 void
-Albany::EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params)
+EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params)
 {
 
   // Read element block specs from input file, or set defaults
@@ -616,7 +628,7 @@ Albany::EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::Paramete
 
 template<>
 void
-Albany::EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params)
+EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params)
 {
 
   // Read element block specs from input file, or set defaults
@@ -643,7 +655,7 @@ Albany::EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::Paramete
 // Specializations to build the mesh for each dimension
 template<>
 void
-Albany::TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
+TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT */)
 {
 
   stk::mesh::PartVector nodePartVec;
@@ -668,18 +680,27 @@ Albany::TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
 
 template<>
 void
-Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBulkData(
+TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setFieldData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                  const Teuchos::RCP<StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /*side_set_sis*/,
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/,
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
-  SetupFieldData(commT, neq_, req, sis, worksetSize);
+  SetupFieldData(commT, req, sis, worksetSize);
+}
 
+template<>
+void
+TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setBulkData(
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const AbstractFieldContainer::FieldContainerRequirements& /* req */,
+                  const Teuchos::RCP<StateInfoStruct>& /* sis */,
+                  const unsigned int /* worksetSize */,
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/,
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
+{
   metaData->commit();
 
   // STK
@@ -688,13 +709,13 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
   TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh(commT);
 
   // STK
-  Albany::fix_node_sharing(*bulkData);
+  fix_node_sharing(*bulkData);
   bulkData->modification_end();
 }
 
 template<>
 void
-Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
+TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
 
   stk::mesh::PartVector nodePartVec;
@@ -712,7 +733,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
   }
 
   // Create elements and node IDs
-  for (int i=0; i<elem_map->getNodeNumElements(); i++) {
+  for (size_t i=0; i<elem_map->getNodeNumElements(); i++) {
     const GO elem_GID = elem_map->getGlobalElement(i);
     const GO left_node  = elem_GID;
     GO right_node = left_node+1;
@@ -773,7 +794,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
        bulkData->change_entity_parts(lnode, singlePartVec);
 
     }
-    if (right_node==elem_map->getGlobalNumElements() + StartIndex) {
+    if (right_node==(GO) elem_map->getGlobalNumElements() + StartIndex) {
       singlePartVec[0] = nsPartVec["NodeSet1"];
       bulkData->change_entity_parts(rnode, singlePartVec);
     }
@@ -792,7 +813,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
 
 template<>
 void
-Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
+TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT */)
 {
 
   // STK
@@ -818,7 +839,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
       this->PBCStruct.scale[1] = scale[1];
   }
 
-  for (int i=0; i<elem_map->getNodeNumElements(); i++) {
+  for (size_t i=0; i<elem_map->getNodeNumElements(); i++) {
 
     const GO elem_GID = elem_map->getGlobalElement(i);
     const GO x_GID = elem_GID % nelem[0]; // mesh column number
@@ -1035,7 +1056,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
 
 template<>
 void
-Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
+TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
 
   stk::mesh::PartVector nodePartVec;
@@ -1066,7 +1087,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
   }
 
   // Create elements and node IDs
-  for (int i=0; i<elem_map->getNodeNumElements(); i++) {
+  for (size_t i=0; i<elem_map->getNodeNumElements(); i++) {
     const GO elem_GID = elem_map->getGlobalElement(i);
     const GO z_GID    = elem_GID / (nelem[0]*nelem[1]); // mesh column number
     const GO xy_plane = elem_GID % (nelem[0]*nelem[1]);
@@ -1358,7 +1379,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
 
 template<>
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const
+TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("ValidSTK0D_DiscParams");
@@ -1368,7 +1389,7 @@ Albany::TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const
 
 template<>
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
+TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("ValidSTK1D_DiscParams");
@@ -1395,7 +1416,7 @@ Albany::TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
 
 template<>
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
+TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("ValidSTK2D_DiscParams");
@@ -1428,7 +1449,7 @@ Albany::TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
 
 template<>
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
+TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("ValidSTK3D_DiscParams");
@@ -1461,3 +1482,5 @@ Albany::TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
 
   return validPL;
 }
+
+} // namespace Albany

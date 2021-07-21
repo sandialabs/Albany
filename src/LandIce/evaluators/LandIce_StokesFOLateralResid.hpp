@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_Layouts.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 #include "Albany_SacadoTypes.hpp"
@@ -50,19 +51,21 @@ private:
   void evaluate_with_computed_immersed_ratio(typename Traits::EvalData d);
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Side,Node,Dim>        coords_qp;
-  PHX::MDField<const ThicknessScalarT,Cell,Side,QuadPoint>  thickness;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       elevation;
-  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>     BF;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   normals;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>       w_measure;
+  // NOTE: if thickness is ParamST or ScalarT, we are moving the surface,
+  //       so use ThicknessScalarT for elevation
+  PHX::MDField<const MeshScalarT,Side,Node,Dim>       coords_qp;
+  PHX::MDField<const ThicknessScalarT,Side,QuadPoint> thickness;
+  PHX::MDField<const ThicknessScalarT,Side,QuadPoint> elevation;
+  PHX::MDField<const RealType,Side,Node,QuadPoint>    BF;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim>  normals;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint>      w_measure;
 
   // Output:
-  PHX::MDField<OutputScalarT,Cell,Node,VecDim>              residual;
+  PHX::MDField<OutputScalarT,Cell,Node,VecDim> residual;
 
-  std::vector<std::vector<int> >  sideNodes;
-  std::string                     lateralSideName;
-
+  Kokkos::View<int**, PHX::Device> sideNodes;
+  std::string                      lateralSideName;
+  
   double rho_w;  // [Kg m^{-3}]
   double rho_i;  // [Kg m^{-3}]
   double g;      // [m s^{-2}]
@@ -77,9 +80,26 @@ private:
   bool add_melange_force;
   bool use_stereographic_map;
 
-  int numSideNodes;
-  int numSideQPs;
-  int vecDimFO;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int vecDimFO;
+
+  Albany::LocalSideSetInfo sideSet;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct GivenImmersedRatio_Tag{};
+  struct ComputedImmersedRatio_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, GivenImmersedRatio_Tag> GivenImmersedRatio_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ComputedImmersedRatio_Tag> ComputedImmersedRatio_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const GivenImmersedRatio_Tag& tag, const int& sideSet_idx) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ComputedImmersedRatio_Tag& tag, const int& sideSet_idx) const;
+  
 };
 
 } // Namespace LandIce

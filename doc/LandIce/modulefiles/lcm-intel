@@ -10,6 +10,8 @@ if { [is-loaded lcm-cluster] } {
   module load sierra-compiler/intel/17.0.2
 }
 
+module load cde/dev/cmake/3.19.2
+
 setenv TOOL_CHAIN intel
 
 setenv CC [exec which icc]

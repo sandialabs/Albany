@@ -36,7 +36,7 @@ Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
   this->ss_requirements[basalSideName].reserve(req.size()); // Note: this is not for performance, but to guarantee
 
-  for (int i(0); i<req.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
+  for (unsigned int i(0); i<req.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
     this->ss_requirements[basalSideName].push_back(req[i]); //       throw, even if it's empty...
 
   Teuchos::ParameterList& physics_list = params->sublist("LandIce Physical Parameters");
@@ -100,11 +100,10 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 
 	  // Volume Fields
 	  Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
-	  int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+	  unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
 	  std::string fieldType, fieldUsage, meshPart;
-	  bool nodal_state, scalar_state;
-	  for (int ifield=0; ifield<num_fields; ++ifield) {
+	  for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
 	    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
 
 	    // Get current state specs
@@ -138,7 +137,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 	           << ", SideNodes= " << numBasalSideNodes
 	           << ", SideQuadPts= " << numBasalSideQPs << std::endl;
 
-	      dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,numDim-1,numDim,numCellSides,vecDim,true,basalMeshSpecs.worksetSize));
+	      dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,numDim-1,numDim,numCellSides,vecDim,basalMeshSpecs.singleWorksetSizeAllocation,basalMeshSpecs.worksetSize));
 
 	      dl->side_layouts[basalSideName] = dl_basal;
 	  }

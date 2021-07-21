@@ -66,13 +66,11 @@ private:
   Kokkos::View<int**, PHX::Device> sideNodes;
   std::string                     basalSideName;
 
-  int numCellNodes;
-  int numSideNodes;
-  int numSideQPs;
-  int sideDim;
-  int vecDimFO;
-
-  bool useCollapsedSidesets;
+  unsigned int numCellNodes;
+  unsigned int numSideNodes;
+  unsigned int numSideQPs;
+  unsigned int sideDim;
+  unsigned int vecDimFO;
 
   // double a;
   // double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
@@ -80,7 +78,7 @@ private:
   // double rho_i;  // [kg m^{-3}]
   // double rho_w;  // [kg m^{-3}]
   // double g;  //[m s^{-2}]
-  // double L;       //[J kg^{-1} ] Latent heat of fusion", 3e5)
+  // double L;       //[J kg^{-1} ] Ice Latent Heat Of Fusion", 3e5)
   // double k_0;     //[m^2], Permeability factor
   // double eta_w;   //[Pa s], Viscosity of water
   // double alpha_om; //[]
@@ -92,15 +90,11 @@ private:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
   struct Enthalpy_Basal_Residual_Tag{};
-  struct Enthalpy_Basal_Residual_Collapsed_Tag{};
 
   typedef Kokkos::RangePolicy<ExecutionSpace,Enthalpy_Basal_Residual_Tag> Enthalpy_Basal_Residual_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,Enthalpy_Basal_Residual_Collapsed_Tag> Enthalpy_Basal_Residual_Collapsed_Policy;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const Enthalpy_Basal_Residual_Tag& tag, const int& i) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const Enthalpy_Basal_Residual_Collapsed_Tag& tag, const int& i) const;
 
 };
 

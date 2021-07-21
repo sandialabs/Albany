@@ -179,17 +179,11 @@ void StokesFOThickness::setFieldsProperties () {
   StokesFOBase::setFieldsProperties();
 
   // Fix the scalar type of ice_thickness_name, since in StokesFOThickness it depends on the solution.
-  field_scalar_type[ice_thickness_name] = FieldScalarType::Scalar;
-
-  // Mark the thickness increment and initial_thickness+increment as computed
-  is_computed_field[ice_thickness_name] = true;
-  if (Albany::mesh_depends_on_solution()) {
-    // With a moving mesh, the surface height is an output variable
-    is_computed_field[surface_height_name] = true;
-  }
-
-  field_rank[ice_thickness_name]     = 0;
-  field_rank[surface_height_name]    = 0;
+  // Note: the ST of surface_height doesn't *need* to be Scalar if MESH_DEPENDS_ON_SOLUTION=OFF,
+  //       But if they don't match StokesFOLateralResid would need a second template argument.
+  //       This simply makes life easier.
+  setSingleFieldProperties(ice_thickness_name, FRT::Scalar, FST::Scalar);
+  setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::Scalar);
 }
 
 } // namespace LandIce

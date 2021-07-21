@@ -287,8 +287,8 @@ StokesBodyForce<EvalT, Traits>::
 StokesBodyForce(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl) :
   force(p.get<std::string>("Body Force Name"),dl->qp_vector),
-  A(1.0),
-  n(3.0)
+  n(3.0),
+  A(1.0)
 {
 
   Teuchos::ParameterList* bf_list =
@@ -297,6 +297,12 @@ StokesBodyForce(const Teuchos::ParameterList& p,
   std::string type = bf_list->get("Type", "None");
   A = bf_list->get("Glen's Law A", 1.0);
   n = bf_list->get("Glen's Law n", 3.0);
+  // Turn A's units from [Pa^-n s^-1] to [k^-1 kPa^-n yr^-1]
+  // This makes the final units of viscosity kPa k yr, which makes [mu*Ugrad] = kPa
+  const auto scyr = 3.1536e7;      // [s y-1]
+  const auto knp1 = pow(1000,n+1);
+  A *= knp1*scyr;
+
   if (type == "None") {
     bf_type = NONE;
   }
@@ -508,7 +514,7 @@ evaluateFields(typename Traits::EvalData workset)
        //MeshScalarT& y = coordVec(cell,qp,1);
        ScalarT X = coordVec(cell,qp,0);
        ScalarT Y = coordVec(cell,qp,1);
-       int num_deriv = 2;
+       unsigned int num_deriv = 2;
        Sacado::Fad::DFad<ScalarT> xfad(num_deriv, 0, X);
        Sacado::Fad::DFad<ScalarT> yfad(num_deriv, 1, Y);
        Sacado::Fad::DFad<ScalarT> tau11fad = tau112d(xfad, yfad);
@@ -530,7 +536,7 @@ evaluateFields(typename Traits::EvalData workset)
        ScalarT X = coordVec(cell,qp,0);
        ScalarT Y = coordVec(cell,qp,1);
        ScalarT Z = coordVec(cell,qp,3);
-       int num_deriv = 3;
+       unsigned int num_deriv = 3;
        Sacado::Fad::DFad<ScalarT> xfad(num_deriv, 0, X);
        Sacado::Fad::DFad<ScalarT> yfad(num_deriv, 1, Y);
        Sacado::Fad::DFad<ScalarT> zfad(num_deriv, 2, Z);

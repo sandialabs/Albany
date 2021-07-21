@@ -46,7 +46,7 @@ private:
   PHX::MDField<RealType>                                BF;
   PHX::MDField<MeshScalarT>                             GradBF;
   PHX::MDField<MeshScalarT>                             w_measure;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim> metric; // Only used in 2D, so we know the layout
+  PHX::MDField<MeshScalarT> metric; // Only used in 2D, so we know the layout (Cell,Side,QuadPoint,Dim,Dim)
 
   PHX::MDField<ScalarT>                                 u;
   PHX::MDField<ScalarT>                                 grad_u;
@@ -54,8 +54,10 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node>                       residual; // Always a 3D residual, so we know the layout
 
+  Albany::LocalSideSetInfo sideSet;
+
   std::string                     sideSetName;
-  std::vector<std::vector<int> >  sideNodes;
+  Kokkos::View<int**, PHX::Device> sideNodes;
 
   int spaceDim;
   int gradDim;
@@ -63,6 +65,21 @@ private:
   int numQPs;
 
   bool sideSetEquation;
+
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct SideLaplacianResidual_Side_Tag{};
+  struct SideLaplacianResidual_Cell_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,SideLaplacianResidual_Side_Tag> SideLaplacianResidual_Side_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,SideLaplacianResidual_Cell_Tag> SideLaplacianResidual_Cell_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const SideLaplacianResidual_Side_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const SideLaplacianResidual_Cell_Tag& tag, const int& i) const;
 };
 
 } // Namespace PHAL

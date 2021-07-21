@@ -90,6 +90,10 @@ class AbstractDiscretization
   virtual const LocalSideSetInfoList&
   getSideSetViews(const int ws) const = 0;
 
+  //! Get local DOF views for GatherVerticallyContractedSolution
+  virtual const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
+  getLocalDOFViews(const int workset) const = 0;
+
   //! Get map from (Ws, El, Local Node, Eq) -> unkLID
   virtual const Conn&
   getWsElNodeEqID() const = 0;
@@ -224,6 +228,11 @@ class AbstractDiscretization
       const Thyra_Vector& field_vector,
       const std::string&  field_name,
       bool                overlapped) = 0;
+
+  virtual void
+  setFieldData(
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<StateInfoStruct>& sis) = 0;
 
   // --- Methods to write solution in the output file --- //
 

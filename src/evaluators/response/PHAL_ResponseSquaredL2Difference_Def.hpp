@@ -100,33 +100,53 @@ void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetS
   // Zero out local response
   PHAL::set(this->local_response_eval, 0.0);
 
-  for (int cell=0; cell<workset.numCells; ++cell)
+  switch(fieldDim)
   {
-    ScalarT sum = 0;
-    for (int qp=0; qp<numQPs; ++qp)
-    {
-      ScalarT sq = 0;
-      // Computing squared difference at qp
-      switch (fieldDim)
-      {
-        case 0:
+    case 0:
+      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+        ScalarT sum = 0;
+        for (int qp=0; qp<numQPs; ++qp)
+        {
+          ScalarT sq = 0;
+          // Computing squared difference at qp
           sq += std::pow(sourceField(cell,qp)-(target_value ? target_value_val : targetField(cell,qp)),2);
-          break;
-        case 1:
-          for (int j=0; j<dims[2]; ++j)
-            sq += std::pow(sourceField(cell,qp,j)-(target_value ? target_value_val : targetField(cell,qp,j)),2);
-          break;
-        case 2:
-          for (int j=0; j<dims[2]; ++j)
-            for (int k=0; k<dims[3]; ++k)
-              sq += std::pow(sourceField(cell,qp,j,k)-(target_value ? target_value_val : targetField(cell,qp,j,k)),2);
-          break;
+          sum += sq * w_measure(cell,qp);
+        }
+        this->local_response_eval(cell, 0) = sum*scaling;
+        this->global_response_eval(0) += sum*scaling;
       }
-      sum += sq * w_measure(cell,qp);
-    }
-
-    this->local_response_eval(cell, 0) = sum*scaling;
-    this->global_response_eval(0) += sum*scaling;
+      break;
+    case 1:
+      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+        ScalarT sum = 0;
+        for (int qp=0; qp<numQPs; ++qp)
+        {
+          ScalarT sq = 0;
+          // Computing squared difference at qp
+          for (size_t j=0; j<dims[2]; ++j)
+            sq += std::pow(sourceField(cell,qp,j)-(target_value ? target_value_val : targetField(cell,qp,j)),2);
+          sum += sq * w_measure(cell,qp);
+        }
+        this->local_response_eval(cell, 0) = sum*scaling;
+        this->global_response_eval(0) += sum*scaling;
+      }
+      break;
+    case 2:
+      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+        ScalarT sum = 0;
+        for (int qp=0; qp<numQPs; ++qp)
+        {
+          ScalarT sq = 0;
+          // Computing squared difference at qp
+          for (size_t j=0; j<dims[2]; ++j)
+            for (size_t k=0; k<dims[3]; ++k)
+              sq += std::pow(sourceField(cell,qp,j,k)-(target_value ? target_value_val : targetField(cell,qp,j,k)),2);
+          sum += sq * w_measure(cell,qp);
+        }
+        this->local_response_eval(cell, 0) = sum*scaling;
+        this->global_response_eval(0) += sum*scaling;
+      }
+      break;
   }
 
   // Do any local-scattering necessary

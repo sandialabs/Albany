@@ -105,7 +105,7 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   // have separate node_vector and node_gradient layouts.
 }
 
-Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim, bool collapsed_sidesets, int sidesetWorksetSize)
+Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim, bool singleWorksetSizeAllocation, int sidesetWorksetSize)
 // numSideDim is the number of spatial dimensions
 // vecDim is the length of a vector quantity
 // -- For many problems, numSideDim is used for both since there are
@@ -127,40 +127,43 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
 
   isSideLayouts = true;
 
+  // Collapsed sideset layouts are now used to ensure contiguous memory access for efficient GPU evaluation
+  sidesetWorksetSize = singleWorksetSizeAllocation ? sidesetWorksetSize : worksetSize*numSides;
+
   // Solution Fields
-  node_scalar  = rcp(new MDALayout<Cell,Side,Node>(worksetSize,numSides,numNodes));
-  qp_scalar    = rcp(new MDALayout<Cell,Side,QuadPoint>(worksetSize,numSides,numQPts));
-  cell_scalar  = rcp(new MDALayout<Cell,Side,QuadPoint>(worksetSize,numSides,1));
-  cell_scalar2 = rcp(new MDALayout<Cell,Side>(worksetSize,numSides));
+  node_scalar  = rcp(new MDALayout<Side,Node>(sidesetWorksetSize,numNodes));
+  qp_scalar    = rcp(new MDALayout<Side,QuadPoint>(sidesetWorksetSize,numQPts));
+  cell_scalar  = rcp(new MDALayout<Side,QuadPoint>(sidesetWorksetSize,1));
+  cell_scalar2 = rcp(new MDALayout<Side>(sidesetWorksetSize));
 
-  node_vector = rcp(new MDALayout<Cell,Side,Node,Dim>(worksetSize,numSides,numNodes,vecDim));
-  qp_vector   = rcp(new MDALayout<Cell,Side,QuadPoint,Dim>(worksetSize,numSides,numQPts,vecDim));
-  cell_vector = rcp(new MDALayout<Cell,Side,Dim>(worksetSize,numSides,vecDim));
+  node_vector = rcp(new MDALayout<Side,Node,Dim>(sidesetWorksetSize,numNodes,vecDim));
+  qp_vector   = rcp(new MDALayout<Side,QuadPoint,Dim>(sidesetWorksetSize,numQPts,vecDim));
+  cell_vector = rcp(new MDALayout<Side,Dim>(sidesetWorksetSize,vecDim));
 
-  node_gradient = rcp(new MDALayout<Cell,Side,Node,Dim>(worksetSize,numSides,numNodes,numSideDim));
-  qp_gradient   = rcp(new MDALayout<Cell,Side,QuadPoint,Dim>(worksetSize,numSides,numQPts,numSideDim));
-  cell_gradient = rcp(new MDALayout<Cell,Side,Dim>(worksetSize,numSides,numSideDim));
+  node_gradient = rcp(new MDALayout<Side,Node,Dim>(sidesetWorksetSize,numNodes,numSideDim));
+  qp_gradient   = rcp(new MDALayout<Side,QuadPoint,Dim>(sidesetWorksetSize,numQPts,numSideDim));
+  cell_gradient = rcp(new MDALayout<Side,Dim>(sidesetWorksetSize,numSideDim));
 
-  qp_vector_spacedim = rcp(new MDALayout<Cell,Side,QuadPoint,Dim>(worksetSize,numSides,numQPts,numSpaceDim));
+  qp_vector_spacedim = rcp(new MDALayout<Side,QuadPoint,Dim>(sidesetWorksetSize,numQPts,numSpaceDim));
 
-  node_tensor     = rcp(new MDALayout<Cell,Side,Node,Dim,Dim>(worksetSize,numSides,numNodes,numSideDim,numSideDim));
-  qp_tensor       = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim>(worksetSize,numSides,numQPts,numSideDim,numSideDim));
-  cell_tensor     = rcp(new MDALayout<Cell,Side,Dim,Dim>(worksetSize,numSides,numSideDim,numSideDim));
-  qp_tensor_cd_sd = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim>(worksetSize,numSides,numQPts,numSideDim+1,numSideDim));
+  node_tensor     = rcp(new MDALayout<Side,Node,Dim,Dim>(sidesetWorksetSize,numNodes,numSideDim,numSideDim));
+  qp_tensor       = rcp(new MDALayout<Side,QuadPoint,Dim,Dim>(sidesetWorksetSize,numQPts,numSideDim,numSideDim));
+  cell_tensor     = rcp(new MDALayout<Side,Dim,Dim>(sidesetWorksetSize,numSideDim,numSideDim));
+  qp_tensor_cd_sd = rcp(new MDALayout<Side,QuadPoint,Dim,Dim>(sidesetWorksetSize,numQPts,numSideDim+1,numSideDim));
 
-  node_vecgradient = rcp(new MDALayout<Cell,Side,Node,Dim,Dim>(worksetSize,numSides,numNodes,vecDim,numSideDim));
-  qp_vecgradient   = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim>(worksetSize,numSides,numQPts,vecDim,numSideDim));
-  cell_vecgradient = rcp(new MDALayout<Cell,Side,Dim,Dim>(worksetSize,numSides,vecDim,numSideDim));
+  node_vecgradient = rcp(new MDALayout<Side,Node,Dim,Dim>(sidesetWorksetSize,numNodes,vecDim,numSideDim));
+  qp_vecgradient   = rcp(new MDALayout<Side,QuadPoint,Dim,Dim>(sidesetWorksetSize,numQPts,vecDim,numSideDim));
+  cell_vecgradient = rcp(new MDALayout<Side,Dim,Dim>(sidesetWorksetSize,vecDim,numSideDim));
 
-  qp_tensorgradient = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim,Dim>(worksetSize,numSides,numQPts,vecDim,vecDim,numSideDim));
+  qp_tensorgradient = rcp(new MDALayout<Side,QuadPoint,Dim,Dim,Dim>(sidesetWorksetSize,numQPts,vecDim,vecDim,numSideDim));
 
-  node_tensor3  = rcp(new MDALayout<Cell,Side,Node,Dim,Dim,Dim>(worksetSize,numSides,numNodes,numSideDim,numSideDim,numSideDim));
-  qp_tensor3    = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim,Dim>(worksetSize,numSides,numQPts,numSideDim,numSideDim,numSideDim));
-  cell_tensor3  = rcp(new MDALayout<Cell,Side,Dim,Dim,Dim>(worksetSize,numSides,numSideDim,numSideDim,numSideDim));
+  node_tensor3  = rcp(new MDALayout<Side,Node,Dim,Dim,Dim>(sidesetWorksetSize,numNodes,numSideDim,numSideDim,numSideDim));
+  qp_tensor3    = rcp(new MDALayout<Side,QuadPoint,Dim,Dim,Dim>(sidesetWorksetSize,numQPts,numSideDim,numSideDim,numSideDim));
+  cell_tensor3  = rcp(new MDALayout<Side,Dim,Dim,Dim>(sidesetWorksetSize,numSideDim,numSideDim,numSideDim));
 
-  node_tensor4  = rcp(new MDALayout<Cell,Side,Node,Dim,Dim,Dim,Dim>(worksetSize,numSides,numNodes,numSideDim,numSideDim,numSideDim,numSideDim));
-  qp_tensor4    = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim,Dim,Dim>(worksetSize,numSides,numQPts,numSideDim,numSideDim,numSideDim,numSideDim));
-  cell_tensor4  = rcp(new MDALayout<Cell,Side,Dim,Dim,Dim,Dim>(worksetSize,numSides,numSideDim,numSideDim,numSideDim,numSideDim));
+  node_tensor4  = rcp(new MDALayout<Side,Node,Dim,Dim,Dim,Dim>(sidesetWorksetSize,numNodes,numSideDim,numSideDim,numSideDim,numSideDim));
+  qp_tensor4    = rcp(new MDALayout<Side,QuadPoint,Dim,Dim,Dim,Dim>(sidesetWorksetSize,numQPts,numSideDim,numSideDim,numSideDim,numSideDim));
+  cell_tensor4  = rcp(new MDALayout<Side,Dim,Dim,Dim,Dim>(sidesetWorksetSize,numSideDim,numSideDim,numSideDim,numSideDim));
 
   node_node_scalar = rcp(new MDALayout<Node,Side,Dim>(worksetSize,numSides,1));
   node_node_vector = rcp(new MDALayout<Node,Side,Dim>(worksetSize,numSides,vecDim));
@@ -171,14 +174,14 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   //       to build the manifold metric and other structures.
   // WARNING: if you change the above fact, make sure to make the appropriate corrections to the parts of
   //          the library that rely on it!
-  vertices_vector = rcp(new MDALayout<Cell,Side,Vertex,Dim>(worksetSize,numSides,numVertices,numSpaceDim));
-  node_3vector    = rcp(new MDALayout<Cell,Side,Node,Dim>(worksetSize,numSides,numNodes,3));
-  qp_coords       = rcp(new MDALayout<Cell,Side,QuadPoint,Dim>(worksetSize,numSides,numQPts,numSpaceDim));
+  vertices_vector = rcp(new MDALayout<Side,Vertex,Dim>(sidesetWorksetSize,numVertices,numSpaceDim));
+  node_3vector    = rcp(new MDALayout<Side,Node,Dim>(sidesetWorksetSize,numNodes,3));
+  qp_coords       = rcp(new MDALayout<Side,QuadPoint,Dim>(sidesetWorksetSize,numQPts,numSpaceDim));
 
   // Basis Functions
-  node_qp_scalar   = rcp(new MDALayout<Cell,Side,Node,QuadPoint>(worksetSize,numSides,numNodes,numQPts));
-  node_qp_gradient = rcp(new MDALayout<Cell,Side,Node,QuadPoint,Dim>(worksetSize,numSides,numNodes,numQPts,numSideDim));
-  node_qp_vector   = rcp(new MDALayout<Cell,Side,Node,QuadPoint,Dim>(worksetSize,numSides,numNodes,numQPts,vecDim));
+  node_qp_scalar   = rcp(new MDALayout<Side,Node,QuadPoint>(sidesetWorksetSize,numNodes,numQPts));
+  node_qp_gradient = rcp(new MDALayout<Side,Node,QuadPoint,Dim>(sidesetWorksetSize,numNodes,numQPts,numSideDim));
+  node_qp_vector   = rcp(new MDALayout<Side,Node,QuadPoint,Dim>(sidesetWorksetSize,numNodes,numQPts,vecDim));
 
   workset_scalar      = rcp(new MDALayout<Dummy>(1));
   workset_vector      = rcp(new MDALayout<Dim>(vecDim));
@@ -195,20 +198,4 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   // the vector fields are length numSideDim (which tends to be true
   // for displacements and velocities). Could be separated to
   // have separate node_vector and node_gradient layouts.
-
-
-  // This flag lets evaluators know to use the collapsed sideset layouts
-  useCollapsedSidesets = collapsed_sidesets;
-
-  // Collapsed sideset layouts to ensure contiguous memory access for efficient GPU evaluation
-  qp_scalar_sideset       = rcp(new MDALayout<Side,QuadPoint>(sidesetWorksetSize,numQPts));
-  node_scalar_sideset     = rcp(new MDALayout<Side,Node>(sidesetWorksetSize,numNodes));
-  node_vector_sideset     = rcp(new MDALayout<Side,Node,Dim>(sidesetWorksetSize,numNodes,vecDim));
-  qp_vector_sideset       = rcp(new MDALayout<Side,QuadPoint,Dim>(sidesetWorksetSize,numQPts,vecDim));
-  vertices_vector_sideset = rcp(new MDALayout<Side,Vertex,Dim>(sidesetWorksetSize,numVertices,numSpaceDim));
-  node_qp_scalar_sideset  = rcp(new MDALayout<Side,Node,QuadPoint>(sidesetWorksetSize,numNodes,numQPts));
-  node_qp_gradient_sideset = rcp(new MDALayout<Side,Node,QuadPoint,Dim>(sidesetWorksetSize,numNodes,numQPts,numSideDim));
-  qp_tensor_sideset       = rcp(new MDALayout<Side,QuadPoint,Dim,Dim>(sidesetWorksetSize,numQPts,numSideDim,numSideDim));
-  qp_tensor_cd_sd_sideset = rcp(new MDALayout<Side,QuadPoint,Dim,Dim>(sidesetWorksetSize,numQPts,numSideDim+1,numSideDim));
-  
 }

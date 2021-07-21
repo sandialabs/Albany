@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-set (CTEST_DO_SUBMIT ON)
+set (CTEST_DO_SUBMIT OFF)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
@@ -101,12 +101,13 @@ if (BUILD_CISM_PISCEES)
     "-DCMAKE_C_COMPILER=cc"
     "-DCMAKE_Fortran_COMPILER=ftn"
     #
-    "-DCMAKE_CXX_FLAGS:STRING='-O2 -static -std=c++11'" 
-    "-DCMAKE_EXE_LINKER_FLAGS:STRING='-static -Wl,-zmuldefs'"
-    "-DBUILD_SHARED_LIBS:BOOL=OFF"
-    "-DCISM_STATIC_LINKING:BOOL=ON"
+    "-DCMAKE_EXE_LINKER_FLAGS:STRING='-Wl,-zmuldefs'"
+    "-DBUILD_SHARED_LIBS:BOOL=ON"
+    "-DCISM_STATIC_LINKING:BOOL=OFF"
     "-DCISM_Fortran_FLAGS='-ffree-line-length-none'" 
     "-DCISM_GNU:BOOL=ON"
+    "-DCMAKE_C_FLAGS:STRING='-O3 -std=c++1y'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -std=c++1y'"
   )
  
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany")
@@ -173,6 +174,10 @@ IF(RUN_CISM_PISCEES)
   #
   # Run CISM-Albany tests
   #
+
+  #  Over-write default limit for output posted to CDash site
+  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
+  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany"
