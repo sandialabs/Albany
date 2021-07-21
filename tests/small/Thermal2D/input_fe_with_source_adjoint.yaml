@@ -46,9 +46,9 @@ ALBANY:
     Workset Size: -1
     Method: STK2D
     Exodus Output File Name: thermal2D_with_source_fe_adjoint_out.exo
-    Exodus Write Interval: 100
+    Exodus Write Interval: 1
   Piro:
-    #Sensitivity Method: Adjoint
+    Sensitivity Method: Adjoint
     Tempus:
       Lump Mass Matrix: true
       Constant Mass Matrix: true
@@ -68,7 +68,7 @@ ALBANY:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
           Initial Time Step: 1.0e-04
-          Final Time: 1.0
+          Final Time: 1.0e-1
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
@@ -83,6 +83,7 @@ ALBANY:
         #Stepper Type: General ERK
         Use FSAL: false
         Initial Condition Consistency Check: false
+        Initial Condition Consistency: None #This is necessary for Forward Euler!
       Stratimikos:
         Linear Solver Type: Belos
         Linear Solver Types:
@@ -107,6 +108,6 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 4.519971726640e-01
+    Test Value: 3.694397248057e-01
     Relative Tolerance: 1.00000000000000002e-03
 ...
