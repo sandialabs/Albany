@@ -5,17 +5,19 @@ ANONYMOUS:
   Debug Output:
     Write Jacobian to MatrixMarket: 0
     Write Solution to MatrixMarket: 0
+    Write Residual to MatrixMarket: 0
+    Report Timers: false
   Problem:
     Phalanx Graph Visualization Detail: 0
-    Solution Method: Continuation
+    Solution Method: Steady
     Name: LandIce Stokes FO Hydrology
     Basal Side Name: basalside
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
-        Name: Homotopy Parameter
-        Nominal Value: 0.1
+        Name: Glen's Law Homotopy Parameter
+        Nominal Value: 0.2
     Response Functions:
       Number Of Responses: 1
       Response 0:
@@ -27,22 +29,21 @@ ANONYMOUS:
         Target Value: 0.0
     Initial Condition:
       Function: Constant
-      Function Data: [10.0, 10.0, 100.0]
+      Function Data: [1.0, 1.0, 100.0]
     Dirichlet BCs:
-      DBC on NS extruded_BoundaryNodeSet1 for DOF water_pressure_basalside: 0.00000000000000000e+00
-      # DBC off NS bottom for DOF water_thickness_basalside: 0.00000000000000000e+00
+      DBC on NS basal_BoundaryNodeSet1 for DOF water_pressure_basalside: 0.0
     Neumann BCs: { }
     LandIce BCs:
-      Number : 2
+      Number : 1
       BC 0:
         Type: Basal Friction
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Regularized Coulomb
-          Power Exponent: 0.3333
-          Bed Roughness: 4.0e-3
-          Coulomb Friction Coefficient: 0.6
-          Use log scalar parameters: false
+          Type: Power Law
+          Mu Type: Constant
+          Effective Pressure Type: Field
+          Power Exponent: 0.33
+          Mu Coefficient: 0.01
       BC 1:
         Type: Lateral
         Cubature Degree: 3
@@ -50,15 +51,14 @@ ANONYMOUS:
     LandIce Physical Parameters:
       Water Density:                 1028.0
       Ice Density:                    910.0
-      Ice Latent Heat:                  3.35e+05
+      Ice Latent Heat Of Fusion:        3.35e+05
       Gravity Acceleration:             9.8
       Clausius-Clapeyron Coefficient:   0.0
     LandIce Viscosity:
-      Type: Glen's Law
-      Homotopy Parameter: 1.00000000000000006e-01
+      Type: 'Glen''s Law'
       Glen's Law A: 3.1689e-24    # [ Pa^-3 s^-1 ]
-      Glen's Law n: 3.00000000000000000e+00
-      Flow Rate Type: Temperature Based
+      Glen's Law n: 3.0
+      Flow Rate Type: Uniform
     Body Force:
       Type: FO INTERP SURF GRAD
     LandIce Field Norm:
@@ -70,23 +70,24 @@ ANONYMOUS:
       Eliminate Water Thickness: true
       Melting Rate:
         Distributed Geothermal Flux: false
-        Geothermal Flux: 0.06
+        Use Geothermal Melt: true
+        Given Geothermal Flux: 0.06
         Use Log Scalar Parameters: false
       Cavities Equation:
         Nodal: true
         Use Melting: false
-        Creep Closure Coefficient: 0.04
+        Creep Closure Coefficient: 4.0e-02
         Use Log Scalar Parameters: false
         Bed Bumps Height: 1.0
         Bed Bumps Length: 2.0
       Mass Equation:
         Lump Mass: false
-        Use Melting: true
+        Use Melting: false
       Darcy Law:
         Water Thickness Exponent: 1.0
         Potential Gradient Norm Exponent: 2.0
         Use Log Scalar Parameters: false
-        Transmissivity: 1.0e-3
+        Transmissivity: 1.0e-2
         Regularization:
           Regularization Type: Given Parameter
           Regularization Parameter Name: Regularization
@@ -95,18 +96,18 @@ ANONYMOUS:
   Discretization:
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 1
+    Cubature Degree: 4
     Exodus Output File Name: results/dome.exo
-    Element Shape: Tetrahedron
+    Element Shape: Wedge
     Columnwise Ordering: true
-    NumLayers: 1
+    NumLayers: 5
     Thickness Field Name: ice_thickness
     Use Glimmer Spacing: true
     Extrude Basal Node Fields: [ice_thickness, surface_height]
     Basal Node Fields Ranks: [1, 1]
     Workset Size: -1
     Required Fields Info:
-      Number Of Fields: 3
+      Number Of Fields: 2
       Field 0:
         Field Name: surface_height
         Field Type: Node Scalar
@@ -115,22 +116,17 @@ ANONYMOUS:
         Field Name: ice_thickness
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 2:
-        Field Name: temperature
-        Field Type: Node Scalar
-        Field Origin: File
-        Field Value: [273.0]
     Side Set Discretizations:
       Side Sets: [basalside]
       basalside:
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
+        Cubature Degree: 4
         Workset Size: 100
         Method: Gmsh
-        Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle.msh
+        Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle_fine.msh
         Exodus Output File Name: results/dome_basal.exo
         Required Fields Info:
-          Number Of Fields: 10
+          Number Of Fields: 11
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
@@ -145,7 +141,7 @@ ANONYMOUS:
             Field Name: surface_water_input
             Field Type: Node Scalar
             Field Origin: File
-            Field Value: [20.0]
+            Field Value: [5.47999999999999972e+03]
           Field 3:
             Field Name: effective_pressure
             Field Type: Node Scalar
@@ -174,13 +170,21 @@ ANONYMOUS:
             Field Name: sliding_velocity
             Field Type: Node Scalar
             Field Usage: Output
+          Field 10:
+            Field Name: water_pressure
+            Field Type: Node Scalar
+            Field Usage: Output
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-04
+    Test Value: 3.818041320727e+02
+    Relative Tolerance: 1.0e-04
   Piro:
     LOCA:
       Predictor:
         Method: Constant
       Stepper:
         Initial Value: 5.00000000000000028e-02
-        Continuation Parameter: Homotopy Parameter
+        Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 50
         Max Value: 1.00000000000000000e+00
@@ -204,7 +208,7 @@ ANONYMOUS:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Unscaled
-          Tolerance: 1.00000000000000002e-02
+          Tolerance: 1.0e-02
         Test 2:
           Test Type: NormWRMS
           Absolute Tolerance: 1.00000000000000005e-04
@@ -225,7 +229,7 @@ ANONYMOUS:
               Linear Solver Types:
                 Belos:
                   VerboseObject:
-                    Verbosity Level: none
+                    Verbosity Level: low
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
@@ -242,6 +246,7 @@ ANONYMOUS:
                   Overlap: 0
                   Prec Type: Amesos2
                   Ifpack2 Settings:
+                    Amesos2: {}
                     'fact: ilut level-of-fill': 1.00000000000000000e+00
                     'fact: absolute threshold': 9.99999999999999955e-07
                 MueLu:

@@ -210,7 +210,7 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
   if(sideName != "INVALID") {
     //---- Restrict vertex coordinates from cell-based to cell-side-based
-    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",sideName,"Vertex Vector",cellType,"Coord Vec " + sideName);
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,sideName,"Vertex Vector",cellType,Albany::coord_vec_name + "_" + sideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis, sideCubature, sideName);
@@ -228,11 +228,11 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
     p->set<std::string>("Field Variable Name", "prior_sample");
     p->set<std::string>("Field Gradient Variable Name", "prior_sample Gradient");
     p->set<std::string>("Forcing Field Name", "weighted_normal_sample");
-    p->set<std::string>("Weighted Measure Name", "Weights");
+    p->set<std::string>("Weighted Measure Name", Albany::weights_name);
     p->set<double>("Mass Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Mass Coefficient",1.0));
     p->set<double>("Laplacian Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Laplacian Coefficient",1.0));
     p->set<double>("Robin Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Robin Coefficient",0.0));
-    p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name+" "+sideName);
+    p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + "_" + sideName);
     p->set<std::string>("Side Set Name", sideName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
 

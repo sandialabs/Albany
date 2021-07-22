@@ -9,6 +9,7 @@
 
 #include "Albany_Layouts.hpp"
 
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -85,6 +86,7 @@ private:
   double h_r;                 // Bed bumps typical height [m]
   double l_r;                 // Bed bumps typical length [m]
   double c_creep;             // Creep closure coefficient [non dimensional]
+  double n;                   // Glen's Law exponent
 
   // The type of the cavities closure term. Cubic: c_creep*h*A*N^3. Linear: c_creep*h*N/eta_i
   enum ClosureTypeN { Cubic , Linear};

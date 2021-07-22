@@ -9,6 +9,7 @@
 #include "Teuchos_VerboseObject.hpp"
 
 #include "LandIce_HydrologyWaterDischarge.hpp"
+#include <stdexcept>
 
 namespace LandIce
 {
@@ -76,11 +77,24 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
     this->addDependentField(gradPhiNorm);
   }
 
-  regularize = darcy_law_params.get<bool>("Regularize With Continuation", false);
-  if (regularize)
-  {
-    regularizationParam = PHX::MDField<ScalarT,Dim>(p.get<std::string>("Regularization Parameter Name"), dl->shared_param);
+  auto& reg_pl = darcy_law_params.sublist("Regularization");
+  auto type = reg_pl.get<std::string>("Regularization Type","None");
+  if (type=="None") {
+    reg_type = NONE;
+    regularization = 0.0;
+  } else if (type=="Given Value") {
+    reg_type = GIVEN_VALUE;
+    regularization = reg_pl.get<double>("Regularization Value");
+    printedReg = -1.0;
+  } else if (type=="Given Parameter") {
+    reg_type = GIVEN_PARAMETER;
+    auto pname = reg_pl.get<std::string>("Regularization Parameter Name");
+    regularizationParam = PHX::MDField<ScalarT,Dim>(pname, dl->shared_param);
     this->addDependentField(regularizationParam);
+    printedReg = -1.0;
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+        "Error! Invalid choice for 'Regularization Type'. Valid options: 'Given Parameter', 'Given Value', 'None'.\n");
   }
 
   this->setName("HydrologyWaterDischarge"+PHX::print<EvalT>());
@@ -100,17 +114,16 @@ void HydrologyWaterDischarge<EvalT, Traits>::evaluateFields (typename Traits::Ev
 template<typename EvalT, typename Traits>
 void HydrologyWaterDischarge<EvalT, Traits>::evaluateFieldsCell (typename Traits::EvalData workset)
 {
-  ScalarT regularization(0.0);
-  if (regularize) {
+  if (reg_type==GIVEN_PARAMETER) {
     regularization = regularizationParam(0);
   }
+
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
   int procRank = Teuchos::GlobalMPISession::getRank();
   int numProcs = Teuchos::GlobalMPISession::getNProc();
   output->setProcRankAndSize (procRank, numProcs);
   output->setOutputToRootOnly (0);
 
-  static ScalarT printedReg = -1;
   if (printedReg!=regularization) {
     *output << "[HydrologyWaterDischarge" << PHX::print<EvalT>() << "] reg = " << regularization << "\n";
     printedReg = regularization;
@@ -148,8 +161,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
 
-  ScalarT regularization(0.0);
-  if (regularize) {
+  if (reg_type==GIVEN_PARAMETER) {
     regularization = regularizationParam(0);
   }
 
@@ -158,7 +170,6 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   int numProcs = Teuchos::GlobalMPISession::getNProc();
   output->setProcRankAndSize (procRank, numProcs);
   output->setOutputToRootOnly (0);
-  static ScalarT printedReg = -1;
   if (printedReg!=regularization) {
     *output << "[HydrologyWaterDischarge<" << PHX::print<EvalT>() << ">] reg = " << regularization << "\n";
     printedReg = regularization;

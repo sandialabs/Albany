@@ -10,6 +10,8 @@
 #include "Albany_SacadoTypes.hpp"
 #include "Albany_TpetraTypes.hpp"
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_DistributedParameterLibrary.hpp"
+#include "Albany_DistributedParameterDerivativeOp.hpp"
 
 #include "Piro_TransientDecorator.hpp"
 
@@ -82,6 +84,9 @@ public:
   //@}
 
   Teuchos::RCP<Application> getAlbanyApp () const { return app; }
+  
+  Teuchos::RCP<const DistributedParameter> setDistParamVec(const std::string p_name, const Teuchos::ParameterList param_list);
+
  protected:
   /** \name Overridden from Thyra::ModelEvaluatorDefaultBase<ST> . */
   //@{

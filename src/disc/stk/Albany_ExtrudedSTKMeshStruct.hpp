@@ -26,23 +26,19 @@ namespace Albany {
 
     ~ExtrudedSTKMeshStruct();
 
-    void setFieldData(
-                  const Teuchos::RCP<const Teuchos_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}, // empty map as default
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}); // empty map as default
+    void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                       const AbstractFieldContainer::FieldContainerRequirements& req,
+                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                       const unsigned int worksetSize,
+                       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}, // empty map as default
+                       const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}); // empty map as default
 
-    void setBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& comm,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}, // empty map as default
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}); // empty map as default
+    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                      const AbstractFieldContainer::FieldContainerRequirements& req,
+                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                      const unsigned int worksetSize,
+                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}, // empty map as default
+                      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}); // empty map as default
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }

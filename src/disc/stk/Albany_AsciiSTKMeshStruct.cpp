@@ -419,12 +419,11 @@ AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 void
 AsciiSTKMeshStruct::setFieldData(
               const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
               const AbstractFieldContainer::FieldContainerRequirements& req,
               const Teuchos::RCP<StateInfoStruct>& sis,
               const unsigned int worksetSize,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-              const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /* side_set_sis */,
+              const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /* side_set_req */)
 {
   this->SetupFieldData(comm, req, sis, worksetSize);
 }
@@ -432,9 +431,8 @@ AsciiSTKMeshStruct::setFieldData(
 void
 AsciiSTKMeshStruct::setBulkData(
               const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
-              const AbstractFieldContainer::FieldContainerRequirements& req,
-              const Teuchos::RCP<StateInfoStruct>& sis,
+              const AbstractFieldContainer::FieldContainerRequirements& /* req */,
+              const Teuchos::RCP<StateInfoStruct>& /* sis */,
               const unsigned int worksetSize,
               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
               const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)

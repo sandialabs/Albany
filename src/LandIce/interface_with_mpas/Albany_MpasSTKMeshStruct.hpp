@@ -41,7 +41,6 @@ public:
 
   void setFieldData(
       const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-      const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
       const Albany::AbstractFieldContainer::FieldContainerRequirements& /* req */,
       const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
       const unsigned int /* worksetSize */,
@@ -50,7 +49,6 @@ public:
 
   void setBulkData(
       const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-      const Teuchos::RCP<Teuchos::ParameterList>& /* params */,
       const Albany::AbstractFieldContainer::FieldContainerRequirements& /* req */,
       const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
       const unsigned int /* worksetSize */,

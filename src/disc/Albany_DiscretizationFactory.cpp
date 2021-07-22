@@ -86,7 +86,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         meshStruct2D = Teuchos::rcp(new AsciiSTKMesh2D(disc_params, comm, numParams));
         Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct);
         AbstractFieldContainer::FieldContainerRequirements req;
-        meshStruct2D->setFieldAndBulkData(comm, disc_params, req,
+        meshStruct2D->setFieldAndBulkData(comm, req,
                 sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
         Ioss::Init::Initializer io;
         Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
@@ -201,7 +201,7 @@ DiscretizationFactory::setMeshStructFieldData(
         const AbstractFieldContainer::FieldContainerRequirements& req,
         const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) 
 {
-    meshStruct->setFieldData(commT, discParams, req, sis,
+    meshStruct->setFieldData(commT, req, sis,
             meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, 
             side_set_req);
 }
@@ -221,7 +221,7 @@ DiscretizationFactory::setMeshStructBulkData(
         const AbstractFieldContainer::FieldContainerRequirements& req,
         const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) 
 {
-    meshStruct->setBulkData(commT, discParams, req, sis,
+    meshStruct->setBulkData(commT, req, sis,
             meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, 
             side_set_req);
 }

@@ -1647,7 +1647,7 @@ Application::computeGlobalJacobianImpl(
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (Teuchos::nonnull(dfm)) {
     // Re-open the jacobian
-    resumeFill(jac);
+    beginModify(jac);
 
     PHAL::Workset workset;
 
@@ -1686,7 +1686,7 @@ Application::computeGlobalJacobianImpl(
     dfm->evaluateFields<EvalT>(workset);
 
     // Close the jacobian
-    fillComplete(jac);
+    endModify(jac);
   }
 
   // Apply scaling to residual and Jacobian
@@ -2472,13 +2472,11 @@ Application::evaluateResponseDistParamHessian_pp(
   Teuchos::ParameterList coloring_params;
   std::string matrixType = "Hessian";
   coloring_params.set("matrixType", matrixType);
-
-  // Even if the Hessian is symmetric, the distributed crs matrix
-  // is not symmetrical as the row and column map are not identical.
-  coloring_params.set("symmetric", false);
+  coloring_params.set("symmetric", true);
 
   // Get the crs Hessian:
   RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
+  Ht->resumeFill();
 
   // Create a colorer
   Zoltan2::TpetraCrsColorer<Tpetra_CrsMatrix> colorer(Ht);

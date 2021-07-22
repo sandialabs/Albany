@@ -54,6 +54,15 @@ if (ALBANY_EPETRA)
   endif()
 endif()
 
+# Copy input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test_fea.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_wet_bed_test_fea.yaml)
+
+# Create the tests
+set (testName ${testNameRoot}_Wet_Bed_FEA)
+add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test_fea.yaml)
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
+
 if (ALBANY_FROSCH)
   # Copy input file from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test_FROSch.yaml
@@ -63,4 +72,20 @@ if (ALBANY_FROSCH)
   set (testName ${testNameRoot}_Wet_Bed_FROSch)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test_FROSch.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward;FROSch")
+endif()
+
+if(${PYTHON_TEST})
+  set(TESTFILES hessian_comparison.py humboldt_analysis.yaml H-ref-000.mm ${PYTHON_TEST_HELPERS_DIR}/__init__.py ${PYTHON_TEST_HELPERS_DIR}/matrix_reader.py)
+  file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+  set (testName ${testNameRoot}_Contiguous_Mesh_Hessian)
+  add_test(${testName}_Serial "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${SerialAlbanyAnalysis.exe}" "humboldt_analysis.yaml")
+  set_tests_properties(${testName}_Serial PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+
+  if(ALBANY_MPI)
+    add_test(${testName}_Parallel "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${AlbanyAnalysis.exe}"  "humboldt_analysis.yaml")
+    set_tests_properties(${testName}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+    # Prevent the two tests to be run at the same time as they rely on written files:
+    set_tests_properties(${testName}_Parallel PROPERTIES DEPENDS  ${testName}_Serial)
+  endif()
 endif()

@@ -653,8 +653,8 @@ OrdinarySTKFieldContainer<Interleaved>::saveVectorImpl(
     SFT* field = this->metaData->template get_field<SFT>(
         stk::topology::NODE_RANK, field_name);
     using Helper = STKFieldContainerHelper<SFT>;
-    for (auto it = all_elements.begin(); it != all_elements.end(); ++it) {
-      const stk::mesh::Bucket& bucket = **it;
+    for (auto it : all_elements) {
+      const stk::mesh::Bucket& bucket = *it;
       Helper::saveVector(
           field_vector, *field, field_node_vs_indexer, bucket, nodalDofManager, 0);
     }
@@ -662,8 +662,8 @@ OrdinarySTKFieldContainer<Interleaved>::saveVectorImpl(
     VFT* field = this->metaData->template get_field<VFT>(
         stk::topology::NODE_RANK, field_name);
     using Helper = STKFieldContainerHelper<VFT>;
-    for (auto it = all_elements.begin(); it != all_elements.end(); ++it) {
-      const stk::mesh::Bucket& bucket = **it;
+    for (auto it : all_elements) {
+      const stk::mesh::Bucket& bucket = *it;
       Helper::saveVector(
           field_vector, *field, field_node_vs_indexer, bucket, nodalDofManager, 0);
     }

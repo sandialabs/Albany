@@ -4,11 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Phalanx_DataLayout.hpp"
-#include "Teuchos_CommHelpers.hpp"
+#include "PHAL_ResponseSquaredL2DifferenceSide.hpp"
 #include "PHAL_Utilities.hpp"
 
 #include "Albany_Utils.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
+
+#include "Phalanx_DataLayout.hpp"
+#include "Teuchos_CommHelpers.hpp"
 
 template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
 PHAL::ResponseSquaredL2DifferenceSideBase<EvalT, Traits, SourceScalarT, TargetScalarT>::
@@ -39,12 +42,12 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
 
   if (fieldDim>0)
   {
-    metric = decltype(metric)("Metric " + sideSetName, dl_side->qp_tensor);
+    metric = decltype(metric)(Albany::metric_name + "_" + sideSetName, dl_side->qp_tensor);
     this->addDependentField(metric);
   }
 
   sourceField = decltype(sourceField)(fname,layout);
-  w_measure   = decltype(w_measure)("Weighted Measure " + sideSetName, dl_side->qp_scalar);
+  w_measure   = decltype(w_measure)(Albany::weighted_measure_name + "_" + sideSetName, dl_side->qp_scalar);
   scaling     = plist->get("Scaling",1.0);
 
   this->addDependentField(sourceField);

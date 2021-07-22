@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
                 << std::endl);
         response_names[l] = "Sum Of Responses: ";
         for (int k = 0; k < num_sub_responses; ++k) {
-          response_names[l] += pList.sublist(Albany::strint("Response", 0)).get<std::string>("Name");
+          response_names[l] += pList.sublist(Albany::strint("Response", k)).get<std::string>("Name");
           if( k != num_sub_responses-1)
             response_names[l] += " + ";
         }
@@ -347,6 +347,7 @@ int main(int argc, char *argv[])
 
       if (writeToMatrixMarketDistrSolnMap == true) {
         Albany::writeMatrixMarket(xfinal->space(),"xfinal_distributed_map");
+        Albany::writeMatrixMarket(xfinal,"xfinal_distributed");
       }
     }
   }

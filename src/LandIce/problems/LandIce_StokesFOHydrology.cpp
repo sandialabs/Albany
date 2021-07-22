@@ -95,16 +95,16 @@ StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   hydro_resids_names.resize(hydro_neq);
 
   // We always solve for the water pressure
-  hydro_dofs_names[0]   = dof_names[stokes_ndofs] = bname(water_pressure_name);
+  hydro_dofs_names[0]   = dof_names[stokes_ndofs] = basal_fname(water_pressure_name);
   hydro_resids_names[0] = resid_names[stokes_ndofs] = "Residual Mass Eqn";
 
   if (!eliminate_h) {
-    hydro_dofs_names[1]   = dof_names[stokes_ndofs+1] = bname(water_thickness_name);
+    hydro_dofs_names[1]   = dof_names[stokes_ndofs+1] = basal_fname(water_thickness_name);
     hydro_resids_names[1] = resid_names[stokes_ndofs+1] = "Residual Cavities Eqn";
   }
 
   if (has_h_till) {
-    hydro_dofs_names[2]   = dof_names[stokes_ndofs+2] = bname(till_water_storage_name);
+    hydro_dofs_names[2]   = dof_names[stokes_ndofs+2] = basal_fname(till_water_storage_name);
     hydro_resids_names[2] = resid_names[stokes_ndofs+2] = "Residual Till Storage Eqn";
   }
 
@@ -118,19 +118,19 @@ StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
     auto& cav = hy.sublist("Cavities Equation");
     if (cav.get<double>("Englacial Porosity")>0.0) {
       hydro_dofs_dot_names.resize(2);
-      hydro_dofs_dot_names[0] = bname(water_pressure_name) + "_dot";
-      hydro_dofs_dot_names[1] = bname(water_thickness_name) + "_dot";
+      hydro_dofs_dot_names[0] = basal_fname(water_pressure_name) + "_dot";
+      hydro_dofs_dot_names[1] = basal_fname(water_thickness_name) + "_dot";
       hydro_dof_dot_offset = hydro_dof_offset;
       hydro_ndofs_dot = 2;
     } else {
       hydro_dofs_dot_names.resize(1);
-      hydro_dofs_dot_names[0] = bname(water_thickness_name) + "_dot";
+      hydro_dofs_dot_names[0] = basal_fname(water_thickness_name) + "_dot";
       hydro_dof_dot_offset = hydro_dof_offset + 1;
       hydro_ndofs_dot = 1;
     }
     if (has_h_till) {
       hydro_dofs_dot_names.resize(hydro_ndofs_dot+1);
-      hydro_dofs_dot_names[hydro_ndofs_dot] = bname(till_water_storage_name) + "_dot";
+      hydro_dofs_dot_names[hydro_ndofs_dot] = basal_fname(till_water_storage_name) + "_dot";
       ++hydro_ndofs_dot;
     }
   }

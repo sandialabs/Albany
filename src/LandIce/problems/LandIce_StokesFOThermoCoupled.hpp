@@ -238,10 +238,10 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Input
   p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
   p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
-  p->set<std::string>("BF Side Name", Albany::bf_name + " "+basalSideName);
+  p->set<std::string>("BF Side Name", Albany::bf_name + "_" + basalSideName);
   p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
-  p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + " "+basalSideName);
-  p->set<std::string>("Side Normal Name", Albany::normal_name + " " + basalSideName);
+  p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + "_" + basalSideName);
+  p->set<std::string>("Side Normal Name", Albany::normal_name + "_" + basalSideName);
   p->set<std::string>("w Side QP Variable Name", dof_names[1] + "_" + basalSideName);
   p->set<std::string>("w Gradient QP Variable Name", dof_names[1] + " Gradient");
   p->set<std::string>("Basal Vertical Velocity Side QP Variable Name", "basal_vert_velocity_" + basalSideName);
@@ -419,8 +419,8 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p = Teuchos::rcp(new Teuchos::ParameterList("Enthalpy Basal Resid"));
 
   //Input
-  p->set<std::string>("BF Side Name", Albany::bf_name + " "+basalSideName);
-  p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + " "+basalSideName);
+  p->set<std::string>("BF Side Name", Albany::bf_name + "_"+basalSideName);
+  p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + "_"+basalSideName);
   p->set<std::string>("Side Set Name", basalSideName);
   p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
   p->set<std::string>("Basal Melt Rate Side QP Variable Name", "basal_melt_rate_" + basalSideName);

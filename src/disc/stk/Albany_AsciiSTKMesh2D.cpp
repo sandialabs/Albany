@@ -295,7 +295,6 @@ Albany::AsciiSTKMesh2D::~AsciiSTKMesh2D() {}
 
 void Albany::AsciiSTKMesh2D::setFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& commT,
-    const Teuchos::RCP<Teuchos::ParameterList>& /*params_*/,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
@@ -307,7 +306,6 @@ void Albany::AsciiSTKMesh2D::setFieldData(
 
 void Albany::AsciiSTKMesh2D::setBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& commT,
-    const Teuchos::RCP<Teuchos::ParameterList>& /*params_*/,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,

@@ -2,6 +2,8 @@
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/circle.msh
                  ${CMAKE_CURRENT_BINARY_DIR}/circle.msh COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/circle_fine.msh
+                 ${CMAKE_CURRENT_BINARY_DIR}/circle_fine.msh COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/xyz
                  ${CMAKE_CURRENT_BINARY_DIR}/xyz COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eles

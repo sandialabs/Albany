@@ -7,6 +7,7 @@
 #ifndef LANDICE_HYDROLOGY_RESIDUAL_MASS_EQN_HPP
 #define LANDICE_HYDROLOGY_RESIDUAL_MASS_EQN_HPP 1
 
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_Layouts.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 #include "PHAL_Dimension.hpp"
