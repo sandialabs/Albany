@@ -54,13 +54,16 @@ public:
   //! Destructor
   ~StokesFO() = default;
 
-  // Build evaluators
+  //! Build evaluators
   virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                    const Albany::MeshSpecsStruct& meshSpecs,
                    Albany::StateManager& stateMgr,
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+  //! Build unmanaged fields
+  virtual void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
   //! Each problem must generate it's list of valide parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -79,6 +82,9 @@ public:
   template <typename EvalT>
   void constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                     Albany::FieldManagerChoice FieldManagerChoice);
+
+  template <typename EvalT>
+  void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
 protected:
 
@@ -307,6 +313,13 @@ void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits
       fm0.requireField<EvalT>(res_tag);
     }
   }
+}
+
+template <typename EvalT>
+void
+LandIce::StokesFO::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+{
+  constructStokesFOBaseFields<EvalT>(fm0);
 }
 
 } // namespace LandIce

@@ -7,7 +7,6 @@
 #include "LandIce_Enthalpy.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Phalanx_MDField_UnmanagedAllocator.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "PHAL_FactoryTraits.hpp"
@@ -179,39 +178,15 @@ LandIce::Enthalpy::buildEvaluators( PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   return *op.tags;
 }
 
-LandIce::Enthalpy::ConstructFieldsOp::ConstructFieldsOp(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                                        Teuchos::RCP<Albany::Layouts> dl) :
-                                                        fm0(fm0), dl(dl)
-{
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
-  // If mesh does not depend on the solution, allocate MeshScalarT=RealType fields once to save memory
-  weighted_measure = PHX::allocateUnmanagedMDField<RealType,Cell,QuadPoint>(Albany::weights_name, dl->qp_scalar);
-  jacobian_det = PHX::allocateUnmanagedMDField<RealType,Cell,QuadPoint>(Albany::jacobian_det_name, dl->qp_scalar);
-  BF = PHX::allocateUnmanagedMDField<RealType,Cell,Node,QuadPoint>(Albany::bf_name, dl->node_qp_scalar);
-  wBF = PHX::allocateUnmanagedMDField<RealType,Cell,Node,QuadPoint>(Albany::weighted_bf_name, dl->node_qp_scalar);
-  GradBF = PHX::allocateUnmanagedMDField<RealType,Cell,Node,QuadPoint,Dim>(Albany::grad_bf_name, dl->node_qp_gradient);
-  wGradBF = PHX::allocateUnmanagedMDField<RealType,Cell,Node,QuadPoint,Dim>(Albany::weighted_grad_bf_name, dl->node_qp_gradient);
-#endif
-}
-
-template <typename EvalT>
-void
-LandIce::Enthalpy::ConstructFieldsOp::operator()(EvalT /* e */) const
-{
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
-  fm0.setUnmanagedField<EvalT>(weighted_measure);
-  fm0.setUnmanagedField<EvalT>(jacobian_det);
-  fm0.setUnmanagedField<EvalT>(BF);
-  fm0.setUnmanagedField<EvalT>(wBF);
-  fm0.setUnmanagedField<EvalT>(GradBF);
-  fm0.setUnmanagedField<EvalT>(wGradBF);
-#endif
-}
-
 void
 LandIce::Enthalpy::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 {
-  ConstructFieldsOp op(fm0, dl);
+  // Allocate memory for unmanaged fields
+  fieldUtils = Teuchos::rcp(new Albany::FieldUtils(fm0, dl));
+  fieldUtils->allocateComputeBasisFunctionsFields();
+
+  // Call constructFields<EvalT>() for each EvalT in PHAL::AlbanyTraits::BEvalTypes
+  Albany::ConstructFieldsOp<Enthalpy> op(*this, fm0);
   Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 }
 

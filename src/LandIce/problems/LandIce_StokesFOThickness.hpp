@@ -65,6 +65,9 @@ public:
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
+  //! Build unmanaged fields
+  virtual void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
+
   //! Each problem must generate it's list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
@@ -76,6 +79,9 @@ public:
                        Albany::StateManager& stateMgr,
                        Albany::FieldManagerChoice fmchoice,
                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+  template <typename EvalT>
+  void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
 protected:
 
@@ -312,6 +318,13 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     PHX::Tag<typename EvalT::ScalarT> scatterTag(scatter_names[1], dl->dummy);
     fm0.requireField<EvalT>(scatterTag);
   }
+}
+
+template <typename EvalT>
+void
+LandIce::StokesFOThickness::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+{
+  constructStokesFOBaseFields<EvalT>(fm0);
 }
 
 } // namespace LandIce
