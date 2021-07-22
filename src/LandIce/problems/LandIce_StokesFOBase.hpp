@@ -26,6 +26,7 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
+#include "Albany_FieldUtils.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "LandIce_ResponseUtilities.hpp"
 
@@ -96,6 +97,11 @@ protected:
                 const Teuchos::RCP<ParamLib>& paramLib_,
                 const int numDim_);
 
+  //! Build unmanaged fields
+  virtual void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0) = 0;
+
+  void buildStokesFOBaseFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
+
   template <typename EvalT>
   void constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                         const Albany::MeshSpecsStruct& meshSpecs,
@@ -139,6 +145,9 @@ protected:
                                             Albany::StateManager& stateMgr,
                                             Albany::FieldManagerChoice fieldManagerChoice,
                                             const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+  template <typename EvalT>
+  void constructStokesFOBaseFields (PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
   virtual void constructDirichletEvaluators (const Albany::MeshSpecsStruct& /* meshSpecs */) {}
   virtual void constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& /* meshSpecs */) {}
@@ -282,6 +291,9 @@ protected:
 
   template<typename T>
   std::string print_map_keys (const std::map<std::string,T>& map);
+
+  // Storage for unmanaged fields
+  Teuchos::RCP<Albany::FieldUtils> fieldUtils;
 };
 
 template <typename EvalT>
@@ -1622,6 +1634,13 @@ constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
   }
 
   return Teuchos::null;
+}
+
+template <typename EvalT>
+void
+LandIce::StokesFOBase::constructStokesFOBaseFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+{
+  fieldUtils->setComputeBasisFunctionsFields<EvalT>();
 }
 
 template<typename T>

@@ -9,7 +9,6 @@
 #define LANDICE_ENTHALPY_PROBLEM_HPP
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Phalanx_MDField.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -20,7 +19,7 @@
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
-#include "LandIce_ResponseUtilities.hpp"
+#include "Albany_FieldUtils.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
@@ -30,7 +29,6 @@
 #include "PHAL_LoadSideSetStateField.hpp"
 #include "PHAL_ScatterScalarNodalParameter.hpp"
 #include "PHAL_SharedParameter.hpp"
-#include "LandIce_ParamEnum.hpp"
 
 #include "LandIce_EnthalpyResid.hpp"
 #include "LandIce_EnthalpyBasalResid.hpp"
@@ -43,7 +41,8 @@
 #include "LandIce_VerticalVelocity.hpp"
 #include "LandIce_BasalMeltRate.hpp"
 #include "LandIce_SurfaceAirEnthalpy.hpp"
-
+#include "LandIce_ParamEnum.hpp"
+#include "LandIce_ResponseUtilities.hpp"
 
 namespace LandIce
 {
@@ -76,30 +75,6 @@ namespace LandIce
                                                                                 Albany::StateManager& stateMgr,
                                                                                 Albany::FieldManagerChoice fmchoice,
                                                                                 const Teuchos::RCP<Teuchos::ParameterList>& responseList);
-    //! Allocate and set unmanaged fields
-    struct ConstructFieldsOp
-    {
-    public:
-      //! Allocate unmanaged fields
-      ConstructFieldsOp(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                        Teuchos::RCP<Albany::Layouts> dl);
-
-      //! Pass unmanaged fields to all eval types
-      template <typename EvalT>
-      void operator() (EvalT /* e */) const;
-
-    private:
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0;
-      Teuchos::RCP<Albany::Layouts> dl;
-
-      mutable PHX::MDField<RealType,Cell,QuadPoint> weighted_measure;
-      mutable PHX::MDField<RealType,Cell,QuadPoint> jacobian_det;
-      mutable PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-      mutable PHX::MDField<RealType,Cell,Node,QuadPoint> wBF;
-      mutable PHX::MDField<RealType,Cell,Node,QuadPoint,Dim> GradBF;
-      mutable PHX::MDField<RealType,Cell,Node,QuadPoint,Dim> wGradBF;
-    };
-
     //! Build unmanaged fields
     void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
@@ -113,6 +88,9 @@ namespace LandIce
                         Albany::StateManager& stateMgr,
                         Albany::FieldManagerChoice fmchoice,
                         const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+    template <typename EvalT>
+    void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
     void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
@@ -139,6 +117,9 @@ namespace LandIce
     bool needsDiss, needsBasFric;
 
     std::string basalSideName, basalEBName;
+
+    // Storage for unmanaged fields
+    Teuchos::RCP<Albany::FieldUtils> fieldUtils;
 
     /// Boolean marking whether SDBCs are used
     bool use_sdbcs_;
@@ -758,6 +739,13 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   }
 
   return Teuchos::null;
+}
+
+template <typename EvalT>
+void
+LandIce::Enthalpy::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+{
+  fieldUtils->setComputeBasisFunctionsFields<EvalT>();
 }
 
 #endif /* LandIce_ENTHALPY_PROBLEM_HPP */

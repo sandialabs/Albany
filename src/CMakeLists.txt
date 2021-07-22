@@ -233,6 +233,7 @@ list (APPEND SOURCES
   problems/Albany_AbstractProblem.cpp
   problems/Albany_BCUtils.cpp
   problems/Albany_EvaluatorUtils.cpp
+  problems/Albany_FieldUtils.cpp
   problems/Albany_HeatProblem.cpp
   problems/Albany_Layouts.cpp
   problems/Albany_PopulateMesh.cpp
@@ -249,6 +250,8 @@ list (APPEND HEADERS
   problems/Albany_BCUtils_Def.hpp
   problems/Albany_EvaluatorUtils.hpp
   problems/Albany_EvaluatorUtils_Def.hpp
+  problems/Albany_FieldUtils.hpp
+  problems/Albany_FieldUtils_Def.hpp
   problems/Albany_GeneralPurposeFieldsNames.hpp
   problems/Albany_HeatProblem.hpp
   problems/Albany_Layouts.hpp

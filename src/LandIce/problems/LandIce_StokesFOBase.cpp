@@ -257,6 +257,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
+  buildFields(*fm[0]);
 
   // Build a dirichlet fm if nodesets are present
   if (meshSpecs[0]->nsNames.size() >0) {
@@ -274,6 +275,13 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   if(meshSpecs[0]->ssNames.size() > 0) {
      constructNeumannEvaluators(meshSpecs[0]);
   }
+}
+
+void
+StokesFOBase::buildStokesFOBaseFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
+{
+  // Allocate memory for unmanaged fields
+  fieldUtils->allocateComputeBasisFunctionsFields();
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
