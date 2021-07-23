@@ -128,7 +128,7 @@ evaluateFields(typename Traits::EvalData workset)
   } else if (fieldDim == 2) {
     diffDims = dims[2];
     diff_2.resize(diffDims);
-    for(int i=0; i<diffDims; i++)
+    for(size_t i=0; i<diffDims; i++)
       diff_2[i].resize(diffDims);
   }
 

@@ -346,9 +346,9 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
     const Teuchos::ArrayRCP<double>& ov_coords = disc->getCoordinates();
     Teuchos::RCP<const Thyra_VectorSpace> vec_space = disc->getVectorSpace();
     const int num_dims = app->getSpatialDimension();
-    const int num_dofs = ov_coords.size(); 
     const int num_nodes = vec_space->dim(); 
-    /*std::cout << "IKT num_dims, num_dofs, num_nodes = " << num_dims << ", " << num_dofs 
+    /*const int num_dofs = ov_coords.size();
+      std::cout << "IKT num_dims, num_dofs, num_nodes = " << num_dims << ", " << num_dofs
                 << ", " << num_nodes << "\n"; 
     for (int i=0; i<num_dofs; i++) {
       std::cout << "IKT i, ov_coords = " << i << ", " << ov_coords[i] << "\n"; 
