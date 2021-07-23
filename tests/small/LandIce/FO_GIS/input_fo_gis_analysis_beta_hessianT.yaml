@@ -17,10 +17,20 @@ ANONYMOUS:
     Response Functions:
       Number Of Responses: 1
       Response 0:
-        Scaling Coefficient: 5.88239999999999978e-07
-        Asinh Scaling: 1.00000000000000000e+01
-        Name: Surface Velocity Mismatch
-        Regularization Coefficient: 1.00000000000000000e+01
+        Type: Sum Of Responses
+        Number Of Responses: 2
+        Response 0:
+          Scaling Coefficient: 5.88239999999999978e-07
+          Asinh Scaling: 1.00000000000000000e+01
+          Name: Surface Velocity Mismatch
+          Regularization Coefficient: 0.0
+        Response 1:
+          Scaling: 5.88239999999999978e-06
+          Name: Squared L2 Difference Side Source PST Target MST
+          Source Field Name: basal_friction_gradient_basalside
+          Side Set Name: basalside
+          Field Rank: Gradient
+          Target Value: 0.0
     Dirichlet BCs: {}
     LandIce BCs:
       Number: 2

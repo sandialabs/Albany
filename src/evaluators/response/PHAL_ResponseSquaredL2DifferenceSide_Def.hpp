@@ -124,10 +124,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (fieldDim == 1) {
     diffDims = dims[2];
-    diff_1 = Kokkos::View<ScalarT*,  PHX::Device>("diff_1", diffDims);
+    diff_1.resize(diffDims);
   } else if (fieldDim == 2) {
     diffDims = dims[2];
-    diff_2 = Kokkos::View<ScalarT**, PHX::Device>("diff_2", diffDims, diffDims);
+    diff_2.resize(diffDims);
+    for(int i=0; i<diffDims; i++)
+      diff_2[i].resize(diffDims);
   }
 
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
@@ -168,11 +170,11 @@ evaluateFields(typename Traits::EvalData workset)
             // Computing squared difference at qp
             // Precompute differentce and access fields only n times (not n^2)
             for (size_t i=0; i<diffDims; ++i)
-              diff_1(i) = sourceField(sideSet_idx,qp,i) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i));
+              diff_1[i] = sourceField(sideSet_idx,qp,i) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i));
 
             for (size_t i=0; i<diffDims; ++i)
               for (size_t j=0; j<diffDims; ++j)
-                sq += diff_1(i)*metric(sideSet_idx,qp,i,j)*diff_1(j);
+                sq += diff_1[i]*metric(sideSet_idx,qp,i,j)*diff_1[j];
             sum += sq * w_measure(sideSet_idx,qp);
           }
 
@@ -194,13 +196,13 @@ evaluateFields(typename Traits::EvalData workset)
             // Precompute differentce and access fields only n^2 times (not n^4)
             for (size_t i=0; i<diffDims; ++i)
               for (size_t j=0; j<diffDims; ++j)
-                diff_2(i,j) = sourceField(sideSet_idx,qp,i,j) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i,j));
+                diff_2[i][j] = sourceField(sideSet_idx,qp,i,j) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i,j));
 
             for (size_t i=0; i<diffDims; ++i)
               for (size_t j=0; j<diffDims; ++j)
                 for (size_t k=0; k<diffDims; ++k)
                   for (size_t l=0; l<diffDims; ++l)
-                    sq += metric(sideSet_idx,qp,k,i)*diff_2(i,j) * metric(sideSet_idx,qp,j,l)*diff_2(l,k);
+                    sq += metric(sideSet_idx,qp,k,i)*diff_2[i][j] * metric(sideSet_idx,qp,j,l)*diff_2[l][k];
             sum += sq * w_measure(sideSet_idx,qp);
           }
 
@@ -223,8 +225,8 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
-  if(workset.comm->getRank()==0)
-    std::cout << "resp" << PHX::print<EvalT>() << ": " << this->global_response_eval(0) << "\n" << std::flush;
+//  if(workset.comm->getRank()==0)
+//    std::cout << "resp" << PHX::print<EvalT>() << ": " << this->global_response_eval(0) << "\n" << std::flush;
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
