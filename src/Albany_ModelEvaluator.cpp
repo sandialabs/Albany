@@ -865,35 +865,37 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
 
   for (int i = 0; i < n_g; ++i) {
     // Default value for response:
-    bool dADHessVec_g, reconstructHpp;
+    bool dADHessVec_g, supportHpp;
 
     if(hessParams.isSublist(Albany::strint("Response", i))) {
       dADHessVec_g = hessParams.sublist(Albany::strint("Response", i)).isParameter("Use AD for Hessian-vector products (default)") ?
         hessParams.sublist(Albany::strint("Response", i)).get<bool>("Use AD for Hessian-vector products (default)") : dADHessVec;
-      reconstructHpp = hessParams.sublist(Albany::strint("Response", i)).isParameter("Reconstruct H_pp") ?
-        hessParams.sublist(Albany::strint("Response", i)).get<bool>("Reconstruct H_pp") : false;
+      supportHpp = hessParams.sublist(Albany::strint("Response", i)).isParameter("Reconstruct H_pp") ?
+        hessParams.sublist(Albany::strint("Response", i)).get<bool>("Reconstruct H_pp") : true;
     }
     else {
       dADHessVec_g = dADHessVec;
-      reconstructHpp = false;
+      supportHpp = true;
     }
     
     auto& analysisParams = appParams->sublist("Piro").sublist("Analysis");
     if(analysisParams.isSublist("ROL")) {
-      bool reconstructHppROL = reconstructHpp = analysisParams.sublist("ROL").get("Hessian Dot Product", false);
+      bool reconstructHppROL = false;
+      if(analysisParams.sublist("ROL").isSublist("Matrix Based Dot Product"))
+        reconstructHppROL =
+            (analysisParams.sublist("ROL").sublist("Matrix Based Dot Product").get<std::string>("Matrix Type") == "Hessian Of Response");
+
       TEUCHOS_TEST_FOR_EXCEPTION(
-          reconstructHpp!=reconstructHppROL,
+          (supportHpp == false) && (reconstructHppROL == true),
           Teuchos::Exceptions::InvalidParameter,
           std::endl
               << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
-              << "The Hessian reconstruction options are not consistent: " << reconstructHpp << " != "
-              << reconstructHppROL
+              << "The construction of H_pp is requested but not supported"
               << ". Please set the Option in the Hessian and ROL sublists consistently."
               << std::endl);
-    }
 
     TEUCHOS_TEST_FOR_EXCEPTION(
-        reconstructHpp && (num_param_vecs>0),
+        reconstructHppROL && (num_param_vecs>0),
         Teuchos::Exceptions::InvalidParameter,
         std::endl
             << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
@@ -903,6 +905,8 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
             << "If at least one parameter is a scalar parameter or a parameter vector, "
             << "the Hessian reconstruction option must be disabled."
             << std::endl);
+
+    }
 
     aDHessVec_g[0][0] = dADHessVec_g;
 
@@ -1028,7 +1032,7 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
         i,
         j1,
         j1,
-        reconstructHpp);
+        supportHpp);
       for (int j2 = 0; j2 < num_params; j2++) {
         result.setSupports(
           Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_pp,

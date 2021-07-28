@@ -60,8 +60,10 @@ ANONYMOUS:
         Bound Constrained: true
 
         Full Space: false
-        Hessian Dot Product: false
         Use NOX Solver: true        
+        
+        Matrix Based Dot Product: 
+          Matrix Type: Identity
         
         Step Method: "Line Search"
         bound_eps: 1.0e-01
