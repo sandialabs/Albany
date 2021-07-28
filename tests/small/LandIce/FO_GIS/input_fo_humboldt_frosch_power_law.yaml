@@ -256,7 +256,6 @@ ANONYMOUS:
         Step Method: "Trust Region"
 
         Full Space: false
-        Hessian Dot Product: true
         Use NOX Solver: true
 
         ROL Options:
