@@ -118,7 +118,6 @@ ANONYMOUS:
     Cubature Degree: 4
     Exodus Output File Name: ./humboldt_full.exo
     Element Shape: Wedge
-    Use Serial Mesh: true
     Interleaved Ordering: 1
     Columnwise Ordering: false
     NumLayers: 2
@@ -173,7 +172,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Restart Index: 1
-        Use Serial Mesh: true
+        Use Serial Mesh: false
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
         Exodus Output File Name: ./humboldt_basal.exo
         Cubature Degree: 4

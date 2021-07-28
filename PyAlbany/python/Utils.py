@@ -128,10 +128,11 @@ def writeMVector(filename, mvector, distributedFile = True, useBinary = True):
             mvectorRank0 = wpa.gatherMVector(mvector, mvector.getMap())
         else:
             mvectorRank0 = mvector
-        if useBinary:     
-            np.save(filename+'.npy', mvectorRank0[:,:])
-        else:
-            np.savetxt(filename+'.txt', mvectorRank0[:,:])
+        if rank == 0:
+            if useBinary:
+                np.save(filename+'.npy', mvectorRank0[:,:])
+            else:
+                np.savetxt(filename+'.txt', mvectorRank0[:,:])
 
 def createTimers(names):
     """@brief Creates Teuchos timers."""

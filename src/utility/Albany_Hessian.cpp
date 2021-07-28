@@ -50,7 +50,7 @@ Teuchos::RCP<Thyra_LinearOp> Albany::createHessianLinearOp(
     Tpetra_GO cols[1];
     Teuchos::Array<ST> vals(1);
 
-    for (std::size_t ielem; ielem<num_elem; ++ielem) {
+    for (std::size_t ielem=0; ielem<num_elem; ++ielem) {
         IDArray wsElDofs = vElDofs[floor(ielem / num_elem_per_ws)];
         const Tpetra_LO ielem_ws = ielem % num_elem_per_ws;
         for (std::size_t i = 0; i < NN; ++i)

@@ -53,6 +53,9 @@ public:
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
+  //! Build unmanaged fields
+  virtual void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
+
   //! Each problem must generate it's list of valide parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
@@ -73,6 +76,9 @@ public:
                        Albany::StateManager& stateMgr,
                        Albany::FieldManagerChoice fmchoice,
                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+  template <typename EvalT>
+  void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
   void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
   void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
@@ -494,6 +500,13 @@ constructHydrologyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
   ev = Teuchos::rcp(new UnaryExpOp<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
+}
+
+template <typename EvalT>
+void
+LandIce::StokesFOHydrology::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+{
+  constructStokesFOBaseFields<EvalT>(fm0);
 }
 
 } // Namespace LandIce

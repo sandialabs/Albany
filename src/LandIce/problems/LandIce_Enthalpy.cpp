@@ -8,6 +8,7 @@
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
+
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
@@ -163,6 +164,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 	  fm.resize(1);
 	  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
 	  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
+	  buildFields(*fm[0]);
 	  constructDirichletEvaluators(*meshSpecs[0]);
 }
 
@@ -178,6 +180,18 @@ LandIce::Enthalpy::buildEvaluators( PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   Albany::ConstructEvaluatorsOp<Enthalpy> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
+}
+
+void
+LandIce::Enthalpy::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
+{
+  // Allocate memory for unmanaged fields
+  fieldUtils = Teuchos::rcp(new Albany::FieldUtils(fm0, dl));
+  fieldUtils->allocateComputeBasisFunctionsFields();
+
+  // Call constructFields<EvalT>() for each EvalT in PHAL::AlbanyTraits::BEvalTypes
+  Albany::ConstructFieldsOp<Enthalpy> op(*this, fm0);
+  Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 }
 
 void LandIce::Enthalpy::

@@ -56,8 +56,8 @@ private:
   PHX::MDField<const MeshScalarT,Side,QuadPoint>   w_measure;
 
   size_t diffDims;
-  Kokkos::View<ScalarT*,  PHX::Device> diff_1;
-  Kokkos::View<ScalarT**, PHX::Device> diff_2;
+  std::vector<ScalarT> diff_1;
+  std::vector<std::vector<ScalarT>> diff_2;
 
 };
 
