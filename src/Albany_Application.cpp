@@ -726,13 +726,6 @@ Application::finalSetUp(
     solveParams.get(sensitivityToken, *oldSensitivityFlag);
   }
 
-  // ======= Dynamic Sizing Experiment =======
-  setSideSetExtents<PHAL::AlbanyTraits::Residual>();
-  setSideSetExtents<PHAL::AlbanyTraits::Jacobian>();
-  setSideSetExtents<PHAL::AlbanyTraits::Tangent>();
-  setSideSetExtents<PHAL::AlbanyTraits::DistParamDeriv>();
-  setSideSetExtents<PHAL::AlbanyTraits::HessianVec>();
-
   // MPerego: Preforming post registration setup here to make sure that the
   // discretization is already created, so that  derivative dimensions are
   // known. Cannot do post registration right before the evaluate , as done for
@@ -744,7 +737,7 @@ Application::finalSetUp(
 
 template<typename Traits>
 void
-Application::setSideSetExtents() const
+Application::setSideSetExtents(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const
 {
   // get number of worksets
   const auto& wsElNodeEqID = disc->getWsElNodeEqID();
@@ -768,8 +761,8 @@ Application::setSideSetExtents() const
   }
 
   // Iterate over tags and set extents for sideset fields
-  const auto& tags = fm[0]->getFieldTagsForSizing<Traits>();
-  fm[0]->buildDagForType<Traits>();
+  const auto& tags = in_fm->getFieldTagsForSizing<Traits>();
+  in_fm->buildDagForType<Traits>();
   *out << "(Dynamic Sizing Experiment) FM length: " << fm.size() << std::endl; 
   *out << "(Dynamic Sizing Experiment) Number of worksets: " << numWorksets << std::endl;
   *out << "(Dynamic Sizing Experiment) Number of tags: " << tags.size() << std::endl;
@@ -1124,6 +1117,8 @@ Application::postRegSetup<PHAL::AlbanyTraits::Residual>()
     evalName = PHAL::evalName<EvalT>("FM",ps);
     phxSetup->insert_eval(evalName);
 
+    setSideSetExtents<EvalT>(fm[ps]);
+
     fm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
     // Update phalanx saved/unsaved fields based on field dependencies
@@ -1135,6 +1130,8 @@ Application::postRegSetup<PHAL::AlbanyTraits::Residual>()
   if (dfm != Teuchos::null) {
     evalName = PHAL::evalName<EvalT>("DFM",0);
     phxSetup->insert_eval(evalName);
+
+    setSideSetExtents<EvalT>(dfm);
 
     dfm->postRegistrationSetupForType<EvalT>(*phxSetup);
 
@@ -1148,6 +1145,8 @@ Application::postRegSetup<PHAL::AlbanyTraits::Residual>()
     for (int ps = 0; ps < nfm.size(); ps++) {
       evalName = PHAL::evalName<EvalT>("NFM",ps);
       phxSetup->insert_eval(evalName);
+
+      setSideSetExtents<EvalT>(nfm[ps]);
 
       nfm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
@@ -1202,6 +1201,7 @@ Application::postRegSetupDImpl()
     derivative_dimensions.push_back(
         PHAL::getDerivativeDimensions<EvalT>(this, ps, explicit_scheme));
     fm[ps]->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
+    setSideSetExtents<EvalT>(fm[ps]);
     fm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
     // Update phalanx saved/unsaved fields based on field dependencies
@@ -1215,6 +1215,7 @@ Application::postRegSetupDImpl()
       phxSetup->insert_eval(evalName);
 
       nfm[ps]->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
+      setSideSetExtents<EvalT>(nfm[ps]);
       nfm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
       // Update phalanx saved/unsaved fields based on field dependencies
@@ -1234,6 +1235,7 @@ Application::postRegSetupDImpl()
     derivative_dimensions.push_back(
         PHAL::getDerivativeDimensions<EvalT>(this, 0, explicit_scheme));
     dfm->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
+    setSideSetExtents<EvalT>(dfm);
     dfm->postRegistrationSetupForType<EvalT>(*phxSetup);
 
     // Update phalanx saved/unsaved fields based on field dependencies
@@ -3010,6 +3012,7 @@ Application::evaluateStateFieldManager(
         sfm[ps]
             ->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
                 derivative_dimensions);
+
         sfm[ps]->postRegistrationSetup(*phxSetup);
 
         // Update phalanx saved/unsaved fields based on field dependencies
