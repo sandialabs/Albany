@@ -75,6 +75,7 @@ if (ALBANY_FROSCH)
 endif()
 
 if(${PYTHON_TEST})
+if (ALBANY_FROSCH)
   set(TESTFILES hessian_comparison.py humboldt_analysis.yaml H-ref-000.mm ${PYTHON_TEST_HELPERS_DIR}/__init__.py ${PYTHON_TEST_HELPERS_DIR}/matrix_reader.py)
   file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -88,4 +89,5 @@ if(${PYTHON_TEST})
     # Prevent the two tests to be run at the same time as they rely on written files:
     set_tests_properties(${testName}_Parallel PROPERTIES DEPENDS  ${testName}_Serial)
   endif()
+endif()
 endif()
