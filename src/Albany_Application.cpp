@@ -744,10 +744,6 @@ Application::setSideSetExtents(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits
   unsigned int const numWorksets = wsElNodeEqID.size();
 
   // compute largest workset size over all worksets for each sideset name
-  // for each workset:
-  //   get sideSetViews object
-  //   for each sideset name in sideSetViews object:
-  //     compute maximum workset size
   std::map<std::string, unsigned int> maxSideSetSizes;
   for (unsigned int i = 0; i < numWorksets; ++i) { 
     const LocalSideSetInfoList& sideSetView = disc->getSideSetViews(i);
@@ -763,9 +759,6 @@ Application::setSideSetExtents(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits
   // Iterate over tags and set extents for sideset fields
   const auto& tags = in_fm->getFieldTagsForSizing<Traits>();
   in_fm->buildDagForType<Traits>();
-  *out << "(Dynamic Sizing Experiment) FM length: " << fm.size() << std::endl; 
-  *out << "(Dynamic Sizing Experiment) Number of worksets: " << numWorksets << std::endl;
-  *out << "(Dynamic Sizing Experiment) Number of tags: " << tags.size() << std::endl;
   for (auto& t : tags) {
     auto& t_dl = t->nonConstDataLayout();
     std::vector<PHX::Device::size_type> t_dims;
@@ -773,7 +766,6 @@ Application::setSideSetExtents(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits
 
     // Check if dimension[0] is Side
     std::string first_dim_name = t_dl.name(0);
-    
     std::string t_identifier = t_dl.identifier();
     std::string sideSetName = t_identifier.substr(0, t_identifier.find("<"));
 
@@ -805,14 +797,6 @@ Application::setSideSetExtents(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits
             "Error! Sideset dynamic sizing as encountered a layout with more field tags than expected.\n");
       }
     }
-    
-    *out << "  Tag " << t_identifier << std::endl;
-    *out << "    Side set name = " << sideSetName << std::endl;
-    *out << "    Rank = " << t_dl.rank() << ": ";
-    for (unsigned int i = 0; i < t_dl.rank(); ++i) {
-      *out << t_dl.extent(i) << " (" << t_dims[i] << ") ";
-    }
-    *out << std::endl;
   }
 }
 
