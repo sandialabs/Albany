@@ -43,8 +43,11 @@ class TestSteadyHeat(unittest.TestCase):
         hessian = problem.getReducedHessian(0, 0)
 
         stackedTimer = problem.getStackedTimer()
-        setup_time = stackedTimer.accumulatedTime("Albany: Setup Time")
+        setup_time = stackedTimer.accumulatedTime("PyAlbany: Setup Time")
         print("setup_time = " + str(setup_time))
+
+        setup_time_2 = stackedTimer.findBaseTimer("PyAlbany Total Time@PyAlbany: Setup Time").accumulatedTime()
+        setup_time_fix_node_sharing = stackedTimer.findBaseTimer("PyAlbany Total Time@PyAlbany: Setup Time@Albany Setup: fix_node_sharing").accumulatedTime()
 
         g_target = 3.23754626955999991e-01
         norm_target = 8.94463776843999921e-03
@@ -67,6 +70,8 @@ class TestSteadyHeat(unittest.TestCase):
             self.assertTrue(np.abs(g_data[0]-g_target) < tol)
             self.assertTrue(np.abs(norm-norm_target) < tol)
             self.assertTrue(setup_time > 0.)
+            self.assertTrue(setup_time == setup_time_2)
+            self.assertTrue(setup_time_fix_node_sharing > 0.)
             for i in range(0,n_directions):
                 self.assertTrue(np.abs(hessian_norms[i]-h_target[i]) < tol)
 
