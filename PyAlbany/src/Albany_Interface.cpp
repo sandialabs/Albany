@@ -434,6 +434,8 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getReducedHessian(const int g_ind
 
 void PyProblem::performSolve()
 {
+    if (Teuchos::TimeMonitor::getStackedTimer() != stackedTimer)
+        Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->start("Albany: performSolve");
 
     Teuchos::ParameterList &solveParams =
@@ -450,6 +452,8 @@ void PyProblem::performSolve()
 
 void PyProblem::performAnalysis()
 {
+    if (Teuchos::TimeMonitor::getStackedTimer() != stackedTimer)
+        Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->start("Albany: performAnalysis");
 
     Teuchos::RCP<Albany::ObserverImpl> observer = Teuchos::rcp(new Albany::ObserverImpl(albanyApp));
