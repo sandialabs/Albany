@@ -78,10 +78,10 @@ PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParall
     PrintPyHeader(*out);
 
     stackedTimer = Teuchos::rcp(
-        new Teuchos::StackedTimer("Albany Total Time"));
+        new Teuchos::StackedTimer("PyAlbany Total Time"));
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
 
-    stackedTimer->start("Albany: Setup Time");
+    stackedTimer->start("PyAlbany: Setup Time");
 
     comm = this->pyParallelEnv->comm;
 
@@ -116,7 +116,7 @@ PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParall
     forwardHasBeenSolved = false;
     inverseHasBeenSolved = false;
 
-    stackedTimer->stop("Albany: Setup Time");
+    stackedTimer->stop("PyAlbany: Setup Time");
 }
 
 PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<PyParallelEnv> _pyParallelEnv) : pyParallelEnv(_pyParallelEnv)
@@ -128,10 +128,10 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
     PrintPyHeader(*out);
 
     stackedTimer = Teuchos::rcp(
-        new Teuchos::StackedTimer("Albany Total Time"));
+        new Teuchos::StackedTimer("PyAlbany Total Time"));
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
 
-    stackedTimer->start("Albany: Setup Time");
+    stackedTimer->start("PyAlbany: Setup Time");
 
     comm = this->pyParallelEnv->comm;
 
@@ -166,51 +166,65 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
     forwardHasBeenSolved = false;
     inverseHasBeenSolved = false;
 
-    stackedTimer->stop("Albany: Setup Time");
+    stackedTimer->stop("PyAlbany: Setup Time");
 }
 
 Teuchos::RCP<const PyTrilinosMap> PyProblem::getResponseMap(const int g_index)
 {
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: getResponseMap");
     if (forwardHasBeenSolved == false)
     {
         std::cout << "Warning: getResponseMap() must be called after performSolve()" << std::endl;
+        stackedTimer->stop("PyAlbany: getResponseMap");
         return Teuchos::null;
     }
     Teuchos::RCP<const Thyra_Vector> g = thyraResponses[g_index];
     if (Teuchos::nonnull(g))
     {
         auto g_space = g->space();
+        stackedTimer->stop("PyAlbany: getResponseMap");
         return getPyTrilinosMap(Albany::getTpetraMap(g_space), false);
     }
+    stackedTimer->stop("PyAlbany: getResponseMap");
     return Teuchos::null;
 }
 
-
 Teuchos::RCP<const PyTrilinosMap> PyProblem::getStateMap()
 {
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: getStateMap");
     if (forwardHasBeenSolved == false)
     {
         std::cout << "Warning: getStateMap() must be called after performSolve()" << std::endl;
+        stackedTimer->stop("PyAlbany: getStateMap");
         return Teuchos::null;
     }
     Teuchos::RCP<const Thyra_Vector> s = thyraResponses.back();
     if (Teuchos::nonnull(s))
     {
         auto s_space = s->space();
+        stackedTimer->stop("PyAlbany: getStateMap");
         return getPyTrilinosMap(Albany::getTpetraMap(s_space), false);
     }
+    stackedTimer->stop("PyAlbany: getStateMap");
     return Teuchos::null;
 }
 
-
 Teuchos::RCP<const PyTrilinosMap> PyProblem::getParameterMap(const int p_index)
 {
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: getResponseMap");
     auto p_space = solver->getNominalValues().get_p(p_index)->space();
-    return getPyTrilinosMap(Albany::getTpetraMap(p_space), true);
+    auto outputMap = getPyTrilinosMap(Albany::getTpetraMap(p_space), true);
+    stackedTimer->stop("PyAlbany: getResponseMap");
+    return outputMap;
 }
 
 void PyProblem::setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVector> direction)
 {
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: setDirections");
     forwardHasBeenSolved = false;
 
     const unsigned int n_directions = direction->getNumVectors();
@@ -243,10 +257,14 @@ void PyProblem::setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVec
             for (size_t i_direction = 0; i_direction < n_directions; i_direction++)
                 thyraDirections[l]->col(i_direction)->assign(0.0);
     }
+
+    stackedTimer->stop("PyAlbany: setDirections");
 }
 
 void PyProblem::setParameter(const int p_index, Teuchos::RCP<PyTrilinosVector> p)
 {
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: setParameter");
     RCP<Teuchos::ParameterList> appParams = slvrfctry->getParameters();
     if (appParams->isSublist("Piro"))
     {
@@ -293,13 +311,18 @@ void PyProblem::setParameter(const int p_index, Teuchos::RCP<PyTrilinosVector> p
         if (p_index == l)
             albanyModel->setNominalValue(l, thyraParameter[l]);
     }
+
+    stackedTimer->stop("PyAlbany: setParameter");
 }
 
 Teuchos::RCP<PyTrilinosVector> PyProblem::getParameter(const int p_index)
 {
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: getParameter");
 #ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
     Teuchos::RCP<Thyra_Vector> p = thyraParameter[p_index];
     Teuchos::RCP<PyTrilinosVector> p_out = Albany::getTpetraVector(p);
+    stackedTimer->stop("PyAlbany: getParameter");
     return p_out;
 #else
     Teuchos::RCP<const Thyra_Vector> p = thyraParameter[p_index];
@@ -311,13 +334,18 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getParameter(const int p_index)
         auto p_out_view = p_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
         auto p_in_view = pT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
         Kokkos::deep_copy(p_out_view, p_in_view);
+        stackedTimer->stop("PyAlbany: getParameter");
         return p_out;
     }
+    stackedTimer->stop("PyAlbany: getParameter");
+    return Teuchos::null;
 #endif
 }
 
 Teuchos::RCP<PyTrilinosVector> PyProblem::getResponse(const int g_index)
 {
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: getResponse");
     if (forwardHasBeenSolved == false)
     {
         std::cout << "Warning: getResponse() must be called after performSolve()" << std::endl;
@@ -327,6 +355,7 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getResponse(const int g_index)
 #ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
         Teuchos::RCP<Thyra_Vector> g = thyraResponses[g_index];
         Teuchos::RCP<PyTrilinosVector> g_out = Albany::getTpetraVector(g);
+        stackedTimer->stop("PyAlbany: getResponse");
         return g_out;
 #else
         Teuchos::RCP<const Thyra_Vector> g = thyraResponses[g_index];
@@ -338,16 +367,19 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getResponse(const int g_index)
             auto g_out_view = g_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
             auto g_in_view = gT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
             Kokkos::deep_copy(g_out_view, g_in_view);
+            stackedTimer->stop("PyAlbany: getResponse");
             return g_out;
         }
 #endif
     }
+    stackedTimer->stop("PyAlbany: getResponse");
     return Teuchos::null;
 }
 
-
 Teuchos::RCP<PyTrilinosVector> PyProblem::getState()
 {
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: getState");
     if (forwardHasBeenSolved == false)
     {
         std::cout << "Warning: getState() must be called after performSolve()" << std::endl;
@@ -357,6 +389,7 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getState()
 #ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
         Teuchos::RCP<Thyra_Vector> s = thyraResponses.back();
         Teuchos::RCP<PyTrilinosVector> s_out = Albany::getTpetraVector(s);
+        stackedTimer->stop("PyAlbany: getState");
         return s_out;
 #else
         Teuchos::RCP<const Thyra_Vector> s = thyraResponses.back();
@@ -365,19 +398,21 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getState()
         {
             Teuchos::RCP<const Tpetra_Vector> sT = Albany::getConstTpetraVector(s);
             auto s_out_view = s_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
-            auto s_in_view  = sT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            auto s_in_view = sT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
             Kokkos::deep_copy(s_out_view, s_in_view);
+            stackedTimer->stop("PyAlbany: getState");
             return s_out;
         }
 #endif
     }
+    stackedTimer->stop("PyAlbany: getState");
     return Teuchos::null;
 }
 
-
-
 Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getSensitivity(const int g_index, const int p_index)
 {
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: getSensitivity");
     if (forwardHasBeenSolved == false)
     {
         std::cout << "Warning: getSensitivity() must be called after performSolve()" << std::endl;
@@ -386,6 +421,7 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getSensitivity(const int g_index,
     {
 #ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
         Teuchos::RCP<PyTrilinosMultiVector> dg_out = Albany::getTpetraMultiVector(thyraSensitivities[g_index][p_index]);
+        stackedTimer->stop("PyAlbany: getSensitivity");
         return dg_out;
 #else
         Teuchos::RCP<const Thyra_MultiVector> dg = thyraSensitivities[g_index][p_index];
@@ -397,15 +433,19 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getSensitivity(const int g_index,
             auto dg_out_view = dg_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
             auto dg_in_view = dgT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
             Kokkos::deep_copy(dg_out_view, dg_in_view);
+            stackedTimer->stop("PyAlbany: getSensitivity");
             return dg_out;
         }
 #endif
     }
+    stackedTimer->stop("PyAlbany: getSensitivity");
     return Teuchos::null;
 }
 
 Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getReducedHessian(const int g_index, const int p_index)
 {
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: getReducedHessian");
     if (forwardHasBeenSolved == false)
     {
         std::cout << "Warning: getReducedHessian() must be called after performSolve()" << std::endl;
@@ -414,10 +454,11 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getReducedHessian(const int g_ind
     {
 #ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
         Teuchos::RCP<PyTrilinosMultiVector> hv_out = Albany::getTpetraMultiVector(thyraReducedHessian[g_index][p_index]);
+        stackedTimer->stop("PyAlbany: getReducedHessian");
         return hv_out;
 #else
         Teuchos::RCP<const Thyra_MultiVector> hv = thyraReducedHessian[g_index][p_index];
-        Teuchos::RCP<PyTrilinosMultiVector> hv_out if (Teuchos::nonnull(hv))
+        if (Teuchos::nonnull(hv))
         {
             Teuchos::RCP<const Tpetra_MultiVector> hvT = Albany::getConstTpetraMultiVector(hv);
             Teuchos::RCP<PyTrilinosMultiVector> hv_out = rcp(new PyTrilinosMultiVector(this->getParameterMap(p_index),
@@ -425,18 +466,19 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getReducedHessian(const int g_ind
             auto hv_out_view = hv_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
             auto hv_in_view = hvT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
             Kokkos::deep_copy(hv_out_view, hv_in_view);
+            stackedTimer->stop("PyAlbany: getReducedHessian");
             return hv_out;
         }
 #endif
     }
+    stackedTimer->stop("PyAlbany: getReducedHessian");
     return Teuchos::null;
 }
 
 void PyProblem::performSolve()
 {
-    if (Teuchos::TimeMonitor::getStackedTimer() != stackedTimer)
-        Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
-    stackedTimer->start("Albany: performSolve");
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: performSolve");
 
     Teuchos::ParameterList &solveParams =
         slvrfctry->getAnalysisParameters().sublist(
@@ -447,14 +489,13 @@ void PyProblem::performSolve()
 
     forwardHasBeenSolved = true;
 
-    stackedTimer->stop("Albany: performSolve");
+    stackedTimer->stop("PyAlbany: performSolve");
 }
 
 void PyProblem::performAnalysis()
 {
-    if (Teuchos::TimeMonitor::getStackedTimer() != stackedTimer)
-        Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
-    stackedTimer->start("Albany: performAnalysis");
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->start("PyAlbany: performAnalysis");
 
     Teuchos::RCP<Albany::ObserverImpl> observer = Teuchos::rcp(new Albany::ObserverImpl(albanyApp));
 
@@ -475,7 +516,7 @@ void PyProblem::performAnalysis()
 
     inverseHasBeenSolved = true;
 
-    stackedTimer->stop("Albany: performAnalysis");
+    stackedTimer->stop("PyAlbany: performAnalysis");
 }
 
 void PyProblem::reportTimers()
