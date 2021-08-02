@@ -380,6 +380,7 @@ SolverFactory::getValidDebugParameters() const
   validPL->set<int>("Derivative Check", 0, "Derivative check");
   validPL->set<int>("Write Solution to MatrixMarket", 0, "Solution Number to Dump to MatrixMarket");
   validPL->set<bool>("Write Distributed Solution and Map to MatrixMarket", false, "Flag to Write Distributed Solution and Map to MatrixMarket");
+  validPL->set<bool>("Write DgDp to MatrixMarket", false, "Flag to Write DgDp to MatrixMarket");
   validPL->set<int>("Write Solution to Standard Output", 0, "Residual Number to Dump to Standard Output");
   validPL->set<bool>("Analyze Memory", false, "Flag to Analyze Memory");
   validPL->set<bool>("Report Timers", true, "Whether to report timers at the end of execution");

@@ -2,7 +2,8 @@
 ---
 ALBANY:
   Debug Output:
-    Write Distributed Solution and Map to MatrixMarket: True
+    Write Distributed Solution and Map to MatrixMarket: true
+    Write DgDp to MatrixMarket: true
   Problem:
     Name: Thermal 1D
     Solution Method: Transient

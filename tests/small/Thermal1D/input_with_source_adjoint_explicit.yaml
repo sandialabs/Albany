@@ -3,6 +3,7 @@
 ALBANY:
   Debug Output:
     Write Solution to MatrixMarket: 0
+    Write DgDp to MatrixMarket: true
   Problem:
     Name: Thermal 1D
     Solution Method: Transient
@@ -13,7 +14,6 @@ ALBANY:
     Initial Condition:
       Function: Expression Parser All DOFs
       Function Expressions: ['16*x*(1-x)']
-    #Thermal Conductivity: [1.6]
     Heat Capacity: 1.0
     Density: 1.0
     Thermal Source: 1D Cost
@@ -21,7 +21,7 @@ ALBANY:
       Number Of Responses: 1
       Response 0:
         Type: Scalar Response
-        Name: Solution Average
+        Name: Solution Average 
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -29,11 +29,6 @@ ALBANY:
         Name: thermal_conductivity
         Parameter Analytic Expression: Quadratic
         Mesh Part: ''
-      #Parameters:
-        #Number Of Parameters: 1
-        #Parameter 0:
-        #Type: Scalar
-        #Name: 'kappa_x Parameter'
   Discretization:
     1D Elements: 20
     1D Scale: 1.00000000000000000e+00

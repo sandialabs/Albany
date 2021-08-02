@@ -300,9 +300,14 @@ int main(int argc, char *argv[])
 
       if (num_p == 0)  
           status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
+      bool writeToMatrixMarketDgDp = debugParams.get("Write DgDp to MatrixMarket", false);
       for (int j=0; j<num_p; j++) {
         Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
         if (Teuchos::nonnull(dgdp)) {
+          if (writeToMatrixMarketDgDp) {
+	    std::string name = "dgdp_" + std::to_string(i) + "_" + std::to_string(j); 
+            Albany::writeMatrixMarket(dgdp, name);
+	  }
           if(j < num_param_vecs) {
             Albany::printThyraMultiVector(
                 *out << "\nSensitivities (" << i << "," << j << "):\n", dgdp);

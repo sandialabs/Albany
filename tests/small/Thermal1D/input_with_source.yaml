@@ -3,6 +3,7 @@
 ALBANY:
   Debug Output:
     Write Solution to MatrixMarket: 0
+    Write DgDp to MatrixMarket: true
   Problem:
     Name: Thermal 1D
     Solution Method: Transient
