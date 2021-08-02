@@ -76,9 +76,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
       const int numSideVecDim   = -1;
 
       dl->side_layouts[ss_name] = Teuchos::rcp(new Layouts(worksetSize,numSideVertices,numSideNodes,numSideQPs,
-                                                           numSideDim,numCellDim,numCellSides,numSideVecDim,
-                                                           ssMeshSpecs.singleWorksetSizeAllocation,
-                                                           ssMeshSpecs.worksetSize));
+                                                           numSideDim,numCellDim,numCellSides,numSideVecDim,ss_name));
     }
   }
 

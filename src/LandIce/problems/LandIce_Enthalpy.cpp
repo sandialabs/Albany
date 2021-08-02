@@ -137,10 +137,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 	           << ", SideQuadPts= " << numBasalSideQPs << std::endl;
 
 	      dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,
-		  										numDim-1,numDim,numCellSides,vecDim,
-												basalMeshSpecs.singleWorksetSizeAllocation,
-												basalMeshSpecs.worksetSize,
-												basalSideName));
+		  										numDim-1,numDim,numCellSides,vecDim,basalSideName));
 
 	      dl->side_layouts[basalSideName] = dl_basal;
 	  }

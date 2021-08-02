@@ -125,7 +125,7 @@ postRegDerivImpl()
   derivative_dimensions.push_back(
       PHAL::getDerivativeDimensions<EvalT>(application.get(), meshSpecs.get(), true));
   rfm->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
-  application->setSideSetExtents<EvalT>(rfm);
+  application->setDynamicLayoutSizes<EvalT>(rfm);
   rfm->postRegistrationSetupForType<EvalT>(*phxSetup);
 }
 
@@ -135,7 +135,7 @@ postRegImpl<PHAL::AlbanyTraits::Residual>()
 {
   using EvalT = PHAL::AlbanyTraits::Residual;
   const auto phxSetup = application->getPhxSetup();
-  application->setSideSetExtents<EvalT>(rfm);
+  application->setDynamicLayoutSizes<EvalT>(rfm);
   rfm->postRegistrationSetupForType<EvalT>(*phxSetup);
 }
 

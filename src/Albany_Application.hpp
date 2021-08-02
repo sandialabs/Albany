@@ -80,7 +80,7 @@ public:
 
   template<typename Traits>
   void
-  setSideSetExtents(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const;
+  setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const;
 
   //! Get underlying abstract discretization
   Teuchos::RCP<Albany::AbstractDiscretization>

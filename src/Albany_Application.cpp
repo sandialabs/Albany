@@ -737,7 +737,7 @@ Application::finalSetUp(
 
 template<typename Traits>
 void
-Application::setSideSetExtents(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const
+Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const
 {
   // get number of worksets
   const auto& wsElNodeEqID = disc->getWsElNodeEqID();
@@ -771,7 +771,12 @@ Application::setSideSetExtents(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits
 
     if (first_dim_name == "Side") {
 
+      if (maxSideSetSizes.find(sideSetName) == maxSideSetSizes.end())
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Dynamic sizing error: " + sideSetName + " was not found in side sets.\n");
+
       t_dims[0] = maxSideSetSizes[sideSetName];
+
+      TEUCHOS_TEST_FOR_EXCEPTION(t_dims[0] == 0, std::logic_error, "Dynamic sizing error: Extent of first rank should not be 0!\n");
 
       switch (t_dims.size()) {
         case 1:
@@ -1101,7 +1106,7 @@ Application::postRegSetup<PHAL::AlbanyTraits::Residual>()
     evalName = PHAL::evalName<EvalT>("FM",ps);
     phxSetup->insert_eval(evalName);
 
-    setSideSetExtents<EvalT>(fm[ps]);
+    setDynamicLayoutSizes<EvalT>(fm[ps]);
 
     fm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
@@ -1115,7 +1120,7 @@ Application::postRegSetup<PHAL::AlbanyTraits::Residual>()
     evalName = PHAL::evalName<EvalT>("DFM",0);
     phxSetup->insert_eval(evalName);
 
-    setSideSetExtents<EvalT>(dfm);
+    setDynamicLayoutSizes<EvalT>(dfm);
 
     dfm->postRegistrationSetupForType<EvalT>(*phxSetup);
 
@@ -1130,7 +1135,7 @@ Application::postRegSetup<PHAL::AlbanyTraits::Residual>()
       evalName = PHAL::evalName<EvalT>("NFM",ps);
       phxSetup->insert_eval(evalName);
 
-      setSideSetExtents<EvalT>(nfm[ps]);
+      setDynamicLayoutSizes<EvalT>(nfm[ps]);
 
       nfm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
@@ -1185,7 +1190,7 @@ Application::postRegSetupDImpl()
     derivative_dimensions.push_back(
         PHAL::getDerivativeDimensions<EvalT>(this, ps, explicit_scheme));
     fm[ps]->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
-    setSideSetExtents<EvalT>(fm[ps]);
+    setDynamicLayoutSizes<EvalT>(fm[ps]);
     fm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
     // Update phalanx saved/unsaved fields based on field dependencies
@@ -1199,7 +1204,7 @@ Application::postRegSetupDImpl()
       phxSetup->insert_eval(evalName);
 
       nfm[ps]->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
-      setSideSetExtents<EvalT>(nfm[ps]);
+      setDynamicLayoutSizes<EvalT>(nfm[ps]);
       nfm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
       // Update phalanx saved/unsaved fields based on field dependencies
@@ -1219,7 +1224,7 @@ Application::postRegSetupDImpl()
     derivative_dimensions.push_back(
         PHAL::getDerivativeDimensions<EvalT>(this, 0, explicit_scheme));
     dfm->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
-    setSideSetExtents<EvalT>(dfm);
+    setDynamicLayoutSizes<EvalT>(dfm);
     dfm->postRegistrationSetupForType<EvalT>(*phxSetup);
 
     // Update phalanx saved/unsaved fields based on field dependencies
@@ -2996,7 +3001,7 @@ Application::evaluateStateFieldManager(
         sfm[ps]
             ->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
                 derivative_dimensions);
-
+        setDynamicLayoutSizes<PHAL::AlbanyTraits::Residual>(sfm[ps]);
         sfm[ps]->postRegistrationSetup(*phxSetup);
 
         // Update phalanx saved/unsaved fields based on field dependencies
