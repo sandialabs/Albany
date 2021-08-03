@@ -19,10 +19,13 @@ ALBANY:
     Density: 1.0
     Thermal Source: 1D Cost
     Response Functions:
-      Number Of Responses: 1
+      Number Of Responses: 2
       Response 0:
         Type: Scalar Response
         Name: Solution Average
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Min Value
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -132,5 +135,11 @@ ALBANY:
     Sensitivity For Parameter 0:
       Test Value: 9.395066921520e+00
     Test Value: -1.983408347195e+00
+    Relative Tolerance: 1.00000000000000002e-03
+  Regression For Response 1:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Sensitivity For Parameter 0:
+      Test Value: 1.483766171916e+01
+    Test Value: -3.127535657016e+00
     Relative Tolerance: 1.00000000000000002e-03
 ...
