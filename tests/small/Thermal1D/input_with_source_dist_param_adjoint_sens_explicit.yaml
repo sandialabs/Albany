@@ -18,10 +18,13 @@ ALBANY:
     Density: 1.0
     Thermal Source: 1D Cost
     Response Functions:
-      Number Of Responses: 1
+      Number Of Responses: 2
       Response 0:
         Type: Scalar Response
         Name: Solution Average 
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Max Value 
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -41,6 +44,8 @@ ALBANY:
     Tempus:
       Lump Mass Matrix: true
       Constant Mass Matrix: true
+      Sensitivities:
+        Response Function Index: 1
       Integrator Name: Tempus Integrator
       Tempus Integrator:
         Integrator Type: Integrator Basic
@@ -99,8 +104,14 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    #Sensitivity For Parameter 0:
-      #Test Value: 9.395066921520e+00
+    Sensitivity For Parameter 0:
+      Test Value: 0.0
     Test Value: 7.166990507737e-01
+    Relative Tolerance: 1.00000000000000002e-03
+  Regression For Response 1:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Sensitivity For Parameter 0:
+      Test Value: 1.660068083011e+00
+    Test Value: 1.414339231787e+00
     Relative Tolerance: 1.00000000000000002e-03
 ...
