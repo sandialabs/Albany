@@ -290,18 +290,36 @@ int main(int argc, char *argv[])
     }
 
     Albany::RegressionTests regression(slvrfctry.getParameters());
-    for (int i = 0; i < num_g - 1; i++) {
+
+    //Check/print responses
+    for (int i = 0; i < num_g-1; i++) {
       const RCP<const Thyra_Vector> g = thyraResponses[i];
       if (!albanyApp->getResponse(i)->isScalarResponse()) continue;
 
       *out << "\nResponse " << i << ": " << response_names[i] << "\n";
 
       Albany::printThyraVector(*out, g);
+      status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
+    }
 
-      if (num_p == 0)  
-          status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
-      bool writeToMatrixMarketDgDp = debugParams.get("Write DgDp to MatrixMarket", false);
-      for (int j=0; j<num_p; j++) {
+    //Check/print sensitivities
+    const Teuchos::ParameterList &tempusSensParams =
+        slvrfctry.getParameters()->sublist("Piro").sublist("Tempus").sublist("Sensitivities");
+    const int& response_fn_index = tempusSensParams.isParameter("Response Function Index") ?
+          tempusSensParams.get<int>("Response Function Index") : -1;
+    const int& sens_param_index = tempusSensParams.isParameter("Sensitivity Parameter Index") ?
+          tempusSensParams.get<int>("Sensitivity Parameter Index") : -1;
+    const int min_i_index = (response_fn_index == -1) ? 0 : response_fn_index; 
+    const int max_i_index = (response_fn_index == -1) ? num_g - 1 : response_fn_index + 1; 
+    const int min_j_index = (sens_param_index == -1) ? 0 : sens_param_index; 
+    const int max_j_index = (sens_param_index == -1) ? num_p : sens_param_index + 1;  
+    bool writeToMatrixMarketDgDp = debugParams.get("Write DgDp to MatrixMarket", false);
+
+    for (int i = min_i_index; i < max_i_index; i++) {
+      const RCP<const Thyra_Vector> g = thyraResponses[i];
+      if (!albanyApp->getResponse(i)->isScalarResponse()) continue;
+
+      for (int j = min_j_index; j < max_j_index; j++) {
         Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
         if (Teuchos::nonnull(dgdp)) {
           if (writeToMatrixMarketDgDp) {
@@ -330,8 +348,6 @@ int main(int argc, char *argv[])
             status += regression.checkSolveTestResults(i, j, g, norms);
           }
         }
-        else //check response only, no sensitivities
-          status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
       }
     }
 

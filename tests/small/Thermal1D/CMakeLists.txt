@@ -4,8 +4,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_fwd_sens.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_fwd_sens.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_fwd_sens_implicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_fwd_sens_implicit.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_fwd_sens_explicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_fwd_sens_explicit.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_dist_param_adjoint_sens_implicit.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_dist_param_adjoint_sens_implicit.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_dist_param_adjoint_sens_explicit.yaml
@@ -23,12 +25,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_exact_soln.m
 add_test(${testName} ${Albany.exe} input.yaml)
 set_tests_properties(${testName} PROPERTIES LABELS
                                             "Demo;Tpetra;Forward;Serial")
-add_test(${testName}_with_Source_Fwd_Sens ${Albany.exe} input_with_source_fwd_sens.yaml)
-set_tests_properties(${testName}_with_Source_Fwd_Sens PROPERTIES LABELS
+add_test(${testName}_with_Source_Fwd_Sens_Implicit ${Albany.exe} input_with_source_fwd_sens_implicit.yaml)
+set_tests_properties(${testName}_with_Source_Fwd_Sens_Implicit PROPERTIES LABELS
                                             "Demo;Tpetra;Forward;Serial")
 add_test(${testName}_with_Source_Dist_Param_Adjoint_Sens_Implicit ${SerialAlbany.exe} input_with_source_dist_param_adjoint_sens_implicit.yaml)
 set_tests_properties(${testName}_with_Source_Dist_Param_Adjoint_Sens_Implicit PROPERTIES LABELS
                                        	"Demo;Tpetra;Adjoint;Serial")
-add_test(${testName}_with_Source_Adjoint_Dist_Param_Sens_Explicit ${SerialAlbany.exe} input_with_source_dist_param_adjoint_sens_explicit.yaml)
-set_tests_properties(${testName}_with_Source_Adjoint_Dist_Param_Sens_Explicit PROPERTIES LABELS
+add_test(${testName}_with_Source_Dist_Param_Adjoint_Sens_Explicit ${SerialAlbany.exe} input_with_source_dist_param_adjoint_sens_explicit.yaml)
+set_tests_properties(${testName}_with_Source_Dist_Param_Adjoint_Sens_Explicit PROPERTIES LABELS
                                        	"Demo;Tpetra;Adjoint;Serial")

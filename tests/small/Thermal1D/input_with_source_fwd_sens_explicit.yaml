@@ -14,6 +14,7 @@ ALBANY:
     Initial Condition:
       Function: Expression Parser All DOFs
       Function Expressions: ['16*x*(1-x)']
+    Thermal Conductivity: [1.6]
     Heat Capacity: 1.0
     Density: 1.0
     Thermal Source: 1D Cost
@@ -21,32 +22,27 @@ ALBANY:
       Number Of Responses: 2
       Response 0:
         Type: Scalar Response
-        Name: Solution Average 
+        Name: Solution Average
       Response 1:
         Type: Scalar Response
-        Name: Solution Max Value 
+        Name: Solution Min Value
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
-        Type: Distributed
-        Name: thermal_conductivity
-        Parameter Analytic Expression: Quadratic
-        Mesh Part: ''
+        Type: Scalar
+        Name: 'kappa_x Parameter'
   Discretization:
     1D Elements: 20
     1D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: thermal1D_with_source_dist_param_adjoint_sens_explicit_out.exo
-    Exodus Write Interval: 10
+    Exodus Output File Name: thermal1D_with_source_fwd_sens_explicit_out.exo
+    Exodus Write Interval: 100
   Piro:
-    Sensitivity Method: Adjoint
+    Sensitivity Method: Forward
     Tempus:
-      Lump Mass Matrix: true
+      Lump Mass Matrix: false
       Constant Mass Matrix: true
-      Sensitivities:
-        Sensitivity Parameter Index: 0
-        Response Function Index: 1
       Integrator Name: Tempus Integrator
       Tempus Integrator:
         Integrator Type: Integrator Basic
@@ -56,15 +52,12 @@ ALBANY:
         Solution History:
           Storage Type: Unlimited
           Storage Limit: 20
-          Interpolator:
-            Interpolator Type: Lagrange
-            Order: 3  #All RK methods are at most 4th order
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 1.0e-3
+          Initial Time Step: 1.0e-4
           Final Time: 1.0
-          Final Time Index: 1000000
+          Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
           Output Time List: ''
@@ -105,12 +98,14 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 7.166990507737e-01
+    Sensitivity For Parameter 0:
+      Test Value: 9.395066921520e+00
+    Test Value: -1.983408347195e+00
     Relative Tolerance: 1.00000000000000002e-03
   Regression For Response 1:
     Absolute Tolerance: 1.00000000000000008e-05
     Sensitivity For Parameter 0:
-      Test Value: 1.660068083011e+00
-    Test Value: 1.414339231787e+00
+      Test Value: 1.483766171916e+01
+    Test Value: -3.127535657016e+00
     Relative Tolerance: 1.00000000000000002e-03
 ...

@@ -40,7 +40,7 @@ ALBANY:
     1D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: thermal1D_with_source_out.exo
+    Exodus Output File Name: thermal1D_with_source_dist_param_adjoint_sens_implicit_out.exo
     Exodus Write Interval: 1 
   Piro:
     #Sensitivity Method: Adjoint
