@@ -90,7 +90,7 @@ void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpe
     numSideNodes    = sideBasis->getCardinality();
     numSideQPs      = sideCubature->getNumPoints();
 
-    dl_side = Teuchos::rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
+    dl_side = Teuchos::rcp(new Albany::Layouts(numSideVertices,numSideNodes,
                                                numSideQPs,numDim-1,numDim,numCellSides,2,sideSetName));
     dl->side_layouts[sideSetName] = dl_side;
   }

@@ -749,11 +749,17 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
     const LocalSideSetInfoList& sideSetView = disc->getSideSetViews(i);
     for (auto it = sideSetView.begin(); it != sideSetView.end(); ++it) {
       if (maxSideSetSizes.find(it->first) == maxSideSetSizes.end()) {
+        printf("[%d] Adding sideset %s to maxSideSetSizes\n", comm->getRank(), it->first.c_str());
         maxSideSetSizes[it->first] = 0;
       }
       unsigned int sideSetSize = it->second.size;
       maxSideSetSizes[it->first] = std::max(maxSideSetSizes[it->first], sideSetSize);
     }
+  }
+
+  printf("[%d] maxSideSetSizes:\n", comm->getRank());
+  for (auto it = maxSideSetSizes.begin(); it != maxSideSetSizes.end(); ++it) {
+    printf("[%d]   %s: %d\n", comm->getRank(), it->first.c_str(), it->second);
   }
 
   // Iterate over tags and set extents for sideset fields
@@ -769,10 +775,12 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
     std::string t_identifier = t_dl.identifier();
     std::string sideSetName = t_identifier.substr(0, t_identifier.find("<"));
 
-    if (first_dim_name == "Side") {
+    printf("[%d] field tag identifier: %s\n", comm->getRank(), t->identifier().c_str());
 
-      if (maxSideSetSizes.find(sideSetName) == maxSideSetSizes.end())
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Dynamic sizing error: " + sideSetName + " was not found in side sets.\n");
+    if (first_dim_name == "Side" && maxSideSetSizes.find(sideSetName) != maxSideSetSizes.end()) {
+
+      printf("[%d] data layout identifier: %s, sideSetName: %s\n", comm->getRank(), t_identifier.c_str(), sideSetName.c_str());
+      printf("[%d]   maxSideSetSizes[%s]: %d\n", comm->getRank(), sideSetName.c_str(), maxSideSetSizes[sideSetName]);
 
       t_dims[0] = maxSideSetSizes[sideSetName];
 
@@ -801,6 +809,8 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
           TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
             "Error! Sideset dynamic sizing as encountered a layout with more field tags than expected.\n");
       }
+
+      printf("[%d] updated field tag identifier: %s\n", comm->getRank(), t->identifier().c_str());
     }
   }
 }

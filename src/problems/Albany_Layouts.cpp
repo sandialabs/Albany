@@ -105,7 +105,7 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   // have separate node_vector and node_gradient layouts.
 }
 
-Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim, std::string sideSetName)
+Albany::Layouts::Layouts (int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim, std::string sideSetName)
 // numSideDim is the number of spatial dimensions
 // vecDim is the length of a vector quantity
 // -- For many problems, numSideDim is used for both since there are
@@ -161,10 +161,6 @@ Albany::Layouts::Layouts (int worksetSize, int numVertices, int numNodes, int nu
   node_tensor4  = rcp(new MDALayout<Side,Node,Dim,Dim,Dim,Dim>(sideSetName,0,numNodes,numSideDim,numSideDim,numSideDim,numSideDim));
   qp_tensor4    = rcp(new MDALayout<Side,QuadPoint,Dim,Dim,Dim,Dim>(sideSetName,0,numQPts,numSideDim,numSideDim,numSideDim,numSideDim));
   cell_tensor4  = rcp(new MDALayout<Side,Dim,Dim,Dim,Dim>(sideSetName,0,numSideDim,numSideDim,numSideDim,numSideDim));
-
-  node_node_scalar = rcp(new MDALayout<Node,Side,Dim>(worksetSize,numSides,1));
-  node_node_vector = rcp(new MDALayout<Node,Side,Dim>(worksetSize,numSides,vecDim));
-  node_node_tensor = rcp(new MDALayout<Node,Side,Dim,Dim>(worksetSize,numSides,numSideDim,numSideDim));
 
   // Coordinates: 3vector is for shells 2D topology 3 coordinates
   // Note: vertices coordinates always have the dimension of the ambient space. In fact, you need full n-dim coordinates

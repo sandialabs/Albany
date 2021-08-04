@@ -75,7 +75,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
       const int numSideQPs      = sideCubature[ss_name]->getNumPoints();
       const int numSideVecDim   = -1;
 
-      dl->side_layouts[ss_name] = Teuchos::rcp(new Layouts(worksetSize,numSideVertices,numSideNodes,numSideQPs,
+      dl->side_layouts[ss_name] = Teuchos::rcp(new Layouts(numSideVertices,numSideNodes,numSideQPs,
                                                            numSideDim,numCellDim,numCellSides,numSideVecDim,ss_name));
     }
   }
