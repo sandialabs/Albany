@@ -178,7 +178,7 @@ Albany::AdvectionProblem::constructEvaluators(
   Teuchos::ArrayRCP<string> dof_names_dot(neq);
   dof_names_dot[0] = "solution_dot";
   Teuchos::ArrayRCP<string> resid_names(neq);
-  resid_names[0] = "Solution Residual";
+  resid_names[0] = "Advection Residual";
 
   fm0.template registerEvaluator<EvalT>(
       evalUtils.constructGatherSolutionEvaluator(
@@ -274,7 +274,7 @@ Albany::AdvectionProblem::constructEvaluators(
     // Input
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("QP Time Derivative Variable Name", "solution_dot");
-    p->set<string>("Gradient QP Variable Name", "Solution Gradient");
+    p->set<string>("Gradient QP Variable Name", "solution Gradient");
     p->set<string>("Source Name", "Advection Source");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 

@@ -5,27 +5,29 @@ ALBANY:
   #  Write Jacobian to MatrixMarket: -1
   #  Write Residual to MatrixMarket: -1
   Problem:
-    Name: Thermal 1D
+    Name: Advection 1D
     Solution Method: Transient
-    Dirichlet BCs:
-      #ExpressionEvaluated SDBC on NS NodeSet1 for DOF T: '250.0 + 5.0e-04 * t'
-      ExpressionEvaluated SDBC on NS NodeSet1 for DOF T: '250.0 *cosh(5.421312110550360e-02) * exp(0.0015*0.0015*t)'
+    Dirichlet BCs: {}
     Initial Condition:
       Function: Expression Parser All DOFs
-      #Function Expressions: ['250']
-      Function Expressions: ['250 * cosh(5.421312110550360e-02*x)']
-    Thermal Conductivity: [1.6]
+      Function Expressions: ['sin(x)']
+    Advection Coefficient: [5.0]
     Response Functions:
-      Number Of Responses: 1
+      Number Of Responses: 2
       Response 0:
         Type: Scalar Response
         Name: Solution Average
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Max Value
   Discretization:
-    1D Elements: 20
-    1D Scale: 1.00000000000000000e+00
+    1D Elements: 100
+    1D Scale: 6.283185307179586e00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: thermal1D_out.exo
+    Exodus Output File Name: advection1D_out.exo
+    Periodic_x BC: true
+    Exodus Write Interval: 100
   Piro:
     Tempus:
       Integrator Name: Tempus Integrator
@@ -40,8 +42,8 @@ ALBANY:
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 1.0e+03
-          Final Time: 1.0e+5
+          Initial Time Step: 1.0e-4
+          Final Time: 1.0
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08

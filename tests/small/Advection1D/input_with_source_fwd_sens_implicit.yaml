@@ -14,7 +14,7 @@ ALBANY:
     Initial Condition:
       Function: Expression Parser All DOFs
       Function Expressions: ['16*x*(1-x)']
-    Thermal Conductivity: [1.6]
+    Advection Coefficient: [1.6]
     Advection Source: 1D Cost
     Response Functions:
       Number Of Responses: 2
@@ -28,13 +28,13 @@ ALBANY:
       Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
-        Name: 'kappa_x Parameter'
+        Name: 'a_x Parameter'
   Discretization:
     1D Elements: 20
     1D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: thermal1D_with_source_fwd_sens_implicit_out.exo
+    Exodus Output File Name: advection1D_with_source_fwd_sens_implicit_out.exo
   Piro:
     Sensitivity Method: Forward
     Tempus:
