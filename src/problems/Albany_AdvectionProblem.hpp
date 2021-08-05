@@ -88,9 +88,7 @@ namespace Albany {
 
    int numDim;
    Teuchos::Array<double> kappa;  // thermal conductivity
-   double                 C;      // heat capacity
-   double                 rho;    // density
-   std::string            thermal_source; //thermal source name 
+   std::string            advection_source; //thermal source name 
    bool                   conductivityIsDistParam;
 
    //! Problem PL 
@@ -184,11 +182,11 @@ Albany::AdvectionProblem::constructEvaluators(
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
   Teuchos::ArrayRCP<string> dof_names(neq);
-  dof_names[0] = "Temperature";
+  dof_names[0] = "solution";
   Teuchos::ArrayRCP<string> dof_names_dot(neq);
-  dof_names_dot[0] = "Temperature_dot";
+  dof_names_dot[0] = "solution_dot";
   Teuchos::ArrayRCP<string> resid_names(neq);
-  resid_names[0] = "Temperature Residual";
+  resid_names[0] = "Solution Residual";
 
   fm0.template registerEvaluator<EvalT>(
       evalUtils.constructGatherSolutionEvaluator(
@@ -278,15 +276,15 @@ Albany::AdvectionProblem::constructEvaluators(
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
   }
 
-  {  // Temperature Resid
-    RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
+  {  // Advection Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Advection Resid"));
 
     // Input
     p->set<string>("Weighted BF Name", "wBF");
-    p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
-    p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
+    p->set<string>("QP Time Derivative Variable Name", "solution_dot");
+    p->set<string>("Gradient QP Variable Name", "Solution Gradient");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<string>("Source Name", "Temperature Source");
+    p->set<string>("Source Name", "Advection Source");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
     p->set<RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
@@ -309,13 +307,11 @@ Albany::AdvectionProblem::constructEvaluators(
     else {
       p->set<bool>("Disable Transient", false);
     }
-    p->set<double>("Heat Capacity", C);
-    p->set<double>("Density", rho);
     p->set<bool>("Distributed Thermal Conductivity", conductivityIsDistParam);
-    p->set<std::string>("Thermal Source", thermal_source); 
+    p->set<std::string>("Advection Source", advection_source); 
 
     // Output
-    p->set<string>("Residual Name", "Temperature Residual");
+    p->set<string>("Residual Name", "Advection Residual");
 
     ev = rcp(new PHAL::AdvectionResid<EvalT, AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);

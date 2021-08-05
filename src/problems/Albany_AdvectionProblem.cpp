@@ -34,9 +34,7 @@ AdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (kappa.size() != numDim) {
     ALBANY_ABORT("Thermal Conductivity array must have length = numDim!");
   }
-  rho = params->get<double>("Density", 1.0);
-  C = params->get<double>("Heat Capacity", 1.0);
-  thermal_source = params->get<std::string>("Thermal Source", "None"); 
+  advection_source = params->get<std::string>("Advection Source", "None"); 
 
   conductivityIsDistParam = false;
   if(params->isSublist("Parameters")) {
@@ -67,7 +65,7 @@ buildProblem(
 {
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
-  std::cout << "Thermal Problem Num MeshSpecs: " << physSets << std::endl;
+  std::cout << "Advection Problem Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
 
   for (int ps=0; ps<physSets; ps++) {
@@ -172,7 +170,7 @@ Albany::AdvectionProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::
    condNames[3] = "robin";
    condNames[4] = "radiate";
 
-   nfm.resize(1); // Thermal problem only has one physics set
+   nfm.resize(1); // Advection problem only has one physics set
    nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
                                   condNames, offsets, dl, this->params, this->paramLib);
 
@@ -190,12 +188,8 @@ Albany::AdvectionProblem::getValidProblemParameters() const
       "Thermal Conductivity",
       defaultData,
       "Arrays of values of thermal conductivities in x, y, z [required]");
-  validPL->set<double>(
-      "Heat Capacity", 1.0, "Value of heat capacity [required]");
-  validPL->set<double>(
-      "Density", 1.0, "Value of density [required]");
   validPL->set<std::string>(
-      "Thermal Source", "None", "Value of thermal source [required]");
+      "Advection Source", "None", "Value of thermal source [required]");
 
   return validPL;
 }

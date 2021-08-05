@@ -1,42 +1,32 @@
 %YAML 1.1
 ---
 ALBANY:
-  Debug Output:
-    Write Solution to MatrixMarket: 0
-    Write DgDp to MatrixMarket: true
+  #Debug Output: 
+  #  Write Jacobian to MatrixMarket: -1
+  #  Write Residual to MatrixMarket: -1
   Problem:
-    Name: Advection 1D
+    Name: Thermal 1D
     Solution Method: Transient
-    Compute Sensitivities: true
     Dirichlet BCs:
-      SDBC on NS NodeSet0 for DOF T: 0.0
-      SDBC on NS NodeSet1 for DOF T: 0.0
+      #ExpressionEvaluated SDBC on NS NodeSet1 for DOF T: '250.0 + 5.0e-04 * t'
+      ExpressionEvaluated SDBC on NS NodeSet1 for DOF T: '250.0 *cosh(5.421312110550360e-02) * exp(0.0015*0.0015*t)'
     Initial Condition:
       Function: Expression Parser All DOFs
-      Function Expressions: ['16*x*(1-x)']
+      #Function Expressions: ['250']
+      Function Expressions: ['250 * cosh(5.421312110550360e-02*x)']
     Thermal Conductivity: [1.6]
-    Advection Source: 1D Cost
     Response Functions:
-      Number Of Responses: 2
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average
-      Response 1:
-        Type: Scalar Response
-        Name: Solution Min Value
-    Parameters:
-      Number Of Parameters: 1
-      Parameter 0:
-        Type: Scalar
-        Name: 'kappa_x Parameter'
   Discretization:
     1D Elements: 20
     1D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: thermal1D_with_source_fwd_sens_implicit_out.exo
+    Exodus Output File Name: thermal1D_out.exo
   Piro:
-    Sensitivity Method: Forward
     Tempus:
       Integrator Name: Tempus Integrator
       Tempus Integrator:
@@ -50,11 +40,17 @@ ALBANY:
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 1.0e-2
-          Final Time: 1.0
+          Initial Time Step: 1.0e+03
+          Final Time: 1.0e+5
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
+          Time Step Control Strategy:
+            Strategy Type: Basic VS
+            Reduction Factor: 5.00000000000000000e-01
+            Amplification Factor: 1.50000000000000000e+00
+            Minimum Value Monitoring Function: 1.0e-12
+            Maximum Value Monitoring Function: 1.0e20
           Output Time List: ''
           Output Index List: ''
           Output Time Interval: 1.00000000000000000e+01
@@ -73,7 +69,7 @@ ALBANY:
                 Forcing Term Method: Constant
                 Rescue Bad Newton Solve: true
                 Linear Solver:
-                  Tolerance: 9.99999999999999954e-07
+                  Tolerance: 1.00000000000000002e-02
             Line Search:
               Full Step:
                 Full Step: 1.00000000000000000e+00
@@ -104,6 +100,8 @@ ALBANY:
               Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 10
+        Demo Predictor:
+          Stepper Type: Forward Euler
       Stratimikos:
         Linear Solver Type: Belos
         Linear Solver Types:
@@ -130,14 +128,6 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Sensitivity For Parameter 0:
-      Test Value: 9.395066921520e+00
-    Test Value: -1.983408347195e+00
-    Relative Tolerance: 1.00000000000000002e-03
-  Regression For Response 1:
-    Absolute Tolerance: 1.00000000000000008e-05
-    Sensitivity For Parameter 0:
-      Test Value: 1.483766171916e+01
-    Test Value: -3.127535657016e+00
+    Test Value: 3.132382379221e+02
     Relative Tolerance: 1.00000000000000002e-03
 ...

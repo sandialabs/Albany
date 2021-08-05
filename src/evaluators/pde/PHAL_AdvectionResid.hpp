@@ -52,8 +52,6 @@ private:
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
   PHX::MDField<ScalarT const, Cell, QuadPoint, Dim>           uGrad;
   PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>       coordVec;
-  double                 C;      // Heat Capacity
-  double                 rho;    // Density
   bool                   disable_transient; //Boolean to disable transient terms 
   bool                   conductivityIsDistParam; //Flag telling code conductivity is distr. param.
   // Thermal conductivity components
