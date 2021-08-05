@@ -29,22 +29,21 @@ AdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   neq = 1; 
   Teuchos::Array<double> defaultData;
   defaultData.resize(numDim, 1.0);
-  kappa =
-      params->get<Teuchos::Array<double>>("Thermal Conductivity", defaultData);
-  if (kappa.size() != numDim) {
-    ALBANY_ABORT("Thermal Conductivity array must have length = numDim!");
+  a = params->get<Teuchos::Array<double>>("Advection Coefficient", defaultData);
+  if (a.size() != numDim) {
+    ALBANY_ABORT("Advection Coefficient array must have length = numDim!");
   }
   advection_source = params->get<std::string>("Advection Source", "None"); 
 
-  conductivityIsDistParam = false;
+  advectionIsDistParam = false;
   if(params->isSublist("Parameters")) {
     int total_num_param_vecs, num_param_vecs, numDistParams;
     Albany::getParameterSizes(params->sublist("Parameters"), total_num_param_vecs, num_param_vecs, numDistParams);
     for (int i=0; i<numDistParams; ++i) {
       Teuchos::ParameterList p = params->sublist("Parameters").sublist(Albany::strint("Parameter", 
 			                 i+num_param_vecs));
-      if(p.get<std::string>("Name") == "thermal_conductivity" && p.get<std::string>("Type") == "Distributed")
-        conductivityIsDistParam = true;
+      if(p.get<std::string>("Name") == "advection_coefficient" && p.get<std::string>("Type") == "Distributed")
+        advectionIsDistParam = true;
     }
   }
   // Set Parameters for passing coords/near null space to preconditioners
@@ -185,7 +184,7 @@ Albany::AdvectionProblem::getValidProblemParameters() const
   Teuchos::Array<double> defaultData;
   defaultData.resize(numDim, 1.0);
   validPL->set<Teuchos::Array<double>>(
-      "Thermal Conductivity",
+      "Advection Coefficient",
       defaultData,
       "Arrays of values of thermal conductivities in x, y, z [required]");
   validPL->set<std::string>(

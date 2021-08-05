@@ -49,16 +49,14 @@ private:
   // Input:
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint>      wBF;
   PHX::MDField<ScalarT const, Cell, QuadPoint>                udot;
-  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
   PHX::MDField<ScalarT const, Cell, QuadPoint, Dim>           uGrad;
   PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>       coordVec;
-  bool                   disable_transient; //Boolean to disable transient terms 
-  bool                   conductivityIsDistParam; //Flag telling code conductivity is distr. param.
-  // Thermal conductivity components
-  PHX::MDField<const ScalarT> kappa_x;
-  PHX::MDField<const ScalarT> kappa_y;
-  PHX::MDField<const ScalarT> kappa_z;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> ThermalCond;
+  bool advectionIsDistParam; //Flag telling code conductivity is distr. param.
+  // Advection coefficient components
+  PHX::MDField<const ScalarT> a_x;
+  PHX::MDField<const ScalarT> a_y;
+  PHX::MDField<const ScalarT> a_z;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> AdvCoeff;
 
   // Output:
   PHX::MDField<ScalarT, Cell, QuadPoint> source;

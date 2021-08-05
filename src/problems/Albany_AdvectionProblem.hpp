@@ -87,9 +87,9 @@ namespace Albany {
   protected:
 
    int numDim;
-   Teuchos::Array<double> kappa;  // thermal conductivity
-   std::string            advection_source; //thermal source name 
-   bool                   conductivityIsDistParam;
+   Teuchos::Array<double> a;  // advection_coefficient
+   std::string            advection_source; //advection source name 
+   bool                   advectionIsDistParam;
 
    //! Problem PL 
    const Teuchos::RCP<Teuchos::ParameterList> params; 
@@ -155,20 +155,12 @@ Albany::AdvectionProblem::constructEvaluators(
   SolutionMethodType SolutionType = getSolutionMethod();
 
   ALBANY_PANIC(
-      SolutionType == SolutionMethodType::Unknown,
-      "Solution Method must be Steady, Transient, "
-      "Continuation, or Eigensolve");
+      SolutionType != SolutionMethodType::Transient,
+      "Solution Method must be Transient for Advection Problem!\n "); 
   
-  if (SolutionType == SolutionMethodType::Transient) { // Problem is transient
-    ALBANY_PANIC(
-        number_of_time_deriv != 1,
-        "You are using a transient solution method in Albany::AdvectionProblem but number of time derivatives != 1!"); 
-  }
-  else { //Problem is steady
-    ALBANY_PANIC(
-        number_of_time_deriv > 0,
-        "You are using a steady solution method in Albany::AdvectionProblem but number of time derivatives > 0!");
-  } 
+  ALBANY_PANIC(
+      number_of_time_deriv != 1,
+      "You are using a transient solution method in Albany::AdvectionProblem but number of time derivatives != 1!"); 
 
   *out << "Field Dimensions: Workset=" << worksetSize
        << ", Vertices= " << numVertices << ", Nodes= " << numNodes
@@ -216,47 +208,47 @@ Albany::AdvectionProblem::constructEvaluators(
         evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
-  if (!conductivityIsDistParam) {  
-    //Shared parameter for sensitivity analysis: kappa_x
-    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_x"));
+  if (!advectionIsDistParam) {  
+    //Shared parameter for sensitivity analysis: a_x
+    RCP<ParameterList> p = rcp(new ParameterList("Advection Coefficient: a_x"));
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
-    const std::string param_name = "kappa_x Parameter";
+    const std::string param_name = "a_x Parameter";
     p->set<std::string>("Parameter Name", param_name);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-    p->set<double>("Default Nominal Value", kappa[0]);
-    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>> ptr_kappa_x;
-    ptr_kappa_x = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ptr_kappa_x);
+    p->set<double>("Default Nominal Value", a[0]);
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>> ptr_a_x;
+    ptr_a_x = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ptr_a_x);
 
-    if (numDim > 1) {  //Shared parameter for sensitivity analysis: kappa_y
-      RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_y"));
+    if (numDim > 1) {  //Shared parameter for sensitivity analysis: a_y
+      RCP<ParameterList> p = rcp(new ParameterList("Advection Coefficient: a_y"));
       p->set< RCP<ParamLib> >("Parameter Library", paramLib);
-      const std::string param_name = "kappa_y Parameter";
+      const std::string param_name = "a_y Parameter";
       p->set<std::string>("Parameter Name", param_name);
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-      p->set<double>("Default Nominal Value", kappa[1]);
-      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>> ptr_kappa_y;
-      ptr_kappa_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ptr_kappa_y);
+      p->set<double>("Default Nominal Value", a[1]);
+      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>> ptr_a_y;
+      ptr_a_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_a_y);
     }
-    if (numDim > 2) {  //Shared parameter for sensitivity analysis: kappa_z
-      RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_z"));
+    if (numDim > 2) {  //Shared parameter for sensitivity analysis: a_z
+      RCP<ParameterList> p = rcp(new ParameterList("Advection Coefficient: a_z"));
       p->set< RCP<ParamLib> >("Parameter Library", paramLib);
-      const std::string param_name = "kappa_z Parameter";
+      const std::string param_name = "a_z Parameter";
       p->set<std::string>("Parameter Name", param_name);
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-      p->set<double>("Default Nominal Value", kappa[2]);
-      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>> ptr_kappa_z;
-      ptr_kappa_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ptr_kappa_z);
+      p->set<double>("Default Nominal Value", a[2]);
+      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>> ptr_a_z;
+      ptr_a_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_a_z);
     }
   }
-  else //conductivityIsDistParam
+  else //advectionIsDistParam
   {
     RCP<ParameterList> p = rcp(new ParameterList);
     Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
-    std::string stateName = "thermal_conductivity";
-    std::string fieldName = "ThermalConductivity";
+    std::string stateName = "advection_coefficient";
+    std::string fieldName = "AdvectionCoefficient";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
 
     //Gather parameter (similarly to what done with the solution)
@@ -272,7 +264,7 @@ Albany::AdvectionProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
     fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(fieldName));
-    stateName = "thermal_conductivity_sensitivity";
+    stateName = "advection_coefficient_sensitivity";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
   }
 
@@ -283,7 +275,6 @@ Albany::AdvectionProblem::constructEvaluators(
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("QP Time Derivative Variable Name", "solution_dot");
     p->set<string>("Gradient QP Variable Name", "Solution Gradient");
-    p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<string>("Source Name", "Advection Source");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
 
@@ -292,22 +283,16 @@ Albany::AdvectionProblem::constructEvaluators(
     p->set<RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
     p->set<RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
     p->set<RCP<DataLayout>>("Node Scalar Data Layout", dl->node_scalar);
-    if (!conductivityIsDistParam) {  
-      p->set<std::string>("Thermal Conductivity: kappa_x","kappa_x Parameter");
-      if (numDim > 1) p->set<std::string>("Thermal Conductivity: kappa_y","kappa_y Parameter");
-      if (numDim > 2) p->set<std::string>("Thermal Conductivity: kappa_z","kappa_z Parameter");
+    if (!advectionIsDistParam) {  
+      p->set<std::string>("Advection Coefficient: a_x","a_x Parameter");
+      if (numDim > 1) p->set<std::string>("Advection Coefficient: a_y","a_y Parameter");
+      if (numDim > 2) p->set<std::string>("Advection Coefficient: a_z","a_z Parameter");
     }
     else {
-      p->set<string>("ThermalConductivity Name", "ThermalConductivity");
+      p->set<string>("AdvectionCoefficient Name", "AdvectionCoefficient");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     }
-    if (SolutionType != SolutionMethodType::Transient) {
-      p->set<bool>("Disable Transient", true);
-    }
-    else {
-      p->set<bool>("Disable Transient", false);
-    }
-    p->set<bool>("Distributed Thermal Conductivity", conductivityIsDistParam);
+    p->set<bool>("Distributed Advection Coefficient", advectionIsDistParam);
     p->set<std::string>("Advection Source", advection_source); 
 
     // Output
