@@ -48,9 +48,9 @@ private:
   
   // Input:
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint>      wBF;
-  PHX::MDField<ScalarT const, Cell, QuadPoint>                Tdot;
+  PHX::MDField<ScalarT const, Cell, QuadPoint>                udot;
   PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> wGradBF;
-  PHX::MDField<ScalarT const, Cell, QuadPoint, Dim>           TGrad;
+  PHX::MDField<ScalarT const, Cell, QuadPoint, Dim>           uGrad;
   PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>       coordVec;
   double                 C;      // Heat Capacity
   double                 rho;    // Density
@@ -63,11 +63,11 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint> ThermalCond;
 
   // Output:
-  PHX::MDField<ScalarT, Cell, QuadPoint> Source;
-  PHX::MDField<ScalarT, Cell, Node> TResidual;
+  PHX::MDField<ScalarT, Cell, QuadPoint> source;
+  PHX::MDField<ScalarT, Cell, Node> residual;
 
   unsigned int numQPs, numDims, numNodes, worksetSize;
-  enum FTYPE {NONE, ONEDCOST, TWODCOSTEXPT};
+  enum FTYPE {NONE};
   FTYPE force_type;
 };
 }
