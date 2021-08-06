@@ -50,6 +50,14 @@ AdvectionResid(const Teuchos::ParameterList& p,
   numQPs      = dims[2];
   numDims     = dims[3];
 
+  if (numDims > 1) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Advection problem is currently implemented in 1D only!  You are attempting to run in " 
+	<<  numDims << "spatial dimensions.\n"); 
+  }
+
   if (!advectionIsDistParam) {  
     a_x = decltype(a_x)(p.get<std::string>("Advection Coefficient: a_x"), dl->shared_param);
     this->addDependentField(a_x);
