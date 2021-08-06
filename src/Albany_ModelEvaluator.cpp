@@ -353,6 +353,23 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
     for (int i=0; i<num_dofs; i++) {
       std::cout << "IKT i, ov_coords = " << i << ", " << ov_coords[i] << "\n"; 
     }*/
+    Teuchos::ArrayRCP<double> coeffs(2);
+    if (param_list.isParameter("Parameter Analytic Expression Coefficients")) {
+      Teuchos::Array<double> coeffs_array = param_list.get<Teuchos::Array<double>>("Parameter Analytic Expression Coefficients");
+      if (coeffs_array.size() != 2) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              "\nError!  In Albany::ModelEvaluator constructor:  "
+              << "'Parameter Analytic Expression Coefficients' array must have size 2."
+              << " You have provided an array of size " << coeffs_array.size() << ".\n"); 
+      }
+      coeffs[0] = coeffs_array[0];
+      coeffs[1] = coeffs_array[1];
+    }
+    else {
+      coeffs[0] = 1.0; 
+      coeffs[1] = 0.0;
+    }
+
     Teuchos::ArrayRCP<ST> distParamVec_ArrayRCP = 
        getNonconstLocalData(distParam->vector()); 
 
@@ -361,14 +378,14 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
       if (num_dims == 1) {
         for (int i=0; i < num_nodes; i++) {
           const double x = ov_coords[i]; 
-          distParamVec_ArrayRCP[i] = x*(1-x); 
+          distParamVec_ArrayRCP[i] = x*(coeffs[0]-x) + coeffs[1]; 
         }
       }
       else if (num_dims == 2) {
         for (int i=0; i < num_nodes; i++) {
           const double x = ov_coords[2*i]; 
           const double y = ov_coords[2*i+1]; 
-          distParamVec_ArrayRCP[i] = x*(1-x)*y*(1-y); 
+          distParamVec_ArrayRCP[i] = x*(coeffs[0]-x)*y*(coeffs[0]-y) + coeffs[1]; 
         }
       }
       else {
@@ -377,25 +394,11 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
             << "Quadratic Parameter Analytic Expression not valid for >2D.\n"); 
       }
     }
-    else if (param_expr == "Shifted Quadratic") 
-    {
-      if (num_dims == 1) {
-        for (int i=0; i < num_nodes; i++) {
-          const double x = ov_coords[i]; 
-          distParamVec_ArrayRCP[i] = x*(2.0*M_PI-x) + 10.0; 
-        }
-      }
-      else {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            "\nError!  In Albany::ModelEvaluator constructor:  "
-            << "Shifted Quadratic Parameter Analytic Expression not valid for >1D.\n"); 
-      }
-    }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
             "\nError!  In Albany::ModelEvaluator constructor:  "
             << "Invalid value for 'Parameter Analytic Expression' = "
-            << param_expr << ".  Valid expressions are: 'Quadratic', 'Shifted Quadratic'.\n");
+            << param_expr << ".  Valid expressions are: 'Quadratic'.\n");
     }
   } 
     
