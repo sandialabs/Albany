@@ -154,20 +154,20 @@ Albany::ThermalProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Me
 
 
    // Construct BC evaluators for all possible names of conditions
-   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+   // Should only specify flux vector components (dTdx, dTdy, dTdz), or dTdn, not both
    std::vector<std::string> condNames(5);
-     //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
+     //dTdx, dTdy, dTdz, dTdn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
 
    // Note that sidesets are only supported for two and 3D currently
    if(numDim == 2)
-    condNames[0] = "(dudx, dudy)";
+    condNames[0] = "(dTdx, dTdy)";
    else if(numDim == 3)
-    condNames[0] = "(dudx, dudy, dudz)";
+    condNames[0] = "(dTdx, dTdy, dTdz)";
    else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
-   condNames[1] = "dudn";
+   condNames[1] = "dTdn";
    condNames[2] = "scaled jump";
    condNames[3] = "robin";
    condNames[4] = "radiate";

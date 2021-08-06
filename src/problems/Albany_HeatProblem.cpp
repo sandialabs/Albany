@@ -149,8 +149,8 @@ Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshS
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq);
 
-   bcNames[0] = "T";
-   dof_names[0] = "Temperature";
+   bcNames[0] = "u";
+   dof_names[0] = "solution";
    offsets[0].resize(1);
    offsets[0][0] = 0;
 

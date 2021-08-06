@@ -377,11 +377,25 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
             << "Quadratic Parameter Analytic Expression not valid for >2D.\n"); 
       }
     }
+    else if (param_expr == "Shifted Quadratic") 
+    {
+      if (num_dims == 1) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[i]; 
+          distParamVec_ArrayRCP[i] = x*(2.0*M_PI-x) + 10.0; 
+        }
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "Shifted Quadratic Parameter Analytic Expression not valid for >1D.\n"); 
+      }
+    }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
             "\nError!  In Albany::ModelEvaluator constructor:  "
             << "Invalid value for 'Parameter Analytic Expression' = "
-            << param_expr << ".  Valid expressions are: 'Quadratic'.\n");
+            << param_expr << ".  Valid expressions are: 'Quadratic', 'Shifted Quadratic'.\n");
     }
   } 
     
