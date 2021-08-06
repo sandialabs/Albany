@@ -8,6 +8,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_fwd_sens_implicit.y
                ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_fwd_sens_implicit.yaml COPYONLY)
 
 # Create the test with this name and standard executable
+add_test(${testName} ${Albany.exe} input.yaml)
+set_tests_properties(${testName} PROPERTIES LABELS "Demo;Tpetra;Forward;Serial")
 #add_test(${testName}_with_Source_Fwd_Sens_Implicit ${Albany.exe} input_with_source_fwd_sens_implicit.yaml)
 #set_tests_properties(${testName}_with_Source_Fwd_Sens_Implicit PROPERTIES LABELS
 #                                            "Demo;Tpetra;Forward;Serial")

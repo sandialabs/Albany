@@ -11,7 +11,7 @@ ALBANY:
     Initial Condition:
       Function: Expression Parser All DOFs
       Function Expressions: ['sin(x)']
-    Advection Coefficient: [5.0]
+    Advection Coefficient: [10.0]
     Response Functions:
       Number Of Responses: 2
       Response 0:
@@ -21,13 +21,13 @@ ALBANY:
         Type: Scalar Response
         Name: Solution Max Value
   Discretization:
-    1D Elements: 100
+    1D Elements: 25
     1D Scale: 6.283185307179586e00
     Workset Size: -1
     Method: STK1D
     Exodus Output File Name: advection1D_out.exo
     Periodic_x BC: true
-    Exodus Write Interval: 100
+    Exodus Write Interval: 1
   Piro:
     Tempus:
       Integrator Name: Tempus Integrator
@@ -42,7 +42,7 @@ ALBANY:
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 1.0e-4
+          Initial Time Step: 1.0e-3
           Final Time: 1.0
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
@@ -130,6 +130,10 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 3.132382379221e+02
+    Test Value: 0.0
+    Relative Tolerance: 1.00000000000000002e-03
+  Regression For Response 1:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Test Value: 9.511938565164e-01
     Relative Tolerance: 1.00000000000000002e-03
 ...
