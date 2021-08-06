@@ -1,12 +1,14 @@
 %YAML 1.1
 ---
 ALBANY:
-  #Debug Output: 
+  Debug Output: 
   #  Write Jacobian to MatrixMarket: -1
   #  Write Residual to MatrixMarket: -1
+    Write DgDp to MatrixMarket: true
   Problem:
     Name: Advection 1D
     Solution Method: Transient
+    Compute Sensitivities: true
     Dirichlet BCs: {}
     Initial Condition:
       Function: Expression Parser All DOFs
@@ -20,6 +22,11 @@ ALBANY:
       Response 1:
         Type: Scalar Response
         Name: Solution Max Value
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: 'a_x Parameter'
   Discretization:
     1D Elements: 25
     1D Scale: 6.283185307179586e00
@@ -29,6 +36,7 @@ ALBANY:
     Periodic_x BC: true
     Exodus Write Interval: 1
   Piro:
+    Sensitivity Method: Forward
     Tempus:
       Integrator Name: Tempus Integrator
       Tempus Integrator:
@@ -131,9 +139,13 @@ ALBANY:
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
     Test Value: 0.0
+    Sensitivity For Parameter 0:
+      Test Value: 0.0
     Relative Tolerance: 1.00000000000000002e-03
   Regression For Response 1:
     Absolute Tolerance: 1.00000000000000008e-05
     Test Value: 9.511938565164e-01
+    Sensitivity For Parameter 0:
+      Test Value: -1.82404989716553993e-02
     Relative Tolerance: 1.00000000000000002e-03
 ...
