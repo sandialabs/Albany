@@ -63,7 +63,7 @@ private:
   PHX::MDField<ScalarT, Cell, Node> residual;
 
   unsigned int numQPs, numDims, numNodes, worksetSize;
-  enum FTYPE {NONE};
+  enum FTYPE {NONE, XSIN};
   FTYPE force_type;
 };
 }

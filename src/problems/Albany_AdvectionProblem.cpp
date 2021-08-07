@@ -113,7 +113,7 @@ Albany::AdvectionProblem::constructDirichletEvaluators(const std::vector<std::st
 {
    // Construct BC evaluators for all node sets and names
    std::vector<std::string> bcNames(neq);
-   bcNames[0] = "T";
+   bcNames[0] = "u";
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
@@ -144,8 +144,8 @@ Albany::AdvectionProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq);
 
-   bcNames[0] = "T";
-   dof_names[0] = "Temperature";
+   bcNames[0] = "u";
+   dof_names[0] = "solution";
    offsets[0].resize(1);
    offsets[0][0] = 0;
 

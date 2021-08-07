@@ -71,7 +71,7 @@ AdvectionResid(const Teuchos::ParameterList& p,
     }
   }
   else {  
-    AdvCoeff = decltype(AdvCoeff)(p.get<std::string>("AdvCoefficient Name"),
+    AdvCoeff = decltype(AdvCoeff)(p.get<std::string>("AdvectionCoefficient Name"),
   	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     this->addDependentField(AdvCoeff);
   }
@@ -80,11 +80,14 @@ AdvectionResid(const Teuchos::ParameterList& p,
   if (advection_source == "None") {
     force_type = NONE;
   }
+  else if (advection_source == "xSin") {
+    force_type = XSIN;
+  }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::logic_error,
-        "Unknown Advection Source = " << advection_source << "!  Valid options are: 'None'. \n"); 
+        "Unknown Advection Source = " << advection_source << "!  Valid options are: 'None' and 'xSin'. \n"); 
   }
 
   this->setName("AdvectionResid" );
@@ -125,6 +128,18 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  else if (force_type == XSIN) {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {     
+        const ScalarT x = coordVec(cell, qp, 0); 
+        const RealType t = workset.current_time;
+	//IKT FIXME: need to calculate dadx from AdvCoeff using basis functions!
+	const ScalarT dadx = 2.0*M_PI - 2.0*x; 
+	const ScalarT a = AdvCoeff(cell, qp); 
+        source(cell, qp) = a*sin(x-a*t) - a*x*t*dadx*cos(x-a*t);
+      }
+    }
+  }
 
   // Evaluate residual: for the following PDE
   // du/dt + a(x)*du/dx = 0
@@ -145,8 +160,13 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
         // source contribution to residual
         residual(cell, node) -= source(cell,qp) * wBF(cell, node, qp); 
-        // Diffusion part of residual
-	residual(cell, node) += a_x(0) * uGrad(cell, qp, 0) * wBF(cell, node, qp); 
+        // advection part of residual
+        if (!advectionIsDistParam) {
+	  residual(cell, node) += a_x(0) * uGrad(cell, qp, 0) * wBF(cell, node, qp); 
+	}
+	else { 
+	  residual(cell, node) += AdvCoeff(cell, qp) * uGrad(cell, qp, 0) * wBF(cell, node, qp); 
+	}
       }
     }
   }
