@@ -36,9 +36,14 @@ ALBANY:
     Periodic_x BC: true
     Exodus Write Interval: 1
   Piro:
-    Sensitivity Method: Forward
+    Sensitivity Method: Adjoint
     Tempus:
       Integrator Name: Tempus Integrator
+      Lump Mass Matrix: true
+      Constant Mass Matrix: true
+      Sensitivities:
+        Sensitivity Parameter Index: 0
+        Response Function Index: 0
       Tempus Integrator:
         Integrator Type: Integrator Basic
         Screen Output Index List: '1'
@@ -47,20 +52,17 @@ ALBANY:
         Solution History:
           Storage Type: Unlimited
           Storage Limit: 20
+          Interpolator:
+            Interpolator Type: Lagrange
+            Order: 3  #All RK methods are at most 4th order
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 1.0e-3
+          Initial Time Step: 1.0e-4
           Final Time: 1.0
-          Final Time Index: 10000
+          Final Time Index: 10000000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
-          Time Step Control Strategy:
-            Strategy Type: Basic VS
-            Reduction Factor: 5.00000000000000000e-01
-            Amplification Factor: 1.50000000000000000e+00
-            Minimum Value Monitoring Function: 1.0e-12
-            Maximum Value Monitoring Function: 1.0e20
           Output Time List: ''
           Output Index List: ''
           Output Time Interval: 1.00000000000000000e+01
@@ -68,50 +70,11 @@ ALBANY:
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
       Tempus Stepper:
-        Stepper Type: Backward Euler
-        Solver Name: Demo Solver
-        Predictor Name: None
-        Demo Solver:
-          NOX:
-            Direction:
-              Method: Newton
-              Newton:
-                Forcing Term Method: Constant
-                Rescue Bad Newton Solve: true
-                Linear Solver:
-                  Tolerance: 1.00000000000000002e-02
-            Line Search:
-              Full Step:
-                Full Step: 1.00000000000000000e+00
-              Method: Full Step
-            Nonlinear Solver: Line Search Based
-            Printing:
-              Output Precision: 3
-              Output Processor: 0
-              Output Information:
-                Error: true
-                Warning: true
-                Outer Iteration: false
-                Parameters: true
-                Details: false
-                Linear Solver Details: true
-                Stepper Iteration: true
-                Stepper Details: true
-                Stepper Parameters: true
-            Solver Options:
-              Status Test Check Type: Minimal
-            Status Tests:
-              Test Type: Combo
-              Combo Type: OR
-              Number of Tests: 2
-              Test 0:
-                Test Type: NormF
-                Tolerance: 1.00000000000000002e-08
-              Test 1:
-                Test Type: MaxIters
-                Maximum Iterations: 10
-        Demo Predictor:
-          Stepper Type: Forward Euler
+        Stepper Type: RK Forward Euler
+        #Stepper Type: General ERK
+        Use FSAL: false
+        Initial Condition Consistency Check: false
+        Initial Condition Consistency: None #This is necessary for Forward Euler!
       Stratimikos:
         Linear Solver Type: Belos
         Linear Solver Types:
@@ -144,8 +107,8 @@ ALBANY:
     Relative Tolerance: 1.00000000000000002e-03
   Regression For Response 1:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 9.511938565164e-01
-    Sensitivity For Parameter 0:
-      Test Value: -1.82404989716553993e-02
+    Test Value: 1.000356173124e+00
+      #Sensitivity For Parameter 0:
+      #Test Value: -1.82404989716553993e-02
     Relative Tolerance: 1.00000000000000002e-03
 ...
