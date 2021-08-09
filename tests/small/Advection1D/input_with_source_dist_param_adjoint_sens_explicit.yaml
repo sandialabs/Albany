@@ -7,7 +7,7 @@ ALBANY:
   Problem:
     Name: Advection 1D
     Solution Method: Transient
-    #Compute Sensitivities: true
+    Compute Sensitivities: true
     Dirichlet BCs:
       SDBC on NS NodeSet0 for DOF u: 0.0
     Initial Condition:
@@ -38,13 +38,13 @@ ALBANY:
     Exodus Output File Name: advection1D_with_source_dist_param_adjoint_sens_explicit_out.exo
     Exodus Write Interval: 1
   Piro:
-    #Sensitivity Method: Adjoint
+    Sensitivity Method: Adjoint
     Tempus:
       Lump Mass Matrix: true
       Constant Mass Matrix: true
-        #Sensitivities:
-        #Sensitivity Parameter Index: 0
-        #Response Function Index: 1
+      Sensitivities:
+        Sensitivity Parameter Index: 0
+        Response Function Index: 0
       Integrator Name: Tempus Integrator
       Tempus Integrator:
         Integrator Type: Integrator Basic
@@ -103,12 +103,12 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 5.863536185249e-01
+    Test Value: 5.855549010527e-01
+    Sensitivity For Parameter 0:
+      Test Value: 1.454139854757e-01
     Relative Tolerance: 1.00000000000000002e-03
   Regression For Response 1:
     Absolute Tolerance: 1.00000000000000008e-05
-      #Sensitivity For Parameter 0:
-      #Test Value: 1.660068083011e+00
-    Test Value: 6.943390972520e+00 
+    Test Value: 6.925322617546e+00 
     Relative Tolerance: 1.00000000000000002e-03
 ...

@@ -266,6 +266,12 @@ Albany::AdvectionProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(fieldName));
     stateName = "advection_coefficient_sensitivity";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
+  
+    //Construct gradient of AdvectionCoefficient, for defining source term
+    fm0.template registerEvaluator<EvalT>(
+		  evalUtils.constructDOFGradInterpolationEvaluator(fieldName));
+
+
   }
 
   {  // Advection Resid
@@ -291,6 +297,7 @@ Albany::AdvectionProblem::constructEvaluators(
     else {
       p->set<string>("AdvectionCoefficient Name", "AdvectionCoefficient");
       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set<std::string>("AdvectionCoefficient Gradient Name", "AdvectionCoefficient Gradient");
     }
     p->set<bool>("Distributed Advection Coefficient", advectionIsDistParam);
     p->set<std::string>("Advection Source", advection_source); 

@@ -74,6 +74,10 @@ AdvectionResid(const Teuchos::ParameterList& p,
     AdvCoeff = decltype(AdvCoeff)(p.get<std::string>("AdvectionCoefficient Name"),
   	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     this->addDependentField(AdvCoeff);
+    AdvCoeffGrad = decltype(AdvCoeffGrad)(p.get<std::string>("AdvectionCoefficient Gradient Name"),
+		    dl->qp_gradient); 
+    this->addDependentField(AdvCoeffGrad);
+
   }
 
   std::string advection_source = p.get<std::string>("Advection Source"); 
@@ -112,6 +116,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
   else {
     this->utils.setFieldData(AdvCoeff, fm);
+    this->utils.setFieldData(AdvCoeffGrad, fm);
   }
 }
 
@@ -133,10 +138,16 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {     
         const ScalarT x = coordVec(cell, qp, 0); 
         const RealType t = workset.current_time;
-	//IKT FIXME: need to calculate dadx from AdvCoeff using basis functions!
-	const ScalarT dadx = 2.0*M_PI - 2.0*x; 
-	const ScalarT a = AdvCoeff(cell, qp); 
-        source(cell, qp) = a*sin(x-a*t) - a*x*t*dadx*cos(x-a*t);
+	const ScalarT a = AdvCoeff(cell, qp);
+        const ScalarT aGrad = AdvCoeffGrad(cell, qp, 0); 	
+        source(cell, qp) = a*sin(x-a*t) - a*x*t*aGrad*cos(x-a*t);
+	//IKT, 8/9/2021: the following is for checking AdvCoeffGrad against the analytic 
+	//value for da/dx.
+	/*const ScalarT dadx = 2.0*M_PI - 2.0*x;
+        if (cell == 0 || cell == 10) 
+	  std::cout << "IKTIKT cell, dadx, AdvCoeffGrad = " << cell << ", " << dadx << ", " << AdvCoeffGrad(cell, qp, 0) << "\n"; 	
+	*/
+        //source(cell, qp) = a*sin(x-a*t) - a*x*t*dadx*cos(x-a*t);
       }
     }
   }

@@ -56,7 +56,9 @@ private:
   PHX::MDField<const ScalarT> a_x;
   PHX::MDField<const ScalarT> a_y;
   PHX::MDField<const ScalarT> a_z;
+  // Advection coefficient and its gradient (for distributed advection field)
   PHX::MDField<const ScalarT,Cell,QuadPoint> AdvCoeff;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> AdvCoeffGrad;
 
   // Output:
   PHX::MDField<ScalarT, Cell, QuadPoint> source;
