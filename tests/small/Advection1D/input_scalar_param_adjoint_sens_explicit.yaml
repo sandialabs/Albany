@@ -32,7 +32,7 @@ ALBANY:
     1D Scale: 6.283185307179586e00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: advection1D_out.exo
+    Exodus Output File Name: advection1D_scalar_param_adjoint_sens_explicit_out.exo
     Periodic_x BC: true
     Exodus Write Interval: 1
   Piro:
