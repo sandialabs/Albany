@@ -180,7 +180,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   int cub = params->get("Cubature Degree", 3);
   int basalWorksetSize = basalMeshSpec->worksetSize;
-  int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
+  int worksetSizeMax = params->get<int>("Workset Size");
   int numElemsInColumn = numLayers*((ElemShape==Tetrahedron) ? 3 : 1);
   int ebSizeMaxEstimate = basalWorksetSize * numElemsInColumn; // This is ebSizeMax when basalWorksetSize is max
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMaxEstimate);

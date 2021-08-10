@@ -4,6 +4,7 @@ ANONYMOUS:
   Build Type: Tpetra
   Debug Output:
     Write Solution to MatrixMarket: 0
+    Report MPI Info: true
   Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Continuation
