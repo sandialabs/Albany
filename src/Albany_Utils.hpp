@@ -10,6 +10,7 @@
 // Get Albany configuration macros
 #include "Albany_config.h"
 
+#include <ostream>
 #include <sstream>
 
 #include "Albany_CommUtils.hpp"
@@ -24,6 +25,10 @@ namespace Albany {
 //! Print ascii art and version information
 void
 PrintHeader(std::ostream& os);
+
+//! Print MPI processor name and rank
+void
+PrintMPIInfo(std::ostream& os);
 
 //! Helper function to calculate the number of parameters in a problem
 int

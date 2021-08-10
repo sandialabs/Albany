@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
   int status=0; // 0 = pass, failures are incremented
   bool success = true;
 
-  Teuchos::GlobalMPISession mpiSession(&argc,&argv);
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv, nullptr);
 
   Kokkos::initialize(argc, argv);
 
@@ -58,6 +58,9 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList &debugParams =
         slvrfctry.getParameters()->sublist("Debug Output", true);
     reportTimers = debugParams.get<bool>("Report Timers", true);
+
+    const bool reportMPIInfo = debugParams.get<bool>("Report MPI Info", false);
+    if (reportMPIInfo) Albany::PrintMPIInfo(std::cout);
 
     const auto& bt = slvrfctry.getParameters()->get("Build Type","Tpetra");
     if (bt=="Tpetra") {
@@ -100,7 +103,7 @@ int main(int argc, char *argv[]) {
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
 
-  stackedTimer->stop("Albany Total Time");
+  stackedTimer->stopBaseTimer();
   if (reportTimers) {
     Teuchos::StackedTimer::OutputOptions options;
     options.output_fraction = true;

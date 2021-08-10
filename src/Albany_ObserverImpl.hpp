@@ -34,11 +34,11 @@ public:
       const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp) override;
 
   void parameterChanged(
-      const std::string& param);
+      const std::string& param) override;
 
-  void parametersChanged();
+  void parametersChanged() override;
   
-  void observeResponse(int iter);
+  void observeResponse(int iter) override;
 };
 
 } // namespace Albany

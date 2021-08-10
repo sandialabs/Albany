@@ -113,7 +113,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         }
 
         // Set basal workset size
-        int extruded_ws_size = disc_params->get("Workset Size", 50);
+        int extruded_ws_size = disc_params->get("Workset Size", -1);
         if (extruded_ws_size == -1) {
           basal_params->set("Workset Size", -1);
         } else if (!basal_params->isParameter("Workset Size")) {
