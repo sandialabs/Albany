@@ -21,7 +21,7 @@ ALBANY:
         Name: Solution Average
       Response 1:
         Type: Scalar Response
-        Name: Solution Max Value
+        Name: Solution Two Norm
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -145,6 +145,6 @@ ALBANY:
     Absolute Tolerance: 1.00000000000000008e-05
     #Sensitivity For Parameter 0:
       #Test Value: 9.395066921520e+00
-    Test Value: 6.953220841473e+00
+    Test Value: 1.916823263498e+01
     Relative Tolerance: 1.00000000000000002e-03
 ...

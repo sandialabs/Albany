@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
     const int min_i_index = (response_fn_index == -1) ? 0 : response_fn_index; 
     const int max_i_index = (response_fn_index == -1) ? num_g - 1 : response_fn_index + 1; 
     const int min_j_index = (sens_param_index == -1) ? 0 : sens_param_index; 
-    const int max_j_index = (sens_param_index == -1) ? num_p : sens_param_index + 1;  
+    const int max_j_index = ((sens_param_index == -1) || (num_p == 0)) ? num_p : sens_param_index + 1;  
     bool writeToMatrixMarketDgDp = debugParams.get("Write DgDp to MatrixMarket", false);
 
     for (int i = min_i_index; i < max_i_index; i++) {
