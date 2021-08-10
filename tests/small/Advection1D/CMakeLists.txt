@@ -19,6 +19,6 @@ set_tests_properties(${testName}_Scalar_Param_Adjoint_Sens_Explicit PROPERTIES L
 add_test(${testName}_with_Source_Dist_Param_Adjoint_Sens_Explicit ${SerialAlbany.exe} input_with_source_dist_param_adjoint_sens_explicit.yaml)
 set_tests_properties(${testName}_with_Source_Dist_Param_Adjoint_Sens_Explicit PROPERTIES LABELS
                                        	"Demo;Tpetra;Adjoint;Serial")
-add_test(${testName}_with_Source_Dist_Param_Implicit ${SerialAlbany.exe} input_with_source_dist_param_adjoint_sens_explicit.yaml)
+add_test(${testName}_with_Source_Dist_Param_Implicit ${SerialAlbany.exe} input_with_source_dist_param_adjoint_sens_implicit.yaml)
 set_tests_properties(${testName}_with_Source_Dist_Param_Implicit PROPERTIES LABELS
 	                                "Demo;Tpetra;Forward;Serial")
