@@ -29,8 +29,8 @@ ThermalResid(const Teuchos::ParameterList& p,
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   C(p.get<double>("Heat Capacity")),
   rho(p.get<double>("Density")),
-  conductivityIsDistParam(p.get<bool>("Distributed Thermal Conductivity")),
   disable_transient(p.get<bool>("Disable Transient")),
+  conductivityIsDistParam(p.get<bool>("Distributed Thermal Conductivity")),
   Source   (p.get<std::string>                   ("Source Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   TResidual   (p.get<std::string>                   ("Residual Name"),
@@ -368,7 +368,7 @@ evaluateFields(typename Traits::EvalData workset)
 	}
 	else { //IKT 7/11/2021: note that for distributed params, ThermalCond is a scalar, not a vector, 
 	       //that is, it is the same for all coordinate dimentions
-          for (auto dim = 0; dim < numDims; ++dim) {
+          for (unsigned int dim = 0; dim < numDims; ++dim) {
 	    TResidual(cell, node) += ThermalCond(cell, qp) * TGrad(cell, qp, dim) * wGradBF(cell, node, qp, dim); 
 	  }
 	}

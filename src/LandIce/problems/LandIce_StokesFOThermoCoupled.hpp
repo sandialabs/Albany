@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LANDICE_STOKES_FO_THERMO_COUPLED_PROBLEM_HPP
-#define LANDICE_STOKES_FO_THERMO_COUPLED_PROBLEM_HPP
+#ifndef LANDICE_PROBLEMS_LANDICE_STOKESFOTHERMOCOUPLED_HPP_
+#define LANDICE_PROBLEMS_LANDICE_STOKESFOTHERMOCOUPLED_HPP_
 
 #include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "LandIce_StokesFOBase.hpp"
@@ -50,6 +50,9 @@ public:
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
+  //! Build unmanaged fields
+  virtual void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
+
   //! Each problem must generate it's list of valide parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
@@ -65,6 +68,9 @@ public:
   void constructFluxDivEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                     Albany::FieldManagerChoice FieldManagerChoice,
                                     const Albany::MeshSpecsStruct& meshSpecs);
+
+  template <typename EvalT>
+  void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
   void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
   void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
@@ -516,6 +522,13 @@ void StokesFOThermoCoupled::constructFluxDivEvaluators (PHX::FieldManager<PHAL::
   }
 }
 
+template <typename EvalT>
+void
+LandIce::StokesFOThermoCoupled::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+{
+  constructStokesFOBaseFields<EvalT>(fm0);
+}
+
 } // namespace LandIce
 
-#endif // LANDICE_STOKES_FO_THERMO_COUPLED_PROBLEM_HPP
+#endif /* LANDICE_PROBLEMS_LANDICE_STOKESFOTHERMOCOUPLED_HPP_ */

@@ -49,52 +49,6 @@ set_target_properties(disc_unit_tester PROPERTIES
 
 TARGET_LINK_LIBRARIES(disc_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 
-set(PYTHON_TEST TRUE)
-
-# If not python executable is set, find the one in the path (if any):
-IF(NOT DEFINED PYTHON_EXECUTABLE)
-  find_program(PYTHON_EXECUTABLE
-      NAMES python3 python
-      )
-  MESSAGE("  -- CMake has set: PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
-ENDIF()
-
-# Get the python version
-EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c
-                        "import sys; print(sys.version[:3])"
-  OUTPUT_VARIABLE PYTHON_VERSION
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-IF(${PYTHON_VERSION} VERSION_LESS 2.7)
-  set(PYTHON_TEST FALSE)
-  MESSAGE("The PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE} is older than 2.7.0, the test BlockDiscretization_Jacobian_Unit_Test will NOT be run.")
-ELSE()
-  # Verify that numpy and scipy are available:
-  EXECUTE_PROCESS(COMMAND
-    ${PYTHON_EXECUTABLE} -c "import numpy; print(numpy.__version__)"
-    OUTPUT_VARIABLE NUMPY_VERSION
-    ERROR_VARIABLE  NUMPY_VERSION_ERROR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-  EXECUTE_PROCESS(COMMAND
-    ${PYTHON_EXECUTABLE} -c "import scipy; print(scipy.__version__)"
-    OUTPUT_VARIABLE SCIPY_VERSION
-    ERROR_VARIABLE  SCIPY_VERSION_ERROR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-  IF(NUMPY_VERSION_ERROR OR SCIPY_VERSION_ERROR)
-    set(PYTHON_TEST FALSE)
-    MESSAGE("The PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE} does not support numpy or scipy, the test BlockDiscretization_Jacobian_Unit_Test will NOT be run.")
-  ELSE()
-    IF(${SCIPY_VERSION} VERSION_LESS 1.2.1 OR ${NUMPY_VERSION} VERSION_LESS 1.15.1)
-      set(PYTHON_TEST FALSE)
-      MESSAGE("The PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE} supports numpy and scipy but one of them is too old, the test BlockDiscretization_Jacobian_Unit_Test will NOT be run.")
-    ELSE()
-      MESSAGE("The PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE} supports numpy and scipy, the test BlockDiscretization_Jacobian_Unit_Test will be run.")
-    ENDIF()
-  ENDIF()
-ENDIF()
-
 IF(${PYTHON_TEST})
   SET(SOURCES
             ./UnitTest_BlockedJacobian.cpp
@@ -111,7 +65,7 @@ IF(${PYTHON_TEST})
 
   TARGET_LINK_LIBRARIES(blockJacobian_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 
-  set(TESTFILES matrices_comparison.py)
+  set(TESTFILES matrices_comparison.py ${PYTHON_TEST_HELPERS_DIR}/__init__.py ${PYTHON_TEST_HELPERS_DIR}/matrix_reader.py)
 
   file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
   ADD_TEST(BlockDiscretization_Jacobian_Unit_Test "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/matrices_comparison.py")

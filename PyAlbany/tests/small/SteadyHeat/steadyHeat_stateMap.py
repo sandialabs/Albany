@@ -39,7 +39,7 @@ class TestSteadyHeat(unittest.TestCase):
         
 
         stackedTimer = problem.getStackedTimer()
-        setup_time = stackedTimer.accumulatedTime("Albany: Setup Time")
+        setup_time = stackedTimer.accumulatedTime("PyAlbany: Setup Time")
         print("setup_time = " + str(setup_time))
         tol = 1.e-8
         self.assertTrue(np.linalg.norm(state_ref[0, :] - state[0,:]) < tol)

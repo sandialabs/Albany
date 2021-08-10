@@ -227,17 +227,12 @@ class AbstractProblem {
   operator=(const AbstractProblem&);
 };
 
-template <typename ProblemType>
+template <typename ProblemT>
 struct ConstructEvaluatorsOp {
-  ProblemType& prob;
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm;
-  const Albany::MeshSpecsStruct& meshSpecs;
-  Albany::StateManager& stateMgr;
-  Albany::FieldManagerChoice fmchoice;
-  Teuchos::RCP<Teuchos::ParameterList> responseList;
-  Teuchos::RCP<Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>> tags;
+public:
   ConstructEvaluatorsOp(
-      ProblemType& prob_, PHX::FieldManager<PHAL::AlbanyTraits>& fm_,
+      ProblemT& prob_,
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm_,
       const Albany::MeshSpecsStruct& meshSpecs_,
       Albany::StateManager& stateMgr_,
       Albany::FieldManagerChoice fmchoice_ = BUILD_RESID_FM,
@@ -247,16 +242,54 @@ struct ConstructEvaluatorsOp {
         meshSpecs(meshSpecs_),
         stateMgr(stateMgr_),
         fmchoice(fmchoice_),
-        responseList(responseList_) {
+        responseList(responseList_)
+  {
     tags = Teuchos::rcp(new Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>);
   }
-  template <typename T>
+
+  template <typename EvalT>
   void
-  operator()(T /* x */) const {
-    tags->push_back(prob.template constructEvaluators<T>(
+  operator()(EvalT /* e */) const
+  {
+    tags->push_back(prob.template constructEvaluators<EvalT>(
         fm, meshSpecs, stateMgr, fmchoice, responseList));
   }
+
+private:
+  ProblemT& prob;
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm;
+  const Albany::MeshSpecsStruct& meshSpecs;
+  Albany::StateManager& stateMgr;
+  Albany::FieldManagerChoice fmchoice;
+  Teuchos::RCP<Teuchos::ParameterList> responseList;
+
+public:
+  Teuchos::RCP<Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>> tags;
 };
-}
+
+template <typename ProblemT>
+struct ConstructFieldsOp
+{
+public:
+  ConstructFieldsOp(
+      ProblemT& prob_,
+      PHX::FieldManager<PHAL::AlbanyTraits>& fm_)
+      : prob(prob_),
+        fm(fm_)
+  {
+  }
+
+  template <typename EvalT>
+  void operator() (EvalT /* e */) const
+  {
+    prob.template constructFields<EvalT>(fm);
+  }
+
+private:
+  ProblemT& prob;
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm;
+};
+
+} // namespace Albany
 
 #endif  // ALBANY_ABSTRACTPROBLEM_HPP

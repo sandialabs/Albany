@@ -65,7 +65,6 @@ ANONYMOUS:
         bound_eps: 1.00000000000000006e-01
 
         Full Space: false
-        Hessian Dot Product: true
         Use NOX Solver: true
         
         ROL Options: 

@@ -20,8 +20,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
-  BF            (p.get<std::string>  ("BF Name"), dl->node_qp_scalar),
   jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
+  BF            (p.get<std::string>  ("BF Name"), dl->node_qp_scalar),
   wBF           (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
@@ -65,14 +65,14 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(wGradBF,fm);
 
-  jacobian = Kokkos::createDynRankView(jacobian_det.get_view(), "XXX", numCells, numQPs, numDims, numDims);
-  jacobian_inv = Kokkos::createDynRankView(jacobian_det.get_view(), "XXX", numCells, numQPs, numDims, numDims);
+  jacobian = Kokkos::createDynRankView(jacobian_det.get_view(), "jacobian", numCells, numQPs, numDims, numDims);
+  jacobian_inv = Kokkos::createDynRankView(jacobian_det.get_view(), "jacobian_inv", numCells, numQPs, numDims, numDims);
 
   // Allocate Temporary Kokkos Views
-  val_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs);
-  grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs, numDims);
-  refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numDims);
-  refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+  val_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("val_at_cub_points", numNodes, numQPs);
+  grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("grad_at_cub_points", numNodes, numQPs, numDims);
+  refPoints = Kokkos::DynRankView<RealType, PHX::Device>("refPoints", numQPs, numDims);
+  refWeights = Kokkos::DynRankView<RealType, PHX::Device>("refWeights", numQPs);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
