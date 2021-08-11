@@ -64,7 +64,6 @@ ALBANY:
       Tempus Stepper:
         Stepper Type: Backward Euler
         Solver Name: Demo Solver
-        Predictor Name: None
         Demo Solver:
           NOX:
             Direction:
@@ -104,8 +103,6 @@ ALBANY:
               Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 10
-        Demo Predictor:
-          Stepper Type: Forward Euler
       Stratimikos:
         Linear Solver Type: Belos
         Linear Solver Types:

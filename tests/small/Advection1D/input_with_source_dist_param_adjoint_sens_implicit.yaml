@@ -69,7 +69,6 @@ ALBANY:
       Tempus Stepper:
         Stepper Type: Backward Euler
         Solver Name: Demo Solver
-        Predictor Name: None
         Use FSAL: false
         Initial Condition Consistency Check: false
         Demo Solver:
