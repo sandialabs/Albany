@@ -383,7 +383,7 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getReducedHessian(const int g_ind
     return Teuchos::null;
 }
 
-void PyProblem::performSolve()
+bool PyProblem::performSolve()
 {
     stackedTimer->start("Albany: performSolve");
 
@@ -397,6 +397,8 @@ void PyProblem::performSolve()
     forwardHasBeenSolved = true;
 
     stackedTimer->stop("Albany: performSolve");
+    bool error = (albanyApp->getSolutionStatus() != Albany::Application::SolutionStatus::Converged);
+    return error;
 }
 
 void PyProblem::performAnalysis()
