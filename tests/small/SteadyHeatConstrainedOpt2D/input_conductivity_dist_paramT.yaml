@@ -35,6 +35,9 @@ ANONYMOUS:
           Scaling: 1.49999999999999994e-01
           Source Field Name: ThermalConductivity
           Target Value: 0.0
+    Hessian:
+      Response 0:
+        Reconstruct H_pp: true
   Discretization: 
     1D Elements: 40
     2D Elements: 40
@@ -65,10 +68,39 @@ ANONYMOUS:
         bound_eps: 1.0e-01
         Max Iterations: 10
        
-
         Full Space: false
-        Hessian Dot Product: true
         Use NOX Solver: true
+        
+        Matrix Based Dot Product: 
+          Matrix Type: Hessian Of Response
+          Matrix Types:
+            Hessian Of Response:
+              Response Index: 0
+              Remove Mean Of The Right-hand Side: false
+              Block Diagonal Solver:
+                Block 0:
+                  Linear Solver Type: Belos
+                  Linear Solver Types:
+                    Belos:
+                      Solver Type: Block GMRES
+                      Solver Types:
+                        Block GMRES:
+                          Maximum Iterations: 200
+                          Convergence Tolerance: 1e-7
+                          Num Blocks: 200
+                          Output Frequency: 20
+                          Output Style: 1
+                          Verbosity: 33
+                      VerboseObject:
+                        Verbosity Level: medium
+                  Preconditioner Type: Ifpack2
+                  Preconditioner Types:
+                    Ifpack2:
+                      Overlap: 0
+                      Prec Type: Amesos2
+                      Ifpack2 Settings: 
+                        Amesos2: {}
+                        Amesos2 solver name: klu
  
 
 

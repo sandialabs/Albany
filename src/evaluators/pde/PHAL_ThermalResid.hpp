@@ -55,10 +55,12 @@ private:
   double                 C;      // Heat Capacity
   double                 rho;    // Density
   bool                   disable_transient; //Boolean to disable transient terms 
+  bool                   conductivityIsDistParam; //Flag telling code conductivity is distr. param.
   // Thermal conductivity components
   PHX::MDField<const ScalarT> kappa_x;
   PHX::MDField<const ScalarT> kappa_y;
   PHX::MDField<const ScalarT> kappa_z;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> ThermalCond;
 
   // Output:
   PHX::MDField<ScalarT, Cell, QuadPoint> Source;

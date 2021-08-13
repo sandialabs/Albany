@@ -18,6 +18,7 @@
 
 #include "Teuchos_TimeMonitor.hpp"
 
+#include <stdexcept>
 #include <string>
 #include "Albany_DataTypes.hpp"
 
@@ -170,6 +171,15 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   // Initialize Phalanx postRegistration setup
   phxSetup = Teuchos::rcp(new PHAL::Setup());
   phxSetup->init_problem_params(problemParams);
+
+  // If memoization is active, set workset size to -1 (otherwise memoization won't work)
+  if (phxSetup->memoizer_active()) {
+    int worksetSize = discParams->get("Workset Size", -1);
+    TEUCHOS_TEST_FOR_EXCEPTION(worksetSize != -1, std::logic_error,
+        "Input error: Memoization is active but Workset Size is not set to -1!\n" <<
+        "             A single workset is needed to active memoization.\n")
+    discParams->set("Workset Size", -1);
+  }
 
   // Set in Albany_AbstractProblem constructor or in siblings
   num_time_deriv = problemParams->get<int>("Number Of Time Derivatives");
@@ -2384,13 +2394,11 @@ Application::evaluateResponseDistParamHessian_pp(
   Teuchos::ParameterList coloring_params;
   std::string matrixType = "Hessian";
   coloring_params.set("matrixType", matrixType);
-
-  // Even if the Hessian is symmetric, the distributed crs matrix
-  // is not symmetrical as the row and column map are not identical.
-  coloring_params.set("symmetric", false);
+  coloring_params.set("symmetric", true);
 
   // Get the crs Hessian:
   RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
+  Ht->resumeFill();
 
   // Create a colorer
   Zoltan2::TpetraCrsColorer<Tpetra_CrsMatrix> colorer(Ht);

@@ -123,7 +123,7 @@ void Setup::check_fields(const std::vector<Teuchos::RCP<PHX::FieldTag>>& fields)
         os << missingField << "\n";
       }
       TEUCHOS_TEST_FOR_EXCEPTION(true,
-          std::logic_error, "The following fields could not be found:\n" + os.str());
+          std::logic_error, "The following fields required by Memoization could not be found:\n" + os.str());
     }
   }
 }

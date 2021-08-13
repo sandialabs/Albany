@@ -18,7 +18,8 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
-#include "LandIce_ResponseUtilities.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "Albany_FieldUtils.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
@@ -28,7 +29,6 @@
 #include "PHAL_LoadSideSetStateField.hpp"
 #include "PHAL_ScatterScalarNodalParameter.hpp"
 #include "PHAL_SharedParameter.hpp"
-#include "LandIce_ParamEnum.hpp"
 
 #include "LandIce_EnthalpyResid.hpp"
 #include "LandIce_EnthalpyBasalResid.hpp"
@@ -41,7 +41,8 @@
 #include "LandIce_VerticalVelocity.hpp"
 #include "LandIce_BasalMeltRate.hpp"
 #include "LandIce_SurfaceAirEnthalpy.hpp"
-
+#include "LandIce_ParamEnum.hpp"
+#include "LandIce_ResponseUtilities.hpp"
 
 namespace LandIce
 {
@@ -68,12 +69,14 @@ namespace LandIce
     virtual void buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
                               Albany::StateManager& stateMgr);
 
-    // Build evaluators
+    //! Build evaluators
     virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                                                                 const Albany::MeshSpecsStruct& meshSpecs,
                                                                                 Albany::StateManager& stateMgr,
                                                                                 Albany::FieldManagerChoice fmchoice,
                                                                                 const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+    //! Build unmanaged fields
+    void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
     //! Each problem must generate its list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -85,6 +88,9 @@ namespace LandIce
                         Albany::StateManager& stateMgr,
                         Albany::FieldManagerChoice fmchoice,
                         const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+    template <typename EvalT>
+    void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
     void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
@@ -111,6 +117,9 @@ namespace LandIce
     bool needsDiss, needsBasFric;
 
     std::string basalSideName, basalEBName;
+
+    // Storage for unmanaged fields
+    Teuchos::RCP<Albany::FieldUtils> fieldUtils;
 
     /// Boolean marking whether SDBCs are used
     bool use_sdbcs_;
@@ -730,6 +739,13 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   }
 
   return Teuchos::null;
+}
+
+template <typename EvalT>
+void
+LandIce::Enthalpy::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+{
+  fieldUtils->setComputeBasisFunctionsFields<EvalT>();
 }
 
 #endif /* LandIce_ENTHALPY_PROBLEM_HPP */

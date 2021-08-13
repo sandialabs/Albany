@@ -277,6 +277,10 @@ tests are a beginning, "work in progress."
       // panzer::pauseToAttach();
 
       bool useExodus = false;
+
+      if (comm->getSize() > 1)
+         useExodus = true;
+
       bool verbose = false;
 
       RCP<Teuchos::ParameterList> discParams = rcp(new Teuchos::ParameterList);
@@ -305,7 +309,7 @@ tests are a beginning, "work in progress."
       discParams->set<int>("Interleaved Ordering", 2);
       discParams->set<bool>("Use Composite Tet 10", 0);
       discParams->set<int>("Number Of Time Derivatives", 0);
-      discParams->set<bool>("Use Serial Mesh", 1);
+      discParams->set<bool>("Use Serial Mesh", 0);
 
       if (!useExodus)
       {

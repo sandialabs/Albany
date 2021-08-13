@@ -160,6 +160,17 @@ namespace PyAlbany
          */
         Teuchos::RCP<const PyTrilinosMap> getResponseMap(const int g_index);
 
+	/**
+         * \brief getStateMap member function
+         * 
+         * This function is used to communicate the map of the state to Python.
+         * 
+         * The function returns an RCP to a map supported by PyTrilinos.
+         * 
+         * This function should ne be called before calling performSolve().
+         */
+	Teuchos::RCP<const PyTrilinosMap> getStateMap();
+        
         /**
          * \brief getParameterMap member function
          * 
@@ -214,6 +225,17 @@ namespace PyAlbany
          * This function should ne be called before calling performSolve().
          */
         Teuchos::RCP<PyTrilinosVector> getResponse(const int g_index);
+
+	/**
+         * \brief getState member function
+         * 
+         * This function is used to communicate the state from Albany to Python.
+         * 
+         * \param response [out] A distributed vector which stores the state.
+         *
+         * This function should ne be called before calling performSolve().
+         */	
+	Teuchos::RCP<PyTrilinosVector> getState();
 
         /**
          * \brief getSensitivity member function
