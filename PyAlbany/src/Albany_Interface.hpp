@@ -134,7 +134,7 @@ namespace PyAlbany
          * 
          * This function is used to call the function Piro::PerformSolve and solve the
          * defined problem.
-	 * Returns true if solve converged.
+	 * \return false if solve converged, true otherwise.
          */
         bool performSolve();
 
