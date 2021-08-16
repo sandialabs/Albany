@@ -205,7 +205,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
                                 "Invalid Cubature Rule: " << cub_rule_string << "; valid options are GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, and GAUSS_LOBATTO");
 
-  int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
+  int worksetSizeMax = params->get<int>("Workset Size", -1);
 
   // Get number of elements per element block using Ioss for use
   // in calculating an upper bound on the worksetSize.

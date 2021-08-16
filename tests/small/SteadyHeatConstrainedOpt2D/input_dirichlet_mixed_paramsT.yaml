@@ -74,7 +74,6 @@ ANONYMOUS:
         Bound Constrained: true
 
         Full Space: false
-        Hessian Dot Product: false
         Use NOX Solver: true
         
         Step Method: "Line Search"

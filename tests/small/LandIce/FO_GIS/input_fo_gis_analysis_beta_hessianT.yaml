@@ -15,7 +15,7 @@ ANONYMOUS:
       Type: LandIce
       Num Equations: 2
     Response Functions:
-      Number Of Responses: 1
+      Number Of Responses: 2
       Response 0:
         Type: Sum Of Responses
         Number Of Responses: 2
@@ -24,6 +24,23 @@ ANONYMOUS:
           Asinh Scaling: 1.00000000000000000e+01
           Name: Surface Velocity Mismatch
           Regularization Coefficient: 0.0
+        Response 1:
+          Scaling: 5.88239999999999978e-06
+          Name: Squared L2 Difference Side Source PST Target MST
+          Source Field Name: basal_friction_gradient_basalside
+          Side Set Name: basalside
+          Field Rank: Gradient
+          Target Value: 0.0
+      Response 1:
+        Type: Sum Of Responses
+        Number Of Responses: 2
+        Response 0:
+          Scaling: 5.88239999999999978e-06
+          Name: Squared L2 Difference Side Source PST Target MST
+          Source Field Name: basal_friction_basalside
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Target Value: 0.0
         Response 1:
           Scaling: 5.88239999999999978e-06
           Name: Squared L2 Difference Side Source PST Target MST
@@ -158,6 +175,7 @@ ANONYMOUS:
   Piro:
     Sensitivity Method: Adjoint
     Analysis:
+      Output Final Parameters: false
       Analysis Package: ROL
       ROL:
         Check Gradient: false
@@ -174,28 +192,36 @@ ANONYMOUS:
         Full Space: false
         Use NOX Solver: false
 
-        Hessian Dot Product: true
-        Remove Mean Of The Right-hand Side: true
-        Hessian Diagonal Inverse:
-          Block solver type 0: Belos
-          Block 0:
-            Linear Solver Type: Belos
-            Linear Solver Types:
-              Belos:
-                Solver Type: Pseudo Block GMRES
-                Solver Types:
-                  Pseudo Block GMRES:
-                    Maximum Iterations: 1000
-                    Convergence Tolerance: 1e-4
-                    Num Blocks: 1000
-                    Output Frequency: 200
-                    Verbosity: 33
-                VerboseObject:
-                  Verbosity Level: medium
-            Preconditioner Type: Ifpack2
-            Preconditioner Types:
-              Ifpack2:
-                Prec Type: ILUT
+        Matrix Based Dot Product: 
+          Matrix Type: Hessian Of Response
+          Matrix Types:
+            Hessian Of Response:
+              Response Index: 1
+              Remove Mean Of The Right-hand Side: false
+              Block Diagonal Solver:
+                Block 0:
+                  Linear Solver Type: Belos
+                  Linear Solver Types:
+                    Belos:
+                      Solver Type: Block GMRES
+                      Solver Types:
+                        Block GMRES:
+                          Maximum Iterations: 200
+                          Convergence Tolerance: 1e-7
+                          Num Blocks: 200
+                          Output Frequency: 20
+                          Output Style: 1
+                          Verbosity: 33
+                      VerboseObject:
+                        Verbosity Level: medium
+                  Preconditioner Type: Ifpack2
+                  Preconditioner Types:
+                    Ifpack2:
+                      Overlap: 0
+                      Prec Type: Amesos2
+                      Ifpack2 Settings: 
+                        Amesos2: {}
+                        Amesos2 solver name: klu
         ROL Options:
           General:
             Variable Objective Function: false
@@ -379,9 +405,12 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
+    Test Value: 1.13523015029099994e+02
+    Relative Tolerance: 1.00000000000000004e-04
     Absolute Tolerance: 1.00000000000000004e-04
     Sensitivity For Parameter 0:
       Test Value: 4.53304824162499997e+00
-    Test Value: 1.13523015029099994e+02
-    Relative Tolerance: 1.00000000000000004e-04
+    Number of Piro Analysis Comparisons: 1
+    Piro Analysis Test Two Norm: true
+    Piro Analysis Test Values: [78.4624]
 ...
