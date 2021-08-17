@@ -104,3 +104,12 @@ endif()
 target_include_directories(albanyPyInterface PUBLIC
                             "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
                             $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+
+if (INSTALL_ALBANY)
+  install(TARGETS pyalbanyLib
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+  install(TARGETS albanyPyInterface
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+endif()
