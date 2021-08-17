@@ -8,7 +8,7 @@ file(GLOB TESTFILES *.npy *.txt *.py *.yaml )
 
 file(COPY ${TESTFILES} ${PyAlbanyPyFiles} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
 
-add_test(PyAlbany_SteadyHeat "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat.py")
+add_test(PyAlbany_SteadyHeat ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat.py")
 
 set_tests_properties(PyAlbany_SteadyHeat
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
@@ -20,7 +20,7 @@ IF(ALBANY_MPI)
         PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 ENDIF()
 
-add_test(PyAlbany_Inv_SteadyHeat "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/inv_steadyHeat.py")
+add_test(PyAlbany_Inv_SteadyHeat ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/inv_steadyHeat.py")
 
 set_tests_properties(PyAlbany_Inv_SteadyHeat
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
@@ -32,7 +32,7 @@ IF(ALBANY_MPI)
         PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 ENDIF()
 
-add_test(PyAlbany_multiple_SteadyHeat "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/inv_steadyHeat.py")
+add_test(PyAlbany_multiple_SteadyHeat ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/inv_steadyHeat.py")
 
 set_tests_properties(PyAlbany_multiple_SteadyHeat
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
@@ -44,7 +44,7 @@ IF(ALBANY_MPI)
         PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 ENDIF()
 
-add_test(PyAlbany_SteadyHeat_StateMap "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat_stateMap.py")
+add_test(PyAlbany_SteadyHeat_StateMap ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeat_stateMap.py")
 
 set_tests_properties(PyAlbany_SteadyHeat_StateMap
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")

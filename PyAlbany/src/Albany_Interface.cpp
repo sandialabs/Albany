@@ -489,7 +489,7 @@ bool PyProblem::performSolve()
 
     forwardHasBeenSolved = true;
 
-    stackedTimer->stop("Albany: performSolve");
+    stackedTimer->stop("PyAlbany: performSolve");
     bool error = (albanyApp->getSolutionStatus() != Albany::Application::SolutionStatus::Converged);
     return error;
 }
