@@ -521,8 +521,6 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
         auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
         TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
             "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
-        if (sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation)
-          params_ss->set<int>("Workset Size", sideSetMeshSpecIter->second[0]->worksetSize);
 
         std::string method = params_ss->get<std::string>("Method");
         if (method=="SideSetSTK") {
@@ -532,8 +530,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
 
           this->sideSetMeshStructs[ss_name] =
               Teuchos::rcp(new SideSetSTKMeshStruct(
-                  *this->meshSpecs[0], *sideSetMeshSpecIter->second[0],
-                  params_ss, comm, num_params));
+                  *this->meshSpecs[0], params_ss, comm, num_params));
         } else {
           ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,comm, num_params);
           this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
