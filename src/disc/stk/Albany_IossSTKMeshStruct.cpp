@@ -230,7 +230,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
         ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(),
         ebNameToIndex, this->interleavedOrdering, false, cub_rule));
-    if (worksetSize == ebSizeMax) this->meshSpecs[0]->singleWorksetSizeAllocation = true;
   } else {
     *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << std::endl;
     this->allElementBlocksHaveSamePhysics=false;
@@ -240,7 +239,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
           ebNameToIndex, this->interleavedOrdering, true, cub_rule));
-      if (worksetSize == ebSizeMax) this->meshSpecs[eb]->singleWorksetSizeAllocation = true;
     }
   }
 
@@ -278,7 +276,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
         TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
             "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
         sideSetMeshSpecIter->second[0]->worksetSize = sidesetSizeMax;
-        sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
       }
     } else { // FIXME: All element blocks have the same sidesets?
       for (int eb = 0; eb < numEB; ++eb) {
@@ -295,7 +292,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
           TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
               "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
           sideSetMeshSpecIter->second[0]->worksetSize = sidesetSizeMax;
-          sideSetMeshSpecIter->second[0]->singleWorksetSizeAllocation = true;
         }
       }
     }

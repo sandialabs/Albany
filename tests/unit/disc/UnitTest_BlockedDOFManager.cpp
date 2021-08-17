@@ -98,7 +98,7 @@ tests are a beginning, "work in progress."
          const std::map<std::string, RCP<Albany::StateInfoStruct>> side_set_sis;
          const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-         ms->setFieldAndBulkData(comm, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize,
+         ms->setFieldAndBulkData(comm, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
                                  side_set_sis, side_set_req);
 
          // Null for this test
@@ -380,7 +380,7 @@ tests are a beginning, "work in progress."
       const std::map<std::string, RCP<Albany::StateInfoStruct>> side_set_sis;
       const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-      ms->setFieldAndBulkData(comm, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
+      ms->setFieldAndBulkData(comm, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
 
       // Use the Albany STK interface as it is used elsewhere in the code
       auto stkDisc = rcp(new BlockedSTKDiscretization(blockedDiscParams, ms, comm));
