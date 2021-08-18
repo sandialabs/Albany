@@ -1,0 +1,134 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+
+# Problem Description
+  Problem: 
+    Solution Method: Steady
+    Name: Populate Mesh
+
+# Discretization Description
+  Discretization: 
+    Number Of Time Derivatives: 0
+    Method: Extruded
+    NumLayers: 10
+    Element Shape: Wedge
+    Cubature Degree: 4
+    Columnwise Ordering: true
+    Use Glimmer Spacing: true
+
+#   Field Information
+    Thickness Field Name: ice_thickness
+    Surface Height Field Name: surface_height
+
+#   Sideset Discretizations descriptions
+    Side Set Discretizations: 
+      Side Sets: [basalside, upperside]
+      basalside:
+        Number Of Time Derivatives: 0
+        Method: Ioss
+        Cubature Degree: 4
+        Exodus Input File Name: meshes/green-3-20km/gis_1k_2d.exo
+        Exodus Output File Name: mesh-pop-wdg/gis_basal_populated.exo
+        Required Fields Info: 
+          Number Of Fields: 14
+          Field 0:
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/thickness.ascii
+          Field 1:
+            Field Name: observed_ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/thickness.ascii
+          Field 2:
+            Field Name: observed_ice_thickness_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/thickness_uncertainty.ascii
+          Field 3:
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/surface_height.ascii
+          Field 4:
+            Field Name: bed_topography
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/bed_topography.ascii
+          Field 5:
+            Field Name: log_basal_friction
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/log_basal_friction.ascii
+          Field 6: 
+            Field Name: temperature
+            Field Type: Node Layered Scalar
+            Number Of Layers: 11
+            Field Origin: File
+            File Name: meshes/green-3-20km/temperature.ascii
+          Field 7:
+            Field Name: apparent_mass_balance
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/surface_mass_balance.ascii
+          Field 8:
+            Field Name: apparent_mass_balance_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/surface_mass_balance_uncertainty.ascii
+          Field 9:
+            Field Name: basal_friction
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/basal_friction.ascii
+          Field 10:
+            Field Name: surface_air_temperature
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/surface_air_temperature.ascii
+          Field 11:
+            Field Name: heat_flux
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/basal_heat_flux.ascii
+          Field 12: 
+            Number Of Layers: 11 
+            Vector Dim: 2
+            Field Name: velocity
+            Field Type: Node Layered Vector
+            Field Origin: File
+            File Name: meshes/green-3-20km/horizontal_velocity.ascii
+          Field 13:
+            Number Of Layers: 11 
+            Field Name: vertical_velocity
+            Field Type: Node Layered Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/vertical_velocity.ascii
+      upperside:
+        Number Of Time Derivatives: 0
+        Method: SideSetSTK
+        Cubature Degree: 4
+        Exodus Output File Name: mesh-pop-wdg/gis_upper_populated.exo
+        Required Fields Info: 
+          Number Of Fields: 2
+          Field 0:
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            Vector Dim: 2
+            Field Origin: File
+            File Name: meshes/green-3-20km/surface_velocity.ascii
+          Field 1:
+            Field Name: observed_surface_velocity_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: meshes/green-3-20km/surface_velocity_uncertainty.ascii
+
+  Piro: 
+    NOX: 
+      Printing: 
+        Output Information: 
+          Details: false
+...
