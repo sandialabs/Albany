@@ -779,6 +779,8 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
     std::string t_identifier = t_dl.identifier();
     std::string sideSetName = t_identifier.substr(0, t_identifier.find("<"));
 
+    TEUCHOS_TEST_FOR_EXCEPTION(first_dim_name == "Side" && sideSetName.empty(), std::logic_error, "Dynamic sizing error: Identifier is that of a sideset but has no sideset name.\n");
+
     if (first_dim_name == "Side" && maxSideSetSizes.find(sideSetName) != maxSideSetSizes.end()) {
 
       t_dims[0] = maxSideSetSizes[sideSetName];
