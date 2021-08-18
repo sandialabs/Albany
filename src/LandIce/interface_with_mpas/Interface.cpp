@@ -525,6 +525,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   basalFrictionParams.set("Type",betaType);
   basalFrictionParams.set("Power Exponent", basalFrictionParams.get("Power Exponent",1.0));
   basalFrictionParams.set("Mu Field Name",basalFrictionParams.get("Mu Field Name","mu"));
+  basalFrictionParams.set("Mu Type",basalFrictionParams.get("Mu Type","Field"));
   basalFrictionParams.set("Effective Pressure Type",basalFrictionParams.get("Effective Pressure Type","Field"));
   basalFrictionParams.set<bool>("Zero Beta On Floating Ice", zeroBetaOnShelf);
 
