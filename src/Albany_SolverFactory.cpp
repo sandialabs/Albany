@@ -220,18 +220,6 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
         "Error: cannot locate Stratimikos solver parameters in the input file.\n")
   }
 
-  // TODO: remove this error when Belos + Ifpack2/Amesos2 is fixed
-  if (stratList->isParameter("Linear Solver Type") && stratList->isParameter("Preconditioner Type") &&
-      stratList->isParameter("Preconditioner Types")) {
-    if (stratList->get<std::string>("Linear Solver Type") == "Belos" &&
-        stratList->get<std::string>("Preconditioner Type") == "Ifpack2") {
-      const auto ifpack2List = Teuchos::sublist(Teuchos::sublist(stratList, "Preconditioner Types"), "Ifpack2");
-      if (ifpack2List->isParameter("Prec Type"))
-        TEUCHOS_TEST_FOR_EXCEPTION(ifpack2List->get<std::string>("Prec Type") == "Amesos2", std::logic_error,
-            "Belos + Ifpack2/Amesos2 is currently not working in Trilinos.\n");
-    }
-  }
-
   Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;
   if (Teuchos::nonnull(model->get_W_factory())) {
     modelWithSolve = model;
