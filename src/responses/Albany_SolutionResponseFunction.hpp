@@ -136,7 +136,7 @@ public:
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp) override;
   //@}
 
-  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out) override;
+  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
 
 protected:
   

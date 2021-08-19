@@ -151,7 +151,7 @@ public:
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp) override;
   //@}
 
-  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out) override;
+  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
 
 protected:
 
