@@ -34,7 +34,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   using EvalT = typename PHAL::AlbanyTraits::Jacobian;
   using FadT = typename EvalT::EvaluationType::ScalarT;
   TEUCHOS_TEST_FOR_EXCEPTION(
-      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size != dDims),
+      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size < dDims),
       std::runtime_error,
       "Derivative dimensions " << PHX::print<EvalT>() << " are " << dDims <<
       " but FadType has static size " << FadT::StorageType::static_size << "!\n" <<
@@ -51,7 +51,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
   using FadT = typename EvalT::EvaluationType::ScalarT;
   const int dDims = app->getTangentDerivDimension();
   TEUCHOS_TEST_FOR_EXCEPTION(
-      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size != dDims),
+      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size < dDims),
       std::runtime_error,
       "Derivative dimensions " << PHX::print<EvalT>() << " are " << dDims <<
       " but TanFadType has static size " << FadT::StorageType::static_size << "!\n" <<
@@ -70,7 +70,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
   using FadT = typename EvalT::EvaluationType::ScalarT;
   const int dDims = ms->ctd.node_count;
   TEUCHOS_TEST_FOR_EXCEPTION(
-      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size != dDims),
+      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size < dDims),
       std::runtime_error,
       "Derivative dimensions " << PHX::print<EvalT>() << " are " << dDims <<
       " but TanFadType has static size " << FadT::StorageType::static_size << "!\n" <<
@@ -90,7 +90,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
   using EvalT = typename PHAL::AlbanyTraits::HessianVec;
   using FadT = typename EvalT::EvaluationType::ScalarT;
   TEUCHOS_TEST_FOR_EXCEPTION(
-      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size != derivativeDimension_max),
+      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size < derivativeDimension_max),
       std::runtime_error,
       "Derivative dimensions " << PHX::print<EvalT>() << " are " << derivativeDimension_max <<
       " but HessianVecFad has static size " << FadT::StorageType::static_size << "!\n" <<
