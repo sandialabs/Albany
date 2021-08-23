@@ -57,6 +57,29 @@ PrintHeader(std::ostream& os)
   os << R"(** Albany cuda compiler --- Cuda )" << KOKKOS_COMPILER_CUDA_VERSION << std::endl;
 #endif
 
+  // Print fad types
+#if defined(ALBANY_FAD_TYPE_SFAD)
+  os << R"(** Albany FadType --------- SFad)" << ALBANY_SFAD_SIZE << std::endl;
+#elif defined(ALBANY_FAD_TYPE_SLFAD)
+  os << R"(** Albany FadType --------- SLFad)" << ALBANY_SLFAD_SIZE << std::endl;
+#else
+  os << R"(** Albany FadType --------- DFad)" << std::endl;
+#endif
+#if defined(ALBANY_TAN_FAD_TYPE_SFAD)
+  os << R"(** Albany TanFadType ------ SFad)" << ALBANY_TAN_SFAD_SIZE << std::endl;
+#elif defined(ALBANY_TAN_FAD_TYPE_SLFAD)
+  os << R"(** Albany TanFadType ------ SLFad)" << ALBANY_TAN_SLFAD_SIZE << std::endl;
+#else
+  os << R"(** Albany TanFadType ------ DFad)" << std::endl;
+#endif
+#if defined(ALBANY_HES_VEC_FAD_TYPE_SFAD)
+  os << R"(** Albany HessianVecFad  -- SFad)" << ALBANY_HES_VEC_SFAD_SIZE << std::endl;
+#elif defined(ALBANY_HES_VEC_FAD_TYPE_SLFAD)
+  os << R"(** Albany HessianVecFad  -- SLFad)" << ALBANY_HES_VEC_SLFAD_SIZE << std::endl;
+#else
+  os << R"(** Albany HessianVecFad  -- DFad)" << std::endl;
+#endif
+
   // Print start time
   time_t rawtime;
   time(&rawtime);
@@ -65,6 +88,21 @@ PrintHeader(std::ostream& os)
   strftime(buffer, 80, "%F at %T", timeinfo);
   os << R"(** Simulation start time -- )" << buffer << std::endl;
   os << R"(***************************************************************)" << std::endl;
+}
+
+void
+PrintMPIInfo(std::ostream& os)
+{
+  const auto comm = Albany::getDefaultComm();
+  const auto rank = comm->getRank();
+  const auto size = comm->getSize();
+  int nameLen;
+  char procName[MPI_MAX_PROCESSOR_NAME];
+  ::MPI_Get_processor_name(procName, &nameLen);
+  std::ostringstream oss;
+  oss << "Rank " << rank << " of " << size << " exists on processor " << procName << std::endl;
+  os << oss.str() << std::flush;
+  comm->barrier();
 }
 
 int

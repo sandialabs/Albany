@@ -160,10 +160,8 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
       unsigned int numSideNodes    = sideBasis[ssName]->getCardinality();
       unsigned int numSideQPs      = sideCubature[ssName]->getNumPoints();
 
-      dl->side_layouts[ssName] = rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
-                                                         numSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                         sideMeshSpecs.singleWorksetSizeAllocation,
-                                                         sideMeshSpecs.worksetSize));
+      dl->side_layouts[ssName] = rcp(new Albany::Layouts(numSideVertices,numSideNodes,
+                                                         numSideQPs,sideDim,numDim,numCellSides,vecDimFO,ssName));
     }
   }
 
@@ -186,10 +184,8 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int numSurfaceSideNodes    = sideBasis[surfaceSideName]->getCardinality();
     int numSurfaceSideQPs      = sideCubature[surfaceSideName]->getNumPoints();
 
-    dl->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
-                                                                numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                                surfaceMeshSpecs.singleWorksetSizeAllocation,
-                                                                surfaceMeshSpecs.worksetSize));
+    dl->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(numSurfaceSideVertices,numSurfaceSideNodes,
+                                                                numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO,surfaceSideName));
   }
 
   // If we have thickness or surface velocity diagnostics, we may need basal side stuff
@@ -211,10 +207,8 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int numbasalSideNodes    = sideBasis[basalSideName]->getCardinality();
     int numbasalSideQPs      = sideCubature[basalSideName]->getNumPoints();
 
-    dl->side_layouts[basalSideName] = rcp(new Albany::Layouts(worksetSize,numbasalSideVertices,numbasalSideNodes,
-                                                              numbasalSideQPs,sideDim,numDim,numCellSides,vecDimFO,
-                                                              basalMeshSpecs.singleWorksetSizeAllocation,
-                                                              basalMeshSpecs.worksetSize));
+    dl->side_layouts[basalSideName] = rcp(new Albany::Layouts(numbasalSideVertices,numbasalSideNodes,
+                                                              numbasalSideQPs,sideDim,numDim,numCellSides,vecDimFO,basalSideName));
   }
 
 #ifdef OUTPUT_TO_SCREEN

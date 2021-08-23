@@ -8,7 +8,7 @@ file(GLOB TESTFILES *.npy *.txt *.py *.yaml )
 
 file(COPY ${TESTFILES} ${PyAlbanyPyFiles} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
 
-add_test(PyAlbany_IO "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/io_PyAlbany.py")
+add_test(PyAlbany_IO ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/io_PyAlbany.py")
 
 set_tests_properties(PyAlbany_IO
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")

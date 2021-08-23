@@ -78,6 +78,10 @@ public:
   void finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null);
 
+  template<typename Traits>
+  void
+  setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const;
+
   //! Get underlying abstract discretization
   Teuchos::RCP<Albany::AbstractDiscretization>
   getDiscretization() const;
