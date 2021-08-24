@@ -274,8 +274,8 @@ Albany::ThermalProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
     fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(fieldName));
-    stateName = "thermal_conductivity_sensitivity";
-    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
+    /*stateName = "thermal_conductivity_sensitivity";
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");*/
   }
 
   {  // Temperature Resid
