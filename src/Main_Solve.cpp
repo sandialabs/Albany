@@ -136,7 +136,6 @@ int main(int argc, char *argv[])
     const auto albanyApp = slvrfctry.createApplication(comm);
     const auto albanyModel = slvrfctry.createModel(albanyApp);
     const auto solver      = slvrfctry.createSolver(albanyModel,comm);
-    Teuchos::RCP<Albany::PiroObserver> observer = Teuchos::rcp( new Albany::PiroObserver(albanyApp, albanyModel));
 
     stackedTimer->stop("Albany: Setup Time");
 
@@ -320,6 +319,11 @@ int main(int argc, char *argv[])
     const int min_j_index = (sens_param_index == -1) ? 0 : sens_param_index; 
     const int max_j_index = ((sens_param_index == -1) || (num_p == 0)) ? num_p : sens_param_index + 1;  
     bool writeToMatrixMarketDgDp = debugParams.get("Write DgDp to MatrixMarket", false);
+   
+    //Force writing of solution and create observer (for DgDp for transient 
+    //adjoint sensitivities) 
+    albanyApp->forceWriteSolution();
+    Teuchos::RCP<Albany::PiroObserver> observer = Teuchos::rcp( new Albany::PiroObserver(albanyApp, albanyModel));
 
     for (int i = min_i_index; i < max_i_index; i++) {
       const RCP<const Thyra_Vector> g = thyraResponses[i];
@@ -351,6 +355,8 @@ int main(int argc, char *argv[])
             }
             *out << "\n" << std::endl;
 	    //Observe dgdp for transient problems through observer
+	    //There may be better ways to do this, which can be looked at in 
+	    //future work.
 	    if (albanyApp->getNumTimeDerivs() > 0) {
 	      observer->observeSolution(*(thyraResponses.back()), *dgdp);  
 	    }

@@ -194,6 +194,16 @@ public:
     solutionStatus = status;
   }
 
+  void forceWriteSolution() 
+  {
+    force_write_solution = true;  
+  }
+
+  bool getForceWriteSolution() const 
+  {
+    return force_write_solution; 
+  }
+
   //! Return whether problem wants to use its own preconditioner
   bool
   suppliesPreconditioner() const;
@@ -1289,6 +1299,9 @@ void
 
   // local responses
   Teuchos::Array<unsigned int> relative_responses;
+
+  mutable bool force_write_solution{false}; 
+
 };
 
 template <typename EvalT>
