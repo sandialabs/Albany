@@ -44,12 +44,14 @@ namespace Albany
 
 ModelEvaluator::
 ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
-                const Teuchos::RCP<Teuchos::ParameterList>& appParams_)
+                const Teuchos::RCP<Teuchos::ParameterList>& appParams_,
+		const bool adjoint_model_)
  : app(app_)
  , appParams(appParams_)
  , supplies_prec(app_->suppliesPreconditioner())
  , supports_xdot(false)
  , supports_xdotdot(false)
+ , adjoint_model(adjoint_model_)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -1079,6 +1081,8 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
 
   //! If a parameter has changed in value, saved/unsaved fields must be updated
 
+  //IKT, 8/25/2021 QUESTION: can the following go in the constructor?  If so, 
+  //we should move it there to make the code cleaner.
   bool transposeJacobian = false;
   ObserverImpl observer(app);
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -1086,6 +1090,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     auto& opt_paramList = appParams->sublist("Piro").sublist("Optimization Status");
     transposeJacobian = opt_paramList.get("Compute Transposed Jacobian", false);
   }
+  if (adjoint_model == true) transposeJacobian = true; 
 
   // Thyra vectors
   const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();

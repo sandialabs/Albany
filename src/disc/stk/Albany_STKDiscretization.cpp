@@ -694,7 +694,6 @@ STKDiscretization::writeSolutionToFile(
     const bool          overlapped,
     const bool          force_write_solution) 
 {
-  std::cout << "IKT writeSolutionToFile force_write_solution = " << force_write_solution << "\n"; 
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
     solutionFieldContainer->transferSolutionToCoords();

@@ -182,6 +182,9 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         }
       }
     }
+    if (sens_method == "Adjoint") {
+      adjoint_trans_sens = true; 
+    }
   }
 
   // Pull the number of solution vectors out of the problem and send them to the

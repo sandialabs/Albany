@@ -160,7 +160,8 @@ createApplication (const Teuchos::RCP<const Teuchos_Comm>& appComm,
 }
 
 Teuchos::RCP<ModelEvaluator>
-SolverFactory::createModel (const Teuchos::RCP<Application>& app)
+SolverFactory::createModel (const Teuchos::RCP<Application>& app,
+		            const bool adjoint_model)
 {
   // Validate Response list
   // TODO: may move inside individual Problem class
@@ -168,13 +169,14 @@ SolverFactory::createModel (const Teuchos::RCP<Application>& app)
   problemParams->sublist("Response Functions")
       .validateParameters(*getValidResponseParameters(), 0);
 
-  return Teuchos::rcp(new ModelEvaluator(app,m_appParams));
+  return Teuchos::rcp(new ModelEvaluator(app,m_appParams,adjoint_model));
 }
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
 SolverFactory::
-createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
-              const Teuchos::RCP<const Teuchos_Comm>& solverComm)
+createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
+	      const Teuchos::RCP<ModelEvaluator>&     model,
+	      const Teuchos::RCP<ModelEvaluator>&     adjointModel)
 {
   const Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(m_appParams, "Problem");
   const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
@@ -221,8 +223,10 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
   }
 
   Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;
+  Teuchos::RCP<Thyra_ModelEvaluator> adjointModelWithSolve = Teuchos::null;
   if (Teuchos::nonnull(model->get_W_factory())) {
     modelWithSolve = model;
+    adjointModelWithSolve = adjointModel; 
   } else {
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
@@ -238,6 +242,9 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
         createLinearSolveStrategy(linearSolverBuilder);
 
     modelWithSolve = rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(model, lowsFactory));
+    if (adjointModel != Teuchos::null) {
+      adjointModelWithSolve = rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(adjointModel, lowsFactory));
+    }
   }
 
   const auto app    = model->getAlbanyApp();
@@ -245,6 +252,10 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
 
   Piro::SolverFactory piroFactory;
   m_observer = Teuchos::rcp(new PiroObserver(app, modelWithSolve));
+
+  //IKT, 8/25/2021 TODO: pass adjointModelWithSolve to the following createSolver 
+  //routine once Piro::SolverFactory::createSolver routine is extended to take in a 2nd ME
+
   return piroFactory.createSolver<ST>(
        piroParams, modelWithSolve, Teuchos::null, m_observer);
   TEUCHOS_TEST_FOR_EXCEPTION(

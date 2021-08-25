@@ -204,6 +204,11 @@ public:
     return force_write_solution; 
   }
 
+  bool isAdjointTransSensitivities() const 
+  {
+    return adjoint_trans_sens;
+  }
+
   //! Return whether problem wants to use its own preconditioner
   bool
   suppliesPreconditioner() const;
@@ -1301,6 +1306,7 @@ void
   Teuchos::Array<unsigned int> relative_responses;
 
   mutable bool force_write_solution{false}; 
+  mutable bool adjoint_trans_sens{false}; 
 
 };
 
