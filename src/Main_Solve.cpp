@@ -31,6 +31,8 @@
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_MultiVectorStdOps.hpp"
 
+#include "Albany_PiroObserver.hpp"
+
 #if defined(ALBANY_CHECK_FPE) || defined(ALBANY_STRONG_FPE_CHECK) || defined(ALBANY_FLUSH_DENORMALS)
 #include <xmmintrin.h>
 #endif
@@ -134,6 +136,7 @@ int main(int argc, char *argv[])
     const auto albanyApp = slvrfctry.createApplication(comm);
     const auto albanyModel = slvrfctry.createModel(albanyApp);
     const auto solver      = slvrfctry.createSolver(albanyModel,comm);
+    Teuchos::RCP<Albany::PiroObserver> observer = Teuchos::rcp( new Albany::PiroObserver(albanyApp, albanyModel));
 
     stackedTimer->stop("Albany: Setup Time");
 
@@ -347,6 +350,10 @@ int main(int argc, char *argv[])
                 *out << "    " << norm2;
             }
             *out << "\n" << std::endl;
+	    //Observe dgdp for transient problems through observer
+	    if (albanyApp->getNumTimeDerivs() > 0) {
+	      observer->observeSolution(*(thyraResponses.back()), *dgdp);  
+	    }
             //check response and sensitivities for distributed parameters
             status += regression.checkSolveTestResults(i, j, g, norms);
           }

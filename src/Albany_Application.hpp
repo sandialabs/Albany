@@ -149,6 +149,12 @@ public:
     return solMethod;
   }
 
+  int 
+  getNumTimeDerivs() const
+  {
+    return num_time_deriv;
+  }
+
   //! Get number of responses
   int
   getNumResponses() const;

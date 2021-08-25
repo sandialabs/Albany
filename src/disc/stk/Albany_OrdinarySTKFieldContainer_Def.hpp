@@ -120,21 +120,33 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 #endif
   //IKT FIXME? - currently won't write dxdp to output file if problem is steady,
   //as this output doesn't work in same way.  May want to change in the future.
-  bool output_dxdp_field = false;
-  if (this->num_params > 0 && num_time_deriv > 0) output_dxdp_field = true;
+  bool output_sens_field = false;
+  const std::string sens_method = params_->get<std::string>("Sensitivity Method"); 
+  const int resp_fn_index = params_->get<int>("Response Function Index"); 
+  const int param_sens_index = params_->get<int>("Sensitivity Parameter Index"); 
 
-  //Create tag and id arrays for dxdp
-  std::vector<std::string> sol_dxdp_tag_name_vec;
-  sol_dxdp_tag_name_vec.resize(this->num_params);
-  std::vector<std::string> sol_dxdp_id_name_vec;
-  sol_dxdp_id_name_vec.resize(this->num_params);
-  for (int np = 0; np<this->num_params; np++) {
-    std::string prefix = "Exodus Solution Sensitivity Name ";
-    std::string tag_name = prefix + std::to_string(np);
-    sol_dxdp_tag_name_vec[np] = tag_name;
-    prefix = "solution dxdp";
-    std::string id_name = prefix + std::to_string(np);
-    sol_dxdp_id_name_vec[np] = id_name;
+  if (this->num_params > 0 && num_time_deriv > 0 && sens_method != "None") output_sens_field = true;
+
+  //Create tag and id arrays for sensitivity field (dxdp or dgdp)
+  std::vector<std::string> sol_sens_tag_name_vec;
+  std::vector<std::string> sol_sens_id_name_vec;
+  if (sens_method == "Forward") {
+    sol_sens_tag_name_vec.resize(this->num_params);
+    sol_sens_id_name_vec.resize(this->num_params);
+    for (int np=0; np<this->num_params; np++) {
+      sol_sens_tag_name_vec[np] = "Exodus Solution Sensitivity Name" + std::to_string(np);
+      sol_sens_id_name_vec[np] = "sensitivity dxdp" + std::to_string(np); 
+    }
+  }
+  else if (sens_method == "Adjoint") {
+    //Adjoint sensitivities can only be computed for 1 response/parameter at a time.
+    sol_sens_tag_name_vec.resize(1);
+    sol_sens_id_name_vec.resize(1);
+    sol_sens_tag_name_vec[0] = "Exodus Solution Sensitivity Name";
+    //WARNING IKT 8/24/2021: I am not sure that the following will do the right thing in the case the parameter
+    //p is not defined on the entire mesh.  A different way of observing dgdp may need to be implemented
+    //for that case.  Also note that dgdp will not be written correctly to the mesh for the case of a scalar (vs. distributed) parameter.
+    sol_sens_id_name_vec[0] = "sensitivity dg" + std::to_string(resp_fn_index) + "dp" + std::to_string(param_sens_index); 
   }
 
   solution_field.resize(num_time_deriv + 1);
@@ -173,13 +185,14 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 #endif
   }
 
-  //Forward transient sensitivities dx/dp
-  for (int np = 0; np < this->num_params; np++) {
-    if (output_dxdp_field == true) {
+  //Transient sensitivities output to Exodus
+  const int num_sens = (sens_method == "Forward") ? this->num_params : 1; 
+  for (int np = 0; np < num_sens; np++) {
+    if (output_sens_field == true) {
       solution_field_dxdp[np] = &metaData_->declare_field<VFT>(
           stk::topology::NODE_RANK,
           params_->get<std::string>(
-              sol_dxdp_tag_name_vec[np], sol_dxdp_id_name_vec[np]));
+              sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]));
       stk::mesh::put_field_on_mesh(
           *solution_field_dxdp[np],
           metaData_->universal_part(),
@@ -187,7 +200,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
           nullptr);
     }
 #ifdef ALBANY_SEACAS
-    if (output_dxdp_field == true)
+    if (output_sens_field == true)
       stk::io::set_field_role(
           *solution_field_dxdp[np], Ioss::Field::TRANSIENT);
 #endif
