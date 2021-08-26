@@ -257,7 +257,7 @@ createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
   //routine once Piro::SolverFactory::createSolver routine is extended to take in a 2nd ME
 
   return piroFactory.createSolver<ST>(
-       piroParams, modelWithSolve, Teuchos::null, m_observer);
+       piroParams, modelWithSolve, adjointModelWithSolve, m_observer);
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
       std::logic_error,
