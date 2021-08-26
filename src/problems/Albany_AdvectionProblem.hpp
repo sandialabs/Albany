@@ -264,8 +264,6 @@ Albany::AdvectionProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
     fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(fieldName));
-    stateName = "advection_coefficient_sensitivity";
-    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
   
     //Construct gradient of AdvectionCoefficient, for defining source term
     fm0.template registerEvaluator<EvalT>(
