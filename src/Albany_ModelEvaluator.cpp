@@ -375,7 +375,28 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
     Teuchos::ArrayRCP<ST> distParamVec_ArrayRCP = 
        getNonconstLocalData(distParam->vector()); 
 
-    if (param_expr == "Quadratic") 
+    if (param_expr == "Linear") 
+    {
+      if (num_dims == 1) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[i]; 
+          distParamVec_ArrayRCP[i] = x + coeffs[0]; 
+        }
+      }
+      else if (num_dims == 2) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[2*i]; 
+          const double y = ov_coords[2*i+1]; 
+          distParamVec_ArrayRCP[i] = (x + coeffs[0]) + (y + coeffs[1]); 
+        }
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "Linear Parameter Analytic Expression not valid for >2D.\n"); 
+      }
+    }
+    else if (param_expr == "Quadratic") 
     {
       if (num_dims == 1) {
         for (int i=0; i < num_nodes; i++) {
@@ -400,7 +421,7 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
             "\nError!  In Albany::ModelEvaluator constructor:  "
             << "Invalid value for 'Parameter Analytic Expression' = "
-            << param_expr << ".  Valid expressions are: 'Quadratic'.\n");
+            << param_expr << ".  Valid expressions are: 'Linear', 'Quadratic'.\n");
     }
   } 
     
