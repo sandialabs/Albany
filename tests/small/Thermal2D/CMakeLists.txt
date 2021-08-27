@@ -7,6 +7,8 @@ if(NOT ALBANY_PARALLEL_ONLY)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_steady.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_be_with_source_scalar_param_fwd_sens.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_be_with_source_scalar_param_fwd_sens.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_be_with_source_scalar_param_adjoint_sens.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_be_with_source_scalar_param_adjoint_sens.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_be_with_source_dist_param_adjoint_sens.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_be_with_source_dist_param_adjoint_sens.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fe_with_source.yaml
@@ -35,6 +37,9 @@ endif()
 
   add_test(${testName}_BackwardEuler_with_Source_Scalar_Param_Fwd_Sens ${Albany.exe} input_be_with_source_scalar_param_fwd_sens.yaml)
   set_tests_properties(${testName}_BackwardEuler_with_Source_Scalar_Param_Fwd_Sens PROPERTIES LABELS "Demo;Tpetra;Forward")
+  
+  add_test(${testName}_BackwardEuler_with_Source_Scalar_Param_Adjoint_Sens ${Albany.exe} input_be_with_source_scalar_param_fwd_sens.yaml)
+  set_tests_properties(${testName}_BackwardEuler_with_Source_Scalar_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Forward")
   
   add_test(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens ${SerialAlbany.exe} input_be_with_source_dist_param_adjoint_sens.yaml)
   set_tests_properties(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Adjoint")
