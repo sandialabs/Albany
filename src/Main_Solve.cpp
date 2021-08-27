@@ -360,9 +360,12 @@ int main(int argc, char *argv[])
                 *out << "    " << norm2;
             }
             *out << "\n" << std::endl;
-	    //Observe dgdp for transient problems through observer
+	    //Observe dgdp for transient problems through observer as the last 
+	    //step of the output .exo file.
 	    //There may be better ways to do this, which can be looked at in 
-	    //future work.
+	    //future work, e.g., to create a new .exo file with sensitivities.
+	    //It should be possible to use the observer similar to what is done
+	    //here to do that.
 	    if (albanyApp->getNumTimeDerivs() > 0) {
 	      observer->observeSolution(*(thyraResponses.back()), *dgdp);  
 	    }
