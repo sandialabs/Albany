@@ -314,12 +314,19 @@ int main(int argc, char *argv[])
     }
 
     //Check/print sensitivities
+    int response_fn_index = -1;
+    int sens_param_index = -1; 
     const Teuchos::ParameterList &tempusSensParams =
         slvrfctry.getParameters()->sublist("Piro").sublist("Tempus").sublist("Sensitivities");
-    const int& response_fn_index = tempusSensParams.isParameter("Response Function Index") ?
-          tempusSensParams.get<int>("Response Function Index") : -1;
-    const int& sens_param_index = tempusSensParams.isParameter("Sensitivity Parameter Index") ?
-          tempusSensParams.get<int>("Sensitivity Parameter Index") : -1;
+    if (tempusSensParams.isParameter("Response Function Index") == true) {
+      response_fn_index = tempusSensParams.get<int>("Response Function Index");
+    }
+    else {
+      if (albanyApp->isAdjointTransSensitivities() == true) {
+        response_fn_index = 0;
+	sens_param_index = 0; 
+      }
+    }
     const int min_i_index = (response_fn_index == -1) ? 0 : response_fn_index; 
     const int max_i_index = (response_fn_index == -1) ? num_g - 1 : response_fn_index + 1; 
     const int min_j_index = (sens_param_index == -1) ? 0 : sens_param_index; 
