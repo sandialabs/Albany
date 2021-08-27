@@ -2,7 +2,7 @@
 ---
 ALBANY:
   Debug Output:
-    Write Distributed Solution and Map to MatrixMarket: true
+    Write Solution to MatrixMarket: 0
     Write DgDp to MatrixMarket: true
   Problem:
     Name: Thermal 1D
@@ -14,28 +14,29 @@ ALBANY:
     Initial Condition:
       Function: Expression Parser All DOFs
       Function Expressions: ['16*x*(1-x)']
+    Thermal Conductivity: [1.6]
     Heat Capacity: 1.0
     Density: 1.0
     Thermal Source: 1D Cost
     Response Functions:
-      Number Of Responses: 1
+      Number Of Responses: 2
       Response 0:
         Type: Scalar Response
         Name: Solution Average
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Min Value
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
-        Type: Distributed
-        Name: thermal_conductivity
-        Parameter Analytic Expression: Quadratic
-        Mesh Part: ''
+        Type: Scalar
+        Name: 'kappa_x Parameter'
   Discretization:
     1D Elements: 20
     1D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: thermal1D_with_source_dist_param_adjoint_sens_implicit_out.exo
-    Exodus Write Interval: 1 
+    Exodus Output File Name: thermal1D_with_source_adjoint_sens_implicit_out.exo
   Piro:
     Sensitivity Method: Adjoint
     Tempus:
@@ -48,15 +49,12 @@ ALBANY:
         Solution History:
           Storage Type: Unlimited
           Storage Limit: 20
-          Interpolator:
-            Interpolator Type: Lagrange
-            Order: 0
         Time Step Control:
-          Initial Time: 0.00000000000000000e+18
+          Initial Time: 0.0
           Initial Time Index: 0
-          Initial Time Step: 0.01 #1.0e-2
+          Initial Time Step: 1.0e-3
           Final Time: 1.0
-          Final Time Index: 1000000
+          Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
           Output Time List: ''
@@ -68,8 +66,6 @@ ALBANY:
       Tempus Stepper:
         Stepper Type: Backward Euler
         Solver Name: Demo Solver
-        Use FSAL: false
-        Initial Condition Consistency Check: false
         Demo Solver:
           NOX:
             Direction:
@@ -136,7 +132,11 @@ ALBANY:
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
     Sensitivity For Parameter 0:
-      Test Value: 8.049561912726e+00
-    Test Value: 7.020546086145e-01
+      Test Value: 9.236397953783e+00
+    Test Value: -2.042594760521e+00
+    Relative Tolerance: 1.00000000000000002e-03
+  Regression For Response 1:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Test Value: -3.224826011030e+00
     Relative Tolerance: 1.00000000000000002e-03
 ...
