@@ -16,9 +16,11 @@ using Teuchos::rcp;
 Albany::CumulativeScalarResponseFunction::
 CumulativeScalarResponseFunction(
   const Teuchos::RCP<const Teuchos_Comm>& commT,
-  const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses_) :
+  const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses_,
+  const Teuchos::Array< double >& scalar_weights_) :
   SamplingBasedScalarResponseFunction(commT),
   responses(responses_),
+  scalar_weights(scalar_weights_),
   num_responses(0)
 {
   if(responses.size() > 0) {
@@ -87,7 +89,7 @@ evaluateResponse(const double current_time,
     responses[i]->evaluateResponse(current_time, x, xdot, xdotdot, p, g_i);
 
     // Add result into cumulative result
-    g->update(1.0,*g_i);
+    g->update(scalar_weights[i],*g_i);
   }
   g_->assign(*g);
 }
@@ -103,6 +105,7 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		const Teuchos::Array<ParamVec>& p,
+    int parameter_index,
 		ParamVec* deriv_p,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
@@ -144,18 +147,18 @@ evaluateTangent(const double alpha,
 
     // Evaluate response function
     responses[i]->evaluateTangent(alpha, beta, omega, current_time, sum_derivs,
-				  x, xdot, xdotdot, p, deriv_p, Vx, Vxdot, Vxdotdot, Vp, 
+				  x, xdot, xdotdot, p, parameter_index, deriv_p, Vx, Vxdot, Vxdotdot, Vp, 
           g_i, gx_i, gp_i);
 
     // Copy results into combined result
     if (!g.is_null()) {
-      g->update(1.0, *g_i);
+      g->update(scalar_weights[i], *g_i);
     }
     if (!gx.is_null()) {
-      gx->update(1.0, *gx_i);
+      gx->update(scalar_weights[i], *gx_i);
     }
     if (!gp.is_null()) {
-      gp->update(1.0, *gp_i);
+      gp->update(scalar_weights[i], *gp_i);
     }
   }
 }
@@ -221,19 +224,19 @@ evaluateGradient(const double current_time,
 
     // Copy results into combined result
     if (!g.is_null()) {
-      g->update(1.0, *g_i);
+      g->update(scalar_weights[i], *g_i);
     }
     if (!dg_dx.is_null()) {
-      dg_dx->update(1.0, *dg_dx_i);
+      dg_dx->update(scalar_weights[i], *dg_dx_i);
     }
     if (!dg_dxdot.is_null()) {
-      dg_dxdot->update(1.0, *dg_dxdot_i);
+      dg_dxdot->update(scalar_weights[i], *dg_dxdot_i);
     }
     if (!dg_dxdotdot.is_null()) {
-      dg_dxdotdot->update(1.0, *dg_dxdotdot_i);
+      dg_dxdotdot->update(scalar_weights[i], *dg_dxdotdot_i);
     }
     if (!dg_dp.is_null()) {
-      dg_dp->update(1.0, *dg_dp_i);
+      dg_dp->update(scalar_weights[i], *dg_dp_i);
     }
   }
 }
@@ -269,7 +272,7 @@ evaluateDistParamDeriv(
            dg_dp_i);
 
     // Copy results into combined result
-    dg_dp->update(1.0, *dg_dp_i);
+    dg_dp->update(scalar_weights[i], *dg_dp_i);
   }
 }
 
@@ -303,7 +306,7 @@ evaluate_HessVecProd_xx(
            Hv_dp_i);
 
     // Copy results into combined result
-    Hv_dp->update(1.0, *Hv_dp_i);
+    Hv_dp->update(scalar_weights[i], *Hv_dp_i);
   }
 }
 
@@ -338,7 +341,7 @@ evaluate_HessVecProd_xp(
            Hv_dp_i);
 
     // Copy results into combined result
-    Hv_dp->update(1.0, *Hv_dp_i);
+    Hv_dp->update(scalar_weights[i], *Hv_dp_i);
   }
 }
 
@@ -373,7 +376,7 @@ evaluate_HessVecProd_px(
            Hv_dp_i);
 
     // Copy results into combined result
-    Hv_dp->update(1.0, *Hv_dp_i);
+    Hv_dp->update(scalar_weights[i], *Hv_dp_i);
   }
 }
 
@@ -410,7 +413,7 @@ evaluate_HessVecProd_pp(
            Hv_dp_i);
 
     // Copy results into combined result
-    Hv_dp->update(1.0, *Hv_dp_i);
+    Hv_dp->update(scalar_weights[i], *Hv_dp_i);
   }
 }
 
@@ -426,7 +429,7 @@ printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
   std::size_t precision = 8;
   std::size_t value_width = precision + 4;
   
-  *out << std::setw(value_width) << Thyra::get_ele(*g_,0) << "sum of [";
+  *out << std::setw(value_width) << Thyra::get_ele(*g_,0) << " weighted sum of [";
   for (unsigned int i=0; i<responses.size(); i++) {
     responses[i]->printResponse(out);
     if (i<(responses.size()-1))
@@ -434,4 +437,34 @@ printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
     else
       *out << "]";
   }
+  *out << " weights [ ";
+  for (unsigned int i=0; i<responses.size(); i++) {
+    *out << scalar_weights[i];
+    if (i<(responses.size()-1))
+      *out << ", ";
+    else
+      *out << "]";
+  }
+}
+
+double 
+Albany::CumulativeScalarResponseFunction::
+getContribution(int j)
+{
+  std::ostringstream response_string;
+  RCP<Teuchos::FancyOStream> fancy = Teuchos::fancyOStream(Teuchos::rcpFromRef(response_string));
+  TEUCHOS_TEST_FOR_EXCEPTION(j>responses.size(), std::runtime_error,
+                              "Error! getContribution(j), j is larger than the responses.size().\n");
+  responses[j]->printResponse(fancy);
+
+  return std::stod(response_string.str());
+}
+
+void
+Albany::CumulativeScalarResponseFunction::
+updateWeight(int j, double weight)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(j>responses.size(), std::runtime_error,
+                              "Error! updateWeight(j, weight), j is larger than the responses.size().\n");
+  scalar_weights[j] = weight;
 }

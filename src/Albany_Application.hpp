@@ -321,6 +321,7 @@ public:
   void
   evaluateResponseTangent(
       int                                          response_index,
+      int                                          parameter_index,
       const double                                 alpha,
       const double                                 beta,
       const double                                 omega,

@@ -1387,7 +1387,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(sacado_param_vec[l]);
 
         app->evaluateResponseTangent(
-            j, alpha, beta, omega, curr_time, false,
+            j, l, alpha, beta, omega, curr_time, false,
             x, x_dot, x_dotdot, sacado_param_vec, p_vec.get(),
             Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
             g_out, Teuchos::null, dgdp_out);

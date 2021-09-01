@@ -2238,6 +2238,7 @@ Application::evaluateResponse(
 void
 Application::evaluateResponseTangent(
     int                                          response_index,
+    int                                          parameter_index,
     const double                                 alpha,
     const double                                 beta,
     const double                                 omega,
@@ -2269,6 +2270,7 @@ Application::evaluateResponseTangent(
       xdot,
       xdotdot,
       p,
+      parameter_index,
       deriv_p,
       Vx,
       Vxdot,

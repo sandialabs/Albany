@@ -42,6 +42,7 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& p,
+    int parameter_index,
     ParamVec* deriv_p,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
@@ -52,7 +53,7 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
   response->evaluateTangent(alpha, beta, omega, current_time, sum_derivs,
-          x, xdot, xdotdot, p, deriv_p, Vx, Vxdot, Vxdotdot, Vp, g, gx, gp);
+          x, xdot, xdotdot, p, parameter_index, deriv_p, Vx, Vxdot, Vxdotdot, Vp, g, gx, gp);
 }
 
 //! Evaluate distributed parameter derivative dg/dp

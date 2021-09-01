@@ -77,6 +77,7 @@ public:
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& p,
+    int parameter_index,
     ParamVec* deriv_p,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,

@@ -23,7 +23,8 @@ namespace Albany {
     //! Default constructor
     CumulativeScalarResponseFunction(
       const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses);
+      const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses,
+      const Teuchos::Array< double >& scalar_weights);
 
     //! Setup response function
     virtual void setup();
@@ -57,6 +58,7 @@ namespace Albany {
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		  const Teuchos::Array<ParamVec>& p,
+      int parameter_index,
 		  ParamVec* deriv_p,
       const Teuchos::RCP<const Thyra_MultiVector>& Vx,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
@@ -81,6 +83,9 @@ namespace Albany {
 
     virtual void
     printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
+
+    double getContribution(int j);
+    void updateWeight(int j, double weight);
 
   private:
 
@@ -153,6 +158,7 @@ namespace Albany {
 
     //! Response functions to add
     Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> > responses;
+    Teuchos::Array< double > scalar_weights;
     unsigned int num_responses;
 
   };
