@@ -165,25 +165,39 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   }
 
 
-  const bool compute_sens = problemParams->get<bool>("Compute Sensitivities", false); 
+  const bool compute_sens = problemParams->get<bool>("Compute Sensitivities", false);
   std::string sens_method = "None"; 
   int sens_param_index = 0; 
   int resp_fn_index = 0; 
-  if (compute_sens == true) { 
-    if (params->isSublist("Piro")) {
-      Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(params, "Piro", true);
+  if (params->isSublist("Piro")) {
+    Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(params, "Piro", true);
+    if (compute_sens == true) {
       sens_method = piroParams->get<std::string>("Sensitivity Method", "Forward"); 
-      if (piroParams->isSublist("Tempus")) {
-        Teuchos::RCP<Teuchos::ParameterList> tempusParams = Teuchos::sublist(piroParams, "Tempus", true);
-        if (tempusParams->isSublist("Sensitivities")) {
-          Teuchos::RCP<Teuchos::ParameterList> sensParams = Teuchos::sublist(tempusParams, "Sensitivities", true);
-  	  sens_param_index = sensParams->get<int>("Sensitivity Parameter Index", 0); 
-	  resp_fn_index = sensParams->get<int>("Response Function Index", 0);
-        }
+    }
+    if (piroParams->isSublist("Tempus")) {
+      Teuchos::RCP<Teuchos::ParameterList> tempusParams = Teuchos::sublist(piroParams, "Tempus", true);
+      if (tempusParams->isSublist("Sensitivities")) {
+        Teuchos::RCP<Teuchos::ParameterList> sensParams = Teuchos::sublist(tempusParams, "Sensitivities", true);
+        sens_param_index = sensParams->get<int>("Sensitivity Parameter Index", 0); 
+	resp_fn_index = sensParams->get<int>("Response Function Index", 0);
       }
     }
+  }
+  if (compute_sens == true) { 
     if (sens_method == "Adjoint") {
       adjoint_trans_sens = true; 
+    }
+    else if (sens_method == "None") {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error!  'Compute Sensitivities' is true but 'Sensitivity Method' is set to 'None'!\n"); 
+    }
+  }
+  else {
+    if (sens_method != "None") {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error!  'Compute Sensitivities' is false but 'Sensitivity Method' has been set to " 
+	<< sens_method << ".\n"); 
+
     }
   }
 
