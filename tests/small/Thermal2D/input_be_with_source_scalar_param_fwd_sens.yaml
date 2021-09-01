@@ -41,7 +41,7 @@ ALBANY:
     2D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK2D
-    Exodus Output File Name: thermal2D_with_source_out.exo
+    Exodus Output File Name: thermal2D_with_source_scalar_param_fwd_sens_be_out.exo
     Exodus Write Interval: 1
   Piro:
     Sensitivity Method: Forward

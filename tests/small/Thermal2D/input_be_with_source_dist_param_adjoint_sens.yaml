@@ -16,7 +16,6 @@ ALBANY:
     Initial Condition:
       Function: Expression Parser All DOFs
       Function Expressions: ['16.0*x*(1.0-x)*y*(1.0-y)']
-    #Thermal Conductivity: [1.6, 0.8]
     Heat Capacity: 1.0
     Density: 1.0
     Thermal Source: 2D Cost Expt
@@ -32,14 +31,6 @@ ALBANY:
         Name: thermal_conductivity
         Parameter Analytic Expression: Quadratic
         Mesh Part: ''
-      #Number Of Parameters: 1
-      #Parameter 0:
-        #Type: Vector
-        #Dimension: 2
-        #Scalar 0:
-        #  Name: 'kappa_x Parameter'
-        #Scalar 1:
-        #  Name: 'kappa_y Parameter'
   Discretization:
     1D Elements: 10
     2D Elements: 10
@@ -47,7 +38,7 @@ ALBANY:
     2D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK2D
-    Exodus Output File Name: thermal2D_with_source_adjoint_out.exo
+    Exodus Output File Name: thermal2D_with_source_dist_param_adjoint_sens_be_out.exo
     Exodus Write Interval: 1
   Piro:
     Sensitivity Method: Adjoint
@@ -65,7 +56,7 @@ ALBANY:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
           Initial Time Step: 1.0e-3
-          Final Time: 5.0e-2
+          Final Time: 1.0e-2
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
@@ -144,7 +135,7 @@ ALBANY:
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
     Sensitivity For Parameter 0:
-      Test Value:  5.394771859944e-02
-    Test Value:  3.646913098784e-01
+      Test Value:  1.105249306867e-02
+    Test Value:  3.609366723139e-01
     Relative Tolerance: 1.00000000000000002e-03
 ...

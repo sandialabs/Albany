@@ -18,13 +18,10 @@ ALBANY:
     Density: 1.0
     Thermal Source: 1D Cost
     Response Functions:
-      Number Of Responses: 2
+      Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average 
-      Response 1:
-        Type: Scalar Response
-        Name: Solution Two Norm 
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -38,7 +35,7 @@ ALBANY:
     Workset Size: -1
     Method: STK1D
     Exodus Output File Name: thermal1D_with_source_dist_param_adjoint_sens_explicit_out.exo
-    Exodus Write Interval: 10
+    Exodus Write Interval: 1
   Piro:
     Sensitivity Method: Adjoint
     Tempus:
@@ -46,7 +43,7 @@ ALBANY:
       Constant Mass Matrix: true
       Sensitivities:
         Sensitivity Parameter Index: 0
-        Response Function Index: 1
+        Response Function Index: 0
       Integrator Name: Tempus Integrator
       Tempus Integrator:
         Integrator Type: Integrator Basic
@@ -62,8 +59,8 @@ ALBANY:
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 1.0e-3
-          Final Time: 1.0
+          Initial Time Step: 1.0e-4
+          Final Time: 1.0e-2
           Final Time Index: 1000000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
@@ -105,12 +102,8 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 7.166990507737e-01
+    Test Value: 2.533116741287e+00
     Relative Tolerance: 1.00000000000000002e-03
-  Regression For Response 1:
-    Absolute Tolerance: 1.00000000000000008e-05
     Sensitivity For Parameter 0:
-      Test Value: 3.190528022395e+00
-    Test Value: 4.050244173105e+00
-    Relative Tolerance: 1.00000000000000002e-03
+      Test Value: 1.64518052e-01
 ...
