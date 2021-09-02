@@ -146,8 +146,9 @@ namespace PyAlbany
          * \brief performAnalysis member function
          * 
          * This function is used to call the function Piro::PerformAnalysis.
+         * \return false if solve converged, true otherwise.
          */
-        void performAnalysis();
+        bool performAnalysis();
 
         /**
          * \brief getResponseMap member function

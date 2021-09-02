@@ -120,7 +120,7 @@ def main(parallelEnv):
         X = np.arange(-5, 5, 0.2)
         Y = np.arange(-5, 5, 0.25)
 
-        #Z1, Z2 = evaluate_responses(X, Y, problem, True)
+        Z1, Z2 = evaluate_responses(X, Y, problem, True)
 
         X, Y = np.meshgrid(X, Y)
 
@@ -137,21 +137,21 @@ def main(parallelEnv):
             if n_params == 2:
                 plt.figure()
                 plt.plot(theta_star[:, 0], theta_star[:, 1], '*-')
-                #plt.contour(X, Y, Z1, levels=I_star, colors='g')
-                #plt.contour(X, Y, Z2, levels=F_star, colors='r')
+                plt.contour(X, Y, Z1, levels=I_star, colors='g')
+                plt.contour(X, Y, Z2, levels=F_star, colors='r')
                 plt.savefig('theta_star.jpeg', dpi=800)
                 plt.close()
 
                 fig = plt.figure()
                 ax = fig.gca(projection='3d')
-                #ax.plot_surface(X, Y, Z1)
+                ax.plot_surface(X, Y, Z1)
 
                 plt.savefig('Z1.jpeg', dpi=800)
                 plt.close()
 
                 fig = plt.figure()
                 ax = fig.gca(projection='3d')
-                #ax.plot_surface(X, Y, Z2)
+                ax.plot_surface(X, Y, Z2)
 
                 plt.savefig('Z2.jpeg', dpi=800)
                 plt.close()

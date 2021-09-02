@@ -11,7 +11,11 @@ def evaluateThetaStar(l, problem, n_params, response_id=0, F_id=1):
     # Loop over the lambdas
     for i in range(0, n_l):
         problem.updateCumulativeResponseContributionWeigth(0, 1, -l[i])
-        problem.performAnalysis()
+        error = problem.performAnalysis()
+
+        if error:
+            print("The forward solve has not converged for lambda = "+str(l[i]))
+            raise NameError("Has not converged")
 
         for j in range(0, n_params):
             para = problem.getParameter(j)

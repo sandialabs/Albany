@@ -7,4 +7,3 @@
 #SBATCH -p blake
 
 python thermal_steady.py &> log_steady.txt
-python thermal_transient.py &> log_transient.txt
