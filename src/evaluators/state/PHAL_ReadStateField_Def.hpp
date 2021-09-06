@@ -92,13 +92,13 @@ void
 ReadStateField<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
     typename Traits::EvalData workset)
 {
-  if (field_type == "Cell") {
+  if (field_type == PHX::print<Cell>()) {
     readElemState(workset);
-  } else if (field_type == "Node") {
+  } else if (field_type == PHX::print<Node>()) {
     readNodalState(workset);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
-        field_type == "Cell" || field_type == "Node",
+        field_type == PHX::print<Cell>() || field_type == PHX::print<Node>(),
         std::runtime_error,
         "Error! Only read cell or node states for now.\n");
   }

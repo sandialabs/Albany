@@ -502,7 +502,7 @@ Albany::StateManager::registerSideSetStateVariable(
   {
     mfe_type = StateStruct::ElemData;  // One value per element
   } else if (dl->rank() > 1) {
-    if (dl->name(1) == "Dim")
+    if (dl->name(1) == PHX::print<Dim>())
       mfe_type = StateStruct::ElemData;   // One vector/tensor per element
     else if (dl->name(1) == PHX::print<Node>())       // Element node data
       mfe_type = StateStruct::ElemNode;   // One value per side node
@@ -564,7 +564,7 @@ Albany::StateManager::registerSideSetStateVariable(
   }
   stateRef.output              = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
-  stateRef.layered             = (dl->name(dl->rank() - 1) == "LayerDim");
+  stateRef.layered             = (dl->name(dl->rank() - 1) == PHX::print<LayerDim>());
   TEUCHOS_TEST_FOR_EXCEPTION(
       stateRef.layered && (dl->extent(dl->rank() - 1) <= 0),
       std::logic_error,
