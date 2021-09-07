@@ -73,6 +73,17 @@ struct Dummy : public shards::ArrayDimTag {
 };
 
 namespace PHX {
+  template<> std::string print<Dim>();
+  template<> std::string print<VecDim>();
+  template<> std::string print<LayerDim>();
+  template<> std::string print<QuadPoint>();
+  template<> std::string print<Node>();
+  template<> std::string print<Vertex>();
+  template<> std::string print<Point>();
+  template<> std::string print<Cell>();
+  template<> std::string print<Side>();
+  template<> std::string print<Dummy>();
+
   template<> struct is_extent<Dim> : std::true_type {};
   template<> struct is_extent<LayerDim> : std::true_type {};
   template<> struct is_extent<VecDim> : std::true_type {};

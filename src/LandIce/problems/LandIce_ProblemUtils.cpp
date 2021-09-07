@@ -11,7 +11,7 @@ extrudeSideLayout (const Teuchos::RCP<PHX::DataLayout>& in, const int numLayers)
 
   std::vector<std::string> names;
   in->names(names);
-  TEUCHOS_TEST_FOR_EXCEPTION(names[0]!="Side", std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(names[0]!=PHX::print<Side>(), std::runtime_error,
     "Error! A side layout must begin with <Side,...>.\n");
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -22,11 +22,11 @@ extrudeSideLayout (const Teuchos::RCP<PHX::DataLayout>& in, const int numLayers)
       out = Teuchos::rcp(new PHX::MDALayout<Side,LayerDim>(dims[0],numLayers));
         break;
     case 2:
-      if (names[1]=="Node") {
+      if (names[1]==PHX::print<Node>()) {
         out = Teuchos::rcp(new PHX::MDALayout<Side,Node,LayerDim>(dims[0],dims[1],numLayers));
-      } else if (names[1]=="Dim") {
+      } else if (names[1]==PHX::print<Dim>()) {
         out = Teuchos::rcp(new PHX::MDALayout<Side,Dim,LayerDim>(dims[0],dims[1],numLayers));
-      } else if (names[1]=="VecDim") {
+      } else if (names[1]==PHX::print<VecDim>()) {
         out = Teuchos::rcp(new PHX::MDALayout<Side,VecDim,LayerDim>(dims[0],dims[1],numLayers));
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
@@ -34,11 +34,11 @@ extrudeSideLayout (const Teuchos::RCP<PHX::DataLayout>& in, const int numLayers)
       }
       break;
     case 3:
-      if (names[1]=="Node" && names[2]=="Dim") {
+      if (names[1]==PHX::print<Node>() && names[2]==PHX::print<Dim>()) {
         out = Teuchos::rcp(new PHX::MDALayout<Side,Node,Dim,LayerDim>(dims[0],dims[1],dims[2],numLayers));
-      } else if (names[1]=="Node" && names[2]=="VecDim") {
+      } else if (names[1]==PHX::print<Node>() && names[2]==PHX::print<VecDim>()) {
         out = Teuchos::rcp(new PHX::MDALayout<Side,Node,VecDim,LayerDim>(dims[0],dims[1],dims[2],numLayers));
-      } else if (names[1]=="Dim" && names[2]=="Dim") {
+      } else if (names[1]==PHX::print<Dim>() && names[2]==PHX::print<Dim>()) {
         out = Teuchos::rcp(new PHX::MDALayout<Side,Dim,Dim,LayerDim>(dims[0],dims[1],dims[2],numLayers));
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
