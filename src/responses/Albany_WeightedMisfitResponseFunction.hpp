@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_LDTRATERESPONSEFUNCTION_HPP
-#define ALBANY_LDTRATERESPONSEFUNCTION_HPP
+#ifndef ALBANY_WeightedMisfitResponse_HPP
+#define ALBANY_WeightedMisfitResponse_HPP
 
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
 #include "Albany_Utils.hpp"
@@ -23,13 +23,21 @@ namespace Albany
   class CombineAndScatterManager;
 
   /*!
- * \brief Reponse function representing the average of the solution values
- */
-  class LDTRateResponseFunction : public SamplingBasedScalarResponseFunction
+   * \brief Weighted l2 misfit response
+   *
+   * Given an invertible matrix \f$\boldsymbol{C}\f$ and a vector \f$\theta_0\f$, 
+   * this response is, for a given curent parameter vector \f$\theta\f$:
+   *
+   * \f[
+   *   I(\theta) := 
+   *   1/2 \|\theta-\theta_0 \|^2_{\boldsymbol{C}^{-1}},
+   * \f]
+   */
+  class WeightedMisfitResponse : public SamplingBasedScalarResponseFunction
   {
   public:
     //! Constructor
-    LDTRateResponseFunction(const Teuchos::RCP<const Application> &app,
+    WeightedMisfitResponse(const Teuchos::RCP<const Application> &app,
                             Teuchos::ParameterList &responseParams);
 
     //! Get the number of responses
@@ -150,4 +158,4 @@ namespace Albany
 
 } // namespace Albany
 
-#endif // ALBANY_LDTRATERESPONSEFUNCTION_HPP
+#endif // ALBANY_WeightedMisfitResponse_HPP

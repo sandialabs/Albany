@@ -18,7 +18,7 @@
 #include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
 #include "Albany_SolutionResponseFunction.hpp"
 #include "Albany_KLResponseFunction.hpp"
-#include "Albany_LDTRateResponseFunction.hpp"
+#include "Albany_WeightedMisfitResponseFunction.hpp"
 
 #include "Teuchos_TestForException.hpp"
 
@@ -48,7 +48,7 @@ createResponseFunction(
     responses.push_back(rcp(new Albany::SolutionValuesResponseFunction(app, responseParams)));
   }
   else if (name == "LDT-rate function") {
-    responses.push_back(rcp(new Albany::LDTRateResponseFunction(app, responseParams)));
+    responses.push_back(rcp(new Albany::WeightedMisfitResponse(app, responseParams)));
   }
 
   else if (name == "Solution Max Value") {

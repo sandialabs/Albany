@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_LDTRateResponseFunction.hpp"
+#include "Albany_WeightedMisfitResponseFunction.hpp"
 
 #include "Albany_SolutionCullingStrategy.hpp"
 
@@ -32,8 +32,8 @@ using Teuchos::SerialDenseVector;
 namespace Albany
 {
 
-LDTRateResponseFunction::
-LDTRateResponseFunction(const Teuchos::RCP<const Application>& app,
+WeightedMisfitResponse::
+WeightedMisfitResponse(const Teuchos::RCP<const Application>& app,
                                Teuchos::ParameterList& responseParams) :
   SamplingBasedScalarResponseFunction(app->getComm()),
   app_(app)
@@ -82,17 +82,17 @@ LDTRateResponseFunction(const Teuchos::RCP<const Application>& app,
   }
 }
 
-void LDTRateResponseFunction::setup()
+void WeightedMisfitResponse::setup()
 {
 }
 
-unsigned int LDTRateResponseFunction::
+unsigned int WeightedMisfitResponse::
 numResponses() const
 {
   return 1;
 }
 
-void LDTRateResponseFunction::
+void WeightedMisfitResponse::
 evaluateResponseImpl (
     const Teuchos::Array<ParamVec> &p,
 		Thyra_Vector& g)
@@ -103,21 +103,7 @@ evaluateResponseImpl (
   typedef SerialDenseVector<int, double> DVector;
 
   DVector theta(n_parameters), tmp1(n_parameters), tmp2(n_parameters);
-/*
-  ParamVec params_l = p[0];
-  unsigned int num_cols_p_l = params_l.size();
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      num_cols_p_l != n_parameters,
-      Teuchos::Exceptions::InvalidParameter,
-      std::endl
-          << "Error!  Albany::LDTRateResponseFunction::evaluateResponse():  "
-          << "The number of parameter in the parameter vector "
-          << num_cols_p_l
-          << " is not consistent with the number of parameter of the xml file "
-          << n_parameters
-          << std::endl);  
-*/
   for (int i=0; i<n_parameters; i++) {
     theta(i) = p[i][0].family->getValue<PHAL::AlbanyTraits::Residual>();
   }
@@ -133,7 +119,7 @@ evaluateResponseImpl (
   g.assign(I);
 }
 
-void LDTRateResponseFunction::
+void WeightedMisfitResponse::
 evaluateGradientImpl (
     const Teuchos::Array<ParamVec> &p,
 		SerialDenseVector<int, double>& dgdp)
@@ -144,21 +130,7 @@ evaluateGradientImpl (
   typedef SerialDenseVector<int, double> DVector;
 
   DVector theta(n_parameters), tmp1(n_parameters);
-/*
-  ParamVec params_l = p[0];
-  unsigned int num_cols_p_l = params_l.size();
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      num_cols_p_l != n_parameters,
-      Teuchos::Exceptions::InvalidParameter,
-      std::endl
-          << "Error!  Albany::LDTRateResponseFunction::evaluateGradientImpl():  "
-          << "The number of parameter in the parameter vector "
-          << num_cols_p_l
-          << " is not consistent with the number of parameter of the xml file "
-          << n_parameters
-          << std::endl);  
-*/
   for (int i=0; i<n_parameters; i++) {
     theta(i) = p[i][0].family->getValue<PHAL::AlbanyTraits::Residual>();
   }
@@ -170,7 +142,7 @@ evaluateGradientImpl (
   dgdp.multiply( Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *invC, tmp1, 0.0 );
 }
 
-void LDTRateResponseFunction::
+void WeightedMisfitResponse::
 evaluateResponse(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -189,7 +161,7 @@ evaluateResponse(const double /*current_time*/,
   g_->assign(*g);
 }
 
-void LDTRateResponseFunction::
+void WeightedMisfitResponse::
 evaluateTangent(const double /*alpha*/,
 		const double beta,
 		const double /* omega */,
@@ -224,37 +196,12 @@ evaluateTangent(const double /*alpha*/,
     evaluateGradientImpl (p, dgdp);
 
     // gp = (dg/dp)^T*Vp
-    /*
-    if (Teuchos::nonnull(Vp)) {
-      Teuchos::ArrayRCP<const double> Vp_constView;
-      for (int k = 0; k < Vp->domain()->dim(); k++) {
-        Vp_constView                     = getLocalData(Vp->col(k));
-        double tmp_gp = 0;
-        for (int i=0; i<n_parameters; i++)
-          tmp_gp += Vp_constView[i]*tmp2(i);
-        gp->col(k)->assign(tmp_gp);
-      }
-    }
-    */
-   /*
-    if (Teuchos::nonnull(Vp)) {
-      Teuchos::ArrayRCP<const double> Vp_constView;
-      for (int k = 0; k < Vp->domain()->dim(); k++) {
-        Vp_constView                     = getLocalData(Vp->col(k));
-        double tmp_gp = 0;
-        for (int i=0; i<n_parameters; i++)
-          tmp_gp += Vp_constView[i]*dgdp(i);
-        gp->col(k)->assign(tmp_gp);
-      }
-    }
-  */
     Thyra::set_ele(0, dgdp(parameter_index), gp->col(0).ptr());
-  
   }
 }
 
 //! Evaluate distributed parameter derivative dg/dp
-void LDTRateResponseFunction::
+void WeightedMisfitResponse::
 evaluateDistParamDeriv(
     const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
@@ -269,7 +216,7 @@ evaluateDistParamDeriv(
   }
 }
 
-void LDTRateResponseFunction::
+void WeightedMisfitResponse::
 evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& /*v*/,
@@ -284,7 +231,7 @@ evaluate_HessVecProd_xx(
   }
 }
 
-void LDTRateResponseFunction::
+void WeightedMisfitResponse::
 evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& /*v*/,
@@ -300,7 +247,7 @@ evaluate_HessVecProd_xp(
   }
 }
 
-void LDTRateResponseFunction::
+void WeightedMisfitResponse::
 evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& /*v*/,
@@ -316,7 +263,7 @@ evaluate_HessVecProd_px(
   }
 }
 
-void LDTRateResponseFunction::
+void WeightedMisfitResponse::
 evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
@@ -342,23 +289,10 @@ evaluate_HessVecProd_pp(
     for (int i=0; i<n_parameters; i++) {
       Thyra::set_ele(i, tmp2(i), Hv_dp->col(0).ptr());
     }
-    /*
-    for (int k = 0; k < v->domain()->dim(); k++) {
-      for (int i=0; i<n_parameters; i++) {
-        tmp1(i) = Thyra::get_ele(*v->col(k),i);
-      }
-
-      tmp2.multiply( Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *invC, tmp1, 0.0 );
-
-      for (int i=0; i<n_parameters; i++) {
-        Thyra::set_ele(i, tmp2(i), Hv_dp->col(k).ptr());
-      }
-    }
-    */
   }
 }
 
-void LDTRateResponseFunction::
+void WeightedMisfitResponse::
 evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -398,7 +332,7 @@ evaluateGradient(const double /*current_time*/,
 }
 
 void
-LDTRateResponseFunction::
+WeightedMisfitResponse::
 printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
 {
   if (g_.is_null()) {
