@@ -273,9 +273,8 @@ evaluateTangent(const double /* alpha */,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-		const Teuchos::Array<ParamVec>& p,
-    int parameter_index,
-		ParamVec* deriv_p,
+		Teuchos::Array<ParamVec>& p,
+    const int parameter_index,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -292,7 +291,7 @@ evaluateTangent(const double /* alpha */,
   // Set data in Workset struct
   PHAL::Workset workset;
   application->setupTangentWorksetInfo(workset, current_time, sum_derivs, 
-                x, xdot, xdotdot, p, deriv_p, Vx, Vxdot, Vxdotdot, Vp);
+                x, xdot, xdotdot, p, parameter_index, Vx, Vxdot, Vxdotdot, Vp);
   workset.g = g;
   workset.dgdx = gx;
   workset.dgdp = gp;
@@ -307,7 +306,7 @@ evaluateGradient(const double current_time,
   const Teuchos::RCP<const Thyra_Vector>& xdot,
   const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 	const Teuchos::Array<ParamVec>& p,
-	ParamVec* /* deriv_p */,
+	const int  /*parameter_index*/,
   const Teuchos::RCP<Thyra_Vector>& g,
   const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
   const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,

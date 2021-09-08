@@ -14,7 +14,7 @@ evaluateDerivative(
   const Teuchos::RCP<const Thyra_Vector>& xdot,
   const Teuchos::RCP<const Thyra_Vector>& xdotdot,
   const Teuchos::Array<ParamVec>& p,
-  ParamVec* deriv_p,
+  const int parameter_index,
   const Teuchos::RCP<Thyra_Vector>& g,
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
@@ -30,6 +30,6 @@ evaluateDerivative(
   const Teuchos::RCP<Thyra_MultiVector>& dg_dp_mv = dg_dp.getMultiVector();
 
   this->evaluateGradient(
-    current_time, x, xdot, xdotdot, p, deriv_p, g,
+    current_time, x, xdot, xdotdot, p, parameter_index, g,
     dg_dx_op, dg_dxdot_op, dg_dxdotdot_op, dg_dp_mv);
 }

@@ -104,9 +104,8 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-		const Teuchos::Array<ParamVec>& p,
-    int parameter_index,
-		ParamVec* deriv_p,
+		Teuchos::Array<ParamVec>& p,
+    const int parameter_index,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -147,7 +146,7 @@ evaluateTangent(const double alpha,
 
     // Evaluate response function
     responses[i]->evaluateTangent(alpha, beta, omega, current_time, sum_derivs,
-				  x, xdot, xdotdot, p, parameter_index, deriv_p, Vx, Vxdot, Vxdotdot, Vp, 
+				  x, xdot, xdotdot, p, parameter_index, Vx, Vxdot, Vxdotdot, Vp, 
           g_i, gx_i, gp_i);
 
     // Copy results into combined result
@@ -170,7 +169,7 @@ evaluateGradient(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
 		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
+    const int parameter_index,
 		const Teuchos::RCP<Thyra_Vector>& g,
 		const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
 		const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
@@ -219,7 +218,7 @@ evaluateGradient(const double current_time,
 
     // Evaluate response function
     responses[i]->evaluateGradient(
-            current_time, x, xdot, xdotdot, p, deriv_p, 
+            current_time, x, xdot, xdotdot, p, parameter_index, 
             g_i, dg_dx_i, dg_dxdot_i, dg_dxdotdot_i, dg_dp_i);
 
     // Copy results into combined result
