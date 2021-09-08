@@ -1884,10 +1884,7 @@ Application::computeGlobalTangent(
 
   RCP<ParamVec> params;
   if (parameter_index < par.size()){
-    const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(par[parameter_index]);
-    ParamVec* deriv_p = p_vec.get();
-
-    params = Teuchos::rcp(deriv_p);
+    params = Teuchos::rcp(new ParamVec(par[parameter_index]));
   }
 
   // Zero out overlapped residual
@@ -3456,10 +3453,7 @@ Application::setupTangentWorksetInfo(
 
   RCP<ParamVec> params;
   if (parameter_index < p.size()){
-    const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(p[parameter_index]);
-    ParamVec* deriv_p = p_vec.get();
-
-    params = Teuchos::rcp(deriv_p);
+    params = Teuchos::rcp(new ParamVec(p[parameter_index]));
   }
 
   // Number of x & xdot tangent directions
