@@ -1566,14 +1566,6 @@ Application::computeGlobalJacobianImpl(
     workset.Jac = jac;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
-    // fill Jacobian derivative dimensions:
-    for (int ps = 0; ps < fm.size(); ps++) {
-      (workset.Jacobian_deriv_dims)
-          .push_back(
-              PHAL::getDerivativeDimensions<EvalT>(
-                  this, ps, explicit_scheme));
-    }
-
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     if (!workset.f.is_null()) {
       workset.f_kokkos = getNonconstDeviceData(workset.f);
@@ -1994,13 +1986,6 @@ Application::computeGlobalTangent(
       if (nfm != Teuchos::null)
         deref_nfm(nfm, wsPhysIndex, ws)
             ->evaluateFields<EvalT>(workset);
-    }
-
-    // fill Tangent derivative dimensions
-    for (int ps = 0; ps < fm.size(); ps++) {
-      (workset.Tangent_deriv_dims)
-          .push_back(PHAL::getDerivativeDimensions<EvalT>(
-              this, ps));
     }
   }
 
