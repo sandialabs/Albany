@@ -34,10 +34,8 @@ ANONYMOUS:
           Mean: [1., 1.]
           Covariance Matrix: [[1., 0.], [0., 1.]]
         Response 1:
-          Name: Squared L2 Difference Source ST Target PST
-          Field Rank: Scalar
-          Source Field Name: Temperature
-          Target Value: 0.0
+          Type: Scalar Response
+          Name: Solution Average
         Scaling Coefficient 1: -1.
   Discretization: 
     1D Elements: 10
