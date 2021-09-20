@@ -10,3 +10,12 @@ ANONYMOUS:
     Exodus Output File Name: ./humboldt_2d.exo
     Ascii Input Mesh File Name: ../AsciiMeshes/Humboldt/albany.msh
     Use Serial Mesh: true
+  Piro:
+    NOX:
+      Status Tests:
+        Test Type: NormF
+        Tolerance: 1.0
+      Printing:
+        Output Information: 
+          Details: false
+...

@@ -67,9 +67,12 @@ ANONYMOUS:
             Vector Dim: 2
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
-  Piro: 
-    NOX: 
-      Printing: 
-        Output Information: 
+  Piro:
+    NOX:
+      Status Tests:
+        Test Type: NormF
+        Tolerance: 1.0
+      Printing:
+        Output Information:
           Details: false
 ...

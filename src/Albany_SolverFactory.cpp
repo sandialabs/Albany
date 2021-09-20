@@ -294,20 +294,6 @@ setSolverParamDefaults(Teuchos::ParameterList* appParams,
   Teuchos::ParameterList& lsParams = newtonParams.sublist("Linear Solver");
   lsParams.set("Max Iterations", 43);
   lsParams.set("Tolerance", 1e-4);
-
-  // Sublist for status tests
-  Teuchos::ParameterList& statusParams = noxParams.sublist("Status Tests");
-  statusParams.set("Test Type", "Combo");
-  statusParams.set("Combo Type", "OR");
-  statusParams.set("Number of Tests", 2);
-  Teuchos::ParameterList& normF = statusParams.sublist("Test 0");
-  normF.set("Test Type", "NormF");
-  normF.set("Tolerance", 1.0e-8);
-  normF.set("Norm Type", "Two Norm");
-  normF.set("Scale Type", "Unscaled");
-  Teuchos::ParameterList& maxiters = statusParams.sublist("Test 1");
-  maxiters.set("Test Type", "MaxIters");
-  maxiters.set("Maximum Iterations", 10);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
