@@ -63,10 +63,6 @@ ANONYMOUS:
             Norm Type: Two Norm
             Scale Type: Scaled
             Tolerance: 9.99999999999999954e-08
-          Test 1:
-            Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000002e-03
-            Relative Tolerance: 9.99999999999999954e-07
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 100
