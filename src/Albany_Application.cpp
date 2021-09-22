@@ -820,9 +820,9 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
     std::string t_identifier = t_dl.identifier();
     std::string sideSetName = t_identifier.substr(0, t_identifier.find("<"));
 
-    TEUCHOS_TEST_FOR_EXCEPTION(first_dim_name == "Side" && sideSetName.empty(), std::logic_error, "Dynamic sizing error: Identifier is that of a sideset but has no sideset name.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(first_dim_name == PHX::print<Side>() && sideSetName.empty(), std::logic_error, "Dynamic sizing error: Identifier is that of a sideset but has no sideset name.\n");
 
-    if (first_dim_name == "Side" && maxSideSetSizes.find(sideSetName) != maxSideSetSizes.end()) {
+    if (first_dim_name == PHX::print<Side>() && maxSideSetSizes.find(sideSetName) != maxSideSetSizes.end()) {
 
       t_dims[0] = maxSideSetSizes[sideSetName];
 
@@ -1607,14 +1607,6 @@ Application::computeGlobalJacobianImpl(
     workset.Jac = jac;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
-    // fill Jacobian derivative dimensions:
-    for (int ps = 0; ps < fm.size(); ps++) {
-      (workset.Jacobian_deriv_dims)
-          .push_back(
-              PHAL::getDerivativeDimensions<EvalT>(
-                  this, ps, explicit_scheme));
-    }
-
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     if (!workset.f.is_null()) {
       workset.f_kokkos = getNonconstDeviceData(workset.f);
@@ -2035,13 +2027,6 @@ Application::computeGlobalTangent(
       if (nfm != Teuchos::null)
         deref_nfm(nfm, wsPhysIndex, ws)
             ->evaluateFields<EvalT>(workset);
-    }
-
-    // fill Tangent derivative dimensions
-    for (int ps = 0; ps < fm.size(); ps++) {
-      (workset.Tangent_deriv_dims)
-          .push_back(PHAL::getDerivativeDimensions<EvalT>(
-              this, ps));
     }
   }
 

@@ -42,9 +42,12 @@ ANONYMOUS:
         Field Origin: File
         Vector Dim: 2
         Field Expression: ['a=1.1', 'b=2.1', 'c=3.1', 'a*x^2+b*y^2+c', 'a*sin(x*b)*cos(y*c)']
-  Piro: 
-    NOX: 
-      Printing: 
+  Piro:
+    NOX:
+      Status Tests:
+        Test Type: NormF
+        Tolerance: 1.0
+      Printing:
         Output Information: 
           Details: false
 ...

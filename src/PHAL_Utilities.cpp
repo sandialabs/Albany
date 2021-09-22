@@ -10,6 +10,39 @@
 #include "Albany_StateInfoStruct.hpp"
 #include "PHAL_Utilities.hpp"
 
+namespace {
+
+template <typename EvalT> std::string getSFadSizeName();
+template <> std::string getSFadSizeName<PHAL::AlbanyTraits::Jacobian>() {return "ALBANY_SFAD_SIZE";}
+template <> std::string getSFadSizeName<PHAL::AlbanyTraits::Tangent>() {return "ALBANY_TAN_SFAD_SIZE";}
+template <> std::string getSFadSizeName<PHAL::AlbanyTraits::DistParamDeriv>() {return "ALBANY_TAN_SFAD_SIZE";}
+template <> std::string getSFadSizeName<PHAL::AlbanyTraits::HessianVec>() {return "ALBANY_HES_VEC_SFAD_SIZE";}
+
+template <typename EvalT>
+void checkDerivativeDimensions(const int dDims)
+{
+  // Check derivative dimensions against fad size
+  using FadT = typename EvalT::EvaluationType::ScalarT;
+  if (FadT::StorageType::is_statically_sized) {
+    const int static_size = FadT::StorageType::static_size;
+    if (static_size != dDims) {
+      const auto sfadSizeName = getSFadSizeName<EvalT>();
+      std::stringstream ss1, ss2;
+      ss1 << "Derivative dimension for " << PHX::print<EvalT>() << " is " << dDims << " but "
+          << sfadSizeName << " is " << static_size << "!\n";
+      ss2 << " - Rebuild with " << sfadSizeName << "=" << dDims << "\n";
+      if (static_size > dDims)
+        *Teuchos::VerboseObjectBase::getDefaultOStream()
+            << "WARNING: " << ss1.str()
+            << "Continuing with this size may cause issues...\n" << ss2.str();
+      else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, ss1.str() + ss2.str());
+    }
+  }
+}
+
+} // namespace
+
 namespace PHAL {
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
@@ -29,34 +62,15 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
         dDims = app->getNumEquations()*(node_count + side_node_count*numLevels);
       }
   }
-
-  // Check derivative dimensions against fad size
-  using EvalT = typename PHAL::AlbanyTraits::Jacobian;
-  using FadT = typename EvalT::EvaluationType::ScalarT;
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size < dDims),
-      std::runtime_error,
-      "Derivative dimensions " << PHX::print<EvalT>() << " are " << dDims <<
-      " but FadType has static size " << FadT::StorageType::static_size << "!\n" <<
-      " - Rebuild with ALBANY_SFAD_SIZE=" << dDims << "\n");
-
+  checkDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(dDims);
   return dDims;
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* /* ms */, bool /* responseEvaluation */)
 {
-  // Check derivative dimensions against tan fad size
-  using EvalT = typename PHAL::AlbanyTraits::Tangent;
-  using FadT = typename EvalT::EvaluationType::ScalarT;
   const int dDims = app->getTangentDerivDimension();
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size < dDims),
-      std::runtime_error,
-      "Derivative dimensions " << PHX::print<EvalT>() << " are " << dDims <<
-      " but TanFadType has static size " << FadT::StorageType::static_size << "!\n" <<
-      " - Rebuild with ALBANY_TAN_SFAD_SIZE=" << dDims << "\n");
-
+  checkDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(dDims);
   return dDims;
 }
 
@@ -64,18 +78,8 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
   const Albany::Application* /* app */, const Albany::MeshSpecsStruct* ms, bool /* responseEvaluation */)
 {
   //Mauro: currently distributed derivatives work only with scalar parameters, to be updated.
-
-  // Check derivative dimensions against tan fad size
-  using EvalT = typename PHAL::AlbanyTraits::DistParamDeriv;
-  using FadT = typename EvalT::EvaluationType::ScalarT;
   const int dDims = ms->ctd.node_count;
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size < dDims),
-      std::runtime_error,
-      "Derivative dimensions " << PHX::print<EvalT>() << " are " << dDims <<
-      " but TanFadType has static size " << FadT::StorageType::static_size << "!\n" <<
-      " - Rebuild with ALBANY_TAN_SFAD_SIZE=" << dDims << "\n");
-
+  checkDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(dDims);
   return dDims;
 }
 
@@ -85,17 +89,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
   const int derivativeDimension_x = getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(app, ms, responseEvaluation);
   const int derivativeDimension_p = getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(app, ms, responseEvaluation);
   const int derivativeDimension_max = derivativeDimension_x > derivativeDimension_p ? derivativeDimension_x : derivativeDimension_p;
-
-  // Check derivative dimensions against hes vec fad size
-  using EvalT = typename PHAL::AlbanyTraits::HessianVec;
-  using FadT = typename EvalT::EvaluationType::ScalarT;
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      FadT::StorageType::is_statically_sized && (FadT::StorageType::static_size < derivativeDimension_max),
-      std::runtime_error,
-      "Derivative dimensions " << PHX::print<EvalT>() << " are " << derivativeDimension_max <<
-      " but HessianVecFad has static size " << FadT::StorageType::static_size << "!\n" <<
-      " - Rebuild with ALBANY_HES_VEC_SFAD_SIZE=" << derivativeDimension_max << "\n");
-
+  checkDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(derivativeDimension_max);
   return derivativeDimension_max;
 }
 

@@ -36,9 +36,12 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: File
         Random Value: ['true']
-  Piro: 
-    NOX: 
-      Printing: 
+  Piro:
+    NOX:
+      Status Tests:
+        Test Type: NormF
+        Tolerance: 1.0
+      Printing:
         Output Information: 
           Details: false
 ...

@@ -40,6 +40,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   n = -1; //dummy value
   dim = -1;
   worksetSize = -1;
+  is_power_parameter = false;
   Teuchos::ParameterList beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
 
   //Validate Parameters
@@ -263,7 +264,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
     } else if (beta_type == BETA_TYPE::POWER_LAW) {
       auto paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-      if (paramLib->isParameter("Power Exponent")) {
+      is_power_parameter = paramLib->isParameter("Power Exponent");
+      if (is_power_parameter) {
         u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
         this->addDependentField (u_norm);
       } else {
@@ -393,7 +395,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
         break;
       }
 
-      if (power == 1.0)
+      if (!is_power_parameter && power == 1.0)
         beta(cell,ipt) = muValue * NVal;
       else
         beta(cell,ipt) = muValue * NVal * std::pow (u_norm(cell,ipt), power-1.0);

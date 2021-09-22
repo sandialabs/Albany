@@ -97,7 +97,7 @@ private:
   bool logParameters;
   bool nodal;
   bool is_side_equation;
-
+  bool is_power_parameter;
   enum class BETA_TYPE {CONSTANT, FIELD, POWER_LAW, REGULARIZED_COULOMB};
   enum class FIELD_TYPE {CONSTANT, FIELD, EXPONENT_OF_FIELD, EXPONENT_OF_FIELD_AT_NODES};
   enum class EFFECTIVE_PRESSURE_TYPE {CONSTANT, FIELD, HYDROSTATIC, HYDROSTATIC_AT_NODES};
