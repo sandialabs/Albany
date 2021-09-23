@@ -35,12 +35,12 @@ ALBANY:
     1D Scale: 6.283185307179586e00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: advection1D_with_source_dist_param_adjoint_sens_explicit_out.exo
+    Exodus Output File Name: advection1D_with_source_dist_param_adjoint_sens_explicit_consistentM_out.exo
     Exodus Write Interval: 1
   Piro:
     Sensitivity Method: Adjoint
     Tempus:
-      Lump Mass Matrix: true
+      Lump Mass Matrix: false
       Constant Mass Matrix: true
       Sensitivities:
         Sensitivity Parameter Index: 0

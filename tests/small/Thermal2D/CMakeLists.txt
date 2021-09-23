@@ -41,8 +41,8 @@ endif()
   add_test(${testName}_BackwardEuler_with_Source_Scalar_Param_Adjoint_Sens ${Albany.exe} input_be_with_source_scalar_param_fwd_sens.yaml)
   set_tests_properties(${testName}_BackwardEuler_with_Source_Scalar_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Forward")
   
-  add_test(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens ${SerialAlbany.exe} input_be_with_source_dist_param_adjoint_sens.yaml)
-  set_tests_properties(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Adjoint")
+  #add_test(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens ${SerialAlbany.exe} input_be_with_source_dist_param_adjoint_sens.yaml)
+  #set_tests_properties(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Adjoint")
 
   add_test(${testName}_ForwardEuler_with_Source_Dist_Param_Adjoint_Sens ${SerialAlbany.exe} input_fe_with_source_dist_param_adjoint_sens.yaml)
   set_tests_properties(${testName}_ForwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Adjoint")

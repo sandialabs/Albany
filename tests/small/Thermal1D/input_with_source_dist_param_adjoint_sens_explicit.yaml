@@ -39,7 +39,7 @@ ALBANY:
   Piro:
     Sensitivity Method: Adjoint
     Tempus:
-      Lump Mass Matrix: true
+      Lump Mass Matrix: false
       Constant Mass Matrix: true
       Sensitivities:
         Sensitivity Parameter Index: 0
