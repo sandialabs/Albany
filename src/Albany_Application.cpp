@@ -1811,8 +1811,8 @@ Application::computeGlobalTangent(
     const Teuchos::RCP<const Thyra_Vector>&      x,
     const Teuchos::RCP<const Thyra_Vector>&      xdot,
     const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-    const Teuchos::Array<ParamVec>&              par,
-    ParamVec*                                    deriv_par,
+    Teuchos::Array<ParamVec>&                    par,
+    const int                                    parameter_index,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -1874,7 +1874,10 @@ Application::computeGlobalTangent(
     }
   }
 
-  RCP<ParamVec> params = rcp(deriv_par, false);
+  RCP<ParamVec> params;
+  if (parameter_index < par.size()){
+    params = Teuchos::rcp(new ParamVec(par[parameter_index]));
+  }
 
   // Zero out overlapped residual
   if (Teuchos::nonnull(f)) {
@@ -2223,6 +2226,7 @@ Application::evaluateResponse(
 void
 Application::evaluateResponseTangent(
     int                                          response_index,
+    int                                          parameter_index,
     const double                                 alpha,
     const double                                 beta,
     const double                                 omega,
@@ -2231,8 +2235,7 @@ Application::evaluateResponseTangent(
     const Teuchos::RCP<const Thyra_Vector>&      x,
     const Teuchos::RCP<const Thyra_Vector>&      xdot,
     const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-    const Teuchos::Array<ParamVec>&              p,
-    ParamVec*                                    deriv_p,
+    Teuchos::Array<ParamVec>&                    p,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -2254,7 +2257,7 @@ Application::evaluateResponseTangent(
       xdot,
       xdotdot,
       p,
-      deriv_p,
+      parameter_index,
       Vx,
       Vxdot,
       Vxdotdot,
@@ -2272,7 +2275,7 @@ Application::evaluateResponseDerivative(
     const Teuchos::RCP<const Thyra_Vector>&          xdot,
     const Teuchos::RCP<const Thyra_Vector>&          xdotdot,
     const Teuchos::Array<ParamVec>&                  p,
-    ParamVec*                                        deriv_p,
+    const int                                        parameter_index,
     const Teuchos::RCP<Thyra_Vector>&                g,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
@@ -2289,7 +2292,7 @@ Application::evaluateResponseDerivative(
       xdot,
       xdotdot,
       p,
-      deriv_p,
+      parameter_index,
       g,
       dg_dx,
       dg_dxdot,
@@ -3397,8 +3400,8 @@ Application::setupTangentWorksetInfo(
     const Teuchos::RCP<const Thyra_Vector>&      x,
     const Teuchos::RCP<const Thyra_Vector>&      xdot,
     const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-    const Teuchos::Array<ParamVec>&              p,
-    ParamVec*                                    deriv_p,
+    Teuchos::Array<ParamVec>&                    p,
+    const int                                    parameter_index,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -3433,7 +3436,10 @@ Application::setupTangentWorksetInfo(
         Vxdotdot, overlapped_Vxdotdot, CombineMode::INSERT);
   }
 
-  RCP<ParamVec> params = rcp(deriv_p, false);
+  RCP<ParamVec> params;
+  if (parameter_index < p.size()){
+    params = Teuchos::rcp(new ParamVec(p[parameter_index]));
+  }
 
   // Number of x & xdot tangent directions
   int num_cols_x = 0;

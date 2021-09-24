@@ -274,6 +274,7 @@ list (APPEND SOURCES
   responses/Albany_FieldManagerResidualOnlyResponseFunction.cpp
   responses/Albany_SamplingBasedScalarResponseFunction.cpp
   responses/Albany_KLResponseFunction.cpp
+  responses/Albany_WeightedMisfitResponseFunction.cpp
   responses/Albany_ResponseFactory.cpp
   responses/Albany_ScalarResponseFunction.cpp
   responses/Albany_SolutionCullingStrategy.cpp
@@ -291,6 +292,7 @@ list (APPEND HEADERS
   responses/Albany_DistributedResponseFunction.hpp
   responses/Albany_FieldManagerScalarResponseFunction.hpp
   responses/Albany_KLResponseFunction.hpp
+  responses/Albany_WeightedMisfitResponseFunction.hpp
   responses/Albany_SamplingBasedScalarResponseFunction.hpp
   responses/Albany_ResponseFactory.hpp
   responses/Albany_ScalarResponseFunction.hpp

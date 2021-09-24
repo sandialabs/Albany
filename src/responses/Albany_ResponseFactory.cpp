@@ -18,6 +18,7 @@
 #include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
 #include "Albany_SolutionResponseFunction.hpp"
 #include "Albany_KLResponseFunction.hpp"
+#include "Albany_WeightedMisfitResponseFunction.hpp"
 
 #include "Teuchos_TestForException.hpp"
 
@@ -45,6 +46,9 @@ createResponseFunction(
   }
   else if (name == "Solution Values") {
     responses.push_back(rcp(new Albany::SolutionValuesResponseFunction(app, responseParams)));
+  }
+  else if (name == "Weighted Misfit") {
+    responses.push_back(rcp(new Albany::WeightedMisfitResponse(app, responseParams)));
   }
 
   else if (name == "Solution Max Value") {
@@ -79,6 +83,7 @@ createResponseFunction(
     int num_responses = responseParams.get<int>("Number Of Responses");
     Array< RCP<AbstractResponseFunction> > aggregated_responses;
     Array< RCP<ScalarResponseFunction> > scalar_responses;
+    Array<double> scalar_weights;
     for (int i=0; i<num_responses; i++) {
       std::string id = Albany::strint("Response",i);
       Teuchos::ParameterList sublist = responseParams.sublist(id);
@@ -86,6 +91,7 @@ createResponseFunction(
       createResponseFunction(name, sublist, aggregated_responses);
     }
     scalar_responses.resize(aggregated_responses.size());
+    scalar_weights.resize(aggregated_responses.size());
     for (int i=0; i<aggregated_responses.size(); i++) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           aggregated_responses[i]->isScalarResponse() != true, std::logic_error,
@@ -93,8 +99,11 @@ createResponseFunction(
           std::endl <<
           "The aggregated response can only aggregate scalar response " << "functions!");
       scalar_responses[i] = Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(aggregated_responses[i]);
+
+      std::string id = Albany::strint("Scaling Coefficient",i);
+      scalar_weights[i] = responseParams.get<double>(id, 1.0);
     }
-    responses.push_back(rcp(new Albany::CumulativeScalarResponseFunction(comm, scalar_responses)));
+    responses.push_back(rcp(new Albany::CumulativeScalarResponseFunction(comm, scalar_responses, scalar_weights)));
   }
 
   else if (name == "Field Integral" ||

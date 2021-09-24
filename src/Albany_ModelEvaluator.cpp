@@ -1219,7 +1219,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
 
       app->computeGlobalTangent(
           0.0, 0.0, 0.0, curr_time, false,
-          x, x_dot, x_dotdot, sacado_param_vec, p_vec.get(),
+          x, x_dot, x_dotdot, sacado_param_vec, l,
           Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
           f_out, Teuchos::null, dfdp_out);
 
@@ -1369,7 +1369,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       app->evaluateResponseDerivative(
           j, curr_time, x, x_dot, x_dotdot,
           sacado_param_vec,
-          NULL,
+          -1,
           g_out,
           dgdx_out,
           dgdxdot_out,
@@ -1387,8 +1387,8 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(sacado_param_vec[l]);
 
         app->evaluateResponseTangent(
-            j, alpha, beta, omega, curr_time, false,
-            x, x_dot, x_dotdot, sacado_param_vec, p_vec.get(),
+            j, l, alpha, beta, omega, curr_time, false,
+            x, x_dot, x_dotdot, sacado_param_vec,
             Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
             g_out, Teuchos::null, dgdp_out);
         // Set g_out to null to indicate that g_out was evaluated.

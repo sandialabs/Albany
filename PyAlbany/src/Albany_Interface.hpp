@@ -24,6 +24,8 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_YamlParameterListHelpers.hpp"
 
+#include "Albany_CumulativeScalarResponseFunction.hpp"
+
 namespace PyAlbany
 {
     /**
@@ -134,7 +136,7 @@ namespace PyAlbany
          * 
          * This function is used to call the function Piro::PerformSolve and solve the
          * defined problem.
-	 * \return false if solve converged, true otherwise.
+	     * \return false if solve converged, true otherwise.
          */
         bool performSolve();
 
@@ -144,8 +146,9 @@ namespace PyAlbany
          * \brief performAnalysis member function
          * 
          * This function is used to call the function Piro::PerformAnalysis.
+         * \return false if solve converged, true otherwise.
          */
-        void performAnalysis();
+        bool performAnalysis();
 
         /**
          * \brief getResponseMap member function
@@ -275,6 +278,27 @@ namespace PyAlbany
          * This function reports the Albany timers.
          */
         void reportTimers();
+
+        double getCumulativeResponseContribution( int i, int j)
+        {
+            Teuchos::RCP<Albany::CumulativeScalarResponseFunction>  csrf = Teuchos::rcp_dynamic_cast<Albany::CumulativeScalarResponseFunction>(albanyApp->getResponse(i), false);
+            if (csrf == Teuchos::null) {
+                std::cout << "Warning: getCumulativeResponseContribution() response " << i << " is not a CumulativeScalarResponseFunction." << std::endl;
+                return 0.;
+            }
+            else
+                return csrf->getContribution(j);
+        }
+
+        void updateCumulativeResponseContributionWeigth( int i, int j, double weigth)
+        {
+            Teuchos::RCP<Albany::CumulativeScalarResponseFunction>  csrf = Teuchos::rcp_dynamic_cast<Albany::CumulativeScalarResponseFunction>(albanyApp->getResponse(i), false);
+            if (csrf == Teuchos::null) {
+                std::cout << "Warning: updateCumulativeResponseContributionWeigth() response " << i << " is not a CumulativeScalarResponseFunction." << std::endl;
+            }
+            else
+                csrf->updateWeight(j, weigth);
+        }
     };
 
 } // namespace PyAlbany

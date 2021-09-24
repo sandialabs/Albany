@@ -62,7 +62,7 @@ private:
 
   // Input:
   PHX::MDField<const RealType>      BF;           // Basis functions
-  PHX::MDField<const MeshScalarT>   w_measure;    // Weigthed measure (for quadrature)
+  PHX::MDField<const MeshScalarT>   w_measure;    // Weighted measure (for quadrature)
   PHX::MDField<const ScalarT>       h;            // Water thickness [m]
   PHX::MDField<const ScalarT>       h_node;       // Water thickness nodal [m]
   PHX::MDField<const ScalarT>       h_dot;        // Water thickness time derivative [m/s]

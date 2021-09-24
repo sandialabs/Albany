@@ -532,7 +532,7 @@ bool PyProblem::performSolve()
     return error;
 }
 
-void PyProblem::performAnalysis()
+bool PyProblem::performAnalysis()
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
@@ -545,7 +545,7 @@ void PyProblem::performAnalysis()
     Teuchos::ParameterList &piroParams =
         slvrfctry->getParameters()->sublist("Piro");
 
-    Piro::PerformAnalysis(*solver, piroParams, p, observer);
+    int status = Piro::PerformAnalysis(*solver, piroParams, p, observer);
 
     auto p_dpv = Teuchos::rcp_dynamic_cast<Thyra::DefaultProductVector<double>>(p);
 
@@ -559,6 +559,8 @@ void PyProblem::performAnalysis()
 
     stackedTimer->stop("PyAlbany: performAnalysis");
     stackedTimer->stopBaseTimer();
+    bool error = (status != 0);
+    return error;
 }
 
 void PyProblem::reportTimers()
