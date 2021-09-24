@@ -47,7 +47,7 @@ createResponseFunction(
   else if (name == "Solution Values") {
     responses.push_back(rcp(new Albany::SolutionValuesResponseFunction(app, responseParams)));
   }
-  else if (name == "LDT-rate function") {
+  else if (name == "Weighted Misfit") {
     responses.push_back(rcp(new Albany::WeightedMisfitResponse(app, responseParams)));
   }
 

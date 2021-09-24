@@ -29,7 +29,7 @@ ANONYMOUS:
         Type: Sum Of Responses
         Number Of Responses: 2
         Response 0:
-          Name: LDT-rate function
+          Name: Weighted Misfit
           Number Of Parameters: 2
           Mean: [1., 1.]
           Covariance Matrix: [[1., 0.], [0., 1.]]
