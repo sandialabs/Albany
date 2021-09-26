@@ -333,11 +333,6 @@ int main(int argc, char *argv[])
     const int max_j_index = ((sens_param_index == -1) || (num_p == 0)) ? num_p : sens_param_index + 1;  
     bool writeToMatrixMarketDgDp = debugParams.get("Write DgDp to MatrixMarket", false);
    
-    //Force writing of solution and create observer (for DgDp for transient 
-    //adjoint sensitivities) 
-    albanyApp->forceWriteSolution();
-    Teuchos::RCP<Albany::PiroObserver> observer = Teuchos::rcp( new Albany::PiroObserver(albanyApp, albanyModel));
-
     for (int i = min_i_index; i < max_i_index; i++) {
       const RCP<const Thyra_Vector> g = thyraResponses[i];
       if (!albanyApp->getResponse(i)->isScalarResponse()) continue;
@@ -367,15 +362,6 @@ int main(int argc, char *argv[])
                 *out << "    " << norm2;
             }
             *out << "\n" << std::endl;
-	    //Observe dgdp for transient problems through observer as the last 
-	    //step of the output .exo file.
-	    //There may be better ways to do this, which can be looked at in 
-	    //future work, e.g., to create a new .exo file with sensitivities.
-	    //It should be possible to use the observer similar to what is done
-	    //here to do that.
-	    if (albanyApp->getNumTimeDerivs() > 0) {
-	      observer->observeSolution(*(thyraResponses.back()), *dgdp);  
-	    }
             //check response and sensitivities for distributed parameters
             status += regression.checkSolveTestResults(i, j, g, norms);
           }
