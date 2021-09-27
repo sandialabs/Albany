@@ -4,12 +4,16 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_adjoint.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_adjoint.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_adjoint_explicit.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_adjoint_explicit.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_scalar_param_fwd_sens_implicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_scalar_param_fwd_sens_implicit.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_scalar_param_adjoint_sens_implicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_scalar_param_adjoint_sens_implicit.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_scalar_param_fwd_sens_explicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_scalar_param_fwd_sens_explicit.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_dist_param_adjoint_sens_implicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_dist_param_adjoint_sens_implicit.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_source_dist_param_adjoint_sens_explicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_with_source_dist_param_adjoint_sens_explicit.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/compute_errs.m
                ${CMAKE_CURRENT_BINARY_DIR}/compute_errs.m COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/compute_errs_no_movie2avi.m
@@ -23,12 +27,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_exact_soln.m
 add_test(${testName} ${Albany.exe} input.yaml)
 set_tests_properties(${testName} PROPERTIES LABELS
                                             "Demo;Tpetra;Forward;Serial")
-add_test(${testName}_with_Source ${Albany.exe} input_with_source.yaml)
-set_tests_properties(${testName}_with_Source PROPERTIES LABELS
+add_test(${testName}_with_Source_Scalar_Param_Fwd_Sens_Implicit ${Albany.exe} input_with_source_scalar_param_fwd_sens_implicit.yaml)
+set_tests_properties(${testName}_with_Source_Scalar_Param_Fwd_Sens_Implicit PROPERTIES LABELS
                                             "Demo;Tpetra;Forward;Serial")
-add_test(${testName}_with_Source_Adjoint_Implicit ${SerialAlbany.exe} input_with_source_adjoint.yaml)
-set_tests_properties(${testName}_with_Source_Adjoint_Implicit PROPERTIES LABELS
+add_test(${testName}_with_Source_Scalar_Param_Adjoint_Sens_Implicit ${Albany.exe} input_with_source_scalar_param_adjoint_sens_implicit.yaml)
+set_tests_properties(${testName}_with_Source_Scalar_Param_Adjoint_Sens_Implicit PROPERTIES LABELS
+	"Demo;Tpetra;Adjoint;Serial")
+add_test(${testName}_with_Source_Dist_Param_Adjoint_Sens_Implicit ${SerialAlbany.exe} input_with_source_dist_param_adjoint_sens_implicit.yaml)
+set_tests_properties(${testName}_with_Source_Dist_Param_Adjoint_Sens_Implicit PROPERTIES LABELS
                                        	"Demo;Tpetra;Adjoint;Serial")
-add_test(${testName}_with_Source_Adjoint_Explicit ${SerialAlbany.exe} input_with_source_adjoint_explicit.yaml)
-set_tests_properties(${testName}_with_Source_Adjoint_Explicit PROPERTIES LABELS
+add_test(${testName}_with_Source_Dist_Param_Adjoint_Sens_Explicit ${SerialAlbany.exe} input_with_source_dist_param_adjoint_sens_explicit.yaml)
+set_tests_properties(${testName}_with_Source_Dist_Param_Adjoint_Sens_Explicit PROPERTIES LABELS
                                        	"Demo;Tpetra;Adjoint;Serial")

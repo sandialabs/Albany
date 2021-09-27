@@ -17,7 +17,9 @@ StatelessObserverImpl::
 StatelessObserverImpl (const Teuchos::RCP<Application> &app)
   : app_(app),
   solOutTime_(Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"))
-{}
+{
+  force_write_solution_ = app->getForceWriteSolution(); 
+}
 
 RealType StatelessObserverImpl::
 getTimeParamValueOrDefault (RealType defaultValue) const {
@@ -69,10 +71,12 @@ void StatelessObserverImpl::observeSolution (
     const Teuchos::RCP<const Thyra_Vector> overlappedSolutionDot =
       app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionDot(*nonOverlappedSolutionDot);
     app_->getDiscretization()->writeSolution(
-      *overlappedSolution, overlappedSolutionDxDp, *overlappedSolutionDot, stamp, true);
+      *overlappedSolution, overlappedSolutionDxDp, *overlappedSolutionDot, stamp, true,
+      force_write_solution_);
   }
   else {
-    app_->getDiscretization()->writeSolution(*overlappedSolution, overlappedSolutionDxDp, stamp, true);
+    app_->getDiscretization()->writeSolution(*overlappedSolution, overlappedSolutionDxDp, 
+		    stamp, true, force_write_solution_);
   }
 }
 
@@ -98,16 +102,17 @@ void StatelessObserverImpl::observeSolution (
         app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionDotDot(*nonOverlappedSolutionDotDot);
       app_->getDiscretization()->writeSolution(
         *overlappedSolution, overlappedSolutionDxDp, *overlappedSolutionDot, *overlappedSolutionDotDot,
-        stamp, true);
+        stamp, true, force_write_solution_);
     }
     else {
       app_->getDiscretization()->writeSolution(
-        *overlappedSolution, overlappedSolutionDxDp, *overlappedSolutionDot, stamp, true);
+        *overlappedSolution, overlappedSolutionDxDp, *overlappedSolutionDot, 
+	stamp, true, force_write_solution_);
     }
   }
   else {
     app_->getDiscretization()->writeSolution(
-      *overlappedSolution, overlappedSolutionDxDp, stamp, true);
+      *overlappedSolution, overlappedSolutionDxDp, stamp, true, force_write_solution_);
   }
 }
 
@@ -122,7 +127,8 @@ void StatelessObserverImpl::observeSolution (
   if (nonOverlappedSolution_dxdp != Teuchos::null) {
     overlappedSolutionDxDp = app_->getAdaptSolMgr()->updateAndReturnOverlapSolutionDxDp(*nonOverlappedSolution_dxdp);
   }
-  app_->getDiscretization()->writeSolutionMV(*overlappedSolution, overlappedSolutionDxDp, stamp, true);
+  app_->getDiscretization()->writeSolutionMV(*overlappedSolution, overlappedSolutionDxDp, 
+		  stamp, true, force_write_solution_);
 }
 
 } // namespace Albany

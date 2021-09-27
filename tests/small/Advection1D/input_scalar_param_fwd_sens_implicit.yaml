@@ -1,55 +1,42 @@
 %YAML 1.1
 ---
 ALBANY:
-  Debug Output:
-    Write Solution to MatrixMarket: 0
+  Debug Output: 
+  #  Write Jacobian to MatrixMarket: -1
+  #  Write Residual to MatrixMarket: -1
+    Write DgDp to MatrixMarket: true
   Problem:
-    Name: Thermal 2D
+    Name: Advection 1D
     Solution Method: Transient
     Compute Sensitivities: true
-    Dirichlet BCs:
-      SDBC on NS NodeSet0 for DOF T: 0.0
-      SDBC on NS NodeSet1 for DOF T: 0.0
-      SDBC on NS NodeSet2 for DOF T: 0.0
-      SDBC on NS NodeSet3 for DOF T: 0.0
+    Dirichlet BCs: {}
     Initial Condition:
       Function: Expression Parser All DOFs
-      Function Expressions: ['16.0*x*(1.0-x)*y*(1.0-y)']
-    #Thermal Conductivity: [1.6, 0.8]
-    Heat Capacity: 1.0
-    Density: 1.0
-    Thermal Source: 2D Cost Expt
+      Function Expressions: ['sin(x)']
+    Advection Coefficient: [10.0]
     Response Functions:
-      Number Of Responses: 1
+      Number Of Responses: 2
       Response 0:
         Type: Scalar Response
         Name: Solution Average
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Two Norm
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
-        Type: Distributed
-        Name: thermal_conductivity
-        Parameter Analytic Expression: Quadratic
-        Mesh Part: ''
-      #Number Of Parameters: 1
-      #Parameter 0:
-        #Type: Vector
-        #Dimension: 2
-        #Scalar 0:
-        #  Name: 'kappa_x Parameter'
-        #Scalar 1:
-        #  Name: 'kappa_y Parameter'
+        Type: Scalar
+        Name: 'a_x Parameter'
   Discretization:
-    1D Elements: 10
-    2D Elements: 10
-    1D Scale: 1.00000000000000000e+00
-    2D Scale: 1.00000000000000000e+00
+    1D Elements: 25
+    1D Scale: 6.283185307179586e00
     Workset Size: -1
-    Method: STK2D
-    Exodus Output File Name: thermal2D_with_source_adjoint_out.exo
+    Method: STK1D
+    Exodus Output File Name: advection1D_scalar_param_fwd_sens_implicit_out.exo
+    Periodic_x BC: true
     Exodus Write Interval: 1
   Piro:
-    #Sensitivity Method: Adjoint
+    Sensitivity Method: Forward
     Tempus:
       Integrator Name: Tempus Integrator
       Tempus Integrator:
@@ -63,7 +50,7 @@ ALBANY:
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 1.0e-2
+          Initial Time Step: 1.0e-3
           Final Time: 1.0
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
@@ -77,7 +64,6 @@ ALBANY:
       Tempus Stepper:
         Stepper Type: Backward Euler
         Solver Name: Demo Solver
-        Predictor Name: None
         Demo Solver:
           NOX:
             Direction:
@@ -143,8 +129,14 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    #Sensitivity For Parameter 0:
-    #  Test Value: 2.103917477841e+02
-    Test Value:  4.524352198553e-01
+    Test Value: 0.0
+    Sensitivity For Parameter 0:
+      Test Value: 0.0
+    Relative Tolerance: 1.00000000000000002e-03
+  Regression For Response 1:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Test Value: 3.363119799958e+00
+    Sensitivity For Parameter 0:
+      Test Value: -3.362633334361e-02
     Relative Tolerance: 1.00000000000000002e-03
 ...

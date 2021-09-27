@@ -44,12 +44,14 @@ namespace Albany
 
 ModelEvaluator::
 ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
-                const Teuchos::RCP<Teuchos::ParameterList>& appParams_)
+                const Teuchos::RCP<Teuchos::ParameterList>& appParams_,
+		const bool adjoint_model_)
  : app(app_)
  , appParams(appParams_)
  , supplies_prec(app_->suppliesPreconditioner())
  , supports_xdot(false)
  , supports_xdotdot(false)
+ , adjoint_model(adjoint_model_)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -353,22 +355,60 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
     for (int i=0; i<num_dofs; i++) {
       std::cout << "IKT i, ov_coords = " << i << ", " << ov_coords[i] << "\n"; 
     }*/
+    Teuchos::ArrayRCP<double> coeffs(2);
+    if (param_list.isParameter("Parameter Analytic Expression Coefficients")) {
+      Teuchos::Array<double> coeffs_array = param_list.get<Teuchos::Array<double>>("Parameter Analytic Expression Coefficients");
+      if (coeffs_array.size() != 2) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              "\nError!  In Albany::ModelEvaluator constructor:  "
+              << "'Parameter Analytic Expression Coefficients' array must have size 2."
+              << " You have provided an array of size " << coeffs_array.size() << ".\n"); 
+      }
+      coeffs[0] = coeffs_array[0];
+      coeffs[1] = coeffs_array[1];
+    }
+    else {
+      coeffs[0] = 1.0; 
+      coeffs[1] = 0.0;
+    }
+
     Teuchos::ArrayRCP<ST> distParamVec_ArrayRCP = 
        getNonconstLocalData(distParam->vector()); 
 
-    if (param_expr == "Quadratic") 
+    if (param_expr == "Linear") 
     {
       if (num_dims == 1) {
         for (int i=0; i < num_nodes; i++) {
           const double x = ov_coords[i]; 
-          distParamVec_ArrayRCP[i] = x*(1-x); 
+          distParamVec_ArrayRCP[i] = x + coeffs[0]; 
         }
       }
       else if (num_dims == 2) {
         for (int i=0; i < num_nodes; i++) {
           const double x = ov_coords[2*i]; 
           const double y = ov_coords[2*i+1]; 
-          distParamVec_ArrayRCP[i] = x*(1-x)*y*(1-y); 
+          distParamVec_ArrayRCP[i] = (x + coeffs[0]) + (y + coeffs[1]); 
+        }
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "Linear Parameter Analytic Expression not valid for >2D.\n"); 
+      }
+    }
+    else if (param_expr == "Quadratic") 
+    {
+      if (num_dims == 1) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[i]; 
+          distParamVec_ArrayRCP[i] = x*(coeffs[0]-x) + coeffs[1]; 
+        }
+      }
+      else if (num_dims == 2) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[2*i]; 
+          const double y = ov_coords[2*i+1]; 
+          distParamVec_ArrayRCP[i] = x*(coeffs[0]-x)*y*(coeffs[0]-y) + coeffs[1]; 
         }
       }
       else {
@@ -381,7 +421,7 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
             "\nError!  In Albany::ModelEvaluator constructor:  "
             << "Invalid value for 'Parameter Analytic Expression' = "
-            << param_expr << ".  Valid expressions are: 'Quadratic'.\n");
+            << param_expr << ".  Valid expressions are: 'Linear', 'Quadratic'.\n");
     }
   } 
     
@@ -1062,6 +1102,8 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
 
   //! If a parameter has changed in value, saved/unsaved fields must be updated
 
+  //IKT, 8/25/2021 QUESTION: can the following go in the constructor?  If so, 
+  //we should move it there to make the code cleaner.
   bool transposeJacobian = false;
   ObserverImpl observer(app);
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -1069,6 +1111,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     auto& opt_paramList = appParams->sublist("Piro").sublist("Optimization Status");
     transposeJacobian = opt_paramList.get("Compute Transposed Jacobian", false);
   }
+  if (adjoint_model == true) transposeJacobian = true; 
 
   // Thyra vectors
   const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();

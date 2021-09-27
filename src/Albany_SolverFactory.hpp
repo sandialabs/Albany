@@ -46,11 +46,13 @@ public:
                      const Teuchos::RCP<const Thyra_Vector>& initial_guess = Teuchos::null);
 
   Teuchos::RCP<ModelEvaluator>
-  createModel (const Teuchos::RCP<Application>& app);
+  createModel (const Teuchos::RCP<Application>& app,
+	       const bool adjoint_model = false);
 
   Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
-  createSolver (const Teuchos::RCP<ModelEvaluator>&  model,
-                const Teuchos::RCP<const Teuchos_Comm>&    solverComm);
+  createSolver (const Teuchos::RCP<const Teuchos_Comm>&    solverComm, 
+                const Teuchos::RCP<ModelEvaluator>&  model,
+		const Teuchos::RCP<ModelEvaluator>&  adjointModel = Teuchos::null); 
 
   Teuchos::ParameterList&
   getAnalysisParameters() const

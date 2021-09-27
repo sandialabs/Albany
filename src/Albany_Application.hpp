@@ -149,6 +149,12 @@ public:
     return solMethod;
   }
 
+  int 
+  getNumTimeDerivs() const
+  {
+    return num_time_deriv;
+  }
+
   //! Get number of responses
   int
   getNumResponses() const;
@@ -186,6 +192,21 @@ public:
 
   void setSolutionStatus(SolutionStatus status) {
     solutionStatus = status;
+  }
+
+  void forceWriteSolution() 
+  {
+    force_write_solution = true;  
+  }
+
+  bool getForceWriteSolution() const 
+  {
+    return force_write_solution; 
+  }
+
+  bool isAdjointTransSensitivities() const 
+  {
+    return adjoint_trans_sens;
   }
 
   //! Return whether problem wants to use its own preconditioner
@@ -1283,6 +1304,10 @@ void
 
   // local responses
   Teuchos::Array<unsigned int> relative_responses;
+
+  mutable bool force_write_solution{false}; 
+  mutable bool adjoint_trans_sens{false}; 
+
 };
 
 template <typename EvalT>

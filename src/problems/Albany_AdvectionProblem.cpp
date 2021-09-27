@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_ThermalProblem.hpp"
+#include "Albany_AdvectionProblem.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
@@ -12,8 +12,8 @@
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
 
-Albany::ThermalProblem::
-ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+Albany::AdvectionProblem::
+AdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              //const Teuchos::RCP<DistributedParameterLibrary>& distParamLib_,
              const int numDim_,
@@ -29,24 +29,21 @@ ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   neq = 1; 
   Teuchos::Array<double> defaultData;
   defaultData.resize(numDim, 1.0);
-  kappa =
-      params->get<Teuchos::Array<double>>("Thermal Conductivity", defaultData);
-  if (kappa.size() != numDim) {
-    ALBANY_ABORT("Thermal Conductivity array must have length = numDim!");
+  a = params->get<Teuchos::Array<double>>("Advection Coefficient", defaultData);
+  if (a.size() != numDim) {
+    ALBANY_ABORT("Advection Coefficient array must have length = numDim!");
   }
-  rho = params->get<double>("Density", 1.0);
-  C = params->get<double>("Heat Capacity", 1.0);
-  thermal_source = params->get<std::string>("Thermal Source", "None"); 
+  advection_source = params->get<std::string>("Advection Source", "None"); 
 
-  conductivityIsDistParam = false;
+  advectionIsDistParam = false;
   if(params->isSublist("Parameters")) {
     int total_num_param_vecs, num_param_vecs, numDistParams;
     Albany::getParameterSizes(params->sublist("Parameters"), total_num_param_vecs, num_param_vecs, numDistParams);
     for (int i=0; i<numDistParams; ++i) {
       Teuchos::ParameterList p = params->sublist("Parameters").sublist(Albany::strint("Parameter", 
 			                 i+num_param_vecs));
-      if(p.get<std::string>("Name") == "thermal_conductivity" && p.get<std::string>("Type") == "Distributed")
-        conductivityIsDistParam = true;
+      if(p.get<std::string>("Name") == "advection_coefficient" && p.get<std::string>("Type") == "Distributed")
+        advectionIsDistParam = true;
     }
   }
   // Set Parameters for passing coords/near null space to preconditioners
@@ -54,20 +51,20 @@ ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   rigidBodyModes->setParameters(neq, computeConstantModes);
 }
 
-Albany::ThermalProblem::
-~ThermalProblem()
+Albany::AdvectionProblem::
+~AdvectionProblem()
 {
 }
 
 void
-Albany::ThermalProblem::
+Albany::AdvectionProblem::
 buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
-  std::cout << "Thermal Problem Num MeshSpecs: " << physSets << std::endl;
+  std::cout << "Advection Problem Num MeshSpecs: " << physSets << std::endl;
   fm.resize(physSets);
 
   for (int ps=0; ps<physSets; ps++) {
@@ -94,7 +91,7 @@ buildProblem(
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
-Albany::ThermalProblem::
+Albany::AdvectionProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
@@ -104,7 +101,7 @@ buildEvaluators(
 {
   // Call constructEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<ThermalProblem> op(
+  ConstructEvaluatorsOp<AdvectionProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
@@ -112,11 +109,11 @@ buildEvaluators(
 
 // Dirichlet BCs
 void
-Albany::ThermalProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
+Albany::AdvectionProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
    // Construct BC evaluators for all node sets and names
    std::vector<std::string> bcNames(neq);
-   bcNames[0] = "T";
+   bcNames[0] = "u";
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
@@ -127,7 +124,7 @@ Albany::ThermalProblem::constructDirichletEvaluators(const std::vector<std::stri
 
 // Neumann BCs
 void
-Albany::ThermalProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+Albany::AdvectionProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0
@@ -147,55 +144,51 @@ Albany::ThermalProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Me
    Teuchos::Array<Teuchos::Array<int> > offsets;
    offsets.resize(neq);
 
-   bcNames[0] = "T";
-   dof_names[0] = "Temperature";
+   bcNames[0] = "u";
+   dof_names[0] = "solution";
    offsets[0].resize(1);
    offsets[0][0] = 0;
 
 
    // Construct BC evaluators for all possible names of conditions
-   // Should only specify flux vector components (dTdx, dTdy, dTdz), or dTdn, not both
+   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
    std::vector<std::string> condNames(5);
-     //dTdx, dTdy, dTdz, dTdn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
+     //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
 
    // Note that sidesets are only supported for two and 3D currently
    if(numDim == 2)
-    condNames[0] = "(dTdx, dTdy)";
+    condNames[0] = "(dudx, dudy)";
    else if(numDim == 3)
-    condNames[0] = "(dTdx, dTdy, dTdz)";
+    condNames[0] = "(dudx, dudy, dudz)";
    else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
-   condNames[1] = "dTdn";
+   condNames[1] = "dudn";
    condNames[2] = "scaled jump";
    condNames[3] = "robin";
    condNames[4] = "radiate";
 
-   nfm.resize(1); // Thermal problem only has one physics set
+   nfm.resize(1); // Advection problem only has one physics set
    nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
                                   condNames, offsets, dl, this->params, this->paramLib);
 
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::ThermalProblem::getValidProblemParameters() const
+Albany::AdvectionProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidThermalProblemParams");
+    this->getGenericProblemParams("ValidAdvectionProblemParams");
   
   Teuchos::Array<double> defaultData;
   defaultData.resize(numDim, 1.0);
   validPL->set<Teuchos::Array<double>>(
-      "Thermal Conductivity",
+      "Advection Coefficient",
       defaultData,
       "Arrays of values of thermal conductivities in x, y, z [required]");
-  validPL->set<double>(
-      "Heat Capacity", 1.0, "Value of heat capacity [required]");
-  validPL->set<double>(
-      "Density", 1.0, "Value of density [required]");
   validPL->set<std::string>(
-      "Thermal Source", "None", "Value of thermal source [required]");
+      "Advection Source", "None", "Value of thermal source [required]");
 
   return validPL;
 }

@@ -1,27 +1,36 @@
 %YAML 1.1
 ---
 ALBANY:
-  #Debug Output: 
-  #  Write Jacobian to MatrixMarket: -1
-  #  Write Residual to MatrixMarket: -1
+  Debug Output:
+    Write Solution to MatrixMarket: 0
+    Write DgDp to MatrixMarket: true
   Problem:
     Name: Thermal 2D
     Solution Method: Transient
+    Compute Sensitivities: true
     Dirichlet BCs:
-      ExpressionEvaluated SDBC on NS NodeSet3 for DOF T: '200.0 + 5.0e-04 * t'
-      #ExpressionEvaluated SDBC on NS NodeSet3 for DOF T: '250.0 *cosh(5.421312110550360e-02) * exp(0.0015*0.0015*t)'
+      SDBC on NS NodeSet0 for DOF T: 0.0
+      SDBC on NS NodeSet1 for DOF T: 0.0
+      SDBC on NS NodeSet2 for DOF T: 0.0
+      SDBC on NS NodeSet3 for DOF T: 0.0
     Initial Condition:
-      Function: Expression Parser
-      Function Expressions: ['200']
-      #Function Expressions: ['250 * cosh(5.421312110550360e-02*x)']
-    Thermal Conductivity: [1.6, 1.6]
-    Heat Capacity: 2.09e3
-    Density: 920.0
+      Function: Expression Parser All DOFs
+      Function Expressions: ['16.0*x*(1.0-x)*y*(1.0-y)']
+    Heat Capacity: 1.0
+    Density: 1.0
+    Thermal Source: 2D Cost Expt
     Response Functions:
       Number Of Responses: 1
       Response 0:
         Type: Scalar Response
         Name: Solution Average
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Distributed
+        Name: thermal_conductivity
+        Parameter Analytic Expression: Quadratic
+        Mesh Part: ''
   Discretization:
     1D Elements: 10
     2D Elements: 10
@@ -29,8 +38,10 @@ ALBANY:
     2D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK2D
-    Exodus Output File Name: thermal2D_implicit_sdbc_out.exo
+    Exodus Output File Name: thermal2D_with_source_dist_param_adjoint_sens_be_out.exo
+    Exodus Write Interval: 1
   Piro:
+    Sensitivity Method: Adjoint
     Tempus:
       Integrator Name: Tempus Integrator
       Tempus Integrator:
@@ -44,20 +55,11 @@ ALBANY:
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 1.0e+03
-          Initial Order: 0
-          Final Time: 1.0e+5
+          Initial Time Step: 1.0e-3
+          Final Time: 1.0e-2
           Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
-          Time Step Control Strategy:
-            Time Step Control Strategy List: basic_vs
-            basic_vs:
-              Name: Basic VS
-              Reduction Factor: 5.00000000000000000e-01
-              Amplification Factor: 1.50000000000000000e+00
-              Minimum Value Monitoring Function: 1.0e-12
-              Maximum Value Monitoring Function: 1.0e20
           Output Time List: ''
           Output Index List: ''
           Output Time Interval: 1.00000000000000000e+01
@@ -67,7 +69,6 @@ ALBANY:
       Tempus Stepper:
         Stepper Type: Backward Euler
         Solver Name: Demo Solver
-        Predictor Name: None
         Demo Solver:
           NOX:
             Direction:
@@ -107,8 +108,6 @@ ALBANY:
               Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 10
-        Demo Predictor:
-          Stepper Type: Forward Euler
       Stratimikos:
         Linear Solver Type: Belos
         Linear Solver Types:
@@ -124,8 +123,10 @@ ALBANY:
                 Block Size: 1
                 Num Blocks: 100
                 Flexible Gmres: false
-        Preconditioner Type: Ifpack2
+        Preconditioner Type: MueLu
         Preconditioner Types:
+          MueLu:
+            verbosity: none
           Ifpack2:
             Prec Type: ILUT
             Overlap: 1
@@ -133,6 +134,8 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 2.122588137382e+02
+    Sensitivity For Parameter 0:
+      Test Value:  1.105249306867e-02
+    Test Value:  3.609366723139e-01
     Relative Tolerance: 1.00000000000000002e-03
 ...

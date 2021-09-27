@@ -77,6 +77,7 @@ public:
 protected:
   Teuchos::RCP<Application> app_;
   Teuchos::RCP<Teuchos::Time> solOutTime_;
+  bool force_write_solution_; 
 };
 
 } // namespace Albany

@@ -164,6 +164,43 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     tangent_deriv_dim = 1;
   }
 
+
+  const bool compute_sens = problemParams->get<bool>("Compute Sensitivities", false);
+  std::string sens_method = "None"; 
+  int sens_param_index = 0; 
+  int resp_fn_index = 0; 
+  if (params->isSublist("Piro")) {
+    Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(params, "Piro", true);
+    if (compute_sens == true) {
+      sens_method = piroParams->get<std::string>("Sensitivity Method", "Forward"); 
+    }
+    if (piroParams->isSublist("Tempus")) {
+      Teuchos::RCP<Teuchos::ParameterList> tempusParams = Teuchos::sublist(piroParams, "Tempus", true);
+      if (tempusParams->isSublist("Sensitivities")) {
+        Teuchos::RCP<Teuchos::ParameterList> sensParams = Teuchos::sublist(tempusParams, "Sensitivities", true);
+        sens_param_index = sensParams->get<int>("Sensitivity Parameter Index", 0); 
+	resp_fn_index = sensParams->get<int>("Response Function Index", 0);
+      }
+    }
+  }
+  if (compute_sens == true) { 
+    if (sens_method == "Adjoint") {
+      adjoint_trans_sens = true; 
+    }
+    else if (sens_method == "None") {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error!  'Compute Sensitivities' is true but 'Sensitivity Method' is set to 'None'!\n"); 
+    }
+  }
+  else {
+    if (sens_method != "None") {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error!  'Compute Sensitivities' is false but 'Sensitivity Method' has been set to " 
+	<< sens_method << ".\n"); 
+
+    }
+  }
+
   // Pull the number of solution vectors out of the problem and send them to the
   // discretization list, if the user specifies this in the problem
   Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(params, "Discretization", true);
@@ -193,6 +230,10 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     discParams->set<int>("Number Of Time Derivatives", num_time_deriv);
   else
     num_time_deriv = num_time_deriv_from_input;
+
+  discParams->set<std::string>("Sensitivity Method", sens_method);
+  discParams->set<int>("Sensitivity Parameter Index", sens_param_index); 
+  discParams->set<int>("Response Function Index", resp_fn_index); 
 
   TEUCHOS_TEST_FOR_EXCEPTION(
       num_time_deriv > 2,

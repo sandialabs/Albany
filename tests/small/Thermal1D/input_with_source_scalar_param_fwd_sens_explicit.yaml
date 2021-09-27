@@ -2,7 +2,8 @@
 ---
 ALBANY:
   Debug Output:
-    Write Distributed Solution and Map to MatrixMarket: True
+    Write Solution to MatrixMarket: 0
+    Write DgDp to MatrixMarket: true
   Problem:
     Name: Thermal 1D
     Solution Method: Transient
@@ -13,40 +14,36 @@ ALBANY:
     Initial Condition:
       Function: Expression Parser All DOFs
       Function Expressions: ['16*x*(1-x)']
-    #Thermal Conductivity: [1.6]
+    Thermal Conductivity: [1.6]
     Heat Capacity: 1.0
     Density: 1.0
     Thermal Source: 1D Cost
     Response Functions:
-      Number Of Responses: 1
+      Number Of Responses: 2
       Response 0:
         Type: Scalar Response
         Name: Solution Average
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Min Value
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
-        Type: Distributed
-        Name: thermal_conductivity
-        Parameter Analytic Expression: Quadratic
-        Mesh Part: ''
-    #Parameters:
-      #Number Of Parameters: 1
-      #Parameter 0:
-        #Type: Scalar
-        #Name: 'kappa_x Parameter'
+        Type: Scalar
+        Name: 'kappa_x Parameter'
   Discretization:
     1D Elements: 20
     1D Scale: 1.00000000000000000e+00
     Workset Size: -1
     Method: STK1D
-    Exodus Output File Name: thermal1D_with_source_out.exo
-    Exodus Write Interval: 1 
+    Exodus Output File Name: thermal1D_with_source_fwd_sens_explicit_out.exo
+    Exodus Write Interval: 100
   Piro:
-    #Sensitivity Method: Adjoint
+    Sensitivity Method: Forward
     Tempus:
+      Lump Mass Matrix: false
+      Constant Mass Matrix: true
       Integrator Name: Tempus Integrator
-      #Sensitivities:
-        #Mass Matrix Is Identity: false
       Tempus Integrator:
         Integrator Type: Integrator Basic
         Screen Output Index List: '1'
@@ -55,15 +52,12 @@ ALBANY:
         Solution History:
           Storage Type: Unlimited
           Storage Limit: 20
-          Interpolator:
-            Interpolator Type: Lagrange
-            Order: 0
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 0.01 #1.0e-2
+          Initial Time Step: 1.0e-4
           Final Time: 1.0
-          Final Time Index: 1000000
+          Final Time Index: 10000
           Maximum Absolute Error: 1.00000000000000002e-08
           Maximum Relative Error: 1.00000000000000002e-08
           Output Time List: ''
@@ -73,50 +67,11 @@ ALBANY:
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
       Tempus Stepper:
-        Stepper Type: Backward Euler
-        Solver Name: Demo Solver
-        Predictor Name: None
+        Stepper Type: RK Forward Euler
+        #Stepper Type: General ERK
         Use FSAL: false
         Initial Condition Consistency Check: false
-        Demo Solver:
-          NOX:
-            Direction:
-              Method: Newton
-              Newton:
-                Forcing Term Method: Constant
-                Rescue Bad Newton Solve: true
-                Linear Solver:
-                  Tolerance: 9.99999999999999954e-07
-            Line Search:
-              Full Step:
-                Full Step: 1.00000000000000000e+00
-              Method: Full Step
-            Nonlinear Solver: Line Search Based
-            Printing:
-              Output Precision: 3
-              Output Processor: 0
-              Output Information:
-                Error: true
-                Warning: true
-                Outer Iteration: false
-                Parameters: true
-                Details: false
-                Linear Solver Details: true
-                Stepper Iteration: true
-                Stepper Details: true
-                Stepper Parameters: true
-            Solver Options:
-              Status Test Check Type: Minimal
-            Status Tests:
-              Test Type: Combo
-              Combo Type: OR
-              Number of Tests: 2
-              Test 0:
-                Test Type: NormF
-                Tolerance: 1.00000000000000002e-08
-              Test 1:
-                Test Type: MaxIters
-                Maximum Iterations: 10
+        Initial Condition Consistency: None #This is necessary for Forward Euler!
       Stratimikos:
         Linear Solver Type: Belos
         Linear Solver Types:
@@ -143,8 +98,14 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    #Sensitivity For Parameter 0:
-      #Test Value: 9.395066921520e+00
-    Test Value: 7.020546086145e-01
+    Sensitivity For Parameter 0:
+      Test Value: 9.395066921520e+00
+    Test Value: -1.983408347195e+00
+    Relative Tolerance: 1.00000000000000002e-03
+  Regression For Response 1:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Sensitivity For Parameter 0:
+      Test Value: 1.483766171916e+01
+    Test Value: -3.127535657016e+00
     Relative Tolerance: 1.00000000000000002e-03
 ...

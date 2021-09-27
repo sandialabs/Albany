@@ -17,6 +17,7 @@
 #include "Albany_PNPProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "Albany_ThermalProblem.hpp"
+#include "Albany_AdvectionProblem.hpp"
 
 namespace Albany
 {
@@ -57,6 +58,9 @@ bool DemoProblemFactory::provides (const std::string& key) const
          key == "Thermal 1D" ||
          key == "Thermal 2D" ||
          key == "Thermal 3D" ||
+         key == "Advection 1D" ||
+         key == "Advection 2D" ||
+         key == "Advection 3D" ||
          key == "ThermoElectrostatics 1D" ||
          key == "ThermoElectrostatics 2D" ||
          key == "ThermoElectrostatics 3D";
@@ -118,6 +122,9 @@ create (const std::string& key,
   } else if (getName(key) == "Thermal") {
     problem =
         Teuchos::rcp(new ThermalProblem(problemParams, paramLib, getNumDim(key), comm));
+  } else if (getName(key) == "Advection") {
+    problem =
+        Teuchos::rcp(new AdvectionProblem(problemParams, paramLib, getNumDim(key), comm));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
       "Error! Unrecognized key in DemoProblemFactory. Did you forget to check with 'provides(key)' first?\n");

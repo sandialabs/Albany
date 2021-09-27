@@ -649,6 +649,7 @@ if(ALBANY_DEMO_PDES)
     problems/Albany_PNPProblem.cpp
     problems/Albany_ThermoElectrostaticsProblem.cpp
     problems/Albany_ThermalProblem.cpp
+    problems/Albany_AdvectionProblem.cpp
     evaluators/pde/PHAL_AdvDiffResid.cpp
     evaluators/pde/PHAL_ReactDiffSystemResid.cpp
     evaluators/pde/PHAL_CahnHillChemTerm.cpp
@@ -669,6 +670,7 @@ if(ALBANY_DEMO_PDES)
     evaluators/pde/PHAL_NSNeutronEqResid.cpp
     evaluators/pde/PHAL_NSPermeabilityTerm.cpp
     evaluators/pde/PHAL_ThermalResid.cpp
+    evaluators/pde/PHAL_AdvectionResid.cpp
     evaluators/pde/PHAL_NSRm.cpp
     evaluators/pde/PHAL_NSTauM.cpp
     evaluators/pde/PHAL_NSTauT.cpp
@@ -693,6 +695,7 @@ if(ALBANY_DEMO_PDES)
     problems/Albany_PNPProblem.hpp
     problems/Albany_ThermoElectrostaticsProblem.hpp
     problems/Albany_ThermalProblem.hpp
+    problems/Albany_AdvectionProblem.hpp
     evaluators/pde/PHAL_AdvDiffResid.hpp
     evaluators/pde/PHAL_AdvDiffResid_Def.hpp
     evaluators/pde/PHAL_ReactDiffSystemResid.hpp
@@ -753,6 +756,8 @@ if(ALBANY_DEMO_PDES)
     evaluators/pde/PNP_PotentialResid_Def.hpp
     evaluators/pde/PHAL_ThermalResid.hpp
     evaluators/pde/PHAL_ThermalResid_Def.hpp
+    evaluators/pde/PHAL_AdvectionResid.hpp
+    evaluators/pde/PHAL_AdvectionResid_Def.hpp
   )
 
   add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS})

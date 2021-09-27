@@ -26,7 +26,8 @@ public:
   // Constructor
   ModelEvaluator(
       const Teuchos::RCP<Application>& app,
-      const Teuchos::RCP<Teuchos::ParameterList>& appParams);
+      const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+      const bool adjoint_model);
 
   /** \name Overridden from Thyra::ModelEvaluator<ST> . */
   //@{
@@ -181,6 +182,10 @@ public:
 
   //! As it says, when reportFinalPoint is called.
   bool overwriteNominalValuesWithFinalPoint;
+
+  //! Tells code whether to construct forward or adjoint ME
+  //The latter has the Jacobian transposed
+  bool adjoint_model;
 };
 
 } // namespace Albany
