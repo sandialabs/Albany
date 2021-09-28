@@ -59,7 +59,7 @@ endif ()
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (cism-piscees_REPOSITORY_LOCATION  git@github.com:E3SM-Project/cism-piscees.git)
 
 if (CLEAN_BUILD)
@@ -178,7 +178,6 @@ if (BUILD_CISM_PISCEES)
     "-DCISM_SERIAL_MODE:BOOL=OFF"
     "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
     "-DALBANY_LANDICE_DYCORE:BOOL=ON"
-    "-DCISM_DISABLE_CMAKE_PYTHON2_SEARCH=ON"
     "-DALBANY_LANDICE_CTEST:BOOL=ON"
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockbaInstall"
     "-DCISM_MPI_BASE_DIR=$ENV{SEMS_OPENMPI_ROOT}"
@@ -187,6 +186,7 @@ if (BUILD_CISM_PISCEES)
     "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
     "-DCMAKE_VERBOSE_MAKEFILE=OFF"
+    "-DCISM_DISABLE_CMAKE_PYTHON2_SEARCH=ON" 
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany")
