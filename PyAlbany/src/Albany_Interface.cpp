@@ -108,7 +108,7 @@ PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParall
     // Create app (null initial guess)
     albanyApp = slvrfctry->createApplication(comm);
     albanyModel = slvrfctry->createModel(albanyApp);
-    solver = slvrfctry->createSolver(albanyModel, comm);
+    solver = slvrfctry->createSolver(comm, albanyModel, Teuchos::null);
 
     thyraDirections.resize(solver->Np());
     thyraParameter.resize(solver->Np());
@@ -159,7 +159,7 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
     // Create app (null initial guess)
     albanyApp = slvrfctry->createApplication(comm);
     albanyModel = slvrfctry->createModel(albanyApp);
-    solver = slvrfctry->createSolver(albanyModel, comm);
+    solver = slvrfctry->createSolver(comm, albanyModel, Teuchos::null);
 
     thyraDirections.resize(solver->Np());
     thyraParameter.resize(solver->Np());
