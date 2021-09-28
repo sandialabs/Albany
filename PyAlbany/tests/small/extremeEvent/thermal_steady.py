@@ -21,6 +21,7 @@ class TestExtremeEvent(unittest.TestCase):
         cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
 
     def test_all(self):
+        debug = True
         cls = self.__class__
         myGlobalRank = cls.comm.getRank()
         nproc = cls.comm.getSize()
@@ -78,6 +79,15 @@ class TestExtremeEvent(unittest.TestCase):
             expected_P_mixed = np.loadtxt('expected_P_steady_mixed_'+str(nproc)+'.txt')
 
             tol = 1e-8
+
+            if debug:
+                for i in range(0, len(expected_theta_star)):
+                    print('i = ' + str(i) + ': theta star: expected value = ' + str(expected_theta_star[i]) + ', computed value = ' + str(theta_star[i]) + ', and diff = ' + str(expected_theta_star[i]-theta_star[i]))
+                    print('i = ' + str(i) + ': I star: expected value = ' + str(expected_I_star[i]) + ', computed value = ' + str(I_star[i]) + ', and diff = ' + str(expected_I_star[i]-I_star[i]))
+                    print('i = ' + str(i) + ': P star: expected value = ' + str(expected_P_star[i]) + ', computed value = ' + str(P_star[i]) + ', and diff = ' + str(expected_P_star[i]-P_star[i]))
+                    print('i = ' + str(i) + ': F star: expected value = ' + str(expected_F_star[i]) + ', computed value = ' + str(F_star[i]) + ', and diff = ' + str(expected_F_star[i]-F_star[i]))
+                    print('i = ' + str(i) + ': P IS: expected value = ' + str(expected_P_IS[i]) + ', computed value = ' + str(P_IS[i]) + ', and diff = ' + str(expected_P_IS[i]-P_IS[i]))
+                    print('i = ' + str(i) + ': P mixed: expected value = ' + str(expected_P_mixed[i]) + ', computed value = ' + str(P_mixed[i]) + ', and diff = ' + str(expected_P_mixed[i]-P_mixed[i]))
 
             self.assertTrue(np.amax(np.abs(expected_theta_star - theta_star)) < tol)
             self.assertTrue(np.amax(np.abs(expected_I_star - I_star)) < tol)
