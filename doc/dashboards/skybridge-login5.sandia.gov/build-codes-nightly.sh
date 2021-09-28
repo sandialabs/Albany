@@ -9,7 +9,7 @@ git clone git@github.com:trilinos/Trilinos.git >& trilinos-clone.log
 cd Trilinos
 git checkout develop
 cd ..
-git clone git@github.com:SNLComputation/Albany.git >& albany-clone.log 
+git clone git@github.com:sandialabs/Albany.git >& albany-clone.log 
 module use --append $TEST_DIR/Albany/doc/LandIce/modulefiles
 module load serial-intel-release >& modules.out 
 rm -rf trilinos-build-serial-intel-release
