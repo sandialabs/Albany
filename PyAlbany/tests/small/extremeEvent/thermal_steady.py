@@ -79,6 +79,7 @@ class TestExtremeEvent(unittest.TestCase):
             expected_P_mixed = np.loadtxt('expected_P_steady_mixed_'+str(nproc)+'.txt')
 
             tol = 1e-8
+            tol_F = 5e-5
 
             if debug:
                 for i in range(0, len(expected_theta_star)):
@@ -92,7 +93,7 @@ class TestExtremeEvent(unittest.TestCase):
             self.assertTrue(np.amax(np.abs(expected_theta_star - theta_star)) < tol)
             self.assertTrue(np.amax(np.abs(expected_I_star - I_star)) < tol)
             self.assertTrue(np.amax(np.abs(expected_P_star - P_star)) < tol)
-            self.assertTrue(np.amax(np.abs(expected_F_star - F_star)) < tol)
+            self.assertTrue(np.amax(np.abs(expected_F_star - F_star)) < tol_F)
             self.assertTrue(np.amax(np.abs(expected_P_IS - P_IS)) < tol)
             self.assertTrue(np.amax(np.abs(expected_P_mixed - P_mixed)) < tol)
 
