@@ -57,7 +57,7 @@ ALBANY:
             Maximum Value Monitoring Function: 1.0e20
           Output Time List: ''
           Output Index List: ''
-          Output Time Interval: 1.00000000000000000e+01
+          #Output Time Interval: 1.00000000000000000e+01
           Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5

@@ -34,7 +34,7 @@ ALBANY:
       Tempus Integrator:
         Integrator Type: Integrator Basic
         Screen Output Index List: '1'
-        Screen Output Index Interval: 100
+        #Screen Output Index Interval: 100
         Stepper Name: Tempus Stepper
         Solution History:
           Storage Type: Unlimited
@@ -55,8 +55,8 @@ ALBANY:
             Maximum Value Monitoring Function: 1.0e20
           Output Time List: ''
           Output Index List: ''
-          Output Time Interval: 1.00000000000000000e+01
-          Output Index Interval: 1000
+          ##Output Time Interval: 1.00000000000000000e+01
+          #Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
       Tempus Stepper:
