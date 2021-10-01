@@ -138,9 +138,7 @@ int main(int argc, char *argv[])
     const auto albanyModel = slvrfctry.createModel(albanyApp, false);
     //Adjoint model model evaluator - only relevant for adjoint transient sensitivities
     const bool adjointTransSens = albanyApp->isAdjointTransSensitivities(); 
-    std::cout << "IKT Albany::SolverFactor::createModel is adjoint trans sens = " << adjointTransSens << "\n"; ;
     const auto albanyAdjointModel = (adjointTransSens == true) ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
-    std::cout << "IKT albanyModel, albanyAdjointModel = " << albanyModel << ", " << albanyAdjointModel << "\n"; 
     const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel);
 
     stackedTimer->stop("Albany: Setup Time");
