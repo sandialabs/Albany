@@ -274,9 +274,13 @@ protected:
   std::string velocity_name;
   std::string body_force_name;
   std::string surface_height_name;
+  std::string surface_height_param_name;
+  std::string surface_height_observed_name;
   std::string ice_thickness_name;
   std::string flux_divergence_name;
   std::string bed_topography_name;
+  std::string bed_topography_param_name;
+  std::string bed_topography_observed_name;
   std::string temperature_name;
   std::string corrected_temperature_name;
   std::string flow_factor_name;
@@ -815,9 +819,17 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
         // Put "_gradient" before the ss name, so you can save the field via input file,
         // since side states field names are BLAH+ss_name, where BLAH is the name
         // specified in the input file.
-        const std::string& grad_name_side = fname + "_gradient_" + ss_name;
+       const std::string& grad_name_side = fname + "_gradient_" + ss_name;
+
+        bool planar = (fname == surface_height_name) ||
+                      (fname == surface_height_param_name) ||
+                      (fname == ice_thickness_name)  ||
+                      (fname == bed_topography_name) ||
+                      (fname == bed_topography_param_name) ||
+                      (fname == stiffening_factor_name);
+
         if (rank==FRT::Scalar) {
-          ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name, grad_name_side);
+          ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name, grad_name_side, planar);
         } else if (rank==FRT::Vector) {
           ev = utils.constructDOFVecGradInterpolationSideEvaluator (fname_side, ss_name);
         } else {
@@ -1359,8 +1371,6 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", beta_side_name);
 
-    std::string bft = util::upper_case(pl->sublist("Basal Friction Coefficient").get<std::string>("Type"));
-
     auto N_st = get_scalar_type(effective_pressure_name);
     auto A_st = get_scalar_type(flow_factor_name);
     ev = createEvaluatorWithThreeScalarTypes<BasalFrictionCoefficient,EvalT>(p,dl_side,N_st,FST::Scalar,A_st);
@@ -1477,8 +1487,6 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
 
     std::string velocity_side_name                     = basal_fname(velocity_name);
     std::string ice_thickness_side_name                = basal_fname(ice_thickness_name);
-    std::string ice_thickness_side_name_planar         = side_fname(ice_thickness_name, basalSideNamePlanar);
-    std::string surface_height_side_name               = basal_fname(surface_height_name);
     std::string apparent_mass_balance_side_name        = basal_fname("apparent_mass_balance");
     std::string apparent_mass_balance_RMS_side_name    = basal_fname("apparent_mass_balance_RMS");
     std::string stiffening_factor_side_name            = basal_fname(stiffening_factor_name);
@@ -1486,36 +1494,7 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     std::string vertically_averaged_velocity_side_name = basal_fname(vertically_averaged_velocity_name);
     std::string bed_roughness_side_name                = basal_fname("bed_roughness");
 
-    // ------------------- Interpolations and utilities ------------------ //
-
-    // if (is_dist_param[ice_thickness_name])
-    // {
-    //   //---- Restrict ice thickness from cell-based to cell-side-based
-    //   ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator(ice_thickness_name,basalSideName,"Node Scalar",cellType,ice_thickness_side_name);
-    //   fm0.template registerEvaluator<EvalT> (ev);
-    // }
-
     // -------------------------------- LandIce evaluators ------------------------- //
-
-    {
-
-      std::map<FieldScalarType,Teuchos::RCP<const Albany::EvaluatorUtilsBase<PHAL::AlbanyTraits>>> utils_map;
-      utils_map[FieldScalarType::Scalar]      = Teuchos::rcpFromRef(evalUtils.getSTUtils());
-      utils_map[FieldScalarType::ParamScalar] = Teuchos::rcpFromRef(evalUtils.getPSTUtils());
-      utils_map[FieldScalarType::MeshScalar]  = Teuchos::rcpFromRef(evalUtils.getMSTUtils());
-      utils_map[FieldScalarType::Real]        = Teuchos::rcpFromRef(evalUtils.getRTUtils());
-
-      // If there's no information about this field, we assume it is not needed, so we skip it.
-      // If it WAS indeed needed, Phalanx DAG will miss a node, and an exception will be thrown.
-      const FieldScalarType st = get_scalar_type(ice_thickness_name);
-
-      // Get the right evaluator utils for this field.
-      // const FieldScalarType st = field_scalar_type.at(ice_thickness_name);
-      const auto& utils = *utils_map.at(st);
-
-      ev = utils.constructDOFGradInterpolationSideEvaluator (ice_thickness_side_name, basalSideName, true);
-      fm0.template registerEvaluator<EvalT> (ev);
-    }
 
     // Vertically averaged velocity
     p = Teuchos::rcp(new Teuchos::ParameterList("Gather Averaged Velocity"));
@@ -1541,7 +1520,7 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
       p->set<std::string>("Averaged Velocity Side QP Variable Name", vertically_averaged_velocity_side_name);
       p->set<std::string>("Averaged Velocity Side QP Divergence Name", vertically_averaged_velocity_side_name + " Divergence");
       p->set<std::string>("Thickness Side QP Variable Name", ice_thickness_side_name);
-      p->set<std::string>("Thickness Gradient Name", ice_thickness_side_name + " Planar Gradient");
+      p->set<std::string>("Thickness Gradient Name", basal_fname(ice_thickness_name + "_gradient"));
       p->set<std::string>("Side Tangents Name", side_fname(Albany::tangents_name,basalSideNamePlanar));
 
       p->set<std::string>("Field Name",  "flux_divergence_basalside");
@@ -1613,7 +1592,7 @@ constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
     paramList->set<std::string>("Observed Thickness Side QP Variable Name",basal_fname("observed_ice_thickness"));
     paramList->set<std::string>("SMB Side QP Variable Name",basal_fname("apparent_mass_balance"));
     paramList->set<std::string>("SMB RMS Side QP Variable Name",basal_fname("apparent_mass_balance_RMS"));
-    paramList->set<std::string>("Thickness Gradient Name", basal_fname(ice_thickness_name) + " Planar Gradient");
+    paramList->set<std::string>("Thickness Gradient Name", basal_fname(ice_thickness_name + "_gradient"));
     paramList->set<std::string>("Thickness Side QP Variable Name",basal_fname(ice_thickness_name));
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Weighted Measure Basal Name",basal_fname(Albany::weighted_measure_name));
