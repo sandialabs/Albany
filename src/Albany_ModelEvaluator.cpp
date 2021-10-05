@@ -1245,6 +1245,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         sacado_param_vec,
         f_out, W_op_out, dt);
     if(transposeJacobian) {
+      TEUCHOS_FUNC_TIME_MONITOR("Albany Transpose Jacobian");
       Albany::transpose(W_op_out);
     }
 
