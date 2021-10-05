@@ -62,6 +62,13 @@ UpdateZCoordinateMovingTop (const Teuchos::ParameterList& p,
   rho_w = p_list->get<double>("Water Density");
 }
 
+template<typename EvalT, typename Traits>
+void UpdateZCoordinateMovingTop<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+{
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void UpdateZCoordinateMovingTop<EvalT, Traits>::
@@ -146,6 +153,13 @@ UpdateZCoordinateMovingBed (const Teuchos::ParameterList& p,
   this->setName("Update Z Coordinate Moving Bed");
 }
 
+template<typename EvalT, typename Traits>
+void UpdateZCoordinateMovingBed<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+{
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+}
+
 //**********************************************************************
 //Kokkos functors
 
@@ -196,6 +210,114 @@ evaluateFields(typename Traits::EvalData workset)
         val = (icomp==2) ?
             ScalarOutT(top - (1.0- sigmaLevel[ ilevel])*h)
            : ScalarOutT(coordVecIn(cell,node,icomp));
+      }
+    }
+  }
+}
+
+//****************************************************************************
+
+template<typename EvalT, typename Traits>
+UpdateZCoordinateGivenTopAndBedSurfaces<EvalT, Traits>::
+UpdateZCoordinateGivenTopAndBedSurfaces (const Teuchos::ParameterList& p,
+                            const Teuchos::RCP<Albany::Layouts>& dl) :
+  coordVecIn (p.get<std::string> ("Old Coords Name"), dl->vertices_vector),
+  bedTopo(p.get<std::string> ("Bed Topography Name"), dl->node_scalar),
+  topSurf(p.get<std::string>("Top Surface Name"), dl->node_scalar),
+  coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
+  H(p.get<std::string> ("Thickness Name"), dl->node_scalar)
+{
+  isTopSurfParam = p.isParameter("Top Surface Parameter Name");
+  isBedTopoParam = p.isParameter("Bed Topography Parameter Name");
+
+  if(isBedTopoParam == true) {
+    bedTopoIn = decltype(bedTopoIn)(p.get<std::string> ("Bed Topography Parameter Name"), dl->node_scalar);
+    this->addDependentField(bedTopoIn);
+    this->addEvaluatedField(bedTopo);
+  } else {
+    this->addDependentField(bedTopo);
+  }
+
+  if((isTopSurfParam == true)) {
+    topSurfIn = decltype(topSurfIn)(p.get<std::string> ("Top Surface Parameter Name"), dl->node_scalar);
+    this->addDependentField(topSurfIn);
+    this->addEvaluatedField(topSurf);
+  } else {
+    this->addDependentField(topSurf);
+  }
+
+  this->addDependentField(coordVecIn);
+  this->addEvaluatedField(H);
+  this->addEvaluatedField(coordVecOut);
+
+  minH = p.isParameter("Minimum Thickness") ? p.get<double>("Minimum Thickness") : 1e-5;
+  std::vector<PHX::DataLayout::size_type> dims;
+  dl->vertices_vector->dimensions(dims);
+  numNodes = dims[1];
+  numDims = dims[2];
+  this->setName("Update Z Coordinate Give Top And Bed Surfaces");
+
+  Teuchos::ParameterList* p_list = p.get<Teuchos::ParameterList*>("Physical Parameter List");
+  rho_i = p_list->get<double>("Ice Density");
+  rho_w = p_list->get<double>("Water Density");
+}
+
+template<typename EvalT, typename Traits>
+void UpdateZCoordinateGivenTopAndBedSurfaces<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+{
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+void UpdateZCoordinateGivenTopAndBedSurfaces<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  auto nodeID = workset.wsElNodeEqID;
+
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
+    std::runtime_error, "Error! No layered numbering in the mesh.\n");
+
+  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+
+  const int numLayers = layeredMeshNumbering.numLayers;
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+  const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+  Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
+  sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
+  for(int i=1; i<numLayers; ++i) {
+    sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
+  }
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const GO ilevel = layeredMeshNumbering.getLayerId(elNodeID[node]);
+
+      if(isTopSurfParam) {
+        if(!isBedTopoParam) {
+          MeshScalarT minTopSurf = bedTopo(cell,node) + minH;
+          topSurf(cell,node) = std::max(topSurfIn(cell,node),minTopSurf);
+        } else
+          topSurf(cell,node) = topSurfIn(cell,node);
+      }
+      if(isBedTopoParam) {
+        MeshScalarT maxBedTopo = topSurf(cell,node) - minH;
+        bedTopo(cell,node) = std::min(bedTopoIn(cell,node),maxBedTopo);
+      }
+
+      MeshScalarT h = topSurf(cell,node), bed = bedTopo(cell,node);
+      auto floating = (rho_i*h + (rho_w-rho_i)*bed) < 0.0;
+      MeshScalarT lowSurf = floating ? -h*rho_i/(rho_w-rho_i) : bed;
+
+      H(cell,node) = h-lowSurf;
+
+      for(std::size_t icomp=0; icomp< numDims; icomp++) {
+        typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
+        val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*H(cell,node))
+                         : coordVecIn(cell,node,icomp);
       }
     }
   }
