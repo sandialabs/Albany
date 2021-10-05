@@ -367,13 +367,8 @@ namespace Albany {
     virtual constructDOFGradInterpolationSideEvaluator(
       const std::string& dof_name,
       const std::string& sideSetName,
+      const std::string& dof_grad_name,
       const bool planar = false) const = 0;
-
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    virtual constructDOFGradInterpolationSideEvaluator(
-      const std::string& dof_name,
-      const std::string& sideSetName,
-      const std::string& dof_grad_name) const = 0;
 
     //! Interpolation functions for gradient of vector quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -772,16 +767,11 @@ namespace Albany {
 
     //! Interpolation functions for gradient of quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructDOFGradInterpolationSideEvaluator(
-      const std::string& dof_names,
-      const std::string& sideSetName,
-      const bool planar = false) const;
-
-    Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructDOFGradInterpolationSideEvaluator(
       const std::string& dof_name,
       const std::string& sideSetName,
-      const std::string& dof_grad_name) const;
+      const std::string& dof_grad_name,
+      const bool planar = false) const;
 
     //! Interpolation functions for gradient of vector quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
