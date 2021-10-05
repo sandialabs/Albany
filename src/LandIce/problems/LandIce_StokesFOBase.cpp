@@ -90,10 +90,14 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // loaded from mesh, where they are saved with a different name
   body_force_name             = params->sublist("Variables Names").get<std::string>("Body Force Name","body_force");
   surface_height_name         = params->sublist("Variables Names").get<std::string>("Surface Height Name","surface_height");
+  surface_height_param_name   = surface_height_name + "_param";
+  surface_height_observed_name= "observed_" +  surface_height_name;
   ice_thickness_name          = params->sublist("Variables Names").get<std::string>("Ice Thickness Name" ,"ice_thickness");
   temperature_name            = params->sublist("Variables Names").get<std::string>("Temperature Name"   ,"temperature");
   corrected_temperature_name  = "corrected_" + temperature_name;
   bed_topography_name         = params->sublist("Variables Names").get<std::string>("Bed Topography Name"    ,"bed_topography");
+  bed_topography_param_name   = bed_topography_name + "_param";
+  bed_topography_observed_name= "observed_" + bed_topography_name;
   flow_factor_name            = params->sublist("Variables Names").get<std::string>("Flow Factor Name"       ,"flow_factor");
   stiffening_factor_name      = params->sublist("Variables Names").get<std::string>("Stiffening Factor Name" ,"stiffening_factor");
   effective_pressure_name     = params->sublist("Variables Names").get<std::string>("Effective Pressure Name","effective_pressure");
@@ -604,12 +608,17 @@ void StokesFOBase::setupEvaluatorRequests ()
         if(responseType == "Sum Of Responses") {
           unsigned int num_sub_resps = resp.sublist(Albany::strint("Response", i)).get<int>("Number Of Responses");
           for(unsigned int j=0; j<num_sub_resps; j++) {
-            if(resp.sublist(Albany::strint("Response", i)).sublist(Albany::strint("Response", j)).get<std::string>("Name") == "Grounding Line Flux") {
+            const auto& response = resp.sublist(Albany::strint("Response", i)).sublist(Albany::strint("Response", j));
+            if(response.get<std::string>("Name") == "Grounding Line Flux") {
               has_GLF_resp = true;
               continue;
             }
-            if(resp.sublist(Albany::strint("Response", i)).sublist(Albany::strint("Response", j)).get<std::string>("Name") == "Surface Mass Balance Mismatch") {
+            if(response.get<std::string>("Name") == "Surface Mass Balance Mismatch") {
               has_SMB_resp = true;
+              continue;
+            }
+            if(response.get<std::string>("Name") == "Squared L2 Difference Side Source ST Target RT") {
+              has_SMB_resp = (response.get<std::string>("Source Field Name").find("flux_divergence") != std::string::npos);
               continue;
             }
           }
@@ -624,19 +633,37 @@ void StokesFOBase::setupEvaluatorRequests ()
             has_SMB_resp = true;
             continue;
           }
+          if(resp.sublist(Albany::strint("Response", i)).get<std::string>("Name") == "Squared L2 Difference Side Source ST Target RT") {
+            has_SMB_resp = (resp.sublist(Albany::strint("Response", i)).get<std::string>("Source Field Name").find("flux_divergence") != std::string::npos);
+            continue;
+          }
         }
         if (has_GLF_resp && has_SMB_resp)
           break;
       }
     }
 
-    // If zero on floating, we also need bed topography and thickness
-    if (bfc.get<bool>("Zero Beta On Floating Ice", false) || has_GLF_resp) {
-      ss_build_interp_ev[ssName][bed_topography_name][IReq::QP_VAL      ] = true;
-      ss_build_interp_ev[ssName][bed_topography_name][IReq::CELL_TO_SIDE] = true;
+    if (is_dist_param[bed_topography_param_name] || is_dist_param[surface_height_param_name]) {
 
+      ss_build_interp_ev[ssName][bed_topography_param_name][IReq::QP_VAL      ] = true;
+      ss_build_interp_ev[ssName][bed_topography_param_name][IReq::CELL_TO_SIDE] = true;
+
+      ss_build_interp_ev[ssName][bed_topography_observed_name][IReq::QP_VAL      ] = true;
+      ss_build_interp_ev[ssName][bed_topography_observed_name][IReq::CELL_TO_SIDE] = true;
+
+      ss_build_interp_ev[ssName][surface_height_param_name][IReq::QP_VAL      ] = true;
+      ss_build_interp_ev[ssName][surface_height_param_name][IReq::CELL_TO_SIDE] = true;
+
+      ss_build_interp_ev[ssName][surface_height_observed_name][IReq::QP_VAL      ] = true;
+      ss_build_interp_ev[ssName][surface_height_observed_name][IReq::CELL_TO_SIDE] = true;
+    }
+
+    { //these are used for several basal boundary conditions
       ss_build_interp_ev[ssName][ice_thickness_name][IReq::QP_VAL      ] = true;
       ss_build_interp_ev[ssName][ice_thickness_name][IReq::CELL_TO_SIDE] = true;
+
+      ss_build_interp_ev[ssName][bed_topography_name][IReq::QP_VAL      ] = true;
+      ss_build_interp_ev[ssName][bed_topography_name][IReq::CELL_TO_SIDE] = true;
     }
   }
 

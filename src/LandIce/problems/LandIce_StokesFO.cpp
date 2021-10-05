@@ -221,6 +221,7 @@ void StokesFO::setupEvaluatorRequests () {
     auto dof_name_auxiliary = "L2 Projected Boundary Laplacian";
 
     ss_build_interp_ev[ssName][dof_name_auxiliary][IReq::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[ssName][dof_name_auxiliary][IReq::QP_VAL] = true;
     ss_build_interp_ev[ssName][field_name][IReq::GRAD_QP_VAL] = true;
   }
 }
