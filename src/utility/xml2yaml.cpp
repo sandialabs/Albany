@@ -5,10 +5,12 @@
 #include <sstream>
 #include <regex>
 
+#ifdef ALBANY_DEBUG
 static bool ends_with(std::string const& s, std::string const& suffix) {
   if (s.length() < suffix.length()) return false;
   return 0 == s.compare(s.length() - suffix.length(), suffix.length(), suffix);
 }
+#endif
 
 int main(int argc, char** argv) {
   for (int i = 1; i < argc; ++i) {
