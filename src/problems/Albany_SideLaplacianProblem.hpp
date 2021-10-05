@@ -269,7 +269,8 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Solution Gradient Side
-  ev = evalUtils.constructDOFGradInterpolationSideEvaluator(dof_names[0],sideSetName);
+  std::string grad_side_name = dof_names[0] + "_gradient_" + sideSetName;
+  ev = evalUtils.constructDOFGradInterpolationSideEvaluator(dof_names[0],sideSetName,grad_side_name);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // -------- Restriction of Solution to Side Field -------- /
@@ -291,7 +292,7 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   p->set<std::string> ("Gradient BF Variable Name", Albany::grad_bf_name + "_" + sideSetName);
   p->set<std::string> ("Solution Variable Name", dof_names[0]);
   p->set<std::string> ("Solution QP Variable Name", dof_names[0]);
-  p->set<std::string> ("Solution Gradient QP Variable Name", dof_names[0] + " Gradient");
+  p->set<std::string> ("Solution Gradient QP Variable Name", grad_side_name);
   p->set<std::string> ("Side Set Name",sideSetName);
   p->set<bool> ("Side Equation", true);
   p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type",cellType);
