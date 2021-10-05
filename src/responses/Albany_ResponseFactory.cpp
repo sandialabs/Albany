@@ -119,12 +119,15 @@ createResponseFunction(
      name == "Squared L2 Difference Side Source ST Target ST" ||
      name == "Squared L2 Difference Side Source ST Target MST" ||
      name == "Squared L2 Difference Side Source ST Target PST" ||
+     name == "Squared L2 Difference Side Source ST Target RT" ||
      name == "Squared L2 Difference Side Source PST Target ST" ||
      name == "Squared L2 Difference Side Source PST Target MST" ||
      name == "Squared L2 Difference Side Source PST Target PST" ||
+     name == "Squared L2 Difference Side Source PST Target RT" ||
      name == "Squared L2 Difference Side Source MST Target ST" ||
      name == "Squared L2 Difference Side Source MST Target MST" ||
      name == "Squared L2 Difference Side Source MST Target PST" ||
+     name == "Squared L2 Difference Side Source MST Target RT" ||
      name == "Surface Velocity Mismatch" ||
      name == "Surface Mass Balance Mismatch" ||
      name == "Grounding Line Flux" ||
