@@ -36,6 +36,15 @@ FIND_PACKAGE(Trilinos 13.1 REQUIRED)
 
 OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers should be treated as 'system' headers (hence, without issuing warnings)" ON)
 
+IF (DEFINED CMAKE_BUILD_TYPE)
+   IF (${CMAKE_BUILD_TYPE} STREQUAL "DEBUG")
+      MESSAGE("-- CMAKE_BUILD_TYPE=DEBUG...  Debug build is Enabled")
+      SET(ALBANY_DEBUG_BUILD ON)
+   ELSE()
+      MESSAGE("-- CMAKE_BUILD_TYPE=RELEASE...  Debug build is NOT Enabled")
+      SET(ALBANY_DEBUG_BUILD OFF)
+   ENDIF()
+ENDIF()
 # Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
 # This is needed to find SEACAS tools used during testing (epu, etc).
 SET(Trilinos_BIN_DIRS "${Trilinos_DIR}/../../../bin")

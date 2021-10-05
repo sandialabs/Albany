@@ -100,4 +100,8 @@
   #cmakedefine CISM_USE_EPETRA
 #endif
 
+#ifdef ALBANY_DEBUG_BUILD
+  #cmakedefine ALBANY_DEBUG_BUILD
+#endif
+
 #endif // ALBANY_CONFIG_H
