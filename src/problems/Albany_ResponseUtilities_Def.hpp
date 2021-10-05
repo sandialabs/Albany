@@ -74,7 +74,7 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   }
   else if (responseName == "Squared L2 Difference Source MST Target PST")
   {
-    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSMST_TPST<EvalT,Traits>(*p,dl));
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSMST_TPST<EvalT,Traits>(*p,dl));
   }
   else if (responseName == "Squared L2 Difference Side Source ST Target ST")
   {
@@ -88,6 +88,10 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   {
     res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSST_TPST<EvalT,Traits>(*p,dl));
   }
+  else if (responseName == "Squared L2 Difference Side Source ST Target RT")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSST_TRT<EvalT,Traits>(*p,dl));
+  }
   else if (responseName == "Squared L2 Difference Side Source PST Target ST")
   {
     res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSPST_TST<EvalT,Traits>(*p,dl));
@@ -100,6 +104,10 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   {
     res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSPST_TPST<EvalT,Traits>(*p,dl));
   }
+  else if (responseName == "Squared L2 Difference Side Source PST Target RT")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSPST_TRT<EvalT,Traits>(*p,dl));
+  }
   else if (responseName == "Squared L2 Difference Side Source MST Target ST")
   {
     res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSMST_TST<EvalT,Traits>(*p,dl));
@@ -110,7 +118,11 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   }
   else if (responseName == "Squared L2 Difference Side Source MST Target PST")
   {
-    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSMST_TPST<EvalT,Traits>(*p,dl));
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSMST_TPST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Side Source MST Target RT")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSMST_TRT<EvalT,Traits>(*p,dl));
   }
   else if (responseName == "PHAL Field Integral")
   {
