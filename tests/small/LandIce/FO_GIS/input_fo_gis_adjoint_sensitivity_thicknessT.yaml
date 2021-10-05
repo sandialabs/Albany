@@ -5,6 +5,7 @@ ANONYMOUS:
   Debug Output:
     Write Solution to MatrixMarket: 0
   Problem:
+    Use MDField Memoization: true
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
@@ -36,12 +37,37 @@ ANONYMOUS:
         Type: Scalar Response
         Name: Grounding Line Flux
       Response 0:
-        Name: Surface Mass Balance Mismatch
-        SMB Coefficient: 1.0e+00
-        Regularization Coefficient: 1.0e+00
-        Scaling Coefficient: 5.8824e-07
-        Type: Scalar Response
-        H Coefficient: 1.0e+00
+        Type: Sum Of Responses
+        Number Of Responses: 3
+        Response 0:
+          Scaling: 5.8824e-07
+          Name: Squared L2 Difference Side Source ST Target RT
+          Source Field Name: flux_divergence_basalside
+          Response Depends On Solution Column: true
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Is Side Set Planar: true
+          Root Mean Square Error Field Name: apparent_mass_balance_RMS_basalside
+          Target Field Name: apparent_mass_balance_basalside
+        Response 1:
+          Scaling: 5.8824e-07
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: ice_thickness_basalside
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Is Side Set Planar: true
+          Response Depends On Extruded Parameters: true
+          Root Mean Square Error Field Name: observed_ice_thickness_RMS_basalside
+          Target Field Name: observed_ice_thickness_basalside
+        Response 2:
+          Scaling: 5.8824e-07
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: ice_thickness_gradient_basalside
+          Response Depends On Extruded Parameters: true
+          Side Set Name: basalside
+          Field Rank: Gradient
+          Is Side Set Planar: true
+          Target Value: 0.0
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -66,6 +92,7 @@ ANONYMOUS:
     Body Force:
       Type: FO INTERP SURF GRAD
   Discretization:
+    Workset Size: -1
     Method: Extruded
     Surface Height Field Name: observed_surface_height
     Number Of Time Derivatives: 0
@@ -283,13 +310,15 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Absolute Tolerance: 1.e-05
+    Absolute Tolerance: 1.e-06
+    Relative Tolerance: 1.e-06
+    Test Value: 3.907995515271e+01
     Sensitivity For Parameter 0:
       Test Value: 2.381305924869e+02
-    Test Value: 3.907995515271e+01
-    Relative Tolerance: 1.e-05
   Regression For Response 1:
-    Absolute Tolerance: 1.e-05
+    Absolute Tolerance: 1.e-06
+    Relative Tolerance: 1.e-06
     Test Value: 1.523621754658e+12
-    Relative Tolerance: 1.e-05
+    Sensitivity For Parameter 0:
+      Test Value: 2.005848338672e+13
 ...

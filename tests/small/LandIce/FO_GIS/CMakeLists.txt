@@ -362,6 +362,11 @@ if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thicknessT.yaml)
     add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_adjoint_sensitivity_thicknessT.yaml)
     set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+    
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_bed_and_topT.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_bed_and_topT.yaml)
+    add_test(${testName}_MoveSurfHeightAndBed ${Albany.exe} input_fo_gis_adjoint_sensitivity_bed_and_topT.yaml)
+    set_tests_properties(${testName}_MoveSurfHeightAndBed PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml)
