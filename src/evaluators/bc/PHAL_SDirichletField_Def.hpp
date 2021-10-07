@@ -171,50 +171,22 @@ template<typename Traits>
 void SDirichletField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-
-  Teuchos::RCP<Thyra_Vector>       f = dirichlet_workset.f;
-  if(Teuchos::nonnull(f)) {
-    Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
-    Teuchos::ArrayRCP<ST> x_view = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
-
-    const Albany::NodalDOFManager& fieldDofManager = dirichlet_workset.disc->getDOFManager(this->field_name);
-    //MP: If the parameter is scalar, then the parameter offset is set to zero. Otherwise the parameter offset is the same of the solution's one.
-    auto fieldNodeVs = dirichlet_workset.disc->getNodeVectorSpace(this->field_name);
-    auto fieldVs = dirichlet_workset.disc->getVectorSpace(this->field_name);
-    bool isFieldScalar = (fieldNodeVs->dim() == fieldVs->dim());
-    int fieldOffset = isFieldScalar ? 0 : this->offset;
-    const std::vector<GO>& nsNodesGIDs = dirichlet_workset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
-
-    Teuchos::RCP<const Thyra_Vector> pvec = dirichlet_workset.distParamLib->get(this->field_name)->vector();
-    Teuchos::ArrayRCP<const ST> p_constView = Albany::getLocalData(pvec);
-
-    const std::vector<std::vector<int> >& nsNodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
-    auto field_node_indexer = Albany::createGlobalLocalIndexer(fieldNodeVs);
-    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-        int lunk = nsNodes[inode][this->offset];
-        GO node_gid = nsNodesGIDs[inode];
-        int lfield = fieldDofManager.getLocalDOF(field_node_indexer->getLocalElement(node_gid),fieldOffset);
-        x_view[lunk] = p_constView[lfield];
-    }
-  }
-
   this->set_row_and_col_is_dbc(dirichlet_workset);
 
   const bool is_tpetra = Albany::build_type() == Albany::BuildType::Tpetra;
+  Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
   bool const fill_residual = f != Teuchos::null;
   if (is_tpetra)
   {
     Tpetra_Vector::dual_view_type::t_dev fView;
     if (fill_residual)
     {
-      printf("Fill residual...\n");
       auto tf = Albany::getTpetraVector(f);
       fView = tf->getLocalViewDevice(Tpetra::Access::ReadWrite);
     }
 
     auto tCol2DBC = Albany::getTpetraVector(col_is_dbc_);
     auto col2DBCView = tCol2DBC->getLocalViewDevice(Tpetra::Access::ReadOnly);
-    auto col2DBC = Kokkos::subview(col2DBCView, Kokkos::ALL(), 0);
 
     auto tJac = Albany::getTpetraMatrix(dirichlet_workset.Jac);
     auto lJac = tJac->getLocalMatrixDevice();
@@ -224,7 +196,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     Kokkos::parallel_for(
       "SDirichletField<Jacobian>::evaluateFields",
       range_policy(0, numLRows), KOKKOS_LAMBDA(const int lrow) {
-        const bool isRowDBC = col2DBC(lrow) > 0;
+        const bool isRowDBC = col2DBCView(lrow, 0) > 0;
         if (fill_residual == true && isRowDBC)
           fView(lrow, 0) = 0.0;
 
@@ -235,7 +207,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
           const bool isDiagEntry = lcol == lrow;
           if (isDiagEntry) continue;
 
-          const bool isColDBC = col2DBC(lcol) > 0;
+          const bool isColDBC = col2DBCView(lcol, 0) > 0;
           if (isRowDBC || isColDBC)
             lJacRow.value(i) = 0.0;
         }
@@ -255,10 +227,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     for (LO local_row = 0; local_row < num_local_rows; ++local_row) {
       Albany::getLocalRowValues(J, local_row, indices, entries);
       auto row_is_dbc = col_is_dbc_data[local_row] > 0;
-      if (row_is_dbc && fill_residual == true) {
-        int lunk = nsNodes[local_row][this->offset];
-        f_view[lunk] = 0.0;
-      }
+      if (row_is_dbc && fill_residual == true)
+        f_view[local_row] = 0.0;
 
       const LO num_row_entries = entries.size();
 
