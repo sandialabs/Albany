@@ -17,8 +17,8 @@ ANONYMOUS:
         Regularization Type: Given Value
         Regularization Value: 1.0e-05
     Dirichlet BCs:
-      DBC on NS extruded_boundary_node_set_3 for DOF U0 prescribe Field: velocity
-      DBC on NS extruded_boundary_node_set_3 for DOF U1 prescribe Field: velocity
+      SDBC on NS extruded_boundary_node_set_3 for DOF U0 prescribe Field: velocity
+      SDBC on NS extruded_boundary_node_set_3 for DOF U1 prescribe Field: velocity
     LandIce BCs:
       Number: 2
       BC 0:
