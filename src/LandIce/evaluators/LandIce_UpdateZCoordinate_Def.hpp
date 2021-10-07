@@ -222,10 +222,10 @@ UpdateZCoordinateGivenTopAndBedSurfaces<EvalT, Traits>::
 UpdateZCoordinateGivenTopAndBedSurfaces (const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVecIn (p.get<std::string> ("Old Coords Name"), dl->vertices_vector),
-  bedTopo(p.get<std::string> ("Bed Topography Name"), dl->node_scalar),
-  topSurf(p.get<std::string>("Top Surface Name"), dl->node_scalar),
+  H(p.get<std::string> ("Thickness Name"), dl->node_scalar),
   coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
-  H(p.get<std::string> ("Thickness Name"), dl->node_scalar)
+  bedTopo(p.get<std::string> ("Bed Topography Name"), dl->node_scalar),
+  topSurf(p.get<std::string>("Top Surface Name"), dl->node_scalar)
 {
   isTopSurfParam = p.isParameter("Top Surface Parameter Name");
   isBedTopoParam = p.isParameter("Bed Topography Parameter Name");
