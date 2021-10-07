@@ -9,12 +9,12 @@ if(NOT ALBANY_PARALLEL_ONLY)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_be_with_source_scalar_param_fwd_sens.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_be_with_source_scalar_param_adjoint_sens.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_be_with_source_scalar_param_adjoint_sens.yaml COPYONLY)
-  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_be_with_source_dist_param_adjoint_sens.yaml
-  #        ${CMAKE_CURRENT_BINARY_DIR}/input_be_with_source_dist_param_adjoint_sens.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_be_with_source_dist_param_adjoint_sens.yaml
+          ${CMAKE_CURRENT_BINARY_DIR}/input_be_with_source_dist_param_adjoint_sens.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fe_with_source.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fe_with_source.yaml COPYONLY)
-  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fe_with_source_dist_param_adjoint_sens.yaml
-  #        ${CMAKE_CURRENT_BINARY_DIR}/input_fe_with_source_dist_param_adjoint_sens.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fe_with_source_dist_param_adjoint_sens.yaml
+          ${CMAKE_CURRENT_BINARY_DIR}/input_fe_with_source_dist_param_adjoint_sens.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/compute_errs_source_no_movie2avi.m
                  ${CMAKE_CURRENT_BINARY_DIR}/compute_errs_source_no_movie2avi.m COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_backward_euler.yaml
@@ -41,9 +41,9 @@ endif()
   add_test(${testName}_BackwardEuler_with_Source_Scalar_Param_Adjoint_Sens ${Albany.exe} input_be_with_source_scalar_param_fwd_sens.yaml)
   set_tests_properties(${testName}_BackwardEuler_with_Source_Scalar_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Forward")
   
-  #add_test(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens ${SerialAlbany.exe} input_be_with_source_dist_param_adjoint_sens.yaml)
-  #set_tests_properties(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Adjoint")
+  add_test(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens ${SerialAlbany.exe} input_be_with_source_dist_param_adjoint_sens.yaml)
+  set_tests_properties(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Adjoint")
 
-  #add_test(${testName}_ForwardEuler_with_Source_Dist_Param_Adjoint_Sens ${SerialAlbany.exe} input_fe_with_source_dist_param_adjoint_sens.yaml)
-  #set_tests_properties(${testName}_ForwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Adjoint")
+  add_test(${testName}_ForwardEuler_with_Source_Dist_Param_Adjoint_Sens ${SerialAlbany.exe} input_fe_with_source_dist_param_adjoint_sens.yaml)
+  set_tests_properties(${testName}_ForwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Adjoint")
 
