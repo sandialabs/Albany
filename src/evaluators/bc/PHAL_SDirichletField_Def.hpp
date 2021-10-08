@@ -222,7 +222,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     auto     col_is_dbc_data = Albany::getLocalData(col_is_dbc_.getConst());
     auto     range_spmd_vs   = Albany::getSpmdVectorSpace(J->range());
     const LO num_local_rows  = range_spmd_vs->localSubDim();
-    const std::vector<std::vector<int> >& nsNodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
     for (LO local_row = 0; local_row < num_local_rows; ++local_row) {
       Albany::getLocalRowValues(J, local_row, indices, entries);
