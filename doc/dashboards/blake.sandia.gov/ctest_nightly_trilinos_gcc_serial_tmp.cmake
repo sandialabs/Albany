@@ -49,7 +49,7 @@ set (CTEST_BUILD_FLAGS "-j48")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (MPI_PATH $ENV{MPI_ROOT})  
 set (BOOST_PATH $ENV{BOOST_ROOT}) 
