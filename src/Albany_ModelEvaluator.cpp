@@ -566,22 +566,27 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
           << "l2 = " << l2
           << std::endl);
 
-  // Currently, only support distributed parameters.
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      l1 >= num_param_vecs + num_dist_param_vecs || l1 < num_param_vecs,
-      Teuchos::Exceptions::InvalidParameter,
-      std::endl
-          << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
-          << "Invalid parameter index l1 = "
-          << l1
-          << std::endl);
+  if (l1 < num_param_vecs) {
+    return Albany::createDenseHessianLinearOp(param_vss[l1]);
+  }
+  else {
+    // distributed parameters
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        l1 >= num_param_vecs + num_dist_param_vecs || l1 < num_param_vecs,
+        Teuchos::Exceptions::InvalidParameter,
+        std::endl
+            << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
+            << "Invalid parameter index l1 = "
+            << l1
+            << std::endl);
 
-  Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
-  Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
-  std::vector<IDArray> vElDofs =
-    distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
+    Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
+    Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
+    std::vector<IDArray> vElDofs =
+      distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
 
-  return Albany::createHessianLinearOp(p_owned_vs, p_overlapped_vs, vElDofs);
+    return Albany::createSparseHessianLinearOp(p_owned_vs, p_overlapped_vs, vElDofs);
+  }
 }
 
 Teuchos::RCP<Thyra_LinearOp>
@@ -933,18 +938,6 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
               << "The construction of H_pp is requested but not supported"
               << ". Please set the Option in the Hessian and ROL sublists consistently."
               << std::endl);
-
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        reconstructHppROL && (num_param_vecs>0),
-        Teuchos::Exceptions::InvalidParameter,
-        std::endl
-            << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
-            << "The Hessian reconstruction option is enabled but at least one "
-            << "parameter is not distributed. The Hessian reconstruction option "
-            << "currently requires all parameters to be distributed. "
-            << "If at least one parameter is a scalar parameter or a parameter vector, "
-            << "the Hessian reconstruction option must be disabled."
-            << std::endl);
 
     }
 
@@ -1522,12 +1515,10 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         outArgs.get_hess_g_pp(j, l1, l1) : Teuchos::null;
 
       if (Teuchos::nonnull(g_hess_pp)) {
-        if (l1 >= num_param_vecs) {
-          app->evaluateResponseDistParamHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
-                    sacado_param_vec,
-                    all_param_names[l1],
-                    g_hess_pp);
-        }
+        app->evaluateResponseHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
+                  sacado_param_vec,
+                  all_param_names[l1],
+                  g_hess_pp);
         if(appParams->sublist("Problem").sublist("Hessian").get<bool>("Write Hessian MatrixMarket", false))
           Albany::writeMatrixMarket(Albany::getTpetraMatrix(g_hess_pp).getConst(), "H", l1);
       }
