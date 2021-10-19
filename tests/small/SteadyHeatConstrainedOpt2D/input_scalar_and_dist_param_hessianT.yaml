@@ -37,7 +37,7 @@ ANONYMOUS:
       Response 0:
         Use AD for Hessian-vector products (default): true
         Reconstruct H_pp: true
-        Replace H_pp by I parameter 1: true
+        Replace H_pp with Identity for Parameter 1: true
       Write Hessian MatrixMarket: false 
     Response Functions:
       Number Of Responses: 1

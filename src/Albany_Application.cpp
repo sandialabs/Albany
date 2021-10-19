@@ -2506,10 +2506,16 @@ Application::evaluateResponseHessian_pp(
   RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
   Ht->resumeFill();
 
-  bool replace_by_I = 
-    problemParams->sublist("Hessian").sublist(Albany::strint("Response", response_index)).isParameter(Albany::strint("Replace H_pp by I parameter", parameter_index)) ?
-    problemParams->sublist("Hessian").sublist(Albany::strint("Response", response_index)).get<bool>(Albany::strint("Replace H_pp by I parameter", parameter_index)) :
-    false;
+  Teuchos::RCP<Teuchos::ParameterList> validHessianResponseParams = Teuchos::rcp(new Teuchos::ParameterList("validHessianResponseParams"));;
+  validHessianResponseParams->set<bool>("Use AD for Hessian-vector products (default)", false);
+  validHessianResponseParams->set<bool>("Reconstruct H_pp", false);
+
+  for (int i=0; i<problemParams->sublist("Parameters").get<int>("Number Of Parameters"); ++i)
+    validHessianResponseParams->set<bool>(Albany::strint("Replace H_pp with Identity for Parameter", i), false);
+
+  auto hessianResponseParams = problemParams->sublist("Hessian").sublist(Albany::strint("Response", response_index));
+  hessianResponseParams.validateParametersAndSetDefaults(*validHessianResponseParams, 0);
+  bool replace_by_I = hessianResponseParams.get<bool>(Albany::strint("Replace H_pp with Identity for Parameter", parameter_index));
 
   if (replace_by_I) {
     auto rangeMap = Ht->getRangeMap();
