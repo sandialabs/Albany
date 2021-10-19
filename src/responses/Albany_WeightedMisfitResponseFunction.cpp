@@ -25,6 +25,8 @@
 #include "Teuchos_SerialDenseSolver.hpp"
 #include <Teuchos_TwoDArray.hpp>
 
+#include "Albany_Hessian.hpp"
+
 using Teuchos::ScalarTraits;
 using Teuchos::SerialDenseMatrix;
 using Teuchos::SerialDenseVector;
@@ -39,16 +41,27 @@ WeightedMisfitResponse(const Teuchos::RCP<const Application>& app,
   app_(app)
 {
   n_parameters = responseParams.get<int>("Number Of Parameters", 1);
-  theta_0 = Teuchos::rcp( new Teuchos::SerialDenseVector<int, double>(n_parameters) );
-  C = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int, double>(n_parameters,n_parameters) );
-  invC = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int, double>(n_parameters,n_parameters) );
+  total_dimension = 0;
+  dimensions = Teuchos::rcp( new Teuchos::SerialDenseVector<int, int>(n_parameters) );
 
-  Teuchos::TwoDArray<double> C_data(n_parameters, n_parameters, 0);
+  for (int i=0; i<n_parameters; i++) {
+    if (app->getProblemPL()->sublist("Parameters").sublist(strint("Parameter",i)).isParameter("Dimension"))
+      (*dimensions)(i) = app->getProblemPL()->sublist("Parameters").sublist(strint("Parameter",i)).get<int>("Dimension");
+    else
+      (*dimensions)(i) = 1;
+    total_dimension += (*dimensions)(i);
+  }
+
+  theta_0 = Teuchos::rcp( new Teuchos::SerialDenseVector<int, double>(total_dimension) );
+  C = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int, double>(total_dimension,total_dimension) );
+  invC = Teuchos::rcp( new Teuchos::SerialDenseMatrix<int, double>(total_dimension,total_dimension) );
+
+  Teuchos::TwoDArray<double> C_data(total_dimension, total_dimension, 0);
   if (responseParams.isParameter("Covariance Matrix")) {
     C_data = responseParams.get<Teuchos::TwoDArray<double>>("Covariance Matrix");
   }
   else {
-    for (int i=0; i<n_parameters; i++)
+    for (int i=0; i<total_dimension; i++)
       C_data(i,i) = 1.;
   }
 
@@ -57,22 +70,22 @@ WeightedMisfitResponse(const Teuchos::RCP<const Application>& app,
     theta_0_data = responseParams.get<Teuchos::Array<double> >("Mean");
   }
   else {
-    for (int i=0; i<n_parameters; i++)
+    for (int i=0; i<total_dimension; i++)
       theta_0_data.push_back(0.);
   }
 
-  for (int i=0; i<n_parameters; i++)
-    for (int j=0; j<n_parameters; j++)
+  for (int i=0; i<total_dimension; i++)
+    for (int j=0; j<total_dimension; j++)
       (*C)(i,j) = C_data(i,j);
 
-  for (int i=0; i<n_parameters; i++)
+  for (int i=0; i<total_dimension; i++)
     (*theta_0)(i) = theta_0_data[i];
   
   // Fill invC:
-  SerialDenseVector<int, double> tmp1(n_parameters), tmp2(n_parameters);
+  SerialDenseVector<int, double> tmp1(total_dimension), tmp2(total_dimension);
   Teuchos::SerialDenseSolver<int, double> solver;
   solver.setMatrix( C );
-  for (int i=0; i<n_parameters; i++) {
+  for (int i=0; i<total_dimension; i++) {
     tmp1.putScalar( 0.0 );
     tmp1(i) = 1.0;
     solver.setVectors( Teuchos::rcp( &tmp2, false ), Teuchos::rcp( &tmp1, false ) );
@@ -102,13 +115,17 @@ evaluateResponseImpl (
 
   typedef SerialDenseVector<int, double> DVector;
 
-  DVector theta(n_parameters), tmp1(n_parameters), tmp2(n_parameters);
+  DVector theta(total_dimension), tmp1(total_dimension), tmp2(total_dimension);
 
+  int i_temp = 0;
   for (int i=0; i<n_parameters; i++) {
-    theta(i) = p[i][0].family->getValue<PHAL::AlbanyTraits::Residual>();
+    for (int j=0; j<(*dimensions)(i); j++) {
+      theta(i_temp) = p[i][j].family->getValue<PHAL::AlbanyTraits::Residual>();
+      ++i_temp;
+    }
   }
 
-  for (int i=0; i<n_parameters; i++) {
+  for (int i=0; i<total_dimension; i++) {
     tmp1(i) = theta(i) - (*theta_0)(i);
   }
 
@@ -129,13 +146,17 @@ evaluateGradientImpl (
 
   typedef SerialDenseVector<int, double> DVector;
 
-  DVector theta(n_parameters), tmp1(n_parameters);
+  DVector theta(total_dimension), tmp1(total_dimension);
 
+  int i_temp = 0;
   for (int i=0; i<n_parameters; i++) {
-    theta(i) = p[i][0].family->getValue<PHAL::AlbanyTraits::Residual>();
+    for (int j=0; j<(*dimensions)(i); j++) {
+      theta(i_temp) = p[i][j].family->getValue<PHAL::AlbanyTraits::Residual>();
+      ++i_temp;
+    }
   }
 
-  for (int i=0; i<n_parameters; i++) {
+  for (int i=0; i<total_dimension; i++) {
     tmp1(i) = theta(i) - (*theta_0)(i);
   }
 
@@ -190,12 +211,22 @@ evaluateTangent(const double /*alpha*/,
   }
 
   if (!gp.is_null()) {
-    // dgdp = dg/dp
-    SerialDenseVector<int, double> dgdp(n_parameters);
-    evaluateGradientImpl (p, dgdp);
+    if (parameter_index < n_parameters) {
+      // dgdp = dg/dp
+      SerialDenseVector<int, double> dgdp(total_dimension);
+      evaluateGradientImpl (p, dgdp);
 
-    // gp = (dg/dp)^T*Vp
-    Thyra::set_ele(0, dgdp(parameter_index), gp->col(0).ptr());
+      int offset = 0;
+      for (int j=0; j<parameter_index; j++) {
+        offset += (*dimensions)(j);
+      }
+      // gp = (dg/dp)^T*Vp
+      for (int j=0; j<(*dimensions)(parameter_index); j++) {
+        Thyra::set_ele(0, dgdp(j+offset), gp->col(j).ptr());
+      }
+    }
+    else
+      gp->assign(0.0);
   }
 }
 
@@ -270,24 +301,34 @@ evaluate_HessVecProd_pp(
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
     const Teuchos::Array<ParamVec>& param_array,
-    const std::string& /*dist_param_name*/,
+    const std::string& param_name,
     const std::string& /*dist_param_direction_name*/,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
-  if (!Hv_dp.is_null()) {
+  // First, the function checks whether the parameter associated to param_name
+  // is a distributed parameter (l1_is_distributed==true) or a parameter vector
+  // (l1_is_distributed==false).
+  int parameter_index;
+  bool l1_is_distributed;
+  Albany::getParameterVectorID(parameter_index, l1_is_distributed, param_name);
+
+  if (!Hv_dp.is_null() && !l1_is_distributed && parameter_index < n_parameters) {
     typedef SerialDenseVector<int, double> DVector;
 
-    DVector tmp1(n_parameters), tmp2(n_parameters);
+    DVector tmp1(total_dimension), tmp2(total_dimension);
 
-    for (int i=0; i<n_parameters; i++) {
+    for (int i=0; i<total_dimension; i++) {
       tmp1(i) = Thyra::get_ele(*v->col(0),i);
     }
 
     tmp2.multiply( Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *invC, tmp1, 0.0 );
 
-    for (int i=0; i<n_parameters; i++) {
+    for (int i=0; i<total_dimension; i++) {
       Thyra::set_ele(i, tmp2(i), Hv_dp->col(0).ptr());
     }
+  }
+  else if (!Hv_dp.is_null()) {
+    Hv_dp->assign(0.0);
   }
 }
 
@@ -297,7 +338,7 @@ evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& p,
-		const int  /*parameter_index*/,
+		const int  parameter_index,
 		const Teuchos::RCP<Thyra_Vector>& g,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
@@ -320,12 +361,17 @@ evaluateGradient(const double /*current_time*/,
   }
 
   if (!dg_dp.is_null()) {
-    // dgdp = dg/dp
-    SerialDenseVector<int, double> dgdp(n_parameters);
-    evaluateGradientImpl (p, dgdp);
+    if (parameter_index < n_parameters) {
+      // dgdp = dg/dp
+      SerialDenseVector<int, double> dgdp(total_dimension);
+      evaluateGradientImpl (p, dgdp);
 
-    for (int i=0; i<n_parameters; i++) {
-      dg_dp->col(i)->assign(dgdp(i));
+      for (int i=0; i<total_dimension; i++) {
+        dg_dp->col(i)->assign(dgdp(i));
+      }
+    }
+    else {
+      dg_dp->assign(0.0);
     }
   }
 }

@@ -150,6 +150,8 @@ namespace Albany
 
     Teuchos::RCP<Thyra_Vector> g_;
     int n_parameters;
+    int total_dimension;
+    Teuchos::RCP<Teuchos::SerialDenseVector<int, int>> dimensions;
     Teuchos::RCP<Teuchos::SerialDenseVector<int, double>> theta_0;
     Teuchos::RCP<Teuchos::SerialDenseMatrix<int, double>> C;
     Teuchos::RCP<Teuchos::SerialDenseMatrix<int, double>> invC;

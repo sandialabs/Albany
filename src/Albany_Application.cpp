@@ -2487,7 +2487,7 @@ Application::evaluateResponse_HessVecProd_pp(
 }
 
 void
-Application::evaluateResponseDistParamHessian_pp(
+Application::evaluateResponseHessian_pp(
     int                                     response_index,
     int                                     parameter_index,
     const double                            current_time,
@@ -2498,51 +2498,116 @@ Application::evaluateResponseDistParamHessian_pp(
     const std::string&                      param_name,
     const Teuchos::RCP<Thyra_LinearOp>&     H)
 {
-  Teuchos::ParameterList coloring_params;
-  std::string matrixType = "Hessian";
-  coloring_params.set("matrixType", matrixType);
-  coloring_params.set("symmetric", true);
+  int l1;
+  bool l1_is_distributed;
+  Albany::getParameterVectorID(l1, l1_is_distributed, param_name);
 
   // Get the crs Hessian:
   RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
   Ht->resumeFill();
 
-  // Create a colorer
-  Zoltan2::TpetraCrsColorer<Tpetra_CrsMatrix> colorer(Ht);
+  Teuchos::RCP<Teuchos::ParameterList> validHessianResponseParams = Teuchos::rcp(new Teuchos::ParameterList("validHessianResponseParams"));;
+  validHessianResponseParams->set<bool>("Use AD for Hessian-vector products (default)", false);
+  validHessianResponseParams->set<bool>("Reconstruct H_pp", false);
 
-  colorer.computeColoring(coloring_params);
+  for (int i=0; i<problemParams->sublist("Parameters").get<int>("Number Of Parameters"); ++i)
+    validHessianResponseParams->set<bool>(Albany::strint("Replace H_pp with Identity for Parameter", i), false);
 
-  // Compute seed matrix V -- this matrix is a dense
-  // matrix of 0/1 indicating the compression via coloring
+  auto hessianResponseParams = problemParams->sublist("Hessian").sublist(Albany::strint("Response", response_index));
+  hessianResponseParams.validateParametersAndSetDefaults(*validHessianResponseParams, 0);
+  bool replace_by_I = hessianResponseParams.get<bool>(Albany::strint("Replace H_pp with Identity for Parameter", parameter_index));
 
-  const int numColors = colorer.getNumColors();
+  if (replace_by_I) {
+    auto rangeMap = Ht->getRangeMap();
+    int numElements = rangeMap->getNodeNumElements();
 
-  // Compute the seed matrix
-  RCP<Tpetra_MultiVector> V = rcp(new Tpetra_MultiVector(Ht->getDomainMap(), numColors));
-  colorer.computeSeedMatrix(*V);
+    Tpetra_Vector::scalar_type values[1];
+    Tpetra_Vector::global_ordinal_type cols[1];
 
-  // Apply the Hessian to all the directions
-  RCP<Tpetra_MultiVector> HV = rcp(new Tpetra_MultiVector(Ht->getDomainMap(), numColors));
+    values[0] = 1.;
 
-  for (int i = 0; i < numColors; ++i)
-  {
-    RCP<const Thyra_MultiVector> v_i = Albany::createConstThyraMultiVector(V->getVector(i));
-    RCP<Thyra_MultiVector> Hv_i = Albany::createThyraMultiVector(HV->getVectorNonConst(i));
-    evaluateResponse_HessVecProd_pp(
-      response_index,
-      current_time,
-      v_i,
-      x,
-      xdot,
-      xdotdot,
-      param_array,
-      param_name,
-      param_name,
-      Hv_i);
+    for (int i = 0; i < numElements; ++i) {
+      cols[0] = rangeMap->getGlobalElement(i);
+      Ht->replaceGlobalValues(cols[0], 1, values, cols);
+    }
+  }
+  else if (l1_is_distributed) {
+    Teuchos::ParameterList coloring_params;
+    std::string matrixType = "Hessian";
+    coloring_params.set("matrixType", matrixType);
+    coloring_params.set("symmetric", true);
+
+    // Create a colorer
+    Zoltan2::TpetraCrsColorer<Tpetra_CrsMatrix> colorer(Ht);
+
+    colorer.computeColoring(coloring_params);
+
+    // Compute seed matrix V -- this matrix is a dense
+    // matrix of 0/1 indicating the compression via coloring
+
+    const int numColors = colorer.getNumColors();
+
+    // Compute the seed matrix
+    RCP<Tpetra_MultiVector> V = rcp(new Tpetra_MultiVector(Ht->getDomainMap(), numColors));
+    colorer.computeSeedMatrix(*V);
+
+    // Apply the Hessian to all the directions
+    RCP<Tpetra_MultiVector> HV = rcp(new Tpetra_MultiVector(Ht->getDomainMap(), numColors));
+
+    for (int i = 0; i < numColors; ++i) {
+      RCP<const Thyra_MultiVector> v_i = Albany::createConstThyraMultiVector(V->getVector(i));
+      RCP<Thyra_MultiVector> Hv_i = Albany::createThyraMultiVector(HV->getVectorNonConst(i));
+      evaluateResponse_HessVecProd_pp(
+        response_index,
+        current_time,
+        v_i,
+        x,
+        xdot,
+        xdotdot,
+        param_array,
+        param_name,
+        param_name,
+        Hv_i);
+    }
+
+    // Reconstruct the Hessian matrix based on the Hessian-vector products
+    colorer.reconstructMatrix(*HV, *Ht);
+  }
+  else {
+    int numColors = Ht->getDomainMap()->getNodeNumElements();
+    RCP<Tpetra_Vector> v = rcp(new Tpetra_Vector(Ht->getDomainMap()));
+    RCP<Tpetra_Vector> Hv = rcp(new Tpetra_Vector(Ht->getDomainMap()));
+
+    Tpetra_Vector::scalar_type values[1];
+    Tpetra_Vector::global_ordinal_type cols[1];
+
+    for (int i = 0; i < numColors; ++i) {
+      v->replaceGlobalValue (i, 1.);
+      if (i>0)
+        v->replaceGlobalValue (i-1, 0.);
+
+      RCP<const Thyra_MultiVector> v_i = Albany::createConstThyraMultiVector(v);
+      RCP<Thyra_MultiVector> Hv_i = Albany::createThyraMultiVector(Hv);
+      evaluateResponse_HessVecProd_pp(
+        response_index,
+        current_time,
+        v_i,
+        x,
+        xdot,
+        xdotdot,
+        param_array,
+        param_name,
+        param_name,
+        Hv_i);
+      auto Hv_data = Hv->getData();
+      for (int j = 0; j < numColors; ++j) {
+        values[0] = Hv_data[j];
+        cols[0] = i;
+        Ht->replaceGlobalValues(j, 1, values, cols);
+      }
+    }
   }
 
-  // Reconstruct the Hessian matrix based on the Hessian-vector products
-  colorer.reconstructMatrix(*HV, *Ht);
   Ht->fillComplete();
 
 #ifdef WRITE_TO_MATRIX_MARKET
