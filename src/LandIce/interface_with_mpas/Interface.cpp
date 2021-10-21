@@ -71,6 +71,7 @@ bool MPAS_useGLP(true);
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
 
 bool keptMesh =false;
+bool kokkosInitializedByAlbany = false;
 
 std::string elemShape;
 
@@ -354,7 +355,10 @@ void velocity_solver_export_fo_velocity(MPI_Comm reducedComm) {
 
 int velocity_solver_init_mpi(MPI_Comm comm) {
   mpiCommMPAS = Albany::createTeuchosCommFromMpiComm(comm);
-  Kokkos::initialize();
+  if(! Kokkos::is_initialized()) {
+    Kokkos::initialize();
+    kokkosInitializedByAlbany = true;
+  }
   stackedTimer = Teuchos::rcp(new Teuchos::StackedTimer("Albany Velocity Solver"));
   Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
   return 0;
@@ -384,7 +388,8 @@ void velocity_solver_finalize() {
   stackedTimer = Teuchos::null;
 
   mpiCommMPAS = Teuchos::null;
-  Kokkos::finalize_all();
+  if(kokkosInitializedByAlbany)
+    Kokkos::finalize_all();
 }
 
 /*duality:
