@@ -26,6 +26,26 @@
 
 #include "Albany_CumulativeScalarResponseFunction.hpp"
 
+#include "BelosConfigDefs.hpp"
+#include "BelosOutputManager.hpp"
+
+#include "Teuchos_CommandLineProcessor.hpp"
+#include "Teuchos_ParameterList.hpp"
+#include "Teuchos_StandardCatchMacros.hpp"
+#include <Teuchos_StackedTimer.hpp>
+
+#include "BelosTpetraAdapter.hpp"
+#include "BelosTpetraOperator.hpp"
+#include "Tpetra_Core.hpp"
+#include "Tpetra_CrsMatrix.hpp"
+#include <MatrixMarket_Tpetra.hpp>
+#include "BelosOrthoManagerFactory.hpp"
+#include "BelosOrthoManager.hpp"
+
+using Teuchos::RCP;
+using Teuchos::rcp;
+using Teuchos::Array;
+
 namespace PyAlbany
 {
     /**
@@ -76,7 +96,15 @@ namespace PyAlbany
             std::cout << "~PyParallelEnv()\n";
         }
     };
-
+   
+    /**
+    * \brief orthogTpMVecs function
+    *
+    * The function orthogonalizes the input MultiVector object.
+    *
+    */ 
+    void orthogTpMVecs(Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> inputVecs, int blkSize);
+   
     /**
    * \brief getParameterList function
    * 
@@ -344,6 +372,54 @@ Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> PyAlbany::gatherMVector(Teuchos::R
     Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> outVector = rcp(new PyAlbany::PyTrilinosMultiVector(rankZeroMap, inVector->getNumVectors()));
     outVector->doExport(*inVector, *exportZero, Tpetra::ADD);
     return outVector;
+}
+
+void PyAlbany::orthogTpMVecs(Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> inputVecs, int blkSize)
+{
+  typedef double                            ScalarType;
+  typedef int                               OT;
+  typedef typename Teuchos::SerialDenseMatrix<OT,ScalarType> MAT;
+  typedef Tpetra::MultiVector<ScalarType>   MV;
+  typedef Kokkos::DefaultExecutionSpace     EXSP;
+  typedef Tpetra::Operator<ScalarType>             OP;
+  typedef Belos::OperatorTraits<ScalarType,MV,OP> OPT;
+  int numVecs = inputVecs->getNumVectors();
+  int numRows = inputVecs->getGlobalLength();
+  std::string orthogType("ICGS");
+
+  RCP<MAT> B = rcp(new MAT(blkSize, blkSize)); //Matrix for coeffs of X
+  Array<RCP<MAT>> C; 
+
+  Belos::OrthoManagerFactory<ScalarType, MV, OP> factory;
+  Teuchos::RCP<Teuchos::ParameterList> paramsOrtho;   // can be null
+
+  //Default OutputManager is std::cout.
+  Teuchos::RCP<Belos::OutputManager<ScalarType> > myOutputMgr = Teuchos::rcp( new Belos::OutputManager<ScalarType>() );
+  const Teuchos::RCP<Belos::OrthoManager<ScalarType,MV>> orthoMgr = factory.makeOrthoManager (orthogType, Teuchos::null, myOutputMgr, "Tpetra OrthoMgr", paramsOrtho); 
+  
+  int numLoops = numVecs/blkSize;
+  int remainder = numVecs % blkSize;
+
+  RCP<MV> vecBlock = inputVecs->subViewNonConst(Teuchos::Range1D(0,blkSize-1));
+  orthoMgr->normalize(*vecBlock, B);
+  std::vector<RCP<const MV>> pastVecArray;
+  pastVecArray.push_back(vecBlock);
+  Teuchos::ArrayView<RCP<const MV>> pastVecArrayView; 
+
+  for(int k=1; k<numLoops; k++){
+    pastVecArrayView = arrayViewFromVector(pastVecArray);
+    vecBlock = inputVecs->subViewNonConst(Teuchos::Range1D(k*blkSize,k*blkSize + blkSize - 1));
+    C.append(rcp(new MAT(blkSize, blkSize)));
+    int rank = orthoMgr->projectAndNormalize(*vecBlock, C, B, pastVecArrayView);
+    pastVecArray.push_back(vecBlock);
+  }
+  if( remainder > 0){
+    pastVecArrayView = arrayViewFromVector(pastVecArray);
+    vecBlock = inputVecs->subViewNonConst(Teuchos::Range1D(numVecs-remainder, numVecs-1));
+    B = rcp(new MAT(remainder, remainder));
+    C.append(rcp(new MAT(remainder, remainder)));
+    int rank = orthoMgr->projectAndNormalize(*vecBlock, C, B, pastVecArrayView);
+  }
 }
 
 Teuchos::RCP<Teuchos::ParameterList> PyAlbany::getParameterList(std::string inputFile, Teuchos::RCP<PyAlbany::PyParallelEnv> pyParallelEnv)
