@@ -14,15 +14,18 @@ ANONYMOUS:
     Thermal Conductivity: [1.6, 0.8]
     Thermal Source: None
     Parameters:
-      Number Of Parameters: 2
+      Number Of Parameters: 1
       Parameter 0:
-        Name: DBC on NS NodeSet0 for DOF T
-        Lower Bound: -5.00000000000000000e+00
-        Upper Bound: 5.00000000000000000e+00
-      Parameter 1:
-        Name: DBC on NS NodeSet1 for DOF T
-        Lower Bound: -5.00000000000000000e+00
-        Upper Bound: 5.00000000000000000e+00
+        Dimension: 2
+        Type: Vector
+        Scalar 0:
+          Name: DBC on NS NodeSet1 for DOF T
+          Lower Bound: -5.00000000000000000e+04
+          Upper Bound: 5.00000000000000000e+04
+        Scalar 1:
+          Name: DBC on NS NodeSet0 for DOF T
+          Lower Bound: -5.00000000000000000e+04
+          Upper Bound: 5.00000000000000000e+04
     Response Functions: 
       Number Of Responses: 1
       Response 0:
@@ -30,13 +33,17 @@ ANONYMOUS:
         Number Of Responses: 2
         Response 0:
           Name: Weighted Misfit
-          Number Of Parameters: 2
+          Number Of Parameters: 1
           Mean: [1., 1.]
           Covariance Matrix: [[1., 0.], [0., 1.]]
         Response 1:
           Type: Scalar Response
           Name: Solution Average
         Scaling Coefficient 1: -1.
+    Hessian:
+      Use AD for Hessian-vector products (default): true
+      Response 0:
+        Reconstruct H_pp: false
   Discretization: 
     1D Elements: 10
     2D Elements: 10
@@ -48,7 +55,7 @@ ANONYMOUS:
     Analysis: 
       Analysis Package: ROL
       ROL: 
-        Number Of Parameters: 2
+        Number Of Parameters: 1
         Check Gradient: false
         Gradient Tolerance: 1.0e-04
         Step Tolerance: 1.0e-04

@@ -225,10 +225,10 @@ Teuchos::RCP<const PyTrilinosMap> PyProblem::getParameterMap(const int p_index)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
-    stackedTimer->start("PyAlbany: getResponseMap");
-    auto p_space = solver->getNominalValues().get_p(p_index)->space();
+    stackedTimer->start("PyAlbany: getParameterMap");
+    auto p_space = solver->get_p_space(p_index);
     auto outputMap = getPyTrilinosMap(Albany::getTpetraMap(p_space), true);
-    stackedTimer->stop("PyAlbany: getResponseMap");
+    stackedTimer->stop("PyAlbany: getParameterMap");
     stackedTimer->stopBaseTimer();
     return outputMap;
 }

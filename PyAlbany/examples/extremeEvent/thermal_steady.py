@@ -26,11 +26,8 @@ def evaluate_responses(X, Y, problem, recompute=False):
         comm = MPI.COMM_WORLD
         myGlobalRank = comm.rank
 
-        parameter_map_0 = problem.getParameterMap(0)
-        parameter_0 = Tpetra.Vector(parameter_map_0, dtype="d")
-
-        parameter_map_1 = problem.getParameterMap(1)
-        parameter_1 = Tpetra.Vector(parameter_map_1, dtype="d")
+        parameter_map = problem.getParameterMap(0)
+        parameter = Tpetra.Vector(parameter_map, dtype="d")
 
         n_x = len(X)
         n_y = len(Y)
@@ -38,11 +35,10 @@ def evaluate_responses(X, Y, problem, recompute=False):
         Z2 = np.zeros((n_y, n_x))
 
         for i in range(n_x):
-            parameter_0[0] = X[i]
-            problem.setParameter(0, parameter_0)
+            parameter[0] = X[i]
             for j in range(n_y):
-                parameter_1[0] = Y[j]
-                problem.setParameter(1, parameter_1)
+                parameter[1] = Y[j]
+                problem.setParameter(0, parameter)
 
                 problem.performSolve()
 
@@ -74,11 +70,13 @@ def main(parallelEnv):
     #
     # ----------------------------------------------
 
-    l_min = 0.
-    l_max = 2.
+    l_min = 8.
+    l_max = 20.
     n_l = 5
 
-    l = np.linspace(l_min, l_max, n_l)
+    p = 1.
+
+    l = l_min + np.power(np.linspace(0.0, 1.0, n_l), p) * (l_max-l_min)
 
     theta_star, I_star, F_star, P_star = ee.evaluateThetaStar(l, problem, n_params)
 
@@ -105,9 +103,11 @@ def main(parallelEnv):
 
     P_IS = ee.importanceSamplingEstimator(mean, cov, theta_star, F_star, P_star, samples, problem)
     P_mixed = ee.mixedImportanceSamplingEstimator(mean, cov, theta_star, F_star, P_star, samples, problem, angle_1, angle_2)
+    P_SO = ee.secondOrderEstimator(mean, cov, l, theta_star, I_star, F_star, P_star, problem)
 
     np.savetxt('P_steady_IS.txt', P_IS)
     np.savetxt('P_steady_mixed.txt', P_mixed)
+    np.savetxt('P_steady_SO.txt', P_SO)
 
     problem.reportTimers()
 
@@ -117,8 +117,8 @@ def main(parallelEnv):
     #
     # ----------------------------------------------
     if n_params == 2:
-        X = np.arange(-5, 5, 0.2)
-        Y = np.arange(-5, 5, 0.25)
+        X = np.arange(1, 7, 0.2)
+        Y = np.arange(1, 7, 0.25)
 
         Z1, Z2 = evaluate_responses(X, Y, problem, True)
 
@@ -130,6 +130,7 @@ def main(parallelEnv):
             plt.semilogy(F_star, P_star, 'k*-')
             plt.semilogy(F_star, P_IS, 'b*-')
             plt.semilogy(F_star, P_mixed, 'r*--')
+            plt.semilogy(F_star, P_SO, 'g*-')
 
             plt.savefig('extreme_steady.jpeg', dpi=800)
             plt.close()

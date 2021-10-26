@@ -19,13 +19,13 @@ ANONYMOUS:
         Dimension: 2
         Type: Vector
         Scalar 0:
-          Name: DBC on NS NodeSet0 for DOF T
-          Lower Bound: -5.00000000000000000e+00
-          Upper Bound: 5.00000000000000000e+00
-        Scalar 1:
           Name: DBC on NS NodeSet1 for DOF T
-          Lower Bound: -5.00000000000000000e+00
-          Upper Bound: 5.00000000000000000e+00
+          Lower Bound: -5.00000000000000000e+04
+          Upper Bound: 5.00000000000000000e+04
+        Scalar 1:
+          Name: DBC on NS NodeSet0 for DOF T
+          Lower Bound: -5.00000000000000000e+04
+          Upper Bound: 5.00000000000000000e+04
     Response Functions: 
       Number Of Responses: 1
       Response 0:
@@ -38,8 +38,15 @@ ANONYMOUS:
           Covariance Matrix: [[1., 0.], [0., 1.]]
         Response 1:
           Type: Scalar Response
-          Name: Solution Average
+          Name: Squared L2 Difference Source ST Target PST
+          Field Rank: Scalar
+          Source Field Name: Temperature
+          Target Value: 0.0
         Scaling Coefficient 1: -1.
+    Hessian:
+      Use AD for Hessian-vector products (default): true
+      Response 0:
+        Reconstruct H_pp: false
   Discretization: 
     1D Elements: 10
     2D Elements: 10
@@ -52,29 +59,31 @@ ANONYMOUS:
       Analysis Package: ROL
       ROL: 
         Number Of Parameters: 1
-        Check Gradient: false
+        Check Gradient: true
         Gradient Tolerance: 1.0e-04
         Step Tolerance: 1.0e-04
         Print Output: true
-        Parameter Initial Guess Type: From Model Evaluator
-        Uniform Parameter Guess: 0.0e+00
+        Parameter Initial Guess Type: Uniform Vector
+        Uniform Parameter Guess: 1.0e+00
         Min And Max Of Random Parameter Guess: [-1.0e+00, 2.0e+00]
         Bound Constrained: true
 
-        Full Space: false
-        Hessian Dot Product: false
-        Use NOX Solver: true
-        
         Step Method: "Line Search"
         bound_eps: 1.0e-01
-        Max Iterations: 5
+        Max Iterations: 10
+       
+
+        Full Space: false
+        Use NOX Solver: true
+ 
+
 
         ROL Options: 
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
           SimOpt:
             Solve:
-              Absolute Residual Tolerance:   1.0e-6
-              Relative Residual Tolerance:   1.0e-1
+              Absolute Residual Tolerance:   1.0e-5
+              Relative Residual Tolerance:   1.0e-0
               Iteration Limit:               20
               Sufficient Decrease Tolerance: 1.e-4
               Step Tolerance:                1.e-8
@@ -87,14 +96,14 @@ ANONYMOUS:
             Gradient Tolerance: 1.0e-4
             Constraint Tolerance: 1.0e-5
             Step Tolerance: 1.0e-10
-            Iteration Limit: 5
+            Iteration Limit: 10
 
           General: 
             Variable Objective Function: false
             Scale for Epsilon Active Sets: 1.00000000000000000e+00
             Inexact Objective Function: false
             Inexact Gradient: false
-            Inexact Hessian-Times-A-Vector: true
+            Inexact Hessian-Times-A-Vector: false
             Projected Gradient Criticality Measure: false
             Secant: 
               Type: Limited-Memory BFGS
