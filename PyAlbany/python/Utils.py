@@ -16,7 +16,7 @@ import sys
 
 def norm(distributedVector, comm):
     """@brief Computes the norm-2 of a distributed vector using Python and Teuchos MPI communicator."""
-    norm = inner(distributedVector, distributedVector, comm)
+    norm = np.sqrt(inner(distributedVector, distributedVector, comm))
     return norm
 
 def inner(distributedVector1, distributedVector2, comm):
