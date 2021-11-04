@@ -19,7 +19,9 @@ enum class ParamEnum
   Mu,
   Power,
   Homotopy,
-  GLHomotopy
+  GLHomotopy,
+  Theta_0,
+  Theta_1
 };
 
 namespace ParamEnumName
@@ -30,6 +32,8 @@ namespace ParamEnumName
   static const std::string Power           = "Power Exponent";
   static const std::string HomotopyParam   = "Homotopy Parameter";
   static const std::string GLHomotopyParam = "Glen's Law Homotopy Parameter";
+  static const std::string theta_0         = "Theta 0"; 
+  static const std::string theta_1         = "Theta 1";
 } // ParamEnum
 
 } // Namespace LandIce

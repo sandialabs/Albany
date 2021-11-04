@@ -3,7 +3,6 @@
 ANONYMOUS:
   Build Type: Tpetra
   Problem:
-    Phalanx Graph Visualization Detail: 1
     Name: Thermal 2D
     Solution Method: Steady
     Compute Sensitivities: true
@@ -20,27 +19,13 @@ ANONYMOUS:
         Dimension: 2
         Type: Vector
         Scalar 0:
-          Name: Theta 0
-          Lower Bound: -1.e+10
-          Upper Bound: 1.e+10
+          Name: DBC on NS NodeSet1 for DOF T
+          Lower Bound: -5.00000000000000000e+04
+          Upper Bound: 5.00000000000000000e+04
         Scalar 1:
-          Name: Theta 1
-          Lower Bound: -1.e+10
-          Upper Bound: 1.e+10
-    Random Parameters:
-      Number Of Parameters: 2
-      Parameter 0:
-        Name: DBC on NS NodeSet1 for DOF T
-        Distribution: 
-          Name: Normal
-          Loc: 1.
-        Standard Normal Parameter: Theta 0
-      Parameter 1:
-        Name: DBC on NS NodeSet0 for DOF T
-        Distribution: 
-          Name: Normal
-          Loc: 1.
-        Standard Normal Parameter: Theta 1
+          Name: DBC on NS NodeSet0 for DOF T
+          Lower Bound: -5.00000000000000000e+04
+          Upper Bound: 5.00000000000000000e+04
     Response Functions: 
       Number Of Responses: 1
       Response 0:
@@ -49,7 +34,7 @@ ANONYMOUS:
         Response 0:
           Name: Weighted Misfit
           Number Of Parameters: 1
-          Mean: [0., 0.]
+          Mean: [1., 1.]
           Covariance Matrix: [[1., 0.], [0., 1.]]
         Response 1:
           Type: Scalar Response

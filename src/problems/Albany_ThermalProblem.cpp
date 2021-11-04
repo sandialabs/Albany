@@ -11,6 +11,25 @@
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
+#include "PHAL_SharedParameter.hpp"
+
+template<typename ParamNameEnum, ParamNameEnum ParamName>
+struct ConstructSharedParameterOp
+{
+private:
+  Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm_;
+  Teuchos::RCP<Teuchos::ParameterList> p_;
+  Teuchos::RCP<Albany::Layouts> dl_;
+
+public:
+  ConstructSharedParameterOp (Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm, Teuchos::RCP<Teuchos::ParameterList> p, Teuchos::RCP<Albany::Layouts> dl) :
+      fm_(fm), p_(p), dl_(dl) {}
+  template<typename EvalT>
+  void operator() (EvalT /*x*/) const {
+    auto ev = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamNameEnum,ParamName>(*p_,dl_));
+    fm_->template registerEvaluator<EvalT>(ev);
+  }
+};
 
 Albany::ThermalProblem::
 ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -118,8 +137,31 @@ Albany::ThermalProblem::constructDirichletEvaluators(const std::vector<std::stri
    std::vector<std::string> bcNames(neq);
    bcNames[0] = "T";
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
+
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
+
+   {
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Theta 0"));
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", this->paramLib);
+    const std::string param_name = "Theta 0";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<double>("Default Nominal Value", 0.);
+    ConstructSharedParameterOp<Albany::ParamEnum, Albany::ParamEnum::Theta_0> constructor(dfm, p, dl);
+    Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
+   }
+   {
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Theta 1"));
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", this->paramLib);
+    const std::string param_name = "Theta 1";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<double>("Default Nominal Value", 0.);
+    ConstructSharedParameterOp<Albany::ParamEnum, Albany::ParamEnum::Theta_1> constructor(dfm, p, dl);
+    Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
+   }
+
    use_sdbcs_ = bcUtils.useSDBCs(); 
    offsets_ = bcUtils.getOffsets(); 
    nodeSetIDs_ = bcUtils.getNodeSetIDs();
