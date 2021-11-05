@@ -481,7 +481,6 @@ Albany::IossSTKMeshStruct::setFieldData (
     std::vector<double> ltr;
     int ordering;
     GO stride;
-    stk::util::Parameter temp_any;
 
     std::string state_name = "layer_thickness_ratio";
     hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
@@ -492,6 +491,8 @@ Albany::IossSTKMeshStruct::setFieldData (
     if(hasLayeredStructure)
       fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
     state_name = "stride";
+    stk::util::Parameter temp_any;
+    temp_any.type = stk::util::ParameterType::INT64;
     hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, false);
     if(hasLayeredStructure) {
       stride = temp_any.get_value<int64_t>();
@@ -728,7 +729,6 @@ Albany::IossSTKMeshStruct::setBulkData (
     std::vector<double> ltr;
     int ordering;
     GO stride;
-    stk::util::Parameter temp_any;
 
     std::string state_name = "layer_thickness_ratio";
     hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
@@ -739,6 +739,8 @@ Albany::IossSTKMeshStruct::setBulkData (
     if(hasLayeredStructure)
       fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
     state_name = "stride";
+    stk::util::Parameter temp_any;
+    temp_any.type = stk::util::ParameterType::INT64;
     hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, false);
     if(hasLayeredStructure) {
       stride = temp_any.get_value<int64_t>();
