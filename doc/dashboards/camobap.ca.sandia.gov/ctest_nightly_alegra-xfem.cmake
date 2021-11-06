@@ -122,31 +122,31 @@ if (CTEST_DO_SUBMIT)
   endif ()
 endif ()
 
-if (DOWNLOAD)
+#if (DOWNLOAD)
 
-  #
-  # Update alegra-xfem
-  #
+# #
+#  # Update alegra-xfem
+#  #
 
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/alegra-xfem" RETURN_VALUE count)
-  message("Found ${count} changed files")
+#  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+#  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/alegra-xfem" RETURN_VALUE count)
+#  message("Found ${count} changed files")
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Update
-      RETURN_VALUE  HAD_ERROR
-      )
+#  if (CTEST_DO_SUBMIT)
+#    ctest_submit (PARTS Update
+#      RETURN_VALUE  HAD_ERROR
+#      )
 
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot update alegra-xfem repository!")
-    endif ()
-  endif ()
+#   if (HAD_ERROR)
+#      message(FATAL_ERROR "Cannot update alegra-xfem repository!")
+#    endif ()
+#  endif ()
 
-  if (count LESS 0)
-    message(FATAL_ERROR "Cannot update alegra-xfem!")
-  endif ()
+#  if (count LESS 0)
+#    message(FATAL_ERROR "Cannot update alegra-xfem!")
+#  endif ()
 
-endif ()
+#endif ()
 
 
 
