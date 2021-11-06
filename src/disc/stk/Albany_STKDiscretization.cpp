@@ -722,9 +722,7 @@ STKDiscretization::writeSolutionToFile(
       mesh_data->write_global(outputFileIdx, it.first, it.second);
     }
     for (const auto& it : fc->getMeshScalarInteger64States()) {
-      boost::any value;
-      value = static_cast<int64_t>(it.second);
-      mesh_data->write_global(outputFileIdx, it.first, value, stk::util::ParameterType::INT64);
+      mesh_data->write_global(outputFileIdx, it.first, static_cast<int64_t>(it.second), stk::util::ParameterType::INT64);
     }
     mesh_data->end_output_step(outputFileIdx);
 
@@ -789,9 +787,7 @@ STKDiscretization::writeSolutionMVToFile(
       mesh_data->write_global(outputFileIdx, it.first, it.second);
     }
     for (const auto& it : fc->getMeshScalarInteger64States()) {
-      boost::any value;
-      value = static_cast<int64_t>(it.second);
-      mesh_data->write_global(outputFileIdx, it.first, value, stk::util::ParameterType::INT64);
+      mesh_data->write_global(outputFileIdx, it.first, static_cast<int64_t>(it.second), stk::util::ParameterType::INT64);
     }
     mesh_data->end_output_step(outputFileIdx);
 
@@ -822,7 +818,9 @@ STKDiscretization::writeSolutionMVToFile(
 #endif
 }
 
-void STKDiscretization::addSolutionField(const std::string & fieldName,const std::string & blockId)
+void STKDiscretization::
+addSolutionField (const std::string & /* fieldName */,
+                  const std::string & /* blockId */)
 {
 #if 0
    TEUCHOS_TEST_FOR_EXCEPTION(!validBlockId(blockId),ElementBlockException,
@@ -844,7 +842,9 @@ void STKDiscretization::addSolutionField(const std::string & fieldName,const std
 #endif
 }
 
-void STKDiscretization::addCellField(const std::string & fieldName,const std::string & blockId)
+void STKDiscretization::
+addCellField (const std::string & /* fieldName */,
+              const std::string & /* blockId */)
 {
 #if 0
    TEUCHOS_TEST_FOR_EXCEPTION(!validBlockId(blockId),ElementBlockException,
@@ -1931,8 +1931,7 @@ STKDiscretization::computeSideSets()
   }
 
   // 2) Construct GlobalSideSetList (map of GlobalSideSetInfo)
-  std::map<std::string, int>::iterator ss_it = num_local_worksets.begin();
-  while (ss_it != num_local_worksets.end()) {
+  for (auto ss_it=num_local_worksets.begin(); ss_it!=num_local_worksets.end(); ++ss_it) {
     std::string             ss_key = ss_it->first;
 
     max_sides[ss_key]++; // max sides is the largest local ID + 1 and needs to be incremented once for each key here
@@ -1948,8 +1947,6 @@ STKDiscretization::computeSideSets()
     globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::View<int**,      Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
     globalSideSetViews[ss_key].cellsOnSide      = Kokkos::View<int***,     Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
     globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::View<int***,     Kokkos::LayoutRight>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
-
-    ss_it++;
   }
 
   // 3) Populate global views
@@ -2082,12 +2079,9 @@ STKDiscretization::computeSideSets()
     }
 
     // Allocate total localDOFView for each sideset name
-    ss_it = num_local_worksets.begin();
-    while (ss_it != num_local_worksets.end()) {
+    for (auto ss_it=num_local_worksets.begin(); ss_it!=num_local_worksets.end(); ++ss_it) {
       std::string ss_key = ss_it->first;
       allLocalDOFViews[ss_key] = Kokkos::View<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
-
-      ss_it++;
     }
 
   }
@@ -2338,18 +2332,15 @@ STKDiscretization::setupExodusOutput()
     auto fc = stkMeshStruct->getFieldContainer();
     for (auto& it : fc->getMeshVectorStates()) {
       const auto DV_Type = stk::util::ParameterType::DOUBLEVECTOR;
-      boost::any mvs     = it.second;
-      mesh_data->add_global(outputFileIdx, it.first, mvs, DV_Type);
+      mesh_data->add_global(outputFileIdx, it.first, it.second, DV_Type);
     }
     for (const auto& it : fc->getMeshScalarIntegerStates()) {
      const auto INT_Type = stk::util::ParameterType::INTEGER;
-     boost::any ms      = it.second;
-     mesh_data->add_global(outputFileIdx, it.first, ms, INT_Type);
+     mesh_data->add_global(outputFileIdx, it.first, it.second, INT_Type);
     }
     for (const auto& it : fc->getMeshScalarInteger64States()) {
      const auto INT64_Type = stk::util::ParameterType::INT64;
-     boost::any ms      = it.second;
-     mesh_data->add_global(outputFileIdx, it.first, ms, INT64_Type);
+     mesh_data->add_global(outputFileIdx, it.first, it.second, INT64_Type);
     }
 
     // STK and Ioss/Exodus only allow TRANSIENT fields to be exported.
