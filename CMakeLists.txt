@@ -188,27 +188,6 @@ if (SET_COMPILERS_AUTOMATICALLY)
   PROJECT(Albany)
 endif()
 
-include(CheckCSourceCompiles)
-set(CMAKE_REQUIRED_LIBRARIES ${${PROJECT_NAME}_EXTRA_LINK_FLAGS})
-set(CMAKE_REQUIRED_INCLUDES  ${Trilinos_INCLUDE_DIRS})
-check_c_source_compiles(
-  "
-  #include <exodusII_par.h>
-  int main()
-  {
-    return 0;
-  }
-  "
-  PARALLEL_EXODUS_SUPPORTED
-  )
-  
-IF (PARALLEL_EXODUS_SUPPORTED)
-  SET(ALBANY_PARALELL_EXODUS TRUE)
-ELSE()
-  SET(ALBANY_PARALELL_EXODUS FALSE)
-ENDIF()
-
-
 # AGS: Adding these lines so Ctest can be run to submit to cdash dashboard
 #   Uses CTestConfig.cmake file for Cdash info.
 ENABLE_TESTING()
@@ -519,6 +498,28 @@ ELSE()
   SET(ALBANY_SEACAS FALSE)
 ENDIF()
 
+# Check whether Exodus can access a file in parallel
+include(CheckCSourceCompiles)
+set(CMAKE_REQUIRED_LIBRARIES ${${PROJECT_NAME}_EXTRA_LINK_FLAGS})
+set(CMAKE_REQUIRED_INCLUDES  ${Trilinos_INCLUDE_DIRS})
+check_c_source_compiles(
+  "
+  #include <exodusII_par.h>
+  int main()
+  {
+    return 0;
+  }
+  "
+  PARALLEL_EXODUS_SUPPORTED
+  )
+  
+IF (PARALLEL_EXODUS_SUPPORTED)
+  SET(ALBANY_PARALELL_EXODUS TRUE)
+  MESSAGE("-- ALBANY_PARALELL_EXODUS set to True")
+ELSE()
+  SET(ALBANY_PARALELL_EXODUS FALSE)
+  MESSAGE("-- ALBANY_PARALELL_EXODUS set to False")
+ENDIF()
 
 ##########################################
 ### Check Albany configuration options ###
