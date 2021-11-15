@@ -1,5 +1,17 @@
 get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR}_16km NAME)
 
+# This variable will be set in the input files during the 'configure_file' call
+if (ALBANY_IOPX)
+  set (USE_SERIAL_MESH "true")
+else ()
+  # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
+  # OR execute with only one rank.
+  IF (ALBANY_MPI AND NOT ${ALBANY_SEACAS_PATH})
+    MESSAGE (FATAL_ERROR "Error! Cannot execute FO_AIS tests in parallel without Iopx or decomp from Trilinos.\n")
+  ENDIF()
+  set (USE_SERIAL_MESH "false")
+endif()
+
 # Copy mesh and input files from source dir to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/antarctica_2d.exo
                ${CMAKE_CURRENT_BINARY_DIR}/antarctica_2d.exo COPYONLY)
@@ -25,7 +37,7 @@ endif()
 
 if (ALBANY_EPETRA) 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputML.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputML.yaml COPYONLY)
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputML.yaml)
   add_test(${testNameRoot}_ML ${Albany8.exe} inputML.yaml)
     
   if (NOT ALBANY_IOPX AND ALBANY_MPI)
@@ -40,11 +52,11 @@ endif()
 
 if(ALBANY_MUELU)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLuShort.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuShort.yaml COPYONLY)
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuShort.yaml)
   add_test(${testNameRoot}_MueLuShortList ${Albany8.exe} inputMueLuShort.yaml)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLu.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputMueLu.yaml COPYONLY)
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputMueLu.yaml)
   add_test(${testNameRoot}_MueLu ${Albany8.exe} inputMueLu.yaml)
     
   if (NOT ALBANY_IOPX AND ALBANY_MPI)
@@ -65,7 +77,7 @@ endif()
 
 # if (ALBANY_FROSCH)
 #   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FROSch.yaml
-#                  ${CMAKE_CURRENT_BINARY_DIR}/input_FROSch.yaml COPYONLY)
+#                  ${CMAKE_CURRENT_BINARY_DIR}/input_FROSch.yaml)
 #   add_test(${testNameRoot}_FROSch ${Albany8.exe} input_FROSch.yaml)
 #   if (NOT ALBANY_IOPX AND ALBANY_MPI)
 #     set_tests_properties(${testNameRoot}_FROSch

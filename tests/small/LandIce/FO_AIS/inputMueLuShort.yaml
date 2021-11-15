@@ -88,7 +88,7 @@ ANONYMOUS:
       basalside:
         Method: Ioss
         Number Of Time Derivatives: 0
-        Use Serial Mesh: true
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: antarctica_2d.exo
         Cubature Degree: 3
         Required Fields Info:
