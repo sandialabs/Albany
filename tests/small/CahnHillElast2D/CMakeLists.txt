@@ -1,4 +1,4 @@
-if (ALBANY_IOPX)
+if (ALBANY_PARALELL_EXODUS)
   # Name the test with the directory name
   get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
@@ -22,4 +22,4 @@ if (ALBANY_IOPX)
     add_test(${testName} ${Albany.exe} inputT_tempus.yaml)
     set_tests_properties(${testName} PROPERTIES LABELS "Demo;Tpetra;Forward")
   endif()
-endif(ALBANY_IOPX)
+endif(ALBANY_PARALELL_EXODUS)

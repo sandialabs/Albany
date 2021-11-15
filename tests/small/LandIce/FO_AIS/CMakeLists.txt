@@ -1,7 +1,7 @@
 get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR}_16km NAME)
 
 # This variable will be set in the input files during the 'configure_file' call
-if (ALBANY_IOPX)
+if (ALBANY_PARALELL_EXODUS)
   set (USE_SERIAL_MESH "true")
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
@@ -27,7 +27,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basal_friction_reg.ascii
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_velocity.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/surface_velocity.ascii COPYONLY)
                  
-if (NOT ALBANY_IOPX AND ALBANY_MPI)
+if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
   add_test (NAME FO_AIS_decompMesh
         COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} antarctica_2d.exo
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -40,7 +40,7 @@ if (ALBANY_EPETRA)
                  ${CMAKE_CURRENT_BINARY_DIR}/inputML.yaml)
   add_test(${testNameRoot}_ML ${Albany8.exe} inputML.yaml)
     
-  if (NOT ALBANY_IOPX AND ALBANY_MPI)
+  if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
     set_tests_properties(${testNameRoot}_ML
                      PROPERTIES
                      LABELS            "LandIce;Epetra;Forward"
@@ -59,7 +59,7 @@ if(ALBANY_MUELU)
                  ${CMAKE_CURRENT_BINARY_DIR}/inputMueLu.yaml)
   add_test(${testNameRoot}_MueLu ${Albany8.exe} inputMueLu.yaml)
     
-  if (NOT ALBANY_IOPX AND ALBANY_MPI)
+  if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
     set_tests_properties(${testNameRoot}_MueLuShortList
                      PROPERTIES
                      LABELS            "LandIce;Tpetra;Forward"
@@ -79,7 +79,7 @@ endif()
 #   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FROSch.yaml
 #                  ${CMAKE_CURRENT_BINARY_DIR}/input_FROSch.yaml)
 #   add_test(${testNameRoot}_FROSch ${Albany8.exe} input_FROSch.yaml)
-#   if (NOT ALBANY_IOPX AND ALBANY_MPI)
+#   if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
 #     set_tests_properties(${testNameRoot}_FROSch
 #                      PROPERTIES
 #                      LABELS            "LandIce;Tpetra;Forward"
