@@ -1,6 +1,6 @@
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-if (ALBANY_IOPX)
+if (ALBANY_PARALELL_EXODUS)
   set (USE_SERIAL_MESH "true")
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
@@ -18,7 +18,7 @@ endif()
 # Create the test
 add_test(${testName}_Humboldt ${Albany.exe} input_enthalpy_humboldt.yaml)
 # If Iopx is not present, we must decompose the input mesh first
-if (NOT ALBANY_IOPX AND ALBANY_MPI)
+if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
     add_test (NAME FO_GIS_HUMBOLDT_decompMesh
             COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
