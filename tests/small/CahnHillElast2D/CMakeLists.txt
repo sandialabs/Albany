@@ -19,7 +19,7 @@ if (ALBANY_PARALELL_EXODUS)
   if (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
-    add_test(${testName} ${Albany.exe} inputT_tempus.yaml)
+    add_test(${testName} ${Albany.exe} inputT.yaml)
     set_tests_properties(${testName} PROPERTIES LABELS "Demo;Tpetra;Forward")
   endif()
 endif(ALBANY_PARALELL_EXODUS)
