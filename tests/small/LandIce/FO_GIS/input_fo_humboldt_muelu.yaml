@@ -592,6 +592,7 @@ ANONYMOUS:
                     max levels: 7
                     'coarse: max size': 2000
                     verbosity: Low
+                    use kokkos refactor: false
                     Finest: 
                       Smoother: mySmoother1
                       CoarseSolver: mySmoother4
