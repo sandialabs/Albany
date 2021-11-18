@@ -4,6 +4,7 @@ rm -rf CMake*
 
 # Point to Trilinos install path
 TRILINOS_INSTALL=
+ALBANY_DIR=
 ALBANY_INSTALL=
 
 cmake \
@@ -20,7 +21,7 @@ cmake \
     -DALBANY_SLFAD_SIZE=16 \
     -DINSTALL_ALBANY:BOOL=ON \
     -DENABLE_MPAS_INTERFACE:BOOL=ON \
-    ${HOME}/LandIce/Albany
+    ${ALBANY_DIR}
 
 #For debug build:
 #  -D CMAKE_CXX_FLAGS:STRING="-g -G" \

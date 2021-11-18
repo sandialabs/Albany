@@ -5,7 +5,8 @@
 rm -rf CMake*
 
 # Set Trilinos build path
-BUILD_DIR=`pwd`
+TRILINOS_DIR=
+BUILD_DIR=
 
 cmake \
     -DCMAKE_INSTALL_PREFIX:PATH=${BUILD_DIR}/install \
@@ -143,7 +144,7 @@ cmake \
     -D Tpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
     -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
     \
-    ${HOME}/LandIce/Trilinos.fork
+    ${TRILINOS_DIR}
 
 #    -DTPL_ENABLE_BLAS:BOOL=ON \
 #    -DTPL_BLAS_LIBRARIES:FILEPATH=${OLCF_NETLIB_SCALAPACK_ROOT}/lib/libscalapack.so \
