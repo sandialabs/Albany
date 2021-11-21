@@ -23,9 +23,9 @@ set (CTEST_CONFIGURATION  Release) # What type of build do you want ?
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
-set (CTEST_SOURCE_NAME repos)
+set (CTEST_SOURCE_NAME repos-gcc)
 set (CTEST_BUILD_NAME "blake-serial-Albany-gcc-no-warn")
-set (CTEST_BINARY_NAME build)
+set (CTEST_BINARY_NAME build-gcc)
 
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -122,7 +122,7 @@ if (BUILD_ALBANY_SERIAL)
   #
 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstallGccNoWarn"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosSerialInstallGccNoWarn"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
