@@ -625,6 +625,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Hydraulic Potential Gradient Variable Name",hydraulic_potential_gradient_name);
   p->set<std::string>("Hydraulic Potential Gradient Norm Variable Name",hydraulic_potential_gradient_norm_name);
   p->set<std::string>("Regularization Parameter Name","Regularization");
+  p->set<std::string>("Transmissivity Parameter Name", LandIce::ParamEnumName::Kappa);
 
   p->set<Teuchos::ParameterList*>("LandIce Hydrology",&hy_pl);
 
@@ -856,6 +857,19 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   ev = Teuchos::rcp(new UnaryExpOp<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
+
+  //--- Shared Parameter for transmissivity coefficient: kappa ---//
+  p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: lambda"));
+
+  param_name = ParamEnumName::Kappa;
+  p->set<std::string>("Parameter Name", param_name);
+  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+  p->set<double>("Default Nominal Value", hy_pl.sublist("Darcy Law").get<double>(param_name,-1.0));
+
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Kappa>> ptr_kappa;
+  ptr_kappa = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Kappa>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ptr_kappa);
 
   //--- Shared Parameter for basal friction coefficient: lambda ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: lambda"));

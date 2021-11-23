@@ -20,7 +20,8 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl) :
   gradPhi (p.get<std::string> ("Hydraulic Potential Gradient Variable Name"), dl->qp_gradient),
   h       (p.get<std::string> ("Water Thickness Variable Name"), dl->qp_scalar),
-  q       (p.get<std::string> ("Water Discharge Variable Name"), dl->qp_gradient)
+  q       (p.get<std::string> ("Water Discharge Variable Name"), dl->qp_gradient),
+  k_param (p.get<std::string> ("Transmissivity Parameter Name"), dl->shared_param)
 {
   /*
    *  The water discharge follows the following Darcy-like form
@@ -51,6 +52,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 
   this->addDependentField(gradPhi);
   this->addDependentField(h);
+  this->addDependentField(k_param);
 
   this->addEvaluatedField(q);
 
@@ -58,7 +60,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("LandIce Hydrology");
   Teuchos::ParameterList& darcy_law_params = hydrology_params.sublist("Darcy Law");
 
-  k_0   = darcy_law_params.get<double>("Transmissivity");
+  // k_0   = darcy_law_params.get<double>("Transmissivity");
   alpha = darcy_law_params.get<double>("Water Thickness Exponent");
   beta  = darcy_law_params.get<double>("Potential Gradient Norm Exponent");
 
@@ -129,6 +131,8 @@ void HydrologyWaterDischarge<EvalT, Traits>::evaluateFieldsCell (typename Traits
     printedReg = regularization;
   }
 
+  auto k_0 = k_param(0);
+
   if (needsGradPhiNorm) {
     double grad_norm_exponent = beta - 2.0;
     ScalarT hpow(0.0);
@@ -175,6 +179,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     printedReg = regularization;
   }
 
+  auto k_0 = k_param(0);
   sideSet = workset.sideSetViews->at(sideSetName);
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {

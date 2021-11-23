@@ -61,6 +61,7 @@ private:
   PHX::MDField<const ScalarT>       gradPhiNorm;
   PHX::MDField<const ScalarT>       h;
   PHX::MDField<const ScalarT,Dim>   regularizationParam;
+  PHX::MDField<const ScalarT,Dim>   k_param;
 
   // Output:
   PHX::MDField<ScalarT>   q;
@@ -72,7 +73,6 @@ private:
   std::string   sideSetName;  // Only used if eval_on_side=true
   Albany::LocalSideSetInfo sideSet; // Needed only if eval_on_side=true
 
-  double k_0;
   double alpha;
   double beta;
 
