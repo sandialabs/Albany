@@ -81,6 +81,7 @@ private:
   RegularizationType reg_type;
   ScalarT regularization;
   ScalarT printedReg;
+  ScalarT printedKappa;
 
   bool needsGradPhiNorm;
 };

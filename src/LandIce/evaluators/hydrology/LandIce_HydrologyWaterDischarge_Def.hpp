@@ -87,17 +87,19 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   } else if (type=="Given Value") {
     reg_type = GIVEN_VALUE;
     regularization = reg_pl.get<double>("Regularization Value");
-    printedReg = -1.0;
   } else if (type=="Given Parameter") {
     reg_type = GIVEN_PARAMETER;
     auto pname = reg_pl.get<std::string>("Regularization Parameter Name");
     regularizationParam = PHX::MDField<ScalarT,Dim>(pname, dl->shared_param);
     this->addDependentField(regularizationParam);
-    printedReg = -1.0;
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
         "Error! Invalid choice for 'Regularization Type'. Valid options: 'Given Parameter', 'Given Value', 'None'.\n");
   }
+
+  // Force them to be printed the 1st time the evaluator is called
+  printedReg = -1.0;
+  printedKappa = -1.0;
 
   this->setName("HydrologyWaterDischarge"+PHX::print<EvalT>());
 }
@@ -126,12 +128,15 @@ void HydrologyWaterDischarge<EvalT, Traits>::evaluateFieldsCell (typename Traits
   output->setProcRankAndSize (procRank, numProcs);
   output->setOutputToRootOnly (0);
 
+  auto k_0 = k_param(0);
   if (printedReg!=regularization) {
     *output << "[HydrologyWaterDischarge" << PHX::print<EvalT>() << "] reg = " << regularization << "\n";
     printedReg = regularization;
   }
-
-  auto k_0 = k_param(0);
+  if (printedKappa!=k_0) {
+    *output << "[HydrologyWaterDischarge" << PHX::print<EvalT>() << "] kappa = " << k_0 << "\n";
+    printedKappa = k_0;
+  }
 
   if (needsGradPhiNorm) {
     double grad_norm_exponent = beta - 2.0;
@@ -174,12 +179,18 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   int numProcs = Teuchos::GlobalMPISession::getNProc();
   output->setProcRankAndSize (procRank, numProcs);
   output->setOutputToRootOnly (0);
+
+  auto k_0 = k_param(0);
   if (printedReg!=regularization) {
     *output << "[HydrologyWaterDischarge<" << PHX::print<EvalT>() << ">] reg = " << regularization << "\n";
     printedReg = regularization;
   }
+  if (printedKappa!=k_0) {
+    *output << "[HydrologyWaterDischarge" << PHX::print<EvalT>() << "] kappa = " << k_0 << "\n";
+    printedKappa = k_0;
+  }
 
-  auto k_0 = k_param(0);
+
   sideSet = workset.sideSetViews->at(sideSetName);
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
   {
