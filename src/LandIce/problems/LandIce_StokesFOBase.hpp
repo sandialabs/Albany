@@ -395,7 +395,20 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     meshPart = is_dist[stateName] ? dist_params_name_to_mesh_part[stateName] : "";
 
     auto loc = fieldType.find("Node")!=std::string::npos ? FL::Node : FL::Cell;
-    auto rank = get_field_rank(stateName);
+    TEUCHOS_TEST_FOR_EXCEPTION (
+        fieldType.find("Scalar")==std::string::npos &&
+        fieldType.find("Vector")==std::string::npos &&
+        fieldType.find("Gradient")==std::string::npos &&
+        fieldType.find("Tensor")==std::string::npos, std::runtime_error,
+        "Error! Invalid rank type for state " + stateName + "\n");
+
+    auto rank = fieldType.find("Scalar")!=std::string::npos ? FRT::Scalar :
+               (fieldType.find("Vector")!=std::string::npos ? FRT::Vector :
+               (fieldType.find("Gradient")!=std::string::npos ? FRT::Gradient : FRT::Tensor));
+    if (field_rank.find(stateName)!=field_rank.end()) {
+      TEUCHOS_TEST_FOR_EXCEPTION (rank!=get_field_rank(stateName), std::logic_error,
+          "Error! Conflicting rank for state " + stateName + "\n");
+    }
 
     // Get data layout
     if (rank == FRT::Scalar) {
@@ -516,8 +529,21 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       fieldType  = thisFieldList.get<std::string>("Field Type");
       auto loc = fieldType.find("Node")!=std::string::npos ? FL::Node : FL::Cell;
-      auto rank = get_field_rank(stateName);
 
+      TEUCHOS_TEST_FOR_EXCEPTION (
+          fieldType.find("Scalar")==std::string::npos &&
+          fieldType.find("Vector")==std::string::npos &&
+          fieldType.find("Gradient")==std::string::npos &&
+          fieldType.find("Tensor")==std::string::npos, std::runtime_error,
+          "Error! Invalid rank type for state " + stateName + "\n");
+
+      auto rank = fieldType.find("Scalar")!=std::string::npos ? FRT::Scalar :
+                 (fieldType.find("Vector")!=std::string::npos ? FRT::Vector :
+                 (fieldType.find("Gradient")!=std::string::npos ? FRT::Gradient : FRT::Tensor));
+      if (field_rank.find(stateName)!=field_rank.end()) {
+        TEUCHOS_TEST_FOR_EXCEPTION (rank!=get_field_rank(stateName), std::logic_error,
+            "Error! Conflicting rank for state " + stateName + "\n");
+      }
 
       // Get data layout
       if (rank == FRT::Scalar) {
