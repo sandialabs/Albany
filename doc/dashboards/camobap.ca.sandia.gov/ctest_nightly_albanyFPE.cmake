@@ -197,7 +197,7 @@ if (BUILD_ALBANY_FPE)
     "-DTRILINOS_SOURCE_DIR=${TRILINOSSRCDIR}"
     "-DTRILINOS_BUILD_DIR=${TRILINOSBLDDIR}"
     "-DPYTHON_EXECUTABLE='/usr/bin/python'"
-    "-DPYTHON_INCLUDE_PATH='/usr/include/python3.9'"
+    "-DPYTHON_INCLUDE_PATH='/usr/include/python3.10'"
     "-DSWIG_EXECUTABLE='/nightlyCDash/albany-tpls-gcc-11.2.1/swig/bin/swig'"
     "-DINSTALL_ALBANY:BOOL=OFF"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
