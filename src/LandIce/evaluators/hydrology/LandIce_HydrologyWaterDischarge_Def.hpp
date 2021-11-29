@@ -11,6 +11,9 @@
 #include "LandIce_HydrologyWaterDischarge.hpp"
 #include <stdexcept>
 
+//uncomment the following line if you want debug output to be printed to screen
+// #define OUTPUT_TO_SCREEN
+
 namespace LandIce
 {
 
@@ -66,7 +69,8 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 
   TEUCHOS_TEST_FOR_EXCEPTION (
       beta<=1, Teuchos::Exceptions::InvalidParameter,
-      "Error! 'Darcy Law: Potential Gradient Norm Exponent' must be larger than 1.0.\n");
+      "Error! 'Darcy Law: Potential Gradient Norm Exponent' must be larger than 1.0.\n"
+      "   Input value: " + std::to_string(beta) + "\n");
 
   if (beta==2.0) {
     needsGradPhiNorm = false;
@@ -181,6 +185,11 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   output->setOutputToRootOnly (0);
 
   auto k_0 = k_param(0);
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      k_0<=0, Teuchos::Exceptions::InvalidParameter,
+      "Error in LandIce::HydrologyWaterDischarge: 'Transmissivity' must be > 0.\n"
+      "   Input value: " + std::to_string(Albany::ADValue(k_0)) + "\n");
+#ifdef DEBUG_OUTPUT
   if (printedReg!=regularization) {
     *output << "[HydrologyWaterDischarge<" << PHX::print<EvalT>() << ">] reg = " << regularization << "\n";
     printedReg = regularization;
@@ -189,6 +198,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
     *output << "[HydrologyWaterDischarge" << PHX::print<EvalT>() << "] kappa = " << k_0 << "\n";
     printedKappa = k_0;
   }
+#endif
 
 
   sideSet = workset.sideSetViews->at(sideSetName);
