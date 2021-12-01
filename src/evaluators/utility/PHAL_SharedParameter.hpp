@@ -41,6 +41,7 @@ public:
     // Find the parameter in the Paramter list,
     // register as a Sacado Parameter and set the Nominal value
     bool nominalValueSet = false;
+    log_parameter = false;
     if((paramsList != NULL) && paramsList->isParameter("Number Of Parameters"))
     {
       int n = paramsList->get<int>("Number Of Parameters");
@@ -58,10 +59,13 @@ public:
           {
             this->registerSacadoParameter(param_name, paramLib);
             if (pvi.isParameter("Nominal Value")) {
-            double nom_val = pvi.get<double>("Nominal Value");
-            value = nom_val;
-            nominalValueSet = true;
-          }
+              double nom_val = pvi.get<double>("Nominal Value");
+              value = nom_val;
+              nominalValueSet = true;
+            }
+            if (pvi.isParameter("Log Of Physical Parameter")) {
+              log_parameter = pvi.get<bool>("Log Of Physical Parameter");
+            }
           break;
           }
         }
@@ -77,6 +81,9 @@ public:
                 double nom_val = pj.get<double>("Nominal Value");
                 value = nom_val;
                 nominalValueSet = true;
+              }
+              if (pj.isParameter("Log Of Physical Parameter")) {
+                log_parameter = pj.get<bool>("Log Of Physical Parameter");
               }
               break;
             }
@@ -112,7 +119,11 @@ public:
 
   void evaluateFields(typename Traits::EvalData /*d*/)
   {
-    param_as_field(0) = value;
+    if (log_parameter) {
+      param_as_field(0) = std::exp(value);
+    } else {
+      param_as_field(0) = value;
+    }
   }
 
 protected:
@@ -120,8 +131,7 @@ protected:
   static ScalarT              value;
   static ScalarT              dummy;
   static std::string          param_name;
-  static double               nominal_value;
-  static bool                 is_parameter;
+  static bool                 log_parameter;
 
   PHX::MDField<ScalarT,Dim>   param_as_field;
 };
@@ -134,6 +144,9 @@ typename EvalT::ScalarT SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::d
 
 template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
 std::string SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::param_name;
+
+template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
+bool SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::log_parameter;
 
 } // Namespace PHAL
 
