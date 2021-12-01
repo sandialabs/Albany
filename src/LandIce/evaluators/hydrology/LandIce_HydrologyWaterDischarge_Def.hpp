@@ -110,8 +110,20 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
+void HydrologyWaterDischarge<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& fm)
+{
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
 void HydrologyWaterDischarge<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   if (eval_on_side) {
     evaluateFieldsSide(workset);
   } else {

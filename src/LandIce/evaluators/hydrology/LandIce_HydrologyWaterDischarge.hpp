@@ -9,6 +9,7 @@
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_Layouts.hpp"
+#include "PHAL_Utilities.hpp"
 #include "PHAL_Dimension.hpp"
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -46,8 +47,8 @@ public:
   HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData,
-                              PHX::FieldManager<Traits>&) {}
+  void postRegistrationSetup (typename Traits::SetupData d,
+                              PHX::FieldManager<Traits>& fm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -62,6 +63,8 @@ private:
   PHX::MDField<const ScalarT>       h;
   PHX::MDField<const ScalarT,Dim>   regularizationParam;
   PHX::MDField<const ScalarT,Dim>   k_param;
+
+  PHAL::MDFieldMemoizer<Traits> memoizer;
 
   // Output:
   PHX::MDField<ScalarT>   q;
