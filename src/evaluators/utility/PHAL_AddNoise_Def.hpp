@@ -95,11 +95,14 @@ AddNoiseBase (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void AddNoiseBase<EvalT, Traits, ScalarT>::
-postRegistrationSetup(typename Traits::SetupData /* d */,
+postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
   this->utils.setFieldData(noisy_field,fm);
+
+  d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+  if (d.memoizer_active()) memoizer.enable_memoizer();
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -114,8 +117,10 @@ preEvaluate(typename Traits::PreEvalData /* workset */)
 
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
-void AddNoiseBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData /* workset */)
+void AddNoiseBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
+  if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+
   PHAL::MDFieldIterator<const ScalarT> in(field);
   PHAL::MDFieldIterator<ScalarT> out(noisy_field);
 

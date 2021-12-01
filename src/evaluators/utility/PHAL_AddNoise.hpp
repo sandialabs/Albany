@@ -9,6 +9,7 @@
 
 #include <Albany_Layouts.hpp>
 #include <Albany_ScalarOrdinalTypes.hpp>
+#include "PHAL_Utilities.hpp"
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -55,6 +56,8 @@ private:
 
   // Output:
   PHX::MDField<ScalarT> noisy_field;
+
+  MDFieldMemoizer<Traits> memoizer;
 
   enum PDFType {UNIFORM, NORMAL};
   PDFType pdf_type;

@@ -12,7 +12,7 @@
 #include <stdexcept>
 
 //uncomment the following line if you want debug output to be printed to screen
-// #define OUTPUT_TO_SCREEN
+#define DEBUG_OUTPUT
 
 namespace LandIce
 {
@@ -133,14 +133,16 @@ void HydrologyWaterDischarge<EvalT, Traits>::evaluateFieldsCell (typename Traits
   output->setOutputToRootOnly (0);
 
   auto k_0 = k_param(0);
-  if (printedReg!=regularization) {
-    *output << "[HydrologyWaterDischarge" << PHX::print<EvalT>() << "] reg = " << regularization << "\n";
-    printedReg = regularization;
-  }
+#ifdef DEBUG_OUTPUT
+  // if (printedReg!=regularization) {
+  //   *output << "[HydrologyWaterDischarge" << PHX::print<EvalT>() << "] reg = " << regularization << "\n";
+  //   printedReg = regularization;
+  // }
   if (printedKappa!=k_0) {
     *output << "[HydrologyWaterDischarge" << PHX::print<EvalT>() << "] kappa = " << k_0 << "\n";
     printedKappa = k_0;
   }
+#endif
 
   if (needsGradPhiNorm) {
     double grad_norm_exponent = beta - 2.0;
@@ -190,10 +192,10 @@ evaluateFieldsSide (typename Traits::EvalData workset)
       "Error in LandIce::HydrologyWaterDischarge: 'Transmissivity' must be > 0.\n"
       "   Input value: " + std::to_string(Albany::ADValue(k_0)) + "\n");
 #ifdef DEBUG_OUTPUT
-  if (printedReg!=regularization) {
-    *output << "[HydrologyWaterDischarge<" << PHX::print<EvalT>() << ">] reg = " << regularization << "\n";
-    printedReg = regularization;
-  }
+  // if (printedReg!=regularization) {
+  //   *output << "[HydrologyWaterDischarge<" << PHX::print<EvalT>() << ">] reg = " << regularization << "\n";
+  //   printedReg = regularization;
+  // }
   if (printedKappa!=k_0) {
     *output << "[HydrologyWaterDischarge" << PHX::print<EvalT>() << "] kappa = " << k_0 << "\n";
     printedKappa = k_0;
