@@ -1,0 +1,71 @@
+{
+ "input": "input_albany_Velocity_MueLuKokkos_Wedge.yaml",
+ "case": "humboldt-3-20km_vel_muk_wdg_tune_np1",
+ "algorithm": "random_search",
+ "mS1": {
+     "type_options": ["Two-stage Gauss-Seidel", "MT Gauss-Seidel"],
+     "relaxation: sweeps": {
+         "inclusive_lower_bound": 1,
+         "inclusive_upper_bound": 2
+     },
+     "relaxation: damping factor": {
+             "mean": 1,
+             "sd": 0.1,
+             "low": 0.8,
+             "upper": 1.2
+     },
+     "relaxation: inner damping factor": {
+             "mean": 1,
+             "sd": 0.1,
+             "low": 0.8,
+             "upper": 1.2
+     },
+     "chebyshev: degree": {
+             "inclusive_lower_bound": 1,
+             "inclusive_upper_bound": 6
+     },
+     "chebyshev: ratio eigenvalue": {
+             "mean": 30,
+             "sd": 15,
+             "low": 10,
+             "upper": 50
+     },
+     "chebyshev: eigenvalue max iterations": {
+             "inclusive_lower_bound": 5,
+             "inclusive_upper_bound": 100
+     }
+ },
+ "mS4": {
+     "type_options": ["Two-stage Gauss-Seidel", "MT Gauss-Seidel", "CHEBYSHEV"],
+     "relaxation: sweeps": {
+         "inclusive_lower_bound": 1,
+         "inclusive_upper_bound": 2
+     },
+     "relaxation: damping factor": {
+             "mean": 1,
+             "sd": 0.1,
+             "low": 0.8,
+             "upper": 1.2
+     },
+     "relaxation: inner damping factor": {
+             "mean": 1,
+             "sd": 0.1,
+             "low": 0.8,
+             "upper": 1.2
+     },
+     "chebyshev: degree": {
+             "inclusive_lower_bound": 1,
+             "inclusive_upper_bound": 6
+     },
+     "chebyshev: ratio eigenvalue": {
+             "mean": 30,
+             "sd": 15,
+             "low": 10,
+             "upper": 50
+     },
+     "chebyshev: eigenvalue max iterations": {
+             "inclusive_lower_bound": 5,
+             "inclusive_upper_bound": 100
+     }
+ }
+}
