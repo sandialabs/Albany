@@ -62,13 +62,13 @@ if __name__ == "__main__":
     parallelEnv = Utils.createDefaultParallelEnv(comm)
 
     # populate mesh
-    filename = 'inputs/input_albany_PopulateMesh_Wedge.yaml'
+    filename = 'problems/humboldt-3-20km/input_albany_PopulateMesh_Wedge.yaml'
     problem = Utils.createAlbanyProblem(filename, parallelEnv)
     problem.performSolve()
     problem = None
 
     # set up pyalbany instance
-    filename = 'inputs/input_albany_Velocity_MueLu_Wedge_Tune.yaml'
+    filename = 'inputs/humboldt-3-20km/input_albany_Velocity_MueLu_Wedge_Tune.yaml'
     solver = PyAlbanyInstance(filename, parallelEnv)
 
     # input format: ['smoother name', 'relaxation: sweeps', 'relaxation: damping factor',
