@@ -71,6 +71,7 @@ bool MPAS_useGLP(true);
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
 
 bool keptMesh =false;
+bool kokkosInitializedByAlbany = false;
 
 std::string elemShape;
 
@@ -250,7 +251,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   Teuchos::ArrayRCP<const ST> solution_constView;
   try {
     auto model = slvrfctry->createModel(albanyApp);
-    solver = slvrfctry->createSolver(model, mpiComm);
+    solver = slvrfctry->createSolver(mpiComm, model);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
@@ -354,7 +355,10 @@ void velocity_solver_export_fo_velocity(MPI_Comm reducedComm) {
 
 int velocity_solver_init_mpi(MPI_Comm comm) {
   mpiCommMPAS = Albany::createTeuchosCommFromMpiComm(comm);
-  Kokkos::initialize();
+  if(! Kokkos::is_initialized()) {
+    Kokkos::initialize();
+    kokkosInitializedByAlbany = true;
+  }
   stackedTimer = Teuchos::rcp(new Teuchos::StackedTimer("Albany Velocity Solver"));
   Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
   return 0;
@@ -384,7 +388,8 @@ void velocity_solver_finalize() {
   stackedTimer = Teuchos::null;
 
   mpiCommMPAS = Teuchos::null;
-  Kokkos::finalize_all();
+  if(kokkosInitializedByAlbany)
+    Kokkos::finalize_all();
 }
 
 /*duality:
@@ -525,6 +530,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   basalFrictionParams.set("Type",betaType);
   basalFrictionParams.set("Power Exponent", basalFrictionParams.get("Power Exponent",1.0));
   basalFrictionParams.set("Mu Field Name",basalFrictionParams.get("Mu Field Name","mu"));
+  basalFrictionParams.set("Mu Type",basalFrictionParams.get("Mu Type","Field"));
   basalFrictionParams.set("Effective Pressure Type",basalFrictionParams.get("Effective Pressure Type","Field"));
   basalFrictionParams.set<bool>("Zero Beta On Floating Ice", zeroBetaOnShelf);
 

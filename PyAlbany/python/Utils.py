@@ -13,14 +13,17 @@ except:
 import numpy as np
 from numpy import linalg as LA
 import sys
-from numpy import linalg as LA
-import sys
 
 def norm(distributedVector, comm):
     """@brief Computes the norm-2 of a distributed vector using Python and Teuchos MPI communicator."""
-    localSNorm = (LA.norm(distributedVector))**2
-    norm = np.sqrt(comm.reduceAll(Teuchos.REDUCE_SUM, localSNorm))
+    norm = np.sqrt(inner(distributedVector, distributedVector, comm))
     return norm
+
+def inner(distributedVector1, distributedVector2, comm):
+    """@brief Computes the l2 inner product of two distributed vectors using Python and Teuchos MPI communicator."""
+    localInnerProduct = np.inner(distributedVector1, distributedVector2)
+    innerProduct = comm.reduceAll(Teuchos.REDUCE_SUM, localInnerProduct)
+    return innerProduct
 
 def createDefaultParallelEnv(comm = Teuchos.DefaultComm.getComm(), n_threads=-1,n_numa=-1,device_id=-1):
     """@brief Creates a default parallel environment.

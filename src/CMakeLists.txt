@@ -4,39 +4,12 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-# Configure the file containing Albany configuration macros,
-# and add its folder to the include directories
-# Note: write to a temp file, and only copy into Albany_config.h if
-#       the temp file is different
-macro (CreateAlbanyConfig_h)
-  set (SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in)
-  set (CFG_FILE ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h)
-  set (TMP_FILE ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h.tmp)
 
-  configure_file (${SRC_FILE} ${TMP_FILE})
-
-  set (OUT_OF_DATE TRUE)
-
-  if (EXISTS ${CFG_FILE})
-    # we rely on FILE macro rather than running diff, since it is
-    # more portable (guaranteed to work regardless of underlying system)
-    file (READ ${CFG_FILE} CFG_FILE_STR)
-    file (READ ${TMP_FILE} TMP_FILE_STR)
-
-    if (${CFG_FILE_STR} STREQUAL ${TMP_FILE_STR})
-      # config file was present and appears unchanged
-      set (OUT_OF_DATE FALSE)
-    endif()
-  endif ()
-
-  if (OUT_OF_DATE)
-    file (RENAME ${TMP_FILE} ${CFG_FILE})
-  else()
-    file (REMOVE ${TMP_FILE})
-  endif()
-endmacro()
-
-CreateAlbanyConfig_h()
+# Generate Albany_config.h and Albany_GitVersion.h
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Albany_config.h.in
+                ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h)
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Albany_GitVersion.h.in
+                ${CMAKE_CURRENT_BINARY_DIR}/Albany_GitVersion.h)
 
 include(CheckCXXSourceCompiles)
 
@@ -274,6 +247,7 @@ list (APPEND SOURCES
   responses/Albany_FieldManagerResidualOnlyResponseFunction.cpp
   responses/Albany_SamplingBasedScalarResponseFunction.cpp
   responses/Albany_KLResponseFunction.cpp
+  responses/Albany_WeightedMisfitResponseFunction.cpp
   responses/Albany_ResponseFactory.cpp
   responses/Albany_ScalarResponseFunction.cpp
   responses/Albany_SolutionCullingStrategy.cpp
@@ -291,6 +265,7 @@ list (APPEND HEADERS
   responses/Albany_DistributedResponseFunction.hpp
   responses/Albany_FieldManagerScalarResponseFunction.hpp
   responses/Albany_KLResponseFunction.hpp
+  responses/Albany_WeightedMisfitResponseFunction.hpp
   responses/Albany_SamplingBasedScalarResponseFunction.hpp
   responses/Albany_ResponseFactory.hpp
   responses/Albany_ScalarResponseFunction.hpp
@@ -647,6 +622,7 @@ if(ALBANY_DEMO_PDES)
     problems/Albany_PNPProblem.cpp
     problems/Albany_ThermoElectrostaticsProblem.cpp
     problems/Albany_ThermalProblem.cpp
+    problems/Albany_AdvectionProblem.cpp
     evaluators/pde/PHAL_AdvDiffResid.cpp
     evaluators/pde/PHAL_ReactDiffSystemResid.cpp
     evaluators/pde/PHAL_CahnHillChemTerm.cpp
@@ -667,6 +643,7 @@ if(ALBANY_DEMO_PDES)
     evaluators/pde/PHAL_NSNeutronEqResid.cpp
     evaluators/pde/PHAL_NSPermeabilityTerm.cpp
     evaluators/pde/PHAL_ThermalResid.cpp
+    evaluators/pde/PHAL_AdvectionResid.cpp
     evaluators/pde/PHAL_NSRm.cpp
     evaluators/pde/PHAL_NSTauM.cpp
     evaluators/pde/PHAL_NSTauT.cpp
@@ -691,6 +668,7 @@ if(ALBANY_DEMO_PDES)
     problems/Albany_PNPProblem.hpp
     problems/Albany_ThermoElectrostaticsProblem.hpp
     problems/Albany_ThermalProblem.hpp
+    problems/Albany_AdvectionProblem.hpp
     evaluators/pde/PHAL_AdvDiffResid.hpp
     evaluators/pde/PHAL_AdvDiffResid_Def.hpp
     evaluators/pde/PHAL_ReactDiffSystemResid.hpp
@@ -751,6 +729,8 @@ if(ALBANY_DEMO_PDES)
     evaluators/pde/PNP_PotentialResid_Def.hpp
     evaluators/pde/PHAL_ThermalResid.hpp
     evaluators/pde/PHAL_ThermalResid_Def.hpp
+    evaluators/pde/PHAL_AdvectionResid.hpp
+    evaluators/pde/PHAL_AdvectionResid_Def.hpp
   )
 
   add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS})

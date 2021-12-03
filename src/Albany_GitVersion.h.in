@@ -1,0 +1,9 @@
+#ifndef ALBANY_GIT_VERSION_H
+#define ALBANY_GIT_VERSION_H
+
+// Trilinos/Albany version details
+#cmakedefine ALBANY_TRILINOS_GIT_COMMIT_ID "${ALBANY_TRILINOS_GIT_COMMIT_ID}"
+#cmakedefine ALBANY_GIT_BRANCH "${ALBANY_GIT_BRANCH}"
+#cmakedefine ALBANY_GIT_COMMIT_ID "${ALBANY_GIT_COMMIT_ID}"
+
+#endif // ALBANY_GIT_VERSION_H

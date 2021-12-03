@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora34-gcc11.0.1-${CTEST_BUILD_CONFIGURATION}-No-Epetra-Albany")
+set (CTEST_BUILD_NAME "fedora35-gcc11.2.1-${CTEST_BUILD_CONFIGURATION}-No-Epetra-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -62,7 +62,7 @@ endif ()
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (cism-piscees_REPOSITORY_LOCATION  git@github.com:E3SM-Project/cism-piscees.git)
 
 if (CLEAN_BUILD)

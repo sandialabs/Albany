@@ -160,7 +160,8 @@ createApplication (const Teuchos::RCP<const Teuchos_Comm>& appComm,
 }
 
 Teuchos::RCP<ModelEvaluator>
-SolverFactory::createModel (const Teuchos::RCP<Application>& app)
+SolverFactory::createModel (const Teuchos::RCP<Application>& app,
+		            const bool adjoint_model)
 {
   // Validate Response list
   // TODO: may move inside individual Problem class
@@ -168,13 +169,14 @@ SolverFactory::createModel (const Teuchos::RCP<Application>& app)
   problemParams->sublist("Response Functions")
       .validateParameters(*getValidResponseParameters(), 0);
 
-  return Teuchos::rcp(new ModelEvaluator(app,m_appParams));
+  return Teuchos::rcp(new ModelEvaluator(app,m_appParams,adjoint_model));
 }
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
 SolverFactory::
-createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
-              const Teuchos::RCP<const Teuchos_Comm>& solverComm)
+createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
+	      const Teuchos::RCP<ModelEvaluator>&     model,
+	      const Teuchos::RCP<ModelEvaluator>&     adjointModel)
 {
   const Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(m_appParams, "Problem");
   const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
@@ -220,21 +222,11 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
         "Error: cannot locate Stratimikos solver parameters in the input file.\n")
   }
 
-  // TODO: remove this error when Belos + Ifpack2/Amesos2 is fixed
-  if (stratList->isParameter("Linear Solver Type") && stratList->isParameter("Preconditioner Type") &&
-      stratList->isParameter("Preconditioner Types")) {
-    if (stratList->get<std::string>("Linear Solver Type") == "Belos" &&
-        stratList->get<std::string>("Preconditioner Type") == "Ifpack2") {
-      const auto ifpack2List = Teuchos::sublist(Teuchos::sublist(stratList, "Preconditioner Types"), "Ifpack2");
-      if (ifpack2List->isParameter("Prec Type"))
-        TEUCHOS_TEST_FOR_EXCEPTION(ifpack2List->get<std::string>("Prec Type") == "Amesos2", std::logic_error,
-            "Belos + Ifpack2/Amesos2 is currently not working in Trilinos.\n");
-    }
-  }
-
   Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;
+  Teuchos::RCP<Thyra_ModelEvaluator> adjointModelWithSolve = Teuchos::null;
   if (Teuchos::nonnull(model->get_W_factory())) {
     modelWithSolve = model;
+    adjointModelWithSolve = adjointModel; 
   } else {
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
@@ -250,6 +242,9 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
         createLinearSolveStrategy(linearSolverBuilder);
 
     modelWithSolve = rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(model, lowsFactory));
+    if (adjointModel != Teuchos::null) {
+      adjointModelWithSolve = rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(adjointModel, lowsFactory));
+    }
   }
 
   const auto app    = model->getAlbanyApp();
@@ -257,8 +252,12 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model,
 
   Piro::SolverFactory piroFactory;
   m_observer = Teuchos::rcp(new PiroObserver(app, modelWithSolve));
+
+  //IKT, 8/25/2021 TODO: pass adjointModelWithSolve to the following createSolver 
+  //routine once Piro::SolverFactory::createSolver routine is extended to take in a 2nd ME
+
   return piroFactory.createSolver<ST>(
-       piroParams, modelWithSolve, Teuchos::null, m_observer);
+       piroParams, modelWithSolve, adjointModelWithSolve, m_observer);
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
       std::logic_error,
@@ -306,20 +305,6 @@ setSolverParamDefaults(Teuchos::ParameterList* appParams,
   Teuchos::ParameterList& lsParams = newtonParams.sublist("Linear Solver");
   lsParams.set("Max Iterations", 43);
   lsParams.set("Tolerance", 1e-4);
-
-  // Sublist for status tests
-  Teuchos::ParameterList& statusParams = noxParams.sublist("Status Tests");
-  statusParams.set("Test Type", "Combo");
-  statusParams.set("Combo Type", "OR");
-  statusParams.set("Number of Tests", 2);
-  Teuchos::ParameterList& normF = statusParams.sublist("Test 0");
-  normF.set("Test Type", "NormF");
-  normF.set("Tolerance", 1.0e-8);
-  normF.set("Norm Type", "Two Norm");
-  normF.set("Scale Type", "Unscaled");
-  Teuchos::ParameterList& maxiters = statusParams.sublist("Test 1");
-  maxiters.set("Test Type", "MaxIters");
-  maxiters.set("Maximum Iterations", 10);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -380,6 +365,7 @@ SolverFactory::getValidDebugParameters() const
   validPL->set<int>("Derivative Check", 0, "Derivative check");
   validPL->set<int>("Write Solution to MatrixMarket", 0, "Solution Number to Dump to MatrixMarket");
   validPL->set<bool>("Write Distributed Solution and Map to MatrixMarket", false, "Flag to Write Distributed Solution and Map to MatrixMarket");
+  validPL->set<bool>("Write DgDp to MatrixMarket", false, "Flag to Write DgDp to MatrixMarket");
   validPL->set<int>("Write Solution to Standard Output", 0, "Residual Number to Dump to Standard Output");
   validPL->set<bool>("Analyze Memory", false, "Flag to Analyze Memory");
   validPL->set<bool>("Report Timers", true, "Whether to report timers at the end of execution");

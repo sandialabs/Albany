@@ -143,9 +143,6 @@ struct Workset
   bool                                              transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>> local_Vp;
 
-  std::vector<PHX::index_size_type> Jacobian_deriv_dims;
-  std::vector<PHX::index_size_type> Tangent_deriv_dims;
-
   Albany::WorksetConn                           wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>      wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>> wsCoords;

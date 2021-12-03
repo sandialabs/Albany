@@ -30,7 +30,7 @@ public:
                              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData /* d */,
-                             PHX::FieldManager<Traits>& /* vm */) {}
+                             PHX::FieldManager<Traits>& /* vm */);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -64,7 +64,7 @@ public:
                              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData /* d */,
-                             PHX::FieldManager<Traits>& /* vm */) {}
+                             PHX::FieldManager<Traits>& /* vm */);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -86,6 +86,46 @@ private:
   PHX::MDField<ScalarOutT, Cell, Node>       topSurfaceOut;
   PHX::MDField<ScalarOutT, Cell, Node>       bedTopoOut;
 
+  double minH, rho_i, rho_w;
+  unsigned int numDims, numNodes;
+};
+
+
+template<typename EvalT, typename Traits>
+class UpdateZCoordinateGivenTopAndBedSurfaces : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                   public PHX::EvaluatorDerived<EvalT, Traits>
+{
+public:
+
+  UpdateZCoordinateGivenTopAndBedSurfaces(const Teuchos::ParameterList& p,
+                             const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void postRegistrationSetup(typename Traits::SetupData /* d */,
+                             PHX::FieldManager<Traits>& /* vm */);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  using MeshScalarT = typename EvalT::MeshScalarT;
+
+  // Input:
+  PHX::MDField<const MeshScalarT, Cell, Node,Dim> coordVecIn;
+  PHX::MDField<const MeshScalarT, Cell, Node>     topSurfIn;
+  PHX::MDField<const MeshScalarT, Cell, Node>     bedTopoIn;
+
+  // Output:
+  PHX::MDField<MeshScalarT, Cell, Node>  H;
+  PHX::MDField<MeshScalarT, Cell, Node, Dim>  coordVecOut;
+
+  // InOut:
+  // output if isBedSurfParam == true
+  PHX::MDField<MeshScalarT, Cell, Node>        bedTopo;
+
+  // output if isBedSurfParam == false
+  PHX::MDField<MeshScalarT, Cell, Node>        topSurf;
+
+  bool isTopSurfParam, isBedTopoParam;
   double minH, rho_i, rho_w;
   unsigned int numDims, numNodes;
 };

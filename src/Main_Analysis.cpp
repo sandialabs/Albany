@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 
     auto albanyApp   = slvrfctry.createApplication(comm);
     auto albanyModel = slvrfctry.createModel(albanyApp);
-    auto fwd_solver  = slvrfctry.createSolver(albanyModel,comm);
+    auto fwd_solver  = slvrfctry.createSolver(comm, albanyModel);
 
     stackedTimer->stop("Albany: Setup Time");
 

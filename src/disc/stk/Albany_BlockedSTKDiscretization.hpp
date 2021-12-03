@@ -552,9 +552,10 @@ namespace Albany
         const Thyra_Vector &soln,
         const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution)
     {
-      this->writeSolution(0, soln, soln_dxdp, time, overlapped);
+      this->writeSolution(0, soln, soln_dxdp, time, overlapped, force_write_solution);
     }
     void
     writeSolution(
@@ -562,9 +563,10 @@ namespace Albany
         const Thyra_Vector &soln,
         const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution)
     {
-      m_blocks[i_block]->writeSolution(soln, soln_dxdp, time, overlapped);
+      m_blocks[i_block]->writeSolution(soln, soln_dxdp, time, overlapped, force_write_solution);
     }
 
     void
@@ -573,9 +575,10 @@ namespace Albany
         const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
         const Thyra_Vector &soln_dot,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution)
     {
-      this->writeSolution(0, soln, soln_dxdp, soln_dot, time, overlapped);
+      this->writeSolution(0, soln, soln_dxdp, soln_dot, time, overlapped, force_write_solution);
     }
     void
     writeSolution(
@@ -584,9 +587,10 @@ namespace Albany
         const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
         const Thyra_Vector &soln_dot,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution)
     {
-      m_blocks[i_block]->writeSolution(soln, soln_dxdp, soln_dot, time, overlapped);
+      m_blocks[i_block]->writeSolution(soln, soln_dxdp, soln_dot, time, overlapped, force_write_solution);
     }
 
     void
@@ -596,9 +600,10 @@ namespace Albany
         const Thyra_Vector &soln_dot,
         const Thyra_Vector &soln_dotdot,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution)
     {
-      this->writeSolution(0, soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped);
+      this->writeSolution(0, soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped, force_write_solution);
     }
     void
     writeSolution(
@@ -608,9 +613,11 @@ namespace Albany
         const Thyra_Vector &soln_dot,
         const Thyra_Vector &soln_dotdot,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution)
     {
-      m_blocks[i_block]->writeSolution(soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped);
+      m_blocks[i_block]->writeSolution(soln, soln_dxdp, soln_dot, soln_dotdot, time, 
+		            overlapped, force_write_solution);
     }
 
     void
@@ -618,9 +625,10 @@ namespace Albany
         const Thyra_MultiVector &soln,
         const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution) 
     {
-      this->writeSolutionMV(0, soln, soln_dxdp, time, overlapped);
+      this->writeSolutionMV(0, soln, soln_dxdp, time, overlapped, force_write_solution);
     }
     void
     writeSolutionMV(
@@ -628,9 +636,10 @@ namespace Albany
         const Thyra_MultiVector &soln,
         const Teuchos::RCP<const Thyra_MultiVector> &soln_dxdp,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution) 
     {
-      m_blocks[i_block]->writeSolutionMV(soln, soln_dxdp, time, overlapped);
+      m_blocks[i_block]->writeSolutionMV(soln, soln_dxdp, time, overlapped, force_write_solution);
     }
 
     void
@@ -723,36 +732,40 @@ namespace Albany
     writeSolutionToFile(
         const Thyra_Vector &soln,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution) 
     {
-      this->writeSolutionToFile(0, soln, time, overlapped);
+      this->writeSolutionToFile(0, soln, time, overlapped, force_write_solution);
     }
     void
     writeSolutionToFile(
         const size_t i_block,
         const Thyra_Vector &soln,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution) 
     {
-      m_blocks[i_block]->writeSolutionToFile(soln, time, overlapped);
+      m_blocks[i_block]->writeSolutionToFile(soln, time, overlapped, force_write_solution);
     }
 
     void
     writeSolutionMVToFile(
         const Thyra_MultiVector &soln,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution) 
     {
-      this->writeSolutionMVToFile(0, soln, time, overlapped);
+      this->writeSolutionMVToFile(0, soln, time, overlapped, force_write_solution);
     }
     void
     writeSolutionMVToFile(
         const size_t i_block,
         const Thyra_MultiVector &soln,
         const double time,
-        const bool overlapped)
+        const bool overlapped,
+        const bool force_write_solution) 
     {
-      m_blocks[i_block]->writeSolutionMVToFile(soln, time, overlapped);
+      m_blocks[i_block]->writeSolutionMVToFile(soln, time, overlapped, force_write_solution);
     }
 
     Teuchos::RCP<const GlobalLocalIndexer>

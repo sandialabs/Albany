@@ -4,42 +4,83 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <stdexcept>
+
 #include "Albany_Application.hpp"
 #include "Albany_StateInfoStruct.hpp"
-
 #include "PHAL_Utilities.hpp"
+
+namespace {
+
+template <typename EvalT> std::string getSFadSizeName();
+template <> std::string getSFadSizeName<PHAL::AlbanyTraits::Jacobian>() {return "ALBANY_SFAD_SIZE";}
+template <> std::string getSFadSizeName<PHAL::AlbanyTraits::Tangent>() {return "ALBANY_TAN_SFAD_SIZE";}
+template <> std::string getSFadSizeName<PHAL::AlbanyTraits::DistParamDeriv>() {return "ALBANY_TAN_SFAD_SIZE";}
+template <> std::string getSFadSizeName<PHAL::AlbanyTraits::HessianVec>() {return "ALBANY_HES_VEC_SFAD_SIZE";}
+
+template <typename EvalT>
+void checkDerivativeDimensions(const int dDims)
+{
+  // Check derivative dimensions against fad size
+  using FadT = typename EvalT::EvaluationType::ScalarT;
+  if (FadT::StorageType::is_statically_sized) {
+    const int static_size = FadT::StorageType::static_size;
+    if (static_size != dDims) {
+      const auto sfadSizeName = getSFadSizeName<EvalT>();
+      std::stringstream ss1, ss2;
+      ss1 << "Derivative dimension for " << PHX::print<EvalT>() << " is " << dDims << " but "
+          << sfadSizeName << " is " << static_size << "!\n";
+      ss2 << " - Rebuild with " << sfadSizeName << "=" << dDims << "\n";
+      if (static_size > dDims)
+        *Teuchos::VerboseObjectBase::getDefaultOStream()
+            << "WARNING: " << ss1.str()
+            << "Continuing with this size may cause issues...\n" << ss2.str();
+      else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, ss1.str() + ss2.str());
+    }
+  }
+}
+
+} // namespace
 
 namespace PHAL {
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms, bool responseEvaluation)
 {
+  int dDims = app->getNumEquations() * ms->ctd.node_count;
   const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
   if (Teuchos::nonnull(pl)) {
+    const bool landIceCoupledFOH3D = !responseEvaluation && pl->get<std::string>("Name") == "LandIce Coupled FO H 3D";
     const bool extrudedColumnCoupled = (responseEvaluation && pl->isParameter("Extruded Column Coupled in 2D Response")) ?
         pl->get<bool>("Extruded Column Coupled in 2D Response") : false;
-    if(extrudedColumnCoupled)
+    if(landIceCoupledFOH3D || extrudedColumnCoupled)
       { //all column is coupled
         int side_node_count = ms->ctd.side[3].topology->node_count;
         int node_count = ms->ctd.node_count;
         int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
-        return app->getNumEquations()*(node_count + side_node_count*numLevels);
+        dDims = app->getNumEquations()*(node_count + side_node_count*numLevels);
       }
   }
-  return app->getNumEquations() * ms->ctd.node_count;
+  checkDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(dDims);
+  return dDims;
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* /* ms */, bool /* responseEvaluation */)
 {
-  return app->getTangentDerivDimension();
+  const int dDims = app->getTangentDerivDimension();
+  checkDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(dDims);
+  return dDims;
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
   const Albany::Application* /* app */, const Albany::MeshSpecsStruct* ms, bool /* responseEvaluation */)
 {
   //Mauro: currently distributed derivatives work only with scalar parameters, to be updated.
-  return ms->ctd.node_count;
+  const int dDims = ms->ctd.node_count;
+  checkDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(dDims);
+  return dDims;
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
@@ -48,48 +89,16 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
   const int derivativeDimension_x = getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(app, ms, responseEvaluation);
   const int derivativeDimension_p = getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(app, ms, responseEvaluation);
   const int derivativeDimension_max = derivativeDimension_x > derivativeDimension_p ? derivativeDimension_x : derivativeDimension_p;
-
+  checkDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(derivativeDimension_max);
   return derivativeDimension_max;
 }
 
-template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
- const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
+template <typename EvalT>
+int getDerivativeDimensions(const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
 {
-  const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
-  if (Teuchos::nonnull(pl)) {
-    const std::string problemName = pl->isType<std::string>("Name") ? pl->get<std::string>("Name") : "";
-    if(problemName == "LandIce Coupled FO H 3D")
-    { //all column is coupled
-      int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[3].topology->node_count;
-      int node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.node_count;
-      int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
-      return app->getNumEquations()*(node_count + side_node_count*numLevels);
-    }
-   }
-   return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-     app, app->getEnrichedMeshSpecs()[ebi].get());
+  return getDerivativeDimensions<EvalT>(app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
-template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
- const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
-{
-  return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-    app, app->getEnrichedMeshSpecs()[ebi].get());
-}
-
-template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
- const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
-{
-  return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-    app, app->getEnrichedMeshSpecs()[ebi].get());
-}
-
-template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
- const Albany::Application* app, const int ebi, const bool explicit_scheme)
-{
-  return getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(
-    app, app->getEnrichedMeshSpecs()[ebi].get());
-}
 
 namespace {
 template<typename ScalarT>
@@ -197,6 +206,15 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
   copy<ScalarT>(v, a);
 }
 
+template int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+    const Albany::Application*, const int, const bool);
+template int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+    const Albany::Application*, const int, const bool);
+template int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+    const Albany::Application*, const int, const bool);
+template int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(
+    const Albany::Application*, const int, const bool);
+
 #  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
@@ -210,19 +228,13 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
   macro(HessianVecFad)
 #  endif
 
-#define eti(T)                                                          \
-  template void reduceAll<T> (                                          \
-    const Teuchos_Comm&, const Teuchos::EReductionType, PHX::MDField<T>&);
-apply_to_all_ad_types(eti)
-#undef eti
-#define eti(T)                                                  \
-  template void reduceAll<T> (                                  \
-    const Teuchos_Comm&, const Teuchos::EReductionType, T&);
-apply_to_all_ad_types(eti)
-#undef eti
-#define eti(T)                                                          \
-  template void broadcast<T> (                                          \
-    const Teuchos_Comm&, const int root_rank, PHX::MDField<T>&);
+#define eti(T)                                                              \
+  template void reduceAll<T> (                                              \
+    const Teuchos_Comm&, const Teuchos::EReductionType, PHX::MDField<T>&);  \
+  template void reduceAll<T> (                                              \
+    const Teuchos_Comm&, const Teuchos::EReductionType, T&);                \
+  template void broadcast<T> (                                              \
+    const Teuchos_Comm&, const int, PHX::MDField<T>&);
 apply_to_all_ad_types(eti)
 #undef eti
 #undef apply_to_all_ad_types

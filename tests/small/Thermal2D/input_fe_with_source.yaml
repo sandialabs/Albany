@@ -4,6 +4,7 @@ ALBANY:
   Debug Output:
     Write Solution to MatrixMarket: 0
     Write Jacobian to MatrixMarket: 0
+    Write DgDp to MatrixMarket: true
   Problem:
     Name: Thermal 2D
     Solution Method: Transient
@@ -65,7 +66,7 @@ ALBANY:
           Maximum Relative Error: 1.00000000000000002e-08
           Output Time List: ''
           Output Index List: ''
-          Output Time Interval: 1.00000000000000000e+01
+          #Output Time Interval: 1.00000000000000000e+01
           Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5

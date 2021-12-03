@@ -3,11 +3,6 @@
 BASE_DIR=/home/projects/albany/nightlyCDashTrilinosBlake
 cd $BASE_DIR
 
-#rm -rf build
-#rm -rf repos 
-#rm -rf *log*
-rm -rf results_blake_openmp
-rm -rf ctest_nightly.cmake 
 rm -rf intel_modules.out 
 
 unset http_proxy

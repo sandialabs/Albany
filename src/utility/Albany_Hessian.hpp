@@ -4,7 +4,18 @@
 namespace Albany
 {
     /**
-     * \brief createHessianLinearOp function
+     * \brief createDenseHessianLinearOp function
+     *
+     * This function computes the Thyra::LinearOp associated to
+     * the Hessian w.r.t a parameter vector.
+     *
+     * \param p_vs [in] Thyra::VectorSpace which specifies the entries of the current parameter vector.
+     */
+    Teuchos::RCP<Thyra_LinearOp> createDenseHessianLinearOp(
+        Teuchos::RCP<const Thyra_VectorSpace> p_vs);
+
+    /**
+     * \brief createSparseHessianLinearOp function
      *
      * This function computes the Thyra::LinearOp associated to
      * the Hessian w.r.t a distributed parameter.
@@ -15,7 +26,7 @@ namespace Albany
      *
      * \param wsElDofs [in] Vector of IDArray associated to the mesh used.
      */
-    Teuchos::RCP<Thyra_LinearOp> createHessianLinearOp(
+    Teuchos::RCP<Thyra_LinearOp> createSparseHessianLinearOp(
         Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
         Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
         const std::vector<IDArray> wsElDofs);

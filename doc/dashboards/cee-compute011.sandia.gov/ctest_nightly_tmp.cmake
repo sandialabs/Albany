@@ -242,7 +242,7 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
-set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 
 if (DOWNLOAD_TRILINOS)
   #

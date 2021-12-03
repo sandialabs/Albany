@@ -38,7 +38,7 @@ endif()
 ###      Serial input tests      ###
 ####################################
 
-if (ALBANY_IOPX)
+if (ALBANY_PARALELL_EXODUS)
   set(testName ${testNameRoot}_SerialInput)
   if (ALBANY_EPETRA)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_Serial.yaml

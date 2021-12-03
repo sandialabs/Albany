@@ -23,9 +23,9 @@ set (CTEST_CONFIGURATION  Release) # What type of build do you want ?
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
-set (CTEST_SOURCE_NAME repos)
+set (CTEST_SOURCE_NAME repos-intel)
 set (CTEST_BUILD_NAME "blake-openmp-Trilinos")
-set (CTEST_BINARY_NAME build)
+set (CTEST_BINARY_NAME build-intel)
 
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -48,7 +48,7 @@ set (CTEST_BUILD_FLAGS "-j48")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (MPI_PATH $ENV{MPI_ROOT})  
 set (MKL_PATH $ENV{MKL_ROOT})  

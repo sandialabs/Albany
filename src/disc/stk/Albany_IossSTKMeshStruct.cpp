@@ -481,18 +481,21 @@ Albany::IossSTKMeshStruct::setFieldData (
     std::vector<double> ltr;
     int ordering;
     GO stride;
-    boost::any temp_any;
 
     std::string state_name = "layer_thickness_ratio";
     hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
-    if(hasLayeredStructure) fieldContainer->getMeshVectorStates()[state_name] = ltr;
+    if(hasLayeredStructure)
+      fieldContainer->getMeshVectorStates()[state_name] = ltr;
     state_name = "ordering";
     hasLayeredStructure &= mesh_data->get_global (state_name, ordering, false);
-    if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
+    if(hasLayeredStructure)
+      fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
     state_name = "stride";
-    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, stk::util::ParameterType::INT64, false);
+    stk::util::Parameter temp_any;
+    temp_any.type = stk::util::ParameterType::INT64;
+    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, false);
     if(hasLayeredStructure) {
-      stride = boost::any_cast<int64_t>(temp_any);
+      stride = temp_any.get_value<int64_t>();
       fieldContainer->getMeshScalarInteger64States()[state_name] = stride;
     }
 
@@ -726,18 +729,21 @@ Albany::IossSTKMeshStruct::setBulkData (
     std::vector<double> ltr;
     int ordering;
     GO stride;
-    boost::any temp_any;
 
     std::string state_name = "layer_thickness_ratio";
     hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
-    if(hasLayeredStructure) fieldContainer->getMeshVectorStates()[state_name] = ltr;
+    if(hasLayeredStructure)
+      fieldContainer->getMeshVectorStates()[state_name] = ltr;
     state_name = "ordering";
     hasLayeredStructure &= mesh_data->get_global (state_name, ordering, false);
-    if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
+    if(hasLayeredStructure)
+      fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
     state_name = "stride";
-    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, stk::util::ParameterType::INT64, false);
+    stk::util::Parameter temp_any;
+    temp_any.type = stk::util::ParameterType::INT64;
+    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, false);
     if(hasLayeredStructure) {
-      stride = boost::any_cast<int64_t>(temp_any);
+      stride = temp_any.get_value<int64_t>();
       fieldContainer->getMeshScalarInteger64States()[state_name] = stride;
     }
 
@@ -748,9 +754,7 @@ Albany::IossSTKMeshStruct::setBulkData (
       }
       this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<GO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
     }
-  }
-  else
-  {
+  } else {
     // We put all the fields as 'missing'
     const stk::mesh::FieldVector& fields = metaData->get_fields();
     for (decltype(fields.size()) i=0; i<fields.size(); ++i) {

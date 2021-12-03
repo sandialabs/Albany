@@ -54,6 +54,7 @@ IF(ALBANY_DEMO_PDES)
     add_subdirectory(Thermal1D)
     add_subdirectory(Thermal2D)
     add_subdirectory(Thermal3D)
+    add_subdirectory(Advection1D)
   ENDIF()
   # add_subdirectory(TekoPrec)
 

@@ -11,4 +11,5 @@
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::UpdateZCoordinateMovingTop)
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::UpdateZCoordinateMovingBed)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::UpdateZCoordinateGivenTopAndBedSurfaces)
 

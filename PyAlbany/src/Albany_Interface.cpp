@@ -108,7 +108,7 @@ PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParall
     // Create app (null initial guess)
     albanyApp = slvrfctry->createApplication(comm);
     albanyModel = slvrfctry->createModel(albanyApp);
-    solver = slvrfctry->createSolver(albanyModel, comm);
+    solver = slvrfctry->createSolver(comm, albanyModel, Teuchos::null);
 
     thyraDirections.resize(solver->Np());
     thyraParameter.resize(solver->Np());
@@ -159,7 +159,7 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
     // Create app (null initial guess)
     albanyApp = slvrfctry->createApplication(comm);
     albanyModel = slvrfctry->createModel(albanyApp);
-    solver = slvrfctry->createSolver(albanyModel, comm);
+    solver = slvrfctry->createSolver(comm, albanyModel, Teuchos::null);
 
     thyraDirections.resize(solver->Np());
     thyraParameter.resize(solver->Np());
@@ -225,10 +225,10 @@ Teuchos::RCP<const PyTrilinosMap> PyProblem::getParameterMap(const int p_index)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
-    stackedTimer->start("PyAlbany: getResponseMap");
-    auto p_space = solver->getNominalValues().get_p(p_index)->space();
+    stackedTimer->start("PyAlbany: getParameterMap");
+    auto p_space = solver->get_p_space(p_index);
     auto outputMap = getPyTrilinosMap(Albany::getTpetraMap(p_space), true);
-    stackedTimer->stop("PyAlbany: getResponseMap");
+    stackedTimer->stop("PyAlbany: getParameterMap");
     stackedTimer->stopBaseTimer();
     return outputMap;
 }
@@ -532,7 +532,7 @@ bool PyProblem::performSolve()
     return error;
 }
 
-void PyProblem::performAnalysis()
+bool PyProblem::performAnalysis()
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
@@ -545,7 +545,7 @@ void PyProblem::performAnalysis()
     Teuchos::ParameterList &piroParams =
         slvrfctry->getParameters()->sublist("Piro");
 
-    Piro::PerformAnalysis(*solver, piroParams, p, observer);
+    int status = Piro::PerformAnalysis(*solver, piroParams, p, observer);
 
     auto p_dpv = Teuchos::rcp_dynamic_cast<Thyra::DefaultProductVector<double>>(p);
 
@@ -559,6 +559,8 @@ void PyProblem::performAnalysis()
 
     stackedTimer->stop("PyAlbany: performAnalysis");
     stackedTimer->stopBaseTimer();
+    bool error = (status != 0);
+    return error;
 }
 
 void PyProblem::reportTimers()

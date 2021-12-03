@@ -34,7 +34,7 @@ void ScalarResponseFunction::evaluateDerivative(
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& p,
-    ParamVec* deriv_p,
+    const int parameter_index,
     const Teuchos::RCP<Thyra_Vector>& g,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
@@ -42,7 +42,7 @@ void ScalarResponseFunction::evaluateDerivative(
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
   this->evaluateGradient(
-    current_time, x, xdot, xdotdot, p, deriv_p, g,
+    current_time, x, xdot, xdotdot, p, parameter_index, g,
     dg_dx.getMultiVector(), dg_dxdot.getMultiVector(),
     dg_dxdotdot.getMultiVector(), dg_dp.getMultiVector());
 }

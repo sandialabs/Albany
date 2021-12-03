@@ -590,11 +590,12 @@ STKDiscretization::writeSolution(
     const Thyra_Vector& soln,
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const double        time,
-    const bool          overlapped)
+    const bool          overlapped,
+    const bool          force_write_solution)  
 {
   writeSolutionToMeshDatabase(soln, soln_dxdp, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dxdp?
-  writeSolutionToFile(soln, time, overlapped);
+  writeSolutionToFile(soln, time, overlapped, force_write_solution);
 }
 
 void
@@ -603,11 +604,12 @@ STKDiscretization::writeSolution(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const Thyra_Vector& soln_dot,
     const double        time,
-    const bool          overlapped)
+    const bool          overlapped,
+    const bool          force_write_solution)  
 {
   writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dot and/or soln_dxdp?
-  writeSolutionToFile(soln, time, overlapped);
+  writeSolutionToFile(soln, time, overlapped, force_write_solution);
 }
 
 void
@@ -617,11 +619,12 @@ STKDiscretization::writeSolution(
     const Thyra_Vector& soln_dot,
     const Thyra_Vector& soln_dotdot,
     const double        time,
-    const bool          overlapped)
+    const bool          overlapped,
+    const bool          force_write_solution)  
 {
   writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dot and soln_dotdot?
-  writeSolutionToFile(soln, time, overlapped);
+  writeSolutionToFile(soln, time, overlapped, force_write_solution);
 }
 
 void
@@ -629,11 +632,12 @@ STKDiscretization::writeSolutionMV(
     const Thyra_MultiVector& soln,
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const double             time,
-    const bool               overlapped)
+    const bool               overlapped,
+    const bool               force_write_solution) 
 {
   writeSolutionMVToMeshDatabase(soln, soln_dxdp, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dxdp?
-  writeSolutionMVToFile(soln, time, overlapped);
+  writeSolutionMVToFile(soln, time, overlapped, force_write_solution);
 }
 
 void
@@ -687,7 +691,8 @@ void
 STKDiscretization::writeSolutionToFile(
     const Thyra_Vector& soln,
     const double        time,
-    const bool          overlapped)
+    const bool          overlapped,
+    const bool          force_write_solution) 
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
@@ -701,8 +706,9 @@ STKDiscretization::writeSolutionToFile(
   }
 
   // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput &&
-      !(outputInterval % stkMeshStruct->exoOutputInterval)) {
+  if ((stkMeshStruct->exoOutput &&
+      !(outputInterval % stkMeshStruct->exoOutputInterval)) || 
+      (force_write_solution == true) ) {
     double time_label = monotonicTimeLabel(time);
 
     mesh_data->begin_output_step(outputFileIdx, time_label);
@@ -716,9 +722,7 @@ STKDiscretization::writeSolutionToFile(
       mesh_data->write_global(outputFileIdx, it.first, it.second);
     }
     for (const auto& it : fc->getMeshScalarInteger64States()) {
-      boost::any value;
-      value = static_cast<int64_t>(it.second);
-      mesh_data->write_global(outputFileIdx, it.first, value, stk::util::ParameterType::INT64);
+      mesh_data->write_global(outputFileIdx, it.first, static_cast<int64_t>(it.second), stk::util::ParameterType::INT64);
     }
     mesh_data->end_output_step(outputFileIdx);
 
@@ -736,12 +740,12 @@ STKDiscretization::writeSolutionToFile(
       auto ss_soln = Thyra::createMember(it.second->getOverlapVectorSpace());
       const Thyra_LinearOp& P = *ov_projectors.at(it.first);
       P.apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
-      it.second->writeSolutionToFile(*ss_soln, time, overlapped);
+      it.second->writeSolutionToFile(*ss_soln, time, overlapped, force_write_solution);
     } else {
       auto ss_soln = Thyra::createMember(it.second->getVectorSpace());
       const Thyra_LinearOp& P = *projectors.at(it.first);
       P.apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
-      it.second->writeSolutionToFile(*ss_soln, time, overlapped);
+      it.second->writeSolutionToFile(*ss_soln, time, overlapped, force_write_solution);
     }
   }
 #endif
@@ -751,7 +755,8 @@ void
 STKDiscretization::writeSolutionMVToFile(
     const Thyra_MultiVector& soln,
     const double             time,
-    const bool               overlapped)
+    const bool               overlapped,
+    const bool               force_write_solution) 
 {
 #ifdef ALBANY_SEACAS
 
@@ -766,8 +771,9 @@ STKDiscretization::writeSolutionMVToFile(
   }
 
   // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput &&
-      !(outputInterval % stkMeshStruct->exoOutputInterval)) {
+  if ((stkMeshStruct->exoOutput &&
+      !(outputInterval % stkMeshStruct->exoOutputInterval)) || 
+      (force_write_solution == true) ) {
     double time_label = monotonicTimeLabel(time);
 
     mesh_data->begin_output_step(outputFileIdx, time_label);
@@ -781,9 +787,7 @@ STKDiscretization::writeSolutionMVToFile(
       mesh_data->write_global(outputFileIdx, it.first, it.second);
     }
     for (const auto& it : fc->getMeshScalarInteger64States()) {
-      boost::any value;
-      value = static_cast<int64_t>(it.second);
-      mesh_data->write_global(outputFileIdx, it.first, value, stk::util::ParameterType::INT64);
+      mesh_data->write_global(outputFileIdx, it.first, static_cast<int64_t>(it.second), stk::util::ParameterType::INT64);
     }
     mesh_data->end_output_step(outputFileIdx);
 
@@ -802,19 +806,21 @@ STKDiscretization::writeSolutionMVToFile(
           it.second->getOverlapVectorSpace(), soln.domain()->dim());
       const Thyra_LinearOp& P = *ov_projectors.at(it.first);
       P.apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
-      it.second->writeSolutionMVToFile(*ss_soln, time, overlapped);
+      it.second->writeSolutionMVToFile(*ss_soln, time, overlapped, force_write_solution);
     } else {
       auto ss_soln = Thyra::createMembers(
           it.second->getVectorSpace(), soln.domain()->dim());
       const Thyra_LinearOp& P = *projectors.at(it.first);
       P.apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
-      it.second->writeSolutionMVToFile(*ss_soln, time, overlapped);
+      it.second->writeSolutionMVToFile(*ss_soln, time, overlapped, force_write_solution);
     }
   }
 #endif
 }
 
-void STKDiscretization::addSolutionField(const std::string & fieldName,const std::string & blockId)
+void STKDiscretization::
+addSolutionField (const std::string & /* fieldName */,
+                  const std::string & /* blockId */)
 {
 #if 0
    TEUCHOS_TEST_FOR_EXCEPTION(!validBlockId(blockId),ElementBlockException,
@@ -836,7 +842,9 @@ void STKDiscretization::addSolutionField(const std::string & fieldName,const std
 #endif
 }
 
-void STKDiscretization::addCellField(const std::string & fieldName,const std::string & blockId)
+void STKDiscretization::
+addCellField (const std::string & /* fieldName */,
+              const std::string & /* blockId */)
 {
 #if 0
    TEUCHOS_TEST_FOR_EXCEPTION(!validBlockId(blockId),ElementBlockException,
@@ -1923,8 +1931,7 @@ STKDiscretization::computeSideSets()
   }
 
   // 2) Construct GlobalSideSetList (map of GlobalSideSetInfo)
-  std::map<std::string, int>::iterator ss_it = num_local_worksets.begin();
-  while (ss_it != num_local_worksets.end()) {
+  for (auto ss_it=num_local_worksets.begin(); ss_it!=num_local_worksets.end(); ++ss_it) {
     std::string             ss_key = ss_it->first;
 
     max_sides[ss_key]++; // max sides is the largest local ID + 1 and needs to be incremented once for each key here
@@ -1940,8 +1947,6 @@ STKDiscretization::computeSideSets()
     globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::View<int**,      Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
     globalSideSetViews[ss_key].cellsOnSide      = Kokkos::View<int***,     Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
     globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::View<int***,     Kokkos::LayoutRight>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
-
-    ss_it++;
   }
 
   // 3) Populate global views
@@ -2074,12 +2079,9 @@ STKDiscretization::computeSideSets()
     }
 
     // Allocate total localDOFView for each sideset name
-    ss_it = num_local_worksets.begin();
-    while (ss_it != num_local_worksets.end()) {
+    for (auto ss_it=num_local_worksets.begin(); ss_it!=num_local_worksets.end(); ++ss_it) {
       std::string ss_key = ss_it->first;
       allLocalDOFViews[ss_key] = Kokkos::View<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
-
-      ss_it++;
     }
 
   }
@@ -2330,18 +2332,15 @@ STKDiscretization::setupExodusOutput()
     auto fc = stkMeshStruct->getFieldContainer();
     for (auto& it : fc->getMeshVectorStates()) {
       const auto DV_Type = stk::util::ParameterType::DOUBLEVECTOR;
-      boost::any mvs     = it.second;
-      mesh_data->add_global(outputFileIdx, it.first, mvs, DV_Type);
+      mesh_data->add_global(outputFileIdx, it.first, it.second, DV_Type);
     }
     for (const auto& it : fc->getMeshScalarIntegerStates()) {
      const auto INT_Type = stk::util::ParameterType::INTEGER;
-     boost::any ms      = it.second;
-     mesh_data->add_global(outputFileIdx, it.first, ms, INT_Type);
+     mesh_data->add_global(outputFileIdx, it.first, it.second, INT_Type);
     }
     for (const auto& it : fc->getMeshScalarInteger64States()) {
      const auto INT64_Type = stk::util::ParameterType::INT64;
-     boost::any ms      = it.second;
-     mesh_data->add_global(outputFileIdx, it.first, ms, INT64_Type);
+     mesh_data->add_global(outputFileIdx, it.first, it.second, INT64_Type);
     }
 
     // STK and Ioss/Exodus only allow TRANSIENT fields to be exported.

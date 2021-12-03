@@ -8,6 +8,7 @@
 
 #include "Albany_Macros.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GitVersion.h"
 
 // Include the concrete Epetra Comm's, if needed
 #if defined(ALBANY_EPETRA)

@@ -9,12 +9,13 @@ if [ -z "$BUILD_OPT" ]; then
    echo "Please supply an argument: sfad4, sfad6, sfad8, sfad12 or sfad24"
    exit 1;
 fi
+rm -rf intel_modules.out 
 
 unset http_proxy
 unset https_proxy
 
 export INTEL_LICENSE_FILE=/home/projects/x86-64/intel/licenses/USE_SERVER-ohpc.lic
-source blake_intel_modules_submit.sh >& modules.out  
+source blake_intel_modules_submit.sh >& intel_modules.out  
 
 export OMP_NUM_THREADS=1
 

@@ -1627,6 +1627,11 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
 
   validPL->sublist("Side Set Discretizations", false, "A sublist containing info for storing side discretizations");
+ 
+  //The following are for observing dxdp and dgdp for transient sensitivities 
+  validPL->set<std::string>("Sensitivity Method", "None", "Type of sensitivities requested");
+  validPL->set<int>("Response Function Index", 0, "Response function index (for adjoint transient sensitivities)");
+  validPL->set<int>("Sensitivity Parameter Index", 0, "Parameter sensitivity index (for transient sensitivities)");
 
   return validPL;
 }

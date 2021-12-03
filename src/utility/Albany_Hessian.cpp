@@ -12,7 +12,36 @@
 #include <Kokkos_Sort.hpp>
 #include <math.h>
 
-Teuchos::RCP<Thyra_LinearOp> Albany::createHessianLinearOp(
+Teuchos::RCP<Thyra_LinearOp> Albany::createDenseHessianLinearOp(
+    Teuchos::RCP<const Thyra_VectorSpace> p_vs)
+{
+    Teuchos::RCP<const Tpetra_Map> p_map = Albany::getTpetraMap(p_vs);
+    Teuchos::RCP<Thyra_LinearOp> H;
+
+    Tpetra_GO num_params = p_map->getNodeNumElements();
+
+    Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Teuchos::rcp(new Tpetra_CrsGraph(p_map, num_params));
+
+    Tpetra_GO cols[num_params];
+
+    for (Tpetra_GO iparam=0; iparam<num_params; ++iparam) {
+        cols[iparam] = p_map->getGlobalElement(iparam);
+    }
+
+    for (Tpetra_GO iparam=0; iparam<num_params; ++iparam) {
+        Hgraph->insertGlobalIndices(cols[iparam], num_params, cols);
+    }
+
+    Hgraph->fillComplete();
+    Teuchos::RCP<Tpetra_CrsMatrix> Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
+
+    H = Albany::createThyraLinearOp(Ht);
+    assign(H, 0.0);
+
+    return H;
+}
+
+Teuchos::RCP<Thyra_LinearOp> Albany::createSparseHessianLinearOp(
     Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
     Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
     const std::vector<IDArray> vElDofs)
@@ -48,7 +77,6 @@ Teuchos::RCP<Thyra_LinearOp> Albany::createHessianLinearOp(
     Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Teuchos::rcp(new Tpetra_CrsGraph(p_owned_map, 30));
 
     Tpetra_GO cols[1];
-    Teuchos::Array<ST> vals(1);
 
     for (std::size_t ielem=0; ielem<num_elem; ++ielem) {
         IDArray wsElDofs = vElDofs[floor(ielem / num_elem_per_ws)];

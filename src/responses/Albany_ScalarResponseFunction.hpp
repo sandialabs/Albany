@@ -52,7 +52,7 @@ public:
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& p,
-    ParamVec* deriv_p,
+    const int parameter_index,
     const Teuchos::RCP<Thyra_Vector>& g,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
@@ -88,14 +88,14 @@ public:
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& p,
-    ParamVec* deriv_p,
+    const int parameter_index,
     const Teuchos::RCP<Thyra_Vector>& g,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp) override;
 
-  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
+  void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out) override;
 
 protected:
 

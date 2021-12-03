@@ -18,3 +18,4 @@ echo "" >> results_debug-albany
 echo "The Albany CDash site can be accessed here: https://sems-cdash-son.sandia.gov/cdash/index.php?project=Albany" >> results_debug-albany
 echo "" >> results_debug-albany 
 rm results0 results1 results11 results2 results3 results4 results5 results6 results7 results8
+source send_email_debug.sh

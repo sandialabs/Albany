@@ -31,6 +31,8 @@
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_MultiVectorStdOps.hpp"
 
+#include "Albany_PiroObserver.hpp"
+
 #if defined(ALBANY_CHECK_FPE) || defined(ALBANY_STRONG_FPE_CHECK) || defined(ALBANY_FLUSH_DENORMALS)
 #include <xmmintrin.h>
 #endif
@@ -132,8 +134,12 @@ int main(int argc, char *argv[])
 
     // Create app (null initial guess)
     const auto albanyApp = slvrfctry.createApplication(comm);
-    const auto albanyModel = slvrfctry.createModel(albanyApp);
-    const auto solver      = slvrfctry.createSolver(albanyModel,comm);
+    //Forward model model evaluator
+    const auto albanyModel = slvrfctry.createModel(albanyApp, false);
+    //Adjoint model model evaluator - only relevant for adjoint transient sensitivities
+    const bool adjointTransSens = albanyApp->isAdjointTransSensitivities(); 
+    const auto albanyAdjointModel = (adjointTransSens == true) ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
+    const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel);
 
     stackedTimer->stop("Albany: Setup Time");
 
@@ -293,19 +299,49 @@ int main(int argc, char *argv[])
     }
 
     Albany::RegressionTests regression(slvrfctry.getParameters());
-    for (int i = 0; i < num_g - 1; i++) {
+
+    //Check/print responses
+    for (int i = 0; i < num_g-1; i++) {
       const RCP<const Thyra_Vector> g = thyraResponses[i];
       if (!albanyApp->getResponse(i)->isScalarResponse()) continue;
 
       *out << "\nResponse " << i << ": " << response_names[i] << "\n";
 
       Albany::printThyraVector(*out, g);
+      status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
+    }
 
-      if (num_p == 0)  
-          status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
-      for (int j=0; j<num_p; j++) {
+    //Check/print sensitivities
+    int response_fn_index = -1;
+    int sens_param_index = -1; 
+    const Teuchos::ParameterList &tempusSensParams =
+        slvrfctry.getParameters()->sublist("Piro").sublist("Tempus").sublist("Sensitivities");
+    if (tempusSensParams.isParameter("Response Function Index") == true) {
+      response_fn_index = tempusSensParams.get<int>("Response Function Index");
+    }
+    else {
+      if (albanyApp->isAdjointTransSensitivities() == true) {
+        response_fn_index = 0;
+	sens_param_index = 0; 
+      }
+    }
+    const int min_i_index = (response_fn_index == -1) ? 0 : response_fn_index; 
+    const int max_i_index = (response_fn_index == -1) ? num_g - 1 : response_fn_index + 1; 
+    const int min_j_index = (sens_param_index == -1) ? 0 : sens_param_index; 
+    const int max_j_index = ((sens_param_index == -1) || (num_p == 0)) ? num_p : sens_param_index + 1;  
+    bool writeToMatrixMarketDgDp = debugParams.get("Write DgDp to MatrixMarket", false);
+   
+    for (int i = min_i_index; i < max_i_index; i++) {
+      const RCP<const Thyra_Vector> g = thyraResponses[i];
+      if (!albanyApp->getResponse(i)->isScalarResponse()) continue;
+
+      for (int j = min_j_index; j < max_j_index; j++) {
         Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
         if (Teuchos::nonnull(dgdp)) {
+          if (writeToMatrixMarketDgDp) {
+	    std::string name = "dgdp_" + std::to_string(i) + "_" + std::to_string(j); 
+            Albany::writeMatrixMarket(dgdp, name);
+	  }
           if(j < num_param_vecs) {
             Albany::printThyraMultiVector(
                 *out << "\nSensitivities (" << i << "," << j << "):\n", dgdp);
@@ -328,8 +364,6 @@ int main(int argc, char *argv[])
             status += regression.checkSolveTestResults(i, j, g, norms);
           }
         }
-        else //check response only, no sensitivities
-          status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
       }
     }
 

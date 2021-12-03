@@ -156,10 +156,6 @@ ANONYMOUS:
           Norm Type: Two Norm
           Scale Type: Unscaled
           Tolerance: 1.0e-02
-        Test 2: 
-          Test Type: NormWRMS
-          Absolute Tolerance: 1.0e-04
-          Relative Tolerance: 1.0e-03
       Nonlinear Solver: Line Search Based
       Direction: 
         Method: Newton

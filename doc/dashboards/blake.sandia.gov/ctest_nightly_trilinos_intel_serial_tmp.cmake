@@ -23,9 +23,9 @@ set (CTEST_CONFIGURATION  Release) # What type of build do you want ?
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
-set (CTEST_SOURCE_NAME repos)
+set (CTEST_SOURCE_NAME repos-intel)
 set (CTEST_BUILD_NAME "blake-serial-Trilinos")
-set (CTEST_BINARY_NAME build)
+set (CTEST_BINARY_NAME build-intel)
 
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -44,11 +44,11 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
-SET (CTEST_BUILD_FLAGS "-j48")
+set (CTEST_BUILD_FLAGS "-j48")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (MPI_PATH $ENV{MPI_ROOT})  
 set (MKL_PATH $ENV{MKL_ROOT})  
@@ -57,7 +57,6 @@ set (BOOST_PATH $ENV{BOOST_ROOT})
 set (NETCDF_PATH $ENV{NETCDF_ROOT}) 
 set (HDF5_PATH $ENV{HDF5_ROOT})
 set (ZLIB_PATH $ENV{ZLIB_ROOT})  
-set (YAMLCPP_PATH $ENV{YAMLCPP_ROOT})
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -108,44 +107,10 @@ if (DOWNLOAD_TRILINOS)
     message(FATAL_ERROR "Cannot pull Trilinos!")
   endif ()
 
-  #
-  # Get Albany
-  #
-
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
-    execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Albany_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Albany
-      OUTPUT_VARIABLE _out
-      ERROR_VARIABLE _err
-      RESULT_VARIABLE HAD_ERROR)
-    
-    message(STATUS "out: ${_out}")
-    message(STATUS "err: ${_err}")
-    message(STATUS "res: ${HAD_ERROR}")
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot clone Albany repository!")
-    endif ()
-  endif ()
-
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-  
-  # Pull the repo
-  execute_process (COMMAND "${CTEST_GIT_COMMAND}" pull
-      WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Albany
-      OUTPUT_VARIABLE _out
-      ERROR_VARIABLE _err
-      RESULT_VARIABLE HAD_ERROR)
-  message(STATUS "Output of Albany pull: ${_out}")
-  message(STATUS "Text sent to standard error stream: ${_err}")
-  message(STATUS "command result status: ${HAD_ERROR}")
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot pull Albany!")
-  endif ()
 endif()
 
 ctest_start(${CTEST_TEST_TYPE})
 
-# 
 # Set the common Trilinos config options & build Trilinos
 # 
 if (BUILD_TRILINOS_SERIAL) 
@@ -217,7 +182,7 @@ if (BUILD_TRILINOS_SERIAL)
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
     message ("Encountered build errors in Trilinos build. Exiting!")
   endif ()
-  
+
   #
   # Run Trilinos tests
   #
@@ -237,5 +202,4 @@ if (BUILD_TRILINOS_SERIAL)
       message(FATAL_ERROR "Cannot submit Trilinos test results!")
     endif ()
   endif ()
-
 endif()

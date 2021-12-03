@@ -62,8 +62,8 @@ set (CTEST_CONFIGURATION  Release) # What type of build do you want ?
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
-set (CTEST_SOURCE_NAME repos)
-set (CTEST_BINARY_NAME build)
+set (CTEST_SOURCE_NAME repos-intel)
+set (CTEST_BINARY_NAME build-intel)
 
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -86,7 +86,7 @@ set (CTEST_BUILD_FLAGS "-j48")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (MPI_PATH $ENV{MPI_ROOT})  
 set (MKL_PATH $ENV{MKL_ROOT})  
@@ -161,7 +161,7 @@ ctest_start(${CTEST_TEST_TYPE})
 
 IF (BUILD_ALBANY_SERIAL_SFAD4) 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
@@ -184,7 +184,7 @@ IF (BUILD_ALBANY_SERIAL_SFAD4)
 ENDIF()
 IF (BUILD_ALBANY_SERIAL_SFAD6) 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
@@ -207,7 +207,7 @@ IF (BUILD_ALBANY_SERIAL_SFAD6)
 ENDIF()
 IF (BUILD_ALBANY_SERIAL_SFAD8) 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
@@ -230,7 +230,7 @@ IF (BUILD_ALBANY_SERIAL_SFAD8)
 ENDIF()
 IF (BUILD_ALBANY_SERIAL_SFAD12) 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
@@ -253,7 +253,7 @@ IF (BUILD_ALBANY_SERIAL_SFAD12)
 ENDIF()
 IF (BUILD_ALBANY_SERIAL_SFAD24) 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosSerialInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"

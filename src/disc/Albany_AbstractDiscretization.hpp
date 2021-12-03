@@ -242,14 +242,16 @@ class AbstractDiscretization
       const Thyra_Vector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double        time,
-      const bool          overlapped = false) = 0;
+      const bool          overlapped = false,
+      const bool          force_write_solution = false) = 0; 
   virtual void
   writeSolution(
       const Thyra_Vector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const double        time,
-      const bool          overlapped = false) = 0;
+      const bool          overlapped = false,
+      const bool          force_write_solution = false) = 0; 
   virtual void
   writeSolution(
       const Thyra_Vector& solution,
@@ -257,13 +259,15 @@ class AbstractDiscretization
       const Thyra_Vector& solution_dot,
       const Thyra_Vector& solution_dotdot,
       const double        time,
-      const bool          overlapped = false) = 0;
+      const bool          overlapped = false,
+      const bool          force_write_solution = false) = 0; 
   virtual void
   writeSolutionMV(
       const Thyra_MultiVector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double             time,
-      const bool               overlapped = false) = 0;
+      const bool               overlapped = false,
+      const bool               force_write_solution = false) = 0; 
   //! Write the solution to the mesh database.
   virtual void
   writeSolutionToMeshDatabase(
@@ -298,12 +302,14 @@ class AbstractDiscretization
   writeSolutionToFile(
       const Thyra_Vector& solution,
       const double        time,
-      const bool          overlapped = false) = 0;
+      const bool          overlapped = false,
+      const bool          force_write_solution = false) = 0; 
   virtual void
   writeSolutionMVToFile(
       const Thyra_MultiVector& solution,
       const double             time,
-      const bool               overlapped = false) = 0;
+      const bool               overlapped = false,
+      const bool               force_write_solution = false) = 0; 
 };
 
 }  // namespace Albany

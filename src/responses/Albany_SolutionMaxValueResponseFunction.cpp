@@ -54,8 +54,8 @@ evaluateTangent(const double /* alpha */,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec>& p,
-    ParamVec* deriv_p,
+    Teuchos::Array<ParamVec>& p,
+    const int parameter_index,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
@@ -65,7 +65,7 @@ evaluateTangent(const double /* alpha */,
     const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
   if (!gx.is_null() || !gp.is_null()) {
-    evaluateGradient(current_time, x, xdot, xdotdot, p, deriv_p, g, gx, Teuchos::null, Teuchos::null, gp);
+    evaluateGradient(current_time, x, xdot, xdotdot, p, parameter_index, g, gx, Teuchos::null, Teuchos::null, gp);
   }
 
   if (!gx.is_null() && !Vx.is_null()) {
@@ -86,7 +86,7 @@ evaluateGradient(const double /*current_time*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
     const Teuchos::Array<ParamVec>& /*p*/,
-    ParamVec* /*deriv_p*/,
+    const int  /*parameter_index*/,
     const Teuchos::RCP<Thyra_Vector>& g,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dx,
     const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,

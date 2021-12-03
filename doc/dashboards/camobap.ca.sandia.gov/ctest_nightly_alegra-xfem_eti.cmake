@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora34-gcc11.0.1-${CTEST_BUILD_CONFIGURATION}-alegra-xfem-eti")
+set (CTEST_BUILD_NAME "fedora35-gcc11.2.1-${CTEST_BUILD_CONFIGURATION}-alegra-xfem-eti")
 set (CTEST_BINARY_NAME build)
 
 
@@ -122,31 +122,31 @@ if (CTEST_DO_SUBMIT)
   endif ()
 endif ()
 
-if (DOWNLOAD)
+#if (DOWNLOAD)
 
-  #
-  # Update alegra-xfem
-  #
+# #
+#  # Update alegra-xfem
+#  #
 
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/alegra-xfem" RETURN_VALUE count)
-  message("Found ${count} changed files")
+#  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+#  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/alegra-xfem" RETURN_VALUE count)
+#  message("Found ${count} changed files")
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Update
-      RETURN_VALUE  HAD_ERROR
-      )
+#  if (CTEST_DO_SUBMIT)
+#    ctest_submit (PARTS Update
+#      RETURN_VALUE  HAD_ERROR
+#      )
 
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot update alegra-xfem repository!")
-    endif ()
-  endif ()
+#    if (HAD_ERROR)
+#      message(FATAL_ERROR "Cannot update alegra-xfem repository!")
+#    endif ()
+#  endif ()
 
-  if (count LESS 0)
-    message(FATAL_ERROR "Cannot update alegra-xfem!")
-  endif ()
+#  if (count LESS 0)
+#    message(FATAL_ERROR "Cannot update alegra-xfem!")
+#  endif ()
 
-endif ()
+#endif ()
 
 
 

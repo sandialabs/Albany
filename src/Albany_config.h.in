@@ -24,11 +24,6 @@
 
 // ========================== General Albany build and capabilities options ============================== //
 
-// Trilinos/Albany version details
-#cmakedefine ALBANY_TRILINOS_GIT_COMMIT_ID "${ALBANY_TRILINOS_GIT_COMMIT_ID}"
-#cmakedefine ALBANY_GIT_BRANCH "${ALBANY_GIT_BRANCH}"
-#cmakedefine ALBANY_GIT_COMMIT_ID "${ALBANY_GIT_COMMIT_ID}"
-
 // Albany compiler details
 #cmakedefine ALBANY_CXX_COMPILER_ID "${ALBANY_CXX_COMPILER_ID}"
 #cmakedefine ALBANY_CXX_COMPILER_VERSION "${ALBANY_CXX_COMPILER_VERSION}"
@@ -98,6 +93,10 @@
   #cmakedefine CISM_CHECK_COMPARISONS
   #cmakedefine REDUCED_COMM
   #cmakedefine CISM_USE_EPETRA
+#endif
+
+#ifdef ALBANY_DEBUG_BUILD
+  #cmakedefine ALBANY_DEBUG_BUILD
 #endif
 
 #endif // ALBANY_CONFIG_H

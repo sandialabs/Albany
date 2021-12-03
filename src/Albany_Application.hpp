@@ -149,6 +149,12 @@ public:
     return solMethod;
   }
 
+  int 
+  getNumTimeDerivs() const
+  {
+    return num_time_deriv;
+  }
+
   //! Get number of responses
   int
   getNumResponses() const;
@@ -186,6 +192,21 @@ public:
 
   void setSolutionStatus(SolutionStatus status) {
     solutionStatus = status;
+  }
+
+  void forceWriteSolution() 
+  {
+    force_write_solution = true;  
+  }
+
+  bool getForceWriteSolution() const 
+  {
+    return force_write_solution; 
+  }
+
+  bool isAdjointTransSensitivities() const 
+  {
+    return adjoint_trans_sens;
   }
 
   //! Return whether problem wants to use its own preconditioner
@@ -272,8 +293,8 @@ public:
       const Teuchos::RCP<const Thyra_Vector>&      x,
       const Teuchos::RCP<const Thyra_Vector>&      xdot,
       const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-      const Teuchos::Array<ParamVec>&              par,
-      ParamVec*                                    deriv_par,
+      Teuchos::Array<ParamVec>&                    par,
+      const int                                    parameter_index,
       const Teuchos::RCP<const Thyra_MultiVector>& Vx,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -321,6 +342,7 @@ public:
   void
   evaluateResponseTangent(
       int                                          response_index,
+      int                                          parameter_index,
       const double                                 alpha,
       const double                                 beta,
       const double                                 omega,
@@ -329,8 +351,7 @@ public:
       const Teuchos::RCP<const Thyra_Vector>&      x,
       const Teuchos::RCP<const Thyra_Vector>&      xdot,
       const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-      const Teuchos::Array<ParamVec>&              p,
-      ParamVec*                                    deriv_p,
+      Teuchos::Array<ParamVec>&                    p,
       const Teuchos::RCP<const Thyra_MultiVector>& Vx,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -351,7 +372,7 @@ public:
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>&         p,
-      ParamVec*                               deriv_p,
+      const int                               parameter_index,
       const Teuchos::RCP<Thyra_Vector>&       g,
       const Thyra_Derivative&                 dg_dx,
       const Thyra_Derivative&                 dg_dxdot,
@@ -649,14 +670,14 @@ public:
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_g_pp);
 
   /**
-   * \brief evaluateResponseDistParamHessian_pp function
+   * \brief evaluateResponseHessian_pp function
    *
    * This function is used to compute the Hessian \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_i}(g)\f$ of the <tt>response[response_index]</tt> 
-   * (i.e. the response_index-th response) where \f$g\f$ is the response and \f$\boldsymbol{p}_i\f$ is a distributed parameter.
+   * (i.e. the response_index-th response) where \f$g\f$ is the response and \f$\boldsymbol{p}_i\f$ is a parameter.
    *
    * \param response_index [in] Response index of the response which the Hessian is computed.
    *
-   * \param parameter_index [in] Parameter index of the distributed parameter.
+   * \param parameter_index [in] Parameter index of the parameter.
    *
    * \param current_time [in] Current time at which the Hessian is computed for transient simulations.
    *
@@ -668,12 +689,12 @@ public:
    *
    * \param param_array [in] Array of the parameters vectors.
    *
-   * \param dist_param_name [in] Name of the distributed parameter.
+   * \param param_name [in] Name of the parameter.
    *
    * \param H [out] the output of the computation: \f$\boldsymbol{H}_{\boldsymbol{p}_i\boldsymbol{p}_i}(g)\f$.
    */
   void
-  evaluateResponseDistParamHessian_pp(
+  evaluateResponseHessian_pp(
       int                                     response_index,
       int                                     parameter_index,
       const double                            current_time,
@@ -681,7 +702,7 @@ public:
       const Teuchos::RCP<const Thyra_Vector>& xdot,
       const Teuchos::RCP<const Thyra_Vector>& xdotdot,
       const Teuchos::Array<ParamVec>&         param_array,
-      const std::string&                      dist_param_name,
+      const std::string&                      param_name,
       const Teuchos::RCP<Thyra_LinearOp>&     H);
 
   /**
@@ -1098,8 +1119,8 @@ void
       const Teuchos::RCP<const Thyra_Vector>&      x,
       const Teuchos::RCP<const Thyra_Vector>&      xdot,
       const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-      const Teuchos::Array<ParamVec>&              p,
-      ParamVec*                                    deriv_p,
+      Teuchos::Array<ParamVec>&                    p,
+      const int                                    parameter_index,
       const Teuchos::RCP<const Thyra_MultiVector>& Vx,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -1283,6 +1304,10 @@ void
 
   // local responses
   Teuchos::Array<unsigned int> relative_responses;
+
+  mutable bool force_write_solution{false}; 
+  mutable bool adjoint_trans_sens{false}; 
+
 };
 
 template <typename EvalT>

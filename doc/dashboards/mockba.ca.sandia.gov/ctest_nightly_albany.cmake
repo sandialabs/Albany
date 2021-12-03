@@ -59,7 +59,7 @@ endif ()
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
-set (Albany_REPOSITORY_LOCATION git@github.com:SNLComputation/Albany.git)
+set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (cism-piscees_REPOSITORY_LOCATION  git@github.com:E3SM-Project/cism-piscees.git)
 
 if (CLEAN_BUILD)
@@ -138,31 +138,31 @@ if (CTEST_DO_SUBMIT)
   endif ()
 endif ()
 
-if (DOWNLOAD)
+#if (DOWNLOAD)
 
-  #
-  # Update Albany 
-  #
+ # #
+ # # Update Albany 
+ # #
 
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
-  message("Found ${count} changed files")
+  #set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+  #CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
+  #message("Found ${count} changed files")
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Update
-      RETURN_VALUE  HAD_ERROR
-      )
+  #if (CTEST_DO_SUBMIT)
+  #  ctest_submit (PARTS Update
+  #    RETURN_VALUE  HAD_ERROR
+  #    )
 
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot update Albany repository!")
-    endif ()
-  endif ()
+  #  if (HAD_ERROR)
+  #    message(FATAL_ERROR "Cannot update Albany repository!")
+  #  endif ()
+  #endif ()
 
-  if (count LESS 0)
-    message(FATAL_ERROR "Cannot update Albany!")
-  endif ()
+  #if (count LESS 0)
+  #  message(FATAL_ERROR "Cannot update Albany!")
+  #endif ()
 
-endif ()
+#endif ()
 
 
 if (BUILD_ALBANY)

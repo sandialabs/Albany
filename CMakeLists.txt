@@ -36,6 +36,15 @@ FIND_PACKAGE(Trilinos 13.1 REQUIRED)
 
 OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers should be treated as 'system' headers (hence, without issuing warnings)" ON)
 
+IF (DEFINED CMAKE_BUILD_TYPE)
+   IF (${CMAKE_BUILD_TYPE} STREQUAL "DEBUG")
+      MESSAGE("-- CMAKE_BUILD_TYPE=DEBUG...  Debug build is Enabled")
+      SET(ALBANY_DEBUG_BUILD ON)
+   ELSE()
+      MESSAGE("-- CMAKE_BUILD_TYPE=RELEASE...  Debug build is NOT Enabled")
+      SET(ALBANY_DEBUG_BUILD OFF)
+   ENDIF()
+ENDIF()
 # Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
 # This is needed to find SEACAS tools used during testing (epu, etc).
 SET(Trilinos_BIN_DIRS "${Trilinos_DIR}/../../../bin")
@@ -489,6 +498,28 @@ ELSE()
   SET(ALBANY_SEACAS FALSE)
 ENDIF()
 
+# Check whether Exodus can access a file in parallel
+include(CheckCSourceCompiles)
+set(CMAKE_REQUIRED_LIBRARIES ${${PROJECT_NAME}_EXTRA_LINK_FLAGS})
+set(CMAKE_REQUIRED_INCLUDES  ${Trilinos_INCLUDE_DIRS})
+check_c_source_compiles(
+  "
+  #include <exodusII_par.h>
+  int main()
+  {
+    return 0;
+  }
+  "
+  PARALLEL_EXODUS_SUPPORTED
+  )
+  
+IF (PARALLEL_EXODUS_SUPPORTED)
+  SET(ALBANY_PARALELL_EXODUS TRUE)
+  MESSAGE("-- ALBANY_PARALELL_EXODUS set to True")
+ELSE()
+  SET(ALBANY_PARALELL_EXODUS FALSE)
+  MESSAGE("-- ALBANY_PARALELL_EXODUS set to False")
+ENDIF()
 
 ##########################################
 ### Check Albany configuration options ###

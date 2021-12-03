@@ -2,7 +2,7 @@
 get_filename_component(testNameRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # This variable will be set in the input files during the 'configure_file' call
-if (ALBANY_IOPX)
+if (ALBANY_PARALELL_EXODUS)
   set (USE_SERIAL_MESH "true")
 #IKT 5/22/19 - commenting out for now as this is leading to compilation error
 else ()
@@ -24,7 +24,7 @@ set (testName ${testNameRoot}_Import2DAsciiMesh)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_create_exo_from_msh.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_create_exo_from_msh.yaml)
  
-IF (ALBANY_IOPX AND ALBANY_MPI)
+IF (ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
   add_test(${testName} ${Albany.exe} input_create_exo_from_msh.yaml)  
   set_tests_properties(${testName}
                        PROPERTIES
@@ -49,7 +49,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_populate_meshes.yaml
 
 add_test(${testName} ${Albany.exe} input_fo_gis_populate_meshes.yaml)
 # If Iopx is not present, we must decompose the input mesh first
-IF (NOT ALBANY_IOPX AND ALBANY_MPI)
+IF (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
   add_test (NAME FO_GIS_decompMesh
             COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} gis_unstruct_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
@@ -116,6 +116,13 @@ if (ALBANY_IFPACK2)
                        FIXTURES_REQUIRED PopulateMeshes)
 endif()
 
+if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
+  add_test (NAME FO_GIS_HUMBOLDT_decompMesh
+        COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
+  set_tests_properties (FO_GIS_HUMBOLDT_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
+endif()
+
 if (ALBANY_FROSCH)
   # Normal run
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstructT_FROSch.yaml
@@ -138,12 +145,7 @@ if (ALBANY_FROSCH)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_effect_press.yaml)
   add_test(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_effect_press.yaml)
 
-  if (NOT ALBANY_IOPX AND ALBANY_MPI)
-    add_test (NAME FO_GIS_HUMBOLDT_decompMesh
-            COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-    set_tests_properties (FO_GIS_HUMBOLDT_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
-
+  if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
     set_tests_properties(${testNameRoot}_Humboldt_Tpetra_FROSch
                        PROPERTIES
                        LABELS            "LandIce;Epetra;Forward"
@@ -159,7 +161,7 @@ if (ALBANY_FROSCH)
                        LABELS            "LandIce;Epetra;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
                        
-    else ()
+  else ()
     set_tests_properties(${testNameRoot}_Humboldt_Tpetra_FROSch
                        PROPERTIES
                        LABELS         "LandIce;Epetra;Forward")
@@ -169,6 +171,26 @@ if (ALBANY_FROSCH)
                        LABELS         "LandIce;Epetra;Forward")
                        
     set_tests_properties(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch
+                       PROPERTIES
+                       LABELS         "LandIce;Epetra;Forward")
+  endif()
+  
+endif()
+
+if (ALBANY_MUELU)
+  # Normal run
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_muelu.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_muelu.yaml)
+  add_test(${testNameRoot}_Humboldt_Tpetra_MueLu ${Albany.exe} input_fo_humboldt_muelu.yaml)
+
+  if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
+    set_tests_properties(${testNameRoot}_Humboldt_Tpetra_MueLu
+                       PROPERTIES
+                       LABELS            "LandIce;Epetra;Forward"
+                       FIXTURES_REQUIRED humboldtMeshSetup)
+  else ()
+    set_tests_properties(${testNameRoot}_Humboldt_Tpetra_MueLu
                        PROPERTIES
                        LABELS         "LandIce;Epetra;Forward")
   endif()
@@ -362,6 +384,11 @@ if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thicknessT.yaml)
     add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_adjoint_sensitivity_thicknessT.yaml)
     set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+    
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_bed_and_topT.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_bed_and_topT.yaml)
+    add_test(${testName}_MoveSurfHeightAndBed ${Albany.exe} input_fo_gis_adjoint_sensitivity_bed_and_topT.yaml)
+    set_tests_properties(${testName}_MoveSurfHeightAndBed PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml)

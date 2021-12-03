@@ -44,12 +44,14 @@ namespace Albany
 
 ModelEvaluator::
 ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
-                const Teuchos::RCP<Teuchos::ParameterList>& appParams_)
+                const Teuchos::RCP<Teuchos::ParameterList>& appParams_,
+		const bool adjoint_model_)
  : app(app_)
  , appParams(appParams_)
  , supplies_prec(app_->suppliesPreconditioner())
  , supports_xdot(false)
  , supports_xdotdot(false)
+ , adjoint_model(adjoint_model_)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -353,22 +355,60 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
     for (int i=0; i<num_dofs; i++) {
       std::cout << "IKT i, ov_coords = " << i << ", " << ov_coords[i] << "\n"; 
     }*/
+    Teuchos::ArrayRCP<double> coeffs(2);
+    if (param_list.isParameter("Parameter Analytic Expression Coefficients")) {
+      Teuchos::Array<double> coeffs_array = param_list.get<Teuchos::Array<double>>("Parameter Analytic Expression Coefficients");
+      if (coeffs_array.size() != 2) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+              "\nError!  In Albany::ModelEvaluator constructor:  "
+              << "'Parameter Analytic Expression Coefficients' array must have size 2."
+              << " You have provided an array of size " << coeffs_array.size() << ".\n"); 
+      }
+      coeffs[0] = coeffs_array[0];
+      coeffs[1] = coeffs_array[1];
+    }
+    else {
+      coeffs[0] = 1.0; 
+      coeffs[1] = 0.0;
+    }
+
     Teuchos::ArrayRCP<ST> distParamVec_ArrayRCP = 
        getNonconstLocalData(distParam->vector()); 
 
-    if (param_expr == "Quadratic") 
+    if (param_expr == "Linear") 
     {
       if (num_dims == 1) {
         for (int i=0; i < num_nodes; i++) {
           const double x = ov_coords[i]; 
-          distParamVec_ArrayRCP[i] = x*(1-x); 
+          distParamVec_ArrayRCP[i] = x + coeffs[0]; 
         }
       }
       else if (num_dims == 2) {
         for (int i=0; i < num_nodes; i++) {
           const double x = ov_coords[2*i]; 
           const double y = ov_coords[2*i+1]; 
-          distParamVec_ArrayRCP[i] = x*(1-x)*y*(1-y); 
+          distParamVec_ArrayRCP[i] = (x + coeffs[0]) + (y + coeffs[1]); 
+        }
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+            "\nError!  In Albany::ModelEvaluator constructor:  "
+            << "Linear Parameter Analytic Expression not valid for >2D.\n"); 
+      }
+    }
+    else if (param_expr == "Quadratic") 
+    {
+      if (num_dims == 1) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[i]; 
+          distParamVec_ArrayRCP[i] = x*(coeffs[0]-x) + coeffs[1]; 
+        }
+      }
+      else if (num_dims == 2) {
+        for (int i=0; i < num_nodes; i++) {
+          const double x = ov_coords[2*i]; 
+          const double y = ov_coords[2*i+1]; 
+          distParamVec_ArrayRCP[i] = x*(coeffs[0]-x)*y*(coeffs[0]-y) + coeffs[1]; 
         }
       }
       else {
@@ -381,7 +421,7 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
             "\nError!  In Albany::ModelEvaluator constructor:  "
             << "Invalid value for 'Parameter Analytic Expression' = "
-            << param_expr << ".  Valid expressions are: 'Quadratic'.\n");
+            << param_expr << ".  Valid expressions are: 'Linear', 'Quadratic'.\n");
     }
   } 
     
@@ -526,22 +566,27 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
           << "l2 = " << l2
           << std::endl);
 
-  // Currently, only support distributed parameters.
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      l1 >= num_param_vecs + num_dist_param_vecs || l1 < num_param_vecs,
-      Teuchos::Exceptions::InvalidParameter,
-      std::endl
-          << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
-          << "Invalid parameter index l1 = "
-          << l1
-          << std::endl);
+  if (l1 < num_param_vecs) {
+    return Albany::createDenseHessianLinearOp(param_vss[l1]);
+  }
+  else {
+    // distributed parameters
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        l1 >= num_param_vecs + num_dist_param_vecs || l1 < num_param_vecs,
+        Teuchos::Exceptions::InvalidParameter,
+        std::endl
+            << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
+            << "Invalid parameter index l1 = "
+            << l1
+            << std::endl);
 
-  Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
-  Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
-  std::vector<IDArray> vElDofs =
-    distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
+    Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
+    Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
+    std::vector<IDArray> vElDofs =
+      distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
 
-  return Albany::createHessianLinearOp(p_owned_vs, p_overlapped_vs, vElDofs);
+    return Albany::createSparseHessianLinearOp(p_owned_vs, p_overlapped_vs, vElDofs);
+  }
 }
 
 Teuchos::RCP<Thyra_LinearOp>
@@ -894,18 +939,6 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
               << ". Please set the Option in the Hessian and ROL sublists consistently."
               << std::endl);
 
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        reconstructHppROL && (num_param_vecs>0),
-        Teuchos::Exceptions::InvalidParameter,
-        std::endl
-            << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
-            << "The Hessian reconstruction option is enabled but at least one "
-            << "parameter is not distributed. The Hessian reconstruction option "
-            << "currently requires all parameters to be distributed. "
-            << "If at least one parameter is a scalar parameter or a parameter vector, "
-            << "the Hessian reconstruction option must be disabled."
-            << std::endl);
-
     }
 
     aDHessVec_g[0][0] = dADHessVec_g;
@@ -1062,6 +1095,8 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
 
   //! If a parameter has changed in value, saved/unsaved fields must be updated
 
+  //IKT, 8/25/2021 QUESTION: can the following go in the constructor?  If so, 
+  //we should move it there to make the code cleaner.
   bool transposeJacobian = false;
   ObserverImpl observer(app);
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -1069,6 +1104,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     auto& opt_paramList = appParams->sublist("Piro").sublist("Optimization Status");
     transposeJacobian = opt_paramList.get("Compute Transposed Jacobian", false);
   }
+  if (adjoint_model == true) transposeJacobian = true; 
 
   // Thyra vectors
   const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
@@ -1202,6 +1238,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         sacado_param_vec,
         f_out, W_op_out, dt);
     if(transposeJacobian) {
+      TEUCHOS_FUNC_TIME_MONITOR("Albany Transpose Jacobian");
       Albany::transpose(W_op_out);
     }
 
@@ -1219,7 +1256,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
 
       app->computeGlobalTangent(
           0.0, 0.0, 0.0, curr_time, false,
-          x, x_dot, x_dotdot, sacado_param_vec, p_vec.get(),
+          x, x_dot, x_dotdot, sacado_param_vec, l,
           Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
           f_out, Teuchos::null, dfdp_out);
 
@@ -1369,7 +1406,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       app->evaluateResponseDerivative(
           j, curr_time, x, x_dot, x_dotdot,
           sacado_param_vec,
-          NULL,
+          -1,
           g_out,
           dgdx_out,
           dgdxdot_out,
@@ -1387,8 +1424,8 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(sacado_param_vec[l]);
 
         app->evaluateResponseTangent(
-            j, alpha, beta, omega, curr_time, false,
-            x, x_dot, x_dotdot, sacado_param_vec, p_vec.get(),
+            j, l, alpha, beta, omega, curr_time, false,
+            x, x_dot, x_dotdot, sacado_param_vec,
             Teuchos::null, Teuchos::null, Teuchos::null, Teuchos::null,
             g_out, Teuchos::null, dgdp_out);
         // Set g_out to null to indicate that g_out was evaluated.
@@ -1478,12 +1515,10 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         outArgs.get_hess_g_pp(j, l1, l1) : Teuchos::null;
 
       if (Teuchos::nonnull(g_hess_pp)) {
-        if (l1 >= num_param_vecs) {
-          app->evaluateResponseDistParamHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
-                    sacado_param_vec,
-                    all_param_names[l1],
-                    g_hess_pp);
-        }
+        app->evaluateResponseHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
+                  sacado_param_vec,
+                  all_param_names[l1],
+                  g_hess_pp);
         if(appParams->sublist("Problem").sublist("Hessian").get<bool>("Write Hessian MatrixMarket", false))
           Albany::writeMatrixMarket(Albany::getTpetraMatrix(g_hess_pp).getConst(), "H", l1);
       }

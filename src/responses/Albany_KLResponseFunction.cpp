@@ -41,8 +41,8 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec>& p,
-    ParamVec* deriv_p,
+    Teuchos::Array<ParamVec>& p,
+    const int parameter_index,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -52,7 +52,7 @@ evaluateTangent(const double alpha,
     const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
   response->evaluateTangent(alpha, beta, omega, current_time, sum_derivs,
-          x, xdot, xdotdot, p, deriv_p, Vx, Vxdot, Vxdotdot, Vp, g, gx, gp);
+          x, xdot, xdotdot, p, parameter_index, Vx, Vxdot, Vxdotdot, Vp, g, gx, gp);
 }
 
 //! Evaluate distributed parameter derivative dg/dp
@@ -131,14 +131,14 @@ evaluateDerivative(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
     const Teuchos::RCP<const Thyra_Vector>& xdotdot,
     const Teuchos::Array<ParamVec>& p,
-    ParamVec* deriv_p,
+    const int parameter_index,
     const Teuchos::RCP<Thyra_Vector>& g,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
 {
-  response->evaluateDerivative(current_time, x, xdot, xdotdot, p, deriv_p,
+  response->evaluateDerivative(current_time, x, xdot, xdotdot, p, parameter_index,
                                g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
 }
 

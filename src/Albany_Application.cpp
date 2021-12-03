@@ -164,6 +164,43 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     tangent_deriv_dim = 1;
   }
 
+
+  const bool compute_sens = problemParams->get<bool>("Compute Sensitivities", false);
+  std::string sens_method = "None"; 
+  int sens_param_index = 0; 
+  int resp_fn_index = 0; 
+  if (params->isSublist("Piro")) {
+    Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(params, "Piro", true);
+    if (compute_sens == true) {
+      sens_method = piroParams->get<std::string>("Sensitivity Method", "Forward"); 
+    }
+    if (piroParams->isSublist("Tempus")) {
+      Teuchos::RCP<Teuchos::ParameterList> tempusParams = Teuchos::sublist(piroParams, "Tempus", true);
+      if (tempusParams->isSublist("Sensitivities")) {
+        Teuchos::RCP<Teuchos::ParameterList> sensParams = Teuchos::sublist(tempusParams, "Sensitivities", true);
+        sens_param_index = sensParams->get<int>("Sensitivity Parameter Index", 0); 
+	resp_fn_index = sensParams->get<int>("Response Function Index", 0);
+      }
+    }
+  }
+  if (compute_sens == true) { 
+    if (sens_method == "Adjoint") {
+      adjoint_trans_sens = true; 
+    }
+    else if (sens_method == "None") {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error!  'Compute Sensitivities' is true but 'Sensitivity Method' is set to 'None'!\n"); 
+    }
+  }
+  else {
+    if (sens_method != "None") {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error!  'Compute Sensitivities' is false but 'Sensitivity Method' has been set to " 
+	<< sens_method << ".\n"); 
+
+    }
+  }
+
   // Pull the number of solution vectors out of the problem and send them to the
   // discretization list, if the user specifies this in the problem
   Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(params, "Discretization", true);
@@ -193,6 +230,10 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     discParams->set<int>("Number Of Time Derivatives", num_time_deriv);
   else
     num_time_deriv = num_time_deriv_from_input;
+
+  discParams->set<std::string>("Sensitivity Method", sens_method);
+  discParams->set<int>("Sensitivity Parameter Index", sens_param_index); 
+  discParams->set<int>("Response Function Index", resp_fn_index); 
 
   TEUCHOS_TEST_FOR_EXCEPTION(
       num_time_deriv > 2,
@@ -779,9 +820,9 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
     std::string t_identifier = t_dl.identifier();
     std::string sideSetName = t_identifier.substr(0, t_identifier.find("<"));
 
-    TEUCHOS_TEST_FOR_EXCEPTION(first_dim_name == "Side" && sideSetName.empty(), std::logic_error, "Dynamic sizing error: Identifier is that of a sideset but has no sideset name.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(first_dim_name == PHX::print<Side>() && sideSetName.empty(), std::logic_error, "Dynamic sizing error: Identifier is that of a sideset but has no sideset name.\n");
 
-    if (first_dim_name == "Side" && maxSideSetSizes.find(sideSetName) != maxSideSetSizes.end()) {
+    if (first_dim_name == PHX::print<Side>() && maxSideSetSizes.find(sideSetName) != maxSideSetSizes.end()) {
 
       t_dims[0] = maxSideSetSizes[sideSetName];
 
@@ -1566,14 +1607,6 @@ Application::computeGlobalJacobianImpl(
     workset.Jac = jac;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
-    // fill Jacobian derivative dimensions:
-    for (int ps = 0; ps < fm.size(); ps++) {
-      (workset.Jacobian_deriv_dims)
-          .push_back(
-              PHAL::getDerivativeDimensions<EvalT>(
-                  this, ps, explicit_scheme));
-    }
-
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     if (!workset.f.is_null()) {
       workset.f_kokkos = getNonconstDeviceData(workset.f);
@@ -1819,8 +1852,8 @@ Application::computeGlobalTangent(
     const Teuchos::RCP<const Thyra_Vector>&      x,
     const Teuchos::RCP<const Thyra_Vector>&      xdot,
     const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-    const Teuchos::Array<ParamVec>&              par,
-    ParamVec*                                    deriv_par,
+    Teuchos::Array<ParamVec>&                    par,
+    const int                                    parameter_index,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -1882,7 +1915,10 @@ Application::computeGlobalTangent(
     }
   }
 
-  RCP<ParamVec> params = rcp(deriv_par, false);
+  RCP<ParamVec> params;
+  if (parameter_index < par.size()){
+    params = Teuchos::rcp(new ParamVec(par[parameter_index]));
+  }
 
   // Zero out overlapped residual
   if (Teuchos::nonnull(f)) {
@@ -1994,13 +2030,6 @@ Application::computeGlobalTangent(
       if (nfm != Teuchos::null)
         deref_nfm(nfm, wsPhysIndex, ws)
             ->evaluateFields<EvalT>(workset);
-    }
-
-    // fill Tangent derivative dimensions
-    for (int ps = 0; ps < fm.size(); ps++) {
-      (workset.Tangent_deriv_dims)
-          .push_back(PHAL::getDerivativeDimensions<EvalT>(
-              this, ps));
     }
   }
 
@@ -2238,6 +2267,7 @@ Application::evaluateResponse(
 void
 Application::evaluateResponseTangent(
     int                                          response_index,
+    int                                          parameter_index,
     const double                                 alpha,
     const double                                 beta,
     const double                                 omega,
@@ -2246,8 +2276,7 @@ Application::evaluateResponseTangent(
     const Teuchos::RCP<const Thyra_Vector>&      x,
     const Teuchos::RCP<const Thyra_Vector>&      xdot,
     const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-    const Teuchos::Array<ParamVec>&              p,
-    ParamVec*                                    deriv_p,
+    Teuchos::Array<ParamVec>&                    p,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -2269,7 +2298,7 @@ Application::evaluateResponseTangent(
       xdot,
       xdotdot,
       p,
-      deriv_p,
+      parameter_index,
       Vx,
       Vxdot,
       Vxdotdot,
@@ -2287,7 +2316,7 @@ Application::evaluateResponseDerivative(
     const Teuchos::RCP<const Thyra_Vector>&          xdot,
     const Teuchos::RCP<const Thyra_Vector>&          xdotdot,
     const Teuchos::Array<ParamVec>&                  p,
-    ParamVec*                                        deriv_p,
+    const int                                        parameter_index,
     const Teuchos::RCP<Thyra_Vector>&                g,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
     const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
@@ -2304,7 +2333,7 @@ Application::evaluateResponseDerivative(
       xdot,
       xdotdot,
       p,
-      deriv_p,
+      parameter_index,
       g,
       dg_dx,
       dg_dxdot,
@@ -2458,7 +2487,7 @@ Application::evaluateResponse_HessVecProd_pp(
 }
 
 void
-Application::evaluateResponseDistParamHessian_pp(
+Application::evaluateResponseHessian_pp(
     int                                     response_index,
     int                                     parameter_index,
     const double                            current_time,
@@ -2469,51 +2498,116 @@ Application::evaluateResponseDistParamHessian_pp(
     const std::string&                      param_name,
     const Teuchos::RCP<Thyra_LinearOp>&     H)
 {
-  Teuchos::ParameterList coloring_params;
-  std::string matrixType = "Hessian";
-  coloring_params.set("matrixType", matrixType);
-  coloring_params.set("symmetric", true);
+  int l1;
+  bool l1_is_distributed;
+  Albany::getParameterVectorID(l1, l1_is_distributed, param_name);
 
   // Get the crs Hessian:
   RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
   Ht->resumeFill();
 
-  // Create a colorer
-  Zoltan2::TpetraCrsColorer<Tpetra_CrsMatrix> colorer(Ht);
+  Teuchos::RCP<Teuchos::ParameterList> validHessianResponseParams = Teuchos::rcp(new Teuchos::ParameterList("validHessianResponseParams"));;
+  validHessianResponseParams->set<bool>("Use AD for Hessian-vector products (default)", false);
+  validHessianResponseParams->set<bool>("Reconstruct H_pp", false);
 
-  colorer.computeColoring(coloring_params);
+  for (int i=0; i<problemParams->sublist("Parameters").get<int>("Number Of Parameters"); ++i)
+    validHessianResponseParams->set<bool>(Albany::strint("Replace H_pp with Identity for Parameter", i), false);
 
-  // Compute seed matrix V -- this matrix is a dense
-  // matrix of 0/1 indicating the compression via coloring
+  auto hessianResponseParams = problemParams->sublist("Hessian").sublist(Albany::strint("Response", response_index));
+  hessianResponseParams.validateParametersAndSetDefaults(*validHessianResponseParams, 0);
+  bool replace_by_I = hessianResponseParams.get<bool>(Albany::strint("Replace H_pp with Identity for Parameter", parameter_index));
 
-  const int numColors = colorer.getNumColors();
+  if (replace_by_I) {
+    auto rangeMap = Ht->getRangeMap();
+    int numElements = rangeMap->getNodeNumElements();
 
-  // Compute the seed matrix
-  RCP<Tpetra_MultiVector> V = rcp(new Tpetra_MultiVector(Ht->getDomainMap(), numColors));
-  colorer.computeSeedMatrix(*V);
+    Tpetra_Vector::scalar_type values[1];
+    Tpetra_Vector::global_ordinal_type cols[1];
 
-  // Apply the Hessian to all the directions
-  RCP<Tpetra_MultiVector> HV = rcp(new Tpetra_MultiVector(Ht->getDomainMap(), numColors));
+    values[0] = 1.;
 
-  for (int i = 0; i < numColors; ++i)
-  {
-    RCP<const Thyra_MultiVector> v_i = Albany::createConstThyraMultiVector(V->getVector(i));
-    RCP<Thyra_MultiVector> Hv_i = Albany::createThyraMultiVector(HV->getVectorNonConst(i));
-    evaluateResponse_HessVecProd_pp(
-      response_index,
-      current_time,
-      v_i,
-      x,
-      xdot,
-      xdotdot,
-      param_array,
-      param_name,
-      param_name,
-      Hv_i);
+    for (int i = 0; i < numElements; ++i) {
+      cols[0] = rangeMap->getGlobalElement(i);
+      Ht->replaceGlobalValues(cols[0], 1, values, cols);
+    }
+  }
+  else if (l1_is_distributed) {
+    Teuchos::ParameterList coloring_params;
+    std::string matrixType = "Hessian";
+    coloring_params.set("matrixType", matrixType);
+    coloring_params.set("symmetric", true);
+
+    // Create a colorer
+    Zoltan2::TpetraCrsColorer<Tpetra_CrsMatrix> colorer(Ht);
+
+    colorer.computeColoring(coloring_params);
+
+    // Compute seed matrix V -- this matrix is a dense
+    // matrix of 0/1 indicating the compression via coloring
+
+    const int numColors = colorer.getNumColors();
+
+    // Compute the seed matrix
+    RCP<Tpetra_MultiVector> V = rcp(new Tpetra_MultiVector(Ht->getDomainMap(), numColors));
+    colorer.computeSeedMatrix(*V);
+
+    // Apply the Hessian to all the directions
+    RCP<Tpetra_MultiVector> HV = rcp(new Tpetra_MultiVector(Ht->getDomainMap(), numColors));
+
+    for (int i = 0; i < numColors; ++i) {
+      RCP<const Thyra_MultiVector> v_i = Albany::createConstThyraMultiVector(V->getVector(i));
+      RCP<Thyra_MultiVector> Hv_i = Albany::createThyraMultiVector(HV->getVectorNonConst(i));
+      evaluateResponse_HessVecProd_pp(
+        response_index,
+        current_time,
+        v_i,
+        x,
+        xdot,
+        xdotdot,
+        param_array,
+        param_name,
+        param_name,
+        Hv_i);
+    }
+
+    // Reconstruct the Hessian matrix based on the Hessian-vector products
+    colorer.reconstructMatrix(*HV, *Ht);
+  }
+  else {
+    int numColors = Ht->getDomainMap()->getNodeNumElements();
+    RCP<Tpetra_Vector> v = rcp(new Tpetra_Vector(Ht->getDomainMap()));
+    RCP<Tpetra_Vector> Hv = rcp(new Tpetra_Vector(Ht->getDomainMap()));
+
+    Tpetra_Vector::scalar_type values[1];
+    Tpetra_Vector::global_ordinal_type cols[1];
+
+    for (int i = 0; i < numColors; ++i) {
+      v->replaceGlobalValue (i, 1.);
+      if (i>0)
+        v->replaceGlobalValue (i-1, 0.);
+
+      RCP<const Thyra_MultiVector> v_i = Albany::createConstThyraMultiVector(v);
+      RCP<Thyra_MultiVector> Hv_i = Albany::createThyraMultiVector(Hv);
+      evaluateResponse_HessVecProd_pp(
+        response_index,
+        current_time,
+        v_i,
+        x,
+        xdot,
+        xdotdot,
+        param_array,
+        param_name,
+        param_name,
+        Hv_i);
+      auto Hv_data = Hv->getData();
+      for (int j = 0; j < numColors; ++j) {
+        values[0] = Hv_data[j];
+        cols[0] = i;
+        Ht->replaceGlobalValues(j, 1, values, cols);
+      }
+    }
   }
 
-  // Reconstruct the Hessian matrix based on the Hessian-vector products
-  colorer.reconstructMatrix(*HV, *Ht);
   Ht->fillComplete();
 
 #ifdef WRITE_TO_MATRIX_MARKET
@@ -3412,8 +3506,8 @@ Application::setupTangentWorksetInfo(
     const Teuchos::RCP<const Thyra_Vector>&      x,
     const Teuchos::RCP<const Thyra_Vector>&      xdot,
     const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-    const Teuchos::Array<ParamVec>&              p,
-    ParamVec*                                    deriv_p,
+    Teuchos::Array<ParamVec>&                    p,
+    const int                                    parameter_index,
     const Teuchos::RCP<const Thyra_MultiVector>& Vx,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdot,
     const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
@@ -3448,7 +3542,10 @@ Application::setupTangentWorksetInfo(
         Vxdotdot, overlapped_Vxdotdot, CombineMode::INSERT);
   }
 
-  RCP<ParamVec> params = rcp(deriv_p, false);
+  RCP<ParamVec> params;
+  if (parameter_index < p.size()){
+    params = Teuchos::rcp(new ParamVec(p[parameter_index]));
+  }
 
   // Number of x & xdot tangent directions
   int num_cols_x = 0;

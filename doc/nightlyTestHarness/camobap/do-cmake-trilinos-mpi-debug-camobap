@@ -47,8 +47,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_Fortran_COMPILER=/usr/lib64/openmpi/bin/mpif90 \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.2.1/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.2.1/lib \
 \
       -D TPL_ENABLE_HDF5:BOOL=OFF \
 \
@@ -165,10 +165,10 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_PyTrilinos:BOOL=ON \
       -D PyTrilinos_DOCSTRINGS:BOOL=OFF \
       -D PYTHON_EXECUTABLE="/usr/bin/python" \
-      -D PYTHON_LIBRARIES="/usr/lib64/libpython3.9.so.1.0" \
-      -D PYTHON_LIBRARY="/usr/lib64/libpython3.9.so.1.0" \
-      -D PYTHON_INCLUDE_DIR="/usr/include/python3.9" \
-      -D SWIG_EXECUTABLE="/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/swig/bin/swig" \
+      -D PYTHON_LIBRARIES="/usr/lib64/libpython3.10.so.1.0" \
+      -D PYTHON_LIBRARY="/usr/lib64/libpython3.10.so.1.0" \
+      -D PYTHON_INCLUDE_DIR="/usr/include/python3.10" \
+      -D SWIG_EXECUTABLE="/nightlyCDash/albany-tpls-gcc-11.2.1/swig/bin/swig" \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
       -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
        ..
