@@ -4,6 +4,6 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-add_subdirectory(extremeEvent)
+add_subdirectory(ExtremeEvent)
 add_subdirectory(IO)
 add_subdirectory(SteadyHeat)
