@@ -993,7 +993,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT>(ptr_theta_1);
 
   auto rparams = params->sublist("Random Parameters");
-  int nrparams = rparams.get("Number Of Parameters",0);
+  int nrparams = rparams.get<int>("Number Of Parameters");
   for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
     auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
 
